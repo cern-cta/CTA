@@ -1,21 +1,17 @@
-# This file is part of the Castor project.
-# See http://castor.web.cern.ch/castor
+# @project        The CERN Tape Archive (CTA)
+# @copyright      Copyright(C) 2003-2021 CERN
+# @license        This program is free software: you can redistribute it and/or modify
+#                 it under the terms of the GNU General Public License as published by
+#                 the Free Software Foundation, either version 3 of the License, or
+#                 (at your option) any later version.
 #
-# Copyright (C) 2003  CERN
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#                 This program is distributed in the hope that it will be useful,
+#                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+#                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#                 GNU General Public License for more details.
 #
-# @author Castor Dev team, castor-dev@cern.ch
-#
+#                 You should have received a copy of the GNU General Public License
+#                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 cmake_minimum_required (VERSION 2.6)
 
 include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
@@ -31,4 +27,3 @@ if(CMAKE_COMPILER_IS_GNUCC)
       PROPERTY COMPILE_FLAGS " -Wno-unused-local-typedefs")
   endif(GCC_VERSION_GE_4_8_0)
 endif(CMAKE_COMPILER_IS_GNUCC)
-

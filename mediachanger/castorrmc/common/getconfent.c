@@ -1,6 +1,18 @@
 /*
- * Copyright (C) 1991-1999 by CERN/IT/PDP/DM
- * All rights reserved
+ * @project        The CERN Tape Archive (CTA)
+ * @copyright      Copyright(C) 1991-2021 CERN
+ * @license        This program is free software: you can redistribute it and/or modify
+ *                 it under the terms of the GNU General Public License as published by
+ *                 the Free Software Foundation, either version 3 of the License, or
+ *                 (at your option) any later version.
+ *
+ *                 This program is distributed in the hope that it will be useful,
+ *                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *                 GNU General Public License for more details.
+ *
+ *                 You should have received a copy of the GNU General Public License
+ *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -135,12 +147,12 @@ int getconfent_parser(char **conf_val,
 
   /* Saving the index information to pass on later */
   *count = i;
-  
+
   /* Allocating the necessary space and parsing the string */
   if ((p = strdup(*conf_val)) == NULL) { return -1; }
   (*result) = (char **)calloc((i+1), sizeof(char *));
   if (result == NULL) { return -1; }
- 
+
   i = 0 ;
   for (q = strtok(p," \t");q != NULL; q = strtok(NULL," \t")) { (*result)[i++] = strdup(q); }
   free(p);
@@ -157,12 +169,12 @@ int getconfent_multi_fromfile(const char *filename,
 {
   char *conf_val;
 
-  if((conf_val = getconfent_fromfile(filename,category,name,flags)) == NULL){ 
+  if((conf_val = getconfent_fromfile(filename,category,name,flags)) == NULL){
     *result = NULL;
     *count = 0;
-    return 0; 
+    return 0;
   }
- 
+
   if ( getconfent_parser(&conf_val, result, count) == -1 ) {return -1;}
 
   return 0;
@@ -177,13 +189,13 @@ int getconfent_multi(const char *category,
                      int *count)
 {
   char *conf_val;
-  
-  if((conf_val = getconfent(category,name,flags)) == NULL) { 
+
+  if((conf_val = getconfent(category,name,flags)) == NULL) {
     *result = NULL;
     *count = 0;
-    return 0; 
+    return 0;
   }
-  
+
   if( getconfent_parser(&conf_val, result, count) == -1 ) {return -1;}
 
   return 0;

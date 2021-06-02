@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# @project        The CERN Tape Archive (CTA)
+# @copyright      Copyright(C) 2021 CERN
+# @license        This program is free software: you can redistribute it and/or modify
+#                 it under the terms of the GNU General Public License as published by
+#                 the Free Software Foundation, either version 3 of the License, or
+#                 (at your option) any later version.
+#
+#                 This program is distributed in the hope that it will be useful,
+#                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+#                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#                 GNU General Public License for more details.
+#
+#                 You should have received a copy of the GNU General Public License
+#                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 BASE_REPORT_DIRECTORY=/var/log
 
 usage() { cat <<EOF 1>&2
@@ -62,7 +77,7 @@ roundTripRepack() {
   echo "***********************************************************"
 
   VID_TO_REPACK=$(getFirstVidContainingFiles)
-  if [ "$VID_TO_REPACK" != "null" ] 
+  if [ "$VID_TO_REPACK" != "null" ]
   then
   echo
     echo "Launching the repack \"just move\" test on VID ${VID_TO_REPACK} (with backpressure)"
@@ -76,7 +91,7 @@ roundTripRepack() {
   kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
 
   VID_TO_REPACK=$(getFirstVidContainingFiles)
-  if [ "$VID_TO_REPACK" != "null" ] 
+  if [ "$VID_TO_REPACK" != "null" ]
   then
   echo
     echo "Launching the repack \"just move\" test on VID ${VID_TO_REPACK}"
@@ -88,14 +103,14 @@ roundTripRepack() {
 
   echo "Reclaiming tape ${VID_TO_REPACK}"
   kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
-  echo 
+  echo
   echo "*******************************************************************"
   echo "STEP $1. Launching a round trip repack \"just move\" request TEST OK"
   echo "*******************************************************************"
 }
 
 repackDisableTape() {
-  echo 
+  echo
   echo "*****************************************************"
   echo "STEP $1. Launching a Repack Request on a disabled tape"
   echo "*****************************************************"
@@ -130,13 +145,13 @@ repackDisableTape() {
 }
 
 repackJustMove() {
-  echo 
+  echo
   echo "*********************************************"
   echo "STEP $1. Testing Repack \"Just move\" workflow"
   echo "*********************************************"
 
   VID_TO_REPACK=$(getFirstVidContainingFiles)
-  if [ "$VID_TO_REPACK" != "null" ] 
+  if [ "$VID_TO_REPACK" != "null" ]
   then
   echo
     echo "Launching the repack test \"just move\" on VID ${VID_TO_REPACK}"
@@ -148,7 +163,7 @@ repackJustMove() {
 
   echo "Reclaiming tape ${VID_TO_REPACK}"
   kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
-  echo 
+  echo
   echo "*****************************************************"
   echo "STEP $1. Testing Repack \"Just move\" workflow TEST OK"
   echo "*****************************************************"
@@ -161,10 +176,10 @@ repackJustAddCopies() {
   echo "**************************************************************************"
 
   VID_TO_REPACK=$(getFirstVidContainingFiles)
-  if [ "$VID_TO_REPACK" != "null" ] 
+  if [ "$VID_TO_REPACK" != "null" ]
   then
     echo "Launching the repack \"just add copies\" test on VID ${VID_TO_REPACK} with all copies already on CTA"
-    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -a -r ${BASE_REPORT_DIRECTORY}/Step$1-JustAddCopiesAllCopiesInCTA -n ctasystest 
+    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -a -r ${BASE_REPORT_DIRECTORY}/Step$1-JustAddCopiesAllCopiesInCTA -n ctasystest
   else
     echo "No vid found to repack"
     exit 1
@@ -175,7 +190,7 @@ repackJustAddCopies() {
   nbRetrievedFiles=`echo ${repackJustAddCopiesResult} | jq -r ".retrievedFiles"`
   nbArchivedFiles=`echo ${repackJustAddCopiesResult} | jq -r ".archivedFiles"`
 
-  if [ $nbArchivedFiles == 0 ] && [ $nbRetrievedFiles == 0 ] 
+  if [ $nbArchivedFiles == 0 ] && [ $nbRetrievedFiles == 0 ]
   then
     echo "Nb retrieved files = 0 and nb archived files = 0. Test OK"
   else
@@ -200,7 +215,7 @@ repackCancellation() {
   kubectl -n ${NAMESPACE} exec ctacli -- cta-admin drive down VD.* --reason "Putting drive down for repack test"
 
   VID_TO_REPACK=$(getFirstVidContainingFiles)
-  if [ "$VID_TO_REPACK" != "null" ] 
+  if [ "$VID_TO_REPACK" != "null" ]
   then
   echo
     echo "Launching a repack request on VID ${VID_TO_REPACK}"
@@ -228,7 +243,7 @@ repackCancellation() {
   do
     lastExpandedFSeq=`kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json repack ls --vid ${VID_TO_REPACK} | jq -r ".[0] | .lastExpandedFseq" || 0`
   done
-  
+
   echo "Expansion finished, deleting the Repack Request"
   kill $pid
   kubectl -n ${NAMESPACE} exec ctacli -- cta-admin repack rm --vid ${VID_TO_REPACK} || echo "Error while removing the Repack Request. Test FAILED"
@@ -237,8 +252,8 @@ repackCancellation() {
   echo "Checking that the Retrieve queue of the VID ${VID_TO_REPACK} contains the Retrieve Requests created from the Repack Request expansion"
   nbFilesOnTapeToRepack=`kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json tapefile ls --vid ${VID_TO_REPACK} | jq "length"`
   echo "Nb files on tape = $nbFilesOnTapeToRepack"
-  
-  nbFilesOnQueue=`kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json showqueues | jq -r ". [] | select(.vid == \"${VID_TO_REPACK}\") | .queuedFiles"` 
+
+  nbFilesOnQueue=`kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json showqueues | jq -r ". [] | select(.vid == \"${VID_TO_REPACK}\") | .queuedFiles"`
   echo "Nb files on the queue ${VID_TO_REPACK} = $nbFilesOnQueue"
 
   if [[ $nbFilesOnTapeToRepack != $nbFilesOnQueue ]]
@@ -252,7 +267,7 @@ repackCancellation() {
   kubectl -n ${NAMESPACE} exec ctacli -- cta-admin drive up VD.*
 
   WAIT_FOR_EMPTY_QUEUE_TIMEOUT=100
-  
+
   SECONDS_PASSED=0
   while test 0 != `kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json showqueues | jq -r ". [] | select(.vid == \"${VID_TO_REPACK}\")" | wc -l`; do
     echo "Waiting for the Retrieve queue ${VID_TO_REPACK} to be empty: Seconds passed = $SECONDS_PASSED"
@@ -345,12 +360,12 @@ repackMoveAndAddCopies() {
   totalFilesToArchive=`echo $repackLsResult | jq -r ".totalFilesToArchive"`
   retrievedFiles=`echo $repackLsResult | jq -r ".retrievedFiles"`
   archivedFiles=`echo $repackLsResult | jq -r ".archivedFiles"`
-  
+
   if [[ $retrievedFiles != $totalFilesToRetrieve ]]
   then
     echo "RetrievedFiles ($retrievedFiles) != totalFilesToRetrieve ($totalFilesToRetrieve), test FAILED"
     exit 1
-  else 
+  else
     echo "RetrievedFiles ($retrievedFiles) = totalFilesToRetrieve ($totalFilesToRetrieve), OK"
   fi
 
@@ -361,7 +376,7 @@ repackMoveAndAddCopies() {
   else
      echo "ArchivedFiles ($archivedFiles) == totalFilesToArchive ($totalFilesToArchive), OK"
   fi
-  
+
   echo "Reclaimimg tape ${VID_TO_REPACK}"
   kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
 
@@ -375,20 +390,20 @@ repackTapeRepair() {
   echo
   echo "*******************************************************"
   echo "STEP $1. Testing Repack \"Tape Repair\" workflow"
-  echo "*******************************************************"  
+  echo "*******************************************************"
 
   VID_TO_REPACK=$(getFirstVidContainingFiles)
-  if [ "$VID_TO_REPACK" == "null" ] 
+  if [ "$VID_TO_REPACK" == "null" ]
   then
     echo "No vid found to repack"
     exit 1
   fi
-  
+
   echo "Getting files to inject into the repack buffer directory"
-  
+
   tfls=`kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json tapefile ls --vid ${VID_TO_REPACK}`
   nbFileToInject=10
-  
+
   if [[ $nbFileToInject != 0 ]]
   then
     echo "Will inject $nbFileToInject files into the repack buffer directory"
@@ -409,17 +424,17 @@ repackTapeRepair() {
       pathFileToInject=`kubectl -n ${NAMESPACE} exec ctaeos -- eos fileinfo fid:$diskId --path | cut -d":" -f2 | tr -d " "`
       pathOfFilesToInject[$i]=$pathFileToInject
     done
-    
+
     kubectl -n ${NAMESPACE} exec client -- bash /root/client_prepare_file.sh `for file in ${pathOfFilesToInject[@]}; do echo -n "-f $file "; done`
 
     echo "Copying the retrieved files into the repack buffer $bufferDirectory"
-    
+
     for i in $(seq 0 $(( nbFileToInject - 1)) )
     do
       fseqFile=`echo $tfls | jq -r ". [] | select(.df.diskId == \"${diskIds[$i]}\") | .tf.fSeq"` || break
       kubectl -n ${NAMESPACE} exec ctaeos -- eos cp ${pathOfFilesToInject[$i]} $bufferDirectory/`printf "%9d\n" $fseqFile | tr ' ' 0`
     done
-   
+
     echo "Launching a repack request on the vid ${VID_TO_REPACK}"
     kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackTapeRepair -n ctasystest  ||      exit 1
 
@@ -436,7 +451,7 @@ repackTapeRepair() {
       exit 1
     else
       echo "totalFilesToRetrieve ($totalFilesToRetrieve) == totalFilesToArchive ($totalFilesToArchive) - userProvidedFiles ($userProvidedFiles), OK"
-    fi  
+    fi
 
     if [[ $retrievedFiles != $totalFilesToRetrieve ]]
     then
@@ -456,7 +471,7 @@ repackTapeRepair() {
     echo "Reclaiming tape ${VID_TO_REPACK}"
     kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
 
-  else 
+  else
     echo "No file to inject, test not OK"
     exit 1
   fi
@@ -471,21 +486,21 @@ repackTapeRepairNoRecall() {
   echo
   echo "*******************************************************"
   echo "STEP $1. Testing Repack \"Tape Repair\" NO RECALL workflow"
-  echo "*******************************************************"  
+  echo "*******************************************************"
 
   VID_TO_REPACK=$(getFirstVidContainingFiles)
-  if [ "$VID_TO_REPACK" == "null" ] 
+  if [ "$VID_TO_REPACK" == "null" ]
   then
     echo "No vid found to repack"
     exit 1
   fi
-  
+
   echo "Getting files to inject into the repack buffer directory"
-  
+
   tfls=`kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json tapefile ls --vid ${VID_TO_REPACK}`
   nbFilesOnTape=`echo $tfls | jq length`
   nbFileToInject=10
-  
+
   if [[ $nbFileToInject != 0 ]]
   then
     echo "Will inject $nbFileToInject files into the repack buffer directory"
@@ -502,7 +517,7 @@ repackTapeRepairNoRecall() {
     # Prepare array of indices to pick from the tfls output
     for i in $(seq 0 $(( nbFileToInject - 1 )) )
     do
-      filesIndices[$i]=$(( i + 1 )) 
+      filesIndices[$i]=$(( i + 1 ))
     done
 
     for i in $(seq 0 $(( nbFileToInject - 1 )) )
@@ -512,17 +527,17 @@ repackTapeRepairNoRecall() {
       pathFileToInject=`kubectl -n ${NAMESPACE} exec ctaeos -- eos fileinfo fid:$diskId --path | cut -d":" -f2 | tr -d " "`
       pathOfFilesToInject[$i]=$pathFileToInject
     done
-    
+
     kubectl -n ${NAMESPACE} exec client -- bash /root/client_prepare_file.sh `for file in ${pathOfFilesToInject[@]}; do echo -n "-f $file "; done`
 
     echo "Copying the retrieved files into the repack buffer $bufferDirectory"
-    
+
     for i in $(seq 0 $(( nbFileToInject - 1)) )
     do
       fseqFile=`echo $tfls | jq -r ". [] | select(.df.diskId == \"${diskIds[$i]}\") | .tf.fSeq"` || break
       kubectl -n ${NAMESPACE} exec ctaeos -- eos cp ${pathOfFilesToInject[$i]} $bufferDirectory/`printf "%9d\n" $fseqFile | tr ' ' 0`
     done
-   
+
     echo "Launching a repack request on the vid ${VID_TO_REPACK}"
     kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackTapeRepairNoRecall -n ctasystest -u ||      exit 1
 
@@ -539,7 +554,7 @@ repackTapeRepairNoRecall() {
       exit 1
     else
       echo "totalFilesToRetrieve ($totalFilesToRetrieve) == totalFilesToArchive ($totalFilesToArchive) - userProvidedFiles ($userProvidedFiles), OK"
-    fi  
+    fi
 
     if [[ $retrievedFiles != $totalFilesToRetrieve ]]
     then
@@ -557,7 +572,7 @@ repackTapeRepairNoRecall() {
        echo "archivedFiles ($archivedFiles) == totalFilesToArchive ($totalFilesToArchive), OK"
     fi
 
-  else 
+  else
     echo "No file to inject, test not OK"
     exit 1
   fi

@@ -1,8 +1,20 @@
 /*
- * Copyright (C) 1998-2003 by CERN/IT/PDP/DM
- * All rights reserved
+ * @project        The CERN Tape Archive (CTA)
+ * @copyright      Copyright(C) 1998-2021 CERN
+ * @license        This program is free software: you can redistribute it and/or modify
+ *                 it under the terms of the GNU General Public License as published by
+ *                 the Free Software Foundation, either version 3 of the License, or
+ *                 (at your option) any later version.
+ *
+ *                 This program is distributed in the hope that it will be useful,
+ *                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *                 GNU General Public License for more details.
+ *
+ *                 You should have received a copy of the GNU General Public License
+ *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
- 
+
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -51,7 +63,7 @@ static void smc_usage(const char *const cmd)
 }
 
 void smc_qdrive_humanPrint(const struct robot_info *const robot_info,
-  const struct smc_element_info *const element_info, const int numberOfElements, 
+  const struct smc_element_info *const element_info, const int numberOfElements,
   const int useSpectraLib) {
   char *pstatus;
   int i;
@@ -96,9 +108,9 @@ void smc_qdrive_jsonPrint(const struct robot_info *const robot_info,
             (element_info+i)->element_address-robot_info->device_start,
             (element_info+i)->element_address,
              pstatus,
-            (element_info+i)->name);                
+            (element_info+i)->name);
   }
-  printf ("]");  
+  printf ("]");
 }
 static int smc_qdrive (
 	const char *const rmchost,
@@ -112,7 +124,7 @@ static int smc_qdrive (
 	int nbelem;
         char *smcLibraryType;
         char useSpectraLib;
- 
+
 	if (drvord < 0) {
 		drvord = 0;
 		nbelem = robot_info->device_count;
@@ -130,7 +142,7 @@ static int smc_qdrive (
 	}
         useSpectraLib=0;
         smcLibraryType = getconfent_fromfile(PATH_CONF,"SMC","LIBRARY_TYPE",0);
-        if (NULL != smcLibraryType && 
+        if (NULL != smcLibraryType &&
             0 == strcasecmp(smcLibraryType,"SPECTRA")) {
           useSpectraLib = 1;
         }
@@ -138,7 +150,7 @@ static int smc_qdrive (
           smc_qdrive_jsonPrint(robot_info, element_info, c, useSpectraLib);
 	} else {
           smc_qdrive_humanPrint(robot_info, element_info, c, useSpectraLib);
-        }      
+        }
 	free (element_info);
 	return (0);
 }
@@ -164,7 +176,7 @@ void smc_qlib_jsonPrint(const struct robot_info *const robot_info) {
   memcpy(prodId, robot_info->inquiry + 8, 16);
   prodId[16] = '\0';
   memcpy(prodRevLvl,robot_info->inquiry + 8 + 16, 4);
-  prodRevLvl[4] = '\0';      
+  prodRevLvl[4] = '\0';
   printf ("[");
   printf ("{\"inquiry\":{\"vendor\":\"%s\",\"product\":\"%s\",\"revision\":\"%s\"},",
           T10Vendor, prodId, prodRevLvl);
@@ -175,7 +187,7 @@ void smc_qlib_jsonPrint(const struct robot_info *const robot_info) {
   printf ("\"port\":{\"count\":%d,\"start\":%d},",
           robot_info->port_count, robot_info->port_start);
   printf ("\"device\":{\"count\":%d,\"start\":%d}",
-          robot_info->device_count, robot_info->device_start);            
+          robot_info->device_count, robot_info->device_start);
   printf ("}]");
 }
 
@@ -228,7 +240,7 @@ void smc_qport_jsonPrint(const struct smc_element_info *const element_info,
             "\"state\":\"%s\"}",
             (element_info+i)->element_address,
             (element_info+i)->name,
-             pstatus); 
+             pstatus);
   }
   printf ("]");
 }
@@ -271,7 +283,7 @@ void smc_qslot_humanPrint(const struct smc_element_info *element_info,
     printf ("    %4d\t%s\n",
             element_info[i].element_address, element_info[i].name);
   }
-} 
+}
 
 void smc_qslot_jsonPrint(const struct smc_element_info *element_info,
   const int numberOfElements) {
@@ -283,8 +295,8 @@ void smc_qslot_jsonPrint(const struct smc_element_info *element_info,
     }
     printf ("{\"elementAddress\":%4d,"
             "\"vid\":\"%s\"}",
-            element_info[i].element_address, 
-            element_info[i].name); 
+            element_info[i].element_address,
+            element_info[i].name);
   }
   printf ("]");
 }
@@ -299,7 +311,7 @@ static int smc_qslot (
 {
         int c;
         struct smc_element_info *element_info;
- 
+
 	if (nbelem == 0) {
 		if (slotaddr < 0)
 			nbelem = robot_info->slot_count;
@@ -387,7 +399,7 @@ static int smc_qvid (
         int c;
         struct smc_element_info *element_info;
 	const char *vid;
- 
+
 	if (*reqvid)
 		vid = reqvid;
 	else
@@ -410,8 +422,8 @@ static int smc_qvid (
 		return (serrno - ERMCRBTERR);
 	}
          if (isJsonEnabled) {
-           smc_qvid_jsonPrint(element_info, c); 
-	} else {   
+           smc_qvid_jsonPrint(element_info, c);
+	} else {
            smc_qvid_humanPrint(element_info, c);
         }
 	free (element_info);
@@ -572,7 +584,7 @@ int main(const int argc,
 		if ((c = rmc_dismount (rmchost, vid, drvord, 0)) < 0) {
 			c = (serrno == SECOMERR) ? RBT_FAST_RETRY : serrno - ERMCRBTERR;
 		}
-		break;	
+		break;
 	case 'e':
 		if ((c = rmc_export (rmchost, vid)) < 0) {
 			c = (serrno == SECOMERR) ? RBT_FAST_RETRY : serrno - ERMCRBTERR;
@@ -587,7 +599,7 @@ int main(const int argc,
 		if ((c = rmc_mount (rmchost, vid, invert, drvord)) < 0) {
 			c = (serrno == SECOMERR) ? RBT_FAST_RETRY : serrno - ERMCRBTERR;
 		}
-		break;	
+		break;
 	case 'q':
 		switch (qry_type) {
 		case 'D':

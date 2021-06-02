@@ -1,5 +1,17 @@
-.\"   $Id: Cmutex.man,v 1.6 2002/01/09 13:25:25 jdurand Exp $
+.\" @project        The CERN Tape Archive (CTA)
+.\" @copyright      Copyright(C) 2002-2021 CERN
+.\" @license        This program is free software: you can redistribute it and/or modify
+.\"                 it under the terms of the GNU General Public License as published by
+.\"                 the Free Software Foundation, either version 3 of the License, or
+.\"                 (at your option) any later version.
 .\"
+.\"                 This program is distributed in the hope that it will be useful,
+.\"                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"                 GNU General Public License for more details.
+.\"
+.\"                 You should have received a copy of the GNU General Public License
+.\"                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .TH CMUTEX "3castor" "$Date: 2002/01/09 13:25:25 $" "CASTOR" "Common Library Functions"
 .SH NAME
 \fBCmutex\fP \- \fBCASTOR\fP \fBMutex\fP inferface
@@ -15,7 +27,7 @@
 
 .SH DESCRIPTION
 
-\fBCmutex\fP is a common API interface for application compiled or not with the multithread flag. If the application do never initialize the \fBCmutex\fP package, using \fBCmutex_init\fP, and two arguments that are the addresses of the mutex lock and unlock functions, 
+\fBCmutex\fP is a common API interface for application compiled or not with the multithread flag. If the application do never initialize the \fBCmutex\fP package, using \fBCmutex_init\fP, and two arguments that are the addresses of the mutex lock and unlock functions,
 .BI lockfunction
 and
 .BI unlockfunction

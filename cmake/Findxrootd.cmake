@@ -40,7 +40,7 @@ message (STATUS "XROOTD_XRDSSI_LIB          = ${XROOTD_XRDSSI_LIB}")
 message (STATUS "XROOTD_XRDUTILS_LIB        = ${XROOTD_XRDUTILS_LIB}")
 
 include (FindPackageHandleStandardArgs)
-find_package_handle_standard_args (xrootd DEFAULT_MSG 
+find_package_handle_standard_args (xrootd DEFAULT_MSG
   XROOTD_INCLUDE_DIR
   XROOTD_PRIVATE_INCLUDE_DIR
   XROOTD_XRDCL_LIB

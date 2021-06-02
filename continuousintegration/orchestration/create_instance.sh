@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# @project        The CERN Tape Archive (CTA)
+# @copyright      Copyright(C) 2021 CERN
+# @license        This program is free software: you can redistribute it and/or modify
+#                 it under the terms of the GNU General Public License as published by
+#                 the Free Software Foundation, either version 3 of the License, or
+#                 (at your option) any later version.
+#
+#                 This program is distributed in the hope that it will be useful,
+#                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+#                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#                 GNU General Public License for more details.
+#
+#                 You should have received a copy of the GNU General Public License
+#                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 # CTA registry secret name
 ctareg_secret='ctaregsecret'
 
@@ -70,7 +85,7 @@ while getopts "n:o:d:e:a:p:b:B:E:SDOUm:" o; do
             ;;
         m)
             model=${OPTARG}
-            if [ "-${model}-" != "-ibm-" ] && [ "-${model}-" != "-mhvtl-" ] ; then error="${error}Library model ${model} does not exist\n"; fi 
+            if [ "-${model}-" != "-ibm-" ] && [ "-${model}-" != "-mhvtl-" ] ; then error="${error}Library model ${model} does not exist\n"; fi
             ;;
         n)
             instance=${OPTARG}
@@ -181,7 +196,7 @@ else
     echo "DB content will be wiped"
 fi
 
-if [ $keepobjectstore == 1 ] ; then 
+if [ $keepobjectstore == 1 ] ; then
     echo "objecstore content will be kept"
 else
     echo "objectstore content will be wiped"
@@ -325,7 +340,7 @@ echo OK
 
 echo -n "Configuring KDC clients (frontend, cli...) "
 kubectl --namespace=${instance} exec kdc cat /etc/krb5.conf | kubectl --namespace=${instance} exec -i client --  bash -c "cat > /etc/krb5.conf"
-kubectl --namespace=${instance} exec kdc cat /etc/krb5.conf | kubectl --namespace=${instance} exec -i ctacli --  bash -c "cat > /etc/krb5.conf" 
+kubectl --namespace=${instance} exec kdc cat /etc/krb5.conf | kubectl --namespace=${instance} exec -i ctacli --  bash -c "cat > /etc/krb5.conf"
 kubectl --namespace=${instance} exec kdc cat /etc/krb5.conf | kubectl --namespace=${instance} exec -i ctafrontend --  bash -c "cat > /etc/krb5.conf"
 kubectl --namespace=${instance} exec kdc cat /etc/krb5.conf | kubectl --namespace=${instance} exec -i ctaeos --  bash -c "cat > /etc/krb5.conf"
 kubectl --namespace=${instance} exec kdc cat /root/ctaadmin1.keytab | kubectl --namespace=${instance} exec -i ctacli --  bash -c "cat > /root/ctaadmin1.keytab"
@@ -380,7 +395,7 @@ echo OK
 echo -n "Waiting for EOS to be configured"
 for ((i=0; i<300; i++)); do
   echo -n "."
-  [ "`kubectl --namespace=${instance} exec ctaeos -- bash -c "[ -f /EOSOK ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] && break  
+  [ "`kubectl --namespace=${instance} exec ctaeos -- bash -c "[ -f /EOSOK ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] && break
   sleep 1
 done
 [ "`kubectl --namespace=${instance} exec ctaeos -- bash -c "[ -f /EOSOK ] && echo -n Ready || echo -n Not ready"`" = "Ready" ] || die "TIMED OUT"

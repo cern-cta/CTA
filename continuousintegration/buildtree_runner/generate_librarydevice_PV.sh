@@ -1,5 +1,20 @@
 #!/bin/bash -e
 
+# @project        The CERN Tape Archive (CTA)
+# @copyright      Copyright(C) 2021 CERN
+# @license        This program is free software: you can redistribute it and/or modify
+#                 it under the terms of the GNU General Public License as published by
+#                 the Free Software Foundation, either version 3 of the License, or
+#                 (at your option) any later version.
+#
+#                 This program is distributed in the hope that it will be useful,
+#                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+#                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#                 GNU General Public License for more details.
+#
+#                 You should have received a copy of the GNU General Public License
+#                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 LIBRARY_DIR=/opt/kubernetes/CTA/library
 
 mkdir -p ${LIBRARY_DIR} ${LIBRARY_DIR}/config ${LIBRARY_DIR}/resource
@@ -25,7 +40,7 @@ for device in $(grep mediumx ${tempdir}/lsscsi-g.dump | awk {'print $7'} | sed -
   scsi_channel="$(echo $line | cut -d\: -f2)"
 
   drivenames=$(grep "^.${scsi_host}:${scsi_channel}:" ${tempdir}/lsscsi-g.dump | grep tape | sed -e 's/^.[0-9]\+:\([0-9]\+\):\([0-9]\+\):.*/VDSTK\1\2/' | xargs -itoto echo -n " toto")
-  drivedevices=$(grep "^.${scsi_host}:${scsi_channel}:" ${tempdir}/lsscsi-g.dump | grep tape | awk '{print $6}' | sed -e 's%/dev/%n%' | xargs -itoto echo -n " toto")  
+  drivedevices=$(grep "^.${scsi_host}:${scsi_channel}:" ${tempdir}/lsscsi-g.dump | grep tape | awk '{print $6}' | sed -e 's%/dev/%n%' | xargs -itoto echo -n " toto")
 
 cat <<EOF > ${LIBRARY_DIR}/config/library-config-${device}.yaml
 apiVersion: v1

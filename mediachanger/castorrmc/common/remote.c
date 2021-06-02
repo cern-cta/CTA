@@ -1,6 +1,18 @@
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
- * All rights reserved
+ * @project        The CERN Tape Archive (CTA)
+ * @copyright      Copyright(C) 1990-2021 CERN
+ * @license        This program is free software: you can redistribute it and/or modify
+ *                 it under the terms of the GNU General Public License as published by
+ *                 the Free Software Foundation, either version 3 of the License, or
+ *                 (at your option) any later version.
+ *
+ *                 This program is distributed in the hope that it will be useful,
+ *                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *                 GNU General Public License for more details.
+ *
+ *                 You should have received a copy of the GNU General Public License
+ *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdlib.h>
@@ -18,7 +30,7 @@
 #include <net/if.h>                     /* Network interfaces           */
 #include <sys/ioctl.h>                  /* ioctl() definitions          */
 #include <Castor_limits.h>
-#include <log.h> 
+#include <log.h>
 #include <net.h>
 #include <serrno.h>
 #include <Cnetdb.h>
@@ -41,7 +53,7 @@ int isremote(struct in_addr from_host,
     int   s_s;
     struct  ifconf  ifc;     /* ifconf structure      */
     struct  ifreq   *ifr;    /* Pointer on ifreq structure */
-    int n ;          
+    int n ;
     union adr {
         u_long adr_i;
         unsigned char adr_c[4];
@@ -68,7 +80,7 @@ int isremote(struct in_addr from_host,
      * getting local IP number
      */
     gethostname(local, CA_MAXHOSTNAMELEN+1);
-     
+
     if ( (h=(struct hostent *)Cgethostbyname(local))==NULL) {
         (*logfunc)(LOG_ERR,"isremote(): gethostbyname() error\n");
         return -1 ;
@@ -127,7 +139,7 @@ int isremote(struct in_addr from_host,
                     }
                     if ( isdigit(cp[0]) ) {
                         strcpy(ent,cp) ;
-                        if ( strtok_r(cp,".",&last) ==  NULL || 
+                        if ( strtok_r(cp,".",&last) ==  NULL ||
                              strtok_r(NULL,".",&last) == NULL )
                             (*logfunc)(LOG_DEBUG,"%s ignored: IP specification too short \n", ent);
                         else {
@@ -151,7 +163,7 @@ int isremote(struct in_addr from_host,
         (*logfunc)(LOG_ERR, "socket: %s\n",strerror(errno));
         return -1;
     }
-   
+
     ifc.ifc_len = sizeof(buf);
     ifc.ifc_buf = buf;
     ifr = ifc.ifc_req;
@@ -160,8 +172,8 @@ int isremote(struct in_addr from_host,
         (*logfunc)(LOG_ERR, "ioctl(SIOCGIFCONF): %s\n",strerror(errno));
         close(s_s);
         return -1;
-    } 
-    else 
+    }
+    else
     {
         for (n = ifc.ifc_len/sizeof(struct ifreq); --n >= 0; ifr++)  {
             memcpy (&addr, &ifr->ifr_addr, sizeof(struct sockaddr_in));
@@ -213,7 +225,7 @@ int CDoubleDnsLookup(int s, char *host) {
         (*logfunc)(LOG_ERR,"CDoubleDnsLookup() isremote(): %s\n",neterror());
         errno = save_errno;
         return(-1);
-    } 
+    }
 
     if ( (i==0) && (p = strchr(tmphost,'.')) != NULL ) *p = '\0';
     if ( host != NULL ) strcpy(host,tmphost);
@@ -247,7 +259,7 @@ int isadminhost(int s, char *peerhost) {
     if ( admin_hosts == NULL ) admin_hosts = getenv("ADMIN_HOSTS");
     if ( admin_hosts == NULL ) admin_hosts = getconfent("ADMIN","HOSTS",1);
 
-    if ( (admin_hosts != NULL) && 
+    if ( (admin_hosts != NULL) &&
          ((admin_host = strstr(admin_hosts,peerhost)) != NULL) ) {
         i = strlen(peerhost);
         if ( (admin_host[i] == '\0' ||

@@ -1,6 +1,18 @@
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
- * All rights reserved
+ * @project        The CERN Tape Archive (CTA)
+ * @copyright      Copyright(C) 1990-2021 CERN
+ * @license        This program is free software: you can redistribute it and/or modify
+ *                 it under the terms of the GNU General Public License as published by
+ *                 the Free Software Foundation, either version 3 of the License, or
+ *                 (at your option) any later version.
+ *
+ *                 This program is distributed in the hope that it will be useful,
+ *                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *                 GNU General Public License for more details.
+ *
+ *                 You should have received a copy of the GNU General Public License
+ *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /* readc.c              Fortran callable C I/O functions                */
@@ -39,13 +51,13 @@ void read_s_(FILE **stream,
 
 	/*
  	 * Reading the record length.
-	 */	
+	 */
 	rcode= fread(&size,sizeof(size),1,*stream) ;
 	if ( rcode == 0 ) {
 		/*
 		 * End of file.
 		 */
-		*count = 0 ; 
+		*count = 0 ;
 		*status= 2 ;
 		return ;
 	}
@@ -54,17 +66,17 @@ void read_s_(FILE **stream,
 		/*
 		 * Error.
 		 */
-		*status= 5 ; 
+		*status= 5 ;
 		return ;
 	}
 	/*
 	 * Reading the record.
 	 */
         if ( *count > size ) {
-                rcode= fread(buff,size,1,*stream) ; 
+                rcode= fread(buff,size,1,*stream) ;
 		if ( rcode != 1 ) {
-			*status= 5 ; 
-			return ; 
+			*status= 5 ;
+			return ;
 		}
 		/*
 		 * Number of bytes read.
@@ -72,34 +84,34 @@ void read_s_(FILE **stream,
 		*count= size ;
 	}
 	else {
-    rcode= fread(buff,*count,1,*stream) ; 
+    rcode= fread(buff,*count,1,*stream) ;
 		if ( rcode != 1 ) {
-			*status= 5 ; 
-			return ; 
+			*status= 5 ;
+			return ;
 		}
 	}
 
 
 	/*
-	 * Skipping the record's end if it 
+	 * Skipping the record's end if it
 	 * was only partially read.
 	 */
 	if ( *count < size ) {
 
-		*status= -1 ; 
+		*status= -1 ;
 		if ( fseek(*stream,size-(*count),1) == -1 ) {
-			*status= 5 ; 
+			*status= 5 ;
 			return ;
-		}	
+		}
 	}
 
 	/*
-	 * Reading the trailing record length. 
+	 * Reading the trailing record length.
 	 */
 	rcode= fread(&size,sizeof(size),1,*stream) ;
 	if ( rcode != 1 ) {
-		*status= 5 ; 
-		return ; 
+		*status= 5 ;
+		return ;
 	}
 
 }
@@ -113,7 +125,7 @@ void read_d_(FILE **stream,
  	/*
 	 * Initialization.
 	 */
-	*status= 0 ; 
+	*status= 0 ;
 
 	/*
 	 * Reading the record.
@@ -124,7 +136,7 @@ void read_d_(FILE **stream,
 		 * End of file.
 		 */
 		*count = 0 ;
-		*status= 2 ; 
+		*status= 2 ;
 		return ;
 	}
 
@@ -132,8 +144,8 @@ void read_d_(FILE **stream,
 		/*
 		 * Error
 		 */
-		*status= 5 ; 
+		*status= 5 ;
 		return ;
-	} 
+	}
 
 }

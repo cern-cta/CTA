@@ -1,10 +1,18 @@
 /*
- * $Id: Cglobals.h,v 1.9 2001/06/29 05:04:23 baud Exp $
- */
-
-/*
- * Copyright (C) 1999-2001 by CERN/IT/PDP/DM
- * All rights reserved
+ * @project        The CERN Tape Archive (CTA)
+ * @copyright      Copyright(C) 1999-2021 CERN
+ * @license        This program is free software: you can redistribute it and/or modify
+ *                 it under the terms of the GNU General Public License as published by
+ *                 the Free Software Foundation, either version 3 of the License, or
+ *                 (at your option) any later version.
+ *
+ *                 This program is distributed in the hope that it will be useful,
+ *                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *                 GNU General Public License for more details.
+ *
+ *                 You should have received a copy of the GNU General Public License
+ *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #pragma once
@@ -17,4 +25,3 @@ EXTERN_C void Cglobals_init (int (*) (int *, void **),
 			     int (*) (void));
 EXTERN_C int Cglobals_get (int *, void **, size_t size);
 EXTERN_C void Cglobals_getTid (int *);
-

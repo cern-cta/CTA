@@ -1,8 +1,19 @@
 /*
- * Copyright (C) 1998-2003 by CERN/IT/PDP/DM
- * All rights reserved
+ * @project        The CERN Tape Archive (CTA)
+ * @copyright      Copyright(C) 1998-2021 CERN
+ * @license        This program is free software: you can redistribute it and/or modify
+ *                 it under the terms of the GNU General Public License as published by
+ *                 the Free Software Foundation, either version 3 of the License, or
+ *                 (at your option) any later version.
+ *
+ *                 This program is distributed in the hope that it will be useful,
+ *                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *                 GNU General Public License for more details.
+ *
+ *                 You should have received a copy of the GNU General Public License
+ *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
- 
 
 #include <errno.h>
 #include <stdarg.h>
@@ -99,7 +110,7 @@ static int get_element_size(
  	cdb[5] = 1;             /* we only need one element */
  	cdb[9] = 128;           /* limit for the report */
 
-        /* IBM library in pause mode  */ 
+        /* IBM library in pause mode  */
         while (pause_mode && nretries <= 900) {
  	     rc = rmc_send_scsi_cmd (fd, rbtdev, 0, cdb, 12, buf, 128,
  		  sense, 38, SCSI_IN, &nb_sense_ret, &msgaddr);
@@ -108,7 +119,7 @@ static int get_element_size(
                  sleep(60);
                  pause_mode = 1;
                } else  {
-                 pause_mode = 0; 
+                 pause_mode = 0;
                }
              } else {
                 pause_mode = 0;
@@ -187,7 +198,7 @@ static int get_element_info(
 	cdb[8] = (len >> 8) & 0xFF;
 	cdb[9] = len & 0xFF;
 
-        /* IBM library in pause mode  */ 
+        /* IBM library in pause mode  */
         while (pause_mode && nretries <= 900) {
 	     rc = rmc_send_scsi_cmd (fd, rbtdev, 0, cdb, 12, data, len,
 		  sense, 38, SCSI_IN, &nb_sense_ret, &msgaddr);
@@ -261,8 +272,8 @@ int smc_get_geometry(
 	int nb_sense_ret;
 	int rc;
 	char sense[MAXSENSE];
-        int pause_mode = 1;        
-        int nretries = 0;     
+        int pause_mode = 1;
+        int nretries = 0;
 
 	strncpy(func, "get_geometry", sizeof(func));
 	func[sizeof(func) - 1] = '\0';
@@ -271,8 +282,8 @@ int smc_get_geometry(
 	cdb[0] = 0x12;		/* inquiry */
 	cdb[4] = 36;
 
-        /* IBM library in pause mode  */ 
-        while (pause_mode && nretries <= 900) { 
+        /* IBM library in pause mode  */
+        while (pause_mode && nretries <= 900) {
 	    rc = rmc_send_scsi_cmd (fd, rbtdev, 0, cdb, 6, buf, 36,
 		sense, 38, SCSI_IN, &nb_sense_ret, &msgaddr);
             if (rc < 0) {
@@ -302,8 +313,8 @@ int smc_get_geometry(
         pause_mode = 1;
         nretries = 0;
 
-        /* IBM library in pause mode  */ 
-        while (pause_mode && nretries<=900) { 
+        /* IBM library in pause mode  */
+        while (pause_mode && nretries<=900) {
 	     rc = rmc_send_scsi_cmd (fd, rbtdev, 0, cdb, 6, buf, 24,
 		 sense, 38, SCSI_IN, &nb_sense_ret, &msgaddr);
              if (rc < 0) {
@@ -363,7 +374,7 @@ int smc_find_cartridgeWithoutSendVolumeTag (
 	int nbFound = 0;
 	char func[16];
 	int i;
-	struct smc_element_info *inventory_info; 
+	struct smc_element_info *inventory_info;
 	char *msgaddr;
 	const int patternMatching = strchr (find_template, '*') || strchr (find_template, '?');
 	struct robot_info robot_info;
@@ -441,7 +452,7 @@ int smc_find_cartridge(
 
 	strncpy(func, "findWithVT", sizeof(func));
 	func[sizeof(func) - 1] = '\0';
-        
+
         /* Skip the 0xB6 cdb command if the tape library is Spectra like */
         smcLibraryType = getconfent_fromfile(PATH_CONF,"SMC","LIBRARY_TYPE",0);
         if (NULL != smcLibraryType &&
@@ -450,7 +461,7 @@ int smc_find_cartridge(
                                     element_info);
           if (rc >= 0)
             return (rc);
-          return (-1);  
+          return (-1);
         }
 
 	memset (cdb, 0, sizeof(cdb));
@@ -462,8 +473,8 @@ int smc_find_cartridge(
 	cdb[9] = 40;
 	memset (plist, 0, sizeof(plist));
 	strcpy (plist, find_template);
-   
-       /* IBM library in pause mode  */ 
+
+       /* IBM library in pause mode  */
         while (pause_mode && nretries <= 900) {
           rc = rmc_send_scsi_cmd (fd, rbtdev, 0, cdb, 12, (unsigned char*)plist, 40,
                            sense, 38, SCSI_OUT, &nb_sense_ret, &msgaddr);
@@ -472,7 +483,7 @@ int smc_find_cartridge(
                  sleep(60);
                  pause_mode = 1;
               } else  {
-                 pause_mode = 0; 
+                 pause_mode = 0;
               }
             } else {
                 pause_mode = 0;
@@ -611,7 +622,7 @@ int smc_move_medium(
 	int rc;
 	char sense[MAXSENSE];
         int pause_mode = 1;
-        int nretries = 0;         
+        int nretries = 0;
 
 	strncpy(func, "move_medium", sizeof(func));
 	func[sizeof(func) - 1] = '\0';
@@ -623,7 +634,7 @@ int smc_move_medium(
 	cdb[6] = to >> 8;
 	cdb[7] = to & 0xFF;
 	cdb[10] = invert;
-        
+
         while (pause_mode) {
 	     rc = rmc_send_scsi_cmd (fd, rbtdev, 0, cdb, 12, NULL, 0,
 		sense, 38, SCSI_NONE, &nb_sense_ret, &msgaddr);
@@ -694,7 +705,7 @@ int smc_dismount (
 	char func[16];
 	const char *msgaddr = 0;
 	struct smc_status smc_status;
- 
+
 	strncpy (func, "smc_dismount", sizeof(func));
 	func[sizeof(func) - 1] = '\0';
 
@@ -744,16 +755,16 @@ int smc_dismount (
 		return (smc_error);
 	}
     /* check that the vid is in a slot before returning */
-    while (1) {   
+    while (1) {
           struct smc_element_info vol_element_info;
           if (0 > smc_find_cartridge (fd, loader, drive_element_info.name, 0, 0, 1, &vol_element_info)) {
               const int smc_error = smc_lasterror (&smc_status, &msgaddr);
               rmc_usrmsg ( rpfd, func, SR017, "find_cartridge", drive_element_info.name, msgaddr);
               return (smc_error);
           }
-         
-          /* vid is in a storage slot */  
-          if (vol_element_info.element_type == 2) break; 
+
+          /* vid is in a storage slot */
+          if (vol_element_info.element_type == 2) break;
           /* give time for the tape enter the slot */
           sleep (2);
     }
@@ -775,7 +786,7 @@ int smc_export (
 	const char *msgaddr = NULL;
 	int nbelem = 0;
 	struct smc_status smc_status;
- 
+
 	strncpy (func, "smc_export", sizeof(func));
 	func[sizeof(func) - 1] = '\0';
 
@@ -858,7 +869,7 @@ int smc_import (
 	int port_start;
 	int slot_start;
 	struct smc_status smc_status;
- 
+
 	strncpy (func, "smc_import", sizeof(func));
 	func[sizeof(func) - 1] = '\0';
 
@@ -943,7 +954,7 @@ int smc_mount (
 	char func[16];
 	const char *msgaddr;
 	struct smc_status smc_status;
- 
+
 	strncpy (func, "smc_mount", sizeof(func));
 	func[sizeof(func) - 1] = '\0';
 
@@ -959,29 +970,29 @@ int smc_mount (
 	if (element_info.element_type != 2) {
 
                 /* compare requested and replied vid   */
-                rmc_usrmsg ( rpfd, func, "Asked for %s, got reply for %s\n", 
+                rmc_usrmsg ( rpfd, func, "Asked for %s, got reply for %s\n",
                         vid, element_info.name );
 
                 /* detail on a tape's current location */
                 switch (element_info.element_type) {
 
                 case 1:
-                        rmc_usrmsg ( rpfd, func, "Location: medium transport element (0x%x)\n", 
+                        rmc_usrmsg ( rpfd, func, "Location: medium transport element (0x%x)\n",
                                 element_info.element_type );
                         break;
-                case 2:                        
+                case 2:
                         /* normal case: in its home slot, not possible inside the if */
                         break;
                 case 3:
-                        rmc_usrmsg ( rpfd, func, "Location: import/export element (0x%x)\n", 
+                        rmc_usrmsg ( rpfd, func, "Location: import/export element (0x%x)\n",
                                 element_info.element_type );
                         break;
                 case 4:
-                        rmc_usrmsg ( rpfd, func, "Location: data transfer element (0x%x)\n", 
+                        rmc_usrmsg ( rpfd, func, "Location: data transfer element (0x%x)\n",
                                 element_info.element_type );
                         break;
                 default:
-                        rmc_usrmsg ( rpfd, func, "Location: unknown (0x%x)\n", 
+                        rmc_usrmsg ( rpfd, func, "Location: unknown (0x%x)\n",
                                 element_info.element_type );
                 }
 

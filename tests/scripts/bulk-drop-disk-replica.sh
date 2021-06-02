@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# @project        The CERN Tape Archive (CTA)
+# @copyright      Copyright(C) 2021 CERN
+# @license        This program is free software: you can redistribute it and/or modify
+#                 it under the terms of the GNU General Public License as published by
+#                 the Free Software Foundation, either version 3 of the License, or
+#                 (at your option) any later version.
+#
+#                 This program is distributed in the hope that it will be useful,
+#                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+#                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#                 GNU General Public License for more details.
+#
+#                 You should have received a copy of the GNU General Public License
+#                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 # this script deletes all disk replicas from a given EOS directory that are dX::t1 ,,X>=1
 
 
@@ -50,11 +65,11 @@ FILES_COUNT=`cat $TEST_FILE_LIST | wc -l`
 /usr/bin/date "+%Y-%m-%d %H:%M:%S"
 /usr/bin/echo -e "***\n*** Files for which to drop disk copy: $FILES_COUNT \n***"
 
-for FILE_PATH in `cat $TEST_FILE_LIST`; do 
+for FILE_PATH in `cat $TEST_FILE_LIST`; do
   for DISK_FSID in `eos file info "${FILE_PATH}" -m | sed s/\ /'\n'/g | grep fsid | sed s/fsid=// | grep -v ${TAPE_FS_ID}`; do
-     #echo "deleting disk replica with fsid ${DISK_FSID} for ${FILE_PATH}" 
+     #echo "deleting disk replica with fsid ${DISK_FSID} for ${FILE_PATH}"
     if ! eos -r 0 0 file drop "${FILE_PATH}" ${DISK_FSID} >/dev/null; then
-      echo "failed to delete disk replica with fsid ${DISK_FSID} for ${FILE_PATH}" 
+      echo "failed to delete disk replica with fsid ${DISK_FSID} for ${FILE_PATH}"
     fi
   done
 done
@@ -62,6 +77,6 @@ done
 
 # Cleanup
 /usr/bin/date "+%Y-%m-%d %H:%M:%S"
-# /usr/bin/rm -f $TEST_FILE_NAME $TEST_FILE_LIST 
+# /usr/bin/rm -f $TEST_FILE_NAME $TEST_FILE_LIST
 
 exit 0

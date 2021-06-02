@@ -1,18 +1,17 @@
-// The CERN Tape Archive (CTA) project
-// Copyright (C) 2015  CERN
+// @project        The CERN Tape Archive (CTA)
+// @copyright      Copyright(C) 2015-2021 CERN
+// @license        This program is free software: you can redistribute it and/or modify
+//                 it under the terms of the GNU General Public License as published by
+//                 the Free Software Foundation, either version 3 of the License, or
+//                 (at your option) any later version.
 //
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
+//                 This program is distributed in the hope that it will be useful,
+//                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+//                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//                 GNU General Public License for more details.
 //
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//                 You should have received a copy of the GNU General Public License
+//                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 syntax = "proto2";
 package cta.objectstore.serializers;
 
@@ -42,7 +41,7 @@ enum ObjectType {
 // to a dead agent to the right queue or container.
 // - The type allows automatic management of the content without knowing its
 // payload.
-// - The version allows multi schema to be used at the object level (smooth schema 
+// - The version allows multi schema to be used at the object level (smooth schema
 // evolution, on an object by object basis).
 // - The owner is the authoritative source of ownership for the object.
 // It allows arbitration of the actual owner in case the object is pointed
@@ -212,7 +211,7 @@ message ArchiveFile {
 // ------------- Drives handling  ----------------------------------------------
 
 message DiskSpaceReservation {
-  // Each drive keeps tabs of its intended 
+  // Each drive keeps tabs of its intended
   required string disk_system_name = 5100;
   required uint64 reserved_bytes = 5110;
 }
@@ -305,7 +304,7 @@ message MountPolicy {
 
 // ------------- Archive Jobs --------------------------------------------------
 
-// The status of the individual archive jobs. The jobs are materialised 
+// The status of the individual archive jobs. The jobs are materialised
 // by table entries in the ArchiveRequest.
 // This life cycle represented by the following enum
 
@@ -347,7 +346,7 @@ message ArchiveRequestRepackInfo {
   required string repack_request_address = 4450;
   required string file_buffer_url = 4453;
   required uint64 fseq = 4455;
-  repeated JobDestinationVid jobs_destination = 4456; 
+  repeated JobDestinationVid jobs_destination = 4456;
 }
 
 message ArchiveRequest {
@@ -376,10 +375,10 @@ message ArchiveRequest {
 
 // ------------- Retrieve Jobs -------------------------------------------------
 
-// The status of the individual retrieve jobs. The jobs are materialised 
+// The status of the individual retrieve jobs. The jobs are materialised
 // by table entries in the RetrieveRequest.
 // This life cycle represented by the following enum
-// There is no complete state as the completion of one jobs implies the 
+// There is no complete state as the completion of one jobs implies the
 // completion of the whole requests, and leads to the immediate deletion
 // of the request.
 

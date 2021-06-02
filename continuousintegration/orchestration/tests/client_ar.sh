@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# @project        The CERN Tape Archive (CTA)
+# @copyright      Copyright(C) 2021 CERN
+# @license        This program is free software: you can redistribute it and/or modify
+#                 it under the terms of the GNU General Public License as published by
+#                 the Free Software Foundation, either version 3 of the License, or
+#                 (at your option) any later version.
+#
+#                 This program is distributed in the hope that it will be useful,
+#                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+#                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#                 GNU General Public License for more details.
+#
+#                 You should have received a copy of the GNU General Public License
+#                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 EOSINSTANCE=ctaeos
 EOS_BASEDIR=/eos/ctaeos/cta
 TEST_FILE_NAME_BASE=test
@@ -431,7 +446,7 @@ while [[ $SECONDS_PASSED < WAIT_FOR_DRIVES_DOWN_TIMEOUT ]]; do
   echo -n "."
   SECONDS_PASSED=$SECONDS_PASSED+1
   if [[ $SECONDS_PASSED -gt $WAIT_FOR_DRIVES_DOWN_TIMEOUT ]]; then
-    die "ERROR: Timeout reach for trying to put all drives down" 
+    die "ERROR: Timeout reach for trying to put all drives down"
   fi
 done
 
@@ -489,7 +504,7 @@ WAIT_FOR_RETRIEVE_QUEUES_CLEAR_TIMEOUT=$((60))
 REMAINING_REQUESTS=`admin_cta --json sq | jq -r 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add'`
 echo "${REMAINING_REQUESTS} requests remaining."
 # Prevent the result from being empty
-if [ -z "$REMAINING_REQUESTS" ]; then REMAINING_REQUESTS='0'; fi 
+if [ -z "$REMAINING_REQUESTS" ]; then REMAINING_REQUESTS='0'; fi
 while [[ ${REMAINING_REQUESTS} > 0 ]]; do
   echo "$(date +%s): Waiting for retrieve queues to be cleared: Seconds passed = ${SECONDS_PASSED}"
   sleep 1
@@ -527,7 +542,7 @@ fi
 DELETED=0
 if [[ $REMOVE == 1 ]]; then
   echo "Waiting for files to be removed from EOS and tapes"
-  # . /root/client_helper.sh 
+  # . /root/client_helper.sh
   admin_kdestroy &>/dev/null
   admin_kinit &>/dev/null
   if $(admin_cta admin ls &>/dev/null); then

@@ -1,7 +1,6 @@
-/*!
+/*
  * @project        The CERN Tape Archive (CTA)
- * @brief          CTA Frontend Tape Namespace query class
- * @copyright      Copyright 2020 CERN
+ * @copyright      Copyright(C) 2021 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
  *                 the Free Software Foundation, either version 3 of the License, or

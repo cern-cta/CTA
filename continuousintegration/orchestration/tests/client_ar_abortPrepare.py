@@ -1,5 +1,20 @@
 #!/usr/bin/python3.6
 
+# @project        The CERN Tape Archive (CTA)
+# @copyright      Copyright(C) 2021 CERN
+# @license        This program is free software: you can redistribute it and/or modify
+#                 it under the terms of the GNU General Public License as published by
+#                 the Free Software Foundation, either version 3 of the License, or
+#                 (at your option) any later version.
+#
+#                 This program is distributed in the hope that it will be useful,
+#                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+#                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#                 GNU General Public License for more details.
+#
+#                 You should have received a copy of the GNU General Public License
+#                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import argparse
 import subprocess
 import os
@@ -34,7 +49,7 @@ env['KRB5CCNAME'] = '/tmp/' + options.eos_poweruser + '/krb5cc_0'
 env['XrdSecPROTOCOL'] = 'krb5'
 try:
   xattrRes = subprocess.run(
-      ['xrdfs', options.eos_instance, 'query', 'opaquefile', 
+      ['xrdfs', options.eos_instance, 'query', 'opaquefile',
           filepath+'?mgm.pcmd=xattr&mgm.subcmd=get&mgm.xattrname=sys.retrieve.req_id'],
       env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   xattrRes.check_returncode()
@@ -45,7 +60,7 @@ except subprocess.CalledProcessError as cpe:
   print(cpe.stdout)
   errFile = open(xattrgeterrorfilepath, 'w')
   errFile.write(str(xattrRes.stderr))
-  errFile.close() 
+  errFile.close()
 except Exception as e:
   print('ERROR with xrdfs query for file ' + options.file + ': got exception of type: ' +
       str(type(e)) + '['.join(arg + ', ' for arg in e.args) +'] full logs in ' +  xattrgeterrorfilepath)
@@ -82,7 +97,7 @@ except subprocess.CalledProcessError as cpe:
   print(cpe.stdout.decode('utf8'))
   errFile = open(aborterrorfilepath, 'w')
   errFile.write(str(abortRes.stderr))
-  errFile.close() 
+  errFile.close()
 except Exception as e:
   print('ERROR with xrdfs prepare -a for file ' + options.file + ': got exception of type: ' +
         str(type(e)) + '['.join(arg + ', ' for arg in e.args) +'] full logs in '+ aborterrorfilepath)
@@ -90,8 +105,3 @@ except Exception as e:
   errFile = open(aborterrorfilepath, 'w')
   errFile.write(str(e))
   errFile.close()
-
-
-  
-  
-  

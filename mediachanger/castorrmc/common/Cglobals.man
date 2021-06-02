@@ -1,6 +1,17 @@
+.\" @project        The CERN Tape Archive (CTA)
+.\" @copyright      Copyright(C) 2001-2021 CERN
+.\" @license        This program is free software: you can redistribute it and/or modify
+.\"                 it under the terms of the GNU General Public License as published by
+.\"                 the Free Software Foundation, either version 3 of the License, or
+.\"                 (at your option) any later version.
 .\"
-.\" $Id: Cglobals.man,v 1.6 2001/10/26 11:56:31 jdurand Exp $
+.\"                 This program is distributed in the hope that it will be useful,
+.\"                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"                 GNU General Public License for more details.
 .\"
+.\"                 You should have received a copy of the GNU General Public License
+.\"                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .TH CGLOBALS "3castor" "$Date: 2001/10/26 11:56:31 $" "CASTOR" "Common Library Functions"
 .SH NAME
 \fBCglobals\fP \- \fBC\fPASTOR thread-specific \fBglobal\fP variable\fBs\fP interface
@@ -65,31 +76,31 @@ The following description of \fBCglobals_init\fP function is explaining internal
 .RS
 a
 .I getspec
-function address that, given a static 
+function address that, given a static
 .I key
 adress, returns the adress of a Thread-Specific memory into
 .I addr
 content. This uses an internal structure inside \fBCthread\fP, allocated on the heap, that is associated bijectively to
 .I key
-address. \fBCthread\fP always explicitely allocates such internal structure to any 
+address. \fBCthread\fP always explicitely allocates such internal structure to any
 .I key
 address if it is unknown at the moment of the call to
 .I getspec.
 .br
-In such a case it will return a NULL value into 
+In such a case it will return a NULL value into
 .I addr
-, and it will be the responsability of \fBCglobals\fP to allocate memory on the heap and to say to \fBCthread\fP that this newly allocated memory is the one to associate with 
+, and it will be the responsability of \fBCglobals\fP to allocate memory on the heap and to say to \fBCthread\fP that this newly allocated memory is the one to associate with
 .I key
-address, using 
+address, using
 .I setspec.
 .br
 If the internal structure in \fBCthread\fP associated bijectively to
 .I key
-yet exists, 
+yet exists,
 .I getspec
 only returns what it knows about the thread-specific memory associated with it, which is a \fBvoid *\fP member inside the same internal structure mentionned above.
 .P
-a 
+a
 .I setspec
 function address that, given the
 .I key
@@ -109,17 +120,17 @@ function address that returns an unique integer identifier associated with any t
 .P
 \fBCglobals_get\fP returns in
 .I addr
-content the address of a thread-specific memory, e.g. thread-safe, that is bijectively associated with the address of a *static*, e.g. constant, address 
+content the address of a thread-specific memory, e.g. thread-safe, that is bijectively associated with the address of a *static*, e.g. constant, address
 .I key
 , that is automatically created and filled with zeros if necessary, up to
 .I size
 bytes.
 .br
-If the 
+If the
 .I addr
-content, at return of \fBCglobals_get\fP, is not NULL, you can safely fill this memory with any value, provided you does not exceed the 
+content, at return of \fBCglobals_get\fP, is not NULL, you can safely fill this memory with any value, provided you does not exceed the
 .I size
-bytes length speficied in your previous call to \fBCglobals_get\fP. Because of applications that are \fBnot\fP multi-threaded, the initial value of 
+bytes length speficied in your previous call to \fBCglobals_get\fP. Because of applications that are \fBnot\fP multi-threaded, the initial value of
 .I key
 has then an importance, that's why it is necessary to always declare it with an initial value of -1.
 .P
@@ -130,11 +141,11 @@ key
 .I key.
 This allows to distinguish when Cglobals_get() initialize the memory with zeros (return code 1) and not (return code 0).
 .P
-\fBCglobals_getTid\fP uses the third function address, 
+\fBCglobals_getTid\fP uses the third function address,
 .I getTid
 , given as an argument to \fBCglobals_init\fP, and will return in
 .I Tid
-content the value returned by 
+content the value returned by
 .I getTid.
 .P
 \fBC__serrno\fP, \fBC__rfio_errno\fP, \fBC__Copterr\fP, \fBC__Coptind\fP, \fBC__Coptopt\fP, \fBC__Coptreset\fP, \fBC__Coptarg\fP and \fBC__h_errno\fP are all the internal functions that return the address of the thread-specific memory hosting the value of the 'global' variables serrno, rfio_errno, Copterr, Coptind, Coptopt, Coptreset, Coptarg and h_errno, respectively.
@@ -285,7 +296,7 @@ void *doit(arg)
 }
 
 
-  
+
 .ft
 .LP
 .SH SEE ALSO
@@ -293,4 +304,3 @@ void *doit(arg)
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
-

@@ -1,16 +1,19 @@
 /*
- * $Id: marshall.h,v 1.15 2005/02/22 13:28:13 jdurand Exp $
+ * @project        The CERN Tape Archive (CTA)
+ * @copyright      Copyright(C) 1990-2021 CERN
+ * @license        This program is free software: you can redistribute it and/or modify
+ *                 it under the terms of the GNU General Public License as published by
+ *                 the Free Software Foundation, either version 3 of the License, or
+ *                 (at your option) any later version.
+ *
+ *                 This program is distributed in the hope that it will be useful,
+ *                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *                 GNU General Public License for more details.
+ *
+ *                 You should have received a copy of the GNU General Public License
+ *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-/*
- */
-
-/*
- * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
- * All rights reserved
- */
-
-/*  marshall.h   -   marshalling/unmarshalling definitions */
 
 #pragma once
 
@@ -24,7 +27,7 @@
 #define SHORTADDR		WORDADDR
 
 #define marshall_WORD		marshall_SHORT
-#define unmarshall_WORD		unmarshall_SHORT		
+#define unmarshall_WORD		unmarshall_SHORT
 
 #define INC_PTR(ptr,n)		(ptr) = (char*)(ptr) + (n)
 #define DIFF_PTR(ptr,base)      (char*)(ptr) - (char*)(base)
@@ -77,13 +80,13 @@ typedef  char*          bitvct; /* bit vector type definition           */
 #define marshall_BYTE(ptr,n)	{ BYTE n_ = n; \
 				  (void) memcpy((ptr),BYTEADDR(n_),BYTESIZE); \
 				  INC_PTR(ptr,BYTESIZE); \
-				} 
+				}
 
 #define unmarshall_BYTE(ptr,n)  { BYTE n_ = 0; \
 				  (void) memcpy(BYTEADDR(n_),(ptr),BYTESIZE); \
 				  n = n_; \
 				  INC_PTR(ptr,BYTESIZE); \
-				} 
+				}
 
 /*
  *    S H O R T
@@ -93,7 +96,7 @@ typedef  char*          bitvct; /* bit vector type definition           */
 				  (void) memcpy((ptr),SHORTADDR(n_),SHORTSIZE); \
 				  INC_PTR(ptr,SHORTSIZE); \
 				}
-                                                                 
+
 #define unmarshall_SHORT(ptr,n)	{ SHORT n_ = 0;  \
 				  (void) memcpy(SHORTADDR(n_),(ptr),SHORTSIZE); \
                                   n = ntohs((unsigned short)(n_)); \
@@ -110,7 +113,7 @@ typedef  char*          bitvct; /* bit vector type definition           */
 				  (void) memcpy((ptr),LONGADDR(n_),LONGSIZE); \
 				  INC_PTR(ptr,LONGSIZE); \
 				}
-                                                                 
+
 #define unmarshall_LONG(ptr,n)	{ LONG n_ = 0;  \
 				  (void) memcpy(LONGADDR(n_),(ptr),LONGSIZE); \
                                   n = ntohl((unsigned long)(n_)); \
@@ -194,4 +197,3 @@ EXTERN_C int _unmarshall_STRINGN (char **, char*, int);
 					   unmarshall_HYPER(ptr,_unmarshall_time_dummy); \
 					   n = (time_t) _unmarshall_time_dummy; \
 					}
-

@@ -1,6 +1,18 @@
 /*
- * Copyright (C) 2001 by CERN/IT/PDP/DM
- * All rights reserved
+ * @project        The CERN Tape Archive (CTA)
+ * @copyright      Copyright(C) 2001-2021 CERN
+ * @license        This program is free software: you can redistribute it and/or modify
+ *                 it under the terms of the GNU General Public License as published by
+ *                 the Free Software Foundation, either version 3 of the License, or
+ *                 (at your option) any later version.
+ *
+ *                 This program is distributed in the hope that it will be useful,
+ *                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *                 GNU General Public License for more details.
+ *
+ *                 You should have received a copy of the GNU General Public License
+ *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -33,7 +45,7 @@ int rmc_logit(const char *const func, const char *const msg, ...)
 	vsprintf (prtbuf+strlen(prtbuf), msg, args);
 	va_end (args);
 	fd_log = open("/var/log/cta/cta-rmcd.log", O_WRONLY | O_CREAT | O_APPEND, 0664);
-        if (fd_log < 0) return -1;        
+        if (fd_log < 0) return -1;
 	write (fd_log, prtbuf, strlen(prtbuf));
 	close (fd_log);
 	errno = save_errno;

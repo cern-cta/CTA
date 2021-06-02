@@ -1,14 +1,18 @@
 /*
- * $Id: scsictl.h,v 1.2 1999/12/09 13:46:22 jdurand Exp $
- */
-
-/*
- * Copyright (C) 1995-1996 by CERN/CN/SW/SC
- * All rights reserved
- */
-
-/*
- * @(#)scsictl.h	1.1 12/10/96 CERN CN-SW/SC   Fabien Collin
+ * @project        The CERN Tape Archive (CTA)
+ * @copyright      Copyright(C) 1995-2021 CERN
+ * @license        This program is free software: you can redistribute it and/or modify
+ *                 it under the terms of the GNU General Public License as published by
+ *                 the Free Software Foundation, either version 3 of the License, or
+ *                 (at your option) any later version.
+ *
+ *                 This program is distributed in the hope that it will be useful,
+ *                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *                 GNU General Public License for more details.
+ *
+ *                 You should have received a copy of the GNU General Public License
+ *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #pragma once
@@ -20,7 +24,7 @@
 #define SCSI_OUT           2
 #define SCSI_IN_OUT        4
 #define SCSI_NONE          8
-#define SCSI_SEL_WITH_ATN 16 
+#define SCSI_SEL_WITH_ATN 16
 #define SCSI_SYNC         32
 #define SCSI_WIDE         64
 
@@ -74,4 +78,3 @@
 #define SCSI_PERIPH_ASC2             11
 #define SCSI_PERIPH_RAID             12
 #define SCSI_PERIPH_UNKNOWN          31
-

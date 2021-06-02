@@ -1,6 +1,18 @@
 /*
- * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
- * All rights reserved
+ * @project        The CERN Tape Archive (CTA)
+ * @copyright      Copyright(C) 1990-2021 CERN
+ * @license        This program is free software: you can redistribute it and/or modify
+ *                 it under the terms of the GNU General Public License as published by
+ *                 the Free Software Foundation, either version 3 of the License, or
+ *                 (at your option) any later version.
+ *
+ *                 This program is distributed in the hope that it will be useful,
+ *                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *                 GNU General Public License for more details.
+ *
+ *                 You should have received a copy of the GNU General Public License
+ *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdlib.h>
@@ -46,7 +58,7 @@ int netconnect_timeout(int fd,
 		rc = ioctl(fd,FIONBIO,&nonblocking);
 		if ( rc == -1 ) {
 			serrno = 0;
-		} 
+		}
 	} else {
 		nonblocking = 0;
 	}
@@ -316,11 +328,11 @@ int _net_isclosed(int fd)
 {
 	struct pollfd pollit;
 	char buf[1];
-	
+
 	pollit.fd = fd;
 	pollit.events = POLLIN;
 	pollit.revents = 0;
-	
+
 	/* Will return > 0 if the descriptor is closed */
 	if (poll(&pollit, 1, 0) > 0) {
 		if (recv(fd, buf, sizeof(buf), MSG_PEEK | MSG_DONTWAIT) == 0) {
@@ -335,7 +347,7 @@ int _net_writable(int fd,
                   int timeout)
 {
 	struct pollfd pollit;
-	
+
 	pollit.fd = fd;
 	pollit.events = POLLOUT;
 	pollit.revents = 0;
@@ -348,7 +360,7 @@ int _net_readable(int fd,
                   int timeout)
 {
 	struct pollfd pollit;
-	
+
 	pollit.fd = fd;
 	pollit.events = POLLIN;
 	pollit.revents = 0;
@@ -392,8 +404,8 @@ int _net_connectable(int fd,
 	 * are reported through socket layer errors since the connect is
 	 * non-blocking. In this case, select() has returned a positive
 	 * value indicating that a socket was ready for writing. Note that
-	 * most systems seem to require that one always checks the socket 
-	 * error for the connect() completion. Some systems (Windows) sets 
+	 * most systems seem to require that one always checks the socket
+	 * error for the connect() completion. Some systems (Windows) sets
 	 * the exception set to indicate that there was an error.
 	 */
 	errval_len = (socklen_t) sizeof(errval);

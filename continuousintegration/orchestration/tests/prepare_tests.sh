@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# @project        The CERN Tape Archive (CTA)
+# @copyright      Copyright(C) 2021 CERN
+# @license        This program is free software: you can redistribute it and/or modify
+#                 it under the terms of the GNU General Public License as published by
+#                 the Free Software Foundation, either version 3 of the License, or
+#                 (at your option) any later version.
+#
+#                 This program is distributed in the hope that it will be useful,
+#                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+#                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#                 GNU General Public License for more details.
+#
+#                 You should have received a copy of the GNU General Public License
+#                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 usage() { cat <<EOF 1>&2
 Usage: $0 -n <namespace>
 EOF
@@ -89,7 +104,7 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
 
   kubectl --namespace ${NAMESPACE}  exec ctacli -- cta-admin --json tapepool ls  |              \
     jq -r '.[] | .name' |                                                                       \
-    xargs -I{} kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tapepool rm -n {} 
+    xargs -I{} kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tapepool rm -n {}
 
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json storageclass ls  |           \
     jq -r '.[] | " -n  " + .name'  |                                    \
@@ -110,7 +125,7 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
     --vo vo                                                                          \
     --readmaxdrives 1                                                                \
     --writemaxdrives 1                                                               \
-    --comment "vo"                                                                   
+    --comment "vo"
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tapepool add       \
     --name ctasystest                                                 \
     --vo vo                                                           \
@@ -208,7 +223,7 @@ echo "Labeling tapes:"
     echo "  cta-tape-label --vid ${VID}"
     # for debug use
       # kubectl --namespace ${NAMESPACE} exec tpsrv01 -c taped  -- cta-tape-label --vid ${VID} --debug
-    kubectl --namespace ${NAMESPACE} exec tpsrv01 -c taped  -- cta-tape-label --vid ${VID} 
+    kubectl --namespace ${NAMESPACE} exec tpsrv01 -c taped  -- cta-tape-label --vid ${VID}
     if [ $? -ne 0 ]; then
       echo "ERROR: failed to label the tape ${VID}"
       exit 1

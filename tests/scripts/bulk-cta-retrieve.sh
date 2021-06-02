@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# @project        The CERN Tape Archive (CTA)
+# @copyright      Copyright(C) 2021 CERN
+# @license        This program is free software: you can redistribute it and/or modify
+#                 it under the terms of the GNU General Public License as published by
+#                 the Free Software Foundation, either version 3 of the License, or
+#                 (at your option) any later version.
+#
+#                 This program is distributed in the hope that it will be useful,
+#                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+#                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#                 GNU General Public License for more details.
+#
+#                 You should have received a copy of the GNU General Public License
+#                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 # this script retrieves all files from a given EOS directory that are d0::t1
 
 
@@ -56,7 +71,7 @@ FILES_COUNT=`cat $TEST_FILE_LIST | wc -l`
 /usr/bin/echo -e "***\n*** Retrieving tape replicas for $FILES_COUNT files in the $EOS_DIR directory from $TEST_FILE_LIST file list onto EOS disk ...\n***"
 echo "0 u:cta g:cta n:cta-taped N:6425591835858577167 c:1496074683 e:0 f:0 k:b7825f9dd4d72952e429e342dd687aa8735411c29587ddd052613e33c0792e0b" > $EOS_KEYTAB
 chmod 400 $EOS_KEYTAB
-/usr/bin/xargs -a $TEST_FILE_LIST -I {} echo "{}?eos.ruid=$USER_ID&eos.rgid=$GROUP_ID" | XrdSecPROTOCOL=sss XrdSecSSSKT=$EOS_KEYTAB /usr/bin/xargs -n 5 -P50 /usr/bin/xrdfs eosctatape prepare -s 
+/usr/bin/xargs -a $TEST_FILE_LIST -I {} echo "{}?eos.ruid=$USER_ID&eos.rgid=$GROUP_ID" | XrdSecPROTOCOL=sss XrdSecSSSKT=$EOS_KEYTAB /usr/bin/xargs -n 5 -P50 /usr/bin/xrdfs eosctatape prepare -s
 
 
 # Wait $TIMEOUT for files until they are recalled

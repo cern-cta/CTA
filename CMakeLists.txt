@@ -1,18 +1,17 @@
-# The CERN Tape Archive (CTA) project
-# Copyright (C) 2015  CERN
+# @project        The CERN Tape Archive (CTA)
+# @copyright      Copyright(C) 2015-2021 CERN
+# @license        This program is free software: you can redistribute it and/or modify
+#                 it under the terms of the GNU General Public License as published by
+#                 the Free Software Foundation, either version 3 of the License, or
+#                 (at your option) any later version.
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+#                 This program is distributed in the hope that it will be useful,
+#                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+#                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#                 GNU General Public License for more details.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#                 You should have received a copy of the GNU General Public License
+#                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 cmake_minimum_required (VERSION 2.6)
 
 project(cta)
@@ -74,7 +73,7 @@ include(cmake/CTAVersions.cmake)
 
 IF(DEFINED PackageOnly)
   message (STATUS "Running CMake in package-only mode")
-   set(COMPILE_PACKAGING "1") 
+   set(COMPILE_PACKAGING "1")
 ELSE(DEFINED PackageOnly)
   message (STATUS "Running in full configuration mode.")
   message (STATUS "Override with -DPackageOnly:Bool=true")
@@ -94,7 +93,7 @@ ELSE(DEFINED PackageOnly)
   ELSE()
     # log choosen default (RelWithDebInfo) and set it
     message(STATUS "Setting build type to 'RelWithDebInfo' as none was specified.")
-    message (STATUS "Override with -DCMAKE_BUILD_TYPE:STRING=Debug")  
+    message (STATUS "Override with -DCMAKE_BUILD_TYPE:STRING=Debug")
     set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose the type of build." FORCE)
     # Set the possible values of build type for cmake-gui
     # this command is not yet available in SLC6's cmake 2.6
@@ -149,7 +148,7 @@ ELSE(DEFINED PackageOnly)
   add_subdirectory(rdbms)
   add_subdirectory(scheduler)
   add_subdirectory(tapeserver)
-  
+
   add_subdirectory(statistics)
 
   add_subdirectory(continuousintegration/orchestration/tests)
@@ -205,7 +204,7 @@ add_custom_target(fullunittests
   COMMAND tests/cta-unitTests-multiProcess
   COMMAND ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} --child-silent-after-fork=yes tests/cta-unitTests-multiProcess
   COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unitTests-multiProcess
-  
+
   DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/valgrind.suppr tests/helgrind.suppr
   COMMENT "Running unit tests with memory leak and race conditions detection" VERBATIM)
 
@@ -223,7 +222,7 @@ add_custom_target(helgrind
   COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unitTests
   COMMAND echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unitTests-multiProcess
   COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unitTests-multiProcess
-  
+
   DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/helgrind.suppr
   COMMENT "Running unit tests with race conditions detection" VERBATIM)
 
@@ -239,39 +238,39 @@ add_custom_target(helgrindBase
   COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=-OStoreDBPlusMockSchedulerTestVFS*:OStoreTestVFS*:OStoreDBPlusMockSchedulerTestVFS*:InMemory*
   COMMAND echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests-multiProcess
   COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests-multiProcess
-  
+
   DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/helgrind.suppr
   COMMENT "Running unit tests with race conditions detection (except slow sections)" VERBATIM)
 
 add_custom_target(helgrindScheduler
   echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=OStoreDBPlusMockSchedulerTestVFS/Scheduler*
   COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=OStoreDBPlusMockSchedulerTestVFS/Scheduler*
-  
+
   DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/helgrind.suppr
   COMMENT "Running unit tests with race conditions detection (Mock scheduler section)" VERBATIM)
 
 add_custom_target(helgrindOStoreDB
   echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=OStoreTestVFS*
   COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=OStoreTestVFS*
-  
+
   DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/helgrind.suppr
   COMMENT "Running unit tests with race conditions detection (Object store DB section)" VERBATIM)
 
 add_custom_target(helgrindDataTransfer
   echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=OStoreDBPlusMockSchedulerTestVFS/DataTransferSessionTest*
   COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=OStoreDBPlusMockSchedulerTestVFS/DataTransferSessionTest*
-  
+
   DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/helgrind.suppr
   COMMENT "Running unit tests with race conditions detection (Data transfer section)" VERBATIM)
 
 add_custom_target(helgrindInMemoryCatalogue
   echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=InMemory/*
   COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=InMemory/*
-  
+
   DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/helgrind.suppr
   COMMENT "Running unit tests with race conditions detection (In memory catalogue section)" VERBATIM)
 
 add_custom_target(parallelHelgrind
   echo
-  
+
   DEPENDS helgrindBase helgrindMockSechduler helgrindOStoreDB helgrindDataTransfer helgrindInMemoryCatalogue)

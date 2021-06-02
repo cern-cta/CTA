@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# @project        The CERN Tape Archive (CTA)
+# @copyright      Copyright(C) 2021 CERN
+# @license        This program is free software: you can redistribute it and/or modify
+#                 it under the terms of the GNU General Public License as published by
+#                 the Free Software Foundation, either version 3 of the License, or
+#                 (at your option) any later version.
+#
+#                 This program is distributed in the hope that it will be useful,
+#                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+#                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#                 GNU General Public License for more details.
+#
+#                 You should have received a copy of the GNU General Public License
+#                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 # makes sure that set -e from gitlab CI scripts is not enabled
 set +e
 # enable pipefail to get the return code of a failed command in pipeline and not the return code of the last command in pipeline:
@@ -121,7 +136,7 @@ if [ -z "${namespace}" ]; then
 fi
 
 if [ -z "${systemtest_script}" ]; then
-    echo "a systemtest script is mandatory" 1>&2 
+    echo "a systemtest script is mandatory" 1>&2
     usage
 fi
 
@@ -136,7 +151,7 @@ if [ $useoracle == 1 ] ; then
       die "Oracle database requested but not database configuration was found."
     else
       CREATE_OPTS="${CREATE_OPTS} -d ${database_configmap}"
-    fi    
+    fi
 fi
 
 if [ $useceph == 1 ] ; then
@@ -144,7 +159,7 @@ if [ $useceph == 1 ] ; then
     if [ "-${objectstore_configmap}-" == "--" ]; then
       die "Ceph objecstore requested but not objectstore configuration was found."
     else
-      CREATE_OPTS="${CREATE_OPTS} -o ${objectstore_configmap}"                                         
+      CREATE_OPTS="${CREATE_OPTS} -o ${objectstore_configmap}"
     fi
 fi
 

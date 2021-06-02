@@ -1,18 +1,17 @@
-# The CERN Tape Archive (CTA) project
-# Copyright (C) 2015  CERN
+# @project        The CERN Tape Archive (CTA)
+# @copyright      Copyright(C) 2015-2021 CERN
+# @license        This program is free software: you can redistribute it and/or modify
+#                 it under the terms of the GNU General Public License as published by
+#                 the Free Software Foundation, either version 3 of the License, or
+#                 (at your option) any later version.
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+#                 This program is distributed in the hope that it will be useful,
+#                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+#                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#                 GNU General Public License for more details.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#                 You should have received a copy of the GNU General Public License
+#                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 cmake_minimum_required (VERSION 2.6)
 
 find_package(Protobuf3 REQUIRED)
@@ -95,9 +94,9 @@ add_custom_command (OUTPUT sqlite_catalogue_schema.sql mysql_catalogue_schema.sq
     | sed 's/UINT64TYPE/INTEGER/g'
     | sed 's/CHECKSUM_BLOB_TYPE/BLOB\(200\)/g'
     | tee sqlite_catalogue_schema.sql ${catalogue_schema_directory}/sqlite_catalogue_schema.sql > /dev/null
-  COMMAND cat 
-    ${CMAKE_CURRENT_SOURCE_DIR}/mysql_catalogue_schema_header.sql 
-    ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql 
+  COMMAND cat
+    ${CMAKE_CURRENT_SOURCE_DIR}/mysql_catalogue_schema_header.sql
+    ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
     insert_cta_catalogue_version.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/mysql_catalogue_schema_trailer.sql
     | sed 's/UINT8TYPE/TINYINT UNSIGNED/g'
@@ -294,7 +293,7 @@ add_executable(cta-catalogue-admin-user-create
   CreateAdminUserCmdLineArgs.cpp
   CreateAdminUserCmdMain.cpp)
 
-target_link_libraries(cta-catalogue-admin-user-create ctacatalogue) 
+target_link_libraries(cta-catalogue-admin-user-create ctacatalogue)
 set_property(TARGET cta-catalogue-admin-user-create APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 set_property(TARGET cta-catalogue-admin-user-create APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 

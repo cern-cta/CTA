@@ -1,4 +1,19 @@
-#!/bin/bash 
+#!/bin/bash
+
+# @project        The CERN Tape Archive (CTA)
+# @copyright      Copyright(C) 2021 CERN
+# @license        This program is free software: you can redistribute it and/or modify
+#                 it under the terms of the GNU General Public License as published by
+#                 the Free Software Foundation, either version 3 of the License, or
+#                 (at your option) any later version.
+#
+#                 This program is distributed in the hope that it will be useful,
+#                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+#                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#                 GNU General Public License for more details.
+#
+#                 You should have received a copy of the GNU General Public License
+#                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 . /opt/run/bin/init_pod.sh
 
@@ -78,7 +93,7 @@ test -f /etc/config/eos/xrd.cf.mgm && cat /etc/config/eos/xrd.cf.mgm >> /etc/xrd
 # need a deterministic key for taped and it must be forwardable in case of kubernetes
 # see [here](http://xrootd.org/doc/dev47/sec_config.htm#_Toc489606587)
 # can only have one key????
-echo -n '0 u:daemon g:daemon n:ctaeos+ N:6361884315374059521 c:1481241620 e:0 f:0 k:1a08f769e9c8e0c4c5a7e673247c8561cd23a0e7d8eee75e4a543f2d2dd3fd22' > /etc/eos.keytab 
+echo -n '0 u:daemon g:daemon n:ctaeos+ N:6361884315374059521 c:1481241620 e:0 f:0 k:1a08f769e9c8e0c4c5a7e673247c8561cd23a0e7d8eee75e4a543f2d2dd3fd22' > /etc/eos.keytab
     chmod 400 /etc/eos.keytab
     chown daemon:daemon /etc/eos.keytab
   mkdir -p /run/lock/subsys
@@ -281,7 +296,7 @@ fi
   eos chmod 555 ${CTA_TEST_DIR}
   eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+dp,u:poweruser2:rwx+dp,z:'!'u,u:root:+u ${CTA_TEST_DIR}
   eos attr set sys.archive.storage_class=ctaStorageClass ${CTA_TEST_DIR}
-    
+
   # Link the attributes of CTA worklow directory to the test directory
   eos attr link ${CTA_WF_DIR} ${CTA_TEST_DIR}
 

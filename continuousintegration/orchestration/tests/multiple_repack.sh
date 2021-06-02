@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# @project        The CERN Tape Archive (CTA)
+# @copyright      Copyright(C) 2021 CERN
+# @license        This program is free software: you can redistribute it and/or modify
+#                 it under the terms of the GNU General Public License as published by
+#                 the Free Software Foundation, either version 3 of the License, or
+#                 (at your option) any later version.
+#
+#                 This program is distributed in the hope that it will be useful,
+#                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+#                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#                 GNU General Public License for more details.
+#
+#                 You should have received a copy of the GNU General Public License
+#                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 #default CI EOS instance
 EOSINSTANCE=ctaeos
 EOSBASEDIR=/eos/ctaeos/preprod
@@ -108,10 +123,10 @@ done
 nbDestinationTape=${#destinationTapes[@]}
 
 # Compute the number of files to copy and the size of each file
-fileSizeToCopy=`perl -e "use POSIX; print int( ceil((( (${SIZE_OF_TAPES} * 1000) - ((6 * 80) / 1000)) / ${NB_FILES_PER_TAPE})) )"` 
+fileSizeToCopy=`perl -e "use POSIX; print int( ceil((( (${SIZE_OF_TAPES} * 1000) - ((6 * 80) / 1000)) / ${NB_FILES_PER_TAPE})) )"`
 nbFilesToCopy=$(($NB_FILES_PER_TAPE * $nbTapesToRepack))
 
-echo 
+echo
 echo "file size to copy (in KB) =  $fileSizeToCopy"
 echo "Nb files to copy = $nbFilesToCopy"
 
@@ -168,7 +183,7 @@ echo "End of multiple_repack test"
 #else
 #  for vid in $successfulRepackTapes[@]
 #  do
-#    bash /root/repack_generate_report.sh -v $vid 
+#    bash /root/repack_generate_report.sh -v $vid
 #  done
 #  echo "End of multiple repack test"
 #  exit 0

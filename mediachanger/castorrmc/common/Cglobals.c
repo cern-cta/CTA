@@ -1,10 +1,18 @@
 /*
- * $Id: Cglobals.c,v 1.18 2007/12/06 14:24:46 sponcec3 Exp $
- */
-
-/*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
- * All rights reserved
+ * @project        The CERN Tape Archive (CTA)
+ * @copyright      Copyright(C) 1990-2021 CERN
+ * @license        This program is free software: you can redistribute it and/or modify
+ *                 it under the terms of the GNU General Public License as published by
+ *                 the Free Software Foundation, either version 3 of the License, or
+ *                 (at your option) any later version.
+ *
+ *                 This program is distributed in the hope that it will be useful,
+ *                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *                 GNU General Public License for more details.
+ *
+ *                 You should have received a copy of the GNU General Public License
+ *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
@@ -87,7 +95,7 @@ int *C__Coptreset (void);
 char **C__Coptarg (void);
 
 /*
- * Cglobals_init() - assing routines to provide thread local storage. 
+ * Cglobals_init() - assing routines to provide thread local storage.
  * Globals that existed prior to this call are all re-assigned as
  * thread-specific to calling thread (normally the main thread).
  */
@@ -133,8 +141,8 @@ void Cglobals_init(int (*getspec) (int *, void **),
 
         single_thread_globals = NULL;
     }
-    return;    
-}    
+    return;
+}
 
 /*
  * Cglobals_get() - simulate keyed accessed global storage in
@@ -219,15 +227,15 @@ int Cglobals_get(int *key,
  * environment Tid = -1 will always refer to main thread since
  * Cthread_self() returns an error for the main thread (the main
  * thread has *NOT* been created with a Cthread_create()).
- * 
- */ 
+ *
+ */
 void Cglobals_getTid(int *Tid)
 {
     if ( Tid == NULL ) return;
     if ( local_getTid == NULL ) *Tid = -1;
     else *Tid = local_getTid();
     return;
-} 
+}
 
 int *C__serrno() {
     int rc;

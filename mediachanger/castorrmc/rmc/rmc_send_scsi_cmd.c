@@ -1,6 +1,18 @@
 /*
- * Copyright (C) 1996-2000 by CERN/IT/PDP/DM
- * All rights reserved
+ * @project        The CERN Tape Archive (CTA)
+ * @copyright      Copyright(C) 1996-2021 CERN
+ * @license        This program is free software: you can redistribute it and/or modify
+ *                 it under the terms of the GNU General Public License as published by
+ *                 the Free Software Foundation, either version 3 of the License, or
+ *                 (at your option) any later version.
+ *
+ *                 This program is distributed in the hope that it will be useful,
+ *                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *                 GNU General Public License for more details.
+ *
+ *                 You should have received a copy of the GNU General Public License
+ *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /*	rmc_send_scsi_cmd - Send a SCSI command to a device */
@@ -55,15 +67,15 @@ static const char *sk_msg[] = {
 };
 
 static void find_sgpath(char *const sgpath, const int maj, const int min) {
-        
+
         /*
           Find the sg device for a pair of major and minor device IDs
           of a tape device. The match is done by
-          
+
           . identifying the tape's st device node
           . getting the device's unique ID from sysfs
           . searching the sg device with the same ID (in sysfs)
-          
+
           If no match is found, the returned sg path will be an empty
           string.
         */
@@ -75,7 +87,7 @@ static void find_sgpath(char *const sgpath, const int maj, const int min) {
         char tlink[256];
         char glink[256];
 
-        int match = 0;        
+        int match = 0;
         DIR *dir_tape, *dir_gen;
         struct dirent *dirent;
         char st_dev[64];
@@ -85,13 +97,13 @@ static void find_sgpath(char *const sgpath, const int maj, const int min) {
         sgpath[0] = '\0';
 
         /* find the st sysfs entry */
-        if (!(dir_tape = opendir(systape))) return;  
+        if (!(dir_tape = opendir(systape))) return;
         while ((dirent = readdir(dir_tape))) {
-                
+
                 if (0 == strcmp(".", dirent->d_name)) continue;
                 if (0 == strcmp("..", dirent->d_name)) continue;
 
-                sprintf(st_dev, "/dev/%s", dirent->d_name);                
+                sprintf(st_dev, "/dev/%s", dirent->d_name);
                 stat(st_dev, &sbuf);
                 if (maj == (int)major(sbuf.st_rdev) && min == (int)minor(sbuf.st_rdev)) {
                         sprintf(syspath, "%s/%s/device", systape, dirent->d_name);
@@ -109,15 +121,15 @@ static void find_sgpath(char *const sgpath, const int maj, const int min) {
         /* find the corresponding sg sysfs entry */
         if (!(dir_gen = opendir(sysgen))) return;
         while ((dirent = readdir(dir_gen))) {
-                
+
                 if (0 == strcmp(".", dirent->d_name)) continue;
                 if (0 == strcmp("..", dirent->d_name)) continue;
 
                 sprintf(syspath, "%s/%s/device", sysgen, dirent->d_name);
-                
+
                 memset(glink, 0, 256);
                 readlink(syspath, glink, 256);
-                
+
                 if (0 == strcmp(glink, tlink)) {
                         sprintf(sgpath, "/dev/%s", dirent->d_name);
                         goto out;
@@ -220,7 +232,7 @@ int rmc_send_scsi_cmd (
 		if (major(sbuf.st_rdev) == major(sbufa.st_rdev)) {
 			strcpy (sgpath, path);
 		} else {
-                        find_sgpath(sgpath, major(sbuf.st_rdev), minor(sbuf.st_rdev));  
+                        find_sgpath(sgpath, major(sbuf.st_rdev), minor(sbuf.st_rdev));
 		}
 
 		if ((fd = open (sgpath, O_RDWR)) < 0) {

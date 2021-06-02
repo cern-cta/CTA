@@ -1,8 +1,6 @@
-/*!
+/*
  * @project        The CERN Tape Archive (CTA)
- * @brief          Definitions for parsing the options of the CTA Admin command-line tool
- * @description    CTA Admin command using Google Protocol Buffers and XRootD SSI transport
- * @copyright      Copyright 2020 CERN
+ * @copyright      Copyright(C) 2021 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
  *                 the Free Software Foundation, either version 3 of the License, or

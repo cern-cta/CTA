@@ -1,13 +1,18 @@
 /*
- * $Id: osdep.h,v 1.22 2009/05/13 10:06:27 sponcec3 Exp $
- */
-
-/*
- * Copyright (C) 1990-2002 by CERN/IT/PDP/IP
- * All rights reserved
- */
-
-/*
+ * @project        The CERN Tape Archive (CTA)
+ * @copyright      Copyright(C) 1990-2021 CERN
+ * @license        This program is free software: you can redistribute it and/or modify
+ *                 it under the terms of the GNU General Public License as published by
+ *                 the Free Software Foundation, either version 3 of the License, or
+ *                 (at your option) any later version.
+ *
+ *                 This program is distributed in the hope that it will be useful,
+ *                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *                 GNU General Public License for more details.
+ *
+ *                 You should have received a copy of the GNU General Public License
+ *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /* osdep.h      Operating system dependencies                           */
@@ -63,7 +68,7 @@ typedef U_HYPER TIME_T;
 
 #define NETERROR  perror
 #define OSERROR   perror
- 
+
 /* Macros for externalization (UNIX) (J.-D.Durand) */
 #ifdef EXTERN_C
 #undef EXTERN_C
@@ -77,4 +82,3 @@ typedef U_HYPER TIME_T;
 #if defined(__APPLE__)
 #define off64_t off_t
 #endif
-

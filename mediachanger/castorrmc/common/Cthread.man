@@ -1,5 +1,17 @@
-.\"   $Id: Cthread.man,v 1.13 2007/09/10 10:42:34 obarring Exp $
+.\" @project        The CERN Tape Archive (CTA)
+.\" @copyright      Copyright(C) 2007-2021 CERN
+.\" @license        This program is free software: you can redistribute it and/or modify
+.\"                 it under the terms of the GNU General Public License as published by
+.\"                 the Free Software Foundation, either version 3 of the License, or
+.\"                 (at your option) any later version.
 .\"
+.\"                 This program is distributed in the hope that it will be useful,
+.\"                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"                 GNU General Public License for more details.
+.\"
+.\"                 You should have received a copy of the GNU General Public License
+.\"                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 .TH CTHREAD "3castor" "$Date: 2007/09/10 10:42:34 $" "CASTOR" "Common Library Functions"
 .SH NAME
 \fBCthread\fP \- \fBCASTOR\fP \fBThread\fP inferface
@@ -111,7 +123,7 @@ address. The second parameter is the eventual
 .I "timeout"
 in seconds. If this parameter is < 0, the calling thread is suspended until it is granted access to
 .I "addr"
-, if it is zero, the calling thread will try to gain the lock, and if it is greater than zero the calling thread will wait up to 
+, if it is zero, the calling thread will try to gain the lock, and if it is greater than zero the calling thread will wait up to
 .I timeout
 seconds.
 .P
@@ -293,7 +305,7 @@ void testit() {
     fprintf(stderr,"[%d] --> old 0x%x\\n",
             Cthread_self(),addr);
   }
-  
+
   sprintf(addr,"[%d] Print with TSD buffer : Cthread ID=%d\\n",
                Cthread_self(),Cthread_self());
 

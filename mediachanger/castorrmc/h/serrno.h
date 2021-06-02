@@ -1,13 +1,19 @@
 /*
- * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
- * All rights reserved
+ * @project        The CERN Tape Archive (CTA)
+ * @copyright      Copyright(C) 1990-2021 CERN
+ * @license        This program is free software: you can redistribute it and/or modify
+ *                 it under the terms of the GNU General Public License as published by
+ *                 the Free Software Foundation, either version 3 of the License, or
+ *                 (at your option) any later version.
+ *
+ *                 This program is distributed in the hope that it will be useful,
+ *                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *                 GNU General Public License for more details.
+ *
+ *                 You should have received a copy of the GNU General Public License
+ *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-/*
- * serrno.h,v 1.65 2002/11/27 14:45:53
- */
-
-/* serrno.h     Special error numbers - not in errno.h                  */
 
 #pragma once
 
@@ -514,4 +520,3 @@ EXTERN_C const char *sstrerror (const int n);
 EXTERN_C void sperror (char *);
 
 extern const char *sys_serrlist[]; /* Error text array             */
-
