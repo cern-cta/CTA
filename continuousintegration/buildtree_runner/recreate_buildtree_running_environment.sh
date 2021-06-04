@@ -63,7 +63,8 @@ ls -lR /opt/mhvtl
 mkdir -p /opt/mhvtl
 sudo groupadd vtl || true
 sudo adduser vtl -g vtl || true
-chown vtl.vtl /opt/mhvtl
+sudo make_vtl_media -C /etc/mhvtl
+chown -R vtl.vtl /opt/mhvtl
 
 ################################################################################
 #### Start mhvtl
