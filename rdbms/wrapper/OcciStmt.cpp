@@ -334,10 +334,10 @@ bool OcciStmt::connShouldBeClosed(const oracle::occi::SQLException &ex) {
   case 12170:
   case 12514:
   case 12528:
+  case 12537:
   case 12541:
   case 12571:
   case 24338:
-  case 12537:
   case 25401:
   case 25409:
   case 32102:
