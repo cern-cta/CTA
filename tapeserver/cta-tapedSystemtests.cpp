@@ -1,6 +1,6 @@
 /*
  * @project        The CERN Tape Archive (CTA)
- * @copyright      Copyright(C) 2021 CERN
+ * @copyright      Copyright(C) 2015-2021 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
  *                 the Free Software Foundation, either version 3 of the License, or
@@ -20,9 +20,9 @@
 
 #include <gtest/gtest.h>
 
-namespace systemTests {  
+namespace systemTests {
 TEST(cta_taped, InvocationTests) {
-  {  
+  {
     // Do we get help with -h or --help?
     cta::threading::SubProcess spHelpShort("cta-taped", std::list<std::string>({"cta-taped", "-h"}));
     spHelpShort.wait();
@@ -35,7 +35,7 @@ TEST(cta_taped, InvocationTests) {
     ASSERT_TRUE(spHelpLong.stderr().empty());
     ASSERT_EQ(EXIT_SUCCESS, spHelpLong.exitValue());
   }
-  
+
   {
     // Do we get proper complaint when the configuration file is not there?
     cta::threading::SubProcess spNoConfigFile("cta-taped", std::list<std::string>({"cta-taped", "-f", "-s", "-c", "/no/such/file"}));
@@ -44,7 +44,7 @@ TEST(cta_taped, InvocationTests) {
     ASSERT_TRUE(spNoConfigFile.stderr().empty());
     ASSERT_EQ(EXIT_FAILURE, spNoConfigFile.exitValue());
   }
-  
+
   // Does the tape server complain about absence of drive configuration?
   {
     // We provide le daemon with an existing (but almost empty) configuration

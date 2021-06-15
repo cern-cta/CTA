@@ -1,6 +1,6 @@
 /*
  * @project        The CERN Tape Archive (CTA)
- * @copyright      Copyright(C) 2021 CERN
+ * @copyright      Copyright(C) 2015-2021 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
  *                 the Free Software Foundation, either version 3 of the License, or
@@ -51,7 +51,7 @@ static int exceptionThrowingMain(const cta::daemon::CommandLineParams & commandL
 //------------------------------------------------------------------------------
 // The help string
 //------------------------------------------------------------------------------
-std::string gHelpString = 
+std::string gHelpString =
     "Usage: cta-taped [options]\n"
     "\n"
     "where options can be:\n"
@@ -115,7 +115,7 @@ static int exceptionThrowingMain(
     std::list<cta::log::Param> params = {cta::log::Param("logMask", globalConfig.logMask.value())};
     log(log::INFO, "Set log mask", params);
   }
-  
+
   // Create the object providing utilities for working with UNIX capabilities
   cta::server::ProcessCap capUtils;
 
@@ -191,7 +191,7 @@ void logStartOfDaemon(cta::log::Logger &log,
 //------------------------------------------------------------------------------
 int main(const int argc, char **const argv) {
   using namespace cta;
-  
+
   // Interpret the command line
   std::unique_ptr<cta::daemon::CommandLineParams> commandLine;
   try {
@@ -202,7 +202,7 @@ int main(const int argc, char **const argv) {
       ex.getMessage().str() << std::endl;
     return EXIT_FAILURE;
   }
-  
+
   if(commandLine->helpRequested) {
     std::cout << cta::taped::gHelpString << std::endl;
     return EXIT_SUCCESS;
