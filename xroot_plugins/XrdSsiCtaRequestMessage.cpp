@@ -48,11 +48,6 @@ using XrdSsiPb::PbException;
 namespace cta {
 namespace xrd {
 
-// Codes to change colours for console output (when sending a response to cta-admin)
-const char* const TEXT_RED    = "\x1b[31;1m";
-const char* const TEXT_NORMAL = "\x1b[0m\n";
-
-
 /*
  * Convert AdminCmd <Cmd, SubCmd> pair to an integer so that it can be used in a switch statement
  */
