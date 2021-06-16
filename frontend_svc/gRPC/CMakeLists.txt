@@ -21,6 +21,7 @@ include_directories(${CMAKE_BINARY_DIR}/eos_cta
                     ${PROTOBUF3_INCLUDE_DIRS})
 
 add_executable(frontend-grpc-svc FrontendGRpcSvc.cpp)
+
 target_link_libraries(frontend-grpc-svc CtaGRpc
         ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY}
         ctascheduler ctacommon ctaobjectstore ctacatalogue)

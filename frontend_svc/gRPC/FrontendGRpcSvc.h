@@ -18,5 +18,31 @@
 
 #include "cta_rpc.grpc.pb.h"
 
+using cta::Scheduler;
+using cta::SchedulerDBInit_t;
+using cta::SchedulerDB_t;
+using cta::catalogue::Catalogue;
+using cta::rdbms::Login;
+using cta::rpc::CtaRpc;
+
+using grpc::Server;
+using grpc::ServerBuilder;
+using grpc::ServerContext;
+using grpc::Status;
+
+class CtaRpcImpl : public CtaRpc::Service {
+
+private:
+    std::unique_ptr <cta::catalogue::Catalogue> m_catalogue;
+    std::unique_ptr <cta::SchedulerDB_t> m_scheddb;
+    std::unique_ptr <cta::SchedulerDBInit_t> m_scheddb_init;
+    std::unique_ptr <cta::Scheduler> m_scheduler;
+    cta::log::LogContext  *m_log;
+
+public:
+    CtaRpcImpl(cta::log::LogContext *lc, std::unique_ptr<cta::catalogue::Catalogue> &catalogue);
+    void run(const std::string server_address);
+    Status Version(::grpc::ServerContext *context, const ::google::protobuf::Empty *request, ::cta::admin::Version *response);
+};
 
 #endif //CTA_FRONTENDGRPCSVC_H
