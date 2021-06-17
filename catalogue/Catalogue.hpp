@@ -55,6 +55,7 @@
 #include "common/dataStructures/StorageClass.hpp"
 #include "common/dataStructures/Tape.hpp"
 #include "common/dataStructures/TapeCopyToPoolMap.hpp"
+#include "common/dataStructures/TapeDrive.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 #include "common/dataStructures/UpdateFileInfoRequest.hpp"
 #include "common/dataStructures/RequesterIdentity.hpp"
@@ -81,7 +82,7 @@
 namespace cta {
 
 namespace catalogue {
-  
+
 CTA_GENERATE_EXCEPTION_CLASS(WrongSchemaVersionException);
 
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentDiskSystem);
@@ -230,7 +231,7 @@ public:
    * used by the Catalogue to determine the mount policy to be used when
    * retrieving the file.
    * @param activity The activity under which the user wants to start the retrieve
-   * The call will fail if the activity is set and unknown. 
+   * The call will fail if the activity is set and unknown.
    * @param lc The log context.
    *
    * @return The information required to queue the associated retrieve request(s).
@@ -277,33 +278,33 @@ public:
    * @param vo the Virtual Organization
    */
   virtual void createVirtualOrganization(const common::dataStructures::SecurityIdentity &admin, const common::dataStructures::VirtualOrganization &vo) = 0;
-  
+
   /**
    * Deletes the specified Virtual Organization
    * @param voName the name of the VirtualOrganization to delete
    */
   virtual void deleteVirtualOrganization(const std::string &voName) = 0;
-  
+
   /**
    * Get all the Virtual Organizations from the Catalogue
    * @return the list of all the Virtual Organizations
    */
   virtual std::list<common::dataStructures::VirtualOrganization> getVirtualOrganizations() const = 0;
-  
+
   /**
    * Get the virtual organization corresponding to the tapepool passed in parameter
    * @param tapepoolName the name of the tapepool which we want the virtual organization
    * @return the VirtualOrganization associated to the tapepool passed in parameter
    */
   virtual common::dataStructures::VirtualOrganization getVirtualOrganizationOfTapepool(const std::string & tapepoolName) const = 0;
-  
+
   /**
    * Get, from the cache, the virtual organization corresponding to the tapepool passed in parameter
    * @param tapepoolName the name of the tapepool which we want the virtual organization
    * @return the VirtualOrganization associated to the tapepool passed in parameter
    */
   virtual common::dataStructures::VirtualOrganization getCachedVirtualOrganizationOfTapepool(const std::string & tapepoolName) const = 0;
-  
+
   /**
    * Modifies the name of the specified Virtual Organization.
    *
@@ -311,23 +312,23 @@ public:
    * @param newVoName The new name of the Virtual Organization.
    */
   virtual void modifyVirtualOrganizationName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentVoName, const std::string &newVoName) = 0;
-  
+
   /**
    * Modifies the max number of allocated drives for read for the specified Virtual Organization
-   * 
+   *
    * @param voName the VO name
    * @param readMaxDrives the new max number of allocated drives for read for the specified Virtual Organization
    */
   virtual void modifyVirtualOrganizationReadMaxDrives(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t readMaxDrives) = 0;
-  
+
   /**
    * Modifies the max number of allocated drives for write for the specified Virtual Organization
-   * 
+   *
    * @param voName the VO name
    * @param writeMaxDrives the new max number of allocated drives for write for the specified Virtual Organization
    */
   virtual void modifyVirtualOrganizationWriteMaxDrives(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t writeMaxDrives) = 0;
-  
+
   /**
    * Modifies the comment of the specified Virtual Organization
    *
@@ -387,7 +388,7 @@ public:
    * @return All tape media types.
    */
   virtual std::list<MediaTypeWithLogs> getMediaTypes() const = 0;
-  
+
   /**
    * Return the media type associated to the tape corresponding to the
    * vid passed in parameter
@@ -632,17 +633,17 @@ public:
    * @param lc the logContext
    */
   virtual void reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, cta::log::LogContext & lc) = 0;
-  
+
   /**
    * Checks the specified tape for the tape label command.
    *
-   * This method checks if the tape is safe to be labeled and will throw an 
+   * This method checks if the tape is safe to be labeled and will throw an
    * exception if the specified tape does not ready to be labeled.
    *
    * @param vid The volume identifier of the tape to be checked.
    */
   virtual void checkTapeForLabel(const std::string &vid) = 0;
-  
+
   /**
    * Returns the number of any files contained in the tape identified by its vid
    * @param vid the vid in which we will the number of files
@@ -674,19 +675,19 @@ public:
    * @param fullValue Set to true if the tape is full.
    */
   virtual void setTapeFull(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool fullValue) = 0;
-  
+
   /**
    * This method notifies the CTA catalogue to set the specified tape is from CASTOR.
-   * This method only for unitTests and MUST never be called in CTA!!! 
+   * This method only for unitTests and MUST never be called in CTA!!!
    *
    * @param vid The volume identifier of the tape.
    */
   virtual void setTapeIsFromCastorInUnitTests(const std::string &vid) = 0;
 
   virtual void setTapeDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string & reason) = 0;
-  
+
   virtual void setTapeDirty(const std::string & vid) = 0;
-  
+
   /**
    * Modifies the tape comment
    * If the comment == cta::nullopt, it will delete the comment from the tape table
@@ -709,7 +710,7 @@ public:
    * @return the list of all existing mount policies.
    */
   virtual std::list<common::dataStructures::MountPolicy> getMountPolicies() const = 0;
-  
+
   /**
    * Returns the cached list of all existing mount policies.
    *
@@ -765,7 +766,7 @@ public:
    */
   virtual void deleteRequesterMountRule(const std::string &diskInstanceName, const std::string &requesterName) = 0;
 
-  /**   
+  /**
    * Creates the rule that the specified mount policy will be used for the
    * specified requester group.
    *
@@ -820,7 +821,7 @@ public:
     double weight, const std::string & comment) = 0;
   virtual void deleteActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity &admin, const std::string & diskInstanceName, const std::string & acttivity) = 0;
   virtual std::list<common::dataStructures::ActivitiesFairShareWeights> getActivitiesFairShareWeights() const = 0;
-  
+
   /**
    * Returns all the disk systems within the CTA catalogue.
    *
@@ -828,20 +829,20 @@ public:
    * requester group.
    */
   virtual disk::DiskSystemList getAllDiskSystems() const = 0;
-  
+
   /**
    * Creates a disk system.
-   * 
+   *
    * @param admin The administrator.
    * @param name The name of the disk system.
    * @param fileRegexp The regular expression allowing matching destination URLs
    * for this disk system.
    * @param freeSpaceQueryURL The query URL that describes a method to query the
    * free space from the disk system.
-   * @param refreshInterval The refresh interval (seconds) defining how long do 
+   * @param refreshInterval The refresh interval (seconds) defining how long do
    * we use a free space value.
    * @param targetedFreeSpace The targeted free space (margin) based on the free
-   * space update latency (inherent to the file system and induced by the refresh 
+   * space update latency (inherent to the file system and induced by the refresh
    * interval), and the expected external bandwidth from sources external to CTA.
    * @param comment Comment.
    */
@@ -854,14 +855,14 @@ public:
     const uint64_t targetedFreeSpace,
     const uint64_t sleepTime,
     const std::string &comment) = 0;
-  
+
   /**
    * Deletes a disk system.
-   * 
+   *
    * @param name The name of the disk system.
    */
   virtual void deleteDiskSystem(const std::string &name) = 0;
-  
+
   virtual void modifyDiskSystemFileRegexp(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name, const std::string &fileRegexp) = 0;
   virtual void modifyDiskSystemFreeSpaceQueryURL(const common::dataStructures::SecurityIdentity &admin,
@@ -876,7 +877,7 @@ public:
     const std::string &name, const std::string &comment) = 0;
 
   typedef CatalogueItor<common::dataStructures::ArchiveFile> ArchiveFileItor;
-      
+
   /**
    * Returns the specified archive files.  Please note that the list of files
    * is ordered by archive file ID.
@@ -887,9 +888,9 @@ public:
   virtual ArchiveFileItor getArchiveFilesItor(
     const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const = 0;
 
-  
+
   typedef CatalogueItor<common::dataStructures::FileRecycleLog> FileRecycleLogItor;
-  
+
   /**
    * Returns all the currently deleted files by looking at the FILE_RECYCLE_LOG table
    *
@@ -985,20 +986,20 @@ public:
    * Checks that the most trivial query goes through. Throws an exception if not.
    */
   virtual void ping() = 0;
-  
+
   /**
    * Checks that the online database schema MAJOR version number matches the schema MAJOR version number defined in version.h
    */
   virtual void verifySchemaVersion() = 0;
-  
+
   /**
    * Returns the SchemaVersion object corresponding to the catalogue schema version:
    * - SCHEMA_VERSION_MAJOR
    * - SCHEMA_VERSION_MINOR
    * - SCHEMA_VERSION_MAJOR_NEXT (future major version number of the schema in case of upgrade)
    * - SCHEMA_VERSION_MINOR_NEXT (future minor version number of the schema in case of upgrade)
-   * - STATUS (UPGRADING or PRODUCTION)	
-   * 
+   * - STATUS (UPGRADING or PRODUCTION)
+   *
    * @return The SchemaVersion object corresponding to the catalogue schema version
    */
   virtual SchemaVersion getSchemaVersion() const = 0;
@@ -1018,14 +1019,14 @@ public:
    * @return True if the tape exists.
    */
   virtual bool tapeExists(const std::string &vid) const = 0;
-  
+
   /**
    * Returns true if the specified disk system exists.
    *
    * @param name The name identifier of the disk system.
    * @return True if the tape exists.
    */
-  virtual bool diskSystemExists(const std::string &name) const = 0;  
+  virtual bool diskSystemExists(const std::string &name) const = 0;
 
   /**
    * Updates the disk file ID of the specified archive file.
@@ -1039,17 +1040,17 @@ public:
    */
   virtual void updateDiskFileId(uint64_t archiveFileId, const std::string &diskInstance,
     const std::string &diskFileId) = 0;
-  
+
   /**
    * Insert the ArchiveFile and all its tape files in the FILE_RECYCLE_LOG table.
    * There will be one entry on the FILE_RECYCLE_LOG table per deleted tape file
-   * 
+   *
    * @param request the DeleteRequest object that holds information about the file to delete.
    * @param lc the logContext
    */
-  virtual void moveArchiveFileToRecycleLog(const common::dataStructures::DeleteArchiveRequest &request, 
+  virtual void moveArchiveFileToRecycleLog(const common::dataStructures::DeleteArchiveRequest &request,
   log::LogContext & lc) = 0;
-  
+
    /**
    *
    * Deletes the specified archive file and its associated tape copies from the
@@ -1062,18 +1063,20 @@ public:
    * @param lc The log context.
    */
   virtual void deleteFileFromRecycleBin(const uint64_t archiveFileId, log::LogContext &lc) = 0;
-  
+
   /**
    * Deletes all the log entries corresponding to the vid passed in parameter.
-   * 
+   *
    * Please note that this method is idempotent.  If there are no recycle log
    * entries associated to the vid passed in parameter, the method will return
    * without any error.
-   * 
+   *
    * @param vid, the vid of the files to be deleted
    * @param lc, the logContext
    */
   virtual void deleteFilesFromRecycleLog(const std::string & vid, log::LogContext & lc) = 0;
+
+  virtual void createTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) = 0;
 
 }; // class Catalogue
 

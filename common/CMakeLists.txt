@@ -70,6 +70,7 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/SecurityIdentity.cpp
   dataStructures/StorageClass.cpp
   dataStructures/Tape.cpp
+  dataStructures/TapeDrive.cpp
   dataStructures/TapeFile.cpp
   dataStructures/TapeLog.cpp
   dataStructures/TestSourceType.cpp

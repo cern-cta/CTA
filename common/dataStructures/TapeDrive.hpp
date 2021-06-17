@@ -1,0 +1,137 @@
+/*
+ * @project        The CERN Tape Archive (CTA)
+ * @copyright      Copyright(C) 2021 CERN
+ * @license        This program is free software: you can redistribute it and/or modify
+ *                 it under the terms of the GNU General Public License as published by
+ *                 the Free Software Foundation, either version 3 of the License, or
+ *                 (at your option) any later version.
+ *
+ *                 This program is distributed in the hope that it will be useful,
+ *                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *                 GNU General Public License for more details.
+ *
+ *                 You should have received a copy of the GNU General Public License
+ *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#pragma once
+
+#include <string>
+
+#include "common/dataStructures/EntryLog.hpp"
+#include "common/optional.hpp"
+
+namespace cta {
+namespace common {
+namespace dataStructures {
+
+/**
+ * This struct holds status of a Tape Drive
+ */
+struct TapeDrive {
+
+  enum State {
+    UNKNOWN = 0,
+    DOWN = 1,
+    UP = 2,
+    PROBING = 3,
+    STARTING = 4,
+    MOUNTING = 5,
+    TRANSFERING = 6,
+    UNLOADING = 7,
+    UNMOUNTING = 8,
+    DRAININGTODISK = 9,
+    CLEANINGUP = 10,
+    SHUTDOWN = 11
+  };
+
+  static const std::map<State,std::string> STATE_TO_STRING_MAP;
+  static const std::map<std::string,State> STRING_TO_STATE_MAP;
+
+  static std::string getAllPossibleStates();
+
+  TapeDrive();
+
+  bool operator==(const TapeDrive &rhs) const;
+  bool operator!=(const TapeDrive &rhs) const;
+
+  void setState(const std::string & state);
+
+  std::string getStateStr() const;
+
+  /**
+   * Return the string representation of the tape drive State passed in parameter
+   * @param state the state to return the string representation
+   * @return the string representation of the state passed in parameter
+   * @throws cta::exception::Exception if the state passed in parameter does not exist
+   */
+  static std::string stateToString(const State &state);
+
+  /**
+   * Return the state value according to the state passed in parameter (not case sensitive)
+   * @param state the string that identifies the state enum value to return
+   * @return the state corresponding to the State enum value
+   * @throws cta::exception::Exception if the state passed in parameter does not match any existing State enum value
+   */
+  static State stringToState(const std::string & state);
+
+  std::string driveName;
+  std::string host;
+  std::string logicalLibrary;
+  optional<uint64_t> sessionId;
+
+  optional<uint64_t> bytesTransferedInSession;
+  optional<uint64_t> filesTransferedInSession;
+  optional<std::string> latestBandwidth;
+
+  optional<time_t> sessionStartTime;
+  optional<time_t> mountStartTime;
+  optional<time_t> transferStartTime;
+  optional<time_t> unloadStartTime;
+  optional<time_t> unmountStartTime;
+  optional<time_t> drainingStartTime;
+  optional<time_t> downOrUpStartTime;
+  optional<time_t> probeStartTime;
+  optional<time_t> cleanupStartTime;
+  optional<time_t> startStartTime;
+  optional<time_t> shutdownTime;
+
+  uint32_t mountType;
+  State driveStatus;
+  bool desiredUp;
+  bool desiredForceDown;
+
+  optional<std::string> reasonUpDown;
+  optional<std::string> currentVid;
+  optional<std::string> ctaVersion;
+  optional<uint64_t> currentPriority;
+  optional<std::string> currentActivity;
+  optional<std::string> currentActivityWeight;
+  optional<std::string> currentTapePool;
+  optional<uint32_t> nextMountType;
+  optional<std::string> nextVid;
+  optional<std::string> nextTapePool;
+  optional<uint64_t> nextPriority;
+  optional<std::string> nextActivity;
+  optional<std::string> nextActivityWeight;
+
+  optional<std::string> devFileName;
+  optional<std::string> rawLibrarySlot;
+
+  optional<std::string> currentVo;
+  optional<std::string> nextVo;
+
+  std::string diskSystemName;
+  uint64_t reservedBytes;
+
+  optional<std::string> userComment;
+  optional<EntryLog> creationLog;
+  optional<EntryLog> lastModificationLog;
+};  // struct TapeDrive
+
+std::ostream &operator<<(std::ostream &os, const TapeDrive &obj);
+
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

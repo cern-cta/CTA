@@ -321,11 +321,11 @@ void RdbmsCatalogue::createVirtualOrganization(const common::dataStructures::Sec
     }
     const uint64_t virtualOrganizationId = getNextVirtualOrganizationId(conn);
     const time_t now = time(nullptr);
-    const char *const sql = 
+    const char *const sql =
     "INSERT INTO VIRTUAL_ORGANIZATION("
         "VIRTUAL_ORGANIZATION_ID,"
         "VIRTUAL_ORGANIZATION_NAME,"
-        
+
         "READ_MAX_DRIVES,"
         "WRITE_MAX_DRIVES,"
 
@@ -354,15 +354,15 @@ void RdbmsCatalogue::createVirtualOrganization(const common::dataStructures::Sec
         ":LAST_UPDATE_HOST_NAME,"
         ":LAST_UPDATE_TIME)";
     auto stmt = conn.createStmt(sql);
-    
+
     stmt.bindUint64(":VIRTUAL_ORGANIZATION_ID", virtualOrganizationId);
     stmt.bindString(":VIRTUAL_ORGANIZATION_NAME", vo.name);
-    
+
     stmt.bindUint64(":READ_MAX_DRIVES",vo.readMaxDrives);
     stmt.bindUint64(":WRITE_MAX_DRIVES",vo.writeMaxDrives);
 
     stmt.bindString(":USER_COMMENT", vo.comment);
-    
+
     stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
     stmt.bindString(":CREATION_LOG_HOST_NAME", admin.host);
     stmt.bindUint64(":CREATION_LOG_TIME", now);
@@ -372,9 +372,9 @@ void RdbmsCatalogue::createVirtualOrganization(const common::dataStructures::Sec
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt.executeNonQuery();
-    
+
     m_tapepoolVirtualOrganizationCache.invalidate();
-    
+
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -602,9 +602,9 @@ void RdbmsCatalogue::modifyVirtualOrganizationName(const common::dataStructures:
       throw exception::UserError(std::string("Cannot modify virtual organization : ") + currentVoName +
         " because it does not exist");
     }
-    
+
     m_tapepoolVirtualOrganizationCache.invalidate();
-    
+
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -625,7 +625,7 @@ void RdbmsCatalogue::modifyVirtualOrganizationReadMaxDrives(const common::dataSt
       "WHERE "
         "VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME";
     auto conn = m_connPool.getConn();
-   
+
     auto stmt = conn.createStmt(sql);
     stmt.bindUint64(":READ_MAX_DRIVES", readMaxDrives);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
@@ -638,9 +638,9 @@ void RdbmsCatalogue::modifyVirtualOrganizationReadMaxDrives(const common::dataSt
       throw exception::UserError(std::string("Cannot modify virtual organization : ") + voName +
         " because it does not exist");
     }
-    
+
     m_tapepoolVirtualOrganizationCache.invalidate();
-    
+
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -661,7 +661,7 @@ void RdbmsCatalogue::modifyVirtualOrganizationWriteMaxDrives(const common::dataS
       "WHERE "
         "VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME";
     auto conn = m_connPool.getConn();
-   
+
     auto stmt = conn.createStmt(sql);
     stmt.bindUint64(":WRITE_MAX_DRIVES", writeMaxDrives);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
@@ -674,9 +674,9 @@ void RdbmsCatalogue::modifyVirtualOrganizationWriteMaxDrives(const common::dataS
       throw exception::UserError(std::string("Cannot modify virtual organization : ") + voName +
         " because it does not exist");
     }
-    
+
     m_tapepoolVirtualOrganizationCache.invalidate();
-    
+
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -697,7 +697,7 @@ try {
       "WHERE "
         "VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME";
     auto conn = m_connPool.getConn();
-   
+
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":USER_COMMENT", comment);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
@@ -735,9 +735,9 @@ void RdbmsCatalogue::createStorageClass(
     if(storageClass.comment.empty()) {
       throw UserSpecifiedAnEmptyStringComment("Cannot create storage class because the comment is an empty string");
     }
-    
+
     std::string vo = storageClass.vo.name;
-    
+
     if(vo.empty()) {
       throw UserSpecifiedAnEmptyStringVo("Cannot create storage class because the vo is an empty string");
     }
@@ -790,7 +790,7 @@ void RdbmsCatalogue::createStorageClass(
     stmt.bindString(":STORAGE_CLASS_NAME", storageClass.name);
     stmt.bindUint64(":NB_COPIES", storageClass.nbCopies);
     stmt.bindString(":VO",vo);
-    
+
     stmt.bindString(":USER_COMMENT", storageClass.comment);
 
     stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
@@ -851,7 +851,7 @@ void RdbmsCatalogue::deleteStorageClass(const std::string &storageClassName) {
       throw UserSpecifiedStorageClassUsedByArchiveFiles(std::string("The ") + storageClassName +
         " storage class is being used by one or more archive files");
     }
-    
+
     if(storageClassIsUsedByFileRecyleLogs(conn,storageClassName)){
       throw UserSpecifiedStorageClassUsedByFileRecycleLogs(std::string("The ") + storageClassName +
         " storage class is being used by one or more file in the recycle logs");
@@ -1338,7 +1338,7 @@ void RdbmsCatalogue::createMediaType(
     stmt.bindUint32(":NB_WRAPS", mediaType.nbWraps);
     stmt.bindUint64(":MIN_LPOS", mediaType.minLPos);
     stmt.bindUint64(":MAX_LPOS", mediaType.maxLPos);
-    
+
     stmt.bindString(":USER_COMMENT", mediaType.comment);
 
     stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
@@ -1516,7 +1516,7 @@ MediaType RdbmsCatalogue::getMediaTypeByVid(const std::string& vid) const {
       mediaType.minLPos = rset.columnOptionalUint64("MIN_LPOS");
       mediaType.maxLPos = rset.columnOptionalUint64("MAX_LPOS");
       mediaType.comment = rset.columnString("USER_COMMENT");
-      
+
       return mediaType;
     } else {
       throw exception::Exception("The tape vid "+vid+" does not exist.");
@@ -2180,9 +2180,9 @@ void RdbmsCatalogue::deleteTapePool(const std::string &name) {
       if(0 == stmt.getNbAffectedRows()) {
         throw exception::UserError(std::string("Cannot delete tape-pool ") + name + " because it does not exist");
       }
-      
+
       m_tapepoolVirtualOrganizationCache.invalidate();
-      
+
     } else {
       throw UserSpecifiedAnEmptyTapePool(std::string("Cannot delete tape-pool ") + name + " because it is not empty");
     }
@@ -2353,7 +2353,7 @@ cta::optional<TapePool> RdbmsCatalogue::getTapePool(const std::string &tapePoolN
     stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
     stmt.bindString(":STATE_DISABLED",common::dataStructures::Tape::stateToString(common::dataStructures::Tape::DISABLED));
     stmt.bindString(":STATE_ACTIVE",common::dataStructures::Tape::stateToString(common::dataStructures::Tape::ACTIVE));
-    
+
     auto rset = stmt.executeQuery();
 
     if (!rset.next()) {
@@ -2416,11 +2416,11 @@ void RdbmsCatalogue::modifyTapePoolVo(const common::dataStructures::SecurityIden
       "WHERE "
         "TAPE_POOL_NAME = :TAPE_POOL_NAME";
     auto conn = m_connPool.getConn();
-    
+
     if(!virtualOrganizationExists(conn,vo)){
       throw exception::UserError(std::string("Cannot modify tape pool ") + name +" because the vo " + vo + " does not exist");
     }
-    
+
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":VO", vo);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
@@ -2642,9 +2642,9 @@ void RdbmsCatalogue::modifyTapePoolName(const common::dataStructures::SecurityId
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify tape pool ") + currentName + " because it does not exist");
     }
-    
+
     m_tapepoolVirtualOrganizationCache.invalidate();
-    
+
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -3366,7 +3366,7 @@ void RdbmsCatalogue::createTape(
     // Translate an empty comment string to a NULL database value
     const optional<std::string> tapeComment = tape.comment && tape.comment->empty() ? nullopt : tape.comment;
     const optional<std::string> stateReason = tape.stateReason && cta::utils::trimString(tape.stateReason.value()).empty() ? nullopt : tape.stateReason;
-    
+
     if(vid.empty()) {
       throw UserSpecifiedAnEmptyStringVid("Cannot create tape because the VID is an empty string");
     }
@@ -3387,7 +3387,7 @@ void RdbmsCatalogue::createTape(
     if(tapePoolName.empty()) {
       throw UserSpecifiedAnEmptyStringTapePoolName("Cannot create tape because the tape pool name is an empty string");
     }
-    
+
     std::string tapeState;
     try {
       tapeState = common::dataStructures::Tape::stateToString(tape.state);
@@ -3395,7 +3395,7 @@ void RdbmsCatalogue::createTape(
       std::string errorMsg = "Cannot create tape because the state specified does not exist. Possible values for state are: " + common::dataStructures::Tape::getAllPossibleStates();
       throw UserSpecifiedANonExistentTapeState(errorMsg);
     }
-    
+
     if(tape.state != common::dataStructures::Tape::ACTIVE){
       if(!stateReason){
         throw UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive("Cannot create tape because no reason has been provided for the state " + tapeState);
@@ -3417,7 +3417,7 @@ void RdbmsCatalogue::createTape(
       throw exception::UserError(std::string("Cannot create tape ") + vid + " because tape pool " +
        tapePoolName + " does not exist");
     }
-    
+
     const auto mediaTypeId = getMediaTypeId(conn, mediaTypeName);
     if(!mediaTypeId) {
       throw exception::UserError(std::string("Cannot create tape ") + vid + " because media type " +
@@ -3437,7 +3437,7 @@ void RdbmsCatalogue::createTape(
         "IS_FROM_CASTOR,"          "\n"
 
         "USER_COMMENT,"            "\n"
-    
+
         "TAPE_STATE,"              "\n"
         "STATE_REASON,"            "\n"
         "STATE_UPDATE_TIME,"       "\n"
@@ -3462,7 +3462,7 @@ void RdbmsCatalogue::createTape(
         ":IS_FROM_CASTOR,"         "\n"
 
         ":USER_COMMENT,"           "\n"
-    
+
         ":TAPE_STATE,"             "\n"
         ":STATE_REASON,"           "\n"
         ":STATE_UPDATE_TIME,"      "\n"
@@ -3489,7 +3489,7 @@ void RdbmsCatalogue::createTape(
     stmt.bindBool(":IS_FROM_CASTOR", isFromCastor);
 
     stmt.bindString(":USER_COMMENT", tapeComment);
-    
+
     std::string stateModifiedBy = RdbmsCatalogue::generateTapeStateModifiedBy(admin);
     stmt.bindString(":TAPE_STATE",cta::common::dataStructures::Tape::stateToString(tape.state));
     stmt.bindString(":STATE_REASON",stateReason);
@@ -3708,12 +3708,12 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
 
         "TAPE.LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
         "TAPE.LAST_WRITE_TIME AS LAST_WRITE_TIME,"
-            
+
         "TAPE.READ_MOUNT_COUNT AS READ_MOUNT_COUNT,"
         "TAPE.WRITE_MOUNT_COUNT AS WRITE_MOUNT_COUNT,"
 
         "TAPE.USER_COMMENT AS USER_COMMENT,"
-            
+
         "TAPE.TAPE_STATE AS TAPE_STATE,"
         "TAPE.STATE_REASON AS STATE_REASON,"
         "TAPE.STATE_UPDATE_TIME AS STATE_UPDATE_TIME,"
@@ -3810,7 +3810,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
       sql += " TAPE.TAPE_STATE = :TAPE_STATE";
       addedAWhereConstraint = true;
     }
-    
+
     sql += " ORDER BY TAPE.VID";
 
     auto stmt = conn.createStmt(sql);
@@ -3862,7 +3862,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
         tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
         tape.full = rset.columnBool("IS_FULL");
         tape.isFromCastor = rset.columnBool("IS_FROM_CASTOR");
-        
+
         tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
         tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
         tape.lastWriteLog = getTapeLogFromRset(rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
@@ -3872,12 +3872,12 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
 
         auto optionalComment = rset.columnOptionalString("USER_COMMENT");
         tape.comment = optionalComment ? optionalComment.value() : "";
-        
+
         tape.setState(rset.columnString("TAPE_STATE"));
         tape.stateReason = rset.columnOptionalString("STATE_REASON");
         tape.stateUpdateTime = rset.columnUint64("STATE_UPDATE_TIME");
         tape.stateModifiedBy = rset.columnString("STATE_MODIFIED_BY");
-        
+
         tape.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
         tape.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
         tape.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
@@ -3988,7 +3988,7 @@ std::string RdbmsCatalogue::getSelectTapesBy100VidsSql() const {
       "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
       "TAPE.LAST_FSEQ AS LAST_FSEQ,"
       "TAPE.IS_FULL AS IS_FULL,"
-      "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"    
+      "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"
 
       "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
       "TAPE.LABEL_TIME AS LABEL_TIME,"
@@ -4003,7 +4003,7 @@ std::string RdbmsCatalogue::getSelectTapesBy100VidsSql() const {
       "TAPE.WRITE_MOUNT_COUNT AS WRITE_MOUNT_COUNT,"
 
       "TAPE.USER_COMMENT AS USER_COMMENT,"
-          
+
       "TAPE.TAPE_STATE AS TAPE_STATE,"
       "TAPE.STATE_REASON AS STATE_REASON,"
       "TAPE.STATE_UPDATE_TIME AS STATE_UPDATE_TIME,"
@@ -4066,12 +4066,12 @@ void RdbmsCatalogue::executeGetTapesBy100VidsStmtAndCollectResults(rdbms::Stmt &
     tape.writeMountCount = rset.columnUint64("WRITE_MOUNT_COUNT");
     auto optionalComment = rset.columnOptionalString("USER_COMMENT");
     tape.comment = optionalComment ? optionalComment.value() : "";
-    
+
     tape.setState(rset.columnString("TAPE_STATE"));
     tape.stateReason = rset.columnOptionalString("STATE_REASON");
     tape.stateUpdateTime = rset.columnUint64("STATE_UPDATE_TIME");
     tape.stateModifiedBy = rset.columnString("STATE_MODIFIED_BY");
-    
+
     tape.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
     tape.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
     tape.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
@@ -4209,10 +4209,10 @@ uint64_t RdbmsCatalogue::getNbFilesOnTape(const std::string& vid) const {
 //------------------------------------------------------------------------------
 uint64_t RdbmsCatalogue::getNbFilesOnTape(rdbms::Conn& conn, const std::string& vid) const {
   try {
-    const char *const sql = 
+    const char *const sql =
     "SELECT COUNT(*) AS NB_FILES FROM TAPE_FILE "
     "WHERE VID = :VID ";
-    
+
     auto stmt = conn.createStmt(sql);
 
     stmt.bindString(":VID", vid);
@@ -4230,7 +4230,7 @@ uint64_t RdbmsCatalogue::getNbFilesOnTape(rdbms::Conn& conn, const std::string& 
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::deleteTapeFiles(rdbms::Conn& conn, const std::string& vid) const {
   try {
-    const char * const sql = 
+    const char * const sql =
     "DELETE FROM TAPE_FILE WHERE VID = :VID";
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":VID", vid);
@@ -4247,7 +4247,7 @@ void RdbmsCatalogue::deleteTapeFiles(rdbms::Conn& conn, const std::string& vid) 
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::setTapeDirty(rdbms::Conn& conn, const std::string& vid) const {
   try {
-    const char * const sql = 
+    const char * const sql =
     "UPDATE TAPE SET DIRTY='1' WHERE VID = :VID";
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":VID", vid);
@@ -4263,7 +4263,7 @@ void RdbmsCatalogue::setTapeDirty(rdbms::Conn& conn, const std::string& vid) con
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::setTapeDirty(rdbms::Conn& conn, const uint64_t & archiveFileId) const {
   try {
-    const char * const sql = 
+    const char * const sql =
     "UPDATE TAPE SET DIRTY='1' "
     "WHERE VID IN "
     "  (SELECT DISTINCT TAPE_FILE.VID AS VID FROM TAPE_FILE WHERE TAPE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID)";
@@ -4320,7 +4320,7 @@ void RdbmsCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity 
     log::TimingList tl;
     utils::Timer t;
     auto conn = m_connPool.getConn();
-    
+
     TapeSearchCriteria searchCriteria;
     searchCriteria.vid = vid;
     const auto tapes = getTapes(conn, searchCriteria);
@@ -4331,7 +4331,7 @@ void RdbmsCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity 
     }  else {
       if(!tapes.front().full){
         throw exception::UserError(std::string("Cannot reclaim tape ") + vid + " because it is not FULL");
-      } 
+      }
     }
     //The tape exists and is full, we can try to reclaim it
     if(this->getNbFilesOnTape(conn,vid) == 0){
@@ -4366,23 +4366,23 @@ void RdbmsCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity 
 void RdbmsCatalogue::checkTapeForLabel(const std::string &vid) {
    try{
     auto conn = m_connPool.getConn();
-    
+
     TapeSearchCriteria searchCriteria;
     searchCriteria.vid = vid;
     const auto tapes = getTapes(conn, searchCriteria);
 
     if(tapes.empty()) {
-      throw exception::UserError(std::string("Cannot label tape ") + vid + 
+      throw exception::UserError(std::string("Cannot label tape ") + vid +
                                              " because it does not exist");
-    } 
+    }
     //The tape exists checks any files on it
     const uint64_t nbFilesOnTape = getNbFilesOnTape(conn, vid);
     if( 0 != nbFilesOnTape) {
-      throw exception::UserError(std::string("Cannot label tape ") + vid + 
+      throw exception::UserError(std::string("Cannot label tape ") + vid +
                                              " because it has " +
-                                             std::to_string(nbFilesOnTape) + 
-                                             " file(s)");  
-    } 
+                                             std::to_string(nbFilesOnTape) +
+                                             " file(s)");
+    }
   } catch (exception::UserError& ue) {
     throw;
   }
@@ -4447,7 +4447,7 @@ void RdbmsCatalogue::modifyTapeMediaType(const common::dataStructures::SecurityI
         "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
       "WHERE "
         "VID = :VID";
-    
+
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":MEDIA_TYPE", mediaType);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
@@ -4670,12 +4670,12 @@ void RdbmsCatalogue::modifyTapeEncryptionKeyName(const common::dataStructures::S
 // modifyTapeState
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const cta::optional<std::string> & stateReason){
-  try {  
+  try {
     using namespace common::dataStructures;
     const time_t now = time(nullptr);
-    
+
     const optional<std::string> stateReasonCopy = stateReason && cta::utils::trimString(stateReason.value()).empty() ? nullopt : stateReason;
-    
+
     std::string stateStr;
     try {
       stateStr = cta::common::dataStructures::Tape::stateToString(state);
@@ -4683,14 +4683,14 @@ void RdbmsCatalogue::modifyTapeState(const common::dataStructures::SecurityIdent
       std::string errorMsg = "The state provided in parameter (" + std::to_string(state) + ") is not known or has not been initialized existing states are:" + common::dataStructures::Tape::getAllPossibleStates();
       throw UserSpecifiedANonExistentTapeState(errorMsg);
     }
-    
+
     //Check the reason is set for all the status except the ACTIVE one, this is the only state that allows the reason to be set to null.
     if(state != Tape::State::ACTIVE){
       if(!stateReasonCopy){
-        throw UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(std::string("Cannot modify the state of the tape ") + vid + " to " + stateStr + " because the reason has not been provided."); 
+        throw UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(std::string("Cannot modify the state of the tape ") + vid + " to " + stateStr + " because the reason has not been provided.");
       }
     }
-    
+
     const char *const sql =
       "UPDATE TAPE SET "
         "TAPE_STATE = :TAPE_STATE,"
@@ -4701,7 +4701,7 @@ void RdbmsCatalogue::modifyTapeState(const common::dataStructures::SecurityIdent
         "VID = :VID";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
-    
+
     stmt.bindString(":TAPE_STATE", stateStr);
     stmt.bindString(":STATE_REASON", stateReasonCopy);
     stmt.bindUint64(":STATE_UPDATE_TIME", now);
@@ -4729,7 +4729,7 @@ std::string RdbmsCatalogue::generateTapeStateModifiedBy(const common::dataStruct
 // tapeMountedForArchive
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::tapeMountedForArchive(const std::string &vid, const std::string &drive) {
-  try {  
+  try {
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE TAPE SET "
@@ -4917,7 +4917,7 @@ void RdbmsCatalogue::setTapeIsFromCastorInUnitTests(const std::string &vid) {
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::setTapeDisabled(const common::dataStructures::SecurityIdentity &admin,
   const std::string &vid, const std::string & reason) {
-  
+
   try {
     modifyTapeState(admin,vid,common::dataStructures::Tape::DISABLED,reason);
   } catch(exception::UserError &) {
@@ -5194,7 +5194,7 @@ void RdbmsCatalogue::createMountPolicy(const common::dataStructures::SecurityIde
 
     stmt.bindUint64(":RETRIEVE_PRIORITY", mountPolicy.retrievePriority);
     stmt.bindUint64(":RETRIEVE_MIN_REQUEST_AGE", mountPolicy.minRetrieveRequestAge);
-    
+
     stmt.bindString(":USER_COMMENT", mountPolicy.comment);
 
     stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
@@ -5839,7 +5839,7 @@ void RdbmsCatalogue::deleteMountPolicy(const std::string &name) {
 // getMountPolicies
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::MountPolicy> RdbmsCatalogue::getMountPolicies() const {
-  try {   
+  try {
     auto conn = m_connPool.getConn();
     return getMountPolicies(conn);
   } catch(exception::UserError &) {
@@ -5891,7 +5891,7 @@ try {
 
       policy.retrievePriority = rset.columnUint64("RETRIEVE_PRIORITY");
       policy.retrieveMinRequestAge = rset.columnUint64("RETRIEVE_MIN_REQUEST_AGE");
-      
+
       policy.comment = rset.columnString("USER_COMMENT");
 
       policy.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
@@ -6130,35 +6130,35 @@ void RdbmsCatalogue::modifyMountPolicyComment(const common::dataStructures::Secu
 //------------------------------------------------------------------------------
 // createActivitiesFairShareWeight
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::createActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity& admin, 
+void RdbmsCatalogue::createActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity& admin,
     const std::string& diskInstanceName, const std::string& activity, double weight, const std::string & comment) {
   try {
     if (diskInstanceName.empty()) {
       throw UserSpecifiedAnEmptyStringDiskInstanceName("Cannot create activity weight because the disk instance name is"
         " an empty string");
     }
-    
+
     if (activity.empty()) {
       throw UserSpecifiedAnEmptyStringActivity("Cannot create activity weight because the activity name is"
         " an empty string");
     }
-    
+
     if (weight <= 0 || weight > 1) {
       throw UserSpecifiedAnOutOfRangeActivityWeight("Cannot create activity because the activity weight is out of ]0, 1] range.");
     }
-    
+
     if (comment.empty()) {
       throw UserSpecifiedAnEmptyStringComment("Cannot create activity weight because the comment is"
         " an empty string");
     }
-    
+
     const time_t now = time(nullptr);
     const char *const sql =
       "INSERT INTO ACTIVITIES_WEIGHTS("
         "DISK_INSTANCE_NAME,"
         "ACTIVITY,"
         "WEIGHT,"
-    
+
         "USER_COMMENT,"
 
         "CREATION_LOG_USER_NAME,"
@@ -6168,7 +6168,7 @@ void RdbmsCatalogue::createActivitiesFairShareWeight(const common::dataStructure
         "LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME)"
-    
+
       "VALUES ("
         ":DISK_INSTANCE_NAME,"
         ":ACTIVITY,"
@@ -6198,7 +6198,7 @@ void RdbmsCatalogue::createActivitiesFairShareWeight(const common::dataStructure
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
-    
+
     stmt.executeNonQuery();
 
     conn.commit();
@@ -6219,21 +6219,21 @@ void RdbmsCatalogue::modifyActivitiesFairShareWeight(const common::dataStructure
       throw UserSpecifiedAnEmptyStringDiskInstanceName("Cannot create activity weight because the disk instance name is"
         " an empty string");
     }
-    
+
     if (activity.empty()) {
       throw UserSpecifiedAnEmptyStringActivity("Cannot create activity weight because the activity name is"
         " an empty string");
     }
-    
+
     if (weight <= 0 || weight > 1) {
       throw UserSpecifiedAnOutOfRangeActivityWeight("Cannot create activity because the activity weight is out of ]0, 1] range.");
     }
-    
+
     if (comment.empty()) {
       throw UserSpecifiedAnEmptyStringComment("Cannot modify activity weight because the comment is"
         " an empty string");
     }
-    
+
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE ACTIVITIES_WEIGHTS SET "
@@ -6278,12 +6278,12 @@ void RdbmsCatalogue::deleteActivitiesFairShareWeight(const common::dataStructure
       throw UserSpecifiedAnEmptyStringDiskInstanceName("Cannot create activity weight because the disk instance name is"
         " an empty string");
     }
-    
+
     if (activity.empty()) {
       throw UserSpecifiedAnEmptyStringActivity("Cannot create activity weight because the activity name is"
         " an empty string");
     }
-    
+
     const char *const sql = "DELETE FROM ACTIVITIES_WEIGHTS WHERE DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND ACTIVITY = :ACTIVITY";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
@@ -6358,7 +6358,7 @@ disk::DiskSystemList RdbmsCatalogue::getAllDiskSystems() const {
         "DISK_SYSTEM.REFRESH_INTERVAL AS REFRESH_INTERVAL,"
         "DISK_SYSTEM.TARGETED_FREE_SPACE AS TARGETED_FREE_SPACE,"
         "DISK_SYSTEM.SLEEP_TIME AS SLEEP_TIME,"
-        
+
         "DISK_SYSTEM.USER_COMMENT AS USER_COMMENT,"
 
         "DISK_SYSTEM.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
@@ -6390,7 +6390,7 @@ disk::DiskSystemList RdbmsCatalogue::getAllDiskSystems() const {
       diskSystem.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
       diskSystem.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
       diskSystem.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
-      diskSystemList.push_back(diskSystem);     
+      diskSystemList.push_back(diskSystem);
     }
     return diskSystemList;
   } catch(exception::UserError &) {
@@ -6441,7 +6441,7 @@ void RdbmsCatalogue::createDiskSystem(
       throw exception::UserError(std::string("Cannot create disk system ") + name +
         " because a disk system with the same name identifier already exists");
     }
-    
+
     const time_t now = time(nullptr);
     const char *const sql =
       "INSERT INTO DISK_SYSTEM("
@@ -6468,7 +6468,7 @@ void RdbmsCatalogue::createDiskSystem(
         ":REFRESH_INTERVAL,"
         ":TARGETED_FREE_SPACE,"
         ":SLEEP_TIME,"
-  
+
         ":USER_COMMENT,"
 
         ":CREATION_LOG_USER_NAME,"
@@ -6503,7 +6503,7 @@ void RdbmsCatalogue::createDiskSystem(
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
-  }  
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -6618,7 +6618,7 @@ void RdbmsCatalogue::modifyDiskSystemFreeSpaceQueryURL(const common::dataStructu
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
-  }  
+  }
 }
 
 void RdbmsCatalogue::modifyDiskSystemRefreshInterval(const common::dataStructures::SecurityIdentity &admin,
@@ -6741,13 +6741,13 @@ void RdbmsCatalogue::modifyDiskSystemComment(const common::dataStructures::Secur
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
-  }  
+  }
 }
 
 //------------------------------------------------------------------------------
 // modifyDiskSystemSleepTime
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyDiskSystemSleepTime(const common::dataStructures::SecurityIdentity& admin, const std::string& name, 
+void RdbmsCatalogue::modifyDiskSystemSleepTime(const common::dataStructures::SecurityIdentity& admin, const std::string& name,
     const uint64_t sleepTime) {
   try {
     if(name.empty()) {
@@ -6785,7 +6785,7 @@ void RdbmsCatalogue::modifyDiskSystemSleepTime(const common::dataStructures::Sec
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
-  }  
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -7821,7 +7821,7 @@ void RdbmsCatalogue::insertTapeFile(
   const uint64_t archiveFileId) {
   rdbms::AutoRollback autoRollback(conn);
   try{
-    
+
       std::list<InsertFileRecycleLog> insertedFilesRecycleLog = insertOldCopiesOfFilesIfAnyOnFileRecycleLog(conn,tapeFile,archiveFileId);
       {
         const time_t now = time(nullptr);
@@ -7855,7 +7855,7 @@ void RdbmsCatalogue::insertTapeFile(
       }
     {
       for(auto& fileRecycleLog: insertedFilesRecycleLog){
-        const char *const sql = 
+        const char *const sql =
         "DELETE FROM "
           "TAPE_FILE "
         "WHERE "
@@ -8057,11 +8057,11 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.copyNb = rset.columnUint64("COPY_NB");
         tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumBlob = archiveFile->checksumBlob; // Duplicated for convenience
-        
+
         archiveFile->tapeFiles.push_back(tapeFile);
       }
     }
-    
+
     //If there are no tape files that belong to the archive file, then return a nullptr.
     if(archiveFile.get() != nullptr && archiveFile->tapeFiles.empty()){
       archiveFile.reset(nullptr);
@@ -8079,7 +8079,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
 //------------------------------------------------------------------------------
 // getCachedActivitiesWeights
 //------------------------------------------------------------------------------
-common::dataStructures::ActivitiesFairShareWeights 
+common::dataStructures::ActivitiesFairShareWeights
 RdbmsCatalogue::getCachedActivitiesWeights(const std::string& diskInstance) const {
   try {
     auto getNonCachedValue = [&] {
@@ -8098,7 +8098,7 @@ RdbmsCatalogue::getCachedActivitiesWeights(const std::string& diskInstance) cons
 //------------------------------------------------------------------------------
 // getActivitiesWeights
 //------------------------------------------------------------------------------
-common::dataStructures::ActivitiesFairShareWeights 
+common::dataStructures::ActivitiesFairShareWeights
 RdbmsCatalogue::getActivitiesWeights(rdbms::Conn& conn, const std::string& diskInstanceName) const {
   try {
     const char *const sql =
@@ -8198,7 +8198,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.copyNb = rset.columnUint64("COPY_NB");
         tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumBlob = archiveFile->checksumBlob; // Duplicated for convenience
-        
+
         archiveFile->tapeFiles.push_back(tapeFile);
       }
     }
@@ -8286,7 +8286,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         tapeFile.copyNb = rset.columnUint64("COPY_NB");
         tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
         tapeFile.checksumBlob = archiveFile->checksumBlob; // Duplicated for convenience
-        
+
         archiveFile->tapeFiles.push_back(tapeFile);
       }
     }
@@ -8359,7 +8359,7 @@ SchemaVersion RdbmsCatalogue::getSchemaVersion() const {
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
     auto rset = stmt.executeQuery();
-    
+
     if(rset.next()) {
       SchemaVersion::Builder schemaVersionBuilder;
       schemaVersionBuilder.schemaVersionMajor(rset.columnUint64("SCHEMA_VERSION_MAJOR"))
@@ -8374,7 +8374,7 @@ SchemaVersion RdbmsCatalogue::getSchemaVersion() const {
       return schemaVersionBuilder.build();
     } else {
       throw exception::Exception("CTA_CATALOGUE does not contain any row");
-    } 
+    }
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -8605,7 +8605,7 @@ void RdbmsCatalogue::updateDiskFileId(const uint64_t archiveFileId, const std::s
 //------------------------------------------------------------------------------
 // moveArchiveFileToRecycleBin
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::moveArchiveFileToRecycleLog(const common::dataStructures::DeleteArchiveRequest &request, 
+void RdbmsCatalogue::moveArchiveFileToRecycleLog(const common::dataStructures::DeleteArchiveRequest &request,
   log::LogContext & lc) {
   if(!request.archiveFile){
     //The archive file does not exist in the catalogue, nothing to do with it
@@ -8648,7 +8648,7 @@ void RdbmsCatalogue::moveArchiveFileToRecycleLog(const common::dataStructures::D
     ue.getMessage() << "Failed to move archive file with ID " << request.archiveFileID << " to the file-recycle-log. errorMessage=" << ex.getMessageValue();
     throw ue;
   }
-  
+
   try {
     //All checks are good, we can move the file to the recycle-bin
     auto conn = m_connPool.getConn();
@@ -8697,7 +8697,7 @@ void RdbmsCatalogue::copyArchiveFileToFileRecycleLog(rdbms::Conn & conn, const c
       throw cta::exception::Exception("No archiveFile object has been set in the DeleteArchiveRequest object.");
     }
     const common::dataStructures::ArchiveFile & archiveFile = request.archiveFile.value();
-    
+
     for(auto &tapeFile: archiveFile.tapeFiles){
       //Create one file recycle log entry per tape file
       InsertFileRecycleLog fileRecycleLog;
@@ -8712,7 +8712,7 @@ void RdbmsCatalogue::copyArchiveFileToFileRecycleLog(rdbms::Conn & conn, const c
       fileRecycleLog.recycleLogTime = time(nullptr);
       insertFileInFileRecycleLog(conn,fileRecycleLog);
     }
-    
+
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
@@ -8725,7 +8725,7 @@ void RdbmsCatalogue::copyArchiveFileToFileRecycleLog(rdbms::Conn & conn, const c
 void RdbmsCatalogue::insertFileInFileRecycleLog(rdbms::Conn& conn, const InsertFileRecycleLog& fileRecycleLog){
   try{
     uint64_t fileRecycleLogId = getNextFileRecyleLogId(conn);
-    const char *const sql = 
+    const char *const sql =
     "INSERT INTO FILE_RECYCLE_LOG("
       "FILE_RECYCLE_LOG_ID,"
       "VID,"
@@ -8796,13 +8796,13 @@ void RdbmsCatalogue::insertFileInFileRecycleLog(rdbms::Conn& conn, const InsertF
 }
 
 void RdbmsCatalogue::deleteTapeFiles(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest& request){
-  try {    
+  try {
     //Delete the tape files after.
-    const char *const deleteTapeFilesSql = 
+    const char *const deleteTapeFilesSql =
     "DELETE FROM "
       "TAPE_FILE "
     "WHERE TAPE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-    
+
     auto deleteTapeFilesStmt = conn.createStmt(deleteTapeFilesSql);
     deleteTapeFilesStmt.bindUint64(":ARCHIVE_FILE_ID",request.archiveFileID);
     deleteTapeFilesStmt.executeNonQuery();
@@ -8816,15 +8816,15 @@ void RdbmsCatalogue::deleteTapeFiles(rdbms::Conn & conn, const common::dataStruc
 
 void RdbmsCatalogue::deleteArchiveFile(rdbms::Conn& conn, const common::dataStructures::DeleteArchiveRequest& request){
   try{
-    const char *const deleteArchiveFileSql = 
+    const char *const deleteArchiveFileSql =
     "DELETE FROM "
       "ARCHIVE_FILE "
     "WHERE ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-    
+
     auto deleteArchiveFileStmt = conn.createStmt(deleteArchiveFileSql);
     deleteArchiveFileStmt.bindUint64(":ARCHIVE_FILE_ID",request.archiveFileID);
     deleteArchiveFileStmt.executeNonQuery();
-    
+
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -8846,7 +8846,7 @@ void RdbmsCatalogue::deleteFileFromRecycleBin(const uint64_t archiveFileId, log:
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
-  }  
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -8854,15 +8854,15 @@ void RdbmsCatalogue::deleteFileFromRecycleBin(const uint64_t archiveFileId, log:
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::deleteTapeFilesFromRecycleBin(cta::rdbms::Conn & conn, const uint64_t archiveFileId) {
   try {
-    const char *const deleteTapeFilesSql = 
+    const char *const deleteTapeFilesSql =
     "DELETE FROM "
       "TAPE_FILE_RECYCLE_BIN "
     "WHERE TAPE_FILE_RECYCLE_BIN.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-    
+
     auto deleteTapeFilesStmt = conn.createStmt(deleteTapeFilesSql);
     deleteTapeFilesStmt.bindUint64(":ARCHIVE_FILE_ID",archiveFileId);
     deleteTapeFilesStmt.executeNonQuery();
-    
+
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -8876,15 +8876,15 @@ void RdbmsCatalogue::deleteTapeFilesFromRecycleBin(cta::rdbms::Conn & conn, cons
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::deleteArchiveFileFromRecycleBin(rdbms::Conn& conn, const uint64_t archiveFileId) {
   try {
-    const char *const deleteArchiveFileSql = 
+    const char *const deleteArchiveFileSql =
     "DELETE FROM "
       "ARCHIVE_FILE_RECYCLE_BIN "
     "WHERE ARCHIVE_FILE_RECYCLE_BIN.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
-    
+
     auto deleteTapeFilesStmt = conn.createStmt(deleteArchiveFileSql);
     deleteTapeFilesStmt.bindUint64(":ARCHIVE_FILE_ID",archiveFileId);
     deleteTapeFilesStmt.executeNonQuery();
-    
+
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -8901,7 +8901,7 @@ std::list<InsertFileRecycleLog> RdbmsCatalogue::insertOldCopiesOfFilesIfAnyOnFil
   try {
     //First, get the file to insert on the FILE_RECYCLE_LOG table
     {
-      const char *const sql = 
+      const char *const sql =
       "SELECT "
         "TAPE_FILE.VID AS VID,"
         "TAPE_FILE.FSEQ AS FSEQ,"
@@ -8951,14 +8951,14 @@ std::list<InsertFileRecycleLog> RdbmsCatalogue::insertOldCopiesOfFilesIfAnyOnFil
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::deleteFilesFromRecycleBin(rdbms::Conn & conn, const std::string& vid, cta::log::LogContext & lc) {
   try {
-    const char *const selectArchiveFileIdSql = 
+    const char *const selectArchiveFileIdSql =
     "SELECT "
       "TAPE_FILE_RECYCLE_BIN.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID "
     "FROM "
       "TAPE_FILE_RECYCLE_BIN "
     "WHERE "
       "TAPE_FILE_RECYCLE_BIN.VID = :VID";
-    
+
     auto selectFileStmt = conn.createStmt(selectArchiveFileIdSql);
     selectFileStmt.bindString(":VID",vid);
     auto rset = selectFileStmt.executeQuery();
@@ -8996,12 +8996,12 @@ void RdbmsCatalogue::deleteFilesFromRecycleLog(const std::string& vid, log::LogC
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::deleteFilesFromRecycleLog(rdbms::Conn & conn, const std::string& vid, log::LogContext& lc) {
   try {
-    const char *const deleteFilesFromRecycleLogSql = 
+    const char *const deleteFilesFromRecycleLogSql =
     "DELETE FROM "
       "FILE_RECYCLE_LOG "
     "WHERE "
       "VID=:VID";
-    
+
     cta::utils::Timer t;
     log::TimingList tl;
     auto selectFileStmt = conn.createStmt(deleteFilesFromRecycleLogSql);
@@ -9020,6 +9020,10 @@ void RdbmsCatalogue::deleteFilesFromRecycleLog(rdbms::Conn & conn, const std::st
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
+}
+
+void RdbmsCatalogue::createTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) {
+  return;
 }
 
 } // namespace catalogue
