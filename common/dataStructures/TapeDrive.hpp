@@ -20,6 +20,7 @@
 #include <string>
 
 #include "common/dataStructures/EntryLog.hpp"
+#include "common/dataStructures/MountType.hpp"
 #include "common/optional.hpp"
 
 namespace cta {
@@ -97,12 +98,12 @@ struct TapeDrive {
   optional<time_t> startStartTime;
   optional<time_t> shutdownTime;
 
-  uint32_t mountType;
+  MountType mountType;
   State driveStatus;
   bool desiredUp;
   bool desiredForceDown;
-
   optional<std::string> reasonUpDown;
+
   optional<std::string> currentVid;
   optional<std::string> ctaVersion;
   optional<uint64_t> currentPriority;
