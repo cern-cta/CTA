@@ -2047,6 +2047,8 @@ protected:
 
   void createTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) override;
 
+  void deleteTapeDrive(const std::string &tapeDriveName) override;
+
   /**
    * Cached versions of tape copy to tape tape pool mappings for specific
    * storage classes.

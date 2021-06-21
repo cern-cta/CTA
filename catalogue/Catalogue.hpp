@@ -1078,6 +1078,7 @@ public:
 
   virtual void createTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) = 0;
 
+  virtual void deleteTapeDrive(const std::string &tapeDriveName) = 0;
 }; // class Catalogue
 
 } // namespace catalogue

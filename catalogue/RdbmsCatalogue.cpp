@@ -9264,7 +9264,24 @@ void RdbmsCatalogue::createTapeDrive(const common::dataStructures::TapeDrive &ta
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
-  return;
+}
+
+void RdbmsCatalogue::deleteTapeDrive(const std::string &tapeDriveName) {
+  try {
+    const char *const delete_sql =
+      "DELETE "
+      "FROM "
+        "TAPE_DRIVE "
+      "WHERE "
+        "DRIVE_NAME = :DELETE_DRIVE_NAME";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(delete_sql);
+    stmt.bindString(":DELETE_DRIVE_NAME", tapeDriveName);
+    stmt.executeNonQuery();
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
 }
 
 } // namespace catalogue

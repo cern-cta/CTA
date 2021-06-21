@@ -15514,12 +15514,13 @@ TEST_P(cta_catalogue_CatalogueTest, sameFileWrittenToSameTapePutThePreviousCopyO
   }
 }
 
-TEST_P(cta_catalogue_CatalogueTest, createTapeDrive) {
+TEST_P(cta_catalogue_CatalogueTest, createAndDeleteTapeDrive) {
   using namespace cta;
 
   log::LogContext dummyLc(m_dummyLog);
 
   m_catalogue->createTapeDrive(m_tapeDrive);
+  m_catalogue->deleteTapeDrive(m_tapeDrive.driveName);
 }
 
 } // namespace unitTests

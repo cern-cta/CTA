@@ -612,6 +612,10 @@ public:
     return retryOnLostConnection(m_log,[&]{return m_catalogue->createTapeDrive(tapeDrive);},m_maxTriesToConnect);
   }
 
+  void deleteTapeDrive(const std::string &tapeDriveName) override {
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->deleteTapeDrive(tapeDriveName);},m_maxTriesToConnect);
+  }
+
 protected:
 
   /**
