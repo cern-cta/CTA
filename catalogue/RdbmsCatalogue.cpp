@@ -9184,20 +9184,47 @@ void RdbmsCatalogue::createTapeDrive(const common::dataStructures::TapeDrive &ta
     stmt.bindBool(":DESIRED_FORCE_DOWN", tapeDrive.desiredForceDown);
     stmt.bindString(":REASON_UP_DOWN", tapeDrive.reasonUpDown);
 
+    stmt.bindString(":CURRENT_VID", tapeDrive.currentVid);
+    stmt.bindString(":CTA_VERSION", tapeDrive.ctaVersion);
+    stmt.bindUint64(":CURRENT_PRIORITY", tapeDrive.currentPriority);
+    stmt.bindString(":CURRENT_ACTIVITY", tapeDrive.currentActivity);
+    stmt.bindString(":CURRENT_ACTIVITY_WEIGHT", tapeDrive.currentActivityWeight);
+    stmt.bindString(":CURRENT_TAPE_POOL", tapeDrive.currentTapePool);
+    stmt.bindUint32(":NEXT_MOUNT_TYPE", tapeDrive.nextMountType);
+    stmt.bindString(":NEXT_VID", tapeDrive.nextVid);
+    stmt.bindString(":NEXT_TAPE_POOL", tapeDrive.nextTapePool);
+    stmt.bindUint64(":NEXT_PRIORITY", tapeDrive.nextPriority);
+    stmt.bindString(":NEXT_ACTIVITY", tapeDrive.nextActivity);
+    stmt.bindString(":NEXT_ACTIVITY_WEIGHT", tapeDrive.nextActivityWeight);
+
+    stmt.bindString(":DEV_FILE_NAME", tapeDrive.devFileName);
+    stmt.bindString(":RAW_LIBRARY_SLOT", tapeDrive.rawLibrarySlot);
+
     stmt.bindString(":CURRENT_VO", tapeDrive.currentVo);
     stmt.bindString(":NEXT_VO", tapeDrive.nextVo);
     stmt.bindString(":USER_COMMENT", tapeDrive.userComment);
 
+    auto setEntryLog = [&stmt](const std::string &field, const optional<std::string> &username,
+      const optional<std::string> &host, const time_t &time) {
+        stmt.bindString(field + "_USER_NAME", username);
+        stmt.bindString(field + "_HOST_NAME", host);
+        stmt.bindUint64(field + "_TIME", time);
+    };
+
     if (tapeDrive.creationLog) {
-      stmt.bindString(":CREATION_LOG_USER_NAME", tapeDrive.creationLog.value().username);
-      stmt.bindString(":CREATION_LOG_HOST_NAME", tapeDrive.creationLog.value().host);
-      stmt.bindUint64(":CREATION_LOG_TIME", tapeDrive.creationLog.value().time);
+      setEntryLog(":CREATION_LOG", tapeDrive.creationLog.value().username,
+        tapeDrive.creationLog.value().host, tapeDrive.creationLog.value().time);
+    } else {
+      setEntryLog(":CREATION_LOG", cta::nullopt_t(), cta::nullopt_t(), 0);
     }
+
     if (tapeDrive.lastModificationLog) {
-      stmt.bindString(":LAST_UPDATE_USER_NAME", tapeDrive.lastModificationLog.value().username);
-      stmt.bindString(":LAST_UPDATE_HOST_NAME", tapeDrive.lastModificationLog.value().host);
-      stmt.bindUint64(":LAST_UPDATE_TIME", tapeDrive.lastModificationLog.value().time);
+      setEntryLog(":LAST_UPDATE", tapeDrive.lastModificationLog.value().username,
+        tapeDrive.lastModificationLog.value().host, tapeDrive.lastModificationLog.value().time);
+    } else {
+      setEntryLog(":LAST_UPDATE", cta::nullopt_t(), cta::nullopt_t(), 0);
     }
+
     stmt.bindString(":DISK_SYSTEM_NAME", tapeDrive.diskSystemName);
     stmt.bindUint64(":RESERVED_BYTES", tapeDrive.reservedBytes);
 
@@ -9258,10 +9285,9 @@ void RdbmsCatalogue::createTapeDrive(const common::dataStructures::TapeDrive &ta
       .add("reservedBytes", tapeDrive.reservedBytes);
 
     lc.log(log::INFO, "Catalogue - created tape drive");
-  } catch(exception::UserError &) {
-    throw;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    std::cout << ex.getMessage().str() << std::endl;
     throw;
   }
 }

@@ -184,8 +184,8 @@ namespace {
     tapeDrive.logicalLibrary = "VLSTK10";
     tapeDrive.mountType = cta::common::dataStructures::MountType::NoMount;
     tapeDrive.driveStatus = cta::common::dataStructures::TapeDrive::State::UP;
-    tapeDrive.desiredUp = 0;
-    tapeDrive.desiredForceDown = 0;
+    tapeDrive.desiredUp = false;
+    tapeDrive.desiredForceDown = false;
     tapeDrive.diskSystemName = "dummyDiskSystemName";
     tapeDrive.reservedBytes = 694498291384;
     return tapeDrive;
@@ -15516,8 +15516,6 @@ TEST_P(cta_catalogue_CatalogueTest, sameFileWrittenToSameTapePutThePreviousCopyO
 
 TEST_P(cta_catalogue_CatalogueTest, createAndDeleteTapeDrive) {
   using namespace cta;
-
-  log::LogContext dummyLc(m_dummyLog);
 
   m_catalogue->createTapeDrive(m_tapeDrive);
   m_catalogue->deleteTapeDrive(m_tapeDrive.driveName);
