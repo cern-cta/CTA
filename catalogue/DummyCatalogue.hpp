@@ -86,6 +86,8 @@ public:
   void deleteFilesFromRecycleLog(const std::string & vid, log::LogContext & lc) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void createTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void deleteTapeDrive(const std::string &tapeDriveName) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
+  void createDriveConfig(const std::string &tapeDriveName, const std::string &category, const std::string &keyName, const std::string &value, const std::string &source) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
+  void deleteDriveConfig(const std::string &tapeDriveName, const std::string &keyName) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   std::list<common::dataStructures::ArchiveFile> getFilesForRepack(const std::string &vid, const uint64_t startFSeq, const uint64_t maxNbFiles) const override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   ArchiveFileItor getArchiveFilesForRepackItor(const std::string &vid, const uint64_t startFSeq) const override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes() const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }

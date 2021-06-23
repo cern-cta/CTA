@@ -616,6 +616,15 @@ public:
     return retryOnLostConnection(m_log,[&]{return m_catalogue->deleteTapeDrive(tapeDriveName);},m_maxTriesToConnect);
   }
 
+  void createDriveConfig(const std::string &driveName, const std::string &category,
+    const std::string &keyName, const std::string &value, const std::string &source) {
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->createDriveConfig(driveName, category, keyName, value, source);},m_maxTriesToConnect);
+  }
+
+  void deleteDriveConfig(const std::string &tapeDriveName, const std::string &keyName) {
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->deleteDriveConfig(tapeDriveName, keyName);},m_maxTriesToConnect);
+  }
+
 protected:
 
   /**

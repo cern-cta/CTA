@@ -9287,7 +9287,6 @@ void RdbmsCatalogue::createTapeDrive(const common::dataStructures::TapeDrive &ta
     lc.log(log::INFO, "Catalogue - created tape drive");
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    std::cout << ex.getMessage().str() << std::endl;
     throw;
   }
 }
@@ -9303,6 +9302,69 @@ void RdbmsCatalogue::deleteTapeDrive(const std::string &tapeDriveName) {
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(delete_sql);
     stmt.bindString(":DELETE_DRIVE_NAME", tapeDriveName);
+    stmt.executeNonQuery();
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+void RdbmsCatalogue::createDriveConfig(const std::string &tapeDriveName, const std::string &category,
+  const std::string &keyName, const std::string &value, const std::string &source) {
+  try {
+    auto conn = m_connPool.getConn();
+    const char *const sql =
+    "INSERT INTO DRIVE_CONFIG(" "\n"
+      "DRIVE_NAME,"             "\n"
+      "CATEGORY,"               "\n"
+      "KEY_NAME,"               "\n"
+      "VALUE,"                  "\n"
+      "SOURCE)"                 "\n"
+    "VALUES("                   "\n"
+      ":DRIVE_NAME,"            "\n"
+      ":CATEGORY,"              "\n"
+      ":KEY_NAME,"              "\n"
+      ":VALUE,"                 "\n"
+      ":SOURCE"                 "\n"
+    ")";
+
+    auto stmt = conn.createStmt(sql);
+
+    stmt.bindString(":DRIVE_NAME", tapeDriveName);
+    stmt.bindString(":CATEGORY", category);
+    stmt.bindString(":KEY_NAME", keyName);
+    stmt.bindString(":VALUE", value);
+    stmt.bindString(":SOURCE", source);
+
+    stmt.executeNonQuery();
+
+    log::LogContext lc(m_log);
+    log::ScopedParamContainer spc(lc);
+    spc.add("driveName", tapeDriveName)
+      .add("category", category)
+      .add("keyName", keyName)
+      .add("value", value)
+      .add("source", source);
+    lc.log(log::INFO, "Catalogue - created drive configuration");
+
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+void RdbmsCatalogue::deleteDriveConfig(const std::string &tapeDriveName, const std::string &keyName) {
+  try {
+    const char *const delete_sql =
+      "DELETE "
+      "FROM "
+        "DRIVE_CONFIG "
+      "WHERE "
+        "DRIVE_NAME = :DELETE_DRIVE_NAME AND KEY_NAME = :DELETE_KEY_NAME";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(delete_sql);
+    stmt.bindString(":DELETE_DRIVE_NAME", tapeDriveName);
+    stmt.bindString(":DELETE_KEY_NAME", keyName);
     stmt.executeNonQuery();
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());

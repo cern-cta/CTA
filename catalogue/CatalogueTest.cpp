@@ -22,12 +22,13 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/make_unique.hpp"
-#include "common/threading/Thread.hpp"
+#include "common/SourcedParameter.hpp"
 #include "common/threading/Mutex.hpp"
 #include "common/threading/MutexLocker.hpp"
-#include "rdbms/wrapper/ConnFactoryFactory.hpp"
-#include "rdbms/Conn.hpp"
+#include "common/threading/Thread.hpp"
 #include "InsertFileRecycleLog.hpp"
+#include "rdbms/Conn.hpp"
+#include "rdbms/wrapper/ConnFactoryFactory.hpp"
 #include "RdbmsCatalogue.hpp"
 
 #include <algorithm>
@@ -15519,6 +15520,19 @@ TEST_P(cta_catalogue_CatalogueTest, createAndDeleteTapeDrive) {
 
   m_catalogue->createTapeDrive(m_tapeDrive);
   m_catalogue->deleteTapeDrive(m_tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createAndDeleteDriveConfig) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+
+  cta::SourcedParameter<std::string> daemonUserName {
+    "taped", "DaemonUserName", "cta", "Compile time default"};
+
+  m_catalogue->createDriveConfig(tapeDriveName, daemonUserName.category(), daemonUserName.key(),
+    daemonUserName.value(), daemonUserName.source());
+  m_catalogue->deleteDriveConfig(m_tapeDrive.driveName, daemonUserName.key());
 }
 
 } // namespace unitTests

@@ -2049,6 +2049,11 @@ protected:
 
   void deleteTapeDrive(const std::string &tapeDriveName) override;
 
+  void createDriveConfig(const std::string &tapeDriveName, const std::string &category,
+    const std::string &keyName, const std::string &value, const std::string &source) override;
+
+  void deleteDriveConfig(const std::string &tapeDriveName, const std::string &keyName) override;
+
   /**
    * Cached versions of tape copy to tape tape pool mappings for specific
    * storage classes.
