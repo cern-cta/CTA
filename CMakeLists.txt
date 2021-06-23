@@ -59,6 +59,11 @@ if (CMAKE_COMPILER_IS_GNUCC AND ((GCC_VERSION VERSION_GREATER 4.8.0) OR (GCC_VER
   set (GCC_VERSION_GE_4_8_0 TRUE)
 endif (CMAKE_COMPILER_IS_GNUCC AND ((GCC_VERSION VERSION_GREATER 4.8.0) OR (GCC_VERSION VERSION_EQUAL 4.8.0)))
 
+# To enable logging for testing purposes set -DENABLE_STDOUT_LOGGING=1
+if (ENABLE_STDOUT_LOGGING)
+  add_definitions (-DSTDOUT_LOGGING)
+endif ()
+
 # Generate the compilation variables, if needed
 if (NOT DEFINED SKIP_UNIT_TESTS)
   message (STATUS "Setting SKIP_UNIT_TESTS to the value of 0")
