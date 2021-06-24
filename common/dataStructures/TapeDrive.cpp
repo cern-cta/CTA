@@ -85,7 +85,48 @@ bool TapeDrive::operator==(const TapeDrive &rhs) const {
       && desiredUp==rhs.desiredUp
       && desiredForceDown==rhs.desiredForceDown
       && diskSystemName==rhs.diskSystemName
-      && reservedBytes==rhs.reservedBytes;
+      && reservedBytes==rhs.reservedBytes
+
+      && sessionId==rhs.sessionId
+      && bytesTransferedInSession==rhs.bytesTransferedInSession
+      && filesTransferedInSession==rhs.filesTransferedInSession
+      && latestBandwidth==rhs.latestBandwidth
+      && sessionStartTime==rhs.sessionStartTime
+      && mountStartTime==rhs.mountStartTime
+      && transferStartTime==rhs.transferStartTime
+      && unloadStartTime==rhs.unloadStartTime
+      && unmountStartTime==rhs.unmountStartTime
+      && drainingStartTime==rhs.drainingStartTime
+      && downOrUpStartTime==rhs.downOrUpStartTime
+      && probeStartTime==rhs.probeStartTime
+      && cleanupStartTime==rhs.cleanupStartTime
+      && startStartTime==rhs.startStartTime
+      && shutdownTime==rhs.shutdownTime
+
+      && reasonUpDown==rhs.reasonUpDown
+      && currentVid==rhs.currentVid
+      && ctaVersion==rhs.ctaVersion
+      && currentPriority==rhs.currentPriority
+      && currentActivity==rhs.currentActivity
+      && currentActivityWeight==rhs.currentActivityWeight
+      && currentTapePool==rhs.currentTapePool
+      && nextMountType==rhs.nextMountType
+      && nextVid==rhs.nextVid
+      && nextTapePool==rhs.nextTapePool
+      && nextPriority==rhs.nextPriority
+      && nextActivity==rhs.nextActivity
+      && nextActivityWeight==rhs.nextActivityWeight
+      //
+      // && devFileName==rhs.devFileName
+      // && rawLibrarySlot==rhs.rawLibrarySlot
+      //
+      // && currentVo==rhs.currentVo
+      // && nextVo==rhs.nextVo
+      //
+      // && userComment==rhs.userComment
+      // && creationLog==rhs.creationLog
+      // && lastModificationLog==rhs.lastModificationLog
+      ;
 }
 
 //------------------------------------------------------------------------------

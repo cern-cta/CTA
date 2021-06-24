@@ -110,7 +110,7 @@ struct TapeDrive {
   optional<std::string> currentActivity;
   optional<std::string> currentActivityWeight;
   optional<std::string> currentTapePool;
-  optional<uint32_t> nextMountType;
+  optional<MountType> nextMountType;
   optional<std::string> nextVid;
   optional<std::string> nextTapePool;
   optional<uint64_t> nextPriority;

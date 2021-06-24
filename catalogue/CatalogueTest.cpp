@@ -178,7 +178,7 @@ namespace {
     return mountPolicy;
   }
 
-  cta::common::dataStructures::TapeDrive getTapeDrive() {
+  cta::common::dataStructures::TapeDrive getTapeDriveWithMandatoryElements() {
     cta::common::dataStructures::TapeDrive tapeDrive;
     tapeDrive.driveName = "VDSTK11";
     tapeDrive.host = "admin_host";
@@ -189,6 +189,58 @@ namespace {
     tapeDrive.desiredForceDown = false;
     tapeDrive.diskSystemName = "dummyDiskSystemName";
     tapeDrive.reservedBytes = 694498291384;
+    return tapeDrive;
+  }
+
+  cta::common::dataStructures::TapeDrive getTapeDriveWithAllElements() {
+    cta::common::dataStructures::TapeDrive tapeDrive;
+    tapeDrive.driveName = "VDSTK11";
+    tapeDrive.host = "admin_host";
+    tapeDrive.logicalLibrary = "VLSTK10";
+    tapeDrive.mountType = cta::common::dataStructures::MountType::NoMount;
+    tapeDrive.driveStatus = cta::common::dataStructures::TapeDrive::State::UP;
+    tapeDrive.desiredUp = false;
+    tapeDrive.desiredForceDown = false;
+    tapeDrive.diskSystemName = "dummyDiskSystemName";
+    tapeDrive.reservedBytes = 694498291384;
+
+    tapeDrive.sessionStartTime = 1001;
+    tapeDrive.mountStartTime = 1002;
+    tapeDrive.transferStartTime = 1003;
+    tapeDrive.unloadStartTime = 1004;
+    tapeDrive.unmountStartTime = 1005;
+    tapeDrive.drainingStartTime = 1006;
+    tapeDrive.downOrUpStartTime = 1007;
+    tapeDrive.probeStartTime = 1008;
+    tapeDrive.cleanupStartTime = 1009;
+    tapeDrive.startStartTime = 1010;
+    tapeDrive.shutdownTime = 1011;
+
+    tapeDrive.reasonUpDown = "Random Reason";
+
+    tapeDrive.currentVid = "VIDONE";
+    tapeDrive.ctaVersion = "v1.0.0";
+    tapeDrive.currentPriority = 3;
+    tapeDrive.currentActivity = "Activity1";
+    tapeDrive.currentActivityWeight = "0.1";
+    tapeDrive.currentTapePool = "tape_pool_0";
+    tapeDrive.nextMountType = cta::common::dataStructures::MountType::Retrieve;
+    tapeDrive.nextVid = "VIDTWO";
+    tapeDrive.nextTapePool = "tape_pool_1";
+    tapeDrive.nextPriority = 1;
+    tapeDrive.nextActivity = "Activity2";
+    tapeDrive.nextActivityWeight = "0.5";
+
+    tapeDrive.devFileName = "fileName";
+    tapeDrive.rawLibrarySlot = "librarySlot1";
+
+    tapeDrive.currentVo = "VO_ONE";
+    tapeDrive.nextVo = "VO_TWO";
+
+    tapeDrive.userComment = "Random comment";
+    tapeDrive.creationLog = cta::common::dataStructures::EntryLog("user_name_1", "host_1", 100002);
+    tapeDrive.lastModificationLog = cta::common::dataStructures::EntryLog("user_name_2", "host_2", 10032131);
+
     return tapeDrive;
   }
 }  // namespace
@@ -205,7 +257,6 @@ cta_catalogue_CatalogueTest::cta_catalogue_CatalogueTest():
         m_storageClassSingleCopy(getStorageClass()),
         m_anotherStorageClass(getAnotherStorageClass()),
         m_storageClassDualCopy(getStorageClassDualCopy()),
-        m_tapeDrive(getTapeDrive()),
         m_mediaType(getMediaType()),
         m_tape1(getTape1()),
         m_tape2(getTape2()) {
@@ -15518,10 +15569,21 @@ TEST_P(cta_catalogue_CatalogueTest, sameFileWrittenToSameTapePutThePreviousCopyO
 TEST_P(cta_catalogue_CatalogueTest, getTapeDrive) {
   using namespace cta;
 
-  m_catalogue->createTapeDrive(m_tapeDrive);
-  const auto storedTapeDrive = m_catalogue->getTapeDrive(m_tapeDrive.driveName);
-  ASSERT_EQ(m_tapeDrive, storedTapeDrive);
-  m_catalogue->deleteTapeDrive(m_tapeDrive.driveName);
+  const auto tapeDrive = getTapeDriveWithMandatoryElements();
+  m_catalogue->createTapeDrive(tapeDrive);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_EQ(tapeDrive, storedTapeDrive);
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getTapeDriveWithAllElements) {
+  using namespace cta;
+
+  const auto tapeDrive = getTapeDriveWithAllElements();
+  m_catalogue->createTapeDrive(tapeDrive);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_EQ(tapeDrive, storedTapeDrive);
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createAndDeleteDriveConfig) {
@@ -15531,10 +15593,11 @@ TEST_P(cta_catalogue_CatalogueTest, createAndDeleteDriveConfig) {
 
   cta::SourcedParameter<std::string> daemonUserName {
     "taped", "DaemonUserName", "cta", "Compile time default"};
+  const auto tapeDrive = getTapeDriveWithMandatoryElements();
 
   m_catalogue->createDriveConfig(tapeDriveName, daemonUserName.category(), daemonUserName.key(),
     daemonUserName.value(), daemonUserName.source());
-  m_catalogue->deleteDriveConfig(m_tapeDrive.driveName, daemonUserName.key());
+  m_catalogue->deleteDriveConfig(tapeDrive.driveName, daemonUserName.key());
 }
 
 } // namespace unitTests
