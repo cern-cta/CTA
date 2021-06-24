@@ -15515,10 +15515,12 @@ TEST_P(cta_catalogue_CatalogueTest, sameFileWrittenToSameTapePutThePreviousCopyO
   }
 }
 
-TEST_P(cta_catalogue_CatalogueTest, createAndDeleteTapeDrive) {
+TEST_P(cta_catalogue_CatalogueTest, getTapeDrive) {
   using namespace cta;
 
   m_catalogue->createTapeDrive(m_tapeDrive);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(m_tapeDrive.driveName);
+  ASSERT_EQ(m_tapeDrive, storedTapeDrive);
   m_catalogue->deleteTapeDrive(m_tapeDrive.driveName);
 }
 

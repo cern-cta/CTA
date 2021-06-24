@@ -1078,6 +1078,8 @@ public:
 
   virtual void createTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) = 0;
 
+  virtual common::dataStructures::TapeDrive getTapeDrive(const std::string &tapeDriveName) const = 0;
+
   virtual void deleteTapeDrive(const std::string &tapeDriveName) = 0;
 
   virtual void createDriveConfig(const std::string &tapeDriveName, const std::string &category,

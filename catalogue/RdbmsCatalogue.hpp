@@ -2047,6 +2047,8 @@ protected:
 
   void createTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) override;
 
+  common::dataStructures::TapeDrive getTapeDrive(const std::string &tapeDriveName) const override;
+
   void deleteTapeDrive(const std::string &tapeDriveName) override;
 
   void createDriveConfig(const std::string &tapeDriveName, const std::string &category,
