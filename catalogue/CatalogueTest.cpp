@@ -15647,18 +15647,54 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeDrive) {
   m_catalogue->deleteTapeDrive(tapeDrive2.driveName);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, createAndDeleteDriveConfig) {
+TEST_P(cta_catalogue_CatalogueTest, getDriveConfig) {
   using namespace cta;
 
   const std::string tapeDriveName = "VDSTK11";
 
   cta::SourcedParameter<std::string> daemonUserName {
     "taped", "DaemonUserName", "cta", "Compile time default"};
-  const auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
 
   m_catalogue->createDriveConfig(tapeDriveName, daemonUserName.category(), daemonUserName.key(),
     daemonUserName.value(), daemonUserName.source());
-  m_catalogue->deleteDriveConfig(tapeDrive.driveName, daemonUserName.key());
+  std::string category, value, source;
+  auto driveConfig = m_catalogue->getDriveConfig(tapeDriveName, daemonUserName.key());
+  ASSERT_TRUE(static_cast<bool>(driveConfig));
+  std::tie(category, value, source) = driveConfig.value();
+  ASSERT_EQ(daemonUserName.category(), category);
+  ASSERT_EQ(daemonUserName.value(), value);
+  ASSERT_EQ(daemonUserName.source(), source);
+  m_catalogue->deleteDriveConfig(tapeDriveName, daemonUserName.key());
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDriveConfig) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  // Both share same key
+  cta::SourcedParameter<std::string> daemonUserName1 {
+    "taped1", "DaemonUserName", "cta1", "Compile time1 default"};
+  cta::SourcedParameter<std::string> daemonUserName2 {
+    "taped2", "DaemonUserName", "cta2", "Compile time2 default"};
+
+  m_catalogue->createDriveConfig(tapeDriveName, daemonUserName1.category(), daemonUserName1.key(),
+    daemonUserName1.value(), daemonUserName1.source());
+  const auto driveConfig1 = m_catalogue->getDriveConfig(tapeDriveName, daemonUserName1.key());
+  ASSERT_TRUE(static_cast<bool>(driveConfig1));
+  std::string category, value, source;
+  std::tie(category, value, source) = driveConfig1.value();
+  ASSERT_NE(daemonUserName2.category(), category);
+  ASSERT_NE(daemonUserName2.value(), value);
+  ASSERT_NE(daemonUserName2.source(), source);
+  m_catalogue->modifyDriveConfig(tapeDriveName, daemonUserName2.category(), daemonUserName2.key(),
+    daemonUserName2.value(), daemonUserName2.source());
+  const auto driveConfig2 = m_catalogue->getDriveConfig(tapeDriveName, daemonUserName1.key());
+  ASSERT_TRUE(static_cast<bool>(driveConfig2));
+  std::tie(category, value, source) = driveConfig2.value();
+  ASSERT_EQ(daemonUserName2.category(), category);
+  ASSERT_EQ(daemonUserName2.value(), value);
+  ASSERT_EQ(daemonUserName2.source(), source);
+  m_catalogue->deleteDriveConfig(tapeDriveName, daemonUserName1.key());
 }
 
 } // namespace unitTests

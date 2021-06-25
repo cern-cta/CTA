@@ -39,7 +39,9 @@
 
 #include <ctype.h>
 #include <memory>
+#include <string>
 #include <time.h>
+#include <tuple>
 
 namespace cta {
 namespace catalogue {
@@ -9387,8 +9389,8 @@ optional<common::dataStructures::TapeDrive> RdbmsCatalogue::getTapeDrive(const s
     stmt.bindString(":DRIVE_NAME", tapeDriveName);
     auto rset = stmt.executeQuery();
 
-    common::dataStructures::TapeDrive tapeDrive;
     if (rset.next()) {
+      common::dataStructures::TapeDrive tapeDrive;
       auto checkOptionalString = [](const std::string &value) -> optional<std::string> {
         if (value == "NULL") return nullopt_t();
         return value;
@@ -9605,6 +9607,71 @@ void RdbmsCatalogue::createDriveConfig(const std::string &tapeDriveName, const s
   }
 }
 
+optional<std::tuple<std::string, std::string, std::string>> RdbmsCatalogue::getDriveConfig(
+  const std::string &tapeDriveName, const std::string &keyName) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "DRIVE_NAME AS DRIVE_NAME,"
+        "CATEGORY AS CATEGORY,"
+        "KEY_NAME AS KEY_NAME,"
+        "VALUE AS VALUE,"
+        "SOURCE AS SOURCE "
+      "FROM "
+        "DRIVE_CONFIG "
+      "WHERE "
+        "DRIVE_NAME = :DRIVE_NAME AND KEY_NAME = :KEY_NAME";;
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":DRIVE_NAME", tapeDriveName);
+    stmt.bindString(":KEY_NAME", keyName);
+    auto rset = stmt.executeQuery();
+    if (rset.next()) {
+      const std::string category = rset.columnString("CATEGORY");
+      const std::string value = rset.columnString("VALUE");
+      const std::string source = rset.columnString("SOURCE");
+      return std::make_tuple(category, value, source);
+    }
+    return nullopt_t();
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+void RdbmsCatalogue::modifyDriveConfig(const std::string &tapeDriveName, const std::string &category,
+  const std::string &keyName, const std::string &value, const std::string &source) {
+  try {
+    const char *const sql =
+      "UPDATE DRIVE_CONFIG "
+      "SET "
+        "CATEGORY = :CATEGORY,"
+        "VALUE = :VALUE,"
+        "SOURCE = :SOURCE "
+      "WHERE "
+        "DRIVE_NAME = :DRIVE_NAME AND KEY_NAME = :KEY_NAME";
+
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+
+    stmt.bindString(":DRIVE_NAME", tapeDriveName);
+    stmt.bindString(":CATEGORY", category);
+    stmt.bindString(":KEY_NAME", keyName);
+    stmt.bindString(":VALUE", value);
+    stmt.bindString(":SOURCE", source);
+
+    stmt.executeNonQuery();
+
+    if (0 == stmt.getNbAffectedRows()) {
+      throw exception::Exception(std::string("Cannot modify Config Drive with name: ") + tapeDriveName +
+        " and key" + keyName + " because it doesn't exist");
+    }
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
 void RdbmsCatalogue::deleteDriveConfig(const std::string &tapeDriveName, const std::string &keyName) {
   try {
     const char *const delete_sql =
@@ -9624,5 +9691,5 @@ void RdbmsCatalogue::deleteDriveConfig(const std::string &tapeDriveName, const s
   }
 }
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

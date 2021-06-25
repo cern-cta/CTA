@@ -1087,6 +1087,12 @@ public:
   virtual void createDriveConfig(const std::string &tapeDriveName, const std::string &category,
     const std::string &keyName, const std::string &value, const std::string &source) = 0;
 
+  virtual void modifyDriveConfig(const std::string &tapeDriveName, const std::string &category,
+    const std::string &keyName, const std::string &value, const std::string &source) = 0;
+
+  virtual optional<std::tuple<std::string, std::string, std::string>> getDriveConfig( const std::string &tapeDriveName,
+    const std::string &keyName) const = 0;
+
   virtual void deleteDriveConfig(const std::string &tapeDriveName, const std::string &keyName) = 0;
 }; // class Catalogue
 

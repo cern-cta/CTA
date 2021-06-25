@@ -2056,6 +2056,12 @@ protected:
   void createDriveConfig(const std::string &tapeDriveName, const std::string &category,
     const std::string &keyName, const std::string &value, const std::string &source) override;
 
+  void modifyDriveConfig(const std::string &tapeDriveName, const std::string &category,
+    const std::string &keyName, const std::string &value, const std::string &source) override;
+
+  optional<std::tuple<std::string, std::string, std::string>> getDriveConfig( const std::string &tapeDriveName,
+    const std::string &keyName) const override;
+
   void deleteDriveConfig(const std::string &tapeDriveName, const std::string &keyName) override;
 
   /**
