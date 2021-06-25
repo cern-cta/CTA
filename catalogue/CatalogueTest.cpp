@@ -15657,14 +15657,110 @@ TEST_P(cta_catalogue_CatalogueTest, getDriveConfig) {
 
   m_catalogue->createDriveConfig(tapeDriveName, daemonUserName.category(), daemonUserName.key(),
     daemonUserName.value(), daemonUserName.source());
-  std::string category, value, source;
   auto driveConfig = m_catalogue->getDriveConfig(tapeDriveName, daemonUserName.key());
   ASSERT_TRUE(static_cast<bool>(driveConfig));
+  std::string category, value, source;
   std::tie(category, value, source) = driveConfig.value();
   ASSERT_EQ(daemonUserName.category(), category);
   ASSERT_EQ(daemonUserName.value(), value);
   ASSERT_EQ(daemonUserName.source(), source);
   m_catalogue->deleteDriveConfig(tapeDriveName, daemonUserName.key());
+}
+
+TEST_P(cta_catalogue_CatalogueTest, failToGetDriveConfig) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  const std::string wrongName = "VDSTK56";
+  const std::string wrongKey = "wrongKey";
+  cta::SourcedParameter<std::string> daemonUserName {
+    "taped", "DaemonUserName", "cta", "Compile time default"};
+
+  m_catalogue->createDriveConfig(tapeDriveName, daemonUserName.category(), daemonUserName.key(),
+    daemonUserName.value(), daemonUserName.source());
+  auto driveConfig = m_catalogue->getDriveConfig(wrongName, daemonUserName.key());
+  ASSERT_FALSE(driveConfig);
+  driveConfig = m_catalogue->getDriveConfig(tapeDriveName, wrongKey);
+  ASSERT_FALSE(driveConfig);
+  driveConfig = m_catalogue->getDriveConfig(wrongName, wrongKey);
+  ASSERT_FALSE(driveConfig);
+  m_catalogue->deleteDriveConfig(tapeDriveName, daemonUserName.key());
+}
+
+TEST_P(cta_catalogue_CatalogueTest, failToDeleteDriveConfig) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  const std::string wrongName = "VDSTK56";
+  const std::string wrongKey = "wrongKey";
+  cta::SourcedParameter<std::string> daemonUserName {
+    "taped", "DaemonUserName", "cta", "Compile time default"};
+  m_catalogue->createDriveConfig(tapeDriveName, daemonUserName.category(), daemonUserName.key(),
+    daemonUserName.value(), daemonUserName.source());
+  m_catalogue->deleteDriveConfig(wrongName, daemonUserName.key());
+  auto driveConfig = m_catalogue->getDriveConfig(tapeDriveName, daemonUserName.key());
+  ASSERT_TRUE(static_cast<bool>(driveConfig));
+  m_catalogue->deleteDriveConfig(tapeDriveName, wrongKey);
+  driveConfig = m_catalogue->getDriveConfig(tapeDriveName, daemonUserName.key());
+  ASSERT_TRUE(static_cast<bool>(driveConfig));
+  m_catalogue->deleteDriveConfig(wrongName, wrongKey);
+  driveConfig = m_catalogue->getDriveConfig(tapeDriveName, daemonUserName.key());
+  ASSERT_TRUE(static_cast<bool>(driveConfig));
+  // Good deletion
+  m_catalogue->deleteDriveConfig(tapeDriveName, daemonUserName.key());
+  driveConfig = m_catalogue->getDriveConfig(tapeDriveName, daemonUserName.key());
+  ASSERT_FALSE(driveConfig);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, multipleDriveConfig) {
+  using namespace cta;
+
+  const std::string tapeDriveName1 = "VDSTK11";
+  const std::string tapeDriveName2 = "VDSTK12";
+
+  cta::SourcedParameter<std::string> daemonUserName {
+    "taped", "DaemonUserName", "cta", "Compile time default"};
+  cta::SourcedParameter<std::string> daemonGroupName {
+    "taped", "DaemonGroupName", "tape", "Compile time default"};
+
+  // Combinations of tapeDriveName1/2 and daemonUserName and daemonGroupName
+  m_catalogue->createDriveConfig(tapeDriveName1, daemonUserName.category(), daemonUserName.key(),
+    daemonUserName.value(), daemonUserName.source());
+  m_catalogue->createDriveConfig(tapeDriveName1, daemonGroupName.category(), daemonGroupName.key(),
+    daemonGroupName.value(), daemonGroupName.source());
+  m_catalogue->createDriveConfig(tapeDriveName2, daemonUserName.category(), daemonUserName.key(),
+    daemonUserName.value(), daemonUserName.source());
+  m_catalogue->createDriveConfig(tapeDriveName2, daemonGroupName.category(), daemonGroupName.key(),
+    daemonGroupName.value(), daemonGroupName.source());
+  auto driveConfig1UserName = m_catalogue->getDriveConfig(tapeDriveName1, daemonUserName.key());
+  auto driveConfig2UserName = m_catalogue->getDriveConfig(tapeDriveName2, daemonUserName.key());
+  auto driveConfig1GroupName = m_catalogue->getDriveConfig(tapeDriveName1, daemonGroupName.key());
+  auto driveConfig2GroupName = m_catalogue->getDriveConfig(tapeDriveName2, daemonGroupName.key());
+  ASSERT_TRUE(static_cast<bool>(driveConfig1UserName));
+  ASSERT_TRUE(static_cast<bool>(driveConfig2UserName));
+  ASSERT_TRUE(static_cast<bool>(driveConfig1GroupName));
+  ASSERT_TRUE(static_cast<bool>(driveConfig2GroupName));
+  std::string category, value, source;
+  std::tie(category, value, source) = driveConfig1UserName.value();
+  ASSERT_EQ(daemonUserName.category(), category);
+  ASSERT_EQ(daemonUserName.value(), value);
+  ASSERT_EQ(daemonUserName.source(), source);
+  std::tie(category, value, source) = driveConfig2UserName.value();
+  ASSERT_EQ(daemonUserName.category(), category);
+  ASSERT_EQ(daemonUserName.value(), value);
+  ASSERT_EQ(daemonUserName.source(), source);
+  std::tie(category, value, source) = driveConfig1GroupName.value();
+  ASSERT_EQ(daemonGroupName.category(), category);
+  ASSERT_EQ(daemonGroupName.value(), value);
+  ASSERT_EQ(daemonGroupName.source(), source);
+  std::tie(category, value, source) = driveConfig2GroupName.value();
+  ASSERT_EQ(daemonGroupName.category(), category);
+  ASSERT_EQ(daemonGroupName.value(), value);
+  ASSERT_EQ(daemonGroupName.source(), source);
+  m_catalogue->deleteDriveConfig(tapeDriveName1, daemonUserName.key());
+  m_catalogue->deleteDriveConfig(tapeDriveName1, daemonGroupName.key());
+  m_catalogue->deleteDriveConfig(tapeDriveName2, daemonUserName.key());
+  m_catalogue->deleteDriveConfig(tapeDriveName2, daemonGroupName.key());
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyDriveConfig) {

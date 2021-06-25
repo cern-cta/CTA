@@ -1076,23 +1076,66 @@ public:
    */
   virtual void deleteFilesFromRecycleLog(const std::string & vid, log::LogContext & lc) = 0;
 
+  /**
+   * Creates the specified Tape Drive
+   * @param tapeDrive Parameters of the Tape Drive.
+   */
   virtual void createTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) = 0;
 
+  /**
+   * Gets the information of the specified Tape Drive
+   * @param tapeDriveName The name of the tape drive.
+   * @return Parameters of the Tape Drive.
+   */
   virtual optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string &tapeDriveName) const = 0;
 
+  /**
+   * Modifies the parameters of the specified Tape Drive
+   * @param tapeDrive Parameters of the Tape Drive.
+   */
   virtual void modifyTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) = 0;
 
+  /**
+   * Deletes the entry of a Tape Drive
+   * @param tapeDriveName The name of the tape drive.
+   */
   virtual void deleteTapeDrive(const std::string &tapeDriveName) = 0;
 
+  /**
+   * Creates a specified parameter of the configuration for a certain Tape Drive
+   * @param tapeDriveName The name of the tape drive.
+   * @param category The category of the parameter.
+   * @param keyName The key of the parameter.
+   * @param value The value of the parameter.
+   * @param source The source from which the parameter was gotten.
+   */
   virtual void createDriveConfig(const std::string &tapeDriveName, const std::string &category,
     const std::string &keyName, const std::string &value, const std::string &source) = 0;
 
+  /**
+   * Modifies a specified parameter of the configuration for a certain Tape Drive
+   * @param tapeDriveName The name of the tape drive.
+   * @param category The category of the parameter.
+   * @param keyName The key of the parameter.
+   * @param value The value of the parameter.
+   * @param source The source from which the parameter was gotten.
+   */
   virtual void modifyDriveConfig(const std::string &tapeDriveName, const std::string &category,
     const std::string &keyName, const std::string &value, const std::string &source) = 0;
 
+  /**
+   * Gets a specified parameter of the configuration for a certain Tape Drive
+   * @param tapeDriveName The name of the tape drive.
+   * @param keyName The key of the parameter.
+   * @return Returns the category, value and source of a parameter of the configuarion
+   */
   virtual optional<std::tuple<std::string, std::string, std::string>> getDriveConfig( const std::string &tapeDriveName,
     const std::string &keyName) const = 0;
 
+  /**
+   * Deletes the entry of a Drive Configuration
+   * @param tapeDriveName The name of the tape drive.
+   */
   virtual void deleteDriveConfig(const std::string &tapeDriveName, const std::string &keyName) = 0;
 }; // class Catalogue
 
