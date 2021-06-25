@@ -38,6 +38,7 @@
 #include <map>
 #include <memory>
 #include <set>
+#include <string>
 
 namespace unitTests {
 
@@ -178,9 +179,9 @@ namespace {
     return mountPolicy;
   }
 
-  cta::common::dataStructures::TapeDrive getTapeDriveWithMandatoryElements() {
+  cta::common::dataStructures::TapeDrive getTapeDriveWithMandatoryElements(const std::string &driveName) {
     cta::common::dataStructures::TapeDrive tapeDrive;
-    tapeDrive.driveName = "VDSTK11";
+    tapeDrive.driveName = driveName;
     tapeDrive.host = "admin_host";
     tapeDrive.logicalLibrary = "VLSTK10";
     tapeDrive.mountType = cta::common::dataStructures::MountType::NoMount;
@@ -192,9 +193,9 @@ namespace {
     return tapeDrive;
   }
 
-  cta::common::dataStructures::TapeDrive getTapeDriveWithAllElements() {
+  cta::common::dataStructures::TapeDrive getTapeDriveWithAllElements(const std::string &driveName) {
     cta::common::dataStructures::TapeDrive tapeDrive;
-    tapeDrive.driveName = "VDSTK11";
+    tapeDrive.driveName = driveName;
     tapeDrive.host = "admin_host";
     tapeDrive.logicalLibrary = "VLSTK10";
     tapeDrive.mountType = cta::common::dataStructures::MountType::NoMount;
@@ -15569,21 +15570,81 @@ TEST_P(cta_catalogue_CatalogueTest, sameFileWrittenToSameTapePutThePreviousCopyO
 TEST_P(cta_catalogue_CatalogueTest, getTapeDrive) {
   using namespace cta;
 
-  const auto tapeDrive = getTapeDriveWithMandatoryElements();
+  const std::string tapeDriveName = "VDSTK11";
+  const auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
   m_catalogue->createTapeDrive(tapeDrive);
   const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
   ASSERT_EQ(tapeDrive, storedTapeDrive);
   m_catalogue->deleteTapeDrive(tapeDrive.driveName);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, failToGetTapeDrive) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  const std::string wrongName = "VDSTK56";
+  const auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  m_catalogue->createTapeDrive(tapeDrive);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(wrongName);
+  ASSERT_FALSE(storedTapeDrive);
+  m_catalogue->deleteTapeDrive(tapeDriveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, failToDeleteTapeDrive) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  const std::string wrongName = "VDSTK56";
+  const auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  m_catalogue->createTapeDrive(tapeDrive);
+  m_catalogue->deleteTapeDrive(wrongName);
+  auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive));
+  m_catalogue->deleteTapeDrive(tapeDriveName);
+  storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_FALSE(storedTapeDrive);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, getTapeDriveWithAllElements) {
   using namespace cta;
 
-  const auto tapeDrive = getTapeDriveWithAllElements();
+  const std::string tapeDriveName = "VDSTK11";
+  const auto tapeDrive = getTapeDriveWithAllElements(tapeDriveName);
   m_catalogue->createTapeDrive(tapeDrive);
   const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
   ASSERT_EQ(tapeDrive, storedTapeDrive);
   m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, multipleTapeDrives) {
+  using namespace cta;
+
+  const std::string tapeDriveName1 = "VDSTK11";
+  const std::string tapeDriveName2 = "VDSTK12";
+  const auto tapeDrive1 = getTapeDriveWithMandatoryElements(tapeDriveName1);
+  const auto tapeDrive2 = getTapeDriveWithAllElements(tapeDriveName2);
+  m_catalogue->createTapeDrive(tapeDrive1);
+  m_catalogue->createTapeDrive(tapeDrive2);
+  const auto storedTapeDrive1 = m_catalogue->getTapeDrive(tapeDrive1.driveName);
+  const auto storedTapeDrive2 = m_catalogue->getTapeDrive(tapeDrive2.driveName);
+  ASSERT_EQ(tapeDrive1, storedTapeDrive1);
+  ASSERT_EQ(tapeDrive2, storedTapeDrive2);
+  m_catalogue->deleteTapeDrive(tapeDrive1.driveName);
+  m_catalogue->deleteTapeDrive(tapeDrive2.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyTapeDrive) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  const auto tapeDrive1 = getTapeDriveWithMandatoryElements(tapeDriveName);
+  m_catalogue->createTapeDrive(tapeDrive1);
+  const auto tapeDrive2 = getTapeDriveWithAllElements(tapeDriveName);
+  ASSERT_NE(tapeDrive1, tapeDrive2);
+  m_catalogue->modifyTapeDrive(tapeDrive2);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive2.driveName);
+  ASSERT_EQ(tapeDrive2, storedTapeDrive);
+  m_catalogue->deleteTapeDrive(tapeDrive2.driveName);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createAndDeleteDriveConfig) {
@@ -15593,7 +15654,7 @@ TEST_P(cta_catalogue_CatalogueTest, createAndDeleteDriveConfig) {
 
   cta::SourcedParameter<std::string> daemonUserName {
     "taped", "DaemonUserName", "cta", "Compile time default"};
-  const auto tapeDrive = getTapeDriveWithMandatoryElements();
+  const auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
 
   m_catalogue->createDriveConfig(tapeDriveName, daemonUserName.category(), daemonUserName.key(),
     daemonUserName.value(), daemonUserName.source());

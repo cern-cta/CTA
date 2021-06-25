@@ -2047,7 +2047,9 @@ protected:
 
   void createTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) override;
 
-  common::dataStructures::TapeDrive getTapeDrive(const std::string &tapeDriveName) const override;
+  optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string &tapeDriveName) const override;
+
+  void modifyTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) override;
 
   void deleteTapeDrive(const std::string &tapeDriveName) override;
 
@@ -2099,6 +2101,9 @@ protected:
    * Cached version of the activities to weight maps.
    */
   mutable TimeBasedCache<std::string, common::dataStructures::ActivitiesFairShareWeights> m_activitiesFairShareWeights;
+
+private:
+  void settingSqlTapeDriveValues(cta::rdbms::Stmt *stmt, const common::dataStructures::TapeDrive &tapeDrive) const;
 
 }; // class RdbmsCatalogue
 
