@@ -15,4 +15,6 @@ import "cta_admin.proto";
 //
 service CtaRpc {
   rpc Version (google.protobuf.Empty) returns (cta.admin.Version) {}
+  rpc GetTapes (google.protobuf.Empty) returns (stream cta.admin.TapeLsItem) {}
+  rpc GetStorageClasses (google.protobuf.Empty) returns (stream cta.admin.StorageClassLsItem) {}
 }
