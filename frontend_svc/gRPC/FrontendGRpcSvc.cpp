@@ -133,9 +133,7 @@ using namespace cta;
 
 int main(const int argc, char *const *const argv) {
 
-    std::unique_ptr <cta::log::Logger> logger;
-    logger.reset(new log::StdoutLogger("cta-dev", "cta-grpc-frontend"));
-
+    std::unique_ptr <cta::log::Logger> logger = std::unique_ptr<cta::log::Logger>(new log::StdoutLogger("cta-dev", "cta-grpc-frontend", true));
     log::LogContext lc(*logger);
 
     std::string server_address("0.0.0.0:17017");
