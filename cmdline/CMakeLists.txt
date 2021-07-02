@@ -40,7 +40,7 @@ set_property (TARGET cta-admin APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 #
 add_executable(cta-send-event CtaSendEvent.cpp)
 target_link_libraries(cta-send-event ctacommon XrdSsiPbEosCta XrdSsiLib XrdUtils)
-set_property (TARGET cta-send-event APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+set_property(TARGET cta-send-event APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 #
 # verify-file <archiveFileId> <vid>
@@ -65,4 +65,5 @@ install(TARGETS cta-admin DESTINATION usr/bin)
 install(FILES cta-admin.1cta DESTINATION usr/share/man/man1)
 install(TARGETS cta-send-event DESTINATION usr/bin)
 install(FILES cta-send-closew.sh DESTINATION usr/bin)
+install(TARGETS cta-verify-file DESTINATION usr/bin)
 install(FILES cta-cli.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
