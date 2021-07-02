@@ -124,17 +124,21 @@ void CtaRpcImpl::run(const std::string server_address) {
     server->Wait();
 }
 
-CtaRpcImpl::CtaRpcImpl(cta::log::LogContext *lc, std::unique_ptr<cta::catalogue::Catalogue> &catalogue):
-    m_catalogue(std::move(catalogue)) {
+CtaRpcImpl::CtaRpcImpl(cta::log::LogContext *lc, std::unique_ptr<cta::catalogue::Catalogue> &catalogue, std::unique_ptr <cta::Scheduler> &scheduler):
+    m_catalogue(std::move(catalogue)), m_scheduler(std::move(scheduler)) {
     m_log = lc;
 }
 
 using namespace cta;
+using namespace cta::common;
 
 int main(const int argc, char *const *const argv) {
 
     std::unique_ptr <cta::log::Logger> logger = std::unique_ptr<cta::log::Logger>(new log::StdoutLogger("cta-dev", "cta-grpc-frontend", true));
     log::LogContext lc(*logger);
+
+    // use castor config to avoid dependency on xroot-ssi
+    Configuration config("/etc/cta/cta.conf");
 
     std::string server_address("0.0.0.0:17017");
 
@@ -155,6 +159,16 @@ int main(const int argc, char *const *const argv) {
         exit(1);
     }
 
-    CtaRpcImpl svc(&lc, catalogue);
+
+    // Initialise the Scheduler
+    auto backed = config.getConfEntString("ObjectStore", "BackendPath");
+    lc.log(log::INFO, "Using scheduler backend: " + backed);
+
+    auto sInit = cta::make_unique<SchedulerDBInit_t>("Frontend", backed, *logger);
+    auto scheddb = sInit->getSchedDB(*catalogue, *logger);
+    scheddb->setBottomHalfQueueSize(25000);
+    auto scheduler = cta::make_unique<cta::Scheduler>(*catalogue, *scheddb, 5, 2*1000*1000);
+
+    CtaRpcImpl svc(&lc, catalogue, scheduler);
     svc.run(server_address);
 }
