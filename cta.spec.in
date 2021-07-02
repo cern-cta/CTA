@@ -176,6 +176,20 @@ The xroot plugin
 %systemd_post cta-frontend.service
 %systemdDaemonReload
 
+%package -n cta-frontend-grpc
+Summary: CERN Tape Archive: gRPC based frontend
+Group: Application/CTA
+Requires: logrotate
+Requires: cta-common = %{version}-%{release}
+Requires: cta-lib = %{version}-%{release}
+Requires: cta-lib-catalogue = %{version}-%{release}
+%description -n cta-frontend-grpc
+CERN Tape Archive:
+gRPC based frontend
+%files -n cta-frontend-grpc
+%defattr(0755,root,root)
+%attr(0755,root,root) %{_bindir}/frontend-grpc-svc
+
 %package -n cta-cli
 Summary: CERN Tape Archive: command line interface
 Group: Application/CTA

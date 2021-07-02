@@ -26,3 +26,5 @@ target_link_libraries(frontend-grpc-svc CtaGRpc
         ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY}
         ctascheduler ctacommon ctaobjectstore ctacatalogue)
 set_property(TARGET frontend-grpc-svc APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+
+install(TARGETS frontend-grpc-svc DESTINATION usr/bin)
