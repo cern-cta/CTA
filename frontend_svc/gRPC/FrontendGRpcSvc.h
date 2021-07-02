@@ -45,6 +45,8 @@ public:
     Status Version(::grpc::ServerContext *context, const ::google::protobuf::Empty *request, ::cta::admin::Version *response);
     Status GetTapes(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::grpc::ServerWriter<::cta::admin::TapeLsItem>* writer);
     Status GetStorageClasses(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::grpc::ServerWriter<::cta::admin::StorageClassLsItem>* writer);
+
+    Status Archive(::grpc::ServerContext* context, const ::cta::eos::Notification* request, ::cta::xrd::Response* response);
 };
 
 #endif //CTA_FRONTENDGRPCSVC_H

@@ -9,6 +9,7 @@ package cta.rpc;
 import "google/protobuf/empty.proto";
 
 import "cta_admin.proto";
+import "cta_eos.proto";
 
 //
 // gRPC interface to CTA frontend
@@ -17,4 +18,5 @@ service CtaRpc {
   rpc Version (google.protobuf.Empty) returns (cta.admin.Version) {}
   rpc GetTapes (google.protobuf.Empty) returns (stream cta.admin.TapeLsItem) {}
   rpc GetStorageClasses (google.protobuf.Empty) returns (stream cta.admin.StorageClassLsItem) {}
+  rpc Archive (cta.eos.Notification) returns (cta.xrd.Response) {}
 }

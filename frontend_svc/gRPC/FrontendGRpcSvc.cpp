@@ -109,6 +109,36 @@ Status CtaRpcImpl::GetTapes(::grpc::ServerContext *context, const ::google::prot
     return Status::OK;
 }
 
+
+Status CtaRpcImpl::Archive(::grpc::ServerContext* context, const ::cta::eos::Notification* request, ::cta::xrd::Response* response) {
+
+    m_log->log(cta::log::INFO, "Archive request");
+
+    auto storageClassItor = request->file().xattr().find("sys.archive.storage_class");
+    if(request->file().xattr().end() == storageClassItor) {
+        return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "storage class is not provided");
+    }
+    const std::string storageClass = storageClassItor->second;
+    m_log->log(cta::log::INFO, "Archive request for " + storageClass);
+
+
+    cta::common::dataStructures::RequesterIdentity requester;
+    requester.name = request->cli().user().username();
+    requester.group = request->cli().user().groupname();
+
+    auto instance = request->wf().instance().name();
+
+    try {
+        uint64_t archiveFileId = m_scheduler->checkAndGetNextArchiveFileId(instance, storageClass, requester, *m_log);
+        std::cout << "New Fileid: " << archiveFileId << std::endl;
+    } catch (cta::exception::Exception &ex) {
+        m_log->log(cta::log::CRIT, ex.getMessageValue());
+        return ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.getMessageValue());
+    }
+
+    return Status::OK;
+}
+
 void CtaRpcImpl::run(const std::string server_address) {
 
     ServerBuilder builder;
