@@ -492,6 +492,9 @@ Currently contains a helper for the client-ar script, which should be installed 
 %attr(0755,root,root) /usr/bin/cta-client-ar-abortPrepare
 
 %changelog
+* Mon Jul 05 2021 julien.leduc (at) cern.ch - 4.0-3
+- Upgraded ceph to version 14.2.20
+- Adds cta-verify-file to cta-cli RPM
 * Tue Jun 01 2021 julien.leduc (at) cern.ch - 4.0-2
 - Upgraded EOS to 4.8.45
 - Upgraded eos-xrootd to 4.12.8

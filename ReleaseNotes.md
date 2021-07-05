@@ -4,10 +4,14 @@
 
 ### Features
 
+### Bug fixes
+
+# v4.0-3
+
+### Features
+
 - Upgraded ceph to version 14.2.20
 - Adds cta-verify-file to cta-cli RPM
-
-### Bug fixes
 
 # v4.0-2
 
