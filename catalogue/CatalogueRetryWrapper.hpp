@@ -612,6 +612,10 @@ public:
     return retryOnLostConnection(m_log,[&]{return m_catalogue->createTapeDrive(tapeDrive);},m_maxTriesToConnect);
   }
 
+  std::list<std::string> getTapeDriveNames() const override {
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->getTapeDriveNames();},m_maxTriesToConnect);
+  }
+
   optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string &tapeDriveName) const override {
     return retryOnLostConnection(m_log,[&]{return m_catalogue->getTapeDrive(tapeDriveName);},m_maxTriesToConnect);
   }
@@ -627,6 +631,10 @@ public:
   void createDriveConfig(const std::string &driveName, const std::string &category,
     const std::string &keyName, const std::string &value, const std::string &source) {
     return retryOnLostConnection(m_log,[&]{return m_catalogue->createDriveConfig(driveName, category, keyName, value, source);},m_maxTriesToConnect);
+  }
+
+  std::list<std::pair<std::string, std::string>> getDriveConfigNamesAndKeys() const {
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->getDriveConfigNamesAndKeys();},m_maxTriesToConnect);
   }
 
   void modifyDriveConfig(const std::string &driveName, const std::string &category,

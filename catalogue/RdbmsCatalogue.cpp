@@ -38,6 +38,7 @@
 #include "RdbmsCatalogueGetFileRecycleLogItor.hpp"
 
 #include <ctype.h>
+#include <list>
 #include <memory>
 #include <string>
 #include <time.h>
@@ -9320,6 +9321,30 @@ void RdbmsCatalogue::deleteTapeDrive(const std::string &tapeDriveName) {
   }
 }
 
+std::list<std::string> RdbmsCatalogue::getTapeDriveNames() const {
+  try {
+    std::list<std::string> tapeDriveNames;
+    const char *const sql =
+      "SELECT "
+        "DRIVE_NAME AS DRIVE_NAME "
+      "FROM "
+        "TAPE_DRIVE ";
+
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+
+    while (rset.next()) {
+      const std::string driveName = rset.columnString("DRIVE_NAME");
+      tapeDriveNames.push_back(driveName);
+    }
+    return tapeDriveNames;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
 optional<common::dataStructures::TapeDrive> RdbmsCatalogue::getTapeDrive(const std::string &tapeDriveName) const {
   try {
     const char *const sql =
@@ -9601,6 +9626,32 @@ void RdbmsCatalogue::createDriveConfig(const std::string &tapeDriveName, const s
       .add("value", value)
       .add("source", source);
     lc.log(log::INFO, "Catalogue - created drive configuration");
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+std::list<std::pair<std::string, std::string>> RdbmsCatalogue::getDriveConfigNamesAndKeys() const {
+  try {
+    std::list<std::pair<std::string, std::string>> namesAndKeys;
+    const char *const sql =
+      "SELECT "
+        "DRIVE_NAME AS DRIVE_NAME,"
+        "KEY_NAME AS KEY_NAME "
+      "FROM "
+        "DRIVE_CONFIG ";
+
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+
+    while (rset.next()) {
+      const std::string driveName = rset.columnString("DRIVE_NAME");
+      const std::string key = rset.columnString("KEY_NAME");
+      namesAndKeys.push_back(std::make_pair(driveName, key));
+    }
+    return namesAndKeys;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;

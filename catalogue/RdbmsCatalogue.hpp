@@ -2047,6 +2047,8 @@ protected:
 
   void createTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) override;
 
+  std::list<std::string> getTapeDriveNames() const override;
+
   optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string &tapeDriveName) const override;
 
   void modifyTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) override;
@@ -2055,6 +2057,8 @@ protected:
 
   void createDriveConfig(const std::string &tapeDriveName, const std::string &category,
     const std::string &keyName, const std::string &value, const std::string &source) override;
+
+  std::list<std::pair<std::string, std::string>> getDriveConfigNamesAndKeys() const override;
 
   void modifyDriveConfig(const std::string &tapeDriveName, const std::string &category,
     const std::string &keyName, const std::string &value, const std::string &source) override;

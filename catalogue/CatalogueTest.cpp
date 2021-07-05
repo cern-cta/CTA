@@ -35,6 +35,7 @@
 #include <gtest/gtest.h>
 #include <iomanip>
 #include <limits>
+#include <list>
 #include <map>
 #include <memory>
 #include <set>
@@ -378,6 +379,18 @@ void cta_catalogue_CatalogueTest::SetUp() {
       const auto virtualOrganizations = m_catalogue->getVirtualOrganizations();
       for(auto &vo: virtualOrganizations) {
         m_catalogue->deleteVirtualOrganization(vo.name);
+      }
+    }
+    {
+      const auto tapeDriveNames = m_catalogue->getTapeDriveNames();
+      for (const auto& name : tapeDriveNames) {
+        m_catalogue->deleteTapeDrive(name);
+      }
+    }
+    {
+      const auto configurationTapeNamesAndKeys = m_catalogue->getDriveConfigNamesAndKeys();
+      for (const auto& nameAndKey : configurationTapeNamesAndKeys) {
+        m_catalogue->deleteDriveConfig(nameAndKey.first, nameAndKey.second);
       }
     }
 
@@ -15567,6 +15580,21 @@ TEST_P(cta_catalogue_CatalogueTest, sameFileWrittenToSameTapePutThePreviousCopyO
   }
 }
 
+TEST_P(cta_catalogue_CatalogueTest, getTapeDriveNames) {
+  using namespace cta;
+
+  const std::list<std::string> tapeDriveNames = {"VDSTK11", "VDSTK12", "VDSTK21", "VDSTK22"};
+  for (const auto& name : tapeDriveNames) {
+    const auto tapeDrive = getTapeDriveWithMandatoryElements(name);
+    m_catalogue->createTapeDrive(tapeDrive);
+  }
+  const auto storedTapeDriveNames = m_catalogue->getTapeDriveNames();
+  ASSERT_EQ(tapeDriveNames, storedTapeDriveNames);
+  for (const auto& name : tapeDriveNames) {
+    m_catalogue->deleteTapeDrive(name);
+  }
+}
+
 TEST_P(cta_catalogue_CatalogueTest, getTapeDrive) {
   using namespace cta;
 
@@ -15761,6 +15789,34 @@ TEST_P(cta_catalogue_CatalogueTest, multipleDriveConfig) {
   m_catalogue->deleteDriveConfig(tapeDriveName1, daemonGroupName.key());
   m_catalogue->deleteDriveConfig(tapeDriveName2, daemonUserName.key());
   m_catalogue->deleteDriveConfig(tapeDriveName2, daemonGroupName.key());
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getNamesAndKeysOfMultipleDriveConfig) {
+  using namespace cta;
+
+  const std::string tapeDriveName1 = "VDSTK11";
+  const std::string tapeDriveName2 = "VDSTK12";
+
+  cta::SourcedParameter<std::string> daemonUserName {
+    "taped", "DaemonUserName", "cta", "Compile time default"};
+  cta::SourcedParameter<std::string> daemonGroupName {
+    "taped", "DaemonGroupName", "tape", "Compile time default"};
+
+  // Combinations of tapeDriveName1/2 and daemonUserName and daemonGroupName
+  m_catalogue->createDriveConfig(tapeDriveName1, daemonUserName.category(), daemonUserName.key(),
+    daemonUserName.value(), daemonUserName.source());
+  m_catalogue->createDriveConfig(tapeDriveName1, daemonGroupName.category(), daemonGroupName.key(),
+    daemonGroupName.value(), daemonGroupName.source());
+  m_catalogue->createDriveConfig(tapeDriveName2, daemonUserName.category(), daemonUserName.key(),
+    daemonUserName.value(), daemonUserName.source());
+  m_catalogue->createDriveConfig(tapeDriveName2, daemonGroupName.category(), daemonGroupName.key(),
+    daemonGroupName.value(), daemonGroupName.source());
+
+  const auto configurationTapeNamesAndKeys = m_catalogue->getDriveConfigNamesAndKeys();
+
+  for (const auto& nameAndKey : configurationTapeNamesAndKeys) {
+    m_catalogue->deleteDriveConfig(nameAndKey.first, nameAndKey.second);
+  }
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyDriveConfig) {
