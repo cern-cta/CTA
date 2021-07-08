@@ -4875,6 +4875,12 @@ void OStoreDB::ArchiveJob::failReport(const std::string& failureReason, log::Log
   typedef EnqueueingNextStep::NextStep NextStep;
   EnqueueingNextStep enQueueingNextStep = 
       m_archiveRequest.addReportFailure(tapeFile.copyNb, m_mountId, failureLog, lc);
+  // Don't re-queue the job if reportType is set to NoReportRequired. This can happen if a previous
+  // attempt to report failed due to an exception, for example if the file was deleted on close.
+  if(reportType == ReportType::NoReportRequired) {
+    enQueueingNextStep.nextStep = NextStep::StoreInFailedJobsContainer;
+  }
+
   // First set the job status
   m_archiveRequest.setJobStatus(tapeFile.copyNb, enQueueingNextStep.nextStatus);
   // Now apply the decision.

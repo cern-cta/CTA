@@ -87,7 +87,7 @@ void cta::ArchiveJob::validate(){
 }
 
 //------------------------------------------------------------------------------
-// ArchiveJob::reportURL
+// ArchiveJob::exceptionThrowingReportURL
 //------------------------------------------------------------------------------
 std::string cta::ArchiveJob::exceptionThrowingReportURL() {
   switch (m_dbJob->reportType) {
