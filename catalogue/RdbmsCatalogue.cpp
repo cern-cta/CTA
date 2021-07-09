@@ -40,8 +40,6 @@
 #include <ctype.h>
 #include <memory>
 #include <time.h>
-#include <sys/types.h>
-#include <grp.h>
 
 namespace cta {
 namespace catalogue {
