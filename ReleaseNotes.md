@@ -6,6 +6,12 @@
 
 ### Bug fixes
 
+# v4.0-4
+
+### Bug fixes
+
+- cta/CTA#1002 Do not requeue report jobs when reportType is NoReportRequired
+
 # v4.0-3
 
 ### Features
