@@ -40,6 +40,8 @@
 #include <ctype.h>
 #include <memory>
 #include <time.h>
+#include <sys/types.h>
+#include <grp.h>
 
 namespace cta {
 namespace catalogue {
@@ -7311,11 +7313,16 @@ uint64_t RdbmsCatalogue::checkAndGetNextArchiveFileId(const std::string &diskIns
       const auto groupMountPolicy = getCachedRequesterGroupMountPolicy(Group(diskInstanceName, user.group));
 
       if(!groupMountPolicy) {
-        exception::UserError ue;
-        ue.getMessage() << "No mount rules for the requester or their group:"
-          " storageClass=" << storageClassName << " requester=" << diskInstanceName << ":" << user.name << ":" <<
-          user.group;
-        throw ue;
+
+        const auto defaultMountPolicy = getCachedRequesterMountPolicy(User(diskInstanceName, "default"));
+
+        if(!defaultMountPolicy) {
+          exception::UserError ue;
+          ue.getMessage() << "No mount rules for the requester or their group:"
+            " storageClass=" << storageClassName << " requester=" << diskInstanceName << ":" << user.name << ":" <<
+            user.group;
+          throw ue;
+        }
       }
     }
 
@@ -7364,10 +7371,14 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::getArchiveFileQ
       mountPolicy = getCachedRequesterGroupMountPolicy(Group(diskInstanceName, user.group));
 
       if(!mountPolicy) {
-        exception::UserError ue;
-        ue.getMessage() << "No mount rules for the requester or their group: storageClass=" << storageClassName <<
-          " requester=" << diskInstanceName << ":" << user.name << ":" << user.group;
-        throw ue;
+        mountPolicy = getCachedRequesterMountPolicy(User(diskInstanceName, "default"));
+
+        if(!mountPolicy) {
+          exception::UserError ue;
+          ue.getMessage() << "No mount rules for the requester or their group: storageClass=" << storageClassName <<
+            " requester=" << diskInstanceName << ":" << user.name << ":" << user.group;
+          throw ue;
+        }
       }
     }
 
