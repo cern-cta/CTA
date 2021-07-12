@@ -28,39 +28,39 @@ namespace dataStructures {
 // constructor
 //------------------------------------------------------------------------------
 TapeDrive::TapeDrive():
-  driveStatus(TapeDrive::State::UNKNOWN),
+  driveStatus(DriveStatus::Unknown),
   desiredUp(false),
   desiredForceDown(false)
   {}
 
-const std::map<TapeDrive::State,std::string> TapeDrive::STATE_TO_STRING_MAP = {
-  {TapeDrive::State::UNKNOWN,"UNKNOWN"},
-  {TapeDrive::State::DOWN,"DOWN"},
-  {TapeDrive::State::UP,"UP"},
-  {TapeDrive::State::PROBING,"PROBING"},
-  {TapeDrive::State::STARTING,"STARTING"},
-  {TapeDrive::State::MOUNTING,"MOUNTING"},
-  {TapeDrive::State::TRANSFERING,"TRANSFERING"},
-  {TapeDrive::State::UNLOADING,"UNLOADING"},
-  {TapeDrive::State::UNMOUNTING,"UNMOUNTING"},
-  {TapeDrive::State::DRAININGTODISK,"DRAININGTODISK"},
-  {TapeDrive::State::CLEANINGUP,"CLEANINGUP"},
-  {TapeDrive::State::SHUTDOWN,"SHUTDOWN"}
+const std::map<DriveStatus, std::string> TapeDrive::STATE_TO_STRING_MAP = {
+  {DriveStatus::Unknown, "UNKNOWN"},
+  {DriveStatus::Down, "DOWN"},
+  {DriveStatus::Up, "UP"},
+  {DriveStatus::Probing, "PROBING"},
+  {DriveStatus::Starting, "STARTING"},
+  {DriveStatus::Mounting, "MOUNTING"},
+  {DriveStatus::Transferring, "TRANSFERING"},
+  {DriveStatus::Unloading, "UNLOADING"},
+  {DriveStatus::Unmounting, "UNMOUNTING"},
+  {DriveStatus::DrainingToDisk, "DRAININGTODISK"},
+  {DriveStatus::CleaningUp, "CLEANINGUP"},
+  {DriveStatus::Shutdown, "SHUTDOWN"}
 };
 
-const std::map<std::string,TapeDrive::State> TapeDrive::STRING_TO_STATE_MAP = {
-  {"UNKNOWN",TapeDrive::State::UNKNOWN},
-  {"DOWN",TapeDrive::State::DOWN},
-  {"UP",TapeDrive::State::UP},
-  {"PROBING",TapeDrive::State::PROBING},
-  {"STARTING",TapeDrive::State::STARTING},
-  {"MOUNTING",TapeDrive::State::MOUNTING},
-  {"TRANSFERING",TapeDrive::State::TRANSFERING},
-  {"UNLOADING",TapeDrive::State::UNLOADING},
-  {"UNMOUNTING",TapeDrive::State::UNMOUNTING},
-  {"DRAININGTODISK",TapeDrive::State::DRAININGTODISK},
-  {"CLEANINGUP",TapeDrive::State::CLEANINGUP},
-  {"SHUTDOWN",TapeDrive::State::SHUTDOWN}
+const std::map<std::string, DriveStatus> TapeDrive::STRING_TO_STATE_MAP = {
+  {"UNKNOWN", DriveStatus::Unknown},
+  {"DOWN", DriveStatus::Down},
+  {"UP", DriveStatus::Up},
+  {"PROBING", DriveStatus::Probing},
+  {"STARTING", DriveStatus::Starting},
+  {"MOUNTING", DriveStatus::Mounting},
+  {"TRANSFERING", DriveStatus::Transferring},
+  {"UNLOADING", DriveStatus::Unloading},
+  {"UNMOUNTING", DriveStatus::Unmounting},
+  {"DRAININGTODISK", DriveStatus::DrainingToDisk},
+  {"CLEANINGUP", DriveStatus::CleaningUp},
+  {"SHUTDOWN", DriveStatus::Shutdown}
 };
 
 std::string TapeDrive::getAllPossibleStates(){
@@ -144,7 +144,7 @@ std::string TapeDrive::getStateStr() const {
   return TapeDrive::stateToString(driveStatus);
 }
 
-std::string TapeDrive::stateToString(const TapeDrive::State & state) {
+std::string TapeDrive::stateToString(const DriveStatus & state) {
   try {
     return TapeDrive::STATE_TO_STRING_MAP.at(state);
   } catch (std::out_of_range &ex){
@@ -153,7 +153,7 @@ std::string TapeDrive::stateToString(const TapeDrive::State & state) {
   }
 }
 
-TapeDrive::State TapeDrive::stringToState(const std::string& state) {
+DriveStatus TapeDrive::stringToState(const std::string& state) {
   std::string stateUpperCase = state;
   cta::utils::toUpper(stateUpperCase);
   try {

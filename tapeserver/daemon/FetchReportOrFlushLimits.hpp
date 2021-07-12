@@ -19,7 +19,7 @@
 
 namespace cta { namespace tape { namespace daemon {
 
-/** The structure representing the maximum number of bytes and files 
+/** The structure representing the maximum number of bytes and files
  cta-taped will fetch or report in one access to the object store*/
 struct FetchReportOrFlushLimits {
   uint64_t maxBytes;

@@ -17,8 +17,10 @@
 
 #pragma once
 
+#include <map>
 #include <string>
 
+#include "common/dataStructures/DriveStatus.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/MountType.hpp"
 #include "common/optional.hpp"
@@ -31,24 +33,8 @@ namespace dataStructures {
  * This struct holds status of a Tape Drive
  */
 struct TapeDrive {
-
-  enum State {
-    UNKNOWN = 0,
-    DOWN = 1,
-    UP = 2,
-    PROBING = 3,
-    STARTING = 4,
-    MOUNTING = 5,
-    TRANSFERING = 6,
-    UNLOADING = 7,
-    UNMOUNTING = 8,
-    DRAININGTODISK = 9,
-    CLEANINGUP = 10,
-    SHUTDOWN = 11
-  };
-
-  static const std::map<State,std::string> STATE_TO_STRING_MAP;
-  static const std::map<std::string,State> STRING_TO_STATE_MAP;
+  static const std::map<DriveStatus, std::string> STATE_TO_STRING_MAP;
+  static const std::map<std::string, DriveStatus> STRING_TO_STATE_MAP;
 
   static std::string getAllPossibleStates();
 
@@ -67,7 +53,7 @@ struct TapeDrive {
    * @return the string representation of the state passed in parameter
    * @throws cta::exception::Exception if the state passed in parameter does not exist
    */
-  static std::string stateToString(const State &state);
+  static std::string stateToString(const DriveStatus &state);
 
   /**
    * Return the state value according to the state passed in parameter (not case sensitive)
@@ -75,7 +61,7 @@ struct TapeDrive {
    * @return the state corresponding to the State enum value
    * @throws cta::exception::Exception if the state passed in parameter does not match any existing State enum value
    */
-  static State stringToState(const std::string & state);
+  static DriveStatus stringToState(const std::string & state);
 
   std::string driveName;
   std::string host;
@@ -99,7 +85,7 @@ struct TapeDrive {
   optional<time_t> shutdownTime;
 
   MountType mountType;
-  State driveStatus;
+  DriveStatus driveStatus;
   bool desiredUp;
   bool desiredForceDown;
   optional<std::string> reasonUpDown;

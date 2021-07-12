@@ -30,38 +30,40 @@ class DriveState: public ObjectOps<serializers::DriveState, serializers::DriveSt
 public:
   // Undefined object constructor
   DriveState(Backend & os);
-  
+
   // Garbage collection interface
   DriveState(GenericObject & go);
-  void garbageCollect(const std::string& presumedOwner, AgentReference& agentReference, 
+  void garbageCollect(const std::string& presumedOwner, AgentReference& agentReference,
     log::LogContext& lc, cta::catalogue::Catalogue& catalogue) override;
 
   // Initialization
   void initialize(const std::string & driveName);
-  
+
   // Standard access constructor
   DriveState(const std::string & address, Backend & os);
-  
+
   // Data access
   cta::common::dataStructures::DriveState getState();
   void setState(cta::common::dataStructures::DriveState & state);
-  
+
   std::map<std::string, uint64_t> getDiskSpaceReservations();
   void addDiskSpaceReservation(const std::string & diskSystemName, uint64_t bytes);
+  void addDiskSpaceReservation(catalogue::Catalogue* catalogue, const std::string& diskSystemName, uint64_t bytes);
   CTA_GENERATE_EXCEPTION_CLASS(NegativeDiskSpaceReservationReached);
   void substractDiskSpaceReservation(const std::string & diskSystemName, uint64_t bytes);
+  void subtractDiskSpaceReservation(catalogue::Catalogue* catalogue, const std::string& diskSystemName, uint64_t bytes);
   void resetDiskSpaceReservation();
-  
+
   void setConfig(const cta::tape::daemon::TapedConfiguration &tapedConfiguration);
   void setTpConfig(const cta::tape::daemon::TpconfigLine &tpConfigLine);
   /**
    * JSON dump of the drive state
-   * @return 
+   * @return
    */
   std::string dump();
-  
+
   void commit();
-  
+
 private:
   /**
    * Allows to set a configuration value to the DriveConfig item passed in parameter
@@ -70,16 +72,16 @@ private:
    */
   template <typename T>
   void setConfigValue(cta::objectstore::serializers::DriveConfig * item,const T& value);
-  
+
   /**
    * Add a DriveConfig to the DriveState DriveConfig list and return its pointer
    * so the pointed DriveConfig can be modified afterwards
    * @param sourcedParameter the configuration that will be used for initialize the DriveConfig item
-   * @return 
+   * @return
    */
   template <typename T>
   cta::objectstore::serializers::DriveConfig * createAndInitDriveConfig(cta::SourcedParameter<T>& sourcedParameter);
-  
+
   /**
    * Allows to put the content of the sourcedParameter passed in parameter
    * into the DriveState's protobuf list of DriveConfig items (used for the cta-admin --json dr ls) command

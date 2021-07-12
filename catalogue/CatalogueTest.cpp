@@ -186,7 +186,7 @@ namespace {
     tapeDrive.host = "admin_host";
     tapeDrive.logicalLibrary = "VLSTK10";
     tapeDrive.mountType = cta::common::dataStructures::MountType::NoMount;
-    tapeDrive.driveStatus = cta::common::dataStructures::TapeDrive::State::UP;
+    tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::Up;
     tapeDrive.desiredUp = false;
     tapeDrive.desiredForceDown = false;
     tapeDrive.diskSystemName = "dummyDiskSystemName";
@@ -200,7 +200,7 @@ namespace {
     tapeDrive.host = "admin_host";
     tapeDrive.logicalLibrary = "VLSTK10";
     tapeDrive.mountType = cta::common::dataStructures::MountType::NoMount;
-    tapeDrive.driveStatus = cta::common::dataStructures::TapeDrive::State::UP;
+    tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::Up;
     tapeDrive.desiredUp = false;
     tapeDrive.desiredForceDown = false;
     tapeDrive.diskSystemName = "dummyDiskSystemName";

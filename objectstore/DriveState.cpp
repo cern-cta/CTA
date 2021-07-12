@@ -122,7 +122,7 @@ cta::common::dataStructures::DriveState DriveState::getState() {
   ret.devFileName = m_payload.dev_file_name();
   ret.rawLibrarySlot = m_payload.raw_library_slot();
   if (m_payload.has_current_activity())
-    ret.currentActivityAndWeight = 
+    ret.currentActivityAndWeight =
       cta::common::dataStructures::DriveState::ActivityAndWeight{
         m_payload.current_activity(), m_payload.current_activity_weight()};
   if (m_payload.has_nextmounttype())
@@ -251,7 +251,6 @@ void DriveState::fillConfig<cta::tape::daemon::FetchReportOrFlushLimits>(cta::So
   cta::utils::searchAndReplace(key,"Files","");
   itemFiles->set_key(key.append("Files"));
   setConfigValue(itemFiles, sourcedParameter.value().maxFiles);
-  
   cta::utils::searchAndReplace(key,"Files","");
   auto itemBytes = createAndInitDriveConfig(sourcedParameter);
   itemBytes->set_key(key.append("Bytes"));
@@ -281,9 +280,9 @@ void DriveState::fillConfig<time_t>(cta::SourcedParameter<time_t>& sourcedParame
 //------------------------------------------------------------------------------
 void DriveState::setConfig(const cta::tape::daemon::TapedConfiguration& tapedConfiguration) {
   cta::tape::daemon::TapedConfiguration * config = const_cast<cta::tape::daemon::TapedConfiguration*>(&tapedConfiguration);
-  
+
   m_payload.mutable_drive_config()->Clear();
-  
+
   fillConfig(config->daemonUserName);
   fillConfig(config->daemonGroupName);
   fillConfig(config->logMask);
@@ -348,6 +347,15 @@ void DriveState::addDiskSpaceReservation(const std::string& diskSystemName, uint
   newDsr->set_reserved_bytes(bytes);
 }
 
+void DriveState::addDiskSpaceReservation(catalogue::Catalogue* catalogue, const std::string& diskSystemName,
+  uint64_t bytes) {
+  auto tdStatus = catalogue->getTapeDrive(getState().driveName);
+  if (tdStatus) return;
+  tdStatus.value().diskSystemName = diskSystemName;
+  tdStatus.value().reservedBytes += bytes;
+  catalogue->modifyTapeDrive(tdStatus.value());
+}
+
 //------------------------------------------------------------------------------
 // DriveState::substractDiskSpaceReservation())
 //------------------------------------------------------------------------------
@@ -383,6 +391,16 @@ void DriveState::substractDiskSpaceReservation(const std::string& diskSystemName
         err.str()
       );
   }
+}
+
+void DriveState::subtractDiskSpaceReservation(catalogue::Catalogue* catalogue, const std::string& diskSystemName,
+  uint64_t bytes) {
+  auto tdStatus = catalogue->getTapeDrive(getState().driveName);
+  if (bytes > tdStatus.value().reservedBytes) throw NegativeDiskSpaceReservationReached(
+    "In DriveState::subtractDiskSpaceReservation(): we would reach a negative reservation size.");
+  tdStatus.value().diskSystemName = diskSystemName;
+  tdStatus.value().reservedBytes -= bytes;
+  catalogue->modifyTapeDrive(tdStatus.value());
 }
 
 //------------------------------------------------------------------------------

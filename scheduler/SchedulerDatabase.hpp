@@ -96,18 +96,18 @@ public:
    * Destructor.
    */
   virtual ~SchedulerDatabase() throw() = 0;
-  
-  
+
+
   /*============ Sub thread handling, mostly for unit tests =================*/
   virtual void waitSubthreadsComplete() = 0;
-  
+
   /*============ Basic IO check: validate object store access ===============*/
   /**
    * Validates that the scheduler database is accessible. A trivial operation
    * will be executed to check. The exception is let through in case of problem.
    */
   virtual void ping() = 0;
-  
+
   /*============ Archive management: user side ==============================*/
   /**
    * Queues the specified request.
@@ -118,10 +118,10 @@ public:
    * @param logContext context allowing logging db operation
    * @returns the objectstore ArchiveRequest address
    */
-  virtual std::string queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request, 
+  virtual std::string queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest &request,
     const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId &criteria,
     log::LogContext &logContext) = 0;
- 
+
 
   /**
    * Returns all of the queued archive jobs.  The returned jobs are
@@ -155,7 +155,7 @@ public:
   public:
     QueueRepackRequest(const std::string & vid, const std::string repackBufferURL, const common::dataStructures::RepackInfo::Type repackType, const common::dataStructures::MountPolicy & mountPolicy, const bool forceDisabledTape, const bool noRecall):
     m_vid(vid), m_repackBufferURL(repackBufferURL), m_repackType(repackType), m_mountPolicy(mountPolicy), m_forceDisabledTape(forceDisabledTape),m_noRecall(noRecall){}
-    
+
     std::string m_vid;
     std::string m_repackBufferURL;
     common::dataStructures::RepackInfo::Type m_repackType;
@@ -164,7 +164,7 @@ public:
     bool m_noRecall;
     common::dataStructures::EntryLog m_creationLog;
   };
-  
+
   /*============ Archive management: tape server side =======================*/
   /**
    * The class used by the scheduler database to track the archive mounts
@@ -196,7 +196,7 @@ public:
     virtual ~ArchiveMount() {}
     uint32_t nbFilesCurrentlyOnTape;
   };
-  
+
   /**
    * The class to handle the DB-side of a tape job.
    */
@@ -220,10 +220,10 @@ public:
     virtual void bumpUpTapeFileCount(uint64_t newFileCount) = 0;
     virtual ~ArchiveJob() {}
   };
-  
+
   /**
-   * Get a a set of jobs to report to the clients. This function is like 
-   * ArchiveMount::getNextJobBatch. It it not in the context of a mount as any 
+   * Get a a set of jobs to report to the clients. This function is like
+   * ArchiveMount::getNextJobBatch. It it not in the context of a mount as any
    * process can grab a batch of jobs to report and proceed with the reporting.
    * After reporting, setJobReported will be the last step of the job's lifecycle.
    * @return A list of process-owned jobs to report.
@@ -247,13 +247,13 @@ public:
    */
   virtual void setArchiveJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob *> & jobsBatch,
     log::TimingList & timingList, utils::Timer & t, log::LogContext & lc) = 0;
-  
+
   /*============ Retrieve  management: user side ============================*/
 
   /**
-   * A representation of an existing retrieve queue. This is a (simpler) relative 
-   * to the PotentialMount used for mount scheduling. This summary will be used to 
-   * decide which retrieve job to use for multiple copy files. 
+   * A representation of an existing retrieve queue. This is a (simpler) relative
+   * to the PotentialMount used for mount scheduling. This summary will be used to
+   * decide which retrieve job to use for multiple copy files.
    * In order to have a stable comparison, we compare on byte number and not file counts.
    */
   struct RetrieveQueueStatistics {
@@ -261,24 +261,24 @@ public:
     uint64_t bytesQueued;
     uint64_t filesQueued;
     uint64_t currentPriority;
-    
+
     bool operator <(const RetrieveQueueStatistics& right) const {
       return right > * this; // Reuse greater than operator
     }
-    
+
     bool operator >(const RetrieveQueueStatistics& right) const {
       return bytesQueued > right.bytesQueued || currentPriority > right.currentPriority;
     }
-    
+
     static bool leftGreaterThanRight (const RetrieveQueueStatistics& left, const RetrieveQueueStatistics& right) {
       return left > right;
     }
 
   };
-  
+
   /**
    * Get the retrieve queue statistics for the vids of the tape files from the criteria, that are also
-   * listed in the set. 
+   * listed in the set.
    * @param criteria the retrieve criteria, containing the list of tape files.
    * @param vidsToConsider list of vids to considers. Other vids should not be considered.
    * @return the list of statistics.
@@ -304,7 +304,7 @@ public:
   virtual RetrieveRequestInfo queueRetrieve(cta::common::dataStructures::RetrieveRequest &rqst,
     const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria, const optional<std::string> diskSystemName,
     log::LogContext &logContext) = 0;
-  
+
   virtual void cancelRetrieve(const std::string & instanceName, const cta::common::dataStructures::CancelRetrieveRequest &rqst,
     log::LogContext & lc) = 0;
 
@@ -328,7 +328,7 @@ public:
    */
   virtual std::list<RetrieveRequestDump> getRetrieveRequestsByVid(
     const std::string &vid) const = 0;
-  
+
   /**
    * Returns the list of retrieve jobs associated with the specified requester
    * sorted by creation time in ascending order (oldest first).
@@ -339,7 +339,7 @@ public:
    */
   virtual std::list<RetrieveRequestDump> getRetrieveRequestsByRequester(
     const std::string &requester) const = 0;
-  
+
   /**
    * Deletes the specified retrieve job.
    *
@@ -349,21 +349,21 @@ public:
   virtual void deleteRetrieveRequest(
     const common::dataStructures::SecurityIdentity &cliIdentity,
     const std::string &remoteFile) = 0;
-  
+
   /**
    * Idempotently deletes the specified ArchiveRequest from the objectstore
    * @param request, the ArchiveRequest to delete
    * @param lc the LogContext
    */
   virtual void cancelArchive(const common::dataStructures::DeleteArchiveRequest& request,  log::LogContext & lc) = 0;
-  
+
   /**
    * Idempotently deletes the specified ArchiveRequest from the objectstore
    * @param request, the ArchiveRequest to delete
    * @param lc the LogContext
    */
   virtual void deleteFailed(const std::string &objectId, log::LogContext & lc) = 0;
-  
+
   /**
    * Returns all of the queued archive jobs.  The returned jobs are
    * grouped by tape pool and then sorted by creation time, oldest first.
@@ -382,16 +382,16 @@ public:
    */
   virtual std::list<cta::common::dataStructures::RetrieveJob> getRetrieveJobs(
     const std::string &tapePoolName) const = 0;
-  
-  
+
+
   /*============ Retrieve management: tape server side ======================*/
 
   class RetrieveJob;
-  
+
   struct DiskSpaceReservationRequest: public std::map<std::string, uint64_t> {
     void addRequest(const std::string &diskSystemName, uint64_t size);
   };
-  
+
 public:
   class RetrieveMount {
   public:
@@ -418,7 +418,7 @@ public:
     virtual ~RetrieveMount() {}
     uint32_t nbFilesCurrentlyOnTape;
   };
-  
+
   class RetrieveJob {
     friend class RetrieveMount;
   public:
@@ -449,11 +449,11 @@ public:
   virtual std::list<common::dataStructures::RepackInfo> getRepackInfo() = 0;
   virtual common::dataStructures::RepackInfo getRepackInfo(const std::string & vid) = 0;
   virtual void cancelRepack(const std::string & vid, log::LogContext & lc) = 0;
-  
+
   /**
    * A class containing all the information needed for pending repack requests promotion.
    * We need to promote repack requests from "Pending" to "ToExpand" in a controlled
-   * manner. This will ensure the presence of a sufficient amount of repack subrequests 
+   * manner. This will ensure the presence of a sufficient amount of repack subrequests
    * in the system in order to keep things going without clogging the system with too many
    * requests in the case of a massive repack.
    * The mechanism is the same as for TapeMountDecision info. Polling functions (implemented
@@ -474,15 +474,15 @@ public:
     virtual PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount,
             log::LogContext &lc) = 0;
     virtual ~RepackRequestStatistics() {}
-    // The pending request queue could be absent. This is not a big problem as 
-    // there will be nothing to schedule anyway. This exception is thrown by the 
+    // The pending request queue could be absent. This is not a big problem as
+    // there will be nothing to schedule anyway. This exception is thrown by the
     // locking version only.
     CTA_GENERATE_EXCEPTION_CLASS(NoPendingRequestQueue);
   };
   CTA_GENERATE_EXCEPTION_CLASS(SchedulingLockNotHeld);
   virtual std::unique_ptr<RepackRequestStatistics> getRepackStatistics() = 0;
   virtual std::unique_ptr<RepackRequestStatistics> getRepackStatisticsNoLock() = 0;
-  
+
   /**
    * A class providing the per repack request interface. It is also used to create the per file
    * subrequests in the object store.
@@ -499,7 +499,7 @@ public:
       std::string fileBufferURL;
       bool hasUserProvidedFile = false;
     };
-    
+
     //Struct to hold the RepackRequest's total stats
     struct TotalStatsFiles{
       uint64_t totalFilesToArchive = 0;
@@ -508,13 +508,13 @@ public:
       uint64_t totalBytesToRetrieve = 0;
       uint64_t userProvidedFiles = 0;
     };
-    
+
     /**
      * Add Retrieve subrequests to the repack request and update its statistics
      * @return the number of retrieve subrequests queued
-     */    
-    virtual uint64_t addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests, 
-      cta::common::dataStructures::ArchiveRoute::FullMap & archiveRoutesMap, uint64_t maxFSeqLowBound, 
+     */
+    virtual uint64_t addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests,
+      cta::common::dataStructures::ArchiveRoute::FullMap & archiveRoutesMap, uint64_t maxFSeqLowBound,
       const uint64_t maxAddedFSeq, const TotalStatsFiles &totalStatsFiles, disk::DiskSystemList diskSystemList,
       log::LogContext & lc) = 0;
     virtual void expandDone() = 0;
@@ -524,12 +524,12 @@ public:
     virtual void fillLastExpandedFSeqAndTotalStatsFile(uint64_t &fSeq, TotalStatsFiles &totalStatsFiles) = 0;
     virtual ~RepackRequest() {}
   };
-  
+
   /***/
   virtual std::unique_ptr<RepackRequest> getNextRepackJobToExpand() = 0;
-  
+
   /*============ Repack management: maintenance process side =========================*/
-  
+
   /*!
    * Get a a set of failed jobs to report to the client.
    *
@@ -540,7 +540,7 @@ public:
    */
   virtual std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logContext) = 0;
   virtual std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext &logContext) = 0;
-  
+
   /**
    * A base class handling the various types of reports to repack. Implementation if left to Db implementer.
    */
@@ -549,29 +549,29 @@ public:
     virtual ~RepackReportBatch() {}
     virtual void report(log::LogContext & lc) = 0;
   };
-  
+
   /**
    * Extracts a batch of subrequests from the database to be reported to repack.
    * @param lc log context
    * @return Next batch to report.
    */
   virtual std::unique_ptr<RepackReportBatch> getNextRepackReportBatch(log::LogContext & lc) = 0;
-  
+
   virtual std::unique_ptr<RepackReportBatch> getNextSuccessfulRetrieveRepackReportBatch(log::LogContext &lc) = 0;
-  
+
   virtual std::unique_ptr<RepackReportBatch> getNextSuccessfulArchiveRepackReportBatch(log::LogContext &lc) = 0;
-  
+
   virtual std::unique_ptr<RepackReportBatch> getNextFailedRetrieveRepackReportBatch(log::LogContext &lc) = 0;
-  
+
   virtual std::unique_ptr<RepackReportBatch> getNextFailedArchiveRepackReportBatch(log::LogContext &lc) = 0;
-  
+
   /**
    * Return all batches of subrequests from the database to be reported to repack.
    * @param lc log context
    * @return the list of all batches to be reported
    */
   virtual std::list<std::unique_ptr<RepackReportBatch>> getRepackReportBatches(log::LogContext &lc) = 0;
-  
+
   /**
    * Set a batch of jobs as reported (modeled on ArchiveMount::setJobBatchSuccessful().
    * @param jobsBatch
@@ -583,10 +583,10 @@ public:
 
   /*============ Label management: user side =================================*/
   // TODO
-  
+
   /*============ Label management: tape server side ==========================*/
   class LabelMount {}; // TODO
-  
+
   /*============ Session management ==========================================*/
   /**
    * A structure describing a potential mount with all the information allowing
@@ -595,23 +595,23 @@ public:
   struct PotentialMount {
     cta::common::dataStructures::MountType type;    /**< Is this an archive, retireve or label? */
     std::string vid;              /**< The tape VID (for a retieve) */
-    std::string tapePool;         /**< The name of the tape pool for both archive 
+    std::string tapePool;         /**< The name of the tape pool for both archive
                                    * and retrieve */
     std::string vo;               // Virtual organization of the tape
     std::string mediaType;        // Media type of the tape
     std::string vendor;           // Vendor of the tape
     uint64_t capacityInBytes;     // Capacity in bytes of the tape
-    
-    uint64_t priority;            /**< The priority for the mount, defined as the highest 
+
+    uint64_t priority;            /**< The priority for the mount, defined as the highest
                                    * priority of all queued jobs */
-    time_t minRequestAge;         /**< The maximum amount of time to wait before 
-                                   * forcing a mount in the absence of enough data. 
+    time_t minRequestAge;         /**< The maximum amount of time to wait before
+                                   * forcing a mount in the absence of enough data.
                                    * Defined as the smallest value amongst jobs.*/
     uint64_t filesQueued;         /**< The number of files queued for this queue */
     uint64_t bytesQueued;         /**< The amount of data currently queued */
     time_t oldestJobStartTime;    /**< Creation time of oldest request */
     std::string logicalLibrary;   /**< The logical library (for a retrieve) */
-    double ratioOfMountQuotaUsed; /**< The [ 0.0, 1.0 ] ratio of existing 
+    double ratioOfMountQuotaUsed; /**< The [ 0.0, 1.0 ] ratio of existing
                                    * mounts/quota (for faire share of mounts)*/
     bool sleepingMount = false;   /**< Is the mount being slept due to lack of disk space? */
     time_t sleepStartTime = 0;    /**< Start time for the sleeping for lack of disk space. */
@@ -624,11 +624,11 @@ public:
       uint32_t mountCount = 0;
       double weightedMountCount = 0.0;
     };                            /**< Struct describing the activity if we have one for this mount. */
-    
+
     optional<ActivityNameAndWeightedMountCount> activityNameAndWeightedMountCount;
                                   /**< Description if the activity for this potential mount. */
-    
-    
+
+
     bool operator < (const PotentialMount &other) const {
       if (priority < other.priority)
         return true;
@@ -659,7 +659,7 @@ public:
       if(oldestJobStartTime < other.oldestJobStartTime)
         return false;
       /**
-       * For the tests, we try to have the priority by 
+       * For the tests, we try to have the priority by
        * alphabetical order : vid1 / tapepool1 should be treated before vid2/tapepool2,
        * so if this->vid < other.vid : then this > other.vid, so return false
        */
@@ -667,16 +667,16 @@ public:
         return false;
       if(vid > other.vid)
         return true;
-      
+
       if(tapePool < other.tapePool)
         return false;
       if(tapePool > other.tapePool)
         return true;
-      
+
       return false;
     }
   };
-  
+
 
   /**
    * Information about the existing mounts.
@@ -694,7 +694,7 @@ public:
     uint64_t priority;
     optional<std::string> activity;
   };
-  
+
   /**
    * An entry (to be indexed by drive name (string) in a map) for the dedication
    * lists of each drive.
@@ -702,12 +702,12 @@ public:
   struct DedicationEntry {
     // TODO.
   };
-  
+
   /**
    * A class containing all the information needed for mount decision
    * and whose creation implicitly takes a global lock on the drive register
    * so that only one mount scheduling happens at a time. Two member functions
-   * then allow the 
+   * then allow the
    */
   class TapeMountDecisionInfo {
   public:
@@ -721,7 +721,7 @@ public:
      */
     virtual std::unique_ptr<ArchiveMount> createArchiveMount(
       common::dataStructures::MountType mountType,
-      const catalogue::TapeForWriting & tape, const std::string driveName, 
+      const catalogue::TapeForWriting & tape, const std::string driveName,
       const std::string & logicalLibrary, const std::string & hostName,
       const std::string& vo, const std::string& mediaType,
       const std::string& vendor,
@@ -732,7 +732,7 @@ public:
      * lock.
      */
     virtual std::unique_ptr<RetrieveMount> createRetrieveMount(const std::string & vid,
-      const std::string & tapePool, const std::string driveName, 
+      const std::string & tapePool, const std::string driveName,
       const std::string& logicalLibrary, const std::string& hostName,
       const std::string& vo, const std::string& mediaType,
       const std::string& vendor,
@@ -741,34 +741,34 @@ public:
     /** Destructor: releases the global lock if not already done */
     virtual ~TapeMountDecisionInfo() {};
   };
-  
+
   //Enum to change the behaviour of the getMountInfoNoLock method
-  //if SHOW_QUEUES, getMountInfoNoLock will return the queues of the 
+  //if SHOW_QUEUES, getMountInfoNoLock will return the queues of the
   //tape that are disabled
   enum PurposeGetMountInfo {
     GET_NEXT_MOUNT,
     SHOW_QUEUES
   };
-  
+
   /**
    * A function dumping the relevant mount information for deciding which
    * tape to mount next. This also starts the mount decision process (and takes
    * a global lock on for scheduling).
    */
   virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) = 0;
-  
+
   /**
    * A function running a queue trim. This should be called if the corresponding
    * bit was set in the TapeMountDecisionInfo returned by getMountInfo().
    */
   virtual void trimEmptyQueues(log::LogContext & lc) = 0;
-  
+
   /**
    * A function dumping the relevant mount information for reporting the system
    * status. It is identical to getMountInfo, yet does not take the global lock.
    */
   virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose, log::LogContext& logContext) = 0;
-  
+
   /* === Drive state handling  ============================================== */
   /**
    * Returns the current list of registered drives.
@@ -776,7 +776,7 @@ public:
    * @return The current list of registered drives.
    */
   virtual std::list<cta::common::dataStructures::DriveState> getDriveStates(log::LogContext & lc) const = 0;
-  
+
   /**
    * Sets the administrative desired state (up/down/force down) for an existing drive.
    * Will throw an excpeiton is the drive does not exist
@@ -785,15 +785,15 @@ public:
    */
   virtual void setDesiredDriveState(const std::string & drive, const cta::common::dataStructures::DesiredDriveState & state,
     log::LogContext & lc) = 0;
-  
+
   /**
    * Remove drive from the drive register.
    * Will throw an exception is the drive does not exist.
-   * 
+   *
    * @param drive The drive name.
    */
   virtual void removeDrive(const std::string & drive, log::LogContext & logContext) = 0;
-  
+
   /**
    * Sets the drive status in the object store. The drive status will be recorded in all cases,
    * although some historical information is needed to provide an accurate view of the
@@ -813,7 +813,7 @@ public:
    */
   virtual void reportDriveStatus (const common::dataStructures::DriveInfo & driveInfo,
     cta::common::dataStructures::MountType mountType,
-    common::dataStructures::DriveStatus status, 
+    common::dataStructures::DriveStatus status,
     time_t reportTime,
     log::LogContext & lc,
     uint64_t mountSessionId = std::numeric_limits<uint64_t>::max(),
@@ -823,11 +823,12 @@ public:
     const std::string & vid = "",
     const std::string & tapepool = "",
     const std::string & vo = "") = 0;
-  
+
   virtual void reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine, const cta::tape::daemon::TapedConfiguration& tapedConfig,log::LogContext& lc) = 0;
-  
+
   virtual void checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo) = 0;
-  
+  virtual void checkDriveCanBeCreatedDB(const cta::common::dataStructures::DriveInfo & driveInfo) = 0;
+
 }; // class SchedulerDatabase
 
 } // namespace cta
