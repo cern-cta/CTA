@@ -6,6 +6,8 @@
 
 ### Bug fixes
 
+- [frontend] Adds missing break after "schedulinginfo ls" command
+
 # v4.0-4
 
 ### Bug fixes
