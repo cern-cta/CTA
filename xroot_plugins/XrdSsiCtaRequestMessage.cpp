@@ -271,13 +271,14 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                processVirtualOrganization_Ls(response, stream);
                break;
            case cmd_pair(AdminCmd::CMD_VERSION, AdminCmd::SUBCMD_NONE):
-             processVersion(response, stream);
-             break;
+               processVersion(response, stream);
+               break;
            case cmd_pair(AdminCmd::CMD_SCHEDULINGINFOS, AdminCmd::SUBCMD_LS):
-             processSchedulingInfos_Ls(response,stream);
+               processSchedulingInfos_Ls(response,stream);
+               break;
            case cmd_pair(AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_LS):
-             processRecycleTapeFile_Ls(response,stream);
-             break;
+               processRecycleTapeFile_Ls(response,stream);
+               break;
             default:
                throw PbException("Admin command pair <" +
                      AdminCmd_Cmd_Name(request.admincmd().cmd()) + ", " +
