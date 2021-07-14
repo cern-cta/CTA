@@ -513,9 +513,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
     }
   }
   
-  std::list<common::dataStructures::StorageClass> storageClasses;
-  if(repackInfo.type == RepackType::AddCopiesOnly || repackInfo.type == RepackType::MoveAndAddCopies)
-    storageClasses = m_catalogue.getStorageClasses();
+  std::list<common::dataStructures::StorageClass> storageClasses = m_catalogue.getStorageClasses();
   
   repackRequest->m_dbReq->setExpandStartedAndChangeStatus();
   uint64_t nbRetrieveSubrequestsQueued = 0;
@@ -553,6 +551,22 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
     retrieveSubRequest.archiveFile = archiveFile;
     retrieveSubRequest.fSeq = std::numeric_limits<decltype(retrieveSubRequest.fSeq)>::max();
 
+     //Check that all the archive routes have been configured, if one archive route is missing, we fail the repack request.
+    auto archiveFileRoutes = archiveRoutesMap[archiveFile.storageClass];
+    auto storageClassOfArchiveFile = std::find_if(storageClasses.begin(),storageClasses.end(),[&archiveFile](const common::dataStructures::StorageClass& sc){
+      return sc.name == archiveFile.storageClass;
+    });
+    
+    if(storageClassOfArchiveFile == storageClasses.end()) {
+      //No storage class have been found for the current tapefile throw an exception
+      deleteRepackBuffer(std::move(dir),lc);
+      std::ostringstream oss;
+      oss << "In Scheduler::expandRepackRequest(): No storage class have been found for the file to repack. ArchiveFileID=" << archiveFile.archiveFileID << " StorageClass of the file=" << archiveFile.storageClass; 
+      throw ExpandRepackRequestException(oss.str());
+    }
+    
+    common::dataStructures::StorageClass sc = *storageClassOfArchiveFile;
+    
     // We have to determine which copynbs we want to rearchive, and under which fSeq we record this file.
     if (repackInfo.type == RepackType::MoveAndAddCopies || repackInfo.type == RepackType::MoveOnly) {
       // determine which fSeq(s) (normally only one) lives on this tape.
@@ -561,6 +575,17 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
         // If not, we will ensure the subrequest is filed under the lowest fSeq existing on this tape.
         // This will prevent double subrequest creation (we already have such a mechanism in case of crash and 
         // restart of expansion.
+        
+        //Here, test that the archive route of the copyNb of the tape file is configured
+        try {
+          archiveFileRoutes.at(tc.copyNb);
+        } catch (const std::out_of_range & ex) {
+          deleteRepackBuffer(std::move(dir),lc);
+          std::ostringstream oss;
+          oss << "In Scheduler::expandRepackRequest(): the file archiveFileID=" << archiveFile.archiveFileID << ", copyNb=" << std::to_string(tc.copyNb) << ", storageClass=" << archiveFile.storageClass << " does not have any archive route for archival.";
+          throw ExpandRepackRequestException(oss.str());
+        }
+        
         totalStatsFile.totalFilesToArchive += 1;
         totalStatsFile.totalBytesToArchive += retrieveSubRequest.archiveFile.fileSize;
         retrieveSubRequest.copyNbsToRearchive.insert(tc.copyNb);
@@ -571,53 +596,42 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
     if(repackInfo.type == RepackType::AddCopiesOnly || repackInfo.type == RepackType::MoveAndAddCopies){
       //We are in the case where we possibly need to create new copies (if the number of copies the storage class of the current ArchiveFile 
       //is greater than the number of tape files we have in the current ArchiveFile)
-      auto archiveFileRoutes = archiveRoutesMap[archiveFile.storageClass];
-      auto storageClassItor = std::find_if(storageClasses.begin(),storageClasses.end(),[&archiveFile](const common::dataStructures::StorageClass& sc){
-        return sc.name == archiveFile.storageClass;
-      });
-      if(storageClassItor != storageClasses.end()){
-        common::dataStructures::StorageClass sc = *storageClassItor;
-        uint64_t nbFilesAlreadyArchived = getNbFilesAlreadyArchived(archiveFile);
-        uint64_t nbCopiesInStorageClass = sc.nbCopies;
-        uint64_t filesToArchive = nbCopiesInStorageClass - nbFilesAlreadyArchived;
-        if(filesToArchive > 0){
-          totalStatsFile.totalFilesToArchive += filesToArchive;
-          totalStatsFile.totalBytesToArchive += (filesToArchive * archiveFile.fileSize);
-          std::set<uint64_t> copyNbsAlreadyInCTA;
-          for (auto & tc: archiveFile.tapeFiles) {
-            copyNbsAlreadyInCTA.insert(tc.copyNb);
-            if (tc.vid == repackInfo.vid) {
-              // We make the (reasonable) assumption that the archive file only has one copy on this tape.
-              // If not, we will ensure the subrequest is filed under the lowest fSeq existing on this tape.
-              // This will prevent double subrequest creation (we already have such a mechanism in case of crash and 
-              // restart of expansion.
-              //We found the copy of the file we want to retrieve and archive
-              //retrieveSubRequest.fSeq = tc.fSeq;
-              if(repackInfo.type == RepackType::AddCopiesOnly)
-                retrieveSubRequest.fSeq = (retrieveSubRequest.fSeq == std::numeric_limits<decltype(retrieveSubRequest.fSeq)>::max()) ? tc.fSeq : std::max(tc.fSeq, retrieveSubRequest.fSeq);
-            }
-          }
-          for(auto archiveFileRoutesItor = archiveFileRoutes.begin(); archiveFileRoutesItor != archiveFileRoutes.end(); ++archiveFileRoutesItor){
-            if(copyNbsAlreadyInCTA.find(archiveFileRoutesItor->first) == copyNbsAlreadyInCTA.end()){
-              //We need to archive the missing copy
-              retrieveSubRequest.copyNbsToRearchive.insert(archiveFileRoutesItor->first);
-            }
-          }
-          if(retrieveSubRequest.copyNbsToRearchive.size() < filesToArchive){
-            deleteRepackBuffer(std::move(dir),lc);
-            throw ExpandRepackRequestException("In Scheduler::expandRepackRequest(): Missing archive routes for the creation of the new copies of the files");
-          }
-        } else {
-          if(repackInfo.type == RepackType::AddCopiesOnly){
-            //Nothing to Archive so nothing to Retrieve as well
-            retrieveSubrequests.pop_back();
-            continue;
+      uint64_t nbFilesAlreadyArchived = getNbFilesAlreadyArchived(archiveFile);
+      uint64_t nbCopiesInStorageClass = sc.nbCopies;
+      uint64_t filesToArchive = nbCopiesInStorageClass - nbFilesAlreadyArchived;
+      if(filesToArchive > 0){
+        totalStatsFile.totalFilesToArchive += filesToArchive;
+        totalStatsFile.totalBytesToArchive += (filesToArchive * archiveFile.fileSize);
+        std::set<uint64_t> copyNbsAlreadyInCTA;
+        for (auto & tc: archiveFile.tapeFiles) {
+          copyNbsAlreadyInCTA.insert(tc.copyNb);
+          if (tc.vid == repackInfo.vid) {
+            // We make the (reasonable) assumption that the archive file only has one copy on this tape.
+            // If not, we will ensure the subrequest is filed under the lowest fSeq existing on this tape.
+            // This will prevent double subrequest creation (we already have such a mechanism in case of crash and 
+            // restart of expansion.
+            //We found the copy of the file we want to retrieve and archive
+            //retrieveSubRequest.fSeq = tc.fSeq;
+            if(repackInfo.type == RepackType::AddCopiesOnly)
+              retrieveSubRequest.fSeq = (retrieveSubRequest.fSeq == std::numeric_limits<decltype(retrieveSubRequest.fSeq)>::max()) ? tc.fSeq : std::max(tc.fSeq, retrieveSubRequest.fSeq);
           }
         }
+        for(auto archiveFileRoutesItor = archiveFileRoutes.begin(); archiveFileRoutesItor != archiveFileRoutes.end(); ++archiveFileRoutesItor){
+          if(copyNbsAlreadyInCTA.find(archiveFileRoutesItor->first) == copyNbsAlreadyInCTA.end()){
+            //We need to archive the missing copy
+            retrieveSubRequest.copyNbsToRearchive.insert(archiveFileRoutesItor->first);
+          }
+        }
+        if(retrieveSubRequest.copyNbsToRearchive.size() < filesToArchive){
+          deleteRepackBuffer(std::move(dir),lc);
+          throw ExpandRepackRequestException("In Scheduler::expandRepackRequest(): Missing archive routes for the creation of the new copies of the files");
+        }
       } else {
-        //No storage class have been found for the current tapefile throw an exception
-        deleteRepackBuffer(std::move(dir),lc);
-        throw ExpandRepackRequestException("In Scheduler::expandRepackRequest(): No storage class have been found for the file to add copies");
+        if(repackInfo.type == RepackType::AddCopiesOnly){
+          //Nothing to Archive so nothing to Retrieve as well
+          retrieveSubrequests.pop_back();
+          continue;
+        }
       }
     }
 
