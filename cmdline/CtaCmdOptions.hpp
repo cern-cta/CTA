@@ -18,14 +18,14 @@
 #pragma once
 
 /*!
-* Simple command line option class for the verification command
+* Simple command line option class for simpler commands like cta-verify-file or cta-send-event
 */
-class VerifyOption {
+class StringOption {
 public:
     /*!
     * Constructor
     */
-    VerifyOption(const std::string &long_opt, const std::string &short_opt, const bool is_optional) :
+    StringOption(const std::string &long_opt, const std::string &short_opt, const bool is_optional) :
             m_long_opt(long_opt),
             m_short_opt(short_opt),
             m_is_optional(is_optional),

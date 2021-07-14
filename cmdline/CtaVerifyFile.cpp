@@ -21,7 +21,7 @@
 
 #include "CtaFrontendApi.hpp"
 #include "version.h"
-#include "CtaVerifyFile.hpp"
+#include "CtaCmdOptions.hpp"
 
 const std::string config_file = "/etc/cta/cta-cli.conf";
 
@@ -49,17 +49,27 @@ const std::runtime_error Usage("Usage: cta-verify-file <archiveFileID> [-v <vid>
                                "cta-verify-file <archiveFileID> [--vid <id>] "
                                "--instance <instance> --request.user <user> --request.group <group>");
 
-VerifyOption option_instance {"--instance", "-i", false};
-VerifyOption option_request_user {"--request.user", "-r.user", false};
-VerifyOption option_request_group {"--request.group", "-r.group", false};
-VerifyOption option_vid {"--vid", "-v", true};
+StringOption option_instance {"--instance", "-i", false};
+StringOption option_request_user {"--request.user", "-r.user", false};
+StringOption option_request_group {"--request.group", "-r.group", false};
+StringOption option_vid {"--vid", "-v", true};
 
-std::vector<VerifyOption*> verify_options = {&option_instance, &option_request_user, &option_request_group, &option_vid};
+std::vector<StringOption*> verify_options = {&option_instance, &option_request_user, &option_request_group, &option_vid};
 
+std::map<std::string, StringOption*> option_map = {
+        {"-i", &option_instance},
+        {"--instance", &option_instance},
+        {"-r.user", &option_request_user},
+        {"--request.user", &option_request_user},
+        {"-r.group", &option_request_group},
+        {"--request.group", &option_request_group},
+        {"-v", &option_vid},
+        {"--vid", &option_vid},
+};
 
-void validate_cmd()
-{
-    for (auto &option: verify_options) {
+void validate_cmd() {
+    for (auto &it: option_map) {
+        auto option = it.second;
         if (!option->is_optional() && !option->is_present()) {
             std::cout << "Error: Option " << option->get_name() << " is mandatory but not present." << std::endl;
             throw Usage;
@@ -67,25 +77,18 @@ void validate_cmd()
     }
 }
 
-
 void parse_cmd(const int argc, const char *const *const argv) {
     for (int i = 2; i < argc; i += 2) {
-        bool matches = false;
-        for (auto &option: verify_options) {
-            if (*option == argv[i]) {
-                option->set_present();
-                option->set_value(argv[i + 1]);
-                matches = true;
-                break;
-            }
-        }
-        if (!matches) {
+        auto search = option_map.find(argv[i]);
+        if (search == option_map.end()) {
             std::cout << "Error: Unknown option: " << argv[i] << std::endl;
             throw Usage;
         }
+        auto option = search->second;
+        option->set_present();
+        option->set_value(argv[i + 1]);
     }
 }
-
 
 /*
  * Fill a Notification message from the command-line parameters and stdin

@@ -25,6 +25,7 @@
 #include <common/checksum/ChecksumBlobSerDeser.hpp>
 #include "CtaFrontendApi.hpp"
 #include "version.h"
+#include "CtaCmdOptions.hpp"
 
 const std::string config_file = "/etc/cta/cta-cli.conf";
 
@@ -47,7 +48,43 @@ void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
 typedef std::map<std::string, std::string> AttrMap;
 
 // Usage exception
-const std::runtime_error Usage("Usage: eos --json fileinfo /eos/path | cta-send-event CLOSEW|PREPARE");
+const std::runtime_error Usage("Usage: eos --json fileinfo /eos/path | cta-send-event CLOSEW|PREPARE "
+                               "-i/--eos.instance <instance> [-e/--eos.endpoint <url>]");
+
+StringOption option_instance {"--eos.instance", "-i", true};
+StringOption option_endpoint {"--eos.endpoint", "-e", false};
+
+std::map<std::string, StringOption*> option_map = {
+        {"-i", &option_instance},
+        {"--eos.instance", &option_instance},
+        {"-e", &option_endpoint},
+        {"--eos.endpoint", &option_endpoint},
+};
+
+
+void validate_cmd() {
+    for (auto &it: option_map) {
+        auto option = it.second;
+        if (!option->is_optional() && !option->is_present()) {
+            std::cout << "Error: Option " << option->get_name() << " is mandatory but not present." << std::endl;
+            throw Usage;
+        }
+    }
+}
+
+void parse_cmd(const int argc, const char *const *const argv) {
+    for (int i = 2; i < argc; i += 2) {
+        auto search = option_map.find(argv[i]);
+        if (search == option_map.end()) {
+            std::cout << "Error: Unknown option: " << argv[i] << std::endl;
+            throw Usage;
+        }
+        auto option = search->second;
+        option->set_present();
+        option->set_value(argv[i + 1]);
+    }
+}
+
 
 // remove leading spaces and quotes
 void ltrim(std::string &s) {
@@ -105,17 +142,22 @@ void parseFileInfo(std::istream &in, AttrMap &attr, AttrMap &xattr)
  * @param[in]    config          The XrdSsiPb object containing the configuration parameters
  * @param[in]    wf_command      The workflow command (CLOSEW or PREPARE)
  */
-void fillNotification(cta::eos::Notification &notification, const std::string &wf_command)
+void fillNotification(cta::eos::Notification &notification, const std::string &wf_command,
+                      const int argc, const char *const *const argv)
 {
   XrdSsiPb::Config config(config_file, "eos");
 
-  for(auto &conf_option : std::vector<std::string>({ "instance", "requester.user", "requester.group" })) {
+  for(auto &conf_option : std::vector<std::string>({"requester.user", "requester.group" })) {
     if(!config.getOptionValueStr(conf_option).first) {
       throw std::runtime_error(conf_option + " must be specified in " + config_file);
     }
   }
-  const std::string &eos_instance = config.getOptionValueStr("instance").second;
-  const std::string &eos_endpoint = config.getOptionValueStr("endpoint").first ? config.getOptionValueStr("endpoint").second : "localhost:1095";
+
+  parse_cmd(argc, argv);
+  validate_cmd();
+
+  const std::string &eos_instance = option_instance.get_value();
+  const std::string &eos_endpoint = option_endpoint.is_present() ?option_endpoint.get_value() : "localhost:1095";
   const std::string &requester_user = config.getOptionValueStr("requester.user").second;
   const std::string &requester_group = config.getOptionValueStr("requester.group").second;
 
@@ -195,7 +237,7 @@ void fillNotification(cta::eos::Notification &notification, const std::string &w
  */
 int exceptionThrowingMain(int argc, const char *const *const argv)
 {
-  if(argc != 2) {
+  if(argc % 2) {
     throw Usage;
   }
 
@@ -224,7 +266,7 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
   config.getEnv("log", "XrdSsiPbLogLevel");
 
   // Parse the command line arguments: fill the Notification fields
-  fillNotification(notification, argv[1]);
+  fillNotification(notification, argv[1], argc, argv);
 
   // Obtain a Service Provider
   XrdSsiPbServiceType cta_service(config);
