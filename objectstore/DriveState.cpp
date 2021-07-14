@@ -15,6 +15,8 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <iostream>
+
 #include "DriveState.hpp"
 #include "GenericObject.hpp"
 #include <google/protobuf/util/json_util.h>
@@ -251,6 +253,7 @@ void DriveState::fillConfig<cta::tape::daemon::FetchReportOrFlushLimits>(cta::So
   cta::utils::searchAndReplace(key,"Files","");
   itemFiles->set_key(key.append("Files"));
   setConfigValue(itemFiles, sourcedParameter.value().maxFiles);
+
   cta::utils::searchAndReplace(key,"Files","");
   auto itemBytes = createAndInitDriveConfig(sourcedParameter);
   itemBytes->set_key(key.append("Bytes"));
@@ -350,10 +353,11 @@ void DriveState::addDiskSpaceReservation(const std::string& diskSystemName, uint
 void DriveState::addDiskSpaceReservation(catalogue::Catalogue* catalogue, const std::string& diskSystemName,
   uint64_t bytes) {
   auto tdStatus = catalogue->getTapeDrive(getState().driveName);
-  if (tdStatus) return;
+  if (!tdStatus) return;
   tdStatus.value().diskSystemName = diskSystemName;
   tdStatus.value().reservedBytes += bytes;
   catalogue->modifyTapeDrive(tdStatus.value());
+  auto tdStatus3 = catalogue->getTapeDrive(getState().driveName);
 }
 
 //------------------------------------------------------------------------------

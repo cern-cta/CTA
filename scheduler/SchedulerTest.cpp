@@ -167,7 +167,7 @@ public:
     const uint64_t retrievePriority = s_retrievePriority;
     const uint64_t minRetrieveRequestAge = s_minRetrieveRequestAge;
     const std::string mountPolicyComment = "create mount group";
-    
+
     catalogue::CreateMountPolicyAttributes mountPolicy;
     mountPolicy.name = mountPolicyName;
     mountPolicy.archivePriority = archivePriority;
@@ -213,7 +213,7 @@ public:
     vo.writeMaxDrives = 1;
     vo.readMaxDrives = 1;
     m_catalogue->createVirtualOrganization(s_adminOnAdminHost,vo);
-    
+
     common::dataStructures::StorageClass storageClass;
     storageClass.name = s_storageClassName;
     storageClass.nbCopies = 1;
@@ -231,13 +231,20 @@ public:
     const std::string archiveRouteComment = "Archive-route comment";
     catalogue.createArchiveRoute(s_adminOnAdminHost, s_storageClassName, copyNb, s_tapePoolName,
       archiveRouteComment);
-    
+
     cta::catalogue::MediaType mediaType;
     mediaType.name = s_mediaType;
     mediaType.capacityInBytes = s_mediaTypeCapacityInBytes;
     mediaType.cartridge = "cartridge";
     mediaType.comment = "comment";
-    catalogue.createMediaType(s_adminOnAdminHost,mediaType);
+    catalogue.createMediaType(s_adminOnAdminHost, mediaType);
+
+    const std::string driveName = "tape_drive";
+    const auto tapeDrive = getDefaultTapeDrive(driveName);
+    catalogue.createTapeDrive(tapeDrive);
+    const std::string driveName2 = "drive0";
+    const auto tapeDrive2 = getDefaultTapeDrive(driveName2);
+    catalogue.createTapeDrive(tapeDrive2);
   }
 
   cta::catalogue::CreateTapeAttributes getDefaultTape() {
@@ -255,6 +262,21 @@ public:
 
     return tape;
   }
+
+  cta::common::dataStructures::TapeDrive getDefaultTapeDrive(const std::string &driveName) {
+    cta::common::dataStructures::TapeDrive tapeDrive;
+    tapeDrive.driveName = driveName;
+    tapeDrive.host = "admin_host";
+    tapeDrive.logicalLibrary = "VLSTK10";
+    tapeDrive.mountType = cta::common::dataStructures::MountType::NoMount;
+    tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::Up;
+    tapeDrive.desiredUp = false;
+    tapeDrive.desiredForceDown = false;
+    tapeDrive.diskSystemName = "dummyDiskSystemName";
+    tapeDrive.reservedBytes = 694498291384;
+    return tapeDrive;
+  }
+
 private:
 
   // Prevent copying
@@ -267,7 +289,7 @@ private:
   std::unique_ptr<cta::objectstore::OStoreDBWrapperInterface> m_db;
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::unique_ptr<cta::Scheduler> m_scheduler;
-  
+
 protected:
 
   // Default parameters for storage classes, etc...
@@ -286,9 +308,9 @@ protected:
   const uint64_t s_minFilesToWarrantAMount = 5;
   const uint64_t s_minBytesToWarrantAMount = 2*1000*1000;
   const uint64_t s_archivePriority = 1;
-  const uint64_t s_minArchiveRequestAge = 2; 
+  const uint64_t s_minArchiveRequestAge = 2;
   const uint64_t s_retrievePriority = 3;
-  const uint64_t s_minRetrieveRequestAge = 4; 
+  const uint64_t s_minRetrieveRequestAge = 4;
   const uint64_t s_mediaTypeCapacityInBytes = 10;
   const std::string s_vo = "vo";
   //TempFile m_tempSqliteFile;
@@ -300,7 +322,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
 
   setupDefaultCatalogue();
   Scheduler &scheduler = getScheduler();
-  
+
   cta::common::dataStructures::EntryLog creationLog;
   creationLog.host="host2";
   creationLog.time=0;
@@ -422,7 +444,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
 
   Scheduler &scheduler = getScheduler();
   auto &catalogue = getCatalogue();
-  
+
   setupDefaultCatalogue();
 #ifdef STDOUT_LOGGING
   log::StdoutLogger dl("dummy", "unitTest");
@@ -430,7 +452,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
   log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
-  
+
   uint64_t archiveFileId;
   {
     // Queue an archive request.
@@ -458,7 +480,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
-  
+
   // Check that we have the file in the queues
   // TODO: for this to work all the time, we need an index of all requests
   // (otherwise we miss the selected ones).
@@ -472,7 +494,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
   }
   ASSERT_TRUE(found);
 
-  // Create the environment for the migration to happen (library + tape) 
+  // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = true;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
@@ -534,7 +556,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     ASSERT_EQ(0, archiveJobBatch.size());
     archiveMount->complete();
   }
-  
+
   {
     // Emulate the the reporter process reporting successful transfer to tape to the disk system
     auto jobsToReport = scheduler.getNextArchiveJobsToReportBatch(10, lc);
@@ -639,7 +661,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     const uint64_t retrievePriority = s_retrievePriority;
     const uint64_t minRetrieveRequestAge = s_minRetrieveRequestAge;
     const std::string mountPolicyComment = "create mount group";
-    
+
     catalogue::CreateMountPolicyAttributes mountPolicy;
     mountPolicy.name = mountPolicyName;
     mountPolicy.archivePriority = archivePriority;
@@ -685,7 +707,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     vo.writeMaxDrives = 1;
     vo.readMaxDrives = 1;
     catalogue.createVirtualOrganization(s_adminOnAdminHost,vo);
-    
+
     common::dataStructures::StorageClass storageClass;
     storageClass.name = dualCopyStorageClassName;
     storageClass.nbCopies = 2;
@@ -711,22 +733,29 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
       archiveRoute1Comment);
     catalogue.createArchiveRoute(s_adminOnAdminHost, dualCopyStorageClassName, archiveRoute2CopyNb, tapePool2Name,
       archiveRoute1Comment);
-    
+
     cta::catalogue::MediaType mediaType;
     mediaType.name = s_mediaType;
     mediaType.capacityInBytes = s_mediaTypeCapacityInBytes;
     mediaType.cartridge = "cartridge";
     mediaType.comment = "comment";
-    catalogue.createMediaType(s_adminOnAdminHost,mediaType);
+    catalogue.createMediaType(s_adminOnAdminHost, mediaType);
+
+    const std::string driveName = "tape_drive";
+    const auto tapeDrive = getDefaultTapeDrive(driveName);
+    catalogue.createTapeDrive(tapeDrive);
+    const std::string driveName2 = "drive0";
+    const auto tapeDrive2 = getDefaultTapeDrive(driveName2);
+    catalogue.createTapeDrive(tapeDrive2);
   }
-  
+
 #ifdef STDOUT_LOGGING
   log::StdoutLogger dl("dummy", "unitTest");
 #else
   log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
-  
+
   uint64_t archiveFileId;
   {
     // Queue an archive request.
@@ -754,7 +783,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
-  
+
   // Check that we have the file in the queues
   // TODO: for this to work all the time, we need an index of all requests
   // (otherwise we miss the selected ones).
@@ -769,7 +798,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
   ASSERT_TRUE(found);
 
   // Create the environment for the migration of copy 1 to happen (library +
-  // tape) 
+  // tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = true;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
@@ -809,6 +838,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     cta::common::dataStructures::DriveInfo driveInfo = { driveName, "myHost", s_libraryName };
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
+
     mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
     //Test that no mount is available when a logical library is disabled
     ASSERT_EQ(nullptr, mount.get());
@@ -852,7 +882,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
   }
 
   // Create the environment for the migration of copy 2 to happen (library +
-  // tape) 
+  // tape)
   catalogue.setLogicalLibraryDisabled(s_adminOnAdminHost,s_libraryName,true);
   const std::string copy2TapeVid = "copy_2_tape";
   {
@@ -914,7 +944,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     ASSERT_EQ(0, archiveJobBatch.size());
     archiveMount->complete();
   }
-  
+
   {
     // Emulate the the reporter process reporting successful transfer to tape to the disk system
     auto jobsToReport = scheduler.getNextArchiveJobsToReportBatch(10, lc);
@@ -1050,7 +1080,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
 
   Scheduler &scheduler = getScheduler();
   auto &catalogue = getCatalogue();
-  
+
   setupDefaultCatalogue();
 #ifdef STDOUT_LOGGING
   log::StdoutLogger dl("dummy", "unitTest");
@@ -1058,7 +1088,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
   log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
-  
+
   uint64_t archiveFileId;
   {
     // Queue an archive request.
@@ -1086,7 +1116,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
-  
+
   // Check that we have the file in the queues
   // TODO: for this to work all the time, we need an index of all requests
   // (otherwise we miss the selected ones).
@@ -1100,7 +1130,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
   }
   ASSERT_TRUE(found);
 
-  // Create the environment for the migration to happen (library + tape) 
+  // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
@@ -1157,7 +1187,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     ASSERT_EQ(0, archiveJobBatch.size());
     archiveMount->complete();
   }
-  
+
   {
     // Emulate the the reporter process reporting successful transfer to tape to the disk system
     auto jobsToReport = scheduler.getNextArchiveJobsToReportBatch(10, lc);
@@ -1189,7 +1219,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     scheduler.queueRetrieve("disk_instance", request, lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
-  
+
   // Try mounting the tape twice
   for(int mountPass = 0; mountPass < 2; ++mountPass)
   {
@@ -1269,7 +1299,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
       getSchedulerDB().replaceAgent(new objectstore::AgentReference("OStoreDBFactory2", dl));
     } // end of retries
   } // end of pass
-  
+
   {
     // We expect the retrieve queue to be empty
     auto rqsts = scheduler.getPendingRetrieveJobs(lc);
@@ -1299,7 +1329,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
 
   Scheduler &scheduler = getScheduler();
   auto &catalogue = getCatalogue();
-  
+
   setupDefaultCatalogue();
 #ifdef STDOUT_LOGGING
   log::StdoutLogger dl("dummy", "unitTest");
@@ -1307,7 +1337,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
   log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
-  
+
   uint64_t archiveFileId;
   {
     // Queue an archive request.
@@ -1335,7 +1365,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
-  
+
   // Check that we have the file in the queues
   // TODO: for this to work all the time, we need an index of all requests
   // (otherwise we miss the selected ones).
@@ -1349,7 +1379,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
   }
   ASSERT_TRUE(found);
 
-  // Create the environment for the migration to happen (library + tape) 
+  // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
@@ -1406,7 +1436,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     ASSERT_EQ(0, archiveJobBatch.size());
     archiveMount->complete();
   }
-  
+
   {
     // Emulate the the reporter process reporting successful transfer to tape to the disk system
     auto jobsToReport = scheduler.getNextArchiveJobsToReportBatch(10, lc);
@@ -1550,19 +1580,19 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
 
 TEST_P(SchedulerTest, retry_archive_until_max_reached) {
   using namespace cta;
-  
+
   setupDefaultCatalogue();
 
   auto &scheduler = getScheduler();
   auto &catalogue = getCatalogue();
-  
+
 #ifdef STDOUT_LOGGING
   log::StdoutLogger dl("dummy", "unitTest");
 #else
   log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
-  
+
   uint64_t archiveFileId;
   {
     // Queue an archive request.
@@ -1591,8 +1621,8 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
-  
-  // Create the environment for the migration to happen (library + tape) 
+
+  // Create the environment for the migration to happen (library + tape)
     const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
@@ -1638,11 +1668,11 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
 
 TEST_P(SchedulerTest, retrieve_non_existing_file) {
   using namespace cta;
-  
+
   setupDefaultCatalogue();
-  
+
   Scheduler &scheduler = getScheduler();
-  
+
   log::DummyLogger dl("", "");
   log::LogContext lc(dl);
 
@@ -1668,14 +1698,14 @@ TEST_P(SchedulerTest, retrieve_non_existing_file) {
 
 TEST_P(SchedulerTest, showqueues) {
   using namespace cta;
-  
+
   setupDefaultCatalogue();
-  
+
   Scheduler &scheduler = getScheduler();
-  
+
   log::DummyLogger dl("", "");
   log::LogContext lc(dl);
-  
+
   uint64_t archiveFileId __attribute__((unused));
   {
     // Queue an archive request.
@@ -1703,7 +1733,7 @@ TEST_P(SchedulerTest, showqueues) {
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
-  
+
   // get the queues from scheduler
   auto queuesSummary = scheduler.getQueuesAndMountSummaries(lc);
   ASSERT_EQ(1, queuesSummary.size());
@@ -1713,22 +1743,22 @@ TEST_P(SchedulerTest, repack) {
   using namespace cta;
   unitTests::TempDirectory tempDirectory;
   setupDefaultCatalogue();
-  
+
   Scheduler &scheduler = getScheduler();
   cta::catalogue::Catalogue& catalogue = getCatalogue();
-    
+
   log::DummyLogger dl("", "");
   log::LogContext lc(dl);
-  
+
   typedef cta::common::dataStructures::RepackInfo RepackInfo;
   typedef cta::common::dataStructures::RepackInfo::Status Status;
-  
-   // Create the environment for the migration to happen (library + tape) 
+
+   // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryIsDisabled, libraryComment);
-  
+
   common::dataStructures::SecurityIdentity cliId;
   cliId.host = "host";
   cliId.username = s_userName;
@@ -1739,7 +1769,7 @@ TEST_P(SchedulerTest, repack) {
     tape.vid = tape1;
     catalogue.createTape(cliId, tape);
   }
-  
+
   //The queueing of a repack request should fail if the tape to repack is not full
   cta::SchedulerDatabase::QueueRepackRequest qrr(tape1,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
     common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
@@ -1747,9 +1777,9 @@ TEST_P(SchedulerTest, repack) {
   //The queueing of a repack request in a vid that does not exist should throw an exception
   qrr.m_vid = "NOT_EXIST";
   ASSERT_THROW(scheduler.queueRepack(cliId, qrr, lc),cta::exception::UserError);
-  
+
   catalogue.setTapeFull(cliId,tape1,true);
-  
+
   // Create and then cancel repack
   qrr.m_vid = tape1;
   scheduler.queueRepack(cliId, qrr, lc);
@@ -1789,21 +1819,21 @@ TEST_P(SchedulerTest, repack) {
 TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
   using namespace cta;
   unitTests::TempDirectory tempDirectory;
-  
+
   setupDefaultCatalogue();
-  
+
   Scheduler &scheduler = getScheduler();
   catalogue::Catalogue& catalogue = getCatalogue();
-  
+
   log::DummyLogger dl("", "");
   log::LogContext lc(dl);
-  
-  // Create the environment for the migration to happen (library + tape) 
+
+  // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryIsDisabled, libraryComment);
-  
+
   common::dataStructures::SecurityIdentity cliId;
   cliId.host = "host";
   cliId.username = s_userName;
@@ -1819,7 +1849,7 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
   cta::SchedulerDatabase::QueueRepackRequest qrr(tape1,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
     common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
   scheduler.queueRepack(cliId, qrr, lc);
-  
+
   std::string tape2 = "Tape2";
 
   {
@@ -1833,14 +1863,14 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
   qrr.m_vid = tape2;
   qrr.m_repackType = common::dataStructures::RepackInfo::Type::AddCopiesOnly;
   scheduler.queueRepack(cliId,qrr,lc);
-  
+
   //Test the repack request queued has status Pending
   ASSERT_EQ(scheduler.getRepack(tape1).status,common::dataStructures::RepackInfo::Status::Pending);
   ASSERT_EQ(scheduler.getRepack(tape2).status,common::dataStructures::RepackInfo::Status::Pending);
-  
+
   //Change the repack request status to ToExpand
   scheduler.promoteRepackRequestsToToExpand(lc);
-  
+
   //Test the getNextRepackRequestToExpand method that is supposed to retrieve the previously first inserted request
   auto repackRequestToExpand1 = scheduler.getNextRepackRequestToExpand();
   //Check vid
@@ -1848,16 +1878,16 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
   //Check status changed from Pending to ToExpand
   ASSERT_EQ(repackRequestToExpand1.get()->getRepackInfo().status,common::dataStructures::RepackInfo::Status::ToExpand);
   ASSERT_EQ(repackRequestToExpand1.get()->getRepackInfo().type,common::dataStructures::RepackInfo::Type::MoveOnly);
-  
+
   //Test the getNextRepackRequestToExpand method that is supposed to retrieve the previously second inserted request
   auto repackRequestToExpand2 = scheduler.getNextRepackRequestToExpand();
-  
+
   //Check vid
   ASSERT_EQ(repackRequestToExpand2.get()->getRepackInfo().vid,tape2);
   //Check status changed from Pending to ToExpand
   ASSERT_EQ(repackRequestToExpand2.get()->getRepackInfo().status,common::dataStructures::RepackInfo::Status::ToExpand);
   ASSERT_EQ(repackRequestToExpand2.get()->getRepackInfo().type,common::dataStructures::RepackInfo::Type::AddCopiesOnly);
-  
+
   auto nullRepackRequest = scheduler.getNextRepackRequestToExpand();
   ASSERT_EQ(nullRepackRequest,nullptr);
 }
@@ -1865,40 +1895,40 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
 TEST_P(SchedulerTest, expandRepackRequest) {
   using namespace cta;
   unitTests::TempDirectory tempDirectory;
-  
+
   auto &catalogue = getCatalogue();
   auto &scheduler = getScheduler();
   auto &schedulerDB = getSchedulerDB();
-  
+
   setupDefaultCatalogue();
   catalogue.createDiskSystem({"user", "host"}, "diskSystem", "/public_dir/public_file", "constantFreeSpace:10", 10, 10L*1000*1000*1000, 15*60, "no comment");
-  
-    
+
+
 #ifdef STDOUT_LOGGING
   log::StdoutLogger dl("dummy", "unitTest");
 #else
   log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
-  
+
   //Create an agent to represent this test process
   std::string agentReferenceName = "expandRepackRequestTest";
   std::unique_ptr<objectstore::AgentReference> agentReference(new objectstore::AgentReference(agentReferenceName, dl));
- 
-  
+
+
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
-  
+
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
-  
+
   uint64_t nbTapesToRepack = 10;
   uint64_t nbTapesForTest = 2; //corresponds to the targetAvailableRequests variable in the Scheduler::promoteRepackRequestsToToExpand() method
-  
+
   std::vector<std::string> allVid;
-  
+
   //Create the tapes from which we will retrieve
   for(uint64_t i = 1; i <= nbTapesToRepack ; ++i){
     std::ostringstream ossVid;
@@ -1911,7 +1941,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
     tape.full = true;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
-  
+
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
   storageClass.name = s_storageClassName;
@@ -1939,7 +1969,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         fileWritten.archiveFileId = archiveFileId++;
         fileWritten.diskInstance = s_diskInstance;
         fileWritten.diskFileId = diskFileId.str();
-        
+
         fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
         fileWritten.diskFileGid = PUBLIC_GID;
         fileWritten.size = archiveFileSize;
@@ -1980,7 +2010,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
       //If we have expanded 2 repack requests, the getNextRepackRequestToExpand will return null as it is not possible
       //to promote more than 2 repack requests at a time. So we break here.
       if(repackRequestToExpand == nullptr) break;
-      
+
       scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc);
     }
     scheduler.waitSchedulerDbSubthreadsComplete();
@@ -2014,7 +2044,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
     }
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
-  
+
   //Now, we need to simulate a retrieve for each file
   {
     // Emulate a tape server by asking for nbTapesForTest mount and then all files
@@ -2056,11 +2086,11 @@ TEST_P(SchedulerTest, expandRepackRequest) {
 
       ASSERT_EQ(rrp.allThreadsDone(),true);
     }
-    
+
     uint64_t archiveFileId = 1;
     for(uint64_t i = 1; i<= nbTapesForTest ;++i)
     {
-      //After the jobs reported as completed, we will test that all jobs have been put in 
+      //After the jobs reported as completed, we will test that all jobs have been put in
       //the RetrieveQueueToReportToRepackForSuccess and that they have the status RJS_Succeeded
       {
         cta::objectstore::RootEntry re(schedulerDB.getBackend());
@@ -2138,7 +2168,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         ASSERT_EQ(0, re.dumpArchiveQueues(queueType).size());
       }
       // Now check we find all our requests in the archive queue.
-      cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(s_tapePoolName, cta::objectstore::JobQueueType::JobsToTransferForRepack), 
+      cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(s_tapePoolName, cta::objectstore::JobQueueType::JobsToTransferForRepack),
           schedulerDB.getBackend());
       aq.fetchNoLock();
       std::set<uint64_t> archiveIdsSeen;
@@ -2189,7 +2219,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
   auto &schedulerDB = getSchedulerDB();
   cta::objectstore::Backend& backend = schedulerDB.getBackend();
   setupDefaultCatalogue();
-  
+
 
 #ifdef STDOUT_LOGGING
   log::StdoutLogger dl("dummy", "unitTest");
@@ -2197,22 +2227,22 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
   log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
-  
+
   //Create an agent to represent this test process
   cta::objectstore::AgentReference agentReference("expandRepackRequestTest", dl);
   cta::objectstore::Agent agent(agentReference.getAgentAddress(), backend);
   agent.initialize();
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf(lc);
-  
+
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
-  
+
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
-  
+
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
   std::string vid = ossVid.str();
@@ -2220,11 +2250,11 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
   {
     auto tape = getDefaultTape();
     tape.vid = vid;
-    
+
     tape.full = true;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
-  
+
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
   storageClass.name = s_storageClassName;
@@ -2234,7 +2264,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
   const std::string tapeDrive = "tape_drive";
   const uint64_t nbArchiveFilesPerTape = 10;
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
-  
+
   //Simulate the writing of 10 files per tape in the catalogue
   std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
   {
@@ -2250,7 +2280,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      
+
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
       fileWritten.diskFileGid = PUBLIC_GID;
       fileWritten.size = archiveFileSize;
@@ -2270,20 +2300,20 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
   }
   //Test the expandRepackRequest method
   scheduler.waitSchedulerDbSubthreadsComplete();
-  
+
   {
     cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
         common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
     scheduler.queueRepack(admin,qrr,lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
- 
+
     log::TimingList tl;
     utils::Timer t;
-    
+
     //The promoteRepackRequestsToToExpand will only promote 2 RepackRequests to ToExpand status at a time.
     scheduler.promoteRepackRequestsToToExpand(lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
-    
+
     auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
     //If we have expanded 2 repack requests, the getNextRepackRequestToExpand will return null as it is not possible
     //to promote more than 2 repack requests at a time. So we break here.
@@ -2291,7 +2321,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
     scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
-  
+
   {
     std::unique_ptr<cta::TapeMount> mount;
     mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
@@ -2315,7 +2345,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
     castor::tape::tapeserver::daemon::RecallReportPacker rrp(retrieveMount.get(),lc);
 
     rrp.startThreads();
-    
+
     //Report all jobs as succeeded except the first one
     auto it = executedJobs.begin();
     it++;
@@ -2325,7 +2355,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
     }
     std::unique_ptr<cta::RetrieveJob> failedJobUniqPtr = std::move(*(executedJobs.begin()));
     rrp.reportFailedJob(std::move(failedJobUniqPtr),cta::exception::Exception("FailedJob expandRepackRequestFailedRetrieve"));
-   
+
     rrp.setDiskDone();
     rrp.setTapeDone();
 
@@ -2335,9 +2365,9 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
     rrp.waitThread();
 
     ASSERT_EQ(rrp.allThreadsDone(),true);
-    
+
     scheduler.waitSchedulerDbSubthreadsComplete();
-    
+
     {
       for(int i = 0; i < 5; ++i){
         std::unique_ptr<cta::TapeMount> mount;
@@ -2353,13 +2383,13 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
         auto jobBatch = retrieveMount->getNextJobBatch(1,archiveFileSize,lc);
         retrieveJob.reset(jobBatch.front().release());
         ASSERT_NE(nullptr, retrieveJob.get());
-        
+
         castor::tape::tapeserver::daemon::RecallReportPacker rrp(retrieveMount.get(),lc);
 
         rrp.startThreads();
-        
+
         rrp.reportFailedJob(std::move(retrieveJob),cta::exception::Exception("FailedJob for unit test expandRepackRequestFailedRetrieve"));
-        
+
         rrp.setDiskDone();
         rrp.setTapeDone();
 
@@ -2369,7 +2399,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
         rrp.waitThread();
         ASSERT_EQ(rrp.allThreadsDone(),true);
       }
-      
+
       {
         //Verify that the job is in the RetrieveQueueToReportToRepackForFailure
         cta::objectstore::RootEntry re(backend);
@@ -2380,7 +2410,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
         // The queue is named after the repack request: we need to query the repack index
         objectstore::RepackIndex ri(re.getRepackIndexAddress(), schedulerDB.getBackend());
         ri.fetchNoLock();
-        
+
         std::string retrieveQueueToReportToRepackForFailureAddress = re.getRetrieveQueueAddress(ri.getRepackRequestAddress(vid),cta::objectstore::JobQueueType::JobsToReportToRepackForFailure);
         cta::objectstore::RetrieveQueue rq(retrieveQueueToReportToRepackForFailureAddress,backend);
 
@@ -2394,7 +2424,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
           ASSERT_EQ(archiveFileSize,job.size);
         }
       }
-      
+
       {
         Scheduler::RepackReportBatch reports = scheduler.getNextRepackReportBatch(lc);
         reports.report(lc);
@@ -2411,7 +2441,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
         // The queue is named after the repack request: we need to query the repack index
         objectstore::RepackIndex ri(re.getRepackIndexAddress(), schedulerDB.getBackend());
         ri.fetchNoLock();
-        
+
         ASSERT_THROW(re.getRetrieveQueueAddress(ri.getRepackRequestAddress(vid),cta::objectstore::JobQueueType::JobsToReportToRepackForFailure),cta::exception::Exception);
       }
     }
@@ -2434,22 +2464,22 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
-  
+
   //Create an agent to represent this test process
   cta::objectstore::AgentReference agentReference("expandRepackRequestTest", dl);
   cta::objectstore::Agent agent(agentReference.getAgentAddress(), backend);
   agent.initialize();
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf(lc);
-  
+
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
-  
+
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
-  
+
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
   std::string vid = ossVid.str();
@@ -2479,7 +2509,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   const std::string tapeDrive = "tape_drive";
   const uint64_t nbArchiveFilesPerTape = 10;
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
-  
+
   //Simulate the writing of 10 files per tape in the catalogue
   std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
   {
@@ -2495,7 +2525,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      
+
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
       fileWritten.diskFileGid = PUBLIC_GID;
       fileWritten.size = archiveFileSize;
@@ -2515,21 +2545,21 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   }
   //Test the expandRepackRequest method
   scheduler.waitSchedulerDbSubthreadsComplete();
-  
+
   {
     cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
     common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
     scheduler.queueRepack(admin,qrr,lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
     //scheduler.waitSchedulerDbSubthreadsComplete();
- 
+
     log::TimingList tl;
     utils::Timer t;
-    
+
     //The promoteRepackRequestsToToExpand will only promote 2 RepackRequests to ToExpand status at a time.
     scheduler.promoteRepackRequestsToToExpand(lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
-    
+
     auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
     //If we have expanded 2 repack requests, the getNextRepackRequestToExpand will return null as it is not possible
     //to promote more than 2 repack requests at a time. So we break here.
@@ -2560,13 +2590,13 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
     castor::tape::tapeserver::daemon::RecallReportPacker rrp(retrieveMount.get(),lc);
 
     rrp.startThreads();
-    
+
     //Report all jobs as succeeded
     for(auto it = executedJobs.begin(); it != executedJobs.end(); ++it)
     {
       rrp.reportCompletedJob(std::move(*it));
     }
-   
+
     rrp.setDiskDone();
     rrp.setTapeDone();
 
@@ -2592,12 +2622,12 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
     mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForRepack, mount.get()->getMountType());
-    
+
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
     std::unique_ptr<cta::ArchiveJob> archiveJob;
-    
+
     //Get all Archive jobs
     std::list<std::unique_ptr<cta::ArchiveJob>> executedJobs;
     for(uint64_t j = 1;j<=nbArchiveFilesPerTape;++j){
@@ -2609,21 +2639,21 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
       ASSERT_NE(nullptr,archiveJob.get());
       executedJobs.push_back(std::move(archiveJob));
     }
-    
+
     castor::tape::tapeserver::daemon::MigrationReportPacker mrp(archiveMount.get(),lc);
     mrp.startThreads();
-    
+
     //Report all archive jobs as succeeded
     for(auto it = executedJobs.begin();it != executedJobs.end(); ++it){
       mrp.reportCompletedJob(std::move(*it),lc);
     }
-    
+
     castor::tape::tapeserver::drive::compressionStats compressStats;
     mrp.reportFlush(compressStats,lc);
     mrp.reportEndOfSession(lc);
     mrp.reportTestGoingToEnd(lc);
     mrp.waitThread();
-    
+
     //Check that the ArchiveRequests are in the ArchiveQueueToReportToRepackForSuccess
     {
       //Verify that the job is in the ArchiveQueueToReportToRepackForSuccess
@@ -2688,22 +2718,22 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
   log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
-  
+
   //Create an agent to represent this test process
   cta::objectstore::AgentReference agentReference("expandRepackRequestTest", dl);
   cta::objectstore::Agent agent(agentReference.getAgentAddress(), backend);
   agent.initialize();
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf(lc);
-  
+
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
-  
+
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
-  
+
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
   std::string vid = ossVid.str();
@@ -2722,7 +2752,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
     tape.vid = vidDestinationRepack;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
-  
+
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
   storageClass.name = s_storageClassName;
@@ -2732,7 +2762,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
   const std::string tapeDrive = "tape_drive";
   const uint64_t nbArchiveFilesPerTape = 10;
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
-  
+
   //Simulate the writing of 10 files per tape in the catalogue
   std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
   {
@@ -2748,7 +2778,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      
+
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
       fileWritten.diskFileGid = PUBLIC_GID;
       fileWritten.size = archiveFileSize;
@@ -2768,7 +2798,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
   }
   //Test the expandRepackRequest method
   scheduler.waitSchedulerDbSubthreadsComplete();
-  
+
   {
     cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
     common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
@@ -2809,13 +2839,13 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
     castor::tape::tapeserver::daemon::RecallReportPacker rrp(retrieveMount.get(),lc);
 
     rrp.startThreads();
-    
+
     //Report all jobs as succeeded
     for(auto it = executedJobs.begin(); it != executedJobs.end(); ++it)
     {
       rrp.reportCompletedJob(std::move(*it));
     }
-   
+
     rrp.setDiskDone();
     rrp.setTapeDone();
 
@@ -2841,12 +2871,12 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
     mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForRepack, mount.get()->getMountType());
-    
+
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
     std::unique_ptr<cta::ArchiveJob> archiveJob;
-    
+
     //Get all Archive jobs
     std::list<std::unique_ptr<cta::ArchiveJob>> executedJobs;
     for(uint64_t j = 1;j<=nbArchiveFilesPerTape;++j){
@@ -2858,7 +2888,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
       ASSERT_NE(nullptr,archiveJob.get());
       executedJobs.push_back(std::move(archiveJob));
     }
-    
+
     {
       castor::tape::tapeserver::daemon::MigrationReportPacker mrp(archiveMount.get(),lc);
       mrp.startThreads();
@@ -2877,7 +2907,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
       mrp.reportEndOfSession(lc);
       mrp.reportTestGoingToEnd(lc);
       mrp.waitThread();
-      
+
       {
         //Test only 9 jobs are in the ArchiveQueueToReportToRepackForSuccess
         cta::objectstore::RootEntry re(backend);
@@ -2892,7 +2922,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
         ASSERT_EQ(9,aq.dumpJobs().size());
       }
     }
-   
+
     for(int i = 0; i < 5; ++i){
       {
         //The failed job should be queued into the ArchiveQueueToTransferForRepack
@@ -2933,7 +2963,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
       mrp.reportTestGoingToEnd(lc);
       mrp.waitThread();
     }
-    
+
     //Test that the failed job is queued in the ArchiveQueueToReportToRepackForFailure
     {
       cta::objectstore::RootEntry re(backend);
@@ -2990,22 +3020,22 @@ TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
   log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
-  
+
   //Create an agent to represent this test process
   cta::objectstore::AgentReference agentReference("expandRepackRequestTest", dl);
   cta::objectstore::Agent agent(agentReference.getAgentAddress(), backend);
   agent.initialize();
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf(lc);
-  
+
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
-  
+
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
   catalogue.createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
-  
+
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
   std::string vid = ossVid.str();
@@ -3028,7 +3058,7 @@ TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
   const std::string tapeDrive = "tape_drive";
   const uint64_t nbArchiveFilesPerTape = 10;
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
-  
+
   //Simulate the writing of 10 files in 1 tape in the catalogue
   std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
   {
@@ -3044,7 +3074,7 @@ TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      
+
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
       fileWritten.diskFileGid = PUBLIC_GID;
       fileWritten.size = archiveFileSize;
@@ -3062,7 +3092,7 @@ TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
     catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
     tapeFilesWrittenCopy1.clear();
   }
-  //Test the expanding requeue the Repack after the creation of 
+  //Test the expanding requeue the Repack after the creation of
   //one retrieve request
   scheduler.waitSchedulerDbSubthreadsComplete();
   {
@@ -3116,22 +3146,22 @@ TEST_P(SchedulerTest, expandRepackRequestBrokenTape) {
   log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
-  
+
   //Create an agent to represent this test process
   cta::objectstore::AgentReference agentReference("expandRepackRequestTest", dl);
   cta::objectstore::Agent agent(agentReference.getAgentAddress(), backend);
   agent.initialize();
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf(lc);
-  
+
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
-  
+
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
   catalogue.createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
-  
+
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
   std::string vid = ossVid.str();
@@ -3179,22 +3209,22 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
   log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
-  
+
   //Create an agent to represent this test process
   cta::objectstore::AgentReference agentReference("expandRepackRequestTest", dl);
   cta::objectstore::Agent agent(agentReference.getAgentAddress(), backend);
   agent.initialize();
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf(lc);
-  
+
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
-  
+
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
   catalogue.createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
-  
+
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
   std::string vid = ossVid.str();
@@ -3205,7 +3235,7 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
     tape.full = true;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
-  
+
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
   storageClass.name = s_storageClassName;
@@ -3215,7 +3245,7 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
   const std::string tapeDrive = "tape_drive";
   const uint64_t nbArchiveFilesPerTape = 10;
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
-  
+
   //Simulate the writing of 10 files in 1 tape in the catalogue
   std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
   {
@@ -3231,7 +3261,7 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      
+
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
       fileWritten.diskFileGid = PUBLIC_GID;
       fileWritten.size = archiveFileSize;
@@ -3262,23 +3292,23 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
   //disabled the tape
-  
+
   std::string disabledReason = "Disabled reason";
   catalogue.setTapeDisabled(admin,vid,disabledReason);
-  
+
   //No mount should be returned by getNextMount
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, "drive0", lc));
-  
+
   //enable the tape
   catalogue.modifyTapeState(admin,vid,common::dataStructures::Tape::ACTIVE,cta::nullopt);
-  
+
   //A mount should be returned by getNextMount
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName,"drive0",lc));
-  
+
   //disable the tape
   catalogue.setTapeDisabled(admin,vid,disabledReason);
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName,"drive0",lc));
-  
+
   //Queue a Repack Request with --disabledtape flag set to force Retrieve Mount for disabled tape
   cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
     common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,true,s_defaultRepackNoRecall);
@@ -3325,22 +3355,22 @@ TEST_P(SchedulerTest, emptyMountIsTriggeredWhenCancelledRetrieveRequest) {
   log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
-  
+
   //Create an agent to represent this test process
   cta::objectstore::AgentReference agentReference("expandRepackRequestTest", dl);
   cta::objectstore::Agent agent(agentReference.getAgentAddress(), backend);
   agent.initialize();
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf(lc);
-  
+
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
-  
+
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
   catalogue.createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
-  
+
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
   std::string vid = ossVid.str();
@@ -3351,7 +3381,7 @@ TEST_P(SchedulerTest, emptyMountIsTriggeredWhenCancelledRetrieveRequest) {
     tape.full = true;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
-  
+
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
   storageClass.name = s_storageClassName;
@@ -3361,7 +3391,7 @@ TEST_P(SchedulerTest, emptyMountIsTriggeredWhenCancelledRetrieveRequest) {
   const std::string tapeDrive = "tape_drive";
   const uint64_t nbArchiveFilesPerTape = 10;
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
-  
+
   //Simulate the writing of 10 files in 1 tape in the catalogue
   std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
   {
@@ -3377,7 +3407,7 @@ TEST_P(SchedulerTest, emptyMountIsTriggeredWhenCancelledRetrieveRequest) {
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      
+
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
       fileWritten.diskFileGid = PUBLIC_GID;
       fileWritten.size = archiveFileSize;
@@ -3412,13 +3442,13 @@ TEST_P(SchedulerTest, emptyMountIsTriggeredWhenCancelledRetrieveRequest) {
   //disabled the tape
   std::string disabledReason = "reason";
   catalogue.setTapeDisabled(admin,vid,disabledReason);
-  
+
   //No mount should be returned by getNextMount
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, "drive0", lc));
-  
+
   //abort the retrieve request
   {
-    //Get the only retrieve job in the queue 
+    //Get the only retrieve job in the queue
     cta::objectstore::RootEntry re(backend);
     re.fetchNoLock();
     std::string retrieveQueueAddr = re.getRetrieveQueueAddress(vid,JobQueueType::JobsToTransferForUser);
@@ -3431,11 +3461,11 @@ TEST_P(SchedulerTest, emptyMountIsTriggeredWhenCancelledRetrieveRequest) {
     crr.dstURL = dstUrl;
     scheduler.abortRetrieve(diskInstance,crr,lc);
   }
-  
+
   //A mount should be returned by getNextMount
   auto retrieveMount = scheduler.getNextMount(s_libraryName,"drive0",lc);
   ASSERT_NE(nullptr,retrieveMount);
-  
+
 }
 
 TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivities) {
@@ -3443,7 +3473,7 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
 
   Scheduler &scheduler = getScheduler();
   auto &catalogue = getCatalogue();
-  
+
   setupDefaultCatalogue();
 #ifdef STDOUT_LOGGING
   log::StdoutLogger dl("dummy", "unitTest");
@@ -3451,7 +3481,7 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
   log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
-  
+
   // We want to virtually archive files on 10 different tapes that will be asked for by different activities.
   // Activity A will have a weight of .4, B 0.3, and this allows partially predicting the mount order for them:
   // (A or B) (the other) A B A B A (A or B) (the other) A.
@@ -3486,7 +3516,7 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
     scheduler.queueArchiveWithGivenId(archiveFileIds[i], s_diskInstance, request, lc);
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
-  
+
   // Check that we have the files in the queues
   // TODO: for this to work all the time, we need an index of all requests
   // (otherwise we miss the selected ones).
@@ -3504,7 +3534,7 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
     ASSERT_TRUE(found.at(i));
   }
 
-  // Create the environment for the migrations to happen (library + tapes) 
+  // Create the environment for the migrations to happen (library + tapes)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
@@ -3521,7 +3551,7 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
     std::string vid = s_vid + std::to_string(i);
     tape.vid = vid;
     catalogue.createTape(s_adminOnAdminHost, tape);
-    catalogue.tapeLabelled(vid, "tape_drive");    
+    catalogue.tapeLabelled(vid, "tape_drive");
   }
 
 
@@ -3564,7 +3594,7 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
       archiveMount->complete();
     }
   }
-  
+
   {
     // Emulate the the reporter process reporting successful transfer to tape to the disk system
     // The jobs get reported by tape, so we need to report 10*1 file (one per tape).
@@ -3579,7 +3609,7 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
     }
     ASSERT_EQ(0, scheduler.getNextArchiveJobsToReportBatch(10, lc).size());
   }
-  
+
   {
     // Declare activities in the catalogue.
     catalogue.createActivitiesFairShareWeight(s_adminOnAdminHost, s_diskInstance, "A", 0.4, "No comment");
@@ -3614,7 +3644,7 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
       request.requester.group = "userGroup";
       if (i < 6)
         request.activity = "A";
-      else 
+      else
         request.activity = "B";
       scheduler.queueRetrieve(s_diskInstance, request, lc);
     }
@@ -3641,13 +3671,13 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
     }
   }
 
-  
+
   enum ExpectedActivity {
     Unknown,
     A,
     B
   };
-  
+
   std::vector<ExpectedActivity> expectedActivities = { Unknown, Unknown, A, B, A, B, A, Unknown, Unknown, A};
   size_t i=0;
   for (auto ea: expectedActivities) {
@@ -3695,22 +3725,22 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
   log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
-  
+
   //Create an agent to represent this test process
   cta::objectstore::AgentReference agentReference("expandRepackRequestTest", dl);
   cta::objectstore::Agent agent(agentReference.getAgentAddress(), backend);
   agent.initialize();
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf(lc);
-  
+
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
-  
+
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
   catalogue.createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
-  
+
   //Create the source tape
   std::string vid = "vidSource";
   {
@@ -3719,26 +3749,26 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
     tape.full = true;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
-  
+
   //Create two different destination tapepool
   std::string tapepool2Name = "tapepool2";
   const cta::optional<std::string> supply;
   catalogue.createTapePool(admin,tapepool2Name,"vo",1,false,supply,"comment");
-  
+
   std::string tapepool3Name = "tapepool3";
-  catalogue.createTapePool(admin,tapepool3Name,"vo",1,false,supply,"comment"); 
-  
+  catalogue.createTapePool(admin,tapepool3Name,"vo",1,false,supply,"comment");
+
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
   storageClass.name = s_storageClassName;
   storageClass.nbCopies = 3;
   storageClass.comment = "Create storage class";
   catalogue.modifyStorageClassNbCopies(admin,storageClass.name,storageClass.nbCopies);
-  
+
   //Create the two archive routes for the new copies
   catalogue.createArchiveRoute(admin,storageClass.name,2,tapepool2Name,"ArchiveRoute2");
   catalogue.createArchiveRoute(admin,storageClass.name,3,tapepool3Name,"ArchiveRoute3");
-  
+
   //Create two other destinationTape
   std::string vidDestination1 = "vidDestination1";
   {
@@ -3747,7 +3777,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
     tape.tapePoolName = tapepool2Name;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
-  
+
   std::string vidDestination2 = "vidDestination2";
   {
     auto tape = getDefaultTape();
@@ -3759,7 +3789,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
   const std::string tapeDrive = "tape_drive";
   const uint64_t nbArchiveFilesPerTape = 10;
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
-  
+
   //Simulate the writing of 10 files the source tape in the catalogue
   std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
   {
@@ -3775,7 +3805,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      
+
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
       fileWritten.diskFileGid = PUBLIC_GID;
       fileWritten.size = archiveFileSize;
@@ -3793,7 +3823,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
     catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
     tapeFilesWrittenCopy1.clear();
   }
-  //Test the expanding requeue the Repack after the creation of 
+  //Test the expanding requeue the Repack after the creation of
   //one retrieve request
   scheduler.waitSchedulerDbSubthreadsComplete();
   {
@@ -3801,16 +3831,16 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
     common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
     scheduler.queueRepack(admin,qrr,lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
-    
+
     //Get the address of the Repack Request
     cta::objectstore::RootEntry re(backend);
     re.fetchNoLock();
-    
+
     std::string repackQueueAddress = re.getRepackQueueAddress(common::dataStructures::RepackQueueType::Pending);
-    
+
     cta::objectstore::RepackQueuePending repackQueuePending(repackQueueAddress,backend);
     repackQueuePending.fetchNoLock();
-    
+
     std::string repackRequestAddress = repackQueuePending.getCandidateList(1,{}).candidates.front().address;
 
     log::TimingList tl;
@@ -3822,11 +3852,11 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
     auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
     //scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
-    
+
     ASSERT_EQ(vid,repackRequestToExpand->getRepackInfo().vid);
-    
+
     scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc);
-    
+
     {
       cta::objectstore::RepackRequest rr(repackRequestAddress,backend);
       rr.fetchNoLock();
@@ -3839,7 +3869,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
       ASSERT_EQ(10*archiveFileSize,rr.getTotalStatsFile().totalBytesToRetrieve);
     }
   }
-  
+
   {
     std::unique_ptr<cta::TapeMount> mount;
     mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
@@ -3863,13 +3893,13 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
     castor::tape::tapeserver::daemon::RecallReportPacker rrp(retrieveMount.get(),lc);
 
     rrp.startThreads();
-    
+
     //Report all jobs as succeeded
     for(auto it = executedJobs.begin(); it != executedJobs.end(); ++it)
     {
       rrp.reportCompletedJob(std::move(*it));
     }
-   
+
     rrp.setDiskDone();
     rrp.setTapeDone();
 
@@ -3909,7 +3939,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
         ASSERT_EQ(vidDestination1,archiveMount->getVid());
       }
     }
-    
+
     {
       //Second mount should be the vidDestination2 that belongs to the tapepool2
       std::unique_ptr<cta::TapeMount> mount;
@@ -3945,22 +3975,22 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
   log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
-  
+
   //Create an agent to represent this test process
   cta::objectstore::AgentReference agentReference("expandRepackRequestTest", dl);
   cta::objectstore::Agent agent(agentReference.getAgentAddress(), backend);
   agent.initialize();
   agent.setTimeout_us(100);
   agent.insertAndRegisterSelf(lc);
-  
+
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
-  
+
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
   catalogue.createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
-  
+
   //Create the source tape
   std::string vid = "vidSource";
   {
@@ -3969,26 +3999,26 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
     tape.full = true;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
-  
+
   //Create two different destination tapepool
   std::string tapepool2Name = "tapepool2";
   const cta::optional<std::string> supply;
   catalogue.createTapePool(admin,tapepool2Name,"vo",1,false,supply,"comment");
 
   std::string tapepool3Name = "tapepool3";
-  catalogue.createTapePool(admin,tapepool3Name,"vo",1,false,supply,"comment"); 
-  
+  catalogue.createTapePool(admin,tapepool3Name,"vo",1,false,supply,"comment");
+
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
   storageClass.name = s_storageClassName;
   storageClass.nbCopies = 3;
   storageClass.comment = "Create storage class";
   catalogue.modifyStorageClassNbCopies(admin,storageClass.name,storageClass.nbCopies);
-  
+
   //Create the two archive routes for the new copies
   catalogue.createArchiveRoute(admin,storageClass.name,2,tapepool2Name,"ArchiveRoute2");
   catalogue.createArchiveRoute(admin,storageClass.name,3,tapepool3Name,"ArchiveRoute3");
-  
+
   //Create two other destinationTape and one for the move workflow
   std::string vidDestination1 = "vidDestination1";
   {
@@ -4006,18 +4036,18 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
     tape.full = false;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
-  
+
   std::string vidMove = "vidMove";
   {
     auto tape = getDefaultTape();
     tape.vid = vidMove;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
-  
+
   const std::string tapeDrive = "tape_drive";
   const uint64_t nbArchiveFilesPerTape = 10;
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
-  
+
   //Simulate the writing of 10 files the source tape in the catalogue
   std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
   {
@@ -4033,7 +4063,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      
+
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
       fileWritten.diskFileGid = PUBLIC_GID;
       fileWritten.size = archiveFileSize;
@@ -4051,7 +4081,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
     catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
     tapeFilesWrittenCopy1.clear();
   }
-  //Test the expanding requeue the Repack after the creation of 
+  //Test the expanding requeue the Repack after the creation of
   //one retrieve request
   scheduler.waitSchedulerDbSubthreadsComplete();
   {
@@ -4059,16 +4089,16 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
     common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
     scheduler.queueRepack(admin,qrr, lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
-    
+
     //Get the address of the Repack Request
     cta::objectstore::RootEntry re(backend);
     re.fetchNoLock();
-    
+
     std::string repackQueueAddress = re.getRepackQueueAddress(common::dataStructures::RepackQueueType::Pending);
-    
+
     cta::objectstore::RepackQueuePending repackQueuePending(repackQueueAddress,backend);
     repackQueuePending.fetchNoLock();
-    
+
     std::string repackRequestAddress = repackQueuePending.getCandidateList(1,{}).candidates.front().address;
 
     log::TimingList tl;
@@ -4080,11 +4110,11 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
     auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
 
     scheduler.waitSchedulerDbSubthreadsComplete();
-    
+
     ASSERT_EQ(vid,repackRequestToExpand->getRepackInfo().vid);
-    
+
     scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc);
-    
+
     {
       cta::objectstore::RepackRequest rr(repackRequestAddress,backend);
       rr.fetchNoLock();
@@ -4097,7 +4127,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
       ASSERT_EQ(10*archiveFileSize,rr.getTotalStatsFile().totalBytesToRetrieve);
     }
   }
-  
+
   {
     std::unique_ptr<cta::TapeMount> mount;
     mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
@@ -4121,13 +4151,13 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
     castor::tape::tapeserver::daemon::RecallReportPacker rrp(retrieveMount.get(),lc);
 
     rrp.startThreads();
-    
+
     //Report all jobs as succeeded
     for(auto it = executedJobs.begin(); it != executedJobs.end(); ++it)
     {
       rrp.reportCompletedJob(std::move(*it));
     }
-   
+
     rrp.setDiskDone();
     rrp.setTapeDone();
 
@@ -4167,7 +4197,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
         ASSERT_EQ(vidMove,archiveMount->getVid());
       }
     }
-    
+
     {
       //Second mount should be the vidDestination1 that belongs to the tapepool
       std::unique_ptr<cta::TapeMount> mount;
@@ -4185,7 +4215,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
         ASSERT_EQ(vidDestination1,archiveMount->getVid());
       }
     }
-    
+
     {
       //Third mount should be the vidDestination2 that belongs to the same tapepool as the repacked tape
       std::unique_ptr<cta::TapeMount> mount;
@@ -4222,22 +4252,22 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
   log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
-  
+
   //Create an agent to represent this test process
   cta::objectstore::AgentReference agentReference("expandRepackRequestTest", dl);
   cta::objectstore::Agent agent(agentReference.getAgentAddress(), backend);
   agent.initialize();
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf(lc);
-  
+
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
-  
+
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
-  
+
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
   std::string vid = ossVid.str();
@@ -4264,7 +4294,7 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
   const std::string tapeDrive = "tape_drive";
   const uint64_t nbArchiveFilesPerTape = 10;
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
-  
+
   //Simulate the writing of 10 files per tape in the catalogue
   std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
   {
@@ -4280,7 +4310,7 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      
+
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
       fileWritten.diskFileGid = PUBLIC_GID;
       fileWritten.size = archiveFileSize;
@@ -4300,7 +4330,7 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
   }
   //Test the expandRepackRequest method
   scheduler.waitSchedulerDbSubthreadsComplete();
-  
+
   {
     cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
     common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
@@ -4332,7 +4362,7 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
     ASSERT_EQ(vid,repackRequestToExpand->getRepackInfo().vid);
 
     scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc);
-    
+
     scheduler.waitSchedulerDbSubthreadsComplete();
     re.fetchNoLock();
     //Get all retrieve subrequests in the RetrieveQueue
@@ -4382,7 +4412,7 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
     scheduler.waitSchedulerDbSubthreadsComplete();
 
     scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc);
-    
+
     scheduler.waitSchedulerDbSubthreadsComplete();
     {
       std::unique_ptr<cta::TapeMount> mount;
@@ -4460,7 +4490,7 @@ TEST_P(SchedulerTest, getNextMountEmptyArchiveForRepackIfNbFilesQueuedIsLessThan
   log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
-  
+
   //Create an agent to represent this test process
   cta::objectstore::AgentReference agentReference("expandRepackRequestTest", dl);
   cta::objectstore::Agent agent(agentReference.getAgentAddress(), backend);
@@ -4480,7 +4510,7 @@ TEST_P(SchedulerTest, getNextMountEmptyArchiveForRepackIfNbFilesQueuedIsLessThan
   }
 
   catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,10000);
-  
+
   Sorter sorter(agentReference,backend,catalogue);
   for(uint64_t i = 0; i < s_minFilesToWarrantAMount; ++i) {
     std::shared_ptr<cta::objectstore::ArchiveRequest> ar(new cta::objectstore::ArchiveRequest(agentReference.nextId("RepackSubRequest"),backend));
@@ -4509,13 +4539,13 @@ TEST_P(SchedulerTest, getNextMountEmptyArchiveForRepackIfNbFilesQueuedIsLessThan
     sorter.insertArchiveRequest(ar, agentReference, lc);
     ar->insert();
   }
-  
+
   sorter.flushAll(lc);
-  
+
   //As the scheduler minFilesToWarrantAMount is 5 and there is 5 ArchiveForRepack jobs queued
   //the call to getNextMount should return an nullptr (10 files mini to have an ArchiveForRepack mount)
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName,"drive0",lc));
- 
+
   for(uint64_t i = s_minFilesToWarrantAMount; i < 2 * s_minFilesToWarrantAMount; ++i) {
     std::shared_ptr<cta::objectstore::ArchiveRequest> ar(new cta::objectstore::ArchiveRequest(agentReference.nextId("RepackSubRequest"),backend));
     ar->initialize();
@@ -4543,9 +4573,9 @@ TEST_P(SchedulerTest, getNextMountEmptyArchiveForRepackIfNbFilesQueuedIsLessThan
     sorter.insertArchiveRequest(ar, agentReference, lc);
     ar->insert();
   }
-  
+
   sorter.flushAll(lc);
-  
+
   //As there is now 10 files in the queue, the getNextMount method should return an ArchiveMount
   //with 10 files in it
   std::unique_ptr<cta::TapeMount> tapeMount = scheduler.getNextMount(s_libraryName,"drive0",lc);
@@ -4561,7 +4591,7 @@ TEST_P(SchedulerTest, getNextMountBrokenOrDisabledTapeShouldNotReturnAMount) {
 
   Scheduler &scheduler = getScheduler();
   auto &catalogue = getCatalogue();
-  
+
   setupDefaultCatalogue();
 #ifdef STDOUT_LOGGING
   log::StdoutLogger dl("dummy", "unitTest");
@@ -4569,13 +4599,13 @@ TEST_P(SchedulerTest, getNextMountBrokenOrDisabledTapeShouldNotReturnAMount) {
   log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
-  
-  // Create the environment for the migration to happen (library + tape) 
+
+  // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryIsDisabled, libraryComment);
-  
+
   auto tape = getDefaultTape();
   {
     catalogue.createTape(s_adminOnAdminHost, tape);
@@ -4584,14 +4614,14 @@ TEST_P(SchedulerTest, getNextMountBrokenOrDisabledTapeShouldNotReturnAMount) {
   const std::string driveName = "tape_drive";
 
   catalogue.tapeLabelled(s_vid, driveName);
-  
+
   {
     // This first initialization is normally done by the dataSession function.
     cta::common::dataStructures::DriveInfo driveInfo = { driveName, "myHost", s_libraryName };
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
   }
-  
+
   uint64_t archiveFileId;
 
   // Queue an archive request.
@@ -4619,7 +4649,7 @@ TEST_P(SchedulerTest, getNextMountBrokenOrDisabledTapeShouldNotReturnAMount) {
   scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
 
   scheduler.waitSchedulerDbSubthreadsComplete();
-  
+
   catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::BROKEN,std::string("Test"));
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
   catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,cta::nullopt);
@@ -4629,7 +4659,7 @@ TEST_P(SchedulerTest, getNextMountBrokenOrDisabledTapeShouldNotReturnAMount) {
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
   catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,cta::nullopt);
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
-  
+
   {
     std::unique_ptr<cta::TapeMount> mount;
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
@@ -4655,7 +4685,7 @@ TEST_P(SchedulerTest, getNextMountBrokenOrDisabledTapeShouldNotReturnAMount) {
     ASSERT_EQ(0, archiveJobBatch.size());
     archiveMount->complete();
   }
-  
+
   //Queue a retrieve request for the archived file
   {
     cta::common::dataStructures::EntryLog creationLog;
@@ -4680,7 +4710,7 @@ TEST_P(SchedulerTest, getNextMountBrokenOrDisabledTapeShouldNotReturnAMount) {
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
   catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,cta::nullopt);
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
-  
+
   catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::DISABLED,std::string("Test"));
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
   catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,cta::nullopt);
@@ -4690,30 +4720,30 @@ TEST_P(SchedulerTest, getNextMountBrokenOrDisabledTapeShouldNotReturnAMount) {
 TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
   using namespace cta;
   unitTests::TempDirectory tempDirectory;
-  
+
   auto &catalogue = getCatalogue();
   auto &scheduler = getScheduler();
   auto &schedulerDB = getSchedulerDB();
   cta::objectstore::Backend& backend = schedulerDB.getBackend();
-  
+
   setupDefaultCatalogue();
   catalogue.createDiskSystem({"user", "host"}, "repackBuffer", tempDirectory.path(), "eos:ctaeos:default", 10, 10L*1000*1000*1000, 15*60, "no comment");
-  
+
 #ifdef STDOUT_LOGGING
   log::StdoutLogger dl("dummy", "unitTest");
 #else
   log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
-  
+
   //Create an agent to represent this test process
   std::string agentReferenceName = "expandRepackRequestTest";
   std::unique_ptr<objectstore::AgentReference> agentReference(new objectstore::AgentReference(agentReferenceName, dl));
- 
+
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
-  
+
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
@@ -4723,7 +4753,7 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
     tape.full = true;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
-  
+
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
   storageClass.name = s_storageClassName;
@@ -4749,7 +4779,7 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      
+
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
       fileWritten.diskFileGid = PUBLIC_GID;
       fileWritten.size = archiveFileSize;
@@ -4768,7 +4798,7 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
   }
 
   scheduler.waitSchedulerDbSubthreadsComplete();
-  
+
   cta::SchedulerDatabase::QueueRepackRequest qrr(s_vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
   common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
   scheduler.queueRepack(admin,qrr, lc);
@@ -4781,7 +4811,7 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
   utils::Timer t;
   scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc);
   scheduler.waitSchedulerDbSubthreadsComplete();
-  
+
   {
     std::unique_ptr<cta::TapeMount> mount;
     mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
@@ -4804,7 +4834,7 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
     // The queue is named after the repack request: we need to query the repack index
     objectstore::RepackIndex ri(re.getRepackIndexAddress(), schedulerDB.getBackend());
     ri.fetchNoLock();
-    
+
     std::string retrieveQueueToReportToRepackForFailureAddress = re.getRetrieveQueueAddress(ri.getRepackRequestAddress(s_vid),cta::objectstore::JobQueueType::JobsToReportToRepackForFailure);
     cta::objectstore::RetrieveQueue rq(retrieveQueueToReportToRepackForFailureAddress,backend);
 
@@ -4826,7 +4856,7 @@ TEST_P(SchedulerTest, getSchedulingInformations) {
 
   Scheduler &scheduler = getScheduler();
   auto &catalogue = getCatalogue();
-  
+
   setupDefaultCatalogue();
 #ifdef STDOUT_LOGGING
   log::StdoutLogger dl("dummy", "unitTest");
@@ -4834,8 +4864,8 @@ TEST_P(SchedulerTest, getSchedulingInformations) {
   log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
-  
-  // Create the environment for the migration to happen (library + tape) 
+
+  // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
@@ -4855,14 +4885,14 @@ TEST_P(SchedulerTest, getSchedulingInformations) {
   const std::string driveName = "tape_drive";
 
   catalogue.tapeLabelled(s_vid, driveName);
-  
+
   {
     // This first initialization is normally done by the dataSession function.
     cta::common::dataStructures::DriveInfo driveInfo = { driveName, "myHost", s_libraryName };
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
   }
-  
+
   uint64_t archiveFileId;
 
   // Queue an archive request.
@@ -4890,7 +4920,7 @@ TEST_P(SchedulerTest, getSchedulingInformations) {
   scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
 
   scheduler.waitSchedulerDbSubthreadsComplete();
-  
+
   {
     auto schedulerInformations = scheduler.getSchedulingInformations(lc);
     ASSERT_FALSE(schedulerInformations.empty());
@@ -4898,7 +4928,7 @@ TEST_P(SchedulerTest, getSchedulingInformations) {
     auto & schedulerInfo = schedulerInformations.front();
     ASSERT_EQ(s_libraryName,schedulerInfo.getLogicalLibraryName());
     const auto & potentialMounts = schedulerInfo.getPotentialMounts();
-    
+
     ASSERT_FALSE(potentialMounts.empty());
     const auto & potentialMount = potentialMounts.front();
 
@@ -4941,9 +4971,9 @@ TEST_P(SchedulerTest, getSchedulingInformations) {
     ASSERT_EQ(0, archiveJobBatch.size());
     archiveMount->complete();
   }
-  
+
   ASSERT_TRUE(scheduler.getSchedulingInformations(lc).empty());
-  
+
   //Queue a retrieve request for the archived file
   {
     cta::common::dataStructures::EntryLog creationLog;
@@ -4964,7 +4994,7 @@ TEST_P(SchedulerTest, getSchedulingInformations) {
     scheduler.queueRetrieve(s_diskInstance, request, lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
-  
+
   {
     auto schedulerInformations = scheduler.getSchedulingInformations(lc);
     ASSERT_FALSE(schedulerInformations.empty());
@@ -4972,7 +5002,7 @@ TEST_P(SchedulerTest, getSchedulingInformations) {
     auto & schedulerInfo = schedulerInformations.front();
     ASSERT_EQ(s_libraryName,schedulerInfo.getLogicalLibraryName());
     const auto & potentialMounts = schedulerInfo.getPotentialMounts();
-    
+
     ASSERT_FALSE(potentialMounts.empty());
     const auto & potentialMount = potentialMounts.front();
 
@@ -4998,11 +5028,11 @@ TEST_P(SchedulerTest, getSchedulingInformations) {
   catalogue.modifyMountPolicyArchivePriority(s_adminOnAdminHost,s_mountPolicyName,1);
   catalogue.modifyMountPolicyRetrieveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,1);
   catalogue.modifyMountPolicyRetrievePriority(s_adminOnAdminHost,s_mountPolicyName,1);
-  
+
   {
     auto schedulerInformations = scheduler.getSchedulingInformations(lc);
     ASSERT_FALSE(schedulerInformations.empty());
-    
+
     // Queue an archive request.
     cta::common::dataStructures::EntryLog creationLog;
     creationLog.host="host2";
@@ -5029,7 +5059,7 @@ TEST_P(SchedulerTest, getSchedulingInformations) {
 
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
-  
+
   {
     auto schedulingInfos = scheduler.getSchedulingInformations(lc);
     ASSERT_FALSE(schedulingInfos.empty());
@@ -5046,10 +5076,10 @@ TEST_P(SchedulerTest, getSchedulingInformations) {
     auto & secondMount = potentialMounts.front();
     ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve,secondMount.type);
   }
-  
+
   //Change the mount policies to have a Retrieve priority higher than the Archive priority
   catalogue.modifyMountPolicyRetrievePriority(s_adminOnAdminHost,s_mountPolicyName,10);
-  
+
   {
     auto schedulingInfos = scheduler.getSchedulingInformations(lc);
     ASSERT_FALSE(schedulingInfos.empty());
@@ -5071,28 +5101,28 @@ TEST_P(SchedulerTest, getSchedulingInformations) {
 TEST_P(SchedulerTest, expandRepackRequestShouldThrowIfUseBufferNotRecallButNoDirectoryCreated){
   using namespace cta;
   unitTests::TempDirectory tempDirectory;
-  
+
   auto &catalogue = getCatalogue();
   auto &scheduler = getScheduler();
-  
+
   setupDefaultCatalogue();
   catalogue.createDiskSystem({"user", "host"}, "repackBuffer", tempDirectory.path(), "eos:ctaeos:default", 10, 10L*1000*1000*1000, 15*60, "no comment");
-  
+
 #ifdef STDOUT_LOGGING
   log::StdoutLogger dl("dummy", "unitTest");
 #else
   log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
-  
+
   //Create an agent to represent this test process
   std::string agentReferenceName = "expandRepackRequestTest";
   std::unique_ptr<objectstore::AgentReference> agentReference(new objectstore::AgentReference(agentReferenceName, dl));
- 
+
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
-  
+
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
@@ -5102,7 +5132,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldThrowIfUseBufferNotRecallButNoDir
     tape.full = true;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
-  
+
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
   storageClass.name = s_storageClassName;
@@ -5128,7 +5158,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldThrowIfUseBufferNotRecallButNoDir
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      
+
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
       fileWritten.diskFileGid = PUBLIC_GID;
       fileWritten.size = archiveFileSize;
@@ -5147,9 +5177,9 @@ TEST_P(SchedulerTest, expandRepackRequestShouldThrowIfUseBufferNotRecallButNoDir
   }
 
   scheduler.waitSchedulerDbSubthreadsComplete();
-  
+
   bool noRecall = true;
-  
+
   cta::SchedulerDatabase::QueueRepackRequest qrr(s_vid,"file://DOES_NOT_EXIST",common::dataStructures::RepackInfo::Type::MoveOnly,
   common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,noRecall);
   scheduler.queueRepack(admin,qrr, lc);
@@ -5166,28 +5196,28 @@ TEST_P(SchedulerTest, expandRepackRequestShouldThrowIfUseBufferNotRecallButNoDir
 TEST_P(SchedulerTest, expandRepackRequestShouldNotThrowIfTapeDisabledButNoRecallFlagProvided){
   using namespace cta;
   unitTests::TempDirectory tempDirectory;
-  
+
   auto &catalogue = getCatalogue();
   auto &scheduler = getScheduler();
-  
+
   setupDefaultCatalogue();
   catalogue.createDiskSystem({"user", "host"}, "repackBuffer", tempDirectory.path(), "eos:ctaeos:default", 10, 10L*1000*1000*1000, 15*60, "no comment");
-  
+
 #ifdef STDOUT_LOGGING
   log::StdoutLogger dl("dummy", "unitTest");
 #else
   log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
-  
+
   //Create an agent to represent this test process
   std::string agentReferenceName = "expandRepackRequestTest";
   std::unique_ptr<objectstore::AgentReference> agentReference(new objectstore::AgentReference(agentReferenceName, dl));
- 
+
   cta::common::dataStructures::SecurityIdentity admin;
   admin.username = "admin_user_name";
   admin.host = "admin_host";
-  
+
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
@@ -5197,7 +5227,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldNotThrowIfTapeDisabledButNoRecall
     tape.full = true;
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
-  
+
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
   storageClass.name = s_storageClassName;
@@ -5223,7 +5253,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldNotThrowIfTapeDisabledButNoRecall
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      
+
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
       fileWritten.diskFileGid = PUBLIC_GID;
       fileWritten.size = archiveFileSize;
@@ -5242,7 +5272,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldNotThrowIfTapeDisabledButNoRecall
   }
 
   scheduler.waitSchedulerDbSubthreadsComplete();
-  
+
   bool noRecall = true;
   std::string pathRepackBuffer = "file://"+tempDirectory.path();
   tempDirectory.append("/"+s_vid);
@@ -5286,8 +5316,8 @@ TEST_P(SchedulerTest, archiveMaxDrivesVoInFlightChangeScheduleMount){
   request.requester = requester;
   request.srcURL="srcURL";
   request.storageClass=s_storageClassName;
-  
-  // Create the environment for the migration to happen (library + tape) 
+
+  // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
@@ -5298,7 +5328,7 @@ TEST_P(SchedulerTest, archiveMaxDrivesVoInFlightChangeScheduleMount){
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
-    
+
   auto tape = getDefaultTape();
   catalogue.createTape(s_adminOnAdminHost, tape);
 
@@ -5306,16 +5336,16 @@ TEST_P(SchedulerTest, archiveMaxDrivesVoInFlightChangeScheduleMount){
 
   catalogue.tapeLabelled(s_vid, "tape_drive");
 
-  
+
   log::DummyLogger dl("", "");
   log::LogContext lc(dl);
   const uint64_t archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass,
       request.requester, lc);
   scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   scheduler.waitSchedulerDbSubthreadsComplete();
-  
+
   catalogue.modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,0);
-  
+
   {
     // Emulate a tape server
     std::unique_ptr<cta::TapeMount> mount;
@@ -5350,7 +5380,7 @@ TEST_P(SchedulerTest, retrieveMaxDrivesVoInFlightChangeScheduleMount)
   log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
-  
+
   //Create an agent to represent this test process
   cta::objectstore::AgentReference agentReference("expandRepackRequestTest", dl);
   cta::objectstore::Agent agent(agentReference.getAgentAddress(), backend);
@@ -5361,10 +5391,10 @@ TEST_P(SchedulerTest, retrieveMaxDrivesVoInFlightChangeScheduleMount)
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
-  
+
   auto tape = getDefaultTape();
   catalogue.createTape(s_adminOnAdminHost, tape);
-  
+
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
   storageClass.name = s_storageClassName;
@@ -5374,7 +5404,7 @@ TEST_P(SchedulerTest, retrieveMaxDrivesVoInFlightChangeScheduleMount)
   const std::string tapeDrive = "tape_drive";
   const uint64_t nbArchiveFilesPerTape = 10;
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
-  
+
   //Simulate the writing of 10 files in 1 tape in the catalogue
   std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
   {
@@ -5390,7 +5420,7 @@ TEST_P(SchedulerTest, retrieveMaxDrivesVoInFlightChangeScheduleMount)
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      
+
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
       fileWritten.diskFileGid = PUBLIC_GID;
       fileWritten.size = archiveFileSize;
@@ -5420,15 +5450,15 @@ TEST_P(SchedulerTest, retrieveMaxDrivesVoInFlightChangeScheduleMount)
     scheduler.queueRetrieve(diskInstance, rReq, lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
-  
+
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,"drive",lc));
-  
+
   catalogue.modifyVirtualOrganizationReadMaxDrives(s_adminOnAdminHost,s_vo,0);
-  
+
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,"drive",lc));
-  
+
   catalogue.modifyVirtualOrganizationReadMaxDrives(s_adminOnAdminHost,s_vo,1);
-  
+
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,"drive",lc));
 }
 
@@ -5452,58 +5482,70 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
   log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
-  
+
   //Create an agent to represent this test process
   cta::objectstore::AgentReference agentReference("expandRepackRequestTest", dl);
   cta::objectstore::Agent agent(agentReference.getAgentAddress(), backend);
   agent.initialize();
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf(lc);
-  
+
   std::string drive1 = "drive1";
+  {
+    const auto tapeDrive = getDefaultTapeDrive(drive1);
+    catalogue.createTapeDrive(tapeDrive);
+  }
   std::string drive2 = "drive2";
+  {
+    const auto tapeDrive = getDefaultTapeDrive(drive2);
+    catalogue.createTapeDrive(tapeDrive);
+  }
   std::string drive3 = "drive3";
+  {
+    const auto tapeDrive = getDefaultTapeDrive(drive3);
+    catalogue.createTapeDrive(tapeDrive);
+  }
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
-  
+
   //This tape will contains files for triggering a Retrieve
   auto tape1 = getDefaultTape();
   catalogue.createTape(s_adminOnAdminHost, tape1);
-  
+
   //Two tapes for ArchiveForUser and ArchiveForRepack mounts
   std::string vid2 = "vid_2";
   std::string vid3 = "vid_3";
   auto tape2 = tape1;
   tape2.vid = vid2;
   catalogue.createTape(s_adminOnAdminHost, tape2);
-  
+
   //Create a new tapepool on the same VO
   std::string newTapepool = "new_tapepool";
   catalogue.createTapePool(s_adminOnAdminHost,newTapepool,s_vo,1,false,cta::nullopt,"Test");
-  
+
   //Create the third tape in the new tapepool
   auto tape3  = tape1;
   tape3.vid = vid3;
   tape3.tapePoolName = newTapepool;
   catalogue.createTape(s_adminOnAdminHost,tape3);
-  
+
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
   storageClass.name = s_storageClassName;
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
-  
+
   catalogue.modifyStorageClassNbCopies(s_adminOnAdminHost,storageClass.name,storageClass.nbCopies);
-  
+
    //Create the a new archive routes for the second copy
   catalogue.createArchiveRoute(s_adminOnAdminHost,storageClass.name,2,newTapepool,"ArchiveRoute2");
 
   const std::string tapeDrive = "tape_drive";
   const uint64_t nbArchiveFilesPerTape = 10;
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
-  
+
   //Simulate the writing of 10 files in the first tape in the catalogue
   std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
   {
@@ -5519,7 +5561,7 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      
+
       fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
       fileWritten.diskFileGid = PUBLIC_GID;
       fileWritten.size = archiveFileSize;
@@ -5580,26 +5622,26 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
     sorter.insertArchiveRequest(ar, agentReference, lc);
     ar->insert();
   }
-  
+
   sorter.flushAll(lc);
-  
+
   catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,0);
   catalogue.modifyMountPolicyRetrieveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,0);
-  
+
   //Wait 2 second to be sure the minRequestAge will not prevent a mount
   ::sleep(1);
-  
+
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,drive1,lc));
-  
+
   //No read nor write allowed
   catalogue.modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,0);
   catalogue.modifyVirtualOrganizationReadMaxDrives(s_adminOnAdminHost,s_vo,0);
-  
+
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,drive1,lc));
-  
+
   //Allow one drive for write and trigger the mount
   catalogue.modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,1);
-  
+
   //Disable the tape 1 to prevent the mount in it (should be the Retrieve)
   catalogue.setTapeDisabled(s_adminOnAdminHost,tape1.vid,"test");
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,drive1,lc));
@@ -5617,13 +5659,13 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
     //Pop only one file for this mount
     ASSERT_EQ(nbArchiveRequestToQueue,archiveForUserJobs.size());
   }
-  
+
   //As only one drive for write is allowed, no mount should be triggered by another drive
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,drive2,lc));
-  
+
   //Now allocate one more drive for Archival
   catalogue.modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,2);
-  
+
   //A new Archive mount should be triggered
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,drive2,lc));
   {
@@ -5640,7 +5682,7 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
     //Pop only one file for this mount
     ASSERT_EQ(1,archiveForRepackJobs.size());
   }
-  
+
   //As 2 drives are writing and only 2 drives are allowed on this VO, the third drive should not trigger a new mount
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,drive3,lc));
   //Now allocate one drive for Retrieve
@@ -5685,26 +5727,26 @@ TEST_P(SchedulerTest, getQueuesAndMountSummariesTest)
   log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
-  
+
   //Create an agent to represent this test process
   cta::objectstore::AgentReference agentReference("getQueuesAndMountSummariesTestAgent", dl);
   cta::objectstore::Agent agent(agentReference.getAgentAddress(), backend);
   agent.initialize();
   agent.setTimeout_us(0);
   agent.insertAndRegisterSelf(lc);
-  
+
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
-  
+
   //Create two tapes
   auto tape = getDefaultTape();
   catalogue.createTape(s_adminOnAdminHost, tape);
-  
+
   std::string vid2 = s_vid + "2";
   tape.vid = vid2;
   catalogue.createTape(s_adminOnAdminHost,tape);
-  
+
   //Create a RetrieveQueue with the vid s_vid
   std::string retrieveQueueAddress;
   cta::objectstore::RootEntry re(backend);
@@ -5713,7 +5755,7 @@ TEST_P(SchedulerTest, getQueuesAndMountSummariesTest)
     re.fetch();
     retrieveQueueAddress = re.addOrGetRetrieveQueueAndCommit(s_vid,agentReference,JobQueueType::JobsToTransferForUser);
   }
-  
+
   //Create a RetrieveJob and put it in the queue s_vid
   cta::objectstore::RetrieveQueue::JobToAdd retrieveJobToAdd;
   retrieveJobToAdd.copyNb = 1;
@@ -5721,7 +5763,7 @@ TEST_P(SchedulerTest, getQueuesAndMountSummariesTest)
   retrieveJobToAdd.fileSize = 1;
   retrieveJobToAdd.startTime = time(nullptr);
   retrieveJobToAdd.retrieveRequestAddress = "";
-  
+
   cta::objectstore::RetrieveQueue retrieveQueue1(retrieveQueueAddress,backend);
   {
     cta::objectstore::ScopedExclusiveLock sel(retrieveQueue1);
@@ -5729,7 +5771,7 @@ TEST_P(SchedulerTest, getQueuesAndMountSummariesTest)
     std::list<cta::objectstore::RetrieveQueue::JobToAdd> jobsToAdd({retrieveJobToAdd});
     retrieveQueue1.addJobsAndCommit(jobsToAdd,agentReference,lc);
   }
-  
+
   //Create a second retrieve queue that will hold a job for the tape vid2
   std::string retrieveQueue2Address;
   {
@@ -5744,7 +5786,7 @@ TEST_P(SchedulerTest, getQueuesAndMountSummariesTest)
     std::list<cta::objectstore::RetrieveQueue::JobToAdd> jobsToAdd({retrieveJobToAdd});
     retrieveQueue2.addJobsAndCommit(jobsToAdd,agentReference,lc);
   }
-  
+
   //Create an ArchiveForUser queue and put one file on it
   std::string archiveForUserQueueAddress;
   {
@@ -5752,12 +5794,12 @@ TEST_P(SchedulerTest, getQueuesAndMountSummariesTest)
     re.fetch();
     archiveForUserQueueAddress = re.addOrGetArchiveQueueAndCommit(s_tapePoolName,agentReference,JobQueueType::JobsToTransferForUser);
   }
-  
+
   cta::objectstore::ArchiveQueue::JobToAdd archiveJobToAdd;
   archiveJobToAdd.archiveFileId = 1;
   archiveJobToAdd.fileSize = 2;
   archiveJobToAdd.startTime = time(nullptr);
-  
+
   cta::objectstore::ArchiveQueue aq(archiveForUserQueueAddress,backend);
   {
     cta::objectstore::ScopedExclusiveLock sel(aq);
@@ -5765,21 +5807,21 @@ TEST_P(SchedulerTest, getQueuesAndMountSummariesTest)
     std::list<cta::objectstore::ArchiveQueue::JobToAdd> jobsToAdd({archiveJobToAdd});
     aq.addJobsAndCommit(jobsToAdd,agentReference,lc);
   }
-  
+
   // Create an ArchiveForRepack queue and put one file on it
-  
+
   std::string archiveForRepackQueueAddress;
   {
     cta::objectstore::ScopedExclusiveLock sel(re);
     re.fetch();
     archiveForRepackQueueAddress = re.addOrGetArchiveQueueAndCommit(s_tapePoolName,agentReference,JobQueueType::JobsToTransferForRepack);
   }
-  
+
   cta::objectstore::ArchiveQueue::JobToAdd repackArchiveJob;
   repackArchiveJob.archiveFileId = 2;
   repackArchiveJob.fileSize = 3;
   repackArchiveJob.startTime = time(nullptr);
-  
+
   cta::objectstore::ArchiveQueue repackArchiveQueue(archiveForRepackQueueAddress,backend);
   {
     cta::objectstore::ScopedExclusiveLock sel(repackArchiveQueue);
@@ -5787,44 +5829,44 @@ TEST_P(SchedulerTest, getQueuesAndMountSummariesTest)
     std::list<cta::objectstore::ArchiveQueue::JobToAdd> jobsToAdd({repackArchiveJob});
     repackArchiveQueue.addJobsAndCommit(jobsToAdd,agentReference,lc);
   }
-  
+
   auto queuesAndMountSummaries = scheduler.getQueuesAndMountSummaries(lc);
-  
+
   ASSERT_EQ(4,queuesAndMountSummaries.size());
   std::string vid = tape.vid;
-  
+
   //Test the QueueAndMountSummary of the first Retrieve Queue s_vid
   auto res = std::find_if(queuesAndMountSummaries.begin(), queuesAndMountSummaries.end(), [vid](const cta::common::dataStructures::QueueAndMountSummary & qams){
-    return qams.mountType == cta::common::dataStructures::MountType::Retrieve && qams.vid == vid; 
+    return qams.mountType == cta::common::dataStructures::MountType::Retrieve && qams.vid == vid;
   });
   ASSERT_EQ(tape.vid,res->vid);
   ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve,res->mountType);
-  
+
   vid = vid2;
   //Test the QueueAndMountSummary of the first Retrieve Queue vid2
   res = std::find_if(queuesAndMountSummaries.begin(), queuesAndMountSummaries.end(), [vid](const cta::common::dataStructures::QueueAndMountSummary & qams){
-    return qams.mountType == cta::common::dataStructures::MountType::Retrieve && qams.vid == vid; 
+    return qams.mountType == cta::common::dataStructures::MountType::Retrieve && qams.vid == vid;
   });
   ASSERT_EQ(vid,res->vid);
   ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve,res->mountType);
-  
+
   //Test the ArchiveForUser QueueAndMountSummary
   std::string tapePool = s_tapePoolName;
   res = std::find_if(queuesAndMountSummaries.begin(), queuesAndMountSummaries.end(), [tapePool](const cta::common::dataStructures::QueueAndMountSummary & qams){
-    return qams.mountType == cta::common::dataStructures::MountType::ArchiveForUser && qams.tapePool == tapePool; 
+    return qams.mountType == cta::common::dataStructures::MountType::ArchiveForUser && qams.tapePool == tapePool;
   });
   ASSERT_EQ(tapePool,res->tapePool);
   ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser,res->mountType);
-  
+
   //Test the ArchiveForRepack QueueAndMountSummary
   res = std::find_if(queuesAndMountSummaries.begin(), queuesAndMountSummaries.end(), [tapePool](const cta::common::dataStructures::QueueAndMountSummary & qams){
-    return qams.mountType == cta::common::dataStructures::MountType::ArchiveForRepack && qams.tapePool == tapePool; 
+    return qams.mountType == cta::common::dataStructures::MountType::ArchiveForRepack && qams.tapePool == tapePool;
   });
   ASSERT_EQ(tapePool, res->tapePool);
   ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForRepack,res->mountType);
 }
 
-//This test tests what is described in the use case ticket 
+//This test tests what is described in the use case ticket
 // high priority Archive job not scheduled when Repack is running : https://gitlab.cern.ch/cta/operations/-/issues/150
 TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldReturnBothMountsArchiveMinRequestAge){
   using namespace cta;
@@ -5840,7 +5882,7 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
   log::DummyLogger dl("", "");
 #endif
   log::LogContext lc(dl);
-  
+
   //Create an agent to represent this test process
   cta::objectstore::AgentReference agentReference("agentTest", dl);
   cta::objectstore::Agent agent(agentReference.getAgentAddress(), backend);
@@ -5853,27 +5895,35 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryIsDisabled, libraryComment);
-  
+
   catalogue.modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,1);
-  
+
   std::string drive0 = "drive0";
   std::string drive1 = "drive1";
+  {
+    const auto tapeDrive = getDefaultTapeDrive(drive1);
+    catalogue.createTapeDrive(tapeDrive);
+  }
   std::string drive2 = "drive2";
+  {
+    const auto tapeDrive = getDefaultTapeDrive(drive2);
+    catalogue.createTapeDrive(tapeDrive);
+  }
 
   //Create two tapes (ArchiveForRepack and ArchiveForUser)
   {
     auto tape = getDefaultTape();
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
-    
+
   {
     auto tape = getDefaultTape();
     tape.vid = s_vid+"_1";
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
-  
+
   uint64_t fileSize = 667;
-  
+
   Sorter sorter(agentReference,backend,catalogue);
   for(uint64_t i = 0; i < 2; ++i) {
     std::shared_ptr<cta::objectstore::ArchiveRequest> ar(new cta::objectstore::ArchiveRequest(agentReference.nextId("RepackSubRequest"),backend));
@@ -5904,20 +5954,20 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
     sorter.insertArchiveRequest(ar, agentReference, lc);
     ar->insert();
   }
-  
+
   catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,100);
-  
+
   sorter.flushAll(lc);
-  
+
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,drive0,lc));
-  
+
   catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,0);
-  
+
   //The archiveMinRequestAge should have 1 second to trigger a mount
   ::sleep(1);
-  
+
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,drive0,lc));
-  
+
   {
     std::unique_ptr<cta::TapeMount> tapeMount = scheduler.getNextMount(s_libraryName,drive0,lc);
 
@@ -5962,27 +6012,27 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
     sorter.insertArchiveRequest(ar, agentReference, lc);
     ar->insert();
   }
-  
+
   sorter.flushAll(lc);
-  
+
   catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,100);
   //mount should not be triggered
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,drive0,lc));
-  
+
   catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,0);
-  
+
   //Sleeping one seconds to trigger a mount
   ::sleep(1);
-  
+
   catalogue.modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,1);
-  
+
   //Test the per VO writeMaxDrives: no mount should be triggered as only one drive for write
   //has been configured for this VO
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,drive1,lc));
- 
+
   //Adding a second drive for write for this VO
   catalogue.modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,2);
-  
+
   //The next mount should be an ArchiveForUser mount as there is already a mount ongoing with an ArchiveForRepack
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,drive1,lc));
   {
@@ -5999,7 +6049,7 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
     //Pop only one file for this mount
     ASSERT_EQ(1,archiveForUserJobs.size());
   }
-  
+
   //Now let's create another tape, and try to schedule another mount with another drive
   //No ArchiveMount should be triggered
   {

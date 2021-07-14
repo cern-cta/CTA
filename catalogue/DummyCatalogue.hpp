@@ -17,7 +17,10 @@
 
 #pragma once
 
+#include <iostream>
+
 #include "Catalogue.hpp"
+#include "common/make_unique.hpp"
 
 namespace cta {
 
@@ -30,8 +33,8 @@ namespace catalogue {
  */
 class DummyCatalogue: public Catalogue {
 public:
-  DummyCatalogue() {}
-  virtual ~DummyCatalogue() { }
+  DummyCatalogue() = default;
+  ~DummyCatalogue() override = default;
 
   void createActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity& admin, const std::string& diskInstanceName, const std::string& acttivity, double weight, const std::string & comment) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void createAdminUser(const common::dataStructures::SecurityIdentity& admin, const std::string& username, const std::string& comment) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
@@ -85,9 +88,6 @@ public:
   void deleteFileFromRecycleBin(const uint64_t archiveFileId, log::LogContext &lc) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void deleteFilesFromRecycleLog(const std::string & vid, log::LogContext & lc) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void createTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
-  std::list<std::string> getTapeDriveNames() const {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
-  optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string &tapeDriveName) const {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
-  void modifyTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void deleteTapeDrive(const std::string &tapeDriveName) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void createDriveConfig(const std::string &tapeDriveName, const std::string &category, const std::string &keyName, const std::string &value, const std::string &source) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   std::list<std::pair<std::string, std::string>> getDriveConfigNamesAndKeys() const {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
@@ -239,9 +239,45 @@ public:
     mountPolicies.push_back(mp1);
     return mountPolicies;
   }
+
+  std::list<std::string> getTapeDriveNames() const {
+    return {m_tapeDriveStatus.driveName};
+  }
+
+  optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string &tapeDriveName) const {
+    if (m_tapeDriveStatus.driveName != "") return m_tapeDriveStatus;
+    common::dataStructures::TapeDrive tapeDriveStatus;
+    const time_t reportTime = time(NULL);
+
+    tapeDriveStatus.driveName = tapeDriveName;
+    tapeDriveStatus.host = "Dummy_Host";
+    tapeDriveStatus.logicalLibrary = "Dummy_Library";
+
+    tapeDriveStatus.latestBandwidth = "0.0";
+
+    tapeDriveStatus.downOrUpStartTime = reportTime;
+
+    tapeDriveStatus.mountType = common::dataStructures::MountType::NoMount;
+    tapeDriveStatus.driveStatus = common::dataStructures::DriveStatus::Down;
+    tapeDriveStatus.desiredUp = false;
+    tapeDriveStatus.desiredForceDown = false;
+
+    tapeDriveStatus.diskSystemName = "Dummy_System";
+    tapeDriveStatus.reservedBytes = 0;
+
+    return tapeDriveStatus;
+  }
+
+  void modifyTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) {
+    m_tapeDriveStatus = tapeDrive;
+  }
+
+
 private:
   mutable threading::Mutex m_tapeEnablingMutex;
   std::map<std::string, common::dataStructures::Tape::State> m_tapeEnabling;
+
+  common::dataStructures::TapeDrive m_tapeDriveStatus;
 };
 
 }} // namespace cta::catalogue.

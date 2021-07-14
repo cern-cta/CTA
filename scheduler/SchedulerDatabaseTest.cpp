@@ -567,7 +567,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
   auto rjb = rm->getNextJobBatch(20,20*1000,diskSystemFreeSpaceList, lc);
   //Files with successful fetch should be popped
   ASSERT_EQ(aFiles, rjb.size());
-  
+
   // The files that are in the "Error" DiskSystem should be queued in the RetrieveQueueFailed
   cta::SchedulerDatabase::JobsFailedSummary failedRetrieves = db.getRetrieveJobsFailedSummary(lc);
   ASSERT_EQ(filesToDo / 2,failedRetrieves.totalFiles);

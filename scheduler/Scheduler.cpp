@@ -860,24 +860,18 @@ common::dataStructures::TapeDrive Scheduler::setTapeDriveStatus(const common::da
   tapeDriveStatus.driveName = driveInfo.driveName;
   tapeDriveStatus.host = driveInfo.host;
   tapeDriveStatus.logicalLibrary = driveInfo.logicalLibrary;
-
   tapeDriveStatus.latestBandwidth = "0.0";
-
   tapeDriveStatus.downOrUpStartTime = reportTime;
-
   tapeDriveStatus.mountType = type;
   tapeDriveStatus.driveStatus = status;
   tapeDriveStatus.desiredUp = desiredState.up;
   tapeDriveStatus.desiredForceDown = desiredState.forceDown;
   if (desiredState.reason) tapeDriveStatus.reasonUpDown = desiredState.reason;
   if (desiredState.comment) tapeDriveStatus.userComment = desiredState.comment;
-
   tapeDriveStatus.diskSystemName = "NOT_SET";
   tapeDriveStatus.reservedBytes = 0;
-
   tapeDriveStatus.devFileName = tpConfigLine.devFilename;
   tapeDriveStatus.rawLibrarySlot = tpConfigLine.rawLibrarySlot;
-
   tapeDriveStatus.creationLog = common::dataStructures::EntryLog(identity.username, identity.host, reportTime);
   tapeDriveStatus.lastModificationLog = common::dataStructures::EntryLog(identity.username, identity.host, reportTime);
   return tapeDriveStatus;
@@ -898,7 +892,21 @@ void Scheduler::updateTapeDriveStatus(const common::dataStructures::DriveInfo& d
   const common::dataStructures::DesiredDriveState & desiredState, const common::dataStructures::MountType& type,
   const common::dataStructures::DriveStatus& status, const tape::daemon::TpconfigLine& tpConfigLine,
   const common::dataStructures::SecurityIdentity& identity, log::LogContext & lc) {
-  const auto tapeDriveStatus = setTapeDriveStatus(driveInfo, desiredState, type, status, tpConfigLine, identity);
+  auto tapeDriveStatus = m_catalogue.getTapeDrive(driveInfo.driveName).value();
+  const time_t reportTime = time(NULL);
+  tapeDriveStatus.host = driveInfo.host;
+  tapeDriveStatus.logicalLibrary = driveInfo.logicalLibrary;
+  tapeDriveStatus.downOrUpStartTime = reportTime;
+  tapeDriveStatus.mountType = type;
+  tapeDriveStatus.driveStatus = status;
+  tapeDriveStatus.desiredUp = desiredState.up;
+  tapeDriveStatus.desiredForceDown = desiredState.forceDown;
+  if (desiredState.reason) tapeDriveStatus.reasonUpDown = desiredState.reason;
+  if (desiredState.comment) tapeDriveStatus.userComment = desiredState.comment;
+  tapeDriveStatus.devFileName = tpConfigLine.devFilename;
+  tapeDriveStatus.rawLibrarySlot = tpConfigLine.rawLibrarySlot;
+  tapeDriveStatus.creationLog = common::dataStructures::EntryLog(identity.username, identity.host, reportTime);
+  tapeDriveStatus.lastModificationLog = common::dataStructures::EntryLog(identity.username, identity.host, reportTime);
   m_catalogue.modifyTapeDrive(tapeDriveStatus);
   log::ScopedParamContainer spc(lc);
   spc.add("drive", driveInfo.driveName);

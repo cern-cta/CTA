@@ -3295,6 +3295,54 @@ void OStoreDB::updateDriveStatus(const common::dataStructures::DriveInfo& driveI
     lc.log(log::INFO, "In OStoreDB::updateDriveStatus(): changing drive status.");
   }
   ds.commit();
+  // DataBase NEW
+  auto tapeDriveStatus = m_catalogue.getTapeDrive(driveInfo.driveName).value();
+  tapeDriveStatus.driveName = driveInfo.driveName;
+  tapeDriveStatus.host = driveInfo.host;
+  tapeDriveStatus.logicalLibrary = driveInfo.logicalLibrary;
+  tapeDriveStatus.ctaVersion = driveState.ctaVersion;
+  tapeDriveStatus.sessionId = driveState.sessionId;
+  tapeDriveStatus.bytesTransferedInSession = driveState.bytesTransferredInSession;
+  tapeDriveStatus.filesTransferedInSession = driveState.filesTransferredInSession;
+  tapeDriveStatus.latestBandwidth = driveState.latestBandwidth;
+  tapeDriveStatus.sessionStartTime = driveState.sessionStartTime;
+  tapeDriveStatus.mountStartTime = driveState.mountStartTime;
+  tapeDriveStatus.transferStartTime = driveState.transferStartTime;
+  tapeDriveStatus.unloadStartTime = driveState.unloadStartTime;
+  tapeDriveStatus.unmountStartTime = driveState.unmountStartTime;
+  tapeDriveStatus.drainingStartTime = driveState.drainingStartTime;
+  tapeDriveStatus.downOrUpStartTime = driveState.downOrUpStartTime;
+  tapeDriveStatus.probeStartTime = driveState.probeStartTime;
+  tapeDriveStatus.cleanupStartTime = driveState.cleanupStartTime;
+  // tapeDriveStatus.lastUpdateTime = driveState.lastUpdateTime;
+  tapeDriveStatus.startStartTime = driveState.startStartTime;
+  tapeDriveStatus.shutdownTime = driveState.shutdownTime;
+  tapeDriveStatus.mountType = driveState.mountType;
+  tapeDriveStatus.driveStatus = driveState.driveStatus;
+  tapeDriveStatus.desiredUp = driveState.desiredDriveState.up;
+  tapeDriveStatus.desiredForceDown = driveState.desiredDriveState.forceDown;
+  tapeDriveStatus.reasonUpDown = driveState.desiredDriveState.reason;
+  tapeDriveStatus.userComment = driveState.desiredDriveState.comment;
+  tapeDriveStatus.currentVid = driveState.currentVid;
+  tapeDriveStatus.currentTapePool = driveState.currentTapePool;
+  tapeDriveStatus.currentVo = driveState.currentVo;
+  tapeDriveStatus.currentPriority = driveState.currentPriority;
+  if (driveState.currentActivityAndWeight) {
+    tapeDriveStatus.currentActivity = driveState.currentActivityAndWeight.value().activity;
+    tapeDriveStatus.currentActivityWeight = driveState.currentActivityAndWeight.value().weight;
+  }
+  tapeDriveStatus.nextMountType = driveState.nextMountType;
+  tapeDriveStatus.nextVid = driveState.nextVid;
+  tapeDriveStatus.nextTapePool = driveState.nextTapepool;
+  tapeDriveStatus.nextVo = driveState.nextVo;
+  tapeDriveStatus.nextPriority = driveState.nextPriority;
+  if (driveState.nextActivityAndWeight) {
+    tapeDriveStatus.nextActivity = driveState.nextActivityAndWeight.value().activity;
+    tapeDriveStatus.nextActivityWeight = driveState.nextActivityAndWeight.value().weight;
+  }
+  tapeDriveStatus.devFileName = driveState.devFileName;
+  tapeDriveStatus.rawLibrarySlot = driveState.rawLibrarySlot;
+  m_catalogue.modifyTapeDrive(tapeDriveStatus);
 }
 
 //------------------------------------------------------------------------------

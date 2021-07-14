@@ -942,7 +942,7 @@ int DriveHandler::runChild() {
       driveState.setReasonFromLogMsg(logLevel,errorMsg);
       scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName,driveState, lc);
       // DataBase
-      scheduler.createTapeDriveStatus(driveInfo, driveState, common::dataStructures::MountType::NoMount,
+      scheduler.updateTapeDriveStatus(driveInfo, driveState, common::dataStructures::MountType::NoMount,
         common::dataStructures::DriveStatus::Down, m_configLine, securityIdentity, lc);
       return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
     } catch (cta::exception::Exception &ex) {
@@ -977,7 +977,7 @@ int DriveHandler::runChild() {
         driveState.setReasonFromLogMsg(logLevel,errorMsg);
         scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName, driveState, lc);
         // DataBase
-        scheduler.createTapeDriveStatus(driveInfo, driveState, common::dataStructures::MountType::NoMount,
+        scheduler.updateTapeDriveStatus(driveInfo, driveState, common::dataStructures::MountType::NoMount,
           common::dataStructures::DriveStatus::Down, m_configLine, securityIdentity, lc);
         return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
       } catch (cta::exception::Exception &ex) {

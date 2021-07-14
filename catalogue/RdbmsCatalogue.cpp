@@ -9217,7 +9217,15 @@ void RdbmsCatalogue::settingSqlTapeDriveValues(cta::rdbms::Stmt *stmt,
   const std::string nullStringMessage = "NULL";
   auto setOptionalString = [&stmt, nullStringMessage](const std::string &sqlField,
     const optional<std::string> &optionalField) {
-    stmt->bindString(sqlField, optionalField ? optionalField.value() : nullStringMessage);
+    if (optionalField) {
+      if (optionalField.value().empty()) {
+        stmt->bindString(sqlField, nullStringMessage);
+      } else {
+        stmt->bindString(sqlField, optionalField.value());
+      }
+    } else {
+      stmt->bindString(sqlField, nullStringMessage);
+    }
   };
   auto setOptionalUint64 = [&stmt](const std::string &sqlField,
     const optional<uint64_t> optionalField) {
