@@ -297,7 +297,7 @@ const std::map<std::string, OptionUInt64::Key> uint64Options = {
  * Map string options to Protocol Buffer enum values
  */
 const std::map<std::string, OptionString::Key> strOptions = {
-   { "--bufferurl",             OptionString::BUFFERURL }, 
+   { "--bufferurl",             OptionString::BUFFERURL },
    { "--cartridge",             OptionString::CARTRIDGE },
    { "--comment",               OptionString::COMMENT },
    { "--drive",                 OptionString::DRIVE },
@@ -592,7 +592,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
       { opt_tapepool_alias, opt_vo.optional(), opt_partialtapes.optional(), opt_encrypted.optional(),
         opt_supply.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_RM    }, { opt_tapepool_alias }},
-   {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_LS    }, { }},
+   {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_LS    }, { opt_tapepool.optional(), opt_vo.optional(), opt_encrypted.optional()}},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_DISKSYSTEM,           AdminCmd::SUBCMD_ADD   },
       { opt_disksystem, opt_file_regexp, opt_free_space_query_url, opt_refresh_interval, opt_targeted_free_space, opt_sleep_time,

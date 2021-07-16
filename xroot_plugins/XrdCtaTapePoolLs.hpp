@@ -19,6 +19,7 @@
 
 #include <xroot_plugins/XrdCtaStream.hpp>
 #include <xroot_plugins/XrdSsiCtaRequestMessage.hpp>
+#include <catalogue/TapePoolSearchCriteria.hpp>
 
 
 namespace cta { namespace xrd {
@@ -63,6 +64,13 @@ TapePoolLsStream::TapePoolLsStream(const RequestMessage &requestMsg, cta::catalo
   using namespace cta::admin;
 
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "TapePoolLsStream() constructor");
+  cta::catalogue::TapePoolSearchCriteria searchCriteria;
+
+  searchCriteria.name = requestMsg.getOptional(OptionString_Key_TAPE_POOL);
+  searchCriteria.vo = requestMsg.getOptional(OptionString_Key_VO);
+  searchCriteria.encrypted = requestMsg.getOptional(OptionBoolean_Key_ENCRYPTED);
+
+  m_tapePoolList = m_catalogue.getTapePools(searchCriteria);
 }
 
 int TapePoolLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {

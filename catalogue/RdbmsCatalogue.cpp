@@ -2194,13 +2194,42 @@ void RdbmsCatalogue::deleteTapePool(const std::string &name) {
   }
 }
 
+
 //------------------------------------------------------------------------------
 // getTapePools
 //------------------------------------------------------------------------------
-std::list<TapePool> RdbmsCatalogue::getTapePools() const {
+std::list<TapePool> RdbmsCatalogue::getTapePools(const TapePoolSearchCriteria &searchCriteria) const {
   try {
+    auto conn = m_connPool.getConn();
+    return getTapePools(conn, searchCriteria);
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+
+std::list<TapePool> RdbmsCatalogue::getTapePools(rdbms::Conn &conn, const TapePoolSearchCriteria &searchCriteria) const {
+  if (isSetAndEmpty(searchCriteria.name)) throw exception::UserError("Pool name cannot be an empty string");
+  if (isSetAndEmpty(searchCriteria.vo)) throw exception::UserError("Virtual organisation cannot be an empty string");
+  try {
+
+    if (searchCriteria.name && !tapePoolExists(conn, searchCriteria.name.value())) {
+      UserSpecifiedANonExistentTapePool ex;
+      ex.getMessage() << "Cannot list tape pools because tape pool " + searchCriteria.name.value() + " does not exist";
+      throw ex;
+    }
+
+    if (searchCriteria.vo && !virtualOrganizationExists(conn, searchCriteria.vo.value())) {
+      UserSpecifiedANonExistentVirtualOrganization ex;
+      ex.getMessage() << "Cannot list tape pools because virtual organization " + searchCriteria.vo.value() + " does not exist";
+      throw ex;
+    }
+
     std::list<TapePool> pools;
-    const char *const sql =
+    std::string sql =
       "SELECT "
         "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
         "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,"
@@ -2233,27 +2262,61 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
       "LEFT OUTER JOIN TAPE ON "
         "TAPE_POOL.TAPE_POOL_ID = TAPE.TAPE_POOL_ID "
       "LEFT OUTER JOIN MEDIA_TYPE ON "
-        "TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID "
-      "GROUP BY "
-        "TAPE_POOL.TAPE_POOL_NAME,"
-        "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME,"
-        "TAPE_POOL.NB_PARTIAL_TAPES,"
-        "TAPE_POOL.IS_ENCRYPTED,"
-        "TAPE_POOL.SUPPLY,"
-        "TAPE_POOL.USER_COMMENT,"
-        "TAPE_POOL.CREATION_LOG_USER_NAME,"
-        "TAPE_POOL.CREATION_LOG_HOST_NAME,"
-        "TAPE_POOL.CREATION_LOG_TIME,"
-        "TAPE_POOL.LAST_UPDATE_USER_NAME,"
-        "TAPE_POOL.LAST_UPDATE_HOST_NAME,"
-        "TAPE_POOL.LAST_UPDATE_TIME "
-      "ORDER BY "
-        "TAPE_POOL_NAME";
+        "TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID";
 
-    auto conn = m_connPool.getConn();
+    if (searchCriteria.name || searchCriteria.vo || searchCriteria.encrypted) {
+      sql += " WHERE ";
+    }
+    bool addedAWhereConstraint = false;
+    if (searchCriteria.name) {
+      sql += "TAPE_POOL.TAPE_POOL_NAME = :NAME";
+      addedAWhereConstraint = true;
+    }
+
+    if (searchCriteria.vo) {
+      if (addedAWhereConstraint) sql += " AND ";
+      sql += "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME = :VO";
+      addedAWhereConstraint = true;
+    }
+
+    if (searchCriteria.encrypted) {
+      if (addedAWhereConstraint) sql += " AND ";
+      sql += "TAPE_POOL.IS_ENCRYPTED = :ENCRYPTED";
+    }
+
+    sql +=
+        " GROUP BY "
+           "TAPE_POOL.TAPE_POOL_NAME,"
+           "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME,"
+           "TAPE_POOL.NB_PARTIAL_TAPES,"
+           "TAPE_POOL.IS_ENCRYPTED,"
+           "TAPE_POOL.SUPPLY,"
+           "TAPE_POOL.USER_COMMENT,"
+           "TAPE_POOL.CREATION_LOG_USER_NAME,"
+           "TAPE_POOL.CREATION_LOG_HOST_NAME,"
+           "TAPE_POOL.CREATION_LOG_TIME,"
+           "TAPE_POOL.LAST_UPDATE_USER_NAME,"
+           "TAPE_POOL.LAST_UPDATE_HOST_NAME,"
+           "TAPE_POOL.LAST_UPDATE_TIME "
+         "ORDER BY "
+           "TAPE_POOL_NAME";
+
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":STATE_DISABLED",common::dataStructures::Tape::stateToString(common::dataStructures::Tape::DISABLED));
     stmt.bindString(":STATE_ACTIVE",common::dataStructures::Tape::stateToString(common::dataStructures::Tape::ACTIVE));
+
+    if (searchCriteria.name) {
+      stmt.bindString(":NAME", searchCriteria.name.value());
+    }
+
+    if (searchCriteria.vo) {
+      stmt.bindString(":VO", searchCriteria.vo.value());
+    }
+
+    if(searchCriteria.encrypted) {
+      stmt.bindBool(":ENCRYPTED", searchCriteria.encrypted.value());
+    }
+
     auto rset = stmt.executeQuery();
     while (rset.next()) {
       TapePool pool;

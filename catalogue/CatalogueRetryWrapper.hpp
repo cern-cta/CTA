@@ -241,8 +241,8 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteTapePool(name);}, m_maxTriesToConnect);
   }
 
-  std::list<TapePool> getTapePools() const override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->getTapePools();}, m_maxTriesToConnect);
+  std::list<TapePool> getTapePools(const TapePoolSearchCriteria &searchCriteria) const override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->getTapePools(searchCriteria);}, m_maxTriesToConnect);
   }
 
   cta::optional<TapePool> getTapePool(const std::string &tapePoolName) const override {

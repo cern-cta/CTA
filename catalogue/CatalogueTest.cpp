@@ -2942,6 +2942,250 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolSupply_nonExistentTapePool) {
   ASSERT_THROW(m_catalogue->modifyTapePoolSupply(m_admin, tapePoolName, supply), exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, getTapePools_filterName) {
+  using namespace cta;
+
+  const std::string tapePoolName = "tape_pool";
+  const std::string secondTapePoolName = "tape_pool_2";
+
+  const uint64_t nbFirstPoolPartialTapes = 2;
+  const uint64_t nbSecondPoolPartialTapes = 3;
+
+  const bool firstPoolIsEncrypted = true;
+  const bool secondPoolIsEncrypted = false;
+
+  const cta::optional<std::string> firstPoolSupply("value for the supply first pool mechanism");
+  const cta::optional<std::string> secondPoolSupply("value for the supply second pool mechanism");
+
+  const std::string firstPoolComment = "Create first tape pool";
+  const std::string secondPoolComment = "Create second tape pool";
+
+  m_catalogue->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->createVirtualOrganization(m_admin, m_anotherVo);
+
+  m_catalogue->createTapePool(m_admin, tapePoolName, m_vo.name, nbFirstPoolPartialTapes, firstPoolIsEncrypted, firstPoolSupply, firstPoolComment);
+  m_catalogue->createTapePool(m_admin, secondTapePoolName, m_anotherVo.name, nbSecondPoolPartialTapes, secondPoolIsEncrypted, secondPoolSupply, secondPoolComment);
+
+
+  {
+    cta::catalogue::TapePoolSearchCriteria criteria;
+    criteria.name = tapePoolName;
+    const auto pools = m_catalogue->getTapePools(criteria);
+    ASSERT_EQ(1, pools.size());
+
+    const auto &pool = pools.front();
+    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(m_vo.name, pool.vo.name);
+    ASSERT_EQ(nbFirstPoolPartialTapes, pool.nbPartialTapes);
+    ASSERT_EQ(firstPoolIsEncrypted, pool.encryption);
+    ASSERT_TRUE((bool)pool.supply);
+    ASSERT_EQ(0, pool.nbTapes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
+    ASSERT_EQ(firstPoolComment, pool.comment);
+
+    const common::dataStructures::EntryLog creationLog = pool.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+
+  {
+    cta::catalogue::TapePoolSearchCriteria criteria;
+    criteria.name = secondTapePoolName;
+    const auto pools = m_catalogue->getTapePools(criteria);
+    ASSERT_EQ(1, pools.size());
+
+    const auto &pool = pools.front();
+    ASSERT_EQ(secondTapePoolName, pool.name);
+    ASSERT_EQ(m_anotherVo.name, pool.vo.name);
+    ASSERT_EQ(nbSecondPoolPartialTapes, pool.nbPartialTapes);
+    ASSERT_EQ(secondPoolIsEncrypted, pool.encryption);
+    ASSERT_TRUE((bool)pool.supply);
+    ASSERT_EQ(0, pool.nbTapes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
+    ASSERT_EQ(secondPoolComment, pool.comment);
+
+    const common::dataStructures::EntryLog creationLog = pool.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+
+  {
+    cta::catalogue::TapePoolSearchCriteria criteria;
+    criteria.name = "no pool with such name";
+
+    ASSERT_THROW(m_catalogue->getTapePools(criteria), catalogue::UserSpecifiedANonExistentTapePool);
+  }
+
+  {
+    cta::catalogue::TapePoolSearchCriteria criteria;
+    criteria.name = "";
+
+    ASSERT_THROW(m_catalogue->getTapePools(criteria), exception::UserError);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getTapePools_filterVO) {
+  using namespace cta;
+
+  const std::string tapePoolName = "tape_pool";
+  const std::string secondTapePoolName = "tape_pool_2";
+
+  const uint64_t nbFirstPoolPartialTapes = 2;
+  const uint64_t nbSecondPoolPartialTapes = 3;
+
+  const bool firstPoolIsEncrypted = true;
+  const bool secondPoolIsEncrypted = false;
+
+  const cta::optional<std::string> firstPoolSupply("value for the supply first pool mechanism");
+  const cta::optional<std::string> secondPoolSupply("value for the supply second pool mechanism");
+
+  const std::string firstPoolComment = "Create first tape pool";
+  const std::string secondPoolComment = "Create second tape pool";
+
+  m_catalogue->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->createVirtualOrganization(m_admin, m_anotherVo);
+
+  m_catalogue->createTapePool(m_admin, tapePoolName, m_vo.name, nbFirstPoolPartialTapes, firstPoolIsEncrypted, firstPoolSupply, firstPoolComment);
+  m_catalogue->createTapePool(m_admin, secondTapePoolName, m_anotherVo.name, nbSecondPoolPartialTapes, secondPoolIsEncrypted, secondPoolSupply, secondPoolComment);
+
+
+  {
+    cta::catalogue::TapePoolSearchCriteria criteria;
+    criteria.vo = m_vo.name;
+    const auto pools = m_catalogue->getTapePools(criteria);
+    ASSERT_EQ(1, pools.size());
+
+    const auto &pool = pools.front();
+    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(m_vo.name, pool.vo.name);
+    ASSERT_EQ(nbFirstPoolPartialTapes, pool.nbPartialTapes);
+    ASSERT_EQ(firstPoolIsEncrypted, pool.encryption);
+    ASSERT_TRUE((bool)pool.supply);
+    ASSERT_EQ(0, pool.nbTapes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
+    ASSERT_EQ(firstPoolComment, pool.comment);
+
+    const common::dataStructures::EntryLog creationLog = pool.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+
+  {
+    cta::catalogue::TapePoolSearchCriteria criteria;
+    criteria.vo = m_anotherVo.name;
+    const auto pools = m_catalogue->getTapePools(criteria);
+    ASSERT_EQ(1, pools.size());
+
+    const auto &pool = pools.front();
+    ASSERT_EQ(secondTapePoolName, pool.name);
+    ASSERT_EQ(m_anotherVo.name, pool.vo.name);
+    ASSERT_EQ(nbSecondPoolPartialTapes, pool.nbPartialTapes);
+    ASSERT_EQ(secondPoolIsEncrypted, pool.encryption);
+    ASSERT_TRUE((bool)pool.supply);
+    ASSERT_EQ(0, pool.nbTapes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
+    ASSERT_EQ(secondPoolComment, pool.comment);
+
+    const common::dataStructures::EntryLog creationLog = pool.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+
+  {
+    cta::catalogue::TapePoolSearchCriteria criteria;
+    criteria.vo = "no vo with such name";
+
+    ASSERT_THROW(m_catalogue->getTapePools(criteria), catalogue::UserSpecifiedANonExistentVirtualOrganization);
+  }
+
+  {
+    cta::catalogue::TapePoolSearchCriteria criteria;
+    criteria.vo = "";
+
+    ASSERT_THROW(m_catalogue->getTapePools(criteria), exception::UserError);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getTapePools_filterEncrypted) {
+  using namespace cta;
+
+  const std::string tapePoolName = "tape_pool";
+  const std::string secondTapePoolName = "tape_pool_2";
+
+  const uint64_t nbFirstPoolPartialTapes = 2;
+  const uint64_t nbSecondPoolPartialTapes = 3;
+
+  const bool firstPoolIsEncrypted = true;
+  const bool secondPoolIsEncrypted = false;
+
+  const cta::optional<std::string> firstPoolSupply("value for the supply first pool mechanism");
+  const cta::optional<std::string> secondPoolSupply("value for the supply second pool mechanism");
+
+  const std::string firstPoolComment = "Create first tape pool";
+  const std::string secondPoolComment = "Create second tape pool";
+
+  m_catalogue->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->createVirtualOrganization(m_admin, m_anotherVo);
+
+  m_catalogue->createTapePool(m_admin, tapePoolName, m_vo.name, nbFirstPoolPartialTapes, firstPoolIsEncrypted, firstPoolSupply, firstPoolComment);
+  m_catalogue->createTapePool(m_admin, secondTapePoolName, m_anotherVo.name, nbSecondPoolPartialTapes, secondPoolIsEncrypted, secondPoolSupply, secondPoolComment);
+
+
+  {
+    cta::catalogue::TapePoolSearchCriteria criteria;
+    criteria.encrypted = true;
+    const auto pools = m_catalogue->getTapePools(criteria);
+    ASSERT_EQ(1, pools.size());
+
+    const auto &pool = pools.front();
+    ASSERT_EQ(tapePoolName, pool.name);
+    ASSERT_EQ(m_vo.name, pool.vo.name);
+    ASSERT_EQ(nbFirstPoolPartialTapes, pool.nbPartialTapes);
+    ASSERT_EQ(firstPoolIsEncrypted, pool.encryption);
+    ASSERT_TRUE((bool)pool.supply);
+    ASSERT_EQ(0, pool.nbTapes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
+    ASSERT_EQ(firstPoolComment, pool.comment);
+
+    const common::dataStructures::EntryLog creationLog = pool.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+
+  {
+    cta::catalogue::TapePoolSearchCriteria criteria;
+    criteria.encrypted = false;
+    const auto pools = m_catalogue->getTapePools(criteria);
+    ASSERT_EQ(1, pools.size());
+
+    const auto &pool = pools.front();
+    ASSERT_EQ(secondTapePoolName, pool.name);
+    ASSERT_EQ(m_anotherVo.name, pool.vo.name);
+    ASSERT_EQ(nbSecondPoolPartialTapes, pool.nbPartialTapes);
+    ASSERT_EQ(secondPoolIsEncrypted, pool.encryption);
+    ASSERT_TRUE((bool)pool.supply);
+    ASSERT_EQ(0, pool.nbTapes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
+    ASSERT_EQ(secondPoolComment, pool.comment);
+
+    const common::dataStructures::EntryLog creationLog = pool.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+}
+
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
   using namespace cta;
 

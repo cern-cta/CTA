@@ -431,7 +431,9 @@ public:
 
   void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue, const cta::optional<std::string> &supply, const std::string &comment) override;
   void deleteTapePool(const std::string &name) override;
-  std::list<TapePool> getTapePools() const override;
+  std::list<TapePool> getTapePools(const TapePoolSearchCriteria &searchCriteria) const override;
+
+  std::list<TapePool> getTapePools(rdbms::Conn &conn, const TapePoolSearchCriteria &searchCriteria) const;
 
   /**
    * @return The tape pool with the specified name.
