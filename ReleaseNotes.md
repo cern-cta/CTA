@@ -7,6 +7,7 @@
 ### Bug fixes
 
 - [frontend] Adds missing break after "schedulinginfo ls" command
+- cta/CTA#999 Adds a default mount rule
 - cta/CTA#1003 The expansion of a repack request now fails if the archive route for archiving the repacked files is missing
 
 # v4.0-4
