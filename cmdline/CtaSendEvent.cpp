@@ -49,16 +49,24 @@ typedef std::map<std::string, std::string> AttrMap;
 
 // Usage exception
 const std::runtime_error Usage("Usage: eos --json fileinfo /eos/path | cta-send-event CLOSEW|PREPARE "
-                               "-i/--eos.instance <instance> [-e/--eos.endpoint <url>]");
+                               "-i/--eos.instance <instance> [-e/--eos.endpoint <url>] "
+                               "-u/--request.user <user> -g/--request.group <group>");
 
 StringOption option_instance {"--eos.instance", "-i", true};
 StringOption option_endpoint {"--eos.endpoint", "-e", false};
+StringOption option_user {"--request.user", "-u", true};
+StringOption option_group {"--request.group", "-g", true};
+
 
 std::map<std::string, StringOption*> option_map = {
         {"-i", &option_instance},
         {"--eos.instance", &option_instance},
         {"-e", &option_endpoint},
         {"--eos.endpoint", &option_endpoint},
+        {"-u", &option_user},
+        {"--request.user", &option_user},
+        {"-g", &option_group},
+        {"--request.group", &option_group},
 };
 
 
@@ -145,21 +153,14 @@ void parseFileInfo(std::istream &in, AttrMap &attr, AttrMap &xattr)
 void fillNotification(cta::eos::Notification &notification, const std::string &wf_command,
                       const int argc, const char *const *const argv)
 {
-  XrdSsiPb::Config config(config_file, "eos");
-
-  for(auto &conf_option : std::vector<std::string>({"requester.user", "requester.group" })) {
-    if(!config.getOptionValueStr(conf_option).first) {
-      throw std::runtime_error(conf_option + " must be specified in " + config_file);
-    }
-  }
 
   parse_cmd(argc, argv);
   validate_cmd();
 
   const std::string &eos_instance = option_instance.get_value();
   const std::string &eos_endpoint = option_endpoint.is_present() ?option_endpoint.get_value() : "localhost:1095";
-  const std::string &requester_user = config.getOptionValueStr("requester.user").second;
-  const std::string &requester_group = config.getOptionValueStr("requester.group").second;
+  const std::string &requester_user = option_user.get_value();
+  const std::string &requester_group = option_group.get_value();
 
   // Set the event type
   if(wf_command == "CLOSEW") {
