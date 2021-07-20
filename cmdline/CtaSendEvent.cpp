@@ -52,10 +52,10 @@ const std::runtime_error Usage("Usage: eos --json fileinfo /eos/path | cta-send-
                                "-i/--eos.instance <instance> [-e/--eos.endpoint <url>] "
                                "-u/--request.user <user> -g/--request.group <group>");
 
-StringOption option_instance {"--eos.instance", "-i", true};
-StringOption option_endpoint {"--eos.endpoint", "-e", false};
-StringOption option_user {"--request.user", "-u", true};
-StringOption option_group {"--request.group", "-g", true};
+StringOption option_instance {"--eos.instance", "-i", false};
+StringOption option_endpoint {"--eos.endpoint", "-e", true};
+StringOption option_user {"--request.user", "-u", false};
+StringOption option_group {"--request.group", "-g", false};
 
 
 std::map<std::string, StringOption*> option_map = {
