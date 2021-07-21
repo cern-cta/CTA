@@ -882,6 +882,11 @@ void Scheduler::createTapeDriveStatus(const common::dataStructures::DriveInfo& d
   const common::dataStructures::DriveStatus& status, const tape::daemon::TpconfigLine& tpConfigLine,
   const common::dataStructures::SecurityIdentity& identity, log::LogContext & lc) {
   const auto tapeDriveStatus = setTapeDriveStatus(driveInfo, desiredState, type, status, tpConfigLine, identity);
+  auto driveNames = m_catalogue.getTapeDriveNames();
+  auto it = std::find(driveNames.begin(), driveNames.end(), tapeDriveStatus.driveName);
+  if (it != driveNames.end()) {
+    m_catalogue.deleteTapeDrive(tapeDriveStatus.driveName);
+  }
   m_catalogue.createTapeDrive(tapeDriveStatus);
   log::ScopedParamContainer spc(lc);
   spc.add("drive", driveInfo.driveName);

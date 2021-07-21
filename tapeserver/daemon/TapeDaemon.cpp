@@ -29,13 +29,13 @@
 
 namespace cta { namespace tape { namespace daemon {
 
-TapeDaemon::TapeDaemon(const cta::daemon::CommandLineParams & commandLine, 
-    log::Logger& log, 
-    const TapedConfiguration& globalConfig, 
-    cta::server::ProcessCap& capUtils): 
+TapeDaemon::TapeDaemon(const cta::daemon::CommandLineParams & commandLine,
+    log::Logger& log,
+    const TapedConfiguration& globalConfig,
+    cta::server::ProcessCap& capUtils):
     cta::server::Daemon(log),
     m_globalConfiguration(globalConfig), m_capUtils(capUtils),
-    m_programName("cta-taped"), m_hostName(getHostName()) { 
+    m_programName("cta-taped"), m_hostName(getHostName()) {
   setCommandLineHasBeenParsed(commandLine.foreground);
 }
 
@@ -89,7 +89,7 @@ void  cta::tape::daemon::TapeDaemon::exceptionThrowingMain()  {
   // however the process should still be permitted to perform raw IO in the
   // future
   setProcessCapabilities("cap_sys_rawio+p");
-  
+
   // Set the name of the (unique) thread for easy process identification.
   prctl(PR_SET_NAME, "cta-tpd-master");
   mainEventLoop();
@@ -150,7 +150,7 @@ void cta::tape::daemon::TapeDaemon::setProcessCapabilities(
   const std::string &text) {
   try {
     m_capUtils.setProcText(text);
-    m_log(log::INFO, "Set process capabilities", 
+    m_log(log::INFO, "Set process capabilities",
       {{"capabilities", m_capUtils.getProcText()}});
   } catch(cta::exception::Exception &ne) {
     cta::exception::Exception ex;

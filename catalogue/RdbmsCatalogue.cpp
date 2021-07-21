@@ -9286,11 +9286,11 @@ void RdbmsCatalogue::settingSqlTapeDriveValues(cta::rdbms::Stmt *stmt,
   setOptionalString(":NEXT_VO", tapeDrive.nextVo);
   setOptionalString(":USER_COMMENT", tapeDrive.userComment);
 
-  auto setEntryLog = [stmt](const std::string &field, const std::string &username,
+  auto setEntryLog = [stmt, setOptionalString, setOptionalUint64](const std::string &field, const std::string &username,
     const std::string &host, const time_t &time) {
-      stmt->bindString(field + "_USER_NAME", username);
-      stmt->bindString(field + "_HOST_NAME", host);
-      stmt->bindUint64(field + "_TIME", time);
+      setOptionalString(field + "_USER_NAME", username);
+      setOptionalString(field + "_HOST_NAME", host);
+      setOptionalUint64(field + "_TIME", time);
   };
 
   if (tapeDrive.creationLog) {
@@ -9621,7 +9621,11 @@ void RdbmsCatalogue::createDriveConfig(const std::string &tapeDriveName, const s
     stmt.bindString(":DRIVE_NAME", tapeDriveName);
     stmt.bindString(":CATEGORY", category);
     stmt.bindString(":KEY_NAME", keyName);
-    stmt.bindString(":VALUE", value);
+    if (value.empty()) {
+      stmt.bindString(":VALUE", std::string("NULL"));
+    } else {
+      stmt.bindString(":VALUE", value);
+    }
     stmt.bindString(":SOURCE", source);
 
     stmt.executeNonQuery();

@@ -3296,7 +3296,9 @@ void OStoreDB::updateDriveStatus(const common::dataStructures::DriveInfo& driveI
   }
   ds.commit();
   // DataBase NEW
-  auto tapeDriveStatus = m_catalogue.getTapeDrive(driveInfo.driveName).value();
+  auto tapeDriveToUpdate = m_catalogue.getTapeDrive(driveInfo.driveName);
+  if (!tapeDriveToUpdate) return;
+  auto tapeDriveStatus = tapeDriveToUpdate.value();
   tapeDriveStatus.driveName = driveInfo.driveName;
   tapeDriveStatus.host = driveInfo.host;
   tapeDriveStatus.logicalLibrary = driveInfo.logicalLibrary;
