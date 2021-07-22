@@ -70,6 +70,7 @@ TapeLsStream::TapeLsStream(const RequestMessage &requestMsg, cta::catalogue::Cat
   // Get the search criteria from the optional options
 
   searchCriteria.full            = requestMsg.getOptional(OptionBoolean::FULL,           &has_any);
+  searchCriteria.fromCastor      = requestMsg.getOptional(OptionBoolean::FROM_CASTOR,    &has_any);
   searchCriteria.capacityInBytes = requestMsg.getOptional(OptionUInt64::CAPACITY,        &has_any);
   searchCriteria.logicalLibrary  = requestMsg.getOptional(OptionString::LOGICAL_LIBRARY, &has_any);
   searchCriteria.tapePool        = requestMsg.getOptional(OptionString::TAPE_POOL,       &has_any);

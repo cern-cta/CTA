@@ -77,6 +77,11 @@ struct TapeSearchCriteria {
   optional<bool> full;
 
   /**
+   * Set to true if searching for tapes imported from castor.
+   */
+  optional<bool> fromCastor;
+
+  /**
    * List of disk file IDs to search for.
    */
   optional<std::vector<std::string>> diskFileIds;

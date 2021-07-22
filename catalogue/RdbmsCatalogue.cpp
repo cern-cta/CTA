@@ -3809,7 +3809,8 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
        searchCriteria.capacityInBytes ||
        searchCriteria.full ||
        searchCriteria.diskFileIds ||
-       searchCriteria.state) {
+       searchCriteria.state ||
+       searchCriteria.fromCastor) {
       sql += " WHERE";
     }
 
@@ -3873,6 +3874,11 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
       sql += " TAPE.TAPE_STATE = :TAPE_STATE";
       addedAWhereConstraint = true;
     }
+    if(searchCriteria.fromCastor) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += " TAPE.IS_FROM_CASTOR = :FROM_CASTOR";
+      addedAWhereConstraint = true;
+    }
     
     sql += " ORDER BY TAPE.VID";
 
@@ -3886,6 +3892,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
     if(searchCriteria.vo) stmt.bindString(":VO", searchCriteria.vo.value());
     if(searchCriteria.capacityInBytes) stmt.bindUint64(":CAPACITY_IN_BYTES", searchCriteria.capacityInBytes.value());
     if(searchCriteria.full) stmt.bindBool(":IS_FULL", searchCriteria.full.value());
+    if(searchCriteria.fromCastor) stmt.bindBool(":FROM_CASTOR", searchCriteria.fromCastor.value());
     try{
       if(searchCriteria.state) stmt.bindString(":TAPE_STATE",cta::common::dataStructures::Tape::stateToString(searchCriteria.state.value()));
     } catch(cta::exception::Exception &ex){

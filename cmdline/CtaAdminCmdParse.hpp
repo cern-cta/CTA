@@ -252,6 +252,7 @@ const std::map<std::string, OptionBoolean::Key> boolOptions = {
    { "--encrypted",             OptionBoolean::ENCRYPTED },
    { "--force",                 OptionBoolean::FORCE },
    { "--full",                  OptionBoolean::FULL },
+   {"--fromcastor",             OptionBoolean::FROM_CASTOR },
 
    // hasOption options
    { "--disabledtape",          OptionBoolean::DISABLED },
@@ -435,6 +436,7 @@ const Option opt_fidfile              { Option::OPT_STR_LIST, "--fxidfile",     
 const Option opt_filename             { Option::OPT_STR,  "--file",                  "-f",   " <filename>" };
 const Option opt_force                { Option::OPT_BOOL, "--force",                 "-f",   " <\"true\" or \"false\">" };
 const Option opt_force_flag           { Option::OPT_FLAG, "--force",                 "-f",   "" };
+const Option opt_fromcastor           { Option::OPT_BOOL, "--fromcastor",            "-fc",  " <\"true\" or \"false\">"};      
 const Option opt_instance             { Option::OPT_STR,  "--instance",              "-i",   " <disk_instance>" };
 const Option opt_justarchive          { Option::OPT_FLAG, "--justarchive",           "-a",   "" };
 const Option opt_justmove             { Option::OPT_FLAG, "--justmove",              "-m",   "" };
@@ -578,7 +580,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_LS    },
       { opt_vid.optional(), opt_mediatype.optional(), opt_vendor.optional(),
         opt_logicallibrary.optional(), opt_tapepool.optional(), opt_vo.optional(), opt_capacity.optional(),
-        opt_full.optional(), opt_fidfile.optional(), opt_all.optional(), opt_state.optional() }},
+        opt_full.optional(), opt_fidfile.optional(), opt_all.optional(), opt_state.optional(), opt_fromcastor.optional() }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_LABEL },
       { opt_vid, opt_force.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
