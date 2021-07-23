@@ -1496,7 +1496,7 @@ void RequestMessage::processRepack_Ls(cta::xrd::Response &response, XrdSsiStream
   auto vid = getOptional(OptionString::VID);
 
   // Create a XrdSsi stream object to return the results
-  stream = new RepackLsStream(m_scheduler, vid);
+  stream = new RepackLsStream(m_scheduler, m_catalogue, vid);
 
   response.set_show_header(HeaderType::REPACK_LS);
   response.set_type(cta::xrd::Response::RSP_SUCCESS);

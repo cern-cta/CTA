@@ -30,8 +30,8 @@ namespace cta { namespace xrd {
   class RepackLsStream: public XrdSsiStream {
   public:
     
-    RepackLsStream(cta::Scheduler& scheduler, const cta::optional<std::string> vid):
-    XrdSsiStream(XrdSsiStream::isActive),m_scheduler(scheduler), m_vid(vid){
+    RepackLsStream(cta::Scheduler& scheduler, cta::catalogue::Catalogue& catalogue, const cta::optional<std::string> vid):
+    XrdSsiStream(XrdSsiStream::isActive),m_scheduler(scheduler), m_catalogue(catalogue), m_vid(vid) {
       XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "RepackLsStream() constructor");
       if(!vid){
         m_repackList = m_scheduler.getRepacks();
@@ -59,7 +59,14 @@ namespace cta { namespace xrd {
 	  last = true;
 	  return nullptr;
 	}
-	
+
+	std::set<std::string> tapeVids;
+	std::transform(m_repackList.begin(), m_repackList.end(),
+                 std::inserter(tapeVids, tapeVids.begin()),
+                 [](cta::common::dataStructures::RepackInfo &ri) {return ri.vid;});
+
+	cta::common::dataStructures::VidToTapeMap tapeVidMap = m_catalogue.getTapesByVid(tapeVids); // throws an exception if a vid does not exist
+
 	streambuf = new XrdSsiPb::OStreamBuffer<Data>(dlen);
 	
 	for(bool is_buffer_full = false; !m_repackList.empty() && !is_buffer_full; m_repackList.pop_front()){
@@ -73,6 +80,7 @@ namespace cta { namespace xrd {
     
 	  auto repackRequestItem = record.mutable_rels_item();
 	  repackRequestItem->set_vid(repackRequest.vid);
+	  repackRequestItem->set_tapepool(tapeVidMap[repackRequest.vid].tapePoolName);
 	  repackRequestItem->set_repack_buffer_url(repackRequest.repackBufferBaseURL);
 	  repackRequestItem->set_user_provided_files(repackRequest.userProvidedFiles);
 	  repackRequestItem->set_total_files_to_retrieve(totalFilesToRetrieve);
@@ -137,6 +145,7 @@ namespace cta { namespace xrd {
   
   private:
     cta::Scheduler &m_scheduler;
+    cta::catalogue::Catalogue &m_catalogue;
     const cta::optional<std::string> m_vid;
     std::list<common::dataStructures::RepackInfo> m_repackList;
     static constexpr const char * const LOG_SUFFIX = "RepackLsStream";

@@ -614,6 +614,7 @@ void TextFormatter::printRepackLsHeader() {
     "repackTime",
     "c.user",
     "vid",
+    "tapepool",
     "providedFiles",
     "totalFiles",
     "totalBytes",
@@ -630,6 +631,7 @@ void TextFormatter::print(const RepackLsItem &rels_item) {
    secondsToDayHoursMinSec(rels_item.repack_time()),
    rels_item.creation_log().username(),
    rels_item.vid(),
+   rels_item.tapepool(),
    rels_item.user_provided_files(),
    rels_item.total_files_to_archive(), //https://gitlab.cern.ch/cta/CTA/-/issues/680#note_3849045
    dataSizeToStr(rels_item.total_bytes_to_archive()), //https://gitlab.cern.ch/cta/CTA/-/issues/680#note_3849045
