@@ -3,6 +3,10 @@
 ## Summary
 
 ### Features
+- [frontend] Add options to "tapepool ls" to filter tapepools on their name, vo and encryption
+- cta/CTA#898 cta-send-event now gets the requester id and eos instance as command line arguments
+- cta/CTA#1005 "tape ls" now can filter tapes on wether they were imported from CASTOR
+- cta/CTA#1006 "repack ls" now shows the tapepool of the tape being repacked
 
 ### Bug fixes
 
