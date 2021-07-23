@@ -19,6 +19,7 @@
 #include "catalogue/CatalogueTest.hpp"
 #include "catalogue/SchemaVersion.hpp"
 #include "common/Constants.hpp"
+#include "common/dataStructures/EntryLog.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/make_unique.hpp"
@@ -15606,6 +15607,18 @@ TEST_P(cta_catalogue_CatalogueTest, getTapeDrive) {
   m_catalogue->deleteTapeDrive(tapeDrive.driveName);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, getTapeDriveWithEmptyEntryLog) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  tapeDrive.creationLog = cta::common::dataStructures::EntryLog("", "", 0);
+  m_catalogue->createTapeDrive(tapeDrive);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_FALSE(storedTapeDrive.value().creationLog);
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, failToGetTapeDrive) {
   using namespace cta;
 
@@ -15693,6 +15706,40 @@ TEST_P(cta_catalogue_CatalogueTest, getDriveConfig) {
   ASSERT_EQ(daemonUserName.value(), value);
   ASSERT_EQ(daemonUserName.source(), source);
   m_catalogue->deleteDriveConfig(tapeDriveName, daemonUserName.key());
+}
+
+TEST_P(cta_catalogue_CatalogueTest, setSourcedParameterWithEmptyValue) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+
+  cta::SourcedParameter<std::string> raoLtoOptions {
+    "taped", "RAOLTOAlgorithmOptions","","Compile time default"
+  };
+
+  m_catalogue->createDriveConfig(tapeDriveName, raoLtoOptions.category(), raoLtoOptions.key(),
+    raoLtoOptions.value(), raoLtoOptions.source());
+  auto driveConfig = m_catalogue->getDriveConfig(tapeDriveName, raoLtoOptions.key());
+  ASSERT_TRUE(static_cast<bool>(driveConfig));
+  std::string category, value, source;
+  std::tie(category, value, source) = driveConfig.value();
+  ASSERT_EQ(raoLtoOptions.category(), category);
+  ASSERT_EQ("", value);
+  ASSERT_EQ(raoLtoOptions.source(), source);
+  m_catalogue->deleteDriveConfig(tapeDriveName, raoLtoOptions.key());
+
+  cta::SourcedParameter<std::string> backendPath{
+    "ObjectStore", "BackendPath"};
+
+  m_catalogue->createDriveConfig(tapeDriveName, backendPath.category(), backendPath.key(),
+    backendPath.value(), backendPath.source());
+  driveConfig = m_catalogue->getDriveConfig(tapeDriveName, backendPath.key());
+  ASSERT_TRUE(static_cast<bool>(driveConfig));
+  std::tie(category, value, source) = driveConfig.value();
+  ASSERT_EQ(backendPath.category(), category);
+  ASSERT_EQ("", value);
+  ASSERT_EQ("", source);
+  m_catalogue->deleteDriveConfig(tapeDriveName, backendPath.key());
 }
 
 TEST_P(cta_catalogue_CatalogueTest, failToGetDriveConfig) {

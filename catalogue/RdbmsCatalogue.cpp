@@ -9626,7 +9626,11 @@ void RdbmsCatalogue::createDriveConfig(const std::string &tapeDriveName, const s
     } else {
       stmt.bindString(":VALUE", value);
     }
-    stmt.bindString(":SOURCE", source);
+    if (source.empty()){
+      stmt.bindString(":SOURCE", std::string("NULL"));
+    } else {
+      stmt.bindString(":SOURCE", source);
+    }
 
     stmt.executeNonQuery();
 
@@ -9691,8 +9695,10 @@ optional<std::tuple<std::string, std::string, std::string>> RdbmsCatalogue::getD
     auto rset = stmt.executeQuery();
     if (rset.next()) {
       const std::string category = rset.columnString("CATEGORY");
-      const std::string value = rset.columnString("VALUE");
-      const std::string source = rset.columnString("SOURCE");
+      std::string value = rset.columnString("VALUE");
+      std::string source = rset.columnString("SOURCE");
+      if (value == "NULL") value.clear();
+      if (source == "NULL") source.clear();
       return std::make_tuple(category, value, source);
     }
     return nullopt_t();
@@ -9720,8 +9726,16 @@ void RdbmsCatalogue::modifyDriveConfig(const std::string &tapeDriveName, const s
     stmt.bindString(":DRIVE_NAME", tapeDriveName);
     stmt.bindString(":CATEGORY", category);
     stmt.bindString(":KEY_NAME", keyName);
-    stmt.bindString(":VALUE", value);
-    stmt.bindString(":SOURCE", source);
+    if (value.empty()) {
+      stmt.bindString(":VALUE", std::string("NULL"));
+    } else {
+      stmt.bindString(":VALUE", value);
+    }
+    if (source.empty()){
+      stmt.bindString(":SOURCE", std::string("NULL"));
+    } else {
+      stmt.bindString(":SOURCE", source);
+    }
 
     stmt.executeNonQuery();
 
