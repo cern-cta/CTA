@@ -64,6 +64,7 @@
 #include "common/exception/FileSizeMismatch.hpp"
 #include "common/exception/TapeFseqMismatch.hpp"
 #include "common/exception/UserError.hpp"
+#include "common/exception/UserErrorWithCacheInfo.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
 #include "common/optional.hpp"
@@ -164,6 +165,7 @@ public:
    * used by the Catalogue to determine the mount policy to be used when
    * archiving the file.
    * @return The new archive file identifier.
+   * @throw UserErrorWithCacheInfo if there was a user error.
    */
   virtual uint64_t checkAndGetNextArchiveFileId(
     const std::string &diskInstanceName,

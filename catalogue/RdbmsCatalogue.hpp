@@ -117,6 +117,7 @@ public:
    * used by the Catalogue to determine the mount policy to be used when
    * archiving the file.
    * @return The new archive file identifier.
+   * @throw UserErrorWithTimeBasedCacheInfo if there was a user error.
    */
   uint64_t checkAndGetNextArchiveFileId(
     const std::string &diskInstanceName,
@@ -1230,8 +1231,9 @@ protected:
    * @param user The fully qualified user, in other words the name of the disk
    * instance and the name of the group.
    * @return The mount policy or nullopt if one does not exists.
+   * @throw UserErrorWithTimeBasedCacheInfo if there was a user error.
    */
-  optional<common::dataStructures::MountPolicy> getCachedRequesterMountPolicy(const User &user) const;
+  ValueAndTimeBasedCacheInfo<optional<common::dataStructures::MountPolicy> > getCachedRequesterMountPolicy(const User &user) const;
 
   /**
    * Returns the specified requester mount-policy or nullopt if one does not
@@ -1305,7 +1307,7 @@ protected:
    * instance and the name of the group.
    * @return The cached mount policy or nullopt if one does not exists.
    */
-  optional<common::dataStructures::MountPolicy> getCachedRequesterGroupMountPolicy(const Group &group) const;
+  ValueAndTimeBasedCacheInfo<optional<common::dataStructures::MountPolicy> > getCachedRequesterGroupMountPolicy(const Group &group) const;
 
   /**
    * Returns the specified requester-group mount-policy or nullptr if one does

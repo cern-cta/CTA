@@ -21,6 +21,7 @@
 #include "common/Constants.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
+#include "common/exception/UserErrorWithCacheInfo.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/Thread.hpp"
 #include "common/threading/Mutex.hpp"
@@ -7567,7 +7568,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_no_mount_rules)
   requesterIdentity.name = requesterName;
   requesterIdentity.group = "group";
 
-  ASSERT_THROW(m_catalogue->checkAndGetNextArchiveFileId(diskInstance, m_storageClassSingleCopy.name, requesterIdentity), exception::UserError);
+  ASSERT_THROW(m_catalogue->checkAndGetNextArchiveFileId(diskInstance, m_storageClassSingleCopy.name, requesterIdentity), exception::UserErrorWithCacheInfo);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_after_cached_and_then_deleted_requester_mount_rule) {
@@ -7644,7 +7645,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_after_cached_an
   // Try to get an archive ID which should now fail because there is no user
   // mount rule and the invalidated user mount rule cache should not hide this
   // fact
-  ASSERT_THROW(m_catalogue->checkAndGetNextArchiveFileId(diskInstanceName, m_storageClassSingleCopy.name, requesterIdentity), exception::UserError);
+  ASSERT_THROW(m_catalogue->checkAndGetNextArchiveFileId(diskInstanceName, m_storageClassSingleCopy.name, requesterIdentity), exception::UserErrorWithCacheInfo);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount_rule) {
@@ -7860,7 +7861,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_after_cached_an
   // Try to get an archive ID which should now fail because there is no group
   // mount rule and the invalidated group mount rule cache should not hide this
   // fact
-  ASSERT_THROW(m_catalogue->checkAndGetNextArchiveFileId(diskInstanceName, m_storageClassSingleCopy.name, requesterIdentity), exception::UserError);
+  ASSERT_THROW(m_catalogue->checkAndGetNextArchiveFileId(diskInstanceName, m_storageClassSingleCopy.name, requesterIdentity), exception::UserErrorWithCacheInfo);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount_rule_overide) {

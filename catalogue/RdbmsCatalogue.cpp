@@ -560,7 +560,7 @@ common::dataStructures::VirtualOrganization RdbmsCatalogue::getCachedVirtualOrga
       auto conn = m_connPool.getConn();
       return getVirtualOrganizationOfTapepool(conn,tapepoolName);
     };
-    return m_tapepoolVirtualOrganizationCache.getCachedValue(tapepoolName,getNonCachedValue);
+    return m_tapepoolVirtualOrganizationCache.getCachedValue(tapepoolName,getNonCachedValue).value;
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -5538,7 +5538,7 @@ void RdbmsCatalogue::createRequesterGroupMountRule(
 //------------------------------------------------------------------------------
 // getCachedRequesterGroupMountPolicy
 //------------------------------------------------------------------------------
-optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getCachedRequesterGroupMountPolicy(const Group &group)
+ValueAndTimeBasedCacheInfo<optional<common::dataStructures::MountPolicy> > RdbmsCatalogue::getCachedRequesterGroupMountPolicy(const Group &group)
   const {
   try {
     auto getNonCachedValue = [&] {
@@ -5764,7 +5764,7 @@ bool RdbmsCatalogue::requesterMountRuleExists(rdbms::Conn &conn, const std::stri
 //------------------------------------------------------------------------------
 // getCachedRequesterMountPolicy
 //------------------------------------------------------------------------------
-optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getCachedRequesterMountPolicy(const User &user) const {
+ValueAndTimeBasedCacheInfo <optional <common::dataStructures::MountPolicy> > RdbmsCatalogue::getCachedRequesterMountPolicy(const User &user) const {
   try {
     auto getNonCachedValue = [&] {
       auto conn = m_connPool.getConn();
@@ -5992,7 +5992,7 @@ std::list<common::dataStructures::MountPolicy> RdbmsCatalogue::getCachedMountPol
       auto conn = m_connPool.getConn();
       return getMountPolicies(conn);
     };
-    return m_allMountPoliciesCache.getCachedValue("all",getNonCachedValue);
+    return m_allMountPoliciesCache.getCachedValue("all",getNonCachedValue).value;
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -7375,17 +7375,20 @@ uint64_t RdbmsCatalogue::checkAndGetNextArchiveFileId(const std::string &diskIns
       throw ue;
     }
 
-    auto mountPolicy = getCachedRequesterMountPolicy(User(diskInstanceName, user.name));
+    const auto userMountPolicyAndCacheInfo = getCachedRequesterMountPolicy(User(diskInstanceName, user.name));
+    const auto userMountPolicy = userMountPolicyAndCacheInfo.value;
     // Only consider the requester's group if there is no user mount policy
-    if(!mountPolicy) {
-      const auto groupMountPolicy = getCachedRequesterGroupMountPolicy(Group(diskInstanceName, user.group));
+    if(!userMountPolicy) {
+      const auto groupMountPolicyAndCacheInfo = getCachedRequesterGroupMountPolicy(Group(diskInstanceName, user.group));
+      const auto groupMountPolicy = groupMountPolicyAndCacheInfo.value;
 
       if(!groupMountPolicy) {
 
-        const auto defaultMountPolicy = getCachedRequesterMountPolicy(User(diskInstanceName, "default"));
+        const auto defaultUserMountPolicyAndCacheInfo = getCachedRequesterMountPolicy(User(diskInstanceName, "default"));
+        const auto defaultUserMountPolicy = defaultUserMountPolicyAndCacheInfo.value;
 
-        if(!defaultMountPolicy) {
-          exception::UserError ue;
+        if(!defaultUserMountPolicy) {
+          exception::UserErrorWithCacheInfo ue(defaultUserMountPolicyAndCacheInfo.cacheInfo);
           ue.getMessage() << "Failed to check and get next archive file ID: No mount rules: storageClass=" <<
             storageClassName << " requester=" << diskInstanceName << ":" << user.name << ":" << user.group;
           throw ue;
@@ -7399,6 +7402,13 @@ uint64_t RdbmsCatalogue::checkAndGetNextArchiveFileId(const std::string &diskIns
       auto conn = m_connPool.getConn();
       return getNextArchiveFileId(conn);
     }
+  } catch(exception::UserErrorWithCacheInfo &ue) {
+    log::LogContext lc(m_log);
+    log::ScopedParamContainer spc(lc);
+    spc.add("cacheInfo", ue.cacheInfo)
+       .add("userError", ue.getMessage().str());
+    lc.log(log::INFO, "Catalogue::checkAndGetNextArchiveFileId caught a UserErrorWithCacheInfo");
+    throw;
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -7433,23 +7443,31 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::getArchiveFileQ
     }
 
     // Get the mount policy - user mount policies overrule group ones
-    auto mountPolicy = getCachedRequesterMountPolicy(User(diskInstanceName, user.name));
-    if(!mountPolicy) {
-      mountPolicy = getCachedRequesterGroupMountPolicy(Group(diskInstanceName, user.group));
+    const auto userMountPolicyAndCacheInfo = getCachedRequesterMountPolicy(User(diskInstanceName, user.name));
+    const auto userMountPolicy = userMountPolicyAndCacheInfo.value;
 
-      if(!mountPolicy) {
-        mountPolicy = getCachedRequesterMountPolicy(User(diskInstanceName, "default"));
+    if(userMountPolicy) {
+      return common::dataStructures::ArchiveFileQueueCriteria(copyToPoolMap, *userMountPolicy);
+    } else {
+      const auto groupMountPolicyAndCacheInfo = getCachedRequesterGroupMountPolicy(Group(diskInstanceName, user.group));
+      const auto groupMountPolicy = groupMountPolicyAndCacheInfo.value;
 
-        if(!mountPolicy) {
-          exception::UserError ue;
+      if(groupMountPolicy) {
+        return common::dataStructures::ArchiveFileQueueCriteria(copyToPoolMap, *groupMountPolicy);
+      } else {
+        const auto defaultUserMountPolicyAndCacheInfo = getCachedRequesterMountPolicy(User(diskInstanceName, "default"));
+        const auto defaultUserMountPolicy = defaultUserMountPolicyAndCacheInfo.value;
+
+        if(defaultUserMountPolicy) {
+          return common::dataStructures::ArchiveFileQueueCriteria(copyToPoolMap, *defaultUserMountPolicy);
+        } else {
+          exception::UserErrorWithCacheInfo ue(defaultUserMountPolicyAndCacheInfo.cacheInfo);
           ue.getMessage() << "Failed to get archive file queue criteria: No mount rules: storageClass=" <<
             storageClassName << " requester=" << diskInstanceName << ":" << user.name << ":" << user.group;
           throw ue;
         }
       }
     }
-
-    return common::dataStructures::ArchiveFileQueueCriteria(copyToPoolMap, *mountPolicy);
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -7468,7 +7486,7 @@ common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getCachedTapeCopyToPoo
       auto conn = m_connPool.getConn();
       return getTapeCopyToPoolMap(conn, storageClass);
     };
-    return m_tapeCopyToPoolCache.getCachedValue(storageClass, getNonCachedValue);
+    return m_tapeCopyToPoolCache.getCachedValue(storageClass, getNonCachedValue).value;
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -7523,7 +7541,7 @@ uint64_t RdbmsCatalogue::getCachedExpectedNbArchiveRoutes(const StorageClass &st
       auto conn = m_connPool.getConn();
       return getExpectedNbArchiveRoutes(conn, storageClass);
     };
-    return m_expectedNbArchiveRoutesCache.getCachedValue(storageClass, getNonCachedValue);
+    return m_expectedNbArchiveRoutesCache.getCachedValue(storageClass, getNonCachedValue).value;
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
@@ -7793,7 +7811,7 @@ bool RdbmsCatalogue::isCachedAdmin(const common::dataStructures::SecurityIdentit
     auto getNonCachedValue = [&] {
       return isNonCachedAdmin(admin);
     };
-    return m_isAdminCache.getCachedValue(admin, getNonCachedValue);
+    return m_isAdminCache.getCachedValue(admin, getNonCachedValue).value;
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -8164,7 +8182,7 @@ RdbmsCatalogue::getCachedActivitiesWeights(const std::string& diskInstance) cons
       auto conn = m_connPool.getConn();
       return getActivitiesWeights(conn, diskInstance);
     };
-    return m_activitiesFairShareWeights.getCachedValue(diskInstance, getNonCachedValue);
+    return m_activitiesFairShareWeights.getCachedValue(diskInstance, getNonCachedValue).value;
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
