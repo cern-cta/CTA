@@ -198,6 +198,7 @@ private:
   void processTape_Rm               (cta::xrd::Response &response);
   void processTape_Reclaim          (cta::xrd::Response &response);
   void processTape_Label            (cta::xrd::Response &response);
+  void processTapeFile_Rm           (cta::xrd::Response &response);
   void processTapePool_Add          (cta::xrd::Response &response);
   void processTapePool_Ch           (cta::xrd::Response &response);
   void processTapePool_Rm           (cta::xrd::Response &response);

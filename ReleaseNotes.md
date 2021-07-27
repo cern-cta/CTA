@@ -6,6 +6,8 @@
  - cta/CTA#1016 New options for filtering deleted files using `cta-admin rtf ls` command.
  - cta/CTA#983 Add cta-release package for public binary rpm distribution.
 
+- [frontend] New command "tapefile rm" allows deleting a copy of a file from tape
+
 ### Bug fixes
 
  - cta/CTA#1014 Fix last column alignment when more than 1000 items are listed.

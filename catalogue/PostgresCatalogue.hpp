@@ -284,6 +284,17 @@ private:
    * @param archiveFileId the archiveFileId of the file to delete from the recycle-bin
    */
   virtual void deleteTapeFilesAndArchiveFileFromRecycleBin(rdbms::Conn & conn, const uint64_t archiveFileId, log::LogContext & lc);
+  
+  /**
+   * Copy the tape files from the TAPE_FILE tables to the FILE_RECYCLE_LOG table
+   * and deletes the TAPE_FILE entry.
+   * @param conn the database connection
+   * @param file the file to be deleted
+   * @param reason The reason for deleting the tape file copy
+   * @param lc the log context
+   */
+  void copyTapeFileToFileRecyleLogAndDelete(rdbms::Conn & conn, const cta::common::dataStructures::ArchiveFile &file, 
+                                            const std::string &reason, log::LogContext & lc) override;
 
 }; // class PostgresCatalogue
 

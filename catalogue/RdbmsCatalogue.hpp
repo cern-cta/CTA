@@ -902,7 +902,39 @@ public:
   common::dataStructures::ArchiveFileSummary getTapeFileSummary(
     const TapeFileSearchCriteria &searchCriteria) const override;
 
+ /**
+ * Deletes a tape file copy
+ *
+ * @param vid The vid of the tape the file copy is stored on
+ * @param archiveFileId The unique identifier of the archived file
+ * @param reason The reason for deleting the tape file copy
+ */
+ void deleteTapeFileCopy(const std::string &vid, const uint64_t archiveFileId, const std::string &reason) override;
+
   /**
+  * Deletes a tape file copy
+  *
+  * @param vid The vid of the tape the file copy is stored on
+  * @param diskFileId The identifier of the archive_file on disk
+  * @param diskInstanceName The name of the archived file disk instance
+  * @param reason The reason for deleting the tape file copy 
+  */
+  void deleteTapeFileCopy(const std::string &vid, const std::string &diskFileId,
+                          const std::string &diskInstanceName, const std::string &reason) override;
+
+
+  /**
+  * Deletes a tape file copy
+  *
+  * @param criteria The search criteria of the archive file
+  * @param vid The vid of the tape the file copy is stored on
+  * @param criteria The search criteria of the archive file
+  * @param reason The reason for deleting the tape file copy
+  */
+  void deleteTapeFileCopy(const std::string &vid, const TapeFileSearchCriteria &criteria, const std::string &reason);
+
+
+    /**
    * Returns the archive file with the specified unique identifier.
    *
    * This method assumes that the archive file being requested exists and will
@@ -1899,6 +1931,24 @@ protected:
   void copyArchiveFileToFileRecycleLog(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest & request);
   
   /**
+   * Copies the TAPE_FILE entries to the recycle-bin tables 
+   * @param conn the database connection
+   * @param file the archiveFile whose tapefiles we want to copy
+   * @param reason The reason for deleting the tape file copy
+   */
+  void copyTapeFilesToFileRecycleLog(rdbms::Conn & conn, const common::dataStructures::ArchiveFile &file, const std::string &reason);
+
+  /**
+   * Copy the tape files from the TAPE_FILE tables to the FILE_RECYCLE_LOG table
+   * and deletes the TAPE_FILE entry.
+   * @param conn the database connection
+   * @param file the archive file containing the tapefile to be copied
+   * @param reason The reason for deleting the tape file copy
+   * @param lc the log context
+   */
+  virtual void copyTapeFileToFileRecyleLogAndDelete(rdbms::Conn & conn, const cta::common::dataStructures::ArchiveFile &file, const std::string &reason, log::LogContext & lc) = 0;
+
+  /**
    * Insert the file in the FILE_RECYCLE_LOG table
    * @param conn the database connection
    * @param fileRecycleLog the file to insert into the FILE_RECYCLE_LOG table
@@ -1919,6 +1969,14 @@ protected:
    */
   void deleteTapeFiles(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest & request);
   
+  /**
+   * Delete the TapeFiles associated to an ArchiveFile from the TAPE_FILE table
+   * @param conn the database connection
+   * @param file the file that contains the tape files to delete
+   */
+  void deleteTapeFiles(rdbms::Conn & conn, const common::dataStructures::ArchiveFile &file);
+  
+
    /**
    * Set the DIRTY flag to true
    * @param conn the database connection

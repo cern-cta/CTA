@@ -785,5 +785,40 @@ void MysqlCatalogue::deleteTapeFilesAndArchiveFileFromRecycleBin(rdbms::Conn & c
   }
 }
 
+//------------------------------------------------------------------------------
+// copyTapeFileToFileRecyleLogAndDelete
+//------------------------------------------------------------------------------
+void MysqlCatalogue::copyTapeFileToFileRecyleLogAndDelete(rdbms::Conn & conn, const cta::common::dataStructures::ArchiveFile &file,
+                                                          const std::string &reason, log::LogContext & lc) {
+  try {
+    utils::Timer t;
+    log::TimingList tl;
+    //We currently do an INSERT INTO and a DELETE FROM
+    //in a single transaction
+    conn.executeNonQuery("START TRANSACTION");
+    copyTapeFilesToFileRecycleLog(conn, file, reason);
+    tl.insertAndReset("insertToRecycleBinTime",t);
+    setTapeDirty(conn, file.archiveFileID);
+    tl.insertAndReset("setTapeDirtyTime",t);
+    deleteTapeFiles(conn,file);
+    tl.insertAndReset("deleteTapeFilesTime",t);
+    conn.commit();
+    tl.insertAndReset("commitTime",t);
+    log::ScopedParamContainer spc(lc);
+    spc.add("archiveFileId", file.archiveFileID);
+    spc.add("diskFileId", file.diskFileId);
+    spc.add("diskFilePath", file.diskFileInfo.path);
+    spc.add("diskInstance", file.diskInstance);
+    tl.addToLog(spc);
+    lc.log(log::INFO,"In MysqlCatalogue::copyArchiveFileToRecycleBinAndDelete: ArchiveFile moved to the recycle-bin.");
+    
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  } 
+}
+
 } // namespace catalogue
 } // namespace cta
