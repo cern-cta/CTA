@@ -7386,9 +7386,8 @@ uint64_t RdbmsCatalogue::checkAndGetNextArchiveFileId(const std::string &diskIns
 
         if(!defaultMountPolicy) {
           exception::UserError ue;
-          ue.getMessage() << "No mount rules for the requester or their group:"
-            " storageClass=" << storageClassName << " requester=" << diskInstanceName << ":" << user.name << ":" <<
-            user.group;
+          ue.getMessage() << "Failed to check and get next archive file ID: No mount rules: storageClass=" <<
+            storageClassName << " requester=" << diskInstanceName << ":" << user.name << ":" << user.group;
           throw ue;
         }
       }
@@ -7443,8 +7442,8 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::getArchiveFileQ
 
         if(!mountPolicy) {
           exception::UserError ue;
-          ue.getMessage() << "No mount rules for the requester or their group: storageClass=" << storageClassName <<
-            " requester=" << diskInstanceName << ":" << user.name << ":" << user.group;
+          ue.getMessage() << "Failed to get archive file queue criteria: No mount rules: storageClass=" <<
+            storageClassName << " requester=" << diskInstanceName << ":" << user.name << ":" << user.group;
           throw ue;
         }
       }
