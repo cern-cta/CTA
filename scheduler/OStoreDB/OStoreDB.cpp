@@ -3072,6 +3072,15 @@ void OStoreDB::setDesiredDriveState(const std::string& drive, const common::data
   driveState.desiredDriveState = newDesiredState;
   ds.setState(driveState);
   ds.commit();
+  // DataBase NEW
+  auto tapeDriveToUpdate = m_catalogue.getTapeDrive(drive);
+  if (!tapeDriveToUpdate) return;
+  auto tapeDriveStatus = tapeDriveToUpdate.value();
+  tapeDriveStatus.desiredUp = driveState.desiredDriveState.up;
+  tapeDriveStatus.desiredForceDown = driveState.desiredDriveState.forceDown;
+  tapeDriveStatus.reasonUpDown = driveState.desiredDriveState.reason;
+  tapeDriveStatus.userComment = driveState.desiredDriveState.comment;
+  m_catalogue.modifyTapeDrive(tapeDriveStatus);
 }
 
 //------------------------------------------------------------------------------
@@ -3316,7 +3325,10 @@ void OStoreDB::updateDriveStatus(const common::dataStructures::DriveInfo& driveI
   tapeDriveStatus.downOrUpStartTime = driveState.downOrUpStartTime;
   tapeDriveStatus.probeStartTime = driveState.probeStartTime;
   tapeDriveStatus.cleanupStartTime = driveState.cleanupStartTime;
-  // tapeDriveStatus.lastUpdateTime = driveState.lastUpdateTime;
+  tapeDriveStatus.lastModificationLog = common::dataStructures::EntryLog(
+    "NO_USER",
+    driveInfo.host,
+    driveState.lastUpdateTime);
   tapeDriveStatus.startStartTime = driveState.startStartTime;
   tapeDriveStatus.shutdownTime = driveState.shutdownTime;
   tapeDriveStatus.mountType = driveState.mountType;
