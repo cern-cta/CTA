@@ -1,6 +1,6 @@
 /*
  * @project        The CERN Tape Archive (CTA)
- * @copyright      Copyright(C) 2021 CERN
+ * @copyright      Copyright(C) 2015-2021 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
  *                 the Free Software Foundation, either version 3 of the License, or
@@ -70,6 +70,7 @@ TapeLsStream::TapeLsStream(const RequestMessage &requestMsg, cta::catalogue::Cat
   // Get the search criteria from the optional options
 
   searchCriteria.full            = requestMsg.getOptional(OptionBoolean::FULL,           &has_any);
+  searchCriteria.fromCastor      = requestMsg.getOptional(OptionBoolean::FROM_CASTOR,    &has_any);
   searchCriteria.capacityInBytes = requestMsg.getOptional(OptionUInt64::CAPACITY,        &has_any);
   searchCriteria.logicalLibrary  = requestMsg.getOptional(OptionString::LOGICAL_LIBRARY, &has_any);
   searchCriteria.tapePool        = requestMsg.getOptional(OptionString::TAPE_POOL,       &has_any);

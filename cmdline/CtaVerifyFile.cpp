@@ -1,6 +1,6 @@
 /*
  * @project        The CERN Tape Archive (CTA)
- * @copyright      Copyright(C) 2021 CERN
+ * @copyright      Copyright(C) 2015-2021 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
  *                 the Free Software Foundation, either version 3 of the License, or
@@ -21,6 +21,7 @@
 
 #include "CtaFrontendApi.hpp"
 #include "version.h"
+#include "CtaCmdOptions.hpp"
 
 const std::string config_file = "/etc/cta/cta-cli.conf";
 
@@ -43,51 +44,92 @@ void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
 typedef std::map<std::string, std::string> AttrMap;
 
 // Usage exception
-const std::runtime_error Usage("Usage: cta-verify-file archiveFileID [vid]");
+const std::runtime_error Usage("Usage: cta-verify-file <archiveFileID> [-v <vid>] "
+                               "-i <instance> -r.user <user> -r.group <group>\n"
+                               "cta-verify-file <archiveFileID> [--vid <id>] "
+                               "--instance <instance> --request.user <user> --request.group <group>");
+
+StringOption option_instance {"--instance", "-i", false};
+StringOption option_request_user {"--request.user", "-r.user", false};
+StringOption option_request_group {"--request.group", "-r.group", false};
+StringOption option_vid {"--vid", "-v", true};
+
+std::vector<StringOption*> verify_options = {&option_instance, &option_request_user, &option_request_group, &option_vid};
+
+std::map<std::string, StringOption*> option_map = {
+        {"-i", &option_instance},
+        {"--instance", &option_instance},
+        {"-r.user", &option_request_user},
+        {"--request.user", &option_request_user},
+        {"-r.group", &option_request_group},
+        {"--request.group", &option_request_group},
+        {"-v", &option_vid},
+        {"--vid", &option_vid},
+};
+
+void validate_cmd() {
+    for (auto &it: option_map) {
+        auto option = it.second;
+        if (!option->is_optional() && !option->is_present()) {
+            std::cout << "Error: Option " << option->get_name() << " is mandatory but not present." << std::endl;
+            throw Usage;
+        }
+    }
+}
+
+void parse_cmd(const int argc, const char *const *const argv) {
+    for (int i = 2; i < argc; i += 2) {
+        auto search = option_map.find(argv[i]);
+        if (search == option_map.end()) {
+            std::cout << "Error: Unknown option: " << argv[i] << std::endl;
+            throw Usage;
+        }
+        auto option = search->second;
+        option->set_present();
+        option->set_value(argv[i + 1]);
+    }
+}
 
 /*
  * Fill a Notification message from the command-line parameters and stdin
  *
  * @param[out]   notification    The protobuf to fill
- * @param[in]    config          The XrdSsiPb object containing the configuration parameters
- * @param[in]    archiveFileId   The ID of the file to retrieve
- * @param[in]    vid             If non-empty, restrict PREPARE requests to this tape only
+ * @param[in]    argc            Number of arguments passed on the command line
+ * @param[in]    argv            Command line arguments array
  */
-void fillNotification(cta::eos::Notification &notification, const std::string &archiveFileId, const std::string &vid)
+void fillNotification(cta::eos::Notification &notification, const int argc, const char *const *const argv)
 {
-  XrdSsiPb::Config config(config_file, "eos");
+    parse_cmd(argc, argv);
+    validate_cmd();
 
-  // WF
-  notification.mutable_wf()->set_event(cta::eos::Workflow::PREPARE);
+    std::string archiveFileId(argv[1]);
 
-  for(auto &conf_option : std::vector<std::string>({ "instance", "requester.user", "requester.group" })) {
-    if(!config.getOptionValueStr(conf_option).first) {
-      throw std::runtime_error(conf_option + " must be specified in " + config_file);
+    // WF
+    notification.mutable_wf()->set_event(cta::eos::Workflow::PREPARE);
+
+    notification.mutable_wf()->mutable_instance()->set_name(option_instance.get_value());
+    notification.mutable_wf()->set_requester_instance("cta-verify-file");
+    notification.mutable_wf()->set_verify_only(true);
+    notification.mutable_wf()->set_vid(option_vid.get_value());
+
+    // CLI
+    notification.mutable_cli()->mutable_user()->set_username(option_request_user.get_value());
+    notification.mutable_cli()->mutable_user()->set_groupname(option_request_group.get_value());
+
+    // Transport
+    notification.mutable_transport()->set_dst_url("file://dummy");
+
+    // File
+    notification.mutable_file()->set_lpath("dummy");
+
+    // eXtended attributes
+    AttrMap xattrs;
+    xattrs["sys.archive.file_id"] = archiveFileId;
+
+    for(auto &xattr : xattrs) {
+        google::protobuf::MapPair<std::string,std::string> mp(xattr.first, xattr.second);
+        notification.mutable_file()->mutable_xattr()->insert(mp);
     }
-  }
-  notification.mutable_wf()->mutable_instance()->set_name(config.getOptionValueStr("instance").second);
-  notification.mutable_wf()->set_requester_instance("cta-verify-file");
-  notification.mutable_wf()->set_verify_only(true);
-  notification.mutable_wf()->set_vid(vid);
-
-  // CLI
-  notification.mutable_cli()->mutable_user()->set_username(config.getOptionValueStr("requester.user").second);
-  notification.mutable_cli()->mutable_user()->set_groupname(config.getOptionValueStr("requester.group").second);
-
-  // Transport
-  notification.mutable_transport()->set_dst_url("file://dummy");
-
-  // File
-  notification.mutable_file()->set_lpath("dummy");
-
-  // eXtended attributes
-  AttrMap xattrs;
-  xattrs["sys.archive.file_id"] = archiveFileId;
-
-  for(auto &xattr : xattrs) {
-    google::protobuf::MapPair<std::string,std::string> mp(xattr.first, xattr.second);
-    notification.mutable_file()->mutable_xattr()->insert(mp);
-  }
 }
 
 
@@ -98,9 +140,7 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 {
   std::string vid;
 
-  if(argc == 3) {
-    vid = argv[2];
-  } else if(argc != 2) {
+  if(argc < 6 || argc % 2) { // Since all options need values associated, argc should always be even
     throw Usage;
   }
 
@@ -129,7 +169,7 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
   config.getEnv("log", "XrdSsiPbLogLevel");
 
   // Parse the command line arguments: fill the Notification fields
-  fillNotification(notification, argv[1], vid);
+  fillNotification(notification, argc, argv);
 
   // Obtain a Service Provider
   XrdSsiPbServiceType cta_service(config);
@@ -162,7 +202,7 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
  */
 int main(int argc, const char **argv)
 {
-  try {    
+  try {
     return exceptionThrowingMain(argc, argv);
   } catch (XrdSsiPb::PbException &ex) {
     std::cerr << "Error in Google Protocol Buffers: " << ex.what() << std::endl;

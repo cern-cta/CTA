@@ -1,6 +1,6 @@
 /*
  * @project        The CERN Tape Archive (CTA)
- * @copyright      Copyright(C) 2021 CERN
+ * @copyright      Copyright(C) 2015-2021 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
  *                 the Free Software Foundation, either version 3 of the License, or
@@ -3957,6 +3957,184 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
         ASSERT_EQ(vidDestination2,archiveMount->getVid());
       }
     }
+  }
+}
+
+TEST_P(SchedulerTest, expandRepackRequestShouldFailIfArchiveRouteMissing) {
+  using namespace cta;
+  using namespace cta::objectstore;
+  unitTests::TempDirectory tempDirectory;
+  auto &catalogue = getCatalogue();
+  auto &scheduler = getScheduler();
+  auto &schedulerDB = getSchedulerDB();
+  cta::objectstore::Backend& backend = schedulerDB.getBackend();
+  setupDefaultCatalogue();
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+  
+  //Create an agent to represent this test process
+  cta::objectstore::AgentReference agentReference("expandRepackRequestTest", dl);
+  cta::objectstore::Agent agent(agentReference.getAgentAddress(), backend);
+  agent.initialize();
+  agent.setTimeout_us(0);
+  agent.insertAndRegisterSelf(lc);
+  
+  cta::common::dataStructures::SecurityIdentity admin;
+  admin.username = "admin_user_name";
+  admin.host = "admin_host";
+  
+  //Create a logical library in the catalogue
+  const bool logicalLibraryIsDisabled = false;
+  catalogue.createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  
+  //Create the source tape
+  std::string vidCopyNb1 = "vidSource";
+  {
+    auto tape = getDefaultTape();
+    tape.vid = vidCopyNb1;
+    tape.full = true;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
+  
+  //Create two different destination tapepool
+  std::string tapepool2Name = "tapepool2";
+  const cta::optional<std::string> supply;
+  catalogue.createTapePool(admin,tapepool2Name,"vo",1,false,supply,"comment");
+  
+  //Create a storage class in the catalogue
+  common::dataStructures::StorageClass storageClass;
+  storageClass.name = s_storageClassName;
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+  catalogue.modifyStorageClassNbCopies(admin,storageClass.name,storageClass.nbCopies);
+  
+  //Create the one archive route for the second copy
+  catalogue.createArchiveRoute(admin,storageClass.name,2,tapepool2Name,"ArchiveRoute3");
+  
+  //Create two other destinationTape
+  std::string vidCopyNb2_source = "vidCopyNb2-source";
+  {
+    auto tape = getDefaultTape();
+    tape.vid = vidCopyNb2_source;
+    tape.tapePoolName = tapepool2Name;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
+  
+  std::string vidCopyNb2_destination = "vidCopyNb2-destination";
+  {
+    auto tape = getDefaultTape();
+    tape.vid = vidCopyNb2_destination;
+    tape.tapePoolName = tapepool2Name;
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
+
+  const std::string tapeDrive = "tape_drive";
+  const uint64_t nbArchiveFilesPerTape = 10;
+  const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
+  
+  //Simulate the writing of 10 files the source tape in the catalogue
+  std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy;
+  {
+    uint64_t archiveFileId = 1;
+    std::string currentVid = vidCopyNb1;
+    for(uint64_t j = 1; j <= nbArchiveFilesPerTape; ++j) {
+      std::ostringstream diskFileId;
+      diskFileId << (12345677 + archiveFileId);
+      std::ostringstream diskFilePath;
+      diskFilePath << "/public_dir/public_file_"<<1<<"_"<< j;
+      auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto & fileWritten = *fileWrittenUP;
+      fileWritten.archiveFileId = archiveFileId++;
+      fileWritten.diskInstance = s_diskInstance;
+      fileWritten.diskFileId = diskFileId.str();
+      
+      fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
+      fileWritten.diskFileGid = PUBLIC_GID;
+      fileWritten.size = archiveFileSize;
+      fileWritten.checksumBlob.insert(cta::checksum::ADLER32,"1234");
+      fileWritten.storageClassName = s_storageClassName;
+      fileWritten.vid = currentVid;
+      fileWritten.fSeq = j;
+      fileWritten.blockId = j * 100;
+      fileWritten.size = archiveFileSize;
+      fileWritten.copyNb = 1;
+      fileWritten.tapeDrive = tapeDrive;
+      tapeFilesWrittenCopy.emplace(fileWrittenUP.release());
+    }
+    //update the DB tape
+    catalogue.filesWrittenToTape(tapeFilesWrittenCopy);
+    tapeFilesWrittenCopy.clear();
+  }
+  //Archive the second copy of the files in the tape located in the tapepool2
+  {
+    uint64_t archiveFileId = 1;
+    std::string currentVid = vidCopyNb2_source;
+    for(uint64_t j = 1; j <= nbArchiveFilesPerTape; ++j) {
+      std::ostringstream diskFileId;
+      diskFileId << (12345677 + archiveFileId);
+      std::ostringstream diskFilePath;
+      diskFilePath << "/public_dir/public_file_"<<1<<"_"<< j;
+      auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto & fileWritten = *fileWrittenUP;
+      fileWritten.archiveFileId = archiveFileId++;
+      fileWritten.diskInstance = s_diskInstance;
+      fileWritten.diskFileId = diskFileId.str();
+      
+      fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
+      fileWritten.diskFileGid = PUBLIC_GID;
+      fileWritten.size = archiveFileSize;
+      fileWritten.checksumBlob.insert(cta::checksum::ADLER32,"1234");
+      fileWritten.storageClassName = s_storageClassName;
+      fileWritten.vid = currentVid;
+      fileWritten.fSeq = j;
+      fileWritten.blockId = j * 100;
+      fileWritten.size = archiveFileSize;
+      fileWritten.copyNb = 2;
+      fileWritten.tapeDrive = tapeDrive;
+      tapeFilesWrittenCopy.emplace(fileWrittenUP.release());
+    }
+    //update the DB tape
+    catalogue.filesWrittenToTape(tapeFilesWrittenCopy);
+    tapeFilesWrittenCopy.clear();
+  }
+  catalogue.setTapeFull(admin,vidCopyNb2_source,true);
+  //Delete the archive route of the second copy and repack the tape that contains these second copies
+  catalogue.deleteArchiveRoute(storageClass.name,2);
+  {
+    std::string vid = vidCopyNb2_source;
+    cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveAndAddCopies,
+    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
+    scheduler.queueRepack(admin,qrr,lc);
+    scheduler.waitSchedulerDbSubthreadsComplete();
+    
+    //Get the address of the Repack Request
+    cta::objectstore::RootEntry re(backend);
+    re.fetchNoLock();
+    
+    std::string repackQueueAddress = re.getRepackQueueAddress(common::dataStructures::RepackQueueType::Pending);
+    
+    cta::objectstore::RepackQueuePending repackQueuePending(repackQueueAddress,backend);
+    repackQueuePending.fetchNoLock();
+    
+    std::string repackRequestAddress = repackQueuePending.getCandidateList(1,{}).candidates.front().address;
+
+    log::TimingList tl;
+    utils::Timer t;
+
+    scheduler.promoteRepackRequestsToToExpand(lc);
+    scheduler.waitSchedulerDbSubthreadsComplete();
+
+    auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
+    scheduler.waitSchedulerDbSubthreadsComplete();
+    
+    ASSERT_EQ(vid,repackRequestToExpand->getRepackInfo().vid);
+    
+    //Expansion should fail.
+    ASSERT_THROW(scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc),cta::ExpandRepackRequestException);
   }
 }
 

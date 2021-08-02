@@ -1,6 +1,6 @@
 /*
  * @project        The CERN Tape Archive (CTA)
- * @copyright      Copyright(C) 2021 CERN
+ * @copyright      Copyright(C) 2015-2021 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
  *                 the Free Software Foundation, either version 3 of the License, or
@@ -56,6 +56,8 @@ private:
    */
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
 
+  cta::log::LogContext m_lc;
+
   static constexpr const char* const LOG_SUFFIX  = "DriveLsStream";    //!< Identifier for log messages
 
   std::list<std::string> m_tapeDriveNames;
@@ -65,7 +67,8 @@ private:
 DriveLsStream::DriveLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue,
   cta::Scheduler &scheduler, const cta::common::dataStructures::SecurityIdentity &clientID,
   log::LogContext &lc) :
-  XrdCtaStream(catalogue, scheduler) {
+  XrdCtaStream(catalogue, scheduler),
+  m_lc(lc) {
   using namespace cta::admin;
 
   m_tapeDriveNames = m_catalogue.getTapeDriveNames();
@@ -115,12 +118,15 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     dr_item->set_desired_drive_state(dr.desiredUp ? DriveLsItem::UP : DriveLsItem::DOWN);
     dr_item->set_mount_type(MountTypeToProtobuf(dr.mountType));
     dr_item->set_drive_status(DriveStatusToProtobuf(dr.driveStatus));
-    dr_item->set_vid(dr.currentVid ? dr.currentVid.value() : 0);
+    dr_item->set_vid(dr.currentVid ? dr.currentVid.value() : "");
     dr_item->set_tapepool(dr.currentTapePool ? dr.currentTapePool.value() : "");
     dr_item->set_vo(dr.currentVo ? dr.currentVo.value() : "");
     dr_item->set_files_transferred_in_session(dr.filesTransferedInSession ? dr.filesTransferedInSession.value() : 0);
     dr_item->set_bytes_transferred_in_session(dr.bytesTransferedInSession ? dr.bytesTransferedInSession.value() : 0);
-    dr_item->set_latest_bandwidth(dr.latestBandwidth ? std::stoi(dr.latestBandwidth.value()) : 0);
+    if (dr.latestBandwidth && std::isdigit(dr.latestBandwidth.value().at(0)))
+      dr_item->set_latest_bandwidth(std::stoi(dr.latestBandwidth.value()));
+    else
+      dr_item->set_latest_bandwidth(0);
     dr_item->set_session_id(dr.sessionId ? dr.sessionId.value() : 0);
     const auto lastUpdateTime = dr.lastModificationLog ? dr.lastModificationLog.value().time : 0;
     dr_item->set_time_since_last_update(time(nullptr) - lastUpdateTime);

@@ -15,8 +15,10 @@
 #                 You should have received a copy of the GNU General Public License
 #                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-echo Initializing krb5.conf...
-sudo cp -fv krb5.conf /etc/krb5.conf
+if [ ! -f /etc/krb5.conf ] || ! (grep default_realm /etc/krb5.conf | grep -qv '^ *#'); then
+  echo Initializing krb5.conf...
+  sudo cp -fv krb5.conf /etc/krb5.conf
+fi
 
 CTAUSER=cta
 if [[ ! -z $1 ]]; then

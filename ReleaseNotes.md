@@ -6,6 +6,35 @@
 
 ### Bug fixes
 
+# v4.0-5
+
+## Summary
+
+### Features
+- [frontend] Add options to "tapepool ls" to filter tapepools on their name, vo and encryption
+- cta/CTA#898 cta-send-event now gets the requester id and eos instance as command line arguments
+- cta/CTA#1005 "tape ls" now can filter tapes on wether they were imported from CASTOR
+- cta/CTA#1006 "repack ls" now shows the tapepool of the tape being repacked
+
+### Bug fixes
+
+- [frontend] Adds missing break after "schedulinginfo ls" command
+- cta/CTA#999 Adds a default mount rule
+- cta/CTA#1003 The expansion of a repack request now fails if the archive route for archiving the repacked files is missing
+
+# v4.0-4
+
+### Bug fixes
+
+- cta/CTA#1002 Do not requeue report jobs when reportType is NoReportRequired
+
+# v4.0-3
+
+### Features
+
+- Upgraded ceph to version 14.2.20
+- Adds cta-verify-file to cta-cli RPM
+
 # v4.0-2
 
 ## Summary

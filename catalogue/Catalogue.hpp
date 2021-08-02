@@ -1,6 +1,6 @@
 /*
  * @project        The CERN Tape Archive (CTA)
- * @copyright      Copyright(C) 2021 CERN
+ * @copyright      Copyright(C) 2015-2021 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
  *                 the Free Software Foundation, either version 3 of the License, or
@@ -65,12 +65,14 @@
 #include "common/exception/FileSizeMismatch.hpp"
 #include "common/exception/TapeFseqMismatch.hpp"
 #include "common/exception/UserError.hpp"
+#include "common/exception/UserErrorWithCacheInfo.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
 #include "common/optional.hpp"
 #include "disk/DiskSystem.hpp"
 #include "RecyleTapeFileSearchCriteria.hpp"
 #include "CreateMountPolicyAttributes.hpp"
+#include "TapePoolSearchCriteria.hpp"
 
 #include <list>
 #include <map>
@@ -93,6 +95,7 @@ CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentArchiveRoute);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentLogicalLibrary);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentTape);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentTapePool);
+CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentVirtualOrganization);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringComment);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringDiskSystemName);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringFileRegexp);
@@ -163,6 +166,7 @@ public:
    * used by the Catalogue to determine the mount policy to be used when
    * archiving the file.
    * @return The new archive file identifier.
+   * @throw UserErrorWithCacheInfo if there was a user error.
    */
   virtual uint64_t checkAndGetNextArchiveFileId(
     const std::string &diskInstanceName,
@@ -489,7 +493,7 @@ public:
   */
   virtual void deleteTapePool(const std::string &name) = 0;
 
-  virtual std::list<TapePool> getTapePools() const = 0;
+  virtual std::list<TapePool> getTapePools(const TapePoolSearchCriteria &searchCriteria = TapePoolSearchCriteria()) const = 0;
 
   /**
    * @return The tape pool with the specified name.

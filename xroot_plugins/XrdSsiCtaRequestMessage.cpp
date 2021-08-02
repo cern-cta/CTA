@@ -1,6 +1,6 @@
 /*
  * @project        The CERN Tape Archive (CTA)
- * @copyright      Copyright(C) 2021 CERN
+ * @copyright      Copyright(C) 2015-2021 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
  *                 the Free Software Foundation, either version 3 of the License, or
@@ -47,11 +47,6 @@ using XrdSsiPb::PbException;
 
 namespace cta {
 namespace xrd {
-
-// Codes to change colours for console output (when sending a response to cta-admin)
-const char* const TEXT_RED    = "\x1b[31;1m";
-const char* const TEXT_NORMAL = "\x1b[0m\n";
-
 
 /*
  * Convert AdminCmd <Cmd, SubCmd> pair to an integer so that it can be used in a switch statement
@@ -276,13 +271,14 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                processVirtualOrganization_Ls(response, stream);
                break;
            case cmd_pair(AdminCmd::CMD_VERSION, AdminCmd::SUBCMD_NONE):
-             processVersion(response, stream);
-             break;
+               processVersion(response, stream);
+               break;
            case cmd_pair(AdminCmd::CMD_SCHEDULINGINFOS, AdminCmd::SUBCMD_LS):
-             processSchedulingInfos_Ls(response,stream);
+               processSchedulingInfos_Ls(response,stream);
+               break;
            case cmd_pair(AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_LS):
-             processRecycleTapeFile_Ls(response,stream);
-             break;
+               processRecycleTapeFile_Ls(response,stream);
+               break;
             default:
                throw PbException("Admin command pair <" +
                      AdminCmd_Cmd_Name(request.admincmd().cmd()) + ", " +
@@ -1500,7 +1496,7 @@ void RequestMessage::processRepack_Ls(cta::xrd::Response &response, XrdSsiStream
   auto vid = getOptional(OptionString::VID);
 
   // Create a XrdSsi stream object to return the results
-  stream = new RepackLsStream(m_scheduler, vid);
+  stream = new RepackLsStream(m_scheduler, m_catalogue, vid);
 
   response.set_show_header(HeaderType::REPACK_LS);
   response.set_type(cta::xrd::Response::RSP_SUCCESS);

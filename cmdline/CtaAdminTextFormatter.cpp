@@ -1,6 +1,6 @@
 /*
  * @project        The CERN Tape Archive (CTA)
- * @copyright      Copyright(C) 2021 CERN
+ * @copyright      Copyright(C) 2015-2021 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
  *                 the Free Software Foundation, either version 3 of the License, or
@@ -614,6 +614,7 @@ void TextFormatter::printRepackLsHeader() {
     "repackTime",
     "c.user",
     "vid",
+    "tapepool",
     "providedFiles",
     "totalFiles",
     "totalBytes",
@@ -630,6 +631,7 @@ void TextFormatter::print(const RepackLsItem &rels_item) {
    secondsToDayHoursMinSec(rels_item.repack_time()),
    rels_item.creation_log().username(),
    rels_item.vid(),
+   rels_item.tapepool(),
    rels_item.user_provided_files(),
    rels_item.total_files_to_archive(), //https://gitlab.cern.ch/cta/CTA/-/issues/680#note_3849045
    dataSizeToStr(rels_item.total_bytes_to_archive()), //https://gitlab.cern.ch/cta/CTA/-/issues/680#note_3849045

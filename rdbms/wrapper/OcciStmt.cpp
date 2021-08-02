@@ -1,6 +1,6 @@
 /*
  * @project        The CERN Tape Archive (CTA)
- * @copyright      Copyright(C) 2021 CERN
+ * @copyright      Copyright(C) 2015-2021 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
  *                 the Free Software Foundation, either version 3 of the License, or
@@ -333,10 +333,11 @@ bool OcciStmt::connShouldBeClosed(const oracle::occi::SQLException &ex) {
   case  3135:
   case 12170:
   case 12514:
+  case 12528:
+  case 12537:
   case 12541:
   case 12571:
   case 24338:
-  case 12537:
   case 25401:
   case 25409:
   case 32102:

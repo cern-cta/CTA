@@ -1,6 +1,6 @@
 /*
  * @project        The CERN Tape Archive (CTA)
- * @copyright      Copyright(C) 2021 CERN
+ * @copyright      Copyright(C) 2015-2021 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
  *                 the Free Software Foundation, either version 3 of the License, or
@@ -117,6 +117,7 @@ public:
    * used by the Catalogue to determine the mount policy to be used when
    * archiving the file.
    * @return The new archive file identifier.
+   * @throw UserErrorWithTimeBasedCacheInfo if there was a user error.
    */
   uint64_t checkAndGetNextArchiveFileId(
     const std::string &diskInstanceName,
@@ -431,7 +432,9 @@ public:
 
   void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue, const cta::optional<std::string> &supply, const std::string &comment) override;
   void deleteTapePool(const std::string &name) override;
-  std::list<TapePool> getTapePools() const override;
+  std::list<TapePool> getTapePools(const TapePoolSearchCriteria &searchCriteria) const override;
+
+  std::list<TapePool> getTapePools(rdbms::Conn &conn, const TapePoolSearchCriteria &searchCriteria) const;
 
   /**
    * @return The tape pool with the specified name.
@@ -1228,8 +1231,9 @@ protected:
    * @param user The fully qualified user, in other words the name of the disk
    * instance and the name of the group.
    * @return The mount policy or nullopt if one does not exists.
+   * @throw UserErrorWithTimeBasedCacheInfo if there was a user error.
    */
-  optional<common::dataStructures::MountPolicy> getCachedRequesterMountPolicy(const User &user) const;
+  ValueAndTimeBasedCacheInfo<optional<common::dataStructures::MountPolicy> > getCachedRequesterMountPolicy(const User &user) const;
 
   /**
    * Returns the specified requester mount-policy or nullopt if one does not
@@ -1303,7 +1307,7 @@ protected:
    * instance and the name of the group.
    * @return The cached mount policy or nullopt if one does not exists.
    */
-  optional<common::dataStructures::MountPolicy> getCachedRequesterGroupMountPolicy(const Group &group) const;
+  ValueAndTimeBasedCacheInfo<optional<common::dataStructures::MountPolicy> > getCachedRequesterGroupMountPolicy(const Group &group) const;
 
   /**
    * Returns the specified requester-group mount-policy or nullptr if one does

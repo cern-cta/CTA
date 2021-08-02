@@ -1,6 +1,6 @@
 /*
  * @project        The CERN Tape Archive (CTA)
- * @copyright      Copyright(C) 2021 CERN
+ * @copyright      Copyright(C) 2015-2021 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
  *                 the Free Software Foundation, either version 3 of the License, or
@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "catalogue/ValueAndTimeBasedCacheInfo.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/Mutex.hpp"
 #include "common/threading/MutexLocker.hpp"
@@ -40,11 +41,11 @@ public:
   }
 
   /**
-   * Get the cached value corresponing to the specified key.
+   * Get the cached value corresponding to the specified key.
    *
    * This method updates the cache when necessary.
    */
-  template<typename Callable> Value getCachedValue(const Key &key, const Callable &getNonCachedValue) {
+  template<typename Callable> ValueAndTimeBasedCacheInfo<Value> getCachedValue(const Key &key, const Callable &getNonCachedValue) {
     const time_t now = time(nullptr);
 
     threading::MutexLocker cacheLock(m_mutex);
@@ -56,16 +57,17 @@ public:
       const time_t ageSecs = now - cachedValue.timestamp;
 
       if (m_maxAgeSecs >= ageSecs) { // Cached value is fresh
-        return cachedValue.value;
+        return ValueAndTimeBasedCacheInfo<Value>(cachedValue.value, "Fresh value found in cache");
       } else { // Cached value is stale
         cachedValue.value = getNonCachedValue();
         cachedValue.timestamp = ::time(nullptr);
-        return cachedValue.value;
+
+        return ValueAndTimeBasedCacheInfo<Value>(cachedValue.value, "Stale value found and replaced in cache");
       }
     } else { // No cache hit
       const auto emplaceResult = m_cache.emplace(std::make_pair(key,
         cta::make_unique<TimestampedValue>(now, getNonCachedValue())));
-      return emplaceResult.first->second->value;
+      return ValueAndTimeBasedCacheInfo<Value>(emplaceResult.first->second->value, "First time value entered into cache");
     }
   }
 

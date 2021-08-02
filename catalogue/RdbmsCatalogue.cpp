@@ -1,6 +1,6 @@
  /*
  * @project        The CERN Tape Archive (CTA)
- * @copyright      Copyright(C) 2021 CERN
+ * @copyright      Copyright(C) 2015-2021 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
  *                 the Free Software Foundation, either version 3 of the License, or
@@ -563,7 +563,7 @@ common::dataStructures::VirtualOrganization RdbmsCatalogue::getCachedVirtualOrga
       auto conn = m_connPool.getConn();
       return getVirtualOrganizationOfTapepool(conn,tapepoolName);
     };
-    return m_tapepoolVirtualOrganizationCache.getCachedValue(tapepoolName,getNonCachedValue);
+    return m_tapepoolVirtualOrganizationCache.getCachedValue(tapepoolName,getNonCachedValue).value;
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -2197,13 +2197,42 @@ void RdbmsCatalogue::deleteTapePool(const std::string &name) {
   }
 }
 
+
 //------------------------------------------------------------------------------
 // getTapePools
 //------------------------------------------------------------------------------
-std::list<TapePool> RdbmsCatalogue::getTapePools() const {
+std::list<TapePool> RdbmsCatalogue::getTapePools(const TapePoolSearchCriteria &searchCriteria) const {
   try {
+    auto conn = m_connPool.getConn();
+    return getTapePools(conn, searchCriteria);
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+
+std::list<TapePool> RdbmsCatalogue::getTapePools(rdbms::Conn &conn, const TapePoolSearchCriteria &searchCriteria) const {
+  if (isSetAndEmpty(searchCriteria.name)) throw exception::UserError("Pool name cannot be an empty string");
+  if (isSetAndEmpty(searchCriteria.vo)) throw exception::UserError("Virtual organisation cannot be an empty string");
+  try {
+
+    if (searchCriteria.name && !tapePoolExists(conn, searchCriteria.name.value())) {
+      UserSpecifiedANonExistentTapePool ex;
+      ex.getMessage() << "Cannot list tape pools because tape pool " + searchCriteria.name.value() + " does not exist";
+      throw ex;
+    }
+
+    if (searchCriteria.vo && !virtualOrganizationExists(conn, searchCriteria.vo.value())) {
+      UserSpecifiedANonExistentVirtualOrganization ex;
+      ex.getMessage() << "Cannot list tape pools because virtual organization " + searchCriteria.vo.value() + " does not exist";
+      throw ex;
+    }
+
     std::list<TapePool> pools;
-    const char *const sql =
+    std::string sql =
       "SELECT "
         "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
         "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,"
@@ -2236,27 +2265,61 @@ std::list<TapePool> RdbmsCatalogue::getTapePools() const {
       "LEFT OUTER JOIN TAPE ON "
         "TAPE_POOL.TAPE_POOL_ID = TAPE.TAPE_POOL_ID "
       "LEFT OUTER JOIN MEDIA_TYPE ON "
-        "TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID "
-      "GROUP BY "
-        "TAPE_POOL.TAPE_POOL_NAME,"
-        "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME,"
-        "TAPE_POOL.NB_PARTIAL_TAPES,"
-        "TAPE_POOL.IS_ENCRYPTED,"
-        "TAPE_POOL.SUPPLY,"
-        "TAPE_POOL.USER_COMMENT,"
-        "TAPE_POOL.CREATION_LOG_USER_NAME,"
-        "TAPE_POOL.CREATION_LOG_HOST_NAME,"
-        "TAPE_POOL.CREATION_LOG_TIME,"
-        "TAPE_POOL.LAST_UPDATE_USER_NAME,"
-        "TAPE_POOL.LAST_UPDATE_HOST_NAME,"
-        "TAPE_POOL.LAST_UPDATE_TIME "
-      "ORDER BY "
-        "TAPE_POOL_NAME";
+        "TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID";
 
-    auto conn = m_connPool.getConn();
+    if (searchCriteria.name || searchCriteria.vo || searchCriteria.encrypted) {
+      sql += " WHERE ";
+    }
+    bool addedAWhereConstraint = false;
+    if (searchCriteria.name) {
+      sql += "TAPE_POOL.TAPE_POOL_NAME = :NAME";
+      addedAWhereConstraint = true;
+    }
+
+    if (searchCriteria.vo) {
+      if (addedAWhereConstraint) sql += " AND ";
+      sql += "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME = :VO";
+      addedAWhereConstraint = true;
+    }
+
+    if (searchCriteria.encrypted) {
+      if (addedAWhereConstraint) sql += " AND ";
+      sql += "TAPE_POOL.IS_ENCRYPTED = :ENCRYPTED";
+    }
+
+    sql +=
+        " GROUP BY "
+           "TAPE_POOL.TAPE_POOL_NAME,"
+           "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME,"
+           "TAPE_POOL.NB_PARTIAL_TAPES,"
+           "TAPE_POOL.IS_ENCRYPTED,"
+           "TAPE_POOL.SUPPLY,"
+           "TAPE_POOL.USER_COMMENT,"
+           "TAPE_POOL.CREATION_LOG_USER_NAME,"
+           "TAPE_POOL.CREATION_LOG_HOST_NAME,"
+           "TAPE_POOL.CREATION_LOG_TIME,"
+           "TAPE_POOL.LAST_UPDATE_USER_NAME,"
+           "TAPE_POOL.LAST_UPDATE_HOST_NAME,"
+           "TAPE_POOL.LAST_UPDATE_TIME "
+         "ORDER BY "
+           "TAPE_POOL_NAME";
+
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":STATE_DISABLED",common::dataStructures::Tape::stateToString(common::dataStructures::Tape::DISABLED));
     stmt.bindString(":STATE_ACTIVE",common::dataStructures::Tape::stateToString(common::dataStructures::Tape::ACTIVE));
+
+    if (searchCriteria.name) {
+      stmt.bindString(":NAME", searchCriteria.name.value());
+    }
+
+    if (searchCriteria.vo) {
+      stmt.bindString(":VO", searchCriteria.vo.value());
+    }
+
+    if(searchCriteria.encrypted) {
+      stmt.bindBool(":ENCRYPTED", searchCriteria.encrypted.value());
+    }
+
     auto rset = stmt.executeQuery();
     while (rset.next()) {
       TapePool pool;
@@ -3749,7 +3812,8 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
        searchCriteria.capacityInBytes ||
        searchCriteria.full ||
        searchCriteria.diskFileIds ||
-       searchCriteria.state) {
+       searchCriteria.state ||
+       searchCriteria.fromCastor) {
       sql += " WHERE";
     }
 
@@ -3813,7 +3877,12 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
       sql += " TAPE.TAPE_STATE = :TAPE_STATE";
       addedAWhereConstraint = true;
     }
-
+    if(searchCriteria.fromCastor) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += " TAPE.IS_FROM_CASTOR = :FROM_CASTOR";
+      addedAWhereConstraint = true;
+    }
+    
     sql += " ORDER BY TAPE.VID";
 
     auto stmt = conn.createStmt(sql);
@@ -3826,6 +3895,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
     if(searchCriteria.vo) stmt.bindString(":VO", searchCriteria.vo.value());
     if(searchCriteria.capacityInBytes) stmt.bindUint64(":CAPACITY_IN_BYTES", searchCriteria.capacityInBytes.value());
     if(searchCriteria.full) stmt.bindBool(":IS_FULL", searchCriteria.full.value());
+    if(searchCriteria.fromCastor) stmt.bindBool(":FROM_CASTOR", searchCriteria.fromCastor.value());
     try{
       if(searchCriteria.state) stmt.bindString(":TAPE_STATE",cta::common::dataStructures::Tape::stateToString(searchCriteria.state.value()));
     } catch(cta::exception::Exception &ex){
@@ -5471,7 +5541,7 @@ void RdbmsCatalogue::createRequesterGroupMountRule(
 //------------------------------------------------------------------------------
 // getCachedRequesterGroupMountPolicy
 //------------------------------------------------------------------------------
-optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getCachedRequesterGroupMountPolicy(const Group &group)
+ValueAndTimeBasedCacheInfo<optional<common::dataStructures::MountPolicy> > RdbmsCatalogue::getCachedRequesterGroupMountPolicy(const Group &group)
   const {
   try {
     auto getNonCachedValue = [&] {
@@ -5697,7 +5767,7 @@ bool RdbmsCatalogue::requesterMountRuleExists(rdbms::Conn &conn, const std::stri
 //------------------------------------------------------------------------------
 // getCachedRequesterMountPolicy
 //------------------------------------------------------------------------------
-optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getCachedRequesterMountPolicy(const User &user) const {
+ValueAndTimeBasedCacheInfo <optional <common::dataStructures::MountPolicy> > RdbmsCatalogue::getCachedRequesterMountPolicy(const User &user) const {
   try {
     auto getNonCachedValue = [&] {
       auto conn = m_connPool.getConn();
@@ -5925,7 +5995,7 @@ std::list<common::dataStructures::MountPolicy> RdbmsCatalogue::getCachedMountPol
       auto conn = m_connPool.getConn();
       return getMountPolicies(conn);
     };
-    return m_allMountPoliciesCache.getCachedValue("all",getNonCachedValue);
+    return m_allMountPoliciesCache.getCachedValue("all",getNonCachedValue).value;
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -7308,17 +7378,24 @@ uint64_t RdbmsCatalogue::checkAndGetNextArchiveFileId(const std::string &diskIns
       throw ue;
     }
 
-    auto mountPolicy = getCachedRequesterMountPolicy(User(diskInstanceName, user.name));
+    const auto userMountPolicyAndCacheInfo = getCachedRequesterMountPolicy(User(diskInstanceName, user.name));
+    const auto userMountPolicy = userMountPolicyAndCacheInfo.value;
     // Only consider the requester's group if there is no user mount policy
-    if(!mountPolicy) {
-      const auto groupMountPolicy = getCachedRequesterGroupMountPolicy(Group(diskInstanceName, user.group));
+    if(!userMountPolicy) {
+      const auto groupMountPolicyAndCacheInfo = getCachedRequesterGroupMountPolicy(Group(diskInstanceName, user.group));
+      const auto groupMountPolicy = groupMountPolicyAndCacheInfo.value;
 
       if(!groupMountPolicy) {
-        exception::UserError ue;
-        ue.getMessage() << "No mount rules for the requester or their group:"
-          " storageClass=" << storageClassName << " requester=" << diskInstanceName << ":" << user.name << ":" <<
-          user.group;
-        throw ue;
+
+        const auto defaultUserMountPolicyAndCacheInfo = getCachedRequesterMountPolicy(User(diskInstanceName, "default"));
+        const auto defaultUserMountPolicy = defaultUserMountPolicyAndCacheInfo.value;
+
+        if(!defaultUserMountPolicy) {
+          exception::UserErrorWithCacheInfo ue(defaultUserMountPolicyAndCacheInfo.cacheInfo);
+          ue.getMessage() << "Failed to check and get next archive file ID: No mount rules: storageClass=" <<
+            storageClassName << " requester=" << diskInstanceName << ":" << user.name << ":" << user.group;
+          throw ue;
+        }
       }
     }
 
@@ -7328,6 +7405,13 @@ uint64_t RdbmsCatalogue::checkAndGetNextArchiveFileId(const std::string &diskIns
       auto conn = m_connPool.getConn();
       return getNextArchiveFileId(conn);
     }
+  } catch(exception::UserErrorWithCacheInfo &ue) {
+    log::LogContext lc(m_log);
+    log::ScopedParamContainer spc(lc);
+    spc.add("cacheInfo", ue.cacheInfo)
+       .add("userError", ue.getMessage().str());
+    lc.log(log::INFO, "Catalogue::checkAndGetNextArchiveFileId caught a UserErrorWithCacheInfo");
+    throw;
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -7362,19 +7446,31 @@ common::dataStructures::ArchiveFileQueueCriteria RdbmsCatalogue::getArchiveFileQ
     }
 
     // Get the mount policy - user mount policies overrule group ones
-    auto mountPolicy = getCachedRequesterMountPolicy(User(diskInstanceName, user.name));
-    if(!mountPolicy) {
-      mountPolicy = getCachedRequesterGroupMountPolicy(Group(diskInstanceName, user.group));
+    const auto userMountPolicyAndCacheInfo = getCachedRequesterMountPolicy(User(diskInstanceName, user.name));
+    const auto userMountPolicy = userMountPolicyAndCacheInfo.value;
 
-      if(!mountPolicy) {
-        exception::UserError ue;
-        ue.getMessage() << "No mount rules for the requester or their group: storageClass=" << storageClassName <<
-          " requester=" << diskInstanceName << ":" << user.name << ":" << user.group;
-        throw ue;
+    if(userMountPolicy) {
+      return common::dataStructures::ArchiveFileQueueCriteria(copyToPoolMap, *userMountPolicy);
+    } else {
+      const auto groupMountPolicyAndCacheInfo = getCachedRequesterGroupMountPolicy(Group(diskInstanceName, user.group));
+      const auto groupMountPolicy = groupMountPolicyAndCacheInfo.value;
+
+      if(groupMountPolicy) {
+        return common::dataStructures::ArchiveFileQueueCriteria(copyToPoolMap, *groupMountPolicy);
+      } else {
+        const auto defaultUserMountPolicyAndCacheInfo = getCachedRequesterMountPolicy(User(diskInstanceName, "default"));
+        const auto defaultUserMountPolicy = defaultUserMountPolicyAndCacheInfo.value;
+
+        if(defaultUserMountPolicy) {
+          return common::dataStructures::ArchiveFileQueueCriteria(copyToPoolMap, *defaultUserMountPolicy);
+        } else {
+          exception::UserErrorWithCacheInfo ue(defaultUserMountPolicyAndCacheInfo.cacheInfo);
+          ue.getMessage() << "Failed to get archive file queue criteria: No mount rules: storageClass=" <<
+            storageClassName << " requester=" << diskInstanceName << ":" << user.name << ":" << user.group;
+          throw ue;
+        }
       }
     }
-
-    return common::dataStructures::ArchiveFileQueueCriteria(copyToPoolMap, *mountPolicy);
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -7393,7 +7489,7 @@ common::dataStructures::TapeCopyToPoolMap RdbmsCatalogue::getCachedTapeCopyToPoo
       auto conn = m_connPool.getConn();
       return getTapeCopyToPoolMap(conn, storageClass);
     };
-    return m_tapeCopyToPoolCache.getCachedValue(storageClass, getNonCachedValue);
+    return m_tapeCopyToPoolCache.getCachedValue(storageClass, getNonCachedValue).value;
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -7448,7 +7544,7 @@ uint64_t RdbmsCatalogue::getCachedExpectedNbArchiveRoutes(const StorageClass &st
       auto conn = m_connPool.getConn();
       return getExpectedNbArchiveRoutes(conn, storageClass);
     };
-    return m_expectedNbArchiveRoutesCache.getCachedValue(storageClass, getNonCachedValue);
+    return m_expectedNbArchiveRoutesCache.getCachedValue(storageClass, getNonCachedValue).value;
   } catch (exception::LostDatabaseConnection &le) {
     throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " failed: " + le.getMessage().str());
   } catch(exception::UserError &) {
@@ -7718,7 +7814,7 @@ bool RdbmsCatalogue::isCachedAdmin(const common::dataStructures::SecurityIdentit
     auto getNonCachedValue = [&] {
       return isNonCachedAdmin(admin);
     };
-    return m_isAdminCache.getCachedValue(admin, getNonCachedValue);
+    return m_isAdminCache.getCachedValue(admin, getNonCachedValue).value;
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -8089,7 +8185,7 @@ RdbmsCatalogue::getCachedActivitiesWeights(const std::string& diskInstance) cons
       auto conn = m_connPool.getConn();
       return getActivitiesWeights(conn, diskInstance);
     };
-    return m_activitiesFairShareWeights.getCachedValue(diskInstance, getNonCachedValue);
+    return m_activitiesFairShareWeights.getCachedValue(diskInstance, getNonCachedValue).value;
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
