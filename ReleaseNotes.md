@@ -6,6 +6,8 @@
 
 ### Bug fixes
 
+ - cta/CTA#1014 Fix last column alignment when more than 1000 items are listed.
+
 # v4.0-5
 
 ## Summary
