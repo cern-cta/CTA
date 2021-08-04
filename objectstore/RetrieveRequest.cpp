@@ -174,8 +174,8 @@ queueForFailure:;
         }
         // Generate the last failure for this job (tape unavailable).
         *j.mutable_failurelogs()->Add() = utils::getCurrentLocalTime() + " " + 
-            utils::getShortHostname() + " In RetrieveRequest::garbageCollect(): No VID avaiable to requeue the request. Failing it.";
-        lc.log(log::ERR, "In RetrieveRequest::garbageCollect(): No VID avaiable to requeue the request. Failing all jobs.");
+            utils::getShortHostname() + " In RetrieveRequest::garbageCollect(): No VID available to requeue the request. Failing it.";
+        lc.log(log::ERR, "In RetrieveRequest::garbageCollect(): No VID available to requeue the request. Failing all jobs.");
       }
     }
     // Ok, the request is ready to be queued. We will queue it to the VID corresponding
