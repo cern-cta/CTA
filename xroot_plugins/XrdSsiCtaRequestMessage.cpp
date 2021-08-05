@@ -987,47 +987,49 @@ void RequestMessage::processDrive_Ls(cta::xrd::Response &response, XrdSsiStream*
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
-
-
 void RequestMessage::processDrive_Rm(cta::xrd::Response &response)
 {
-   using namespace cta::admin;
+  using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+  std::stringstream cmdlineOutput;
 
-   auto regex = getRequired(OptionString::DRIVE);
-   regex = '^' + regex + '$';
-   cta::utils::Regex driveNameRegex(regex.c_str());
-   auto driveStates = m_scheduler.getDriveStates(m_cliIdentity, m_lc);
-   bool drivesFound = false;
-   for(auto driveState: driveStates)
-   {
-      const auto regexResult = driveNameRegex.exec(driveState.driveName);
-      if(!regexResult.empty())
+  auto regex = getRequired(OptionString::DRIVE);
+  regex = '^' + regex + '$';
+  cta::utils::Regex driveNameRegex(regex.c_str());
+
+  const auto tapeDriveNames = m_catalogue.getTapeDriveNames();
+  bool drivesFound = false;
+
+  for (auto tapeDriveName : tapeDriveNames)
+  {
+    const auto regexResult = driveNameRegex.exec(tapeDriveName);
+    if (!regexResult.empty())
+    {
+      const auto tapeDrive = m_catalogue.getTapeDrive(tapeDriveName).value();
+
+      if (tapeDrive.driveStatus == cta::common::dataStructures::DriveStatus::Down     ||
+          tapeDrive.driveStatus == cta::common::dataStructures::DriveStatus::Shutdown ||
+          tapeDrive.driveStatus == cta::common::dataStructures::DriveStatus::Unknown  ||
+          has_flag(OptionBoolean::FORCE))
       {
-         if(driveState.driveStatus == cta::common::dataStructures::DriveStatus::Down     ||
-            driveState.driveStatus == cta::common::dataStructures::DriveStatus::Shutdown ||
-            driveState.driveStatus == cta::common::dataStructures::DriveStatus::Unknown  ||
-            has_flag(OptionBoolean::FORCE))
-         {
-            m_scheduler.removeDrive(m_cliIdentity, driveState.driveName, m_lc);
-            cmdlineOutput << "Drive " << driveState.driveName << " removed"
-                          << (has_flag(OptionBoolean::FORCE) ? " (forced)." : ".") << std::endl;
-         } else {
-            cmdlineOutput << "Drive " << driveState.driveName << " in state "
-                          << cta::common::dataStructures::toString(driveState.driveStatus)
-                          << " and force is not set (skipped)." << std::endl;
-         }
-         drivesFound = true;
+        m_scheduler.removeDrive(m_cliIdentity, tapeDriveName, m_lc);
+        cmdlineOutput << "Drive " << tapeDriveName << " removed"
+                      << (has_flag(OptionBoolean::FORCE) ? " (forced)." : ".") << std::endl;
+      } else {
+        cmdlineOutput << "Drive " << tapeDriveName << " in state "
+                      << cta::common::dataStructures::toString(tapeDrive.driveStatus)
+                      << " and force is not set (skipped)." << std::endl;
       }
-   }
+      drivesFound = true;
+    }
+  }
 
-   if(!drivesFound) {
-      cmdlineOutput << "No drives match \"" << regex << "\". No drives were removed." << std::endl;
-   }
+  if (!drivesFound) {
+    cmdlineOutput << "No drives match \"" << regex << "\". No drives were removed." << std::endl;
+  }
 
-   response.set_message_txt(cmdlineOutput.str());
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+  response.set_message_txt(cmdlineOutput.str());
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 

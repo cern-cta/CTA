@@ -828,7 +828,7 @@ void Scheduler::setDesiredDriveState(const common::dataStructures::SecurityIdent
 void Scheduler::removeDrive(const common::dataStructures::SecurityIdentity &cliIdentity,
   const std::string &driveName, log::LogContext & lc) {
   utils::Timer t;
-  m_db.removeDrive(driveName, lc);
+  m_catalogue.deleteTapeDrive(driveName);
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("drive", driveName)
