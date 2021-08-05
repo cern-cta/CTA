@@ -4,6 +4,7 @@
 
 ### Features
  - cta/CTA#1016 New options for filtering deleted files using `cta-admin rtf ls` command.
+ - cta/CTA#983 Add cta-release package for public binary rpm distribution.
 
 ### Bug fixes
 
