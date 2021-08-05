@@ -15,39 +15,40 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/log/StdoutLogger.hpp"
-
-#include "OStoreDB.hpp"
-#include "MemQueues.hpp"
-#include "objectstore/ArchiveQueueAlgorithms.hpp"
-#include "objectstore/RepackQueueAlgorithms.hpp"
-#include "objectstore/DriveRegister.hpp"
-#include "objectstore/DriveState.hpp"
-#include "objectstore/RepackRequest.hpp"
-#include "objectstore/RepackIndex.hpp"
-#include "objectstore/RepackQueue.hpp"
-#include "objectstore/Sorter.hpp"
-#include "objectstore/Helpers.hpp"
-#include "common/exception/Exception.hpp"
-#include "common/exception/UserError.hpp"
-#include "common/utils/utils.hpp"
-#include "scheduler/LogicalLibrary.hpp"
-#include "common/dataStructures/MountPolicy.hpp"
-#include "common/make_unique.hpp"
-#include "tapeserver/castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
-#include "Scheduler.hpp"
-#include "disk/DiskFile.hpp"
 #include <algorithm>
+#include <bits/unique_ptr.h>
 #include <cmath>
+#include <iostream>
 #include <numeric>      /* std::accumulate */
+#include <set>
+#include <stdexcept>
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
-#include <stdexcept>
-#include <set>
-#include <iostream>
-#include <bits/unique_ptr.h>
+#include <tuple>
+
+#include "common/dataStructures/MountPolicy.hpp"
+#include "common/exception/Exception.hpp"
+#include "common/exception/UserError.hpp"
+#include "common/log/StdoutLogger.hpp"
+#include "common/make_unique.hpp"
 #include "common/utils/utils.hpp"
+#include "common/utils/utils.hpp"
+#include "disk/DiskFile.hpp"
+#include "MemQueues.hpp"
 #include "objectstore/AgentWrapper.hpp"
+#include "objectstore/ArchiveQueueAlgorithms.hpp"
+#include "objectstore/DriveRegister.hpp"
+#include "objectstore/DriveState.hpp"
+#include "objectstore/Helpers.hpp"
+#include "objectstore/RepackIndex.hpp"
+#include "objectstore/RepackQueue.hpp"
+#include "objectstore/RepackQueueAlgorithms.hpp"
+#include "objectstore/RepackRequest.hpp"
+#include "objectstore/Sorter.hpp"
+#include "OStoreDB.hpp"
+#include "Scheduler.hpp"
+#include "scheduler/LogicalLibrary.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 
 namespace cta {
 using namespace objectstore;
@@ -3179,32 +3180,11 @@ void OStoreDB::reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfig
   ds.commit();
   }
 
-void OStoreDB::checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo) {
-  objectstore::RootEntry re(m_objectStore);
-  re.fetchNoLock();
-  objectstore::DriveRegister dr(re.getDriveRegisterAddress(),m_objectStore);
-  ScopedExclusiveLock sel(dr);
-  dr.fetch();
-  try {
-    std::string driveAddress =  dr.getDriveAddress(driveInfo.driveName);
-    objectstore::DriveState ds(driveAddress,m_objectStore);
-    ds.fetchNoLock();
-    cta::common::dataStructures::DriveState driveState = ds.getState();
-    if(driveState.logicalLibrary != driveInfo.logicalLibrary || driveState.host != driveInfo.host) {
-      throw cta::SchedulerDatabase::DriveAlreadyExistsException(std::string("The drive name=") + driveInfo.driveName +
-        " logicalLibrary=" + driveInfo.logicalLibrary +
-        " host=" + driveInfo.host +
-        " cannot be created because a drive with a same name with logicalLibrary=" + driveState.logicalLibrary +
-        " host=" + driveState.host +
-        " already exists.");
-    }
-  } catch (cta::objectstore::DriveRegister::NoSuchDrive & ex) {
-    //Drive does not exist
-    //We can create it, do nothing then
-  }
-}
+//------------------------------------------------------------------------------
+// OStoreDB::checkDriveCanBeCreated()
+//------------------------------------------------------------------------------
 
-void OStoreDB::checkDriveCanBeCreatedDB(const cta::common::dataStructures::DriveInfo & driveInfo) {
+void OStoreDB::checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo) {
   const auto driveNames = m_catalogue.getTapeDriveNames();
   try {
     const auto tapeDrive = m_catalogue.getTapeDrive(driveInfo.driveName);
@@ -4219,40 +4199,6 @@ void OStoreDB::RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<OStoreDB
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveMount::getExistingDrivesReservations()
 //------------------------------------------------------------------------------
-// std::map<std::string, uint64_t> OStoreDB::RetrieveMount::getExistingDrivesReservations() {
-//   objectstore::RootEntry re(m_oStoreDB.m_objectStore);
-//   re.fetchNoLock();
-//   objectstore::DriveRegister dr(re.getDriveRegisterAddress(), m_oStoreDB.m_objectStore);
-//   dr.fetchNoLock();
-//   auto driveAddresses = dr.getDriveAddresses();
-//   std::list <objectstore::DriveState> dsList;
-//   std::list <std::unique_ptr<objectstore::DriveState::AsyncLockfreeFetcher>> dsFetchers;
-//   for (auto &d: driveAddresses) {
-//     dsList.emplace_back(d.driveStateAddress, m_oStoreDB.m_objectStore);
-//     dsFetchers.emplace_back(dsList.back().asyncLockfreeFetch());
-//   }
-//   auto dsf = dsFetchers.begin();
-//   std::map<std::string, uint64_t> ret;
-//   for (auto &d: dsList) {
-//     try {
-//       (*dsf)->wait();
-//       dsf++;
-//       for (auto &dsr: d.getDiskSpaceReservations()) {
-//         try {
-//           ret.at(dsr.first) += dsr.second;
-//         } catch (std::out_of_range &) {
-//           ret[dsr.first] = dsr.second;
-//         }
-//       }
-//     } catch (objectstore::Backend::NoSuchObject) {
-//       // If the drive status is not there, we just skip it.
-//       dsf++;
-//     }
-//   }
-//   return ret;
-// }
-
-// Using Database
 std::map<std::string, uint64_t> OStoreDB::RetrieveMount::getExistingDrivesReservations() {
   std::map<std::string, uint64_t> ret;
   const auto tdNames = this->m_oStoreDB.m_catalogue.getTapeDriveNames();
@@ -4270,73 +4216,82 @@ std::map<std::string, uint64_t> OStoreDB::RetrieveMount::getExistingDrivesReserv
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveMount::reserveDiskSpace()
 //------------------------------------------------------------------------------
-void OStoreDB::RetrieveMount::reserveDiskSpace(const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) {
+void OStoreDB::RetrieveMount::reserveDiskSpace(const DiskSpaceReservationRequest& diskSpaceReservation,
+  log::LogContext & lc) {
   if (diskSpaceReservation.empty()) return;
   // Try add our reservation to the drive status.
-  objectstore::DriveState ds(m_oStoreDB.m_objectStore);
-  objectstore::ScopedExclusiveLock dsl;
-  for (auto & rr: diskSpaceReservation) {
+  auto setLogParam = [&lc](const std::string& diskSystemName, uint64_t bytes) {
     log::ScopedParamContainer params(lc);
-    params.add("diskSystem", rr.first)
-          .add("reservation", rr.second);
-    lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): reservation request content.");
-  }
-  Helpers::getLockedAndFetchedDriveState(ds, dsl, *m_oStoreDB.m_agentReference, mountInfo.drive, lc, Helpers::CreateIfNeeded::doNotCreate);
-  for (auto & r: ds.getDiskSpaceReservations()) {
-    log::ScopedParamContainer params(lc);
-    params.add("diskSystem", r.first)
-          .add("reservation", r.second)
-          .add("objectName", ds.getAddressIfSet());
-    lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): state before reservation.");
-  }
-  for (auto const & dsr: diskSpaceReservation) ds.addDiskSpaceReservation(dsr.first, dsr.second);
-  for (auto & r: ds.getDiskSpaceReservations()) {
-    log::ScopedParamContainer params(lc);
-    params.add("diskSystem", r.first)
-          .add("reservation", r.second)
-          .add("objectName", ds.getAddressIfSet());
-    lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): state after reservation.");
-  }
-  ds.commit();
-  // Using Database
-  ds.addDiskSpaceReservation(&this->m_oStoreDB.m_catalogue, diskSpaceReservation.begin()->first,
+    params.add("diskSystem", diskSystemName)
+          .add("reservation", bytes);
+  };
+  std::string diskSystemName = diskSpaceReservation.begin()->first;
+  uint64_t bytes = diskSpaceReservation.begin()->second;
+  setLogParam(diskSystemName, bytes);
+  lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): reservation request content.");
+
+  std::tie(diskSystemName, bytes) = getDiskSpaceReservation();
+  setLogParam(diskSystemName, bytes);
+  lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): state before reservation.");
+
+  addDiskSpaceReservation(&this->m_oStoreDB.m_catalogue, diskSpaceReservation.begin()->first,
     diskSpaceReservation.begin()->second);
+  std::tie(diskSystemName, bytes) = getDiskSpaceReservation();
+  setLogParam(diskSystemName, bytes);
+  lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): state after reservation.");
+}
+
+void OStoreDB::RetrieveMount::addDiskSpaceReservation(catalogue::Catalogue* catalogue,
+  const std::string& diskSystemName, uint64_t bytes) {
+    auto tdStatus = catalogue->getTapeDrive(mountInfo.drive);
+    if (!tdStatus) return;
+    tdStatus.value().diskSystemName = diskSystemName;
+    tdStatus.value().reservedBytes += bytes;
+    catalogue->modifyTapeDrive(tdStatus.value());
+}
+
+std::tuple<std::string, uint64_t> OStoreDB::RetrieveMount::getDiskSpaceReservation() {
+  const auto tdStatus = this->m_oStoreDB.m_catalogue.getTapeDrive(mountInfo.drive);
+  return std::make_tuple(tdStatus.value().diskSystemName, tdStatus.value().reservedBytes);
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveMount::releaseDiskSpace()
 //------------------------------------------------------------------------------
-void OStoreDB::RetrieveMount::releaseDiskSpace(const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) {
+void OStoreDB::RetrieveMount::releaseDiskSpace(const DiskSpaceReservationRequest& diskSpaceReservation,
+  log::LogContext & lc) {
   if (diskSpaceReservation.empty()) return;
   // Try add our reservation to the drive status.
-  objectstore::DriveState ds(m_oStoreDB.m_objectStore);
-  objectstore::ScopedExclusiveLock dsl;
-  for (auto & rr: diskSpaceReservation) {
+  auto setLogParam = [&lc](const std::string& diskSystemName, uint64_t bytes) {
     log::ScopedParamContainer params(lc);
-    params.add("diskSystem", rr.first)
-          .add("reservation", rr.second);
-    lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): release request content.");
-  }
-  Helpers::getLockedAndFetchedDriveState(ds, dsl, *m_oStoreDB.m_agentReference, mountInfo.drive, lc, Helpers::CreateIfNeeded::doNotCreate);
-  for (auto & r: ds.getDiskSpaceReservations()) {
-    log::ScopedParamContainer params(lc);
-    params.add("diskSystem", r.first)
-          .add("reservation", r.second)
-          .add("objectName", ds.getAddressIfSet());
-    lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): state before release.");
-  }
-  for (auto const & dsr: diskSpaceReservation) ds.substractDiskSpaceReservation(dsr.first, dsr.second);
-  for (auto & r: ds.getDiskSpaceReservations()) {
-    log::ScopedParamContainer params(lc);
-    params.add("diskSystem", r.first)
-          .add("reservation", r.second)
-          .add("objectName", ds.getAddressIfSet());
-    lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): state after release.");
-  }
-  ds.commit();
-  // Using Database
-  ds.subtractDiskSpaceReservation(&this->m_oStoreDB.m_catalogue, diskSpaceReservation.begin()->first,
+    params.add("diskSystem", diskSystemName)
+          .add("reservation", bytes);
+  };
+  std::string diskSystemName = diskSpaceReservation.begin()->first;
+  uint64_t bytes = diskSpaceReservation.begin()->second;
+  setLogParam(diskSystemName, bytes);
+  lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): release request content.");
+
+  std::tie(diskSystemName, bytes) = getDiskSpaceReservation();
+  setLogParam(diskSystemName, bytes);
+  lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): state before release.");
+
+  subtractDiskSpaceReservation(&this->m_oStoreDB.m_catalogue, diskSpaceReservation.begin()->first,
     diskSpaceReservation.begin()->second);
+
+  std::tie(diskSystemName, bytes) = getDiskSpaceReservation();
+  setLogParam(diskSystemName, bytes);
+  lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): state after release.");
+}
+
+void OStoreDB::RetrieveMount::subtractDiskSpaceReservation(catalogue::Catalogue* catalogue,
+  const std::string& diskSystemName, uint64_t bytes) {
+  auto tdStatus = catalogue->getTapeDrive(mountInfo.drive);
+  if (bytes > tdStatus.value().reservedBytes) throw NegativeDiskSpaceReservationReached(
+    "In DriveState::subtractDiskSpaceReservation(): we would reach a negative reservation size.");
+  tdStatus.value().diskSystemName = diskSystemName;
+  tdStatus.value().reservedBytes -= bytes;
+  catalogue->modifyTapeDrive(tdStatus.value());
 }
 
 //------------------------------------------------------------------------------

@@ -1094,22 +1094,9 @@ int DriveHandler::runChild() {
         driveInfo.logicalLibrary=m_configLine.logicalLibrary;
         driveInfo.host=hostname;
 
-        //Checking the drive does not already exist in the objectstore
+        // Checking the drive does not already exist in the database
         try{
           sched_db->checkDriveCanBeCreated(driveInfo);
-        } catch (SchedulerDatabase::DriveAlreadyExistsException &ex) {
-          log::ScopedParamContainer param(lc);
-          param.add("tapeDrive",driveInfo.driveName)
-               .add("logicalLibrary",driveInfo.logicalLibrary)
-               .add("host",driveInfo.host)
-               .add("exceptionMsg",ex.getMessageValue());
-          lc.log(log::CRIT,"In DriveHandler::runChild(): drive already exists. Reporting fatal error.");
-          driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
-          return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
-        }
-        // Same checking but with Database
-        try{
-          sched_db->checkDriveCanBeCreatedDB(driveInfo);
         } catch (SchedulerDatabase::DriveAlreadyExistsException &ex) {
           log::ScopedParamContainer param(lc);
           param.add("tapeDrive",driveInfo.driveName)

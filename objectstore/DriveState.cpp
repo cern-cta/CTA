@@ -350,16 +350,6 @@ void DriveState::addDiskSpaceReservation(const std::string& diskSystemName, uint
   newDsr->set_reserved_bytes(bytes);
 }
 
-void DriveState::addDiskSpaceReservation(catalogue::Catalogue* catalogue, const std::string& diskSystemName,
-  uint64_t bytes) {
-  auto tdStatus = catalogue->getTapeDrive(getState().driveName);
-  if (!tdStatus) return;
-  tdStatus.value().diskSystemName = diskSystemName;
-  tdStatus.value().reservedBytes += bytes;
-  catalogue->modifyTapeDrive(tdStatus.value());
-  auto tdStatus3 = catalogue->getTapeDrive(getState().driveName);
-}
-
 //------------------------------------------------------------------------------
 // DriveState::substractDiskSpaceReservation())
 //------------------------------------------------------------------------------
@@ -395,16 +385,6 @@ void DriveState::substractDiskSpaceReservation(const std::string& diskSystemName
         err.str()
       );
   }
-}
-
-void DriveState::subtractDiskSpaceReservation(catalogue::Catalogue* catalogue, const std::string& diskSystemName,
-  uint64_t bytes) {
-  auto tdStatus = catalogue->getTapeDrive(getState().driveName);
-  if (bytes > tdStatus.value().reservedBytes) throw NegativeDiskSpaceReservationReached(
-    "In DriveState::subtractDiskSpaceReservation(): we would reach a negative reservation size.");
-  tdStatus.value().diskSystemName = diskSystemName;
-  tdStatus.value().reservedBytes -= bytes;
-  catalogue->modifyTapeDrive(tdStatus.value());
 }
 
 //------------------------------------------------------------------------------

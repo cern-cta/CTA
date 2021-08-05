@@ -48,10 +48,8 @@ public:
 
   std::map<std::string, uint64_t> getDiskSpaceReservations();
   void addDiskSpaceReservation(const std::string & diskSystemName, uint64_t bytes);
-  void addDiskSpaceReservation(catalogue::Catalogue* catalogue, const std::string& diskSystemName, uint64_t bytes);
   CTA_GENERATE_EXCEPTION_CLASS(NegativeDiskSpaceReservationReached);
   void substractDiskSpaceReservation(const std::string & diskSystemName, uint64_t bytes);
-  void subtractDiskSpaceReservation(catalogue::Catalogue* catalogue, const std::string& diskSystemName, uint64_t bytes);
   void resetDiskSpaceReservation();
 
   void setConfig(const cta::tape::daemon::TapedConfiguration &tapedConfiguration);

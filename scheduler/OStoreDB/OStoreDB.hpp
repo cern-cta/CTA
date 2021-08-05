@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include <tuple>
+
 #include "scheduler/SchedulerDatabase.hpp"
 #include "objectstore/RootEntry.hpp"
 #include "objectstore/ArchiveQueue.hpp"
@@ -251,6 +253,10 @@ public:
       log::LogContext& logContext);
     std::map<std::string, uint64_t> getExistingDrivesReservations();
     void reserveDiskSpace(const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc);
+    void addDiskSpaceReservation(catalogue::Catalogue* catalogue, const std::string& diskSystemName, uint64_t bytes);
+    CTA_GENERATE_EXCEPTION_CLASS(NegativeDiskSpaceReservationReached);
+    void subtractDiskSpaceReservation(catalogue::Catalogue* catalogue, const std::string& diskSystemName, uint64_t bytes);
+    std::tuple<std::string, uint64_t> getDiskSpaceReservation();
     struct DiskSystemToSkip {
       std::string name;
       uint64_t sleepTime;
@@ -589,7 +595,6 @@ public:
   void reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine, const cta::tape::daemon::TapedConfiguration& tapedConfig,log::LogContext& lc) override;
 
   void checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo) override;
-  void checkDriveCanBeCreatedDB(const cta::common::dataStructures::DriveInfo & driveInfo) override;
 
   /* --- Private helper part implementing state transition logic -------------*/
   /*
