@@ -27,10 +27,11 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
   log::Logger &log,
-  rdbms::ConnPool &connPool,
-  const RecycleTapeFileSearchCriteria & searchCriteria):
+  rdbms::Conn &&conn,
+  const RecycleTapeFileSearchCriteria & searchCriteria,
+  const std::string &tempDiskFxidsTableName):
   m_log(log),
-  m_connPool(connPool),
+  m_conn(std::move(conn)),
   m_searchCriteria(searchCriteria),
   m_rsetIsEmpty(true),
   m_hasMoreHasBeenCalled(false) {
@@ -65,7 +66,10 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
 
     const bool thereIsAtLeastOneSearchCriteria =
       searchCriteria.vid            ||
-      searchCriteria.diskFileId;
+      searchCriteria.diskFileIds    ||
+      searchCriteria.archiveFileId  ||
+      searchCriteria.copynb         ||
+      searchCriteria.diskInstance;
 
     if(thereIsAtLeastOneSearchCriteria) {
       sql += " WHERE ";
@@ -77,11 +81,28 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
       sql += "FILE_RECYCLE_LOG.VID = :VID";
       addedAWhereConstraint = true;
     }
-    
-    if(searchCriteria.diskFileId){
+
+    if (searchCriteria.archiveFileId) {
       if(addedAWhereConstraint) sql += " AND ";
-      sql += "FILE_RECYCLE_LOG.DISK_FILE_ID = :DISK_FILE_ID";
+      sql += "FILE_RECYCLE_LOG.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
       addedAWhereConstraint = true;
+    }
+    
+    if(searchCriteria.diskFileIds) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += "FILE_RECYCLE_LOG.DISK_FILE_ID IN (SELECT DISK_FILE_ID FROM " + tempDiskFxidsTableName + ")";
+      addedAWhereConstraint = true;
+    }
+
+    if (searchCriteria.diskInstance) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += "FILE_RECYCLE_LOG.DISK_INSTANCE_NAME = :DISK_INSTANCE";
+      addedAWhereConstraint = true;
+    }
+
+    if (searchCriteria.copynb) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += "FILE_RECYCLE_LOG.COPY_NB = :COPY_NB";
     }
     
     // Order by FSEQ if we are listing the contents of a tape, else order by archive file ID
@@ -91,15 +112,22 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
       sql += " ORDER BY FILE_RECYCLE_LOG.ARCHIVE_FILE_ID, FILE_RECYCLE_LOG.COPY_NB";
     }
     
-    m_conn = connPool.getConn();
     m_stmt = m_conn.createStmt(sql);
     
     if(searchCriteria.vid){
       m_stmt.bindString(":VID", searchCriteria.vid.value());
     }
-    
-    if(searchCriteria.diskFileId){
-      m_stmt.bindString(":DISK_FILE_ID", searchCriteria.diskFileId.value());
+
+    if (searchCriteria.archiveFileId) {
+      m_stmt.bindUint64(":ARCHIVE_FILE_ID", searchCriteria.archiveFileId.value());
+    }
+
+    if (searchCriteria.diskInstance) {
+      m_stmt.bindString(":DISK_INSTANCE", searchCriteria.diskInstance.value());
+    }
+
+    if (searchCriteria.copynb) {
+      m_stmt.bindUint64(":COPY_NB", searchCriteria.copynb.value());
     }
     
     m_rset = m_stmt.executeQuery();

@@ -192,7 +192,7 @@ void SqliteCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string 
 //------------------------------------------------------------------------------
 // createAndPopulateTempTableFxid
 //------------------------------------------------------------------------------
-std::string SqliteCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn, const TapeFileSearchCriteria &tapeFileSearchCriteria) const {
+std::string SqliteCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn, const optional<std::vector<std::string>> &diskFileIds) const {
   try {
     const std::string tempTableName = "TEMP.DISK_FXIDS";
 
@@ -200,9 +200,9 @@ std::string SqliteCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn, c
     conn.executeNonQuery("DROP TABLE IF EXISTS " + tempTableName);
     conn.executeNonQuery("CREATE TEMPORARY TABLE " + tempTableName + "(DISK_FILE_ID TEXT)");
 
-    if(tapeFileSearchCriteria.diskFileIds) {
+    if(diskFileIds) {
       auto stmt = conn.createStmt("INSERT INTO " + tempTableName + " VALUES(:DISK_FILE_ID)");
-      for(auto &diskFileId : tapeFileSearchCriteria.diskFileIds.value()) {
+      for(auto &diskFileId : diskFileIds.value()) {
         stmt.bindString(":DISK_FILE_ID", diskFileId);
         stmt.executeNonQuery();
       }

@@ -154,11 +154,11 @@ OracleCatalogue::~OracleCatalogue() {
 //------------------------------------------------------------------------------
 // createAndPopulateTempTableFxid
 //------------------------------------------------------------------------------
-std::string OracleCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn, const TapeFileSearchCriteria &tapeFileSearchCriteria) const {
+std::string OracleCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn, const optional<std::vector<std::string>> &diskFileIds) const {
   const std::string tempTableName = "ORA$PTT_DISK_FXIDS";
 
   try {
-    if(tapeFileSearchCriteria.diskFileIds) {
+    if(diskFileIds) {
       conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
       std::string sql = "CREATE PRIVATE TEMPORARY TABLE " + tempTableName +
         "(DISK_FILE_ID VARCHAR2(100))";
@@ -166,7 +166,7 @@ std::string OracleCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn, c
   
       sql = "INSERT INTO " + tempTableName + " VALUES(:DISK_FILE_ID)";
       auto stmt = conn.createStmt(sql);
-      for(auto &diskFileId : tapeFileSearchCriteria.diskFileIds.value()) {
+      for(auto &diskFileId : diskFileIds.value()) {
         stmt.bindString(":DISK_FILE_ID", diskFileId);
         stmt.executeNonQuery();
       }

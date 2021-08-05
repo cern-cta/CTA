@@ -15653,7 +15653,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesArePutInTheFileRecycleLogInsteadOfBeing
     //Check the diskFileId search criteria
     std::string diskFileId = "12345678";
     catalogue::RecycleTapeFileSearchCriteria criteria;
-    criteria.diskFileId = diskFileId;
+    criteria.diskFileIds = std::vector<std::string>();
+    criteria.diskFileIds->push_back(diskFileId);
     auto fileRecycleLogItor = m_catalogue->getFileRecycleLogItor(criteria);
     ASSERT_TRUE(fileRecycleLogItor.hasMore());
     auto fileRecycleLog = fileRecycleLogItor.next();
@@ -15664,8 +15665,78 @@ TEST_P(cta_catalogue_CatalogueTest, filesArePutInTheFileRecycleLogInsteadOfBeing
     //Check the non existing diskFileId search criteria
     std::string diskFileId = "DOES_NOT_EXIST";
     catalogue::RecycleTapeFileSearchCriteria criteria;
-    criteria.diskFileId = diskFileId;
+    criteria.diskFileIds = std::vector<std::string>();
+    criteria.diskFileIds->push_back(diskFileId);
     auto fileRecycleLogItor = m_catalogue->getFileRecycleLogItor(criteria);
+    ASSERT_FALSE(fileRecycleLogItor.hasMore());
+  }
+  {
+    //Check the archiveID search criteria
+    uint64_t archiveFileId = 1;
+    catalogue::RecycleTapeFileSearchCriteria criteria;
+    criteria.archiveFileId = archiveFileId;
+    auto fileRecycleLogItor = m_catalogue->getFileRecycleLogItor(criteria);
+    ASSERT_TRUE(fileRecycleLogItor.hasMore());
+    auto fileRecycleLog = fileRecycleLogItor.next();
+    ASSERT_EQ(archiveFileId,fileRecycleLog.archiveFileId);
+    ASSERT_FALSE(fileRecycleLogItor.hasMore());
+  }
+  {
+    //Check the non existing archiveFileId search criteria
+    uint64_t archiveFileId = -1;
+    catalogue::RecycleTapeFileSearchCriteria criteria;
+    criteria.archiveFileId = archiveFileId;
+    auto fileRecycleLogItor = m_catalogue->getFileRecycleLogItor(criteria);
+    ASSERT_FALSE(fileRecycleLogItor.hasMore());
+  }
+  {
+    //Check the copynb search criteria
+    uint64_t copynb = 1;
+    catalogue::RecycleTapeFileSearchCriteria criteria;
+    criteria.copynb = copynb;
+    auto fileRecycleLogItor = m_catalogue->getFileRecycleLogItor(criteria);
+    int nbFileRecycleLogs = 0;
+    while(fileRecycleLogItor.hasMore()){
+      nbFileRecycleLogs++;
+      fileRecycleLogItor.next();
+    }
+    ASSERT_EQ(nbArchiveFiles,nbFileRecycleLogs);
+  }
+  {
+    //Check the disk instance search criteria
+    catalogue::RecycleTapeFileSearchCriteria criteria;
+    criteria.diskInstance = diskInstance;
+    auto fileRecycleLogItor = m_catalogue->getFileRecycleLogItor(criteria);
+    int nbFileRecycleLogs = 0;
+    while(fileRecycleLogItor.hasMore()){
+      nbFileRecycleLogs++;
+      fileRecycleLogItor.next();
+    }
+    ASSERT_EQ(nbArchiveFiles,nbFileRecycleLogs);
+  }
+  {
+    //Check multiple search criteria together
+    uint64_t copynb = 1;
+    uint64_t archiveFileId = 1;
+    std::string diskFileId = "12345678";
+    catalogue::RecycleTapeFileSearchCriteria criteria;
+    criteria.diskInstance = diskInstance;
+    criteria.copynb = copynb;
+    criteria.archiveFileId = archiveFileId;
+    criteria.diskFileIds = std::vector<std::string>();
+    criteria.diskFileIds->push_back(diskFileId);
+    criteria.vid = tape1.vid;
+    
+    auto fileRecycleLogItor = m_catalogue->getFileRecycleLogItor(criteria);
+    
+    ASSERT_TRUE(fileRecycleLogItor.hasMore());
+    auto fileRecycleLog = fileRecycleLogItor.next();
+    ASSERT_EQ(archiveFileId, fileRecycleLog.archiveFileId);
+    ASSERT_EQ(diskFileId, fileRecycleLog.diskFileId);
+    ASSERT_EQ(copynb, fileRecycleLog.copyNb);
+    ASSERT_EQ(tape1.vid, fileRecycleLog.vid);
+    ASSERT_EQ(diskInstance, fileRecycleLog.diskInstanceName);
+    
     ASSERT_FALSE(fileRecycleLogItor.hasMore());
   }
 }

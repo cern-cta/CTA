@@ -6970,7 +6970,7 @@ Catalogue::ArchiveFileItor RdbmsCatalogue::getArchiveFilesItor(const TapeFileSea
   try {
     // Create a connection to populate the temporary table (specialised by database type)
     auto conn = m_archiveFileListingConnPool.getConn();
-    const auto tempDiskFxidsTableName = createAndPopulateTempTableFxid(conn, searchCriteria);
+    const auto tempDiskFxidsTableName = createAndPopulateTempTableFxid(conn, searchCriteria.diskFileIds);
     // Pass ownership of the connection to the Iterator object
     auto impl = new RdbmsCatalogueGetArchiveFilesItor(m_log, std::move(conn), searchCriteria, tempDiskFxidsTableName);
     return ArchiveFileItor(impl);
@@ -7002,9 +7002,8 @@ Catalogue::ArchiveFileItor RdbmsCatalogue::getTapeContentsItor(const std::string
 //------------------------------------------------------------------------------
 // checkRecycleTapeFileSearchCriteria
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::checkRecycleTapeFileSearchCriteria(const RecycleTapeFileSearchCriteria & searchCriteria) const {
+void RdbmsCatalogue::checkRecycleTapeFileSearchCriteria(cta::rdbms::Conn &conn, const RecycleTapeFileSearchCriteria & searchCriteria) const {
   if(searchCriteria.vid) {
-    auto conn = m_connPool.getConn();
     if(!tapeExists(conn, searchCriteria.vid.value())) {
       throw exception::UserError(std::string("Tape ") + searchCriteria.vid.value() + " does not exist");
     }
@@ -7013,8 +7012,10 @@ void RdbmsCatalogue::checkRecycleTapeFileSearchCriteria(const RecycleTapeFileSea
 
 Catalogue::FileRecycleLogItor RdbmsCatalogue::getFileRecycleLogItor(const RecycleTapeFileSearchCriteria & searchCriteria) const {
   try {
-    checkRecycleTapeFileSearchCriteria(searchCriteria);
-    auto impl = new RdbmsCatalogueGetFileRecycleLogItor(m_log, m_archiveFileListingConnPool, searchCriteria);
+    auto conn = m_archiveFileListingConnPool.getConn();
+    checkRecycleTapeFileSearchCriteria(conn, searchCriteria);
+    const auto tempDiskFxidsTableName = createAndPopulateTempTableFxid(conn, searchCriteria.diskFileIds);
+    auto impl = new RdbmsCatalogueGetFileRecycleLogItor(m_log, std::move(conn), searchCriteria, tempDiskFxidsTableName);
     return FileRecycleLogItor(impl);
   } catch(exception::UserError &) {
     throw;
@@ -7182,7 +7183,7 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
       addedAWhereConstraint = true;
     }
     if(searchCriteria.diskFileIds) {
-      const auto tempDiskFxidsTableName = createAndPopulateTempTableFxid(conn, searchCriteria);
+      const auto tempDiskFxidsTableName = createAndPopulateTempTableFxid(conn, searchCriteria.diskFileIds);
 
       if(addedAWhereConstraint) sql += " AND ";
       sql += "ARCHIVE_FILE.DISK_FILE_ID IN (SELECT DISK_FILE_ID FROM " + tempDiskFxidsTableName + ")";

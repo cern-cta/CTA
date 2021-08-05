@@ -3,6 +3,7 @@
 ## Summary
 
 ### Features
+ - cta/CTA#1016 New options for filtering deleted files using `cta-admin rtf ls` command.
 
 ### Bug fixes
 

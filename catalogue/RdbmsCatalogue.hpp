@@ -851,10 +851,10 @@ public:
   /**
    * Throws a UserError exception if the specified searchCriteria is not valid
    * due to a user error.
-   *
+   * @param conn The database connection.
    * @param searchCriteria The search criteria.
    */
-  void checkRecycleTapeFileSearchCriteria(const RecycleTapeFileSearchCriteria & searchCriteria) const;
+  void checkRecycleTapeFileSearchCriteria(cta::rdbms::Conn &conn, const RecycleTapeFileSearchCriteria & searchCriteria) const;
   
   /**
    * Returns all the currently deleted files by looking at the FILE_RECYCLE_LOG table
@@ -1575,10 +1575,10 @@ protected:
    * Creates a temporary table from the list of disk file IDs provided in the search criteria.
    *
    * @param conn The database connection.
-   * @param tapeFileSearchCriteria Search criteria containing a list of disk file IDs (fxid).
+   * @param diskFileIds List of disk file IDs (fxid).
    * @return Name of the temporary table
    */
-  virtual std::string createAndPopulateTempTableFxid(rdbms::Conn &conn, const TapeFileSearchCriteria &tapeFileSearchCriteria) const = 0;
+  virtual std::string createAndPopulateTempTableFxid(rdbms::Conn &conn, const optional<std::vector<std::string>> &diskFileIds) const = 0;
 
   /**
    * Returns a unique archive ID that can be used by a new archive file within

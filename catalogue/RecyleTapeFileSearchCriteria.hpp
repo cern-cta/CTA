@@ -32,6 +32,15 @@ namespace catalogue {
  * Please note that no wild cards, for example '*' or '%', are supported.
  */
 struct RecycleTapeFileSearchCriteria {
+  /**
+   * The unique identifier of an archive file.
+   */
+  optional<uint64_t> archiveFileId;
+
+  /**
+   * The name of a disk instance.
+   */
+  optional<std::string> diskInstance;
   
   /**
    * The volume identifier of a tape.
@@ -44,7 +53,12 @@ struct RecycleTapeFileSearchCriteria {
    * These are given as a list of strings in DECIMAL format. EOS provides the fxids in hex format. The parsing and
    * conversion into decimal is done in the cta-admin client, ready to be built into a SQL query string.
    */
-  optional<std::string> diskFileId;
+  optional<std::vector<std::string>> diskFileIds;
+
+  /**
+   * The copy number of the deleted tape file.
+   */
+  optional<uint64_t> copynb;
   
 }; // struct TapeFileSearchCriteria
 

@@ -152,10 +152,10 @@ PostgresCatalogue::~PostgresCatalogue() {
 //------------------------------------------------------------------------------
 // createAndPopulateTempTableFxid
 //------------------------------------------------------------------------------
-std::string PostgresCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn, const TapeFileSearchCriteria &tapeFileSearchCriteria) const {
+std::string PostgresCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn, const optional<std::vector<std::string>> &diskFileIds) const {
   const std::string tempTableName = "TEMP_DISK_FXIDS";
 
-  if(tapeFileSearchCriteria.diskFileIds) {
+  if(diskFileIds) {
     try {
       std::string sql = "CREATE TEMPORARY TABLE " + tempTableName + "(DISK_FILE_ID VARCHAR(100))";
       try {
@@ -169,7 +169,7 @@ std::string PostgresCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn,
 
       sql = "INSERT INTO " + tempTableName + " VALUES(:DISK_FILE_ID)";
       auto stmt = conn.createStmt(sql);
-      for(auto &diskFileId : tapeFileSearchCriteria.diskFileIds.value()) {
+      for(auto &diskFileId : diskFileIds.value()) {
         stmt.bindString(":DISK_FILE_ID", diskFileId);
         stmt.executeNonQuery();
       }

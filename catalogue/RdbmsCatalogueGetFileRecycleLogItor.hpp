@@ -29,9 +29,13 @@ public:
    * Constructor.
    *
    * @param log Object representing the API to the CTA logging system.
-   * @param connPool The database connection pool.
+   * @param conn A database connection.
    */
-  RdbmsCatalogueGetFileRecycleLogItor(log::Logger &log, rdbms::ConnPool &connPool, const RecycleTapeFileSearchCriteria & searchCriteria);
+  RdbmsCatalogueGetFileRecycleLogItor(
+    log::Logger &log, 
+    rdbms::Conn &&conn, 
+    const RecycleTapeFileSearchCriteria & searchCriteria, 
+    const std::string &tempDiskFxidsTableName);
 
   /**
    * Destructor.
@@ -54,10 +58,12 @@ private:
    */
   log::Logger &m_log;
 
+
   /**
-   * The database connection pool.
+   * The database connection.
    */
-  rdbms::ConnPool &m_connPool;
+  rdbms::Conn m_conn;
+
   
   /**
    * The search criteria to be used when listing recycled tape files.
@@ -78,11 +84,6 @@ private:
    * hasMore().
    */
   bool m_hasMoreHasBeenCalled;
-
-  /**
-   * The database connection.
-   */
-  rdbms::Conn m_conn;
 
   /**
    * The database statement.
