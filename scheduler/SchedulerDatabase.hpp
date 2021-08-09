@@ -20,20 +20,21 @@
 #include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
 #include "common/dataStructures/DriveState.hpp"
 #include "common/MountControl.hpp"
-#include "common/dataStructures/ArchiveJob.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
-#include "common/dataStructures/ArchiveRequest.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteriaAndFileId.hpp"
+#include "common/dataStructures/ArchiveJob.hpp"
+#include "common/dataStructures/ArchiveRequest.hpp"
 #include "common/dataStructures/ArchiveRoute.hpp"
+#include "common/dataStructures/CancelRetrieveRequest.hpp"
+#include "common/dataStructures/DeleteArchiveRequest.hpp"
 #include "common/dataStructures/DriveInfo.hpp"
-#include "common/dataStructures/MountType.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
+#include "common/dataStructures/MountType.hpp"
+#include "common/dataStructures/RepackInfo.hpp"
 #include "common/dataStructures/RetrieveJob.hpp"
 #include "common/dataStructures/RetrieveRequest.hpp"
-#include "common/dataStructures/CancelRetrieveRequest.hpp"
-#include "common/dataStructures/RepackInfo.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
-#include "common/dataStructures/DeleteArchiveRequest.hpp"
+#include "common/dataStructures/TapeDrive.hpp"
 #include "disk/DiskSystem.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "common/exception/Exception.hpp"
@@ -775,7 +776,7 @@ public:
    *
    * @return The current list of registered drives.
    */
-  virtual std::list<cta::common::dataStructures::DriveState> getDriveStates(log::LogContext & lc) const = 0;
+  virtual std::list<cta::common::dataStructures::TapeDrive> getDriveStates(log::LogContext & lc) const = 0;
 
   /**
    * Sets the administrative desired state (up/down/force down) for an existing drive.

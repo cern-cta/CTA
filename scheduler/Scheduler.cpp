@@ -790,8 +790,8 @@ void Scheduler::RepackReportBatch::report(log::LogContext& lc) {
 common::dataStructures::DesiredDriveState Scheduler::getDesiredDriveState(const std::string& driveName, log::LogContext & lc) {
   utils::Timer t;
   auto driveStates = m_db.getDriveStates(lc);
-  for (auto & d: driveStates) {
-    if (d.driveName == driveName) {
+  for (auto & driveState : driveStates) {
+    if (driveState.driveName == driveName) {
       auto schedulerDbTime = t.secs();
       if (schedulerDbTime > 1) {
         log::ScopedParamContainer spc(lc);
@@ -799,7 +799,12 @@ common::dataStructures::DesiredDriveState Scheduler::getDesiredDriveState(const 
            .add("schedulerDbTime", schedulerDbTime);
         lc.log(log::DEBUG, "In Scheduler::getDesiredDriveState(): success.");
       }
-      return d.desiredDriveState;
+      common::dataStructures::DesiredDriveState desiredDriveState;
+      desiredDriveState.up = driveState.desiredUp;
+      desiredDriveState.forceDown = driveState.desiredForceDown;
+      desiredDriveState.reason = driveState.reasonUpDown;
+      desiredDriveState.comment = driveState.userComment;
+      return desiredDriveState;
     }
   }
   throw NoSuchDrive ("In Scheduler::getDesiredDriveState(): no such drive");
@@ -993,7 +998,7 @@ std::list<common::dataStructures::RetrieveJob> Scheduler::getPendingRetrieveJobs
 //------------------------------------------------------------------------------
 // getDriveStates
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::DriveState> Scheduler::getDriveStates(const common::dataStructures::SecurityIdentity &cliIdentity, log::LogContext & lc) const {
+std::list<common::dataStructures::TapeDrive> Scheduler::getDriveStates(const common::dataStructures::SecurityIdentity &cliIdentity, log::LogContext & lc) const {
   utils::Timer t;
   auto ret = m_db.getDriveStates(lc);
   auto schedulerDbTime = t.secs();
@@ -1709,10 +1714,10 @@ std::list<SchedulingInfos> Scheduler::getSchedulingInformations(log::LogContext&
 
   //get all drive informations and sort them by logical library name
   cta::common::dataStructures::SecurityIdentity admin;
-  std::list<cta::common::dataStructures::DriveState> drives = getDriveStates(admin,lc);
+  auto drives = getDriveStates(admin,lc);
 
   std::map<std::string,std::list<std::string>> logicalLibraryDriveNamesMap;
-  for(auto & drive: drives){
+  for(auto & drive : drives){
     logicalLibraryDriveNamesMap[drive.logicalLibrary].push_back(drive.driveName);
   }
 

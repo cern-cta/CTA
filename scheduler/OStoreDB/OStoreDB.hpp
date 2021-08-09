@@ -581,7 +581,7 @@ public:
    * Get states of all drives.
    * @return list of all known drive states
    */
-  std::list<cta::common::dataStructures::DriveState> getDriveStates(log::LogContext & lc) const override;
+  std::list<cta::common::dataStructures::TapeDrive> getDriveStates(log::LogContext & lc) const override;
 
   void setDesiredDriveState(const std::string& drive, const common::dataStructures::DesiredDriveState & desiredState,
     log::LogContext & lc) override;
@@ -644,38 +644,39 @@ private:
     const ReportDriveStatsInputs & inputs, log::LogContext & lc);
 
   /** Helper for setting a drive state in a specific case */
-  static void setDriveDown(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
+  static void setDriveDown(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs);
 
   /** Helper for setting a drive state in a specific case. Going UP means drive is ready. It will be instead marked as
    * down if this is the requested state */
-  static void setDriveUpOrMaybeDown(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
+  static void setDriveUpOrMaybeDown(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs);
 
   /** Helper for setting a drive state in a specific case */
-  static void setDriveProbing(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
+  static void setDriveProbing(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs);
 
   /** Helper for setting a drive state in a specific case */
-  static void setDriveStarting(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
+  static void setDriveStarting(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs);
 
   /** Helper for setting a drive state in a specific case */
-  static void setDriveMounting(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
+  static void setDriveMounting(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs);
 
   /** Helper for setting a drive state in a specific case */
-  static void setDriveTransferring(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
+  static void setDriveTransfering(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs);
 
   /** Helper for setting a drive state in a specific case */
-  static void setDriveUnloading(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
+  static void setDriveUnloading(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs);
 
   /** Helper for setting a drive state in a specific case */
-  static void setDriveUnmounting(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
+  static void setDriveUnmounting(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs);
 
   /** Helper for setting a drive state in a specific case */
-  static void setDriveDrainingToDisk(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
+  static void setDriveDrainingToDisk(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs);
 
   /** Helper for setting a drive state in a specific case */
-  static void setDriveCleaningUp(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
+  static void setDriveCleaningUp(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs);
 
   /** Helper for setting a drive state in a specific case */
-  static void setDriveShutdown(common::dataStructures::DriveState & driveState, const ReportDriveStatusInputs & inputs);
+  static void setDriveShutdown(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs);
+
 private:
   objectstore::Backend & m_objectStore;
   catalogue::Catalogue & m_catalogue;

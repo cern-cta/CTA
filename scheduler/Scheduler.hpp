@@ -294,7 +294,7 @@ public:
    * @param cliIdentity
    * @return A list of drive state structures.
    */
-  std::list<cta::common::dataStructures::DriveState> getDriveStates(
+  std::list<cta::common::dataStructures::TapeDrive> getDriveStates(
     const cta::common::dataStructures::SecurityIdentity &cliIdentity, log::LogContext & lc) const;
 
   /*============== Actual mount scheduling and queue status reporting ========*/

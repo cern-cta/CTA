@@ -36,7 +36,7 @@ namespace unitTests {
  */
 struct OStoreDBTestParams {
   cta::SchedulerDatabaseFactory &dbFactory;
-  
+
   OStoreDBTestParams(cta::SchedulerDatabaseFactory &dbFactory):
     dbFactory(dbFactory) {};
 }; // struct OStoreDBTestParams
@@ -61,7 +61,7 @@ public:
   };
 
   virtual void SetUp() {
-    // We do a deep reference to the member as the C++ compiler requires the function to be 
+    // We do a deep reference to the member as the C++ compiler requires the function to be
     // already defined if called implicitly.
     const auto &factory = GetParam().dbFactory;
     m_catalogue = cta::make_unique<cta::catalogue::DummyCatalogue>();
@@ -111,7 +111,7 @@ private:
   OStoreDBTest & operator= (const OStoreDBTest &) = delete;
 
   std::unique_ptr<cta::objectstore::OStoreDBWrapperInterface> m_db;
-  
+
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
 }; // class SchedulerDatabaseTest
 
@@ -217,7 +217,7 @@ TEST_P(OStoreDBTest, MemQueuesSharedAddToArchiveQueue) {
       ArchiveRequest::JobDump jd;
       jd.tapePool = "tapepool";
       jd.copyNb = 1;
-      auto sharedLock = cta::ostoredb::MemQueue<ArchiveRequest, ArchiveQueue>::sharedAddToQueue(jd, jd.tapePool, aReq, 
+      auto sharedLock = cta::ostoredb::MemQueue<ArchiveRequest, ArchiveQueue>::sharedAddToQueue(jd, jd.tapePool, aReq,
           osdbi.getOstoreDB(), localLc);
     });
     jobInsertions.emplace_back(std::async(std::launch::async ,lambdas.back()));
@@ -225,12 +225,15 @@ TEST_P(OStoreDBTest, MemQueuesSharedAddToArchiveQueue) {
   for (auto &j: jobInsertions) { j.get(); }
   jobInsertions.clear();
   lambdas.clear();
-  
+
   // Now make sure the files made it to the queue.
   ASSERT_EQ(filesToDo, osdbi.getArchiveJobs("tapepool").size());
 }
 
-TEST_P(OStoreDBTest, setDesiredState){
+/*
+ * After moving the Tape Drive state to catalogue this test doesn't work, as it's expected. It should be removed.
+ */
+TEST_P(OStoreDBTest, DISABLED_setDesiredState){
   using namespace cta::objectstore;
   cta::log::StringLogger logger("dummy", "OStoreAbstractTest", cta::log::DEBUG);
   cta::log::LogContext lc(logger);

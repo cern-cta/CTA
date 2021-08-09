@@ -468,7 +468,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
   // If a next mount exists the drive "counts double", but the corresponding drive
   // is either about to mount, or about to replace its current mount.
   double registerFetchTime = 0;
-  auto driveStates = Helpers::getAllDriveStates(m_objectStore, logContext);
+  auto driveStates = getDriveStates(logContext);
   registerFetchTime = t.secs(utils::Timer::resetCounter);
   using common::dataStructures::DriveStatus;
   std::set<int> activeDriveStatuses = {
@@ -484,34 +484,41 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     (int)cta::common::dataStructures::MountType::ArchiveForRepack,
     (int)cta::common::dataStructures::MountType::Retrieve,
     (int)cta::common::dataStructures::MountType::Label };
-  for (const auto &d : driveStates) {
-    if (activeDriveStatuses.count((int)d.driveStatus)) {
+  for (const auto& driveState : driveStates) {
+    if (activeDriveStatuses.count(static_cast<int>(driveState.driveStatus))) {
       tmdi.existingOrNextMounts.push_back(ExistingMount());
-      tmdi.existingOrNextMounts.back().type = d.mountType;
-      tmdi.existingOrNextMounts.back().tapePool = d.currentTapePool;
-      tmdi.existingOrNextMounts.back().vo = d.currentVo;
-      tmdi.existingOrNextMounts.back().driveName = d.driveName;
-      tmdi.existingOrNextMounts.back().vid = d.currentVid;
+      tmdi.existingOrNextMounts.back().type = driveState.mountType;
+      tmdi.existingOrNextMounts.back().tapePool = driveState.currentTapePool ? driveState.currentTapePool.value() : "";
+      tmdi.existingOrNextMounts.back().vo = driveState.currentVo ? driveState.currentVo.value() : "";
+      tmdi.existingOrNextMounts.back().driveName = driveState.driveName;
+      tmdi.existingOrNextMounts.back().vid = driveState.currentVid ? driveState.currentVid.value() : "";
       tmdi.existingOrNextMounts.back().currentMount = true;
-      tmdi.existingOrNextMounts.back().bytesTransferred = d.bytesTransferredInSession;
-      tmdi.existingOrNextMounts.back().filesTransferred = d.filesTransferredInSession;
-      tmdi.existingOrNextMounts.back().latestBandwidth = d.latestBandwidth;
-      if (d.currentActivityAndWeight)
-        tmdi.existingOrNextMounts.back().activity = d.currentActivityAndWeight.value().activity;
+      tmdi.existingOrNextMounts.back().bytesTransferred = driveState.bytesTransferedInSession
+        ? driveState.bytesTransferedInSession.value() : 0;
+      tmdi.existingOrNextMounts.back().filesTransferred = driveState.filesTransferedInSession
+        ? driveState.filesTransferedInSession.value() : 0;
+      if (driveState.latestBandwidth && driveState.latestBandwidth.value().size() > 0) {
+        if (std::isdigit(driveState.latestBandwidth.value().at(0)))
+          tmdi.existingOrNextMounts.back().latestBandwidth = std::stoi(driveState.latestBandwidth.value());
+      } else {
+        tmdi.existingOrNextMounts.back().latestBandwidth = 0;
+      }
+      tmdi.existingOrNextMounts.back().activity = driveState.currentActivity ? driveState.currentActivity.value() : "";
     }
-    if (activeMountTypes.count((int)d.nextMountType)) {
+    if (!driveState.nextMountType) continue;
+    if (activeMountTypes.count(static_cast<int>(driveState.nextMountType.value()))) {
       tmdi.existingOrNextMounts.push_back(ExistingMount());
-      tmdi.existingOrNextMounts.back().type = d.nextMountType;
-      tmdi.existingOrNextMounts.back().tapePool = d.nextTapepool;
-      tmdi.existingOrNextMounts.back().vo = d.nextVo;
-      tmdi.existingOrNextMounts.back().driveName = d.driveName;
-      tmdi.existingOrNextMounts.back().vid = d.nextVid;
+      tmdi.existingOrNextMounts.back().type = driveState.nextMountType
+        ? driveState.nextMountType.value() : common::dataStructures::MountType::NoMount;
+      tmdi.existingOrNextMounts.back().tapePool = driveState.nextTapePool ? driveState.nextTapePool.value() : "";
+      tmdi.existingOrNextMounts.back().vo = driveState.nextVo ? driveState.nextVo.value() : "";
+      tmdi.existingOrNextMounts.back().driveName = driveState.driveName;
+      tmdi.existingOrNextMounts.back().vid = driveState.nextVid ? driveState.nextVid.value() : "";
       tmdi.existingOrNextMounts.back().currentMount = false;
       tmdi.existingOrNextMounts.back().bytesTransferred = 0;
       tmdi.existingOrNextMounts.back().filesTransferred = 0;
       tmdi.existingOrNextMounts.back().latestBandwidth = 0;
-      if (d.nextActivityAndWeight)
-        tmdi.existingOrNextMounts.back().activity = d.currentActivityAndWeight.value().activity;
+      tmdi.existingOrNextMounts.back().activity = driveState.nextActivity ? driveState.nextActivity.value() : "";
     }
   }
   auto registerProcessingTime = t.secs(utils::Timer::resetCounter);
@@ -3052,95 +3059,47 @@ getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext &logCont
 //------------------------------------------------------------------------------
 // OStoreDB::getDriveStates()
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::DriveState> OStoreDB::getDriveStates(log::LogContext & lc) const {
-  return Helpers::getAllDriveStates(m_objectStore, lc);
+std::list<cta::common::dataStructures::TapeDrive> OStoreDB::getDriveStates(log::LogContext & lc) const {
+  std::list<cta::common::dataStructures::TapeDrive> tapeDrivesList;
+  const auto driveNames = m_catalogue.getTapeDriveNames();
+  for (const auto& driveName : driveNames) {
+    const auto tapeDrive = m_catalogue.getTapeDrive(driveName);
+    tapeDrivesList.push_back(tapeDrive.value());
+  }
+  return tapeDrivesList;
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::setDesiredDriveState()
 //------------------------------------------------------------------------------
 void OStoreDB::setDesiredDriveState(const std::string& drive, const common::dataStructures::DesiredDriveState & desiredState, log::LogContext &lc) {
-  objectstore::DriveState ds(m_objectStore);
-  ScopedExclusiveLock dsl;
-  Helpers::getLockedAndFetchedDriveState(ds, dsl, *m_agentReference, drive, lc);
   common::dataStructures::DesiredDriveState newDesiredState = desiredState;
-  auto driveState = ds.getState();
+  auto driveState = m_catalogue.getTapeDrive(drive);
+  if (!driveState) return;
   if(desiredState.comment){
     //In case we modify the comment, we want to keep the same status and forceDown of the drive
-    newDesiredState.up = driveState.desiredDriveState.up;
-    newDesiredState.forceDown = driveState.desiredDriveState.forceDown;
+    newDesiredState.up = driveState.value().desiredUp;
+    newDesiredState.forceDown = driveState.value().desiredForceDown;
   }
-  driveState.desiredDriveState = newDesiredState;
-  ds.setState(driveState);
-  ds.commit();
-  // DataBase NEW
-  auto tapeDriveToUpdate = m_catalogue.getTapeDrive(drive);
-  if (!tapeDriveToUpdate) return;
-  auto tapeDriveStatus = tapeDriveToUpdate.value();
-  tapeDriveStatus.desiredUp = driveState.desiredDriveState.up;
-  tapeDriveStatus.desiredForceDown = driveState.desiredDriveState.forceDown;
-  tapeDriveStatus.reasonUpDown = driveState.desiredDriveState.reason;
-  tapeDriveStatus.userComment = driveState.desiredDriveState.comment;
-  m_catalogue.modifyTapeDrive(tapeDriveStatus);
+  driveState.value().desiredUp = newDesiredState.up;
+  driveState.value().desiredForceDown = newDesiredState.forceDown;
+  driveState.value().reasonUpDown = newDesiredState.reason;
+  driveState.value().userComment = newDesiredState.comment;
+  m_catalogue.modifyTapeDrive(driveState.value());
 }
+
 
 //------------------------------------------------------------------------------
 // OStoreDB::removeDrive()
 //------------------------------------------------------------------------------
 void OStoreDB::removeDrive(const std::string& drive, log::LogContext &lc) {
-  RootEntry re(m_objectStore);
-  re.fetchNoLock();
-  auto driveRegisterAddress = re.getDriveRegisterAddress();
-  objectstore::DriveRegister dr(driveRegisterAddress, m_objectStore);
-  objectstore::ScopedExclusiveLock drl(dr);
-  dr.fetch();
-  // If the driveStatus exists, take ownership before deleting and finally dereferencing.
-  auto driveAddresses = dr.getDriveAddresses();
-  // If the drive is present, find status and lock it. If not, nothing to do.
-  auto di = std::find_if(driveAddresses.begin(), driveAddresses.end(),
-      [&](const DriveRegister::DriveAddress & da){ return da.driveName == drive; });
-  if (di!=driveAddresses.end()) {
-    // Try and take an exclusive lock on the object
+  try {
+    m_catalogue.deleteTapeDrive(drive);
     log::ScopedParamContainer params(lc);
-    params.add("driveName", drive)
-          .add("driveRegisterObject", dr.getAddressIfSet())
-          .add("driveStateObject", di->driveStateAddress);
-    try {
-      objectstore::DriveState ds(di->driveStateAddress, m_objectStore);
-      objectstore::ScopedExclusiveLock dsl(ds);
-      ds.fetch();
-      params.add("driveName", drive)
-            .add("driveRegisterObject", dr.getAddressIfSet())
-            .add("driveStateObject", ds.getAddressIfSet());
-      if (ds.getOwner() == dr.getAddressIfSet()) {
-        // The drive state is owned as expected, delete it and then de-reference it.
-        ds.remove();
-        dr.removeDrive(drive);
-        dr.commit();
-        log::ScopedParamContainer params(lc);
-        params.add("driveStateObject", ds.getAddressIfSet());
-        lc.log(log::INFO, "In OStoreDB::removeDrive(): removed and dereferenced drive state object.");
-      } else {
-        dr.removeDrive(drive);
-        dr.commit();
-        lc.log(log::WARNING, "In OStoreDB::removeDrive(): just dereferenced drive state object not owned by drive register.");
-      }
-    } catch (cta::exception::Exception & ex) {
-      // The drive might not exist anymore, in which case we can proceed to
-      // dereferencing from DriveRegister.
-      if (!m_objectStore.exists(di->driveStateAddress)) {
-        dr.removeDrive(drive);
-        dr.commit();
-        lc.log(log::WARNING, "In OStoreDB::removeDrive(): dereferenced non-existing drive state object.");
-      } else {
-        params.add("exceptionMessage", ex.getMessageValue());
-        lc.log(log::ERR, "In OStoreDB::removeDrive(): unexpected error dereferencing drive state. Doing nothing.");
-      }
-    }
-  } else {
-    log::ScopedParamContainer params (lc);
     params.add("driveName", drive);
-    lc.log(log::INFO, "In OStoreDB::removeDrive(): no such drive reference in register.");
+    lc.log(log::INFO, "In OStoreDB::removeDrive(): removed tape drive from database.");
+  } catch (cta::exception::Exception & ex) {
+    lc.log(log::WARNING, "In OStoreDB::removeDrive(): Problem to remove tape drive from database.");
   }
 }
 
@@ -3172,13 +3131,13 @@ void OStoreDB::reportDriveStatus(const common::dataStructures::DriveInfo& driveI
 // OStoreDB::reportDriveConfig()
 //------------------------------------------------------------------------------
 void OStoreDB::reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine, const cta::tape::daemon::TapedConfiguration& tapedConfig, log::LogContext& lc){
-  objectstore::DriveState ds(m_objectStore);
-  ScopedExclusiveLock dsl;
-  Helpers::getLockedAndFetchedDriveState(ds, dsl, *m_agentReference, tpConfigLine.unitName, lc, Helpers::CreateIfNeeded::doNotCreate);
-  ds.setConfig(tapedConfig);
-  ds.setTpConfig(tpConfigLine);
-  ds.commit();
-  }
+  // objectstore::DriveState ds(m_objectStore);
+  // ScopedExclusiveLock dsl;
+  // Helpers::getLockedAndFetchedDriveState(ds, dsl, *m_agentReference, tpConfigLine.unitName, lc, Helpers::CreateIfNeeded::doNotCreate);
+  // ds.setConfig(tapedConfig);
+  // ds.setTpConfig(tpConfigLine);
+  // ds.commit();
+}
 
 //------------------------------------------------------------------------------
 // OStoreDB::checkDriveCanBeCreated()
@@ -3208,13 +3167,10 @@ void OStoreDB::checkDriveCanBeCreated(const cta::common::dataStructures::DriveIn
 //------------------------------------------------------------------------------
 void OStoreDB::updateDriveStatus(const common::dataStructures::DriveInfo& driveInfo, const ReportDriveStatusInputs& inputs,
   log::LogContext &lc) {
-  using common::dataStructures::DriveStatus;
   // First, get the drive state.
-  objectstore::DriveState ds(m_objectStore);
-  objectstore::ScopedExclusiveLock dsl;
-  Helpers::getLockedAndFetchedDriveState(ds, dsl, *m_agentReference, driveInfo.driveName, lc);
-  // The drive state might not be present, in which case we have to fill it up with default values.
-  cta::common::dataStructures::DriveState driveState = ds.getState();
+  const auto driveStateOptional = m_catalogue.getTapeDrive(driveInfo.driveName);
+  if (!driveStateOptional) return;
+  auto driveState = driveStateOptional.value();
   // Set the parameters that we always set
   driveState.host = driveInfo.host;
   driveState.logicalLibrary = driveInfo.logicalLibrary;
@@ -3222,60 +3178,60 @@ void OStoreDB::updateDriveStatus(const common::dataStructures::DriveInfo& driveI
   auto previousStatus = driveState.driveStatus;
   // Set the status
   switch (inputs.status) {
-    case DriveStatus::Down:
+    case common::dataStructures::DriveStatus::Down:
       setDriveDown(driveState, inputs);
       break;
-    case DriveStatus::Up:
+    case common::dataStructures::DriveStatus::Up:
       setDriveUpOrMaybeDown(driveState, inputs);
       break;
-    case DriveStatus::Probing:
+    case common::dataStructures::DriveStatus::Probing:
       setDriveProbing(driveState, inputs);
       break;
-    case DriveStatus::Starting:
+    case common::dataStructures::DriveStatus::Starting:
       setDriveStarting(driveState, inputs);
       break;
-    case DriveStatus::Mounting:
+    case common::dataStructures::DriveStatus::Mounting:
       setDriveMounting(driveState, inputs);
       break;
-    case DriveStatus::Transferring:
-      setDriveTransferring(driveState, inputs);
+    case common::dataStructures::DriveStatus::Transferring:
+      setDriveTransfering(driveState, inputs);
       break;
-    case DriveStatus::Unloading:
+    case common::dataStructures::DriveStatus::Unloading:
       setDriveUnloading(driveState, inputs);
       break;
-    case DriveStatus::Unmounting:
+    case common::dataStructures::DriveStatus::Unmounting:
       setDriveUnmounting(driveState, inputs);
       break;
-    case DriveStatus::DrainingToDisk:
+    case common::dataStructures::DriveStatus::DrainingToDisk:
       setDriveDrainingToDisk(driveState, inputs);
       break;
-    case DriveStatus::CleaningUp:
+    case common::dataStructures::DriveStatus::CleaningUp:
       setDriveCleaningUp(driveState, inputs);
       break;
-    case DriveStatus::Shutdown:
+    case common::dataStructures::DriveStatus::Shutdown:
       setDriveShutdown(driveState, inputs);
       break;
     default:
       throw exception::Exception("Unexpected status in DriveRegister::reportDriveStatus");
   }
-  ds.setState(driveState);
   // If the drive is a state incompatible with space reservation, make sure there is none:
   switch (driveState.driveStatus) {
-  case DriveStatus::Down:
-  case DriveStatus::Shutdown:
-  case DriveStatus::Unknown:
-  case DriveStatus::Up:
-    for (auto dr: ds.getDiskSpaceReservations()) {
+    case common::dataStructures::DriveStatus::Down:
+    case common::dataStructures::DriveStatus::Shutdown:
+    case common::dataStructures::DriveStatus::Unknown:
+    case common::dataStructures::DriveStatus::Up:
+    {
       log::ScopedParamContainer params(lc);
-      params.add("diskSystem", dr.first)
-            .add("bytes", dr.second)
-            .add("previousStatus",toString(previousStatus))
+      params.add("diskSystem", driveState.diskSystemName)
+            .add("bytes", driveState.reservedBytes)
+            .add("previousStatus", toString(previousStatus))
             .add("newStatus", toString(driveState.driveStatus));
       lc.log(log::WARNING, "In OStoreDB::updateDriveStatus(): will clear non-empty disk space reservation on status change.");
+      driveState.diskSystemName = "NULL";
+      driveState.reservedBytes = 0;
     }
-    ds.resetDiskSpaceReservation();
-  default:
-    break;
+    default:
+      break;
   }
   if (previousStatus != driveState.driveStatus) {
     log::ScopedParamContainer params(lc);
@@ -3283,489 +3239,452 @@ void OStoreDB::updateDriveStatus(const common::dataStructures::DriveInfo& driveI
           .add("newStatus", toString(driveState.driveStatus));
     lc.log(log::INFO, "In OStoreDB::updateDriveStatus(): changing drive status.");
   }
-  ds.commit();
-  // DataBase NEW
-  auto tapeDriveToUpdate = m_catalogue.getTapeDrive(driveInfo.driveName);
-  if (!tapeDriveToUpdate) return;
-  auto tapeDriveStatus = tapeDriveToUpdate.value();
-  tapeDriveStatus.driveName = driveInfo.driveName;
-  tapeDriveStatus.host = driveInfo.host;
-  tapeDriveStatus.logicalLibrary = driveInfo.logicalLibrary;
-  tapeDriveStatus.ctaVersion = driveState.ctaVersion;
-  tapeDriveStatus.sessionId = driveState.sessionId;
-  tapeDriveStatus.bytesTransferedInSession = driveState.bytesTransferredInSession;
-  tapeDriveStatus.filesTransferedInSession = driveState.filesTransferredInSession;
-  tapeDriveStatus.latestBandwidth = driveState.latestBandwidth;
-  tapeDriveStatus.sessionStartTime = driveState.sessionStartTime;
-  tapeDriveStatus.mountStartTime = driveState.mountStartTime;
-  tapeDriveStatus.transferStartTime = driveState.transferStartTime;
-  tapeDriveStatus.unloadStartTime = driveState.unloadStartTime;
-  tapeDriveStatus.unmountStartTime = driveState.unmountStartTime;
-  tapeDriveStatus.drainingStartTime = driveState.drainingStartTime;
-  tapeDriveStatus.downOrUpStartTime = driveState.downOrUpStartTime;
-  tapeDriveStatus.probeStartTime = driveState.probeStartTime;
-  tapeDriveStatus.cleanupStartTime = driveState.cleanupStartTime;
-  tapeDriveStatus.lastModificationLog = common::dataStructures::EntryLog(
-    "NO_USER",
-    driveInfo.host,
-    driveState.lastUpdateTime);
-  tapeDriveStatus.startStartTime = driveState.startStartTime;
-  tapeDriveStatus.shutdownTime = driveState.shutdownTime;
-  tapeDriveStatus.mountType = driveState.mountType;
-  tapeDriveStatus.driveStatus = driveState.driveStatus;
-  tapeDriveStatus.desiredUp = driveState.desiredDriveState.up;
-  tapeDriveStatus.desiredForceDown = driveState.desiredDriveState.forceDown;
-  tapeDriveStatus.reasonUpDown = driveState.desiredDriveState.reason;
-  tapeDriveStatus.userComment = driveState.desiredDriveState.comment;
-  tapeDriveStatus.currentVid = driveState.currentVid;
-  tapeDriveStatus.currentTapePool = driveState.currentTapePool;
-  tapeDriveStatus.currentVo = driveState.currentVo;
-  tapeDriveStatus.currentPriority = driveState.currentPriority;
-  if (driveState.currentActivityAndWeight) {
-    tapeDriveStatus.currentActivity = driveState.currentActivityAndWeight.value().activity;
-    tapeDriveStatus.currentActivityWeight = driveState.currentActivityAndWeight.value().weight;
-  }
-  tapeDriveStatus.nextMountType = driveState.nextMountType;
-  tapeDriveStatus.nextVid = driveState.nextVid;
-  tapeDriveStatus.nextTapePool = driveState.nextTapepool;
-  tapeDriveStatus.nextVo = driveState.nextVo;
-  tapeDriveStatus.nextPriority = driveState.nextPriority;
-  if (driveState.nextActivityAndWeight) {
-    tapeDriveStatus.nextActivity = driveState.nextActivityAndWeight.value().activity;
-    tapeDriveStatus.nextActivityWeight = driveState.nextActivityAndWeight.value().weight;
-  }
-  tapeDriveStatus.devFileName = driveState.devFileName;
-  tapeDriveStatus.rawLibrarySlot = driveState.rawLibrarySlot;
-  m_catalogue.modifyTapeDrive(tapeDriveStatus);
+  m_catalogue.modifyTapeDrive(driveState);
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::updateDriveStatsInRegitry()
 //------------------------------------------------------------------------------
-void OStoreDB::updateDriveStatistics(const common::dataStructures::DriveInfo& driveInfo, const ReportDriveStatsInputs& inputs, log::LogContext & lc) {
-  using common::dataStructures::DriveStatus;
-  // The drive state might not be present, in which case we do nothing.
-  cta::common::dataStructures::DriveState driveState;
-  objectstore::DriveState ds(m_objectStore);
-  objectstore::ScopedExclusiveLock dsl;
-  try {
-    Helpers::getLockedAndFetchedDriveState(ds, dsl, *m_agentReference, driveInfo.driveName,
-      lc, Helpers::CreateIfNeeded::doNotCreate);
-  } catch (cta::exception::Exception & ex) {
-    // The drive is missing in the registry. Nothing to update
-    return;
-  }
-  driveState = ds.getState();
+void OStoreDB::updateDriveStatistics(const common::dataStructures::DriveInfo& driveInfo,
+  const ReportDriveStatsInputs& inputs, log::LogContext & lc) {
+  auto driveState = m_catalogue.getTapeDrive(driveInfo.driveName);
+  if (!driveState) return;
   // Set the parameters that we always set
-  driveState.host = driveInfo.host;
-  driveState.logicalLibrary = driveInfo.logicalLibrary;
+  driveState.value().host = driveInfo.host;
+  driveState.value().logicalLibrary = driveInfo.logicalLibrary;
 
-  switch (driveState.driveStatus) {
-    case DriveStatus::Transferring:
+  switch (driveState.value().driveStatus) {
+    case common::dataStructures::DriveStatus::Transferring:
     {
-      const time_t timeDifference = inputs.reportTime -  driveState.lastUpdateTime;
-      const uint64_t bytesDifference = inputs.bytesTransferred - driveState.bytesTransferredInSession;
-      driveState.lastUpdateTime=inputs.reportTime;
-      driveState.bytesTransferredInSession=inputs.bytesTransferred;
-      driveState.filesTransferredInSession=inputs.filesTransferred;
-      driveState.latestBandwidth = timeDifference?1.0*bytesDifference/timeDifference:0.0;
+      const time_t timeDifference = inputs.reportTime -  driveState.value().lastModificationLog.value().time;
+      const uint64_t bytesDifference = inputs.bytesTransferred - driveState.value().bytesTransferedInSession.value();
+      driveState.value().lastModificationLog = common::dataStructures::EntryLog(
+        "NO_USER", driveInfo.host, inputs.reportTime);
+      driveState.value().bytesTransferedInSession = inputs.bytesTransferred;
+      driveState.value().filesTransferedInSession = inputs.filesTransferred;
+      auto latestBandwidth = timeDifference ? 1.0 * bytesDifference / timeDifference : 0.0;
+      driveState.value().latestBandwidth = std::to_string(latestBandwidth);
       break;
     }
     default:
       return;
   }
-  ds.setState(driveState);
-  ds.commit();
+  m_catalogue.modifyTapeDrive(driveState.value());
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::setDriveDown()
 //------------------------------------------------------------------------------
-void OStoreDB::setDriveDown(common::dataStructures::DriveState & driveState,
+void OStoreDB::setDriveDown(common::dataStructures::TapeDrive & driveState,
   const ReportDriveStatusInputs & inputs) {
   // If we were already down, then we only update the last update time.
   if (driveState.driveStatus == common::dataStructures::DriveStatus::Down) {
-    driveState.lastUpdateTime=inputs.reportTime;
+    driveState.lastModificationLog = common::dataStructures::EntryLog(
+      "NO_USER", driveState.host, inputs.reportTime);
     return;
   }
   // If we are changing state, then all should be reset.
-  driveState.sessionId=0;
-  driveState.bytesTransferredInSession=0;
-  driveState.filesTransferredInSession=0;
-  driveState.latestBandwidth=0;
-  driveState.sessionStartTime=0;
-  driveState.mountStartTime=0;
-  driveState.transferStartTime=0;
-  driveState.unloadStartTime=0;
-  driveState.unmountStartTime=0;
-  driveState.drainingStartTime=0;
-  driveState.downOrUpStartTime=inputs.reportTime;
-  driveState.probeStartTime=0;
-  driveState.cleanupStartTime=0;
-  driveState.shutdownTime=0;
-  driveState.lastUpdateTime=inputs.reportTime;
-  driveState.mountType=common::dataStructures::MountType::NoMount;
-  driveState.driveStatus=common::dataStructures::DriveStatus::Down;
-  driveState.desiredDriveState.up=false;
-  driveState.desiredDriveState.forceDown=false;
-  driveState.currentVid="";
-  driveState.currentTapePool="";
+  driveState.sessionId = 0;
+  driveState.bytesTransferedInSession = 0;
+  driveState.filesTransferedInSession = 0;
+  driveState.latestBandwidth = 0;
+  driveState.sessionStartTime = 0;
+  driveState.mountStartTime = 0;
+  driveState.transferStartTime = 0;
+  driveState.unloadStartTime = 0;
+  driveState.unmountStartTime = 0;
+  driveState.drainingStartTime = 0;
+  driveState.downOrUpStartTime = inputs.reportTime;
+  driveState.probeStartTime = 0;
+  driveState.cleanupStartTime = 0;
+  driveState.shutdownTime = 0;
+  driveState.lastModificationLog = common::dataStructures::EntryLog(
+    "NO_USER", driveState.host, inputs.reportTime);
+  driveState.mountType = common::dataStructures::MountType::NoMount;
+  driveState.driveStatus = common::dataStructures::DriveStatus::Down;
+  driveState.desiredUp = false;
+  driveState.desiredForceDown = false;
+  driveState.currentVid = "";
+  driveState.currentTapePool = "";
   driveState.currentVo = "";
-  driveState.currentActivityAndWeight = nullopt;
-  driveState.desiredDriveState.reason = inputs.reason;
+  driveState.currentActivity = nullopt_t();
+  driveState.currentActivityWeight = nullopt_t();
+  driveState.reasonUpDown = inputs.reason;
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::setDriveUp()
 //------------------------------------------------------------------------------
-void OStoreDB::setDriveUpOrMaybeDown(common::dataStructures::DriveState & driveState,
+void OStoreDB::setDriveUpOrMaybeDown(common::dataStructures::TapeDrive & driveState,
   const ReportDriveStatusInputs & inputs) {
-  using common::dataStructures::DriveStatus;
   // Decide whether we should be up or down
-  DriveStatus  targetStatus=DriveStatus::Up;
-  if (!driveState.desiredDriveState.up) {
+  auto targetStatus = common::dataStructures::DriveStatus::Up;
+  if (!driveState.desiredUp) {
     driveState.driveStatus = common::dataStructures::DriveStatus::Down;
-    driveState.desiredDriveState.reason = inputs.reason;
+    driveState.reasonUpDown = inputs.reason;
   }
   // If we were already up (or down), then we only update the last update time.
   if (driveState.driveStatus == targetStatus) {
-    driveState.lastUpdateTime=inputs.reportTime;
+    driveState.lastModificationLog = common::dataStructures::EntryLog(
+      "NO_USER", driveState.host, inputs.reportTime);
     return;
   }
   // If we are changing state, then all should be reset.
-  driveState.sessionId=0;
-  driveState.bytesTransferredInSession=0;
-  driveState.filesTransferredInSession=0;
-  driveState.latestBandwidth=0;
-  driveState.sessionStartTime=0;
-  driveState.mountStartTime=0;
-  driveState.transferStartTime=0;
-  driveState.unloadStartTime=0;
-  driveState.unmountStartTime=0;
-  driveState.drainingStartTime=0;
-  driveState.downOrUpStartTime=inputs.reportTime;
-  driveState.probeStartTime=0;
-  driveState.cleanupStartTime=0;
-  driveState.shutdownTime=0;
-  driveState.lastUpdateTime=inputs.reportTime;
-  driveState.mountType=common::dataStructures::MountType::NoMount;
-  driveState.driveStatus=targetStatus;
-  driveState.currentVid="";
-  driveState.currentTapePool="";
+  driveState.sessionId = 0;
+  driveState.bytesTransferedInSession = 0;
+  driveState.filesTransferedInSession = 0;
+  driveState.latestBandwidth = 0;
+  driveState.sessionStartTime = 0;
+  driveState.mountStartTime = 0;
+  driveState.transferStartTime = 0;
+  driveState.unloadStartTime = 0;
+  driveState.unmountStartTime = 0;
+  driveState.drainingStartTime = 0;
+  driveState.downOrUpStartTime = inputs.reportTime;
+  driveState.probeStartTime = 0;
+  driveState.cleanupStartTime = 0;
+  driveState.shutdownTime = 0;
+  driveState.lastModificationLog = common::dataStructures::EntryLog(
+    "NO_USER", driveState.host, inputs.reportTime);
+  driveState.mountType = common::dataStructures::MountType::NoMount;
+  driveState.driveStatus = targetStatus;
+  driveState.currentVid = "";
+  driveState.currentTapePool = "";
   driveState.currentVo = "";
-  driveState.currentActivityAndWeight = nullopt;
+  driveState.currentActivity = nullopt_t();
+  driveState.currentActivityWeight = nullopt_t();
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::setDriveUp()
 //------------------------------------------------------------------------------
-void OStoreDB::setDriveProbing(common::dataStructures::DriveState & driveState,
+void OStoreDB::setDriveProbing(common::dataStructures::TapeDrive & driveState,
   const ReportDriveStatusInputs & inputs) {
   using common::dataStructures::DriveStatus;
   // If we were already up (or down), then we only update the last update time.
   if (driveState.driveStatus == inputs.status) {
-    driveState.lastUpdateTime=inputs.reportTime;
+    driveState.lastModificationLog = common::dataStructures::EntryLog(
+      "NO_USER", driveState.host, inputs.reportTime);
     return;
   }
   // If we are changing state, then all should be reset.
-  driveState.sessionId=0;
-  driveState.bytesTransferredInSession=0;
-  driveState.filesTransferredInSession=0;
-  driveState.latestBandwidth=0;
-  driveState.sessionStartTime=0;
-  driveState.mountStartTime=0;
-  driveState.transferStartTime=0;
-  driveState.unloadStartTime=0;
-  driveState.unmountStartTime=0;
-  driveState.drainingStartTime=0;
-  driveState.downOrUpStartTime=0;
-  driveState.probeStartTime=inputs.reportTime;
-  driveState.cleanupStartTime=0;
-  driveState.shutdownTime=0;
-  driveState.lastUpdateTime=inputs.reportTime;
-  driveState.mountType=common::dataStructures::MountType::NoMount;
-  driveState.driveStatus=inputs.status;
-  driveState.currentVid="";
-  driveState.currentTapePool="";
+  driveState.sessionId = 0;
+  driveState.bytesTransferedInSession = 0;
+  driveState.filesTransferedInSession = 0;
+  driveState.latestBandwidth = 0;
+  driveState.sessionStartTime = 0;
+  driveState.mountStartTime = 0;
+  driveState.transferStartTime = 0;
+  driveState.unloadStartTime = 0;
+  driveState.unmountStartTime = 0;
+  driveState.drainingStartTime = 0;
+  driveState.downOrUpStartTime = 0;
+  driveState.probeStartTime = inputs.reportTime;
+  driveState.cleanupStartTime = 0;
+  driveState.shutdownTime = 0;
+  driveState.lastModificationLog = common::dataStructures::EntryLog(
+    "NO_USER", driveState.host, inputs.reportTime);
+  driveState.mountType = common::dataStructures::MountType::NoMount;
+  driveState.driveStatus = inputs.status;
+  driveState.currentVid = "";
+  driveState.currentTapePool = "";
   driveState.currentVo = "";
-  driveState.currentActivityAndWeight = nullopt;
+  driveState.currentActivity = nullopt_t();
+  driveState.currentActivityWeight = nullopt_t();
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::setDriveStarting()
 //------------------------------------------------------------------------------
-void OStoreDB::setDriveStarting(common::dataStructures::DriveState & driveState,
+void OStoreDB::setDriveStarting(common::dataStructures::TapeDrive & driveState,
   const ReportDriveStatusInputs & inputs) {
   // If we were already starting, then we only update the last update time.
   if (driveState.driveStatus == common::dataStructures::DriveStatus::Starting) {
-    driveState.lastUpdateTime = inputs.reportTime;
+    driveState.lastModificationLog = common::dataStructures::EntryLog(
+      "NO_USER", driveState.host, inputs.reportTime);
     return;
   }
   // If we are changing state, then all should be reset.
-  driveState.sessionId=inputs.mountSessionId;
-  driveState.bytesTransferredInSession=0;
-  driveState.filesTransferredInSession=0;
-  driveState.latestBandwidth=0;
-  driveState.sessionStartTime=inputs.reportTime;
-  driveState.mountStartTime=0;
-  driveState.transferStartTime=0;
-  driveState.unloadStartTime=0;
-  driveState.unmountStartTime=0;
-  driveState.drainingStartTime=0;
-  driveState.downOrUpStartTime=0;
-  driveState.probeStartTime=0;
-  driveState.cleanupStartTime=0;
-  driveState.shutdownTime=0;
-  driveState.startStartTime=inputs.reportTime;
-  driveState.lastUpdateTime=inputs.reportTime;
-  driveState.mountType=inputs.mountType;
-  driveState.driveStatus=common::dataStructures::DriveStatus::Starting;
-  driveState.currentVid=inputs.vid;
-  driveState.currentTapePool=inputs.tapepool;
-  driveState.currentVo=inputs.vo;
+  driveState.sessionId = inputs.mountSessionId;
+  driveState.bytesTransferedInSession = 0;
+  driveState.filesTransferedInSession = 0;
+  driveState.latestBandwidth = 0;
+  driveState.sessionStartTime = inputs.reportTime;
+  driveState.mountStartTime = 0;
+  driveState.transferStartTime = 0;
+  driveState.unloadStartTime = 0;
+  driveState.unmountStartTime = 0;
+  driveState.drainingStartTime = 0;
+  driveState.downOrUpStartTime = 0;
+  driveState.probeStartTime = 0;
+  driveState.cleanupStartTime = 0;
+  driveState.shutdownTime = 0;
+  driveState.startStartTime = inputs.reportTime;
+  driveState.lastModificationLog = common::dataStructures::EntryLog(
+    "NO_USER", driveState.host, inputs.reportTime);
+  driveState.mountType = inputs.mountType;
+  driveState.driveStatus = common::dataStructures::DriveStatus::Starting;
+  driveState.currentVid = inputs.vid;
+  driveState.currentTapePool = inputs.tapepool;
+  driveState.currentVo = inputs.vo;
   if (inputs.activityAndWeigh) {
-    common::dataStructures::DriveState::ActivityAndWeight aaw;
-    aaw.activity = inputs.activityAndWeigh.value().activity;
-    aaw.weight = inputs.activityAndWeigh.value().weight;
-    driveState.currentActivityAndWeight = aaw;
+    driveState.currentActivity = inputs.activityAndWeigh.value().activity;
+    driveState.currentActivityWeight = inputs.activityAndWeigh.value().weight;
   }
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::setDriveMounting()
 //------------------------------------------------------------------------------
-void OStoreDB::setDriveMounting(common::dataStructures::DriveState & driveState,
+void OStoreDB::setDriveMounting(common::dataStructures::TapeDrive & driveState,
   const ReportDriveStatusInputs & inputs) {
   // If we were already starting, then we only update the last update time.
   if (driveState.driveStatus == common::dataStructures::DriveStatus::Mounting) {
-    driveState.lastUpdateTime = inputs.reportTime;
+    driveState.lastModificationLog = common::dataStructures::EntryLog(
+      "NO_USER", driveState.host, inputs.reportTime);
     return;
   }
   // If we are changing state, then all should be reset. We are not supposed to
   // know the direction yet.
-  driveState.sessionId=inputs.mountSessionId;
-  driveState.bytesTransferredInSession=0;
-  driveState.filesTransferredInSession=0;
-  driveState.latestBandwidth=0;
-  //driveState.sessionstarttime=inputs.reportTime;
-  driveState.mountStartTime=inputs.reportTime;
-  driveState.transferStartTime=0;
-  driveState.unloadStartTime=0;
-  driveState.unmountStartTime=0;
-  driveState.drainingStartTime=0;
-  driveState.downOrUpStartTime=0;
-  driveState.probeStartTime=0;
-  driveState.cleanupStartTime=0;
-  driveState.shutdownTime=0;
-  driveState.lastUpdateTime=inputs.reportTime;
-  driveState.mountType=inputs.mountType;
-  driveState.driveStatus=common::dataStructures::DriveStatus::Mounting;
-  driveState.currentVid=inputs.vid;
-  driveState.currentTapePool=inputs.tapepool;
+  driveState.sessionId = inputs.mountSessionId;
+  driveState.bytesTransferedInSession = 0;
+  driveState.filesTransferedInSession = 0;
+  driveState.latestBandwidth = 0;
+  // driveState.sessionstarttime = inputs.reportTime;
+  driveState.mountStartTime = inputs.reportTime;
+  driveState.transferStartTime = 0;
+  driveState.unloadStartTime = 0;
+  driveState.unmountStartTime = 0;
+  driveState.drainingStartTime = 0;
+  driveState.downOrUpStartTime = 0;
+  driveState.probeStartTime = 0;
+  driveState.cleanupStartTime = 0;
+  driveState.shutdownTime = 0;
+  driveState.lastModificationLog = common::dataStructures::EntryLog(
+    "NO_USER", driveState.host, inputs.reportTime);
+  driveState.mountType = inputs.mountType;
+  driveState.driveStatus = common::dataStructures::DriveStatus::Mounting;
+  driveState.currentVid = inputs.vid;
+  driveState.currentTapePool = inputs.tapepool;
   driveState.currentVo = inputs.vo;
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::setDriveTransferring()
+// OStoreDB::setDriveTransfering()
 //------------------------------------------------------------------------------
-void OStoreDB::setDriveTransferring(common::dataStructures::DriveState & driveState,
+void OStoreDB::setDriveTransfering(common::dataStructures::TapeDrive & driveState,
   const ReportDriveStatusInputs & inputs) {
   // If we were already transferring, we update the full statistics
   if (driveState.driveStatus == common::dataStructures::DriveStatus::Transferring) {
-    driveState.lastUpdateTime=inputs.reportTime;
-    driveState.bytesTransferredInSession=inputs.byteTransferred;
-    driveState.filesTransferredInSession=inputs.filesTransferred;
-    driveState.latestBandwidth=inputs.latestBandwidth;
+    driveState.lastModificationLog = common::dataStructures::EntryLog(
+      "NO_USER", driveState.host, inputs.reportTime);
+    driveState.bytesTransferedInSession = inputs.byteTransferred;
+    driveState.filesTransferedInSession = inputs.filesTransferred;
+    driveState.latestBandwidth = inputs.latestBandwidth;
     return;
   }
-  driveState.sessionId=inputs.mountSessionId;
-  driveState.bytesTransferredInSession=inputs.byteTransferred;
-  driveState.filesTransferredInSession=inputs.filesTransferred;
-  driveState.latestBandwidth=inputs.latestBandwidth;
-  //driveState.sessionstarttime=inputs.reportTime;
-  //driveState.mountstarttime=inputs.reportTime;
-  driveState.transferStartTime=inputs.reportTime;
-  driveState.unloadStartTime=0;
-  driveState.unmountStartTime=0;
-  driveState.drainingStartTime=0;
-  driveState.downOrUpStartTime=0;
-  driveState.probeStartTime=0;
-  driveState.cleanupStartTime=0;
-  driveState.shutdownTime=0;
-  driveState.lastUpdateTime=inputs.reportTime;
-  driveState.mountType=inputs.mountType;
-  driveState.driveStatus=common::dataStructures::DriveStatus::Transferring;
-  driveState.currentVid=inputs.vid;
-  driveState.currentTapePool=inputs.tapepool;
+  driveState.sessionId = inputs.mountSessionId;
+  driveState.bytesTransferedInSession = inputs.byteTransferred;
+  driveState.filesTransferedInSession = inputs.filesTransferred;
+  driveState.latestBandwidth = inputs.latestBandwidth;
+  // driveState.sessionstarttime = inputs.reportTime;
+  // driveState.mountstarttime = inputs.reportTime;
+  driveState.transferStartTime = inputs.reportTime;
+  driveState.unloadStartTime = 0;
+  driveState.unmountStartTime = 0;
+  driveState.drainingStartTime = 0;
+  driveState.downOrUpStartTime = 0;
+  driveState.probeStartTime = 0;
+  driveState.cleanupStartTime = 0;
+  driveState.shutdownTime = 0;
+  driveState.lastModificationLog = common::dataStructures::EntryLog(
+    "NO_USER", driveState.host, inputs.reportTime);
+  driveState.mountType = inputs.mountType;
+  driveState.driveStatus = common::dataStructures::DriveStatus::Transferring;
+  driveState.currentVid = inputs.vid;
+  driveState.currentTapePool = inputs.tapepool;
   driveState.currentVo = inputs.vo;
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::setDriveUnloading()
 //------------------------------------------------------------------------------
-void OStoreDB::setDriveUnloading(common::dataStructures::DriveState & driveState,
+void OStoreDB::setDriveUnloading(common::dataStructures::TapeDrive & driveState,
   const ReportDriveStatusInputs & inputs) {
   if (driveState.driveStatus == common::dataStructures::DriveStatus::Unloading) {
-    driveState.lastUpdateTime=inputs.reportTime;
+    driveState.lastModificationLog = common::dataStructures::EntryLog(
+      "NO_USER", driveState.host, inputs.reportTime);
     return;
   }
   // If we are changing state, then all should be reset. We are not supposed to
   // know the direction yet.
-  driveState.sessionId=inputs.mountSessionId;
-  driveState.bytesTransferredInSession=0;
-  driveState.filesTransferredInSession=0;
-  driveState.latestBandwidth=0;
-  driveState.sessionStartTime=0;
-  driveState.mountStartTime=0;
-  driveState.transferStartTime=0;
-  driveState.unloadStartTime=inputs.reportTime;
-  driveState.unmountStartTime=0;
-  driveState.drainingStartTime=0;
-  driveState.downOrUpStartTime=0;
-  driveState.probeStartTime=0;
-  driveState.cleanupStartTime=0;
-  driveState.shutdownTime=0;
-  driveState.lastUpdateTime=inputs.reportTime;
-  driveState.mountType=inputs.mountType;
-  driveState.driveStatus=common::dataStructures::DriveStatus::Unloading;
-  driveState.currentVid=inputs.vid;
-  driveState.currentTapePool=inputs.tapepool;
+  driveState.sessionId = inputs.mountSessionId;
+  driveState.bytesTransferedInSession = 0;
+  driveState.filesTransferedInSession = 0;
+  driveState.latestBandwidth = 0;
+  driveState.sessionStartTime = 0;
+  driveState.mountStartTime = 0;
+  driveState.transferStartTime = 0;
+  driveState.unloadStartTime = inputs.reportTime;
+  driveState.unmountStartTime = 0;
+  driveState.drainingStartTime = 0;
+  driveState.downOrUpStartTime = 0;
+  driveState.probeStartTime = 0;
+  driveState.cleanupStartTime = 0;
+  driveState.shutdownTime = 0;
+  driveState.lastModificationLog = common::dataStructures::EntryLog(
+    "NO_USER", driveState.host, inputs.reportTime);
+  driveState.mountType = inputs.mountType;
+  driveState.driveStatus = common::dataStructures::DriveStatus::Unloading;
+  driveState.currentVid = inputs.vid;
+  driveState.currentTapePool = inputs.tapepool;
   driveState.currentVo = inputs.vo;
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::setDriveUnmounting()
 //------------------------------------------------------------------------------
-void OStoreDB::setDriveUnmounting(common::dataStructures::DriveState & driveState,
+void OStoreDB::setDriveUnmounting(common::dataStructures::TapeDrive & driveState,
   const ReportDriveStatusInputs & inputs) {
   if (driveState.driveStatus == common::dataStructures::DriveStatus::Unmounting) {
-    driveState.lastUpdateTime=inputs.reportTime;
+    driveState.lastModificationLog = common::dataStructures::EntryLog(
+      "NO_USER", driveState.host, inputs.reportTime);
     return;
   }
   // If we are changing state, then all should be reset. We are not supposed to
   // know the direction yet.
-  driveState.sessionId=inputs.mountSessionId;
-  driveState.bytesTransferredInSession=0;
-  driveState.filesTransferredInSession=0;
-  driveState.latestBandwidth=0;
-  driveState.sessionStartTime=0;
-  driveState.mountStartTime=0;
-  driveState.transferStartTime=0;
-  driveState.unloadStartTime=0;
-  driveState.unmountStartTime=inputs.reportTime;
-  driveState.drainingStartTime=0;
-  driveState.downOrUpStartTime=0;
-  driveState.probeStartTime=0;
-  driveState.cleanupStartTime=0;
-  driveState.shutdownTime=0;
-  driveState.lastUpdateTime=inputs.reportTime;
-  driveState.mountType=inputs.mountType;
-  driveState.driveStatus=common::dataStructures::DriveStatus::Unmounting;
-  driveState.currentVid=inputs.vid;
-  driveState.currentTapePool=inputs.tapepool;
+  driveState.sessionId = inputs.mountSessionId;
+  driveState.bytesTransferedInSession = 0;
+  driveState.filesTransferedInSession = 0;
+  driveState.latestBandwidth = 0;
+  driveState.sessionStartTime = 0;
+  driveState.mountStartTime = 0;
+  driveState.transferStartTime = 0;
+  driveState.unloadStartTime = 0;
+  driveState.unmountStartTime = inputs.reportTime;
+  driveState.drainingStartTime = 0;
+  driveState.downOrUpStartTime = 0;
+  driveState.probeStartTime = 0;
+  driveState.cleanupStartTime = 0;
+  driveState.shutdownTime = 0;
+  driveState.lastModificationLog = common::dataStructures::EntryLog(
+    "NO_USER", driveState.host, inputs.reportTime);
+  driveState.mountType = inputs.mountType;
+  driveState.driveStatus = common::dataStructures::DriveStatus::Unmounting;
+  driveState.currentVid = inputs.vid;
+  driveState.currentTapePool = inputs.tapepool;
   driveState.currentVo = inputs.vo;
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::setDriveDrainingToDisk()
 //------------------------------------------------------------------------------
-void OStoreDB::setDriveDrainingToDisk(common::dataStructures::DriveState & driveState,
+void OStoreDB::setDriveDrainingToDisk(common::dataStructures::TapeDrive & driveState,
   const ReportDriveStatusInputs & inputs) {
   if (driveState.driveStatus == common::dataStructures::DriveStatus::DrainingToDisk) {
-    driveState.lastUpdateTime=inputs.reportTime;
+    driveState.lastModificationLog = common::dataStructures::EntryLog(
+      "NO_USER", driveState.host, inputs.reportTime);
     return;
   }
   // If we are changing state, then all should be reset. We are not supposed to
   // know the direction yet.
-  driveState.sessionId=inputs.mountSessionId;
-  driveState.bytesTransferredInSession=0;
-  driveState.filesTransferredInSession=0;
-  driveState.latestBandwidth=0;
-  driveState.sessionStartTime=0;
-  driveState.mountStartTime=0;
-  driveState.transferStartTime=0;
-  driveState.unloadStartTime=0;
-  driveState.unmountStartTime=0;
-  driveState.drainingStartTime=inputs.reportTime;
-  driveState.downOrUpStartTime=0;
-  driveState.probeStartTime=0;
-  driveState.cleanupStartTime=0;
-  driveState.shutdownTime=0;
-  driveState.lastUpdateTime=inputs.reportTime;
-  driveState.mountType=inputs.mountType;
-  driveState.driveStatus=common::dataStructures::DriveStatus::DrainingToDisk;
-  driveState.currentVid=inputs.vid;
-  driveState.currentTapePool=inputs.tapepool;
+  driveState.sessionId = inputs.mountSessionId;
+  driveState.bytesTransferedInSession = 0;
+  driveState.filesTransferedInSession = 0;
+  driveState.latestBandwidth = 0;
+  driveState.sessionStartTime = 0;
+  driveState.mountStartTime = 0;
+  driveState.transferStartTime = 0;
+  driveState.unloadStartTime = 0;
+  driveState.unmountStartTime = 0;
+  driveState.drainingStartTime = inputs.reportTime;
+  driveState.downOrUpStartTime = 0;
+  driveState.probeStartTime = 0;
+  driveState.cleanupStartTime = 0;
+  driveState.shutdownTime = 0;
+  driveState.lastModificationLog = common::dataStructures::EntryLog(
+    "NO_USER", driveState.host, inputs.reportTime);
+  driveState.mountType = inputs.mountType;
+  driveState.driveStatus = common::dataStructures::DriveStatus::DrainingToDisk;
+  driveState.currentVid = inputs.vid;
+  driveState.currentTapePool = inputs.tapepool;
   driveState.currentVo = inputs.vo;
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::setDriveCleaningUp()
 //------------------------------------------------------------------------------
-void OStoreDB::setDriveCleaningUp(common::dataStructures::DriveState & driveState,
+void OStoreDB::setDriveCleaningUp(common::dataStructures::TapeDrive & driveState,
   const ReportDriveStatusInputs & inputs) {
   if (driveState.driveStatus == common::dataStructures::DriveStatus::CleaningUp) {
-    driveState.lastUpdateTime=inputs.reportTime;
+    driveState.lastModificationLog = common::dataStructures::EntryLog(
+      "NO_USER", driveState.host, inputs.reportTime);
     return;
   }
   // If we are changing state, then all should be reset. We are not supposed to
   // know the direction yet.
-  driveState.sessionId=inputs.mountSessionId;
-  driveState.bytesTransferredInSession=0;
-  driveState.filesTransferredInSession=0;
-  driveState.latestBandwidth=0;
-  driveState.sessionStartTime=0;
-  driveState.mountStartTime=0;
-  driveState.transferStartTime=0;
-  driveState.unloadStartTime=0;
-  driveState.unmountStartTime=0;
-  driveState.drainingStartTime=0;
-  driveState.downOrUpStartTime=0;
-  driveState.probeStartTime=0;
-  driveState.cleanupStartTime=inputs.reportTime;
-  driveState.shutdownTime=0;
-  driveState.lastUpdateTime=inputs.reportTime;
-  driveState.mountType=inputs.mountType;
-  driveState.driveStatus=common::dataStructures::DriveStatus::CleaningUp;
-  driveState.currentVid=inputs.vid;
-  driveState.currentTapePool=inputs.tapepool;
-  driveState.currentActivityAndWeight = nullopt;
+  driveState.sessionId = inputs.mountSessionId;
+  driveState.bytesTransferedInSession = 0;
+  driveState.filesTransferedInSession = 0;
+  driveState.latestBandwidth = 0;
+  driveState.sessionStartTime = 0;
+  driveState.mountStartTime = 0;
+  driveState.transferStartTime = 0;
+  driveState.unloadStartTime = 0;
+  driveState.unmountStartTime = 0;
+  driveState.drainingStartTime = 0;
+  driveState.downOrUpStartTime = 0;
+  driveState.probeStartTime = 0;
+  driveState.cleanupStartTime = inputs.reportTime;
+  driveState.shutdownTime = 0;
+  driveState.lastModificationLog = common::dataStructures::EntryLog(
+    "NO_USER", driveState.host, inputs.reportTime);
+  driveState.mountType = inputs.mountType;
+  driveState.driveStatus = common::dataStructures::DriveStatus::CleaningUp;
+  driveState.currentVid = inputs.vid;
+  driveState.currentTapePool = inputs.tapepool;
+  driveState.currentActivity = nullopt_t();
+  driveState.currentActivityWeight = nullopt_t();
   driveState.currentVo = inputs.vo;
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::setDriveShutdown()
 //------------------------------------------------------------------------------
-void OStoreDB::setDriveShutdown(common::dataStructures::DriveState & driveState,
+void OStoreDB::setDriveShutdown(common::dataStructures::TapeDrive & driveState,
   const ReportDriveStatusInputs & inputs) {
   if (driveState.driveStatus == common::dataStructures::DriveStatus::Shutdown) {
-    driveState.lastUpdateTime=inputs.reportTime;
+    driveState.lastModificationLog = common::dataStructures::EntryLog(
+      "NO_USER", driveState.host, inputs.reportTime);
     return;
   }
   // If we are changing state, then all should be reset. We are not supposed to
   // know the direction yet.
-  driveState.sessionId=0;
-  driveState.bytesTransferredInSession=0;
-  driveState.filesTransferredInSession=0;
-  driveState.latestBandwidth=0;
-  driveState.sessionStartTime=0;
-  driveState.mountStartTime=0;
-  driveState.transferStartTime=0;
-  driveState.unloadStartTime=0;
-  driveState.unmountStartTime=0;
-  driveState.drainingStartTime=0;
-  driveState.downOrUpStartTime=0;
-  driveState.probeStartTime=0;
-  driveState.cleanupStartTime=0;
-  driveState.shutdownTime=inputs.reportTime;
-  driveState.lastUpdateTime=inputs.reportTime;
-  driveState.mountType=inputs.mountType;
-  driveState.driveStatus=common::dataStructures::DriveStatus::CleaningUp;
-  driveState.currentVid=inputs.vid;
-  driveState.currentTapePool=inputs.tapepool;
-  driveState.currentActivityAndWeight = nullopt;
+  driveState.sessionId = 0;
+  driveState.bytesTransferedInSession = 0;
+  driveState.filesTransferedInSession = 0;
+  driveState.latestBandwidth = 0;
+  driveState.sessionStartTime = 0;
+  driveState.mountStartTime = 0;
+  driveState.transferStartTime = 0;
+  driveState.unloadStartTime = 0;
+  driveState.unmountStartTime = 0;
+  driveState.drainingStartTime = 0;
+  driveState.downOrUpStartTime = 0;
+  driveState.probeStartTime = 0;
+  driveState.cleanupStartTime = 0;
+  driveState.shutdownTime = inputs.reportTime;
+  driveState.lastModificationLog = common::dataStructures::EntryLog(
+    "NO_USER", driveState.host, inputs.reportTime);
+  driveState.mountType = inputs.mountType;
+  driveState.driveStatus = common::dataStructures::DriveStatus::CleaningUp;
+  driveState.currentVid = inputs.vid;
+  driveState.currentTapePool = inputs.tapepool;
+  driveState.currentActivity = nullopt_t();
+  driveState.currentActivityWeight = nullopt_t();
   driveState.currentVo = inputs.vo;
 }
+
 //------------------------------------------------------------------------------
 // OStoreDB::TapeMountDecisionInfo::createArchiveMount()
 //------------------------------------------------------------------------------

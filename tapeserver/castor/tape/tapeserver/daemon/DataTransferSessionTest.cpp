@@ -52,6 +52,12 @@
 #include "objectstore/BackendRadosTestSwitch.hpp"
 #include "CleanerSession.hpp"
 
+#ifdef STDOUT_LOGGING
+#include "common/log/StdoutLogger.hpp"
+#else
+#include "common/log/DummyLogger.hpp"
+#endif
+
 #include <dirent.h>
 #include <fcntl.h>
 #include <stdexcept>
@@ -409,7 +415,11 @@ private:
   std::unique_ptr<cta::Scheduler> m_scheduler;
 
 protected:
+  #ifdef STDOUT_LOGGING
+  cta::log::StdoutLogger m_dummyLog;
+  #else
   cta::log::DummyLogger m_dummyLog;
+  #endif
 
   // Default parameters for storage classes, etc...
   const std::string s_userName = "user_name";
@@ -580,9 +590,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
-
+  std::cout << "Before Exectution" << std::endl;
+  std::cout << logger.getLog() << std::endl;
   // 8) Run the data transfer session
   sess.execute();
+  std::cout << "After Exectution" << std::endl;
 
   // 9) Check the session git the correct VID
   ASSERT_EQ(s_vid, sess.getVid());

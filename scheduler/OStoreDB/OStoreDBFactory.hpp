@@ -260,7 +260,7 @@ public:
     return m_OStoreDB.getNextRepackJobToExpand();
   }
 
-  std::list<cta::common::dataStructures::DriveState> getDriveStates(log::LogContext & lc) const override {
+  std::list<cta::common::dataStructures::TapeDrive> getDriveStates(log::LogContext & lc) const override {
     return m_OStoreDB.getDriveStates(lc);
   }
 
