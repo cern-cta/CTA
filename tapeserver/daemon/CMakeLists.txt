@@ -27,7 +27,6 @@ include_directories(${PROTOBUF3_INCLUDE_DIRS})
 add_library(ctatapedaemon
   ${WDMsgSources}
   CommandLineParams.cpp
-  DriveConfig.cpp
   DriveHandler.cpp
   DriveHandlerProxy.cpp
   MaintenanceHandler.cpp

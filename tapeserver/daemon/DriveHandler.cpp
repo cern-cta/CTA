@@ -19,7 +19,6 @@
 #include "common/exception/Errnum.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/processCap/ProcessCap.hpp"
-#include "DriveConfig.hpp"
 #include "DriveHandler.hpp"
 #include "DriveHandlerProxy.hpp"
 #include "rdbms/Login.hpp"
@@ -941,9 +940,6 @@ int DriveHandler::runChild() {
       driveState.forceDown = false;
       driveState.setReasonFromLogMsg(logLevel,errorMsg);
       scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName,driveState, lc);
-      // DataBase
-      scheduler.updateTapeDriveStatus(driveInfo, driveState, common::dataStructures::MountType::NoMount,
-        common::dataStructures::DriveStatus::Down, m_configLine, securityIdentity, lc);
       return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
     } catch (cta::exception::Exception &ex) {
       log::ScopedParamContainer param(lc);
@@ -976,9 +972,6 @@ int DriveHandler::runChild() {
         driveState.forceDown = false;
         driveState.setReasonFromLogMsg(logLevel,errorMsg);
         scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName, driveState, lc);
-        // DataBase
-        scheduler.updateTapeDriveStatus(driveInfo, driveState, common::dataStructures::MountType::NoMount,
-          common::dataStructures::DriveStatus::Down, m_configLine, securityIdentity, lc);
         return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
       } catch (cta::exception::Exception &ex) {
         log::ScopedParamContainer param(lc);
@@ -1119,12 +1112,9 @@ int DriveHandler::runChild() {
         if(!currentDesiredDriveState.reason){
           driveState.setReasonFromLogMsg(logLevel,msg);
         }
-        scheduler.setDesiredDriveState(securityIdentity, driveInfo.driveName, driveState, lc);
-        scheduler.reportDriveConfig(m_configLine,m_tapedConfig,lc);
-        // Using Database
         scheduler.createTapeDriveStatus(driveInfo, driveState, common::dataStructures::MountType::NoMount,
           common::dataStructures::DriveStatus::Down, m_configLine, securityIdentity, lc);
-        DriveConfig::setTapedConfiguration(m_tapedConfig, m_catalogue, driveInfo.driveName);
+        scheduler.reportDriveConfig(m_configLine, m_tapedConfig,lc);
       } catch (cta::exception::Exception & ex) {
         params.add("Message", ex.getMessageValue())
               .add("Backtrace",ex.backtrace());

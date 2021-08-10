@@ -25,8 +25,6 @@
 #include "tapeserver/daemon/TapedConfiguration.hpp"
 
 namespace cta {
-namespace tape {
-namespace daemon {
 
 /**
  * Static class to set TapedConfiguration in Database
@@ -34,23 +32,21 @@ namespace daemon {
 class DriveConfig {
  public:
   static void setTapedConfiguration(const cta::tape::daemon::TapedConfiguration &tapedConfiguration,
-    const std::unique_ptr<catalogue::Catalogue>& catalogue, const std::string& tapeDriveName);
+    catalogue::Catalogue* catalogue, const std::string& tapeDriveName);
 
  private:
-  static void checkConfigInDB(const std::unique_ptr<catalogue::Catalogue>& catalogue, const std::string& tapeDriveName,
+  static void checkConfigInDB(catalogue::Catalogue* catalogue, const std::string& tapeDriveName,
     const std::string& key);
   static void setConfigToDB(cta::SourcedParameter<std::string>* sourcedParameter,
-    const std::unique_ptr<catalogue::Catalogue>& catalogue, const std::string& tapeDriveName);
+    catalogue::Catalogue* catalogue, const std::string& tapeDriveName);
   static void setConfigToDB(cta::SourcedParameter<cta::tape::daemon::FetchReportOrFlushLimits>* sourcedParameter,
-    const std::unique_ptr<catalogue::Catalogue>& catalogue, const std::string& tapeDriveName);
+    catalogue::Catalogue* catalogue, const std::string& tapeDriveName);
   static void setConfigToDB(cta::SourcedParameter<std::uint32_t>* sourcedParameter,
-    const std::unique_ptr<catalogue::Catalogue>& catalogue, const std::string& tapeDriveName);
+    catalogue::Catalogue* catalogue, const std::string& tapeDriveName);
   static void setConfigToDB(cta::SourcedParameter<std::uint64_t>* sourcedParameter,
-    const std::unique_ptr<catalogue::Catalogue>& catalogue, const std::string& tapeDriveName);
+    catalogue::Catalogue* catalogue, const std::string& tapeDriveName);
   static void setConfigToDB(cta::SourcedParameter<std::time_t>* sourcedParameter,
-    const std::unique_ptr<catalogue::Catalogue>& catalogue, const std::string& tapeDriveName);
+    catalogue::Catalogue* catalogue, const std::string& tapeDriveName);
 };  // class DriveConfig
 
-}  // namespace daemon
-}  // namespace tape
 }  // namespace cta

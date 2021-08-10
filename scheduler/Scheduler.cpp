@@ -16,21 +16,22 @@
  */
 
 
-#include "Scheduler.hpp"
 #include "ArchiveMount.hpp"
-#include "RetrieveMount.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteriaAndFileId.hpp"
-#include "common/utils/utils.hpp"
-#include "common/Timer.hpp"
 #include "common/exception/NonRetryableError.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/make_unique.hpp"
-#include "objectstore/RepackRequest.hpp"
-#include "RetrieveRequestDump.hpp"
+#include "common/Timer.hpp"
+#include "common/utils/utils.hpp"
 #include "disk/DiskFileImplementations.hpp"
 #include "disk/RadosStriperPool.hpp"
-#include "OStoreDB/OStoreDB.hpp"
 #include "DiskReportRunner.hpp"
+#include "DriveConfig.hpp"
+#include "objectstore/RepackRequest.hpp"
+#include "OStoreDB/OStoreDB.hpp"
+#include "RetrieveMount.hpp"
+#include "RetrieveRequestDump.hpp"
+#include "Scheduler.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -846,7 +847,7 @@ void Scheduler::removeDrive(const common::dataStructures::SecurityIdentity &cliI
 //------------------------------------------------------------------------------
 void Scheduler::reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine,const cta::tape::daemon::TapedConfiguration& tapedConfig,log::LogContext& lc) {
   utils::Timer t;
-  m_db.reportDriveConfig(tpConfigLine,tapedConfig,lc);
+  DriveConfig::setTapedConfiguration(tapedConfig, &m_catalogue, tpConfigLine.unitName);
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
    spc.add("drive", tpConfigLine.unitName)
