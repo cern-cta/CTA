@@ -1101,19 +1101,20 @@ int DriveHandler::runChild() {
           return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
         }
 
-        scheduler.reportDriveStatus(driveInfo, common::dataStructures::MountType::NoMount, common::dataStructures::DriveStatus::Down, lc);
         cta::common::dataStructures::SecurityIdentity securityIdentity;
         cta::common::dataStructures::DesiredDriveState driveState;
         driveState.up = false;
         driveState.forceDown = false;
+        scheduler.createTapeDriveStatus(driveInfo, driveState, common::dataStructures::MountType::NoMount,
+          common::dataStructures::DriveStatus::Down, m_configLine, securityIdentity, lc);
+
         // Get the drive state to see if there is a reason or not, we don't want to change the reason
         // why a drive is down at the startup of the tapeserver
         cta::common::dataStructures::DesiredDriveState  currentDesiredDriveState = scheduler.getDesiredDriveState(m_configLine.unitName,lc);
         if(!currentDesiredDriveState.reason){
           driveState.setReasonFromLogMsg(logLevel,msg);
         }
-        scheduler.createTapeDriveStatus(driveInfo, driveState, common::dataStructures::MountType::NoMount,
-          common::dataStructures::DriveStatus::Down, m_configLine, securityIdentity, lc);
+        scheduler.reportDriveStatus(driveInfo, common::dataStructures::MountType::NoMount, common::dataStructures::DriveStatus::Down, lc);
         scheduler.reportDriveConfig(m_configLine, m_tapedConfig,lc);
       } catch (cta::exception::Exception & ex) {
         params.add("Message", ex.getMessageValue())
