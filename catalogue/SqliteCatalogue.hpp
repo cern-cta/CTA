@@ -86,10 +86,10 @@ protected:
    * Creates a temporary table from the list of disk file IDs provided in the search criteria.
    *
    * @param conn The database connection.
-   * @param tapeFileSearchCriteria Search criteria containing a list of disk file IDs (fxid).
+   * @param diskFileIds List of disk file IDs (fxid).
    * @return Name of the temporary table
    */
-  std::string createAndPopulateTempTableFxid(rdbms::Conn &conn, const TapeFileSearchCriteria &tapeFileSearchCriteria) const override;
+  std::string createAndPopulateTempTableFxid(rdbms::Conn &conn, const optional<std::vector<std::string>> &diskFileIds) const override;
 
   /**
    * Returns a unique archive ID that can be used by a new archive file within
@@ -216,6 +216,17 @@ protected:
    */
   void deleteTapeFilesAndArchiveFileFromRecycleBin(rdbms::Conn& conn, const uint64_t archiveFileId, log::LogContext& lc) override;
   
+  /**
+   * Copy the tape files from the TAPE_FILE tables to the FILE_RECYCLE_LOG table
+   * and deletes the TAPE_FILE entry.
+   * @param conn the database connection
+   * @param file the file to be deleted
+   * @param reason The reason for deleting the tape file copy
+   * @param lc the log context
+   */
+  void copyTapeFileToFileRecyleLogAndDelete(rdbms::Conn & conn, const cta::common::dataStructures::ArchiveFile &file, 
+                                            const std::string &reason, log::LogContext & lc) override;
+
 private:
 
   /**

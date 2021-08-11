@@ -121,17 +121,16 @@ void TextFormatter::flush() {
   }
 
   // Output columns
-  bool lastColumnFlushLeft = false;
   for(auto &l : m_outputBuffer) {
     if(is_header) { std::cout << TEXT_RED; }
     for(size_t c = 0; c < l.size(); ++c) {
       // flush right, except for comments, paths and drive reasons, which are flush left
       if(is_header && c == l.size()-1 &&
          (l.at(c) == "comment" || l.at(c) == "path" || l.at(c) == "reason")) {
-        lastColumnFlushLeft = true;
+        m_lastColumnFlushLeft = true;
       }
 
-      auto flush = (c == l.size()-1 && lastColumnFlushLeft) ? std::left : std::right;
+      auto flush = (c == l.size()-1 && m_lastColumnFlushLeft) ? std::left : std::right;
 
       std::cout << std::setfill(' ')
                 << std::setw(m_colSize.at(c))

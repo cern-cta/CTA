@@ -43,6 +43,7 @@
 #include <string>
 #include <time.h>
 #include <tuple>
+#include <climits>
 
 namespace cta {
 namespace catalogue {
@@ -3882,7 +3883,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
       sql += " TAPE.IS_FROM_CASTOR = :FROM_CASTOR";
       addedAWhereConstraint = true;
     }
-    
+
     sql += " ORDER BY TAPE.VID";
 
     auto stmt = conn.createStmt(sql);
@@ -6973,7 +6974,7 @@ Catalogue::ArchiveFileItor RdbmsCatalogue::getArchiveFilesItor(const TapeFileSea
   try {
     // Create a connection to populate the temporary table (specialised by database type)
     auto conn = m_archiveFileListingConnPool.getConn();
-    const auto tempDiskFxidsTableName = createAndPopulateTempTableFxid(conn, searchCriteria);
+    const auto tempDiskFxidsTableName = createAndPopulateTempTableFxid(conn, searchCriteria.diskFileIds);
     // Pass ownership of the connection to the Iterator object
     auto impl = new RdbmsCatalogueGetArchiveFilesItor(m_log, std::move(conn), searchCriteria, tempDiskFxidsTableName);
     return ArchiveFileItor(impl);
@@ -7005,9 +7006,8 @@ Catalogue::ArchiveFileItor RdbmsCatalogue::getTapeContentsItor(const std::string
 //------------------------------------------------------------------------------
 // checkRecycleTapeFileSearchCriteria
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::checkRecycleTapeFileSearchCriteria(const RecycleTapeFileSearchCriteria & searchCriteria) const {
+void RdbmsCatalogue::checkRecycleTapeFileSearchCriteria(cta::rdbms::Conn &conn, const RecycleTapeFileSearchCriteria & searchCriteria) const {
   if(searchCriteria.vid) {
-    auto conn = m_connPool.getConn();
     if(!tapeExists(conn, searchCriteria.vid.value())) {
       throw exception::UserError(std::string("Tape ") + searchCriteria.vid.value() + " does not exist");
     }
@@ -7016,8 +7016,10 @@ void RdbmsCatalogue::checkRecycleTapeFileSearchCriteria(const RecycleTapeFileSea
 
 Catalogue::FileRecycleLogItor RdbmsCatalogue::getFileRecycleLogItor(const RecycleTapeFileSearchCriteria & searchCriteria) const {
   try {
-    checkRecycleTapeFileSearchCriteria(searchCriteria);
-    auto impl = new RdbmsCatalogueGetFileRecycleLogItor(m_log, m_archiveFileListingConnPool, searchCriteria);
+    auto conn = m_archiveFileListingConnPool.getConn();
+    checkRecycleTapeFileSearchCriteria(conn, searchCriteria);
+    const auto tempDiskFxidsTableName = createAndPopulateTempTableFxid(conn, searchCriteria.diskFileIds);
+    auto impl = new RdbmsCatalogueGetFileRecycleLogItor(m_log, std::move(conn), searchCriteria, tempDiskFxidsTableName);
     return FileRecycleLogItor(impl);
   } catch(exception::UserError &) {
     throw;
@@ -7185,7 +7187,7 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
       addedAWhereConstraint = true;
     }
     if(searchCriteria.diskFileIds) {
-      const auto tempDiskFxidsTableName = createAndPopulateTempTableFxid(conn, searchCriteria);
+      const auto tempDiskFxidsTableName = createAndPopulateTempTableFxid(conn, searchCriteria.diskFileIds);
 
       if(addedAWhereConstraint) sql += " AND ";
       sql += "ARCHIVE_FILE.DISK_FILE_ID IN (SELECT DISK_FILE_ID FROM " + tempDiskFxidsTableName + ")";
@@ -7219,6 +7221,80 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
     throw;
   }
 }
+
+
+//------------------------------------------------------------------------------
+// deleteTapeFileCopy
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::deleteTapeFileCopy(const std::string &vid, const uint64_t archiveFileId, const std::string &reason) {
+  try {
+    TapeFileSearchCriteria searchCriteria;
+    searchCriteria.archiveFileId = archiveFileId;
+    deleteTapeFileCopy(vid, searchCriteria, reason);
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// deleteTapeFileCopy
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::deleteTapeFileCopy(const std::string &vid, const std::string &diskFileId,
+                                        const std::string &diskInstanceName, const std::string &reason) {
+  try {
+    // cta-admin converts the list from EOS fxid (hex) to fid (dec). In the case of the
+    // single option on the command line we need to do the conversion ourselves.
+    auto fid = strtol(diskFileId.c_str(), nullptr, 16);
+    if(fid < 1 || fid == LONG_MAX) {
+      throw cta::exception::UserError(diskFileId + " is not a valid file ID");
+    }
+    TapeFileSearchCriteria searchCriteria;
+    searchCriteria.diskInstance = diskInstanceName;
+
+    searchCriteria.diskFileIds = std::vector<std::string>();
+    searchCriteria.diskFileIds->push_back(std::to_string(fid));
+    deleteTapeFileCopy(vid, searchCriteria, reason);
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// deleteTapeFileCopy
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::deleteTapeFileCopy(const std::string &vid, const TapeFileSearchCriteria &criteria,
+                                        const std::string &reason) {
+  auto itor = getArchiveFilesItor(criteria); // itor should have only at most one archive file since we always search on unique attributes
+  if (!itor.hasMore()) {
+    throw exception::UserError(std::string("Cannot delete the copy because the file specified does not exist"));
+  }
+  cta::common::dataStructures::ArchiveFile af = itor.next();
+  if (af.tapeFiles.size() == 1) {
+    throw exception::UserError(std::string("Cannot delete the copy because it is the only copy"));
+  }
+
+  af.tapeFiles.removeAllVidsExcept(vid); // assume there is only one copy per vid, this should return a list with at most one item
+  if (af.tapeFiles.empty()) {
+    throw exception::UserError(std::string("No copy present on the specified vid"));
+  }
+  if (af.tapeFiles.size() > 1){
+    throw exception::UserError(std::string("Error: More than one copy of the file in the specified vid"));
+  }
+
+  log::LogContext lc(m_log);
+  auto conn = m_connPool.getConn();
+  af.diskFileInfo.path = "Not applicable for copies deleted with cta-admin tf rm"; // will go into the diskFilePath column of the File Recycle log
+  copyTapeFileToFileRecyleLogAndDelete(conn, af, reason, lc);
+}
+
 
 //------------------------------------------------------------------------------
 // getArchiveFileById
@@ -8818,6 +8894,32 @@ void RdbmsCatalogue::copyArchiveFileToFileRecycleLog(rdbms::Conn & conn, const c
   }
 }
 
+
+//------------------------------------------------------------------------------
+// copyTapeFilesToFileRecycleLog
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::copyTapeFilesToFileRecycleLog(rdbms::Conn & conn, const common::dataStructures::ArchiveFile &archiveFile, const std::string &reason) {
+  try {
+    for(auto &tapeFile: archiveFile.tapeFiles) {
+      //Create one file recycle log entry per tape file
+      InsertFileRecycleLog fileRecycleLog;
+      fileRecycleLog.vid = tapeFile.vid;
+      fileRecycleLog.fSeq = tapeFile.fSeq;
+      fileRecycleLog.blockId = tapeFile.blockId;
+      fileRecycleLog.copyNb = tapeFile.copyNb;
+      fileRecycleLog.tapeFileCreationTime = tapeFile.creationTime;
+      fileRecycleLog.archiveFileId = archiveFile.archiveFileID;
+      fileRecycleLog.diskFilePath = archiveFile.diskFileInfo.path;
+      fileRecycleLog.reasonLog = "(Deleted using cta-admin tf rm) " + reason;
+      fileRecycleLog.recycleLogTime = time(nullptr);
+      insertFileInFileRecycleLog(conn,fileRecycleLog);
+    }
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
 //------------------------------------------------------------------------------
 // insertFileInFileRecycleLog
 //------------------------------------------------------------------------------
@@ -8912,6 +9014,32 @@ void RdbmsCatalogue::deleteTapeFiles(rdbms::Conn & conn, const common::dataStruc
     throw;
   }
 }
+
+void RdbmsCatalogue::deleteTapeFiles(rdbms::Conn & conn, const common::dataStructures::ArchiveFile& file){
+  try {
+    for(auto &tapeFile: file.tapeFiles) {
+
+      //Delete the tape file.
+      const char *const deleteTapeFilesSql =
+      "DELETE FROM "
+        "TAPE_FILE "
+      "WHERE "
+       "TAPE_FILE.VID = :VID AND "
+       "TAPE_FILE.FSEQ = :FSEQ";
+
+      auto deleteTapeFilesStmt = conn.createStmt(deleteTapeFilesSql);
+      deleteTapeFilesStmt.bindString(":VID", tapeFile.vid);
+      deleteTapeFilesStmt.bindUint64(":FSEQ", tapeFile.fSeq);
+      deleteTapeFilesStmt.executeNonQuery();
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
 
 void RdbmsCatalogue::deleteArchiveFile(rdbms::Conn& conn, const common::dataStructures::DeleteArchiveRequest& request){
   try{

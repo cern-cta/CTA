@@ -234,6 +234,9 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
             case cmd_pair(AdminCmd::CMD_TAPEFILE, AdminCmd::SUBCMD_LS):
                processTapeFile_Ls(response, stream);
                break;
+            case cmd_pair(AdminCmd::CMD_TAPEFILE, AdminCmd::SUBCMD_RM):
+               processTapeFile_Rm(response);
+               break;
             case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_ADD):
                processTapePool_Add(response);
                break;
@@ -1813,6 +1816,29 @@ void RequestMessage::processTapeFile_Ls(cta::xrd::Response &response, XrdSsiStre
 
   response.set_show_header(HeaderType::TAPEFILE_LS);
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+void RequestMessage::processTapeFile_Rm(cta::xrd::Response &response)
+{
+  using namespace cta::admin;
+  auto &vid           = getRequired(OptionString::VID);
+  auto &reason        = getRequired(OptionString::REASON);
+  auto archiveFileId  = getOptional(OptionUInt64::ARCHIVE_FILE_ID);
+  auto instance       = getOptional(OptionString::INSTANCE);
+  auto diskFileId     = getOptional(OptionString::FXID);
+
+  if (archiveFileId) {
+    m_catalogue.deleteTapeFileCopy(vid, archiveFileId.value(), reason);
+    response.set_type(cta::xrd::Response::RSP_SUCCESS);
+  } else if (diskFileId) {
+    if (!instance) {
+      throw exception::UserError(std::string("--fxid requires that --instance is specified"));
+    } 
+    m_catalogue.deleteTapeFileCopy(vid, diskFileId.value(), instance.value(), reason);
+    response.set_type(cta::xrd::Response::RSP_SUCCESS);
+  } else {
+    throw exception::UserError("--id or --fxid must be specified");
+  }
 }
 
 

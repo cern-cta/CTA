@@ -371,10 +371,12 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
    { AdminCmd::CMD_SHOWQUEUES,           { "showqueues",           "sq",  { } }},
    { AdminCmd::CMD_STORAGECLASS,         { "storageclass",         "sc",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_TAPE,                 { "tape",                 "ta",  { "add", "ch", "rm", "reclaim", "ls", "label" } }},
-   { AdminCmd::CMD_TAPEFILE,             { "tapefile",             "tf",  { "ls" },
+   { AdminCmd::CMD_TAPEFILE,             { "tapefile",             "tf",  { "ls", "rm" },
+                            "\n  This command allows to manage files stored on tape\n"
                             "  Tape files can be listed by VID or by EOS disk instance + EOS disk file ID.\n"
                             "  Disk file IDs should be provided in hexadecimal (fxid). The --fxidfile option\n"
-                            "  takes a file in the same format as the output of 'eos find --fid <path>'\n\n"
+                            "  takes a file in the same format as the output of 'eos find --fid <path>'\n"
+                            "  Delete a file copy with the \"rm\" subcommand\n\n"
    }},
    { AdminCmd::CMD_TAPEPOOL,             { "tapepool",             "tp",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_DISKSYSTEM,           { "disksystem",           "ds",  { "add", "ch", "rm", "ls" },
@@ -408,7 +410,7 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
    { AdminCmd::CMD_VERSION,              { "version",               "v",  { } }},
    { AdminCmd::CMD_SCHEDULINGINFOS,      { "schedulinginfo",        "si",  { "ls" } }},
    { AdminCmd::CMD_RECYCLETAPEFILE,      { "recycletf",        "rtf",  { "ls" },
-                            "  Tape files in the recycle log can be listed by VID or by EOS disk file ID.\n"
+                            "  Tape files in the recycle log can be listed by VID, EOS disk file ID, EOS disk instance, ArchiveFileId or copy number.\n"
                             "  Disk file IDs should be provided in hexadecimal (fxid).\n\n" }},
 };
 
@@ -587,6 +589,8 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_TAPEFILE,             AdminCmd::SUBCMD_LS    },
       { opt_vid.optional(), opt_instance.optional(), opt_fid.optional(), opt_fidfile.optional(),
         opt_lookupns.optional(), opt_archivefileid.optional() }},
+   {{ AdminCmd::CMD_TAPEFILE,             AdminCmd::SUBCMD_RM    },
+     { opt_vid, opt_instance.optional(), opt_fid.optional(), opt_archivefileid.optional(), opt_reason }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_ADD   },
       { opt_tapepool_alias, opt_vo, opt_partialtapes, opt_encrypted, opt_supply.optional(), opt_comment }},
@@ -614,7 +618,8 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
       { }},
    {{ AdminCmd::CMD_VERSION,           AdminCmd::SUBCMD_NONE   }, { }},
    {{ AdminCmd::CMD_SCHEDULINGINFOS,      AdminCmd::SUBCMD_LS   }, { }},
-   {{ AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_LS }, { opt_vid.optional(), opt_fid.optional() }},
+   {{ AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_LS }, 
+   { opt_vid.optional(), opt_fid.optional(), opt_fidfile.optional(), opt_copynb.optional(), opt_archivefileid.optional(), opt_instance.optional() }},
 };
 
 

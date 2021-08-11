@@ -152,10 +152,10 @@ PostgresCatalogue::~PostgresCatalogue() {
 //------------------------------------------------------------------------------
 // createAndPopulateTempTableFxid
 //------------------------------------------------------------------------------
-std::string PostgresCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn, const TapeFileSearchCriteria &tapeFileSearchCriteria) const {
+std::string PostgresCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn, const optional<std::vector<std::string>> &diskFileIds) const {
   const std::string tempTableName = "TEMP_DISK_FXIDS";
 
-  if(tapeFileSearchCriteria.diskFileIds) {
+  if(diskFileIds) {
     try {
       std::string sql = "CREATE TEMPORARY TABLE " + tempTableName + "(DISK_FILE_ID VARCHAR(100))";
       try {
@@ -169,7 +169,7 @@ std::string PostgresCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn,
 
       sql = "INSERT INTO " + tempTableName + " VALUES(:DISK_FILE_ID)";
       auto stmt = conn.createStmt(sql);
-      for(auto &diskFileId : tapeFileSearchCriteria.diskFileIds.value()) {
+      for(auto &diskFileId : diskFileIds.value()) {
         stmt.bindString(":DISK_FILE_ID", diskFileId);
         stmt.executeNonQuery();
       }
@@ -1072,6 +1072,41 @@ void PostgresCatalogue::deleteTapeFilesAndArchiveFileFromRecycleBin(rdbms::Conn&
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
+}
+
+//------------------------------------------------------------------------------
+// copyTapeFileToFileRecyleLogAndDelete
+//------------------------------------------------------------------------------
+void PostgresCatalogue::copyTapeFileToFileRecyleLogAndDelete(rdbms::Conn & conn, const cta::common::dataStructures::ArchiveFile &file, 
+                                                            const std::string &reason, log::LogContext & lc) {
+  try {
+    utils::Timer t;
+    log::TimingList tl;
+    //We currently do an INSERT INTO and a DELETE FROM
+    //in a single transaction
+    conn.executeNonQuery("BEGIN");
+    copyTapeFilesToFileRecycleLog(conn, file, reason);
+    tl.insertAndReset("insertToRecycleBinTime",t);
+    setTapeDirty(conn, file.archiveFileID);
+    tl.insertAndReset("setTapeDirtyTime",t);
+    deleteTapeFiles(conn,file);
+    tl.insertAndReset("deleteTapeFilesTime",t);
+    conn.commit();
+    tl.insertAndReset("commitTime",t);
+    log::ScopedParamContainer spc(lc);
+    spc.add("archiveFileId", file.archiveFileID);
+    spc.add("diskFileId", file.diskFileId);
+    spc.add("diskFilePath", file.diskFileInfo.path);
+    spc.add("diskInstance", file.diskInstance);
+    tl.addToLog(spc);
+    lc.log(log::INFO,"In PostgresCatalogue::copyArchiveFileToRecycleBinAndDelete: ArchiveFile moved to the recycle-bin.");
+    
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  } 
 }
 
 } // namespace catalogue

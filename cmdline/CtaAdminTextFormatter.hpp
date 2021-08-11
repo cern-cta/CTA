@@ -35,6 +35,7 @@ public:
   TextFormatter(unsigned int bufLines = 1000) :
     m_bufLines(bufLines) {
     m_outputBuffer.reserve(bufLines);
+    m_lastColumnFlushLeft = false;
   }
 
   ~TextFormatter() {
@@ -157,7 +158,7 @@ private:
   std::vector<unsigned int> m_colSize;                              //!< Array of column sizes
   unsigned int m_bufLines;                                          //!< Number of text lines to buffer before flushing formatted output
   std::vector<std::vector<std::string>> m_outputBuffer;             //!< Buffer for text output (not used for JSON)
-
+  bool m_lastColumnFlushLeft;                                       //!< Flag indicating if last collumn should be aligned left
   static constexpr const char* const TEXT_RED    = "\x1b[31;1m";    //!< Terminal formatting code for red text
   static constexpr const char* const TEXT_NORMAL = "\x1b[0m";       //!< Terminal formatting code for normal text
   static constexpr const int NB_CHAR_REASON = 50;                   //!< Reason max length to display in tabular output (DriveLs and TapeLs)

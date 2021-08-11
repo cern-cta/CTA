@@ -66,15 +66,28 @@ RecycleTapeFileLsStream::RecycleTapeFileLsStream(const RequestMessage &requestMs
   searchCriteria.vid = requestMsg.getOptional(OptionString::VID, &has_any);
   
   auto diskFileId = requestMsg.getOptional(OptionString::FXID, &has_any);
+
+  searchCriteria.diskFileIds = requestMsg.getOptional(OptionStrList::FILE_ID, &has_any);
   
   if(diskFileId){
     // single option on the command line we need to do the conversion ourselves.
+    if(!searchCriteria.diskFileIds) searchCriteria.diskFileIds = std::vector<std::string>();
+
     auto fid = strtol(diskFileId->c_str(), nullptr, 16);
     if(fid < 1 || fid == LONG_MAX) {
        throw cta::exception::UserError(*diskFileId + " is not a valid file ID");
     }
-    searchCriteria.diskFileId = std::to_string(fid);
+
+    searchCriteria.diskFileIds->push_back(std::to_string(fid));
   }
+  // Disk instance on its own does not give a valid set of search criteria (no &has_any)
+  searchCriteria.diskInstance = requestMsg.getOptional(OptionString::INSTANCE);
+
+  searchCriteria.archiveFileId = requestMsg.getOptional(OptionUInt64::ARCHIVE_FILE_ID, &has_any);
+
+  // Copy number on its own does not give a valid set of search criteria (no &has_any)
+  searchCriteria.copynb = requestMsg.getOptional(OptionUInt64::COPY_NUMBER);
+
   if(!has_any){
     throw cta::exception::UserError("Must specify at least one search option");
   }

@@ -158,6 +158,7 @@ ELSE(DEFINED PackageOnly)
 
   add_subdirectory(continuousintegration/orchestration/tests)
 
+  add_subdirectory(cta-release)
 
   #Generate version information
   configure_file(${PROJECT_SOURCE_DIR}/version.hpp.in

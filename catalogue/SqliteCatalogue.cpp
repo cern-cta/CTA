@@ -192,7 +192,7 @@ void SqliteCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string 
 //------------------------------------------------------------------------------
 // createAndPopulateTempTableFxid
 //------------------------------------------------------------------------------
-std::string SqliteCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn, const TapeFileSearchCriteria &tapeFileSearchCriteria) const {
+std::string SqliteCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn, const optional<std::vector<std::string>> &diskFileIds) const {
   try {
     const std::string tempTableName = "TEMP.DISK_FXIDS";
 
@@ -200,9 +200,9 @@ std::string SqliteCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn, c
     conn.executeNonQuery("DROP TABLE IF EXISTS " + tempTableName);
     conn.executeNonQuery("CREATE TEMPORARY TABLE " + tempTableName + "(DISK_FILE_ID TEXT)");
 
-    if(tapeFileSearchCriteria.diskFileIds) {
+    if(diskFileIds) {
       auto stmt = conn.createStmt("INSERT INTO " + tempTableName + " VALUES(:DISK_FILE_ID)");
-      for(auto &diskFileId : tapeFileSearchCriteria.diskFileIds.value()) {
+      for(auto &diskFileId : diskFileIds.value()) {
         stmt.bindString(":DISK_FILE_ID", diskFileId);
         stmt.executeNonQuery();
       }
@@ -650,6 +650,40 @@ void SqliteCatalogue::deleteTapeFilesAndArchiveFileFromRecycleBin(rdbms::Conn& c
   }
 }
 
+//------------------------------------------------------------------------------
+// copyTapeFileToFileRecyleLogAndDelete
+//------------------------------------------------------------------------------
+void SqliteCatalogue::copyTapeFileToFileRecyleLogAndDelete(rdbms::Conn & conn, const cta::common::dataStructures::ArchiveFile &file, 
+                                                          const std::string &reason, log::LogContext & lc) {
+  try {
+    utils::Timer t;
+    log::TimingList tl;
+    //We currently do an INSERT INTO and a DELETE FROM
+    //in a single transaction
+    conn.executeNonQuery("BEGIN TRANSACTION");
+    copyTapeFilesToFileRecycleLog(conn, file, reason);
+    tl.insertAndReset("insertToRecycleBinTime",t);
+    setTapeDirty(conn, file.archiveFileID);
+    tl.insertAndReset("setTapeDirtyTime",t);
+    deleteTapeFiles(conn,file);
+    tl.insertAndReset("deleteTapeFilesTime",t);
+    conn.commit();
+    tl.insertAndReset("commitTime",t);
+    log::ScopedParamContainer spc(lc);
+    spc.add("archiveFileId", file.archiveFileID);
+    spc.add("diskFileId", file.diskFileId);
+    spc.add("diskFilePath", file.diskFileInfo.path);
+    spc.add("diskInstance", file.diskInstance);
+    tl.addToLog(spc);
+    lc.log(log::INFO,"In SqliteCatalogue::copyArchiveFileToRecycleBinAndDelete: ArchiveFile moved to the recycle-bin.");
+    
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  } 
+}
 
 } // namespace catalogue
 } // namespace cta
