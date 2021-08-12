@@ -680,7 +680,7 @@ void TextFormatter::printShowQueuesHeader() {
     "type",
     "tapepool",
     "vo",
-    "logical library",
+    "library",
     "vid",
     "files queued",
     "data queued",
