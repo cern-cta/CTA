@@ -296,6 +296,7 @@ void TextFormatter::print(const DriveLsItem &drls_item)
 void TextFormatter::printFailedRequestLsHeader() {
   push_back("HEADER");
   push_back(
+    "object id",
     "request type",
     "copy no",
     "tapepool/vid",
@@ -323,6 +324,7 @@ void TextFormatter::print(const FailedRequestLsItem &frls_item) {
   }
 
   push_back(
+    frls_item.object_id(),
     request_type,
     frls_item.copy_nb(),
     tapepool_vid,
