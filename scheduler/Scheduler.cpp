@@ -32,6 +32,7 @@
 #include "RetrieveMount.hpp"
 #include "RetrieveRequestDump.hpp"
 #include "Scheduler.hpp"
+#include "TapeDrivesCatalogueState.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -53,7 +54,9 @@ Scheduler::Scheduler(
   catalogue::Catalogue &catalogue,
   SchedulerDatabase &db, const uint64_t minFilesToWarrantAMount, const uint64_t minBytesToWarrantAMount):
     m_catalogue(catalogue), m_db(db), m_minFilesToWarrantAMount(minFilesToWarrantAMount),
-    m_minBytesToWarrantAMount(minBytesToWarrantAMount) {}
+    m_minBytesToWarrantAMount(minBytesToWarrantAMount) {
+      m_tapeDrivesState = cta::make_unique<TapeDrivesCatalogueState>(m_catalogue);
+    }
 
 //------------------------------------------------------------------------------
 // destructor
@@ -834,7 +837,7 @@ void Scheduler::setDesiredDriveState(const common::dataStructures::SecurityIdent
 void Scheduler::removeDrive(const common::dataStructures::SecurityIdentity &cliIdentity,
   const std::string &driveName, log::LogContext & lc) {
   utils::Timer t;
-  m_catalogue.deleteTapeDrive(driveName);
+  m_tapeDrivesState->removeDrive(driveName, lc);
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("drive", driveName)

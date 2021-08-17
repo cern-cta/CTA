@@ -3088,21 +3088,6 @@ void OStoreDB::setDesiredDriveState(const std::string& drive, const common::data
   m_catalogue.modifyTapeDrive(driveState.value());
 }
 
-
-//------------------------------------------------------------------------------
-// OStoreDB::removeDrive()
-//------------------------------------------------------------------------------
-void OStoreDB::removeDrive(const std::string& drive, log::LogContext &lc) {
-  try {
-    m_catalogue.deleteTapeDrive(drive);
-    log::ScopedParamContainer params(lc);
-    params.add("driveName", drive);
-    lc.log(log::INFO, "In OStoreDB::removeDrive(): removed tape drive from database.");
-  } catch (cta::exception::Exception & ex) {
-    lc.log(log::WARNING, "In OStoreDB::removeDrive(): Problem to remove tape drive from database.");
-  }
-}
-
 //------------------------------------------------------------------------------
 // OStoreDB::reportDriveStatus()
 //------------------------------------------------------------------------------
@@ -3125,18 +3110,6 @@ void OStoreDB::reportDriveStatus(const common::dataStructures::DriveInfo& driveI
   inputs.tapepool = tapepool;
   inputs.vo = vo;
   updateDriveStatus(driveInfo, inputs, lc);
-}
-
-//------------------------------------------------------------------------------
-// OStoreDB::reportDriveConfig()
-//------------------------------------------------------------------------------
-void OStoreDB::reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine, const cta::tape::daemon::TapedConfiguration& tapedConfig, log::LogContext& lc){
-  // objectstore::DriveState ds(m_objectStore);
-  // ScopedExclusiveLock dsl;
-  // Helpers::getLockedAndFetchedDriveState(ds, dsl, *m_agentReference, tpConfigLine.unitName, lc, Helpers::CreateIfNeeded::doNotCreate);
-  // ds.setConfig(tapedConfig);
-  // ds.setTpConfig(tpConfigLine);
-  // ds.commit();
 }
 
 //------------------------------------------------------------------------------

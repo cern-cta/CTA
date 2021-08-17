@@ -251,11 +251,6 @@ public:
   private:
     void requeueJobBatch(std::list<std::unique_ptr<OStoreDB::RetrieveJob> >& jobBatch,
       log::LogContext& logContext);
-    void reserveDiskSpace(const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc);
-    void addDiskSpaceReservation(catalogue::Catalogue* catalogue, const std::string& diskSystemName, uint64_t bytes);
-    CTA_GENERATE_EXCEPTION_CLASS(NegativeDiskSpaceReservationReached);
-    void subtractDiskSpaceReservation(catalogue::Catalogue* catalogue, const std::string& diskSystemName, uint64_t bytes);
-    std::tuple<std::string, uint64_t> getDiskSpaceReservation();
     struct DiskSystemToSkip {
       std::string name;
       uint64_t sleepTime;
@@ -264,7 +259,6 @@ public:
     std::set<DiskSystemToSkip> m_diskSystemsToSkip;
   public:
     /// Public but non overriding function used by retrieve jobs (on failure to transfer):
-    void releaseDiskSpace(const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc);
     void complete(time_t completionTime) override;
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime, const cta::optional<std::string> & reason = cta::nullopt) override;
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
@@ -585,13 +579,9 @@ public:
   void setDesiredDriveState(const std::string& drive, const common::dataStructures::DesiredDriveState & desiredState,
     log::LogContext & lc) override;
 
-  void removeDrive(const std::string & drive, log::LogContext & logContext) override;
-
   void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, cta::common::dataStructures::MountType mountType,
     common::dataStructures::DriveStatus status, time_t reportTime, log::LogContext & lc, uint64_t mountSessionId, uint64_t byteTransfered,
     uint64_t filesTransfered, double latestBandwidth, const std::string& vid, const std::string& tapepool, const std::string & vo) override;
-
-  void reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine, const cta::tape::daemon::TapedConfiguration& tapedConfig,log::LogContext& lc) override;
 
   void checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo) override;
 

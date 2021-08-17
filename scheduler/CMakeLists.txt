@@ -41,6 +41,7 @@ set (CTA_SCHEDULER_SRC_FILES
   SchedulerDatabase.cpp
   SchedulerDatabaseFactory.cpp
   SchedulingInfos.cpp
+  TapeDrivesCatalogueState.cpp
   TapeMount.cpp)
 
 find_package(Protobuf3 REQUIRED)

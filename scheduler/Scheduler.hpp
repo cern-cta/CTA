@@ -55,6 +55,7 @@
 #include "disk/DiskReporter.hpp"
 #include "disk/DiskReporterFactory.hpp"
 #include "SchedulingInfos.hpp"
+#include "TapeDrivesCatalogueState.hpp"
 
 #include <list>
 #include <map>
@@ -489,6 +490,8 @@ private:
 
   const uint64_t m_minFilesToWarrantAMount;
   const uint64_t m_minBytesToWarrantAMount;
+
+  std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
 }; // class Scheduler
 
 } // namespace cta

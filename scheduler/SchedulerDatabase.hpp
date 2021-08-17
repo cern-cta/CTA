@@ -788,14 +788,6 @@ public:
     log::LogContext & lc) = 0;
 
   /**
-   * Remove drive from the drive register.
-   * Will throw an exception is the drive does not exist.
-   *
-   * @param drive The drive name.
-   */
-  virtual void removeDrive(const std::string & drive, log::LogContext & logContext) = 0;
-
-  /**
    * Sets the drive status in the object store. The drive status will be recorded in all cases,
    * although some historical information is needed to provide an accurate view of the
    * current session state. This allows the system to gracefully handle drive entry
@@ -824,8 +816,6 @@ public:
     const std::string & vid = "",
     const std::string & tapepool = "",
     const std::string & vo = "") = 0;
-
-  virtual void reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine, const cta::tape::daemon::TapedConfiguration& tapedConfig,log::LogContext& lc) = 0;
 
   virtual void checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo) = 0;
 }; // class SchedulerDatabase
