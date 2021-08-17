@@ -793,7 +793,7 @@ void Scheduler::RepackReportBatch::report(log::LogContext& lc) {
 //------------------------------------------------------------------------------
 common::dataStructures::DesiredDriveState Scheduler::getDesiredDriveState(const std::string& driveName, log::LogContext & lc) {
   utils::Timer t;
-  auto driveStates = m_db.getDriveStates(lc);
+  auto driveStates = m_tapeDrivesState->getDriveStates(lc);
   for (auto & driveState : driveStates) {
     if (driveState.driveName == driveName) {
       auto schedulerDbTime = t.secs();
@@ -819,7 +819,7 @@ common::dataStructures::DesiredDriveState Scheduler::getDesiredDriveState(const 
 //------------------------------------------------------------------------------
 void Scheduler::setDesiredDriveState(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &driveName, const common::dataStructures::DesiredDriveState & desiredState, log::LogContext & lc) {
   utils::Timer t;
-  m_db.setDesiredDriveState(driveName, desiredState, lc);
+  m_tapeDrivesState->setDesiredDriveState(driveName, desiredState, lc);
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("drive", driveName)
@@ -829,6 +829,21 @@ void Scheduler::setDesiredDriveState(const common::dataStructures::SecurityIdent
      .add("comment", desiredState.comment ? desiredState.comment.value() : "")
      .add("schedulerDbTime", schedulerDbTime);
    lc.log(log::INFO, "In Scheduler::setDesiredDriveState(): success.");
+}
+
+bool Scheduler::checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo, log::LogContext & lc) {
+  try{
+    m_tapeDrivesState->checkDriveCanBeCreated(driveInfo);
+    return true;
+  } catch (cta::TapeDrivesCatalogueState::DriveAlreadyExistsException &ex) {
+    log::ScopedParamContainer param(lc);
+    param.add("tapeDrive",driveInfo.driveName)
+         .add("logicalLibrary",driveInfo.logicalLibrary)
+         .add("host",driveInfo.host)
+         .add("exceptionMsg",ex.getMessageValue());
+    lc.log(log::CRIT,"In Scheduler::checkDriveCanBeCreated(): drive already exists. Reporting fatal error.");
+    return false;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -859,7 +874,7 @@ void Scheduler::reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfi
 }
 
 //------------------------------------------------------------------------------
-// setDesiredDriveState
+// reportDriveStatus
 //------------------------------------------------------------------------------
 void Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, common::dataStructures::MountType type, common::dataStructures::DriveStatus status, log::LogContext & lc) {
   // TODO: mount type should be transmitted too.
@@ -1004,7 +1019,7 @@ std::list<common::dataStructures::RetrieveJob> Scheduler::getPendingRetrieveJobs
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::TapeDrive> Scheduler::getDriveStates(const common::dataStructures::SecurityIdentity &cliIdentity, log::LogContext & lc) const {
   utils::Timer t;
-  auto ret = m_db.getDriveStates(lc);
+  auto ret = m_tapeDrivesState->getDriveStates(lc);
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("schedulerDbTime", schedulerDbTime);

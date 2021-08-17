@@ -47,6 +47,8 @@ namespace ostoredb {
   class MemQueue;
 }
 
+class TapeDrivesCatalogueState;
+
 class OStoreDB: public SchedulerDatabase {
   template <class, class>
   friend class cta::ostoredb::MemQueue;
@@ -570,20 +572,10 @@ private:
 public:
 
   /* === Drive state handling  ============================================== */
-  /**
-   * Get states of all drives.
-   * @return list of all known drive states
-   */
-  std::list<cta::common::dataStructures::TapeDrive> getDriveStates(log::LogContext & lc) const override;
-
-  void setDesiredDriveState(const std::string& drive, const common::dataStructures::DesiredDriveState & desiredState,
-    log::LogContext & lc) override;
 
   void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, cta::common::dataStructures::MountType mountType,
     common::dataStructures::DriveStatus status, time_t reportTime, log::LogContext & lc, uint64_t mountSessionId, uint64_t byteTransfered,
     uint64_t filesTransfered, double latestBandwidth, const std::string& vid, const std::string& tapepool, const std::string & vo) override;
-
-  void checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo) override;
 
   /* --- Private helper part implementing state transition logic -------------*/
   /*
@@ -670,6 +662,7 @@ private:
   objectstore::Backend & m_objectStore;
   catalogue::Catalogue & m_catalogue;
   log::Logger & m_logger;
+  std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
   objectstore::AgentReference *m_agentReference = nullptr;
 };
 

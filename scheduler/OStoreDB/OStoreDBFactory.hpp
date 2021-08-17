@@ -260,23 +260,11 @@ public:
     return m_OStoreDB.getNextRepackJobToExpand();
   }
 
-  std::list<cta::common::dataStructures::TapeDrive> getDriveStates(log::LogContext & lc) const override {
-    return m_OStoreDB.getDriveStates(lc);
-  }
-
-  void setDesiredDriveState(const std::string& drive, const cta::common::dataStructures::DesiredDriveState& state, log::LogContext& lc) override {
-    return m_OStoreDB.setDesiredDriveState(drive, state, lc);
-  }
-
   void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, cta::common::dataStructures::MountType mountType,
     common::dataStructures::DriveStatus status, time_t reportTime, log::LogContext& lc, uint64_t mountSessionId,
     uint64_t byteTransfered, uint64_t filesTransfered, double latestBandwidth, const std::string& vid, const std::string& tapepool, const std::string & vo) override {
     m_OStoreDB.reportDriveStatus(driveInfo, mountType, status, reportTime, lc, mountSessionId, byteTransfered, filesTransfered,
        latestBandwidth, vid, tapepool,vo);
-  }
-
-  void checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo) override {
-    m_OStoreDB.checkDriveCanBeCreated(driveInfo);
   }
 
 private:

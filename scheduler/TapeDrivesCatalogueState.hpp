@@ -26,12 +26,23 @@ namespace log {
 class LogContext;
 }
 
+namespace common {
+namespace dataStructures {
+class DesiredDriveState;
+class DriveInfo;
+}
+}
+
 class TapeDrivesCatalogueState {
 public:
   TapeDrivesCatalogueState(catalogue::Catalogue &catalogue);
   ~TapeDrivesCatalogueState() = default;
-
+  CTA_GENERATE_EXCEPTION_CLASS(DriveAlreadyExistsException);
+  void checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo);
+  std::list<cta::common::dataStructures::TapeDrive> getDriveStates(log::LogContext & lc) const;
   void removeDrive(const std::string& drive, log::LogContext &lc);
+  void setDesiredDriveState(const std::string& drive, const common::dataStructures::DesiredDriveState & desiredState,
+    log::LogContext &lc);
 
 private:
   cta::catalogue::Catalogue &m_catalogue;

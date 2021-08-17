@@ -48,6 +48,7 @@
 #include "OStoreDB.hpp"
 #include "Scheduler.hpp"
 #include "scheduler/LogicalLibrary.hpp"
+#include "TapeDrivesCatalogueState.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 
 namespace cta {
@@ -58,6 +59,7 @@ using namespace objectstore;
 //------------------------------------------------------------------------------
 OStoreDB::OStoreDB(objectstore::Backend& be, catalogue::Catalogue & catalogue, log::Logger &logger):
   m_taskQueueSize(0), m_taskPostingSemaphore(5), m_objectStore(be), m_catalogue(catalogue), m_logger(logger) {
+  m_tapeDrivesState = cta::make_unique<TapeDrivesCatalogueState>(m_catalogue);
   for (size_t i=0; i<5; i++) {
     m_enqueueingWorkerThreads.emplace_back(new EnqueueingWorkerThread(m_enqueueingTasksQueue));
     m_enqueueingWorkerThreads.back()->start();
@@ -468,7 +470,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
   // If a next mount exists the drive "counts double", but the corresponding drive
   // is either about to mount, or about to replace its current mount.
   double registerFetchTime = 0;
-  auto driveStates = getDriveStates(logContext);
+  auto driveStates = m_tapeDrivesState->getDriveStates(logContext);
   registerFetchTime = t.secs(utils::Timer::resetCounter);
   using common::dataStructures::DriveStatus;
   std::set<int> activeDriveStatuses = {
@@ -3057,38 +3059,6 @@ getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext &logCont
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::getDriveStates()
-//------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::TapeDrive> OStoreDB::getDriveStates(log::LogContext & lc) const {
-  std::list<cta::common::dataStructures::TapeDrive> tapeDrivesList;
-  const auto driveNames = m_catalogue.getTapeDriveNames();
-  for (const auto& driveName : driveNames) {
-    const auto tapeDrive = m_catalogue.getTapeDrive(driveName);
-    tapeDrivesList.push_back(tapeDrive.value());
-  }
-  return tapeDrivesList;
-}
-
-//------------------------------------------------------------------------------
-// OStoreDB::setDesiredDriveState()
-//------------------------------------------------------------------------------
-void OStoreDB::setDesiredDriveState(const std::string& drive, const common::dataStructures::DesiredDriveState & desiredState, log::LogContext &lc) {
-  common::dataStructures::DesiredDriveState newDesiredState = desiredState;
-  auto driveState = m_catalogue.getTapeDrive(drive);
-  if (!driveState) return;
-  if(desiredState.comment){
-    //In case we modify the comment, we want to keep the same status and forceDown of the drive
-    newDesiredState.up = driveState.value().desiredUp;
-    newDesiredState.forceDown = driveState.value().desiredForceDown;
-  }
-  driveState.value().desiredUp = newDesiredState.up;
-  driveState.value().desiredForceDown = newDesiredState.forceDown;
-  driveState.value().reasonUpDown = newDesiredState.reason;
-  driveState.value().userComment = newDesiredState.comment;
-  m_catalogue.modifyTapeDrive(driveState.value());
-}
-
-//------------------------------------------------------------------------------
 // OStoreDB::reportDriveStatus()
 //------------------------------------------------------------------------------
 void OStoreDB::reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
@@ -3110,29 +3080,6 @@ void OStoreDB::reportDriveStatus(const common::dataStructures::DriveInfo& driveI
   inputs.tapepool = tapepool;
   inputs.vo = vo;
   updateDriveStatus(driveInfo, inputs, lc);
-}
-
-//------------------------------------------------------------------------------
-// OStoreDB::checkDriveCanBeCreated()
-//------------------------------------------------------------------------------
-
-void OStoreDB::checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo) {
-  const auto driveNames = m_catalogue.getTapeDriveNames();
-  try {
-    const auto tapeDrive = m_catalogue.getTapeDrive(driveInfo.driveName);
-    if (!tapeDrive) return;  // tape drive does not exist
-    if (tapeDrive.value().logicalLibrary != driveInfo.logicalLibrary || tapeDrive.value().host != driveInfo.host) {
-      throw cta::SchedulerDatabase::DriveAlreadyExistsException(std::string("The drive name=") + driveInfo.driveName +
-        " logicalLibrary=" + driveInfo.logicalLibrary +
-        " host=" + driveInfo.host +
-        " cannot be created because a drive with a same name with logicalLibrary=" + tapeDrive.value().logicalLibrary +
-        " host=" + tapeDrive.value().host +
-        " already exists.");
-    }
-  } catch (cta::objectstore::DriveRegister::NoSuchDrive & ex) {
-    // Drive does not exist
-    // We can create it, do nothing then
-  }
 }
 
 //------------------------------------------------------------------------------

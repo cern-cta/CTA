@@ -235,6 +235,8 @@ public:
   void setDesiredDriveState(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string & driveName,
     const common::dataStructures::DesiredDriveState & desiredState, log::LogContext & lc);
 
+  bool checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo, log::LogContext & lc);
+
   /**
    * Remove drive from the drive register.
    *

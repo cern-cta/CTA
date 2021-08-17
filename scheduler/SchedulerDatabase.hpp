@@ -771,21 +771,6 @@ public:
   virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose, log::LogContext& logContext) = 0;
 
   /* === Drive state handling  ============================================== */
-  /**
-   * Returns the current list of registered drives.
-   *
-   * @return The current list of registered drives.
-   */
-  virtual std::list<cta::common::dataStructures::TapeDrive> getDriveStates(log::LogContext & lc) const = 0;
-
-  /**
-   * Sets the administrative desired state (up/down/force down) for an existing drive.
-   * Will throw an excpeiton is the drive does not exist
-   * @param drive
-   * @param desiredState
-   */
-  virtual void setDesiredDriveState(const std::string & drive, const cta::common::dataStructures::DesiredDriveState & state,
-    log::LogContext & lc) = 0;
 
   /**
    * Sets the drive status in the object store. The drive status will be recorded in all cases,
@@ -817,7 +802,6 @@ public:
     const std::string & tapepool = "",
     const std::string & vo = "") = 0;
 
-  virtual void checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo) = 0;
 }; // class SchedulerDatabase
 
 } // namespace cta
