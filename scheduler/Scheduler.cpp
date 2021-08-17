@@ -889,43 +889,11 @@ void Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& drive
   }
 }
 
-common::dataStructures::TapeDrive Scheduler::setTapeDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
-  const common::dataStructures::DesiredDriveState & desiredState, const common::dataStructures::MountType& type,
-  const common::dataStructures::DriveStatus& status, const tape::daemon::TpconfigLine& tpConfigLine,
-  const common::dataStructures::SecurityIdentity& identity) {
-  const time_t reportTime = time(NULL);
-  common::dataStructures::TapeDrive tapeDriveStatus;
-  tapeDriveStatus.driveName = driveInfo.driveName;
-  tapeDriveStatus.host = driveInfo.host;
-  tapeDriveStatus.logicalLibrary = driveInfo.logicalLibrary;
-  tapeDriveStatus.latestBandwidth = "0.0";
-  tapeDriveStatus.downOrUpStartTime = reportTime;
-  tapeDriveStatus.mountType = type;
-  tapeDriveStatus.driveStatus = status;
-  tapeDriveStatus.desiredUp = desiredState.up;
-  tapeDriveStatus.desiredForceDown = desiredState.forceDown;
-  if (desiredState.reason) tapeDriveStatus.reasonUpDown = desiredState.reason;
-  if (desiredState.comment) tapeDriveStatus.userComment = desiredState.comment;
-  tapeDriveStatus.diskSystemName = "NOT_SET";
-  tapeDriveStatus.reservedBytes = 0;
-  tapeDriveStatus.devFileName = tpConfigLine.devFilename;
-  tapeDriveStatus.rawLibrarySlot = tpConfigLine.rawLibrarySlot;
-  tapeDriveStatus.creationLog = common::dataStructures::EntryLog(identity.username, identity.host, reportTime);
-  tapeDriveStatus.lastModificationLog = common::dataStructures::EntryLog(identity.username, identity.host, reportTime);
-  return tapeDriveStatus;
-}
-
 void Scheduler::createTapeDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
   const common::dataStructures::DesiredDriveState & desiredState, const common::dataStructures::MountType& type,
   const common::dataStructures::DriveStatus& status, const tape::daemon::TpconfigLine& tpConfigLine,
   const common::dataStructures::SecurityIdentity& identity, log::LogContext & lc) {
-  const auto tapeDriveStatus = setTapeDriveStatus(driveInfo, desiredState, type, status, tpConfigLine, identity);
-  auto driveNames = m_catalogue.getTapeDriveNames();
-  auto it = std::find(driveNames.begin(), driveNames.end(), tapeDriveStatus.driveName);
-  if (it != driveNames.end()) {
-    m_catalogue.deleteTapeDrive(tapeDriveStatus.driveName);
-  }
-  m_catalogue.createTapeDrive(tapeDriveStatus);
+  m_tapeDrivesState->createTapeDriveStatus(driveInfo, desiredState, type, status, tpConfigLine, identity, lc);
   log::ScopedParamContainer spc(lc);
   spc.add("drive", driveInfo.driveName);
   lc.log(log::DEBUG, "In Scheduler::createTapeDriveStatus(): success.");

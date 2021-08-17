@@ -348,19 +348,6 @@ private:
    */
   void checkNeededEnvironmentVariables();
 
-  /**
-   * Set the information in a TapeDrive struct
-   * @param driveInfo default info of the Tape Drive
-   * @param desiredState the structure that contains the desired state informations
-   * @param type the type of the session, if any
-   * @param status the state of the drive. Reporting the state to down will also
-   * @param status The identity of the user requesting the drive to put up or down.
-   */
-  common::dataStructures::TapeDrive setTapeDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
-    const common::dataStructures::DesiredDriveState & desiredState, const common::dataStructures::MountType& type,
-    const common::dataStructures::DriveStatus& status, const tape::daemon::TpconfigLine& tpConfigLine,
-    const common::dataStructures::SecurityIdentity& identity);
-
 public:
   /**
    * Run the mount decision logic lock free, so we have no contention in the

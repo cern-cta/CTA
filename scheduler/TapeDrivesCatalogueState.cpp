@@ -15,14 +15,34 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
+
 #include "common/dataStructures/DesiredDriveState.hpp"
 #include "common/dataStructures/DriveInfo.hpp"
+#include "common/dataStructures/TapeDrive.hpp"
 #include "common/log/Logger.hpp"
 #include "TapeDrivesCatalogueState.hpp"
+#include "tapeserver/daemon/TpconfigLine.hpp"
 
 namespace cta {
 
 TapeDrivesCatalogueState::TapeDrivesCatalogueState(catalogue::Catalogue &catalogue) : m_catalogue(catalogue) {}
+
+void TapeDrivesCatalogueState::createTapeDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
+  const common::dataStructures::DesiredDriveState & desiredState, const common::dataStructures::MountType& type,
+  const common::dataStructures::DriveStatus& status, const tape::daemon::TpconfigLine& tpConfigLine,
+  const common::dataStructures::SecurityIdentity& identity, log::LogContext & lc) {
+  const auto tapeDriveStatus = setTapeDriveStatus(driveInfo, desiredState, type, status, tpConfigLine, identity);
+  auto driveNames = m_catalogue.getTapeDriveNames();
+  auto it = std::find(driveNames.begin(), driveNames.end(), tapeDriveStatus.driveName);
+  if (it != driveNames.end()) {
+    m_catalogue.deleteTapeDrive(tapeDriveStatus.driveName);
+  }
+  m_catalogue.createTapeDrive(tapeDriveStatus);
+  log::ScopedParamContainer spc(lc);
+  spc.add("drive", driveInfo.driveName);
+  lc.log(log::DEBUG, "In TapeDrivesCatalogueState::createTapeDriveStatus(): success.");
+}
 
 void TapeDrivesCatalogueState::checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo) {
   const auto driveNames = m_catalogue.getTapeDriveNames();
@@ -585,6 +605,33 @@ void TapeDrivesCatalogueState::setDriveShutdown(common::dataStructures::TapeDriv
   driveState.currentActivity = nullopt_t();
   driveState.currentActivityWeight = nullopt_t();
   driveState.currentVo = inputs.vo;
+}
+
+common::dataStructures::TapeDrive TapeDrivesCatalogueState::setTapeDriveStatus(
+  const common::dataStructures::DriveInfo& driveInfo,
+  const common::dataStructures::DesiredDriveState & desiredState, const common::dataStructures::MountType& type,
+  const common::dataStructures::DriveStatus& status, const tape::daemon::TpconfigLine& tpConfigLine,
+  const common::dataStructures::SecurityIdentity& identity) {
+  const time_t reportTime = time(NULL);
+  common::dataStructures::TapeDrive tapeDriveStatus;
+  tapeDriveStatus.driveName = driveInfo.driveName;
+  tapeDriveStatus.host = driveInfo.host;
+  tapeDriveStatus.logicalLibrary = driveInfo.logicalLibrary;
+  tapeDriveStatus.latestBandwidth = "0.0";
+  tapeDriveStatus.downOrUpStartTime = reportTime;
+  tapeDriveStatus.mountType = type;
+  tapeDriveStatus.driveStatus = status;
+  tapeDriveStatus.desiredUp = desiredState.up;
+  tapeDriveStatus.desiredForceDown = desiredState.forceDown;
+  if (desiredState.reason) tapeDriveStatus.reasonUpDown = desiredState.reason;
+  if (desiredState.comment) tapeDriveStatus.userComment = desiredState.comment;
+  tapeDriveStatus.diskSystemName = "NOT_SET";
+  tapeDriveStatus.reservedBytes = 0;
+  tapeDriveStatus.devFileName = tpConfigLine.devFilename;
+  tapeDriveStatus.rawLibrarySlot = tpConfigLine.rawLibrarySlot;
+  tapeDriveStatus.creationLog = common::dataStructures::EntryLog(identity.username, identity.host, reportTime);
+  tapeDriveStatus.lastModificationLog = common::dataStructures::EntryLog(identity.username, identity.host, reportTime);
+  return tapeDriveStatus;
 }
 
 }  // namespace cta
