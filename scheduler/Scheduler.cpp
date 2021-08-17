@@ -876,7 +876,8 @@ void Scheduler::reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfi
 //------------------------------------------------------------------------------
 // reportDriveStatus
 //------------------------------------------------------------------------------
-void Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, common::dataStructures::MountType type, common::dataStructures::DriveStatus status, log::LogContext & lc) {
+void Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
+  common::dataStructures::MountType type, common::dataStructures::DriveStatus status, log::LogContext & lc) {
   // TODO: mount type should be transmitted too.
   utils::Timer t;
   m_tapeDrivesState->reportDriveStatus(driveInfo, type, status, time(NULL), lc);
@@ -898,32 +899,6 @@ void Scheduler::createTapeDriveStatus(const common::dataStructures::DriveInfo& d
   spc.add("drive", driveInfo.driveName);
   lc.log(log::DEBUG, "In Scheduler::createTapeDriveStatus(): success.");
 }
-
-void Scheduler::updateTapeDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
-  const common::dataStructures::DesiredDriveState & desiredState, const common::dataStructures::MountType& type,
-  const common::dataStructures::DriveStatus& status, const tape::daemon::TpconfigLine& tpConfigLine,
-  const common::dataStructures::SecurityIdentity& identity, log::LogContext & lc) {
-  auto tapeDriveStatus = m_catalogue.getTapeDrive(driveInfo.driveName).value();
-  const time_t reportTime = time(NULL);
-  tapeDriveStatus.host = driveInfo.host;
-  tapeDriveStatus.logicalLibrary = driveInfo.logicalLibrary;
-  tapeDriveStatus.downOrUpStartTime = reportTime;
-  tapeDriveStatus.mountType = type;
-  tapeDriveStatus.driveStatus = status;
-  tapeDriveStatus.desiredUp = desiredState.up;
-  tapeDriveStatus.desiredForceDown = desiredState.forceDown;
-  if (desiredState.reason) tapeDriveStatus.reasonUpDown = desiredState.reason;
-  if (desiredState.comment) tapeDriveStatus.userComment = desiredState.comment;
-  tapeDriveStatus.devFileName = tpConfigLine.devFilename;
-  tapeDriveStatus.rawLibrarySlot = tpConfigLine.rawLibrarySlot;
-  tapeDriveStatus.creationLog = common::dataStructures::EntryLog(identity.username, identity.host, reportTime);
-  tapeDriveStatus.lastModificationLog = common::dataStructures::EntryLog(identity.username, identity.host, reportTime);
-  m_catalogue.modifyTapeDrive(tapeDriveStatus);
-  log::ScopedParamContainer spc(lc);
-  spc.add("drive", driveInfo.driveName);
-  lc.log(log::DEBUG, "In Scheduler::updateTapeDriveStatus(): success.");
-}
-
 
 //------------------------------------------------------------------------------
 // getPendingArchiveJobs

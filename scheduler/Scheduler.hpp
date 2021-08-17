@@ -273,19 +273,6 @@ public:
     const common::dataStructures::SecurityIdentity& identity, log::LogContext & lc);
 
   /**
-   * Update the Table in the Database for an specific Tape Drive
-   * @param driveInfo default info of the Tape Drive
-   * @param desiredState the structure that contains the desired state informations
-   * @param type the type of the session, if any
-   * @param status the state of the drive. Reporting the state to down will also
-   * @param status The identity of the user requesting the drive to put up or down.
-   */
-  void updateTapeDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
-    const common::dataStructures::DesiredDriveState & desiredState, const common::dataStructures::MountType& type,
-    const common::dataStructures::DriveStatus& status, const tape::daemon::TpconfigLine& tpConfigLine,
-    const common::dataStructures::SecurityIdentity& identity, log::LogContext & lc);
-
-  /**
    * Reports the configuration of the drive to the objectstore.
    * @param driveName the name of the drive to report the config to the objectstore
    * @param tapedConfig the config of the drive to report to the objectstore.
