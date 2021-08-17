@@ -34,6 +34,7 @@
 #include "common/utils/utils.hpp"
 #include "common/utils/utils.hpp"
 #include "disk/DiskFile.hpp"
+#include "DiskSpaceReservation.hpp"
 #include "MemQueues.hpp"
 #include "objectstore/AgentWrapper.hpp"
 #include "objectstore/ArchiveQueueAlgorithms.hpp"
@@ -3979,7 +3980,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::RetrieveMou
   // that they will require. In case we cannot allocate the space for some of them, mark the destination filesystem as
   // full and stop popping from it, after requeueing the jobs.
   bool failedAllocation = false;
-  SchedulerDatabase::DiskSpaceReservationRequest diskSpaceReservationRequest;
+  cta::DiskSpaceReservationRequest diskSpaceReservationRequest;
   typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> RQAlgos;
   RQAlgos rqAlgos(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
   RQAlgos::PoppedElementsBatch jobs;
@@ -3995,7 +3996,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::RetrieveMou
       if (j.diskSystemName)
         diskSpaceReservationRequest.addRequest(j.diskSystemName.value(), j.archiveFile.fileSize);
     // Get the existing reservation map from drives (including this drive's previous pending reservations).
-    auto previousDrivesReservations = getExistingDrivesReservations();
+    auto previousDrivesReservations = DiskSpaceReservation::getExistingDrivesReservations(&this->m_oStoreDB.m_catalogue);
     typedef std::pair<std::string, uint64_t> Res;
     uint64_t previousDrivesReservationTotal = 0;
     previousDrivesReservationTotal = std::accumulate(previousDrivesReservations.begin(), previousDrivesReservations.end(),
@@ -4076,7 +4077,8 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::RetrieveMou
     diskSpaceReservationRequest.clear();
     goto retryPop;
   }
-  this->reserveDiskSpace(diskSpaceReservationRequest, logContext);
+  DiskSpaceReservation::reserveDiskSpace(&this->m_oStoreDB.m_catalogue, mountInfo.drive, diskSpaceReservationRequest,
+    logContext);
   // Allocation went fine, we can construct the return value (we did not hit any full disk system.
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
   for(auto &j : jobs.elements)
@@ -4113,104 +4115,6 @@ void OStoreDB::RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<OStoreDB
   locks.clear();
   rrlist.clear();
   sorter.flushAll(logContext);
-}
-
-//------------------------------------------------------------------------------
-// OStoreDB::RetrieveMount::getExistingDrivesReservations()
-//------------------------------------------------------------------------------
-std::map<std::string, uint64_t> OStoreDB::RetrieveMount::getExistingDrivesReservations() {
-  std::map<std::string, uint64_t> ret;
-  const auto tdNames = this->m_oStoreDB.m_catalogue.getTapeDriveNames();
-  for (const auto& driveName : tdNames) {
-    const auto tdStatus = this->m_oStoreDB.m_catalogue.getTapeDrive(driveName);
-    try {
-      ret.at(tdStatus.value().diskSystemName) += tdStatus.value().reservedBytes;
-    } catch (std::out_of_range &) {
-      ret[tdStatus.value().diskSystemName] = tdStatus.value().reservedBytes;
-    }
-  }
-  return ret;
-}
-
-//------------------------------------------------------------------------------
-// OStoreDB::RetrieveMount::reserveDiskSpace()
-//------------------------------------------------------------------------------
-void OStoreDB::RetrieveMount::reserveDiskSpace(const DiskSpaceReservationRequest& diskSpaceReservation,
-  log::LogContext & lc) {
-  if (diskSpaceReservation.empty()) return;
-  // Try add our reservation to the drive status.
-  auto setLogParam = [&lc](const std::string& diskSystemName, uint64_t bytes) {
-    log::ScopedParamContainer params(lc);
-    params.add("diskSystem", diskSystemName)
-          .add("reservation", bytes);
-  };
-  std::string diskSystemName = diskSpaceReservation.begin()->first;
-  uint64_t bytes = diskSpaceReservation.begin()->second;
-  setLogParam(diskSystemName, bytes);
-  lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): reservation request content.");
-
-  std::tie(diskSystemName, bytes) = getDiskSpaceReservation();
-  setLogParam(diskSystemName, bytes);
-  lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): state before reservation.");
-
-  addDiskSpaceReservation(&this->m_oStoreDB.m_catalogue, diskSpaceReservation.begin()->first,
-    diskSpaceReservation.begin()->second);
-  std::tie(diskSystemName, bytes) = getDiskSpaceReservation();
-  setLogParam(diskSystemName, bytes);
-  lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): state after reservation.");
-}
-
-void OStoreDB::RetrieveMount::addDiskSpaceReservation(catalogue::Catalogue* catalogue,
-  const std::string& diskSystemName, uint64_t bytes) {
-    auto tdStatus = catalogue->getTapeDrive(mountInfo.drive);
-    if (!tdStatus) return;
-    tdStatus.value().diskSystemName = diskSystemName;
-    tdStatus.value().reservedBytes += bytes;
-    catalogue->modifyTapeDrive(tdStatus.value());
-}
-
-std::tuple<std::string, uint64_t> OStoreDB::RetrieveMount::getDiskSpaceReservation() {
-  const auto tdStatus = this->m_oStoreDB.m_catalogue.getTapeDrive(mountInfo.drive);
-  return std::make_tuple(tdStatus.value().diskSystemName, tdStatus.value().reservedBytes);
-}
-
-//------------------------------------------------------------------------------
-// OStoreDB::RetrieveMount::releaseDiskSpace()
-//------------------------------------------------------------------------------
-void OStoreDB::RetrieveMount::releaseDiskSpace(const DiskSpaceReservationRequest& diskSpaceReservation,
-  log::LogContext & lc) {
-  if (diskSpaceReservation.empty()) return;
-  // Try add our reservation to the drive status.
-  auto setLogParam = [&lc](const std::string& diskSystemName, uint64_t bytes) {
-    log::ScopedParamContainer params(lc);
-    params.add("diskSystem", diskSystemName)
-          .add("reservation", bytes);
-  };
-  std::string diskSystemName = diskSpaceReservation.begin()->first;
-  uint64_t bytes = diskSpaceReservation.begin()->second;
-  setLogParam(diskSystemName, bytes);
-  lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): release request content.");
-
-  std::tie(diskSystemName, bytes) = getDiskSpaceReservation();
-  setLogParam(diskSystemName, bytes);
-  lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): state before release.");
-
-  subtractDiskSpaceReservation(&this->m_oStoreDB.m_catalogue, diskSpaceReservation.begin()->first,
-    diskSpaceReservation.begin()->second);
-
-  std::tie(diskSystemName, bytes) = getDiskSpaceReservation();
-  setLogParam(diskSystemName, bytes);
-  lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): state after release.");
-}
-
-void OStoreDB::RetrieveMount::subtractDiskSpaceReservation(catalogue::Catalogue* catalogue,
-  const std::string& diskSystemName, uint64_t bytes) {
-  auto tdStatus = catalogue->getTapeDrive(mountInfo.drive);
-  if (bytes > tdStatus.value().reservedBytes) throw NegativeDiskSpaceReservationReached(
-    "In DriveState::subtractDiskSpaceReservation(): we would reach a negative reservation size.");
-  tdStatus.value().diskSystemName = diskSystemName;
-  tdStatus.value().reservedBytes -= bytes;
-  catalogue->modifyTapeDrive(tdStatus.value());
 }
 
 //------------------------------------------------------------------------------
@@ -4307,7 +4211,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
   std::map<std::string, std::list<OStoreDB::RetrieveJob*>> jobsToRequeueForRepackMap;
   // We will wait on the asynchronously started reports of jobs, queue the retrieve jobs
   // for report and remove them from ownership.
-  SchedulerDatabase::DiskSpaceReservationRequest diskSpaceReservationRequest;
+  cta::DiskSpaceReservationRequest diskSpaceReservationRequest;
   // 1) Check the async update result.
   common::dataStructures::MountPolicy mountPolicy;
   for (auto & sDBJob: jobsBatch) {
@@ -4385,7 +4289,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
       }
     }
   }
-  releaseDiskSpace(diskSpaceReservationRequest, lc);
+  DiskSpaceReservation::releaseDiskSpace(&this->m_oStoreDB.m_catalogue, mountInfo.drive, diskSpaceReservationRequest, lc);
   // 2) Queue the retrieve requests for repack.
   for (auto & repackRequestQueue: jobsToRequeueForRepackMap) {
     typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReportToRepackForSuccess> RQTRTRFSAlgo;
@@ -5332,9 +5236,10 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
 
   // Remove the space reservation for this job as we are done with it (if needed).
   if (diskSystemName) {
-    SchedulerDatabase::DiskSpaceReservationRequest dsrr;
+    cta::DiskSpaceReservationRequest dsrr;
     dsrr.addRequest(diskSystemName.value(), archiveFile.fileSize);
-    m_retrieveMount->releaseDiskSpace(dsrr, lc);
+    DiskSpaceReservation::releaseDiskSpace(&this->m_oStoreDB.m_catalogue, m_retrieveMount->getMountInfo().drive,
+      dsrr, lc);
   }
 
   // Lock the retrieve request. Fail the job.

@@ -251,7 +251,6 @@ public:
   private:
     void requeueJobBatch(std::list<std::unique_ptr<OStoreDB::RetrieveJob> >& jobBatch,
       log::LogContext& logContext);
-    std::map<std::string, uint64_t> getExistingDrivesReservations();
     void reserveDiskSpace(const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc);
     void addDiskSpaceReservation(catalogue::Catalogue* catalogue, const std::string& diskSystemName, uint64_t bytes);
     CTA_GENERATE_EXCEPTION_CLASS(NegativeDiskSpaceReservationReached);

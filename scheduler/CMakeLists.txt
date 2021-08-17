@@ -21,6 +21,7 @@ set (CTA_SCHEDULER_SRC_FILES
   ArchiveJob.cpp
   ArchiveMount.cpp
   DiskReportRunner.cpp
+  DiskSpaceReservation.cpp
   DriveConfig.cpp
   LabelMount.cpp
   LogicalLibrary.cpp
