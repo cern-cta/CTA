@@ -770,38 +770,6 @@ public:
    */
   virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose, log::LogContext& logContext) = 0;
 
-  /* === Drive state handling  ============================================== */
-
-  /**
-   * Sets the drive status in the object store. The drive status will be recorded in all cases,
-   * although some historical information is needed to provide an accurate view of the
-   * current session state. This allows the system to gracefully handle drive entry
-   * deletion at any time (an operator operation).
-   * @param driveInfo Fundamental information about the drive.
-   * @param mountType Mount type (required).
-   * @param status Current drive status (required).
-   * @param reportTime Time of report (required).
-   * @param mountSessionId (optional, required by some statuses).
-   * @param byteTransfered (optional, required by some statuses).
-   * @param filesTransfered (optional, required by some statuses).
-   * @param latestBandwidth (optional, required by some statuses).
-   * @param vid (optional, required by some statuses).
-   * @param tapepool (optional, required by some statuses).
-   * @param vo (virtual organization, optional, required by some statuses).
-   */
-  virtual void reportDriveStatus (const common::dataStructures::DriveInfo & driveInfo,
-    cta::common::dataStructures::MountType mountType,
-    common::dataStructures::DriveStatus status,
-    time_t reportTime,
-    log::LogContext & lc,
-    uint64_t mountSessionId = std::numeric_limits<uint64_t>::max(),
-    uint64_t byteTransfered = std::numeric_limits<uint64_t>::max(),
-    uint64_t filesTransfered = std::numeric_limits<uint64_t>::max(),
-    double latestBandwidth = std::numeric_limits<double>::max(),
-    const std::string & vid = "",
-    const std::string & tapepool = "",
-    const std::string & vo = "") = 0;
-
 }; // class SchedulerDatabase
 
 } // namespace cta

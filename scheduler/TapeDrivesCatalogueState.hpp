@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <limits>
 #include <string>
 
 #include "catalogue/Catalogue.hpp"
@@ -32,6 +33,21 @@ class DesiredDriveState;
 class DriveInfo;
 }
 }
+
+struct ReportDriveStatusInputs {
+  common::dataStructures::DriveStatus status;
+  cta::common::dataStructures::MountType mountType;
+  time_t reportTime;
+  uint64_t mountSessionId;
+  uint64_t byteTransferred;
+  uint64_t filesTransferred;
+  double latestBandwidth;
+  std::string vid;
+  std::string tapepool;
+  std::string vo;
+  optional<common::dataStructures::DriveState::ActivityAndWeight> activityAndWeigh;
+  optional<std::string> reason;
+};
 
 struct ReportDriveStatsInputs {
   time_t reportTime;
@@ -51,9 +67,33 @@ public:
     log::LogContext &lc);
   void updateDriveStatistics(const common::dataStructures::DriveInfo& driveInfo, const ReportDriveStatsInputs& inputs,
     log::LogContext & lc);
+  void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
+    cta::common::dataStructures::MountType mountType, common::dataStructures::DriveStatus status,
+    time_t reportTime, log::LogContext & lc,
+    uint64_t mountSessionId = std::numeric_limits<uint64_t>::max(),
+    uint64_t byteTransferred = std::numeric_limits<uint64_t>::max(),
+    uint64_t filesTransferred = std::numeric_limits<uint64_t>::max(),
+    double latestBandwidth = std::numeric_limits<double>::max(),
+    const std::string& vid = "",
+    const std::string& tapepool = "",
+    const std::string & vo = "");
+  void updateDriveStatus(const common::dataStructures::DriveInfo& driveInfo, const ReportDriveStatusInputs& inputs,
+    log::LogContext &lc);
 
 private:
   cta::catalogue::Catalogue &m_catalogue;
+
+  void setDriveDown(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs);
+  void setDriveUpOrMaybeDown(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs);
+  void setDriveProbing(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs);
+  void setDriveStarting(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs);
+  void setDriveMounting(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs);
+  void setDriveTransfering(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs);
+  void setDriveUnloading(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs);
+  void setDriveUnmounting(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs);
+  void setDriveDrainingToDisk(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs);
+  void setDriveCleaningUp(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs);
+  void setDriveShutdown(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs);
 };
 
 }  // namespace cta

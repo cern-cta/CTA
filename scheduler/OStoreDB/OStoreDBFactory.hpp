@@ -260,13 +260,6 @@ public:
     return m_OStoreDB.getNextRepackJobToExpand();
   }
 
-  void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, cta::common::dataStructures::MountType mountType,
-    common::dataStructures::DriveStatus status, time_t reportTime, log::LogContext& lc, uint64_t mountSessionId,
-    uint64_t byteTransfered, uint64_t filesTransfered, double latestBandwidth, const std::string& vid, const std::string& tapepool, const std::string & vo) override {
-    m_OStoreDB.reportDriveStatus(driveInfo, mountType, status, reportTime, lc, mountSessionId, byteTransfered, filesTransfered,
-       latestBandwidth, vid, tapepool,vo);
-  }
-
 private:
   std::unique_ptr <cta::log::Logger> m_logger;
   std::unique_ptr <cta::objectstore::Backend> m_backend;

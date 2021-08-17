@@ -879,7 +879,7 @@ void Scheduler::reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfi
 void Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, common::dataStructures::MountType type, common::dataStructures::DriveStatus status, log::LogContext & lc) {
   // TODO: mount type should be transmitted too.
   utils::Timer t;
-  m_db.reportDriveStatus(driveInfo, type, status, time(NULL), lc);
+  m_tapeDrivesState->reportDriveStatus(driveInfo, type, status, time(NULL), lc);
   auto schedulerDbTime = t.secs();
   if (schedulerDbTime > 1) {
     log::ScopedParamContainer spc(lc);
