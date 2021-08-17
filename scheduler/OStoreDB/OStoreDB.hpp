@@ -19,26 +19,27 @@
 
 #include <tuple>
 
-#include "scheduler/SchedulerDatabase.hpp"
-#include "objectstore/RootEntry.hpp"
-#include "objectstore/ArchiveQueue.hpp"
-#include "objectstore/RetrieveQueue.hpp"
-#include "objectstore/Agent.hpp"
-#include "objectstore/AgentReference.hpp"
-#include "objectstore/ArchiveRequest.hpp"
-#include "objectstore/ArchiveQueue.hpp"
-#include "objectstore/ArchiveRequest.hpp"
-#include "objectstore/DriveRegister.hpp"
-#include "objectstore/RetrieveRequest.hpp"
-#include "objectstore/RetrieveActivityCountMap.hpp"
-#include "objectstore/RepackQueue.hpp"
-#include "objectstore/RepackRequest.hpp"
-#include "objectstore/SchedulerGlobalLock.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/log/Logger.hpp"
 #include "common/threading/BlockingQueue.hpp"
 #include "common/threading/Thread.hpp"
+#include "objectstore/Agent.hpp"
+#include "objectstore/AgentReference.hpp"
+#include "objectstore/ArchiveQueue.hpp"
+#include "objectstore/ArchiveQueue.hpp"
+#include "objectstore/ArchiveRequest.hpp"
+#include "objectstore/ArchiveRequest.hpp"
+#include "objectstore/DriveRegister.hpp"
+#include "objectstore/RepackQueue.hpp"
+#include "objectstore/RepackRequest.hpp"
+#include "objectstore/RetrieveActivityCountMap.hpp"
+#include "objectstore/RetrieveQueue.hpp"
+#include "objectstore/RetrieveRequest.hpp"
+#include "objectstore/RootEntry.hpp"
+#include "objectstore/SchedulerGlobalLock.hpp"
 #include "QueueItor.hpp"
+#include "scheduler/SchedulerDatabase.hpp"
+#include "scheduler/TapeDrivesCatalogueState.hpp"
 
 namespace cta {
 
@@ -46,8 +47,6 @@ namespace ostoredb {
   template <class, class>
   class MemQueue;
 }
-
-class TapeDrivesCatalogueState;
 
 class OStoreDB: public SchedulerDatabase {
   template <class, class>
@@ -600,29 +599,13 @@ private:
     optional<common::dataStructures::DriveState::ActivityAndWeight> activityAndWeigh;
     optional<std::string> reason;
   };
-  /** Collection of smaller scale parts of reportDriveStats */
-  struct ReportDriveStatsInputs {
-    time_t reportTime;
-    uint64_t bytesTransferred;
-    uint64_t filesTransferred;
-  };
+
   /**
    * Utility implementing the operation of finding/creating the drive state object and
    * updating it.
    */
   void updateDriveStatus(const common::dataStructures::DriveInfo & driveInfo,
     const ReportDriveStatusInputs & inputs, log::LogContext & lc);
-
-  /**
-   * Utility implementing the operation get drive state and update stats in it if present, set on an
-   * already locked and fetched DriveRegistry.
-   *
-   * @param dr
-   * @param driveInfo
-   * @param inputs
-   */
-  void updateDriveStatistics(const common::dataStructures::DriveInfo & driveInfo,
-    const ReportDriveStatsInputs & inputs, log::LogContext & lc);
 
   /** Helper for setting a drive state in a specific case */
   static void setDriveDown(common::dataStructures::TapeDrive & driveState, const ReportDriveStatusInputs & inputs);

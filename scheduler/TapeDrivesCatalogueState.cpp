@@ -82,4 +82,31 @@ void TapeDrivesCatalogueState::setDesiredDriveState(const std::string& drive,
   m_catalogue.modifyTapeDrive(driveState.value());
 }
 
+void TapeDrivesCatalogueState::updateDriveStatistics(const common::dataStructures::DriveInfo& driveInfo,
+  const ReportDriveStatsInputs& inputs, log::LogContext & lc) {
+  auto driveState = m_catalogue.getTapeDrive(driveInfo.driveName);
+  if (!driveState) return;
+  // Set the parameters that we always set
+  driveState.value().host = driveInfo.host;
+  driveState.value().logicalLibrary = driveInfo.logicalLibrary;
+
+  switch (driveState.value().driveStatus) {
+    case common::dataStructures::DriveStatus::Transferring:
+    {
+      const time_t timeDifference = inputs.reportTime -  driveState.value().lastModificationLog.value().time;
+      const uint64_t bytesDifference = inputs.bytesTransferred - driveState.value().bytesTransferedInSession.value();
+      driveState.value().lastModificationLog = common::dataStructures::EntryLog(
+        "NO_USER", driveInfo.host, inputs.reportTime);
+      driveState.value().bytesTransferedInSession = inputs.bytesTransferred;
+      driveState.value().filesTransferedInSession = inputs.filesTransferred;
+      auto latestBandwidth = timeDifference ? 1.0 * bytesDifference / timeDifference : 0.0;
+      driveState.value().latestBandwidth = std::to_string(latestBandwidth);
+      break;
+    }
+    default:
+      return;
+  }
+  m_catalogue.modifyTapeDrive(driveState.value());
+}
+
 }  // namespace cta

@@ -33,6 +33,12 @@ class DriveInfo;
 }
 }
 
+struct ReportDriveStatsInputs {
+  time_t reportTime;
+  uint64_t bytesTransferred;
+  uint64_t filesTransferred;
+};
+
 class TapeDrivesCatalogueState {
 public:
   TapeDrivesCatalogueState(catalogue::Catalogue &catalogue);
@@ -43,6 +49,8 @@ public:
   void removeDrive(const std::string& drive, log::LogContext &lc);
   void setDesiredDriveState(const std::string& drive, const common::dataStructures::DesiredDriveState & desiredState,
     log::LogContext &lc);
+  void updateDriveStatistics(const common::dataStructures::DriveInfo& driveInfo, const ReportDriveStatsInputs& inputs,
+    log::LogContext & lc);
 
 private:
   cta::catalogue::Catalogue &m_catalogue;

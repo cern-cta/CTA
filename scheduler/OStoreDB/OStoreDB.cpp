@@ -3163,36 +3163,6 @@ void OStoreDB::updateDriveStatus(const common::dataStructures::DriveInfo& driveI
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::updateDriveStatsInRegitry()
-//------------------------------------------------------------------------------
-void OStoreDB::updateDriveStatistics(const common::dataStructures::DriveInfo& driveInfo,
-  const ReportDriveStatsInputs& inputs, log::LogContext & lc) {
-  auto driveState = m_catalogue.getTapeDrive(driveInfo.driveName);
-  if (!driveState) return;
-  // Set the parameters that we always set
-  driveState.value().host = driveInfo.host;
-  driveState.value().logicalLibrary = driveInfo.logicalLibrary;
-
-  switch (driveState.value().driveStatus) {
-    case common::dataStructures::DriveStatus::Transferring:
-    {
-      const time_t timeDifference = inputs.reportTime -  driveState.value().lastModificationLog.value().time;
-      const uint64_t bytesDifference = inputs.bytesTransferred - driveState.value().bytesTransferedInSession.value();
-      driveState.value().lastModificationLog = common::dataStructures::EntryLog(
-        "NO_USER", driveInfo.host, inputs.reportTime);
-      driveState.value().bytesTransferedInSession = inputs.bytesTransferred;
-      driveState.value().filesTransferedInSession = inputs.filesTransferred;
-      auto latestBandwidth = timeDifference ? 1.0 * bytesDifference / timeDifference : 0.0;
-      driveState.value().latestBandwidth = std::to_string(latestBandwidth);
-      break;
-    }
-    default:
-      return;
-  }
-  m_catalogue.modifyTapeDrive(driveState.value());
-}
-
-//------------------------------------------------------------------------------
 // OStoreDB::setDriveDown()
 //------------------------------------------------------------------------------
 void OStoreDB::setDriveDown(common::dataStructures::TapeDrive & driveState,
@@ -4103,7 +4073,7 @@ void OStoreDB::RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver
   inputs.filesTransferred = stats.filesCount;
 
   log::LogContext lc(m_oStoreDB.m_logger);
-  m_oStoreDB.updateDriveStatistics(driveInfo, inputs, lc);
+  m_oStoreDB.m_tapeDrivesState->updateDriveStatistics(driveInfo, inputs, lc);
 }
 
 
@@ -4313,7 +4283,7 @@ void OStoreDB::ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver:
   inputs.filesTransferred = stats.filesCount;
 
   log::LogContext lc(m_oStoreDB.m_logger);
-  m_oStoreDB.updateDriveStatistics(driveInfo, inputs, lc);
+  m_oStoreDB.m_tapeDrivesState->updateDriveStatistics(driveInfo, inputs, lc);
 }
 
 //------------------------------------------------------------------------------
