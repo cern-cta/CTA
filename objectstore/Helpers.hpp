@@ -42,7 +42,6 @@ namespace cta { namespace objectstore {
 
 class ScopedExclusiveLock;
 class AgentReference;
-class DriveState;
 class RepackQueue;
 
 /**
@@ -59,10 +58,10 @@ public:
    * @param tapePool or vid the name of the needed tape pool
    */
   template <class Queue>
-  static void getLockedAndFetchedJobQueue(Queue & queue, 
-    ScopedExclusiveLock & queueLock, AgentReference & agentReference, 
+  static void getLockedAndFetchedJobQueue(Queue & queue,
+    ScopedExclusiveLock & queueLock, AgentReference & agentReference,
     const cta::optional<std::string> & tapePoolOrVid, JobQueueType queueType, log::LogContext & lc);
-  
+
   /**
    * Find or create a repack queue, and return it locked and fetched to the caller
    * (Queue and ScopedExclusiveLock objects are provided empty)
@@ -70,21 +69,21 @@ public:
    * @param queueLock the lock, not initialized
    * @param agentReference the agent reference that will be needed in case of object creation
    */
-  static void getLockedAndFetchedRepackQueue(RepackQueue & queue, 
-    ScopedExclusiveLock & queueLock, AgentReference & agentReference, 
+  static void getLockedAndFetchedRepackQueue(RepackQueue & queue,
+    ScopedExclusiveLock & queueLock, AgentReference & agentReference,
     common::dataStructures::RepackQueueType queueType, log::LogContext & lc);
-  
+
   CTA_GENERATE_EXCEPTION_CLASS(NoTapeAvailableForRetrieve);
   /**
    * Find the most appropriate queue (bid) to add the retrieve request to. The potential
    * VIDs (VIDs for non-failed copies) is provided by the caller. The status of the
-   * the tapes (disabled or not, and available queue size) are all cached to avoid 
-   * frequent access to the object store. The caching create a small inefficiency 
+   * the tapes (disabled or not, and available queue size) are all cached to avoid
+   * frequent access to the object store. The caching create a small inefficiency
    * to the algorithm, but will help performance drastically for a very similar result
    */
-  static std::string selectBestRetrieveQueue (const std::set<std::string> & candidateVids, cta::catalogue::Catalogue & catalogue, 
+  static std::string selectBestRetrieveQueue (const std::set<std::string> & candidateVids, cta::catalogue::Catalogue & catalogue,
   objectstore::Backend & objectstore, bool forceDisabledTape = false);
-  
+
   /**
    * Gets the retrieve queue statistics for a set of Vids (extracted from the OStoreDB
    * so it can be used in the Helper context without passing the DB object.
@@ -93,19 +92,19 @@ public:
     const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
     const std::set<std::string> & vidsToConsider,
     objectstore::Backend & objectstore);
-  
+
   /**
    * Opportunistic updating of the queue stats cache as we access it. This implies the
    * tape is not disabled (full status not fetched).
    */
   static void updateRetrieveQueueStatisticsCache(const std::string & vid, uint64_t files, uint64_t bytes, uint64_t priority);
-  
+
   /**
    * Allows to flush the RetrieveQueueStatisticsCache
    * TO BE USED BY UNIT TESTS !
    */
   static void flushRetrieveQueueStatisticsCache();
-  
+
 private:
   /** Lock for the retrieve queues stats */
   static cta::threading::Mutex g_retrieveQueueStatisticsMutex;
@@ -114,9 +113,9 @@ private:
     cta::SchedulerDatabase::RetrieveQueueStatistics stats;
     cta::common::dataStructures::Tape tapeStatus;
     bool updating;
-    /** The shared future will allow all updating safely an entry of the cache while 
+    /** The shared future will allow all updating safely an entry of the cache while
      * releasing the global mutex to allow threads interested in other VIDs to carry on.*/
-    std::shared_future<void> updateFuture; 
+    std::shared_future<void> updateFuture;
     time_t updateTime;
   };
   /** The stats for the queues */
@@ -124,35 +123,21 @@ private:
   /** Time between cache updates */
   static const time_t c_retrieveQueueCacheMaxAge = 10;
   static void logUpdateCacheIfNeeded(const bool entryCreation,const RetrieveQueueStatisticsWithTime& tapeStatistic, std::string message="");
-  
+
 public:
-  
+
   enum class CreateIfNeeded: bool {
     create=true,
     doNotCreate=false
   };
-  
-  CTA_GENERATE_EXCEPTION_CLASS(NoSuchDrive);
+
   /**
-   * Helper to create a drive status object if needed, and return
-   * it locked exclusively and fetched.
-   * If the state is created, it will be populated with default values.
-   */
-  static void getLockedAndFetchedDriveState(DriveState & driveState, ScopedExclusiveLock & driveStateLock,
-    AgentReference & agentReference, const std::string & driveName, log::LogContext & lc, CreateIfNeeded doCreate=CreateIfNeeded::create);
-  
-  /**
-   * Helper to fetch in parallel all the drive statuses.
-   */
-  static std::list<cta::common::dataStructures::DriveState> getAllDriveStates(Backend & backend, log::LogContext & lc);
-  
-  /**
-   * Helper to register a repack request in the repack index. 
+   * Helper to register a repack request in the repack index.
    * As this structure was developed late, we potentially have to create it on the fly.
    */
   static void registerRepackRequestToIndex(const std::string & vid, const std::string & requestAddress,
       AgentReference & agentReference, Backend & backend, log::LogContext & lc);
-  
+
   /**
    * Helper to remove an entry form the repack index.
    */

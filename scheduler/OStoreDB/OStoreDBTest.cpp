@@ -27,7 +27,6 @@
 #include "objectstore/BackendRadosTestSwitch.hpp"
 #include "MemQueues.hpp"
 #include "catalogue/InMemoryCatalogue.hpp"
-#include "objectstore/DriveState.hpp"
 
 namespace unitTests {
 
@@ -228,123 +227,6 @@ TEST_P(OStoreDBTest, MemQueuesSharedAddToArchiveQueue) {
 
   // Now make sure the files made it to the queue.
   ASSERT_EQ(filesToDo, osdbi.getArchiveJobs("tapepool").size());
-}
-
-/*
- * After moving the Tape Drive state to catalogue this test doesn't work, as it's expected. It should be removed.
- */
-TEST_P(OStoreDBTest, DISABLED_setDesiredState){
-  using namespace cta::objectstore;
-  cta::log::StringLogger logger("dummy", "OStoreAbstractTest", cta::log::DEBUG);
-  cta::log::LogContext lc(logger);
-  // Get the OStoreBDinterface
-  OStoreDBWrapperInterface & osdbi = getDb();
-  AgentReference & agentRef = osdbi.getAgentReference();
-  //Create the drive first
-  std::string expectedReason = cta::common::dataStructures::DesiredDriveState::c_tpsrvPrefixComment + " INFO Drive created.";
-  std::string driveName = "DRIVE";
-  {
-    DriveState ds(osdbi.getBackend());
-    ScopedExclusiveLock dsl;
-    Helpers::getLockedAndFetchedDriveState(ds, dsl, agentRef, driveName, lc);
-    //Check the reason is set
-    ASSERT_EQ(expectedReason,ds.getState().desiredDriveState.reason.value());
-  }
-  cta::common::dataStructures::DesiredDriveState desiredState;
-  desiredState.up = true;
-  desiredState.forceDown = false;
-  desiredState.reason = "";
-  cta::common::dataStructures::DriveState driveState;
-  {
-    //Test the reason and comment fields are empty
-    osdbi.setDesiredDriveState(driveName,desiredState,lc);
-    DriveState ds(osdbi.getBackend());
-    ScopedExclusiveLock dsl;
-    Helpers::getLockedAndFetchedDriveState(ds, dsl, agentRef, driveName, lc, Helpers::CreateIfNeeded::doNotCreate);
-    driveState = ds.getState();
-    ASSERT_EQ(cta::common::dataStructures::DriveStatus::Down, driveState.driveStatus);
-    ASSERT_EQ(driveName, driveState.driveName);
-    ASSERT_FALSE(driveState.desiredDriveState.reason);
-    ASSERT_FALSE(driveState.desiredDriveState.comment);
-  }
-  {
-    //Testing the addition of a comment
-    desiredState.comment = "comment";
-    osdbi.setDesiredDriveState(driveName,desiredState,lc);
-    DriveState ds(osdbi.getBackend());
-    ScopedExclusiveLock dsl;
-    Helpers::getLockedAndFetchedDriveState(ds, dsl, agentRef, driveName, lc, Helpers::CreateIfNeeded::doNotCreate);
-    driveState = ds.getState();
-    ASSERT_EQ(cta::common::dataStructures::DriveStatus::Down, driveState.driveStatus);
-    ASSERT_EQ(driveName, driveState.driveName);
-    ASSERT_FALSE(driveState.desiredDriveState.reason);
-    ASSERT_EQ(desiredState.comment,driveState.desiredDriveState.comment.value());
-  }
-  {
-    //Testing the changing of a comment
-    desiredState.comment = "NewComment";
-    osdbi.setDesiredDriveState(driveName,desiredState,lc);
-    DriveState ds(osdbi.getBackend());
-    ScopedExclusiveLock dsl;
-    Helpers::getLockedAndFetchedDriveState(ds, dsl, agentRef, driveName, lc, Helpers::CreateIfNeeded::doNotCreate);
-    driveState = ds.getState();
-    ASSERT_EQ(cta::common::dataStructures::DriveStatus::Down, driveState.driveStatus);
-    ASSERT_EQ(driveName, driveState.driveName);
-    ASSERT_FALSE(driveState.desiredDriveState.reason);
-    ASSERT_EQ(desiredState.comment,driveState.desiredDriveState.comment.value());
-  }
-  {
-    //Testing the addition of a reason
-    desiredState.reason = "reason";
-    osdbi.setDesiredDriveState(driveName,desiredState,lc);
-    DriveState ds(osdbi.getBackend());
-    ScopedExclusiveLock dsl;
-    Helpers::getLockedAndFetchedDriveState(ds, dsl, agentRef, driveName, lc, Helpers::CreateIfNeeded::doNotCreate);
-    driveState = ds.getState();
-    ASSERT_EQ(cta::common::dataStructures::DriveStatus::Down, driveState.driveStatus);
-    ASSERT_EQ(driveName, driveState.driveName);
-    ASSERT_FALSE(!driveState.desiredDriveState.reason);
-    ASSERT_FALSE(!driveState.desiredDriveState.comment);
-    ASSERT_EQ(desiredState.reason,driveState.desiredDriveState.reason.value());
-  }
-  {
-    //Testing the modification of a reason
-    desiredState.reason = "reason2";
-    osdbi.setDesiredDriveState(driveName,desiredState,lc);
-    DriveState ds(osdbi.getBackend());
-    ScopedExclusiveLock dsl;
-    Helpers::getLockedAndFetchedDriveState(ds, dsl, agentRef, driveName, lc, Helpers::CreateIfNeeded::doNotCreate);
-    driveState = ds.getState();
-    ASSERT_EQ(cta::common::dataStructures::DriveStatus::Down, driveState.driveStatus);
-    ASSERT_EQ(driveName, driveState.driveName);
-    ASSERT_FALSE(!driveState.desiredDriveState.reason);
-    ASSERT_EQ(desiredState.reason,driveState.desiredDriveState.reason.value());
-  }
-  {
-    //Testing reason not modified when optional not set
-    std::string reasonBefore = desiredState.reason.value();
-    desiredState.reason = cta::optional<std::string>();
-    osdbi.setDesiredDriveState(driveName,desiredState,lc);
-    DriveState ds(osdbi.getBackend());
-    ScopedExclusiveLock dsl;
-    Helpers::getLockedAndFetchedDriveState(ds, dsl, agentRef, driveName, lc, Helpers::CreateIfNeeded::doNotCreate);
-    driveState = ds.getState();
-    ASSERT_EQ(cta::common::dataStructures::DriveStatus::Down, driveState.driveStatus);
-    ASSERT_EQ(driveName, driveState.driveName);
-    ASSERT_EQ(reasonBefore,driveState.desiredDriveState.reason);
-  }
-  {
-    //Testing the deletion of a reason
-    desiredState.reason = "";
-    osdbi.setDesiredDriveState(driveName,desiredState,lc);
-    DriveState ds(osdbi.getBackend());
-    ScopedExclusiveLock dsl;
-    Helpers::getLockedAndFetchedDriveState(ds, dsl, agentRef, driveName, lc, Helpers::CreateIfNeeded::doNotCreate);
-    driveState = ds.getState();
-    ASSERT_EQ(cta::common::dataStructures::DriveStatus::Down, driveState.driveStatus);
-    ASSERT_EQ(driveName, driveState.driveName);
-    ASSERT_FALSE(driveState.desiredDriveState.reason);
-  }
 }
 
 static cta::objectstore::BackendVFS osVFS(__LINE__, __FILE__);

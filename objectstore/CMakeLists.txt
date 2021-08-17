@@ -33,7 +33,6 @@ set (CTAProtoDependants
   objectstore/ArchiveRequest.hpp
   objectstore/CreationLog.hpp
   objectstore/DriveRegister.hpp
-  objectstore/DriveState.hpp
   objectstore/GenericObject.hpp
   objectstore/ObjectOps.hpp
   objectstore/RepackIndex.hpp
@@ -84,7 +83,6 @@ add_library (ctaobjectstore SHARED
   ArchiveRequest.cpp
   RetrieveRequest.cpp
   DriveRegister.cpp
-  DriveState.cpp
   RepackIndex.cpp
   RepackRequest.cpp
   RepackQueue.cpp

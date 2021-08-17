@@ -23,7 +23,6 @@
 #include "RepackQueue.hpp"
 #include "RootEntry.hpp"
 #include "DriveRegister.hpp"
-#include "DriveState.hpp"
 #include "RepackIndex.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/exception/NonRetryableError.hpp"
@@ -96,7 +95,7 @@ void Helpers::getLockedAndFetchedJobQueue<ArchiveQueue>(ArchiveQueue& archiveQue
       // We hence allow ourselves to retry a couple times.
       // We also need to make sure the lock on the queue is released (it is in
       // an object and hence not scoped).
-      // We should also deal with the case where a queue was deleted but left 
+      // We should also deal with the case where a queue was deleted but left
       // referenced in the root entry. We will try to clean up if necessary.
       // Failing to do this, we will spin and exhaust all of our retries.
       // We will do this if this is not the first attempt (i.e. failing again
@@ -117,7 +116,7 @@ void Helpers::getLockedAndFetchedJobQueue<ArchiveQueue>(ArchiveQueue& archiveQue
                 .add("queueObject", archiveQueue.getAddressIfSet())
                 .add("exceptionMsg", ex.getMessageValue());
           lc.log(log::INFO, "In Helpers::getLockedAndFetchedQueue<ArchiveQueue>(): removed reference to gone archive queue from root entry.");
-        } catch (...) { /* Failing here is not fatal. We can get an exception if the queue was deleted in the meantime */ } 
+        } catch (...) { /* Failing here is not fatal. We can get an exception if the queue was deleted in the meantime */ }
       }
       if (archiveQueueLock.isLocked()) archiveQueueLock.release();
       log::ScopedParamContainer params(lc);
@@ -215,7 +214,7 @@ void Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(RetrieveQueue& retrieve
       // We hence allow ourselves to retry a couple times.
       // We also need to make sure the lock on the queue is released (it is in
       // an object and hence not scoped).
-      // We should also deal with the case where a queue was deleted but left 
+      // We should also deal with the case where a queue was deleted but left
       // referenced in the root entry. We will try to clean up if necessary.
       // Failing to do this, we will spin and exhaust all of our retries.
       // We will do this if this is not the first attempt (i.e. failing again
@@ -236,7 +235,7 @@ void Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(RetrieveQueue& retrieve
                 .add("queueObject", retrieveQueue.getAddressIfSet())
                 .add("exceptionMsg", ex.getMessageValue());
           lc.log(log::INFO, "In Helpers::getLockedAndFetchedQueue<RetrieveQueue>(): removed reference to gone retrieve queue from root entry.");
-        } catch (...) { /* Failing here is not fatal. We can get an exception if the queue was deleted in the meantime */ } 
+        } catch (...) { /* Failing here is not fatal. We can get an exception if the queue was deleted in the meantime */ }
       }
       if (retrieveQueueLock.isLocked()) retrieveQueueLock.release();
       log::ScopedParamContainer params(lc);
@@ -313,7 +312,7 @@ void Helpers::getLockedAndFetchedRepackQueue(RepackQueue& queue, ScopedExclusive
       // We hence allow ourselves to retry a couple times.
       // We also need to make sure the lock on the queue is released (it is
       // an object and hence not scoped).
-      // We should also deal with the case where a queue was deleted but left 
+      // We should also deal with the case where a queue was deleted but left
       // referenced in the root entry. We will try to clean up if necessary.
       // Failing to do this, we will spin and exhaust all of our retries.
       if (i && typeid(ex) == typeid(cta::objectstore::Backend::NoSuchObject)) {
@@ -331,7 +330,7 @@ void Helpers::getLockedAndFetchedRepackQueue(RepackQueue& queue, ScopedExclusive
           params.add("queueObject", queue.getAddressIfSet())
                 .add("exceptionMsg", ex.getMessageValue());
           lc.log(log::INFO, "In Helpers::getLockedAndFetchedRepackQueue(): removed reference to gone repack queue from root entry.");
-        } catch (...) { /* Failing here is not fatal. We can get an exception if the queue was deleted in the meantime */ } 
+        } catch (...) { /* Failing here is not fatal. We can get an exception if the queue was deleted in the meantime */ }
       }
       if (queueLock.isLocked()) {
         queueLock.release();
@@ -395,7 +394,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
                   +std::to_string(c_retrieveQueueCacheMaxAge)+"), cache needs to be updated");
           throw std::out_of_range("");
         }
-        
+
         logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v),"Cache is not updated, timeSinceLastUpdate ("+std::to_string(timeSinceLastUpdate)+
         ") <= c_retrieveQueueCacheMaxAge ("+std::to_string(c_retrieveQueueCacheMaxAge)+")");
         // We're lucky: cache hit (and not stale)
@@ -425,7 +424,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
       g_retrieveQueueStatistics[v].updating=false;
       g_retrieveQueueStatistics[v].updateFuture=std::shared_future<void>();
       // Check we got the expected vid (and size of stats).
-      if (queuesStats.size()!=1) 
+      if (queuesStats.size()!=1)
         throw cta::exception::Exception("In Helpers::selectBestRetrieveQueue(): unexpected size for queueStats.");
       if (queuesStats.front().vid!=v)
         throw cta::exception::Exception("In Helpers::selectBestRetrieveQueue(): unexpected vid in queueStats.");
@@ -476,7 +475,7 @@ void Helpers::updateRetrieveQueueStatisticsCache(const std::string& vid, uint64_
   // We will not update the status of the tape if we already cached it (caller did not check),
   // We will also not update the update time, to force an update after a while.
   // If we update the entry while another thread is updating it, this is harmless (cache users will
-  // anyway wait, and just not profit from our update.  
+  // anyway wait, and just not profit from our update.
   threading::MutexLocker ml(g_retrieveQueueStatisticsMutex);
   try {
     g_retrieveQueueStatistics.at(vid).stats.filesQueued=files;
@@ -554,128 +553,6 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> Helpers::getRetrieveQueueS
 }
 
 //------------------------------------------------------------------------------
-// Helpers::getLockedAndFetchedDriveState()
-//------------------------------------------------------------------------------
-void Helpers::getLockedAndFetchedDriveState(DriveState& driveState, ScopedExclusiveLock& driveStateLock, 
-  AgentReference& agentReference, const std::string& driveName, log::LogContext& lc, CreateIfNeeded doCreate) {
-  Backend & be = driveState.m_objectStore;
-  // Try and get the location of the derive state lockfree (this should be most of the cases).
-  try {
-    RootEntry re(be);
-    re.fetchNoLock();
-    DriveRegister dr(re.getDriveRegisterAddress(), be);
-    dr.fetchNoLock();
-    driveState.setAddress(dr.getDriveAddress(driveName));
-    driveStateLock.lock(driveState);
-    driveState.fetch();
-    if (driveState.getOwner() != dr.getAddressIfSet()) {
-      std::string previouslySeenOwner=driveState.getOwner();
-      // We have a special case: the drive state is not owned by the
-      // drive register.
-      // As we are lock free, we will re-lock in proper order.
-      if (driveStateLock.isLocked()) driveStateLock.release();
-      ScopedExclusiveLock drl(dr);
-      dr.fetch();
-      // Re-get the state (could have changed).
-      driveState.resetAddress();
-      driveState.setAddress(dr.getDriveAddress(driveName));
-      driveStateLock.lock(driveState);
-      driveState.fetch();
-      // We have an exclusive lock on everything. We can now
-      // safely switch the owner of the drive status to the drive register
-      // (there is no other steady state ownership).
-      // return all as we are done.
-      log::ScopedParamContainer params (lc);
-      params.add("driveRegisterObject", dr.getAddressIfSet())
-            .add("driveStateObject", driveState.getAddressIfSet())
-            .add("driveStateCurrentOwner", driveState.getOwner())
-            .add("driveStatePreviouslySeenOwner", previouslySeenOwner);
-      lc.log(log::WARNING, "In Helpers::getLockedAndFetchedDriveState(): unexpected owner for driveState (should be register, will fix it).");
-      if (driveState.getOwner() != dr.getAddressIfSet()) {
-        driveState.setOwner(dr.getAddressIfSet());
-        driveState.commit();
-      }
-      // The drive register lock will be released automatically
-    }
-    // We're done with good day scenarios.
-    return;
-  } catch (...) {
-    // If anything goes wrong, we will suppose we have to create the drive state and do every step,
-    // one at time. Of course, this is far more costly (lock-wise).
-    // ... except if we were not supposed to create it.
-    if (doCreate == CreateIfNeeded::doNotCreate) {
-      throw NoSuchDrive("In Helpers::getLockedAndFetchedDriveState(): no such drive. Will not create it as instructed.");
-    }
-    RootEntry re(be);
-    re.fetchNoLock();
-    DriveRegister dr(re.getDriveRegisterAddress(), be);
-    ScopedExclusiveLock drl(dr);
-    dr.fetch();
-  checkDriveKnown:
-    try {
-      std::string dsAddress=dr.getDriveAddress(driveName);
-      // The drive is known. Check it does exist.
-      // We work in this order here because we are in one-off mode, so
-      // efficiency is not problematic.
-      if (be.exists(dsAddress)) {
-        driveState.setAddress(dsAddress);
-        driveStateLock.lock(driveState);
-        driveState.fetch();
-        if (driveState.getOwner() != dr.getAddressIfSet()) {
-          driveState.setOwner(dr.getAddressIfSet());
-          driveState.commit();
-        }
-      } else {
-        dr.removeDrive(driveName);
-        goto checkDriveKnown;
-      }
-    } catch (DriveRegister::NoSuchDrive &) {
-      // OK, we do need to create the drive status.
-      driveState.setAddress(agentReference.nextId(std::string ("DriveState-")+driveName));
-      driveState.initialize(driveName);
-      agentReference.addToOwnership(driveState.getAddressIfSet(), be);
-      driveState.setOwner(agentReference.getAgentAddress());
-      driveState.insert();
-      dr.setDriveAddress(driveName, driveState.getAddressIfSet());
-      dr.commit();
-      driveStateLock.lock(driveState);
-      driveState.fetch();
-      driveState.setOwner(dr.getAddressIfSet());
-      driveState.commit();
-      agentReference.removeFromOwnership(driveState.getAddressIfSet(), be);
-      return;
-    }
-  }
-}
-
-
-//------------------------------------------------------------------------------
-// Helpers::getAllDriveStates()
-//------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::DriveState> Helpers::getAllDriveStates(Backend& backend, log::LogContext &lc) {
-  std::list<cta::common::dataStructures::DriveState> ret;
-  // Get the register. Parallel get the states. Report... BUT if there are discrepancies, we 
-  // will need to do some cleanup.
-  RootEntry re(backend);
-  re.fetchNoLock();
-  DriveRegister dr(re.getDriveRegisterAddress(), backend);
-  dr.fetchNoLock();
-  std::list<DriveState> driveStates;
-  std::list<std::unique_ptr<DriveState::AsyncLockfreeFetcher>> driveStateFetchers;
-  for (auto & d: dr.getDriveAddresses()) {
-    driveStates.emplace_back(DriveState(d.driveStateAddress, backend));
-    driveStateFetchers.emplace_back(driveStates.back().asyncLockfreeFetch());
-  }
-  for (auto & df: driveStateFetchers) {
-    df->wait();
-  }
-  for (auto &d: driveStates) {
-    ret.emplace_back(d.getState());
-  }
-  return ret;
-}
-
-//------------------------------------------------------------------------------
 // Helpers::registerRepackRequestToIndex()
 //------------------------------------------------------------------------------
 void Helpers::registerRepackRequestToIndex(const std::string& vid, const std::string& requestAddress,
@@ -728,7 +605,7 @@ void Helpers::logUpdateCacheIfNeeded(const bool entryCreation, const RetrieveQue
     // Chomp newline in the end
     std::string date=std::ctime(&end_time);
     date.erase(std::remove(date.begin(), date.end(), '\n'), date.end());
-    logFile << date << " pid=" << ::getpid() << " tid=" << syscall(SYS_gettid) << " message=" << message << " entryCreation="<< entryCreation <<" vid=" 
+    logFile << date << " pid=" << ::getpid() << " tid=" << syscall(SYS_gettid) << " message=" << message << " entryCreation="<< entryCreation <<" vid="
             << tapeStatistic.tapeStatus.vid << " state=" << common::dataStructures::Tape::stateToString(tapeStatistic.tapeStatus.state) << " filesQueued=" << tapeStatistic.stats.filesQueued <<  std::endl;
   #endif //HELPERS_CACHE_UPDATE_LOGGING
 }

@@ -39,7 +39,6 @@
 #include "objectstore/AgentWrapper.hpp"
 #include "objectstore/ArchiveQueueAlgorithms.hpp"
 #include "objectstore/DriveRegister.hpp"
-#include "objectstore/DriveState.hpp"
 #include "objectstore/Helpers.hpp"
 #include "objectstore/RepackIndex.hpp"
 #include "objectstore/RepackQueue.hpp"
