@@ -1,10 +1,10 @@
-# v4.NEXT
+# v4.1-2
 
 ## Summary
 
 ### Features
 
-### Bug fixes
+- cta/CTA#976 Define a new table in the DB schema to contain the drive status.
 
 # v4.1-1
 
