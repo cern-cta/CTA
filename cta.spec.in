@@ -513,6 +513,12 @@ Remember to add its content to "%{_sysconfdir}/yum/pluginconf.d/versionlock.list
 EOF
 
 %changelog
+* Wed Aug 18 2021 volodymyr.yurchenko (at) cern.ch - 4.1-1
+- cta/CTA#1016 New options for filtering deleted files using `cta-admin rtf ls` command.
+- cta/CTA#983 Add cta-release package for public binary rpm distribution.
+- cta/CTA#980 Add external encryption script option
+- [frontend] New command "tapefile rm" allows deleting a copy of a file from tape
+- cta/CTA#1014 Fix last column alignment when more than 1000 items are listed.
 * Tue Jul 27 2021 julien.leduc (at) cern.ch - 4.0-5
 - [frontend] Add options to "tapepool ls" to filter tapepools on their name, vo and encryption
 - cta/CTA#898 cta-send-event now gets the requester id and eos instance as command line arguments
