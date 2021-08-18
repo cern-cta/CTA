@@ -1,10 +1,8 @@
-# v4.1-2
+# v4.NEXT
 
 ## Summary
 
 ### Features
-
-- cta/CTA#976 Define a new table in the DB schema to contain the drive status.
 
 # v4.1-1
 
@@ -14,6 +12,7 @@
 - cta/CTA#1016 New options for filtering deleted files using `cta-admin rtf ls` command.
 - cta/CTA#983 Add cta-release package for public binary rpm distribution.
 - cta/CTA#980 Add external encryption script option
+- cta/CTA#976 Define a new table in the DB schema to contain the drive status.
 
 - [frontend] New command "tapefile rm" allows deleting a copy of a file from tape
 
