@@ -44,6 +44,7 @@ using XrdSsiPb::PbException;
 
 #include <limits>
 #include <sstream>
+#include <string>
 
 namespace cta {
 namespace xrd {
