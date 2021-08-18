@@ -66,9 +66,9 @@ TapePoolLsStream::TapePoolLsStream(const RequestMessage &requestMsg, cta::catalo
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "TapePoolLsStream() constructor");
   cta::catalogue::TapePoolSearchCriteria searchCriteria;
 
-  searchCriteria.name = requestMsg.getOptional(OptionString_Key_TAPE_POOL);
-  searchCriteria.vo = requestMsg.getOptional(OptionString_Key_VO);
-  searchCriteria.encrypted = requestMsg.getOptional(OptionBoolean_Key_ENCRYPTED);
+  searchCriteria.name = requestMsg.getOptional(OptionString::TAPE_POOL);
+  searchCriteria.vo = requestMsg.getOptional(OptionString::VO);
+  searchCriteria.encrypted = requestMsg.getOptional(OptionBoolean::ENCRYPTED);
 
   m_tapePoolList = m_catalogue.getTapePools(searchCriteria);
 }

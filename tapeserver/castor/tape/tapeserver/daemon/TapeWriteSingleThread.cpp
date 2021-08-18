@@ -82,7 +82,7 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeCleaning::~TapeClea
       m_this.m_drive.waitUntilReady(waitMediaInDriveTimeout);
     } catch (cta::exception::TimeOut &) {}
     if (!m_this.m_drive.hasTapeInPlace()) {
-      m_this.m_logContext.log(cta::log::INFO, "TapeReadSingleThread: No tape to unload");
+      m_this.m_logContext.log(cta::log::INFO, "TapeWriteSingleThread: No tape to unload");
       goto done;
     }
     // in the special case of a "manual" mode tape, we should skip the unload too.
