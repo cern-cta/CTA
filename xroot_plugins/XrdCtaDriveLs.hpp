@@ -136,6 +136,8 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     dr_item->set_raw_library_slot(dr.rawLibrarySlot ? dr.rawLibrarySlot.value() : "");
     dr_item->set_comment(dr.userComment ? dr.userComment.value() : "");
     dr_item->set_reason(dr.reasonUpDown ? dr.reasonUpDown.value() : "");
+    dr_item->set_disk_system_name(dr.diskSystemName);
+    dr_item->set_reserved_bytes(dr.reservedBytes);
 
     auto driveConfig = dr_item->mutable_drive_config();
 
