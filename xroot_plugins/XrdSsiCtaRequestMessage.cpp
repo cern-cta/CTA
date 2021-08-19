@@ -282,6 +282,10 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
            case cmd_pair(AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_LS):
                processRecycleTapeFile_Ls(response,stream);
                break;
+           case cmd_pair(AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_RESTORE):
+               processRecycleTapeFile_Restore(response);
+               break;
+           
             default:
                throw PbException("Admin command pair <" +
                      AdminCmd_Cmd_Name(request.admincmd().cmd()) + ", " +
@@ -2143,6 +2147,41 @@ void RequestMessage::processRecycleTapeFile_Ls(cta::xrd::Response &response, Xrd
   stream = new RecycleTapeFileLsStream(*this,m_catalogue,m_scheduler);
   
   response.set_show_header(HeaderType::RECYLETAPEFILE_LS);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+void RequestMessage::processRecycleTapeFile_Restore(cta::xrd::Response& response) {
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+   using namespace cta::admin;
+
+  bool has_any = false;
+  cta::catalogue::RecycleTapeFileSearchCriteria searchCriteria;
+  
+  searchCriteria.vid = getOptional(OptionString::VID, &has_any);  
+  auto diskFileId = getOptional(OptionString::FXID, &has_any);
+  searchCriteria.diskFileIds = getOptional(OptionStrList::FILE_ID, &has_any);
+  
+  if(diskFileId){
+    // single option on the command line we need to do the conversion ourselves.
+    if(!searchCriteria.diskFileIds) searchCriteria.diskFileIds = std::vector<std::string>();
+
+    auto fid = strtol(diskFileId->c_str(), nullptr, 16);
+    if(fid < 1 || fid == LONG_MAX) {
+       throw cta::exception::UserError(*diskFileId + " is not a valid file ID");
+    }
+
+    searchCriteria.diskFileIds->push_back(std::to_string(fid));
+  }
+  // Disk instance on its own does not give a valid set of search criteria (no &has_any)
+  searchCriteria.diskInstance = getOptional(OptionString::INSTANCE);
+  searchCriteria.archiveFileId = getOptional(OptionUInt64::ARCHIVE_FILE_ID, &has_any);
+  // Copy number on its own does not give a valid set of search criteria (no &has_any)
+  searchCriteria.copynb = getOptional(OptionUInt64::COPY_NUMBER);
+
+  if(!has_any){
+    throw cta::exception::UserError("Must specify at least one search option");
+  }
+   m_catalogue.restoreFilesInRecycleLog(searchCriteria);
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 

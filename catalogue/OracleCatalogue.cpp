@@ -1149,6 +1149,99 @@ void OracleCatalogue::copyTapeFileToFileRecyleLogAndDelete(rdbms::Conn & conn, c
   } 
 }
 
+//------------------------------------------------------------------------------
+// restoreFileCopiesInRecycleLog
+//------------------------------------------------------------------------------
+void OracleCatalogue::restoreFileCopiesInRecycleLog(rdbms::Conn & conn, FileRecycleLogItor &fileRecycleLogItor, log::LogContext & lc) {
+try {
+    utils::Timer t;
+    log::TimingList tl;
+
+    //put fileRecycleLogs in std::list so we can release the underlying fileRecycleLogItor database connection
+    //otherwise we are using two conns when calling getArchiveFilesItor
+    std::list<common::dataStructures::FileRecycleLog> fileRecycleLogList;
+    while (fileRecycleLogItor.hasMore()) {
+      auto fileRecycleLog = fileRecycleLogItor.next();
+      fileRecycleLogList.push_back(fileRecycleLog);
+    }
+
+    //We currently do all file copies restoring in a single transaction
+    conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+    for (auto &fileRecycleLog: fileRecycleLogList) {     
+      TapeFileSearchCriteria searchCriteria;
+      searchCriteria.archiveFileId = fileRecycleLog.archiveFileId;
+      searchCriteria.diskInstance = fileRecycleLog.diskInstanceName;
+      searchCriteria.diskFileIds = std::vector<std::string>();
+      searchCriteria.diskFileIds.value().push_back(fileRecycleLog.diskFileId);
+
+      auto itor = getArchiveFilesItor(conn, searchCriteria); 
+      if (itor.hasMore()) {
+        //only restore file copies, do nothing if file has been completely deleted in CTA
+        cta::common::dataStructures::ArchiveFile archiveFile = itor.next();
+        if (archiveFile.tapeFiles.find(fileRecycleLog.copyNb) != archiveFile.tapeFiles.end()) {
+          //copy with same copy_nb exists, cannot restore
+          UserSpecifiedExistingDeletedFileCopy ex;
+          ex.getMessage() << "Cannot restore file copy with archiveFileId " << std::to_string(fileRecycleLog.archiveFileId) 
+          << " and copy_nb " << std::to_string(fileRecycleLog.copyNb) << " because a tapefile with same archiveFileId and copy_nb already exists";
+          throw ex;
+        }
+        restoreFileCopyInRecycleLog(conn, fileRecycleLog, lc);
+      }
+    }
+    conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_ON);
+    conn.commit();
+
+    log::ScopedParamContainer spc(lc);
+    tl.insertAndReset("commitTime",t);
+    tl.addToLog(spc);
+    lc.log(log::INFO,"In OracleCatalogue::restoreFileCopiesInRecycleLog: all file copies successfully restored.");
+
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// restoreFileCopyInRecycleLog
+//------------------------------------------------------------------------------
+void OracleCatalogue::restoreFileCopyInRecycleLog(rdbms::Conn & conn, const common::dataStructures::FileRecycleLog &fileRecycleLog, log::LogContext & lc) {
+  try {
+    utils::Timer t;
+    log::TimingList tl;
+    cta::common::dataStructures::TapeFile tapeFile;
+    tapeFile.vid = fileRecycleLog.vid;
+    tapeFile.fSeq = fileRecycleLog.fSeq;
+    tapeFile.copyNb = fileRecycleLog.copyNb;
+    tapeFile.blockId = fileRecycleLog.blockId;
+    tapeFile.fileSize = fileRecycleLog.sizeInBytes;
+    tapeFile.creationTime = fileRecycleLog.tapeFileCreationTime;
+
+    insertTapeFile(conn, tapeFile, fileRecycleLog.archiveFileId);
+    tl.insertAndReset("insertTapeFileTime",t);
+    
+    deleteTapeFileCopyFromRecycleBin(conn, fileRecycleLog);
+    tl.insertAndReset("deleteTapeFileCopyFromRecycleBinTime",t);
+    
+    log::ScopedParamContainer spc(lc);
+    spc.add("vid", tapeFile.vid);
+    spc.add("archiveFileId", fileRecycleLog.archiveFileId);
+    spc.add("fSeq", tapeFile.fSeq);
+    spc.add("copyNb", tapeFile.copyNb);
+    spc.add("fileSize", tapeFile.fileSize);
+    tl.addToLog(spc);
+    lc.log(log::INFO,"In OracleCatalogue::restoreFileCopyInRecycleLog: File restored from the recycle log.");
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+
 
 } // namespace catalogue
 } // namespace cta

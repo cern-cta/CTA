@@ -123,6 +123,7 @@ CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedStorageClassUsedByArchiveFiles);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedStorageClassUsedByArchiveRoutes);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedStorageClassUsedByFileRecycleLogs);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedTapePoolUsedInAnArchiveRoute);
+CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedExistingDeletedFileCopy);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentTapeState);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);
 
@@ -900,6 +901,15 @@ public:
    * @return The deleted archive files ordered by archive file ID.
    */
   virtual FileRecycleLogItor getFileRecycleLogItor(const RecycleTapeFileSearchCriteria & searchCriteria = RecycleTapeFileSearchCriteria()) const = 0;
+  
+
+  /**
+   * Restores the deleted files in the Recycle log that match the criteria passed
+   *
+   * @param searchCriteria The search criteria
+   */
+  virtual void restoreFilesInRecycleLog(const RecycleTapeFileSearchCriteria & searchCriteria = RecycleTapeFileSearchCriteria()) = 0;
+
 
   /**
    * Returns the specified files in tape file sequence order.
@@ -967,6 +977,7 @@ public:
       const std::string &diskFileId,
       const std::string &diskInstanceName,
       const std::string &reason) = 0;
+
 
 
   /**
