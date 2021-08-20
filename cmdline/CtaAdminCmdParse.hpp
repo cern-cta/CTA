@@ -67,6 +67,13 @@ public:
    }
 
    /*!
+    * Check if the supplied option matches the option
+    */
+   bool operator==(const Option &option) const {
+      return option == m_short_opt || option == m_long_opt;
+   }
+
+   /*!
     * Return the type of this option
     */
    option_t get_type() const { return m_type; }
@@ -346,7 +353,9 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
                         "\n  This is a synchronous command that sets and reads back the state of one or\n"
                           "  more drives. The <drive_name> option accepts a regular expression. If the\n"
                           "  --force option is not set, the drives will complete any running mount and\n"
-                          "  drives must be in the down state before deleting.\n\n"
+                          "  drives must be in the down state before deleting. If the <drive_name> option\n"
+                          "  is set to first, the up, down, ls and ch commands will use the first drive\n"
+                          "  listed in TPCONFIG\n\n"
                                          }},
    { AdminCmd::CMD_FAILEDREQUEST,        { "failedrequest",        "fr",  { "ls", "rm" } }},
    { AdminCmd::CMD_GROUPMOUNTRULE,       { "groupmountrule",       "gmr", { "add", "ch", "rm", "ls" } }},
@@ -432,7 +441,6 @@ const Option opt_comment              { Option::OPT_STR,  "--comment",          
 const Option opt_copynb               { Option::OPT_UINT, "--copynb",                "-c",   " <copy_number>" };
 const Option opt_copynb_alias         { Option::OPT_UINT, "--numberofcopies",        "-c",   " <number_of_copies>", "--copynb" };
 const Option opt_disabled             { Option::OPT_BOOL, "--disabled",              "-d",   " <\"true\" or \"false\">" };
-const Option opt_drivename            { Option::OPT_STR,  "--drive",                 "-d",   " <drive_name>" };
 const Option opt_drivename_cmd        { Option::OPT_CMD,  "--drive",                 "",     "<drive_name>" };
 const Option opt_encrypted            { Option::OPT_BOOL, "--encrypted",             "-e",   " <\"true\" or \"false\">" };
 const Option opt_encryptionkeyname    { Option::OPT_STR,  "--encryptionkeyname",     "-k",   " <encryption_key_name>" };
@@ -511,8 +519,8 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_UP    }, { opt_drivename_cmd, opt_reason.optional() }},
    {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_DOWN  }, { opt_drivename_cmd, opt_reason, opt_force_flag.optional() }},
-   {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_LS    }, { opt_drivename.optional() }},
-   {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_RM    }, { opt_drivename_cmd, opt_force_flag.optional() }},
+   {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_LS    }, { opt_drivename_cmd.optional() }},
+   {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_RM    }, { opt_drivename_cmd, opt_force_flag.optional()}},
    {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_CH    }, { opt_drivename_cmd, opt_comment }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_FAILEDREQUEST,        AdminCmd::SUBCMD_LS    },
@@ -635,5 +643,4 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
  * Throws a std::runtime_error if the command is invalid
  */
 void validateCmd(const cta::admin::AdminCmd &admincmd);
-
 }} // namespace cta::admin
