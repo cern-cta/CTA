@@ -533,6 +533,10 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getFileRecycleLogItor(searchCriteria);}, m_maxTriesToConnect);
   }
   
+  void restoreFilesInRecycleLog(const RecycleTapeFileSearchCriteria & searchCriteria) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->restoreFilesInRecycleLog(searchCriteria);}, m_maxTriesToConnect);
+  }
+
   void deleteFileFromRecycleBin(const uint64_t archiveFileId, log::LogContext &lc){
     return retryOnLostConnection(m_log,[&]{return m_catalogue->deleteFileFromRecycleBin(archiveFileId,lc);},m_maxTriesToConnect);
   }

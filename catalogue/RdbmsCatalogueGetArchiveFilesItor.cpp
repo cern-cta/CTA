@@ -142,9 +142,13 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
       addedAWhereConstraint = true;
     }
 
-    // Order by FSEQ if we are listing the contents of a tape, else order by archive file ID
+    // Order by FSEQ if we are listing the contents of a tape, 
+    // by DISK_FILE_ID if listing the contents of a DISK_INSTANCE 
+    // else order by archive file ID
     if(searchCriteria.vid) {
       sql += " ORDER BY FSEQ";
+    } else if (searchCriteria.diskInstance) {
+      sql += " ORDER BY DISK_FILE_ID";
     } else {
       sql += " ORDER BY ARCHIVE_FILE_ID, COPY_NB";
     }

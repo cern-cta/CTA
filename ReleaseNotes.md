@@ -13,6 +13,7 @@
 - cta/CTA#983 Add cta-release package for public binary rpm distribution.
 - cta/CTA#980 Add external encryption script option
 - cta/CTA#976 Define a new table in the DB schema to contain the drive status.
+- cta/CTA#834 New command "recycletf restore" allows undeleting a copy of a file from tape deleted using tapefile rm
 
 - [frontend] New command "tapefile rm" allows deleting a copy of a file from tape
 

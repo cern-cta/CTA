@@ -839,6 +839,15 @@ public:
    */
   void checkTapeFileSearchCriteria(const TapeFileSearchCriteria &searchCriteria) const;
 
+    /**
+   * Throws a UserError exception if the specified searchCriteria is not valid
+   * due to a user error.
+   *
+   * @param conn The database connection.
+   * @param searchCriteria The search criteria.
+   */
+  void checkTapeFileSearchCriteria(rdbms::Conn &conn, const TapeFileSearchCriteria &searchCriteria) const;
+  
   /**
    * Returns the specified archive files.  Please note that the list of files
    * is ordered by archive file ID.
@@ -847,6 +856,17 @@ public:
    * @return The archive files.
    */
   ArchiveFileItor getArchiveFilesItor(const TapeFileSearchCriteria &searchCriteria) const override;
+
+
+  /**
+   * Returns the specified archive files.  Please note that the list of files
+   * is ordered by archive file ID.
+   *
+   * @param conn The database connection.
+   * @param searchCriteria The search criteria.
+   * @return The archive files.
+   */
+  ArchiveFileItor getArchiveFilesItor(rdbms::Conn &conn, const TapeFileSearchCriteria &searchCriteria) const;
 
   /**
    * Throws a UserError exception if the specified searchCriteria is not valid
@@ -864,6 +884,13 @@ public:
    */
   FileRecycleLogItor getFileRecycleLogItor(const RecycleTapeFileSearchCriteria & searchCriteria) const override;
   
+  /**
+   * Restores the deleted files in the Recycle log that match the criteria passed
+   *
+   * @param searchCriteria The search criteria
+   */
+  void restoreFilesInRecycleLog(const RecycleTapeFileSearchCriteria & searchCriteria) override;
+
   /**
    * Returns the specified files in tape file sequence order.
    *
@@ -1924,6 +1951,14 @@ protected:
   virtual void copyArchiveFileToFileRecyleLogAndDelete(rdbms::Conn & conn,const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc) = 0;
   
   /**
+   * Copy the fileRecycleLog to the TAPE_FILE table and deletes the corresponding FILE_RECYCLE_LOG table entry
+   * @param conn the database connection
+   * @param fileRecycleLog the fileRecycleLog we want to restore
+   * @param lc the log context
+   */
+  virtual void restoreFileCopiesInRecycleLog(rdbms::Conn & conn, FileRecycleLogItor &fileRecycleLogItor, log::LogContext & lc) = 0;
+  
+  /**
    * Copies the ARCHIVE_FILE and TAPE_FILE entries to the recycle-bin tables 
    * @param conn the database connection
    * @param request the request that contains the necessary informations to identify the archiveFile to copy to the recycle-bin
@@ -2038,6 +2073,8 @@ protected:
    */
   void deleteTapeFilesFromRecycleBin(rdbms::Conn & conn, const uint64_t archiveFileId);
   
+  void deleteTapeFileCopyFromRecycleBin(cta::rdbms::Conn & conn, const common::dataStructures::FileRecycleLog fileRecycleLog);
+
   /**
    * Delete the archive file from the ARCHIVE_FILE recycle-bin
    * @param conn the database connection
