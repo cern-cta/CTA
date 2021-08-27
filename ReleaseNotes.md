@@ -3,6 +3,7 @@
 ## Summary
 
 ### Features
+- cta/CTA#1001 Maximum file size is now defined by VO instead of globally.
 
 # v4.1-1
 

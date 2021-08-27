@@ -273,6 +273,7 @@ public:
     vo.name = "vo";
     vo.readMaxDrives = 1;
     vo.writeMaxDrives = 1;
+    vo.maxFileSize = 0;
     vo.comment = "comment";
     return vo;
   }

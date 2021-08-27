@@ -212,6 +212,7 @@ public:
     vo.comment = "comment";
     vo.writeMaxDrives = 1;
     vo.readMaxDrives = 1;
+    vo.maxFileSize = 0;
     m_catalogue->createVirtualOrganization(s_adminOnAdminHost,vo);
     
     common::dataStructures::StorageClass storageClass;
@@ -684,6 +685,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     vo.comment = "comment";
     vo.writeMaxDrives = 1;
     vo.readMaxDrives = 1;
+    vo.maxFileSize = 0;
     catalogue.createVirtualOrganization(s_adminOnAdminHost,vo);
     
     common::dataStructures::StorageClass storageClass;

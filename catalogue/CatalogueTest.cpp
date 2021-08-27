@@ -77,6 +77,7 @@ namespace {
     vo.comment = "Creation of virtual organization vo";
     vo.readMaxDrives = 1;
     vo.writeMaxDrives = 1;
+    vo.maxFileSize = 0;
     return vo;
   }
 
@@ -88,6 +89,7 @@ namespace {
     vo.comment = "Creation of another virtual organization vo";
     vo.readMaxDrives = 1;
     vo.writeMaxDrives = 1;
+    vo.maxFileSize = 0;
     return vo;
   }
 
@@ -15132,6 +15134,24 @@ TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationWriteMaxDrives) {
   ASSERT_EQ(writeMaxDrives,frontVo.writeMaxDrives);
   
   ASSERT_THROW(m_catalogue->modifyVirtualOrganizationWriteMaxDrives(m_admin,"DOES not exists",writeMaxDrives),cta::exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationMaxFileSize) {
+  using namespace cta;
+  
+  common::dataStructures::VirtualOrganization vo = getVo();
+  
+  ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
+  
+  uint64_t maxFileSize = 1;
+  ASSERT_NO_THROW(m_catalogue->modifyVirtualOrganizationMaxFileSize(m_admin,vo.name,maxFileSize));
+  
+  auto vos = m_catalogue->getVirtualOrganizations();
+  auto &frontVo = vos.front();
+  
+  ASSERT_EQ(maxFileSize,frontVo.maxFileSize);
+  
+  ASSERT_THROW(m_catalogue->modifyVirtualOrganizationMaxFileSize(m_admin,"DOES not exists", maxFileSize),cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getVirtualOrganizationOfTapepool) {

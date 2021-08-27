@@ -471,10 +471,12 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
       throw PbException("File is in fail_on_closew_test storage class, which always fails.");
    }
 
+   auto storageClass = m_catalogue.getStorageClass(storageClassItor->second);
+
    // Disallow archival of files above the specified limit
-   if(notification.file().size() > m_archiveFileMaxSize) {
+   if(storageClass.vo.maxFileSize && notification.file().size() > storageClass.vo.maxFileSize) {
       throw exception::UserError("Archive request rejected: file size (" + std::to_string(notification.file().size()) +
-                                 " bytes) exceeds maximum allowed size (" + std::to_string(m_archiveFileMaxSize) + " bytes)");
+                                 " bytes) exceeds maximum allowed size (" + std::to_string(storageClass.vo.maxFileSize) + " bytes)");
    }
 
    cta::common::dataStructures::ArchiveRequest request;
@@ -2002,11 +2004,19 @@ void RequestMessage::processVirtualOrganization_Add(cta::xrd::Response &response
   const auto &writeMaxDrives = getRequired(OptionUInt64::WRITE_MAX_DRIVES);
   const auto &comment = getRequired(OptionString::COMMENT);
   
+  const auto &maxFileSizeOpt = getOptional(OptionUInt64::MAX_FILE_SIZE);
+
   cta::common::dataStructures::VirtualOrganization vo;
   vo.name = name;
   vo.readMaxDrives = readMaxDrives;
   vo.writeMaxDrives = writeMaxDrives;
   vo.comment = comment;
+
+  if (maxFileSizeOpt) {
+    vo.maxFileSize = maxFileSizeOpt.value();
+  } else {
+    vo.maxFileSize = m_archiveFileMaxSize;
+  }
   
   m_catalogue.createVirtualOrganization(m_cliIdentity,vo);
   
@@ -2020,6 +2030,7 @@ void RequestMessage::processVirtualOrganization_Ch(cta::xrd::Response &response)
   const auto readMaxDrives = getOptional(OptionUInt64::READ_MAX_DRIVES);
   const auto writeMaxDrives = getOptional(OptionUInt64::WRITE_MAX_DRIVES);
   const auto comment = getOptional(OptionString::COMMENT);
+  const auto maxFileSize = getOptional(OptionUInt64::MAX_FILE_SIZE);
   
   if(comment)
     m_catalogue.modifyVirtualOrganizationComment(m_cliIdentity,name,comment.value());
@@ -2029,6 +2040,9 @@ void RequestMessage::processVirtualOrganization_Ch(cta::xrd::Response &response)
   
   if(writeMaxDrives)
     m_catalogue.modifyVirtualOrganizationWriteMaxDrives(m_cliIdentity,name,writeMaxDrives.value());
+  
+  if(maxFileSize)
+    m_catalogue.modifyVirtualOrganizationMaxFileSize(m_cliIdentity,name,maxFileSize.value());
   
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }

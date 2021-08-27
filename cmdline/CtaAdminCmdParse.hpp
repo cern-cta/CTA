@@ -284,6 +284,7 @@ const std::map<std::string, OptionUInt64::Key> uint64Options = {
    { "--capacity",              OptionUInt64::CAPACITY },
    { "--copynb",                OptionUInt64::COPY_NUMBER },
    { "--id",                    OptionUInt64::ARCHIVE_FILE_ID },
+   {"--maxfilesize",            OptionUInt64::MAX_FILE_SIZE},
    { "--maxlpos",               OptionUInt64::MAX_LPOS },
    { "--minarchiverequestage",  OptionUInt64::MIN_ARCHIVE_REQUEST_AGE },
    { "--minlpos",               OptionUInt64::MIN_LPOS },
@@ -414,7 +415,8 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
                                            "   * Specify the name (--vo) of the virtual organization. It must be unique.\n"
                                            "   * Specify the maximum number of drives the virtual organization is allowed to use for writing with the --writemaxdrives parameter\n"
                                            "   * Specify the maximum number of drives the virtual organization is allowed to use for reading with the --readmaxdrives parameter\n"
-                                           "   * Specify the comment (--comment) associated to the virtual organization"
+                                           "   * Specify the comment (--comment) associated to the virtual organization\n"
+                                           "   * Specify the maximum file size (--maxfilesize) associated to the virtual organization (optional, a value of 0 means no limit)"
                                            "\n\n"
                                          }},
    { AdminCmd::CMD_VERSION,              { "version",               "v",  { } }},
@@ -459,6 +461,7 @@ const Option opt_log                  { Option::OPT_FLAG, "--log",              
 const Option opt_logicallibrary       { Option::OPT_STR,  "--logicallibrary",        "-l",   " <logical_library_name>" };
 const Option opt_logicallibrary_alias { Option::OPT_STR,  "--name",                  "-n",   " <logical_library_name>", "--logicallibrary" };
 const Option opt_lookupns             { Option::OPT_FLAG, "--lookupnamespace",       "-l",   "" };
+const Option opt_maxfilesize          { Option::OPT_UINT, "--maxfilesize",           "-mfs", " <maximum_file_size>" };
 const Option opt_maxlpos              { Option::OPT_UINT, "--maxlpos",               "-maxl", " <maximum_longitudinal_position>" };
 const Option opt_mediatype            { Option::OPT_STR,  "--mediatype",             "--mt", " <media_type_name>" };
 const Option opt_mediatype_alias      { Option::OPT_STR,  "--name",                  "-n",   " <media_type_name>", "--mediatype" };
@@ -620,9 +623,9 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_DISKSYSTEM,           AdminCmd::SUBCMD_RM    }, { opt_disksystem }},
    {{ AdminCmd::CMD_DISKSYSTEM,           AdminCmd::SUBCMD_LS    }, { }},
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_ADD   },
-      { opt_vo, opt_read_max_drives, opt_write_max_drives, opt_comment }},
+      { opt_vo, opt_read_max_drives, opt_write_max_drives, opt_comment, opt_maxfilesize.optional() }},
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_CH   },
-      { opt_vo, opt_comment.optional(), opt_read_max_drives.optional(), opt_write_max_drives.optional() }},
+      { opt_vo, opt_comment.optional(), opt_read_max_drives.optional(), opt_write_max_drives.optional(), opt_maxfilesize.optional() }},
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_RM   },
       { opt_vo }},
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_LS   },

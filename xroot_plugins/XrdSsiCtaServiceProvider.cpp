@@ -153,7 +153,7 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
 
    // Initialise the Frontend
    auto archiveFileMaxSize = config.getOptionValueInt("cta.archivefile.max_size_gb");
-   m_archiveFileMaxSize = archiveFileMaxSize.first ? archiveFileMaxSize.second : 2048; // GB
+   m_archiveFileMaxSize = archiveFileMaxSize.first ? archiveFileMaxSize.second : 0; // GB
    m_archiveFileMaxSize *= 1024*1024*1024; // bytes
 
    // Get the repack buffer URL

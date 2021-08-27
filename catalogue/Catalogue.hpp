@@ -332,7 +332,15 @@ public:
    * @param writeMaxDrives the new max number of allocated drives for write for the specified Virtual Organization
    */
   virtual void modifyVirtualOrganizationWriteMaxDrives(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t writeMaxDrives) = 0;
-  
+
+  /**
+   * Modifies the max size of files  for the specified Virtual Organization
+   * 
+   * @param voName the VO name
+   * @param maxFileSize the new max file size for the specified Virtual Organization
+   */
+  virtual void modifyVirtualOrganizationMaxFileSize(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t maxFileSize) = 0;
+
   /**
    * Modifies the comment of the specified Virtual Organization
    *
@@ -359,6 +367,8 @@ public:
   virtual void deleteStorageClass(const std::string &storageClassName) = 0;
 
   virtual std::list<common::dataStructures::StorageClass> getStorageClasses() const = 0;
+  virtual common::dataStructures::StorageClass getStorageClass(const std::string &name) const = 0;
+
   virtual void modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t nbCopies) = 0;
   virtual void modifyStorageClassComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) = 0;
   virtual void modifyStorageClassVo(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo) = 0;

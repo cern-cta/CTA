@@ -329,6 +329,7 @@ void RdbmsCatalogue::createVirtualOrganization(const common::dataStructures::Sec
         
         "READ_MAX_DRIVES,"
         "WRITE_MAX_DRIVES,"
+        "MAX_FILE_SIZE,"
 
         "USER_COMMENT,"
 
@@ -344,6 +345,7 @@ void RdbmsCatalogue::createVirtualOrganization(const common::dataStructures::Sec
         ":VIRTUAL_ORGANIZATION_NAME,"
         ":READ_MAX_DRIVES,"
         ":WRITE_MAX_DRIVES,"
+        ":MAX_FILE_SIZE,"
 
         ":USER_COMMENT,"
 
@@ -361,6 +363,7 @@ void RdbmsCatalogue::createVirtualOrganization(const common::dataStructures::Sec
     
     stmt.bindUint64(":READ_MAX_DRIVES",vo.readMaxDrives);
     stmt.bindUint64(":WRITE_MAX_DRIVES",vo.writeMaxDrives);
+    stmt.bindUint64(":MAX_FILE_SIZE", vo.maxFileSize);
 
     stmt.bindString(":USER_COMMENT", vo.comment);
     
@@ -436,6 +439,7 @@ std::list<common::dataStructures::VirtualOrganization> RdbmsCatalogue::getVirtua
 
         "READ_MAX_DRIVES AS READ_MAX_DRIVES,"
         "WRITE_MAX_DRIVES AS WRITE_MAX_DRIVES,"
+        "MAX_FILE_SIZE AS MAX_FILE_SIZE,"
 
         "USER_COMMENT AS USER_COMMENT,"
 
@@ -460,6 +464,7 @@ std::list<common::dataStructures::VirtualOrganization> RdbmsCatalogue::getVirtua
 
       virtualOrganization.readMaxDrives = rset.columnUint64("READ_MAX_DRIVES");
       virtualOrganization.writeMaxDrives = rset.columnUint64("WRITE_MAX_DRIVES");
+      virtualOrganization.maxFileSize = rset.columnUint64("MAX_FILE_SIZE");
       virtualOrganization.comment = rset.columnString("USER_COMMENT");
       virtualOrganization.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
       virtualOrganization.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
@@ -506,7 +511,8 @@ common::dataStructures::VirtualOrganization RdbmsCatalogue::getVirtualOrganizati
 
         "VIRTUAL_ORGANIZATION.READ_MAX_DRIVES AS READ_MAX_DRIVES,"
         "VIRTUAL_ORGANIZATION.WRITE_MAX_DRIVES AS WRITE_MAX_DRIVES,"
-
+        "VIRTUAL_ORGANIZATION.MAX_FILE_SIZE AS MAX_FILE_SIZE,"
+        
         "VIRTUAL_ORGANIZATION.USER_COMMENT AS USER_COMMENT,"
 
         "VIRTUAL_ORGANIZATION.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
@@ -535,6 +541,7 @@ common::dataStructures::VirtualOrganization RdbmsCatalogue::getVirtualOrganizati
     virtualOrganization.name = rset.columnString("VIRTUAL_ORGANIZATION_NAME");
     virtualOrganization.readMaxDrives = rset.columnUint64("READ_MAX_DRIVES");
     virtualOrganization.writeMaxDrives = rset.columnUint64("WRITE_MAX_DRIVES");
+    virtualOrganization.maxFileSize = rset.columnUint64("MAX_FILE_SIZE");
     virtualOrganization.comment = rset.columnString("USER_COMMENT");
     virtualOrganization.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
     virtualOrganization.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
@@ -665,6 +672,42 @@ void RdbmsCatalogue::modifyVirtualOrganizationWriteMaxDrives(const common::dataS
    
     auto stmt = conn.createStmt(sql);
     stmt.bindUint64(":WRITE_MAX_DRIVES", writeMaxDrives);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":VIRTUAL_ORGANIZATION_NAME", voName);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify virtual organization : ") + voName +
+        " because it does not exist");
+    }
+    
+    m_tapepoolVirtualOrganizationCache.invalidate();
+    
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+void RdbmsCatalogue::modifyVirtualOrganizationMaxFileSize(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t maxFileSize){
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE VIRTUAL_ORGANIZATION SET "
+        "MAX_FILE_SIZE = :MAX_FILE_SIZE,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME";
+    auto conn = m_connPool.getConn();
+   
+    auto stmt = conn.createStmt(sql);
+    stmt.bindUint64(":MAX_FILE_SIZE", maxFileSize);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
@@ -1103,6 +1146,65 @@ std::list<common::dataStructures::StorageClass> RdbmsCatalogue::getStorageClasse
     throw;
   }
 }
+
+//------------------------------------------------------------------------------
+// getStorageClasses
+//------------------------------------------------------------------------------
+common::dataStructures::StorageClass RdbmsCatalogue::getStorageClass(const std::string &name) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,"
+        "NB_COPIES AS NB_COPIES,"
+        "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME,"
+        "VIRTUAL_ORGANIZATION.MAX_FILE_SIZE AS MAX_FILE_SIZE,"
+        "STORAGE_CLASS.USER_COMMENT AS USER_COMMENT,"
+
+        "STORAGE_CLASS.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "STORAGE_CLASS.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "STORAGE_CLASS.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+
+        "STORAGE_CLASS.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "STORAGE_CLASS.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "STORAGE_CLASS.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+      "FROM "
+        "STORAGE_CLASS "
+      "INNER JOIN "
+        "VIRTUAL_ORGANIZATION ON STORAGE_CLASS.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID "
+      "WHERE "
+        "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":STORAGE_CLASS_NAME", name);
+    auto rset = stmt.executeQuery();
+    if (rset.isEmpty()) {
+      throw exception::UserError(std::string("Cannot get storage class : ") + name +
+        " because it does not exist");
+    }
+    rset.next();
+    common::dataStructures::StorageClass storageClass;
+
+    storageClass.name = rset.columnString("STORAGE_CLASS_NAME");
+    storageClass.nbCopies = rset.columnUint64("NB_COPIES");
+    storageClass.vo.name = rset.columnString("VIRTUAL_ORGANIZATION_NAME");
+    storageClass.vo.maxFileSize = rset.columnUint64("MAX_FILE_SIZE");
+    storageClass.comment = rset.columnString("USER_COMMENT");
+    storageClass.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+    storageClass.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+    storageClass.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+    storageClass.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+    storageClass.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+    storageClass.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
+  
+    return storageClass;
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
 
 //------------------------------------------------------------------------------
 // modifyStorageClassNbCopies
