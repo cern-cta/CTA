@@ -484,6 +484,7 @@ const Option opt_tapepool             { Option::OPT_STR,  "--tapepool",         
 const Option opt_tapepool_alias       { Option::OPT_STR,  "--name",                  "-n",   " <tapepool_name>", "--tapepool" };
 const Option opt_username             { Option::OPT_STR,  "--username",              "-u",   " <user_name>" };
 const Option opt_username_alias       { Option::OPT_STR,  "--name",                  "-n",   " <user_name>", "--username" };
+const Option opt_groupname_alias      { Option::OPT_STR,  "--name",                  "-n",   " <group_name>", "--username" };
 const Option opt_vendor               { Option::OPT_STR,  "--vendor",                "--ve", " <vendor>" };
 const Option opt_vid                  { Option::OPT_STR,  "--vid",                   "-v",   " <vid>" };
 const Option opt_vo                   { Option::OPT_STR,  "--virtualorganisation",   "--vo", " <virtual_organisation>" };
@@ -532,10 +533,10 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_FAILEDREQUEST,        AdminCmd::SUBCMD_RM    }, { opt_object_id }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_GROUPMOUNTRULE,       AdminCmd::SUBCMD_ADD   },
-      { opt_instance, opt_username_alias, opt_mountpolicy, opt_comment }},
+      { opt_instance, opt_groupname_alias, opt_mountpolicy, opt_comment }},
    {{ AdminCmd::CMD_GROUPMOUNTRULE,       AdminCmd::SUBCMD_CH    },
-      { opt_instance, opt_username_alias, opt_mountpolicy.optional(), opt_comment.optional() }},
-   {{ AdminCmd::CMD_GROUPMOUNTRULE,       AdminCmd::SUBCMD_RM    }, { opt_instance, opt_username_alias }},
+      { opt_instance, opt_groupname_alias, opt_mountpolicy.optional(), opt_comment.optional() }},
+   {{ AdminCmd::CMD_GROUPMOUNTRULE,       AdminCmd::SUBCMD_RM    }, { opt_instance, opt_groupname_alias }},
    {{ AdminCmd::CMD_GROUPMOUNTRULE,       AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_ADD   },
