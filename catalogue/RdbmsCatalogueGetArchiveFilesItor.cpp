@@ -114,7 +114,8 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
       searchCriteria.archiveFileId  ||
       searchCriteria.diskInstance   ||
       searchCriteria.vid            ||
-      searchCriteria.diskFileIds;
+      searchCriteria.diskFileIds    ||
+      searchCriteria.fSeq;
 
     if(thereIsAtLeastOneSearchCriteria) {
     sql += " WHERE ";
@@ -134,6 +135,11 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
     if(searchCriteria.vid) {
       if(addedAWhereConstraint) sql += " AND ";
       sql += "TAPE_FILE.VID = :VID";
+      addedAWhereConstraint = true;
+    }
+    if (searchCriteria.fSeq) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += "TAPE_FILE.FSEQ = :FSEQ";
       addedAWhereConstraint = true;
     }
     if(searchCriteria.diskFileIds) {
@@ -163,6 +169,11 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
     if(searchCriteria.vid) {
       m_stmt.bindString(":VID", searchCriteria.vid.value());
     }
+
+    if(searchCriteria.fSeq) {
+      m_stmt.bindUint64(":FSEQ", searchCriteria.fSeq.value());
+    }
+    
     m_rset = m_stmt.executeQuery();
     {
       log::LogContext lc(m_log);

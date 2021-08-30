@@ -7057,6 +7057,10 @@ void RdbmsCatalogue::checkTapeFileSearchCriteria(rdbms::Conn &conn, const TapeFi
     throw exception::UserError(std::string("Disk file IDs are ambiguous without disk instance name"));
   }
 
+  if (searchCriteria.fSeq && !searchCriteria.vid) {
+    throw exception::UserError(std::string("fSeq makes no sense without vid"));  
+  }
+
   if(searchCriteria.vid) {
     if(!tapeExists(conn, searchCriteria.vid.value())) {
       throw exception::UserError(std::string("Tape ") + searchCriteria.vid.value() + " does not exist");
@@ -7072,8 +7076,8 @@ Catalogue::ArchiveFileItor RdbmsCatalogue::getArchiveFilesItor(const TapeFileSea
   checkTapeFileSearchCriteria(searchCriteria);
 
   // If this is the listing of the contents of a tape
-  if (!searchCriteria.archiveFileId && !searchCriteria.diskInstance && !searchCriteria.diskFileIds &&
-    searchCriteria.vid) {
+  if (!searchCriteria.archiveFileId && !searchCriteria.diskInstance && !searchCriteria.diskFileIds && 
+    !searchCriteria.fSeq && searchCriteria.vid) {
     return getTapeContentsItor(searchCriteria.vid.value());
   }
 

@@ -8832,6 +8832,17 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_non_existance_archiveFileId)
   ASSERT_THROW(m_catalogue->getArchiveFilesItor(searchCriteria), exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_fSeq_without_vid) {
+  using namespace cta;
+
+  ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
+
+  catalogue::TapeFileSearchCriteria searchCriteria;
+  searchCriteria.fSeq = 1234;
+
+  ASSERT_THROW(m_catalogue->getArchiveFilesItor(searchCriteria), exception::UserError);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_disk_file_id_without_instance) {
   using namespace cta;
 
