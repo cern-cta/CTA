@@ -3,8 +3,13 @@
 ## Summary
 
 ### Features
-- cta/CTA#1001 Maximum file size is now defined by VO instead of globally.
 
+# v4.2-1
+
+## Summary
+
+### Features
+- cta/CTA#1001 Maximum file size is now defined by VO instead of globally.
 - cta/CTA#1019 New command `cta-readtp` allows reading files from tape and verifying their checksum
 
 # v4.1-1
