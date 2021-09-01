@@ -71,6 +71,9 @@ private:
   std::string m_previousVid;
   /** Representation of the status of the current process. */
   session::SessionState m_sessionState=session::SessionState::PendingFork;
+
+  int setDriveDownForShutdown(const std::unique_ptr<cta::Scheduler>& scheduler, cta::log::LogContext* lc);
+
   /**
    * Utility function resetting all parameters to pre-fork state
    * @param previousSessionState outcome to be considered for the next run.
@@ -137,9 +140,9 @@ private:
   void processLogs(serializers::WatchdogMessage & message);
   /** Helper function accumulating bytes transferred */
   void processBytes(serializers::WatchdogMessage & message);
-  
+
   std::unique_ptr<cta::catalogue::Catalogue> createCatalogue(const std::string & methodCaller);
-  
+
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
 };
 
