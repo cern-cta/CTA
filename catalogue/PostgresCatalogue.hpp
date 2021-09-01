@@ -296,6 +296,22 @@ private:
   void copyTapeFileToFileRecyleLogAndDelete(rdbms::Conn & conn, const cta::common::dataStructures::ArchiveFile &file, 
                                             const std::string &reason, log::LogContext & lc) override;
 
+  /**
+   * Copy the files in fileRecycleLogItor to the TAPE_FILE table and deletes the corresponding FILE_RECYCLE_LOG table entries
+   * @param conn the database connection
+   * @param fileRecycleLogItor the collection of fileRecycleLogs we want to restore
+   * @param lc the log context
+   */
+  void restoreFileCopiesInRecycleLog(rdbms::Conn & conn, FileRecycleLogItor &fileRecycleLogItor, log::LogContext & lc) override;
+
+  /**
+   * Copy the fileRecycleLog to the TAPE_FILE table and deletes the corresponding FILE_RECYCLE_LOG table entry
+   * @param conn the database connection
+   * @param fileRecycleLog the fileRecycleLog we want to restore
+   * @param lc the log context
+   */
+  void restoreFileCopyInRecycleLog(rdbms::Conn & conn, const common::dataStructures::FileRecycleLog &fileRecycleLogItor, log::LogContext & lc);
+
 }; // class PostgresCatalogue
 
 } // namespace catalogue

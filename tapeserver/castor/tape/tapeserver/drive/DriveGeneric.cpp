@@ -753,10 +753,42 @@ bool drive::DriveIBM3592::isEncryptionCapEnabled() {
   cta::exception::Errnum::throwOnMinusOne(
     m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh),
     "Failed SG_IO ioctl in DriveIBM3592::isEncryptionCapEnabled");
-  SCSI::ExceptionLauncher(sgh, "SCSI error in DriveIBM3592::clearEncryptionKey");
+  SCSI::ExceptionLauncher(sgh, "SCSI error in DriveIBM3592::isEncryptionCapEnabled");
 
   return SCSI::Structures::toU16(pl.supportedProtocolListLength) > 1;
 }
+
+bool drive::DriveLTO::isEncryptionCapEnabled() {
+  /*
+   * Encryption enable support. Initially copied from IBM enterprise implementation.
+   */
+  /*
+   * We are acquiring the encryption capability from the length of the SPIN index page.
+   * If it has one page (only 0x00), then encryption is disabled from the libary.
+   * If it has more pages, the encryption(0x00, 0x20 at the moment of writing), then it is enabled.
+   */
+  SCSI::Structures::LinuxSGIO_t sgh;
+  SCSI::Structures::encryption::spinCDB_t cdb;
+  SCSI::Structures::senseData_t<255> senseBuff;
+  SCSI::Structures::encryption::spinPageList_t<20> pl;
+
+  cdb.securityProtocol = SCSI::encryption::spinSecurityProtocolPages::securityProtocolInformation;
+  SCSI::Structures::setU16(cdb.securityProtocolSpecific, 0x0000);
+  SCSI::Structures::setU32(cdb.allocationLength, sizeof(pl));
+
+  sgh.setCDB(&cdb);
+  sgh.setDataBuffer(&pl);
+  sgh.setSenseBuffer(&senseBuff);
+  sgh.dxfer_direction = SG_DXFER_FROM_DEV;
+
+  cta::exception::Errnum::throwOnMinusOne(
+    m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh),
+    "Failed SG_IO ioctl in DriveLTO::isEncryptionCapEnabled");
+  SCSI::ExceptionLauncher(sgh, "SCSI error in DriveLTO::isEncryptionCapEnabled");
+
+  return SCSI::Structures::toU16(pl.supportedProtocolListLength) > 1;
+}
+
 
 bool drive::DriveT10000::isEncryptionCapEnabled() {
   /*

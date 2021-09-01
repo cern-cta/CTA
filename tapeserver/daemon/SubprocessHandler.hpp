@@ -27,8 +27,8 @@ namespace daemon {
 /** 
  * The interface to classes managing subprocesses. It allows an external loop
  * to handle global polling and timeouts for a set of them. Several children
- * classes are expected to be developed: a DriveHandler, a GarbageCollector
- * handler and a SignalHandler (using signalfd()).
+ * classes are expected to be developed: a DriveHandler, a MaintenanceHandler 
+ * and a SignalHandler (using signalfd()).
  * The main loop will typically be:
  * statuses[] = [all]->getInitialStatus(); // This implicitly registers the right fds in epoll (if needed)
  * loop forever

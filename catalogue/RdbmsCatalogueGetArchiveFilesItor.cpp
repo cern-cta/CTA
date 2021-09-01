@@ -114,7 +114,8 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
       searchCriteria.archiveFileId  ||
       searchCriteria.diskInstance   ||
       searchCriteria.vid            ||
-      searchCriteria.diskFileIds;
+      searchCriteria.diskFileIds    ||
+      searchCriteria.fSeq;
 
     if(thereIsAtLeastOneSearchCriteria) {
     sql += " WHERE ";
@@ -136,15 +137,24 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
       sql += "TAPE_FILE.VID = :VID";
       addedAWhereConstraint = true;
     }
+    if (searchCriteria.fSeq) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += "TAPE_FILE.FSEQ = :FSEQ";
+      addedAWhereConstraint = true;
+    }
     if(searchCriteria.diskFileIds) {
       if(addedAWhereConstraint) sql += " AND ";
       sql += "ARCHIVE_FILE.DISK_FILE_ID IN (SELECT DISK_FILE_ID FROM " + tempDiskFxidsTableName + ")";
       addedAWhereConstraint = true;
     }
 
-    // Order by FSEQ if we are listing the contents of a tape, else order by archive file ID
+    // Order by FSEQ if we are listing the contents of a tape, 
+    // by DISK_FILE_ID if listing the contents of a DISK_INSTANCE 
+    // else order by archive file ID
     if(searchCriteria.vid) {
       sql += " ORDER BY FSEQ";
+    } else if (searchCriteria.diskInstance) {
+      sql += " ORDER BY DISK_FILE_ID";
     } else {
       sql += " ORDER BY ARCHIVE_FILE_ID, COPY_NB";
     }
@@ -159,6 +169,11 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
     if(searchCriteria.vid) {
       m_stmt.bindString(":VID", searchCriteria.vid.value());
     }
+
+    if(searchCriteria.fSeq) {
+      m_stmt.bindUint64(":FSEQ", searchCriteria.fSeq.value());
+    }
+    
     m_rset = m_stmt.executeQuery();
     {
       log::LogContext lc(m_log);

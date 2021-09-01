@@ -67,6 +67,13 @@ public:
    }
 
    /*!
+    * Check if the supplied option matches the option
+    */
+   bool operator==(const Option &option) const {
+      return option == m_short_opt || option == m_long_opt;
+   }
+
+   /*!
     * Return the type of this option
     */
    option_t get_type() const { return m_type; }
@@ -238,6 +245,7 @@ const subcmdLookup_t subcmdLookup = {
    { "rm",                      AdminCmd::SUBCMD_RM },
    { "up",                      AdminCmd::SUBCMD_UP },
    { "down",                    AdminCmd::SUBCMD_DOWN },
+   { "restore",                 AdminCmd::SUBCMD_RESTORE }
 };
 
 
@@ -276,6 +284,7 @@ const std::map<std::string, OptionUInt64::Key> uint64Options = {
    { "--capacity",              OptionUInt64::CAPACITY },
    { "--copynb",                OptionUInt64::COPY_NUMBER },
    { "--id",                    OptionUInt64::ARCHIVE_FILE_ID },
+   {"--maxfilesize",            OptionUInt64::MAX_FILE_SIZE},
    { "--maxlpos",               OptionUInt64::MAX_LPOS },
    { "--minarchiverequestage",  OptionUInt64::MIN_ARCHIVE_REQUEST_AGE },
    { "--minlpos",               OptionUInt64::MIN_LPOS },
@@ -345,7 +354,9 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
                         "\n  This is a synchronous command that sets and reads back the state of one or\n"
                           "  more drives. The <drive_name> option accepts a regular expression. If the\n"
                           "  --force option is not set, the drives will complete any running mount and\n"
-                          "  drives must be in the down state before deleting.\n\n"
+                          "  drives must be in the down state before deleting. If the <drive_name> option\n"
+                          "  is set to first, the up, down, ls and ch commands will use the first drive\n"
+                          "  listed in TPCONFIG\n\n"
                                          }},
    { AdminCmd::CMD_FAILEDREQUEST,        { "failedrequest",        "fr",  { "ls", "rm" } }},
    { AdminCmd::CMD_GROUPMOUNTRULE,       { "groupmountrule",       "gmr", { "add", "ch", "rm", "ls" } }},
@@ -404,14 +415,17 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
                                            "   * Specify the name (--vo) of the virtual organization. It must be unique.\n"
                                            "   * Specify the maximum number of drives the virtual organization is allowed to use for writing with the --writemaxdrives parameter\n"
                                            "   * Specify the maximum number of drives the virtual organization is allowed to use for reading with the --readmaxdrives parameter\n"
-                                           "   * Specify the comment (--comment) associated to the virtual organization"
+                                           "   * Specify the comment (--comment) associated to the virtual organization\n"
+                                           "   * Specify the maximum file size (--maxfilesize) associated to the virtual organization (optional, a value of 0 means no limit)"
                                            "\n\n"
                                          }},
    { AdminCmd::CMD_VERSION,              { "version",               "v",  { } }},
    { AdminCmd::CMD_SCHEDULINGINFOS,      { "schedulinginfo",        "si",  { "ls" } }},
-   { AdminCmd::CMD_RECYCLETAPEFILE,      { "recycletf",        "rtf",  { "ls" },
+   { AdminCmd::CMD_RECYCLETAPEFILE,      { "recycletf",        "rtf",  { "ls", "restore" },
+                            "  This command allows to manage files in the recycle log.\n"
                             "  Tape files in the recycle log can be listed by VID, EOS disk file ID, EOS disk instance, ArchiveFileId or copy number.\n"
-                            "  Disk file IDs should be provided in hexadecimal (fxid).\n\n" }},
+                            "  Disk file IDs should be provided in hexadecimal (fxid).\n"
+                            "  Deleted files can be restored with the restore command\n\n" }},
 };
 
 
@@ -429,7 +443,6 @@ const Option opt_comment              { Option::OPT_STR,  "--comment",          
 const Option opt_copynb               { Option::OPT_UINT, "--copynb",                "-c",   " <copy_number>" };
 const Option opt_copynb_alias         { Option::OPT_UINT, "--numberofcopies",        "-c",   " <number_of_copies>", "--copynb" };
 const Option opt_disabled             { Option::OPT_BOOL, "--disabled",              "-d",   " <\"true\" or \"false\">" };
-const Option opt_drivename            { Option::OPT_STR,  "--drive",                 "-d",   " <drive_name>" };
 const Option opt_drivename_cmd        { Option::OPT_CMD,  "--drive",                 "",     "<drive_name>" };
 const Option opt_encrypted            { Option::OPT_BOOL, "--encrypted",             "-e",   " <\"true\" or \"false\">" };
 const Option opt_encryptionkeyname    { Option::OPT_STR,  "--encryptionkeyname",     "-k",   " <encryption_key_name>" };
@@ -448,6 +461,7 @@ const Option opt_log                  { Option::OPT_FLAG, "--log",              
 const Option opt_logicallibrary       { Option::OPT_STR,  "--logicallibrary",        "-l",   " <logical_library_name>" };
 const Option opt_logicallibrary_alias { Option::OPT_STR,  "--name",                  "-n",   " <logical_library_name>", "--logicallibrary" };
 const Option opt_lookupns             { Option::OPT_FLAG, "--lookupnamespace",       "-l",   "" };
+const Option opt_maxfilesize          { Option::OPT_UINT, "--maxfilesize",           "-mfs", " <maximum_file_size>" };
 const Option opt_maxlpos              { Option::OPT_UINT, "--maxlpos",               "-maxl", " <maximum_longitudinal_position>" };
 const Option opt_mediatype            { Option::OPT_STR,  "--mediatype",             "--mt", " <media_type_name>" };
 const Option opt_mediatype_alias      { Option::OPT_STR,  "--name",                  "-n",   " <media_type_name>", "--mediatype" };
@@ -470,6 +484,7 @@ const Option opt_tapepool             { Option::OPT_STR,  "--tapepool",         
 const Option opt_tapepool_alias       { Option::OPT_STR,  "--name",                  "-n",   " <tapepool_name>", "--tapepool" };
 const Option opt_username             { Option::OPT_STR,  "--username",              "-u",   " <user_name>" };
 const Option opt_username_alias       { Option::OPT_STR,  "--name",                  "-n",   " <user_name>", "--username" };
+const Option opt_groupname_alias      { Option::OPT_STR,  "--name",                  "-n",   " <group_name>", "--username" };
 const Option opt_vendor               { Option::OPT_STR,  "--vendor",                "--ve", " <vendor>" };
 const Option opt_vid                  { Option::OPT_STR,  "--vid",                   "-v",   " <vid>" };
 const Option opt_vo                   { Option::OPT_STR,  "--virtualorganisation",   "--vo", " <virtual_organisation>" };
@@ -508,8 +523,8 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_UP    }, { opt_drivename_cmd, opt_reason.optional() }},
    {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_DOWN  }, { opt_drivename_cmd, opt_reason, opt_force_flag.optional() }},
-   {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_LS    }, { opt_drivename.optional() }},
-   {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_RM    }, { opt_drivename_cmd, opt_force_flag.optional() }},
+   {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_LS    }, { opt_drivename_cmd.optional() }},
+   {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_RM    }, { opt_drivename_cmd, opt_force_flag.optional()}},
    {{ AdminCmd::CMD_DRIVE,                AdminCmd::SUBCMD_CH    }, { opt_drivename_cmd, opt_comment }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_FAILEDREQUEST,        AdminCmd::SUBCMD_LS    },
@@ -518,10 +533,10 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_FAILEDREQUEST,        AdminCmd::SUBCMD_RM    }, { opt_object_id }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_GROUPMOUNTRULE,       AdminCmd::SUBCMD_ADD   },
-      { opt_instance, opt_username_alias, opt_mountpolicy, opt_comment }},
+      { opt_instance, opt_groupname_alias, opt_mountpolicy, opt_comment }},
    {{ AdminCmd::CMD_GROUPMOUNTRULE,       AdminCmd::SUBCMD_CH    },
-      { opt_instance, opt_username_alias, opt_mountpolicy.optional(), opt_comment.optional() }},
-   {{ AdminCmd::CMD_GROUPMOUNTRULE,       AdminCmd::SUBCMD_RM    }, { opt_instance, opt_username_alias }},
+      { opt_instance, opt_groupname_alias, opt_mountpolicy.optional(), opt_comment.optional() }},
+   {{ AdminCmd::CMD_GROUPMOUNTRULE,       AdminCmd::SUBCMD_RM    }, { opt_instance, opt_groupname_alias }},
    {{ AdminCmd::CMD_GROUPMOUNTRULE,       AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_ADD   },
@@ -609,9 +624,9 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_DISKSYSTEM,           AdminCmd::SUBCMD_RM    }, { opt_disksystem }},
    {{ AdminCmd::CMD_DISKSYSTEM,           AdminCmd::SUBCMD_LS    }, { }},
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_ADD   },
-      { opt_vo, opt_read_max_drives, opt_write_max_drives, opt_comment }},
+      { opt_vo, opt_read_max_drives, opt_write_max_drives, opt_comment, opt_maxfilesize.optional() }},
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_CH   },
-      { opt_vo, opt_comment.optional(), opt_read_max_drives.optional(), opt_write_max_drives.optional() }},
+      { opt_vo, opt_comment.optional(), opt_read_max_drives.optional(), opt_write_max_drives.optional(), opt_maxfilesize.optional() }},
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_RM   },
       { opt_vo }},
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_LS   },
@@ -619,6 +634,8 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_VERSION,           AdminCmd::SUBCMD_NONE   }, { }},
    {{ AdminCmd::CMD_SCHEDULINGINFOS,      AdminCmd::SUBCMD_LS   }, { }},
    {{ AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_LS }, 
+   { opt_vid.optional(), opt_fid.optional(), opt_fidfile.optional(), opt_copynb.optional(), opt_archivefileid.optional(), opt_instance.optional() }},
+   {{ AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_RESTORE }, 
    { opt_vid.optional(), opt_fid.optional(), opt_fidfile.optional(), opt_copynb.optional(), opt_archivefileid.optional(), opt_instance.optional() }},
 };
 
@@ -630,5 +647,4 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
  * Throws a std::runtime_error if the command is invalid
  */
 void validateCmd(const cta::admin::AdminCmd &admincmd);
-
 }} // namespace cta::admin

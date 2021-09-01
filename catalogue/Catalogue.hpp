@@ -124,6 +124,7 @@ CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedStorageClassUsedByArchiveFiles);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedStorageClassUsedByArchiveRoutes);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedStorageClassUsedByFileRecycleLogs);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedTapePoolUsedInAnArchiveRoute);
+CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedExistingDeletedFileCopy);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentTapeState);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);
 
@@ -334,6 +335,14 @@ public:
   virtual void modifyVirtualOrganizationWriteMaxDrives(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t writeMaxDrives) = 0;
 
   /**
+   * Modifies the max size of files  for the specified Virtual Organization
+   *
+   * @param voName the VO name
+   * @param maxFileSize the new max file size for the specified Virtual Organization
+   */
+  virtual void modifyVirtualOrganizationMaxFileSize(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t maxFileSize) = 0;
+
+  /**
    * Modifies the comment of the specified Virtual Organization
    *
    * @param voName The name of the Virtual Organization.
@@ -359,6 +368,8 @@ public:
   virtual void deleteStorageClass(const std::string &storageClassName) = 0;
 
   virtual std::list<common::dataStructures::StorageClass> getStorageClasses() const = 0;
+  virtual common::dataStructures::StorageClass getStorageClass(const std::string &name) const = 0;
+
   virtual void modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t nbCopies) = 0;
   virtual void modifyStorageClassComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) = 0;
   virtual void modifyStorageClassVo(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo) = 0;
@@ -902,6 +913,15 @@ public:
    */
   virtual FileRecycleLogItor getFileRecycleLogItor(const RecycleTapeFileSearchCriteria & searchCriteria = RecycleTapeFileSearchCriteria()) const = 0;
 
+
+  /**
+   * Restores the deleted files in the Recycle log that match the criteria passed
+   *
+   * @param searchCriteria The search criteria
+   */
+  virtual void restoreFilesInRecycleLog(const RecycleTapeFileSearchCriteria & searchCriteria = RecycleTapeFileSearchCriteria()) = 0;
+
+
   /**
    * Returns the specified files in tape file sequence order.
    *
@@ -968,6 +988,7 @@ public:
       const std::string &diskFileId,
       const std::string &diskInstanceName,
       const std::string &reason) = 0;
+
 
 
   /**

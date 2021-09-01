@@ -94,8 +94,7 @@ TapeFileLsStream::TapeFileLsStream(const RequestMessage &requestMsg,
     }
     searchCriteria.diskFileIds->push_back(std::to_string(fid));
   }
-  // Disk instance on its own does not give a valid set of search criteria (no &has_any)
-  searchCriteria.diskInstance = requestMsg.getOptional(OptionString::INSTANCE);
+  searchCriteria.diskInstance = requestMsg.getOptional(OptionString::INSTANCE, &has_any);
 
   searchCriteria.archiveFileId = requestMsg.getOptional(OptionUInt64::ARCHIVE_FILE_ID, &has_any);
 

@@ -34,6 +34,8 @@ std::atomic<bool> isHeaderSent(false);
 cta::admin::TextFormatter formattedText(1000);
 
 
+std::string tp_config_file = "/etc/cta/TPCONFIG";
+
 namespace XrdSsiPb {
 
 /*!
@@ -229,7 +231,7 @@ void CtaAdminCmd::send() const
    } catch(std::runtime_error &ex) {
       throwUsage(ex.what());
    }
-   
+
    // Set configuration options
    const std::string config_file = "/etc/cta/cta-cli.conf";
    XrdSsiPb::Config config(config_file, "cta");
@@ -346,7 +348,36 @@ void CtaAdminCmd::parseOptions(int start, int argc, const char *const *const arg
    }
 }
 
+std::string CtaAdminCmd::getDriveFromTpConfig() {
+   std::ifstream file(tp_config_file);
+   if (file.fail()) {
+      throw std::runtime_error("Unable to open file " + tp_config_file);
+   }
 
+   std::string line;
+
+   while(std::getline(file, line)) {
+      // Strip out comments
+      auto pos = line.find('#');
+      if(pos != std::string::npos) {
+         line.resize(pos);
+      }
+
+      // Extract the list items
+      std::stringstream ss(line);
+      while(!ss.eof()) {
+         std::string item;
+         ss >> item;
+         // skip blank lines or lines consisting only of whitespace
+         if(item.empty()) continue;
+
+         std::string drivename = item.substr(0, item.find(" ")); // first word of line
+         return drivename;
+         
+      }
+   }
+   throw std::runtime_error("File " + tp_config_file + " is empty");
+}
 
 void CtaAdminCmd::addOption(const Option &option, const std::string &value)
 {
@@ -359,7 +390,11 @@ void CtaAdminCmd::addOption(const Option &option, const std::string &value)
          auto key = strOptions.at(option.get_key());
          auto new_opt = admincmd_ptr->add_option_str();
          new_opt->set_key(key);
-         new_opt->set_value(value);
+         if (option == opt_drivename_cmd && value == "first") {
+            new_opt->set_value(getDriveFromTpConfig());
+         } else {
+            new_opt->set_value(value);
+         }
          break;
       }
       case Option::OPT_STR_LIST: {

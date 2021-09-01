@@ -283,6 +283,10 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
            case cmd_pair(AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_LS):
                processRecycleTapeFile_Ls(response,stream);
                break;
+           case cmd_pair(AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_RESTORE):
+               processRecycleTapeFile_Restore(response);
+               break;
+
             default:
                throw PbException("Admin command pair <" +
                      AdminCmd_Cmd_Name(request.admincmd().cmd()) + ", " +
@@ -468,10 +472,12 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
       throw PbException("File is in fail_on_closew_test storage class, which always fails.");
    }
 
+   auto storageClass = m_catalogue.getStorageClass(storageClassItor->second);
+
    // Disallow archival of files above the specified limit
-   if(notification.file().size() > m_archiveFileMaxSize) {
+   if(storageClass.vo.maxFileSize && notification.file().size() > storageClass.vo.maxFileSize) {
       throw exception::UserError("Archive request rejected: file size (" + std::to_string(notification.file().size()) +
-                                 " bytes) exceeds maximum allowed size (" + std::to_string(m_archiveFileMaxSize) + " bytes)");
+                                 " bytes) exceeds maximum allowed size (" + std::to_string(storageClass.vo.maxFileSize) + " bytes)");
    }
 
    cta::common::dataStructures::ArchiveRequest request;
@@ -1834,7 +1840,7 @@ void RequestMessage::processTapeFile_Rm(cta::xrd::Response &response)
   } else if (diskFileId) {
     if (!instance) {
       throw exception::UserError(std::string("--fxid requires that --instance is specified"));
-    } 
+    }
     m_catalogue.deleteTapeFileCopy(vid, diskFileId.value(), instance.value(), reason);
     response.set_type(cta::xrd::Response::RSP_SUCCESS);
   } else {
@@ -2000,12 +2006,19 @@ void RequestMessage::processVirtualOrganization_Add(cta::xrd::Response &response
   const auto &readMaxDrives = getRequired(OptionUInt64::READ_MAX_DRIVES);
   const auto &writeMaxDrives = getRequired(OptionUInt64::WRITE_MAX_DRIVES);
   const auto &comment = getRequired(OptionString::COMMENT);
+  const auto &maxFileSizeOpt = getOptional(OptionUInt64::MAX_FILE_SIZE);
 
   cta::common::dataStructures::VirtualOrganization vo;
   vo.name = name;
   vo.readMaxDrives = readMaxDrives;
   vo.writeMaxDrives = writeMaxDrives;
   vo.comment = comment;
+
+  if (maxFileSizeOpt) {
+    vo.maxFileSize = maxFileSizeOpt.value();
+  } else {
+    vo.maxFileSize = m_archiveFileMaxSize;
+  }
 
   m_catalogue.createVirtualOrganization(m_cliIdentity,vo);
 
@@ -2019,6 +2032,7 @@ void RequestMessage::processVirtualOrganization_Ch(cta::xrd::Response &response)
   const auto readMaxDrives = getOptional(OptionUInt64::READ_MAX_DRIVES);
   const auto writeMaxDrives = getOptional(OptionUInt64::WRITE_MAX_DRIVES);
   const auto comment = getOptional(OptionString::COMMENT);
+  const auto maxFileSize = getOptional(OptionUInt64::MAX_FILE_SIZE);
 
   if(comment)
     m_catalogue.modifyVirtualOrganizationComment(m_cliIdentity,name,comment.value());
@@ -2028,6 +2042,9 @@ void RequestMessage::processVirtualOrganization_Ch(cta::xrd::Response &response)
 
   if(writeMaxDrives)
     m_catalogue.modifyVirtualOrganizationWriteMaxDrives(m_cliIdentity,name,writeMaxDrives.value());
+
+  if(maxFileSize)
+    m_catalogue.modifyVirtualOrganizationMaxFileSize(m_cliIdentity,name,maxFileSize.value());
 
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -2145,6 +2162,41 @@ void RequestMessage::processRecycleTapeFile_Ls(cta::xrd::Response &response, Xrd
   stream = new RecycleTapeFileLsStream(*this,m_catalogue,m_scheduler);
 
   response.set_show_header(HeaderType::RECYLETAPEFILE_LS);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+void RequestMessage::processRecycleTapeFile_Restore(cta::xrd::Response& response) {
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+   using namespace cta::admin;
+
+  bool has_any = false;
+  cta::catalogue::RecycleTapeFileSearchCriteria searchCriteria;
+
+  searchCriteria.vid = getOptional(OptionString::VID, &has_any);
+  auto diskFileId = getOptional(OptionString::FXID, &has_any);
+  searchCriteria.diskFileIds = getOptional(OptionStrList::FILE_ID, &has_any);
+
+  if(diskFileId){
+    // single option on the command line we need to do the conversion ourselves.
+    if(!searchCriteria.diskFileIds) searchCriteria.diskFileIds = std::vector<std::string>();
+
+    auto fid = strtol(diskFileId->c_str(), nullptr, 16);
+    if(fid < 1 || fid == LONG_MAX) {
+       throw cta::exception::UserError(*diskFileId + " is not a valid file ID");
+    }
+
+    searchCriteria.diskFileIds->push_back(std::to_string(fid));
+  }
+  // Disk instance on its own does not give a valid set of search criteria (no &has_any)
+  searchCriteria.diskInstance = getOptional(OptionString::INSTANCE);
+  searchCriteria.archiveFileId = getOptional(OptionUInt64::ARCHIVE_FILE_ID, &has_any);
+  // Copy number on its own does not give a valid set of search criteria (no &has_any)
+  searchCriteria.copynb = getOptional(OptionUInt64::COPY_NUMBER);
+
+  if(!has_any){
+    throw cta::exception::UserError("Must specify at least one search option");
+  }
+   m_catalogue.restoreFilesInRecycleLog(searchCriteria);
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
