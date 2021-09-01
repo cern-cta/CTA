@@ -85,6 +85,7 @@ public:
   common::dataStructures::ArchiveFile getArchiveFileById(const uint64_t id) const override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   ArchiveFileItor getArchiveFilesItor(const TapeFileSearchCriteria& searchCriteria) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   FileRecycleLogItor getFileRecycleLogItor(const RecycleTapeFileSearchCriteria & searchCriteria) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
+  void restoreFilesInRecycleLog(const RecycleTapeFileSearchCriteria & searchCriteria) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void deleteFileFromRecycleBin(const uint64_t archiveFileId, log::LogContext &lc) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void deleteFilesFromRecycleLog(const std::string & vid, log::LogContext & lc) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void createTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
@@ -102,6 +103,7 @@ public:
   std::list<common::dataStructures::RequesterGroupMountRule> getRequesterGroupMountRules() const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   std::list<common::dataStructures::RequesterMountRule> getRequesterMountRules() const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   std::list<common::dataStructures::StorageClass> getStorageClasses() const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
+  common::dataStructures::StorageClass getStorageClass(const std::string &name) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   common::dataStructures::ArchiveFileSummary getTapeFileSummary(const TapeFileSearchCriteria& searchCriteria) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void deleteTapeFileCopy(const std::string &vid, const uint64_t archiveFileId, const std::string &reason) override {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void deleteTapeFileCopy(const std::string &vid, const std::string &diskFileId, const std::string &diskInstanceName, const std::string &reason) override {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
@@ -122,6 +124,7 @@ public:
   void modifyVirtualOrganizationName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentVoName, const std::string &newVoName) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void modifyVirtualOrganizationReadMaxDrives(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t readMaxDrives) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void modifyVirtualOrganizationWriteMaxDrives(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t writeMaxDrives) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
+  void modifyVirtualOrganizationMaxFileSize(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t maxFileSize) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void modifyVirtualOrganizationComment(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const std::string &comment) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity& admin, const std::string& storageClassName, const uint32_t copyNb, const std::string& comment) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity& admin, const std::string& storageClassName, const uint32_t copyNb, const std::string& tapePoolName) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }

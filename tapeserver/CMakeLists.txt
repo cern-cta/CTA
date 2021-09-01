@@ -23,6 +23,7 @@ add_subdirectory (session)
 # The tape session's threads are in a separate directory (session, but compiled
 # from the previous one to create a single library).
 add_subdirectory (tapelabel)
+add_subdirectory (readtp)
 
 include_directories (${PROTOBUF3_INCLUDE_DIRS})
 add_executable (cta-taped cta-taped.cpp)

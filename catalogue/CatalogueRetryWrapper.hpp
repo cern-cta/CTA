@@ -147,6 +147,9 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyVirtualOrganizationWriteMaxDrives(admin,voName,writeMaxDrives);}, m_maxTriesToConnect);
   }
 
+  void modifyVirtualOrganizationMaxFileSize(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t maxFileSize) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyVirtualOrganizationMaxFileSize(admin,voName,maxFileSize);}, m_maxTriesToConnect);
+  }
 
 
   void modifyVirtualOrganizationComment(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const std::string &comment) override {
@@ -163,6 +166,10 @@ public:
 
   std::list<common::dataStructures::StorageClass> getStorageClasses() const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getStorageClasses();}, m_maxTriesToConnect);
+  }
+
+  common::dataStructures::StorageClass getStorageClass(const std::string &name) const override {
+   return retryOnLostConnection(m_log, [&]{return m_catalogue->getStorageClass(name);}, m_maxTriesToConnect);
   }
 
   void modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t nbCopies) override {
@@ -531,6 +538,10 @@ public:
 
   FileRecycleLogItor getFileRecycleLogItor(const RecycleTapeFileSearchCriteria & searchCriteria) const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getFileRecycleLogItor(searchCriteria);}, m_maxTriesToConnect);
+  }
+
+  void restoreFilesInRecycleLog(const RecycleTapeFileSearchCriteria & searchCriteria) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->restoreFilesInRecycleLog(searchCriteria);}, m_maxTriesToConnect);
   }
 
   void deleteFileFromRecycleBin(const uint64_t archiveFileId, log::LogContext &lc){
