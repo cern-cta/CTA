@@ -1138,6 +1138,15 @@ int DriveHandler::runChild() {
 // DriveHandler::shutdown
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
+  auto exitShutdown = [this]() -> SubprocessHandler::ProcessingStatus {
+    m_sessionState = SessionState::Shutdown;
+    m_processingStatus.nextTimeout = m_processingStatus.nextTimeout.max();
+    m_processingStatus.forkRequested = false;
+    m_processingStatus.killRequested = false;
+    m_processingStatus.shutdownComplete = true;
+    m_processingStatus.sigChild = false;
+    return m_processingStatus;
+  };
   // TODO: improve in the future (preempt the child process)
   auto &lc = m_processManager.logContext();
   log::ScopedParamContainer params(lc);
@@ -1145,9 +1154,33 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
   lc.log(log::INFO, "In DriveHandler::shutdown(): simply killing the process.");
   kill();
 
+  // Mounting management.
+  if (!m_catalogue)
+    m_catalogue = createCatalogue("DriveHandler::shutdown()");
+
+  // Create the scheduler
+  std::unique_ptr<SchedulerDBInit_t> sched_db_init;
+
+  try {
+    std::string processName = "DriveHandlerShutdown-";
+    processName+=m_configLine.unitName;
+    log::ScopedParamContainer params(lc);
+    params.add("processName", processName);
+    lc.log(log::DEBUG, "In DriveHandler::shutdown(): will create agent entry. Enabling leaving non-empty agent behind.");
+    sched_db_init.reset(new SchedulerDBInit_t(processName, m_tapedConfig.backendPath.value(), lc.logger(), true));
+  } catch (cta::exception::Exception &ex) {
+    log::ScopedParamContainer param(lc);
+    param.add("errorMessage", ex.getMessageValue());
+    lc.log(log::CRIT, "In DriveHandler::shutdown(): failed to connect to objectstore or failed to instantiate agent entry. Reporting fatal error.");
+    return exitShutdown();
+  }
+  std::unique_ptr<SchedulerDB_t> sched_db = sched_db_init->getSchedDB(*m_catalogue, lc.logger());
+  lc.log(log::DEBUG, "In DriveHandler::shutdown(): will create scheduler.");
+  auto scheduler = cta::make_unique<Scheduler>(*m_catalogue, *sched_db, 0, 0);
+
   std::set<SessionState> statesRequiringCleaner = { SessionState::Mounting,
     SessionState::Running, SessionState::Unmounting };
-  if ( statesRequiringCleaner.count(m_sessionState)) {
+  if (statesRequiringCleaner.count(m_sessionState)) {
     if (!m_sessionVid.size()) {
       lc.log(log::ERR, "In DriveHandler::shutdown(): Should run cleaner but VID is missing. Do nothing.");
     } else {
@@ -1159,29 +1192,6 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
       lc.log(log::INFO, "In DriveHandler::shutdown(): starting cleaner.");
       // Capabilities management.
       cta::server::ProcessCap capUtils;
-      // Mounting management.
-      if(!m_catalogue)
-        m_catalogue = createCatalogue("DriveHandler::shutdown()");
-
-      //Create the scheduler
-      std::unique_ptr<SchedulerDBInit_t> sched_db_init;
-
-      try {
-        std::string processName="DriveHandlerShutdown-";
-        processName+=m_configLine.unitName;
-        log::ScopedParamContainer params(lc);
-        params.add("processName", processName);
-        lc.log(log::DEBUG, "In DriveHandler::shutdown(): will create agent entry. Enabling leaving non-empty agent behind.");
-        sched_db_init.reset(new SchedulerDBInit_t(processName, m_tapedConfig.backendPath.value(), lc.logger(), true));
-      } catch (cta::exception::Exception &ex) {
-        log::ScopedParamContainer param (lc);
-        param.add("errorMessage", ex.getMessageValue());
-        lc.log(log::CRIT, "In DriveHandler::shutdown(): failed to connect to objectstore or failed to instantiate agent entry. Reporting fatal error.");
-        goto exitShutdown;
-      }
-      std::unique_ptr<SchedulerDB_t> sched_db = sched_db_init->getSchedDB(*m_catalogue, lc.logger());
-      lc.log(log::DEBUG, "In DriveHandler::shutdown(): will create scheduler.");
-      std::unique_ptr<cta::Scheduler> scheduler(new Scheduler(*m_catalogue, *sched_db, 0,0));
 
       cta::mediachanger::MediaChangerFacade mediaChangerFacade(m_processManager.logContext().logger());
       castor::tape::System::realWrapper sWrapper;
@@ -1196,20 +1206,40 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
         m_tapedConfig.tapeLoadTimeout.value(),
         "",
         *m_catalogue,
-        *scheduler
-      );
-      cleanerSession.execute();
+        *scheduler);
+      if (cleanerSession.execute() == castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN) {
+        return exitShutdown();
+      }
     }
   }
+  // Putting the drive down
+  try {
+    setDriveDownForShutdown(scheduler, &lc);
+  } catch(const cta::exception::Exception &ex) {
+    params.add("tapeVid", m_sessionVid)
+          .add("tapeDrive", m_configLine.unitName)
+          .add("message", ex.getMessageValue());
+    lc.log(cta::log::ERR, "In DriveHandler::shutdown(). Failed to put the drive down.");
+  }
+  return exitShutdown();
+}
 
-  exitShutdown:
-    m_sessionState = SessionState::Shutdown;
-    m_processingStatus.nextTimeout=m_processingStatus.nextTimeout.max();
-    m_processingStatus.forkRequested = false;
-    m_processingStatus.killRequested = false;
-    m_processingStatus.shutdownComplete = true;
-    m_processingStatus.sigChild = false;
-    return m_processingStatus;
+int DriveHandler::setDriveDownForShutdown(const std::unique_ptr<cta::Scheduler>& scheduler, cta::log::LogContext* lc) {
+  cta::common::dataStructures::DriveInfo driveInfo;
+  driveInfo.driveName = m_configLine.unitName;
+  driveInfo.logicalLibrary = m_configLine.logicalLibrary;
+  driveInfo.host = cta::utils::getShortHostname();
+
+  scheduler->reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
+    cta::common::dataStructures::DriveStatus::Down, *lc);
+  cta::common::dataStructures::SecurityIdentity cliId;
+  cta::common::dataStructures::DesiredDriveState driveState;
+  driveState.up = false;
+  driveState.forceDown = false;
+  driveState.setReasonFromLogMsg(cta::log::INFO, "Putting down the driver for shutdown");
+  scheduler->setDesiredDriveState(cliId, m_configLine.unitName, driveState, *lc);
+
+  return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
 }
 
 std::unique_ptr<cta::catalogue::Catalogue> DriveHandler::createCatalogue(const std::string & methodCaller){
