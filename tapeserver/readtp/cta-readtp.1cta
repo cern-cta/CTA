@@ -1,0 +1,53 @@
+.\" @project        The CERN Tape Archive (CTA)
+.\" @copyright      Copyright(C) 2019-2021 CERN
+.\" @license        This program is free software: you can redistribute it and/or modify
+.\"                 it under the terms of the GNU General Public License as published by
+.\"                 the Free Software Foundation, either version 3 of the License, or
+.\"                 (at your option) any later version.
+.\"
+.\"                 This program is distributed in the hope that it will be useful,
+.\"                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"                 GNU General Public License for more details.
+.\"
+.\"                 You should have received a copy of the GNU General Public License
+.\"                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+.TH CTA-READTP 1CTA "August 2021" CTA CTA
+.SH NAME
+cta-readtp \- Read files from a tape
+.SH SYNOPSIS
+.BI "cta-readtp VID SEQUENCE [OPTIONS]"
+
+.SH DESCRIPTION
+\fBcta-readtp\fP is a command-line tool for reading files from tape and validating their checksums.
+
+The  tape  to  be read is specified by the \fBVID\fP argument.  The tape files to be read are specified as a \fBSEQUENCE\fP of tape file sequence numbers.  The
+syntax used to specify the sequence is as follows:
+
+    f1-f2          Files f1 to f2 inclusive.
+    f1-            Files f1 to the last file on the tape.
+    f1-f2,f4,f6-   A series of non-consecutive ranges of files.
+
+.SH OPTIONS
+.TP
+.TP
+\fB\-h, \-\-help
+Prints the usage message.
+.TP
+\fB\-f, \-\-destination_files
+Path to a file containing a list of URLs the read files will be written to. If not specified, read files will be written to file:///dev/null.
+If there are more read files than destination files, the remaining read files will be written to file:///dev/null
+.TP
+\fB\-p, \-\-xroot_private_key
+Path to the xroot private key file. Necessary if any destination file URL is for xroot.
+.
+
+.SH RETURN VALUE
+Zero on success and non-zero on failure.
+.SH EXAMPLES
+.br
+cta-readtp V01007 10002,10004-10006,10008-
+
+.SH AUTHOR
+\fBCTA\fP Team

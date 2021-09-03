@@ -3,8 +3,25 @@
 ## Summary
 
 ### Features
- - cta/CTA#1016 New options for filtering deleted files using `cta-admin rtf ls` command.
- - cta/CTA#983 Add cta-release package for public binary rpm distribution.
+
+# v4.2-1
+
+## Summary
+
+### Features
+- cta/CTA#1001 Maximum file size is now defined by VO instead of globally.
+- cta/CTA#1019 New command `cta-readtp` allows reading files from tape and verifying their checksum
+
+# v4.1-1
+
+## Summary
+
+### Features
+- cta/CTA#1016 New options for filtering deleted files using `cta-admin rtf ls` command.
+- cta/CTA#983 Add cta-release package for public binary rpm distribution.
+- cta/CTA#980 Add external encryption script option
+- cta/CTA#976 Define a new table in the DB schema to contain the drive status.
+- cta/CTA#834 New command "recycletf restore" allows undeleting a copy of a file from tape deleted using tapefile rm
 
 - [frontend] New command "tapefile rm" allows deleting a copy of a file from tape
 

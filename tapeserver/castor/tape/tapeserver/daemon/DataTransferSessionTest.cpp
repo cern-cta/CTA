@@ -279,6 +279,7 @@ public:
     vo.name = "vo";
     vo.readMaxDrives = 1;
     vo.writeMaxDrives = 1;
+    vo.maxFileSize = 0;
     vo.comment = "comment";
     return vo;
   }
@@ -2322,21 +2323,24 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   std::string temp = logger.getLog();
   temp += "";
   ASSERT_EQ(s_vid, sess.getVid());
-  auto afiiter = archiveFileIds.begin();
-  size_t archiveFileCount = 0;
-  for(auto & sf: sourceFiles) {
-    auto afi = *(afiiter++);
-    archiveFileCount++;
+  cta::catalogue::TapeFileSearchCriteria criteria;
+  auto afsItor = catalogue.getArchiveFilesItor(criteria);
+  for (size_t i = 1; i <= sourceFiles.size(); ++i) {
     // Only the first files made it through.
-    if (archiveFileCount <= 3) {
-      auto afs = catalogue.getArchiveFileById(afi);
+    if (i <= 3) {
+      ASSERT_TRUE(afsItor.hasMore());
+      auto afs = afsItor.next();
       ASSERT_EQ(1, afs.tapeFiles.size());
       cta::checksum::ChecksumBlob checksumBlob;
-      checksumBlob.insert(cta::checksum::ADLER32, sf->adler32());
+      // Get the element of the list sourceFiles correspondent with afs.archiveFileID (https://stackoverflow.com/a/16747600)
+      // archiveFileID starts on "1" that's why it removes one position in the list
+      auto sourceFiles_front = sourceFiles.begin();
+      std::advance(sourceFiles_front, afs.archiveFileID - 1);
+      checksumBlob.insert(cta::checksum::ADLER32, (*sourceFiles_front)->adler32());
       ASSERT_EQ(afs.checksumBlob, checksumBlob);
       ASSERT_EQ(1000, afs.fileSize);
     } else {
-      ASSERT_THROW(catalogue.getArchiveFileById(afi), cta::exception::Exception);
+      ASSERT_FALSE(afsItor.hasMore());
     }
     // The tape should now be marked as full
     cta::catalogue::TapeSearchCriteria crit;
@@ -2485,21 +2489,24 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   std::string temp = logger.getLog();
   temp += "";
   ASSERT_EQ(s_vid, sess.getVid());
-  auto afiiter = archiveFileIds.begin();
-  size_t archiveFileCount = 0;
-  for(auto & sf: sourceFiles) {
-    auto afi = *(afiiter++);
-    archiveFileCount++;
+  cta::catalogue::TapeFileSearchCriteria criteria;
+  auto afsItor = catalogue.getArchiveFilesItor(criteria);
+  for (size_t i = 1; i <= sourceFiles.size(); ++i) {
     // Only the first files made it through.
-    if (archiveFileCount <= 3) {
-      auto afs = catalogue.getArchiveFileById(afi);
+    if (i <= 3) {
+      ASSERT_TRUE(afsItor.hasMore());
+      auto afs = afsItor.next();
       ASSERT_EQ(1, afs.tapeFiles.size());
       cta::checksum::ChecksumBlob checksumBlob;
-      checksumBlob.insert(cta::checksum::ADLER32, sf->adler32());
+      // Get the element of the list sourceFiles correspondent with afs.archiveFileID (https://stackoverflow.com/a/16747600)
+      // archiveFileID starts on "1" that's why it removes one position in the list
+      auto sourceFiles_front = sourceFiles.begin();
+      std::advance(sourceFiles_front, afs.archiveFileID - 1);
+      checksumBlob.insert(cta::checksum::ADLER32, (*sourceFiles_front)->adler32());
       ASSERT_EQ(afs.checksumBlob, checksumBlob);
       ASSERT_EQ(1000, afs.fileSize);
     } else {
-      ASSERT_THROW(catalogue.getArchiveFileById(afi), cta::exception::Exception);
+      ASSERT_FALSE(afsItor.hasMore());
     }
     // The tape should now be marked as full
     cta::catalogue::TapeSearchCriteria crit;

@@ -441,6 +441,22 @@ The command-line tool for pre-labelling a CTA tape.
 %post -n cta-tape-label
 /usr/sbin/setcap cap_sys_rawio+ep  %{_bindir}/cta-tape-label
 
+%package -n cta-readtp
+Summary: The command-line tool for reading files from a CTA tape.
+Group: Application/CTA
+Requires: cta-lib = %{version}-%{release}
+Requires: xrootd-client-libs >= %{xrootdVersion}
+Requires(post): /usr/sbin/setcap
+%description -n cta-readtp
+CERN Tape Archive:
+The command-line tool for reading files from a CTA tape.
+%files -n cta-readtp
+%defattr(-,root,root)
+%attr(0750,cta,tape) %{_bindir}/cta-readtp
+%attr(0644,root,root) %doc /usr/share/man/man1/cta-readtp.1cta.gz
+%post -n cta-readtp
+/usr/sbin/setcap cap_sys_rawio+ep  %{_bindir}/cta-readtp
+
 %package -n cta-common
 Summary: CERN Tape Archive common items
 Group: Application/CTA
@@ -513,6 +529,12 @@ Remember to add its content to "%{_sysconfdir}/yum/pluginconf.d/versionlock.list
 EOF
 
 %changelog
+* Wed Aug 18 2021 volodymyr.yurchenko (at) cern.ch - 4.1-1
+- cta/CTA#1016 New options for filtering deleted files using `cta-admin rtf ls` command.
+- cta/CTA#983 Add cta-release package for public binary rpm distribution.
+- cta/CTA#980 Add external encryption script option
+- [frontend] New command "tapefile rm" allows deleting a copy of a file from tape
+- cta/CTA#1014 Fix last column alignment when more than 1000 items are listed.
 * Tue Jul 27 2021 julien.leduc (at) cern.ch - 4.0-5
 - [frontend] Add options to "tapepool ls" to filter tapepools on their name, vo and encryption
 - cta/CTA#898 cta-send-event now gets the requester id and eos instance as command line arguments

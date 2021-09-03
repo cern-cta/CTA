@@ -48,6 +48,11 @@ struct TapeFileSearchCriteria {
   optional<std::string> vid;
 
   /**
+   * The fSeq of the file on tape.
+   */
+  optional<uint64_t> fSeq;
+
+  /**
    * List of disk file IDs.
    *
    * These are given as a list of strings in DECIMAL format. EOS provides the fxids in hex format. The parsing and

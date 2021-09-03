@@ -589,6 +589,7 @@ namespace drive {
     virtual compressionStats getCompression();
     virtual void clearCompressionStats();
     virtual std::vector<castor::tape::tapeserver::drive::endOfWrapPosition> getEndOfWrapPositions();
+    virtual bool isEncryptionCapEnabled();
   };
 
   class DriveIBM3592 : public DriveGeneric {

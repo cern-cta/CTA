@@ -376,7 +376,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
     // This can happen late in the session, so we can still print the stats.
     cta::log::ScopedParamContainer params(m_logContext);
     params.add("status", "error")
-          .add("ErrorMesage", e.getMessageValue());
+          .add("ErrorMessage", e.getMessageValue());
     m_stats.totalTime = totalTimer.secs();
     logWithStat(cta::log::INFO, "Tape thread complete",
             params);

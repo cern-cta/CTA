@@ -46,9 +46,11 @@ protected:
   const cta::common::dataStructures::StorageClass m_storageClassSingleCopy;
   const cta::common::dataStructures::StorageClass m_anotherStorageClass;
   const cta::common::dataStructures::StorageClass m_storageClassDualCopy;
+  const cta::common::dataStructures::StorageClass m_storageClassTripleCopy;
   const cta::catalogue::MediaType m_mediaType;
   const cta::catalogue::CreateTapeAttributes m_tape1;
   const cta::catalogue::CreateTapeAttributes m_tape2;
+  const cta::catalogue::CreateTapeAttributes m_tape3;
 
   virtual void SetUp();
 

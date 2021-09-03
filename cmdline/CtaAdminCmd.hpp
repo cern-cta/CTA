@@ -49,6 +49,9 @@ private:
    //! Add a valid option to the protocol buffer
    void addOption(const Option &option, const std::string &value);
 
+   //! Parses the TPCONFIG file to obtain the first drive in the tapeserver
+   std::string getDriveFromTpConfig();
+
    //! Read a list of string options from a file
    void readListFromFile(cta::admin::OptionStrList &str_list, const std::string &filename);
 

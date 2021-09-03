@@ -161,6 +161,13 @@ struct TapedConfiguration {
   cta::SourcedParameter<uint32_t> tapeLoadTimeout {
     "taped", "TapeLoadTimeout",60,"Compile time default"
   };
+
+  //----------------------------------------------------------------------------
+  // Tape encryption script
+  //----------------------------------------------------------------------------
+  cta::SourcedParameter<std::string> externalEncryptionKeyScript {
+    "taped", "externalEncryptionKeyScript","","Compile time default"
+  };
   
 private:
   /** A private dummy logger which will simplify the implementation of the 

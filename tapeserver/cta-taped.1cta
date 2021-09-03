@@ -142,6 +142,10 @@ The protocol to be used when transferring files to and from disk servers.
 Possible values are RFIO or XROOT.  The value is not case sensitive.
 
 .TP
+\fBtaped externalEncryptionKeyScript
+The Python script to interface with the encryption data store.
+
+.TP
 \fBXROOT PrivateKey
 The file hosting the Xroot private key, needed to sign Xroot URLs.
 
