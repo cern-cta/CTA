@@ -4,6 +4,9 @@
 
 ### Features
 
+### Bug fixes
+- cta/CTA#1029 Fix segmentatin fault in frontend when list repacks of a tape that has been deleted in the catalogue
+
 # v4.2-1
 
 ## Summary
