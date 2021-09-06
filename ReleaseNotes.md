@@ -4,6 +4,7 @@
 
 ### Features
 
+<<<<<<< HEAD
 # v4.2-2
 
 ## Summary
@@ -12,6 +13,10 @@
 
 ### Bug fixes
 - cta/CTA#1029 Fix error handling code of XrdCtaStream so it doesn't lead to a segmentation fault.
+=======
+### Bug fixes
+- cta/CTA#1029 Fix segmentatin fault in frontend when list repacks of a tape that has been deleted in the catalogue
+>>>>>>> 01b88b414 (Fix segmentatin fault when list repacks with a tape that has been deleted (#1029))
 
 # v4.2-1
 
