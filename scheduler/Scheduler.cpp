@@ -414,6 +414,18 @@ common::dataStructures::RepackInfo Scheduler::getRepack(const std::string &vid) 
 }
 
 //------------------------------------------------------------------------------
+// isBeingRepacked
+//------------------------------------------------------------------------------
+bool Scheduler::isBeingRepacked(const std::string &vid) {
+  try {
+    getRepack(vid);
+    return true;
+  } catch(cta::exception::UserError) {
+    return false;
+  }
+}
+
+//------------------------------------------------------------------------------
 // promoteRepackRequestsToToExpand
 //------------------------------------------------------------------------------
 void Scheduler::promoteRepackRequestsToToExpand(log::LogContext & lc) {

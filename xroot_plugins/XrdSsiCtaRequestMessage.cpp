@@ -1762,6 +1762,9 @@ void RequestMessage::processTape_Rm(cta::xrd::Response &response)
 
    auto &vid = getRequired(OptionString::VID);
 
+   if (m_scheduler.isBeingRepacked(vid)) {
+     throw cta::exception::UserError("Cannot delete tape " + vid + " because there is a repack for that tape");
+   }  
    m_catalogue.deleteTape(vid);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
