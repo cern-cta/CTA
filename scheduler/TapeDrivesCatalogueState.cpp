@@ -21,6 +21,7 @@
 #include "common/dataStructures/DriveInfo.hpp"
 #include "common/dataStructures/TapeDrive.hpp"
 #include "common/log/Logger.hpp"
+#include "scheduler/DiskSpaceReservation.hpp"
 #include "TapeDrivesCatalogueState.hpp"
 #include "tapeserver/daemon/TpconfigLine.hpp"
 
@@ -206,14 +207,16 @@ void TapeDrivesCatalogueState::updateDriveStatus(const common::dataStructures::D
     case common::dataStructures::DriveStatus::Unknown:
     case common::dataStructures::DriveStatus::Up:
     {
-      log::ScopedParamContainer params(lc);
-      params.add("diskSystem", driveState.diskSystemName)
-            .add("bytes", driveState.reservedBytes)
-            .add("previousStatus", toString(previousStatus))
-            .add("newStatus", toString(driveState.driveStatus));
-      lc.log(log::WARNING, "In TapeDrivesCatalogueState::updateDriveStatus(): will clear non-empty disk space reservation on status change.");
-      driveState.diskSystemName = "NULL";
-      driveState.reservedBytes = 0;
+      if (driveState.diskSystemName != "NULL") {
+        log::ScopedParamContainer params(lc);
+        params.add("diskSystem", driveState.diskSystemName)
+              .add("bytes", driveState.reservedBytes)
+              .add("previousStatus", toString(previousStatus))
+              .add("newStatus", toString(driveState.driveStatus));
+        lc.log(log::WARNING, "In TapeDrivesCatalogueState::updateDriveStatus(): will clear non-empty disk space reservation on status change.");
+        driveState.diskSystemName = "NULL";
+        driveState.reservedBytes = 0;
+      }
     }
     default:
       break;

@@ -6,6 +6,17 @@
 
 ### Bug fixes
 - cta/CTA#1029 Fix segmentatin fault in frontend when list repacks of a tape that has been deleted in the catalogue
+- cta/CTA#1031 Fix Warning in updateDriveStatus
+
+# v4.2-3
+
+# v4.2-2
+
+## Summary
+
+### Features
+- cta/CTA#976 Add logical part of Drive Status using Catalogue
+- cta/CTA#988 Add diskSpaceReservations map in cta-admin --json dr ls output.
 
 # v4.2-1
 
