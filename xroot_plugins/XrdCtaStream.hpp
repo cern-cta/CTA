@@ -84,16 +84,19 @@ public:
       errMsg << __FUNCTION__ << " failed: Caught CTA exception: " << ex.what();
       eInfo.Set(errMsg.str().c_str(), ECANCELED);
       delete streambuf;
+      return nullptr;
     } catch(std::exception &ex) {
       std::ostringstream errMsg;
       errMsg << __FUNCTION__ << " failed: " << ex.what();
       eInfo.Set(errMsg.str().c_str(), ECANCELED);
       delete streambuf;
+      return nullptr;
     } catch(...) {
       std::ostringstream errMsg;
       errMsg << __FUNCTION__ << " failed: Caught an unknown exception";
       eInfo.Set(errMsg.str().c_str(), ECANCELED);
       delete streambuf;
+      return nullptr;
     }
     return streambuf;
   }
