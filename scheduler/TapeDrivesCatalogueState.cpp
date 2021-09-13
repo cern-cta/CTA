@@ -242,7 +242,7 @@ void TapeDrivesCatalogueState::setDriveDown(common::dataStructures::TapeDrive & 
   driveState.sessionId = 0;
   driveState.bytesTransferedInSession = 0;
   driveState.filesTransferedInSession = 0;
-  driveState.latestBandwidth = 0;
+  driveState.latestBandwidth = "0";
   driveState.sessionStartTime = 0;
   driveState.mountStartTime = 0;
   driveState.transferStartTime = 0;
@@ -285,7 +285,7 @@ void TapeDrivesCatalogueState::setDriveUpOrMaybeDown(common::dataStructures::Tap
   driveState.sessionId = 0;
   driveState.bytesTransferedInSession = 0;
   driveState.filesTransferedInSession = 0;
-  driveState.latestBandwidth = 0;
+  driveState.latestBandwidth = "0";
   driveState.sessionStartTime = 0;
   driveState.mountStartTime = 0;
   driveState.transferStartTime = 0;
@@ -320,7 +320,7 @@ void TapeDrivesCatalogueState::setDriveProbing(common::dataStructures::TapeDrive
   driveState.sessionId = 0;
   driveState.bytesTransferedInSession = 0;
   driveState.filesTransferedInSession = 0;
-  driveState.latestBandwidth = 0;
+  driveState.latestBandwidth = "0";
   driveState.sessionStartTime = 0;
   driveState.mountStartTime = 0;
   driveState.transferStartTime = 0;
@@ -354,7 +354,7 @@ void TapeDrivesCatalogueState::setDriveStarting(common::dataStructures::TapeDriv
   driveState.sessionId = inputs.mountSessionId;
   driveState.bytesTransferedInSession = 0;
   driveState.filesTransferedInSession = 0;
-  driveState.latestBandwidth = 0;
+  driveState.latestBandwidth = "0";
   driveState.sessionStartTime = inputs.reportTime;
   driveState.mountStartTime = 0;
   driveState.transferStartTime = 0;
@@ -392,7 +392,7 @@ void TapeDrivesCatalogueState::setDriveMounting(common::dataStructures::TapeDriv
   driveState.sessionId = inputs.mountSessionId;
   driveState.bytesTransferedInSession = 0;
   driveState.filesTransferedInSession = 0;
-  driveState.latestBandwidth = 0;
+  driveState.latestBandwidth = "0";
   // driveState.sessionstarttime = inputs.reportTime;
   driveState.mountStartTime = inputs.reportTime;
   driveState.transferStartTime = 0;
@@ -420,13 +420,13 @@ void TapeDrivesCatalogueState::setDriveTransfering(common::dataStructures::TapeD
       "NO_USER", driveState.host, inputs.reportTime);
     driveState.bytesTransferedInSession = inputs.byteTransferred;
     driveState.filesTransferedInSession = inputs.filesTransferred;
-    driveState.latestBandwidth = inputs.latestBandwidth;
+    driveState.latestBandwidth = std::to_string(inputs.latestBandwidth);
     return;
   }
   driveState.sessionId = inputs.mountSessionId;
   driveState.bytesTransferedInSession = inputs.byteTransferred;
   driveState.filesTransferedInSession = inputs.filesTransferred;
-  driveState.latestBandwidth = inputs.latestBandwidth;
+  driveState.latestBandwidth = std::to_string(inputs.latestBandwidth);
   // driveState.sessionstarttime = inputs.reportTime;
   // driveState.mountstarttime = inputs.reportTime;
   driveState.transferStartTime = inputs.reportTime;
@@ -458,7 +458,7 @@ void TapeDrivesCatalogueState::setDriveUnloading(common::dataStructures::TapeDri
   driveState.sessionId = inputs.mountSessionId;
   driveState.bytesTransferedInSession = 0;
   driveState.filesTransferedInSession = 0;
-  driveState.latestBandwidth = 0;
+  driveState.latestBandwidth = "0";
   driveState.sessionStartTime = 0;
   driveState.mountStartTime = 0;
   driveState.transferStartTime = 0;
@@ -490,7 +490,7 @@ void TapeDrivesCatalogueState::setDriveUnmounting(common::dataStructures::TapeDr
   driveState.sessionId = inputs.mountSessionId;
   driveState.bytesTransferedInSession = 0;
   driveState.filesTransferedInSession = 0;
-  driveState.latestBandwidth = 0;
+  driveState.latestBandwidth = "0";
   driveState.sessionStartTime = 0;
   driveState.mountStartTime = 0;
   driveState.transferStartTime = 0;
@@ -522,7 +522,7 @@ void TapeDrivesCatalogueState::setDriveDrainingToDisk(common::dataStructures::Ta
   driveState.sessionId = inputs.mountSessionId;
   driveState.bytesTransferedInSession = 0;
   driveState.filesTransferedInSession = 0;
-  driveState.latestBandwidth = 0;
+  driveState.latestBandwidth = "0";
   driveState.sessionStartTime = 0;
   driveState.mountStartTime = 0;
   driveState.transferStartTime = 0;
@@ -554,7 +554,7 @@ void TapeDrivesCatalogueState::setDriveCleaningUp(common::dataStructures::TapeDr
   driveState.sessionId = inputs.mountSessionId;
   driveState.bytesTransferedInSession = 0;
   driveState.filesTransferedInSession = 0;
-  driveState.latestBandwidth = 0;
+  driveState.latestBandwidth = "0";
   driveState.sessionStartTime = 0;
   driveState.mountStartTime = 0;
   driveState.transferStartTime = 0;
@@ -588,7 +588,7 @@ void TapeDrivesCatalogueState::setDriveShutdown(common::dataStructures::TapeDriv
   driveState.sessionId = 0;
   driveState.bytesTransferedInSession = 0;
   driveState.filesTransferedInSession = 0;
-  driveState.latestBandwidth = 0;
+  driveState.latestBandwidth = "0";
   driveState.sessionStartTime = 0;
   driveState.mountStartTime = 0;
   driveState.transferStartTime = 0;
