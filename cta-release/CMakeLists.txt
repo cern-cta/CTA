@@ -73,4 +73,5 @@ install (FILES ${KEY_FILES}
 install (FILES ../continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/yum/pluginconf.d
   RENAME versionlock.cta)
-
+install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-versionlock
+  DESTINATION usr/${CMAKE_INSTALL_BINDIR})

@@ -3,8 +3,14 @@
 ## Summary
 
 ### Features
+- cta/CTA#501 cta-taped should set the state to DOWN when machine rebooting
 - cta/CTA#976 Add logical part of Drive Status using Catalogue
+- cta/CTA#983 Add cta-versionlock helper script to cta-release package
+- cta/CTA#988 Instrument backpressure for retrieve in dr ls
 
+### Bug fixes
+- cta/CTA#1031 Fix Warning in updateDriveStatus
+- cta/CTA#1032 cta-admin dr ls crashes the frontend if executed during an archive/retrieve
 
 # v4.2-2
 
@@ -14,21 +20,6 @@
 
 ### Bug fixes
 - cta/CTA#1029 Fix error handling code of XrdCtaStream so it doesn't lead to a segmentation fault.
-
-### Bug fixes
-- cta/CTA#1029 Fix segmentatin fault in frontend when list repacks of a tape that has been deleted in the catalogue
-- cta/CTA#1031 Fix Warning in updateDriveStatus
-- cta/CTA#1032 cta-admin dr ls crashes the frontend if executed during an archive/retrieve
-
-# v4.2-3
-
-# v4.2-2
-
-## Summary
-
-### Features
-- cta/CTA#976 Add logical part of Drive Status using Catalogue
-- cta/CTA#988 Add diskSpaceReservations map in cta-admin --json dr ls output.
 
 # v4.2-1
 

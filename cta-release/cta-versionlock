@@ -1,0 +1,170 @@
+#!/usr/bin/python
+
+import os.path
+import sys
+import re
+from rpmUtils.miscutils import splitFilename
+from collections import defaultdict
+
+
+vfiles = {
+  'cta': '/etc/yum/pluginconf.d/versionlock.cta', 
+  'yum': '/etc/yum/pluginconf.d/versionlock.list'
+}
+versions = defaultdict(dict)
+summary = defaultdict(list)
+actions = ('check', 'apply', 'forceupdate', 'clear')
+retcode = 0
+
+try:
+  FileNotFoundError
+except NameError:
+  FileNotFoundError = IOError
+
+
+def usage():
+  print("\n%s: command line tool to manage cta packages versionlock\n \
+\n \
+usage: %s check|apply|forceupdate|clear\n \
+  check: show cta versionlock status\n \
+  apply: add cta versions to versionlock file\n \
+  forceupdate: add cta versions to versionlock file and overwrite already defined versions\n \
+  clear: remove all cta versions from versionlock file\n \
+" % (sys.argv[0], sys.argv[0]))
+  exit(1)
+
+
+# Compare versions in both version lists
+def matchPkg(pkglist):
+  for p, version in pkglist.items():
+    try: 
+      versions['yum'][p]
+    except:
+      summary['missing'].append(p)
+      continue
+    else:
+      if versions['yum'][p][:-1] == version[:-1]:
+        summary['present'].append(p)
+      else:
+        summary['wrong_version'].append(p)
+  
+
+# add cta versions to yum versionlock file
+def addtoVfile(pkglist):
+  with open(vfiles['yum'], 'a' ) as f:
+    for p in pkglist:
+      (e, v, r, a) = versions['cta'][p][:]
+      package = ("%s:%s-%s-%s.%s" % (e, p, v, r, a))
+      f.write(package + '\n')
+
+
+# force update existing versions in yum versionlock with cta one
+def updateVfile(pkglist):
+  with open(vfiles['yum'], 'r+') as f:
+    content = f.read()
+    for p in pkglist:
+      ver = {}
+      for t in 'yum', 'cta':
+        (e, v, r, a) = versions[t][p][:]
+        ver[t] = ("%s:%s-%s-%s.%s" % (e, p, v, r, a))
+      content = re.sub(ver['yum'], ver['cta'], content)
+
+    f.seek(0)
+    f.write(content)
+    f.truncate()
+
+
+# clear cta versions from yum versionlock
+def clearPkgs(pkglist):
+  with open(vfiles['yum'], 'r+') as f:
+    content = f.read()
+    for p in pkglist:
+      (e, v, r, a) = versions['cta'][p][:]
+      line = ("%s:%s-%s-%s.%s\n" % (e, p, v, r, a))
+      content = re.sub(line, '', content)
+
+    f.seek(0)
+    f.write(content)
+    f.truncate()
+
+
+# check arguments
+if len(sys.argv) != 2:
+  usage()
+
+action = sys.argv[1]
+if action not in actions:
+  print("Error: option %s is not valid" % sys.argv[1])
+  usage()
+
+
+# read version files
+for fname, vfile in vfiles.items():
+  if not os.path.isfile(vfile):
+    raise FileNotFoundError("file %s not found" % vfile)
+
+  with open(vfile) as f:
+    plist = f.read().splitlines()
+    for p in plist:
+      if p == "" or p.startswith('#'):
+        continue
+      (n, v, r, e, a) = splitFilename(p)
+      versions[fname][n] = [e, v, r, a]
+
+
+# check if packages versions exist in yum versionlock file (ignore arch)
+matchPkg(versions['cta'])
+
+
+# return summary
+if (action == 'check'):
+  for status, content in summary.items():
+    print("\n=> %s: (%s/%s)" % (status, len(content), len(versions['cta'])))
+    print("\n".join(content))
+  if ("missing" in summary or "wrong_version" in summary):
+    retcode = 2
+
+
+# add cta packages to versionlock file
+elif (action == 'apply'):
+  if "missing" in summary:
+    print("\nAdding %s packages to version lock file:" % len(summary['missing']))
+    print("\n".join(summary['missing']))
+    addtoVfile(summary['missing'])
+  else:
+    print("\nNothing to do")
+
+  if "wrong_version" in summary:
+    print("\nWARNING: the following packages have a different version specified in versionlock file:")
+    print('\n'.join(summary['wrong_version']))
+    print("\nThey will not be changed unless you run %s with the 'forceupdate' option" % sys.argv[0])
+    retcode = 2
+
+
+# overwrite existing versions in versionlock file
+elif (action == 'forceupdate'):
+  if "wrong_version" in summary:
+    print("\nUpdating %s packages version in versionlock file:" % len(summary['wrong_version']))
+    for p in summary['wrong_version']:
+      print("%s: previous %s, new %s" % (p, ':'.join(versions['yum'][p]), ':'.join(versions['cta'][p])))
+    updateVfile(summary['wrong_version'])
+  if "missing" in summary:
+    print("\nAdding %s packages to version lock file:" % len(summary['missing']))
+    print("\n".join(summary['missing']))
+    addtoVfile(summary['missing'])
+  if (not summary['missing'] and not summary['wrong_version']):
+    print("\nNothing to do")
+
+
+# remove cta versions from versionlock file
+elif (action == 'clear'):
+  if versions['cta']:
+    clearPkgs(versions['cta'])
+    print("\nRemoving %s packages from versionlock file:" % len(versions['cta']))
+    print("\n".join(versions['cta']))
+  else:
+    print("\nNothing to do")
+
+
+print('\n')
+exit(retcode)
