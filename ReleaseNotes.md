@@ -3,6 +3,7 @@
 ## Summary
 
 ### Features
+- cta/CTA#983 Add cta-versionlock helper script to cta-release package
 
 <<<<<<< HEAD
 # v4.2-2

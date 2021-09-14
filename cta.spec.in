@@ -513,20 +513,20 @@ Group: Application/CTA
 Requires: yum-plugin-versionlock
 %description -n cta-release
 Repository configuration for CTA dependencies
-This package contains .repo files, gpg keys and yum-versionlock configuration fro CTA
+This package contains .repo files, gpg keys and yum-versionlock configuration for CTA
 %files -n cta-release
-%defattr(0644,root,root)
-%config(noreplace) %{_sysconfdir}/yum.repos.d/*
-%{_sysconfdir}/pki/rpm-gpg/*
-%{_sysconfdir}/yum/pluginconf.d/versionlock.cta
+%defattr(-,root,root)
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/yum.repos.d/*
+%attr(0644,root,root) %{_sysconfdir}/pki/rpm-gpg/*
+%attr(0644,root,root) %{_sysconfdir}/yum/pluginconf.d/versionlock.cta
+%attr(0755,root,root) %{_bindir}/cta-versionlock
 
 %post -n cta-release
-cat << EOF
-------
-CTA versionlock file installed as "%{_sysconfdir}/yum/pluginconf.d/versionlock.cta"
-Remember to add its content to "%{_sysconfdir}/yum/pluginconf.d/versionlock.list" to enable it.
-------
-EOF
+/usr/bin/cta-versionlock apply
+
+%preun -n cta-release
+/usr/bin/cta-versionlock clear
+
 
 %changelog
 * Wed Sep 15 2021 miguel.veloso.barros (at) cern.ch - 4.2-2
