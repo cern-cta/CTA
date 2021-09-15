@@ -529,6 +529,11 @@ Remember to add its content to "%{_sysconfdir}/yum/pluginconf.d/versionlock.list
 EOF
 
 %changelog
+* Wed Sep 15 2021 miguel.veloso.barros (at) cern.ch - 4.2-2
+- cta/CTA#1029 Fix error handling code of XrdCtaStream so it doesn't lead to a segmentation fault.
+* Wed Sep 01 2021 miguel.veloso.barros (at) cern.ch - 4.2-1
+- cta/CTA#1001 Maximum file size is now defined by VO instead of globally.
+- cta/CTA#1019 New command cta-readtp allows reading files from tape and verifying their checksum
 * Wed Aug 18 2021 volodymyr.yurchenko (at) cern.ch - 4.1-1
 - cta/CTA#1016 New options for filtering deleted files using `cta-admin rtf ls` command.
 - cta/CTA#983 Add cta-release package for public binary rpm distribution.

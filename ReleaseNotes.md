@@ -4,6 +4,15 @@
 
 ### Features
 
+# v4.2-2
+
+## Summary
+
+### Features
+
+### Bug fixes
+- cta/CTA#1029 Fix error handling code of XrdCtaStream so it doesn't lead to a segmentation fault.
+
 # v4.2-1
 
 ## Summary
