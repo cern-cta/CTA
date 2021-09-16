@@ -6,6 +6,8 @@
 - cta/CTA#983
   - Add cta-versionlock helper script to cta-release package
   - Update cta repo file to use the new public repo
+- cta/CTA#1036 Better error reporting in cta-admin tools
+- cta/CTA#1039 Improve logging of cta admin commands in cta frontend
 
 ### Bug fixes
 - cta/CTA#1029 Fix segmentatin fault in frontend when list repacks of a tape that has been deleted in the catalogue
