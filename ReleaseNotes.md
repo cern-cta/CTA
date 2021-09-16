@@ -5,7 +5,11 @@
 ### Features
 - cta/CTA#983 Add cta-versionlock helper script to cta-release package
 
-<<<<<<< HEAD
+### Bug fixes
+- cta/CTA#1029 Fix segmentatin fault in frontend when list repacks of a tape that has been deleted in the catalogue
+- cta/CTA#1032 cta-admin dr ls crashes the frontend if executed during an archive/retrieve
+- cta/CTA#996  Removes PARALLEL from migration scripts
+
 # v4.2-2
 
 ## Summary
@@ -13,11 +17,7 @@
 ### Features
 
 ### Bug fixes
-- cta/CTA#1029 Fix error handling code of XrdCtaStream so it doesn't lead to a segmentation fault.
-=======
-### Bug fixes
 - cta/CTA#1029 Fix segmentatin fault in frontend when list repacks of a tape that has been deleted in the catalogue
->>>>>>> 01b88b414 (Fix segmentatin fault when list repacks with a tape that has been deleted (#1029))
 
 # v4.2-1
 
@@ -96,7 +96,7 @@
 - cta/CTA#777 Minimize mounts for dual copy tape pool recalls - Temporary fix
 - cta/CTA#927 Bad message for archive route pointing non-existing pool
 - cta/CTA#930 Batched the queueing and the deleting of the repack subrequests
-- cta/CTA#969 `xrdfs query prepare` malformed JSON output 
+- cta/CTA#969 `xrdfs query prepare` malformed JSON output
 - cta/CTA#972 Updates cta-taped and rmcd man pages
 - cta/CTA#967 CI DB cleanup issues
 - cta/CTA#982 cta-fst-gcd ignored eos files with fid>4294967295
@@ -119,7 +119,7 @@ CTA v3.1-14.
 
 ## Summary
 
-This version is a transition version between CTA v3.1-14 and CTA v4.0. The functionalities of the v4.0 are implemented, 
+This version is a transition version between CTA v3.1-14 and CTA v4.0. The functionalities of the v4.0 are implemented,
 but at the database level, the columns to be deleted have been put as NULLABLE and the NOT NULL columns to be added as NULLABLE.
 The xrootd-ssi-protobuf-interface is not up-to-date with the CTA v4.0: deprecated fields have not been removed.
 
@@ -228,7 +228,7 @@ This release contains the CTA software Recommended Access Order (RAO) implemente
 - Upgraded EOS to 4.8.24-1
 - Upgraded xrootd to 4.12.5-1
 - cta-admin repack ls tabular output improvements
-- Repack management execution can be disabled via the cta-taped configuration file 
+- Repack management execution can be disabled via the cta-taped configuration file
 - cta/CTA#907 Maintenance process can be disabled via the cta-taped configuration file
 
 # Modifications
@@ -238,7 +238,7 @@ This release contains the CTA software Recommended Access Order (RAO) implemente
 ### Bug fixes
 
 - cta/CTA#901 cta-admin tapefile ls too slow
-- cta/CTA#895 [catalogue] RdbmsCatalogue::deleteLogicalLibrary does not delete empty logical library 
+- cta/CTA#895 [catalogue] RdbmsCatalogue::deleteLogicalLibrary does not delete empty logical library
 - utils::trimString() now returns an empty string if the string passed in parameter contains only white-space characters
 - Repack request and sub-requests are now unowned from their Agent when completed
 
@@ -451,7 +451,7 @@ command-line tool based on operator requests and removes the deprecated
 
 ## Summary
 
-### Features 
+### Features
 
 - New schema version 2.0
   - *VIRTUAL_ORGANIZATION* has its own table
@@ -465,7 +465,7 @@ command-line tool based on operator requests and removes the deprecated
 
 ## Summary
 
-### Features 
+### Features
 
 - cta-admin tapefile ls command: list the tape files located in a specific tape
 - New schema verification tool (cta-catalogue-schema-verify)
@@ -488,7 +488,7 @@ command-line tool based on operator requests and removes the deprecated
 
 - The scheduler does not return a mount if a tape is disabled (unless if the tape is repacked with the --disabledtape flag set)
 
-### Improvements 
+### Improvements
 
 - CASTOR-To-CTA migration improvements
 - Better cta-admin parameter checking and column formatting
