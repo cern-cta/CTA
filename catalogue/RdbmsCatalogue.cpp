@@ -7430,21 +7430,61 @@ void RdbmsCatalogue::deleteTapeFileCopy(const std::string &vid, const std::strin
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::deleteTapeFileCopy(const std::string &vid, const TapeFileSearchCriteria &criteria,
                                         const std::string &reason) {
-  auto itor = getArchiveFilesItor(criteria); // itor should have only at most one archive file since we always search on unique attributes
-  if (!itor.hasMore()) {
-    throw exception::UserError(std::string("Cannot delete the copy because the file specified does not exist"));
+  
+  if (!criteria.diskFileIds && !criteria.archiveFileId) {
+    throw exception::UserError("To delete a file copy either the diskFileId+diskInstanceName or archiveFileId must be specified");
   }
+
+  auto itor = getArchiveFilesItor(criteria); // itor should have only at most one archive file since we always search on unique attributes
+  
+  if (!itor.hasMore()) {
+    if (criteria.archiveFileId) {
+      throw exception::UserError(std::string("Cannot delete a copy of the file with archiveFileId ") +
+                                std::to_string(criteria.archiveFileId.value()) +
+                                 " because the file does not exist");
+    } else {
+      throw exception::UserError(std::string("Cannot delete a copy of the file with eosFxid ") +
+                                criteria.diskFileIds.value().front() + " and diskInstance " +
+                                criteria.diskInstance.value() + " because the file does not exist");
+    }
+  }
+  
   cta::common::dataStructures::ArchiveFile af = itor.next();
+  
   if (af.tapeFiles.size() == 1) {
-    throw exception::UserError(std::string("Cannot delete the copy because it is the only copy"));
+    if (criteria.archiveFileId) {
+      throw exception::UserError(std::string("Cannot delete a copy of the file with archiveFileId ") +
+                                std::to_string(criteria.archiveFileId.value()) +
+                                " because it is the only copy");
+    } else {
+      throw exception::UserError(std::string("Cannot delete a copy of the file with eosFxid ") +
+                                criteria.diskFileIds.value().front() + " and diskInstance " +
+                                criteria.diskInstance.value() + " because it is the only copy");
+    }
   }
 
   af.tapeFiles.removeAllVidsExcept(vid); // assume there is only one copy per vid, this should return a list with at most one item
   if (af.tapeFiles.empty()) {
-    throw exception::UserError(std::string("No copy present on the specified vid"));
+    if (criteria.archiveFileId) {
+      throw exception::UserError(std::string("No copy of the file with archiveFileId ") +
+                                std::to_string(criteria.archiveFileId.value()) +
+                                 " on vid " + vid);
+    } else {
+      throw exception::UserError(std::string("No copy of the file with eosFxid ") +
+                                criteria.diskFileIds.value().front() + " and diskInstance " +
+                                criteria.diskInstance.value() + " on vid " + vid);
+    }
   }
   if (af.tapeFiles.size() > 1){
-    throw exception::UserError(std::string("Error: More than one copy of the file in the specified vid"));
+    if (criteria.archiveFileId) {
+      throw exception::UserError(std::string("Error: More than one copy of the file with archiveFileId ") +
+                                std::to_string(criteria.archiveFileId.value()) +
+                                 " on vid " + vid);
+    } else {
+      throw exception::UserError(std::string("Error: More than one copy of the file with eosFxid ") +
+                                criteria.diskFileIds.value().front() + " and diskInstance " +
+                                criteria.diskInstance.value() + " on vid " + vid);
+    }
   }
 
   log::LogContext lc(m_log);

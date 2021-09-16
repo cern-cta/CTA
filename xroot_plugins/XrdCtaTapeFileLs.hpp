@@ -99,7 +99,7 @@ TapeFileLsStream::TapeFileLsStream(const RequestMessage &requestMsg,
   searchCriteria.archiveFileId = requestMsg.getOptional(OptionUInt64::ARCHIVE_FILE_ID, &has_any);
 
   if(!has_any) {
-    throw cta::exception::UserError("Must specify at least one search option");
+    throw cta::exception::UserError("Must specify at least one of the following search options: vid, fxid, fxidfile or archiveFileId");
   }
 
   m_tapeFileItor = m_catalogue.getArchiveFilesItor(searchCriteria);
