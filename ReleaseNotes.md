@@ -9,6 +9,8 @@
   - Add cta-versionlock helper script to cta-release package
   - Update cta repo file to use the new public repo
 - cta/CTA#988 Instrument backpressure for retrieve in dr ls
+- cta/CTA#1036 Better error reporting in cta-admin tools
+- cta/CTA#1039 Improve logging of cta admin commands in cta frontend
 
 ### Bug fixes
 - cta/CTA#1031 Fix Warning in updateDriveStatus
