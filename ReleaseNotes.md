@@ -5,7 +5,9 @@
 ### Features
 - cta/CTA#501 cta-taped should set the state to DOWN when machine rebooting
 - cta/CTA#976 Add logical part of Drive Status using Catalogue
-- cta/CTA#983 Add cta-versionlock helper script to cta-release package
+- cta/CTA#983
+  - Add cta-versionlock helper script to cta-release package
+  - Update cta repo file to use the new public repo
 - cta/CTA#988 Instrument backpressure for retrieve in dr ls
 
 ### Bug fixes
