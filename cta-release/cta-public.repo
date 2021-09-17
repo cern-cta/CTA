@@ -1,0 +1,6 @@
+[cta-public]
+name=CTA public releases for CTA project
+baseurl=https://cta-public-repo.web.cern.ch/$releasever/$basearch/
+enabled=1
+gpgcheck=0
+priority=10
