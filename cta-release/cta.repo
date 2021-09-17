@@ -1,6 +1,0 @@
-[cta]
-name=CTA releases from CTA project
-baseurl=https://cta-repo.web.cern.ch/cta-repo/
-enabled=1
-gpgcheck=0
-priority=10
