@@ -803,10 +803,62 @@ void RequestMessage::logAdminCmd(const std::string &function, const cta::admin::
       }
    }
 
+   // Log options passed from the command line
+   std::pair<cta::admin::AdminCmd::Cmd, cta::admin::AdminCmd::SubCmd> cmd_key(admincmd.cmd(), admincmd.subcmd());
+   std::vector<cta::admin::Option> cmd_options = cta::admin::cmdOptions.at(cmd_key);
+
+   for (auto &cmd_option: cmd_options) {
+      bool has_option = false;
+      auto lookup_key = cmd_option.get_key();
+      // Lookup if command line option was used in the command
+      switch (cmd_option.get_type()) {
+         case cta::admin::Option::option_t::OPT_FLAG: //Treat flag options as bool options
+         case cta::admin::Option::option_t::OPT_BOOL:
+            {
+               auto bool_key = cta::admin::boolOptions.at(lookup_key);
+               auto opt_value = getOptional(bool_key, &has_option);
+               if (has_option) {
+                  log_msg += " " + lookup_key + " " + std::to_string(opt_value.value());
+               }
+               break;
+            }
+         case cta::admin::Option::option_t::OPT_UINT:
+            {
+               auto int_key = cta::admin::uint64Options.at(lookup_key);
+               auto opt_value = getOptional(int_key, &has_option);
+               if (has_option) {
+                  log_msg += " " + lookup_key + " " + std::to_string(opt_value.value());
+               }
+               break;
+            }
+         case cta::admin::Option::option_t::OPT_CMD: //Treat command options as string options
+         case cta::admin::Option::option_t::OPT_STR:
+            {
+               auto string_key = cta::admin::strOptions.at(lookup_key);
+               auto opt_value = getOptional(string_key, &has_option);
+               if (has_option) {
+                  log_msg += " " + lookup_key + " " + opt_value.value();
+               }
+               break;
+            }
+         case cta::admin::Option::option_t::OPT_STR_LIST:
+            {
+               auto string_list_key = cta::admin::strListOptions.at(lookup_key);
+               auto opt_value = getOptional(string_list_key, &has_option);
+               if (has_option) {
+                  log_msg += " " + lookup_key + " " + cmd_option.get_help_text();
+               }
+               break;
+            }
+      }
+   }
+
    // Add the log message
    cta::log::ScopedParamContainer params(m_lc);
    params.add("adminTime", t.secs());
+   params.add("user", m_cliIdentity.username + "@" + m_cliIdentity.host);
    m_lc.log(cta::log::INFO, log_msg);
+
 }
 
 
