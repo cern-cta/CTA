@@ -52,14 +52,14 @@ namespace cta {
      *
      * @return The mount transaction id.
      */
-    virtual std::string getMountTransactionId() const = 0;    
-    
+    virtual std::string getMountTransactionId() const = 0;
+
     /**
      * Return the activity this mount is running for.
-     * 
+     *
      * @return optional, populated with the activity name if appropriate.
      */
-    
+
     virtual optional<std::string> getActivity() const = 0;
 
     /**
@@ -68,13 +68,13 @@ namespace cta {
      * @return The mount transaction id.
      */
     virtual uint32_t getNbFiles() const = 0;
-    
+
     virtual std::string getVo() const = 0;
-    
+
     virtual std::string getMediaType() const = 0;
-    
+
     virtual std::string getVendor() const = 0;
-    
+
     /**
     * Returns the capacity in bytes of the tape
     * @return the capacity in bytes of the tape
@@ -84,29 +84,29 @@ namespace cta {
     /**
      * Indicates that the mount was aborted.
      */
-    virtual void abort() = 0;
-    
+    virtual void abort(const std::string& reason) = 0;
+
     /**
      * Report a drive status change
      */
     virtual void setDriveStatus(cta::common::dataStructures::DriveStatus status, const cta::optional<std::string> & reason = cta::nullopt) = 0;
-    
+
     /**
      * Report a tape session statistics
      */
     virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) = 0;
-    
+
     /**
      * Report a tape mounted event
      * @param LogContext
      */
     virtual void setTapeMounted(cta::log::LogContext &logContext) const = 0;
-    
+
     /**
      * Destructor.
      */
     virtual ~TapeMount() throw();
 
   }; // class TapeMount
-  
+
 }

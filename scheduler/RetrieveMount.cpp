@@ -32,7 +32,7 @@ cta::RetrieveMount::RetrieveMount(cta::catalogue::Catalogue &catalogue): m_sessi
 //------------------------------------------------------------------------------
 cta::RetrieveMount::RetrieveMount(
   cta::catalogue::Catalogue &catalogue,
-  std::unique_ptr<SchedulerDatabase::RetrieveMount> dbMount): 
+  std::unique_ptr<SchedulerDatabase::RetrieveMount> dbMount):
   m_sessionRunning(false), m_catalogue(catalogue) {
   m_dbMount.reset(dbMount.release());
 }
@@ -146,7 +146,7 @@ std::list<std::unique_ptr<cta::RetrieveJob> > cta::RetrieveMount::getNextJobBatc
   // TODO: the diskSystemFreeSpaceList could be made a member of the retrieve mount and cache the fetched values, limiting the re-querying
   // of the disk systems free space.
   disk::DiskSystemFreeSpaceList diskSystemFreeSpaceList (diskSystemList);
-  // Try and get a new job from the DB. The DB mount (in memory object) is taking care of reserving the free space for the popped 
+  // Try and get a new job from the DB. The DB mount (in memory object) is taking care of reserving the free space for the popped
   // elements and query the disk systems, via the diskSystemFreeSpaceList object.
   auto dbJobBatch = m_dbMount->getNextJobBatch(filesRequested, bytesRequested, diskSystemFreeSpaceList, logContext);
   std::list<std::unique_ptr<RetrieveJob>> ret;
@@ -285,9 +285,10 @@ void cta::RetrieveMount::diskComplete() {
 //------------------------------------------------------------------------------
 // abort()
 //------------------------------------------------------------------------------
-void cta::RetrieveMount::abort() {
+void cta::RetrieveMount::abort(const std::string& reason) {
   diskComplete();
   tapeComplete();
+  setDriveStatus(cta::common::dataStructures::DriveStatus::Down, reason);
 }
 
 //------------------------------------------------------------------------------
@@ -308,7 +309,7 @@ void cta::RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver::dae
 // setTapeMounted()
 //------------------------------------------------------------------------------
 void cta::RetrieveMount::setTapeMounted(cta::log::LogContext& logContext) const {
-  utils::Timer t;    
+  utils::Timer t;
   log::ScopedParamContainer spc(logContext);
   try {
     m_catalogue.tapeMountedForRetrieve(m_dbMount->getMountInfo().vid, m_dbMount->getMountInfo().drive);
@@ -320,7 +321,7 @@ void cta::RetrieveMount::setTapeMounted(cta::log::LogContext& logContext) const 
     spc.add("catalogueTime", catalogueTimeFailed);
     logContext.log(cta::log::WARNING,
       "Failed to update catalogue for the tape mounted for retrieve.");
-  }    
+  }
 }
 
 //------------------------------------------------------------------------------

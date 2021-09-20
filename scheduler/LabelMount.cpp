@@ -24,9 +24,9 @@ LabelMount::LabelMount(catalogue::Catalogue& catalogue): m_catalogue(catalogue) 
   // TODO
 }
 
-void LabelMount::abort() {
+void LabelMount::abort(const std::string& reason) {
   throw 0;
-  // TODO  
+  // TODO
 }
 
 std::string LabelMount::getMountTransactionId() const {
@@ -69,7 +69,7 @@ void LabelMount::setTapeMounted(log::LogContext &logContext) const {
   // TODO
 }
 
-LabelMount::LabelMount(catalogue::Catalogue& catalogue, std::unique_ptr<cta::SchedulerDatabase::LabelMount> dbMount): 
+LabelMount::LabelMount(catalogue::Catalogue& catalogue, std::unique_ptr<cta::SchedulerDatabase::LabelMount> dbMount):
   m_catalogue(catalogue) {
   throw 0;
   // TODO;
