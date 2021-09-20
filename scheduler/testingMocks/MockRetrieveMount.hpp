@@ -33,7 +33,7 @@ namespace cta {
     ~MockRetrieveMount() throw() {
     }
 
-    std::list<std::unique_ptr<cta::RetrieveJob> > getNextJobBatch(uint64_t filesRequested, 
+    std::list<std::unique_ptr<cta::RetrieveJob> > getNextJobBatch(uint64_t filesRequested,
       uint64_t bytesRequested, log::LogContext & logContext) override {
       std::list<std::unique_ptr<cta::RetrieveJob> > ret;
       // Count the attempt to get a file (even if not successful).
@@ -56,20 +56,20 @@ namespace cta {
       return "1234567890";
     }
 
-    void abort() override { completes ++; }
+    void abort(const std::string&) override { completes ++; }
 
     void diskComplete() override { completes ++;}
 
     void tapeComplete() override {};
 
     bool bothSidesComplete() override { return false; }
-    
+
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, const cta::optional<std::string> & reason) override {};
-    
+
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override {};
-    
+
     void setTapeMounted(log::LogContext &logContext) const override {};
-    
+
     void flushAsyncSuccessReports(std::queue<std::unique_ptr<cta::RetrieveJob> >& successfulRetrieveJobs, cta::log::LogContext& logContext) override {};
 
   private:

@@ -31,7 +31,7 @@ cta::ArchiveMount::ArchiveMount(catalogue::Catalogue & catalogue): m_catalogue(c
 // constructor
 //------------------------------------------------------------------------------
 cta::ArchiveMount::ArchiveMount(catalogue::Catalogue & catalogue,
-  std::unique_ptr<SchedulerDatabase::ArchiveMount> dbMount): m_catalogue(catalogue), 
+  std::unique_ptr<SchedulerDatabase::ArchiveMount> dbMount): m_catalogue(catalogue),
     m_sessionRunning(false) {
   m_dbMount.reset(
     dynamic_cast<SchedulerDatabase::ArchiveMount*>(dbMount.release()));
@@ -134,13 +134,13 @@ void cta::ArchiveMount::updateCatalogueWithTapeFilesWritten(const std::set<cta::
 //------------------------------------------------------------------------------
 // getNextJobBatch
 //------------------------------------------------------------------------------
-std::list<std::unique_ptr<cta::ArchiveJob> > cta::ArchiveMount::getNextJobBatch(uint64_t filesRequested, 
+std::list<std::unique_ptr<cta::ArchiveJob> > cta::ArchiveMount::getNextJobBatch(uint64_t filesRequested,
   uint64_t bytesRequested, log::LogContext& logContext) {
   // Check we are still running the session
   if (!m_sessionRunning)
     throw SessionNotRunning("In ArchiveMount::getNextJobBatch(): trying to get job from complete/not started session");
   // try and get a new job from the DB side
-  std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> dbJobBatch(m_dbMount->getNextJobBatch(filesRequested, 
+  std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> dbJobBatch(m_dbMount->getNextJobBatch(filesRequested,
     bytesRequested, logContext));
   std::list<std::unique_ptr<ArchiveJob>> ret;
   // We prepare the response
@@ -190,7 +190,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
       }
       files++;
       bytes+=job->archiveFile.fileSize;
-      validatedSuccessfulArchiveJobs.emplace_back(std::move(job));      
+      validatedSuccessfulArchiveJobs.emplace_back(std::move(job));
       job.reset();
     }
     while (!skippedFiles.empty()) {
@@ -200,7 +200,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
       tapeItemsWritten.emplace(tiwup.release());
     }
     utils::Timer t;
-    
+
     // Now get the db mount to mark the jobs as successful.
     // Extract the db jobs from the scheduler jobs.
     for (auto &schJob: validatedSuccessfulArchiveJobs) {
@@ -216,9 +216,9 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
             .add("files", files)
             .add("bytes", bytes)
             .add("catalogueTime", catalogueTime);
-      logContext.log(cta::log::INFO, "Catalog updated for batch of jobs");   
+      logContext.log(cta::log::INFO, "Catalog updated for batch of jobs");
     }
-    
+
     // We can now pass  thevalidatedSuccessfulArchiveJobs list for the dbMount to process. We are done at that point.
     // Reporting to client will be queued if needed and done in another process.
     m_dbMount->setJobBatchTransferred(validatedSuccessfulDBArchiveJobs, logContext);
@@ -299,8 +299,9 @@ void cta::ArchiveMount::complete() {
 //------------------------------------------------------------------------------
 // abort
 //------------------------------------------------------------------------------
-void cta::ArchiveMount::abort() {
+void cta::ArchiveMount::abort(const std::string& reason) {
   complete();
+  setDriveStatus(cta::common::dataStructures::DriveStatus::Down, reason);
 }
 
 //------------------------------------------------------------------------------
@@ -327,7 +328,7 @@ void cta::ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver::daem
 // setTapeMounted()
 //------------------------------------------------------------------------------
 void cta::ArchiveMount::setTapeMounted(cta::log::LogContext& logContext) const {
-  utils::Timer t;    
+  utils::Timer t;
   log::ScopedParamContainer spc(logContext);
   try {
     m_catalogue.tapeMountedForArchive(m_dbMount->getMountInfo().vid, m_dbMount->getMountInfo().drive);
@@ -339,7 +340,7 @@ void cta::ArchiveMount::setTapeMounted(cta::log::LogContext& logContext) const {
     spc.add("catalogueTime", catalogueTimeFailed);
     logContext.log(cta::log::WARNING,
       "Failed to update catalogue for the tape mounted for archive.");
-  }    
+  }
 }
 
 //------------------------------------------------------------------------------

@@ -72,10 +72,10 @@ namespace cta {
      * @return The mount transaction id.
      */
     std::string getMountTransactionId() const override;
-    
+
     /**
      * Return nullopt as activities are for retrieve mounts;
-     * 
+     *
      * @return nullopt.
      */
     optional<std::string> getActivity() const override { return nullopt; }
@@ -84,40 +84,40 @@ namespace cta {
     /**
      * Indicates that the mount was cancelled.
      */
-    void abort() override;
-    
+    void abort(const std::string& reason) override;
+
     /**
      * Report a drive status change
      */
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, const cta::optional<std::string> & reason = cta::nullopt) override;
-    
+
     /**
      * Report a tape session statistics
      */
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
-    
+
     /**
      * Report a tape mounted event
      * @param logContext
-     */ 
+     */
     void setTapeMounted(log::LogContext &logContext) const override;
 
     CTA_GENERATE_EXCEPTION_CLASS(SessionNotRunning);
-    
+
     /**
      * Returns the tape pool of the tape to be mounted.
      *
      * @return The tape pool of the tape to be mounted.
      */
     virtual std::string getPoolName() const;
-    
+
     /**
      * Returns the mount transaction id.
      *
      * @return The mount transaction id.
      */
     uint32_t getNbFiles() const override;
-    
+
     /**
      * Destructor.
      */
@@ -129,7 +129,7 @@ namespace cta {
      * The database representation of this mount.
      */
     std::unique_ptr<cta::SchedulerDatabase::ArchiveMount> m_dbMount;
-    
+
     /**
      * A reference to the file catalogue.
      */
@@ -139,7 +139,7 @@ namespace cta {
      * Internal tracking of the session completion
      */
     std::atomic<bool> m_sessionRunning;
-    
+
   }; // class ArchiveMount
 
 } // namespace cta
