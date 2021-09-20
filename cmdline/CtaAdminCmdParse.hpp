@@ -101,6 +101,11 @@ public:
    void validateCmd(const cta::admin::AdminCmd &admincmd) const;
 
    /*!
+    * Return the help text for this option
+    */
+   std::string get_help_text() const { return m_help_txt; }
+
+   /*!
     * Return per-option help string
     */
    std::string help() const {
