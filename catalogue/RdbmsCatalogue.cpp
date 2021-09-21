@@ -7662,7 +7662,7 @@ uint64_t RdbmsCatalogue::checkAndGetNextArchiveFileId(const std::string &diskIns
         const auto defaultUserMountPolicy = defaultUserMountPolicyAndCacheInfo.value;
 
         if(!defaultUserMountPolicy) {
-          exception::UserErrorWithCacheInfo ue(defaultUserMountPolicyAndCacheInfo.cacheInfo);
+          exception::UserErrorWithCacheInfo ue(userMountPolicyAndCacheInfo.cacheInfo);
           ue.getMessage() << "Failed to check and get next archive file ID: No mount rules: storageClass=" <<
             storageClassName << " requester=" << diskInstanceName << ":" << user.name << ":" << user.group;
           throw ue;
