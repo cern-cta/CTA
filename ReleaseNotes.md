@@ -1,4 +1,4 @@
-# v4.3-1
+# v4.NEXT
 
 ## Summary
 
@@ -6,6 +6,7 @@
 
 ### Bug fixes
 - cta/CTA#1013 reportType uninitialized
+- cta/CTA#1035 log configuration options on frontend startup
 
 # v4.3-1
 
