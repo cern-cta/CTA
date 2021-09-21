@@ -80,6 +80,11 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
       Log::SetLogLevel("info");
    }
 
+   int logToSyslog = 0;
+   int logToStdout = 0;
+   int logtoFile = 0;
+   std::string logFilePath = "";
+
    // Instantiate the CTA logging system
    try {
       // Set the logger URL
@@ -94,10 +99,14 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
 
       if (loggerURL.second == "syslog:") {
          m_log.reset(new log::SyslogLogger(shortHostname, "cta-frontend", loggerLevel));
+         logToSyslog = 1;
       } else if (loggerURL.second == "stdout:") {
          m_log.reset(new log::StdoutLogger(shortHostname, "cta-frontend"));
+         logToStdout = 1;
       } else if (loggerURL.second.substr(0, 5) == "file:") {
-         m_log.reset(new log::FileLogger(shortHostname, "cta-frontend", loggerURL.second.substr(5), loggerLevel));
+         logtoFile = 1;
+         logFilePath = loggerURL.second.substr(5);
+         m_log.reset(new log::FileLogger(shortHostname, "cta-frontend", logFilePath, loggerLevel));
       } else {
          throw exception::UserError(std::string("Unknown log URL: ") + loggerURL.second);
       }
@@ -109,6 +118,18 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
    const std::list<log::Param> params = {log::Param("version", CTA_VERSION)};
    log::Logger &log = *m_log;
 
+   {
+      // Log starting message
+      std::list<log::Param> params;
+      params.push_back(log::Param("version", CTA_VERSION));
+      params.push_back(log::Param("configFileLocation",  cfgFn));
+      params.push_back(log::Param("logToStdout", std::to_string(logToStdout)));
+      params.push_back(log::Param("logToSyslog", std::to_string(logToSyslog)));
+      params.push_back(log::Param("logtoFile", std::to_string(logtoFile)));
+      params.push_back(log::Param("logFilePath", logFilePath));
+      log(log::INFO, std::string("Starting cta-frontend"), params);
+   }
+
    // Initialise the Catalogue
    std::string catalogueConfigFile = "/etc/cta/cta-catalogue.conf";
    const rdbms::Login catalogueLogin = rdbms::Login::parseFile(catalogueConfigFile);
@@ -117,6 +138,25 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
       throw exception::UserError("cta.catalogue.numberofconnections is not set in configuration file " + cfgFn);
    }
    const uint64_t nbArchiveFileListingConns = 2;
+
+   {
+      // Log catalogue.numberofconnections
+      std::list<log::Param> params;
+      params.push_back(log::Param("source", cfgFn));
+      params.push_back(log::Param("category", "cta.catalogue"));
+      params.push_back(log::Param("key", "numberofconnections"));
+      params.push_back(log::Param("value", std::to_string(catalogue_numberofconnections.second)));
+      log(log::INFO, "Configuration entry", params);
+   }
+   {
+      // Log catalogue number of archive file listing connections
+      std::list<log::Param> params;
+      params.push_back(log::Param("source", "Compile time default"));
+      params.push_back(log::Param("category", "cta.catalogue"));
+      params.push_back(log::Param("key", "nbArchiveFileListingConns"));
+      params.push_back(log::Param("value", std::to_string(nbArchiveFileListingConns)));
+      log(log::INFO, "Configuration entry", params);
+   }
 
    {
      auto catalogueFactory = catalogue::CatalogueFactoryFactory::create(*m_log, catalogueLogin,
@@ -139,6 +179,17 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
    if(!db_conn.first) {
      throw exception::UserError(DB_CONN_PARAM + " is not set in configuration file " + cfgFn);
    }
+
+   {
+      // Log cta.objectstore.backendpath
+      std::list<log::Param> params;
+      params.push_back(log::Param("source", cfgFn));
+      params.push_back(log::Param("category", "cta.objectstore"));
+      params.push_back(log::Param("key", "backendpath"));
+      params.push_back(log::Param("value", db_conn.second));
+      log(log::INFO, "Configuration entry", params);
+   }
+
    m_scheddb_init = cta::make_unique<SchedulerDBInit_t>("Frontend", db_conn.second, *m_log);
    m_scheddb      = m_scheddb_init->getSchedDB(*m_catalogue, *m_log);
 
@@ -148,6 +199,18 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
    }
    m_scheddb->setBottomHalfQueueSize(25000);
 
+   {
+      // Log cta.schedulerdb.numberofthreads
+      if (threadPoolSize.first) {
+         std::list<log::Param> params;
+         params.push_back(log::Param("source", cfgFn));
+         params.push_back(log::Param("category", "cta.schedulerdb"));
+         params.push_back(log::Param("key", "numberofthreads"));
+         params.push_back(log::Param("value", std::to_string(threadPoolSize.second)));
+         log(log::INFO, "Configuration entry", params);
+      }
+   }
+
    // Initialise the Scheduler
    m_scheduler = cta::make_unique<cta::Scheduler>(*m_catalogue, *m_scheddb, 5, 2*1000*1000);
 
@@ -156,10 +219,32 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
    m_archiveFileMaxSize = archiveFileMaxSize.first ? archiveFileMaxSize.second : 0; // GB
    m_archiveFileMaxSize *= 1024*1024*1024; // bytes
 
+   {
+      // Log cta.archivefile.max_size_gb   
+      std::list<log::Param> params;
+      params.push_back(log::Param("source", archiveFileMaxSize.first ? cfgFn: "Compile time default"));
+      params.push_back(log::Param("category", "cta.archivefile"));
+      params.push_back(log::Param("key", "max_size_gb"));
+      params.push_back(log::Param("value", std::to_string(archiveFileMaxSize.first ? archiveFileMaxSize.second : 0)));
+      log(log::INFO, "Configuration entry", params);
+   }
+
    // Get the repack buffer URL
    auto repackBufferURLConf = config.getOptionValueStr("cta.repack.repack_buffer_url");
    if(repackBufferURLConf.first){
      m_repackBufferURL = repackBufferURLConf.second;
+   }
+
+   {
+      // Log cta.repack.repack_buffer_url   
+      if(repackBufferURLConf.first){
+         std::list<log::Param> params;
+         params.push_back(log::Param("source", cfgFn));
+         params.push_back(log::Param("category", "cta.repack"));
+         params.push_back(log::Param("key", "repack_buffer_url"));
+         params.push_back(log::Param("value", repackBufferURLConf.second));
+         log(log::INFO, "Configuration entry", params);
+      }
    }
 
    // Get the endpoint for namespace queries
@@ -168,6 +253,18 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
       setNamespaceMap(nsConf.second);
    } else {
       Log::Msg(XrdSsiPb::Log::WARNING, LOG_SUFFIX, "warning: 'cta.ns.config' not specified; namespace queries are disabled");
+   }
+
+   {
+      // Log cta.ns.config   
+      if(nsConf.first){
+         std::list<log::Param> params;
+         params.push_back(log::Param("source", cfgFn));
+         params.push_back(log::Param("category", "cta.ns"));
+         params.push_back(log::Param("key", "config"));
+         params.push_back(log::Param("value", nsConf.second));
+         log(log::INFO, "Configuration entry", params);
+      }
    }
   
    // All done
