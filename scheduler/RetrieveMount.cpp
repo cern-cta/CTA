@@ -285,10 +285,9 @@ void cta::RetrieveMount::diskComplete() {
 //------------------------------------------------------------------------------
 // abort()
 //------------------------------------------------------------------------------
-void cta::RetrieveMount::abort(const std::string& reason) {
+void cta::RetrieveMount::abort(const std::string&) {
   diskComplete();
   tapeComplete();
-  setDriveStatus(cta::common::dataStructures::DriveStatus::Down, reason);
 }
 
 //------------------------------------------------------------------------------
