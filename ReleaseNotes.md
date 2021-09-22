@@ -11,6 +11,7 @@
 - cta/CTA#988 Instrument backpressure for retrieve in dr ls
 - cta/CTA#1036 Better error reporting in cta-admin tools
 - cta/CTA#1039 Improve logging of cta admin commands in cta frontend
+- cta/CTA#1041 Fix host values in cta-admin commands
 
 ### Bug fixes
 - cta/CTA#1031 Fix Warning in updateDriveStatus

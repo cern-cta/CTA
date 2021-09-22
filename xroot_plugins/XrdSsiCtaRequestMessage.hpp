@@ -21,6 +21,7 @@
 
 #include "XrdSsiCtaServiceProvider.hpp"
 #include "cta_frontend.pb.h"
+#include "common/utils/utils.hpp"
 #include "Versions.hpp"
 
 
@@ -42,8 +43,9 @@ public:
     m_lc(service->getLogContext()),
     m_catalogue_conn_string(service->getCatalogueConnectionString())
     {
-      m_cliIdentity.username = client.name;
-      m_cliIdentity.host     = client.host;
+      m_cliIdentity.username   = client.name;
+      m_cliIdentity.host       = cta::utils::getShortHostname(); // Host should be of the machine that executes the command
+      m_cliIdentity.clientHost = client.host;
 
       // Map the client protocol string to an enum value
       auto proto_it = m_protomap.find(client.prot);

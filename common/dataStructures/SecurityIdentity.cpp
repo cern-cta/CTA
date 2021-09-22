@@ -34,12 +34,20 @@ SecurityIdentity::SecurityIdentity() {}
 SecurityIdentity::SecurityIdentity(const std::string& username, const std::string& host):
   username(username), host(host) {}
 
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+SecurityIdentity::SecurityIdentity(const std::string& username, const std::string& host, const std::string & clientHost):
+  username(username), host(host), clientHost(clientHost) {}
+
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool SecurityIdentity::operator==(const SecurityIdentity &rhs) const {
   return username==rhs.username
-      && host==rhs.host;
+      && host==rhs.host
+      && clientHost==rhs.clientHost;
 }
 
 //------------------------------------------------------------------------------
@@ -54,7 +62,11 @@ bool SecurityIdentity::operator!=(const SecurityIdentity &rhs) const {
 //------------------------------------------------------------------------------
 bool SecurityIdentity::operator<(const SecurityIdentity &rhs) const {
   if(username == rhs.username) {
-    return host < rhs.host;
+    if (host == rhs.host) {
+      return clientHost < rhs.clientHost;
+    } else {
+      return host < rhs.host;
+    }
   } else {
     return username < rhs.username;
   }
@@ -65,7 +77,8 @@ bool SecurityIdentity::operator<(const SecurityIdentity &rhs) const {
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const SecurityIdentity &obj) {
   os << "(username=" << obj.username
-     << " host=" << obj.host << ")";
+     << " host=" << obj.host 
+     << " clientHost=" << obj.clientHost << ")";
   return os;
 }
 
