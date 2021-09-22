@@ -36,6 +36,8 @@ struct SecurityIdentity {
   
   SecurityIdentity(const std::string & username, const std::string & host);
 
+  SecurityIdentity(const std::string & username, const std::string & host, const std::string & clientHost);
+
   bool operator==(const SecurityIdentity &rhs) const;
 
   bool operator!=(const SecurityIdentity &rhs) const;
@@ -44,6 +46,7 @@ struct SecurityIdentity {
 
   std::string username;
   std::string host;
+  std::string clientHost;
 
 }; // struct SecurityIdentity
 
