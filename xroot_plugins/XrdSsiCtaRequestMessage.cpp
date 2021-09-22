@@ -79,238 +79,252 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
          m_client_versions.ctaVersion = request.client_cta_version();
          m_client_versions.xrootdSsiProtoIntVersion = request.client_xrootd_ssi_protobuf_interface_version();
 
-         // Map the <Cmd, SubCmd> to a method
-         switch(cmd_pair(request.admincmd().cmd(), request.admincmd().subcmd())) {
-            using namespace cta::admin;
+         try {
+            // Map the <Cmd, SubCmd> to a method
+            switch(cmd_pair(request.admincmd().cmd(), request.admincmd().subcmd())) {
+               using namespace cta::admin;
 
-            case cmd_pair(AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_ADD):
-               processAdmin_Add(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_CH):
-               processAdmin_Ch(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_RM):
-               processAdmin_Rm(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_LS):
-               processAdmin_Ls(response, stream);
-               break;
-            case cmd_pair(AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_ADD):
-               processArchiveRoute_Add(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_CH):
-               processArchiveRoute_Ch(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_RM):
-               processArchiveRoute_Rm(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_LS):
-               processArchiveRoute_Ls(response, stream);
-               break;
-            case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_UP):
-               processDrive_Up(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_DOWN):
-               processDrive_Down(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_DRIVE,AdminCmd::SUBCMD_CH):
-               processDrive_Ch(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_LS):
-               processDrive_Ls(response, stream);
-               break;
-            case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_RM):
-               processDrive_Rm(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_FAILEDREQUEST, AdminCmd::SUBCMD_LS):
-               processFailedRequest_Ls(response, stream);
-               break;
-            case cmd_pair(AdminCmd::CMD_FAILEDREQUEST, AdminCmd::SUBCMD_RM):
-               processFailedRequest_Rm(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_ADD):
-               processGroupMountRule_Add(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_CH):
-               processGroupMountRule_Ch(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_RM):
-               processGroupMountRule_Rm(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_LS):
-               processGroupMountRule_Ls(response, stream);
-               break;
-            case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_ADD):
-               processLogicalLibrary_Add(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_CH):
-               processLogicalLibrary_Ch(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_RM):
-               processLogicalLibrary_Rm(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_LS):
-               processLogicalLibrary_Ls(response, stream);
-               break;
-            case cmd_pair(AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_ADD):
-               processMediaType_Add(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_CH):
-               processMediaType_Ch(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_RM):
-               processMediaType_Rm(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_LS):
-               processMediaType_Ls(response, stream);
-               break;
-            case cmd_pair(AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_ADD):
-               processMountPolicy_Add(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_CH):
-               processMountPolicy_Ch(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_RM):
-               processMountPolicy_Rm(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_LS):
-               processMountPolicy_Ls(response, stream);
-               break;
-            case cmd_pair(AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_ADD):
-               processRepack_Add(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_RM):
-               processRepack_Rm(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_LS):
-               processRepack_Ls(response, stream);
-               break;
-            case cmd_pair(AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_ERR):
-               processRepack_Err(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_ADD):
-               processRequesterMountRule_Add(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_CH):
-               processRequesterMountRule_Ch(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_RM):
-               processRequesterMountRule_Rm(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_LS):
-               processRequesterMountRule_Ls(response, stream);
-               break;
-            case cmd_pair(AdminCmd::CMD_ACTIVITYMOUNTRULE, AdminCmd::SUBCMD_ADD):
-               processActivityMountRule_Add(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_ACTIVITYMOUNTRULE, AdminCmd::SUBCMD_CH):
-               processActivityMountRule_Ch(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_ACTIVITYMOUNTRULE, AdminCmd::SUBCMD_RM):
-               processActivityMountRule_Rm(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_ACTIVITYMOUNTRULE, AdminCmd::SUBCMD_LS):
-               processActivityMountRule_Ls(response, stream);
-               break;
-            case cmd_pair(AdminCmd::CMD_SHOWQUEUES, AdminCmd::SUBCMD_NONE):
-               processShowQueues(response, stream);
-               break;
-            case cmd_pair(AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_ADD):
-               processStorageClass_Add(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_CH):
-               processStorageClass_Ch(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_RM):
-               processStorageClass_Rm(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_LS):
-               processStorageClass_Ls(response, stream);
-               break;
-            case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_ADD):
-               processTape_Add(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_CH):
-               processTape_Ch(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_RM):
-               processTape_Rm(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_RECLAIM):
-               processTape_Reclaim(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_LS):
-               processTape_Ls(response, stream);
-               break;
-            case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_LABEL):
-               processTape_Label(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_TAPEFILE, AdminCmd::SUBCMD_LS):
-               processTapeFile_Ls(response, stream);
-               break;
-            case cmd_pair(AdminCmd::CMD_TAPEFILE, AdminCmd::SUBCMD_RM):
-               processTapeFile_Rm(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_ADD):
-               processTapePool_Add(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_CH):
-               processTapePool_Ch(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_RM):
-               processTapePool_Rm(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_LS):
-               processTapePool_Ls(response, stream);
-               break;
-            case cmd_pair(AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_LS):
-               processDiskSystem_Ls(response, stream);
-               break;
-            case cmd_pair(AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_ADD):
-               processDiskSystem_Add(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_RM):
-               processDiskSystem_Rm(response);
-               break;
-            case cmd_pair(AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_CH):
-               processDiskSystem_Ch(response);
-               break;
-           case cmd_pair(AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_ADD):
-               processVirtualOrganization_Add(response);
-               break;
-           case cmd_pair(AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_CH):
-               processVirtualOrganization_Ch(response);
-               break;
-           case cmd_pair(AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_RM):
-               processVirtualOrganization_Rm(response);
-               break;
-           case cmd_pair(AdminCmd::CMD_VIRTUALORGANIZATION,AdminCmd::SUBCMD_LS):
-               processVirtualOrganization_Ls(response, stream);
-               break;
-           case cmd_pair(AdminCmd::CMD_VERSION, AdminCmd::SUBCMD_NONE):
-               processVersion(response, stream);
-               break;
-           case cmd_pair(AdminCmd::CMD_SCHEDULINGINFOS, AdminCmd::SUBCMD_LS):
-               processSchedulingInfos_Ls(response,stream);
-               break;
-           case cmd_pair(AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_LS):
-               processRecycleTapeFile_Ls(response,stream);
-               break;
-           case cmd_pair(AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_RESTORE):
-               processRecycleTapeFile_Restore(response);
-               break;
+               case cmd_pair(AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_ADD):
+                  processAdmin_Add(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_CH):
+                  processAdmin_Ch(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_RM):
+                  processAdmin_Rm(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_ADMIN, AdminCmd::SUBCMD_LS):
+                  processAdmin_Ls(response, stream);
+                  break;
+               case cmd_pair(AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_ADD):
+                  processArchiveRoute_Add(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_CH):
+                  processArchiveRoute_Ch(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_RM):
+                  processArchiveRoute_Rm(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_LS):
+                  processArchiveRoute_Ls(response, stream);
+                  break;
+               case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_UP):
+                  processDrive_Up(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_DOWN):
+                  processDrive_Down(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_DRIVE,AdminCmd::SUBCMD_CH):
+                  processDrive_Ch(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_LS):
+                  processDrive_Ls(response, stream);
+                  break;
+               case cmd_pair(AdminCmd::CMD_DRIVE, AdminCmd::SUBCMD_RM):
+                  processDrive_Rm(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_FAILEDREQUEST, AdminCmd::SUBCMD_LS):
+                  processFailedRequest_Ls(response, stream);
+                  break;
+               case cmd_pair(AdminCmd::CMD_FAILEDREQUEST, AdminCmd::SUBCMD_RM):
+                  processFailedRequest_Rm(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_ADD):
+                  processGroupMountRule_Add(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_CH):
+                  processGroupMountRule_Ch(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_RM):
+                  processGroupMountRule_Rm(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_GROUPMOUNTRULE, AdminCmd::SUBCMD_LS):
+                  processGroupMountRule_Ls(response, stream);
+                  break;
+               case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_ADD):
+                  processLogicalLibrary_Add(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_CH):
+                  processLogicalLibrary_Ch(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_RM):
+                  processLogicalLibrary_Rm(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_LOGICALLIBRARY, AdminCmd::SUBCMD_LS):
+                  processLogicalLibrary_Ls(response, stream);
+                  break;
+               case cmd_pair(AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_ADD):
+                  processMediaType_Add(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_CH):
+                  processMediaType_Ch(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_RM):
+                  processMediaType_Rm(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_LS):
+                  processMediaType_Ls(response, stream);
+                  break;
+               case cmd_pair(AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_ADD):
+                  processMountPolicy_Add(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_CH):
+                  processMountPolicy_Ch(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_RM):
+                  processMountPolicy_Rm(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_LS):
+                  processMountPolicy_Ls(response, stream);
+                  break;
+               case cmd_pair(AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_ADD):
+                  processRepack_Add(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_RM):
+                  processRepack_Rm(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_LS):
+                  processRepack_Ls(response, stream);
+                  break;
+               case cmd_pair(AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_ERR):
+                  processRepack_Err(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_ADD):
+                  processRequesterMountRule_Add(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_CH):
+                  processRequesterMountRule_Ch(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_RM):
+                  processRequesterMountRule_Rm(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_LS):
+                  processRequesterMountRule_Ls(response, stream);
+                  break;
+               case cmd_pair(AdminCmd::CMD_ACTIVITYMOUNTRULE, AdminCmd::SUBCMD_ADD):
+                  processActivityMountRule_Add(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_ACTIVITYMOUNTRULE, AdminCmd::SUBCMD_CH):
+                  processActivityMountRule_Ch(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_ACTIVITYMOUNTRULE, AdminCmd::SUBCMD_RM):
+                  processActivityMountRule_Rm(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_ACTIVITYMOUNTRULE, AdminCmd::SUBCMD_LS):
+                  processActivityMountRule_Ls(response, stream);
+                  break;
+               case cmd_pair(AdminCmd::CMD_SHOWQUEUES, AdminCmd::SUBCMD_NONE):
+                  processShowQueues(response, stream);
+                  break;
+               case cmd_pair(AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_ADD):
+                  processStorageClass_Add(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_CH):
+                  processStorageClass_Ch(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_RM):
+                  processStorageClass_Rm(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_STORAGECLASS, AdminCmd::SUBCMD_LS):
+                  processStorageClass_Ls(response, stream);
+                  break;
+               case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_ADD):
+                  processTape_Add(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_CH):
+                  processTape_Ch(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_RM):
+                  processTape_Rm(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_RECLAIM):
+                  processTape_Reclaim(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_LS):
+                  processTape_Ls(response, stream);
+                  break;
+               case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_LABEL):
+                  processTape_Label(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_TAPEFILE, AdminCmd::SUBCMD_LS):
+                  processTapeFile_Ls(response, stream);
+                  break;
+               case cmd_pair(AdminCmd::CMD_TAPEFILE, AdminCmd::SUBCMD_RM):
+                  processTapeFile_Rm(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_ADD):
+                  processTapePool_Add(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_CH):
+                  processTapePool_Ch(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_RM):
+                  processTapePool_Rm(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_LS):
+                  processTapePool_Ls(response, stream);
+                  break;
+               case cmd_pair(AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_LS):
+                  processDiskSystem_Ls(response, stream);
+                  break;
+               case cmd_pair(AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_ADD):
+                  processDiskSystem_Add(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_RM):
+                  processDiskSystem_Rm(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_CH):
+                  processDiskSystem_Ch(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_ADD):
+                  processVirtualOrganization_Add(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_CH):
+                  processVirtualOrganization_Ch(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_RM):
+                  processVirtualOrganization_Rm(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_VIRTUALORGANIZATION,AdminCmd::SUBCMD_LS):
+                  processVirtualOrganization_Ls(response, stream);
+                  break;
+               case cmd_pair(AdminCmd::CMD_VERSION, AdminCmd::SUBCMD_NONE):
+                  processVersion(response, stream);
+                  break;
+               case cmd_pair(AdminCmd::CMD_SCHEDULINGINFOS, AdminCmd::SUBCMD_LS):
+                  processSchedulingInfos_Ls(response,stream);
+                  break;
+               case cmd_pair(AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_LS):
+                  processRecycleTapeFile_Ls(response,stream);
+                  break;
+               case cmd_pair(AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_RESTORE):
+                  processRecycleTapeFile_Restore(response);
+                  break;
 
-            default:
-               throw PbException("Admin command pair <" +
-                     AdminCmd_Cmd_Name(request.admincmd().cmd()) + ", " +
-                     AdminCmd_SubCmd_Name(request.admincmd().subcmd()) +
-                     "> is not implemented.");
+               default:
+                  throw PbException("Admin command pair <" +
+                        AdminCmd_Cmd_Name(request.admincmd().cmd()) + ", " +
+                        AdminCmd_SubCmd_Name(request.admincmd().subcmd()) +
+                        "> is not implemented.");
             } // end switch
-
+            
             // Log the admin command
-            logAdminCmd(__FUNCTION__, request.admincmd(), t);
-         } // end case Request::kAdmincmd
+            logAdminCmd(__FUNCTION__, "success", "", request.admincmd(), t);
+         } catch(PbException &ex) {
+            logAdminCmd(__FUNCTION__, "failure", ex.what(), request.admincmd(), t);
+            throw ex;
+         } catch(cta::exception::UserError &ex) {
+            logAdminCmd(__FUNCTION__, "failure", ex.getMessageValue(), request.admincmd(), t);
+            throw ex;
+         } catch(cta::exception::Exception &ex) {
+            logAdminCmd(__FUNCTION__, "failure", ex.what(), request.admincmd(), t);
+            throw ex;
+         } catch(std::runtime_error &ex) {
+            logAdminCmd(__FUNCTION__, "failure", ex.what(), request.admincmd(), t);
+            throw ex;
+         }
          break;
+         } // end case Request::kAdmincmd
 
       case Request::kNotification:
          // Validate that instance name in key used to authenticate matches instance name in Protocol buffer
@@ -796,9 +810,12 @@ void RequestMessage::processUPDATE_FID(const cta::eos::Notification &notificatio
 
 // Admin commands
 
-void RequestMessage::logAdminCmd(const std::string &function, const cta::admin::AdminCmd &admincmd, cta::utils::Timer &t)
+void RequestMessage::logAdminCmd(const std::string &function, const std::string &status, const std::string &reason,
+const cta::admin::AdminCmd &admincmd, cta::utils::Timer &t)
 {
    using namespace cta::admin;
+
+   cta::log::ScopedParamContainer params(m_lc);
 
    std::string log_msg = "In RequestMessage::" + function + "(): Admin command succeeded: ";
 
@@ -806,16 +823,23 @@ void RequestMessage::logAdminCmd(const std::string &function, const cta::admin::
    for(auto cmd_it = cmdLookup.begin(); cmd_it != cmdLookup.end(); ++cmd_it) {
       // Return the matching long string (length > 3)
       if(admincmd.cmd() == cmd_it->second && cmd_it->first.length() > 3) {
-         log_msg += cmd_it->first + ' ';
+         params.add("command", cmd_it->first);
          break;
       }
    }
    for(auto subcmd_it = subcmdLookup.begin(); subcmd_it != subcmdLookup.end(); ++subcmd_it) {
       if(admincmd.subcmd() == subcmd_it->second) {
-         log_msg += subcmd_it->first;
+         params.add("subcommand", subcmd_it->first);
          break;
       }
    }
+
+   params.add("status", status);
+
+   if (reason != "") {
+      params.add("reason", reason);
+   }
+
 
    // Log options passed from the command line
    std::pair<cta::admin::AdminCmd::Cmd, cta::admin::AdminCmd::SubCmd> cmd_key(admincmd.cmd(), admincmd.subcmd());
@@ -832,7 +856,9 @@ void RequestMessage::logAdminCmd(const std::string &function, const cta::admin::
                auto bool_key = cta::admin::boolOptions.at(lookup_key);
                auto opt_value = getOptional(bool_key, &has_option);
                if (has_option) {
-                  log_msg += " " + lookup_key + " " + std::to_string(opt_value.value());
+                  auto descriptor = cta::admin::OptionBoolean::Key_descriptor();
+                  auto bool_key_name  = descriptor->FindValueByNumber(bool_key)->name();
+                  params.add(bool_key_name, opt_value.value() ? "true" : "false");
                }
                break;
             }
@@ -841,7 +867,9 @@ void RequestMessage::logAdminCmd(const std::string &function, const cta::admin::
                auto int_key = cta::admin::uint64Options.at(lookup_key);
                auto opt_value = getOptional(int_key, &has_option);
                if (has_option) {
-                  log_msg += " " + lookup_key + " " + std::to_string(opt_value.value());
+                  auto descriptor = cta::admin::OptionUInt64::Key_descriptor();
+                  auto int_key_name  = descriptor->FindValueByNumber(int_key)->name();
+                  params.add(int_key_name, opt_value.value());
                }
                break;
             }
@@ -851,7 +879,9 @@ void RequestMessage::logAdminCmd(const std::string &function, const cta::admin::
                auto string_key = cta::admin::strOptions.at(lookup_key);
                auto opt_value = getOptional(string_key, &has_option);
                if (has_option) {
-                  log_msg += " " + lookup_key + " " + opt_value.value();
+                  auto descriptor = cta::admin::OptionString::Key_descriptor();
+                  auto string_key_name  = descriptor->FindValueByNumber(string_key)->name();
+                  params.add(string_key_name, opt_value.value());
                }
                break;
             }
@@ -860,15 +890,15 @@ void RequestMessage::logAdminCmd(const std::string &function, const cta::admin::
                auto string_list_key = cta::admin::strListOptions.at(lookup_key);
                auto opt_value = getOptional(string_list_key, &has_option);
                if (has_option) {
-                  log_msg += " " + lookup_key + " " + cmd_option.get_help_text();
+                  auto descriptor = cta::admin::OptionStrList::Key_descriptor();
+                  auto string_list_key_name  = descriptor->FindValueByNumber(string_list_key)->name();
+                  params.add(string_list_key_name, cmd_option.get_help_text());
                }
                break;
             }
       }
    }
 
-   // Add the log message
-   cta::log::ScopedParamContainer params(m_lc);
    params.add("adminTime", t.secs());
    params.add("user", m_cliIdentity.username + "@" + m_cliIdentity.host);
    m_lc.log(cta::log::INFO, log_msg);

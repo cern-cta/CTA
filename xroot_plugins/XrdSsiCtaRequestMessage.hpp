@@ -254,7 +254,8 @@ private:
    * @param[in]    admincmd    CTA Admin command request message
    * @param[in]    t           CTA Catalogue timer
    */
-  void logAdminCmd(const std::string &function, const cta::admin::AdminCmd &admincmd, cta::utils::Timer &t);
+  void logAdminCmd(const std::string &function, const std::string &status, const std::string &reason, 
+    const cta::admin::AdminCmd &admincmd, cta::utils::Timer &t);
 
   /*!
    * Drive state enum
