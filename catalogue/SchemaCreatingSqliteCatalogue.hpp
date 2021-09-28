@@ -25,7 +25,7 @@ namespace catalogue {
 class CatalogueFactory;
 
 /**
- * Asbtract CTA catalogue class to be used for unit testing.
+ * CTA catalogue class to be used for unit testing.
  */
 class SchemaCreatingSqliteCatalogue: public SqliteCatalogue {
 public:
