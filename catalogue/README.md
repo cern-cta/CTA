@@ -81,6 +81,10 @@ The six main classes to note are:
 
 The `Catalogue` class is an interface class.  Its purpose is to allow the CTA catalogue to be implemented by any form of persistent store and not just relational database management systems.  The `RdbmsCatalogue` class inherits from `Catalogue` and implements the majority of the CTA catalogue logic.  The design goal is to implement as much of the logic in common code as is possible and to only implement specialised code when absolutely necessary.  The `InMemoryCatalogue` class is used solely for implementing C++ unit tests.  The remaining classes contain the code required to work with specific database management systems.
 
+The following class diagram shows the above 6 main classes plus the `SchemaCreatingSQLiteCatalogue` and `CatalogueRetryWrapper` classes:
+
+![cta_catalogue_class_diagram.png](cta_catalogue_class_diagram.png)
+
 # Create a new version of the Catalogue Schema
 
 ## Introduction
