@@ -257,7 +257,10 @@ struct Login {
    */
   static const char *s_fileFormat;
   
-  static std::string s_hiddenPassword;
+  /**
+   * String displayed instead of the actual password.
+   */
+  static const std::string s_hiddenPassword;
   
 private:
   /**
