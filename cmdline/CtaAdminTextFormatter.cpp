@@ -26,7 +26,7 @@
 
 namespace cta {
 namespace admin {
-  
+
 /**
  ** Generic utility methods
  **/
@@ -51,15 +51,15 @@ std::string TextFormatter::timeToStr(const time_t &unixtime) {
 
 std::string TextFormatter::secondsToDayHoursMinSec(const uint64_t & seconds){
   uint64_t secondsSave = seconds;
-  int day = secondsSave / (24 * 3600); 
-  
-  secondsSave = secondsSave % (24 * 3600); 
-  int hour = secondsSave / 3600; 
+  int day = secondsSave / (24 * 3600);
 
-  secondsSave %= 3600; 
-  int minutes = secondsSave / 60 ; 
+  secondsSave = secondsSave % (24 * 3600);
+  int hour = secondsSave / 3600;
 
-  secondsSave %= 60; 
+  secondsSave %= 3600;
+  int minutes = secondsSave / 60 ;
+
+  secondsSave %= 60;
   std::stringstream ss;
   if(day){
     ss << day << "d";
@@ -156,7 +156,7 @@ void TextFormatter::printAdminLsHeader() {
   push_back(
     "user",
     "c.user",
-    "c.host", 
+    "c.host",
     "c.time",
     "m.user",
     "m.host",
@@ -230,7 +230,9 @@ void TextFormatter::printDriveLsHeader() {
     "priority",
     "activity",
     "age",
-    "reason"
+    "reason",
+    "disk_system_name",
+    "reserved_bytes"
   );
 }
 
@@ -270,7 +272,7 @@ void TextFormatter::print(const DriveLsItem &drls_item)
 
   //If there is a reason, we only want to display the beginning
   std::string reason = cta::utils::postEllipsis(drls_item.reason(),NB_CHAR_REASON);
-  
+
   push_back(
     drls_item.logical_library(),
     drls_item.drive_name(),
@@ -289,7 +291,9 @@ void TextFormatter::print(const DriveLsItem &drls_item)
     drls_item.current_priority(),
     drls_item.current_activity(),
     timeSinceLastUpdate,
-    reason
+    reason,
+    drls_item.disk_system_name(),
+    drls_item.reserved_bytes()
   );
 }
 
@@ -707,7 +711,7 @@ void TextFormatter::print(const ShowQueuesItem &sq_item) {
   std::string readMaxDrives;
   std::string writeMaxDrives;
 
-  if(sq_item.mount_type() == ARCHIVE_FOR_USER || sq_item.mount_type() == ARCHIVE_FOR_REPACK || 
+  if(sq_item.mount_type() == ARCHIVE_FOR_USER || sq_item.mount_type() == ARCHIVE_FOR_REPACK ||
      sq_item.mount_type() == RETRIEVE) {
     priority         = std::to_string(sq_item.priority());
     minAge           = std::to_string(sq_item.min_age());
@@ -923,7 +927,7 @@ void TextFormatter::printTapePoolLsHeader() {
 void TextFormatter::print(const TapePoolLsItem &tpls_item)
 {
   uint64_t avail = tpls_item.capacity_bytes() > tpls_item.data_bytes() ?
-    tpls_item.capacity_bytes()-tpls_item.data_bytes() : 0; 
+    tpls_item.capacity_bytes()-tpls_item.data_bytes() : 0;
 
   double use_percent = tpls_item.capacity_bytes() > 0 ?
     (static_cast<double>(tpls_item.data_bytes())/static_cast<double>(tpls_item.capacity_bytes()))*100.0 : 0.0;
@@ -970,7 +974,7 @@ void TextFormatter::printDiskSystemLsHeader() {
 }
 
 void TextFormatter::print(const DiskSystemLsItem &dsls_item)
-{  
+{
   push_back(
     dsls_item.name(),
     dsls_item.file_regexp(),
@@ -1085,7 +1089,7 @@ void TextFormatter::print(const RecycleTapeFileLsItem & rtfls_item){
   auto fid = strtol(rtfls_item.disk_file_id().c_str(), nullptr, 10);
   std::stringstream fxid;
   fxid << std::hex << fid;
-  
+
   push_back(
     rtfls_item.archive_file_id(),
     rtfls_item.copy_nb(),
