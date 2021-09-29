@@ -23,22 +23,21 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 enum DriveStatus {
-  Down,
-  Up,
-  Probing,
-  Starting,
-  Mounting,
-  Transferring,
-  Unloading,
-  Unmounting,
-  DrainingToDisk,
-  CleaningUp,
-  Shutdown,
-  Unknown
+  Down = 1,
+  Up = 2,
+  Probing = 3,
+  Starting = 4,
+  Mounting = 5,
+  Transferring = 6,
+  Unloading = 7,
+  Unmounting = 8,
+  DrainingToDisk = 9,
+  CleaningUp = 10,
+  Shutdown = 11,
+  Unknown = 0
 };
 
 std::string toString(DriveStatus type);
 } // namespace dataStructures
 } // namespace common
 } // namespace cta
-

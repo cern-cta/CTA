@@ -55,6 +55,7 @@
 #include "disk/DiskReporter.hpp"
 #include "disk/DiskReporterFactory.hpp"
 #include "SchedulingInfos.hpp"
+#include "TapeDrivesCatalogueState.hpp"
 
 #include <list>
 #include <map>
@@ -69,16 +70,16 @@ class RetrieveJob;
 
 /**
  * Class implementing a tape resource scheduler. This class is the main entry point
- * for most of the operations on both the tape file catalogue and the object store for 
+ * for most of the operations on both the tape file catalogue and the object store for
  * queues. An exception is although used for operations that would trivially map to
  * catalogue operations.
- * The scheduler is the unique entry point to the central storage for taped. It is 
- * 
+ * The scheduler is the unique entry point to the central storage for taped. It is
+ *
  */
 CTA_GENERATE_EXCEPTION_CLASS(ExpandRepackRequestException);
 
 class Scheduler {
-  
+
 public:
 
   /**
@@ -86,20 +87,20 @@ public:
    */
   Scheduler(
     cta::catalogue::Catalogue &catalogue,
-    SchedulerDatabase &db, const uint64_t minFilesToWarrantAMount, const uint64_t minBytesToWarrantAMount); 
+    SchedulerDatabase &db, const uint64_t minFilesToWarrantAMount, const uint64_t minBytesToWarrantAMount);
     //TODO: we have out the mount policy parameters here temporarily we will remove them once we know where to put them
 
   /**
    * Destructor.
    */
   ~Scheduler() throw();
-  
+
   /**
    * Validates that the underlying storages are accessible
    * Lets the exception through in case of failure.
    */
   void ping(log::LogContext & lc);
-    
+
   /**
    * Waits for all scheduler db threads to complete (mostly for unit tests).
    */
@@ -127,8 +128,8 @@ public:
     const common::dataStructures::RequesterIdentity &user,
     log::LogContext &lc);
 
-  /** 
-   * Queue the specified archive request. 
+  /**
+   * Queue the specified archive request.
    * Throws a UserError exception in case of wrong request parameters (ex. no route to tape)
    * Throws a (Non)RetryableError exception in case something else goes wrong with the request
    * @param archiveFileId The archive file indentifier to be associated with the new archive file.
@@ -139,17 +140,17 @@ public:
    */
   std::string queueArchiveWithGivenId(const uint64_t archiveFileId, const std::string &instanceName,
     const cta::common::dataStructures::ArchiveRequest &request, log::LogContext &lc);
-  
+
   /**
-   * Queue a retrieve request. 
+   * Queue a retrieve request.
    * Throws a UserError exception in case of wrong request parameters (ex. unknown file id)
    * Throws a (Non)RetryableError exception in case something else goes wrong with the request
    * return an opaque id (string) that can be used to cancel the retrieve request.
    */
   std::string queueRetrieve(const std::string &instanceName, cta::common::dataStructures::RetrieveRequest &request,
     log::LogContext &lc);
-  
-  /** 
+
+  /**
    * Delete an archived file or a file which is in the process of being archived.
    * Throws a UserError exception in case of wrong request parameters (ex. unknown file id)
    * Throws a (Non)RetryableError exception in case something else goes wrong with the request
@@ -157,37 +158,37 @@ public:
   void deleteArchive(const std::string &instanceName,
     const cta::common::dataStructures::DeleteArchiveRequest &request,
     log::LogContext & lc);
-  
-  /** 
+
+  /**
    * Cancel an ongoing retrieval.
    * Throws a UserError exception in case of wrong request parameters (ex. file not being retrieved)
    * Throws a (Non)RetryableError exception in case something else goes wrong with the request
    */
-  void abortRetrieve(const std::string &instanceName, 
+  void abortRetrieve(const std::string &instanceName,
     const cta::common::dataStructures::CancelRetrieveRequest &request, log::LogContext & lc);
-  
-  /** 
+
+  /**
    * Delete a job from the failed queue.
    */
   void deleteFailed(const std::string &objectId, log::LogContext & lc);
-  
-  /** 
+
+  /**
    * Update the file information of an archived file.
    * Throws a UserError exception in case of wrong request parameters (ex. unknown file id)
    * Throws a (Non)RetryableError exception in case something else goes wrong with the request
    */
-  void updateFileInfo(const std::string &instanceName, 
+  void updateFileInfo(const std::string &instanceName,
     const cta::common::dataStructures::UpdateFileInfoRequest &request);
-  
-  /** 
+
+  /**
    * Update the storage class of an archived file.
    * Throws a UserError exception in case of wrong request parameters (ex. unknown storage class)
    * Throws a (Non)RetryableError exception in case something else goes wrong with the request
    */
-  void updateFileStorageClass(const std::string &instanceName, 
+  void updateFileStorageClass(const std::string &instanceName,
     const cta::common::dataStructures::UpdateFileStorageClassRequest &request);
-  
-  /** 
+
+  /**
    * List the storage classes that a specific user is allowed to use (the ones belonging to the instance from where
    * the command was issued)
    * Throws a (Non)RetryableError exception in case something else goes wrong with the request
@@ -196,8 +197,8 @@ public:
     const cta::common::dataStructures::ListStorageClassRequest &request);
 
   /**
-   * Labeling is treated just like archivals and retrievals (no drive dedication is required). When an admin issues a 
-   * labeling command, the operation gets queued just like a normal user operation, and the first drive that can 
+   * Labeling is treated just like archivals and retrievals (no drive dedication is required). When an admin issues a
+   * labeling command, the operation gets queued just like a normal user operation, and the first drive that can
    * accomplish it will dequeue it.
    */
   void queueLabel(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid,
@@ -212,19 +213,19 @@ public:
   std::list<cta::common::dataStructures::ArchiveJob> getPendingArchiveJobs(const std::string &tapePoolName, log::LogContext &lc) const;
   std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > getPendingRetrieveJobs(log::LogContext &lc) const;
   std::list<cta::common::dataStructures::RetrieveJob> getPendingRetrieveJobs(const std::string &vid, log::LogContext &lc) const;
-  
+
   /*============== Drive state management ====================================*/
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchDrive);
-  
+
   /**
    * Gets the desired drive state from object store. Used by the tape drive, when scheduling.
    * @param driveName
    * @return The structure representing the desired states
    */
   common::dataStructures::DesiredDriveState getDesiredDriveState(const std::string &driveName, log::LogContext & lc);
-  
+
   /**
-   * Sets the desired drive state. This function is used by the front end to pass instructions to the 
+   * Sets the desired drive state. This function is used by the front end to pass instructions to the
    * object store for the requested drive status. The status is reset to down by the drives
    * on hardware failures.
    * @param cliIdentity The identity of the user requesting the drive to put up of down.
@@ -233,29 +234,44 @@ public:
    */
   void setDesiredDriveState(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string & driveName,
     const common::dataStructures::DesiredDriveState & desiredState, log::LogContext & lc);
-  
+
+  bool checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo, log::LogContext & lc);
+
   /**
    * Remove drive from the drive register.
-   * 
+   *
    * @param cliIdentity The identity of the user requesting the drive removal.
    * @param driveName The drive name
    */
   void removeDrive(const cta::common::dataStructures::SecurityIdentity &cliIdentity,
     const std::string &driveName, log::LogContext & lc);
-  
+
   /**
    * Reports the state of the drive to the object store. This information is then reported
    * to the user through the command line interface, via getDriveStates(). This function
    * any necessary field in the drive's state. The drive entry will be created if necessary.
-   * @param defaultState a drive state containing all the default values 
+   * @param defaultState a drive state containing all the default values
    * @param type the type of the session, if any
-   * @param status the state of the drive. Reporting the state to down will also 
+   * @param status the state of the drive. Reporting the state to down will also
    * mean that  the desired state should be reset to down following an hardware
    * error encountered by the drive.
    */
-  void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, cta::common::dataStructures::MountType type, 
+  void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, cta::common::dataStructures::MountType type,
     cta::common::dataStructures::DriveStatus status, log::LogContext & lc);
-  
+
+  /**
+   * Creates a Table in the Database for a new Tape Drives
+   * @param driveInfo default info of the Tape Drive
+   * @param desiredState the structure that contains the desired state informations
+   * @param type the type of the session, if any
+   * @param status the state of the drive. Reporting the state to down will also
+   * @param status The identity of the user requesting the drive to put up or down.
+   */
+  void createTapeDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
+    const common::dataStructures::DesiredDriveState & desiredState, const common::dataStructures::MountType& type,
+    const common::dataStructures::DriveStatus& status, const tape::daemon::TpconfigLine& tpConfigLine,
+    const common::dataStructures::SecurityIdentity& identity, log::LogContext & lc);
+
   /**
    * Reports the configuration of the drive to the objectstore.
    * @param driveName the name of the drive to report the config to the objectstore
@@ -268,15 +284,15 @@ public:
    * @param cliIdentity
    * @return A list of drive state structures.
    */
-  std::list<cta::common::dataStructures::DriveState> getDriveStates(
+  std::list<cta::common::dataStructures::TapeDrive> getDriveStates(
     const cta::common::dataStructures::SecurityIdentity &cliIdentity, log::LogContext & lc) const;
-  
+
   /*============== Actual mount scheduling and queue status reporting ========*/
 private:
-  
+
   typedef std::pair<std::string, common::dataStructures::MountType> TapePoolMountPair;
   typedef std::pair<std::string, common::dataStructures::MountType> VirtualOrganizationMountPair;
-  
+
   struct MountCounts {
     uint32_t totalMounts = 0;
     struct AutoZeroUint32_t {
@@ -286,18 +302,18 @@ private:
   };
   typedef std::map<TapePoolMountPair, MountCounts> ExistingMountSummaryPerTapepool;
   typedef std::map<VirtualOrganizationMountPair, MountCounts> ExistingMountSummaryPerVo;
-  
+
   const std::set<std::string> c_mandatoryEnvironmentVariables = {"XrdSecPROTOCOL", "XrdSecSSSKT"};
-  
+
   /**
    * Common part to getNextMountDryRun() and getNextMount() to populate mount decision info.
    * The structure should be pre-loaded by the calling function.
    */
-  void sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> &mountInfo, 
-    const std::string & logicalLibraryName, const std::string & driveName, utils::Timer & timer, 
+  void sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> &mountInfo,
+    const std::string & logicalLibraryName, const std::string & driveName, utils::Timer & timer,
     ExistingMountSummaryPerTapepool & existingMountsDistinctTypeSummaryPerTapepool, ExistingMountSummaryPerVo & existingMountBasicTypeSummaryPerVo, std::set<std::string> & tapesInUse, std::list<catalogue::TapeForWriting> & tapeList,
     double & getTapeInfoTime, double & candidateSortingTime, double & getTapeForWriteTime, log::LogContext & lc);
-  
+
   /**
    * Checks wether the tape can be repacked of not.
    * A tape can be repacked if it exists, it is full, not BROKEN and not DISABLED unless there the --disabledtape flag has been provided by the user.
@@ -306,22 +322,22 @@ private:
    * @throws a UserError exception if the tape cannot be repacked
    */
   void checkTapeCanBeRepacked(const std::string & vid, const SchedulerDatabase::QueueRepackRequest & repackRequest);
-  
+
   cta::optional<common::dataStructures::LogicalLibrary> getLogicalLibrary(const std::string &libraryName, double &getLogicalLibraryTime);
-  
+
   void deleteRepackBuffer(std::unique_ptr<cta::disk::Directory> repackBuffer, cta::log::LogContext & lc);
-  
+
   uint64_t getNbFilesAlreadyArchived(const common::dataStructures::ArchiveFile& archiveFile);
-  
+
   /**
    * Checks that the environment variables needed by the tapeserver to work
    * are set correctly.
    */
-  void checkNeededEnvironmentVariables(); 
-  
+  void checkNeededEnvironmentVariables();
+
 public:
   /**
-   * Run the mount decision logic lock free, so we have no contention in the 
+   * Run the mount decision logic lock free, so we have no contention in the
    * most usual case where there is no mount to create.
    * @param logicalLibraryName library for the drive we are scheduling
    * @param driveName name of the drive we are scheduling
@@ -337,37 +353,37 @@ public:
    * @return unique pointer to the tape mount structure. Next step for the user will be find which type of mount this is.
    */
   std::unique_ptr<TapeMount> getNextMount(const std::string &logicalLibraryName, const std::string &driveName, log::LogContext & lc);
-  
+
   /**
    * Returns scheduling informations for the cta-admin schedulinginfos ls command
    * @param lc the log context
    * @return the list of the scheduling informations for the cta-admin schedulinginfos ls command
    */
   std::list<SchedulingInfos> getSchedulingInformations(log::LogContext & lc);
-  
+
   /**
-   * A function returning 
+   * A function returning
    * @param lc
-   * @return 
+   * @return
    */
   std::list<common::dataStructures::QueueAndMountSummary> getQueuesAndMountSummaries(log::LogContext & lc);
-  
+
   /*======================== Archive reporting support =======================*/
   /**
    * Batch job factory
-   * 
+   *
    * @param filesRequested the number of files requested
    * @param logContext
-   * @return a list of unique_ptr to the next successful archive jobs to report. 
-   * The list is empty when no more jobs can be found. Will return jobs (if 
+   * @return a list of unique_ptr to the next successful archive jobs to report.
+   * The list is empty when no more jobs can be found. Will return jobs (if
    * available) up to specified number.
    */
   std::list<std::unique_ptr<ArchiveJob>> getNextArchiveJobsToReportBatch(uint64_t filesRequested,
     log::LogContext &logContext);
-  
+
   void reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>> & archiveJobsBatch,
       cta::disk::DiskReporterFactory & reporterFactory, log::TimingList&, utils::Timer &, log::LogContext &);
-  
+
   /*============== Repack support ===========================================*/
   // Promotion of requests
   void promoteRepackRequestsToToExpand(log::LogContext & lc);
@@ -385,19 +401,19 @@ public:
   };
   RepackReportBatch getNextRepackReportBatch(log::LogContext & lc);
   std::list<Scheduler::RepackReportBatch> getRepackReportBatches(log::LogContext &lc);
-  
+
   RepackReportBatch getNextSuccessfulRetrieveRepackReportBatch(log::LogContext &lc);
   RepackReportBatch getNextFailedRetrieveRepackReportBatch(log::LogContext &lc);
   RepackReportBatch getNextSuccessfulArchiveRepackReportBatch(log::LogContext &lc);
   RepackReportBatch getNextFailedArchiveRepackReportBatch(log::LogContext &lc);
-  
+
   /*======================= Failed archive jobs support ======================*/
   SchedulerDatabase::JobsFailedSummary getArchiveJobsFailedSummary(log::LogContext &lc);
 
   /*======================= Retrieve reporting support =======================*/
   /*!
    * Batch job factory
-   * 
+   *
    * @param filesRequested    the number of files requested
    * @param logContext
    *
@@ -413,7 +429,7 @@ public:
 
   /*!
    * Batch job factory
-   * 
+   *
    * @param filesRequested    The number of files requested. Returns available jobs up to the specified
    *                          number.
    * @param logContext        Log Context
@@ -429,13 +445,13 @@ public:
 
   /*======================== Administrator management ========================*/
   void authorizeAdmin(const cta::common::dataStructures::SecurityIdentity &cliIdentity, log::LogContext & lc);
-  
+
   void setRepackRequestExpansionTimeLimit(const double &time);
-  
+
   double getRepackRequestExpansionTimeLimit() const;
-  
+
   cta::catalogue::Catalogue & getCatalogue();
-  
+
 private:
 
   /**
@@ -447,9 +463,11 @@ private:
    * The scheduler database.
    */
   SchedulerDatabase &m_db;
-  
+
   const uint64_t m_minFilesToWarrantAMount;
   const uint64_t m_minBytesToWarrantAMount;
+
+  std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
 }; // class Scheduler
 
 } // namespace cta

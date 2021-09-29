@@ -114,15 +114,15 @@ public:
   void modifyAdminUserComment(const common::dataStructures::SecurityIdentity &admin, const std::string &username, const std::string &comment) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyAdminUserComment(admin, username, comment);}, m_maxTriesToConnect);
   }
-  
+
   void createVirtualOrganization(const common::dataStructures::SecurityIdentity &admin, const common::dataStructures::VirtualOrganization &vo) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->createVirtualOrganization(admin, vo);}, m_maxTriesToConnect);
   }
-  
+
   void deleteVirtualOrganization(const std::string &voName) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteVirtualOrganization(voName);}, m_maxTriesToConnect);
   }
-  
+
   std::list<common::dataStructures::VirtualOrganization> getVirtualOrganizations() const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getVirtualOrganizations();}, m_maxTriesToConnect);
   }
@@ -130,32 +130,32 @@ public:
   common::dataStructures::VirtualOrganization getVirtualOrganizationOfTapepool(const std::string & tapepoolName) const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getVirtualOrganizationOfTapepool(tapepoolName);}, m_maxTriesToConnect);
   }
-  
+
   common::dataStructures::VirtualOrganization getCachedVirtualOrganizationOfTapepool(const std::string & tapepoolName) const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getCachedVirtualOrganizationOfTapepool(tapepoolName);}, m_maxTriesToConnect);
   }
-  
+
   void modifyVirtualOrganizationName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentVoName, const std::string &newVoName) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyVirtualOrganizationName(admin,currentVoName,newVoName);}, m_maxTriesToConnect);
   }
-  
+
   void modifyVirtualOrganizationReadMaxDrives(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t readMaxDrives) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyVirtualOrganizationReadMaxDrives(admin,voName,readMaxDrives);}, m_maxTriesToConnect);
   }
-  
+
   void modifyVirtualOrganizationWriteMaxDrives(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t writeMaxDrives) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyVirtualOrganizationWriteMaxDrives(admin,voName,writeMaxDrives);}, m_maxTriesToConnect);
   }
-  
+
   void modifyVirtualOrganizationMaxFileSize(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t maxFileSize) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyVirtualOrganizationMaxFileSize(admin,voName,maxFileSize);}, m_maxTriesToConnect);
   }
-  
-  
+
+
   void modifyVirtualOrganizationComment(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const std::string &comment) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyVirtualOrganizationComment(admin,voName,comment);}, m_maxTriesToConnect);
   }
-    
+
   void createStorageClass(const common::dataStructures::SecurityIdentity &admin, const common::dataStructures::StorageClass &storageClass) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->createStorageClass(admin, storageClass);}, m_maxTriesToConnect);
   }
@@ -169,7 +169,7 @@ public:
   }
 
   common::dataStructures::StorageClass getStorageClass(const std::string &name) const override {
-   return retryOnLostConnection(m_log, [&]{return m_catalogue->getStorageClass(name);}, m_maxTriesToConnect); 
+   return retryOnLostConnection(m_log, [&]{return m_catalogue->getStorageClass(name);}, m_maxTriesToConnect);
   }
 
   void modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t nbCopies) override {
@@ -183,7 +183,7 @@ public:
   void modifyStorageClassName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentName, const std::string &newName) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyStorageClassName(admin, currentName, newName);}, m_maxTriesToConnect);
   }
-  
+
   void modifyStorageClassVo(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyStorageClassVo(admin, name, vo);}, m_maxTriesToConnect);
   }
@@ -199,7 +199,7 @@ public:
   std::list<MediaTypeWithLogs> getMediaTypes() const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getMediaTypes();}, m_maxTriesToConnect);
   }
-  
+
   MediaType getMediaTypeByVid(const std::string & vid) const override {
     return retryOnLostConnection(m_log,[&]{return m_catalogue->getMediaTypeByVid(vid);}, m_maxTriesToConnect);
   }
@@ -355,11 +355,11 @@ public:
   void checkTapeForLabel(const std::string &vid) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->checkTapeForLabel(vid);}, m_maxTriesToConnect);
   }
-  
+
   uint64_t getNbFilesOnTape(const std::string &vid) const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getNbFilesOnTape(vid);}, m_maxTriesToConnect);
   }
-  
+
   void modifyTapeMediaType(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &mediaType) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapeMediaType(admin, vid, mediaType);}, m_maxTriesToConnect);
   }
@@ -379,7 +379,7 @@ public:
   void modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &encryptionKeyName) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapeEncryptionKeyName(admin, vid, encryptionKeyName);}, m_maxTriesToConnect);
   }
-  
+
   void modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const cta::optional<std::string> & stateReason) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapeState(admin,vid, state, stateReason);}, m_maxTriesToConnect);
   }
@@ -391,11 +391,11 @@ public:
   void setTapeIsFromCastorInUnitTests(const std::string &vid) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->setTapeIsFromCastorInUnitTests(vid);}, m_maxTriesToConnect);
   }
-  
+
   void setTapeDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string & reason) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->setTapeDisabled(admin, vid, reason);}, m_maxTriesToConnect);
   }
-  
+
   void setTapeDirty(const std::string & vid) override {
     return retryOnLostConnection(m_log,[&]{ return m_catalogue->setTapeDirty(vid);}, m_maxTriesToConnect);
   }
@@ -427,7 +427,7 @@ public:
   std::list<common::dataStructures::MountPolicy> getMountPolicies() const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getMountPolicies();}, m_maxTriesToConnect);
   }
-  
+
   std::list<common::dataStructures::MountPolicy> getCachedMountPolicies() const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getCachedMountPolicies();}, m_maxTriesToConnect);
   }
@@ -479,19 +479,19 @@ public:
   void modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyMountPolicyComment(admin, name, comment);}, m_maxTriesToConnect);
   }
-  
+
   void createActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity& admin, const std::string& diskInstanceName, const std::string& acttivity, double weight, const std::string & comment) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->createActivitiesFairShareWeight(admin, diskInstanceName, acttivity, weight, comment);}, m_maxTriesToConnect);
   }
-  
+
   void modifyActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity& admin, const std::string& diskInstanceName, const std::string& acttivity, double weight, const std::string & comment) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyActivitiesFairShareWeight(admin, diskInstanceName, acttivity, weight, comment);}, m_maxTriesToConnect);
   }
-  
+
   void deleteActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity& admin, const std::string& diskInstanceName, const std::string& acttivity) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteActivitiesFairShareWeight(admin, diskInstanceName, acttivity);}, m_maxTriesToConnect);
   }
-  
+
   std::list<common::dataStructures::ActivitiesFairShareWeights> getActivitiesFairShareWeights() const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getActivitiesFairShareWeights();}, m_maxTriesToConnect);
   }
@@ -499,47 +499,47 @@ public:
   disk::DiskSystemList getAllDiskSystems() const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getAllDiskSystems();}, m_maxTriesToConnect);
   }
-  
+
   void createDiskSystem(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &fileRegexp, const std::string &freeSpaceQueryURL, const uint64_t refreshInterval, const uint64_t targetedFreeSpace, const uint64_t sleepTime, const std::string &comment)  override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->createDiskSystem(admin, name, fileRegexp, freeSpaceQueryURL, refreshInterval, targetedFreeSpace, sleepTime, comment);}, m_maxTriesToConnect);
   }
-  
+
   void deleteDiskSystem(const std::string &name) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteDiskSystem(name);}, m_maxTriesToConnect);
   }
-  
+
   void modifyDiskSystemFileRegexp(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &fileRegexp) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyDiskSystemFileRegexp(admin, name, fileRegexp);}, m_maxTriesToConnect);
   }
 
   void modifyDiskSystemFreeSpaceQueryURL(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &freeSpaceQueryURL) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyDiskSystemFreeSpaceQueryURL(admin, name, freeSpaceQueryURL);}, m_maxTriesToConnect);  
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyDiskSystemFreeSpaceQueryURL(admin, name, freeSpaceQueryURL);}, m_maxTriesToConnect);
   }
-  
+
   void modifyDiskSystemRefreshInterval(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t refreshInterval) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyDiskSystemRefreshInterval(admin, name, refreshInterval);}, m_maxTriesToConnect);      
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyDiskSystemRefreshInterval(admin, name, refreshInterval);}, m_maxTriesToConnect);
   }
- 
+
   void modifyDiskSystemTargetedFreeSpace(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t targetedFreeSpace) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyDiskSystemTargetedFreeSpace(admin, name, targetedFreeSpace);}, m_maxTriesToConnect);      
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyDiskSystemTargetedFreeSpace(admin, name, targetedFreeSpace);}, m_maxTriesToConnect);
   }
-  
+
   void modifyDiskSystemComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyDiskSystemComment(admin, name, comment);}, m_maxTriesToConnect);
   }
-  
+
   void modifyDiskSystemSleepTime(const common::dataStructures::SecurityIdentity& admin, const std::string& name, const uint64_t sleepTime) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyDiskSystemSleepTime(admin, name, sleepTime);}, m_maxTriesToConnect);
   }
-  
+
   ArchiveFileItor getArchiveFilesItor(const TapeFileSearchCriteria &searchCriteria) const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getArchiveFilesItor(searchCriteria);}, m_maxTriesToConnect);
   }
-  
+
   FileRecycleLogItor getFileRecycleLogItor(const RecycleTapeFileSearchCriteria & searchCriteria) const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getFileRecycleLogItor(searchCriteria);}, m_maxTriesToConnect);
   }
-  
+
   void restoreFilesInRecycleLog(const RecycleTapeFileSearchCriteria & searchCriteria) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->restoreFilesInRecycleLog(searchCriteria);}, m_maxTriesToConnect);
   }
@@ -547,19 +547,19 @@ public:
   void deleteFileFromRecycleBin(const uint64_t archiveFileId, log::LogContext &lc){
     return retryOnLostConnection(m_log,[&]{return m_catalogue->deleteFileFromRecycleBin(archiveFileId,lc);},m_maxTriesToConnect);
   }
-  
+
   /**
    * Deletes all the log entries corresponding to the vid passed in parameter.
-   * 
+   *
    * Please note that this method is idempotent.  If there are no recycle log
    * entries associated to the vid passed in parameter, the method will return
    * without any error.
-   * 
+   *
    * @param vid, the vid of the files to be deleted
    * @param lc, the logContext
    */
   void deleteFilesFromRecycleLog(const std::string & vid, log::LogContext & lc){
-    return retryOnLostConnection(m_log,[&]{return m_catalogue->deleteFilesFromRecycleLog(vid,lc);},m_maxTriesToConnect); 
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->deleteFilesFromRecycleLog(vid,lc);},m_maxTriesToConnect);
   }
 
   std::list<common::dataStructures::ArchiveFile> getFilesForRepack(const std::string &vid, const uint64_t startFSeq, const uint64_t maxNbFiles) const override {
@@ -616,15 +616,58 @@ public:
 
   bool diskSystemExists(const std::string &name) const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->diskSystemExists(name);}, m_maxTriesToConnect);
-  } 
+  }
 
   void updateDiskFileId(uint64_t archiveFileId, const std::string &diskInstance, const std::string &diskFileId) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->updateDiskFileId(archiveFileId, diskInstance, diskFileId);}, m_maxTriesToConnect);
   }
-  
-  void moveArchiveFileToRecycleLog(const common::dataStructures::DeleteArchiveRequest &request, 
+
+  void moveArchiveFileToRecycleLog(const common::dataStructures::DeleteArchiveRequest &request,
   log::LogContext & lc) override {
     return retryOnLostConnection(m_log,[&]{return m_catalogue->moveArchiveFileToRecycleLog(request,lc);},m_maxTriesToConnect);
+  }
+
+  void createTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) override {
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->createTapeDrive(tapeDrive);},m_maxTriesToConnect);
+  }
+
+  std::list<std::string> getTapeDriveNames() const override {
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->getTapeDriveNames();},m_maxTriesToConnect);
+  }
+
+  optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string &tapeDriveName) const override {
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->getTapeDrive(tapeDriveName);},m_maxTriesToConnect);
+  }
+
+  void modifyTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) override {
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->modifyTapeDrive(tapeDrive);},m_maxTriesToConnect);
+  }
+
+  void deleteTapeDrive(const std::string &tapeDriveName) override {
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->deleteTapeDrive(tapeDriveName);},m_maxTriesToConnect);
+  }
+
+  void createDriveConfig(const std::string &driveName, const std::string &category,
+    const std::string &keyName, const std::string &value, const std::string &source) {
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->createDriveConfig(driveName, category, keyName, value, source);},m_maxTriesToConnect);
+  }
+
+  std::list<std::pair<std::string, std::string>> getDriveConfigNamesAndKeys() const {
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->getDriveConfigNamesAndKeys();},m_maxTriesToConnect);
+  }
+
+  void modifyDriveConfig(const std::string &driveName, const std::string &category,
+    const std::string &keyName, const std::string &value, const std::string &source) {
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->modifyDriveConfig(driveName, category, keyName, value, source);},m_maxTriesToConnect);
+  }
+
+  optional<std::tuple<std::string, std::string, std::string>> getDriveConfig( const std::string &tapeDriveName,
+    const std::string &keyName) const {
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->getDriveConfig(tapeDriveName, keyName);},m_maxTriesToConnect);
+  }
+
+  void deleteDriveConfig(const std::string &tapeDriveName, const std::string &keyName) {
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->deleteDriveConfig(tapeDriveName, keyName);},m_maxTriesToConnect);
   }
 
 protected:

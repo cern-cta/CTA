@@ -20,26 +20,29 @@ include_directories (${CMAKE_CURRENT_SOURCE_DIR}
 set (CTA_SCHEDULER_SRC_FILES
   ArchiveJob.cpp
   ArchiveMount.cpp
-  RepackRequest.cpp
-  TapeMount.cpp
+  DiskReportRunner.cpp
+  DiskSpaceReservation.cpp
+  DriveConfig.cpp
+  LabelMount.cpp
   LogicalLibrary.cpp
   MountType.cpp
+  MountType.cpp
+  OStoreDB/MemQueues.cpp
+  OStoreDB/OStoreDB.cpp
+  OStoreDB/OStoreDBWithAgent.cpp
+  OStoreDB/QueueItor.cpp
   PositioningMethod.cpp
+  RepackReportThread.cpp
+  RepackRequest.cpp
+  RepackRequestManager.cpp
   RetrieveJob.cpp
   RetrieveMount.cpp
   Scheduler.cpp
   SchedulerDatabase.cpp
   SchedulerDatabaseFactory.cpp
   SchedulingInfos.cpp
-  MountType.cpp
-  OStoreDB/QueueItor.cpp
-  OStoreDB/MemQueues.cpp
-  OStoreDB/OStoreDB.cpp
-  OStoreDB/OStoreDBWithAgent.cpp
-  LabelMount.cpp
-  DiskReportRunner.cpp
-  RepackReportThread.cpp
-  RepackRequestManager.cpp)
+  TapeDrivesCatalogueState.cpp
+  TapeMount.cpp)
 
 find_package(Protobuf3 REQUIRED)
 include_directories (${PROTOBUF3_INCLUDE_DIRS})

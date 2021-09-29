@@ -177,7 +177,7 @@ public:
    * used by the Catalogue to determine the mount policy to be used when
    * retrieving the file.
    * @param activity The activity under which the user wants to start the retrieve
-   * The call will fail if the activity is set and unknown. 
+   * The call will fail if the activity is set and unknown.
    * @param lc The log context.
    *
    * @return The information required to queue the associated retrieve request(s).
@@ -217,33 +217,33 @@ public:
   void deleteAdminUser(const std::string &username) override;
   std::list<common::dataStructures::AdminUser> getAdminUsers() const override;
   void modifyAdminUserComment(const common::dataStructures::SecurityIdentity &admin, const std::string &username, const std::string &comment) override;
-  
+
   /**
    * Creates the specified Virtual Organization
    * @param admin The administrator.
    * @param vo the Virtual Organization
    */
   void createVirtualOrganization(const common::dataStructures::SecurityIdentity &admin, const common::dataStructures::VirtualOrganization &vo) override;
-  
+
   /**
    * Deletes the specified Virtual Organization
    * @param voName the name of the VirtualOrganization to delete
    */
   void deleteVirtualOrganization(const std::string &voName) override;
-  
+
   /**
    * Get all the Virtual Organizations from the Catalogue
    * @return the list of all the Virtual Organizations
    */
   std::list<common::dataStructures::VirtualOrganization> getVirtualOrganizations() const override;
-  
+
   /**
    * Get the virtual organization corresponding to the tapepool passed in parameter
    * @param tapepoolName the name of the tapepool which we want the virtual organization
    * @return the VirtualOrganization associated to the tapepool passed in parameter
    */
   common::dataStructures::VirtualOrganization getVirtualOrganizationOfTapepool(const std::string & tapepoolName) const override;
-  
+
   /**
    * Get the virtual organization corresponding to the tapepool passed in parameter
    * @param conn the database connection
@@ -251,14 +251,14 @@ public:
    * @return the VirtualOrganization associated to the tapepool passed in parameter
    */
   common::dataStructures::VirtualOrganization getVirtualOrganizationOfTapepool(rdbms::Conn & conn, const std::string & tapepoolName) const;
-  
+
   /**
    * Get, from the cache, the virtual organization corresponding to the tapepool passed in parameter
    * @param tapepoolName the name of the tapepool which we want the virtual organization
    * @return the VirtualOrganization associated to the tapepool passed in parameter
    */
   common::dataStructures::VirtualOrganization getCachedVirtualOrganizationOfTapepool(const std::string & tapepoolName) const override;
-  
+
   /**
    * Modifies the name of the specified Virtual Organization.
    *
@@ -266,30 +266,30 @@ public:
    * @param newVoName The new name of the Virtual Organization.
    */
   void modifyVirtualOrganizationName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentVoName, const std::string &newVoName) override;
-  
+
   /**
    * Modifies the max number of allocated drives for read for the specified Virtual Organization
-   * 
+   *
    * @param voName the VO name
    * @param readMaxDrives the new max number of allocated drives for read for the specified Virtual Organization
    */
   void modifyVirtualOrganizationReadMaxDrives(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t readMaxDrives) override;
-  
+
   /**
    * Modifies the max number of allocated drives for write for the specified Virtual Organization
-   * 
+   *
    * @param voName the VO name
    * @param writeMaxDrives the new max number of allocated drives for write for the specified Virtual Organization
    */
   void modifyVirtualOrganizationWriteMaxDrives(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t writeMaxDrives) override;
-  
+
   /**
    * Modifies the max file size for the specified Virtual Organization
-   * 
+   *
    * @param voName the VO name
    * @param maxFileSize the new max file size for the specified Virtual Organization
    */
-  
+
   void modifyVirtualOrganizationMaxFileSize(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t maxFileSize) override;
   /**
    * Modifies the comment of the specified Virtual Organization
@@ -298,7 +298,7 @@ public:
    * @param comment The new comment of the Virtual Organization.
    */
   void modifyVirtualOrganizationComment(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const std::string &comment) override;
-  
+
   /**
    * Creates the specified storage class.
    *
@@ -319,7 +319,7 @@ public:
 
   std::list<common::dataStructures::StorageClass> getStorageClasses() const override;
   common::dataStructures::StorageClass getStorageClass(const std::string &name) const override;
-  
+
 
   void modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t nbCopies) override;
   void modifyStorageClassComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override;
@@ -352,11 +352,11 @@ public:
    * @return All tape media types.
    */
   std::list<MediaTypeWithLogs> getMediaTypes() const override;
-  
+
   /**
    * Return the media type associated to the tape corresponding to the
    * vid passed in parameter
-   * 
+   *
    * @param vid the vid of the tape to return its media type
    * @return the media type associated to the tape corresponding to the vid passed in parameter
    */
@@ -414,7 +414,7 @@ public:
    * @param nbWraps The new number of tape wraps.
    */
   void modifyMediaTypeNbWraps(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const cta::optional<std::uint32_t> &nbWraps) override;
-  
+
   /**
    * Modify the minimum longitudinal tape position of a tape media type.
    *
@@ -423,7 +423,7 @@ public:
    * @param minLPos The new minimum longitudinal tape position.
    */
   void modifyMediaTypeMinLPos(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const cta::optional<std::uint64_t> &minLPos) override;
-  
+
   /**
    * Modify the maximum longitudinal tape position of a tape media type.
    *
@@ -484,7 +484,7 @@ public:
    * @param copyNb The copy number of the tape file.
    */
   void deleteArchiveRoute(
-    const std::string &storageClassName, 
+    const std::string &storageClassName,
     const uint32_t copyNb) override;
 
   std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes() const override;
@@ -532,7 +532,7 @@ public:
   void createTape(
     const common::dataStructures::SecurityIdentity &admin,
     const CreateTapeAttributes & tape) override;
-  
+
   void deleteTape(const std::string &vid) override;
 
   /**
@@ -577,24 +577,24 @@ public:
    * @param lc the logContext
    */
   void reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, cta::log::LogContext & lc) override;
-  
+
   /**
    * Checks the specified tape for the tape label command.
    *
-   * This method checks if the tape is safe to be labeled and will throw an 
+   * This method checks if the tape is safe to be labeled and will throw an
    * exception if the specified tape does not ready to be labeled.
    *
    * @param vid The volume identifier of the tape to be checked.
    */
   void checkTapeForLabel(const std::string &vid) override;
-  
+
   /**
    * Returns the number of any files contained in the tape identified by its vid
    * @param vid the vid in which we will count the number of files
    * @return the number of files on the tape
    */
   uint64_t getNbFilesOnTape(const std::string &vid) const override;
-  
+
   /**
    * Returns the number of any files contained in the tape identified by its vid
    * @param conn the database connection
@@ -602,21 +602,21 @@ public:
    * @return the number of files on the tape
    */
   uint64_t getNbFilesOnTape(rdbms::Conn &conn, const std::string &vid) const;
-  
+
   /**
    * Delete all the tape files of the VID passed in parameter
    * @param conn the database connection
    * @param vid the vid in which we want to remove all the tape files
    */
   void deleteTapeFiles(rdbms::Conn &conn, const std::string& vid) const;
-  
+
   /**
    * Set the DIRTY flag to true
    * @param conn the database connection
    * @param vid	the vid in which we want to set it as dirty
    */
   void setTapeDirty(rdbms::Conn &conn, const std::string &vid) const;
-  
+
   /**
    * Reset the counters of a tape
    * @param conn the database connection
@@ -642,15 +642,15 @@ public:
    * @param fullValue Set to true if the tape is full.
    */
   void setTapeFull(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool fullValue) override;
-  
+
   /**
    * This method notifies the CTA catalogue to set the specified tape is from CASTOR.
-   * This method only for unitTests and MUST never be called in CTA!!! 
+   * This method only for unitTests and MUST never be called in CTA!!!
    *
    * @param vid The volume identifier of the tape.
    */
   void setTapeIsFromCastorInUnitTests(const std::string &vid) override;
-  
+
   void setTapeDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string & reason) override;
   void setTapeDirty(const std::string & vid) override;
   void modifyTapeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,  const cta::optional<std::string> &comment) override;
@@ -668,15 +668,15 @@ public:
    * @return the list of all existing mount policies.
    */
   std::list<common::dataStructures::MountPolicy> getMountPolicies() const override;
-  
+
   /**
    * Returns the list of all existing mount policies.
-   * 
+   *
    * @param conn the database connection
    * @return the list of all existing mount policies.
    */
   std::list<common::dataStructures::MountPolicy> getMountPolicies(rdbms::Conn & conn) const;
-  
+
   /**
    * Returns the cached list of all existing mount policies.
    *
@@ -780,7 +780,7 @@ public:
   void modifyMountPolicyRetrievePriority(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t retrievePriority) override;
   void modifyMountPolicyRetrieveMinRequestAge(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t minRetrieveRequestAge) override;
   void modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override;
-  
+
   void createActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity &admin, const std::string & diskInstanceName, const std::string & activity,
     double weight, const std::string & comment) override;
   void modifyActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity &admin, const std::string & diskInstanceName, const std::string & activity,
@@ -795,20 +795,20 @@ public:
    * requester group.
    */
   disk::DiskSystemList getAllDiskSystems() const override;
-  
+
   /**
    * Creates a disk system.
-   * 
+   *
    * @param admin The administrator.
    * @param name The name of the disk system.
    * @param fileRegexp The regular expression allowing matching destination URLs
    * for this disk system.
    * @param freeSpaceQueryURL The query URL that describes a method to query the
    * free space from the disk system.
-   * @param refreshInterval The refresh interval (seconds) defining how long do 
+   * @param refreshInterval The refresh interval (seconds) defining how long do
    * we use a free space value.
    * @param targetedFreeSpace The targeted free space (margin) based on the free
-   * space update latency (inherent to the file system and induced by the refresh 
+   * space update latency (inherent to the file system and induced by the refresh
    * interval), and the expected external bandwidth from sources external to CTA.
    * @param comment Comment.
    */
@@ -821,14 +821,14 @@ public:
     const uint64_t targetedFreeSpace,
     const uint64_t sleepTime,
     const std::string &comment) override;
-  
+
   /**
    * Deletes a disk system.
-   * 
+   *
    * @param name The name of the disk system.
    */
   void deleteDiskSystem(const std::string &name) override;
-   
+
   void modifyDiskSystemFileRegexp(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name, const std::string &fileRegexp) override;
   void modifyDiskSystemFreeSpaceQueryURL(const common::dataStructures::SecurityIdentity &admin,
@@ -842,7 +842,7 @@ public:
   void modifyDiskSystemSleepTime(const common::dataStructures::SecurityIdentity& admin,
     const std::string& name, const uint64_t sleepTime) override;
 
-  
+
   /**
    * Throws a UserError exception if the specified searchCriteria is not valid
    * due to a user error.
@@ -859,7 +859,7 @@ public:
    * @param searchCriteria The search criteria.
    */
   void checkTapeFileSearchCriteria(rdbms::Conn &conn, const TapeFileSearchCriteria &searchCriteria) const;
-  
+
   /**
    * Returns the specified archive files.  Please note that the list of files
    * is ordered by archive file ID.
@@ -887,7 +887,7 @@ public:
    * @param searchCriteria The search criteria.
    */
   void checkRecycleTapeFileSearchCriteria(cta::rdbms::Conn &conn, const RecycleTapeFileSearchCriteria & searchCriteria) const;
-  
+
   /**
    * Returns all the currently deleted files by looking at the FILE_RECYCLE_LOG table
    *
@@ -895,7 +895,7 @@ public:
    * @return The deleted archive files ordered by archive file ID.
    */
   FileRecycleLogItor getFileRecycleLogItor(const RecycleTapeFileSearchCriteria & searchCriteria) const override;
-  
+
   /**
    * Restores the deleted files in the Recycle log that match the criteria passed
    *
@@ -956,7 +956,7 @@ public:
   * @param vid The vid of the tape the file copy is stored on
   * @param diskFileId The identifier of the archive_file on disk
   * @param diskInstanceName The name of the archived file disk instance
-  * @param reason The reason for deleting the tape file copy 
+  * @param reason The reason for deleting the tape file copy
   */
   void deleteTapeFileCopy(const std::string &vid, const std::string &diskFileId,
                           const std::string &diskInstanceName, const std::string &reason) override;
@@ -998,28 +998,28 @@ public:
   /**
    * Checks that the most trivial query goes through. Returns true on success,
    * false on failure.
-   * 
+   *
    * @return True if the query went through.
    */
   void ping() override;
-  
+
   /**
    * Checks that the online database schema MAJOR version number matches the schema MAJOR version number defined in version.h
    */
   void verifySchemaVersion() override;
-  
+
   /**
    * Returns the SchemaVersion object corresponding to the catalogue schema version:
    * - SCHEMA_VERSION_MAJOR
    * - SCHEMA_VERSION_MINOR
    * - SCHEMA_VERSION_MAJOR_NEXT (future major version number of the schema in case of upgrade)
    * - SCHEMA_VERSION_MINOR_NEXT (future minor version number of the schema in case of upgrade)
-   * - STATUS (UPGRADING or PRODUCTION)	
-   * 
+   * - STATUS (UPGRADING or PRODUCTION)
+   *
    * @return The SchemaVersion object corresponding to the catalogue schema version
    */
   SchemaVersion getSchemaVersion() const override;
-  
+
   /**
    * Returns the names of all the tables in the database schema in alphabetical
    * order.
@@ -1200,15 +1200,15 @@ protected:
    * @return True if the tape exists.
    */
   bool tapeExists(rdbms::Conn &conn, const std::string &vid) const;
-  
+
   /**
    * Returns true if the specified disk system exists.
    *
    * @param name The name identifier of the disk system.
    * @return True if the tape exists.
    */
-  bool diskSystemExists(const std::string &name) const override;  
-  
+  bool diskSystemExists(const std::string &name) const override;
+
   /**
    * Returns true if the specified disk system exists.
    *
@@ -1226,7 +1226,7 @@ protected:
    * @return The list of tapes.
    */
   std::list<common::dataStructures::Tape> getTapes(rdbms::Conn &conn, const TapeSearchCriteria &searchCriteria) const;
-  
+
   /**
    * Returns true if the specified logical library exists.
    *
@@ -1570,7 +1570,7 @@ protected:
    */
   common::dataStructures::ActivitiesFairShareWeights getCachedActivitiesWeights(
     const std::string &diskInstanceName) const;
-  
+
   /**
    * Returns a the (possibly empty) activities to weight map for the given dsk instance.
    * @param conn The database connection.
@@ -1579,8 +1579,8 @@ protected:
    */
   common::dataStructures::ActivitiesFairShareWeights getActivitiesWeights(
     rdbms::Conn &conn,
-    const std::string &diskInstanceName) const;  
-  
+    const std::string &diskInstanceName) const;
+
   /**
    * Returns the specified archive file.   A nullptr pointer is returned if
    * there is no corresponding row in the ARCHIVE_FILE table.  Please note that
@@ -1682,17 +1682,17 @@ protected:
   /**
    * Returns a unique virtual organization ID that can be used by a new Virtual Organization
    * within the catalogue.
-   * 
+   *
    * This method must be implemented by the sub-classes of RdbmsCatalogue
    * because different database technologies propose different solution to the
    * problem of generating ever increasing numeric identifiers.
-   * 
+   *
    * @param conn The database connection
    * @return a unique virtual organization ID that can be used by a new Virtual Organization
    * within the catalogue.
    */
   virtual uint64_t getNextVirtualOrganizationId(rdbms::Conn &conn) = 0;
-  
+
   /**
    * Returns a unique media type ID that can be used by a new media type within
    * the catalogue.
@@ -1706,7 +1706,7 @@ protected:
    * within the catalogue.
    */
   virtual uint64_t getNextMediaTypeId(rdbms::Conn &conn) = 0;
-  
+
   /**
    * Returns a unique storage class ID that can be used by a new storage class
    * within the catalogue.
@@ -1734,7 +1734,7 @@ protected:
    * the catalogue.
    */
   virtual uint64_t getNextTapePoolId(rdbms::Conn &conn) = 0;
-  
+
   /**
    * Returns a unique file recycle log ID that can be used by a new entry of file recycle log within
    * the catalogue.
@@ -1783,7 +1783,7 @@ protected:
    * @param event The evnt to be checked.
    */
   void checkTapeItemWrittenFieldsAreSet(const std::string &callingFunc, const TapeItemWritten &event) const;
-  
+
   /**
    * Throws an exception if one of the fields of the specified event have not
    * been set.
@@ -1792,7 +1792,7 @@ protected:
    * @param event The evnt to be checked.
    */
   void checkTapeFileWrittenFieldsAreSet(const std::string &callingFunc, const TapeFileWritten &event) const;
-  
+
   /**
    * Throws an exception if the delete request passed in parameter is not consistent
    * to allow a deletion of the ArchiveFile from the Catalogue.
@@ -1872,7 +1872,7 @@ protected:
    * @param storageClassName The name of the storage class.
    */
   bool storageClassIsUsedByArchiveFiles(rdbms::Conn &conn, const std::string &storageClassName) const;
-  
+
   /**
    * Returns true if the specified storage class is currently being used by one
    * or more files in the recycle log.
@@ -1881,7 +1881,7 @@ protected:
    * @param storageClassName The name of the storage class.
    */
   bool storageClassIsUsedByFileRecyleLogs(rdbms::Conn & conn, const std::string & storageClassName) const;
-  
+
   /**
    * Returns true if the specified Virtual Organization is currently being used by one
    * or more StorageClasses
@@ -1890,7 +1890,7 @@ protected:
    * @param voName The name of the Virtual Organization.
    */
   bool virtualOrganizationIsUsedByStorageClasses(rdbms::Conn &conn, const std::string &voName) const;
-  
+
   /**
    * Returns true if the specified Virtual Organization is currently being used by one
    * or more Tapepools
@@ -1919,7 +1919,7 @@ protected:
    * @return the ID of the specified tape pool.
    */
   optional<uint64_t> getTapePoolId(rdbms::Conn &conn, const std::string &name) const;
-  
+
   /**
    * Returns the ID of the specified media type or nullopt if it the media type
    * does not exist.
@@ -1946,13 +1946,13 @@ protected:
    /**
    * Insert the ArchiveFile and all its tape files in the FILE_RECYCLE_LOG table.
    * There will be one entry on the FILE_RECYCLE_LOG table per deleted tape file
-   * 
+   *
    * @param request the DeleteRequest object that holds information about the file to delete.
    * @param lc the logContext
    */
-  void moveArchiveFileToRecycleLog(const common::dataStructures::DeleteArchiveRequest &request, 
+  void moveArchiveFileToRecycleLog(const common::dataStructures::DeleteArchiveRequest &request,
   log::LogContext & lc) override;
-  
+
   /**
    * Copy the archiveFile and the associated tape files from the ARCHIVE_FILE and TAPE_FILE tables to the FILE_RECYCLE_LOG table
    * and deletes the ARCHIVE_FILE and TAPE_FILE entries.
@@ -1961,7 +1961,7 @@ protected:
    * @param lc the log context
    */
   virtual void copyArchiveFileToFileRecyleLogAndDelete(rdbms::Conn & conn,const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc) = 0;
-  
+
   /**
    * Copy the fileRecycleLog to the TAPE_FILE table and deletes the corresponding FILE_RECYCLE_LOG table entry
    * @param conn the database connection
@@ -1969,16 +1969,16 @@ protected:
    * @param lc the log context
    */
   virtual void restoreFileCopiesInRecycleLog(rdbms::Conn & conn, FileRecycleLogItor &fileRecycleLogItor, log::LogContext & lc) = 0;
-  
+
   /**
-   * Copies the ARCHIVE_FILE and TAPE_FILE entries to the recycle-bin tables 
+   * Copies the ARCHIVE_FILE and TAPE_FILE entries to the recycle-bin tables
    * @param conn the database connection
    * @param request the request that contains the necessary informations to identify the archiveFile to copy to the recycle-bin
    */
   void copyArchiveFileToFileRecycleLog(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest & request);
-  
+
   /**
-   * Copies the TAPE_FILE entries to the recycle-bin tables 
+   * Copies the TAPE_FILE entries to the recycle-bin tables
    * @param conn the database connection
    * @param file the archiveFile whose tapefiles we want to copy
    * @param reason The reason for deleting the tape file copy
@@ -2001,28 +2001,27 @@ protected:
    * @param fileRecycleLog the file to insert into the FILE_RECYCLE_LOG table
    */
   void insertFileToRecycleLog(rdbms::Conn & conn, const InsertFileRecycleLog & fileRecycleLog);
-  
+
   /**
    * Deletes the ArchiveFile from the ARCHIVE_FILE table
    * @param conn the database connection
    * @param request the DeleteArchiveRequest that contains the archiveFileId to delete
    */
   void deleteArchiveFile(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest & request);
-  
+
   /**
    * Delete the TapeFile from the TAPE_FILE table
    * @param conn the database connection
    * @param request the DeleteArchiveRequest that contains the archiveFileId to delete the corresponding tape files
    */
   void deleteTapeFiles(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest & request);
-  
+
   /**
    * Delete the TapeFiles associated to an ArchiveFile from the TAPE_FILE table
    * @param conn the database connection
    * @param file the file that contains the tape files to delete
    */
   void deleteTapeFiles(rdbms::Conn & conn, const common::dataStructures::ArchiveFile &file);
-  
 
    /**
    * Set the DIRTY flag to true
@@ -2031,60 +2030,60 @@ protected:
    * the tape files will be removed from this tape
    */
   void setTapeDirty(rdbms::Conn & conn, const uint64_t & archiveFileId) const;
-  
+
   /**
    * Delete the archiveFile and the associated tape files from the recycle-bin
    * @param archiveFileId the archiveFileId of the archive file to delete
    * @param lc the logContext
    */
   void deleteFileFromRecycleBin(const uint64_t archiveFileId, log::LogContext &lc);
-  
+
   /**
    * Delete the archiveFile and the associated tape files that are on the specified tape from the recycle-bin
    * @param vid the vid of the tape where the files to be deleted are located
    * @param lc the logContext
    */
   void deleteFilesFromRecycleBin(rdbms::Conn & conn,const std::string & vid, log::LogContext & lc);
-  
+
   /**
    * Deletes all the log entries corresponding to the vid passed in parameter.
-   * 
+   *
    * Please note that this method is idempotent.  If there are no recycle log
    * entries associated to the vid passed in parameter, the method will return
    * without any error.
-   * 
+   *
    * @param vid, the vid of the files to be deleted
    * @param lc, the logContext
    */
   void deleteFilesFromRecycleLog(const std::string & vid, log::LogContext & lc);
-  
+
    /**
    * Deletes all the log entries corresponding to the vid passed in parameter.
-   * 
+   *
    * Please note that this method is idempotent.  If there are no recycle log
    * entries associated to the vid passed in parameter, the method will return
    * without any error.
-   * 
+   *
     *@param conn, the database connection
    * @param vid, the vid of the files to be deleted
    * @param lc, the logContext
    */
   void deleteFilesFromRecycleLog(rdbms::Conn & conn, const std::string & vid, log::LogContext & lc);
-  
+
   /**
    * Delete the TapeFiles and the ArchiveFile from the recycle-bin in one transaction
    * @param conn the database connection
    * @param archiveFileId the archiveFileId of the file to delete from the recycle-bin
    */
   virtual void deleteTapeFilesAndArchiveFileFromRecycleBin(rdbms::Conn & conn, const uint64_t archiveFileId, log::LogContext & lc) = 0;
-  
+
   /**
    * Delete the tape files from the TAPE_FILE recycle-bin
    * @param conn the database connection
    * @param archiveFileId the archiveFileId of the tape files to delete
    */
   void deleteTapeFilesFromRecycleBin(rdbms::Conn & conn, const uint64_t archiveFileId);
-  
+
   void deleteTapeFileCopyFromRecycleBin(cta::rdbms::Conn & conn, const common::dataStructures::FileRecycleLog fileRecycleLog);
 
   /**
@@ -2093,14 +2092,14 @@ protected:
    * @param archiveFileId the archiveFileId of the archive file to delete
    */
   void deleteArchiveFileFromRecycleBin(rdbms::Conn & conn, const uint64_t archiveFileId);
-  
+
   /**
    * In the case we insert a TAPE_FILE that already has a copy on the catalogue (same copyNb),
    * this TAPE_FILE will go to the FILE_RECYCLE_LOG table.
-   * 
-   * This case happens always during the repacking of a tape: the new TAPE_FILE created 
+   *
+   * This case happens always during the repacking of a tape: the new TAPE_FILE created
    * will replace the old one, the old one will then be moved to the FILE_RECYCLE_LOG table
-   * 
+   *
    * @param conn The database connection.
    * @returns the list of inserted fileRecycleLog
    */
@@ -2112,7 +2111,7 @@ protected:
    * @param fileRecycleLog the file to insert on the FILE_RECYCLE_LOG table
    */
   void insertFileInFileRecycleLog(rdbms::Conn & conn, const InsertFileRecycleLog & fileRecycleLog);
-  
+
   /**
    * Generates the SELECT statement required to search for tapes using 100 tape
    * VIDs.  Each tape VID is represented in the SQL by a bind parameter with the
@@ -2155,7 +2154,30 @@ protected:
    * @return The iterator.
    */
   ArchiveFileItor getTapeContentsItor(const std::string &vid) const;
-  
+
+  void createTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) override;
+
+  std::list<std::string> getTapeDriveNames() const override;
+
+  optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string &tapeDriveName) const override;
+
+  void modifyTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) override;
+
+  void deleteTapeDrive(const std::string &tapeDriveName) override;
+
+  void createDriveConfig(const std::string &tapeDriveName, const std::string &category,
+    const std::string &keyName, const std::string &value, const std::string &source) override;
+
+  std::list<std::pair<std::string, std::string>> getDriveConfigNamesAndKeys() const override;
+
+  void modifyDriveConfig(const std::string &tapeDriveName, const std::string &category,
+    const std::string &keyName, const std::string &value, const std::string &source) override;
+
+  optional<std::tuple<std::string, std::string, std::string>> getDriveConfig( const std::string &tapeDriveName,
+    const std::string &keyName) const override;
+
+  void deleteDriveConfig(const std::string &tapeDriveName, const std::string &keyName) override;
+
   /**
    * Cached versions of tape copy to tape tape pool mappings for specific
    * storage classes.
@@ -2171,12 +2193,12 @@ protected:
    * Cached versions of mount policies for specific users.
    */
   mutable TimeBasedCache<User, optional<common::dataStructures::MountPolicy> > m_userMountPolicyCache;
-  
+
   /**
    * Cached versions of all mount policies
    */
   mutable TimeBasedCache<std::string, std::list<common::dataStructures::MountPolicy>> m_allMountPoliciesCache;
-  
+
   /**
    * Cached versions of virtual organization for specific tapepools
    */
@@ -2194,11 +2216,14 @@ protected:
    * Cached version of isAdmin() results.
    */
   mutable TimeBasedCache<common::dataStructures::SecurityIdentity, bool> m_isAdminCache;
-  
+
   /**
    * Cached version of the activities to weight maps.
    */
   mutable TimeBasedCache<std::string, common::dataStructures::ActivitiesFairShareWeights> m_activitiesFairShareWeights;
+
+private:
+  void settingSqlTapeDriveValues(cta::rdbms::Stmt *stmt, const common::dataStructures::TapeDrive &tapeDrive) const;
 
 }; // class RdbmsCatalogue
 

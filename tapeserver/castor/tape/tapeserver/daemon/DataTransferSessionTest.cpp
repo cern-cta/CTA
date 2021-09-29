@@ -52,6 +52,12 @@
 #include "objectstore/BackendRadosTestSwitch.hpp"
 #include "CleanerSession.hpp"
 
+#ifdef STDOUT_LOGGING
+#include "common/log/StdoutLogger.hpp"
+#else
+#include "common/log/DummyLogger.hpp"
+#endif
+
 #include <dirent.h>
 #include <fcntl.h>
 #include <stdexcept>
@@ -278,6 +284,20 @@ public:
     return vo;
   }
 
+  cta::common::dataStructures::TapeDrive getDefaultTapeDrive(const std::string &driveName) {
+    cta::common::dataStructures::TapeDrive tapeDrive;
+    tapeDrive.driveName = driveName;
+    tapeDrive.host = "admin_host";
+    tapeDrive.logicalLibrary = "VLSTK10";
+    tapeDrive.mountType = cta::common::dataStructures::MountType::NoMount;
+    tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::Up;
+    tapeDrive.desiredUp = false;
+    tapeDrive.desiredForceDown = false;
+    tapeDrive.diskSystemName = "dummyDiskSystemName";
+    tapeDrive.reservedBytes = 694498291384;
+    return tapeDrive;
+  }
+
   void setupDefaultCatalogue() {
     using namespace cta;
     auto & catalogue=getCatalogue();
@@ -353,6 +373,10 @@ public:
     mediaType.nbWraps = 112;
     mediaType.comment = "comment";
     catalogue.createMediaType(s_adminOnAdminHost,mediaType);
+
+    const std::string driveName = "T10D6116";
+    const auto tapeDrive = getDefaultTapeDrive(driveName);
+    catalogue.createTapeDrive(tapeDrive);
   }
 
   /**
@@ -392,7 +416,11 @@ private:
   std::unique_ptr<cta::Scheduler> m_scheduler;
 
 protected:
+  #ifdef STDOUT_LOGGING
+  cta::log::StdoutLogger m_dummyLog;
+  #else
   cta::log::DummyLogger m_dummyLog;
+  #endif
 
   // Default parameters for storage classes, etc...
   const std::string s_userName = "user_name";
@@ -541,7 +569,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
-  driveInfo.host=="host";
+  driveInfo.host="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
@@ -563,9 +591,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
-
+  std::cout << "Before Exectution" << std::endl;
+  std::cout << logger.getLog() << std::endl;
   // 8) Run the data transfer session
   sess.execute();
+  std::cout << "After Exectution" << std::endl;
 
   // 9) Check the session git the correct VID
   ASSERT_EQ(s_vid, sess.getVid());
@@ -747,7 +777,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
-  driveInfo.host=="host";
+  driveInfo.host="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
@@ -928,6 +958,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
+  driveInfo.host="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
@@ -1112,6 +1143,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
+  driveInfo.host="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
@@ -1297,6 +1329,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
+  driveInfo.host="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
@@ -1484,6 +1517,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
+  driveInfo.host="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
@@ -1666,7 +1700,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
-  driveInfo.host=="host";
+  driveInfo.host="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
@@ -1815,7 +1849,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
-  driveInfo.host=="host";
+  driveInfo.host="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
@@ -1949,7 +1983,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
-  driveInfo.host=="host";
+  driveInfo.host="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
@@ -2101,7 +2135,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
-  driveInfo.host=="host";
+  driveInfo.host="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
@@ -2262,7 +2296,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
-  driveInfo.host=="host";
+  driveInfo.host="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
@@ -2428,7 +2462,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
-  driveInfo.host=="host";
+  driveInfo.host="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
@@ -2556,7 +2590,7 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
-  driveInfo.host=="host";
+  driveInfo.host="host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   cta::common::dataStructures::DesiredDriveState driveState;

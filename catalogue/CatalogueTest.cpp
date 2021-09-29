@@ -19,25 +19,29 @@
 #include "catalogue/CatalogueTest.hpp"
 #include "catalogue/SchemaVersion.hpp"
 #include "common/Constants.hpp"
+#include "common/dataStructures/EntryLog.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/exception/UserErrorWithCacheInfo.hpp"
 #include "common/make_unique.hpp"
-#include "common/threading/Thread.hpp"
+#include "common/SourcedParameter.hpp"
 #include "common/threading/Mutex.hpp"
 #include "common/threading/MutexLocker.hpp"
-#include "rdbms/wrapper/ConnFactoryFactory.hpp"
-#include "rdbms/Conn.hpp"
+#include "common/threading/Thread.hpp"
 #include "InsertFileRecycleLog.hpp"
+#include "rdbms/Conn.hpp"
+#include "rdbms/wrapper/ConnFactoryFactory.hpp"
 #include "RdbmsCatalogue.hpp"
 
 #include <algorithm>
 #include <gtest/gtest.h>
 #include <iomanip>
 #include <limits>
+#include <list>
 #include <map>
 #include <memory>
 #include <set>
+#include <string>
 
 namespace unitTests {
 
@@ -178,17 +182,17 @@ namespace {
     return tape;
   }
 
-    cta::catalogue::CreateTapeAttributes getTape3() {
+  cta::catalogue::CreateTapeAttributes getTape3() {
     // Tape 3 is an exact copy of tape 1 except for its VID and comment
     auto tape = getTape1();
     tape.vid = "VIDTHREE";
     tape.comment = "Creation of tape three";
     return tape;
   }
-  
+
   cta::catalogue::CreateMountPolicyAttributes getMountPolicy1() {
     using namespace cta;
-    
+
     catalogue::CreateMountPolicyAttributes mountPolicy;
     mountPolicy.name = "mount_policy";
     mountPolicy.archivePriority = 1;
@@ -198,7 +202,73 @@ namespace {
     mountPolicy.comment = "Create mount policy";
     return mountPolicy;
   }
-}
+
+  cta::common::dataStructures::TapeDrive getTapeDriveWithMandatoryElements(const std::string &driveName) {
+    cta::common::dataStructures::TapeDrive tapeDrive;
+    tapeDrive.driveName = driveName;
+    tapeDrive.host = "admin_host";
+    tapeDrive.logicalLibrary = "VLSTK10";
+    tapeDrive.mountType = cta::common::dataStructures::MountType::NoMount;
+    tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::Up;
+    tapeDrive.desiredUp = false;
+    tapeDrive.desiredForceDown = false;
+    tapeDrive.diskSystemName = "dummyDiskSystemName";
+    tapeDrive.reservedBytes = 694498291384;
+    return tapeDrive;
+  }
+
+  cta::common::dataStructures::TapeDrive getTapeDriveWithAllElements(const std::string &driveName) {
+    cta::common::dataStructures::TapeDrive tapeDrive;
+    tapeDrive.driveName = driveName;
+    tapeDrive.host = "admin_host";
+    tapeDrive.logicalLibrary = "VLSTK10";
+    tapeDrive.mountType = cta::common::dataStructures::MountType::NoMount;
+    tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::Up;
+    tapeDrive.desiredUp = false;
+    tapeDrive.desiredForceDown = false;
+    tapeDrive.diskSystemName = "dummyDiskSystemName";
+    tapeDrive.reservedBytes = 694498291384;
+
+    tapeDrive.sessionStartTime = 1001;
+    tapeDrive.mountStartTime = 1002;
+    tapeDrive.transferStartTime = 1003;
+    tapeDrive.unloadStartTime = 1004;
+    tapeDrive.unmountStartTime = 1005;
+    tapeDrive.drainingStartTime = 1006;
+    tapeDrive.downOrUpStartTime = 1007;
+    tapeDrive.probeStartTime = 1008;
+    tapeDrive.cleanupStartTime = 1009;
+    tapeDrive.startStartTime = 1010;
+    tapeDrive.shutdownTime = 1011;
+
+    tapeDrive.reasonUpDown = "Random Reason";
+
+    tapeDrive.currentVid = "VIDONE";
+    tapeDrive.ctaVersion = "v1.0.0";
+    tapeDrive.currentPriority = 3;
+    tapeDrive.currentActivity = "Activity1";
+    tapeDrive.currentActivityWeight = "0.1";
+    tapeDrive.currentTapePool = "tape_pool_0";
+    tapeDrive.nextMountType = cta::common::dataStructures::MountType::Retrieve;
+    tapeDrive.nextVid = "VIDTWO";
+    tapeDrive.nextTapePool = "tape_pool_1";
+    tapeDrive.nextPriority = 1;
+    tapeDrive.nextActivity = "Activity2";
+    tapeDrive.nextActivityWeight = "0.5";
+
+    tapeDrive.devFileName = "fileName";
+    tapeDrive.rawLibrarySlot = "librarySlot1";
+
+    tapeDrive.currentVo = "VO_ONE";
+    tapeDrive.nextVo = "VO_TWO";
+
+    tapeDrive.userComment = "Random comment";
+    tapeDrive.creationLog = cta::common::dataStructures::EntryLog("user_name_1", "host_1", 100002);
+    tapeDrive.lastModificationLog = cta::common::dataStructures::EntryLog("user_name_2", "host_2", 10032131);
+
+    return tapeDrive;
+  }
+}  // namespace
 
 //------------------------------------------------------------------------------
 // constructor
@@ -279,7 +349,7 @@ void cta_catalogue_CatalogueTest::SetUp() {
         m_catalogue->DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(archiveFile.diskInstance, archiveFile.archiveFileID, dummyLc);
       }
     }
-    
+
     {
       //Delete all the entries from the recycle log table
       auto itor = m_catalogue->getFileRecycleLogItor();
@@ -336,6 +406,18 @@ void cta_catalogue_CatalogueTest::SetUp() {
         m_catalogue->deleteVirtualOrganization(vo.name);
       }
     }
+    {
+      const auto tapeDriveNames = m_catalogue->getTapeDriveNames();
+      for (const auto& name : tapeDriveNames) {
+        m_catalogue->deleteTapeDrive(name);
+      }
+    }
+    {
+      const auto configurationTapeNamesAndKeys = m_catalogue->getDriveConfigNamesAndKeys();
+      for (const auto& nameAndKey : configurationTapeNamesAndKeys) {
+        m_catalogue->deleteDriveConfig(nameAndKey.first, nameAndKey.second);
+      }
+    }
 
     if(!m_catalogue->getAdminUsers().empty()) {
       throw exception::Exception("Found one of more admin users after emptying the database");
@@ -348,7 +430,7 @@ void cta_catalogue_CatalogueTest::SetUp() {
     if(!m_catalogue->getArchiveRoutes().empty()) {
       throw exception::Exception("Found one of more archive routes after emptying the database");
     }
-    
+
     if(m_catalogue->getFileRecycleLogItor().hasMore()){
       throw exception::Exception("Found one or more files in the file recycle log after emptying the database");
     }
@@ -772,12 +854,12 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass) {
   const std::list<common::dataStructures::StorageClass> storageClasses = m_catalogue->getStorageClasses();
 
   ASSERT_EQ(1, storageClasses.size());
-  
+
   ASSERT_EQ(m_storageClassSingleCopy.name, storageClasses.front().name);
   ASSERT_EQ(m_storageClassSingleCopy.nbCopies, storageClasses.front().nbCopies);
   ASSERT_EQ(m_storageClassSingleCopy.comment, storageClasses.front().comment);
   ASSERT_EQ(m_storageClassSingleCopy.vo.name, storageClasses.front().vo.name);
-  
+
   const common::dataStructures::EntryLog creationLog = storageClasses.front().creationLog;
   ASSERT_EQ(m_admin.username, creationLog.username);
   ASSERT_EQ(m_admin.host, creationLog.host);
@@ -870,7 +952,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassNbCopies) {
 
     ASSERT_EQ(1, storageClasses.size());
 
-    
+
     ASSERT_EQ(m_storageClassSingleCopy.name, storageClasses.front().name);
     ASSERT_EQ(m_storageClassSingleCopy.nbCopies, storageClasses.front().nbCopies);
     ASSERT_EQ(m_storageClassSingleCopy.comment, storageClasses.front().comment);
@@ -891,7 +973,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassNbCopies) {
 
     ASSERT_EQ(1, storageClasses.size());
 
-    
+
     ASSERT_EQ(m_storageClassSingleCopy.name, storageClasses.front().name);
     ASSERT_EQ(modifiedNbCopies, storageClasses.front().nbCopies);
     ASSERT_EQ(m_storageClassSingleCopy.comment, storageClasses.front().comment);
@@ -921,7 +1003,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassComment) {
 
     ASSERT_EQ(1, storageClasses.size());
 
-    
+
     ASSERT_EQ(m_storageClassSingleCopy.name, storageClasses.front().name);
     ASSERT_EQ(m_storageClassSingleCopy.nbCopies, storageClasses.front().nbCopies);
     ASSERT_EQ(m_storageClassSingleCopy.comment, storageClasses.front().comment);
@@ -942,7 +1024,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassComment) {
 
     ASSERT_EQ(1, storageClasses.size());
 
-    
+
     ASSERT_EQ(m_storageClassSingleCopy.name, storageClasses.front().name);
     ASSERT_EQ(m_storageClassSingleCopy.nbCopies, storageClasses.front().nbCopies);
     ASSERT_EQ(modifiedComment, storageClasses.front().comment);
@@ -972,7 +1054,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassName) {
 
     ASSERT_EQ(1, storageClasses.size());
 
-    
+
     ASSERT_EQ(m_storageClassSingleCopy.name, storageClasses.front().name);
     ASSERT_EQ(m_storageClassSingleCopy.nbCopies, storageClasses.front().nbCopies);
     ASSERT_EQ(m_storageClassSingleCopy.comment, storageClasses.front().comment);
@@ -993,7 +1075,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassName) {
 
     ASSERT_EQ(1, storageClasses.size());
 
-    
+
     ASSERT_EQ(newStorageClassName, storageClasses.front().name);
     ASSERT_EQ(m_storageClassSingleCopy.nbCopies, storageClasses.front().nbCopies);
     ASSERT_EQ(m_storageClassSingleCopy.comment, storageClasses.front().comment);
@@ -1017,12 +1099,12 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassName_newNameAlreadyExists)
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
-  
+
   auto storageClass2 = m_storageClassSingleCopy;
   storageClass2.name = "storage_class2";
-  
+
   m_catalogue->createStorageClass(m_admin, storageClass2);
-  
+
   //Try to rename the first storage class with the name of the second one
   ASSERT_THROW(m_catalogue->modifyStorageClassName(m_admin, m_storageClassSingleCopy.name, storageClass2.name), exception::UserError);
 }
@@ -1032,13 +1114,13 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassVo) {
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
-  
+
   auto newVo = m_vo;
   newVo.name = "newVo";
   m_catalogue->createVirtualOrganization(m_admin, newVo);
-  
+
   m_catalogue->modifyStorageClassVo(m_admin, m_storageClassSingleCopy.name, newVo.name);
-  
+
   auto storageClasses = m_catalogue->getStorageClasses();
   ASSERT_EQ(newVo.name, storageClasses.front().vo.name);
 }
@@ -1048,7 +1130,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassEmptyStringVo) {
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
-  
+
   ASSERT_THROW(m_catalogue->modifyStorageClassVo(m_admin, m_storageClassSingleCopy.name, ""), catalogue::UserSpecifiedAnEmptyStringVo);
 }
 
@@ -1057,7 +1139,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassVoDoesNotExist) {
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
-  
+
   ASSERT_THROW(m_catalogue->modifyStorageClassVo(m_admin, m_storageClassSingleCopy.name, "DOES_NOT_EXISTS"), exception::UserError);
 }
 
@@ -1079,7 +1161,7 @@ TEST_P(cta_catalogue_CatalogueTest, createMediaType) {
   ASSERT_EQ(m_mediaType.minLPos, mediaTypes.front().minLPos);
   ASSERT_EQ(m_mediaType.maxLPos, mediaTypes.front().maxLPos);
   ASSERT_EQ(m_mediaType.comment, mediaTypes.front().comment);
-  
+
   const common::dataStructures::EntryLog creationLog = mediaTypes.front().creationLog;
   ASSERT_EQ(m_admin.username, creationLog.username);
   ASSERT_EQ(m_admin.host, creationLog.host);
@@ -1145,7 +1227,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteMediaType) {
   ASSERT_EQ(m_mediaType.minLPos, mediaTypes.front().minLPos);
   ASSERT_EQ(m_mediaType.maxLPos, mediaTypes.front().maxLPos);
   ASSERT_EQ(m_mediaType.comment, mediaTypes.front().comment);
-  
+
   const common::dataStructures::EntryLog creationLog = mediaTypes.front().creationLog;
   ASSERT_EQ(m_admin.username, creationLog.username);
   ASSERT_EQ(m_admin.host, creationLog.host);
@@ -1178,7 +1260,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteMediaType_usedByTapes) {
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, m_tape1);
-   
+
   //Media type is used by at least one tape, deleting it should throw an exception
   ASSERT_THROW(m_catalogue->deleteMediaType(m_tape1.mediaType), exception::UserError);
 }
@@ -1197,7 +1279,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapes_non_existent_tape_pool) {
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, m_tape1);
-   
+
   {
     cta::catalogue::TapeSearchCriteria criteria;
     criteria.tapePool = "non_existent";
@@ -1228,7 +1310,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyMediaTypeName) {
     ASSERT_EQ(m_mediaType.minLPos, mediaTypes.front().minLPos);
     ASSERT_EQ(m_mediaType.maxLPos, mediaTypes.front().maxLPos);
     ASSERT_EQ(m_mediaType.comment, mediaTypes.front().comment);
-  
+
     const common::dataStructures::EntryLog creationLog = mediaTypes.front().creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
@@ -1254,7 +1336,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyMediaTypeName) {
     ASSERT_EQ(m_mediaType.minLPos, mediaTypes.front().minLPos);
     ASSERT_EQ(m_mediaType.maxLPos, mediaTypes.front().maxLPos);
     ASSERT_EQ(m_mediaType.comment, mediaTypes.front().comment);
-  
+
     const common::dataStructures::EntryLog creationLog = mediaTypes.front().creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
@@ -1300,7 +1382,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyMediaTypeName_newNameAlreadyExists) {
     ASSERT_EQ(m_mediaType.minLPos, mediaType1Itor->second.minLPos);
     ASSERT_EQ(m_mediaType.maxLPos, mediaType1Itor->second.maxLPos);
     ASSERT_EQ(m_mediaType.comment, mediaType1Itor->second.comment);
-  
+
     const common::dataStructures::EntryLog creationLog1 = mediaType1Itor->second.creationLog;
     ASSERT_EQ(m_admin.username, creationLog1.username);
     ASSERT_EQ(m_admin.host, creationLog1.host);
@@ -1320,7 +1402,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyMediaTypeName_newNameAlreadyExists) {
     ASSERT_EQ(mediaType2.minLPos, mediaType2Itor->second.minLPos);
     ASSERT_EQ(mediaType2.maxLPos, mediaType2Itor->second.maxLPos);
     ASSERT_EQ(mediaType2.comment, mediaType2Itor->second.comment);
-  
+
     const common::dataStructures::EntryLog creationLog2 = mediaType2Itor->second.creationLog;
     ASSERT_EQ(m_admin.username, creationLog2.username);
     ASSERT_EQ(m_admin.host, creationLog2.host);
@@ -1836,7 +1918,7 @@ TEST_P(cta_catalogue_CatalogueTest, getMediaTypeByVid) {
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   m_catalogue->createTape(m_admin, m_tape1);
-  
+
   auto tapeMediaType = m_catalogue->getMediaTypeByVid(m_tape1.vid);
   ASSERT_EQ(m_mediaType.name, tapeMediaType.name);
   ASSERT_EQ(m_mediaType.capacityInBytes, tapeMediaType.capacityInBytes);
@@ -1851,7 +1933,7 @@ TEST_P(cta_catalogue_CatalogueTest, getMediaTypeByVid) {
 
 TEST_P(cta_catalogue_CatalogueTest, getTapePool_non_existent) {
   using namespace cta;
-      
+
   const std::string tapePoolName = "non_existent_tape_pool";
 
   ASSERT_FALSE(m_catalogue->tapePoolExists(tapePoolName));
@@ -1863,7 +1945,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapePool_non_existent) {
 
 TEST_P(cta_catalogue_CatalogueTest, createTapePool) {
   using namespace cta;
-      
+
   const std::string tapePoolName = "tape_pool";
 
   ASSERT_FALSE(m_catalogue->tapePoolExists(tapePoolName));
@@ -1879,9 +1961,9 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool) {
 
   {
     const auto pools = m_catalogue->getTapePools();
-      
+
     ASSERT_EQ(1, pools.size());
-      
+
     const auto &pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
@@ -1899,7 +1981,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool) {
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
-  
+
     const common::dataStructures::EntryLog lastModificationLog = pool.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
@@ -1924,7 +2006,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool) {
     const common::dataStructures::EntryLog creationLog = pool->creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
-  
+
     const common::dataStructures::EntryLog lastModificationLog = pool->lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
@@ -1932,7 +2014,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool) {
 
 TEST_P(cta_catalogue_CatalogueTest, createTapePool_null_supply) {
   using namespace cta;
-      
+
   const std::string tapePoolName = "tape_pool";
 
   ASSERT_FALSE(m_catalogue->tapePoolExists(tapePoolName));
@@ -1945,11 +2027,11 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_null_supply) {
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, comment);
 
   ASSERT_TRUE(m_catalogue->tapePoolExists(tapePoolName));
-      
+
   const auto pools = m_catalogue->getTapePools();
-      
+
   ASSERT_EQ(1, pools.size());
-      
+
   const auto &pool = pools.front();
   ASSERT_EQ(tapePoolName, pool.name);
   ASSERT_EQ(m_vo.name, pool.vo.name);
@@ -1965,15 +2047,15 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_null_supply) {
   const common::dataStructures::EntryLog creationLog = pool.creationLog;
   ASSERT_EQ(m_admin.username, creationLog.username);
   ASSERT_EQ(m_admin.host, creationLog.host);
-  
+
   const common::dataStructures::EntryLog lastModificationLog =
     pool.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 }
-  
+
 TEST_P(cta_catalogue_CatalogueTest, createTapePool_same_twice) {
   using namespace cta;
-  
+
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
@@ -1986,7 +2068,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_same_twice) {
 
 TEST_P(cta_catalogue_CatalogueTest, createTapePool_vo_does_not_exist) {
   using namespace cta;
-  
+
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
@@ -2003,7 +2085,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_tapes_of_mixed_state) {
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  
+
   m_catalogue->createMediaType(m_admin, m_mediaType);
 
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -2021,7 +2103,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_tapes_of_mixed_state) {
     ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
-  
+
   cta::catalogue::TapeSearchCriteria criteria;
   criteria.vid = m_tape1.vid;
   ASSERT_EQ(0,m_catalogue->getTapes(criteria).size());
@@ -2045,7 +2127,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_tapes_of_mixed_state) {
   tape_broken_01.state = common::dataStructures::Tape::BROKEN;
   tape_broken_01.stateReason = "unit Test";
   m_catalogue->createTape(m_admin, tape_broken_01);
-  
+
   auto tape_full_01 = m_tape1;
   tape_full_01.vid = "F000001";
   tape_full_01.full = true;
@@ -2239,7 +2321,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_notEmpty) {
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  
+
   m_catalogue->createMediaType(m_admin, m_mediaType);
 
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -2310,7 +2392,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_notEmpty) {
 
 TEST_P(cta_catalogue_CatalogueTest, createTapePool_emptyStringTapePoolName) {
   using namespace cta;
-      
+
   const std::string tapePoolName = "";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
@@ -2323,7 +2405,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_emptyStringTapePoolName) {
 
 TEST_P(cta_catalogue_CatalogueTest, createTapePool_emptyStringVO) {
   using namespace cta;
-      
+
   const std::string vo = "";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
@@ -2369,12 +2451,12 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_used_in_an_archive_route) {
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
   m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, comment);
-      
+
   {
     const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
-      
+
     ASSERT_EQ(1, routes.size());
-      
+
     const common::dataStructures::ArchiveRoute route = routes.front();
     ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
     ASSERT_EQ(copyNb, route.copyNb);
@@ -2384,16 +2466,16 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_used_in_an_archive_route) {
     const common::dataStructures::EntryLog creationLog = route.creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
-  
+
     const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
   {
     const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes(m_storageClassSingleCopy.name, tapePoolName);
-      
+
     ASSERT_EQ(1, routes.size());
-      
+
     const common::dataStructures::ArchiveRoute route = routes.front();
     ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
     ASSERT_EQ(copyNb, route.copyNb);
@@ -2403,7 +2485,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_used_in_an_archive_route) {
     const common::dataStructures::EntryLog creationLog = route.creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
-  
+
     const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
@@ -2563,7 +2645,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolVo_VoDoesNotExist) {
 
 TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolNbPartialTapes) {
   using namespace cta;
-      
+
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
@@ -2574,9 +2656,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolNbPartialTapes) {
 
   {
     const auto pools = m_catalogue->getTapePools();
-      
+
     ASSERT_EQ(1, pools.size());
-      
+
     const auto &pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
@@ -2591,7 +2673,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolNbPartialTapes) {
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
-  
+
     const common::dataStructures::EntryLog lastModificationLog = pool.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
@@ -2601,9 +2683,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolNbPartialTapes) {
 
   {
     const auto pools = m_catalogue->getTapePools();
-      
+
     ASSERT_EQ(1, pools.size());
-      
+
     const auto &pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
@@ -2639,7 +2721,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolNbPartialTapes_nonExistentTape
 
 TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment) {
   using namespace cta;
-      
+
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
@@ -2650,7 +2732,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment) {
 
   {
     const auto pools = m_catalogue->getTapePools();
-      
+
     ASSERT_EQ(1, pools.size());
 
     const auto &pool = pools.front();
@@ -2667,7 +2749,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment) {
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
-  
+
     const common::dataStructures::EntryLog lastModificationLog = pool.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
@@ -2677,9 +2759,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment) {
 
   {
     const auto pools = m_catalogue->getTapePools();
-      
+
     ASSERT_EQ(1, pools.size());
-      
+
     const auto &pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
@@ -2699,7 +2781,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment) {
 
 TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment_emptyStringTapePoolName) {
   using namespace cta;
-      
+
   const std::string tapePoolName = "";
   const std::string modifiedComment = "Modified comment";
   ASSERT_THROW(m_catalogue->modifyTapePoolComment(m_admin, tapePoolName, modifiedComment), catalogue::UserSpecifiedAnEmptyStringTapePoolName);
@@ -2707,7 +2789,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment_emptyStringTapePoolNam
 
 TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment_emptyStringComment) {
   using namespace cta;
-      
+
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
@@ -2718,7 +2800,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment_emptyStringComment) {
 
   {
     const auto pools = m_catalogue->getTapePools();
-      
+
     ASSERT_EQ(1, pools.size());
 
     const auto &pool = pools.front();
@@ -2735,7 +2817,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment_emptyStringComment) {
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
-  
+
     const common::dataStructures::EntryLog lastModificationLog = pool.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
@@ -2747,7 +2829,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment_emptyStringComment) {
 
 TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment_nonExistentTapePool) {
   using namespace cta;
-      
+
   const std::string tapePoolName = "tape_pool";
   const std::string comment = "Comment";
   ASSERT_THROW(m_catalogue->modifyTapePoolComment(m_admin, tapePoolName, comment), exception::UserError);
@@ -2755,7 +2837,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment_nonExistentTapePool) {
 
 TEST_P(cta_catalogue_CatalogueTest, setTapePoolEncryption) {
   using namespace cta;
-      
+
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
@@ -2766,7 +2848,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapePoolEncryption) {
 
   {
     const auto pools = m_catalogue->getTapePools();
-      
+
     ASSERT_EQ(1, pools.size());
 
     const auto &pool = pools.front();
@@ -2783,7 +2865,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapePoolEncryption) {
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
-  
+
     const common::dataStructures::EntryLog lastModificationLog = pool.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
@@ -2793,9 +2875,9 @@ TEST_P(cta_catalogue_CatalogueTest, setTapePoolEncryption) {
 
   {
     const auto pools = m_catalogue->getTapePools();
-      
+
     ASSERT_EQ(1, pools.size());
-      
+
     const auto &pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
@@ -2815,7 +2897,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapePoolEncryption) {
 
 TEST_P(cta_catalogue_CatalogueTest, setTapePoolEncryption_nonExistentTapePool) {
   using namespace cta;
-      
+
   const std::string tapePoolName = "tape_pool";
   const bool isEncrypted = false;
   ASSERT_THROW(m_catalogue->setTapePoolEncryption(m_admin, tapePoolName, isEncrypted), exception::UserError);
@@ -2823,7 +2905,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapePoolEncryption_nonExistentTapePool) {
 
 TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolSupply) {
   using namespace cta;
-      
+
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
@@ -2834,7 +2916,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolSupply) {
 
   {
     const auto pools = m_catalogue->getTapePools();
-      
+
     ASSERT_EQ(1, pools.size());
 
     const auto &pool = pools.front();
@@ -2854,7 +2936,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolSupply) {
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
-  
+
     const common::dataStructures::EntryLog lastModificationLog = pool.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
@@ -2864,9 +2946,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolSupply) {
 
   {
     const auto pools = m_catalogue->getTapePools();
-      
+
     ASSERT_EQ(1, pools.size());
-      
+
     const auto &pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
@@ -2888,7 +2970,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolSupply) {
 
 TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolSupply_emptyStringTapePoolName) {
   using namespace cta;
-      
+
   const std::string tapePoolName = "";
   const std::string modifiedSupply = "Modified supply";
   ASSERT_THROW(m_catalogue->modifyTapePoolSupply(m_admin, tapePoolName, modifiedSupply), catalogue::UserSpecifiedAnEmptyStringTapePoolName);
@@ -2907,7 +2989,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolSupply_emptyStringSupply) {
 
   {
     const auto pools = m_catalogue->getTapePools();
-      
+
     ASSERT_EQ(1, pools.size());
 
     const auto &pool = pools.front();
@@ -2927,7 +3009,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolSupply_emptyStringSupply) {
     const common::dataStructures::EntryLog creationLog = pool.creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
-  
+
     const common::dataStructures::EntryLog lastModificationLog = pool.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
@@ -2937,9 +3019,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolSupply_emptyStringSupply) {
 
   {
     const auto pools = m_catalogue->getTapePools();
-      
+
     ASSERT_EQ(1, pools.size());
-      
+
     const auto &pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
@@ -3214,7 +3296,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
   using namespace cta;
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  
+
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const std::string tapePoolName = "tape_pool";
@@ -3226,12 +3308,12 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
   m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, comment);
-      
+
   {
     const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
-      
+
     ASSERT_EQ(1, routes.size());
-      
+
     const common::dataStructures::ArchiveRoute route = routes.front();
     ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
     ASSERT_EQ(copyNb, route.copyNb);
@@ -3241,16 +3323,16 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
     const common::dataStructures::EntryLog creationLog = route.creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
-  
+
     const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
   {
     const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes(m_storageClassSingleCopy.name, tapePoolName);
-      
+
     ASSERT_EQ(1, routes.size());
-      
+
     const common::dataStructures::ArchiveRoute route = routes.front();
     ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
     ASSERT_EQ(copyNb, route.copyNb);
@@ -3260,7 +3342,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
     const common::dataStructures::EntryLog creationLog = route.creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
-  
+
     const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
@@ -3377,11 +3459,11 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolName_emptyStringNewTapePoolNam
 
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringStorageClassName) {
   using namespace cta;
-      
+
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  
+
   common::dataStructures::StorageClass storageClass;
-  
+
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const std::string tapePoolName = "tape_pool";
@@ -3399,7 +3481,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringStorageClassNa
 
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_zeroCopyNb) {
   using namespace cta;
-      
+
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -3415,9 +3497,9 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_zeroCopyNb) {
 
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringTapePoolName) {
   using namespace cta;
-      
+
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  
+
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const std::string tapePoolName = "";
@@ -3428,7 +3510,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringTapePoolName) 
 
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringComment) {
   using namespace cta;
-      
+
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -3441,10 +3523,10 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringComment) {
   const std::string comment = "";
   ASSERT_THROW(m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, m_tape1.tapePoolName, comment), catalogue::UserSpecifiedAnEmptyStringComment);
 }
-  
+
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_non_existent_storage_class) {
   using namespace cta;
-      
+
   const std::string storageClassName = "storage_class";
 
   const uint64_t nbPartialTapes = 2;
@@ -3457,10 +3539,10 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_non_existent_storage_clas
   const std::string comment = "Create archive route";
   ASSERT_THROW(m_catalogue->createArchiveRoute(m_admin, storageClassName, copyNb, m_tape1.tapePoolName, comment), exception::UserError);
 }
-  
+
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_non_existent_tape_pool) {
   using namespace cta;
-      
+
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -3471,7 +3553,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_non_existent_tape_pool) {
 
   ASSERT_THROW(m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, tapePoolName, comment), exception::UserError);
 }
-  
+
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_same_twice) {
   using namespace cta;
 
@@ -3488,7 +3570,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_same_twice) {
   m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, m_tape1.tapePoolName, comment);
   ASSERT_THROW(m_catalogue->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, m_tape1.tapePoolName, comment), exception::Exception);
 }
-  
+
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_two_routes_same_pool) {
   using namespace cta;
 
@@ -3590,7 +3672,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_deleteStorageClass) {
 
 TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName) {
   using namespace cta;
-      
+
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -3608,9 +3690,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName) {
 
   {
     const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
-      
+
     ASSERT_EQ(1, routes.size());
-      
+
     const common::dataStructures::ArchiveRoute route = routes.front();
     ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
     ASSERT_EQ(copyNb, route.copyNb);
@@ -3620,7 +3702,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName) {
     const common::dataStructures::EntryLog creationLog = route.creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
-  
+
     const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
@@ -3629,9 +3711,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName) {
 
   {
     const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
-      
+
     ASSERT_EQ(1, routes.size());
-      
+
     const common::dataStructures::ArchiveRoute route = routes.front();
     ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
     ASSERT_EQ(copyNb, route.copyNb);
@@ -3646,7 +3728,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName) {
 
 TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName_nonExistentTapePool) {
   using namespace cta;
-      
+
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -3664,9 +3746,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName_nonExistentTa
 
   {
     const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
-      
+
     ASSERT_EQ(1, routes.size());
-      
+
     const common::dataStructures::ArchiveRoute route = routes.front();
     ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
     ASSERT_EQ(copyNb, route.copyNb);
@@ -3676,7 +3758,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName_nonExistentTa
     const common::dataStructures::EntryLog creationLog = route.creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
-  
+
     const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
@@ -3686,7 +3768,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName_nonExistentTa
 
 TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName_nonExistentArchiveRoute) {
   using namespace cta;
-      
+
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -3701,7 +3783,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName_nonExistentAr
 
 TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment) {
   using namespace cta;
-      
+
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -3716,9 +3798,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment) {
 
   {
     const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
-      
+
     ASSERT_EQ(1, routes.size());
-      
+
     const common::dataStructures::ArchiveRoute route = routes.front();
     ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
     ASSERT_EQ(copyNb, route.copyNb);
@@ -3728,7 +3810,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment) {
     const common::dataStructures::EntryLog creationLog = route.creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
-  
+
     const common::dataStructures::EntryLog lastModificationLog = route.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
@@ -3738,9 +3820,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment) {
 
   {
     const std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue->getArchiveRoutes();
-      
+
     ASSERT_EQ(1, routes.size());
-      
+
     const common::dataStructures::ArchiveRoute route = routes.front();
     ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
     ASSERT_EQ(copyNb, route.copyNb);
@@ -3755,7 +3837,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment) {
 
 TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment_nonExistentArchiveRoute) {
   using namespace cta;
-      
+
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -3771,18 +3853,18 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment_nonExistentArchive
 
 TEST_P(cta_catalogue_CatalogueTest, createLogicalLibrary) {
   using namespace cta;
-      
+
   ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
-      
+
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "Create logical library";
   const bool logicalLibraryIsDisabled= false;
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, comment);
-      
+
   const std::list<common::dataStructures::LogicalLibrary> libs = m_catalogue->getLogicalLibraries();
-      
+
   ASSERT_EQ(1, libs.size());
-      
+
   const common::dataStructures::LogicalLibrary lib = libs.front();
   ASSERT_EQ(logicalLibraryName, lib.name);
   ASSERT_FALSE(lib.isDisabled);
@@ -3791,25 +3873,25 @@ TEST_P(cta_catalogue_CatalogueTest, createLogicalLibrary) {
   const common::dataStructures::EntryLog creationLog = lib.creationLog;
   ASSERT_EQ(m_admin.username, creationLog.username);
   ASSERT_EQ(m_admin.host, creationLog.host);
-  
+
   const common::dataStructures::EntryLog lastModificationLog = lib.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createLogicalLibrary_disabled_true) {
   using namespace cta;
-      
+
   ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
-      
+
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "Create logical library";
   const bool logicalLibraryIsDisabled(true);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, comment);
-      
+
   const std::list<common::dataStructures::LogicalLibrary> libs = m_catalogue->getLogicalLibraries();
-      
+
   ASSERT_EQ(1, libs.size());
-      
+
   const common::dataStructures::LogicalLibrary lib = libs.front();
   ASSERT_EQ(logicalLibraryName, lib.name);
   ASSERT_TRUE(lib.isDisabled);
@@ -3818,25 +3900,25 @@ TEST_P(cta_catalogue_CatalogueTest, createLogicalLibrary_disabled_true) {
   const common::dataStructures::EntryLog creationLog = lib.creationLog;
   ASSERT_EQ(m_admin.username, creationLog.username);
   ASSERT_EQ(m_admin.host, creationLog.host);
-  
+
   const common::dataStructures::EntryLog lastModificationLog = lib.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createLogicalLibrary_disabled_false) {
   using namespace cta;
-      
+
   ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
-      
+
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "Create logical library";
   const bool logicalLibraryIsDisabled(false);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, comment);
-      
+
   const std::list<common::dataStructures::LogicalLibrary> libs = m_catalogue->getLogicalLibraries();
-      
+
   ASSERT_EQ(1, libs.size());
-      
+
   const common::dataStructures::LogicalLibrary lib = libs.front();
   ASSERT_EQ(logicalLibraryName, lib.name);
   ASSERT_FALSE(lib.isDisabled);
@@ -3845,15 +3927,15 @@ TEST_P(cta_catalogue_CatalogueTest, createLogicalLibrary_disabled_false) {
   const common::dataStructures::EntryLog creationLog = lib.creationLog;
   ASSERT_EQ(m_admin.username, creationLog.username);
   ASSERT_EQ(m_admin.host, creationLog.host);
-  
+
   const common::dataStructures::EntryLog lastModificationLog =
     lib.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 }
-  
+
 TEST_P(cta_catalogue_CatalogueTest, createLogicalLibrary_same_twice) {
   using namespace cta;
-  
+
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "Create logical library";
   const bool logicalLibraryIsDisabled= false;
@@ -3863,20 +3945,20 @@ TEST_P(cta_catalogue_CatalogueTest, createLogicalLibrary_same_twice) {
 
 TEST_P(cta_catalogue_CatalogueTest, setLogicalLibraryDisabled_true) {
   using namespace cta;
-      
+
   ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
-      
+
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "Create logical library";
   const bool logicalLibraryIsDisabled= false;
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, comment);
-      
+
   {
     const std::list<common::dataStructures::LogicalLibrary> libs =
       m_catalogue->getLogicalLibraries();
-      
+
     ASSERT_EQ(1, libs.size());
-      
+
     const common::dataStructures::LogicalLibrary lib = libs.front();
     ASSERT_EQ(logicalLibraryName, lib.name);
     ASSERT_FALSE(lib.isDisabled);
@@ -3885,7 +3967,7 @@ TEST_P(cta_catalogue_CatalogueTest, setLogicalLibraryDisabled_true) {
     const common::dataStructures::EntryLog creationLog = lib.creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
-  
+
     const common::dataStructures::EntryLog lastModificationLog =
       lib.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
@@ -3897,9 +3979,9 @@ TEST_P(cta_catalogue_CatalogueTest, setLogicalLibraryDisabled_true) {
   {
     const std::list<common::dataStructures::LogicalLibrary> libs =
       m_catalogue->getLogicalLibraries();
-      
+
     ASSERT_EQ(1, libs.size());
-      
+
     const common::dataStructures::LogicalLibrary lib = libs.front();
     ASSERT_EQ(logicalLibraryName, lib.name);
     ASSERT_EQ(modifiedLogicalLibraryIsDisabled, lib.isDisabled);
@@ -3913,20 +3995,20 @@ TEST_P(cta_catalogue_CatalogueTest, setLogicalLibraryDisabled_true) {
 
 TEST_P(cta_catalogue_CatalogueTest, setLogicalLibraryDisabled_false) {
   using namespace cta;
-      
+
   ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
-      
+
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "Create logical library";
   const bool logicalLibraryIsDisabled= false;
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, comment);
-      
+
   {
     const std::list<common::dataStructures::LogicalLibrary> libs =
       m_catalogue->getLogicalLibraries();
-      
+
     ASSERT_EQ(1, libs.size());
-      
+
     const common::dataStructures::LogicalLibrary lib = libs.front();
     ASSERT_EQ(logicalLibraryName, lib.name);
     ASSERT_FALSE(lib.isDisabled);
@@ -3935,7 +4017,7 @@ TEST_P(cta_catalogue_CatalogueTest, setLogicalLibraryDisabled_false) {
     const common::dataStructures::EntryLog creationLog = lib.creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
-  
+
     const common::dataStructures::EntryLog lastModificationLog =
       lib.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
@@ -3947,9 +4029,9 @@ TEST_P(cta_catalogue_CatalogueTest, setLogicalLibraryDisabled_false) {
   {
     const std::list<common::dataStructures::LogicalLibrary> libs =
       m_catalogue->getLogicalLibraries();
-      
+
     ASSERT_EQ(1, libs.size());
-      
+
     const common::dataStructures::LogicalLibrary lib = libs.front();
     ASSERT_EQ(logicalLibraryName, lib.name);
     ASSERT_EQ(modifiedLogicalLibraryIsDisabled, lib.isDisabled);
@@ -3969,7 +4051,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string libNotToDeleteComment = "Create logical library to NOT be deleted";
-      
+
   // Create a tape and a logical library that are not the ones to be deleted
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, libNotToDeleteIsDisabled, libNotToDeleteComment);
   {
@@ -4089,7 +4171,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary) {
 
 TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary_non_existent) {
   using namespace cta;
-      
+
   ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
   ASSERT_THROW(m_catalogue->deleteLogicalLibrary("non_existent_logical_library"),
     catalogue::UserSpecifiedANonExistentLogicalLibrary);
@@ -4102,7 +4184,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary_non_empty) {
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  
+
   m_catalogue->createMediaType(m_admin, m_mediaType);
 
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -4240,9 +4322,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyLogicalLibraryName_emptyStringNewLogic
 
 TEST_P(cta_catalogue_CatalogueTest, modifyLogicalLibraryComment) {
   using namespace cta;
-      
+
   ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
-      
+
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "Create logical library";
   const bool logicalLibraryIsDisabled= false;
@@ -4250,9 +4332,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyLogicalLibraryComment) {
 
   {
     const std::list<common::dataStructures::LogicalLibrary> libs = m_catalogue->getLogicalLibraries();
-      
+
     ASSERT_EQ(1, libs.size());
-      
+
     const common::dataStructures::LogicalLibrary lib = libs.front();
     ASSERT_EQ(logicalLibraryName, lib.name);
     ASSERT_EQ(comment, lib.comment);
@@ -4260,7 +4342,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyLogicalLibraryComment) {
     const common::dataStructures::EntryLog creationLog = lib.creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
-  
+
     const common::dataStructures::EntryLog lastModificationLog = lib.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
@@ -4270,9 +4352,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyLogicalLibraryComment) {
 
   {
     const std::list<common::dataStructures::LogicalLibrary> libs = m_catalogue->getLogicalLibraries();
-      
+
     ASSERT_EQ(1, libs.size());
-      
+
     const common::dataStructures::LogicalLibrary lib = libs.front();
     ASSERT_EQ(logicalLibraryName, lib.name);
     ASSERT_EQ(modifiedComment, lib.comment);
@@ -4280,7 +4362,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyLogicalLibraryComment) {
     const common::dataStructures::EntryLog creationLog = lib.creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
-  
+
     const common::dataStructures::EntryLog lastModificationLog = lib.lastModificationLog;
   }
 }
@@ -4311,7 +4393,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
-  
+
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -4442,7 +4524,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringVendor) {
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  
+
   m_catalogue->createMediaType(m_admin, m_mediaType);
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
@@ -4473,7 +4555,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringLogicalLibraryName) {
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
-  
+
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   {
@@ -4674,7 +4756,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_StateDoesNotExist) {
 
   auto tape = m_tape1;
   tape.state = (cta::common::dataStructures::Tape::State)42;
-  ASSERT_THROW(m_catalogue->createTape(m_admin, tape),cta::catalogue::UserSpecifiedANonExistentTapeState);  
+  ASSERT_THROW(m_catalogue->createTape(m_admin, tape),cta::catalogue::UserSpecifiedANonExistentTapeState);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createTape_StateNotActiveWithoutReasonShouldThrow) {
@@ -4693,11 +4775,11 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_StateNotActiveWithoutReasonShould
 
   auto tape = m_tape1;
   tape.state = cta::common::dataStructures::Tape::DISABLED;
-  ASSERT_THROW(m_catalogue->createTape(m_admin, tape),cta::catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);  
-  
+  ASSERT_THROW(m_catalogue->createTape(m_admin, tape),cta::catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);
+
   tape.state = cta::common::dataStructures::Tape::BROKEN;
-  ASSERT_THROW(m_catalogue->createTape(m_admin, tape),cta::catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);  
-  
+  ASSERT_THROW(m_catalogue->createTape(m_admin, tape),cta::catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);
+
   tape.stateReason = "Tape broken";
   ASSERT_NO_THROW(m_catalogue->createTape(m_admin, tape));
 }
@@ -4775,7 +4857,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape1.state,tape.state);
       ASSERT_EQ(m_tape1.full, tape.full);
-  
+
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(m_tape1.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
@@ -4832,7 +4914,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
     searchCriteria.diskFileIds = std::vector<std::string>();
     ASSERT_THROW(m_catalogue->getTapes(searchCriteria), exception::UserError);
   }
-  
+
   {
     catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.state = (cta::common::dataStructures::Tape::State)42;
@@ -4993,7 +5075,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape1.full, tape.full);
-  
+
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(m_tape1.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
@@ -5015,7 +5097,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
-  
+
   const std::string diskInstance = "disk_instance";
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
@@ -5155,7 +5237,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_TRUE(m_tape2.state == tape.state);
     ASSERT_TRUE(m_tape2.full == tape.full);
-    
+
     ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(m_tape2.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
@@ -5234,7 +5316,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
   using namespace cta;
 
   log::LogContext dummyLc(m_dummyLog);
-  
+
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -5337,7 +5419,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
 
   ASSERT_THROW(m_catalogue->deleteTape(m_tape1.vid), catalogue::UserSpecifiedANonEmptyTape);
   ASSERT_FALSE(m_catalogue->getTapes().empty());
-  
+
   //Put the files on the tape on the recycle log
   cta::common::dataStructures::DeleteArchiveRequest deletedArchiveReq;
   deletedArchiveReq.archiveFile = m_catalogue->getArchiveFileById(archiveFileId);
@@ -5348,7 +5430,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
   deletedArchiveReq.requester = cta::common::dataStructures::RequesterIdentity(m_admin.username,"group");
   deletedArchiveReq.diskFilePath = "/path/";
   m_catalogue->moveArchiveFileToRecycleLog(deletedArchiveReq,dummyLc);
-  
+
   //The ArchiveFilesItor should not have any file in it
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
   //The tape should not be deleted
@@ -5444,7 +5526,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeMediaType) {
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
   }
-  
+
   ASSERT_THROW(m_catalogue->modifyTapeMediaType(m_admin, m_tape1.vid, "DOES NOT EXIST"),cta::exception::UserError);
 }
 
@@ -5912,7 +5994,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeState_noReasonWhenNotActive) {
 
   std::string reason = "";
   ASSERT_THROW(m_catalogue->modifyTapeState(m_admin,m_tape1.vid,common::dataStructures::Tape::State::BROKEN,reason),cta::catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);
-  
+
   ASSERT_THROW(m_catalogue->modifyTapeState(m_admin,m_tape1.vid,common::dataStructures::Tape::State::DISABLED,cta::nullopt),cta::catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);
 }
 
@@ -5933,10 +6015,10 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeState) {
   m_catalogue->createTape(m_admin, m_tape1);
 
   std::string reason = "tape broken";
-  
+
   std::string vid = m_tape1.vid;
   ASSERT_NO_THROW(m_catalogue->modifyTapeState(m_admin,vid,common::dataStructures::Tape::State::BROKEN,reason));
-  
+
   {
     //catalogue getTapesByVid test
     auto vidToTapeMap = m_catalogue->getTapesByVid({vid});
@@ -5947,7 +6029,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeState) {
     ASSERT_EQ(catalogue::RdbmsCatalogue::generateTapeStateModifiedBy(m_admin),tape.stateModifiedBy);
     ASSERT_NE(0,tape.stateUpdateTime);
   }
-  
+
   {
     //Get tape by search criteria test
     cta::catalogue::TapeSearchCriteria criteria;
@@ -5960,7 +6042,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeState) {
     ASSERT_EQ(catalogue::RdbmsCatalogue::generateTapeStateModifiedBy(m_admin),tape.stateModifiedBy);
     ASSERT_NE(0,tape.stateUpdateTime);
   }
-  
+
   {
     auto vidToTapeMap = m_catalogue->getTapesByVid({vid});
     auto tape = vidToTapeMap.at(vid);
@@ -5987,14 +6069,14 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeStateResetReasonWhenBackToActiveSt
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   m_catalogue->createTape(m_admin, m_tape1);
-  
+
   std::string vid = m_tape1.vid;
 
   std::string reason = "Broken tape";
   ASSERT_NO_THROW(m_catalogue->modifyTapeState(m_admin,vid,common::dataStructures::Tape::State::BROKEN,reason));
-  
+
   ASSERT_NO_THROW(m_catalogue->modifyTapeState(m_admin,vid,common::dataStructures::Tape::State::ACTIVE,cta::nullopt));
-  
+
   {
     auto vidToTapeMap = m_catalogue->getTapesByVid({vid});
     auto tape = vidToTapeMap.at(vid);
@@ -6022,10 +6104,10 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesSearchCriteriaByState) {
 
   m_catalogue->createTape(m_admin, m_tape1);
   m_catalogue->createTape(m_admin, m_tape2);
-  
+
   std::string vidTape1 = m_tape1.vid;
   std::string vidTape2 = m_tape2.vid;
-  
+
   {
     cta::catalogue::TapeSearchCriteria criteria;
     criteria.state = common::dataStructures::Tape::ACTIVE;
@@ -6038,10 +6120,10 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesSearchCriteriaByState) {
     ASSERT_EQ(m_admin.username + "@" + m_admin.host,tape.stateModifiedBy);
     ASSERT_NE(0,tape.stateUpdateTime);
   }
-  
+
   std::string reason = "Broken tape";
   ASSERT_NO_THROW(m_catalogue->modifyTapeState(m_admin,vidTape1,common::dataStructures::Tape::State::BROKEN,reason));
-  
+
   {
     cta::catalogue::TapeSearchCriteria criteria;
     criteria.state = common::dataStructures::Tape::ACTIVE;
@@ -6225,7 +6307,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
   }
-  
+
   for(int i=1; i<1024; i++) {
     m_catalogue->tapeMountedForArchive(m_tape1.vid, modifiedDrive);
   }
@@ -6346,7 +6428,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
   }
-  
+
   for(int i=1; i<1024; i++) {
     m_catalogue->tapeMountedForRetrieve(m_tape1.vid, modifiedDrive);
   }
@@ -6621,7 +6703,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeIsFromCastorInUnitTests) {
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
   }
-  
+
   // do it twice
   m_catalogue->setTapeIsFromCastorInUnitTests(m_tape1.vid);
 
@@ -6649,7 +6731,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeIsFromCastorInUnitTests) {
     const common::dataStructures::EntryLog creationLog = tape.creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
-  }  
+  }
 }
 
 TEST_P(cta_catalogue_CatalogueTest, setTapeIsFromCastor_nonExistentTape) {
@@ -6704,7 +6786,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWritingOrderedByDataInBytesDesc) 
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   m_catalogue->createTape(m_admin, m_tape1);
-  
+
 
   m_catalogue->tapeLabelled(m_tape1.vid, "tape_drive");
 
@@ -6721,12 +6803,12 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWritingOrderedByDataInBytesDesc) 
   ASSERT_EQ(0, tape.lastFSeq);
   ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
   ASSERT_EQ(0, tape.dataOnTapeInBytes);
-  
+
   //Create a tape and insert a file in it
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
   m_catalogue->createTape(m_admin, m_tape2);
   m_catalogue->tapeLabelled(m_tape2.vid, "tape_drive");
-  
+
   const uint64_t fileSize = 1234 * 1000000000UL;
   {
     auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
@@ -6748,7 +6830,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWritingOrderedByDataInBytesDesc) 
     file1Written.tapeDrive            = "tape_drive";
     m_catalogue->filesWrittenToTape(file1WrittenSet);
   }
-  
+
   //The tape m_tape2 should be returned by the Catalogue::getTapesForWriting() method
   ASSERT_EQ(m_tape2.vid,m_catalogue->getTapesForWriting(m_tape2.logicalLibraryName).front().vid);
 }
@@ -6785,7 +6867,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting_full_tape) {
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  
+
   auto tape1 = m_tape1;
   tape1.full = true;
 
@@ -6828,7 +6910,7 @@ TEST_P(cta_catalogue_CatalogueTest, createMountPolicy) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getMountPolicies().empty());
-  
+
   catalogue::CreateMountPolicyAttributes mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->createMountPolicy(m_admin, mountPolicyToAdd);
@@ -6903,7 +6985,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyMountPolicyArchivePriority) {
 
   auto mountPolicyToAdd = getMountPolicy1();
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
-  
+
   const uint64_t modifiedArchivePriority = mountPolicyToAdd.archivePriority + 10;
   m_catalogue->modifyMountPolicyArchivePriority(m_admin, mountPolicyToAdd.name, modifiedArchivePriority);
 
@@ -6936,9 +7018,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyMountPolicyArchiveMinRequestAge) {
   using namespace cta;
 
   ASSERT_TRUE(m_catalogue->getMountPolicies().empty());
-  
+
   auto mountPolicyToAdd = getMountPolicy1();
-  
+
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
 
   const uint64_t modifiedMinArchiveRequestAge = mountPolicyToAdd.minArchiveRequestAge + 10;
@@ -6987,7 +7069,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyMountPolicyRetrievePriority) {
     const common::dataStructures::MountPolicy mountPolicy = mountPolicies.front();
 
     ASSERT_EQ(modifiedRetrievePriority, mountPolicy.retrievePriority);
-    
+
     const common::dataStructures::EntryLog modificationLog = mountPolicy.lastModificationLog;
     ASSERT_EQ(m_admin.username, modificationLog.username);
     ASSERT_EQ(m_admin.host, modificationLog.host);
@@ -7150,7 +7232,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteRequesterMountRule) {
 
   const std::list<common::dataStructures::RequesterMountRule> rules = m_catalogue->getRequesterMountRules();
   ASSERT_EQ(1, rules.size());
-  
+
   m_catalogue->deleteRequesterMountRule(diskInstanceName, requesterName);
   ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
 }
@@ -7297,7 +7379,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterGroupMountRulePolicy) {
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
 
   std::string mountPolicyName = mountPolicyToAdd.name;
-  
+
   const std::string anotherMountPolicyName = "another_mount_policy";
 
   auto anotherMountPolicy = getMountPolicy1();
@@ -7538,7 +7620,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_no_archive_rout
   ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
-  
+
   const std::string diskInstance = "disk_instance";
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -8278,7 +8360,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape2.full, tape.full);
-    
+
     ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(m_tape2.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
@@ -8298,7 +8380,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
 
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
   ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
-  
+
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const uint64_t archiveFileSize = 1;
@@ -8449,7 +8531,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
   std::string disabledReason = "disabledReason";
-  
+
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
@@ -8499,7 +8581,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(m_tape2.full, tape.full);
-    
+
     ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(m_tape2.comment, tape.comment);
     ASSERT_FALSE(tape.labelLog);
@@ -8532,7 +8614,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = diskInstanceName1;
   file1Written.diskFileId           = "5678";
-  
+
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
@@ -8555,7 +8637,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
-    
+
     ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
     ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
@@ -8577,7 +8659,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   file2Written.archiveFileId        = file1Written.archiveFileId;
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
-  
+
   file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
   file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
@@ -8600,7 +8682,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
-    
+
     ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
     ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
@@ -8743,7 +8825,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_retu
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = diskInstanceName1;
   file1Written.diskFileId           = "5678";
-  
+
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
@@ -8764,7 +8846,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_retu
   file2Written.archiveFileId        = file1Written.archiveFileId;
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
-  
+
   file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
   file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
@@ -8776,7 +8858,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_retu
   file2Written.copyNb               = 1;
   file2Written.tapeDrive            = tapeDrive;
   m_catalogue->filesWrittenToTape(file2WrittenSet);
-  
+
   ASSERT_TRUE(m_catalogue->getFileRecycleLogItor().hasMore());
 
   auto mountPolicyToAdd = getMountPolicy1();
@@ -9012,7 +9094,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(tape1.full == tape.full);
-      
+
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(0, tape.readMountCount);
       ASSERT_EQ(0, tape.writeMountCount);
@@ -9040,7 +9122,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(tape2.full == tape.full);
-      
+
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(tape2.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
@@ -9055,7 +9137,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(creationLog, lastModificationLog);
     }
   }
-  
+
   m_catalogue->createStorageClass(m_admin, m_storageClassDualCopy);
 
   const std::string tapeDrive = "tape_drive";
@@ -9075,7 +9157,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     fileWritten.archiveFileId = i;
     fileWritten.diskInstance = diskInstance;
     fileWritten.diskFileId = diskFileId.str();
-    
+
     fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
     fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
     fileWritten.size = archiveFileSize;
@@ -9139,7 +9221,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     fileWritten.archiveFileId = i;
     fileWritten.diskInstance = diskInstance;
     fileWritten.diskFileId = diskFileId.str();
-    
+
     fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
     fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
     fileWritten.size = archiveFileSize;
@@ -9230,7 +9312,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten1.archiveFileId = i;
       fileWritten1.diskInstance = diskInstance;
       fileWritten1.diskFileId = diskFileId.str();
-      
+
       fileWritten1.diskFileOwnerUid = PUBLIC_DISK_USER;
       fileWritten1.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten1.size = archiveFileSize;
@@ -9251,7 +9333,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(fileWritten1.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(fileWritten1.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten1.diskFileId, archiveFile.diskFileId);
-      
+
       ASSERT_EQ(fileWritten1.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
       ASSERT_EQ(fileWritten1.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten1.size, archiveFile.fileSize);
@@ -9301,7 +9383,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten1.archiveFileId = i;
       fileWritten1.diskInstance = diskInstance;
       fileWritten1.diskFileId = diskFileId.str();
-      
+
       fileWritten1.diskFileOwnerUid = PUBLIC_DISK_USER;
       fileWritten1.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten1.size = archiveFileSize;
@@ -9318,7 +9400,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(fileWritten1.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(fileWritten1.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten1.diskFileId, archiveFile.diskFileId);
-      
+
       ASSERT_EQ(fileWritten1.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
       ASSERT_EQ(fileWritten1.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten1.size, archiveFile.fileSize);
@@ -9357,7 +9439,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten1.archiveFileId = i;
       fileWritten1.diskInstance = diskInstance;
       fileWritten1.diskFileId = diskFileId.str();
-      
+
       fileWritten1.diskFileOwnerUid = PUBLIC_DISK_USER;
       fileWritten1.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten1.size = archiveFileSize;
@@ -9374,7 +9456,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(fileWritten1.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(fileWritten1.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten1.diskFileId, archiveFile.diskFileId);
-      
+
       ASSERT_EQ(fileWritten1.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
       ASSERT_EQ(fileWritten1.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten1.size, archiveFile.fileSize);
@@ -9413,7 +9495,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten2.archiveFileId = i;
       fileWritten2.diskInstance = diskInstance;
       fileWritten2.diskFileId = diskFileId.str();
-      
+
       fileWritten2.diskFileOwnerUid = PUBLIC_DISK_USER;
       fileWritten2.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten2.size = archiveFileSize;
@@ -9430,7 +9512,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(fileWritten2.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(fileWritten2.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten2.diskFileId, archiveFile.diskFileId);
-      
+
       ASSERT_EQ(fileWritten2.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
       ASSERT_EQ(fileWritten2.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten2.size, archiveFile.fileSize);
@@ -9467,7 +9549,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten1.archiveFileId = i;
       fileWritten1.diskInstance = diskInstance;
       fileWritten1.diskFileId = diskFileId.str();
-      
+
       fileWritten1.diskFileOwnerUid     = PUBLIC_DISK_USER;
       fileWritten1.diskFileGid     = PUBLIC_DISK_GROUP;
       fileWritten1.size = archiveFileSize;
@@ -9488,7 +9570,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(fileWritten1.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(fileWritten1.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten1.diskFileId, archiveFile.diskFileId);
-      
+
       ASSERT_EQ(fileWritten1.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
       ASSERT_EQ(fileWritten1.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten1.size, archiveFile.fileSize);
@@ -9538,7 +9620,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten.archiveFileId = i;
       fileWritten.diskInstance = diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      
+
       fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
       fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
@@ -9555,7 +9637,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(fileWritten.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(fileWritten.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten.diskFileId, archiveFile.diskFileId);
-      
+
       ASSERT_EQ(fileWritten.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
       ASSERT_EQ(fileWritten.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten.size, archiveFile.fileSize);
@@ -9596,7 +9678,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten.archiveFileId = i;
       fileWritten.diskInstance = diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      
+
       fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
       fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
@@ -9613,7 +9695,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(fileWritten.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(fileWritten.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten.diskFileId, archiveFile.diskFileId);
-      
+
       ASSERT_EQ(fileWritten.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
       ASSERT_EQ(fileWritten.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten.size, archiveFile.fileSize);
@@ -9654,7 +9736,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten.archiveFileId = i;
       fileWritten.diskInstance = diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      
+
       fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
       fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
@@ -9671,7 +9753,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(fileWritten.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(fileWritten.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten.diskFileId, archiveFile.diskFileId);
-      
+
       ASSERT_EQ(fileWritten.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
       ASSERT_EQ(fileWritten.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten.size, archiveFile.fileSize);
@@ -9966,7 +10048,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
           fileWritten.archiveFileId = fn_afid;
           fileWritten.diskInstance = m_diskInstance;
           fileWritten.diskFileId = diskFileId.str();
-          
+
           fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
           fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
           fileWritten.size = m_archiveFileSize;
@@ -10133,7 +10215,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(tape1.full == tape.full);
-      
+
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(tape1.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
@@ -10159,7 +10241,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(tape2.full == tape.full);
-      
+
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(tape2.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
@@ -10176,7 +10258,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
   }
 
   common::dataStructures::StorageClass storageClass;
-  
+
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const std::string tapeDrive1 = "tape_drive1";
@@ -10322,7 +10404,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten1.archiveFileId = i;
       fileWritten1.diskInstance = diskInstance;
       fileWritten1.diskFileId = diskFileId.str();
-      
+
       fileWritten1.diskFileOwnerUid = PUBLIC_DISK_USER;
       fileWritten1.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten1.size = archiveFileSize;
@@ -10345,7 +10427,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(fileWritten1.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(fileWritten1.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten1.diskFileId, archiveFile.diskFileId);
-      
+
       ASSERT_EQ(fileWritten1.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
       ASSERT_EQ(fileWritten1.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten1.size, archiveFile.fileSize);
@@ -10395,7 +10477,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten1.archiveFileId = i;
       fileWritten1.diskInstance = diskInstance;
       fileWritten1.diskFileId = diskFileId.str();
-      
+
       fileWritten1.diskFileOwnerUid = PUBLIC_DISK_USER;
       fileWritten1.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten1.size = archiveFileSize;
@@ -10418,7 +10500,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(fileWritten1.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(fileWritten1.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten1.diskFileId, archiveFile.diskFileId);
-      
+
       ASSERT_EQ(fileWritten1.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
       ASSERT_EQ(fileWritten1.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten1.size, archiveFile.fileSize);
@@ -10471,7 +10553,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten.archiveFileId = i;
       fileWritten.diskInstance = diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      
+
       fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
       fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
@@ -10488,7 +10570,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(fileWritten.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(fileWritten.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten.diskFileId, archiveFile.diskFileId);
-      
+
       ASSERT_EQ(fileWritten.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
       ASSERT_EQ(fileWritten.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten.size, archiveFile.fileSize);
@@ -10532,7 +10614,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten.archiveFileId = i;
       fileWritten.diskInstance = diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      
+
       fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
       fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
@@ -10549,7 +10631,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(fileWritten.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(fileWritten.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten.diskFileId, archiveFile.diskFileId);
-      
+
       ASSERT_EQ(fileWritten.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
       ASSERT_EQ(fileWritten.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten.size, archiveFile.fileSize);
@@ -10593,7 +10675,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten.archiveFileId = i;
       fileWritten.diskInstance = diskInstance;
       fileWritten.diskFileId = diskFileId.str();
-      
+
       fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
       fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten.size = archiveFileSize;
@@ -10610,7 +10692,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(fileWritten.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(fileWritten.diskInstance, archiveFile.diskInstance);
       ASSERT_EQ(fileWritten.diskFileId, archiveFile.diskFileId);
-      
+
       ASSERT_EQ(fileWritten.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
       ASSERT_EQ(fileWritten.diskFileGid, archiveFile.diskFileInfo.gid);
       ASSERT_EQ(fileWritten.size, archiveFile.fileSize);
@@ -10754,7 +10836,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape1.full, tape.full);
-  
+
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(0, tape.readMountCount);
       ASSERT_EQ(0, tape.writeMountCount);
@@ -10790,7 +10872,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = diskInstance;
   file1Written.diskFileId           = "5678";
-  
+
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
@@ -10822,7 +10904,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
-    
+
     ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
     ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
@@ -10871,7 +10953,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape1.full, tape.full);
-  
+
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(0, tape.readMountCount);
       ASSERT_EQ(0, tape.writeMountCount);
@@ -10906,7 +10988,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = diskInstance;
   file1Written.diskFileId           = "5678";
-  
+
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
@@ -10938,7 +11020,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
-    
+
     ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
     ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
@@ -10961,7 +11043,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_file_recycle_log_delete
   using namespace cta;
 
   log::LogContext dummyLc(m_dummyLog);
-  
+
   const std::string diskInstance = "disk_instance";
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
@@ -10997,7 +11079,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_file_recycle_log_delete
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = diskInstance;
   file1Written.diskFileId           = "5678";
-  
+
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
@@ -11035,13 +11117,13 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_file_recycle_log_delete
 
   ASSERT_THROW(m_catalogue->deleteStorageClass(m_storageClassSingleCopy.name), catalogue::UserSpecifiedStorageClassUsedByFileRecycleLogs);
   ASSERT_THROW(m_catalogue->deleteStorageClass(m_storageClassSingleCopy.name), exception::UserError);
-  
+
   {
     //reclaim the tape to delete the files from the recycle log and delete the storage class
     m_catalogue->setTapeFull(m_admin,m_tape1.vid,true);
     m_catalogue->reclaimTape(m_admin,m_tape1.vid,dummyLc);
   }
-  
+
   ASSERT_NO_THROW(m_catalogue->deleteStorageClass(m_storageClassSingleCopy.name));
 }
 
@@ -11079,7 +11161,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape1.full, tape.full);
-  
+
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(0, tape.readMountCount);
       ASSERT_EQ(0, tape.writeMountCount);
@@ -11107,7 +11189,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(m_tape2.full == tape.full);
-      
+
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(0, tape.readMountCount);
       ASSERT_EQ(0, tape.writeMountCount);
@@ -11143,7 +11225,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = diskInstance;
   file1Written.diskFileId           = "5678";
-  
+
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
@@ -11175,7 +11257,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
-    
+
     ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
     ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
@@ -11197,7 +11279,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.archiveFileId        = file1Written.archiveFileId;
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
-  
+
   file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
   file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
@@ -11230,7 +11312,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
-    
+
     ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
     ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
@@ -11289,7 +11371,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape1.full, tape.full);
-  
+
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(m_tape1.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
@@ -11314,7 +11396,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(m_tape2.full == tape.full);
-      
+
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(m_tape2.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
@@ -11347,7 +11429,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = diskInstance;
   file1Written.diskFileId           = "5678";
-  
+
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
@@ -11379,7 +11461,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
-    
+
     ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
     ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
@@ -11401,7 +11483,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.archiveFileId        = file1Written.archiveFileId;
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
-  
+
   file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
   file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
@@ -11434,7 +11516,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
-    
+
     ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
     ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
@@ -11487,7 +11569,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape1.full, tape.full);
-  
+
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(0, tape.readMountCount);
       ASSERT_EQ(0, tape.writeMountCount);
@@ -11521,7 +11603,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = diskInstance;
   file1Written.diskFileId           = "5678";
-  
+
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
@@ -11553,7 +11635,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
-    
+
     ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
     ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
@@ -11575,7 +11657,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.archiveFileId        = file1Written.archiveFileId;
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
-  
+
   file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
   file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
@@ -11608,7 +11690,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
-    
+
     ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
     ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
@@ -11661,7 +11743,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape1.full, tape.full);
-  
+
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(0, tape.readMountCount);
       ASSERT_EQ(0, tape.writeMountCount);
@@ -11726,7 +11808,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
-    
+
     ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
     ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
@@ -11748,7 +11830,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.archiveFileId        = file1Written.archiveFileId;
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
-  
+
   file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
   file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
@@ -11796,7 +11878,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape1.full, tape.full);
-  
+
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(0, tape.readMountCount);
       ASSERT_EQ(0, tape.writeMountCount);
@@ -11823,7 +11905,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(m_tape2.full == tape.full);
-      
+
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(m_tape2.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
@@ -11854,7 +11936,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = diskInstance;
   file1Written.diskFileId           = "5678";
-  
+
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize1;
@@ -11886,7 +11968,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
-    
+
     ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
     ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
@@ -11910,7 +11992,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.archiveFileId        = file1Written.archiveFileId;
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
-  
+
   file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
   file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize2;
@@ -11958,7 +12040,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape1.full, tape.full);
-  
+
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(0, tape.readMountCount);
       ASSERT_EQ(0, tape.writeMountCount);
@@ -11985,10 +12067,10 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(m_tape2.full == tape.full);
-      
+
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(0, tape.readMountCount);
-      ASSERT_EQ(0, tape.writeMountCount);      
+      ASSERT_EQ(0, tape.writeMountCount);
       ASSERT_EQ(m_tape2.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
       ASSERT_FALSE(tape.lastReadLog);
@@ -12018,7 +12100,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = diskInstance;
   file1Written.diskFileId           = "5678";
-  
+
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
@@ -12050,7 +12132,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
-    
+
     ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
     ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
@@ -12072,7 +12154,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.archiveFileId        = file1Written.archiveFileId;
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
-  
+
   file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
   file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
@@ -12120,7 +12202,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape1.full, tape.full);
-  
+
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(m_tape1.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
@@ -12146,7 +12228,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_TRUE(m_tape2.full == tape.full);
-      
+
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(m_tape2.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
@@ -12178,7 +12260,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = diskInstance;
   file1Written.diskFileId           = "5678";
-  
+
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
@@ -12210,7 +12292,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
-    
+
     ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
     ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
@@ -12233,7 +12315,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   file2Written.archiveFileId        = file1Written.archiveFileId;
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
-  
+
   file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
   file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
@@ -12281,7 +12363,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape1.full, tape.full);
-  
+
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(0, tape.readMountCount);
       ASSERT_EQ(0, tape.writeMountCount);
@@ -12308,7 +12390,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape2.full, tape.full);
-      
+
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(m_tape2.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
@@ -12339,7 +12421,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = diskInstance;
   file1Written.diskFileId           = "5678";
-  
+
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
@@ -12377,7 +12459,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
-    
+
     ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
     ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
@@ -12402,7 +12484,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
-    
+
     ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
     ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
@@ -12424,7 +12506,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   file2Written.archiveFileId        = file1Written.archiveFileId;
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
-  
+
   file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
   file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
@@ -12465,7 +12547,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
       ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
       ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
-      
+
       ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
       ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
@@ -12501,7 +12583,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
-    
+
     ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
     ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
@@ -12528,7 +12610,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
 
   log::LogContext dummyLc(m_dummyLog);
   m_catalogue->DO_NOT_USE_deleteArchiveFile_DO_NOT_USE("disk_instance", archiveFileId, dummyLc);
-  
+
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
 }
 
@@ -12566,7 +12648,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape1.full, tape.full);
-  
+
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(m_tape1.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
@@ -12591,7 +12673,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape2.full, tape.full);
-  
+
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(m_tape2.comment, tape.comment);
       ASSERT_FALSE(tape.labelLog);
@@ -12622,7 +12704,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = diskInstance;
   file1Written.diskFileId           = "5678";
-  
+
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
@@ -12660,7 +12742,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
-    
+
     ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
     ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
@@ -12685,7 +12767,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
-    
+
     ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
     ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
@@ -12707,7 +12789,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   file2Written.archiveFileId        = file1Written.archiveFileId;
   file2Written.diskInstance         = file1Written.diskInstance;
   file2Written.diskFileId           = file1Written.diskFileId;
-  
+
   file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
   file2Written.diskFileGid          = file1Written.diskFileGid;
   file2Written.size                 = archiveFileSize;
@@ -12748,7 +12830,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
       ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
       ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
-      
+
       ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
       ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
@@ -12784,7 +12866,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
-    
+
     ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
     ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
@@ -12882,7 +12964,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesByVid_1_tape) {
     ASSERT_EQ(m_mediaType.capacityInBytes, tapeItor->second.capacityInBytes);
     ASSERT_EQ(m_tape1.state, tapeItor->second.state);
     ASSERT_EQ(m_tape1.full, tapeItor->second.full);
-    
+
     ASSERT_FALSE(tapeItor->second.isFromCastor);
     ASSERT_EQ(0, tapeItor->second.readMountCount);
     ASSERT_EQ(0, tapeItor->second.writeMountCount);
@@ -12937,7 +13019,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesByVid_350_tapes) {
     ASSERT_EQ(m_mediaType.capacityInBytes, tapeItor->second.capacityInBytes);
     ASSERT_EQ(m_tape1.state, tapeItor->second.state);
     ASSERT_EQ(m_tape1.full, tapeItor->second.full);
-    
+
     ASSERT_FALSE(tapeItor->second.isFromCastor);
     ASSERT_EQ(0, tapeItor->second.readMountCount);
     ASSERT_EQ(0, tapeItor->second.writeMountCount);
@@ -13053,14 +13135,14 @@ TEST_P(cta_catalogue_CatalogueTest, getAllDiskSystems_many_diskSystems) {
   const uint64_t refreshInterval = 32;
   const uint64_t targetedFreeSpace = 64;
   const uint64_t sleepTime = 15*60;
-  
+
   const uint32_t nbDiskSystems = 16;
-  
+
   for(uint32_t i = 0; i < nbDiskSystems; i++) {
     std::ostringstream name;
     name << "DiskSystem" << std::setfill('0') << std::setw(5) << i;
     const std::string diskSystemComment = "Create disk system " + name.str();
-    m_catalogue->createDiskSystem(m_admin, name.str(), fileRegexp, 
+    m_catalogue->createDiskSystem(m_admin, name.str(), fileRegexp,
       freeSpaceQueryURL, refreshInterval + i, targetedFreeSpace + i, sleepTime + i, diskSystemComment);
   }
 
@@ -13073,7 +13155,7 @@ TEST_P(cta_catalogue_CatalogueTest, getAllDiskSystems_many_diskSystems) {
     const std::string diskSystemComment = "Create disk system " + name.str();
     ASSERT_NO_THROW(diskSystemsList.at(name.str()));
     const auto diskSystem = diskSystemsList.at(name.str());
-    
+
     ASSERT_EQ(name.str(), diskSystem.name);
     ASSERT_EQ(fileRegexp, diskSystem.fileRegexp);
     ASSERT_EQ(freeSpaceQueryURL, diskSystem.freeSpaceQueryURL);
@@ -13106,7 +13188,7 @@ TEST_P(cta_catalogue_CatalogueTest, createDiskSystem_emptyStringDiskSystemName) 
   const uint64_t sleepTime = 15*60;
   const std::string comment = "Create disk system";
 
-  ASSERT_THROW(m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+  ASSERT_THROW(m_catalogue->createDiskSystem(m_admin, name, fileRegexp,
     freeSpaceQueryURL, refreshInterval, targetedFreeSpace, sleepTime, comment),
     catalogue::UserSpecifiedAnEmptyStringDiskSystemName);
 }
@@ -13124,7 +13206,7 @@ TEST_P(cta_catalogue_CatalogueTest, createDiskSystem_emptyStringFileRegexp) {
   const uint64_t sleepTime = 15*60;
   const std::string comment = "Create disk system";
 
-  ASSERT_THROW(m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+  ASSERT_THROW(m_catalogue->createDiskSystem(m_admin, name, fileRegexp,
     freeSpaceQueryURL, refreshInterval, targetedFreeSpace, sleepTime, comment),
     catalogue::UserSpecifiedAnEmptyStringFileRegexp);
 }
@@ -13142,7 +13224,7 @@ TEST_P(cta_catalogue_CatalogueTest, createDiskSystem_emptyStringFresSpaceQueryUR
   const uint64_t sleepTime = 15*60;
   const std::string comment = "Create disk system";
 
-  ASSERT_THROW(m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+  ASSERT_THROW(m_catalogue->createDiskSystem(m_admin, name, fileRegexp,
     freeSpaceQueryURL, refreshInterval, targetedFreeSpace, sleepTime, comment),
     catalogue::UserSpecifiedAnEmptyStringFreeSpaceQueryURL);
 }
@@ -13161,7 +13243,7 @@ TEST_P(cta_catalogue_CatalogueTest, createDiskSystem_zeroRefreshInterval) {
   const uint64_t sleepTime = 15*60;
   const std::string comment = "Create disk system";
 
-  ASSERT_THROW(m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+  ASSERT_THROW(m_catalogue->createDiskSystem(m_admin, name, fileRegexp,
     freeSpaceQueryURL, refreshInterval, targetedFreeSpace, sleepTime, comment),
     catalogue::UserSpecifiedAZeroRefreshInterval);
 }
@@ -13179,7 +13261,7 @@ TEST_P(cta_catalogue_CatalogueTest, createDiskSystem_zeroTargetedFreeSpace) {
   const uint64_t sleepTime = 15*60;
   const std::string comment = "Create disk system";
 
-  ASSERT_THROW(m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+  ASSERT_THROW(m_catalogue->createDiskSystem(m_admin, name, fileRegexp,
     freeSpaceQueryURL, refreshInterval, targetedFreeSpace, sleepTime, comment),
     catalogue::UserSpecifiedAZeroTargetedFreeSpace);
 }
@@ -13197,7 +13279,7 @@ TEST_P(cta_catalogue_CatalogueTest, createDiskSystem_emptyStringComment) {
   const uint64_t sleepTime = 15*60;
   const std::string comment = "";
 
-  ASSERT_THROW(m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+  ASSERT_THROW(m_catalogue->createDiskSystem(m_admin, name, fileRegexp,
     freeSpaceQueryURL, refreshInterval, targetedFreeSpace, sleepTime, comment),
     catalogue::UserSpecifiedAnEmptyStringComment);
 }
@@ -13215,9 +13297,9 @@ TEST_P(cta_catalogue_CatalogueTest, createDiskSystem_9_exabytes_targetedFreeSpac
   const uint64_t sleepTime = 15*60;
   const std::string comment = "disk system comment";
 
-  m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+  m_catalogue->createDiskSystem(m_admin, name, fileRegexp,
     freeSpaceQueryURL, refreshInterval, targetedFreeSpace, sleepTime, comment);
-  
+
   const auto diskSystemList = m_catalogue->getAllDiskSystems();
 
   ASSERT_EQ(1, diskSystemList.size());
@@ -13254,15 +13336,15 @@ TEST_P(cta_catalogue_CatalogueTest, createDiskSystem_sleepTimeHandling) {
   const uint64_t sleepTime = 0;
   const std::string comment = "disk system comment";
 
-  ASSERT_THROW(m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+  ASSERT_THROW(m_catalogue->createDiskSystem(m_admin, name, fileRegexp,
     freeSpaceQueryURL, refreshInterval, targetedFreeSpace, sleepTime, comment),
     catalogue::UserSpecifiedAZeroSleepTime);
-  
-  m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+
+  m_catalogue->createDiskSystem(m_admin, name, fileRegexp,
     freeSpaceQueryURL, refreshInterval, targetedFreeSpace, std::numeric_limits<int64_t>::max(), comment);
-  
+
   const auto diskSystemList = m_catalogue->getAllDiskSystems();
-  
+
   ASSERT_EQ(1, diskSystemList.size());
 
   {
@@ -13298,13 +13380,13 @@ TEST_P(cta_catalogue_CatalogueTest, createDiskSystem_same_twice) {
   const uint64_t sleepTime = 15*60;
   const std::string comment = "disk system comment";
 
-  m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+  m_catalogue->createDiskSystem(m_admin, name, fileRegexp,
     freeSpaceQueryURL, refreshInterval, targetedFreeSpace, sleepTime, comment);
-  
+
   const auto diskSystemList = m_catalogue->getAllDiskSystems();
 
   ASSERT_EQ(1, diskSystemList.size());
-  ASSERT_THROW(m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+  ASSERT_THROW(m_catalogue->createDiskSystem(m_admin, name, fileRegexp,
     freeSpaceQueryURL, refreshInterval, targetedFreeSpace, sleepTime, comment), exception::UserError);
 
 }
@@ -13322,13 +13404,13 @@ TEST_P(cta_catalogue_CatalogueTest, deleteDiskSystem) {
   const uint64_t sleepTime = 15*60;
   const std::string comment = "disk system comment";
 
-  m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+  m_catalogue->createDiskSystem(m_admin, name, fileRegexp,
     freeSpaceQueryURL, refreshInterval, targetedFreeSpace, sleepTime, comment);
-  
+
   const auto diskSystemList = m_catalogue->getAllDiskSystems();
 
   ASSERT_EQ(1, diskSystemList.size());
-  
+
   const auto &diskSystem = diskSystemList.front();
   ASSERT_EQ(name, diskSystem.name);
   ASSERT_EQ(fileRegexp, diskSystem.fileRegexp);
@@ -13343,7 +13425,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteDiskSystem) {
 
   const auto lastModificationLog = diskSystem.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
-  
+
   m_catalogue->deleteDiskSystem(diskSystem.name);
   ASSERT_TRUE(m_catalogue->getAllDiskSystems().empty());
 }
@@ -13368,13 +13450,13 @@ TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemFileRegexp) {
   const uint64_t sleepTime = 15*60;
   const std::string comment = "disk system comment";
 
-  m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+  m_catalogue->createDiskSystem(m_admin, name, fileRegexp,
     freeSpaceQueryURL, refreshInterval, targetedFreeSpace, sleepTime, comment);
-  
+
   {
     const auto diskSystemList = m_catalogue->getAllDiskSystems();
     ASSERT_EQ(1, diskSystemList.size());
-    
+
     const auto &diskSystem = diskSystemList.front();
     ASSERT_EQ(name, diskSystem.name);
     ASSERT_EQ(fileRegexp, diskSystem.fileRegexp);
@@ -13447,9 +13529,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemFileRegexp_emptyStringFileRe
   const uint64_t sleepTime = 15*60;
   const std::string comment = "disk system comment";
 
-  m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+  m_catalogue->createDiskSystem(m_admin, name, fileRegexp,
     freeSpaceQueryURL, refreshInterval, targetedFreeSpace, sleepTime, comment);
-  
+
   {
     const auto diskSystemList = m_catalogue->getAllDiskSystems();
     ASSERT_EQ(1, diskSystemList.size());
@@ -13488,13 +13570,13 @@ TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemFreeSpaceQueryURL) {
   const uint64_t sleepTime = 15*60;
   const std::string comment = "disk system comment";
 
-  m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+  m_catalogue->createDiskSystem(m_admin, name, fileRegexp,
     freeSpaceQueryURL, refreshInterval, targetedFreeSpace, sleepTime, comment);
-  
+
   {
     const auto diskSystemList = m_catalogue->getAllDiskSystems();
     ASSERT_EQ(1, diskSystemList.size());
-    
+
     const auto &diskSystem = diskSystemList.front();
     ASSERT_EQ(name, diskSystem.name);
     ASSERT_EQ(fileRegexp, diskSystem.fileRegexp);
@@ -13567,9 +13649,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemFreeSpaceQueryURL_emptyStrin
   const uint64_t sleepTime = 15*60;
   const std::string comment = "disk system comment";
 
-  m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+  m_catalogue->createDiskSystem(m_admin, name, fileRegexp,
     freeSpaceQueryURL, refreshInterval, targetedFreeSpace, sleepTime, comment);
-  
+
   {
     const auto diskSystemList = m_catalogue->getAllDiskSystems();
     ASSERT_EQ(1, diskSystemList.size());
@@ -13608,13 +13690,13 @@ TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemRefreshInterval) {
   const uint64_t sleepTime = 15*60;
   const std::string comment = "disk system comment";
 
-  m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+  m_catalogue->createDiskSystem(m_admin, name, fileRegexp,
     freeSpaceQueryURL, refreshInterval, targetedFreeSpace, sleepTime, comment);
-  
+
   {
     const auto diskSystemList = m_catalogue->getAllDiskSystems();
     ASSERT_EQ(1, diskSystemList.size());
-    
+
     const auto &diskSystem = diskSystemList.front();
     ASSERT_EQ(name, diskSystem.name);
     ASSERT_EQ(fileRegexp, diskSystem.fileRegexp);
@@ -13687,9 +13769,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemRefreshInterval_zeroRefreshI
   const uint64_t sleepTime = 15*60;
   const std::string comment = "disk system comment";
 
-  m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+  m_catalogue->createDiskSystem(m_admin, name, fileRegexp,
     freeSpaceQueryURL, refreshInterval, targetedFreeSpace, sleepTime, comment);
-  
+
   {
     const auto diskSystemList = m_catalogue->getAllDiskSystems();
     ASSERT_EQ(1, diskSystemList.size());
@@ -13728,13 +13810,13 @@ TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemTargetedFreeSpace) {
   const uint64_t sleepTime = 15*60;
   const std::string comment = "disk system comment";
 
-  m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+  m_catalogue->createDiskSystem(m_admin, name, fileRegexp,
     freeSpaceQueryURL, refreshInterval, targetedFreeSpace, sleepTime, comment);
-  
+
   {
     const auto diskSystemList = m_catalogue->getAllDiskSystems();
     ASSERT_EQ(1, diskSystemList.size());
-    
+
     const auto &diskSystem = diskSystemList.front();
     ASSERT_EQ(name, diskSystem.name);
     ASSERT_EQ(fileRegexp, diskSystem.fileRegexp);
@@ -13807,9 +13889,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemTargetedFreeSpace_zeroTarget
   const uint64_t sleepTime = 15*60;
   const std::string comment = "disk system comment";
 
-  m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+  m_catalogue->createDiskSystem(m_admin, name, fileRegexp,
     freeSpaceQueryURL, refreshInterval, targetedFreeSpace, sleepTime, comment);
-  
+
   {
     const auto diskSystemList = m_catalogue->getAllDiskSystems();
     ASSERT_EQ(1, diskSystemList.size());
@@ -13848,13 +13930,13 @@ TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemComment) {
   const uint64_t sleepTime = 15*60;
   const std::string comment = "disk system comment";
 
-  m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+  m_catalogue->createDiskSystem(m_admin, name, fileRegexp,
     freeSpaceQueryURL, refreshInterval, targetedFreeSpace, sleepTime, comment);
-  
+
   {
     const auto diskSystemList = m_catalogue->getAllDiskSystems();
     ASSERT_EQ(1, diskSystemList.size());
-    
+
     const auto &diskSystem = diskSystemList.front();
     ASSERT_EQ(name, diskSystem.name);
     ASSERT_EQ(fileRegexp, diskSystem.fileRegexp);
@@ -13927,9 +14009,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemCommentL_emptyStringComment)
   const uint64_t sleepTime = 15*60;
   const std::string comment = "disk system comment";
 
-  m_catalogue->createDiskSystem(m_admin, name, fileRegexp, 
+  m_catalogue->createDiskSystem(m_admin, name, fileRegexp,
     freeSpaceQueryURL, refreshInterval, targetedFreeSpace, sleepTime, comment);
-  
+
   {
     const auto diskSystemList = m_catalogue->getAllDiskSystems();
     ASSERT_EQ(1, diskSystemList.size());
@@ -13999,7 +14081,7 @@ TEST_P(cta_catalogue_CatalogueTest, getNbFilesOnTape_no_tape_files) {
     const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
- 
+
   ASSERT_EQ(0, m_catalogue->getNbFilesOnTape(m_tape1.vid));
 }
 
@@ -14065,7 +14147,7 @@ TEST_P(cta_catalogue_CatalogueTest, getNbFilesOnTape_one_tape_file) {
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = diskInstanceName1;
   file1Written.diskFileId           = "5678";
-  
+
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
@@ -14088,7 +14170,7 @@ TEST_P(cta_catalogue_CatalogueTest, getNbFilesOnTape_one_tape_file) {
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
-    
+
     ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
     ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
@@ -14150,7 +14232,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_no_tape_files) {
     const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
- 
+
   ASSERT_NO_THROW(m_catalogue->checkTapeForLabel(m_tape1.vid));
 }
 
@@ -14238,7 +14320,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file) {
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
-    
+
     ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
     ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
@@ -14318,7 +14400,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_reclaimed_ta
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = diskInstanceName1;
   file1Written.diskFileId           = "5678";
-  
+
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
@@ -14341,7 +14423,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_reclaimed_ta
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
-    
+
     ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
     ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
@@ -14357,25 +14439,25 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_reclaimed_ta
   }
 
   ASSERT_THROW(m_catalogue->checkTapeForLabel(m_tape1.vid), exception::UserError);
-  
+
   log::LogContext dummyLc(m_dummyLog);
   m_catalogue->DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(diskInstanceName1, archiveFileId, dummyLc);
-  
+
   m_catalogue->setTapeFull(m_admin, m_tape1.vid, true);
   m_catalogue->reclaimTape(m_admin, m_tape1.vid,dummyLc);
-  
+
   ASSERT_NO_THROW(m_catalogue->checkTapeForLabel(m_tape1.vid));
 }
 
 TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_not_in_the_catalogue) {
   using namespace cta;
-    
+
   ASSERT_THROW(m_catalogue->checkTapeForLabel(m_tape1.vid), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_empty_vid) {
   using namespace cta;
-    
+
   const std::string vid = "";
   ASSERT_THROW(m_catalogue->checkTapeForLabel(vid), exception::UserError);
 }
@@ -14513,7 +14595,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   using namespace cta;
 
   log::LogContext dummyLc(m_dummyLog);
-  
+
   const std::string diskInstanceName1 = "disk_instance_1";
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
@@ -14574,7 +14656,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = diskInstanceName1;
   file1Written.diskFileId           = "5678";
-  
+
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
@@ -14597,7 +14679,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
-    
+
     ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
     ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
@@ -14777,7 +14859,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = diskInstanceName1;
   file1Written.diskFileId           = "5678";
-  
+
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
@@ -14800,7 +14882,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
-    
+
     ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
     ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
@@ -14857,62 +14939,62 @@ TEST_P(cta_catalogue_CatalogueTest, createModifyDeleteActivityWeight) {
   using namespace cta;
 
   const std::string diskInstanceName = "ExperimentEOS";
-  const std::string activity1 = "Reco";  
+  const std::string activity1 = "Reco";
   const std::string activity2 = "Grid";
   const double weight1 = 0.654;
   const double weight2 = 0.456;
   const std::string comment = "No comment.";
 
   m_catalogue->createActivitiesFairShareWeight(m_admin, diskInstanceName, activity1, weight1, comment);
-      
+
   const auto activitiesList = m_catalogue->getActivitiesFairShareWeights();
-      
+
   ASSERT_EQ(1, activitiesList.size());
   ASSERT_EQ(1, activitiesList.front().activitiesWeights.size());
   ASSERT_NO_THROW(activitiesList.front().activitiesWeights.at(activity1));
   ASSERT_EQ(weight1, activitiesList.front().activitiesWeights.at(activity1));
 
   m_catalogue->createActivitiesFairShareWeight(m_admin, diskInstanceName, activity2, weight2, comment);
-  
+
   const auto activitiesList2 = m_catalogue->getActivitiesFairShareWeights();
-  
+
   ASSERT_EQ(1, activitiesList2.size());
   ASSERT_EQ(2, activitiesList2.front().activitiesWeights.size());
   ASSERT_NO_THROW(activitiesList2.front().activitiesWeights.at(activity1));
   ASSERT_EQ(weight1, activitiesList2.front().activitiesWeights.at(activity1));
   ASSERT_NO_THROW(activitiesList2.front().activitiesWeights.at(activity2));
   ASSERT_EQ(weight2, activitiesList2.front().activitiesWeights.at(activity2));
-  
+
   ASSERT_THROW(m_catalogue->modifyActivitiesFairShareWeight(m_admin, "NoSuchInstance", activity2, weight2, comment), cta::exception::UserError);
   ASSERT_THROW(m_catalogue->modifyActivitiesFairShareWeight(m_admin, diskInstanceName, "NoSuchActivity", weight2, comment), cta::exception::UserError);
-  
+
   ASSERT_NO_THROW(m_catalogue->modifyActivitiesFairShareWeight(m_admin, diskInstanceName, activity1, weight2, comment));
   ASSERT_NO_THROW(m_catalogue->modifyActivitiesFairShareWeight(m_admin, diskInstanceName, activity2, weight1, comment));
-  
-  
+
+
   const auto activitiesList3 = m_catalogue->getActivitiesFairShareWeights();
-  
+
   ASSERT_EQ(1, activitiesList3.size());
   ASSERT_EQ(2, activitiesList3.front().activitiesWeights.size());
   ASSERT_NO_THROW(activitiesList3.front().activitiesWeights.at(activity1));
   ASSERT_EQ(weight2, activitiesList3.front().activitiesWeights.at(activity1));
   ASSERT_NO_THROW(activitiesList3.front().activitiesWeights.at(activity2));
   ASSERT_EQ(weight1, activitiesList3.front().activitiesWeights.at(activity2));
-  
+
   ASSERT_THROW(m_catalogue->deleteActivitiesFairShareWeight(m_admin, "NoSuchInstance", activity2), cta::exception::UserError);
   ASSERT_THROW(m_catalogue->deleteActivitiesFairShareWeight(m_admin, diskInstanceName, "NoSuchActivity"), cta::exception::UserError);
-  
+
   ASSERT_NO_THROW(m_catalogue->deleteActivitiesFairShareWeight(m_admin, diskInstanceName, activity1));
-  
+
   const auto activitiesList4 = m_catalogue->getActivitiesFairShareWeights();
-      
+
   ASSERT_EQ(1, activitiesList4.size());
   ASSERT_EQ(1, activitiesList4.front().activitiesWeights.size());
   ASSERT_NO_THROW(activitiesList4.front().activitiesWeights.at(activity2));
   ASSERT_EQ(weight1, activitiesList4.front().activitiesWeights.at(activity2));
-  
+
   ASSERT_NO_THROW(m_catalogue->deleteActivitiesFairShareWeight(m_admin, diskInstanceName, activity2));
-  
+
   ASSERT_EQ(0, m_catalogue->getActivitiesFairShareWeights().size());
 }
 
@@ -14923,13 +15005,13 @@ TEST_P(cta_catalogue_CatalogueTest, activitiesDataValidation) {
   ASSERT_THROW(m_catalogue->createActivitiesFairShareWeight(m_admin, "DiskInstance", "Activity", 0.0, "No comment."), catalogue::UserSpecifiedAnOutOfRangeActivityWeight);
   ASSERT_THROW(m_catalogue->createActivitiesFairShareWeight(m_admin, "DiskInstance", "Activity", 1.1, "No comment."), catalogue::UserSpecifiedAnOutOfRangeActivityWeight);
   ASSERT_THROW(m_catalogue->createActivitiesFairShareWeight(m_admin, "DiskInstance", "Activity", 0.1, ""), catalogue::UserSpecifiedAnEmptyStringComment);
-  
+
   ASSERT_THROW(m_catalogue->modifyActivitiesFairShareWeight(m_admin, "", "Activity", 0.1, "No comment."), catalogue::UserSpecifiedAnEmptyStringDiskInstanceName);
   ASSERT_THROW(m_catalogue->modifyActivitiesFairShareWeight(m_admin, "DiskInstance", "", 0.1, "No comment."), catalogue::UserSpecifiedAnEmptyStringActivity);
   ASSERT_THROW(m_catalogue->modifyActivitiesFairShareWeight(m_admin, "DiskInstance", "Activity", 0.0, "No comment."), catalogue::UserSpecifiedAnOutOfRangeActivityWeight);
   ASSERT_THROW(m_catalogue->modifyActivitiesFairShareWeight(m_admin, "DiskInstance", "Activity", 1.1, "No comment."), catalogue::UserSpecifiedAnOutOfRangeActivityWeight);
   ASSERT_THROW(m_catalogue->modifyActivitiesFairShareWeight(m_admin, "DiskInstance", "Activity", 0.1, ""), catalogue::UserSpecifiedAnEmptyStringComment);
-  
+
   ASSERT_THROW(m_catalogue->deleteActivitiesFairShareWeight(m_admin, "", "Activity"), catalogue::UserSpecifiedAnEmptyStringDiskInstanceName);
   ASSERT_THROW(m_catalogue->deleteActivitiesFairShareWeight(m_admin, "DiskInstance", ""), catalogue::UserSpecifiedAnEmptyStringActivity);
 }
@@ -14952,7 +15034,7 @@ TEST_P(cta_catalogue_CatalogueTest, createVirtualOrganization) {
   using namespace cta;
 
   common::dataStructures::VirtualOrganization vo = getVo();
-  
+
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
 }
 
@@ -14960,7 +15042,7 @@ TEST_P(cta_catalogue_CatalogueTest, createVirtualOrganizationAlreadyExists) {
   using namespace cta;
 
   common::dataStructures::VirtualOrganization vo = getVo();
-  
+
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
   ASSERT_THROW(m_catalogue->createVirtualOrganization(m_admin,vo),cta::exception::UserError);
 }
@@ -14970,7 +15052,7 @@ TEST_P(cta_catalogue_CatalogueTest, createVirtualOrganizationEmptyComment) {
 
   common::dataStructures::VirtualOrganization vo = getVo();
   vo.comment = "";
-  
+
   ASSERT_THROW(m_catalogue->createVirtualOrganization(m_admin,vo),cta::exception::UserError);
 }
 
@@ -14978,10 +15060,10 @@ TEST_P(cta_catalogue_CatalogueTest, createVirtualOrganizationEmptyName) {
   using namespace cta;
 
   common::dataStructures::VirtualOrganization vo = getVo();
-  
+
   vo.name = "";
   vo.comment = "comment";
-  
+
   ASSERT_THROW(m_catalogue->createVirtualOrganization(m_admin,vo),cta::exception::UserError);
 }
 
@@ -14989,9 +15071,9 @@ TEST_P(cta_catalogue_CatalogueTest, deleteVirtualOrganization) {
   using namespace cta;
 
   common::dataStructures::VirtualOrganization vo = getVo();
-  
+
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
-  
+
   ASSERT_NO_THROW(m_catalogue->deleteVirtualOrganization(vo.name));
 }
 
@@ -15005,7 +15087,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteVirtualOrganizationUsedByTapePool) {
   const std::string comment = "Create tape pool";
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, comment);
-  
+
   ASSERT_THROW(m_catalogue->deleteVirtualOrganization(m_vo.name),exception::UserError);
 }
 
@@ -15013,9 +15095,9 @@ TEST_P(cta_catalogue_CatalogueTest, deleteVirtualOrganizationNameDoesNotExist) {
   using namespace cta;
 
   common::dataStructures::VirtualOrganization vo = getVo();
-  
+
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
-  
+
   ASSERT_THROW(m_catalogue->deleteVirtualOrganization("DOES_NOT_EXIST"),cta::exception::UserError);
 }
 
@@ -15031,12 +15113,12 @@ TEST_P(cta_catalogue_CatalogueTest, getVirtualOrganizations) {
   using namespace cta;
 
   common::dataStructures::VirtualOrganization vo = getVo();
-  
+
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
-  
+
   std::list<common::dataStructures::VirtualOrganization> vos = m_catalogue->getVirtualOrganizations();
   ASSERT_EQ(1,vos.size());
-  
+
   auto &voRetrieved = vos.front();
   ASSERT_EQ(vo.name,voRetrieved.name);
   ASSERT_EQ(vo.readMaxDrives,voRetrieved.readMaxDrives);
@@ -15046,8 +15128,8 @@ TEST_P(cta_catalogue_CatalogueTest, getVirtualOrganizations) {
   ASSERT_EQ(m_admin.username,voRetrieved.creationLog.username);
   ASSERT_EQ(m_admin.host,voRetrieved.lastModificationLog.host);
   ASSERT_EQ(m_admin.username,voRetrieved.lastModificationLog.username);
-  
-  
+
+
   ASSERT_NO_THROW(m_catalogue->deleteVirtualOrganization(vo.name));
   vos = m_catalogue->getVirtualOrganizations();
   ASSERT_EQ(0,vos.size());
@@ -15057,129 +15139,129 @@ TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationName) {
   using namespace cta;
 
   common::dataStructures::VirtualOrganization vo = getVo();
-  
+
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
-  
+
   std::string newVoName = "NewVoName";
-  
+
   ASSERT_NO_THROW(m_catalogue->modifyVirtualOrganizationName(m_admin,vo.name,newVoName));
-  
+
   auto vos = m_catalogue->getVirtualOrganizations();
-  
+
   auto voFront = vos.front();
   ASSERT_EQ(newVoName,voFront.name);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationNameVoDoesNotExists) {
   using namespace cta;
-  
+
   ASSERT_THROW(m_catalogue->modifyVirtualOrganizationName(m_admin,"DOES_NOT_EXIST","NEW_NAME"),cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationNameThatAlreadyExists) {
   using namespace cta;
-  
+
   common::dataStructures::VirtualOrganization vo = getVo();
-  
+
   std::string vo2Name = "vo2";
   std::string vo1Name = vo.name;
-  
+
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
-  
+
   vo.name = vo2Name;
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
-  
+
   ASSERT_THROW(m_catalogue->modifyVirtualOrganizationName(m_admin,vo1Name,vo2Name),cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationComment) {
   using namespace cta;
-  
+
   common::dataStructures::VirtualOrganization vo = getVo();
-  
+
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
-  
+
   std::string newComment = "newComment";
-  
+
   ASSERT_NO_THROW(m_catalogue->modifyVirtualOrganizationComment(m_admin,vo.name,newComment));
-  
+
   auto vos = m_catalogue->getVirtualOrganizations();
   auto &frontVo = vos.front();
-  
+
   ASSERT_EQ(newComment,frontVo.comment);
-  
+
   ASSERT_THROW(m_catalogue->modifyVirtualOrganizationComment(m_admin,"DOES not exists","COMMENT_DOES_NOT_EXIST"),cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationReadMaxDrives) {
   using namespace cta;
-  
+
   common::dataStructures::VirtualOrganization vo = getVo();
-  
+
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
 
   uint64_t readMaxDrives = 42;
   ASSERT_NO_THROW(m_catalogue->modifyVirtualOrganizationReadMaxDrives(m_admin,vo.name,readMaxDrives));
-  
+
   auto vos = m_catalogue->getVirtualOrganizations();
   auto &frontVo = vos.front();
-  
+
   ASSERT_EQ(readMaxDrives,frontVo.readMaxDrives);
-  
+
   ASSERT_THROW(m_catalogue->modifyVirtualOrganizationReadMaxDrives(m_admin,"DOES not exists",readMaxDrives),cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationWriteMaxDrives) {
   using namespace cta;
-  
+
   common::dataStructures::VirtualOrganization vo = getVo();
-  
+
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
-  
+
   uint64_t writeMaxDrives = 42;
   ASSERT_NO_THROW(m_catalogue->modifyVirtualOrganizationWriteMaxDrives(m_admin,vo.name,writeMaxDrives));
-  
+
   auto vos = m_catalogue->getVirtualOrganizations();
   auto &frontVo = vos.front();
-  
+
   ASSERT_EQ(writeMaxDrives,frontVo.writeMaxDrives);
-  
+
   ASSERT_THROW(m_catalogue->modifyVirtualOrganizationWriteMaxDrives(m_admin,"DOES not exists",writeMaxDrives),cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationMaxFileSize) {
   using namespace cta;
-  
+
   common::dataStructures::VirtualOrganization vo = getVo();
-  
+
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
-  
+
   uint64_t maxFileSize = 1;
   ASSERT_NO_THROW(m_catalogue->modifyVirtualOrganizationMaxFileSize(m_admin,vo.name,maxFileSize));
-  
+
   auto vos = m_catalogue->getVirtualOrganizations();
   auto &frontVo = vos.front();
-  
+
   ASSERT_EQ(maxFileSize,frontVo.maxFileSize);
-  
+
   ASSERT_THROW(m_catalogue->modifyVirtualOrganizationMaxFileSize(m_admin,"DOES not exists", maxFileSize),cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getVirtualOrganizationOfTapepool) {
   using namespace cta;
-  
+
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  
+
   common::dataStructures::VirtualOrganization vo = getVo();
-  
+
   m_catalogue->createVirtualOrganization(m_admin,vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  
+
   cta::common::dataStructures::VirtualOrganization voFromTapepool = m_catalogue->getVirtualOrganizationOfTapepool(m_tape1.tapePoolName);
   ASSERT_EQ(vo,voFromTapepool);
-  
+
   ASSERT_THROW(m_catalogue->getVirtualOrganizationOfTapepool("DOES_NOT_EXIST"),cta::exception::Exception);
 }
 
@@ -15216,7 +15298,7 @@ TEST_P(cta_catalogue_CatalogueTest, updateDiskFileId) {
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
       ASSERT_EQ(m_tape1.full, tape.full);
-  
+
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(0, tape.readMountCount);
       ASSERT_EQ(0, tape.writeMountCount);
@@ -15250,7 +15332,7 @@ TEST_P(cta_catalogue_CatalogueTest, updateDiskFileId) {
   file1Written.archiveFileId        = archiveFileId;
   file1Written.diskInstance         = diskInstance;
   file1Written.diskFileId           = "5678";
-  
+
   file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
   file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
   file1Written.size                 = archiveFileSize;
@@ -15282,7 +15364,7 @@ TEST_P(cta_catalogue_CatalogueTest, updateDiskFileId) {
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
-    
+
     ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
     ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
@@ -15361,7 +15443,7 @@ TEST_P(cta_catalogue_CatalogueTest, moveFilesToRecycleLog) {
   for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
     std::ostringstream diskFileId;
     diskFileId << (12345677 + i);
-    
+
     std::ostringstream diskFilePath;
     diskFilePath << "/test/file"<<i;
 
@@ -15388,7 +15470,7 @@ TEST_P(cta_catalogue_CatalogueTest, moveFilesToRecycleLog) {
   {
     ASSERT_TRUE(m_catalogue->getArchiveFilesItor().hasMore());
   }
-  log::LogContext dummyLc(m_dummyLog);  
+  log::LogContext dummyLc(m_dummyLog);
   for(auto & tapeItemWritten: tapeFilesWrittenCopy1){
     cta::catalogue::TapeFileWritten * tapeItem = static_cast<cta::catalogue::TapeFileWritten *>(tapeItemWritten.get());
     cta::common::dataStructures::DeleteArchiveRequest req;
@@ -15401,7 +15483,7 @@ TEST_P(cta_catalogue_CatalogueTest, moveFilesToRecycleLog) {
     ASSERT_NO_THROW(m_catalogue->moveArchiveFileToRecycleLog(req,dummyLc));
   }
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
-  
+
   std::vector<common::dataStructures::FileRecycleLog> deletedArchiveFiles;
   {
     auto itor = m_catalogue->getFileRecycleLogItor();
@@ -15409,21 +15491,21 @@ TEST_P(cta_catalogue_CatalogueTest, moveFilesToRecycleLog) {
       deletedArchiveFiles.push_back(itor.next());
     }
   }
-  
+
   //And test that these files are there.
   //Run the unit test for all the databases
   ASSERT_EQ(nbArchiveFiles,deletedArchiveFiles.size());
-  
+
   for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
-    
+
     auto deletedArchiveFile = deletedArchiveFiles[i-1];
-    
+
     std::ostringstream diskFileId;
     diskFileId << (12345677 + i);
-    
+
     std::ostringstream diskFilePath;
     diskFilePath << "/test/file"<<i;
-    
+
     ASSERT_EQ(i,deletedArchiveFile.archiveFileId);
     ASSERT_EQ(diskInstance,deletedArchiveFile.diskInstanceName);
     ASSERT_EQ(diskFileId.str(),deletedArchiveFile.diskFileId);
@@ -15440,12 +15522,12 @@ TEST_P(cta_catalogue_CatalogueTest, moveFilesToRecycleLog) {
     ASSERT_EQ(i * 100,deletedArchiveFile.blockId);
     ASSERT_EQ(1, deletedArchiveFile.copyNb);
   }
-  
+
   //Let's try the deletion of the files from the recycle-bin.
   for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
     m_catalogue->deleteFilesFromRecycleLog(tape1.vid,dummyLc);
   }
-  
+
   {
     auto itor = m_catalogue->getFileRecycleLogItor();
     ASSERT_FALSE(itor.hasMore());
@@ -15488,7 +15570,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTapeRemovesFilesFromRecycleLog) {
   for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
     std::ostringstream diskFileId;
     diskFileId << (12345677 + i);
-    
+
     std::ostringstream diskFilePath;
     diskFilePath << "/test/file"<<i;
 
@@ -15515,7 +15597,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTapeRemovesFilesFromRecycleLog) {
   {
     ASSERT_TRUE(m_catalogue->getArchiveFilesItor().hasMore());
   }
-  log::LogContext dummyLc(m_dummyLog);  
+  log::LogContext dummyLc(m_dummyLog);
   for(auto & tapeItemWritten: tapeFilesWrittenCopy1){
     cta::catalogue::TapeFileWritten * tapeItem = static_cast<cta::catalogue::TapeFileWritten *>(tapeItemWritten.get());
     cta::common::dataStructures::DeleteArchiveRequest req;
@@ -15534,10 +15616,10 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTapeRemovesFilesFromRecycleLog) {
       deletedArchiveFiles.push_back(itor.next());
     }
   }
-  
+
   //And test that these files are in the recycle log
   ASSERT_EQ(nbArchiveFiles,deletedArchiveFiles.size());
-  
+
   ASSERT_TRUE(m_catalogue->getFileRecycleLogItor().hasMore());
   //Reclaim the tape
   m_catalogue->setTapeFull(m_admin, tape1.vid, true);
@@ -15559,10 +15641,10 @@ TEST_P(cta_catalogue_CatalogueTest, getFileRecycleLogItorVidNotExists) {
   using namespace cta;
   auto itor = m_catalogue->getFileRecycleLogItor();
   ASSERT_FALSE(m_catalogue->getFileRecycleLogItor().hasMore());
-  
+
   catalogue::RecycleTapeFileSearchCriteria criteria;
   criteria.vid = "NOT_EXISTS";
-  
+
   ASSERT_THROW(m_catalogue->getFileRecycleLogItor(criteria),exception::UserError);
 }
 
@@ -15601,7 +15683,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesArePutInTheFileRecycleLogInsteadOfBeing
   for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
     std::ostringstream diskFileId;
     diskFileId << (12345677 + i);
-    
+
     std::ostringstream diskFilePath;
     diskFilePath << "/test/file"<<i;
 
@@ -15629,7 +15711,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesArePutInTheFileRecycleLogInsteadOfBeing
     ASSERT_TRUE(m_catalogue->getArchiveFilesItor().hasMore());
     ASSERT_FALSE(m_catalogue->getFileRecycleLogItor().hasMore());
   }
-  log::LogContext dummyLc(m_dummyLog); 
+  log::LogContext dummyLc(m_dummyLog);
   //Archive the same files but in a new tape
   for(auto & tapeItemWritten: tapeFilesWrittenCopy1){
     cta::catalogue::TapeFileWritten * tapeItem = static_cast<cta::catalogue::TapeFileWritten *>(tapeItemWritten.get());
@@ -15667,7 +15749,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesArePutInTheFileRecycleLogInsteadOfBeing
         cta::catalogue::TapeFileWritten * fileWrittenPtr = static_cast<cta::catalogue::TapeFileWritten *>(item.get());
         return fileWrittenPtr->archiveFileId == fileRecycleLog.archiveFileId;
       });
-      
+
       ASSERT_NE(tapeFilesWrittenCopy1.end(), tapeFilesWrittenCopy1Itor);
       cta::catalogue::TapeFileWritten * fileWrittenPtr = static_cast<cta::catalogue::TapeFileWritten *>(tapeFilesWrittenCopy1Itor->get());
       ASSERT_EQ(fileRecycleLog.vid,tape1.vid);
@@ -15778,9 +15860,9 @@ TEST_P(cta_catalogue_CatalogueTest, filesArePutInTheFileRecycleLogInsteadOfBeing
     criteria.diskFileIds = std::vector<std::string>();
     criteria.diskFileIds->push_back(diskFileId);
     criteria.vid = tape1.vid;
-    
+
     auto fileRecycleLogItor = m_catalogue->getFileRecycleLogItor(criteria);
-    
+
     ASSERT_TRUE(fileRecycleLogItor.hasMore());
     auto fileRecycleLog = fileRecycleLogItor.next();
     ASSERT_EQ(archiveFileId, fileRecycleLog.archiveFileId);
@@ -15788,7 +15870,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesArePutInTheFileRecycleLogInsteadOfBeing
     ASSERT_EQ(copynb, fileRecycleLog.copyNb);
     ASSERT_EQ(tape1.vid, fileRecycleLog.vid);
     ASSERT_EQ(diskInstance, fileRecycleLog.diskInstanceName);
-    
+
     ASSERT_FALSE(fileRecycleLogItor.hasMore());
   }
 }
@@ -15821,7 +15903,7 @@ TEST_P(cta_catalogue_CatalogueTest, sameFileWrittenToSameTapePutThePreviousCopyO
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
 
   std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
-  
+
   std::ostringstream diskFileId;
   diskFileId << 12345677;
 
@@ -15846,14 +15928,14 @@ TEST_P(cta_catalogue_CatalogueTest, sameFileWrittenToSameTapePutThePreviousCopyO
   fileWritten.copyNb = 1;
   fileWritten.tapeDrive = tapeDrive;
   tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
-  
+
   m_catalogue->filesWrittenToTape(tapeFilesWrittenCopy1);
-  
+
   auto & tapeItemWritten =  *(tapeFilesWrittenCopy1.begin());
   cta::catalogue::TapeFileWritten * tapeItem = static_cast<cta::catalogue::TapeFileWritten *>(tapeItemWritten.get());
   tapeItem->fSeq = 2;
   tapeItem->blockId = 2 *100 + 1;
-  
+
   m_catalogue->filesWrittenToTape(tapeFilesWrittenCopy1);
   {
     auto archiveFilesItor = m_catalogue->getArchiveFilesItor();
@@ -15864,7 +15946,322 @@ TEST_P(cta_catalogue_CatalogueTest, sameFileWrittenToSameTapePutThePreviousCopyO
     ASSERT_TRUE(fileRecycleLogItor.hasMore());
     //The previous file (fSeq = 1) is on the recycle log
     ASSERT_EQ(1,fileRecycleLogItor.next().fSeq);
-  }  
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getTapeDriveNames) {
+  using namespace cta;
+
+  const std::list<std::string> tapeDriveNames = {"VDSTK11", "VDSTK12", "VDSTK21", "VDSTK22"};
+  for (const auto& name : tapeDriveNames) {
+    const auto tapeDrive = getTapeDriveWithMandatoryElements(name);
+    m_catalogue->createTapeDrive(tapeDrive);
+  }
+  const auto storedTapeDriveNames = m_catalogue->getTapeDriveNames();
+  ASSERT_EQ(tapeDriveNames, storedTapeDriveNames);
+  for (const auto& name : tapeDriveNames) {
+    m_catalogue->deleteTapeDrive(name);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getTapeDrive) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  const auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  m_catalogue->createTapeDrive(tapeDrive);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_EQ(tapeDrive, storedTapeDrive);
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getTapeDriveWithEmptyEntryLog) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  tapeDrive.creationLog = cta::common::dataStructures::EntryLog("", "", 0);
+  m_catalogue->createTapeDrive(tapeDrive);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_FALSE(storedTapeDrive.value().creationLog);
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, failToGetTapeDrive) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  const std::string wrongName = "VDSTK56";
+  const auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  m_catalogue->createTapeDrive(tapeDrive);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(wrongName);
+  ASSERT_FALSE(storedTapeDrive);
+  m_catalogue->deleteTapeDrive(tapeDriveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, failToDeleteTapeDrive) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  const std::string wrongName = "VDSTK56";
+  const auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  m_catalogue->createTapeDrive(tapeDrive);
+  m_catalogue->deleteTapeDrive(wrongName);
+  auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive));
+  m_catalogue->deleteTapeDrive(tapeDriveName);
+  storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_FALSE(storedTapeDrive);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getTapeDriveWithAllElements) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  const auto tapeDrive = getTapeDriveWithAllElements(tapeDriveName);
+  m_catalogue->createTapeDrive(tapeDrive);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_EQ(tapeDrive, storedTapeDrive);
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, multipleTapeDrives) {
+  using namespace cta;
+
+  const std::string tapeDriveName1 = "VDSTK11";
+  const std::string tapeDriveName2 = "VDSTK12";
+  const auto tapeDrive1 = getTapeDriveWithMandatoryElements(tapeDriveName1);
+  const auto tapeDrive2 = getTapeDriveWithAllElements(tapeDriveName2);
+  m_catalogue->createTapeDrive(tapeDrive1);
+  m_catalogue->createTapeDrive(tapeDrive2);
+  const auto storedTapeDrive1 = m_catalogue->getTapeDrive(tapeDrive1.driveName);
+  const auto storedTapeDrive2 = m_catalogue->getTapeDrive(tapeDrive2.driveName);
+  ASSERT_EQ(tapeDrive1, storedTapeDrive1);
+  ASSERT_EQ(tapeDrive2, storedTapeDrive2);
+  m_catalogue->deleteTapeDrive(tapeDrive1.driveName);
+  m_catalogue->deleteTapeDrive(tapeDrive2.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyTapeDrive) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  const auto tapeDrive1 = getTapeDriveWithMandatoryElements(tapeDriveName);
+  m_catalogue->createTapeDrive(tapeDrive1);
+  const auto tapeDrive2 = getTapeDriveWithAllElements(tapeDriveName);
+  ASSERT_NE(tapeDrive1, tapeDrive2);
+  m_catalogue->modifyTapeDrive(tapeDrive2);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive2.driveName);
+  ASSERT_EQ(tapeDrive2, storedTapeDrive);
+  m_catalogue->deleteTapeDrive(tapeDrive2.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getDriveConfig) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+
+  cta::SourcedParameter<std::string> daemonUserName {
+    "taped", "DaemonUserName", "cta", "Compile time default"};
+
+  m_catalogue->createDriveConfig(tapeDriveName, daemonUserName.category(), daemonUserName.key(),
+    daemonUserName.value(), daemonUserName.source());
+  auto driveConfig = m_catalogue->getDriveConfig(tapeDriveName, daemonUserName.key());
+  ASSERT_TRUE(static_cast<bool>(driveConfig));
+  std::string category, value, source;
+  std::tie(category, value, source) = driveConfig.value();
+  ASSERT_EQ(daemonUserName.category(), category);
+  ASSERT_EQ(daemonUserName.value(), value);
+  ASSERT_EQ(daemonUserName.source(), source);
+  m_catalogue->deleteDriveConfig(tapeDriveName, daemonUserName.key());
+}
+
+TEST_P(cta_catalogue_CatalogueTest, setSourcedParameterWithEmptyValue) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+
+  cta::SourcedParameter<std::string> raoLtoOptions {
+    "taped", "RAOLTOAlgorithmOptions","","Compile time default"
+  };
+
+  m_catalogue->createDriveConfig(tapeDriveName, raoLtoOptions.category(), raoLtoOptions.key(),
+    raoLtoOptions.value(), raoLtoOptions.source());
+  auto driveConfig = m_catalogue->getDriveConfig(tapeDriveName, raoLtoOptions.key());
+  ASSERT_TRUE(static_cast<bool>(driveConfig));
+  std::string category, value, source;
+  std::tie(category, value, source) = driveConfig.value();
+  ASSERT_EQ(raoLtoOptions.category(), category);
+  ASSERT_EQ("", value);
+  ASSERT_EQ(raoLtoOptions.source(), source);
+  m_catalogue->deleteDriveConfig(tapeDriveName, raoLtoOptions.key());
+
+  cta::SourcedParameter<std::string> backendPath{
+    "ObjectStore", "BackendPath"};
+
+  m_catalogue->createDriveConfig(tapeDriveName, backendPath.category(), backendPath.key(),
+    backendPath.value(), backendPath.source());
+  driveConfig = m_catalogue->getDriveConfig(tapeDriveName, backendPath.key());
+  ASSERT_TRUE(static_cast<bool>(driveConfig));
+  std::tie(category, value, source) = driveConfig.value();
+  ASSERT_EQ(backendPath.category(), category);
+  ASSERT_EQ("", value);
+  ASSERT_EQ("", source);
+  m_catalogue->deleteDriveConfig(tapeDriveName, backendPath.key());
+}
+
+TEST_P(cta_catalogue_CatalogueTest, failToGetDriveConfig) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  const std::string wrongName = "VDSTK56";
+  const std::string wrongKey = "wrongKey";
+  cta::SourcedParameter<std::string> daemonUserName {
+    "taped", "DaemonUserName", "cta", "Compile time default"};
+
+  m_catalogue->createDriveConfig(tapeDriveName, daemonUserName.category(), daemonUserName.key(),
+    daemonUserName.value(), daemonUserName.source());
+  auto driveConfig = m_catalogue->getDriveConfig(wrongName, daemonUserName.key());
+  ASSERT_FALSE(driveConfig);
+  driveConfig = m_catalogue->getDriveConfig(tapeDriveName, wrongKey);
+  ASSERT_FALSE(driveConfig);
+  driveConfig = m_catalogue->getDriveConfig(wrongName, wrongKey);
+  ASSERT_FALSE(driveConfig);
+  m_catalogue->deleteDriveConfig(tapeDriveName, daemonUserName.key());
+}
+
+TEST_P(cta_catalogue_CatalogueTest, failToDeleteDriveConfig) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  const std::string wrongName = "VDSTK56";
+  const std::string wrongKey = "wrongKey";
+  cta::SourcedParameter<std::string> daemonUserName {
+    "taped", "DaemonUserName", "cta", "Compile time default"};
+  m_catalogue->createDriveConfig(tapeDriveName, daemonUserName.category(), daemonUserName.key(),
+    daemonUserName.value(), daemonUserName.source());
+  m_catalogue->deleteDriveConfig(wrongName, daemonUserName.key());
+  auto driveConfig = m_catalogue->getDriveConfig(tapeDriveName, daemonUserName.key());
+  ASSERT_TRUE(static_cast<bool>(driveConfig));
+  m_catalogue->deleteDriveConfig(tapeDriveName, wrongKey);
+  driveConfig = m_catalogue->getDriveConfig(tapeDriveName, daemonUserName.key());
+  ASSERT_TRUE(static_cast<bool>(driveConfig));
+  m_catalogue->deleteDriveConfig(wrongName, wrongKey);
+  driveConfig = m_catalogue->getDriveConfig(tapeDriveName, daemonUserName.key());
+  ASSERT_TRUE(static_cast<bool>(driveConfig));
+  // Good deletion
+  m_catalogue->deleteDriveConfig(tapeDriveName, daemonUserName.key());
+  driveConfig = m_catalogue->getDriveConfig(tapeDriveName, daemonUserName.key());
+  ASSERT_FALSE(driveConfig);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, multipleDriveConfig) {
+  using namespace cta;
+
+  const std::string tapeDriveName1 = "VDSTK11";
+  const std::string tapeDriveName2 = "VDSTK12";
+
+  cta::SourcedParameter<std::string> daemonUserName {
+    "taped", "DaemonUserName", "cta", "Compile time default"};
+  cta::SourcedParameter<std::string> daemonGroupName {
+    "taped", "DaemonGroupName", "tape", "Compile time default"};
+
+  // Combinations of tapeDriveName1/2 and daemonUserName and daemonGroupName
+  m_catalogue->createDriveConfig(tapeDriveName1, daemonUserName.category(), daemonUserName.key(),
+    daemonUserName.value(), daemonUserName.source());
+  m_catalogue->createDriveConfig(tapeDriveName1, daemonGroupName.category(), daemonGroupName.key(),
+    daemonGroupName.value(), daemonGroupName.source());
+  m_catalogue->createDriveConfig(tapeDriveName2, daemonUserName.category(), daemonUserName.key(),
+    daemonUserName.value(), daemonUserName.source());
+  m_catalogue->createDriveConfig(tapeDriveName2, daemonGroupName.category(), daemonGroupName.key(),
+    daemonGroupName.value(), daemonGroupName.source());
+  auto driveConfig1UserName = m_catalogue->getDriveConfig(tapeDriveName1, daemonUserName.key());
+  auto driveConfig2UserName = m_catalogue->getDriveConfig(tapeDriveName2, daemonUserName.key());
+  auto driveConfig1GroupName = m_catalogue->getDriveConfig(tapeDriveName1, daemonGroupName.key());
+  auto driveConfig2GroupName = m_catalogue->getDriveConfig(tapeDriveName2, daemonGroupName.key());
+  ASSERT_TRUE(static_cast<bool>(driveConfig1UserName));
+  ASSERT_TRUE(static_cast<bool>(driveConfig2UserName));
+  ASSERT_TRUE(static_cast<bool>(driveConfig1GroupName));
+  ASSERT_TRUE(static_cast<bool>(driveConfig2GroupName));
+  std::string category, value, source;
+  std::tie(category, value, source) = driveConfig1UserName.value();
+  ASSERT_EQ(daemonUserName.category(), category);
+  ASSERT_EQ(daemonUserName.value(), value);
+  ASSERT_EQ(daemonUserName.source(), source);
+  std::tie(category, value, source) = driveConfig2UserName.value();
+  ASSERT_EQ(daemonUserName.category(), category);
+  ASSERT_EQ(daemonUserName.value(), value);
+  ASSERT_EQ(daemonUserName.source(), source);
+  std::tie(category, value, source) = driveConfig1GroupName.value();
+  ASSERT_EQ(daemonGroupName.category(), category);
+  ASSERT_EQ(daemonGroupName.value(), value);
+  ASSERT_EQ(daemonGroupName.source(), source);
+  std::tie(category, value, source) = driveConfig2GroupName.value();
+  ASSERT_EQ(daemonGroupName.category(), category);
+  ASSERT_EQ(daemonGroupName.value(), value);
+  ASSERT_EQ(daemonGroupName.source(), source);
+  m_catalogue->deleteDriveConfig(tapeDriveName1, daemonUserName.key());
+  m_catalogue->deleteDriveConfig(tapeDriveName1, daemonGroupName.key());
+  m_catalogue->deleteDriveConfig(tapeDriveName2, daemonUserName.key());
+  m_catalogue->deleteDriveConfig(tapeDriveName2, daemonGroupName.key());
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getNamesAndKeysOfMultipleDriveConfig) {
+  using namespace cta;
+
+  const std::string tapeDriveName1 = "VDSTK11";
+  const std::string tapeDriveName2 = "VDSTK12";
+
+  cta::SourcedParameter<std::string> daemonUserName {
+    "taped", "DaemonUserName", "cta", "Compile time default"};
+  cta::SourcedParameter<std::string> daemonGroupName {
+    "taped", "DaemonGroupName", "tape", "Compile time default"};
+
+  // Combinations of tapeDriveName1/2 and daemonUserName and daemonGroupName
+  m_catalogue->createDriveConfig(tapeDriveName1, daemonUserName.category(), daemonUserName.key(),
+    daemonUserName.value(), daemonUserName.source());
+  m_catalogue->createDriveConfig(tapeDriveName1, daemonGroupName.category(), daemonGroupName.key(),
+    daemonGroupName.value(), daemonGroupName.source());
+  m_catalogue->createDriveConfig(tapeDriveName2, daemonUserName.category(), daemonUserName.key(),
+    daemonUserName.value(), daemonUserName.source());
+  m_catalogue->createDriveConfig(tapeDriveName2, daemonGroupName.category(), daemonGroupName.key(),
+    daemonGroupName.value(), daemonGroupName.source());
+
+  const auto configurationTapeNamesAndKeys = m_catalogue->getDriveConfigNamesAndKeys();
+
+  for (const auto& nameAndKey : configurationTapeNamesAndKeys) {
+    m_catalogue->deleteDriveConfig(nameAndKey.first, nameAndKey.second);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDriveConfig) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  // Both share same key
+  cta::SourcedParameter<std::string> daemonUserName1 {
+    "taped1", "DaemonUserName", "cta1", "Compile time1 default"};
+  cta::SourcedParameter<std::string> daemonUserName2 {
+    "taped2", "DaemonUserName", "cta2", "Compile time2 default"};
+
+  m_catalogue->createDriveConfig(tapeDriveName, daemonUserName1.category(), daemonUserName1.key(),
+    daemonUserName1.value(), daemonUserName1.source());
+  const auto driveConfig1 = m_catalogue->getDriveConfig(tapeDriveName, daemonUserName1.key());
+  ASSERT_TRUE(static_cast<bool>(driveConfig1));
+  std::string category, value, source;
+  std::tie(category, value, source) = driveConfig1.value();
+  ASSERT_NE(daemonUserName2.category(), category);
+  ASSERT_NE(daemonUserName2.value(), value);
+  ASSERT_NE(daemonUserName2.source(), source);
+  m_catalogue->modifyDriveConfig(tapeDriveName, daemonUserName2.category(), daemonUserName2.key(),
+    daemonUserName2.value(), daemonUserName2.source());
+  const auto driveConfig2 = m_catalogue->getDriveConfig(tapeDriveName, daemonUserName1.key());
+  ASSERT_TRUE(static_cast<bool>(driveConfig2));
+  std::tie(category, value, source) = driveConfig2.value();
+  ASSERT_EQ(daemonUserName2.category(), category);
+  ASSERT_EQ(daemonUserName2.value(), value);
+  ASSERT_EQ(daemonUserName2.source(), source);
+  m_catalogue->deleteDriveConfig(tapeDriveName, daemonUserName1.key());
 }
 
 TEST_P(cta_catalogue_CatalogueTest, DeleteTapeFileCopyUsingArchiveID) {
@@ -15902,7 +16299,7 @@ TEST_P(cta_catalogue_CatalogueTest, DeleteTapeFileCopyUsingArchiveID) {
   // Write a file on tape
   {
     std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
-    
+
     std::ostringstream diskFileId;
     diskFileId << 12345677;
 
@@ -15926,14 +16323,14 @@ TEST_P(cta_catalogue_CatalogueTest, DeleteTapeFileCopyUsingArchiveID) {
     fileWritten.copyNb = 1;
     fileWritten.tapeDrive = tapeDrive;
     tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
-    
+
     m_catalogue->filesWrittenToTape(tapeFilesWrittenCopy1);
   }
-  
+
   // Write a second copy of file on tape
   {
     std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
-    
+
     std::ostringstream diskFileId;
     diskFileId << 12345677;
 
@@ -15957,19 +16354,19 @@ TEST_P(cta_catalogue_CatalogueTest, DeleteTapeFileCopyUsingArchiveID) {
     fileWritten.copyNb = 2;
     fileWritten.tapeDrive = tapeDrive;
     tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
-    
+
     m_catalogue->filesWrittenToTape(tapeFilesWrittenCopy1);
   }
   {
     //Assert both copies written
-    auto archiveFile = m_catalogue->getArchiveFileById(1);  
+    auto archiveFile = m_catalogue->getArchiveFileById(1);
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
   }
 
   {
     //delete copy of file on tape1
     m_catalogue->deleteTapeFileCopy(tape1.vid, 1, reason);
-    auto archiveFile = m_catalogue->getArchiveFileById(1);  
+    auto archiveFile = m_catalogue->getArchiveFileById(1);
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto fileRecycleLogItor = m_catalogue->getFileRecycleLogItor();
     ASSERT_TRUE(fileRecycleLogItor.hasMore());
@@ -15987,7 +16384,7 @@ TEST_P(cta_catalogue_CatalogueTest, DeleteTapeFileCopyUsingArchiveID) {
   {
     //delete last copy of file should fail
     ASSERT_THROW(m_catalogue->deleteTapeFileCopy(tape2.vid, 1, "reason"), exception::UserError);
-    
+
   }
 }
 
@@ -16022,7 +16419,7 @@ TEST_P(cta_catalogue_CatalogueTest, DeleteTapeFileCopyDoesNotExist) {
   {
     //delete copy of file that does not exist should fail
     ASSERT_THROW(m_catalogue->deleteTapeFileCopy(tape2.vid, 1, reason), exception::UserError);
-    
+
   }
 }
 
@@ -16061,7 +16458,7 @@ TEST_P(cta_catalogue_CatalogueTest, DeleteTapeFileCopyUsingFXID) {
   // Write a file on tape
   {
     std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
-    
+
     std::ostringstream diskFileId;
     diskFileId << 12345677;
 
@@ -16085,14 +16482,14 @@ TEST_P(cta_catalogue_CatalogueTest, DeleteTapeFileCopyUsingFXID) {
     fileWritten.copyNb = 1;
     fileWritten.tapeDrive = tapeDrive;
     tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
-    
+
     m_catalogue->filesWrittenToTape(tapeFilesWrittenCopy1);
   }
-  
+
   // Write a second copy of file on tape
   {
     std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
-    
+
     std::ostringstream diskFileId;
     diskFileId << 12345677;
 
@@ -16116,19 +16513,19 @@ TEST_P(cta_catalogue_CatalogueTest, DeleteTapeFileCopyUsingFXID) {
     fileWritten.copyNb = 2;
     fileWritten.tapeDrive = tapeDrive;
     tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
-    
+
     m_catalogue->filesWrittenToTape(tapeFilesWrittenCopy1);
   }
   {
     //Assert both copies written
-    auto archiveFile = m_catalogue->getArchiveFileById(1);  
+    auto archiveFile = m_catalogue->getArchiveFileById(1);
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
   }
 
   {
     //delete copy of file on tape1
     m_catalogue->deleteTapeFileCopy(tape1.vid, "BC614D", diskInstance, reason);
-    auto archiveFile = m_catalogue->getArchiveFileById(1);  
+    auto archiveFile = m_catalogue->getArchiveFileById(1);
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto fileRecycleLogItor = m_catalogue->getFileRecycleLogItor();
     ASSERT_TRUE(fileRecycleLogItor.hasMore());
@@ -16145,7 +16542,7 @@ TEST_P(cta_catalogue_CatalogueTest, DeleteTapeFileCopyUsingFXID) {
 
   {
     //delete last copy of file should fail
-    ASSERT_THROW(m_catalogue->deleteTapeFileCopy(tape2.vid, "BC614D", diskInstance, reason), exception::UserError); 
+    ASSERT_THROW(m_catalogue->deleteTapeFileCopy(tape2.vid, "BC614D", diskInstance, reason), exception::UserError);
   }
 }
 
@@ -16184,7 +16581,7 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreTapeFileCopy) {
   // Write a file on tape
   {
     std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
-    
+
     std::ostringstream diskFileId;
     diskFileId << 12345677;
 
@@ -16208,14 +16605,14 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreTapeFileCopy) {
     fileWritten.copyNb = 1;
     fileWritten.tapeDrive = tapeDrive;
     tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
-    
+
     m_catalogue->filesWrittenToTape(tapeFilesWrittenCopy1);
   }
-  
+
   // Write a second copy of file on tape
   {
     std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
-    
+
     std::ostringstream diskFileId;
     diskFileId << 12345677;
 
@@ -16239,19 +16636,19 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreTapeFileCopy) {
     fileWritten.copyNb = 2;
     fileWritten.tapeDrive = tapeDrive;
     tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
-    
+
     m_catalogue->filesWrittenToTape(tapeFilesWrittenCopy1);
   }
   {
     //Assert both copies written
-    auto archiveFile = m_catalogue->getArchiveFileById(1);  
+    auto archiveFile = m_catalogue->getArchiveFileById(1);
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
   }
 
   {
     //delete copy of file on tape1
     m_catalogue->deleteTapeFileCopy(tape1.vid, "BC614D", diskInstance, reason);
-    auto archiveFile = m_catalogue->getArchiveFileById(1);  
+    auto archiveFile = m_catalogue->getArchiveFileById(1);
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
   }
 
@@ -16263,14 +16660,14 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreTapeFileCopy) {
     searchCriteria.vid = tape1.vid;
 
     m_catalogue->restoreFilesInRecycleLog(searchCriteria);
-    auto archiveFile = m_catalogue->getArchiveFileById(1); 
+    auto archiveFile = m_catalogue->getArchiveFileById(1);
     //assert both copies present
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
     //assert recycle log is empty
     auto fileRecycleLogItor = m_catalogue->getFileRecycleLogItor();
     ASSERT_FALSE(fileRecycleLogItor.hasMore());
-    
+
   }
 }
 
@@ -16309,7 +16706,7 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreRewrittenTapeFileCopyFails) {
   // Write a file on tape
   {
     std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
-    
+
     std::ostringstream diskFileId;
     diskFileId << 12345677;
 
@@ -16333,14 +16730,14 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreRewrittenTapeFileCopyFails) {
     fileWritten.copyNb = 1;
     fileWritten.tapeDrive = tapeDrive;
     tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
-    
+
     m_catalogue->filesWrittenToTape(tapeFilesWrittenCopy1);
   }
-  
+
   // Write a second copy of file on tape
   {
     std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
-    
+
     std::ostringstream diskFileId;
     diskFileId << 12345677;
 
@@ -16364,26 +16761,26 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreRewrittenTapeFileCopyFails) {
     fileWritten.copyNb = 2;
     fileWritten.tapeDrive = tapeDrive;
     tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
-    
+
     m_catalogue->filesWrittenToTape(tapeFilesWrittenCopy1);
   }
   {
     //Assert both copies written
-    auto archiveFile = m_catalogue->getArchiveFileById(1);  
+    auto archiveFile = m_catalogue->getArchiveFileById(1);
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
   }
 
   {
     //delete copy of file on tape1
     m_catalogue->deleteTapeFileCopy(tape1.vid, "BC614D", diskInstance, reason);
-    auto archiveFile = m_catalogue->getArchiveFileById(1);  
+    auto archiveFile = m_catalogue->getArchiveFileById(1);
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
   }
 
     // Rewrite deleted copy of file on tape
   {
     std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
-    
+
     std::ostringstream diskFileId;
     diskFileId << 12345677;
 
@@ -16407,7 +16804,7 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreRewrittenTapeFileCopyFails) {
     fileWritten.copyNb = 1;
     fileWritten.tapeDrive = tapeDrive;
     tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
-    
+
     m_catalogue->filesWrittenToTape(tapeFilesWrittenCopy1);
   }
 
@@ -16418,14 +16815,14 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreRewrittenTapeFileCopyFails) {
     searchCriteria.vid = tape1.vid;
 
     ASSERT_THROW(m_catalogue->restoreFilesInRecycleLog(searchCriteria), catalogue::UserSpecifiedExistingDeletedFileCopy);
-    auto archiveFile = m_catalogue->getArchiveFileById(1); 
+    auto archiveFile = m_catalogue->getArchiveFileById(1);
     //assert only two copies present
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
     //assert recycle log still contains deleted copy
     auto fileRecycleLogItor = m_catalogue->getFileRecycleLogItor();
     ASSERT_TRUE(fileRecycleLogItor.hasMore());
-    
+
   }
 }
 
@@ -16469,7 +16866,7 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreVariousDeletedTapeFileCopies) {
   // Write a file on tape
   {
     std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
-    
+
     std::ostringstream diskFileId;
     diskFileId << 12345677;
 
@@ -16493,14 +16890,14 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreVariousDeletedTapeFileCopies) {
     fileWritten.copyNb = 1;
     fileWritten.tapeDrive = tapeDrive;
     tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
-    
+
     m_catalogue->filesWrittenToTape(tapeFilesWrittenCopy1);
   }
-  
+
   // Write a second copy of file on tape
   {
     std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
-    
+
     std::ostringstream diskFileId;
     diskFileId << 12345677;
 
@@ -16524,14 +16921,14 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreVariousDeletedTapeFileCopies) {
     fileWritten.copyNb = 2;
     fileWritten.tapeDrive = tapeDrive;
     tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
-    
+
     m_catalogue->filesWrittenToTape(tapeFilesWrittenCopy1);
   }
 
   // Write a third copy of file on tape
   {
     std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
-    
+
     std::ostringstream diskFileId;
     diskFileId << 12345677;
 
@@ -16555,26 +16952,26 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreVariousDeletedTapeFileCopies) {
     fileWritten.copyNb = 3;
     fileWritten.tapeDrive = tapeDrive;
     tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
-    
+
     m_catalogue->filesWrittenToTape(tapeFilesWrittenCopy1);
   }
   {
     //Assert all copies written
-    auto archiveFile = m_catalogue->getArchiveFileById(1);  
+    auto archiveFile = m_catalogue->getArchiveFileById(1);
     ASSERT_EQ(3, archiveFile.tapeFiles.size());
   }
 
   {
     //delete copy of file on tape1
     m_catalogue->deleteTapeFileCopy(tape1.vid, "BC614D", diskInstance, reason);
-    auto archiveFile = m_catalogue->getArchiveFileById(1);  
+    auto archiveFile = m_catalogue->getArchiveFileById(1);
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
   }
 
   {
     //delete copy of file on tape2
     m_catalogue->deleteTapeFileCopy(tape2.vid, "BC614D", diskInstance, reason);
-    auto archiveFile = m_catalogue->getArchiveFileById(1);  
+    auto archiveFile = m_catalogue->getArchiveFileById(1);
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
   }
 
@@ -16585,14 +16982,14 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreVariousDeletedTapeFileCopies) {
     searchCriteria.archiveFileId = 1;
 
     m_catalogue->restoreFilesInRecycleLog(searchCriteria);
-    auto archiveFile = m_catalogue->getArchiveFileById(1); 
+    auto archiveFile = m_catalogue->getArchiveFileById(1);
     //assert only two copies present
     ASSERT_EQ(3, archiveFile.tapeFiles.size());
 
     //assert recycle log still contains deleted copy
     auto fileRecycleLogItor = m_catalogue->getFileRecycleLogItor();
     ASSERT_FALSE(fileRecycleLogItor.hasMore());
-    
+
   }
 }
 

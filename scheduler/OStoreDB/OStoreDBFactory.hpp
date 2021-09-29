@@ -33,12 +33,12 @@
 #include <memory>
 
 namespace cta {
-  
+
 namespace objectstore {
   class Backend;
 
 /**
- * As slight variation of the SchedulerDatabase interface allowing 
+ * As slight variation of the SchedulerDatabase interface allowing
  * access to the underlying backend (this is hence OStoreDB specific).
  * This interface allows tests to go behind the scenes and create "broken" situations
  * and test recovery.
@@ -68,11 +68,11 @@ template <class BackendType>
 class OStoreDBWrapper: public cta::objectstore::OStoreDBWrapperInterface {
 public:
   OStoreDBWrapper(const std::string &context, std::unique_ptr<cta::catalogue::Catalogue>& catalogue, const std::string &URL = "");
-  
+
   ~OStoreDBWrapper() throw () {}
-  
+
   objectstore::Backend& getBackend() override { return *m_backend; }
-  
+
   objectstore::AgentReference& getAgentReference() override { return *m_agentReferencePtr; }
 
   void replaceAgent(objectstore::AgentReference *agentReferencePtr) override {
@@ -100,7 +100,7 @@ public:
   void waitSubthreadsComplete() override {
     m_OStoreDB.waitSubthreadsComplete();
   }
-  
+
   void ping() override {
     m_OStoreDB.ping();
   }
@@ -112,7 +112,7 @@ public:
   void deleteRetrieveRequest(const common::dataStructures::SecurityIdentity& cliIdentity, const std::string& remoteFile) override {
     m_OStoreDB.deleteRetrieveRequest(cliIdentity, remoteFile);
   }
-  
+
   std::list<cta::common::dataStructures::RetrieveJob> getRetrieveJobs(const std::string& tapePoolName) const override {
     return m_OStoreDB.getRetrieveJobs(tapePoolName);
   }
@@ -124,7 +124,7 @@ public:
   std::map<std::string, std::list<common::dataStructures::ArchiveJob> > getArchiveJobs() const override {
     return m_OStoreDB.getArchiveJobs();
   }
-  
+
   std::list<cta::common::dataStructures::ArchiveJob> getArchiveJobs(const std::string& tapePoolName) const override {
     return m_OStoreDB.getArchiveJobs(tapePoolName);
   }
@@ -144,31 +144,31 @@ public:
   std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &lc) override {
     return m_OStoreDB.getNextRetrieveJobsToReportBatch(filesRequested, lc);
   }
-  
+
   std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext &lc) override {
     return m_OStoreDB.getNextRetrieveJobsFailedBatch(filesRequested, lc);
   }
-  
+
   std::unique_ptr<RepackReportBatch> getNextRepackReportBatch(log::LogContext& lc) override {
     return m_OStoreDB.getNextRepackReportBatch(lc);
   }
-  
+
   std::unique_ptr<RepackReportBatch> getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) override {
     return m_OStoreDB.getNextSuccessfulRetrieveRepackReportBatch(lc);
   }
-  
+
   std::unique_ptr<RepackReportBatch> getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) override {
     return m_OStoreDB.getNextSuccessfulArchiveRepackReportBatch(lc);
   }
-  
+
   std::unique_ptr<RepackReportBatch> getNextFailedRetrieveRepackReportBatch(log::LogContext& lc) override {
     return m_OStoreDB.getNextFailedRetrieveRepackReportBatch(lc);
   }
-  
+
   std::unique_ptr<RepackReportBatch> getNextFailedArchiveRepackReportBatch(log::LogContext& lc) override {
     return m_OStoreDB.getNextFailedArchiveRepackReportBatch(lc);
   }
-  
+
   std::list<std::unique_ptr<SchedulerDatabase::RepackReportBatch>> getRepackReportBatches(log::LogContext &lc) override {
     return m_OStoreDB.getRepackReportBatches(lc);
   }
@@ -190,20 +190,20 @@ public:
   std::list<RetrieveRequestDump> getRetrieveRequestsByVid(const std::string& vid) const override {
     return m_OStoreDB.getRetrieveRequestsByVid(vid);
   }
-  
+
   std::list<RetrieveRequestDump> getRetrieveRequestsByRequester(const std::string& requester) const override {
     return m_OStoreDB.getRetrieveRequestsByRequester(requester);
   }
 
-  
+
   std::unique_ptr<TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) override {
     return m_OStoreDB.getMountInfo(logContext);
   }
-  
+
   void trimEmptyQueues(log::LogContext& lc) override {
     m_OStoreDB.trimEmptyQueues(lc);
   }
-  
+
   std::unique_ptr<TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose, log::LogContext& logContext) override {
     return m_OStoreDB.getMountInfoNoLock(purpose,logContext);
   }
@@ -218,11 +218,11 @@ public:
     log::LogContext &logContext) override {
     return m_OStoreDB.queueRetrieve(rqst, criteria, diskSystemName, logContext);
   }
-  
+
   void cancelArchive(const common::dataStructures::DeleteArchiveRequest& request, log::LogContext & lc) override {
     m_OStoreDB.cancelArchive(request,lc);
   }
-  
+
   void cancelRetrieve(const std::string& instanceName, const cta::common::dataStructures::CancelRetrieveRequest& rqst,
     log::LogContext& lc) override {
     m_OStoreDB.cancelRetrieve(instanceName, rqst, lc);
@@ -235,58 +235,30 @@ public:
   std::string queueRepack(const SchedulerDatabase::QueueRepackRequest & repackRequest, log::LogContext& lc) override {
     return m_OStoreDB.queueRepack(repackRequest, lc);
   }
-  
+
   std::list<common::dataStructures::RepackInfo> getRepackInfo() override {
     return m_OStoreDB.getRepackInfo();
   }
-  
+
   common::dataStructures::RepackInfo getRepackInfo(const std::string& vid) override {
     return m_OStoreDB.getRepackInfo(vid);
   }
-  
+
   void cancelRepack(const std::string& vid, log::LogContext & lc) override {
     m_OStoreDB.cancelRepack(vid, lc);
   }
-  
+
   std::unique_ptr<RepackRequestStatistics> getRepackStatistics() override {
     return m_OStoreDB.getRepackStatistics();
   }
-  
+
   std::unique_ptr<RepackRequestStatistics> getRepackStatisticsNoLock() override {
     return m_OStoreDB.getRepackStatisticsNoLock();
   }
-  
+
   std::unique_ptr<RepackRequest> getNextRepackJobToExpand() override {
     return m_OStoreDB.getNextRepackJobToExpand();
   }
-
-  std::list<cta::common::dataStructures::DriveState> getDriveStates(log::LogContext & lc) const override {
-    return m_OStoreDB.getDriveStates(lc);
-  }
-  
-  void setDesiredDriveState(const std::string& drive, const cta::common::dataStructures::DesiredDriveState& state, log::LogContext& lc) override {
-    return m_OStoreDB.setDesiredDriveState(drive, state, lc);
-  }
-  
-  void removeDrive(const std::string & drive, log::LogContext& lc) override {
-    return m_OStoreDB.removeDrive(drive, lc);
-  }
-
-  void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, cta::common::dataStructures::MountType mountType, 
-    common::dataStructures::DriveStatus status, time_t reportTime, log::LogContext& lc, uint64_t mountSessionId, 
-    uint64_t byteTransfered, uint64_t filesTransfered, double latestBandwidth, const std::string& vid, const std::string& tapepool, const std::string & vo) override {
-    m_OStoreDB.reportDriveStatus(driveInfo, mountType, status, reportTime, lc, mountSessionId, byteTransfered, filesTransfered,
-       latestBandwidth, vid, tapepool,vo);
-  }
-  
-  void reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine, const cta::tape::daemon::TapedConfiguration& tapedConfig,log::LogContext& lc) override {
-    m_OStoreDB.reportDriveConfig(tpConfigLine, tapedConfig,lc);
-  }
-  
-  void checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo) override {
-    m_OStoreDB.checkDriveCanBeCreated(driveInfo);
-  }
-  
 
 private:
   std::unique_ptr <cta::log::Logger> m_logger;
@@ -299,7 +271,7 @@ private:
 template <>
 OStoreDBWrapper<cta::objectstore::BackendVFS>::OStoreDBWrapper(
         const std::string &context, std::unique_ptr<cta::catalogue::Catalogue> & catalogue, const std::string &URL) :
-m_logger(new cta::log::DummyLogger("", "")), m_backend(new cta::objectstore::BackendVFS()), 
+m_logger(new cta::log::DummyLogger("", "")), m_backend(new cta::objectstore::BackendVFS()),
 m_catalogue(catalogue),
 m_OStoreDB(*m_backend, *m_catalogue, *m_logger),
   m_agentReferencePtr(new objectstore::AgentReference("OStoreDBFactory", *m_logger))
@@ -328,7 +300,7 @@ m_OStoreDB(*m_backend, *m_catalogue, *m_logger),
 template <>
 OStoreDBWrapper<cta::objectstore::BackendRados>::OStoreDBWrapper(
         const std::string &context,std::unique_ptr<cta::catalogue::Catalogue> & catalogue, const std::string &URL) :
-m_logger(new cta::log::DummyLogger("", "")), m_backend(cta::objectstore::BackendFactory::createBackend(URL, *m_logger).release()), 
+m_logger(new cta::log::DummyLogger("", "")), m_backend(cta::objectstore::BackendFactory::createBackend(URL, *m_logger).release()),
 m_catalogue(catalogue),
 m_OStoreDB(*m_backend, *m_catalogue, *m_logger),
   m_agentReferencePtr(new objectstore::AgentReference("OStoreDBFactory", *m_logger))
@@ -374,12 +346,12 @@ public:
    * Constructor
    */
   OStoreDBFactory(const std::string & URL = ""): m_URL(URL) {}
-  
+
   /**
    * Destructor.
    */
   ~OStoreDBFactory() throw() {}
-  
+
   /**
    * Returns a newly created scheduler database object.
    *
@@ -388,7 +360,7 @@ public:
   std::unique_ptr<SchedulerDatabase> create(std::unique_ptr<cta::catalogue::Catalogue>& catalogue) const {
     return std::unique_ptr<SchedulerDatabase>(new OStoreDBWrapper<BackendType>("UnitTest", catalogue, m_URL));
   }
-  
+
   private:
     std::string m_URL;
 }; // class OStoreDBFactory

@@ -17,7 +17,11 @@
 
 #include "catalogue/CatalogueTest.hpp"
 #include "catalogue/InMemoryCatalogueFactory.hpp"
+#ifdef STDOUT_LOGGING
+#include "common/log/StdoutLogger.hpp"
+#else
 #include "common/log/DummyLogger.hpp"
+#endif
 
 namespace unitTests {
 
@@ -26,7 +30,11 @@ namespace {
 const uint64_t g_in_memory_CatalogueTest_nbConn = 1;
 const uint64_t g_in_memory_nbArchiveFileListingConns = 1;
 const uint64_t g_in_memory_maxTriesToConnect = 1;
+#ifdef STDOUT_LOGGING
+cta::log::StdoutLogger g_in_memory_CatalogueTest_dummyLogger("stdout", "stdout");
+#else
 cta::log::DummyLogger g_in_memory_CatalogueTest_dummyLogger("dummy", "dummy");
+#endif
 
 cta::catalogue::InMemoryCatalogueFactory g_inMemoryCatalogueFactory(g_in_memory_CatalogueTest_dummyLogger,
   g_in_memory_CatalogueTest_nbConn, g_in_memory_nbArchiveFileListingConns, g_in_memory_maxTriesToConnect);

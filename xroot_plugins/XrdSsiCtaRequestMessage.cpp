@@ -65,18 +65,18 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
       using namespace cta::xrd;
 
       case Request::kAdmincmd: {
-        
+
          // Check that the user is authorized
          m_scheduler.authorizeAdmin(m_cliIdentity, m_lc);
-         
+
          cta::utils::Timer t;
 
          // Validate the Protocol Buffer and import options into maps
          importOptions(request.admincmd());
-         
+
          m_client_versions.ctaVersion = request.client_cta_version();
          m_client_versions.xrootdSsiProtoIntVersion = request.client_xrootd_ssi_protobuf_interface_version();
-         
+
          // Map the <Cmd, SubCmd> to a method
          switch(cmd_pair(request.admincmd().cmd(), request.admincmd().subcmd())) {
             using namespace cta::admin;
@@ -251,13 +251,13 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                break;
             case cmd_pair(AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_LS):
                processDiskSystem_Ls(response, stream);
-               break;   
+               break;
             case cmd_pair(AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_ADD):
                processDiskSystem_Add(response);
                break;
             case cmd_pair(AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_RM):
                processDiskSystem_Rm(response);
-               break;  
+               break;
             case cmd_pair(AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_CH):
                processDiskSystem_Ch(response);
                break;
@@ -285,7 +285,7 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
            case cmd_pair(AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_RESTORE):
                processRecycleTapeFile_Restore(response);
                break;
-           
+
             default:
                throw PbException("Admin command pair <" +
                      AdminCmd_Cmd_Name(request.admincmd().cmd()) + ", " +
@@ -441,7 +441,7 @@ void RequestMessage::processCREATE(const cta::eos::Notification &notification, c
 
    // Set ArchiveFileId in xattrs
    response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("sys.archive.file_id", std::to_string(archiveFileId)));
-   
+
    // Set the storage class in xattrs
    response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("sys.archive.storage_class", storageClass));
 
@@ -584,7 +584,7 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
    {
       throw PbException("Invalid archiveFileID " + archiveFileIdStr);
    }
-   
+
    // Activity value is a string. The parameter might be present or not.
    if(notification.file().xattr().find("activity") != notification.file().xattr().end()) {
      request.activity = notification.file().xattr().at("activity");
@@ -637,7 +637,7 @@ void RequestMessage::processABORT_PREPARE(const cta::eos::Notification &notifica
    {
       throw PbException("Invalid archiveFileID " + archiveFileIdStr);
    }
-   
+
    // The request Id should be stored as an extended attribute
    const auto retrieveRequestIdItor = notification.file().xattr().find("sys.cta.objectstore.id");
    if(notification.file().xattr().end() == retrieveRequestIdItor) {
@@ -677,7 +677,7 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
    cta::common::dataStructures::DeleteArchiveRequest request;
    request.requester.name    = notification.cli().user().username();
    request.requester.group   = notification.cli().user().groupname();
-   
+
    std::string lpath         = notification.file().lpath();
    uint64_t diskFileId       = notification.file().fid();
    request.diskFilePath          = lpath;
@@ -698,7 +698,7 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
    {
       throw PbException("Invalid archiveFileID " + archiveFileIdStr);
    }
-   
+
    auto archiveRequestAddrItor = notification.file().xattr().find("sys.cta.archive.objectstore.id");
    if(archiveRequestAddrItor != notification.file().xattr().end()){
      //We have the ArchiveRequest's objectstore address.
@@ -711,7 +711,7 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
    // Delete the file from the catalogue or from the objectstore if archive request is created
    cta::utils::Timer t;
    cta::log::TimingList tl;
-   try { 
+   try {
      request.archiveFile = m_catalogue.getArchiveFileById(request.archiveFileID);
      tl.insertAndReset("catalogueGetArchiveFileByIdTime",t);
    } catch (cta::exception::Exception &ex){
@@ -760,7 +760,7 @@ void RequestMessage::processUPDATE_FID(const cta::eos::Notification &notificatio
    if(0 == archiveFileId) {
       throw PbException("Invalid archiveFileID " + archiveFileIdStr);
    }
-   
+
    // Update the disk file ID
    cta::utils::Timer t;
    m_catalogue.updateDiskFileId(archiveFileId, diskInstance, diskFileId);
@@ -930,7 +930,7 @@ void RequestMessage::processArchiveRoute_Ls(cta::xrd::Response &response, XrdSsi
 void RequestMessage::processDrive_Up(cta::xrd::Response &response)
 {
    using namespace cta::admin;
-   
+
    cta::optional<std::string> reason = getOptional(OptionString::REASON);
    cta::common::dataStructures::DesiredDriveState desiredDS;
    desiredDS.up = true;
@@ -940,7 +940,7 @@ void RequestMessage::processDrive_Up(cta::xrd::Response &response)
      //If reason not provided while setting the drive up, we delete it, so we set it to an empty string
      desiredDS.reason = "";
    }
-   
+
    std::string cmdlineOutput = setDriveState('^' + getRequired(OptionString::DRIVE) + '$', desiredDS);
 
    response.set_message_txt(cmdlineOutput);
@@ -961,7 +961,7 @@ void RequestMessage::processDrive_Down(cta::xrd::Response &response)
    desiredDS.up = false;
    desiredDS.forceDown = has_flag(OptionBoolean::FORCE);
    desiredDS.reason = reason;
-   
+
    std::string cmdlineOutput = setDriveState('^' + getRequired(OptionString::DRIVE) + '$', desiredDS);
 
    response.set_message_txt(cmdlineOutput);
@@ -970,19 +970,19 @@ void RequestMessage::processDrive_Down(cta::xrd::Response &response)
 
 void RequestMessage::processDrive_Ch(cta::xrd::Response & response) {
   using namespace cta::admin;
-  
+
   std::string comment = getRequired(OptionString::COMMENT);
   if(utils::trimString(comment).empty()) {
     throw cta::exception::UserError("You must provide a comment to change it.");
   }
-  
+
   cta::common::dataStructures::DesiredDriveState desiredDS;
   desiredDS.comment = comment;
-  
+
   std::string cmdlineOutput = setDriveState('^' + getRequired(OptionString::DRIVE) + '$', desiredDS);
-  
+
   response.set_message_txt(cmdlineOutput);
-  response.set_type(cta::xrd::Response::RSP_SUCCESS);  
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 void RequestMessage::processDrive_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)
@@ -996,47 +996,49 @@ void RequestMessage::processDrive_Ls(cta::xrd::Response &response, XrdSsiStream*
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
-
-
 void RequestMessage::processDrive_Rm(cta::xrd::Response &response)
 {
-   using namespace cta::admin;
+  using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+  std::stringstream cmdlineOutput;
 
-   auto regex = getRequired(OptionString::DRIVE);
-   regex = '^' + regex + '$';
-   cta::utils::Regex driveNameRegex(regex.c_str());
-   auto driveStates = m_scheduler.getDriveStates(m_cliIdentity, m_lc);
-   bool drivesFound = false;
-   for(auto driveState: driveStates)
-   {
-      const auto regexResult = driveNameRegex.exec(driveState.driveName);
-      if(!regexResult.empty())
+  auto regex = getRequired(OptionString::DRIVE);
+  regex = '^' + regex + '$';
+  cta::utils::Regex driveNameRegex(regex.c_str());
+
+  const auto tapeDriveNames = m_catalogue.getTapeDriveNames();
+  bool drivesFound = false;
+
+  for (auto tapeDriveName : tapeDriveNames)
+  {
+    const auto regexResult = driveNameRegex.exec(tapeDriveName);
+    if (!regexResult.empty())
+    {
+      const auto tapeDrive = m_catalogue.getTapeDrive(tapeDriveName).value();
+
+      if (tapeDrive.driveStatus == cta::common::dataStructures::DriveStatus::Down     ||
+          tapeDrive.driveStatus == cta::common::dataStructures::DriveStatus::Shutdown ||
+          tapeDrive.driveStatus == cta::common::dataStructures::DriveStatus::Unknown  ||
+          has_flag(OptionBoolean::FORCE))
       {
-         if(driveState.driveStatus == cta::common::dataStructures::DriveStatus::Down     ||
-            driveState.driveStatus == cta::common::dataStructures::DriveStatus::Shutdown ||
-            driveState.driveStatus == cta::common::dataStructures::DriveStatus::Unknown  ||
-            has_flag(OptionBoolean::FORCE))
-         {
-            m_scheduler.removeDrive(m_cliIdentity, driveState.driveName, m_lc);
-            cmdlineOutput << "Drive " << driveState.driveName << " removed"
-                          << (has_flag(OptionBoolean::FORCE) ? " (forced)." : ".") << std::endl;            
-         } else {
-            cmdlineOutput << "Drive " << driveState.driveName << " in state "
-                          << cta::common::dataStructures::toString(driveState.driveStatus)
-                          << " and force is not set (skipped)." << std::endl;
-         }
-         drivesFound = true;
+        m_scheduler.removeDrive(m_cliIdentity, tapeDriveName, m_lc);
+        cmdlineOutput << "Drive " << tapeDriveName << " removed"
+                      << (has_flag(OptionBoolean::FORCE) ? " (forced)." : ".") << std::endl;
+      } else {
+        cmdlineOutput << "Drive " << tapeDriveName << " in state "
+                      << cta::common::dataStructures::toString(tapeDrive.driveStatus)
+                      << " and force is not set (skipped)." << std::endl;
       }
-   }
+      drivesFound = true;
+    }
+  }
 
-   if(!drivesFound) {
-      cmdlineOutput << "No drives match \"" << regex << "\". No drives were removed." << std::endl;
-   }
+  if (!drivesFound) {
+    cmdlineOutput << "No drives match \"" << regex << "\". No drives were removed." << std::endl;
+  }
 
-   response.set_message_txt(cmdlineOutput.str());
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+  response.set_message_txt(cmdlineOutput.str());
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
@@ -1268,7 +1270,7 @@ void RequestMessage::processMediaType_Ch(cta::xrd::Response &response)
       << ": value=" << secondaryDensityCode.value();
     throw ex;
   }
-   
+
   if(cartridge){
     m_catalogue.modifyMediaTypeCartridge(m_cliIdentity,mediaTypeName,cartridge.value());
   }
@@ -1335,7 +1337,7 @@ void RequestMessage::processMountPolicy_Add(cta::xrd::Response &response)
    auto &retrievepriority      = getRequired(OptionUInt64::RETRIEVE_PRIORITY);
    auto &minretrieverequestage = getRequired(OptionUInt64::MIN_RETRIEVE_REQUEST_AGE);
    auto &comment               = getRequired(OptionString::COMMENT);
-   
+
    cta::catalogue::CreateMountPolicyAttributes mountPolicy;
    mountPolicy.name = group;
    mountPolicy.archivePriority = archivepriority;
@@ -1345,7 +1347,7 @@ void RequestMessage::processMountPolicy_Add(cta::xrd::Response &response)
    mountPolicy.comment = comment;
 
    m_catalogue.createMountPolicy(m_cliIdentity, mountPolicy);
-      
+
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -1421,7 +1423,7 @@ void RequestMessage::processRepack_Add(cta::xrd::Response &response)
   if(vidl) vid_list = vidl.value();
   auto vid = getOptional(OptionString::VID);
   if(vid) vid_list.push_back(vid.value());
-  
+
   if(vid_list.empty()) {
     throw cta::exception::UserError("Must specify at least one vid, using --vid or --vidfile options");
   }
@@ -1471,9 +1473,9 @@ void RequestMessage::processRepack_Add(cta::xrd::Response &response)
   }
 
   bool forceDisabledTape = has_flag(OptionBoolean::DISABLED);
-  
+
   bool noRecall = has_flag(OptionBoolean::NO_RECALL);
-  
+
   // Process each item in the list
   for(auto it = vid_list.begin(); it != vid_list.end(); ++it) {
     SchedulerDatabase::QueueRepackRequest repackRequest(*it,bufferURL,type,mountPolicy,forceDisabledTape, noRecall);
@@ -1501,7 +1503,7 @@ void RequestMessage::processRepack_Rm(cta::xrd::Response &response)
 void RequestMessage::processRepack_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)
 {
   using namespace cta::admin;
-  
+
   auto vid = getOptional(OptionString::VID);
 
   // Create a XrdSsi stream object to return the results
@@ -1837,7 +1839,7 @@ void RequestMessage::processTapeFile_Rm(cta::xrd::Response &response)
   } else if (diskFileId) {
     if (!instance) {
       throw exception::UserError(std::string("--fxid requires that --instance is specified"));
-    } 
+    }
     m_catalogue.deleteTapeFileCopy(vid, diskFileId.value(), instance.value(), reason);
     response.set_type(cta::xrd::Response::RSP_SUCCESS);
   } else {
@@ -1944,7 +1946,7 @@ void RequestMessage::processDiskSystem_Add(cta::xrd::Response &response)
   const auto &targetedFreeSpace = getRequired(OptionUInt64::TARGETED_FREE_SPACE);
   const auto &sleepTime         = getRequired(OptionUInt64::SLEEP_TIME);
   const auto &comment           = getRequired(OptionString::COMMENT);
-   
+
   m_catalogue.createDiskSystem(m_cliIdentity, name, fileRegexp, freeSpaceQueryURL,
     refreshInterval, targetedFreeSpace, sleepTime, comment);
 
@@ -1962,7 +1964,7 @@ void RequestMessage::processDiskSystem_Ch(cta::xrd::Response &response)
    const auto  targetedFreeSpace = getOptional(OptionUInt64::TARGETED_FREE_SPACE);
    const auto  sleepTime         = getOptional(OptionUInt64::SLEEP_TIME);
    const auto  comment           = getOptional(OptionString::COMMENT);
-   
+
    if(comment) {
       m_catalogue.modifyDiskSystemComment(m_cliIdentity, name, comment.value());
    }
@@ -2003,7 +2005,6 @@ void RequestMessage::processVirtualOrganization_Add(cta::xrd::Response &response
   const auto &readMaxDrives = getRequired(OptionUInt64::READ_MAX_DRIVES);
   const auto &writeMaxDrives = getRequired(OptionUInt64::WRITE_MAX_DRIVES);
   const auto &comment = getRequired(OptionString::COMMENT);
-  
   const auto &maxFileSizeOpt = getOptional(OptionUInt64::MAX_FILE_SIZE);
 
   cta::common::dataStructures::VirtualOrganization vo;
@@ -2017,9 +2018,9 @@ void RequestMessage::processVirtualOrganization_Add(cta::xrd::Response &response
   } else {
     vo.maxFileSize = m_archiveFileMaxSize;
   }
-  
+
   m_catalogue.createVirtualOrganization(m_cliIdentity,vo);
-  
+
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -2031,29 +2032,29 @@ void RequestMessage::processVirtualOrganization_Ch(cta::xrd::Response &response)
   const auto writeMaxDrives = getOptional(OptionUInt64::WRITE_MAX_DRIVES);
   const auto comment = getOptional(OptionString::COMMENT);
   const auto maxFileSize = getOptional(OptionUInt64::MAX_FILE_SIZE);
-  
+
   if(comment)
     m_catalogue.modifyVirtualOrganizationComment(m_cliIdentity,name,comment.value());
-  
+
   if(readMaxDrives)
     m_catalogue.modifyVirtualOrganizationReadMaxDrives(m_cliIdentity,name,readMaxDrives.value());
-  
+
   if(writeMaxDrives)
     m_catalogue.modifyVirtualOrganizationWriteMaxDrives(m_cliIdentity,name,writeMaxDrives.value());
-  
+
   if(maxFileSize)
     m_catalogue.modifyVirtualOrganizationMaxFileSize(m_cliIdentity,name,maxFileSize.value());
-  
+
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 void RequestMessage::processVirtualOrganization_Rm(cta::xrd::Response& response) {
   using namespace cta::admin;
-  
+
   const auto &name = getRequired(OptionString::VO);
-  
+
   m_catalogue.deleteVirtualOrganization(name);
-  
+
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -2070,42 +2071,41 @@ void RequestMessage::processVirtualOrganization_Ls(cta::xrd::Response &response,
 
 std::string RequestMessage::setDriveState(const std::string &regex, const cta::common::dataStructures::DesiredDriveState & desiredDriveState)
 {
-   using namespace cta::admin;
+  using namespace cta::admin;
 
-   std::stringstream cmdlineOutput;
+  std::stringstream cmdlineOutput;
 
-   cta::utils::Regex driveNameRegex(regex.c_str());
+  cta::utils::Regex driveNameRegex(regex.c_str());
 
-   auto driveStates = m_scheduler.getDriveStates(m_cliIdentity, m_lc);
-   bool is_found = false;
+  const auto tapeDriveNames = m_catalogue.getTapeDriveNames();
+  bool is_found = false;
 
-   for(auto driveState: driveStates)
-   {
-      const auto regexResult = driveNameRegex.exec(driveState.driveName);
-      if(!regexResult.empty())
-      {
-        is_found = true;
-        m_scheduler.setDesiredDriveState(m_cliIdentity, driveState.driveName, desiredDriveState, m_lc);
-        
-        cmdlineOutput << "Drive " << driveState.driveName << ": set ";
-        if(!desiredDriveState.comment){
-          cmdlineOutput << (desiredDriveState.up ? "Up" : "Down")
-                      << (desiredDriveState.forceDown ? " (forced)" : "")
-                      << "." << std::endl;
-        } else {
-          //We modified the comment so we will output that the comment was changed
-          cmdlineOutput << "a new comment."
-                        << std::endl;
-        }
+  for(auto tapeDriveName: tapeDriveNames)
+  {
+    const auto regexResult = driveNameRegex.exec(tapeDriveName);
+    if(!regexResult.empty())
+    {
+      is_found = true;
+      m_scheduler.setDesiredDriveState(m_cliIdentity, tapeDriveName, desiredDriveState, m_lc);
+
+      cmdlineOutput << "Drive " << tapeDriveName << ": set ";
+      if(!desiredDriveState.comment){
+        cmdlineOutput << (desiredDriveState.up ? "Up" : "Down")
+                    << (desiredDriveState.forceDown ? " (forced)" : "")
+                    << "." << std::endl;
+      } else {
+        //We modified the comment so we will output that the comment was changed
+        cmdlineOutput << "a new comment."
+                      << std::endl;
       }
-   }
-   if (!is_found) {
-      cmdlineOutput << "No drives match \"" << regex << "\". No action was taken." << std::endl;
-   }
+    }
+  }
+  if (!is_found) {
+    cmdlineOutput << "No drives match \"" << regex << "\". No action was taken." << std::endl;
+  }
 
-   return cmdlineOutput.str();
+  return cmdlineOutput.str();
 }
-
 
 void RequestMessage::importOptions(const cta::admin::AdminCmd &admincmd)
 {
@@ -2139,27 +2139,27 @@ void RequestMessage::importOptions(const cta::admin::AdminCmd &admincmd)
 
 void RequestMessage::processVersion(cta::xrd::Response &response, XrdSsiStream * & stream){
   using namespace cta::admin;
-  
+
   stream = new VersionStream(*this,m_catalogue,m_scheduler,m_catalogue_conn_string);
-  
+
   response.set_show_header(HeaderType::VERSION_CMD);
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 void RequestMessage::processSchedulingInfos_Ls(cta::xrd::Response &response, XrdSsiStream * & stream) {
   using namespace cta::admin;
-  
+
   stream = new SchedulingInfosLsStream(*this,m_catalogue,m_scheduler,m_lc);
-  
+
   response.set_show_header(HeaderType::SCHEDULINGINFOS_LS);
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 void RequestMessage::processRecycleTapeFile_Ls(cta::xrd::Response &response, XrdSsiStream * & stream) {
   using namespace cta::admin;
-  
+
   stream = new RecycleTapeFileLsStream(*this,m_catalogue,m_scheduler);
-  
+
   response.set_show_header(HeaderType::RECYLETAPEFILE_LS);
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -2170,11 +2170,11 @@ void RequestMessage::processRecycleTapeFile_Restore(cta::xrd::Response& response
 
   bool has_any = false;
   cta::catalogue::RecycleTapeFileSearchCriteria searchCriteria;
-  
-  searchCriteria.vid = getOptional(OptionString::VID, &has_any);  
+
+  searchCriteria.vid = getOptional(OptionString::VID, &has_any);
   auto diskFileId = getOptional(OptionString::FXID, &has_any);
   searchCriteria.diskFileIds = getOptional(OptionStrList::FILE_ID, &has_any);
-  
+
   if(diskFileId){
     // single option on the command line we need to do the conversion ourselves.
     if(!searchCriteria.diskFileIds) searchCriteria.diskFileIds = std::vector<std::string>();

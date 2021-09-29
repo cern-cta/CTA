@@ -17,7 +17,10 @@
 
 #pragma once
 
+#include <iostream>
+
 #include "Catalogue.hpp"
+#include "common/make_unique.hpp"
 
 namespace cta {
 
@@ -30,8 +33,8 @@ namespace catalogue {
  */
 class DummyCatalogue: public Catalogue {
 public:
-  DummyCatalogue() {}
-  virtual ~DummyCatalogue() { }
+  DummyCatalogue() = default;
+  ~DummyCatalogue() override = default;
 
   void createActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity& admin, const std::string& diskInstanceName, const std::string& acttivity, double weight, const std::string & comment) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void createAdminUser(const common::dataStructures::SecurityIdentity& admin, const std::string& username, const std::string& comment) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
@@ -71,13 +74,13 @@ public:
   std::list<common::dataStructures::ActivitiesFairShareWeights> getActivitiesFairShareWeights() const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   disk::DiskSystemList getAllDiskSystems() const override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void createDiskSystem(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &fileRegexp, const std::string &freeSpaceQueryURL, const uint64_t refreshInterval, const uint64_t targetedFreeSpace, const uint64_t sleepTime, const std::string &comment)  override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
-  void deleteDiskSystem(const std::string &name) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); } 
+  void deleteDiskSystem(const std::string &name) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void modifyDiskSystemFileRegexp(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &fileRegexp) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void modifyDiskSystemFreeSpaceQueryURL(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &freeSpaceQueryURL) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void modifyDiskSystemRefreshInterval(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t refreshInterval) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void modifyDiskSystemTargetedFreeSpace(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t targetedFreeSpace) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void modifyDiskSystemSleepTime(const common::dataStructures::SecurityIdentity& admin, const std::string& name, const uint64_t sleepTime) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
-  void modifyDiskSystemComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}  
+  void modifyDiskSystemComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   std::list<common::dataStructures::AdminUser> getAdminUsers() const override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   common::dataStructures::ArchiveFile getArchiveFileById(const uint64_t id) const override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   ArchiveFileItor getArchiveFilesItor(const TapeFileSearchCriteria& searchCriteria) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
@@ -85,6 +88,13 @@ public:
   void restoreFilesInRecycleLog(const RecycleTapeFileSearchCriteria & searchCriteria) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void deleteFileFromRecycleBin(const uint64_t archiveFileId, log::LogContext &lc) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void deleteFilesFromRecycleLog(const std::string & vid, log::LogContext & lc) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
+  void createTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
+  void deleteTapeDrive(const std::string &tapeDriveName) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
+  void createDriveConfig(const std::string &tapeDriveName, const std::string &category, const std::string &keyName, const std::string &value, const std::string &source) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
+  std::list<std::pair<std::string, std::string>> getDriveConfigNamesAndKeys() const {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
+  void modifyDriveConfig(const std::string &tapeDriveName, const std::string &category, const std::string &keyName, const std::string &value, const std::string &source) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
+  optional<std::tuple<std::string, std::string, std::string>> getDriveConfig( const std::string &tapeDriveName, const std::string &keyName) const {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
+  void deleteDriveConfig(const std::string &tapeDriveName, const std::string &keyName) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   std::list<common::dataStructures::ArchiveFile> getFilesForRepack(const std::string &vid, const uint64_t startFSeq, const uint64_t maxNbFiles) const override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   ArchiveFileItor getArchiveFilesForRepackItor(const std::string &vid, const uint64_t startFSeq) const override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes() const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
@@ -169,7 +179,7 @@ public:
   void tapeMountedForRetrieve(const std::string& vid, const std::string& drive) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   bool tapePoolExists(const std::string& tapePoolName) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void updateDiskFileId(uint64_t archiveFileId, const std::string &diskInstance, const std::string &diskFileId) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
-  void moveArchiveFileToRecycleLog(const common::dataStructures::DeleteArchiveRequest &request, 
+  void moveArchiveFileToRecycleLog(const common::dataStructures::DeleteArchiveRequest &request,
   log::LogContext & lc) override {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   // Special functions for unit tests.
   void addEnabledTape(const std::string & vid) {
@@ -204,7 +214,7 @@ public:
     mp1.retrievePriority = 1;
     mp1.retrieveMinRequestAge = 0;
     mountPolicies.push_back(mp1);
-    
+
     common::dataStructures::MountPolicy mp2;
     mp2.name = "moreAdvantageous";
     mp2.archivePriority = 2;
@@ -214,8 +224,8 @@ public:
     mountPolicies.push_back(mp1);
     return mountPolicies;
   }
-  
-  std::list<common::dataStructures::MountPolicy> getCachedMountPolicies() const override { 
+
+  std::list<common::dataStructures::MountPolicy> getCachedMountPolicies() const override {
     std::list<common::dataStructures::MountPolicy> mountPolicies;
     common::dataStructures::MountPolicy mp1;
     mp1.name = "mountPolicy";
@@ -224,7 +234,7 @@ public:
     mp1.retrievePriority = 1;
     mp1.retrieveMinRequestAge = 0;
     mountPolicies.push_back(mp1);
-    
+
     common::dataStructures::MountPolicy mp2;
     mp2.name = "moreAdvantageous";
     mp2.archivePriority = 2;
@@ -234,9 +244,45 @@ public:
     mountPolicies.push_back(mp1);
     return mountPolicies;
   }
+
+  std::list<std::string> getTapeDriveNames() const {
+    return {m_tapeDriveStatus.driveName};
+  }
+
+  optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string &tapeDriveName) const {
+    if (m_tapeDriveStatus.driveName != "") return m_tapeDriveStatus;
+    common::dataStructures::TapeDrive tapeDriveStatus;
+    const time_t reportTime = time(NULL);
+
+    tapeDriveStatus.driveName = tapeDriveName;
+    tapeDriveStatus.host = "Dummy_Host";
+    tapeDriveStatus.logicalLibrary = "Dummy_Library";
+
+    tapeDriveStatus.latestBandwidth = "0.0";
+
+    tapeDriveStatus.downOrUpStartTime = reportTime;
+
+    tapeDriveStatus.mountType = common::dataStructures::MountType::NoMount;
+    tapeDriveStatus.driveStatus = common::dataStructures::DriveStatus::Down;
+    tapeDriveStatus.desiredUp = false;
+    tapeDriveStatus.desiredForceDown = false;
+
+    tapeDriveStatus.diskSystemName = "Dummy_System";
+    tapeDriveStatus.reservedBytes = 0;
+
+    return tapeDriveStatus;
+  }
+
+  void modifyTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) {
+    m_tapeDriveStatus = tapeDrive;
+  }
+
+
 private:
   mutable threading::Mutex m_tapeEnablingMutex;
   std::map<std::string, common::dataStructures::Tape::State> m_tapeEnabling;
+
+  common::dataStructures::TapeDrive m_tapeDriveStatus;
 };
 
 }} // namespace cta::catalogue.

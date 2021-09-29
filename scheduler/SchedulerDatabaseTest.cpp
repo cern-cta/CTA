@@ -114,7 +114,7 @@ private:
   SchedulerDatabaseTest & operator= (const SchedulerDatabaseTest &);
 
   std::unique_ptr<cta::SchedulerDatabase> m_db;
-  
+
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
 
 }; // class SchedulerDatabaseTest
@@ -192,7 +192,7 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   jobInsertions.clear();
   lambdas.clear();
   db.waitSubthreadsComplete();
-  
+
   // Then load all archive jobs into memory
   // Create mount.
   auto moutInfo = db.getMountInfo(lc);
@@ -215,10 +215,10 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
       done = true;
   }
 #ifdef LOOPING_TEST
-  if (filesToDo != count) { 
+  if (filesToDo != count) {
     std::cout << "ERROR_DETECTED!!! ********************************************* BLocking test" << std::endl;
     std::cout << "Missing=" << filesToDo - count << " count=" << count << " filesToDo=" << filesToDo << std::endl;
-    while (true) { sleep(1);} 
+    while (true) { sleep(1);}
   } else {
     std::cout << "**************************************************************************************************** END OF RUN *******************************************************\n" << std::endl;
   }
@@ -266,11 +266,11 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
       db.queueArchive("eosInstance", ar, afqc, locallc);
     });
     jobInsertions.emplace_back(std::async(std::launch::async,lambdas.back()));
-  }  
+  }
   for (auto &j: jobInsertions) { j.get(); }
   jobInsertions.clear();
   lambdas.clear();
-  
+
   // Then load all archive jobs into memory (2nd pass)
   // Create mount.
 #ifdef LOOPING_TEST
@@ -324,7 +324,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
   diskSystemList.push_back(cta::disk::DiskSystem{"ds-B", "$root://b.disk.system/", "constantFreeSpace:999999999999", 60, 10UL*1000*1000*1000,
       15*60, common::dataStructures::EntryLog(), common::dataStructures::EntryLog{},"No comment"});
   cta::disk::DiskSystemFreeSpaceList diskSystemFreeSpaceList(diskSystemList);
-  
+
   // Inject 10 retrieve jobs to the db.
   const size_t filesToDo = 10;
   std::list<std::future<void>> jobInsertions;
@@ -408,7 +408,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
       15*60, common::dataStructures::EntryLog(), common::dataStructures::EntryLog{},"No comment"});
   cta::disk::DiskSystemFreeSpaceList diskSystemFreeSpaceList(diskSystemList);
 
-  
+
   // Inject 10 retrieve jobs to the db.
   const size_t filesToDo = 10;
   std::atomic<size_t> aFiles(0);
@@ -438,7 +438,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
       uuid_generate(fileUUID);
       char fileUUIDStr[37];
       uuid_unparse(fileUUID, fileUUIDStr);
-      rr.diskFileInfo.path = std::string("/uuid/")+fileUUIDStr; 
+      rr.diskFileInfo.path = std::string("/uuid/")+fileUUIDStr;
       rr.requester = { "user", "group" };
       std::string dsName;
       if (i%2) {
@@ -508,7 +508,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
   diskSystemList.push_back(cta::disk::DiskSystem{"ds-Repack", "$eos://ctaeos//eos/ctaepos/repack/", "eos:ctaeos:spinners", 60, 0UL,
     15*60, common::dataStructures::EntryLog(), common::dataStructures::EntryLog{},"No comment"});
   cta::disk::DiskSystemFreeSpaceList diskSystemFreeSpaceList(diskSystemList);
-    
+
   // Inject 10 retrieve jobs to the db.
   const size_t filesToDo = 10;
   std::atomic<size_t> aFiles(0);
@@ -538,7 +538,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
       uuid_generate(fileUUID);
       char fileUUIDStr[37];
       uuid_unparse(fileUUID, fileUUIDStr);
-      rr.diskFileInfo.path = std::string("/uuid/")+fileUUIDStr; 
+      rr.diskFileInfo.path = std::string("/uuid/")+fileUUIDStr;
       rr.requester = { "user", "group" };
       std::string dsName;
       if (i%2) {
@@ -558,7 +558,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
   jobInsertions.clear();
   lambdas.clear();
   db.waitSubthreadsComplete();
-  
+
   // Then load all retrieve jobs into memory
   // Create mount.
   auto mountInfo = db.getMountInfo(lc);
@@ -567,12 +567,12 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
   auto rjb = rm->getNextJobBatch(20,20*1000,diskSystemFreeSpaceList, lc);
   //Files with successful fetch should be popped
   ASSERT_EQ(aFiles, rjb.size());
-  
+
   // The files that are in the "Error" DiskSystem should be queued in the RetrieveQueueFailed
   cta::SchedulerDatabase::JobsFailedSummary failedRetrieves = db.getRetrieveJobsFailedSummary(lc);
   ASSERT_EQ(filesToDo / 2,failedRetrieves.totalFiles);
   ASSERT_EQ((filesToDo / 2) * 1000,failedRetrieves.totalBytes);
-  
+
   ASSERT_EQ(0,rm->getNextJobBatch(20,20*1000,diskSystemFreeSpaceList, lc).size());
 }
 

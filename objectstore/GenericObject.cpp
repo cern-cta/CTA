@@ -20,7 +20,6 @@
 #include "Agent.hpp"
 #include "ArchiveRequest.hpp"
 #include "DriveRegister.hpp"
-#include "DriveState.hpp"
 #include "RootEntry.hpp"
 #include "SchedulerGlobalLock.hpp"
 #include "ArchiveQueue.hpp"
@@ -51,9 +50,9 @@ void GenericObject::getHeaderFromObjectData(const std::string& objData) {
     CryptoPP::StringSource ss1(objData, true,
       new CryptoPP::Base64Encoder(
          new CryptoPP::StringSink(objDataBase64), noNewLineInBase64Output));
-    throw cta::exception::Exception(std::string("In <GenericObject::getHeaderFromObjectData(): could not parse header: ") + 
-            m_header.InitializationErrorString() + 
-            " size=" + std::to_string(objData.size()) + " data(b64)=\"" + 
+    throw cta::exception::Exception(std::string("In <GenericObject::getHeaderFromObjectData(): could not parse header: ") +
+            m_header.InitializationErrorString() +
+            " size=" + std::to_string(objData.size()) + " data(b64)=\"" +
             objDataBase64 + "\" name=" + m_name + "\"");
   }
   m_headerInterpreted = true;
@@ -107,7 +106,7 @@ void GenericObject::garbageCollect(const std::string& presumedOwner, AgentRefere
   throw ForbiddenOperation("In GenericObject::garbageCollect(): GenericObject cannot be garbage collected");
 }
 
-void GenericObject::garbageCollectDispatcher(ScopedExclusiveLock& lock, 
+void GenericObject::garbageCollectDispatcher(ScopedExclusiveLock& lock,
     const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) {
   checkHeaderWritable();
@@ -120,9 +119,6 @@ void GenericObject::garbageCollectDispatcher(ScopedExclusiveLock& lock,
       break;
     case serializers::DriveRegister_t:
       garbageCollectWithType<DriveRegister>(this, lock, presumedOwner, agentReference, lc, catalogue);
-      break;
-    case serializers::DriveState_t:
-      garbageCollectWithType<DriveState>(this, lock, presumedOwner, agentReference, lc, catalogue);
       break;
     case serializers::SchedulerGlobalLock_t:
       garbageCollectWithType<SchedulerGlobalLock>(this, lock, presumedOwner, agentReference, lc, catalogue);
@@ -185,9 +181,6 @@ std::string GenericObject::dump() {
       break;
     case serializers::DriveRegister_t:
       bodyDump = dumpWithType<DriveRegister>(this);
-      break;
-    case serializers::DriveState_t:
-      bodyDump = dumpWithType<DriveState>(this);
       break;
     case serializers::ArchiveQueue_t:
       bodyDump = dumpWithType<cta::objectstore::ArchiveQueue>(this);

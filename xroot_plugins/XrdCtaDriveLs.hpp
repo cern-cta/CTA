@@ -17,6 +17,10 @@
 
 #pragma once
 
+#include <algorithm>
+#include <list>
+#include <string>
+
 #include <xroot_plugins/XrdCtaStream.hpp>
 #include <xroot_plugins/XrdSsiCtaRequestMessage.hpp>
 #include <common/dataStructures/DriveStatusSerDeser.hpp>
@@ -44,7 +48,7 @@ private:
    * Can we close the stream?
    */
   virtual bool isDone() const {
-    return m_driveList.empty();
+    return m_tapeDriveNames.empty();
   }
 
   /*!
@@ -52,9 +56,11 @@ private:
    */
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
 
-  std::list<cta::common::dataStructures::DriveState> m_driveList;      //!< List of drives from the scheduler
+  cta::log::LogContext m_lc;
 
   static constexpr const char* const LOG_SUFFIX  = "DriveLsStream";    //!< Identifier for log messages
+
+  std::list<std::string> m_tapeDriveNames;
 };
 
 
@@ -62,78 +68,91 @@ DriveLsStream::DriveLsStream(const RequestMessage &requestMsg, cta::catalogue::C
   cta::Scheduler &scheduler, const cta::common::dataStructures::SecurityIdentity &clientID,
   log::LogContext &lc) :
   XrdCtaStream(catalogue, scheduler),
-  m_driveList(scheduler.getDriveStates(clientID, lc))
-{
+  m_lc(lc) {
   using namespace cta::admin;
+
+  m_tapeDriveNames = m_catalogue.getTapeDriveNames();
 
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "DriveLsStream() constructor");
 
   auto driveRegexOpt = requestMsg.getOptional(OptionString::DRIVE);
 
   // Dump all drives unless we specified a drive
-  if(driveRegexOpt) {
+  if (driveRegexOpt) {
     std::string driveRegexStr = '^' + driveRegexOpt.value() + '$';
     utils::Regex driveRegex(driveRegexStr.c_str());
 
     // Remove non-matching drives from the list
-    for(auto dr_it = m_driveList.begin(); dr_it != m_driveList.end(); ) {
-      if(driveRegex.has_match(dr_it->driveName)) {
+    for (auto dr_it = m_tapeDriveNames.begin(); dr_it != m_tapeDriveNames.end(); ) {
+      if (driveRegex.has_match(*dr_it)) {
         ++dr_it;
       } else {
         auto erase_it = dr_it;
         ++dr_it;
-        m_driveList.erase(erase_it);
+        m_tapeDriveNames.erase(erase_it);
       }
     }
 
-    if(m_driveList.empty()) {
+    if (m_tapeDriveNames.empty()) {
       throw exception::UserError(std::string("Drive ") + driveRegexOpt.value() + " not found.");
     }
   }
 
   // Sort drives in the result set into lexicographic order
-  typedef decltype(*m_driveList.begin()) dStateVal_t;
-  m_driveList.sort([](const dStateVal_t &a, const dStateVal_t &b){ return a.driveName < b.driveName; });
+  m_tapeDriveNames.sort();
 }
 
 int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
   using namespace cta::admin;
 
-  for(bool is_buffer_full = false; !m_driveList.empty() && !is_buffer_full; m_driveList.pop_front()) {
+  for (bool is_buffer_full = false; !m_tapeDriveNames.empty() && !is_buffer_full; m_tapeDriveNames.pop_front()) {
     Data record;
 
-    auto &dr      = m_driveList.front();
+    const auto dr = m_catalogue.getTapeDrive(m_tapeDriveNames.front()).value();
     auto  dr_item = record.mutable_drls_item();
-    
-    dr_item->set_cta_version(dr.ctaVersion);
+
+    dr_item->set_cta_version(dr.ctaVersion ? dr.ctaVersion.value() : "");
     dr_item->set_logical_library(dr.logicalLibrary);
     dr_item->set_drive_name(dr.driveName);
     dr_item->set_host(dr.host);
-    dr_item->set_desired_drive_state(dr.desiredDriveState.up ? DriveLsItem::UP : DriveLsItem::DOWN);
+    dr_item->set_desired_drive_state(dr.desiredUp ? DriveLsItem::UP : DriveLsItem::DOWN);
     dr_item->set_mount_type(MountTypeToProtobuf(dr.mountType));
     dr_item->set_drive_status(DriveStatusToProtobuf(dr.driveStatus));
-    dr_item->set_vid(dr.currentVid);
-    dr_item->set_tapepool(dr.currentTapePool);
-    dr_item->set_vo(dr.currentVo);
-    dr_item->set_files_transferred_in_session(dr.filesTransferredInSession);
-    dr_item->set_bytes_transferred_in_session(dr.bytesTransferredInSession);
-    dr_item->set_latest_bandwidth(dr.latestBandwidth);
-    dr_item->set_session_id(dr.sessionId);
-    dr_item->set_time_since_last_update(time(nullptr)-dr.lastUpdateTime);
-    dr_item->set_current_priority(dr.currentPriority);
-    dr_item->set_current_activity(dr.currentActivityAndWeight ? dr.currentActivityAndWeight.value().activity : "");
-    dr_item->set_dev_file_name(dr.devFileName);
-    dr_item->set_raw_library_slot(dr.rawLibrarySlot);
-    dr_item->set_comment(dr.desiredDriveState.comment ? dr.desiredDriveState.comment.value() : "");
-    dr_item->set_reason(dr.desiredDriveState.reason ? dr.desiredDriveState.reason.value() : "");
-    
+    dr_item->set_vid(dr.currentVid ? dr.currentVid.value() : "");
+    dr_item->set_tapepool(dr.currentTapePool ? dr.currentTapePool.value() : "");
+    dr_item->set_vo(dr.currentVo ? dr.currentVo.value() : "");
+    dr_item->set_files_transferred_in_session(dr.filesTransferedInSession ? dr.filesTransferedInSession.value() : 0);
+    dr_item->set_bytes_transferred_in_session(dr.bytesTransferedInSession ? dr.bytesTransferedInSession.value() : 0);
+    if (dr.latestBandwidth && std::isdigit(dr.latestBandwidth.value().at(0)))
+      dr_item->set_latest_bandwidth(std::stoi(dr.latestBandwidth.value()));
+    else
+      dr_item->set_latest_bandwidth(0);
+    dr_item->set_session_id(dr.sessionId ? dr.sessionId.value() : 0);
+    const auto lastUpdateTime = dr.lastModificationLog ? dr.lastModificationLog.value().time : 0;
+    dr_item->set_time_since_last_update(time(nullptr) - lastUpdateTime);
+    dr_item->set_current_priority(dr.currentPriority ? dr.currentPriority.value() : 0);
+    dr_item->set_current_activity(dr.currentActivity ? dr.currentActivity.value() : "");
+    dr_item->set_dev_file_name(dr.devFileName ? dr.devFileName.value() : "");
+    dr_item->set_raw_library_slot(dr.rawLibrarySlot ? dr.rawLibrarySlot.value() : "");
+    dr_item->set_comment(dr.userComment ? dr.userComment.value() : "");
+    dr_item->set_reason(dr.reasonUpDown ? dr.reasonUpDown.value() : "");
+
     auto driveConfig = dr_item->mutable_drive_config();
-    for(auto & driveConfigItem: dr.driveConfigItems){
+
+    const auto configNamesAndKeys = m_catalogue.getDriveConfigNamesAndKeys();
+    std::list<std::pair<std::string, std::string>> configItems;
+    std::copy_if(configNamesAndKeys.begin(), configNamesAndKeys.end(), std::back_inserter(configItems),
+      [dr](const std::pair<std::string, std::string>& elem)
+        { return elem.first == dr.driveName; });
+    for(const auto& driveConfigItem: configItems){
       auto driveConfigItemProto = driveConfig->Add();
-      driveConfigItemProto->set_category(driveConfigItem.category);
-      driveConfigItemProto->set_key(driveConfigItem.key);
-      driveConfigItemProto->set_value(driveConfigItem.value);
-      driveConfigItemProto->set_source(driveConfigItem.source);
+      const auto config = m_catalogue.getDriveConfig(driveConfigItem.first, driveConfigItem.second);
+      std::string category, value, source;
+      std::tie(category, value, source) = config.value();
+      driveConfigItemProto->set_category(category);
+      driveConfigItemProto->set_key(driveConfigItem.second);
+      driveConfigItemProto->set_value(value);
+      driveConfigItemProto->set_source(source);
     }
     // set the time spent in the current state
     uint64_t drive_time = time(nullptr);
@@ -141,17 +160,17 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     switch(dr.driveStatus) {
       using namespace cta::common::dataStructures;
 
-      case DriveStatus::Probing:           drive_time -= dr.probeStartTime;    break;
-      case DriveStatus::Up:                drive_time -= dr.downOrUpStartTime; break;
-      case DriveStatus::Down:              drive_time -= dr.downOrUpStartTime; break;
-      case DriveStatus::Starting:          drive_time -= dr.startStartTime;    break;
-      case DriveStatus::Mounting:          drive_time -= dr.mountStartTime;    break;
-      case DriveStatus::Transferring:      drive_time -= dr.transferStartTime; break;
-      case DriveStatus::CleaningUp:        drive_time -= dr.cleanupStartTime;  break;
-      case DriveStatus::Unloading:         drive_time -= dr.unloadStartTime;   break;
-      case DriveStatus::Unmounting:        drive_time -= dr.unmountStartTime;  break;
-      case DriveStatus::DrainingToDisk:    drive_time -= dr.drainingStartTime; break;
-      case DriveStatus::Shutdown:          drive_time -= dr.shutdownTime;      break;
+      case DriveStatus::Probing:           drive_time -= dr.probeStartTime.value();    break;
+      case DriveStatus::Up:                drive_time -= dr.downOrUpStartTime.value(); break;
+      case DriveStatus::Down:              drive_time -= dr.downOrUpStartTime.value(); break;
+      case DriveStatus::Starting:          drive_time -= dr.startStartTime.value();    break;
+      case DriveStatus::Mounting:          drive_time -= dr.mountStartTime.value();    break;
+      case DriveStatus::Transferring:      drive_time -= dr.transferStartTime.value(); break;
+      case DriveStatus::CleaningUp:        drive_time -= dr.cleanupStartTime.value();  break;
+      case DriveStatus::Unloading:         drive_time -= dr.unloadStartTime.value();   break;
+      case DriveStatus::Unmounting:        drive_time -= dr.unmountStartTime.value();  break;
+      case DriveStatus::DrainingToDisk:    drive_time -= dr.drainingStartTime.value(); break;
+      case DriveStatus::Shutdown:          drive_time -= dr.shutdownTime.value();      break;
       case DriveStatus::Unknown:                                               break;
     }
     dr_item->set_drive_status_since(drive_time);

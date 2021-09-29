@@ -16,7 +16,11 @@
  */
 
 #include "catalogue/CatalogueFactoryFactory.hpp"
+#ifdef STDOUT_LOGGING
+#include "common/log/StdoutLogger.hpp"
+#else
 #include "common/log/DummyLogger.hpp"
+#endif
 #include "rdbms/Login.hpp"
 #include "tests/GlobalCatalogueFactoryForUnitTests.hpp"
 #include "tests/RdbmsUnitTestsCmdLineArgs.hpp"
@@ -66,7 +70,11 @@ int main(int argc, char** argv) {
     // Google test will consume its options from the command-line and leave everything else
     g_cmdLineArgs = parseCmdLine(argc, argv);
 
+    #ifdef STDOUT_LOGGING
+    cta::log::StdoutLogger dummyLogger("stdout", "stdout");
+    #else
     cta::log::DummyLogger dummyLogger("dummy", "dummy");
+    #endif
     const auto login = cta::rdbms::Login::parseFile(g_cmdLineArgs.dbConfigPath);
     const uint64_t nbConns = 1;
     const uint64_t nbArchiveFileListingConns = 1;
