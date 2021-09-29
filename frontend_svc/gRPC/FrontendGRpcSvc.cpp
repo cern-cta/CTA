@@ -75,6 +75,31 @@ Status CtaRpcImpl::Archive(::grpc::ServerContext* context, const ::cta::dcache::
 
 
 Status CtaRpcImpl::Delete(::grpc::ServerContext* context, const ::cta::dcache::rpc::DeleteRequest* request, ::google::protobuf::Empty *response) {
+
+    m_log->log(cta::log::DEBUG, "Delete request");
+    auto instance = request->instance().name();
+    // Unpack message
+    cta::common::dataStructures::DeleteArchiveRequest deleteRequest;
+    deleteRequest.requester.name    = request->cli().user().username();
+    deleteRequest.requester.group   = request->cli().user().groupname();
+
+    deleteRequest.diskFilePath          = "";
+    deleteRequest.diskFileId = request->file().fid();
+    deleteRequest.diskInstance = instance;
+
+    deleteRequest.archiveFileID = request->archiveid().fid();
+
+    // Delete the file from the catalogue or from the objectstore if archive request is created
+    cta::utils::Timer t;
+    try {
+        deleteRequest.archiveFile = m_catalogue->getArchiveFileById(deleteRequest.archiveFileID);
+    } catch (cta::exception::Exception &ex){
+        // TODO add logging
+    }
+    m_scheduler->deleteArchive(instance, deleteRequest, *m_log);
+
+    m_log->log(cta::log::INFO, "archive file deleted.");
+
     return Status::OK;
 }
 
@@ -83,10 +108,6 @@ Status CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const ::cta::dcache:
 
     const std::string storageClass = request->file().storageclass();
     m_log->log(cta::log::DEBUG, "Retrieve request for storageClass: " + storageClass);
-
-    cta::common::dataStructures::RequesterIdentity requester;
-    requester.name = request->cli().user().username();
-    requester.group = request->cli().user().groupname();
 
     auto instance = request->instance().name();
 
@@ -114,6 +135,7 @@ Status CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const ::cta::dcache:
                                + " archiveFileId: " + std::to_string(retrieveRequest.archiveFileID)
                                + "RequestID: " + retrieveReqId);
 
+    // TODO: we need to keep retrieveReqId to cancel request, if needed
     // Set response type and add retrieve request reference as an extended attribute.
     //response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("sys.cta.objectstore.id", retrieveReqId));
     //response.set_type(cta::xrd::Response::RSP_SUCCESS);
