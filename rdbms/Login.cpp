@@ -39,7 +39,7 @@ const char *Login::s_fileFormat = "one of "
   "mysql://<username>:<password>@<host>:<port>/<db_name> or "
   "postgresql:[connectinfo | URI]";
 
-std::string Login::s_hiddenPassword = "******";
+const std::string Login::s_hiddenPassword = "******";
 
 const std::string Login::DbTypeAndConnectionDetails::in_memory = "in_memory";
 const std::string Login::DbTypeAndConnectionDetails::oracle = "oracle";
