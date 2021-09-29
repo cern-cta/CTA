@@ -54,7 +54,7 @@ Status CtaRpcImpl::Archive(::grpc::ServerContext* context, const ::cta::dcache::
         archiveRequest.srcURL = request->transport().dst_url();
         archiveRequest.archiveReportURL = request->transport().report_url();
         archiveRequest.archiveErrorReportURL = request->transport().error_report_url();
-        archiveRequest.creationLog.host = "foo";
+        archiveRequest.creationLog.host = context->peer();
         archiveRequest.creationLog.username = instance;
         archiveRequest.creationLog.time = time(nullptr);
 
@@ -79,6 +79,45 @@ Status CtaRpcImpl::Delete(::grpc::ServerContext* context, const ::cta::dcache::r
 }
 
 Status CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const ::cta::dcache::rpc::RetrieveRequest* request, ::google::protobuf::Empty *response) {
+
+
+    const std::string storageClass = request->file().storageclass();
+    m_log->log(cta::log::DEBUG, "Retrieve request for storageClass: " + storageClass);
+
+    cta::common::dataStructures::RequesterIdentity requester;
+    requester.name = request->cli().user().username();
+    requester.group = request->cli().user().groupname();
+
+    auto instance = request->instance().name();
+
+    // Unpack message
+    cta::common::dataStructures::RetrieveRequest retrieveRequest;
+    retrieveRequest.requester.name         = request->cli().user().username();
+    retrieveRequest.requester.group        = request->cli().user().groupname();
+    retrieveRequest.dstURL                 = request->transport().dst_url();
+    retrieveRequest.errorReportURL         = request->transport().error_report_url();
+    retrieveRequest.diskFileInfo.owner_uid = 0;
+    retrieveRequest.diskFileInfo.gid       = 0;
+    retrieveRequest.diskFileInfo.path      = "";
+    retrieveRequest.creationLog.host       = context->peer();
+    retrieveRequest.creationLog.username   = instance;
+    retrieveRequest.creationLog.time       = time(nullptr);
+    retrieveRequest.isVerifyOnly           = false;
+
+    retrieveRequest.archiveFileID = request->archiveid().fid();
+
+    cta::utils::Timer t;
+
+    // Queue the request
+    std::string retrieveReqId = m_scheduler->queueRetrieve(instance, retrieveRequest, *m_log);
+    m_log->log(cta::log::INFO, "Retrieve request for storageClass: " + storageClass
+                               + " archiveFileId: " + std::to_string(retrieveRequest.archiveFileID)
+                               + "RequestID: " + retrieveReqId);
+
+    // Set response type and add retrieve request reference as an extended attribute.
+    //response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("sys.cta.objectstore.id", retrieveReqId));
+    //response.set_type(cta::xrd::Response::RSP_SUCCESS);
+
     return Status::OK;
 }
 
