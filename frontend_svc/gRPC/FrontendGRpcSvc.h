@@ -15,6 +15,7 @@
 #include "common/log/StdoutLogger.hpp"
 #include "common/log/FileLogger.hpp"
 #include "common/log/LogLevel.hpp"
+#include <common/checksum/ChecksumBlobSerDeser.hpp>
 
 #include "cta_rpc.grpc.pb.h"
 
@@ -23,7 +24,7 @@ using cta::SchedulerDBInit_t;
 using cta::SchedulerDB_t;
 using cta::catalogue::Catalogue;
 using cta::rdbms::Login;
-using cta::rpc::CtaRpc;
+using cta::dcache::rpc::CtaRpc;
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -43,10 +44,10 @@ public:
     CtaRpcImpl(cta::log::LogContext *lc, std::unique_ptr<cta::catalogue::Catalogue> &catalogue, std::unique_ptr<cta::Scheduler> &scheduler);
     void run(const std::string server_address);
     Status Version(::grpc::ServerContext *context, const ::google::protobuf::Empty *request, ::cta::admin::Version *response);
-    Status GetTapes(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::grpc::ServerWriter<::cta::admin::TapeLsItem>* writer);
-    Status GetStorageClasses(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::grpc::ServerWriter<::cta::admin::StorageClassLsItem>* writer);
 
-    Status Archive(::grpc::ServerContext* context, const ::cta::eos::Notification* request, ::cta::xrd::Response* response);
+    Status Archive(::grpc::ServerContext* context, const ::cta::dcache::rpc::ArchiveRequest* request, ::cta::dcache::rpc::ArchiveFileId* response);
+    Status Retrieve(::grpc::ServerContext* context, const ::cta::dcache::rpc::RetrieveRequest* request, ::google::protobuf::Empty *response);
+    Status Delete(::grpc::ServerContext* context, const ::cta::dcache::rpc::DeleteRequest* request, ::google::protobuf::Empty *response);
 };
 
 #endif //CTA_FRONTENDGRPCSVC_H

@@ -1,22 +1,59 @@
-
-syntax  = "proto3";
+syntax = "proto3";
 
 option java_multiple_files = true;
-option java_package = "ch.cern.cta.rpc";
+option java_package = "org.dcache.cta.rpc";
 option optimize_for = CODE_SIZE;
-package cta.rpc;
+package cta.dcache.rpc;
 
 import "google/protobuf/empty.proto";
 
+import "cta_common.proto";
 import "cta_admin.proto";
 import "cta_eos.proto";
 
 //
 // gRPC interface to CTA frontend
 //
+
+message Metadata0 {
+  string fid = 1; // pnfsid
+  uint64 size = 2;
+  string storageClass = 3;
+  cta.common.ChecksumBlob csb = 4;
+}
+
+message ArchiveFileId {
+  uint64 fid = 1;
+}
+
+message ArchiveRequest {
+  cta.common.Service instance = 1;      //< caller instance id
+  cta.eos.Client cli = 2;      //< client information
+  cta.eos.Transport transport = 3;      //< transport
+  Metadata0 file = 4;      //< file meta data
+}
+
+message RetrieveRequest {
+  cta.common.Service instance = 1;      //< caller instance id
+  cta.eos.Client cli = 2;      //< client information
+  cta.eos.Transport transport = 3;      //< transport
+  Metadata0 file = 4;      //< file meta data
+  ArchiveFileId archiveId = 5;
+}
+
+message DeleteRequest {
+  cta.common.Service instance = 1;      //< caller instance id
+  cta.eos.Client cli = 2;      //< client information
+  cta.eos.Transport transport = 3;      //< transport
+  Metadata0 file = 4;      //< file meta data
+  ArchiveFileId archiveId = 5;
+}
+
 service CtaRpc {
   rpc Version (google.protobuf.Empty) returns (cta.admin.Version) {}
-  rpc GetTapes (google.protobuf.Empty) returns (stream cta.admin.TapeLsItem) {}
-  rpc GetStorageClasses (google.protobuf.Empty) returns (stream cta.admin.StorageClassLsItem) {}
-  rpc Archive (cta.eos.Notification) returns (cta.xrd.Response) {}
+
+  rpc Archive (ArchiveRequest) returns (ArchiveFileId) {}
+  rpc Retrieve (RetrieveRequest) returns (google.protobuf.Empty) {}
+  rpc Delete (DeleteRequest) returns (google.protobuf.Empty) {}
+
 }
