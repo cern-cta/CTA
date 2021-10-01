@@ -25,7 +25,7 @@ Status CtaRpcImpl::Version(::grpc::ServerContext *context, const ::google::proto
     return Status::OK;
 }
 
-Status CtaRpcImpl::Archive(::grpc::ServerContext* context, const ::cta::dcache::rpc::ArchiveRequest* request, ::cta::dcache::rpc::ArchiveFileId* response) {
+Status CtaRpcImpl::Archive(::grpc::ServerContext* context, const ::cta::dcache::rpc::ArchiveRequest* request, ::cta::dcache::rpc::ArchiveResponse* response) {
 
     m_log->log(cta::log::INFO, "Archive request");
 
@@ -58,12 +58,13 @@ Status CtaRpcImpl::Archive(::grpc::ServerContext* context, const ::cta::dcache::
         archiveRequest.creationLog.username = instance;
         archiveRequest.creationLog.time = time(nullptr);
 
-        std::string archiveRequestAddr = m_scheduler->queueArchiveWithGivenId(archiveFileId, instance, archiveRequest, *m_log);
+        std::string reqId = m_scheduler->queueArchiveWithGivenId(archiveFileId, instance, archiveRequest, *m_log);
         m_log->log(cta::log::INFO, "Archive request for storageClass: " + storageClass
             + " archiveFileId: " + std::to_string(archiveFileId)
-            + "RequestID: " + archiveRequestAddr);
+            + "RequestID: " + reqId);
 
         response->set_fid(archiveFileId);
+        response->set_reqid(reqId);
 
     } catch (cta::exception::Exception &ex) {
         m_log->log(cta::log::CRIT, ex.getMessageValue());
@@ -74,7 +75,7 @@ Status CtaRpcImpl::Archive(::grpc::ServerContext* context, const ::cta::dcache::
 }
 
 
-Status CtaRpcImpl::Delete(::grpc::ServerContext* context, const ::cta::dcache::rpc::DeleteRequest* request, ::google::protobuf::Empty *response) {
+Status CtaRpcImpl::Delete(::grpc::ServerContext* context, const ::cta::dcache::rpc::DeleteRequest* request, ::google::protobuf::Empty* response) {
 
     m_log->log(cta::log::DEBUG, "Delete request");
     auto instance = request->instance().name();
@@ -87,7 +88,7 @@ Status CtaRpcImpl::Delete(::grpc::ServerContext* context, const ::cta::dcache::r
     deleteRequest.diskFileId = request->file().fid();
     deleteRequest.diskInstance = instance;
 
-    deleteRequest.archiveFileID = request->archiveid().fid();
+    deleteRequest.archiveFileID = request->archiveid();
 
     // Delete the file from the catalogue or from the objectstore if archive request is created
     cta::utils::Timer t;
@@ -103,7 +104,7 @@ Status CtaRpcImpl::Delete(::grpc::ServerContext* context, const ::cta::dcache::r
     return Status::OK;
 }
 
-Status CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const ::cta::dcache::rpc::RetrieveRequest* request, ::google::protobuf::Empty *response) {
+Status CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const ::cta::dcache::rpc::RetrieveRequest* request, ::cta::dcache::rpc::RetrieveResponse *response) {
 
 
     const std::string storageClass = request->file().storageclass();
@@ -125,21 +126,17 @@ Status CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const ::cta::dcache:
     retrieveRequest.creationLog.time       = time(nullptr);
     retrieveRequest.isVerifyOnly           = false;
 
-    retrieveRequest.archiveFileID = request->archiveid().fid();
+    retrieveRequest.archiveFileID = request->archiveid();
 
     cta::utils::Timer t;
 
     // Queue the request
-    std::string retrieveReqId = m_scheduler->queueRetrieve(instance, retrieveRequest, *m_log);
+    std::string reqId = m_scheduler->queueRetrieve(instance, retrieveRequest, *m_log);
     m_log->log(cta::log::INFO, "Retrieve request for storageClass: " + storageClass
                                + " archiveFileId: " + std::to_string(retrieveRequest.archiveFileID)
-                               + "RequestID: " + retrieveReqId);
+                               + "RequestID: " + reqId);
 
-    // TODO: we need to keep retrieveReqId to cancel request, if needed
-    // Set response type and add retrieve request reference as an extended attribute.
-    //response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("sys.cta.objectstore.id", retrieveReqId));
-    //response.set_type(cta::xrd::Response::RSP_SUCCESS);
-
+    response->set_reqid(reqId);
     return Status::OK;
 }
 
