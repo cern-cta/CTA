@@ -3910,6 +3910,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
       aj->m_jobOwned = true;
       aj->m_mountId = mountInfo.mountId;
       aj->m_tapePool = mountInfo.tapePool;
+      aj->reportType = j.reportType;
       ret.emplace_back(std::move(aj));
     }
     return ret;
@@ -3934,6 +3935,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
       aj->m_jobOwned = true;
       aj->m_mountId = mountInfo.mountId;
       aj->m_tapePool = mountInfo.tapePool;
+      aj->reportType = j.reportType;
       ret.emplace_back(std::move(aj));
     }
     return ret;
