@@ -443,11 +443,11 @@
   <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="-252.08" y="398.89">
     <tspan x="-252.08" y="398.89">The rdbms::wrapper namespace</tspan>
   </text>
-  <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="842.824" y="114.924">
-    <tspan x="842.824" y="114.924">All of the classes on the outside of</tspan>
-    <tspan x="842.824" y="130.924">the grey rectangle are members of</tspan>
-    <tspan x="842.824" y="146.924">the rdbms namespace, whereas all</tspan>
-    <tspan x="842.824" y="162.924">those outside are direct members</tspan>
-    <tspan x="842.824" y="178.924">of the rdbms namespace.</tspan>
+  <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="841.824" y="292.924">
+    <tspan x="841.824" y="292.924">All of the classes on the outside of the grey rectangle are</tspan>
+    <tspan x="841.824" y="308.924">direct members of the rdbms namespace and all those</tspan>
+    <tspan x="841.824" y="324.924">on the inside are members of the rdbms::wrapper</tspan>
+    <tspan x="841.824" y="340.924">namespace.  The namespace name rdbms is implicit in</tspan>
+    <tspan x="841.824" y="356.924">order not to clutter this diagram.</tspan>
   </text>
 </svg>
