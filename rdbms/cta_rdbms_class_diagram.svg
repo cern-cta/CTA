@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/PR-SVG-20010719/DTD/svg10.dtd">
-<svg width="87cm" height="49cm" viewBox="-499 -49 1721 977" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<svg width="87cm" height="49cm" viewBox="-499 -49 1722 977" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   <g>
     <rect style="fill: #e5e5e5" x="-257.586" y="376.862" width="1480.08" height="550.728"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 0.2; stroke-dasharray: 20; stroke: #000000" x="-257.586" y="376.862" width="1480.08" height="550.728"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 1; stroke-dasharray: 20; stroke: #000000" x="-257.586" y="376.862" width="1480.08" height="550.728"/>
   </g>
   <g>
     <rect style="fill: #ffffff" x="-469.31" y="311.822" width="171.7" height="28"/>
