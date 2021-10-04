@@ -436,12 +436,18 @@
   </g>
   <line style="fill: none; fill-opacity:0; stroke-width: 0.02; stroke-dasharray: 4; stroke: #000000" x1="895.677" y1="501.006" x2="929.241" y2="497.871"/>
   <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="-121.281" y="646.718">
-    <tspan x="-121.281" y="646.718">The objects within the rdbms::wrapper namespace hide</tspan>
-    <tspan x="-121.281" y="662.718">the implementation details of the underlying database</tspan>
-    <tspan x="-121.281" y="678.718">client APIs from the objects directly within the rdbms</tspan>
-    <tspan x="-121.281" y="694.718">namespace.</tspan>
+    <tspan x="-121.281" y="646.718">The classes within the rdbms::wrapper namespace hide the</tspan>
+    <tspan x="-121.281" y="662.718">implementation details of the underlying database client APIs</tspan>
+    <tspan x="-121.281" y="678.718">from the classes directly within the rdbms namespace.</tspan>
   </text>
   <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="-252.08" y="398.89">
     <tspan x="-252.08" y="398.89">The rdbms::wrapper namespace</tspan>
+  </text>
+  <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="842.824" y="114.924">
+    <tspan x="842.824" y="114.924">All of the classes on the outside of</tspan>
+    <tspan x="842.824" y="130.924">the grey rectangle are members of</tspan>
+    <tspan x="842.824" y="146.924">the rdbms namespace, whereas all</tspan>
+    <tspan x="842.824" y="162.924">those outside are direct members</tspan>
+    <tspan x="842.824" y="178.924">of the rdbms namespace.</tspan>
   </text>
 </svg>
