@@ -3,26 +3,26 @@
 <svg width="87cm" height="49cm" viewBox="-499 -49 1721 977" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   <g>
     <rect style="fill: #e5e5e5" x="-257.586" y="376.862" width="1480.08" height="550.728"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 0.02; stroke-dasharray: 20; stroke: #000000" x="-257.586" y="376.862" width="1480.08" height="550.728"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 0.2; stroke-dasharray: 20; stroke: #000000" x="-257.586" y="376.862" width="1480.08" height="550.728"/>
   </g>
   <g>
-    <rect style="fill: #ffffff" x="-469.31" y="312.822" width="171.7" height="28"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="-469.31" y="312.822" width="171.7" height="28"/>
-    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:700" x="-383.46" y="331.822">Stmt</text>
-    <rect style="fill: #ffffff" x="-469.31" y="340.822" width="171.7" height="8"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="-469.31" y="340.822" width="171.7" height="8"/>
-    <rect style="fill: #ffffff" x="-469.31" y="348.822" width="171.7" height="164"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="-469.31" y="348.822" width="171.7" height="164"/>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-465.31" y="362.822">+bindBlob()</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-465.31" y="378.822">+bindBool()</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-465.31" y="394.822">+bindDouble()</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-465.31" y="410.822">+bindString()</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-465.31" y="426.822">+bindUint8()</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-465.31" y="442.822">+bindUint16()</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-465.31" y="458.822">+bindUint32()</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-465.31" y="474.822">+binUint64()</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-465.31" y="490.822">+executeQuery(): Rset</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-465.31" y="506.822">+executeNonQuery()</text>
+    <rect style="fill: #ffffff" x="-469.31" y="311.822" width="171.7" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="-469.31" y="311.822" width="171.7" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:700" x="-383.46" y="330.822">Stmt</text>
+    <rect style="fill: #ffffff" x="-469.31" y="339.822" width="171.7" height="8"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="-469.31" y="339.822" width="171.7" height="8"/>
+    <rect style="fill: #ffffff" x="-469.31" y="347.822" width="171.7" height="164"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="-469.31" y="347.822" width="171.7" height="164"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-465.31" y="361.822">+bindBlob()</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-465.31" y="377.822">+bindBool()</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-465.31" y="393.822">+bindDouble()</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-465.31" y="409.822">+bindString()</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-465.31" y="425.822">+bindUint8()</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-465.31" y="441.822">+bindUint16()</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-465.31" y="457.822">+bindUint32()</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-465.31" y="473.822">+binUint64()</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-465.31" y="489.822">+executeQuery(): Rset</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-465.31" y="505.822">+executeNonQuery()</text>
   </g>
   <g>
     <rect style="fill: #ffffff" x="-476.878" y="583.202" width="187.1" height="28"/>
@@ -51,10 +51,10 @@
     <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-472.878" y="889.202">+next()</text>
   </g>
   <g>
-    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="-383.46,512.822 -383.46,548.012 -383.328,548.012 -383.328,583.202 "/>
-    <text font-size="12.7998" style="fill: #000000;text-anchor:middle;font-family:monospace;font-style:normal;font-weight:normal" x="-383.394" y="544.012">Creates</text>
-    <polygon style="fill: #000000" points="-354.444,544.012 -354.444,536.012 -346.444,540.012 "/>
-    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-379.46" y="524.822">1</text>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="-383.46,511.822 -383.46,547.512 -383.328,547.512 -383.328,583.202 "/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:middle;font-family:monospace;font-style:normal;font-weight:normal" x="-383.394" y="543.512">Creates</text>
+    <polygon style="fill: #000000" points="-354.444,543.512 -354.444,535.512 -346.444,539.512 "/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-379.46" y="523.822">1</text>
     <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-379.328" y="579.202">0..*</text>
   </g>
   <g>
@@ -84,23 +84,23 @@
     <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="437.812" y="192.71" width="143.75" height="8"/>
   </g>
   <g>
-    <rect style="fill: #ffffff" x="274.491" y="250.74" width="92.7" height="28"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="274.491" y="250.74" width="92.7" height="28"/>
-    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:700" x="320.841" y="269.74">StmtPool</text>
-    <rect style="fill: #ffffff" x="274.491" y="278.74" width="92.7" height="8"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="274.491" y="278.74" width="92.7" height="8"/>
-    <rect style="fill: #ffffff" x="274.491" y="286.74" width="92.7" height="20"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="274.491" y="286.74" width="92.7" height="20"/>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="278.491" y="300.74">+getStmt()</text>
+    <rect style="fill: #ffffff" x="274.49" y="250.74" width="92.7" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="274.49" y="250.74" width="92.7" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:700" x="320.84" y="269.74">StmtPool</text>
+    <rect style="fill: #ffffff" x="274.49" y="278.74" width="92.7" height="8"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="274.49" y="278.74" width="92.7" height="8"/>
+    <rect style="fill: #ffffff" x="274.49" y="286.74" width="92.7" height="20"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="274.49" y="286.74" width="92.7" height="20"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="278.49" y="300.74">+getStmt()</text>
   </g>
   <g>
-    <rect style="fill: #ffffff" x="211.183" y="407.958" width="219.1" height="28"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="211.183" y="407.958" width="219.1" height="28"/>
-    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:700" x="320.733" y="426.958">wrapper::StmtWrapper</text>
-    <rect style="fill: #ffffff" x="211.183" y="435.958" width="219.1" height="8"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="211.183" y="435.958" width="219.1" height="8"/>
-    <rect style="fill: #ffffff" x="211.183" y="443.958" width="219.1" height="8"/>
-    <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="211.183" y="443.958" width="219.1" height="8"/>
+    <rect style="fill: #ffffff" x="211.184" y="407.958" width="219.1" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="211.184" y="407.958" width="219.1" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:700" x="320.734" y="426.958">wrapper::StmtWrapper</text>
+    <rect style="fill: #ffffff" x="211.184" y="435.958" width="219.1" height="8"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="211.184" y="435.958" width="219.1" height="8"/>
+    <rect style="fill: #ffffff" x="211.184" y="443.958" width="219.1" height="8"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="211.184" y="443.958" width="219.1" height="8"/>
   </g>
   <g>
     <rect style="fill: #ffffff" x="668.09" y="427.726" width="225.6" height="28"/>
@@ -248,24 +248,24 @@
     <rect style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #000000" x="407.696" y="540.79" width="187.45" height="8"/>
   </g>
   <g>
-    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="320.733,470.194 320.733,486.374 -145.204,486.374 -145.204,504.79 "/>
-    <polygon style="fill: #ffffff" points="328.733,470.194 320.733,454.194 312.733,470.194 "/>
-    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="328.733,470.194 320.733,454.194 312.733,470.194 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="320.734,470.194 320.734,486.374 -145.204,486.374 -145.204,504.79 "/>
+    <polygon style="fill: #ffffff" points="328.734,470.194 320.734,454.194 312.734,470.194 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="328.734,470.194 320.734,454.194 312.734,470.194 "/>
   </g>
   <g>
-    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="320.733,470.194 320.733,486.374 59.4464,486.374 59.4464,504.79 "/>
-    <polygon style="fill: #ffffff" points="328.733,470.194 320.733,454.194 312.733,470.194 "/>
-    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="328.733,470.194 320.733,454.194 312.733,470.194 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="320.734,470.194 320.734,486.374 59.4464,486.374 59.4464,504.79 "/>
+    <polygon style="fill: #ffffff" points="328.734,470.194 320.734,454.194 312.734,470.194 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="328.734,470.194 320.734,454.194 312.734,470.194 "/>
   </g>
   <g>
-    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="320.733,470.194 320.733,486.374 279.196,486.374 279.196,504.79 "/>
-    <polygon style="fill: #ffffff" points="328.733,470.194 320.733,454.194 312.733,470.194 "/>
-    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="328.733,470.194 320.733,454.194 312.733,470.194 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="320.734,470.194 320.734,486.374 279.196,486.374 279.196,504.79 "/>
+    <polygon style="fill: #ffffff" points="328.734,470.194 320.734,454.194 312.734,470.194 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="328.734,470.194 320.734,454.194 312.734,470.194 "/>
   </g>
   <g>
-    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="320.733,470.194 320.733,486.374 501.421,486.374 501.421,504.79 "/>
-    <polygon style="fill: #ffffff" points="328.733,470.194 320.733,454.194 312.733,470.194 "/>
-    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="328.733,470.194 320.733,454.194 312.733,470.194 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="320.734,470.194 320.734,486.374 501.421,486.374 501.421,504.79 "/>
+    <polygon style="fill: #ffffff" points="328.734,470.194 320.734,454.194 312.734,470.194 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="328.734,470.194 320.734,454.194 312.734,470.194 "/>
   </g>
   <g>
     <rect style="fill: #ffffff" x="360.82" y="676.638" width="198.3" height="28"/>
@@ -324,11 +324,11 @@
     <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="788.89,613.962 780.89,597.962 772.89,613.962 "/>
   </g>
   <g>
-    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="-383.476,228.666 -383.476,270.744 -383.46,270.744 -383.46,312.822 "/>
-    <text font-size="12.7998" style="fill: #000000;text-anchor:middle;font-family:monospace;font-style:normal;font-weight:normal" x="-383.468" y="266.744">creates</text>
-    <polygon style="fill: #000000" points="-354.518,266.744 -354.518,258.744 -346.518,262.744 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="-383.476,228.666 -383.476,270.244 -383.46,270.244 -383.46,311.822 "/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:middle;font-family:monospace;font-style:normal;font-weight:normal" x="-383.468" y="266.244">creates</text>
+    <polygon style="fill: #000000" points="-354.518,266.244 -354.518,258.244 -346.518,262.244 "/>
     <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-379.476" y="240.666">1</text>
-    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-379.46" y="308.822">0..1</text>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-379.46" y="307.822">0..1</text>
   </g>
   <g>
     <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="-245.504,170.666 90.568,170.666 90.568,170.71 437.812,170.71 "/>
@@ -347,15 +347,15 @@
   </g>
   <g>
     <polygon style="fill: #ffffff" points="31.1026,52.6814 414.403,52.6814 426.403,64.6814 426.403,118.681 31.1026,118.681 "/>
-    <polygon style="fill: none; fill-opacity:0; stroke-width: 2.35099e-37; stroke: #000000" points="31.1026,52.6814 414.403,52.6814 426.403,64.6814 426.403,118.681 31.1026,118.681 "/>
-    <polyline style="fill: none; fill-opacity:0; stroke-width: 1.17549e-37; stroke: #000000" points="414.403,52.6814 414.403,64.6814 426.403,64.6814 "/>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="37.1026" y="76.5814">
-      <tspan x="37.1026" y="76.5814">At any single point in time a ConnAndStmt is</tspan>
-      <tspan x="37.1026" y="92.5814">exclusively owned by either a ConnPool or a Conn.</tspan>
-      <tspan x="37.1026" y="108.581">In other words a ConnAndStmt is loaned to a Conn.</tspan>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #000000" points="31.1026,52.6814 414.403,52.6814 426.403,64.6814 426.403,118.681 31.1026,118.681 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 0.5; stroke: #000000" points="414.403,52.6814 414.403,64.6814 426.403,64.6814 "/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="37.6026" y="77.0814">
+      <tspan x="37.6026" y="77.0814">At any single point in time a ConnAndStmt is</tspan>
+      <tspan x="37.6026" y="93.0814">exclusively owned by either a ConnPool or a Conn.</tspan>
+      <tspan x="37.6026" y="109.081">In other words a ConnAndStmt is loaned to a Conn.</tspan>
     </text>
   </g>
-  <line style="fill: none; fill-opacity:0; stroke-width: 2.35099e-37; stroke-dasharray: 4; stroke: #000000" x1="437.224" y1="154.715" x2="328.376" y2="118.671"/>
+  <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke-dasharray: 4; stroke: #000000" x1="437.224" y1="154.715" x2="328.376" y2="118.671"/>
   <g>
     <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="-264.606,789.202 -99.8695,789.202 -99.8695,789.108 76.039,789.108 "/>
     <polygon style="fill: #ffffff" points="-289.778,789.202 -275.778,784.402 -261.778,789.202 -275.778,794.002 "/>
@@ -365,76 +365,76 @@
     <text font-size="12.7998" style="fill: #000000;text-anchor:end;font-family:monospace;font-style:normal;font-weight:normal" x="72.039" y="785.108"/>
   </g>
   <g>
-    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="320.841,331.912 320.841,364.349 320.733,364.349 320.733,407.958 "/>
-    <polygon style="fill: #ffffff" points="320.841,306.74 325.641,320.74 320.841,334.74 316.041,320.74 "/>
-    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="320.841,306.74 325.641,320.74 320.841,334.74 316.041,320.74 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="320.84,331.912 320.84,364.349 320.734,364.349 320.734,407.958 "/>
+    <polygon style="fill: #ffffff" points="320.84,306.74 325.64,320.74 320.84,334.74 316.04,320.74 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="320.84,306.74 325.64,320.74 320.84,334.74 316.04,320.74 "/>
     <text font-size="12.7998" style="fill: #000000;text-anchor:middle;font-family:monospace;font-style:normal;font-weight:normal" x="320.787" y="360.349"/>
-    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="331.841" y="318.74">1</text>
-    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="324.733" y="403.958">0..1</text>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="331.84" y="318.74">1</text>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="324.734" y="403.958">0..1</text>
   </g>
   <g>
     <polygon style="fill: #ffffff" points="-38.088,214.962 237.412,214.962 249.412,226.962 249.412,328.962 -38.088,328.962 "/>
-    <polygon style="fill: none; fill-opacity:0; stroke-width: 2.35099e-37; stroke: #000000" points="-38.088,214.962 237.412,214.962 249.412,226.962 249.412,328.962 -38.088,328.962 "/>
-    <polyline style="fill: none; fill-opacity:0; stroke-width: 1.17549e-37; stroke: #000000" points="237.412,214.962 237.412,226.962 249.412,226.962 "/>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-32.088" y="238.862">
-      <tspan x="-32.088" y="238.862">At any single point in time a</tspan>
-      <tspan x="-32.088" y="254.862">wrapper::StmtWrapper is exclusively</tspan>
-      <tspan x="-32.088" y="270.862">owned by either a StmtPool or a</tspan>
-      <tspan x="-32.088" y="286.862">Stmt. In other words a</tspan>
-      <tspan x="-32.088" y="302.862">wrapper::StmtWrapper is loaned to a</tspan>
-      <tspan x="-32.088" y="318.862">Stmt.</tspan>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #000000" points="-38.088,214.962 237.412,214.962 249.412,226.962 249.412,328.962 -38.088,328.962 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 0.5; stroke: #000000" points="237.412,214.962 237.412,226.962 249.412,226.962 "/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-31.588" y="239.362">
+      <tspan x="-31.588" y="239.362">At any single point in time a</tspan>
+      <tspan x="-31.588" y="255.362">wrapper::StmtWrapper is exclusively</tspan>
+      <tspan x="-31.588" y="271.362">owned by either a StmtPool or a</tspan>
+      <tspan x="-31.588" y="287.362">Stmt. In other words a</tspan>
+      <tspan x="-31.588" y="303.362">wrapper::StmtWrapper is loaned to a</tspan>
+      <tspan x="-31.588" y="319.362">Stmt.</tspan>
     </text>
   </g>
   <g>
-    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="-272.438,422.822 -36.2133,422.822 -36.2133,421.958 211.183,421.958 "/>
-    <polygon style="fill: #ffffff" points="-297.61,422.822 -283.61,418.022 -269.61,422.822 -283.61,427.622 "/>
-    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="-297.61,422.822 -283.61,418.022 -269.61,422.822 -283.61,427.622 "/>
-    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-34.2133" y="418.39"/>
-    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-265.61" y="418.822">1</text>
-    <text font-size="12.7998" style="fill: #000000;text-anchor:end;font-family:monospace;font-style:normal;font-weight:normal" x="207.183" y="417.958">0..1</text>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="-272.438,421.822 -36.213,421.822 -36.213,421.958 211.184,421.958 "/>
+    <polygon style="fill: #ffffff" points="-297.61,421.822 -283.61,417.022 -269.61,421.822 -283.61,426.622 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="-297.61,421.822 -283.61,417.022 -269.61,421.822 -283.61,426.622 "/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-34.213" y="417.89"/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-265.61" y="417.822">1</text>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:end;font-family:monospace;font-style:normal;font-weight:normal" x="207.184" y="417.958">0..1</text>
   </g>
   <g>
-    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="437.812,225.882 437.812,232.725 320.841,232.725 320.841,250.74 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="437.812,225.882 437.812,232.725 320.84,232.725 320.84,250.74 "/>
     <polygon style="fill: #000000" points="437.812,200.71 442.612,214.71 437.812,228.71 433.012,214.71 "/>
     <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="437.812,200.71 442.612,214.71 437.812,228.71 433.012,214.71 "/>
     <text font-size="12.7998" style="fill: #000000;text-anchor:middle;font-family:monospace;font-style:normal;font-weight:normal" x="379.326" y="228.725"/>
     <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="448.812" y="212.71">1</text>
-    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="324.841" y="246.74">0..1</text>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="324.84" y="246.74">0..1</text>
   </g>
-  <line style="fill: none; fill-opacity:0; stroke-width: 0.02; stroke-dasharray: 4; stroke: #000000" x1="183.216" y1="328.935" x2="288.061" y2="405.956"/>
+  <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke-dasharray: 4; stroke: #000000" x1="183.216" y1="328.935" x2="288.061" y2="405.956"/>
   <g>
     <polygon style="fill: #ffffff" points="663.506,-48.5764 954.406,-48.5764 966.406,-36.5764 966.406,17.4236 663.506,17.4236 "/>
-    <polygon style="fill: none; fill-opacity:0; stroke-width: 0.02; stroke: #000000" points="663.506,-48.5764 954.406,-48.5764 966.406,-36.5764 966.406,17.4236 663.506,17.4236 "/>
-    <polyline style="fill: none; fill-opacity:0; stroke-width: 0.02; stroke: #000000" points="954.406,-48.5764 954.406,-36.5764 966.406,-36.5764 "/>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="669.506" y="-24.6764">
-      <tspan x="669.506" y="-24.6764">The rdbms layer provides support for</tspan>
-      <tspan x="669.506" y="-8.6764">connection pools independently of the</tspan>
-      <tspan x="669.506" y="7.3236">underlying database client library.</tspan>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #000000" points="663.506,-48.5764 954.406,-48.5764 966.406,-36.5764 966.406,17.4236 663.506,17.4236 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 0.5; stroke: #000000" points="954.406,-48.5764 954.406,-36.5764 966.406,-36.5764 "/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="670.006" y="-24.1764">
+      <tspan x="670.006" y="-24.1764">The rdbms layer provides support for</tspan>
+      <tspan x="670.006" y="-8.1764">connection pools independently of the</tspan>
+      <tspan x="670.006" y="7.8236">underlying database client library.</tspan>
     </text>
   </g>
-  <line style="fill: none; fill-opacity:0; stroke-width: 0.02; stroke-dasharray: 4; stroke: #000000" x1="663.5" y1="-13.0427" x2="613.445" y2="-12.2053"/>
+  <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke-dasharray: 4; stroke: #000000" x1="663.5" y1="-13.0427" x2="613.445" y2="-12.2053"/>
   <g>
     <polygon style="fill: #ffffff" points="436.374,267.86 627.174,267.86 639.174,279.86 639.174,333.86 436.374,333.86 "/>
-    <polygon style="fill: none; fill-opacity:0; stroke-width: 0.02; stroke: #000000" points="436.374,267.86 627.174,267.86 639.174,279.86 639.174,333.86 436.374,333.86 "/>
-    <polyline style="fill: none; fill-opacity:0; stroke-width: 0.02; stroke: #000000" points="627.174,267.86 627.174,279.86 639.174,279.86 "/>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="442.374" y="291.76">
-      <tspan x="442.374" y="291.76">The rdbms layer supports</tspan>
-      <tspan x="442.374" y="307.76">pools/caches of prepared</tspan>
-      <tspan x="442.374" y="323.76">statements.</tspan>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #000000" points="436.374,267.86 627.174,267.86 639.174,279.86 639.174,333.86 436.374,333.86 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 0.5; stroke: #000000" points="627.174,267.86 627.174,279.86 639.174,279.86 "/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="442.874" y="292.26">
+      <tspan x="442.874" y="292.26">The rdbms layer supports</tspan>
+      <tspan x="442.874" y="308.26">pools/caches of prepared</tspan>
+      <tspan x="442.874" y="324.26">statements.</tspan>
     </text>
   </g>
-  <line style="fill: none; fill-opacity:0; stroke-width: 0.02; stroke-dasharray: 4; stroke: #000000" x1="369.169" y1="283.668" x2="436.371" y2="290.52"/>
+  <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke-dasharray: 4; stroke: #000000" x1="369.168" y1="283.668" x2="436.371" y2="290.52"/>
   <g>
     <polygon style="fill: #ffffff" points="929.234,453.964 1150.83,453.964 1162.83,465.964 1162.83,519.964 929.234,519.964 "/>
-    <polygon style="fill: none; fill-opacity:0; stroke-width: 0.02; stroke: #000000" points="929.234,453.964 1150.83,453.964 1162.83,465.964 1162.83,519.964 929.234,519.964 "/>
-    <polyline style="fill: none; fill-opacity:0; stroke-width: 0.02; stroke: #000000" points="1150.83,453.964 1150.83,465.964 1162.83,465.964 "/>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="935.234" y="477.864">
-      <tspan x="935.234" y="477.864">Auto commit is on by default</tspan>
-      <tspan x="935.234" y="493.864">no matter the underlying</tspan>
-      <tspan x="935.234" y="509.864">type of database.</tspan>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #000000" points="929.234,453.964 1150.83,453.964 1162.83,465.964 1162.83,519.964 929.234,519.964 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 0.5; stroke: #000000" points="1150.83,453.964 1150.83,465.964 1162.83,465.964 "/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="935.734" y="478.364">
+      <tspan x="935.734" y="478.364">Auto commit is on by default</tspan>
+      <tspan x="935.734" y="494.364">no matter the underlying</tspan>
+      <tspan x="935.734" y="510.364">type of database.</tspan>
     </text>
   </g>
-  <line style="fill: none; fill-opacity:0; stroke-width: 0.02; stroke-dasharray: 4; stroke: #000000" x1="895.677" y1="501.006" x2="929.241" y2="497.871"/>
+  <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke-dasharray: 4; stroke: #000000" x1="895.677" y1="501.006" x2="929.241" y2="497.871"/>
   <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="-121.281" y="646.718">
     <tspan x="-121.281" y="646.718">The classes within the rdbms::wrapper namespace hide the</tspan>
     <tspan x="-121.281" y="662.718">implementation details of the underlying database client APIs</tspan>
@@ -452,24 +452,24 @@
   </text>
   <g>
     <polygon style="fill: #ffffff" points="-276.276,261.424 -100.876,261.424 -88.876,273.424 -88.876,327.424 -276.276,327.424 "/>
-    <polygon style="fill: none; fill-opacity:0; stroke-width: 0.02; stroke: #000000" points="-276.276,261.424 -100.876,261.424 -88.876,273.424 -88.876,327.424 -276.276,327.424 "/>
-    <polyline style="fill: none; fill-opacity:0; stroke-width: 0.02; stroke: #000000" points="-100.876,261.424 -100.876,273.424 -88.876,273.424 "/>
-    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-270.276" y="285.324">
-      <tspan x="-270.276" y="285.324">Destructor returns the</tspan>
-      <tspan x="-270.276" y="301.324">wrapper::StmtWrapper</tspan>
-      <tspan x="-270.276" y="317.324">back to its StmtPool.</tspan>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #000000" points="-276.276,261.424 -100.876,261.424 -88.876,273.424 -88.876,327.424 -276.276,327.424 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 0.5; stroke: #000000" points="-100.876,261.424 -100.876,273.424 -88.876,273.424 "/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-269.776" y="285.824">
+      <tspan x="-269.776" y="285.824">Destructor returns the</tspan>
+      <tspan x="-269.776" y="301.824">wrapper::StmtWrapper</tspan>
+      <tspan x="-269.776" y="317.824">back to its StmtPool.</tspan>
     </text>
   </g>
   <g>
     <polygon style="fill: #ffffff" points="-214.276,16.4236 -38.876,16.4236 -26.876,28.4236 -26.876,82.4236 -214.276,82.4236 "/>
-    <polygon style="fill: none; fill-opacity:0; stroke-width: 0.02; stroke: #000000" points="-214.276,16.4236 -38.876,16.4236 -26.876,28.4236 -26.876,82.4236 -214.276,82.4236 "/>
-    <polyline style="fill: none; fill-opacity:0; stroke-width: 0.02; stroke: #000000" points="-38.876,16.4236 -38.876,28.4236 -26.876,28.4236 "/>
-    <text font-size="12.7998" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-208.276" y="40.3236">
-      <tspan x="-208.276" y="40.3236">Destructor returns the</tspan>
-      <tspan x="-208.276" y="56.3236">wrapper::ConnWrapper</tspan>
-      <tspan x="-208.276" y="72.3236">back to its ConnPool.</tspan>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #000000" points="-214.276,16.4236 -38.876,16.4236 -26.876,28.4236 -26.876,82.4236 -214.276,82.4236 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 0.5; stroke: #000000" points="-38.876,16.4236 -38.876,28.4236 -26.876,28.4236 "/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="-207.776" y="40.8236">
+      <tspan x="-207.776" y="40.8236">Destructor returns the</tspan>
+      <tspan x="-207.776" y="56.8236">wrapper::ConnWrapper</tspan>
+      <tspan x="-207.776" y="72.8236">back to its ConnPool.</tspan>
     </text>
   </g>
-  <line style="fill: none; fill-opacity:0; stroke-width: 0.02; stroke-dasharray: 4; stroke: #000000" x1="-211.59" y1="82.3956" x2="-268.674" y2="103.076"/>
-  <line style="fill: none; fill-opacity:0; stroke-width: 0.02; stroke-dasharray: 4; stroke: #000000" x1="-238.535" y1="327.405" x2="-295.61" y2="361.044"/>
+  <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke-dasharray: 4; stroke: #000000" x1="-211.59" y1="82.3956" x2="-268.674" y2="103.076"/>
+  <line style="fill: none; fill-opacity:0; stroke-width: 1; stroke-dasharray: 4; stroke: #000000" x1="-235.936" y1="325.608" x2="-295.61" y2="360.482"/>
 </svg>
