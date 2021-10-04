@@ -18,7 +18,7 @@ import "cta_eos.proto";
 /*
  * File metadata
  */
-message Metadata0 {
+message FileInfo {
   string fid = 1; // disk system unique file ID
   uint64 size = 2; // file size
   string storageClass = 3; // tape system related storage class (file family)
@@ -48,7 +48,7 @@ message ArchiveRequest {
   cta.common.Service instance = 1;  // client instance ID
   cta.eos.Client cli = 2;      // requester information
   cta.eos.Transport transport = 3;      // IO, error and success endpoints
-  Metadata0 file = 4;      // files' metadata
+  FileInfo file = 4;      // files' metadata
 }
 
 /*
@@ -58,7 +58,7 @@ message RetrieveRequest {
   cta.common.Service instance = 1;  // client instance ID
   cta.eos.Client cli = 2;      // requester information
   cta.eos.Transport transport = 3;      // IO, error and success endpoints
-  Metadata0 file = 4;      // files' metadata
+  FileInfo file = 4;      // files' metadata
   uint64 archiveId = 5; // tape system unique file ID
 }
 
@@ -66,7 +66,7 @@ message DeleteRequest {
   cta.common.Service instance = 1;  // client instance ID
   cta.eos.Client cli = 2;      // requester information
   cta.eos.Transport transport = 3;      // IO, error and success endpoints
-  Metadata0 file = 4;      // files' metadata
+  FileInfo file = 4;      // files' metadata
   uint64 archiveId = 5; // tape system unique file ID
 }
 
