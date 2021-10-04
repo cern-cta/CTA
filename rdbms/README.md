@@ -64,5 +64,5 @@ auto conn = connPool.getConn();
 
 The following class diagram shows the most important design details of the `rdbms` layer:
 
-![cta_rdbms_class_diagram.png](cta_rdbms_class_diagram.png)
+![cta_rdbms_class_diagram.svg](cta_rdbms_class_diagram.svg)
 
