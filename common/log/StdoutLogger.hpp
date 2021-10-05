@@ -34,8 +34,9 @@ public:
    * @param hostName The name of the host to be prepended to every log message.
    * @param programName The name of the program to be prepended to every log
    * message.
+   * @param simple If true, then logging header is not included.
    */
-  StdoutLogger(const std::string &hostName, const std::string &programName);
+  StdoutLogger(const std::string &hostName, const std::string &programName, bool simple = false);
 
   /**
    * Destructor.
@@ -68,6 +69,9 @@ protected:
    * @param body The body of the message to be logged.
    */
   void writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) override;
+
+private:
+    bool m_simple;
 
 }; // class StringLogger
 

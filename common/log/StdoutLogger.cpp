@@ -23,8 +23,8 @@ namespace log {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-StdoutLogger::StdoutLogger(const std::string &hostName, const std::string &programName):
-  Logger(hostName, programName, DEBUG) {
+StdoutLogger::StdoutLogger(const std::string &hostName, const std::string &programName, bool simple):
+  Logger(hostName, programName, DEBUG), m_simple(simple) {
 }
 
 //------------------------------------------------------------------------------
@@ -42,8 +42,13 @@ void StdoutLogger::prepareForFork() {}
 // writeMsgToUnderlyingLoggingSystem
 //------------------------------------------------------------------------------
 void StdoutLogger::writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) {
-  const std::string headerPlusBody = header + body;
-  printf("%s\n", headerPlusBody.c_str());
+
+  if (m_simple) {
+      printf("%s\n", body.c_str());
+  }  else {
+      const std::string headerPlusBody = header + body;
+      printf("%s\n", headerPlusBody.c_str());
+  }
 }
 
 } // namespace log
