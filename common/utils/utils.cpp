@@ -163,12 +163,13 @@ std::string getEnclosingPath(const std::string &path) {
   if(path == "/") {
     throw Exception("Root directory does not have a parent");
   }
+  const std::string &trimmedPath = trimFinalSlashes(path);
 
-  const std::string::size_type lastSlashIndex = path.find_last_of('/');
+  const std::string::size_type lastSlashIndex = trimmedPath.find_last_of('/');
   if(std::string::npos == lastSlashIndex) {
     throw Exception("Path does not contain a slash");
   }
-  return path.substr(0, lastSlashIndex + 1);
+  return trimmedPath.substr(0, lastSlashIndex + 1);
 }
 
 //------------------------------------------------------------------------------
