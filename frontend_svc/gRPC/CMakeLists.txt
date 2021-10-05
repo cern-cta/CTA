@@ -20,11 +20,12 @@ find_package(Protobuf3 REQUIRED)
 include_directories(${CMAKE_BINARY_DIR}/eos_cta
                     ${PROTOBUF3_INCLUDE_DIRS})
 
-add_executable(frontend-grpc-svc FrontendGRpcSvc.cpp)
+add_executable(cta-dcache FrontendGRpcSvc.cpp)
 
-target_link_libraries(frontend-grpc-svc CtaGRpc
+target_link_libraries(cta-dcache CtaGRpc
         ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY}
         ctascheduler ctacommon ctaobjectstore ctacatalogue)
-set_property(TARGET frontend-grpc-svc APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+set_property(TARGET cta-dcache APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
-install(TARGETS frontend-grpc-svc DESTINATION usr/bin)
+install(TARGETS cta-dcache DESTINATION usr/bin)
+install (FILES cta-dcache.service DESTINATION etc/systemd/system)

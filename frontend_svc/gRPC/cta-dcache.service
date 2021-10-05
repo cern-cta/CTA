@@ -1,0 +1,13 @@
+[Unit]
+Description=dCache frontend for CERN Tape Archive (CTA)
+After=syslog.target network-online.target
+
+[Service]
+ExecStart=/usr/bin/cta-dcache
+Type=simple
+Restart=always
+User=cta
+Group=cta
+
+[Install]
+WantedBy=default.target
