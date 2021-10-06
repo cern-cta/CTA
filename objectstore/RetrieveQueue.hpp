@@ -126,6 +126,9 @@ public:
 
   //! Return a summary of the number of jobs and number of bytes in the queue
   CandidateJobList getCandidateSummary();
+
+  //! Return the mount policy names for the queue object
+  std::list<std::string> getMountPolicyNames();
   
   void removeJobsAndCommit(const std::list<std::string> & jobsToRemove);
   // -- Generic parameters

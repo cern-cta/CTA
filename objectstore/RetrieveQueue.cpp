@@ -670,6 +670,20 @@ auto RetrieveQueue::getCandidateSummary() -> CandidateJobList {
   return ret;
 }
 
+auto RetrieveQueue::getMountPolicyNames() -> std::list<std::string> {
+  ValueCountMapString mountPolicyNameMap(m_payload.mutable_mountpolicynamemap());
+  auto mountPolicyCountMap = mountPolicyNameMap.getMap(); 
+
+  std::list<std::string> mountPolicyNames;
+
+  for(const auto &mountPolicyCount: mountPolicyCountMap) {
+    if (mountPolicyCount.second != 0) {
+      mountPolicyNames.push_back(mountPolicyCount.first);
+    }
+  }
+  return mountPolicyNames;
+}
+
 void RetrieveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemove) {
   checkPayloadWritable();
   ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap());

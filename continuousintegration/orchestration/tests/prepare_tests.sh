@@ -215,6 +215,15 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
      --instance ${EOSINSTANCE}                                        \
      --name powerusers                                                  \
      --mountpolicy ctasystest --comment "ctasystest"
+###
+# This mount policy is for repack: IT MUST CONTAIN THE `repack` STRING IN IT TO ALLOW MOUNTING DISABLED TAPES
+kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mountpolicy add    \
+    --name repack_ctasystest                                                 \
+    --archivepriority 2                                               \
+    --minarchiverequestage 1                                          \
+    --retrievepriority 2                                              \
+    --minretrieverequestage 1                                         \
+    --comment "repack mountpolicy for ctasystest"
 
 echo "Labeling tapes:"
   # add all tapes

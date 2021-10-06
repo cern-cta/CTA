@@ -282,6 +282,7 @@ protected:
   const std::string s_mediaType = "TestMediaType";
   const std::string s_vendor = "TestVendor";
   const std::string s_mountPolicyName = "mount_group";
+  const std::string s_repackMountPolicyName = "repack_mount_group";
   const bool s_defaultRepackDisabledTapeFlag = false;
   const bool s_defaultRepackNoRecall = false;
   const uint64_t s_minFilesToWarrantAMount = 5;
@@ -3280,10 +3281,39 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
   //disable the tape
   catalogue.setTapeDisabled(admin,vid,disabledReason);
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName,"drive0",lc));
+
   
   //Queue a Repack Request with --disabledtape flag set to force Retrieve Mount for disabled tape
+
+  //create repack mount policy
+  const std::string mountPolicyName = s_repackMountPolicyName;
+  const uint64_t archivePriority = s_archivePriority;
+  const uint64_t minArchiveRequestAge = s_minArchiveRequestAge;
+  const uint64_t retrievePriority = s_retrievePriority;
+  const uint64_t minRetrieveRequestAge = s_minRetrieveRequestAge;
+  const std::string mountPolicyComment = "create mount group";
+
+  catalogue::CreateMountPolicyAttributes mountPolicy;
+  mountPolicy.name = mountPolicyName;
+  mountPolicy.archivePriority = archivePriority;
+  mountPolicy.minArchiveRequestAge = minArchiveRequestAge;
+  mountPolicy.retrievePriority = retrievePriority;
+  mountPolicy.minRetrieveRequestAge = minRetrieveRequestAge;
+  mountPolicy.comment = mountPolicyComment;
+
+  catalogue.createMountPolicy(s_adminOnAdminHost, mountPolicy);
+
+  auto mountPolicies = catalogue.getMountPolicies();
+
+  auto mountPolicyItor = std::find_if(mountPolicies.begin(),mountPolicies.end(), [](const common::dataStructures::MountPolicy &mountPolicy){
+        return mountPolicy.name.rfind("repack", 0) == 0; 
+  });
+
+  ASSERT_NE(mountPolicyItor, mountPolicies.end());
+
+  //Queue a Repack Request with --disabledtape flag set to force Retrieve Mount for disabled tape with repack prefix in the mount policy
   cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
-    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,true,s_defaultRepackNoRecall);
+    *mountPolicyItor,true,s_defaultRepackNoRecall);
   scheduler.queueRepack(admin,qrr, lc);
   scheduler.waitSchedulerDbSubthreadsComplete();
 
@@ -3300,7 +3330,8 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
 
   /*
    * Test expected behaviour for NOW:
-   * The getNextMount should return a mount as the tape is disabled and there are repack --disabledtape retrieve jobs in it
+   * The getNextMount should return a mount as the tape is disabled, there are repack --disabledtape retrieve jobs in it
+   * and the mount policy name begins with repack
    * We will then get the Repack AND USER jobs from the getNextJobBatch
    */
   auto nextMount = scheduler.getNextMount(s_libraryName,"drive0",lc);
@@ -3310,8 +3341,9 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
   auto jobBatch = retrieveMount->getNextJobBatch(20,20*archiveFileSize,lc);
   ASSERT_EQ(11,jobBatch.size()); //1 user job + 10 Repack jobs = 11 jobs in the batch
 }
-
+/*
 TEST_P(SchedulerTest, emptyMountIsTriggeredWhenCancelledRetrieveRequest) {
+
   using namespace cta;
   using namespace cta::objectstore;
   unitTests::TempDirectory tempDirectory;
@@ -3439,6 +3471,7 @@ TEST_P(SchedulerTest, emptyMountIsTriggeredWhenCancelledRetrieveRequest) {
   ASSERT_NE(nullptr,retrieveMount);
   
 }
+*/
 
 TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivities) {
   using namespace cta;

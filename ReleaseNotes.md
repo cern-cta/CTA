@@ -15,7 +15,10 @@
 - cta/CTA#1032 cta-admin dr ls crashes the frontend if executed during an archive/retrieve
 - cta/CTA#996  Removes PARALLEL from migration scripts
 - cta/CTA#1035 log configuration options on frontend startup
-
+- cta/CTA#1042 Do not iterate over retrieve queues when holding global scheduler lock
+  - Repacks on a disabled tape must now use a mount policy whose name starts with repack
+  - There is no longer an empty mount when a disabled/broken tape queue is full of deleted requests
+  
 # v4.2-2
 
 ## Summary

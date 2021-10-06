@@ -81,7 +81,7 @@ roundTripRepack() {
   then
   echo
     echo "Launching the repack \"just move\" test on VID ${VID_TO_REPACK} (with backpressure)"
-    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step1-RoundTripRepack -p -n ctasystest || exit 1
+    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step1-RoundTripRepack -p -n repack_ctasystest || exit 1
   else
     echo "No vid found to repack"
     exit 1
@@ -95,7 +95,7 @@ roundTripRepack() {
   then
   echo
     echo "Launching the repack \"just move\" test on VID ${VID_TO_REPACK}"
-    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RoundTripRepack -n ctasystest  || exit 1
+    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RoundTripRepack -n repack_ctasystest  || exit 1
   else
     echo "No vid found to repack"
     exit 1
@@ -122,7 +122,7 @@ repackDisableTape() {
     echo "Marking the tape ${VID_TO_REPACK} as DISABLED"
     kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape ch --state DISABLED --reason "Repack disabled tape test" --vid ${VID_TO_REPACK}
     echo "Launching the repack request test on VID ${VID_TO_REPACK} without the disabled flag"
-    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackDisabledTape -n ctasystest && echo "The repack command should have failed as the tape is disabled" && exit 1 || echo "The repack submission has failed, test OK"
+    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackDisabledTape -n repack_ctasystest && echo "The repack command should have failed as the tape is disabled" && exit 1 || echo "The repack submission has failed, test OK"
   else
     echo "No vid found to repack"
     exit 1
@@ -130,7 +130,7 @@ repackDisableTape() {
 
   echo
   echo "Launching the repack request test on VID ${VID_TO_REPACK} with the --disabledtape flag"
-  kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -d -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackDisabledTape -n ctasystest  || exit 1
+  kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -d -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackDisabledTape -n repack_ctasystest  || exit 1
 
   echo "Reclaiming tape ${VID_TO_REPACK}"
   kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
@@ -155,7 +155,7 @@ repackJustMove() {
   then
   echo
     echo "Launching the repack test \"just move\" on VID ${VID_TO_REPACK}"
-    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackJustMove -n ctasystest  || exit 1
+    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackJustMove -n repack_ctasystest  || exit 1
   else
     echo "No vid found to repack"
     exit 1
@@ -179,7 +179,7 @@ repackJustAddCopies() {
   if [ "$VID_TO_REPACK" != "null" ]
   then
     echo "Launching the repack \"just add copies\" test on VID ${VID_TO_REPACK} with all copies already on CTA"
-    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -a -r ${BASE_REPORT_DIRECTORY}/Step$1-JustAddCopiesAllCopiesInCTA -n ctasystest
+    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -a -r ${BASE_REPORT_DIRECTORY}/Step$1-JustAddCopiesAllCopiesInCTA -n repack_ctasystest
   else
     echo "No vid found to repack"
     exit 1
@@ -219,7 +219,7 @@ repackCancellation() {
   then
   echo
     echo "Launching a repack request on VID ${VID_TO_REPACK}"
-    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackCancellation -n ctasystest & 2>/dev/null
+    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackCancellation -n repack_ctasystest & 2>/dev/null
     pid=$!
   else
     echo "No vid found to repack"
@@ -353,7 +353,7 @@ repackMoveAndAddCopies() {
   VID_TO_REPACK=$(getFirstVidContainingFiles)
 
   echo "Launching the repack \"Move and add copies\" test on VID ${VID_TO_REPACK}"
-  kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -t 600 -r ${BASE_REPORT_DIRECTORY}/Step$1-MoveAndAddCopies -n ctasystest  || exit 1
+  kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -t 600 -r ${BASE_REPORT_DIRECTORY}/Step$1-MoveAndAddCopies -n repack_ctasystest  || exit 1
 
   repackLsResult=`kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json repack ls --vid ${VID_TO_REPACK} | jq ". [0]"`
   totalFilesToRetrieve=`echo $repackLsResult | jq -r ".totalFilesToRetrieve"`
@@ -436,7 +436,7 @@ repackTapeRepair() {
     done
 
     echo "Launching a repack request on the vid ${VID_TO_REPACK}"
-    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackTapeRepair -n ctasystest  ||      exit 1
+    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackTapeRepair -n repack_ctasystest  ||      exit 1
 
     repackLsResult=`kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0]"`
     userProvidedFiles=`echo $repackLsResult | jq -r ".userProvidedFiles"`
@@ -539,7 +539,7 @@ repackTapeRepairNoRecall() {
     done
 
     echo "Launching a repack request on the vid ${VID_TO_REPACK}"
-    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackTapeRepairNoRecall -n ctasystest -u ||      exit 1
+    kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackTapeRepairNoRecall -n repack_ctasystest -u ||      exit 1
 
     repackLsResult=`kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0]"`
     userProvidedFiles=`echo $repackLsResult | jq -r ".userProvidedFiles"`
