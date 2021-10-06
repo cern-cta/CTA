@@ -339,38 +339,28 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     auto vidToTapeMap = m_catalogue.getTapesByVid({rqp.vid});
     common::dataStructures::Tape::State tapeState = vidToTapeMap.at(rqp.vid).state;
     bool tapeIsDisabled = tapeState == common::dataStructures::Tape::DISABLED;
-    bool tapeIsBroken = tapeState == common::dataStructures::Tape::BROKEN;
-    if(tapeIsDisabled || tapeIsBroken){
+    bool tapeIsActive = tapeState == common::dataStructures::Tape::ACTIVE;
+    if (tapeIsActive) {
+      isPotentialMount = true;
+    }
+    else if(tapeIsDisabled){
       //In the case there are Repack Retrieve Requests with the force disabled flag set
-      //on it, we will trigger a mount.
+      //on a disabled tape, we will trigger a mount.
+      //Mount policies that begin with repack are used for repack requests with force disabled flag 
+      //set to true. We only look for those to avoid looping through the retrieve queue 
+      //while holding the global scheduler lock.
       //In the case there are only deleted Retrieve Request on a DISABLED or BROKEN tape
-      //we want to trigger a mount to flush the queue.
-      auto retrieveQueueJobs = rqueue.dumpJobs();
-      uint64_t nbJobsNotExistInQueue = 0;
-      for(auto &job: retrieveQueueJobs){
-        cta::objectstore::RetrieveRequest rr(job.address,this->m_objectStore);
-        try{
-          rr.fetchNoLock();
-          if(tapeIsDisabled && rr.getRepackInfo().forceDisabledTape){
-            //At least one Retrieve job is a Repack Retrieve job with the tape disabled flag,
-            //we have a potential mount.
-            isPotentialMount = true;
-            break;
-          }
-        } catch(const cta::objectstore::Backend::NoSuchObject & ex){
-          //In the case of a repack cancellation, the RetrieveRequest object is deleted, so we just ignore the exception
-          //it will not be a potential mount.
-          nbJobsNotExistInQueue++;
-        }
-      }
-      if(!isPotentialMount && nbJobsNotExistInQueue == retrieveQueueJobs.size()){
-        //The tape is disabled or broken, there are only jobs that have been deleted, it is a potential mount as we want to flush the queue.
+      //we will no longer trigger a mount. Eventually the oldestRequestAge will pass the configured
+      //threshold and the queue will be flushed
+
+      auto queueMountPolicyNames = rqueue.getMountPolicyNames();
+      auto mountPolicyItor = std::find_if(queueMountPolicyNames.begin(),queueMountPolicyNames.end(), [](const std::string &mountPolicyName){
+        return mountPolicyName.rfind("repack", 0) == 0; 
+      });
+      
+      if(mountPolicyItor != queueMountPolicyNames.end()){
         isPotentialMount = true;
       }
-    } else {
-      //A BROKEN tape cannot be a potential mount, only ACTIVE tape
-      if(tapeState == common::dataStructures::Tape::ACTIVE)
-        isPotentialMount = true;
     }
     if (rqSummary.jobs && (isPotentialMount || purpose == SchedulerDatabase::PurposeGetMountInfo::SHOW_QUEUES)) {
       //Getting the default mountPolicies parameters from the queue summary

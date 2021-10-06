@@ -1527,6 +1527,13 @@ void RequestMessage::processRepack_Add(cta::xrd::Response &response)
 
   bool forceDisabledTape = has_flag(OptionBoolean::DISABLED);
 
+  if (forceDisabledTape) {
+   //repacks on a disabled tape must be from a mount policy whose name starts with repack
+   if (mountPolicy.name.rfind("repack", 0) != 0) { 
+      throw cta::exception::UserError("--disabledtape requires a mount policy whose name starts with repack");
+   }
+  }
+
   bool noRecall = has_flag(OptionBoolean::NO_RECALL);
 
   // Process each item in the list
