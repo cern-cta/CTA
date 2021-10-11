@@ -426,13 +426,16 @@ public:
         if (contLock.isLocked()) contLock.release();
         localTimingList.insertAndReset("containerUnlockTime", t);
         m_agentReference.removeBatchFromOwnership(elementsToDereferenceFromAgent, m_backend);
+        typename ContainerTraits<Q,C>::PoppedElementsSummary batchSummary = candidateElements.summary;
         for (auto & e: candidateElements.elements) {
           if (!elementsNotToReport.count(ContainerTraits<Q,C>::getElementAddress(e))) {
-            ret.summary += ContainerTraits<Q,C>::getElementSummary(e);
-            unfulfilledCriteria -= ContainerTraits<Q,C>::getElementSummary(e);
             ret.elements.insertBack(std::move(e));
+          } else {
+            batchSummary -= ContainerTraits<Q,C>::getElementSummary(e);
           }
         }
+        ret.summary += batchSummary;
+        unfulfilledCriteria -= batchSummary;
         localTimingList.insertAndReset("structureProcessingTime", t);
       }
       log::ScopedParamContainer params(lc);

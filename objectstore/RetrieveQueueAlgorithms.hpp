@@ -80,6 +80,10 @@ struct ContainerTraits<RetrieveQueue,C>
       files += other.files;
       return *this;
     }
+    PoppedElementsSummary& operator-=(const PoppedElementsSummary &other) {
+      files -= other.files;
+      return *this;
+    }
     void addDeltaToLog(const PoppedElementsSummary&, log::ScopedParamContainer&) const;
   };
   struct PoppedElementsList : public std::list<PoppedElement> {
@@ -493,6 +497,11 @@ struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PoppedElementsSum
   PoppedElementsSummary& operator+=(const PoppedElementsSummary &other) {
     bytes += other.bytes;
     files += other.files;
+    return *this;
+  }
+  PoppedElementsSummary& operator-=(const PoppedElementsSummary &other) {
+    bytes -= other.bytes;
+    files -= other.files;
     return *this;
   }
   void addDeltaToLog(const PoppedElementsSummary &previous, log::ScopedParamContainer &params) {
