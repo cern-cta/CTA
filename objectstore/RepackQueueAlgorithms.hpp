@@ -64,6 +64,10 @@ struct ContainerTraits<RepackQueue,C>
       requests += other.requests;
       return *this;
     }
+    PoppedElementsSummary& operator-=(const PoppedElementsSummary &other) {
+      requests -= other.requests;
+      return *this;
+    }
     void addDeltaToLog(const PoppedElementsSummary&, log::ScopedParamContainer&);
   };
   struct PoppedElementsList : public std::list<PoppedElement> {

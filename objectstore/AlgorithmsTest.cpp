@@ -236,6 +236,120 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
   }
 }
 
+TEST(ObjectStore, ArchiveQueueAlgorithmsWithDeletedJobsInQueue) {
+  using namespace cta::objectstore;
+  // We will need a log object 
+#ifdef STDOUT_LOGGING
+  cta::log::StdoutLogger dl("dummy", "unitTest");
+#else
+  cta::log::DummyLogger dl("dummy", "unitTest");
+#endif
+  cta::catalogue::DummyCatalogue catalogue;
+  cta::log::LogContext lc(dl);
+  // Here we check for the ability to detect dead (but empty agents)
+  // and clean them up.
+  BackendVFS be;
+  AgentReference agentRef("unitTestGarbageCollector", dl);
+  Agent agent(agentRef.getAgentAddress(), be);
+  
+  // Create the root entry
+  RootEntry re(be);
+  re.initialize();
+  re.insert();
+  // Create the agent register
+  EntryLogSerDeser el("user0",
+      "unittesthost", time(NULL));
+  ScopedExclusiveLock rel(re);
+  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
+  rel.release();
+  agent.initialize();
+  agent.insertAndRegisterSelf(lc);
+  ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser>::InsertedElement::list requests;
+  std::list<std::unique_ptr<cta::objectstore::ArchiveRequest>> archiveRequests;
+  for (size_t i=0; i<10; i++) {
+    std::string arAddr = agentRef.nextId("ArchiveRequest");
+    agentRef.addToOwnership(arAddr, be);
+    cta::common::dataStructures::MountPolicy mp;
+    // This will be a copy number 1.
+    cta::common::dataStructures::ArchiveFile aFile;
+    aFile.archiveFileID = 123456789L;
+    aFile.diskFileId = "eos://diskFile";
+    aFile.checksumBlob.insert(cta::checksum::NONE, "");
+    aFile.creationTime = i; //so we can check the requests popped were correct
+    aFile.reconciliationTime = 0;
+    aFile.diskFileInfo = cta::common::dataStructures::DiskFileInfo();
+    aFile.diskInstance = "eoseos";
+    aFile.fileSize = 667;
+    aFile.storageClass = "sc";
+    archiveRequests.emplace_back(new cta::objectstore::ArchiveRequest(arAddr, be));
+    requests.emplace_back(ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser>::InsertedElement{archiveRequests.back().get(), 1, aFile, mp,
+        cta::nullopt});
+    auto & ar=*requests.back().archiveRequest;
+    auto copyNb = requests.back().copyNb;
+    ar.initialize();
+    ar.setArchiveFile(aFile);
+    ar.addJob(copyNb, "TapePool0", agentRef.getAgentAddress(), 1, 1, 1);
+    ar.setMountPolicy(mp);
+    ar.setArchiveReportURL("");
+    ar.setArchiveErrorReportURL("");
+    ar.setRequester(cta::common::dataStructures::RequesterIdentity("user0", "group0"));
+    ar.setSrcURL("root://eoseos/myFile");
+    ar.setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
+    ar.insert();
+  }
+  ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser> archiveAlgos(be, agentRef);
+  archiveAlgos.referenceAndSwitchOwnership("Tapepool", requests, lc);
+
+  {
+    //Delete one in tree requests from the queue
+    int i = 0;
+    for(auto & ar: archiveRequests){
+      cta::objectstore::ScopedExclusiveLock sel(*ar);
+      ar->fetch();
+      if ((i % 3) == 1) { 
+        ar->remove();
+      }
+      i++;
+    }
+  }
+
+  {
+    // Get first batch of four requests 
+    ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::PopCriteria popCriteria;
+    popCriteria.bytes = 667 * 4;
+    popCriteria.files = 100; // never reached
+    auto poppedJobs = archiveAlgos.popNextBatch("Tapepool", popCriteria, lc);
+    ASSERT_EQ(poppedJobs.elements.size(), 4);
+    ASSERT_EQ(poppedJobs.summary.files, 4);
+    ASSERT_EQ(poppedJobs.summary.bytes, 667 * 4);
+    int expected_times[] = {0, 2, 3, 5};
+    int i = 0;
+    for (auto &job: poppedJobs.elements) {
+      ASSERT_EQ(job.archiveFile.creationTime, expected_times[i]);
+      ASSERT_EQ(job.bytes, 667);
+      i++;
+    }
+  }
+  
+  {
+    // Get a second batch of remaining tree requests 
+    ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::PopCriteria popCriteria;
+    popCriteria.bytes = 667 * 3;
+    popCriteria.files = 100; // never reached
+    auto poppedJobs = archiveAlgos.popNextBatch("Tapepool", popCriteria, lc);
+    ASSERT_EQ(poppedJobs.elements.size(), 3);
+    ASSERT_EQ(poppedJobs.summary.files, 3);
+    ASSERT_EQ(poppedJobs.summary.bytes, 667 * 3);
+    int expected_times[] = {6, 8, 9};
+    int i = 0;
+    for (auto &job: poppedJobs.elements) {
+      ASSERT_EQ(job.archiveFile.creationTime, expected_times[i]);
+      ASSERT_EQ(job.bytes, 667);
+      i++;
+    }
+  }
+}
+
 TEST(ObjectStore, RetrieveQueueAlgorithms) {
   using namespace cta::objectstore;
   // We will need a log object 
