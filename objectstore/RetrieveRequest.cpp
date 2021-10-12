@@ -994,7 +994,7 @@ auto RetrieveRequest::asyncUpdateJobOwner(uint32_t copyNumber, const std::string
               ri.forceDisabledTape = payload.repack_info().force_disabled_tape();
             }
             // TODO serialization of payload maybe not necessary
-            oh.set_payload(payload.SerializePartialAsString());
+            oh.set_payload(payload.SerializeAsString());
             return oh.SerializeAsString();
           }
         }
@@ -1173,7 +1173,7 @@ RetrieveRequest::AsyncJobSucceedForRepackReporter * RetrieveRequest::asyncReport
           {
             //Change the status to RJS_Succeed
             job.set_status(serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess);
-            oh.set_payload(payload.SerializePartialAsString());
+            oh.set_payload(payload.SerializeAsString());
             return oh.SerializeAsString();
           }
         }

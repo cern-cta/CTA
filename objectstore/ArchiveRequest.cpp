@@ -594,7 +594,7 @@ ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint32
               // Get all jobs statuses.
               retRef.m_jobsStatusMap[j2.copynb()] = j2.status();
             }
-            oh.set_payload(payload.SerializePartialAsString());
+            oh.set_payload(payload.SerializeAsString());
             retRef.m_timingReport.processTime = retRef.m_timer.secs(utils::Timer::resetCounter);
             return oh.SerializeAsString();
           }

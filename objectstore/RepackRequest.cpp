@@ -800,7 +800,7 @@ RepackRequest::AsyncOwnerAndStatusUpdater* RepackRequest::asyncUpdateOwnerAndSta
         throw exception::Exception("In RepackRequest::asyncUpdateOwner()::lambda(): unexpcted mode: neither expand nor repack.");
       }
       // We only need to modify the pay load if there is a status change.
-      if (newStatus) oh.set_payload(payload.SerializePartialAsString());
+      if (newStatus) oh.set_payload(payload.SerializeAsString());
       return oh.SerializeAsString();
     };
   ret->m_backendUpdater.reset(m_objectStore.asyncUpdate(getAddressIfSet(), ret->m_updaterCallback));
