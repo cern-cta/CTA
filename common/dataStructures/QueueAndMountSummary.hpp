@@ -60,6 +60,7 @@ struct QueueAndMountSummary {
     time_t sleepTime;
   };
   optional<SleepForSpaceInfo> sleepForSpaceInfo;
+  std::list<std::string> mountPolicies;
   
   static QueueAndMountSummary &getOrCreateEntry(std::list<QueueAndMountSummary> &summaryList,
     MountType mountType, const std::string &tapePool, const std::string &vid,

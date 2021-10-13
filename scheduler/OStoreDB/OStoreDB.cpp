@@ -227,8 +227,11 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       if(mountPolicies.size()) {
         //We get all the mount policies that are on the queue from the catalogue list
         auto mountPoliciesInQueueList = getMountPoliciesInQueue(mountPolicies,aqueueJobsSummary.mountPolicyCountMap);
+        m.mountPolicyNames = std::list<std::string>();
         //If an operator removed the queue mountPolicies from the catalogue, we will have no results...
         if(mountPoliciesInQueueList.size()){
+          std::transform(mountPoliciesInQueueList.begin(), mountPoliciesInQueueList.end(), std::back_inserter(m.mountPolicyNames.value()),
+            [](const cta::common::dataStructures::MountPolicy &policy) -> std::string {return policy.name;});
           auto mountPolicyToUse = createBestArchiveMountPolicy(mountPoliciesInQueueList);
           m.priority = mountPolicyToUse.archivePriority;
           m.minRequestAge = mountPolicyToUse.archiveMinRequestAge;
@@ -286,8 +289,11 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       if(mountPolicies.size()) {
         //We get all the mount policies that are on the queue from the catalogue list
         auto mountPoliciesInQueueList = getMountPoliciesInQueue(mountPolicies,aqueueRepackJobsSummary.mountPolicyCountMap);
+        m.mountPolicyNames = std::list<std::string>();
         //If an operator removed the queue mountPolicies from the catalogue, we will have no results...
         if(mountPoliciesInQueueList.size()){
+          std::transform(mountPoliciesInQueueList.begin(), mountPoliciesInQueueList.end(), std::back_inserter(m.mountPolicyNames.value()),
+            [](const cta::common::dataStructures::MountPolicy &policy) -> std::string {return policy.name;});
           auto mountPolicyToUse = createBestArchiveMountPolicy(mountPoliciesInQueueList);
           m.priority = mountPolicyToUse.archivePriority;
           m.minRequestAge = mountPolicyToUse.archiveMinRequestAge;
@@ -363,10 +369,13 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       //Getting the default mountPolicies parameters from the queue summary
       uint64_t minRetrieveRequestAge = rqSummary.minRetrieveRequestAge;
       uint64_t priority = rqSummary.priority;
+      std::list<std::string> queueMountPolicyNames;
       //Try to get the last values of the mountPolicies from the ones in the Catalogue
       if(mountPolicies.size()){
         auto mountPoliciesInQueueList = getMountPoliciesInQueue(mountPolicies,rqSummary.mountPolicyCountMap);
         if(mountPoliciesInQueueList.size()){
+          std::transform(mountPoliciesInQueueList.begin(), mountPoliciesInQueueList.end(), std::back_inserter(queueMountPolicyNames),
+            [](const cta::common::dataStructures::MountPolicy &policy) -> std::string {return policy.name;});
           //We need to get the most advantageous mountPolicy
           //As the Init element of the reduce function is the first element of the list, we start the reduce with the second element (++mountPolicyInQueueList.begin())
           common::dataStructures::MountPolicy mountPolicyToUse = createBestRetrieveMountPolicy(mountPoliciesInQueueList);
@@ -401,6 +410,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
           m.activityNameAndWeightedMountCount.value().weight = ac.weight;
           m.activityNameAndWeightedMountCount.value().weightedMountCount = 0.0; // This value will be computed later by the caller.
           m.activityNameAndWeightedMountCount.value().mountCount = 0; // This value will be computed later by the caller.
+          m.mountPolicyNames = queueMountPolicyNames;
           // We will display the sleep flag only if it is not expired (15 minutes timeout, hardcoded).
           // This allows having a single decision point instead of implementing is at the consumer levels.
           if (rqSummary.sleepInfo && (::time(nullptr) < (rqSummary.sleepInfo.value().sleepStartTime 
@@ -428,6 +438,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
         m.mediaType = "";      // The logical library is not known here, and will be determined by the caller.
         m.vo = "";             // The vo is not known here, and will be determined by the caller.
         m.capacityInBytes = 0; // The capacity is not known here, and will be determined by the caller.
+        m.mountPolicyNames = queueMountPolicyNames;
         // We will display the sleep flag only if it is not expired (15 minutes timeout, hardcoded).
         // This allows having a single decision point instead of implementing is at the consumer levels.
         if (rqSummary.sleepInfo && (::time(nullptr) < (rqSummary.sleepInfo.value().sleepStartTime
