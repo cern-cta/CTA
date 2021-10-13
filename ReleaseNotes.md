@@ -48,6 +48,7 @@
 ## Summary
 
 ### Features
+- Catalogue schema version 4.2
 - cta/CTA#1001 Maximum file size is now defined by VO instead of globally.
 - cta/CTA#1019 New command `cta-readtp` allows reading files from tape and verifying their checksum
 
@@ -56,17 +57,17 @@
 ## Summary
 
 ### Features
+- Catalogue schema version 4.1
 - cta/CTA#1016 New options for filtering deleted files using `cta-admin rtf ls` command.
 - cta/CTA#983 Add cta-release package for public binary rpm distribution.
 - cta/CTA#980 Add external encryption script option
 - cta/CTA#976 Define a new table in the DB schema to contain the drive status.
 - cta/CTA#834 New command "recycletf restore" allows undeleting a copy of a file from tape deleted using tapefile rm
-
 - [frontend] New command "tapefile rm" allows deleting a copy of a file from tape
 
 ### Bug fixes
 
- - cta/CTA#1014 Fix last column alignment when more than 1000 items are listed.
+- cta/CTA#1014 Fix last column alignment when more than 1000 items are listed.
 
 # v4.0-5
 
@@ -147,6 +148,7 @@ CTA v3.1-14.
 
 ### Features
 
+- Catalogue schema version 4.0
 - cta/CTA#964 Adds failure log messages to processCLOSEW in CTA Frontend
 - When the operator submits a tape to repack, a check is done about the tape state before queueing the repack request to ensure it can be repacked
 - Oracle catalogue migration scripts 3.1to3.2.sql: replaced DELETE FROM table_name by TRUNCATE TABLE table_name
@@ -161,6 +163,7 @@ The xrootd-ssi-protobuf-interface is not up-to-date with the CTA v4.0: deprecate
 
 ### Features
 
+- Catalogue schema version 3.2
 - Upgraded EOS to 4.8.37-1
 - cta/CTA#922 The superseded concept has been removed and replaced by a new recycle bin
 - cta/CTA#943 A new tape lifecycle logic has been implemented
