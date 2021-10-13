@@ -628,7 +628,8 @@ public:
 
     optional<ActivityNameAndWeightedMountCount> activityNameAndWeightedMountCount;
                                   /**< Description if the activity for this potential mount. */
-
+    
+    optional<std::list<std::string>> mountPolicyNames; /**< Names of mount policies for the mount*/
 
     bool operator < (const PotentialMount &other) const {
       if (priority < other.priority)

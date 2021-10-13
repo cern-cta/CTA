@@ -115,6 +115,9 @@ int ShowQueuesStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     } else {
       sq_item->set_sleeping_for_space(false);
     }
+    for (auto &policyName: sq.mountPolicies) {
+      sq_item->add_mount_policies(policyName);
+    }
 
     is_buffer_full = streambuf->Push(record);
   }
