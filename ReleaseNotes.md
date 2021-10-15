@@ -11,6 +11,7 @@
 - cta/CTA#1020 - cta-restore-deleted-files command for restoring deleted files
 - cta/CTA#1057 - Remove support for MySQL
 - cta/CTA#1074 - Improve error reporting when retrieving archive
+- cta/CTA#1026 - Add activity Mount Policy resolution to CTA
 
 ### Bug fixes
 - cta/CTA#1059 - Clean up warnings reported by static analysis

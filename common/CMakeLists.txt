@@ -70,6 +70,7 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/RequesterGroupMountRule.cpp
   dataStructures/RequesterIdentity.cpp
   dataStructures/RequesterMountRule.cpp
+  dataStructures/RequesterActivityMountRule.cpp
   dataStructures/RetrieveFileQueueCriteria.cpp
   dataStructures/RetrieveJob.cpp
   dataStructures/RetrieveRequest.cpp

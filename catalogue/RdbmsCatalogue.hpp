@@ -655,6 +655,8 @@ public:
   void setTapeDirty(const std::string & vid) override;
   void modifyTapeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,  const cta::optional<std::string> &comment) override;
 
+  void modifyRequesterActivityMountRulePolicy(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterName, const std::string &activityRegex, const std::string &mountPolicy) override;
+  void modifyRequesterActivityMountRuleComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterName, const std::string &activityRegex, const std::string &comment) override;
   void modifyRequesterMountRulePolicy(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterName, const std::string &mountPolicy) override;
   void modifyRequesteMountRuleComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterName, const std::string &comment) override;
   void modifyRequesterGroupMountRulePolicy(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterGroupName, const std::string &mountPolicy) override;
@@ -690,6 +692,50 @@ public:
    * @param name The name of the mount policy.
    */
   void deleteMountPolicy(const std::string &name) override;
+
+  /**
+   * Creates the rule that the specified mount policy will be used for the
+   * specified requester+matching activities.
+   *
+   * Please note that requester-activity mount-rules overrule requester
+   * mount-rules.
+   *
+   * @param admin The administrator.
+   * @param mountPolicyName The name of the mount policy.
+   * @param diskInstance The name of the disk instance to which the requester
+   * belongs.
+   * @param activityRegex The regex to match request activities
+   * @param requesterName The name of the requester which is only guarantted to
+   * be unique within its disk instance.
+   * @param comment Comment.
+   */
+  void createRequesterActivityMountRule(
+    const common::dataStructures::SecurityIdentity &admin,
+    const std::string &mountPolicyName,
+    const std::string &diskInstance,
+    const std::string &requesterName,
+    const std::string &activityRegex,
+    const std::string &comment) override;
+
+  /**
+   * Returns the rules that specify which mount policy is be used for which
+   * requester + activity.
+   *
+   * @return the rules that specify which mount policy is be used for which
+   * requester + activity.
+   */
+  std::list<common::dataStructures::RequesterActivityMountRule> getRequesterActivityMountRules() const override;
+
+    /**
+   * Deletes the specified mount rule.
+   *
+   * @param diskInstanceName The name of the disk instance to which the
+   * requester belongs.
+   * @param requesterName The name of the requester which is only guaranteed to
+   * be unique within its disk instance.
+   * @param activityRegex The regex to match request activities
+   */
+  void deleteRequesterActivityMountRule(const std::string &diskInstanceName, const std::string &requesterName, const std::string &activityRegex) override;
 
   /**
    * Creates the rule that the specified mount policy will be used for the
@@ -1295,6 +1341,19 @@ protected:
   ValueAndTimeBasedCacheInfo<optional<common::dataStructures::MountPolicy> > getCachedRequesterMountPolicy(const User &user) const;
 
   /**
+   * Returns true if the specified requester+activity mount-policy exists
+   *
+   * @param conn The database connection.
+   * @param diskInstanceName The name of the disk instance to which the
+   * requester and requester group belong.
+   * @param requesterName The name of the requester which is only guaranteed to
+   * be unique within its disk instance.
+   * @param activityRegex The regex to match request activities
+   * @return True if the requester-activity mount-rule exists
+   */
+  bool requesterActivityMountRuleExists(rdbms::Conn &conn, const std::string &diskInstanceName, const std::string &requesterName, const std::string &activityRegex) const;
+
+  /**
    * Returns the specified requester mount-policy or nullopt if one does not
    * exist.
    *
@@ -1623,6 +1682,29 @@ protected:
     const std::string &diskInstanceName,
     const std::string &requesterName,
     const std::string &requesterGroupName) const;
+
+
+  /**
+   * Returns the mount policies for the specified requester, requester group and requester activity.
+   *
+   * @param conn The database connection.
+   * @param diskInstanceName The name of the disk instance to which the
+   * requester and requester group belong.
+   * @param requesterName The name of the requester which is only guaranteed to
+   * be unique within its disk instance.
+   * @param requesterGroupName The name of the requester group which is only
+   * guaranteed to be unique within its disk instance.
+   * @param activity The name of the activity to match the requester activity
+   * mount rules against
+   * @return The mount policies.
+   */
+  RequesterAndGroupMountPolicies getMountPolicies(
+    rdbms::Conn &conn,
+    const std::string &diskInstanceName,
+    const std::string &requesterName,
+    const std::string &requesterGroupName,
+    const std::string &activity) const;
+
 
   /**
    * Creates a temporary table from the list of disk file IDs provided in the search criteria.

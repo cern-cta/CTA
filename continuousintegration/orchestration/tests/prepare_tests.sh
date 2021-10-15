@@ -203,6 +203,7 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
      --instance ${EOSINSTANCE}                                        \
      --name adm                                                       \
      --mountpolicy ctasystest --comment "ctasystest"
+
 ###
 # This rule exists to allow users from eosusers group to migrate files to tapes
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin groupmountrule add \
@@ -224,6 +225,14 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mountpolicy add    \
     --retrievepriority 2                                              \
     --minretrieverequestage 1                                         \
     --comment "repack mountpolicy for ctasystest"
+
+###
+# This rule if for retrieves, and matches the retrieve activity used in the tests only
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin activitymountrule add \
+     --instance ${EOSINSTANCE}                                        \
+     --name powerusers                                                \
+     --activityregex ^T0Reprocess$                                    \
+     --mountpolicy ctasystest --comment "ctasystest"
 
 echo "Labeling tapes:"
   # add all tapes

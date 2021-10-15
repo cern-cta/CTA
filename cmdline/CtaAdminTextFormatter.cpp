@@ -151,6 +151,39 @@ void TextFormatter::flush() {
  ** Output for specific commands
  **/
 
+ void TextFormatter::printActivityMountRuleLsHeader() {
+  push_back("HEADER");
+  push_back(
+    "instance",
+    "username",
+    "policy",
+    "activity",
+    "c.user",
+    "c.host",
+    "c.time",
+    "m.user",
+    "m.host",
+    "m.time",
+    "comment"
+  );
+ }
+
+ void TextFormatter::print(const ActivityMountRuleLsItem &amrls_item) {
+  push_back(
+    amrls_item.disk_instance(),
+    amrls_item.activity_mount_rule(),
+    amrls_item.mount_policy(),
+    amrls_item.activity_regex(),
+    amrls_item.creation_log().username(),
+    amrls_item.creation_log().host(),
+    timeToStr(amrls_item.creation_log().time()),
+    amrls_item.last_modification_log().username(),
+    amrls_item.last_modification_log().host(),
+    timeToStr(amrls_item.last_modification_log().time()),
+    amrls_item.comment()
+  );
+}
+
 void TextFormatter::printAdminLsHeader() {
   push_back("HEADER");
   push_back(

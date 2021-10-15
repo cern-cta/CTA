@@ -232,6 +232,8 @@ const cmdLookup_t cmdLookup = {
    { "si",                      AdminCmd::CMD_SCHEDULINGINFOS},
    { "recycletf",               AdminCmd::CMD_RECYCLETAPEFILE},
    { "rtf",                     AdminCmd::CMD_RECYCLETAPEFILE},
+   { "activitymountrule",       AdminCmd::CMD_ACTIVITYMOUNTRULE },
+   { "amr",                     AdminCmd::CMD_ACTIVITYMOUNTRULE },
 };
 
 
@@ -333,7 +335,8 @@ const std::map<std::string, OptionString::Key> strOptions = {
    { "--fileregexp",            OptionString::FILE_REGEXP },
    { "--freespacequeryurl",     OptionString::FREE_SPACE_QUERY_URL },
    { "--reason",                OptionString::REASON },
-   { "--state",                 OptionString::STATE }
+   { "--state",                 OptionString::STATE },
+   {  "--activityregex",        OptionString::ACTIVITY_REGEX},
 };
 
 
@@ -383,6 +386,7 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
 					"\n\n" 
 					 }},
    { AdminCmd::CMD_REQUESTERMOUNTRULE,   { "requestermountrule",   "rmr", { "add", "ch", "rm", "ls" } }},
+   { AdminCmd::CMD_ACTIVITYMOUNTRULE,    { "activitymountrule",    "amr", { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_SHOWQUEUES,           { "showqueues",           "sq",  { } }},
    { AdminCmd::CMD_STORAGECLASS,         { "storageclass",         "sc",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_TAPE,                 { "tape",                 "ta",  { "add", "ch", "rm", "reclaim", "ls", "label" } }},
@@ -508,7 +512,7 @@ const Option opt_read_max_drives      { Option::OPT_UINT,  "--readmaxdrives",   
 const Option opt_write_max_drives     { Option::OPT_UINT,  "--writemaxdrives",       "--wmd", " <write_max_drives>" };
 
 const Option opt_state                { Option::OPT_STR,  "--state",                 "-s",   std::string(" <\"") + Tape::stateToString(Tape::ACTIVE) +"\"" + " or \"" + Tape::stateToString(Tape::DISABLED) + "\" or \"" + Tape::stateToString(Tape::BROKEN) + "\">" };
-
+const Option opt_activityregex        { Option::OPT_STR,  "--activityregex",         "--ar", " <activity_regex>"};
 /*!
  * Map valid options to commands
  */
@@ -641,6 +645,13 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    { opt_vid.optional(), opt_fid.optional(), opt_fidfile.optional(), opt_copynb.optional(), opt_archivefileid.optional(), opt_instance.optional() }},
    {{ AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_RESTORE }, 
    { opt_vid.optional(), opt_fid, opt_copynb.optional(), opt_archivefileid.optional(), opt_instance.optional() }},
+      /*----------------------------------------------------------------------------------------------------*/
+   {{ AdminCmd::CMD_ACTIVITYMOUNTRULE,   AdminCmd::SUBCMD_ADD   },
+      { opt_instance, opt_username_alias, opt_activityregex, opt_mountpolicy, opt_comment }},
+   {{ AdminCmd::CMD_ACTIVITYMOUNTRULE,   AdminCmd::SUBCMD_CH    },
+      { opt_instance, opt_username_alias, opt_activityregex, opt_mountpolicy.optional(), opt_comment.optional() }},
+   {{ AdminCmd::CMD_ACTIVITYMOUNTRULE,   AdminCmd::SUBCMD_RM    }, { opt_instance, opt_username_alias, opt_activityregex }},
+   {{ AdminCmd::CMD_ACTIVITYMOUNTRULE,   AdminCmd::SUBCMD_LS    }, { }},
 };
 
 

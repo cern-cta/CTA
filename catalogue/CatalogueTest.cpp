@@ -203,6 +203,21 @@ namespace {
     return mountPolicy;
   }
 
+  cta::catalogue::CreateMountPolicyAttributes getMountPolicy2() {
+    // Higher priority mount policy 
+    using namespace cta;
+
+    catalogue::CreateMountPolicyAttributes mountPolicy;
+    mountPolicy.name = "mount_policy_2";
+    mountPolicy.archivePriority = 2;
+    mountPolicy.minArchiveRequestAge = 1;
+    mountPolicy.retrievePriority = 4;
+    mountPolicy.minRetrieveRequestAge = 3;
+    mountPolicy.comment = "Create mount policy";
+    return mountPolicy;
+  }
+
+
   cta::common::dataStructures::TapeDrive getTapeDriveWithMandatoryElements(const std::string &driveName) {
     cta::common::dataStructures::TapeDrive tapeDrive;
     tapeDrive.driveName = driveName;
@@ -318,6 +333,12 @@ void cta_catalogue_CatalogueTest::SetUp() {
       for(auto &archiveRoute: archiveRoutes) {
         m_catalogue->deleteArchiveRoute(archiveRoute.storageClassName,
           archiveRoute.copyNb);
+      }
+    }
+    {
+      const std::list<common::dataStructures::RequesterActivityMountRule> rules = m_catalogue->getRequesterActivityMountRules();
+      for(auto &rule: rules) {
+        m_catalogue->deleteRequesterActivityMountRule(rule.diskInstance, rule.name, rule.activityRegex);
       }
     }
     {
@@ -455,6 +476,10 @@ void cta_catalogue_CatalogueTest::SetUp() {
 
     if(!m_catalogue->getRequesterMountRules().empty()) {
       throw exception::Exception("Found one of more requester mount rules after emptying the database");
+    }
+
+    if(!m_catalogue->getRequesterActivityMountRules().empty()) {
+      throw exception::Exception("Found one of more requester activity mount rules after emptying the database");
     }
 
     if(!m_catalogue->getStorageClasses().empty()) {
@@ -7157,6 +7182,231 @@ TEST_P(cta_catalogue_CatalogueTest, modifyMountPolicyComment_nonExistentMountPol
   ASSERT_THROW(m_catalogue->modifyMountPolicyComment(m_admin, name, comment), exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, createRequesterActivityMountRule) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getRequesterActivityMountRules().empty());
+
+  auto mountPolicyToAdd = getMountPolicy1();
+  std::string mountPolicyName = mountPolicyToAdd.name;
+  m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+
+  const std::string comment = "Create mount rule for requester";
+  const std::string diskInstanceName = "disk_instance";
+  const std::string requesterName = "requester_name";
+  const std::string activityRegex = "activity_regex";
+  m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, activityRegex, comment);
+
+  const std::list<common::dataStructures::RequesterActivityMountRule> rules = m_catalogue->getRequesterActivityMountRules();
+  ASSERT_EQ(1, rules.size());
+
+  const common::dataStructures::RequesterActivityMountRule rule = rules.front();
+
+  ASSERT_EQ(requesterName, rule.name);
+  ASSERT_EQ(mountPolicyName, rule.mountPolicy);
+  ASSERT_EQ(comment, rule.comment);
+  ASSERT_EQ(m_admin.username, rule.creationLog.username);
+  ASSERT_EQ(m_admin.host, rule.creationLog.host);
+  ASSERT_EQ(activityRegex, rule.activityRegex);
+  ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createRequesterActivityMountRule_same_twice) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getRequesterActivityMountRules().empty());
+
+  auto mountPolicyToAdd = getMountPolicy1();
+  std::string mountPolicyName = mountPolicyToAdd.name;
+  m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+
+  const std::string comment = "Create mount rule for requester";
+  const std::string diskInstanceName = "disk_instance";
+  const std::string requesterName = "requester_name";
+  const std::string activityRegex = "activity_regex";
+  m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, activityRegex, comment);
+
+  ASSERT_THROW(m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, activityRegex, comment), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createRequesterActivityMountRule_non_existent_mount_policy) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getRequesterActivityMountRules().empty());
+
+  const std::string comment = "Create mount rule for requester";
+  const std::string mountPolicyName = "non_existent_mount_policy";
+  const std::string diskInstanceName = "disk_instance";
+  const std::string requesterName = "requester_name";
+  const std::string activityRegex = "activity_regex";
+ 
+  ASSERT_THROW( m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, 
+    activityRegex, comment), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, deleteRequesterActivityMountRule) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
+
+  auto mountPolicyToAdd = getMountPolicy1();
+  std::string mountPolicyName = mountPolicyToAdd.name;
+  m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+
+  const std::string comment = "Create mount rule for requester";
+  const std::string diskInstanceName = "disk_instance";
+  const std::string requesterName = "requester_name";
+  const std::string activityRegex = "activity_regex";
+  m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, activityRegex, comment);
+
+  const std::list<common::dataStructures::RequesterActivityMountRule> rules = m_catalogue->getRequesterActivityMountRules();
+  ASSERT_EQ(1, rules.size());
+
+  m_catalogue->deleteRequesterActivityMountRule(diskInstanceName, requesterName, activityRegex);
+  ASSERT_TRUE(m_catalogue->getRequesterActivityMountRules().empty());
+}
+
+TEST_P(cta_catalogue_CatalogueTest, deleteRequesterActivityMountRule_non_existent) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getRequesterActivityMountRules().empty());
+  ASSERT_THROW(m_catalogue->deleteRequesterActivityMountRule("non_existent_disk_instance", "non_existent_requester", "non_existrnt_activity"),
+    exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyRequesterActivityMountRulePolicy) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getRequesterActivityMountRules().empty());
+
+  auto mountPolicyToAdd = getMountPolicy1();
+  std::string mountPolicyName = mountPolicyToAdd.name;
+  m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+
+  const std::string anotherMountPolicyName = "another_mount_policy";
+
+  auto anotherMountPolicy = getMountPolicy1();
+  anotherMountPolicy.name = anotherMountPolicyName;
+  m_catalogue->createMountPolicy(m_admin,anotherMountPolicy);
+
+
+  const std::string comment = "Create mount rule for requester";
+  const std::string diskInstanceName = "disk_instance";
+  const std::string requesterName = "requester_name";
+  const std::string activityRegex = "activity";
+  m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, activityRegex, comment);
+
+  {
+    const std::list<common::dataStructures::RequesterActivityMountRule> rules = m_catalogue->getRequesterActivityMountRules();
+    ASSERT_EQ(1, rules.size());
+
+    const common::dataStructures::RequesterActivityMountRule rule = rules.front();
+
+    ASSERT_EQ(requesterName, rule.name);
+    ASSERT_EQ(mountPolicyName, rule.mountPolicy);
+    ASSERT_EQ(comment, rule.comment);
+    ASSERT_EQ(activityRegex, rule.activityRegex);
+    ASSERT_EQ(m_admin.username, rule.creationLog.username);
+    ASSERT_EQ(m_admin.host, rule.creationLog.host);
+    ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
+  }
+
+  m_catalogue->modifyRequesterActivityMountRulePolicy(m_admin, diskInstanceName, requesterName, activityRegex, anotherMountPolicyName);
+
+  {
+    const std::list<common::dataStructures::RequesterActivityMountRule> rules = m_catalogue->getRequesterActivityMountRules();
+    ASSERT_EQ(1, rules.size());
+
+    const common::dataStructures::RequesterActivityMountRule rule = rules.front();
+
+    ASSERT_EQ(requesterName, rule.name);
+    ASSERT_EQ(anotherMountPolicyName, rule.mountPolicy);
+    ASSERT_EQ(comment, rule.comment);
+    ASSERT_EQ(activityRegex, rule.activityRegex);  
+    ASSERT_EQ(m_admin.username, rule.creationLog.username);
+    ASSERT_EQ(m_admin.host, rule.creationLog.host);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyRequesterActivityMountRulePolicy_nonExistentRequesterActivity) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getRequesterActivityMountRules().empty());
+
+  auto mountPolicyToAdd = getMountPolicy1();
+  std::string mountPolicyName = mountPolicyToAdd.name;
+  m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+
+  const std::string diskInstanceName = "disk_instance";
+  const std::string requesterName = "requester_name";
+  const std::string activityRegex = "activity";
+
+  ASSERT_THROW(m_catalogue->modifyRequesterActivityMountRulePolicy(m_admin, diskInstanceName, requesterName, activityRegex, mountPolicyName),
+    exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyRequesterActivityMountRuleComment) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getRequesterActivityMountRules().empty());
+
+  auto mountPolicyToAdd = getMountPolicy1();
+  std::string mountPolicyName = mountPolicyToAdd.name;
+  m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+
+  const std::string comment = "Create mount rule for requester";
+  const std::string diskInstanceName = "disk_instance";
+  const std::string requesterName = "requester_name";
+  const std::string activityRegex = "activity";
+  m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, activityRegex, comment);
+
+  {
+    const std::list<common::dataStructures::RequesterActivityMountRule> rules = m_catalogue->getRequesterActivityMountRules();
+    ASSERT_EQ(1, rules.size());
+
+    const common::dataStructures::RequesterActivityMountRule rule = rules.front();
+
+    ASSERT_EQ(requesterName, rule.name);
+    ASSERT_EQ(mountPolicyName, rule.mountPolicy);
+    ASSERT_EQ(comment, rule.comment);
+    ASSERT_EQ(activityRegex, rule.activityRegex);
+    ASSERT_EQ(m_admin.username, rule.creationLog.username);
+    ASSERT_EQ(m_admin.host, rule.creationLog.host);
+    ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
+  }
+
+  const std::string modifiedComment = "Modified comment";
+  m_catalogue->modifyRequesterActivityMountRuleComment(m_admin, diskInstanceName, requesterName, activityRegex, modifiedComment);
+
+  {
+    const std::list<common::dataStructures::RequesterActivityMountRule> rules = m_catalogue->getRequesterActivityMountRules();
+    ASSERT_EQ(1, rules.size());
+
+    const common::dataStructures::RequesterActivityMountRule rule = rules.front();
+
+    ASSERT_EQ(requesterName, rule.name);
+    ASSERT_EQ(mountPolicyName, rule.mountPolicy);
+    ASSERT_EQ(modifiedComment, rule.comment);
+    ASSERT_EQ(activityRegex, rule.activityRegex);
+    ASSERT_EQ(m_admin.username, rule.creationLog.username);
+    ASSERT_EQ(m_admin.host, rule.creationLog.host);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyRequesterMountRuleComment_nonExistentRequesterActivity) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getRequesterActivityMountRules().empty());
+
+  const std::string diskInstanceName = "disk_instance";
+  const std::string requesterName = "requester_name";
+  const std::string comment = "Comment";
+  const std::string activityRegex = "activity";
+  ASSERT_THROW(m_catalogue->modifyRequesterActivityMountRuleComment(m_admin, diskInstanceName, requesterName, activityRegex, comment),
+    exception::UserError);
+}
+
+
 TEST_P(cta_catalogue_CatalogueTest, createRequesterMountRule) {
   using namespace cta;
 
@@ -8898,6 +9148,240 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_retu
   m_catalogue->setTapeDisabled(m_admin, m_tape2.vid, disabledReason);
 
   ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, requesterIdentity, cta::nullopt, dummyLc),
+    exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_ActivityMountPolicy) {
+  using namespace cta;
+
+  const std::string diskInstanceName1 = "disk_instance_1";
+  const std::string diskInstanceName2 = "disk_instance_2";
+
+  const bool logicalLibraryIsDisabled= false;
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+
+  m_catalogue->createMediaType(m_admin, m_mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+
+  m_catalogue->createTape(m_admin, m_tape1);
+  m_catalogue->createTape(m_admin, m_tape2);
+
+  const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+  const std::map<std::string, common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
+  {
+    auto it = vidToTape.find(m_tape1.vid);
+    ASSERT_TRUE(it != vidToTape.end());
+    const common::dataStructures::Tape &tape = it->second;
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_vo.name, tape.vo);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.full, tape.full);
+
+    ASSERT_FALSE(tape.isFromCastor);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog =
+      tape.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+  {
+    auto it = vidToTape.find(m_tape2.vid);
+    ASSERT_TRUE(it != vidToTape.end());
+    const common::dataStructures::Tape &tape = it->second;
+    ASSERT_EQ(m_tape2.vid, tape.vid);
+    ASSERT_EQ(m_tape2.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape2.vendor, tape.vendor);
+    ASSERT_EQ(m_tape2.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_vo.name, tape.vo);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape2.full, tape.full);
+
+    ASSERT_FALSE(tape.isFromCastor);
+    ASSERT_EQ(m_tape2.comment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const uint64_t archiveFileId = 1234;
+
+
+  ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
+  ASSERT_THROW(m_catalogue->getArchiveFileById(archiveFileId), exception::Exception);
+
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
+
+  const uint64_t archiveFileSize = 1;
+  const std::string tapeDrive = "tape_drive";
+
+  auto file1WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file1Written = *file1WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
+  file1WrittenSet.insert(file1WrittenUP.release());
+  file1Written.archiveFileId        = archiveFileId;
+  file1Written.diskInstance         = diskInstanceName1;
+  file1Written.diskFileId           = "5678";
+  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
+  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
+  file1Written.size                 = archiveFileSize;
+  file1Written.checksumBlob.insert(checksum::ADLER32, "1234");
+  file1Written.storageClassName     = m_storageClassSingleCopy.name;
+  file1Written.vid                  = m_tape1.vid;
+  file1Written.fSeq                 = 1;
+  file1Written.blockId              = 4321;
+  file1Written.copyNb               = 1;
+  file1Written.tapeDrive            = tapeDrive;
+  m_catalogue->filesWrittenToTape(file1WrittenSet);
+
+  {
+    const common::dataStructures::ArchiveFile archiveFile = m_catalogue->getArchiveFileById(archiveFileId);
+
+    ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
+    ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
+    ASSERT_EQ(file1Written.size, archiveFile.fileSize);
+    ASSERT_EQ(file1Written.checksumBlob, archiveFile.checksumBlob);
+    ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
+
+    ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
+
+    ASSERT_EQ(1, archiveFile.tapeFiles.size());
+    auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
+    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
+    ASSERT_EQ(file1Written.vid, tapeFile1.vid);
+    ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
+    ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
+    ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
+  }
+
+  auto file2WrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+  auto & file2Written = *file2WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file2WrittenSet;
+  file2WrittenSet.insert(file2WrittenUP.release());
+  file2Written.archiveFileId        = file1Written.archiveFileId;
+  file2Written.diskInstance         = file1Written.diskInstance;
+  file2Written.diskFileId           = file1Written.diskFileId;
+  file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid          = file1Written.diskFileGid;
+  file2Written.size                 = archiveFileSize;
+  file2Written.checksumBlob         = file1Written.checksumBlob;
+  file2Written.storageClassName     = m_storageClassSingleCopy.name;
+  file2Written.vid                  = m_tape2.vid;
+  file2Written.fSeq                 = 1;
+  file2Written.blockId              = 4331;
+  file2Written.copyNb               = 2;
+  file2Written.tapeDrive            = tapeDrive;
+  m_catalogue->filesWrittenToTape(file2WrittenSet);
+
+  {
+    const common::dataStructures::ArchiveFile archiveFile = m_catalogue->getArchiveFileById(archiveFileId);
+
+    ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
+    ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileId);
+    ASSERT_EQ(file2Written.size, archiveFile.fileSize);
+    ASSERT_EQ(file2Written.checksumBlob, archiveFile.checksumBlob);
+    ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
+
+    ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
+    ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
+
+    ASSERT_EQ(2, archiveFile.tapeFiles.size());
+
+    auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
+    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
+    ASSERT_EQ(file1Written.vid, tapeFile1.vid);
+    ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
+    ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
+
+    auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
+    ASSERT_FALSE(copyNbToTapeFile2Itor == archiveFile.tapeFiles.end());
+    const common::dataStructures::TapeFile &tapeFile2 = *copyNbToTapeFile2Itor;
+    ASSERT_EQ(file2Written.vid, tapeFile2.vid);
+    ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
+    ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
+    ASSERT_EQ(file2Written.checksumBlob, tapeFile2.checksumBlob);
+  }
+
+  auto mountPolicyToAdd1 = getMountPolicy1();
+  m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd1);
+  auto mountPolicyToAdd2 = getMountPolicy2();
+  m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd2);
+
+    const std::string comment = "Create mount rule for requester+activity";
+    const std::string requesterName = "requester_name";
+    const std::string activityRegex = "^activity_[a-zA-Z0-9-]+$";
+    m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyToAdd1.name, diskInstanceName1, requesterName, activityRegex, comment);  
+  
+
+    const std::string secondActivityRegex = "^activity_specific$";
+    m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyToAdd2.name, diskInstanceName1, requesterName, secondActivityRegex, comment);  
+  
+
+  {
+    const std::list<common::dataStructures::RequesterActivityMountRule> rules = m_catalogue->getRequesterActivityMountRules();
+    ASSERT_EQ(2, rules.size());
+  }
+
+  log::LogContext dummyLc(m_dummyLog);
+
+  common::dataStructures::RequesterIdentity requesterIdentity;
+  requesterIdentity.name = requesterName;
+  requesterIdentity.group = "group";
+  cta::optional<std::string> requestActivity = std::string("activity_retrieve");
+
+  {
+    const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
+      m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, requesterIdentity, requestActivity, dummyLc);
+
+    ASSERT_EQ(2, queueCriteria.archiveFile.tapeFiles.size());
+    ASSERT_EQ(mountPolicyToAdd1.archivePriority, queueCriteria.mountPolicy.archivePriority);
+    ASSERT_EQ(mountPolicyToAdd1.minArchiveRequestAge, queueCriteria.mountPolicy.archiveMinRequestAge);
+  }
+  
+  // Check that multiple matching policies returns the highest priority one for retrieve
+  requestActivity = std::string("activity_specific");
+  {
+    const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
+    m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, requesterIdentity, requestActivity, dummyLc);
+
+    ASSERT_EQ(2, queueCriteria.archiveFile.tapeFiles.size());
+    ASSERT_EQ(mountPolicyToAdd2.archivePriority, queueCriteria.mountPolicy.archivePriority);
+    ASSERT_EQ(mountPolicyToAdd2.minArchiveRequestAge, queueCriteria.mountPolicy.archiveMinRequestAge);
+  }
+
+  
+  // Check that no matching activity detection works
+  requestActivity = std::string("no_matching_activity");
+  ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName2, archiveFileId, requesterIdentity, requestActivity, dummyLc),
     exception::UserError);
 }
 

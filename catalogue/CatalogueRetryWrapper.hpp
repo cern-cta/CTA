@@ -404,6 +404,14 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapeComment(admin, vid, comment);}, m_maxTriesToConnect);
   }
 
+  void modifyRequesterActivityMountRulePolicy(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterName, const std::string &activityRegex, const std::string &mountPolicy) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyRequesterActivityMountRulePolicy(admin, instanceName, requesterName, activityRegex, mountPolicy);}, m_maxTriesToConnect);
+  }
+
+  void modifyRequesterActivityMountRuleComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterName, const std::string &activityRegex, const std::string &comment) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyRequesterActivityMountRuleComment(admin, instanceName, requesterName, activityRegex, comment);}, m_maxTriesToConnect);
+  }
+
   void modifyRequesterMountRulePolicy(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterName, const std::string &mountPolicy) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyRequesterMountRulePolicy(admin, instanceName, requesterName, mountPolicy);}, m_maxTriesToConnect);
   }
@@ -434,6 +442,18 @@ public:
 
   void deleteMountPolicy(const std::string &name) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteMountPolicy(name);}, m_maxTriesToConnect);
+  }
+  
+  void createRequesterActivityMountRule(const common::dataStructures::SecurityIdentity &admin, const std::string &mountPolicyName, const std::string &diskInstance, const std::string &requesterName, const std::string &activityRegex, const std::string &comment) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->createRequesterActivityMountRule(admin, mountPolicyName, diskInstance, requesterName, activityRegex, comment);}, m_maxTriesToConnect);
+  }
+
+  std::list<common::dataStructures::RequesterActivityMountRule> getRequesterActivityMountRules() const override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->getRequesterActivityMountRules();}, m_maxTriesToConnect);
+  }
+
+  void deleteRequesterActivityMountRule(const std::string &diskInstanceName, const std::string &requesterName, const std::string &activityRegex) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteRequesterActivityMountRule(diskInstanceName, requesterName, activityRegex);}, m_maxTriesToConnect);
   }
 
   void createRequesterMountRule(const common::dataStructures::SecurityIdentity &admin, const std::string &mountPolicyName, const std::string &diskInstance, const std::string &requesterName, const std::string &comment) override {

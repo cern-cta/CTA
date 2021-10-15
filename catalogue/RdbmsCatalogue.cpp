@@ -28,6 +28,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/UserError.hpp"
+#include "common/utils/Regex.hpp"
 #include "common/log/TimingList.hpp"
 #include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
@@ -5161,6 +5162,86 @@ void RdbmsCatalogue::modifyTapeComment(const common::dataStructures::SecurityIde
 }
 
 //------------------------------------------------------------------------------
+// modifyRequesterActivityMountRulePolicy
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::modifyRequesterActivityMountRulePolicy(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &instanceName, const std::string &requesterName, const std::string &activityRegex, const std::string &mountPolicy) {
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE REQUESTER_ACTIVITY_MOUNT_RULE SET "
+        "MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
+        "REQUESTER_NAME = :REQUESTER_NAME AND "
+        "ACTIVITY_REGEX = :ACTIVITY_REGEX";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":MOUNT_POLICY_NAME", mountPolicy);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":DISK_INSTANCE_NAME", instanceName);
+    stmt.bindString(":REQUESTER_NAME", requesterName);
+    stmt.bindString(":ACTIVITY_REGEX", activityRegex);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify requester  activity mount rule ") + instanceName + ":" +
+        requesterName + "for activities matching " + activityRegex + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// modifyRequesterActivityMountRuleComment
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::modifyRequesterActivityMountRuleComment(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &instanceName, const std::string &requesterName, const std::string &activityRegex, const std::string &comment) {
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE REQUESTER_ACTIVITY_MOUNT_RULE SET "
+        "USER_COMMENT = :USER_COMMENT,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
+        "REQUESTER_NAME = :REQUESTER_NAME AND "
+        "ACTIVITY_REGEX = :ACTIVITY_REGEX";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":USER_COMMENT", comment);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":DISK_INSTANCE_NAME", instanceName);
+    stmt.bindString(":REQUESTER_NAME", requesterName);
+    stmt.bindString(":ACTIVITY_REGEX", activityRegex);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify requester  activity mount rule ") + instanceName + ":" +
+        requesterName + "for activities matching " + activityRegex + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // modifyRequesterMountRulePolicy
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::modifyRequesterMountRulePolicy(const common::dataStructures::SecurityIdentity &admin,
@@ -5392,6 +5473,177 @@ void RdbmsCatalogue::createMountPolicy(const common::dataStructures::SecurityIde
   m_groupMountPolicyCache.invalidate();
   m_userMountPolicyCache.invalidate();
   m_allMountPoliciesCache.invalidate();
+}
+
+//------------------------------------------------------------------------------
+// createRequesterActivityMountRule
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::createRequesterActivityMountRule(
+  const common::dataStructures::SecurityIdentity &admin,
+  const std::string &mountPolicyName,
+  const std::string &diskInstanceName,
+  const std::string &requesterName,
+  const std::string &activityRegex,
+  const std::string &comment) {
+  try {
+    auto conn = m_connPool.getConn();
+    if(requesterActivityMountRuleExists(conn, diskInstanceName, requesterName, activityRegex)) {
+      throw exception::UserError(std::string("Cannot create rule to assign mount-policy ") + mountPolicyName +
+        " to requester " + diskInstanceName + ":" + requesterName + " for activities matching " + activityRegex +
+        " because that requester-activity mount rule already exists");
+    }
+    if(!mountPolicyExists(conn, mountPolicyName)) {
+      throw exception::UserError(std::string("Cannot create a rule to assign mount-policy ") + mountPolicyName +
+        " to requester " + diskInstanceName + ":" + requesterName + " for activities matching " + activityRegex + 
+        " because mount-policy " + mountPolicyName + " does not exist");
+    }
+    const uint64_t now = time(nullptr);
+    const char *const sql =
+      "INSERT INTO REQUESTER_ACTIVITY_MOUNT_RULE("
+        "DISK_INSTANCE_NAME,"
+        "REQUESTER_NAME,"
+        "MOUNT_POLICY_NAME,"
+        "ACTIVITY_REGEX,"
+
+        "USER_COMMENT,"
+
+        "CREATION_LOG_USER_NAME,"
+        "CREATION_LOG_HOST_NAME,"
+        "CREATION_LOG_TIME,"
+
+        "LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME)"
+      "VALUES("
+        ":DISK_INSTANCE_NAME,"
+        ":REQUESTER_NAME,"
+        ":MOUNT_POLICY_NAME,"
+        ":ACTIVITY_REGEX,"
+
+        ":USER_COMMENT,"
+
+        ":CREATION_LOG_USER_NAME,"
+        ":CREATION_LOG_HOST_NAME,"
+        ":CREATION_LOG_TIME,"
+
+        ":LAST_UPDATE_USER_NAME,"
+        ":LAST_UPDATE_HOST_NAME,"
+        ":LAST_UPDATE_TIME)";
+    auto stmt = conn.createStmt(sql);
+
+    stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
+    stmt.bindString(":REQUESTER_NAME", requesterName);
+    stmt.bindString(":MOUNT_POLICY_NAME", mountPolicyName);
+    stmt.bindString(":ACTIVITY_REGEX", activityRegex);
+
+    stmt.bindString(":USER_COMMENT", comment);
+
+    stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
+    stmt.bindString(":CREATION_LOG_HOST_NAME", admin.host);
+    stmt.bindUint64(":CREATION_LOG_TIME", now);
+
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+
+    stmt.executeNonQuery();
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+
+  m_userMountPolicyCache.invalidate();
+}
+
+//------------------------------------------------------------------------------
+// getRequesterMountRules
+//------------------------------------------------------------------------------
+std::list<common::dataStructures::RequesterActivityMountRule> RdbmsCatalogue::getRequesterActivityMountRules() const {
+  try {
+    std::list<common::dataStructures::RequesterActivityMountRule> rules;
+    const char *const sql =
+      "SELECT "
+        "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
+        "REQUESTER_NAME AS REQUESTER_NAME,"
+        "MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,"
+        "ACTIVITY_REGEX AS ACTIVITY_REGEX,"
+
+        "USER_COMMENT AS USER_COMMENT,"
+
+        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+
+        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+      "FROM "
+        "REQUESTER_ACTIVITY_MOUNT_RULE "
+      "ORDER BY "
+        "DISK_INSTANCE_NAME, REQUESTER_NAME, ACTIVITY_REGEX, MOUNT_POLICY_NAME";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+    while(rset.next()) {
+      common::dataStructures::RequesterActivityMountRule rule;
+
+      rule.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
+      rule.name = rset.columnString("REQUESTER_NAME");
+      rule.mountPolicy = rset.columnString("MOUNT_POLICY_NAME");
+      rule.activityRegex = rset.columnString("ACTIVITY_REGEX");
+      rule.comment = rset.columnString("USER_COMMENT");
+      rule.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+      rule.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+      rule.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+      rule.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+      rule.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+      rule.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
+
+      rules.push_back(rule);
+    }
+
+    return rules;
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// deleteRequesterActivityMountRule
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::deleteRequesterActivityMountRule(const std::string &diskInstanceName, const std::string &requesterName, const std::string &activityRegex) {
+  try {
+    const char *const sql =
+      "DELETE FROM "
+        "REQUESTER_ACTIVITY_MOUNT_RULE "
+      "WHERE "
+        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
+        "REQUESTER_NAME = :REQUESTER_NAME AND "
+        "ACTIVITY_REGEX = :ACTIVITY_REGEX";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
+    stmt.bindString(":REQUESTER_NAME", requesterName);
+    stmt.bindString(":ACTIVITY_REGEX", activityRegex);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot delete mount rule for requester ") + diskInstanceName + ":" + requesterName +
+        " and activity regex " + activityRegex + " because the rule does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+
+  m_userMountPolicyCache.invalidate();
 }
 
 //------------------------------------------------------------------------------
@@ -5949,6 +6201,36 @@ optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getRequesterMountP
     } else {
       return nullopt;
     }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// requesterActivityMountRuleExists
+//------------------------------------------------------------------------------
+bool RdbmsCatalogue::requesterActivityMountRuleExists(rdbms::Conn &conn, const std::string &diskInstanceName, const std::string &requesterName, const std::string &activityRegex) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME, "
+        "REQUESTER_NAME AS REQUESTER_NAME, "
+        "ACTIVITY_REGEX AS ACTIVITY_REGEX "
+      "FROM "
+        "REQUESTER_ACTIVITY_MOUNT_RULE "
+      "WHERE "
+        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
+        "REQUESTER_NAME = :REQUESTER_NAME AND "
+        "ACTIVITY_REGEX = :ACTIVITY_REGEX";
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
+    stmt.bindString(":REQUESTER_NAME", requesterName);
+    stmt.bindString(":ACTIVITY_REGEX", activityRegex);
+    auto rset = stmt.executeQuery();
+    return rset.next();
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -7709,9 +7991,14 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
       }
 
       t.reset();
-      const RequesterAndGroupMountPolicies mountPolicies = getMountPolicies(conn, diskInstanceName, user.name,
-        user.group);
-       const auto getMountPoliciesTime = t.secs(utils::Timer::resetCounter);
+      RequesterAndGroupMountPolicies mountPolicies;
+      if (activity) {
+        mountPolicies = getMountPolicies(conn, diskInstanceName, user.name, user.group, activity.value());
+      } else {
+        mountPolicies = getMountPolicies(conn, diskInstanceName, user.name, user.group);
+      }
+      
+      const auto getMountPoliciesTime = t.secs(utils::Timer::resetCounter);
 
       log::ScopedParamContainer spc(lc);
       spc.add("getConnTime", getConnTime)
@@ -7719,23 +8006,175 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
          .add("getMountPoliciesTime", getMountPoliciesTime);
       lc.log(log::INFO, "Catalogue::prepareToRetrieve internal timings");
 
+      // Requester activity mount policies overrule requester mount policies
       // Requester mount policies overrule requester group mount policies
       common::dataStructures::MountPolicy mountPolicy;
-      if(!mountPolicies.requesterMountPolicies.empty()) {
+      if (!mountPolicies.requesterActivityMountPolicies.empty()) {
+        //More than one may match the activity, so choose the one with highest retrieve priority
+        mountPolicy = *std::max_element(mountPolicies.requesterActivityMountPolicies.begin(),
+          mountPolicies.requesterActivityMountPolicies.end(),
+          [](const  common::dataStructures::MountPolicy &p1,  common::dataStructures::MountPolicy &p2) {
+            return p1.retrievePriority < p2.retrievePriority;
+          });
+      } else if(!mountPolicies.requesterMountPolicies.empty()) {
         mountPolicy = mountPolicies.requesterMountPolicies.front();
       } else if(!mountPolicies.requesterGroupMountPolicies.empty()) {
         mountPolicy = mountPolicies.requesterGroupMountPolicies.front();
       } else {
         exception::UserError ue;
-        ue.getMessage() << "Cannot retrieve file because there are no mount rules for the requester or their group:" <<
+        ue.getMessage() << "Cannot retrieve file because there are no mount rules for the requester, activity or their group:" <<
           " archiveFileId=" << archiveFileId <<  " requester=" <<
           diskInstanceName << ":" << user.name << ":" << user.group;
+        if (activity) {
+          ue.getMessage() << " activity=" << activity.value();
+          }
         throw ue;
       }
       criteria.archiveFile = *archiveFile;
       criteria.mountPolicy = mountPolicy;
     }
     return criteria;
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getMountPolicies
+//------------------------------------------------------------------------------
+RequesterAndGroupMountPolicies RdbmsCatalogue::getMountPolicies(
+  rdbms::Conn &conn,
+  const std::string &diskInstanceName,
+  const std::string &requesterName,
+  const std::string &requesterGroupName,
+  const std::string &activity) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "'ACTIVITY' AS RULE_TYPE,"
+        "REQUESTER_ACTIVITY_MOUNT_RULE.REQUESTER_NAME AS ASSIGNEE,"
+        "REQUESTER_ACTIVITY_MOUNT_RULE.ACTIVITY_REGEX AS ACTIVITY_REGEX,"
+
+        "MOUNT_POLICY.MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,"
+        "MOUNT_POLICY.ARCHIVE_PRIORITY AS ARCHIVE_PRIORITY,"
+        "MOUNT_POLICY.ARCHIVE_MIN_REQUEST_AGE AS ARCHIVE_MIN_REQUEST_AGE,"
+        "MOUNT_POLICY.RETRIEVE_PRIORITY AS RETRIEVE_PRIORITY,"
+        "MOUNT_POLICY.RETRIEVE_MIN_REQUEST_AGE AS RETRIEVE_MIN_REQUEST_AGE,"
+        "MOUNT_POLICY.USER_COMMENT AS USER_COMMENT,"
+        "MOUNT_POLICY.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "MOUNT_POLICY.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "MOUNT_POLICY.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+        "MOUNT_POLICY.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "MOUNT_POLICY.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "MOUNT_POLICY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+      "FROM "
+        "REQUESTER_ACTIVITY_MOUNT_RULE "
+      "INNER JOIN "
+        "MOUNT_POLICY "
+      "ON "
+        "REQUESTER_ACTIVITY_MOUNT_RULE.MOUNT_POLICY_NAME = MOUNT_POLICY.MOUNT_POLICY_NAME "
+      "WHERE "
+        "REQUESTER_ACTIVITY_MOUNT_RULE.DISK_INSTANCE_NAME = :ACTIVITY_DISK_INSTANCE_NAME AND "
+        "REQUESTER_ACTIVITY_MOUNT_RULE.REQUESTER_NAME = :REQUESTER_ACTIVITY_NAME "
+      "UNION "
+      "SELECT "
+        "'REQUESTER' AS RULE_TYPE,"
+        "REQUESTER_MOUNT_RULE.REQUESTER_NAME AS ASSIGNEE,"
+        "'' AS ACTIVITY_REGEX,"
+
+
+        "MOUNT_POLICY.MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,"
+        "MOUNT_POLICY.ARCHIVE_PRIORITY AS ARCHIVE_PRIORITY,"
+        "MOUNT_POLICY.ARCHIVE_MIN_REQUEST_AGE AS ARCHIVE_MIN_REQUEST_AGE,"
+        "MOUNT_POLICY.RETRIEVE_PRIORITY AS RETRIEVE_PRIORITY,"
+        "MOUNT_POLICY.RETRIEVE_MIN_REQUEST_AGE AS RETRIEVE_MIN_REQUEST_AGE,"
+        "MOUNT_POLICY.USER_COMMENT AS USER_COMMENT,"
+        "MOUNT_POLICY.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "MOUNT_POLICY.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "MOUNT_POLICY.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+        "MOUNT_POLICY.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "MOUNT_POLICY.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "MOUNT_POLICY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+      "FROM "
+        "REQUESTER_MOUNT_RULE "
+      "INNER JOIN "
+        "MOUNT_POLICY "
+      "ON "
+        "REQUESTER_MOUNT_RULE.MOUNT_POLICY_NAME = MOUNT_POLICY.MOUNT_POLICY_NAME "
+      "WHERE "
+        "REQUESTER_MOUNT_RULE.DISK_INSTANCE_NAME = :REQUESTER_DISK_INSTANCE_NAME AND "
+        "REQUESTER_MOUNT_RULE.REQUESTER_NAME = :REQUESTER_NAME "
+      "UNION "
+      "SELECT "
+        "'REQUESTER_GROUP' AS RULE_TYPE,"
+        "REQUESTER_GROUP_MOUNT_RULE.REQUESTER_GROUP_NAME AS ASSIGNEE,"
+        "'' AS ACTIVITY_REGEX,"
+
+        "MOUNT_POLICY.MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,"
+        "MOUNT_POLICY.ARCHIVE_PRIORITY AS ARCHIVE_PRIORITY,"
+        "MOUNT_POLICY.ARCHIVE_MIN_REQUEST_AGE AS ARCHIVE_MIN_REQUEST_AGE,"
+        "MOUNT_POLICY.RETRIEVE_PRIORITY AS RETRIEVE_PRIORITY,"
+        "MOUNT_POLICY.RETRIEVE_MIN_REQUEST_AGE AS RETRIEVE_MIN_REQUEST_AGE,"
+        "MOUNT_POLICY.USER_COMMENT AS USER_COMMENT,"
+        "MOUNT_POLICY.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "MOUNT_POLICY.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "MOUNT_POLICY.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+        "MOUNT_POLICY.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "MOUNT_POLICY.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "MOUNT_POLICY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+      "FROM "
+        "REQUESTER_GROUP_MOUNT_RULE "
+      "INNER JOIN "
+        "MOUNT_POLICY "
+      "ON "
+        "REQUESTER_GROUP_MOUNT_RULE.MOUNT_POLICY_NAME = MOUNT_POLICY.MOUNT_POLICY_NAME "
+      "WHERE "
+        "REQUESTER_GROUP_MOUNT_RULE.DISK_INSTANCE_NAME = :GROUP_DISK_INSTANCE_NAME AND "
+        "REQUESTER_GROUP_MOUNT_RULE.REQUESTER_GROUP_NAME = :REQUESTER_GROUP_NAME";
+
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":ACTIVITY_DISK_INSTANCE_NAME", diskInstanceName);
+    stmt.bindString(":REQUESTER_DISK_INSTANCE_NAME", diskInstanceName);
+    stmt.bindString(":GROUP_DISK_INSTANCE_NAME", diskInstanceName);
+    stmt.bindString(":REQUESTER_ACTIVITY_NAME", requesterName);
+    stmt.bindString(":REQUESTER_NAME", requesterName);
+    stmt.bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
+    auto rset = stmt.executeQuery();
+
+    RequesterAndGroupMountPolicies policies;
+    while(rset.next()) {
+      common::dataStructures::MountPolicy policy;
+
+      policy.name = rset.columnString("MOUNT_POLICY_NAME");
+      policy.archivePriority = rset.columnUint64("ARCHIVE_PRIORITY");
+      policy.archiveMinRequestAge = rset.columnUint64("ARCHIVE_MIN_REQUEST_AGE");
+      policy.retrievePriority = rset.columnUint64("RETRIEVE_PRIORITY");
+      policy.retrieveMinRequestAge = rset.columnUint64("RETRIEVE_MIN_REQUEST_AGE");
+      policy.comment = rset.columnString("USER_COMMENT");
+      policy.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+      policy.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+      policy.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+      policy.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+      policy.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+      policy.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
+
+      if(rset.columnString("RULE_TYPE") == "ACTIVITY") {
+        auto activityRegexString = rset.columnString("ACTIVITY_REGEX");
+        cta::utils::Regex activityRegex(activityRegexString);
+        if (activityRegex.has_match(activity)) {
+          policies.requesterActivityMountPolicies.push_back(policy);
+        }
+      } else if(rset.columnString("RULE_TYPE") == "REQUESTER") {
+        policies.requesterMountPolicies.push_back(policy);
+      } else {
+        policies.requesterGroupMountPolicies.push_back(policy);
+      }
+    }
+
+    return policies;
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {

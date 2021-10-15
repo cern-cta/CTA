@@ -31,6 +31,11 @@ namespace catalogue {
 struct RequesterAndGroupMountPolicies {
 
   /**
+   * List of requester activity mount-policies.
+   */
+  std::list<common::dataStructures::MountPolicy> requesterActivityMountPolicies;
+
+  /**
    * List of requester mount-policies.
    */
   std::list<common::dataStructures::MountPolicy> requesterMountPolicies;

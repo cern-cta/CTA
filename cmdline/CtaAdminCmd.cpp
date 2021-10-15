@@ -97,6 +97,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kMplsItem:      std::cout << Log::DumpProtobuf(&record.mpls_item());    break;
          case Data::kRelsItem:      std::cout << Log::DumpProtobuf(&record.rels_item());    break;
          case Data::kRmrlsItem:     std::cout << Log::DumpProtobuf(&record.rmrls_item());   break;
+         case Data::kAmrlsItem:     std::cout << Log::DumpProtobuf(&record.amrls_item());   break;
          case Data::kSqItem:        std::cout << Log::DumpProtobuf(&record.sq_item());      break;
          case Data::kSclsItem:      std::cout << Log::DumpProtobuf(&record.scls_item());    break;
          case Data::kTalsItem:      std::cout << Log::DumpProtobuf(&record.tals_item());    break;
@@ -128,6 +129,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kMplsItem:      formattedText.print(record.mpls_item());    break;
          case Data::kRelsItem:      formattedText.print(record.rels_item());    break;
          case Data::kRmrlsItem:     formattedText.print(record.rmrls_item());   break;
+         case Data::kAmrlsItem:     formattedText.print(record.amrls_item());   break;
          case Data::kSqItem:        formattedText.print(record.sq_item());      break;
          case Data::kSclsItem:      formattedText.print(record.scls_item());    break;
          case Data::kTalsItem:      formattedText.print(record.tals_item());    break;
@@ -289,6 +291,7 @@ void CtaAdminCmd::send() const
             case HeaderType::MOUNTPOLICY_LS:               formattedText.printMountPolicyLsHeader(); break;
             case HeaderType::REPACK_LS:                    formattedText.printRepackLsHeader(); break;
             case HeaderType::REQUESTERMOUNTRULE_LS:        formattedText.printRequesterMountRuleLsHeader(); break;
+            case HeaderType::ACTIVITYMOUNTRULE_LS:         formattedText.printActivityMountRuleLsHeader(); break;
             case HeaderType::SHOWQUEUES:                   formattedText.printShowQueuesHeader(); break;
             case HeaderType::STORAGECLASS_LS:              formattedText.printStorageClassLsHeader(); break;
             case HeaderType::TAPE_LS:                      formattedText.printTapeLsHeader(); break;

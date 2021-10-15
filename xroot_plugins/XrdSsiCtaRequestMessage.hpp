@@ -194,6 +194,9 @@ private:
   void processRequesterMountRule_Add(cta::xrd::Response &response);
   void processRequesterMountRule_Ch (cta::xrd::Response &response);
   void processRequesterMountRule_Rm (cta::xrd::Response &response);
+  void processActivityMountRule_Add (cta::xrd::Response &response);
+  void processActivityMountRule_Ch  (cta::xrd::Response &response);
+  void processActivityMountRule_Rm  (cta::xrd::Response &response);
   void processStorageClass_Add      (cta::xrd::Response &response);
   void processStorageClass_Ch       (cta::xrd::Response &response);
   void processStorageClass_Rm       (cta::xrd::Response &response);
@@ -228,6 +231,7 @@ private:
   admincmdstream_t processDrive_Ls;
   admincmdstream_t processFailedRequest_Ls;
   admincmdstream_t processGroupMountRule_Ls;
+  admincmdstream_t processActivityMountRule_Ls;
   admincmdstream_t processLogicalLibrary_Ls;
   admincmdstream_t processMediaType_Ls;
   admincmdstream_t processMountPolicy_Ls;

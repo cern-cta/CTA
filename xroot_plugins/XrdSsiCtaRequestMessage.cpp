@@ -26,6 +26,7 @@ using XrdSsiPb::PbException;
 #include "XrdCtaDriveLs.hpp"
 #include "XrdCtaFailedRequestLs.hpp"
 #include "XrdCtaGroupMountRuleLs.hpp"
+#include "XrdCtaActivityMountRuleLs.hpp"
 #include "XrdCtaLogicalLibraryLs.hpp"
 #include "XrdCtaMountPolicyLs.hpp"
 #include "XrdCtaMediaTypeLs.hpp"
@@ -198,6 +199,18 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                break;
             case cmd_pair(AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_LS):
                processRequesterMountRule_Ls(response, stream);
+               break;
+            case cmd_pair(AdminCmd::CMD_ACTIVITYMOUNTRULE, AdminCmd::SUBCMD_ADD):
+               processActivityMountRule_Add(response);
+               break;
+            case cmd_pair(AdminCmd::CMD_ACTIVITYMOUNTRULE, AdminCmd::SUBCMD_CH):
+               processActivityMountRule_Ch(response);
+               break;
+            case cmd_pair(AdminCmd::CMD_ACTIVITYMOUNTRULE, AdminCmd::SUBCMD_RM):
+               processActivityMountRule_Rm(response);
+               break;
+            case cmd_pair(AdminCmd::CMD_ACTIVITYMOUNTRULE, AdminCmd::SUBCMD_LS):
+               processActivityMountRule_Ls(response, stream);
                break;
             case cmd_pair(AdminCmd::CMD_SHOWQUEUES, AdminCmd::SUBCMD_NONE):
                processShowQueues(response, stream);
@@ -1643,6 +1656,74 @@ void RequestMessage::processRequesterMountRule_Ls(cta::xrd::Response &response, 
   stream = new RequesterMountRuleLsStream(*this, m_catalogue, m_scheduler);
 
   response.set_show_header(HeaderType::REQUESTERMOUNTRULE_LS);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+
+void RequestMessage::processActivityMountRule_Add(cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   auto &mountpolicy   = getRequired(OptionString::MOUNT_POLICY);
+   auto &in            = getRequired(OptionString::INSTANCE);
+   auto &name          = getRequired(OptionString::USERNAME);
+   auto &comment       = getRequired(OptionString::COMMENT);
+   auto &activityRegex = getRequired(OptionString::ACTIVITY_REGEX);
+
+   m_catalogue.createRequesterActivityMountRule(m_cliIdentity, mountpolicy, in, name, activityRegex, comment);
+
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processActivityMountRule_Ch(cta::xrd::Response &response)
+{
+   
+   using namespace cta::admin;
+
+   auto &in            = getRequired(OptionString::INSTANCE);
+   auto &name          = getRequired(OptionString::USERNAME);
+   auto &activityRegex = getRequired(OptionString::ACTIVITY_REGEX);
+   auto  comment       = getOptional(OptionString::COMMENT);
+   auto  mountpolicy   = getOptional(OptionString::MOUNT_POLICY);
+
+   if(comment) {
+      m_catalogue.modifyRequesterActivityMountRuleComment(m_cliIdentity, in, name, activityRegex, comment.value());
+   }
+   if(mountpolicy) {
+      m_catalogue.modifyRequesterActivityMountRulePolicy(m_cliIdentity, in, name, activityRegex, mountpolicy.value());
+   }
+   
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processActivityMountRule_Rm(cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   auto &in   = getRequired(OptionString::INSTANCE);
+   auto &name = getRequired(OptionString::USERNAME);
+   auto &activityRegex = getRequired(OptionString::ACTIVITY_REGEX);
+
+   m_catalogue.deleteRequesterActivityMountRule(in, name, activityRegex);
+
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+
+
+void RequestMessage::processActivityMountRule_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)
+{
+  using namespace cta::admin;
+
+  stream = new ActivityMountRuleLsStream(*this, m_catalogue, m_scheduler);
+
+  response.set_show_header(HeaderType::ACTIVITYMOUNTRULE_LS);
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 

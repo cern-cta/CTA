@@ -43,6 +43,7 @@ public:
   }
 
   // Output headers
+  void printActivityMountRuleLsHeader();
   void printAdminLsHeader();
   void printArchiveRouteLsHeader();
   void printDriveLsHeader();
@@ -70,6 +71,7 @@ public:
   void printRecycleTapeFileLsHeader();
    
   // Output records
+  void print(const ActivityMountRuleLsItem &amrls_item);
   void print(const AdminLsItem &adls_item);
   void print(const ArchiveRouteLsItem &afls_item);
   void print(const DriveLsItem &drls_item);
