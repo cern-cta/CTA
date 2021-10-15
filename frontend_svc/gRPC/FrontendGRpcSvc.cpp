@@ -52,7 +52,7 @@ Status CtaRpcImpl::Archive(::grpc::ServerContext* context, const ::cta::dcache::
         archiveRequest.requester.group = request->cli().user().groupname();
         archiveRequest.storageClass = storageClass;
         archiveRequest.srcURL = request->transport().dst_url();
-        archiveRequest.archiveReportURL = request->transport().report_url();
+        archiveRequest.archiveReportURL = request->transport().report_url() + "?archiveid=" + std::to_string(archiveFileId);
         archiveRequest.archiveErrorReportURL = request->transport().error_report_url();
         archiveRequest.creationLog.host = context->peer();
         archiveRequest.creationLog.username = instance;
