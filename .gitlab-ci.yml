@@ -7,6 +7,7 @@ stages:
   - shouldfail
   - publish_rpm
   - release_rpm
+  - docs
 
 before_script:
   - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
@@ -312,3 +313,38 @@ regressioneos:
     - kubernetes
     - mhvtl
     - xlarge
+
+catalogue_schema_draw:
+  stage: test
+  image: gitlab-registry.cern.ch/cta/ctageneric/schemacrawler
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+      changes:
+        - catalogue/common_catalogue_schema.sql
+      when: on_success
+      allow_failure: true
+  script:
+    - echo "Generating DB schema drawing"
+    - mkdir drawings
+    - sqlite3 common_db.sqlite < catalogue/common_catalogue_schema.sql
+    - /opt/schemacrawler/schemacrawler.sh --server=sqlite --database=common_db.sqlite --command=script --script-language=python --script=/opt/mermaid.py --info-level=standard > drawings/db_schema.mmd
+    - /opt/schemacrawler/schemacrawler.sh --server=sqlite --database=common_db.sqlite --command=schema --outputformat=png --info-level=standard --output-file=drawings/db_schema.png
+    - /opt/schemacrawler/schemacrawler.sh --server=sqlite --database=common_db.sqlite --command=schema --outputformat=svg --info-level=standard --output-file=drawings/db_schema.svg
+  artifacts:
+    when: always
+    expire_in: 30 days  # Pipeline artifacts from the latest pipeline are kept forever.
+    paths:
+      - drawings/
+
+trigger_doc_update:
+  stage: docs
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+      changes:
+        - catalogue/common_catalogue_schema.sql
+      when: manual
+      allow_failure: true
+  trigger:
+    project: CTA/eoscta-docs
+    strategy: depend
+
