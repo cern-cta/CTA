@@ -43,8 +43,8 @@ Status CtaRpcImpl::Archive(::grpc::ServerContext* context, const ::cta::dcache::
 
         cta::common::dataStructures::ArchiveRequest archiveRequest;
         cta::checksum::ProtobufToChecksumBlob(request->file().csb(), archiveRequest.checksumBlob);
-        archiveRequest.diskFileInfo.owner_uid = 0;
-        archiveRequest.diskFileInfo.gid = 0;
+        archiveRequest.diskFileInfo.owner_uid = 1;
+        archiveRequest.diskFileInfo.gid = 1;
         archiveRequest.diskFileInfo.path = "";
         archiveRequest.diskFileID = request->file().fid();
         archiveRequest.fileSize = request->file().size();
@@ -118,8 +118,8 @@ Status CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const ::cta::dcache:
     retrieveRequest.requester.group        = request->cli().user().groupname();
     retrieveRequest.dstURL                 = request->transport().dst_url();
     retrieveRequest.errorReportURL         = request->transport().error_report_url();
-    retrieveRequest.diskFileInfo.owner_uid = 0;
-    retrieveRequest.diskFileInfo.gid       = 0;
+    retrieveRequest.diskFileInfo.owner_uid = 1;
+    retrieveRequest.diskFileInfo.gid       = 1;
     retrieveRequest.diskFileInfo.path      = "";
     retrieveRequest.creationLog.host       = context->peer();
     retrieveRequest.creationLog.username   = instance;
