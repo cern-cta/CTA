@@ -3,6 +3,14 @@
 ## Summary
 
 ### Features
+
+### Bug fixes
+
+# v4.2-3
+
+## Summary
+
+### Features
 - cta/CTA#983
   - Add cta-versionlock helper script to cta-release package
   - Update cta repo file to use the new public repo

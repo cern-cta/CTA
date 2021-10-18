@@ -529,6 +529,23 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 
 
 %changelog
+* Mon Oct 18 2021 julien.leduc (at) cern.ch - 4.2-3
+- cta/CTA#983
+  - Add cta-versionlock helper script to cta-release package
+  - Update cta repo file to use the new public repo
+- cta/CTA#1036 Better error reporting in cta-admin tools
+- cta/CTA#1039 Improve logging of cta admin commands in cta frontend
+- cta/CTA#1041 Fix host values in cta-admin commands
+- cta/CTA#1026 `cta-admin sq` now shows the mount policies of potential mounts
+- cta/CTA#1029 Fix segmentatin fault in frontend when list repacks of a tape that has been deleted in the catalogue
+- cta/CTA#1032 cta-admin dr ls crashes the frontend if executed during an archive/retrieve
+- cta/CTA#996  Removes PARALLEL from migration scripts
+- cta/CTA#1035 log configuration options on frontend startup
+- cta/CTA#1042 Do not iterate over retrieve queues when holding global scheduler lock
+  - Repacks on a disabled tape must now use a mount policy whose name starts with repack
+  - There is no longer an empty mount when a disabled/broken tape queue is full of deleted requests
+- cta/CTA#1027 Mitigate popNextBatch bad behaviour in archive queues
+- Migration tools: fixes filemode of files imported from CASTOR to EOS
 * Wed Sep 15 2021 miguel.veloso.barros (at) cern.ch - 4.2-2
 - cta/CTA#1029 Fix error handling code of XrdCtaStream so it doesn't lead to a segmentation fault.
 * Wed Sep 01 2021 miguel.veloso.barros (at) cern.ch - 4.2-1
