@@ -4,6 +4,7 @@
 
 ### Features
 - cta/CTA#1026 `cta-admin sq` now shows the mount policies of potential mounts
+- cta-admin: All short options with more than one character now require two dashes
 
 ### Bug fixes
 - cta/CTA#1013 reportType uninitialized
