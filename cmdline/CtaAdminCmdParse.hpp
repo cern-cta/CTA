@@ -456,7 +456,7 @@ const Option opt_fidfile              { Option::OPT_STR_LIST, "--fxidfile",     
 const Option opt_filename             { Option::OPT_STR,  "--file",                  "-f",   " <filename>" };
 const Option opt_force                { Option::OPT_BOOL, "--force",                 "-f",   " <\"true\" or \"false\">" };
 const Option opt_force_flag           { Option::OPT_FLAG, "--force",                 "-f",   "" };
-const Option opt_fromcastor           { Option::OPT_BOOL, "--fromcastor",            "-fc",  " <\"true\" or \"false\">"};      
+const Option opt_fromcastor           { Option::OPT_BOOL, "--fromcastor",            "--fc",  " <\"true\" or \"false\">"};      
 const Option opt_instance             { Option::OPT_STR,  "--instance",              "-i",   " <disk_instance>" };
 const Option opt_justarchive          { Option::OPT_FLAG, "--justarchive",           "-a",   "" };
 const Option opt_justmove             { Option::OPT_FLAG, "--justmove",              "-m",   "" };
@@ -466,12 +466,12 @@ const Option opt_log                  { Option::OPT_FLAG, "--log",              
 const Option opt_logicallibrary       { Option::OPT_STR,  "--logicallibrary",        "-l",   " <logical_library_name>" };
 const Option opt_logicallibrary_alias { Option::OPT_STR,  "--name",                  "-n",   " <logical_library_name>", "--logicallibrary" };
 const Option opt_lookupns             { Option::OPT_FLAG, "--lookupnamespace",       "-l",   "" };
-const Option opt_maxfilesize          { Option::OPT_UINT, "--maxfilesize",           "-mfs", " <maximum_file_size>" };
-const Option opt_maxlpos              { Option::OPT_UINT, "--maxlpos",               "-maxl", " <maximum_longitudinal_position>" };
+const Option opt_maxfilesize          { Option::OPT_UINT, "--maxfilesize",           "--mfs", " <maximum_file_size>" };
+const Option opt_maxlpos              { Option::OPT_UINT, "--maxlpos",               "--maxl", " <maximum_longitudinal_position>" };
 const Option opt_mediatype            { Option::OPT_STR,  "--mediatype",             "--mt", " <media_type_name>" };
 const Option opt_mediatype_alias      { Option::OPT_STR,  "--name",                  "-n",   " <media_type_name>", "--mediatype" };
 const Option opt_minarchiverequestage { Option::OPT_UINT, "--minarchiverequestage",  "--aa", " <min_request_age>" };
-const Option opt_minlpos              { Option::OPT_UINT, "--minlpos",               "-minl", " <minimum_longitudinal_position>" };
+const Option opt_minlpos              { Option::OPT_UINT, "--minlpos",               "--minl", " <minimum_longitudinal_position>" };
 const Option opt_minretrieverequestage{ Option::OPT_UINT, "--minretrieverequestage", "--ra", " <min_request_age>" };
 const Option opt_mountpolicy          { Option::OPT_STR,  "--mountpolicy",           "-u",   " <mount_policy_name>" };
 const Option opt_mountpolicy_alias    { Option::OPT_STR,  "--name",                  "-n",   " <mount_policy_name>", "--mountpolicy" };
@@ -503,10 +503,10 @@ const Option opt_refresh_interval     { Option::OPT_UINT, "--refreshinterval",  
 const Option opt_targeted_free_space  { Option::OPT_UINT, "--targetedfreespace",     "-f",   " <targeted_free_space>" };
 const Option opt_sleep_time           { Option::OPT_UINT, "--sleeptime",             "-s",   " <sleep time in s>" };
 const Option opt_reason               { Option::OPT_STR,  "--reason",                "-r",   " <reason_status_change>" };
-const Option opt_no_recall            { Option::OPT_FLAG, "--no-recall",             "-nr",  "" };
+const Option opt_no_recall            { Option::OPT_FLAG, "--no-recall",             "--nr",  "" };
 const Option opt_object_id            { Option::OPT_STR,  "--objectid",              "-o",   " <objectId>" };
-const Option opt_read_max_drives      { Option::OPT_UINT,  "--readmaxdrives",        "-rmd", " <read_max_drives>" };
-const Option opt_write_max_drives     { Option::OPT_UINT,  "--writemaxdrives",       "-wmd", " <write_max_drives>" };
+const Option opt_read_max_drives      { Option::OPT_UINT,  "--readmaxdrives",        "--rmd", " <read_max_drives>" };
+const Option opt_write_max_drives     { Option::OPT_UINT,  "--writemaxdrives",       "--wmd", " <write_max_drives>" };
 
 const Option opt_state                { Option::OPT_STR,  "--state",                 "-s",   std::string(" <\"") + Tape::stateToString(Tape::ACTIVE) +"\"" + " or \"" + Tape::stateToString(Tape::DISABLED) + "\" or \"" + Tape::stateToString(Tape::BROKEN) + "\">" };
 

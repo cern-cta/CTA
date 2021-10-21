@@ -160,7 +160,7 @@ echo "Launching repack request for VID ${VID_TO_REPACK}, bufferURL = ${FULL_REPA
 
 NO_RECALL_FLAG=""
 if [ ! -z $NO_RECALL ]; then
-  NO_RECALL_FLAG="-nr"
+  NO_RECALL_FLAG="--nr"
 fi
 
 admin_cta repack add --mountpolicy ${MOUNT_POLICY_NAME} --vid ${VID_TO_REPACK} ${REPACK_OPTION} --bufferurl ${FULL_REPACK_BUFFER_URL} ${DISABLED_TAPE_FLAG} ${NO_RECALL_FLAG} || exit 1
