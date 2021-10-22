@@ -124,7 +124,7 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     dr_item->set_files_transferred_in_session(dr.filesTransferedInSession ? dr.filesTransferedInSession.value() : 0);
     dr_item->set_bytes_transferred_in_session(dr.bytesTransferedInSession ? dr.bytesTransferedInSession.value() : 0);
     if (dr.latestBandwidth && std::isdigit(dr.latestBandwidth.value().at(0)))
-      dr_item->set_latest_bandwidth(std::stoi(dr.latestBandwidth.value()));
+      dr_item->set_latest_bandwidth(std::stod(dr.latestBandwidth.value()));
     else
       dr_item->set_latest_bandwidth(0);
     dr_item->set_session_id(dr.sessionId ? dr.sessionId.value() : 0);

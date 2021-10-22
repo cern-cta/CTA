@@ -1,21 +1,38 @@
-# v4.NEXT
+# v4.3-2
 
 ## Summary
 
 ### Features
-- cta/CTA#1026 `cta-admin sq` now shows the mount policies of potential mounts
 - cta-admin: All short options with more than one character now require two dashes
 
 ### Bug fixes
 - cta/CTA#1013 reportType uninitialized
-- cta/CTA#1035 log configuration options on frontend startup
-- cta/CTA#1042 Do not iterate over retrieve queues when holding global scheduler lock
-  - Repacks on a disabled tape must now use a mount policy whose name starts with repack
-  - There is no longer an empty mount when a disabled/broken tape queue is full of deleted requests
-- cta/CTA#1027 Mitigate popNextBatch bad behaviour in archive queues
-- Migration tools: fixes filemode of files imported from CASTOR to EOS
+- cta/CTA#1044 Fix segmentation fault due to uninitialized optional value and remove diskSpaceReservations from `cta-admin dr ls`
 
 # v4.3-1
+
+## Summary
+
+### Features
+- cta/CTA#976 Add logical part of Drive Status using Catalogue
+- cta/CTA#988 Add diskSpaceReservations map in cta-admin --json dr ls output.
+- cta/CTA#983
+  - Add cta-versionlock helper script to cta-release package
+  - Update cta repo file to use the new public repo
+- cta/CTA#1036 Better error reporting in cta-admin tools
+- cta/CTA#1039 Improve logging of cta admin commands in cta frontend
+- cta/CTA#1041 Fix host values in cta-admin commands
+
+### Bug fixes
+- cta/CTA#501 cta-taped should set the state to DOWN when machine rebooting
+- cta/CTA#955 cta-taped daemon should stop "immediately" and cleanly when systemctl stop/restart is executed
+- cta/CTA#991  Drive is not put down if the device file is removed while cta-taped is running and before a data transfer
+- cta/CTA#996  Removes PARALLEL from migration scripts
+- cta/CTA#1029 Fix segmentatin fault in frontend when list repacks of a tape that has been deleted in the catalogue
+- cta/CTA#1031 Fix Warning in updateDriveStatus
+- cta/CTA#1032 cta-admin dr ls crashes the frontend if executed during an archive/retrieve
+
+# v4.2-3
 
 ## Summary
 
@@ -26,23 +43,27 @@
 - cta/CTA#1036 Better error reporting in cta-admin tools
 - cta/CTA#1039 Improve logging of cta admin commands in cta frontend
 - cta/CTA#1041 Fix host values in cta-admin commands
+- cta/CTA#1026 `cta-admin sq` now shows the mount policies of potential mounts
 
 ### Bug fixes
 - cta/CTA#1029 Fix segmentatin fault in frontend when list repacks of a tape that has been deleted in the catalogue
-- cta/CTA#1031 Fix Warning in updateDriveStatus
 - cta/CTA#1032 cta-admin dr ls crashes the frontend if executed during an archive/retrieve
 - cta/CTA#996  Removes PARALLEL from migration scripts
-- cta/CTA#991  Drive is not put down if the device file is removed while cta-taped is running and before a data transfer
-
-# v4.2-3
+- cta/CTA#1035 log configuration options on frontend startup
+- cta/CTA#1042 Do not iterate over retrieve queues when holding global scheduler lock
+  - Repacks on a disabled tape must now use a mount policy whose name starts with repack
+  - There is no longer an empty mount when a disabled/broken tape queue is full of deleted requests
+- cta/CTA#1027 Mitigate popNextBatch bad behaviour in archive queues
+- Migration tools: fixes filemode of files imported from CASTOR to EOS
 
 # v4.2-2
 
 ## Summary
 
 ### Features
-- cta/CTA#976 Add logical part of Drive Status using Catalogue
-- cta/CTA#988 Add diskSpaceReservations map in cta-admin --json dr ls output.
+
+### Bug fixes
+- cta/CTA#1029 Fix segmentatin fault in frontend when list repacks of a tape that has been deleted in the catalogue
 
 # v4.2-1
 

@@ -16,6 +16,7 @@
  */
 
 #include <algorithm>
+#include <list>
 
 #include "common/dataStructures/DesiredDriveState.hpp"
 #include "common/dataStructures/DriveInfo.hpp"
@@ -70,6 +71,7 @@ std::list<cta::common::dataStructures::TapeDrive> TapeDrivesCatalogueState::getD
   const auto driveNames = m_catalogue.getTapeDriveNames();
   for (const auto& driveName : driveNames) {
     const auto tapeDrive = m_catalogue.getTapeDrive(driveName);
+    if (!tapeDrive) continue;
     tapeDrivesList.push_back(tapeDrive.value());
   }
   return tapeDrivesList;
@@ -114,8 +116,11 @@ void TapeDrivesCatalogueState::updateDriveStatistics(const common::dataStructure
   switch (driveState.value().driveStatus) {
     case common::dataStructures::DriveStatus::Transferring:
     {
-      const time_t timeDifference = inputs.reportTime -  driveState.value().lastModificationLog.value().time;
-      const uint64_t bytesDifference = inputs.bytesTransferred - driveState.value().bytesTransferedInSession.value();
+      const time_t timeDifference = inputs.reportTime - driveState.value().lastModificationLog.value().time;
+      uint64_t bytesTransferedInSession = 0;
+      if (driveState.value().bytesTransferedInSession)
+        bytesTransferedInSession = driveState.value().bytesTransferedInSession.value();
+      const uint64_t bytesDifference = inputs.bytesTransferred - bytesTransferedInSession;
       driveState.value().lastModificationLog = common::dataStructures::EntryLog(
         "NO_USER", driveInfo.host, inputs.reportTime);
       driveState.value().bytesTransferedInSession = inputs.bytesTransferred;
@@ -628,7 +633,7 @@ common::dataStructures::TapeDrive TapeDrivesCatalogueState::setTapeDriveStatus(
   tapeDriveStatus.desiredForceDown = desiredState.forceDown;
   if (desiredState.reason) tapeDriveStatus.reasonUpDown = desiredState.reason;
   if (desiredState.comment) tapeDriveStatus.userComment = desiredState.comment;
-  tapeDriveStatus.diskSystemName = "NOT_SET";
+  tapeDriveStatus.diskSystemName = "NULL";
   tapeDriveStatus.reservedBytes = 0;
   tapeDriveStatus.devFileName = tpConfigLine.devFilename;
   tapeDriveStatus.rawLibrarySlot = tpConfigLine.rawLibrarySlot;

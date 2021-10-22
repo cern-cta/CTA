@@ -230,9 +230,7 @@ void TextFormatter::printDriveLsHeader() {
     "priority",
     "activity",
     "age",
-    "reason",
-    "disk_system_name",
-    "reserved_bytes"
+    "reason"
   );
 }
 
@@ -291,9 +289,7 @@ void TextFormatter::print(const DriveLsItem &drls_item)
     drls_item.current_priority(),
     drls_item.current_activity(),
     timeSinceLastUpdate,
-    reason,
-    drls_item.disk_system_name(),
-    drls_item.reserved_bytes()
+    reason
   );
 }
 
