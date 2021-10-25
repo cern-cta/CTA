@@ -117,9 +117,8 @@ void TapeDrivesCatalogueState::updateDriveStatistics(const common::dataStructure
     case common::dataStructures::DriveStatus::Transferring:
     {
       const time_t timeDifference = inputs.reportTime - driveState.value().lastModificationLog.value().time;
-      uint64_t bytesTransferedInSession = 0;
-      if (driveState.value().bytesTransferedInSession)
-        bytesTransferedInSession = driveState.value().bytesTransferedInSession.value();
+      uint64_t bytesTransferedInSession = driveState.value().bytesTransferedInSession ?
+        driveState.value().bytesTransferedInSession.value() : 0;
       const uint64_t bytesDifference = inputs.bytesTransferred - bytesTransferedInSession;
       driveState.value().lastModificationLog = common::dataStructures::EntryLog(
         "NO_USER", driveInfo.host, inputs.reportTime);
