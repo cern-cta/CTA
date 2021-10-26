@@ -45,7 +45,7 @@ Status CtaRpcImpl::Archive(::grpc::ServerContext* context, const ::cta::dcache::
         cta::checksum::ProtobufToChecksumBlob(request->file().csb(), archiveRequest.checksumBlob);
         archiveRequest.diskFileInfo.owner_uid = 1;
         archiveRequest.diskFileInfo.gid = 1;
-        archiveRequest.diskFileInfo.path = "";
+        archiveRequest.diskFileInfo.path = "/" + request->file().fid();
         archiveRequest.diskFileID = request->file().fid();
         archiveRequest.fileSize = request->file().size();
         archiveRequest.requester.name = request->cli().user().username();
@@ -84,7 +84,7 @@ Status CtaRpcImpl::Delete(::grpc::ServerContext* context, const ::cta::dcache::r
     deleteRequest.requester.name    = request->cli().user().username();
     deleteRequest.requester.group   = request->cli().user().groupname();
 
-    deleteRequest.diskFilePath          = "";
+    deleteRequest.diskFilePath          = "/" + request->file().fid();
     deleteRequest.diskFileId = request->file().fid();
     deleteRequest.diskInstance = instance;
 
@@ -120,7 +120,7 @@ Status CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const ::cta::dcache:
     retrieveRequest.errorReportURL         = request->transport().error_report_url();
     retrieveRequest.diskFileInfo.owner_uid = 1;
     retrieveRequest.diskFileInfo.gid       = 1;
-    retrieveRequest.diskFileInfo.path      = "";
+    retrieveRequest.diskFileInfo.path      = "/" + request->file().fid();
     retrieveRequest.creationLog.host       = context->peer();
     retrieveRequest.creationLog.username   = instance;
     retrieveRequest.creationLog.time       = time(nullptr);
