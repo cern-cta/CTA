@@ -24,7 +24,7 @@ set(PROTOBUF_EOS_CTA_DIR ${XRD_SSI_PB_DIR}/eos_cta/protobuf)
 file(GLOB ProtoFilesEosCta "${PROTOBUF_EOS_CTA_DIR}/*.proto")
 set(PROTOBUF_MIGRATION_DIR ${PROJECT_SOURCE_DIR}/migration/grpc-proto/protobuf)
 file(GLOB ProtoFilesMigration "${PROTOBUF_MIGRATION_DIR}/*.proto")
-set(PROTOBUF_FRONTEND_DIR ${PROJECT_SOURCE_DIR}/frontend_svc/grpc-proto/protobuf)
+set(PROTOBUF_FRONTEND_DIR ${PROJECT_SOURCE_DIR}/cta-dcache/grpc-proto/protobuf)
 file(GLOB ProtoFilesFrontendCta "${PROTOBUF_FRONTEND_DIR}/*.proto")
 
 # Compile protobufs
