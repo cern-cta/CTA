@@ -24,31 +24,23 @@ set(PROTOBUF_EOS_CTA_DIR ${XRD_SSI_PB_DIR}/eos_cta/protobuf)
 file(GLOB ProtoFilesEosCta "${PROTOBUF_EOS_CTA_DIR}/*.proto")
 set(PROTOBUF_MIGRATION_DIR ${PROJECT_SOURCE_DIR}/migration/grpc-proto/protobuf)
 file(GLOB ProtoFilesMigration "${PROTOBUF_MIGRATION_DIR}/*.proto")
-set(PROTOBUF_FRONTEND_DIR ${PROJECT_SOURCE_DIR}/cta-dcache/grpc-proto/protobuf)
-file(GLOB ProtoFilesFrontendCta "${PROTOBUF_FRONTEND_DIR}/*.proto")
 
 # Compile protobufs
-set(PROTOBUF3_INCLUDE_PATH ${PROTOBUF_EOS_CTA_DIR}:${PROTOBUF_MIGRATION_DIR}:${PROTOBUF_FRONTEND_DIR}:${PROTOBUF3_INCLUDE_DIRS})
+set(PROTOBUF3_INCLUDE_PATH ${PROTOBUF_EOS_CTA_DIR}:${PROTOBUF_MIGRATION_DIR})
 PROTOBUF3_GENERATE_CPP(ProtoSourcesEosCta ProtoHeadersEosCta ${ProtoFilesEosCta})
 PROTOBUF3_GENERATE_CPP(ProtoSourcesMigration ProtoHeadersMigration ${ProtoFilesMigration})
-PROTOBUF3_GENERATE_CPP(ProtoSourcesFrontendCta ProtoHeadersFrontendCta ${ProtoFilesFrontendCta})
 
 # Compile gRPC code
 set(GRPC_PROTOBUF_PATH "${CMAKE_BINARY_DIR}/eos_cta/")
 grpc_generate_cpp(ProtoGrpcSourcesMigration ProtoGrpcHeadersMigration ${GRPC_PROTOBUF_PATH} ${ProtoFilesMigration})
-# depends on CTA_EOS definitions
-set(PROTOBUF3_IMPORT_DIRS "${PROTOBUF_EOS_CTA_DIR}:${PROTOBUF3_INCLUDE_DIRS}")
-grpc_generate_cpp(ProtoGrpcSourcesFrontendCta ProtoGrpcHeadersFrontendCta ${GRPC_PROTOBUF_PATH} ${ProtoFilesFrontendCta})
 
 set_source_files_properties(
   ${ProtoSourcesEosCta} ${ProtoHeadersEosCta}
   ${ProtoSourcesMigration} ${ProtoHeadersMigration}
   ${ProtoGrpcSourcesMigration} ${ProtoGrpcHeadersMigration}
-  ${ProtoSourcesFrontendCta} ${ProtoHeadersFrontendCta}
-  ${ProtoGrpcSourcesFrontendCta} ${ProtoGrpcHeadersFrontendCta}
   PROPERTIES GENERATED TRUE)
 
-foreach(PROTO_SRC ${ProtoSourcesEosCta} ${ProtoSourcesMigration} ${ProtoGrpcSourcesMigration} ${ProtoSourcesFrontendCta} ${ProtoGrpcSourcesFrontendCta})
+foreach(PROTO_SRC ${ProtoSourcesEosCta} ${ProtoSourcesMigration} ${ProtoGrpcSourcesMigration})
   set_property(SOURCE ${PROTO_SRC} PROPERTY COMPILE_FLAGS " -Wno-missing-field-initializers -fPIC -Wno-narrowing -Wno-implicit-fallthrough")
 endforeach(PROTO_SRC)
 
@@ -63,11 +55,3 @@ set_target_properties(EosMigration PROPERTIES
   LINKER_LANGUAGE CXX
   POSITION_INDEPENDENT_CODE TRUE)
 target_link_libraries(EosMigration ${PROTOBUF3_GRPC_LIBRARIES})
-
-add_library(CtaGRpc ${ProtoSourcesFrontendCta} ${ProtoGrpcSourcesFrontendCta})
-set_target_properties(CtaGRpc PROPERTIES
-        LINKER_LANGUAGE CXX
-        POSITION_INDEPENDENT_CODE TRUE)
-target_link_libraries(CtaGRpc ${PROTOBUF3_GRPC_LIBRARIES})
-
-add_dependencies(CtaGRpc XrdSsiPbEosCta)
