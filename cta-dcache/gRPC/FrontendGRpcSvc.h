@@ -17,7 +17,7 @@
 #include "common/log/LogLevel.hpp"
 #include <common/checksum/ChecksumBlobSerDeser.hpp>
 
-#include "cta_rpc.grpc.pb.h"
+#include "cta_dcache.grpc.pb.h"
 
 using cta::Scheduler;
 using cta::SchedulerDBInit_t;
