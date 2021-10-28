@@ -18,10 +18,13 @@
 #include "FrontendGRpcSvc.h"
 #include "version.h"
 
+
+static const std::string CTA_DCACHE_VERSION = "cta-dcache-" + std::string(CTA_VERSION);
+
 Status CtaRpcImpl::Version(::grpc::ServerContext *context, const ::google::protobuf::Empty *request,
                            ::cta::admin::Version *response) {
     response->set_cta_version(CTA_VERSION);
-    response->set_xrootd_ssi_protobuf_interface_version("gPRC-frontend v0.0.1");
+    response->set_xrootd_ssi_protobuf_interface_version(CTA_DCACHE_VERSION);
     return Status::OK;
 }
 
@@ -167,6 +170,8 @@ int main(const int argc, char *const *const argv) {
 
     std::unique_ptr <cta::log::Logger> logger = std::unique_ptr<cta::log::Logger>(new log::StdoutLogger("cta-dev", "cta-grpc-frontend", true));
     log::LogContext lc(*logger);
+
+    lc.log(log::INFO, "Starting " + CTA_DCACHE_VERSION);
 
     // use castor config to avoid dependency on xroot-ssi
     Configuration config("/etc/cta/cta.conf");
