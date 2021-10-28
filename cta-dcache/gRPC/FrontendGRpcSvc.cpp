@@ -17,6 +17,7 @@
  */
 #include "FrontendGRpcSvc.h"
 #include "version.h"
+#include <getopt.h>
 
 
 static const std::string CTA_DCACHE_VERSION = "cta-dcache-" + std::string(CTA_VERSION);
@@ -166,9 +167,43 @@ CtaRpcImpl::CtaRpcImpl(cta::log::LogContext *lc, std::unique_ptr<cta::catalogue:
 using namespace cta;
 using namespace cta::common;
 
+
+static struct option long_options[] =
+        {
+                {"port", required_argument, 0, 'p'},
+                {"log-header", no_argument, 0, 'n'},
+                {"no-log-header", no_argument, 0, 's'},
+                {0, 0, 0, 0}
+        };
+
 int main(const int argc, char *const *const argv) {
 
-    std::unique_ptr <cta::log::Logger> logger = std::unique_ptr<cta::log::Logger>(new log::StdoutLogger("cta-dev", "cta-grpc-frontend", true));
+    std::string port = "17017";
+
+    char c;
+    bool shortHeader = true;
+    int option_index = 0;
+    const std::string shortHostName = utils::getShortHostname();
+
+    while( (c = getopt_long(argc, argv, "p:ns", long_options, &option_index)) != EOF) {
+
+        switch(c) {
+            case 'p':
+                port = std::string(optarg);
+                break;
+            case 'n':
+                shortHeader = true;
+                break;
+            case 's':
+                shortHeader = false;
+                break;
+            default:
+                exit(1);
+        }
+    }
+
+
+    std::unique_ptr <cta::log::Logger> logger = std::unique_ptr<cta::log::Logger>(new log::StdoutLogger(shortHostName, "cta-dcache", shortHeader));
     log::LogContext lc(*logger);
 
     lc.log(log::INFO, "Starting " + CTA_DCACHE_VERSION);
@@ -176,7 +211,7 @@ int main(const int argc, char *const *const argv) {
     // use castor config to avoid dependency on xroot-ssi
     Configuration config("/etc/cta/cta.conf");
 
-    std::string server_address("0.0.0.0:17017");
+    std::string server_address("0.0.0.0:" + port);
 
     // Initialise the Catalogue
     std::string catalogueConfigFile = "/etc/cta/cta-catalogue.conf";
