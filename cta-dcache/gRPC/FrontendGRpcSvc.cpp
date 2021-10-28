@@ -167,14 +167,36 @@ CtaRpcImpl::CtaRpcImpl(cta::log::LogContext *lc, std::unique_ptr<cta::catalogue:
 using namespace cta;
 using namespace cta::common;
 
+std::string help =
+        "Usage: cta-dcache [options]\n"
+        "\n"
+        "where options can be:\n"
+        "\n"
+        "\t--port <port>, -p <port>:\tTCP port number to use, defaults to 17017\n"
+        "\t--log-header, -n         \tadd hostname and timestamp to log outputs\n"
+        "\t--no-log-header, -s      \tdon't add hostname and timestamp to log outputs, defalut\n"
+        "\t--version, -v            \tprint version and exit.\n"
+        "\t--help, -h               \tprint this help and exit\n";
 
 static struct option long_options[] =
         {
                 {"port", required_argument, 0, 'p'},
                 {"log-header", no_argument, 0, 'n'},
                 {"no-log-header", no_argument, 0, 's'},
+                {"help", no_argument, 0, 'h'},
+                { "version", no_argument, 0, 'v'},
                 {0, 0, 0, 0}
         };
+
+void printHelpAndExit(int rc) {
+    std::cout << help << std::endl;
+    exit(rc);
+}
+
+void printVersionAndExit() {
+    std::cout << "cta-dcache version: " << CTA_VERSION << std::endl;
+    exit(0);
+}
 
 int main(const int argc, char *const *const argv) {
 
@@ -185,7 +207,7 @@ int main(const int argc, char *const *const argv) {
     int option_index = 0;
     const std::string shortHostName = utils::getShortHostname();
 
-    while( (c = getopt_long(argc, argv, "p:ns", long_options, &option_index)) != EOF) {
+    while( (c = getopt_long(argc, argv, "p:nshv", long_options, &option_index)) != EOF) {
 
         switch(c) {
             case 'p':
@@ -197,8 +219,14 @@ int main(const int argc, char *const *const argv) {
             case 's':
                 shortHeader = false;
                 break;
+            case 'h':
+                printHelpAndExit(0);
+                break;
+            case 'v':
+                printVersionAndExit();
+                break;
             default:
-                exit(1);
+                printHelpAndExit(1);
         }
     }
 
