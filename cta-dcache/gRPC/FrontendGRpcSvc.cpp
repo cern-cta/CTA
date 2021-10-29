@@ -33,6 +33,10 @@ Status CtaRpcImpl::Archive(::grpc::ServerContext* context, const ::cta::dcache::
 
     m_log->log(cta::log::INFO, "Archive request");
 
+    cta::log::ScopedParamContainer sp(*m_log);
+    sp.add("remoteHost", context->peer());
+    sp.add("request", "archive");
+
     const std::string storageClass = request->file().storageclass();
     m_log->log(cta::log::DEBUG, "Archive request for storageClass: " + storageClass);
 
@@ -42,8 +46,16 @@ Status CtaRpcImpl::Archive(::grpc::ServerContext* context, const ::cta::dcache::
 
     auto instance = request->instance().name();
 
+    sp.add("instance", instance);
+    sp.add("username", request->cli().user().username());
+    sp.add("groupname", request->cli().user().groupname());
+
+    sp.add("storageClass", storageClass);
+    sp.add("fileID", request->file().fid());
+
     try {
         uint64_t archiveFileId = m_scheduler->checkAndGetNextArchiveFileId(instance, storageClass, requester, *m_log);
+        sp.add("archiveID", archiveFileId);
 
         cta::common::dataStructures::ArchiveRequest archiveRequest;
         cta::checksum::ProtobufToChecksumBlob(request->file().csb(), archiveRequest.checksumBlob);
@@ -63,9 +75,11 @@ Status CtaRpcImpl::Archive(::grpc::ServerContext* context, const ::cta::dcache::
         archiveRequest.creationLog.time = time(nullptr);
 
         std::string reqId = m_scheduler->queueArchiveWithGivenId(archiveFileId, instance, archiveRequest, *m_log);
+        sp.add("reqId", reqId);
+
         m_log->log(cta::log::INFO, "Archive request for storageClass: " + storageClass
             + " archiveFileId: " + std::to_string(archiveFileId)
-            + "RequestID: " + reqId);
+            + " RequestID: " + reqId);
 
         response->set_fid(archiveFileId);
         response->set_reqid(reqId);
@@ -81,12 +95,23 @@ Status CtaRpcImpl::Archive(::grpc::ServerContext* context, const ::cta::dcache::
 
 Status CtaRpcImpl::Delete(::grpc::ServerContext* context, const ::cta::dcache::rpc::DeleteRequest* request, ::google::protobuf::Empty* response) {
 
+    cta::log::ScopedParamContainer sp(*m_log);
+    sp.add("remoteHost", context->peer());
+
     m_log->log(cta::log::DEBUG, "Delete request");
+    sp.add("request", "delete");
+
     auto instance = request->instance().name();
     // Unpack message
     cta::common::dataStructures::DeleteArchiveRequest deleteRequest;
     deleteRequest.requester.name    = request->cli().user().username();
     deleteRequest.requester.group   = request->cli().user().groupname();
+
+    sp.add("instance", instance);
+    sp.add("username", request->cli().user().username());
+    sp.add("groupname", request->cli().user().groupname());
+    sp.add("fileID", request->file().fid());
+
 
     deleteRequest.diskFilePath          = "/" + request->file().fid();
     deleteRequest.diskFileId = request->file().fid();
@@ -112,10 +137,21 @@ Status CtaRpcImpl::Delete(::grpc::ServerContext* context, const ::cta::dcache::r
 Status CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const ::cta::dcache::rpc::RetrieveRequest* request, ::cta::dcache::rpc::RetrieveResponse *response) {
 
 
+    cta::log::ScopedParamContainer sp(*m_log);
+    sp.add("remoteHost", context->peer());
+    sp.add("request", "retrieve");
+
     const std::string storageClass = request->file().storageclass();
     m_log->log(cta::log::DEBUG, "Retrieve request for storageClass: " + storageClass);
 
     auto instance = request->instance().name();
+
+    sp.add("instance", instance);
+    sp.add("username", request->cli().user().username());
+    sp.add("groupname", request->cli().user().groupname());
+    sp.add("storageClass", storageClass);
+    sp.add("archiveID", request->archiveid());
+    sp.add("fileID", request->file().fid());
 
     // Unpack message
     cta::common::dataStructures::RetrieveRequest retrieveRequest;
@@ -132,14 +168,17 @@ Status CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const ::cta::dcache:
     retrieveRequest.isVerifyOnly           = false;
 
     retrieveRequest.archiveFileID = request->archiveid();
+    sp.add("archiveID", request->archiveid());
+    sp.add("fileID", request->file().fid());
 
     cta::utils::Timer t;
 
     // Queue the request
     std::string reqId = m_scheduler->queueRetrieve(instance, retrieveRequest, *m_log);
+    sp.add("reqId", reqId);
     m_log->log(cta::log::INFO, "Retrieve request for storageClass: " + storageClass
                                + " archiveFileId: " + std::to_string(retrieveRequest.archiveFileID)
-                               + "RequestID: " + reqId);
+                               + " RequestID: " + reqId);
 
     response->set_reqid(reqId);
     return Status::OK;
