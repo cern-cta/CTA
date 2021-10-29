@@ -99,7 +99,8 @@ Status CtaRpcImpl::Delete(::grpc::ServerContext* context, const ::cta::dcache::r
     try {
         deleteRequest.archiveFile = m_catalogue->getArchiveFileById(deleteRequest.archiveFileID);
     } catch (cta::exception::Exception &ex){
-        // TODO add logging
+        m_log->log(cta::log::CRIT, ex.getMessageValue());
+        return ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.getMessageValue());
     }
     m_scheduler->deleteArchive(instance, deleteRequest, *m_log);
 
