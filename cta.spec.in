@@ -191,6 +191,7 @@ dCache frontend
 %attr(0755,root,root) %{_bindir}/cta-dcache
 %attr(0644,root,root) /etc/systemd/system/cta-dcache.service
 %attr(0644,root,root) /etc/sysconfig/cta-dcache
+%attr(0644,root,root) %doc /usr/share/man/man1/cta-dcache.1cta.gz
 
 %post -n cta-dcache
 %systemd_post cta-dcache.service
