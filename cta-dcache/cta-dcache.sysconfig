@@ -1,0 +1,6 @@
+#
+# Config properties of cta-dcache
+#
+
+# port number to accept TCP connections
+GRPC_PORT=17017

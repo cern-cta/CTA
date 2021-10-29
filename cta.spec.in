@@ -190,6 +190,7 @@ dCache frontend
 %defattr(0755,root,root)
 %attr(0755,root,root) %{_bindir}/cta-dcache
 %attr(0644,root,root) /etc/systemd/system/cta-dcache.service
+%attr(0644,root,root) /etc/sysconfig/cta-dcache
 
 %post -n cta-dcache
 %systemd_post cta-dcache.service

@@ -3,7 +3,8 @@ Description=dCache frontend for CERN Tape Archive (CTA)
 After=syslog.target network-online.target
 
 [Service]
-ExecStart=/usr/bin/cta-dcache
+EnvironmentFile=/etc/sysconfig/cta-dcache
+ExecStart=/usr/bin/cta-dcache --no-log-header --port ${GRPC_PORT}
 Type=simple
 Restart=always
 User=cta

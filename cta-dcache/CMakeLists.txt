@@ -60,3 +60,4 @@ set_property(TARGET cta-dcache APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 install(TARGETS cta-dcache DESTINATION usr/bin)
 install (FILES cta-dcache.service DESTINATION etc/systemd/system)
+install (FILES cta-dcache.sysconfig DESTINATION /etc/sysconfig RENAME cta-dcache)
