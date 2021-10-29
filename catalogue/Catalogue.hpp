@@ -36,6 +36,7 @@
 #include "common/dataStructures/ArchiveJob.hpp"
 #include "common/dataStructures/ArchiveRoute.hpp"
 #include "common/dataStructures/CancelRetrieveRequest.hpp"
+#include "common/dataStructures/DiskSpaceReservationRequest.hpp"
 #include "common/dataStructures/DeleteArchiveRequest.hpp"
 #include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/DriveState.hpp"
@@ -86,6 +87,7 @@ namespace cta {
 namespace catalogue {
 
 CTA_GENERATE_EXCEPTION_CLASS(WrongSchemaVersionException);
+CTA_GENERATE_EXCEPTION_CLASS(NegativeDiskSpaceReservationReached);
 
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentDiskSystem);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonEmptyDiskSystemAfterDelete);
@@ -1204,6 +1206,19 @@ public:
    * @param tapeDriveName The name of the tape drive.
    */
   virtual void deleteDriveConfig(const std::string &tapeDriveName, const std::string &keyName) = 0;
+
+  virtual std::map<std::string, uint64_t> getExistingDrivesReservations() const = 0;
+
+  virtual void reserveDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) = 0;
+
+  virtual void addDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes) = 0;
+
+  virtual void subtractDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes) = 0;
+  
+  virtual std::tuple<std::string, uint64_t> getDiskSpaceReservation(const std::string& driveName) = 0;
+  
+  virtual void releaseDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) = 0;
+
 }; // class Catalogue
 
 } // namespace catalogue

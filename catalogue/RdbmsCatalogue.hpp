@@ -2178,6 +2178,18 @@ protected:
 
   void deleteDriveConfig(const std::string &tapeDriveName, const std::string &keyName) override;
 
+  std::map<std::string, uint64_t> getExistingDrivesReservations() const override;
+
+  void reserveDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) override;
+
+  void addDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes) override;
+
+  void subtractDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes) override;
+  
+  std::tuple<std::string, uint64_t> getDiskSpaceReservation(const std::string& driveName) override;
+  
+  void releaseDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) override;
+
   /**
    * Cached versions of tape copy to tape tape pool mappings for specific
    * storage classes.

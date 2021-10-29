@@ -34,7 +34,6 @@
 #include "common/utils/utils.hpp"
 #include "common/utils/utils.hpp"
 #include "disk/DiskFile.hpp"
-#include "DiskSpaceReservation.hpp"
 #include "MemQueues.hpp"
 #include "objectstore/AgentWrapper.hpp"
 #include "objectstore/ArchiveQueueAlgorithms.hpp"
@@ -3371,7 +3370,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::RetrieveMou
       if (j.diskSystemName)
         diskSpaceReservationRequest.addRequest(j.diskSystemName.value(), j.archiveFile.fileSize);
     // Get the existing reservation map from drives (including this drive's previous pending reservations).
-    auto previousDrivesReservations = DiskSpaceReservation::getExistingDrivesReservations(&this->m_oStoreDB.m_catalogue);
+    auto previousDrivesReservations = this->m_oStoreDB.m_catalogue.getExistingDrivesReservations();
     typedef std::pair<std::string, uint64_t> Res;
     uint64_t previousDrivesReservationTotal = 0;
     previousDrivesReservationTotal = std::accumulate(previousDrivesReservations.begin(), previousDrivesReservations.end(),
@@ -3452,7 +3451,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::RetrieveMou
     diskSpaceReservationRequest.clear();
     goto retryPop;
   }
-  DiskSpaceReservation::reserveDiskSpace(&this->m_oStoreDB.m_catalogue, mountInfo.drive, diskSpaceReservationRequest,
+  this->m_oStoreDB.m_catalogue.reserveDiskSpace(mountInfo.drive, diskSpaceReservationRequest,
     logContext);
   // Allocation went fine, we can construct the return value (we did not hit any full disk system.
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
@@ -3664,7 +3663,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
       }
     }
   }
-  DiskSpaceReservation::releaseDiskSpace(&this->m_oStoreDB.m_catalogue, mountInfo.drive, diskSpaceReservationRequest, lc);
+  this->m_oStoreDB.m_catalogue.releaseDiskSpace(mountInfo.drive, diskSpaceReservationRequest, lc);
   // 2) Queue the retrieve requests for repack.
   for (auto & repackRequestQueue: jobsToRequeueForRepackMap) {
     typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReportToRepackForSuccess> RQTRTRFSAlgo;
@@ -4613,7 +4612,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
   if (diskSystemName) {
     cta::DiskSpaceReservationRequest dsrr;
     dsrr.addRequest(diskSystemName.value(), archiveFile.fileSize);
-    DiskSpaceReservation::releaseDiskSpace(&this->m_oStoreDB.m_catalogue, m_retrieveMount->getMountInfo().drive,
+    this->m_oStoreDB.m_catalogue.releaseDiskSpace(m_retrieveMount->getMountInfo().drive,
       dsrr, lc);
   }
 

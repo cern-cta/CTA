@@ -277,6 +277,88 @@ public:
     m_tapeDriveStatus = tapeDrive;
   }
 
+  std::map<std::string, uint64_t> getExistingDrivesReservations() const override {
+    std::map<std::string, uint64_t> ret;
+    const auto tdNames = getTapeDriveNames();
+    for (const auto& driveName : tdNames) {
+      const auto tdStatus = getTapeDrive(driveName);
+      //no need to check key, operator[] initializes missing values at zero for scalar types
+      ret[tdStatus.value().diskSystemName] += tdStatus.value().reservedBytes; 
+    }
+    return ret;
+  }
+
+  void reserveDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) override {
+    if (diskSpaceReservation.empty()) return;
+    // Try add our reservation to the drive status.
+    auto setLogParam = [&lc](const std::string& diskSystemName, uint64_t bytes) {
+      log::ScopedParamContainer params(lc);
+      params.add("diskSystem", diskSystemName)
+            .add("reservation", bytes);
+    };
+    std::string diskSystemName = diskSpaceReservation.begin()->first;
+    uint64_t bytes = diskSpaceReservation.begin()->second;
+    setLogParam(diskSystemName, bytes);
+    lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): reservation request content.");
+
+    std::tie(diskSystemName, bytes) = getDiskSpaceReservation(driveName);
+    setLogParam(diskSystemName, bytes);
+    lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): state before reservation.");
+
+    addDiskSpaceReservation(driveName, diskSpaceReservation.begin()->first,
+      diskSpaceReservation.begin()->second);
+    std::tie(diskSystemName, bytes) = getDiskSpaceReservation(driveName);
+    setLogParam(diskSystemName, bytes);
+    lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): state after reservation.");
+  }
+  
+  void addDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes) override {
+    auto tdStatus = getTapeDrive(driveName);
+    if (!tdStatus) return;
+    tdStatus.value().diskSystemName = diskSystemName;
+    tdStatus.value().reservedBytes += bytes;
+    modifyTapeDrive(tdStatus.value());
+  }
+
+  std::tuple<std::string, uint64_t> getDiskSpaceReservation(const std::string& driveName) override {
+  const auto tdStatus = getTapeDrive(driveName);
+  return std::make_tuple(tdStatus.value().diskSystemName, tdStatus.value().reservedBytes);
+  }
+
+  void releaseDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) override {
+    if (diskSpaceReservation.empty()) return;
+    // Try add our reservation to the drive status.
+    auto setLogParam = [&lc](const std::string& diskSystemName, uint64_t bytes) {
+      log::ScopedParamContainer params(lc);
+      params.add("diskSystem", diskSystemName)
+            .add("reservation", bytes);
+    };
+    std::string diskSystemName = diskSpaceReservation.begin()->first;
+    uint64_t bytes = diskSpaceReservation.begin()->second;
+    setLogParam(diskSystemName, bytes);
+    lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): release request content.");
+
+    std::tie(diskSystemName, bytes) = getDiskSpaceReservation(driveName);
+    setLogParam(diskSystemName, bytes);
+    lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): state before release.");
+
+    subtractDiskSpaceReservation(driveName, diskSpaceReservation.begin()->first,
+      diskSpaceReservation.begin()->second);
+
+    std::tie(diskSystemName, bytes) = getDiskSpaceReservation(driveName);
+    setLogParam(diskSystemName, bytes);
+    lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): state after release.");
+  }
+
+  void subtractDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes) override {
+    auto tdStatus = getTapeDrive(driveName);
+    if (bytes > tdStatus.value().reservedBytes) throw NegativeDiskSpaceReservationReached(
+      "In DriveState::subtractDiskSpaceReservation(): we would reach a negative reservation size.");
+    tdStatus.value().diskSystemName = diskSystemName;
+    tdStatus.value().reservedBytes -= bytes;
+    modifyTapeDrive(tdStatus.value());
+  }
+
 
 private:
   mutable threading::Mutex m_tapeEnablingMutex;

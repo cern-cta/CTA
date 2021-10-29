@@ -22,7 +22,6 @@
 #include "common/dataStructures/DriveInfo.hpp"
 #include "common/dataStructures/TapeDrive.hpp"
 #include "common/log/Logger.hpp"
-#include "scheduler/DiskSpaceReservation.hpp"
 #include "TapeDrivesCatalogueState.hpp"
 #include "tapeserver/daemon/TpconfigLine.hpp"
 

@@ -669,6 +669,30 @@ public:
   void deleteDriveConfig(const std::string &tapeDriveName, const std::string &keyName) {
     return retryOnLostConnection(m_log,[&]{return m_catalogue->deleteDriveConfig(tapeDriveName, keyName);},m_maxTriesToConnect);
   }
+  
+  std::map<std::string, uint64_t> getExistingDrivesReservations() const {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->getExistingDrivesReservations();}, m_maxTriesToConnect);
+  }
+
+  void reserveDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->reserveDiskSpace(driveName, diskSpaceReservation, lc);}, m_maxTriesToConnect);
+  }
+
+  void addDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes) {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->addDiskSpaceReservation(driveName, diskSystemName, bytes);}, m_maxTriesToConnect);
+  }
+
+  void subtractDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes) {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->subtractDiskSpaceReservation(driveName, diskSystemName, bytes);}, m_maxTriesToConnect);
+  }
+
+  std::tuple<std::string, uint64_t> getDiskSpaceReservation(const std::string& driveName) {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->getDiskSpaceReservation(driveName);}, m_maxTriesToConnect);
+  }
+  
+  void releaseDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->releaseDiskSpace(driveName, diskSpaceReservation, lc);}, m_maxTriesToConnect);
+  }
 
 protected:
 

@@ -19,31 +19,11 @@
 
 #include <map>
 #include <string>
-#include <tuple>
-
-#include "catalogue/Catalogue.hpp"
-#include "common/log/Logger.hpp"
 
 namespace cta {
 
 struct DiskSpaceReservationRequest: public std::map<std::string, uint64_t> {
   void addRequest(const std::string &diskSystemName, uint64_t size);
-};
-
-class DiskSpaceReservation {
- public:
-  static std::map<std::string, uint64_t> getExistingDrivesReservations(catalogue::Catalogue* catalogue);
-  static void reserveDiskSpace(catalogue::Catalogue* catalogue, const std::string& driveName,
-    const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc);
-  static void addDiskSpaceReservation(catalogue::Catalogue* catalogue, const std::string& driveName,
-    const std::string& diskSystemName, uint64_t bytes);
-  CTA_GENERATE_EXCEPTION_CLASS(NegativeDiskSpaceReservationReached);
-  static void subtractDiskSpaceReservation(catalogue::Catalogue* catalogue, const std::string& driveName,
-    const std::string& diskSystemName, uint64_t bytes);
-  static std::tuple<std::string, uint64_t> getDiskSpaceReservation(catalogue::Catalogue* catalogue,
-    const std::string& driveName);
-  static void releaseDiskSpace(catalogue::Catalogue* catalogue, const std::string& driveName,
-    const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc);
 };
 
 }
