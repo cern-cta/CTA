@@ -7380,63 +7380,24 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
   }
 }
 
-
 //------------------------------------------------------------------------------
 // deleteTapeFileCopy
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::deleteTapeFileCopy(const std::string &vid, const uint64_t archiveFileId, const std::string &reason) {
-  try {
-    TapeFileSearchCriteria searchCriteria;
-    searchCriteria.archiveFileId = archiveFileId;
-    deleteTapeFileCopy(vid, searchCriteria, reason);
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
-}
-
-
-//------------------------------------------------------------------------------
-// deleteTapeFileCopy
-//------------------------------------------------------------------------------
-void RdbmsCatalogue::deleteTapeFileCopy(const std::string &vid, const std::string &diskFileId,
-                                        const std::string &diskInstanceName, const std::string &reason) {
-  try {
-    // cta-admin converts the list from EOS fxid (hex) to fid (dec). In the case of the
-    // single option on the command line we need to do the conversion ourselves.
-    auto fid = strtol(diskFileId.c_str(), nullptr, 16);
-    if(fid < 1 || fid == LONG_MAX) {
-      throw cta::exception::UserError(diskFileId + " is not a valid file ID");
-    }
-    TapeFileSearchCriteria searchCriteria;
-    searchCriteria.diskInstance = diskInstanceName;
-
-    searchCriteria.diskFileIds = std::vector<std::string>();
-    searchCriteria.diskFileIds->push_back(std::to_string(fid));
-    deleteTapeFileCopy(vid, searchCriteria, reason);
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
-}
-
-
-//------------------------------------------------------------------------------
-// deleteTapeFileCopy
-//------------------------------------------------------------------------------
-void RdbmsCatalogue::deleteTapeFileCopy(const std::string &vid, const TapeFileSearchCriteria &criteria,
-                                        const std::string &reason) {
+void RdbmsCatalogue::deleteTapeFileCopy(const TapeFileSearchCriteria &criteria, const std::string &reason) {
   
   if (!criteria.diskFileIds && !criteria.archiveFileId) {
     throw exception::UserError("To delete a file copy either the diskFileId+diskInstanceName or archiveFileId must be specified");
   }
-
-  auto itor = getArchiveFilesItor(criteria); // itor should have only at most one archive file since we always search on unique attributes
+  if (criteria.diskFileIds && !criteria.diskInstance) {
+    throw exception::UserError("DiskFileId makes no sense without disk instance");
+  }
   
+  auto vid = criteria.vid.value();
+  TapeFileSearchCriteria searchCriteria = criteria;
+  searchCriteria.vid = nullopt; //unset vid, we want to get all copies of the archive file so we can check that it is not a one copy file
+  auto itor = getArchiveFilesItor(searchCriteria); 
+
+  // itor should have at most one archive file since we always search on unique attributes
   if (!itor.hasMore()) {
     if (criteria.archiveFileId) {
       throw exception::UserError(std::string("Cannot delete a copy of the file with archiveFileId ") +
@@ -7462,7 +7423,6 @@ void RdbmsCatalogue::deleteTapeFileCopy(const std::string &vid, const TapeFileSe
                                 criteria.diskInstance.value() + " because it is the only copy");
     }
   }
-
   af.tapeFiles.removeAllVidsExcept(vid); // assume there is only one copy per vid, this should return a list with at most one item
   if (af.tapeFiles.empty()) {
     if (criteria.archiveFileId) {

@@ -16365,7 +16365,10 @@ TEST_P(cta_catalogue_CatalogueTest, DeleteTapeFileCopyUsingArchiveID) {
 
   {
     //delete copy of file on tape1
-    m_catalogue->deleteTapeFileCopy(tape1.vid, 1, reason);
+    cta::catalogue::TapeFileSearchCriteria criteria;
+    criteria.vid = tape1.vid;
+    criteria.archiveFileId = 1;
+    m_catalogue->deleteTapeFileCopy(criteria, reason);
     auto archiveFile = m_catalogue->getArchiveFileById(1);
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto fileRecycleLogItor = m_catalogue->getFileRecycleLogItor();
@@ -16383,7 +16386,10 @@ TEST_P(cta_catalogue_CatalogueTest, DeleteTapeFileCopyUsingArchiveID) {
 
   {
     //delete last copy of file should fail
-    ASSERT_THROW(m_catalogue->deleteTapeFileCopy(tape2.vid, 1, "reason"), exception::UserError);
+    cta::catalogue::TapeFileSearchCriteria criteria;
+    criteria.vid = tape2.vid;
+    criteria.archiveFileId = 1;
+    ASSERT_THROW(m_catalogue->deleteTapeFileCopy(criteria, reason), exception::UserError);
 
   }
 }
@@ -16418,7 +16424,10 @@ TEST_P(cta_catalogue_CatalogueTest, DeleteTapeFileCopyDoesNotExist) {
 
   {
     //delete copy of file that does not exist should fail
-    ASSERT_THROW(m_catalogue->deleteTapeFileCopy(tape2.vid, 1, reason), exception::UserError);
+    cta::catalogue::TapeFileSearchCriteria criteria;
+    criteria.vid = tape2.vid;
+    criteria.archiveFileId = 1;
+    ASSERT_THROW(m_catalogue->deleteTapeFileCopy(criteria, reason), exception::UserError);
 
   }
 }
@@ -16524,7 +16533,13 @@ TEST_P(cta_catalogue_CatalogueTest, DeleteTapeFileCopyUsingFXID) {
 
   {
     //delete copy of file on tape1
-    m_catalogue->deleteTapeFileCopy(tape1.vid, "BC614D", diskInstance, reason);
+    cta::catalogue::TapeFileSearchCriteria criteria;
+    criteria.vid = tape1.vid;
+    criteria.diskInstance = diskInstance;
+    criteria.diskFileIds = std::vector<std::string>();
+    auto fid = std::to_string(strtol("BC614D", nullptr, 16));
+    criteria.diskFileIds.value().push_back(fid);
+    m_catalogue->deleteTapeFileCopy(criteria, reason);
     auto archiveFile = m_catalogue->getArchiveFileById(1);
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto fileRecycleLogItor = m_catalogue->getFileRecycleLogItor();
@@ -16542,7 +16557,13 @@ TEST_P(cta_catalogue_CatalogueTest, DeleteTapeFileCopyUsingFXID) {
 
   {
     //delete last copy of file should fail
-    ASSERT_THROW(m_catalogue->deleteTapeFileCopy(tape2.vid, "BC614D", diskInstance, reason), exception::UserError);
+    cta::catalogue::TapeFileSearchCriteria criteria;
+    criteria.vid = tape2.vid;
+    criteria.diskInstance = diskInstance;
+    criteria.diskFileIds = std::vector<std::string>();
+    auto fid = std::to_string(strtol("BC614D", nullptr, 16));
+    criteria.diskFileIds.value().push_back(fid);
+    ASSERT_THROW(m_catalogue->deleteTapeFileCopy(criteria, reason), exception::UserError);
   }
 }
 
@@ -16647,7 +16668,13 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreTapeFileCopy) {
 
   {
     //delete copy of file on tape1
-    m_catalogue->deleteTapeFileCopy(tape1.vid, "BC614D", diskInstance, reason);
+    cta::catalogue::TapeFileSearchCriteria criteria;
+    criteria.vid = tape1.vid;
+    criteria.diskInstance = diskInstance;
+    criteria.diskFileIds = std::vector<std::string>();
+    auto fid = std::to_string(strtol("BC614D", nullptr, 16));
+    criteria.diskFileIds.value().push_back(fid);
+    m_catalogue->deleteTapeFileCopy(criteria, reason);
     auto archiveFile = m_catalogue->getArchiveFileById(1);
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
   }
@@ -16772,7 +16799,15 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreRewrittenTapeFileCopyFails) {
 
   {
     //delete copy of file on tape1
-    m_catalogue->deleteTapeFileCopy(tape1.vid, "BC614D", diskInstance, reason);
+    
+    //delete copy of file on tape1
+    cta::catalogue::TapeFileSearchCriteria criteria;
+    criteria.vid = tape1.vid;
+    criteria.diskInstance = diskInstance;
+    criteria.diskFileIds = std::vector<std::string>();
+    auto fid = std::to_string(strtol("BC614D", nullptr, 16));
+    criteria.diskFileIds.value().push_back(fid);
+    m_catalogue->deleteTapeFileCopy(criteria, reason);
     auto archiveFile = m_catalogue->getArchiveFileById(1);
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
   }
@@ -16963,14 +16998,30 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreVariousDeletedTapeFileCopies) {
 
   {
     //delete copy of file on tape1
-    m_catalogue->deleteTapeFileCopy(tape1.vid, "BC614D", diskInstance, reason);
+
+    //delete copy of file on tape1
+    cta::catalogue::TapeFileSearchCriteria criteria;
+    criteria.vid = tape1.vid;
+    criteria.diskInstance = diskInstance;
+    criteria.diskFileIds = std::vector<std::string>();
+    auto fid = std::to_string(strtol("BC614D", nullptr, 16));
+    criteria.diskFileIds.value().push_back(fid);
+    m_catalogue->deleteTapeFileCopy(criteria, reason);
     auto archiveFile = m_catalogue->getArchiveFileById(1);
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
   }
 
   {
     //delete copy of file on tape2
-    m_catalogue->deleteTapeFileCopy(tape2.vid, "BC614D", diskInstance, reason);
+    
+    //delete copy of file on tape1
+    cta::catalogue::TapeFileSearchCriteria criteria;
+    criteria.vid = tape2.vid;
+    criteria.diskInstance = diskInstance;
+    criteria.diskFileIds = std::vector<std::string>();
+    auto fid = std::to_string(strtol("BC614D", nullptr, 16));
+    criteria.diskFileIds.value().push_back(fid);
+    m_catalogue->deleteTapeFileCopy(criteria, reason);
     auto archiveFile = m_catalogue->getArchiveFileById(1);
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
   }

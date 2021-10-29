@@ -1896,18 +1896,25 @@ void RequestMessage::processTapeFile_Rm(cta::xrd::Response &response)
   auto instance       = getOptional(OptionString::INSTANCE);
   auto diskFileId     = getOptional(OptionString::FXID);
 
+  cta::catalogue::TapeFileSearchCriteria searchCriteria;
+  searchCriteria.vid = vid;
+  
   if (archiveFileId) {
-    m_catalogue.deleteTapeFileCopy(vid, archiveFileId.value(), reason);
-    response.set_type(cta::xrd::Response::RSP_SUCCESS);
-  } else if (diskFileId) {
-    if (!instance) {
-      throw exception::UserError(std::string("--fxid requires that --instance is specified"));
-    }
-    m_catalogue.deleteTapeFileCopy(vid, diskFileId.value(), instance.value(), reason);
-    response.set_type(cta::xrd::Response::RSP_SUCCESS);
-  } else {
-    throw exception::UserError("--id or --fxid must be specified");
+    searchCriteria.archiveFileId = archiveFileId.value();
   }
+  if (diskFileId) {
+    auto fid = strtol(diskFileId.value().c_str(), nullptr, 16);
+    if(fid < 1 || fid == LONG_MAX) {
+      throw cta::exception::UserError(diskFileId.value() + " is not a valid file ID");
+    }
+    searchCriteria.diskFileIds = std::vector<std::string>();
+    searchCriteria.diskFileIds.value().push_back(std::to_string(fid));
+  }
+  if (instance) {
+    searchCriteria.diskInstance = instance.value();
+  }
+   m_catalogue.deleteTapeFileCopy(searchCriteria, reason);
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 

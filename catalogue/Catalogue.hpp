@@ -962,36 +962,13 @@ public:
   virtual common::dataStructures::ArchiveFileSummary getTapeFileSummary(
     const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const = 0;
 
-   /**
-   * Deletes a tape file copy that meet the specified vid, copyNb and archiveFileId
-   * The copy must match all attributes, or an exception is thrown.
-   *
-   * @param vid The vid of the tape the file copy is stored on.
-   * @param archiveFileId The unique identifier of the archived file
-   * @param reason The reason for deleting the tape file copy
-   */
-    virtual void deleteTapeFileCopy(
-      const std::string &vid,
-      const uint64_t archiveFileId,
-      const std::string &reason) = 0;
-
-   /**
-   * Deletes a tape file copy that meet the specified vid, copyNb, diskFileId and diskInstanceName
-   * The copy must match all attributes, or an exception is thrown.
-   *
-   * @param vid The vid of the tape the file copy is stored on.
-   * @param diskFileId The identifier of the archive_file on disk
-   * @param diskInstanceName The name of the archived file disk instance
-   * @param reason The reason for deleting the tape file copy
-   *
-   */
-  virtual void deleteTapeFileCopy(
-      const std::string &vid,
-      const std::string &diskFileId,
-      const std::string &diskInstanceName,
-      const std::string &reason) = 0;
-
-
+  /**
+  * Deletes a tape file copy
+  *
+  * @param criteria The search criteria of the tape file to delete
+  * @param reason The reason for deleting the tape file copy
+  */
+  virtual void deleteTapeFileCopy(const TapeFileSearchCriteria &criteria, const std::string &reason) = 0;
 
   /**
    * Returns the archive file with the specified unique identifier.

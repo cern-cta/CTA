@@ -941,36 +941,13 @@ public:
   common::dataStructures::ArchiveFileSummary getTapeFileSummary(
     const TapeFileSearchCriteria &searchCriteria) const override;
 
- /**
- * Deletes a tape file copy
- *
- * @param vid The vid of the tape the file copy is stored on
- * @param archiveFileId The unique identifier of the archived file
- * @param reason The reason for deleting the tape file copy
- */
- void deleteTapeFileCopy(const std::string &vid, const uint64_t archiveFileId, const std::string &reason) override;
-
   /**
   * Deletes a tape file copy
   *
-  * @param vid The vid of the tape the file copy is stored on
-  * @param diskFileId The identifier of the archive_file on disk
-  * @param diskInstanceName The name of the archived file disk instance
+  * @param criteria The search criteria of the tape file to delete
   * @param reason The reason for deleting the tape file copy
   */
-  void deleteTapeFileCopy(const std::string &vid, const std::string &diskFileId,
-                          const std::string &diskInstanceName, const std::string &reason) override;
-
-
-  /**
-  * Deletes a tape file copy
-  *
-  * @param criteria The search criteria of the archive file
-  * @param vid The vid of the tape the file copy is stored on
-  * @param criteria The search criteria of the archive file
-  * @param reason The reason for deleting the tape file copy
-  */
-  void deleteTapeFileCopy(const std::string &vid, const TapeFileSearchCriteria &criteria, const std::string &reason);
+  void deleteTapeFileCopy(const TapeFileSearchCriteria &criteria, const std::string &reason) override;
 
 
     /**
