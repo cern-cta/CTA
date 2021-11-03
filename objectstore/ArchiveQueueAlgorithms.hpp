@@ -560,4 +560,13 @@ struct ContainerTraits<ArchiveQueue, ArchiveQueueToReportToRepackForFailure>::Qu
   objectstore::JobQueueType value = objectstore::JobQueueType::JobsToReportToRepackForFailure;
 };
 
+template<>
+auto ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::
+getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, ElementsToSkipSet &elementsToSkip,
+  log::LogContext &lc) -> PoppedElementsBatch;
+
+template<>
+auto ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::
+getElementSummary(const PoppedElement &poppedElement) -> PoppedElementsSummary;
+
 }} // namespace cta::objectstore
