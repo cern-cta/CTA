@@ -137,7 +137,7 @@ int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context) {
 	}
 	c = smc_find_cartridge (extended_robot_info.smc_fd,
 	    extended_robot_info.smc_ldr, template, type, startaddr,
-	    nbelem, element_info);
+	    nbelem, element_info, &extended_robot_info.robot_info);
 	if (c < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
 		free (element_info);

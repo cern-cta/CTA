@@ -27,12 +27,12 @@
 #include "smc_constants.h"
 #include "getconfent.h"
 #include "getopt.h"
+#include "spectra_like_libs.h"
 
 #include <ctype.h>
 			/* exit codes */
 
 #define	USERR	1
-#define PATH_CONF "/etc/cta/cta-smc.conf"
 #define TEXT_RED    "\x1b[31;1m"
 #define TEXT_NORMAL "\x1b[0m"
 
@@ -122,7 +122,6 @@ static int smc_qdrive (
         int c;
         struct smc_element_info *element_info;
 	int nbelem;
-        char *smcLibraryType;
         char useSpectraLib;
 
 	if (drvord < 0) {
@@ -140,10 +139,7 @@ static int smc_qdrive (
 		free (element_info);
 		return (c);
 	}
-        useSpectraLib=0;
-        smcLibraryType = getconfent_fromfile(PATH_CONF,"SMC","LIBRARY_TYPE",0);
-        if (NULL != smcLibraryType &&
-            0 == strcasecmp(smcLibraryType,"SPECTRA")) {
+        if (is_library_spectra_like(robot_info)) {
           useSpectraLib = 1;
         }
         if (isJsonEnabled) {

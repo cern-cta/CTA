@@ -34,9 +34,9 @@
 #include "scsictl.h"
 #include "serrno.h"
 #include "smc_constants.h"
+#include "spectra_like_libs.h"
 
 #define	RBT_XTRA_PROC 10
-#define PATH_CONF "/etc/cta/cta-smc.conf"
 static struct smc_status smc_status;
 static const char *smc_msgaddr;
 
@@ -437,7 +437,8 @@ int smc_find_cartridge(
 	const int type,
 	const int start,
 	const int nbelem,
-	struct smc_element_info element_info[])
+	struct smc_element_info element_info[],
+	struct robot_info *const robot_info)
 {
 	unsigned char cdb[12];
 	char func[16];
@@ -448,15 +449,12 @@ int smc_find_cartridge(
 	char sense[MAXSENSE];
         int pause_mode = 1;
         int nretries = 0;
-        char *smcLibraryType;
 
 	strncpy(func, "findWithVT", sizeof(func));
 	func[sizeof(func) - 1] = '\0';
 
         /* Skip the 0xB6 cdb command if the tape library is Spectra like */
-        smcLibraryType = getconfent_fromfile(PATH_CONF,"SMC","LIBRARY_TYPE",0);
-        if (NULL != smcLibraryType &&
-            0 == strcasecmp(smcLibraryType,"SPECTRA")) {
+        if (is_library_spectra_like(robot_info)) {
           rc = smc_find_cartridgeWithoutSendVolumeTag (fd, rbtdev, find_template, type, start, nbelem,
                                     element_info);
           if (rc >= 0)
@@ -757,7 +755,7 @@ int smc_dismount (
     /* check that the vid is in a slot before returning */
     while (1) {
           struct smc_element_info vol_element_info;
-          if (0 > smc_find_cartridge (fd, loader, drive_element_info.name, 0, 0, 1, &vol_element_info)) {
+          if (0 > smc_find_cartridge (fd, loader, drive_element_info.name, 0, 0, 1, &vol_element_info, robot_info)) {
               const int smc_error = smc_lasterror (&smc_status, &msgaddr);
               rmc_usrmsg ( rpfd, func, SR017, "find_cartridge", drive_element_info.name, msgaddr);
               return (smc_error);
@@ -791,7 +789,7 @@ int smc_export (
 	func[sizeof(func) - 1] = '\0';
 
 	{
-		const int smc_find_cartridge_rc = smc_find_cartridge (fd, loader, vid, 0, 0, 1, &element_info);
+		const int smc_find_cartridge_rc = smc_find_cartridge (fd, loader, vid, 0, 0, 1, &element_info, robot_info);
 		if (0 > smc_find_cartridge_rc) {
 			const int smc_lasterror_rc = smc_lasterror (&smc_status, &msgaddr);
 			rmc_usrmsg ( rpfd, func, SR017, "find_cartridge", vid, msgaddr);
@@ -958,7 +956,7 @@ int smc_mount (
 	strncpy (func, "smc_mount", sizeof(func));
 	func[sizeof(func) - 1] = '\0';
 
-	if ((c = smc_find_cartridge (fd, loader, vid, 0, 0, 1, &element_info)) < 0) {
+	if ((c = smc_find_cartridge (fd, loader, vid, 0, 0, 1, &element_info, robot_info)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
 		rmc_usrmsg ( rpfd, func, SR017, "find_cartridge", vid, msgaddr);
 		return (c);

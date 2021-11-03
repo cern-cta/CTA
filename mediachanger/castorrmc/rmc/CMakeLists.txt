@@ -25,6 +25,7 @@ set (RMCD_SRC_FILES
   rmc_send_scsi_cmd.c
   rmc_serv.c
   rmc_smcsubr.c
+  spectra_like_libs.c
 )
 
 if(CMAKE_COMPILER_IS_GNUCC)
@@ -55,6 +56,7 @@ set (SMC_SRC_FILES
   rmc_mount.c
   rmc_read_elem_status.c
   send2rmc.c
+  spectra_like_libs.c
   smc.c)
 add_executable(cta-smc ${SMC_SRC_FILES})
 target_link_libraries(cta-smc ctarmccommon)

@@ -49,7 +49,8 @@ EXTERN_C int smc_find_cartridge(
   const int type,
   const int start,
   const int nbelem,
-  struct smc_element_info element_info[]);
+  struct smc_element_info element_info[],
+  struct robot_info *const robot_info);
 
 EXTERN_C int smc_lasterror(
   struct smc_status *const smc_stat,
