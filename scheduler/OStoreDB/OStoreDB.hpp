@@ -20,6 +20,7 @@
 #include <tuple>
 
 #include "catalogue/Catalogue.hpp"
+#include "common/dataStructures/JobQueueType.hpp"
 #include "common/log/Logger.hpp"
 #include "common/threading/BlockingQueue.hpp"
 #include "common/threading/Thread.hpp"
@@ -188,9 +189,9 @@ public:
   class ArchiveMount: public SchedulerDatabase::ArchiveMount {
     friend class TapeMountDecisionInfo;
   private:
-    ArchiveMount(OStoreDB & oStoreDB, objectstore::JobQueueType queueType);
+    ArchiveMount(OStoreDB & oStoreDB, common::dataStructures::JobQueueType queueType);
     OStoreDB & m_oStoreDB;
-    objectstore::JobQueueType m_queueType;
+    common::dataStructures::JobQueueType m_queueType;
   public:
     CTA_GENERATE_EXCEPTION_CLASS(MaxFSeqNotGoingUp);
     const MountInfo & getMountInfo() override;
@@ -318,13 +319,21 @@ public:
 
   std::list<cta::common::dataStructures::ArchiveJob> getArchiveJobs(const std::string& tapePoolName) const override;
 
-  typedef QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue> ArchiveQueueItor_t;
+  class ArchiveJobQueueItor : public IArchiveJobQueueItor {
+   public:
+    ArchiveJobQueueItor(objectstore::Backend *objectStore, common::dataStructures::JobQueueType queueType,
+      const std::string &queue_id = "") : m_archiveQueueItor(*objectStore, queueType, queue_id) {}
+    ~ArchiveJobQueueItor() override = default;
+    const std::string &qid() const override;
+    bool end() const override;
+    void operator++() override;
+    const common::dataStructures::ArchiveJob &operator*() const override;
+   private:
+    QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue> m_archiveQueueItor;
+  };
 
-  ArchiveQueueItor_t getArchiveJobItor(const std::string &tapePoolName,
-    objectstore::JobQueueType queueType = objectstore::JobQueueType::JobsToTransferForUser) const;
-
-  ArchiveQueueItor_t* getArchiveJobItorPtr(const std::string &tapePoolName,
-    objectstore::JobQueueType queueType = objectstore::JobQueueType::JobsToTransferForUser) const;
+  std::unique_ptr<IArchiveJobQueueItor> getArchiveJobQueueItor(const std::string &tapePoolName,
+    common::dataStructures::JobQueueType queueType) const override;
 
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > getNextArchiveJobsToReportBatch(uint64_t filesRequested,
      log::LogContext & logContext) override;
@@ -367,13 +376,26 @@ public:
 
   std::map<std::string, std::list<common::dataStructures::RetrieveJob>> getRetrieveJobs() const override;
 
-  typedef QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue> RetrieveQueueItor_t;
+  // typedef QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue> RetrieveQueueItor_t;
 
-  RetrieveQueueItor_t getRetrieveJobItor(const std::string &vid,
-    objectstore::JobQueueType queueType = objectstore::JobQueueType::JobsToTransferForUser) const;
+  class RetrieveJobQueueItor : public IRetrieveJobQueueItor {
+   public:
+    RetrieveJobQueueItor(objectstore::Backend *objectStore, common::dataStructures::JobQueueType queueType,
+      const std::string &queue_id = "") : m_retrieveQueueItor(*objectStore, queueType, queue_id) {}
+    ~RetrieveJobQueueItor() override = default;
+    const std::string &qid() const override;
+    bool end() const override;
+    void operator++() override;
+    const common::dataStructures::RetrieveJob &operator*() const override;
+   private:
+    QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue> m_retrieveQueueItor;
+  };
 
-  RetrieveQueueItor_t* getRetrieveJobItorPtr(const std::string &vid,
-    objectstore::JobQueueType queueType = objectstore::JobQueueType::JobsToTransferForUser) const;
+  std::unique_ptr<IRetrieveJobQueueItor> getRetrieveJobQueueItor(const std::string &vid,
+    common::dataStructures::JobQueueType queueType) const override;
+
+  // RetrieveQueueItor_t* getRetrieveJobItorPtr(const std::string &vid,
+  //   common::dataStructures::JobQueueType queueType = common::dataStructures::JobQueueType::JobsToTransferForUser) const;
 
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logContext) override;
 

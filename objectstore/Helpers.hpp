@@ -17,18 +17,19 @@
 
 #pragma once
 
-#include "scheduler/SchedulerDatabase.hpp"
+#include <fstream>
+#include <future>
+#include <set>
+#include <string>
+#include <syscall.h>
+
+#include "catalogue/Catalogue.hpp"
+#include "common/dataStructures/JobQueueType.hpp"
+#include "common/dataStructures/RepackQueueType.hpp"
 #include "common/threading/Mutex.hpp"
 #include "common/threading/MutexLocker.hpp"
-#include "catalogue/Catalogue.hpp"
 #include "scheduler/OStoreDB/OStoreDB.hpp"
-#include "JobQueueType.hpp"
-#include "common/dataStructures/RepackQueueType.hpp"
-#include <string>
-#include <set>
-#include <future>
-#include <fstream>
-#include <syscall.h>
+#include "scheduler/SchedulerDatabase.hpp"
 
 //Activate or not helper cache update for debugging
 //#define HELPERS_CACHE_UPDATE_LOGGING
@@ -60,7 +61,7 @@ public:
   template <class Queue>
   static void getLockedAndFetchedJobQueue(Queue & queue,
     ScopedExclusiveLock & queueLock, AgentReference & agentReference,
-    const cta::optional<std::string> & tapePoolOrVid, JobQueueType queueType, log::LogContext & lc);
+    const cta::optional<std::string> & tapePoolOrVid, common::dataStructures::JobQueueType queueType, log::LogContext & lc);
 
   /**
    * Find or create a repack queue, and return it locked and fetched to the caller

@@ -33,6 +33,11 @@ include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 set_source_files_properties(CRC.cpp PROPERTIES COMPILE_FLAGS -O2)
 
 set (COMMON_LIB_SRC_FILES
+  checksum/ChecksumBlob.cpp
+  Configuration.cpp
+  ConfigurationFile.cpp
+  CRC.cpp
+  CreationLog.cpp
   dataStructures/ActivitiesFairShareWeights.cpp
   dataStructures/AdminUser.cpp
   dataStructures/ArchiveFile.cpp
@@ -52,11 +57,12 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/EntryLog.cpp
   dataStructures/FileRecycleLog.cpp
   dataStructures/FrontendReturnCode.cpp
+  dataStructures/JobQueueType.cpp
   dataStructures/LifecycleTimings.cpp
   dataStructures/ListStorageClassRequest.cpp
   dataStructures/LogicalLibrary.cpp
-  dataStructures/MountType.cpp
   dataStructures/MountPolicy.cpp
+  dataStructures/MountType.cpp
   dataStructures/OwnerIdentity.cpp
   dataStructures/QueueAndMountSummary.cpp
   dataStructures/ReadTestResult.cpp
@@ -77,19 +83,18 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/TestSourceType.cpp
   dataStructures/UpdateFileInfoRequest.cpp
   dataStructures/UpdateFileStorageClassRequest.cpp
+  dataStructures/utils.cpp
   dataStructures/VirtualOrganization.cpp
   dataStructures/WriteTestResult.cpp
-  dataStructures/utils.cpp
-  checksum/ChecksumBlob.cpp
   exception/AcceptConnectionInterrupted.cpp
   exception/AcsQueryVolumeCmd.cpp
   exception/Backtrace.cpp
   exception/BadAlloc.cpp
   exception/CommandLineNotParsed.cpp
   exception/DismountFailed.cpp
-  exception/ForceDismountFailed.cpp
   exception/Errnum.cpp
   exception/Exception.cpp
+  exception/ForceDismountFailed.cpp
   exception/InvalidArgument.cpp
   exception/InvalidConfigEntry.cpp
   exception/LostDatabaseConnection.cpp
@@ -107,8 +112,8 @@ set (COMMON_LIB_SRC_FILES
   exception/TimeOut.cpp
   exception/UserError.cpp
   exception/XrootCl.cpp
-  json/object/JSONObject.cpp
   json/object/JSONCObject.cpp
+  json/object/JSONObject.cpp
   log/DummyLogger.cpp
   log/FileLogger.cpp
   log/LogContext.cpp
@@ -117,10 +122,11 @@ set (COMMON_LIB_SRC_FILES
   log/Message.cpp
   log/Param.cpp
   log/PriorityMaps.cpp
+  log/StdoutLogger.cpp
   log/StringLogger.cpp
   log/SyslogLogger.cpp
-  log/StdoutLogger.cpp
   log/TimingList.cpp
+  optional.cpp
   priorities/DriveQuota.cpp
   priorities/MountCriteria.cpp
   priorities/UserGroup.cpp
@@ -132,7 +138,8 @@ set (COMMON_LIB_SRC_FILES
   remoteFS/RemotePathAndStatus.cpp
   SmartFd.cpp
   SmartFILEPtr.cpp
-  CRC.cpp
+  SourcedParameter.cpp
+  threading/Async.cpp
   threading/ChildProcess.cpp
   threading/CondVar.cpp
   threading/Daemon.cpp
@@ -140,22 +147,16 @@ set (COMMON_LIB_SRC_FILES
   threading/RWLock.cpp
   threading/RWLockRdLocker.cpp
   threading/RWLockWrLocker.cpp
+  threading/Semaphores.cpp
   threading/SocketPair.cpp
+  threading/SubProcess.cpp
   threading/System.cpp
   threading/Thread.cpp
-  threading/Semaphores.cpp
-  threading/SubProcess.cpp
-  threading/Async.cpp
+  Timer.cpp
   utils/GetOptThreadSafe.cpp
   utils/Regex.cpp
-  utils/utils.cpp
   utils/strerror_r_wrapper.cpp
-  CreationLog.cpp
-  Configuration.cpp
-  ConfigurationFile.cpp
-  SourcedParameter.cpp
-  Timer.cpp
-  optional.cpp)
+  utils/utils.cpp)
 
 add_library (ctacommon SHARED
   ${COMMON_LIB_SRC_FILES})

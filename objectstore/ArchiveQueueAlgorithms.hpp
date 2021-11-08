@@ -16,8 +16,10 @@
  */
 
 #pragma once
+
 #include "Algorithms.hpp"
 #include "ArchiveQueue.hpp"
+#include "common/dataStructures/JobQueueType.hpp"
 #include "common/make_unique.hpp"
 #include "common/optional.hpp"
 
@@ -27,11 +29,11 @@ namespace cta { namespace objectstore {
 
 template<typename C>
 struct ContainerTraits<ArchiveQueue,C>
-{ 
+{
   struct ContainerSummary : public ArchiveQueue::JobsSummary {
     void addDeltaToLog(ContainerSummary&, log::ScopedParamContainer&);
   };
-  
+
   struct QueueType;
 
   struct InsertedElement {
@@ -92,7 +94,7 @@ struct ContainerTraits<ArchiveQueue,C>
     PoppedElementsSummary summary;
     void addToLog(log::ScopedParamContainer&);
   };
-  
+
   typedef ArchiveQueue                                Container;
   typedef std::string                                 ContainerAddress;
   typedef std::string                                 ElementAddress;
@@ -115,7 +117,7 @@ struct ContainerTraits<ArchiveQueue,C>
   };
 
   struct OwnershipSwitchFailure: public cta::exception::Exception {
-    OwnershipSwitchFailure(const std::string & message): cta::exception::Exception(message) {}; 
+    OwnershipSwitchFailure(const std::string & message): cta::exception::Exception(message) {};
     typename OpFailure<InsertedElement>::list failedElements;
   };
 
@@ -123,7 +125,7 @@ struct ContainerTraits<ArchiveQueue,C>
   static ElementAddress getElementAddress(const Element &e) {
     return e.archiveRequest->getAddressIfSet();
   }
-  
+
   static ContainerSummary getContainerSummary(Container &cont);
   static bool trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
     const ContainerIdentifier &cId, log::LogContext &lc);
@@ -340,7 +342,7 @@ addReferencesAndCommit(Container& cont, typename InsertedElement::list& elemMemC
     jd.owner = cont.getAddressIfSet();
     ArchiveRequest & ar = *e.archiveRequest;
     cta::common::dataStructures::MountPolicy mp;
-    if (e.mountPolicy) 
+    if (e.mountPolicy)
       mp=*e.mountPolicy;
     else
       mp=cta::common::dataStructures::MountPolicy();
@@ -519,45 +521,45 @@ struct ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::PoppedElemen
 };
 
 template<>
-struct ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForRepack>::PopCriteria: 
+struct ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForRepack>::PopCriteria:
   public ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::PopCriteria {
   using ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::PopCriteria::PopCriteria;
 };
 
 template<>
-struct ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForRepack>::PoppedElementsSummary: 
+struct ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForRepack>::PoppedElementsSummary:
   public ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::PoppedElementsSummary {
   using ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::PoppedElementsSummary::PoppedElementsSummary;
 };
 
 template<>
 struct ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::QueueType {
-    objectstore::JobQueueType value = objectstore::JobQueueType::JobsToTransferForUser;
+    common::dataStructures::JobQueueType value = common::dataStructures::JobQueueType::JobsToTransferForUser;
 };
 
 template<>
 struct ContainerTraits<ArchiveQueue,ArchiveQueueFailed>::QueueType {
-    objectstore::JobQueueType value = objectstore::JobQueueType::FailedJobs;
+    common::dataStructures::JobQueueType value = common::dataStructures::JobQueueType::FailedJobs;
 };
 
 template<>
 struct ContainerTraits<ArchiveQueue,ArchiveQueueToReportForUser>::QueueType {
-    objectstore::JobQueueType value = objectstore::JobQueueType::JobsToReportToUser;
+    common::dataStructures::JobQueueType value = common::dataStructures::JobQueueType::JobsToReportToUser;
 };
 
 template<>
 struct ContainerTraits<ArchiveQueue, ArchiveQueueToTransferForRepack>::QueueType{
-  objectstore::JobQueueType value = objectstore::JobQueueType::JobsToTransferForRepack;
+  common::dataStructures::JobQueueType value = common::dataStructures::JobQueueType::JobsToTransferForRepack;
 };
 
 template<>
 struct ContainerTraits<ArchiveQueue,ArchiveQueueToReportToRepackForSuccess>::QueueType{
-  objectstore::JobQueueType value = objectstore::JobQueueType::JobsToReportToRepackForSuccess;
+  common::dataStructures::JobQueueType value = common::dataStructures::JobQueueType::JobsToReportToRepackForSuccess;
 };
 
 template<>
 struct ContainerTraits<ArchiveQueue, ArchiveQueueToReportToRepackForFailure>::QueueType{
-  objectstore::JobQueueType value = objectstore::JobQueueType::JobsToReportToRepackForFailure;
+  common::dataStructures::JobQueueType value = common::dataStructures::JobQueueType::JobsToReportToRepackForFailure;
 };
 
 template<>

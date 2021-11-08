@@ -16,10 +16,12 @@
  */
 
 #pragma once
+
 #include "Algorithms.hpp"
-#include "RepackQueue.hpp"
+#include "common/exception/NoSuchObject.hpp"
 #include "common/make_unique.hpp"
 #include "common/optional.hpp"
+#include "RepackQueue.hpp"
 #include "RepackRequest.hpp"
 
 namespace cta { namespace objectstore {
@@ -28,14 +30,14 @@ namespace cta { namespace objectstore {
 
 template<typename C>
 struct ContainerTraits<RepackQueue,C>
-{ 
+{
   struct ContainerSummary : public RepackQueue::RequestsSummary {
     using RepackQueue::RequestsSummary::RequestsSummary;
     void addDeltaToLog(ContainerSummary&, log::ScopedParamContainer&);
   };
-  
+
   struct QueueType;
-  
+
   struct InsertedElement {
     std::unique_ptr<RepackRequest> repackRequest;
     cta::optional<serializers::RepackRequestStatus> newStatus;
@@ -110,7 +112,7 @@ struct ContainerTraits<RepackQueue,C>
   static ElementAddress getElementAddress(const Element &e) {
     return e.repackRequest->getAddressIfSet();
   }
-  
+
   static ContainerSummary getContainerSummary(Container &cont);
   static bool trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
     const ContainerIdentifier &cId, log::LogContext &lc);
@@ -132,7 +134,7 @@ struct ContainerTraits<RepackQueue,C>
   static typename OpFailure<PoppedElement>::list
   switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const ContainerAddress &contAddress,
     const ContainerAddress &previousOwnerAddress, log::TimingList &timingList, utils::Timer &t, log::LogContext &lc);
-  
+
   static typename OpFailure<PoppedElement>::list
   switchElementsOwnershipAndStatus(PoppedElementsBatch &poppedElementBatch, const ContainerAddress &contAddress,
     const ContainerAddress &previousOwnerAddress, log::TimingList &timingList, utils::Timer &t, log::LogContext &lc,
@@ -259,7 +261,7 @@ getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, cons
     contLock.lock(cont);
     cont.fetch();
     //lockFetchQueueTime += localLockFetchQueueTime = t.secs(utils::Timer::resetCounter);
-  } catch (Backend::NoSuchObject & ex) {
+  } catch (cta::exception::NoSuchObject & ex) {
     // The queue is now absent. We can remove its reference in the root entry.
     // A new queue could have been added in the mean time, and be non-empty.
     // We will then fail to remove from the RootEntry (non-fatal).
@@ -269,19 +271,19 @@ getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, cons
       re.removeRepackQueueAndCommit(queueType.value, lc);
       log::ScopedParamContainer params(lc);
       params.add("queueObject", cont.getAddressIfSet());
-      lc.log(log::INFO, 
+      lc.log(log::INFO,
           "In ContainerTraits<RepackQueue,C>::getLockedAndFetchedNoCreate(): de-referenced missing queue from root entry");
     } catch (RootEntry::RepackQueueNotEmpty & ex) {
       log::ScopedParamContainer params(lc);
       params.add("queueObject", cont.getAddressIfSet())
             .add("Message", ex.getMessageValue());
-      lc.log(log::INFO, 
+      lc.log(log::INFO,
           "In ContainerTraits<RepackQueue,C>::getLockedAndFetchedNoCreate(): could not de-referenced missing queue from root entry");
     } catch (RootEntry::NoSuchRepackQueue &) {
       // Somebody removed the queue in the mean time. Barely worth mentioning.
       log::ScopedParamContainer params(lc);
       params.add("queueObject", cont.getAddressIfSet());
-      lc.log(log::DEBUG, 
+      lc.log(log::DEBUG,
           "In ContainerTraits<RepackQueue,C>::getLockedAndFetchedNoCreate(): could not de-referenced missing queue from root entry: already done.");
     }
     //emptyQueueCleanupTime += localEmptyCleanupQueueTime = t.secs(utils::Timer::resetCounter);
@@ -370,9 +372,9 @@ auto ContainerTraits<RepackQueue,C>::switchElementsOwnership(PoppedElementsBatch
       updaters.emplace_back(repackRequest.asyncUpdateOwnerAndStatus(contAddress,previousOwnerAddress,cta::nullopt));
     }
     timingList.insertAndReset("asyncUpdateLaunchTime", t);
-    
+
     typename OpFailure<PoppedElement>::list ret;
-    
+
     for(auto el = std::make_pair(updaters.begin(), poppedElementBatch.elements.begin());
       el.first != updaters.end(); ++el.first, ++el.second)
     {

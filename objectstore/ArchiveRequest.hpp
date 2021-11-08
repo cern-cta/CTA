@@ -18,20 +18,21 @@
 
 #pragma once
 
-#include "common/dataStructures/DiskFileInfo.hpp"
-#include "common/dataStructures/EntryLog.hpp"
-#include "common/dataStructures/MountPolicy.hpp"
-#include "common/dataStructures/RequesterIdentity.hpp"
-#include "common/dataStructures/ArchiveFile.hpp"
-#include "JobQueueType.hpp"
-#include "common/Timer.hpp"
-#include "common/optional.hpp"
-#include "ObjectOps.hpp"
-#include "objectstore/cta.pb.h"
 #include <list>
 
+#include "common/dataStructures/ArchiveFile.hpp"
+#include "common/dataStructures/DiskFileInfo.hpp"
+#include "common/dataStructures/EntryLog.hpp"
+#include "common/dataStructures/JobQueueType.hpp"
+#include "common/dataStructures/MountPolicy.hpp"
+#include "common/dataStructures/RequesterIdentity.hpp"
+#include "common/optional.hpp"
+#include "common/Timer.hpp"
+#include "ObjectOps.hpp"
+#include "objectstore/cta.pb.h"
+
 namespace cta { namespace objectstore {
-  
+
 class Backend;
 class Agent;
 class GenericObject;
@@ -93,7 +94,7 @@ public:
       serializers::ArchiveJobStatus::AJS_ToReportToRepackForSuccess};
 private:
   /**
-   * Determine and set the new status of the job and determine whether and where the request should be queued 
+   * Determine and set the new status of the job and determine whether and where the request should be queued
    * or deleted after the job status change. This function only handles failures, which have a more varied
    * array of possibilities.
    * @param copyNumberUpdated
@@ -119,7 +120,7 @@ public:
   EnqueueingNextStep addReportFailure(uint32_t copyNumber, uint64_t sessionId, const std::string & failureReason,
       log::LogContext &lc); //< returns next step to take with the job
   CTA_GENERATE_EXCEPTION_CLASS(JobNotQueueable);
-  JobQueueType getJobQueueType(uint32_t copyNumber);
+  common::dataStructures::JobQueueType getJobQueueType(uint32_t copyNumber);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
   // Set a job ownership
   void setJobOwner(uint32_t copyNumber, const std::string & owner);
@@ -159,7 +160,7 @@ public:
   // one, the request will do nothing and not fail.
   AsyncJobOwnerUpdater * asyncUpdateJobOwner(uint32_t copyNumber, const std::string & owner, const std::string &previousOwner,
       const cta::optional<serializers::ArchiveJobStatus>& newStatus);
-  
+
   struct RepackInfoSerDeser: public RepackInfo {
     operator RepackInfo() { return RepackInfo(*this); }
     void serialize(cta::objectstore::serializers::ArchiveRequestRepackInfo & arri) {
@@ -173,7 +174,7 @@ public:
 	jobDestination->set_destination_vid(kv.second);
       }
     }
-    
+
     void deserialize(const cta::objectstore::serializers::ArchiveRequestRepackInfo & arri) {
       isRepack = true;
       fileBufferURL = arri.file_buffer_url();
@@ -184,7 +185,7 @@ public:
       }
     }
   };
-  
+
   // An asynchronous job updating class for transfer success.
   class AsyncTransferSuccessfulUpdater {
     friend class ArchiveRequest;
@@ -197,7 +198,7 @@ public:
     std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
   };
   AsyncTransferSuccessfulUpdater * asyncUpdateTransferSuccessful(const std::string destinationVid, const uint32_t copyNumber);
-  
+
   // An asynchronous request deleter class after report of success.
   class AsyncRequestDeleter {
     friend class ArchiveRequest;
@@ -211,16 +212,16 @@ public:
   std::string getJobOwner(uint32_t copyNumber);
 
   // Utility to convert status to queue type
-  static JobQueueType getQueueType(const serializers::ArchiveJobStatus &status);
+  static common::dataStructures::JobQueueType getQueueType(const serializers::ArchiveJobStatus &status);
 
   // ===========================================================================
-  // TODO: ArchiveFile comes with extraneous information. 
+  // TODO: ArchiveFile comes with extraneous information.
   void setArchiveFile(const cta::common::dataStructures::ArchiveFile& archiveFile);
   cta::common::dataStructures::ArchiveFile getArchiveFile();
-  
+
   void setArchiveReportURL(const std::string &URL);
   std::string getArchiveReportURL();
-  
+
   void setArchiveErrorReportURL(const std::string &URL);
   std::string getArchiveErrorReportURL();
 
@@ -232,10 +233,10 @@ public:
 
   void setEntryLog(const cta::common::dataStructures::EntryLog &creationLog);
   cta::common::dataStructures::EntryLog getEntryLog();
-  
+
   void setMountPolicy(const cta::common::dataStructures::MountPolicy &mountPolicy);
   cta::common::dataStructures::MountPolicy getMountPolicy();
-  
+
   class JobDump {
   public:
     uint32_t copyNb;
@@ -243,7 +244,7 @@ public:
     std::string owner;
     serializers::ArchiveJobStatus status;
   };
-  
+
   std::list<JobDump> dumpJobs();
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) override;

@@ -19,6 +19,7 @@
 #include "ArchiveMount.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteriaAndFileId.hpp"
 #include "common/exception/NonRetryableError.hpp"
+#include "common/exception/NoSuchObject.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/make_unique.hpp"
 #include "common/Timer.hpp"
@@ -1960,7 +1961,7 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob> >& 
       lc.log(log::ERR, "In Scheduler::reportArchiveJobsBatch(): failed to launch reporter.");
       try {
         j->reportFailed(ex.getMessageValue(), lc);
-      } catch(const cta::objectstore::Backend::NoSuchObject &ex){
+      } catch(const cta::exception::NoSuchObject &ex){
         params.add("fileId",j->archiveFile.archiveFileID)
               .add("reportType",j->reportType())
               .add("exceptionMSG",ex.getMessageValue());
@@ -1982,7 +1983,7 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob> >& 
       lc.log(log::ERR, "In Scheduler::reportArchiveJobsBatch(): failed to report.");
       try {
         current.archiveJob->reportFailed(ex.getMessageValue(), lc);
-      } catch(const cta::objectstore::Backend::NoSuchObject &ex){
+      } catch(const cta::exception::NoSuchObject &ex){
         params.add("fileId",current.archiveJob->archiveFile.archiveFileID)
               .add("reportType",current.archiveJob->reportType())
               .add("exceptionMSG",ex.getMessageValue());

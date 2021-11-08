@@ -129,6 +129,16 @@ public:
     return m_OStoreDB.getArchiveJobs(tapePoolName);
   }
 
+  std::unique_ptr<IArchiveJobQueueItor> getArchiveJobQueueItor(const std::string &tapePoolName,
+    common::dataStructures::JobQueueType queueType) const override {
+    return m_OStoreDB.getArchiveJobQueueItor(tapePoolName, queueType);
+  }
+
+  std::unique_ptr<IRetrieveJobQueueItor> getRetrieveJobQueueItor(const std::string &vid,
+    common::dataStructures::JobQueueType queueType) const override {
+    return m_OStoreDB.getRetrieveJobQueueItor(vid, queueType);
+  }
+
   std::map<std::string, std::list<RetrieveRequestDump> > getRetrieveRequests() const override {
     return m_OStoreDB.getRetrieveRequests();
   }

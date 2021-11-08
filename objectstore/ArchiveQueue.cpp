@@ -15,17 +15,20 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ArchiveQueue.hpp"
-#include "GenericObject.hpp"
-#include "ProtocolBuffersAlgorithms.hpp"
-#include "EntryLogSerDeser.hpp"
-#include "RootEntry.hpp"
-#include "ValueCountMap.hpp"
-#include "ArchiveQueueShard.hpp"
-#include "AgentReference.hpp"
 #include <google/protobuf/util/json_util.h>
 
-namespace cta { namespace objectstore { 
+#include "AgentReference.hpp"
+#include "ArchiveQueue.hpp"
+#include "ArchiveQueueShard.hpp"
+#include "common/dataStructures/JobQueueType.hpp"
+#include "common/exception/NoSuchObject.hpp"
+#include "EntryLogSerDeser.hpp"
+#include "GenericObject.hpp"
+#include "ProtocolBuffersAlgorithms.hpp"
+#include "RootEntry.hpp"
+#include "ValueCountMap.hpp"
+
+namespace cta { namespace objectstore {
 
 ArchiveQueue::ArchiveQueue(const std::string& address, Backend& os):
   ObjectOps<serializers::ArchiveQueue, serializers::ArchiveQueue_t>(os, address) { }
@@ -41,7 +44,7 @@ ArchiveQueue::ArchiveQueue(GenericObject& go):
   getPayloadFromHeader();
 }
 
-std::string ArchiveQueue::dump() {  
+std::string ArchiveQueue::dump() {
   checkPayloadReadable();
   google::protobuf::util::JsonPrintOptions options;
   options.add_whitespace = true;
@@ -85,7 +88,7 @@ bool ArchiveQueue::checkMapsAndShardsCoherency() {
   uint64_t totalBytes = m_payload.archivejobstotalsize();
   uint64_t totalJobs = m_payload.archivejobscount();
   // The sum of shards should be equal to the summary
-  if (totalBytes != bytesFromShardPointers || 
+  if (totalBytes != bytesFromShardPointers ||
       totalJobs != jobsExpectedFromShardsPointers)
     return false;
   // Check that we have coherent queue summaries
@@ -102,7 +105,7 @@ bool ArchiveQueue::checkMapsAndShardsCoherency() {
 
 void ArchiveQueue::rebuild() {
   checkPayloadWritable();
-  // Something is off with the queue. We will hence rebuild it. The rebuild of the 
+  // Something is off with the queue. We will hence rebuild it. The rebuild of the
   // queue will consist in:
   // 1) Attempting to read all shards in parallel. Absent shards are possible, and will
   // mean we have dangling pointers.
@@ -111,7 +114,7 @@ void ArchiveQueue::rebuild() {
   // shards, as this is already handled as access goes.
   std::list<ArchiveQueueShard> shards;
   std::list<std::unique_ptr<ArchiveQueueShard::AsyncLockfreeFetcher>> shardsFetchers;
-  
+
   // Get the summaries structures ready
   ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap());
   priorityMap.clear();
@@ -132,7 +135,7 @@ void ArchiveQueue::rebuild() {
     // Each shard could be gone
     try {
       (*sf)->wait();
-    } catch (Backend::NoSuchObject & ex) {
+    } catch (cta::exception::NoSuchObject & ex) {
       // Remove the shard from the list
       auto aqs = m_payload.mutable_archivequeueshards()->begin();
       while (aqs != m_payload.mutable_archivequeueshards()->end()) {
@@ -197,15 +200,15 @@ void ArchiveQueue::rebuild() {
 
 void ArchiveQueue::recomputeOldestJobCreationTime(){
   checkPayloadWritable();
-  
+
   std::list<ArchiveQueueShard> shards;
   std::list<std::unique_ptr<ArchiveQueueShard::AsyncLockfreeFetcher>> shardsFetchers;
-  
+
   for (auto & sa: m_payload.archivequeueshards()) {
     shards.emplace_back(ArchiveQueueShard(sa.address(), m_objectStore));
     shardsFetchers.emplace_back(shards.back().asyncLockfreeFetch());
   }
-  
+
   auto s = shards.begin();
   auto sf = shardsFetchers.begin();
   time_t oldestJobCreationTime=std::numeric_limits<time_t>::max();
@@ -213,7 +216,7 @@ void ArchiveQueue::recomputeOldestJobCreationTime(){
     // Each shard could be gone
     try {
       (*sf)->wait();
-    } catch (Backend::NoSuchObject & ex) {
+    } catch (cta::exception::NoSuchObject & ex) {
       // Remove the shard from the list
       auto aqs = m_payload.mutable_archivequeueshards()->begin();
       while (aqs != m_payload.mutable_archivequeueshards()->end()) {
@@ -259,14 +262,14 @@ void ArchiveQueue::garbageCollect(const std::string &presumedOwner, AgentReferen
     return;
   // If the owner is still the agent, there are 2 possibilities
   // 1) The tape pool is referenced in the root entry, and then nothing is needed
-  // besides setting the tape pool's owner to the root entry's address in 
+  // besides setting the tape pool's owner to the root entry's address in
   // order to enable its usage. Before that, it was considered as a dangling
   // pointer.
   {
     RootEntry re(m_objectStore);
     ScopedSharedLock rel (re);
     re.fetch();
-    auto tpd=re.dumpArchiveQueues(JobQueueType::JobsToTransferForUser);
+    auto tpd=re.dumpArchiveQueues(common::dataStructures::JobQueueType::JobsToTransferForUser);
     for (auto tp=tpd.begin(); tp!=tpd.end(); tp++) {
       if (tp->address == getAddressIfSet()) {
         setOwner(re.getAddressIfSet());
@@ -306,7 +309,7 @@ void ArchiveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefere
   //  First implementation is shard by shard. A batter, parallel one could be implemented,
   // but the performance gain should be marginal as most of the time we will be dealing
   // with a single shard.
-  
+
   auto nextJob = jobsToAdd.begin();
   while (nextJob != jobsToAdd.end()) {
     // If we're here, the is at least a job to add.
@@ -326,7 +329,7 @@ void ArchiveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefere
       m_exclusiveLock->includeSubObject(aqs);
       try {
         aqs.fetch();
-      } catch (Backend::NoSuchObject & ex) {
+      } catch (cta::exception::NoSuchObject & ex) {
         log::ScopedParamContainer params (lc);
         params.add("archiveQueueObject", getAddressIfSet())
               .add("shardNumber", shardCount - 1)
@@ -372,7 +375,7 @@ void ArchiveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefere
     }
     // We can now add the individual jobs, commit the main queue and then insert or commit the shard.
     {
-      // As the queue could be rebuilt on each shard round, we get access to the 
+      // As the queue could be rebuilt on each shard round, we get access to the
       // value maps here
       ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap());
       ValueCountMapUint64 minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
@@ -436,7 +439,7 @@ ArchiveQueue::AdditionSummary ArchiveQueue::addJobsIfNecessaryAndCommit(std::lis
   // First get all the shards of the queue to understand which jobs to add.
   std::list<ArchiveQueueShard> shards;
   std::list<std::unique_ptr<ArchiveQueueShard::AsyncLockfreeFetcher>> shardsFetchers;
-  
+
   for (auto & sa: m_payload.archivequeueshards()) {
     shards.emplace_back(ArchiveQueueShard(sa.address(), m_objectStore));
     shardsFetchers.emplace_back(shards.back().asyncLockfreeFetch());
@@ -444,11 +447,11 @@ ArchiveQueue::AdditionSummary ArchiveQueue::addJobsIfNecessaryAndCommit(std::lis
   std::list<std::list<JobDump>> shardsDumps;
   auto s = shards.begin();
   auto sf = shardsFetchers.begin();
-  
+
   while (s!= shards.end()) {
     try {
       (*sf)->wait();
-    } catch (Backend::NoSuchObject & ex) {
+    } catch (cta::exception::NoSuchObject & ex) {
       goto nextShard;
     }
     shardsDumps.emplace_back(std::list<JobDump>());
@@ -459,7 +462,7 @@ ArchiveQueue::AdditionSummary ArchiveQueue::addJobsIfNecessaryAndCommit(std::lis
     s++;
     sf++;
   }
-  
+
   // Now filter the jobs to add
   AdditionSummary ret;
   std::list<JobToAdd> jobsToReallyAdd;
@@ -475,7 +478,7 @@ ArchiveQueue::AdditionSummary ArchiveQueue::addJobsIfNecessaryAndCommit(std::lis
     ret.files++;
   found:;
   }
-  
+
   // We can now proceed with the standard addition.
   addJobsAndCommit(jobsToReallyAdd, agentReference, lc);
   return ret;
@@ -521,14 +524,14 @@ void ArchiveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemov
       // Also update the shard pointers's stats. In case of mismatch, we will trigger a rebuild.
       shardPointer->set_shardbytescount(shardPointer->shardbytescount() - removalResult.bytesRemoved);
       shardPointer->set_shardjobscount(shardPointer->shardjobscount() - removalResult.jobsRemoved);
-      if (shardPointer->shardbytescount() != removalResult.bytesAfter 
+      if (shardPointer->shardbytescount() != removalResult.bytesAfter
           || shardPointer->shardjobscount() != removalResult.jobsAfter) {
         rebuild();
       }
       // We will commit when exiting anyway...
       shardIndex++;
     } else {
-      // Shard's gone, so should the pointer. Push it to the end of the queue and 
+      // Shard's gone, so should the pointer. Push it to the end of the queue and
       // trim it.
       for (auto i=shardIndex; i<mutableArchiveQueueShards->size()-1; i++) {
         mutableArchiveQueueShards->SwapElements(i, i+1);
@@ -537,7 +540,7 @@ void ArchiveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemov
     }
     // We should also trim the removed jobs from our list.
     localJobsToRemove.remove_if(
-      [&removalResult](const std::string & ja){ 
+      [&removalResult](const std::string & ja){
         return std::count_if(removalResult.removedJobs.begin(), removalResult.removedJobs.end(),
           [&ja](ArchiveQueueShard::JobInfo & j) {
             return j.address == ja;
@@ -566,7 +569,7 @@ auto ArchiveQueue::dumpJobs() -> std::list<JobDump> {
   while (s != shards.end()) {
     try {
       (*sf)->wait();
-    } catch (Backend::NoSuchObject & ex) {
+    } catch (cta::exception::NoSuchObject & ex) {
       // We are possibly in read only mode, so we cannot rebuild.
       // Just skip this shard.
       goto nextShard;

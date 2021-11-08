@@ -15,25 +15,26 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "RepackRequestManager.hpp"
-#include "Scheduler.hpp"
+#include "common/exception/NoSuchObject.hpp"
 #include "common/make_unique.hpp"
 #include "OStoreDB/OStoreDB.hpp"
 #include "RepackReportThread.hpp"
+#include "RepackRequestManager.hpp"
+#include "Scheduler.hpp"
 
 namespace cta {
-  
+
 void RepackRequestManager::runOnePass(log::LogContext& lc) {
   // We give ourselves a budget of 30s for those operations...
   utils::Timer t;
   log::TimingList timingList;
   // First expand any request to expand
   // Next promote requests to ToExpand if needed
-  
+
   //Putting pending repack request into the RepackQueueToExpand queue
   m_scheduler.promoteRepackRequestsToToExpand(lc);
-  
-  {  
+
+  {
     //Retrieve the first repack request from the RepackQueueToExpand queue
     std::unique_ptr<cta::RepackRequest> repackRequest = m_scheduler.getNextRepackRequestToExpand();
     if(repackRequest != nullptr){
@@ -53,13 +54,13 @@ void RepackRequestManager::runOnePass(log::LogContext& lc) {
           repackRequest->fail();
           throw(e);
         }
-      } catch (const cta::objectstore::Backend::NoSuchObject &ex){
+      } catch (const cta::exception::NoSuchObject &ex){
         //In case the repack request is deleted during expansion, avoid a segmentation fault of the tapeserver
         lc.log(log::WARNING,"In RepackRequestManager::runOnePass(), RepackRequest object does not exist in the objectstore");
       }
     }
   }
-  
+
   {
     RetrieveSuccessesRepackReportThread rsrrt(m_scheduler,lc);
     rsrrt.run();
@@ -70,7 +71,7 @@ void RepackRequestManager::runOnePass(log::LogContext& lc) {
     ArchiveFailedRepackReportThread afrrt(m_scheduler,lc);
     afrrt.run();
   }
-  
+
 }
 
 } // namespace cta

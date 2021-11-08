@@ -22,11 +22,14 @@
  * to/from them.
  */
 
-#include <string>
-#include "Helpers.hpp"
-#include "common/log/LogContext.hpp"
+ #include <string>
+#include <iostream>
+
 #include "common/exception/Exception.hpp"
+#include "common/exception/NoSuchObject.hpp"
+#include "common/log/LogContext.hpp"
 #include "common/log/TimingList.hpp"
+#include "Helpers.hpp"
 
 namespace cta { namespace objectstore {
 
@@ -35,15 +38,15 @@ class ContainerAlgorithms {
 public:
   ContainerAlgorithms(Backend & backend, AgentReference & agentReference):
     m_backend(backend), m_agentReference(agentReference) {}
-    
+
   typedef typename ContainerTraits<Q,C>::InsertedElement InsertedElement;
   typedef typename ContainerTraits<Q,C>::PopCriteria PopCriteria;
   typedef typename ContainerTraits<Q,C>::OwnershipSwitchFailure OwnershipSwitchFailure;
   typedef typename ContainerTraits<Q,C>::PoppedElementsBatch PoppedElementsBatch;
   typedef typename ContainerTraits<Q,C>::QueueType JobQueueType;
-    
-  /** 
-   * Reference objects in the container and then switch their ownership. Objects 
+
+  /**
+   * Reference objects in the container and then switch their ownership. Objects
    * are provided existing and owned by algorithm's agent.
    */
   void referenceAndSwitchOwnership(const typename ContainerTraits<Q,C>::ContainerIdentifier & contId,
@@ -113,7 +116,7 @@ public:
   }
 
   /**
-   * Addition of jobs to container. Convenience overload for cases when current agent is the previous owner 
+   * Addition of jobs to container. Convenience overload for cases when current agent is the previous owner
    * (most cases except garbage collection).
    */
   void referenceAndSwitchOwnership(const typename ContainerTraits<Q,C>::ContainerIdentifier &contId,
@@ -128,7 +131,7 @@ public:
    * might vary. This function is typically used by the garbage collector. We do not take care of
    * dereferencing the object from the caller.
    */
-  void referenceAndSwitchOwnershipIfNecessary(const typename ContainerTraits<Q,C>::ContainerIdentifier & contId, 
+  void referenceAndSwitchOwnershipIfNecessary(const typename ContainerTraits<Q,C>::ContainerIdentifier & contId,
       typename ContainerTraits<Q,C>::ContainerAddress & previousOwnerAddress,
       typename ContainerTraits<Q,C>::ContainerAddress & contAddress,
       typename ContainerTraits<Q,C>::InsertedElement::list & elements, log::LogContext & lc) {
@@ -183,7 +186,7 @@ public:
    * @param popCriteria
    * @param newStatus: optional new status, for pop-and-switch-status combined operation.
    * @param lc
-   * @return 
+   * @return
    */
   PoppedElementsBatch popNextBatchFromContainerAndSwitchStatus(
       C &cont,
@@ -208,7 +211,7 @@ public:
     {
       // We have a container. Get candidate element list from it.
       typename ContainerTraits<Q,C>::ElementsToSkipSet emptyElementsToSkip;
-      PoppedElementsBatch candidateElements = 
+      PoppedElementsBatch candidateElements =
           ContainerTraits<Q,C>::getPoppingElementsCandidates(cont, popCriteria,
           emptyElementsToSkip, lc);
       timingList.insertAndReset("jobSelectionTime", t);
@@ -220,8 +223,8 @@ public:
       timingList.insertAndReset("ownershipAdditionTime", t);
       m_agentReference.addBatchToOwnership(candidateElementsAddresses, m_backend);
       // We can now attempt to switch ownership of elements
-      auto failedOwnershipSwitchElements = ContainerTraits<Q,C>::switchElementsOwnershipAndStatus(candidateElements, 
-          m_agentReference.getAgentAddress(), 
+      auto failedOwnershipSwitchElements = ContainerTraits<Q,C>::switchElementsOwnershipAndStatus(candidateElements,
+          m_agentReference.getAgentAddress(),
           cont.getAddressIfSet(), timingList, t, lc, newStatus);
       if (failedOwnershipSwitchElements.empty()) {
         timingList.insertAndReset("updateResultProcessingTime", t);
@@ -247,7 +250,8 @@ public:
         for (auto &e: failedOwnershipSwitchElements) {
           try {
             std::rethrow_exception(e.failure);
-          } catch (Backend::NoSuchObject &) {
+          } catch (cta::exception::NoSuchObject &) {
+            std::cout << "HELLO1" << std::endl;
             elementsToDereferenceFromAgent.push_back(ContainerTraits<Q,C>::getElementAddress(*e.element));
             elementsNotToReport.insert(ContainerTraits<Q,C>::getElementAddress(*e.element));
           } catch (Backend::WrongPreviousOwner &) {
@@ -306,7 +310,7 @@ public:
     }
     return ret;
   }
-  
+
   /**
    * Loop popping from a container until coming empty handed or fulfilling the criteria.
    * The popping can take several iterations. The container is re-found on each round.
@@ -314,7 +318,7 @@ public:
    * @param queueType container type (usually represents the steps in the requests lifecycle (ToTranfer, FailedToReport, Failed...)
    * @param popCriteria
    * @param lc
-   * @return 
+   * @return
    */
   PoppedElementsBatch popNextBatch(
     const typename ContainerTraits<Q,C>::ContainerIdentifier &contId,
@@ -349,7 +353,7 @@ public:
       typename ContainerTraits<Q,C>::ContainerSummary contSummaryBefore, contSummaryAfter;
       contSummaryBefore = ContainerTraits<Q,C>::getContainerSummary(cont);
       // We have a container. Get candidate element list from it.
-      PoppedElementsBatch candidateElements = 
+      PoppedElementsBatch candidateElements =
           ContainerTraits<Q,C>::getPoppingElementsCandidates(cont, unfulfilledCriteria, elementsToSkip, lc);
       localTimingList.insertAndReset("jobSelectionTime", t);
       // Reference the candidates to our agent
@@ -360,7 +364,7 @@ public:
       localTimingList.insertAndReset("ownershipAdditionTime", t);
       m_agentReference.addBatchToOwnership(candidateElementsAddresses, m_backend);
       // We can now attempt to switch ownership of elements
-      auto failedOwnershipSwitchElements = ContainerTraits<Q,C>::switchElementsOwnership(candidateElements, m_agentReference.getAgentAddress(), 
+      auto failedOwnershipSwitchElements = ContainerTraits<Q,C>::switchElementsOwnership(candidateElements, m_agentReference.getAgentAddress(),
           cont.getAddressIfSet(), localTimingList, t, lc);
       if (failedOwnershipSwitchElements.empty()) {
         localTimingList.insertAndReset("updateResultProcessingTime", t);
@@ -389,7 +393,8 @@ public:
         for (auto &e: failedOwnershipSwitchElements) {
           try {
             std::rethrow_exception(e.failure);
-          } catch (Backend::NoSuchObject &) {
+          } catch (cta::exception::NoSuchObject &) {
+            std::cout << "HELLO2" << std::endl;
             elementsToDereferenceFromAgent.push_back(ContainerTraits<Q,C>::getElementAddress(*e.element));
             elementsNotToReport.insert(ContainerTraits<Q,C>::getElementAddress(*e.element));
           } catch (Backend::WrongPreviousOwner &) {

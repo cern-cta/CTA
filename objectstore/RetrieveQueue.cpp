@@ -15,14 +15,16 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <google/protobuf/util/json_util.h>
+
+#include "AgentReference.hpp"
+#include "common/exception/NoSuchObject.hpp"
+#include "EntryLogSerDeser.hpp"
+#include "GenericObject.hpp"
+#include "RetrieveActivityCountMap.hpp"
 #include "RetrieveQueue.hpp"
 #include "RetrieveQueueShard.hpp"
-#include "GenericObject.hpp"
-#include "EntryLogSerDeser.hpp"
 #include "ValueCountMap.hpp"
-#include "AgentReference.hpp"
-#include "RetrieveActivityCountMap.hpp"
-#include <google/protobuf/util/json_util.h>
 
 namespace cta { namespace objectstore {
 
@@ -64,7 +66,7 @@ bool RetrieveQueue::checkMapsAndShardsCoherency() {
   uint64_t totalBytes = m_payload.retrievejobstotalsize();
   uint64_t totalJobs = m_payload.retrievejobscount();
   // The sum of shards should be equal to the summary
-  if (totalBytes != bytesFromShardPointers || 
+  if (totalBytes != bytesFromShardPointers ||
       totalJobs != jobsExpectedFromShardsPointers)
     return false;
   // Check that we have coherent queue summaries
@@ -72,7 +74,7 @@ bool RetrieveQueue::checkMapsAndShardsCoherency() {
   ValueCountMapUint64 minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
   ValueCountMapString mountPolicyNameMap(m_payload.mutable_mountpolicynamemap());
   if (priorityMap.total() != m_payload.retrievejobscount() ||
-      minRetrieveRequestAgeMap.total() != m_payload.retrievejobscount() || 
+      minRetrieveRequestAgeMap.total() != m_payload.retrievejobscount() ||
       mountPolicyNameMap.total() != m_payload.retrievejobscount()
     )
     return false;
@@ -81,7 +83,7 @@ bool RetrieveQueue::checkMapsAndShardsCoherency() {
 
 void RetrieveQueue::rebuild() {
   checkPayloadWritable();
-  // Something is off with the queue. We will hence rebuild it. The rebuild of the 
+  // Something is off with the queue. We will hence rebuild it. The rebuild of the
   // queue will consist in:
   // 1) Attempting to read all shards in parallel. Absent shards are possible, and will
   // mean we have dangling pointers.
@@ -90,7 +92,7 @@ void RetrieveQueue::rebuild() {
   // shards, as this is already handled as access goes.
   std::list<RetrieveQueueShard> shards;
   std::list<std::unique_ptr<RetrieveQueueShard::AsyncLockfreeFetcher>> shardsFetchers;
-  
+
   // Get the summaries structures ready
   ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap());
   priorityMap.clear();
@@ -111,7 +113,7 @@ void RetrieveQueue::rebuild() {
     // Each shard could be gone
     try {
       (*sf)->wait();
-    } catch (Backend::NoSuchObject & ex) {
+    } catch (cta::exception::NoSuchObject & ex) {
       // Remove the shard from the list
       auto aqs = m_payload.mutable_retrievequeueshards()->begin();
       while (aqs != m_payload.mutable_retrievequeueshards()->end()) {
@@ -227,7 +229,7 @@ void RetrieveQueue::setSleepForFreeSpaceStartTimeAndName(time_t time, const std:
   m_payload.set_sleep_time(sleepTime);
 }
 
-std::string RetrieveQueue::dump() {  
+std::string RetrieveQueue::dump() {
   checkPayloadReadable();
   google::protobuf::util::JsonPrintOptions options;
   options.add_whitespace = true;
@@ -243,7 +245,7 @@ void RetrieveQueue::updateShardLimits(uint64_t fSeq, ShardForAddition & sfa) {
 }
 
 /** Add a jobs to a shard, spliting it if necessary*/
-void RetrieveQueue::addJobToShardAndMaybeSplit(RetrieveQueue::JobToAdd & jobToAdd, 
+void RetrieveQueue::addJobToShardAndMaybeSplit(RetrieveQueue::JobToAdd & jobToAdd,
     std::list<ShardForAddition>::iterator & shardForAddition, std::list<ShardForAddition> & shardList) {
   // Is the shard still small enough? We will not double split shards (we suppose insertion size << shard size cap).
   // We will also no split a new shard.
@@ -312,7 +314,7 @@ void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefer
   // We can classify the previous into 2 use cases
   // - Within a shard
   // - Outside of a shard
-  // In the case we land within a shard, we either have to use the existing one, or 
+  // In the case we land within a shard, we either have to use the existing one, or
   // to split it and choose the half we are going to use.
   // In case we land outside of a shard, we have 1 or 2 adjacent shards. If any of the
   // one or 2 is not full, we will add the job to it.
@@ -384,13 +386,13 @@ void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefer
     }
     jobInserted:;
   }
-  
+
   {
     // Number the shards.
     size_t shardIndex=0;
     for (auto & shard: shardsForAddition) shard.shardIndex=shardIndex++;
   }
-  
+
   // Jobs are now planned for insertions in their respective (and potentially
   // new) shards.
   // We will iterate shard by shard.
@@ -480,7 +482,7 @@ void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefer
       if (j.activityDescription) {
         retrieveActivityCountMap.incCount(j.activityDescription.value());
       }
-      // oldestjobcreationtime is initialized to 0 when 
+      // oldestjobcreationtime is initialized to 0 when
       if (m_payload.oldestjobcreationtime()) {
         if ((uint64_t)j.startTime < m_payload.oldestjobcreationtime())
           m_payload.set_oldestjobcreationtime(j.startTime);
@@ -495,7 +497,7 @@ void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefer
     shardPointer->set_minfseq(shardSummary.minFseq);
     shardPointer->set_shardbytescount(shardSummary.bytes);
     shardPointer->set_shardjobscount(shardSummary.jobs);
-    // ... and finally commit the queue (first! there is potentially a new shard to 
+    // ... and finally commit the queue (first! there is potentially a new shard to
     // pre-reference before inserting) and shards as is appropriate.
     // Update global summaries
     m_payload.set_retrievejobscount(m_payload.retrievejobscount() + addedJobs - transferedInSplitJobs);
@@ -510,7 +512,7 @@ void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefer
       commit();
     }
     shard.comitted = true;
-    
+
     if (shard.newShard) {
       rqs.insert();
       if (shard.fromSplit)
@@ -521,13 +523,13 @@ void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefer
 }
 
 auto RetrieveQueue::addJobsIfNecessaryAndCommit(std::list<JobToAdd> & jobsToAdd,
-    AgentReference & agentReference, log::LogContext & lc) 
+    AgentReference & agentReference, log::LogContext & lc)
 -> AdditionSummary {
   checkPayloadWritable();
   // First get all the shards of the queue to understand which jobs to add.
   std::list<RetrieveQueueShard> shards;
   std::list<std::unique_ptr<RetrieveQueueShard::AsyncLockfreeFetcher>> shardsFetchers;
-  
+
   for (auto & sp: m_payload.retrievequeueshards()) {
     shards.emplace_back(RetrieveQueueShard(sp.address(), m_objectStore));
     shardsFetchers.emplace_back(shards.back().asyncLockfreeFetch());
@@ -535,11 +537,11 @@ auto RetrieveQueue::addJobsIfNecessaryAndCommit(std::list<JobToAdd> & jobsToAdd,
   std::list<std::list<JobDump>> shardsDumps;
   auto s = shards.begin();
   auto sf = shardsFetchers.begin();
-  
+
   while (s!= shards.end()) {
     try {
       (*sf)->wait();
-    } catch (Backend::NoSuchObject & ex) {
+    } catch (cta::exception::NoSuchObject & ex) {
       goto nextShard;
     }
     shardsDumps.emplace_back(std::list<JobDump>());
@@ -550,7 +552,7 @@ auto RetrieveQueue::addJobsIfNecessaryAndCommit(std::list<JobToAdd> & jobsToAdd,
     s++;
     sf++;
   }
-  
+
   // Now filter the jobs to add
   AdditionSummary ret;
   std::list<JobToAdd> jobsToReallyAdd;
@@ -566,7 +568,7 @@ auto RetrieveQueue::addJobsIfNecessaryAndCommit(std::list<JobToAdd> & jobsToAdd,
     ret.files++;
   found:;
   }
-  
+
   // We can now proceed with the standard addition.
   addJobsAndCommit(jobsToReallyAdd, agentReference, lc);
   return ret;
@@ -619,7 +621,7 @@ auto RetrieveQueue::dumpJobs() -> std::list<JobDump> {
   while (s != shards.end()) {
     try {
       (*sf)->wait();
-    } catch (Backend::NoSuchObject & ex) {
+    } catch (cta::exception::NoSuchObject & ex) {
       // We are possibly in read only mode, so we cannot rebuild.
       // Just skip this shard.
       goto nextShard;
@@ -672,7 +674,7 @@ auto RetrieveQueue::getCandidateSummary() -> CandidateJobList {
 
 auto RetrieveQueue::getMountPolicyNames() -> std::list<std::string> {
   ValueCountMapString mountPolicyNameMap(m_payload.mutable_mountpolicynamemap());
-  auto mountPolicyCountMap = mountPolicyNameMap.getMap(); 
+  auto mountPolicyCountMap = mountPolicyNameMap.getMap();
 
   std::list<std::string> mountPolicyNames;
 
@@ -740,15 +742,15 @@ void RetrieveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemo
       // Also update the shard pointers's stats. In case of mismatch, we will trigger a rebuild.
       shardPointer->set_shardbytescount(shardPointer->shardbytescount() - removalResult.bytesRemoved);
       shardPointer->set_shardjobscount(shardPointer->shardjobscount() - removalResult.jobsRemoved);
-      
-      if (!needToRebuild && (shardPointer->shardbytescount() != removalResult.bytesAfter 
+
+      if (!needToRebuild && (shardPointer->shardbytescount() != removalResult.bytesAfter
           || shardPointer->shardjobscount() != removalResult.jobsAfter)) {
         rebuild();
       }
       // We will commit when exiting anyway...
       shardIndex++;
     } else {
-      // Shard's gone, so should the pointer. Push it to the end of the queue and 
+      // Shard's gone, so should the pointer. Push it to the end of the queue and
       // trim it.
       for (auto i=shardIndex; i<mutableRetrieveQueueShards->size()-1; i++) {
         mutableRetrieveQueueShards->SwapElements(i, i+1);
@@ -757,7 +759,7 @@ void RetrieveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemo
     }
     // We should also trim the removed jobs from our list.
     localJobsToRemove.remove_if(
-      [&removalResult](const std::string & ja){ 
+      [&removalResult](const std::string & ja){
         return std::count_if(removalResult.removedJobs.begin(), removalResult.removedJobs.end(),
           [&ja](RetrieveQueueShard::JobInfo & j) {
             return j.address == ja;

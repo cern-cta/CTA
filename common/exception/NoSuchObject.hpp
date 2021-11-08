@@ -19,23 +19,21 @@
 
 #include <string>
 
-namespace cta { namespace objectstore {
-enum class JobQueueType { 
-  JobsToTransferForUser, 
-  FailedJobs, 
-  JobsToReportToUser, 
-  JobsToReportToRepackForSuccess, 
-  JobsToReportToRepackForFailure, 
-  JobsToTransferForRepack 
+#include "common/exception/Exception.hpp"
+
+namespace cta {
+namespace exception {
+
+/**
+ * No Such Object exception
+ */
+class NoSuchObject : public cta::exception::Exception {
+ public:
+  /**
+   * default constructor
+   */
+  explicit NoSuchObject(const std::string& what = "") : cta::exception::Exception(what) {}
 };
 
- static const JobQueueType AllJobQueueTypes[] = {
-   JobQueueType::JobsToTransferForUser,
-   JobQueueType::FailedJobs,
-   JobQueueType::JobsToReportToUser,
-   JobQueueType::JobsToReportToRepackForSuccess,
-   JobQueueType::JobsToReportToRepackForFailure,
-   JobQueueType::JobsToTransferForRepack
- };
-std::string toString(JobQueueType queueType);
-}} // namespace cta::objectstore
+}  // namespace exception
+}  // namespace cta

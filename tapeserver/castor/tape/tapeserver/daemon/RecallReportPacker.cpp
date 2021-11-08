@@ -17,6 +17,7 @@
 
 #include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
+#include "common/exception/NoSuchObject.hpp"
 #include "common/log/Logger.hpp"
 #include "common/utils/utils.hpp"
 #include "objectstore/Backend.hpp"
@@ -46,7 +47,7 @@ RecallReportPacker::RecallReportPacker(cta::RetrieveMount *retrieveMount, cta::l
   m_workerThread(*this), m_errorHappened(false), m_retrieveMount(retrieveMount),
   m_tapeThreadComplete(false), m_diskThreadComplete(false)
 {
-  
+
 }
 //------------------------------------------------------------------------------
 //Destructor
@@ -64,7 +65,7 @@ void RecallReportPacker::reportCompletedJob(std::unique_ptr<cta::RetrieveJob> su
 }
 //------------------------------------------------------------------------------
 //reportFailedJob
-//------------------------------------------------------------------------------  
+//------------------------------------------------------------------------------
 void RecallReportPacker::reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const cta::exception::Exception & ex){
   std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() +
       " " + ex.getMessageValue();
@@ -88,7 +89,7 @@ void RecallReportPacker::reportDriveStatus(cta::common::dataStructures::DriveSta
   m_fifo.push(new ReportDriveStatus(status,reason));
 }
 
-  
+
 //------------------------------------------------------------------------------
 //reportEndOfSessionWithErrors
 //------------------------------------------------------------------------------
@@ -97,7 +98,7 @@ void RecallReportPacker::reportEndOfSessionWithErrors(const std::string msg,int 
   m_fifo.push(new ReportEndofSessionWithErrors(msg,error_code));
 }
 
-  
+
 //------------------------------------------------------------------------------
 //reportTestGoingToEnd
 //------------------------------------------------------------------------------
@@ -113,7 +114,7 @@ void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& parent){
   try{
     m_successfulRetrieveJob->asyncSetSuccessful();
     parent.m_successfulRetrieveJobs.push(std::move(m_successfulRetrieveJob));
-  } catch (const cta::objectstore::Backend::NoSuchObject &ex){
+  } catch (const cta::exception::NoSuchObject &ex){
     cta::log::ScopedParamContainer params(parent.m_lc);
     params.add("ExceptionMSG", ex.getMessageValue())
           .add("fileId", m_successfulRetrieveJob->archiveFile.archiveFileID);
@@ -216,7 +217,7 @@ void RecallReportPacker::ReportError::execute(RecallReportPacker& reportPacker){
   }
   try {
     m_failedRetrieveJob->transferFailed(m_failureLog, reportPacker.m_lc);
-  } catch (const cta::objectstore::Backend::NoSuchObject &ex){
+  } catch (const cta::exception::NoSuchObject &ex){
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add("ExceptionMSG", ex.getMessageValue())
           .add("fileId", m_failedRetrieveJob->archiveFile.archiveFileID);
@@ -243,7 +244,7 @@ void RecallReportPacker::WorkerThread::run(){
   m_parent.m_lc.pushOrReplace(Param("thread", "RecallReportPacker"));
   m_parent.m_lc.log(cta::log::DEBUG, "Starting RecallReportPacker thread");
   bool endFound = false;
-  
+
   std::list <std::unique_ptr<Report>> reportedSuccessfully;
   cta::utils::Timer t;
   while(1) {
@@ -274,7 +275,7 @@ void RecallReportPacker::WorkerThread::run(){
       // This slightly hackish bit prevents too many calls to sub function and gettime()
       // m_parent.fullCheckAndFinishAsyncExecute will execute the shared half of the
       // request updates (individual, asynchronous is done in rep->execute(m_parent);
-      if (typeid(*rep) == typeid(RecallReportPacker::ReportSuccessful) 
+      if (typeid(*rep) == typeid(RecallReportPacker::ReportSuccessful)
           && (m_parent.m_successfulRetrieveJobs.size() >= m_parent.RECALL_REPORT_PACKER_FLUSH_SIZE || t.secs() >= m_parent.RECALL_REPORT_PACKER_FLUSH_TIME )){
         m_parent.m_lc.log(cta::log::INFO,"m_parent.fullCheckAndFinishAsyncExecute()");
         m_parent.fullCheckAndFinishAsyncExecute();
@@ -313,8 +314,8 @@ void RecallReportPacker::WorkerThread::run(){
     }
     if (endFound) break;
   }
-  
-  // Make sure the last batch of reports got cleaned up. 
+
+  // Make sure the last batch of reports got cleaned up.
   try {
     m_parent.fullCheckAndFinishAsyncExecute();
     if(m_parent.isDiskDone()){
@@ -331,7 +332,7 @@ void RecallReportPacker::WorkerThread::run(){
       if (m_parent.m_watchdog) {
         m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
         m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
-      } 
+      }
   } catch(const std::exception& e){
       cta::log::ScopedParamContainer params(m_parent.m_lc);
       params.add("exceptionWhat", e.what())
@@ -347,8 +348,8 @@ void RecallReportPacker::WorkerThread::run(){
         m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
         m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
       }
-  } 
-  
+  }
+
   // Drain the fifo in case we got an exception
   if (!endFound) {
     while (1) {

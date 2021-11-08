@@ -15,20 +15,22 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Helpers.hpp"
-#include "Backend.hpp"
-#include "ArchiveQueue.hpp"
+#include <random>
+
 #include "AgentReference.hpp"
-#include "RetrieveQueue.hpp"
-#include "RepackQueue.hpp"
-#include "RootEntry.hpp"
-#include "DriveRegister.hpp"
-#include "RepackIndex.hpp"
+#include "ArchiveQueue.hpp"
+#include "Backend.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/exception/NonRetryableError.hpp"
-#include "common/range.hpp"
+#include "common/exception/NoSuchObject.hpp"
 #include "common/log/TimingList.hpp"
-#include <random>
+#include "common/range.hpp"
+#include "DriveRegister.hpp"
+#include "Helpers.hpp"
+#include "RepackIndex.hpp"
+#include "RepackQueue.hpp"
+#include "RetrieveQueue.hpp"
+#include "RootEntry.hpp"
 
 namespace cta { namespace objectstore {
 
@@ -38,7 +40,7 @@ namespace cta { namespace objectstore {
 template <>
 void Helpers::getLockedAndFetchedJobQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
   ScopedExclusiveLock& archiveQueueLock, AgentReference & agentReference,
-  const cta::optional<std::string>& tapePool, JobQueueType queueType, log::LogContext & lc) {
+  const cta::optional<std::string>& tapePool, common::dataStructures::JobQueueType queueType, log::LogContext & lc) {
   // TODO: if necessary, we could use a singleton caching object here to accelerate
   // lookups.
   // Getting a locked AQ is the name of the game.
@@ -100,7 +102,7 @@ void Helpers::getLockedAndFetchedJobQueue<ArchiveQueue>(ArchiveQueue& archiveQue
       // Failing to do this, we will spin and exhaust all of our retries.
       // We will do this if this is not the first attempt (i.e. failing again
       // in a retry).
-      if (i && typeid(ex) == typeid(cta::objectstore::Backend::NoSuchObject)) {
+      if (i && typeid(ex) == typeid(cta::exception::NoSuchObject)) {
         // The queue has been proven to not exist. Let's make sure we de-reference
         // it form the root entry.
         RootEntry re(be);
@@ -155,7 +157,7 @@ void Helpers::getLockedAndFetchedJobQueue<ArchiveQueue>(ArchiveQueue& archiveQue
 template <>
 void Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(RetrieveQueue& retrieveQueue,
   ScopedExclusiveLock& retrieveQueueLock, AgentReference& agentReference,
-  const cta::optional<std::string>& vid, JobQueueType queueType, log::LogContext & lc) {
+  const cta::optional<std::string>& vid, common::dataStructures::JobQueueType queueType, log::LogContext & lc) {
   // TODO: if necessary, we could use a singleton caching object here to accelerate
   // lookups.
   // Getting a locked AQ is the name of the game.
@@ -219,7 +221,7 @@ void Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(RetrieveQueue& retrieve
       // Failing to do this, we will spin and exhaust all of our retries.
       // We will do this if this is not the first attempt (i.e. failing again
       // in a retry).
-      if (i && typeid(ex) == typeid(cta::objectstore::Backend::NoSuchObject)) {
+      if (i && typeid(ex) == typeid(cta::exception::NoSuchObject)) {
         // The queue has been proven to not exist. Let's make sure we de-reference
         // it form the root entry.
         RootEntry re(be);
@@ -315,7 +317,7 @@ void Helpers::getLockedAndFetchedRepackQueue(RepackQueue& queue, ScopedExclusive
       // We should also deal with the case where a queue was deleted but left
       // referenced in the root entry. We will try to clean up if necessary.
       // Failing to do this, we will spin and exhaust all of our retries.
-      if (i && typeid(ex) == typeid(cta::objectstore::Backend::NoSuchObject)) {
+      if (i && typeid(ex) == typeid(cta::exception::NoSuchObject)) {
         // The queue has been proven to not exist. Let's make sure we de-reference
         // it form the root entry.
         RootEntry re(be);
@@ -528,7 +530,7 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> Helpers::getRetrieveQueueS
       continue;
     std::string rqAddr;
     try {
-      std::string rqAddr = re.getRetrieveQueueAddress(tf.vid, JobQueueType::JobsToTransferForUser);
+      std::string rqAddr = re.getRetrieveQueueAddress(tf.vid, common::dataStructures::JobQueueType::JobsToTransferForUser);
     } catch (cta::exception::Exception &) {
       ret.push_back(SchedulerDatabase::RetrieveQueueStatistics());
       ret.back().vid=tf.vid;

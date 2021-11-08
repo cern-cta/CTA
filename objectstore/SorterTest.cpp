@@ -16,6 +16,9 @@
  */
 
 #include <gtest/gtest.h>
+
+#include <memory>
+
 #include "BackendVFS.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
@@ -35,10 +38,9 @@
 #include "EntryLogSerDeser.hpp"
 #include "catalogue/DummyCatalogue.hpp"
 #include "Sorter.hpp"
-#include <memory>
 
 namespace unitTests {
-  
+
 TEST(ObjectStore,SorterInsertArchiveRequest){
   //cta::log::StdoutLogger dl("dummy", "unitTest");
   cta::log::DummyLogger dl("dummy", "unitTest");
@@ -102,7 +104,7 @@ TEST(ObjectStore,SorterInsertArchiveRequest){
   ar.insert();
   cta::objectstore::ScopedExclusiveLock atfrl(ar);
   ar.fetch();
-  
+
   cta::objectstore::Sorter sorter(agentRefSorter,be,catalogue);
   std::shared_ptr<cta::objectstore::ArchiveRequest> arPtr = std::make_shared<cta::objectstore::ArchiveRequest>(ar);
   sorter.insertArchiveRequest(arPtr,agentRef,lc);
@@ -110,7 +112,7 @@ TEST(ObjectStore,SorterInsertArchiveRequest){
   //Get the future
   cta::objectstore::Sorter::MapArchive allArchiveJobs = sorter.getAllArchive();
   std::list<std::tuple<cta::objectstore::SorterArchiveJob,std::future<void>>> allFutures;
-  
+
   for(auto& kv: allArchiveJobs){
     for(auto& job: kv.second){
       allFutures.emplace_back(std::make_tuple(std::get<0>(job->jobToQueue),std::get<1>(job->jobToQueue).get_future()));
@@ -124,9 +126,10 @@ TEST(ObjectStore,SorterInsertArchiveRequest){
   cta::objectstore::ScopedExclusiveLock sel(re);
   re.fetch();
 
+  using cta::common::dataStructures::JobQueueType;
   {
     //Get the archiveQueueToReport
-    std::string archiveQueueToReport = re.getArchiveQueueAddress("TapePool0",cta::objectstore::JobQueueType::JobsToReportToUser);
+    std::string archiveQueueToReport = re.getArchiveQueueAddress("TapePool0", JobQueueType::JobsToReportToUser);
     cta::objectstore::ArchiveQueue aq(archiveQueueToReport,be);
 
     //Fetch the queue so that we can get the archiveRequests from it
@@ -154,7 +157,7 @@ TEST(ObjectStore,SorterInsertArchiveRequest){
 
   {
     //Get the archiveQueueToTransfer
-    std::string archiveQueueToTransfer = re.getArchiveQueueAddress("TapePool1",cta::objectstore::JobQueueType::JobsToTransferForUser);
+    std::string archiveQueueToTransfer = re.getArchiveQueueAddress("TapePool1", JobQueueType::JobsToTransferForUser);
     cta::objectstore::ArchiveQueue aq(archiveQueueToTransfer,be);
 
     //Fetch the queue so that we can get the archiveRequests from it
@@ -180,14 +183,14 @@ TEST(ObjectStore,SorterInsertArchiveRequest){
       ASSERT_EQ(archiveFile.storageClass,aFile.storageClass);
     }
   }
-  
+
   ASSERT_EQ(sorter.getAllArchive().size(),0);
 }
 
 TEST(ObjectStore,SorterInsertRetrieveRequest){
-  
+
   using namespace cta::objectstore;
-  
+
   //cta::log::StdoutLogger dl("dummy", "unitTest");
   cta::log::DummyLogger dl("dummy", "unitTest");
   cta::log::LogContext lc(dl);
@@ -219,7 +222,7 @@ TEST(ObjectStore,SorterInsertRetrieveRequest){
   agentSorter.initialize();
   agentSorter.setTimeout_us(0);
   agentSorter.insertAndRegisterSelf(lc);
-  
+
   std::string retrieveRequestID = agentRef.nextId("RetrieveRequest");
   agentRef.addToOwnership(retrieveRequestID,be);
   cta::objectstore::RetrieveRequest rr(retrieveRequestID,be);
@@ -261,22 +264,22 @@ TEST(ObjectStore,SorterInsertRetrieveRequest){
   rqc.mountPolicy.retrieveMinRequestAge = 1;
   rqc.mountPolicy.retrievePriority = 1;
   rr.setRetrieveFileQueueCriteria(rqc);
-  
+
   // Make sure job 1 will get queued by failing the other one.
   rr.setJobStatus(2,cta::objectstore::serializers::RetrieveJobStatus::RJS_Failed);
-  
+
   cta::common::dataStructures::RetrieveRequest sReq;
   sReq.archiveFileID = rqc.archiveFile.archiveFileID;
   sReq.creationLog.time=time(nullptr);
   rr.setSchedulerRequest(sReq);
-  
+
   rr.setOwner(agent.getAddressIfSet());
   rr.setActiveCopyNumber(0);
   rr.insert();
-  
+
   cta::objectstore::Sorter sorter(agentRefSorter,be,catalogue);
   std::shared_ptr<cta::objectstore::RetrieveRequest> retrieveRequest = std::make_shared<cta::objectstore::RetrieveRequest>(rr);
-  
+
   {
     cta::objectstore::ScopedExclusiveLock rrl(*retrieveRequest);
     retrieveRequest->fetch();
@@ -346,11 +349,11 @@ TEST(ObjectStore,SorterInsertRetrieveRequest){
     for(auto& future: allFutures){
       ASSERT_NO_THROW(std::get<1>(future).get());
     }
-    
+
     ASSERT_EQ(sorter.getAllRetrieve().size(),0);
     typedef ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> Algo;
     Algo algo(be,agentRef);
-    
+
     typename Algo::PopCriteria criteria;
     criteria.files = 1;
     criteria.bytes = 1000;
@@ -381,16 +384,16 @@ TEST(ObjectStore,SorterInsertRetrieveRequest){
     retrieveRequest->setJobStatus(1,serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess);
     retrieveRequest->setJobStatus(2,serializers::RetrieveJobStatus::RJS_Failed);
     retrieveRequest->commit();
-    
+
     // We should be forbidden to requeue a request if no copy is in status ToTranfer.
     ASSERT_THROW(sorter.insertRetrieveRequest(retrieveRequest,agentRef,cta::nullopt,lc),cta::exception::Exception);
-    
+
     sel.release();
   }
 }
 
 TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
-  
+
   using namespace cta::objectstore;
 
   //cta::log::StdoutLogger dl("dummy", "unitTest");
@@ -425,7 +428,7 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
   agentSorter.initialize();
   agentSorter.setTimeout_us(0);
   agentSorter.insertAndRegisterSelf(lc);
-  
+
   /**
    * Creation of retrieve requests
    */
@@ -460,16 +463,16 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
   rqc.mountPolicy.retrieveMinRequestAge = 1;
   rqc.mountPolicy.retrievePriority = 1;
   rr.setRetrieveFileQueueCriteria(rqc);
-  
+
   cta::common::dataStructures::RetrieveRequest sReq;
   sReq.archiveFileID = rqc.archiveFile.archiveFileID;
   sReq.creationLog.time=time(nullptr);
   rr.setSchedulerRequest(sReq);
-  
+
   rr.setOwner(agent.getAddressIfSet());
   rr.setActiveCopyNumber(0);
   rr.insert();
-  
+
   std::string retrieveRequestID2 = agentRef.nextId("RetrieveRequest");
   agentRef.addToOwnership(retrieveRequestID2,be);
   cta::objectstore::RetrieveRequest rr2(retrieveRequestID2,be);
@@ -501,20 +504,20 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
   rqc2.mountPolicy.retrieveMinRequestAge = 1;
   rqc2.mountPolicy.retrievePriority = 1;
   rr2.setRetrieveFileQueueCriteria(rqc2);
-  
+
   cta::common::dataStructures::RetrieveRequest sReq2;
   sReq2.archiveFileID = rqc2.archiveFile.archiveFileID;
   sReq2.creationLog.time=time(nullptr);
   rr2.setSchedulerRequest(sReq2);
-  
+
   rr2.setOwner(agent.getAddressIfSet());
   rr2.setActiveCopyNumber(0);
   rr2.insert();
-  
+
   cta::objectstore::Sorter sorter(agentRefSorter,be,catalogue);
-  
+
   std::shared_ptr<cta::objectstore::RetrieveRequest> retrieveRequest = std::make_shared<cta::objectstore::RetrieveRequest>(rr);
-  
+
   {
     ScopedExclusiveLock sel(*retrieveRequest);
     retrieveRequest->fetch();
@@ -523,17 +526,17 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
 
     sel.release();
   }
-  
+
   std::shared_ptr<cta::objectstore::RetrieveRequest> retrieveRequest2 = std::make_shared<cta::objectstore::RetrieveRequest>(rr2);
   {
     ScopedExclusiveLock sel(*retrieveRequest2);
     retrieveRequest2->fetch();
-    
+
     ASSERT_NO_THROW(sorter.insertRetrieveRequest(retrieveRequest2,agentRef,cta::nullopt,lc));
-    
+
     sel.release();
   }
-  
+
   cta::objectstore::Sorter::MapRetrieve allRetrieveJobs = sorter.getAllRetrieve();
   std::list<std::tuple<cta::objectstore::Sorter::RetrieveJob,std::future<void>>> allFuturesRetrieve;
   ASSERT_EQ(allRetrieveJobs.size(),1);
@@ -542,7 +545,7 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
       allFuturesRetrieve.emplace_back(std::make_tuple(std::get<0>(job->jobToQueue),std::get<1>(job->jobToQueue).get_future()));
     }
   }
-  
+
   /**
    * Creation of Archive Requests
    */
@@ -570,7 +573,7 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
   ar.setSrcURL("root://eoseos/myFile");
   ar.setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
   ar.insert();
-  
+
   std::string archiveRequestID2 = agentRef.nextId("ArchiveRequest");
   agentRef.addToOwnership(archiveRequestID2,be);
   cta::objectstore::ArchiveRequest ar2(archiveRequestID2,be);
@@ -596,25 +599,25 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
   ar2.setSrcURL("root://eoseos/myFile");
   ar2.setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
   ar2.insert();
-  
+
   std::shared_ptr<ArchiveRequest> archiveRequest = std::make_shared<ArchiveRequest>(ar);
   {
     ScopedExclusiveLock sel(*archiveRequest);
     archiveRequest->fetch();
-    
+
     ASSERT_NO_THROW(sorter.insertArchiveRequest(archiveRequest,agentRef,lc));
     sel.release();
   }
-  
+
   std::shared_ptr<ArchiveRequest> archiveRequest2 = std::make_shared<ArchiveRequest>(ar2);
   {
     ScopedExclusiveLock sel(*archiveRequest2);
     archiveRequest2->fetch();
-    
+
     ASSERT_NO_THROW(sorter.insertArchiveRequest(archiveRequest2,agentRef,lc));
     sel.release();
   }
-  
+
   cta::objectstore::Sorter::MapArchive allArchiveJobs = sorter.getAllArchive();
   std::list<std::tuple<cta::objectstore::SorterArchiveJob,std::future<void>>> allFuturesArchive;
   ASSERT_EQ(allArchiveJobs.size(),2);
@@ -623,17 +626,17 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
       allFuturesArchive.emplace_back(std::make_tuple(std::get<0>(job->jobToQueue),std::get<1>(job->jobToQueue).get_future()));
     }
   }
-  
+
   ASSERT_NO_THROW(sorter.flushAll(lc));
-  
+
   for(auto& future: allFuturesRetrieve){
     ASSERT_NO_THROW(std::get<1>(future).get());
   }
-  
+
   for(auto& future: allFuturesArchive){
     ASSERT_NO_THROW(std::get<1>(future).get());
   }
-  
+
   {
     //Test the Retrieve Jobs
     typedef ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> Algo;
@@ -641,20 +644,20 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
     typename Algo::PopCriteria criteria;
     criteria.files = 2;
     criteria.bytes = 2000;
-    
+
     typename Algo::PoppedElementsBatch elements = algo.popNextBatch("Tape0",criteria,lc);
     ASSERT_EQ(elements.elements.size(),2);
-    
+
     auto& elt = elements.elements.front();
     ASSERT_EQ(elt.copyNb,1);
     ASSERT_EQ(elt.archiveFile.tapeFiles.at(1).vid,"Tape0");
     ASSERT_EQ(elt.archiveFile.tapeFiles.at(1).fSeq,1);
-    
+
     auto& elt2 = elements.elements.back();
     ASSERT_EQ(elt2.copyNb,2);
     ASSERT_EQ(elt2.archiveFile.tapeFiles.at(2).vid,"Tape0");
     ASSERT_EQ(elt2.archiveFile.tapeFiles.at(2).fSeq,2);
-    
+
   }
   {
     //Test the Archive Jobs
@@ -663,15 +666,15 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
     typename Algo::PopCriteria criteria;
     criteria.files = 2;
     criteria.bytes = 2000;
-    
+
     typename Algo::PoppedElementsBatch elements = algo.popNextBatch("TapePool0",criteria,lc);
     ASSERT_EQ(elements.elements.size(),2);
-    
+
     auto &elt = elements.elements.front();
-    
+
     ASSERT_EQ(elt.copyNb,1);
     ASSERT_EQ(elt.archiveFile.archiveFileID,3L);
-    
+
     auto& elt2 = elements.elements.back();
     ASSERT_EQ(elt2.copyNb,2);
     ASSERT_EQ(elt2.archiveFile.archiveFileID,4L);
@@ -685,7 +688,7 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
 
     typename Algo::PoppedElementsBatch elements = algo.popNextBatch("TapePool0",criteria,lc);
     ASSERT_EQ(elements.elements.size(),1);
-    
+
     auto& elt = elements.elements.front();
     ASSERT_EQ(elt.copyNb,3);
     ASSERT_EQ(elt.archiveFile.archiveFileID,4L);
@@ -693,9 +696,9 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
 }
 
 TEST(ObjectStore,SorterInsertArchiveRequestNotFetched){
-  
+
   using namespace cta::objectstore;
-  
+
   //cta::log::StdoutLogger dl("dummy", "unitTest");
   cta::log::DummyLogger dl("dummy", "unitTest");
   cta::log::LogContext lc(dl);
@@ -728,7 +731,7 @@ TEST(ObjectStore,SorterInsertArchiveRequestNotFetched){
   agentSorter.initialize();
   agentSorter.setTimeout_us(0);
   agentSorter.insertAndRegisterSelf(lc);
-  
+
   /**
   * Creation of Archive Requests
   */
@@ -758,8 +761,8 @@ TEST(ObjectStore,SorterInsertArchiveRequestNotFetched){
   ar.setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
   ar.insert();
 
-  
-  
+
+
   SorterArchiveRequest request;
   std::list<SorterArchiveJob>& jobs = request.archiveJobs;
   jobs.emplace_back();
@@ -770,11 +773,11 @@ TEST(ObjectStore,SorterInsertArchiveRequestNotFetched){
   job1.jobDump.tapePool = "TapePool0";
   job1.jobDump.owner = agentRef.getAgentAddress();
   job1.jobDump.status = serializers::ArchiveJobStatus::AJS_ToTransferForUser;
-  job1.jobQueueType = JobQueueType::JobsToTransferForUser;
+  job1.jobQueueType = cta::common::dataStructures::JobQueueType::JobsToTransferForUser;
   job1.mountPolicy = mp;
   job1.mountPolicy.creationLog = cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr));
   job1.previousOwner = &agentRef;
-  
+
   jobs.emplace_back();
   SorterArchiveJob& job2 = jobs.back();
   job2.archiveRequest = std::make_shared<cta::objectstore::ArchiveRequest>(ar);
@@ -783,14 +786,14 @@ TEST(ObjectStore,SorterInsertArchiveRequestNotFetched){
   job2.jobDump.tapePool = "TapePool0";
   job2.jobDump.owner = agentRef.getAgentAddress();
   job2.jobDump.status = serializers::ArchiveJobStatus::AJS_ToTransferForUser;
-  job2.jobQueueType = JobQueueType::JobsToTransferForUser;
+  job2.jobQueueType = cta::common::dataStructures::JobQueueType::JobsToTransferForUser;
   job2.mountPolicy = mp;
   job2.mountPolicy.creationLog = cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr));
   job2.previousOwner = &agentRef;
-  
+
   Sorter sorter(agentRefSorter,be,catalogue);
   sorter.insertArchiveRequest(request,agentRef,lc);
-  
+
   cta::objectstore::Sorter::MapArchive allArchiveJobs = sorter.getAllArchive();
   std::list<std::tuple<cta::objectstore::SorterArchiveJob,std::future<void>>> allFuturesArchive;
   ASSERT_EQ(allArchiveJobs.size(),1);
@@ -799,13 +802,13 @@ TEST(ObjectStore,SorterInsertArchiveRequestNotFetched){
       allFuturesArchive.emplace_back(std::make_tuple(std::get<0>(job->jobToQueue),std::get<1>(job->jobToQueue).get_future()));
     }
   }
-  
+
   sorter.flushAll(lc);
-  
+
   for(auto& future: allFuturesArchive){
     ASSERT_NO_THROW(std::get<1>(future).get());
   }
-  
+
   {
     //Test the Archive Jobs
     typedef ContainerAlgorithms<ArchiveQueue, ArchiveQueueToTransferForUser> Algo;
@@ -813,32 +816,32 @@ TEST(ObjectStore,SorterInsertArchiveRequestNotFetched){
     typename Algo::PopCriteria criteria;
     criteria.files = 2;
     criteria.bytes = 2000;
-    
+
     typename Algo::PoppedElementsBatch elements = algo.popNextBatch("TapePool0",criteria,lc);
     ASSERT_EQ(elements.elements.size(),2);
-    
+
     auto &elt = elements.elements.front();
-    
+
     ASSERT_EQ(elt.copyNb,1);
     ASSERT_EQ(elt.archiveFile.archiveFileID,3L);
     ASSERT_EQ(elt.archiveFile.checksumBlob,cta::checksum::ChecksumBlob(cta::checksum::ADLER32, "1234"));
     ASSERT_EQ(elt.archiveFile.diskInstance,"eoseos");
     ASSERT_EQ(elt.archiveFile.diskFileId,"eos://diskFile");
-    
+
     auto &elt2 = elements.elements.back();
-    
+
     ASSERT_EQ(elt2.copyNb,2);
     ASSERT_EQ(elt2.archiveFile.archiveFileID,3L);
     ASSERT_EQ(elt2.archiveFile.checksumBlob,cta::checksum::ChecksumBlob(cta::checksum::ADLER32, "1234"));
     ASSERT_EQ(elt.archiveFile.diskInstance,"eoseos");
     ASSERT_EQ(elt.archiveFile.diskFileId,"eos://diskFile");
   }
-  
+
 }
 
 TEST(ObjectStore,SorterInsertRetrieveRequestNotFetched){
   using namespace cta::objectstore;
-  
+
   //cta::log::StdoutLogger dl("dummy", "unitTest");
   cta::log::DummyLogger dl("dummy", "unitTest");
   cta::log::LogContext lc(dl);
@@ -871,7 +874,7 @@ TEST(ObjectStore,SorterInsertRetrieveRequestNotFetched){
   agentSorter.initialize();
   agentSorter.setTimeout_us(0);
   agentSorter.insertAndRegisterSelf(lc);
-  
+
   /**
    * Creation of retrieve requests
    */
@@ -906,34 +909,34 @@ TEST(ObjectStore,SorterInsertRetrieveRequestNotFetched){
   rqc.mountPolicy.retrieveMinRequestAge = 1;
   rqc.mountPolicy.retrievePriority = 1;
   rr.setRetrieveFileQueueCriteria(rqc);
-  
+
   cta::common::dataStructures::RetrieveRequest sReq;
   sReq.archiveFileID = rqc.archiveFile.archiveFileID;
   sReq.creationLog.time=time(nullptr);
   rr.setSchedulerRequest(sReq);
-  
+
   rr.setOwner(agent.getAddressIfSet());
   rr.setActiveCopyNumber(0);
   rr.insert();
-  
+
   Sorter::SorterRetrieveRequest request;
   request.archiveFile = rqc.archiveFile;
-  
+
   for(auto& tf: request.archiveFile.tapeFiles){
     Sorter::RetrieveJob& job = request.retrieveJobs[tf.copyNb];
     job.fSeq = tf.fSeq;
     job.fileSize = rqc.archiveFile.fileSize;
     job.jobDump.copyNb = tf.copyNb;
     job.jobDump.status = serializers::RetrieveJobStatus::RJS_ToTransfer;
-    job.jobQueueType = JobQueueType::JobsToTransferForUser;
+    job.jobQueueType = cta::common::dataStructures::JobQueueType::JobsToTransferForUser;
     job.mountPolicy = rqc.mountPolicy;
     job.previousOwner = &agentRef;
     job.retrieveRequest = std::make_shared<cta::objectstore::RetrieveRequest>(rr);
   }
-  
+
   Sorter sorter(agentRefSorter,be,catalogue);
   sorter.insertRetrieveRequest(request,agentRef,cta::nullopt,lc);
-  
+
   cta::objectstore::Sorter::MapRetrieve allRetrieveJobs = sorter.getAllRetrieve();
   std::list<std::tuple<cta::objectstore::Sorter::RetrieveJob,std::future<void>>> allFuturesRetrieve;
   ASSERT_EQ(allRetrieveJobs.size(),1);
@@ -942,13 +945,13 @@ TEST(ObjectStore,SorterInsertRetrieveRequestNotFetched){
       allFuturesRetrieve.emplace_back(std::make_tuple(std::get<0>(job->jobToQueue),std::get<1>(job->jobToQueue).get_future()));
     }
   }
-  
+
   ASSERT_NO_THROW(sorter.flushAll(lc));
-  
+
   for(auto& future: allFuturesRetrieve){
     ASSERT_NO_THROW(std::get<1>(future).get());
   }
-  
+
   {
     //Test the Retrieve Jobs
     typedef ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> Algo;
@@ -956,10 +959,10 @@ TEST(ObjectStore,SorterInsertRetrieveRequestNotFetched){
     typename Algo::PopCriteria criteria;
     criteria.files = 2;
     criteria.bytes = 2000;
-    
+
     typename Algo::PoppedElementsBatch elements = algo.popNextBatch("Tape0",criteria,lc);
     ASSERT_EQ(elements.elements.size(),1);
-    
+
     auto& elt = elements.elements.front();
     ASSERT_EQ(elt.copyNb,1);
     ASSERT_EQ(elt.archiveFile.tapeFiles.at(1).vid,"Tape0");
@@ -969,7 +972,7 @@ TEST(ObjectStore,SorterInsertRetrieveRequestNotFetched){
     ASSERT_EQ(elt.archiveFile.fileSize,1000);
     ASSERT_EQ(elt.archiveFile.storageClass,"sc");
   }
-  
+
 }
 
 }

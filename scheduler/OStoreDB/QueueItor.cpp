@@ -15,10 +15,11 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "common/exception/NoSuchObject.hpp"
 #include "QueueItor.hpp"
-#include <objectstore/RootEntry.hpp>
 #include <objectstore/ArchiveQueue.hpp>
 #include <objectstore/RetrieveQueue.hpp>
+#include <objectstore/RootEntry.hpp>
 
 namespace cta {
 
@@ -27,7 +28,7 @@ namespace cta {
 //------------------------------------------------------------------------------
 template<>
 QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue>::
-QueueItor(objectstore::Backend &objectStore, objectstore::JobQueueType queueType, const std::string &queue_id) :
+QueueItor(objectstore::Backend &objectStore, common::dataStructures::JobQueueType queueType, const std::string &queue_id) :
   m_objectStore(objectStore),
   m_onlyThisQueueId(!queue_id.empty()),
   m_isEndQueue(false)
@@ -94,7 +95,7 @@ getQueueJobs(const jobQueue_t &jobQueueChunk)
   for(auto &osar : requests) {
     try {
       osar.second->wait();
-    } catch(Backend::NoSuchObject &ex) {
+    } catch(cta::exception::NoSuchObject &ex) {
       // Skip non-existent objects
       continue;
     }
@@ -134,7 +135,7 @@ getQueueJobs(const jobQueue_t &jobQueueChunk)
 //------------------------------------------------------------------------------
 template<>
 QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>::
-QueueItor(objectstore::Backend &objectStore, objectstore::JobQueueType queueType, const std::string &queue_id) :
+QueueItor(objectstore::Backend &objectStore, common::dataStructures::JobQueueType queueType, const std::string &queue_id) :
   m_objectStore(objectStore),
   m_onlyThisQueueId(!queue_id.empty()),
   m_isEndQueue(false)
@@ -199,7 +200,7 @@ getQueueJobs(const jobQueue_t &jobQueueChunk)
   for(auto &osrr : requests) {
     try {
       osrr.second->wait();
-    } catch (Backend::NoSuchObject &ex) {
+    } catch (cta::exception::NoSuchObject &ex) {
       // Skip non-existent objects
       continue;
     }

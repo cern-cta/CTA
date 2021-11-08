@@ -17,26 +17,27 @@
 
 #pragma once
 
-#include "ObjectOps.hpp"
-#include "objectstore/cta.pb.h"
-#include "TapeFileSerDeser.hpp"
-#include "JobQueueType.hpp"
-#include "RetrieveActivityCountMap.hpp"
 #include <list>
+
+#include "AgentReference.hpp"
+#include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/EntryLog.hpp"
-#include "common/dataStructures/TapeFile.hpp"
-#include "common/dataStructures/ArchiveFile.hpp"
-#include "common/dataStructures/RetrieveRequest.hpp"
-#include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
+#include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/LifecycleTimings.hpp"
-#include "AgentReference.hpp"
-#include "SorterArchiveJob.hpp"
+#include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
+#include "common/dataStructures/RetrieveRequest.hpp"
+#include "common/dataStructures/TapeFile.hpp"
 #include "MountPolicySerDeser.hpp"
+#include "ObjectOps.hpp"
+#include "objectstore/cta.pb.h"
+#include "RetrieveActivityCountMap.hpp"
+#include "SorterArchiveJob.hpp"
+#include "TapeFileSerDeser.hpp"
 
-namespace cta { 
+namespace cta {
   namespace objectstore {
-  
+
 class Backend;
 class Agent;
 class GenericObject;
@@ -68,8 +69,8 @@ public:
     std::unique_ptr<Backend::AsyncDeleter> m_backendDeleter;
   };
   AsyncJobDeleter * asyncDeleteJob();
-  
-  
+
+
   class AsyncJobSucceedForRepackReporter{
     friend class RetrieveRequest;
   public:
@@ -84,22 +85,22 @@ public:
     //Callback to be executed by the AsyncUpdater
     std::function<std::string(const std::string &)> m_updaterCallback;
   };
-  
+
   /**
    * This class allows to hold the asynchronous updater and the callback
-   * that will be executed for the transformation of a RetrieveRequest into an ArchiveRequest 
+   * that will be executed for the transformation of a RetrieveRequest into an ArchiveRequest
    */
   class AsyncRetrieveToArchiveTransformer{
     friend class RetrieveRequest;
   public:
-    void wait();  
+    void wait();
   private:
     //Hold the AsyncUpdater that will run asynchronously the m_updaterCallback
     std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
     //Callback to be executed by the AsyncUpdater
     std::function<std::string(const std::string &)> m_updaterCallback;
   };
-  
+
   /**
    * Asynchronously report the RetrieveJob corresponding to the copyNb parameter
    * as RJS_Success
@@ -109,18 +110,18 @@ public:
    * and the backend async updater (responsible for executing asynchronously the updater callback
    */
   AsyncJobSucceedForRepackReporter * asyncReportSucceedForRepack(uint32_t copyNb);
-  
+
   /**
    * Asynchronously transform the current RetrieveRequest into an ArchiveRequest
    * @param processAgent : The agent of the process that will transform the RetrieveRequest into an ArchiveRequest
    * @return the class that is Responsible to save the updater callback and the backend async updater.
    */
   AsyncRetrieveToArchiveTransformer * asyncTransformToArchiveRequest(AgentReference& processAgent);
-  
+
   JobDump getJob(uint32_t copyNb);
   std::list<JobDump> getJobs();
-  bool addJobFailure(uint32_t copyNumber, uint64_t mountId, const std::string & failureReason, log::LogContext & lc); 
-                                                                  /**< Returns true is the request is completely failed 
+  bool addJobFailure(uint32_t copyNumber, uint64_t mountId, const std::string & failureReason, log::LogContext & lc);
+                                                                  /**< Returns true is the request is completely failed
                                                                    (telling wheather we should requeue or not). */
   struct RetryStatus {
     uint64_t retriesWithinMount = 0;
@@ -160,7 +161,7 @@ public:
   };
   void setRepackInfo(const RepackInfo & repackInfo);
   RepackInfo getRepackInfo();
-  
+
   struct RepackInfoSerDeser: public RepackInfo {
     operator RepackInfo() { return RepackInfo(*this); }
     void serialize(cta::objectstore::serializers::RetrieveRequestRepackInfo & rrri) {
@@ -179,7 +180,7 @@ public:
 	rrri.set_has_user_provided_file(hasUserProvidedFile);
       }
     }
-    
+
     void deserialize(const cta::objectstore::serializers::RetrieveRequestRepackInfo & rrri) {
       isRepack = true;
       for(auto &route: rrri.archive_routes()) { archiveRouteMap[route.copynb()] = route.tapepool(); }
@@ -215,9 +216,9 @@ public:
   EnqueueingNextStep addReportFailure(uint32_t copyNumber, uint64_t sessionId, const std::string &failureReason, log::LogContext &lc);
   EnqueueingNextStep addReportAbort(uint32_t copyNumber, uint64_t mountId, const std::string &abortReason, log::LogContext &lc);
   //! Returns queue type depending on the compound statuses of all retrieve requests
-  JobQueueType getQueueType();
+  common::dataStructures::JobQueueType getQueueType();
   CTA_GENERATE_EXCEPTION_CLASS(JobNotQueueable);
-  JobQueueType getQueueType(uint32_t copyNumber);
+  common::dataStructures::JobQueueType getQueueType(uint32_t copyNumber);
   std::list<std::string> getFailures();
   std::list<std::string> getReportFailures();
   std::string statusToString(const serializers::RetrieveJobStatus & status);
@@ -250,7 +251,7 @@ public:
   // ===========================================================================
   void setSchedulerRequest(const cta::common::dataStructures::RetrieveRequest & retrieveRequest);
   cta::common::dataStructures::RetrieveRequest getSchedulerRequest();
-  
+
   void setRetrieveFileQueueCriteria(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria);
   void setActivityIfNeeded(const cta::common::dataStructures::RetrieveRequest & retrieveRequest,
     const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria);

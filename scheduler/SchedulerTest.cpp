@@ -15,11 +15,26 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <gtest/gtest.h>
+
+#include <bits/unique_ptr.h>
+#include <exception>
+#include <memory>
+#include <utility>
+
 #include "catalogue/InMemoryCatalogue.hpp"
 #include "catalogue/SchemaCreatingSqliteCatalogue.hpp"
+#include "common/dataStructures/JobQueueType.hpp"
+#include "common/exception/NoSuchObject.hpp"
 #include "common/log/DummyLogger.hpp"
-#include "common/log/StdoutLogger.hpp"
 #include "common/make_unique.hpp"
+#include "common/range.hpp"
+#include "common/Timer.hpp"
+#include "objectstore/Algorithms.hpp"
+#include "objectstore/BackendRadosTestSwitch.hpp"
+#include "objectstore/GarbageCollector.hpp"
+#include "objectstore/RepackIndex.hpp"
+#include "objectstore/RootEntry.hpp"
 #include "scheduler/ArchiveMount.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/MountRequest.hpp"
@@ -29,30 +44,15 @@
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/SchedulerDatabaseFactory.hpp"
 #include "scheduler/TapeMount.hpp"
-#include "tests/TempFile.hpp"
-#include "common/log/DummyLogger.hpp"
-#include "objectstore/GarbageCollector.hpp"
-#include "objectstore/BackendRadosTestSwitch.hpp"
-#include "objectstore/RootEntry.hpp"
-#include "objectstore/JobQueueType.hpp"
-#include "objectstore/RepackIndex.hpp"
-#include "tests/TestsCompileTimeSwitches.hpp"
-#include "tests/TempDirectory.hpp"
-#include "common/Timer.hpp"
-#include "tapeserver/castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
-#include "objectstore/Algorithms.hpp"
-#include "common/range.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
+#include "tests/TempDirectory.hpp"
+#include "tests/TempFile.hpp"
+#include "tests/TestsCompileTimeSwitches.hpp"
 
 #ifdef STDOUT_LOGGING
 #include "common/log/StdoutLogger.hpp"
 #endif
-
-#include <exception>
-#include <gtest/gtest.h>
-#include <memory>
-#include <utility>
-#include <bits/unique_ptr.h>
 
 namespace unitTests {
 
@@ -1897,6 +1897,7 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
 
 TEST_P(SchedulerTest, expandRepackRequest) {
   using namespace cta;
+  using cta::common::dataStructures::JobQueueType;
   unitTests::TempDirectory tempDirectory;
 
   auto &catalogue = getCatalogue();
@@ -2104,7 +2105,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         // The queue is named after the repack request: we need to query the repack index
         objectstore::RepackIndex ri(re.getRepackIndexAddress(), schedulerDB.getBackend());
         ri.fetchNoLock();
-        std::string retrieveQueueToReportToRepackForSuccessAddress = re.getRetrieveQueueAddress(ri.getRepackRequestAddress(allVid.at(i-1)),cta::objectstore::JobQueueType::JobsToReportToRepackForSuccess);
+        std::string retrieveQueueToReportToRepackForSuccessAddress = re.getRetrieveQueueAddress(ri.getRepackRequestAddress(allVid.at(i-1)), JobQueueType::JobsToReportToRepackForSuccess);
         cta::objectstore::RetrieveQueue rq(retrieveQueueToReportToRepackForSuccessAddress,schedulerDB.getBackend());
 
         //Fetch the queue so that we can get the retrieveRequests from it
@@ -2137,7 +2138,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
           ASSERT_EQ(schedulerRetrieveRequest.dstURL,ss.str());
           //Testing the retrieve request
           ASSERT_EQ(retrieveRequest.getRepackInfo().isRepack,true);
-          ASSERT_EQ(retrieveRequest.getQueueType(),cta::objectstore::JobQueueType::JobsToReportToRepackForSuccess);
+          ASSERT_EQ(retrieveRequest.getQueueType(),JobQueueType::JobsToReportToRepackForSuccess);
           ASSERT_EQ(retrieveRequest.getRetrieveFileQueueCriteria().mountPolicy,cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack);
           ASSERT_EQ(retrieveRequest.getActiveCopyNumber(),1);
           ASSERT_EQ(retrieveRequest.getJobStatus(job.copyNb),cta::objectstore::serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess);
@@ -2160,18 +2161,24 @@ TEST_P(SchedulerTest, expandRepackRequest) {
       // All the retrieve requests should be gone and replaced by archive requests.
       cta::objectstore::RootEntry re(schedulerDB.getBackend());
       re.fetchNoLock();
-      typedef cta::objectstore::JobQueueType QueueType;
-      for (auto queueType: {QueueType::FailedJobs, QueueType::JobsToReportToRepackForFailure, QueueType::JobsToReportToRepackForSuccess,
-          QueueType::JobsToReportToUser, QueueType::JobsToTransferForRepack, QueueType::JobsToTransferForUser}) {
+      for (auto queueType: {JobQueueType::FailedJobs,
+        JobQueueType::JobsToReportToRepackForFailure,
+        JobQueueType::JobsToReportToRepackForSuccess,
+        JobQueueType::JobsToReportToUser,
+        JobQueueType::JobsToTransferForRepack,
+        JobQueueType::JobsToTransferForUser}) {
         ASSERT_EQ(0, re.dumpRetrieveQueues(queueType).size());
       }
-      ASSERT_EQ(1, re.dumpArchiveQueues(QueueType::JobsToTransferForRepack).size());
-      for (auto queueType: {QueueType::FailedJobs, QueueType::JobsToReportToRepackForFailure, QueueType::JobsToReportToRepackForSuccess,
-          QueueType::JobsToReportToUser, QueueType::JobsToTransferForUser}) {
+      ASSERT_EQ(1, re.dumpArchiveQueues(JobQueueType::JobsToTransferForRepack).size());
+      for (auto queueType: {JobQueueType::FailedJobs,
+        JobQueueType::JobsToReportToRepackForFailure,
+        JobQueueType::JobsToReportToRepackForSuccess,
+        JobQueueType::JobsToReportToUser,
+        JobQueueType::JobsToTransferForUser}) {
         ASSERT_EQ(0, re.dumpArchiveQueues(queueType).size());
       }
       // Now check we find all our requests in the archive queue.
-      cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(s_tapePoolName, cta::objectstore::JobQueueType::JobsToTransferForRepack),
+      cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(s_tapePoolName, JobQueueType::JobsToTransferForRepack),
           schedulerDB.getBackend());
       aq.fetchNoLock();
       std::set<uint64_t> archiveIdsSeen;
@@ -2216,6 +2223,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
 TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
   using namespace cta;
   using namespace cta::objectstore;
+  using cta::common::dataStructures::JobQueueType;
   unitTests::TempDirectory tempDirectory;
   auto &catalogue = getCatalogue();
   auto &scheduler = getScheduler();
@@ -2414,7 +2422,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
         objectstore::RepackIndex ri(re.getRepackIndexAddress(), schedulerDB.getBackend());
         ri.fetchNoLock();
 
-        std::string retrieveQueueToReportToRepackForFailureAddress = re.getRetrieveQueueAddress(ri.getRepackRequestAddress(vid),cta::objectstore::JobQueueType::JobsToReportToRepackForFailure);
+        std::string retrieveQueueToReportToRepackForFailureAddress = re.getRetrieveQueueAddress(ri.getRepackRequestAddress(vid),JobQueueType::JobsToReportToRepackForFailure);
         cta::objectstore::RetrieveQueue rq(retrieveQueueToReportToRepackForFailureAddress,backend);
 
         //Fetch the queue so that we can get the retrieveRequests from it
@@ -2445,7 +2453,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
         objectstore::RepackIndex ri(re.getRepackIndexAddress(), schedulerDB.getBackend());
         ri.fetchNoLock();
 
-        ASSERT_THROW(re.getRetrieveQueueAddress(ri.getRepackRequestAddress(vid),cta::objectstore::JobQueueType::JobsToReportToRepackForFailure),cta::exception::Exception);
+        ASSERT_THROW(re.getRetrieveQueueAddress(ri.getRepackRequestAddress(vid),JobQueueType::JobsToReportToRepackForFailure),cta::exception::Exception);
       }
     }
   }
@@ -2669,7 +2677,8 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
       objectstore::RepackIndex ri(re.getRepackIndexAddress(), schedulerDB.getBackend());
       ri.fetchNoLock();
 
-      std::string archiveQueueToReportToRepackForSuccessAddress = re.getArchiveQueueAddress(ri.getRepackRequestAddress(vid),cta::objectstore::JobQueueType::JobsToReportToRepackForSuccess);
+      using cta::common::dataStructures::JobQueueType;
+      std::string archiveQueueToReportToRepackForSuccessAddress = re.getArchiveQueueAddress(ri.getRepackRequestAddress(vid),JobQueueType::JobsToReportToRepackForSuccess);
       cta::objectstore::ArchiveQueue aq(archiveQueueToReportToRepackForSuccessAddress,backend);
 
       //Fetch the queue so that we can get the retrieveRequests from it
@@ -2708,6 +2717,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
 TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
   using namespace cta;
   using namespace cta::objectstore;
+  using cta::common::dataStructures::JobQueueType;
   unitTests::TempDirectory tempDirectory;
   auto &catalogue = getCatalogue();
   auto &scheduler = getScheduler();
@@ -2918,7 +2928,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
         objectstore::RepackIndex ri(re.getRepackIndexAddress(), schedulerDB.getBackend());
         ri.fetchNoLock();
 
-        std::string archiveQueueToReportToRepackForSuccessAddress = re.getArchiveQueueAddress(ri.getRepackRequestAddress(vid),cta::objectstore::JobQueueType::JobsToReportToRepackForSuccess);
+        std::string archiveQueueToReportToRepackForSuccessAddress = re.getArchiveQueueAddress(ri.getRepackRequestAddress(vid),JobQueueType::JobsToReportToRepackForSuccess);
         cta::objectstore::ArchiveQueue aq(archiveQueueToReportToRepackForSuccessAddress,backend);
 
         aq.fetchNoLock();
@@ -2932,7 +2942,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
         cta::objectstore::RootEntry re(backend);
         re.fetchNoLock();
 
-        std::string archiveQueueToTransferForRepackAddress = re.getArchiveQueueAddress(s_tapePoolName,cta::objectstore::JobQueueType::JobsToTransferForRepack);
+        std::string archiveQueueToTransferForRepackAddress = re.getArchiveQueueAddress(s_tapePoolName,JobQueueType::JobsToTransferForRepack);
         cta::objectstore::ArchiveQueue aq(archiveQueueToTransferForRepackAddress,backend);
 
         aq.fetchNoLock();
@@ -2974,7 +2984,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
       objectstore::RepackIndex ri(re.getRepackIndexAddress(), schedulerDB.getBackend());
       ri.fetchNoLock();
 
-      std::string archiveQueueToReportToRepackForFailureAddress = re.getArchiveQueueAddress(ri.getRepackRequestAddress(vid),cta::objectstore::JobQueueType::JobsToReportToRepackForFailure);
+      std::string archiveQueueToReportToRepackForFailureAddress = re.getArchiveQueueAddress(ri.getRepackRequestAddress(vid),JobQueueType::JobsToReportToRepackForFailure);
       cta::objectstore::ArchiveQueue aq(archiveQueueToReportToRepackForFailureAddress,backend);
 
       aq.fetchNoLock();
@@ -3333,7 +3343,7 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
   auto mountPolicies = catalogue.getMountPolicies();
 
   auto mountPolicyItor = std::find_if(mountPolicies.begin(),mountPolicies.end(), [](const common::dataStructures::MountPolicy &mountPolicy){
-        return mountPolicy.name.rfind("repack", 0) == 0; 
+        return mountPolicy.name.rfind("repack", 0) == 0;
   });
 
   ASSERT_NE(mountPolicyItor, mountPolicies.end());
@@ -4449,6 +4459,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
 TEST_P(SchedulerTest, cancelRepackRequest) {
   using namespace cta;
   using namespace cta::objectstore;
+  using cta::common::dataStructures::JobQueueType;
   unitTests::TempDirectory tempDirectory;
   auto &catalogue = getCatalogue();
   auto &scheduler = getScheduler();
@@ -4576,7 +4587,7 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
     scheduler.waitSchedulerDbSubthreadsComplete();
     re.fetchNoLock();
     //Get all retrieve subrequests in the RetrieveQueue
-    cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress(vid, cta::objectstore::JobQueueType::JobsToTransferForUser),backend);
+    cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress(vid, JobQueueType::JobsToTransferForUser),backend);
     rq.fetchNoLock();
     for(auto & job: rq.dumpJobs()){
       //Check that subrequests exist in the objectstore
@@ -4587,10 +4598,10 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
     //Check that the subrequests are deleted from the objectstore
     for(auto & job: rq.dumpJobs()){
       cta::objectstore::RetrieveRequest retrieveReq(job.address,backend);
-      ASSERT_THROW(retrieveReq.fetchNoLock(),cta::objectstore::Backend::NoSuchObject);
+      ASSERT_THROW(retrieveReq.fetchNoLock(),cta::exception::NoSuchObject);
     }
     //Check that the RepackRequest is deleted from the objectstore
-    ASSERT_THROW(cta::objectstore::RepackRequest(repackRequestAddress,backend).fetchNoLock(),cta::objectstore::Backend::NoSuchObject);
+    ASSERT_THROW(cta::objectstore::RepackRequest(repackRequestAddress,backend).fetchNoLock(),cta::exception::NoSuchObject);
   }
   //Do another test to check the deletion of ArchiveSubrequests
   {
@@ -4668,7 +4679,7 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
     }
     re.fetchNoLock();
     //Get all archive subrequests in the ArchiveQueue
-    cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(s_tapePoolName, cta::objectstore::JobQueueType::JobsToTransferForRepack),backend);
+    cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(s_tapePoolName, JobQueueType::JobsToTransferForRepack),backend);
     aq.fetchNoLock();
     for(auto & job: aq.dumpJobs()){
       cta::objectstore::ArchiveRequest archiveReq(job.address,backend);
@@ -4678,10 +4689,10 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
     //Check that the subrequests are deleted from the objectstore
     for(auto & job: aq.dumpJobs()){
       cta::objectstore::ArchiveRequest archiveReq(job.address,backend);
-      ASSERT_THROW(archiveReq.fetchNoLock(),cta::objectstore::Backend::NoSuchObject);
+      ASSERT_THROW(archiveReq.fetchNoLock(),cta::exception::NoSuchObject);
     }
     //Check that the RepackRequest is deleted from the objectstore
-    ASSERT_THROW(cta::objectstore::RepackRequest(repackRequestAddress,backend).fetchNoLock(),cta::objectstore::Backend::NoSuchObject);
+    ASSERT_THROW(cta::objectstore::RepackRequest(repackRequestAddress,backend).fetchNoLock(),cta::exception::NoSuchObject);
   }
 }
 
@@ -4929,6 +4940,7 @@ TEST_P(SchedulerTest, getNextMountBrokenOrDisabledTapeShouldNotReturnAMount) {
 
 TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
   using namespace cta;
+  using cta::common::dataStructures::JobQueueType;
   unitTests::TempDirectory tempDirectory;
 
   auto &catalogue = getCatalogue();
@@ -5045,7 +5057,7 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
     objectstore::RepackIndex ri(re.getRepackIndexAddress(), schedulerDB.getBackend());
     ri.fetchNoLock();
 
-    std::string retrieveQueueToReportToRepackForFailureAddress = re.getRetrieveQueueAddress(ri.getRepackRequestAddress(s_vid),cta::objectstore::JobQueueType::JobsToReportToRepackForFailure);
+    std::string retrieveQueueToReportToRepackForFailureAddress = re.getRetrieveQueueAddress(ri.getRepackRequestAddress(s_vid),JobQueueType::JobsToReportToRepackForFailure);
     cta::objectstore::RetrieveQueue rq(retrieveQueueToReportToRepackForFailureAddress,backend);
 
     //Fetch the queue so that we can get the retrieve jobs from it
@@ -5925,6 +5937,7 @@ TEST_P(SchedulerTest, getQueuesAndMountSummariesTest)
 {
   using namespace cta;
   using namespace cta::objectstore;
+  using cta::common::dataStructures::JobQueueType;
   unitTests::TempDirectory tempDirectory;
   auto &catalogue = getCatalogue();
   auto &scheduler = getScheduler();

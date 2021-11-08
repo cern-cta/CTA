@@ -15,35 +15,31 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "JobQueueType.hpp"
 
-#include <list>
-#include <memory>
+namespace cta {
+namespace common {
+namespace dataStructures {
 
-#include "ArchiveRequest.hpp"
-#include "common/dataStructures/JobQueueType.hpp"
+std::string toString(JobQueueType queueType) {
+  switch (queueType) {
+  case JobQueueType::FailedJobs:
+    return "failedJobs";
+  case JobQueueType::JobsToReportToUser:
+    return "JobsToReportToUser";
+  case JobQueueType::JobsToTransferForUser:
+    return "jobsToTranfer";
+  case JobQueueType::JobsToReportToRepackForSuccess:
+    return "JobsToReportToRepackForSuccess";
+  case JobQueueType::JobsToReportToRepackForFailure:
+    return "JobsToReportToRepackForFailure";
+  case JobQueueType::JobsToTransferForRepack:
+    return "JobsToTransferForRepack";
+  default:
+    return "Unknown queue type.";
+  }
+}
 
-namespace cta { namespace objectstore {
-/**
- * This structure holds the necessary data to queue a job taken from the ArchiveRequest that needs to be queued.
- */
-struct SorterArchiveJob{
-  std::shared_ptr<ArchiveRequest> archiveRequest;
-  ArchiveRequest::JobDump jobDump;
-  common::dataStructures::ArchiveFile archiveFile;
-  AgentReferenceInterface * previousOwner;
-  common::dataStructures::MountPolicy mountPolicy;
-  common::dataStructures::JobQueueType jobQueueType;
-};
-
-/**
- * This structure holds the datas the user have to
- * give to insert an ArchiveRequest without any fetch needed on the Request
- */
-struct SorterArchiveRequest{
-  std::list<SorterArchiveJob> archiveJobs;
-};
-
-
-}  // namespace objectstore
+}  // namespace dataStructures
+}  // namespace common
 }  // namespace cta

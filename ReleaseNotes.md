@@ -1,3 +1,12 @@
+# v4.NEXT
+
+## Summary
+
+### Features
+- cta/CTA#1053 Remove the objectstore presence in another classes
+
+### Bug fixes
+
 # v4.3-2
 
 ## Summary

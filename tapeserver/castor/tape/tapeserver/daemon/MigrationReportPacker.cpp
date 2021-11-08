@@ -15,16 +15,17 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <memory>
+#include <numeric>
+#include <cstdio>
+
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "catalogue/TapeFileWritten.hpp"
+#include "common/exception/NoSuchObject.hpp"
 #include "common/utils/utils.hpp"
 #include "objectstore/Backend.hpp"
-
-#include <memory>
-#include <numeric>
-#include <cstdio>
 
 using cta::log::LogContext;
 using cta::log::Param;
@@ -49,7 +50,7 @@ MigrationReportPacker::~MigrationReportPacker(){
 }
 //------------------------------------------------------------------------------
 //reportCompletedJob
-//------------------------------------------------------------------------------ 
+//------------------------------------------------------------------------------
 void MigrationReportPacker::reportCompletedJob(
   std::unique_ptr<cta::ArchiveJob> successfulArchiveJob, cta::log::LogContext & lc) {
   std::unique_ptr<Report> rep(new ReportSuccessful(std::move(successfulArchiveJob)));
@@ -61,7 +62,7 @@ void MigrationReportPacker::reportCompletedJob(
 }
 //------------------------------------------------------------------------------
 //reportSkippedJob
-//------------------------------------------------------------------------------ 
+//------------------------------------------------------------------------------
 void MigrationReportPacker::reportSkippedJob(std::unique_ptr<cta::ArchiveJob> skippedArchiveJob, const std::string& failure,
     cta::log::LogContext& lc) {
   std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() +
@@ -75,7 +76,7 @@ void MigrationReportPacker::reportSkippedJob(std::unique_ptr<cta::ArchiveJob> sk
 }
 //------------------------------------------------------------------------------
 //reportFailedJob
-//------------------------------------------------------------------------------ 
+//------------------------------------------------------------------------------
 void MigrationReportPacker::reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob,
         const cta::exception::Exception &ex, cta::log::LogContext & lc){
   std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() +
@@ -111,7 +112,7 @@ void MigrationReportPacker::reportTapeFull(cta::log::LogContext & lc){
 }
 //------------------------------------------------------------------------------
 //reportEndOfSession
-//------------------------------------------------------------------------------ 
+//------------------------------------------------------------------------------
 void MigrationReportPacker::reportEndOfSession(cta::log::LogContext & lc) {
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportEndofSession");
@@ -122,7 +123,7 @@ void MigrationReportPacker::reportEndOfSession(cta::log::LogContext & lc) {
 }
 //------------------------------------------------------------------------------
 //reportEndOfSessionWithErrors
-//------------------------------------------------------------------------------ 
+//------------------------------------------------------------------------------
 void MigrationReportPacker::reportEndOfSessionWithErrors(std::string msg,int errorCode, cta::log::LogContext & lc){
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportEndofSessionWithErrors");
@@ -146,7 +147,7 @@ void MigrationReportPacker::reportTestGoingToEnd(cta::log::LogContext & lc){
 
 //------------------------------------------------------------------------------
 //synchronousReportEndWithErrors
-//------------------------------------------------------------------------------ 
+//------------------------------------------------------------------------------
 void MigrationReportPacker::synchronousReportEndWithErrors(const std::string msg, int errorCode, cta::log::LogContext & lc){
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportEndofSessionWithErrors");
@@ -195,12 +196,12 @@ void MigrationReportPacker::ReportSkipped::execute(MigrationReportPacker& report
           .add("fileSize",m_skippedArchiveJob->archiveFile.fileSize)
           .add("fileId", m_skippedArchiveJob->archiveFile.archiveFileID);
     m_skippedArchiveJob->archiveFile.checksumBlob.addFirstChecksumToLog(params);
-    
+
     reportPacker.m_lc.log(cta::log::DEBUG,"In MigrationReportPacker::ReportSkipped::execute(): skipping archive job after exception.");
   }
   try {
     m_skippedArchiveJob->transferFailed(m_failureLog, reportPacker.m_lc);
-  } catch (cta::objectstore::Backend::NoSuchObject & ex){
+  } catch (cta::exception::NoSuchObject & ex){
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add("ExceptionMSG", ex.getMessageValue())
           .add("fileId", m_skippedArchiveJob->archiveFile.archiveFileID);
@@ -255,7 +256,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
     }
     std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> failedToReportArchiveJobs;
     try{
-      reportPacker.m_archiveMount->reportJobsBatchTransferred(reportPacker.m_successfulArchiveJobs, reportPacker.m_skippedFiles, failedToReportArchiveJobs, 
+      reportPacker.m_archiveMount->reportJobsBatchTransferred(reportPacker.m_successfulArchiveJobs, reportPacker.m_skippedFiles, failedToReportArchiveJobs,
         reportPacker.m_lc);
     } catch(const cta::ArchiveMount::FailedMigrationRecallResult &ex){
       while(!failedToReportArchiveJobs.empty()){
@@ -358,12 +359,12 @@ void MigrationReportPacker::ReportError::execute(MigrationReportPacker& reportPa
   }
   try {
     m_failedArchiveJob->transferFailed(m_failureLog, reportPacker.m_lc);
-  } catch (cta::objectstore::Backend::NoSuchObject & ex){
+  } catch (cta::exception::NoSuchObject & ex){
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add("ExceptionMSG", ex.getMessageValue())
           .add("fileId", m_failedArchiveJob->archiveFile.archiveFileID);
     reportPacker.m_lc.log(cta::log::WARNING,"In MigrationReportPacker::ReportError::execute(): call to m_failedArchiveJob->failed(), job does not exist in the objectstore.");
-  } 
+  }
   catch (cta::exception::Exception & ex) {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add("ExceptionMSG", ex.getMessageValue())
@@ -439,7 +440,7 @@ void MigrationReportPacker::WorkerThread::run(){
       m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
     }
   }
-  // Drain the FIFO if necessary. We know that m_continue will be 
+  // Drain the FIFO if necessary. We know that m_continue will be
   // set by ReportEndofSessionWithErrors or ReportEndofSession
   // TODO devise a more generic mechanism
   while(m_parent.m_fifo.size()) {

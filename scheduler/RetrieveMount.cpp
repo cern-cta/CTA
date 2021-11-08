@@ -15,11 +15,12 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "scheduler/RetrieveMount.hpp"
-#include "common/Timer.hpp"
+#include "common/exception/NoSuchObject.hpp"
 #include "common/log/TimingList.hpp"
-#include "objectstore/Backend.hpp"
+#include "common/Timer.hpp"
 #include "disk/DiskSystem.hpp"
+#include "objectstore/Backend.hpp"
+#include "scheduler/RetrieveMount.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -202,7 +203,7 @@ void cta::RetrieveMount::flushAsyncSuccessReports(std::queue<std::unique_ptr<cta
       //TODO : if repack, add log to say that the jobs were marked as RJS_Succeeded
       logContext.log(cta::log::DEBUG,"In cta::RetrieveMount::flushAsyncSuccessReports(): deleted complete retrieve jobs.");
     }
-  } catch(const cta::objectstore::Backend::NoSuchObject &ex){
+  } catch(const cta::exception::NoSuchObject &ex){
     cta::log::ScopedParamContainer params(logContext);
     params.add("exceptionMessageValue", ex.getMessageValue());
     if (job.get()) {

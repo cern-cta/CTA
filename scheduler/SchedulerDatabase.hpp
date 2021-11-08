@@ -28,6 +28,7 @@
 #include "common/dataStructures/CancelRetrieveRequest.hpp"
 #include "common/dataStructures/DeleteArchiveRequest.hpp"
 #include "common/dataStructures/DriveInfo.hpp"
+#include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/MountType.hpp"
 #include "common/dataStructures/RepackInfo.hpp"
@@ -221,6 +222,18 @@ public:
     virtual void bumpUpTapeFileCount(uint64_t newFileCount) = 0;
     virtual ~ArchiveJob() {}
   };
+
+  class IArchiveJobQueueItor {
+   public:
+    virtual ~IArchiveJobQueueItor() = default;
+    virtual const std::string &qid() const = 0;
+    virtual bool end() const = 0;
+    virtual void operator++() = 0;
+    virtual const common::dataStructures::ArchiveJob &operator*() const = 0;
+  };
+
+  virtual std::unique_ptr<IArchiveJobQueueItor> getArchiveJobQueueItor(const std::string &tapePoolName,
+    common::dataStructures::JobQueueType queueType) const = 0;
 
   /**
    * Get a a set of jobs to report to the clients. This function is like
@@ -445,6 +458,18 @@ public:
   private:
   };
 
+  class IRetrieveJobQueueItor {
+   public:
+    virtual ~IRetrieveJobQueueItor() = default;
+    virtual const std::string &qid() const = 0;
+    virtual bool end() const = 0;
+    virtual void operator++() = 0;
+    virtual const common::dataStructures::RetrieveJob &operator*() const = 0;
+  };
+
+  virtual std::unique_ptr<IRetrieveJobQueueItor> getRetrieveJobQueueItor(const std::string &vid,
+    common::dataStructures::JobQueueType queueType) const = 0;
+
   /*============ Repack management: user side ================================*/
   virtual std::string queueRepack(const cta::SchedulerDatabase::QueueRepackRequest & repackRequest, log::LogContext & lc) = 0;
   virtual std::list<common::dataStructures::RepackInfo> getRepackInfo() = 0;
@@ -628,7 +653,7 @@ public:
 
     optional<ActivityNameAndWeightedMountCount> activityNameAndWeightedMountCount;
                                   /**< Description if the activity for this potential mount. */
-    
+
     optional<std::list<std::string>> mountPolicyNames; /**< Names of mount policies for the mount*/
 
     bool operator < (const PotentialMount &other) const {

@@ -15,15 +15,17 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "RepackRequest.hpp"
-#include "GenericObject.hpp"
-#include "AgentReference.hpp"
-#include "RepackQueueAlgorithms.hpp"
-#include "Algorithms.hpp"
-#include "MountPolicySerDeser.hpp"
-#include "AgentWrapper.hpp"
 #include <google/protobuf/util/json_util.h>
 #include <iostream>
+
+#include "AgentReference.hpp"
+#include "AgentWrapper.hpp"
+#include "Algorithms.hpp"
+#include "common/exception/NoSuchObject.hpp"
+#include "GenericObject.hpp"
+#include "MountPolicySerDeser.hpp"
+#include "RepackQueueAlgorithms.hpp"
+#include "RepackRequest.hpp"
 
 namespace cta { namespace objectstore {
 
@@ -236,7 +238,7 @@ void RepackRequest::deleteAllSubrequests() {
         for(auto & deleter: deleters){
           deleter->wait();
         }
-      } catch(objectstore::Backend::NoSuchObject & ){ /* If object already deleted, do nothing */ }
+      } catch(cta::exception::NoSuchObject & ){ /* If object already deleted, do nothing */ }
     }
   }
 }
@@ -248,7 +250,7 @@ void RepackRequest::setIsComplete(const bool isComplete){
 
 void RepackRequest::updateRepackDestinationInfos(const cta::common::dataStructures::ArchiveFile & archiveFile, const std::string & destinationVid){
   checkPayloadWritable();
-  
+
   bool rdiFound = false;
   cta::objectstore::serializers::RepackDestinationInfo * info = nullptr;
   for (auto rdiIter = m_payload.mutable_destination_infos()->begin(); !rdiFound && rdiIter != m_payload.mutable_destination_infos()->end(); ++rdiIter) {
@@ -270,7 +272,7 @@ void RepackRequest::updateRepackDestinationInfos(const cta::common::dataStructur
 
 std::list<common::dataStructures::RepackInfo::RepackDestinationInfo> RepackRequest::getRepackDestinationInfos(){
   checkPayloadReadable();
-  
+
   std::list<common::dataStructures::RepackInfo::RepackDestinationInfo> ret;
   for(auto rdiIter: m_payload.destination_infos()){
     common::dataStructures::RepackInfo::RepackDestinationInfo rdi;
@@ -319,7 +321,7 @@ void RepackRequest::setStatus(){
   checkPayloadWritable();
   checkPayloadReadable();
   if(m_payload.is_expand_started()){
-    //The expansion of the Repack Request have started 
+    //The expansion of the Repack Request have started
     if(m_payload.is_expand_finished()){
       if( (m_payload.retrievedfiles() + m_payload.failedtoretrievefiles() >= m_payload.totalfilestoretrieve()) && (m_payload.archivedfiles() + m_payload.failedtoarchivefiles() + m_payload.failedtocreatearchivereq() >= m_payload.totalfilestoarchive()) ){
         //We reached the end
@@ -390,7 +392,7 @@ void RepackRequest::RepackSubRequestPointer::deserialize(const serializers::Repa
 //------------------------------------------------------------------------------
 // RepackRequest::getOrPrepareSubrequestInfo()
 //------------------------------------------------------------------------------
-auto RepackRequest::getOrPrepareSubrequestInfo(std::set<uint64_t> fSeqs, AgentReference& agentRef) 
+auto RepackRequest::getOrPrepareSubrequestInfo(std::set<uint64_t> fSeqs, AgentReference& agentRef)
 -> SubrequestInfo::set {
   checkPayloadWritable();
   RepackSubRequestPointer::Map pointerMap;
@@ -707,7 +709,7 @@ void RepackRequest::reportArchiveCreationFailures(uint64_t nbFailedToCreateArchi
 //------------------------------------------------------------------------------
 // RepackRequest::garbageCollect()
 //------------------------------------------------------------------------------
-void RepackRequest::garbageCollect(const std::string& presumedOwner, AgentReference& agentReference, 
+void RepackRequest::garbageCollect(const std::string& presumedOwner, AgentReference& agentReference,
     log::LogContext& lc, cta::catalogue::Catalogue& catalogue) {
   //Let's requeue the RepackRequest if its status is ToExpand or Pending
   agentReference.addToOwnership(this->getAddressIfSet(), m_objectStore);
@@ -747,7 +749,7 @@ void RepackRequest::garbageCollect(const std::string& presumedOwner, AgentRefere
 //------------------------------------------------------------------------------
 // RepackRequest::asyncUpdateOwner()
 //------------------------------------------------------------------------------
-RepackRequest::AsyncOwnerAndStatusUpdater* RepackRequest::asyncUpdateOwnerAndStatus(const std::string& owner, const std::string& previousOwner, 
+RepackRequest::AsyncOwnerAndStatusUpdater* RepackRequest::asyncUpdateOwnerAndStatus(const std::string& owner, const std::string& previousOwner,
     cta::optional<serializers::RepackRequestStatus> newStatus) {
   std::unique_ptr<AsyncOwnerAndStatusUpdater> ret(new AsyncOwnerAndStatusUpdater);
   auto & retRef = *ret;
@@ -804,7 +806,7 @@ RepackRequest::AsyncOwnerAndStatusUpdater* RepackRequest::asyncUpdateOwnerAndSta
       return oh.SerializeAsString();
     };
   ret->m_backendUpdater.reset(m_objectStore.asyncUpdate(getAddressIfSet(), ret->m_updaterCallback));
-  return ret.release();  
+  return ret.release();
 }
 
 //------------------------------------------------------------------------------
@@ -826,7 +828,7 @@ common::dataStructures::RepackInfo RepackRequest::AsyncOwnerAndStatusUpdater::ge
 //------------------------------------------------------------------------------
 // RepackRequest::dump()
 //------------------------------------------------------------------------------
-std::string RepackRequest::dump() {  
+std::string RepackRequest::dump() {
   checkPayloadReadable();
   google::protobuf::util::JsonPrintOptions options;
   options.add_whitespace = true;

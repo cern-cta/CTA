@@ -31,7 +31,7 @@
 
 #include <future>
 
-namespace cta { 
+namespace cta {
 // Forward declaration
 class OStoreDB;
   namespace ostoredb {
@@ -96,7 +96,7 @@ SharedQueueLock<Queue, Request>::~SharedQueueLock() {
         .add("successorUnlockTime", successorUnlockTime)
         .add("inMemoryQueuesCleanupTime", inMemoryQueuesCleanupTime);
   m_logContext.log(log::INFO, "In SharedQueueLock::~SharedQueueLock(): unlocked the archive queue pointer.");
-}   
+}
 
 template <class Request, class Queue>
 class MemQueueRequest {
@@ -132,11 +132,11 @@ public:
    * accumulated.
    * The creation and action are done using the global lock, which should be
    * sufficiently fast as we work in memory.
-   * All calls sharing the same batch will either succeed of throw the same 
+   * All calls sharing the same batch will either succeed of throw the same
    * exception.
    * The address of the archive queue object will be updated in both parameters
    * (job and archiveRequest).
-   * 
+   *
    * @param job to be added to the ArchiveQueue (contains the tape pool name)
    * @param request the request itself.
    * @param oStoreDB reference to the object store, allowing creation of the queue
@@ -145,7 +145,7 @@ public:
    */
   static std::shared_ptr<SharedQueueLock<Queue, Request>> sharedAddToQueue(typename Request::JobDump & job,
     const std::string & queueIndex, Request & request, OStoreDB & oStoreDB, log::LogContext & logContext);
-  
+
 private:
   /** Mutex that should be locked before attempting any operation */
   threading::Mutex m_mutex;
@@ -163,8 +163,8 @@ private:
    * a new queue (when there is no queue, yet a promise is present) will wait on them to prevent contention with previous queue update.
    * When a thread creates a queue (there was none) and finds no promise, it will create is own queue and promise, post the queue,
    * immediately push the content of the queue (which is likely, but not guaranteed to be just its own job), and release the promise
-   * when done. 
-   * At completion, if the initial promise is still present in the map, the creating thread will remove it, as no promise of a 
+   * when done.
+   * At completion, if the initial promise is still present in the map, the creating thread will remove it, as no promise of a
    * fulfilled promise are equivalent.
    */
   static std::map<std::string, std::shared_ptr<std::promise<void>>> g_promises;
@@ -172,21 +172,21 @@ private:
    * A set of futures, extracted from the corresponding g_promises.
    */
   static std::map<std::string, std::future<void>> g_futures;
-  
+
   /** Helper function for sharedAddToArchiveQueue */
   static std::shared_ptr<SharedQueueLock<Queue, Request>> sharedAddToNewQueue(typename Request::JobDump & job, const std::string & queueIndex,
     Request & request, OStoreDB & oStoreDB, log::LogContext & logContext, threading::MutexLocker &globalLock);
-  
+
   /** Struct holding the job plus request data */
   struct JobAndRequest {
     typename Request::JobDump & job;
     Request & request;
   };
-  
+
   /** Helper function handling the difference between archive and retrieve (vid vs tapepool) */
-  static void specializedAddJobsToQueueAndCommit(std::list<JobAndRequest> & jobsToAdd, Queue & queue, 
+  static void specializedAddJobsToQueueAndCommit(std::list<JobAndRequest> & jobsToAdd, Queue & queue,
     objectstore::AgentReference & agentReference, log::LogContext & logContext);
-  
+
   /** Helper function updating the cached retrieve queue stats. Noop for archive queues */
   static void specializedUpdateCachedQueueStats(Queue &queue);
 };
@@ -204,7 +204,7 @@ template <class Request, class Queue>
 std::map<std::string, std::future<void>> MemQueue<Request, Queue>::g_futures;
 
 template <class Request, class Queue>
-std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::sharedAddToQueue(typename Request::JobDump& job, 
+std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::sharedAddToQueue(typename Request::JobDump& job,
     const std::string & queueIndex, Request& request, OStoreDB & oStoreDB, log::LogContext & logContext) {
   // 1) Take the global lock (implicit in the constructor)
   threading::MutexLocker globalLock(g_mutex);
@@ -214,7 +214,7 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
     q = g_queues.at(queueIndex);
   } catch (std::out_of_range &) {
     // The queue is not there. We will just create a new one.
-    return sharedAddToNewQueue(job, queueIndex, request, oStoreDB, logContext, globalLock); 
+    return sharedAddToNewQueue(job, queueIndex, request, oStoreDB, logContext, globalLock);
   }
   // It does: we just ride the train: queue ourselves
   // Lock the queue.
@@ -239,7 +239,7 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
 
 template <class Request, class Queue>
 std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::sharedAddToNewQueue(
-  typename Request::JobDump& job, const std::string & queueIndex, Request& request, 
+  typename Request::JobDump& job, const std::string & queueIndex, Request& request,
   OStoreDB& oStoreDB, log::LogContext& logContext, threading::MutexLocker &globalLock) {
   utils::Timer timer;
   // Re-check the queue is not there
@@ -299,8 +299,8 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
     ret->m_lock.reset(new objectstore::ScopedExclusiveLock);
     auto & queue = *ret->m_queue;
     auto & aql = *ret->m_lock;
-    objectstore::Helpers::getLockedAndFetchedJobQueue<Queue>(queue, aql, 
-            *oStoreDB.m_agentReference, queueIndex, objectstore::JobQueueType::JobsToTransferForUser, logContext);
+    objectstore::Helpers::getLockedAndFetchedJobQueue<Queue>(queue, aql,
+            *oStoreDB.m_agentReference, queueIndex, common::dataStructures::JobQueueType::JobsToTransferForUser, logContext);
     double getFetchedQueueTime = timer.secs(utils::Timer::resetCounter);
     auto summaryBefore=queue.getJobsSummary();
     size_t addedJobs=1;
@@ -342,8 +342,8 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
             .add("waitTime", waitTime)
             .add("getFetchedQueueTime", getFetchedQueueTime)
             .add("queueProcessAndCommitTime", queueProcessAndCommitTime)
-            .add("cacheUpdateTime", cacheUpdateTime) 
-            .add("totalEnqueueTime", getFetchedQueueTime + queueProcessAndCommitTime 
+            .add("cacheUpdateTime", cacheUpdateTime)
+            .add("totalEnqueueTime", getFetchedQueueTime + queueProcessAndCommitTime
                                     + cacheUpdateTime + timer.secs());
       logContext.log(log::INFO, "In MemQueue::sharedAddToNewQueue(): added batch of jobs to the queue.");
     }
@@ -403,12 +403,12 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
       }
     } else
       throw;
-  } 
+  }
 }
 
 template <class Request, class Queue>
 void MemQueue<Request, Queue>::add(std::shared_ptr<MemQueueRequest<Request, Queue>>& request) {
-  m_requests.emplace_back(request); 
+  m_requests.emplace_back(request);
 }
 
 typedef MemQueue<objectstore::ArchiveRequest, objectstore::ArchiveQueue> MemArchiveQueue;

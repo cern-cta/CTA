@@ -15,20 +15,23 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "RootEntry.hpp"
-#include "AgentRegister.hpp"
+#include <cxxabi.h>
+#include <google/protobuf/util/json_util.h>
+
 #include "Agent.hpp"
 #include "AgentReference.hpp"
+#include "AgentRegister.hpp"
 #include "ArchiveQueue.hpp"
-#include "RetrieveQueue.hpp"
+#include "common/dataStructures/JobQueueType.hpp"
+#include "common/exception/NoSuchObject.hpp"
 #include "DriveRegister.hpp"
 #include "GenericObject.hpp"
-#include "SchedulerGlobalLock.hpp"
+#include "ProtocolBuffersAlgorithms.hpp"
 #include "RepackIndex.hpp"
 #include "RepackQueue.hpp"
-#include <cxxabi.h>
-#include "ProtocolBuffersAlgorithms.hpp"
-#include <google/protobuf/util/json_util.h>
+#include "RetrieveQueue.hpp"
+#include "RootEntry.hpp"
+#include "SchedulerGlobalLock.hpp"
 
 namespace cta { namespace objectstore {
 
@@ -39,7 +42,7 @@ const std::string RootEntry::address("root");
 RootEntry::RootEntry(Backend & os):
   ObjectOps<serializers::RootEntry, serializers::RootEntry_t>(os, address) {}
 
-RootEntry::RootEntry(GenericObject& go): 
+RootEntry::RootEntry(GenericObject& go):
   ObjectOps<serializers::RootEntry, serializers::RootEntry_t>(go.objectStore()) {
   // Here we transplant the generic object into the new object
   go.transplantHeader(*this);
@@ -47,7 +50,7 @@ RootEntry::RootEntry(GenericObject& go):
   getPayloadFromHeader();
 }
 
-// Initialiser. This uses the base object's initialiser and sets the defaults 
+// Initialiser. This uses the base object's initialiser and sets the defaults
 // of payload.
 void RootEntry::initialize() {
   ObjectOps<serializers::RootEntry, serializers::RootEntry_t>::initialize();
@@ -68,11 +71,15 @@ bool RootEntry::isEmpty() {
   if (m_payload.has_schedulerlockpointer() &&
       m_payload.schedulerlockpointer().address().size())
     return false;
-  for (auto &qt: {JobQueueType::JobsToTransferForUser, JobQueueType::JobsToReportToUser, JobQueueType::FailedJobs}) {
+  for (auto &qt: {common::dataStructures::JobQueueType::JobsToTransferForUser,
+    common::dataStructures::JobQueueType::JobsToReportToUser,
+    common::dataStructures::JobQueueType::FailedJobs}) {
     if (archiveQueuePointers(qt).size())
       return false;
   }
-  for (auto &qt: {JobQueueType::JobsToTransferForUser, JobQueueType::JobsToReportToUser, JobQueueType::FailedJobs, JobQueueType::JobsToReportToRepackForSuccess}) {
+  for (auto &qt: {common::dataStructures::JobQueueType::JobsToTransferForUser,
+    common::dataStructures::JobQueueType::JobsToReportToUser, common::dataStructures::JobQueueType::FailedJobs,
+    common::dataStructures::JobQueueType::JobsToReportToRepackForSuccess}) {
     if (retrieveQueuePointers(qt).size())
       return false;
   }
@@ -100,76 +107,80 @@ void RootEntry::garbageCollect(const std::string& presumedOwner, AgentReference 
 // ========== Queue types and helper functions =================================
 // =============================================================================
 
-const ::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::ArchiveQueuePointer>& RootEntry::archiveQueuePointers(JobQueueType queueType) {
-  switch(queueType) {
-  case JobQueueType::JobsToTransferForUser:
+const ::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::ArchiveQueuePointer>& RootEntry::archiveQueuePointers(
+  common::dataStructures::JobQueueType queueType) {
+  switch (queueType) {
+  case common::dataStructures::JobQueueType::JobsToTransferForUser:
     return m_payload.archive_queue_to_transfer_for_user_pointers();
-  case JobQueueType::JobsToReportToUser:
+  case common::dataStructures::JobQueueType::JobsToReportToUser:
     return m_payload.archive_queue_to_report_for_user_pointers();
-  case JobQueueType::FailedJobs:
+  case common::dataStructures::JobQueueType::FailedJobs:
     return m_payload.archive_queue_failed_pointers();
-  case JobQueueType::JobsToTransferForRepack:
+  case common::dataStructures::JobQueueType::JobsToTransferForRepack:
     return m_payload.archive_queue_to_transfer_for_repack_pointers();
-  case JobQueueType::JobsToReportToRepackForSuccess:
+  case common::dataStructures::JobQueueType::JobsToReportToRepackForSuccess:
     return m_payload.archive_queue_to_report_to_repack_for_success_pointers();
-  case JobQueueType::JobsToReportToRepackForFailure:
+  case common::dataStructures::JobQueueType::JobsToReportToRepackForFailure:
     return m_payload.archive_queue_to_report_to_repack_for_failure_pointers();
   default:
     throw cta::exception::Exception("In RootEntry::archiveQueuePointers(): unknown queue type.");
   }
 }
 
-::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::ArchiveQueuePointer>* RootEntry::mutableArchiveQueuePointers(JobQueueType queueType) {
-  switch(queueType) {
-  case JobQueueType::JobsToTransferForUser:
+::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::ArchiveQueuePointer>* RootEntry::mutableArchiveQueuePointers(
+  common::dataStructures::JobQueueType queueType) {
+  switch (queueType) {
+  case common::dataStructures::JobQueueType::JobsToTransferForUser:
     return m_payload.mutable_archive_queue_to_transfer_for_user_pointers();
-  case JobQueueType::JobsToReportToUser:
+  case common::dataStructures::JobQueueType::JobsToReportToUser:
     return m_payload.mutable_archive_queue_to_report_for_user_pointers();
-  case JobQueueType::FailedJobs:
+  case common::dataStructures::JobQueueType::FailedJobs:
     return m_payload.mutable_archive_queue_failed_pointers();
-  case JobQueueType::JobsToTransferForRepack:
+  case common::dataStructures::JobQueueType::JobsToTransferForRepack:
     return m_payload.mutable_archive_queue_to_transfer_for_repack_pointers();
-  case JobQueueType::JobsToReportToRepackForSuccess:
+  case common::dataStructures::JobQueueType::JobsToReportToRepackForSuccess:
     return m_payload.mutable_archive_queue_to_report_to_repack_for_success_pointers();
-  case JobQueueType::JobsToReportToRepackForFailure:
+  case common::dataStructures::JobQueueType::JobsToReportToRepackForFailure:
     return m_payload.mutable_archive_queue_to_report_to_repack_for_failure_pointers();
   default:
     throw cta::exception::Exception("In RootEntry::mutableArchiveQueuePointers(): unknown queue type.");
   }
 }
 
-const ::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::RetrieveQueuePointer>& RootEntry::retrieveQueuePointers(JobQueueType queueType) {
-  switch(queueType) {
-  case JobQueueType::JobsToTransferForUser:
+const ::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::RetrieveQueuePointer>& RootEntry::retrieveQueuePointers(
+  common::dataStructures::JobQueueType queueType) {
+  switch (queueType) {
+  case common::dataStructures::JobQueueType::JobsToTransferForUser:
     return m_payload.retrieve_queue_to_transfer_for_user_pointers();
-  case JobQueueType::JobsToReportToUser:
+  case common::dataStructures::JobQueueType::JobsToReportToUser:
     return m_payload.retrieve_queue_to_report_for_user_pointers();
-  case JobQueueType::FailedJobs:
+  case common::dataStructures::JobQueueType::FailedJobs:
     return m_payload.retrieve_queue_failed_pointers();
-  case JobQueueType::JobsToReportToRepackForSuccess:
+  case common::dataStructures::JobQueueType::JobsToReportToRepackForSuccess:
      return m_payload.retrieve_queue_to_report_to_repack_for_success_pointers();
-  case JobQueueType::JobsToReportToRepackForFailure:
+  case common::dataStructures::JobQueueType::JobsToReportToRepackForFailure:
     return m_payload.retrieve_queue_to_report_to_repack_for_failure_pointers();
-  case JobQueueType::JobsToTransferForRepack:
+  case common::dataStructures::JobQueueType::JobsToTransferForRepack:
     return m_payload.retrieve_queue_to_transfer_for_repack_pointers();
   default:
     throw cta::exception::Exception("In RootEntry::retrieveQueuePointers(): unknown queue type.");
   }
 }
 
-::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::RetrieveQueuePointer>* RootEntry::mutableRetrieveQueuePointers(JobQueueType queueType) {
-  switch(queueType) {
-  case JobQueueType::JobsToTransferForUser:
+::google::protobuf::RepeatedPtrField<::cta::objectstore::serializers::RetrieveQueuePointer>* RootEntry::mutableRetrieveQueuePointers(
+  common::dataStructures::JobQueueType queueType) {
+  switch (queueType) {
+  case common::dataStructures::JobQueueType::JobsToTransferForUser:
     return m_payload.mutable_retrieve_queue_to_transfer_for_user_pointers();
-  case JobQueueType::JobsToReportToUser:
+  case common::dataStructures::JobQueueType::JobsToReportToUser:
     return m_payload.mutable_retrieve_queue_to_report_for_user_pointers();
-  case JobQueueType::FailedJobs:
+  case common::dataStructures::JobQueueType::FailedJobs:
     return m_payload.mutable_retrieve_queue_failed_pointers();
-  case JobQueueType::JobsToReportToRepackForSuccess:
+  case common::dataStructures::JobQueueType::JobsToReportToRepackForSuccess:
     return m_payload.mutable_retrieve_queue_to_report_to_repack_for_success_pointers();
-  case JobQueueType::JobsToReportToRepackForFailure:
+  case common::dataStructures::JobQueueType::JobsToReportToRepackForFailure:
     return m_payload.mutable_retrieve_queue_to_report_to_repack_for_failure_pointers();
-  case JobQueueType::JobsToTransferForRepack:
+  case common::dataStructures::JobQueueType::JobsToTransferForRepack:
     return m_payload.mutable_retrieve_queue_to_transfer_for_repack_pointers();
   default:
     throw cta::exception::Exception("In RootEntry::mutableRetrieveQueuePointers(): unknown queue type.");
@@ -190,7 +201,8 @@ namespace {
   }
 }
 
-std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool, AgentReference& agentRef, JobQueueType queueType) {
+std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool, AgentReference& agentRef,
+  common::dataStructures::JobQueueType queueType) {
   checkPayloadWritable();
   // Check the archive queue does not already exist
   try {
@@ -198,13 +210,13 @@ std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool
   } catch (serializers::NotFound &) {}
   // Insert the archive queue pointer in the root entry, then the queue.
   std::string archiveQueueNameHeader = "ArchiveQueue";
-  switch(queueType) {
-  case JobQueueType::JobsToTransferForUser: archiveQueueNameHeader+="ToTransferForUser"; break;
-  case JobQueueType::JobsToReportToRepackForFailure: archiveQueueNameHeader+="ToReportToRepackForSuccess"; break;
-  case JobQueueType::JobsToReportToRepackForSuccess: archiveQueueNameHeader+="ToReportToRepackForSuccess"; break;
-  case JobQueueType::JobsToReportToUser: archiveQueueNameHeader+="ToReportForUser"; break;
-  case JobQueueType::FailedJobs: archiveQueueNameHeader+="Failed"; break;
-  case JobQueueType::JobsToTransferForRepack: archiveQueueNameHeader+="ToTransferForRepack"; break;
+  switch (queueType) {
+  case common::dataStructures::JobQueueType::JobsToTransferForUser: archiveQueueNameHeader+="ToTransferForUser"; break;
+  case common::dataStructures::JobQueueType::JobsToReportToRepackForFailure: archiveQueueNameHeader+="ToReportToRepackForSuccess"; break;
+  case common::dataStructures::JobQueueType::JobsToReportToRepackForSuccess: archiveQueueNameHeader+="ToReportToRepackForSuccess"; break;
+  case common::dataStructures::JobQueueType::JobsToReportToUser: archiveQueueNameHeader+="ToReportForUser"; break;
+  case common::dataStructures::JobQueueType::FailedJobs: archiveQueueNameHeader+="Failed"; break;
+  case common::dataStructures::JobQueueType::JobsToTransferForRepack: archiveQueueNameHeader+="ToTransferForRepack"; break;
   default: break;
   }
   std::string archiveQueueAddress = agentRef.nextId(archiveQueueNameHeader+"-"+tapePool);
@@ -223,7 +235,8 @@ std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool
   return archiveQueueAddress;
 }
 
-void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool, JobQueueType queueType, log::LogContext & lc) {
+void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool, common::dataStructures::JobQueueType queueType,
+  log::LogContext & lc) {
   checkPayloadWritable();
   // find the address of the archive queue object
   try {
@@ -243,7 +256,7 @@ void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool, JobQueu
         // Let the exception pass through.
         throw;
       } else {
-        // The queue object is already gone. We can skip to removing the 
+        // The queue object is already gone. We can skip to removing the
         // reference from the RootEntry
         goto deleteFromRootEntry;
       }
@@ -284,11 +297,11 @@ void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool, JobQueu
   }
 }
 
-void RootEntry::removeMissingArchiveQueueReference(const std::string& tapePool, JobQueueType queueType) {
+void RootEntry::removeMissingArchiveQueueReference(const std::string& tapePool, common::dataStructures::JobQueueType queueType) {
   serializers::removeOccurences(mutableArchiveQueuePointers(queueType), tapePool);
 }
 
-std::string RootEntry::getArchiveQueueAddress(const std::string& tapePool, JobQueueType queueType) {
+std::string RootEntry::getArchiveQueueAddress(const std::string& tapePool, common::dataStructures::JobQueueType queueType) {
   checkPayloadReadable();
   try {
     auto & tpp = serializers::findElement(archiveQueuePointers(queueType), tapePool);
@@ -298,11 +311,11 @@ std::string RootEntry::getArchiveQueueAddress(const std::string& tapePool, JobQu
   }
 }
 
-auto RootEntry::dumpArchiveQueues(JobQueueType queueType) -> std::list<ArchiveQueueDump> {
+auto RootEntry::dumpArchiveQueues(common::dataStructures::JobQueueType queueType) -> std::list<ArchiveQueueDump> {
   checkPayloadReadable();
   std::list<ArchiveQueueDump> ret;
   auto & tpl = archiveQueuePointers(queueType);
-  for (auto i = tpl.begin(); i!=tpl.end(); i++) {
+  for (auto i = tpl.begin(); i != tpl.end(); i++) {
     ret.push_back(ArchiveQueueDump());
     ret.back().address = i->address();
     ret.back().tapePool = i->name();
@@ -323,7 +336,8 @@ namespace {
   }
 }
 
-std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, AgentReference& agentRef, JobQueueType queueType) {
+std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, AgentReference& agentRef,
+  common::dataStructures::JobQueueType queueType) {
   checkPayloadWritable();
   // Check the retrieve queue does not already exist
   try {
@@ -333,13 +347,13 @@ std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, Ag
   // First generate the intent. We expect the agent to be passed locked.
   // The make of the vid in the object name will be handy.
   std::string retrieveQueueNameHeader = "RetrieveQueue";
-  switch(queueType) {
-  case JobQueueType::JobsToTransferForUser: retrieveQueueNameHeader+="ToTransferForUser"; break;
-  case JobQueueType::JobsToReportToUser: retrieveQueueNameHeader+="ToReportForUser"; break;
-  case JobQueueType::FailedJobs: retrieveQueueNameHeader+="Failed"; break;
-  case JobQueueType::JobsToReportToRepackForSuccess: retrieveQueueNameHeader+="ToReportToRepackForSuccess"; break;
-  case JobQueueType::JobsToReportToRepackForFailure: retrieveQueueNameHeader+="ToReportToRepackForFailure"; break;
-  case JobQueueType::JobsToTransferForRepack: retrieveQueueNameHeader+="ToTransferForRepack"; break;
+  switch (queueType) {
+  case common::dataStructures::JobQueueType::JobsToTransferForUser: retrieveQueueNameHeader+="ToTransferForUser"; break;
+  case common::dataStructures::JobQueueType::JobsToReportToUser: retrieveQueueNameHeader+="ToReportForUser"; break;
+  case common::dataStructures::JobQueueType::FailedJobs: retrieveQueueNameHeader+="Failed"; break;
+  case common::dataStructures::JobQueueType::JobsToReportToRepackForSuccess: retrieveQueueNameHeader+="ToReportToRepackForSuccess"; break;
+  case common::dataStructures::JobQueueType::JobsToReportToRepackForFailure: retrieveQueueNameHeader+="ToReportToRepackForFailure"; break;
+  case common::dataStructures::JobQueueType::JobsToTransferForRepack: retrieveQueueNameHeader+="ToTransferForRepack"; break;
   default: break;
   }
   std::string retrieveQueueAddress = agentRef.nextId(retrieveQueueNameHeader+"-"+vid);
@@ -358,11 +372,12 @@ std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid, Ag
   return retrieveQueueAddress;
 }
 
-void RootEntry::removeMissingRetrieveQueueReference(const std::string& vid, JobQueueType queueType) {
+void RootEntry::removeMissingRetrieveQueueReference(const std::string& vid, common::dataStructures::JobQueueType queueType) {
   serializers::removeOccurences(mutableRetrieveQueuePointers(queueType), vid);
 }
 
-void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid, JobQueueType queueType, log::LogContext & lc) {
+void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid, common::dataStructures::JobQueueType queueType,
+  log::LogContext & lc) {
   checkPayloadWritable();
   // find the address of the retrieve queue object
   try {
@@ -382,7 +397,7 @@ void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid, JobQueueTyp
         // Let the exception pass through.
         throw;
       } else {
-        // The queue object is already gone. We can skip to removing the 
+        // The queue object is already gone. We can skip to removing the
         // reference from the RootEntry
         goto deleteFromRootEntry;
       }
@@ -424,7 +439,7 @@ void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid, JobQueueTyp
 }
 
 
-std::string RootEntry::getRetrieveQueueAddress(const std::string& vid, JobQueueType queueType) {
+std::string RootEntry::getRetrieveQueueAddress(const std::string& vid, common::dataStructures::JobQueueType queueType) {
   checkPayloadReadable();
   try {
     auto & rqp = serializers::findElement(retrieveQueuePointers(queueType), vid);
@@ -435,11 +450,11 @@ std::string RootEntry::getRetrieveQueueAddress(const std::string& vid, JobQueueT
   }
 }
 
-auto RootEntry::dumpRetrieveQueues(JobQueueType queueType) -> std::list<RetrieveQueueDump> {
+auto RootEntry::dumpRetrieveQueues(common::dataStructures::JobQueueType queueType) -> std::list<RetrieveQueueDump> {
   checkPayloadReadable();
   std::list<RetrieveQueueDump> ret;
   auto & tpl = retrieveQueuePointers(queueType);
-  for (auto i = tpl.begin(); i!=tpl.end(); i++) {
+  for (auto i = tpl.begin(); i != tpl.end(); i++) {
     ret.push_back(RetrieveQueueDump());
     ret.back().address = i->address();
     ret.back().vid = i->vid();
@@ -487,7 +502,7 @@ std::string RootEntry::addOrGetDriveRegisterPointerAndCommit(
 void RootEntry::removeDriveRegisterAndCommit(log::LogContext & lc) {
   checkPayloadWritable();
   // Get the address of the drive register (nothing to do if there is none)
-  if (!m_payload.has_driveregisterpointer() || 
+  if (!m_payload.has_driveregisterpointer() ||
       !m_payload.driveregisterpointer().address().size())
     return;
   std::string drAddr = m_payload.driveregisterpointer().address();
@@ -512,7 +527,7 @@ void RootEntry::removeDriveRegisterAndCommit(log::LogContext & lc) {
 
 std::string RootEntry::getDriveRegisterAddress() {
   checkPayloadReadable();
-  if (m_payload.has_driveregisterpointer() && 
+  if (m_payload.has_driveregisterpointer() &&
       m_payload.driveregisterpointer().address().size()) {
     return m_payload.driveregisterpointer().address();
   }
@@ -769,7 +784,7 @@ std::string RootEntry::addOrGetRepackIndexAndCommit(AgentReference& agentRef) {
     ri.insert();
     // done.
     return rtrAddress;
-  } 
+  }
 }
 
 void RootEntry::removeRepackIndexAndCommit(log::LogContext& lc) {
@@ -793,7 +808,7 @@ void RootEntry::removeRepackIndexAndCommit(log::LogContext& lc) {
     log::ScopedParamContainer params(lc);
     params.add("repackIndex", ri.getAddressIfSet());
     lc.log(log::INFO, "In RootEntry::removeRepackIndexAndCommit(): removed repack tape register object.");
-  } catch(const Backend::NoSuchObject& ex) {
+  } catch(const cta::exception::NoSuchObject& ex) {
     log::ScopedParamContainer params(lc);
     params.add("errorMsg",ex.getMessageValue());
     lc.log(log::INFO, "In RootEntry::removeRepackIndexAndCommit(): the repack tape register object does not exist in the objectstore.");
@@ -874,7 +889,7 @@ void RootEntry::removeRepackQueueAndCommit(common::dataStructures::RepackQueueTy
         // Let the exception pass through.
         throw;
       } else {
-        // The queue object is already gone. We can skip to removing the 
+        // The queue object is already gone. We can skip to removing the
         // reference from the RootEntry
         goto deleteFromRootEntry;
       }
@@ -931,7 +946,7 @@ std::string RootEntry::addOrGetRepackQueueAndCommit(AgentReference& agentRef, co
   // Now move create a reference in the root entry
   switch(queueType) {
   case common::dataStructures::RepackQueueType::Pending:
-    m_payload.mutable_repackrequestspendingqueuepointer()->set_address(repackQueueAddress); 
+    m_payload.mutable_repackrequestspendingqueuepointer()->set_address(repackQueueAddress);
     break;
   case common::dataStructures::RepackQueueType::ToExpand:
     m_payload.mutable_repackrequeststoexpandqueuepointer()->set_address(repackQueueAddress);

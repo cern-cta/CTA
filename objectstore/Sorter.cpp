@@ -14,17 +14,20 @@
  *                 You should have received a copy of the GNU General Public License
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "Sorter.hpp"
-#include "Helpers.hpp"
-#include "common/threading/MutexLocker.hpp"
+
 #include <iostream>
+
+#include "common/exception/NoSuchObject.hpp"
+#include "common/threading/MutexLocker.hpp"
+#include "Helpers.hpp"
+#include "Sorter.hpp"
 
 namespace cta { namespace objectstore {
 
-/* SORTER CLASS */  
+/* SORTER CLASS */
 
 Sorter::Sorter(AgentReference& agentReference, Backend& objectstore, catalogue::Catalogue& catalogue):m_agentReference(agentReference),m_objectstore(objectstore),m_catalogue(catalogue){
-}  
+}
 
 Sorter::~Sorter(){
 }
@@ -49,7 +52,7 @@ void Sorter::executeArchiveAlgorithm(const std::string tapePool, std::string& qu
     for(auto &failedAR: failure.failedElements){
       try{
         std::rethrow_exception(failedAR.failure);
-      } catch (const cta::objectstore::Backend::NoSuchObject &ex) {
+      } catch (const cta::exception::NoSuchObject &ex) {
         log::ScopedParamContainer params(lc);
         params.add("fileId",failedAR.element->archiveFile.archiveFileID);
         lc.log(log::WARNING,"In Sorter::executeArchiveAlgorithm(), queueing impossible, job do not exist in the objectstore.");
@@ -65,48 +68,50 @@ void Sorter::executeArchiveAlgorithm(const std::string tapePool, std::string& qu
   }
 }
 
-void Sorter::dispatchArchiveAlgorithm(const std::string tapePool, const JobQueueType jobQueueType, std::string& queueAddress, std::list<std::shared_ptr<ArchiveJobQueueInfo>>& jobs, log::LogContext &lc){
-  switch(jobQueueType){
-    case JobQueueType::JobsToReportToUser:
-      executeArchiveAlgorithm<ArchiveQueueToReportForUser>(tapePool,queueAddress,jobs,lc);
+void Sorter::dispatchArchiveAlgorithm(const std::string tapePool, const common::dataStructures::JobQueueType jobQueueType,
+  std::string& queueAddress, std::list<std::shared_ptr<ArchiveJobQueueInfo>>& jobs, log::LogContext &lc) {
+  switch (jobQueueType) {
+    case common::dataStructures::JobQueueType::JobsToReportToUser:
+      executeArchiveAlgorithm<ArchiveQueueToReportForUser>(tapePool, queueAddress, jobs, lc);
       break;
-    case JobQueueType::JobsToTransferForRepack:
-      executeArchiveAlgorithm<ArchiveQueueToTransferForRepack>(tapePool,queueAddress,jobs,lc);
+    case common::dataStructures::JobQueueType::JobsToTransferForRepack:
+      executeArchiveAlgorithm<ArchiveQueueToTransferForRepack>(tapePool,  queueAddress, jobs, lc);
       break;
-    case JobQueueType::JobsToReportToRepackForSuccess:
-      executeArchiveAlgorithm<ArchiveQueueToReportToRepackForSuccess>(tapePool,queueAddress,jobs,lc); 
+    case common::dataStructures::JobQueueType::JobsToReportToRepackForSuccess:
+      executeArchiveAlgorithm<ArchiveQueueToReportToRepackForSuccess>(tapePool, queueAddress, jobs, lc);
       break;
-    case JobQueueType::JobsToReportToRepackForFailure:
-      executeArchiveAlgorithm<ArchiveQueueToReportToRepackForFailure>(tapePool,queueAddress,jobs,lc);
+    case common::dataStructures::JobQueueType::JobsToReportToRepackForFailure:
+      executeArchiveAlgorithm<ArchiveQueueToReportToRepackForFailure>(tapePool, queueAddress, jobs, lc);
       break;
-    case JobQueueType::JobsToTransferForUser:
-      executeArchiveAlgorithm<ArchiveQueueToTransferForUser>(tapePool,queueAddress,jobs,lc);
+    case common::dataStructures::JobQueueType::JobsToTransferForUser:
+      executeArchiveAlgorithm<ArchiveQueueToTransferForUser>(tapePool, queueAddress, jobs, lc);
       break;
-    case JobQueueType::FailedJobs:
-      executeArchiveAlgorithm<ArchiveQueueFailed>(tapePool,queueAddress,jobs,lc);
+    case common::dataStructures::JobQueueType::FailedJobs:
+      executeArchiveAlgorithm<ArchiveQueueFailed>(tapePool, queueAddress, jobs, lc);
       break;
     default:
       throw cta::exception::Exception("In Sorter::dispatchArchiveAlgorithm(), unknown JobQueueType");
   }
 }
 
-void Sorter::insertArchiveRequest(std::shared_ptr<ArchiveRequest> archiveRequest, AgentReferenceInterface& previousOwner, log::LogContext& lc){
-  for(auto& job: archiveRequest->dumpJobs()){
+void Sorter::insertArchiveRequest(std::shared_ptr<ArchiveRequest> archiveRequest,
+  AgentReferenceInterface& previousOwner, log::LogContext& lc) {
+  for (auto& job : archiveRequest->dumpJobs()) {
     SorterArchiveJob jobToInsert;
     jobToInsert.archiveRequest = archiveRequest;
     jobToInsert.archiveFile = archiveRequest->getArchiveFile();
     jobToInsert.jobDump = job;
     jobToInsert.mountPolicy = archiveRequest->getMountPolicy();
     jobToInsert.previousOwner = &previousOwner;
-    try{
+    try {
       jobToInsert.jobQueueType = archiveRequest->getJobQueueType(job.copyNb);
       insertArchiveJob(jobToInsert);
-    } catch(const cta::exception::Exception &ex){
+    } catch (const cta::exception::Exception &ex) {
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveRequest->getArchiveFile().archiveFileID)
             .add("exceptionMessage", ex.getMessageValue())
             .add("status", ArchiveRequest::statusToString(job.status));
-      lc.log(log::ERR,"In Sorter::insertArchiveJob() Failed to determine destination queue for Archive Job.");
+      lc.log(log::ERR, "In Sorter::insertArchiveJob() Failed to determine destination queue for Archive Job.");
     }
   }
 }
@@ -143,9 +148,10 @@ Sorter::MapArchive Sorter::getAllArchive(){
   return m_archiveQueuesAndRequests;
 }
 
-void Sorter::queueArchiveRequests(const std::string tapePool, const JobQueueType jobQueueType, std::list<std::shared_ptr<ArchiveJobQueueInfo>>& archiveJobsInfos, log::LogContext &lc){
+void Sorter::queueArchiveRequests(const std::string tapePool, const common::dataStructures::JobQueueType jobQueueType,
+  std::list<std::shared_ptr<ArchiveJobQueueInfo>>& archiveJobsInfos, log::LogContext &lc) {
   std::string queueAddress;
-  this->dispatchArchiveAlgorithm(tapePool,jobQueueType,queueAddress,archiveJobsInfos,lc);
+  this->dispatchArchiveAlgorithm(tapePool, jobQueueType, queueAddress, archiveJobsInfos, lc);
 }
 
 /* End of archive related algorithms */
@@ -171,7 +177,7 @@ void Sorter::executeRetrieveAlgorithm(const std::string vid, std::string& queueA
     for(auto& failedRR: failure.failedElements){
       try {
         std::rethrow_exception(failedRR.failure);
-      } catch (const cta::objectstore::Backend::NoSuchObject &ex) {
+      } catch (const cta::exception::NoSuchObject &ex) {
         log::ScopedParamContainer params(lc);
         params.add("copyNb",failedRR.element->copyNb)
               .add("fSeq",failedRR.element->fSeq);
@@ -188,22 +194,23 @@ void Sorter::executeRetrieveAlgorithm(const std::string vid, std::string& queueA
   }
 }
 
-void Sorter::dispatchRetrieveAlgorithm(const std::string vid, const JobQueueType jobQueueType, std::string& queueAddress, std::list<std::shared_ptr<RetrieveJobQueueInfo> >& jobs, log::LogContext& lc){
-  switch(jobQueueType){
-    case JobQueueType::JobsToReportToUser:
-      this->executeRetrieveAlgorithm<RetrieveQueueToReportForUser>(vid,queueAddress,jobs,lc);
+void Sorter::dispatchRetrieveAlgorithm(const std::string vid, const common::dataStructures::JobQueueType jobQueueType,
+  std::string& queueAddress, std::list<std::shared_ptr<RetrieveJobQueueInfo> >& jobs, log::LogContext& lc) {
+  switch (jobQueueType){
+    case common::dataStructures::JobQueueType::JobsToReportToUser:
+      this->executeRetrieveAlgorithm<RetrieveQueueToReportForUser>(vid, queueAddress, jobs, lc);
     break;
-    case JobQueueType::JobsToTransferForUser:
-      this->executeRetrieveAlgorithm<RetrieveQueueToTransfer>(vid,queueAddress,jobs,lc);
+    case common::dataStructures::JobQueueType::JobsToTransferForUser:
+      this->executeRetrieveAlgorithm<RetrieveQueueToTransfer>(vid, queueAddress, jobs, lc);
       break;
-    case JobQueueType::JobsToReportToRepackForSuccess:
-      this->executeRetrieveAlgorithm<RetrieveQueueToReportToRepackForSuccess>(vid,queueAddress,jobs,lc);
+    case common::dataStructures::JobQueueType::JobsToReportToRepackForSuccess:
+      this->executeRetrieveAlgorithm<RetrieveQueueToReportToRepackForSuccess>(vid, queueAddress, jobs, lc);
       break;
-    case JobQueueType::JobsToReportToRepackForFailure:
-      this->executeRetrieveAlgorithm<RetrieveQueueToReportToRepackForFailure>(vid,queueAddress,jobs,lc);
+    case common::dataStructures::JobQueueType::JobsToReportToRepackForFailure:
+      this->executeRetrieveAlgorithm<RetrieveQueueToReportToRepackForFailure>(vid, queueAddress, jobs, lc);
       break;
-    case JobQueueType::FailedJobs:
-      this->executeRetrieveAlgorithm<RetrieveQueueFailed>(vid,queueAddress,jobs,lc);
+    case common::dataStructures::JobQueueType::FailedJobs:
+      this->executeRetrieveAlgorithm<RetrieveQueueFailed>(vid, queueAddress, jobs, lc);
       break;
     default:
       throw cta::exception::Exception("In Sorter::dispatchRetrieveAlgorithm(), unknown JobQueueType");
@@ -213,7 +220,7 @@ void Sorter::dispatchRetrieveAlgorithm(const std::string vid, const JobQueueType
 
 Sorter::RetrieveJob Sorter::createRetrieveJob(std::shared_ptr<RetrieveRequest> retrieveRequest, const cta::common::dataStructures::ArchiveFile archiveFile,
         const uint32_t copyNb, const uint64_t fSeq, AgentReferenceInterface* previousOwner){
-  
+
   Sorter::RetrieveJob jobToAdd;
   jobToAdd.jobDump.copyNb = copyNb;
   jobToAdd.fSeq = fSeq;
@@ -269,7 +276,7 @@ void Sorter::insertRetrieveRequest(RetrieveRequestInfosAccessorInterface& access
           //We are sure that we want to queue a ToTransfer Job
           rjqi->jobToQueue = std::make_tuple(jobToAdd,std::promise<void>());
           threading::MutexLocker mapLocker(m_mutex);
-          m_retrieveQueuesAndRequests[std::make_tuple(bestVid,JobQueueType::JobsToTransferForUser)].emplace_back(rjqi);
+          m_retrieveQueuesAndRequests[std::make_tuple(bestVid, common::dataStructures::JobQueueType::JobsToTransferForUser)].emplace_back(rjqi);
           params.add("fileId", accessor.getArchiveFile().archiveFileID)
                  .add("copyNb", copyNb)
                  .add("tapeVid", bestVid)
@@ -361,9 +368,10 @@ Sorter::MapRetrieve Sorter::getAllRetrieve(){
   return m_retrieveQueuesAndRequests;
 }
 
-void Sorter::queueRetrieveRequests(const std::string vid, const JobQueueType jobQueueType, std::list<std::shared_ptr<RetrieveJobQueueInfo>>& retrieveJobsInfos, log::LogContext &lc){
+void Sorter::queueRetrieveRequests(const std::string vid, const common::dataStructures::JobQueueType jobQueueType,
+  std::list<std::shared_ptr<RetrieveJobQueueInfo>>& retrieveJobsInfos, log::LogContext &lc) {
   std::string queueAddress;
-  this->dispatchRetrieveAlgorithm(vid,jobQueueType,queueAddress,retrieveJobsInfos,lc);
+  this->dispatchRetrieveAlgorithm(vid, jobQueueType, queueAddress, retrieveJobsInfos, lc);
 }
 
 /* End of Retrieve related algorithms */

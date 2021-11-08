@@ -16,16 +16,18 @@
  */
 
 #include <gtest/gtest.h>
-#include "BackendVFS.hpp"
-#include "common/exception/Exception.hpp"
-#include "objectstore/SerializersExceptions.hpp"
-#include "RootEntry.hpp"
+
 #include "Agent.hpp"
 #include "AgentReference.hpp"
 #include "AgentRegister.hpp"
 #include "ArchiveQueue.hpp"
+#include "BackendVFS.hpp"
+#include "common/dataStructures/JobQueueType.hpp"
+#include "common/exception/Exception.hpp"
 #include "common/log/DummyLogger.hpp"
+#include "objectstore/SerializersExceptions.hpp"
 #include "RetrieveQueue.hpp"
+#include "RootEntry.hpp"
 
 namespace unitTests {
 
@@ -33,7 +35,7 @@ TEST(ObjectStore, RootEntryBasicAccess) {
   cta::objectstore::BackendVFS be;
   cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
-  { 
+  {
     // Try to create the root entry
     cta::objectstore::RootEntry re(be);
     re.initialize();
@@ -51,7 +53,7 @@ TEST(ObjectStore, RootEntryBasicAccess) {
     // Try to allocate the agent register
     // Try to read back and dump the root entry
     cta::objectstore::RootEntry re(be);
-    cta::objectstore::ScopedExclusiveLock lock (re);
+    cta::objectstore::ScopedExclusiveLock lock(re);
     // Create an agent
     cta::log::DummyLogger dl("dummy", "dummyLogger");
     cta::objectstore::AgentReference agentRef("unitTest", dl);
@@ -62,7 +64,7 @@ TEST(ObjectStore, RootEntryBasicAccess) {
     re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
     ASSERT_NO_THROW(re.getAgentRegisterAddress());
     re.commit();
-    //agent.registerSelf();
+    // agent.registerSelf();
   }
   // Delete the root entry
   cta::objectstore::RootEntry re(be);
@@ -73,7 +75,8 @@ TEST(ObjectStore, RootEntryBasicAccess) {
   ASSERT_FALSE(re.exists());
 }
 
-TEST (ObjectStore, RootEntryArchiveQueues) {
+TEST(ObjectStore, RootEntryArchiveQueues) {
+  using cta::common::dataStructures::JobQueueType;
   cta::objectstore::BackendVFS be;
   cta::objectstore::EntryLogSerDeser el("user0",
     "unittesthost", time(NULL));
@@ -82,7 +85,7 @@ TEST (ObjectStore, RootEntryArchiveQueues) {
   cta::objectstore::AgentReference agr("UnitTests", dl);
   cta::objectstore::Agent ag(agr.getAgentAddress(), be);
   ag.initialize();
-  { 
+  {
     // Try to create the root entry and allocate the agent register
     cta::objectstore::RootEntry re(be);
     re.initialize();
@@ -97,9 +100,9 @@ TEST (ObjectStore, RootEntryArchiveQueues) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
-    ASSERT_THROW(re.getArchiveQueueAddress("tapePool1", cta::objectstore::JobQueueType::JobsToTransferForUser),
+    ASSERT_THROW(re.getArchiveQueueAddress("tapePool1", JobQueueType::JobsToTransferForUser),
       cta::objectstore::RootEntry::NoSuchArchiveQueue);
-    tpAddr1 = re.addOrGetArchiveQueueAndCommit("tapePool1", agr, cta::objectstore::JobQueueType::JobsToTransferForUser);
+    tpAddr1 = re.addOrGetArchiveQueueAndCommit("tapePool1", agr, JobQueueType::JobsToTransferForUser);
     // Check that we car read it
     cta::objectstore::ArchiveQueue aq(tpAddr1, be);
     cta::objectstore::ScopedSharedLock aql(aq);
@@ -110,7 +113,7 @@ TEST (ObjectStore, RootEntryArchiveQueues) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
-    tpAddr2 = re.addOrGetArchiveQueueAndCommit("tapePool2", agr, cta::objectstore::JobQueueType::JobsToTransferForUser);
+    tpAddr2 = re.addOrGetArchiveQueueAndCommit("tapePool2", agr, JobQueueType::JobsToTransferForUser);
     ASSERT_TRUE(be.exists(tpAddr2));
   }
   {
@@ -118,7 +121,7 @@ TEST (ObjectStore, RootEntryArchiveQueues) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
-    re.removeArchiveQueueAndCommit("tapePool2", cta::objectstore::JobQueueType::JobsToTransferForUser, lc);
+    re.removeArchiveQueueAndCommit("tapePool2", JobQueueType::JobsToTransferForUser, lc);
     ASSERT_FALSE(be.exists(tpAddr2));
   }
   // Unregister the agent
@@ -129,15 +132,15 @@ TEST (ObjectStore, RootEntryArchiveQueues) {
   cta::objectstore::ScopedExclusiveLock lock(re);
   re.fetch();
   re.removeAgentRegisterAndCommit(lc);
-  re.removeArchiveQueueAndCommit("tapePool1", cta::objectstore::JobQueueType::JobsToTransferForUser, lc);
+  re.removeArchiveQueueAndCommit("tapePool1", JobQueueType::JobsToTransferForUser, lc);
   ASSERT_FALSE(be.exists(tpAddr1));
   re.removeIfEmpty(lc);
   ASSERT_FALSE(re.exists());
 }
 
-TEST (ObjectStore, RootEntryDriveRegister) {
+TEST(ObjectStore, RootEntryDriveRegister) {
   cta::objectstore::BackendVFS be;
-  { 
+  {
     // Try to create the root entry
     cta::objectstore::RootEntry re(be);
     re.initialize();
@@ -147,10 +150,10 @@ TEST (ObjectStore, RootEntryDriveRegister) {
     "unittesthost", time(NULL));
   cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
-  cta::objectstore::AgentReference agr("UnitTests", dl); 
+  cta::objectstore::AgentReference agr("UnitTests", dl);
   cta::objectstore::Agent ag(agr.getAgentAddress(), be);
   ag.initialize();
-  { 
+  {
     // Try to create the root entry and allocate the agent register
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock rel(re);
@@ -193,7 +196,7 @@ TEST (ObjectStore, RootEntryDriveRegister) {
 
 TEST(ObjectStore, RootEntryAgentRegister) {
   cta::objectstore::BackendVFS be;
-  { 
+  {
     // Try to create the root entry
     cta::objectstore::RootEntry re(be);
     re.initialize();
@@ -203,7 +206,7 @@ TEST(ObjectStore, RootEntryAgentRegister) {
     "unittesthost", time(NULL));
   cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
-  cta::objectstore::AgentReference agr("UnitTests", dl); 
+  cta::objectstore::AgentReference agr("UnitTests", dl);
   cta::objectstore::Agent ag(agr.getAgentAddress(), be);
   ag.initialize();
   std::string arAddr;
@@ -241,9 +244,9 @@ TEST(ObjectStore, RootEntryAgentRegister) {
   ASSERT_FALSE(re.exists());
 }
 
-TEST (ObjectStore, RootEntrySchedulerGlobalLock) {
+TEST(ObjectStore, RootEntrySchedulerGlobalLock) {
   cta::objectstore::BackendVFS be;
-  { 
+  {
     // Try to create the root entry
     cta::objectstore::RootEntry re(be);
     re.initialize();
@@ -256,7 +259,7 @@ TEST (ObjectStore, RootEntrySchedulerGlobalLock) {
   cta::objectstore::AgentReference agr("UnitTests", dl);
   cta::objectstore::Agent ag(agr.getAgentAddress(), be);
   ag.initialize();
-  { 
+  {
     // Try to create the root entry and allocate the agent register
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock rel(re);
@@ -297,7 +300,8 @@ TEST (ObjectStore, RootEntrySchedulerGlobalLock) {
   ASSERT_FALSE(re.exists());
 }
 
-TEST(ObjectStore, RetrieveQueueToReportToRepackForSuccessRootEntryTest){
+TEST(ObjectStore, RetrieveQueueToReportToRepackForSuccessRootEntryTest) {
+  using cta::common::dataStructures::JobQueueType;
   cta::objectstore::BackendVFS be;
   cta::objectstore::EntryLogSerDeser el("user0",
     "unittesthost", time(NULL));
@@ -306,7 +310,7 @@ TEST(ObjectStore, RetrieveQueueToReportToRepackForSuccessRootEntryTest){
   cta::objectstore::AgentReference agr("UnitTests", dl);
   cta::objectstore::Agent ag(agr.getAgentAddress(), be);
   ag.initialize();
-  { 
+  {
     // Try to create the root entry and allocate the agent register
     cta::objectstore::RootEntry re(be);
     re.initialize();
@@ -315,25 +319,25 @@ TEST(ObjectStore, RetrieveQueueToReportToRepackForSuccessRootEntryTest){
     re.addOrGetAgentRegisterPointerAndCommit(agr, el, lc);
   }
   ag.insertAndRegisterSelf(lc);
-  
+
   std::string tpAddr1, tpAddr2;
   {
     // Create the tape vid
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
-    //Try to retrieve a retrieve queue address that does not exist
-    ASSERT_THROW(re.getRetrieveQueueAddress("VID1", cta::objectstore::JobQueueType::JobsToReportToRepackForSuccess),
+    // Try to retrieve a retrieve queue address that does not exist
+    ASSERT_THROW(re.getRetrieveQueueAddress("VID1", JobQueueType::JobsToReportToRepackForSuccess),
       cta::objectstore::RootEntry::NoSuchRetrieveQueue);
-    
-    tpAddr1 = re.addOrGetRetrieveQueueAndCommit("VID1", agr, cta::objectstore::JobQueueType::JobsToReportToRepackForSuccess);
+
+    tpAddr1 = re.addOrGetRetrieveQueueAndCommit("VID1", agr, JobQueueType::JobsToReportToRepackForSuccess);
 
     ASSERT_FALSE(re.isEmpty());
     // Check that we can read it
     cta::objectstore::RetrieveQueueToReportToRepackForSuccess aq(tpAddr1, be);
     cta::objectstore::ScopedSharedLock aql(aq);
     ASSERT_NO_THROW(aq.fetch());
-    ASSERT_EQ(aq.getVid(),"VID1");
+    ASSERT_EQ(aq.getVid(), "VID1");
     ASSERT_TRUE(aq.isEmpty());
   }
   {
@@ -341,7 +345,7 @@ TEST(ObjectStore, RetrieveQueueToReportToRepackForSuccessRootEntryTest){
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
-    tpAddr2 = re.addOrGetRetrieveQueueAndCommit("VID2", agr, cta::objectstore::JobQueueType::JobsToReportToRepackForSuccess);
+    tpAddr2 = re.addOrGetRetrieveQueueAndCommit("VID2", agr, JobQueueType::JobsToReportToRepackForSuccess);
     ASSERT_TRUE(be.exists(tpAddr2));
   }
   {
@@ -349,7 +353,7 @@ TEST(ObjectStore, RetrieveQueueToReportToRepackForSuccessRootEntryTest){
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
-    re.removeRetrieveQueueAndCommit("VID2", cta::objectstore::JobQueueType::JobsToReportToRepackForSuccess, lc);
+    re.removeRetrieveQueueAndCommit("VID2", JobQueueType::JobsToReportToRepackForSuccess, lc);
     ASSERT_FALSE(be.exists(tpAddr2));
   }
   // Unregister the agent
@@ -360,8 +364,8 @@ TEST(ObjectStore, RetrieveQueueToReportToRepackForSuccessRootEntryTest){
   cta::objectstore::ScopedExclusiveLock lock(re);
   re.fetch();
   re.removeAgentRegisterAndCommit(lc);
-  re.removeRetrieveQueueAndCommit("VID1", cta::objectstore::JobQueueType::JobsToReportToRepackForSuccess, lc);
-  ASSERT_FALSE(be.exists(tpAddr1));  
+  re.removeRetrieveQueueAndCommit("VID1", JobQueueType::JobsToReportToRepackForSuccess, lc);
+  ASSERT_FALSE(be.exists(tpAddr1));
   re.removeIfEmpty(lc);
   ASSERT_FALSE(re.exists());
 }

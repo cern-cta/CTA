@@ -15,22 +15,23 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "RootEntry.hpp"
-#include "AgentReference.hpp"
+#include <gtest/gtest.h>
+
 #include "Agent.hpp"
-#include "common/log/DummyLogger.hpp"
-#include "common/log/StdoutLogger.hpp"
-#include "tests/TestsCompileTimeSwitches.hpp"
-#include "catalogue/DummyCatalogue.hpp"
-#include "BackendVFS.hpp"
-#include "common/make_unique.hpp"
+#include "AgentReference.hpp"
 #include "ArchiveQueueAlgorithms.hpp"
-#include "RetrieveQueueAlgorithms.hpp"
+#include "BackendVFS.hpp"
+#include "catalogue/DummyCatalogue.hpp"
+#include "common/dataStructures/JobQueueType.hpp"
+#include "common/log/DummyLogger.hpp"
 #ifdef STDOUT_LOGGING
 #include "common/log/StdoutLogger.hpp"
 #endif
-
-#include <gtest/gtest.h>
+#include "common/make_unique.hpp"
+#include "objectstore/RetrieveQueueAlgorithms.hpp"
+#include "RetrieveQueueAlgorithms.hpp"
+#include "RootEntry.hpp"
+#include "tests/TestsCompileTimeSwitches.hpp"
 
 std::ostream& operator<<(std::ostream& os, const cta::objectstore::ContainerTraits<cta::objectstore::RetrieveQueue, cta::objectstore::RetrieveQueueToTransfer>::PoppedElementsSummary& s) {
   os <<
@@ -156,7 +157,7 @@ void fillArchiveRequests(typename cta::objectstore::ContainerAlgorithms<cta::obj
 
 TEST(ObjectStore, ArchiveQueueAlgorithms) {
   using namespace cta::objectstore;
-  // We will need a log object 
+  // We will need a log object
 #ifdef STDOUT_LOGGING
   cta::log::StdoutLogger dl("dummy", "unitTest");
 #else
@@ -169,7 +170,7 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
   BackendVFS be;
   AgentReference agentRef("unitTestGarbageCollector", dl);
   Agent agent(agentRef.getAgentAddress(), be);
-  
+
   // Create the root entry
   RootEntry re(be);
   re.initialize();
@@ -217,7 +218,7 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
   }
   ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser> archiveAlgos(be, agentRef);
   archiveAlgos.referenceAndSwitchOwnership("Tapepool", requests, lc);
-  
+
   for(auto & ar: archiveRequests){
     cta::objectstore::ScopedExclusiveLock sel(*ar);
     ar->fetch();
@@ -238,7 +239,7 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
 
 TEST(ObjectStore, ArchiveQueueAlgorithmsWithDeletedJobsInQueue) {
   using namespace cta::objectstore;
-  // We will need a log object 
+  // We will need a log object
 #ifdef STDOUT_LOGGING
   cta::log::StdoutLogger dl("dummy", "unitTest");
 #else
@@ -251,7 +252,7 @@ TEST(ObjectStore, ArchiveQueueAlgorithmsWithDeletedJobsInQueue) {
   BackendVFS be;
   AgentReference agentRef("unitTestGarbageCollector", dl);
   Agent agent(agentRef.getAgentAddress(), be);
-  
+
   // Create the root entry
   RootEntry re(be);
   re.initialize();
@@ -306,7 +307,7 @@ TEST(ObjectStore, ArchiveQueueAlgorithmsWithDeletedJobsInQueue) {
     for(auto & ar: archiveRequests){
       cta::objectstore::ScopedExclusiveLock sel(*ar);
       ar->fetch();
-      if ((i % 3) == 1) { 
+      if ((i % 3) == 1) {
         ar->remove();
       }
       i++;
@@ -314,7 +315,7 @@ TEST(ObjectStore, ArchiveQueueAlgorithmsWithDeletedJobsInQueue) {
   }
 
   {
-    // Get first batch of four requests 
+    // Get first batch of four requests
     ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::PopCriteria popCriteria;
     popCriteria.bytes = 667 * 4;
     popCriteria.files = 100; // never reached
@@ -330,9 +331,9 @@ TEST(ObjectStore, ArchiveQueueAlgorithmsWithDeletedJobsInQueue) {
       i++;
     }
   }
-  
+
   {
-    // Get a second batch of remaining tree requests 
+    // Get a second batch of remaining tree requests
     ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::PopCriteria popCriteria;
     popCriteria.bytes = 667 * 3;
     popCriteria.files = 100; // never reached
@@ -352,7 +353,7 @@ TEST(ObjectStore, ArchiveQueueAlgorithmsWithDeletedJobsInQueue) {
 
 TEST(ObjectStore, RetrieveQueueAlgorithms) {
   using namespace cta::objectstore;
-  // We will need a log object 
+  // We will need a log object
 #ifdef STDOUT_LOGGING
   cta::log::StdoutLogger dl("dummy", "unitTest");
 #else
@@ -366,7 +367,7 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
   //Agent1 for queueing
   AgentReference agentRef("unitTestGarbageCollector", dl);
   Agent agent(agentRef.getAgentAddress(), be);
-  
+
   //Agent2 for popping
   AgentReference agentRef2("Agent2", dl);
   Agent agent2(agentRef2.getAgentAddress(), be);
@@ -389,7 +390,7 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
   fillRetrieveRequests(requests, requestsPtrs, be, agentRef); //memory leak here
   auto a1 = agentRef.getAgentAddress();
   auto a2 = agentRef2.getAgentAddress();
-    
+
   {
     ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer>::InsertedElement::list requests2;
 
@@ -404,7 +405,7 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
       ASSERT_TRUE(rr.getOwner().find("RetrieveQueueToTransferForUser-VID-Agent2") != std::string::npos);
     }
   }
-  
+
   ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> popRetrieveAlgos(be, agentRef);
   try {
     ASSERT_EQ(requests.size(), 10);
@@ -441,8 +442,12 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
 }
 
 TEST(ObjectStore, RetrieveQueueAlgorithmsUpdatesOldestJobQueueTime) {
-    using namespace cta::objectstore;
-  // We will need a log object 
+  using cta::common::dataStructures::JobQueueType;
+  using cta::objectstore::RetrieveQueue;
+  using cta::objectstore::RetrieveQueueToTransfer;
+  using cta::objectstore::RetrieveRequest;
+  using cta::objectstore::ContainerAlgorithms;
+  // We will need a log object
 #ifdef STDOUT_LOGGING
   cta::log::StdoutLogger dl("dummy", "unitTest");
 #else
@@ -452,81 +457,86 @@ TEST(ObjectStore, RetrieveQueueAlgorithmsUpdatesOldestJobQueueTime) {
   cta::log::LogContext lc(dl);
 
   // Here we check for the ability to detect dead (but empty agents) and clean them up
-  BackendVFS be;
-  AgentReference agentRef("unitTestGarbageCollector", dl);
-  Agent agent(agentRef.getAgentAddress(), be);
+  cta::objectstore::BackendVFS be;
+  cta::objectstore::AgentReference agentRef("unitTestGarbageCollector", dl);
+  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
   // Create the root entry
-  RootEntry re(be);
+  cta::objectstore::RootEntry re(be);
   re.initialize();
   re.insert();
   // Create the agent register
-  EntryLogSerDeser el("user0", "unittesthost", time(NULL));
-  ScopedExclusiveLock rel(re);
+  cta::objectstore::EntryLogSerDeser el("user0", "unittesthost", time(NULL));
+  cta::objectstore::ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   rel.release();
   agent.initialize();
   agent.insertAndRegisterSelf(lc);
-  
+
   std::string vid = "Tape0";
-  
-  ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> retrieveAlgos(be, agentRef);
+
+  ContainerAlgorithms<RetrieveQueue, RetrieveQueueToTransfer> retrieveAlgos(be, agentRef);
   std::string retrieveQueueAddress;
   std::unique_ptr<cta::objectstore::RetrieveQueue> rq;
   time_t firstBatchOldestJobStartTime;
   {
     std::list<std::unique_ptr<RetrieveRequest> > requestsPtrs;
-    ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer>::InsertedElement::list requests;
-    fillRetrieveRequests(requests, requestsPtrs, be, agentRef,0);
+    ContainerAlgorithms<RetrieveQueue, RetrieveQueueToTransfer>::InsertedElement::list requests;
+    fillRetrieveRequests(requests, requestsPtrs, be, agentRef, 0);
 
-    //Insert a first batch of 10 requests
+    // Insert a first batch of 10 requests
     ASSERT_EQ(requests.size(), 10);
 
-    retrieveAlgos.referenceAndSwitchOwnership(vid, 
+    retrieveAlgos.referenceAndSwitchOwnership(vid,
       agentRef.getAgentAddress(), requests, lc);
-    
+
     re.fetchNoLock();
-    
-    retrieveQueueAddress = re.getRetrieveQueueAddress(vid,JobQueueType::JobsToTransferForUser);
-    rq.reset(new cta::objectstore::RetrieveQueue(retrieveQueueAddress,be));
+
+    retrieveQueueAddress = re.getRetrieveQueueAddress(vid, JobQueueType::JobsToTransferForUser);
+    rq.reset(new cta::objectstore::RetrieveQueue(retrieveQueueAddress, be));
     rq->fetchNoLock();
-    //Get the first batch oldestAge
+    // Get the first batch oldestAge
     firstBatchOldestJobStartTime = rq->getJobsSummary().oldestJobStartTime;
   }
-  //Create another batch of 10 requests
+  // Create another batch of 10 requests
   {
     std::list<std::unique_ptr<RetrieveRequest> > requestsPtrs;
-    ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer>::InsertedElement::list requests;
-    fillRetrieveRequests(requests, requestsPtrs, be, agentRef,10);
+    ContainerAlgorithms<RetrieveQueue, RetrieveQueueToTransfer>::InsertedElement::list requests;
+    fillRetrieveRequests(requests, requestsPtrs, be, agentRef, 10);
     ASSERT_EQ(requests.size(), 10);
-    //Sleep 1 second before requeueing
+    // Sleep 1 second before requeueing
     ::sleep(1);
-    //Requeue
-    retrieveAlgos.referenceAndSwitchOwnership(vid, 
+    // Requeue
+    retrieveAlgos.referenceAndSwitchOwnership(vid,
       agentRef.getAgentAddress(), requests, lc);
     rq->fetchNoLock();
     uint64_t secondBatchOldestJobStartTime;
     secondBatchOldestJobStartTime = rq->getJobsSummary().oldestJobStartTime;
-    //As we did not pop, the first inserted batch of jobs is the oldest one
-    ASSERT_EQ(firstBatchOldestJobStartTime,secondBatchOldestJobStartTime);
+    // As we did not pop, the first inserted batch of jobs is the oldest one
+    ASSERT_EQ(firstBatchOldestJobStartTime, secondBatchOldestJobStartTime);
   }
 
-  // Now pop the first 10 batches of jobs --> the queue oldestjobstarttime should be equal to the second batch oldestjobstarttime
-  ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PopCriteria popCriteria;
+  // Now pop the first 10 batches of jobs --> the queue oldestjobstarttime should be equal
+  // to the second batch oldestjobstarttime
+  cta::objectstore::ContainerTraits<RetrieveQueue, RetrieveQueueToTransfer>::PopCriteria popCriteria;
   popCriteria.bytes = std::numeric_limits<decltype(popCriteria.bytes)>::max();
   popCriteria.files = 10;
   auto poppedJobs = retrieveAlgos.popNextBatch(vid, popCriteria, lc);
   ASSERT_EQ(poppedJobs.summary.files, 10);
 
-  //The new oldestJobStartTime should be equal to the jobstarttime of the first job of the second batch
+  // The new oldestJobStartTime should be equal to the jobstarttime of the first job of the second batch
   rq->fetchNoLock();
   time_t oldestJobStartTime = rq->getJobsSummary().oldestJobStartTime;
-  
+
   ASSERT_TRUE(oldestJobStartTime > firstBatchOldestJobStartTime);
 }
 
-TEST(ObjectStore, ArchiveQueueAlgorithmsUpdatesOldestJobQueueTime){
-  using namespace cta::objectstore;
-  // We will need a log object 
+TEST(ObjectStore, ArchiveQueueAlgorithmsUpdatesOldestJobQueueTime) {
+  using cta::common::dataStructures::JobQueueType;
+  using cta::objectstore::ArchiveQueue;
+  using cta::objectstore::ArchiveQueueToTransferForUser;
+  using cta::objectstore::ArchiveRequest;
+  using cta::objectstore::ContainerAlgorithms;
+  // We will need a log object
 #ifdef STDOUT_LOGGING
   cta::log::StdoutLogger dl("dummy", "unitTest");
 #else
@@ -536,75 +546,76 @@ TEST(ObjectStore, ArchiveQueueAlgorithmsUpdatesOldestJobQueueTime){
   cta::log::LogContext lc(dl);
 
   // Here we check for the ability to detect dead (but empty agents) and clean them up
-  BackendVFS be;
-  AgentReference agentRef("unitTestArchiveQueueAlgorithms", dl);
-  Agent agent(agentRef.getAgentAddress(), be);
+  cta::objectstore::BackendVFS be;
+  cta::objectstore::AgentReference agentRef("unitTestArchiveQueueAlgorithms", dl);
+  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
   // Create the root entry
-  RootEntry re(be);
+  cta::objectstore::RootEntry re(be);
   re.initialize();
   re.insert();
   // Create the agent register
-  EntryLogSerDeser el("user0", "unittesthost", time(NULL));
-  ScopedExclusiveLock rel(re);
+  cta::objectstore::EntryLogSerDeser el("user0", "unittesthost", time(NULL));
+  cta::objectstore::ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   rel.release();
   agent.initialize();
   agent.insertAndRegisterSelf(lc);
-  
+
   std::string tapepool = "tapepool";
-  
-  ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser> archiveAlgos(be, agentRef);
+
+  ContainerAlgorithms<ArchiveQueue, ArchiveQueueToTransferForUser> archiveAlgos(be, agentRef);
   std::string archiveQueueAddress;
   std::unique_ptr<cta::objectstore::ArchiveQueue> aq;
   time_t firstBatchOldestJobStartTime;
   {
     std::list<std::unique_ptr<ArchiveRequest> > requestsPtrs;
-    ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser>::InsertedElement::list requests;
+    ContainerAlgorithms<ArchiveQueue, ArchiveQueueToTransferForUser>::InsertedElement::list requests;
     fillArchiveRequests(requests, requestsPtrs, be, agentRef);
 
-    //Insert a first batch of 10 requests
+    // Insert a first batch of 10 requests
     ASSERT_EQ(requests.size(), 10);
 
-    archiveAlgos.referenceAndSwitchOwnership(tapepool, 
+    archiveAlgos.referenceAndSwitchOwnership(tapepool,
       agentRef.getAgentAddress(), requests, lc);
-    
+
     re.fetchNoLock();
-    
-    archiveQueueAddress = re.getArchiveQueueAddress(tapepool,JobQueueType::JobsToTransferForUser);
-    aq.reset(new cta::objectstore::ArchiveQueue(archiveQueueAddress,be));
+
+    archiveQueueAddress = re.getArchiveQueueAddress(tapepool, JobQueueType::JobsToTransferForUser);
+    aq.reset(new cta::objectstore::ArchiveQueue(archiveQueueAddress, be));
     aq->fetchNoLock();
-    //Get the first batch oldestAge
+    // Get the first batch oldestAge
     firstBatchOldestJobStartTime = aq->getJobsSummary().oldestJobStartTime;
   }
-  //Create another batch of 10 requests
+  // Create another batch of 10 requests
   {
     std::list<std::unique_ptr<ArchiveRequest> > requestsPtrs;
-    ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser>::InsertedElement::list requests;
+    ContainerAlgorithms<ArchiveQueue, ArchiveQueueToTransferForUser>::InsertedElement::list requests;
     fillArchiveRequests(requests, requestsPtrs, be, agentRef);
     ASSERT_EQ(requests.size(), 10);
-    //Sleep 1 second before requeueing
+    // Sleep 1 second before requeueing
     ::sleep(1);
-    //Requeue
-    archiveAlgos.referenceAndSwitchOwnership(tapepool, 
+    // Requeue
+    archiveAlgos.referenceAndSwitchOwnership(tapepool,
       agentRef.getAgentAddress(), requests, lc);
     aq->fetchNoLock();
     uint64_t secondBatchOldestJobStartTime;
     secondBatchOldestJobStartTime = aq->getJobsSummary().oldestJobStartTime;
-    //As we did not pop, the first inserted batch of jobs is the oldest one
-    ASSERT_EQ(firstBatchOldestJobStartTime,secondBatchOldestJobStartTime);
+    // As we did not pop, the first inserted batch of jobs is the oldest one
+    ASSERT_EQ(firstBatchOldestJobStartTime, secondBatchOldestJobStartTime);
   }
 
-  // Now pop the first 10 batches of jobs --> the queue oldestjobstarttime should be equal to the second batch oldestjobstarttime
-  ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::PopCriteria popCriteria;
+  // Now pop the first 10 batches of jobs --> the queue oldestjobstarttime should be equal to the
+  // second batch oldestjobstarttime
+  cta::objectstore::ContainerTraits<ArchiveQueue, ArchiveQueueToTransferForUser>::PopCriteria popCriteria;
   popCriteria.files = 10;
   popCriteria.bytes = std::numeric_limits<decltype(popCriteria.bytes)>::max();
   auto poppedJobs = archiveAlgos.popNextBatch(tapepool, popCriteria, lc);
   ASSERT_EQ(poppedJobs.summary.files, 10);
 
-  //The new oldestJobStartTime should be equal to the jobstarttime of the first job of the second batch
+  // The new oldestJobStartTime should be equal to the jobstarttime of the first job of the second batch
   aq->fetchNoLock();
   time_t oldestJobStartTime = aq->getJobsSummary().oldestJobStartTime;
-  
+
   ASSERT_TRUE(oldestJobStartTime > firstBatchOldestJobStartTime);
 }
 

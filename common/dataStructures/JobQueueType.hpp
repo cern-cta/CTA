@@ -15,27 +15,34 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "JobQueueType.hpp"
+#pragma once
 
-namespace cta { namespace objectstore {
+#include <string>
 
-std::string toString(JobQueueType queueType) {
-  switch (queueType) {
-  case JobQueueType::FailedJobs:
-    return "failedJobs";
-  case JobQueueType::JobsToReportToUser:
-    return "JobsToReportToUser";
-  case JobQueueType::JobsToTransferForUser:
-    return "jobsToTranfer";
-  case JobQueueType::JobsToReportToRepackForSuccess:
-    return "JobsToReportToRepackForSuccess";
-  case JobQueueType::JobsToReportToRepackForFailure:
-    return "JobsToReportToRepackForFailure";
-  case JobQueueType::JobsToTransferForRepack:
-    return "JobsToTransferForRepack";
-  default:
-    return "Unknown queue type.";
-  }
-}
+namespace cta {
+namespace common {
+namespace dataStructures {
 
-}} //namespace cta::objectstore
+enum class JobQueueType {
+  JobsToTransferForUser,
+  FailedJobs,
+  JobsToReportToUser,
+  JobsToReportToRepackForSuccess,
+  JobsToReportToRepackForFailure,
+  JobsToTransferForRepack
+};
+
+static const JobQueueType AllJobQueueTypes[] = {
+  JobQueueType::JobsToTransferForUser,
+  JobQueueType::FailedJobs,
+  JobQueueType::JobsToReportToUser,
+  JobQueueType::JobsToReportToRepackForSuccess,
+  JobQueueType::JobsToReportToRepackForFailure,
+  JobQueueType::JobsToTransferForRepack
+};
+
+std::string toString(JobQueueType queueType);
+
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

@@ -35,7 +35,7 @@ public:
   RepackRequest(Backend & os);
   RepackRequest(GenericObject & go);
   void initialize();
-  
+
   // Parameters interface
   void setVid(const std::string & vid);
   void setType(common::dataStructures::RepackInfo::Type repackType);
@@ -63,7 +63,7 @@ public:
    */
   void setForceDisabledTape(const bool disabledTape);
   bool getForceDisabledTape();
-  
+
   /**
    * Set the flag noRecall to only inject files that are in the buffer. This will prevent
    * to retrieve the files from the repacked tape.
@@ -72,7 +72,7 @@ public:
    */
   void setNoRecall(const bool noRecall);
   bool getNoRecall();
-  
+
   /**
    * Automatically set the new status of the Repack Request
    * regarding multiple parameters
@@ -86,7 +86,7 @@ public:
     typedef std::set<SubrequestInfo> set;
     bool operator< (const SubrequestInfo & o) const { return fSeq < o.fSeq; }
   };
-  /** 
+  /**
    * Provide a list of addresses for a set or fSeqs. For expansion of repack requests.
    * The addresses could be provided from the repack request if previously recorded, or
    * generated if not. The repack request should then be committed (not done here) before the
@@ -96,12 +96,12 @@ public:
    * This function implicitly records the information it generates (commit up t the caller);
    */
   SubrequestInfo::set getOrPrepareSubrequestInfo (std::set<uint64_t> fSeqs, AgentReference & agentRef);
-  
+
   /**
    * Remove this request from its owner ownership
    */
   void removeFromOwnerAgentOwnership();
-  
+
 private:
   struct RepackSubRequestPointer {
     std::string address;
@@ -113,18 +113,18 @@ private:
     void serialize (serializers::RepackSubRequestPointer & rsrp);
     void deserialize (const serializers::RepackSubRequestPointer & rsrp);
   };
-  
+
 public:
   /// Set the last fully created sub-requests address
   void setLastExpandedFSeq(uint64_t lastExpandedFSeq);
   uint64_t getLastExpandedFSeq();
-  
+
   void setTotalFileToRetrieve(const uint64_t nbFilesToRetrieve);
   void setTotalBytesToRetrieve(const uint64_t nbBytesToRetrieve);
   void setTotalFileToArchive(const uint64_t nbFilesToArchive);
   void setTotalBytesToArchive(const uint64_t nbBytesToArchive);
   void setUserProvidedFiles(const uint64_t userProvidedFiles);
-  
+
   struct SubrequestStatistics {
     uint64_t fSeq;
     uint64_t files = 1;
@@ -156,16 +156,16 @@ public:
     uint64_t bytes = 0;
   };
   std::map<StatsType, StatsValues> getStats();
-  
+
   void reportRetrieveCreationFailures(const std::list<cta::SchedulerDatabase::RepackRequest::Subrequest>& notCreatedSubrequests);
-  
+
   void reportArchiveCreationFailures(uint64_t nbFailedToCreateArchiveRequests);
-  
+
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) override;
-    
+
   std::string dump();
-  
+
   // An asynchronous request ownership updating class.
   class AsyncOwnerAndStatusUpdater {
     friend class RepackRequest;

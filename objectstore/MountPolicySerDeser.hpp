@@ -17,8 +17,9 @@
 
 #pragma once
 
-#include "objectstore/cta.pb.h"
 #include "common/dataStructures/MountPolicy.hpp"
+#include "EntryLogSerDeser.hpp"
+#include "objectstore/cta.pb.h"
 
 #include <string>
 #include <stdint.h>
@@ -34,7 +35,7 @@ public:
   MountPolicySerDeser (const cta::common::dataStructures::MountPolicy & mp): cta::common::dataStructures::MountPolicy(mp) {}
   operator cta::common::dataStructures::MountPolicy() {
     return cta::common::dataStructures::MountPolicy(*this);
-  } 
+  }
   void serialize (cta::objectstore::serializers::MountPolicy & osmp) const {
     osmp.set_name(name);
     osmp.set_archivepriority(archivePriority);
@@ -59,5 +60,5 @@ public:
     comment=osmp.comment();
   }
 };
-  
+
 }}

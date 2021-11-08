@@ -17,12 +17,13 @@
 
 #include "BackendVFS.hpp"
 #include "common/exception/Errnum.hpp"
-#include "common/utils/utils.hpp"
-#include "common/utils/Regex.hpp"
-#include "common/Timer.hpp"
-#include "tests/TestsCompileTimeSwitches.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/NoSuchObject.hpp"
 #include "common/threading/MutexLocker.hpp"
+#include "common/Timer.hpp"
+#include "common/utils/Regex.hpp"
+#include "common/utils/utils.hpp"
+#include "tests/TestsCompileTimeSwitches.hpp"
 
 #include <fstream>
 #include <stdlib.h>
@@ -55,7 +56,7 @@ BackendVFS::BackendVFS(int line, const char *file) : m_deleteOnExit(true) {
     throw cta::exception::Errnum("Failed to create temporary directory");
   }
   #ifdef LOW_LEVEL_TRACING
-  std::cout << "In BackendVFS::BackendVFS(): created object store " << m_root << " " 
+  std::cout << "In BackendVFS::BackendVFS(): created object store " << m_root << " "
       << std::hex << this << file << ":" << line << std::endl;
   #endif
 }
@@ -71,7 +72,7 @@ void BackendVFS::deleteOnExit() {
   m_deleteOnExit = true;
 }
 
-int deleteFileOrDirectory(const char* fpath, 
+int deleteFileOrDirectory(const char* fpath,
   const struct ::stat* sb, int tflag, struct FTW* ftwbuf) {
   switch (tflag) {
     case FTW_D:
@@ -135,7 +136,7 @@ void BackendVFS::create(std::string name, std::string content) {
     throw;
   }
 }
-    
+
 void BackendVFS::atomicOverwrite(std::string name, std::string content) {
   // When entering here, we should hold an exclusive lock on the *context
   // file descriptor. We will create a new file, lock it immediately exclusively,
@@ -174,7 +175,7 @@ std::string BackendVFS::read(std::string name) {
   std::ifstream file(path.c_str());
   if (!file) {
     if (errno == ENOENT) {
-      throw Backend::NoSuchObject(
+      throw cta::exception::NoSuchObject(
           "In ObjectStoreVFS::read, failed to open file for read: No such object.");
     }
     throw cta::exception::Errnum(
@@ -204,7 +205,7 @@ void BackendVFS::remove(std::string name) {
 
 bool BackendVFS::exists(std::string name) {
   std::string path = m_root + "/" + name;
-  std::string lockPath = m_root + "/." + name + ".lock";  
+  std::string lockPath = m_root + "/." + name + ".lock";
   struct stat buffer;
   #ifdef LOW_LEVEL_TRACING
     bool filePresent=stat(path.c_str(), &buffer)==0 && stat(lockPath.c_str(), &buffer)==0;
@@ -269,7 +270,7 @@ BackendVFS::ScopedLock * BackendVFS::lockHelper(std::string name, int type, uint
       ret->set(fd, path);
     } else {
       if (statErrno == ENOENT)
-        throw Backend::NoSuchObject("In BackendVFS::lockHelper(): no such file " + m_root + '/' + name);
+        throw cta::exception::NoSuchObject("In BackendVFS::lockHelper(): no such file " + m_root + '/' + name);
       const std::string errnoStr = utils::errnoToString(errno);
       exception::Exception ex;
       ex.getMessage() << "In BackendVFS::lockHelper(): Failed to open file " << path <<
@@ -303,7 +304,7 @@ BackendVFS::ScopedLock * BackendVFS::lockHelper(std::string name, int type, uint
       throw ex;
     }
   }
-  
+
   #ifdef LOW_LEVEL_TRACING
   if (ret->m_fd==-1) {
     std::cout << "Warning: fd=-1!" << std::endl;
@@ -316,7 +317,7 @@ BackendVFS::ScopedLock * BackendVFS::lockHelper(std::string name, int type, uint
 BackendVFS::ScopedLock * BackendVFS::lockExclusive(std::string name, uint64_t timeout_us) {
   std::unique_ptr<BackendVFS::ScopedLock> ret(lockHelper(name, LOCK_EX, timeout_us));
   #ifdef LOW_LEVEL_TRACING
-    ::printf ("In BackendVFS::lockExclusive(): LockedExclusive %s with fd=%d path=%s tid=%ld\n", 
+    ::printf ("In BackendVFS::lockExclusive(): LockedExclusive %s with fd=%d path=%s tid=%ld\n",
         name.c_str(), ret->m_fd, ret->m_path.c_str(), syscall(SYS_gettid));
   #endif
   return ret.release();
@@ -333,7 +334,7 @@ BackendVFS::ScopedLock * BackendVFS::lockShared(std::string name, uint64_t timeo
 
 BackendVFS::AsyncCreator::AsyncCreator(BackendVFS& be, const std::string& name, const std::string& value):
   m_backend(be), m_name(name), m_value(value),
-  m_job(std::async(std::launch::async, 
+  m_job(std::async(std::launch::async,
     [&](){
       std::string path = m_backend.m_root + "/" + m_name;
       std::string lockPath = m_backend.m_root + "/." + m_name + ".lock";
@@ -367,7 +368,7 @@ BackendVFS::AsyncCreator::AsyncCreator(BackendVFS& be, const std::string& name, 
         if (lockCreated) unlink(lockPath.c_str());
         throw;
       }
-    })) 
+    }))
 {}
 
 Backend::AsyncCreator* BackendVFS::asyncCreate(const std::string& name, const std::string& value) {
@@ -383,12 +384,12 @@ void BackendVFS::AsyncCreator::wait() {
 
 BackendVFS::AsyncUpdater::AsyncUpdater(BackendVFS & be, const std::string& name, std::function<std::string(const std::string&)>& update):
   m_backend(be), m_name(name), m_update(update),
-  m_job(std::async(std::launch::async, 
+  m_job(std::async(std::launch::async,
     [&](){
       std::unique_ptr<ScopedLock> sl;
       try { // locking already throws proper exceptions for no such file.
         sl.reset(m_backend.lockExclusive(m_name));
-      } catch (Backend::NoSuchObject &) {
+      } catch (cta::exception::NoSuchObject &) {
         ANNOTATE_HAPPENS_BEFORE(&m_job);
         throw;
       } catch (cta::exception::Exception & ex) {
@@ -402,18 +403,18 @@ BackendVFS::AsyncUpdater::AsyncUpdater(BackendVFS & be, const std::string& name,
         ANNOTATE_HAPPENS_BEFORE(&m_job);
         throw Backend::CouldNotFetch(ex.getMessageValue());
       }
-      
+
       std::string postUpdateData;
       bool updateWithDelete = false;
-      try {      
+      try {
         postUpdateData=m_update(preUpdateData);
       } catch (AsyncUpdateWithDelete & ex) {
-        updateWithDelete = true;               
+        updateWithDelete = true;
       } catch (...) {
         // Let user's exceptions go through.
-        throw; 
+        throw;
       }
-      
+
       if(updateWithDelete) {
         try {
           m_backend.remove(m_name);
@@ -421,7 +422,7 @@ BackendVFS::AsyncUpdater::AsyncUpdater(BackendVFS & be, const std::string& name,
           ANNOTATE_HAPPENS_BEFORE(&m_job);
           throw Backend::CouldNotCommit(ex.getMessageValue());
         }
-      } else { 
+      } else {
         try {
           m_backend.atomicOverwrite(m_name, postUpdateData);
         } catch (cta::exception::Exception & ex) {
@@ -436,7 +437,7 @@ BackendVFS::AsyncUpdater::AsyncUpdater(BackendVFS & be, const std::string& name,
         throw Backend::CouldNotUnlock(ex.getMessageValue());
       }
       ANNOTATE_HAPPENS_BEFORE(&m_job);
-    })) 
+    }))
 {}
 
 Backend::AsyncUpdater* BackendVFS::asyncUpdate(const std::string & name, std::function <std::string(const std::string &)> & update) {
@@ -452,12 +453,12 @@ void BackendVFS::AsyncUpdater::wait() {
 
 BackendVFS::AsyncDeleter::AsyncDeleter(BackendVFS & be, const std::string& name):
   m_backend(be), m_name(name),
-  m_job(std::async(std::launch::async, 
+  m_job(std::async(std::launch::async,
     [&](){
       std::unique_ptr<ScopedLock> sl;
       try { // locking already throws proper exceptions for no such file.
         sl.reset(m_backend.lockExclusive(m_name));
-      } catch (Backend::NoSuchObject &) {
+      } catch (cta::exception::NoSuchObject &) {
         ANNOTATE_HAPPENS_BEFORE(&m_job);
         throw;
       } catch (cta::exception::Exception & ex) {
@@ -477,7 +478,7 @@ BackendVFS::AsyncDeleter::AsyncDeleter(BackendVFS & be, const std::string& name)
         throw Backend::CouldNotUnlock(ex.getMessageValue());
       }
       ANNOTATE_HAPPENS_BEFORE(&m_job);
-    })) 
+    }))
 {}
 
 Backend::AsyncDeleter* BackendVFS::asyncDelete(const std::string & name) {

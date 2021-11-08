@@ -17,9 +17,10 @@
 
 #include <iostream>
 
-#include "scheduler/ArchiveMount.hpp"
+#include "common/exception/NoSuchObject.hpp"
 #include "common/make_unique.hpp"
 #include "objectstore/Backend.hpp"
+#include "scheduler/ArchiveMount.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -230,7 +231,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
           .add("schedulerDbTime", schedulerDbTime)
           .add("totalTime", catalogueTime  + schedulerDbTime + clientReportingTime);
     logContext.log(log::INFO, "In ArchiveMount::reportJobsBatchWritten(): recorded a batch of archive jobs in metadata.");
-  } catch (const cta::objectstore::Backend::NoSuchObject& ex){
+  } catch (const cta::exception::NoSuchObject& ex){
     cta::log::ScopedParamContainer params(logContext);
     params.add("exceptionMessageValue", ex.getMessageValue());
     if (job.get()) {

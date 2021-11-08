@@ -15,29 +15,30 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ArchiveRequest.hpp"
-#include "GenericObject.hpp"
-#include "ArchiveQueue.hpp"
-#include "Helpers.hpp"
-#include "common/dataStructures/EntryLog.hpp"
-#include "MountPolicySerDeser.hpp"
-
 #include <algorithm>
-#include <google/protobuf/util/json_util.h>
 #include <cmath>
+#include <google/protobuf/util/json_util.h>
+
+#include "ArchiveQueue.hpp"
+#include "ArchiveRequest.hpp"
+#include "common/dataStructures/EntryLog.hpp"
+#include "common/dataStructures/JobQueueType.hpp"
+#include "GenericObject.hpp"
+#include "Helpers.hpp"
+#include "MountPolicySerDeser.hpp"
 
 namespace cta { namespace objectstore {
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-ArchiveRequest::ArchiveRequest(const std::string& address, Backend& os): 
+ArchiveRequest::ArchiveRequest(const std::string& address, Backend& os):
   ObjectOps<serializers::ArchiveRequest, serializers::ArchiveRequest_t>(os, address){ }
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-ArchiveRequest::ArchiveRequest(Backend& os): 
+ArchiveRequest::ArchiveRequest(Backend& os):
   ObjectOps<serializers::ArchiveRequest, serializers::ArchiveRequest_t>(os) { }
 
 //------------------------------------------------------------------------------
@@ -82,7 +83,7 @@ void ArchiveRequest::commit(){
 // ArchiveRequest::addJob()
 //------------------------------------------------------------------------------
 void ArchiveRequest::addJob(uint32_t copyNumber,
-  const std::string& tapepool, const std::string& initialOwner, 
+  const std::string& tapepool, const std::string& initialOwner,
     uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries) {
   checkPayloadWritable();
   auto *j = m_payload.add_jobs();
@@ -103,31 +104,31 @@ void ArchiveRequest::addJob(uint32_t copyNumber,
 //------------------------------------------------------------------------------
 // ArchiveRequest::getJobQueueType()
 //------------------------------------------------------------------------------
-JobQueueType ArchiveRequest::getJobQueueType(uint32_t copyNumber) {
+common::dataStructures::JobQueueType ArchiveRequest::getJobQueueType(uint32_t copyNumber) {
   checkPayloadReadable();
   for (auto &j: m_payload.jobs()) {
     if (j.copynb() == copyNumber) {
       switch (j.status()) {
       case serializers::ArchiveJobStatus::AJS_ToTransferForUser:
-        return JobQueueType::JobsToTransferForUser;
+        return common::dataStructures::JobQueueType::JobsToTransferForUser;
       case serializers::ArchiveJobStatus::AJS_ToTransferForRepack:
-        return JobQueueType::JobsToTransferForRepack;
+        return common::dataStructures::JobQueueType::JobsToTransferForRepack;
       case serializers::ArchiveJobStatus::AJS_Complete:
         throw JobNotQueueable("In ArchiveRequest::getJobQueueType(): Complete jobs are not queueable. They are finished and pend siblings completion.");
       case serializers::ArchiveJobStatus::AJS_ToReportToUserForTransfer:
         // We should report a success...
-        return JobQueueType::JobsToReportToUser;
+        return common::dataStructures::JobQueueType::JobsToReportToUser;
       case serializers::ArchiveJobStatus::AJS_ToReportToUserForFailure:
         // We should report a failure. The report queue can be shared.
-        return JobQueueType::JobsToReportToUser;
+        return common::dataStructures::JobQueueType::JobsToReportToUser;
       case serializers::ArchiveJobStatus::AJS_Failed:
-        return JobQueueType::FailedJobs;
+        return common::dataStructures::JobQueueType::FailedJobs;
       case serializers::ArchiveJobStatus::AJS_Abandoned:
         throw JobNotQueueable("In ArchiveRequest::getJobQueueType(): Abandoned jobs are not queueable. They are finished and pend siblings completion.");
       case serializers::ArchiveJobStatus::AJS_ToReportToRepackForSuccess:
-        return JobQueueType::JobsToReportToRepackForSuccess;
+        return common::dataStructures::JobQueueType::JobsToReportToRepackForSuccess;
       case serializers::ArchiveJobStatus::AJS_ToReportToRepackForFailure:
-        return JobQueueType::JobsToReportToRepackForFailure;
+        return common::dataStructures::JobQueueType::JobsToReportToRepackForFailure;
       }
     }
   }
@@ -487,7 +488,7 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
           params.add("exceptionWhat", ex.what());
         } catch (...) {
           params.add("exceptionType", "unknown");
-        }        
+        }
           commit();
         lc.log(log::ERR, "In ArchiveRequest::garbageCollect(): failed to requeue the job and failed it. Internal error: the job is now orphaned.");
         }
@@ -674,11 +675,11 @@ const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getLastestError() {
 // ArchiveRequest::asyncUpdateTransferSuccessful()
 //------------------------------------------------------------------------------
 ArchiveRequest::AsyncTransferSuccessfulUpdater * ArchiveRequest::asyncUpdateTransferSuccessful(const std::string destinationVid, const uint32_t copyNumber ) {
-  std::unique_ptr<AsyncTransferSuccessfulUpdater> ret(new AsyncTransferSuccessfulUpdater);  
+  std::unique_ptr<AsyncTransferSuccessfulUpdater> ret(new AsyncTransferSuccessfulUpdater);
   // The unique pointer will be std::moved so we need to work with its content (bare pointer or here ref to content).
   auto retPtr = ret.get();
   ret->m_updaterCallback=
-    [this, destinationVid, copyNumber, retPtr](const std::string &in)->std::string { 
+    [this, destinationVid, copyNumber, retPtr](const std::string &in)->std::string {
       // We have a locked and fetched object, so we just need to work on its representation.
       serializers::ObjectHeader oh;
       oh.ParseFromString(in);
@@ -776,25 +777,25 @@ std::string ArchiveRequest::getJobOwner(uint32_t copyNumber) {
 //------------------------------------------------------------------------------
 // ArchiveRequest::getQueueType()
 //------------------------------------------------------------------------------
-JobQueueType ArchiveRequest::getQueueType(const serializers::ArchiveJobStatus& status) {
+common::dataStructures::JobQueueType ArchiveRequest::getQueueType(const serializers::ArchiveJobStatus& status) {
   using serializers::ArchiveJobStatus;
   switch(status) {
   case ArchiveJobStatus::AJS_ToTransferForUser:
-    return JobQueueType::JobsToTransferForUser;
+    return common::dataStructures::JobQueueType::JobsToTransferForUser;
   case ArchiveJobStatus::AJS_ToReportToUserForTransfer:
   case ArchiveJobStatus::AJS_ToReportToUserForFailure:
-    return JobQueueType::JobsToReportToUser;
+    return common::dataStructures::JobQueueType::JobsToReportToUser;
   case ArchiveJobStatus::AJS_ToReportToRepackForSuccess:
-    return JobQueueType::JobsToReportToRepackForSuccess;
+    return common::dataStructures::JobQueueType::JobsToReportToRepackForSuccess;
   case ArchiveJobStatus::AJS_ToReportToRepackForFailure:
-    return JobQueueType::JobsToReportToRepackForFailure;
+    return common::dataStructures::JobQueueType::JobsToReportToRepackForFailure;
   case ArchiveJobStatus::AJS_ToTransferForRepack:
-    return JobQueueType::JobsToTransferForRepack;
+    return common::dataStructures::JobQueueType::JobsToTransferForRepack;
   case ArchiveJobStatus::AJS_Failed:
-    return JobQueueType::FailedJobs;
+    return common::dataStructures::JobQueueType::FailedJobs;
   case ArchiveJobStatus::AJS_Complete:
   case ArchiveJobStatus::AJS_Abandoned:
-    throw JobNotQueueable("In ArchiveRequest::getQueueType(): status is "+ArchiveRequest::statusToString(status)+ "there for it is not queueable.");    
+    throw JobNotQueueable("In ArchiveRequest::getQueueType(): status is "+ArchiveRequest::statusToString(status)+ "there for it is not queueable.");
   default:
     throw cta::exception::Exception("In ArchiveRequest::getQueueType(): unknown status for queueing.");
   }
@@ -843,7 +844,7 @@ std::string ArchiveRequest::eventToString(JobEvent jobEvent) {
 //------------------------------------------------------------------------------
 // ArchiveRequest::determineNextStep()
 //------------------------------------------------------------------------------
-auto ArchiveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent jobEvent, 
+auto ArchiveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent jobEvent,
     log::LogContext& lc) -> EnqueueingNextStep {
   checkPayloadWritable();
   // We have to determine which next step should be taken.
@@ -852,9 +853,9 @@ auto ArchiveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent jobE
   //   - If the job failed and is not the last, we will queue it as "failed" in the failed jobs queue.
   //   - If the job is the last and all jobs succeeded, this jobs becomes ToReportForTransfer
   //   - If the job is the last and any (including this one) failed, this job becomes ToReportForFailure.
-  
+
   // - When report completes of fails:
-  //   - If the report was for a failure, the job is 
+  //   - If the report was for a failure, the job is
   auto & jl=m_payload.jobs();
   using serializers::ArchiveJobStatus;
   // Validate the current status.
@@ -892,7 +893,7 @@ auto ArchiveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent jobE
   }
   // We are in the normal cases now.
   EnqueueingNextStep ret;
-  switch (jobEvent) {  
+  switch (jobEvent) {
   case JobEvent::TransferFailed:
   {
     bool isRepack = m_payload.isrepack();

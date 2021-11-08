@@ -18,26 +18,27 @@
 #pragma once
 
 #include "Agent.hpp"
+#include "common/exception/NoSuchObject.hpp"
 #include "common/Timer.hpp"
 
 namespace cta { namespace objectstore {
 class AgentWatchdog {
 public:
-  AgentWatchdog(const std::string & name, Backend & os): m_agent(name, os), 
+  AgentWatchdog(const std::string & name, Backend & os): m_agent(name, os),
     m_heartbeatCounter(readGCData().heartbeat) {
     m_agent.fetchNoLock();
     m_timeout = m_agent.getTimeout();
   }
-  
+
   bool checkAlive() {
     struct gcData newGCData;
     try {
       newGCData = readGCData();
-    } catch (Backend::NoSuchObject &) {
+    } catch (cta::exception::NoSuchObject &) {
       // The agent could be gone. This is not an error. Mark it as alive,
       // and will be trimmed later.
       return true;
-    }        
+    }
     auto timer = m_timer.secs();
     // If GC is required, it's easy...
     if (newGCData.needsGC) return false;
@@ -48,9 +49,9 @@ public:
       m_heartbeatCounter = newGCData.heartbeat;
       m_timer.reset();
     }
-    return true; 
+    return true;
   }
-  
+
   std::list<log::Param> getDeadAgentDetails() {
     std::list<log::Param> ret;
     auto gcData = readGCData();
@@ -61,21 +62,21 @@ public:
     ret.push_back(log::Param("heartbeatAtTimerStart", m_heartbeatCounter));
     return ret;
   }
-  
+
   bool checkExists() {
     return m_agent.exists();
   }
-  
+
   void setTimeout(double timeout) {
     m_timeout = timeout;
   }
-  
+
 private:
   cta::utils::Timer m_timer;
   Agent m_agent;
   uint64_t m_heartbeatCounter;
   double m_timeout;
-  
+
   struct gcData {
     uint64_t heartbeat;
     bool needsGC;
@@ -88,5 +89,5 @@ private:
     return ret;
   }
 };
-    
+
 }}

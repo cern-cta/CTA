@@ -18,8 +18,9 @@
 #pragma once
 
 #include "Algorithms.hpp"
-#include "RetrieveQueue.hpp"
+#include "common/dataStructures/JobQueueType.hpp"
 #include "common/make_unique.hpp"
+#include "RetrieveQueue.hpp"
 
 namespace cta { namespace objectstore {
 
@@ -28,14 +29,14 @@ struct ContainerTraits<RetrieveQueue,C>
 {
   struct ContainerSummary : public RetrieveQueue::JobsSummary {
     ContainerSummary() : RetrieveQueue::JobsSummary() {}
-    ContainerSummary(const RetrieveQueue::JobsSummary &c) : 
+    ContainerSummary(const RetrieveQueue::JobsSummary &c) :
       RetrieveQueue::JobsSummary({c.jobs,c.bytes,c.oldestJobStartTime,c.priority,
           c.minRetrieveRequestAge,c.mountPolicyCountMap,c.activityCounts,nullopt}) {}
     void addDeltaToLog(const ContainerSummary&, log::ScopedParamContainer&) const;
   };
-  
+
   struct QueueType;
-  
+
   struct InsertedElement {
     RetrieveRequest *retrieveRequest;
     uint32_t copyNb;
@@ -126,7 +127,7 @@ struct ContainerTraits<RetrieveQueue,C>
   static ElementAddress getElementAddress(const Element &e) {
     return e.retrieveRequest->getAddressIfSet();
   }
-  
+
   static ContainerSummary getContainerSummary(Container &cont);
   static bool trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
     const ContainerIdentifier &cId, log::LogContext &lc);
@@ -522,8 +523,8 @@ getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, 
   PoppedElementsBatch ret;
 
   auto candidateJobsFromQueue = cont.getCandidateList(std::numeric_limits<uint64_t>::max(), unfulfilledCriteria.files,
-    elementsToSkip, 
-    // This parameter is needed only in the specialized version: 
+    elementsToSkip,
+    // This parameter is needed only in the specialized version:
     // auto ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::getPoppingElementsCandidates
     // We provide an empty set here.
     std::set<std::string>()
@@ -545,35 +546,35 @@ getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, 
 
 template<typename C>
 const std::string ContainerTraits<RetrieveQueue,C>::c_identifierType = "tapeVid";
-  
+
 template<>
 struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::QueueType{
-    objectstore::JobQueueType value = objectstore::JobQueueType::JobsToTransferForUser;
+    common::dataStructures::JobQueueType value = common::dataStructures::JobQueueType::JobsToTransferForUser;
 };
 
 template<>
 struct ContainerTraits<RetrieveQueue,RetrieveQueueFailed>::QueueType{
-    objectstore::JobQueueType value = objectstore::JobQueueType::FailedJobs;
+    common::dataStructures::JobQueueType value = common::dataStructures::JobQueueType::FailedJobs;
 };
 
 template<>
 struct ContainerTraits<RetrieveQueue,RetrieveQueueToReportForUser>::QueueType{
-    objectstore::JobQueueType value = objectstore::JobQueueType::JobsToReportToUser;
+    common::dataStructures::JobQueueType value = common::dataStructures::JobQueueType::JobsToReportToUser;
 };
 
 template<>
 struct ContainerTraits<RetrieveQueue,RetrieveQueueToReportToRepackForSuccess>::QueueType{
-  objectstore::JobQueueType value = objectstore::JobQueueType::JobsToReportToRepackForSuccess;
+  common::dataStructures::JobQueueType value = common::dataStructures::JobQueueType::JobsToReportToRepackForSuccess;
 };
 
 template<>
 struct ContainerTraits<RetrieveQueue,RetrieveQueueToReportToRepackForFailure>::QueueType{
-  objectstore::JobQueueType value = objectstore::JobQueueType::JobsToReportToRepackForFailure;
+  common::dataStructures::JobQueueType value = common::dataStructures::JobQueueType::JobsToReportToRepackForFailure;
 };
 
 template<>
 struct ContainerTraits<RetrieveQueue, RetrieveQueueToTransferForRepack>::QueueType{
-  objectstore::JobQueueType value = objectstore::JobQueueType::JobsToTransferForRepack;
+  common::dataStructures::JobQueueType value = common::dataStructures::JobQueueType::JobsToTransferForRepack;
 };
 
 template<>

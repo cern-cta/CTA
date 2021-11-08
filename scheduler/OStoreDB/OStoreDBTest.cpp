@@ -15,18 +15,24 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "OStoreDBTest.hpp"
-#include "OStoreDBFactory.hpp"
-#include "objectstore/BackendVFS.hpp"
-#include "objectstore/BackendRados.hpp"
-#include "objectstore/BackendPopulator.hpp"
+#include <limits>
+#include <list>
+#include <memory>
+#include <string>
+#include <utility>
+
+#include "catalogue/InMemoryCatalogue.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/StringLogger.hpp"
-#include "OStoreDB.hpp"
-#include "objectstore/BackendRadosTestSwitch.hpp"
 #include "MemQueues.hpp"
-#include "catalogue/InMemoryCatalogue.hpp"
+#include "objectstore/BackendPopulator.hpp"
+#include "objectstore/BackendRados.hpp"
+#include "objectstore/BackendRadosTestSwitch.hpp"
+#include "objectstore/BackendVFS.hpp"
+#include "OStoreDB.hpp"
+#include "OStoreDBFactory.hpp"
+#include "OStoreDBTest.hpp"
 
 namespace unitTests {
 
@@ -36,9 +42,9 @@ namespace unitTests {
 struct OStoreDBTestParams {
   cta::SchedulerDatabaseFactory &dbFactory;
 
-  OStoreDBTestParams(cta::SchedulerDatabaseFactory &dbFactory):
-    dbFactory(dbFactory) {};
-}; // struct OStoreDBTestParams
+  explicit OStoreDBTestParams(cta::SchedulerDatabaseFactory *dbFactory) :
+    dbFactory(*dbFactory) {}
+};  // struct OStoreDBTestParams
 
 
 /**
@@ -47,13 +53,12 @@ struct OStoreDBTestParams {
  */
 class OStoreDBTest: public
   ::testing::TestWithParam<OStoreDBTestParams> {
-public:
-
+ public:
   OStoreDBTest() throw() {
   }
 
   class FailedToGetDatabase: public std::exception {
-  public:
+   public:
     const char *what() const throw() {
       return "Failed to get scheduler database";
     }
@@ -79,7 +84,7 @@ public:
 
   cta::objectstore::OStoreDBWrapperInterface &getDb() {
     cta::objectstore::OStoreDBWrapperInterface *const ptr = m_db.get();
-    if(NULL == ptr) {
+    if (NULL == ptr) {
       throw FailedToGetDatabase();
     }
     return *ptr;
@@ -101,8 +106,7 @@ public:
   static const cta::common::dataStructures::SecurityIdentity s_userOnAdminHost;
   static const cta::common::dataStructures::SecurityIdentity s_userOnUserHost;
 
-private:
-
+ private:
   // Prevent copying
   OStoreDBTest(const OStoreDBTest &) = delete;
 
@@ -112,19 +116,18 @@ private:
   std::unique_ptr<cta::objectstore::OStoreDBWrapperInterface> m_db;
 
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
-}; // class SchedulerDatabaseTest
+};  // class SchedulerDatabaseTest
 
 TEST_P(OStoreDBTest, getBatchArchiveJob) {
-  using namespace cta::objectstore;
   cta::log::StringLogger logger("dummy", "OStoreAbstractTest", cta::log::DEBUG);
   cta::log::LogContext lc(logger);
   // Get the OStoreBDinterface
-  OStoreDBWrapperInterface & osdbi = getDb();
+  cta::objectstore::OStoreDBWrapperInterface & osdbi = getDb();
   // Add jobs to an archive queue.
-  for (size_t i=0; i<10; i++) {
+  for (size_t i = 0; i < 10; i++) {
     cta::common::dataStructures::ArchiveRequest ar;
     cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId afqc;
-    ar.fileSize=123*(i+1);
+    ar.fileSize = 123 * (i + 1);
     afqc.copyToPoolMap[1] = "Tapepool1";
     afqc.fileId = i;
     afqc.mountPolicy.name = "policy";
@@ -140,22 +143,22 @@ TEST_P(OStoreDBTest, getBatchArchiveJob) {
   std::string aqAddr;
   {
     // Get hold of the queue
-    RootEntry re(osdbi.getBackend());
-    ScopedSharedLock rel(re);
+    cta::objectstore::RootEntry re(osdbi.getBackend());
+    cta::objectstore::ScopedSharedLock rel(re);
     re.fetch();
-    aqAddr = re.getArchiveQueueAddress("Tapepool1", cta::objectstore::JobQueueType::JobsToTransferForUser);
+    aqAddr = re.getArchiveQueueAddress("Tapepool1", cta::common::dataStructures::JobQueueType::JobsToTransferForUser);
     rel.release();
-    ArchiveQueue aq(aqAddr, osdbi.getBackend());
-    ScopedSharedLock aql(aq);
+    cta::objectstore::ArchiveQueue aq(aqAddr, osdbi.getBackend());
+    cta::objectstore::ScopedSharedLock aql(aq);
     aq.fetch();
     auto jd = aq.dumpJobs();
-    auto j=jd.begin();
+    auto j = jd.begin();
     // Delete the first job
     osdbi.getBackend().remove(j->address);
     // Change ownership of second
     j++;
-    ArchiveRequest ar(j->address, osdbi.getBackend());
-    ScopedExclusiveLock arl(ar);
+    cta::objectstore::ArchiveRequest ar(j->address, osdbi.getBackend());
+    cta::objectstore::ScopedExclusiveLock arl(ar);
     ar.fetch();
     ar.setJobOwner(1, "NoRealOwner");
     ar.commit();
@@ -168,13 +171,14 @@ TEST_P(OStoreDBTest, getBatchArchiveJob) {
   tape.lastFSeq = 1;
   tape.tapePool = "Tapepool1";
   tape.vid = "tape";
-  auto mount = mountInfo->createArchiveMount(cta::common::dataStructures::MountType::ArchiveForUser, tape, "drive", "library", "host", "vo","mediaType","vendor",123456789,::time(nullptr));
+  auto mount = mountInfo->createArchiveMount(cta::common::dataStructures::MountType::ArchiveForUser,
+    tape, "drive", "library", "host", "vo", "mediaType", "vendor", 123456789, ::time(nullptr));
   auto giveAll = std::numeric_limits<uint64_t>::max();
   auto jobs = mount->getNextJobBatch(giveAll, giveAll, lc);
   ASSERT_EQ(8, jobs.size());
   // With the first 2 jobs removed from queue, we get the 3 and next. (i=2...)
-  size_t i=2;
-  for (auto & j:jobs) {
+  size_t i = 2;
+  for (auto & j : jobs) {
     ASSERT_EQ(123*(i++ + 1), j->archiveFile.fileSize);
   }
   // Check the queue has been emptied, and hence removed.
@@ -182,21 +186,22 @@ TEST_P(OStoreDBTest, getBatchArchiveJob) {
 }
 
 TEST_P(OStoreDBTest, MemQueuesSharedAddToArchiveQueue) {
-  using namespace cta::objectstore;
+  using cta::objectstore::ArchiveQueue;
+  using cta::objectstore::ArchiveRequest;
   cta::log::StringLogger logger("dummy", "OStoreAbstractTest", cta::log::DEBUG);
   cta::log::LogContext lc(logger);
   // Get the OStoreBDinterface
-  OStoreDBWrapperInterface & osdbi = getDb();
+  cta::objectstore::OStoreDBWrapperInterface & osdbi = getDb();
   // Create many archive jobs and enqueue them in the same archive queue.
   const size_t filesToDo = 100;
   std::list<std::future<void>> jobInsertions;
   std::list<std::function<void()>> lambdas;
-  for (size_t i=0; i<filesToDo; i++) {
+  for (size_t i = 0; i < filesToDo; i++) {
     lambdas.emplace_back(
-    [i,&osdbi,&lc](){
-      cta::log::LogContext localLc=lc;
+    [i, &osdbi, &lc](){
+      cta::log::LogContext localLc = lc;
       // We need to pass an archive request and an archive request job dump to sharedAddToArchiveQueue.
-      cta::objectstore::ArchiveRequest aReq(osdbi.getAgentReference().nextId("ArchiveRequest"), osdbi.getBackend());
+      ArchiveRequest aReq(osdbi.getAgentReference().nextId("ArchiveRequest"), osdbi.getBackend());
       aReq.initialize();
       cta::common::dataStructures::ArchiveFile aFile;
       cta::common::dataStructures::MountPolicy mountPolicy;
@@ -219,9 +224,9 @@ TEST_P(OStoreDBTest, MemQueuesSharedAddToArchiveQueue) {
       auto sharedLock = cta::ostoredb::MemQueue<ArchiveRequest, ArchiveQueue>::sharedAddToQueue(jd, jd.tapePool, aReq,
           osdbi.getOstoreDB(), localLc);
     });
-    jobInsertions.emplace_back(std::async(std::launch::async ,lambdas.back()));
+    jobInsertions.emplace_back(std::async(std::launch::async, lambdas.back()));
   }
-  for (auto &j: jobInsertions) { j.get(); }
+  for (auto &j : jobInsertions) { j.get(); }
   jobInsertions.clear();
   lambdas.clear();
 
@@ -233,10 +238,10 @@ static cta::objectstore::BackendVFS osVFS(__LINE__, __FILE__);
 #ifdef TEST_RADOS
 static cta::OStoreDBFactory<cta::objectstore::BackendRados> OStoreDBFactoryRados("rados://tapetest@tapetest");
 INSTANTIATE_TEST_CASE_P(OStoreTestRados, OStoreDBTest,
-    ::testing::Values(OStoreDBTestParams(OStoreDBFactoryRados)));
+    ::testing::Values(OStoreDBTestParams(&OStoreDBFactoryRados)));
 #endif
 static cta::OStoreDBFactory<cta::objectstore::BackendVFS> OStoreDBFactoryVFS;
 INSTANTIATE_TEST_CASE_P(OStoreTestVFS, OStoreDBTest,
-    ::testing::Values(OStoreDBTestParams(OStoreDBFactoryVFS)));
+    ::testing::Values(OStoreDBTestParams(&OStoreDBFactoryVFS)));
 
-}
+}  // namespace unitTests

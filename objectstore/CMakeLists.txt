@@ -78,7 +78,6 @@ add_library (ctaobjectstore SHARED
   RetrieveQueueFailedAlgorithms.cpp
   RetrieveQueueToReportToRepackForSuccessAlgorithms.cpp
   RetrieveQueueToReportToRepackForFailureAlgorithms.cpp
-  JobQueueType.cpp
   Sorter.cpp
   ArchiveRequest.cpp
   RetrieveRequest.cpp

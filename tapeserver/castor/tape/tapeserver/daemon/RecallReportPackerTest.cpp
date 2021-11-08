@@ -18,8 +18,6 @@
 #include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
 #include "common/log/StringLogger.hpp"
 #include "common/exception/Exception.hpp"
-#include "scheduler/OStoreDB/OStoreDBFactory.hpp"
-#include "objectstore/BackendVFS.hpp"
 #include "scheduler/testingMocks/MockRetrieveMount.hpp"
 #include "scheduler/testingMocks/MockRetrieveJob.hpp"
 
@@ -53,7 +51,7 @@ protected:
     void transferFailed(const std::string &failureReason, cta::log::LogContext&) override {
       failuresRef++;
     }
-    
+
   private:
     int & completesRef;
     int & failuresRef;
@@ -64,7 +62,7 @@ TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerN
   cta::MockRetrieveMount retrieveMount(catalogue);
 
 
-  
+
   ::testing::InSequence dummy;
   std::unique_ptr<cta::RetrieveJob> job1;
   int job1completes(0), job1failures(0);
@@ -88,13 +86,13 @@ TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerN
 
   rrp.reportCompletedJob(std::move(job1));
   rrp.reportCompletedJob(std::move(job2));
-  
+
   rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
-  
+
   rrp.reportEndOfSession();
 //  rrp.reportTestGoingToEnd();
   rrp.waitThread();
-  
+
   std::string temp = log.getLog();
   ASSERT_NE(std::string::npos, temp.find("Nominal RecallReportPacker::EndofSession has been reported"));
   ASSERT_EQ(1,job1completes);
@@ -141,7 +139,7 @@ TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerB
   const std::string error_msg = "ERROR_TEST_MSG";
   const cta::exception::Exception ex(error_msg);
   rrp.reportFailedJob(std::move(job3), ex);
-  
+
   rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
 
   rrp.reportEndOfSession();
