@@ -356,7 +356,7 @@ cppcheck:
     name: neszt/cppcheck-docker
     entrypoint: ["/usr/bin/env"]
   script:
-    - cppcheck --xml --enable=warning,performance --suppressions-list=.cppcheck-supressions.txt . 2> cppcheck_out.xml
+    - cppcheck --xml --enable=warning,performance --suppressions-list=.cppcheck-suppressions.txt . 2> cppcheck_out.xml
   artifacts:
     expire_in: 2 days
     paths:
