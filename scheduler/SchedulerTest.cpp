@@ -37,7 +37,6 @@
 #include "objectstore/RootEntry.hpp"
 #include "scheduler/ArchiveMount.hpp"
 #include "scheduler/LogicalLibrary.hpp"
-#include "scheduler/MountRequest.hpp"
 #include "scheduler/OStoreDB/OStoreDBFactory.hpp"
 #include "scheduler/RetrieveMount.hpp"
 #include "scheduler/Scheduler.hpp"
