@@ -16056,6 +16056,22 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeDrive) {
   m_catalogue->deleteTapeDrive(tapeDrive2.driveName);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, modifyTapeDriveWithEmptyDiskSpaceName) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  const auto tapeDrive1 = getTapeDriveWithMandatoryElements(tapeDriveName);
+  m_catalogue->createTapeDrive(tapeDrive1);
+  auto tapeDrive2 = tapeDrive1;
+  tapeDrive2.diskSystemName = "";
+  ASSERT_NE(tapeDrive1, tapeDrive2);
+  m_catalogue->modifyTapeDrive(tapeDrive2);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive2.driveName);
+  ASSERT_EQ(tapeDrive2, storedTapeDrive.value());
+  ASSERT_EQ("", storedTapeDrive.value().diskSystemName);
+  m_catalogue->deleteTapeDrive(tapeDrive2.driveName);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, getDriveConfig) {
   using namespace cta;
 
@@ -16799,7 +16815,7 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreRewrittenTapeFileCopyFails) {
 
   {
     //delete copy of file on tape1
-    
+
     //delete copy of file on tape1
     cta::catalogue::TapeFileSearchCriteria criteria;
     criteria.vid = tape1.vid;
@@ -17013,7 +17029,7 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreVariousDeletedTapeFileCopies) {
 
   {
     //delete copy of file on tape2
-    
+
     //delete copy of file on tape1
     cta::catalogue::TapeFileSearchCriteria criteria;
     criteria.vid = tape2.vid;

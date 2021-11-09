@@ -515,7 +515,7 @@ common::dataStructures::VirtualOrganization RdbmsCatalogue::getVirtualOrganizati
         "VIRTUAL_ORGANIZATION.READ_MAX_DRIVES AS READ_MAX_DRIVES,"
         "VIRTUAL_ORGANIZATION.WRITE_MAX_DRIVES AS WRITE_MAX_DRIVES,"
         "VIRTUAL_ORGANIZATION.MAX_FILE_SIZE AS MAX_FILE_SIZE,"
-        
+
         "VIRTUAL_ORGANIZATION.USER_COMMENT AS USER_COMMENT,"
 
         "VIRTUAL_ORGANIZATION.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
@@ -708,7 +708,7 @@ void RdbmsCatalogue::modifyVirtualOrganizationMaxFileSize(const common::dataStru
       "WHERE "
         "VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME";
     auto conn = m_connPool.getConn();
-   
+
     auto stmt = conn.createStmt(sql);
     stmt.bindUint64(":MAX_FILE_SIZE", maxFileSize);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
@@ -721,9 +721,9 @@ void RdbmsCatalogue::modifyVirtualOrganizationMaxFileSize(const common::dataStru
       throw exception::UserError(std::string("Cannot modify virtual organization : ") + voName +
         " because it does not exist");
     }
-    
+
     m_tapepoolVirtualOrganizationCache.invalidate();
-    
+
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -1198,7 +1198,7 @@ common::dataStructures::StorageClass RdbmsCatalogue::getStorageClass(const std::
     storageClass.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
     storageClass.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
     storageClass.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
-  
+
     return storageClass;
   } catch(exception::UserError &) {
     throw;
@@ -7061,7 +7061,7 @@ void RdbmsCatalogue::checkTapeFileSearchCriteria(rdbms::Conn &conn, const TapeFi
   }
 
   if (searchCriteria.fSeq && !searchCriteria.vid) {
-    throw exception::UserError(std::string("fSeq makes no sense without vid"));  
+    throw exception::UserError(std::string("fSeq makes no sense without vid"));
   }
 
   if(searchCriteria.vid) {
@@ -7079,7 +7079,7 @@ Catalogue::ArchiveFileItor RdbmsCatalogue::getArchiveFilesItor(const TapeFileSea
   checkTapeFileSearchCriteria(searchCriteria);
 
   // If this is the listing of the contents of a tape
-  if (!searchCriteria.archiveFileId && !searchCriteria.diskInstance && !searchCriteria.diskFileIds && 
+  if (!searchCriteria.archiveFileId && !searchCriteria.diskInstance && !searchCriteria.diskFileIds &&
     !searchCriteria.fSeq && searchCriteria.vid) {
     return getTapeContentsItor(searchCriteria.vid.value());
   }
@@ -7177,7 +7177,7 @@ void RdbmsCatalogue::restoreFilesInRecycleLog(const RecycleTapeFileSearchCriteri
   try {
     auto fileRecycleLogitor = getFileRecycleLogItor(searchCriteria);
     auto conn = m_connPool.getConn();
-    log::LogContext lc(m_log);  
+    log::LogContext lc(m_log);
     restoreFileCopiesInRecycleLog(conn, fileRecycleLogitor, lc);
   } catch(exception::UserError &) {
     throw;
@@ -7384,18 +7384,18 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
 // deleteTapeFileCopy
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::deleteTapeFileCopy(const TapeFileSearchCriteria &criteria, const std::string &reason) {
-  
+
   if (!criteria.diskFileIds && !criteria.archiveFileId) {
     throw exception::UserError("To delete a file copy either the diskFileId+diskInstanceName or archiveFileId must be specified");
   }
   if (criteria.diskFileIds && !criteria.diskInstance) {
     throw exception::UserError("DiskFileId makes no sense without disk instance");
   }
-  
+
   auto vid = criteria.vid.value();
   TapeFileSearchCriteria searchCriteria = criteria;
   searchCriteria.vid = nullopt; //unset vid, we want to get all copies of the archive file so we can check that it is not a one copy file
-  auto itor = getArchiveFilesItor(searchCriteria); 
+  auto itor = getArchiveFilesItor(searchCriteria);
 
   // itor should have at most one archive file since we always search on unique attributes
   if (!itor.hasMore()) {
@@ -7409,9 +7409,9 @@ void RdbmsCatalogue::deleteTapeFileCopy(const TapeFileSearchCriteria &criteria, 
                                 criteria.diskInstance.value() + " because the file does not exist");
     }
   }
-  
+
   cta::common::dataStructures::ArchiveFile af = itor.next();
-  
+
   if (af.tapeFiles.size() == 1) {
     if (criteria.archiveFileId) {
       throw exception::UserError(std::string("Cannot delete a copy of the file with archiveFileId ") +
@@ -9283,13 +9283,13 @@ void RdbmsCatalogue::deleteArchiveFileFromRecycleBin(rdbms::Conn& conn, const ui
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::deleteTapeFileCopyFromRecycleBin(cta::rdbms::Conn & conn, const common::dataStructures::FileRecycleLog fileRecycleLog) {
   try {
-    const char *const deleteTapeFilesSql = 
+    const char *const deleteTapeFilesSql =
     "DELETE FROM "
       "FILE_RECYCLE_LOG "
     "WHERE FILE_RECYCLE_LOG.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID AND FILE_RECYCLE_LOG.VID = :VID AND "
     "FILE_RECYCLE_LOG.FSEQ = :FSEQ AND FILE_RECYCLE_LOG.COPY_NB = :COPY_NB AND "
     "FILE_RECYCLE_LOG.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME";
-    
+
     auto deleteTapeFilesStmt = conn.createStmt(deleteTapeFilesSql);
     deleteTapeFilesStmt.bindUint64(":ARCHIVE_FILE_ID", fileRecycleLog.archiveFileId);
     deleteTapeFilesStmt.bindString(":VID", fileRecycleLog.vid);
@@ -9297,7 +9297,7 @@ void RdbmsCatalogue::deleteTapeFileCopyFromRecycleBin(cta::rdbms::Conn & conn, c
     deleteTapeFilesStmt.bindUint64(":COPY_NB", fileRecycleLog.copyNb);
     deleteTapeFilesStmt.bindString(":DISK_INSTANCE_NAME", fileRecycleLog.diskInstanceName);
     deleteTapeFilesStmt.executeNonQuery();
-    
+
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -9717,7 +9717,8 @@ void RdbmsCatalogue::settingSqlTapeDriveValues(cta::rdbms::Stmt *stmt,
     setEntryLog(":LAST_UPDATE", nullStringMessage, nullStringMessage, 0);
   }
 
-  stmt->bindString(":DISK_SYSTEM_NAME", tapeDrive.diskSystemName);
+  tapeDrive.diskSystemName.empty() ? stmt->bindString(":DISK_SYSTEM_NAME", nullStringMessage)
+    : stmt->bindString(":DISK_SYSTEM_NAME", tapeDrive.diskSystemName);
   stmt->bindUint64(":RESERVED_BYTES", tapeDrive.reservedBytes);
 }
 
@@ -9897,10 +9898,11 @@ optional<common::dataStructures::TapeDrive> RdbmsCatalogue::getTapeDrive(const s
       tapeDrive.currentVo = checkOptionalString(rset.columnString("CURRENT_VO"));
       tapeDrive.nextVo = checkOptionalString(rset.columnString("NEXT_VO"));
 
-      tapeDrive.diskSystemName = rset.columnString("DISK_SYSTEM_NAME");
+      const std::string diskSystemName = rset.columnString("DISK_SYSTEM_NAME");
+      tapeDrive.diskSystemName = (diskSystemName == "NULL") ? "" : diskSystemName;
       tapeDrive.reservedBytes = rset.columnUint64("RESERVED_BYTES");
 
-      tapeDrive.userComment = rset.columnString("USER_COMMENT");
+      tapeDrive.userComment = checkOptionalString(rset.columnString("USER_COMMENT"));
       auto setOptionEntryLog = [&rset](const std::string &username, const std::string &host,
         const std::string &time) -> optional<common::dataStructures::EntryLog> {
         const std::string nullStringMessage = "NULL";
@@ -10187,7 +10189,7 @@ std::map<std::string, uint64_t> RdbmsCatalogue::getExistingDrivesReservations() 
   for (const auto& driveName : tdNames) {
     const auto tdStatus = getTapeDrive(driveName);
     //no need to check key, operator[] initializes missing values at zero for scalar types
-    ret[tdStatus.value().diskSystemName] += tdStatus.value().reservedBytes; 
+    ret[tdStatus.value().diskSystemName] += tdStatus.value().reservedBytes;
   }
   return ret;
 }
@@ -10240,7 +10242,7 @@ std::tuple<std::string, uint64_t> RdbmsCatalogue::getDiskSpaceReservation(const 
 
 //------------------------------------------------------------------------------
 // releaseDiskSpace
-//------------------------------------------------------------------------------  
+//------------------------------------------------------------------------------
 void RdbmsCatalogue::releaseDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) {
   if (diskSpaceReservation.empty()) return;
   // Try add our reservation to the drive status.

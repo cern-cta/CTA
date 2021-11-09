@@ -24,6 +24,7 @@
 #include "common/log/Logger.hpp"
 #include "TapeDrivesCatalogueState.hpp"
 #include "tapeserver/daemon/TpconfigLine.hpp"
+#include "version.h"
 
 namespace cta {
 
@@ -33,12 +34,13 @@ void TapeDrivesCatalogueState::createTapeDriveStatus(const common::dataStructure
   const common::dataStructures::DesiredDriveState & desiredState, const common::dataStructures::MountType& type,
   const common::dataStructures::DriveStatus& status, const tape::daemon::TpconfigLine& tpConfigLine,
   const common::dataStructures::SecurityIdentity& identity, log::LogContext & lc) {
-  const auto tapeDriveStatus = setTapeDriveStatus(driveInfo, desiredState, type, status, tpConfigLine, identity);
+  auto tapeDriveStatus = setTapeDriveStatus(driveInfo, desiredState, type, status, tpConfigLine, identity);
   auto driveNames = m_catalogue.getTapeDriveNames();
   auto it = std::find(driveNames.begin(), driveNames.end(), tapeDriveStatus.driveName);
   if (it != driveNames.end()) {
     m_catalogue.deleteTapeDrive(tapeDriveStatus.driveName);
   }
+  tapeDriveStatus.ctaVersion = CTA_VERSION;
   m_catalogue.createTapeDrive(tapeDriveStatus);
   log::ScopedParamContainer spc(lc);
   spc.add("drive", driveInfo.driveName);
@@ -210,14 +212,14 @@ void TapeDrivesCatalogueState::updateDriveStatus(const common::dataStructures::D
     case common::dataStructures::DriveStatus::Unknown:
     case common::dataStructures::DriveStatus::Up:
     {
-      if (driveState.diskSystemName != "NULL") {
+      if (!driveState.diskSystemName.empty()) {
         log::ScopedParamContainer params(lc);
         params.add("diskSystem", driveState.diskSystemName)
               .add("bytes", driveState.reservedBytes)
               .add("previousStatus", toString(previousStatus))
               .add("newStatus", toString(driveState.driveStatus));
         lc.log(log::WARNING, "In TapeDrivesCatalogueState::updateDriveStatus(): will clear non-empty disk space reservation on status change.");
-        driveState.diskSystemName = "NULL";
+        driveState.diskSystemName = "";
         driveState.reservedBytes = 0;
       }
     }
@@ -267,7 +269,6 @@ void TapeDrivesCatalogueState::setDriveDown(common::dataStructures::TapeDrive & 
   driveState.currentVo = "";
   driveState.currentActivity = nullopt_t();
   driveState.currentActivityWeight = nullopt_t();
-  driveState.reasonUpDown = inputs.reason;
 }
 
 void TapeDrivesCatalogueState::setDriveUpOrMaybeDown(common::dataStructures::TapeDrive & driveState,
