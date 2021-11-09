@@ -46,6 +46,7 @@ void RetrieveQueue::initialize(const std::string &vid) {
   ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t>::initialize();
   // Set the reguired fields
   m_payload.set_oldestjobcreationtime(0);
+  m_payload.set_youngestjobcreationtime(0);
   m_payload.set_retrievejobstotalsize(0);
   m_payload.set_retrievejobscount(0);
   m_payload.set_vid(vid);
@@ -109,6 +110,8 @@ void RetrieveQueue::rebuild() {
   uint64_t totalJobs=0;
   uint64_t totalBytes=0;
   time_t oldestJobCreationTime=std::numeric_limits<time_t>::max();
+  time_t youngestJobCreationTime=std::numeric_limits<time_t>::min();
+  
   while (s != shards.end()) {
     // Each shard could be gone
     try {
@@ -138,6 +141,7 @@ void RetrieveQueue::rebuild() {
         minRetrieveRequestAgeMap.incCount(j.minRetrieveRequestAge);
         mountPolicyNameMap.incCount(j.mountPolicyName);
         if (j.startTime < oldestJobCreationTime) oldestJobCreationTime = j.startTime;
+        if (j.startTime > youngestJobCreationTime) youngestJobCreationTime = j.startTime;
         if (j.fSeq < minFseq) minFseq = j.fSeq;
         if (j.fSeq > maxFseq) maxFseq = j.fSeq;
       }
@@ -177,6 +181,7 @@ void RetrieveQueue::rebuild() {
   m_payload.set_retrievejobscount(totalJobs);
   m_payload.set_retrievejobstotalsize(totalBytes);
   m_payload.set_oldestjobcreationtime(oldestJobCreationTime);
+  m_payload.set_youngestjobcreationtime(youngestJobCreationTime);
   // We went through all the shard, re-updated the summaries, removed references to
   // gone shards. Done.}
 }
@@ -489,6 +494,13 @@ void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefer
       } else {
         m_payload.set_oldestjobcreationtime(j.startTime);
       }
+      // youngestjobcreationtime has a default value of 0 when it is not initialized
+      if (m_payload.youngestjobcreationtime()) {
+        if ((uint64_t)j.startTime > m_payload.youngestjobcreationtime())
+          m_payload.set_youngestjobcreationtime(j.startTime);
+      } else {
+        m_payload.set_youngestjobcreationtime(j.startTime);
+      }
     }
     rqs.addJobsBatch(jtas);
     // ... update the shard pointer
@@ -581,6 +593,7 @@ RetrieveQueue::JobsSummary RetrieveQueue::getJobsSummary() {
   ret.bytes = m_payload.retrievejobstotalsize();
   ret.jobs = m_payload.retrievejobscount();
   ret.oldestJobStartTime = m_payload.oldestjobcreationtime();
+  ret.youngestJobStartTime = m_payload.youngestjobcreationtime();
   if (ret.jobs) {
     ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap());
     ret.priority = priorityMap.maxValue();
@@ -716,6 +729,7 @@ void RetrieveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemo
     // Update stats and remove the jobs from the todo list.
     bool needToRebuild = false;
     time_t oldestJobCreationTime = m_payload.oldestjobcreationtime();
+    time_t youngestJobCreationTime = m_payload.youngestjobcreationtime();
     for (auto & j: removalResult.removedJobs) {
       priorityMap.decCount(j.priority);
       minRetrieveRequestAgeMap.decCount(j.minRetrieveRequestAge);
@@ -723,6 +737,11 @@ void RetrieveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemo
       if(j.startTime <= oldestJobCreationTime){
         //the job we remove was the oldest one, we should rebuild the queue
         //to update the oldestjobcreationtime counter
+        needToRebuild = true;
+      }
+      if (j.startTime >= youngestJobCreationTime) {
+        //the job we remove was the youngest one, we should rebuild the queue
+        //to update the youngestjobcreationtime counter
         needToRebuild = true;
       }
       if (j.activityDescription) {

@@ -636,6 +636,7 @@ public:
     uint64_t filesQueued;         /**< The number of files queued for this queue */
     uint64_t bytesQueued;         /**< The amount of data currently queued */
     time_t oldestJobStartTime;    /**< Creation time of oldest request */
+    time_t youngestJobStartTime;  /**< Creation time of youngest request */
     std::string logicalLibrary;   /**< The logical library (for a retrieve) */
     double ratioOfMountQuotaUsed; /**< The [ 0.0, 1.0 ] ratio of existing
                                    * mounts/quota (for faire share of mounts)*/

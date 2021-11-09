@@ -63,6 +63,7 @@ void ArchiveQueue::initialize(const std::string& name) {
   m_payload.set_archivejobstotalsize(0);
   m_payload.set_archivejobscount(0);
   m_payload.set_oldestjobcreationtime(0);
+  m_payload.set_youngestjobcreationtime(0);
   // set the initial summary map rebuild count to zero
   m_payload.set_mapsrebuildcount(0);
   // This object is good to go (to storage)
@@ -131,6 +132,7 @@ void ArchiveQueue::rebuild() {
   uint64_t totalJobs=0;
   uint64_t totalBytes=0;
   time_t oldestJobCreationTime=std::numeric_limits<time_t>::max();
+  time_t youngestJobCreationTime=std::numeric_limits<time_t>::min();
   while (s != shards.end()) {
     // Each shard could be gone
     try {
@@ -158,6 +160,7 @@ void ArchiveQueue::rebuild() {
         minArchiveRequestAgeMap.incCount(j.minArchiveRequestAge);
         mountPolicyNameMap.incCount(j.mountPolicyName);
         if (j.startTime < oldestJobCreationTime) oldestJobCreationTime = j.startTime;
+        if (j.startTime > youngestJobCreationTime) youngestJobCreationTime = j.startTime;
       }
       // Add the summary to total.
       totalJobs+=jobs;
@@ -193,12 +196,13 @@ void ArchiveQueue::rebuild() {
   m_payload.set_archivejobscount(totalJobs);
   m_payload.set_archivejobstotalsize(totalBytes);
   m_payload.set_oldestjobcreationtime(oldestJobCreationTime);
+  m_payload.set_youngestjobcreationtime(youngestJobCreationTime);
   m_payload.set_mapsrebuildcount(m_payload.mapsrebuildcount()+1);
   // We went through all the shard, re-updated the summaries, removed references to
   // gone shards. Done.
 }
 
-void ArchiveQueue::recomputeOldestJobCreationTime(){
+void ArchiveQueue::recomputeOldestAndYoungestJobCreationTime(){
   checkPayloadWritable();
 
   std::list<ArchiveQueueShard> shards;
@@ -212,6 +216,7 @@ void ArchiveQueue::recomputeOldestJobCreationTime(){
   auto s = shards.begin();
   auto sf = shardsFetchers.begin();
   time_t oldestJobCreationTime=std::numeric_limits<time_t>::max();
+  time_t youngestJobCreationTime=std::numeric_limits<time_t>::min();
   while (s != shards.end()) {
     // Each shard could be gone
     try {
@@ -232,6 +237,7 @@ void ArchiveQueue::recomputeOldestJobCreationTime(){
       // The shard is still around, let's compute its oldest job
       for (auto & j: s->dumpJobs()) {
         if (j.startTime < oldestJobCreationTime) oldestJobCreationTime = j.startTime;
+        if (j.startTime > youngestJobCreationTime) youngestJobCreationTime = j.startTime;
       }
     }
     nextShard:;
@@ -240,6 +246,9 @@ void ArchiveQueue::recomputeOldestJobCreationTime(){
   }
   if(oldestJobCreationTime != std::numeric_limits<time_t>::max()){
     m_payload.set_oldestjobcreationtime(oldestJobCreationTime);
+  }
+  if (youngestJobCreationTime != std::numeric_limits<time_t>::min()){
+    m_payload.set_youngestjobcreationtime(youngestJobCreationTime);
   }
 }
 
@@ -388,10 +397,13 @@ void ArchiveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefere
         if (m_payload.archivejobscount()) {
           if ((uint64_t)nextJob->startTime < m_payload.oldestjobcreationtime())
             m_payload.set_oldestjobcreationtime(nextJob->startTime);
+          if ((uint64_t)nextJob->startTime > m_payload.youngestjobcreationtime())
+            m_payload.set_youngestjobcreationtime(nextJob->startTime);
           m_payload.set_archivejobstotalsize(m_payload.archivejobstotalsize() + nextJob->fileSize);
         } else {
           m_payload.set_archivejobstotalsize(nextJob->fileSize);
           m_payload.set_oldestjobcreationtime(nextJob->startTime);
+          m_payload.set_youngestjobcreationtime(nextJob->startTime);
         }
         m_payload.set_archivejobscount(m_payload.archivejobscount()+1);
         // Add the job to shard, update pointer counts and queue summary.
@@ -419,6 +431,7 @@ auto ArchiveQueue::getJobsSummary() -> JobsSummary {
   ret.jobs = m_payload.archivejobscount();
   ret.bytes = m_payload.archivejobstotalsize();
   ret.oldestJobStartTime = m_payload.oldestjobcreationtime();
+  ret.youngestJobStartTime = m_payload.youngestjobcreationtime();
   if (ret.jobs) {
     ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap());
     ret.priority = priorityMap.maxValue();
@@ -549,7 +562,7 @@ void ArchiveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemov
       }
     ); // end of remove_if
     // And commit the queue (once per shard should not hurt performance).
-    recomputeOldestJobCreationTime();
+    recomputeOldestAndYoungestJobCreationTime();
     commit();
   }
 }

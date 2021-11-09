@@ -221,6 +221,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       m.bytesQueued = aqueueJobsSummary.bytes;
       m.filesQueued = aqueueJobsSummary.jobs;
       m.oldestJobStartTime = aqueueJobsSummary.oldestJobStartTime;
+      m.youngestJobStartTime = aqueueJobsSummary.youngestJobStartTime;
       //By default, we get the mountPolicies from the objectstore's queue counters
       m.priority = aqueueJobsSummary.priority;
       m.minRequestAge = aqueueJobsSummary.minArchiveRequestAge;
@@ -284,6 +285,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       m.bytesQueued = aqueueRepackJobsSummary.bytes;
       m.filesQueued = aqueueRepackJobsSummary.jobs;
       m.oldestJobStartTime = aqueueRepackJobsSummary.oldestJobStartTime;
+      m.youngestJobStartTime = aqueueRepackJobsSummary.youngestJobStartTime;
       m.priority = aqueueRepackJobsSummary.priority;
       m.minRequestAge = aqueueRepackJobsSummary.minArchiveRequestAge;
       //If there are mount policies in the Catalogue
@@ -398,6 +400,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
           m.bytesQueued = rqSummary.bytes;
           m.filesQueued = rqSummary.jobs;
           m.oldestJobStartTime = rqueue.getJobsSummary().oldestJobStartTime;
+          m.youngestJobStartTime = rqueue.getJobsSummary().youngestJobStartTime;
           m.priority = priority;
           m.minRequestAge = minRetrieveRequestAge;
           m.logicalLibrary = ""; // The logical library is not known here, and will be determined by the caller.
@@ -431,6 +434,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
         m.bytesQueued = rqSummary.bytes;
         m.filesQueued = rqSummary.jobs;
         m.oldestJobStartTime = rqSummary.oldestJobStartTime;
+        m.youngestJobStartTime = rqSummary.youngestJobStartTime;
         m.priority = priority;
         m.minRequestAge = minRetrieveRequestAge;
         m.logicalLibrary = ""; // The logical library is not known here, and will be determined by the caller.

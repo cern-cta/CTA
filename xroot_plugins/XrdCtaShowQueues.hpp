@@ -96,6 +96,7 @@ int ShowQueuesStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     sq_item->set_queued_files(sq.filesQueued);
     sq_item->set_queued_bytes(sq.bytesQueued);
     sq_item->set_oldest_age(sq.oldestJobAge);
+    sq_item->set_youngest_age(sq.youngestJobAge);
     sq_item->set_cur_mounts(sq.currentMounts);
     sq_item->set_cur_files(sq.currentFiles);
     sq_item->set_cur_bytes(sq.currentBytes);

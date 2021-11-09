@@ -1150,6 +1150,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
             .add("filesQueued", m->filesQueued)
             .add("minFilesToWarrantMount", minFilesToWarrantAMount)
             .add("oldestJobAge", time(NULL) - m->oldestJobStartTime)
+            .add("youngestJobAge", time(NULL) - m->youngestJobStartTime)
             .add("minArchiveRequestAge", m->minRequestAge)
             .add("voReadMaxDrives",voOfThisPotentialMount.readMaxDrives)
             .add("voWriteMaxDrives",voOfThisPotentialMount.writeMaxDrives)
@@ -1191,6 +1192,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
             .add("filesQueued", m->filesQueued)
             .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
             .add("oldestJobAge", time(NULL) - m->oldestJobStartTime)
+            .add("youngestJobAge", time(NULL) - m->youngestJobStartTime)
             .add("minArchiveRequestAge", m->minRequestAge)
             .add("maxDrives", maxDrives)
             .add("voReadMaxDrives",voOfThisPotentialMount.readMaxDrives)
@@ -1369,6 +1371,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
                 .add("filesQueued", m->filesQueued)
                 .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
                 .add("oldestJobAge", time(NULL) - m->oldestJobStartTime)
+                .add("youngestJobAge", time(NULL) - m->youngestJobStartTime)
                 .add("minArchiveRequestAge", m->minRequestAge)
                 .add("getMountInfoTime", getMountInfoTime)
                 .add("getTapeInfoTime", getTapeInfoTime)
@@ -1414,6 +1417,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
             .add("filesQueued", m->filesQueued)
             .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
             .add("oldestJobAge", time(NULL) - m->oldestJobStartTime)
+            .add("youngestJobAge", time(NULL) - m->youngestJobStartTime)
             .add("minArchiveRequestAge", m->minRequestAge)
             .add("getMountInfoTime", getMountInfoTime)
             .add("getTapeInfoTime", getTapeInfoTime)
@@ -1561,6 +1565,7 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
                   .add("filesQueued", m->filesQueued)
                   .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
                   .add("oldestJobAge", time(NULL) - m->oldestJobStartTime)
+                  .add("youngestJobAge", time(NULL) - m->youngestJobStartTime)
                   .add("minArchiveRequestAge", m->minRequestAge)
                   .add("getMountInfoTime", getMountInfoTime)
                   .add("queueTrimingTime", queueTrimingTime)
@@ -1643,6 +1648,7 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
               .add("filesQueued", m->filesQueued)
               .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
               .add("oldestJobAge", time(NULL) - m->oldestJobStartTime)
+              .add("youngestJobAge", time(NULL) - m->youngestJobStartTime)
               .add("minArchiveRequestAge", m->minRequestAge)
               .add("getMountInfoTime", getMountInfoTime)
               .add("queueTrimingTime", queueTrimingTime)
@@ -1773,6 +1779,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       summary.bytesQueued = pm.bytesQueued;
       summary.filesQueued = pm.filesQueued;
       summary.oldestJobAge = time(nullptr) - pm.oldestJobStartTime ;
+      summary.youngestJobAge = time(nullptr) - pm.youngestJobStartTime;
       if (pm.mountPolicyNames) {
         summary.mountPolicies = pm.mountPolicyNames.value();
       }
@@ -1784,6 +1791,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       summary.bytesQueued = pm.bytesQueued;
       summary.filesQueued = pm.filesQueued;
       summary.oldestJobAge = time(nullptr) - pm.oldestJobStartTime ;
+      summary.youngestJobAge = time(nullptr) - pm.youngestJobStartTime;
       if (pm.mountPolicyNames) {
         summary.mountPolicies = pm.mountPolicyNames.value();
       }

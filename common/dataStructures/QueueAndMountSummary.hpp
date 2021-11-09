@@ -40,6 +40,7 @@ struct QueueAndMountSummary {
   uint64_t filesQueued=0;
   uint64_t bytesQueued=0;
   time_t oldestJobAge=0;
+  time_t youngestJobAge=0;
   MountPolicy mountPolicy;
   uint64_t currentMounts=0;
   uint64_t currentFiles=0;

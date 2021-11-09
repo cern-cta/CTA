@@ -81,6 +81,7 @@ public:
     uint64_t jobs;
     uint64_t bytes;
     time_t oldestJobStartTime;
+    time_t youngestJobStartTime;
     uint64_t priority;
     uint64_t minRetrieveRequestAge;
     std::map<std::string, uint64_t> mountPolicyCountMap;
