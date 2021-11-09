@@ -47,6 +47,8 @@ public:
       m_cliIdentity.host       = cta::utils::getShortHostname(); // Host should be of the machine that executes the command
       m_cliIdentity.clientHost = client.host;
 
+      m_lc.pushOrReplace({"user", m_cliIdentity.username + "@" + m_cliIdentity.host});
+
       // Map the client protocol string to an enum value
       auto proto_it = m_protomap.find(client.prot);
       m_protocol = proto_it != m_protomap.end() ? proto_it->second : Protocol::OTHER;
