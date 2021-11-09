@@ -251,7 +251,6 @@ public:
           try {
             std::rethrow_exception(e.failure);
           } catch (cta::exception::NoSuchObject &) {
-            std::cout << "HELLO1" << std::endl;
             elementsToDereferenceFromAgent.push_back(ContainerTraits<Q,C>::getElementAddress(*e.element));
             elementsNotToReport.insert(ContainerTraits<Q,C>::getElementAddress(*e.element));
           } catch (Backend::WrongPreviousOwner &) {
@@ -394,7 +393,6 @@ public:
           try {
             std::rethrow_exception(e.failure);
           } catch (cta::exception::NoSuchObject &) {
-            std::cout << "HELLO2" << std::endl;
             elementsToDereferenceFromAgent.push_back(ContainerTraits<Q,C>::getElementAddress(*e.element));
             elementsNotToReport.insert(ContainerTraits<Q,C>::getElementAddress(*e.element));
           } catch (Backend::WrongPreviousOwner &) {
