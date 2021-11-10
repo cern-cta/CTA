@@ -1,1 +1,2 @@
 syntaxError:*Test.cpp
+syntaxError:*Tests.cpp

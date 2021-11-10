@@ -1081,7 +1081,8 @@ void OStoreDB::setArchiveJobBatchReported(std::list<cta::SchedulerDatabase::Arch
         log::ScopedParamContainer params(lc);
         params.add("fileId",j->archiveFile.archiveFileID);
         lc.log(log::WARNING,"In OStoreDB::setArchiveJobBatchReported() failed to asyncDeleteRequest because it does not exist in the objectstore.");
-        completeJobsToDelete.erase(completeJobsToDeleteItor);
+        completeJobsToDeleteItor = completeJobsToDelete.erase(completeJobsToDeleteItor);
+        continue;
       }
       completeJobsToDeleteItor++;
     }
