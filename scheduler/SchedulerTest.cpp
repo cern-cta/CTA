@@ -1026,18 +1026,12 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     // We expect the job to be single copy
     auto & job = rqsts.cbegin()->second.back();
     ASSERT_EQ(1, job.tapeCopies.size());
-    // Currently guaranteed to get the copy 1 tape due to the temporary fix for
-    // the following CTA GitLab issue:
-    //
-    //   cta/CTA#777 Minimize mounts for dual copy tape pool recalls
-    ASSERT_TRUE(copy1TapeVid == job.tapeCopies.cbegin()->first);
     // Check the remote target
     ASSERT_EQ("dstURL", job.request.dstURL);
     // Check the archive file ID
     ASSERT_EQ(archiveFileId, job.request.archiveFileID);
 
     // Check that we can retrieve jobs by VID
-
     // Get the vid from the above job and submit a separate request for the same vid
     auto vid = rqsts.begin()->second.back().tapeCopies.begin()->first;
     auto rqsts_vid = scheduler.getPendingRetrieveJobs(vid, lc);
@@ -1045,11 +1039,6 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     ASSERT_EQ(1, rqsts_vid.size());
     auto &job_vid = rqsts_vid.back();
     ASSERT_EQ(1, job_vid.tapeCopies.size());
-    // Currently guaranteed to get the copy 1 tape due to the temporary fix for
-    // the following CTA GitLab issue:
-    //
-    //   cta/CTA#777 Minimize mounts for dual copy tape pool recalls
-    ASSERT_TRUE(copy1TapeVid == job_vid.tapeCopies.cbegin()->first);
     ASSERT_EQ("dstURL", job_vid.request.dstURL);
     ASSERT_EQ(archiveFileId, job_vid.request.archiveFileID);
   }

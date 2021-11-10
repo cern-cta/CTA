@@ -45,6 +45,7 @@
 #include <random>
 #include <chrono>
 #include <cstdlib>
+#include <time.h>
 
 namespace cta {
 
@@ -200,22 +201,31 @@ std::string Scheduler::queueRetrieve(
   //
   //   cta/CTA#777 Minimize mounts for dual copy tape pool recalls
   //
-  // The code tries to force a recall to use the tape copy with the lowest
-  // tape copy number.  On the one hand this increases wear and tear on tapes
-  // containing files with lower tape copy numbers but on the other hand it
-  // reduces the number of overall number tape mounts in situations where files
-  // with multiple tape copies are being recalled.
+  // The code tries to force a recall to use the tape copy with the
+  // tape copy number equal to the number of days since the epoch.
+  // It reduces the number of overall number tape mounts 
+  // in situations where files with multiple tape copies are being recalled.
   {
-    const auto lowestCopyNbTapeFileIter = std::min_element(
-      queueCriteria.archiveFile.tapeFiles.begin(), queueCriteria.archiveFile.tapeFiles.end(),
-      [](const common::dataStructures::TapeFile &a, const common::dataStructures::TapeFile &b) -> bool
-        {return a.copyNb < b.copyNb;});
 
-    if (queueCriteria.archiveFile.tapeFiles.end() != lowestCopyNbTapeFileIter) {
-      const common::dataStructures::TapeFile lowestCopyNbTapeFile = *lowestCopyNbTapeFileIter;
-      queueCriteria.archiveFile.tapeFiles.clear();
-      queueCriteria.archiveFile.tapeFiles.push_back(lowestCopyNbTapeFile);
-    }
+    const time_t secondsSinceEpoch = time(NULL);
+    const uint64_t daysSinceEpoch = secondsSinceEpoch / (60*60*24);
+    const uint64_t indexToChose = daysSinceEpoch % queueCriteria.archiveFile.tapeFiles.size();
+
+    std::vector<uint64_t> tapeFileCopyNbs;
+
+    std::transform(queueCriteria.archiveFile.tapeFiles.begin(), queueCriteria.archiveFile.tapeFiles.end(),std::back_inserter(tapeFileCopyNbs), 
+       [](const common::dataStructures::TapeFile &a) -> uint64_t {
+         return a.copyNb;});
+
+    std::sort(tapeFileCopyNbs.begin(), tapeFileCopyNbs.end(),
+      [](const uint64_t &a, const uint64_t &b) -> bool
+        {return a > b;});
+    
+    const uint64_t chosenCopyNb = tapeFileCopyNbs.at(indexToChose);
+
+    const common::dataStructures::TapeFile chosenTapeFile = queueCriteria.archiveFile.tapeFiles.at(chosenCopyNb);
+    queueCriteria.archiveFile.tapeFiles.clear();
+    queueCriteria.archiveFile.tapeFiles.push_back(chosenTapeFile);
   }
 
   auto diskSystemList = m_catalogue.getAllDiskSystems();
