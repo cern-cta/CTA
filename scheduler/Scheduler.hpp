@@ -281,6 +281,14 @@ public:
   void reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfigLine, const cta::tape::daemon::TapedConfiguration& tapedConfig, log::LogContext& lc);
 
   /**
+   * Dumps the state of an specifig drive
+   * @param tapeDriveName
+   * @return An optional drive state structures.
+   */
+  cta::optional<cta::common::dataStructures::TapeDrive> getDriveState(const std::string& tapeDriveName,
+    log::LogContext* lc) const;
+
+  /**
    * Dumps the states of all drives for display
    * @param cliIdentity
    * @return A list of drive state structures.

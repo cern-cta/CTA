@@ -1078,7 +1078,7 @@ int DriveHandler::runChild() {
       log::ScopedParamContainer params(lc);
       params.add("tapeDrive", m_configLine.unitName);
       int logLevel = log::INFO;
-      std::string msg = "Setting the drive down at daemon startup";
+      std::string msg = "Startup";
       lc.log(logLevel, msg);
       try {
         // Before setting the desired state as down, we have to make sure the drive exists in the registry.
@@ -1094,6 +1094,13 @@ int DriveHandler::runChild() {
           return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
         }
 
+        cta::common::dataStructures::DesiredDriveState  currentDesiredDriveState;
+        try {
+          currentDesiredDriveState = scheduler.getDesiredDriveState(m_configLine.unitName, lc);
+        } catch (Scheduler::NoSuchDrive& ex) {
+          lc.log(log::INFO, "In DriveHandler::runChild(): the desired drive state doesn't exist in the Catalogue DB");
+        }
+
         cta::common::dataStructures::SecurityIdentity securityIdentity;
         cta::common::dataStructures::DesiredDriveState driveState;
         driveState.up = false;
@@ -1102,16 +1109,21 @@ int DriveHandler::runChild() {
           common::dataStructures::DriveStatus::Down, m_configLine, securityIdentity, lc);
 
         // Get the drive state to see if there is a reason or not, we don't want to change the reason
-        // why a drive is down at the startup of the tapeserver
-        cta::common::dataStructures::DesiredDriveState  currentDesiredDriveState = scheduler.getDesiredDriveState(m_configLine.unitName,lc);
-        if(!currentDesiredDriveState.reason){
-          driveState.setReasonFromLogMsg(logLevel,msg);
+        // why a drive is down at the startup of the tapeserver. If it's setted up a previous Reason From Log
+        // it will be change for this one.
+        if (!currentDesiredDriveState.reason) {
+          driveState.setReasonFromLogMsg(logLevel, msg);
+        } else if (currentDesiredDriveState.reason.value().substr(0, 11) == "[cta-taped]") {
+          driveState.setReasonFromLogMsg(logLevel, msg);
+        } else {
+          driveState.reason = currentDesiredDriveState.reason.value();
         }
-        scheduler.reportDriveStatus(driveInfo, common::dataStructures::MountType::NoMount, common::dataStructures::DriveStatus::Down, lc);
-        scheduler.reportDriveConfig(m_configLine, m_tapedConfig,lc);
+
+        scheduler.setDesiredDriveState(securityIdentity, m_configLine.unitName, driveState, lc);
+        scheduler.reportDriveConfig(m_configLine, m_tapedConfig, lc);
       } catch (cta::exception::Exception & ex) {
         params.add("Message", ex.getMessageValue())
-              .add("Backtrace",ex.backtrace());
+              .add("Backtrace", ex.backtrace());
         lc.log(log::CRIT, "In DriveHandler::runChild(): failed to set drive down");
         // This is a fatal error (failure to access the scheduler). Shut daemon down.
         driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
@@ -1231,14 +1243,31 @@ int DriveHandler::setDriveDownForShutdown(const std::unique_ptr<cta::Scheduler>&
   driveInfo.logicalLibrary = m_configLine.logicalLibrary;
   driveInfo.host = cta::utils::getShortHostname();
 
+  auto driveState = scheduler->getDriveState(driveInfo.driveName, lc);
+  if (!driveState) {
+    lc->log(cta::log::WARNING, "In DriveHandler::setDriveDownForShutdown(). TapeDrive to set down doesn't exist.");
+    return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
+  }
+
+  cta::common::dataStructures::DesiredDriveState desiredDriveState;
+  desiredDriveState.up = false;
+  desiredDriveState.forceDown = false;
+
+  // Get the drive state to see if there is a reason or not, we don't want to change the reason
+  // why a drive is down at the shutdown of the tapeserver. If it's setted up a previous Reason From Log
+  // it will be change for this new one.
+  if (!driveState.value().reasonUpDown) {
+    desiredDriveState.setReasonFromLogMsg(cta::log::INFO, "Shutdown");
+  } else if (driveState.value().reasonUpDown.value().substr(0, 11) == "[cta-taped]") {
+    desiredDriveState.setReasonFromLogMsg(cta::log::INFO, "Shutdown");
+  } else {
+    desiredDriveState.reason = driveState.value().reasonUpDown.value();
+  }
+
   scheduler->reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
     cta::common::dataStructures::DriveStatus::Down, *lc);
   cta::common::dataStructures::SecurityIdentity cliId;
-  cta::common::dataStructures::DesiredDriveState driveState;
-  driveState.up = false;
-  driveState.forceDown = false;
-  driveState.setReasonFromLogMsg(cta::log::INFO, "Putting down the driver for shutdown");
-  scheduler->setDesiredDriveState(cliId, m_configLine.unitName, driveState, *lc);
+  scheduler->setDesiredDriveState(cliId, m_configLine.unitName, desiredDriveState, *lc);
 
   return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
 }

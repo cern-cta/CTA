@@ -971,6 +971,20 @@ std::list<common::dataStructures::RetrieveJob> Scheduler::getPendingRetrieveJobs
 }
 
 //------------------------------------------------------------------------------
+// getDriveState
+//------------------------------------------------------------------------------
+cta::optional<cta::common::dataStructures::TapeDrive> Scheduler::getDriveState(const std::string& tapeDriveName,
+  log::LogContext* lc) const {
+  utils::Timer t;
+  auto ret = m_catalogue.getTapeDrive(tapeDriveName);
+  auto schedulerDbTime = t.secs();
+  log::ScopedParamContainer spc(*lc);
+  spc.add("schedulerDbTime", schedulerDbTime);
+  lc->log(log::INFO, "In Scheduler::getDriveState(): success.");
+  return ret;
+}
+
+//------------------------------------------------------------------------------
 // getDriveStates
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::TapeDrive> Scheduler::getDriveStates(const common::dataStructures::SecurityIdentity &cliIdentity, log::LogContext & lc) const {
