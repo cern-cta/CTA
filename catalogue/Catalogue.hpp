@@ -905,6 +905,13 @@ public:
   virtual ArchiveFileItor getArchiveFilesItor(
     const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const = 0;
 
+  /**
+   * Returns the specified archive file. If the search criteria result in more than one tape file being returned
+   * an exception is thrown.
+   * @param searchCriteria The search criteria.
+   * @return The archive file.
+   */
+  virtual common::dataStructures::ArchiveFile getArchiveFileForDeletion(const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const = 0;
 
   typedef CatalogueItor<common::dataStructures::FileRecycleLog> FileRecycleLogItor;
 
@@ -965,10 +972,10 @@ public:
   /**
   * Deletes a tape file copy
   *
-  * @param criteria The search criteria of the tape file to delete
+  * @param file The tape file to delete
   * @param reason The reason for deleting the tape file copy
   */
-  virtual void deleteTapeFileCopy(const TapeFileSearchCriteria &criteria, const std::string &reason) = 0;
+  virtual void deleteTapeFileCopy(common::dataStructures::ArchiveFile &file, const std::string &reason) = 0;
 
   /**
    * Returns the archive file with the specified unique identifier.

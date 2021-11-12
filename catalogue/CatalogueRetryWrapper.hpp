@@ -574,8 +574,12 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getTapeFileSummary(searchCriteria);}, m_maxTriesToConnect);
   }
 
-  void deleteTapeFileCopy(const TapeFileSearchCriteria &criteria, const std::string &reason) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteTapeFileCopy(criteria, reason);}, m_maxTriesToConnect);
+  common::dataStructures::ArchiveFile getArchiveFileForDeletion(const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->getArchiveFileForDeletion(searchCriteria);}, m_maxTriesToConnect);
+  }
+
+  void deleteTapeFileCopy(common::dataStructures::ArchiveFile &file, const std::string &reason) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteTapeFileCopy(file, reason);}, m_maxTriesToConnect);
   }
 
   common::dataStructures::ArchiveFile getArchiveFileById(const uint64_t id) const override {

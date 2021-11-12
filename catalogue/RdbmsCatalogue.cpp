@@ -7381,15 +7381,17 @@ common::dataStructures::ArchiveFileSummary RdbmsCatalogue::getTapeFileSummary(
 }
 
 //------------------------------------------------------------------------------
-// deleteTapeFileCopy
+// getArchiveFileForDeletion
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::deleteTapeFileCopy(const TapeFileSearchCriteria &criteria, const std::string &reason) {
-
+common::dataStructures::ArchiveFile RdbmsCatalogue::getArchiveFileForDeletion(const TapeFileSearchCriteria &criteria) const {
   if (!criteria.diskFileIds && !criteria.archiveFileId) {
     throw exception::UserError("To delete a file copy either the diskFileId+diskInstanceName or archiveFileId must be specified");
   }
   if (criteria.diskFileIds && !criteria.diskInstance) {
     throw exception::UserError("DiskFileId makes no sense without disk instance");
+  }
+  if (!criteria.vid) {
+    throw exception::UserError("Vid must be specified");
   }
 
   auto vid = criteria.vid.value();
@@ -7446,11 +7448,18 @@ void RdbmsCatalogue::deleteTapeFileCopy(const TapeFileSearchCriteria &criteria, 
                                 criteria.diskInstance.value() + " on vid " + vid);
     }
   }
+  return af;
+}
+
+
+//------------------------------------------------------------------------------
+// deleteTapeFileCopy
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::deleteTapeFileCopy(common::dataStructures::ArchiveFile &file, const std::string &reason) {
 
   log::LogContext lc(m_log);
   auto conn = m_connPool.getConn();
-  af.diskFileInfo.path = "Not applicable for copies deleted with cta-admin tf rm"; // will go into the diskFilePath column of the File Recycle log
-  copyTapeFileToFileRecyleLogAndDelete(conn, af, reason, lc);
+  copyTapeFileToFileRecyleLogAndDelete(conn, file, reason, lc);
 }
 
 

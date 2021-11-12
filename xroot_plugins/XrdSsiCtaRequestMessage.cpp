@@ -1913,8 +1913,14 @@ void RequestMessage::processTapeFile_Rm(cta::xrd::Response &response)
   if (instance) {
     searchCriteria.diskInstance = instance.value();
   }
-   m_catalogue.deleteTapeFileCopy(searchCriteria, reason);
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+  
+  auto archiveFile = m_catalogue.getArchiveFileForDeletion(searchCriteria);
+  grpc::EndpointMap endpoints(m_namespaceMap);
+  auto diskFilePath = endpoints.getPath(archiveFile.diskInstance, archiveFile.diskFileId);
+  archiveFile.diskFileInfo.path = diskFilePath;
+
+  m_catalogue.deleteTapeFileCopy(archiveFile, reason);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 
