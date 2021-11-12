@@ -26,8 +26,6 @@
 #include "common/exception/Errnum.hpp"
 #include "common/utils/utils.hpp"
 
-#include "common/helgrind_annotator.hpp"
-
 namespace cta { namespace objectstore {
 
 std::atomic <uint64_t> AgentReference::g_nextAgentId(0);
@@ -61,7 +59,6 @@ m_logger(logger) {
   threading::MutexLocker ml(m_currentQueueMutex);
   m_nextQueueExecutionPromise.reset(new std::promise<void>);
   m_nextQueueExecutionFuture = m_nextQueueExecutionPromise->get_future();
-  ANNOTATE_HAPPENS_BEFORE(m_nextQueueExecutionPromise.get());
   m_nextQueueExecutionPromise->set_value();
 }
 
@@ -115,8 +112,6 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
     ulQueue.unlock();
     ulGlobal.unlock();
     actionFuture.get();
-    ANNOTATE_HAPPENS_AFTER(&action->promise);
-    ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&action->promise);
   } else {
     // There is no queue, so we need to create and serve it ourselves.
     // To make sure there is no lifetime issues, we make it a shared_ptr
@@ -139,8 +134,6 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
     // Wait for previous queue to complete so we will not contend with other threads while
     // updating the object store.
     futureForThisQueue.get();
-    ANNOTATE_HAPPENS_AFTER(promiseForThisQueue.get());
-    ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(promiseForThisQueue.get());
     // Make sure we are not listed anymore as the queue taking jobs.
     // We should still be the listed queue
     ulGlobal.lock();
@@ -215,24 +208,20 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
       // We avoid global log (with a count) as we would get one for each heartbeat.
     } catch (...) {
       // Something wend wrong: , we release the next batch of changes
-      ANNOTATE_HAPPENS_BEFORE(promiseForNextQueue.get());
       promiseForNextQueue->set_value();
       // We now pass the exception to all threads
       for (auto a: q->queue) {
         threading::MutexLocker ml(a->mutex);
-        ANNOTATE_HAPPENS_BEFORE(&a->promise);
         a->promise.set_exception(std::current_exception());
       }
       // And to our own caller
       throw;
     }
     // Things went well. We pass the token to the next queue
-    ANNOTATE_HAPPENS_BEFORE(promiseForNextQueue.get());
     promiseForNextQueue->set_value();
     // and release the other threads
     for (auto a: q->queue) {
       threading::MutexLocker ml(a->mutex);
-      ANNOTATE_HAPPENS_BEFORE(&a->promise);
       a->promise.set_value();
     }
   }

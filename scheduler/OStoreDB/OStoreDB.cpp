@@ -137,9 +137,7 @@ void OStoreDB::EnqueueingWorkerThread::run() {
   while (true) {
     std::unique_ptr<EnqueueingTask> et(m_enqueueingTasksQueue.pop());
     if (!et.get()) break;
-    ANNOTATE_HAPPENS_AFTER(et.get());
     (*et)();
-    ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(et.get());
   }
 }
 
@@ -900,7 +898,6 @@ std::string OStoreDB::queueArchive(const std::string &instanceName, const cta::c
              + agOwnershipResetTime);
     logContext.log(log::INFO, "In OStoreDB::queueArchive_bottomHalf(): Finished enqueueing request.");
   });
-  ANNOTATE_HAPPENS_BEFORE(et);
   mlForHelgrind.unlock();
   m_enqueueingTasksQueue.push(et);
   double taskPostingTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
@@ -1392,7 +1389,6 @@ SchedulerDatabase::RetrieveRequestInfo OStoreDB::queueRetrieve(cta::common::data
                 + rUnlockTime + agOwnershipResetTime);
       logContext.log(log::INFO, "In OStoreDB::queueRetrieve_bottomHalf(): added job to queue (enqueueing finished).");
     });
-    ANNOTATE_HAPPENS_BEFORE(et);
     mlForHelgrind.unlock();
     m_enqueueingTasksQueue.push(et);
     double taskPostingTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);

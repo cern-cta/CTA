@@ -32,8 +32,6 @@
 #include "objectstore/RetrieveQueue.hpp"
 #include "objectstore/RetrieveRequest.hpp"
 
-#include "common/helgrind_annotator.hpp"
-
 namespace cta {
 // Forward declaration
 class OStoreDB;
@@ -73,7 +71,6 @@ SharedQueueLock<Queue, Request>::~SharedQueueLock() {
   double queueUnlockTime = m_timer.secs(utils::Timer::resetCounter);
   // The next update of the queue can now proceed
   if (m_promiseForSuccessor.get()) {
-    ANNOTATE_HAPPENS_BEFORE(m_promiseForSuccessor.get());
     m_promiseForSuccessor->set_value();
   } else {
     m_logContext.log(log::ERR, "In SharedQueueLock::~SharedQueueLock(): the promise was not present. Skipping value setting.");
@@ -232,8 +229,6 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
   globalLock.unlock();
   // Wait for our request completion (this could throw, if there was a problem)
   resultFuture.get();
-  ANNOTATE_HAPPENS_AFTER(&maqr->m_promise);
-  ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&maqr->m_promise);
   auto ret=maqr->m_returnValue;
   __attribute__((unused)) auto debugMaqr=maqr.get();
   maqr.reset();
@@ -271,8 +266,6 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
   // Wait on out future, if necessary
   if (promiseFromPredecessor.get()) {
     futureFromPredecessor.get();
-    ANNOTATE_HAPPENS_AFTER(promiseFromPredecessor.get());
-    ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(promiseFromPredecessor.get());
   }
   // We are now clear to update the queue in object store.
   // Re-take the global and make sure the queue is not referenced anymore.
@@ -356,7 +349,6 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
     for (auto &maqr: maq->m_requests) {
       {
         threading::MutexLocker (maqr->m_mutex);
-        ANNOTATE_HAPPENS_BEFORE(&maqr->m_promise);
         maqr->m_returnValue=ret;
         maqr->m_promise.set_value();
       }
@@ -382,7 +374,6 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
     for (auto & maqr: maq->m_requests) {
       try {
         threading::MutexLocker (maqr->m_mutex);
-        ANNOTATE_HAPPENS_BEFORE(&maqr->m_promise);
         maqr->m_promise.set_exception(std::current_exception());
       } catch (...) {
         exceptionsNotPassed++;
