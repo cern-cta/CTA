@@ -17,13 +17,13 @@
 
 #pragma once
 
+#include <limits>
+#include <stdint.h>
+#include <string>
+
 #include "common/dataStructures/MountPolicy.hpp"
 #include "EntryLogSerDeser.hpp"
 #include "objectstore/cta.pb.h"
-
-#include <string>
-#include <stdint.h>
-#include <limits>
 
 namespace cta { namespace objectstore {
 /**

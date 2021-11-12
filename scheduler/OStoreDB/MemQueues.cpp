@@ -15,7 +15,6 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/helgrind_annotator.hpp"
 #include "MemQueues.hpp"
 #include "OStoreDB.hpp"
 #include "objectstore/Helpers.hpp"
@@ -53,7 +52,7 @@ void MemQueue<objectstore::RetrieveRequest, objectstore::RetrieveQueue>::special
     for (auto & j: request.getArchiveFile().tapeFiles) {
       if (j.copyNb == job.copyNb) {
         auto criteria = request.getRetrieveFileQueueCriteria();
-        jtal.push_back({j.copyNb, j.fSeq, request.getAddressIfSet(), criteria.archiveFile.fileSize, 
+        jtal.push_back({j.copyNb, j.fSeq, request.getAddressIfSet(), criteria.archiveFile.fileSize,
             criteria.mountPolicy, request.getEntryLog().time, request.getActivity(), request.getDiskSystemName()});
         request.setActiveCopyNumber(j.copyNb);
         request.setOwner(queueAddress);

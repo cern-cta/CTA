@@ -15,16 +15,18 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "common/helgrind_annotator.hpp"
-#include "AgentReference.hpp"
+#include <sys/syscall.h>
+#include <unistd.h>
+
+#include <iomanip>
+#include <sstream>
+
 #include "Agent.hpp"
+#include "AgentReference.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/utils/utils.hpp"
 
-#include <sstream>
-#include <unistd.h>
-#include <sys/syscall.h>
-#include <iomanip>
+#include "common/helgrind_annotator.hpp"
 
 namespace cta { namespace objectstore {
 
@@ -46,7 +48,7 @@ m_logger(logger) {
   uint64_t id=g_nextAgentId++;
   aid << clientType << "-" << host << "-" << syscall(SYS_gettid) << "-"
     << 1900 + localNow.tm_year
-    << std::setfill('0') << std::setw(2) 
+    << std::setfill('0') << std::setw(2)
     << 1 + localNow.tm_mon
     << std::setw(2) << localNow.tm_mday << "-"
     << std::setw(2) << localNow.tm_hour << ":"
@@ -54,7 +56,7 @@ m_logger(logger) {
     << std::setw(2) << localNow.tm_sec << "-"
     << id;
   m_agentAddress = aid.str();
-  // Initialize the serialization token for queued actions (lock will make helgrind 
+  // Initialize the serialization token for queued actions (lock will make helgrind
   // happy, but not really needed
   threading::MutexLocker ml(m_currentQueueMutex);
   m_nextQueueExecutionPromise.reset(new std::promise<void>);
@@ -135,7 +137,7 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
     ulq.unlock();
     ulGlobal.unlock();
     // Wait for previous queue to complete so we will not contend with other threads while
-    // updating the object store. 
+    // updating the object store.
     futureForThisQueue.get();
     ANNOTATE_HAPPENS_AFTER(promiseForThisQueue.get());
     ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(promiseForThisQueue.get());
@@ -236,7 +238,7 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
   }
 }
 
-void AgentReference::appyAction(Action& action, objectstore::Agent& agent, 
+void AgentReference::appyAction(Action& action, objectstore::Agent& agent,
     std::set<std::string> & ownershipSet, log::LogContext &lc) {
   switch (action.op) {
   case AgentOperation::Add:
@@ -255,7 +257,7 @@ void AgentReference::appyAction(Action& action, objectstore::Agent& agent,
       params.add("ownedObject", oa);
       lc.log(log::DEBUG, "In AgentReference::appyAction(): added object to ownership (by batch).");
     }
-    
+
     break;
   }
   case AgentOperation::Remove:

@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include "common/helgrind_annotator.hpp"
 #include "objectstore/Backend.hpp"
 #include "common/threading/Mutex.hpp"
 #include "common/threading/MutexLocker.hpp"
@@ -39,7 +38,7 @@ class Agent;
  * object name generator, that will allow unique name generation by several threads.
  * This object should be created once and for all per session (as the corresponding
  * Agent object in the object store).
- * A process 
+ * A process
  */
 class AgentReference: public AgentReferenceInterface{
 public:
@@ -48,7 +47,7 @@ public:
    * @param clientType is an indicative string used to generate the agent object's name.
    */
   AgentReference(const std::string &clientType, log::Logger &logger);
-  
+
   /**
    * Generates a unique address for a newly created child object. This function is thread
    * safe.
@@ -56,7 +55,7 @@ public:
    * @return a unique address for the child object, derived from the agent's address.
    */
   std::string nextId(const std::string & childType);
-  
+
   /**
    * Adds an object address to the referenced agent. The additions and removals
    * are queued in memory so that several threads can share the same access.
@@ -65,14 +64,14 @@ public:
    * @param backend reference to the backend to use.
    */
   void addToOwnership(const std::string &objectAddress, objectstore::Backend& backend) override;
-  
+
   /**
    * Adds a list of object addresses to the referenced agent. The addition is immediate.
    * @param objectAdresses
    * @param backend reference to the backend to use.
    */
   void addBatchToOwnership(const std::list<std::string> &objectAdresses, objectstore::Backend& backend) override;
-  
+
   /**
    * Removes an object address from the referenced agent. The additions and removals
    * are queued in memory so that several threads can share the same access.
@@ -80,14 +79,14 @@ public:
    * @param objectAddress
    */
   void removeFromOwnership(const std::string &objectAddress, objectstore::Backend& backend) override;
-  
+
   /**
    * Removes a list of object addresses to the referenced agent. The removal is immediate.
    * @param objectAdresses
    * @param backend reference to the backend to use.
    */
   void removeBatchFromOwnership(const std::list<std::string> &objectAdresses, objectstore::Backend& backend) override;
-  
+
   /**
    * Bumps up the heart beat of the agent. This action is queued in memory like the
    * additions and removals from ownership.
@@ -103,7 +102,7 @@ private:
   static std::atomic<uint64_t> g_nextAgentId;
   std::atomic<uint64_t> m_nextId;
   std::string m_agentAddress;
-  
+
   /**
    * An enumeration describing all the queueable operations
    */
@@ -114,18 +113,18 @@ private:
     RemoveBatch,
     Heartbeat
   };
-  
+
   /**
    * A set used to test for ownership modifying actions.
    */
-  std::set<AgentOperation> m_ownerShipModifyingOperations = { AgentOperation::Add, AgentOperation::Remove, 
+  std::set<AgentOperation> m_ownerShipModifyingOperations = { AgentOperation::Add, AgentOperation::Remove,
     AgentOperation::AddBatch, AgentOperation::RemoveBatch };
-  
+
   /**
    * An operation with its parameter and promise
    */
   struct Action {
-    Action(AgentOperation op, const std::string & objectAddress, const std::list<std::string> & objectAddressSet): 
+    Action(AgentOperation op, const std::string & objectAddress, const std::list<std::string> & objectAddressSet):
       op(op), objectAddress(objectAddress), objectAddressSet(objectAddressSet) {}
     AgentOperation op;
     const std::string & objectAddress;
@@ -137,29 +136,29 @@ private:
      */
     threading::Mutex mutex;
     ~Action() {
-      // The setting of promise result will be protected by this mutex, so destruction 
+      // The setting of promise result will be protected by this mutex, so destruction
       // will only happen after promise setting is complete.
       threading::MutexLocker ml(mutex);
     }
   };
-  
+
   /**
-   * The queue with the lock and flush control 
+   * The queue with the lock and flush control
    */
   struct ActionQueue {
     threading::Mutex mutex;
     std::list<std::shared_ptr<Action>> queue;
   };
-  
+
   /**
    * Helper function applying the action to the already fetched agent.
    * Ownership operations are done on the pre-extracted ownershipSet.
    * @param action
    * @param agent
    */
-  void appyAction(Action& action, objectstore::Agent& agent, 
+  void appyAction(Action& action, objectstore::Agent& agent,
     std::set<std::string> & ownershipSet, log::LogContext &lc);
-  
+
   /**
    * The global function actually doing the job: creates a queue if needed, add
    * the action to it and flushes them based on time and count. Uses an algorithm
@@ -167,12 +166,12 @@ private:
    * @param action the action
    */
   void queueAndExecuteAction(std::shared_ptr<Action> action, objectstore::Backend& backend);
-  
+
   threading::Mutex m_currentQueueMutex;
   std::shared_ptr<ActionQueue> m_currentQueue;
   /**
-   * This pointer holds a promise that will be picked up by the thread managing 
-   * the a queue in memory (promise(n)). The same thread will leave a fresh promise 
+   * This pointer holds a promise that will be picked up by the thread managing
+   * the a queue in memory (promise(n)). The same thread will leave a fresh promise
    * (promise(n+1) in this pointer for the next thread to pick up. The thread will
    * then wait for promise(n) to be fullfilled to flush to queue to the object store
    * and will fullfill promise(n+1) after doing so.
@@ -184,11 +183,11 @@ private:
    * This future will be immediately extracted from the m_nextQueueExecutionPromise before any other thread touches it.
    */
   std::future<void> m_nextQueueExecutionFuture;
-  
+
   /**
    * The logger allows printing debug information
    */
   log::Logger &m_logger;
 };
 
-}} 
+}}

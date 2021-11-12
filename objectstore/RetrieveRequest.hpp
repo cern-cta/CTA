@@ -21,19 +21,15 @@
 
 #include "AgentReference.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
-#include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/LifecycleTimings.hpp"
 #include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
 #include "common/dataStructures/RetrieveRequest.hpp"
-#include "common/dataStructures/TapeFile.hpp"
 #include "MountPolicySerDeser.hpp"
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
-#include "RetrieveActivityCountMap.hpp"
-#include "SorterArchiveJob.hpp"
-#include "TapeFileSerDeser.hpp"
+#include "objectstore/RetrieveActivityCountMap.hpp"
 
 namespace cta {
   namespace objectstore {

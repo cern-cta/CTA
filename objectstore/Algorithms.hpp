@@ -22,8 +22,7 @@
  * to/from them.
  */
 
- #include <string>
-#include <iostream>
+#include <string>
 
 #include "common/exception/Exception.hpp"
 #include "common/exception/NoSuchObject.hpp"

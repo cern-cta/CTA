@@ -15,13 +15,16 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <sys/types.h>
+#include <signal.h>
+#include <unistd.h>
+
 #include "AgentHeartbeatThread.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
-#include <sys/types.h>
-#include <signal.h>
-#include <unistd.h>
+
+#include "common/helgrind_annotator.hpp"
 
 namespace cta { namespace objectstore {
 

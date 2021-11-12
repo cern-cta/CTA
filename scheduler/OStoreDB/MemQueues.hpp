@@ -17,19 +17,22 @@
  */
 
 #pragma once
-#include "common/helgrind_annotator.hpp"
-#include "objectstore/ArchiveRequest.hpp"
-#include "objectstore/ArchiveQueue.hpp"
-#include "objectstore/RetrieveRequest.hpp"
-#include "objectstore/RetrieveQueue.hpp"
-#include "common/log/LogContext.hpp"
-#include "common/threading/Mutex.hpp"
-#include "common/threading/MutexLocker.hpp"
-#include "objectstore/Helpers.hpp"
+
 #include <unistd.h>
 #include <syscall.h>
 
 #include <future>
+
+#include "common/log/LogContext.hpp"
+#include "common/threading/Mutex.hpp"
+#include "common/threading/MutexLocker.hpp"
+#include "objectstore/ArchiveQueue.hpp"
+#include "objectstore/ArchiveRequest.hpp"
+#include "objectstore/Helpers.hpp"
+#include "objectstore/RetrieveQueue.hpp"
+#include "objectstore/RetrieveRequest.hpp"
+
+#include "common/helgrind_annotator.hpp"
 
 namespace cta {
 // Forward declaration

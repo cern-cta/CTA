@@ -20,6 +20,7 @@
 #include <list>
 #include <memory>
 
+#include "AgentReferenceInterface.hpp"
 #include "ArchiveRequest.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 
@@ -43,7 +44,6 @@ struct SorterArchiveJob{
 struct SorterArchiveRequest{
   std::list<SorterArchiveJob> archiveJobs;
 };
-
 
 }  // namespace objectstore
 }  // namespace cta
