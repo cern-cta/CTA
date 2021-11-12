@@ -1,11 +1,14 @@
-# v4.NEXT
+# v4.3-3
 
 ## Summary
 
 ### Features
 - cta/CTA#1053 Remove the objectstore presence in another classes
+- cta/CTA#501 cta-taped should set the state to DOWN when machine rebooting
 
 ### Bug fixes
+- cta/CTA#1056 Fix bugs in cta 4.3-2"
+- cta/CTA#1058 Remove helgrind_annotator from production
 
 # v4.3-2
 
