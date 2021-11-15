@@ -61,7 +61,7 @@ DiskReadThreadPool::~DiskReadThreadPool() {
 //------------------------------------------------------------------------------
 void DiskReadThreadPool::startThreads() {
   for (std::vector<DiskReadWorkerThread *>::iterator i=m_threads.begin();
-          i != m_threads.end(); i++) {
+          i != m_threads.end(); ++i) {
     (*i)->start();
   }
   m_lc.log(cta::log::INFO, "All the DiskReadWorkerThreads are started");
@@ -72,7 +72,7 @@ void DiskReadThreadPool::startThreads() {
 //------------------------------------------------------------------------------
 void DiskReadThreadPool::waitThreads() {
   for (std::vector<DiskReadWorkerThread *>::iterator i=m_threads.begin();
-          i != m_threads.end(); i++) {
+          i != m_threads.end(); ++i) {
     (*i)->wait();
   }
 }

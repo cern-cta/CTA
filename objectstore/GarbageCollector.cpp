@@ -70,7 +70,7 @@ void GarbageCollector::trimGoneTargets(log::LogContext & lc) {
       m_watchedAgents.erase(wa++);
       lc.log(log::INFO, "In GarbageCollector::trimGoneTargets(): removed now gone agent.");
     } else {
-      wa++;
+      ++wa;
     }
   }
 }
@@ -135,7 +135,7 @@ void GarbageCollector::checkHeartbeats(log::LogContext & lc) {
         delete wa->second;
         m_watchedAgents.erase(wa++);
       } else {
-        wa++;
+        ++wa;
       }
     } catch (cta::exception::Exception & ex) {
       if (wa->second->checkExists()) {
@@ -143,7 +143,7 @@ void GarbageCollector::checkHeartbeats(log::LogContext & lc) {
         throw;
       } else {
         // The agent is simply gone on the wrong time. It will be trimmed from the list on the next pass.
-        wa++;
+        ++wa;
       }
     }
   }

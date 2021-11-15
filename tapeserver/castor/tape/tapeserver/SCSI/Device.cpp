@@ -58,7 +58,7 @@ SCSI::DeviceInfo & SCSI::DeviceVector::findBySymlink(std::string path) {
   cta::exception::Errnum::throwOnMinusOne(
       m_sysWrapper.stat(path.c_str(), &sbuff),
       std::string("Could not stat path: ")+path);
-  for(std::vector<DeviceInfo>::iterator i = begin(); i!= end(); i++) {
+  for(std::vector<DeviceInfo>::iterator i = begin(); i!= end(); ++i) {
     if (i->nst == sbuff || i->st == sbuff) {
       return *i;
     }

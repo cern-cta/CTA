@@ -40,7 +40,7 @@ TapeFseqRangeList TapeFileSequenceParser::parse(char *const str)
 
   // For each range string
   for(std::vector<std::string>::const_iterator itor=rangeStrs.begin();
-    itor!=rangeStrs.end(); itor++) {
+    itor!=rangeStrs.end(); ++itor) {
 
     std::vector<std::string> boundaryStrs;
 

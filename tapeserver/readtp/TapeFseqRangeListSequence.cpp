@@ -66,7 +66,7 @@ void TapeFseqRangeListSequence::reset(
     m_isFinite  = true; // Initial guess
     m_totalSize = 0;    // Initial guess
     for(TapeFseqRangeList::const_iterator itor=list->begin();
-      itor != list->end(); itor++) {
+      itor != list->end(); ++itor) {
       const TapeFseqRange &range = *itor;
 
       // If upper bound of range is infinity
@@ -158,7 +158,7 @@ std::ostream &operator<<(std::ostream &os,
   os << '{';
 
   for(cta::tapeserver::readtp::TapeFseqRangeList::const_iterator itor =
-    value.begin(); itor != value.end(); itor++) {
+    value.begin(); itor != value.end(); ++itor) {
 
     // Write a separating comma if not the first item in the list
     if(itor!=value.begin()) {

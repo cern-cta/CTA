@@ -216,7 +216,7 @@ logAndCheckTapeAlertsForWrite() {
   // Log tape alerts in the logs.
   std::vector<std::string> tapeAlerts = m_drive.getTapeAlerts(tapeAlertCodes);
   for (std::vector<std::string>::iterator ta=tapeAlerts.begin();
-          ta!=tapeAlerts.end();ta++)
+          ta!=tapeAlerts.end();++ta)
   {
     cta::log::ScopedParamContainer params(m_logContext);
     params.add("tapeAlert",*ta)
@@ -228,7 +228,7 @@ logAndCheckTapeAlertsForWrite() {
   std::vector<std::string> tapeAlertsCompact = 
     m_drive.getTapeAlertsCompact(tapeAlertCodes);
   for (std::vector<std::string>::iterator tac=tapeAlertsCompact.begin();
-          tac!=tapeAlertsCompact.end();tac++)
+          tac!=tapeAlertsCompact.end();++tac)
   {
     countTapeLogError(std::string("Error_")+*tac);
   }

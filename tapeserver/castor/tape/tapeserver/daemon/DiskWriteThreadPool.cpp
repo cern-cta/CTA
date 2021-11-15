@@ -67,7 +67,7 @@ DiskWriteThreadPool::~DiskWriteThreadPool() {
 //------------------------------------------------------------------------------
 void DiskWriteThreadPool::startThreads() {
   for (std::vector<DiskWriteWorkerThread *>::iterator i=m_threads.begin();
-          i != m_threads.end(); i++) {
+          i != m_threads.end(); ++i) {
     (*i)->start();
   }
   m_lc.log(cta::log::INFO, "Starting threads in DiskWriteThreadPool::DiskWriteThreadPool");
@@ -78,7 +78,7 @@ void DiskWriteThreadPool::startThreads() {
 //------------------------------------------------------------------------------
 void DiskWriteThreadPool::waitThreads() {
   for (std::vector<DiskWriteWorkerThread *>::iterator i=m_threads.begin();
-          i != m_threads.end(); i++) {
+          i != m_threads.end(); ++i) {
     (*i)->wait();
   }
   m_lc.log(cta::log::INFO, "All DiskWriteThreadPool threads are now complete");

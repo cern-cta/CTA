@@ -28,7 +28,7 @@ int main ()
   Tape::System::realWrapper sWrapper;
   SCSI::DeviceVector<Tape::System::realWrapper> dl(sWrapper);
   for(SCSI::DeviceVector<Tape::System::realWrapper>::iterator i = dl.begin();
-          i != dl.end(); i++) {
+          i != dl.end(); ++i) {
     SCSI::DeviceInfo & dev = (*i);
     std::cout << dev.sg_path << std::endl;
   }

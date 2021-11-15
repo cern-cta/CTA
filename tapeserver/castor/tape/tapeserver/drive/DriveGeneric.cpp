@@ -410,7 +410,7 @@ std::vector<std::string> drive::DriveGeneric::getTapeAlerts(const std::vector<ui
   /* return vector */
   std::vector<std::string> ret;
   /* convert tape alert codes to strings */
-  for (std::vector<uint16_t>::const_iterator code =  tacs.begin(); code!= tacs.end(); code++) {
+  for (std::vector<uint16_t>::const_iterator code =  tacs.begin(); code!= tacs.end(); ++code) {
     ret.push_back(SCSI::tapeAlertToString(*code));
   }
   return ret;
@@ -423,7 +423,7 @@ std::vector<std::string> drive::DriveGeneric::getTapeAlertsCompact(const std::ve
   /* return vector */
   std::vector<std::string> ret;
   /* convert tape alert codes to strings */
-  for (std::vector<uint16_t>::const_iterator code =  tacs.begin(); code!= tacs.end(); code++) {
+  for (std::vector<uint16_t>::const_iterator code =  tacs.begin(); code!= tacs.end(); ++code) {
     ret.push_back(SCSI::tapeAlertToCompactString(*code));
   }
   return ret;
@@ -435,7 +435,7 @@ std::vector<std::string> drive::DriveGeneric::getTapeAlertsCompact(const std::ve
 bool drive::DriveGeneric::tapeAlertsCriticalForWrite(
   const std::vector<uint16_t> & codes) {
   for (std::vector<uint16_t>::const_iterator code =  codes.begin(); 
-    code!= codes.end(); code++) {
+    code!= codes.end(); ++code) {
       if(SCSI::isTapeAlertCriticalForWrite(*code)) {
         return true;
       }

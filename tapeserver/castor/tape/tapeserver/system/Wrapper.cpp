@@ -205,10 +205,10 @@ castor::tape::tapeserver::drive::DriveInterface *
  */
 void System::fakeWrapper::referenceFiles() {
   for (std::map<std::string, regularFile>::iterator i = m_regularFiles.begin();
-          i != m_regularFiles.end(); i++)
+          i != m_regularFiles.end(); ++i)
     m_files[i->first] = &m_regularFiles[i->first];
   for (std::map<std::string, stDeviceFile *>::iterator i = m_stFiles.begin();
-          i != m_stFiles.end(); i++)
+          i != m_stFiles.end(); ++i)
     m_files[i->first] = m_stFiles[i->first]; 
 }
 /**
@@ -221,7 +221,7 @@ System::fakeWrapper::~fakeWrapper() {
   }
 
   for (std::map<std::string, stDeviceFile *>::iterator i = m_stFiles.begin();
-       i != m_stFiles.end(); i++)
+       i != m_stFiles.end(); ++i)
     delete m_stFiles[i->first];
 }
 

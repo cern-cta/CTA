@@ -211,7 +211,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::logAndClearTapeAlerts(dri
       size_t alertNumber = 0;
       // Log tape alerts in the logs.
       std::vector<std::string> tapeAlerts = drive.getTapeAlerts(tapeAlertCodes);
-      for (std::vector<std::string>::iterator ta=tapeAlerts.begin(); ta!=tapeAlerts.end();ta++)
+      for (std::vector<std::string>::iterator ta=tapeAlerts.begin(); ta!=tapeAlerts.end();++ta)
       {
         std::list<cta::log::Param> params = {
           cta::log::Param("tapeAlert",*ta),

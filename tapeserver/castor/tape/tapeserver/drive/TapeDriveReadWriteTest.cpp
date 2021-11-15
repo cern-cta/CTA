@@ -62,7 +62,7 @@ int main ()
   castor::tape::System::realWrapper sWrapper;
   castor::tape::SCSI::DeviceVector dl(sWrapper);
   for(castor::tape::SCSI::DeviceVector::iterator i = dl.begin();
-          i != dl.end(); i++) {
+          i != dl.end(); ++i) {
     castor::tape::SCSI::DeviceInfo & dev = (*i);
     std::cout << std::endl << "-- SCSI device: " 
               << dev.sg_dev << " (" << dev.nst_dev << ")" << std::endl;

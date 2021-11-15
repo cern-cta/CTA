@@ -80,7 +80,7 @@ static void assertValidPathChar(const char c) {
 //------------------------------------------------------------------------------
 static void assertPathContainsValidChars(const std::string &path) {
   for(std::string::const_iterator itor = path.begin(); itor != path.end();
-    itor++) {
+    ++itor) {
     assertValidPathChar(*itor);
   }
 }
@@ -196,7 +196,7 @@ std::list<std::string> getEnclosedNames(
   std::list<std::string> names;
 
   for(std::list<std::string>::const_iterator itor = paths.begin();
-    itor != paths.end(); itor++) {
+    itor != paths.end(); ++itor) {
     names.push_back(getEnclosedName(*itor));
   }
 
@@ -346,7 +346,7 @@ std::string singleSpaceString(const std::string &str) {
 
   // For each character in the original string
   for(std::string::const_iterator itor = str.begin(); itor != str.end();
-    itor++) {
+    ++itor) {
 
     // If the character is a space or a tab
     if(*itor == ' ' || *itor == '\t') {
@@ -681,7 +681,7 @@ bool isValidUInt(const std::string &str) {
 
   // For each character in the string
   for(std::string::const_iterator itor = str.begin(); itor != str.end();
-    itor++) {
+    ++itor) {
 
     // If the current character is not a valid numerical digit
     if(*itor < '0' || *itor > '9') {
@@ -724,7 +724,7 @@ bool isValidDecimal(const std::string &str) {
   uint64_t nbDecimalPoints = 0;
 
   // For each character in the string
-  for(std::string::const_iterator itor = str.begin(); itor != str.end(); itor++) {
+  for(std::string::const_iterator itor = str.begin(); itor != str.end(); ++itor) {
 
     const bool isFirstChar = itor == str.begin();
     const bool isMinusChar = '-' == *itor;
@@ -771,7 +771,7 @@ double toDouble(const std::string &str) {
 // toUpper
 //------------------------------------------------------------------------------
 void toUpper(std::string &str) {
-  for(std::string::iterator itor=str.begin(); itor!=str.end(); itor++) {
+  for(std::string::iterator itor=str.begin(); itor!=str.end(); ++itor) {
     *itor = toupper(*itor);
   }
 }
@@ -780,7 +780,7 @@ void toUpper(std::string &str) {
 // toLower
 //------------------------------------------------------------------------------
 void toLower(std::string &str) {
-  for(std::string::iterator itor=str.begin(); itor!=str.end(); itor++) {
+  for(std::string::iterator itor=str.begin(); itor!=str.end(); ++itor) {
     *itor = tolower(*itor);
   }
 }
