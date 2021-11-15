@@ -529,6 +529,33 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 
 
 %changelog
+* Mon Nov 15 2021 julien.leduc (at) cern.ch - 4.3-3
+- cta/CTA#1053 Remove the objectstore presence in another classes
+- cta/CTA#501 cta-taped should set the state to DOWN when machine rebooting
+- cta/CTA#1056 Fix bugs in cta 4.3-2"
+- cta/CTA#1058 Remove helgrind_annotator from production
+* Fri Oct 22 2021 jorge.camarero (at) cern.ch - 4.3-2
+- cta-admin: All short options with more than one character now require two dashes
+- cta/CTA#1013 reportType uninitialized
+- cta/CTA#1044 Fix segmentation fault due to uninitialized optional value and remove diskSpaceReservations from `cta-admin dr ls`
+* Thu Sep 30 2021 jorge.camarero (at) cern.ch - 4.3-1 
+- cta/CTA#976 Add logical part of Drive Status using Catalogue
+- cta/CTA#988 Add diskSpaceReservations map in cta-admin --json dr ls output.
+- cta/CTA#983 Add cta-versionlock helper script to cta-release package, Update cta repo file to use the new public repo
+- cta/CTA#1036 Better error reporting in cta-admin tools
+- cta/CTA#1039 Improve logging of cta admin commands in cta frontend
+- cta/CTA#1041 Fix host values in cta-admin commands
+- cta/CTA#501 cta-taped should set the state to DOWN when machine rebooting
+- cta/CTA#955 cta-taped daemon should stop "immediately" and cleanly when systemctl stop/restart is executed
+- cta/CTA#991  Drive is not put down if the device file is removed while cta-taped is running and before a data transfer
+- cta/CTA#996  Removes PARALLEL from migration scripts
+- cta/CTA#1029 Fix segmentatin fault in frontend when list repacks of a tape that has been deleted in the catalogue
+- cta/CTA#1031 Fix Warning in updateDriveStatus
+- cta/CTA#1032 cta-admin dr ls crashes the frontend if executed during an archive/retrieve
+* Wed Sep 1 2021 miguel.barros (at) cern.ch - 4.2-1
+- Catalogue schema version 4.2
+- cta/CTA#1001 Maximum file size is now defined by VO instead of globally.
+- cta/CTA#1019 New command `cta-readtp` allows reading files from tape and verifying their checksum
 * Wed Aug 18 2021 volodymyr.yurchenko (at) cern.ch - 4.1-1
 - cta/CTA#1016 New options for filtering deleted files using `cta-admin rtf ls` command.
 - cta/CTA#983 Add cta-release package for public binary rpm distribution.
