@@ -275,8 +275,6 @@ void cta::RetrieveMount::diskComplete() {
   m_diskRunning = false;
   if (!m_tapeRunning) {
     // Just set the session as complete in the DB.
-    cta::SchedulerDatabase::RetrieveMount  * ptr = m_dbMount.get();
-    ptr=ptr;
     m_dbMount->complete(time(NULL));
     // and record we are done with the mount
     m_sessionRunning = false;

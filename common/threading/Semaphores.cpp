@@ -125,8 +125,7 @@ CondVarSemaphore::~CondVarSemaphore() {
       pthread_mutex_lock(&m_mutex);
       pthread_mutex_unlock(&m_mutex);
       /* Cleanup */
-      int rc=pthread_cond_destroy(&m_cond);
-      rc=rc;
+      pthread_cond_destroy(&m_cond);
       pthread_mutex_destroy(&m_mutex);
     }
 //------------------------------------------------------------------------------

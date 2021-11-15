@@ -349,8 +349,8 @@ void DriveHandler::resetToDefault(PreviousSession previousSessionState) {
   m_pid=-1;
   m_previousSession=previousSessionState;
   m_previousType=m_sessionType;
-  m_previousState=m_previousState;
-  m_previousVid=m_previousVid;
+  m_previousState=m_sessionState;
+  m_previousVid=m_sessionVid;
   m_sessionState=SessionState::PendingFork;
   m_sessionType=SessionType::Undetermined;
   m_lastStateChangeTime=decltype(m_lastStateChangeTime)::min();
