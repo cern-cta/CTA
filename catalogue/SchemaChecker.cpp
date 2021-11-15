@@ -91,9 +91,7 @@ SchemaCheckerResult SchemaChecker::checkTableContainsColumns(const std::string& 
     return res;
   }
   for(auto &columnName: columnNames){
-    try{
-      mapColumnsTypes.at(columnName);
-    } catch(std::out_of_range &){
+    if(mapColumnsTypes.find(columnName) == mapColumnsTypes.end()) {
       std::string error = "TABLE " + tableName + " does not contain the column " + columnName + ".";
       res.addError(error);
     }

@@ -44,9 +44,18 @@ int Cinitdaemon(const char *const name,
                 if (c > 0) exit (0);
         c = setsid();
         /* Redirect standard files to /dev/null */
-        freopen( "/dev/null", "r", stdin);
-        freopen( "/dev/null", "w", stdout);
-        freopen( "/dev/null", "w", stderr);
+        if (freopen( "/dev/null", "r", stdin) == NULL) {
+                fprintf (stderr, "%s: cannot freeopen stdin: %s\n",name,sstrerror(errno));
+                exit(1);
+        }
+        if (freopen( "/dev/null", "w", stdout) == NULL) {
+                fprintf (stderr, "%s: cannot freeopen stdout: %s\n",name,sstrerror(errno));
+                exit(1);
+        }
+        if (freopen( "/dev/null", "w", stderr) == NULL) {
+                fprintf (stderr, "%s: cannot freeopen stderr: %s\n",name,sstrerror(errno));
+                exit(1);
+        }
 
         for (c = 3; c < maxfds; c++)
                 close (c);
