@@ -117,9 +117,8 @@ libradosstriper::RadosStriper* RadosStriperPool::throwingGetStriper(const std::s
     newStriper->set_object_layout_stripe_unit(32 * 1024 * 1024); // 32 MB
     newStriper->set_object_layout_object_size(32 * 1024 * 1024); // 32 MB
     // insert into cache and return value
-    libradosstriper::RadosStriper * ret = newStriper.get();
     m_stripers[striperIdx][userAtPool] = newStriper.release();
-    return ret;
+    return  m_stripers[striperIdx][userAtPool];
   }
 }
 
