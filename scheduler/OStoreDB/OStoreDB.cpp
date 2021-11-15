@@ -1964,7 +1964,7 @@ std::unique_ptr<SchedulerDatabase::RepackRequest> OStoreDB::getNextRepackJobToEx
     auto repackRequest = jobs.elements.front().repackRequest.get();
     auto repackInfo = jobs.elements.front().repackInfo;
     //build the repackRequest with the repack infos
-    std::unique_ptr<OStoreDB::RepackRequest> ret;
+    std::unique_ptr<SchedulerDatabase::RepackRequest> ret;
     ret.reset(new OStoreDB::RepackRequest(repackRequest->getAddressIfSet(), *this));
     ret->repackInfo.vid = repackInfo.vid;
     ret->repackInfo.type = repackInfo.type;
@@ -1972,7 +1972,7 @@ std::unique_ptr<SchedulerDatabase::RepackRequest> OStoreDB::getNextRepackJobToEx
     ret->repackInfo.repackBufferBaseURL = repackInfo.repackBufferBaseURL;
     ret->repackInfo.forceDisabledTape = repackInfo.forceDisabledTape;
     ret->repackInfo.noRecall = repackInfo.noRecall;
-    return std::move(ret);
+    return ret;
   }
 }
 

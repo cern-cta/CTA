@@ -1283,7 +1283,7 @@ std::unique_ptr<cta::catalogue::Catalogue> DriveHandler::createCatalogue(const s
   m_processManager.logContext().log(log::DEBUG, "In DriveHandler::createCatalogue(): will connect to catalogue.");
   auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(m_sessionEndContext.logger(),
   catalogueLogin, nbConns, nbArchiveFileListingConns);
-  return std::move(catalogueFactory->create());
+  return catalogueFactory->create();
 }
 
 //------------------------------------------------------------------------------

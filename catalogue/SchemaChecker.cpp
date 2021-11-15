@@ -172,7 +172,7 @@ std::unique_ptr<SchemaChecker> SchemaChecker::Builder::build() {
     schemaChecker->m_schemaComparer = std::move(m_schemaComparer);
     schemaChecker->m_schemaComparer->setSchemaSqlStatementsReader(std::move(m_schemaSqlStatementsReader));
   }
-  return std::move(schemaChecker);
+  return schemaChecker;
 }
 
 }}

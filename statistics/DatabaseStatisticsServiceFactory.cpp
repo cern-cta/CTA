@@ -27,13 +27,13 @@ std::unique_ptr<DatabaseStatisticsService> DatabaseStatisticsServiceFactory::cre
   switch(dbType){
     case DbType::DBTYPE_MYSQL:
       ret.reset(new MySQLStatisticsService(databaseConnection));
-      return std::move(ret);
+      return ret;
     case DbType::DBTYPE_IN_MEMORY:
     case DbType::DBTYPE_SQLITE:
     case DbType::DBTYPE_ORACLE:
     case DbType::DBTYPE_POSTGRESQL:
       ret.reset(new DatabaseStatisticsService(databaseConnection));
-      return std::move(ret);
+      return ret;
     default:
       throw cta::exception::Exception("In DatabaseStatisticsServiceFactory::create(), unknown database type.");
   }
