@@ -121,7 +121,7 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
     // Get it referenced
     m_currentQueue = q;
     // Get our execution promise and future and leave one behind.
-    std::shared_ptr<std::promise<void>> promiseForThisQueue(m_nextQueueExecutionPromise);
+    std::shared_ptr<std::promise<void>> promiseForThisQueue = m_nextQueueExecutionPromise;
     auto futureForThisQueue = std::move(m_nextQueueExecutionFuture);
     // Leave a promise behind for the next queue, and set the future.
     m_nextQueueExecutionPromise.reset(new std::promise<void>);
