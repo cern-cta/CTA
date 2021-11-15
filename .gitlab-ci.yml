@@ -351,6 +351,8 @@ trigger_doc_update:
     strategy: depend
 
 cppcheck:
+  except:
+    - tags
   stage: analysis:check
   image:
     name: neszt/cppcheck-docker
@@ -365,6 +367,8 @@ cppcheck:
 
 # based on https://gitlab.com/ahogen/cppcheck-codequality
 cppcheck_report:
+  except:
+    - tags
   stage: analysis:report
   image: centos:7
   script:
