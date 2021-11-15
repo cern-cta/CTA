@@ -15,15 +15,15 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "common/exception/Exception.hpp"
+#include "common/threading/MutexLocker.hpp"
 #include "DiskReporterFactory.hpp"
 #include "EOSReporter.hpp"
 #include "NullReporter.hpp"
-#include "common/exception/Exception.hpp"
-#include "common/threading/MutexLocker.hpp"
 
 namespace cta { namespace disk {
 
-DiskReporter* DiskReporterFactory::createDiskReporter(const std::string URL) {
+DiskReporter* DiskReporterFactory::createDiskReporter(const std::string& URL) {
   threading::MutexLocker ml(m_mutex);
   auto regexResult = m_EosUrlRegex.exec(URL);
   if (regexResult.size()) {
@@ -37,4 +37,5 @@ DiskReporter* DiskReporterFactory::createDiskReporter(const std::string URL) {
       std::string("In DiskReporterFactory::createDiskReporter failed to parse URL: ")+URL);
 }
 
-}} // namespace cta::disk
+}  // namespace disk
+}  // namespace cta

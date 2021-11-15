@@ -15,12 +15,16 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <string>
+#include <vector>
+
 #include "BackendFactory.hpp"
 #include "BackendRados.hpp"
 #include "BackendVFS.hpp"
 #include "common/exception/Exception.hpp"
-#include "common/utils/utils.hpp"
 #include "common/utils/Regex.hpp"
+#include "common/utils/utils.hpp"
+
 
 auto cta::objectstore::BackendFactory::createBackend(const std::string& URL, log::Logger & logger)
   -> std::unique_ptr<Backend> {

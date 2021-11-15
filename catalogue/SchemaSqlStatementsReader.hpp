@@ -21,7 +21,7 @@
 #include "CatalogueSchema.hpp"
 
 namespace cta{ namespace catalogue {
-  
+
 class SchemaSqlStatementsReader {
 public:
   SchemaSqlStatementsReader();
@@ -32,7 +32,7 @@ public:
 protected:
   cta::rdbms::Login::DbType m_dbType;
   /**
-  * Separates the statements and put them in a std::list<std::string> 
+  * Separates the statements and put them in a std::list<std::string>
   * @param schema the sql statements put all together
   * @return a list containing separated statements from the schema passed in parameter
   */
@@ -86,7 +86,7 @@ private:
 
 class CppSchemaStatementsReader: public SchemaSqlStatementsReader{
 public:
-  CppSchemaStatementsReader(const cta::catalogue::CatalogueSchema schema);
+  CppSchemaStatementsReader(const cta::catalogue::CatalogueSchema& schema);
   std::list<std::string> getStatements();
 private:
   const cta::catalogue::CatalogueSchema m_schema;

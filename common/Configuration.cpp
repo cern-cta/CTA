@@ -26,9 +26,9 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::Configuration::Configuration(std::string fileName)
-   : m_fileName(fileName),
-  m_lastUpdateTime(0) {
+cta::common::Configuration::Configuration(const std::string& fileName)
+  : m_fileName(fileName),
+    m_lastUpdateTime(0) {
   // create internal r/w lock
   int rc = pthread_rwlock_init(&m_lock, NULL);
   if (0 != rc) {
@@ -111,8 +111,8 @@ const std::string& cta::common::Configuration::getConfEntString(
       if (catIt->second.end() != entIt) {
         // release the lock
         pthread_rwlock_unlock(&m_lock);
-        if(NULL != log) {           
-          std::list<cta::log::Param> params = {   
+        if(NULL != log) {
+          std::list<cta::log::Param> params = {
             cta::log::Param("category", category),
             cta::log::Param("key", key),
             cta::log::Param("value", entIt->second),
@@ -226,13 +226,13 @@ bool cta::common::Configuration::isStale()
     int timeout = getTimeoutNolock();
     // release the lock
     pthread_rwlock_unlock(&m_lock);
-    // return whether we should renew  
+    // return whether we should renew
     return time(0) > m_lastUpdateTime + timeout;
   } catch (...) {
     // release the lock
     pthread_rwlock_unlock(&m_lock);
     throw;
-  }   
+  }
 }
 
 //------------------------------------------------------------------------------

@@ -14,7 +14,7 @@
  *                 You should have received a copy of the GNU General Public License
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/* 
+/*
  * File:   SchemaComparer.hpp
  * Author: cedric
  *
@@ -41,13 +41,13 @@ public:
    * Constructs a SchemaComparer
    * @param catalogueMetadataGetter the catalogue metadata getter to compare the catalogue schema content
    */
-  SchemaComparer(const std::string databaseToCheckName, DatabaseMetadataGetter &databaseMetadataGetter);
+  SchemaComparer(const std::string& databaseToCheckName, DatabaseMetadataGetter &databaseMetadataGetter);
   /**
    * Destructor
    */
   virtual ~SchemaComparer();
   /**
-   * Compare the schema to compare against the database 
+   * Compare the schema to compare against the database
    * @return a SchemaComparerResult object that will contain the differences if there are some
    */
   virtual SchemaCheckerResult compareAll() = 0;
@@ -61,7 +61,7 @@ public:
    * @return a SchemaComparerResult that will contain the differences if there are some
    */
   virtual SchemaCheckerResult compareIndexes() = 0;
-  
+
   /**
    * Compare only the tables that are located in the schema
    * This is useful when want to compare ONLY tables that are defined in a schema
@@ -73,7 +73,7 @@ public:
    * @param schemaSqlStatementsReader the reader used to get the schema sql statements in order to do schema comparison
    */
   void setSchemaSqlStatementsReader(std::unique_ptr<SchemaSqlStatementsReader> schemaSqlStatementsReader);
-  
+
 protected:
   const std::string  m_databaseToCheckName;
   cta::catalogue::DatabaseMetadataGetter & m_databaseMetadataGetter;

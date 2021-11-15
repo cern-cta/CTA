@@ -35,7 +35,7 @@ cta::objectstore::Agent::Agent(GenericObject& go):
   getPayloadFromHeader();
 }
 
-cta::objectstore::Agent::Agent(const std::string & name, Backend & os): 
+cta::objectstore::Agent::Agent(const std::string & name, Backend & os):
   ObjectOps<serializers::Agent, serializers::Agent_t>(os, name), m_nextId(0) {}
 
 void cta::objectstore::Agent::initialize() {
@@ -164,7 +164,7 @@ bool cta::objectstore::Agent::needsGarbageCollection() {
 void cta::objectstore::Agent::garbageCollect(const std::string& presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) {
   checkPayloadWritable();
-  // We are here limited to checking the presumed owner and mark the agent as 
+  // We are here limited to checking the presumed owner and mark the agent as
   // untracked in the agent register in case of match, else we do nothing
   if (m_header.owner() == presumedOwner) {
     // We need to get hold of the agent register, which we suppose is available
@@ -200,7 +200,7 @@ void cta::objectstore::Agent::garbageCollect(const std::string& presumedOwner, A
   m_creationDone = true;
 }*/
 
-void cta::objectstore::Agent::addToOwnership(std::string name) {
+void cta::objectstore::Agent::addToOwnership(const std::string& name) {
   checkPayloadWritable();
   std::string * owned = m_payload.mutable_ownedobjects()->Add();
   *owned = name;
@@ -211,7 +211,7 @@ void cta::objectstore::Agent::removeFromOwnership(std::string name) {
   serializers::removeString(m_payload.mutable_ownedobjects(), name);
 }
 
-std::list<std::string> 
+std::list<std::string>
   cta::objectstore::Agent::getOwnershipList() {
   checkPayloadReadable();
   std::list<std::string> ret;
@@ -272,5 +272,3 @@ std::string cta::objectstore::Agent::dump() {
   google::protobuf::util::MessageToJsonString(m_payload, &headerDump, options);
   return headerDump;
 }
-
-

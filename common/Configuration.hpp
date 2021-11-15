@@ -25,7 +25,7 @@
 #include <map>
 
 namespace cta { namespace common {
-    
+
     /**
      * represents a category from the CTA configuration file
      */
@@ -41,20 +41,20 @@ namespace cta { namespace common {
     class Configuration {
 
     public:
-      
+
       /**
-       * Private exceptions for this 
+       * Private exceptions for this
        */
       CTA_GENERATE_EXCEPTION_CLASS(InvalidConfigEntry);
       CTA_GENERATE_EXCEPTION_CLASS(NoEntry);
-        
+
     public:
-      
+
       /**
        * constructor
        * @param fileName the file that should be used to build the configuration
        */
-      Configuration(std::string fileName);
+      explicit Configuration(const std::string& fileName);
 
       /**
        * copy constructor
@@ -264,5 +264,4 @@ namespace cta { namespace common {
     };
 
   } // namespace common
-} // namespace castor  
-
+} // namespace castor

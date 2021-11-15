@@ -14,17 +14,26 @@
  *                 You should have received a copy of the GNU General Public License
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include <memory>
+#include <string>
+#include <utility>
+
 #include "SchemaComparer.hpp"
 
 namespace cta {
 namespace catalogue {
-SchemaComparer::SchemaComparer(const std::string databaseToCheckName, DatabaseMetadataGetter &catalogueMetadataGetter): m_databaseToCheckName(databaseToCheckName),m_databaseMetadataGetter(catalogueMetadataGetter),m_compareTableConstraints((m_databaseMetadataGetter.getDbType() != cta::rdbms::Login::DBTYPE_MYSQL)){}
+SchemaComparer::SchemaComparer(const std::string& databaseToCheckName, DatabaseMetadataGetter &catalogueMetadataGetter)
+  : m_databaseToCheckName(databaseToCheckName),
+    m_databaseMetadataGetter(catalogueMetadataGetter),
+    m_compareTableConstraints((m_databaseMetadataGetter.getDbType() != cta::rdbms::Login::DBTYPE_MYSQL)) {}
 
-void SchemaComparer::setSchemaSqlStatementsReader(std::unique_ptr<SchemaSqlStatementsReader> schemaSqlStatementsReader){
+void SchemaComparer::setSchemaSqlStatementsReader(std::unique_ptr<SchemaSqlStatementsReader> schemaSqlStatementsReader) {
   m_schemaSqlStatementsReader = std::move(schemaSqlStatementsReader);
 }
 
 SchemaComparer::~SchemaComparer() {
 }
 
-}}
+}  // namespace catalogue
+}  // namespace cta

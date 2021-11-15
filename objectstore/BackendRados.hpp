@@ -69,25 +69,25 @@ public:
   std::string pool() {
     return m_pool;
   }
-  
 
-  void create(std::string name, std::string content) override;
-  
-  void atomicOverwrite(std::string name, std::string content) override;
 
-  std::string read(std::string name) override;
-  
-  void remove(std::string name) override;
-  
-  bool exists(std::string name) override;
-  
+  void create(const std::string& name, const std::string& content) override;
+
+  void atomicOverwrite(const std::string& name, const std::string& content) override;
+
+  std::string read(const std::string& name) override;
+
+  void remove(const std::string& name) override;
+
+  bool exists(const std::string& name) override;
+
   std::list<std::string> list() override;
-      
+
   enum class LockType {
     Shared,
     Exclusive
   };
-  
+
   class ScopedLock: public Backend::ScopedLock {
     friend class BackendRados;
   public:
@@ -99,33 +99,33 @@ public:
     ~ScopedLock() override;
   private:
     ScopedLock(librados::IoCtx & ioCtx): m_lockSet(false), m_context(ioCtx) {}
-    void set(const std::string & oid, const std::string clientId, LockType lockType);
+    void set(const std::string & oid, const std::string& clientId, LockType lockType);
     bool m_lockSet;
     librados::IoCtx & m_context;
     std::string m_clientId;
     std::string m_oid;
     LockType m_lockType;
   };
-  
+
   static const size_t c_maxBackoff;
   static const size_t c_backoffFraction;
   static const uint64_t c_maxWait;
-  
+
 private:
   static std::string createUniqueClientId();
   /** This function will lock or die (actually throw, that is) */
-  void lock(std::string name, uint64_t timeout_us, LockType lockType, const std::string & clientId);
-  inline void lockBackoff(std::string name, uint64_t timeout_us, LockType lockType, 
+  void lock(const std::string& name, uint64_t timeout_us, LockType lockType, const std::string & clientId);
+  inline void lockBackoff(const std::string& name, uint64_t timeout_us, LockType lockType,
     const std::string & clientId, librados::IoCtx & radosCtx);
-  inline void lockNotify(std::string name, uint64_t timeout_us, LockType lockType, 
+  inline void lockNotify(const std::string& name, uint64_t timeout_us, LockType lockType,
     const std::string & clientId, librados::IoCtx & radosCtx);
-  
-public:  
-  ScopedLock * lockExclusive(std::string name, uint64_t timeout_us=0) override;
 
-  ScopedLock * lockShared(std::string name, uint64_t timeout_us=0) override;
+public:
+  ScopedLock * lockExclusive(const std::string& name, uint64_t timeout_us=0) override;
+
+  ScopedLock * lockShared(const std::string& name, uint64_t timeout_us=0) override;
 private:
-  /** 
+  /**
    * A class for logging the calls to rados taking too long.
    * If RADOS_SLOW_CALLS_LOGGING is not defined, this is just an empty shell.
    */
@@ -163,7 +163,7 @@ private:
     static cta::threading::Mutex g_mutex;
     #endif //RADOS_SLOW_CALLS_LOGGING
   };
-  
+
   /**
    * A class for logging lock timings and performance
    */
@@ -183,7 +183,7 @@ private:
       double minLatencyMultiplier = 0;
       double maxLatencyMultiplier = 0;
       void addSuccess (double latency, double time);
-      void addAttempt(double latency, double waitTime, double latencyMultiplier); 
+      void addAttempt(double latency, double waitTime, double latencyMultiplier);
    };
     void addMeasurements(const Measurements & measurements);
     void logIfNeeded();
@@ -233,7 +233,7 @@ private:
     librados::IoCtx & m_context;
     uint64_t m_watchHandle;
   };
-  
+
 private:
   /**
    * Base class for jobs handled by the thread-and-context pool.
@@ -243,12 +243,12 @@ private:
     virtual void execute()=0;
     virtual ~AsyncJob() {}
   };
-  
+
   /**
    * The queue for the thread-and-context pool.
    */
   cta::threading::BlockingQueue<AsyncJob *> m_jobQueue;
-  
+
   /**
    * The class for the worker threads
    */
@@ -265,12 +265,12 @@ private:
     void run() override;
   };
   friend RadosWorkerThreadAndContext;
-  
+
   /**
    * The container for the threads
    */
   std::vector<RadosWorkerThreadAndContext *> m_threads;
-  
+
 public:
   /**
    * A class following up the async creation. Constructor implicitly starts the creation.
@@ -305,9 +305,9 @@ public:
     /** Timer for retries (created only when needed */
     std::unique_ptr<cta::utils::Timer> m_retryTimer;
   };
-  
+
   Backend::AsyncCreator* asyncCreate(const std::string& name, const std::string& value) override;
-  
+
   /**
    * A class following up the lock-fetch-update-write-unlock. Constructor implicitly
    * starts the lock step.
@@ -327,14 +327,14 @@ public:
     std::promise<void> m_job;
     /** The future from m_jobs, which will be extracted before any thread gets a chance to play with it. */
     std::future<void> m_jobFuture;
-    /** A future used to hold the structure of the lock operation. It will be either empty of complete at 
+    /** A future used to hold the structure of the lock operation. It will be either empty of complete at
      destruction time */
     std::unique_ptr<std::future<void>> m_lockAsync;
     /** A string used to identify the locker */
     std::string m_lockClient;
     /** The rados bufferlist used to hold the object data (read+write) */
     ::librados::bufferlist m_radosBufferList;
-    /** An async job that will process the update of the object. */ 
+    /** An async job that will process the update of the object. */
     class UpdateJob: public AsyncJob {
     public:
       void setParentUpdater (AsyncUpdater * updater) { m_parentUpdater = updater; }
@@ -355,11 +355,11 @@ public:
     /** Instrumentation for rados calls timing */
     RadosTimeoutLogger m_radosTimeoutLogger;
   };
-  
+
   Backend::AsyncUpdater* asyncUpdate(const std::string & name, std::function <std::string(const std::string &)> & update) override;
 
   /**
-   * A class following up the check existence-lock-delete. 
+   * A class following up the check existence-lock-delete.
    * Constructor implicitly starts the lock step.
    */
   class AsyncDeleter: public Backend::AsyncDeleter {
@@ -375,7 +375,7 @@ public:
     std::promise<void> m_job;
     /** The future from m_jobs, which will be extracted before any thread gets a chance to play with it. */
     std::future<void> m_jobFuture;
-    /** A future used to hold the structure of the lock operation. It will be either empty of complete at 
+    /** A future used to hold the structure of the lock operation. It will be either empty of complete at
      destruction time */
     std::unique_ptr<std::future<void>> m_lockAsync;
     /** A string used to identify the locker */
@@ -385,11 +385,11 @@ public:
     /** Instrumentation for rados calls timing */
     RadosTimeoutLogger m_radosTimeoutLogger;
   };
-  
+
   Backend::AsyncDeleter* asyncDelete(const std::string & name) override;
-  
+
   /**
-   * A class following up the async lockfree fetch. 
+   * A class following up the async lockfree fetch.
    * Constructor implicitly starts the fetch step.
    */
   class AsyncLockfreeFetcher: public Backend::AsyncLockfreeFetcher {
@@ -422,9 +422,9 @@ public:
     /** Instrumentation for rados calls timing */
     RadosTimeoutLogger m_radosTimeoutLogger;
   };
-  
+
   Backend::AsyncLockfreeFetcher* asyncLockfreeFetch(const std::string& name) override;
-  
+
   class Parameters: public Backend::Parameters {
     friend class BackendRados;
   public:
@@ -439,13 +439,13 @@ public:
     std::string m_pool;
     std::string m_namespace;
   };
-  
+
   Parameters * getParams() override;
 
   std::string typeName() override {
     return "cta::objectstore::BackendRados";
   }
-  
+
 private:
   std::string m_user;
   std::string m_pool;

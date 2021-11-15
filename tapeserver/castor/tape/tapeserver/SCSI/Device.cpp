@@ -16,17 +16,16 @@
  */
 
 #include <cstdlib>
-#include <scsi/sg.h>
 
-#include "Device.hpp"
 #include "common/exception/Errnum.hpp"
+#include "Device.hpp"
 
 using namespace castor::tape;
 
 /**
  * Fill up the array that the device list is with all the system's
  * SCSI devices information.
- * 
+ *
  * (all code using templates must be in the header file)
  */
 SCSI::DeviceVector::DeviceVector(System::virtualWrapper& sysWrapper) : m_sysWrapper(sysWrapper) {
@@ -53,12 +52,12 @@ SCSI::DeviceVector::DeviceVector(System::virtualWrapper& sysWrapper) : m_sysWrap
   sysWrapper.closedir(dirp);
 }
 
-SCSI::DeviceInfo & SCSI::DeviceVector::findBySymlink(std::string path) {
+SCSI::DeviceInfo & SCSI::DeviceVector::findBySymlink(const std::string& path) {
   struct stat sbuff;
   cta::exception::Errnum::throwOnMinusOne(
       m_sysWrapper.stat(path.c_str(), &sbuff),
       std::string("Could not stat path: ")+path);
-  for(std::vector<DeviceInfo>::iterator i = begin(); i!= end(); ++i) {
+  for (std::vector<DeviceInfo>::iterator i = begin(); i!= end(); i++) {
     if (i->nst == sbuff || i->st == sbuff) {
       return *i;
     }
@@ -67,7 +66,7 @@ SCSI::DeviceInfo & SCSI::DeviceVector::findBySymlink(std::string path) {
       std::string("Could not find tape device pointed to by ") + path);
 }
 
-std::string SCSI::DeviceVector::readfile(std::string path) {
+std::string SCSI::DeviceVector::readfile(const std::string& path) {
   int fd;
   cta::exception::Errnum::throwOnMinusOne(
       fd = m_sysWrapper.open(path.c_str(), 0),
@@ -85,7 +84,7 @@ std::string SCSI::DeviceVector::readfile(std::string path) {
   return ret;
 }
 
-SCSI::DeviceInfo::DeviceFile SCSI::DeviceVector::readDeviceFile(std::string path) {
+SCSI::DeviceInfo::DeviceFile SCSI::DeviceVector::readDeviceFile(const std::string& path) {
   DeviceInfo::DeviceFile ret;
   std::string file = readfile(path);
   if (!::sscanf(file.c_str(), "%u:%u\n", &ret.major, &ret.minor))
@@ -93,7 +92,7 @@ SCSI::DeviceInfo::DeviceFile SCSI::DeviceVector::readDeviceFile(std::string path
   return ret;
 }
 
-SCSI::DeviceInfo::DeviceFile SCSI::DeviceVector::statDeviceFile(std::string path) {
+SCSI::DeviceInfo::DeviceFile SCSI::DeviceVector::statDeviceFile(const std::string& path) {
   struct stat sbuf;
   cta::exception::Errnum::throwOnNonZero(
      m_sysWrapper.stat(path.c_str(), &sbuf),
@@ -113,18 +112,18 @@ SCSI::DeviceInfo::DeviceFile SCSI::DeviceVector::statDeviceFile(std::string path
  */
 void SCSI::DeviceVector::getTapeInfo(DeviceInfo & devinfo) {
   /* Find the st and nst devices for this SCSI device */
-  DIR * dirp; 
+  DIR * dirp;
   /* SLC6 default tapeDir and scsiPrefix */
   std::string tapeDir="/scsi_tape"; /* The name of the tape dir inside of
                                      * devinfo.sysfs_entry. /scsi_tape/ on SLC6.
                                      */
-  std::string scsiPrefix="^";        /* The prefix for the name for the tape 
+  std::string scsiPrefix="^";        /* The prefix for the name for the tape
                                       * device name for the regexp.
                                       * scsi_tape: on SLC5.
-                                      */ 
+                                      */
   /* we try to open /scsi_tape first for SLC6 */
   dirp = m_sysWrapper.opendir((devinfo.sysfs_entry+tapeDir).c_str());
-  
+
   if (!dirp) {
     /* here we open sysfs_entry for SLC5 */
     cta::exception::Errnum::throwOnNull(
@@ -132,20 +131,20 @@ void SCSI::DeviceVector::getTapeInfo(DeviceInfo & devinfo) {
         std::string("Error opening tape device directory ") +
             devinfo.sysfs_entry + tapeDir+" or "+devinfo.sysfs_entry);
     /* we are not on SLC6 */
-    scsiPrefix="^scsi_tape:"; 
+    scsiPrefix = "^scsi_tape:";
     tapeDir ="";
-  } 
-  
+  }
+
   cta::utils::Regex st_re((scsiPrefix+"(st[[:digit:]]+)$").c_str());
   cta::utils::Regex nst_re((scsiPrefix+"(nst[[:digit:]]+)$").c_str());
-  
+
   while (struct dirent * dent = m_sysWrapper.readdir(dirp)) {
     std::vector<std::string> res;
     /* Check if it's the st information */
     res = st_re.exec(dent->d_name);
     if (res.size()) {
       if (!devinfo.st_dev.size()) {
-        devinfo.st_dev = std::string("/dev/") + res[1];     
+        devinfo.st_dev = std::string("/dev/") + res[1];
       } else
         throw cta::exception::Exception("Matched st device several times!");
       /* Read the major and major number */
@@ -191,8 +190,8 @@ void SCSI::DeviceVector::getTapeInfo(DeviceInfo & devinfo) {
 
 /**
  * Extract information from sysfs about a SCSI device.
- * @param path Path to the directory with information about 
- * @return 
+ * @param path Path to the directory with information about
+ * @return
  */
 SCSI::DeviceInfo SCSI::DeviceVector::getDeviceInfo(const char * path) {
   DeviceInfo ret;

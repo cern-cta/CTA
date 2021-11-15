@@ -17,11 +17,14 @@
 
 #pragma once
 
+#include <syscall.h>
+
 #include <fstream>
 #include <future>
+#include <list>
+#include <map>
 #include <set>
 #include <string>
-#include <syscall.h>
 
 #include "catalogue/Catalogue.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
@@ -31,8 +34,8 @@
 #include "scheduler/OStoreDB/OStoreDB.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 
-//Activate or not helper cache update for debugging
-//#define HELPERS_CACHE_UPDATE_LOGGING
+// Activate or not helper cache update for debugging
+// #define HELPERS_CACHE_UPDATE_LOGGING
 #define HELPERS_CACHE_UPDATE_LOGGING_FILE "/var/tmp/cta-helpers-update-cache.log"
 
 /**
@@ -49,7 +52,7 @@ class RepackQueue;
  * A class with static functions allowing multi-object operations
  */
 class Helpers {
-public:
+ public:
   /**
    * Find or create an archive or retrieve queue, and return it locked and fetched to the caller
    * (Queue and ScopedExclusiveLock objects are provided empty)
@@ -82,8 +85,8 @@ public:
    * frequent access to the object store. The caching create a small inefficiency
    * to the algorithm, but will help performance drastically for a very similar result
    */
-  static std::string selectBestRetrieveQueue (const std::set<std::string> & candidateVids, cta::catalogue::Catalogue & catalogue,
-  objectstore::Backend & objectstore, bool forceDisabledTape = false);
+  static std::string selectBestRetrieveQueue(const std::set<std::string> & candidateVids,
+    cta::catalogue::Catalogue & catalogue, objectstore::Backend & objectstore, bool forceDisabledTape = false);
 
   /**
    * Gets the retrieve queue statistics for a set of Vids (extracted from the OStoreDB
@@ -106,7 +109,7 @@ public:
    */
   static void flushRetrieveQueueStatisticsCache();
 
-private:
+ private:
   /** Lock for the retrieve queues stats */
   static cta::threading::Mutex g_retrieveQueueStatisticsMutex;
   /** A struct holding together RetrieveQueueStatistics, tape status and an update time. */
@@ -123,13 +126,13 @@ private:
   static std::map<std::string, RetrieveQueueStatisticsWithTime> g_retrieveQueueStatistics;
   /** Time between cache updates */
   static const time_t c_retrieveQueueCacheMaxAge = 10;
-  static void logUpdateCacheIfNeeded(const bool entryCreation,const RetrieveQueueStatisticsWithTime& tapeStatistic, std::string message="");
+  static void logUpdateCacheIfNeeded(const bool entryCreation, const RetrieveQueueStatisticsWithTime& tapeStatistic,
+    const std::string& message = "");
 
-public:
-
+ public:
   enum class CreateIfNeeded: bool {
-    create=true,
-    doNotCreate=false
+    create = true,
+    doNotCreate = false
   };
 
   /**
@@ -145,4 +148,5 @@ public:
   static void removeRepackRequestToIndex(const std::string & vid, Backend & backend, log::LogContext & lc);
 };
 
-}} // namespace cta::objectstore
+}  // namespace objectstore
+}  // namespace cta

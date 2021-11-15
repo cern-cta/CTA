@@ -17,10 +17,11 @@
 
 #pragma once
 
-#include "common/exception/Exception.hpp"
 #include <string>
 #include <list>
 #include <functional>
+
+#include "common/exception/Exception.hpp"
 
 namespace cta { namespace objectstore {
 
@@ -29,41 +30,41 @@ namespace cta { namespace objectstore {
  */
 
 class Backend {
-public:
+ public:
   virtual ~Backend() {}
   /**
    * Create an object (and possibly the necessary locking structures)
    * @param name name of the object
    * @param content the object's content
    */
-  virtual void create(std::string name, std::string content) = 0;
+  virtual void create(const std::string& name, const std::string& content) = 0;
 
   /**
    * Overwrite an existing object atomically
    * @param name name of the object
    * @param content new content of the object
    */
-  virtual void atomicOverwrite(std::string name, std::string content) = 0;
+  virtual void atomicOverwrite(const std::string& name, const std::string& content) = 0;
 
   /**
    * Read the content of an object
    * @param name name of the object
    * @return the content of the object, as a string.
    */
-  virtual std::string read(std::string name) = 0;
+  virtual std::string read(const std::string& name) = 0;
 
   /**
    * Delete an object (and possibly its locking structure)
    * @param name name of the object
    */
-  virtual void remove(std::string name) = 0;
+  virtual void remove(const std::string& name) = 0;
 
   /**
    * Tests the existence of the object
    * @param name
    * @return true if the object is found
    */
-  virtual bool exists(std::string name) = 0;
+  virtual bool exists(const std::string& name) = 0;
 
   /**
    * Lists all objects
@@ -75,7 +76,7 @@ public:
    * RAII class holding locks
    */
   class ScopedLock {
-  public:
+   public:
     /**
      * Explicitely releases the lock
      */
@@ -92,14 +93,14 @@ public:
    * @param name name of the object
    * @return pointer to a newly created scoped lock object (for RAII)
    */
-  virtual ScopedLock * lockShared(std::string name, uint64_t timeout_us=0) = 0;
+  virtual ScopedLock * lockShared(const std::string& name, uint64_t timeout_us = 0) = 0;
 
   /**
    * Locks the object exclusively
    * @param name name of the object
    * @return pointer to a newly created scoped lock object (for RAII)
    */
-  virtual ScopedLock * lockExclusive(std::string name, uint64_t timeout_us=0) = 0;
+  virtual ScopedLock * lockExclusive(const std::string& name, uint64_t timeout_us = 0) = 0;
 
   /// A collection of exceptions allowing the user to find out which step failed.
   CTA_GENERATE_EXCEPTION_CLASS(WrongPreviousOwner);
@@ -116,7 +117,7 @@ public:
    * A base class handling asynchronous creation of objects.
    */
   class AsyncCreator {
-  public:
+   public:
     /**
      * Waits for completion (success) of throws exception (failure).
      */
@@ -141,7 +142,7 @@ public:
    * (success or exception) will be returned via the wait() function call.
    */
   class AsyncUpdater {
-  public:
+   public:
     /**
      * Waits for completion (success) of throws exception (failure).
      */
@@ -169,7 +170,7 @@ public:
    * (success or exception) will be returned via the wait() function call.
    */
   class AsyncDeleter {
- public:
+   public:
     /**
      * Waits for completion (success) of throws exception (failure).
      */
@@ -196,7 +197,7 @@ public:
    * (success or exception) will be returned via the wait() function call.
    */
   class AsyncLockfreeFetcher {
- public:
+   public:
     /**
      * Waits for completion (success) of throws exception (failure).
      * The return value is the content of the object.
@@ -222,7 +223,7 @@ public:
    * Base class for the representation of the parameters of the BackendStore.
    */
   class Parameters {
-  public:
+   public:
     /**
      * Turns parameter class into string representation
      * @return the string representation
@@ -254,4 +255,5 @@ public:
   virtual std::string typeName() = 0;
 };
 
-}} // end of cta::objectstore
+}  // namespace objectstore
+}  // namespace cta

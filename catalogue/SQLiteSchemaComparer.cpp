@@ -23,8 +23,8 @@
 
 namespace cta {
 namespace catalogue {
-  
-SQLiteSchemaComparer::SQLiteSchemaComparer(const std::string databaseToCheckName, DatabaseMetadataGetter &catalogueMetadataGetter): SchemaComparer(databaseToCheckName,catalogueMetadataGetter) {
+
+SQLiteSchemaComparer::SQLiteSchemaComparer(const std::string& databaseToCheckName, DatabaseMetadataGetter &catalogueMetadataGetter): SchemaComparer(databaseToCheckName,catalogueMetadataGetter) {
   log::DummyLogger dl("dummy","dummy");
   auto login = rdbms::Login::parseString("in_memory");
   //Create SQLite connection
@@ -111,12 +111,12 @@ SchemaCheckerResult SQLiteSchemaComparer::compareTables(const std::list<std::str
   std::map<std::string, std::map<std::string, std::string>> schemaTableColumns;
   std::map<std::string,std::list<std::string>> databaseTableConstraints;
   std::map<std::string, std::list<std::string>> schemaTableConstraints;
-  
+
   for(auto &databaseTable: databaseTables){
     databaseTableColumns[databaseTable] = m_databaseMetadataGetter.getColumns(databaseTable);
     databaseTableConstraints[databaseTable] = m_databaseMetadataGetter.getConstraintNames(databaseTable);
   }
-  
+
   for(auto &schemaTable: schemaTables){
     schemaTableColumns[schemaTable] = m_schemaMetadataGetter->getColumns(schemaTable);
     if(m_compareTableConstraints) {
@@ -124,10 +124,10 @@ SchemaCheckerResult SQLiteSchemaComparer::compareTables(const std::list<std::str
       result += compareItems("IN TABLE "+schemaTable+", CONSTRAINT",databaseTableConstraints[schemaTable],schemaTableConstraints[schemaTable]);
     }
   }
-  
+
   result += compareTableColumns(databaseTableColumns,m_databaseToCheckName+" database",schemaTableColumns,"schema");
   result += compareTableColumns(schemaTableColumns,"schema",databaseTableColumns,m_databaseToCheckName+" database");
-  
+
   return result;
 }
 

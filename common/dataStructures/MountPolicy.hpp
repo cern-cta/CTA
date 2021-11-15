@@ -17,9 +17,10 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #include <list>
 #include <map>
-#include <stdint.h>
 #include <string>
 
 #include "common/dataStructures/EntryLog.hpp"
@@ -29,16 +30,15 @@ namespace common {
 namespace dataStructures {
 
 /**
- * Specifies the minimum criteria needed to warrant a mount 
+ * Specifies the minimum criteria needed to warrant a mount
  */
 struct MountPolicy {
-
   MountPolicy();
-  
+
   bool operator==(const MountPolicy &rhs) const;
 
   bool operator!=(const MountPolicy &rhs) const;
-  
+
   MountPolicy operator=(const MountPolicy& other);
 
   std::string name;
@@ -49,17 +49,18 @@ struct MountPolicy {
   EntryLog creationLog;
   EntryLog lastModificationLog;
   std::string comment;
-  
-  //As repack request does not have mount policy yet, we need to create a fake one to be able to do a Retrieve mount or Archive mount
-  static struct MountPolicy s_defaultMountPolicyForRepack;
-  
-private:
-  MountPolicy(const std::string name,const uint64_t archivePriority,const uint64_t archiveMinRequestAge, const uint64_t retrievePriority, const uint64_t retrieveMinRequestAge);
 
-}; // struct MountPolicy
+  // As repack request does not have mount policy yet, we need to create a fake one to be able
+  // to do a Retrieve mount or Archive mount
+  static struct MountPolicy s_defaultMountPolicyForRepack;
+
+ private:
+  MountPolicy(const std::string& name, const uint64_t archivePriority, const uint64_t archiveMinRequestAge,
+    const uint64_t retrievePriority, const uint64_t retrieveMinRequestAge);
+};  // struct MountPolicy
 
 std::ostream &operator<<(std::ostream &os, const MountPolicy &obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

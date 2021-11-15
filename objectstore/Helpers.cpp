@@ -600,16 +600,20 @@ void Helpers::removeRepackRequestToIndex(const std::string& vid, Backend& backen
   ri.commit();
 }
 
-void Helpers::logUpdateCacheIfNeeded(const bool entryCreation, const RetrieveQueueStatisticsWithTime& tapeStatistic, std::string message){
+void Helpers::logUpdateCacheIfNeeded(const bool entryCreation, const RetrieveQueueStatisticsWithTime& tapeStatistic,
+  const std::string& message) {
   #ifdef HELPERS_CACHE_UPDATE_LOGGING
     std::ofstream logFile(HELPERS_CACHE_UPDATE_LOGGING_FILE, std::ofstream::app);
     std::time_t end_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     // Chomp newline in the end
-    std::string date=std::ctime(&end_time);
+    std::string date = std::ctime(&end_time);
     date.erase(std::remove(date.begin(), date.end(), '\n'), date.end());
-    logFile << date << " pid=" << ::getpid() << " tid=" << syscall(SYS_gettid) << " message=" << message << " entryCreation="<< entryCreation <<" vid="
-            << tapeStatistic.tapeStatus.vid << " state=" << common::dataStructures::Tape::stateToString(tapeStatistic.tapeStatus.state) << " filesQueued=" << tapeStatistic.stats.filesQueued <<  std::endl;
-  #endif //HELPERS_CACHE_UPDATE_LOGGING
+    logFile << date << " pid=" << ::getpid() << " tid=" << syscall(SYS_gettid)
+            << " message=" << message << " entryCreation="<< entryCreation
+            <<" vid=" << tapeStatistic.tapeStatus.vid
+            << " state=" << common::dataStructures::Tape::stateToString(tapeStatistic.tapeStatus.state)
+            << " filesQueued=" << tapeStatistic.stats.filesQueued <<  std::endl;
+  #endif  // HELPERS_CACHE_UPDATE_LOGGING
 }
 
 }} // namespace cta::objectstore.

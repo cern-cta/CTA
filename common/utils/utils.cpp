@@ -116,8 +116,8 @@ bool isValidIPAddress(const std::string &address) {
                          "([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|"     // 1::6:7:8         1:2:3:4::6:7:8  1:2:3:4::8
                          "([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|"     // 1::5:6:7:8       1:2:3::5:6:7:8  1:2:3::8
                          "([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|"     // 1::4:5:6:7:8     1:2::4:5:6:7:8  1:2::8
-                         "[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|"          // 1::3:4:5:6:7:8   1::3:4:5:6:7:8  1::8  
-                         ":((:[0-9a-fA-F]{1,4}){1,7}|:)|"                        // ::2:3:4:5:6:7:8  ::2:3:4:5:6:7:8 ::8       ::     
+                         "[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|"          // 1::3:4:5:6:7:8   1::3:4:5:6:7:8  1::8
+                         ":((:[0-9a-fA-F]{1,4}){1,7}|:)|"                        // ::2:3:4:5:6:7:8  ::2:3:4:5:6:7:8 ::8       ::
                          "fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|"        // fe80::7:8%eth0   fe80::7:8%1     (link-local IPv6 addresses with zone index)
                          "::(ffff(:0{1,4}){0,1}:){0,1}"
                          "((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}"
@@ -224,7 +224,7 @@ std::string trimSlashes(const std::string &s) {
   } else {
     it2 = s.end();
   }
-  
+
   return std::string(it1, it2);
 }
 
@@ -240,7 +240,7 @@ std::string trimFinalSlashes(const std::string &s) {
   } else {
     it2 = s.end();
   }
-  
+
   return std::string(s.begin(), it2);
 }
 
@@ -448,8 +448,8 @@ std::string getXattr(const std::string &path,
   if(0 > getxattr(path.c_str(), name.c_str(), (void *)value.get(),
     sizeOfValue)) {
     const int savedErrno = errno;
-    std::stringstream msg;      
-    msg << "Call to getxattr() failed: path=" << path << " name=" << name << 
+    std::stringstream msg;
+    msg << "Call to getxattr() failed: path=" << path << " name=" << name <<
       ": " << errnoToString(savedErrno);
     throw exception::Exception(msg.str());
   }
@@ -557,7 +557,7 @@ uint16_t toUint16(const std::string &str) {
     std::ostringstream msg;
     msg << "Failed to convert \'" << str << "' to uint16_t: Number too big";
     throw exception::Exception(msg.str());
-  } 
+  }
 
   return value;
 }
@@ -644,7 +644,7 @@ gid_t toGid(const std::string &str) {
       " a valid gid_t value";
     throw exception::Exception(msg.str());
   }
-  
+
   errno = 0;
   const long int value = strtol(str.c_str(), (char **) NULL, 10);
   const int savedErrno = errno;
@@ -660,15 +660,15 @@ gid_t toGid(const std::string &str) {
     msg << "Failed to convert \'" << str << "' to gid_t: Negative number";
     throw exception::Exception(msg.str());
   }
-  
+
   if(std::numeric_limits<gid_t>::max() < value) {
     std::ostringstream msg;
     msg << "Failed to convert \'" << str << "' to gid_t: Number too big";
     throw exception::Exception(msg.str());
   }
-  
+
   return value;
-} 
+}
 
 //------------------------------------------------------------------------------
 // isValidUInt
@@ -943,7 +943,7 @@ std::string extractPathFromXrootdPath(const std::string& path){
 //------------------------------------------------------------------------------
 // searchAndReplace
 //------------------------------------------------------------------------------
-void searchAndReplace(std::string &str, const std::string &search, const std::string replacement) {
+void searchAndReplace(std::string &str, const std::string &search, const std::string& replacement) {
   std::string::size_type pos = 0;
   while(std::string::npos != (pos = str.find(search, pos))) {
     str.replace(pos, search.length(), replacement);
@@ -970,7 +970,7 @@ void appendParameterXRootFileURL(std::string &fileURL, const std::string &parame
       fileURL.append("?"+parameterToAppend);
       return;
     }
-    //There are parameters in the fileURL, check if the parameter is 
+    //There are parameters in the fileURL, check if the parameter is
     //there or not
     if(fileURL.find("&"+parameterName) == std::string::npos){
       fileURL.append("&"+parameterToAppend);

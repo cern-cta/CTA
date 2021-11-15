@@ -108,7 +108,7 @@ namespace utils {
    * @return The result of trimming the string.
    */
   std::string trimSlashes(const std::string &s);
-  
+
   /**
    * Returns the result of trimming right slashes from the
    * specified string.
@@ -130,7 +130,7 @@ namespace utils {
    * stored.
    */
   void splitString(const std::string &str, const char separator, std::vector<std::string> &result);
-  
+
 
   /**
    * Returns the result of trimming both left and right white-space from the
@@ -140,10 +140,10 @@ namespace utils {
    * @return The result of trimming the string.
    */
   std::string trimString(const std::string &s);
-  
+
   /**
-   * Returns a string with an ellipsis in the end if necessary so that the 
-   * string plus ellipsis does not exceed the maxSize. The returned string is 
+   * Returns a string with an ellipsis in the end if necessary so that the
+   * string plus ellipsis does not exceed the maxSize. The returned string is
    * identical to s if it fits the maximum size.
    * @param s the string
    * @param maxSize
@@ -152,28 +152,28 @@ namespace utils {
   std::string postEllipsis(const std::string &s, size_t maxSize);
 
   /**
-   * Returns a string with an ellipsis in the middle if necessary so that the 
-   * string plus ellipsis does not exceed the maxSize. The returned string is 
+   * Returns a string with an ellipsis in the middle if necessary so that the
+   * string plus ellipsis does not exceed the maxSize. The returned string is
    * identical to s if it fits the maximum size. The parts before and after the
-   * ellipsis are evenly distributed, unless beginingSize is set to a non zero 
-   * value. 
+   * ellipsis are evenly distributed, unless beginingSize is set to a non zero
+   * value.
    * @param s the string
    * @param maxSize
    * @param beginingSize
    * @return the ellipsed string
    */
   std::string midEllipsis(const std::string &s, size_t maxSize, size_t beginingSize = 0);
-  
+
   /**
-   * Returns a string with an ellipsis in the beginning if necessary so that the 
-   * string plus ellipsis does not exceed the maxSize. The returned string is 
+   * Returns a string with an ellipsis in the beginning if necessary so that the
+   * string plus ellipsis does not exceed the maxSize. The returned string is
    * identical to s if it fits the maximum size.
    * @param s the string
    * @param maxSize
    * @return the ellipsed string
    */
   std::string preEllipsis(const std::string &s, size_t maxSize);
-  
+
   /**
    * Returns uuid in the form of a string.
    *
@@ -211,7 +211,7 @@ namespace utils {
    * @return    The newly created string with single spaces.
    */
   std::string singleSpaceString(const std::string &str);
-  
+
   /**
    * C++ wrapper around the setxtarr() function.
    *
@@ -318,7 +318,7 @@ namespace utils {
    * @param In/out parameter: The string to be converted.
    */
   void toUpper(std::string &str);
-  
+
   /**
    * Converts the specified string to lowercase.
    *
@@ -328,7 +328,7 @@ namespace utils {
 
   /**
    * Gets the short host name from the system
-   * 
+   *
    * @return the short host name
    */
   std::string getShortHostname();
@@ -341,7 +341,7 @@ namespace utils {
    * @return the alder32 checksum of the specified buffer.
    */
   uint32_t getAdler32(const uint8_t *buf, const uint32_t len);
-  
+
   /**
    * Returns true if the attributes of the current process indicate that it will
    * produce a core dump if it receives a signal whose behaviour is to produce a
@@ -360,7 +360,7 @@ namespace utils {
    * @param dumpable true if the current program should be dumpable.
    */
   void setDumpableProcessAttribute(const bool dumpable);
-  
+
   /**
    * Returns the hexadecimal dump of the specified memory.
    *
@@ -393,13 +393,13 @@ namespace utils {
     const std::string &src) {
     copyString(dst, dstSize, src);
   }
-  
+
   /**
    * Returns the current time, in the local time zone, formated for logging.
    * @return the foramtted time.
    */
   std::string getCurrentLocalTime();
-  
+
   /**
    * Returns the current time formatted according to the string passed in parameter
    * @param format the format of the time the user wants to have as an output
@@ -407,7 +407,7 @@ namespace utils {
    * @return the current time formatted according to the string passed in parameter
    */
   std::string getCurrentLocalTime(const std::string & format);
-  
+
   /**
    * Remove the root:// part of the path passed in parameter
    * and return the corresponding string
@@ -423,18 +423,18 @@ namespace utils {
    * @param search The search string.
    * @param replacement The replacement string.
    */
-  void searchAndReplace(std::string &str, const std::string &search, const std::string replacement);
-  
+  void searchAndReplace(std::string &str, const std::string &search, const std::string& replacement);
+
   /**
    * Willful segmentation violation (accessing nullptr) ensuring the process will stop hard.
    * This is different from self-killing the process as the signal delivery is not immediate.
    * Here, the CPU will interrupt the process with a memory protection error.
    */
   void segfault(void);
-  
+
   /**
    * Idempotently append the XRootD parameter to the fileURL
-   * If the fileURL is not an XRootD path (does not start with root://), 
+   * If the fileURL is not an XRootD path (does not start with root://),
    * the fileURL will not be changed.
    * If the fileURL already has this parameter, it will not be changed.
    * @param fileURL [input, output]
@@ -442,7 +442,7 @@ namespace utils {
    * @param value [input]
    */
   void appendParameterXRootFileURL(std::string &fileURL, const std::string &parameterName, const std::string &value);
-  
+
   /**
    * Applies a reduce function to a list : transform a list of element to one element according
    * to the ReduceOp passed as a parameter
@@ -460,7 +460,7 @@ namespace utils {
     }
     return ret;
   }
-  
+
    /**
    * Allows to remove the first c chars from the beginning of a string
    * Example : removePrefix(aaaaaabcdef,'a') -> bcdef
@@ -469,7 +469,7 @@ namespace utils {
    * @return a new string with the prefix.
    */
   std::string removePrefix(const std::string & input, char prefixChar);
-  
+
    /**
    * Returns the value of the environment variable passed in parameter
    * @param variableName the name of the environment variable to be passed
@@ -477,7 +477,7 @@ namespace utils {
    * If the environment variable is not set, it will return an empty string
    */
   std::string getEnv(const std::string & variableName);
-  
+
 } // namespace utils
 
 } // namespace cta

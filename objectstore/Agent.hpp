@@ -24,14 +24,14 @@
 #include <list>
 
 namespace cta { namespace objectstore {
-  
+
 class GenericObject;
 class AgentReference;
 class GarbageCollector;
 class Sorter;
 
 /**
- * Class containing agent information and managing the update of the 
+ * Class containing agent information and managing the update of the
  * agent's persitent representation in the object store.
  * This object also manages the object id generator, and keeps track of
  * a ContextHandles
@@ -52,45 +52,45 @@ public:
   void initialize();
 
   void insertAndRegisterSelf(log::LogContext & lc);
-  
+
   void removeAndUnregisterSelf(log::LogContext & lc);
-  
+
   bool isEmpty();
-  
+
   void setBeingGarbageCollected();
-  
+
   bool isBeingGarbageCollected();
-  
+
   void setNeedsGarbageCollection();
-  
+
   bool needsGarbageCollection();
-  
+
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) override;
-  
+
 private:
-  void addToOwnership(std::string name);
-  
+  void addToOwnership(const std::string& name);
+
   void removeFromOwnership(std::string name);
 
 public:
   std::list<std::string> getOwnershipList();
-  
+
   std::set<std::string> getOwnershipSet();
-  
+
   void resetOwnership(const std::set<std::string>& ownershipSet);
-  
+
   size_t getOwnershipListSize();
-  
+
   std::string dump();
-  
+
   void bumpHeartbeat();
-  
+
   uint64_t getHeartbeatCount();
-  
+
   // Timeout in s
   double getTimeout();
-  
+
   // We set the timeout as an integer number of us.
   void setTimeout_us(uint64_t timeout);
   /**
@@ -148,9 +148,9 @@ public:
       return;
     }
   }
-  
+
 private:
   uint64_t m_nextId;
 };
-  
+
 }}

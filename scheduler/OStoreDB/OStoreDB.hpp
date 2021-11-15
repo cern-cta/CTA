@@ -17,7 +17,11 @@
 
 #pragma once
 
+#include <map>
+#include <memory>
+#include <string>
 #include <tuple>
+#include <vector>
 
 #include "catalogue/Catalogue.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
@@ -27,8 +31,6 @@
 #include "objectstore/Agent.hpp"
 #include "objectstore/AgentReference.hpp"
 #include "objectstore/ArchiveQueue.hpp"
-#include "objectstore/ArchiveQueue.hpp"
-#include "objectstore/ArchiveRequest.hpp"
 #include "objectstore/ArchiveRequest.hpp"
 #include "objectstore/DriveRegister.hpp"
 #include "objectstore/RepackQueue.hpp"
@@ -45,45 +47,47 @@
 namespace cta {
 
 namespace ostoredb {
-  template <class, class>
-  class MemQueue;
+template <class, class>
+class MemQueue;
 }
 
 class OStoreDB: public SchedulerDatabase {
   template <class, class>
   friend class cta::ostoredb::MemQueue;
-public:
+ public:
   OStoreDB(objectstore::Backend & be, catalogue::Catalogue & catalogue, log::Logger &logger);
   virtual ~OStoreDB() throw();
 
   /* === Object store and agent handling ==================================== */
   void setAgentReference(objectstore::AgentReference *agentReference);
   CTA_GENERATE_EXCEPTION_CLASS(AgentNotSet);
-private:
-  void assertAgentAddressSet();
-public:
 
+ private:
+  void assertAgentAddressSet();
+
+ public:
   CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);
   /*============ Thread pool for queueing bottom halfs ======================*/
-private:
+ private:
   typedef std::function<void()> EnqueueingTask;
   cta::threading::BlockingQueue<EnqueueingTask*> m_enqueueingTasksQueue;
   class EnqueueingWorkerThread: private cta::threading::Thread {
-  public:
-    EnqueueingWorkerThread(cta::threading::BlockingQueue<EnqueueingTask*> & etq):
-      m_enqueueingTasksQueue(etq) {}
+   public:
+    explicit EnqueueingWorkerThread(cta::threading::BlockingQueue<EnqueueingTask*> & etq)
+      : m_enqueueingTasksQueue(etq) {}
     void start() { cta::threading::Thread::start(); }
     void wait() { cta::threading::Thread::wait(); }
-  private:
+   private:
     void run() override;
     cta::threading::BlockingQueue<EnqueueingTask*> & m_enqueueingTasksQueue;
   };
   std::vector<EnqueueingWorkerThread *> m_enqueueingWorkerThreads;
-  std::atomic<uint64_t> m_taskQueueSize; ///< This counter ensures destruction happens after the last thread completed.
+  std::atomic<uint64_t> m_taskQueueSize;  // < This counter ensures destruction happens after the last thread completed.
   /// Delay introduced before posting to the task queue when it becomes too long.
   void delayIfNecessary(log::LogContext &lc);
   cta::threading::Semaphore m_taskPostingSemaphore;
-public:
+
+ public:
   void waitSubthreadsComplete() override;
   void setThreadNumber(uint64_t threadNumber);
   void setBottomHalfQueueSize(uint64_t tasksNumber);
@@ -93,29 +97,31 @@ public:
   /* === Session handling =================================================== */
   class TapeMountDecisionInfo: public SchedulerDatabase::TapeMountDecisionInfo {
     friend class OStoreDB;
-  public:
+   public:
     CTA_GENERATE_EXCEPTION_CLASS(SchedulingLockNotHeld);
     CTA_GENERATE_EXCEPTION_CLASS(TapeNotWritable);
     CTA_GENERATE_EXCEPTION_CLASS(TapeIsBusy);
     std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(
       common::dataStructures::MountType mountType,
       const catalogue::TapeForWriting & tape,
-      const std::string driveName, const std::string& logicalLibrary,
-      const std::string & hostName,
+      const std::string& driveName, const std::string& logicalLibrary,
+      const std::string& hostName,
       const std::string& vo, const std::string& mediaType,
-      const std::string& vendor,uint64_t capacityInBytes,
+      const std::string& vendor, uint64_t capacityInBytes,
       time_t startTime) override;
     std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(
-      const std::string & vid, const std::string & tapePool,
-      const std::string driveName,
+      const std::string& vid, const std::string& tapePool,
+      const std::string& driveName,
       const std::string& logicalLibrary, const std::string& hostName,
       const std::string& vo, const std::string& mediaType,
       const std::string& vendor,
       const uint64_t capacityInBytes,
-      time_t startTime, const optional<common::dataStructures::DriveState::ActivityAndWeight> &activityAndWeight) override;
+      time_t startTime,
+      const optional<common::dataStructures::DriveState::ActivityAndWeight> &activityAndWeight) override;
     virtual ~TapeMountDecisionInfo();
-  private:
-    TapeMountDecisionInfo (OStoreDB & oStoreDB);
+
+   private:
+    explicit TapeMountDecisionInfo(OStoreDB & oStoreDB);
     bool m_lockTaken;
     objectstore::ScopedExclusiveLock m_lockOnSchedulerGlobalLock;
     std::unique_ptr<objectstore::SchedulerGlobalLock> m_schedulerGlobalLock;
@@ -124,33 +130,34 @@ public:
   friend class TapeMountDecisionInfo;
 
   class TapeMountDecisionInfoNoLock: public SchedulerDatabase::TapeMountDecisionInfo {
-  public:
+   public:
     std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(
       common::dataStructures::MountType mountType,
       const catalogue::TapeForWriting & tape,
-      const std::string driveName, const std::string& logicalLibrary,
-      const std::string & hostName, const std::string& vo, const std::string& mediaType,
-      const std::string& vendor,uint64_t capacityInBytes,
+      const std::string& driveName, const std::string& logicalLibrary,
+      const std::string& hostName, const std::string& vo, const std::string& mediaType,
+      const std::string& vendor, uint64_t capacityInBytes,
       time_t startTime) override;
     std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(
-      const std::string & vid, const std::string & tapePool,
-      const std::string driveName,
+      const std::string& vid, const std::string & tapePool,
+      const std::string& driveName,
       const std::string& logicalLibrary, const std::string& hostName,
       const std::string& vo, const std::string& mediaType,
       const std::string& vendor,
       const uint64_t capacityInBytes,
-      time_t startTime, const optional<common::dataStructures::DriveState::ActivityAndWeight> &activityAndWeight) override;
+      time_t startTime,
+      const optional<common::dataStructures::DriveState::ActivityAndWeight> &activityAndWeight) override;
     virtual ~TapeMountDecisionInfoNoLock();
   };
 
-private:
+ private:
   /**
    * An internal helper function with commonalities of both following functions
    * @param tmdi The TapeMountDecisionInfo where to store the data.
    * @param re A RootEntry object that should be locked and fetched.
    */
-  void fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo &tmdi, objectstore::RootEntry &re, SchedulerDatabase::PurposeGetMountInfo purpose,
-    log::LogContext & logContext);
+  void fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo &tmdi, objectstore::RootEntry &re,
+    SchedulerDatabase::PurposeGetMountInfo purpose, log::LogContext & logContext);
 
   /**
    * An internal helper function to build a list of mount policies with the map of the
@@ -160,7 +167,9 @@ private:
    * @param queueMountPolicyMap the map of the <mountPolicyName,counter> coming from the queue JobsSummary object
    * @return the list of MountPolicies that are in the map
    */
-  std::list<common::dataStructures::MountPolicy> getMountPoliciesInQueue(const std::list<common::dataStructures::MountPolicy> & mountPoliciesInCatalogue, const std::map<std::string,uint64_t> & queueMountPolicyMap);
+  std::list<common::dataStructures::MountPolicy> getMountPoliciesInQueue(
+    const std::list<common::dataStructures::MountPolicy> & mountPoliciesInCatalogue,
+    const std::map<std::string, uint64_t> & queueMountPolicyMap);
 
   /**
    * Return the best archive mount policy from the mountPolicies passed in parameter
@@ -178,29 +187,31 @@ private:
    */
   common::dataStructures::MountPolicy createBestRetrieveMountPolicy(const std::list<common::dataStructures::MountPolicy> & mountPolicies);
 
-public:
+ public:
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) override;
 
-  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose, log::LogContext& logContext) override;
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose,
+    log::LogContext& logContext) override;
   void trimEmptyQueues(log::LogContext& lc) override;
 
   /* === Archive Mount handling ============================================= */
   class ArchiveJob;
   class ArchiveMount: public SchedulerDatabase::ArchiveMount {
     friend class TapeMountDecisionInfo;
-  private:
-    ArchiveMount(OStoreDB & oStoreDB, common::dataStructures::JobQueueType queueType);
+   private:
+    ArchiveMount(OStoreDB & oStoreDB, const common::dataStructures::JobQueueType& queueType);
     OStoreDB & m_oStoreDB;
     common::dataStructures::JobQueueType m_queueType;
-  public:
+   public:
     CTA_GENERATE_EXCEPTION_CLASS(MaxFSeqNotGoingUp);
     const MountInfo & getMountInfo() override;
     std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> getNextJobBatch(uint64_t filesRequested,
       uint64_t bytesRequested, log::LogContext &logContext) override;
     void complete(time_t completionTime) override;
-    void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime, const cta::optional<std::string> & reason = cta::nullopt) override;
+    void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime,
+      const cta::optional<std::string> & reason = cta::nullopt) override;
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
-  public:
+   public:
     void setJobBatchTransferred(
       std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> &jobsBatch, log::LogContext &lc) override;
   };
@@ -210,12 +221,13 @@ public:
   class ArchiveJob: public SchedulerDatabase::ArchiveJob {
     friend class OStoreDB::ArchiveMount;
     friend class OStoreDB;
-  public:
+   public:
     CTA_GENERATE_EXCEPTION_CLASS(JobNotOwned);
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
     void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
     void failReport(const std::string& failureReason, log::LogContext& lc) override;
-  private:
+
+   private:
     void asyncSucceedTransfer();
     /** Returns true if the jobs was the last one and the request should be queued for report. */
     void waitAsyncSucceed();
@@ -223,10 +235,12 @@ public:
     bool isLastAfterAsyncSuccess();
     void asyncDeleteRequest();
     void waitAsyncDelete();
-  public:
+
+   public:
     void bumpUpTapeFileCount(uint64_t newFileCount) override;
     ~ArchiveJob() override;
-  private:
+
+   private:
     ArchiveJob(const std::string &, OStoreDB &);
     bool m_jobOwned;
     uint64_t m_mountId;
@@ -236,21 +250,24 @@ public:
     std::unique_ptr<objectstore::ArchiveRequest::AsyncTransferSuccessfulUpdater> m_succesfulTransferUpdater;
     std::unique_ptr<objectstore::ArchiveRequest::AsyncRequestDeleter> m_requestDeleter;
   };
-  //friend class ArchiveJob;
+  // friend class ArchiveJob;
   static ArchiveJob * castFromSchedDBJob(SchedulerDatabase::ArchiveJob * job);
 
   /* === Retrieve Mount handling ============================================ */
   class RetrieveJob;
   class RetrieveMount: public SchedulerDatabase::RetrieveMount {
     friend class TapeMountDecisionInfo;
-  private:
-    RetrieveMount(OStoreDB &oStoreDB);
+   private:
+    explicit RetrieveMount(OStoreDB &oStoreDB);
     OStoreDB & m_oStoreDB;
-  public:
+
+   public:
     const MountInfo & getMountInfo() override;
-    std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> > getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
-      cta::disk::DiskSystemFreeSpaceList & diskSystemFreeSpace, log::LogContext& logContext) override;
-  private:
+    std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> > getNextJobBatch(uint64_t filesRequested,
+      uint64_t bytesRequested, cta::disk::DiskSystemFreeSpaceList & diskSystemFreeSpace,
+      log::LogContext& logContext) override;
+
+   private:
     void requeueJobBatch(std::list<std::unique_ptr<OStoreDB::RetrieveJob> >& jobBatch,
       log::LogContext& logContext);
     struct DiskSystemToSkip {
@@ -259,12 +276,15 @@ public:
       bool operator<(const DiskSystemToSkip & o) const { return name < o.name; }
     };
     std::set<DiskSystemToSkip> m_diskSystemsToSkip;
-  public:
+
+   public:
     /// Public but non overriding function used by retrieve jobs (on failure to transfer):
     void complete(time_t completionTime) override;
-    void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime, const cta::optional<std::string> & reason = cta::nullopt) override;
+    void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime,
+      const cta::optional<std::string> & reason = cta::nullopt) override;
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
-  public:
+
+   public:
     void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch, log::LogContext& lc) override;
   };
   friend class RetrieveMount;
@@ -273,19 +293,20 @@ public:
   class RetrieveJob: public SchedulerDatabase::RetrieveJob {
     friend class OStoreDB::RetrieveMount;
     friend class OStoreDB;
-  public:
+   public:
     CTA_GENERATE_EXCEPTION_CLASS(JobNotOwned);
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
     /** Async set job successful.  Either delete (user transfer) or change status (repack)
      * Wait will happen in RetrieveMount::flushAsyncSuccessReports().
      */
-    virtual void asyncSetSuccessful() override;
+    void asyncSetSuccessful() override;
     void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
     void failReport(const std::string& failureReason, log::LogContext& lc) override;
     void abort(const std::string& abortReason, log::LogContext &lc) override;
     void fail() override;
-    virtual ~RetrieveJob() override;
-  private:
+    ~RetrieveJob() override;
+
+   private:
     // Can be instantiated from a mount (queue to transfer) or a report queue
     RetrieveJob(const std::string &jobAddress, OStoreDB &oStoreDB, RetrieveMount *rm) :
       m_jobOwned(false), m_oStoreDB(oStoreDB),
@@ -293,7 +314,7 @@ public:
       m_retrieveMount(rm) { }
     void setJobOwned(bool b = true) { m_jobOwned = b; }
 
-  private:
+   private:
     bool m_jobOwned;
     uint64_t m_mountId;
     OStoreDB & m_oStoreDB;
@@ -344,7 +365,8 @@ public:
      log::TimingList & timingList, utils::Timer & t, log::LogContext & lc) override;
 
   /* === Retrieve requests handling  ======================================== */
-  std::list<RetrieveQueueStatistics> getRetrieveQueueStatistics(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria, const std::set<std::string>& vidsToConsider) override;
+  std::list<RetrieveQueueStatistics> getRetrieveQueueStatistics(
+    const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria, const std::set<std::string>& vidsToConsider) override;
 
   CTA_GENERATE_EXCEPTION_CLASS(RetrieveRequestHasNoCopies);
   CTA_GENERATE_EXCEPTION_CLASS(TapeCopyNumberOutOfRange);
@@ -397,12 +419,14 @@ public:
   // RetrieveQueueItor_t* getRetrieveJobItorPtr(const std::string &vid,
   //   common::dataStructures::JobQueueType queueType = common::dataStructures::JobQueueType::JobsToTransferForUser) const;
 
-  std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &logContext) override;
+  std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsToReportBatch(
+    uint64_t filesRequested, log::LogContext &logContext) override;
 
   void setRetrieveJobBatchReportedToUser(std::list<cta::SchedulerDatabase::RetrieveJob*> & jobsBatch,
      log::TimingList & timingList, utils::Timer & t, log::LogContext & lc) override;
 
-  std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext &logContext) override;
+  std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsFailedBatch(
+    uint64_t filesRequested, log::LogContext &logContext) override;
 
   JobsFailedSummary getRetrieveJobsFailedSummary(log::LogContext &logContext) override;
 
@@ -416,12 +440,13 @@ public:
   class RepackRequest: public SchedulerDatabase::RepackRequest
   {
     friend class OStoreDB;
-  public:
-    RepackRequest(const std::string &jobAddress, OStoreDB &oStoreDB) :
-    m_oStoreDB(oStoreDB), m_repackRequest(jobAddress, m_oStoreDB.m_objectStore){}
-    uint64_t addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests, cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap,
-      uint64_t maxFSeqLowBound, const uint64_t maxAddedFSeq, const TotalStatsFiles &totalStatsFiles, disk::DiskSystemList diskSystemList,
-      log::LogContext& lc) override;
+   public:
+    RepackRequest(const std::string &jobAddress, OStoreDB &oStoreDB)
+      : m_oStoreDB(oStoreDB), m_repackRequest(jobAddress, m_oStoreDB.m_objectStore) {}
+    uint64_t addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests,
+      cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap,
+      uint64_t maxFSeqLowBound, const uint64_t maxAddedFSeq, const TotalStatsFiles &totalStatsFiles,
+      disk::DiskSystemList diskSystemList, log::LogContext& lc) override;
     void expandDone() override;
     void fail() override;
     void requeueInToExpandQueue(log::LogContext& lc) override;
@@ -430,7 +455,7 @@ public:
     uint64_t getLastExpandedFSeq() override;
     void setLastExpandedFSeq(uint64_t fseq) override;
 
-  private:
+   private:
     OStoreDB & m_oStoreDB;
     objectstore::RepackRequest m_repackRequest;
   };
@@ -442,10 +467,10 @@ public:
    */
   class RepackRequestPromotionStatistics: public SchedulerDatabase::RepackRequestStatistics {
     friend class OStoreDB;
-  public:
+   public:
     PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount, log::LogContext &lc) override;
     virtual ~RepackRequestPromotionStatistics() {};
-  private:
+   private:
     RepackRequestPromotionStatistics(objectstore::Backend & backend,
               objectstore::AgentReference & agentReference);
     objectstore::Backend & m_backend;
@@ -456,17 +481,17 @@ public:
 
   class RepackRequestPromotionStatisticsNoLock: public SchedulerDatabase::RepackRequestStatistics {\
     friend class OStoreDB;
-  public:
+   public:
     PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount, log::LogContext &lc) override {
       throw (SchedulingLockNotHeld("In RepackRequestPromotionStatisticsNoLock::promotePendingRequestsForExpansion"));
     }
     virtual ~RepackRequestPromotionStatisticsNoLock() {}
   };
 
-private:
-  void populateRepackRequestsStatistics (objectstore::RootEntry & re, SchedulerDatabase::RepackRequestStatistics &stats);
-public:
+ private:
+  void populateRepackRequestsStatistics(objectstore::RootEntry & re, SchedulerDatabase::RepackRequestStatistics &stats);
 
+ public:
   std::unique_ptr<RepackRequestStatistics> getRepackStatistics() override;
   std::unique_ptr<RepackRequestStatistics> getRepackStatisticsNoLock() override;
 
@@ -495,8 +520,10 @@ public:
     friend class RepackRetrieveFailureReportBatch;
     friend class RepackArchiveSuccessesReportBatch;
     friend class RepackArchiveFailureReportBatch;
-    RepackReportBatch(objectstore::Backend & backend, OStoreDB & oStoreDb): m_repackRequest(backend), m_oStoreDb(oStoreDb) {}
-  protected:
+    RepackReportBatch(objectstore::Backend & backend, OStoreDB & oStoreDb)
+      : m_repackRequest(backend), m_oStoreDb(oStoreDb) {}
+
+   protected:
     objectstore::RepackRequest m_repackRequest;
     OStoreDB & m_oStoreDb;
     template <class SR>
@@ -518,21 +545,22 @@ public:
 
   class RepackRetrieveSuccessesReportBatch: public RepackReportBatch {
     friend class OStoreDB;
-    RepackRetrieveSuccessesReportBatch(objectstore::Backend & backend, OStoreDB & oStoreDb):
-      RepackReportBatch(backend,oStoreDb) {}
-  public:
+    RepackRetrieveSuccessesReportBatch(objectstore::Backend & backend, OStoreDB & oStoreDb)
+      : RepackReportBatch(backend,oStoreDb) {}
+   public:
     void report(log::LogContext& lc) override;
-  private:
+   private:
     typedef RepackReportBatch::SubrequestInfo<objectstore::RetrieveRequest> SubrequestInfo;
     SubrequestInfo::List m_subrequestList;
   };
 
   class RepackRetrieveFailureReportBatch: public RepackReportBatch{
     friend class OStoreDB;
-    RepackRetrieveFailureReportBatch(objectstore::Backend& backend, OStoreDB &oStoreDb):RepackReportBatch(backend,oStoreDb){}
-  public:
+    RepackRetrieveFailureReportBatch(objectstore::Backend& backend, OStoreDB &oStoreDb)
+      : RepackReportBatch(backend,oStoreDb) {}
+   public:
     void report(log::LogContext& lc) override;
-  private:
+   private:
     typedef RepackReportBatch::SubrequestInfo<objectstore::RetrieveRequest> SubrequestInfo;
     SubrequestInfo::List m_subrequestList;
   };
@@ -543,38 +571,42 @@ public:
    */
   class RepackArchiveReportBatch: public RepackReportBatch{
     friend class OStoreDB;
-  protected:
+   protected:
     typedef RepackReportBatch::SubrequestInfo<objectstore::ArchiveRequest> SubrequestInfo;
     SubrequestInfo::List m_subrequestList;
-  public:
-    RepackArchiveReportBatch(objectstore::Backend & backend, OStoreDB & oStoreDb):RepackReportBatch(backend,oStoreDb){}
+   public:
+    RepackArchiveReportBatch(objectstore::Backend & backend, OStoreDB & oStoreDb)
+      : RepackReportBatch(backend, oStoreDb) {}
     void report(log::LogContext &lc);
-  private:
+   private:
     objectstore::RepackRequest::SubrequestStatistics::List prepareReport();
-    virtual cta::objectstore::serializers::RepackRequestStatus recordReport(objectstore::RepackRequest::SubrequestStatistics::List& ssl, log::TimingList& timingList, utils::Timer& t) = 0;
+    virtual cta::objectstore::serializers::RepackRequestStatus recordReport(
+      objectstore::RepackRequest::SubrequestStatistics::List& ssl, log::TimingList& timingList, utils::Timer& t) = 0;
     virtual cta::objectstore::serializers::ArchiveJobStatus getNewStatus() = 0;
   };
 
   class RepackArchiveSuccessesReportBatch: public RepackArchiveReportBatch {
     friend class OStoreDB;
-    RepackArchiveSuccessesReportBatch(objectstore::Backend & backend, OStoreDB & oStoreDb):
-      RepackArchiveReportBatch(backend,oStoreDb) {}
-  public:
+    RepackArchiveSuccessesReportBatch(objectstore::Backend & backend, OStoreDB & oStoreDb)
+      : RepackArchiveReportBatch(backend, oStoreDb) {}
+   public:
     void report(log::LogContext& lc) override;
-  private:
-    cta::objectstore::serializers::RepackRequestStatus recordReport(objectstore::RepackRequest::SubrequestStatistics::List& ssl, log::TimingList& timingList, utils::Timer& t) override;
+   private:
+    cta::objectstore::serializers::RepackRequestStatus recordReport(objectstore::RepackRequest::SubrequestStatistics::List& ssl,
+      log::TimingList& timingList, utils::Timer& t) override;
     cta::objectstore::serializers::ArchiveJobStatus getNewStatus() override;
   };
 
   class RepackArchiveFailureReportBatch: public RepackArchiveReportBatch {
     friend class OStoreDB;
 
-    RepackArchiveFailureReportBatch(objectstore::Backend & backend, OStoreDB & oStoreDb):
-      RepackArchiveReportBatch(backend,oStoreDb) {}
-  public:
+    RepackArchiveFailureReportBatch(objectstore::Backend & backend, OStoreDB & oStoreDb)
+      : RepackArchiveReportBatch(backend, oStoreDb) {}
+   public:
     void report(log::LogContext& lc) override;
-  private:
-    cta::objectstore::serializers::RepackRequestStatus recordReport(objectstore::RepackRequest::SubrequestStatistics::List& ssl, log::TimingList& timingList, utils::Timer& t) override;
+   private:
+    cta::objectstore::serializers::RepackRequestStatus recordReport(objectstore::RepackRequest::SubrequestStatistics::List& ssl,
+      log::TimingList& timingList, utils::Timer& t) override;
     cta::objectstore::serializers::ArchiveJobStatus getNewStatus() override;
   };
 
@@ -587,11 +619,12 @@ public:
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc);
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextFailedArchiveRepackReportBatch(log::LogContext &lc);
   CTA_GENERATE_EXCEPTION_CLASS(NoRepackReportBatchFound);
-private:
+
+ private:
   const size_t c_repackArchiveReportBatchSize = 10000;
   const size_t c_repackRetrieveReportBatchSize = 10000;
 
-private:
+ private:
   objectstore::Backend & m_objectStore;
   catalogue::Catalogue & m_catalogue;
   log::Logger & m_logger;
@@ -599,4 +632,4 @@ private:
   objectstore::AgentReference *m_agentReference = nullptr;
 };
 
-} // namespace cta
+}  // namespace cta

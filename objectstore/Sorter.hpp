@@ -18,8 +18,10 @@
 #pragma once
 
 #include <future>
+#include <list>
 #include <map>
 #include <memory>
+#include <string>
 #include <tuple>
 
 #include "Agent.hpp"
@@ -40,7 +42,7 @@
 
 namespace cta { namespace objectstore {
 
-//forward declarations
+// forward declarations
 struct ArchiveJobQueueInfo;
 struct RetrieveJobQueueInfo;
 class RetrieveRequestInfosAccessorInterface;
@@ -51,7 +53,7 @@ class Sorter {
 public:
   CTA_GENERATE_EXCEPTION_CLASS(RetrieveRequestHasNoCopies);
 
-  Sorter(AgentReference& agentReference,Backend &objectstore, catalogue::Catalogue& catalogue);
+  Sorter(AgentReference& agentReference, Backend &objectstore, catalogue::Catalogue& catalogue);
   ~Sorter();
 
   //std::string = containerIdentifier
@@ -188,80 +190,91 @@ private:
 
   /* Retrieve-related methods */
   std::set<std::string> getCandidateVidsToTransfer(RetrieveRequestInfosAccessorInterface &requestAccessor);
-  std::string getBestVidForQueueingRetrieveRequest(RetrieveRequestInfosAccessorInterface &requestAccessor, std::set<std::string>& candidateVids, log::LogContext &lc);
+  std::string getBestVidForQueueingRetrieveRequest(RetrieveRequestInfosAccessorInterface &requestAccessor,
+    std::set<std::string>& candidateVids, log::LogContext &lc);
   std::string getContainerID(RetrieveRequestInfosAccessorInterface& requestAccessor, const std::string& vid, const uint32_t copyNb);
-  void queueRetrieveRequests(const std::string vid, const common::dataStructures::JobQueueType jobQueueType, std::list<std::shared_ptr<RetrieveJobQueueInfo>>& archiveJobInfos, log::LogContext &lc);
-  void dispatchRetrieveAlgorithm(const std::string vid, const common::dataStructures::JobQueueType jobQueueType, std::string& queueAddress, std::list<std::shared_ptr<RetrieveJobQueueInfo>>& retrieveJobsInfos, log::LogContext &lc);
-  Sorter::RetrieveJob createRetrieveJob(std::shared_ptr<RetrieveRequest> retrieveRequest, const cta::common::dataStructures::ArchiveFile archiveFile, const uint32_t copyNb, const uint64_t fSeq, AgentReferenceInterface *previousOwner);
-  void insertRetrieveRequest(RetrieveRequestInfosAccessorInterface &accessor,AgentReferenceInterface &previousOwner, cta::optional<uint32_t> copyNb, log::LogContext & lc);
+  void queueRetrieveRequests(const std::string& vid, const common::dataStructures::JobQueueType& jobQueueType,
+    std::list<std::shared_ptr<RetrieveJobQueueInfo>>& archiveJobInfos, log::LogContext &lc);
+  void dispatchRetrieveAlgorithm(const std::string& vid, const common::dataStructures::JobQueueType& jobQueueType,
+    std::string& queueAddress, std::list<std::shared_ptr<RetrieveJobQueueInfo>>& retrieveJobsInfos, log::LogContext &lc);
+  Sorter::RetrieveJob createRetrieveJob(std::shared_ptr<RetrieveRequest> retrieveRequest,
+    const cta::common::dataStructures::ArchiveFile& archiveFile, const uint32_t copyNb,
+    const uint64_t fSeq, AgentReferenceInterface *previousOwner);
+  void insertRetrieveRequest(RetrieveRequestInfosAccessorInterface &accessor, AgentReferenceInterface &previousOwner,
+    cta::optional<uint32_t> copyNb, log::LogContext & lc);
 
   template<typename SpecificQueue>
-  void executeRetrieveAlgorithm(const std::string vid, std::string& queueAddress, std::list<std::shared_ptr<RetrieveJobQueueInfo>>& jobs, log::LogContext& lc);
+  void executeRetrieveAlgorithm(const std::string& vid, std::string& queueAddress,
+    std::list<std::shared_ptr<RetrieveJobQueueInfo>>& jobs, log::LogContext& lc);
   /* End of Retrieve-related methods */
 
   /* Archive-related methods */
-  void queueArchiveRequests(const std::string tapePool, const common::dataStructures::JobQueueType jobQueueType, std::list<std::shared_ptr<ArchiveJobQueueInfo>>& requests, log::LogContext &lc);
+  void queueArchiveRequests(const std::string& tapePool, const common::dataStructures::JobQueueType& jobQueueType,
+    std::list<std::shared_ptr<ArchiveJobQueueInfo>>& requests, log::LogContext &lc);
 
   void insertArchiveJob(const SorterArchiveJob& job);
 
-  void dispatchArchiveAlgorithm(const std::string tapePool, const common::dataStructures::JobQueueType jobQueueType, std::string& queueAddress, std::list<std::shared_ptr<ArchiveJobQueueInfo>>& archiveJobsInfos, log::LogContext &lc);
+  void dispatchArchiveAlgorithm(const std::string& tapePool, const common::dataStructures::JobQueueType& jobQueueType,
+    std::string& queueAddress, std::list<std::shared_ptr<ArchiveJobQueueInfo>>& archiveJobsInfos, log::LogContext &lc);
 
   template<typename SpecificQueue>
-  void executeArchiveAlgorithm(const std::string tapePool, std::string& queueAddress, std::list<std::shared_ptr<ArchiveJobQueueInfo>>& jobs, log::LogContext& lc);
+  void executeArchiveAlgorithm(const std::string& tapePool, std::string& queueAddress,
+    std::list<std::shared_ptr<ArchiveJobQueueInfo>>& jobs, log::LogContext& lc);
   /* End of Archive-related methods */
 };
 
 struct ArchiveJobQueueInfo{
   std::tuple<SorterArchiveJob,std::promise<void>> jobToQueue;
-  //TODO : Job reporting
+  // TODO : Job reporting
 };
 
 struct RetrieveJobQueueInfo{
   std::tuple<Sorter::RetrieveJob,std::promise<void>> jobToQueue;
-  //TODO : Job reporting
+  // TODO : Job reporting
 };
 
 class RetrieveRequestInfosAccessorInterface{
-  public:
-    RetrieveRequestInfosAccessorInterface();
-    virtual std::list<RetrieveRequest::JobDump> getJobs() = 0;
-    virtual common::dataStructures::ArchiveFile getArchiveFile() = 0;
-    virtual Sorter::RetrieveJob createRetrieveJob(const cta::common::dataStructures::ArchiveFile archiveFile,
-        const uint32_t copyNb, const uint64_t fSeq, AgentReferenceInterface* previousOwner) = 0;
-    virtual ~RetrieveRequestInfosAccessorInterface();
-    virtual serializers::RetrieveJobStatus getJobStatus(const uint32_t copyNb) = 0;
-    virtual std::string getRepackAddress() = 0;
-    virtual bool getForceDisabledTape() = 0;
+ public:
+  RetrieveRequestInfosAccessorInterface();
+  virtual std::list<RetrieveRequest::JobDump> getJobs() = 0;
+  virtual common::dataStructures::ArchiveFile getArchiveFile() = 0;
+  virtual Sorter::RetrieveJob createRetrieveJob(const cta::common::dataStructures::ArchiveFile& archiveFile,
+      const uint32_t copyNb, const uint64_t fSeq, AgentReferenceInterface* previousOwner) = 0;
+  virtual ~RetrieveRequestInfosAccessorInterface();
+  virtual serializers::RetrieveJobStatus getJobStatus(const uint32_t copyNb) = 0;
+  virtual std::string getRepackAddress() = 0;
+  virtual bool getForceDisabledTape() = 0;
 };
 
 class OStoreRetrieveRequestAccessor: public RetrieveRequestInfosAccessorInterface{
-  public:
-    OStoreRetrieveRequestAccessor(std::shared_ptr<RetrieveRequest> retrieveRequest);
-    ~OStoreRetrieveRequestAccessor();
-    std::list<RetrieveRequest::JobDump> getJobs();
-    common::dataStructures::ArchiveFile getArchiveFile();
-    Sorter::RetrieveJob createRetrieveJob(const cta::common::dataStructures::ArchiveFile archiveFile,
-        const uint32_t copyNb, const uint64_t fSeq, AgentReferenceInterface* previousOwner);
-    serializers::RetrieveJobStatus getJobStatus(const uint32_t copyNb);
-    std::string getRepackAddress();
-    bool getForceDisabledTape();
-  private:
-    std::shared_ptr<RetrieveRequest> m_retrieveRequest;
+ public:
+  explicit OStoreRetrieveRequestAccessor(std::shared_ptr<RetrieveRequest> retrieveRequest);
+  ~OStoreRetrieveRequestAccessor();
+  std::list<RetrieveRequest::JobDump> getJobs();
+  common::dataStructures::ArchiveFile getArchiveFile();
+  Sorter::RetrieveJob createRetrieveJob(const cta::common::dataStructures::ArchiveFile& archiveFile,
+      const uint32_t copyNb, const uint64_t fSeq, AgentReferenceInterface* previousOwner);
+  serializers::RetrieveJobStatus getJobStatus(const uint32_t copyNb);
+  std::string getRepackAddress();
+  bool getForceDisabledTape();
+ private:
+  std::shared_ptr<RetrieveRequest> m_retrieveRequest;
 };
 
 class SorterRetrieveRequestAccessor: public RetrieveRequestInfosAccessorInterface{
-  public:
-    SorterRetrieveRequestAccessor(Sorter::SorterRetrieveRequest& request);
-    ~SorterRetrieveRequestAccessor();
-    std::list<RetrieveRequest::JobDump> getJobs();
-    common::dataStructures::ArchiveFile getArchiveFile();
-    Sorter::RetrieveJob createRetrieveJob(const cta::common::dataStructures::ArchiveFile archiveFile,
-        const uint32_t copyNb, const uint64_t fSeq, AgentReferenceInterface* previousOwner);
-    serializers::RetrieveJobStatus getJobStatus(const uint32_t copyNb);
-    std::string getRepackAddress();
-    bool getForceDisabledTape();
-  private:
-    Sorter::SorterRetrieveRequest& m_retrieveRequest;
+ public:
+  explicit SorterRetrieveRequestAccessor(Sorter::SorterRetrieveRequest& request);
+  ~SorterRetrieveRequestAccessor();
+  std::list<RetrieveRequest::JobDump> getJobs();
+  common::dataStructures::ArchiveFile getArchiveFile();
+  Sorter::RetrieveJob createRetrieveJob(const cta::common::dataStructures::ArchiveFile& archiveFile,
+      const uint32_t copyNb, const uint64_t fSeq, AgentReferenceInterface* previousOwner);
+  serializers::RetrieveJobStatus getJobStatus(const uint32_t copyNb);
+  std::string getRepackAddress();
+  bool getForceDisabledTape();
+ private:
+  Sorter::SorterRetrieveRequest& m_retrieveRequest;
 };
 
-}}
+}  // namespace objectstore
+}  // namespace cta

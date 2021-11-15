@@ -61,7 +61,7 @@ BackendVFS::BackendVFS(int line, const char *file) : m_deleteOnExit(true) {
   #endif
 }
 
-BackendVFS::BackendVFS(std::string path):
+BackendVFS::BackendVFS(const std::string& path):
   m_root(path), m_deleteOnExit(false) {}
 
 void BackendVFS::noDeleteOnExit() {
@@ -102,7 +102,7 @@ BackendVFS::~BackendVFS() {
   #endif
 }
 
-void BackendVFS::create(std::string name, std::string content) {
+void BackendVFS::create(const std::string& name, const std::string& content) {
   std::string path = m_root + "/" + name;
   std::string lockPath = m_root + "/." + name + ".lock";
   bool fileCreated = false;
@@ -137,7 +137,7 @@ void BackendVFS::create(std::string name, std::string content) {
   }
 }
 
-void BackendVFS::atomicOverwrite(std::string name, std::string content) {
+void BackendVFS::atomicOverwrite(const std::string& name, const std::string& content) {
   // When entering here, we should hold an exclusive lock on the *context
   // file descriptor. We will create a new file, lock it immediately exclusively,
   // create the new content in it, move it over the old file, and close the *context
@@ -169,7 +169,7 @@ void BackendVFS::atomicOverwrite(std::string name, std::string content) {
   #endif
 }
 
-std::string BackendVFS::read(std::string name) {
+std::string BackendVFS::read(const std::string& name) {
   std::string path = m_root + "/" + name;
   std::string ret;
   std::ifstream file(path.c_str());
@@ -193,7 +193,7 @@ std::string BackendVFS::read(std::string name) {
   return ret;
 }
 
-void BackendVFS::remove(std::string name) {
+void BackendVFS::remove(const std::string& name) {
   std::string path = m_root + "/" + name;
   std::string lockPath = m_root + "/." + name + ".lock";
   cta::exception::Errnum::throwOnNonZero(unlink(path.c_str()), "Failed to remove object file");
@@ -203,7 +203,7 @@ void BackendVFS::remove(std::string name) {
   #endif
 }
 
-bool BackendVFS::exists(std::string name) {
+bool BackendVFS::exists(const std::string& name) {
   std::string path = m_root + "/" + name;
   std::string lockPath = m_root + "/." + name + ".lock";
   struct stat buffer;
@@ -251,7 +251,7 @@ void BackendVFS::ScopedLock::release() {
 #endif
 }
 
-BackendVFS::ScopedLock * BackendVFS::lockHelper(std::string name, int type, uint64_t timeout_us) {
+BackendVFS::ScopedLock * BackendVFS::lockHelper(const std::string& name, int type, uint64_t timeout_us) {
   std::string path = m_root + "/." + name + ".lock";
   std::unique_ptr<ScopedLock> ret(new ScopedLock);
   ret->set(::open(path.c_str(), O_RDONLY), path);
@@ -314,7 +314,7 @@ BackendVFS::ScopedLock * BackendVFS::lockHelper(std::string name, int type, uint
   return ret.release();
 }
 
-BackendVFS::ScopedLock * BackendVFS::lockExclusive(std::string name, uint64_t timeout_us) {
+BackendVFS::ScopedLock * BackendVFS::lockExclusive(const std::string& name, uint64_t timeout_us) {
   std::unique_ptr<BackendVFS::ScopedLock> ret(lockHelper(name, LOCK_EX, timeout_us));
   #ifdef LOW_LEVEL_TRACING
     ::printf ("In BackendVFS::lockExclusive(): LockedExclusive %s with fd=%d path=%s tid=%ld\n",
@@ -323,7 +323,7 @@ BackendVFS::ScopedLock * BackendVFS::lockExclusive(std::string name, uint64_t ti
   return ret.release();
 }
 
-BackendVFS::ScopedLock * BackendVFS::lockShared(std::string name, uint64_t timeout_us) {
+BackendVFS::ScopedLock * BackendVFS::lockShared(const std::string& name, uint64_t timeout_us) {
   std::unique_ptr<BackendVFS::ScopedLock> ret(lockHelper(name, LOCK_SH, timeout_us));
   #ifdef LOW_LEVEL_TRACING
     ::printf ("In BackendVFS::lockShared(): LockedShared %s with fd=%d path=%s tid=%ld\n",

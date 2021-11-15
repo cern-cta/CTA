@@ -15,26 +15,28 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "XrootCl.hpp"
 #include <sstream>
+#include <string>
+
+#include "XrootCl.hpp"
 
 namespace cta { namespace exception {
 
 XrootCl::XrootCl(const XrdCl::XRootDStatus& status, const std::string & what) {
-  if(!what.empty()) {
+  if (!what.empty()) {
     getMessage() << what << " ";
   }
   getMessage() << status.ToStr().c_str();
-  getMessage() << " code:"   << status.code 
-               << " errNo:"  << status.errNo 
+  getMessage() << " code:"   << status.code
+               << " errNo:"  << status.errNo
                << " status:" << status.status;
 }
 
-void XrootCl::throwOnError(const XrdCl::XRootDStatus& status, std::string context)
-{
-  if(!status.IsOK()) {
+void XrootCl::throwOnError(const XrdCl::XRootDStatus& status, const std::string& context) {
+  if (!status.IsOK()) {
     throw XrootCl(status, context);
   }
 }
 
-}} // namespace cta::exception
+}  // namespace exception
+}  // namespace cta

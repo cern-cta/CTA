@@ -710,32 +710,33 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
 // OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount()
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount(
-        common::dataStructures::MountType type,
-        const catalogue::TapeForWriting& tape,
-        const std::string driveName,
-        const std::string& logicalLibrary,
-        const std::string& hostName,
-        const std::string& vo,
-        const std::string& mediaType,
-        const std::string& vendor,
-        const uint64_t capacityInBytes,
-        time_t startTime) {
+  common::dataStructures::MountType type,
+  const catalogue::TapeForWriting& tape,
+  const std::string& driveName,
+  const std::string& logicalLibrary,
+  const std::string& hostName,
+  const std::string& vo,
+  const std::string& mediaType,
+  const std::string& vendor,
+  const uint64_t capacityInBytes,
+  time_t startTime) {
   throw cta::exception::Exception("In OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount(): This function should not be called");
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount()
 //------------------------------------------------------------------------------
-std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount(const std::string& vid,
-        const std::string& tapePool,
-        const std::string driveName,
-        const std::string& logicalLibrary,
-        const std::string& hostName,
-        const std::string& vo,
-        const std::string& mediaType,
-        const std::string& vendor,
-        const uint64_t capacityInBytes,
-        time_t startTime, const optional<common::dataStructures::DriveState::ActivityAndWeight> &) {
+std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount(
+  const std::string& vid,
+  const std::string& tapePool,
+  const std::string& driveName,
+  const std::string& logicalLibrary,
+  const std::string& hostName,
+  const std::string& vo,
+  const std::string& mediaType,
+  const std::string& vendor,
+  const uint64_t capacityInBytes,
+  time_t startTime, const optional<common::dataStructures::DriveState::ActivityAndWeight> &) {
   throw cta::exception::Exception("In OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount(): This function should not be called");
 }
 
@@ -3070,12 +3071,11 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::getNextRetr
 //------------------------------------------------------------------------------
 // OStoreDB::TapeMountDecisionInfo::createArchiveMount()
 //------------------------------------------------------------------------------
-std::unique_ptr<SchedulerDatabase::ArchiveMount>
-  OStoreDB::TapeMountDecisionInfo::createArchiveMount(
-    common::dataStructures::MountType type,
-    const catalogue::TapeForWriting & tape, const std::string driveName,
-    const std::string& logicalLibrary, const std::string& hostName, const std::string& vo, const std::string& mediaType,
-    const std::string& vendor, uint64_t capacityInBytes, time_t startTime) {
+std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfo::createArchiveMount(
+  common::dataStructures::MountType type,
+  const catalogue::TapeForWriting & tape, const std::string& driveName,
+  const std::string& logicalLibrary, const std::string& hostName, const std::string& vo, const std::string& mediaType,
+  const std::string& vendor, uint64_t capacityInBytes, time_t startTime) {
   // In order to create the mount, we have to:
   // Check we actually hold the scheduling lock
   // Set the drive status to up, and indicate which tape we use.
@@ -3153,12 +3153,11 @@ OStoreDB::TapeMountDecisionInfo::TapeMountDecisionInfo(OStoreDB & oStoreDb): m_l
 //------------------------------------------------------------------------------
 // OStoreDB::TapeMountDecisionInfo::createRetrieveMount()
 //------------------------------------------------------------------------------
-std::unique_ptr<SchedulerDatabase::RetrieveMount>
-  OStoreDB::TapeMountDecisionInfo::createRetrieveMount(
-    const std::string& vid, const std::string & tapePool, const std::string driveName,
-    const std::string& logicalLibrary, const std::string& hostName,const std::string& vo, const std::string& mediaType,
-    const std::string& vendor,const uint64_t capacityInBytes, time_t startTime,
-    const optional<common::dataStructures::DriveState::ActivityAndWeight>& activityAndWeight) {
+std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInfo::createRetrieveMount(
+  const std::string& vid, const std::string& tapePool, const std::string& driveName,
+  const std::string& logicalLibrary, const std::string& hostName, const std::string& vo, const std::string& mediaType,
+  const std::string& vendor, const uint64_t capacityInBytes, time_t startTime,
+  const optional<common::dataStructures::DriveState::ActivityAndWeight>& activityAndWeight) {
   // In order to create the mount, we have to:
   // Check we actually hold the scheduling lock
   // Check the tape exists, add it to ownership and set its activity status to
@@ -3236,8 +3235,8 @@ OStoreDB::TapeMountDecisionInfo::~TapeMountDecisionInfo() {
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveMount::ArchiveMount()
 //------------------------------------------------------------------------------
-OStoreDB::ArchiveMount::ArchiveMount(OStoreDB & oStoreDB, common::dataStructures::JobQueueType queueType):
-      m_oStoreDB(oStoreDB), m_queueType(queueType) {}
+OStoreDB::ArchiveMount::ArchiveMount(OStoreDB & oStoreDB, const common::dataStructures::JobQueueType& queueType)
+  : m_oStoreDB(oStoreDB), m_queueType(queueType) {}
 
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveMount::getMountInfo()

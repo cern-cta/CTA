@@ -15,12 +15,13 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
 #include <memory>
 
-#include "EncryptionControl.hpp"
+#include "common/exception/Exception.hpp"
 #include "common/threading/SubProcess.hpp"
 #include "common/utils/Regex.hpp"
-#include "common/exception/Exception.hpp"
+#include "EncryptionControl.hpp"
 
 namespace castor {
 namespace tape {
@@ -41,8 +42,7 @@ m_path(scriptPath) {
 // enable
 //------------------------------------------------------------------------------
 auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface &m_drive,
-                               const std::string& vid, SetTag st) -> EncryptionStatus {
-
+  const std::string& vid, SetTag st) -> EncryptionStatus {
   EncryptionStatus encStatus;
   if (m_path.empty()) {
     encStatus = { false, "", "", ""};
@@ -51,7 +51,7 @@ auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface &
 
   std::list<std::string> args({m_path, "--vid", vid});
 
-  switch(st) {
+  switch (st) {
     case SetTag::NO_SET_TAG:
       break;
     case SetTag::SET_TAG:
@@ -69,14 +69,15 @@ auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface &
     } else {
       ex.getMessage() << "script returned: " << sp.exitValue();
     }
-    ex.getMessage() << " called=" << "\'" << argsToString(args, " ")  << "\'" << " stdout=" << sp.stdout() << " stderr=" << sp.stderr();
+    ex.getMessage() << " called=" << "\'" << argsToString(args, " ")  << "\'"
+                    << " stdout=" << sp.stdout()
+                    << " stderr=" << sp.stderr();
     throw ex;
   }
   encStatus = parse_json_script_output(sp.stdout());
   if (encStatus.on) {
     m_drive.setEncryptionKey(encStatus.key);
-  }
-  else {
+  } else {
     /*
      * If tapeserver fails completely and leaves drive in dirty state, we should always clear
      * encryption key from the drive if data are to be written unencrypted.
@@ -108,7 +109,7 @@ struct JsonTokenerDeleter {
 //------------------------------------------------------------------------------
 // JSON Parsing
 //------------------------------------------------------------------------------
-EncryptionControl::EncryptionStatus EncryptionControl::parse_json_script_output(std::string input) {
+EncryptionControl::EncryptionStatus EncryptionControl::parse_json_script_output(const std::string& input) {
   EncryptionStatus encryption_status;
 
   // Parse JSON response of the script
@@ -146,24 +147,24 @@ EncryptionControl::EncryptionStatus EncryptionControl::parse_json_script_output(
   return encryption_status;
 }
 
-std::map<std::string, std::string> EncryptionControl::flatten_json_object_to_map(std::string prefix, json_object *jobj) {
+std::map<std::string, std::string> EncryptionControl::flatten_json_object_to_map(const std::string& prefix,
+  json_object *jobj) {
   std::map<std::string, std::string> ret;
 
   json_object_object_foreach(jobj, key, val) {
     if (json_object_get_type(val) == json_type_object) {
       std::map<std::string, std::string> sec_map = flatten_json_object_to_map(key, val);
       ret.insert(sec_map.begin(), sec_map.end());
-    }
-    else {
+    } else {
       if (json_object_get_type(val) == json_type_string)  // parse only string values at the deepest level
         ret[prefix+key] = json_object_get_string(val);
     }
   }
   return ret;
-} 
+}
 
-std::string EncryptionControl::argsToString(std::list<std::string> args, std::string delimiter) {
-  if(args.empty())
+std::string EncryptionControl::argsToString(std::list<std::string> args, const std::string& delimiter) {
+  if (args.empty())
     return "";
   std::ostringstream toBeReturned;
   std::copy(args.begin(), --args.end(),
@@ -173,4 +174,7 @@ std::string EncryptionControl::argsToString(std::list<std::string> args, std::st
   return toBeReturned.str();
 }
 
-}}}} // namespace castor::tape::tapeserver::daemon
+}  // namespace daemon
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

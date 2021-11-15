@@ -33,7 +33,7 @@ namespace castor {
 namespace tape {
 namespace tapeserver {
 
-drive::DriveInterface * drive::createDrive(SCSI::DeviceInfo di, 
+drive::DriveInterface * drive::createDrive(SCSI::DeviceInfo di,
     System::virtualWrapper& sw) {
   if (std::string::npos != di.product.find("T10000")) {
     return new DriveT10000(di, sw);
@@ -44,7 +44,7 @@ drive::DriveInterface * drive::createDrive(SCSI::DeviceInfo di,
   } else if (std::string::npos != di.product.find("MHVTL")) {
     return new DriveMHVTL(di, sw);
   } else if (std::string::npos != di.product.find("VIRTUAL")) {
-    /* In case of a VIRTUAL drive, it could have been pre-allocated 
+    /* In case of a VIRTUAL drive, it could have been pre-allocated
      * for testing purposes (with "pre-cooked" contents). */
     drive::DriveInterface * ret = sw.getDriveByPath(di.nst_dev);
     if (ret) {
@@ -61,7 +61,7 @@ drive::DriveGeneric::DriveGeneric(SCSI::DeviceInfo di, System::virtualWrapper& s
 m_tapeFD(-1),  m_sysWrapper(sw), m_lbpToUse(lbpToUse::disabled) {
   /* Open the device files */
   /* We open the tape device file non-blocking as blocking open on rewind tapes (at least)
-   * will fail after a long timeout when no tape is present (at least with mhvtl) 
+   * will fail after a long timeout when no tape is present (at least with mhvtl)
    */
   cta::exception::Errnum::throwOnMinusOne(
       m_tapeFD = m_sysWrapper.open(m_SCSIInfo.nst_dev.c_str(), O_RDWR | O_NONBLOCK),
@@ -124,7 +124,7 @@ drive::deviceInfo drive::DriveGeneric::getDeviceInfo()  {
   deviceInfo devInfo;
 
   SCSI::Structures::setU16(cdb.allocationLength, sizeof(inquiryData));
-  
+
   sgh.setCDB(&cdb);
   sgh.setDataBuffer(&inquiryData);
   sgh.setSenseBuffer(&senseBuff);
@@ -219,7 +219,7 @@ std::string drive::DriveGeneric::getGenericSCSIPath() {
 }
 
 /**
- * Information about the serial number of the drive. 
+ * Information about the serial number of the drive.
  * @return   Right-aligned ASCII data for the vendor-assigned serial number.
  */
 std::string drive::DriveGeneric::getSerialNumber()  {
@@ -249,7 +249,7 @@ std::string drive::DriveGeneric::getSerialNumber()  {
 }
 
 /**
- * Position to logical object identifier (i.e. block address). 
+ * Position to logical object identifier (i.e. block address).
  * This function is blocking: the immediate bit is not set.
  * The device server will not return status until the locate operation
  * has completed.
@@ -259,8 +259,8 @@ void drive::DriveGeneric::positionToLogicalObject(uint32_t blockId)
  {
   SCSI::Structures::locate10CDB_t cdb;
   SCSI::Structures::senseData_t<255> senseBuff;
-  SCSI::Structures::LinuxSGIO_t sgh; 
-  
+  SCSI::Structures::LinuxSGIO_t sgh;
+
   SCSI::Structures::setU32(cdb.logicalObjectID, blockId);
 
   sgh.setCDB(&cdb);
@@ -289,11 +289,11 @@ drive::positionInfo drive::DriveGeneric::getPositionInfo()
   SCSI::Structures::LinuxSGIO_t sgh;
 
   positionInfo posInfo;
-  
+
   // We just go all defaults: service action = 00 (SHORT FORM BLOCK ID)
   // The result will come in fixed size and allocation length must be 0.
   // At least IBM drives will complain otherwise
-  
+
   sgh.setCDB(&cdb);
   sgh.setDataBuffer(&positionData);
   sgh.setSenseBuffer(&senseBuff);
@@ -312,7 +312,7 @@ drive::positionInfo drive::DriveGeneric::getPositionInfo()
     posInfo.dirtyBytesCount = SCSI::Structures::toU32(positionData.bytesInBuffer);
   } else {
     /* An overflow has occurred in at least one of the returned position
-     * data fields. The application should use the LONG FORM to obtain the 
+     * data fields. The application should use the LONG FORM to obtain the
      * current position or the application should use the EXTENDED FORM to
      * obtain the current position and number of bytes in the object buffer.
      * (note) For T10000 we have only SHORT FORM.
@@ -357,8 +357,8 @@ drive::physicalPositionInfo drive::DriveGeneric::getPhysicalPositionInfo()
 
 /**
 * Returns all the end of wrap positions of the mounted tape
-* 
-* @return a vector of endOfWrapsPositions. 
+*
+* @return a vector of endOfWrapsPositions.
 */
 std::vector<drive::endOfWrapPosition> drive::DriveGeneric::getEndOfWrapPositions() {
   throw cta::exception::Exception("In drive::DriveGeneric::getEndOfWrapPositions(), the drive does not support REOWP SCSI command.");
@@ -379,11 +379,11 @@ std::vector<uint16_t> drive::DriveGeneric::getTapeAlertCodes(){
   SCSI::Structures::senseData_t<255> senseBuff;
   SCSI::Structures::logSenseCDB_t cdb;
   SCSI::Structures::LinuxSGIO_t sgh;
-  
+
   cdb.pageCode = SCSI::logSensePages::tapeAlert;
   cdb.PC = 0x01; // Current Comulative Values
   SCSI::Structures::setU16(cdb.allocationLength, sizeof(tal));
-  
+
   sgh.setCDB(&cdb);
   sgh.setDataBuffer(&tal);
   sgh.setSenseBuffer(&senseBuff);
@@ -393,7 +393,7 @@ std::vector<uint16_t> drive::DriveGeneric::getTapeAlertCodes(){
       m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh),
       "Failed SG_IO ioctl in DriveGeneric::getTapeAlerts");
   SCSI::ExceptionLauncher(sgh, "SCSI error in getTapeAlerts:");
-  /* Return the ACTIVE tape alerts (this is indicated by "flag" (see 
+  /* Return the ACTIVE tape alerts (this is indicated by "flag" (see
    * SSC-4: 8.2.3 TapeAlert log page). As they are simply used for logging;
    * return strings. */
   for (size_t i = 0; i < tal.parameterNumber(); i++) {
@@ -434,8 +434,8 @@ std::vector<std::string> drive::DriveGeneric::getTapeAlertsCompact(const std::ve
 //------------------------------------------------------------------------------
 bool drive::DriveGeneric::tapeAlertsCriticalForWrite(
   const std::vector<uint16_t> & codes) {
-  for (std::vector<uint16_t>::const_iterator code =  codes.begin(); 
-    code!= codes.end(); ++code) {
+  for (std::vector<uint16_t>::const_iterator code =  codes.begin();
+    code!= codes.end(); code++) {
       if(SCSI::isTapeAlertCriticalForWrite(*code)) {
         return true;
       }
@@ -444,15 +444,15 @@ bool drive::DriveGeneric::tapeAlertsCriticalForWrite(
 }
 
 /**
- * Set the tape density and compression. 
+ * Set the tape density and compression.
  * We use MODE SENSE/SELECT Device Configuration (10h) mode page.
- * As soon as there is no definition in SPC-4 or SSC-3 it depends on the 
- * drives documentation. 
- * 
+ * As soon as there is no definition in SPC-4 or SSC-3 it depends on the
+ * drives documentation.
+ *
  * @param densityCode  The tape specific density code.
- *                     If it is 0 (default) than we use the density code 
+ *                     If it is 0 (default) than we use the density code
  *                     detected by the drive itself means no changes.
- *                                
+ *
  * @param compression  The boolean variable to enable or disable compression
  *                     on the drive for the tape. By default it is enabled.
  */
@@ -531,7 +531,7 @@ void drive::DriveGeneric::setLogicalBlockProtection(
     /* Manage both system error and SCSI errors. */
     cta::exception::Errnum::throwOnMinusOne(
       m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh),
-      "Failed SG_IO ioctl"  );     
+      "Failed SG_IO ioctl"  );
     SCSI::ExceptionLauncher(sgh,
       std::string("SCSI error fetching data in setLogicalBlockProtection: ") +
       SCSI::statusToString(sgh.status));
@@ -546,15 +546,15 @@ void drive::DriveGeneric::setLogicalBlockProtection(
     cdb.PF = 1; // means nothing for IBM, LTO, T10000
     cdb.paramListLength = sizeof (controlDataProtection.header) +
       sizeof (controlDataProtection.blockDescriptor) +
-      SCSI::controlDataProtectionModePageLengthAddition + 
-      SCSI::Structures::toU16(controlDataProtection.modePage.pageLength);    
+      SCSI::controlDataProtectionModePageLengthAddition +
+      SCSI::Structures::toU16(controlDataProtection.modePage.pageLength);
     if (cdb.paramListLength > sizeof(controlDataProtection)) {
-      // should never happen 
+      // should never happen
       throw cta::exception::Exception(
         std::string("cdb.paramListLength greater then size "
                     "of controlDataProtection in setLogicalBlockProtection"));
     }
-    controlDataProtection.header.modeDataLength = 0; // must be 0 for IBM, LTO 
+    controlDataProtection.header.modeDataLength = 0; // must be 0 for IBM, LTO
                                                      // ignored by T10000
     controlDataProtection.modePage.LBPMethod = method;
     controlDataProtection.modePage.LBPInformationLength = methodLength;
@@ -567,9 +567,9 @@ void drive::DriveGeneric::setLogicalBlockProtection(
     sgh.dxfer_direction = SG_DXFER_TO_DEV;
 
     /* Manage both system error and SCSI errors. */
-    cta::exception::Errnum::throwOnMinusOne(   
+    cta::exception::Errnum::throwOnMinusOne(
     m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh),
-    "Failed SG_IO ioctl"  );     
+    "Failed SG_IO ioctl"  );
     SCSI::ExceptionLauncher(sgh,
             std::string("SCSI error setting data in setDataProtection : ") +
             SCSI::statusToString(sgh.status));
@@ -599,7 +599,7 @@ void drive::DriveGeneric::enableCRC32CLogicalBlockProtectionReadWrite() {
 //------------------------------------------------------------------------------
 void drive::DriveGeneric::disableLogicalBlockProtection() {
   m_lbpToUse=lbpToUse::disabled;
-  setLogicalBlockProtection(0,0,false,false);      
+  setLogicalBlockProtection(0,0,false,false);
 }
 
 //------------------------------------------------------------------------------
@@ -608,7 +608,7 @@ void drive::DriveGeneric::disableLogicalBlockProtection() {
 drive::LBPInfo drive::DriveGeneric::getLBPInfo() {
   SCSI::Structures::modeSenseControlDataProtection_t controlDataProtection;
   drive::LBPInfo LBPdata;
-  
+
   /* fetch Control Data Protection */
   SCSI::Structures::modeSense6CDB_t cdb;
   SCSI::Structures::senseData_t<255> senseBuff;
@@ -626,13 +626,13 @@ drive::LBPInfo drive::DriveGeneric::getLBPInfo() {
   /* Manage both system error and SCSI errors. */
   cta::exception::Errnum::throwOnMinusOne(
     m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh),
-    "Failed SG_IO ioctl"  );     
+    "Failed SG_IO ioctl"  );
   SCSI::ExceptionLauncher(sgh,
     std::string("SCSI error fetching data in getLBPInfo: ") +
     SCSI::statusToString(sgh.status));
 
   LBPdata.method = controlDataProtection.modePage.LBPMethod;
-  LBPdata.methodLength = controlDataProtection.modePage.LBPInformationLength;  
+  LBPdata.methodLength = controlDataProtection.modePage.LBPInformationLength;
   LBPdata.enableLBPforRead = (1 == controlDataProtection.modePage.LBP_R);
   LBPdata.enableLBPforWrite = (1 == controlDataProtection.modePage.LBP_W);
 
@@ -841,7 +841,7 @@ SCSI::Structures::RAO::udsLimits drive::DriveGeneric::getLimitUDS() {
     cdb.serviceAction = 0x1d;
     cdb.udsLimits = 1;
     SCSI::Structures::setU32(cdb.allocationLength, sizeof(SCSI::Structures::RAO::udsLimitsPage_t));
-    
+
     sgh.setCDB(&cdb);
     sgh.setSenseBuffer(&senseBuff);
     sgh.setDataBuffer(&limitsSCSI);
@@ -866,9 +866,9 @@ void drive::DriveGeneric::generateRAO(std::list<SCSI::Structures::RAO::blockLims
     SCSI::Structures::senseData_t<127> senseBuff;
 
     int udSize = std::min((int) files.size(), maxSupported);
-    
+
     std::unique_ptr<SCSI::Structures::RAO::udsDescriptor_t[]>  ud (new SCSI::Structures::RAO::udsDescriptor_t[udSize]());
-    
+
     auto it = files.begin();
     for (int i = 0; i < udSize; ++i) {
       strncpy((char*)ud.get()[i].udsName, (char*)it->fseq, 10);
@@ -888,7 +888,7 @@ void drive::DriveGeneric::generateRAO(std::list<SCSI::Structures::RAO::blockLims
     SCSI::Structures::setU32(params.udsListLength, udSize * sizeof(SCSI::Structures::RAO::udsDescriptor_t));
     memcpy(dataBuff.get(), &params, 8); // copy first 2 fields
     memcpy(dataBuff.get() + 8, ud.get(), udSize * sizeof(SCSI::Structures::RAO::udsDescriptor_t));
-    
+
     sgh.setCDB(&cdb);
     sgh.setSenseBuffer(&senseBuff);
     sgh.setDataBuffer(dataBuff.get(), real_params_len);
@@ -953,34 +953,34 @@ void drive::DriveGeneric::queryRAO(std::list<SCSI::Structures::RAO::blockLims> &
 }
 
 /**
- * Function that checks if a tape is blank (contains no records) 
+ * Function that checks if a tape is blank (contains no records)
  * @return true if tape is blank, false otherwise
- */      
+ */
 bool drive::DriveGeneric::isTapeBlank() {
   struct mtop mtCmd1;
   mtCmd1.mt_op = MTREW;
   mtCmd1.mt_count = 1;
-  
+
   struct mtop mtCmd2;
   mtCmd2.mt_op = MTFSR;
   mtCmd2.mt_count = 1;
- 
+
   struct mtget mtInfo;
-  
+
   if((0 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &mtCmd1)) && (0 != m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &mtCmd2))) {
     //we are doing it the old CASTOR way (see readlbl.c)
     if(m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo)>=0) {
       if(GMT_EOD(mtInfo.mt_gstat) && GMT_BOT(mtInfo.mt_gstat)) {
         return true;
       }
-    }    
+    }
   }
-  
+
   struct mtop mtCmd3;
   mtCmd3.mt_op = MTREW;
   mtCmd3.mt_count = 1;
   m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &mtCmd3);
-  
+
   return false;
 }
 
@@ -1003,10 +1003,10 @@ void drive::DriveGeneric::setSTBufferWrite(bool bufWrite)  {
  * Jump to end of recorded media. This will use setSTFastMTEOM() to disable MT_ST_FAST_MTEOM.
  * (See TapeServer's handbook for details). This is used to rebuild the MIR (StorageTek)
  * or tape directory (IBM).
- * Tape directory rebuild is described only for IBM but currently applied to 
+ * Tape directory rebuild is described only for IBM but currently applied to
  * all tape drives.
  * TODO: synchronous? Timeout?
- */    
+ */
 void drive::DriveGeneric::spaceToEOM(void)  {
   setSTFastMTEOM(false);
   struct mtop m_mtCmd;
@@ -1018,8 +1018,8 @@ void drive::DriveGeneric::spaceToEOM(void)  {
 }
 
 /**
- * Set the MTFastEOM option of the ST driver. This function is used only internally in 
- * mounttape (in CAStor), so it could be a private function, not visible to 
+ * Set the MTFastEOM option of the ST driver. This function is used only internally in
+ * mounttape (in CAStor), so it could be a private function, not visible to
  * the higher levels of the software (TODO: protected?).
  * @param fastMTEOM the option switch.
  */
@@ -1034,7 +1034,7 @@ void drive::DriveGeneric::setSTFastMTEOM(bool fastMTEOM)  {
 
 /**
  * Jump to end of data. EOM in ST driver jargon, end of data (which is more accurate)
- * in SCSI terminology). This uses the fast setting (not to be used for MIR rebuild) 
+ * in SCSI terminology). This uses the fast setting (not to be used for MIR rebuild)
  */
 void drive::DriveGeneric::fastSpaceToEOM(void)  {
   setSTFastMTEOM(true);
@@ -1070,10 +1070,10 @@ void drive::DriveGeneric::spaceFileMarksBackwards(size_t count)  {
     size_t c = (tobeskipped > 0x7FFFFF) ? 0x7FFFFF : tobeskipped;
     m_mtCmd.mt_count = (int)c;
     cta::exception::Errnum::throwOnMinusOne(
-    m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd), 
+    m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd),
     "Failed ST ioctl (MTBSF) in DriveGeneric::spaceFileMarksBackwards");
     tobeskipped -= c;
-  }  
+  }
 }
 
 /**
@@ -1088,10 +1088,10 @@ void drive::DriveGeneric::spaceFileMarksForward(size_t count)  {
     size_t c = (tobeskipped > 0x7FFFFF) ? 0x7FFFFF : tobeskipped;
     m_mtCmd.mt_count = (int)c;
     cta::exception::Errnum::throwOnMinusOne(
-      m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd), 
+      m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd),
       "Failed ST ioctl (MTFSF) in DriveGeneric::spaceFileMarksForward");
     tobeskipped -= c;
-  }  
+  }
 }
 
 /**
@@ -1107,7 +1107,7 @@ void drive::DriveGeneric::unloadTape(void)  {
 }
 
 /**
- * Synch call to the tape drive. This function will not return before the 
+ * Synch call to the tape drive. This function will not return before the
  * data in the drive's buffer is actually committed to the medium.
  */
 void drive::DriveGeneric::flush(void)  {
@@ -1122,7 +1122,7 @@ void drive::DriveGeneric::flush(void)  {
 }
 
 /**
- * Write count file marks. The function does not return before the file marks 
+ * Write count file marks. The function does not return before the file marks
  * are committed to medium.
  * @param count
  */
@@ -1266,8 +1266,8 @@ ssize_t drive::DriveGeneric::readBlock(void * data, size_t count)  {
  * @param data pointer the the data block
  * @param count size of the data block
  */
-void drive::DriveGeneric::readExactBlock(void * data, size_t count, std::string context)  {
-  
+void drive::DriveGeneric::readExactBlock(void * data, size_t count, const std::string& context)  {
+
   switch (m_lbpToUse) {
     case lbpToUse::crc32cReadWrite:
     case lbpToUse::crc32cReadOnly:
@@ -1334,7 +1334,7 @@ void drive::DriveGeneric::readExactBlock(void * data, size_t count, std::string 
  * Read over a file mark. Throw an exception we do not read one.
  * @return the actual size of read data
  */
-void drive::DriveGeneric::readFileMark(std::string context)  {
+void drive::DriveGeneric::readFileMark(const std::string& context)  {
   char buff[4]; // We need to try and read at least a small amount of data
                 // due to a bug in mhvtl
   ssize_t res = m_sysWrapper.read(m_tapeFD, buff, 4);
@@ -1342,25 +1342,25 @@ void drive::DriveGeneric::readFileMark(std::string context)  {
   if (-1 == res && ENOSPC == errno)
     throw NotAFileMark(context);
   // Generic handling of other errors
-  cta::exception::Errnum::throwOnMinusOne(res, 
+  cta::exception::Errnum::throwOnMinusOne(res,
       context+": Failed ST read in DriveGeneric::readFileMark");
   // Handle the unlikely case when the block fits
   if (res)
     throw NotAFileMark(context);
 }
-   
+
 
 void drive::DriveGeneric::SCSI_inquiry() {
   SCSI::Structures::LinuxSGIO_t sgh;
   SCSI::Structures::inquiryCDB_t cdb;
   SCSI::Structures::senseData_t<255> senseBuff;
   unsigned char dataBuff[130];
-  
+
   memset(&dataBuff, 0, sizeof (dataBuff));
-  
+
   /* Build command: just declare the bufffer's size. */
   SCSI::Structures::setU16(cdb.allocationLength, sizeof(dataBuff));
-  
+
   sgh.setCDB(&cdb);
   sgh.setSenseBuffer(&senseBuff);
   sgh.setDataBuffer(dataBuff);
@@ -1368,7 +1368,7 @@ void drive::DriveGeneric::SCSI_inquiry() {
   cta::exception::Errnum::throwOnMinusOne(
       m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh),
       "Failed SG_IO ioctl in DriveGeneric::SCSI_inquiry");
-  
+
   /* TODO : this usage of std::cout cannot stay on the long run! */
   std::cout << "INQUIRY result: " << std::endl
       << "sgh.dxfer_len=" << sgh.dxfer_len
@@ -1396,12 +1396,12 @@ drive::compressionStats drive::DriveT10000::getCompression()  {
 drive::compressionStats drive::DriveT10000::getCompressionStats() {
 
   compressionStats driveCompressionStats;
-  
+
   SCSI::Structures::LinuxSGIO_t sgh;
   SCSI::Structures::logSenseCDB_t cdb;
   SCSI::Structures::senseData_t<255> senseBuff;
   unsigned char dataBuff[1024];
-  
+
   memset(dataBuff, 0, sizeof (dataBuff));
 
   cdb.pageCode = SCSI::logSensePages::sequentialAccessDevicePage;
@@ -1476,7 +1476,7 @@ drive::lbpToUse drive::DriveMHVTL::getLbpToUse() {
 }
 
 void drive::DriveMHVTL::setLogicalBlockProtection(const unsigned char method,
-  unsigned char methodLength, const bool enableLPBforRead, 
+  unsigned char methodLength, const bool enableLPBforRead,
   const bool enableLBBforWrite) {
   if (method != 0 || methodLength != 0 || enableLBBforWrite || enableLPBforRead)
     throw cta::exception::Exception("In DriveMHVTL::setLogicalBlockProtection:: LBP cannot be enabled");
@@ -1527,21 +1527,21 @@ drive::compressionStats drive::DriveLTO::getCompression()  {
       case SCSI::dataCompression32h::bytesTransferredFromServer:
         driveCompressionStats.fromHost += logPageParam.getS64Value();
         break;
-        // toTape  
+        // toTape
       case SCSI::dataCompression32h::mbWrittenToTape:
         driveCompressionStats.toTape = logPageParam.getU64Value() * mb;
         break;
       case SCSI::dataCompression32h::bytesWrittenToTape:
         driveCompressionStats.toTape += logPageParam.getS64Value();
         break;
-        // fromTape     
+        // fromTape
       case SCSI::dataCompression32h::mbReadFromTape:
         driveCompressionStats.fromTape = logPageParam.getU64Value() * mb;
         break;
       case SCSI::dataCompression32h::bytesReadFromTape:
         driveCompressionStats.fromTape += logPageParam.getS64Value();
         break;
-        // toHost            
+        // toHost
       case SCSI::dataCompression32h::mbTransferredToServer:
         driveCompressionStats.toHost = logPageParam.getU64Value() * mb;
         break;
@@ -1564,20 +1564,20 @@ std::vector<castor::tape::tapeserver::drive::endOfWrapPosition> drive::DriveLTO:
   cdb.wrapNumber = 0;
   //Each wrap descriptor is 12 bytes
   SCSI::Structures::setU32(cdb.allocationLength,12 * castor::tape::SCSI::maxLTOTapeWraps);
-  
+
   SCSI::Structures::readEndOfWrapPositionDataLongForm_t data;
-  
+
   SCSI::Structures::LinuxSGIO_t sgh;
   sgh.setCDB(&cdb);
   sgh.setDataBuffer(&data);
   sgh.dxfer_direction = SG_DXFER_FROM_DEV;
-  
+
    /* Manage both system error and SCSI errors. */
   cta::exception::Errnum::throwOnMinusOne(
     m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh),
     "Failed SG_IO ioctl in DriveLTO::getEndOfWrapPositions");
   SCSI::ExceptionLauncher(sgh, "SCSI error in getEndOfWrapPositions:");
-  
+
   int nbWrapReturned = data.getNbWrapsReturned();
   //Loop over the list of wraps of the tape returned by the drive
   for(int i = 0; i < nbWrapReturned; ++i){
@@ -1910,7 +1910,7 @@ std::map<std::string,uint32_t> drive::DriveGeneric::getTapeNonMediumErrors() {
 
   unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
 
-  while (logParameter < endPage) { 
+  while (logParameter < endPage) {
     SCSI::Structures::logSenseParameter_t & logPageParam =
       *(SCSI::Structures::logSenseParameter_t *) logParameter;
     switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
@@ -2036,7 +2036,7 @@ std::map<std::string,uint32_t> drive::DriveT10000::getVolumeStats() {
 
   unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
 
-  while (logParameter < endPage) { 
+  while (logParameter < endPage) {
     SCSI::Structures::logSenseParameter_t & logPageParam =
       *(SCSI::Structures::logSenseParameter_t *) logParameter;
     switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
@@ -2103,7 +2103,7 @@ std::map<std::string,float> drive::DriveIBM3592::getQualityStats() {
 
       unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
 
-      while (logParameter < endPage) { 
+      while (logParameter < endPage) {
         SCSI::Structures::logSenseParameter_t &logPageParam =
           *(SCSI::Structures::logSenseParameter_t *) logParameter;
         const int val = logPageParam.getU64Value();
@@ -2214,7 +2214,7 @@ std::map<std::string,float> drive::DriveIBM3592::getQualityStats() {
 
       unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
 
-      while (logParameter < endPage) { 
+      while (logParameter < endPage) {
         SCSI::Structures::logSenseParameter_t &logPageParam =
           *(SCSI::Structures::logSenseParameter_t *) logParameter;
         switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
@@ -2307,7 +2307,7 @@ std::map<std::string,float> drive::DriveT10000::getQualityStats() {
 
   unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
 
-  while (logParameter < endPage) { 
+  while (logParameter < endPage) {
     SCSI::Structures::logSenseParameter_t & logPageParam =
       *(SCSI::Structures::logSenseParameter_t *) logParameter;
     switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
@@ -2596,19 +2596,19 @@ std::map<std::string,uint32_t> castor::tape::tapeserver::drive::DriveMHVTL::getV
 //------------------------------------------------------------------------------
 void drive::DriveGeneric::testUnitReady() const {
   SCSI::Structures::testUnitReadyCDB_t cdb;
-  
+
   SCSI::Structures::senseData_t<255> senseBuff;
   SCSI::Structures::LinuxSGIO_t sgh;
- 
+
   sgh.setCDB(&cdb);
   sgh.setSenseBuffer(&senseBuff);
   sgh.dxfer_direction = SG_DXFER_NONE;
- 
+
   /* Manage both system error and SCSI errors. */
   cta::exception::Errnum::throwOnMinusOne(
     m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh),
     "Failed SG_IO ioctl in DriveGeneric::testUnitReady");
-  
+
   SCSI::ExceptionLauncher(sgh,"SCSI error in testUnitReady:");
 }
 
@@ -2616,7 +2616,7 @@ void drive::DriveGeneric::testUnitReady() const {
 // waitUntilReady
 //------------------------------------------------------------------------------
 void drive::DriveGeneric::waitUntilReady(const uint32_t timeoutSecond)  {
-    
+
   waitTestUnitReady(timeoutSecond);
 
   // we need to reopen the drive to update the GMT_ONLINE cache of the st driver
@@ -2669,7 +2669,7 @@ void drive::DriveGeneric::waitTestUnitReady(const uint32_t timeoutSecond)  {
     } catch (...) {
       throw;
     }
-    
+
     usleep(100 * 1000); // 1/10 second
   } while(t.secs() < timeoutSecond);
 

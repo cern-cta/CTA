@@ -197,7 +197,7 @@ public:
     std::function<std::string(const std::string &)> m_updaterCallback;
     std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
   };
-  AsyncTransferSuccessfulUpdater * asyncUpdateTransferSuccessful(const std::string destinationVid, const uint32_t copyNumber);
+  AsyncTransferSuccessfulUpdater * asyncUpdateTransferSuccessful(const std::string& destinationVid, const uint32_t copyNumber);
 
   // An asynchronous request deleter class after report of success.
   class AsyncRequestDeleter {

@@ -674,11 +674,12 @@ const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getLastestError() {
 //------------------------------------------------------------------------------
 // ArchiveRequest::asyncUpdateTransferSuccessful()
 //------------------------------------------------------------------------------
-ArchiveRequest::AsyncTransferSuccessfulUpdater * ArchiveRequest::asyncUpdateTransferSuccessful(const std::string destinationVid, const uint32_t copyNumber ) {
+ArchiveRequest::AsyncTransferSuccessfulUpdater * ArchiveRequest::asyncUpdateTransferSuccessful(
+  const std::string& destinationVid, const uint32_t copyNumber ) {
   std::unique_ptr<AsyncTransferSuccessfulUpdater> ret(new AsyncTransferSuccessfulUpdater);
   // The unique pointer will be std::moved so we need to work with its content (bare pointer or here ref to content).
   auto retPtr = ret.get();
-  ret->m_updaterCallback=
+  ret->m_updaterCallback =
     [this, destinationVid, copyNumber, retPtr](const std::string &in)->std::string {
       // We have a locked and fetched object, so we just need to work on its representation.
       serializers::ObjectHeader oh;
@@ -691,14 +692,14 @@ ArchiveRequest::AsyncTransferSuccessfulUpdater * ArchiveRequest::asyncUpdateTran
       serializers::ArchiveRequest payload;
       payload.ParseFromString(oh.payload());
       retPtr->m_repackInfo.isRepack = payload.isrepack();
-      if (!payload.isrepack()) { // Non-repack case. We only do one report per request.
+      if (!payload.isrepack()) {  // Non-repack case. We only do one report per request.
         auto * jl = payload.mutable_jobs();
         bool otherJobsToTransfer = false;
-        for (auto j=jl->begin(); j!=jl->end(); j++) {
+        for (auto j = jl->begin(); j != jl->end(); j++) {
           if (j->copynb() != copyNumber && j->status() == serializers::ArchiveJobStatus::AJS_ToTransferForUser)
             otherJobsToTransfer = true;
         }
-        for (auto j=jl->begin(); j!=jl->end(); j++) {
+        for (auto j = jl->begin(); j != jl->end(); j++) {
           if (j->copynb() == copyNumber) {
             if (otherJobsToTransfer || m_payload.reportdecided()) {
               // There are still other jobs to report or another failed and will
@@ -716,12 +717,12 @@ ArchiveRequest::AsyncTransferSuccessfulUpdater * ArchiveRequest::asyncUpdateTran
             return oh.SerializeAsString();
           }
         }
-      } else { // Repack case, the report policy is different (report all jobs). So we just change the job's status.
-        for (auto & j: *payload.mutable_jobs()) {
+      } else {  // Repack case, the report policy is different (report all jobs). So we just change the job's status.
+        for (auto & j : *payload.mutable_jobs()) {
           if (j.copynb() == copyNumber) {
             ArchiveRequest::RepackInfoSerDeser serDeser;
             serDeser.deserialize(payload.repack_info());
-            //Store the job destination vid in the repack info
+            // Store the job destination vid in the repack info
             serDeser.jobsDestination[copyNumber] = destinationVid;
             serDeser.serialize(*(payload.mutable_repack_info()));
             retPtr->m_repackInfo = serDeser;

@@ -18,41 +18,38 @@
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
 #include "castor/tape/tapeserver/SCSI/Structures.hpp"
 #include "DriveGeneric.hpp"
-#include <iostream>
 
 namespace {
-  const long unsigned int max_fake_drive_record_length = 1000;
-  const char filemark[] = "";
+const long unsigned int max_fake_drive_record_length = 1000;
+const char filemark[] = "";
 }
 
 castor::tape::tapeserver::drive::FakeDrive::FakeDrive(uint64_t capacity,
-    FailureMoment failureMoment, bool failToMount) throw(): 
-  m_currentPosition(0), m_tapeCapacity(capacity), m_beginOfCompressStats(0),
-  m_failureMoment(failureMoment), m_tapeOverflow(false),
-  m_failToMount(failToMount), m_lbpToUse(lbpToUse::disabled)
-{
+  FailureMoment failureMoment, bool failToMount) throw()
+  : m_currentPosition(0), m_tapeCapacity(capacity), m_beginOfCompressStats(0),
+    m_failureMoment(failureMoment), m_tapeOverflow(false),
+    m_failToMount(failToMount), m_lbpToUse(lbpToUse::disabled) {
   m_tape.reserve(max_fake_drive_record_length);
 }
 
-castor::tape::tapeserver::drive::FakeDrive::FakeDrive(bool failToMount) throw(): 
-  m_currentPosition(0), m_tapeCapacity(std::numeric_limits<uint64_t>::max()), m_beginOfCompressStats(0),
-  m_failureMoment(OnWrite), m_tapeOverflow(false), m_failToMount(failToMount)
-{
+castor::tape::tapeserver::drive::FakeDrive::FakeDrive(bool failToMount) throw()
+  : m_currentPosition(0), m_tapeCapacity(std::numeric_limits<uint64_t>::max()), m_beginOfCompressStats(0),
+    m_failureMoment(OnWrite), m_tapeOverflow(false), m_failToMount(failToMount) {
   m_tape.reserve(max_fake_drive_record_length);
 }
 
 castor::tape::tapeserver::drive::compressionStats castor::tape::tapeserver::drive::FakeDrive::getCompression()  {
   castor::tape::tapeserver::drive::compressionStats stats;
-  for(unsigned int i=m_beginOfCompressStats;i<m_tape.size();++i){
+  for (unsigned int i = m_beginOfCompressStats; i < m_tape.size(); ++i) {
     stats.toTape += m_tape[i].data.length();
   }
-  
-  //that way we set also stats for reading
+
+  // that way we set also stats for reading
   stats.fromTape  = stats.toTape;
   return stats;
 }
-void castor::tape::tapeserver::drive::FakeDrive::clearCompressionStats()  {
-  m_beginOfCompressStats=m_tape.size();
+void castor::tape::tapeserver::drive::FakeDrive::clearCompressionStats() {
+  m_beginOfCompressStats = m_tape.size();
 }
 
 castor::tape::tapeserver::drive::deviceInfo castor::tape::tapeserver::drive::FakeDrive::getDeviceInfo()  {
@@ -71,7 +68,7 @@ std::string castor::tape::tapeserver::drive::FakeDrive::getSerialNumber()  {
   throw cta::exception::Exception("FakeDrive::getSerialNumber Not implemented");
 }
 void castor::tape::tapeserver::drive::FakeDrive::positionToLogicalObject(uint32_t blockId)  {
-  if(blockId > m_tape.size()-1) {
+  if (blockId > m_tape.size() - 1) {
     throw cta::exception::Exception("FakeDrive::trying to position beyond the end of data");
   }
   m_currentPosition = blockId;
@@ -95,9 +92,9 @@ castor::tape::tapeserver::drive::physicalPositionInfo castor::tape::tapeserver::
 
 std::vector<castor::tape::tapeserver::drive::endOfWrapPosition> castor::tape::tapeserver::drive::FakeDrive::getEndOfWrapPositions() {
   std::vector<drive::endOfWrapPosition> ret;
-  ret.push_back({0,208310,0});
-  ret.push_back({1,416271,0});
-  ret.push_back({2,624562,0});
+  ret.push_back({0, 208310, 0});
+  ret.push_back({1, 416271, 0});
+  ret.push_back({2, 624562, 0});
   return ret;
 }
 
@@ -140,7 +137,7 @@ castor::tape::tapeserver::drive::LBPInfo  castor::tape::tapeserver::drive::FakeD
   throw cta::exception::Exception("FakeDrive::dgetLBPInfo Not implemented");
 }
 void  castor::tape::tapeserver::drive::FakeDrive::setLogicalBlockProtection(const unsigned char method,
-      unsigned char methodLength, const bool enableLPBforRead, 
+      unsigned char methodLength, const bool enableLPBforRead,
       const bool enableLBBforWrite)  {
   throw cta::exception::Exception("FakeDrive::setLogicalBlockProtection Not implemented");
 }
@@ -157,28 +154,28 @@ void castor::tape::tapeserver::drive::FakeDrive::spaceToEOM(void)  {
   m_currentPosition = m_tape.size()-1;
 }
 void castor::tape::tapeserver::drive::FakeDrive::spaceFileMarksBackwards(size_t count)  {
-  if(!count) return;
+  if (!count) return;
   size_t countdown = count;
-  std::vector<std::string>::size_type i=0;
-  for(i=m_currentPosition; i!=(std::vector<std::string>::size_type)-1 and countdown!=0; i--) {
-    if(!m_tape[i].data.compare(filemark)) countdown--;
+  std::vector<std::string>::size_type i = 0;
+  for (i = m_currentPosition; i != (std::vector<std::string>::size_type) - 1 && countdown != 0; i--) {
+    if (!m_tape[i].data.compare(filemark)) countdown--;
   }
-  if(countdown) {
+  if (countdown) {
     throw cta::exception::Exception("FakeDrive::spaceFileMarksBackwards");
-  }  
-  m_currentPosition = i-1; //BOT side of the filemark
+  }
+  m_currentPosition = i - 1;  // BOT side of the filemark
 }
 void castor::tape::tapeserver::drive::FakeDrive::spaceFileMarksForward(size_t count)  {
-  if(!count) return;
+  if (!count) return;
   size_t countdown = count;
-  std::vector<std::string>::size_type i=0;
-  for(i=m_currentPosition; i!=m_tape.size() and countdown!=0; i++) {
-    if(!m_tape[i].data.compare(filemark)) countdown--;
+  std::vector<std::string>::size_type i = 0;
+  for (i = m_currentPosition; i != m_tape.size() && countdown != 0; i++) {
+    if (!m_tape[i].data.compare(filemark)) countdown--;
   }
-  if(countdown) {
+  if (countdown) {
     throw cta::exception::Errnum(EIO, "Failed FakeDrive::spaceFileMarksForward");
   }
-  m_currentPosition = i; //EOT side of the filemark
+  m_currentPosition = i;  // EOT side of the filemark
 }
 void castor::tape::tapeserver::drive::FakeDrive::unloadTape(void)  {
 }
@@ -198,9 +195,9 @@ uint64_t castor::tape::tapeserver::drive::FakeDrive::getRemaingSpace(uint32_t cu
 }
 
 void castor::tape::tapeserver::drive::FakeDrive::writeSyncFileMarks(size_t count)  {
-  if(count==0) return;
+  if (count == 0) return;
   m_tape.resize(m_currentPosition+count);
-  for(size_t i=0; i<count; ++i) {
+  for (size_t i = 0; i < count; ++i) {
     m_tape.at(m_currentPosition).data = filemark;
     // We consider the file mark takes "no space"
     m_tape.at(m_currentPosition).remainingSpaceAfter = getRemaingSpace(m_currentPosition);
@@ -230,7 +227,7 @@ void castor::tape::tapeserver::drive::FakeDrive::writeBlock(const void * data, s
   m_currentPosition++;
 }
 ssize_t castor::tape::tapeserver::drive::FakeDrive::readBlock(void *data, size_t count)  {
-  if(count < m_tape.at(m_currentPosition).data.size()) {
+  if (count < m_tape.at(m_currentPosition).data.size()) {
     throw cta::exception::Exception("Block size too small in FakeDrive::readBlock");
   }
   size_t bytes_copied = m_tape.at(m_currentPosition).data.copy((char *)data, m_tape.at(m_currentPosition).data.size());
@@ -249,39 +246,39 @@ std::string castor::tape::tapeserver::drive::FakeDrive::contentToString() throw(
   exc << std::endl;
   return exc.str();
 }
-void castor::tape::tapeserver::drive::FakeDrive::readExactBlock(void *data, size_t count, std::string context)  {
-  if(count != m_tape.at(m_currentPosition).data.size()) {
+void castor::tape::tapeserver::drive::FakeDrive::readExactBlock(void *data, size_t count, const std::string& context)  {
+  if (count != m_tape.at(m_currentPosition).data.size()) {
     std::stringstream exc;
-    exc << "Wrong block size in FakeDrive::readExactBlock. Expected: " << count 
-        << " Found: " << m_tape.at(m_currentPosition).data.size() 
-        << " Position: " << m_currentPosition 
+    exc << "Wrong block size in FakeDrive::readExactBlock. Expected: " << count
+        << " Found: " << m_tape.at(m_currentPosition).data.size()
+        << " Position: " << m_currentPosition
         << " String: " << m_tape.at(m_currentPosition).data << std::endl;
     exc << contentToString();
     throw cta::exception::Exception(exc.str());
   }
-  if(count != m_tape.at(m_currentPosition).data.copy((char *)data, count)) {
+  if (count != m_tape.at(m_currentPosition).data.copy((char *)data, count)) {
     throw cta::exception::Exception("Failed FakeDrive::readExactBlock");
   }
   m_currentPosition++;
 }
-void castor::tape::tapeserver::drive::FakeDrive::readFileMark(std::string context)  {
-  if(m_tape.at(m_currentPosition).data.compare(filemark)) {
+void castor::tape::tapeserver::drive::FakeDrive::readFileMark(const std::string& context)  {
+  if (m_tape.at(m_currentPosition).data.compare(filemark)) {
     throw cta::exception::Exception("Failed FakeDrive::readFileMark");
   }
-  m_currentPosition++;  
+  m_currentPosition++;
 }
 void castor::tape::tapeserver::drive::FakeDrive::waitUntilReady(const uint32_t timeoutSecond)  {
   if (m_failToMount)
     throw cta::exception::Exception("In FakeDrive::waitUntilReady: Failed to mount the tape");
-}  
+}
 bool castor::tape::tapeserver::drive::FakeDrive::isWriteProtected()  {
   return false;
 }
 bool castor::tape::tapeserver::drive::FakeDrive::isAtBOT()  {
-  return m_currentPosition==0;
+  return m_currentPosition == 0;
 }
 bool castor::tape::tapeserver::drive::FakeDrive::isAtEOD()  {
-  return m_currentPosition==m_tape.size()-1;
+  return m_currentPosition == m_tape.size()-1;
 }
 
 bool castor::tape::tapeserver::drive::FakeDrive::isTapeBlank() {
@@ -322,8 +319,8 @@ void castor::tape::tapeserver::drive::FakeDrive::queryRAO(
   files.reverse();
 }
 
-std::map<std::string,uint64_t> castor::tape::tapeserver::drive::FakeDrive::getTapeWriteErrors() {
-  std::map<std::string,uint64_t> writeErrorsStats;
+std::map<std::string, uint64_t> castor::tape::tapeserver::drive::FakeDrive::getTapeWriteErrors() {
+  std::map<std::string, uint64_t> writeErrorsStats;
   writeErrorsStats["mountTotalCorrectedWriteErrors"] = 5;
   writeErrorsStats["mountTotalWriteBytesProcessed"] = 4096;
   writeErrorsStats["mountTotalUncorrectedWriteErrors"] = 1;
@@ -331,8 +328,8 @@ std::map<std::string,uint64_t> castor::tape::tapeserver::drive::FakeDrive::getTa
   return writeErrorsStats;
 }
 
-std::map<std::string,uint64_t> castor::tape::tapeserver::drive::FakeDrive::getTapeReadErrors() {
-  std::map<std::string,uint64_t> readErrorsStats;
+std::map<std::string, uint64_t> castor::tape::tapeserver::drive::FakeDrive::getTapeReadErrors() {
+  std::map<std::string, uint64_t> readErrorsStats;
   readErrorsStats["mountTotalCorrectedReadErrors"]= 5;
   readErrorsStats["mountTotalReadBytesProcessed"] = 4096;
   readErrorsStats["mountTotalUncorrectedReadErrors"]= 1;
@@ -340,16 +337,16 @@ std::map<std::string,uint64_t> castor::tape::tapeserver::drive::FakeDrive::getTa
   return readErrorsStats;
 }
 
-std::map<std::string,uint32_t> castor::tape::tapeserver::drive::FakeDrive::getTapeNonMediumErrors() {
-  std::map<std::string,uint32_t> nonMediumErrorsStats;
+std::map<std::string, uint32_t> castor::tape::tapeserver::drive::FakeDrive::getTapeNonMediumErrors() {
+  std::map<std::string, uint32_t> nonMediumErrorsStats;
   nonMediumErrorsStats["mountTotalNonMediumErrorCounts"] = 2;
 
   return nonMediumErrorsStats;
 }
 
-std::map<std::string,float> castor::tape::tapeserver::drive::FakeDrive::getQualityStats() {
+std::map<std::string, float> castor::tape::tapeserver::drive::FakeDrive::getQualityStats() {
   // Only common IBM and Oracle stats are included in the return value;
-  std::map<std::string,float> qualityStats;
+  std::map<std::string, float> qualityStats;
   qualityStats["lifetimeMediumEfficiencyPrct"] = 100.0;
   qualityStats["mountReadEfficiencyPrct"] = 100.0;
   qualityStats["mountWriteEfficiencyPrct"] = 100.0;
@@ -357,8 +354,8 @@ std::map<std::string,float> castor::tape::tapeserver::drive::FakeDrive::getQuali
   return qualityStats;
 }
 
-std::map<std::string,uint32_t> castor::tape::tapeserver::drive::FakeDrive::getDriveStats() {
-  std::map<std::string,uint32_t> driveStats;
+std::map<std::string, uint32_t> castor::tape::tapeserver::drive::FakeDrive::getDriveStats() {
+  std::map<std::string, uint32_t> driveStats;
 
   driveStats["mountTemps"] = 100;
   driveStats["mountReadTransients"] = 10;
@@ -375,19 +372,15 @@ std::string castor::tape::tapeserver::drive::FakeDrive::getDriveFirmwareVersion(
   return std::string("123A");
 }
 
-std::map<std::string,uint32_t> castor::tape::tapeserver::drive::FakeDrive::getVolumeStats() {
+std::map<std::string, uint32_t> castor::tape::tapeserver::drive::FakeDrive::getVolumeStats() {
   // No available data
-  return std::map<std::string,uint32_t>();
+  return std::map<std::string, uint32_t>();
 }
 
 
 castor::tape::tapeserver::drive::FakeNonRAODrive::FakeNonRAODrive():FakeDrive() {
-  
 }
 
 castor::tape::SCSI::Structures::RAO::udsLimits castor::tape::tapeserver::drive::FakeNonRAODrive::getLimitUDS() {
   throw castor::tape::tapeserver::drive::DriveDoesNotSupportRAOException("UnitTests");
 }
-
-
-

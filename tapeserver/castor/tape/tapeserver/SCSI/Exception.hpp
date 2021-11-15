@@ -15,11 +15,12 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <sstream>
+#include <string>
+
 #include "common/exception/Exception.hpp"
 #include "Structures.hpp"
 #include "Constants.hpp"
-
-#include <sstream>
 
 namespace castor {
 namespace tape {
@@ -27,98 +28,96 @@ namespace SCSI {
   /**
    * An exception class turning SCSI sense data into a loggable string
    */
-  class Exception: public cta::exception::Exception {
-  public:
-    Exception(unsigned char status, castor::tape::SCSI::Structures::senseData_t<255> * sense,
-            const std::string & context = "");
-    virtual ~Exception() throw () {}
-  }; // class Exception
-  
-  /**
-   * Failed with NotReady error.
-   */
-  class NotReadyException : public castor::tape::SCSI::Exception {
-  public: 
-    /**
-     * Constructor
-     */
-    NotReadyException(unsigned char status, 
-      castor::tape::SCSI::Structures::senseData_t<255> * sense,
-      const std::string & context = ""):
-      Exception(status, sense, context) {};
-  }; // class NotReadyException
-  
-  /**
-   * Failed with UnitAttention error.
-   */
-  class UnitAttentionException : public castor::tape::SCSI::Exception {
-  public: 
-    /**
-     * Constructor
-     */
-    UnitAttentionException(unsigned char status, 
-      castor::tape::SCSI::Structures::senseData_t<255> * sense,
-      const std::string & context = ""):
-      Exception(status, sense, context) {};
-  }; // class UnitAttentionException
+class Exception : public cta::exception::Exception {
+ public:
+  Exception(unsigned char status, castor::tape::SCSI::Structures::senseData_t<255> * sense,
+          const std::string& context = "");
+  virtual ~Exception() throw() {}
+};  // class Exception
 
+/**
+ * Failed with NotReady error.
+ */
+class NotReadyException : public castor::tape::SCSI::Exception {
+ public:
   /**
-   * Failed with host error.
+   * Constructor
    */
-  class HostException: public cta::exception::Exception {
-  public:
-    HostException(const unsigned short int host_status,
-      const std::string & context = "");
-    virtual ~HostException() throw () {}
-  }; // class HostException
+  NotReadyException(unsigned char status,
+    castor::tape::SCSI::Structures::senseData_t<255> * sense,
+    const std::string& context = ""):
+    Exception(status, sense, context) {}
+};  // class NotReadyException
 
+/**
+ * Failed with UnitAttention error.
+ */
+class UnitAttentionException : public castor::tape::SCSI::Exception {
+ public:
   /**
-   * Failed with driver error.
+   * Constructor
    */
-  class DriverException: public cta::exception::Exception {
-  public:
-    DriverException(const unsigned short int driver_status,
-      castor::tape::SCSI::Structures::senseData_t<255> * sense,
-      const std::string & context = "");
-    virtual ~DriverException() throw () {}
-  }; // class DriverException
+  UnitAttentionException(unsigned char status,
+    castor::tape::SCSI::Structures::senseData_t<255> * sense,
+    const std::string & context = ""):
+    Exception(status, sense, context) {}
+};  // class UnitAttentionException
 
-  /**
-   * Automated exception launcher in case of SCSI command error. Does nothing 
-   * in the absence of errors.
-   * @param sgio the sgio struct.
-   */
-  void ExceptionLauncher (const SCSI::Structures::LinuxSGIO_t & sgio, std::string context = "");
+/**
+ * Failed with host error.
+ */
+class HostException: public cta::exception::Exception {
+ public:
+  HostException(const unsigned short int host_status,
+    const std::string & context = "");
+  virtual ~HostException() throw() {}
+};  // class HostException
 
-  /**
-   * Check and throw exception in case of SCSI command error with bad status.
-   * Does nothing in the absence of errors.
-   * @param sgio the sgio struct.
-   * @param context The string to be used as the beginning for the exception
-   *                message.
-   */
-  void checkAndThrowSgStatus(const SCSI::Structures::LinuxSGIO_t & sgio,
-    const std::string context);
+/**
+ * Failed with driver error.
+ */
+class DriverException: public cta::exception::Exception {
+ public:
+  DriverException(const unsigned short int driver_status,
+    castor::tape::SCSI::Structures::senseData_t<255> * sense,
+    const std::string & context = "");
+  virtual ~DriverException() throw() {}
+};  // class DriverException
 
-  /**
-   * Check and throw exception in case of SCSI command error with bad host
-   * status. Does nothing in the absence of errors.
-   * @param sgio the sgio struct.
-   * @param context The string to be used as the beginning for the exception
-   *                message.
-   */
-  void checkAndThrowSgHostStatus(const SCSI::Structures::LinuxSGIO_t & sgio,
-    const std::string context);
+/**
+ * Automated exception launcher in case of SCSI command error. Does nothing
+ * in the absence of errors.
+ * @param sgio the sgio struct.
+ */
+void ExceptionLauncher(const SCSI::Structures::LinuxSGIO_t & sgio, const std::string& context = "");
 
-  /**
-   * Check and throw exception in case of SCSI command error with bad driver
-   * status. Does nothing in the absence of errors.
-   * @param sgio the sgio struct.
-   * @param context The string to be used as the beginning for the exception
-   *                message.
-   */
-  void checkAndThrowSgDriverStatus(const SCSI::Structures::LinuxSGIO_t & sgio,
-    const std::string context);
-} // namespace SCSI
-} // namespace tape
-} // namespace castor
+/**
+ * Check and throw exception in case of SCSI command error with bad status.
+ * Does nothing in the absence of errors.
+ * @param sgio the sgio struct.
+ * @param context The string to be used as the beginning for the exception
+ *                message.
+ */
+void checkAndThrowSgStatus(const SCSI::Structures::LinuxSGIO_t & sgio,
+  const std::string& context);
+
+/**
+ * Check and throw exception in case of SCSI command error with bad host
+ * status. Does nothing in the absence of errors.
+ * @param sgio the sgio struct.
+ * @param context The string to be used as the beginning for the exception
+ *                message.
+ */
+void checkAndThrowSgHostStatus(const SCSI::Structures::LinuxSGIO_t & sgio, const std::string& context);
+
+/**
+ * Check and throw exception in case of SCSI command error with bad driver
+ * status. Does nothing in the absence of errors.
+ * @param sgio the sgio struct.
+ * @param context The string to be used as the beginning for the exception
+ *                message.
+ */
+void checkAndThrowSgDriverStatus(const SCSI::Structures::LinuxSGIO_t & sgio, const std::string& context);
+}  // namespace SCSI
+}  // namespace tape
+}  // namespace castor

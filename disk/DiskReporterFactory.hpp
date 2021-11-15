@@ -17,19 +17,20 @@
 
 #pragma once
 
-#include "DiskReporter.hpp"
-#include "common/utils/Regex.hpp"
-#include "common/threading/Mutex.hpp"
-
-#include <string>
 #include <future>
+#include <string>
 
-namespace cta { namespace disk {
+#include "common/threading/Mutex.hpp"
+#include "common/utils/Regex.hpp"
+#include "DiskReporter.hpp"
+
+namespace cta {
+namespace disk {
 
 class DiskReporterFactory {
-public:
-  DiskReporter * createDiskReporter(const std::string URL);
-private:
+ public:
+  DiskReporter * createDiskReporter(const std::string& URL);
+ private:
   // The typical call to give report to EOS will be:
   // xrdfs localhost query opaquefile "/eos/wfe/passwd?mgm.pcmd=event&mgm.fid=112&mgm.logid=cta&mgm.event=migrated&mgm.workflow=default&mgm.path=/eos/wfe/passwd&mgm.ruid=0&mgm.rgid=0"
   // which will be encoded as eosQuery://eosserver.cern.ch/eos/wfe/passwd?mgm.pcmd=event&mgm.fid=112&mgm.logid=cta&mgm.event=migrated&mgm.workflow=default&mgm.path=/eos/wfe/passwd&mgm.ruid=0&mgm.rgid=0"
@@ -40,4 +41,5 @@ private:
   /// This mutex ensures we do not use the regexes in parallel.
   cta::threading::Mutex m_mutex;
 };
-}} // namespace cta::disk
+}  // namespace disk
+}  // namespace cta

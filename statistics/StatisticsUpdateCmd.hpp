@@ -17,8 +17,10 @@
 
 #pragma once
 
-#include "catalogue/CmdLineTool.hpp"
+#include <string>
+
 #include "catalogue/CatalogueSchema.hpp"
+#include "catalogue/CmdLineTool.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/Login.hpp"
 #include "StatisticsUpdateCmdLineArgs.hpp"
@@ -30,7 +32,7 @@ namespace statistics {
  * Command-line tool for verifying the catalogue schema.
  */
 class StatisticsUpdateCmd: public cta::catalogue::CmdLineTool {
-public:
+ public:
 
   /**
    * Constructor.
@@ -46,7 +48,7 @@ public:
    */
   ~StatisticsUpdateCmd() noexcept;
 
-private:
+ private:
 
   /**
    * An exception throwing version of main().
@@ -72,9 +74,8 @@ private:
    * @param conn The database connection.
    * @return True if the table exists.
    */
-  bool tableExists(const std::string tableName, rdbms::Conn &conn) const;
-  
-}; // class VerifySchemaCmd
+  bool tableExists(const std::string& tableName, rdbms::Conn &conn) const;
+};  // class VerifySchemaCmd
 
-} // namespace statistics
-} // namespace cta
+}  // namespace statistics
+}  // namespace cta

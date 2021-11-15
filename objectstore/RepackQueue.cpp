@@ -15,18 +15,21 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <iostream>
+#include <set>
+#include <google/protobuf/util/json_util.h>
+
 #include "RepackQueue.hpp"
 #include "GenericObject.hpp"
 #include "common/range.hpp"
-#include <iostream>
-#include <google/protobuf/util/json_util.h>
 
-namespace cta { namespace objectstore {
+namespace cta {
+namespace objectstore {
 
 //------------------------------------------------------------------------------
 // RepackQueue::RepackQueue()
 //------------------------------------------------------------------------------
-RepackQueue::RepackQueue(const std::string& address, Backend& os): 
+RepackQueue::RepackQueue(const std::string& address, Backend& os):
   ObjectOps<serializers::RepackQueue, serializers::RepackQueue_t>(os, address) {}
 
 //------------------------------------------------------------------------------
@@ -126,11 +129,11 @@ auto RepackQueue::getRequestsSummary() -> RequestsSummary {
 //------------------------------------------------------------------------------
 // RepackQueue::getCandidateList()
 //------------------------------------------------------------------------------
-auto RepackQueue::getCandidateList(uint64_t maxRequests, std::set<std::string> repackRequestsToSkip)
+auto RepackQueue::getCandidateList(uint64_t maxRequests, const std::set<std::string>& repackRequestsToSkip)
   -> CandidateJobList {
   checkPayloadReadable();
   CandidateJobList ret;
-  uint64_t count=0;
+  uint64_t count = 0;
   for (auto & repreq : m_payload.repackrequestpointers()) {
     RequestDump rd;
     rd.address = repreq.address();
@@ -163,6 +166,5 @@ std::string RepackQueue::dump() {
   return headerDump;
 }
 
-
-
-}} // namespace cta::objectstore.
+}  // namespace objectstore
+}  // namespace cta

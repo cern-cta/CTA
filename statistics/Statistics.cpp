@@ -15,18 +15,17 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Statistics.hpp"
 #include "common/make_unique.hpp"
-#include <iostream>
+#include "Statistics.hpp"
 
-namespace cta { 
+namespace cta {
 namespace statistics {
-  
+
 Statistics::Statistics() {
 }
 
 Statistics::Statistics(const Statistics& other) {
-  if(this != &other){
+  if (this != &other) {
     m_statisticsPerVo = other.m_statisticsPerVo;
     m_totalFiles = other.m_totalFiles;
     m_totalBytes = other.m_totalBytes;
@@ -39,7 +38,7 @@ Statistics::Statistics(const Statistics& other) {
 }
 
 Statistics& Statistics::operator=(const Statistics& other) {
-  if(this != &other){
+  if (this != &other) {
     m_statisticsPerVo = other.m_statisticsPerVo;
     m_totalFiles = other.m_totalFiles;
     m_totalBytes = other.m_totalBytes;
@@ -52,7 +51,7 @@ Statistics& Statistics::operator=(const Statistics& other) {
   return *this;
 }
 
-void Statistics::insertPerVOStatistics(const std::string& vo, const FileStatistics& fileStatistics){
+void Statistics::insertPerVOStatistics(const std::string& vo, const FileStatistics& fileStatistics) {
   m_statisticsPerVo[vo] = fileStatistics;
   m_totalFiles += fileStatistics.nbMasterFiles;
   m_totalBytes += fileStatistics.masterDataInBytes;
@@ -96,10 +95,10 @@ time_t Statistics::getUpdateTime() const {
 
 Statistics::Builder::Builder() {}
 
-std::unique_ptr<Statistics> Statistics::Builder::build(cta::rdbms::Rset & rset){
+std::unique_ptr<Statistics> Statistics::Builder::build(cta::rdbms::Rset & rset) {
   std::unique_ptr<Statistics> ret = cta::make_unique<Statistics>();
-  while(rset.next()){
-    //loop over each VO
+  while (rset.next()) {
+    // loop over each VO
     std::string vo = rset.columnString("VO");
     FileStatistics fileStatistics;
     fileStatistics.nbMasterFiles = rset.columnUint64("TOTAL_MASTER_FILES_VO");
@@ -108,21 +107,21 @@ std::unique_ptr<Statistics> Statistics::Builder::build(cta::rdbms::Rset & rset){
     fileStatistics.copyNb1InBytes = rset.columnUint64("TOTAL_NB_COPY_1_BYTES_VO");
     fileStatistics.nbCopyNbGt1 = rset.columnUint64("TOTAL_NB_COPY_NB_GT_1_VO");
     fileStatistics.copyNbGt1InBytes = rset.columnUint64("TOTAL_COPY_NB_GT_1_IN_BYTES_VO");
-    //insert the perVO file statistics
-    ret->insertPerVOStatistics(vo,fileStatistics);
+    // insert the perVO file statistics
+    ret->insertPerVOStatistics(vo, fileStatistics);
   }
-  //Set the statistics update time to now
+  // Set the statistics update time to now
   ret->m_updateTime = time(nullptr);
   return ret;
 }
 
-std::ostream & operator <<(std::ostream& stream, Statistics stats) {
+std::ostream & operator <<(std::ostream& stream, const Statistics& stats) {
   stream << "{"
          << "\"statisticsPerVo\": [";
   auto allVoStatistics = stats.getAllVOStatistics();
   long unsigned int nbElementsVoStatistics = allVoStatistics.size();
   long unsigned int i = 0;
-  for(auto & stat: allVoStatistics){
+  for (auto & stat : allVoStatistics) {
     stream << "{"
            << "\"vo\": \"" << stat.first << "\","
            << "\"nbMasterFiles\": " << stat.second.nbMasterFiles << ","
@@ -132,7 +131,7 @@ std::ostream & operator <<(std::ostream& stream, Statistics stats) {
            << "\"nbCopyNbGt1\": " << stat.second.nbCopyNbGt1 << ","
            << "\"copyNbGt1InBytes\": " << stat.second.copyNbGt1InBytes
            << "}";
-    if(++i < nbElementsVoStatistics){
+    if (++i < nbElementsVoStatistics) {
       stream << ",";
     }
   }
@@ -148,4 +147,5 @@ std::ostream & operator <<(std::ostream& stream, Statistics stats) {
   return stream;
 }
 
-}}
+}  // namespace statistics
+}  // namespace cta

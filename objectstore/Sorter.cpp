@@ -26,49 +26,51 @@ namespace cta { namespace objectstore {
 
 /* SORTER CLASS */
 
-Sorter::Sorter(AgentReference& agentReference, Backend& objectstore, catalogue::Catalogue& catalogue):m_agentReference(agentReference),m_objectstore(objectstore),m_catalogue(catalogue){
+Sorter::Sorter(AgentReference& agentReference, Backend& objectstore, catalogue::Catalogue& catalogue)
+  : m_agentReference(agentReference), m_objectstore(objectstore), m_catalogue(catalogue) {
 }
 
-Sorter::~Sorter(){
+Sorter::~Sorter() {
 }
 /* Archive related algorithms */
 
 template <typename SpecificQueue>
-void Sorter::executeArchiveAlgorithm(const std::string tapePool, std::string& queueAddress, std::list<std::shared_ptr<ArchiveJobQueueInfo>>& jobs, log::LogContext& lc){
-  typedef ContainerAlgorithms<ArchiveQueue,SpecificQueue> Algo;
-  Algo algo(m_objectstore,m_agentReference);
+void Sorter::executeArchiveAlgorithm(const std::string& tapePool, std::string& queueAddress,
+  std::list<std::shared_ptr<ArchiveJobQueueInfo>>& jobs, log::LogContext& lc) {
+  typedef ContainerAlgorithms<ArchiveQueue, SpecificQueue> Algo;
+  Algo algo(m_objectstore, m_agentReference);
   typename Algo::InsertedElement::list jobsToAdd;
-  std::map<uint64_t,std::shared_ptr<ArchiveJobQueueInfo>> succeededJobs;
+  std::map<uint64_t, std::shared_ptr<ArchiveJobQueueInfo>> succeededJobs;
   std::string previousOwner;
-  for(auto& jobToAdd: jobs){
+  for (auto& jobToAdd : jobs) {
     SorterArchiveJob job = std::get<0>(jobToAdd->jobToQueue);
     succeededJobs[job.jobDump.copyNb] = jobToAdd;
     previousOwner = job.previousOwner->getAgentAddress();
-    jobsToAdd.push_back({ job.archiveRequest.get() ,job.jobDump.copyNb,job.archiveFile, job.mountPolicy,cta::nullopt });
+    jobsToAdd.push_back({ job.archiveRequest.get(), job.jobDump.copyNb, job.archiveFile, job.mountPolicy, cta::nullopt });
   }
-  try{
-      algo.referenceAndSwitchOwnership(tapePool,previousOwner,jobsToAdd,lc);
-  } catch (typename Algo::OwnershipSwitchFailure &failure){
-    for(auto &failedAR: failure.failedElements){
-      try{
+  try {
+    algo.referenceAndSwitchOwnership(tapePool, previousOwner, jobsToAdd, lc);
+  } catch (typename Algo::OwnershipSwitchFailure &failure) {
+    for (auto &failedAR : failure.failedElements) {
+      try {
         std::rethrow_exception(failedAR.failure);
       } catch (const cta::exception::NoSuchObject &ex) {
         log::ScopedParamContainer params(lc);
-        params.add("fileId",failedAR.element->archiveFile.archiveFileID);
-        lc.log(log::WARNING,"In Sorter::executeArchiveAlgorithm(), queueing impossible, job do not exist in the objectstore.");
-      } catch(const cta::exception::Exception &e){
+        params.add("fileId", failedAR.element->archiveFile.archiveFileID);
+        lc.log(log::WARNING, "In Sorter::executeArchiveAlgorithm(), queueing impossible, job do not exist in the objectstore.");
+      } catch (const cta::exception::Exception &e) {
         uint32_t copyNb = failedAR.element->copyNb;
         std::get<1>(succeededJobs[copyNb]->jobToQueue).set_exception(std::current_exception());
         succeededJobs.erase(copyNb);
       }
     }
   }
-  for(auto& succeededJob: succeededJobs){
+  for (auto& succeededJob : succeededJobs) {
     std::get<1>(succeededJob.second->jobToQueue).set_value();
   }
 }
 
-void Sorter::dispatchArchiveAlgorithm(const std::string tapePool, const common::dataStructures::JobQueueType jobQueueType,
+void Sorter::dispatchArchiveAlgorithm(const std::string& tapePool, const common::dataStructures::JobQueueType& jobQueueType,
   std::string& queueAddress, std::list<std::shared_ptr<ArchiveJobQueueInfo>>& jobs, log::LogContext &lc) {
   switch (jobQueueType) {
     case common::dataStructures::JobQueueType::JobsToReportToUser:
@@ -148,7 +150,7 @@ Sorter::MapArchive Sorter::getAllArchive(){
   return m_archiveQueuesAndRequests;
 }
 
-void Sorter::queueArchiveRequests(const std::string tapePool, const common::dataStructures::JobQueueType jobQueueType,
+void Sorter::queueArchiveRequests(const std::string& tapePool, const common::dataStructures::JobQueueType& jobQueueType,
   std::list<std::shared_ptr<ArchiveJobQueueInfo>>& archiveJobsInfos, log::LogContext &lc) {
   std::string queueAddress;
   this->dispatchArchiveAlgorithm(tapePool, jobQueueType, queueAddress, archiveJobsInfos, lc);
@@ -159,7 +161,8 @@ void Sorter::queueArchiveRequests(const std::string tapePool, const common::data
 /* Retrieve related algorithms */
 
 template <typename SpecificQueue>
-void Sorter::executeRetrieveAlgorithm(const std::string vid, std::string& queueAddress, std::list<std::shared_ptr<RetrieveJobQueueInfo>>& jobs, log::LogContext& lc){
+void Sorter::executeRetrieveAlgorithm(const std::string& vid, std::string& queueAddress,
+  std::list<std::shared_ptr<RetrieveJobQueueInfo>>& jobs, log::LogContext& lc) {
   typedef ContainerAlgorithms<RetrieveQueue,SpecificQueue> Algo;
   Algo algo(m_objectstore,m_agentReference);
   typename Algo::InsertedElement::list jobsToAdd;
@@ -194,9 +197,9 @@ void Sorter::executeRetrieveAlgorithm(const std::string vid, std::string& queueA
   }
 }
 
-void Sorter::dispatchRetrieveAlgorithm(const std::string vid, const common::dataStructures::JobQueueType jobQueueType,
+void Sorter::dispatchRetrieveAlgorithm(const std::string& vid, const common::dataStructures::JobQueueType& jobQueueType,
   std::string& queueAddress, std::list<std::shared_ptr<RetrieveJobQueueInfo> >& jobs, log::LogContext& lc) {
-  switch (jobQueueType){
+  switch (jobQueueType) {
     case common::dataStructures::JobQueueType::JobsToReportToUser:
       this->executeRetrieveAlgorithm<RetrieveQueueToReportForUser>(vid, queueAddress, jobs, lc);
     break;
@@ -218,9 +221,9 @@ void Sorter::dispatchRetrieveAlgorithm(const std::string vid, const common::data
   }
 }
 
-Sorter::RetrieveJob Sorter::createRetrieveJob(std::shared_ptr<RetrieveRequest> retrieveRequest, const cta::common::dataStructures::ArchiveFile archiveFile,
-        const uint32_t copyNb, const uint64_t fSeq, AgentReferenceInterface* previousOwner){
-
+Sorter::RetrieveJob Sorter::createRetrieveJob(std::shared_ptr<RetrieveRequest> retrieveRequest,
+  const cta::common::dataStructures::ArchiveFile& archiveFile,
+  const uint32_t copyNb, const uint64_t fSeq, AgentReferenceInterface* previousOwner) {
   Sorter::RetrieveJob jobToAdd;
   jobToAdd.jobDump.copyNb = copyNb;
   jobToAdd.fSeq = fSeq;
@@ -229,7 +232,7 @@ Sorter::RetrieveJob Sorter::createRetrieveJob(std::shared_ptr<RetrieveRequest> r
   jobToAdd.previousOwner = previousOwner;
   jobToAdd.jobDump.status = retrieveRequest->getJobStatus(jobToAdd.jobDump.copyNb);
   jobToAdd.fileSize = archiveFile.fileSize;
-  jobToAdd.jobQueueType = retrieveRequest->getQueueType(copyNb); //May throw an exception
+  jobToAdd.jobQueueType = retrieveRequest->getQueueType(copyNb);  // May throw an exception
   jobToAdd.activityDescription = retrieveRequest->getActivity();
   jobToAdd.diskSystemName = retrieveRequest->getDiskSystemName();
   return jobToAdd;
@@ -368,7 +371,7 @@ Sorter::MapRetrieve Sorter::getAllRetrieve(){
   return m_retrieveQueuesAndRequests;
 }
 
-void Sorter::queueRetrieveRequests(const std::string vid, const common::dataStructures::JobQueueType jobQueueType,
+void Sorter::queueRetrieveRequests(const std::string& vid, const common::dataStructures::JobQueueType& jobQueueType,
   std::list<std::shared_ptr<RetrieveJobQueueInfo>>& retrieveJobsInfos, log::LogContext &lc) {
   std::string queueAddress;
   this->dispatchRetrieveAlgorithm(vid, jobQueueType, queueAddress, retrieveJobsInfos, lc);
@@ -407,7 +410,7 @@ common::dataStructures::ArchiveFile OStoreRetrieveRequestAccessor::getArchiveFil
   return m_retrieveRequest->getArchiveFile();
 }
 
-Sorter::RetrieveJob OStoreRetrieveRequestAccessor::createRetrieveJob(const cta::common::dataStructures::ArchiveFile archiveFile,
+Sorter::RetrieveJob OStoreRetrieveRequestAccessor::createRetrieveJob(const cta::common::dataStructures::ArchiveFile& archiveFile,
         const uint32_t copyNb, const uint64_t fSeq, AgentReferenceInterface* previousOwner){
   Sorter::RetrieveJob ret;
   ret.jobDump.copyNb = copyNb;
@@ -423,15 +426,15 @@ Sorter::RetrieveJob OStoreRetrieveRequestAccessor::createRetrieveJob(const cta::
   return ret;
 }
 
-serializers::RetrieveJobStatus OStoreRetrieveRequestAccessor::getJobStatus(const uint32_t copyNb){
+serializers::RetrieveJobStatus OStoreRetrieveRequestAccessor::getJobStatus(const uint32_t copyNb) {
   return m_retrieveRequest->getJobStatus(copyNb);
 }
 
-std::string OStoreRetrieveRequestAccessor::getRepackAddress(){
+std::string OStoreRetrieveRequestAccessor::getRepackAddress() {
   return m_retrieveRequest->getRepackInfo().repackRequestAddress;
 }
 
-bool OStoreRetrieveRequestAccessor::getForceDisabledTape(){
+bool OStoreRetrieveRequestAccessor::getForceDisabledTape() {
   return m_retrieveRequest->getRepackInfo().forceDisabledTape;
 }
 
@@ -442,37 +445,38 @@ bool OStoreRetrieveRequestAccessor::getForceDisabledTape(){
 
 SorterRetrieveRequestAccessor::SorterRetrieveRequestAccessor(Sorter::SorterRetrieveRequest& request):m_retrieveRequest(request){}
 
-SorterRetrieveRequestAccessor::~SorterRetrieveRequestAccessor(){}
+SorterRetrieveRequestAccessor::~SorterRetrieveRequestAccessor() {}
 
-std::list<RetrieveRequest::JobDump> SorterRetrieveRequestAccessor::getJobs(){
+std::list<RetrieveRequest::JobDump> SorterRetrieveRequestAccessor::getJobs() {
   std::list<RetrieveRequest::JobDump> ret;
-  for(auto& kv: m_retrieveRequest.retrieveJobs){
+  for (auto& kv : m_retrieveRequest.retrieveJobs) {
     ret.push_back(kv.second.jobDump);
   }
   return ret;
 }
 
-common::dataStructures::ArchiveFile SorterRetrieveRequestAccessor::getArchiveFile(){
+common::dataStructures::ArchiveFile SorterRetrieveRequestAccessor::getArchiveFile() {
   return m_retrieveRequest.archiveFile;
 }
 
-Sorter::RetrieveJob SorterRetrieveRequestAccessor::createRetrieveJob(const cta::common::dataStructures::ArchiveFile archiveFile,
-        const uint32_t copyNb, const uint64_t fSeq, AgentReferenceInterface* previousOwner){
+Sorter::RetrieveJob SorterRetrieveRequestAccessor::createRetrieveJob(const cta::common::dataStructures::ArchiveFile& archiveFile,
+  const uint32_t copyNb, const uint64_t fSeq, AgentReferenceInterface* previousOwner) {
   return m_retrieveRequest.retrieveJobs.at(copyNb);
 }
 
-serializers::RetrieveJobStatus SorterRetrieveRequestAccessor::getJobStatus(const uint32_t copyNb){
+serializers::RetrieveJobStatus SorterRetrieveRequestAccessor::getJobStatus(const uint32_t copyNb) {
   return m_retrieveRequest.retrieveJobs.at(copyNb).jobDump.status;
 }
 
-std::string SorterRetrieveRequestAccessor::getRepackAddress(){
+std::string SorterRetrieveRequestAccessor::getRepackAddress() {
   return m_retrieveRequest.repackRequestAddress;
 }
 
-bool SorterRetrieveRequestAccessor::getForceDisabledTape(){
+bool SorterRetrieveRequestAccessor::getForceDisabledTape() {
   return m_retrieveRequest.forceDisabledTape;
 }
 
 /* END OF SorterRetrieveRequestAccessor CLASS*/
 
-}}
+}  // namespace objectstore
+}  // namespace cta

@@ -18,11 +18,14 @@
 #include "SchemaChecker.hpp"
 #include "SQLiteSchemaComparer.hpp"
 
-namespace cta{
-namespace catalogue{
-  
-SchemaChecker::SchemaChecker(const std::string databaseToCheckName, rdbms::Login::DbType dbType,cta::rdbms::Conn &conn):m_databaseToCheckName(databaseToCheckName),m_dbType(dbType),m_catalogueConn(conn) {
-  m_databaseMetadataGetter.reset(DatabaseMetadataGetterFactory::create(m_dbType,m_catalogueConn)); 
+namespace cta {
+namespace catalogue {
+
+SchemaChecker::SchemaChecker(const std::string& databaseToCheckName, rdbms::Login::DbType dbType, cta::rdbms::Conn &conn)
+  : m_databaseToCheckName(databaseToCheckName),
+    m_dbType(dbType),
+    m_catalogueConn(conn) {
+  m_databaseMetadataGetter.reset(DatabaseMetadataGetterFactory::create(m_dbType, m_catalogueConn));
 }
 
 SchemaChecker::~SchemaChecker() {
@@ -82,7 +85,7 @@ SchemaCheckerResult SchemaChecker::compareTablesLocatedInSchema(){
   return m_schemaComparer->compareTablesLocatedInSchema();
 }
 
-SchemaCheckerResult SchemaChecker::checkTableContainsColumns(const std::string& tableName, const std::list<std::string> columnNames){
+SchemaCheckerResult SchemaChecker::checkTableContainsColumns(const std::string& tableName, const std::list<std::string>& columnNames){
   std::map<std::string, std::string> mapColumnsTypes = m_databaseMetadataGetter->getColumns(tableName);
   SchemaCheckerResult res;
   if(mapColumnsTypes.empty()){
@@ -142,8 +145,12 @@ SchemaCheckerResult SchemaChecker::warnErrorLoggingTables() {
 /////////////////////////////////////////
 // SchemaChecker::Builder
 /////////////////////////////////////////
-SchemaChecker::Builder::Builder(const std::string databaseToCheckName, const cta::rdbms::Login::DbType dbType, cta::rdbms::Conn & conn):m_databaseToCheckName(databaseToCheckName), m_dbType(dbType),m_catalogueConn(conn){
-  m_databaseMetadataGetter.reset(DatabaseMetadataGetterFactory::create(m_dbType,m_catalogueConn)); 
+SchemaChecker::Builder::Builder(const std::string& databaseToCheckName, const cta::rdbms::Login::DbType& dbType,
+  cta::rdbms::Conn & conn)
+  : m_databaseToCheckName(databaseToCheckName),
+    m_dbType(dbType),
+    m_catalogueConn(conn) {
+  m_databaseMetadataGetter.reset(DatabaseMetadataGetterFactory::create(m_dbType, m_catalogueConn));
 }
 
 SchemaChecker::Builder & SchemaChecker::Builder::useSQLiteSchemaComparer(){
@@ -161,7 +168,7 @@ SchemaChecker::Builder& SchemaChecker::Builder::useMapStatementsReader() {
   return *this;
 }
 
-SchemaChecker::Builder& SchemaChecker::Builder::useCppSchemaStatementsReader(const cta::catalogue::CatalogueSchema schema){
+SchemaChecker::Builder& SchemaChecker::Builder::useCppSchemaStatementsReader(const cta::catalogue::CatalogueSchema& schema) {
   m_schemaSqlStatementsReader.reset(new CppSchemaStatementsReader(schema));
   return *this;
 }
@@ -175,4 +182,5 @@ std::unique_ptr<SchemaChecker> SchemaChecker::Builder::build() {
   return schemaChecker;
 }
 
-}}
+}  // namespace catalogue
+}  // namespace cta

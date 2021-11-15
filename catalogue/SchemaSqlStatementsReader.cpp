@@ -30,12 +30,12 @@
 #include "AllCatalogueSchema.hpp"
 
 namespace cta{ namespace catalogue{
-  
+
 //////////////////////////////////////////////////////////////////
 // SchemaSqlStatementsReader
 //////////////////////////////////////////////////////////////////
-SchemaSqlStatementsReader::SchemaSqlStatementsReader(){}  
-  
+SchemaSqlStatementsReader::SchemaSqlStatementsReader(){}
+
 SchemaSqlStatementsReader::SchemaSqlStatementsReader(const cta::rdbms::Login::DbType dbType):m_dbType(dbType) {
 }
 
@@ -64,7 +64,7 @@ std::list<std::string> SchemaSqlStatementsReader::getStatements(){
     break;
   case rdbms::Login::DBTYPE_NONE:
     throw exception::Exception("Cannot get statements without a database type");
-  } 
+  }
   return getAllStatementsFromSchema(schema->sql);
 }
 
@@ -176,11 +176,10 @@ std::list<std::string> MapSqlStatementsReader::getStatements(){
 // CppSchemaStatementsReader
 //////////////////////////////////////////////////////////////////
 
-CppSchemaStatementsReader::CppSchemaStatementsReader(const cta::catalogue::CatalogueSchema schema):m_schema(schema) {}
+CppSchemaStatementsReader::CppSchemaStatementsReader(const cta::catalogue::CatalogueSchema& schema):m_schema(schema) {}
 
 std::list<std::string> CppSchemaStatementsReader::getStatements(){
   return getAllStatementsFromSchema(m_schema.sql);
 }
 
 }}
-

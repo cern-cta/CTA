@@ -476,7 +476,7 @@ struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PopCriteria {
   struct DiskSystemToSkip {
     std::string name;
     uint64_t sleepTime;
-    bool operator<(const DiskSystemToSkip o) const { return name < o.name; }
+    bool operator<(const DiskSystemToSkip& o) const { return name < o.name; }
   };
   std::set<DiskSystemToSkip> diskSystemsToSkip;
 };

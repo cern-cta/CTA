@@ -15,13 +15,13 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Exception.hpp" 
+#include "Exception.hpp"
 
 //------------------------------------------------------------------------------
 // ExceptionLauncher
 //------------------------------------------------------------------------------
 void castor::tape::SCSI::ExceptionLauncher(const SCSI::Structures::LinuxSGIO_t &
-  sgio, std::string context) {
+  sgio, const std::string& context) {
   std::stringstream contextWithStatuses;
   contextWithStatuses << context
                       << std::hex << std::nouppercase << std::showbase
@@ -39,12 +39,12 @@ void castor::tape::SCSI::ExceptionLauncher(const SCSI::Structures::LinuxSGIO_t &
 // checkAndThrowSgStatus
 //------------------------------------------------------------------------------
 void castor::tape::SCSI::checkAndThrowSgStatus(
-  const SCSI::Structures::LinuxSGIO_t & sgio, const std::string context) {
+  const SCSI::Structures::LinuxSGIO_t & sgio, const std::string& context) {
   if (SCSI::Status::GOOD != sgio.status) {
-    if (SCSI::Status::CHECK_CONDITION == sgio.status) {  
-      unsigned char senseKey;   
-      castor::tape::SCSI::Structures::senseData_t<255> * sense = 
-        (SCSI::Structures::senseData_t<255> *)sgio.sbp;   
+    if (SCSI::Status::CHECK_CONDITION == sgio.status) {
+      unsigned char senseKey;
+      castor::tape::SCSI::Structures::senseData_t<255> * sense =
+        (SCSI::Structures::senseData_t<255> *)sgio.sbp;
       try {
         senseKey = sense->getSenseKey();
       } catch (...) {
@@ -54,13 +54,13 @@ void castor::tape::SCSI::checkAndThrowSgStatus(
       switch (senseKey) {
         case castor::tape::SCSI::senseKeys::notReady :
           throw NotReadyException(sgio.status,
-            (SCSI::Structures::senseData_t<255> *)sgio.sbp, context); 
+            (SCSI::Structures::senseData_t<255> *)sgio.sbp, context);
         case castor::tape::SCSI::senseKeys::unitAttention :
           throw UnitAttentionException(sgio.status,
-            (SCSI::Structures::senseData_t<255> *)sgio.sbp, context);    
+            (SCSI::Structures::senseData_t<255> *)sgio.sbp, context);
         default:
           throw Exception(sgio.status,
-            (SCSI::Structures::senseData_t<255> *)sgio.sbp, context); 
+            (SCSI::Structures::senseData_t<255> *)sgio.sbp, context);
       }
     } else {
       throw Exception(sgio.status,
@@ -73,7 +73,7 @@ void castor::tape::SCSI::checkAndThrowSgStatus(
 // checkAndThrowSgHostStatus
 //------------------------------------------------------------------------------
 void castor::tape::SCSI::checkAndThrowSgHostStatus(
-  const SCSI::Structures::LinuxSGIO_t & sgio, const std::string context) {
+  const SCSI::Structures::LinuxSGIO_t & sgio, const std::string& context) {
   if (SCSI::HostStatus::OK != sgio.host_status) {
     throw HostException(sgio.host_status, context);
   }
@@ -83,7 +83,7 @@ void castor::tape::SCSI::checkAndThrowSgHostStatus(
 // checkAndThrowSgDriverStatus
 //------------------------------------------------------------------------------
 void castor::tape::SCSI::checkAndThrowSgDriverStatus(
-  const SCSI::Structures::LinuxSGIO_t & sgio, const std::string context) {
+  const SCSI::Structures::LinuxSGIO_t & sgio, const std::string& context) {
   if (SCSI::DriverStatus::OK != sgio.driver_status) {
     throw DriverException(sgio.driver_status,
       (SCSI::Structures::senseData_t<255> *)sgio.sbp, context);
@@ -165,4 +165,3 @@ castor::tape::SCSI::DriverException::DriverException(
 
   setWhat(w.str());
 }
-

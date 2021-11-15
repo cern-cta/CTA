@@ -22,24 +22,24 @@
 #include "CatalogueSchema.hpp"
 #include "SchemaCheckerResult.hpp"
 
-namespace cta{
-namespace catalogue{
-    
+namespace cta {
+namespace catalogue {
+
 /**
  * This class allows to check the catalogue schema validity running in a specific database
  * The database is identified thanks to its connection
- * 
- * The checking of the database consists of 
+ *
+ * The checking of the database consists of
  * 1. comparing the schema running in the database with the one
  * defined in the catalogue/schema_version directory
  * 2. checking if the database contains tables that have been set as PARALLEL
- * 
+ *
  * The comparing part of the checking is done by a SchemaComparer class that will tell the differences between
  * the schema defined by the user and the one in the catalogue database.
- */  
+ */
 class SchemaChecker {
 public:
-  
+
   /**
    * Destructor
    */
@@ -50,66 +50,66 @@ public:
    * @return a SchemaCheckerResult
    */
   SchemaCheckerResult displayingCompareSchema(std::ostream & stdout, std::ostream & stderr);
-  
+
   /**
    * Checks if the catalogue database contains PARALLEL tables
    * It will display a warning with the table name if this is the case
    * @return a SchemaCheckerResult containing the warnings
    */
   SchemaCheckerResult warnParallelTables();
-  
+
   /**
    * Checks if the catalogue database schema is upgrading or not
    * @return a SchemaCheckerResult containing the warnings
    */
   SchemaCheckerResult warnSchemaUpgrading();
-  
+
   /**
    * Compare the schema tables whose names are located in the tableList parameter
    * @param tableList the table names we would like to compare
    * @return a SchemaCheckerResult containing the errors
    */
   SchemaCheckerResult compareTablesLocatedInSchema();
-  
+
   /**
    * Checks if the table tableName contains the columns whose names are in the columnNames list
    * @param tableName the tableName to check
    * @param columnNames the columnName the tableName is supposed to have
    * @return a SchemaCheckerResult containing the errors
    */
-  SchemaCheckerResult checkTableContainsColumns(const std::string &tableName, const std::list<std::string> columnNames);
-  
+  SchemaCheckerResult checkTableContainsColumns(const std::string &tableName, const std::list<std::string>& columnNames);
+
   /**
    * Checks if there are stored procedures in the database.
    * @return a SchemaCheckerResult containing warnings if there are stored procedures.
    */
   SchemaCheckerResult warnProcedures();
-  
+
   /**
    * Checks if there are synonyms in the database.
    * @return a SchemaCheckerResult containing warnings if there are synonyms
    */
   SchemaCheckerResult warnSynonyms();
-  
+
   /**
    * Checks if there are types in the database
    * @return a SchemaCheckerResult containing warnings if there are types in the database
    */
   SchemaCheckerResult warnTypes();
-  
+
   /**
    * Checks if there are error logging tables in the database
    * @return a SchemaCheckerResult containing warnings if there are error logging tables in the database
    */
   SchemaCheckerResult warnErrorLoggingTables();
-  
+
   class Builder {
   public:
-    Builder(const std::string databaseToCheckName, const cta::rdbms::Login::DbType dbType, cta::rdbms::Conn &conn);
+    Builder(const std::string& databaseToCheckName, const cta::rdbms::Login::DbType& dbType, cta::rdbms::Conn &conn);
     Builder & useSQLiteSchemaComparer();
     Builder & useDirectorySchemaReader(const std::string &allSchemasVersionsDirectory);
     Builder & useMapStatementsReader();
-    Builder & useCppSchemaStatementsReader(const cta::catalogue::CatalogueSchema schema);
+    Builder & useCppSchemaStatementsReader(const cta::catalogue::CatalogueSchema& schema);
     std::unique_ptr<SchemaChecker> build();
   private:
     const std::string m_databaseToCheckName;
@@ -119,15 +119,15 @@ public:
     std::unique_ptr<DatabaseMetadataGetter> m_databaseMetadataGetter;
     std::unique_ptr<SchemaSqlStatementsReader> m_schemaSqlStatementsReader;
   };
-  
+
 private:
   /**
    * Constructor of the SchemaChecker class
    * @param dbType the type of the database to check against
    * @param conn the connection of the database to check
    */
-  SchemaChecker(const std::string databaseToCheckName, rdbms::Login::DbType dbType,cta::rdbms::Conn &conn);
-  
+  SchemaChecker(const std::string& databaseToCheckName, rdbms::Login::DbType dbType, cta::rdbms::Conn &conn);
+
   const std::string m_databaseToCheckName;
   /**
    * Catalogue-to-check database type
@@ -141,16 +141,15 @@ private:
    * SchemaComparer class to compare the database schema
    */
   std::unique_ptr<SchemaComparer> m_schemaComparer;
-  
+
   /**
    * Catalogue metadata getter that allows to query the
    * metadatas of the catalogue database
    */
   std::unique_ptr<DatabaseMetadataGetter> m_databaseMetadataGetter;
-  
+
   void checkSchemaComparerNotNull(const std::string & methodName);
 };
 
-}}
-
-
+}  // namespace catalogue
+}  // namespace cta

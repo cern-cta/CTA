@@ -20,7 +20,7 @@
 
 namespace cta {
 namespace catalogue {
-  
+
 /**
  * This class allows to compare a catalogue schema against a InMemory SQLite catalogue schema
  */
@@ -32,7 +32,7 @@ public:
    * @param catalogueMetadataGetter the catalogue metadata getter to compare the catalogue schema content with the SQLite
    * database one
    */
-  SQLiteSchemaComparer(const std::string databaseToCheckName, DatabaseMetadataGetter &catalogueMetadataGetter);
+  SQLiteSchemaComparer(const std::string& databaseToCheckName, DatabaseMetadataGetter &catalogueMetadataGetter);
   /**
    * Compare the catalogue schema against the InMemory SQLite catalogue schema
    * @return a SchemaComparerResult object that will contain the differences if there are some
@@ -43,7 +43,7 @@ public:
   SchemaCheckerResult compareTablesLocatedInSchema() override;
 
   virtual ~SQLiteSchemaComparer();
-  
+
 private:
   void insertSchemaInSQLite();
   SchemaCheckerResult compareItems(const std::string &itemType, const std::list<std::string>& itemsFromDatabase, const std::list<std::string>& itemsFromSQLite);

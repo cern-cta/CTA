@@ -17,22 +17,26 @@
 
 #pragma once
 
+#include <string>
+
 #include "Exception.hpp"
+
 #include <xrootd/XrdCl/XrdClXRootDResponses.hh>
 
 namespace cta {
 namespace exception {
-  /**
-   * A class turning the XrootCl (xroot 4 object client) error codes
-   * into castor exceptions.
-   */
-  class XrootCl: public cta::exception::Exception {
-  public:
-    XrootCl(const XrdCl::XRootDStatus & status, const std::string & context);
-    virtual ~XrootCl() {};
-    const XrdCl::XRootDStatus & xRootDStatus() const { return m_status; }
-    static void throwOnError(const XrdCl::XRootDStatus & status, std::string context = "");
-  protected:
-    XrdCl::XRootDStatus m_status;
-  };
-}} // namespace cta::exception
+/**
+ * A class turning the XrootCl (xroot 4 object client) error codes
+ * into castor exceptions.
+ */
+class XrootCl : public cta::exception::Exception {
+ public:
+  XrootCl(const XrdCl::XRootDStatus & status, const std::string & context);
+  virtual ~XrootCl() {}
+  const XrdCl::XRootDStatus & xRootDStatus() const { return m_status; }
+  static void throwOnError(const XrdCl::XRootDStatus & status, const std::string& context = "");
+ protected:
+  XrdCl::XRootDStatus m_status;
+};
+}  // namespace exception
+}  // namespace cta

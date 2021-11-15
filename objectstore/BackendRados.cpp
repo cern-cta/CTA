@@ -15,6 +15,15 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <sys/syscall.h>
+#include <unistd.h>
+#include <valgrind/helgrind.h>
+
+#include <errno.h>
+#include <random>
+
+#include <rados/librados.hpp>
+
 #include "BackendRados.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/NoSuchObject.hpp"
@@ -22,13 +31,6 @@
 #include "common/threading/MutexLocker.hpp"
 #include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
-
-#include <rados/librados.hpp>
-#include <sys/syscall.h>
-#include <errno.h>
-#include <unistd.h>
-#include <valgrind/helgrind.h>
-#include <random>
 
 // This macro should be defined to get printouts to understand timings of locking.
 // Usually while running BackendTestRados/BackendAbstractTest.MultithreadLockingInterface
@@ -184,7 +186,7 @@ librados::IoCtx& BackendRados::getRadosCtx() {
   return m_radosCtxPool[idx];
 }
 
-void BackendRados::create(std::string name, std::string content) {
+void BackendRados::create(const std::string& name, const std::string& content) {
   if (content.empty()) throw exception::Exception("In BackendRados::create: trying to create an empty object.");
   librados::ObjectWriteOperation wop;
   const bool createExclusive = true;
@@ -237,7 +239,7 @@ void BackendRados::create(std::string name, std::string content) {
   }
 }
 
-void BackendRados::atomicOverwrite(std::string name, std::string content) {
+void BackendRados::atomicOverwrite(const std::string& name, const std::string& content) {
   librados::ObjectWriteOperation wop;
   wop.assert_exists();
   ceph::bufferlist bl;
@@ -250,7 +252,7 @@ void BackendRados::atomicOverwrite(std::string name, std::string content) {
   rtl.logIfNeeded("In BackendRados::atomicOverwrite(): m_radosCtx.operate(assert_exists+write_full)", name);
 }
 
-std::string BackendRados::read(std::string name) {
+std::string BackendRados::read(const std::string& name) {
   std::string ret;
   librados::bufferlist bl;
   RadosTimeoutLogger rtl;
@@ -277,13 +279,13 @@ std::string BackendRados::read(std::string name) {
   return ret;
 }
 
-void BackendRados::remove(std::string name) {
+void BackendRados::remove(const std::string& name) {
   RadosTimeoutLogger rtl;
   cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException([&]() {return -getRadosCtx().remove(name);});
   rtl.logIfNeeded("In BackendRados::remove(): m_radosCtx.remove()", name);
 }
 
-bool BackendRados::exists(std::string name) {
+bool BackendRados::exists(const std::string& name) {
   uint64_t size;
   time_t date;
   RadosTimeoutLogger rtl;
@@ -396,7 +398,7 @@ void BackendRados::ScopedLock::releaseBackoff() {
 }
 
 
-void BackendRados::ScopedLock::set(const std::string& oid, const std::string clientId,
+void BackendRados::ScopedLock::set(const std::string& oid, const std::string& clientId,
     LockType lockType) {
   m_oid = oid;
   m_clientId = clientId;
@@ -480,7 +482,7 @@ std::string BackendRados::createUniqueClientId() {
   return client.str();
 }
 
-void BackendRados::lock(std::string name, uint64_t timeout_us, LockType lockType, const std::string& clientId) {
+void BackendRados::lock(const std::string& name, uint64_t timeout_us, LockType lockType, const std::string& clientId) {
 #if RADOS_LOCKING_STRATEGY == NOTIFY
   lockNotify(name, timeout_us, lockType, clientId, getRadosCtx());
 #elif RADOS_LOCKING_STRATEGY == BACKOFF
@@ -490,7 +492,7 @@ void BackendRados::lock(std::string name, uint64_t timeout_us, LockType lockType
 #endif
 }
 
-void BackendRados::lockNotify(std::string name, uint64_t timeout_us, LockType lockType,
+void BackendRados::lockNotify(const std::string& name, uint64_t timeout_us, LockType lockType,
     const std::string & clientId, librados::IoCtx & radosCtx) {
   // In Rados, locking a non-existing object will create it. This is not our intended
   // behavior. We will lock anyway, test the object and re-delete it if it has a size of 0
@@ -706,7 +708,7 @@ const size_t BackendRados::c_maxBackoff=16;
 const size_t BackendRados::c_backoffFraction=1;
 const uint64_t BackendRados::c_maxWait=1000000;
 
-void BackendRados::lockBackoff(std::string name, uint64_t timeout_us, LockType lockType,
+void BackendRados::lockBackoff(const std::string& name, uint64_t timeout_us, LockType lockType,
     const std::string& clientId, librados::IoCtx & radosCtx) {
   // In Rados, locking a non-existing object will create it. This is not our intended
   // behavior. We will lock anyway, test the object and re-delete it if it has a size of 0
@@ -790,7 +792,7 @@ void BackendRados::lockBackoff(std::string name, uint64_t timeout_us, LockType l
 }
 
 
-BackendRados::ScopedLock* BackendRados::lockExclusive(std::string name, uint64_t timeout_us) {
+BackendRados::ScopedLock* BackendRados::lockExclusive(const std::string& name, uint64_t timeout_us) {
   std::string client = createUniqueClientId();
   lock(name, timeout_us, LockType::Exclusive, client);
   std::unique_ptr<ScopedLock> ret(new ScopedLock(getRadosCtx()));
@@ -798,7 +800,7 @@ BackendRados::ScopedLock* BackendRados::lockExclusive(std::string name, uint64_t
   return ret.release();
 }
 
-BackendRados::ScopedLock* BackendRados::lockShared(std::string name, uint64_t timeout_us) {
+BackendRados::ScopedLock* BackendRados::lockShared(const std::string& name, uint64_t timeout_us) {
    std::string client = createUniqueClientId();
   lock(name, timeout_us, LockType::Shared, client);
   std::unique_ptr<ScopedLock> ret(new ScopedLock(getRadosCtx()));

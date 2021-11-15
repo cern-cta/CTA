@@ -17,10 +17,11 @@
 
 #pragma once
 
-#include <json-c/json.h>
 #include <list>
 #include <map>
 #include <string>
+
+#include <json-c/json.h>
 
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
 
@@ -35,11 +36,11 @@ namespace daemon {
  * the encryption key to the tape drive.
  */
 class EncryptionControl {
-public:
+ public:
   struct EncryptionStatus {
     bool on;
-    std::string keyName; // encryption key identifier
-    std::string key;     // encryption key
+    std::string keyName;  // encryption key identifier
+    std::string key;      // encryption key
     std::string stdout;
   };
 
@@ -49,7 +50,7 @@ public:
   };
 
   /** @param scriptPath The path to the operator provided script for acquiring the key */
-  EncryptionControl(const std::string & scriptPath);
+  explicit EncryptionControl(const std::string & scriptPath);
   /**
    * Will call the encryption script provided by the operators to acquire the encryption key and then enable the
    * encryption if necessary.
@@ -66,15 +67,16 @@ public:
    * @return true if encryption parameters cleared, false otherwise.
    */
   bool disable(castor::tape::tapeserver::drive::DriveInterface &m_drive);
-private:
-  std::string m_path; // Path to the key management script file
+
+ private:
+  std::string m_path;  // Path to the key management script file
   /**
    * Parse the JSON output of the key management script and translate information into Encryption Status struct.
    * Expected to find keys key_id, encryption_key, message and the respective values as JSON strings.
    * @param input The JSON input to parse
    * @return {true, keyName, key, stdout} if the encryption has been set, {false, "", "", stdout} otherwise.
    */
-  EncryptionStatus parse_json_script_output(std::string input);
+  EncryptionStatus parse_json_script_output(const std::string& input);
 
   /**
    * Flatten all levels of a JSON object into a map of strings. When parsing nested JSON objects, it uses the key
@@ -83,7 +85,7 @@ private:
    * @param jobj The JSON-C object which is flattened
    * @return A map of strings to strings representing the flattened hierarchy of the JSON input.
    */
-  std::map<std::string, std::string> flatten_json_object_to_map(std::string prefix, json_object *jobj);
+  std::map<std::string, std::string> flatten_json_object_to_map(const std::string& prefix, json_object *jobj);
 
   /**
    * Flattens the arguments list of strings to a single string.
@@ -91,7 +93,10 @@ private:
    * @param delimiter The delimiter between the different arguments
    * @return A string representation of the arguments passed.
    */
-  std::string argsToString(std::list<std::string> args, std::string delimiter);
+  std::string argsToString(std::list<std::string> args, const std::string& delimiter);
 };
 
-}}}} // namespace castor::tape::tapeserver::daemon
+}  // namespace daemon
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor
