@@ -6,6 +6,7 @@
 - cta/CTA#607 - Add client host and username in cta-frontend logs
 - cta/CTA#928 - Add youngest request age to cta-admin sq
 - cta/CTA#777 - Minimize mounts for dual copy tape pool recalls
+- cta/CTA#1020 - cta-restore-deleted-files command for restoring deleted files
 
 ### Bug fixes
 - cta/CTA#1062 - cta-admin tf rm should store the diskFilePath when deleting the tape file copy
