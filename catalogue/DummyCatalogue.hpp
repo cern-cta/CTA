@@ -71,8 +71,6 @@ public:
   void deleteTape(const std::string& vid) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void deleteTapePool(const std::string& name) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void filesWrittenToTape(const std::set<TapeItemWrittenPointer>& event) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
-  disk::DiskSystemList getAllDiskSystems() const override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
-  void createDiskSystem(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &fileRegexp, const std::string &freeSpaceQueryURL, const uint64_t refreshInterval, const uint64_t targetedFreeSpace, const uint64_t sleepTime, const std::string &comment)  override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void deleteDiskSystem(const std::string &name) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void modifyDiskSystemFileRegexp(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &fileRegexp) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void modifyDiskSystemFreeSpaceQueryURL(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &freeSpaceQueryURL) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
@@ -362,12 +360,24 @@ public:
     modifyTapeDrive(tdStatus.value());
   }
 
-
+  /*
+    Implemented for testing disk space reservation logic
+  */
+  disk::DiskSystemList getAllDiskSystems() const override { 
+    return m_diskSystemList;
+  }
+  
+  void createDiskSystem(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &fileRegexp, const std::string &freeSpaceQueryURL, const uint64_t refreshInterval, const uint64_t targetedFreeSpace, const uint64_t sleepTime, const std::string &comment)  override {
+    m_diskSystemList.push_back({name, fileRegexp, freeSpaceQueryURL, refreshInterval, targetedFreeSpace, sleepTime, common::dataStructures::EntryLog(), common::dataStructures::EntryLog{}, comment});
+  }
+  
 private:
   mutable threading::Mutex m_tapeEnablingMutex;
   std::map<std::string, common::dataStructures::Tape::State> m_tapeEnabling;
 
   common::dataStructures::TapeDrive m_tapeDriveStatus;
+
+  disk::DiskSystemList m_diskSystemList;
 };
 
 }} // namespace cta::catalogue.

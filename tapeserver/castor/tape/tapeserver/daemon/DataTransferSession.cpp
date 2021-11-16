@@ -276,7 +276,14 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       rti.initRAO(raoDataConfig, &m_scheduler.getCatalogue());
     }
     bool noFilesToRecall = false;
-    if (rti.synchronousFetch(noFilesToRecall)) {  //adapt the recall task injector (starting from synchronousFetch)
+    bool fetchResult = false;
+    bool reservationResult = false;
+    fetchResult = rti.synchronousFetch(noFilesToRecall);
+    if (fetchResult) {
+    reservationResult = rti.reserveSpaceForNextJobBatch();
+    }
+    //only mount the tape if we can confirm that we will do some work, otherwise do an empty mount
+    if (fetchResult && reservationResult) { 
       // We got something to recall. Time to start the machinery
       trst.setWaitForInstructionsTime(timer.secs());
       rwd.startThread();
@@ -299,12 +306,13 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       rwd.stopAndWaitThread();
       return trst.getHardwareStatus();
     } else {
-      // Just log this was an empty mount and that's it. The memory management
-      // will be deallocated automatically.
+      // If the first pop from the queue fails, just log this was an empty mount and that's it.
+      // The memory management will be deallocated automatically.
       int priority = cta::log::ERR;
       std::string status = "success";
-      if(noFilesToRecall){
-        //If this is an empty mount because no files have been popped from the queue, it is just a warning
+      if(!fetchResult || !reservationResult){
+        //If this is an empty mount because no files have been popped from the queue 
+        //or because disk reservation failed, it is just a warning
         priority = cta::log::WARNING;
         status = "failure";
       }

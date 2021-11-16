@@ -56,6 +56,10 @@ namespace cta {
       return "1234567890";
     }
 
+    virtual std::string getDrive() const override {
+      return "VDSTK11";
+    }
+
     void abort(const std::string&) override { completes ++; }
 
     void diskComplete() override { completes ++;}
@@ -72,9 +76,24 @@ namespace cta {
 
     void flushAsyncSuccessReports(std::queue<std::unique_ptr<cta::RetrieveJob> >& successfulRetrieveJobs, cta::log::LogContext& logContext) override {};
 
+    void requeueJobBatch(std::vector<std::unique_ptr<cta::RetrieveJob>> &jobs, log::LogContext &logContext) override {};
+
+    bool reserveDiskSpace(const cta::DiskSpaceReservationRequest &request, log::LogContext& logContext) override {return true;}
+
+    void putQueueToSleep(const std::string &diskSystemName, const uint64_t sleepTime, log::LogContext &logContext) override {
+      m_sleepingQueues.push_back(std::make_pair(diskSystemName, sleepTime));
+    };
+
+    virtual void addDiskSystemToSkip(const cta::SchedulerDatabase::RetrieveMount::DiskSystemToSkip &diskSystem) override {
+      m_diskSystemsToSkip.insert(diskSystem);
+    }
+
   private:
 
     std::list<std::unique_ptr<cta::RetrieveJob>> m_jobs;
+    std::set<cta::SchedulerDatabase::RetrieveMount::DiskSystemToSkip> m_diskSystemsToSkip;
+    std::list<std::pair<std::string, uint64_t>> m_sleepingQueues;
+
   public:
     void createRetrieveJobs(const unsigned int nbJobs) {
       for(unsigned int i = 0; i < nbJobs; i++) {
@@ -82,5 +101,10 @@ namespace cta {
           new MockRetrieveJob(*this)));
       }
     }
+    
+    std::list<std::pair<std::string, uint64_t>> getSleepingQueues() {
+      return m_sleepingQueues;  
+    }
+
   }; // class MockRetrieveMount
 }

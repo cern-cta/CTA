@@ -16,6 +16,7 @@
  */
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/make_unique.hpp"
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadTask.hpp"
@@ -43,7 +44,9 @@ RecallTaskInjector::RecallTaskInjector(RecallMemoryManager & mm,
         uint64_t maxFiles, uint64_t byteSizeThreshold,cta::log::LogContext lc) : 
         m_thread(*this),m_memManager(mm),
         m_tapeReader(tapeReader),m_diskWriter(diskWriter),
-        m_retrieveMount(retrieveMount),m_lc(lc),m_maxFiles(maxFiles),m_maxBytes(byteSizeThreshold),
+        m_retrieveMount(retrieveMount),
+        m_lc(lc),m_maxBatchFiles(maxFiles),m_maxBatchBytes(byteSizeThreshold),
+        m_files(0), m_bytes(0),
         m_firstTasksInjectedFuture(m_firstTasksInjectedPromise.get_future()){}
 //------------------------------------------------------------------------------
 //destructor
@@ -64,7 +67,7 @@ void RecallTaskInjector::finish(){
 void RecallTaskInjector::requestInjection(bool lastCall) {
   //@TODO where shall we  acquire the lock ? There of just before the push ?
   cta::threading::MutexLocker ml(m_producerProtection);
-  m_queue.push(Request(m_maxFiles, m_maxBytes, lastCall));
+  m_queue.push(Request(m_maxBatchFiles, m_maxBatchBytes, lastCall));
 }
 //------------------------------------------------------------------------------
 //waitThreads
@@ -130,6 +133,90 @@ void RecallTaskInjector::waitForFirstTasksInjectedPromise(){
   m_firstTasksInjectedFuture.wait();
 }
 
+
+//------------------------------------------------------------------------------
+//reserveSpaceForNextJobBatch
+//------------------------------------------------------------------------------
+bool RecallTaskInjector::reserveSpaceForNextJobBatch() {
+  bool useRAO = m_raoManager.useRAO();
+  auto nextJobBatch = previewGetNextJobBatch(useRAO);
+
+  cta::DiskSpaceReservationRequest necessaryReservedSpace;
+
+  for (auto job: nextJobBatch) {
+    auto diskSystemName = job->diskSystemName();
+    if (diskSystemName) {
+      necessaryReservedSpace.addRequest(diskSystemName.value(), job->archiveFile.fileSize);
+    } 
+  }
+
+  // See if the free disk space reserved by the injector is enough to fit the new batch
+  bool needReservation = false;
+  cta::DiskSpaceReservationRequest spaceToReserve;
+  for(const auto &reservation: necessaryReservedSpace) {
+    cta::log::ScopedParamContainer spc(m_lc);
+    auto currentFreeSpace = m_reservedFreeSpace[reservation.first];
+    if (currentFreeSpace < reservation.second) {
+      spaceToReserve.addRequest(reservation.first, reservation.second - currentFreeSpace);
+      needReservation = true;
+      spc.add("bytesToReserve", reservation.second - currentFreeSpace);
+    }
+    spc.add("diskSystemName", reservation.first);
+    spc.add("currentReservedBytes", currentFreeSpace);
+    spc.add("necessaryReservedBytes", reservation.second);
+    m_lc.log(cta::log::DEBUG, "In RecallTaskInjector::reserveSpaceForNextJobBatch(): Current disk space reservation");
+  }
+
+  if (!needReservation) {
+    m_lc.log(cta::log::INFO, "In RecallTaskInjector::reserveSpaceForNextJobBatch(): Reservation is not necessary for next job batch");
+    return true;
+  }
+
+  for (const auto &reservation: spaceToReserve) {
+    cta::log::ScopedParamContainer spc(m_lc);
+    spc.add("diskSystemName", reservation.first);
+    spc.add("bytes", reservation.second);
+    m_lc.log(cta::log::DEBUG, "Disk space reservation necessary for next job batch");
+  }
+  bool ret = m_retrieveMount.reserveDiskSpace(spaceToReserve, m_lc);
+
+  if(!ret) {
+    m_retrieveMount.requeueJobBatch(m_jobs, m_lc);
+    m_files = 0;
+    m_bytes = 0;
+    m_lc.log(cta::log::ERR, "In RecallTaskInjector::reserveSpaceForNextJobBatch(): Disk space reservation failed, requeued all pending jobs");
+  }
+  else {
+    m_lc.log(cta::log::INFO, "In RecallTaskInjector::reserveSpaceForNextJobBatch(): Disk space reservation for next job batch succeeded");
+    for (const auto &reservation: spaceToReserve) {
+      m_reservedFreeSpace.addRequest(reservation.first, reservation.second);
+    }
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+//previewGetNextJobBatch
+//------------------------------------------------------------------------------
+std::list<cta::RetrieveJob*> RecallTaskInjector::previewGetNextJobBatch(bool useRAO) {
+  uint32_t njobs = m_jobs.size();
+  std::vector<uint64_t> raoOrder;
+  if (useRAO) {
+    raoOrder = m_raoManager.queryRAO(m_jobs,m_lc);
+  }
+  uint64_t nFiles = 0;
+  uint64_t nBytes = 0;
+  std::list<cta::RetrieveJob*> jobBatch;
+  for (uint32_t i = 0; i < njobs && nFiles < m_maxBatchFiles && nBytes < m_maxBatchBytes; i++) {
+    uint64_t index = useRAO ? raoOrder.at(i) : i;
+    auto job = m_jobs.at(index).get();
+    jobBatch.push_back(job);
+    nFiles++;
+    nBytes += job->archiveFile.fileSize;
+  }
+  return jobBatch;
+}
+
 //------------------------------------------------------------------------------
 //injectBulkRecalls
 //------------------------------------------------------------------------------
@@ -150,105 +237,126 @@ void RecallTaskInjector::injectBulkRecalls() {
   } else {
     recallOrderLog << "Recall order of FSEQs:";
   }
-
-  for (uint32_t i = 0; i < njobs; i++) {
+  uint64_t nFiles = 0;
+  uint64_t nBytes = 0;
+  std::list<std::unique_ptr<cta::RetrieveJob>> retrieveJobsBatch;
+  /*
+  Select a batch of tasks, request disk space for the batch, process the successfull files and
+  store the rest for reinjecting in the queue.
+  */
+  for (uint32_t i = 0; i < njobs && nFiles < m_maxBatchFiles && nBytes < m_maxBatchBytes; i++) {
     uint64_t index = useRAO ? raoOrder.at(i) : i;
-
     cta::RetrieveJob *job = m_jobs.at(index).release();
-    recallOrderLog << " " << job->selectedTapeFile().fSeq;
-
     job->positioningMethod=cta::PositioningMethod::ByBlock;
+    retrieveJobsBatch.push_back(std::unique_ptr<cta::RetrieveJob>(job));
+    nFiles++;
+    nBytes += job->archiveFile.fileSize;
+    m_files--;
+    m_bytes -= job->archiveFile.fileSize;
+  }
 
-    LogContext::ScopedParam sp[]={
-      LogContext::ScopedParam(m_lc, Param("fileId", job->retrieveRequest.archiveFileID)),
-      LogContext::ScopedParam(m_lc, Param("fSeq", job->selectedTapeFile().fSeq)),
-      LogContext::ScopedParam(m_lc, Param("blockID", job->selectedTapeFile().blockId)),
-      LogContext::ScopedParam(m_lc, Param("dstURL", job->retrieveRequest.dstURL))
-    };
-    tape::utils::suppresUnusedVariable(sp);
-    
-    m_lc.log(cta::log::INFO, "Recall task created");
-    
+  bool setPromise = (retrieveJobsBatch.size() != 0);
+  for(auto &job_ptr: retrieveJobsBatch) {
+    cta::RetrieveJob *job = job_ptr.release();
     DiskWriteTask * dwt = new DiskWriteTask(job, m_memManager);
     TapeReadTask * trt = new TapeReadTask(job, *dwt, m_memManager);
-
+    recallOrderLog << " " << job->selectedTapeFile().fSeq;
     m_diskWriter.push(dwt);
     m_tapeReader.push(trt);
+    if (job->diskSystemName()) {
+      m_reservedFreeSpace.removeRequest(job->diskSystemName().value(), job->archiveFile.fileSize);
+    }
     m_lc.log(cta::log::INFO, "Created tasks for recalling a file");
   }
-  if(njobs > 0){
+  if(setPromise){
     //At least one task has been created, we tell the TapeReadSingleThread that
     //it can start its infinite loop
     setFirstTasksInjectedPromise();
   }
   m_lc.log(cta::log::INFO, recallOrderLog.str());
-  m_jobs.clear();
+  // keep the rest for later injection
+  m_jobs.erase(std::remove_if(m_jobs.begin(), m_jobs.end(), [](const std::unique_ptr<cta::RetrieveJob> &jobptr) {
+    return jobptr.get() == nullptr;
+  }), m_jobs.end());
   LogContext::ScopedParam sp03(m_lc, Param("nbFile", njobs));
   m_lc.log(cta::log::INFO, "Finished processing batch of recall tasks from client");
+
 }
+
 //------------------------------------------------------------------------------
-//synchronousInjection
+//synchronousFetch
 //------------------------------------------------------------------------------
 bool RecallTaskInjector::synchronousFetch(bool & noFilesToRecall)
 {
-  noFilesToRecall = false;
-  uint64_t reqFiles = (m_raoManager.useRAO() && m_raoManager.getMaxFilesSupported()) ? m_raoManager.getMaxFilesSupported().value() - m_fetched : m_maxFiles;
+  noFilesToRecall = true;
   /* If RAO is enabled, we must ask for files up to 1PB.
    * We are limiting to 1PB because the size will be passed as
    * oracle::occi::Number which is limited to ~56 bits precision
    */
-  uint64_t reqSize = (m_raoManager.useRAO() && m_raoManager.hasUDS()) ? 1024L * 1024 * 1024 * 1024 * 1024 : m_maxBytes;
+
+  uint64_t reqFiles = (m_raoManager.useRAO() && m_raoManager.getMaxFilesSupported()) ? m_raoManager.getMaxFilesSupported().value() : m_maxBatchFiles;
+  if (reqFiles <= m_files) {
+    return true; //No need to pop from the queue, injector already  holds enough files, but we return there is still work to be done
+  }
+  reqFiles -= m_files;
+  
+  uint64_t reqSize = (m_raoManager.useRAO() && m_raoManager.hasUDS()) ? 1024L * 1024 * 1024 * 1024 * 1024 : m_maxBatchBytes;
+  if (reqSize <= m_bytes) {
+     return true; //No need to pop from the queue, injector already holds enough bytes, but we return there is still work to be done
+  }
+  reqSize -= m_bytes;
   try {
     auto jobsList = m_retrieveMount.getNextJobBatch(reqFiles, reqSize, m_lc);
-    for (auto & j: jobsList)
+    for (auto & j: jobsList) {
+      m_files++;
+      m_bytes += j->archiveFile.fileSize;
       m_jobs.emplace_back(j.release());
+    }
     m_fetched = jobsList.size();
+    noFilesToRecall = !jobsList.size();
   } catch (cta::exception::Exception & ex) {
     cta::log::ScopedParamContainer scoped(m_lc);
     scoped.add("transactionId", m_retrieveMount.getMountTransactionId())
-          .add("byteSizeThreshold",reqSize)
+          .add("requestedBytes",reqSize)
           .add("requestedFiles", reqFiles)
           .add("message", ex.getMessageValue());
     m_lc.log(cta::log::ERR, "Failed to getFilesToRecall");
     return false;
   }
-  cta::log::ScopedParamContainer scoped(m_lc); 
-  scoped.add("byteSizeThreshold",reqSize)
-        .add("requestedFiles", reqFiles);
   if(m_jobs.empty()) {
-    m_lc.log(cta::log::WARNING, "No files to recall: empty mount");
-    noFilesToRecall = true;
+    m_lc.log(cta::log::WARNING, "No files left to recall on the queue or in the injector");
     return false;
   }
-  else {
-    if (! m_raoManager.useRAO())
-      injectBulkRecalls();
-    else {
-      cta::log::ScopedParamContainer scoped(m_lc);
-      scoped.add("fetchedFiles", m_fetched);
-      m_lc.log(cta::log::INFO,"Fetched files to recall");
-    }
-    return true;
-  }
+    cta::log::ScopedParamContainer scoped(m_lc); 
+  scoped.add("requestedBytes",reqSize)
+        .add("requestedFiles", reqFiles)
+        .add("fetchedFiles", m_fetched);
+  m_lc.log(cta::log::INFO,"Fetched files to recall");  
+  return true;
 }
 //------------------------------------------------------------------------------
 //signalEndDataMovement
 //------------------------------------------------------------------------------
-  void RecallTaskInjector::signalEndDataMovement(){        
-    //first send the end signal to the threads
+void RecallTaskInjector::signalEndDataMovement(){        
+  //send the end signal to the threads
+  //(do this only one)
+  if (!m_sessionEndSignaled) {
     m_tapeReader.finish();
     m_diskWriter.finish();
+    m_sessionEndSignaled = true;
   }
+}
 //------------------------------------------------------------------------------
 //deleteAllTasks
 //------------------------------------------------------------------------------
-  void RecallTaskInjector::deleteAllTasks(){
-    //discard all the tasks !!
-    while(m_queue.size()>0){
-      m_queue.pop();
-    }
+void RecallTaskInjector::deleteAllTasks(){
+  //discard all the tasks !!
+  while(m_queue.size()>0){
+    m_queue.pop();
   }
-  
+}
+
+
 //------------------------------------------------------------------------------
 //WorkerThread::run
 //------------------------------------------------------------------------------
@@ -281,27 +389,40 @@ void RecallTaskInjector::WorkerThread::run()
       bool noFilesToRecall;
       m_parent.synchronousFetch(noFilesToRecall);
     }
-    m_parent.injectBulkRecalls();
-    /**
-     * Commenting this line as we want the RAO to be executed on
-     * all the batchs and not only one.
-     */
-    //m_parent.m_raoManager.disableRAO();
   }
+  bool reservationResult = m_parent.reserveSpaceForNextJobBatch();
+
+  /* this should never happen, since we check the reservation space before starting the session*/
+  if (!reservationResult) {
+    m_parent.signalEndDataMovement();
+    m_parent.setFirstTasksInjectedPromise();
+    goto end_injection;
+  }
+
+  m_parent.injectBulkRecalls(); //do an initial injection before entering loop
   try{
     while (1) {
       Request req = m_parent.m_queue.pop();
       if (req.end) {
         m_parent.m_lc.log(cta::log::INFO,"Received a end notification from tape thread: triggering the end of session.");
-        
         m_parent.signalEndDataMovement();
         break;
       }
       m_parent.m_lc.log(cta::log::DEBUG,"RecallJobInjector:run: about to call client interface");
-      auto jobsList = m_parent.m_retrieveMount.getNextJobBatch(req.filesRequested, req.bytesRequested, m_parent.m_lc);
-      for (auto & j: jobsList)
-        m_parent.m_jobs.emplace_back(j.release());
       LogContext::ScopedParam sp01(m_parent.m_lc, Param("transactionId", m_parent.m_retrieveMount.getMountTransactionId()));
+      
+      /*When disk space reservation fails, we will no longer fetch more files, 
+      just wait for the session to finish naturally
+      */
+      if (reservationResult) {
+        bool noFilesToRecall;
+        m_parent.synchronousFetch(noFilesToRecall);
+        
+        reservationResult = m_parent.reserveSpaceForNextJobBatch();
+        if (!reservationResult) {
+          m_parent.m_lc.log(cta::log::INFO, "Disk space reservation failed: will inject no more files");
+        }        
+      }
       
       if (m_parent.m_jobs.empty()) {
         if (req.lastCall) {
@@ -316,16 +437,18 @@ void RecallTaskInjector::WorkerThread::run()
       }
     } // end of while(1)
   } //end of try
-  catch(const cta::exception::Exception& ex){
-      //we end up there because we could not talk to the client
-      cta::log::ScopedParamContainer container( m_parent.m_lc);
-      container.add("exception message",ex.getMessageValue());
-      m_parent.m_lc.logBacktrace(cta::log::ERR,ex.backtrace());
-      m_parent.m_lc.log(cta::log::ERR,"In RecallJobInjector::WorkerThread::run(): "
-      "could not retrieve a list of file to recall. End of session");
-      m_parent.signalEndDataMovement();
-      m_parent.deleteAllTasks();
-    }
+catch(const cta::exception::Exception& ex){
+    //we end up there because we could not talk to the client
+    cta::log::ScopedParamContainer container( m_parent.m_lc);
+    container.add("exception message",ex.getMessageValue());
+    m_parent.m_lc.logBacktrace(cta::log::ERR,ex.backtrace());
+    m_parent.m_lc.log(cta::log::ERR,"In RecallJobInjector::WorkerThread::run(): "
+    "could not retrieve a list of file to recall. End of session");
+    m_parent.signalEndDataMovement();
+    m_parent.deleteAllTasks();
+  }
+
+end_injection:
   //-------------
   m_parent.m_lc.log(cta::log::DEBUG, "Finishing RecallTaskInjector thread");
   /* We want to finish at the first lastCall we encounter.

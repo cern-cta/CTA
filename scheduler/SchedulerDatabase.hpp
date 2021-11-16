@@ -42,6 +42,7 @@
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/MountType.hpp"
 #include "common/dataStructures/RepackInfo.hpp"
+#include "common/dataStructures/DiskSpaceReservationRequest.hpp"
 #include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
 #include "common/dataStructures/RetrieveJob.hpp"
 #include "common/dataStructures/RetrieveRequest.hpp"
@@ -430,13 +431,26 @@ class SchedulerDatabase {
     } mountInfo;
     virtual const MountInfo & getMountInfo() = 0;
     virtual std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> getNextJobBatch(uint64_t filesRequested,
-      uint64_t bytesRequested, cta::disk::DiskSystemFreeSpaceList & diskSystemFreeSpace, log::LogContext& logContext) = 0;
+      uint64_t bytesRequested, log::LogContext& logContext) = 0;
+    virtual bool reserveDiskSpace(const cta::DiskSpaceReservationRequest &request,
+      const std::string &fetchEosFreeSpaceScript, log::LogContext& logContext) = 0;
+    virtual void requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobBatch, 
+      log::LogContext& logContext) = 0;
+    
     virtual void complete(time_t completionTime) = 0;
     virtual void setDriveStatus(common::dataStructures::DriveStatus status, time_t completionTime,
       const cta::optional<std::string> & reason = cta::nullopt) = 0;
     virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) = 0;
-    virtual void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob *> & jobsBatch,
-      log::LogContext & lc) = 0;
+
+    virtual void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob *> & jobsBatch, log::LogContext & lc) = 0;
+    struct DiskSystemToSkip {
+      std::string name;
+      uint64_t sleepTime;
+      bool operator<(const DiskSystemToSkip & o) const { return name < o.name; }
+    };
+
+    virtual void addDiskSystemToSkip(const DiskSystemToSkip &diskSystemToSkip) = 0;
+    virtual void putQueueToSleep(const std::string &diskSystemName, const uint64_t sleepTime, log::LogContext &logContext) = 0;
     virtual ~RetrieveMount() {}
     uint32_t nbFilesCurrentlyOnTape;
   };
@@ -789,6 +803,12 @@ class SchedulerDatabase {
    * status. It is identical to getMountInfo, yet does not take the global lock.
    */
   virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose, log::LogContext& logContext) = 0;
+
+  /**
+   * A function to reinsert Retrieve jobs that were previously removed from 
+   * the scheduler database
+   */
+  virtual void requeueRetrieveJobs(std::list<cta::SchedulerDatabase::RetrieveJob*> &jobs, log::LogContext& logContext) = 0;
 
 }; // class SchedulerDatabase
 

@@ -118,6 +118,12 @@ namespace cta {
     std::string getVendor() const;
 
     /**
+     * Returns the tape drive
+     * @return the tape drive
+     */
+    virtual std::string getDrive() const;
+
+    /**
     * Returns the capacity in bytes of the tape
     * @return the capacity in bytes of the tape
     */
@@ -180,6 +186,26 @@ namespace cta {
       uint64_t bytesRequested, log::LogContext &logContext);
 
     /**
+     * Requeues a batch of jobs in their respective queues 
+     * @param jobs The job batch
+     * @param logContext 
+     */
+    virtual void requeueJobBatch(std::vector<std::unique_ptr<cta::RetrieveJob>> &jobs, log::LogContext &logContext);
+
+    /**
+     * Puts the queue associated to this retrieve mount to sleep
+     */
+    virtual void putQueueToSleep(const std::string &diskSystemName, const uint64_t sleepTime, log::LogContext &logContext);
+
+
+    /**
+     * Reserves space in the disk space buffer to the drive of this mount
+     * @param request the disk space reservation request
+     * @param logContext
+     */
+    virtual bool reserveDiskSpace(const cta::DiskSpaceReservationRequest &request, log::LogContext& logContext);
+
+    /**
      * Wait and complete reporting of a batch of jobs successes. The per jobs handling has
      * already been launched in the background using cta::RetrieveJob::asyncComplete().
      * This function will check completion of those async completes and then proceed
@@ -199,6 +225,12 @@ namespace cta {
     disk::DiskReporter * createDiskReporter(std::string & URL);
 
     void setFetchEosFreeSpaceScript(const std::string & name);
+
+    /**
+     * Adds a disk system to the list of disk systems to skip for this mount
+     * @param diskSystem The disk system
+     */
+    virtual void addDiskSystemToSkip(const cta::SchedulerDatabase::RetrieveMount::DiskSystemToSkip &diskSystem);
 
     /**
      * Destructor.

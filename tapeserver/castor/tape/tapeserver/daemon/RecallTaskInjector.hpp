@@ -21,6 +21,7 @@
 #include "common/log/LogContext.hpp"
 #include "common/threading/BlockingQueue.hpp"
 #include "common/threading/Thread.hpp"
+#include "common/dataStructures/DiskSpaceReservationRequest.hpp"
 #include "scheduler/RetrieveJob.hpp"
 #include "scheduler/RetrieveMount.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
@@ -91,11 +92,12 @@ public:
   void finish();
   
     /**
-     * Contact the client to make sure there are really something to do
-     * Something = recall at most  maxFiles or at least maxBytes
+     * Pop jobs from the queue to reach a threshold of files held by the injector
+     * This threshold is either m_maxBatchBytes/m_maxBatchFiles or the values supported by the
+     * RAO implementation
      * 
-     * @param noFilesToRecall will be true if noFilesWere popped from the queue.
-     * @return true if there are jobs to be done, false otherwise 
+     * @param noFilesToRecall will be true if no files were popped from the queue during the call
+     * @return true if there are jobs left to be done on the injector, false otherwise
      */
   bool synchronousFetch(bool & noFilesToRecall);
 
@@ -103,11 +105,16 @@ public:
    * Wait for the inner thread to finish
    */
   void waitThreads();
-  
+
   /**
    * Start the inner thread 
    */
   void startThreads();
+
+  /**
+   * Reserve disk space in the eos instance buffer for the next job batch to be injected
+   */
+  bool reserveSpaceForNextJobBatch();
 
   /**
    * Set the drive interface in use
@@ -151,9 +158,17 @@ private:
   void deleteAllTasks();
   
   /**
-   * Create all the tape-read and write-disk tasks for set of files to retrieve
+   * Transfers a batch of tape-read and write-disk tasks for set of files to retrieve
+   * The size of the batch is given by m_maxBatchFiles or m_maxBatchBytes
    */
   void injectBulkRecalls();
+
+  /**
+   * Get the next job batch to be injected (but keep it in the injector)
+   * @param useRAO wether RAO is supported by the drive or not
+   * @return the job batch
+   */
+  std::list<cta::RetrieveJob*> previewGetNextJobBatch(bool useRAO);
 
   /**
    * A request of files to recall. We request EITHER
@@ -184,6 +199,11 @@ private:
      */
     const bool end;
   };
+
+  class DiskSpaceReservationStatus {
+    cta::DiskSpaceReservationRequest reservedSpace;
+    cta::DiskSpaceReservationRequest usedSpace;
+  };
   
   class WorkerThread: public cta::threading::Thread {
   public:
@@ -205,7 +225,10 @@ private:
   
   /// the client who is sending us jobs
   cta::RetrieveMount &m_retrieveMount;
-  
+
+  /// the amount of disk space reserved and used by the session
+  cta::DiskSpaceReservationRequest m_reservedFreeSpace;
+
   /// Drive interface needed for performing Recommended Access Order query
   castor::tape::tapeserver::drive::DriveInterface * m_drive;
 
@@ -220,11 +243,18 @@ private:
   cta::threading::BlockingQueue<Request> m_queue;
   
 
-  //maximal number of files requested. at once
-  const uint64_t m_maxFiles;
+  //maximal number of files provided by the recall threads at once
+  const uint64_t m_maxBatchFiles;
   
-  //maximal number of cumulated byte requested. at once
-  const uint64_t m_maxBytes;
+  //maximal number of cumulated byte provided to the recall threads at once
+  const uint64_t m_maxBatchBytes;
+
+  //number of files currently held by the recall injector
+  uint64_t m_files;
+  
+  //number of bytes currently held by the recall injector
+  uint64_t m_bytes;
+  
   
   /**
    * The RAO manager to perofrm RAO operations
@@ -247,6 +277,8 @@ private:
   std::future<void> m_firstTasksInjectedFuture;
   
   bool m_promiseFirstTaskInjectedSet = false;
+  bool m_sessionEndSignaled = false;
+
 };
 
 } //end namespace daemon

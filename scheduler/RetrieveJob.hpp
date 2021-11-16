@@ -106,7 +106,12 @@ public:
    * be applied by the scheduler.
    */
   virtual void reportFailed(const std::string &failureReason, log::LogContext &lc);
-  
+
+  /**
+   * Returning the name of the disk system associated with the scheduler database RetrieveJob
+   */
+  virtual cta::optional<std::string> diskSystemName();
+
   /**
    * Helper function returning a reference to the currently selected tape file.
    */

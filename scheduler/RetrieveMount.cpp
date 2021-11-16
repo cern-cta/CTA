@@ -17,10 +17,15 @@
 
 #include "common/exception/NoSuchObject.hpp"
 #include "common/log/TimingList.hpp"
+#include "common/make_unique.hpp"
 #include "common/Timer.hpp"
 #include "disk/DiskSystem.hpp"
 #include "objectstore/Backend.hpp"
 #include "scheduler/RetrieveMount.hpp"
+
+#include <numeric>
+#include <algorithm>
+#include <iterator>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -125,6 +130,19 @@ std::string cta::RetrieveMount::getVendor() const
 }
 
 //------------------------------------------------------------------------------
+// getDrive()
+//------------------------------------------------------------------------------
+std::string cta::RetrieveMount::getDrive() const
+{
+    std::stringstream sDrive;
+    if(!m_dbMount.get())
+        throw exception::Exception("In cta::RetrieveMount::getDrive(): got NULL dbMount");
+    sDrive<<m_dbMount->mountInfo.drive;
+    return sDrive.str();
+}
+
+
+//------------------------------------------------------------------------------
 // getCapacityInBytes()
 //------------------------------------------------------------------------------
 uint64_t cta::RetrieveMount::getCapacityInBytes() const {
@@ -140,16 +158,8 @@ std::list<std::unique_ptr<cta::RetrieveJob> > cta::RetrieveMount::getNextJobBatc
     log::LogContext& logContext) {
   if (!m_sessionRunning)
     throw SessionNotRunning("In RetrieveMount::getNextJobBatch(): trying to get job from complete/not started session");
-  // Get the current file systems list from the catalogue
-  disk::DiskSystemList diskSystemList;
-  diskSystemList = m_catalogue.getAllDiskSystems();
-  diskSystemList.setFetchEosFreeSpaceScript(m_fetchEosFreeSpaceScript);
-  // TODO: the diskSystemFreeSpaceList could be made a member of the retrieve mount and cache the fetched values, limiting the re-querying
-  // of the disk systems free space.
-  disk::DiskSystemFreeSpaceList diskSystemFreeSpaceList (diskSystemList);
-  // Try and get a new job from the DB. The DB mount (in memory object) is taking care of reserving the free space for the popped
-  // elements and query the disk systems, via the diskSystemFreeSpaceList object.
-  auto dbJobBatch = m_dbMount->getNextJobBatch(filesRequested, bytesRequested, diskSystemFreeSpaceList, logContext);
+  // Try and get a new job from the DB
+  auto dbJobBatch = m_dbMount->getNextJobBatch(filesRequested, bytesRequested, logContext);
   std::list<std::unique_ptr<RetrieveJob>> ret;
   // We prepare the response
   for (auto & sdrj: dbJobBatch) {
@@ -160,6 +170,35 @@ std::list<std::unique_ptr<cta::RetrieveJob> > cta::RetrieveMount::getNextJobBatc
   }
   return ret;
 }
+
+//------------------------------------------------------------------------------
+// requeueJobBatch()
+//------------------------------------------------------------------------------
+void cta::RetrieveMount::requeueJobBatch(std::vector<std::unique_ptr<cta::RetrieveJob>> &jobs, log::LogContext &logContext) {
+  std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> jobBatch;
+  for(auto &job: jobs) {
+    if (job) {
+      jobBatch.push_back(std::unique_ptr<SchedulerDatabase::RetrieveJob>(job->m_dbJob.release()));
+    }
+  }
+  jobs.clear();
+  m_dbMount->requeueJobBatch(jobBatch, logContext);
+}
+
+//------------------------------------------------------------------------------
+// reserveDiskSpace()
+//------------------------------------------------------------------------------
+bool cta::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest &request, log::LogContext& logContext) {
+  return m_dbMount->reserveDiskSpace(request, m_fetchEosFreeSpaceScript, logContext);
+}
+
+//------------------------------------------------------------------------------
+// requeueJobBatch()
+//------------------------------------------------------------------------------
+void cta::RetrieveMount::putQueueToSleep(const std::string &diskSystemName, const uint64_t sleepTime, log::LogContext &logContext) {
+  m_dbMount->putQueueToSleep(diskSystemName, sleepTime, logContext);
+}
+
 
 //------------------------------------------------------------------------------
 // waitAndFinishSettingJobsBatchRetrieved()
@@ -334,6 +373,13 @@ bool cta::RetrieveMount::bothSidesComplete() {
 //------------------------------------------------------------------------------
 void cta::RetrieveMount::setFetchEosFreeSpaceScript(const std::string& name){
   m_fetchEosFreeSpaceScript = name;
+}
+
+//------------------------------------------------------------------------------
+// addDiskSystemToSkip()
+//------------------------------------------------------------------------------
+void cta::RetrieveMount::addDiskSystemToSkip(const cta::SchedulerDatabase::RetrieveMount::DiskSystemToSkip &diskSystem) {
+  m_dbMount->addDiskSystemToSkip(diskSystem);
 }
 
 //------------------------------------------------------------------------------

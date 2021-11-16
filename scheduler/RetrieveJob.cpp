@@ -43,6 +43,14 @@ cta::RetrieveJob::RetrieveJob(RetrieveMount *mount,
   positioningMethod(positioningMethod),
   transferredSize(std::numeric_limits<decltype(transferredSize)>::max()) {}
 
+
+//------------------------------------------------------------------------------
+// diskSystemName
+//------------------------------------------------------------------------------
+cta::optional<std::string> cta::RetrieveJob::diskSystemName() {
+  return m_dbJob->diskSystemName;
+}
+
 //------------------------------------------------------------------------------
 // asyncComplete
 //------------------------------------------------------------------------------

@@ -43,6 +43,7 @@
 #include "QueueItor.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/TapeDrivesCatalogueState.hpp"
+#include "scheduler/RetrieveJob.hpp"
 
 namespace cta {
 
@@ -257,24 +258,23 @@ class OStoreDB: public SchedulerDatabase {
   class RetrieveJob;
   class RetrieveMount: public SchedulerDatabase::RetrieveMount {
     friend class TapeMountDecisionInfo;
+    friend class cta::RetrieveJob;
    private:
     explicit RetrieveMount(OStoreDB &oStoreDB);
     OStoreDB & m_oStoreDB;
 
    public:
     const MountInfo & getMountInfo() override;
-    std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> > getNextJobBatch(uint64_t filesRequested,
-      uint64_t bytesRequested, cta::disk::DiskSystemFreeSpaceList & diskSystemFreeSpace,
+    std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> > getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext) override;
+  
+    void requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobBatch, 
       log::LogContext& logContext) override;
-
+    
+    bool reserveDiskSpace(const cta::DiskSpaceReservationRequest &request,
+      const std::string &fetchEosFreeSpaceScript, log::LogContext& logContext) override;
+    
+    void putQueueToSleep(const std::string &diskSystemName, const uint64_t sleepTime, log::LogContext &logContext) override;
    private:
-    void requeueJobBatch(std::list<std::unique_ptr<OStoreDB::RetrieveJob> >& jobBatch,
-      log::LogContext& logContext);
-    struct DiskSystemToSkip {
-      std::string name;
-      uint64_t sleepTime;
-      bool operator<(const DiskSystemToSkip & o) const { return name < o.name; }
-    };
     std::set<DiskSystemToSkip> m_diskSystemsToSkip;
 
    public:
@@ -283,8 +283,7 @@ class OStoreDB: public SchedulerDatabase {
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime,
       const cta::optional<std::string> & reason = cta::nullopt) override;
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
-
-   public:
+    void addDiskSystemToSkip(const SchedulerDatabase::RetrieveMount::DiskSystemToSkip &diskSystemToSkip) override;
     void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch, log::LogContext& lc) override;
   };
   friend class RetrieveMount;
@@ -620,6 +619,9 @@ class OStoreDB: public SchedulerDatabase {
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextFailedRetrieveRepackReportBatch(log::LogContext& lc);
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc);
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextFailedArchiveRepackReportBatch(log::LogContext &lc);
+
+  void requeueRetrieveJobs(std::list<cta::SchedulerDatabase::RetrieveJob *> &jobs, log::LogContext& logContext) override;
+
   CTA_GENERATE_EXCEPTION_CLASS(NoRepackReportBatchFound);
 
  private:

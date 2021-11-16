@@ -4918,8 +4918,8 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
 
   auto &catalogue = getCatalogue();
   auto &scheduler = getScheduler();
-  auto &schedulerDB = getSchedulerDB();
-  cta::objectstore::Backend& backend = schedulerDB.getBackend();
+  //auto &schedulerDB = getSchedulerDB();
+  //cta::objectstore::Backend& backend = schedulerDB.getBackend();
 
   setupDefaultCatalogue();
   catalogue.createDiskSystem({"user", "host"}, "repackBuffer", tempDirectory.path(), "eos:ctaeos:default", 10, 10L*1000*1000*1000, 15*60, "no comment");
@@ -5016,9 +5016,22 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
     retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release()));
     ASSERT_NE(nullptr, retrieveMount.get());
     auto jobBatch = retrieveMount->getNextJobBatch(nbArchiveFilesPerTape,archiveFileSize * nbArchiveFilesPerTape,lc);
-    //0 job should be popped because the fetching of the EOS free space have failed.
-    ASSERT_EQ(0,jobBatch.size());
+    cta::DiskSpaceReservationRequest reservationRequest;
+    for(auto &job: jobBatch) {
+      reservationRequest.addRequest(job->diskSystemName().value(), job->archiveFile.fileSize);
+    }
+    ASSERT_EQ(10,jobBatch.size());
+    auto diskSpaceReservedBefore = std::get<1>(catalogue.getDiskSpaceReservation("drive0"));
+    //Trying to reserve disk space should result in 10 jobs should fail
+    ASSERT_FALSE(retrieveMount->reserveDiskSpace(reservationRequest, lc));
+
+    //No extra disk space was reserved
+    auto diskSpaceReservedAfter = std::get<1>(catalogue.getDiskSpaceReservation("drive0"));
+    
+    ASSERT_EQ(diskSpaceReservedAfter, diskSpaceReservedBefore);
   }
+  /*
+  // jobs are no longer requeued (this is now the responsibility of the retrieve mount)
   {
     //The jobs should be queued in the RetrieveQueueToReportToRepackForFailure
     cta::objectstore::RootEntry re(backend);
@@ -5043,6 +5056,7 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
       ASSERT_EQ(archiveFileSize,job.size);
     }
   }
+  */
 }
 
 TEST_P(SchedulerTest, getSchedulingInformations) {

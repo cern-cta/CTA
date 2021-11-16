@@ -270,6 +270,10 @@ public:
     return m_OStoreDB.getNextRepackJobToExpand();
   }
 
+  void requeueRetrieveJobs(std::list<cta::SchedulerDatabase::RetrieveJob *> &jobs, log::LogContext& logContext) override {
+    return m_OStoreDB.requeueRetrieveJobs(jobs, logContext);
+  }
+
 private:
   std::unique_ptr <cta::log::Logger> m_logger;
   std::unique_ptr <cta::objectstore::Backend> m_backend;

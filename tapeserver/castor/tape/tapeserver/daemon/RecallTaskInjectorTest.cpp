@@ -127,11 +127,15 @@ namespace unitTests
   class TestingDatabaseRetrieveMount: public cta::SchedulerDatabase::RetrieveMount {
     const MountInfo & getMountInfo() override { throw std::runtime_error("Not implemented"); }
     std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> > getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
-      cta::disk::DiskSystemFreeSpaceList & diskSystemFreeSpace, cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented");}
+      cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented");}
     void complete(time_t completionTime) override { throw std::runtime_error("Not implemented"); }
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime,const cta::optional<std::string> & reason) override { throw std::runtime_error("Not implemented"); }
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override { throw std::runtime_error("Not implemented"); }
     void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch, cta::log::LogContext& lc) override { throw std::runtime_error("Not implemented"); }
+    void addDiskSystemToSkip(const cta::SchedulerDatabase::RetrieveMount::DiskSystemToSkip &diskSystemToSkip) override { throw std::runtime_error("Not implemented"); }
+    void requeueJobBatch(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>& jobBatch, cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented"); }
+    void putQueueToSleep(const std::string &diskSystemName, const uint64_t sleepTime, cta::log::LogContext &logContext) override { throw std::runtime_error("Not implemented"); }
+    bool reserveDiskSpace(const cta::DiskSpaceReservationRequest &request, const std::string &fetchEosFreeSpaceScript, cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented"); } 
   };
   
   TEST_F(castor_tape_tapeserver_daemonTest, RecallTaskInjectorNominal) {
@@ -167,8 +171,10 @@ namespace unitTests
     bool noFilesToRecall;
     ASSERT_EQ(true, rti.synchronousFetch(noFilesToRecall));
     ASSERT_FALSE(noFilesToRecall);
-    ASSERT_EQ(maxNbJobsInjectedAtOnce, diskWrite.m_tasks.size());
-    ASSERT_EQ(maxNbJobsInjectedAtOnce, tapeRead.m_tasks.size());
+
+    //Jobs are no longer injected at synchronousFetch, only when the threads start
+    //ASSERT_EQ(maxNbJobsInjectedAtOnce, diskWrite.m_tasks.size());
+    //ASSERT_EQ(maxNbJobsInjectedAtOnce, tapeRead.m_tasks.size());
 
     rti.startThreads();
     rti.requestInjection(false);
@@ -225,7 +231,6 @@ namespace unitTests
     cta::server::ProcessCapDummy cap;
     castor::tape::tapeserver::daemon::TapeServerReporter tsr(initialProcess, cta::tape::daemon::TpconfigLine(), "0.0.0.0", volume, lc);  
     FakeSingleTapeReadThread tapeRead(drive, mc, tsr, volume, cap, 60, lc);
-
     tapeserver::daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, 6, blockSize, lc);
 
     bool noFilesToRecall;
