@@ -189,6 +189,8 @@ The command line utilities
 %defattr(-,root,root)
 %attr(0755,root,root) %{_bindir}/cta-admin
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-admin.1cta.gz
+%attr(0755,root,root) %{_bindir}/cta-restore-deleted-files
+%attr(0644,root,root) %doc /usr/share/man/man1/cta-restore-deleted-files.1cta.gz
 %attr(0755,root,root) %{_bindir}/cta-send-event
 %attr(0755,root,root) %{_bindir}/cta-send-closew.sh
 %attr(0755,root,root) %{_bindir}/cta-verify-file

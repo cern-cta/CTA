@@ -15,6 +15,8 @@
 
 cmake_minimum_required (VERSION 2.6)
 
+add_subdirectory (restore_files)
+
 find_package(xrootdclient REQUIRED)
 find_package(Protobuf3 REQUIRED)
 

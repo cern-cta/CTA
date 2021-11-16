@@ -139,6 +139,8 @@ ELSE(DEFINED PackageOnly)
 
   add_subdirectory(eos_cta)
 
+  add_subdirectory(eos_grpc_client)
+
   add_subdirectory(migration)
 
   add_subdirectory(cmdline)

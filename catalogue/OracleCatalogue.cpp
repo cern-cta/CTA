@@ -1150,52 +1150,47 @@ void OracleCatalogue::copyTapeFileToFileRecyleLogAndDelete(rdbms::Conn & conn, c
 }
 
 //------------------------------------------------------------------------------
-// restoreFileCopiesInRecycleLog
+// restoreEntryInRecycleLog
 //------------------------------------------------------------------------------
-void OracleCatalogue::restoreFileCopiesInRecycleLog(rdbms::Conn & conn, FileRecycleLogItor &fileRecycleLogItor, log::LogContext & lc) {
-try {
+void OracleCatalogue::restoreEntryInRecycleLog(rdbms::Conn & conn, FileRecycleLogItor &fileRecycleLogItor, 
+  const std::string &newFid, log::LogContext & lc) {
+  try {
     utils::Timer t;
     log::TimingList tl;
 
-    //put fileRecycleLogs in std::list so we can release the underlying fileRecycleLogItor database connection
-    //otherwise we are using two conns when calling getArchiveFilesItor
-    std::list<common::dataStructures::FileRecycleLog> fileRecycleLogList;
-    while (fileRecycleLogItor.hasMore()) {
-      auto fileRecycleLog = fileRecycleLogItor.next();
-      fileRecycleLogList.push_back(fileRecycleLog);
+    if (!fileRecycleLogItor.hasMore()) {
+      throw cta::exception::UserError("No file in the recycle bin matches the parameters passed");
     }
-
-    //We currently do all file copies restoring in a single transaction
+    auto fileRecycleLog = fileRecycleLogItor.next();  
+    if (fileRecycleLogItor.hasMore()) {
+      //stop restoring more than one file at once
+      throw cta::exception::UserError("More than one recycle bin file matches the parameters passed");
+    }
     conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
-    for (auto &fileRecycleLog: fileRecycleLogList) {     
-      TapeFileSearchCriteria searchCriteria;
-      searchCriteria.archiveFileId = fileRecycleLog.archiveFileId;
-      searchCriteria.diskInstance = fileRecycleLog.diskInstanceName;
-      searchCriteria.diskFileIds = std::vector<std::string>();
-      searchCriteria.diskFileIds.value().push_back(fileRecycleLog.diskFileId);
-
-      auto itor = getArchiveFilesItor(conn, searchCriteria); 
-      if (itor.hasMore()) {
-        //only restore file copies, do nothing if file has been completely deleted in CTA
-        cta::common::dataStructures::ArchiveFile archiveFile = itor.next();
-        if (archiveFile.tapeFiles.find(fileRecycleLog.copyNb) != archiveFile.tapeFiles.end()) {
-          //copy with same copy_nb exists, cannot restore
-          UserSpecifiedExistingDeletedFileCopy ex;
-          ex.getMessage() << "Cannot restore file copy with archiveFileId " << std::to_string(fileRecycleLog.archiveFileId) 
-          << " and copy_nb " << std::to_string(fileRecycleLog.copyNb) << " because a tapefile with same archiveFileId and copy_nb already exists";
-          throw ex;
-        }
-        restoreFileCopyInRecycleLog(conn, fileRecycleLog, lc);
+    
+    std::unique_ptr<common::dataStructures::ArchiveFile> archiveFilePtr = getArchiveFileById(conn, fileRecycleLog.archiveFileId);
+    if (!archiveFilePtr) {
+      restoreArchiveFileInRecycleLog(conn, fileRecycleLog, newFid, lc);
+    } else {
+      if (archiveFilePtr->tapeFiles.find(fileRecycleLog.copyNb) != archiveFilePtr->tapeFiles.end()) {
+        //copy with same copy_nb exists, cannot restore
+        UserSpecifiedExistingDeletedFileCopy ex;
+        ex.getMessage() << "Cannot restore file copy with archiveFileId " << std::to_string(fileRecycleLog.archiveFileId) 
+        << " and copy_nb " << std::to_string(fileRecycleLog.copyNb) << " because a tapefile with same archiveFileId and copy_nb already exists";
+        throw ex;
       }
     }
+
+    
+    restoreFileCopyInRecycleLog(conn, fileRecycleLog, lc);
+
     conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_ON);
     conn.commit();
 
     log::ScopedParamContainer spc(lc);
     tl.insertAndReset("commitTime",t);
     tl.addToLog(spc);
-    lc.log(log::INFO,"In OracleCatalogue::restoreFileCopiesInRecycleLog: all file copies successfully restored.");
-
+    lc.log(log::INFO,"In OracleCatalogue::restoreEntryInRecycleLog: all file copies successfully restored.");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {

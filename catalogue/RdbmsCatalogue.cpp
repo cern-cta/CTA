@@ -7169,16 +7169,32 @@ Catalogue::FileRecycleLogItor RdbmsCatalogue::getFileRecycleLogItor(const Recycl
   }
 }
 
+//------------------------------------------------------------------------------
+// restoreArchiveFileInRecycleLog
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::restoreArchiveFileInRecycleLog(rdbms::Conn &conn, 
+  const cta::common::dataStructures::FileRecycleLog &fileRecycleLog, const std::string &newFid, log::LogContext & lc) {
+  cta::catalogue::ArchiveFileRowWithoutTimestamps row;
+  row.diskFileId = newFid;
+  row.archiveFileId = fileRecycleLog.archiveFileId;
+  row.checksumBlob = fileRecycleLog.checksumBlob;
+  row.diskFileOwnerUid = fileRecycleLog.diskFileUid;
+  row.diskFileGid = fileRecycleLog.diskFileGid;
+  row.diskInstance = fileRecycleLog.diskInstanceName;
+  row.size = fileRecycleLog.sizeInBytes;
+  row.storageClassName = fileRecycleLog.storageClassName;
+  insertArchiveFile(conn, row);
+}
 
 //------------------------------------------------------------------------------
 // restoreFilesInRecycleLog
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::restoreFilesInRecycleLog(const RecycleTapeFileSearchCriteria & searchCriteria) {
+void RdbmsCatalogue::restoreFileInRecycleLog(const RecycleTapeFileSearchCriteria & searchCriteria, const std::string &newFid) {
   try {
     auto fileRecycleLogitor = getFileRecycleLogItor(searchCriteria);
     auto conn = m_connPool.getConn();
-    log::LogContext lc(m_log);
-    restoreFileCopiesInRecycleLog(conn, fileRecycleLogitor, lc);
+    log::LogContext lc(m_log);  
+    restoreEntryInRecycleLog(conn, fileRecycleLogitor, newFid, lc);
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {

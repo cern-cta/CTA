@@ -897,11 +897,22 @@ public:
   FileRecycleLogItor getFileRecycleLogItor(const RecycleTapeFileSearchCriteria & searchCriteria) const override;
 
   /**
-   * Restores the deleted files in the Recycle log that match the criteria passed
+   * Restores the deleted file in the Recycle log that match the criteria passed
    *
    * @param searchCriteria The search criteria
+   * @param newFid the new Fid of the archive file (if the archive file must be restored)
    */
-  void restoreFilesInRecycleLog(const RecycleTapeFileSearchCriteria & searchCriteria) override;
+  void restoreFileInRecycleLog(const RecycleTapeFileSearchCriteria & searchCriteria, const std::string &newFid) override;
+
+  /**
+   * Copy the fileRecycleLog to the ARCHIVE_FILE with a new eos fxid
+   * @param conn the database connection
+   * @param fileRecycleLog the fileRecycleLog we want to restore
+   * @param newFid the new eos file id of the archive file
+   * @param lc the log context
+   */
+  void restoreArchiveFileInRecycleLog(rdbms::Conn & conn, const common::dataStructures::FileRecycleLog &fileRecycleLogItor, 
+    const std::string &newFid, log::LogContext & lc);
 
   /**
    * Returns the specified files in tape file sequence order.
@@ -1947,12 +1958,14 @@ protected:
   virtual void copyArchiveFileToFileRecyleLogAndDelete(rdbms::Conn & conn,const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc) = 0;
 
   /**
-   * Copy the fileRecycleLog to the TAPE_FILE table and deletes the corresponding FILE_RECYCLE_LOG table entry
+   * Copy the fileRecycleLog to the TAPE_FILE and ARCHIVE_FILE (if the archive file no longer exists) 
+   * table and deletes the corresponding FILE_RECYCLE_LOG table entry
    * @param conn the database connection
    * @param fileRecycleLog the fileRecycleLog we want to restore
+   * @param newFid The new eos file id of the archive file to create
    * @param lc the log context
    */
-  virtual void restoreFileCopiesInRecycleLog(rdbms::Conn & conn, FileRecycleLogItor &fileRecycleLogItor, log::LogContext & lc) = 0;
+  virtual void restoreEntryInRecycleLog(rdbms::Conn & conn, FileRecycleLogItor &fileRecycleLogItor, const std::string &newFid, log::LogContext & lc) = 0;
 
   /**
    * Copies the ARCHIVE_FILE and TAPE_FILE entries to the recycle-bin tables

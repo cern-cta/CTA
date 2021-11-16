@@ -156,7 +156,17 @@ void PostgresStmt::bindUint64(const std::string &paramName, const optional<uint6
 // bindBlob
 //------------------------------------------------------------------------------
 void PostgresStmt::bindBlob(const std::string &paramName, const std::string &paramValue) {
-  throw exception::Exception("PostgresStmt::bindBlob not implemented.");
+  /*Escape the bytea string according to https://www.postgresql.org/docs/12/libpq-exec.html*/
+  size_t escaped_length;
+  auto escapedByteA = PQescapeByteaConn(m_conn.get(), reinterpret_cast<const unsigned char*>(paramValue.c_str()),
+    paramValue.length(), &escaped_length);
+  std::string escapedParamValue(reinterpret_cast<const char*>(escapedByteA), escaped_length);
+  PQfreemem(escapedByteA);
+  try {
+    bindString(paramName, escapedParamValue);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------

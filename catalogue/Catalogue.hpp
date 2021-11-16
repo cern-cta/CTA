@@ -924,11 +924,12 @@ public:
 
 
   /**
-   * Restores the deleted files in the Recycle log that match the criteria passed
+   * Restores the deleted file in the Recycle log that match the criteria passed
    *
    * @param searchCriteria The search criteria
+   * @param newFid the new Fid of the archive file (if the archive file must be restored)
    */
-  virtual void restoreFilesInRecycleLog(const RecycleTapeFileSearchCriteria & searchCriteria = RecycleTapeFileSearchCriteria()) = 0;
+  virtual void restoreFileInRecycleLog(const RecycleTapeFileSearchCriteria & searchCriteria, const std::string &newFid) = 0;
 
 
   /**

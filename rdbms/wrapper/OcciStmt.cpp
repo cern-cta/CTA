@@ -138,7 +138,11 @@ void OcciStmt::bindUint64(const std::string &paramName, const optional<uint64_t>
 // bindBlob
 //------------------------------------------------------------------------------
 void OcciStmt::bindBlob(const std::string &paramName, const std::string &paramValue) {
-  throw exception::Exception("OcciStmt::bindBlob not implemented.");
+  try {
+    bindString(paramName, paramValue);
+  } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
 }
 
 //------------------------------------------------------------------------------

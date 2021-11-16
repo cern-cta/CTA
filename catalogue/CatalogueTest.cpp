@@ -16706,7 +16706,7 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreTapeFileCopy) {
     searchCriteria.archiveFileId = 1;
     searchCriteria.vid = tape1.vid;
 
-    m_catalogue->restoreFilesInRecycleLog(searchCriteria);
+    m_catalogue->restoreFileInRecycleLog(searchCriteria, "0"); //new FID does not matter because archive file still exists in catalogue
     auto archiveFile = m_catalogue->getArchiveFileById(1);
     //assert both copies present
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
@@ -16871,7 +16871,7 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreRewrittenTapeFileCopyFails) {
     searchCriteria.archiveFileId = 1;
     searchCriteria.vid = tape1.vid;
 
-    ASSERT_THROW(m_catalogue->restoreFilesInRecycleLog(searchCriteria), catalogue::UserSpecifiedExistingDeletedFileCopy);
+    ASSERT_THROW(m_catalogue->restoreFileInRecycleLog(searchCriteria, "0"), catalogue::UserSpecifiedExistingDeletedFileCopy);
     auto archiveFile = m_catalogue->getArchiveFileById(1);
     //assert only two copies present
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
@@ -17050,17 +17050,148 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreVariousDeletedTapeFileCopies) {
 
 
   {
-    //restore all deleted copies
+    //try to restore all deleted copies should give an error
     catalogue::RecycleTapeFileSearchCriteria searchCriteria;
     searchCriteria.archiveFileId = 1;
 
-    m_catalogue->restoreFilesInRecycleLog(searchCriteria);
-    auto archiveFile = m_catalogue->getArchiveFileById(1);
-    //assert only two copies present
-    ASSERT_EQ(3, archiveFile.tapeFiles.size());
+    ASSERT_THROW(m_catalogue->restoreFileInRecycleLog(searchCriteria, "0"), cta::exception::UserError);
+    
+  }
+}
 
-    //assert recycle log still contains deleted copy
+TEST_P(cta_catalogue_CatalogueTest, RestoreArchiveFileAndCopy) {
+  using namespace cta;
+
+  const bool logicalLibraryIsDisabled= false;
+  const std::string tapePoolName1 = "tape_pool_name_1";
+  const std::string tapePoolName2 = "tape_pool_name_2";
+  const uint64_t nbPartialTapes = 1;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::string diskInstance = "disk_instance";
+  const std::string tapeDrive = "tape_drive";
+  const std::string reason = "reason";
+
+  m_catalogue->createMediaType(m_admin, m_mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createStorageClass(m_admin, m_storageClassDualCopy);
+
+  auto tape1 = m_tape1;
+  auto tape2 = m_tape2;
+  tape1.tapePoolName = tapePoolName1;
+  tape2.tapePoolName = tapePoolName2;
+
+  m_catalogue->createTape(m_admin, tape1);
+  m_catalogue->createTape(m_admin, tape2);
+
+  ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
+  const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
+
+
+  // Write a file on tape
+  {
+    std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
+
+    std::ostringstream diskFileId;
+    diskFileId << 12345677;
+
+    std::ostringstream diskFilePath;
+    diskFilePath << "/test/file1";
+
+    auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+    auto & fileWritten = *fileWrittenUP;
+    fileWritten.archiveFileId = 1;
+    fileWritten.diskInstance = diskInstance;
+    fileWritten.diskFileId = diskFileId.str();
+    fileWritten.diskFilePath = diskFilePath.str();
+    fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+    fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
+    fileWritten.size = archiveFileSize;
+    fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
+    fileWritten.storageClassName = m_storageClassDualCopy.name;
+    fileWritten.vid = tape1.vid;
+    fileWritten.fSeq = 1;
+    fileWritten.blockId = 1 * 100;
+    fileWritten.copyNb = 1;
+    fileWritten.tapeDrive = tapeDrive;
+    tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
+
+    m_catalogue->filesWrittenToTape(tapeFilesWrittenCopy1);
+  }
+
+  // Write a second copy of file on tape
+  {
+    std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
+
+    std::ostringstream diskFileId;
+    diskFileId << 12345677;
+
+    std::ostringstream diskFilePath;
+    diskFilePath << "/test/file1";
+
+    auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+    auto & fileWritten = *fileWrittenUP;
+    fileWritten.archiveFileId = 1;
+    fileWritten.diskInstance = diskInstance;
+    fileWritten.diskFileId = diskFileId.str();
+    fileWritten.diskFilePath = diskFilePath.str();
+    fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+    fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
+    fileWritten.size = archiveFileSize;
+    fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
+    fileWritten.storageClassName = m_storageClassDualCopy.name;
+    fileWritten.vid = tape2.vid;
+    fileWritten.fSeq = 1;
+    fileWritten.blockId = 1 * 100;
+    fileWritten.copyNb = 2;
+    fileWritten.tapeDrive = tapeDrive;
+    tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
+
+    m_catalogue->filesWrittenToTape(tapeFilesWrittenCopy1);
+  }
+  {
+    //Assert both copies written
+    auto archiveFile = m_catalogue->getArchiveFileById(1);
+    ASSERT_EQ(2, archiveFile.tapeFiles.size());
+  }
+
+  {
+    //delete archive file
+    common::dataStructures::DeleteArchiveRequest deleteRequest;
+    deleteRequest.archiveFileID = 1;
+    deleteRequest.archiveFile = m_catalogue->getArchiveFileById(1);
+    deleteRequest.diskInstance = diskInstance;
+    deleteRequest.diskFileId = std::to_string(12345677);
+    deleteRequest.diskFilePath = "/test/file1";
+    
+    log::LogContext dummyLc(m_dummyLog);
+    m_catalogue->moveArchiveFileToRecycleLog(deleteRequest, dummyLc);
+    ASSERT_THROW(m_catalogue->getArchiveFileById(1), cta::exception::Exception);
+  }
+
+
+  {
+    //restore copy of file on tape1
+    catalogue::RecycleTapeFileSearchCriteria searchCriteria;
+    searchCriteria.archiveFileId = 1;
+    searchCriteria.vid = tape1.vid;
+
+    m_catalogue->restoreFileInRecycleLog(searchCriteria, std::to_string(12345678)); //previous fid + 1
+    
+    //assert archive file has been restored in the catalogue
+    auto archiveFile = m_catalogue->getArchiveFileById(1);
+    ASSERT_EQ(1, archiveFile.tapeFiles.size());
+    ASSERT_EQ(archiveFile.diskFileId, std::to_string(12345678));
+    ASSERT_EQ(archiveFile.diskInstance, diskInstance);
+    ASSERT_EQ(archiveFile.storageClass, m_storageClassDualCopy.name);
+
+    //assert recycle log has the other tape file copy
     auto fileRecycleLogItor = m_catalogue->getFileRecycleLogItor();
+    ASSERT_TRUE(fileRecycleLogItor.hasMore());
+    auto fileRecycleLog = fileRecycleLogItor.next();
     ASSERT_FALSE(fileRecycleLogItor.hasMore());
 
   }

@@ -2248,20 +2248,13 @@ void RequestMessage::processRecycleTapeFile_Restore(cta::xrd::Response& response
   cta::catalogue::RecycleTapeFileSearchCriteria searchCriteria;
 
   searchCriteria.vid = getOptional(OptionString::VID, &has_any);
-  auto diskFileId = getOptional(OptionString::FXID, &has_any);
-  searchCriteria.diskFileIds = getOptional(OptionStrList::FILE_ID, &has_any);
-
-  if(diskFileId){
-    // single option on the command line we need to do the conversion ourselves.
-    if(!searchCriteria.diskFileIds) searchCriteria.diskFileIds = std::vector<std::string>();
-
-    auto fid = strtol(diskFileId->c_str(), nullptr, 16);
-    if(fid < 1 || fid == LONG_MAX) {
-       throw cta::exception::UserError(*diskFileId + " is not a valid file ID");
-    }
-
-    searchCriteria.diskFileIds->push_back(std::to_string(fid));
+  auto diskFileId = getRequired(OptionString::FXID);
+  
+  auto fid = strtol(diskFileId.c_str(), nullptr, 16);
+  if(fid < 1 || fid == LONG_MAX) {
+    throw cta::exception::UserError(diskFileId + " is not a valid file ID");
   }
+
   // Disk instance on its own does not give a valid set of search criteria (no &has_any)
   searchCriteria.diskInstance = getOptional(OptionString::INSTANCE);
   searchCriteria.archiveFileId = getOptional(OptionUInt64::ARCHIVE_FILE_ID, &has_any);
@@ -2271,7 +2264,7 @@ void RequestMessage::processRecycleTapeFile_Restore(cta::xrd::Response& response
   if(!has_any){
     throw cta::exception::UserError("Must specify at least one of the following search options: vid, fxid, fxidfile or archiveFileId");
   }
-   m_catalogue.restoreFilesInRecycleLog(searchCriteria);
+  m_catalogue.restoreFileInRecycleLog(searchCriteria, std::to_string(fid));
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 

@@ -20,6 +20,9 @@
 #include <xroot_plugins/Namespace.hpp>
 #include <xroot_plugins/GrpcClient.hpp>
 
+#include "common/exception/UserError.hpp"
+
+
 namespace cta { namespace grpc { 
 
 class Endpoint
@@ -29,6 +32,7 @@ public:
     m_grpcClient(::eos::client::GrpcClient::Create(endpoint.endpoint, endpoint.token)) { }
 
   std::string getPath(const std::string &diskFileId) const;
+  std::string getPathExceptionThrowing(const std::string &diskFileId) const;
 
 private:
   std::unique_ptr<::eos::client::GrpcClient> m_grpcClient;
@@ -50,6 +54,15 @@ public:
       return "Namespace for disk instance \"" + diskInstance + "\" is not configured in the CTA Frontend";
     } else {
       return ep_it->second.getPath(diskFileId);
+    }
+  }
+
+  std::string getPathExceptionThrowing(const std::string &diskInstance, const std::string &diskFileId) const {
+    auto ep_it = m_endpointMap.find(diskInstance);
+    if(ep_it == m_endpointMap.end()) {
+      throw cta::exception::UserError("Namespace for disk instance \"" + diskInstance + "\" is not configured in the CTA Frontend");
+    } else {
+      return ep_it->second.getPathExceptionThrowing(diskFileId);
     }
   }
 

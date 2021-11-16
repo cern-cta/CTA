@@ -302,7 +302,7 @@ private:
    * @param fileRecycleLogItor the collection of fileRecycleLogs we want to restore
    * @param lc the log context
    */
-  void restoreFileCopiesInRecycleLog(rdbms::Conn & conn, FileRecycleLogItor &fileRecycleLogItor, log::LogContext & lc) override;
+  void restoreEntryInRecycleLog(rdbms::Conn & conn, FileRecycleLogItor &fileRecycleLogItor, const std::string &newFid, log::LogContext & lc) override;
 
   /**
    * Copy the fileRecycleLog to the TAPE_FILE table and deletes the corresponding FILE_RECYCLE_LOG table entry
