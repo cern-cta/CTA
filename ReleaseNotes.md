@@ -9,6 +9,7 @@
 - cta/CTA#1020 - cta-restore-deleted-files command for restoring deleted files
 
 ### Bug fixes
+- cta/CTA#1059 - Clean up warnings reported by static analysis
 - cta/CTA#1062 - cta-admin tf rm should store the diskFilePath when deleting the tape file copy
 
 # v4.3-3
@@ -20,7 +21,7 @@
 - cta/CTA#501 cta-taped should set the state to DOWN when machine rebooting
 
 ### Bug fixes
-- cta/CTA#1056 Fix bugs in cta 4.3-2"
+- cta/CTA#1056 Fix bugs in cta 4.3-2
 - cta/CTA#1058 Remove helgrind_annotator from production
 
 # v4.3-2
