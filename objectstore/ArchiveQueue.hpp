@@ -95,12 +95,12 @@ public:
     AgentReference & agentReference, log::LogContext & lc);
   
   struct JobsSummary {
-    uint64_t jobs;
-    uint64_t bytes;
-    time_t oldestJobStartTime;
-    time_t youngestJobStartTime;
-    uint64_t priority;
-    uint64_t minArchiveRequestAge;
+    uint64_t jobs{0};
+    uint64_t bytes{0};
+    time_t oldestJobStartTime{0};
+    time_t youngestJobStartTime{0};
+    uint64_t priority{0};
+    uint64_t minArchiveRequestAge{0};
     std::map<std::string, uint64_t> mountPolicyCountMap;
   };
   JobsSummary getJobsSummary();

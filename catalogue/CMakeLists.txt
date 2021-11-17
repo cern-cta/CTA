@@ -16,7 +16,7 @@ cmake_minimum_required (VERSION 2.6)
 
 find_package(Protobuf3 REQUIRED)
 
-include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
+include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS} ${POSTGRES_INCLUDE_DIRS})
 
 #
 # Compiled protocol buffers (for ChecksumBlob)

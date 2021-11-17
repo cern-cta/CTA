@@ -174,9 +174,9 @@ std::list<RetrieveQueue::JobToAdd> RetrieveQueueShard::dumpJobsToAdd() {
     ret.back().startTime = j.starttime();
     ret.back().retrieveRequestAddress = j.address();
     if (j.has_activity()) {
-      RetrieveActivityDescription rad;
-      rad.diskInstanceName = j.disk_instance_name();
-      rad.activity = j.activity();
+      RetrieveActivityDescription rad = RetrieveActivityDescription{
+        0, j.disk_instance_name(), j.activity(), 0, 0, 0
+      };
       ret.back().activityDescription = rad;
     }
     if (j.has_destination_disk_system_name())

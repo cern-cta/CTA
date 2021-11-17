@@ -68,10 +68,9 @@ DriveLsStream::DriveLsStream(const RequestMessage &requestMsg, cta::catalogue::C
   cta::Scheduler &scheduler, const cta::common::dataStructures::SecurityIdentity &clientID,
   log::LogContext &lc) :
   XrdCtaStream(catalogue, scheduler),
-  m_lc(lc) {
+  m_lc(lc),
+  m_tapeDriveNames(m_catalogue.getTapeDriveNames()) {
   using namespace cta::admin;
-
-  m_tapeDriveNames = m_catalogue.getTapeDriveNames();
 
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "DriveLsStream() constructor");
 

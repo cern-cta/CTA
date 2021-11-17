@@ -26,9 +26,9 @@ namespace unitTests {
    * to unit test the JSONCTestObject
    */
   struct TestObject {
-    uint64_t integer_number;
+    uint64_t integer_number = 0;
     std::string str;
-    double double_number;
+    double double_number = 0.0;
   };
   
 }

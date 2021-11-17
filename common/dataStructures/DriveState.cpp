@@ -84,7 +84,6 @@ bool DriveState::operator!=(const DriveState &rhs) const {
 // operator<<
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const DriveState &obj) {
-  return
   os << "(name=" << obj.driveName
      << " host=" << obj.host
      << " logicalLibrary=" << obj.logicalLibrary
@@ -130,6 +129,7 @@ std::ostream &operator<<(std::ostream &os, const DriveState &obj) {
     os << "(none)";
   }
   os << ")";
+  return os;
 }
 
 } // namespace dataStructures

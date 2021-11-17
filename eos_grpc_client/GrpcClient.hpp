@@ -29,6 +29,7 @@ class GrpcClient
 public:
   explicit GrpcClient(std::shared_ptr<grpc::Channel> channel) :
     stub_(eos::rpc::Eos::NewStub(channel)),
+    m_SSL(false),
     m_tag(0),
     m_eos_cid(0),
     m_eos_fid(0) { }

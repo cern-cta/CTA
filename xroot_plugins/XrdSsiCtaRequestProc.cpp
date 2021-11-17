@@ -53,15 +53,15 @@ void RequestProc<cta::xrd::Request, cta::xrd::Response, cta::xrd::Alert>::Execut
    const std::string ErrorFunction("In RequestProc::ExecuteAction(): ");
    XrdSsiCtaServiceProvider *cta_service_ptr;
 
-   try {
-      // Perform a capability query (sanity check):
-      // the object pointed to by XrdSsiProviderServer must be a XrdSsiCtaServiceProvider
-      if(!(cta_service_ptr = dynamic_cast<XrdSsiCtaServiceProvider*>(XrdSsiProviderServer)))
-      {
-         // If not, this is fatal unrecoverable error
-         throw std::logic_error("XRootD Service is not a CTA Service");
-      }
+   // Perform a capability query (sanity check):
+   // the object pointed to by XrdSsiProviderServer must be a XrdSsiCtaServiceProvider
+   if(!(cta_service_ptr = dynamic_cast<XrdSsiCtaServiceProvider*>(XrdSsiProviderServer)))
+   {
+      // If not, this is fatal unrecoverable error
+      throw std::logic_error("XRootD Service is not a CTA Service");
+   }
 
+   try {
       // Process the message
       cta::xrd::RequestMessage request_msg(*(m_resource.client), cta_service_ptr);
       request_msg.process(m_request, m_metadata, m_response_stream_ptr);

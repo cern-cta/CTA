@@ -454,7 +454,7 @@ namespace castor {
           m_locked = true;
         }
         
-        void release() throw() {
+        void release() {
           if(!m_locked) {
             m_corrupted = true;
             throw SessionCorrupted();

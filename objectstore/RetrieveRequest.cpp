@@ -206,13 +206,14 @@ queueForFailure:;
     jta.push_back({activeCopyNb, activeFseq, getAddressIfSet(), m_payload.archivefile().filesize(),
       mp, (signed)m_payload.schedulerrequest().entrylog().time(), nullopt, nullopt});
     if (m_payload.has_activity_weight()) {
-      RetrieveActivityDescription activityDescription;
-      activityDescription.priority = m_payload.activity_weight().priority();
-      activityDescription.diskInstanceName = m_payload.activity_weight().disk_instance_name();
-      activityDescription.activity = m_payload.activity_weight().activity();
-      activityDescription.weight = m_payload.activity_weight().weight();
-      activityDescription.creationTime = m_payload.activity_weight().creation_time();
-      jta.back().activityDescription = activityDescription;
+      jta.back().activityDescription = RetrieveActivityDescription{
+        m_payload.activity_weight().priority(),
+        m_payload.activity_weight().disk_instance_name(),
+        m_payload.activity_weight().activity(),
+        m_payload.activity_weight().creation_time(),
+        m_payload.activity_weight().weight(),
+        0
+      };
     }
     rq.addJobsIfNecessaryAndCommit(jta, agentReference, lc);
     auto queueUpdateTime = t.secs(utils::Timer::resetCounter);
@@ -275,13 +276,14 @@ queueForTransfer:;
     jta.push_back({bestTapeFile->copynb(), bestTapeFile->fseq(), getAddressIfSet(), m_payload.archivefile().filesize(),
       mp, (signed)m_payload.schedulerrequest().entrylog().time(), getActivity(), getDiskSystemName()});
     if (m_payload.has_activity_weight()) {
-      RetrieveActivityDescription activityDescription;
-      activityDescription.priority = m_payload.activity_weight().priority();
-      activityDescription.diskInstanceName = m_payload.activity_weight().disk_instance_name();
-      activityDescription.activity = m_payload.activity_weight().activity();
-      activityDescription.weight = m_payload.activity_weight().weight();
-      activityDescription.creationTime = m_payload.activity_weight().creation_time();
-      jta.back().activityDescription = activityDescription;
+      jta.back().activityDescription = RetrieveActivityDescription{
+        m_payload.activity_weight().priority(),
+        m_payload.activity_weight().disk_instance_name(),
+        m_payload.activity_weight().activity(),
+        m_payload.activity_weight().creation_time(),
+        m_payload.activity_weight().weight(),
+        0
+      };
     }
     rq.addJobsIfNecessaryAndCommit(jta, agentReference, lc);
     auto jobsSummary=rq.getJobsSummary();
@@ -564,12 +566,14 @@ optional<RetrieveActivityDescription> RetrieveRequest::getActivity() {
   optional<RetrieveActivityDescription> ret;
   if (m_payload.has_activity_weight()) {
     RetrieveActivityDescription activity;
-    activity.priority = m_payload.activity_weight().priority();
-    activity.diskInstanceName = m_payload.activity_weight().disk_instance_name();
-    activity.activity = m_payload.activity_weight().activity();
-    activity.weight = m_payload.activity_weight().weight();
-    activity.creationTime = m_payload.activity_weight().creation_time();
-    ret = activity;
+    ret = RetrieveActivityDescription{
+        m_payload.activity_weight().priority(),
+        m_payload.activity_weight().disk_instance_name(),
+        m_payload.activity_weight().activity(),
+        m_payload.activity_weight().creation_time(),
+        m_payload.activity_weight().weight(),
+        0
+      };
   }
   return ret;
 }

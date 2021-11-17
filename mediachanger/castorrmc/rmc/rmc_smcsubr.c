@@ -156,7 +156,7 @@ static int get_element_info(
 	unsigned char *p;
 	unsigned char *page_end, *page_start;
 	unsigned char *q;
-	int rc;
+	int rc = 0;
 	char sense[MAXSENSE];
         int pause_mode = 1;
         int nretries = 0;

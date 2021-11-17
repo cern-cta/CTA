@@ -434,11 +434,10 @@ std::vector<std::string> drive::DriveGeneric::getTapeAlertsCompact(const std::ve
 //------------------------------------------------------------------------------
 bool drive::DriveGeneric::tapeAlertsCriticalForWrite(
   const std::vector<uint16_t> & codes) {
-  for (std::vector<uint16_t>::const_iterator code =  codes.begin();
-    code!= codes.end(); code++) {
-      if(SCSI::isTapeAlertCriticalForWrite(*code)) {
-        return true;
-      }
+  for(std::vector<uint16_t>::const_iterator code = codes.begin(); code != codes.end(); ++code) {
+    if(SCSI::isTapeAlertCriticalForWrite(*code)) {
+      return true;
+    }
   }
   return false;
 }

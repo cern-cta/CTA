@@ -21,7 +21,8 @@
 
 namespace cta { namespace catalogue {
 
-SchemaVersion::SchemaVersion(){}  
+SchemaVersion::SchemaVersion() :
+  m_schemaVersionMajor(0), m_schemaVersionMinor(0), m_status(UPGRADING) {}  
   
 SchemaVersion::SchemaVersion(const SchemaVersion& orig) {
   if(this != &orig){
@@ -90,8 +91,7 @@ SchemaVersion::Status SchemaVersion::getStatus() const {
 
 SchemaVersion::Builder::Builder(){}
 
-SchemaVersion::Builder::Builder(const Builder& other){
-  m_schemaVersion = other.m_schemaVersion;
+SchemaVersion::Builder::Builder(const Builder& other): m_schemaVersion(other.m_schemaVersion) {
   m_schemaVersionMajorSet = other.m_schemaVersionMajorSet;
   m_schemaVersionMinorSet = other.m_schemaVersionMinorSet;
 }

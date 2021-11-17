@@ -420,6 +420,29 @@ std::string castor::tape::SCSI::driverStatusSuggestionsToString
   return ret.str();
 }
 
+//------------------------------------------------------------------------------
+// SCSI::senseConstants
+//------------------------------------------------------------------------------
+std::string castor::tape::SCSI::senseConstants::getASCString(uint8_t asc, uint8_t ascq) {
+  uint16_t code = (asc << 8) | ascq;
+  for(int i = 0; ascStrings[i].text; i++) {
+    if(ascStrings[i].code12 == code)
+      return std::string(ascStrings[i].text);
+  }
+
+  char buff[100];
+  for(int i = 0; ascRangesStrings[i].text; i++) {
+    if(ascRangesStrings[i].asc == asc &&
+       ascRangesStrings[i].ascq_min <= ascq &&
+       ascRangesStrings[i].ascq_max >= ascq) {
+         snprintf(buff, sizeof (buff), ascRangesStrings[i].text, ascq);
+         return std::string(buff);
+    }
+  }
+  snprintf(buff, sizeof (buff), "Unknown ASC/ASCQ:%02x/%02x", asc, ascq);
+  return std::string(buff);
+}
+
 const castor::tape::SCSI::senseConstants::error_info castor::tape::SCSI::senseConstants::ascStrings[] = 
 {
 	{0x0000, "No additional sense information"},

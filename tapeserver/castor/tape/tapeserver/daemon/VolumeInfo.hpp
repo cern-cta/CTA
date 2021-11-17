@@ -17,30 +17,23 @@
 
 #pragma once
 
-#include "common/dataStructures/MountType.hpp"
-
 #include <string>
+#include <common/dataStructures/MountType.hpp>
 
 namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
 
-  /**
-   * Class holding the result of a Volume request
-   */
-    class VolumeInfo {
-    public:
-      VolumeInfo() {};
-      /** The VID we will work on */
-      std::string vid;
-      /** The mount type: archive or retrieve */
-      cta::common::dataStructures::MountType mountType;
-      /** The number of files currently on tape*/
-      uint32_t nbFiles;
-      /** The mount Id */
-      std::string mountId;
-    };
+/**
+ * Struct holding the result of a Volume request
+ */
+struct VolumeInfo {
+  std::string vid;                                   //!< The Volume ID (tape) we will work on
+  cta::common::dataStructures::MountType mountType;  //!< Mount type: archive or retrieve
+  uint32_t nbFiles;                                  //!< Number of files currently on tape
+  std::string mountId;                               //!< Mount ID
+};
 
 } // namespace daemon
 } // namespace tapesever

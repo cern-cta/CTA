@@ -22,9 +22,7 @@ namespace cta {
 SchedulingInfos::SchedulingInfos(const std::string & logicalLibraryName):m_logicalLibraryName(logicalLibraryName) {
 }
 
-SchedulingInfos::SchedulingInfos(const SchedulingInfos& other) {
-  m_logicalLibraryName = other.m_logicalLibraryName;
-  m_potentialMounts = other.m_potentialMounts;
+SchedulingInfos::SchedulingInfos(const SchedulingInfos& other): m_logicalLibraryName(other.m_logicalLibraryName), m_potentialMounts(other.m_potentialMounts) {
 }
 
 SchedulingInfos & SchedulingInfos::operator =(const SchedulingInfos& other){

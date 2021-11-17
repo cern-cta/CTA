@@ -19,7 +19,10 @@
 
 namespace cta { namespace disk {
   
-JSONDiskSystem::JSONDiskSystem(): JSONCObject() {
+JSONDiskSystem::JSONDiskSystem() : JSONCObject() {
+  refreshInterval = 0;
+  targetedFreeSpace = 0;
+  sleepTime = 0;
 }
 
 JSONDiskSystem::JSONDiskSystem(const DiskSystem& diskSystem):JSONCObject(){

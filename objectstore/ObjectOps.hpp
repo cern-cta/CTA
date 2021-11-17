@@ -344,11 +344,11 @@ public:
     lock(oo);
   }
   
-  void setObjectLocked(ObjectOpsBase* objectOps) override {
+  void setObjectLocked(ObjectOpsBase* objectOps) override final {
     objectOps->m_locksCount++;
   }
 
-  void setObjectUnlocked(ObjectOpsBase* objectOps) override {
+  void setObjectUnlocked(ObjectOpsBase* objectOps) override final {
     objectOps->m_locksCount--;
   }
   
@@ -357,7 +357,7 @@ public:
     m_objectOps  = & oo;
     checkObjectAndAddressSet();
     m_lock.reset(m_objectOps->m_objectStore.lockShared(m_objectOps->getAddressIfSet()));
-    setObjectLocked(m_objectOps);
+    ScopedSharedLock::setObjectLocked(m_objectOps);
     m_locked = true;
   }
   
@@ -389,7 +389,7 @@ public:
     m_objectOps = &oo;
     checkObjectAndAddressSet();
     m_lock.reset(m_objectOps->m_objectStore.lockExclusive(m_objectOps->getAddressIfSet(), timeout_us));
-    setObjectLocked(m_objectOps);
+    ScopedExclusiveLock::setObjectLocked(m_objectOps);
     m_objectOps->m_exclusiveLock = this;
     m_locked = true;
   }

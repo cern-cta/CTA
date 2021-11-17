@@ -3327,8 +3327,11 @@ void OStoreDB::ArchiveMount::complete(time_t completionTime) {
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveJob::ArchiveJob()
 //------------------------------------------------------------------------------
-OStoreDB::ArchiveJob::ArchiveJob(const std::string& jobAddress, OStoreDB& oStoreDB): m_jobOwned(false),
-  m_oStoreDB(oStoreDB), m_archiveRequest(jobAddress, m_oStoreDB.m_objectStore) { }
+OStoreDB::ArchiveJob::ArchiveJob(const std::string& jobAddress, OStoreDB& oStoreDB) :
+  m_jobOwned(false),
+  m_mountId(0),
+  m_oStoreDB(oStoreDB),
+  m_archiveRequest(jobAddress, m_oStoreDB.m_objectStore) { }
 
 //------------------------------------------------------------------------------
 // OStoreDB::castFromSchedDBJob()

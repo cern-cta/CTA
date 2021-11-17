@@ -56,9 +56,12 @@ private:
 };
 }
 
-namespace cta { namespace threading {
-SubProcess::SubProcess(const std::string & executable, const std::list<std::string>& argv, const std::string & stdinInput):
-m_childComplete(false) {
+namespace cta {
+namespace threading {
+
+SubProcess::SubProcess(const std::string & executable, const std::list<std::string>& argv, const std::string & stdinInput) :
+  m_childComplete(false),
+  m_childStatus(0) {
   // Sanity checks
   if (argv.size() < 1)
     throw cta::exception::Exception(

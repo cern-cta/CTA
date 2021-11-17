@@ -25,9 +25,7 @@ namespace catalogue {
 SchemaCheckerResult::SchemaCheckerResult():m_status(Status::SUCCESS) {
 }
 
-SchemaCheckerResult::SchemaCheckerResult(const SchemaCheckerResult& orig) {
-  m_errors = orig.m_errors;
-  m_warnings = orig.m_warnings;
+SchemaCheckerResult::SchemaCheckerResult(const SchemaCheckerResult& orig): m_errors(orig.m_errors), m_warnings(orig.m_warnings) {
   m_status = orig.m_status;
 }
 

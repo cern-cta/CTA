@@ -447,14 +447,14 @@ class SchedulerDatabase {
     std::string errorReportURL;
     enum class ReportType: uint8_t {
       NoReportRequired,
-      // CompletionReport,
       FailureReport,
-      Report  //!< A generic grouped type
-    } reportType;
+      Report //!< A generic grouped type
+    };
+    ReportType reportType = ReportType::NoReportRequired;
     cta::common::dataStructures::ArchiveFile archiveFile;
     cta::common::dataStructures::RetrieveRequest retrieveRequest;
     optional<std::string> diskSystemName;
-    uint32_t selectedCopyNb;
+    uint32_t selectedCopyNb = 0;
     bool isRepack = false;
     /** Set the job successful (async). Wait() and end of report happen in RetrieveMount::flushAsyncSuccessReports() */
     virtual void asyncSetSuccessful() = 0;

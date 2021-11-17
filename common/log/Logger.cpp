@@ -161,8 +161,7 @@ std::string Logger::createMsgHeader(
   struct tm localTime;
   localtime_r(&(timeStamp.tv_sec), &localTime);
   len += strftime(buf, bufLen, "%b %e %T", &localTime);
-  len += snprintf(buf + len, bufLen - len, ".%06ld ",
-    (unsigned long)timeStamp.tv_usec);
+  len += snprintf(buf + len, bufLen - len, ".%06lu ", static_cast<unsigned long>(timeStamp.tv_usec));
   buf[sizeof(buf) - 1] = '\0';
   os << buf << hostName << " " << programName << ": ";
   return os.str();

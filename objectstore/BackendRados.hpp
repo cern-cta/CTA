@@ -98,7 +98,7 @@ public:
   public:
     ~ScopedLock() override;
   private:
-    ScopedLock(librados::IoCtx & ioCtx): m_lockSet(false), m_context(ioCtx) {}
+    ScopedLock(librados::IoCtx & ioCtx): m_lockSet(false), m_context(ioCtx), m_lockType(LockType::Shared) {}
     void set(const std::string & oid, const std::string& clientId, LockType lockType);
     bool m_lockSet;
     librados::IoCtx & m_context;

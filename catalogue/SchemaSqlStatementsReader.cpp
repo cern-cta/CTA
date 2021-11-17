@@ -34,13 +34,13 @@ namespace cta{ namespace catalogue{
 //////////////////////////////////////////////////////////////////
 // SchemaSqlStatementsReader
 //////////////////////////////////////////////////////////////////
-SchemaSqlStatementsReader::SchemaSqlStatementsReader(){}
-
-SchemaSqlStatementsReader::SchemaSqlStatementsReader(const cta::rdbms::Login::DbType dbType):m_dbType(dbType) {
+SchemaSqlStatementsReader::SchemaSqlStatementsReader(){
 }
 
-SchemaSqlStatementsReader::SchemaSqlStatementsReader(const SchemaSqlStatementsReader& orig) {
-  m_dbType = orig.m_dbType;
+SchemaSqlStatementsReader::SchemaSqlStatementsReader(const cta::rdbms::Login::DbType dbType) : m_dbType(dbType) {
+}
+
+SchemaSqlStatementsReader::SchemaSqlStatementsReader(const SchemaSqlStatementsReader& orig) : m_dbType(orig.m_dbType) {
 }
 
 SchemaSqlStatementsReader::~SchemaSqlStatementsReader() {
@@ -117,9 +117,8 @@ std::string SchemaSqlStatementsReader::getDatabaseType() {
 DirectoryVersionsSqlStatementsReader::DirectoryVersionsSqlStatementsReader(const cta::rdbms::Login::DbType dbType,const std::string &catalogueVersion,const std::string &allSchemasVersionPath):SchemaSqlStatementsReader(dbType),m_catalogueVersion(catalogueVersion),m_allSchemasVersionPath(allSchemasVersionPath) {
 }
 
-DirectoryVersionsSqlStatementsReader::DirectoryVersionsSqlStatementsReader(const DirectoryVersionsSqlStatementsReader& orig):SchemaSqlStatementsReader(orig) {
-  m_allSchemasVersionPath = orig.m_allSchemasVersionPath;
-  m_catalogueVersion = orig.m_catalogueVersion;
+DirectoryVersionsSqlStatementsReader::DirectoryVersionsSqlStatementsReader(const DirectoryVersionsSqlStatementsReader& orig) :
+  SchemaSqlStatementsReader(orig), m_catalogueVersion(orig.m_catalogueVersion), m_allSchemasVersionPath(orig.m_allSchemasVersionPath) {
 }
 
 DirectoryVersionsSqlStatementsReader::~DirectoryVersionsSqlStatementsReader() {
@@ -150,8 +149,7 @@ std::string DirectoryVersionsSqlStatementsReader::getSchemaFilePath() {
 //////////////////////////////////////////////////////////////////
 MapSqlStatementsReader::MapSqlStatementsReader(const cta::rdbms::Login::DbType dbType, const std::string &catalogueVersion):SchemaSqlStatementsReader(dbType),m_catalogueVersion(catalogueVersion){}
 
-MapSqlStatementsReader::MapSqlStatementsReader(const MapSqlStatementsReader& orig):SchemaSqlStatementsReader(orig) {
-  m_catalogueVersion = orig.m_catalogueVersion;
+MapSqlStatementsReader::MapSqlStatementsReader(const MapSqlStatementsReader& orig):SchemaSqlStatementsReader(orig), m_catalogueVersion(orig.m_catalogueVersion) {
 }
 
 MapSqlStatementsReader::~MapSqlStatementsReader() {

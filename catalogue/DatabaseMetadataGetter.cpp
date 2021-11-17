@@ -220,9 +220,7 @@ DatabaseMetadataGetter * DatabaseMetadataGetterFactory::create(const rdbms::Logi
 /**
  * SCHEMA METADATA GETTER methods
  */
-SchemaMetadataGetter::SchemaMetadataGetter(std::unique_ptr<SQLiteDatabaseMetadataGetter> sqliteCatalogueMetadataGetter, const cta::rdbms::Login::DbType dbType):m_dbType(dbType) {
-  m_sqliteDatabaseMetadataGetter = std::move(sqliteCatalogueMetadataGetter);
-}
+SchemaMetadataGetter::SchemaMetadataGetter(std::unique_ptr<SQLiteDatabaseMetadataGetter> sqliteCatalogueMetadataGetter, const cta::rdbms::Login::DbType dbType):m_sqliteDatabaseMetadataGetter(std::move(sqliteCatalogueMetadataGetter)),m_dbType(dbType) {}
 
 std::list<std::string> SchemaMetadataGetter::getIndexNames() {
   return m_sqliteDatabaseMetadataGetter->getIndexNames();

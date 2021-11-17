@@ -36,7 +36,7 @@ RetrieveQueue::RetrieveQueue(GenericObject& go):
   // Here we transplant the generic object into the new object
   go.transplantHeader(*this);
   // And interpret the header.
-  getPayloadFromHeader();
+  RetrieveQueue::getPayloadFromHeader();
 }
 
 RetrieveQueue::RetrieveQueue(Backend& os):
@@ -606,11 +606,11 @@ RetrieveQueue::JobsSummary RetrieveQueue::getJobsSummary() {
       ret.activityCounts.push_back({ra.diskInstanceName, ra.activity, ra.weight, ra.count});
     }
     if (m_payload.has_sleep_for_free_space_since()) {
-      JobsSummary::SleepInfo si;
-      si.diskSystemSleptFor = m_payload.disk_system_slept_for();
-      si.sleepStartTime = m_payload.sleep_for_free_space_since();
-      si.sleepTime = m_payload.sleep_time();
-      ret.sleepInfo = si;
+      ret.sleepInfo = JobsSummary::SleepInfo{
+        static_cast<time_t>(m_payload.sleep_for_free_space_since()),
+        m_payload.disk_system_slept_for(),
+        m_payload.sleep_time()
+      };
     }
   } else {
     ret.priority = 0;

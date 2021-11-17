@@ -561,7 +561,7 @@ namespace SCSI {
       logSenseParameterHeader_t header;
            
       // bytes 4-n
-      unsigned char parameterValue[1];     // parameters have variable length 
+      unsigned char parameterValue[8];     // parameters have variable length 
 
       /**
        * Gets the parameter value
@@ -1107,30 +1107,17 @@ namespace SCSI {
        * Function turning the ACS/ACSQ contents into a string.
        * This function is taken from the Linux kernel sources.
        * see scsi_extd_sense_format.
+       *
+       * TODO: add support for other bits. See section 4.5.6
+       * of SPC-4 for sense key = NO SENSE.
+       *
        * @return the error string as defined by SCSI specifications.
        */
       std::string getACSString() {
-        SCSI::senseConstants sc;
         uint8_t asc = getASC();
         uint8_t ascq = getASCQ();
-        uint16_t code = (asc << 8) | ascq;
-        for (int i = 0; sc.ascStrings[i].text; i++)
-          if (sc.ascStrings[i].code12 == code)
-            return std::string(sc.ascStrings[i].text);
-        for (int i = 0; sc.ascRangesStrings[i].text; i++)
-          if (sc.ascRangesStrings[i].asc == asc &&
-                  sc.ascRangesStrings[i].ascq_min <= ascq &&
-                  sc.ascRangesStrings[i].ascq_max >= ascq) {
-            char buff[100];
-            snprintf(buff, sizeof (buff), sc.ascRangesStrings[i].text, ascq);
-            return std::string(buff);
-          }
-        char buff[100];
-        snprintf(buff, sizeof (buff), "Unknown ASC/ASCQ:%02x/%02x", asc, ascq);
-        return std::string(buff);
+        return SCSI::senseConstants::getASCString(asc, ascq);
       }
-      /* TODO: add support for other bits. See section 4.5.6
-       * of SPC-4 for sense key = NO SENSE. */
     };
 
     /**

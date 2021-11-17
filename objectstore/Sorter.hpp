@@ -104,8 +104,8 @@ public:
     std::shared_ptr<RetrieveRequest> retrieveRequest;
     RetrieveRequest::JobDump jobDump;
     AgentReferenceInterface * previousOwner;
-    uint64_t fileSize;
-    uint64_t fSeq;
+    uint64_t fileSize = 0;
+    uint64_t fSeq = 0;
     common::dataStructures::MountPolicy mountPolicy;
     cta::common::dataStructures::JobQueueType jobQueueType;
     optional<RetrieveActivityDescription> activityDescription;

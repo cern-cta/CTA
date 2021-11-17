@@ -78,6 +78,18 @@ public:
   AdditionSummary addJobsIfNecessaryAndCommit(std::list<JobToAdd> & jobsToAdd,
     AgentReference & agentReference, log::LogContext & lc);
   struct JobsSummary {
+    struct ActivityCount {
+      std::string diskInstanceName;
+      std::string activity;
+      double weight;
+      uint64_t count;
+    };
+    struct SleepInfo {
+      time_t sleepStartTime;
+      std::string diskSystemSleptFor;
+      uint64_t sleepTime;
+    };
+
     uint64_t jobs;
     uint64_t bytes;
     time_t oldestJobStartTime;
@@ -85,19 +97,28 @@ public:
     uint64_t priority;
     uint64_t minRetrieveRequestAge;
     std::map<std::string, uint64_t> mountPolicyCountMap;
-    struct ActivityCount {
-      std::string diskInstanceName;
-      std::string activity;
-      double weight;
-      uint64_t count;
-    };
     std::list<ActivityCount> activityCounts;
-    struct SleepInfo {
-      time_t sleepStartTime;
-      std::string diskSystemSleptFor;
-      uint64_t sleepTime;
-    };
     optional<SleepInfo> sleepInfo;
+
+    JobsSummary() :
+        jobs(0),
+        bytes(0),
+        oldestJobStartTime(0),
+        youngestJobStartTime(0),
+        priority(0),
+        minRetrieveRequestAge(0) {}
+    JobsSummary(uint64_t j, uint64_t b, time_t ojst, time_t yjst, uint64_t p, uint64_t mrra,
+      const std::map<std::string, uint64_t>& mpcm, const std::list<ActivityCount>& ac,
+      const optional<SleepInfo>& si) :
+        jobs(j),
+        bytes(b),
+        oldestJobStartTime(ojst),
+        youngestJobStartTime(yjst),
+        priority(p),
+        minRetrieveRequestAge(mrra),
+        mountPolicyCountMap(mpcm),
+        activityCounts(ac),
+        sleepInfo(si) {}
   };
   JobsSummary getJobsSummary();
   struct JobDump {

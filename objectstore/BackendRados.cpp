@@ -397,7 +397,6 @@ void BackendRados::ScopedLock::releaseBackoff() {
   TIMESTAMPEDPRINT("Post-release");
 }
 
-
 void BackendRados::ScopedLock::set(const std::string& oid, const std::string& clientId,
     LockType lockType) {
   m_oid = oid;
@@ -407,7 +406,7 @@ void BackendRados::ScopedLock::set(const std::string& oid, const std::string& cl
 }
 
 BackendRados::ScopedLock::~ScopedLock() {
-  release();
+  ScopedLock::release();
 }
 
 BackendRados::LockWatcher::LockWatcher(librados::IoCtx& context, const std::string& name):

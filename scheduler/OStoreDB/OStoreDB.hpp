@@ -309,7 +309,9 @@ class OStoreDB: public SchedulerDatabase {
    private:
     // Can be instantiated from a mount (queue to transfer) or a report queue
     RetrieveJob(const std::string &jobAddress, OStoreDB &oStoreDB, RetrieveMount *rm) :
-      m_jobOwned(false), m_oStoreDB(oStoreDB),
+      m_jobOwned(false),
+      m_mountId(0),
+      m_oStoreDB(oStoreDB),
       m_retrieveRequest(jobAddress, m_oStoreDB.m_objectStore),
       m_retrieveMount(rm) { }
     void setJobOwned(bool b = true) { m_jobOwned = b; }

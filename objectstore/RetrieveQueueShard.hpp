@@ -62,10 +62,10 @@ public:
   std::list<RetrieveQueue::JobToAdd> dumpJobsToAdd();
   
   struct JobsSummary {
-    uint64_t jobs;
-    uint64_t bytes;
-    uint64_t minFseq;
-    uint64_t maxFseq;
+    uint64_t jobs = 0;
+    uint64_t bytes = 0;
+    uint64_t minFseq = 0;
+    uint64_t maxFseq = 0;
   };
   JobsSummary getJobsSummary();
   
