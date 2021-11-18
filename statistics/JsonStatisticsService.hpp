@@ -17,11 +17,13 @@
 
 #pragma once
 
+#include <memory>
+
 #include "StatisticsService.hpp"
 #include "Statistics.hpp"
 
-
-namespace cta { namespace statistics {
+namespace cta {
+namespace statistics {
 
   /**
    * This class is a JSON statistics service
@@ -29,33 +31,34 @@ namespace cta { namespace statistics {
    * to and from a JSON file
    */
 class JsonStatisticsService: public StatisticsService {
-public:
+ public:
   typedef std::ostream OutputStream;
   typedef std::istream InputStream;
-  
+
   /**
    * Constructor of the service with a OutputStream object
    */
-  JsonStatisticsService(OutputStream * output);
-  
+  explicit JsonStatisticsService(OutputStream * output);
+
   /**
    * Constructor of the service with the OutputStream and InputStream objects
    * @param output the OutputStream object
    * @param input the InputStream object
    */
   JsonStatisticsService(OutputStream * output, InputStream * input);
-  
+
   JsonStatisticsService(const JsonStatisticsService& orig) = delete;
-  
-  virtual void saveStatistics(const cta::statistics::Statistics& statistics) override;
-  virtual std::unique_ptr<cta::statistics::Statistics> getStatistics() override;
-  virtual void updateStatisticsPerTape() override;
-  
+
+  void saveStatistics(const cta::statistics::Statistics& statistics) override;
+  std::unique_ptr<cta::statistics::Statistics> getStatistics() override;
+  void updateStatisticsPerTape() override;
+
   virtual ~JsonStatisticsService();
-  
-private:
+
+ private:
   OutputStream * m_output;
   InputStream * m_input;
 };
 
-}}
+}  // namespace statistics
+}  // namespace cta

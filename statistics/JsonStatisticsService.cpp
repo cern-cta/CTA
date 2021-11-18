@@ -19,29 +19,30 @@
 
 namespace cta {
 namespace statistics {
-  
-JsonStatisticsService::JsonStatisticsService(OutputStream * output):m_output(output),m_input(nullptr) {
 
+JsonStatisticsService::JsonStatisticsService(OutputStream * output)
+  : m_output(output), m_input(nullptr) {
 }
 
-JsonStatisticsService::JsonStatisticsService(OutputStream * output, InputStream * input):m_output(output),m_input(input) {
-
+JsonStatisticsService::JsonStatisticsService(OutputStream * output, InputStream * input)
+  : m_output(output), m_input(input) {
 }
 
-void JsonStatisticsService::saveStatistics(const cta::statistics::Statistics& statistics){
+void JsonStatisticsService::saveStatistics(const cta::statistics::Statistics& statistics) {
   *m_output << statistics;
-} 
+}
 
-std::unique_ptr<cta::statistics::Statistics> JsonStatisticsService::getStatistics(){
+std::unique_ptr<cta::statistics::Statistics> JsonStatisticsService::getStatistics() {
   throw cta::exception::Exception("In JsonStatisticsService::getStatistics(), method not implemented.");
-} 
+}
 
-void JsonStatisticsService::updateStatisticsPerTape(){
+void JsonStatisticsService::updateStatisticsPerTape() {
   throw cta::exception::Exception("In JsonStatistics::updateStatisticsPerTape(), method not implemented.");
-} 
+}
 
 
 JsonStatisticsService::~JsonStatisticsService() {
 }
 
-}}
+}  // namespace statistics
+}  // namespace cta

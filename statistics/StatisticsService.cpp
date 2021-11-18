@@ -17,8 +17,9 @@
 
 #include "StatisticsService.hpp"
 
-namespace cta { namespace statistics {
-  
+namespace cta {
+namespace statistics {
+
 StatisticsService::StatisticsService() {
 }
 
@@ -29,4 +30,5 @@ uint64_t StatisticsService::getNbUpdatedTapes() {
   return m_nbUpdatedTapes;
 }
 
-}}
+}  // namespace statistics
+}  // namespace cta

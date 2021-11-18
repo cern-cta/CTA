@@ -17,19 +17,21 @@
 
 #pragma once
 
+#include <memory>
+
 #include "common/make_unique.hpp"
 #include "JsonStatisticsService.hpp"
 
-namespace cta{
+namespace cta {
 namespace statistics {
 
 class JsonStatisticsServiceFactory {
-public:
-  static std::unique_ptr<JsonStatisticsService> create(JsonStatisticsService::OutputStream *output, JsonStatisticsService::InputStream *input = nullptr){
-    return cta::make_unique<JsonStatisticsService>(output,input);
+ public:
+  static std::unique_ptr<JsonStatisticsService> create(JsonStatisticsService::OutputStream *output,
+    JsonStatisticsService::InputStream *input = nullptr) {
+    return cta::make_unique<JsonStatisticsService>(output, input);
   }
-private:
-
 };
 
-}}
+}  // namespace statistics
+}  // namespace cta

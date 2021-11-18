@@ -15,11 +15,13 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <getopt.h>
+
+#include <ostream>
+
 #include "StatisticsUpdateCmdLineArgs.hpp"
 #include "common/exception/CommandLineNotParsed.hpp"
 
-#include <getopt.h>
-#include <ostream>
 
 namespace cta {
 namespace statistics {
@@ -29,7 +31,6 @@ namespace statistics {
 //------------------------------------------------------------------------------
 StatisticsUpdateCmdLineArgs::StatisticsUpdateCmdLineArgs(const int argc, char *const *const argv):
   help(false) {
-
   static struct option longopts[] = {
     {"help", no_argument, NULL, 'h'},
     {NULL  ,           0, NULL,   0}
@@ -40,25 +41,24 @@ StatisticsUpdateCmdLineArgs::StatisticsUpdateCmdLineArgs(const int argc, char *c
   opterr = 0;
 
   int opt = 0;
-  while((opt = getopt_long(argc, argv, ":h", longopts, NULL)) != -1) {
-    switch(opt) {
+  while ((opt = getopt_long(argc, argv, ":h", longopts, NULL)) != -1) {
+    switch (opt) {
     case 'h':
       help = true;
       break;
-    case ':': // Missing parameter
+    case ':':  // Missing parameter
       {
         exception::CommandLineNotParsed ex;
-        ex.getMessage() << "The -" << (char)optopt << " option requires a parameter";
+        ex.getMessage() << "The -" << static_cast<char>(optopt) << " option requires a parameter";
         throw ex;
       }
-    case '?': // Unknown option
+    case '?':  // Unknown option
       {
         exception::CommandLineNotParsed ex;
-        if(0 == optopt) {
+        if (0 == optopt) {
           ex.getMessage() << "Unknown command-line option";
         } else {
-          ex.getMessage() << "Unknown command-line option: -" << (char)optopt;
-        }
+          ex.getMessage() << "Unknown command-line option: -" << static_cast<char>(optopt);        }
         throw ex;
       }
     default:
@@ -66,14 +66,14 @@ StatisticsUpdateCmdLineArgs::StatisticsUpdateCmdLineArgs(const int argc, char *c
         exception::CommandLineNotParsed ex;
         ex.getMessage() <<
           "getopt_long returned the following unknown value: 0x" <<
-          std::hex << (int)opt;
+          std::hex << static_cast<int>(opt);
         throw ex;
       }
-    } // switch(opt)
-  } // while getopt_long()
+    }  // switch(opt)
+  }  // while getopt_long()
 
   // There is no need to continue parsing when the help option is set
-  if(help) {
+  if (help) {
     return;
   }
 
@@ -81,7 +81,7 @@ StatisticsUpdateCmdLineArgs::StatisticsUpdateCmdLineArgs(const int argc, char *c
   const int nbArgs = argc - optind;
 
   // Check the number of arguments
-  if(nbArgs != 1) {
+  if (nbArgs != 1) {
     exception::CommandLineNotParsed ex;
     ex.getMessage() << "Wrong number of command-line arguments: expected=1 actual=" << nbArgs;
     throw ex;
@@ -102,9 +102,9 @@ void StatisticsUpdateCmdLineArgs::printUsage(std::ostream &os) {
     "        The path to the file containing the connection details of the CTA" << std::endl <<
     "        catalogue database" << std::endl <<
     "Options:" << std::endl <<
-    "    -h,--help" << std::endl <<     
+    "    -h,--help" << std::endl <<
     "        Prints this usage message" << std::endl;
 }
 
-} // namespace statistics
-} // namespace cta
+}  // namespace statistics
+}  // namespace cta

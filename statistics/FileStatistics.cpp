@@ -18,13 +18,13 @@
 
 #include "FileStatistics.hpp"
 
-namespace cta { 
+namespace cta {
 namespace statistics {
 
 FileStatistics::FileStatistics() {
 }
 
-FileStatistics::FileStatistics(const FileStatistics &other){
+FileStatistics::FileStatistics(const FileStatistics &other) {
   nbMasterFiles = other.nbMasterFiles;
   masterDataInBytes = other.masterDataInBytes;
   nbCopyNb1 = other.nbCopyNb1;
@@ -43,7 +43,7 @@ FileStatistics FileStatistics::operator +=(const FileStatistics& other) {
   return *this;
 }
 
-FileStatistics& FileStatistics::operator =(const FileStatistics& other){
+FileStatistics& FileStatistics::operator =(const FileStatistics& other) {
   nbMasterFiles = other.nbMasterFiles;
   masterDataInBytes = other.masterDataInBytes;
   nbCopyNb1 = other.nbCopyNb1;
@@ -53,5 +53,5 @@ FileStatistics& FileStatistics::operator =(const FileStatistics& other){
   return *this;
 }
 
-}}
-
+}  // namespace statistics
+}  // namespace cta

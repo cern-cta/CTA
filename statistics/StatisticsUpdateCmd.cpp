@@ -20,7 +20,6 @@
 
 #include "catalogue/SchemaChecker.hpp"
 #include "common/Timer.hpp"
-#include "rdbms/AutocommitMode.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "statistics/StatisticsUpdateCmd.hpp"
 #include "statistics/StatisticsUpdateCmdLineArgs.hpp"
@@ -85,7 +84,7 @@ int StatisticsUpdateCmd::exceptionThrowingMain(const int argc, char *const *cons
   }
 
   // Create the Statistics service
-  std::unique_ptr<StatisticsService> service = StatisticsServiceFactory::create(catalogueConn, loginCatalogue.dbType);
+  std::unique_ptr<StatisticsService> service = StatisticsServiceFactory::create(&catalogueConn, loginCatalogue.dbType);
   // Update TAPE statistics
   std::cout << "Updating tape statistics in the catalogue..." << std::endl;
   cta::utils::Timer t;
@@ -102,7 +101,6 @@ int StatisticsUpdateCmd::exceptionThrowingMain(const int argc, char *const *cons
 void StatisticsUpdateCmd::printUsage(std::ostream &os) {
   StatisticsUpdateCmdLineArgs::printUsage(os);
 }
-
 
 }  // namespace statistics
 }  // namespace cta

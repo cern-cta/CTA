@@ -33,7 +33,6 @@ namespace statistics {
  */
 class StatisticsUpdateCmd: public cta::catalogue::CmdLineTool {
  public:
-
   /**
    * Constructor.
    *
@@ -49,7 +48,6 @@ class StatisticsUpdateCmd: public cta::catalogue::CmdLineTool {
   ~StatisticsUpdateCmd() noexcept;
 
  private:
-
   /**
    * An exception throwing version of main().
    *
@@ -65,16 +63,6 @@ class StatisticsUpdateCmd: public cta::catalogue::CmdLineTool {
    * @param os The output stream to which the usage message is to be printed.
    */
   void printUsage(std::ostream &os) override;
-
-  /**
-   * Returns true if the table with the specified name exists in the database
-   * schema of the specified database connection.
-   *
-   * @param tableName The name of the database table.
-   * @param conn The database connection.
-   * @return True if the table exists.
-   */
-  bool tableExists(const std::string& tableName, rdbms::Conn &conn) const;
 };  // class VerifySchemaCmd
 
 }  // namespace statistics

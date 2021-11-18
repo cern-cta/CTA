@@ -17,17 +17,15 @@
 
 
 #include "DatabaseStatisticsServiceFactory.hpp"
-#include "MySQLStatisticsService.hpp"
 
 namespace cta {
 namespace statistics {
-std::unique_ptr<DatabaseStatisticsService> DatabaseStatisticsServiceFactory::create(cta::rdbms::Conn& databaseConnection, cta::rdbms::Login::DbType dbType) {
+
+std::unique_ptr<DatabaseStatisticsService> DatabaseStatisticsServiceFactory::create(cta::rdbms::Conn* databaseConnection,
+  cta::rdbms::Login::DbType dbType) {
   typedef cta::rdbms::Login::DbType DbType;
   std::unique_ptr<DatabaseStatisticsService> ret;
-  switch(dbType){
-    case DbType::DBTYPE_MYSQL:
-      ret.reset(new MySQLStatisticsService(databaseConnection));
-      return ret;
+  switch (dbType) {
     case DbType::DBTYPE_IN_MEMORY:
     case DbType::DBTYPE_SQLITE:
     case DbType::DBTYPE_ORACLE:
@@ -39,5 +37,5 @@ std::unique_ptr<DatabaseStatisticsService> DatabaseStatisticsServiceFactory::cre
   }
 }
 
-
-}}
+}  // namespace statistics
+}  // namespace cta

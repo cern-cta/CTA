@@ -15,12 +15,12 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "StatisticsSaveCmdLineArgs.hpp"
-#include "common/exception/CommandLineNotParsed.hpp"
-
 #include <getopt.h>
 #include <ostream>
 #include <iostream>
+
+#include "StatisticsSaveCmdLineArgs.hpp"
+#include "common/exception/CommandLineNotParsed.hpp"
 
 namespace cta {
 namespace statistics {
@@ -30,14 +30,9 @@ namespace statistics {
 //------------------------------------------------------------------------------
 StatisticsSaveCmdLineArgs::StatisticsSaveCmdLineArgs(const int argc, char *const *const argv):
   help(false) {
-
   static struct option longopts[] = {
-    {"catalogueconf",required_argument,NULL,'c'},
-    {"statisticsconf",required_argument,NULL,'s'},
-    {"build",no_argument, NULL, 'b'},
-    {"drop", no_argument, NULL, 'd'},
-    {"json", no_argument, NULL, 'j'},
-    {"help", no_argument, NULL, 'h'},
+    {"catalogueconf",  required_argument, NULL, 'c'},
+    {"help",  no_argument, NULL, 'h'},
     {NULL  ,           0, NULL,   0}
   };
 
@@ -46,39 +41,27 @@ StatisticsSaveCmdLineArgs::StatisticsSaveCmdLineArgs(const int argc, char *const
   opterr = 0;
 
   int opt = 0;
-  while((opt = getopt_long(argc, argv, ":hbdjc:s:", longopts, NULL)) != -1) {
-    switch(opt) {
+  while ((opt = getopt_long(argc, argv, ":hc:", longopts, NULL)) != -1) {
+    switch (opt) {
     case 'h':
       help = true;
       break;
     case 'c':
       catalogueDbConfigPath = optarg;
       break;
-    case 's':
-      statisticsDbConfigPath = optarg;
-      break;
-    case 'b':
-      buildDatabase = true;
-      break;
-    case 'd':
-      dropDatabase = true;
-      break;
-    case 'j':
-      jsonOutput = true;
-      break;
-    case ':': // Missing parameter
+    case ':':  // Missing parameter
       {
         exception::CommandLineNotParsed ex;
-        ex.getMessage() << "The -" << (char)optopt << " option requires a parameter";
+        ex.getMessage() << "The -" << static_cast<char>(optopt) << " option requires a parameter";
         throw ex;
       }
-    case '?': // Unknown option
+    case '?':  // Unknown option
       {
         exception::CommandLineNotParsed ex;
-        if(0 == optopt) {
+        if (0 == optopt) {
           ex.getMessage() << "Unknown command-line option";
         } else {
-          ex.getMessage() << "Unknown command-line option: -" << (char)optopt;
+          ex.getMessage() << "Unknown command-line option: -" << static_cast<char>(optopt);
         }
         throw ex;
       }
@@ -87,14 +70,14 @@ StatisticsSaveCmdLineArgs::StatisticsSaveCmdLineArgs(const int argc, char *const
         exception::CommandLineNotParsed ex;
         ex.getMessage() <<
           "getopt_long returned the following unknown value: 0x" <<
-          std::hex << (int)opt;
+          std::hex << static_cast<int>(opt);
         throw ex;
       }
-    } // switch(opt)
-  } // while getopt_long()
+    }  // switch(opt)
+  }  // while getopt_long()
 
   // There is no need to continue parsing when the help option is set
-  if(help) {
+  if (help) {
     return;
   }
 
@@ -102,7 +85,7 @@ StatisticsSaveCmdLineArgs::StatisticsSaveCmdLineArgs(const int argc, char *const
   const int nbArgs = argc - 1;
 
   // Check the number of arguments
-  if(nbArgs < 2 ) {
+  if (nbArgs < 2) {
     exception::CommandLineNotParsed ex;
     ex.getMessage() << "At least 2 arguments should be provided. Only " << nbArgs << " provided";
     throw ex;
@@ -115,24 +98,15 @@ StatisticsSaveCmdLineArgs::StatisticsSaveCmdLineArgs(const int argc, char *const
 void StatisticsSaveCmdLineArgs::printUsage(std::ostream &os) {
   os <<
     "Usage:" << std::endl <<
-    "    cta-statistics-save --catalogueconf catalogueDbConnectionFile [options]" << std::endl <<
+    "    cta-statistics-save --catalogueconf catalogueDbConnectionFile" << std::endl <<
     "Where:" << std::endl <<
     "    catalogueDbConnectionFile" << std::endl <<
     "        The path to the file containing the connection details of the CTA" << std::endl <<
     "        catalogue database" << std::endl <<
     "Options:" << std::endl <<
-    "    -s,--statisticsconf statisticsDbConnectionFile" << std::endl <<
-    "        The path to the file containing the connection details of the CTA" << std::endl <<
-    "        statistics database" << std::endl <<
-    "    -h,--help" << std::endl <<     
-    "        Prints this usage message" << std::endl <<
-    "    -b, --build" << std::endl <<
-    "        Builds the statistics database" << std::endl <<
-    "    -d, --drop" << std::endl <<
-    "        Drops the statistics database" << std::endl <<
-    "    -j, --json" << std::endl <<
-    "        Dumps the statistics in json format on stdout" << std::endl;
+    "    -h,--help" << std::endl <<
+    "        Prints this usage message" << std::endl;
 }
 
-} // namespace statistics
-} // namespace cta
+}  // namespace statistics
+}  // namespace cta

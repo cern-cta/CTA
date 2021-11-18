@@ -17,13 +17,16 @@
 
 #pragma once
 
+#include <memory>
+
 #include "rdbms/Conn.hpp"
 #include "rdbms/Login.hpp"
 #include "Statistics.hpp"
 #include "StatisticsService.hpp"
 
-namespace cta { namespace statistics {
-  
+namespace cta {
+namespace statistics {
+
 /**
  * Database statistics service that perform statistics operations
  * with a database backend
@@ -31,51 +34,51 @@ namespace cta { namespace statistics {
  * @param databaseConnection the database connection used by the service to perform statistics operations
  */
 class DatabaseStatisticsService: public StatisticsService {
-public:
+ public:
   /**
    * Constructor
    * @param databaseConnection the database connection that will be used by this service
    */
-  DatabaseStatisticsService(cta::rdbms::Conn &databaseConnection);
+  explicit DatabaseStatisticsService(cta::rdbms::Conn* databaseConnection);
   DatabaseStatisticsService(const DatabaseStatisticsService& orig) = delete;
   DatabaseStatisticsService & operator=(const DatabaseStatisticsService &) = delete;
-  virtual ~DatabaseStatisticsService();
-  
+  ~DatabaseStatisticsService() override;
+
   /**
    * Update the per-Tape statistics in the database used by this service
    */
-  virtual void updateStatisticsPerTape() override;
-  
+  void updateStatisticsPerTape() override;
+
   /**
    * Saves the statistics in the service database
    * @param statistics the statistics to save in the database used by this service
    */
-  virtual void saveStatistics(const cta::statistics::Statistics &statistics) override;
-  
+  void saveStatistics(const cta::statistics::Statistics &statistics) override;
+
   /**
    * Returns the statistics from the service database
    * @return the Statistics object that will contain the statistics retrieved from the database used by this service
    */
-  virtual std::unique_ptr<cta::statistics::Statistics> getStatistics() override;
-  
-protected:
+  std::unique_ptr<cta::statistics::Statistics> getStatistics() override;
+
+ protected:
   /**
-   * The database connection of the database that will be used by the service 
+   * The database connection of the database that will be used by the service
    */
   cta::rdbms::Conn & m_conn;
-  
+
   /**
-   * Saves the total file statistics in the database used by this service 
+   * Saves the total file statistics in the database used by this service
    * @param statistics the statistics to save
    */
-  virtual void saveFileStatistics(const cta::statistics::Statistics & statistics);
-  
+  // virtual void saveFileStatistics(const cta::statistics::Statistics & statistics);
+
   /**
    * Saves the per-VO statistics in the database used by this service
    * @param statistics the statistics to save
    */
-  virtual void saveStatisticsPerVo(const cta::statistics::Statistics & statistics);
+  // virtual void saveStatisticsPerVo(const cta::statistics::Statistics & statistics);
 };
 
-}}
-
+}  // namespace statistics
+}  // namespace cta

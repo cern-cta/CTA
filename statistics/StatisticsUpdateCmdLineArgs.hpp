@@ -55,5 +55,5 @@ struct StatisticsUpdateCmdLineArgs {
   static void printUsage(std::ostream &os);
 };
 
-} // namespace statistics
-} // namespace cta
+}  // namespace statistics
+}  // namespace cta

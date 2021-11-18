@@ -18,39 +18,13 @@ find_package(Protobuf3 REQUIRED)
 
 include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
 
-
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow")
 
-add_custom_command (OUTPUT mysql_statistics_schema.sql
-COMMAND cat
-    ${CMAKE_CURRENT_SOURCE_DIR}/common_statistics_schema.sql
-    | sed 's/UINT8TYPE/TINYINT UNSIGNED/g'
-    | sed 's/UINT16TYPE/SMALLINT UNSIGNED/g'
-    | sed 's/UINT32TYPE/INT UNSIGNED/g'
-    | sed 's/UINT64TYPE/BIGINT UNSIGNED/g'
-    | sed 's/CHECKSUM_BLOB_TYPE/VARBINARY\(200\)/g'
-    | tee mysql_statistics_schema.sql > /dev/null
-DEPENDS  ${CMAKE_CURRENT_SOURCE_DIR}/common_statistics_schema.sql
-)
-
-# For Mysql
-add_custom_command(OUTPUT mysql_statistics_schema.cpp
-  COMMAND sed 's/^/\ \ \"/' mysql_statistics_schema.sql | sed 's/$$/\"/' > mysql_statistics_schema.cpp
-  DEPENDS mysql_statistics_schema.sql)
-
-add_custom_command(OUTPUT MysqlStatisticsSchema.cpp
-  COMMAND sed -e '/CTA_SQL_SCHEMA/r mysql_statistics_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/MysqlStatisticsSchema.before_SQL.cpp > MysqlStatisticsSchema.cpp
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/MysqlStatisticsSchema.before_SQL.cpp mysql_statistics_schema.cpp)
-
 set (STATISTICS_LIB_SRC_FILES
-  StatisticsSchema.cpp
-  MysqlStatisticsSchema.cpp
-  StatisticsSchemaFactory.cpp
   Statistics.cpp
   FileStatistics.cpp
   StatisticsService.cpp
   DatabaseStatisticsService.cpp
-  MySQLStatisticsService.cpp
   DatabaseStatisticsServiceFactory.cpp
   StatisticsServiceFactory.cpp
   JsonStatisticsService.cpp
@@ -78,7 +52,6 @@ add_executable(cta-statistics-save
   StatisticsSaveCmd.cpp
   StatisticsSaveCmdLineArgs.cpp
   StatisticsSaveCmdMain.cpp
-  MysqlStatisticsSchema.cpp
 )
 
 target_link_libraries (cta-statistics-save ctastatistics)

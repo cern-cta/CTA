@@ -17,13 +17,13 @@
 
 
 #pragma once
+
 #include <stdint.h>
 
-namespace cta { 
+namespace cta {
 namespace statistics {
-    
-struct FileStatistics {
 
+struct FileStatistics {
   FileStatistics();
   FileStatistics(const FileStatistics &other);
   uint64_t nbMasterFiles = 0;
@@ -32,12 +32,11 @@ struct FileStatistics {
   uint64_t copyNb1InBytes = 0;
   uint64_t nbCopyNbGt1 = 0;
   uint64_t copyNbGt1InBytes = 0;
-  
+
   FileStatistics &operator=(const FileStatistics &other);
-  
+
   FileStatistics operator +=(const FileStatistics &other);
-  
 };
 
-}}
-
+}  // namespace statistics
+}  // namespace cta

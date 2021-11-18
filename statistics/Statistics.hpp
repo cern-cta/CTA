@@ -107,7 +107,7 @@ class Statistics {
      * @param rset the Rset returned by the Catalogue database query
      * @return a unique_ptr that contains the built statistics
      */
-    std::unique_ptr<Statistics> build(cta::rdbms::Rset & rset);
+    std::unique_ptr<Statistics> build(cta::rdbms::Rset* rset);
 
    private:
     /**

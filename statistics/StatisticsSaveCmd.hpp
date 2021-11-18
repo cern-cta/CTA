@@ -18,11 +18,9 @@
 #pragma once
 
 #include "catalogue/CmdLineTool.hpp"
-#include "catalogue/CatalogueSchema.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/Login.hpp"
 #include "StatisticsSaveCmdLineArgs.hpp"
-#include "StatisticsSchema.hpp"
 
 namespace cta {
 namespace statistics {
@@ -31,8 +29,7 @@ namespace statistics {
  * Command-line tool for verifying the catalogue schema.
  */
 class StatisticsSaveCmd: public cta::catalogue::CmdLineTool {
-public:
-
+ public:
   /**
    * Constructor.
    *
@@ -47,8 +44,7 @@ public:
    */
   ~StatisticsSaveCmd() noexcept;
 
-private:
-
+ private:
   /**
    * An exception throwing version of main().
    *
@@ -64,7 +60,7 @@ private:
    * @param os The output stream to which the usage message is to be printed.
    */
   void printUsage(std::ostream &os) override;
-  
+
   /**
    * Verifies the user input
    * throws an exception if the command line args
@@ -72,42 +68,14 @@ private:
    * @param cmdLineArgs the command line arguments provided by the user
    */
   void verifyCmdLineArgs(const StatisticsSaveCmdLineArgs& cmdLineArgs) const;
-  
-  /**
-   * Create the tables needed to fill the CTA statistics database
-   * @param statisticsDatabaseConn the database where the CTA statistics will be stored
-   * @param statisticsSchema the schema that will be used to insert the CTA statistics tables
-   */
-  void buildStatisticsDatabase(cta::rdbms::Conn &statisticsDatabaseConn,const StatisticsSchema & statisticsSchema);
-  
-  /**
-   * Asks the user if he really wants to drop the CTA statistics tables from the database 
-   * @param dbLogin the CTA statistics database
-   * @return true if the user confirmed, false otherwise
-   */
-  bool userConfirmDropStatisticsSchemaFromDb(const rdbms::Login &dbLogin);
-  
-  /**
-   * Drop the tables associated to the CTA statistics
-   * @param statisticsDatabaseConn the database where the CTA statistics tables will be deleted
-   */
-  void dropStatisticsDatabase(cta::rdbms::Conn &statisticsDatabaseConn, const StatisticsSchema & statisticsSchema);
-  
+
   /**
    * Check the content of the Catalogue database regarding what is needed to compute the statistics
    * @param catalogueDatabaseConn the connection to the Catalogue database
    * @param dbType the dbType of the Catalogue database
    */
-  void checkCatalogueSchema(cta::rdbms::Conn &catalogueDatabaseConn, cta::rdbms::Login::DbType dbType);
-  
-  /**
-   * Checks that the tables needed for statistics are present in the statistics database
-   * @param statisticsDatabaseConn the connection to the statistics database
-   * @param dbType the dbType of the statistics database
-   */
-  void checkStatisticsSchema(cta::rdbms::Conn &statisticsDatabaseConn,cta::rdbms::Login::DbType dbType);
-  
-}; // class VerifySchemaCmd
+  void checkCatalogueSchema(cta::rdbms::Conn* catalogueDatabaseConn, cta::rdbms::Login::DbType dbType);
+};  // class VerifySchemaCmd
 
-} // namespace statistics
-} // namespace cta
+}  // namespace statistics
+}  // namespace cta

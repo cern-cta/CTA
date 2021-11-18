@@ -15,21 +15,23 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "StatisticsServiceFactory.hpp"
+
 #include "DatabaseStatisticsServiceFactory.hpp"
 #include "JsonStatisticsServiceFactory.hpp"
 
-namespace cta { namespace statistics {
-  
+namespace cta {
+namespace statistics {
+
 /**
  * Creates a database StatisticsService corresponding to the dbType passed in parameter
  * @param connection the connection to the database
  * @param dbType the databaseType of the database
- * @return the DatabaseStatisticsService corresponding to the dbType passed in parameter 
- */  
-std::unique_ptr<StatisticsService> StatisticsServiceFactory::create(cta::rdbms::Conn& connection, cta::rdbms::Login::DbType dbType) {
-  return DatabaseStatisticsServiceFactory::create(connection,dbType);
+ * @return the DatabaseStatisticsService corresponding to the dbType passed in parameter
+ */
+std::unique_ptr<StatisticsService> StatisticsServiceFactory::create(cta::rdbms::Conn* connection,
+  cta::rdbms::Login::DbType dbType) {
+  return DatabaseStatisticsServiceFactory::create(connection, dbType);
 }
 
 /**
@@ -41,4 +43,5 @@ std::unique_ptr<StatisticsService> StatisticsServiceFactory::create(std::ostream
   return JsonStatisticsServiceFactory::create(&ostream);
 }
 
-}}
+}  // namespace statistics
+}  // namespace cta

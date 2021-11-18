@@ -39,27 +39,6 @@ struct StatisticsSaveCmdLineArgs {
   std::string catalogueDbConfigPath;
 
   /**
-   * Path to the file containing the connection details of the statistics
-   * database.
-   */
-  std::string statisticsDbConfigPath;
-  
-  /**
-   * True if the --build flag has been provided
-   */
-  bool buildDatabase = false;
-  
-  /**
-   * True if the --drop flag has been provided
-  */
-  bool dropDatabase = false;
-  
-  /**
-   * True if the --json flag has been provided
-   */
-  bool jsonOutput = false;
-  
-  /**
    * Constructor that parses the specified command-line arguments.
    *
    * @param argc The number of command-line arguments including the name of the
@@ -76,5 +55,5 @@ struct StatisticsSaveCmdLineArgs {
   static void printUsage(std::ostream &os);
 };
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace statistics
+}  // namespace cta

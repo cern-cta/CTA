@@ -15,23 +15,26 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <string>
+
 #include "DatabaseStatisticsService.hpp"
 
 
 namespace cta { namespace statistics {
-  
-DatabaseStatisticsService::DatabaseStatisticsService(cta::rdbms::Conn & databaseConnection):m_conn(databaseConnection) {
+
+DatabaseStatisticsService::DatabaseStatisticsService(cta::rdbms::Conn* databaseConnection)
+  : m_conn(*databaseConnection) {
 }
 
 DatabaseStatisticsService::~DatabaseStatisticsService() {
 }
 
-void DatabaseStatisticsService::updateStatisticsPerTape(){
-  //to update the statistics, we will first select the DIRTY tapes ordered by VID and we will run an update for each row.
-  
+void DatabaseStatisticsService::updateStatisticsPerTape() {
+  // to update the statistics, we will first select the DIRTY tapes ordered by VID and we will run an update for each row.
+
   const char * const selectVids = "SELECT TAPE.VID AS VID FROM TAPE WHERE TAPE.DIRTY='1' ORDER BY TAPE.VID";
-  
-  const char * const updateSql = 
+
+  const char * const updateSql =
   "UPDATE TAPE TAPE_TO_UPDATE SET"
   "("
     "DIRTY,"
@@ -85,14 +88,14 @@ void DatabaseStatisticsService::updateStatisticsPerTape(){
     "GROUP BY T.VID"
   ") "
   "WHERE TAPE_TO_UPDATE.VID = :VID";
-  
+
   try {
     auto selectStmt = m_conn.createStmt(selectVids);
     auto rset = selectStmt.executeQuery();
-    while(rset.next()){
-      //For all DIRTY tapes, update its statistics
+    while (rset.next()) {
+      // For all DIRTY tapes, update its statistics
       auto updateStmt = m_conn.createStmt(updateSql);
-      updateStmt.bindString(":VID",rset.columnString("VID"));
+      updateStmt.bindString(":VID", rset.columnString("VID"));
       updateStmt.executeNonQuery();
       m_nbUpdatedTapes += updateStmt.getNbAffectedRows();
     }
@@ -103,99 +106,11 @@ void DatabaseStatisticsService::updateStatisticsPerTape(){
 }
 
 void DatabaseStatisticsService::saveStatistics(const cta::statistics::Statistics& statistics) {
-  //First we save the general FILE statistics, then we go for the per-vo statisticss
-  saveFileStatistics(statistics);
-  saveStatisticsPerVo(statistics);
+  throw cta::exception::Exception("DatabaseStatisticsService::saveStatistics(): Not implemented");
 }
-
-void DatabaseStatisticsService::saveFileStatistics(const cta::statistics::Statistics& statistics) {
-  try {
-    const char * const sql = 
-    "INSERT INTO "
-      "FILE_STATISTICS "
-      "("
-        "NB_MASTER_FILES,"
-        "MASTER_DATA_IN_BYTES,"
-        "NB_COPY_NB_1,"
-        "NB_COPY_NB_1_IN_BYTES,"
-        "NB_COPY_NB_GT_1,"
-        "NB_COPY_NB_GT_1_IN_BYTES,"
-        "UPDATE_TIME"
-    ") "
-    "VALUES "
-    "("
-      ":NB_MASTER_FILES,"
-      ":MASTER_DATA_IN_BYTES,"
-      ":NB_COPY_NB_1,"
-      ":NB_COPY_NB_1_IN_BYTES,"
-      ":NB_COPY_NB_GT_1,"
-      ":NB_COPY_NB_GT_1_IN_BYTES,"
-      ":UPDATE_TIME"
-    ")";
-    auto stmt = m_conn.createStmt(sql);
-    stmt.bindUint64(":NB_MASTER_FILES",statistics.getTotalFiles());
-    stmt.bindUint64(":MASTER_DATA_IN_BYTES",statistics.getTotalBytes());
-    stmt.bindUint64(":NB_COPY_NB_1",statistics.getTotalFilesCopyNb1());
-    stmt.bindUint64(":NB_COPY_NB_1_IN_BYTES",statistics.getTotalBytesCopyNb1());
-    stmt.bindUint64(":NB_COPY_NB_GT_1",statistics.getTotalFilesCopyNbGt1());
-    stmt.bindUint64(":NB_COPY_NB_GT_1_IN_BYTES",statistics.getTotalBytesCopyNbGt1());
-    stmt.bindUint64(":UPDATE_TIME",statistics.getUpdateTime());
-    stmt.executeNonQuery();
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
-}
-
-void DatabaseStatisticsService::saveStatisticsPerVo(const cta::statistics::Statistics& statistics) {
-  try {
-    const char * const sql = 
-    "INSERT INTO "
-      "VO_STATISTICS "
-      "("
-        "VO,"
-        "NB_MASTER_FILES,"
-        "MASTER_DATA_IN_BYTES,"
-        "NB_COPY_NB_1,"
-        "NB_COPY_NB_1_IN_BYTES,"
-        "NB_COPY_NB_GT_1,"
-        "NB_COPY_NB_GT_1_IN_BYTES,"
-        "UPDATE_TIME"
-      ") "
-      "VALUES "
-      "("
-        ":VO,"
-        ":NB_MASTER_FILES,"
-        ":MASTER_DATA_IN_BYTES,"
-        ":NB_COPY_NB_1,"
-        ":NB_COPY_NB_1_IN_BYTES,"
-        ":NB_COPY_NB_GT_1,"
-        ":NB_COPY_NB_GT_1_IN_BYTES,"
-        ":UPDATE_TIME"
-      ")";
-    for(const auto & stat: statistics.getAllVOStatistics()){
-      auto stmt = m_conn.createStmt(sql);
-      auto voFileStatistics = stat.second;
-      stmt.bindString(":VO",stat.first);
-      stmt.bindUint64(":NB_MASTER_FILES",voFileStatistics.nbMasterFiles);
-      stmt.bindUint64(":MASTER_DATA_IN_BYTES",voFileStatistics.masterDataInBytes);
-      stmt.bindUint64(":NB_COPY_NB_1",voFileStatistics.nbCopyNb1);
-      stmt.bindUint64(":NB_COPY_NB_1_IN_BYTES",voFileStatistics.copyNb1InBytes);
-      stmt.bindUint64(":NB_COPY_NB_GT_1",voFileStatistics.nbCopyNbGt1);
-      stmt.bindUint64(":NB_COPY_NB_GT_1_IN_BYTES",voFileStatistics.copyNbGt1InBytes);
-      stmt.bindUint64(":UPDATE_TIME",statistics.getUpdateTime());
-      stmt.executeNonQuery();
-    }
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
-}
-
-
 
 std::unique_ptr<cta::statistics::Statistics> DatabaseStatisticsService::getStatistics() {
-  const char * const sql = 
+  const char * const sql =
   "SELECT "
     "VIRTUAL_ORGANIZATION_NAME AS VO,"
     "COALESCE(SUM(TAPE.NB_MASTER_FILES),0) AS TOTAL_MASTER_FILES_VO,"
@@ -214,14 +129,13 @@ std::unique_ptr<cta::statistics::Statistics> DatabaseStatisticsService::getStati
   try {
     auto stmt = m_conn.createStmt(sql);
     auto rset = stmt.executeQuery();
-    //Build the Statitistics with the result set and return them
-    return Statistics::Builder().build(rset);
+    // Build the Statitistics with the result set and return them
+    return Statistics::Builder().build(&rset);
   } catch(cta::exception::Exception &ex) {
     ex.getMessage().str(std::string(__PRETTY_FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
 }
 
-
-
-}}
+}  // namespace statistics
+}  // namespace cta
