@@ -45,6 +45,7 @@ namespace cta {
       
       void reportJobsBatchTransferred(std::queue<std::unique_ptr<cta::ArchiveJob> >& successfulArchiveJobs, 
           std::queue<cta::catalogue::TapeItemWritten> & skippedFiles, std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& failedToReportArchiveJobs, cta::log::LogContext& logContext) override {
+        bool catalogue_updated = false;
         try {
           std::set<cta::catalogue::TapeItemWrittenPointer> tapeItemsWritten;
           std::list<std::unique_ptr<cta::ArchiveJob> > validatedSuccessfulArchiveJobs;
@@ -65,6 +66,7 @@ namespace cta {
             tapeItemsWritten.emplace(tiwup.release());
           }
           m_catalogue.filesWrittenToTape(tapeItemsWritten);
+          catalogue_updated = true;
           for (auto &job: validatedSuccessfulArchiveJobs) {
             MockArchiveJob * maj = dynamic_cast<MockArchiveJob *>(job.get());
             if (!maj) throw cta::exception::Exception("Wrong job type.");
@@ -77,7 +79,12 @@ namespace cta {
           params.add("exceptionMessageValue", e.getMessageValue());
           const std::string msg_error="In ArchiveMount::reportJobsBatchWritten(): got an exception";
           logContext.log(cta::log::ERR, msg_error);
-          throw cta::ArchiveMount::FailedMigrationRecallResult(msg_error);
+          if (catalogue_updated) {
+            throw cta::ArchiveMount::FailedReportMoveToQueue(msg_error);
+          }
+          else {
+            throw cta::ArchiveMount::FailedReportCatalogueUpdate(msg_error);
+          }
         }
       }
 

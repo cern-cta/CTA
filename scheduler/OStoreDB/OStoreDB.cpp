@@ -3795,13 +3795,22 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<ct
   // We let the exceptions through as failing to report is fatal.
   auto jobsBatchItor = jobsBatch.begin();
   while(jobsBatchItor != jobsBatch.end()){
+    {
+      log::ScopedParamContainer params (lc);
+      params.add("tapeVid", (*jobsBatchItor)->tapeFile.vid)
+            .add("fileId", (*jobsBatchItor)->archiveFile.archiveFileID)
+            .add("requestObject", castFromSchedDBJob(jobsBatchItor->get())->m_archiveRequest.getAddressIfSet());
+      lc.log(log::INFO, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): received a job to be reported.");
+    }
     try {
       castFromSchedDBJob(jobsBatchItor->get())->asyncSucceedTransfer();
       jobsBatchItor++;
     } catch (cta::exception::NoSuchObject &ex) {
       jobsBatch.erase(jobsBatchItor++);
       log::ScopedParamContainer params(lc);
-      params.add("fileId", (*jobsBatchItor)->archiveFile.archiveFileID)
+      params.add("tapeVid", (*jobsBatchItor)->tapeFile.vid)
+            .add("fileId", (*jobsBatchItor)->archiveFile.archiveFileID)
+            .add("requestObject", castFromSchedDBJob(jobsBatchItor->get())->m_archiveRequest.getAddressIfSet())
             .add("exceptionMessage", ex.getMessageValue());
       lc.log(log::WARNING,
           "In OStoreDB::RetrieveMount::setJobBatchTransferred(): async succeed transfer failed, job does not exist in the objectstore.");

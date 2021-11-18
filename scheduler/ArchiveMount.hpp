@@ -57,7 +57,8 @@ namespace cta {
 
     CTA_GENERATE_EXCEPTION_CLASS(WrongMountType);
     CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);
-    CTA_GENERATE_EXCEPTION_CLASS(FailedMigrationRecallResult);
+    CTA_GENERATE_EXCEPTION_CLASS(FailedReportCatalogueUpdate);
+    CTA_GENERATE_EXCEPTION_CLASS(FailedReportMoveToQueue);
 
     /**
      * Returns The type of this tape mount.

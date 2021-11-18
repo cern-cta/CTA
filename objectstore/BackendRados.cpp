@@ -750,7 +750,9 @@ void BackendRados::lockBackoff(const std::string& name, uint64_t timeout_us, Loc
     }
     if (-EBUSY != rc) break;
     if (timeout_us && (timeoutTimer.usecs() > (int64_t)timeout_us)) {
-      throw exception::Exception("In BackendRados::lockBackoff(): timeout : timeout set = "+std::to_string(timeout_us)+" usec, time to lock the object : "+std::to_string(timeoutTimer.usecs())+" usec, number of tries to lock = "+std::to_string(nbTriesToLock));
+      throw exception::Exception(
+        "In BackendRados::lockBackoff(): timeout : timeout set = " + std::to_string(timeout_us) + " usec, time to lock the object : " +
+        std::to_string(timeoutTimer.usecs()) + " usec, number of tries to lock = " + std::to_string(nbTriesToLock) + " object: " + name);
     }
     timespec ts;
     auto latencyUsecs=t.usecs();
