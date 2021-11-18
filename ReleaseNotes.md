@@ -3,6 +3,8 @@
 ## Summary
 
 ### Features
+- Upgraded EOS to 4.8.67 in CI versionlock.list file
+  - EOS/EOS-4976 Fix activity field passed from EOS to CTA
 - cta/CTA#607 - Add client host and username in cta-frontend logs
 - cta/CTA#777 - Minimize mounts for dual copy tape pool recalls
 - cta/CTA#928 - Add youngest request age to cta-admin sq
