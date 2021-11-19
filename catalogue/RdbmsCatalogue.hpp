@@ -1547,7 +1547,8 @@ protected:
 
   /**
    * Returns the specified archive file.   A nullptr pointer is returned if
-   * there are no corresponding rows in the TAPE_FILE table.
+   * there are no corresponding rows in the TAPE_FILE table. Only looks at TAPE_FILE entries
+   * on Tapes with state 'ACTIVE'
    *
    * @param conn The database connection.
    * @param archiveFileId The identifier of the archive file.
@@ -1556,6 +1557,19 @@ protected:
   std::unique_ptr<common::dataStructures::ArchiveFile> getArchiveFileToRetrieveByArchiveFileId(
     rdbms::Conn &conn,
     const uint64_t archiveFileId) const;
+
+  /**
+   * Returns the specified archive file.   A nullptr pointer is returned if
+   * there are no corresponding rows in the TAPE_FILE table.
+   *
+   * @param conn The database connection.
+   * @param archiveFileId The identifier of the archive file.
+   * @return A list of tape file vid and corresponding tape state pairs
+   */
+  const std::list<std::pair<std::string, std::string>> getTapeFileStateListForArchiveFileId(
+    rdbms::Conn &conn,
+    const uint64_t archiveFileId) const;
+
 
   /**
    * Returns a cached version of the (possibly empty) activities to weight map

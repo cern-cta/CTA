@@ -7,6 +7,7 @@
 - cta/CTA#928 - Add youngest request age to cta-admin sq
 - cta/CTA#777 - Minimize mounts for dual copy tape pool recalls
 - cta/CTA#1020 - cta-restore-deleted-files command for restoring deleted files
+- cta/CTA#1074 - Improve error reporting when retrieving archive
 
 ### Bug fixes
 - cta/CTA#1059 - Clean up warnings reported by static analysis

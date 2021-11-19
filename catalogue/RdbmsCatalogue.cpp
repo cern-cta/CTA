@@ -44,6 +44,7 @@
 #include <time.h>
 #include <tuple>
 #include <climits>
+#include <algorithm>
 
 namespace cta {
 namespace catalogue {
@@ -7897,7 +7898,23 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
       const auto getArchiveFileTime = t.secs(utils::Timer::resetCounter);
       if(nullptr == archiveFile.get()) {
         exception::UserError ex;
-        ex.getMessage() << "No tape files available for archive file with archive file ID " << archiveFileId;
+        auto tapeFileStateList = getTapeFileStateListForArchiveFileId(conn, archiveFileId);
+        if (tapeFileStateList.empty()) {
+          ex.getMessage() << "CRITICAL: File with archive file ID " << archiveFileId << " does not exist in CTA namespace";
+          throw ex;
+        }
+        const auto nonBrokenState = std::find_if(std::begin(tapeFileStateList), std::end(tapeFileStateList),
+          [](std::pair<std::string, std::string> state) {return state.second != "BROKEN";});
+        
+        if (nonBrokenState != std::end(tapeFileStateList)) {
+          ex.getMessage() << "WARNING: File with archive file ID " << archiveFileId << 
+            " exits in CTA namespace but is temporarily unavailable on " << nonBrokenState->second << " tape " << nonBrokenState->first;
+          throw ex;
+        }
+        const auto brokenState = tapeFileStateList.front();
+        //All tape files are on broken tapes, just generate an error about the first
+        ex.getMessage() << "ERROR: File with archive file ID " << archiveFileId << 
+            " exits in CTA namespace but is permanently unavailable on " << brokenState.second << " tape " << brokenState.first;
         throw ex;
       }
 
@@ -8433,6 +8450,44 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
     throw;
   }
 }
+
+//------------------------------------------------------------------------------
+// getArchiveFileToRetrieveByArchiveFileId
+//------------------------------------------------------------------------------
+const std::list<std::pair<std::string, std::string>> RdbmsCatalogue::getTapeFileStateListForArchiveFileId(
+  rdbms::Conn &conn, const uint64_t archiveFileId) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "TAPE_FILE.VID AS VID,"
+        "TAPE.TAPE_STATE AS STATE "
+      "FROM "
+        "ARCHIVE_FILE "
+      "INNER JOIN TAPE_FILE ON "
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID "
+      "INNER JOIN TAPE ON "
+        "TAPE_FILE.VID = TAPE.VID "
+      "WHERE "
+        "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID ";
+
+    auto stmt = conn.createStmt(sql);
+    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+    auto rset = stmt.executeQuery();
+    std::list<std::pair<std::string, std::string>> ret;
+    while (rset.next()) {
+      const auto &vid = rset.columnString("VID");
+      const auto &state = rset.columnString("STATE");
+      ret.push_back(std::pair<std::string, std::string>(vid, state));
+    }
+    return ret;
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
 
 //------------------------------------------------------------------------------
 // getCachedActivitiesWeights
