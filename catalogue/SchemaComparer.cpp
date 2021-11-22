@@ -26,7 +26,7 @@ namespace catalogue {
 SchemaComparer::SchemaComparer(const std::string& databaseToCheckName, DatabaseMetadataGetter &catalogueMetadataGetter)
   : m_databaseToCheckName(databaseToCheckName),
     m_databaseMetadataGetter(catalogueMetadataGetter),
-    m_compareTableConstraints((m_databaseMetadataGetter.getDbType() != cta::rdbms::Login::DBTYPE_MYSQL)) {}
+    m_compareTableConstraints(true) {}
 
 void SchemaComparer::setSchemaSqlStatementsReader(std::unique_ptr<SchemaSqlStatementsReader> schemaSqlStatementsReader) {
   m_schemaSqlStatementsReader = std::move(schemaSqlStatementsReader);

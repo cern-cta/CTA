@@ -179,45 +179,6 @@ dbunittests_postgresql:
   tags:
     - docker
 
-dbunittests_mysql:
-  except:
-    - tags
-  stage: test
-  variables:
-    CTAREPODIR: /tmp/repo
-  image: gitlab-registry.cern.ch/linuxsupport/cc7-base
-  script:
-    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/* /etc/yum.repos.d/
-    - yum -y install yum-plugin-priorities createrepo
-    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
-    - mkdir -p ${CTAREPODIR}; cp -r build_rpm/RPM ${CTAREPODIR}
-    - createrepo ${CTAREPODIR}; echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
-    - yum -y --nogpgcheck install cta-systemtests cta-debuginfo sqlite-debuginfo --enablerepo=debug
-    - yum -y install cta-catalogueutils
-    - yum -y install lsof rh-mariadb103-mariadb-server
-    - echo '[mariadb]' > /etc/opt/rh/rh-mariadb103/my.cnf.d/cta_server_listen.cnf
-    - echo 'bind-address=localhost' >> /etc/opt/rh/rh-mariadb103/my.cnf.d/cta_server_listen.cnf
-    - scl enable rh-mariadb103 -- mysql_install_db --user=mysql
-    - cd '/opt/rh/rh-mariadb103/root/usr'
-    - scl enable rh-mariadb103 -- /opt/rh/rh-mariadb103/root/usr/bin/mysqld_safe --user=mysql --datadir=/var/opt/rh/rh-mariadb103/lib/mysql < /dev/null &
-    - echo "Sleeping 5 seconds"
-    - sleep 5
-    - echo "Finished sleeping"
-    - echo 'create database cta;' | scl enable rh-mariadb103 -- mysql
-    - echo 'create user cta@localhost;' | scl enable rh-mariadb103 -- mysql
-    - echo 'grant all privileges on *.* to cta@localhost' | scl enable rh-mariadb103 -- mysql
-    - echo 'flush privileges;' | scl enable rh-mariadb103 -- mysql
-    - CTA_CATALOGUE_CONF=/etc/cta/cta-catalogue.conf
-    - echo CTA_CATALOGUE_CONF=${CTA_CATALOGUE_CONF}
-    - echo 'mysql://cta@localhost:3306/cta' > ${CTA_CATALOGUE_CONF}
-    - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
-    - /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
-    - valgrind /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
-    - kill `ps -ef | egrep '^mysql.*/usr/libexec/mysqld' | awk '{print $2;}'`
-
-  tags:
-    - docker
-
 ctageneric_docker:
   except:
     - tags

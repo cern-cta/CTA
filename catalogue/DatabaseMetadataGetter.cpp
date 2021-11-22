@@ -21,9 +21,9 @@
 namespace cta {
 namespace catalogue {
 
-  
+
 MetadataGetter::~MetadataGetter(){}
-  
+
 void MetadataGetter::removeObjectNameContaining(std::list<std::string>& objects, const std::list<std::string> &wordsToTriggerRemoval){
   objects.remove_if([&wordsToTriggerRemoval](const std::string &object){
     return std::find_if(wordsToTriggerRemoval.begin(), wordsToTriggerRemoval.end(),[&object](const std::string &wordTriggeringRemoval){
@@ -51,7 +51,7 @@ void MetadataGetter::removeObjectNameMatches(std::list<std::string> &objects, co
     return regex.has_match(object);
   });
 }
-  
+
 DatabaseMetadataGetter::DatabaseMetadataGetter(cta::rdbms::Conn& conn):m_conn(conn){}
 
 SchemaVersion DatabaseMetadataGetter::getCatalogueVersion(){
@@ -81,7 +81,7 @@ SchemaVersion DatabaseMetadataGetter::getCatalogueVersion(){
         "CTA_CATALOGUE.STATUS AS STATUS "
       "FROM "
         "CTA_CATALOGUE";
-    
+
     auto stmt2 = m_conn.createStmt(sql2);
     try{
       auto rset2 = stmt2.executeQuery();
@@ -188,12 +188,6 @@ std::list<std::string> OracleDatabaseMetadataGetter::getTableNames(){
   return tableNames;
 }
 
-MySQLDatabaseMetadataGetter::MySQLDatabaseMetadataGetter(cta::rdbms::Conn& conn):DatabaseMetadataGetter(conn) {}
-MySQLDatabaseMetadataGetter::~MySQLDatabaseMetadataGetter(){}
-cta::rdbms::Login::DbType MySQLDatabaseMetadataGetter::getDbType(){
-  return cta::rdbms::Login::DbType::DBTYPE_MYSQL;
-}
-
 PostgresDatabaseMetadataGetter::PostgresDatabaseMetadataGetter(cta::rdbms::Conn& conn):DatabaseMetadataGetter(conn) {}
 PostgresDatabaseMetadataGetter::~PostgresDatabaseMetadataGetter(){}
 cta::rdbms::Login::DbType PostgresDatabaseMetadataGetter::getDbType(){
@@ -208,8 +202,6 @@ DatabaseMetadataGetter * DatabaseMetadataGetterFactory::create(const rdbms::Logi
       return new SQLiteDatabaseMetadataGetter(conn);
     case DbType::DBTYPE_ORACLE:
       return new OracleDatabaseMetadataGetter(conn);
-    case DbType::DBTYPE_MYSQL:
-      return new MySQLDatabaseMetadataGetter(conn);
     case DbType::DBTYPE_POSTGRESQL:
       return new PostgresDatabaseMetadataGetter(conn);
     default:

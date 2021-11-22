@@ -25,12 +25,12 @@
 
 namespace cta {
 namespace catalogue {
-  
+
 /**
  * Interface class to get database metadata
- */  
+ */
 class MetadataGetter{
-  
+
 protected:
   void removeObjectNameContaining(std::list<std::string>& objects, const std::list<std::string> &wordsToTriggerRemoval);
   void removeObjectNameNotContaining(std::list<std::string>& objects, const std::list<std::string> &wordsNotToTriggerRemoval);
@@ -46,8 +46,8 @@ public:
 
 /**
  * This class is used to get the Metadata (table names, columns, indexes) of the database accessed via the connection given in parameters
- * It will simply call the methods from the connection (Conn) instance and adapt or not the metadata returned.  
- */  
+ * It will simply call the methods from the connection (Conn) instance and adapt or not the metadata returned.
+ */
 class DatabaseMetadataGetter: public MetadataGetter {
   protected:
     rdbms::Conn& m_conn;
@@ -93,16 +93,6 @@ class OracleDatabaseMetadataGetter: public DatabaseMetadataGetter{
   cta::rdbms::Login::DbType getDbType() override;
   std::list<std::string> getTableNames() override;
   virtual ~OracleDatabaseMetadataGetter();
-};
-
-/**
- * Specific MySQL database metadata getter
- */
-class MySQLDatabaseMetadataGetter: public DatabaseMetadataGetter{
-  public:
-    MySQLDatabaseMetadataGetter(cta::rdbms::Conn &conn);
-    cta::rdbms::Login::DbType getDbType() override;
-    virtual ~MySQLDatabaseMetadataGetter();
 };
 
 /**

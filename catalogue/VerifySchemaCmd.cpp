@@ -17,7 +17,6 @@
 
 #include "catalogue/VerifySchemaCmd.hpp"
 #include "catalogue/VerifySchemaCmdLineArgs.hpp"
-#include "catalogue/MysqlCatalogueSchema.hpp"
 #include "catalogue/OracleCatalogueSchema.hpp"
 #include "catalogue/PostgresCatalogueSchema.hpp"
 #include "catalogue/SqliteCatalogueSchema.hpp"
@@ -65,20 +64,20 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   const uint64_t maxNbConns = 1;
   rdbms::ConnPool connPool(login, maxNbConns);
   auto conn = connPool.getConn();
-  
+
   const bool ctaCatalogueTableExists = tableExists("CTA_CATALOGUE", conn);
 
   if(!ctaCatalogueTableExists) {
     std::cerr << "Cannot verify the database schema because the CTA_CATALOGUE table does not exists" << std::endl;
     return 1;
   }
-  
+
   SchemaChecker::Builder schemaCheckerBuilder("catalogue",login.dbType,conn);
   std::unique_ptr<SchemaChecker> schemaChecker(schemaCheckerBuilder
                         .useMapStatementsReader()
                         .useSQLiteSchemaComparer()
                         .build());
-  
+
   SchemaCheckerResult result = schemaChecker->displayingCompareSchema(std::cout,std::cerr);
   result += schemaChecker->warnParallelTables();
   result += schemaChecker->warnSchemaUpgrading();
@@ -91,72 +90,6 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
     return 1;
   }
   return 0;
-  /*
-    std::unique_ptr<CatalogueSchema> schema;
-    switch(login.dbType) {
-    case rdbms::Login::DBTYPE_IN_MEMORY:
-    case rdbms::Login::DBTYPE_SQLITE:
-      schema.reset(new SqliteCatalogueSchema);
-      break;
-    case rdbms::Login::DBTYPE_POSTGRESQL:
-      schema.reset(new PostgresCatalogueSchema);
-      break;
-    case rdbms::Login::DBTYPE_MYSQL:
-      schema.reset(new MysqlCatalogueSchema);
-      break;
-    case rdbms::Login::DBTYPE_ORACLE:
-      schema.reset(new OracleCatalogueSchema);
-      break;
-    case rdbms::Login::DBTYPE_NONE:
-      throw exception::Exception("Cannot verify a catalogue without a database type");
-    default:
-      {
-        exception::Exception ex;
-        ex.getMessage() << "Unknown database type: value=" << login.dbType;
-        throw ex;
-      }
-    }
-
-    if (nullptr == schema) {
-      exception::Exception ex;
-      ex.getMessage() << "The catalogue schema uninitialized";
-        throw ex;
-    }
-
-    std::cerr << "Checking schema version..." << std::endl;
-    log::DummyLogger dummyLog("dummy", "dummy");
-    const auto catalogueFactory = CatalogueFactoryFactory::create(dummyLog, login, maxNbConns, maxNbConns);
-    const auto catalogue = catalogueFactory->create();  
-    const auto schemaDbVersion = catalogue->getSchemaVersion();
-    const auto schemaVersion = schema->getSchemaVersion(); 
-    const VerifyStatus verifySchemaStatus = verifySchemaVersion(schemaVersion, schemaDbVersion);
-
-    std::cerr << "Checking table names..." << std::endl;
-    const auto schemaTableNames = schema->getSchemaTableNames();
-    const auto dbTableNames = conn.getTableNames();
-    const VerifyStatus verifyTablesStatus = verifyTableNames(schemaTableNames, dbTableNames);
-
-    std::cerr << "Checking columns in tables..." << std::endl;
-    const VerifyStatus verifyColumnsStatus = verifyColumns(schemaTableNames, dbTableNames, *schema, conn);
-
-    std::cerr << "Checking index names..." << std::endl;
-    const auto schemaIndexNames = schema->getSchemaIndexNames();
-    const auto dbIndexNames = conn.getIndexNames();
-    const VerifyStatus verifyIndexesStatus = verifyIndexNames(schemaIndexNames, dbIndexNames);
-
-    std::cerr << "Checking sequence names..." << std::endl;
-    const auto schemaSequenceNames = schema->getSchemaSequenceNames();
-    const auto dbSequenceNames = conn.getSequenceNames();
-    const VerifyStatus verifySequencesStatus = verifySequenceNames(schemaSequenceNames, dbSequenceNames);
-
-    if (verifySchemaStatus    == VerifyStatus::ERROR ||
-        verifyTablesStatus    == VerifyStatus::ERROR || 
-        verifyIndexesStatus   == VerifyStatus::ERROR ||
-        verifySequencesStatus == VerifyStatus::ERROR || 
-        verifyColumnsStatus   == VerifyStatus::ERROR ) {
-      return 1;
-    }
-    return 0;*/
 }
 
 //------------------------------------------------------------------------------
@@ -182,21 +115,21 @@ void VerifySchemaCmd::printUsage(std::ostream &os) {
 //------------------------------------------------------------------------------
 // verifySchemaVersion
 //------------------------------------------------------------------------------
-VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifySchemaVersion(const std::map<std::string, uint64_t> &schemaVersion, 
+VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifySchemaVersion(const std::map<std::string, uint64_t> &schemaVersion,
   const std::map<std::string, uint64_t> &schemaDbVersion) const {
   try {
     VerifyStatus status = VerifyStatus::UNKNOWN;
     for (const auto &schemaInfo : schemaVersion) {
       if (schemaDbVersion.count(schemaInfo.first)) {
         if (schemaInfo.second != schemaDbVersion.at(schemaInfo.first)) {
-          std::cerr << "  ERROR: the schema version mismatch: SCHEMA[" 
-                    << schemaInfo.first << "] = "  << schemaInfo.second 
-                    << ", DB[" << schemaInfo.first << "] = " 
+          std::cerr << "  ERROR: the schema version mismatch: SCHEMA["
+                    << schemaInfo.first << "] = "  << schemaInfo.second
+                    << ", DB[" << schemaInfo.first << "] = "
                     << schemaDbVersion.at(schemaInfo.first) << std::endl;
           status = VerifyStatus::ERROR;
         }
       } else {
-        std::cerr << "  ERROR: the schema version value for " << schemaInfo.first 
+        std::cerr << "  ERROR: the schema version value for " << schemaInfo.first
                   <<"  not found in the Catalogue DB" << std::endl;
         status = VerifyStatus::ERROR;
       }
@@ -228,7 +161,7 @@ VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyColumns(const std::list<std
         for (const auto &dbColumn : dbColumns) {
           if (!schemaColumns.count(dbColumn.first)) {
             std::cerr << "  ERROR: the DB column " << dbColumn.first
-                      << " for table " << tableName 
+                      << " for table " << tableName
                       << " not found in the catalogue schema" << std::endl;
             status = VerifyStatus::ERROR;
           }
@@ -237,24 +170,24 @@ VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyColumns(const std::list<std
         for (const auto &schemaColumn : schemaColumns) {
             if (dbColumns.count(schemaColumn.first)) {
             if (schemaColumn.second != dbColumns.at(schemaColumn.first)) {
-              std::cerr << "  ERROR: type mismatch for the column: DB[" 
-                        << schemaColumn.first << "] = "  << dbColumns.at(schemaColumn.first) 
-                        << ", SCHEMA[" << schemaColumn.first << "] = " 
-                        << schemaColumn.second 
+              std::cerr << "  ERROR: type mismatch for the column: DB["
+                        << schemaColumn.first << "] = "  << dbColumns.at(schemaColumn.first)
+                        << ", SCHEMA[" << schemaColumn.first << "] = "
+                        << schemaColumn.second
                         << " for table " << tableName << std::endl;
               status = VerifyStatus::ERROR;
             }
           } else {
-            std::cerr << "  ERROR: the schema column " << schemaColumn.first 
-                      << " not found in the DB" 
+            std::cerr << "  ERROR: the schema column " << schemaColumn.first
+                      << " not found in the DB"
                       << " for table " << tableName << std::endl;
             status = VerifyStatus::ERROR;
           }
         }
       } else {
-        std::cerr << "  ERROR: the schema table " << tableName 
+        std::cerr << "  ERROR: the schema table " << tableName
                   << " not found in the DB" << std::endl;
-        status = VerifyStatus::ERROR; 
+        status = VerifyStatus::ERROR;
       }
     }
     if (status != VerifyStatus::INFO && status != VerifyStatus::ERROR) {
@@ -270,7 +203,7 @@ VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyColumns(const std::list<std
 //------------------------------------------------------------------------------
 // verifyTableNames
 //------------------------------------------------------------------------------
-VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyTableNames(const std::list<std::string> &schemaTableNames, 
+VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyTableNames(const std::list<std::string> &schemaTableNames,
   const std::list<std::string> &dbTableNames) const {
   try {
     VerifyStatus status = VerifyStatus::UNKNOWN;
@@ -299,11 +232,11 @@ VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyTableNames(const std::list<
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
-  
+
 //------------------------------------------------------------------------------
 // verifyIndexNames
 //------------------------------------------------------------------------------
-VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyIndexNames(const std::list<std::string> &schemaIndexNames, 
+VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyIndexNames(const std::list<std::string> &schemaIndexNames,
   const std::list<std::string> &dbIndexNames) const {
   try {
     VerifyStatus status = VerifyStatus::UNKNOWN;
@@ -336,7 +269,7 @@ VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifyIndexNames(const std::list<
 //------------------------------------------------------------------------------
 // verifySequenceNames
 //------------------------------------------------------------------------------
-VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifySequenceNames(const std::list<std::string> &schemaSequenceNames, 
+VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifySequenceNames(const std::list<std::string> &schemaSequenceNames,
   const std::list<std::string> &dbSequenceNames) const {
   try {
     VerifyStatus status = VerifyStatus::UNKNOWN;

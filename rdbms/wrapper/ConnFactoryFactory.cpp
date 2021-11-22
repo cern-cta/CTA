@@ -15,12 +15,13 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <string>
+
 #include "common/exception/Exception.hpp"
 #include "common/make_unique.hpp"
 #include "rdbms/wrapper/ConnFactoryFactory.hpp"
 #include "rdbms/wrapper/OcciConnFactory.hpp"
 #include "rdbms/wrapper/SqliteConnFactory.hpp"
-#include "rdbms/wrapper/MysqlConnFactory.hpp"
 #include "rdbms/wrapper/PostgresConnFactory.hpp"
 
 namespace cta {
@@ -32,15 +33,13 @@ namespace wrapper {
 //------------------------------------------------------------------------------
 std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
   try {
-    switch(login.dbType) {
+    switch (login.dbType) {
     case Login::DBTYPE_IN_MEMORY:
       return cta::make_unique<SqliteConnFactory>("file::memory:?cache=shared");
     case Login::DBTYPE_ORACLE:
       return cta::make_unique<OcciConnFactory>(login.username, login.password, login.database);
     case Login::DBTYPE_SQLITE:
       return cta::make_unique<SqliteConnFactory>(login.database);
-    case Login::DBTYPE_MYSQL:
-      return cta::make_unique<MysqlConnFactory>(login.hostname, login.username, login.password, login.database, login.port);
     case Login::DBTYPE_POSTGRESQL:
       return cta::make_unique<PostgresConnFactory>(login.database);
     case Login::DBTYPE_NONE:
@@ -57,6 +56,6 @@ std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
   }
 }
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+}  // namespace wrapper
+}  // namespace rdbms
+}  // namespace cta

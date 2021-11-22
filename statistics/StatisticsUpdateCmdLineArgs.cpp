@@ -43,16 +43,16 @@ StatisticsUpdateCmdLineArgs::StatisticsUpdateCmdLineArgs(const int argc, char *c
   int opt = 0;
   while ((opt = getopt_long(argc, argv, ":h", longopts, NULL)) != -1) {
     switch (opt) {
-    case 'h':
-      help = true;
-      break;
-    case ':':  // Missing parameter
+      case 'h':
+        help = true;
+        break;
+      case ':':  // Missing parameter
       {
         exception::CommandLineNotParsed ex;
         ex.getMessage() << "The -" << static_cast<char>(optopt) << " option requires a parameter";
         throw ex;
       }
-    case '?':  // Unknown option
+      case '?':  // Unknown option
       {
         exception::CommandLineNotParsed ex;
         if (0 == optopt) {
@@ -61,7 +61,7 @@ StatisticsUpdateCmdLineArgs::StatisticsUpdateCmdLineArgs(const int argc, char *c
           ex.getMessage() << "Unknown command-line option: -" << static_cast<char>(optopt);        }
         throw ex;
       }
-    default:
+      default:
       {
         exception::CommandLineNotParsed ex;
         ex.getMessage() <<

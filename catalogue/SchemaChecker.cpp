@@ -47,11 +47,7 @@ SchemaCheckerResult SchemaChecker::displayingCompareSchema(std::ostream & stdOut
   totalResult += resIndex;
   resIndex.displayErrors(stdErr);
   stdOut <<"  "<<resIndex.statusToString(resIndex.getStatus())<<std::endl;
-  if(m_dbType == rdbms::Login::DbType::DBTYPE_MYSQL){
-    stdOut << "Checking tables and columns..." << std::endl;
-  } else {
     stdOut << "Checking tables, columns and constraints..." << std::endl;
-  }
   cta::catalogue::SchemaCheckerResult resTables = m_schemaComparer->compareTables();
   totalResult += resTables;
   resTables.displayErrors(stdErr);

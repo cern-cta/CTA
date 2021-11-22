@@ -41,10 +41,12 @@ StatisticsSaveCmdLineArgs::StatisticsSaveCmdLineArgs(const int argc, char *const
   opterr = 0;
 
   int opt = 0;
-  while ((opt = getopt_long(argc, argv, ":hc:", longopts, NULL)) != -1) {
+  while ((opt = getopt_long(argc, argv, ":hc:j", longopts, NULL)) != -1) {
     switch (opt) {
     case 'h':
       help = true;
+      break;
+    case 'j':  // This should remove in the future, but we keep it for backward compatibility
       break;
     case 'c':
       catalogueDbConfigPath = optarg;

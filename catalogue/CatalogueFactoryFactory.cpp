@@ -15,9 +15,10 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <string>
+
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "catalogue/InMemoryCatalogueFactory.hpp"
-#include "catalogue/MysqlCatalogueFactory.hpp"
 #include "catalogue/OracleCatalogueFactory.hpp"
 #include "catalogue/PostgresqlCatalogueFactory.hpp"
 #include "common/make_unique.hpp"
@@ -35,11 +36,9 @@ std::unique_ptr<CatalogueFactory> CatalogueFactoryFactory::create(
   const uint64_t nbArchiveFileListingConns,
   const uint32_t maxTriesToConnect) {
   try {
-    switch(login.dbType) {
+    switch (login.dbType) {
     case rdbms::Login::DBTYPE_IN_MEMORY:
       return cta::make_unique<InMemoryCatalogueFactory>(log, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
-    case rdbms::Login::DBTYPE_MYSQL:
-      return cta::make_unique<MysqlCatalogueFactory>(log, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
     case rdbms::Login::DBTYPE_ORACLE:
       return cta::make_unique<OracleCatalogueFactory>(log, login, nbConns, nbArchiveFileListingConns,
         maxTriesToConnect);
@@ -61,5 +60,5 @@ std::unique_ptr<CatalogueFactory> CatalogueFactoryFactory::create(
   }
 }
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

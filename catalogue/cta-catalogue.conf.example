@@ -26,10 +26,6 @@
 #
 # or:
 #
-#    mysql://username:password@hostname[:port]/database
-#
-# or:
-#
 #    oracle:username/password@database
 #
 # or:

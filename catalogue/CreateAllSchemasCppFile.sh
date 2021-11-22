@@ -41,7 +41,7 @@ die() {
   exit 1
 }
 
-databaseTypes=('oracle' 'mysql' 'sqlite' 'postgres')
+databaseTypes=('oracle' 'sqlite' 'postgres')
 schemaPostfix='_catalogue_schema.sql'
 cd $1
 tempFilePath="./temp"

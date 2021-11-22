@@ -75,7 +75,6 @@ TEST_P(cta_rdbms_ConnTest, setAutocommitMode_AUTOCOMMIT_OFF) {
     break;
   case Login::DBTYPE_IN_MEMORY:
   case Login::DBTYPE_SQLITE:
-  case Login::DBTYPE_MYSQL:
   case Login::DBTYPE_POSTGRESQL:
     ASSERT_THROW(conn.setAutocommitMode(AutocommitMode::AUTOCOMMIT_OFF), Conn::AutocommitModeNotSupported);
     break;
@@ -108,7 +107,6 @@ TEST_P(cta_rdbms_ConnTest, loan_return_loan_conn_setAutocommitMode_AUTOCOMMIT_OF
     break;
   case Login::DBTYPE_IN_MEMORY:
   case Login::DBTYPE_SQLITE:
-  case Login::DBTYPE_MYSQL:
   case Login::DBTYPE_POSTGRESQL:
     {
       auto conn = connPool.getConn();

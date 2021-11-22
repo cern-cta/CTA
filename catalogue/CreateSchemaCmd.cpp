@@ -17,7 +17,6 @@
 
 #include "catalogue/CreateSchemaCmd.hpp"
 #include "catalogue/CreateSchemaCmdLineArgs.hpp"
-#include "catalogue/MysqlCatalogueSchema.hpp"
 #include "catalogue/OracleCatalogueSchema.hpp"
 #include "catalogue/PostgresCatalogueSchema.hpp"
 #include "catalogue/SqliteCatalogueSchema.hpp"
@@ -76,12 +75,6 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   case rdbms::Login::DBTYPE_POSTGRESQL:
     {
        PostgresCatalogueSchema schema;
-       executeNonQueries(conn, schema.sql);
-    }
-    break;
-  case rdbms::Login::DBTYPE_MYSQL:
-    {
-       MysqlCatalogueSchema schema;
        executeNonQueries(conn, schema.sql);
     }
     break;

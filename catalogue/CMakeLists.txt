@@ -36,9 +36,6 @@ set (CATALOGUE_LIB_SRC_FILES
   CmdLineTool.cpp
   InMemoryCatalogue.cpp
   InMemoryCatalogueFactory.cpp
-  MysqlCatalogue.cpp
-  MysqlCatalogueFactory.cpp
-  MysqlCatalogueSchema.cpp
   OracleCatalogue.cpp
   OracleCatalogueFactory.cpp
   PostgresCatalogue.cpp
@@ -82,7 +79,7 @@ add_custom_target(create_catalogue_schema_directory ALL
     COMMAND ${CMAKE_COMMAND} -E make_directory ${catalogue_schema_directory} DEPENDS
 ${CMAKE_SOURCE_DIR}/cmake/CTAVersions.cmake)
 
-add_custom_command (OUTPUT sqlite_catalogue_schema.sql mysql_catalogue_schema.sql oracle_catalogue_schema.sql postgres_catalogue_schema.sql
+add_custom_command (OUTPUT sqlite_catalogue_schema.sql oracle_catalogue_schema.sql postgres_catalogue_schema.sql
   COMMAND cat
     ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_header.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
@@ -94,17 +91,6 @@ add_custom_command (OUTPUT sqlite_catalogue_schema.sql mysql_catalogue_schema.sq
     | sed 's/UINT64TYPE/INTEGER/g'
     | sed 's/CHECKSUM_BLOB_TYPE/BLOB\(200\)/g'
     | tee sqlite_catalogue_schema.sql ${catalogue_schema_directory}/sqlite_catalogue_schema.sql > /dev/null
-  COMMAND cat
-    ${CMAKE_CURRENT_SOURCE_DIR}/mysql_catalogue_schema_header.sql
-    ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
-    insert_cta_catalogue_version.sql
-    ${CMAKE_CURRENT_SOURCE_DIR}/mysql_catalogue_schema_trailer.sql
-    | sed 's/UINT8TYPE/TINYINT UNSIGNED/g'
-    | sed 's/UINT16TYPE/SMALLINT UNSIGNED/g'
-    | sed 's/UINT32TYPE/INT UNSIGNED/g'
-    | sed 's/UINT64TYPE/BIGINT UNSIGNED/g'
-    | sed 's/CHECKSUM_BLOB_TYPE/VARBINARY\(200\)/g'
-    | tee mysql_catalogue_schema.sql ${catalogue_schema_directory}/mysql_catalogue_schema.sql > /dev/null
   COMMAND cat
     ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_header.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
@@ -134,8 +120,6 @@ add_custom_command (OUTPUT sqlite_catalogue_schema.sql mysql_catalogue_schema.sq
     ${CMAKE_SOURCE_DIR}/cmake/CTAVersions.cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_header.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_trailer.sql
-    ${CMAKE_CURRENT_SOURCE_DIR}/mysql_catalogue_schema_header.sql
-    ${CMAKE_CURRENT_SOURCE_DIR}/mysql_catalogue_schema_trailer.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/postgres_catalogue_schema_header.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/postgres_catalogue_schema_trailer.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_header.sql
@@ -153,15 +137,6 @@ add_custom_command(OUTPUT sqlite_catalogue_schema.cpp
 add_custom_command(OUTPUT SqliteCatalogueSchema.cpp
   COMMAND sed '/CTA_SQL_SCHEMA/r sqlite_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/SqliteCatalogueSchema.before_SQL.cpp > SqliteCatalogueSchema.cpp
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/SqliteCatalogueSchema.before_SQL.cpp sqlite_catalogue_schema.cpp)
-
-# For Mysql
-add_custom_command(OUTPUT mysql_catalogue_schema.cpp
-  COMMAND sed 's/^/\ \ \"/' mysql_catalogue_schema.sql | sed 's/$$/\"/' > mysql_catalogue_schema.cpp
-  DEPENDS mysql_catalogue_schema.sql)
-
-add_custom_command(OUTPUT MysqlCatalogueSchema.cpp
-  COMMAND sed -e '/CTA_SQL_SCHEMA/r mysql_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/MysqlCatalogueSchema.before_SQL.cpp > MysqlCatalogueSchema.cpp
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/MysqlCatalogueSchema.before_SQL.cpp mysql_catalogue_schema.cpp)
 
 # For Postgres
 add_custom_command(OUTPUT postgres_catalogue_schema.cpp
@@ -220,8 +195,7 @@ add_executable(cta-catalogue-schema-create
   CreateSchemaCmdMain.cpp
   OracleCatalogueSchema.cpp
   SqliteCatalogueSchema.cpp
-  PostgresCatalogueSchema.cpp
-  MysqlCatalogueSchema.cpp)
+  PostgresCatalogueSchema.cpp)
 
 set (SCHEMA_CHECKER_LIB_SRC_FILES
   SQLiteSchemaInserter.cpp
@@ -236,7 +210,6 @@ set (SCHEMA_CHECKER_LIB_SRC_FILES
   OracleCatalogueSchema.cpp
   SqliteCatalogueSchema.cpp
   PostgresCatalogueSchema.cpp
-  MysqlCatalogueSchema.cpp
 )
 
 add_library (ctaschemachecker SHARED

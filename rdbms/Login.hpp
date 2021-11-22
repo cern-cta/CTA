@@ -28,7 +28,6 @@ namespace rdbms {
  * A set of database login details.
  */
 struct Login {
-
   /**
    * Enumeration of the supported database types.
    */
@@ -36,7 +35,6 @@ struct Login {
     DBTYPE_IN_MEMORY,
     DBTYPE_ORACLE,
     DBTYPE_SQLITE,
-    DBTYPE_MYSQL,
     DBTYPE_POSTGRESQL,
     DBTYPE_NONE
   };
@@ -47,14 +45,13 @@ struct Login {
    * @return The string representation of the specified database type.
    */
   static std::string dbTypeToString(const DbType &dbType) {
-    switch(dbType) {
-    case DBTYPE_IN_MEMORY: return "DBTYPE_IN_MEMORY";
-    case DBTYPE_ORACLE: return "DBTYPE_ORACLE";
-    case DBTYPE_SQLITE: return "DBTYPE_SQLITE";
-    case DBTYPE_MYSQL: return "DBTYPE_MYSQL";
-    case DBTYPE_POSTGRESQL: return "DBTYPE_POSTGRESQL";
-    case DBTYPE_NONE: return "DBTYPE_NONE";
-    default: return "UNKNOWN";
+    switch (dbType) {
+      case DBTYPE_IN_MEMORY: return "DBTYPE_IN_MEMORY";
+      case DBTYPE_ORACLE: return "DBTYPE_ORACLE";
+      case DBTYPE_SQLITE: return "DBTYPE_SQLITE";
+      case DBTYPE_POSTGRESQL: return "DBTYPE_POSTGRESQL";
+      case DBTYPE_NONE: return "DBTYPE_NONE";
+      default: return "UNKNOWN";
     }
   }
 
@@ -115,7 +112,7 @@ struct Login {
    * The connection string of the database (with hidden password)
    */
   std::string connectionString;
-  
+
   /**
    * Reads and parses the database login information from the specified file.
    *
@@ -154,7 +151,6 @@ struct Login {
    *   in_memory
    *   oracle:username/password@database
    *   sqlite:path
-   *   mysql://username:password@hostname:port/db_name
    *
    * @param connectionString The connection string.
    * @return The database login information.
@@ -180,11 +176,10 @@ struct Login {
   struct DbTypeAndConnectionDetails {
     std::string dbTypeStr;
     std::string connectionDetails;
-    
+
     static const std::string in_memory;
     static const std::string oracle;
     static const std::string sqlite;
-    static const std::string mysql;
     static const std::string postgresql;
   };
 
@@ -218,13 +213,6 @@ struct Login {
   static Login parseSqlite(const std::string &connectionDetails);
 
   /**
-   * Parses the specified connection details.
-   *
-   * @param connectionDetails The database connection details.
-   */
-  static Login parseMySql(const std::string &connectionDetails);
-
-  /**
    * Parses the specified connection details for the Postgres database.
    * The postgres selection type in the config file is "postgres".
    *
@@ -248,62 +236,52 @@ struct Login {
    * @param connectionDetails The database connection details.
    */
   static Login parsePostgresql(const std::string &connectionDetails);
-  
+
   static const std::list<std::string> dbTypeStr;
-  
+
   /**
    * Human readable description of the format of the database
    * login/configuration file.
    */
   static const char *s_fileFormat;
-  
+
   /**
    * String displayed instead of the actual password.
    */
   static const std::string s_hiddenPassword;
-  
-private:
+
+ private:
   /**
    * Sets the connection string of an in_memory database
    */
   void setInMemoryConnectionString();
-  
-  /**
-   * Sets the mysql connection string of a mysql database
-   * @param username
-   * @param password
-   * @param host
-   * @param port
-   * @param database
-   */
-  void setMySqlConnectionString(const std::string & username, const std::string & password, const std::string & host, const std::string & port, const std::string & database);
-  
+
   /**
    * Sets the Oracle connection string of an oracle database
    * @param user
    * @param db
    */
   void setOracleConnectionString(const std::string &user, const std::string &db);
-  
+
   /**
    * Sets the connection string of a Postgresql database
    * @param connectionDetails
    */
   void setPostgresqlConnectionString(const std::string &connectionDetails);
-  
+
   /**
    * Sets the connection string of a sqlite database
    * @param filename
    */
   void setSqliteConnectionString(const std::string & filename);
-  
+
   /**
    * Returns true if the Postgresql connectionDetails contains a password, false otherwise
    * @param connectionDetails the connectionDetails retrieved from the configuration file
    * @return  true if the Postgresql connectionDetails contains a password, false otherwise
    */
   bool postgresqlHasPassword(const std::string & connectionDetails);
-}; // class Login
+};  // class Login
 
-} // namespace rdbms
-} // namespace cta
+}  // namespace rdbms
+}  // namespace cta

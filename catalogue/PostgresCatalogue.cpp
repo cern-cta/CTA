@@ -383,10 +383,10 @@ void PostgresCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer
     // We have a mix of files and items. Only files will be recorded, but items
     // allow checking fSeq coherency.
     // determine the number of files
-    size_t filesCount=std::count_if(events.cbegin(), events.cend(), 
+    size_t filesCount=std::count_if(events.cbegin(), events.cend(),
         [](const TapeItemWrittenPointer &e) -> bool {return typeid(*e)==typeid(TapeFileWritten);});
     TapeFileBatch tapeFileBatch(filesCount);
-    
+
     std::set<TapeFileWritten> fileEvents;
 
     for (const auto &eventP: events) {
@@ -397,7 +397,7 @@ void PostgresCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer
       if (event.vid != firstEvent.vid) {
         throw exception::Exception(std::string("VID mismatch: expected=") + firstEvent.vid + " actual=" + event.vid);
       }
-      
+
       if (expectedFSeq != event.fSeq) {
         exception::TapeFseqMismatch ex;
         ex.getMessage() << "FSeq mismatch for tape " << firstEvent.vid << ": expected=" << expectedFSeq << " actual=" <<
@@ -405,15 +405,15 @@ void PostgresCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer
         throw ex;
       }
       expectedFSeq++;
-      
+
       try {
         // If this is a file (as opposed to a placeholder), do the full processing.
         const auto &fileEvent=dynamic_cast<const TapeFileWritten &>(event);
 
         checkTapeFileWrittenFieldsAreSet(__FUNCTION__, fileEvent);
-        
+
         totalLogicalBytesWritten += fileEvent.size;
-        
+
         fileEvents.insert(fileEvent);
       } catch (std::bad_cast&) {}
     }
@@ -502,7 +502,7 @@ void PostgresCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer
       "-- :COPY_NB,"                                                                 "\n"
       "-- :CREATION_TIME,"                                                           "\n"
       "-- :ARCHIVE_FILE_ID;"                                                         "\n";
-    
+
     auto stmt = conn.createStmt(sql);
     rdbms::wrapper::PostgresStmt &postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt &>(stmt.getStmt());
     postgresStmt.setColumn(tapeFileBatch.vid);
@@ -512,30 +512,30 @@ void PostgresCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer
     postgresStmt.setColumn(tapeFileBatch.copyNb);
     postgresStmt.setColumn(tapeFileBatch.creationTime);
     postgresStmt.setColumn(tapeFileBatch.archiveFileId);
-    
+
     postgresStmt.executeCopyInsert(tapeFileBatch.nbRows);
-    
+
     auto recycledFiles = insertOldCopiesOfFilesIfAnyOnFileRecycleLog(conn);
-    
+
     {
       //Insert the tapefiles from the TEMP_TAPE_FILE_INSERTION_BATCH
-      const char * const insertTapeFileSql = 
+      const char * const insertTapeFileSql =
       "INSERT INTO TAPE_FILE (VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES,"            "\n"
       "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID) "                                     "\n"
       "SELECT VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES,"                            "\n"
       "COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID FROM TEMP_TAPE_FILE_INSERTION_BATCH;"  "\n";
       conn.executeNonQuery(insertTapeFileSql);
     }
-    
+
     for(auto & recycledFile: recycledFiles){
-      const char * const deleteTapeFileSql = 
+      const char * const deleteTapeFileSql =
       "DELETE FROM TAPE_FILE WHERE TAPE_FILE.VID = :VID AND TAPE_FILE.FSEQ = :FSEQ";
       auto deleteTapeFileStmt = conn.createStmt(deleteTapeFileSql);
       deleteTapeFileStmt.bindString(":VID",recycledFile.vid);
       deleteTapeFileStmt.bindUint64(":FSEQ",recycledFile.fSeq);
       deleteTapeFileStmt.executeNonQuery();
     }
-    
+
     autoRollback.cancel();
     conn.commit();
   } catch(exception::UserError &) {
@@ -644,8 +644,8 @@ void PostgresCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn,
         "A.DISK_FILE_UID,"
         "A.DISK_FILE_GID,"
         "A.SIZE_IN_BYTES,"
-        "A.CHECKSUM_BLOB," 
-        "A.CHECKSUM_ADLER32," 
+        "A.CHECKSUM_BLOB,"
+        "A.CHECKSUM_ADLER32,"
         "S.STORAGE_CLASS_ID,"
         "A.CREATION_TIME,"
         "A.RECONCILIATION_TIME "
@@ -935,14 +935,14 @@ void PostgresCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::strin
       stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt.executeNonQuery();
     }
-    
+
     const auto deleteFromTapeFileTime = t.secs(utils::Timer::resetCounter);
-    
+
     for(auto &vidToSetDirty: vidsToSetDirty){
       //We deleted the TAPE_FILE so the tapes containing them should be set as dirty
       setTapeDirty(conn,vidToSetDirty);
     }
-    
+
     const auto setTapeDirtyTime = t.secs(utils::Timer::resetCounter);
 
     {
@@ -1038,7 +1038,7 @@ void PostgresCatalogue::copyArchiveFileToFileRecyleLogAndDelete(rdbms::Conn & co
     spc.add("diskFilePath",request.diskFilePath);
     spc.add("diskInstance",request.diskInstance);
     tl.addToLog(spc);
-    lc.log(log::INFO,"In MysqlCatalogue::copyArchiveFileToRecycleBinAndDelete: ArchiveFile moved to the recycle-bin.");
+    lc.log(log::INFO,"In PostgresCatalogue::copyArchiveFileToRecycleBinAndDelete: ArchiveFile moved to the recycle-bin.");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -1077,7 +1077,7 @@ void PostgresCatalogue::deleteTapeFilesAndArchiveFileFromRecycleBin(rdbms::Conn&
 //------------------------------------------------------------------------------
 // copyTapeFileToFileRecyleLogAndDelete
 //------------------------------------------------------------------------------
-void PostgresCatalogue::copyTapeFileToFileRecyleLogAndDelete(rdbms::Conn & conn, const cta::common::dataStructures::ArchiveFile &file, 
+void PostgresCatalogue::copyTapeFileToFileRecyleLogAndDelete(rdbms::Conn & conn, const cta::common::dataStructures::ArchiveFile &file,
                                                             const std::string &reason, log::LogContext & lc) {
   try {
     utils::Timer t;
@@ -1100,19 +1100,19 @@ void PostgresCatalogue::copyTapeFileToFileRecyleLogAndDelete(rdbms::Conn & conn,
     spc.add("diskInstance", file.diskInstance);
     tl.addToLog(spc);
     lc.log(log::INFO,"In PostgresCatalogue::copyArchiveFileToRecycleBinAndDelete: ArchiveFile moved to the recycle-bin.");
-    
+
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
-  } 
+  }
 }
 
 //------------------------------------------------------------------------------
 // restoreEntryInRecycleLog
 //------------------------------------------------------------------------------
-void PostgresCatalogue::restoreEntryInRecycleLog(rdbms::Conn & conn, FileRecycleLogItor &fileRecycleLogItor, 
+void PostgresCatalogue::restoreEntryInRecycleLog(rdbms::Conn & conn, FileRecycleLogItor &fileRecycleLogItor,
   const std::string &newFid, log::LogContext & lc) {
   try {
     utils::Timer t;
@@ -1121,7 +1121,7 @@ void PostgresCatalogue::restoreEntryInRecycleLog(rdbms::Conn & conn, FileRecycle
     if (!fileRecycleLogItor.hasMore()) {
       throw cta::exception::UserError("No file in the recycle bin matches the parameters passed");
     }
-    auto fileRecycleLog = fileRecycleLogItor.next();  
+    auto fileRecycleLog = fileRecycleLogItor.next();
     if (fileRecycleLogItor.hasMore()) {
       //stop restoring more than one file at once
       throw cta::exception::UserError("More than one recycle bin file matches the parameters passed");
@@ -1136,7 +1136,7 @@ void PostgresCatalogue::restoreEntryInRecycleLog(rdbms::Conn & conn, FileRecycle
       if (archiveFilePtr->tapeFiles.find(fileRecycleLog.copyNb) != archiveFilePtr->tapeFiles.end()) {
         //copy with same copy_nb exists, cannot restore
         UserSpecifiedExistingDeletedFileCopy ex;
-        ex.getMessage() << "Cannot restore file copy with archiveFileId " << std::to_string(fileRecycleLog.archiveFileId) 
+        ex.getMessage() << "Cannot restore file copy with archiveFileId " << std::to_string(fileRecycleLog.archiveFileId)
         << " and copy_nb " << std::to_string(fileRecycleLog.copyNb) << " because a tapefile with same archiveFileId and copy_nb already exists";
         throw ex;
       }
@@ -1174,10 +1174,10 @@ void PostgresCatalogue::restoreFileCopyInRecycleLog(rdbms::Conn & conn, const co
 
     insertTapeFile(conn, tapeFile, fileRecycleLog.archiveFileId);
     tl.insertAndReset("insertTapeFileTime",t);
-    
+
     deleteTapeFileCopyFromRecycleBin(conn, fileRecycleLog);
     tl.insertAndReset("deleteTapeFileCopyFromRecycleBinTime",t);
-    
+
     log::ScopedParamContainer spc(lc);
     spc.add("vid", tapeFile.vid);
     spc.add("archiveFileId", fileRecycleLog.archiveFileId);

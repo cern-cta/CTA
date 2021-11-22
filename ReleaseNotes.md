@@ -4,9 +4,10 @@
 
 ### Features
 - cta/CTA#607 - Add client host and username in cta-frontend logs
-- cta/CTA#928 - Add youngest request age to cta-admin sq
 - cta/CTA#777 - Minimize mounts for dual copy tape pool recalls
+- cta/CTA#928 - Add youngest request age to cta-admin sq
 - cta/CTA#1020 - cta-restore-deleted-files command for restoring deleted files
+- cta/CTA#1057 - Remove support for MySQL
 - cta/CTA#1074 - Improve error reporting when retrieving archive
 
 ### Bug fixes

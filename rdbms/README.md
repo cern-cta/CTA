@@ -3,10 +3,9 @@
 The `rdbms` layer of CTA wraps the APIs of different relational database clients
 in order to hide their syntactic differences from the rest of the CTA code base.
 
-The `rdbms` library currently wraps the client APIs of the following 4 different
+The `rdbms` library currently wraps the client APIs of the following 3 different
 database management systems:
 
-* MySQL
 * Oracle
 * PostgreSQL
 * SQLite
@@ -65,4 +64,3 @@ auto conn = connPool.getConn();
 The following class diagram shows the most important design details of the `rdbms` layer:
 
 ![cta_rdbms_class_diagram.svg](cta_rdbms_class_diagram.svg)
-

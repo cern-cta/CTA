@@ -124,20 +124,20 @@ void SqliteCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string 
       stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt.executeNonQuery();
     }
-    
+
     const auto deleteFromTapeFileTime = t.secs(utils::Timer::resetCounter);
-    
+
     std::set<std::string> vidsToSetDirty;
     //We will insert the vids to set dirty in a set so that
-    //we limit the calls to setTapeDirty to the number of tapes that contained the deleted tape files 
+    //we limit the calls to setTapeDirty to the number of tapes that contained the deleted tape files
     for(auto &tapeFile: archiveFile->tapeFiles){
       vidsToSetDirty.insert(tapeFile.vid);
     }
-    
+
     for(auto &vidToSetDirty: vidsToSetDirty){
        setTapeDirty(conn,vidToSetDirty);
     }
-    
+
     const auto setTapeDirtyTime = t.secs(utils::Timer::resetCounter);
 
     {
@@ -493,11 +493,11 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
         throw ex;
       }
       expectedFSeq++;
-      
-      
+
+
       try {
         // If this is a file (as opposed to a placeholder), do the full processing.
-        const auto &fileEvent=dynamic_cast<const TapeFileWritten &>(event); 
+        const auto &fileEvent=dynamic_cast<const TapeFileWritten &>(event);
         totalLogicalBytesWritten += fileEvent.size;
       } catch (std::bad_cast&) {}
     }
@@ -510,7 +510,7 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
     for(const auto &event : events) {
       try {
         // If this is a file (as opposed to a placeholder), do the full processing.
-        const auto &fileEvent=dynamic_cast<const TapeFileWritten &>(*event); 
+        const auto &fileEvent=dynamic_cast<const TapeFileWritten &>(*event);
         fileWrittenToTape(conn, fileEvent);
       } catch (std::bad_cast&) {}
     }
@@ -614,7 +614,7 @@ void SqliteCatalogue::copyArchiveFileToFileRecyleLogAndDelete(rdbms::Conn & conn
     spc.add("diskFilePath",request.diskFilePath);
     spc.add("diskInstance",request.diskInstance);
     tl.addToLog(spc);
-    lc.log(log::INFO,"In MysqlCatalogue::copyArchiveFileToRecycleBinAndDelete: ArchiveFile moved to the recycle-bin.");
+    lc.log(log::INFO,"In SqliteCatalogue::copyArchiveFileToRecycleBinAndDelete: ArchiveFile moved to the recycle-bin.");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -653,7 +653,7 @@ void SqliteCatalogue::deleteTapeFilesAndArchiveFileFromRecycleBin(rdbms::Conn& c
 //------------------------------------------------------------------------------
 // copyTapeFileToFileRecyleLogAndDelete
 //------------------------------------------------------------------------------
-void SqliteCatalogue::copyTapeFileToFileRecyleLogAndDelete(rdbms::Conn & conn, const cta::common::dataStructures::ArchiveFile &file, 
+void SqliteCatalogue::copyTapeFileToFileRecyleLogAndDelete(rdbms::Conn & conn, const cta::common::dataStructures::ArchiveFile &file,
                                                           const std::string &reason, log::LogContext & lc) {
   try {
     utils::Timer t;
@@ -676,13 +676,13 @@ void SqliteCatalogue::copyTapeFileToFileRecyleLogAndDelete(rdbms::Conn & conn, c
     spc.add("diskInstance", file.diskInstance);
     tl.addToLog(spc);
     lc.log(log::INFO,"In SqliteCatalogue::copyArchiveFileToRecycleBinAndDelete: ArchiveFile moved to the recycle-bin.");
-    
+
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
-  } 
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -703,7 +703,7 @@ void SqliteCatalogue::restoreEntryInRecycleLog(rdbms::Conn & conn, FileRecycleLo
     }
 
     conn.executeNonQuery("BEGIN TRANSACTION");
-    
+
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFilePtr = getArchiveFileById(conn, fileRecycleLog.archiveFileId);
     if (!archiveFilePtr) {
       restoreArchiveFileInRecycleLog(conn, fileRecycleLog, newFid, lc);
@@ -711,7 +711,7 @@ void SqliteCatalogue::restoreEntryInRecycleLog(rdbms::Conn & conn, FileRecycleLo
       if (archiveFilePtr->tapeFiles.find(fileRecycleLog.copyNb) != archiveFilePtr->tapeFiles.end()) {
         //copy with same copy_nb exists, cannot restore
         UserSpecifiedExistingDeletedFileCopy ex;
-        ex.getMessage() << "Cannot restore file copy with archiveFileId " << std::to_string(fileRecycleLog.archiveFileId) 
+        ex.getMessage() << "Cannot restore file copy with archiveFileId " << std::to_string(fileRecycleLog.archiveFileId)
         << " and copy_nb " << std::to_string(fileRecycleLog.copyNb) << " because a tapefile with same archiveFileId and copy_nb already exists";
         throw ex;
       }
@@ -749,10 +749,10 @@ void SqliteCatalogue::restoreFileCopyInRecycleLog(rdbms::Conn &conn, const commo
 
     insertTapeFile(conn, tapeFile, fileRecycleLog.archiveFileId);
     tl.insertAndReset("insertTapeFileTime",t);
-    
+
     deleteTapeFileCopyFromRecycleBin(conn, fileRecycleLog);
     tl.insertAndReset("deleteTapeFileCopyFromRecycleBinTime",t);
-    
+
     log::ScopedParamContainer spc(lc);
     spc.add("vid", tapeFile.vid);
     spc.add("archiveFileId", fileRecycleLog.archiveFileId);

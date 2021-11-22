@@ -92,12 +92,6 @@ std::string cta_rdbms_StmtTest::getCreateStmtTestTableSql() {
       utils::searchAndReplace(sql, "UINT32TYPE", "INTEGER");
       utils::searchAndReplace(sql, "UINT64TYPE", "INTEGER");
       break;
-    case Login::DBTYPE_MYSQL:
-      utils::searchAndReplace(sql, "UINT8TYPE", "TINYINT UNSIGNED");
-      utils::searchAndReplace(sql, "UINT16TYPE", "SMALLINT UNSIGNED");
-      utils::searchAndReplace(sql, "UINT32TYPE", "INT UNSIGNED");
-      utils::searchAndReplace(sql, "UINT64TYPE", "BIGINT UNSIGNED");
-      break;
     case Login::DBTYPE_POSTGRESQL:
       utils::searchAndReplace(sql, "UINT8TYPE", "NUMERIC(3, 0)");
       utils::searchAndReplace(sql, "UINT16TYPE", "NUMERIC(5, 0)");
