@@ -1099,7 +1099,6 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
     // Get summary data
     uint32_t existingMountsDistinctTypesForThisTapepool = 0;
     uint32_t existingMountsBasicTypeForThisVo = 0;
-    uint32_t activityMounts = 0;
     common::dataStructures::MountType basicTypeOfThisPotentialMount = common::dataStructures::getMountBasicType(m->type);
     common::dataStructures::VirtualOrganization voOfThisPotentialMount = tapepoolVoMap.at(m->tapePool);
     bool sleepingMount = false;
@@ -1113,13 +1112,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
           .at(VirtualOrganizationMountPair(voOfThisPotentialMount.name, basicTypeOfThisPotentialMount))
              .totalMounts;
     } catch (std::out_of_range &) {}
-    if (m->activityNameAndWeightedMountCount) {
-      try {
-        activityMounts = existingMountsDistinctTypeSummaryPerTapepool
-          .at(TapePoolMountPair(m->tapePool, m->type))
-             .activityMounts.at(m->activityNameAndWeightedMountCount.value().activity).value;
-      } catch (std::out_of_range &) {}
-    }
+
     uint32_t effectiveExistingMountsForThisTapepool = 0;
     //If we have an archive mount, we don't want
     if (basicTypeOfThisPotentialMount == common::dataStructures::MountType::ArchiveAllTypes) effectiveExistingMountsForThisTapepool = existingMountsDistinctTypesForThisTapepool;
@@ -1178,16 +1171,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       // populate the mount with a weight
       //m->ratioOfMountQuotaUsed = 1.0L * existingMountsPerTapepool / m->maxDrivesAllowed;
       m->ratioOfMountQuotaUsed = 0.0L;
-      if (m->activityNameAndWeightedMountCount) {
-        m->activityNameAndWeightedMountCount.value().mountCount = activityMounts;
-        // Protect against division by zero
-        if (m->activityNameAndWeightedMountCount.value().weight) {
-          m->activityNameAndWeightedMountCount.value().weightedMountCount =
-              1.0 * activityMounts / m->activityNameAndWeightedMountCount.value().weight;
-        } else {
-          m->activityNameAndWeightedMountCount.value().weightedMountCount = std::numeric_limits<double>::max();
-        }
-      }
+
       log::ScopedParamContainer params(lc);
       params.add("tapePool", m->tapePool);
       params.add("vo",voOfThisPotentialMount.name);
@@ -1416,11 +1400,8 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
             .add("mountType", common::dataStructures::toString(m->type))
             .add("existingMountsDistinctTypeForThisTapepool", existingMountsDistinctTypeForThisTapepool)
             .add("existingMountsBasicTypeForThisVo", existingMountsBasicTypeForThisVo);
-      if (m->activityNameAndWeightedMountCount) {
-        params.add("activity", m->activityNameAndWeightedMountCount.value().activity)
-              .add("activityMounts", m->activityNameAndWeightedMountCount.value().weightedMountCount)
-              .add("ActivityMountCount", m->activityNameAndWeightedMountCount.value().mountCount)
-              .add("ActivityWeight", m->activityNameAndWeightedMountCount.value().weight);
+      if (m->activity) {
+        params.add("activity", m->activity.value());
       }
       params.add("bytesQueued", m->bytesQueued)
             .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
@@ -1605,12 +1586,6 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
       try {
         // create the mount, and populate its DB side.
         decisionTime += timer.secs(utils::Timer::resetCounter);
-        optional<common::dataStructures::DriveState::ActivityAndWeight> actvityAndWeight;
-        if (m->activityNameAndWeightedMountCount) {
-          actvityAndWeight = common::dataStructures::DriveState::ActivityAndWeight{
-            m->activityNameAndWeightedMountCount.value().activity,
-            m->activityNameAndWeightedMountCount.value().weight };
-        }
         std::unique_ptr<RetrieveMount> internalRet(new RetrieveMount(m_catalogue));
         internalRet->m_dbMount.reset(mountInfo->createRetrieveMount(m->vid,
             m->tapePool,
@@ -1621,7 +1596,7 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
             m->mediaType,
             m->vendor,
             m->capacityInBytes,
-            time(NULL), actvityAndWeight).release());
+            time(NULL), m->activity).release());
         mountCreationTime += timer.secs(utils::Timer::resetCounter);
         internalRet->m_sessionRunning = true;
         internalRet->m_diskRunning = true;
@@ -1646,11 +1621,8 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
               .add("mountType", common::dataStructures::toString(m->type))
               .add("existingMountsDistinctTypeForThisTapepool", existingMountsDistinctTypeForThisTapepool)
               .add("existingMountsBasicTypeForThisVo",existingMountsBasicTypeForThisVo);
-        if (m->activityNameAndWeightedMountCount) {
-          params.add("activity", m->activityNameAndWeightedMountCount.value().activity)
-                .add("activityMounts", m->activityNameAndWeightedMountCount.value().weightedMountCount)
-                .add("ActivityMountCount", m->activityNameAndWeightedMountCount.value().mountCount)
-                .add("ActivityWeight", m->activityNameAndWeightedMountCount.value().weight);
+        if (m->activity) {
+          params.add("activity", m->activity.value());
         }
         params.add("bytesQueued", m->bytesQueued)
               .add("bytesQueued", m->bytesQueued)

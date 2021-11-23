@@ -108,7 +108,7 @@ public:
     uint64_t fSeq = 0;
     common::dataStructures::MountPolicy mountPolicy;
     cta::common::dataStructures::JobQueueType jobQueueType;
-    optional<RetrieveActivityDescription> activityDescription;
+    optional<std::string> activity;
     optional<std::string> diskSystemName;
   };
 

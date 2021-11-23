@@ -205,15 +205,8 @@ queueForFailure:;
     std::list<RetrieveQueue::JobToAdd> jta;
     jta.push_back({activeCopyNb, activeFseq, getAddressIfSet(), m_payload.archivefile().filesize(),
       mp, (signed)m_payload.schedulerrequest().entrylog().time(), nullopt, nullopt});
-    if (m_payload.has_activity_weight()) {
-      jta.back().activityDescription = RetrieveActivityDescription{
-        m_payload.activity_weight().priority(),
-        m_payload.activity_weight().disk_instance_name(),
-        m_payload.activity_weight().activity(),
-        m_payload.activity_weight().creation_time(),
-        m_payload.activity_weight().weight(),
-        0
-      };
+    if (m_payload.has_activity()) {
+      jta.back().activity = m_payload.activity();
     }
     rq.addJobsIfNecessaryAndCommit(jta, agentReference, lc);
     auto queueUpdateTime = t.secs(utils::Timer::resetCounter);
@@ -275,15 +268,8 @@ queueForTransfer:;
     std::list<RetrieveQueue::JobToAdd> jta;
     jta.push_back({bestTapeFile->copynb(), bestTapeFile->fseq(), getAddressIfSet(), m_payload.archivefile().filesize(),
       mp, (signed)m_payload.schedulerrequest().entrylog().time(), getActivity(), getDiskSystemName()});
-    if (m_payload.has_activity_weight()) {
-      jta.back().activityDescription = RetrieveActivityDescription{
-        m_payload.activity_weight().priority(),
-        m_payload.activity_weight().disk_instance_name(),
-        m_payload.activity_weight().activity(),
-        m_payload.activity_weight().creation_time(),
-        m_payload.activity_weight().weight(),
-        0
-      };
+    if (m_payload.has_activity()) {
+      jta.back().activity = m_payload.activity();
     }
     rq.addJobsIfNecessaryAndCommit(jta, agentReference, lc);
     auto jobsSummary=rq.getJobsSummary();
@@ -549,31 +535,18 @@ void RetrieveRequest::setActivityIfNeeded(const cta::common::dataStructures::Ret
     const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria) {
   checkPayloadWritable();
   if (retrieveRequest.activity) {
-    auto * activity = m_payload.mutable_activity_weight();
-    activity->set_priority(criteria.mountPolicy.retrievePriority);
-    activity->set_activity(retrieveRequest.activity.value());
-    activity->set_disk_instance_name(criteria.activitiesFairShareWeight.diskInstance);
-    activity->set_weight(criteria.activitiesFairShareWeight.activitiesWeights.at(retrieveRequest.activity.value()));
-    activity->set_creation_time(retrieveRequest.creationLog.time);
+    m_payload.set_activity(retrieveRequest.activity.value());
   }
 }
 
 //------------------------------------------------------------------------------
 // RetrieveRequest::getActivity()
 //------------------------------------------------------------------------------
-optional<RetrieveActivityDescription> RetrieveRequest::getActivity() {
+optional<std::string> RetrieveRequest::getActivity() {
   checkPayloadReadable();
-  optional<RetrieveActivityDescription> ret;
-  if (m_payload.has_activity_weight()) {
-    RetrieveActivityDescription activity;
-    ret = RetrieveActivityDescription{
-        m_payload.activity_weight().priority(),
-        m_payload.activity_weight().disk_instance_name(),
-        m_payload.activity_weight().activity(),
-        m_payload.activity_weight().creation_time(),
-        m_payload.activity_weight().weight(),
-        0
-      };
+  optional<std::string> ret;
+  if (m_payload.has_activity()) {
+    ret = m_payload.activity();
   }
   return ret;
 }
@@ -968,12 +941,8 @@ auto RetrieveRequest::asyncUpdateJobOwner(uint32_t copyNumber, const std::string
             af.deserialize(payload.archivefile());
             retRef.m_archiveFile = af;
             retRef.m_jobStatus = j.status();
-            if (payload.has_activity_weight()) {
-              retRef.m_retrieveActivityDescription = RetrieveActivityDescription{
-                payload.activity_weight().priority(), payload.activity_weight().disk_instance_name(),
-                payload.activity_weight().activity(), payload.activity_weight().creation_time(),
-                payload.activity_weight().weight(), 0
-              };
+            if (payload.has_activity()) {
+              retRef.m_activity = payload.activity();
             }
             if (payload.has_disk_system_name())
               retRef.m_diskSystemName = payload.disk_system_name();
@@ -1032,10 +1001,10 @@ const RetrieveRequest::RepackInfo& RetrieveRequest::AsyncJobOwnerUpdater::getRep
 }
 
 //------------------------------------------------------------------------------
-// RetrieveRequest::AsyncJobOwnerUpdater::getRetrieveActivityDescription()
+// RetrieveRequest::AsyncJobOwnerUpdater::getActivity()
 //------------------------------------------------------------------------------
-const optional<RetrieveActivityDescription>& RetrieveRequest::AsyncJobOwnerUpdater::getRetrieveActivityDescription() {
-  return m_retrieveActivityDescription;
+const optional<std::string>& RetrieveRequest::AsyncJobOwnerUpdater::getActivity() {
+  return m_activity;
 }
 
 //------------------------------------------------------------------------------

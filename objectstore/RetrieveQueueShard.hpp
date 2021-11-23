@@ -52,7 +52,7 @@ public:
     time_t startTime;
     uint64_t fSeq;
     std::string mountPolicyName;
-    optional<RetrieveQueue::JobDump::ActivityDescription> activityDescription;
+    optional<std::string> activity;
     optional<std::string> diskSystemName;
   };
   std::list<JobInfo> dumpJobs();

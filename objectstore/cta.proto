@@ -447,7 +447,8 @@ message RetrieveActivityWeight {
 message RetrieveRequest {
   required SchedulerRetrieveRequest schedulerrequest = 9150;
   required MountPolicy mountpolicy = 9151;
-  optional RetrieveActivityWeight activity_weight = 9160;
+  optional RetrieveActivityWeight activity_weight = 9160 [deprecated=true]; // Deprecated for cta/CTA#1077
+  optional string activity = 9164;
   required ArchiveFile archivefile = 9152;
   required uint32 activecopynb = 9153;
   repeated RetrieveJob jobs = 9154;
@@ -535,7 +536,8 @@ message RetrieveQueueShard {
 }
 
 message RetrieveActivityCountPair {
-  required RetrieveActivityWeight retrieve_activity_weight = 10600;
+  optional RetrieveActivityWeight retrieve_activity_weight = 10600 [deprecated=true]; // Marked as deprecated and optional for cta/CTA#1077
+  required string activity = 10602;
   required uint64 count = 10601;
 }
 

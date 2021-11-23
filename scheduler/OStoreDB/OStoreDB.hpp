@@ -117,7 +117,7 @@ class OStoreDB: public SchedulerDatabase {
       const std::string& vendor,
       const uint64_t capacityInBytes,
       time_t startTime,
-      const optional<common::dataStructures::DriveState::ActivityAndWeight> &activityAndWeight) override;
+      const optional<std::string> &activity) override;
     virtual ~TapeMountDecisionInfo();
 
    private:
@@ -146,7 +146,7 @@ class OStoreDB: public SchedulerDatabase {
       const std::string& vendor,
       const uint64_t capacityInBytes,
       time_t startTime,
-      const optional<common::dataStructures::DriveState::ActivityAndWeight> &activityAndWeight) override;
+      const optional<std::string> &activity) override;
     virtual ~TapeMountDecisionInfoNoLock();
   };
 
@@ -325,7 +325,7 @@ class OStoreDB: public SchedulerDatabase {
     std::unique_ptr<objectstore::RetrieveRequest::AsyncJobDeleter> m_jobDelete;
     std::unique_ptr<objectstore::RetrieveRequest::AsyncJobSucceedForRepackReporter> m_jobSucceedForRepackReporter;
     objectstore::RetrieveRequest::RepackInfo m_repackInfo;
-    optional<objectstore::RetrieveActivityDescription> m_activityDescription;
+    optional<std::string> m_activity;
     optional<std::string> m_diskSystemName;
   };
   static RetrieveJob * castFromSchedDBJob(SchedulerDatabase::RetrieveJob * job);

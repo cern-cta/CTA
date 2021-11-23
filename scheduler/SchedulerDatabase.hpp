@@ -655,15 +655,8 @@ class SchedulerDatabase {
     std::string diskSystemSleptFor;/**< Name of (one of) the disk system(s) that could was too full to start more retrieves. */
     uint64_t sleepTime = 0;       /**< Length of time to be slept for for this disk system. */
     uint32_t mountCount;          /**< The number of mounts for this tape pool (which is the current "chargeable" entity for quotas. */
-    struct ActivityNameAndWeightedMountCount {
-      std::string activity;
-      double weight = 0.0;
-      uint32_t mountCount = 0;
-      double weightedMountCount = 0.0;
-    };                            /**< Struct describing the activity if we have one for this mount. */
 
-    optional<ActivityNameAndWeightedMountCount> activityNameAndWeightedMountCount;
-                                  /**< Description if the activity for this potential mount. */
+    optional<std::string> activity; /**Activity if we have on for this potential mount */
 
     optional<std::list<std::string>> mountPolicyNames; /**< Names of mount policies for the mount*/
 
@@ -681,16 +674,6 @@ class SchedulerDatabase {
         return true;
       if (ratioOfMountQuotaUsed < other.ratioOfMountQuotaUsed)
         return false;
-      // If we have activities (and the mounts are for the same tape pool) we can compare them.
-      // If not, it does not matter too much: one mount will go, increasing its ratio, and next time it will
-      // the tapepool. So for different tape pools, we do not order. Likewise, both mounts should have an activity to
-      // be comparable
-      if (activityNameAndWeightedMountCount && other.activityNameAndWeightedMountCount && tapePool == other.tapePool) {
-        if (activityNameAndWeightedMountCount.value().weightedMountCount > other.activityNameAndWeightedMountCount.value().weightedMountCount)
-          return true;
-        if (activityNameAndWeightedMountCount.value().weightedMountCount < other.activityNameAndWeightedMountCount.value().weightedMountCount)
-          return false;
-      }
       //The smaller the oldest job start time is, the bigger the age is, hence the inverted comparison
       if(oldestJobStartTime > other.oldestJobStartTime)
         return true;
@@ -775,7 +758,7 @@ class SchedulerDatabase {
       const std::string& vo, const std::string& mediaType,
       const std::string& vendor,
       const uint64_t capacityInBytes,
-      time_t startTime, const optional<common::dataStructures::DriveState::ActivityAndWeight> &) = 0;
+      time_t startTime, const optional<std::string> &activity) = 0;
     /** Destructor: releases the global lock if not already done */
     virtual ~TapeMountDecisionInfo() {};
   };

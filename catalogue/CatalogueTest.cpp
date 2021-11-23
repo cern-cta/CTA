@@ -247,15 +247,13 @@ namespace {
     tapeDrive.ctaVersion = "v1.0.0";
     tapeDrive.currentPriority = 3;
     tapeDrive.currentActivity = "Activity1";
-    tapeDrive.currentActivityWeight = "0.1";
     tapeDrive.currentTapePool = "tape_pool_0";
     tapeDrive.nextMountType = cta::common::dataStructures::MountType::Retrieve;
     tapeDrive.nextVid = "VIDTWO";
     tapeDrive.nextTapePool = "tape_pool_1";
     tapeDrive.nextPriority = 1;
     tapeDrive.nextActivity = "Activity2";
-    tapeDrive.nextActivityWeight = "0.5";
-
+    
     tapeDrive.devFileName = "fileName";
     tapeDrive.rawLibrarySlot = "librarySlot1";
 
@@ -14933,87 +14931,6 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
 
   m_catalogue->setTapeFull(m_admin, m_tape1.vid, true);
   ASSERT_THROW(m_catalogue->reclaimTape(m_admin, m_tape1.vid, dummyLc), exception::UserError);
-}
-
-TEST_P(cta_catalogue_CatalogueTest, createModifyDeleteActivityWeight) {
-  using namespace cta;
-
-  const std::string diskInstanceName = "ExperimentEOS";
-  const std::string activity1 = "Reco";
-  const std::string activity2 = "Grid";
-  const double weight1 = 0.654;
-  const double weight2 = 0.456;
-  const std::string comment = "No comment.";
-
-  m_catalogue->createActivitiesFairShareWeight(m_admin, diskInstanceName, activity1, weight1, comment);
-
-  const auto activitiesList = m_catalogue->getActivitiesFairShareWeights();
-
-  ASSERT_EQ(1, activitiesList.size());
-  ASSERT_EQ(1, activitiesList.front().activitiesWeights.size());
-  ASSERT_NO_THROW(activitiesList.front().activitiesWeights.at(activity1));
-  ASSERT_EQ(weight1, activitiesList.front().activitiesWeights.at(activity1));
-
-  m_catalogue->createActivitiesFairShareWeight(m_admin, diskInstanceName, activity2, weight2, comment);
-
-  const auto activitiesList2 = m_catalogue->getActivitiesFairShareWeights();
-
-  ASSERT_EQ(1, activitiesList2.size());
-  ASSERT_EQ(2, activitiesList2.front().activitiesWeights.size());
-  ASSERT_NO_THROW(activitiesList2.front().activitiesWeights.at(activity1));
-  ASSERT_EQ(weight1, activitiesList2.front().activitiesWeights.at(activity1));
-  ASSERT_NO_THROW(activitiesList2.front().activitiesWeights.at(activity2));
-  ASSERT_EQ(weight2, activitiesList2.front().activitiesWeights.at(activity2));
-
-  ASSERT_THROW(m_catalogue->modifyActivitiesFairShareWeight(m_admin, "NoSuchInstance", activity2, weight2, comment), cta::exception::UserError);
-  ASSERT_THROW(m_catalogue->modifyActivitiesFairShareWeight(m_admin, diskInstanceName, "NoSuchActivity", weight2, comment), cta::exception::UserError);
-
-  ASSERT_NO_THROW(m_catalogue->modifyActivitiesFairShareWeight(m_admin, diskInstanceName, activity1, weight2, comment));
-  ASSERT_NO_THROW(m_catalogue->modifyActivitiesFairShareWeight(m_admin, diskInstanceName, activity2, weight1, comment));
-
-
-  const auto activitiesList3 = m_catalogue->getActivitiesFairShareWeights();
-
-  ASSERT_EQ(1, activitiesList3.size());
-  ASSERT_EQ(2, activitiesList3.front().activitiesWeights.size());
-  ASSERT_NO_THROW(activitiesList3.front().activitiesWeights.at(activity1));
-  ASSERT_EQ(weight2, activitiesList3.front().activitiesWeights.at(activity1));
-  ASSERT_NO_THROW(activitiesList3.front().activitiesWeights.at(activity2));
-  ASSERT_EQ(weight1, activitiesList3.front().activitiesWeights.at(activity2));
-
-  ASSERT_THROW(m_catalogue->deleteActivitiesFairShareWeight(m_admin, "NoSuchInstance", activity2), cta::exception::UserError);
-  ASSERT_THROW(m_catalogue->deleteActivitiesFairShareWeight(m_admin, diskInstanceName, "NoSuchActivity"), cta::exception::UserError);
-
-  ASSERT_NO_THROW(m_catalogue->deleteActivitiesFairShareWeight(m_admin, diskInstanceName, activity1));
-
-  const auto activitiesList4 = m_catalogue->getActivitiesFairShareWeights();
-
-  ASSERT_EQ(1, activitiesList4.size());
-  ASSERT_EQ(1, activitiesList4.front().activitiesWeights.size());
-  ASSERT_NO_THROW(activitiesList4.front().activitiesWeights.at(activity2));
-  ASSERT_EQ(weight1, activitiesList4.front().activitiesWeights.at(activity2));
-
-  ASSERT_NO_THROW(m_catalogue->deleteActivitiesFairShareWeight(m_admin, diskInstanceName, activity2));
-
-  ASSERT_EQ(0, m_catalogue->getActivitiesFairShareWeights().size());
-}
-
-TEST_P(cta_catalogue_CatalogueTest, activitiesDataValidation) {
-  using namespace cta;
-  ASSERT_THROW(m_catalogue->createActivitiesFairShareWeight(m_admin, "", "Activity", 0.1, "No comment."), catalogue::UserSpecifiedAnEmptyStringDiskInstanceName);
-  ASSERT_THROW(m_catalogue->createActivitiesFairShareWeight(m_admin, "DiskInstance", "", 0.1, "No comment."), catalogue::UserSpecifiedAnEmptyStringActivity);
-  ASSERT_THROW(m_catalogue->createActivitiesFairShareWeight(m_admin, "DiskInstance", "Activity", 0.0, "No comment."), catalogue::UserSpecifiedAnOutOfRangeActivityWeight);
-  ASSERT_THROW(m_catalogue->createActivitiesFairShareWeight(m_admin, "DiskInstance", "Activity", 1.1, "No comment."), catalogue::UserSpecifiedAnOutOfRangeActivityWeight);
-  ASSERT_THROW(m_catalogue->createActivitiesFairShareWeight(m_admin, "DiskInstance", "Activity", 0.1, ""), catalogue::UserSpecifiedAnEmptyStringComment);
-
-  ASSERT_THROW(m_catalogue->modifyActivitiesFairShareWeight(m_admin, "", "Activity", 0.1, "No comment."), catalogue::UserSpecifiedAnEmptyStringDiskInstanceName);
-  ASSERT_THROW(m_catalogue->modifyActivitiesFairShareWeight(m_admin, "DiskInstance", "", 0.1, "No comment."), catalogue::UserSpecifiedAnEmptyStringActivity);
-  ASSERT_THROW(m_catalogue->modifyActivitiesFairShareWeight(m_admin, "DiskInstance", "Activity", 0.0, "No comment."), catalogue::UserSpecifiedAnOutOfRangeActivityWeight);
-  ASSERT_THROW(m_catalogue->modifyActivitiesFairShareWeight(m_admin, "DiskInstance", "Activity", 1.1, "No comment."), catalogue::UserSpecifiedAnOutOfRangeActivityWeight);
-  ASSERT_THROW(m_catalogue->modifyActivitiesFairShareWeight(m_admin, "DiskInstance", "Activity", 0.1, ""), catalogue::UserSpecifiedAnEmptyStringComment);
-
-  ASSERT_THROW(m_catalogue->deleteActivitiesFairShareWeight(m_admin, "", "Activity"), catalogue::UserSpecifiedAnEmptyStringDiskInstanceName);
-  ASSERT_THROW(m_catalogue->deleteActivitiesFairShareWeight(m_admin, "DiskInstance", ""), catalogue::UserSpecifiedAnEmptyStringActivity);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, ping) {

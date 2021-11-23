@@ -268,7 +268,6 @@ void TapeDrivesCatalogueState::setDriveDown(common::dataStructures::TapeDrive & 
   driveState.currentTapePool = "";
   driveState.currentVo = "";
   driveState.currentActivity = nullopt_t();
-  driveState.currentActivityWeight = nullopt_t();
 }
 
 void TapeDrivesCatalogueState::setDriveUpOrMaybeDown(common::dataStructures::TapeDrive & driveState,
@@ -308,7 +307,6 @@ void TapeDrivesCatalogueState::setDriveUpOrMaybeDown(common::dataStructures::Tap
   driveState.currentTapePool = "";
   driveState.currentVo = "";
   driveState.currentActivity = nullopt_t();
-  driveState.currentActivityWeight = nullopt_t();
 }
 
 void TapeDrivesCatalogueState::setDriveProbing(common::dataStructures::TapeDrive & driveState,
@@ -343,7 +341,6 @@ void TapeDrivesCatalogueState::setDriveProbing(common::dataStructures::TapeDrive
   driveState.currentTapePool = "";
   driveState.currentVo = "";
   driveState.currentActivity = nullopt_t();
-  driveState.currentActivityWeight = nullopt_t();
 }
 
 void TapeDrivesCatalogueState::setDriveStarting(common::dataStructures::TapeDrive & driveState,
@@ -377,10 +374,7 @@ void TapeDrivesCatalogueState::setDriveStarting(common::dataStructures::TapeDriv
   driveState.currentVid = inputs.vid;
   driveState.currentTapePool = inputs.tapepool;
   driveState.currentVo = inputs.vo;
-  if (inputs.activityAndWeigh) {
-    driveState.currentActivity = inputs.activityAndWeigh.value().activity;
-    driveState.currentActivityWeight = inputs.activityAndWeigh.value().weight;
-  }
+  driveState.currentActivity = inputs.activity;
 }
 
 void TapeDrivesCatalogueState::setDriveMounting(common::dataStructures::TapeDrive & driveState,
@@ -576,7 +570,6 @@ void TapeDrivesCatalogueState::setDriveCleaningUp(common::dataStructures::TapeDr
   driveState.currentVid = inputs.vid;
   driveState.currentTapePool = inputs.tapepool;
   driveState.currentActivity = nullopt_t();
-  driveState.currentActivityWeight = nullopt_t();
   driveState.currentVo = inputs.vo;
 }
 
@@ -610,7 +603,6 @@ void TapeDrivesCatalogueState::setDriveShutdown(common::dataStructures::TapeDriv
   driveState.currentVid = inputs.vid;
   driveState.currentTapePool = inputs.tapepool;
   driveState.currentActivity = nullopt_t();
-  driveState.currentActivityWeight = nullopt_t();
   driveState.currentVo = inputs.vo;
 }
 

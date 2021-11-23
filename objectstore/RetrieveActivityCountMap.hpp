@@ -24,11 +24,7 @@
 namespace cta { namespace objectstore {
 
 struct RetrieveActivityDescription {
-  uint64_t priority;
-  std::string diskInstanceName;
   std::string activity;
-  time_t creationTime;
-  double weight;
   uint64_t count;
 };
 
@@ -40,16 +36,15 @@ struct RetrieveActivityDescription {
 class RetrieveActivityCountMap {
 public:
   RetrieveActivityCountMap (google::protobuf::RepeatedPtrField<serializers::RetrieveActivityCountPair>* retrieveActivityCountMap);
-  void incCount(const RetrieveActivityDescription & activityDescription);
-  void decCount(const RetrieveActivityDescription & activityDescription);
+  void incCount(const std::string &activity);
+  void decCount(const std::string &activity);
   void clear();
-  std::list<RetrieveActivityDescription> getActivities(uint64_t priority);
+  std::list<RetrieveActivityDescription> getActivities();
 private:
   google::protobuf::RepeatedPtrField<serializers::RetrieveActivityCountPair>& m_activityCountMap;
 };
 
 std::string toString(const RetrieveActivityDescription &);
-std::string toString(const serializers::RetrieveActivityWeight &);
-bool operator==(const serializers::RetrieveActivityCountPair &, const RetrieveActivityDescription &);
+bool operator==(const serializers::RetrieveActivityCountPair &, const std::string &);
 
 }} // namespace cta::objectstore

@@ -24,7 +24,6 @@ RetrieveFileQueueCriteria& RetrieveFileQueueCriteria::operator=(const RetrieveFi
     if(this != &other){
         this->archiveFile = other.archiveFile;
         this->mountPolicy = other.mountPolicy;
-        this->activitiesFairShareWeight = other.activitiesFairShareWeight;
     }
     return *this;
 }

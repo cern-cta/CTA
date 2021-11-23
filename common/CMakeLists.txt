@@ -38,7 +38,6 @@ set (COMMON_LIB_SRC_FILES
   ConfigurationFile.cpp
   CRC.cpp
   CreationLog.cpp
-  dataStructures/ActivitiesFairShareWeights.cpp
   dataStructures/AdminUser.cpp
   dataStructures/ArchiveFile.cpp
   dataStructures/ArchiveFileQueueCriteria.cpp

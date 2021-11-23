@@ -105,7 +105,6 @@ CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringFreeSpaceQueryURL);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAZeroRefreshInterval);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAZeroSleepTime);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAZeroTargetedFreeSpace);
-CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringActivity);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringCartridge);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringDiskInstanceName);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringLogicalLibraryName);
@@ -118,7 +117,6 @@ CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringVendor);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringVid);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringVo);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyTapePool);
-CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnOutOfRangeActivityWeight);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAZeroCapacity);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAZeroCopyNb);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedMediaTypeUsedByTapes);
@@ -831,13 +829,6 @@ public:
   virtual void modifyMountPolicyRetrievePriority(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t retrievePriority) = 0;
   virtual void modifyMountPolicyRetrieveMinRequestAge(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t minRetrieveRequestAge) = 0;
   virtual void modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) = 0;
-
-  virtual void createActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity &admin, const std::string & diskInstanceName, const std::string & acttivity,
-    double weight, const std::string & comment) = 0;
-  virtual void modifyActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity &admin, const std::string & diskInstanceName, const std::string & acttivity,
-    double weight, const std::string & comment) = 0;
-  virtual void deleteActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity &admin, const std::string & diskInstanceName, const std::string & acttivity) = 0;
-  virtual std::list<common::dataStructures::ActivitiesFairShareWeights> getActivitiesFairShareWeights() const = 0;
 
   /**
    * Returns all the disk systems within the CTA catalogue.

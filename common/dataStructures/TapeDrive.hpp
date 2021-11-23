@@ -94,15 +94,13 @@ struct TapeDrive {
   optional<std::string> ctaVersion;
   optional<uint64_t> currentPriority;
   optional<std::string> currentActivity;
-  optional<std::string> currentActivityWeight;
   optional<std::string> currentTapePool;
   optional<MountType> nextMountType;
   optional<std::string> nextVid;
   optional<std::string> nextTapePool;
   optional<uint64_t> nextPriority;
   optional<std::string> nextActivity;
-  optional<std::string> nextActivityWeight;
-
+  
   optional<std::string> devFileName;
   optional<std::string> rawLibrarySlot;
 

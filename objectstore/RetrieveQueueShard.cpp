@@ -70,10 +70,7 @@ RetrieveQueue::CandidateJobList RetrieveQueueShard::getCandidateJobList(uint64_t
     if (!retrieveRequestsToSkip.count(j.address()) && !diskSystemsToSkip.count(j.destination_disk_system_name())) {
       ret.candidates.push_back({j.address(), (uint16_t)j.copynb(), j.size(), nullopt, nullopt});
       if (j.has_activity()) {
-        RetrieveQueue::JobDump::ActivityDescription ad;
-        ad.activity = j.activity();
-        ad.diskInstanceName = j.disk_instance_name();
-        ret.candidates.back().activity = ad;
+        ret.candidates.back().activity = j.activity();
       }
       if (j.has_destination_disk_system_name()) {
         ret.candidates.back().diskSystemName = j.destination_disk_system_name();
@@ -112,7 +109,7 @@ auto RetrieveQueueShard::removeJobs(const std::list<std::string>& jobsToRemove) 
           ret.removedJobs.back().size = j.size();
           ret.removedJobs.back().startTime = j.starttime();
           if (j.has_activity())
-            ret.removedJobs.back().activityDescription = RetrieveQueue::JobDump::ActivityDescription{ j.disk_instance_name(), j.activity() };
+            ret.removedJobs.back().activity = j.activity();
           if (j.has_destination_disk_system_name())
             ret.removedJobs.back().diskSystemName = j.destination_disk_system_name();
           ret.bytesRemoved += j.size();
@@ -151,7 +148,7 @@ auto RetrieveQueueShard::dumpJobs() -> std::list<JobInfo> {
     ret.emplace_back(JobInfo{j.size(), j.address(), (uint16_t)j.copynb(), j.priority(), 
         j.minretrieverequestage(), (time_t)j.starttime(), j.fseq(), j.mountpolicyname(), nullopt, nullopt});
     if (j.has_activity()) {
-      ret.back().activityDescription = RetrieveQueue::JobDump::ActivityDescription{ j.disk_instance_name(), j.activity() };
+      ret.back().activity = j.activity();
     }
     if (j.has_destination_disk_system_name()) {
       ret.back().diskSystemName = j.destination_disk_system_name();
@@ -174,10 +171,7 @@ std::list<RetrieveQueue::JobToAdd> RetrieveQueueShard::dumpJobsToAdd() {
     ret.back().startTime = j.starttime();
     ret.back().retrieveRequestAddress = j.address();
     if (j.has_activity()) {
-      RetrieveActivityDescription rad = RetrieveActivityDescription{
-        0, j.disk_instance_name(), j.activity(), 0, 0, 0
-      };
-      ret.back().activityDescription = rad;
+      ret.back().activity = j.activity();
     }
     if (j.has_destination_disk_system_name())
       ret.back().diskSystemName = j.destination_disk_system_name();
@@ -279,9 +273,8 @@ void RetrieveQueueShard::addJob(const RetrieveQueue::JobToAdd& jobToAdd) {
   j->set_priority(jobToAdd.policy.retrievePriority);
   j->set_minretrieverequestage(jobToAdd.policy.retrieveMinRequestAge);
   j->set_mountpolicyname(jobToAdd.policy.name);
-  if (jobToAdd.activityDescription) {
-    j->set_disk_instance_name(jobToAdd.activityDescription.value().diskInstanceName);
-    j->set_activity(jobToAdd.activityDescription.value().activity);
+  if (jobToAdd.activity) {
+    j->set_activity(jobToAdd.activity.value());
   }
   if (jobToAdd.diskSystemName) j->set_destination_disk_system_name(jobToAdd.diskSystemName.value());
   m_payload.set_retrievejobstotalsize(m_payload.retrievejobstotalsize()+jobToAdd.fileSize);
@@ -316,9 +309,8 @@ void RetrieveQueueShard::addJobsThroughCopy(JobsToAddSet& jobsToAdd) {
     rjp.set_priority(jobToAdd.policy.retrievePriority);
     rjp.set_minretrieverequestage(jobToAdd.policy.retrieveMinRequestAge);
     rjp.set_mountpolicyname(jobToAdd.policy.name);
-    if (jobToAdd.activityDescription) {
-      rjp.set_disk_instance_name(jobToAdd.activityDescription.value().diskInstanceName);
-      rjp.set_activity(jobToAdd.activityDescription.value().activity);
+    if (jobToAdd.activity) {
+      rjp.set_activity(jobToAdd.activity.value());
     }
     if (jobToAdd.diskSystemName) rjp.set_destination_disk_system_name(jobToAdd.diskSystemName.value());
     i = serializedJobsToAdd.insert(i, rjp);

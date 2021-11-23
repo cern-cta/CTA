@@ -3641,21 +3641,6 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
   }
 
   {
-    // Declare activities in the catalogue.
-    catalogue.createActivitiesFairShareWeight(s_adminOnAdminHost, s_diskInstance, "A", 0.4, "No comment");
-    catalogue.createActivitiesFairShareWeight(s_adminOnAdminHost, s_diskInstance, "B", 0.3, "No comment");
-    auto activities = catalogue.getActivitiesFairShareWeights();
-    ASSERT_EQ(1, activities.size());
-    auto ac=activities.front();
-    ASSERT_EQ(s_diskInstance, ac.diskInstance);
-    ASSERT_EQ(2, ac.activitiesWeights.size());
-    ASSERT_NO_THROW(ac.activitiesWeights.at("A"));
-    ASSERT_EQ(0.4, ac.activitiesWeights.at("A"));
-    ASSERT_NO_THROW(ac.activitiesWeights.at("B"));
-    ASSERT_EQ(0.3, ac.activitiesWeights.at("B"));
-  }
-
-  {
     cta::common::dataStructures::EntryLog creationLog;
     creationLog.host="host2";
     creationLog.time=0;

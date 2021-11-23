@@ -43,7 +43,7 @@ struct ContainerTraits<RetrieveQueue,C>
     uint64_t fSeq;
     uint64_t filesize;
     cta::common::dataStructures::MountPolicy policy;
-    optional<RetrieveActivityDescription> activityDescription;
+    optional<std::string> activity;
     optional<std::string> diskSystemName;
     typedef std::list<InsertedElement> list;
   };
@@ -59,7 +59,7 @@ struct ContainerTraits<RetrieveQueue,C>
     std::string errorReportURL;
     SchedulerDatabase::RetrieveJob::ReportType reportType;
     RetrieveRequest::RepackInfo repackInfo;
-    optional<RetrieveQueue::JobDump::ActivityDescription> activity;
+    optional<std::string> activity;
     optional<std::string> diskSystemName;
   };
   struct PoppedElementsSummary;
@@ -285,7 +285,7 @@ addReferencesAndCommit(Container &cont, typename InsertedElement::list &elemMemC
   std::list<RetrieveQueue::JobToAdd> jobsToAdd;
   for (auto &e : elemMemCont) {
     RetrieveRequest &rr = *e.retrieveRequest;
-    jobsToAdd.push_back({e.copyNb, e.fSeq, rr.getAddressIfSet(), e.filesize, e.policy, ::time(nullptr), e.activityDescription, e.diskSystemName});
+    jobsToAdd.push_back({e.copyNb, e.fSeq, rr.getAddressIfSet(), e.filesize, e.policy, ::time(nullptr), e.activity, e.diskSystemName});
   }
   cont.addJobsAndCommit(jobsToAdd, agentRef, lc);
 }
@@ -298,7 +298,7 @@ addReferencesIfNecessaryAndCommit(Container& cont, typename InsertedElement::lis
   std::list<RetrieveQueue::JobToAdd> jobsToAdd;
   for (auto &e : elemMemCont) {
     RetrieveRequest &rr = *e.retrieveRequest;
-    jobsToAdd.push_back({e.copyNb, e.fSeq, rr.getAddressIfSet(), e.filesize, e.policy, ::time(nullptr), e.activityDescription, e.diskSystemName});
+    jobsToAdd.push_back({e.copyNb, e.fSeq, rr.getAddressIfSet(), e.filesize, e.policy, ::time(nullptr), e.activity, e.diskSystemName});
   }
   cont.addJobsIfNecessaryAndCommit(jobsToAdd, agentRef, lc);
 }
@@ -393,10 +393,7 @@ switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const Container
       e.archiveFile = u.get()->getArchiveFile();
       e.rr = u.get()->getRetrieveRequest();
       e.repackInfo = u.get()->getRepackInfo();
-      auto & rad = u.get()->getRetrieveActivityDescription();
-      if (rad) {
-        e.activity = RetrieveQueue::JobDump::ActivityDescription{ rad.value().diskInstanceName, rad.value().activity };
-      }
+      e.activity = u.get()->getActivity();
       e.diskSystemName = u.get()->getDiskSystemName();
       switch(u.get()->getJobStatus()) {
         case serializers::RetrieveJobStatus::RJS_ToReportToUserForFailure:

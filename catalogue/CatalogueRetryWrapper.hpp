@@ -480,22 +480,6 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyMountPolicyComment(admin, name, comment);}, m_maxTriesToConnect);
   }
 
-  void createActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity& admin, const std::string& diskInstanceName, const std::string& acttivity, double weight, const std::string & comment) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->createActivitiesFairShareWeight(admin, diskInstanceName, acttivity, weight, comment);}, m_maxTriesToConnect);
-  }
-
-  void modifyActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity& admin, const std::string& diskInstanceName, const std::string& acttivity, double weight, const std::string & comment) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyActivitiesFairShareWeight(admin, diskInstanceName, acttivity, weight, comment);}, m_maxTriesToConnect);
-  }
-
-  void deleteActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity& admin, const std::string& diskInstanceName, const std::string& acttivity) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteActivitiesFairShareWeight(admin, diskInstanceName, acttivity);}, m_maxTriesToConnect);
-  }
-
-  std::list<common::dataStructures::ActivitiesFairShareWeights> getActivitiesFairShareWeights() const override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->getActivitiesFairShareWeights();}, m_maxTriesToConnect);
-  }
-
   disk::DiskSystemList getAllDiskSystems() const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getAllDiskSystems();}, m_maxTriesToConnect);
   }

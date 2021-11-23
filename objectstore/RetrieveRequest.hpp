@@ -230,7 +230,7 @@ public:
     const common::dataStructures::RetrieveRequest &getRetrieveRequest();
     const common::dataStructures::ArchiveFile &getArchiveFile();
     const RepackInfo &getRepackInfo();
-    const optional<RetrieveActivityDescription> &getRetrieveActivityDescription();
+    const optional<std::string> &getActivity();
     const optional<std::string> &getDiskSystemName();
   private:
     std::function<std::string(const std::string &)> m_updaterCallback;
@@ -239,7 +239,7 @@ public:
     common::dataStructures::ArchiveFile m_archiveFile;
     RepackInfo m_repackInfo;
     serializers::RetrieveJobStatus m_jobStatus;
-    optional<RetrieveActivityDescription> m_retrieveActivityDescription;
+    optional<std::string> m_activity;
     optional<std::string> m_diskSystemName;
   };
   // An owner updater factory. The owner MUST be previousOwner for the update to be executed.
@@ -251,7 +251,7 @@ public:
   void setRetrieveFileQueueCriteria(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria);
   void setActivityIfNeeded(const cta::common::dataStructures::RetrieveRequest & retrieveRequest,
     const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria);
-  optional<RetrieveActivityDescription> getActivity();
+  optional<std::string> getActivity();
   void setDiskSystemName(const std::string & diskSystemName);
   optional<std::string> getDiskSystemName();
   cta::common::dataStructures::RetrieveFileQueueCriteria getRetrieveFileQueueCriteria();

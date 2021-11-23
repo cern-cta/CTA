@@ -409,11 +409,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
           m.mediaType = "";      // The logical library is not known here, and will be determined by the caller.
           m.vo = "";             // The vo is not known here, and will be determined by the caller.
           m.capacityInBytes = 0; // The capacity is not known here, and will be determined by the caller.
-          m.activityNameAndWeightedMountCount = PotentialMount::ActivityNameAndWeightedMountCount();
-          m.activityNameAndWeightedMountCount.value().activity = ac.activity;
-          m.activityNameAndWeightedMountCount.value().weight = ac.weight;
-          m.activityNameAndWeightedMountCount.value().weightedMountCount = 0.0; // This value will be computed later by the caller.
-          m.activityNameAndWeightedMountCount.value().mountCount = 0; // This value will be computed later by the caller.
+          m.activity = ac.activity;
           m.mountPolicyNames = queueMountPolicyNames;
           // We will display the sleep flag only if it is not expired (15 minutes timeout, hardcoded).
           // This allows having a single decision point instead of implementing is at the consumer levels.
@@ -736,7 +732,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInf
   const std::string& mediaType,
   const std::string& vendor,
   const uint64_t capacityInBytes,
-  time_t startTime, const optional<common::dataStructures::DriveState::ActivityAndWeight> &) {
+  time_t startTime, const optional<std::string> &activity) {
   throw cta::exception::Exception("In OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount(): This function should not be called");
 }
 
@@ -1212,7 +1208,7 @@ void OStoreDB::setRetrieveJobBatchReportedToUser(std::list<cta::SchedulerDatabas
       insertedElements.emplace_back(CaRQF::InsertedElement{
         &j.job->m_retrieveRequest, tf_it->copyNb, tf_it->fSeq, j.job->archiveFile.fileSize,
         common::dataStructures::MountPolicy(),
-        j.job->m_activityDescription, j.job->m_diskSystemName
+        j.job->m_activity, j.job->m_diskSystemName
       });
     }
     try {
@@ -1250,27 +1246,6 @@ SchedulerDatabase::RetrieveRequestInfo OStoreDB::queueRetrieve(cta::common::data
   for (auto & tf:criteria.archiveFile.tapeFiles) candidateVids.insert(tf.vid);
   SchedulerDatabase::RetrieveRequestInfo ret;
   ret.selectedVid=Helpers::selectBestRetrieveQueue(candidateVids, m_catalogue, m_objectStore);
-  // Check that the activity is fine (if applying: disk instance uses them or it is sent).
-  if (rqst.activity || criteria.activitiesFairShareWeight.activitiesWeights.size()) {
-    // Activity is set. It should exist in the catlogue
-    if (rqst.activity) {
-      try {
-        criteria.activitiesFairShareWeight.activitiesWeights.at(rqst.activity.value());
-      } catch (std::out_of_range &) {
-        throw cta::exception::UserError(std::string("Unknown fair share activity \"") + rqst.activity.value() + "\" for disk instance \""
-            + criteria.activitiesFairShareWeight.diskInstance + "\"");
-      }
-    } else {
-      try {
-        criteria.activitiesFairShareWeight.activitiesWeights.at("default");
-        rqst.activity = "default";
-      } catch (std::out_of_range &) {
-        throw cta::exception::UserError(
-            std::string("Missing fair share activity \"default\"  while queuing with undefined activity for disk instance \"")
-            + criteria.activitiesFairShareWeight.diskInstance + "\"");
-      }
-    }
-  }
   // Check that the requested retrieve job (for the provided vid) exists, and record the copynb.
   uint64_t bestCopyNb;
   for (auto & tf: criteria.archiveFile.tapeFiles) {
@@ -3157,7 +3132,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInf
   const std::string& vid, const std::string& tapePool, const std::string& driveName,
   const std::string& logicalLibrary, const std::string& hostName, const std::string& vo, const std::string& mediaType,
   const std::string& vendor, const uint64_t capacityInBytes, time_t startTime,
-  const optional<common::dataStructures::DriveState::ActivityAndWeight>& activityAndWeight) {
+  const optional<std::string>& activity) {
   // In order to create the mount, we have to:
   // Check we actually hold the scheduling lock
   // Check the tape exists, add it to ownership and set its activity status to
@@ -3189,7 +3164,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInf
   rm.mountInfo.mediaType = mediaType;
   rm.mountInfo.vendor = vendor;
   rm.mountInfo.capacityInBytes = capacityInBytes;
-  if(activityAndWeight) rm.mountInfo.activity = activityAndWeight.value().activity;
+  rm.mountInfo.activity = activity;
   // Update the status of the drive in the registry
   {
     // Get hold of the drive registry
@@ -3208,7 +3183,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInf
     inputs.vid = rm.mountInfo.vid;
     inputs.tapepool = rm.mountInfo.tapePool;
     inputs.vo = rm.mountInfo.vo;
-    inputs.activityAndWeigh = activityAndWeight;
+    inputs.activity = activity;
     log::LogContext lc(m_oStoreDB.m_logger);
     m_oStoreDB.m_tapeDrivesState->updateDriveStatus(driveInfo, inputs, lc);
   }
@@ -3682,7 +3657,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
     for (auto & req: repackRequestQueue.second) {
       insertedRequests.push_back(RQTRTRFSAlgo::InsertedElement{&req->m_retrieveRequest, req->selectedCopyNb,
           req->archiveFile.tapeFiles.at(req->selectedCopyNb).fSeq, req->archiveFile.fileSize,
-          mountPolicy, req->m_activityDescription, req->m_diskSystemName});
+          mountPolicy, req->m_activity, req->m_diskSystemName});
       requestToJobMap[&req->m_retrieveRequest] = req;
        }
     RQTRTRFSAlgo rQTRTRFSAlgo(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
@@ -4721,7 +4696,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
       CaRqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaRqtr::InsertedElement{
         &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy,
-        m_activityDescription, m_diskSystemName
+        m_activity, m_diskSystemName
       });
       m_retrieveRequest.commit();
       rel.release();
@@ -4789,7 +4764,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
       CaRqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(CaRqtr::InsertedElement{
         &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy,
-        m_activityDescription, m_diskSystemName
+        m_activity, m_diskSystemName
       });
 
       CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
@@ -4852,7 +4827,7 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
         CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
         CaRqtr::InsertedElement::list insertedElements;
         insertedElements.push_back(CaRqtr::InsertedElement{
-          &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, m_activityDescription, m_diskSystemName
+          &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, m_activity, m_diskSystemName
         });
         caRqtr.referenceAndSwitchOwnership(tf.vid, insertedElements, lc);
         log::ScopedParamContainer params(lc);
@@ -4870,7 +4845,7 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
         CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
         CaRqtr::InsertedElement::list insertedElements;
         insertedElements.push_back(CaRqtr::InsertedElement{
-          &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, m_activityDescription, m_diskSystemName
+          &m_retrieveRequest, tf.copyNb, tf.fSeq, af.fileSize, rfqc.mountPolicy, m_activity, m_diskSystemName
         });
         caRqtr.referenceAndSwitchOwnership(tf.vid, insertedElements, lc);
         log::ScopedParamContainer params(lc);

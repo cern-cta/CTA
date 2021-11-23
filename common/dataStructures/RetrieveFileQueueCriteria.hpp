@@ -19,7 +19,6 @@
 
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
-#include "common/dataStructures/ActivitiesFairShareWeights.hpp"
 
 #include <map>
 #include <stdint.h>
@@ -42,11 +41,6 @@ struct RetrieveFileQueueCriteria {
    * The mount policy.
    */
   MountPolicy mountPolicy;
-  
-  /**
-   * The fair shares for the disk instance of the file (if any).
-   */
-  ActivitiesFairShareWeights activitiesFairShareWeight;
   
   RetrieveFileQueueCriteria &operator=(const RetrieveFileQueueCriteria& other);
 

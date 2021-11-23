@@ -484,8 +484,8 @@ void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefer
       priorityMap.incCount(j.policy.retrievePriority);
       minRetrieveRequestAgeMap.incCount(j.policy.retrieveMinRequestAge);
       mountPolicyNameMap.incCount(j.policy.name);
-      if (j.activityDescription) {
-        retrieveActivityCountMap.incCount(j.activityDescription.value());
+      if (j.activity) {
+        retrieveActivityCountMap.incCount(j.activity.value());
       }
       // oldestjobcreationtime is initialized to 0 when
       if (m_payload.oldestjobcreationtime()) {
@@ -558,7 +558,7 @@ auto RetrieveQueue::addJobsIfNecessaryAndCommit(std::list<JobToAdd> & jobsToAdd,
     }
     shardsDumps.emplace_back(std::list<JobDump>());
     for (auto & j: s->dumpJobs()) {
-      shardsDumps.back().emplace_back(JobDump({j.address, j.copyNb, j.size, j.activityDescription, j.diskSystemName}));
+      shardsDumps.back().emplace_back(JobDump({j.address, j.copyNb, j.size, j.activity, j.diskSystemName}));
     }
   nextShard:
     s++;
@@ -602,8 +602,8 @@ RetrieveQueue::JobsSummary RetrieveQueue::getJobsSummary() {
     ValueCountMapString mountPolicyNameMap(m_payload.mutable_mountpolicynamemap());
     ret.mountPolicyCountMap = mountPolicyNameMap.getMap();
     RetrieveActivityCountMap retrieveActivityCountMap(m_payload.mutable_activity_map());
-    for (auto ra: retrieveActivityCountMap.getActivities(ret.priority)) {
-      ret.activityCounts.push_back({ra.diskInstanceName, ra.activity, ra.weight, ra.count});
+    for (auto ra: retrieveActivityCountMap.getActivities()) {
+      ret.activityCounts.push_back({ra.activity, ra.count});
     }
     if (m_payload.has_sleep_for_free_space_since()) {
       ret.sleepInfo = JobsSummary::SleepInfo{
@@ -640,7 +640,7 @@ auto RetrieveQueue::dumpJobs() -> std::list<JobDump> {
       goto nextShard;
     }
     for (auto & j: s->dumpJobs()) {
-      ret.emplace_back(JobDump{j.address, j.copyNb, j.size, j.activityDescription, j.diskSystemName});
+      ret.emplace_back(JobDump{j.address, j.copyNb, j.size, j.activity, j.diskSystemName});
     }
   nextShard:
     s++; sf++;
@@ -744,13 +744,8 @@ void RetrieveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemo
         //to update the youngestjobcreationtime counter
         needToRebuild = true;
       }
-      if (j.activityDescription) {
-        // We have up a partial activity description, but this is enough to decCount.
-        RetrieveActivityDescription activityDescription;
-        activityDescription.priority = j.priority;
-        activityDescription.diskInstanceName = j.activityDescription.value().diskInstanceName;
-        activityDescription.activity = j.activityDescription.value().activity;
-        retrieveActivityCountMap.decCount(activityDescription);
+      if (j.activity) {
+        retrieveActivityCountMap.decCount(j.activity.value());
       }
     }
     // In all cases, we should update the global statistics.

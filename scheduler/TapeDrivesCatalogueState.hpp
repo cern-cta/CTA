@@ -52,7 +52,7 @@ struct ReportDriveStatusInputs {
   std::string vid;
   std::string tapepool;
   std::string vo;
-  optional<common::dataStructures::DriveState::ActivityAndWeight> activityAndWeigh;
+  optional<std::string> activity;
   optional<std::string> reason;
 };
 

@@ -34,31 +34,23 @@ RetrieveActivityCountMap::RetrieveActivityCountMap(
 //------------------------------------------------------------------------------
 // RetrieveActivityCountMap::incCount()
 //------------------------------------------------------------------------------
-void RetrieveActivityCountMap::incCount(const RetrieveActivityDescription& activityDescription) {
+void RetrieveActivityCountMap::incCount(const std::string& activity) {
   // Find the entry for this value (might fail)
-  auto counter = std::find(m_activityCountMap.begin(), m_activityCountMap.end(), activityDescription);
+  auto counter = std::find_if(m_activityCountMap.begin(), m_activityCountMap.end(), 
+    [&activity](serializers::RetrieveActivityCountPair pair) {return pair.activity() == activity;});
   if (counter != m_activityCountMap.end()) {
     if (counter->count() < 1) {
       std::stringstream err;
-      err << "In ValueCountMap::incCount: unexpected count value=" << toString(counter->retrieve_activity_weight()) 
+      err << "In ValueCountMap::incCount: unexpected count value=" << activity 
           << " count=" << counter->count();
       throw  cta::exception::Exception(err.str());
     } else {
       counter->set_count(counter->count()+1);
-      // Update the weight to the latest version (in case weights got updated since last time).
-      if (counter->retrieve_activity_weight().creation_time() < activityDescription.creationTime) {
-        counter->mutable_retrieve_activity_weight()->set_weight(activityDescription.weight);
-        counter->mutable_retrieve_activity_weight()->set_creation_time(activityDescription.creationTime);
-      }
     }
   } else {
     // Create the new entry if necessary.
     auto newCounter = m_activityCountMap.Add();
-    newCounter->mutable_retrieve_activity_weight()->set_priority(activityDescription.priority);
-    newCounter->mutable_retrieve_activity_weight()->set_disk_instance_name(activityDescription.diskInstanceName);
-    newCounter->mutable_retrieve_activity_weight()->set_activity(activityDescription.activity);
-    newCounter->mutable_retrieve_activity_weight()->set_weight(activityDescription.weight);
-    newCounter->mutable_retrieve_activity_weight()->set_creation_time(activityDescription.creationTime);
+    newCounter->set_activity(activity);
     newCounter->set_count(1);
   }
 }
@@ -66,18 +58,19 @@ void RetrieveActivityCountMap::incCount(const RetrieveActivityDescription& activ
 //------------------------------------------------------------------------------
 // RetrieveActivityCountMap::decCount()
 //------------------------------------------------------------------------------
-void RetrieveActivityCountMap::decCount(const RetrieveActivityDescription& activityDescription) {
+void RetrieveActivityCountMap::decCount(const std::string& activity) {
   // Find the entry for this value. Failing is an error.
-  auto counter = std::find(m_activityCountMap.begin(), m_activityCountMap.end(), activityDescription);
+  auto counter = std::find_if(m_activityCountMap.begin(), m_activityCountMap.end(), 
+    [&activity](serializers::RetrieveActivityCountPair pair) {return pair.activity() == activity;});
   if (counter == m_activityCountMap.end()) {
     std::stringstream err;
-    err << "In RetrieveActivityCountMap::decCount: no entry found for value=" << toString(activityDescription);
+    err << "In RetrieveActivityCountMap::decCount: no entry found for value=" << activity;
     throw  cta::exception::Exception(err.str());
   }
   // Decrement the value and remove the entry if needed.
   if (counter->count() < 1) {
     std::stringstream err;
-    err << "In ValueCountMap::decCount: entry with wrong count value=" << toString(activityDescription) << " count=" << counter->count();
+    err << "In ValueCountMap::decCount: entry with wrong count value=" << activity << " count=" << counter->count();
     throw  cta::exception::Exception(err.str());
   }
   counter->set_count(counter->count()-1);
@@ -92,10 +85,11 @@ void RetrieveActivityCountMap::decCount(const RetrieveActivityDescription& activ
       throw  cta::exception::Exception(err.str());
     }
     // Cross check we cannot find the value.
-    auto counter2 = std::find(m_activityCountMap.begin(), m_activityCountMap.end(), activityDescription);
-    if (m_activityCountMap.end() != counter2) {
+    auto counter2 = std::find_if(m_activityCountMap.begin(), m_activityCountMap.end(), 
+      [&activity](serializers::RetrieveActivityCountPair pair) {return pair.activity() == activity;});
+  if (m_activityCountMap.end() != counter2) {
       std::stringstream err;
-      err << "In ValueCountMap::decCount: still found the value after trimming empty entry. value=" << toString(counter2->retrieve_activity_weight()) << " count=" << counter2->count();
+      err << "In ValueCountMap::decCount: still found the value after trimming empty entry. value=" << activity << " count=" << counter2->count();
       throw  cta::exception::Exception(err.str());
     }
   }
@@ -104,13 +98,10 @@ void RetrieveActivityCountMap::decCount(const RetrieveActivityDescription& activ
 //------------------------------------------------------------------------------
 // RetrieveActivityCountMap::getActivities()
 //------------------------------------------------------------------------------
-std::list<RetrieveActivityDescription> RetrieveActivityCountMap::getActivities(uint64_t priority) {
+std::list<RetrieveActivityDescription> RetrieveActivityCountMap::getActivities() {
   std::list<RetrieveActivityDescription> ret;
   for (auto & ad: m_activityCountMap) {
-    if (ad.retrieve_activity_weight().priority() == priority)
-      ret.push_back({ad.retrieve_activity_weight().priority(), ad.retrieve_activity_weight().disk_instance_name(), 
-          ad.retrieve_activity_weight().activity(), ad.retrieve_activity_weight().creation_time(),
-          ad.retrieve_activity_weight().weight(), ad.count()});
+    ret.push_back({ad.activity(), ad.count()});
   }
   return ret;
 }
@@ -126,39 +117,16 @@ void RetrieveActivityCountMap::clear() {
 //------------------------------------------------------------------------------
 // operator==()
 //------------------------------------------------------------------------------
-bool operator==(const serializers::RetrieveActivityCountPair & serialized, const RetrieveActivityDescription & memory) {
-  return (serialized.retrieve_activity_weight().priority() == memory.priority)
-      && (serialized.retrieve_activity_weight().disk_instance_name() == memory.diskInstanceName)
-      && (serialized.retrieve_activity_weight().activity() == memory.activity);
+bool operator==(const serializers::RetrieveActivityCountPair & serialized, const std::string & memory) {
+  return serialized.activity() == memory;
 }
 
 //------------------------------------------------------------------------------
 // toString()
 //------------------------------------------------------------------------------
 std::string toString(const RetrieveActivityDescription & ad) {
-  serializers::RetrieveActivityWeight raw;
-  raw.set_priority(ad.priority);
-  raw.set_disk_instance_name(ad.diskInstanceName);
-  raw.set_activity(ad.activity);
-  raw.set_creation_time(ad.creationTime);
-  raw.set_weight(ad.weight);
-  return toString(raw);
+
+  return ""; //TODO
 }
-
-//------------------------------------------------------------------------------
-// toString()
-//------------------------------------------------------------------------------
-std::string toString(const serializers::RetrieveActivityWeight & raw){
-  using namespace google::protobuf::util;
-
-  std::string json;
-  JsonPrintOptions options;
-
-  options.always_print_primitive_fields = true;
-  MessageToJsonString(raw, &json, options);
-
-  return json;
-}
-    
 
 }} // namespace cta::objectstore.

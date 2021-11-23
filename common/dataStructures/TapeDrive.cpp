@@ -108,14 +108,12 @@ bool TapeDrive::operator==(const TapeDrive &rhs) const {
       && ctaVersion==rhs.ctaVersion
       && currentPriority==rhs.currentPriority
       && currentActivity==rhs.currentActivity
-      && currentActivityWeight==rhs.currentActivityWeight
       && currentTapePool==rhs.currentTapePool
       && nextMountType==rhs.nextMountType
       && nextVid==rhs.nextVid
       && nextTapePool==rhs.nextTapePool
       && nextPriority==rhs.nextPriority
       && nextActivity==rhs.nextActivity
-      && nextActivityWeight==rhs.nextActivityWeight
       //
       // && devFileName==rhs.devFileName
       // && rawLibrarySlot==rhs.rawLibrarySlot

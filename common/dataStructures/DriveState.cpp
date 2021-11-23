@@ -53,23 +53,17 @@ bool DriveState::operator==(const DriveState &rhs) const {
       && currentTapePool==rhs.currentTapePool
       && currentVo == rhs.currentVo
       && currentPriority == rhs.currentPriority
-      && bool(currentActivityAndWeight) == bool(rhs.currentActivityAndWeight)
-      && (currentActivityAndWeight? (
-        currentActivityAndWeight.value().activity 
-          == rhs.currentActivityAndWeight.value().activity
-        && currentActivityAndWeight.value().weight
-          == rhs.currentActivityAndWeight.value().weight
+      && bool(currentActivity) == bool(rhs.currentActivity)
+      && (currentActivity? (
+        currentActivity.value() == rhs.currentActivity.value()
          ): true)
       && nextMountType == rhs.nextMountType
       && nextTapepool == rhs.nextTapepool
       && nextVo == rhs.nextVo
       && nextVid == rhs.nextVid
-      && bool(nextActivityAndWeight) == bool(rhs.nextActivityAndWeight)
-      && (nextActivityAndWeight? (
-        nextActivityAndWeight.value().activity 
-          == rhs.nextActivityAndWeight.value().activity
-        && nextActivityAndWeight.value().weight
-          == rhs.nextActivityAndWeight.value().weight
+      && bool(nextActivity) == bool(rhs.nextActivity)
+      && (nextActivity? (
+        nextActivity.value() == rhs.nextActivity.value()
          ): true);
 }
 
@@ -111,9 +105,8 @@ std::ostream &operator<<(std::ostream &os, const DriveState &obj) {
      << " currentVo=" << obj.currentVo
      << " currentPriority=" << obj.currentPriority
      << " currentActivity=";
-  if (obj.currentActivityAndWeight) {
-    os << "(" << obj.currentActivityAndWeight.value().activity
-       << "," << obj.currentActivityAndWeight.value().weight << ")";
+  if (obj.currentActivity) {
+    os << obj.currentActivity.value();
   } else {
     os << "(none)";
   }
@@ -122,9 +115,8 @@ std::ostream &operator<<(std::ostream &os, const DriveState &obj) {
      << " nextTapePool=" << obj.nextTapepool
      << " nextVo=" << obj.nextVo
      << " currentNext=";
-  if (obj.nextActivityAndWeight) {
-    os << "(" << obj.nextActivityAndWeight.value().activity
-       << "," << obj.nextActivityAndWeight.value().weight << ")";
+  if (obj.nextActivity) {
+    os << obj.nextActivity.value();
   } else {
     os << "(none)";
   }

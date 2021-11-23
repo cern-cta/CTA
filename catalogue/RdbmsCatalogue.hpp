@@ -781,13 +781,6 @@ public:
   void modifyMountPolicyRetrieveMinRequestAge(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t minRetrieveRequestAge) override;
   void modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override;
 
-  void createActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity &admin, const std::string & diskInstanceName, const std::string & activity,
-    double weight, const std::string & comment) override;
-  void modifyActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity &admin, const std::string & diskInstanceName, const std::string & activity,
-    double weight, const std::string & comment) override;
-  void deleteActivitiesFairShareWeight(const common::dataStructures::SecurityIdentity &admin, const std::string & diskInstanceName, const std::string & activity) override;
-  std::list<common::dataStructures::ActivitiesFairShareWeights> getActivitiesFairShareWeights() const override;
-
   /**
    * Returns all the disk systems within the CTA catalogue.
    *
@@ -1570,26 +1563,6 @@ protected:
     rdbms::Conn &conn,
     const uint64_t archiveFileId) const;
 
-
-  /**
-   * Returns a cached version of the (possibly empty) activities to weight map
-   * for the given dsk instance.
-   * @param diskInstance
-   * @return activities to weight map (ActivitiesFairShareWeights)
-   */
-  common::dataStructures::ActivitiesFairShareWeights getCachedActivitiesWeights(
-    const std::string &diskInstanceName) const;
-
-  /**
-   * Returns a the (possibly empty) activities to weight map for the given dsk instance.
-   * @param conn The database connection.
-   * @param diskInstance
-   * @return activities to weight map (ActivitiesFairShareWeights)
-   */
-  common::dataStructures::ActivitiesFairShareWeights getActivitiesWeights(
-    rdbms::Conn &conn,
-    const std::string &diskInstanceName) const;
-
   /**
    * Returns the specified archive file.   A nullptr pointer is returned if
    * there is no corresponding row in the ARCHIVE_FILE table.  Please note that
@@ -2239,11 +2212,6 @@ protected:
    * Cached version of isAdmin() results.
    */
   mutable TimeBasedCache<common::dataStructures::SecurityIdentity, bool> m_isAdminCache;
-
-  /**
-   * Cached version of the activities to weight maps.
-   */
-  mutable TimeBasedCache<std::string, common::dataStructures::ActivitiesFairShareWeights> m_activitiesFairShareWeights;
 
 private:
   void settingSqlTapeDriveValues(cta::rdbms::Stmt *stmt, const common::dataStructures::TapeDrive &tapeDrive) const;

@@ -175,18 +175,13 @@ TEST(ObjectStore, RetrieveQueueActivityCounts) {
     jta.retrieveRequestAddress = address.str();
     // Some (but not all) jobs will be assigned an activity (and weight).
     if (!(i % 3)) { 
-      cta::objectstore::RetrieveActivityDescription ad;
-      ad.diskInstanceName = "diskInstance";
-      ad.creationTime = jta.startTime;
-      ad.priority = 1;
+      std::string activity;
       if (!(i % 2)) {
-        ad.activity = "A";
-        ad.weight = 0.1;
+        activity = "A";
       } else {
-        ad.activity = "B";
-        ad.weight = 0.2;
+        activity = "B";
       }
-      jta.activityDescription = ad;
+      jta.activity = activity;
     }
     jobsToAdd.push_back(jta);
   }
@@ -236,11 +231,9 @@ TEST(ObjectStore, RetrieveQueueActivityCounts) {
     auto jsA = std::find_if(jobsSummary.activityCounts.begin(), jobsSummary.activityCounts.end(), [](const acCount &ac){return ac.activity == "A"; });
     ASSERT_NE(jobsSummary.activityCounts.end(), jsA);
     ASSERT_EQ(17, jsA->count);
-    ASSERT_EQ(0.1, jsA->weight);
     auto jsB = std::find_if(jobsSummary.activityCounts.begin(), jobsSummary.activityCounts.end(), [](const acCount &ac){return ac.activity == "B"; });
     ASSERT_NE(jobsSummary.activityCounts.end(), jsB);
     ASSERT_EQ(17, jsB->count);
-    ASSERT_EQ(0.2, jsB->weight);
     uint64_t nextExpectedFseq=0;
     while (rq.getJobsSummary().jobs) {
       auto candidateJobs = rq.getCandidateList(std::numeric_limits<uint64_t>::max(), 50, std::set<std::string>(),
@@ -268,11 +261,9 @@ TEST(ObjectStore, RetrieveQueueActivityCounts) {
         auto jsA2 = std::find_if(jobsSummary2.activityCounts.begin(), jobsSummary2.activityCounts.end(), [](const acCount &ac){return ac.activity == "A"; });
         ASSERT_NE(jobsSummary2.activityCounts.end(), jsA2);
         ASSERT_EQ(8, jsA2->count);
-        ASSERT_EQ(0.1, jsA2->weight);
         auto jsB2 = std::find_if(jobsSummary2.activityCounts.begin(), jobsSummary2.activityCounts.end(), [](const acCount &ac){return ac.activity == "B"; });
         ASSERT_NE(jobsSummary2.activityCounts.end(), jsB2);
         ASSERT_EQ(9, jsB2->count);
-        ASSERT_EQ(0.2, jsB2->weight);
       } else {
         // Of course, we should have no activity.
         ASSERT_EQ(0, jobsSummary2.activityCounts.size());

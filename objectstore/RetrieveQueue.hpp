@@ -65,7 +65,7 @@ public:
     uint64_t fileSize;
     cta::common::dataStructures::MountPolicy policy;
     time_t startTime;
-    optional<RetrieveActivityDescription> activityDescription;
+    optional<std::string> activity;
     optional<std::string> diskSystemName;
   };
   void addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentReference & agentReference, log::LogContext & lc);
@@ -79,9 +79,7 @@ public:
     AgentReference & agentReference, log::LogContext & lc);
   struct JobsSummary {
     struct ActivityCount {
-      std::string diskInstanceName;
       std::string activity;
-      double weight;
       uint64_t count;
     };
     struct SleepInfo {
@@ -125,11 +123,7 @@ public:
     std::string address;
     uint32_t copyNb;
     uint64_t size;
-    struct ActivityDescription {
-      std::string diskInstanceName;
-      std::string activity;
-    };
-    optional<ActivityDescription> activity;
+    optional<std::string> activity;
     optional<std::string> diskSystemName;
   };
   std::list<JobDump> dumpJobs();
