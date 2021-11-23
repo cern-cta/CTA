@@ -38,10 +38,10 @@ private:
     std::unique_ptr <cta::SchedulerDB_t> m_scheddb;
     std::unique_ptr <cta::SchedulerDBInit_t> m_scheddb_init;
     std::unique_ptr <cta::Scheduler> m_scheduler;
-    cta::log::LogContext  *m_log;
+    cta::log::Logger  *m_log;
 
 public:
-    CtaRpcImpl(cta::log::LogContext *lc, std::unique_ptr<cta::catalogue::Catalogue> &catalogue, std::unique_ptr<cta::Scheduler> &scheduler);
+    CtaRpcImpl(cta::log::Logger *logger, std::unique_ptr<cta::catalogue::Catalogue> &catalogue, std::unique_ptr<cta::Scheduler> &scheduler);
     void run(const std::string server_address);
     Status Version(::grpc::ServerContext *context, const ::google::protobuf::Empty *request, ::cta::admin::Version *response);
 
