@@ -213,8 +213,8 @@ std::string help =
         "where options can be:\n"
         "\n"
         "\t--port <port>, -p <port>:\tTCP port number to use, defaults to 17017\n"
-        "\t--log-header, -n         \tadd hostname and timestamp to log outputs\n"
-        "\t--no-log-header, -s      \tdon't add hostname and timestamp to log outputs, defalut\n"
+        "\t--log-header, -n         \tadd hostname and timestamp to log outputs, default\n"
+        "\t--no-log-header, -s      \tdon't add hostname and timestamp to log outputs\n"
         "\t--version, -v            \tprint version and exit.\n"
         "\t--help, -h               \tprint this help and exit\n";
 
@@ -243,7 +243,7 @@ int main(const int argc, char *const *const argv) {
     std::string port = "17017";
 
     char c;
-    bool shortHeader = true;
+    bool shortHeader = false;
     int option_index = 0;
     const std::string shortHostName = utils::getShortHostname();
 
@@ -254,10 +254,10 @@ int main(const int argc, char *const *const argv) {
                 port = std::string(optarg);
                 break;
             case 'n':
-                shortHeader = true;
+                shortHeader = false;
                 break;
             case 's':
-                shortHeader = false;
+                shortHeader = true;
                 break;
             case 'h':
                 printHelpAndExit(0);
