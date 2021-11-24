@@ -67,7 +67,7 @@ void smc_qdrive_humanPrint(const struct robot_info *const robot_info,
   const int useSpectraLib) {
   char *pstatus;
   int i;
-  printf (TEXT_RED "Drive Ordinal\tElement Addr.\t  Status     Vid\n" TEXT_NORMAL);
+  printf (TEXT_RED "Drive Ordinal\tElement Addr.\t  Status     Vid" TEXT_NORMAL "\n");
   for (i = 0; i < numberOfElements; i++) {
     if (((element_info+i)->state & 0x1) == 0)
             pstatus = "free";
@@ -202,7 +202,7 @@ void smc_qport_humanPrint(const struct smc_element_info *const element_info,
   const int numberOfElements) {
   char *pstatus;
   int i;
-  printf (TEXT_RED "Element Addr.\tVid\tImpExp\n" TEXT_NORMAL);
+  printf (TEXT_RED "Element Addr.\tVid\tImpExp" TEXT_NORMAL "\n");
   for (i = 0; i < numberOfElements; i++) {
     if (((element_info+i)->state & 0x1) == 0)
             pstatus = "";
@@ -274,7 +274,7 @@ static int smc_qport (
 void smc_qslot_humanPrint(const struct smc_element_info *element_info,
   const int numberOfElements) {
   int i;
-  printf (TEXT_RED "Element Addr.\tVid\n" TEXT_NORMAL);
+  printf (TEXT_RED "Element Addr.\tVid" TEXT_NORMAL "\n");
   for (i = 0; i < numberOfElements; i++) {
     printf ("    %4d\t%s\n",
             element_info[i].element_address, element_info[i].name);
@@ -340,7 +340,7 @@ void smc_qvid_humanPrint(const struct smc_element_info *const element_info,
   int i;
   char *ptype;
   char ptypes[5][6] = {"", "hand", "slot", "port", "drive"};
-  printf (TEXT_RED "Vid\tElement Addr.\tElement Type\n" TEXT_NORMAL);
+  printf (TEXT_RED "Vid\tElement Addr.\tElement Type" TEXT_NORMAL "\n");
   for (i = 0; i < numberOfElements; i++) {
     ptype = ptypes[(element_info+i)->element_type];
     if ((element_info+i)->element_type == 3) {
