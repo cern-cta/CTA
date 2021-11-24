@@ -127,7 +127,7 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     else
       dr_item->set_latest_bandwidth(0);
     dr_item->set_session_id(dr.sessionId ? dr.sessionId.value() : 0);
-    const auto lastUpdateTime = dr.lastModificationLog ? dr.lastModificationLog.value().time : 0;
+    const auto lastUpdateTime = dr.lastModificationLog ? dr.lastModificationLog.value().time : time(nullptr);
     dr_item->set_time_since_last_update(time(nullptr) - lastUpdateTime);
     dr_item->set_current_priority(dr.currentPriority ? dr.currentPriority.value() : 0);
     dr_item->set_current_activity(dr.currentActivity ? dr.currentActivity.value() : "");

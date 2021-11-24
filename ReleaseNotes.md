@@ -14,6 +14,7 @@
 - cta/CTA#1059 - Clean up warnings reported by static analysis
 - cta/CTA#1062 - cta-admin tf rm should store the diskFilePath when deleting the tape file copy
 - cta/CTA#1073 - Retry failed reporting for archive jobs
+- cta/CTA#1078 - fix STALE message when cta-taped is restarting
 
 # v4.3-3
 

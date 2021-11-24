@@ -619,7 +619,7 @@ common::dataStructures::TapeDrive TapeDrivesCatalogueState::setTapeDriveStatus(
   const common::dataStructures::DesiredDriveState & desiredState, const common::dataStructures::MountType& type,
   const common::dataStructures::DriveStatus& status, const tape::daemon::TpconfigLine& tpConfigLine,
   const common::dataStructures::SecurityIdentity& identity) {
-  const time_t reportTime = time(NULL);
+  const time_t reportTime = time(nullptr);
   common::dataStructures::TapeDrive tapeDriveStatus;
   tapeDriveStatus.driveName = driveInfo.driveName;
   tapeDriveStatus.host = driveInfo.host;
@@ -636,8 +636,14 @@ common::dataStructures::TapeDrive TapeDrivesCatalogueState::setTapeDriveStatus(
   tapeDriveStatus.reservedBytes = 0;
   tapeDriveStatus.devFileName = tpConfigLine.devFilename;
   tapeDriveStatus.rawLibrarySlot = tpConfigLine.rawLibrarySlot;
-  tapeDriveStatus.creationLog = common::dataStructures::EntryLog(identity.username, identity.host, reportTime);
-  tapeDriveStatus.lastModificationLog = common::dataStructures::EntryLog(identity.username, identity.host, reportTime);
+  if (identity.username.empty()) {
+    tapeDriveStatus.creationLog = common::dataStructures::EntryLog("NO_USER", driveInfo.host, reportTime);
+    tapeDriveStatus.lastModificationLog = common::dataStructures::EntryLog("NO_USER", driveInfo.host, reportTime);
+  } else {
+    tapeDriveStatus.creationLog = common::dataStructures::EntryLog(identity.username, identity.host, reportTime);
+    tapeDriveStatus.lastModificationLog = common::dataStructures::EntryLog(identity.username, identity.host,
+      reportTime);
+  }
   return tapeDriveStatus;
 }
 
