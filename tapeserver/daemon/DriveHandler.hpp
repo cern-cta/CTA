@@ -115,11 +115,11 @@ private:
   /** Values for the data movement timeouts, where applicable */
   static const std::map<session::SessionState, Timeout> m_dataMovementTimeouts;
   /** When did we see the last state change? */
-  std::chrono::time_point<std::chrono::steady_clock> m_lastStateChangeTime=decltype(m_lastStateChangeTime)::min();
+  std::chrono::time_point<std::chrono::steady_clock> m_lastStateChangeTime = std::chrono::steady_clock::now();
   /** When did we see the last heartbeat change? */
-  std::chrono::time_point<std::chrono::steady_clock> m_lastHeartBeatTime=decltype(m_lastHeartBeatTime)::min();
+  std::chrono::time_point<std::chrono::steady_clock> m_lastHeartBeatTime = std::chrono::steady_clock::now();
   /** When did we see the last data movement? */
-  std::chrono::time_point<std::chrono::steady_clock> m_lastDataMovementTime=decltype(m_lastDataMovementTime)::min();
+  std::chrono::time_point<std::chrono::steady_clock> m_lastDataMovementTime = std::chrono::steady_clock::now();
   /** Type of the currently active timeout */
   std::string m_timeoutType;
   /** Session type when currently active timeout was set */

@@ -347,15 +347,15 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
 //------------------------------------------------------------------------------
 void DriveHandler::resetToDefault(PreviousSession previousSessionState) {
   m_pid=-1;
-  m_previousSession=previousSessionState;
-  m_previousType=m_sessionType;
-  m_previousState=m_sessionState;
-  m_previousVid=m_sessionVid;
-  m_sessionState=SessionState::PendingFork;
-  m_sessionType=SessionType::Undetermined;
-  m_lastStateChangeTime=decltype(m_lastStateChangeTime)::min();
-  m_lastHeartBeatTime=decltype(m_lastHeartBeatTime)::min();
-  m_lastDataMovementTime=decltype(m_lastDataMovementTime)::min();
+  m_previousSession = previousSessionState;
+  m_previousType = m_sessionType;
+  m_previousState = m_sessionState;
+  m_previousVid = m_sessionVid;
+  m_sessionState = SessionState::PendingFork;
+  m_sessionType = SessionType::Undetermined;
+  m_lastStateChangeTime = std::chrono::steady_clock::now();
+  m_lastHeartBeatTime = std::chrono::steady_clock::now();
+  m_lastDataMovementTime = std::chrono::steady_clock::now();
   m_processingStatus.forkRequested = false;
   m_processingStatus.killRequested = false;
   m_processingStatus.nextTimeout = m_processingStatus.nextTimeout.max();
