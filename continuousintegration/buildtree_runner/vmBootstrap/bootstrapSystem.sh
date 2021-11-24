@@ -43,7 +43,7 @@ sudo -E bash -c 'cat gitScripts/bash_profile.hook >> $CTAUSERHOME/.bash_profile'
 sudo -u $CTAUSER cp tigConf/tigrc $CTAUSERHOME/.tigrc
 
 echo Installing minimal tools and tape tools
-sudo yum install -y git cmake rpm-build gcc gcc-c++ vim gdb cgdb strace ltrace screen tig lsscsi mt-st mtx sg3_utils jq psmisc mariadb-devel yum-plugin-versionlock krb5-workstation wget yum-utils epel-release
+sudo yum install -y git cmake rpm-build gcc gcc-c++ vim gdb cgdb strace ltrace screen tig lsscsi mt-st mtx sg3_utils jq psmisc yum-plugin-versionlock krb5-workstation wget yum-utils epel-release
 
 echo "Getting CTA sources for $CTAUSER..."
 sudo -u $CTAUSER bash -c 'cd ~ ; git clone https://gitlab.cern.ch/cta/CTA.git'

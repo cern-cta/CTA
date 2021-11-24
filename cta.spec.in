@@ -58,7 +58,6 @@ BuildRequires: libuuid-devel >= 2.17
 BuildRequires: json-c-devel >= 0.11
 BuildRequires: libattr-devel >= 2.4.44
 BuildRequires: oracle-instantclient19.3-devel
-BuildRequires: mariadb-devel
 BuildRequires: postgresql-devel
 BuildRequires: valgrind
 BuildRequires: valgrind-devel
@@ -214,7 +213,6 @@ Summary: CERN Tape Archive libraries
 Group: Application/CTA
 # Explicity require protobuf3 to avoid clash with eos-protobuf3
 Requires: cta-lib-common
-Requires: mariadb-libs
 Requires: oracle-instantclient19.3-basic
 Requires: postgresql-libs
 Requires: xrootd-client-libs >= %{xrootdVersion}
