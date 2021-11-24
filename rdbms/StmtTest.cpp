@@ -71,6 +71,7 @@ std::string cta_rdbms_StmtTest::getCreateStmtTestTableSql() {
       "  UINT32_COL UINT32TYPE,"                                     "\n"
       "  UINT64_COL UINT64TYPE,"                                     "\n"
       "  STRING_COL VARCHAR(100),"                                   "\n"
+      "  BLOB_COL   BLOBTYPE,"                                      "\n"
       "  BOOL_COL   CHAR(1) DEFAULT '0',"                            "\n"
       "  CONSTRAINT STMT_TEST_PK PRIMARY KEY(ID),"                   "\n"
       "  CONSTRAINT BOOL_COL_BOOL_CK CHECK(BOOL_COL IN ('0', '1'))"  "\n"
@@ -85,18 +86,21 @@ std::string cta_rdbms_StmtTest::getCreateStmtTestTableSql() {
       utils::searchAndReplace(sql, "UINT32TYPE", "NUMERIC(10, 0)");
       utils::searchAndReplace(sql, "UINT64TYPE", "NUMERIC(20, 0)");
       utils::searchAndReplace(sql, "VARCHAR", "VARCHAR2");
+      utils::searchAndReplace(sql, "BLOBTYPE", "RAW(200)");
       break;
     case Login::DBTYPE_SQLITE:
       utils::searchAndReplace(sql, "UINT8TYPE", "INTEGER");
       utils::searchAndReplace(sql, "UINT16TYPE", "INTEGER");
       utils::searchAndReplace(sql, "UINT32TYPE", "INTEGER");
       utils::searchAndReplace(sql, "UINT64TYPE", "INTEGER");
+      utils::searchAndReplace(sql, "BLOBTYPE", "BLOB(200)");
       break;
     case Login::DBTYPE_POSTGRESQL:
       utils::searchAndReplace(sql, "UINT8TYPE", "NUMERIC(3, 0)");
       utils::searchAndReplace(sql, "UINT16TYPE", "NUMERIC(5, 0)");
       utils::searchAndReplace(sql, "UINT32TYPE", "NUMERIC(10, 0)");
       utils::searchAndReplace(sql, "UINT64TYPE", "NUMERIC(20, 0)");
+      utils::searchAndReplace(sql, "BLOBTYPE", "BYTEA");
       break;
     case Login::DBTYPE_NONE:
       {
@@ -180,6 +184,47 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindDouble) {
     ASSERT_FALSE(rset.next());
   }
 }
+
+TEST_P(cta_rdbms_StmtTest, insert_with_bindBlob) {
+  using namespace cta::rdbms;
+
+  const std::string insertBlob = "\x00\x01\x02\x03\n\t\t\0\0\0\0";
+
+  // Insert a row into the test table
+  {
+    const char *const sql =
+      "INSERT INTO STMT_TEST(" "\n"
+      "  ID,"                  "\n"
+      "  BLOB_COL)"          "\n"
+      "VALUES("                "\n"
+      "  1,"                   "\n"
+      "  :BLOB_COL)";
+    auto stmt = m_conn.createStmt(sql);
+    stmt.bindBlob(":BLOB_COL", insertBlob);
+    stmt.executeNonQuery();
+  }
+
+  // Select the row back from the table
+  {
+    const char *const sql =
+      "SELECT"                     "\n"
+      "  BLOB_COL AS BLOB_COL" "\n"
+      "FROM"                       "\n"
+      "  STMT_TEST";
+    auto stmt = m_conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+
+    {
+      const auto selectValue = rset.columnBlob("BLOB_COL");
+
+      ASSERT_EQ(insertBlob, selectValue);
+    }
+
+    ASSERT_FALSE(rset.next());
+  }
+}
+
 
 TEST_P(cta_rdbms_StmtTest, insert_with_bindDouble_null) {
   using namespace cta::rdbms;
