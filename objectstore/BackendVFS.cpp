@@ -254,7 +254,11 @@ void BackendVFS::ScopedLock::release() {
 BackendVFS::ScopedLock * BackendVFS::lockHelper(const std::string& name, int type, uint64_t timeout_us) {
   std::string path = m_root + "/." + name + ".lock";
   std::unique_ptr<ScopedLock> ret(new ScopedLock);
-  ret->set(::open(path.c_str(), O_RDONLY), path);
+  int flag = O_RDONLY;
+  if (type == LOCK_EX) {
+    flag = O_RDWR;
+  }
+  ret->set(::open(path.c_str(), flag), path);
 
   if(0 > ret->m_fd) {
     // We went too fast:  the fd is not really set:
