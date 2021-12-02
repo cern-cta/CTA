@@ -5,9 +5,9 @@ priority=2
 gpgcheck=0
 enabled=1
 
-[cta-ci-ceph-nautilus]
-name=CTA CI repo ceph-nautilus cache
-baseurl=https://cta-ci-repo.web.cern.ch/cta-ci-repo/ceph-nautilus
+[cta-ci-ceph-octopus]
+name=CTA CI repo ceph-octopus cache
+baseurl=https://cta-ci-repo.web.cern.ch/cta-ci-repo/ceph-octopus
 priority=3
 gpgcheck=0
 enabled=1
