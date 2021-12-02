@@ -12,7 +12,7 @@
 #
 #                 You should have received a copy of the GNU General Public License
 #                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required (VERSION 3.17)
 
 install (PROGRAMS ctafstgcd.py DESTINATION usr/bin RENAME cta-fst-gcd)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-fst-gcd.1cta DESTINATION /usr/share/man/man1)

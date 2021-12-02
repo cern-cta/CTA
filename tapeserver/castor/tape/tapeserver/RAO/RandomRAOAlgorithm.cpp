@@ -15,6 +15,8 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <numeric>
+
 #include "RandomRAOAlgorithm.hpp"
 #include "common/Timer.hpp"
 

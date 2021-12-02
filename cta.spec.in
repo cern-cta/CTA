@@ -35,7 +35,7 @@ License: GPLv3+
 Group: Application/cta
 
 BuildRoot: %{_builddir}/%{name}-%{version}-root
-BuildRequires: cmake >= 2.6 redhat-rpm-config
+BuildRequires: cmake3 >= 3.17 redhat-rpm-config
 
 
 # The CTA client is the only component of CTA that can be compiled on both SLC6
@@ -77,7 +77,7 @@ The CTA project is the CERN Tape Archive system.
 mkdir -p build
 cd build
 # The cmake step does the selection between client/server compilation or just client
-CTA_VERSION=%{ctaVersion} cmake .. -DCOMPILE_PACKAGING:STRING=0 -DVCS_VERSION=%{ctaRelease}
+CTA_VERSION=%{ctaVersion} cmake3 .. -DCOMPILE_PACKAGING:STRING=0 -DVCS_VERSION=%{ctaRelease}
 # Workaround for the inability of cmake to handle properly the dependencies to generated code.
 %{__make} -s %{_smp_mflags} -k || true
 %{__make} -s %{_smp_mflags}

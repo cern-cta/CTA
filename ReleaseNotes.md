@@ -12,6 +12,7 @@
 - cta/CTA#1057 - Remove support for MySQL
 - cta/CTA#1074 - Improve error reporting when retrieving archive
 - cta/CTA#1026 - Add activity Mount Policy resolution to CTA
+- cta/CTA#1086 - Build cta with gcc 7.x(C++17) and fix deprecated code
 
 ### Bug fixes
 - cta/CTA#1059 - Clean up warnings reported by static analysis

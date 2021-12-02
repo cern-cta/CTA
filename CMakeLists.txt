@@ -12,7 +12,7 @@
 #
 #                 You should have received a copy of the GNU General Public License
 #                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required (VERSION 3.17)
 
 project(cta)
 
@@ -43,16 +43,28 @@ execute_process(
   OUTPUT_VARIABLE GCC_VERSION)
 
 if (CMAKE_COMPILER_IS_GNUCC)
-  if (GCC_VERSION VERSION_EQUAL 4.4.7)
-    message(STATUS "Detected gcc = 4.4.7 - build cmdline only with c++0x")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
-    set (BUILD_CMDLINE_ONLY TRUE)
-  endif (GCC_VERSION VERSION_EQUAL 4.4.7)
-  if (GCC_VERSION VERSION_GREATER 4.4.7)
-    message(STATUS "Detected gcc > 4.4.7 - switching on support for c++1y")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
-  endif (GCC_VERSION VERSION_GREATER 4.4.7)
+  message(STATUS "GCC VERSION ${GCC_VERSION}")
+  if (GCC_VERSION VERSION_GREATER_EQUAL 7.0)
+    message(STATUS "Detected gcc > 7.0 - switching on support for c++17")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+  else (GCC_VERSION VERSION_LESS 7.0)
+    if (GCC_VERSION VERSION_EQUAL 4.4.7)
+      message(STATUS "Detected gcc = 4.4.7 - build cmdline only with c++0x")
+      set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+      set (BUILD_CMDLINE_ONLY TRUE)
+    endif (GCC_VERSION VERSION_EQUAL 4.4.7)
+    if (GCC_VERSION VERSION_GREATER 4.4.7)
+      message(STATUS "Detected gcc > 4.4.7 - switching on support for c++1y")
+      set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
+    endif (GCC_VERSION VERSION_GREATER 4.4.7)
+  endif (GCC_VERSION VERSION_GREATER 11.0)
 endif (CMAKE_COMPILER_IS_GNUCC)
+
+# CTA continue using the old ABI, so we should force it. This command only works on cmake3,
+# so we should update the requeriments of CMakeLists
+# see: https://gcc.gnu.org/onlinedocs/libstdc++/manual/using_dual_abi.html
+#      https://docs.ceph.com/en/latest/dev/cxx/
+add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=0)
 
 set (GCC_VERSION_GE_4_8_0 FALSE)
 if (CMAKE_COMPILER_IS_GNUCC AND ((GCC_VERSION VERSION_GREATER 4.8.0) OR (GCC_VERSION VERSION_EQUAL 4.8.0)))

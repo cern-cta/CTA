@@ -63,7 +63,7 @@ bool RAOFile::operator <(const RAOFile& other) const {
 }
 
 bool RAOFile::operator ==(const RAOFile& other) const {
-  return m_index == m_index;
+  return m_index == other.getIndex();
 }
 
 RAOFile::~RAOFile() {
