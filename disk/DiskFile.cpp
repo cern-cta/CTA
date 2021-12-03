@@ -515,7 +515,7 @@ size_t RadosStriperReadFile::read(void *data, const size_t size) const {
     throw cta::exception::Errnum(-rc,
         "In RadosStriperReadFile::read(): failed to striper->read: ");
   }
-  bl.copy(0, rc, (char *)data);
+  bl.begin().copy(rc, (char *)data);
   m_readPosition += rc;
   return rc;
 }

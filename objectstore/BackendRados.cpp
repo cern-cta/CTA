@@ -275,7 +275,7 @@ std::string BackendRados::read(const std::string& name) {
   // They are regarded as not-existing.
   std::string errorMsg = "In BackendRados::read(): considering empty object (name=" + name + ") as non-existing.";
   if (!bl.length()) throw cta::exception::NoSuchObject(errorMsg);
-  bl.copy(0, bl.length(), ret);
+  bl.begin().copy(bl.length(), ret);
   return ret;
 }
 
@@ -1068,7 +1068,7 @@ void BackendRados::AsyncUpdater::UpdateJob::execute() {
     }
     std::string value;
     try {
-      au.m_radosBufferList.copy(0, au.m_radosBufferList.length(), value);
+      au.m_radosBufferList.begin().copy(au.m_radosBufferList.length(), value);
     } catch (std::exception & ex) {
       throw CouldNotUpdateValue(
           std::string("In In BackendRados::AsyncUpdater::fetchCallback::update_lambda(): failed to read buffer: ") +
@@ -1318,7 +1318,7 @@ void BackendRados::AsyncLockfreeFetcher::fetchCallback(librados::completion_t co
     }
     std::string value;
     try {
-      au.m_radosBufferList.copy(0, au.m_radosBufferList.length(), value);
+      au.m_radosBufferList.begin().copy(au.m_radosBufferList.length(), value);
     } catch (std::exception & ex) {
       throw CouldNotUpdateValue(
           std::string("In In BackendRados::AsyncUpdater::fetchCallback::update_lambda(): failed to read buffer: ") +
