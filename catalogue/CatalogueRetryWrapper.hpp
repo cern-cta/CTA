@@ -443,7 +443,7 @@ public:
   void deleteMountPolicy(const std::string &name) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteMountPolicy(name);}, m_maxTriesToConnect);
   }
-  
+
   void createRequesterActivityMountRule(const common::dataStructures::SecurityIdentity &admin, const std::string &mountPolicyName, const std::string &diskInstance, const std::string &requesterName, const std::string &activityRegex, const std::string &comment) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->createRequesterActivityMountRule(admin, mountPolicyName, diskInstance, requesterName, activityRegex, comment);}, m_maxTriesToConnect);
   }
@@ -639,6 +639,10 @@ public:
     return retryOnLostConnection(m_log,[&]{return m_catalogue->getTapeDriveNames();},m_maxTriesToConnect);
   }
 
+  std::list<common::dataStructures::TapeDrive> getTapeDrives() const override {
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->getTapeDrives();},m_maxTriesToConnect);
+  }
+
   optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string &tapeDriveName) const override {
     return retryOnLostConnection(m_log,[&]{return m_catalogue->getTapeDrive(tapeDriveName);},m_maxTriesToConnect);
   }
@@ -654,6 +658,10 @@ public:
   void createDriveConfig(const std::string &driveName, const std::string &category,
     const std::string &keyName, const std::string &value, const std::string &source) {
     return retryOnLostConnection(m_log,[&]{return m_catalogue->createDriveConfig(driveName, category, keyName, value, source);},m_maxTriesToConnect);
+  }
+
+  std::list<cta::catalogue::Catalogue::DriveConfig> getDrivesConfigs() const {
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->getDrivesConfigs();},m_maxTriesToConnect);
   }
 
   std::list<std::pair<std::string, std::string>> getDriveConfigNamesAndKeys() const {
@@ -673,7 +681,7 @@ public:
   void deleteDriveConfig(const std::string &tapeDriveName, const std::string &keyName) {
     return retryOnLostConnection(m_log,[&]{return m_catalogue->deleteDriveConfig(tapeDriveName, keyName);},m_maxTriesToConnect);
   }
-  
+
   std::map<std::string, uint64_t> getExistingDrivesReservations() const {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getExistingDrivesReservations();}, m_maxTriesToConnect);
   }
@@ -693,7 +701,7 @@ public:
   std::tuple<std::string, uint64_t> getDiskSpaceReservation(const std::string& driveName) {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getDiskSpaceReservation(driveName);}, m_maxTriesToConnect);
   }
-  
+
   void releaseDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->releaseDiskSpace(driveName, diskSpaceReservation, lc);}, m_maxTriesToConnect);
   }

@@ -1169,6 +1169,12 @@ public:
   virtual std::list<std::string> getTapeDriveNames() const = 0;
 
   /**
+   * Gets the information of all Tape Drives
+   * @return Parameters of all Tape Drives.
+   */
+  virtual std::list<common::dataStructures::TapeDrive> getTapeDrives() const = 0;
+
+  /**
    * Gets the information of the specified Tape Drive
    * @param tapeDriveName The name of the tape drive.
    * @return Parameters of the Tape Drive.
@@ -1187,6 +1193,17 @@ public:
    */
   virtual void deleteTapeDrive(const std::string &tapeDriveName) = 0;
 
+  /*
+   * Struct with a drive configuration
+   */
+  struct DriveConfig {
+    std::string tapeDriveName;
+    std::string category;
+    std::string keyName;
+    std::string value;
+    std::string source;
+  };
+
   /**
    * Creates a specified parameter of the configuration for a certain Tape Drive
    * @param tapeDriveName The name of the tape drive.
@@ -1197,6 +1214,12 @@ public:
    */
   virtual void createDriveConfig(const std::string &tapeDriveName, const std::string &category,
     const std::string &keyName, const std::string &value, const std::string &source) = 0;
+
+  /**
+   * Gets all Drive Configurations of all TapeDrives.
+   * @return Drive Configurations of all TapeDrives.
+   */
+  virtual std::list<DriveConfig> getDrivesConfigs() const = 0;
 
   /**
    * Gets the Key and Names of configurations of all TapeDrives
@@ -1237,9 +1260,9 @@ public:
   virtual void addDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes) = 0;
 
   virtual void subtractDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes) = 0;
-  
+
   virtual std::tuple<std::string, uint64_t> getDiskSpaceReservation(const std::string& driveName) = 0;
-  
+
   virtual void releaseDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) = 0;
 
 }; // class Catalogue

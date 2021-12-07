@@ -48,6 +48,8 @@ namespace catalogue {
  */
 class ArchiveFileRow;
 
+class RsetWrapper;
+
 /**
  * Forward declaration.
  */
@@ -950,7 +952,7 @@ public:
    * @param newFid the new eos file id of the archive file
    * @param lc the log context
    */
-  void restoreArchiveFileInRecycleLog(rdbms::Conn & conn, const common::dataStructures::FileRecycleLog &fileRecycleLogItor, 
+  void restoreArchiveFileInRecycleLog(rdbms::Conn & conn, const common::dataStructures::FileRecycleLog &fileRecycleLogItor,
     const std::string &newFid, log::LogContext & lc);
 
   /**
@@ -2027,7 +2029,7 @@ protected:
   virtual void copyArchiveFileToFileRecyleLogAndDelete(rdbms::Conn & conn,const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc) = 0;
 
   /**
-   * Copy the fileRecycleLog to the TAPE_FILE and ARCHIVE_FILE (if the archive file no longer exists) 
+   * Copy the fileRecycleLog to the TAPE_FILE and ARCHIVE_FILE (if the archive file no longer exists)
    * table and deletes the corresponding FILE_RECYCLE_LOG table entry
    * @param conn the database connection
    * @param fileRecycleLog the fileRecycleLog we want to restore
@@ -2225,6 +2227,8 @@ protected:
 
   std::list<std::string> getTapeDriveNames() const override;
 
+  std::list<common::dataStructures::TapeDrive> getTapeDrives() const override;
+
   optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string &tapeDriveName) const override;
 
   void modifyTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) override;
@@ -2239,6 +2243,8 @@ protected:
   void modifyDriveConfig(const std::string &tapeDriveName, const std::string &category,
     const std::string &keyName, const std::string &value, const std::string &source) override;
 
+  std::list<cta::catalogue::Catalogue::DriveConfig> getDrivesConfigs() const override;
+
   optional<std::tuple<std::string, std::string, std::string>> getDriveConfig( const std::string &tapeDriveName,
     const std::string &keyName) const override;
 
@@ -2251,9 +2257,9 @@ protected:
   void addDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes) override;
 
   void subtractDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes) override;
-  
+
   std::tuple<std::string, uint64_t> getDiskSpaceReservation(const std::string& driveName) override;
-  
+
   void releaseDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) override;
 
   /**
@@ -2298,6 +2304,7 @@ protected:
 private:
   void settingSqlTapeDriveValues(cta::rdbms::Stmt *stmt, const common::dataStructures::TapeDrive &tapeDrive) const;
 
+  common::dataStructures::TapeDrive gettingSqlTapeDriveValues(cta::rdbms::Rset* rset) const;
 }; // class RdbmsCatalogue
 
 } // namespace catalogue

@@ -88,8 +88,10 @@ public:
   void deleteFileFromRecycleBin(const uint64_t archiveFileId, log::LogContext &lc) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void deleteFilesFromRecycleLog(const std::string & vid, log::LogContext & lc) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void createTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
+  std::list<common::dataStructures::TapeDrive> getTapeDrives() const {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void deleteTapeDrive(const std::string &tapeDriveName) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void createDriveConfig(const std::string &tapeDriveName, const std::string &category, const std::string &keyName, const std::string &value, const std::string &source) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
+  std::list<cta::catalogue::Catalogue::DriveConfig> getDrivesConfigs() const {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   std::list<std::pair<std::string, std::string>> getDriveConfigNamesAndKeys() const {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void modifyDriveConfig(const std::string &tapeDriveName, const std::string &category, const std::string &keyName, const std::string &value, const std::string &source) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   optional<std::tuple<std::string, std::string, std::string>> getDriveConfig( const std::string &tapeDriveName, const std::string &keyName) const {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
@@ -284,7 +286,7 @@ public:
     for (const auto& driveName : tdNames) {
       const auto tdStatus = getTapeDrive(driveName);
       //no need to check key, operator[] initializes missing values at zero for scalar types
-      ret[tdStatus.value().diskSystemName] += tdStatus.value().reservedBytes; 
+      ret[tdStatus.value().diskSystemName] += tdStatus.value().reservedBytes;
     }
     return ret;
   }
@@ -312,7 +314,7 @@ public:
     setLogParam(diskSystemName, bytes);
     lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): state after reservation.");
   }
-  
+
   void addDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes) override {
     auto tdStatus = getTapeDrive(driveName);
     if (!tdStatus) return;

@@ -204,7 +204,7 @@ namespace {
   }
 
   cta::catalogue::CreateMountPolicyAttributes getMountPolicy2() {
-    // Higher priority mount policy 
+    // Higher priority mount policy
     using namespace cta;
 
     catalogue::CreateMountPolicyAttributes mountPolicy;
@@ -268,7 +268,7 @@ namespace {
     tapeDrive.nextTapePool = "tape_pool_1";
     tapeDrive.nextPriority = 1;
     tapeDrive.nextActivity = "Activity2";
-    
+
     tapeDrive.devFileName = "fileName";
     tapeDrive.rawLibrarySlot = "librarySlot1";
 
@@ -7239,8 +7239,8 @@ TEST_P(cta_catalogue_CatalogueTest, createRequesterActivityMountRule_non_existen
   const std::string diskInstanceName = "disk_instance";
   const std::string requesterName = "requester_name";
   const std::string activityRegex = "activity_regex";
- 
-  ASSERT_THROW( m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, 
+
+  ASSERT_THROW( m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName,
     activityRegex, comment), exception::UserError);
 }
 
@@ -7322,7 +7322,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterActivityMountRulePolicy) {
     ASSERT_EQ(requesterName, rule.name);
     ASSERT_EQ(anotherMountPolicyName, rule.mountPolicy);
     ASSERT_EQ(comment, rule.comment);
-    ASSERT_EQ(activityRegex, rule.activityRegex);  
+    ASSERT_EQ(activityRegex, rule.activityRegex);
     ASSERT_EQ(m_admin.username, rule.creationLog.username);
     ASSERT_EQ(m_admin.host, rule.creationLog.host);
   }
@@ -9339,12 +9339,12 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_Acti
     const std::string comment = "Create mount rule for requester+activity";
     const std::string requesterName = "requester_name";
     const std::string activityRegex = "^activity_[a-zA-Z0-9-]+$";
-    m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyToAdd1.name, diskInstanceName1, requesterName, activityRegex, comment);  
-  
+    m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyToAdd1.name, diskInstanceName1, requesterName, activityRegex, comment);
+
 
     const std::string secondActivityRegex = "^activity_specific$";
-    m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyToAdd2.name, diskInstanceName1, requesterName, secondActivityRegex, comment);  
-  
+    m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyToAdd2.name, diskInstanceName1, requesterName, secondActivityRegex, comment);
+
 
   {
     const std::list<common::dataStructures::RequesterActivityMountRule> rules = m_catalogue->getRequesterActivityMountRules();
@@ -9366,7 +9366,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_Acti
     ASSERT_EQ(mountPolicyToAdd1.archivePriority, queueCriteria.mountPolicy.archivePriority);
     ASSERT_EQ(mountPolicyToAdd1.minArchiveRequestAge, queueCriteria.mountPolicy.archiveMinRequestAge);
   }
-  
+
   // Check that multiple matching policies returns the highest priority one for retrieve
   requestActivity = std::string("activity_specific");
   {
@@ -9378,7 +9378,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_Acti
     ASSERT_EQ(mountPolicyToAdd2.minArchiveRequestAge, queueCriteria.mountPolicy.archiveMinRequestAge);
   }
 
-  
+
   // Check that no matching activity detection works
   requestActivity = std::string("no_matching_activity");
   ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName2, archiveFileId, requesterIdentity, requestActivity, dummyLc),
@@ -16365,6 +16365,34 @@ TEST_P(cta_catalogue_CatalogueTest, getTapeDriveNames) {
   }
 }
 
+TEST_P(cta_catalogue_CatalogueTest, getAllTapeDrives) {
+  std::list<std::string> tapeDriveNames;
+  // Create 100 tape drives
+  for (size_t i = 0; i < 100; i++) {
+    std::stringstream ss;
+    ss << "VDSTK" << std::setw(5) << std::setfill('0') << i;
+    tapeDriveNames.push_back(ss.str());
+  }
+  std::list<cta::common::dataStructures::TapeDrive> tapeDrives;
+  for (const auto& name : tapeDriveNames) {
+    const auto tapeDrive = getTapeDriveWithMandatoryElements(name);
+    m_catalogue->createTapeDrive(tapeDrive);
+    tapeDrives.push_back(tapeDrive);
+  }
+  auto storedTapeDrives = m_catalogue->getTapeDrives();
+  ASSERT_EQ(tapeDriveNames.size(), storedTapeDrives.size());
+  while (!storedTapeDrives.empty()) {
+    const auto storedTapeDrive = storedTapeDrives.front();
+    const auto tapeDrive = tapeDrives.front();
+    storedTapeDrives.pop_front();
+    tapeDrives.pop_front();
+    ASSERT_EQ(tapeDrive, storedTapeDrive);
+  }
+  for (const auto& name : tapeDriveNames) {
+    m_catalogue->deleteTapeDrive(name);
+  }
+}
+
 TEST_P(cta_catalogue_CatalogueTest, getTapeDrive) {
   using namespace cta;
 
@@ -16491,6 +16519,33 @@ TEST_P(cta_catalogue_CatalogueTest, getDriveConfig) {
   ASSERT_EQ(daemonUserName.value(), value);
   ASSERT_EQ(daemonUserName.source(), source);
   m_catalogue->deleteDriveConfig(tapeDriveName, daemonUserName.key());
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getAllDrivesConfigs) {
+  std::list<cta::catalogue::Catalogue::DriveConfig> tapeDriveConfigs;
+  // Create 100 tape drives
+  for (size_t i = 0; i < 100; i++) {
+    std::stringstream ss;
+    ss << "VDSTK" << std::setw(5) << std::setfill('0') << i;
+
+    cta::SourcedParameter<std::string> daemonUserName {
+      "taped", "DaemonUserName", "cta", "Compile time default"};
+    m_catalogue->createDriveConfig(ss.str(), daemonUserName.category(), daemonUserName.key(),
+      daemonUserName.value(), daemonUserName.source());
+    tapeDriveConfigs.push_back({ss.str(), daemonUserName.category(), daemonUserName.key(), daemonUserName.value(),
+      daemonUserName.source()});
+    cta::SourcedParameter<std::string> defaultConfig {
+      "taped", "defaultConfig", "cta", "Random Default Config for Testing"};
+    m_catalogue->createDriveConfig(ss.str(), defaultConfig.category(), defaultConfig.key(),
+      defaultConfig.value(), defaultConfig.source());
+    tapeDriveConfigs.push_back({ss.str(), defaultConfig.category(), defaultConfig.key(), defaultConfig.value(),
+      defaultConfig.source()});
+  }
+  const auto drivesConfigs = m_catalogue->getDrivesConfigs();
+  ASSERT_EQ(tapeDriveConfigs.size(), drivesConfigs.size());
+  for (const auto& dc : drivesConfigs) {
+    m_catalogue->deleteDriveConfig(dc.tapeDriveName, dc.keyName);
+  }
 }
 
 TEST_P(cta_catalogue_CatalogueTest, setSourcedParameterWithEmptyValue) {
@@ -17456,7 +17511,7 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreVariousDeletedTapeFileCopies) {
     searchCriteria.archiveFileId = 1;
 
     ASSERT_THROW(m_catalogue->restoreFileInRecycleLog(searchCriteria, "0"), cta::exception::UserError);
-    
+
   }
 }
 
@@ -17567,7 +17622,7 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreArchiveFileAndCopy) {
     deleteRequest.diskInstance = diskInstance;
     deleteRequest.diskFileId = std::to_string(12345677);
     deleteRequest.diskFilePath = "/test/file1";
-    
+
     log::LogContext dummyLc(m_dummyLog);
     m_catalogue->moveArchiveFileToRecycleLog(deleteRequest, dummyLc);
     ASSERT_THROW(m_catalogue->getArchiveFileById(1), cta::exception::Exception);
@@ -17581,7 +17636,7 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreArchiveFileAndCopy) {
     searchCriteria.vid = tape1.vid;
 
     m_catalogue->restoreFileInRecycleLog(searchCriteria, std::to_string(12345678)); //previous fid + 1
-    
+
     //assert archive file has been restored in the catalogue
     auto archiveFile = m_catalogue->getArchiveFileById(1);
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
