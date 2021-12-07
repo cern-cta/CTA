@@ -16,7 +16,7 @@
 - cta/CTA#1074 - Improve error reporting when retrieving archive
 - cta/CTA#1077 - Remove activity fair scheduling logic
 - cta/CTA#1083 - Upgrade ceph to version 15.2.15
-- cta/CTA#1086 - Build cta with gcc 7.x(C++17) and fix deprecated code
+- cta/CTA#1068 - Build cta with gcc 7.x(C++17) and fix deprecated code
 
 ### Bug fixes
 - cta/CTA#1059 - Clean up warnings reported by static analysis
