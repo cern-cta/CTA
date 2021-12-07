@@ -1,4 +1,4 @@
-# v4.NEXT
+# v4.3-4
 
 ## Summary
 
@@ -9,9 +9,13 @@
 - cta/CTA#777 - Minimize mounts for dual copy tape pool recalls
 - cta/CTA#928 - Add youngest request age to cta-admin sq
 - cta/CTA#1020 - cta-restore-deleted-files command for restoring deleted files
-- cta/CTA#1057 - Remove support for MySQL
-- cta/CTA#1074 - Improve error reporting when retrieving archive
 - cta/CTA#1026 - Add activity Mount Policy resolution to CTA
+- cta/CTA#1057 - Remove support for MySQL
+- cta/CTA#1069 - Open BackendVFS ObjectStore files in R/W mode when obtaining exclusive locks
+- cta/CTA#1070 - Update eos to version 4.8.67
+- cta/CTA#1074 - Improve error reporting when retrieving archive
+- cta/CTA#1077 - Remove activity fair scheduling logic
+- cta/CTA#1083 - Upgrade ceph to version 15.2.15
 - cta/CTA#1086 - Build cta with gcc 7.x(C++17) and fix deprecated code
 
 ### Bug fixes
