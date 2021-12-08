@@ -10559,26 +10559,24 @@ std::map<std::string, uint64_t> RdbmsCatalogue::getExistingDrivesReservations() 
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::reserveDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) {
   if (diskSpaceReservation.empty()) return;
-  // Try add our reservation to the drive status.
-  auto setLogParam = [&lc](const std::string& diskSystemName, uint64_t bytes) {
+  auto debugLogDiskSpaceReservation = [&lc](const std::string &diskSystemName, const uint64_t bytes, const std::string &message) {
     log::ScopedParamContainer params(lc);
     params.add("diskSystem", diskSystemName)
           .add("reservation", bytes);
+    lc.log(log::DEBUG, message);
   };
   std::string diskSystemName = diskSpaceReservation.begin()->first;
   uint64_t bytes = diskSpaceReservation.begin()->second;
-  setLogParam(diskSystemName, bytes);
-  lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): reservation request content.");
-
+  
+  debugLogDiskSpaceReservation(diskSystemName, bytes, "In RetrieveMount::reserveDiskSpace(): reservation request content.");
+  
   std::tie(diskSystemName, bytes) = getDiskSpaceReservation(driveName);
-  setLogParam(diskSystemName, bytes);
-  lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): state before reservation.");
+  debugLogDiskSpaceReservation(diskSystemName, bytes, "In RetrieveMount::reserveDiskSpace(): state before reservation.");
 
-  addDiskSpaceReservation(driveName, diskSpaceReservation.begin()->first,
-    diskSpaceReservation.begin()->second);
+  addDiskSpaceReservation(driveName, diskSpaceReservation.begin()->first, diskSpaceReservation.begin()->second);
+  
   std::tie(diskSystemName, bytes) = getDiskSpaceReservation(driveName);
-  setLogParam(diskSystemName, bytes);
-  lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): state after reservation.");
+  debugLogDiskSpaceReservation(diskSystemName, bytes, "In RetrieveMount::reserveDiskSpace(): state after reservation.");
 }
 
 //------------------------------------------------------------------------------
@@ -10605,27 +10603,24 @@ std::tuple<std::string, uint64_t> RdbmsCatalogue::getDiskSpaceReservation(const 
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::releaseDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) {
   if (diskSpaceReservation.empty()) return;
-  // Try add our reservation to the drive status.
-  auto setLogParam = [&lc](const std::string& diskSystemName, uint64_t bytes) {
+  auto debugLogDiskSpaceReservation = [&lc](const std::string &diskSystemName, const uint64_t bytes, const std::string &message) {
     log::ScopedParamContainer params(lc);
     params.add("diskSystem", diskSystemName)
           .add("reservation", bytes);
+    lc.log(log::DEBUG, message);
   };
   std::string diskSystemName = diskSpaceReservation.begin()->first;
   uint64_t bytes = diskSpaceReservation.begin()->second;
-  setLogParam(diskSystemName, bytes);
-  lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): release request content.");
-
+  
+  debugLogDiskSpaceReservation(diskSystemName, bytes, "In RetrieveMount::releaseDiskSpace(): reservation request content.");
+  
   std::tie(diskSystemName, bytes) = getDiskSpaceReservation(driveName);
-  setLogParam(diskSystemName, bytes);
-  lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): state before release.");
+  debugLogDiskSpaceReservation(diskSystemName, bytes, "In RetrieveMount::releaseDiskSpace(): state before reservation.");
 
-  subtractDiskSpaceReservation(driveName, diskSpaceReservation.begin()->first,
-    diskSpaceReservation.begin()->second);
-
+  subtractDiskSpaceReservation(driveName, diskSpaceReservation.begin()->first, diskSpaceReservation.begin()->second);
+  
   std::tie(diskSystemName, bytes) = getDiskSpaceReservation(driveName);
-  setLogParam(diskSystemName, bytes);
-  lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): state after release.");
+  debugLogDiskSpaceReservation(diskSystemName, bytes, "In RetrieveMount::releaseDiskSpace(): state after reservation.");
 }
 
 //------------------------------------------------------------------------------
