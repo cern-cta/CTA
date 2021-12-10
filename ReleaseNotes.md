@@ -1,3 +1,14 @@
+# v4.NEXT
+
+## Summary
+
+## Upgrade Instructions
+
+## Features
+
+## Bug fixes
+
+
 # v4.4.0-1
 
 ## Upgrade Instructions
@@ -26,7 +37,6 @@ This CTA release requires a database schema upgrade to CTA catalogue schema v4.3
 - cta/CTA#1073 - Retry failed reporting for archive jobs
 - cta/CTA#1078 - fix STALE message when cta-taped is restarting
 - cta/CTA#1081 - refactor database queries for drive ls
-
 
 # v4.3-3
 
