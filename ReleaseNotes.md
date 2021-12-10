@@ -1,8 +1,10 @@
-# v4.3-4
+# v4.4.0-1
 
-## Summary
+## Upgrade Instructions
 
-### Features
+This CTA release requires a database schema upgrade to CTA catalogue schema v4.3. Please consult the [database upgrade documentation](https://tapeoperations.docs.cern.ch/ctaops/upgrade_production_database).
+
+## Features
 - Upgraded EOS to 4.8.67 in CI versionlock.list file
   - EOS/EOS-4976 Fix activity field passed from EOS to CTA
 - cta/CTA#607 - Add client host and username in cta-frontend logs
@@ -18,12 +20,13 @@
 - cta/CTA#1083 - Upgrade ceph to version 15.2.15
 - cta/CTA#1068 - Build cta with gcc 7.x(C++17) and fix deprecated code
 
-### Bug fixes
+## Bug fixes
 - cta/CTA#1059 - Clean up warnings reported by static analysis
 - cta/CTA#1062 - cta-admin tf rm should store the diskFilePath when deleting the tape file copy
 - cta/CTA#1073 - Retry failed reporting for archive jobs
 - cta/CTA#1078 - fix STALE message when cta-taped is restarting
 - cta/CTA#1081 - refactor database queries for drive ls
+
 
 # v4.3-3
 
