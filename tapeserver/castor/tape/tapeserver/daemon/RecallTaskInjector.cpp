@@ -17,6 +17,7 @@
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/make_unique.hpp"
+#include "common/optional.hpp"
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadTask.hpp"
@@ -178,8 +179,21 @@ bool RecallTaskInjector::reserveSpaceForNextJobBatch() {
     spc.add("bytes", reservation.second);
     m_lc.log(cta::log::DEBUG, "Disk space reservation necessary for next job batch");
   }
-  bool ret = m_retrieveMount.reserveDiskSpace(spaceToReserve, m_lc);
-
+  bool ret = true;
+  try {
+    ret = m_retrieveMount.reserveDiskSpace(spaceToReserve, m_lc);
+  } catch (std::out_of_range) {
+    //#1076 If the disk system for this mount was removed, process the jobs as if they had no disk system
+    // (assuming only one disk system per mount)
+    for (auto job: nextJobBatch) {
+      job->diskSystemName() = cta::nullopt_t();
+    }
+    m_lc.log(cta::log::WARNING, 
+    "In RecallTaskInjector::reserveSpaceForNextJobBatch(): Disk sapce reservation failed "
+    "because disk system configuration has been removed, processing job batch as if it had no disk system");
+    return true;
+  }
+  
   if(!ret) {
     m_retrieveMount.requeueJobBatch(m_jobs, m_lc);
     m_files = 0;
