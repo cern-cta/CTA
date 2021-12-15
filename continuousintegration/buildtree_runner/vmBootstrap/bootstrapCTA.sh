@@ -39,7 +39,7 @@ cp ~/CTA/.git/hooks/post-checkout ~/CTA/.git/hooks/post-merge
 echo Creating source rpm
 rm -rf ~/CTA-build-srpm
 mkdir -p ~/CTA-build-srpm
-(cd ~/CTA-build-srpm && cmake -DPackageOnly:Bool=true ../CTA; make cta_srpm)
+(cd ~/CTA-build-srpm && cmake3 -DPackageOnly:Bool=true ../CTA; make cta_srpm)
 
 echo Installing repos
 
@@ -65,6 +65,6 @@ sudo yum-builddep -y ~/CTA-build-srpm/RPM/SRPMS/cta-0-1.src.rpm
 echo Building CTA
 rm -rf ~/CTA-build
 mkdir -p ~/CTA-build
-(cd ~/CTA-build && cmake ../CTA; make -j 4)
+(cd ~/CTA-build && cmake3 ../CTA; make -j 4)
 
 echo CTA setup finished successfully
