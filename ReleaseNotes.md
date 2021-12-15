@@ -5,6 +5,8 @@
 ## Upgrade Instructions
 
 ## Features
+- cta/CTA#1054 - Fix filing of disk buffer when recalling from tapeservers with RAO
+- cta/CTA#1076 - Retrieve fails if disk system configuration is removed
 
 ## Bug fixes
 
