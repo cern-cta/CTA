@@ -190,6 +190,37 @@ Status CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const ::cta::dcache:
     return Status::OK;
 }
 
+Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context, const ::cta::dcache::rpc::CancelRetrieveRequest* request, ::google::protobuf::Empty* response) {
+
+    cta::log::LogContext lc(*m_log);
+    cta::log::ScopedParamContainer sp(lc);
+
+    sp.add("remoteHost", context->peer());
+
+    lc.log(cta::log::DEBUG, "CancelRetrieve request");
+    sp.add("request", "cancel");
+
+    auto instance = request->instance().name();
+    // Unpack message
+    cta::common::dataStructures::CancelRetrieveRequest cancelRequest;
+    cancelRequest.requester.name    = request->cli().user().username();
+    cancelRequest.requester.group   = request->cli().user().groupname();
+    cancelRequest.archiveFileID = request->fid();
+    cancelRequest.retrieveRequestId = request->reqid();
+
+    sp.add("instance", instance);
+    sp.add("username", request->cli().user().username());
+    sp.add("groupname", request->cli().user().groupname());
+    sp.add("fileID", request->fid());
+    sp.add("schedulerJobID", request->reqid());
+
+    m_scheduler->abortRetrieve(instance, cancelRequest, lc);
+
+    lc.log(cta::log::INFO, "retrieve request canceled.");
+
+    return Status::OK;
+}
+
 void CtaRpcImpl::run(const std::string server_address) {
 
     ServerBuilder builder;

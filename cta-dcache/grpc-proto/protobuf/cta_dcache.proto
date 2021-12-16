@@ -52,7 +52,7 @@ message ArchiveRequest {
 }
 
 /*
- * ARCHIVE request.
+ * RETRIEVE request.
  */
 message RetrieveRequest {
   cta.common.Service instance = 1;  // client instance ID
@@ -62,11 +62,24 @@ message RetrieveRequest {
   uint64 archiveId = 5; // tape system unique file ID
 }
 
+/*
+ * DELETE request.
+ */
 message DeleteRequest {
   cta.common.Service instance = 1;  // client instance ID
   cta.eos.Client cli = 2;      // requester information
   FileInfo file = 3;      // files' metadata
   uint64 archiveId = 4; // tape system unique file ID
+}
+
+/*
+ * CANCEL RETRIEVE request.
+ */
+message CancelRetrieveRequest {
+  cta.common.Service instance = 1;  // client instance ID
+  cta.eos.Client cli = 2;      // requester information
+  uint64 fid = 3; // tape system unique file ID
+  string reqId = 4; // tape request scheduler ID, used to cancel the request
 }
 
 service CtaRpc {
@@ -75,5 +88,6 @@ service CtaRpc {
   rpc Archive (ArchiveRequest) returns (ArchiveResponse) {}
   rpc Retrieve (RetrieveRequest) returns (RetrieveResponse) {}
   rpc Delete (DeleteRequest) returns (google.protobuf.Empty) {}
+  rpc CancelRetrieve (CancelRetrieveRequest) returns (google.protobuf.Empty) {}
 
 }
