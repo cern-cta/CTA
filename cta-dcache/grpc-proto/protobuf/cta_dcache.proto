@@ -70,6 +70,7 @@ message DeleteRequest {
   cta.eos.Client cli = 2;      // requester information
   FileInfo file = 3;      // files' metadata
   uint64 archiveId = 4; // tape system unique file ID
+  string reqId = 5; // pending ARCHIVE request scheduler ID
 }
 
 /*

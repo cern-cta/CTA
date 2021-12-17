@@ -121,7 +121,11 @@ Status CtaRpcImpl::Delete(::grpc::ServerContext* context, const ::cta::dcache::r
     deleteRequest.diskFileId = request->file().fid();
     deleteRequest.diskInstance = instance;
 
+    // remove pending scheduler entry, if any
     deleteRequest.archiveFileID = request->archiveid();
+    if (!request->reqid().empty()) {
+        deleteRequest.address = request->reqid();
+    }
 
     // Delete the file from the catalogue or from the objectstore if archive request is created
     cta::utils::Timer t;
