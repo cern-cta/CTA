@@ -529,6 +529,8 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 
 
 %changelog
+* Mon Dec 20 2021 julien.leduc (at) cern.ch - 4.4.1-1
+- cta/CTA#1092 Fix overflow with drive bandwith causing frontend to crash
 * Fri Dec 10 2021 julien.leduc (at) cern.ch - 4.4.0-1
 - Upgraded EOS to 4.8.67 in CI versionlock.list file
 - cta/CTA#607 - Add client host and username in cta-frontend logs
