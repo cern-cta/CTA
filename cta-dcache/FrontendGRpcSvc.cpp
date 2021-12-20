@@ -225,22 +225,6 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context, const ::cta::d
     return Status::OK;
 }
 
-void CtaRpcImpl::run(const std::string server_address) {
-
-    ServerBuilder builder;
-    // Listen on the given address without any authentication mechanism.
-    builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
-
-    // Register "service" as the instance through which we'll communicate with
-    // clients. In this case it corresponds to an *synchronous* service.
-    builder.RegisterService(this);
-    std::unique_ptr <Server> server(builder.BuildAndStart());
-
-    cta::log::LogContext lc(*m_log);
-    lc.log(cta::log::INFO, "Listening on socket address: " + server_address);
-    server->Wait();
-}
-
 CtaRpcImpl::CtaRpcImpl(cta::log::Logger *logger, std::unique_ptr<cta::catalogue::Catalogue> &catalogue, std::unique_ptr <cta::Scheduler> &scheduler):
     m_catalogue(std::move(catalogue)), m_scheduler(std::move(scheduler)) {
     m_log = logger;
@@ -340,7 +324,6 @@ int main(const int argc, char *const *const argv) {
         exit(1);
     }
 
-
     // Initialise the Scheduler
     auto backed = config.getConfEntString("ObjectStore", "BackendPath");
     lc.log(log::INFO, "Using scheduler backend: " + backed);
@@ -351,5 +334,19 @@ int main(const int argc, char *const *const argv) {
     auto scheduler = cta::make_unique<cta::Scheduler>(*catalogue, *scheddb, 5, 2*1000*1000);
 
     CtaRpcImpl svc(&logger, catalogue, scheduler);
-    svc.run(server_address);
+
+    // start gRPC service
+
+    ServerBuilder builder;
+    // Listen on the given address without any authentication mechanism.
+    builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
+
+    // Register "service" as the instance through which we'll communicate with
+    // clients. In this case it corresponds to an *synchronous* service.
+    builder.RegisterService(&svc);
+
+    std::unique_ptr <Server> server(builder.BuildAndStart());
+
+    lc.log(cta::log::INFO, "Listening on socket address: " + server_address);
+    server->Wait();
 }
