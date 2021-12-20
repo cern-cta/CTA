@@ -1,3 +1,12 @@
+# v4.4.1-1
+
+## Upgrade Instructions
+
+## Features
+
+## Bug fixes
+- cta/CTA#1092 Fix overflow with drive bandwith causing frontend to crash
+
 # v4.4.0-1
 
 ## Upgrade Instructions
