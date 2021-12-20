@@ -1,35 +1,23 @@
 
-#ifndef CTA_FRONTENDGRPCSVC_H
-#define CTA_FRONTENDGRPCSVC_H
+#pragma once
 
-
+#include "version.h"
 #include <grpcpp/grpcpp.h>
 
-#include "catalogue/CatalogueFactoryFactory.hpp"
-#include "rdbms/Login.hpp"
-#include <common/Configuration.hpp>
-#include <common/utils/utils.hpp>
 #include <scheduler/Scheduler.hpp>
-#include <scheduler/OStoreDB/OStoreDBInit.hpp>
-#include "common/log/SyslogLogger.hpp"
-#include "common/log/StdoutLogger.hpp"
-#include "common/log/FileLogger.hpp"
-#include "common/log/LogLevel.hpp"
-#include <common/checksum/ChecksumBlobSerDeser.hpp>
-
+#include "common/log/Logger.hpp"
 #include "cta_dcache.grpc.pb.h"
 
 using cta::Scheduler;
-using cta::SchedulerDBInit_t;
-using cta::SchedulerDB_t;
 using cta::catalogue::Catalogue;
-using cta::rdbms::Login;
 using cta::dcache::rpc::CtaRpc;
 
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
+
+static const std::string CTA_DCACHE_VERSION = "cta-dcache-" + std::string(CTA_VERSION);
 
 class CtaRpcImpl : public CtaRpc::Service {
 
@@ -49,4 +37,3 @@ public:
     Status CancelRetrieve(::grpc::ServerContext* context, const ::cta::dcache::rpc::CancelRetrieveRequest* request, ::google::protobuf::Empty* response);
 };
 
-#endif //CTA_FRONTENDGRPCSVC_H

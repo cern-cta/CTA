@@ -52,7 +52,7 @@ endforeach(PROTO_SRC)
 include_directories(${CMAKE_BINARY_DIR}/cta-dcache ${CMAKE_BINARY_DIR}/eos_cta
                     ${PROTOBUF3_INCLUDE_DIRS})
 
-add_executable(cta-dcache FrontendGRpcSvc.cpp ${ProtoSourcesCtaDcache} ${ProtoGrpcSourcesCtaDcache})
+add_executable(cta-dcache Main.cpp FrontendGRpcSvc.cpp ${ProtoSourcesCtaDcache} ${ProtoGrpcSourcesCtaDcache})
 
 target_link_libraries(cta-dcache ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY}
         ctascheduler ctacommon ctaobjectstore ctacatalogue)
