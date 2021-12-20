@@ -35,8 +35,6 @@ class CtaRpcImpl : public CtaRpc::Service {
 
 private:
     std::unique_ptr <cta::catalogue::Catalogue> m_catalogue;
-    std::unique_ptr <cta::SchedulerDB_t> m_scheddb;
-    std::unique_ptr <cta::SchedulerDBInit_t> m_scheddb_init;
     std::unique_ptr <cta::Scheduler> m_scheduler;
     cta::log::Logger  *m_log;
 
