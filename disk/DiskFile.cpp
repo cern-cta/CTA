@@ -377,7 +377,7 @@ size_t XrootBaseReadFile::read(void *data, const size_t size) const {
 }
 
 size_t XrootBaseReadFile::size() const {
-  const bool forceStat=true;
+  const bool forceStat=false;
   XrdCl::StatInfo *statInfo(NULL);
   size_t ret;
   XrootClEx::throwOnError(m_xrootFile.Stat(forceStat, statInfo, m_timeout),
