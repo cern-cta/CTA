@@ -62,16 +62,12 @@ Remain in the foreground.
 Prints the usage message.
 .TP
 \fB\-c, \-\-config <config-file>
-Set the location of the CTA configuration file (cta.conf).  The default location is /etc/cta/cta.conf.
+Set the location of the CTA configuration file (cta-taped.conf).  The default location is /etc/cta/cta-taped.conf.
 
 .SH CTA CONFIGURATION PARAMETERS
 The cta-taped daemon reads and uses the following CTA configuration
 parameters which are specified within the CTA configuration file (the
-default location is /etc/cta/cta.conf).
-
-.TP
-\fBRMC HOST
-The host on which the rmcd daemon is running.
+default location is /etc/cta/cta-tapd.conf).
 
 .TP
 \fBRMC MAXRQSTATTEMPTS
@@ -83,7 +79,11 @@ The maximum time in seconds the data-transfer session of tapeserverd can
 cease to move data blocks
 
 .TP
-\fBtaped BufSize
+\fBtaped BufferCount
+Number of memory buffers in the data-transfer cache.
+
+.TP
+\fBtaped BufferSizeBytes
 Size of a memory buffer in the data-transfer cache in bytes (default is 5
 Mebibytes).
 
@@ -129,35 +129,26 @@ The maximum time in seconds that the data-transfer session can take to mount a
 tape.
 
 .TP
-\fBtaped NbBufs
-Number of memory buffers in the data-transfer cache.
-
-.TP
 \fBtaped NbDiskThreads
 The number of disk I/O threads.
-
-.TP
-\fBtaped RemoteFileProtocol
-The protocol to be used when transferring files to and from disk servers.
-Possible values are RFIO or XROOT.  The value is not case sensitive.
 
 .TP
 \fBtaped externalEncryptionKeyScript
 The Python script to interface with the encryption data store.
 
 .TP
-\fBXROOT PrivateKey
-The file hosting the Xroot private key, needed to sign Xroot URLs.
+\fBtaped TpConfigPath
+The path to tape drive configuration file (defaults is /etc/cta/TPCONFIG).
 
 .SH FILES
 .TP
 .B /etc/cta/TPCONFIG
 The tape drive configuration file.
 .TP
-.B /etc/cta/cta.conf
+.B /etc/cta/cta-taped.conf
 The CTA configuration file.
 .TP
-.B /var/log/cta/cta-tapeserverd.log
+.B /var/log/cta/cta-taped.log
 The tape tapeserver log file.
 
 .SH TRADEMARKS
