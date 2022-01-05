@@ -31,11 +31,12 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
   RecallReportPacker &rrp,
   const bool useLbp,
   const bool useRAO,
+  const bool useEncryption,
   const std::string & externalEncryptionKeyScript,
   const cta::RetrieveMount& retrieveMount,
   const uint32_t tapeLoadTimeout) :
   TapeSingleThreadInterface<TapeReadTask>(drive, mc, initialProcess, volInfo,
-    capUtils, lc, externalEncryptionKeyScript,tapeLoadTimeout),
+    capUtils, lc, useEncryption, externalEncryptionKeyScript,tapeLoadTimeout),
   m_maxFilesRequest(maxFilesRequest),
   m_watchdog(watchdog),
   m_rrp(rrp),

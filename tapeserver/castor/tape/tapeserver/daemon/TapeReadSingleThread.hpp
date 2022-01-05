@@ -62,6 +62,7 @@ public:
           RecallReportPacker &rrp,
           const bool useLbp,
           const bool useRAO,
+          const bool useEncryption,
           const std::string & externalEncryptionKeyScript,
           const cta::RetrieveMount &retrieveMount,
           const uint32_t tapeLoadTimeout);

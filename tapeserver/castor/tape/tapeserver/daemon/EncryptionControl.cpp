@@ -30,7 +30,8 @@ namespace daemon {
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-EncryptionControl::EncryptionControl(const std::string& scriptPath):
+EncryptionControl::EncryptionControl(bool useEncryption, const std::string& scriptPath):
+m_useEncryption(useEncryption),
 m_path(scriptPath) {
   if (m_path.size() && m_path[0] != '/') {
     cta::exception::Exception ex("In EncryptionControl::EncryptionControl: the script path is not absolute: ");
@@ -45,6 +46,13 @@ auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface &
   const std::string& vid, SetTag st) -> EncryptionStatus {
   EncryptionStatus encStatus;
   if (m_path.empty()) {
+    if (m_useEncryption) {
+      //if encryption is enabled, an external script is required
+      cta::exception::Exception ex;
+      ex.getMessage() << "In EncryptionControl::enableEncryption: "
+                       "failed to enable encryption: path provided is empty but tapeserver is configured to use encryption";
+      throw ex;
+    }
     encStatus = { false, "", "", ""};
     return encStatus;
   }

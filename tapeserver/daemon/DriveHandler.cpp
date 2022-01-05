@@ -1069,6 +1069,7 @@ int DriveHandler::runChild() {
     dataTransferConfig.fetchEosFreeSpaceScript = m_tapedConfig.fetchEosFreeSpaceScript.value();
     dataTransferConfig.tapeLoadTimeout = m_tapedConfig.tapeLoadTimeout.value();
     dataTransferConfig.xrootPrivateKey = "";
+    dataTransferConfig.useEncryption = m_tapedConfig.useEncryption.value() == "yes" ? true : false;
     dataTransferConfig.externalEncryptionKeyScript = m_tapedConfig.externalEncryptionKeyScript.value();
 
     // Before launching, and if this is the first session since daemon start, we will

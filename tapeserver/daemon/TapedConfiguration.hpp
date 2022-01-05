@@ -163,8 +163,13 @@ struct TapedConfiguration {
   };
 
   //----------------------------------------------------------------------------
-  // Tape encryption script
+  // Tape encryption support
   //----------------------------------------------------------------------------
+
+  cta::SourcedParameter<std::string> useEncryption {
+    "taped", "UseEncryption","yes", "Compile time default"
+  };
+
   cta::SourcedParameter<std::string> externalEncryptionKeyScript {
     "taped", "externalEncryptionKeyScript","","Compile time default"
   };

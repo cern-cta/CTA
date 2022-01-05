@@ -42,6 +42,7 @@ void DriveConfig::setTapedConfiguration(const cta::tape::daemon::TapedConfigurat
   setConfigToDB(&config->nbDiskThreads, catalogue, tapeDriveName);
   setConfigToDB(&config->useRAO, catalogue, tapeDriveName);
   setConfigToDB(&config->raoLtoAlgorithm, catalogue, tapeDriveName);
+  setConfigToDB(&config->useEncryption, catalogue, tapeDriveName);
   setConfigToDB(&config->externalEncryptionKeyScript, catalogue, tapeDriveName);
   setConfigToDB(&config->raoLtoOptions, catalogue, tapeDriveName);
   setConfigToDB(&config->wdScheduleMaxSecs, catalogue, tapeDriveName);

@@ -50,7 +50,7 @@ class EncryptionControl {
   };
 
   /** @param scriptPath The path to the operator provided script for acquiring the key */
-  explicit EncryptionControl(const std::string & scriptPath);
+  explicit EncryptionControl(const bool useEncryption, const std::string & scriptPath);
   /**
    * Will call the encryption script provided by the operators to acquire the encryption key and then enable the
    * encryption if necessary.
@@ -69,7 +69,10 @@ class EncryptionControl {
   bool disable(castor::tape::tapeserver::drive::DriveInterface &m_drive);
 
  private:
+  bool m_useEncryption; // Wether encryption must be enabled for the tape
+  
   std::string m_path;  // Path to the key management script file
+  
   /**
    * Parse the JSON output of the key management script and translate information into Encryption Status struct.
    * Expected to find keys key_id, encryption_key, message and the respective values as JSON strings.

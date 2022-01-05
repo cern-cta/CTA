@@ -7,6 +7,7 @@
 ## Features
 - cta/CTA#1054 - Fix filing of disk buffer when recalling from tapeservers with RAO
 - cta/CTA#1076 - Retrieve fails if disk system configuration is removed
+- cta/CTA#1087 - Add new tapeserver config option UseEncryption
 
 ## Bug fixes
 - cta/CTA#1092 - Fix overflow error with drive state latestBandwith causing cta frontend crash

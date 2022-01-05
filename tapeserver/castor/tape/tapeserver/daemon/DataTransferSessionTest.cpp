@@ -585,6 +585,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   castorConf.bulkRequestRecallMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
   castorConf.tapeLoadTimeout = 300;
+  castorConf.useEncryption = false;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::MediaChangerFacade mc(dummyLog);
   cta::server::ProcessCap capUtils;
@@ -793,6 +794,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   castorConf.bulkRequestRecallMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
   castorConf.tapeLoadTimeout = 300;
+  castorConf.useEncryption = false;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::MediaChangerFacade mc(dummyLog);
   cta::server::ProcessCap capUtils;
@@ -975,6 +977,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   castorConf.nbDiskThreads = 1;
   castorConf.useRAO = true;
   castorConf.tapeLoadTimeout = 300;
+  castorConf.useEncryption = false;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::MediaChangerFacade mc(dummyLog);
   cta::server::ProcessCap capUtils;
@@ -1161,6 +1164,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   castorConf.useRAO = true;
   castorConf.raoLtoAlgorithm = "linear";
   castorConf.tapeLoadTimeout = 300;
+  castorConf.useEncryption = false;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::MediaChangerFacade mc(dummyLog);
   cta::server::ProcessCap capUtils;
@@ -1347,6 +1351,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   castorConf.useRAO = true;
   castorConf.tapeLoadTimeout = 300;
   castorConf.raoLtoAlgorithm = "DOES_NOT_EXIST";
+  castorConf.useEncryption = false;
+
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::MediaChangerFacade mc(dummyLog);
   cta::server::ProcessCap capUtils;
@@ -1536,6 +1542,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   castorConf.tapeLoadTimeout = 300;
   castorConf.raoLtoAlgorithm = "sltf";
   castorConf.raoLtoAlgorithmOptions = "cost_heuristic_name:cta";
+  castorConf.useEncryption = false;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::MediaChangerFacade mc(dummyLog);
   cta::server::ProcessCap capUtils;
@@ -1713,6 +1720,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   castorConf.bufsz = 1024;
   castorConf.tapeLoadTimeout = 300;
   castorConf.nbBufs = 10;
+  castorConf.useEncryption = false;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::MediaChangerFacade mc(dummyLog);
   castor::messages::TapeserverProxyDummy initialProcess;
@@ -1865,6 +1873,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   castorConf.bulkRequestRecallMaxFiles = 1000;
   castorConf.nbDiskThreads = 3;
   castorConf.tapeLoadTimeout = 300;
+  castorConf.useEncryption = false;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::MediaChangerFacade mc(dummyLog);
   cta::server::ProcessCap capUtils;
@@ -2001,6 +2010,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   castorConf.bulkRequestMigrationMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
   castorConf.tapeLoadTimeout = 300;
+  castorConf.useEncryption = false;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::MediaChangerFacade mc(dummyLog);
   cta::server::ProcessCap capUtils;
@@ -2155,6 +2165,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   castorConf.maxBytesBeforeFlush = 9999999;
   castorConf.maxFilesBeforeFlush = 9999999;
   castorConf.tapeLoadTimeout = 300;
+  castorConf.useEncryption = false;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::MediaChangerFacade mc(dummyLog);
   cta::server::ProcessCap capUtils;
@@ -2314,6 +2325,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   castorConf.bulkRequestMigrationMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
   castorConf.tapeLoadTimeout = 300;
+  castorConf.useEncryption = false;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::MediaChangerFacade mc(dummyLog);
   cta::server::ProcessCap capUtils;
@@ -2480,6 +2492,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   castorConf.bulkRequestMigrationMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
   castorConf.tapeLoadTimeout = 300;
+  castorConf.useEncryption = false;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::MediaChangerFacade mc(dummyLog);
   cta::server::ProcessCap capUtils;
@@ -2608,6 +2621,7 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
   castorConf.bulkRequestMigrationMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
   castorConf.tapeLoadTimeout = 300;
+  castorConf.useEncryption = false;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::MediaChangerFacade mc(dummyLog);
   cta::server::ProcessCapDummy capUtils;

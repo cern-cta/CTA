@@ -96,6 +96,7 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.logMask.setFromConfigurationFile(cf, generalConfigPath);
   ret.tpConfigPath.setFromConfigurationFile(cf, generalConfigPath);
   ret.externalEncryptionKeyScript.setFromConfigurationFile(cf, generalConfigPath);
+  ret.useEncryption.setFromConfigurationFile(cf, generalConfigPath);
   // Memory management
   ret.bufferSizeBytes.setFromConfigurationFile(cf, generalConfigPath);
   ret.bufferCount.setFromConfigurationFile(cf, generalConfigPath);
@@ -139,6 +140,7 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.logMask.log(log);
   ret.tpConfigPath.log(log);
   ret.externalEncryptionKeyScript.log(log);
+  ret.useEncryption.log(log);
   
   ret.bufferSizeBytes.log(log);
   ret.bufferCount.log(log);
@@ -165,7 +167,7 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.fetchEosFreeSpaceScript.log(log);
   
   ret.tapeLoadTimeout.log(log);
-  
+
   for (auto & i:ret.driveConfigs) {
     i.second.log(log);
   }

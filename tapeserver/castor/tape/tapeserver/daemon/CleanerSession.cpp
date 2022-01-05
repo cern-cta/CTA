@@ -42,7 +42,7 @@ castor::tape::tapeserver::daemon::CleanerSession::CleanerSession(
   m_vid(vid),
   m_waitMediaInDrive(waitMediaInDrive),
   m_tapeLoadTimeout(waitMediaInDriveTimeout),
-  m_encryptionControl(externalEncryptionKeyScript),
+  m_encryptionControl(true, externalEncryptionKeyScript),
   m_catalogue(catalogue),
   m_scheduler(scheduler)
   {}

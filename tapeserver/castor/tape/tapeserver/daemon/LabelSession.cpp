@@ -52,7 +52,7 @@ castor::tape::tapeserver::daemon::LabelSession::LabelSession(
   m_labelSessionConfig (labelSessionConfig),
   m_force(force),
   m_lbp(lbp),
-  m_encryptionControl(externalEncryptionKeyScript) {}
+  m_encryptionControl(false, externalEncryptionKeyScript) {}
 
 //------------------------------------------------------------------------------
 // execute

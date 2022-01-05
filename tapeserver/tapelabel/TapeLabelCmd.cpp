@@ -35,7 +35,7 @@ TapeLabelCmd::TapeLabelCmd(std::istream &inStream, std::ostream &outStream,
   cta::mediachanger::MediaChangerFacade &mc):
   CmdLineTool(inStream, outStream, errStream),
   m_log(log),
-  m_encryptionControl(""),
+  m_encryptionControl(false, ""),
   m_mc(mc),
   m_useLbp(true),
   m_driveSupportLbp(true),

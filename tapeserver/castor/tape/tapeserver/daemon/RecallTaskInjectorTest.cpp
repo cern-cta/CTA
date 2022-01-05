@@ -101,7 +101,7 @@ namespace unitTests
       cta::server::ProcessCap& cap, 
       const uint32_t tapeLoadTimeout,
       cta::log::LogContext & lc):
-    TapeSingleThreadInterface<TapeReadTask>(drive, mc, tsr, volInfo,cap, lc, "", tapeLoadTimeout){}
+    TapeSingleThreadInterface<TapeReadTask>(drive, mc, tsr, volInfo,cap, lc, false, "", tapeLoadTimeout){}
 
     ~FakeSingleTapeReadThread(){
       const unsigned int size= m_tasks.size();

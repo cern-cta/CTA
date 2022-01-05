@@ -289,11 +289,12 @@ public:
     cta::mediachanger::MediaChangerFacade &mc,
     TapeServerReporter & tsr,
     const VolumeInfo& volInfo,
-    cta::server::ProcessCap &capUtils,cta::log::LogContext & lc,          
+    cta::server::ProcessCap &capUtils,cta::log::LogContext & lc,  
+    const bool useEncryption,       
     const std::string & externalEncryptionKeyScript, const uint32_t tapeLoadTimeout):m_capUtils(capUtils),
     m_drive(drive), m_mc(mc), m_initialProcess(tsr), m_vid(volInfo.vid), m_logContext(lc),
     m_volInfo(volInfo),m_hardwareStatus(Session::MARK_DRIVE_AS_UP),
-    m_encryptionControl(externalEncryptionKeyScript),m_tapeLoadTimeout(tapeLoadTimeout) {}
+    m_encryptionControl(useEncryption, externalEncryptionKeyScript),m_tapeLoadTimeout(tapeLoadTimeout) {}
 }; // class TapeSingleThreadInterface
 
 } // namespace daemon

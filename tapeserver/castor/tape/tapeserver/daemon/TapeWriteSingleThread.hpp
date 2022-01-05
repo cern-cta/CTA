@@ -63,6 +63,7 @@ public:
     MigrationReportPacker & repPacker,
     cta::server::ProcessCap &capUtils,
     uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush, const bool useLbp,
+    const bool useEncryption,
     const std::string & externalEncryptionKeyScript,
     const cta::ArchiveMount & archiveMount,
     const uint64_t tapeLoadTimeout);

@@ -123,15 +123,20 @@ struct DataTransferConfig {
   std::string raoLtoAlgorithmOptions;
 
   /**
+   * The boolean variable describing to use on not to use Encryption
+   */
+  bool useEncryption;
+
+  /**
    * The path to the operator provided encyption control script (or empty string)
    */
-  std::string externalEncryptionKeyScript;
-  
+  std::string externalEncryptionKeyScript;  
+    
   /**
    * The path to the operator provided EOS free space fetch script (or empty string)
    */
   std::string fetchEosFreeSpaceScript;
-  
+
   /**
    * The timeout after which the mount of a tape is considered failed
    */

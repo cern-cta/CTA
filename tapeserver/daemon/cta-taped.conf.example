@@ -47,3 +47,6 @@
 #
 # Disable Maintenance process.
 # taped DisableMaintenanceProcess yes
+#
+# Enable encryption
+# taped UseEncryption yes
