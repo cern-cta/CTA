@@ -9,7 +9,7 @@
 - cta/CTA#1076 - Retrieve fails if disk system configuration is removed
 
 ## Bug fixes
-
+- cta/CTA#1092 - Fix overflow error with drive state latestBandwith causing cta frontend crash
 
 # v4.4.0-1
 

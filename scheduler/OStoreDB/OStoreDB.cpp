@@ -500,8 +500,16 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       tmdi.existingOrNextMounts.back().filesTransferred = driveState.filesTransferedInSession
         ? driveState.filesTransferedInSession.value() : 0;
       if (driveState.latestBandwidth && driveState.latestBandwidth.value().size() > 0) {
-        if (std::isdigit(driveState.latestBandwidth.value().at(0)))
-          tmdi.existingOrNextMounts.back().latestBandwidth = std::stoi(driveState.latestBandwidth.value());
+        if (std::isdigit(driveState.latestBandwidth.value().at(0))) {
+          try {
+            tmdi.existingOrNextMounts.back().latestBandwidth = std::stod(driveState.latestBandwidth.value());
+          } catch (std::out_of_range) {
+            // TODO: Temporary mitigation for overflow, we should remove latestBandwith from drive state in the future
+            tmdi.existingOrNextMounts.back().latestBandwidth = 0;
+          }
+        } else {
+          tmdi.existingOrNextMounts.back().latestBandwidth = 0;
+        }
       } else {
         tmdi.existingOrNextMounts.back().latestBandwidth = 0;
       }
