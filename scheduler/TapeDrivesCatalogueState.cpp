@@ -276,7 +276,9 @@ void TapeDrivesCatalogueState::setDriveUpOrMaybeDown(common::dataStructures::Tap
   auto targetStatus = common::dataStructures::DriveStatus::Up;
   if (!driveState.desiredUp) {
     driveState.driveStatus = common::dataStructures::DriveStatus::Down;
-    driveState.reasonUpDown = inputs.reason;
+    if (!driveState.reasonUpDown) {
+      driveState.reasonUpDown = inputs.reason;
+    }
   }
   // If we were already up (or down), then we only update the last update time.
   if (driveState.driveStatus == targetStatus) {
