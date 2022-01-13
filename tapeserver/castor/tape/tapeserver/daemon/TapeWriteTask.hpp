@@ -35,9 +35,16 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
 
-  class MigrationReportPacker;
-  class Memblock;
-  class TapeSessionStats;
+/**
+ * @brief Used when an error happens during a migration that should not result in unmounting the tape,
+ * but rather just in skipping the file migration
+ * 
+ */
+CTA_GENERATE_EXCEPTION_CLASS(RecoverableMigrationErrorException);
+
+class MigrationReportPacker;
+class Memblock;
+class TapeSessionStats;
 /**
  * The TapeWriteFileTask is responsible to write a single file onto tape as part of a migration
  * session. Being a consumer of memory blocks, it inherits from the DataConsumer class. It also
@@ -104,10 +111,11 @@ public:
   void circulateMemBlocks();
   
   /**
-   * Return the tasl stats. Should only be called after execute
+   * Return the task stats. Should only be called after execute
    * @return 
    */
   const TapeSessionStats getTaskStats() const ;
+
 private:
   /**
    * Log  all localStats' stats +  m_fileToMigrate's parameters
@@ -115,12 +123,7 @@ private:
    */
   void logWithStats(int level, const std::string& msg,
    cta::log::LogContext&  lc) const;
-     
-  /**
-   *Throw an exception if  m_errorFlag is set
-   */
-  void hasAnotherTaskTailed() const ;
-  
+       
   /**
    * This function will check the consistency of the mem block and 
    * throw exception is something goes wrong
@@ -195,7 +198,6 @@ private:
    * The remote file information
    */
   std::string m_srcURL; 
-
 };
 
 }}}}

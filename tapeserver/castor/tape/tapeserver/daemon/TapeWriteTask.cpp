@@ -191,6 +191,20 @@ namespace daemon {
       m_taskStats.totalTime = localTime.secs();
       // Log the successful transfer      
       logWithStats(cta::log::INFO, "Left placeholder on tape after skipping unreadable file.", lc);
+    } catch(const RecoverableMigrationErrorException &e) {
+      //The disk reading failed due to a size missmatch or wrong checksum
+      //just want to report a failed job and proceed with the mount
+      if(currentErrorToCount.size()) {
+        watchdog.addToErrorCount(currentErrorToCount);
+      }
+      //log and circulate blocks
+      LogContext::ScopedParam sp(lc, Param("exceptionCode", cta::log::ERR));
+      LogContext::ScopedParam sp1(lc, Param("exceptionMessage", e.getMessageValue()));
+      lc.log( cta::log::ERR,"An error occurred for this file, but migration will proceed as error is recoverable");
+      circulateMemBlocks();
+      reportPacker.reportFailedJob(std::move(m_archiveJob),e, lc);
+      return;
+  
     } catch(const cta::exception::Exception& e){
       //we can end up there because
       //we failed to open the WriteFile
@@ -276,7 +290,14 @@ namespace daemon {
       tape::utils::suppresUnusedVariable(sp);
       std::string errorMsg;
       if(mb->isFailed()){
+        //blocks are marked as failed by the DiskReadTask due to a size mismatch
+        //or wrong checksums
+        //both errors should just result in skipping the migration of the file
+        //so we use a different exception to distinguish this case
         errorMsg=mb->errorMsg();
+        m_errorFlag.set();
+        lc.log(cta::log::ERR,errorMsg);
+        throw RecoverableMigrationErrorException(errorMsg);
       } else if (mb->isCanceled()) {
         errorMsg="Received a block marked as cancelled";
       } else{
@@ -329,17 +350,8 @@ namespace daemon {
 //        watchdog.notify();
      }
    }
-//------------------------------------------------------------------------------
-// hasAnotherTaskTailed
-//------------------------------------------------------------------------------      
-   void TapeWriteTask::hasAnotherTaskTailed() const {
-    //if a task has signaled an error, we stop our job
-    if(m_errorFlag){
-      throw  castor::tape::tapeserver::daemon::ErrorFlag();
-    }
-  }
-   
-   void TapeWriteTask::logWithStats(int level, const std::string& msg,
+
+  void TapeWriteTask::logWithStats(int level, const std::string& msg,
    cta::log::LogContext&  lc) const{
      cta::log::ScopedParamContainer params(lc);
      params.add("readWriteTime", m_taskStats.readWriteTime)
