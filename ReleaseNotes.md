@@ -5,6 +5,7 @@
 ## Upgrade Instructions
 
 ## Features
+- Improve cta-versionlock script
 - cta/CTA#1091 - New Drive State table in CTA Catalogue
 - cta/CTA#1054 - Fix filing of disk buffer when recalling from tapeservers with RAO
 - cta/CTA#1076 - Retrieve fails if disk system configuration is removed

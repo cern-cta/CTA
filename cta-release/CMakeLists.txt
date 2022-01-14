@@ -55,6 +55,24 @@ safedl("https://yum.oracle.com/RPM-GPG-KEY-oracle-ol${OSV}"
   "${CMAKE_CURRENT_SOURCE_DIR}/RPM-GPG-KEY-oracle"
 )
 
+# generate versionlock file
+execute_process(
+    COMMAND grep "%package" ../cta.spec.in
+    COMMAND awk "{print $3}"
+    COMMAND grep -v "cta-release"
+    OUTPUT_VARIABLE RESULT OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
+string(REPLACE "\n" ";" RESULTS ${RESULT})
+
+foreach(PNAME ${RESULTS})
+    string(APPEND CTAVERSIONLOCK "0:${PNAME}-${CTA_VERSION}-${CTA_RELEASE}${RPMTools_RPMBUILD_DIST}.*\n")
+endforeach()
+
+file(READ ../continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list VERSIONLOCK)
+string(APPEND CTAVERSIONLOCK "${VERSIONLOCK}")
+file(GENERATE OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/versionlock.cta CONTENT "${CTAVERSIONLOCK}")
+
 # Repos files
 file (GLOB REPO_FILES
   "${CMAKE_CURRENT_SOURCE_DIR}/*.repo"
@@ -70,8 +88,7 @@ install (FILES ${REPO_FILES}
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/yum.repos.d)
 install (FILES ${KEY_FILES}
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/pki/rpm-gpg)
-install (FILES ../continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list
-  DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/yum/pluginconf.d
-  RENAME versionlock.cta)
+install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/versionlock.cta
+  DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/yum/pluginconf.d)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-versionlock
   DESTINATION usr/${CMAKE_INSTALL_BINDIR})

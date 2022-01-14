@@ -3,6 +3,8 @@
 import os.path
 import sys
 import re
+import json
+import rpm
 from rpmUtils.miscutils import splitFilename
 from collections import defaultdict
 
@@ -11,10 +13,10 @@ vfiles = {
   'cta': '/etc/yum/pluginconf.d/versionlock.cta', 
   'yum': '/etc/yum/pluginconf.d/versionlock.list'
 }
-versions = defaultdict(dict)
-summary = defaultdict(list)
-actions = ('check', 'apply', 'forceupdate', 'clear')
+actions = ('help', 'check', 'apply', 'forceupdate', 'checkpkg', 'remove')
 retcode = 0
+jsonoutput = False
+no_vlock = '/etc/cta.novlock'
 
 try:
   FileNotFoundError
@@ -25,31 +27,71 @@ except NameError:
 def usage():
   print("\n%s: command line tool to manage cta packages versionlock\n \
 \n \
-usage: %s check|apply|forceupdate|clear\n \
-  check: show cta versionlock status\n \
-  apply: add cta versions to versionlock file\n \
-  forceupdate: add cta versions to versionlock file and overwrite already defined versions\n \
-  clear: remove all cta versions from versionlock file\n \
-" % (sys.argv[0], sys.argv[0]))
+usage: %s help|check|apply|forceupdate|checkpkg|remove [--json]\n \
+  help: print this message\n \
+  check: show consistency of versionlock.list with cta versionlock requirements\n \
+  apply: add cta versions to versionlock.list\n \
+  forceupdate: add cta versions to versionlock.list and overwrite already defined packages\n \
+  checkpkg: check consistency between installed packages and cta versionlock requirements\n \
+  remove: remove all cta packages and dependencies from versionlock.list\n \
+  [--json]: format output in json\n \
+  \n \
+  to prevent cta-versionlock to alter versionlock.list create a %s file.\n \
+  " % (sys.argv[0], sys.argv[0], no_vlock))
   exit(1)
 
+def _exit():
+  printer(message)
+  exit(retcode)
 
-# Compare versions in both version lists
-def matchPkg(pkglist):
+# output formatting
+def printer(msg):
+  if jsonoutput:
+    print(json.dumps(msg))
+  else:
+    print("\n%s" % msg.pop('title'))
+    for status in ['ok', 'wrong_version', 'missing', 'adding', 'updating', 'removing']:
+      if msg[status]:
+        print("\n==> %s: %s/%s" % (status, msg[status]['count'], len(versions['cta'])))
+        if (status == 'wrong_version' or status == 'updating') and msg[status]['count'] > 0:
+          print("\n".join(['%s: %s' % (key, value) for (key, value) in msg[status]['content'].items()]))
+        else:
+          print("\n".join(msg[status]['content']))
+    print("\n")
+
+# read versionlock files
+def readVer(filelist):
+  versions = defaultdict(dict)
+  for fname, vfile in filelist.items():
+    if not os.path.isfile(vfile):
+      raise FileNotFoundError("file %s not found" % vfile)
+
+    with open(vfile) as f:
+      plist = f.read().splitlines()
+      for p in plist:
+        if p == "" or p.startswith('#'):
+          continue
+        (n, v, r, e, a) = splitFilename(p)
+        versions[fname][n] = [e, v, r, a]
+  return versions
+
+# Compare versions in both versionlock lists
+def checkVfile(pkglist):
+  result = defaultdict(dict)
   for p, version in pkglist.items():
     try: 
       versions['yum'][p]
     except:
-      summary['missing'].append(p)
+      result.setdefault('missing', []).append(p)
       continue
     else:
       if versions['yum'][p][:-1] == version[:-1]:
-        summary['present'].append(p)
+        result.setdefault('ok',[]).append(p)
       else:
-        summary['wrong_version'].append(p)
-  
+        result['wrong_version'][p]= {'current': ("%s:%s-%s" % tuple(versions['yum'][p][:-1])), 'required': ("%s:%s-%s" % tuple(version[:-1]))}
+  return result
 
-# add cta versions to yum versionlock file
+# add CTA packages to versionlock.list
 def addtoVfile(pkglist):
   with open(vfiles['yum'], 'a' ) as f:
     for p in pkglist:
@@ -57,8 +99,7 @@ def addtoVfile(pkglist):
       package = ("%s:%s-%s-%s.%s" % (e, p, v, r, a))
       f.write(package + '\n')
 
-
-# force update existing versions in yum versionlock with cta one
+# update existing packages in versionlock.list with CTA versions required
 def updateVfile(pkglist):
   with open(vfiles['yum'], 'r+') as f:
     content = f.read()
@@ -73,9 +114,23 @@ def updateVfile(pkglist):
     f.write(content)
     f.truncate()
 
+# check installed packages version
+def checkPkg(pkglist):
+  result = defaultdict(dict)
+  ts = rpm.TransactionSet()
+  for pname, verlist in pkglist.items():
+    mi = ts.dbMatch('name', pname)
+    for item in mi:
+      ie = str("0" if item['epoch'] is None else item['epoch'])
+      (e, v, r, a) = verlist
+      if (e, v, r) == (ie, item['version'], item['release']):
+        result['ok'][pname] = ("%s:%s-%s" % (e, v, r))
+      else:
+        result['wrong_version'][pname] = {'required': ("%s:%s-%s" % (e, v, r)), 'installed': ("%s:%s-%s" % (ie, item['version'], item['release']))}
+  return result
 
-# clear cta versions from yum versionlock
-def clearPkgs(pkglist):
+# remove CTA packages from versionlock.list
+def clearVfile(pkglist):
   with open(vfiles['yum'], 'r+') as f:
     content = f.read()
     for p in pkglist:
@@ -89,82 +144,100 @@ def clearPkgs(pkglist):
 
 
 # check arguments
-if len(sys.argv) != 2:
+if not 2 <= len(sys.argv) <= 3:
   usage()
 
-action = sys.argv[1]
-if action not in actions:
-  print("Error: option %s is not valid" % sys.argv[1])
+for arg in sys.argv[1:]:
+  if arg == '--json':
+    jsonoutput = True
+  elif arg in actions:
+    action = arg
+  else:
+    print("Error: option %s is not valid" % sys.argv[1])
+    usage()
+
+# check if CTA packages exist in versionlock.list (ignore arch)
+versions = readVer(vfiles)
+versionlock = checkVfile(versions['cta'])
+message = defaultdict(dict)
+
+if (action == 'help'):
   usage()
 
-
-# read version files
-for fname, vfile in vfiles.items():
-  if not os.path.isfile(vfile):
-    raise FileNotFoundError("file %s not found" % vfile)
-
-  with open(vfile) as f:
-    plist = f.read().splitlines()
-    for p in plist:
-      if p == "" or p.startswith('#'):
-        continue
-      (n, v, r, e, a) = splitFilename(p)
-      versions[fname][n] = [e, v, r, a]
-
-
-# check if packages versions exist in yum versionlock file (ignore arch)
-matchPkg(versions['cta'])
-
-
-# return summary
+# return versionlock summary
 if (action == 'check'):
-  for status, content in summary.items():
-    print("\n=> %s: (%s/%s)" % (status, len(content), len(versions['cta'])))
-    print("\n".join(content))
-  if ("missing" in summary or "wrong_version" in summary):
+  message['title'] = "Yum versionlock status for CTA packages and dependencies"
+  for status, content in versionlock.items():
+    message[status]['count'] = len(content)
+    message[status]['content'] = content
+  if versionlock['missing'] or versionlock['wrong_version']:
     retcode = 2
 
-
-# add cta packages to versionlock file
+# add CTA packages to versionlock.list
 elif (action == 'apply'):
-  if "missing" in summary:
-    print("\nAdding %s packages to version lock file:" % len(summary['missing']))
-    print("\n".join(summary['missing']))
-    addtoVfile(summary['missing'])
+  message['title'] = "Adding CTA packages and dependencies to versionlock.list"
+  if os.path.isfile(no_vlock):
+    message['adding']['count'] = 0
+    message['adding']['content'] = [ "cta_novlock file present, doing nothing" ]
+    retcode = 1
+    _exit()
+  if versionlock['missing']:
+    message['adding']['count'] = len(versionlock['missing'])
+    message['adding']['content'] = versionlock['missing']
+    addtoVfile(versionlock['missing'])
   else:
-    print("\nNothing to do")
-
-  if "wrong_version" in summary:
-    print("\nWARNING: the following packages have a different version specified in versionlock file:")
-    print('\n'.join(summary['wrong_version']))
-    print("\nThey will not be changed unless you run %s with the 'forceupdate' option" % sys.argv[0])
+    message['adding']['count'] = 0
+    message['adding']['content'] = [ "Nothing to do" ]
+  if versionlock['wrong_version']:
+    message['title'] += "\nWARNING: some packages have a different version specified in versionlock.list than required by CTA, it will not be changed unless you use the 'forceupdate' option"
+    message['wrong_version']['count'] = len(versionlock['wrong_version'])
+    message['wrong_version']['content'] = versionlock['wrong_version']
     retcode = 2
 
-
-# overwrite existing versions in versionlock file
+# add CTA packages and overwrite existing versions in versionlock.list
 elif (action == 'forceupdate'):
-  if "wrong_version" in summary:
-    print("\nUpdating %s packages version in versionlock file:" % len(summary['wrong_version']))
-    for p in summary['wrong_version']:
-      print("%s: previous %s, new %s" % (p, ':'.join(versions['yum'][p]), ':'.join(versions['cta'][p])))
-    updateVfile(summary['wrong_version'])
-  if "missing" in summary:
-    print("\nAdding %s packages to version lock file:" % len(summary['missing']))
-    print("\n".join(summary['missing']))
-    addtoVfile(summary['missing'])
-  if (not summary['missing'] and not summary['wrong_version']):
-    print("\nNothing to do")
+  message['title'] = "Adding and updating CTA packages and dependencies in versionlock.list"
+  if os.path.isfile(no_vlock):
+    message['updating']['count'] = 0
+    message['updating']['content'] = [ "cta_novlock file present, doing nothing" ]
+    retcode = 1
+    _exit()
+  if versionlock['wrong_version']:
+    message['updating']['count'] = len(versionlock['wrong_version'])
+    message['updating']['content'] = versionlock['wrong_version']
+    updateVfile(versionlock['wrong_version'])
+  if versionlock['missing']:
+    message['adding']['count'] = len(versionlock['missing'])
+    message['adding']['content'] = versionlock['missing']
+    addtoVfile(versionlock['missing'])
+  if (not versionlock['missing'] and not versionlock['wrong_version']):
+    message['updating']['count'] = 0
+    message['updating']['content'] = [ "Nothing to do" ]
 
+# check version of currently installed packages
+elif (action == 'checkpkg'):
+  message['title'] = "CTA packages and dependencies versions currently installed"
+  packages = checkPkg(versions['cta'])
+  for status, content in packages.items():
+    message[status]['count'] = len(content)
+    message[status]['content'] = content
+  if packages['wrong_version']:
+    retcode = 2
 
-# remove cta versions from versionlock file
-elif (action == 'clear'):
-  if versions['cta']:
-    clearPkgs(versions['cta'])
-    print("\nRemoving %s packages from versionlock file:" % len(versions['cta']))
-    print("\n".join(versions['cta']))
+# remove CTA related packages from versionlock.list
+elif (action == 'remove'):
+  message['title'] = "Removing CTA packages and dependencies from versionlock.list"
+  if os.path.isfile(no_vlock):
+    message['removing']['count'] = 0
+    message['removing']['content'] = [ "cta_novlock file present, doing nothing" ]
+    retcode = 1
+    _exit()
+  if versionlock['ok']:
+    message['removing']['count'] = len(versionlock['ok'])
+    message['removing']['content'] = versionlock['ok']
+    clearVfile(versionlock['ok'])
   else:
-    print("\nNothing to do")
+    message['removing']['count'] = 0
+    message['removing']['content'] = [ "Nothing to do" ]
 
-
-print('\n')
-exit(retcode)
+_exit()
