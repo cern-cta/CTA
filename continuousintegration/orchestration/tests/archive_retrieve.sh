@@ -74,4 +74,13 @@ kubectl -n ${NAMESPACE} exec client -- bash /root/client_ar.sh -n ${NB_FILES} -s
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
+echo
+echo "Launching multiple_retrieve.sh on client pod"
+echo " Archiving file: xrdcp as user1"
+echo " Retrieving it as poweruser1"
+kubectl -n ${NAMESPACE} cp multiple_retrieve.sh client:/root/multiple_retrieve.sh
+kubectl -n ${NAMESPACE} exec client -- bash /root/multiple_retrieve.sh || exit 1
+
+kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
 exit 0
