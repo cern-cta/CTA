@@ -268,6 +268,7 @@ void TapeDrivesCatalogueState::setDriveDown(common::dataStructures::TapeDrive & 
   driveState.currentTapePool = "";
   driveState.currentVo = "";
   driveState.currentActivity = nullopt_t();
+  if (inputs.reason) driveState.reasonUpDown = inputs.reason;
 }
 
 void TapeDrivesCatalogueState::setDriveUpOrMaybeDown(common::dataStructures::TapeDrive & driveState,
@@ -276,9 +277,7 @@ void TapeDrivesCatalogueState::setDriveUpOrMaybeDown(common::dataStructures::Tap
   auto targetStatus = common::dataStructures::DriveStatus::Up;
   if (!driveState.desiredUp) {
     driveState.driveStatus = common::dataStructures::DriveStatus::Down;
-    if (!driveState.reasonUpDown) {
-      driveState.reasonUpDown = inputs.reason;
-    }
+    if (inputs.reason) driveState.reasonUpDown = inputs.reason;
   }
   // If we were already up (or down), then we only update the last update time.
   if (driveState.driveStatus == targetStatus) {

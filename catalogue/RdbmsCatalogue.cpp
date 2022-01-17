@@ -9874,30 +9874,40 @@ void RdbmsCatalogue::settingSqlTapeDriveValues(cta::rdbms::Stmt *stmt,
     const optional<std::string> &optionalField) {
     if (optionalField) {
       if (optionalField.value().empty()) {
-        stmt->bindString(sqlField, nullStringMessage);
+        stmt->bindString(sqlField, nullopt_t());
       } else {
         stmt->bindString(sqlField, optionalField.value());
       }
     } else {
-      stmt->bindString(sqlField, nullStringMessage);
+      stmt->bindString(sqlField, nullopt_t());
     }
   };
-  auto setOptionalUint64 = [&stmt](const std::string &sqlField,
-    const optional<uint64_t> optionalField) {
-    stmt->bindUint64(sqlField, optionalField ? optionalField.value() : 0);
-  };
+
   auto setOptionalTime = [&stmt](const std::string &sqlField,
     const optional<time_t> optionalField) {
-    stmt->bindUint64(sqlField, optionalField ? optionalField.value() : 0);
+    if (optionalField) {
+      stmt->bindUint64(sqlField, optionalField.value());
+    } else {
+      stmt->bindUint64(sqlField, nullopt_t());
+    }
+  };
+
+  auto setOptionalMountType = [&stmt](const std::string &sqlField,
+    const optional<common::dataStructures::MountType>& optionalField) {
+    if (optionalField) {
+      stmt->bindUint32(sqlField, static_cast<uint32_t>(optionalField.value()));
+    } else {
+      stmt->bindUint32(sqlField, nullopt_t());
+    }
   };
 
   stmt->bindString(":DRIVE_NAME", tapeDrive.driveName);
   stmt->bindString(":HOST", tapeDrive.host);
   stmt->bindString(":LOGICAL_LIBRARY", tapeDrive.logicalLibrary);
-  setOptionalUint64(":SESSION_ID", tapeDrive.sessionId);
+  stmt->bindUint64(":SESSION_ID", tapeDrive.sessionId);
 
-  setOptionalUint64(":BYTES_TRANSFERED_IN_SESSION", tapeDrive.bytesTransferedInSession);
-  setOptionalUint64(":FILES_TRANSFERED_IN_SESSION", tapeDrive.filesTransferedInSession);
+  stmt->bindUint64(":BYTES_TRANSFERED_IN_SESSION", tapeDrive.bytesTransferedInSession);
+  stmt->bindUint64(":FILES_TRANSFERED_IN_SESSION", tapeDrive.filesTransferedInSession);
   setOptionalString(":LATEST_BANDWIDTH", tapeDrive.latestBandwidth);
 
   setOptionalTime(":SESSION_START_TIME", tapeDrive.sessionStartTime);
@@ -9922,15 +9932,14 @@ void RdbmsCatalogue::settingSqlTapeDriveValues(cta::rdbms::Stmt *stmt,
 
   setOptionalString(":CURRENT_VID", tapeDrive.currentVid);
   setOptionalString(":CTA_VERSION", tapeDrive.ctaVersion);
-  setOptionalUint64(":CURRENT_PRIORITY", tapeDrive.currentPriority);
+  stmt->bindUint64(":CURRENT_PRIORITY", tapeDrive.currentPriority);
   setOptionalString(":CURRENT_ACTIVITY", tapeDrive.currentActivity);
   setOptionalString(":CURRENT_ACTIVITY_WEIGHT", std::string("1.0")); //activity weight deprecated in cta/CTA#1077
   setOptionalString(":CURRENT_TAPE_POOL", tapeDrive.currentTapePool);
-  stmt->bindUint32(":NEXT_MOUNT_TYPE", tapeDrive.nextMountType
-    ? static_cast<uint32_t>(tapeDrive.nextMountType.value()) : 9999);
+  setOptionalMountType(":NEXT_MOUNT_TYPE", tapeDrive.nextMountType);
   setOptionalString(":NEXT_VID", tapeDrive.nextVid);
   setOptionalString(":NEXT_TAPE_POOL", tapeDrive.nextTapePool);
-  setOptionalUint64(":NEXT_PRIORITY", tapeDrive.nextPriority);
+  stmt->bindUint64(":NEXT_PRIORITY", tapeDrive.nextPriority);
   setOptionalString(":NEXT_ACTIVITY", tapeDrive.nextActivity);
   setOptionalString(":NEXT_ACTIVITY_WEIGHT", std::string("1.0")); //activity weight deprecated in cta/CTA#1077
 
@@ -9941,11 +9950,11 @@ void RdbmsCatalogue::settingSqlTapeDriveValues(cta::rdbms::Stmt *stmt,
   setOptionalString(":NEXT_VO", tapeDrive.nextVo);
   setOptionalString(":USER_COMMENT", tapeDrive.userComment);
 
-  auto setEntryLog = [stmt, setOptionalString, setOptionalUint64](const std::string &field, const std::string &username,
+  auto setEntryLog = [stmt, setOptionalString, setOptionalTime](const std::string &field, const std::string &username,
     const std::string &host, const time_t &time) {
       setOptionalString(field + "_USER_NAME", username);
       setOptionalString(field + "_HOST_NAME", host);
-      setOptionalUint64(field + "_TIME", time);
+      setOptionalTime(field + "_TIME", time);
   };
 
   if (tapeDrive.creationLog) {
@@ -10011,76 +10020,66 @@ std::list<std::string> RdbmsCatalogue::getTapeDriveNames() const {
 
 common::dataStructures::TapeDrive RdbmsCatalogue::gettingSqlTapeDriveValues(cta::rdbms::Rset* rset) const {
   common::dataStructures::TapeDrive tapeDrive;
-  auto checkOptionalString = [](const std::string &value) -> optional<std::string> {
-    if (value == "NULL") return nullopt_t();
-    return value;
+  auto checkOptionalTime = [](const optional<uint64_t> &time) -> optional<time_t> {
+    if (!time) return nullopt_t();
+    return time.value();
   };
-  auto checkOptionalUint64 = [](const uint64_t &value) -> optional<uint64_t> {
-    if (value == 0) return nullopt_t();
-    return value;
-  };
-  auto checkOptionalTime = [](const uint64_t &value) -> optional<time_t> {
-    if (value == 0) return nullopt_t();
-    return value;
-  };
-  auto checkOptionalMountType = [](const uint32_t &value) -> optional<common::dataStructures::MountType> {
-    if (value == 9999) return nullopt_t();
-    return common::dataStructures::MountType(value);
+  auto checkOptionalMountType = [](const optional<uint32_t> &type) -> optional<common::dataStructures::MountType> {
+    if (!type) return nullopt_t();
+    return common::dataStructures::MountType(type.value());
   };
   tapeDrive.driveName = rset->columnString("DRIVE_NAME");
   tapeDrive.host = rset->columnString("HOST");
   tapeDrive.logicalLibrary = rset->columnString("LOGICAL_LIBRARY");
-  tapeDrive.latestBandwidth = rset->columnString("LATEST_BANDWIDTH");
-  tapeDrive.sessionId = checkOptionalUint64(rset->columnUint64("SESSION_ID"));
+  tapeDrive.sessionId = rset->columnOptionalUint64("SESSION_ID");
 
-  tapeDrive.bytesTransferedInSession = checkOptionalUint64(rset->columnUint64("BYTES_TRANSFERED_IN_SESSION"));
-  tapeDrive.filesTransferedInSession = checkOptionalUint64(rset->columnUint64("FILES_TRANSFERED_IN_SESSION"));
-  tapeDrive.latestBandwidth = checkOptionalString(rset->columnString("LATEST_BANDWIDTH"));
+  tapeDrive.bytesTransferedInSession = rset->columnOptionalUint64("BYTES_TRANSFERED_IN_SESSION");
+  tapeDrive.filesTransferedInSession = rset->columnOptionalUint64("FILES_TRANSFERED_IN_SESSION");
+  tapeDrive.latestBandwidth = rset->columnOptionalString("LATEST_BANDWIDTH");
 
-  tapeDrive.sessionStartTime = checkOptionalTime(rset->columnUint64("SESSION_START_TIME"));
-  tapeDrive.mountStartTime = checkOptionalTime(rset->columnUint64("MOUNT_START_TIME"));
-  tapeDrive.transferStartTime = checkOptionalTime(rset->columnUint64("TRANSFER_START_TIME"));
-  tapeDrive.unloadStartTime = checkOptionalTime(rset->columnUint64("UNLOAD_START_TIME"));
-  tapeDrive.unmountStartTime = checkOptionalTime(rset->columnUint64("UNMOUNT_START_TIME"));
-  tapeDrive.drainingStartTime = checkOptionalTime(rset->columnUint64("DRAINING_START_TIME"));
-  tapeDrive.downOrUpStartTime = checkOptionalTime(rset->columnUint64("DOWN_OR_UP_START_TIME"));
-  tapeDrive.probeStartTime = checkOptionalTime(rset->columnUint64("PROBE_START_TIME"));
-  tapeDrive.cleanupStartTime = checkOptionalTime(rset->columnUint64("CLEANUP_START_TIME"));
-  tapeDrive.startStartTime = checkOptionalTime(rset->columnUint64("START_START_TIME"));
-  tapeDrive.shutdownTime = checkOptionalTime(rset->columnUint64("SHUTDOWN_TIME"));
+  tapeDrive.sessionStartTime = checkOptionalTime(rset->columnOptionalUint64("SESSION_START_TIME"));
+  tapeDrive.mountStartTime = checkOptionalTime(rset->columnOptionalUint64("MOUNT_START_TIME"));
+  tapeDrive.transferStartTime = checkOptionalTime(rset->columnOptionalUint64("TRANSFER_START_TIME"));
+  tapeDrive.unloadStartTime = checkOptionalTime(rset->columnOptionalUint64("UNLOAD_START_TIME"));
+  tapeDrive.unmountStartTime = checkOptionalTime(rset->columnOptionalUint64("UNMOUNT_START_TIME"));
+  tapeDrive.drainingStartTime = checkOptionalTime(rset->columnOptionalUint64("DRAINING_START_TIME"));
+  tapeDrive.downOrUpStartTime = checkOptionalTime(rset->columnOptionalUint64("DOWN_OR_UP_START_TIME"));
+  tapeDrive.probeStartTime = checkOptionalTime(rset->columnOptionalUint64("PROBE_START_TIME"));
+  tapeDrive.cleanupStartTime = checkOptionalTime(rset->columnOptionalUint64("CLEANUP_START_TIME"));
+  tapeDrive.startStartTime = checkOptionalTime(rset->columnOptionalUint64("START_START_TIME"));
+  tapeDrive.shutdownTime = checkOptionalTime(rset->columnOptionalUint64("SHUTDOWN_TIME"));
 
   tapeDrive.mountType = common::dataStructures::MountType(rset->columnUint32("MOUNT_TYPE"));
   tapeDrive.driveStatus = common::dataStructures::TapeDrive::stringToState(rset->columnString("DRIVE_STATUS"));
   tapeDrive.desiredUp = rset->columnBool("DESIRED_UP");
   tapeDrive.desiredForceDown = rset->columnBool("DESIRED_FORCE_DOWN");
-  tapeDrive.reasonUpDown = checkOptionalString(rset->columnString("REASON_UP_DOWN"));
+  tapeDrive.reasonUpDown = rset->columnOptionalString("REASON_UP_DOWN");
 
-  tapeDrive.currentVid = checkOptionalString(rset->columnString("CURRENT_VID"));
-  tapeDrive.ctaVersion = checkOptionalString(rset->columnString("CTA_VERSION"));
-  tapeDrive.currentPriority = checkOptionalUint64(rset->columnUint64("CURRENT_PRIORITY"));
-  tapeDrive.currentActivity = checkOptionalString(rset->columnString("CURRENT_ACTIVITY"));
-  tapeDrive.currentTapePool = checkOptionalString(rset->columnString("CURRENT_TAPE_POOL"));
-  tapeDrive.nextMountType = checkOptionalMountType(rset->columnUint32("NEXT_MOUNT_TYPE"));
-  tapeDrive.nextVid = checkOptionalString(rset->columnString("NEXT_VID"));
-  tapeDrive.nextTapePool = checkOptionalString(rset->columnString("NEXT_TAPE_POOL"));
-  tapeDrive.nextPriority = checkOptionalUint64(rset->columnUint64("NEXT_PRIORITY"));
-  tapeDrive.nextActivity = checkOptionalString(rset->columnString("NEXT_ACTIVITY"));
+  tapeDrive.currentVid = rset->columnOptionalString("CURRENT_VID");
+  tapeDrive.ctaVersion = rset->columnOptionalString("CTA_VERSION");
+  tapeDrive.currentPriority = rset->columnOptionalUint64("CURRENT_PRIORITY");
+  tapeDrive.currentActivity = rset->columnOptionalString("CURRENT_ACTIVITY");
+  tapeDrive.currentTapePool = rset->columnOptionalString("CURRENT_TAPE_POOL");
+  tapeDrive.nextMountType = checkOptionalMountType(rset->columnOptionalUint32("NEXT_MOUNT_TYPE"));
+  tapeDrive.nextVid = rset->columnOptionalString("NEXT_VID");
+  tapeDrive.nextTapePool = rset->columnOptionalString("NEXT_TAPE_POOL");
+  tapeDrive.nextPriority = rset->columnOptionalUint64("NEXT_PRIORITY");
+  tapeDrive.nextActivity = rset->columnOptionalString("NEXT_ACTIVITY");
 
-  tapeDrive.devFileName = checkOptionalString(rset->columnString("DEV_FILE_NAME"));
-  tapeDrive.rawLibrarySlot = checkOptionalString(rset->columnString("RAW_LIBRARY_SLOT"));
+  tapeDrive.devFileName = rset->columnOptionalString("DEV_FILE_NAME");
+  tapeDrive.rawLibrarySlot = rset->columnOptionalString("RAW_LIBRARY_SLOT");
 
-  tapeDrive.currentVo = checkOptionalString(rset->columnString("CURRENT_VO"));
-  tapeDrive.nextVo = checkOptionalString(rset->columnString("NEXT_VO"));
+  tapeDrive.currentVo = rset->columnOptionalString("CURRENT_VO");
+  tapeDrive.nextVo = rset->columnOptionalString("NEXT_VO");
 
   const std::string diskSystemName = rset->columnString("DISK_SYSTEM_NAME");
   tapeDrive.diskSystemName = (diskSystemName == "NULL") ? "" : diskSystemName;
   tapeDrive.reservedBytes = rset->columnUint64("RESERVED_BYTES");
 
-  tapeDrive.userComment = checkOptionalString(rset->columnString("USER_COMMENT"));
+  tapeDrive.userComment = rset->columnOptionalString("USER_COMMENT");
   auto setOptionEntryLog = [&rset](const std::string &username, const std::string &host,
     const std::string &time) -> optional<common::dataStructures::EntryLog> {
-    const std::string nullStringMessage = "NULL";
-    if (rset->columnString(username) == nullStringMessage) {
+    if (!rset->columnOptionalString(username)) {
       return nullopt_t();
     } else {
       return common::dataStructures::EntryLog(
