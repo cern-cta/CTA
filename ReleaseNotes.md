@@ -1,10 +1,11 @@
-# v4.NEXT
+# v4.5.0-1
 
 ## Summary
 
 ## Upgrade Instructions
 
 ## Features
+- cta/CTA#1091 - New Drive State table in CTA Catalogue
 - cta/CTA#1054 - Fix filing of disk buffer when recalling from tapeservers with RAO
 - cta/CTA#1076 - Retrieve fails if disk system configuration is removed
 - cta/CTA#1087 - Add new tapeserver config option UseEncryption
