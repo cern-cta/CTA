@@ -3438,9 +3438,6 @@ bool OStoreDB::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRe
 
   // Get the existing reservation map from drives.
   auto previousDrivesReservations = m_oStoreDB.m_catalogue.getExistingDrivesReservations();
-  uint64_t previousDrivesReservationTotal = std::accumulate(previousDrivesReservations.begin(), previousDrivesReservations.end(),
-    0, [](uint64_t t, std::pair<std::string, uint64_t> a){ return t+a.second;});
-
   // Get the free space from disk systems involved.
   std::set<std::string> diskSystemNames;
   for (auto const & dsrr: diskSpaceReservationRequest) {
@@ -3470,6 +3467,18 @@ bool OStoreDB::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRe
   // If a file system does not have enough space fail the disk space reservation,  put the queue to sleep and 
   // the retrieve mount will immediately stop
   for (auto const &ds: diskSystemNames) {
+    uint64_t previousDrivesReservationTotal = 0;
+    auto diskSystem = diskSystemFreeSpace.getDiskSystemList().at(ds);
+    // Compute previous drives reservation for the physical space of the current disk system.
+    for (auto previousDriveReservation: previousDrivesReservations) {
+      //avoid empty string when no disk space reservation exists for drive
+      if (previousDriveReservation.second != 0) { 
+        auto previousDiskSystem = diskSystemFreeSpace.getDiskSystemList().at(previousDriveReservation.first);
+        if (diskSystem.freeSpaceQueryURL == previousDiskSystem.freeSpaceQueryURL) {
+          previousDrivesReservationTotal += previousDriveReservation.second;
+        }
+      }
+    }
     if (diskSystemFreeSpace.at(ds).freeSpace < diskSpaceReservationRequest.at(ds) + diskSystemFreeSpace.at(ds).targetedFreeSpace +
       previousDrivesReservationTotal) {
       cta::log::ScopedParamContainer params(logContext);
@@ -3480,7 +3489,7 @@ bool OStoreDB::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRe
             .add("targetedFreeSpace", diskSystemFreeSpace.at(ds).targetedFreeSpace);
       logContext.log(cta::log::WARNING, "In OStoreDB::RetrieveMount::reservediskSpace(): could not allocate disk space for job, applying backpressure");
       
-      auto sleepTime = diskSystemFreeSpace.getDiskSystemList().at(ds).sleepTime;
+      auto sleepTime = diskSystem.sleepTime;
       putQueueToSleep(ds, sleepTime, logContext);
       return false;
     }

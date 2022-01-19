@@ -15,6 +15,7 @@
 ## Bug fixes
 - cta/CTA#1092 - Fix overflow error with drive state latestBandwith causing cta frontend crash
 - cta/CTA#501 - Fix disappearing reason when TapeDrive is reading or writing
+- cta/CTA#1101 - Fix disk space reservation logic adding all existing disk space reservations for all disk systems
 
 # v4.4.1-1
 
