@@ -614,7 +614,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
         reservationRequest.addRequest(rj->diskSystemName.value(), rj->archiveFile.fileSize);
       } 
     }
-    //reserving disk space second time will fail (not enough disk space, triggers backpressure)
+    //reserving disk space will fail (not enough disk space, backpressure is triggered)
     ASSERT_FALSE(rm->reserveDiskSpace(reservationRequest, "", lc));
   }
   rm->complete(time(nullptr));
@@ -692,20 +692,30 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
   auto mountInfo = db.getMountInfo(lc);
   ASSERT_EQ(1, mountInfo->potentialMounts.size());
   auto rm=mountInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789,time(nullptr), cta::nullopt);
-  auto rjb = rm->getNextJobBatch(20,20*1000,lc);
-  //Files with successful fetch should be popped
-  ASSERT_EQ(filesToDo, rjb.size());
+  {
+    //leave one job in the queue for the potential mount
+    auto rjb = rm->getNextJobBatch(9,20*1000,lc);
+    //Files with successful fetch should be popped
+    ASSERT_EQ(9, rjb.size());
 
-  cta::DiskSpaceReservationRequest reservationRequest;
+    cta::DiskSpaceReservationRequest reservationRequest;
     for (auto &rj: rjb) {
       ASSERT_TRUE((bool)rj->diskSystemName);
       ASSERT_EQ("ds-Error", rj->diskSystemName.value());
-      if (rj->diskSystemName) {
-        reservationRequest.addRequest(rj->diskSystemName.value(), rj->archiveFile.fileSize);
-      }
+      reservationRequest.addRequest(rj->diskSystemName.value(), rj->archiveFile.fileSize);
     }
-    //reserving disk space second time will fail (disk instance not reachable)
+    //reserving disk space will fail because the disk instance is not reachable, causing backpressure
     ASSERT_FALSE(rm->reserveDiskSpace(reservationRequest, "", lc)); 
+  }
+  rm->complete(time(nullptr));
+  rm.reset(nullptr);
+  mountInfo.reset(nullptr);
+  auto mi = db.getMountInfoNoLock(cta::SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT,lc);
+  ASSERT_EQ(1, mi->potentialMounts.size());
+  //did not requeue the job batch (the retrive mount normally does this, but cannot do it in the tests due to BackendVFS)
+  ASSERT_EQ(1, mi->potentialMounts.begin()->filesQueued); 
+  ASSERT_TRUE(mi->potentialMounts.begin()->sleepingMount);
+  ASSERT_EQ("ds-Error", mi->potentialMounts.begin()->diskSystemSleptFor);
 }
 
 #undef TEST_MOCK_DB

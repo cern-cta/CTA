@@ -3448,12 +3448,14 @@ bool OStoreDB::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRe
     diskSystemFreeSpace.fetchDiskSystemFreeSpace(diskSystemNames, logContext);
   } catch(const cta::disk::DiskSystemFreeSpaceListException &ex){
     // Could not get free space for one of the disk systems. Currently the retrieve mount will only query
-    // one disk system, so just log the failure. Cannot put the queue to sleep as that implies knowing the disk system sleep time.
+    // one disk system, so just log the failure and put the queue to sleep inside the loop.
     for (const auto &failedDiskSystem: ex.m_failedDiskSystems) {
       cta::log::ScopedParamContainer params(logContext);
       params.add("diskSystemName", failedDiskSystem.first);
       params.add("failureReason", failedDiskSystem.second.getMessageValue());
-      logContext.log(cta::log::ERR, "In OStoreDB::RetrieveMount::reserveDiskSpace(): unable to request EOS free space for disk system");
+      logContext.log(cta::log::ERR, "In OStoreDB::RetrieveMount::reserveDiskSpace(): unable to request EOS free space for disk system, putting queue to sleep");
+      auto sleepTime = diskSystemFreeSpace.getDiskSystemList().at(failedDiskSystem.first).sleepTime;
+      putQueueToSleep(failedDiskSystem.first, sleepTime, logContext);
     } 
     return false;
   } catch (std::exception &ex) {
