@@ -529,6 +529,18 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 
 
 %changelog
+* Fri Jan 21 2022 miguel.veloso.barros (at) cern.ch - 4.5.1-1
+- cta/CTA#1101 - Fix disk space reservation logic adding all existing disk space reservations for all disk systems
+- cta/CTA#1023 - Retrieve puts the queue to sleep if the eos disk instance is not reachable
+* Fri Jan 21 2022 miguel.veloso.barros (at) cern.ch - 4.5.0-1
+- Improve cta-versionlock script
+- cta/CTA#1091 - New Drive State table in CTA Catalogue
+- cta/CTA#1054 - Fix filing of disk buffer when recalling from tapeservers with RAO
+- cta/CTA#1076 - Retrieve fails if disk system configuration is removed
+- cta/CTA#1087 - Add new tapeserver config option UseEncryption
+- cta/CTA#1096 - Better handling of bad checksums in archive/retrieve sessions
+- cta/CTA#1092 - Fix overflow error with drive state latestBandwith causing cta frontend crash
+- cta/CTA#501 - Fix disappearing reason when TapeDrive is reading or writing
 * Fri Dec 10 2021 julien.leduc (at) cern.ch - 4.4.0-1
 - Upgraded EOS to 4.8.67 in CI versionlock.list file
 - cta/CTA#607 - Add client host and username in cta-frontend logs

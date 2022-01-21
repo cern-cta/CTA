@@ -7,6 +7,16 @@
 ## Features
 
 ## Bug fixes
+
+# v4.5.1-1
+
+## Summary
+
+## Upgrade Instructions
+
+## Features
+
+## Bug fixes
 - cta/CTA#1101 - Fix disk space reservation logic adding all existing disk space reservations for all disk systems
 - cta/CTA#1023 - Retrieve puts the queue to sleep if the eos disk instance is not reachable
 
