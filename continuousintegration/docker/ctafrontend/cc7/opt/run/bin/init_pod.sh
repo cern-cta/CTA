@@ -35,7 +35,7 @@ echo "Mounting logs volume ${PV_PATH} in /var/log"
 mount --bind ${PV_PATH} /var/log
 
 # all core dumps will go there as all the pods AND kubelet are sharing the same kernel.core_pattern
-mkdir /var/log/tmp
+mkdir -p /var/log/tmp
 chmod 1777 /var/log/tmp
 echo '/var/log/tmp/%h-%t-%e-%p-%s.core' > /proc/sys/kernel/core_pattern
 
