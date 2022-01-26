@@ -8022,14 +8022,21 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
       } else if(!mountPolicies.requesterGroupMountPolicies.empty()) {
         mountPolicy = mountPolicies.requesterGroupMountPolicies.front();
       } else {
-        exception::UserError ue;
-        ue.getMessage() << "Cannot retrieve file because there are no mount rules for the requester, activity or their group:" <<
-          " archiveFileId=" << archiveFileId <<  " requester=" <<
-          diskInstanceName << ":" << user.name << ":" << user.group;
-        if (activity) {
-          ue.getMessage() << " activity=" << activity.value();
+        mountPolicies = getMountPolicies(conn, diskInstanceName, "default", user.group);
+
+        if(!mountPolicies.requesterMountPolicies.empty()) {
+          mountPolicy = mountPolicies.requesterMountPolicies.front();
+        } else {
+          exception::UserError ue;
+          ue.getMessage()
+            << "Cannot retrieve file because there are no mount rules for the requester, activity or their group:"
+            << " archiveFileId=" << archiveFileId << " requester=" << diskInstanceName << ":" << user.name << ":"
+            << user.group;
+          if (activity) {
+            ue.getMessage() << " activity=" << activity.value();
           }
-        throw ue;
+          throw ue;
+        }
       }
       criteria.archiveFile = *archiveFile;
       criteria.mountPolicy = mountPolicy;

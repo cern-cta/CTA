@@ -5,6 +5,7 @@
 ## Upgrade Instructions
 
 ## Features
+- cta/CTA#999 - Add a default mount rule for recalls
 
 ## Bug fixes
 - cta/CTA#1102 - Make requeued jobs retain their original creation time
