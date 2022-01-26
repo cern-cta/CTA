@@ -39,8 +39,9 @@ void ContainerTraits<ArchiveQueue>::addReferencesAndCommit(Container& cont, Inse
     jd.tapePool = cont.getTapePool();
     jd.owner = cont.getAddressIfSet();
     ArchiveRequest & ar = *e.archiveRequest;
+    auto creationLog = ar.getCreationLog();
     jobsToAdd.push_back({jd, ar.getAddressIfSet(), e.archiveFile.archiveFileID, e.archiveFile.fileSize,
-        e.mountPolicy, time(nullptr)});
+        e.mountPolicy, ar.getCreationLog().time});
   }
   cont.addJobsAndCommit(jobsToAdd, agentRef, lc);
 }

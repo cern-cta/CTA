@@ -7,6 +7,7 @@
 ## Features
 
 ## Bug fixes
+- cta/CTA#1102 - Make requeued jobs retain their original creation time
 
 # v4.5.1-1
 

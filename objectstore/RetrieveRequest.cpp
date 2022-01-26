@@ -1033,6 +1033,11 @@ void RetrieveRequest::setCreationTime(const uint64_t creationTime){
   m_payload.mutable_lifecycle_timings()->set_creation_time(creationTime);
 }
 
+uint64_t RetrieveRequest::getCreationTime() {
+  checkPayloadReadable();
+  return m_payload.lifecycle_timings().creation_time();
+}
+
 void RetrieveRequest::setFirstSelectedTime(const uint64_t firstSelectedTime){
   checkPayloadWritable();
   m_payload.mutable_lifecycle_timings()->set_first_selected_time(firstSelectedTime);

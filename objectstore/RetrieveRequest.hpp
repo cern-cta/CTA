@@ -259,6 +259,8 @@ public:
   cta::common::dataStructures::EntryLog getEntryLog();
   cta::common::dataStructures::LifecycleTimings getLifecycleTimings();
   void setCreationTime(const uint64_t creationTime);
+  uint64_t getCreationTime();
+
   void setFirstSelectedTime(const uint64_t firstSelectedTime);
   void setCompletedTime(const uint64_t completedTime);
   void setReportedTime(const uint64_t reportedTime);
