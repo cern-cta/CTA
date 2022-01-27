@@ -170,6 +170,7 @@ public:
   uint64_t getNbFilesOnTape(const std::string& vid) const  override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void setTapeDisabled(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string & reason) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void setTapeFull(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const bool fullValue) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
+  void setTapeDirty(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const bool dirtyValue) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void setTapeDirty(const std::string & vid) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void setTapeIsFromCastorInUnitTests(const std::string &vid) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void setTapePoolEncryption(const common::dataStructures::SecurityIdentity& admin, const std::string& name, const bool encryptionValue) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }

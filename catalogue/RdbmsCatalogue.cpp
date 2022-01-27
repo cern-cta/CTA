@@ -3869,6 +3869,8 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
         "TAPE.MASTER_DATA_IN_BYTES AS MASTER_DATA_IN_BYTES,"
         "TAPE.LAST_FSEQ AS LAST_FSEQ,"
         "TAPE.IS_FULL AS IS_FULL,"
+        "TAPE.DIRTY AS DIRTY,"
+        
         "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"
 
         "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
@@ -4039,6 +4041,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
         tape.masterDataInBytes = rset.columnUint64("MASTER_DATA_IN_BYTES");
         tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
         tape.full = rset.columnBool("IS_FULL");
+        tape.dirty = rset.columnBool("DIRTY");
         tape.isFromCastor = rset.columnBool("IS_FROM_CASTOR");
 
         tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
@@ -5022,6 +5025,51 @@ void RdbmsCatalogue::setTapeFull(const common::dataStructures::SecurityIdentity 
     throw;
   }
 }
+
+//------------------------------------------------------------------------------
+// setTapeDirty
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::setTapeDirty(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
+  const bool dirtyValue) {
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE TAPE SET "
+        "DIRTY = :DIRTY,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "VID = :VID";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindBool(":DIRTY", dirtyValue);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":VID", vid);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
+    }
+
+    log::LogContext lc(m_log);
+    log::ScopedParamContainer spc(lc);
+    spc.add("vid", vid)
+       .add("dirty", dirtyValue ? 1 : 0)
+       .add("lastUpdateUserName", admin.username)
+       .add("lastUpdateHostName", admin.host)
+       .add("lastUpdateTime", now);
+    lc.log(log::INFO, "Catalogue - user modified tape - dirty");
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
 
 //------------------------------------------------------------------------------
 // noSpaceLeftOnTape

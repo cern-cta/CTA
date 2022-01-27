@@ -693,6 +693,18 @@ public:
   virtual void setTapeFull(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool fullValue) = 0;
 
   /**
+   * Sets the dirty status of the specified tape.
+   *
+   * Please note that this method is to be called by the CTA front-end in
+   * response to a command from the CTA command-line interface (CLI).
+   *
+   * @param admin The administrator.
+   * @param vid The volume identifier of the tape to be marked as full.
+   * @param dirty Set to true if the tape is dirty.
+   */
+  virtual void setTapeDirty(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool dirty) = 0;
+
+  /**
    * This method notifies the CTA catalogue to set the specified tape is from CASTOR.
    * This method only for unitTests and MUST never be called in CTA!!!
    *

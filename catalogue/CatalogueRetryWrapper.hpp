@@ -388,6 +388,10 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->setTapeFull(admin, vid, fullValue);}, m_maxTriesToConnect);
   }
 
+  void setTapeDirty(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool dirtyValue) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->setTapeDirty(admin, vid, dirtyValue);}, m_maxTriesToConnect);
+  }
+
   void setTapeIsFromCastorInUnitTests(const std::string &vid) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->setTapeIsFromCastorInUnitTests(vid);}, m_maxTriesToConnect);
   }

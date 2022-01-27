@@ -110,6 +110,7 @@ int TapeLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     tape_item->set_occupancy(tape.dataOnTapeInBytes);
     tape_item->set_last_fseq(tape.lastFSeq);
     tape_item->set_full(tape.full);
+    tape_item->set_dirty(tape.dirty);
     tape_item->set_from_castor(tape.isFromCastor);
     tape_item->set_read_mount_count(tape.readMountCount);
     tape_item->set_write_mount_count(tape.writeMountCount);

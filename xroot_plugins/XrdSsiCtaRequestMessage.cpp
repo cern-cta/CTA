@@ -1891,6 +1891,7 @@ void RequestMessage::processTape_Ch(cta::xrd::Response &response)
    auto  full              = getOptional(OptionBoolean::FULL);
    auto  state             = getOptional(OptionString::STATE);
    auto  stateReason       = getOptional(OptionString::REASON);
+   auto  dirty             = getOptional(OptionBoolean::DIRTY_BIT);
 
    if(mediaType) {
       m_catalogue.modifyTapeMediaType(m_cliIdentity, vid, mediaType.value());
@@ -1920,6 +1921,9 @@ void RequestMessage::processTape_Ch(cta::xrd::Response &response)
    if(state){
      auto stateEnumValue = common::dataStructures::Tape::stringToState(state.value());
      m_catalogue.modifyTapeState(m_cliIdentity,vid,stateEnumValue,stateReason);
+   }
+   if (dirty) {
+      m_catalogue.setTapeDirty(m_cliIdentity, vid, dirty.value());
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);

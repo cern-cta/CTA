@@ -277,7 +277,8 @@ const std::map<std::string, OptionBoolean::Key> boolOptions = {
    { "--log",                   OptionBoolean::SHOW_LOG_ENTRIES },
    { "--lookupnamespace",       OptionBoolean::LOOKUP_NAMESPACE },
    { "--summary",               OptionBoolean::SUMMARY },
-   { "--no-recall",             OptionBoolean::NO_RECALL }
+   { "--no-recall",             OptionBoolean::NO_RECALL },
+   { "--dirtybit",             OptionBoolean::DIRTY_BIT }
 };
 
 
@@ -460,6 +461,7 @@ const Option opt_filename             { Option::OPT_STR,  "--file",             
 const Option opt_force                { Option::OPT_BOOL, "--force",                 "-f",   " <\"true\" or \"false\">" };
 const Option opt_force_flag           { Option::OPT_FLAG, "--force",                 "-f",   "" };
 const Option opt_fromcastor           { Option::OPT_BOOL, "--fromcastor",            "--fc",  " <\"true\" or \"false\">"};      
+const Option opt_dirtybit             { Option::OPT_BOOL, "--dirtybit",              "--db",  " <\"true\" or \"false\">"};      
 const Option opt_instance             { Option::OPT_STR,  "--instance",              "-i",   " <disk_instance>" };
 const Option opt_justarchive          { Option::OPT_FLAG, "--justarchive",           "-a",   "" };
 const Option opt_justmove             { Option::OPT_FLAG, "--justmove",              "-m",   "" };
@@ -598,8 +600,8 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
         opt_state.optional(), opt_reason.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_CH    },
       { opt_vid, opt_mediatype.optional(), opt_vendor.optional(), opt_logicallibrary.optional(),
-        opt_tapepool.optional(), opt_encryptionkeyname.optional(),
-        opt_full.optional(), opt_state.optional(), opt_reason.optional(), opt_comment.optional() }},
+        opt_tapepool.optional(), opt_encryptionkeyname.optional(), opt_full.optional(), 
+        opt_state.optional(), opt_reason.optional(), opt_comment.optional(), opt_dirtybit.optional() }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_RM    }, { opt_vid }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_RECLAIM }, { opt_vid }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_LS    },

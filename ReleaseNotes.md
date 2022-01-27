@@ -6,6 +6,7 @@
 
 ## Features
 - cta/CTA#999 - Add a default mount rule for recalls
+- cta/CTA#1109 - Add --dirtybit option to cta-admin ta ch and show dirty bit value in cta-admin --json ta ls
 
 ## Bug fixes
 - cta/CTA#1102 - Make requeued jobs retain their original creation time
