@@ -57,7 +57,7 @@ if (CMAKE_COMPILER_IS_GNUCC)
       message(STATUS "Detected gcc > 4.4.7 - switching on support for c++1y")
       set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
     endif (GCC_VERSION VERSION_GREATER 4.4.7)
-  endif (GCC_VERSION VERSION_GREATER 7.0)
+  endif (GCC_VERSION VERSION_GREATER_EQUAL 7.0)
 endif (CMAKE_COMPILER_IS_GNUCC)
 
 # CTA continue using the old ABI, so we should force it. This command only works on cmake3,
