@@ -182,13 +182,18 @@ Status CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const ::cta::dcache:
     cta::utils::Timer t;
 
     // Queue the request
-    std::string reqId = m_scheduler->queueRetrieve(instance, retrieveRequest, lc);
-    sp.add("reqId", reqId);
-    lc.log(cta::log::INFO, "Retrieve request for storageClass: " + storageClass
+    try {
+        std::string reqId = m_scheduler->queueRetrieve(instance, retrieveRequest, lc);
+        sp.add("reqId", reqId);
+        lc.log(cta::log::INFO, "Retrieve request for storageClass: " + storageClass
                                + " archiveFileId: " + std::to_string(retrieveRequest.archiveFileID)
                                + " RequestID: " + reqId);
 
-    response->set_reqid(reqId);
+        response->set_reqid(reqId);
+    } catch (cta::exception::Exception &ex){
+        lc.log(cta::log::CRIT, ex.getMessageValue());
+        return ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.getMessageValue());
+    }
     return Status::OK;
 }
 
