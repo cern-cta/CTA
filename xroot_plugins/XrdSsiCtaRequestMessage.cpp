@@ -38,6 +38,8 @@ using XrdSsiPb::PbException;
 #include "XrdCtaStorageClassLs.hpp"
 #include "XrdCtaTapePoolLs.hpp"
 #include "XrdCtaDiskSystemLs.hpp"
+#include "XrdCtaDiskInstanceLs.hpp"
+#include "XrdCtaDiskInstanceSpaceLs.hpp"
 #include "XrdCtaVirtualOrganizationLs.hpp"
 #include "XrdCtaVersion.hpp"
 #include "XrdCtaSchedulingInfosLs.hpp"
@@ -275,6 +277,30 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                   break;
                case cmd_pair(AdminCmd::CMD_DISKSYSTEM, AdminCmd::SUBCMD_CH):
                   processDiskSystem_Ch(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_DISKINSTANCE, AdminCmd::SUBCMD_LS):
+                  processDiskInstance_Ls(response, stream);
+                  break;
+               case cmd_pair(AdminCmd::CMD_DISKINSTANCE, AdminCmd::SUBCMD_ADD):
+                  processDiskInstance_Add(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_DISKINSTANCE, AdminCmd::SUBCMD_RM):
+                  processDiskInstance_Rm(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_DISKINSTANCE, AdminCmd::SUBCMD_CH):
+                  processDiskInstance_Ch(response);
+                  break;
+                case cmd_pair(AdminCmd::CMD_DISKINSTANCESPACE, AdminCmd::SUBCMD_LS):
+                  processDiskInstanceSpace_Ls(response, stream);
+                  break;
+               case cmd_pair(AdminCmd::CMD_DISKINSTANCESPACE, AdminCmd::SUBCMD_ADD):
+                  processDiskInstanceSpace_Add(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_DISKINSTANCESPACE, AdminCmd::SUBCMD_RM):
+                  processDiskInstanceSpace_Rm(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_DISKINSTANCESPACE, AdminCmd::SUBCMD_CH):
+                  processDiskInstanceSpace_Ch(response);
                   break;
                case cmd_pair(AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_ADD):
                   processVirtualOrganization_Add(response);
@@ -2185,6 +2211,115 @@ void RequestMessage::processDiskSystem_Rm(cta::xrd::Response &response)
   const auto &name = getRequired(OptionString::DISK_SYSTEM);
 
   m_catalogue.deleteDiskSystem(name);
+
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+void RequestMessage::processDiskInstance_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)
+{
+  using namespace cta::admin;
+
+  // Create a XrdSsi stream object to return the results
+  stream = new DiskInstanceLsStream(*this, m_catalogue, m_scheduler);
+
+  response.set_show_header(HeaderType::DISKINSTANCE_LS);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+void RequestMessage::processDiskInstance_Add(cta::xrd::Response &response)
+{
+  using namespace cta::admin;
+
+  const auto &name              = getRequired(OptionString::DISK_INSTANCE);
+  const auto &comment           = getRequired(OptionString::COMMENT);
+
+  m_catalogue.createDiskInstance(m_cliIdentity, name, comment);
+
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+void RequestMessage::processDiskInstance_Ch(cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   const auto &name              = getRequired(OptionString::DISK_INSTANCE);
+   const auto comment            = getOptional(OptionString::COMMENT);
+
+   if(comment) {
+      m_catalogue.modifyDiskInstanceComment(m_cliIdentity, name, comment.value());
+   }
+
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+void RequestMessage::processDiskInstance_Rm(cta::xrd::Response &response)
+{
+  using namespace cta::admin;
+
+  const auto &name = getRequired(OptionString::DISK_INSTANCE);
+
+  m_catalogue.deleteDiskInstance(name);
+
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+void RequestMessage::processDiskInstanceSpace_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)
+{
+  using namespace cta::admin;
+
+  // Create a XrdSsi stream object to return the results
+  stream = new DiskInstanceSpaceLsStream(*this, m_catalogue, m_scheduler);
+
+  response.set_show_header(HeaderType::DISKINSTANCESPACE_LS);
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+void RequestMessage::processDiskInstanceSpace_Add(cta::xrd::Response &response)
+{
+  using namespace cta::admin;
+
+  const auto &name              = getRequired(OptionString::DISK_INSTANCE_SPACE);
+  const auto &diskInstance      = getRequired(OptionString::DISK_INSTANCE);
+  const auto &comment           = getRequired(OptionString::COMMENT);
+  const auto &freeSpaceQueryURL = getRequired(OptionString::FREE_SPACE_QUERY_URL);
+  const auto refreshInterval    = getRequired(OptionUInt64::REFRESH_INTERVAL);
+   
+  m_catalogue.createDiskInstanceSpace(m_cliIdentity, name, diskInstance, freeSpaceQueryURL, refreshInterval, comment);
+
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+void RequestMessage::processDiskInstanceSpace_Ch(cta::xrd::Response &response)
+{
+   using namespace cta::admin;
+
+   const auto &name              = getRequired(OptionString::DISK_INSTANCE_SPACE);
+   const auto &diskInstance      = getRequired(OptionString::DISK_INSTANCE);
+   const auto comment            = getOptional(OptionString::COMMENT);
+   const auto &freeSpaceQueryURL = getOptional(OptionString::FREE_SPACE_QUERY_URL);
+   const auto refreshInterval    = getOptional(OptionUInt64::REFRESH_INTERVAL);
+   
+   if(comment) {
+      m_catalogue.modifyDiskInstanceSpaceComment(m_cliIdentity, name, diskInstance, comment.value());
+   }
+   if(freeSpaceQueryURL) {
+      m_catalogue.modifyDiskInstanceSpaceQueryURL(m_cliIdentity, name, diskInstance, freeSpaceQueryURL.value());
+   }
+   if(refreshInterval) {
+      m_catalogue.modifyDiskInstanceSpaceRefreshInterval(m_cliIdentity, name, diskInstance, refreshInterval.value());
+   }
+   
+   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+void RequestMessage::processDiskInstanceSpace_Rm(cta::xrd::Response &response)
+{
+  using namespace cta::admin;
+
+  const auto &name         = getRequired(OptionString::DISK_INSTANCE_SPACE);
+  const auto &diskInstance = getRequired(OptionString::DISK_INSTANCE);
+
+  m_catalogue.deleteDiskInstanceSpace(name, diskInstance);
 
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }

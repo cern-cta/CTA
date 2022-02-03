@@ -212,6 +212,12 @@ private:
   void processDiskSystem_Add        (cta::xrd::Response &response);
   void processDiskSystem_Ch         (cta::xrd::Response &response);
   void processDiskSystem_Rm         (cta::xrd::Response &response);
+  void processDiskInstance_Add      (cta::xrd::Response &response);
+  void processDiskInstance_Ch       (cta::xrd::Response &response);
+  void processDiskInstance_Rm       (cta::xrd::Response &response);
+  void processDiskInstanceSpace_Add (cta::xrd::Response &response);
+  void processDiskInstanceSpace_Ch  (cta::xrd::Response &response);
+  void processDiskInstanceSpace_Rm  (cta::xrd::Response &response);
   void processVirtualOrganization_Add(cta::xrd::Response &response);
   void processVirtualOrganization_Ch(cta::xrd::Response &response);
   void processVirtualOrganization_Rm(cta::xrd::Response &response);
@@ -243,6 +249,8 @@ private:
   admincmdstream_t processTapeFile_Ls;
   admincmdstream_t processRepack_Ls;
   admincmdstream_t processDiskSystem_Ls;
+  admincmdstream_t processDiskInstance_Ls;
+  admincmdstream_t processDiskInstanceSpace_Ls;
   admincmdstream_t processVirtualOrganization_Ls;
   admincmdstream_t processVersion;
   admincmdstream_t processSchedulingInfos_Ls;

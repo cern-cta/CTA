@@ -1004,6 +1004,72 @@ void TextFormatter::printDiskSystemLsHeader() {
   );
 }
 
+void TextFormatter::printDiskInstanceLsHeader() {
+  push_back("HEADER");
+  push_back(
+    "name",
+    "c.user",
+    "c.host",
+    "c.time",
+    "m.user",
+    "m.host",
+    "m.time",
+    "comment"
+  );
+}
+
+void TextFormatter::printDiskInstanceSpaceLsHeader() {
+  push_back("HEADER");
+  push_back(
+    "name",
+    "instance",
+    "url",
+    "interval",
+    "last refresh",
+    "space",
+    "c.user",
+    "c.host",
+    "c.time",
+    "m.user",
+    "m.host",
+    "m.time",
+    "comment"
+  );
+}
+
+void TextFormatter::print(const DiskInstanceSpaceLsItem &disls_item)
+{
+  push_back(
+    disls_item.name(),
+    disls_item.disk_instance(),
+    disls_item.free_space_query_url(),
+    disls_item.refresh_interval(),
+    disls_item.last_refresh_time(),
+    disls_item.free_space(),
+    disls_item.creation_log().username(),
+    disls_item.creation_log().host(),
+    timeToStr(disls_item.creation_log().time()),
+    disls_item.last_modification_log().username(),
+    disls_item.last_modification_log().host(),
+    timeToStr(disls_item.last_modification_log().time()),
+    disls_item.comment()
+  );
+}
+
+void TextFormatter::print(const DiskInstanceLsItem &dils_item)
+{
+  push_back(
+    dils_item.name(),
+    dils_item.creation_log().username(),
+    dils_item.creation_log().host(),
+    timeToStr(dils_item.creation_log().time()),
+    dils_item.last_modification_log().username(),
+    dils_item.last_modification_log().host(),
+    timeToStr(dils_item.last_modification_log().time()),
+    dils_item.comment()
+  );
+}
+
 void TextFormatter::print(const DiskSystemLsItem &dsls_item)
 {
   push_back(

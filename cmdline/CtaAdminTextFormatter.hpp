@@ -64,6 +64,8 @@ public:
   void printTapeFileLsHeader();
   void printTapePoolLsHeader();
   void printDiskSystemLsHeader();
+  void printDiskInstanceLsHeader();
+  void printDiskInstanceSpaceLsHeader();
   void printVirtualOrganizationLsHeader();
   void printVersionHeader();
   void printMediaTypeLsHeader();
@@ -92,6 +94,8 @@ public:
   void print(const TapeFileLsItem &tfls_item);
   void print(const TapePoolLsItem &tpls_item);
   void print(const DiskSystemLsItem &dsls_item);
+  void print(const DiskInstanceLsItem &dils_item);
+  void print(const DiskInstanceSpaceLsItem &disls_item);
   void print(const VirtualOrganizationLsItem &vols_item);
   void print(const VersionItem & version_item);
   void print(const MediaTypeLsItem &mtls_item);

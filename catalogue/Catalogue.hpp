@@ -39,6 +39,8 @@
 #include "common/dataStructures/DiskSpaceReservationRequest.hpp"
 #include "common/dataStructures/DeleteArchiveRequest.hpp"
 #include "common/dataStructures/DiskFileInfo.hpp"
+#include "common/dataStructures/DiskInstance.hpp"
+#include "common/dataStructures/DiskInstanceSpace.hpp"
 #include "common/dataStructures/DriveState.hpp"
 #include "common/dataStructures/FileRecycleLog.hpp"
 #include "common/dataStructures/EntryLog.hpp"
@@ -92,6 +94,10 @@ CTA_GENERATE_EXCEPTION_CLASS(NegativeDiskSpaceReservationReached);
 
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentDiskSystem);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonEmptyDiskSystemAfterDelete);
+CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentDiskInstance);
+CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonEmptyDiskInstanceAfterDelete);
+CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentDiskInstanceSpace);
+CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonEmptyDiskInstanceSpaceAfterDelete);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonEmptyLogicalLibrary);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonEmptyTape);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentArchiveRoute);
@@ -108,6 +114,7 @@ CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAZeroSleepTime);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAZeroTargetedFreeSpace);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringCartridge);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringDiskInstanceName);
+CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringDiskInstanceSpaceName);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringLogicalLibraryName);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringMediaType);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringMediaTypeName);
@@ -942,6 +949,79 @@ public:
     const std::string &name, const uint64_t sleepTime) = 0;
   virtual void modifyDiskSystemComment(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name, const std::string &comment) = 0;
+
+  /**
+   * Deletes a disk instance space.
+   *
+   * @param name The name of the disk instance.
+   * @param diskInstance The disk instance of the disk instance space.
+   */
+  virtual void deleteDiskInstanceSpace(const std::string &name, const std::string &diskInstance) = 0;
+
+  /**
+   * Creates the specified Disk Instance Space
+   * @param admin The administrator.
+   * @param name the name of the new disk instance space
+   * @param diskInstance the disk instance associated to the disk instance space
+   * @param freeSpaceQueryURL the URL to query to obtain the disk instance space free space
+   * @param refreshInterval the period to query for disk instance space free space
+   * @param comment the comment of the new disk instance space
+   */
+  virtual void createDiskInstanceSpace(const common::dataStructures::SecurityIdentity &admin, 
+    const std::string &name,
+    const std::string &diskInstance,
+    const std::string &freeSpaceQueryURL,
+    const uint64_t refreshInterval,
+    const std::string &comment) = 0;
+
+  /**
+   * Returns all the disk instance spaces within the CTA catalogue.
+   *
+   * @return The disk instance spaces in the CTA catalogue.
+   */
+  virtual std::list<common::dataStructures::DiskInstanceSpace> getAllDiskInstanceSpaces() const = 0;
+
+  /**
+   * Deletes a disk instance.
+   *
+   * @param name The name of the disk instance.
+   */
+  virtual void deleteDiskInstance(const std::string &name) = 0;
+
+  virtual void modifyDiskInstanceSpaceComment(const common::dataStructures::SecurityIdentity &admin, 
+    const std::string &name, const std::string &diskInstance, const std::string &comment) = 0;
+  virtual void modifyDiskInstanceSpaceRefreshInterval(const common::dataStructures::SecurityIdentity &admin, 
+    const std::string &name, const std::string &diskInstance, const uint64_t refreshInterval) = 0;
+  virtual void modifyDiskInstanceSpaceQueryURL(const common::dataStructures::SecurityIdentity &admin, 
+    const std::string &name, const std::string &diskInstance, const std::string &freeSpaceQueryURL) = 0;
+
+
+  /**
+   * Changes the comment of the specified disk instance
+   * @param admin The administrator.
+   * @param name the name of the disk instance
+   * @param comment the new comment of the disk instance
+   */
+  virtual void modifyDiskInstanceComment(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const std::string &comment) = 0;
+
+  /**
+   * Creates the specified Disk Instance
+   * @param admin The administrator.
+   * @param name the name of the new disk instance
+   * @param comment the comment of the new disk instance
+   */
+  virtual void createDiskInstance(const common::dataStructures::SecurityIdentity &admin, 
+    const std::string &name,
+    const std::string &comment) = 0;
+
+  /**
+   * Returns all the disk instances within the CTA catalogue.
+   *
+   * @return The disk instances in the CTA catalogue.
+   */
+  virtual std::list<common::dataStructures::DiskInstance> getAllDiskInstances() const = 0;
+
 
   typedef CatalogueItor<common::dataStructures::ArchiveFile> ArchiveFileItor;
 

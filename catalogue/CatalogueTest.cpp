@@ -420,6 +420,18 @@ void cta_catalogue_CatalogueTest::SetUp() {
       }
     }
     {
+      const auto diskInstanceSpaces = m_catalogue->getAllDiskInstanceSpaces();
+      for(auto &dis: diskInstanceSpaces) {
+        m_catalogue->deleteDiskInstanceSpace(dis.name, dis.diskInstance);
+      }
+    }
+    {
+      const auto diskInstances = m_catalogue->getAllDiskInstances();
+      for(auto &di: diskInstances) {
+        m_catalogue->deleteDiskInstance(di.name);
+      }
+    }
+    {
       const auto virtualOrganizations = m_catalogue->getVirtualOrganizations();
       for(auto &vo: virtualOrganizations) {
         m_catalogue->deleteVirtualOrganization(vo.name);
@@ -456,6 +468,10 @@ void cta_catalogue_CatalogueTest::SetUp() {
 
     if(!m_catalogue->getAllDiskSystems().empty()) {
       throw exception::Exception("Found one of more disk systems after emptying the database");
+    }
+
+    if (!m_catalogue->getAllDiskInstances().empty()) {
+      throw exception::Exception("Found one of more disk instances after emptying the database");
     }
 
     if(!m_catalogue->getLogicalLibraries().empty()) {
@@ -14599,6 +14615,747 @@ TEST_P(cta_catalogue_CatalogueTest, modifyDiskSystemCommentL_emptyStringComment)
   const std::string modifiedComment = "";
   ASSERT_THROW(m_catalogue->modifyDiskSystemComment(m_admin, name, modifiedComment),
     catalogue::UserSpecifiedAnEmptyStringComment);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getAllDiskInstances_empty) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getAllDiskInstances().empty());
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createDiskInstance) {
+  using namespace cta;
+
+  const std::string name = "disk_instance_name";
+  const std::string comment = "disk_instance_comment";
+
+  m_catalogue->createDiskInstance(m_admin, name, comment);
+
+  const auto diskInstanceList = m_catalogue->getAllDiskInstances();
+  ASSERT_EQ(1, diskInstanceList.size());
+
+  const auto &diskInstance = diskInstanceList.front();
+  ASSERT_EQ(diskInstance.name, name);
+  ASSERT_EQ(diskInstance.comment, comment);
+  
+  const auto creationLog = diskInstance.creationLog;
+  ASSERT_EQ(m_admin.username, creationLog.username);
+  ASSERT_EQ(m_admin.host, creationLog.host);
+
+  const auto lastModificationLog = diskInstance.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createDiskInstance_twice) {
+  using namespace cta;
+
+  const std::string name = "disk_instance_name";
+  const std::string comment = "disk_instance_comment";
+
+  m_catalogue->createDiskInstance(m_admin, name, comment);
+
+  const auto diskInstanceList = m_catalogue->getAllDiskInstances();
+  ASSERT_EQ(1, diskInstanceList.size());
+
+  const auto &diskInstance = diskInstanceList.front();
+  ASSERT_EQ(diskInstance.name, name);
+  ASSERT_EQ(diskInstance.comment, comment);
+  
+  const auto creationLog = diskInstance.creationLog;
+  ASSERT_EQ(m_admin.username, creationLog.username);
+  ASSERT_EQ(m_admin.host, creationLog.host);
+
+  const auto lastModificationLog = diskInstance.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+
+  ASSERT_THROW(m_catalogue->createDiskInstance(m_admin, name, comment), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createDiskInstance_emptyName) {
+  using namespace cta;
+
+  const std::string comment = "disk_instance_comment";
+  ASSERT_THROW(m_catalogue->createDiskInstance(m_admin, "", comment),  catalogue::UserSpecifiedAnEmptyStringDiskInstanceName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createDiskInstance_emptyComment) {
+  using namespace cta;
+
+  const std::string name = "disk_instance_name";
+  ASSERT_THROW(m_catalogue->createDiskInstance(m_admin, name, ""),  catalogue::UserSpecifiedAnEmptyStringComment);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, deleteDiskInstance) {
+  using namespace cta;
+
+  const std::string name = "disk_instance_name";
+  const std::string comment = "disk_instance_comment";
+
+  m_catalogue->createDiskInstance(m_admin, name, comment);
+
+  const auto diskInstanceList = m_catalogue->getAllDiskInstances();
+  ASSERT_EQ(1, diskInstanceList.size());
+
+  const auto &diskInstance = diskInstanceList.front();
+  ASSERT_EQ(diskInstance.name, name);
+  ASSERT_EQ(diskInstance.comment, comment);
+  
+  const auto creationLog = diskInstance.creationLog;
+  ASSERT_EQ(m_admin.username, creationLog.username);
+  ASSERT_EQ(m_admin.host, creationLog.host);
+
+  const auto lastModificationLog = diskInstance.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+
+  m_catalogue->deleteDiskInstance(name);
+  ASSERT_TRUE(m_catalogue->getAllDiskInstances().empty());
+}
+
+TEST_P(cta_catalogue_CatalogueTest, deleteDiskInstance_nonExisting) {
+  using namespace cta;
+
+  const std::string name = "disk_instance_name";
+  ASSERT_THROW(m_catalogue->deleteDiskInstance(name), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskInstanceComment) {
+  using namespace cta;
+
+  const std::string name = "disk_instance_name";
+  const std::string comment = "disk_instance_comment";
+
+  m_catalogue->createDiskInstance(m_admin, name, comment);
+  {
+    const auto diskInstanceList = m_catalogue->getAllDiskInstances();
+    ASSERT_EQ(1, diskInstanceList.size());
+
+    const auto &diskInstance = diskInstanceList.front();
+    ASSERT_EQ(diskInstance.name, name);
+    ASSERT_EQ(diskInstance.comment, comment);
+  
+    const auto creationLog = diskInstance.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const auto lastModificationLog = diskInstance.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const std::string modifiedComment = "modified_disk_instance_comment";
+  m_catalogue->modifyDiskInstanceComment(m_admin, name, modifiedComment);
+  
+  {
+    const auto diskInstanceList = m_catalogue->getAllDiskInstances();
+    ASSERT_EQ(1, diskInstanceList.size());
+
+    const auto &diskInstance = diskInstanceList.front();
+    ASSERT_EQ(diskInstance.name, name);
+    ASSERT_EQ(diskInstance.comment, modifiedComment);
+  
+    const auto creationLog = diskInstance.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskInstanceComment_emptyName) {
+  using namespace cta;
+
+  const std::string name = "disk_instance_name";
+  const std::string comment = "disk_instance_comment";
+
+  m_catalogue->createDiskInstance(m_admin, name, comment);
+  {
+    const auto diskInstanceList = m_catalogue->getAllDiskInstances();
+    ASSERT_EQ(1, diskInstanceList.size());
+
+    const auto &diskInstance = diskInstanceList.front();
+    ASSERT_EQ(diskInstance.name, name);
+    ASSERT_EQ(diskInstance.comment, comment);
+  
+    const auto creationLog = diskInstance.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const auto lastModificationLog = diskInstance.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  ASSERT_THROW(m_catalogue->modifyDiskInstanceComment(m_admin, "", comment), 
+    catalogue::UserSpecifiedAnEmptyStringDiskInstanceName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskInstanceComment_emptyComment) {
+  using namespace cta;
+
+  const std::string name = "disk_instance_name";
+  const std::string comment = "disk_instance_comment";
+
+  m_catalogue->createDiskInstance(m_admin, name, comment);
+  {
+    const auto diskInstanceList = m_catalogue->getAllDiskInstances();
+    ASSERT_EQ(1, diskInstanceList.size());
+
+    const auto &diskInstance = diskInstanceList.front();
+    ASSERT_EQ(diskInstance.name, name);
+    ASSERT_EQ(diskInstance.comment, comment);
+  
+    const auto creationLog = diskInstance.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const auto lastModificationLog = diskInstance.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  ASSERT_THROW(m_catalogue->modifyDiskInstanceComment(m_admin, name, ""), 
+    catalogue::UserSpecifiedAnEmptyStringComment);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskInstanceComment_nonExisting) {
+  using namespace cta;
+
+  const std::string name = "disk_instance_name";
+  const std::string comment = "disk_instance_comment";
+
+  ASSERT_THROW(m_catalogue->modifyDiskInstanceComment(m_admin, name, comment), 
+    catalogue::UserSpecifiedANonExistentDiskInstance);
+}
+
+
+TEST_P(cta_catalogue_CatalogueTest, createDiskInstanceSpace) {
+  using namespace cta;
+
+  const std::string diskInstance = "disk_instance_name";
+  const std::string diskInstanceComment = "disk_instance_comment";
+
+  m_catalogue->createDiskInstance(m_admin, diskInstance, diskInstanceComment);
+
+  const std::string name = "disk_instance_space_name";
+  const std::string freeSpaceQueryURL = "free_space_query_URL";
+  const uint64_t refreshInterval = 32;
+  const std::string comment = "disk_instance_space_comment";
+
+  m_catalogue->createDiskInstanceSpace(m_admin, name, diskInstance, freeSpaceQueryURL, refreshInterval, comment);
+
+  const auto diskInstanceSpaceList = m_catalogue->getAllDiskInstanceSpaces();
+  ASSERT_EQ(1, diskInstanceSpaceList.size());
+
+  const auto &diskInstanceSpace = diskInstanceSpaceList.front();
+  ASSERT_EQ(diskInstanceSpace.name, name);
+  ASSERT_EQ(diskInstanceSpace.diskInstance, diskInstance);
+  ASSERT_EQ(diskInstanceSpace.freeSpaceQueryURL, freeSpaceQueryURL);
+  ASSERT_EQ(diskInstanceSpace.refreshInterval, refreshInterval);
+  ASSERT_EQ(diskInstanceSpace.lastRefreshTime, 0);
+  ASSERT_EQ(diskInstanceSpace.freeSpace, 0);
+  
+  ASSERT_EQ(diskInstanceSpace.comment, comment);
+  
+  const auto creationLog = diskInstanceSpace.creationLog;
+  ASSERT_EQ(m_admin.username, creationLog.username);
+  ASSERT_EQ(m_admin.host, creationLog.host);
+
+  const auto lastModificationLog = diskInstanceSpace.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createDiskInstanceSpace_twice) {
+  using namespace cta;
+
+  const std::string diskInstance = "disk_instance_name";
+  const std::string diskInstanceComment = "disk_instance_comment";
+
+  m_catalogue->createDiskInstance(m_admin, diskInstance, diskInstanceComment);
+
+  const std::string name = "disk_instance_space_name";
+  const std::string freeSpaceQueryURL = "free_space_query_URL";
+  const uint64_t refreshInterval = 32;
+  const std::string comment = "disk_instance_space_comment";
+
+  m_catalogue->createDiskInstanceSpace(m_admin, name, diskInstance, freeSpaceQueryURL, refreshInterval, comment);
+
+  const auto diskInstanceSpaceList = m_catalogue->getAllDiskInstanceSpaces();
+  ASSERT_EQ(1, diskInstanceSpaceList.size());
+
+  const auto &diskInstanceSpace = diskInstanceSpaceList.front();
+  ASSERT_EQ(diskInstanceSpace.name, name);
+  ASSERT_EQ(diskInstanceSpace.diskInstance, diskInstance);
+  ASSERT_EQ(diskInstanceSpace.freeSpaceQueryURL, freeSpaceQueryURL);
+  ASSERT_EQ(diskInstanceSpace.refreshInterval, refreshInterval);
+  ASSERT_EQ(diskInstanceSpace.lastRefreshTime, 0);
+  ASSERT_EQ(diskInstanceSpace.freeSpace, 0);
+  
+  ASSERT_EQ(diskInstanceSpace.comment, comment);
+  
+  const auto creationLog = diskInstanceSpace.creationLog;
+  ASSERT_EQ(m_admin.username, creationLog.username);
+  ASSERT_EQ(m_admin.host, creationLog.host);
+
+  const auto lastModificationLog = diskInstanceSpace.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+
+
+  ASSERT_THROW(m_catalogue->createDiskInstanceSpace(m_admin, name, diskInstance, freeSpaceQueryURL, refreshInterval, comment),
+    exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createDiskInstanceSpace_nonExistantDiskInstance) {
+  using namespace cta;
+
+  const std::string diskInstance = "disk_instance_name";
+  const std::string name = "disk_instance_space_name";
+  const std::string freeSpaceQueryURL = "free_space_query_URL";
+  const uint64_t refreshInterval = 32;
+  const std::string comment = "disk_instance_space_comment";
+
+  ASSERT_THROW(m_catalogue->createDiskInstanceSpace(m_admin, name, diskInstance, freeSpaceQueryURL, refreshInterval, comment), 
+    exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createDiskInstanceSpace_emptyName) {
+  using namespace cta;
+
+  const std::string diskInstance = "disk_instance_name";
+  const std::string diskInstanceComment = "disk_instance_comment";
+
+  m_catalogue->createDiskInstance(m_admin, diskInstance, diskInstanceComment);
+
+  const std::string freeSpaceQueryURL = "free_space_query_URL";
+  const uint64_t refreshInterval = 32;
+  const std::string comment = "disk_instance_space_comment";
+
+  ASSERT_THROW(m_catalogue->createDiskInstanceSpace(m_admin, "", diskInstance, freeSpaceQueryURL, refreshInterval, comment),
+    catalogue::UserSpecifiedAnEmptyStringDiskInstanceSpaceName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createDiskInstanceSpace_emptyComment) {
+  using namespace cta;
+
+  const std::string diskInstance = "disk_instance_name";
+  const std::string diskInstanceComment = "disk_instance_comment";
+
+  m_catalogue->createDiskInstance(m_admin, diskInstance, diskInstanceComment);
+  
+  const std::string name = "disk_instance_space_name";
+  const std::string freeSpaceQueryURL = "free_space_query_URL";
+  const uint64_t refreshInterval = 32;
+  const std::string comment = "disk_instance_space_comment";
+
+  ASSERT_THROW(m_catalogue->createDiskInstanceSpace(m_admin, name, diskInstance, freeSpaceQueryURL, refreshInterval, ""),
+    catalogue::UserSpecifiedAnEmptyStringComment);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createDiskInstanceSpace_emptyFreeSpaceQueryURL) {
+  using namespace cta;
+
+  const std::string diskInstance = "disk_instance_name";
+  const std::string diskInstanceComment = "disk_instance_comment";
+
+  m_catalogue->createDiskInstance(m_admin, diskInstance, diskInstanceComment);
+  
+  const std::string name = "disk_instance_space_name";
+  const uint64_t refreshInterval = 32;
+  const std::string comment = "disk_instance_space_comment";
+
+  ASSERT_THROW(m_catalogue->createDiskInstanceSpace(m_admin, name, diskInstance, "", refreshInterval, comment),
+    catalogue::UserSpecifiedAnEmptyStringFreeSpaceQueryURL);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createDiskInstanceSpace_zeroRefreshInterval) {
+  using namespace cta;
+
+  const std::string diskInstance = "disk_instance_name";
+  const std::string diskInstanceComment = "disk_instance_comment";
+
+  m_catalogue->createDiskInstance(m_admin, diskInstance, diskInstanceComment);
+  
+  const std::string name = "disk_instance_space_name";
+  const std::string freeSpaceQueryURL = "free_space_query_URL";
+  const std::string comment = "disk_instance_space_comment";
+
+  ASSERT_THROW(m_catalogue->createDiskInstanceSpace(m_admin, name, diskInstance, freeSpaceQueryURL, 0, comment),
+    catalogue::UserSpecifiedAZeroRefreshInterval);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskInstanceSpaceComment) {
+  using namespace cta;
+
+  const std::string diskInstance = "disk_instance_name";
+  const std::string diskInstanceComment = "disk_instance_comment";
+
+  m_catalogue->createDiskInstance(m_admin, diskInstance, diskInstanceComment);
+
+  const std::string name = "disk_instance_space_name";
+  const std::string freeSpaceQueryURL = "free_space_query_URL";
+  const uint64_t refreshInterval = 32;
+  const std::string comment = "disk_instance_space_comment";
+
+  m_catalogue->createDiskInstanceSpace(m_admin, name, diskInstance, freeSpaceQueryURL, refreshInterval, comment);
+
+  {
+    const auto diskInstanceSpaceList = m_catalogue->getAllDiskInstanceSpaces();
+    ASSERT_EQ(1, diskInstanceSpaceList.size());
+
+    const auto &diskInstanceSpace = diskInstanceSpaceList.front();
+    ASSERT_EQ(diskInstanceSpace.name, name);
+    ASSERT_EQ(diskInstanceSpace.diskInstance, diskInstance);
+    ASSERT_EQ(diskInstanceSpace.freeSpaceQueryURL, freeSpaceQueryURL);
+    ASSERT_EQ(diskInstanceSpace.refreshInterval, refreshInterval);
+    ASSERT_EQ(diskInstanceSpace.lastRefreshTime, 0);
+    ASSERT_EQ(diskInstanceSpace.freeSpace, 0);
+    
+    ASSERT_EQ(diskInstanceSpace.comment, comment);
+    
+    const auto creationLog = diskInstanceSpace.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const auto lastModificationLog = diskInstanceSpace.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+
+  }
+
+  const std::string newDiskInstanceSpaceComment = "disk_instance_comment_2";
+  m_catalogue->modifyDiskInstanceSpaceComment(m_admin, name, diskInstance, newDiskInstanceSpaceComment);
+
+  {
+    const auto diskInstanceSpaceList = m_catalogue->getAllDiskInstanceSpaces();
+    ASSERT_EQ(1, diskInstanceSpaceList.size());
+
+    const auto &diskInstanceSpace = diskInstanceSpaceList.front();
+    ASSERT_EQ(diskInstanceSpace.name, name);
+    ASSERT_EQ(diskInstanceSpace.diskInstance, diskInstance);
+    ASSERT_EQ(diskInstanceSpace.freeSpaceQueryURL, freeSpaceQueryURL);
+    ASSERT_EQ(diskInstanceSpace.refreshInterval, refreshInterval);
+    ASSERT_EQ(diskInstanceSpace.lastRefreshTime, 0);
+    ASSERT_EQ(diskInstanceSpace.freeSpace, 0);
+    
+    ASSERT_EQ(diskInstanceSpace.comment, newDiskInstanceSpaceComment);
+    
+    const auto creationLog = diskInstanceSpace.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskInstanceSpaceComment_empty) {
+  using namespace cta;
+
+  const std::string diskInstance = "disk_instance_name";
+  const std::string diskInstanceComment = "disk_instance_comment";
+
+  m_catalogue->createDiskInstance(m_admin, diskInstance, diskInstanceComment);
+
+  const std::string name = "disk_instance_space_name";
+  const std::string freeSpaceQueryURL = "free_space_query_URL";
+  const uint64_t refreshInterval = 32;
+  const std::string comment = "disk_instance_space_comment";
+
+  m_catalogue->createDiskInstanceSpace(m_admin, name, diskInstance, freeSpaceQueryURL, refreshInterval, comment);
+
+  {
+    const auto diskInstanceSpaceList = m_catalogue->getAllDiskInstanceSpaces();
+    ASSERT_EQ(1, diskInstanceSpaceList.size());
+
+    const auto &diskInstanceSpace = diskInstanceSpaceList.front();
+    ASSERT_EQ(diskInstanceSpace.name, name);
+    ASSERT_EQ(diskInstanceSpace.diskInstance, diskInstance);
+    ASSERT_EQ(diskInstanceSpace.freeSpaceQueryURL, freeSpaceQueryURL);
+    ASSERT_EQ(diskInstanceSpace.refreshInterval, refreshInterval);
+    ASSERT_EQ(diskInstanceSpace.lastRefreshTime, 0);
+    ASSERT_EQ(diskInstanceSpace.freeSpace, 0);
+    
+    ASSERT_EQ(diskInstanceSpace.comment, comment);
+    
+    const auto creationLog = diskInstanceSpace.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const auto lastModificationLog = diskInstanceSpace.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+
+  }
+  ASSERT_THROW(m_catalogue->modifyDiskInstanceSpaceComment(m_admin, name, diskInstance, ""), catalogue::UserSpecifiedAnEmptyStringComment);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskInstanceSpaceComment_nonExistingSpace) {
+  using namespace cta;
+
+  const std::string name = "disk_instance_space_name";
+  const std::string diskInstance = "disk_instance_name";
+  const std::string comment = "disk_instance_space_comment";
+  ASSERT_THROW(m_catalogue->modifyDiskInstanceSpaceComment(m_admin, name, diskInstance, comment), catalogue::UserSpecifiedANonExistentDiskInstanceSpace);
+}
+
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskInstanceSpaceQueryURL) {
+  using namespace cta;
+
+  const std::string diskInstance = "disk_instance_name";
+  const std::string diskInstanceComment = "disk_instance_comment";
+
+  m_catalogue->createDiskInstance(m_admin, diskInstance, diskInstanceComment);
+
+  const std::string name = "disk_instance_space_name";
+  const std::string freeSpaceQueryURL = "free_space_query_URL";
+  const uint64_t refreshInterval = 32;
+  const std::string comment = "disk_instance_space_comment";
+
+  m_catalogue->createDiskInstanceSpace(m_admin, name, diskInstance, freeSpaceQueryURL, refreshInterval, comment);
+
+  {
+    const auto diskInstanceSpaceList = m_catalogue->getAllDiskInstanceSpaces();
+    ASSERT_EQ(1, diskInstanceSpaceList.size());
+
+    const auto &diskInstanceSpace = diskInstanceSpaceList.front();
+    ASSERT_EQ(diskInstanceSpace.name, name);
+    ASSERT_EQ(diskInstanceSpace.diskInstance, diskInstance);
+    ASSERT_EQ(diskInstanceSpace.freeSpaceQueryURL, freeSpaceQueryURL);
+    ASSERT_EQ(diskInstanceSpace.refreshInterval, refreshInterval);
+    ASSERT_EQ(diskInstanceSpace.lastRefreshTime, 0);
+    ASSERT_EQ(diskInstanceSpace.freeSpace, 0);
+    
+    ASSERT_EQ(diskInstanceSpace.comment, comment);
+    
+    const auto creationLog = diskInstanceSpace.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const auto lastModificationLog = diskInstanceSpace.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+
+  }
+
+  const std::string newFreeSpaceQueryURL = "new_free_space_query_URL";
+  m_catalogue->modifyDiskInstanceSpaceQueryURL(m_admin, name, diskInstance, newFreeSpaceQueryURL);
+
+  {
+    const auto diskInstanceSpaceList = m_catalogue->getAllDiskInstanceSpaces();
+    ASSERT_EQ(1, diskInstanceSpaceList.size());
+
+    const auto &diskInstanceSpace = diskInstanceSpaceList.front();
+    ASSERT_EQ(diskInstanceSpace.name, name);
+    ASSERT_EQ(diskInstanceSpace.diskInstance, diskInstance);
+    ASSERT_EQ(diskInstanceSpace.freeSpaceQueryURL, newFreeSpaceQueryURL);
+    ASSERT_EQ(diskInstanceSpace.refreshInterval, refreshInterval);
+    ASSERT_EQ(diskInstanceSpace.lastRefreshTime, 0);
+    ASSERT_EQ(diskInstanceSpace.freeSpace, 0);
+    
+    ASSERT_EQ(diskInstanceSpace.comment, comment);
+    
+    const auto creationLog = diskInstanceSpace.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskInstanceSpaceQueryURL_empty) {
+  using namespace cta;
+
+  const std::string diskInstance = "disk_instance_name";
+  const std::string diskInstanceComment = "disk_instance_comment";
+
+  m_catalogue->createDiskInstance(m_admin, diskInstance, diskInstanceComment);
+
+  const std::string name = "disk_instance_space_name";
+  const std::string freeSpaceQueryURL = "free_space_query_URL";
+  const uint64_t refreshInterval = 32;
+  const std::string comment = "disk_instance_space_comment";
+
+  m_catalogue->createDiskInstanceSpace(m_admin, name, diskInstance, freeSpaceQueryURL, refreshInterval, comment);
+
+  {
+    const auto diskInstanceSpaceList = m_catalogue->getAllDiskInstanceSpaces();
+    ASSERT_EQ(1, diskInstanceSpaceList.size());
+
+    const auto &diskInstanceSpace = diskInstanceSpaceList.front();
+    ASSERT_EQ(diskInstanceSpace.name, name);
+    ASSERT_EQ(diskInstanceSpace.diskInstance, diskInstance);
+    ASSERT_EQ(diskInstanceSpace.freeSpaceQueryURL, freeSpaceQueryURL);
+    ASSERT_EQ(diskInstanceSpace.refreshInterval, refreshInterval);
+    ASSERT_EQ(diskInstanceSpace.lastRefreshTime, 0);
+    ASSERT_EQ(diskInstanceSpace.freeSpace, 0);
+    
+    ASSERT_EQ(diskInstanceSpace.comment, comment);
+    
+    const auto creationLog = diskInstanceSpace.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const auto lastModificationLog = diskInstanceSpace.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+
+  }
+  ASSERT_THROW(m_catalogue->modifyDiskInstanceSpaceQueryURL(m_admin, name, diskInstance, ""), catalogue::UserSpecifiedAnEmptyStringFreeSpaceQueryURL);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskInstanceSpaceQueryURL_nonExistingSpace) {
+  using namespace cta;
+
+  const std::string name = "disk_instance_space_name";
+  const std::string diskInstance = "disk_instance_name";
+  const std::string freeSpaceQueryURL = "free_space_query_URL";
+  ASSERT_THROW(m_catalogue->modifyDiskInstanceSpaceQueryURL(m_admin, name, diskInstance, freeSpaceQueryURL), catalogue::UserSpecifiedANonExistentDiskInstanceSpace);
+}
+
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskInstanceSpaceRefreshInterval) {
+  using namespace cta;
+
+  const std::string diskInstance = "disk_instance_name";
+  const std::string diskInstanceComment = "disk_instance_comment";
+
+  m_catalogue->createDiskInstance(m_admin, diskInstance, diskInstanceComment);
+
+  const std::string name = "disk_instance_space_name";
+  const std::string freeSpaceQueryURL = "free_space_query_URL";
+  const uint64_t refreshInterval = 32;
+  const std::string comment = "disk_instance_space_comment";
+
+  m_catalogue->createDiskInstanceSpace(m_admin, name, diskInstance, freeSpaceQueryURL, refreshInterval, comment);
+
+  {
+    const auto diskInstanceSpaceList = m_catalogue->getAllDiskInstanceSpaces();
+    ASSERT_EQ(1, diskInstanceSpaceList.size());
+
+    const auto &diskInstanceSpace = diskInstanceSpaceList.front();
+    ASSERT_EQ(diskInstanceSpace.name, name);
+    ASSERT_EQ(diskInstanceSpace.diskInstance, diskInstance);
+    ASSERT_EQ(diskInstanceSpace.freeSpaceQueryURL, freeSpaceQueryURL);
+    ASSERT_EQ(diskInstanceSpace.refreshInterval, refreshInterval);
+    ASSERT_EQ(diskInstanceSpace.lastRefreshTime, 0);
+    ASSERT_EQ(diskInstanceSpace.freeSpace, 0);
+    
+    ASSERT_EQ(diskInstanceSpace.comment, comment);
+    
+    const auto creationLog = diskInstanceSpace.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const auto lastModificationLog = diskInstanceSpace.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+
+  }
+
+  const uint64_t newRefreshInterval = 35;
+  m_catalogue->modifyDiskInstanceSpaceRefreshInterval(m_admin, name, diskInstance, newRefreshInterval);
+
+  {
+    const auto diskInstanceSpaceList = m_catalogue->getAllDiskInstanceSpaces();
+    ASSERT_EQ(1, diskInstanceSpaceList.size());
+
+    const auto &diskInstanceSpace = diskInstanceSpaceList.front();
+    ASSERT_EQ(diskInstanceSpace.name, name);
+    ASSERT_EQ(diskInstanceSpace.diskInstance, diskInstance);
+    ASSERT_EQ(diskInstanceSpace.freeSpaceQueryURL, freeSpaceQueryURL);
+    ASSERT_EQ(diskInstanceSpace.refreshInterval, newRefreshInterval);
+    ASSERT_EQ(diskInstanceSpace.lastRefreshTime, 0);
+    ASSERT_EQ(diskInstanceSpace.freeSpace, 0);
+    
+    ASSERT_EQ(diskInstanceSpace.comment, comment);
+    
+    const auto creationLog = diskInstanceSpace.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskInstanceSpaceRefreshInterval_zeroInterval) {
+  using namespace cta;
+
+  const std::string diskInstance = "disk_instance_name";
+  const std::string diskInstanceComment = "disk_instance_comment";
+
+  m_catalogue->createDiskInstance(m_admin, diskInstance, diskInstanceComment);
+
+  const std::string name = "disk_instance_space_name";
+  const std::string freeSpaceQueryURL = "free_space_query_URL";
+  const uint64_t refreshInterval = 32;
+  const std::string comment = "disk_instance_space_comment";
+
+  m_catalogue->createDiskInstanceSpace(m_admin, name, diskInstance, freeSpaceQueryURL, refreshInterval, comment);
+
+  {
+    const auto diskInstanceSpaceList = m_catalogue->getAllDiskInstanceSpaces();
+    ASSERT_EQ(1, diskInstanceSpaceList.size());
+
+    const auto &diskInstanceSpace = diskInstanceSpaceList.front();
+    ASSERT_EQ(diskInstanceSpace.name, name);
+    ASSERT_EQ(diskInstanceSpace.diskInstance, diskInstance);
+    ASSERT_EQ(diskInstanceSpace.freeSpaceQueryURL, freeSpaceQueryURL);
+    ASSERT_EQ(diskInstanceSpace.refreshInterval, refreshInterval);
+    ASSERT_EQ(diskInstanceSpace.lastRefreshTime, 0);
+    ASSERT_EQ(diskInstanceSpace.freeSpace, 0);
+    
+    ASSERT_EQ(diskInstanceSpace.comment, comment);
+    
+    const auto creationLog = diskInstanceSpace.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const auto lastModificationLog = diskInstanceSpace.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+
+  }
+  ASSERT_THROW(m_catalogue->modifyDiskInstanceSpaceRefreshInterval(m_admin, name, diskInstance, 0), catalogue::UserSpecifiedAZeroRefreshInterval);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyDiskInstanceSpaceRefreshInterval_nonExistingSpace) {
+  using namespace cta;
+
+  const std::string name = "disk_instance_space_name";
+  const std::string diskInstance = "disk_instance_name";
+  const uint64_t refreshInterval = 32;
+  ASSERT_THROW(m_catalogue->modifyDiskInstanceSpaceRefreshInterval(m_admin, name, diskInstance, refreshInterval), catalogue::UserSpecifiedANonExistentDiskInstanceSpace);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, deleteDiskInstanceSpace) {
+  using namespace cta;
+
+  const std::string diskInstance = "disk_instance_name";
+  const std::string diskInstanceComment = "disk_instance_comment";
+
+  m_catalogue->createDiskInstance(m_admin, diskInstance, diskInstanceComment);
+
+  const std::string name = "disk_instance_space_name";
+  const std::string freeSpaceQueryURL = "free_space_query_URL";
+  const uint64_t refreshInterval = 32;
+  const std::string comment = "disk_instance_space_comment";
+
+  m_catalogue->createDiskInstanceSpace(m_admin, name, diskInstance, freeSpaceQueryURL, refreshInterval, comment);
+  {
+    const auto diskInstanceSpaceList = m_catalogue->getAllDiskInstanceSpaces();
+    ASSERT_EQ(1, diskInstanceSpaceList.size());
+
+    const auto &diskInstanceSpace = diskInstanceSpaceList.front();
+    ASSERT_EQ(diskInstanceSpace.name, name);
+    ASSERT_EQ(diskInstanceSpace.diskInstance, diskInstance);
+    ASSERT_EQ(diskInstanceSpace.freeSpaceQueryURL, freeSpaceQueryURL);
+    ASSERT_EQ(diskInstanceSpace.refreshInterval, refreshInterval);
+    ASSERT_EQ(diskInstanceSpace.lastRefreshTime, 0);
+    ASSERT_EQ(diskInstanceSpace.freeSpace, 0);
+    
+    ASSERT_EQ(diskInstanceSpace.comment, comment);
+    
+    const auto creationLog = diskInstanceSpace.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const auto lastModificationLog = diskInstanceSpace.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+  m_catalogue->deleteDiskInstanceSpace(name, diskInstance);
+  const auto diskInstanceSpaceList = m_catalogue->getAllDiskInstanceSpaces();
+  ASSERT_EQ(0, diskInstanceSpaceList.size());
+}
+
+TEST_P(cta_catalogue_CatalogueTest, deleteDiskInstanceSpace_notExisting) {
+  using namespace cta;
+
+  const std::string diskInstance = "disk_instance_name";
+  const std::string name = "disk_instance_space_name";
+  
+  ASSERT_THROW(m_catalogue->deleteDiskInstanceSpace(name, diskInstance), catalogue::UserSpecifiedANonExistentDiskInstanceSpace); 
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getNbFilesOnTape_no_tape_files) {

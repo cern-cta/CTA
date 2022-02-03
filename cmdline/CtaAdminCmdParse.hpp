@@ -234,6 +234,11 @@ const cmdLookup_t cmdLookup = {
    { "rtf",                     AdminCmd::CMD_RECYCLETAPEFILE},
    { "activitymountrule",       AdminCmd::CMD_ACTIVITYMOUNTRULE },
    { "amr",                     AdminCmd::CMD_ACTIVITYMOUNTRULE },
+   { "diskinstance",            AdminCmd::CMD_DISKINSTANCE },
+   { "di",                      AdminCmd::CMD_DISKINSTANCE }, 
+   { "diskinstancespace",       AdminCmd::CMD_DISKINSTANCESPACE },
+   { "dis",                     AdminCmd::CMD_DISKINSTANCESPACE }, 
+   
 };
 
 
@@ -338,6 +343,8 @@ const std::map<std::string, OptionString::Key> strOptions = {
    { "--reason",                OptionString::REASON },
    { "--state",                 OptionString::STATE },
    {  "--activityregex",        OptionString::ACTIVITY_REGEX},
+   { "--diskinstance",          OptionString::DISK_INSTANCE },
+   { "--diskinstancespace",     OptionString::DISK_INSTANCE_SPACE },
 };
 
 
@@ -418,6 +425,24 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
 			    "   If the targeted free space is reach, the queue will sleep during this amount of seconds."
 			    "\n\n"
 					 }},
+   { AdminCmd::CMD_DISKINSTANCE,           { "diskinstance",           "di",  { "add", "ch", "rm", "ls" },
+			  "\n  This command allows to manage disk instances.\n"
+			    "  A disksinstace is an eosctainstance and contains zero or more disk spaces\n\n"
+			    "  Add a diskinstance by using the \"add\" subcommand :\n"
+			    "   * Specify the name (--name) of the disk instance. This name must be unique as it is the identifier of the disk instance and cannot be changed\n"
+			    "\n\n"
+					 }},
+   { AdminCmd::CMD_DISKINSTANCESPACE,      { "diskinstancespace",           "dis",  { "add", "ch", "rm", "ls" },
+			  "\n  This command allows to manage disk instance spaces.\n"
+			    "  A disksinstacespace is a partition of an eosctainstance disk space\n\n"
+			    "  Add a diskinstancespace by using the \"add\" subcommand :\n"
+			    "   * Specify the name (--name) of the disk instance space and the respective disk instance (--diskinstance). This pair must be unique as it is the identifier of the disk instance space and cannot be changed\n"
+             "   * Specify the informations to query the EOS free space by using the --freespacequeryurl\n"
+			    "   It should have the following format : eos:name_of_eos_instance:name_of_eos_space. Example : eos:ctaeos:spinners\n"
+			    "   * The refresh interval (--refreshinterval), in seconds, specify how long the queried free space will be use.\n"
+			    "\n\n"
+					 }},
+   
    { AdminCmd::CMD_VIRTUALORGANIZATION,  { "virtualorganization",   "vo",  { "add", "ch", "rm", "ls" }, 
                                            "\n  This command allows to manage virtual organizations.\n"
                                            "  Add a virtual organization by using the \"add\" subcommand:\n"
@@ -515,6 +540,11 @@ const Option opt_write_max_drives     { Option::OPT_UINT,  "--writemaxdrives",  
 
 const Option opt_state                { Option::OPT_STR,  "--state",                 "-s",   std::string(" <\"") + Tape::stateToString(Tape::ACTIVE) +"\"" + " or \"" + Tape::stateToString(Tape::DISABLED) + "\" or \"" + Tape::stateToString(Tape::BROKEN) + "\">" };
 const Option opt_activityregex        { Option::OPT_STR,  "--activityregex",         "--ar", " <activity_regex>"};
+const Option opt_diskinstance         { Option::OPT_STR,  "--diskinstance",         "--di",  " <disk_instance_name>" };
+const Option opt_diskinstance_alias   { Option::OPT_STR,  "--name",                 "-n",    " <disk_instance_name>", "--diskinstance" };
+const Option opt_diskinstancespace    { Option::OPT_STR,  "--diskinstancespace",         "--dis",  " <disk_instance_space_name>" };
+const Option opt_diskinstancespace_alias { Option::OPT_STR,  "--name",                 "-n",    " <disk_instance_space_name>", "--diskinstancespace" };
+
 /*!
  * Map valid options to commands
  */
@@ -633,6 +663,20 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
         opt_targeted_free_space.optional(), opt_sleep_time.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_DISKSYSTEM,           AdminCmd::SUBCMD_RM    }, { opt_disksystem }},
    {{ AdminCmd::CMD_DISKSYSTEM,           AdminCmd::SUBCMD_LS    }, { }},
+   /*----------------------------------------------------------------------------------------------------*/
+   {{ AdminCmd::CMD_DISKINSTANCE,           AdminCmd::SUBCMD_ADD   }, { opt_diskinstance_alias, opt_comment }},
+   {{ AdminCmd::CMD_DISKINSTANCE,           AdminCmd::SUBCMD_CH    }, { opt_diskinstance_alias, opt_comment.optional() }},
+   {{ AdminCmd::CMD_DISKINSTANCE,           AdminCmd::SUBCMD_RM    }, { opt_diskinstance_alias }},
+   {{ AdminCmd::CMD_DISKINSTANCE,           AdminCmd::SUBCMD_LS    }, { }},
+   /*----------------------------------------------------------------------------------------------------*/
+   {{ AdminCmd::CMD_DISKINSTANCESPACE,           AdminCmd::SUBCMD_ADD   }, 
+      { opt_diskinstancespace_alias, opt_diskinstance, opt_free_space_query_url, opt_refresh_interval, opt_comment }},
+   {{ AdminCmd::CMD_DISKINSTANCESPACE,           AdminCmd::SUBCMD_CH    }, 
+      { opt_diskinstancespace_alias, opt_diskinstance, opt_comment.optional(), opt_free_space_query_url.optional(), opt_refresh_interval.optional() }},
+   {{ AdminCmd::CMD_DISKINSTANCESPACE,           AdminCmd::SUBCMD_RM    }, { opt_diskinstancespace_alias, opt_diskinstance }},
+   {{ AdminCmd::CMD_DISKINSTANCESPACE,           AdminCmd::SUBCMD_LS    }, { }},
+   /*----------------------------------------------------------------------------------------------------*/
+   
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_ADD   },
       { opt_vo, opt_read_max_drives, opt_write_max_drives, opt_comment, opt_maxfilesize.optional() }},
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_CH   },

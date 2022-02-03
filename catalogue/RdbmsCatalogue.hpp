@@ -895,6 +895,77 @@ public:
   void modifyDiskSystemSleepTime(const common::dataStructures::SecurityIdentity& admin,
     const std::string& name, const uint64_t sleepTime) override;
 
+  /**
+   * Creates the specified Disk Instance
+   * @param admin The administrator.
+   * @param name the name of the new disk instance
+   * @param comment the comment of the new disk instance
+   */
+  void createDiskInstance(const common::dataStructures::SecurityIdentity &admin, 
+    const std::string &name,
+    const std::string &comment) override;
+
+  /**
+   * Returns all the disk instances within the CTA catalogue.
+   *
+   * @return The disk instances in the CTA catalogue.
+   */
+  std::list<common::dataStructures::DiskInstance> getAllDiskInstances() const override;
+
+  /**
+   * Deletes a disk instance.
+   *
+   * @param name The name of the disk instance.
+   */
+  void deleteDiskInstance(const std::string &name) override;
+
+  /**
+   * Changes the comment of the specified disk instance
+   * @param admin The administrator.
+   * @param name the name of the disk instance
+   * @param comment the new comment of the disk instance
+   */
+  void modifyDiskInstanceComment(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const std::string &comment) override;
+
+  /**
+   * Deletes a disk instance space.
+   *
+   * @param name The name of the disk instance.
+   * @param diskInstance The disk instance of the disk instance space.
+   */
+  void deleteDiskInstanceSpace(const std::string &name, const std::string &diskInstance) override;
+
+  /**
+   * Creates the specified Disk Instance Space
+   * @param admin The administrator.
+   * @param name the name of the new disk instance space
+   * @param diskInstance the disk instance associated to the disk instance space
+   * @param freeSpaceQueryURL the URL to query to obtain the disk instance space free space
+   * @param refreshInterval the period to query for disk instance space free space
+   * @param comment the comment of the new disk instance space
+   */
+  void createDiskInstanceSpace(const common::dataStructures::SecurityIdentity &admin, 
+    const std::string &name,
+    const std::string &diskInstance,
+    const std::string &freeSpaceQueryURL,
+    const uint64_t refreshInterval,
+    const std::string &comment) override;
+
+  /**
+   * Returns all the disk instance spaces within the CTA catalogue.
+   *
+   * @return The disk instance spaces in the CTA catalogue.
+   */
+  std::list<common::dataStructures::DiskInstanceSpace> getAllDiskInstanceSpaces() const override;
+
+  void modifyDiskInstanceSpaceComment(const common::dataStructures::SecurityIdentity &admin, 
+    const std::string &name, const std::string &diskInstance, const std::string &comment) override;
+  void modifyDiskInstanceSpaceRefreshInterval(const common::dataStructures::SecurityIdentity &admin, 
+    const std::string &name, const std::string &diskInstance, const uint64_t refreshInterval) override;
+  void modifyDiskInstanceSpaceQueryURL(const common::dataStructures::SecurityIdentity &admin, 
+    const std::string &name, const std::string &diskInstance, const std::string &freeSpaceQueryURL) override;
+
 
   /**
    * Throws a UserError exception if the specified searchCriteria is not valid
@@ -1265,6 +1336,26 @@ protected:
    * @return True if the disk system exists.
    */
   bool diskSystemExists(rdbms::Conn &conn, const std::string &name) const;
+
+  /**
+   * Returns true if the specified disk instance exists.
+   *
+   * @param conn The database connection.
+   * @param name The name identifier of the disk instance.
+   * @return True if the disk instance exists.
+   */
+  bool diskInstanceExists(rdbms::Conn &conn, const std::string &name) const;
+
+  /**
+   * Returns true if the specified disk instance space exists.
+   *
+   * @param conn The database connection.
+   * @param name The name identifier of the disk instance space.
+   * @param diskInstance the disk instance associated to the disk instance space
+   * @return True if the disk instance exists.
+   */
+  bool diskInstanceSpaceExists(rdbms::Conn &conn, const std::string &name, const std::string &diskInstance) const;
+
 
   /**
    * Returns the list of tapes that meet the specified search criteria.
