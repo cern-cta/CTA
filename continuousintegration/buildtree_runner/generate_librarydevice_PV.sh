@@ -15,9 +15,22 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-LIBRARY_DIR=/opt/kubernetes/CTA/library
 
-mkdir -p ${LIBRARY_DIR} ${LIBRARY_DIR}/config ${LIBRARY_DIR}/resource
+LIBRARY_DIR=/opt/kubernetes/CTA/library
+# volume used by PV
+# allows automatic recycling while dummy NFS generated some errors
+VOLUME_DIR="${LIBRARY_DIR}/volume"
+
+mkdir -p ${LIBRARY_DIR} ${LIBRARY_DIR}/config ${LIBRARY_DIR}/resource ${VOLUME_DIR}
+
+echo -n "Waiting for the MHVTL libraries to be ready"
+MHVTL_LIBS=$(ls /etc/mhvtl/library_contents.* | wc -l)
+while (( $(lsscsi -g | grep mediumx | grep /dev/sg | grep VLSTK | wc -l) < $MHVTL_LIBS )); do
+  sleep 1
+  echo -n .
+done
+echo "OK"
+lsscsi -g | grep mediumx | grep VLSTK
 
 
 echo "Deleting MHVTL persitent volumes from kubernetes"
@@ -35,12 +48,22 @@ lsscsi -g | sed -e 's/\s\+$//' > ${tempdir}/lsscsi-g.dump
 
 for device in $(grep mediumx ${tempdir}/lsscsi-g.dump | awk {'print $7'} | sed -e 's%/dev/%%'); do
 
+  counter=0
+  while (( $(mtx -f /dev/${device} status | grep Storage\ Element | grep Full | sed -e 's/.*VolumeTag=//;s/ //g;s/\(......\).*/\1/' | xargs -itoto echo -n " toto"| sed -e 's/^ //' | wc -c) < 1 )); do
+    echo -n .
+    sleep 1
+    if [[ $((counter++)) -gt 20 ]]; then
+      echo "ERROR: No tape detected for device ${device} after ${counter} seconds. Exiting"
+      exit 1
+    fi
+  done
+
   line=$(grep ${device}\$ ${tempdir}/lsscsi-g.dump);
   scsi_host="$(echo $line | sed -e 's/^.//' | cut -d\: -f1)"
   scsi_channel="$(echo $line | cut -d\: -f2)"
 
   drivenames=$(grep "^.${scsi_host}:${scsi_channel}:" ${tempdir}/lsscsi-g.dump | grep tape | sed -e 's/^.[0-9]\+:\([0-9]\+\):\([0-9]\+\):.*/VDSTK\1\2/' | xargs -itoto echo -n " toto")
-  drivedevices=$(grep "^.${scsi_host}:${scsi_channel}:" ${tempdir}/lsscsi-g.dump | grep tape | awk '{print $6}' | sed -e 's%/dev/%n%' | xargs -itoto echo -n " toto")
+  drivedevices=$(grep "^.${scsi_host}:${scsi_channel}:" ${tempdir}/lsscsi-g.dump | grep tape | awk '{print $6}' | sed -e 's%/dev/%n%' | xargs -itoto echo -n " toto")  
 
 cat <<EOF > ${LIBRARY_DIR}/config/library-config-${device}.yaml
 apiVersion: v1
@@ -75,9 +98,8 @@ spec:
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Recycle
-  nfs:
-    path: /tmp
-    server: 127.0.0.1
+  hostPath:
+    path: ${VOLUME_DIR}
 EOF
 
 kubectl create -f ${LIBRARY_DIR}/resource/${device}_librarydevice_resource.yaml

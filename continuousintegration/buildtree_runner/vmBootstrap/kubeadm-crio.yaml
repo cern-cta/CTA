@@ -13,7 +13,8 @@ localAPIEndpoint:
 nodeRegistration:
   criSocket: unix:///var/run/crio/crio.sock
   imagePullPolicy: IfNotPresent
-  taints: null
+  taints:
+    node-role.kubernetes.io/control-plane: ""
 ---
 apiServer:
   timeoutForControlPlane: 4m0s
