@@ -21,17 +21,17 @@ apiVersion: kubeadm.k8s.io/v1beta3
 certificatesDir: /etc/kubernetes/pki
 clusterName: kubernetes
 controllerManager: {}
-dns:
-  type: CoreDNS
+dns: {}
 etcd:
   local:
     dataDir: /var/lib/etcd
 imageRepository: k8s.gcr.io
 kind: ClusterConfiguration
-kubernetesVersion: 1.22.0
+kubernetesVersion: 1.22.1
 networking:
   dnsDomain: cluster.local
-  serviceSubnet: 10.254.0.0/16
+  serviceSubnet: 10.96.0.0/12
+  podSubnet: 192.168.0.0/16
 scheduler: {}
 ---
 apiVersion: kubelet.config.k8s.io/v1beta1
@@ -50,7 +50,7 @@ authorization:
     cacheUnauthorizedTTL: 0s
 cgroupDriver: systemd
 clusterDNS:
-- 10.254.199.254
+- 10.96.0.10
 clusterDomain: cluster.local
 cpuManagerReconcilePeriod: 0s
 evictionPressureTransitionPeriod: 0s
@@ -64,7 +64,6 @@ logging: {}
 memorySwap: {}
 nodeStatusReportFrequency: 0s
 nodeStatusUpdateFrequency: 0s
-resolvConf: /run/systemd/resolve/resolv.conf
 rotateCertificates: true
 runtimeRequestTimeout: 0s
 shutdownGracePeriod: 0s
