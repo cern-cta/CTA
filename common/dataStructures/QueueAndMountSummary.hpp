@@ -61,6 +61,8 @@ struct QueueAndMountSummary {
     time_t sleepTime;
   };
   optional<SleepForSpaceInfo> sleepForSpaceInfo;
+  std::string highestPriorityMountPolicy;
+  std::string lowestRequestAgeMountPolicy;
   std::list<std::string> mountPolicies;
   
   static QueueAndMountSummary &getOrCreateEntry(std::list<QueueAndMountSummary> &summaryList,

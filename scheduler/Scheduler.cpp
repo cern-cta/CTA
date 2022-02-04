@@ -1765,6 +1765,12 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       if (pm.mountPolicyNames) {
         summary.mountPolicies = pm.mountPolicyNames.value();
       }
+      if (pm.highestPriorityMountPolicyName) {
+        summary.highestPriorityMountPolicy = pm.highestPriorityMountPolicyName.value();
+      } 
+      if (pm.lowestRequestAgeMountPolicyName) {
+        summary.lowestRequestAgeMountPolicy = pm.lowestRequestAgeMountPolicyName.value();
+      }
       break;
     case common::dataStructures::MountType::Retrieve:
       // TODO: we should remove the retrieveMinRequestAge if it's redundant, or rename pm.minArchiveRequestAge.
@@ -1776,6 +1782,12 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       summary.youngestJobAge = time(nullptr) - pm.youngestJobStartTime;
       if (pm.mountPolicyNames) {
         summary.mountPolicies = pm.mountPolicyNames.value();
+      }
+      if (pm.highestPriorityMountPolicyName) {
+        summary.highestPriorityMountPolicy = pm.highestPriorityMountPolicyName.value();
+      } 
+      if (pm.lowestRequestAgeMountPolicyName) {
+        summary.lowestRequestAgeMountPolicy = pm.lowestRequestAgeMountPolicyName.value();
       }
       if (pm.sleepingMount) {
         common::dataStructures::QueueAndMountSummary::SleepForSpaceInfo sfsi;

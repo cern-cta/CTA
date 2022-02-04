@@ -179,6 +179,22 @@ class OStoreDB: public SchedulerDatabase {
    * @return the best archive mount policy to use
    */
   common::dataStructures::MountPolicy createBestArchiveMountPolicy(const std::list<common::dataStructures::MountPolicy> & mountPolicies);
+  
+  /**
+   * Return the name of the archive mount policy with highest priority from the mountPolicies passed in parameter
+   * The aim is to do the same as ArchiveQueue::getJobsSummary() regarding the priority
+   * @param mountPolicies the list of mount policies in order to create the best one.
+   * @return the archive mount policy with highest priority
+   */
+  std::string getHighestPriorityArchiveMountPolicyName(const std::list<common::dataStructures::MountPolicy> & mountPolicies);
+
+  /**
+   * Return the name of the archive mount policy with lowest request age from the mountPolicies passed in parameter
+   * The aim is to do the same as ArchiveQueue::getJobsSummary() regarding the request age
+   * @param mountPolicies the list of mount policies in order to create the best one.
+   * @return the archive mount policy with lowest request age
+   */
+  std::string getLowestRequestAgeArchiveMountPolicyName(const std::list<common::dataStructures::MountPolicy> & mountPolicies);
 
   /**
    * Return the best retrieve mount policy from the mountPolicies passed in parameter
@@ -187,6 +203,23 @@ class OStoreDB: public SchedulerDatabase {
    * @return the best retrieve mount policy to use
    */
   common::dataStructures::MountPolicy createBestRetrieveMountPolicy(const std::list<common::dataStructures::MountPolicy> & mountPolicies);
+
+  /**
+   * Return the name of the retrieve mount policy with highest priority from the mountPolicies passed in parameter
+   * The aim is to do the same as RetrieveQueue::getJobsSummary() regarding the priority
+   * @param mountPolicies the list of mount policies in order to create the best one.
+   * @return the retrieve mount policy with highest priority
+   */
+  std::string getHighestPriorityRetrieveMountPolicyName(const std::list<common::dataStructures::MountPolicy> & mountPolicies);
+
+  /**
+   * Return the name of the retrieve mount policy with lowest request age from the mountPolicies passed in parameter
+   * The aim is to do the same as RetrieveQueue::getJobsSummary() regarding the request age
+   * @param mountPolicies the list of mount policies in order to create the best one.
+   * @return the retrieve mount policy with lowest request age
+   */
+  std::string getLowestRequestAgeRetrieveMountPolicyName(const std::list<common::dataStructures::MountPolicy> & mountPolicies);
+
 
  public:
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) override;

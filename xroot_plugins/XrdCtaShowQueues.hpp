@@ -119,6 +119,8 @@ int ShowQueuesStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     for (auto &policyName: sq.mountPolicies) {
       sq_item->add_mount_policies(policyName);
     }
+    sq_item->set_highest_priority_mount_policy(sq.highestPriorityMountPolicy);
+    sq_item->set_lowest_request_age_mount_policy(sq.lowestRequestAgeMountPolicy);
 
     is_buffer_full = streambuf->Push(record);
   }

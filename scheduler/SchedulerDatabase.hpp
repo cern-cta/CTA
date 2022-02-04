@@ -672,6 +672,9 @@ class SchedulerDatabase {
 
     optional<std::string> activity; /**Activity if we have on for this potential mount */
 
+    optional<std::string> highestPriorityMountPolicyName;
+    optional<std::string> lowestRequestAgeMountPolicyName;
+    
     optional<std::list<std::string>> mountPolicyNames; /**< Names of mount policies for the mount*/
 
     bool operator < (const PotentialMount &other) const {
