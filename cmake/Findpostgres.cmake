@@ -19,12 +19,12 @@
 
 find_path(POSTGRES_INCLUDE_DIRS
   libpq-fe.h
-  PATHS /usr/include
+  PATHS /usr/include /usr/pgsql-12/include
   NO_DEFAULT_PATH)
 
 find_library(POSTGRES_LIBRARIES
   NAME pq
-  PATHS /usr/lib64/
+  PATHS /usr/lib64/ /usr/pgsql-12/lib/
   NO_DEFAULT_PATH)
 
 message (STATUS "POSTGRES_INCLUDE_DIRS = ${POSTGRES_INCLUDE_DIRS}")

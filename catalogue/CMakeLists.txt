@@ -15,6 +15,7 @@
 cmake_minimum_required (VERSION 3.17)
 
 find_package(Protobuf3 REQUIRED)
+find_package(postgres REQUIRED)
 
 include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS} ${POSTGRES_INCLUDE_DIRS})
 
