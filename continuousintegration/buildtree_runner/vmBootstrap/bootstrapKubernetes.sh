@@ -39,7 +39,7 @@ curl -o /opt/calico.yaml https://docs.projectcalico.org/manifests/calico.yaml
 
 echo Configuring cluster
 kubeadm init --config=./kubeadm-crio.yaml --upload-certs --node-name $HOSTNAME | tee /root/kubeadm-init.out
-kubectl apply -f /root/calico.yaml
+kubectl apply -f /opt/calico.yaml
 systemctl enable kubelet
 
 echo Configuring storage
