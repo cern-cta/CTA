@@ -13,6 +13,12 @@
 ## Bug fixes
 - cta/CTA#1102 - Make requeued jobs retain their original creation time
 
+# v4.5.1-2
+
+## Summary
+
+No code changes. Updates EOS version in CI to 4.8.74.
+
 # v4.5.1-1
 
 ## Summary
