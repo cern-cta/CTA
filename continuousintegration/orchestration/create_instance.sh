@@ -291,7 +291,7 @@ for ((i=0; i<400; i++)); do
 done
 
 # initialization went wrong => exit now with error
-if $(kubectl get pod init -a --namespace=${instance} | grep -q Error); then
+if $(kubectl get pod init --namespace=${instance} | grep -q Error); then
 	echo "init pod in Error status here are its last log lines:"
 	kubectl --namespace=${instance} logs init --tail 10
 	die "ERROR: init pod in ErERROR: init pod in Error state. Initialization failed."
@@ -315,7 +315,7 @@ if [ $runoracleunittests == 1 ] ; then
   kubectl --namespace=${instance} logs oracleunittests
 
   # database unit-tests went wrong => exit now with error
-  if $(kubectl get pod oracleunittests -a --namespace=${instance} | grep -q Error); then
+  if $(kubectl get pod oracleunittests --namespace=${instance} | grep -q Error); then
     echo "init pod in Error status here are its last log lines:"
     kubectl --namespace=${instance} logs oracleunittests --tail 10
     die "ERROR: oracleunittests pod in Error state. Initialization failed."
