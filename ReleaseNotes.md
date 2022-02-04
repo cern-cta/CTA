@@ -2,15 +2,15 @@
 
 ## Summary
 
-## Upgrade Instructions
+### Upgrade Instructions
 
-## Features
+### Features
 - cta/CTA#999 - Add a default mount rule for recalls
 - cta/CTA#1109 - Add --dirtybit option to cta-admin ta ch and show dirty bit value in cta-admin --json ta ls
 - cta/CTA#1111 - Add disk instance and disk instance tables to catalogue and respective cta-admin diskinstance/diskinstancespace add/ls/ch/rm commands
 - cta/CTA#1108 - Make cta-admin --json sq show mount policy with highest priority and mount policy with lowest request age for each queue.
 
-## Bug fixes
+### Bug fixes
 - cta/CTA#1102 - Make requeued jobs retain their original creation time
 
 # v4.5.1-2
@@ -23,11 +23,7 @@ No code changes. Updates EOS version in CI to 4.8.74.
 
 ## Summary
 
-## Upgrade Instructions
-
-## Features
-
-## Bug fixes
+### Bug fixes
 - cta/CTA#1101 - Fix disk space reservation logic adding all existing disk space reservations for all disk systems
 - cta/CTA#1023 - Retrieve puts the queue to sleep if the eos disk instance is not reachable
 
@@ -35,9 +31,7 @@ No code changes. Updates EOS version in CI to 4.8.74.
 
 ## Summary
 
-## Upgrade Instructions
-
-## Features
+### Features
 - Improve cta-versionlock script
 - cta/CTA#1091 - New Drive State table in CTA Catalogue
 - cta/CTA#1054 - Fix filing of disk buffer when recalling from tapeservers with RAO
@@ -45,26 +39,22 @@ No code changes. Updates EOS version in CI to 4.8.74.
 - cta/CTA#1087 - Add new tapeserver config option UseEncryption
 - cta/CTA#1096 - Better handling of bad checksums in archive/retrieve sessions
 
-## Bug fixes
+### Bug fixes
 - cta/CTA#1092 - Fix overflow error with drive state latestBandwith causing cta frontend crash
 - cta/CTA#501 - Fix disappearing reason when TapeDrive is reading or writing
 
 # v4.4.1-1
 
-## Upgrade Instructions
-
-## Features
-
-## Bug fixes
+### Bug fixes
 - cta/CTA#1092 Fix overflow with drive bandwith causing frontend to crash
 
 # v4.4.0-1
 
-## Upgrade Instructions
+### Upgrade Instructions
 
 This CTA release requires a database schema upgrade to CTA catalogue schema v4.3. Please consult the [database upgrade documentation](https://tapeoperations.docs.cern.ch/ctaops/upgrade_production_database).
 
-## Features
+### Features
 - Upgraded EOS to 4.8.67 in CI versionlock.list file
   - EOS/EOS-4976 Fix activity field passed from EOS to CTA
 - cta/CTA#607 - Add client host and username in cta-frontend logs
@@ -80,7 +70,7 @@ This CTA release requires a database schema upgrade to CTA catalogue schema v4.3
 - cta/CTA#1083 - Upgrade ceph to version 15.2.15
 - cta/CTA#1068 - Build cta with gcc 7.x(C++17) and fix deprecated code
 
-## Bug fixes
+### Bug fixes
 - cta/CTA#1059 - Clean up warnings reported by static analysis
 - cta/CTA#1062 - cta-admin tf rm should store the diskFilePath when deleting the tape file copy
 - cta/CTA#1073 - Retry failed reporting for archive jobs
@@ -161,8 +151,6 @@ This CTA release requires a database schema upgrade to CTA catalogue schema v4.3
 
 ## Summary
 
-### Features
-
 ### Bug fixes
 - cta/CTA#1029 Fix segmentatin fault in frontend when list repacks of a tape that has been deleted in the catalogue
 
@@ -201,8 +189,6 @@ This CTA release requires a database schema upgrade to CTA catalogue schema v4.3
 - cta/CTA#898 cta-send-event now gets the requester id and eos instance as command line arguments
 - cta/CTA#1005 "tape ls" now can filter tapes on wether they were imported from CASTOR
 - cta/CTA#1006 "repack ls" now shows the tapepool of the tape being repacked
-
-### Bug fixes
 
 # v4.0-5
 
@@ -462,7 +448,6 @@ This release is a bug fix release.
 - Reinstates missing "cta-admin failedrequest ls --summary" option
 - cta/CTA#865 Empty the RetrieveQueue in the case of cancellation of a retrieve request when the drive is down
 
-
 # v3.1-4
 
 ## Summary
@@ -480,7 +465,6 @@ command-line tool based on operator requests and removes the deprecated
 - cta/CTA#846 cta-admin tapefile ls: list by fileid
 - cta/CTA#840 Remove cta-objectstore-unfollow-agent from cta-objectstore-tools
 
-
 # v3.1-3
 
 ## Summary
@@ -495,11 +479,10 @@ command-line tool based on operator requests and removes the deprecated
 
 ### Modification
 
-- Shrinked `cta-admin repack ls` tabular output
+- Shrinks `cta-admin repack ls` tabular output
 - cta-admin help commands listed in alphabetical order
 - Catalogue connection pool improvements
 - The scheduler will take the tape that has the highest occupancy for archival in order to limit data scattering across all available tapes
-
 
 # v3.1-2
 
@@ -508,7 +491,6 @@ command-line tool based on operator requests and removes the deprecated
 ### Modification
 
 - Added database upgrade/changelog script oracle/3.0to3.1.sql
-
 
 # v3.1-1
 
@@ -521,7 +503,6 @@ command-line tool based on operator requests and removes the deprecated
 - Catalogue schema version 3.1 : addition of a new index on the TAPE table
 - Catalogue and Unit tests improvements
 
-
 # v3.0-3
 
 ## Summary
@@ -529,7 +510,6 @@ command-line tool based on operator requests and removes the deprecated
 ### Modification
 
 - The cta-statistics-update tool updates the tape statistics one by one
-
 
 # v3.0-2
 
@@ -541,7 +521,6 @@ command-line tool based on operator requests and removes the deprecated
 - Upstream xrootd 4.12.3-1
 - Mount policies are now dynamically updated on queued Archive and Retrieve requests
 - ShowQueues now display queued retrieves on disabled tapes
-
 
 # v3.0-1
 
@@ -571,7 +550,6 @@ command-line tool based on operator requests and removes the deprecated
 
 - Fixed archive failure requeueing with no mount policies
 
-
 # v2.0-5
 
 ## Summary
@@ -581,7 +559,6 @@ command-line tool based on operator requests and removes the deprecated
 - Upstream eos 4.7.12-1
 - Added support for FileID change in EOS that occurs during conversion
   - fileID updated in the catalogue when frontend receives Workflow::EventType::UPDATE_FID event
-
 
 # v2.0-3
 
@@ -593,7 +570,6 @@ command-line tool based on operator requests and removes the deprecated
 - Adding reason and comment to cta drive objects
   - Allow to better track tape drive usage in production
   - Allow to track reasons that conducted a drive to be set down
-
 
 # v2.0-2
 
@@ -661,14 +637,14 @@ command-line tool based on operator requests and removes the deprecated
 
 - eos-4.6.8 which brings the delete on close feature
 
-## Upgrade Instructions from v1.0-3
+### Upgrade Instructions from v1.0-3
 
-### 1. Upgrade the Catalogue schema version from version 1.0 to 1.1
+#### 1. Upgrade the Catalogue schema version from version 1.0 to 1.1
 
 Before updating CTA, the Catalogue schema should be upgraded. Here is the link to the documentation about the database schema updating procedure : [https://eoscta.docs.cern.ch/catalogue/upgrade/](https://eoscta.docs.cern.ch/catalogue/upgrade/)
 
 The liquibase changeLog file is already done so you can directly run the [*liquibase update*](https://eoscta.docs.cern.ch/catalogue/upgrade/backward_compatible_upgrades/#3-run-the-liquibase-updatesql-command) command with the changeLogFile located in the directory *CTA/catalogue/migrations/liquibase/oracle/1.0to1.1.sql*.
 
-### 2. Update CTA components
+#### 2. Update CTA components
 
 TODO : Instructions about how to update the tapeservers and the frontend.
