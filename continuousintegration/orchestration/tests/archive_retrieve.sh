@@ -83,4 +83,13 @@ kubectl -n ${NAMESPACE} exec client -- bash /root/multiple_retrieve.sh || exit 1
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
+echo
+echo "Launching idempotent_prepare.sh on client pod"
+echo " Archiving file: xrdcp as user1"
+echo " Retrieving it as poweruser1"
+kubectl -n ${NAMESPACE} cp idempotent_prepare.sh client:/root/idempotent_prepare.sh
+kubectl -n ${NAMESPACE} exec client -- bash /root/idempotent_prepare.sh || exit 1
+
+kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
 exit 0
