@@ -208,6 +208,7 @@ void RepackRequest::setMountPolicy(const common::dataStructures::MountPolicy& mp
   checkPayloadWritable();
   MountPolicySerDeser mpSerDeser(mp);
   mpSerDeser.serialize(*m_payload.mutable_mount_policy());
+  m_payload.set_mountpolicyname(mp.name);
 }
 
 common::dataStructures::MountPolicy RepackRequest::getMountPolicy(){

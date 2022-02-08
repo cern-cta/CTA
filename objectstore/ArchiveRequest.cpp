@@ -297,6 +297,7 @@ std::string ArchiveRequest::getArchiveErrorReportURL() {
 void ArchiveRequest::setMountPolicy(const cta::common::dataStructures::MountPolicy &mountPolicy) {
   checkPayloadWritable();
   MountPolicySerDeser(mountPolicy).serialize(*m_payload.mutable_mountpolicy());
+  m_payload.set_mountpolicyname(mountPolicy.name);
 }
 
 //------------------------------------------------------------------------------

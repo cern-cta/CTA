@@ -351,7 +351,8 @@ message ArchiveRequestRepackInfo {
 
 message ArchiveRequest {
   required uint64 archivefileid = 8990;
-  required MountPolicy mountpolicy = 8995;
+  required MountPolicy mountpolicy = 8995; //to be removed for cta/CTA#1107
+  optional string mountpolicyname = 9100;  //TODO: Once it has been deployed, make it required and remove mountpolicy
   //required string checksumtype = 9000;     DEPRECATED
   //required string checksumvalue = 9010;    DEPRECATED
   required bytes checksumblob = 9011;
@@ -447,6 +448,7 @@ message RetrieveActivityWeight {
 message RetrieveRequest {
   required SchedulerRetrieveRequest schedulerrequest = 9150;
   required MountPolicy mountpolicy = 9151;
+  optional string mountpolicyname = 9165;  //TODO: Once it has been deployed, make it required and remove mountpolicy
   optional RetrieveActivityWeight activity_weight = 9160 [deprecated=true]; // Deprecated for cta/CTA#1077
   optional string activity = 9164;
   required ArchiveFile archivefile = 9152;
@@ -628,6 +630,7 @@ message RepackRequest {
   required bool is_expand_finished = 11561;
   required bool is_expand_started = 11562;
   required MountPolicy mount_policy = 11563;
+  optional string mountpolicyname = 11575;  //TODO: Once it has been deployed, make it required and remove mountpolicy
   required bool force_disabled_tape = 11564;
   required bool is_complete = 11565;
   required bool no_recall = 11566;

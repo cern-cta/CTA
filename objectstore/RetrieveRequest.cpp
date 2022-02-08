@@ -513,6 +513,7 @@ void RetrieveRequest::setRetrieveFileQueueCriteria(const cta::common::dataStruct
   ArchiveFileSerDeser(criteria.archiveFile).serialize(*m_payload.mutable_archivefile());
   for (auto &tf: criteria.archiveFile.tapeFiles) {
     MountPolicySerDeser(criteria.mountPolicy).serialize(*m_payload.mutable_mountpolicy());
+    m_payload.set_mountpolicyname(criteria.mountPolicy.name);
     /*
      * Explaination about these hardcoded retries :
      * The hardcoded RetriesWithinMount will ensure that we will try to retrieve the file 3 times
@@ -1240,6 +1241,7 @@ RetrieveRequest::AsyncRetrieveToArchiveTransformer * RetrieveRequest::asyncTrans
     cta::objectstore::serializers::MountPolicy *archiveRequestMP = archiveRequestPayload.mutable_mountpolicy();
     const cta::objectstore::serializers::MountPolicy& retrieveRequestMP = retrieveRequestPayload.mountpolicy();
     archiveRequestMP->CopyFrom(retrieveRequestMP);
+    archiveRequestPayload.set_mountpolicyname(retrieveRequestMP.name());
 
     //Creation log is used by the queueing: job start time = archiveRequest creationLog.time
     cta::objectstore::serializers::EntryLog *archiveRequestCL = archiveRequestPayload.mutable_creationlog();
