@@ -353,6 +353,20 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
          } // end case Request::kAdmincmd
 
       case Request::kNotification:
+         // Log event before processing, same log as in WFE.log on eos side
+         {
+            const std::string &eventTypeName = Workflow_EventType_Name(request.notification().wf().event());
+            const std::string &eosInstanceName = request.notification().wf().instance().name();
+            const std::string &diskFilePath = request.notification().file().lpath();
+            const std::string &diskFileId = std::to_string(request.notification().file().fid());
+            cta::log::ScopedParamContainer params(m_lc);
+            params.add("eventType", eventTypeName)
+                  .add("eosInstance", eosInstanceName)
+                  .add("diskFilePath", diskFilePath)
+                  .add("diskFileId", diskFileId);
+            m_lc.log(cta::log::INFO, "In RequestMessage::process(): processing SSI event");
+            
+         }
          // Validate that instance name in key used to authenticate matches instance name in Protocol buffer
          if(m_cliIdentity.username != request.notification().wf().instance().name()) {
             // Special case: allow KRB5 authentication for CLOSEW and PREPARE events, to allow operators
