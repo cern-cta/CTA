@@ -92,6 +92,7 @@ echo 'kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version |
 kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
 
   echo "Cleaning up leftovers from potential previous runs."
+  kubectl --namespace ${NAMESPACE} exec ctaeos -- eos rm -rf /eos/ctaeos/cta/fail_on_closew_test/
   kubectl --namespace ${NAMESPACE} exec ctaeos -- eos rm /eos/ctaeos/cta/*
   kubectl --namespace ${NAMESPACE} exec ctaeos -- eos find -f /eos/ctaeos/preprod/ | xargs -I{} kubectl --namespace ${NAMESPACE} exec ctaeos -- eos rm -rf {}
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json tape ls --all  |             \

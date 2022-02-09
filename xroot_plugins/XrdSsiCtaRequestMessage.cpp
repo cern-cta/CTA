@@ -522,7 +522,7 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
 
    // For testing: this storage class will always fail
    if(storageClassItor->second == "fail_on_closew_test") {
-      throw PbException("File is in fail_on_closew_test storage class, which always fails.");
+      throw cta::exception::UserError("File is in fail_on_closew_test storage class, which always fails.");
    }
 
    auto storageClass = m_catalogue.getStorageClass(storageClassItor->second);

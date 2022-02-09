@@ -92,4 +92,13 @@ kubectl -n ${NAMESPACE} exec client -- bash /root/idempotent_prepare.sh || exit 
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
+echo
+echo "Launching delete_on_closew_error.sh on client pod"
+echo " Archiving file: xrdcp as user1"
+echo " Retrieving it as poweruser1"
+kubectl -n ${NAMESPACE} cp delete_on_closew_error.sh client:/root/delete_on_closew_error.sh
+kubectl -n ${NAMESPACE} exec client -- bash /root/delete_on_closew_error.sh || exit 1
+
+kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
 exit 0
