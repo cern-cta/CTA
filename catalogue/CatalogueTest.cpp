@@ -5440,6 +5440,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_EQ(fileSize, tape.dataOnTapeInBytes);
+    ASSERT_EQ(fileSize, tape.masterDataInBytes);
     ASSERT_EQ(m_tape1.full, tape.full);
 
     ASSERT_FALSE(tape.isFromCastor);
@@ -16229,6 +16230,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
     ASSERT_EQ(file1Written.size, tape.dataOnTapeInBytes);
+    ASSERT_EQ(file1Written.size, tape.masterDataInBytes);
     ASSERT_EQ(1, tape.lastFSeq);
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);

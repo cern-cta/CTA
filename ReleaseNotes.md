@@ -5,6 +5,7 @@
 ### Upgrade Instructions
 
 ### Features
+- cta/CTA#1117 - Update masterDataInBytes when writting files to tape.
 
 ### Bug fixes
 

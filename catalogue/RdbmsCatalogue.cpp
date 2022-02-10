@@ -8536,15 +8536,16 @@ void RdbmsCatalogue::updateTape(
       "UPDATE TAPE SET "
         "LAST_FSEQ = :LAST_FSEQ,"
         "DATA_IN_BYTES = DATA_IN_BYTES + :DATA_IN_BYTES,"
+        "MASTER_DATA_IN_BYTES = MASTER_DATA_IN_BYTES + :MASTER_DATA_IN_BYTES,"
         "LAST_WRITE_DRIVE = :LAST_WRITE_DRIVE,"
-        "LAST_WRITE_TIME = :LAST_WRITE_TIME,"
-        "DIRTY='1' "
+        "LAST_WRITE_TIME = :LAST_WRITE_TIME "
       "WHERE "
         "VID = :VID";
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":VID", vid);
     stmt.bindUint64(":LAST_FSEQ", lastFSeq);
     stmt.bindUint64(":DATA_IN_BYTES", compressedBytesWritten);
+    stmt.bindUint64(":MASTER_DATA_IN_BYTES", compressedBytesWritten);
     stmt.bindString(":LAST_WRITE_DRIVE", tapeDrive);
     stmt.bindUint64(":LAST_WRITE_TIME", now);
     stmt.executeNonQuery();
