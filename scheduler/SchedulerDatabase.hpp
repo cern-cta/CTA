@@ -728,7 +728,7 @@ class SchedulerDatabase {
     bool currentMount; ///< True if the mount is current (othermise, it's a next mount).
     uint64_t bytesTransferred;
     uint64_t filesTransferred;
-    double latestBandwidth;
+    double averageBandwidth;
     uint64_t priority;
     optional<std::string> activity;
   };

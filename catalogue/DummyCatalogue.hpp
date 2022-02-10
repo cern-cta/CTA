@@ -98,12 +98,12 @@ public:
   void createTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   std::list<common::dataStructures::TapeDrive> getTapeDrives() const {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void deleteTapeDrive(const std::string &tapeDriveName) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
-  void createDriveConfig(const std::string &tapeDriveName, const std::string &category, const std::string &keyName, const std::string &value, const std::string &source) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
-  std::list<cta::catalogue::Catalogue::DriveConfig> getDrivesConfigs() const {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
-  std::list<std::pair<std::string, std::string>> getDriveConfigNamesAndKeys() const {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
-  void modifyDriveConfig(const std::string &tapeDriveName, const std::string &category, const std::string &keyName, const std::string &value, const std::string &source) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
-  optional<std::tuple<std::string, std::string, std::string>> getDriveConfig( const std::string &tapeDriveName, const std::string &keyName) const {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
-  void deleteDriveConfig(const std::string &tapeDriveName, const std::string &keyName) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
+  void createTapeDriveConfig(const std::string &tapeDriveName, const std::string &category, const std::string &keyName, const std::string &value, const std::string &source) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
+  std::list<cta::catalogue::Catalogue::DriveConfig> getTapeDriveConfigs() const {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
+  std::list<std::pair<std::string, std::string>> getTapeDriveConfigNamesAndKeys() const {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
+  void modifyTapeDriveConfig(const std::string &tapeDriveName, const std::string &category, const std::string &keyName, const std::string &value, const std::string &source) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
+  optional<std::tuple<std::string, std::string, std::string>> getTapeDriveConfig( const std::string &tapeDriveName, const std::string &keyName) const {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
+  void deleteTapeDriveConfig(const std::string &tapeDriveName, const std::string &keyName) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   std::list<common::dataStructures::ArchiveFile> getFilesForRepack(const std::string &vid, const uint64_t startFSeq, const uint64_t maxNbFiles) const override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   ArchiveFileItor getArchiveFilesForRepackItor(const std::string &vid, const uint64_t startFSeq) const override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes() const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
@@ -270,8 +270,6 @@ public:
     tapeDriveStatus.host = "Dummy_Host";
     tapeDriveStatus.logicalLibrary = "Dummy_Library";
 
-    tapeDriveStatus.latestBandwidth = "0.0";
-
     tapeDriveStatus.downOrUpStartTime = reportTime;
 
     tapeDriveStatus.mountType = common::dataStructures::MountType::NoMount;
@@ -285,11 +283,34 @@ public:
     return tapeDriveStatus;
   }
 
+  void setDesiredTapeDriveState(const std::string&,
+      const common::dataStructures::DesiredDriveState &desiredState) override {
+    m_tapeDriveStatus.desiredUp = desiredState.up;
+    m_tapeDriveStatus.desiredForceDown = desiredState.forceDown;
+    m_tapeDriveStatus.reasonUpDown = desiredState.reason;
+    m_tapeDriveStatus.userComment = desiredState.comment;
+  }
+
+  void updateTapeDriveStatistics(const std::string& tapeDriveName,
+    const std::string& host, const std::string& logicalLibrary,
+    const common::dataStructures::TapeDriveStatistics& statistics) override {
+    m_tapeDriveStatus.driveName = tapeDriveName;
+    m_tapeDriveStatus.host = host;
+    m_tapeDriveStatus.logicalLibrary = logicalLibrary;
+    m_tapeDriveStatus.bytesTransferedInSession = statistics.bytesTransferedInSession;
+    m_tapeDriveStatus.filesTransferedInSession = statistics.filesTransferedInSession;
+    m_tapeDriveStatus.lastModificationLog = statistics.lastModificationLog;
+  }
+
+  void updateTapeDriveStatus(const common::dataStructures::TapeDrive &tapeDrive) {
+    m_tapeDriveStatus = tapeDrive;
+  }
+
   void modifyTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) {
     m_tapeDriveStatus = tapeDrive;
   }
 
-  std::map<std::string, uint64_t> getExistingDrivesReservations() const override {
+  std::map<std::string, uint64_t> getDiskSpaceReservations() const override {
     std::map<std::string, uint64_t> ret;
     const auto tdNames = getTapeDriveNames();
     for (const auto& driveName : tdNames) {
@@ -301,79 +322,42 @@ public:
   }
 
   void reserveDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) override {
-    if (diskSpaceReservation.empty()) return;
-    // Try add our reservation to the drive status.
-    auto setLogParam = [&lc](const std::string& diskSystemName, uint64_t bytes) {
-      log::ScopedParamContainer params(lc);
-      params.add("diskSystem", diskSystemName)
-            .add("reservation", bytes);
-    };
-    std::string diskSystemName = diskSpaceReservation.begin()->first;
-    uint64_t bytes = diskSpaceReservation.begin()->second;
-    setLogParam(diskSystemName, bytes);
-    lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): reservation request content.");
+    if(diskSpaceReservation.empty()) return;
 
-    std::tie(diskSystemName, bytes) = getDiskSpaceReservation(driveName);
-    setLogParam(diskSystemName, bytes);
-    lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): state before reservation.");
+    log::ScopedParamContainer params(lc);
+    params.add("driveName", driveName)
+          .add("diskSystem", diskSpaceReservation.begin()->first)
+          .add("reservationBytes", diskSpaceReservation.begin()->second);
+    lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): reservation request.");
 
-    addDiskSpaceReservation(driveName, diskSpaceReservation.begin()->first,
-      diskSpaceReservation.begin()->second);
-    std::tie(diskSystemName, bytes) = getDiskSpaceReservation(driveName);
-    setLogParam(diskSystemName, bytes);
-    lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): state after reservation.");
-  }
-
-  void addDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes) override {
     auto tdStatus = getTapeDrive(driveName);
     if (!tdStatus) return;
-    tdStatus.value().diskSystemName = diskSystemName;
-    tdStatus.value().reservedBytes += bytes;
+    tdStatus.value().diskSystemName = diskSpaceReservation.begin()->first;
+    tdStatus.value().reservedBytes += diskSpaceReservation.begin()->second;
     modifyTapeDrive(tdStatus.value());
-  }
-
-  std::tuple<std::string, uint64_t> getDiskSpaceReservation(const std::string& driveName) override {
-  const auto tdStatus = getTapeDrive(driveName);
-  return std::make_tuple(tdStatus.value().diskSystemName, tdStatus.value().reservedBytes);
   }
 
   void releaseDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) override {
     if (diskSpaceReservation.empty()) return;
-    // Try add our reservation to the drive status.
-    auto setLogParam = [&lc](const std::string& diskSystemName, uint64_t bytes) {
-      log::ScopedParamContainer params(lc);
-      params.add("diskSystem", diskSystemName)
-            .add("reservation", bytes);
-    };
-    std::string diskSystemName = diskSpaceReservation.begin()->first;
-    uint64_t bytes = diskSpaceReservation.begin()->second;
-    setLogParam(diskSystemName, bytes);
-    lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): release request content.");
 
-    std::tie(diskSystemName, bytes) = getDiskSpaceReservation(driveName);
-    setLogParam(diskSystemName, bytes);
-    lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): state before release.");
+    log::ScopedParamContainer params(lc);
+    params.add("driveName", driveName)
+          .add("diskSystem", diskSpaceReservation.begin()->first)
+          .add("reservationBytes", diskSpaceReservation.begin()->second);
+    lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): reservation release request.");
 
-    subtractDiskSpaceReservation(driveName, diskSpaceReservation.begin()->first,
-      diskSpaceReservation.begin()->second);
-
-    std::tie(diskSystemName, bytes) = getDiskSpaceReservation(driveName);
-    setLogParam(diskSystemName, bytes);
-    lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): state after release.");
-  }
-
-  void subtractDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes) override {
     auto tdStatus = getTapeDrive(driveName);
+    auto& bytes = diskSpaceReservation.begin()->second;
     if (bytes > tdStatus.value().reservedBytes) throw NegativeDiskSpaceReservationReached(
       "In DriveState::subtractDiskSpaceReservation(): we would reach a negative reservation size.");
-    tdStatus.value().diskSystemName = diskSystemName;
+    tdStatus.value().diskSystemName = diskSpaceReservation.begin()->first;
     tdStatus.value().reservedBytes -= bytes;
     modifyTapeDrive(tdStatus.value());
   }
 
   /*
-    Implemented for testing disk space reservation logic
-  */
+   * Implemented for testing disk space reservation logic
+   */
   disk::DiskSystemList getAllDiskSystems() const override { 
     return m_diskSystemList;
   }

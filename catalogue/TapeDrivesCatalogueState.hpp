@@ -48,7 +48,6 @@ struct ReportDriveStatusInputs {
   uint64_t mountSessionId;
   uint64_t byteTransferred;
   uint64_t filesTransferred;
-  double latestBandwidth;
   std::string vid;
   std::string tapepool;
   std::string vo;
@@ -84,7 +83,6 @@ public:
     uint64_t mountSessionId = std::numeric_limits<uint64_t>::max(),
     uint64_t byteTransferred = std::numeric_limits<uint64_t>::max(),
     uint64_t filesTransferred = std::numeric_limits<uint64_t>::max(),
-    double latestBandwidth = std::numeric_limits<double>::max(),
     const std::string& vid = "",
     const std::string& tapepool = "",
     const std::string & vo = "");

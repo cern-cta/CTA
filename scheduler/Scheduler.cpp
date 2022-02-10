@@ -15,7 +15,6 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "ArchiveMount.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteriaAndFileId.hpp"
 #include "common/exception/NonRetryableError.hpp"
@@ -27,13 +26,13 @@
 #include "disk/DiskFileImplementations.hpp"
 #include "disk/RadosStriperPool.hpp"
 #include "DiskReportRunner.hpp"
-#include "DriveConfig.hpp"
 #include "objectstore/RepackRequest.hpp"
 #include "OStoreDB/OStoreDB.hpp"
 #include "RetrieveMount.hpp"
 #include "RetrieveRequestDump.hpp"
 #include "Scheduler.hpp"
-#include "TapeDrivesCatalogueState.hpp"
+#include "catalogue/TapeDrivesCatalogueState.hpp"
+#include "catalogue/DriveConfig.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -1813,7 +1812,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
         summary.nextMounts++;*/
       summary.currentBytes += em.bytesTransferred;
       summary.currentFiles += em.filesTransferred;
-      summary.latestBandwidth += em.latestBandwidth;
+      summary.averageBandwidth = em.averageBandwidth;
       break;
     default:
       break;

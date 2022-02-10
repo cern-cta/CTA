@@ -592,11 +592,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
-  std::cout << "Before Exectution" << std::endl;
-  std::cout << logger.getLog() << std::endl;
   // 8) Run the data transfer session
   sess.execute();
-  std::cout << "After Exectution" << std::endl;
 
   // 9) Check the session git the correct VID
   ASSERT_EQ(s_vid, sess.getVid());
@@ -781,11 +778,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
-  std::cout << "Before Exectution" << std::endl;
-  std::cout << logger.getLog() << std::endl;
   // 8) Run the data transfer session
   sess.execute();
-  std::cout << "After Exectution" << std::endl;
 
   // 9) Check the session git the correct VID
   ASSERT_EQ(s_vid, sess.getVid());

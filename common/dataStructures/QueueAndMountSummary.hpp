@@ -45,11 +45,7 @@ struct QueueAndMountSummary {
   uint64_t currentMounts=0;
   uint64_t currentFiles=0;
   uint64_t currentBytes=0;
-  double latestBandwidth=0;
-  //Commenting this nextMounts value
-  //it is not useful for now. It was introduced in the past
-  //for the implementation of drive preemption.
-  //uint64_t nextMounts=0;
+  double averageBandwidth=0;
   uint64_t tapesCapacity=0;
   uint64_t filesOnTapes=0;
   uint64_t dataOnTapes=0;

@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "catalogue/Catalogue.hpp"
+#include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/log/Logger.hpp"
 #include "common/threading/BlockingQueue.hpp"
@@ -42,7 +43,6 @@
 #include "objectstore/SchedulerGlobalLock.hpp"
 #include "QueueItor.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
-#include "scheduler/TapeDrivesCatalogueState.hpp"
 #include "scheduler/RetrieveJob.hpp"
 
 namespace cta {

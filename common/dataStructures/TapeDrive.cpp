@@ -30,8 +30,9 @@ namespace dataStructures {
 TapeDrive::TapeDrive():
   driveStatus(DriveStatus::Unknown),
   desiredUp(false),
-  desiredForceDown(false)
-  {}
+  desiredForceDown(false),
+  nextMountType(MountType::NoMount),
+  reservedBytes(0) {}
 
 const std::map<DriveStatus, std::string> TapeDrive::STATE_TO_STRING_MAP = {
   {DriveStatus::Unknown, "UNKNOWN"},
@@ -77,43 +78,47 @@ std::string TapeDrive::getAllPossibleStates(){
 // operator==
 //------------------------------------------------------------------------------
 bool TapeDrive::operator==(const TapeDrive &rhs) const {
-  return driveName==rhs.driveName
-      && host==rhs.host
-      && logicalLibrary==rhs.logicalLibrary
-      && mountType==rhs.mountType
-      && driveStatus==rhs.driveStatus
-      && desiredUp==rhs.desiredUp
-      && desiredForceDown==rhs.desiredForceDown
-      && diskSystemName==rhs.diskSystemName
-      && reservedBytes==rhs.reservedBytes
+  auto checkOptionalString = [](const optional<std::string> &str) -> std::string {
+    if (!str) return "";
+    return str.value();
+  };
+  return driveName == rhs.driveName
+      && host == rhs.host
+      && logicalLibrary == rhs.logicalLibrary
+      && mountType == rhs.mountType
+      && driveStatus == rhs.driveStatus
+      && desiredUp == rhs.desiredUp
+      && desiredForceDown == rhs.desiredForceDown
+      && diskSystemName == rhs.diskSystemName
+      && reservedBytes == rhs.reservedBytes
 
-      && sessionId==rhs.sessionId
-      && bytesTransferedInSession==rhs.bytesTransferedInSession
-      && filesTransferedInSession==rhs.filesTransferedInSession
-      && latestBandwidth==rhs.latestBandwidth
+      && sessionId == rhs.sessionId
+      && bytesTransferedInSession == rhs.bytesTransferedInSession
+      && filesTransferedInSession == rhs.filesTransferedInSession
       && sessionStartTime==rhs.sessionStartTime
-      && mountStartTime==rhs.mountStartTime
-      && transferStartTime==rhs.transferStartTime
-      && unloadStartTime==rhs.unloadStartTime
-      && unmountStartTime==rhs.unmountStartTime
-      && drainingStartTime==rhs.drainingStartTime
-      && downOrUpStartTime==rhs.downOrUpStartTime
-      && probeStartTime==rhs.probeStartTime
-      && cleanupStartTime==rhs.cleanupStartTime
-      && startStartTime==rhs.startStartTime
-      && shutdownTime==rhs.shutdownTime
+      && sessionElapsedTime==rhs.sessionElapsedTime
+      && mountStartTime == rhs.mountStartTime
+      && transferStartTime == rhs.transferStartTime
+      && unloadStartTime == rhs.unloadStartTime
+      && unmountStartTime == rhs.unmountStartTime
+      && drainingStartTime == rhs.drainingStartTime
+      && downOrUpStartTime == rhs.downOrUpStartTime
+      && probeStartTime == rhs.probeStartTime
+      && cleanupStartTime == rhs.cleanupStartTime
+      && startStartTime == rhs.startStartTime
+      && shutdownTime == rhs.shutdownTime
 
-      && reasonUpDown==rhs.reasonUpDown
-      && currentVid==rhs.currentVid
-      && ctaVersion==rhs.ctaVersion
-      && currentPriority==rhs.currentPriority
-      && currentActivity==rhs.currentActivity
-      && currentTapePool==rhs.currentTapePool
-      && nextMountType==rhs.nextMountType
-      && nextVid==rhs.nextVid
-      && nextTapePool==rhs.nextTapePool
-      && nextPriority==rhs.nextPriority
-      && nextActivity==rhs.nextActivity
+      && checkOptionalString(reasonUpDown) == checkOptionalString(rhs.reasonUpDown)
+      && checkOptionalString(currentVid) == checkOptionalString(rhs.currentVid)
+      && checkOptionalString(ctaVersion) == checkOptionalString(rhs.ctaVersion)
+      && currentPriority == rhs.currentPriority
+      && checkOptionalString(currentActivity) == checkOptionalString(rhs.currentActivity)
+      && checkOptionalString(currentTapePool) == checkOptionalString(rhs.currentTapePool)
+      && nextMountType == rhs.nextMountType
+      && checkOptionalString(nextVid) == checkOptionalString(rhs.nextVid)
+      && checkOptionalString(nextTapePool) == checkOptionalString(rhs.nextTapePool)
+      && nextPriority == rhs.nextPriority
+      && checkOptionalString(nextActivity) == checkOptionalString(rhs.nextActivity)
       //
       // && devFileName==rhs.devFileName
       // && rawLibrarySlot==rhs.rawLibrarySlot

@@ -17,39 +17,22 @@
 
 #pragma once
 
-#include <string>
+#include <ostream>
+#include "common/optional.hpp"
+#include "common/dataStructures/EntryLog.hpp"
 
 namespace cta {
 namespace common {
 namespace dataStructures {
 
-enum class MountType: uint32_t {
-  ArchiveForUser = 1,
-  ArchiveForRepack = 2,
-  Retrieve = 3,
-  Label = 4,
-  NoMount = 0,
-  /// A summary type used in scheduling.
-  ArchiveAllTypes = 99
+struct TapeDriveStatistics {
+public:
+  TapeDriveStatistics() = default;
+  TapeDriveStatistics(const TapeDriveStatistics & statistics) = default;
+  uint64_t bytesTransferedInSession;
+  uint64_t filesTransferedInSession;
+  uint64_t reportTime;
+  EntryLog lastModificationLog;
 };
 
-/**
- * A function summarizing subtypes (currently only Archive) to simplify scheduling.
- */
-MountType getMountBasicType(MountType type);
-
-/**
- * Convert enum to string for storage in DB and logging
- */
-std::string toString(MountType type);
-
-/**
- * Convert string to enum. Needed to get values from DB.
- */
-MountType strToMountType(const std::string& mountTypeStr);
-
-std::ostream &operator <<(std::ostream& os, const MountType &obj);
-
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}}} // namespace cta::common::dataStructures

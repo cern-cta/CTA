@@ -21,7 +21,6 @@ set (CTA_SCHEDULER_SRC_FILES
   ArchiveJob.cpp
   ArchiveMount.cpp
   DiskReportRunner.cpp
-  DriveConfig.cpp
   LabelMount.cpp
   LogicalLibrary.cpp
   MountType.cpp
@@ -40,7 +39,6 @@ set (CTA_SCHEDULER_SRC_FILES
   SchedulerDatabase.cpp
   SchedulerDatabaseFactory.cpp
   SchedulingInfos.cpp
-  TapeDrivesCatalogueState.cpp
   TapeMount.cpp)
 
 find_package(Protobuf3 REQUIRED)

@@ -5021,13 +5021,11 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
       reservationRequest.addRequest(job->diskSystemName().value(), job->archiveFile.fileSize);
     }
     ASSERT_EQ(10,jobBatch.size());
-    auto diskSpaceReservedBefore = std::get<1>(catalogue.getDiskSpaceReservation("drive0"));
+    auto diskSpaceReservedBefore = catalogue.getTapeDrive("drive0").value().reservedBytes;
     //Trying to reserve disk space should result in 10 jobs should fail
     ASSERT_FALSE(retrieveMount->reserveDiskSpace(reservationRequest, lc));
-
     //No extra disk space was reserved
-    auto diskSpaceReservedAfter = std::get<1>(catalogue.getDiskSpaceReservation("drive0"));
-    
+    auto diskSpaceReservedAfter = catalogue.getTapeDrive("drive0").value().reservedBytes;
     ASSERT_EQ(diskSpaceReservedAfter, diskSpaceReservedBefore);
   }
   /*

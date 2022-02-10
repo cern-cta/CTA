@@ -109,7 +109,6 @@ int SchedulingInfosLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf
     sq_item->set_cur_mounts(sq.currentMounts);
     sq_item->set_cur_files(sq.currentFiles);
     sq_item->set_cur_bytes(sq.currentBytes);
-    sq_item->set_bytes_per_second(sq.latestBandwidth);
     sq_item->set_next_mounts(sq.nextMounts);
     sq_item->set_tapes_capacity(sq.tapesCapacity);
     sq_item->set_tapes_files(sq.filesOnTapes);

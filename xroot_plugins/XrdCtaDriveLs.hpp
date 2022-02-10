@@ -72,7 +72,7 @@ DriveLsStream::DriveLsStream(const RequestMessage &requestMsg, cta::catalogue::C
   XrdCtaStream(catalogue, scheduler),
   m_lc(lc),
   m_tapeDrives(m_catalogue.getTapeDrives()),
-  m_tapeDrivesConfigs(m_catalogue.getDrivesConfigs()) {
+  m_tapeDrivesConfigs(m_catalogue.getTapeDriveConfigs()) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "DriveLsStream() constructor");
 
   auto driveRegexOpt = requestMsg.getOptional(cta::admin::OptionString::DRIVE);
@@ -118,10 +118,6 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     dr_item->set_vo(dr.currentVo ? dr.currentVo.value() : "");
     dr_item->set_files_transferred_in_session(dr.filesTransferedInSession ? dr.filesTransferedInSession.value() : 0);
     dr_item->set_bytes_transferred_in_session(dr.bytesTransferedInSession ? dr.bytesTransferedInSession.value() : 0);
-    if (dr.latestBandwidth && std::isdigit(dr.latestBandwidth.value().at(0)))
-      dr_item->set_latest_bandwidth(std::stod(dr.latestBandwidth.value()));
-    else
-      dr_item->set_latest_bandwidth(0);
     dr_item->set_session_id(dr.sessionId ? dr.sessionId.value() : 0);
     const auto lastUpdateTime = dr.lastModificationLog ? dr.lastModificationLog.value().time : time(nullptr);
     dr_item->set_time_since_last_update(time(nullptr) - lastUpdateTime);
@@ -133,6 +129,7 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     dr_item->set_reason(dr.reasonUpDown ? dr.reasonUpDown.value() : "");
     dr_item->set_disk_system_name(dr.diskSystemName);
     dr_item->set_reserved_bytes(dr.reservedBytes);
+    dr_item->set_session_elapsed_time(dr.sessionElapsedTime ? dr.sessionElapsedTime.value() : 0);
 
     auto driveConfig = dr_item->mutable_drive_config();
 

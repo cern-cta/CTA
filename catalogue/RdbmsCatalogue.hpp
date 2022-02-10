@@ -2334,34 +2334,35 @@ protected:
 
   optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string &tapeDriveName) const override;
 
-  void modifyTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) override;
+  void setDesiredTapeDriveState(const std::string& tapeDriveName,
+    const common::dataStructures::DesiredDriveState &desiredState) override;
+
+  void updateTapeDriveStatistics(const std::string& tapeDriveName,
+    const std::string& host, const std::string& logicalLibrary,
+    const common::dataStructures::TapeDriveStatistics& statistics) override;
+
+  void updateTapeDriveStatus(const common::dataStructures::TapeDrive &tapeDrive);
 
   void deleteTapeDrive(const std::string &tapeDriveName) override;
 
-  void createDriveConfig(const std::string &tapeDriveName, const std::string &category,
+  void createTapeDriveConfig(const std::string &tapeDriveName, const std::string &category,
     const std::string &keyName, const std::string &value, const std::string &source) override;
 
-  std::list<std::pair<std::string, std::string>> getDriveConfigNamesAndKeys() const override;
+  std::list<std::pair<std::string, std::string>> getTapeDriveConfigNamesAndKeys() const override;
 
-  void modifyDriveConfig(const std::string &tapeDriveName, const std::string &category,
+  void modifyTapeDriveConfig(const std::string &tapeDriveName, const std::string &category,
     const std::string &keyName, const std::string &value, const std::string &source) override;
 
-  std::list<cta::catalogue::Catalogue::DriveConfig> getDrivesConfigs() const override;
+  std::list<cta::catalogue::Catalogue::DriveConfig> getTapeDriveConfigs() const override;
 
-  optional<std::tuple<std::string, std::string, std::string>> getDriveConfig( const std::string &tapeDriveName,
+  optional<std::tuple<std::string, std::string, std::string>> getTapeDriveConfig( const std::string &tapeDriveName,
     const std::string &keyName) const override;
 
-  void deleteDriveConfig(const std::string &tapeDriveName, const std::string &keyName) override;
+  void deleteTapeDriveConfig(const std::string &tapeDriveName, const std::string &keyName) override;
 
-  std::map<std::string, uint64_t> getExistingDrivesReservations() const override;
+  std::map<std::string, uint64_t> getDiskSpaceReservations() const override;
 
   void reserveDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) override;
-
-  void addDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes) override;
-
-  void subtractDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes) override;
-
-  std::tuple<std::string, uint64_t> getDiskSpaceReservation(const std::string& driveName) override;
 
   void releaseDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) override;
 

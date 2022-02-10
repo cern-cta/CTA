@@ -8,3 +8,5 @@ workbench.xmi
 .vscode/
 cta-release/RPM-GPG-KEY-*
 cta-release/versionlock.cta
+*.swp
+tags

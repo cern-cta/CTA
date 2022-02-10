@@ -54,7 +54,6 @@ struct DriveState {
   uint64_t sessionId = 0;
   uint64_t bytesTransferredInSession = 0;
   uint64_t filesTransferredInSession = 0;
-  double latestBandwidth = 0.0; /** < Byte per seconds */
   time_t sessionStartTime = 0;
   time_t mountStartTime = 0;
   time_t transferStartTime = 0;

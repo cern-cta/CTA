@@ -48,7 +48,6 @@ namespace cta { namespace common {
     uint64_t sessionId;
     uint64_t bytesTransferedInSession;
     uint64_t filesTransferedInSession;
-    double latestBandwidth; /** < Byte per seconds */
     time_t sessionStartTime;
     time_t mountStartTime;
     time_t transferStartTime;

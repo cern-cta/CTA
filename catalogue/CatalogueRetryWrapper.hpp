@@ -691,59 +691,58 @@ public:
     return retryOnLostConnection(m_log,[&]{return m_catalogue->getTapeDrive(tapeDriveName);},m_maxTriesToConnect);
   }
 
-  void modifyTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) override {
-    return retryOnLostConnection(m_log,[&]{return m_catalogue->modifyTapeDrive(tapeDrive);},m_maxTriesToConnect);
+  void setDesiredTapeDriveState(const std::string& tapeDriveName,
+    const common::dataStructures::DesiredDriveState &desiredState) override {
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->setDesiredTapeDriveState(tapeDriveName, desiredState);}, m_maxTriesToConnect);
+  }
+
+  void updateTapeDriveStatistics(const std::string& tapeDriveName,
+    const std::string& host, const std::string& logicalLibrary,
+    const common::dataStructures::TapeDriveStatistics& statistics) override {
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->updateTapeDriveStatistics(tapeDriveName, host, logicalLibrary, statistics);}, m_maxTriesToConnect);
+  }
+
+  void updateTapeDriveStatus(const common::dataStructures::TapeDrive &tapeDrive) override {
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->updateTapeDriveStatus(tapeDrive);}, m_maxTriesToConnect);
   }
 
   void deleteTapeDrive(const std::string &tapeDriveName) override {
     return retryOnLostConnection(m_log,[&]{return m_catalogue->deleteTapeDrive(tapeDriveName);},m_maxTriesToConnect);
   }
 
-  void createDriveConfig(const std::string &driveName, const std::string &category,
+  void createTapeDriveConfig(const std::string &driveName, const std::string &category,
     const std::string &keyName, const std::string &value, const std::string &source) {
-    return retryOnLostConnection(m_log,[&]{return m_catalogue->createDriveConfig(driveName, category, keyName, value, source);},m_maxTriesToConnect);
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->createTapeDriveConfig(driveName, category, keyName, value, source);},m_maxTriesToConnect);
   }
 
-  std::list<cta::catalogue::Catalogue::DriveConfig> getDrivesConfigs() const {
-    return retryOnLostConnection(m_log,[&]{return m_catalogue->getDrivesConfigs();},m_maxTriesToConnect);
+  std::list<cta::catalogue::Catalogue::DriveConfig> getTapeDriveConfigs() const {
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->getTapeDriveConfigs();},m_maxTriesToConnect);
   }
 
-  std::list<std::pair<std::string, std::string>> getDriveConfigNamesAndKeys() const {
-    return retryOnLostConnection(m_log,[&]{return m_catalogue->getDriveConfigNamesAndKeys();},m_maxTriesToConnect);
+  std::list<std::pair<std::string, std::string>> getTapeDriveConfigNamesAndKeys() const {
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->getTapeDriveConfigNamesAndKeys();},m_maxTriesToConnect);
   }
 
-  void modifyDriveConfig(const std::string &driveName, const std::string &category,
+  void modifyTapeDriveConfig(const std::string &driveName, const std::string &category,
     const std::string &keyName, const std::string &value, const std::string &source) {
-    return retryOnLostConnection(m_log,[&]{return m_catalogue->modifyDriveConfig(driveName, category, keyName, value, source);},m_maxTriesToConnect);
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->modifyTapeDriveConfig(driveName, category, keyName, value, source);},m_maxTriesToConnect);
   }
 
-  optional<std::tuple<std::string, std::string, std::string>> getDriveConfig( const std::string &tapeDriveName,
+  optional<std::tuple<std::string, std::string, std::string>> getTapeDriveConfig( const std::string &tapeDriveName,
     const std::string &keyName) const {
-    return retryOnLostConnection(m_log,[&]{return m_catalogue->getDriveConfig(tapeDriveName, keyName);},m_maxTriesToConnect);
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->getTapeDriveConfig(tapeDriveName, keyName);},m_maxTriesToConnect);
   }
 
-  void deleteDriveConfig(const std::string &tapeDriveName, const std::string &keyName) {
-    return retryOnLostConnection(m_log,[&]{return m_catalogue->deleteDriveConfig(tapeDriveName, keyName);},m_maxTriesToConnect);
+  void deleteTapeDriveConfig(const std::string &tapeDriveName, const std::string &keyName) {
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->deleteTapeDriveConfig(tapeDriveName, keyName);},m_maxTriesToConnect);
   }
 
-  std::map<std::string, uint64_t> getExistingDrivesReservations() const {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->getExistingDrivesReservations();}, m_maxTriesToConnect);
+  std::map<std::string, uint64_t> getDiskSpaceReservations() const {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->getDiskSpaceReservations();}, m_maxTriesToConnect);
   }
 
   void reserveDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->reserveDiskSpace(driveName, diskSpaceReservation, lc);}, m_maxTriesToConnect);
-  }
-
-  void addDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes) {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->addDiskSpaceReservation(driveName, diskSystemName, bytes);}, m_maxTriesToConnect);
-  }
-
-  void subtractDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes) {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->subtractDiskSpaceReservation(driveName, diskSystemName, bytes);}, m_maxTriesToConnect);
-  }
-
-  std::tuple<std::string, uint64_t> getDiskSpaceReservation(const std::string& driveName) {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->getDiskSpaceReservation(driveName);}, m_maxTriesToConnect);
   }
 
   void releaseDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) {

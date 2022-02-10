@@ -33,7 +33,6 @@ bool DriveState::operator==(const DriveState &rhs) const {
       && sessionId==rhs.sessionId
       && bytesTransferredInSession==rhs.bytesTransferredInSession
       && filesTransferredInSession==rhs.filesTransferredInSession
-      && latestBandwidth==rhs.latestBandwidth
       && sessionStartTime==rhs.sessionStartTime
       && mountStartTime==rhs.mountStartTime
       && transferStartTime==rhs.transferStartTime
@@ -84,7 +83,6 @@ std::ostream &operator<<(std::ostream &os, const DriveState &obj) {
      << " sessionId=" << obj.sessionId
      << " bytesTransferedInSession=" << obj.bytesTransferredInSession
      << " filesTransferedInSession=" << obj.filesTransferredInSession
-     << " latestBandwidth=" << obj.latestBandwidth
      << " sessionStartTime=" << obj.sessionStartTime
      << " mountStartTime="  << obj.mountStartTime
      << " transferStartTime="  << obj.transferStartTime

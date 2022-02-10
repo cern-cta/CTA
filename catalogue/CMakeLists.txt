@@ -35,6 +35,7 @@ set (CATALOGUE_LIB_SRC_FILES
   CatalogueFactoryFactory.cpp
   CatalogueSchema.cpp
   CmdLineTool.cpp
+  DriveConfig.cpp
   InMemoryCatalogue.cpp
   InMemoryCatalogueFactory.cpp
   OracleCatalogue.cpp
@@ -51,6 +52,7 @@ set (CATALOGUE_LIB_SRC_FILES
   RdbmsCatalogueTapeContentsItor.cpp
   RdbmsCatalogueGetFileRecycleLogItor.cpp
   SchemaCreatingSqliteCatalogue.cpp
+  TapeDrivesCatalogueState.cpp
   SqliteCatalogue.cpp
   SchemaVersion.cpp
   TapeForWriting.cpp

@@ -60,6 +60,7 @@
 #include "common/dataStructures/Tape.hpp"
 #include "common/dataStructures/TapeCopyToPoolMap.hpp"
 #include "common/dataStructures/TapeDrive.hpp"
+#include "common/dataStructures/TapeDriveStatistics.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 #include "common/dataStructures/UpdateFileInfoRequest.hpp"
 #include "common/dataStructures/RequesterIdentity.hpp"
@@ -1274,10 +1275,18 @@ public:
   virtual optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string &tapeDriveName) const = 0;
 
   /**
-   * Modifies the parameters of the specified Tape Drive
-   * @param tapeDrive Parameters of the Tape Drive.
+   * Modifies the desired state parameters off the specified Tape Drive
+   * @param tapeDriveName Name of the Tape Drive.
+   * @param desiredState Desired state parameters of the Tape Drive.
    */
-  virtual void modifyTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) = 0;
+  virtual void setDesiredTapeDriveState(const std::string& tapeDriveName,
+      const common::dataStructures::DesiredDriveState &desiredState) = 0;
+
+  virtual void updateTapeDriveStatistics(const std::string& tapeDriveName,
+    const std::string& host, const std::string& logicalLibrary,
+    const common::dataStructures::TapeDriveStatistics& statistics) = 0;
+
+  virtual void updateTapeDriveStatus(const common::dataStructures::TapeDrive &tapeDrive) = 0;
 
   /**
    * Deletes the entry of a Tape Drive
@@ -1304,20 +1313,20 @@ public:
    * @param value The value of the parameter.
    * @param source The source from which the parameter was gotten.
    */
-  virtual void createDriveConfig(const std::string &tapeDriveName, const std::string &category,
+  virtual void createTapeDriveConfig(const std::string &tapeDriveName, const std::string &category,
     const std::string &keyName, const std::string &value, const std::string &source) = 0;
 
   /**
    * Gets all Drive Configurations of all TapeDrives.
    * @return Drive Configurations of all TapeDrives.
    */
-  virtual std::list<DriveConfig> getDrivesConfigs() const = 0;
+  virtual std::list<DriveConfig> getTapeDriveConfigs() const = 0;
 
   /**
    * Gets the Key and Names of configurations of all TapeDrives
    * @return Keys and Names of configurations.
    */
-  virtual std::list<std::pair<std::string, std::string>> getDriveConfigNamesAndKeys() const = 0;
+  virtual std::list<std::pair<std::string, std::string>> getTapeDriveConfigNamesAndKeys() const = 0;
 
   /**
    * Modifies a specified parameter of the configuration for a certain Tape Drive
@@ -1327,7 +1336,7 @@ public:
    * @param value The value of the parameter.
    * @param source The source from which the parameter was gotten.
    */
-  virtual void modifyDriveConfig(const std::string &tapeDriveName, const std::string &category,
+  virtual void modifyTapeDriveConfig(const std::string &tapeDriveName, const std::string &category,
     const std::string &keyName, const std::string &value, const std::string &source) = 0;
 
   /**
@@ -1336,25 +1345,30 @@ public:
    * @param keyName The key of the parameter.
    * @return Returns the category, value and source of a parameter of the configuarion
    */
-  virtual optional<std::tuple<std::string, std::string, std::string>> getDriveConfig( const std::string &tapeDriveName,
+  virtual optional<std::tuple<std::string, std::string, std::string>> getTapeDriveConfig( const std::string &tapeDriveName,
     const std::string &keyName) const = 0;
 
   /**
    * Deletes the entry of a Drive Configuration
    * @param tapeDriveName The name of the tape drive.
    */
-  virtual void deleteDriveConfig(const std::string &tapeDriveName, const std::string &keyName) = 0;
+  virtual void deleteTapeDriveConfig(const std::string &tapeDriveName, const std::string &keyName) = 0;
 
-  virtual std::map<std::string, uint64_t> getExistingDrivesReservations() const = 0;
+  /**
+   * Gets the disk space reservations for all disk systems
+   */
+  virtual std::map<std::string, uint64_t> getDiskSpaceReservations() const = 0;
 
+  /**
+   * Adds to the current disk space reservation
+   */
   virtual void reserveDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) = 0;
 
-  virtual void addDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes) = 0;
-
-  virtual void subtractDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes) = 0;
-
-  virtual std::tuple<std::string, uint64_t> getDiskSpaceReservation(const std::string& driveName) = 0;
-
+  /**
+   * Subtracts from the current disk space reservation.
+   *
+   * If the amount released exceeds the current reservation, the reservation will be reduced to zero.
+   */
   virtual void releaseDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) = 0;
 
 }; // class Catalogue

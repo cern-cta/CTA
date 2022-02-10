@@ -16,6 +16,7 @@
  */
 
 #include "common/dataStructures/MountType.hpp"
+#include "common/exception/Exception.hpp"
 
 namespace cta {
 namespace common {
@@ -24,20 +25,30 @@ namespace dataStructures {
 std::string toString(cta::common::dataStructures::MountType type) {
   switch(type) {
     case MountType::ArchiveForUser:
-      return "ArchiveForUser";
+      return "ARCHIVE_FOR_USER";
     case MountType::ArchiveForRepack:
-      return "ArchiveForRepack";
+      return "ARCHIVE_FOR_REPACK";
     case MountType::ArchiveAllTypes:
-      return "ArchiveAllTypes";
+      return "ARCHIVE_ALL_TYPES";
     case MountType::Retrieve:
-      return "Retrieve";
+      return "RETRIEVE";
     case MountType::Label:
-      return "Label";
+      return "LABEL";
     case MountType::NoMount:
-      return "-";
+      return "NO_MOUNT";
     default:
       return "UNKNOWN";
   }
+}
+
+MountType strToMountType(const std::string& mountTypeStr) {
+       if(mountTypeStr == "ARCHIVE_FOR_USER")   return MountType::ArchiveForUser;
+  else if(mountTypeStr == "ARCHIVE_FOR_REPACK") return MountType::ArchiveForRepack;
+  else if(mountTypeStr == "ARCHIVE_ALL_TYPES")  return MountType::ArchiveAllTypes;
+  else if(mountTypeStr == "RETRIEVE")           return MountType::Retrieve;
+  else if(mountTypeStr == "LABEL")              return MountType::Label;
+  else if(mountTypeStr == "NO_MOUNT")           return MountType::NoMount;
+  else throw cta::exception::Exception("Mount type " + mountTypeStr + " does not correspond to a valid mount type.");
 }
 
 MountType getMountBasicType(MountType type) {

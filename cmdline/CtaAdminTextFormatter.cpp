@@ -276,22 +276,24 @@ void TextFormatter::print(const DriveLsItem &drls_item)
   std::string driveStatusSince;
   std::string filesTransferredInSession;
   std::string bytesTransferredInSession;
-  std::string latestBandwidth;
+  std::string averageBandwidth;
   std::string sessionId;
   std::string timeSinceLastUpdate;
-
 
   if(drls_item.drive_status() != DriveLsItem::UNKNOWN_DRIVE_STATUS) {
     driveStatusSince = std::to_string(drls_item.drive_status_since());
   }
-
   if(drls_item.drive_status() == DriveLsItem::TRANSFERRING) {
     filesTransferredInSession = std::to_string(drls_item.files_transferred_in_session());
     bytesTransferredInSession = dataSizeToStr(drls_item.bytes_transferred_in_session());
-    double bandwidth = static_cast<double>(drls_item.latest_bandwidth())/static_cast<double>(1000000);
-    latestBandwidth = doubleToStr(bandwidth,'\0');
+    if(drls_item.session_elapsed_time() > 0) {
+      // Calculate average bandwidth for the session in MB/s (reported to 1 decimal place)
+      double bandwidth = drls_item.bytes_transferred_in_session()/drls_item.session_elapsed_time();
+      averageBandwidth = doubleToStr(bandwidth/1000000.0,'\0');
+    } else {
+      averageBandwidth = "0.0";
+    }
   }
-
   if(drls_item.drive_status() != DriveLsItem::UP &&
      drls_item.drive_status() != DriveLsItem::DOWN &&
      drls_item.drive_status() != DriveLsItem::UNKNOWN_DRIVE_STATUS) {
@@ -317,7 +319,7 @@ void TextFormatter::print(const DriveLsItem &drls_item)
     drls_item.vo(),
     filesTransferredInSession,
     bytesTransferredInSession,
-    latestBandwidth,
+    averageBandwidth,
     sessionId,
     drls_item.current_priority(),
     drls_item.current_activity(),

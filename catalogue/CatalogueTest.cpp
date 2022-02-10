@@ -444,9 +444,9 @@ void cta_catalogue_CatalogueTest::SetUp() {
       }
     }
     {
-      const auto configurationTapeNamesAndKeys = m_catalogue->getDriveConfigNamesAndKeys();
+      const auto configurationTapeNamesAndKeys = m_catalogue->getTapeDriveConfigNamesAndKeys();
       for (const auto& nameAndKey : configurationTapeNamesAndKeys) {
-        m_catalogue->deleteDriveConfig(nameAndKey.first, nameAndKey.second);
+        m_catalogue->deleteTapeDriveConfig(nameAndKey.first, nameAndKey.second);
       }
     }
 
@@ -4165,7 +4165,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary) {
 
     {
       const auto nameToLibItor = nameToLib.find(m_tape1.logicalLibraryName);
-      ASSERT_FALSE(nameToLib.end() == nameToLibItor);
+      ASSERT_NE(nameToLib.end(), nameToLibItor);
       const auto &lib = nameToLibItor->second;
       ASSERT_EQ(m_tape1.logicalLibraryName, lib.name);
       ASSERT_EQ(libNotToDeleteIsDisabled, lib.isDisabled);
@@ -4179,7 +4179,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary) {
 
     {
       const auto nameToLibItor = nameToLib.find(libToDeleteName);
-      ASSERT_FALSE(nameToLib.end() == nameToLibItor);
+      ASSERT_NE(nameToLib.end(), nameToLibItor);
       const auto &lib = nameToLibItor->second;
       ASSERT_EQ(libToDeleteName, lib.name);
       ASSERT_EQ(libToDeleteIsDisabled, lib.isDisabled);
@@ -4884,7 +4884,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
       vid << "vid" << i;
 
       auto vidAndTapeItor = vidToTape.find(vid.str());
-      ASSERT_FALSE(vidToTape.end() == vidAndTapeItor);
+      ASSERT_NE(vidToTape.end(), vidAndTapeItor);
 
       const common::dataStructures::Tape tape = vidAndTapeItor->second;
       ASSERT_EQ(vid.str(), tape.vid);
@@ -5103,7 +5103,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
       vid << "vid" << i;
 
       auto vidAndTapeItor = vidToTape.find(vid.str());
-      ASSERT_FALSE(vidToTape.end() == vidAndTapeItor);
+      ASSERT_NE(vidToTape.end(), vidAndTapeItor);
 
       const common::dataStructures::Tape tape = vidAndTapeItor->second;
       ASSERT_EQ(vid.str(), tape.vid);
@@ -5274,8 +5274,8 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
     ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_TRUE(m_tape2.state == tape.state);
-    ASSERT_TRUE(m_tape2.full == tape.full);
+    ASSERT_EQ(m_tape2.state, tape.state);
+    ASSERT_EQ(m_tape2.full, tape.full);
 
     ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(m_tape2.comment, tape.comment);
@@ -8766,7 +8766,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -8810,7 +8810,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -8818,7 +8818,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
     ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
 
     auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
-    ASSERT_FALSE(copyNbToTapeFile2Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile2Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile2 = *copyNbToTapeFile2Itor;
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
@@ -8989,7 +8989,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -9035,7 +9035,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
     const auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -9043,7 +9043,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
 
     const auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
-    ASSERT_FALSE(copyNbToTapeFile2Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile2Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile2 = *copyNbToTapeFile2Itor;
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
@@ -9090,7 +9090,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(2, queueCriteria.archiveFile.tapeFiles.size());
 
     const auto copyNbToTapeFile1Itor = queueCriteria.archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == queueCriteria.archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, queueCriteria.archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -9099,7 +9099,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
 
     const auto copyNbToTapeFile2Itor = queueCriteria.archiveFile.tapeFiles.find(2);
-    ASSERT_FALSE(copyNbToTapeFile2Itor == queueCriteria.archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile2Itor, queueCriteria.archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile2 = *copyNbToTapeFile2Itor;
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
@@ -9119,7 +9119,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(1, queueCriteria.archiveFile.tapeFiles.size());
 
     const auto copyNbToTapeFile2Itor = queueCriteria.archiveFile.tapeFiles.find(2);
-    ASSERT_FALSE(copyNbToTapeFile2Itor == queueCriteria.archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile2Itor, queueCriteria.archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile2 = *copyNbToTapeFile2Itor;
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
@@ -9233,7 +9233,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_retu
     ASSERT_EQ(1, queueCriteria.archiveFile.tapeFiles.size());
 
     const auto copyNbToTapeFile1Itor = queueCriteria.archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == queueCriteria.archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, queueCriteria.archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file2Written.vid, tapeFile1.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile1.fSeq);
@@ -9369,7 +9369,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_Acti
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -9413,7 +9413,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_Acti
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -9421,7 +9421,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_Acti
     ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
 
     auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
-    ASSERT_FALSE(copyNbToTapeFile2Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile2Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile2 = *copyNbToTapeFile2Itor;
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
@@ -9673,7 +9673,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(tapePoolName1, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(tape1.full == tape.full);
+      ASSERT_EQ(tape1.full, tape.full);
 
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(0, tape.readMountCount);
@@ -9701,7 +9701,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       ASSERT_EQ(tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(tape2.full == tape.full);
+      ASSERT_EQ(tape2.full, tape.full);
 
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(tape2.comment, tape.comment);
@@ -9868,7 +9868,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(1, m.size());
 
     const auto idAndFile = m.find(1);
-    ASSERT_FALSE(m.end() == idAndFile);
+    ASSERT_NE(m.end(), idAndFile);
     const common::dataStructures::ArchiveFile archiveFile = idAndFile->second;
     ASSERT_EQ(searchCriteria.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(searchCriteria.diskInstance, archiveFile.diskInstance);
@@ -9908,7 +9908,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten2.copyNb = 2;
 
       const auto idAndFile = m.find(i);
-      ASSERT_FALSE(m.end() == idAndFile);
+      ASSERT_NE(m.end(), idAndFile);
       const common::dataStructures::ArchiveFile archiveFile = idAndFile->second;
       ASSERT_EQ(fileWritten1.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(fileWritten1.diskInstance, archiveFile.diskInstance);
@@ -9975,7 +9975,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten1.copyNb = 1;
 
       const auto idAndFile = m.find(i);
-      ASSERT_FALSE(m.end() == idAndFile);
+      ASSERT_NE(m.end(), idAndFile);
       const common::dataStructures::ArchiveFile archiveFile = idAndFile->second;
       ASSERT_EQ(fileWritten1.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(fileWritten1.diskInstance, archiveFile.diskInstance);
@@ -10031,7 +10031,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten1.copyNb = 1;
 
       const auto idAndFile = m.find(i);
-      ASSERT_FALSE(m.end() == idAndFile);
+      ASSERT_NE(m.end(), idAndFile);
       const common::dataStructures::ArchiveFile archiveFile = idAndFile->second;
       ASSERT_EQ(fileWritten1.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(fileWritten1.diskInstance, archiveFile.diskInstance);
@@ -10087,7 +10087,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten2.copyNb = 2;
 
       const auto idAndFile = m.find(i);
-      ASSERT_FALSE(m.end() == idAndFile);
+      ASSERT_NE(m.end(), idAndFile);
       const common::dataStructures::ArchiveFile archiveFile = idAndFile->second;
       ASSERT_EQ(fileWritten2.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(fileWritten2.diskInstance, archiveFile.diskInstance);
@@ -10145,7 +10145,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten2.copyNb = 2;
 
       const auto idAndFile = m.find(i);
-      ASSERT_FALSE(m.end() == idAndFile);
+      ASSERT_NE(m.end(), idAndFile);
       const common::dataStructures::ArchiveFile archiveFile = idAndFile->second;
       ASSERT_EQ(fileWritten1.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(fileWritten1.diskInstance, archiveFile.diskInstance);
@@ -10212,7 +10212,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten.copyNb = copyNb;
 
       const auto idAndFile = m.find(i);
-      ASSERT_FALSE(m.end() == idAndFile);
+      ASSERT_NE(m.end(), idAndFile);
       const common::dataStructures::ArchiveFile archiveFile = idAndFile->second;
       ASSERT_EQ(fileWritten.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(fileWritten.diskInstance, archiveFile.diskInstance);
@@ -10270,7 +10270,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten.copyNb = copyNb;
 
       const auto idAndFile = m.find(i);
-      ASSERT_FALSE(m.end() == idAndFile);
+      ASSERT_NE(m.end(), idAndFile);
       const common::dataStructures::ArchiveFile archiveFile = idAndFile->second;
       ASSERT_EQ(fileWritten.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(fileWritten.diskInstance, archiveFile.diskInstance);
@@ -10328,7 +10328,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
       fileWritten.copyNb = copyNb;
 
       const auto idAndFile = m.find(i);
-      ASSERT_FALSE(m.end() == idAndFile);
+      ASSERT_NE(m.end(), idAndFile);
       const common::dataStructures::ArchiveFile archiveFile = idAndFile->second;
       ASSERT_EQ(fileWritten.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(fileWritten.diskInstance, archiveFile.diskInstance);
@@ -10794,7 +10794,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(tapePoolName1, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(tape1.full == tape.full);
+      ASSERT_EQ(tape1.full, tape.full);
 
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(tape1.comment, tape.comment);
@@ -10820,7 +10820,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       ASSERT_EQ(tapePoolName2, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(tape2.full == tape.full);
+      ASSERT_EQ(tape2.full, tape.full);
 
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(tape2.comment, tape.comment);
@@ -10946,7 +10946,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
     ASSERT_EQ(1, m.size());
 
     const auto idAndFile = m.find(1);
-    ASSERT_FALSE(m.end() == idAndFile);
+    ASSERT_NE(m.end(), idAndFile);
     const common::dataStructures::ArchiveFile archiveFile = idAndFile->second;
     ASSERT_EQ(searchCriteria.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(searchCriteria.diskInstance, archiveFile.diskInstance);
@@ -11002,7 +11002,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten2.copyNb = 2;
 
       const auto idAndFile = m.find(i);
-      ASSERT_FALSE(m.end() == idAndFile);
+      ASSERT_NE(m.end(), idAndFile);
       const common::dataStructures::ArchiveFile archiveFile = idAndFile->second;
       ASSERT_EQ(fileWritten1.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(fileWritten1.diskInstance, archiveFile.diskInstance);
@@ -11075,7 +11075,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten2.copyNb = 2;
 
       const auto idAndFile = m.find(i);
-      ASSERT_FALSE(m.end() == idAndFile);
+      ASSERT_NE(m.end(), idAndFile);
       const common::dataStructures::ArchiveFile archiveFile = idAndFile->second;
       ASSERT_EQ(fileWritten1.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(fileWritten1.diskInstance, archiveFile.diskInstance);
@@ -11145,7 +11145,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten.copyNb = copyNb;
 
       const auto idAndFile = m.find(i);
-      ASSERT_FALSE(m.end() == idAndFile);
+      ASSERT_NE(m.end(), idAndFile);
       const common::dataStructures::ArchiveFile archiveFile = idAndFile->second;
       ASSERT_EQ(fileWritten.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(fileWritten.diskInstance, archiveFile.diskInstance);
@@ -11206,7 +11206,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten.copyNb = copyNb;
 
       const auto idAndFile = m.find(i);
-      ASSERT_FALSE(m.end() == idAndFile);
+      ASSERT_NE(m.end(), idAndFile);
       const common::dataStructures::ArchiveFile archiveFile = idAndFile->second;
       ASSERT_EQ(fileWritten.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(fileWritten.diskInstance, archiveFile.diskInstance);
@@ -11267,7 +11267,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
       fileWritten.copyNb = copyNb;
 
       const auto idAndFile = m.find(i);
-      ASSERT_FALSE(m.end() == idAndFile);
+      ASSERT_NE(m.end(), idAndFile);
       const common::dataStructures::ArchiveFile archiveFile = idAndFile->second;
       ASSERT_EQ(fileWritten.archiveFileId, archiveFile.archiveFileID);
       ASSERT_EQ(fileWritten.diskInstance, archiveFile.diskInstance);
@@ -11490,7 +11490,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -11606,7 +11606,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -11768,7 +11768,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(m_tape2.full == tape.full);
+      ASSERT_EQ(m_tape2.full, tape.full);
 
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(0, tape.readMountCount);
@@ -11843,7 +11843,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -11899,7 +11899,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -11908,7 +11908,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
 
     auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
-    ASSERT_FALSE(copyNbToTapeFile2Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile2Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile2 = *copyNbToTapeFile2Itor;
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
@@ -11975,7 +11975,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(m_tape2.full == tape.full);
+      ASSERT_EQ(m_tape2.full, tape.full);
 
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(m_tape2.comment, tape.comment);
@@ -12047,7 +12047,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -12221,7 +12221,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -12394,7 +12394,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -12484,7 +12484,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(m_tape2.full == tape.full);
+      ASSERT_EQ(m_tape2.full, tape.full);
 
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(m_tape2.comment, tape.comment);
@@ -12554,7 +12554,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -12646,7 +12646,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(m_tape2.full == tape.full);
+      ASSERT_EQ(m_tape2.full, tape.full);
 
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(0, tape.readMountCount);
@@ -12718,7 +12718,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -12807,7 +12807,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
       ASSERT_EQ(m_tape2.tapePoolName, tape.tapePoolName);
       ASSERT_EQ(m_vo.name, tape.vo);
       ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_TRUE(m_tape2.full == tape.full);
+      ASSERT_EQ(m_tape2.full, tape.full);
 
       ASSERT_FALSE(tape.isFromCastor);
       ASSERT_EQ(m_tape2.comment, tape.comment);
@@ -12878,7 +12878,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -13028,7 +13028,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     const auto m = archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(1, m.size());
     auto mItor = m.find(file1Written.archiveFileId);
-    ASSERT_FALSE(m.end() == mItor);
+    ASSERT_NE(m.end(), mItor);
 
     const common::dataStructures::ArchiveFile archiveFile = mItor->second;
 
@@ -13045,7 +13045,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -13070,7 +13070,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -13116,7 +13116,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
 
     {
       auto mItor = m.find(file1Written.archiveFileId);
-      ASSERT_FALSE(m.end() == mItor);
+      ASSERT_NE(m.end(), mItor);
 
       const common::dataStructures::ArchiveFile archiveFile = mItor->second;
 
@@ -13134,7 +13134,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
       ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
       auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-      ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+      ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
       const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
       ASSERT_EQ(file1Written.vid, tapeFile1.vid);
       ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -13143,7 +13143,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
       ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
 
       auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
-      ASSERT_FALSE(copyNbToTapeFile2Itor == archiveFile.tapeFiles.end());
+      ASSERT_NE(copyNbToTapeFile2Itor, archiveFile.tapeFiles.end());
       const common::dataStructures::TapeFile &tapeFile2 = *copyNbToTapeFile2Itor;
       ASSERT_EQ(file2Written.vid, tapeFile2.vid);
       ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
@@ -13170,7 +13170,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -13179,7 +13179,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
 
     auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
-    ASSERT_FALSE(copyNbToTapeFile2Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile2Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile2 = *copyNbToTapeFile2Itor;
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
@@ -13311,7 +13311,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
     const auto m = archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(1, m.size());
     auto mItor = m.find(file1Written.archiveFileId);
-    ASSERT_FALSE(m.end() == mItor);
+    ASSERT_NE(m.end(), mItor);
 
     const common::dataStructures::ArchiveFile archiveFile = mItor->second;
 
@@ -13328,7 +13328,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -13353,7 +13353,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -13399,7 +13399,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
 
     {
       auto mItor = m.find(file1Written.archiveFileId);
-      ASSERT_FALSE(m.end() == mItor);
+      ASSERT_NE(m.end(), mItor);
 
       const common::dataStructures::ArchiveFile archiveFile = mItor->second;
 
@@ -13417,7 +13417,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
       ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
       auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-      ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+      ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
       const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
       ASSERT_EQ(file1Written.vid, tapeFile1.vid);
       ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -13426,7 +13426,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
       ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
 
       auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
-      ASSERT_FALSE(copyNbToTapeFile2Itor == archiveFile.tapeFiles.end());
+      ASSERT_NE(copyNbToTapeFile2Itor, archiveFile.tapeFiles.end());
       const common::dataStructures::TapeFile &tapeFile2 = *copyNbToTapeFile2Itor;
       ASSERT_EQ(file2Written.vid, tapeFile2.vid);
       ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
@@ -13453,7 +13453,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
     ASSERT_EQ(2, archiveFile.tapeFiles.size());
 
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -13462,7 +13462,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
 
     auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
-    ASSERT_FALSE(copyNbToTapeFile2Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile2Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile2 = *copyNbToTapeFile2Itor;
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
@@ -15497,7 +15497,7 @@ TEST_P(cta_catalogue_CatalogueTest, getNbFilesOnTape_one_tape_file) {
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -15647,7 +15647,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file) {
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -15750,7 +15750,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_reclaimed_ta
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -16006,7 +16006,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -16209,7 +16209,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -16610,7 +16610,7 @@ TEST_P(cta_catalogue_CatalogueTest, updateDiskFileId) {
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -16638,7 +16638,7 @@ TEST_P(cta_catalogue_CatalogueTest, updateDiskFileId) {
 
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_FALSE(copyNbToTapeFile1Itor == archiveFile.tapeFiles.end());
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
     const common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
@@ -17289,7 +17289,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapeDriveWithAllElements) {
   const auto tapeDrive = getTapeDriveWithAllElements(tapeDriveName);
   m_catalogue->createTapeDrive(tapeDrive);
   const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
-  ASSERT_EQ(tapeDrive, storedTapeDrive);
+  ASSERT_EQ(tapeDrive, storedTapeDrive.value());
   m_catalogue->deleteTapeDrive(tapeDrive.driveName);
 }
 
@@ -17310,37 +17310,520 @@ TEST_P(cta_catalogue_CatalogueTest, multipleTapeDrives) {
   m_catalogue->deleteTapeDrive(tapeDrive2.driveName);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, modifyTapeDrive) {
+TEST_P(cta_catalogue_CatalogueTest, setDesiredStateEmpty) {
   using namespace cta;
 
   const std::string tapeDriveName = "VDSTK11";
-  const auto tapeDrive1 = getTapeDriveWithMandatoryElements(tapeDriveName);
-  m_catalogue->createTapeDrive(tapeDrive1);
-  const auto tapeDrive2 = getTapeDriveWithAllElements(tapeDriveName);
-  ASSERT_NE(tapeDrive1, tapeDrive2);
-  m_catalogue->modifyTapeDrive(tapeDrive2);
-  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive2.driveName);
-  ASSERT_EQ(tapeDrive2, storedTapeDrive);
-  m_catalogue->deleteTapeDrive(tapeDrive2.driveName);
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  tapeDrive.reasonUpDown = "Previous reason";
+  m_catalogue->createTapeDrive(tapeDrive);
+  common::dataStructures::DesiredDriveState desiredState;
+  m_catalogue->setDesiredTapeDriveState(tapeDrive.driveName, desiredState);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive.value().reasonUpDown));
+  ASSERT_EQ(storedTapeDrive.value().reasonUpDown.value() ,tapeDrive.reasonUpDown.value());
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, modifyTapeDriveWithEmptyDiskSpaceName) {
+TEST_P(cta_catalogue_CatalogueTest, setDesiredStateWithEmptyReason) {
   using namespace cta;
 
   const std::string tapeDriveName = "VDSTK11";
-  const auto tapeDrive1 = getTapeDriveWithMandatoryElements(tapeDriveName);
-  m_catalogue->createTapeDrive(tapeDrive1);
-  auto tapeDrive2 = tapeDrive1;
-  tapeDrive2.diskSystemName = "";
-  ASSERT_NE(tapeDrive1, tapeDrive2);
-  m_catalogue->modifyTapeDrive(tapeDrive2);
-  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive2.driveName);
-  ASSERT_EQ(tapeDrive2, storedTapeDrive.value());
-  ASSERT_EQ("", storedTapeDrive.value().diskSystemName);
-  m_catalogue->deleteTapeDrive(tapeDrive2.driveName);
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  m_catalogue->createTapeDrive(tapeDrive);
+  common::dataStructures::DesiredDriveState desiredState;
+  desiredState.reason = "";
+  m_catalogue->setDesiredTapeDriveState(tapeDrive.driveName, desiredState);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  // SqlLite (InMemory) returns an empty string and Oracle returns a nullopt
+  if (storedTapeDrive.value().reasonUpDown) {
+    ASSERT_TRUE(storedTapeDrive.value().reasonUpDown.value().empty());
+  } else {
+    ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().reasonUpDown));
+  }
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, getDriveConfig) {
+TEST_P(cta_catalogue_CatalogueTest, setDesiredState) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  m_catalogue->createTapeDrive(tapeDrive);
+  common::dataStructures::DesiredDriveState desiredState;
+  desiredState.up = false;
+  desiredState.forceDown = true;
+  desiredState.reason = "reason";
+  desiredState.comment = "comment";
+  m_catalogue->setDesiredTapeDriveState(tapeDrive.driveName, desiredState);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_EQ(storedTapeDrive.value().desiredUp , desiredState.up);
+  ASSERT_EQ(storedTapeDrive.value().desiredForceDown , desiredState.forceDown);
+  ASSERT_EQ(storedTapeDrive.value().reasonUpDown.value() , desiredState.reason);
+  ASSERT_EQ(storedTapeDrive.value().userComment.value() , desiredState.comment);
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, setTapeDriveStatistics) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  tapeDrive.driveStatus = common::dataStructures::DriveStatus::Transferring;
+  m_catalogue->createTapeDrive(tapeDrive);
+  common::dataStructures::TapeDriveStatistics statistics;
+  statistics.bytesTransferedInSession = 123456789;
+  statistics.filesTransferedInSession = 987654321;
+  statistics.lastModificationLog = common::dataStructures::EntryLog(
+        "NO_USER", tapeDrive.host, time(nullptr));
+  m_catalogue->updateTapeDriveStatistics(tapeDrive.driveName, tapeDrive.host, tapeDrive.logicalLibrary,
+      statistics);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_EQ(storedTapeDrive.value().bytesTransferedInSession.value(), statistics.bytesTransferedInSession);
+  ASSERT_EQ(storedTapeDrive.value().filesTransferedInSession.value(), statistics.filesTransferedInSession);
+  ASSERT_EQ(storedTapeDrive.value().lastModificationLog.value() , statistics.lastModificationLog);
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, setTapeDriveStatisticsInNoTransferingStatus) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  tapeDrive.driveStatus = common::dataStructures::DriveStatus::Down;
+  m_catalogue->createTapeDrive(tapeDrive);
+  common::dataStructures::TapeDriveStatistics statistics;
+  statistics.bytesTransferedInSession = 123456789;
+  statistics.filesTransferedInSession = 987654321;
+  statistics.lastModificationLog = common::dataStructures::EntryLog(
+        "NO_USER", tapeDrive.host, time(nullptr));
+  m_catalogue->updateTapeDriveStatistics(tapeDrive.driveName, tapeDrive.host, tapeDrive.logicalLibrary,
+      statistics);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_FALSE(storedTapeDrive.value().bytesTransferedInSession);
+  ASSERT_FALSE(storedTapeDrive.value().filesTransferedInSession);
+  ASSERT_FALSE(storedTapeDrive.value().lastModificationLog);
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, updateTapeDriveStatusSameAsPrevious) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  tapeDrive.driveStatus = common::dataStructures::DriveStatus::Up;
+  m_catalogue->createTapeDrive(tapeDrive);
+  // We update keeping the same status, so it has to update only the lastModificationLog
+  common::dataStructures::TapeDrive newTapeDrive;
+  newTapeDrive.driveName = tapeDrive.driveName;
+  newTapeDrive.driveStatus = tapeDrive.driveStatus;
+  // We use a different MountType to check it doesn't update this value in the database
+  newTapeDrive.mountType = common::dataStructures::MountType::ArchiveForUser;
+  newTapeDrive.host = tapeDrive.host;
+  newTapeDrive.logicalLibrary = tapeDrive.logicalLibrary;
+  // bytesTransferedInSession and filesTransferedInSession shouldn't be updated in DB for status different of transfering
+  newTapeDrive.bytesTransferedInSession = 123456;
+  newTapeDrive.filesTransferedInSession = 987654;
+  newTapeDrive.lastModificationLog = common::dataStructures::EntryLog(
+    "NO_USER", tapeDrive.host, time(nullptr));
+  m_catalogue->updateTapeDriveStatus(newTapeDrive);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive));
+  ASSERT_EQ(newTapeDrive.driveName, storedTapeDrive.value().driveName);
+  ASSERT_EQ(newTapeDrive.driveStatus, storedTapeDrive.value().driveStatus);
+  ASSERT_NE(newTapeDrive.mountType, storedTapeDrive.value().mountType);  // Not update this value
+  ASSERT_EQ(newTapeDrive.host, storedTapeDrive.value().host);
+  ASSERT_EQ(newTapeDrive.logicalLibrary, storedTapeDrive.value().logicalLibrary);
+  ASSERT_EQ(newTapeDrive.lastModificationLog.value(), storedTapeDrive.value().lastModificationLog.value());
+  ASSERT_FALSE(storedTapeDrive.value().bytesTransferedInSession);
+  ASSERT_FALSE(storedTapeDrive.value().filesTransferedInSession);
+  // Disk reservations are not updated by updateTapeDriveStatus()
+  ASSERT_EQ(tapeDrive.diskSystemName, storedTapeDrive.value().diskSystemName);
+  ASSERT_EQ(tapeDrive.reservedBytes, storedTapeDrive.value().reservedBytes);
+
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, updateTapeDriveStatusSameTransferingAsPrevious) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  tapeDrive.driveStatus = common::dataStructures::DriveStatus::Transferring;
+  m_catalogue->createTapeDrive(tapeDrive);
+  // We update keeping the same status, so it has to update only the lastModificationLog
+  common::dataStructures::TapeDrive newTapeDrive;
+  newTapeDrive.driveName = tapeDrive.driveName;
+  newTapeDrive.driveStatus = tapeDrive.driveStatus;
+  // We use a different MountType to check it doesn't update this value in the database
+  newTapeDrive.mountType = common::dataStructures::MountType::ArchiveForUser;
+  newTapeDrive.host = tapeDrive.host;
+  newTapeDrive.logicalLibrary = tapeDrive.logicalLibrary;
+  newTapeDrive.bytesTransferedInSession = 123456;
+  newTapeDrive.filesTransferedInSession = 987654;
+  newTapeDrive.lastModificationLog = common::dataStructures::EntryLog(
+    "NO_USER", tapeDrive.host, time(nullptr));
+  m_catalogue->updateTapeDriveStatus(newTapeDrive);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive));
+  ASSERT_EQ(newTapeDrive.driveName, storedTapeDrive.value().driveName);
+  ASSERT_EQ(newTapeDrive.driveStatus, storedTapeDrive.value().driveStatus);
+  ASSERT_NE(newTapeDrive.mountType, storedTapeDrive.value().mountType);  // Not update this value
+  ASSERT_EQ(newTapeDrive.host, storedTapeDrive.value().host);
+  ASSERT_EQ(newTapeDrive.logicalLibrary, storedTapeDrive.value().logicalLibrary);
+  ASSERT_EQ(newTapeDrive.lastModificationLog.value(), storedTapeDrive.value().lastModificationLog.value());
+  ASSERT_EQ(newTapeDrive.bytesTransferedInSession.value(), storedTapeDrive.value().bytesTransferedInSession.value());
+  ASSERT_EQ(newTapeDrive.filesTransferedInSession.value(), storedTapeDrive.value().filesTransferedInSession.value());
+  // It will keep names and bytes, because it isn't in state UP
+  ASSERT_NE(storedTapeDrive.value().reservedBytes, 0);
+  ASSERT_NE(storedTapeDrive.value().diskSystemName, "");
+
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, updateTapeDriveStatusDown) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  m_catalogue->createTapeDrive(tapeDrive);
+
+  tapeDrive.sessionId = 0;
+  tapeDrive.bytesTransferedInSession = 0;
+  tapeDrive.filesTransferedInSession = 0;
+  tapeDrive.sessionStartTime = 0;
+  tapeDrive.mountStartTime = 0;
+  tapeDrive.transferStartTime = 0;
+  tapeDrive.unloadStartTime = 0;
+  tapeDrive.unmountStartTime = 0;
+  tapeDrive.drainingStartTime = 0;
+  tapeDrive.downOrUpStartTime = time(nullptr);
+  tapeDrive.probeStartTime = 0;
+  tapeDrive.cleanupStartTime = 0;
+  tapeDrive.shutdownTime = 0;
+  tapeDrive.lastModificationLog = common::dataStructures::EntryLog(
+    "NO_USER", tapeDrive.host, time(nullptr));
+  tapeDrive.mountType = common::dataStructures::MountType::NoMount;
+  tapeDrive.driveStatus = common::dataStructures::DriveStatus::Down;
+  tapeDrive.desiredUp = false;
+  tapeDrive.desiredForceDown = false;
+  tapeDrive.currentVid = "";
+  tapeDrive.currentTapePool = "";
+  tapeDrive.currentVo = "";
+  tapeDrive.currentActivity = nullopt_t();
+  tapeDrive.reasonUpDown = "testing";
+
+  m_catalogue->updateTapeDriveStatus(tapeDrive);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_EQ(tapeDrive, storedTapeDrive.value());
+
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, updateTapeDriveStatusUp) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  tapeDrive.driveStatus = common::dataStructures::DriveStatus::Down;  // To force a change of state
+  m_catalogue->createTapeDrive(tapeDrive);
+
+  // If we are changing state, then all should be reset.
+  tapeDrive.sessionId = 0;
+  tapeDrive.bytesTransferedInSession = 0;
+  tapeDrive.filesTransferedInSession = 0;
+  tapeDrive.sessionStartTime = 0;
+  tapeDrive.mountStartTime = 0;
+  tapeDrive.transferStartTime = 0;
+  tapeDrive.unloadStartTime = 0;
+  tapeDrive.unmountStartTime = 0;
+  tapeDrive.drainingStartTime = 0;
+  tapeDrive.downOrUpStartTime = time(nullptr);
+  tapeDrive.probeStartTime = 0;
+  tapeDrive.cleanupStartTime = 0;
+  tapeDrive.shutdownTime = 0;
+  tapeDrive.lastModificationLog = common::dataStructures::EntryLog(
+    "NO_USER", tapeDrive.host, time(nullptr));
+  tapeDrive.mountType = common::dataStructures::MountType::NoMount;
+  tapeDrive.driveStatus = common::dataStructures::DriveStatus::Up;
+  tapeDrive.currentVid = "";
+  tapeDrive.currentTapePool = "";
+  tapeDrive.currentVo = "";
+  tapeDrive.currentActivity = nullopt_t();
+
+  m_catalogue->updateTapeDriveStatus(tapeDrive);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_EQ(tapeDrive, storedTapeDrive.value());
+
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, updateTapeDriveStatusProbing) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  tapeDrive.driveStatus = common::dataStructures::DriveStatus::Down;  // To force a change of state
+  m_catalogue->createTapeDrive(tapeDrive);
+
+  // If we are changing state, then all should be reset.
+  tapeDrive.sessionId = 0;
+  tapeDrive.bytesTransferedInSession = 0;
+  tapeDrive.filesTransferedInSession = 0;
+  tapeDrive.sessionStartTime = 0;
+  tapeDrive.mountStartTime = 0;
+  tapeDrive.transferStartTime = 0;
+  tapeDrive.unloadStartTime = 0;
+  tapeDrive.unmountStartTime = 0;
+  tapeDrive.drainingStartTime = 0;
+  tapeDrive.downOrUpStartTime = 0;
+  tapeDrive.probeStartTime = time(nullptr);
+  tapeDrive.cleanupStartTime = 0;
+  tapeDrive.shutdownTime = 0;
+  tapeDrive.lastModificationLog = common::dataStructures::EntryLog(
+    "NO_USER", tapeDrive.host, time(nullptr));
+  tapeDrive.mountType = common::dataStructures::MountType::NoMount;
+  tapeDrive.driveStatus = common::dataStructures::DriveStatus::Probing;
+  tapeDrive.currentVid = "";
+  tapeDrive.currentTapePool = "";
+  tapeDrive.currentVo = "";
+  tapeDrive.currentActivity = nullopt_t();
+
+  m_catalogue->updateTapeDriveStatus(tapeDrive);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_EQ(tapeDrive, storedTapeDrive.value());
+
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, updateTapeDriveStatusStarting) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  tapeDrive.driveStatus = common::dataStructures::DriveStatus::Down;  // To force a change of state
+  m_catalogue->createTapeDrive(tapeDrive);
+
+  // If we are changing state, then all should be reset.
+  tapeDrive.sessionId = 1234;
+  tapeDrive.bytesTransferedInSession = 0;
+  tapeDrive.filesTransferedInSession = 0;
+  tapeDrive.sessionStartTime = time(nullptr);
+  tapeDrive.mountStartTime = 0;
+  tapeDrive.transferStartTime = 0;
+  tapeDrive.unloadStartTime = 0;
+  tapeDrive.unmountStartTime = 0;
+  tapeDrive.drainingStartTime = 0;
+  tapeDrive.downOrUpStartTime = 0;
+  tapeDrive.probeStartTime = 0;
+  tapeDrive.cleanupStartTime = 0;
+  tapeDrive.shutdownTime = 0;
+  tapeDrive.startStartTime = time(nullptr);
+  tapeDrive.lastModificationLog = tapeDrive.lastModificationLog = common::dataStructures::EntryLog(
+    "NO_USER", tapeDrive.host, time(nullptr));
+  tapeDrive.mountType = common::dataStructures::MountType::ArchiveForUser;
+  tapeDrive.driveStatus = common::dataStructures::DriveStatus::Starting;
+  tapeDrive.currentVid = "vid";
+  tapeDrive.currentTapePool = "tapepool";
+  tapeDrive.currentVo = "vo";
+  tapeDrive.currentActivity = "activity";
+
+  m_catalogue->updateTapeDriveStatus(tapeDrive);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_EQ(tapeDrive, storedTapeDrive.value());
+
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, updateTapeDriveStatusMounting) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  tapeDrive.driveStatus = common::dataStructures::DriveStatus::Down;  // To force a change of state
+  m_catalogue->createTapeDrive(tapeDrive);
+
+  // If we are changing state, then all should be reset. We are not supposed to
+  // know the direction yet.
+  tapeDrive.sessionId = 1234;
+  tapeDrive.bytesTransferedInSession = 0;
+  tapeDrive.filesTransferedInSession = 0;
+  // driveState.sessionstarttime = inputs.reportTime;
+  tapeDrive.mountStartTime = time(nullptr);
+  tapeDrive.transferStartTime = 0;
+  tapeDrive.unloadStartTime = 0;
+  tapeDrive.unmountStartTime = 0;
+  tapeDrive.drainingStartTime = 0;
+  tapeDrive.downOrUpStartTime = 0;
+  tapeDrive.probeStartTime = 0;
+  tapeDrive.cleanupStartTime = 0;
+  tapeDrive.shutdownTime = 0;
+  tapeDrive.lastModificationLog = tapeDrive.lastModificationLog = common::dataStructures::EntryLog(
+    "NO_USER", tapeDrive.host, time(nullptr));
+  tapeDrive.mountType = common::dataStructures::MountType::ArchiveForUser;
+  tapeDrive.driveStatus = common::dataStructures::DriveStatus::Mounting;
+  tapeDrive.currentVid = "vid";
+  tapeDrive.currentTapePool = "tapepool";
+  tapeDrive.currentVo = "vo";
+
+  m_catalogue->updateTapeDriveStatus(tapeDrive);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_EQ(tapeDrive, storedTapeDrive.value());
+
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, updateTapeDriveStatusTransfering) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  tapeDrive.driveStatus = common::dataStructures::DriveStatus::Down;  // To force a change of state
+  m_catalogue->createTapeDrive(tapeDrive);
+
+  tapeDrive.sessionId = 1234;
+  tapeDrive.bytesTransferedInSession = 123456;
+  tapeDrive.filesTransferedInSession = 987654;
+  // tapeDrive.sessionstarttime = inputs.reportTime;
+  // tapeDrive.mountstarttime = inputs.reportTime;
+  tapeDrive.transferStartTime = time(nullptr);
+  tapeDrive.unloadStartTime = 0;
+  tapeDrive.unmountStartTime = 0;
+  tapeDrive.drainingStartTime = 0;
+  tapeDrive.downOrUpStartTime = 0;
+  tapeDrive.probeStartTime = 0;
+  tapeDrive.cleanupStartTime = 0;
+  tapeDrive.shutdownTime = 0;
+  tapeDrive.lastModificationLog = tapeDrive.lastModificationLog = common::dataStructures::EntryLog(
+    "NO_USER", tapeDrive.host, time(nullptr));
+  tapeDrive.mountType = common::dataStructures::MountType::ArchiveForUser;
+  tapeDrive.driveStatus = common::dataStructures::DriveStatus::Transferring;
+  tapeDrive.currentVid = "vid";
+  tapeDrive.currentTapePool = "tapepool";
+  tapeDrive.currentVo = "vo";
+
+  m_catalogue->updateTapeDriveStatus(tapeDrive);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_EQ(tapeDrive, storedTapeDrive.value());
+
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, updateTapeDriveStatusUnloading) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  tapeDrive.driveStatus = common::dataStructures::DriveStatus::Down;  // To force a change of state
+  m_catalogue->createTapeDrive(tapeDrive);
+
+  // If we are changing state, then all should be reset. We are not supposed to
+  // know the direction yet.
+  tapeDrive.sessionId = 12354;
+  tapeDrive.bytesTransferedInSession = 0;
+  tapeDrive.filesTransferedInSession = 0;
+  tapeDrive.sessionStartTime = 0;
+  tapeDrive.mountStartTime = 0;
+  tapeDrive.transferStartTime = 0;
+  tapeDrive.unloadStartTime = time(nullptr);
+  tapeDrive.unmountStartTime = 0;
+  tapeDrive.drainingStartTime = 0;
+  tapeDrive.downOrUpStartTime = 0;
+  tapeDrive.probeStartTime = 0;
+  tapeDrive.cleanupStartTime = 0;
+  tapeDrive.shutdownTime = 0;
+  tapeDrive.lastModificationLog = tapeDrive.lastModificationLog = common::dataStructures::EntryLog(
+    "NO_USER", tapeDrive.host, time(nullptr));
+  tapeDrive.mountType = common::dataStructures::MountType::ArchiveForUser;
+  tapeDrive.driveStatus = common::dataStructures::DriveStatus::Unloading;
+  tapeDrive.currentVid = "vid";
+  tapeDrive.currentTapePool = "tapepool";
+  tapeDrive.currentVo = "vo";
+
+  m_catalogue->updateTapeDriveStatus(tapeDrive);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_EQ(tapeDrive, storedTapeDrive.value());
+
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, updateTapeDriveStatusUnmounting) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  tapeDrive.driveStatus = common::dataStructures::DriveStatus::Down;  // To force a change of state
+  m_catalogue->createTapeDrive(tapeDrive);
+
+  // If we are changing state, then all should be reset. We are not supposed to
+  // know the direction yet.
+  tapeDrive.sessionId = 1234;
+  tapeDrive.bytesTransferedInSession = 0;
+  tapeDrive.filesTransferedInSession = 0;
+  tapeDrive.sessionStartTime = 0;
+  tapeDrive.mountStartTime = 0;
+  tapeDrive.transferStartTime = 0;
+  tapeDrive.unloadStartTime = 0;
+  tapeDrive.unmountStartTime = time(nullptr);
+  tapeDrive.drainingStartTime = 0;
+  tapeDrive.downOrUpStartTime = 0;
+  tapeDrive.probeStartTime = 0;
+  tapeDrive.cleanupStartTime = 0;
+  tapeDrive.shutdownTime = 0;
+  tapeDrive.lastModificationLog = tapeDrive.lastModificationLog = common::dataStructures::EntryLog(
+    "NO_USER", tapeDrive.host, time(nullptr));
+  tapeDrive.mountType = common::dataStructures::MountType::ArchiveForUser;
+  tapeDrive.driveStatus = common::dataStructures::DriveStatus::Unmounting;
+  tapeDrive.currentVid = "vid";
+  tapeDrive.currentTapePool = "tapepool";
+  tapeDrive.currentVo = "vo";
+
+  m_catalogue->updateTapeDriveStatus(tapeDrive);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_EQ(tapeDrive, storedTapeDrive.value());
+
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, updateTapeDriveStatusDrainingToDisk) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  tapeDrive.driveStatus = common::dataStructures::DriveStatus::Down;  // To force a change of state
+  m_catalogue->createTapeDrive(tapeDrive);
+
+  // If we are changing state, then all should be reset. We are not supposed to
+  // know the direction yet.
+  tapeDrive.sessionId = 1234;
+  tapeDrive.bytesTransferedInSession = 0;
+  tapeDrive.filesTransferedInSession = 0;
+  tapeDrive.sessionStartTime = 0;
+  tapeDrive.mountStartTime = 0;
+  tapeDrive.transferStartTime = 0;
+  tapeDrive.unloadStartTime = 0;
+  tapeDrive.unmountStartTime = 0;
+  tapeDrive.drainingStartTime = time(nullptr);
+  tapeDrive.downOrUpStartTime = 0;
+  tapeDrive.probeStartTime = 0;
+  tapeDrive.cleanupStartTime = 0;
+  tapeDrive.shutdownTime = 0;
+  tapeDrive.lastModificationLog = tapeDrive.lastModificationLog = common::dataStructures::EntryLog(
+    "NO_USER", tapeDrive.host, time(nullptr));
+  tapeDrive.mountType = common::dataStructures::MountType::ArchiveForUser;
+  tapeDrive.driveStatus = common::dataStructures::DriveStatus::DrainingToDisk;
+  tapeDrive.currentVid = "vid";
+  tapeDrive.currentTapePool = "tapepool";
+  tapeDrive.currentVo = "vo";
+
+  m_catalogue->updateTapeDriveStatus(tapeDrive);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_EQ(tapeDrive, storedTapeDrive.value());
+
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getTapeDriveConfig) {
   using namespace cta;
 
   const std::string tapeDriveName = "VDSTK11";
@@ -17348,16 +17831,16 @@ TEST_P(cta_catalogue_CatalogueTest, getDriveConfig) {
   cta::SourcedParameter<std::string> daemonUserName {
     "taped", "DaemonUserName", "cta", "Compile time default"};
 
-  m_catalogue->createDriveConfig(tapeDriveName, daemonUserName.category(), daemonUserName.key(),
+  m_catalogue->createTapeDriveConfig(tapeDriveName, daemonUserName.category(), daemonUserName.key(),
     daemonUserName.value(), daemonUserName.source());
-  auto driveConfig = m_catalogue->getDriveConfig(tapeDriveName, daemonUserName.key());
+  auto driveConfig = m_catalogue->getTapeDriveConfig(tapeDriveName, daemonUserName.key());
   ASSERT_TRUE(static_cast<bool>(driveConfig));
   std::string category, value, source;
   std::tie(category, value, source) = driveConfig.value();
   ASSERT_EQ(daemonUserName.category(), category);
   ASSERT_EQ(daemonUserName.value(), value);
   ASSERT_EQ(daemonUserName.source(), source);
-  m_catalogue->deleteDriveConfig(tapeDriveName, daemonUserName.key());
+  m_catalogue->deleteTapeDriveConfig(tapeDriveName, daemonUserName.key());
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getAllDrivesConfigs) {
@@ -17369,21 +17852,21 @@ TEST_P(cta_catalogue_CatalogueTest, getAllDrivesConfigs) {
 
     cta::SourcedParameter<std::string> daemonUserName {
       "taped", "DaemonUserName", "cta", "Compile time default"};
-    m_catalogue->createDriveConfig(ss.str(), daemonUserName.category(), daemonUserName.key(),
+    m_catalogue->createTapeDriveConfig(ss.str(), daemonUserName.category(), daemonUserName.key(),
       daemonUserName.value(), daemonUserName.source());
     tapeDriveConfigs.push_back({ss.str(), daemonUserName.category(), daemonUserName.key(), daemonUserName.value(),
       daemonUserName.source()});
     cta::SourcedParameter<std::string> defaultConfig {
       "taped", "defaultConfig", "cta", "Random Default Config for Testing"};
-    m_catalogue->createDriveConfig(ss.str(), defaultConfig.category(), defaultConfig.key(),
+    m_catalogue->createTapeDriveConfig(ss.str(), defaultConfig.category(), defaultConfig.key(),
       defaultConfig.value(), defaultConfig.source());
     tapeDriveConfigs.push_back({ss.str(), defaultConfig.category(), defaultConfig.key(), defaultConfig.value(),
       defaultConfig.source()});
   }
-  const auto drivesConfigs = m_catalogue->getDrivesConfigs();
+  const auto drivesConfigs = m_catalogue->getTapeDriveConfigs();
   ASSERT_EQ(tapeDriveConfigs.size(), drivesConfigs.size());
   for (const auto& dc : drivesConfigs) {
-    m_catalogue->deleteDriveConfig(dc.tapeDriveName, dc.keyName);
+    m_catalogue->deleteTapeDriveConfig(dc.tapeDriveName, dc.keyName);
   }
 }
 
@@ -17396,32 +17879,32 @@ TEST_P(cta_catalogue_CatalogueTest, setSourcedParameterWithEmptyValue) {
     "taped", "RAOLTOAlgorithmOptions","","Compile time default"
   };
 
-  m_catalogue->createDriveConfig(tapeDriveName, raoLtoOptions.category(), raoLtoOptions.key(),
+  m_catalogue->createTapeDriveConfig(tapeDriveName, raoLtoOptions.category(), raoLtoOptions.key(),
     raoLtoOptions.value(), raoLtoOptions.source());
-  auto driveConfig = m_catalogue->getDriveConfig(tapeDriveName, raoLtoOptions.key());
+  auto driveConfig = m_catalogue->getTapeDriveConfig(tapeDriveName, raoLtoOptions.key());
   ASSERT_TRUE(static_cast<bool>(driveConfig));
   std::string category, value, source;
   std::tie(category, value, source) = driveConfig.value();
   ASSERT_EQ(raoLtoOptions.category(), category);
   ASSERT_EQ("", value);
   ASSERT_EQ(raoLtoOptions.source(), source);
-  m_catalogue->deleteDriveConfig(tapeDriveName, raoLtoOptions.key());
+  m_catalogue->deleteTapeDriveConfig(tapeDriveName, raoLtoOptions.key());
 
   cta::SourcedParameter<std::string> backendPath{
     "ObjectStore", "BackendPath"};
 
-  m_catalogue->createDriveConfig(tapeDriveName, backendPath.category(), backendPath.key(),
+  m_catalogue->createTapeDriveConfig(tapeDriveName, backendPath.category(), backendPath.key(),
     backendPath.value(), backendPath.source());
-  driveConfig = m_catalogue->getDriveConfig(tapeDriveName, backendPath.key());
+  driveConfig = m_catalogue->getTapeDriveConfig(tapeDriveName, backendPath.key());
   ASSERT_TRUE(static_cast<bool>(driveConfig));
   std::tie(category, value, source) = driveConfig.value();
   ASSERT_EQ(backendPath.category(), category);
   ASSERT_EQ("", value);
   ASSERT_EQ("", source);
-  m_catalogue->deleteDriveConfig(tapeDriveName, backendPath.key());
+  m_catalogue->deleteTapeDriveConfig(tapeDriveName, backendPath.key());
 }
 
-TEST_P(cta_catalogue_CatalogueTest, failToGetDriveConfig) {
+TEST_P(cta_catalogue_CatalogueTest, failTogetTapeDriveConfig) {
   using namespace cta;
 
   const std::string tapeDriveName = "VDSTK11";
@@ -17430,18 +17913,18 @@ TEST_P(cta_catalogue_CatalogueTest, failToGetDriveConfig) {
   cta::SourcedParameter<std::string> daemonUserName {
     "taped", "DaemonUserName", "cta", "Compile time default"};
 
-  m_catalogue->createDriveConfig(tapeDriveName, daemonUserName.category(), daemonUserName.key(),
+  m_catalogue->createTapeDriveConfig(tapeDriveName, daemonUserName.category(), daemonUserName.key(),
     daemonUserName.value(), daemonUserName.source());
-  auto driveConfig = m_catalogue->getDriveConfig(wrongName, daemonUserName.key());
+  auto driveConfig = m_catalogue->getTapeDriveConfig(wrongName, daemonUserName.key());
   ASSERT_FALSE(driveConfig);
-  driveConfig = m_catalogue->getDriveConfig(tapeDriveName, wrongKey);
+  driveConfig = m_catalogue->getTapeDriveConfig(tapeDriveName, wrongKey);
   ASSERT_FALSE(driveConfig);
-  driveConfig = m_catalogue->getDriveConfig(wrongName, wrongKey);
+  driveConfig = m_catalogue->getTapeDriveConfig(wrongName, wrongKey);
   ASSERT_FALSE(driveConfig);
-  m_catalogue->deleteDriveConfig(tapeDriveName, daemonUserName.key());
+  m_catalogue->deleteTapeDriveConfig(tapeDriveName, daemonUserName.key());
 }
 
-TEST_P(cta_catalogue_CatalogueTest, failToDeleteDriveConfig) {
+TEST_P(cta_catalogue_CatalogueTest, failTodeleteTapeDriveConfig) {
   using namespace cta;
 
   const std::string tapeDriveName = "VDSTK11";
@@ -17449,20 +17932,20 @@ TEST_P(cta_catalogue_CatalogueTest, failToDeleteDriveConfig) {
   const std::string wrongKey = "wrongKey";
   cta::SourcedParameter<std::string> daemonUserName {
     "taped", "DaemonUserName", "cta", "Compile time default"};
-  m_catalogue->createDriveConfig(tapeDriveName, daemonUserName.category(), daemonUserName.key(),
+  m_catalogue->createTapeDriveConfig(tapeDriveName, daemonUserName.category(), daemonUserName.key(),
     daemonUserName.value(), daemonUserName.source());
-  m_catalogue->deleteDriveConfig(wrongName, daemonUserName.key());
-  auto driveConfig = m_catalogue->getDriveConfig(tapeDriveName, daemonUserName.key());
+  m_catalogue->deleteTapeDriveConfig(wrongName, daemonUserName.key());
+  auto driveConfig = m_catalogue->getTapeDriveConfig(tapeDriveName, daemonUserName.key());
   ASSERT_TRUE(static_cast<bool>(driveConfig));
-  m_catalogue->deleteDriveConfig(tapeDriveName, wrongKey);
-  driveConfig = m_catalogue->getDriveConfig(tapeDriveName, daemonUserName.key());
+  m_catalogue->deleteTapeDriveConfig(tapeDriveName, wrongKey);
+  driveConfig = m_catalogue->getTapeDriveConfig(tapeDriveName, daemonUserName.key());
   ASSERT_TRUE(static_cast<bool>(driveConfig));
-  m_catalogue->deleteDriveConfig(wrongName, wrongKey);
-  driveConfig = m_catalogue->getDriveConfig(tapeDriveName, daemonUserName.key());
+  m_catalogue->deleteTapeDriveConfig(wrongName, wrongKey);
+  driveConfig = m_catalogue->getTapeDriveConfig(tapeDriveName, daemonUserName.key());
   ASSERT_TRUE(static_cast<bool>(driveConfig));
   // Good deletion
-  m_catalogue->deleteDriveConfig(tapeDriveName, daemonUserName.key());
-  driveConfig = m_catalogue->getDriveConfig(tapeDriveName, daemonUserName.key());
+  m_catalogue->deleteTapeDriveConfig(tapeDriveName, daemonUserName.key());
+  driveConfig = m_catalogue->getTapeDriveConfig(tapeDriveName, daemonUserName.key());
   ASSERT_FALSE(driveConfig);
 }
 
@@ -17478,18 +17961,18 @@ TEST_P(cta_catalogue_CatalogueTest, multipleDriveConfig) {
     "taped", "DaemonGroupName", "tape", "Compile time default"};
 
   // Combinations of tapeDriveName1/2 and daemonUserName and daemonGroupName
-  m_catalogue->createDriveConfig(tapeDriveName1, daemonUserName.category(), daemonUserName.key(),
+  m_catalogue->createTapeDriveConfig(tapeDriveName1, daemonUserName.category(), daemonUserName.key(),
     daemonUserName.value(), daemonUserName.source());
-  m_catalogue->createDriveConfig(tapeDriveName1, daemonGroupName.category(), daemonGroupName.key(),
+  m_catalogue->createTapeDriveConfig(tapeDriveName1, daemonGroupName.category(), daemonGroupName.key(),
     daemonGroupName.value(), daemonGroupName.source());
-  m_catalogue->createDriveConfig(tapeDriveName2, daemonUserName.category(), daemonUserName.key(),
+  m_catalogue->createTapeDriveConfig(tapeDriveName2, daemonUserName.category(), daemonUserName.key(),
     daemonUserName.value(), daemonUserName.source());
-  m_catalogue->createDriveConfig(tapeDriveName2, daemonGroupName.category(), daemonGroupName.key(),
+  m_catalogue->createTapeDriveConfig(tapeDriveName2, daemonGroupName.category(), daemonGroupName.key(),
     daemonGroupName.value(), daemonGroupName.source());
-  auto driveConfig1UserName = m_catalogue->getDriveConfig(tapeDriveName1, daemonUserName.key());
-  auto driveConfig2UserName = m_catalogue->getDriveConfig(tapeDriveName2, daemonUserName.key());
-  auto driveConfig1GroupName = m_catalogue->getDriveConfig(tapeDriveName1, daemonGroupName.key());
-  auto driveConfig2GroupName = m_catalogue->getDriveConfig(tapeDriveName2, daemonGroupName.key());
+  auto driveConfig1UserName = m_catalogue->getTapeDriveConfig(tapeDriveName1, daemonUserName.key());
+  auto driveConfig2UserName = m_catalogue->getTapeDriveConfig(tapeDriveName2, daemonUserName.key());
+  auto driveConfig1GroupName = m_catalogue->getTapeDriveConfig(tapeDriveName1, daemonGroupName.key());
+  auto driveConfig2GroupName = m_catalogue->getTapeDriveConfig(tapeDriveName2, daemonGroupName.key());
   ASSERT_TRUE(static_cast<bool>(driveConfig1UserName));
   ASSERT_TRUE(static_cast<bool>(driveConfig2UserName));
   ASSERT_TRUE(static_cast<bool>(driveConfig1GroupName));
@@ -17511,10 +17994,10 @@ TEST_P(cta_catalogue_CatalogueTest, multipleDriveConfig) {
   ASSERT_EQ(daemonGroupName.category(), category);
   ASSERT_EQ(daemonGroupName.value(), value);
   ASSERT_EQ(daemonGroupName.source(), source);
-  m_catalogue->deleteDriveConfig(tapeDriveName1, daemonUserName.key());
-  m_catalogue->deleteDriveConfig(tapeDriveName1, daemonGroupName.key());
-  m_catalogue->deleteDriveConfig(tapeDriveName2, daemonUserName.key());
-  m_catalogue->deleteDriveConfig(tapeDriveName2, daemonGroupName.key());
+  m_catalogue->deleteTapeDriveConfig(tapeDriveName1, daemonUserName.key());
+  m_catalogue->deleteTapeDriveConfig(tapeDriveName1, daemonGroupName.key());
+  m_catalogue->deleteTapeDriveConfig(tapeDriveName2, daemonUserName.key());
+  m_catalogue->deleteTapeDriveConfig(tapeDriveName2, daemonGroupName.key());
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getNamesAndKeysOfMultipleDriveConfig) {
@@ -17529,23 +18012,23 @@ TEST_P(cta_catalogue_CatalogueTest, getNamesAndKeysOfMultipleDriveConfig) {
     "taped", "DaemonGroupName", "tape", "Compile time default"};
 
   // Combinations of tapeDriveName1/2 and daemonUserName and daemonGroupName
-  m_catalogue->createDriveConfig(tapeDriveName1, daemonUserName.category(), daemonUserName.key(),
+  m_catalogue->createTapeDriveConfig(tapeDriveName1, daemonUserName.category(), daemonUserName.key(),
     daemonUserName.value(), daemonUserName.source());
-  m_catalogue->createDriveConfig(tapeDriveName1, daemonGroupName.category(), daemonGroupName.key(),
+  m_catalogue->createTapeDriveConfig(tapeDriveName1, daemonGroupName.category(), daemonGroupName.key(),
     daemonGroupName.value(), daemonGroupName.source());
-  m_catalogue->createDriveConfig(tapeDriveName2, daemonUserName.category(), daemonUserName.key(),
+  m_catalogue->createTapeDriveConfig(tapeDriveName2, daemonUserName.category(), daemonUserName.key(),
     daemonUserName.value(), daemonUserName.source());
-  m_catalogue->createDriveConfig(tapeDriveName2, daemonGroupName.category(), daemonGroupName.key(),
+  m_catalogue->createTapeDriveConfig(tapeDriveName2, daemonGroupName.category(), daemonGroupName.key(),
     daemonGroupName.value(), daemonGroupName.source());
 
-  const auto configurationTapeNamesAndKeys = m_catalogue->getDriveConfigNamesAndKeys();
+  const auto configurationTapeNamesAndKeys = m_catalogue->getTapeDriveConfigNamesAndKeys();
 
   for (const auto& nameAndKey : configurationTapeNamesAndKeys) {
-    m_catalogue->deleteDriveConfig(nameAndKey.first, nameAndKey.second);
+    m_catalogue->deleteTapeDriveConfig(nameAndKey.first, nameAndKey.second);
   }
 }
 
-TEST_P(cta_catalogue_CatalogueTest, modifyDriveConfig) {
+TEST_P(cta_catalogue_CatalogueTest, modifyTapeDriveConfig) {
   using namespace cta;
 
   const std::string tapeDriveName = "VDSTK11";
@@ -17555,24 +18038,24 @@ TEST_P(cta_catalogue_CatalogueTest, modifyDriveConfig) {
   cta::SourcedParameter<std::string> daemonUserName2 {
     "taped2", "DaemonUserName", "cta2", "Compile time2 default"};
 
-  m_catalogue->createDriveConfig(tapeDriveName, daemonUserName1.category(), daemonUserName1.key(),
+  m_catalogue->createTapeDriveConfig(tapeDriveName, daemonUserName1.category(), daemonUserName1.key(),
     daemonUserName1.value(), daemonUserName1.source());
-  const auto driveConfig1 = m_catalogue->getDriveConfig(tapeDriveName, daemonUserName1.key());
+  const auto driveConfig1 = m_catalogue->getTapeDriveConfig(tapeDriveName, daemonUserName1.key());
   ASSERT_TRUE(static_cast<bool>(driveConfig1));
   std::string category, value, source;
   std::tie(category, value, source) = driveConfig1.value();
   ASSERT_NE(daemonUserName2.category(), category);
   ASSERT_NE(daemonUserName2.value(), value);
   ASSERT_NE(daemonUserName2.source(), source);
-  m_catalogue->modifyDriveConfig(tapeDriveName, daemonUserName2.category(), daemonUserName2.key(),
+  m_catalogue->modifyTapeDriveConfig(tapeDriveName, daemonUserName2.category(), daemonUserName2.key(),
     daemonUserName2.value(), daemonUserName2.source());
-  const auto driveConfig2 = m_catalogue->getDriveConfig(tapeDriveName, daemonUserName1.key());
+  const auto driveConfig2 = m_catalogue->getTapeDriveConfig(tapeDriveName, daemonUserName1.key());
   ASSERT_TRUE(static_cast<bool>(driveConfig2));
   std::tie(category, value, source) = driveConfig2.value();
   ASSERT_EQ(daemonUserName2.category(), category);
   ASSERT_EQ(daemonUserName2.value(), value);
   ASSERT_EQ(daemonUserName2.source(), source);
-  m_catalogue->deleteDriveConfig(tapeDriveName, daemonUserName1.key());
+  m_catalogue->deleteTapeDriveConfig(tapeDriveName, daemonUserName1.key());
 }
 
 TEST_P(cta_catalogue_CatalogueTest, DeleteTapeFileCopyUsingArchiveID) {

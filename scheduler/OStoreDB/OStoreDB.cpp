@@ -27,6 +27,7 @@
 #include <time.h>       /* time */
 #include <tuple>
 
+#include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/NoSuchObject.hpp"
@@ -49,7 +50,6 @@
 #include "Scheduler.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/RetrieveJob.hpp"
-#include "TapeDrivesCatalogueState.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 
 namespace cta {
@@ -511,27 +511,17 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
         ? driveState.bytesTransferedInSession.value() : 0;
       tmdi.existingOrNextMounts.back().filesTransferred = driveState.filesTransferedInSession
         ? driveState.filesTransferedInSession.value() : 0;
-      if (driveState.latestBandwidth && driveState.latestBandwidth.value().size() > 0) {
-        if (std::isdigit(driveState.latestBandwidth.value().at(0))) {
-          try {
-            tmdi.existingOrNextMounts.back().latestBandwidth = std::stod(driveState.latestBandwidth.value());
-          } catch (std::out_of_range) {
-            // TODO: Temporary mitigation for overflow, we should remove latestBandwith from drive state in the future
-            tmdi.existingOrNextMounts.back().latestBandwidth = 0;
-          }
-        } else {
-          tmdi.existingOrNextMounts.back().latestBandwidth = 0;
-        }
+      if(driveState.filesTransferedInSession && driveState.sessionElapsedTime && driveState.sessionElapsedTime.value() > 0) {
+        tmdi.existingOrNextMounts.back().averageBandwidth = driveState.filesTransferedInSession.value() / driveState.sessionElapsedTime.value();
       } else {
-        tmdi.existingOrNextMounts.back().latestBandwidth = 0;
+        tmdi.existingOrNextMounts.back().averageBandwidth = 0.0;
       }
       tmdi.existingOrNextMounts.back().activity = driveState.currentActivity ? driveState.currentActivity.value() : "";
     }
-    if (!driveState.nextMountType) continue;
-    if (activeMountTypes.count(static_cast<int>(driveState.nextMountType.value()))) {
+    if(driveState.nextMountType == common::dataStructures::MountType::NoMount) continue;
+    if (activeMountTypes.count(static_cast<int>(driveState.nextMountType))) {
       tmdi.existingOrNextMounts.push_back(ExistingMount());
-      tmdi.existingOrNextMounts.back().type = driveState.nextMountType
-        ? driveState.nextMountType.value() : common::dataStructures::MountType::NoMount;
+      tmdi.existingOrNextMounts.back().type = driveState.nextMountType;
       tmdi.existingOrNextMounts.back().tapePool = driveState.nextTapePool ? driveState.nextTapePool.value() : "";
       tmdi.existingOrNextMounts.back().vo = driveState.nextVo ? driveState.nextVo.value() : "";
       tmdi.existingOrNextMounts.back().driveName = driveState.driveName;
@@ -539,7 +529,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       tmdi.existingOrNextMounts.back().currentMount = false;
       tmdi.existingOrNextMounts.back().bytesTransferred = 0;
       tmdi.existingOrNextMounts.back().filesTransferred = 0;
-      tmdi.existingOrNextMounts.back().latestBandwidth = 0;
+      tmdi.existingOrNextMounts.back().averageBandwidth = 0;
       tmdi.existingOrNextMounts.back().activity = driveState.nextActivity ? driveState.nextActivity.value() : "";
     }
   }
@@ -3217,7 +3207,6 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfo
     inputs.mountType = type;  // common::dataStructures::MountType::ArchiveForUser;
     inputs.byteTransferred = 0;
     inputs.filesTransferred = 0;
-    inputs.latestBandwidth = 0;
     inputs.mountSessionId = am.mountInfo.mountId;
     inputs.reportTime = startTime;
     inputs.status = common::dataStructures::DriveStatus::Starting;
@@ -3523,7 +3512,7 @@ bool OStoreDB::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRe
   cta::disk::DiskSystemFreeSpaceList diskSystemFreeSpace(diskSystemList);
 
   // Get the existing reservation map from drives.
-  auto previousDrivesReservations = m_oStoreDB.m_catalogue.getExistingDrivesReservations();
+  auto previousDrivesReservations = m_oStoreDB.m_catalogue.getDiskSpaceReservations();
   // Get the free space from disk systems involved.
   std::set<std::string> diskSystemNames;
   for (auto const & dsrr: diskSpaceReservationRequest) {
@@ -3632,7 +3621,6 @@ void OStoreDB::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveS
   // TODO: statistics!
   inputs.byteTransferred = 0;
   inputs.filesTransferred = 0;
-  inputs.latestBandwidth = 0;
   log::LogContext lc(m_oStoreDB.m_logger);
   m_oStoreDB.m_tapeDrivesState->updateDriveStatus(driveInfo, inputs, lc);
 }
@@ -3851,7 +3839,6 @@ void OStoreDB::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveSt
   // TODO: statistics!
   inputs.byteTransferred = 0;
   inputs.filesTransferred = 0;
-  inputs.latestBandwidth = 0;
   log::LogContext lc(m_oStoreDB.m_logger);
   m_oStoreDB.m_tapeDrivesState->updateDriveStatus(driveInfo, inputs, lc);
 }

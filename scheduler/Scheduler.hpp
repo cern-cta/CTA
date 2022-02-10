@@ -18,6 +18,7 @@
 #pragma once
 
 #include "catalogue/Catalogue.hpp"
+#include "catalogue/TapeDrivesCatalogueState.hpp"
 
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/ArchiveJob.hpp"
@@ -55,7 +56,6 @@
 #include "disk/DiskReporter.hpp"
 #include "disk/DiskReporterFactory.hpp"
 #include "SchedulingInfos.hpp"
-#include "TapeDrivesCatalogueState.hpp"
 
 #include <list>
 #include <map>

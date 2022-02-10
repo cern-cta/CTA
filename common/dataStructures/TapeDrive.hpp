@@ -70,9 +70,9 @@ struct TapeDrive {
 
   optional<uint64_t> bytesTransferedInSession;
   optional<uint64_t> filesTransferedInSession;
-  optional<std::string> latestBandwidth;
 
   optional<time_t> sessionStartTime;
+  optional<time_t> sessionElapsedTime;
   optional<time_t> mountStartTime;
   optional<time_t> transferStartTime;
   optional<time_t> unloadStartTime;
@@ -95,12 +95,12 @@ struct TapeDrive {
   optional<uint64_t> currentPriority;
   optional<std::string> currentActivity;
   optional<std::string> currentTapePool;
-  optional<MountType> nextMountType;
+  MountType nextMountType; // defaults to NO_MOUNT. This can't be optional, as we have a NOT NULL constraint in the DB.
   optional<std::string> nextVid;
   optional<std::string> nextTapePool;
   optional<uint64_t> nextPriority;
   optional<std::string> nextActivity;
-  
+
   optional<std::string> devFileName;
   optional<std::string> rawLibrarySlot;
 
