@@ -55,6 +55,18 @@ public:
     }
     m_sem.release();
   }
+
+  /**
+   * Copy the concent of e and push into the queue
+   * @param e
+   */
+  void push(C&& e) {
+    {
+      MutexLocker ml(m_mutex);
+      m_queue.push(std::move(e));
+    }
+    m_sem.release();
+  }
   
   /**
    * Return the next value of the queue and remove it
@@ -107,7 +119,7 @@ private:
    */
   C popCriticalSection(size_t * sz = NULL) {
     MutexLocker ml(m_mutex);
-    C ret = m_queue.front();
+    C ret = std::move(m_queue.front());
     m_queue.pop();
     if (sz)
       *sz = m_queue.size();

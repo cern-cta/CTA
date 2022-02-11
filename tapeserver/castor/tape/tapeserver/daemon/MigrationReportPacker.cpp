@@ -60,7 +60,7 @@ void MigrationReportPacker::reportCompletedJob(
   params.add("type", "ReportSuccessful");
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportCompletedJob(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  m_fifo.push(rep.release());
+  m_fifo.push(std::move(rep));
 }
 
 //------------------------------------------------------------------------------
@@ -75,7 +75,7 @@ void MigrationReportPacker::reportSkippedJob(std::unique_ptr<cta::ArchiveJob> sk
   params.add("type", "ReporSkipped");
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportSkippedJob(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  m_fifo.push(rep.release());
+  m_fifo.push(std::move(rep));
 }
 
 //------------------------------------------------------------------------------
@@ -90,7 +90,7 @@ void MigrationReportPacker::reportFailedJob(std::unique_ptr<cta::ArchiveJob> fai
   params.add("type", "ReportError");
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportFailedJob(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  m_fifo.push(rep.release());
+  m_fifo.push(std::move(rep));
 }
 
 //------------------------------------------------------------------------------
@@ -102,7 +102,7 @@ void MigrationReportPacker::reportFlush(drive::compressionStats compressStats, c
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportFlush(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
   std::unique_ptr<Report> rep(new ReportFlush(compressStats));
-  m_fifo.push(rep.release());
+  m_fifo.push(std::move(rep));
 }
 
 //------------------------------------------------------------------------------
@@ -114,7 +114,7 @@ void MigrationReportPacker::reportTapeFull(cta::log::LogContext& lc) {
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportTapeFull(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
   std::unique_ptr<Report> rep(new ReportTapeFull());
-  m_fifo.push(rep.release());
+  m_fifo.push(std::move(rep));
 }
 
 //------------------------------------------------------------------------------
@@ -126,7 +126,7 @@ void MigrationReportPacker::reportEndOfSession(cta::log::LogContext & lc) {
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportEndOfSession(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
   std::unique_ptr<Report> rep(new ReportEndofSession());
-  m_fifo.push(rep.release());
+  m_fifo.push(std::move(rep));
 }
 
 //------------------------------------------------------------------------------
@@ -138,7 +138,7 @@ void MigrationReportPacker::reportEndOfSessionWithErrors(std::string msg,int err
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportEndOfSessionWithErrors(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
   std::unique_ptr<Report> rep(new ReportEndofSessionWithErrors(msg, errorCode));
-  m_fifo.push(rep.release());
+  m_fifo.push(std::move(rep));
 }
 
 //------------------------------------------------------------------------------
@@ -150,7 +150,7 @@ void MigrationReportPacker::reportTestGoingToEnd(cta::log::LogContext& lc) {
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportTestGoingToEnd(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
   std::unique_ptr<Report> rep(new ReportTestGoingToEnd());
-  m_fifo.push(rep.release());
+  m_fifo.push(std::move(rep));
 }
 
 //------------------------------------------------------------------------------
@@ -241,7 +241,8 @@ void MigrationReportPacker::reportDriveStatus(cta::common::dataStructures::Drive
         .add("Status", cta::common::dataStructures::toString(status));
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportDriveStatus(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  m_fifo.push(new ReportDriveStatus(status, reason));
+  std::unique_ptr<Report> rep(new ReportDriveStatus(status, reason));
+  m_fifo.push(std::move(rep));
 }
 
 //------------------------------------------------------------------------------
