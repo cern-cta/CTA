@@ -5,13 +5,35 @@
 ### Upgrade Instructions
 
 ### Features
-- cta/CTA#999 - Add a default mount rule for recalls
+
+### Bug fixes
+
+# v4.6.0-1
+
+## Summary
+
+Updates EOS version in CI to 4.8.75.
+
+### Upgrade Instructions
+
+This CTA release requires a database schema upgrade to CTA catalogue schema v4.5. Please consult the [database upgrade documentation](https://tapeoperations.docs.cern.ch/ctaops/upgrade_production_database).
+
+### Features
+- cta/CTA#999  - Add a default mount rule for recalls
 - cta/CTA#1109 - Add --dirtybit option to cta-admin ta ch and show dirty bit value in cta-admin --json ta ls
+- cta/CTA#1107 - add mountpolicyname to request schema in objectstore
 - cta/CTA#1111 - Add disk instance and disk instance tables to catalogue and respective cta-admin diskinstance/diskinstancespace add/ls/ch/rm commands
+- cta/CTA#1114 - Log SSI events in ctafrontend
 - cta/CTA#1108 - Make cta-admin --json sq show mount policy with highest priority and mount policy with lowest request age for each queue.
 
 ### Bug fixes
 - cta/CTA#1102 - Make requeued jobs retain their original creation time
+- cta/CTA#1091 - Move TAPE_DRIVE table to DRIVE_STATE and refactor code to update drive states
+- cta/CTA#1110 - Moves disk space reservations to the DRIVE_STATE table, uses atomic updates
+
+### Continuous Integration
+- cta/CTA#734  - Adds test for FST delete-on-close behaviour
+- Adds system tests for 'prepare' and 'query prepare' (idempotent prepare)
 
 # v4.5.1-2
 
