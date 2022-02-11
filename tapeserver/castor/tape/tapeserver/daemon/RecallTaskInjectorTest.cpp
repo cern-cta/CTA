@@ -139,7 +139,8 @@ namespace unitTests
     void addDiskSystemToSkip(const cta::SchedulerDatabase::RetrieveMount::DiskSystemToSkip &diskSystemToSkip) override { throw std::runtime_error("Not implemented"); }
     void requeueJobBatch(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>& jobBatch, cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented"); }
     void putQueueToSleep(const std::string &diskSystemName, const uint64_t sleepTime, cta::log::LogContext &logContext) override { throw std::runtime_error("Not implemented"); }
-    bool reserveDiskSpace(const cta::DiskSpaceReservationRequest &request, const std::string &fetchEosFreeSpaceScript, cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented"); }
+    bool reserveDiskSpace(const cta::DiskSpaceReservationRequest &request, const std::string &fetchEosFreeSpaceScript, cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented"); } 
+    bool testReserveDiskSpace(const cta::DiskSpaceReservationRequest &request, const std::string &fetchEosFreeSpaceScript, cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented"); } 
   };
 
   TEST_F(castor_tape_tapeserver_daemonTest, RecallTaskInjectorNominal) {

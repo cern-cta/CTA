@@ -303,7 +303,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
     bool reservationResult = false;
     fetchResult = taskInjector.synchronousFetch(noFilesToRecall);
     if (fetchResult) {
-      reservationResult = taskInjector.reserveSpaceForNextJobBatch(false);
+    reservationResult = taskInjector.testDiskSpaceReservationWorking();
     }
     //only mount the tape if we can confirm that we will do some work, otherwise do an empty mount
     if (fetchResult && reservationResult) {

@@ -3496,6 +3496,82 @@ void OStoreDB::RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<Schedule
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::RetrieveMount::testReserveDiskSpace()
+//------------------------------------------------------------------------------
+bool OStoreDB::RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationRequest &diskSpaceReservationRequest,
+  const std::string &fetchEosFreeSpaceScript, log::LogContext& logContext) {
+  
+  // Get the current file systems list from the catalogue
+  cta::disk::DiskSystemList diskSystemList;
+  diskSystemList = m_oStoreDB.m_catalogue.getAllDiskSystems();
+  diskSystemList.setFetchEosFreeSpaceScript(fetchEosFreeSpaceScript);
+  cta::disk::DiskSystemFreeSpaceList diskSystemFreeSpace(diskSystemList);
+
+  // Get the existing reservation map from drives.
+  auto previousDrivesReservations = m_oStoreDB.m_catalogue.getDiskSpaceReservations();
+  // Get the free space from disk systems involved.
+  std::set<std::string> diskSystemNames;
+  for (auto const & dsrr: diskSpaceReservationRequest) {
+    diskSystemNames.insert(dsrr.first);
+  }
+
+  try {
+    diskSystemFreeSpace.fetchDiskSystemFreeSpace(diskSystemNames, m_oStoreDB.m_catalogue, logContext);
+  } catch(const cta::disk::DiskSystemFreeSpaceListException &ex){
+    // Could not get free space for one of the disk systems. Currently the retrieve mount will only query
+    // one disk system, so just log the failure and put the queue to sleep inside the loop.
+    for (const auto &failedDiskSystem: ex.m_failedDiskSystems) {
+      cta::log::ScopedParamContainer params(logContext);
+      params.add("diskSystemName", failedDiskSystem.first);
+      params.add("failureReason", failedDiskSystem.second.getMessageValue());
+      logContext.log(cta::log::ERR, "In OStoreDB::RetrieveMount::testReserveDiskSpace(): unable to request EOS free space for disk system, putting queue to sleep");
+      auto sleepTime = diskSystemFreeSpace.getDiskSystemList().at(failedDiskSystem.first).sleepTime;
+      putQueueToSleep(failedDiskSystem.first, sleepTime, logContext);
+    } 
+    return false;
+  } catch (std::exception &ex) {
+    // Leave a log message before letting the possible exception go up the stack.
+    cta::log::ScopedParamContainer params(logContext);
+    params.add("exceptionWhat", ex.what());
+    logContext.log(cta::log::ERR, "In OStoreDB::RetrieveMount::testReserveDiskSpace(): got an exception from diskSystemFreeSpace.fetchDiskSystemFreeSpace().");
+    throw;
+  }
+    
+  // If a file system does not have enough space fail the disk space reservation,  put the queue to sleep and 
+  // the retrieve mount will immediately stop
+  for (auto const &ds: diskSystemNames) {
+    uint64_t previousDrivesReservationTotal = 0;
+    auto diskSystem = diskSystemFreeSpace.getDiskSystemList().at(ds);
+    // Compute previous drives reservation for the physical space of the current disk system.
+    for (auto previousDriveReservation: previousDrivesReservations) {
+      //avoid empty string when no disk space reservation exists for drive
+      if (previousDriveReservation.second != 0) { 
+        auto previousDiskSystem = diskSystemFreeSpace.getDiskSystemList().at(previousDriveReservation.first);
+        if (diskSystem.diskInstanceSpace.freeSpaceQueryURL == previousDiskSystem.diskInstanceSpace.freeSpaceQueryURL) {
+          previousDrivesReservationTotal += previousDriveReservation.second;
+        }
+      }
+    }
+    if (diskSystemFreeSpace.at(ds).freeSpace < diskSpaceReservationRequest.at(ds) + diskSystemFreeSpace.at(ds).targetedFreeSpace +
+      previousDrivesReservationTotal) {
+      cta::log::ScopedParamContainer params(logContext);
+      params.add("diskSystemName", ds)
+            .add("freeSpace", diskSystemFreeSpace.at(ds).freeSpace)
+            .add("existingReservations", previousDrivesReservationTotal)
+            .add("spaceToReserve", diskSpaceReservationRequest.at(ds))
+            .add("targetedFreeSpace", diskSystemFreeSpace.at(ds).targetedFreeSpace);
+      logContext.log(cta::log::WARNING, "In OStoreDB::RetrieveMount::testReserveDiskSpace(): could not allocate disk space for job, applying backpressure");
+      
+      auto sleepTime = diskSystem.sleepTime;
+      putQueueToSleep(ds, sleepTime, logContext);
+      return false;
+    }
+  }
+  return true;
+}
+
+
+//------------------------------------------------------------------------------
 // OStoreDB::RetrieveMount::reserveDiskSpace()
 //------------------------------------------------------------------------------
 bool OStoreDB::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest &diskSpaceReservationRequest,

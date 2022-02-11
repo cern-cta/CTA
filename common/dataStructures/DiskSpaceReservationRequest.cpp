@@ -28,16 +28,4 @@ void DiskSpaceReservationRequest::addRequest(const std::string& diskSystemName, 
   }
 }
 
-void DiskSpaceReservationRequest::removeRequest(const std::string& diskSystemName, uint64_t size) {
-  try {
-    if (at(diskSystemName) < size) {
-      at(diskSystemName) = 0;
-    } else {
-      at(diskSystemName) -= size;
-    }
-  } catch (std::out_of_range &) {
-      throw cta::exception::Exception("At DiskSpaceReservationRequest::removeRequest(): Removing request of " + std::to_string(size) +
-        " bytes from disk system" + diskSystemName + " which does not exist");
-  }
-}
 }

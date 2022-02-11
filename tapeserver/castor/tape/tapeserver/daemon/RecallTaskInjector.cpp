@@ -133,16 +133,11 @@ void RecallTaskInjector::waitForFirstTasksInjectedPromise(){
   m_firstTasksInjectedFuture.wait();
 }
 
-
 //------------------------------------------------------------------------------
-//reserveSpaceForNextJobBatch
+//testDiskSpaceReservationWorking()
 //------------------------------------------------------------------------------
-bool RecallTaskInjector::reserveSpaceForNextJobBatch(const bool useRAOManager) {
-  bool useRAO = false;
-  if (useRAOManager) {
-    useRAO = m_raoManager.useRAO();
-  }
-  auto nextJobBatch = previewGetNextJobBatch(useRAO);
+bool RecallTaskInjector::testDiskSpaceReservationWorking() {
+  auto nextJobBatch = previewGetNextJobBatch(false);
 
   cta::DiskSpaceReservationRequest necessaryReservedSpace;
 
@@ -153,41 +148,43 @@ bool RecallTaskInjector::reserveSpaceForNextJobBatch(const bool useRAOManager) {
     }
   }
 
-  // See if the free disk space reserved by the injector is enough to fit the new batch
-  bool needReservation = false;
-  cta::DiskSpaceReservationRequest spaceToReserve;
-  for(const auto &reservation: necessaryReservedSpace) {
-    cta::log::ScopedParamContainer spc(m_lc);
-    auto currentFreeSpace = m_reservedFreeSpace[reservation.first];
-    if (currentFreeSpace < reservation.second) {
-      spaceToReserve.addRequest(reservation.first, reservation.second - currentFreeSpace);
-      needReservation = true;
-      spc.add("bytesToReserve", reservation.second - currentFreeSpace);
-    }
-    spc.add("diskSystemName", reservation.first);
-    spc.add("currentReservedBytes", currentFreeSpace);
-    spc.add("necessaryReservedBytes", reservation.second);
-    m_lc.log(cta::log::DEBUG, "In RecallTaskInjector::reserveSpaceForNextJobBatch(): Current disk space reservation");
+  bool ret = m_retrieveMount.testReserveDiskSpace(necessaryReservedSpace, m_lc);
+  if (ret) {
+    m_lc.log(cta::log::INFO, "Disk space reservation test passed, can mount tape");
+  } else {
+    m_lc.log(cta::log::INFO, "Disk space reservation test failed, will not mount tape");
+    m_retrieveMount.requeueJobBatch(m_jobs, m_lc);
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+//reserveSpaceForNextJobBatch
+//------------------------------------------------------------------------------
+bool RecallTaskInjector::reserveSpaceForNextJobBatch(std::list<std::unique_ptr<cta::RetrieveJob>> &nextJobBatch) {  
+  
+  cta::DiskSpaceReservationRequest diskSpaceReservation;
+  for (auto &job: nextJobBatch) {
+    auto diskSystemName = job->diskSystemName();
+    if (diskSystemName) {
+      diskSpaceReservation.addRequest(diskSystemName.value(), job->archiveFile.fileSize);
+    } 
   }
 
-  if (!needReservation) {
-    m_lc.log(cta::log::INFO, "In RecallTaskInjector::reserveSpaceForNextJobBatch(): Reservation is not necessary for next job batch");
-    return true;
-  }
-
-  for (const auto &reservation: spaceToReserve) {
+  for (const auto &reservation: diskSpaceReservation) {
     cta::log::ScopedParamContainer spc(m_lc);
     spc.add("diskSystemName", reservation.first);
     spc.add("bytes", reservation.second);
-    m_lc.log(cta::log::DEBUG, "Disk space reservation necessary for next job batch");
+    m_lc.log(cta::log::DEBUG, "Disk space reservation for next job batch");
   }
+
   bool ret = true;
   try {
-    ret = m_retrieveMount.reserveDiskSpace(spaceToReserve, m_lc);
+    ret = m_retrieveMount.reserveDiskSpace(diskSpaceReservation, m_lc);
   } catch (std::out_of_range&) {
     //#1076 If the disk system for this mount was removed, process the jobs as if they had no disk system
     // (assuming only one disk system per mount)
-    for (auto job: nextJobBatch) {
+    for (auto &job: nextJobBatch) {
       job->diskSystemName() = std::nullopt;
     }
     m_lc.log(cta::log::WARNING,
@@ -197,16 +194,17 @@ bool RecallTaskInjector::reserveSpaceForNextJobBatch(const bool useRAOManager) {
   }
 
   if(!ret) {
+    for(auto &jobptr: nextJobBatch) {
+      m_jobs.push_back(std::unique_ptr<cta::RetrieveJob>(jobptr.release()));
+    }
     m_retrieveMount.requeueJobBatch(m_jobs, m_lc);
     m_files = 0;
     m_bytes = 0;
     m_lc.log(cta::log::ERR, "In RecallTaskInjector::reserveSpaceForNextJobBatch(): Disk space reservation failed, requeued all pending jobs");
+    m_diskSpaceReservationFailed = true;
   }
   else {
     m_lc.log(cta::log::INFO, "In RecallTaskInjector::reserveSpaceForNextJobBatch(): Disk space reservation for next job batch succeeded");
-    for (const auto &reservation: spaceToReserve) {
-      m_reservedFreeSpace.addRequest(reservation.first, reservation.second);
-    }
   }
   return ret;
 }
@@ -270,7 +268,10 @@ void RecallTaskInjector::injectBulkRecalls() {
     m_files--;
     m_bytes -= job->archiveFile.fileSize;
   }
-
+  bool reservationSuccess = reserveSpaceForNextJobBatch(retrieveJobsBatch);
+  if (!reservationSuccess) {
+    return;
+  }
   bool setPromise = (retrieveJobsBatch.size() != 0);
   for(auto &job_ptr: retrieveJobsBatch) {
     cta::RetrieveJob *job = job_ptr.release();
@@ -279,9 +280,6 @@ void RecallTaskInjector::injectBulkRecalls() {
     recallOrderLog << " " << job->selectedTapeFile().fSeq;
     m_diskWriter.push(dwt);
     m_tapeReader.push(trt);
-    if (job->diskSystemName()) {
-      m_reservedFreeSpace.removeRequest(job->diskSystemName().value(), job->archiveFile.fileSize);
-    }
     m_lc.log(cta::log::INFO, "Created tasks for recalling a file");
   }
   if(setPromise){
@@ -406,16 +404,14 @@ void RecallTaskInjector::WorkerThread::run()
       m_parent.synchronousFetch(noFilesToRecall);
     }
   }
-  bool reservationResult = m_parent.reserveSpaceForNextJobBatch();
 
-  /* this should never happen, since we check the reservation space before starting the session*/
-  if (!reservationResult) {
+
+  m_parent.injectBulkRecalls(); //do an initial injection before entering loop
+  if (m_parent.m_diskSpaceReservationFailed) {
     m_parent.signalEndDataMovement();
     m_parent.setFirstTasksInjectedPromise();
     goto end_injection;
   }
-
-  m_parent.injectBulkRecalls(); //do an initial injection before entering loop
   try{
     while (1) {
       Request req = m_parent.m_queue.pop();
@@ -426,17 +422,13 @@ void RecallTaskInjector::WorkerThread::run()
       }
       m_parent.m_lc.log(cta::log::DEBUG,"RecallJobInjector:run: about to call client interface");
       LogContext::ScopedParam sp01(m_parent.m_lc, Param("transactionId", m_parent.m_retrieveMount.getMountTransactionId()));
-
-      /*When disk space reservation fails, we will no longer fetch more files,
-      just wait for the session to finish naturally
-      */
-      if (reservationResult) {
+      
+      if (!m_parent.m_diskSpaceReservationFailed) {
         bool noFilesToRecall;
         m_parent.synchronousFetch(noFilesToRecall);
-
-        reservationResult = m_parent.reserveSpaceForNextJobBatch();
-        if (!reservationResult) {
-          m_parent.m_lc.log(cta::log::INFO, "Disk space reservation failed: will inject no more files");
+        m_parent.injectBulkRecalls();
+        if (m_parent.m_diskSpaceReservationFailed) {
+          m_parent.signalEndDataMovement();
         }
       }
 
@@ -448,8 +440,6 @@ void RecallTaskInjector::WorkerThread::run()
         } else {
           m_parent.m_lc.log(cta::log::DEBUG,"In RecallJobInjector::WorkerThread::run(): got empty list, but not last call. NoOp.");
         }
-      } else {
-        m_parent.injectBulkRecalls();
       }
     } // end of while(1)
   } //end of try
@@ -463,7 +453,7 @@ catch(const cta::exception::Exception& ex){
     m_parent.signalEndDataMovement();
     m_parent.deleteAllTasks();
   }
-
+  
 end_injection:
   //-------------
   m_parent.m_lc.log(cta::log::DEBUG, "Finishing RecallTaskInjector thread");

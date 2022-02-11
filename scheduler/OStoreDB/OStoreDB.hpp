@@ -316,7 +316,11 @@ class OStoreDB: public SchedulerDatabase {
     
     bool reserveDiskSpace(const cta::DiskSpaceReservationRequest &request,
       const std::string &fetchEosFreeSpaceScript, log::LogContext& logContext) override;
-    
+
+    bool testReserveDiskSpace(const cta::DiskSpaceReservationRequest &request,
+      const std::string &fetchEosFreeSpaceScript, log::LogContext& logContext) override;
+
+
     void putQueueToSleep(const std::string &diskSystemName, const uint64_t sleepTime, log::LogContext &logContext) override;
    private:
     std::set<DiskSystemToSkip> m_diskSystemsToSkip;

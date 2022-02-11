@@ -201,6 +201,13 @@ bool cta::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest
 }
 
 //------------------------------------------------------------------------------
+// testReserveDiskSpace()
+//------------------------------------------------------------------------------
+bool cta::RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationRequest &request, log::LogContext& logContext) {
+  return m_dbMount->testReserveDiskSpace(request, m_fetchEosFreeSpaceScript, logContext);
+}
+
+//------------------------------------------------------------------------------
 // requeueJobBatch()
 //------------------------------------------------------------------------------
 void cta::RetrieveMount::putQueueToSleep(const std::string &diskSystemName, const uint64_t sleepTime, log::LogContext &logContext) {

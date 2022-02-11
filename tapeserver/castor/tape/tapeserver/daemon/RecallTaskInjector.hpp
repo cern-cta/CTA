@@ -114,7 +114,8 @@ public:
   /**
    * Reserve disk space in the eos instance buffer for the next job batch to be injected
    */
-  bool reserveSpaceForNextJobBatch(const bool useRAOManager = true);
+
+  bool reserveSpaceForNextJobBatch(std::list<std::unique_ptr<cta::RetrieveJob>> &nextJobBatch);
 
   /**
    * Set the drive interface in use
@@ -144,6 +145,11 @@ public:
    * of tasks to be injected by the RecallTaskInjector
    */
   void waitForFirstTasksInjectedPromise();
+
+  /**
+   * Tests if the mount is able to reserve disk space for a job batch
+   */
+  bool testDiskSpaceReservationWorking();
 
 private:
   /**
@@ -200,11 +206,6 @@ private:
     const bool end;
   };
 
-  class DiskSpaceReservationStatus {
-    cta::DiskSpaceReservationRequest reservedSpace;
-    cta::DiskSpaceReservationRequest usedSpace;
-  };
-
   class WorkerThread: public cta::threading::Thread {
   public:
     WorkerThread(RecallTaskInjector & rji): m_parent(rji) {}
@@ -225,9 +226,6 @@ private:
 
   /// the client who is sending us jobs
   cta::RetrieveMount &m_retrieveMount;
-
-  /// the amount of disk space reserved and used by the session
-  cta::DiskSpaceReservationRequest m_reservedFreeSpace;
 
   /// Drive interface needed for performing Recommended Access Order query
   castor::tape::tapeserver::drive::DriveInterface * m_drive;
@@ -278,6 +276,11 @@ private:
 
   bool m_promiseFirstTaskInjectedSet = false;
   bool m_sessionEndSignaled = false;
+
+  /**
+  * Set as true if a previous disk space reservation failed for this mount
+  */
+  bool m_diskSpaceReservationFailed = false;
 
 };
 
