@@ -2256,7 +2256,7 @@ protected:
 
   void addDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes) override;
 
-  void subtractDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes) override;
+  void subtractDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes, log::LogContext & lc) override;
 
   std::tuple<std::string, uint64_t> getDiskSpaceReservation(const std::string& driveName) override;
 

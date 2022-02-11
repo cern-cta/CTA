@@ -10616,7 +10616,7 @@ void RdbmsCatalogue::releaseDiskSpace(const std::string& driveName, const DiskSp
   std::tie(diskSystemName, bytes) = getDiskSpaceReservation(driveName);
   debugLogDiskSpaceReservation(diskSystemName, bytes, "In RetrieveMount::releaseDiskSpace(): state before reservation.");
 
-  subtractDiskSpaceReservation(driveName, diskSpaceReservation.begin()->first, diskSpaceReservation.begin()->second);
+  subtractDiskSpaceReservation(driveName, diskSpaceReservation.begin()->first, diskSpaceReservation.begin()->second, lc);
   
   std::tie(diskSystemName, bytes) = getDiskSpaceReservation(driveName);
   debugLogDiskSpaceReservation(diskSystemName, bytes, "In RetrieveMount::releaseDiskSpace(): state after reservation.");
@@ -10625,10 +10625,17 @@ void RdbmsCatalogue::releaseDiskSpace(const std::string& driveName, const DiskSp
 //------------------------------------------------------------------------------
 // subtractDiskSpaceReservation
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::subtractDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes) {
+void RdbmsCatalogue::subtractDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes, log::LogContext & lc) {
   auto tdStatus = getTapeDrive(driveName);
-  if (bytes > tdStatus.value().reservedBytes) throw NegativeDiskSpaceReservationReached(
-    "In DriveState::subtractDiskSpaceReservation(): we would reach a negative reservation size.");
+  if (bytes > tdStatus.value().reservedBytes) {
+    log::ScopedParamContainer params(lc);
+    params.add("diskSystem", diskSystemName)
+          .add("currentReservation", tdStatus.value().reservedBytes)
+          .add("bytesDelta", bytes);
+    lc.log(log::WARNING, "Attempting to release more disk space than reserved, setting reservation to zero");
+
+    bytes = tdStatus.value().reservedBytes;
+  }  
   tdStatus.value().diskSystemName = diskSystemName;
   tdStatus.value().reservedBytes -= bytes;
   modifyTapeDrive(tdStatus.value());

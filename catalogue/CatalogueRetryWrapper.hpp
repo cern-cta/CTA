@@ -694,8 +694,8 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->addDiskSpaceReservation(driveName, diskSystemName, bytes);}, m_maxTriesToConnect);
   }
 
-  void subtractDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes) {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->subtractDiskSpaceReservation(driveName, diskSystemName, bytes);}, m_maxTriesToConnect);
+  void subtractDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes, log::LogContext & lc) {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->subtractDiskSpaceReservation(driveName, diskSystemName, bytes, lc);}, m_maxTriesToConnect);
   }
 
   std::tuple<std::string, uint64_t> getDiskSpaceReservation(const std::string& driveName) {

@@ -344,14 +344,14 @@ public:
     lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): state before release.");
 
     subtractDiskSpaceReservation(driveName, diskSpaceReservation.begin()->first,
-      diskSpaceReservation.begin()->second);
+      diskSpaceReservation.begin()->second, lc);
 
     std::tie(diskSystemName, bytes) = getDiskSpaceReservation(driveName);
     setLogParam(diskSystemName, bytes);
     lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): state after release.");
   }
 
-  void subtractDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes) override {
+  void subtractDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes, log::LogContext & lc) override {
     auto tdStatus = getTapeDrive(driveName);
     if (bytes > tdStatus.value().reservedBytes) throw NegativeDiskSpaceReservationReached(
       "In DriveState::subtractDiskSpaceReservation(): we would reach a negative reservation size.");

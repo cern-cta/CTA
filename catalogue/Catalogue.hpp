@@ -1259,7 +1259,7 @@ public:
 
   virtual void addDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes) = 0;
 
-  virtual void subtractDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes) = 0;
+  virtual void subtractDiskSpaceReservation(const std::string& driveName, const std::string& diskSystemName, uint64_t bytes, log::LogContext & lc) = 0;
 
   virtual std::tuple<std::string, uint64_t> getDiskSpaceReservation(const std::string& driveName) = 0;
 
