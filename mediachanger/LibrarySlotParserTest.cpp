@@ -33,13 +33,13 @@ protected:
   }
 };
 
-TEST_F(cta_mediachanger_LibrarySlotParserTest, manual) {
+TEST_F(cta_mediachanger_LibrarySlotParserTest, dummy) {
   using namespace cta::mediachanger;
 
   std::unique_ptr<LibrarySlot> slot;
-  ASSERT_NO_THROW(slot.reset(LibrarySlotParser::parse("manual")));
+  ASSERT_NO_THROW(slot.reset(LibrarySlotParser::parse("dummy")));
   ASSERT_NE((LibrarySlot*)0, slot.get());
-  ASSERT_EQ(TAPE_LIBRARY_TYPE_MANUAL, slot->getLibraryType());
+  ASSERT_EQ(TAPE_LIBRARY_TYPE_DUMMY, slot->getLibraryType());
 }
 
 TEST_F(cta_mediachanger_LibrarySlotParserTest, scsi) {

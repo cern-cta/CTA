@@ -24,7 +24,7 @@ const char *cta::mediachanger::tapeLibraryTypeToString(
   const TapeLibraryType libraryType) {
   switch(libraryType) {
   case TAPE_LIBRARY_TYPE_NONE  : return "NONE";
-  case TAPE_LIBRARY_TYPE_MANUAL: return "MANUAL";
+  case TAPE_LIBRARY_TYPE_DUMMY : return "DUMMY";
   case TAPE_LIBRARY_TYPE_SCSI  : return "SCSI";
   default                      : return "UNKNOWN";
   }

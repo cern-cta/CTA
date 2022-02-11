@@ -376,14 +376,6 @@ void castor::tape::tapeserver::daemon::CleanerSession::unloadTape(
   params.push_back(cta::log::Param("tapeDrive", m_driveConfig.unitName));
   params.push_back(cta::log::Param("librarySlot", librarySlot.str()));
 
-  // We implement the same policy as with the tape sessions: 
-  // if the librarySlot parameter is "manual", do nothing.
-  if(cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL == librarySlot.getLibraryType()) {
-    m_log(cta::log::INFO, "Cleaner not unloading tape because media changer is"
-      " manual", params);
-    return;
-  }
-
   try {
     m_log(cta::log::INFO, "Cleaner unloading tape", params);
     drive.unloadTape();
@@ -409,14 +401,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::dismountTape(
 
   try {
     m_mc.dismountTape(vid, librarySlot);
-    const bool dismountWasManual = cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL ==
-      librarySlot.getLibraryType();
-    if(dismountWasManual) {
-      m_log(cta::log::INFO, "Cleaner did not dismount tape because media changer is"
-        " manual", params);
-    } else {
-      m_log(cta::log::INFO, "Cleaner dismounted tape", params);
-    }
+    m_log(cta::log::INFO, "Cleaner dismounted tape", params);
   } catch(cta::exception::Exception &ne) {
     cta::exception::Exception ex;
     ex.getMessage() << "Cleaner failed to dismount tape: " <<

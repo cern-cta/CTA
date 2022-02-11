@@ -18,7 +18,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
 #include "mediachanger/LibrarySlotParser.hpp"
-#include "mediachanger/ManualLibrarySlot.hpp"
+#include "mediachanger/DummyLibrarySlot.hpp"
 #include "mediachanger/ScsiLibrarySlot.hpp"
 
 #include <sstream>
@@ -49,8 +49,8 @@ cta::mediachanger::LibrarySlot *cta::mediachanger::LibrarySlotParser::
 //------------------------------------------------------------------------------
 cta::mediachanger::TapeLibraryType cta::mediachanger::LibrarySlotParser::
   getLibrarySlotType(const std::string &str) {
-  if(isManual(str)) return TAPE_LIBRARY_TYPE_MANUAL;
-  if(isScsi(str))   return TAPE_LIBRARY_TYPE_SCSI;
+  if(isDummy(str)) return TAPE_LIBRARY_TYPE_DUMMY;
+  if(isScsi(str))  return TAPE_LIBRARY_TYPE_SCSI;
 
   cta::exception::Exception ex;
   ex.getMessage() << "Cannot determine library slot type: str=" << str;
@@ -58,11 +58,11 @@ cta::mediachanger::TapeLibraryType cta::mediachanger::LibrarySlotParser::
 }
 
 //------------------------------------------------------------------------------
-// isManual
+// isDummy
 //------------------------------------------------------------------------------
-bool cta::mediachanger::LibrarySlotParser::isManual(const std::string &str)
-  {
-  return 0 == str.find("manual");
+bool cta::mediachanger::LibrarySlotParser::isDummy(const std::string &str)
+{
+  return 0 == str.find("dummy");
 }
 
 //------------------------------------------------------------------------------
@@ -80,7 +80,7 @@ cta::mediachanger::LibrarySlot *cta::mediachanger::LibrarySlotParser::
   parse(const TapeLibraryType libraryType, const std::string &str) {
 
   switch(libraryType) {
-  case TAPE_LIBRARY_TYPE_MANUAL: return parseManualLibrarySlot(str);
+  case TAPE_LIBRARY_TYPE_DUMMY:  return parseDummyLibrarySlot(str);
   case TAPE_LIBRARY_TYPE_SCSI:   return parseScsiLibrarySlot(str);
   default:
     {
@@ -94,12 +94,13 @@ cta::mediachanger::LibrarySlot *cta::mediachanger::LibrarySlotParser::
 }
 
 //------------------------------------------------------------------------------
-// parseManualLibrarySlot
+// parseDummyLibrarySlot
 //------------------------------------------------------------------------------
-cta::mediachanger::ManualLibrarySlot *cta::mediachanger::
-  LibrarySlotParser::parseManualLibrarySlot(const std::string &str) {
-  return new ManualLibrarySlot(str);
+cta::mediachanger::DummyLibrarySlot *cta::mediachanger::
+  LibrarySlotParser::parseDummyLibrarySlot(const std::string &str) {
+  return new DummyLibrarySlot(str);
 }
+
 
 //------------------------------------------------------------------------------
 // parseScsiLibrarySlot

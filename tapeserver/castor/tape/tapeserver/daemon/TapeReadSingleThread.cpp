@@ -95,25 +95,21 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
       m_this.m_logContext.log(cta::log::INFO, "TapeReadSingleThread: No tape to unload");
       goto done;
     }
-    // in the special case of a "manual" mode tape, we should skip the unload too.
-    if (cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.librarySlot().getLibraryType()) {      
-      m_this.m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unloading);
-      m_this.m_drive.unloadTape();
-      m_this.m_logContext.log(cta::log::INFO, "TapeReadSingleThread: Tape unloaded");
-    } else {
-      m_this.m_logContext.log(cta::log::INFO, "TapeReadSingleThread: Tape NOT unloaded (manual mode)");
-    }
+
+    m_this.m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unloading, cta::nullopt);
+    m_this.m_drive.unloadTape();
+    m_this.m_logContext.log(cta::log::INFO, "TapeReadSingleThread: Tape unloaded");
     m_this.m_stats.unloadTime += m_timer.secs(cta::utils::Timer::resetCounter);
+
     // And return the tape to the library
-    // In case of manual mode, this will be filtered by the rmc daemon
-    // (which will do nothing)
     currentErrorToCount = "Error_tapeDismount";
     m_this.m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
     m_this.m_mc.dismountTape(m_this.m_volInfo.vid, m_this.m_drive.config.librarySlot());
     m_this.m_drive.disableLogicalBlockProtection();
     m_this.m_stats.unmountTime += m_timer.secs(cta::utils::Timer::resetCounter);
-    m_this.m_logContext.log(cta::log::INFO, cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.librarySlot().getLibraryType() ?
-      "TapeReadSingleThread : tape unmounted":"TapeReadSingleThread : tape NOT unmounted (manual mode)");
+    m_this.m_logContext.log(cta::log::INFO, "TapeReadSingleThread : tape unmounted");
+    // Report SessionState::ShuttingDown if all tasks finished or
+    // SessionState::DrainingToDisk if there is any DiskWriteWorkerThread still active
     m_this.m_initialProcess.reportTapeUnmountedForRetrieve();
     m_this.m_stats.waitReportingTime += m_timer.secs(cta::utils::Timer::resetCounter);
   } catch(const cta::exception::Exception& ex){
@@ -121,8 +117,8 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
     m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
     const int logLevel = cta::log::ERR;
     const std::string errorMsg = "Exception in TapeReadSingleThread-TapeCleaning when unmounting the tape. Putting the drive down.";
-    cta::optional<std::string> reason = cta::common::dataStructures::DesiredDriveState::generateReasonFromLogMsg(logLevel,errorMsg);
-    m_this.m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down,reason);
+    cta::optional<std::string> reason = cta::common::dataStructures::DesiredDriveState::generateReasonFromLogMsg(logLevel, errorMsg);
+    m_this.m_rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down, reason);
     cta::log::ScopedParamContainer scoped(m_this.m_logContext);
     scoped.add("exceptionMessage", ex.getMessageValue());
     m_this.m_logContext.log(logLevel, errorMsg);
@@ -193,13 +189,18 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::openReadSession() {
 // volumeModeToString
 //-----------------------------------------------------------------------------
 const char *castor::tape::tapeserver::daemon::TapeReadSingleThread::
-  mountTypeToString(const cta::common::dataStructures::MountType mountType) const throw() {
-  switch(mountType) {
-  case cta::common::dataStructures::MountType::Retrieve: return "Retrieve";
-  case cta::common::dataStructures::MountType::ArchiveForUser : return "ArchiveForUser";
-  case cta::common::dataStructures::MountType::ArchiveForRepack : return "ArchiveForRepack";
-  case cta::common::dataStructures::MountType::Label: return "Label";
-  default                      : return "UNKNOWN";
+mountTypeToString(const cta::common::dataStructures::MountType mountType) const noexcept {
+  switch (mountType) {
+    case cta::common::dataStructures::MountType::Retrieve:
+      return "Retrieve";
+    case cta::common::dataStructures::MountType::ArchiveForUser:
+      return "ArchiveForUser";
+    case cta::common::dataStructures::MountType::ArchiveForRepack:
+      return "ArchiveForRepack";
+    case cta::common::dataStructures::MountType::Label:
+      return "Label";
+    default:
+      return "UNKNOWN";
   }
 }
 

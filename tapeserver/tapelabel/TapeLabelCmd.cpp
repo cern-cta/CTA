@@ -291,14 +291,7 @@ void TapeLabelCmd::dismountTape(
   try {
     m_log(cta::log::INFO, "Label session dismounting tape", params);
     m_mc.dismountTape(vid, librarySlot);
-    const bool dismountWasManual = cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL ==
-      librarySlot.getLibraryType();
-    if(dismountWasManual) {
-      m_log(cta::log::INFO, "Label session did not dismount tape because media"
-        " changer is manual", params);
-    } else {
-      m_log(cta::log::INFO, "Label session dismounted tape", params);
-    }
+    m_log(cta::log::INFO, "Label session dismounted tape", params);
   } catch(cta::exception::Exception &ne) {
     cta::exception::Exception ex;
     ex.getMessage() << "Label session failed to dismount tape: " <<
@@ -356,13 +349,12 @@ void TapeLabelCmd::writeLabelToTape(
 //------------------------------------------------------------------------------
 // unloadTape
 //------------------------------------------------------------------------------
-void TapeLabelCmd::unloadTape(
-  const std::string &vid, castor::tape::tapeserver::drive::DriveInterface &drive) {
+void TapeLabelCmd::unloadTape(const std::string &vid, castor::tape::tapeserver::drive::DriveInterface &drive) {
   std::unique_ptr<cta::mediachanger::LibrarySlot> librarySlotPtr;
   librarySlotPtr.reset(
     cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot));
-  const cta::mediachanger::LibrarySlot &librarySlot = *librarySlotPtr.get();
-  
+  const cta::mediachanger::LibrarySlot &librarySlot = *librarySlotPtr;
+
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("userName", m_userName));
   params.push_back(cta::log::Param("tapeVid", m_vid));
@@ -371,15 +363,9 @@ void TapeLabelCmd::unloadTape(
   params.push_back(cta::log::Param("logicalLibrary", m_logicalLibrary));
   params.push_back(cta::log::Param("useLbp",boolToStr(m_useLbp)));
   params.push_back(cta::log::Param("driveSupportLbp",boolToStr(m_driveSupportLbp)));
+  params.push_back(cta::log::Param("librarySlot", librarySlot.str()));
   params.push_back(cta::log::Param("force", boolToStr(m_force)));
 
-  // We implement the same policy as with the tape sessions: 
-  // if the librarySlot parameter is "manual", do nothing.
-  if(cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL == librarySlot.getLibraryType()) {
-    m_log(cta::log::INFO, "Label session not unloading tape because media changer is"
-      " manual", params);
-    return;
-  }
   try {
     m_log(cta::log::INFO, "Label session unloading tape", params);
     drive.unloadTape();
@@ -395,8 +381,7 @@ void TapeLabelCmd::unloadTape(
 //------------------------------------------------------------------------------
 // rewindDrive
 //------------------------------------------------------------------------------
-void TapeLabelCmd::rewindDrive(
-  castor::tape::tapeserver::drive::DriveInterface &drive) {
+void TapeLabelCmd::rewindDrive(castor::tape::tapeserver::drive::DriveInterface &drive) {
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("userName", m_userName));
   params.push_back(cta::log::Param("tapeVid", m_vid));
@@ -415,8 +400,7 @@ void TapeLabelCmd::rewindDrive(
 //------------------------------------------------------------------------------
 // setProcessCapabilities
 //------------------------------------------------------------------------------
-void TapeLabelCmd::setProcessCapabilities(
-  const std::string &capabilities) {
+void TapeLabelCmd::setProcessCapabilities(const std::string &capabilities) {
   m_capUtils.setProcText(capabilities);
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("capabilities", capabilities));
@@ -487,12 +471,7 @@ void TapeLabelCmd::mountTape(const std::string &vid) {
 
   m_log(cta::log::INFO, "Label session mounting tape", params);
   m_mc.mountTapeReadWrite(vid, librarySlot);
-  if(cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL == librarySlot.getLibraryType()) {
-    m_log(cta::log::INFO, "Label session did not mounted tape because the media"
-      " changer is manual", params);
-  } else {
-   m_log(cta::log::INFO, "Label session mounted tape", params);
-  }
+  m_log(cta::log::INFO, "Label session mounted tape", params);
 }
 
 //------------------------------------------------------------------------------

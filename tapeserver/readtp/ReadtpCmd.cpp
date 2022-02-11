@@ -273,12 +273,7 @@ void ReadtpCmd::mountTape(const std::string &vid) {
   
   m_log(cta::log::INFO, "Mounting tape", params);
   m_mc.mountTapeReadOnly(vid, librarySlot);
-  if(cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL == librarySlot.getLibraryType()) {
-    m_log(cta::log::INFO, "Did not mount the tape because the media"
-      " changer is manual", params);
-  } else {
-   m_log(cta::log::INFO, "Mounted tape", params);
-  }
+  m_log(cta::log::INFO, "Mounted tape", params);
 }
 
 //------------------------------------------------------------------------------
@@ -492,15 +487,9 @@ void ReadtpCmd::unloadTape(
   params.push_back(cta::log::Param("tapeDrive", m_unitName));
   params.push_back(cta::log::Param("logicalLibrary", m_logicalLibrary));
   params.push_back(cta::log::Param("useLbp",boolToStr(m_useLbp)));
+  params.push_back(cta::log::Param("librarySlot", librarySlot.str()));
   params.push_back(cta::log::Param("driveSupportLbp",boolToStr(m_driveSupportLbp)));
-  
-  // We implement the same policy as with the tape sessions: 
-  // if the librarySlot parameter is "manual", do nothing.
-  if(cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL == librarySlot.getLibraryType()) {
-    m_log(cta::log::INFO, "Not unloading tape because media changer is"
-      " manual", params);
-    return;
-  }
+
   try {
     m_log(cta::log::INFO, "Unloading tape", params);
     drive.unloadTape();
@@ -534,14 +523,7 @@ void ReadtpCmd::dismountTape(const std::string &vid) {
   try {
     m_log(cta::log::INFO, "Dismounting tape", params);
     m_mc.dismountTape(vid, librarySlot);
-    const bool dismountWasManual = cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL ==
-      librarySlot.getLibraryType();
-    if(dismountWasManual) {
-      m_log(cta::log::INFO, "Did not dismount tape because media"
-        " changer is manual", params);
-    } else {
-      m_log(cta::log::INFO, "Dismounted tape", params);
-    }
+    m_log(cta::log::INFO, "Dismounted tape", params);
   } catch(cta::exception::Exception &ne) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to dismount tape: " <<

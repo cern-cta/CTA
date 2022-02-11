@@ -27,11 +27,11 @@ set (MEDIACHANGER_LIB_SRC_FILES
   IpAndPort.cpp
   LibrarySlot.cpp
   LibrarySlotParser.cpp
-  ManualLibrarySlot.cpp
+  DummyLibrarySlot.cpp
   MediaChangerFacade.cpp
   MediaChangerProxy.cpp
   MessageHeader.cpp
-  MmcProxy.cpp
+  DmcProxy.cpp
   RmcMarshal.cpp
   RmcMarshal.hpp
   RmcMountMsgBody.cpp
@@ -56,7 +56,6 @@ set (MEDIACHANGER_UNIT_TESTS_LIB_SRC_FILES
   DismountCmdLineTest.cpp
   IoTest.cpp
   LibrarySlotParserTest.cpp
-  ManualLibrarySlotTest.cpp
   MountCmdLine.cpp
   MountCmdLineTest.cpp
   ScsiLibrarySlotTest.cpp)

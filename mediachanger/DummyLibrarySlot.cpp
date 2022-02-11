@@ -15,31 +15,31 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "mediachanger/ManualLibrarySlot.hpp"
+#include "mediachanger/DummyLibrarySlot.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::mediachanger::ManualLibrarySlot::ManualLibrarySlot()
+cta::mediachanger::DummyLibrarySlot::DummyLibrarySlot()
  :
-  LibrarySlot(TAPE_LIBRARY_TYPE_MANUAL) {
-  m_str = "manual";
+  LibrarySlot(TAPE_LIBRARY_TYPE_DUMMY) {
+  m_str = "dummy";
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::mediachanger::ManualLibrarySlot::ManualLibrarySlot(
+cta::mediachanger::DummyLibrarySlot::DummyLibrarySlot(
   const std::string &str):
-  LibrarySlot(TAPE_LIBRARY_TYPE_MANUAL) {
+  LibrarySlot(TAPE_LIBRARY_TYPE_DUMMY) {
   m_str = str;
 
-  if(str.find("manual")) {
+  if(str.find("dummy")) {
     cta::exception::Exception ex;
-    ex.getMessage() << "Failed to construct ManualLibrarySlot"
-      ": Library slot must start with manual: str=" << str;
+    ex.getMessage() << "Failed to construct DummyLibrarySlot"
+      ": Library slot must start with dummy: str=" << str;
     throw ex;
   }
 }
@@ -47,13 +47,13 @@ cta::mediachanger::ManualLibrarySlot::ManualLibrarySlot(
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::mediachanger::ManualLibrarySlot::~ManualLibrarySlot() {
+cta::mediachanger::DummyLibrarySlot::~DummyLibrarySlot() {
 }
 
 //------------------------------------------------------------------------------
 // clone
 //------------------------------------------------------------------------------
-cta::mediachanger::LibrarySlot *cta::mediachanger::ManualLibrarySlot::
+cta::mediachanger::LibrarySlot *cta::mediachanger::DummyLibrarySlot::
   clone() {
-  return new ManualLibrarySlot(*this);
+  return new DummyLibrarySlot(*this);
 }

@@ -15,8 +15,8 @@
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "mediachanger/ManualLibrarySlot.hpp"
-#include "mediachanger/MmcProxy.hpp"
+#include "mediachanger/DummyLibrarySlot.hpp"
+#include "mediachanger/DmcProxy.hpp"
 
 namespace cta {
 namespace mediachanger {
@@ -24,38 +24,38 @@ namespace mediachanger {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-MmcProxy::MmcProxy(log::Logger &log):
+DmcProxy::DmcProxy(log::Logger &log):
   m_log(log) {
 }
 
 //------------------------------------------------------------------------------
 // mountTapeReadOnly
 //------------------------------------------------------------------------------
-void MmcProxy::mountTapeReadOnly( const std::string &vid, const LibrarySlot &librarySlot) {
+void DmcProxy::mountTapeReadOnly(const std::string &vid, const LibrarySlot &librarySlot) {
   std::list<log::Param> params = {
     log::Param("tapeVid", vid),
     log::Param("librarySlot", librarySlot.str())};
-  m_log(log::WARNING, "Tape should be manual mounted for read-only access", params);
+  m_log(log::WARNING, "Dummy mount for read-only access", params);
 }
 
 //------------------------------------------------------------------------------
 // mountTapeReadWrite
 //------------------------------------------------------------------------------
-void MmcProxy::mountTapeReadWrite(const std::string &vid, const LibrarySlot &librarySlot) {
+void DmcProxy::mountTapeReadWrite(const std::string &vid, const LibrarySlot &librarySlot) {
   std::list<log::Param> params = {
     log::Param("tapeVid", vid),
     log::Param("librarySlot", librarySlot.str())};
-  m_log(log::WARNING, "Tape should be manual mounted for read/write access", params);
+  m_log(log::WARNING, "Dummy mount for read/write access", params);
 }
 
 //------------------------------------------------------------------------------
 // dismountTape
 //------------------------------------------------------------------------------
-void MmcProxy::dismountTape( const std::string &vid, const LibrarySlot &librarySlot) {
+void DmcProxy::dismountTape(const std::string &vid, const LibrarySlot &librarySlot) {
   std::list<log::Param> params = {
     log::Param("tapeVid", vid),
     log::Param("librarySlot", librarySlot.str())};
-  m_log(log::WARNING, "Tape should be manual dismounted", params);
+  m_log(log::WARNING, "Dummy dismount", params);
 }
 
 } // namespace medichanger

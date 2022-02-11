@@ -18,7 +18,7 @@
 #pragma once
 
 #include "mediachanger/LibrarySlot.hpp"
-#include "mediachanger/ManualLibrarySlot.hpp"
+#include "mediachanger/DummyLibrarySlot.hpp"
 #include "mediachanger/ScsiLibrarySlot.hpp"
 
 namespace cta {
@@ -37,10 +37,10 @@ public:
    *
    * The string representation of a tape library-slot must be in one of the
    * following two forms:
-   * - manual
+   * - dummy
    * - smcDRIVE_ORDINAL
    *
-   * @param str The string represetion of the library slot.
+   * @param str The string representation of the library slot.
    */
   static LibrarySlot *parse(const std::string &str);
 
@@ -64,18 +64,18 @@ private:
     const std::string &str);
 
   /**
-   * Returns true if the type of the specified tape library slot is manual.
+   * Returns true if the type of the specified tape library slot is SCSI.
    *
    * @param str The string representation of the tape library slot.
-   * @return True if the type of the library slot is a manual.
+   * @return True if the type of the library slot is dummy.
    */
-  static bool isManual(const std::string &str); 
+  static bool isDummy(const std::string &str);
 
   /**
    * Returns true if the type of the specified tape library slot is SCSI.
    *
    * @param str The string representation of the tape library slot.
-   * @return True if the type of the library slot is a manual.
+   * @return True if the type of the library slot is SCSI.
    */
   static bool isScsi(const std::string &str); 
 
@@ -92,11 +92,11 @@ private:
     const std::string &str);
 
   /**
-   * Parses the specified string representation of a manual library slot.
+   * Parses the specified string representation of a dummy library slot.
    *
    * @param str The string representation of the tape library slot.
    */
-  static cta::mediachanger::ManualLibrarySlot *parseManualLibrarySlot(
+  static cta::mediachanger::DummyLibrarySlot * parseDummyLibrarySlot(
     const std::string &str);
 
   /**

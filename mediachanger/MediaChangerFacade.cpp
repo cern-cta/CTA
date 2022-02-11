@@ -25,7 +25,7 @@ namespace mediachanger {
 // constructor
 //------------------------------------------------------------------------------
 MediaChangerFacade::MediaChangerFacade(log::Logger &log):
-  m_mmcProxy(log) {
+  m_dmcProxy(log) {
 }
 
 //------------------------------------------------------------------------------
@@ -76,8 +76,8 @@ void MediaChangerFacade::dismountTape(const std::string &vid, const LibrarySlot 
 MediaChangerProxy &MediaChangerFacade::getProxy(const TapeLibraryType libraryType) {
   try {
     switch(libraryType) {
-    case TAPE_LIBRARY_TYPE_MANUAL:
-      return m_mmcProxy;
+    case TAPE_LIBRARY_TYPE_DUMMY:
+      return m_dmcProxy;
     case TAPE_LIBRARY_TYPE_SCSI:
       return m_rmcProxy;
     default:

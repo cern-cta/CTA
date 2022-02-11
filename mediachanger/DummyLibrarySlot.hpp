@@ -17,25 +17,47 @@
 
 #pragma once
 
+#include "mediachanger/LibrarySlot.hpp"
+
 namespace cta {
 namespace mediachanger {
 
 /**
- * Enumeration of the different types of tape library.
+ * Class representing a dummy slot for the tests.
  */
-enum TapeLibraryType {
-  TAPE_LIBRARY_TYPE_NONE,
-  TAPE_LIBRARY_TYPE_DUMMY,
-  TAPE_LIBRARY_TYPE_SCSI};
-  
-/**
- * Thread safe method that returns the string representation of the
- * specified tape library.
- *
- * Please note that this function does not throw an exception.  If the
- * tape-library type is not known then an appropriate string is returned.
- */
-const char *tapeLibraryTypeToString(const TapeLibraryType libraryType);
-  
+class DummyLibrarySlot: public LibrarySlot {
+public:
+
+  /**
+   * Constructor.
+   *
+   * Sets all string member-variables to the empty string.
+   */
+  DummyLibrarySlot();
+
+  /**
+   * Constructor.
+   *
+   * Initialises the member variables based on the result of parsing the
+   * specified string representation of the library slot.
+   *
+   * @param str The string representation of the library slot.
+   */
+  DummyLibrarySlot(const std::string &str);
+
+  /**
+   * Destructor.
+   */
+  ~DummyLibrarySlot();
+
+  /**
+   * Creates a clone of this object.
+   *
+   * @return The clone.
+   */
+  LibrarySlot *clone();
+
+}; // class DummyLibrarySlot
+
 } // namespace mediachanger
 } // namespace cta

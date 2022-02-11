@@ -86,31 +86,25 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeCleaning::~TapeClea
       m_this.m_logContext.log(cta::log::INFO, "TapeWriteSingleThread: No tape to unload");
       goto done;
     }
-    // in the special case of a "manual" mode tape, we should skip the unload too.
-    if (cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.librarySlot().getLibraryType()) {
-      m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unloading,cta::nullopt, m_this.m_logContext);
-      m_this.m_drive.unloadTape();
-      m_this.m_logContext.log(cta::log::INFO, "TapeWriteSingleThread: Tape unloaded");
-    } else {
-        m_this.m_logContext.log(cta::log::INFO, "TapeWriteSingleThread: Tape NOT unloaded (manual mode)");
-    }
+
+    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unloading, cta::nullopt, m_this.m_logContext);
+    m_this.m_drive.unloadTape();
+    m_this.m_logContext.log(cta::log::INFO, "TapeWriteSingleThread: Tape unloaded");
     m_this.m_stats.unloadTime += m_timer.secs(cta::utils::Timer::resetCounter);
+
     // And return the tape to the library
-    // In case of manual mode, this will be filtered by the rmc daemon
-    // (which will do nothing)
     currentErrorToCount = "Error_tapeDismount";
     m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, cta::nullopt, m_this.m_logContext);
     m_this.m_mc.dismountTape(m_this.m_volInfo.vid, m_this.m_drive.config.librarySlot());
     m_this.m_drive.disableLogicalBlockProtection();
     m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Up, cta::nullopt, m_this.m_logContext);
     m_this.m_stats.unmountTime += m_timer.secs(cta::utils::Timer::resetCounter);
-    m_this.m_logContext.log(cta::log::INFO, cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL != m_this.m_drive.config.librarySlot().getLibraryType() ?
-      "TapeWriteSingleThread : tape unmounted":"TapeWriteSingleThread : tape NOT unmounted (manual mode)");
+    m_this.m_logContext.log(cta::log::INFO, "TapeWriteSingleThread : tape unmounted");
     m_this.m_initialProcess.reportState(cta::tape::session::SessionState::ShuttingDown,
-      cta::tape::session::SessionType::Archive);
+                                        cta::tape::session::SessionType::Archive);
     m_this.m_stats.waitReportingTime += m_timer.secs(cta::utils::Timer::resetCounter);
   }
-  catch(const cta::exception::Exception& ex){
+  catch (const cta::exception::Exception& ex) {
     // Notify something failed during the cleaning 
     m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
     const int logLevel = cta::log::ERR;
@@ -216,24 +210,19 @@ logAndCheckTapeAlertsForWrite() {
   size_t alertNumber = 0;
   // Log tape alerts in the logs.
   std::vector<std::string> tapeAlerts = m_drive.getTapeAlerts(tapeAlertCodes);
-  for (std::vector<std::string>::iterator ta=tapeAlerts.begin();
-          ta!=tapeAlerts.end();++ta)
-  {
+  for (const auto& ta: tapeAlerts) {
     cta::log::ScopedParamContainer params(m_logContext);
-    params.add("tapeAlert",*ta)
+    params.add("tapeAlert", ta)
           .add("tapeAlertNumber", alertNumber++)
           .add("tapeAlertCount", tapeAlerts.size());
     m_logContext.log(cta::log::WARNING, "Tape alert detected");
   }
   // Add tape alerts in the tape log parameters
-  std::vector<std::string> tapeAlertsCompact = 
-    m_drive.getTapeAlertsCompact(tapeAlertCodes);
-  for (std::vector<std::string>::iterator tac=tapeAlertsCompact.begin();
-          tac!=tapeAlertsCompact.end();++tac)
-  {
-    countTapeLogError(std::string("Error_")+*tac);
+  std::vector<std::string> tapeAlertsCompact = m_drive.getTapeAlertsCompact(tapeAlertCodes);
+  for (const auto& tac: tapeAlertsCompact) {
+    countTapeLogError(std::string("Error_") + tac);
   }
-  return(m_drive.tapeAlertsCriticalForWrite(tapeAlertCodes));
+  return (m_drive.tapeAlertsCriticalForWrite(tapeAlertCodes));
 }
 
 //------------------------------------------------------------------------------
@@ -254,13 +243,18 @@ isTapeWritable() const {
 // volumeModeToString
 //-----------------------------------------------------------------------------
 const char *castor::tape::tapeserver::daemon::TapeWriteSingleThread::
-  mountTypeToString(const cta::common::dataStructures::MountType mountType) const throw() {
-  switch(mountType) {
-  case cta::common::dataStructures::MountType::Retrieve: return "Retrieve";
-  case cta::common::dataStructures::MountType::ArchiveForUser: return "ArchiveForUser";
-  case cta::common::dataStructures::MountType::ArchiveForRepack: return "ArchiveForRepack";
-  case cta::common::dataStructures::MountType::Label: return "Label";
-  default                      : return "UNKNOWN";
+mountTypeToString(const cta::common::dataStructures::MountType mountType) const noexcept {
+  switch (mountType) {
+    case cta::common::dataStructures::MountType::Retrieve:
+      return "Retrieve";
+    case cta::common::dataStructures::MountType::ArchiveForUser:
+      return "ArchiveForUser";
+    case cta::common::dataStructures::MountType::ArchiveForRepack:
+      return "ArchiveForRepack";
+    case cta::common::dataStructures::MountType::Label:
+      return "Label";
+    default:
+      return "UNKNOWN";
   }
 }
 
@@ -381,23 +375,23 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
         scoped.add("detectedLbp", writeSession->isTapeWithLbp());
 
         if (!writeSession->isTapeWithLbp() && m_useLbp) {
-          m_logContext.log(cta::log::INFO, "Tapserver started with LBP support but "
-            "the tape without LBP label mounted");
+          m_logContext.log(cta::log::INFO, "Tapeserver started with LBP support but "
+                                           "the tape without LBP label mounted");
         }
-        switch(m_drive.getLbpToUse()) {
+        switch (m_drive.getLbpToUse()) {
           case drive::lbpToUse::crc32cReadWrite:
             m_logContext.log(cta::log::INFO, "Write session initialised with LBP"
-              " crc32c in ReadWrite mode, tape VID checked and drive positioned"
-              " for writing");
+                                             " crc32c in ReadWrite mode, tape VID checked and drive positioned"
+                                             " for writing");
             break;
           case drive::lbpToUse::disabled:
             m_logContext.log(cta::log::INFO, "Write session initialised without LBP"
-              ", tape VID checked and drive positioned for writing");
+                                             ", tape VID checked and drive positioned for writing");
             break;
           default:
             m_logContext.log(cta::log::ERR, "Write session initialised with "
-              "unsupported LBP method, tape VID checked and drive positioned"
-              " for writing");
+                                            "unsupported LBP method, tape VID checked and drive positioned"
+                                            " for writing");
         }
       }
 

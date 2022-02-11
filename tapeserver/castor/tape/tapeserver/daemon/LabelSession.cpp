@@ -218,12 +218,7 @@ void castor::tape::tapeserver::daemon::LabelSession::mountTape() {
 
   m_log(cta::log::INFO, "Label session mounting tape", params);
   m_mc.mountTapeReadWrite(m_request.vid, librarySlot);
-  if(cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL == librarySlot.getLibraryType()) {
-    m_log(cta::log::INFO, "Label session did not mounted tape because the media"
-      " changer is manual", params);
-  } else {
-   m_log(cta::log::INFO, "Label session mounted tape", params);
-  }
+  m_log(cta::log::INFO, "Label session mounted tape", params);
 }
 
 //------------------------------------------------------------------------------
@@ -347,15 +342,6 @@ void castor::tape::tapeserver::daemon::LabelSession::unloadTape(
   params.push_back(cta::log::Param("force", boolToStr(m_force)));
   params.push_back(cta::log::Param("lbp", boolToStr(m_lbp)));
 
-  // We implement the same policy as with the tape sessions: 
-  // if the librarySlot parameter is "manual", do nothing.
-  if(cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL ==
-    m_driveConfig.librarySlot().getLibraryType()) {
-    m_log(cta::log::INFO, "Label session not unloading tape because media changer is"
-      " manual", params);
-    return;
-  }
-
   try {
     m_log(cta::log::INFO, "Label session unloading tape", params);
     drive.unloadTape();
@@ -387,14 +373,7 @@ void castor::tape::tapeserver::daemon::LabelSession::dismountTape(
   try {
     m_log(cta::log::INFO, "Label session dismounting tape", params);
     m_mc.dismountTape(vid, librarySlot);
-    const bool dismountWasManual = cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL ==
-      librarySlot.getLibraryType();
-    if(dismountWasManual) {
-      m_log(cta::log::INFO, "Label session did not dismount tape because media"
-        " changer is manual", params);
-    } else {
-      m_log(cta::log::INFO, "Label session dismounted tape", params);
-    }
+    m_log(cta::log::INFO, "Label session dismounted tape", params);
   } catch(cta::exception::Exception &ne) {
     cta::exception::Exception ex;
     ex.getMessage() << "Label session failed to dismount tape: " <<

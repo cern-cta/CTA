@@ -188,7 +188,7 @@ public:
     // If Setup() created a temporary directory
     if(m_tmpDir) {
 
-      // Openn the directory
+      // Open the directory
       std::unique_ptr<DIR, std::function<int(DIR*)>>
         dir(opendir(m_tmpDir), closedir);
       if(NULL == dir.get()) {
@@ -471,7 +471,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester;
 
-  // List to remember the path of each remote file so that the existance of the
+  // List to remember the path of each remote file so that the existence of the
   // files can be tested for at the end of the test
   std::list<std::string> remoteFilePaths;
 
@@ -565,7 +565,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // 6) Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
@@ -592,6 +592,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+
   // 8) Run the data transfer session
   sess.execute();
 
@@ -600,6 +601,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
 
   // 10) Check the remote files exist and have the correct size
   for(auto & path: remoteFilePaths) {
+    std::cout << path << std::endl;
     struct stat statBuf;
     bzero(&statBuf, sizeof(statBuf));
     const int statRc = stat(path.substr(7).c_str(), &statBuf); //remove the "file://" for stat-ing
@@ -651,7 +653,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester;
 
-  // List to remember the path of each remote file so that the existance of the
+  // List to remember the path of each remote file so that the existence of the
   // files can be tested for at the end of the test
   std::list<std::string> remoteFilePaths;
 
@@ -751,7 +753,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // 6) Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
@@ -778,6 +780,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+
   // 8) Run the data transfer session
   sess.execute();
 
@@ -791,7 +794,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
     bzero(&statBuf, sizeof(statBuf));
     int statRc = stat(path.substr(7).c_str(), &statBuf); //remove the "file://" for stat-ing
     // File with wrong checksum are not recalled 
-    // Rest of the files were read (corret behaviour, unlike archive)
+    // Rest of the files were read (correct behaviour, unlike archive)
     if (fseq == 4) {
       ASSERT_EQ(-1, statRc); 
       ASSERT_EQ(errno, ENOENT);  
@@ -850,7 +853,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester;
 
-  // List to remember the path of each remote file so that the existance of the
+  // List to remember the path of each remote file so that the existence of the
   // files can be tested for at the end of the test
   std::list<std::string> remoteFilePaths;
 
@@ -966,7 +969,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // 6) Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
@@ -1044,7 +1047,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester;
 
-  // List to remember the path of each remote file so that the existance of the
+  // List to remember the path of each remote file so that the existence of the
   // files can be tested for at the end of the test
   std::list<std::string> remoteFilePaths;
 
@@ -1148,7 +1151,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // 6) Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
@@ -1234,7 +1237,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester;
 
-  // List to remember the path of each remote file so that the existance of the
+  // List to remember the path of each remote file so that the existence of the
   // files can be tested for at the end of the test
   std::list<std::string> remoteFilePaths;
 
@@ -1334,7 +1337,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // 6) Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
@@ -1421,7 +1424,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester;
 
-  // List to remember the path of each remote file so that the existance of the
+  // List to remember the path of each remote file so that the existence of the
   // files can be tested for at the end of the test
   std::list<std::string> remoteFilePaths;
 
@@ -1521,7 +1524,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // 6) Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
@@ -1611,7 +1614,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester;
 
-  // List to remember the path of each remote file so that the existance of the
+  // List to remember the path of each remote file so that the existence of the
   // files can be tested for at the end of the test
   std::list<std::string> remoteFilePaths;
 
@@ -1711,7 +1714,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // 6) Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
@@ -1803,7 +1806,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester;
 
-  // List to remember the path of each remote file so that the existance of the
+  // List to remember the path of each remote file so that the existence of the
   // files can be tested for at the end of the test
   std::list<std::string> remoteFilePaths;
 
@@ -1895,7 +1898,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // 7) Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/noSuchDrive", "manual");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/noSuchDrive", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
@@ -1953,7 +1956,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester;
 
-  // List to remember the path of each remote file so that the existance of the
+  // List to remember the path of each remote file so that the existence of the
   // files can be tested for at the end of the test
   std::list<std::string> remoteFilePaths;
 
@@ -2045,7 +2048,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // 7) Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
@@ -2113,7 +2116,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester("user", "group");
 
-  // List to remember the path of each remote file so that the existance of the
+  // List to remember the path of each remote file so that the existence of the
   // files can be tested for at the end of the test
   std::list<std::string> remoteFilePaths;
 
@@ -2180,7 +2183,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
   // Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
@@ -2262,7 +2265,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester("user", "group");
 
-  // List to remember the path of each remote file so that the existance of the
+  // List to remember the path of each remote file so that the existence of the
   // files can be tested for at the end of the test
   std::list<std::string> remoteFilePaths;
 
@@ -2352,7 +2355,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
   // Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
@@ -2440,7 +2443,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester("user", "group");
 
-  // List to remember the path of each remote file so that the existance of the
+  // List to remember the path of each remote file so that the existence of the
   // files can be tested for at the end of the test
   std::list<std::string> remoteFilePaths;
 
@@ -2530,7 +2533,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
   // Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
@@ -2609,7 +2612,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester("user", "group");
 
-  // List to remember the path of each remote file so that the existance of the
+  // List to remember the path of each remote file so that the existence of the
   // files can be tested for at the end of the test
   std::list<std::string> remoteFilePaths;
 
@@ -2720,7 +2723,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
   // Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
@@ -2810,7 +2813,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester("user", "group");
 
-  // List to remember the path of each remote file so that the existance of the
+  // List to remember the path of each remote file so that the existence of the
   // files can be tested for at the end of the test
   std::list<std::string> remoteFilePaths;
 
@@ -2880,7 +2883,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
   // Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
@@ -2914,7 +2917,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   std::string temp = logger.getLog();
   temp += "";
   ASSERT_EQ(s_vid, sess.getVid());
-  // We should no have 5 successfully read files.
+  // We should now have 5 successfully read files.
   size_t count=0;
   std::string::size_type pos=0;
   std::string successLog="MSG=\"File successfully read from disk\"";
@@ -2974,7 +2977,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester("user", "group");
 
-  // List to remember the path of each remote file so that the existance of the
+  // List to remember the path of each remote file so that the existence of the
   // files can be tested for at the end of the test
   std::list<std::string> remoteFilePaths;
 
@@ -3042,7 +3045,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
   // Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
@@ -3140,7 +3143,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester("user", "group");
 
-  // List to remember the path of each remote file so that the existance of the
+  // List to remember the path of each remote file so that the existence of the
   // files can be tested for at the end of the test
   std::list<std::string> remoteFilePaths;
 
@@ -3209,7 +3212,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
   // Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;
@@ -3303,7 +3306,7 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester("user", "group");
 
-  // List to remember the path of each remote file so that the existance of the
+  // List to remember the path of each remote file so that the existence of the
   // files can be tested for at the end of the test
   std::list<std::string> remoteFilePaths;
 
@@ -3338,7 +3341,7 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
         castor::tape::tapeserver::drive::FakeDrive::OnFlush);
 
   // Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "manual");
+  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName=driveConfig.unitName;
   driveInfo.logicalLibrary=driveConfig.logicalLibrary;

@@ -103,10 +103,7 @@ protected:
         m_mc.mountTapeReadOnly(m_volInfo.vid, m_drive.config.librarySlot());
         const std::string modeAsString = "R";
         scoped.add("MCMountTime",timer.secs()).add("mode",modeAsString);
-        if(cta::mediachanger::TAPE_LIBRARY_TYPE_MANUAL !=
-          m_drive.config.librarySlot().getLibraryType()) {
-          m_logContext.log(cta::log::INFO, "Tape mounted for read-only access");
-        }
+        m_logContext.log(cta::log::INFO, "Tape mounted for read-only access");
     }
     catch (cta::exception::Exception & ex) {
       scoped.add("exceptionMessage", ex.getMessageValue());
