@@ -30,6 +30,7 @@ This CTA release requires a database schema upgrade to CTA catalogue schema v4.5
 - cta/CTA#1102 - Make requeued jobs retain their original creation time
 - cta/CTA#1091 - Move TAPE_DRIVE table to DRIVE_STATE and refactor code to update drive states
 - cta/CTA#1110 - Moves disk space reservations to the DRIVE_STATE table, uses atomic updates
+- Don't throw an exception if DiskSpaceReservationRequest brings reservation < 0, just reset and log the error
 
 ### Continuous Integration
 - cta/CTA#734  - Adds test for FST delete-on-close behaviour
