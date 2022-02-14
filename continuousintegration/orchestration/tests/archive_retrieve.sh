@@ -101,4 +101,13 @@ kubectl -n ${NAMESPACE} exec client -- bash /root/delete_on_closew_error.sh || e
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
+echo
+echo "Launching try_evict_before_archive_completed.sh on client pod"
+echo " Archiving file: xrdcp as user1"
+echo " Retrieving it as poweruser1"
+kubectl -n ${NAMESPACE} cp try_evict_before_archive_completed.sh client:/root/try_evict_before_archive_completed.sh
+kubectl -n ${NAMESPACE} exec client -- bash /root/try_evict_before_archive_completed.sh || exit 1
+
+kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
 exit 0
