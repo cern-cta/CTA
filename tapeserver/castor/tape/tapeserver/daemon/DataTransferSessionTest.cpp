@@ -601,7 +601,6 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
 
   // 10) Check the remote files exist and have the correct size
   for(auto & path: remoteFilePaths) {
-    std::cout << path << std::endl;
     struct stat statBuf;
     bzero(&statBuf, sizeof(statBuf));
     const int statRc = stat(path.substr(7).c_str(), &statBuf); //remove the "file://" for stat-ing
