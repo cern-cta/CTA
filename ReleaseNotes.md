@@ -3,9 +3,11 @@
 ## Summary
 
 ### Upgrade Instructions
+This CTA release requires a non backwards compatible database schema upgrade to CTA catalogue schema v5.0. Please consult the [database upgrade documentation](https://tapeoperations.docs.cern.ch/ctaops/upgrade_production_database).
 
 ### Features
 - cta/CTA#1117 - Update masterDataInBytes when writting files to tape.
+- cta/CTA#1112 - Remove activities_weights table from catalogue.
 
 ### Bug fixes
 
