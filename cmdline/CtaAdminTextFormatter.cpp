@@ -305,14 +305,13 @@ void TextFormatter::print(const DriveLsItem &drls_item)
 
   //If there is a reason, we only want to display the beginning
   std::string reason = cta::utils::postEllipsis(drls_item.reason(),NB_CHAR_REASON);
-  const std::string mountType = toString(ProtobufToMountType(drls_item.mount_type()));
 
   push_back(
     drls_item.logical_library(),
     drls_item.drive_name(),
     drls_item.host(),
     (drls_item.desired_drive_state() == DriveLsItem::UP ? "Up" : "Down"),
-    mountType != "NO_MOUNT" ? mountType : "-",
+    toCamelCaseString(ProtobufToMountType(drls_item.mount_type())),
     toString(ProtobufToDriveStatus(drls_item.drive_status())),
     driveStatusSince,
     drls_item.vid(),
@@ -753,7 +752,7 @@ void TextFormatter::print(const ShowQueuesItem &sq_item) {
   }
 
   push_back(
-    toString(ProtobufToMountType(sq_item.mount_type())),
+    toCamelCaseString(ProtobufToMountType(sq_item.mount_type())),
     sq_item.tapepool(),
     sq_item.vo(),
     sq_item.logical_library(),

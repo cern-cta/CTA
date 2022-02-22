@@ -44,6 +44,11 @@ MountType getMountBasicType(MountType type);
 std::string toString(MountType type);
 
 /**
+ * Convert enum to string in camel case format to show in cta-admnin
+ */
+std::string toCamelCaseString(cta::common::dataStructures::MountType type);
+
+/**
  * Convert string to enum. Needed to get values from DB.
  */
 MountType strToMountType(const std::string& mountTypeStr);

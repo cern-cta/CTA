@@ -41,6 +41,25 @@ std::string toString(cta::common::dataStructures::MountType type) {
   }
 }
 
+std::string toCamelCaseString(cta::common::dataStructures::MountType type) {
+  switch(type) {
+    case MountType::ArchiveForUser:
+      return "ArchiveForUser";
+    case MountType::ArchiveForRepack:
+      return "ArchiveForRepack";
+    case MountType::ArchiveAllTypes:
+      return "ArchiveAllTypes";
+    case MountType::Retrieve:
+      return "Retrieve";
+    case MountType::Label:
+      return "Label";
+    case MountType::NoMount:
+      return "-";
+    default:
+      return "Unknown";
+  }
+}
+
 MountType strToMountType(const std::string& mountTypeStr) {
        if(mountTypeStr == "ARCHIVE_FOR_USER")   return MountType::ArchiveForUser;
   else if(mountTypeStr == "ARCHIVE_FOR_REPACK") return MountType::ArchiveForRepack;
@@ -61,7 +80,7 @@ MountType getMountBasicType(MountType type) {
   }
 }
 
-std::ostream & operator<<(std::ostream &os, 
+std::ostream & operator<<(std::ostream &os,
   const cta::common::dataStructures::MountType &obj) {
   return os << toString(obj);
 }
