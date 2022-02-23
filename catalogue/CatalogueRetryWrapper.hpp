@@ -696,6 +696,11 @@ public:
     return retryOnLostConnection(m_log,[&]{return m_catalogue->setDesiredTapeDriveState(tapeDriveName, desiredState);}, m_maxTriesToConnect);
   }
 
+  void setDesiredTapeDriveStateComment(const std::string& tapeDriveName,
+    const std::string &comment) override {
+    return retryOnLostConnection(m_log,[&]{return m_catalogue->setDesiredTapeDriveStateComment(tapeDriveName, comment);}, m_maxTriesToConnect);
+  }
+
   void updateTapeDriveStatistics(const std::string& tapeDriveName,
     const std::string& host, const std::string& logicalLibrary,
     const common::dataStructures::TapeDriveStatistics& statistics) override {

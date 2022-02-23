@@ -81,7 +81,7 @@ public:
   void createDiskInstance(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   std::list<common::dataStructures::DiskInstance> getAllDiskInstances() const override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void deleteDiskInstance(const std::string &name) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
-  void modifyDiskInstanceComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}  
+  void modifyDiskInstanceComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void createDiskInstanceSpace(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &diskInstance, const std::string &freeSpaceQueryURL, const uint64_t refreshInterval, const std::string &comment) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   std::list<common::dataStructures::DiskInstanceSpace> getAllDiskInstanceSpaces() const override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void deleteDiskInstanceSpace(const std::string &name, const std::string &diskInstance) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
@@ -288,7 +288,11 @@ public:
     m_tapeDriveStatus.desiredUp = desiredState.up;
     m_tapeDriveStatus.desiredForceDown = desiredState.forceDown;
     m_tapeDriveStatus.reasonUpDown = desiredState.reason;
-    m_tapeDriveStatus.userComment = desiredState.comment;
+  }
+
+  void setDesiredTapeDriveStateComment(const std::string& tapeDriveName,
+    const std::string &comment) override {
+    m_tapeDriveStatus.userComment = comment;
   }
 
   void updateTapeDriveStatistics(const std::string& tapeDriveName,
@@ -358,14 +362,14 @@ public:
   /*
    * Implemented for testing disk space reservation logic
    */
-  disk::DiskSystemList getAllDiskSystems() const override { 
+  disk::DiskSystemList getAllDiskSystems() const override {
     return m_diskSystemList;
   }
-  
+
   void createDiskSystem(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &fileRegexp, const std::string &freeSpaceQueryURL, const uint64_t refreshInterval, const uint64_t targetedFreeSpace, const uint64_t sleepTime, const std::string &comment)  override {
     m_diskSystemList.push_back({name, fileRegexp, freeSpaceQueryURL, refreshInterval, targetedFreeSpace, sleepTime, common::dataStructures::EntryLog(), common::dataStructures::EntryLog{}, comment});
   }
-  
+
 private:
   mutable threading::Mutex m_tapeEnablingMutex;
   std::map<std::string, common::dataStructures::Tape::State> m_tapeEnabling;

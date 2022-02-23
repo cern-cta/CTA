@@ -91,21 +91,15 @@ void TapeDrivesCatalogueState::removeDrive(const std::string& drive, log::LogCon
 
 void TapeDrivesCatalogueState::setDesiredDriveState(const std::string& drive,
   const common::dataStructures::DesiredDriveState & desiredState, log::LogContext &lc) {
-  common::dataStructures::DesiredDriveState newDesiredState = desiredState;
-  auto driveState = m_catalogue.getTapeDrive(drive);
-  if (!driveState) return;
-  if(desiredState.comment){
-    //In case we modify the comment, we want to keep the same status and forceDown of the drive
-    newDesiredState.up = driveState.value().desiredUp;
-    newDesiredState.forceDown = driveState.value().desiredForceDown;
+  if(!desiredState.comment){
+    m_catalogue.setDesiredTapeDriveState(drive, desiredState);
+  } else {
+    m_catalogue.setDesiredTapeDriveStateComment(drive, desiredState.comment.value());
   }
-  m_catalogue.setDesiredTapeDriveState(drive, newDesiredState);
 }
 
 void TapeDrivesCatalogueState::updateDriveStatistics(const common::dataStructures::DriveInfo& driveInfo,
   const ReportDriveStatsInputs& inputs, log::LogContext & lc) {
-  auto driveState = m_catalogue.getTapeDrive(driveInfo.driveName);
-  if (!driveState) return;
   common::dataStructures::TapeDriveStatistics statistics;
   statistics.lastModificationLog = common::dataStructures::EntryLog(
     "NO_USER", driveInfo.host, inputs.reportTime);
@@ -181,44 +175,12 @@ void TapeDrivesCatalogueState::updateDriveStatus(const common::dataStructures::D
     default:
       throw exception::Exception("Unexpected status in DriveRegister::reportDriveStatus");
   }
-  // If the drive is a state incompatible with space reservation, make sure there is none:
-  // switch (driveState.driveStatus) {
-  //   case common::dataStructures::DriveStatus::Down:
-  //   case common::dataStructures::DriveStatus::Shutdown:
-  //   case common::dataStructures::DriveStatus::Unknown:
-  //   case common::dataStructures::DriveStatus::Up:
-  //   {
-  //     if (!driveState.diskSystemName.empty()) {
-  //       log::ScopedParamContainer params(lc);
-  //       params.add("diskSystem", driveState.diskSystemName)
-  //             .add("bytes", driveState.reservedBytes)
-  //             .add("previousStatus", toString(previousStatus))
-  //             .add("newStatus", toString(driveState.driveStatus));
-  //       lc.log(log::WARNING, "In TapeDrivesCatalogueState::updateDriveStatus(): will clear non-empty disk space reservation on status change.");
-  //       driveState.diskSystemName = "";
-  //       driveState.reservedBytes = 0;
-  //     }
-  //   }
-  //   default:
-  //     break;
-  // }
-  // if (previousStatus != driveState.driveStatus) {
-  //   log::ScopedParamContainer params(lc);
-  //   params.add("oldStatus", toString(previousStatus))
-  //         .add("newStatus", toString(driveState.driveStatus));
-  //   lc.log(log::INFO, "In TapeDrivesCatalogueState::updateDriveStatus(): changing drive status.");
-  // }
+
   m_catalogue.updateTapeDriveStatus(driveState);
 }
 
 void TapeDrivesCatalogueState::setDriveDown(common::dataStructures::TapeDrive & driveState,
   const ReportDriveStatusInputs & inputs) {
-  // If we were already down, then we only update the last update time.
-  if (driveState.driveStatus == common::dataStructures::DriveStatus::Down) {
-    driveState.lastModificationLog = common::dataStructures::EntryLog(
-      "NO_USER", driveState.host, inputs.reportTime);
-    return;
-  }
   // If we are changing state, then all should be reset.
   driveState.sessionId = nullopt_t();
   driveState.bytesTransferedInSession = nullopt_t();
@@ -250,16 +212,6 @@ void TapeDrivesCatalogueState::setDriveUpOrMaybeDown(common::dataStructures::Tap
   const ReportDriveStatusInputs & inputs) {
   // Decide whether we should be up or down
   auto targetStatus = common::dataStructures::DriveStatus::Up;
-  if (!driveState.desiredUp) {
-    driveState.driveStatus = common::dataStructures::DriveStatus::Down;
-    if (inputs.reason) driveState.reasonUpDown = inputs.reason;
-  }
-  // If we were already up (or down), then we only update the last update time.
-  if (driveState.driveStatus == targetStatus) {
-    driveState.lastModificationLog = common::dataStructures::EntryLog(
-      "NO_USER", driveState.host, inputs.reportTime);
-    return;
-  }
   // If we are changing state, then all should be reset.
   driveState.sessionId = nullopt_t();
   driveState.bytesTransferedInSession = nullopt_t();
@@ -283,17 +235,12 @@ void TapeDrivesCatalogueState::setDriveUpOrMaybeDown(common::dataStructures::Tap
   driveState.currentTapePool = "";
   driveState.currentVo = "";
   driveState.currentActivity = nullopt_t();
+  if (inputs.reason) driveState.reasonUpDown = inputs.reason;
 }
 
 void TapeDrivesCatalogueState::setDriveProbing(common::dataStructures::TapeDrive & driveState,
   const ReportDriveStatusInputs & inputs) {
   using common::dataStructures::DriveStatus;
-  // If we were already up (or down), then we only update the last update time.
-  if (driveState.driveStatus == inputs.status) {
-    driveState.lastModificationLog = common::dataStructures::EntryLog(
-      "NO_USER", driveState.host, inputs.reportTime);
-    return;
-  }
   // If we are changing state, then all should be reset.
   driveState.sessionId = nullopt_t();
   driveState.bytesTransferedInSession = nullopt_t();
@@ -321,12 +268,6 @@ void TapeDrivesCatalogueState::setDriveProbing(common::dataStructures::TapeDrive
 
 void TapeDrivesCatalogueState::setDriveStarting(common::dataStructures::TapeDrive & driveState,
   const ReportDriveStatusInputs & inputs) {
-  // If we were already starting, then we only update the last update time.
-  if (driveState.driveStatus == common::dataStructures::DriveStatus::Starting) {
-    driveState.lastModificationLog = common::dataStructures::EntryLog(
-      "NO_USER", driveState.host, inputs.reportTime);
-    return;
-  }
   // If we are changing state, then all should be reset.
   driveState.sessionId = inputs.mountSessionId;
   driveState.bytesTransferedInSession = nullopt_t();
@@ -355,12 +296,6 @@ void TapeDrivesCatalogueState::setDriveStarting(common::dataStructures::TapeDriv
 
 void TapeDrivesCatalogueState::setDriveMounting(common::dataStructures::TapeDrive & driveState,
   const ReportDriveStatusInputs & inputs) {
-  // If we were already starting, then we only update the last update time.
-  if (driveState.driveStatus == common::dataStructures::DriveStatus::Mounting) {
-    driveState.lastModificationLog = common::dataStructures::EntryLog(
-      "NO_USER", driveState.host, inputs.reportTime);
-    return;
-  }
   // If we are changing state, then all should be reset. We are not supposed to
   // know the direction yet.
   driveState.sessionId = inputs.mountSessionId;
@@ -386,18 +321,10 @@ void TapeDrivesCatalogueState::setDriveMounting(common::dataStructures::TapeDriv
 
 void TapeDrivesCatalogueState::setDriveTransfering(common::dataStructures::TapeDrive & driveState,
   const ReportDriveStatusInputs & inputs) {
-  // If we were already transferring, we update the full statistics
-  if (driveState.driveStatus == common::dataStructures::DriveStatus::Transferring) {
-    driveState.lastModificationLog = common::dataStructures::EntryLog("NO_USER", driveState.host, inputs.reportTime);
-    driveState.bytesTransferedInSession = inputs.byteTransferred;
-    driveState.filesTransferedInSession = inputs.filesTransferred;
-    driveState.sessionElapsedTime = driveState.sessionStartTime ? inputs.reportTime-driveState.sessionStartTime.value() : 0;
-    return;
-  }
   driveState.sessionId = inputs.mountSessionId;
   driveState.bytesTransferedInSession = inputs.byteTransferred;
   driveState.filesTransferedInSession = inputs.filesTransferred;
-  driveState.sessionElapsedTime = driveState.sessionStartTime ? inputs.reportTime-driveState.sessionStartTime.value() : 0;
+  driveState.sessionElapsedTime = 0;  // Because it just started
   driveState.transferStartTime = inputs.reportTime;
   driveState.unloadStartTime = nullopt_t();
   driveState.unmountStartTime = nullopt_t();
@@ -416,11 +343,6 @@ void TapeDrivesCatalogueState::setDriveTransfering(common::dataStructures::TapeD
 
 void TapeDrivesCatalogueState::setDriveUnloading(common::dataStructures::TapeDrive & driveState,
   const ReportDriveStatusInputs & inputs) {
-  if (driveState.driveStatus == common::dataStructures::DriveStatus::Unloading) {
-    driveState.lastModificationLog = common::dataStructures::EntryLog(
-      "NO_USER", driveState.host, inputs.reportTime);
-    return;
-  }
   // If we are changing state, then all should be reset. We are not supposed to
   // know the direction yet.
   driveState.sessionId = inputs.mountSessionId;
@@ -448,11 +370,6 @@ void TapeDrivesCatalogueState::setDriveUnloading(common::dataStructures::TapeDri
 
 void TapeDrivesCatalogueState::setDriveUnmounting(common::dataStructures::TapeDrive & driveState,
   const ReportDriveStatusInputs & inputs) {
-  if (driveState.driveStatus == common::dataStructures::DriveStatus::Unmounting) {
-    driveState.lastModificationLog = common::dataStructures::EntryLog(
-      "NO_USER", driveState.host, inputs.reportTime);
-    return;
-  }
   // If we are changing state, then all should be reset. We are not supposed to
   // know the direction yet.
   driveState.sessionId = inputs.mountSessionId;
@@ -480,11 +397,6 @@ void TapeDrivesCatalogueState::setDriveUnmounting(common::dataStructures::TapeDr
 
 void TapeDrivesCatalogueState::setDriveDrainingToDisk(common::dataStructures::TapeDrive & driveState,
   const ReportDriveStatusInputs & inputs) {
-  if (driveState.driveStatus == common::dataStructures::DriveStatus::DrainingToDisk) {
-    driveState.lastModificationLog = common::dataStructures::EntryLog(
-      "NO_USER", driveState.host, inputs.reportTime);
-    return;
-  }
   // If we are changing state, then all should be reset. We are not supposed to
   // know the direction yet.
   driveState.sessionId = inputs.mountSessionId;
@@ -512,11 +424,6 @@ void TapeDrivesCatalogueState::setDriveDrainingToDisk(common::dataStructures::Ta
 
 void TapeDrivesCatalogueState::setDriveCleaningUp(common::dataStructures::TapeDrive & driveState,
   const ReportDriveStatusInputs & inputs) {
-  if (driveState.driveStatus == common::dataStructures::DriveStatus::CleaningUp) {
-    driveState.lastModificationLog = common::dataStructures::EntryLog(
-      "NO_USER", driveState.host, inputs.reportTime);
-    return;
-  }
   // If we are changing state, then all should be reset. We are not supposed to
   // know the direction yet.
   driveState.sessionId = inputs.mountSessionId;
@@ -545,11 +452,6 @@ void TapeDrivesCatalogueState::setDriveCleaningUp(common::dataStructures::TapeDr
 
 void TapeDrivesCatalogueState::setDriveShutdown(common::dataStructures::TapeDrive & driveState,
   const ReportDriveStatusInputs & inputs) {
-  if (driveState.driveStatus == common::dataStructures::DriveStatus::Shutdown) {
-    driveState.lastModificationLog = common::dataStructures::EntryLog(
-      "NO_USER", driveState.host, inputs.reportTime);
-    return;
-  }
   // If we are changing state, then all should be reset. We are not supposed to
   // know the direction yet.
   driveState.sessionId = nullopt_t();
@@ -569,7 +471,7 @@ void TapeDrivesCatalogueState::setDriveShutdown(common::dataStructures::TapeDriv
   driveState.lastModificationLog = common::dataStructures::EntryLog(
     "NO_USER", driveState.host, inputs.reportTime);
   driveState.mountType = inputs.mountType;
-  driveState.driveStatus = common::dataStructures::DriveStatus::CleaningUp;
+  driveState.driveStatus = common::dataStructures::DriveStatus::Shutdown;
   driveState.currentVid = inputs.vid;
   driveState.currentTapePool = inputs.tapepool;
   driveState.currentActivity = nullopt_t();

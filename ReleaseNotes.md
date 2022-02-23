@@ -8,6 +8,8 @@ This CTA release requires a non backwards compatible database schema upgrade to 
 ### Features
 - cta/CTA#1117 - Update masterDataInBytes when writting files to tape.
 - cta/CTA#1112 - Remove activities_weights table from catalogue.
+- cta/CTA#1125 - cta-admin dr ls should show '-' instead of "NO_MOUNT" for Mount Type
+- cta/CTA#1126 - Create tests for TapeDrivesCatalogueState
 
 ### Bug fixes
 

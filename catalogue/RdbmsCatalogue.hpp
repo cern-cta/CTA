@@ -901,7 +901,7 @@ public:
    * @param name the name of the new disk instance
    * @param comment the comment of the new disk instance
    */
-  void createDiskInstance(const common::dataStructures::SecurityIdentity &admin, 
+  void createDiskInstance(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name,
     const std::string &comment) override;
 
@@ -945,7 +945,7 @@ public:
    * @param refreshInterval the period to query for disk instance space free space
    * @param comment the comment of the new disk instance space
    */
-  void createDiskInstanceSpace(const common::dataStructures::SecurityIdentity &admin, 
+  void createDiskInstanceSpace(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name,
     const std::string &diskInstance,
     const std::string &freeSpaceQueryURL,
@@ -959,11 +959,11 @@ public:
    */
   std::list<common::dataStructures::DiskInstanceSpace> getAllDiskInstanceSpaces() const override;
 
-  void modifyDiskInstanceSpaceComment(const common::dataStructures::SecurityIdentity &admin, 
+  void modifyDiskInstanceSpaceComment(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name, const std::string &diskInstance, const std::string &comment) override;
-  void modifyDiskInstanceSpaceRefreshInterval(const common::dataStructures::SecurityIdentity &admin, 
+  void modifyDiskInstanceSpaceRefreshInterval(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name, const std::string &diskInstance, const uint64_t refreshInterval) override;
-  void modifyDiskInstanceSpaceQueryURL(const common::dataStructures::SecurityIdentity &admin, 
+  void modifyDiskInstanceSpaceQueryURL(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name, const std::string &diskInstance, const std::string &freeSpaceQueryURL) override;
 
 
@@ -2336,6 +2336,9 @@ protected:
 
   void setDesiredTapeDriveState(const std::string& tapeDriveName,
     const common::dataStructures::DesiredDriveState &desiredState) override;
+
+  void setDesiredTapeDriveStateComment(const std::string& tapeDriveName,
+    const std::string &comment) override;
 
   void updateTapeDriveStatistics(const std::string& tapeDriveName,
     const std::string& host, const std::string& logicalLibrary,

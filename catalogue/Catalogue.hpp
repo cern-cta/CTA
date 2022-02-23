@@ -968,7 +968,7 @@ public:
    * @param refreshInterval the period to query for disk instance space free space
    * @param comment the comment of the new disk instance space
    */
-  virtual void createDiskInstanceSpace(const common::dataStructures::SecurityIdentity &admin, 
+  virtual void createDiskInstanceSpace(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name,
     const std::string &diskInstance,
     const std::string &freeSpaceQueryURL,
@@ -989,11 +989,11 @@ public:
    */
   virtual void deleteDiskInstance(const std::string &name) = 0;
 
-  virtual void modifyDiskInstanceSpaceComment(const common::dataStructures::SecurityIdentity &admin, 
+  virtual void modifyDiskInstanceSpaceComment(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name, const std::string &diskInstance, const std::string &comment) = 0;
-  virtual void modifyDiskInstanceSpaceRefreshInterval(const common::dataStructures::SecurityIdentity &admin, 
+  virtual void modifyDiskInstanceSpaceRefreshInterval(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name, const std::string &diskInstance, const uint64_t refreshInterval) = 0;
-  virtual void modifyDiskInstanceSpaceQueryURL(const common::dataStructures::SecurityIdentity &admin, 
+  virtual void modifyDiskInstanceSpaceQueryURL(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name, const std::string &diskInstance, const std::string &freeSpaceQueryURL) = 0;
 
 
@@ -1012,7 +1012,7 @@ public:
    * @param name the name of the new disk instance
    * @param comment the comment of the new disk instance
    */
-  virtual void createDiskInstance(const common::dataStructures::SecurityIdentity &admin, 
+  virtual void createDiskInstance(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name,
     const std::string &comment) = 0;
 
@@ -1281,6 +1281,9 @@ public:
    */
   virtual void setDesiredTapeDriveState(const std::string& tapeDriveName,
       const common::dataStructures::DesiredDriveState &desiredState) = 0;
+
+  virtual void setDesiredTapeDriveStateComment(const std::string& tapeDriveName,
+    const std::string &comment) = 0;
 
   virtual void updateTapeDriveStatistics(const std::string& tapeDriveName,
     const std::string& host, const std::string& logicalLibrary,

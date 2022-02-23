@@ -3817,7 +3817,7 @@ bool RdbmsCatalogue::diskInstanceSpaceExists(rdbms::Conn &conn, const std::strin
         "DISK_INSTANCE_SPACE "
       "WHERE "
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME "
-      " AND "  
+      " AND "
         "DISK_INSTANCE_SPACE_NAME = :DISK_INSTANCE_SPACE_NAME";
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstance);
@@ -3923,7 +3923,7 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
         "TAPE.LAST_FSEQ AS LAST_FSEQ,"
         "TAPE.IS_FULL AS IS_FULL,"
         "TAPE.DIRTY AS DIRTY,"
-        
+
         "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"
 
         "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
@@ -7156,7 +7156,7 @@ void RdbmsCatalogue::createDiskInstance(
     const char *const sql =
       "INSERT INTO DISK_INSTANCE("
         "DISK_INSTANCE_NAME,"
-        
+
         "USER_COMMENT,"
 
         "CREATION_LOG_USER_NAME,"
@@ -7210,7 +7210,7 @@ std::list<common::dataStructures::DiskInstance> RdbmsCatalogue::getAllDiskInstan
     std::string sql =
       "SELECT "
         "DISK_INSTANCE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
-        
+
         "DISK_INSTANCE.USER_COMMENT AS USER_COMMENT,"
 
         "DISK_INSTANCE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
@@ -7327,7 +7327,7 @@ void RdbmsCatalogue::modifyDiskInstanceComment(const common::dataStructures::Sec
 //------------------------------------------------------------------------------
 // createDiskInstanceSpace
 //------------------------------------------------------------------------------
- void RdbmsCatalogue::createDiskInstanceSpace(const common::dataStructures::SecurityIdentity &admin, 
+ void RdbmsCatalogue::createDiskInstanceSpace(const common::dataStructures::SecurityIdentity &admin,
       const std::string &name, const std::string &diskInstance, const std::string &freeSpaceQueryURL,
       const uint64_t refreshInterval, const std::string &comment) {
 
@@ -10852,10 +10852,6 @@ void RdbmsCatalogue::setDesiredTapeDriveState(const std::string& tapeDriveName,
       sql += "REASON_UP_DOWN = ";
       sql += desiredState.reason.value().empty() ? "''," : ":REASON_UP_DOWN,";
     }
-    if(desiredState.comment) {
-      sql += "USER_COMMENT = ";
-      sql += desiredState.comment.value().empty() ? "''," : ":USER_COMMENT,";
-    }
 
     // Remove last ',' character
     sql.erase(sql.find_last_of(','), 1);
@@ -10871,8 +10867,35 @@ void RdbmsCatalogue::setDesiredTapeDriveState(const std::string& tapeDriveName,
     if(desiredState.reason && !desiredState.reason.value().empty()) {
       stmt.bindString(":REASON_UP_DOWN", desiredState.reason.value());
     }
-    if(desiredState.comment && !desiredState.comment.value().empty()) {
-      stmt.bindString(":USER_COMMENT", desiredState.comment.value());
+    stmt.executeNonQuery();
+
+    if (0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify Tape Drive: ") + tapeDriveName +
+        " because it doesn't exist");
+    }
+  } catch (exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+void RdbmsCatalogue::setDesiredTapeDriveStateComment(const std::string& tapeDriveName,
+  const std::string &comment) {
+  try {
+    std::string sql = "UPDATE DRIVE_STATE SET ";
+    sql += "USER_COMMENT = ";
+    sql += comment.empty() ? "''," : ":USER_COMMENT,";
+    // Remove last ',' character
+    sql.erase(sql.find_last_of(','), 1);
+    sql += " WHERE "
+      "DRIVE_NAME = :DRIVE_NAME";
+
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql.c_str());
+
+    stmt.bindString(":DRIVE_NAME", tapeDriveName);
+    if(!comment.empty()) {
+      stmt.bindString(":USER_COMMENT", comment);
     }
     stmt.executeNonQuery();
 
@@ -10942,7 +10965,8 @@ void RdbmsCatalogue::updateTapeDriveStatus(const common::dataStructures::TapeDri
     if(tapeDrive.driveStatus == common::dataStructures::DriveStatus::Transferring) {
       sql +=
         "BYTES_TRANSFERED_IN_SESSION = :BYTES_TRANSFERED_IN_SESSION,"
-        "FILES_TRANSFERED_IN_SESSION = :FILES_TRANSFERED_IN_SESSION,";
+        "FILES_TRANSFERED_IN_SESSION = :FILES_TRANSFERED_IN_SESSION,"
+        "SESSION_ELAPSED_TIME = CASE WHEN SESSION_START_TIME IS NULL THEN 0 ELSE :CURRENT_TIME - SESSION_START_TIME END,";
     }
     sql +=
         "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
@@ -10965,6 +10989,7 @@ void RdbmsCatalogue::updateTapeDriveStatus(const common::dataStructures::TapeDri
     if (tapeDrive.driveStatus == common::dataStructures::DriveStatus::Transferring) {
       stmt.bindUint64(":BYTES_TRANSFERED_IN_SESSION", tapeDrive.bytesTransferedInSession.value());
       stmt.bindUint64(":FILES_TRANSFERED_IN_SESSION", tapeDrive.filesTransferedInSession.value());
+      stmt.bindUint64(":CURRENT_TIME", tapeDrive.transferStartTime.value());
     }
     stmt.executeNonQuery();
 
@@ -10980,6 +11005,7 @@ void RdbmsCatalogue::updateTapeDriveStatus(const common::dataStructures::TapeDri
         "BYTES_TRANSFERED_IN_SESSION = :BYTES_TRANSFERED_IN_SESSION,"
         "FILES_TRANSFERED_IN_SESSION = :FILES_TRANSFERED_IN_SESSION,"
         "TRANSFER_START_TIME = :TRANSFER_START_TIME,"
+        "SESSION_ELAPSED_TIME = :SESSION_ELAPSED_TIME,"
         "UNLOAD_START_TIME = :UNLOAD_START_TIME,"
         "UNMOUNT_START_TIME = :UNMOUNT_START_TIME,"
         "DRAINING_START_TIME = :DRAINING_START_TIME,"
@@ -10988,15 +11014,13 @@ void RdbmsCatalogue::updateTapeDriveStatus(const common::dataStructures::TapeDri
         "CLEANUP_START_TIME = :CLEANUP_START_TIME,"
         "SHUTDOWN_TIME = :SHUTDOWN_TIME,"
         "MOUNT_TYPE = :MOUNT_TYPE,"
-        "DRIVE_STATUS = :DRIVE_STATUS,"
         "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME = :LAST_UPDATE_TIME,";
 
     if(tapeDrive.driveStatus != common::dataStructures::DriveStatus::Transferring) {
       if(tapeDrive.driveStatus != common::dataStructures::DriveStatus::Mounting) {
-        sql += "SESSION_START_TIME = :SESSION_START_TIME,"
-               "SESSION_ELAPSED_TIME = :SESSION_ELAPSED_TIME,";
+        sql += "SESSION_START_TIME = :SESSION_START_TIME,";
       }
       sql += "MOUNT_START_TIME = :MOUNT_START_TIME,";
     }
@@ -11006,6 +11030,14 @@ void RdbmsCatalogue::updateTapeDriveStatus(const common::dataStructures::TapeDri
     if(tapeDrive.driveStatus == common::dataStructures::DriveStatus::Down) {
       sql += "DESIRED_UP = :DESIRED_UP,"
              "DESIRED_FORCE_DOWN = :DESIRED_FORCE_DOWN,";
+    }
+    // If the drive is a state incompatible with space reservation, make sure there is none:
+    if(tapeDrive.driveStatus == common::dataStructures::DriveStatus::Up) {
+      sql += "DISK_SYSTEM_NAME = CASE WHEN DISK_SYSTEM_NAME <> 'NULL' THEN 'NULL' ELSE DISK_SYSTEM_NAME END,";
+      sql += "RESERVED_BYTES = CASE WHEN DISK_SYSTEM_NAME <> 'NULL' THEN 0 ELSE RESERVED_BYTES END,";
+      sql += "DRIVE_STATUS = CASE WHEN DESIRED_UP = '0' THEN 'DOWN' ELSE 'UP' END,";
+    } else {
+      sql += "DRIVE_STATUS = '" + driveStatusStr + "',";
     }
     if(tapeDrive.reasonUpDown) {
       sql += "REASON_UP_DOWN = :REASON_UP_DOWN,";
@@ -11056,16 +11088,16 @@ void RdbmsCatalogue::updateTapeDriveStatus(const common::dataStructures::TapeDri
     stmt.bindUint64(":SESSION_ID", tapeDrive.sessionId);
     stmt.bindUint64(":BYTES_TRANSFERED_IN_SESSION", tapeDrive.bytesTransferedInSession);
     stmt.bindUint64(":FILES_TRANSFERED_IN_SESSION", tapeDrive.filesTransferedInSession);
-    stmt.bindUint64(":TRANSFER_START_TIME", tapeDrive.transferStartTime ? tapeDrive.transferStartTime.value() : 0);
-    stmt.bindUint64(":UNLOAD_START_TIME", tapeDrive.unloadStartTime ? tapeDrive.unloadStartTime.value() : 0);
-    stmt.bindUint64(":UNMOUNT_START_TIME", tapeDrive.unmountStartTime ? tapeDrive.unmountStartTime.value() : 0);
-    stmt.bindUint64(":DRAINING_START_TIME", tapeDrive.drainingStartTime ? tapeDrive.drainingStartTime.value() : 0);
-    stmt.bindUint64(":DOWN_OR_UP_START_TIME", tapeDrive.downOrUpStartTime ? tapeDrive.downOrUpStartTime.value() : 0);
-    stmt.bindUint64(":PROBE_START_TIME", tapeDrive.probeStartTime ? tapeDrive.probeStartTime.value() : 0);
-    stmt.bindUint64(":CLEANUP_START_TIME", tapeDrive.cleanupStartTime ? tapeDrive.cleanupStartTime.value() : 0);
-    stmt.bindUint64(":SHUTDOWN_TIME", tapeDrive.shutdownTime ? tapeDrive.shutdownTime.value() : 0);
+    setOptionalTime(":TRANSFER_START_TIME", tapeDrive.transferStartTime);
+    setOptionalTime(":SESSION_ELAPSED_TIME", tapeDrive.sessionElapsedTime);
+    setOptionalTime(":UNLOAD_START_TIME", tapeDrive.unloadStartTime);
+    setOptionalTime(":UNMOUNT_START_TIME", tapeDrive.unmountStartTime);
+    setOptionalTime(":DRAINING_START_TIME", tapeDrive.drainingStartTime);
+    setOptionalTime(":DOWN_OR_UP_START_TIME", tapeDrive.downOrUpStartTime);
+    setOptionalTime(":PROBE_START_TIME", tapeDrive.probeStartTime);
+    setOptionalTime(":CLEANUP_START_TIME", tapeDrive.cleanupStartTime);
+    setOptionalTime(":SHUTDOWN_TIME", tapeDrive.shutdownTime);
     stmt.bindString(":MOUNT_TYPE", toString(tapeDrive.mountType));
-    stmt.bindString(":DRIVE_STATUS", driveStatusStr);
     stmt.bindString(":LAST_UPDATE_USER_NAME", tapeDrive.lastModificationLog.value().username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", tapeDrive.lastModificationLog.value().host);
     stmt.bindUint64(":LAST_UPDATE_TIME", tapeDrive.lastModificationLog.value().time);
@@ -11073,12 +11105,11 @@ void RdbmsCatalogue::updateTapeDriveStatus(const common::dataStructures::TapeDri
     if(tapeDrive.driveStatus != common::dataStructures::DriveStatus::Transferring) {
       if(tapeDrive.driveStatus != common::dataStructures::DriveStatus::Mounting) {
         setOptionalTime(":SESSION_START_TIME", tapeDrive.sessionStartTime);
-        setOptionalTime(":SESSION_ELAPSED_TIME", tapeDrive.sessionElapsedTime);
       }
-      stmt.bindUint64(":MOUNT_START_TIME", tapeDrive.mountStartTime ? tapeDrive.mountStartTime.value() : 0);
+      setOptionalTime(":MOUNT_START_TIME", tapeDrive.mountStartTime);
     }
     if(tapeDrive.driveStatus == common::dataStructures::DriveStatus::Starting) {
-      stmt.bindUint64(":START_START_TIME", tapeDrive.startStartTime ? tapeDrive.startStartTime.value() : 0);
+      setOptionalTime(":START_START_TIME", tapeDrive.startStartTime);
     }
     if(tapeDrive.driveStatus == common::dataStructures::DriveStatus::Down) {
       stmt.bindBool(":DESIRED_UP", tapeDrive.desiredUp);
