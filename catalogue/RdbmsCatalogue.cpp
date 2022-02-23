@@ -10882,21 +10882,30 @@ void RdbmsCatalogue::setDesiredTapeDriveState(const std::string& tapeDriveName,
 void RdbmsCatalogue::setDesiredTapeDriveStateComment(const std::string& tapeDriveName,
   const std::string &comment) {
   try {
-    std::string sql = "UPDATE DRIVE_STATE SET ";
-    sql += "USER_COMMENT = ";
-    sql += comment.empty() ? "''," : ":USER_COMMENT,";
-    // Remove last ',' character
-    sql.erase(sql.find_last_of(','), 1);
-    sql += " WHERE "
-      "DRIVE_NAME = :DRIVE_NAME";
+    const char* const sql =
+      "UPDATE DRIVE_STATE "
+      "SET "
+        "USER_COMMENT = :USER_COMMENT "
+      "WHERE "
+        "DRIVE_NAME = :DRIVE_NAME";
 
     auto conn = m_connPool.getConn();
-    auto stmt = conn.createStmt(sql.c_str());
+    auto stmt = conn.createStmt(sql);
+
+    auto bindOptionalStringIfSet = [&stmt](const std::string& sqlField,
+      const cta::optional<std::string>& optionalString) {
+      if (optionalString) {
+        if (optionalString.value().empty()) {
+          stmt.bindString(sqlField, nullopt_t());
+        } else {
+          stmt.bindString(sqlField, optionalString.value());
+        }
+      }
+    };
 
     stmt.bindString(":DRIVE_NAME", tapeDriveName);
-    if(!comment.empty()) {
-      stmt.bindString(":USER_COMMENT", comment);
-    }
+    bindOptionalStringIfSet(":USER_COMMENT", comment);
+
     stmt.executeNonQuery();
 
     if (0 == stmt.getNbAffectedRows()) {
@@ -10966,7 +10975,7 @@ void RdbmsCatalogue::updateTapeDriveStatus(const common::dataStructures::TapeDri
       sql +=
         "BYTES_TRANSFERED_IN_SESSION = :BYTES_TRANSFERED_IN_SESSION,"
         "FILES_TRANSFERED_IN_SESSION = :FILES_TRANSFERED_IN_SESSION,"
-        "SESSION_ELAPSED_TIME = CASE WHEN SESSION_START_TIME IS NULL THEN 0 ELSE :CURRENT_TIME - SESSION_START_TIME END,";
+        "SESSION_ELAPSED_TIME = CASE WHEN SESSION_START_TIME IS NULL THEN 0 ELSE :REPORT_TIME - SESSION_START_TIME END,";
     }
     sql +=
         "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
@@ -10989,7 +10998,7 @@ void RdbmsCatalogue::updateTapeDriveStatus(const common::dataStructures::TapeDri
     if (tapeDrive.driveStatus == common::dataStructures::DriveStatus::Transferring) {
       stmt.bindUint64(":BYTES_TRANSFERED_IN_SESSION", tapeDrive.bytesTransferedInSession.value());
       stmt.bindUint64(":FILES_TRANSFERED_IN_SESSION", tapeDrive.filesTransferedInSession.value());
-      stmt.bindUint64(":CURRENT_TIME", tapeDrive.transferStartTime.value());
+      stmt.bindUint64(":REPORT_TIME", tapeDrive.transferStartTime.value());
     }
     stmt.executeNonQuery();
 
