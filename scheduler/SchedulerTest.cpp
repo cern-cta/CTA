@@ -274,6 +274,7 @@ public:
     tapeDrive.desiredForceDown = false;
     tapeDrive.diskSystemName = "dummyDiskSystemName";
     tapeDrive.reservedBytes = 694498291384;
+    tapeDrive.reservationSessionId = 0;
     return tapeDrive;
   }
 

@@ -3572,7 +3572,7 @@ bool OStoreDB::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRe
     }
   }
 
-  m_oStoreDB.m_catalogue.reserveDiskSpace(mountInfo.drive, diskSpaceReservationRequest, logContext);
+  m_oStoreDB.m_catalogue.reserveDiskSpace(mountInfo.drive, mountInfo.mountId, diskSpaceReservationRequest, logContext);
   return true;
 }
 
@@ -3754,7 +3754,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
       }
     }
   }
-  this->m_oStoreDB.m_catalogue.releaseDiskSpace(mountInfo.drive, diskSpaceReservationRequest, lc);
+  this->m_oStoreDB.m_catalogue.releaseDiskSpace(mountInfo.drive, mountInfo.mountId, diskSpaceReservationRequest, lc);
   // 2) Queue the retrieve requests for repack.
   for (auto & repackRequestQueue: jobsToRequeueForRepackMap) {
     typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReportToRepackForSuccess> RQTRTRFSAlgo;
@@ -4713,8 +4713,8 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
   if (diskSystemName) {
     cta::DiskSpaceReservationRequest dsrr;
     dsrr.addRequest(diskSystemName.value(), archiveFile.fileSize);
-    this->m_oStoreDB.m_catalogue.releaseDiskSpace(m_retrieveMount->getMountInfo().drive,
-      dsrr, lc);
+    this->m_oStoreDB.m_catalogue.releaseDiskSpace(m_retrieveMount->getMountInfo().drive, 
+    m_retrieveMount->getMountInfo().mountId, dsrr, lc);
   }
 
   // Lock the retrieve request. Fail the job.

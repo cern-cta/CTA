@@ -279,6 +279,8 @@ public:
 
     tapeDriveStatus.diskSystemName = "Dummy_System";
     tapeDriveStatus.reservedBytes = 0;
+    tapeDriveStatus.reservationSessionId = 0;
+    
 
     return tapeDriveStatus;
   }
@@ -325,32 +327,44 @@ public:
     return ret;
   }
 
-  void reserveDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) override {
+  void reserveDiskSpace(const std::string& driveName, const uint64_t mountId, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) override {
     if(diskSpaceReservation.empty()) return;
 
     log::ScopedParamContainer params(lc);
     params.add("driveName", driveName)
           .add("diskSystem", diskSpaceReservation.begin()->first)
-          .add("reservationBytes", diskSpaceReservation.begin()->second);
+          .add("reservationBytes", diskSpaceReservation.begin()->second)
+          .add("mountId", mountId);
     lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): reservation request.");
 
     auto tdStatus = getTapeDrive(driveName);
     if (!tdStatus) return;
+
+    if (tdStatus.value().reservationSessionId != mountId) {
+      return;
+    }
+    
     tdStatus.value().diskSystemName = diskSpaceReservation.begin()->first;
     tdStatus.value().reservedBytes += diskSpaceReservation.begin()->second;
     modifyTapeDrive(tdStatus.value());
   }
 
-  void releaseDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) override {
+  void releaseDiskSpace(const std::string& driveName, const uint64_t mountId, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) override {
     if (diskSpaceReservation.empty()) return;
 
     log::ScopedParamContainer params(lc);
     params.add("driveName", driveName)
           .add("diskSystem", diskSpaceReservation.begin()->first)
-          .add("reservationBytes", diskSpaceReservation.begin()->second);
+          .add("reservationBytes", diskSpaceReservation.begin()->second)
+          .add("mountId", mountId);
     lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): reservation release request.");
 
     auto tdStatus = getTapeDrive(driveName);
+    
+    if (!tdStatus) return;
+    if (tdStatus.value().reservationSessionId != mountId) {
+      return;
+    }
     auto& bytes = diskSpaceReservation.begin()->second;
     if (bytes > tdStatus.value().reservedBytes) throw NegativeDiskSpaceReservationReached(
       "In DriveState::subtractDiskSpaceReservation(): we would reach a negative reservation size.");
@@ -358,6 +372,7 @@ public:
     tdStatus.value().reservedBytes -= bytes;
     modifyTapeDrive(tdStatus.value());
   }
+
 
   /*
    * Implemented for testing disk space reservation logic

@@ -1365,14 +1365,15 @@ public:
   /**
    * Adds to the current disk space reservation
    */
-  virtual void reserveDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) = 0;
+  virtual void reserveDiskSpace(const std::string& driveName, const uint64_t mountId, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) = 0;
 
   /**
    * Subtracts from the current disk space reservation.
    *
    * If the amount released exceeds the current reservation, the reservation will be reduced to zero.
    */
-  virtual void releaseDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) = 0;
+  virtual void releaseDiskSpace(const std::string& driveName, const uint64_t mountId, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) = 0;
+
 
 }; // class Catalogue
 

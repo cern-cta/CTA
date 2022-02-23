@@ -746,12 +746,12 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getDiskSpaceReservations();}, m_maxTriesToConnect);
   }
 
-  void reserveDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->reserveDiskSpace(driveName, diskSpaceReservation, lc);}, m_maxTriesToConnect);
+  void reserveDiskSpace(const std::string& driveName, const uint64_t mountId, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->reserveDiskSpace(driveName, mountId, diskSpaceReservation, lc);}, m_maxTriesToConnect);
   }
 
-  void releaseDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->releaseDiskSpace(driveName, diskSpaceReservation, lc);}, m_maxTriesToConnect);
+  void releaseDiskSpace(const std::string& driveName, const uint64_t mountId, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->releaseDiskSpace(driveName, mountId, diskSpaceReservation, lc);}, m_maxTriesToConnect);
   }
 
 protected:

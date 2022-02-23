@@ -10358,7 +10358,8 @@ void RdbmsCatalogue::createTapeDrive(const common::dataStructures::TapeDrive &ta
       "LAST_UPDATE_TIME,"             "\n"
 
       "DISK_SYSTEM_NAME,"             "\n"
-      "RESERVED_BYTES)"               "\n"
+      "RESERVED_BYTES,"               "\n"
+      "RESERVATION_SESSION_ID)"       "\n"
     "VALUES("                         "\n"
       ":DRIVE_NAME,"                  "\n"
       ":HOST,"                        "\n"
@@ -10413,7 +10414,8 @@ void RdbmsCatalogue::createTapeDrive(const common::dataStructures::TapeDrive &ta
       ":LAST_UPDATE_TIME,"            "\n"
 
       ":DISK_SYSTEM_NAME,"            "\n"
-      ":RESERVED_BYTES"               "\n"
+      ":RESERVED_BYTES,"              "\n"
+      ":RESERVATION_SESSION_ID"       "\n"
     ")";
 
     auto stmt = conn.createStmt(sql);
@@ -10473,7 +10475,8 @@ void RdbmsCatalogue::createTapeDrive(const common::dataStructures::TapeDrive &ta
         ? tapeDrive.lastModificationLog.value().time : 0)
 
       .add("diskSystemName", tapeDrive.diskSystemName)
-      .add("reservedBytes", tapeDrive.reservedBytes);
+      .add("reservedBytes", tapeDrive.reservedBytes)
+      .add("reservationSessionId", tapeDrive.reservationSessionId);
 
     lc.log(log::INFO, "Catalogue - created tape drive");
   } catch(exception::Exception &ex) {
@@ -10569,6 +10572,8 @@ void RdbmsCatalogue::settingSqlTapeDriveValues(cta::rdbms::Stmt *stmt,
   // Why not just remove the NOT NULL constraint in the DB?
   stmt->bindString(":DISK_SYSTEM_NAME", tapeDrive.diskSystemName.empty() ? "NULL" : tapeDrive.diskSystemName);
   stmt->bindUint64(":RESERVED_BYTES", tapeDrive.reservedBytes);
+  stmt->bindUint64(":RESERVATION_SESSION_ID", tapeDrive.reservationSessionId);
+  
 }
 
 void RdbmsCatalogue::deleteTapeDrive(const std::string &tapeDriveName) {
@@ -10665,6 +10670,7 @@ common::dataStructures::TapeDrive RdbmsCatalogue::gettingSqlTapeDriveValues(cta:
   const std::string diskSystemName = rset->columnString("DISK_SYSTEM_NAME");
   tapeDrive.diskSystemName = (diskSystemName == "NULL" ? "" : diskSystemName);
   tapeDrive.reservedBytes = rset->columnUint64("RESERVED_BYTES");
+  tapeDrive.reservationSessionId = rset->columnUint64("RESERVATION_SESSION_ID");
 
   tapeDrive.userComment = rset->columnOptionalString("USER_COMMENT");
   auto setOptionEntryLog = [&rset](const std::string &username, const std::string &host,
@@ -10744,7 +10750,8 @@ std::list<common::dataStructures::TapeDrive> RdbmsCatalogue::getTapeDrives() con
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME,"
 
         "DISK_SYSTEM_NAME AS DISK_SYSTEM_NAME,"
-        "RESERVED_BYTES AS RESERVED_BYTES "
+        "RESERVED_BYTES AS RESERVED_BYTES,"
+        "RESERVATION_SESSION_ID AS RESERVATION_SESSION_ID "
       "FROM "
         "DRIVE_STATE "
       "ORDER BY "
@@ -10821,7 +10828,8 @@ optional<common::dataStructures::TapeDrive> RdbmsCatalogue::getTapeDrive(const s
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME,"
 
         "DISK_SYSTEM_NAME AS DISK_SYSTEM_NAME,"
-        "RESERVED_BYTES AS RESERVED_BYTES "
+        "RESERVED_BYTES AS RESERVED_BYTES,"
+        "RESERVATION_SESSION_ID as RESERVATION_SESSION_ID "
       "FROM "
         "DRIVE_STATE "
       "WHERE "
@@ -11364,7 +11372,7 @@ std::map<std::string, uint64_t> RdbmsCatalogue::getDiskSpaceReservations() const
 //------------------------------------------------------------------------------
 // reserveDiskSpace
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::reserveDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) {
+void RdbmsCatalogue::reserveDiskSpace(const std::string& driveName, const uint64_t mountId, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) {
   if(diskSpaceReservation.empty()) return;
 
   try {
@@ -11372,7 +11380,8 @@ void RdbmsCatalogue::reserveDiskSpace(const std::string& driveName, const DiskSp
       log::ScopedParamContainer params(lc);
       params.add("driveName", driveName)
             .add("diskSystem", diskSpaceReservation.begin()->first)
-            .add("reservationBytes", diskSpaceReservation.begin()->second);
+            .add("reservationBytes", diskSpaceReservation.begin()->second)
+            .add("mountId", mountId);
       lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): reservation request.");
     }
 
@@ -11383,19 +11392,18 @@ void RdbmsCatalogue::reserveDiskSpace(const std::string& driveName, const DiskSp
     // disk reservations have been released). Otherwise, to update RESERVED_BYTES, the disk system name has to match.
     const char* const sql =
       "UPDATE DRIVE_STATE SET "
-        "DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME1,"
         "RESERVED_BYTES = RESERVED_BYTES + :BYTES_TO_ADD "
       "WHERE "
         "DRIVE_NAME = :DRIVE_NAME "
-        "AND (DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME2 "
-          "OR RESERVED_BYTES = 0)";
+        "AND DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME "
+        "AND RESERVATION_SESSION_ID = :RESERVATION_SESSION_ID ";
 
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":DRIVE_NAME", driveName);
-    stmt.bindString(":DISK_SYSTEM_NAME1", diskSpaceReservation.begin()->first);
-    stmt.bindString(":DISK_SYSTEM_NAME2", diskSpaceReservation.begin()->first);
+    stmt.bindString(":DISK_SYSTEM_NAME", diskSpaceReservation.begin()->first);
     stmt.bindUint64(":BYTES_TO_ADD", diskSpaceReservation.begin()->second);
+    stmt.bindUint64(":RESERVATION_SESSION_ID", mountId);
     stmt.executeNonQuery();
 
     // If the reservation does not match the <driveName, diskSystem> pair in the DRIVE_STATE table,
@@ -11405,13 +11413,15 @@ void RdbmsCatalogue::reserveDiskSpace(const std::string& driveName, const DiskSp
         log::ScopedParamContainer params(lc);
         params.add("driveName", driveName)
               .add("diskSystem", diskSpaceReservation.begin()->first)
-              .add("reservationBytes", diskSpaceReservation.begin()->second);
-        lc.log(log::ERR, "In RetrieveMount::releaseDiskSpace(): driveName and diskSystem do not match, dropping previous disk reservation for this drive.");
+              .add("reservationBytes", diskSpaceReservation.begin()->second)
+              .add("mountId", mountId);
+        lc.log(log::INFO, "In RetrieveMount::releaseDiskSpace(): creating reservation for new mount");
       }
       const char* const sql_reset =
         "UPDATE DRIVE_STATE SET "
           "DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME,"
-          "RESERVED_BYTES = :BYTES_TO_ADD "
+          "RESERVED_BYTES = :BYTES_TO_ADD,"
+          "RESERVATION_SESSION_ID = :RESERVATION_SESSION_ID "
         "WHERE "
           "DRIVE_NAME = :DRIVE_NAME";
       stmt.reset();
@@ -11419,13 +11429,15 @@ void RdbmsCatalogue::reserveDiskSpace(const std::string& driveName, const DiskSp
       stmt.bindString(":DRIVE_NAME", driveName);
       stmt.bindString(":DISK_SYSTEM_NAME", diskSpaceReservation.begin()->first);
       stmt.bindUint64(":BYTES_TO_ADD", diskSpaceReservation.begin()->second);
+      stmt.bindUint64(":RESERVATION_SESSION_ID", mountId);
       stmt.executeNonQuery();
       if(stmt.getNbAffectedRows() != 1) {
         log::ScopedParamContainer params(lc);
         params.add("driveName", driveName)
               .add("diskSystem", diskSpaceReservation.begin()->first)
-              .add("reservationBytes", diskSpaceReservation.begin()->second);
-        lc.log(log::ERR, "In RetrieveMount::releaseDiskSpace(): failed to create new disk reservation.");
+              .add("reservationBytes", diskSpaceReservation.begin()->second)
+              .add("mountId", mountId);
+        lc.log(log::ERR, "In RetrieveMount::releaseDiskSpace(): failed to create disk reservation for new mount.");
       }
     }
   } catch(exception::Exception &ex) {
@@ -11437,7 +11449,7 @@ void RdbmsCatalogue::reserveDiskSpace(const std::string& driveName, const DiskSp
 //------------------------------------------------------------------------------
 // releaseDiskSpace
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::releaseDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) {
+void RdbmsCatalogue::releaseDiskSpace(const std::string& driveName, const uint64_t mountId, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) {
   if(diskSpaceReservation.empty()) return;
 
   try {
@@ -11445,7 +11457,8 @@ void RdbmsCatalogue::releaseDiskSpace(const std::string& driveName, const DiskSp
       log::ScopedParamContainer params(lc);
       params.add("driveName", driveName)
             .add("diskSystem", diskSpaceReservation.begin()->first)
-            .add("reservationBytes", diskSpaceReservation.begin()->second);
+            .add("reservationBytes", diskSpaceReservation.begin()->second)
+            .add("mountId", mountId);
       lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): reservation release request.");
     }
 
@@ -11455,7 +11468,8 @@ void RdbmsCatalogue::releaseDiskSpace(const std::string& driveName, const DiskSp
         "RESERVED_BYTES = CASE WHEN RESERVED_BYTES > :BYTES_TO_SUBTRACT1 THEN RESERVED_BYTES-:BYTES_TO_SUBTRACT2 ELSE 0 END "
       "WHERE "
         "DRIVE_NAME = :DRIVE_NAME "
-        "AND DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME";
+        "AND DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME "
+        "AND RESERVATION_SESSION_ID = :RESERVATION_SESSION_ID";
 
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
@@ -11463,14 +11477,16 @@ void RdbmsCatalogue::releaseDiskSpace(const std::string& driveName, const DiskSp
     stmt.bindString(":DISK_SYSTEM_NAME", diskSpaceReservation.begin()->first);
     stmt.bindUint64(":BYTES_TO_SUBTRACT1", diskSpaceReservation.begin()->second);
     stmt.bindUint64(":BYTES_TO_SUBTRACT2", diskSpaceReservation.begin()->second);
+    stmt.bindUint64(":RESERVATION_SESSION_ID", mountId);
     stmt.executeNonQuery();
     if(stmt.getNbAffectedRows() != 1) {
       // If the reservation does not match the <driveName, diskSystem> pair in the DRIVE_STATE table, log an error and carry on
       log::ScopedParamContainer params(lc);
       params.add("driveName", driveName)
             .add("diskSystem", diskSpaceReservation.begin()->first)
-            .add("reservationBytes", diskSpaceReservation.begin()->second);
-      lc.log(log::ERR, "In RetrieveMount::releaseDiskSpace(): reservation release request failed, driveName and diskSystem do not match.");
+            .add("reservationBytes", diskSpaceReservation.begin()->second)
+            .add("mountId", mountId);
+      lc.log(log::ERR, "In RetrieveMount::releaseDiskSpace(): reservation release request failed, driveName, diskSystem and mountId do not match.");
     }
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());

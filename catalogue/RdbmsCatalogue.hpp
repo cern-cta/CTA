@@ -2365,9 +2365,10 @@ protected:
 
   std::map<std::string, uint64_t> getDiskSpaceReservations() const override;
 
-  void reserveDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) override;
+  void reserveDiskSpace(const std::string& driveName, const uint64_t mountId, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) override;
 
-  void releaseDiskSpace(const std::string& driveName, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) override;
+  void releaseDiskSpace(const std::string& driveName, const uint64_t mountId, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) override;
+
 
   /**
    * Cached versions of tape copy to tape tape pool mappings for specific

@@ -109,6 +109,7 @@ struct TapeDrive {
 
   std::string diskSystemName;
   uint64_t reservedBytes;
+  uint64_t reservationSessionId;
 
   optional<std::string> userComment;
   optional<EntryLog> creationLog;

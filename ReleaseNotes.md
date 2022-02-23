@@ -8,6 +8,7 @@ This CTA release requires a non backwards compatible database schema upgrade to 
 Please consult the [database upgrade documentation](https://tapeoperations.docs.cern.ch/ctaops/upgrade_production_database).
 
 ### Features
+- cta/CTA#1123 - Add mount id to disk space reservations, prevent tape servers from releasing disk space from a previous mount
 
 ### Bug fixes
 - cta/CTA#1117 - Update masterDataInBytes when writing files to tape

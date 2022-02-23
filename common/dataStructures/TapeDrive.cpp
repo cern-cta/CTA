@@ -32,7 +32,8 @@ TapeDrive::TapeDrive():
   desiredUp(false),
   desiredForceDown(false),
   nextMountType(MountType::NoMount),
-  reservedBytes(0) {}
+  reservedBytes(0),
+  reservationSessionId(0) {}
 
 const std::map<DriveStatus, std::string> TapeDrive::STATE_TO_STRING_MAP = {
   {DriveStatus::Unknown, "UNKNOWN"},
@@ -91,6 +92,7 @@ bool TapeDrive::operator==(const TapeDrive &rhs) const {
       && desiredForceDown == rhs.desiredForceDown
       && diskSystemName == rhs.diskSystemName
       && reservedBytes == rhs.reservedBytes
+      && reservationSessionId == rhs.reservationSessionId
 
       && sessionId == rhs.sessionId
       && bytesTransferedInSession == rhs.bytesTransferedInSession
@@ -185,7 +187,8 @@ std::ostream &operator<<(std::ostream &os, const TapeDrive &obj) {
      << " desiredUp=" << obj.desiredUp
      << " desiredForceDown=" << obj.desiredForceDown
      << " diskSystemName=" << obj.diskSystemName
-     << " reservedBytes=" << obj.reservedBytes << ")";
+     << " reservedBytes=" << obj.reservedBytes
+     << " reservationSessionId=" << obj.reservationSessionId << ")";
   return os;
 }
 
