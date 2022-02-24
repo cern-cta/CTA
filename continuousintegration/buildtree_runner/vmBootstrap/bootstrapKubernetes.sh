@@ -37,8 +37,15 @@ yum install -y kubeadm kubelet kubectl
 echo Prepare kubernetes environment
 curl -o /opt/calico.yaml https://docs.projectcalico.org/manifests/calico.yaml
 
-echo Configuring cluster
+echo Creating cluster
 kubeadm init --config=./kubeadm-crio.yaml --upload-certs --node-name $HOSTNAME | tee /root/kubeadm-init.out
+
+echo Setting up local authentication
+mkdir -p $HOME/.kube
+cp /etc/kubernetes/admin.conf $HOME/.kube/config
+
+echo Configuring cluster
+kubectl taint nodes --all node-role.kubernetes.io/master-
 kubectl apply -f /opt/calico.yaml
 systemctl enable kubelet
 
@@ -46,3 +53,9 @@ echo Configuring storage
 ../generate_librarydevice_PV.sh
 ../generate_logs_PVs.sh
 ../generate_stg_PVs.sh
+
+echo Installing helm
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+echo Kubernetes Bootstrap Done
+
