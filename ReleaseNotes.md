@@ -3,15 +3,21 @@
 ## Summary
 
 ### Upgrade Instructions
-This CTA release requires a non backwards compatible database schema upgrade to CTA catalogue schema v5.0. Please consult the [database upgrade documentation](https://tapeoperations.docs.cern.ch/ctaops/upgrade_production_database).
+
+This CTA release requires a non backwards compatible database schema upgrade to CTA catalogue schema v5.0.
+Please consult the [database upgrade documentation](https://tapeoperations.docs.cern.ch/ctaops/upgrade_production_database).
 
 ### Features
-- cta/CTA#1117 - Update masterDataInBytes when writting files to tape.
-- cta/CTA#1112 - Remove activities_weights table from catalogue.
-- cta/CTA#1125 - cta-admin dr ls should show '-' instead of "NO_MOUNT" for Mount Type
-- cta/CTA#1126 - Create tests for TapeDrivesCatalogueState
 
 ### Bug fixes
+- cta/CTA#1117 - Update masterDataInBytes when writing files to tape
+- cta/CTA#1125 - cta-admin dr ls should show '-' instead of "NO_MOUNT" for Mount Type
+
+### Catalogue Schema
+- cta/CTA#1112 - Remove activities_weights table from catalogue
+
+### Continuous Integration
+- cta/CTA#1126 - Create tests for TapeDrivesCatalogueState
 
 # v4.6.0-1
 
@@ -21,7 +27,8 @@ Updates EOS version in CI to 4.8.75.
 
 ### Upgrade Instructions
 
-This CTA release requires a database schema upgrade to CTA catalogue schema v4.5. Please consult the [database upgrade documentation](https://tapeoperations.docs.cern.ch/ctaops/upgrade_production_database).
+This CTA release requires a database schema upgrade to CTA catalogue schema v4.5.
+Please consult the [database upgrade documentation](https://tapeoperations.docs.cern.ch/ctaops/upgrade_production_database).
 
 ### Features
 - cta/CTA#999  - Add a default mount rule for recalls
