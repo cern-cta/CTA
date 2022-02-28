@@ -107,9 +107,9 @@ struct TapeDrive {
   optional<std::string> currentVo;
   optional<std::string> nextVo;
 
-  std::string diskSystemName;
-  uint64_t reservedBytes;
-  uint64_t reservationSessionId;
+  optional<std::string> diskSystemName;
+  optional<uint64_t> reservedBytes;
+  optional<uint64_t> reservationSessionId;
 
   optional<std::string> userComment;
   optional<EntryLog> creationLog;

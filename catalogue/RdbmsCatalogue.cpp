@@ -10474,9 +10474,9 @@ void RdbmsCatalogue::createTapeDrive(const common::dataStructures::TapeDrive &ta
       .add("lastModificationLog_username", tapeDrive.lastModificationLog
         ? tapeDrive.lastModificationLog.value().time : 0)
 
-      .add("diskSystemName", tapeDrive.diskSystemName)
-      .add("reservedBytes", tapeDrive.reservedBytes)
-      .add("reservationSessionId", tapeDrive.reservationSessionId);
+      .add("diskSystemName", tapeDrive.diskSystemName ? tapeDrive.diskSystemName.value() : "")
+      .add("reservedBytes", tapeDrive.reservedBytes ? tapeDrive.reservedBytes.value() : 0)
+      .add("reservationSessionId", tapeDrive.reservationSessionId ? tapeDrive.reservationSessionId.value() : 0);
 
     lc.log(log::INFO, "Catalogue - created tape drive");
   } catch(exception::Exception &ex) {
@@ -10569,11 +10569,10 @@ void RdbmsCatalogue::settingSqlTapeDriveValues(cta::rdbms::Stmt *stmt,
     setEntryLog(":LAST_UPDATE", nullopt_t(), nullopt_t(), nullopt_t());
   }
 
-  // Why not just remove the NOT NULL constraint in the DB?
-  stmt->bindString(":DISK_SYSTEM_NAME", tapeDrive.diskSystemName.empty() ? "NULL" : tapeDrive.diskSystemName);
+  setOptionalString(":DISK_SYSTEM_NAME", tapeDrive.diskSystemName);
   stmt->bindUint64(":RESERVED_BYTES", tapeDrive.reservedBytes);
   stmt->bindUint64(":RESERVATION_SESSION_ID", tapeDrive.reservationSessionId);
-  
+
 }
 
 void RdbmsCatalogue::deleteTapeDrive(const std::string &tapeDriveName) {
@@ -10667,10 +10666,9 @@ common::dataStructures::TapeDrive RdbmsCatalogue::gettingSqlTapeDriveValues(cta:
   tapeDrive.currentVo = rset->columnOptionalString("CURRENT_VO");
   tapeDrive.nextVo = rset->columnOptionalString("NEXT_VO");
 
-  const std::string diskSystemName = rset->columnString("DISK_SYSTEM_NAME");
-  tapeDrive.diskSystemName = (diskSystemName == "NULL" ? "" : diskSystemName);
-  tapeDrive.reservedBytes = rset->columnUint64("RESERVED_BYTES");
-  tapeDrive.reservationSessionId = rset->columnUint64("RESERVATION_SESSION_ID");
+  tapeDrive.diskSystemName = rset->columnOptionalString("DISK_SYSTEM_NAME");
+  tapeDrive.reservedBytes = rset->columnOptionalUint64("RESERVED_BYTES");
+  tapeDrive.reservationSessionId = rset->columnOptionalUint64("RESERVATION_SESSION_ID");
 
   tapeDrive.userComment = rset->columnOptionalString("USER_COMMENT");
   auto setOptionEntryLog = [&rset](const std::string &username, const std::string &host,
@@ -11050,8 +11048,9 @@ void RdbmsCatalogue::updateTapeDriveStatus(const common::dataStructures::TapeDri
     }
     // If the drive is a state incompatible with space reservation, make sure there is none:
     if(tapeDrive.driveStatus == common::dataStructures::DriveStatus::Up) {
-      sql += "DISK_SYSTEM_NAME = CASE WHEN DISK_SYSTEM_NAME <> 'NULL' THEN 'NULL' ELSE DISK_SYSTEM_NAME END,";
-      sql += "RESERVED_BYTES = CASE WHEN DISK_SYSTEM_NAME <> 'NULL' THEN 0 ELSE RESERVED_BYTES END,";
+      sql += "DISK_SYSTEM_NAME = NULL,";
+      sql += "RESERVED_BYTES = CASE WHEN DISK_SYSTEM_NAME IS NOT NULL THEN NULL ELSE RESERVED_BYTES END,";
+      sql += "RESERVATION_SESSION_ID = CASE WHEN DISK_SYSTEM_NAME IS NOT NULL THEN NULL ELSE RESERVATION_SESSION_ID END,";
       sql += "DRIVE_STATUS = CASE WHEN DESIRED_UP = '0' THEN 'DOWN' ELSE 'UP' END,";
     } else {
       sql += "DRIVE_STATUS = '" + driveStatusStr + "',";
@@ -11363,8 +11362,10 @@ std::map<std::string, uint64_t> RdbmsCatalogue::getDiskSpaceReservations() const
   const auto tdNames = getTapeDriveNames();
   for (const auto& driveName : tdNames) {
     const auto tdStatus = getTapeDrive(driveName);
-    //no need to check key, operator[] initializes missing values at zero for scalar types
-    ret[tdStatus.value().diskSystemName] += tdStatus.value().reservedBytes;
+    if (tdStatus.value().diskSystemName) {
+      //no need to check key, operator[] initializes missing values at zero for scalar types
+      ret[tdStatus.value().diskSystemName.value()] += tdStatus.value().reservedBytes.value();
+    }
   }
   return ret;
 }

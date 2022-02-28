@@ -31,9 +31,7 @@ TapeDrive::TapeDrive():
   driveStatus(DriveStatus::Unknown),
   desiredUp(false),
   desiredForceDown(false),
-  nextMountType(MountType::NoMount),
-  reservedBytes(0),
-  reservationSessionId(0) {}
+  nextMountType(MountType::NoMount) {}
 
 const std::map<DriveStatus, std::string> TapeDrive::STATE_TO_STRING_MAP = {
   {DriveStatus::Unknown, "UNKNOWN"},
@@ -90,9 +88,6 @@ bool TapeDrive::operator==(const TapeDrive &rhs) const {
       && driveStatus == rhs.driveStatus
       && desiredUp == rhs.desiredUp
       && desiredForceDown == rhs.desiredForceDown
-      && diskSystemName == rhs.diskSystemName
-      && reservedBytes == rhs.reservedBytes
-      && reservationSessionId == rhs.reservationSessionId
 
       && sessionId == rhs.sessionId
       && bytesTransferedInSession == rhs.bytesTransferedInSession
@@ -121,6 +116,10 @@ bool TapeDrive::operator==(const TapeDrive &rhs) const {
       && checkOptionalString(nextTapePool) == checkOptionalString(rhs.nextTapePool)
       && nextPriority == rhs.nextPriority
       && checkOptionalString(nextActivity) == checkOptionalString(rhs.nextActivity)
+      && checkOptionalString(diskSystemName) == checkOptionalString(rhs.diskSystemName)
+      && reservedBytes == rhs.reservedBytes
+      && reservationSessionId == rhs.reservationSessionId
+
       //
       // && devFileName==rhs.devFileName
       // && rawLibrarySlot==rhs.rawLibrarySlot
@@ -185,10 +184,8 @@ std::ostream &operator<<(std::ostream &os, const TapeDrive &obj) {
      << " mountType=" << obj.mountType
      << " driveStatus=" << stateStr
      << " desiredUp=" << obj.desiredUp
-     << " desiredForceDown=" << obj.desiredForceDown
-     << " diskSystemName=" << obj.diskSystemName
-     << " reservedBytes=" << obj.reservedBytes
-     << " reservationSessionId=" << obj.reservationSessionId << ")";
+     << " desiredForceDown=" << obj.desiredForceDown 
+     << ")";
   return os;
 }
 

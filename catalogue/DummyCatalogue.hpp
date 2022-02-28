@@ -321,8 +321,10 @@ public:
     const auto tdNames = getTapeDriveNames();
     for (const auto& driveName : tdNames) {
       const auto tdStatus = getTapeDrive(driveName);
-      //no need to check key, operator[] initializes missing values at zero for scalar types
-      ret[tdStatus.value().diskSystemName] += tdStatus.value().reservedBytes;
+      if (tdStatus.value().diskSystemName) {
+        //no need to check key, operator[] initializes missing values at zero for scalar types
+        ret[tdStatus.value().diskSystemName.value()] += tdStatus.value().reservedBytes.value();
+      }
     }
     return ret;
   }
@@ -340,12 +342,18 @@ public:
     auto tdStatus = getTapeDrive(driveName);
     if (!tdStatus) return;
 
+    if (!tdStatus.value().reservationSessionId) {
+      tdStatus.value().reservationSessionId = mountId;
+      tdStatus.value().reservedBytes = 0;
+    }
+    
     if (tdStatus.value().reservationSessionId != mountId) {
-      return;
+      tdStatus.value().reservationSessionId = mountId;
+      tdStatus.value().reservedBytes = 0;
     }
     
     tdStatus.value().diskSystemName = diskSpaceReservation.begin()->first;
-    tdStatus.value().reservedBytes += diskSpaceReservation.begin()->second;
+    tdStatus.value().reservedBytes.value() += diskSpaceReservation.begin()->second;
     modifyTapeDrive(tdStatus.value());
   }
 
@@ -362,6 +370,9 @@ public:
     auto tdStatus = getTapeDrive(driveName);
     
     if (!tdStatus) return;
+    if (!tdStatus.value().reservationSessionId) {
+      return;
+    }
     if (tdStatus.value().reservationSessionId != mountId) {
       return;
     }
@@ -369,7 +380,7 @@ public:
     if (bytes > tdStatus.value().reservedBytes) throw NegativeDiskSpaceReservationReached(
       "In DriveState::subtractDiskSpaceReservation(): we would reach a negative reservation size.");
     tdStatus.value().diskSystemName = diskSpaceReservation.begin()->first;
-    tdStatus.value().reservedBytes -= bytes;
+    tdStatus.value().reservedBytes.value() -= bytes;
     modifyTapeDrive(tdStatus.value());
   }
 

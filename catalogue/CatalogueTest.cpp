@@ -229,9 +229,6 @@ namespace {
     tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::Up;
     tapeDrive.desiredUp = false;
     tapeDrive.desiredForceDown = false;
-    tapeDrive.diskSystemName = "dummyDiskSystemName";
-    tapeDrive.reservedBytes = 694498291384;
-    tapeDrive.reservationSessionId = 0;
     return tapeDrive;
   }
 
@@ -17542,8 +17539,9 @@ TEST_P(cta_catalogue_CatalogueTest, updateTapeDriveStatusSameAsPrevious) {
   ASSERT_FALSE(storedTapeDrive.value().bytesTransferedInSession);
   ASSERT_FALSE(storedTapeDrive.value().filesTransferedInSession);
   // Disk reservations are not updated by updateTapeDriveStatus()
-  ASSERT_EQ(tapeDrive.diskSystemName, storedTapeDrive.value().diskSystemName);
-  ASSERT_EQ(tapeDrive.reservedBytes, storedTapeDrive.value().reservedBytes);
+  ASSERT_FALSE(storedTapeDrive.value().diskSystemName);
+  ASSERT_FALSE(storedTapeDrive.value().reservedBytes);
+  ASSERT_FALSE(storedTapeDrive.value().reservationSessionId);
 
   m_catalogue->deleteTapeDrive(tapeDrive.driveName);
 }
@@ -17592,8 +17590,9 @@ TEST_P(cta_catalogue_CatalogueTest, updateTapeDriveStatusSameTransferingAsPrevio
   ASSERT_EQ(inputs.byteTransferred, storedTapeDrive.value().bytesTransferedInSession.value());
   ASSERT_EQ(inputs.filesTransferred, storedTapeDrive.value().filesTransferedInSession.value());
   // It will keep names and bytes, because it isn't in state UP
-  ASSERT_NE(storedTapeDrive.value().reservedBytes, 0);
-  ASSERT_NE(storedTapeDrive.value().diskSystemName, "");
+  ASSERT_FALSE(storedTapeDrive.value().reservedBytes);
+  ASSERT_FALSE(storedTapeDrive.value().reservationSessionId);
+  ASSERT_FALSE(storedTapeDrive.value().diskSystemName);
   ASSERT_EQ(storedTapeDrive.value().sessionElapsedTime.value(), inputs.reportTime - tapeDrive.sessionStartTime.value()); // Check elapsed time
 
   m_catalogue->deleteTapeDrive(tapeDrive.driveName);
@@ -17787,8 +17786,9 @@ TEST_P(cta_catalogue_CatalogueTest, updateTapeDriveStatusUpCleanSpaceReservation
     tapeDrivesState->updateDriveStatus(driveInfo, inputs, dummyLc);
   }
   const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
-  ASSERT_TRUE(storedTapeDrive.value().diskSystemName.empty());
-  ASSERT_EQ(storedTapeDrive.value().reservedBytes, 0);
+  ASSERT_FALSE(storedTapeDrive.value().diskSystemName);
+  ASSERT_FALSE(storedTapeDrive.value().reservedBytes);
+  ASSERT_FALSE(storedTapeDrive.value().reservationSessionId);
 
   m_catalogue->deleteTapeDrive(tapeDrive.driveName);
 }
@@ -17799,8 +17799,9 @@ TEST_P(cta_catalogue_CatalogueTest, updateTapeDriveStatusUpDontCleanSpaceReserva
   const std::string tapeDriveName = "VDSTK11";
   auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
   tapeDrive.driveStatus = common::dataStructures::DriveStatus::Down;  // To force a change of state
-  tapeDrive.diskSystemName = "";
-  tapeDrive.reservedBytes = 123456789;
+  tapeDrive.diskSystemName = nullopt_t();
+  tapeDrive.reservedBytes = nullopt_t();
+  tapeDrive.reservationSessionId = nullopt_t();
   m_catalogue->createTapeDrive(tapeDrive);
 
   ReportDriveStatusInputs inputs;
@@ -17825,8 +17826,9 @@ TEST_P(cta_catalogue_CatalogueTest, updateTapeDriveStatusUpDontCleanSpaceReserva
     tapeDrivesState->updateDriveStatus(driveInfo, inputs, dummyLc);
   }
   const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
-  ASSERT_TRUE(storedTapeDrive.value().diskSystemName.empty());
-  ASSERT_EQ(storedTapeDrive.value().reservedBytes, tapeDrive.reservedBytes);
+  ASSERT_FALSE(storedTapeDrive.value().diskSystemName);
+  ASSERT_FALSE(storedTapeDrive.value().reservedBytes);
+  ASSERT_FALSE(storedTapeDrive.value().reservationSessionId);
 
   m_catalogue->deleteTapeDrive(tapeDrive.driveName);
 }

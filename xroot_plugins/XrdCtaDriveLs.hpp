@@ -128,8 +128,8 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     dr_item->set_comment(dr.userComment ? dr.userComment.value() : "");
     dr_item->set_reason(dr.reasonUpDown ? dr.reasonUpDown.value() : "");
     if (dr.mountType == cta::common::dataStructures::MountType::Retrieve) {
-      dr_item->set_disk_system_name(dr.diskSystemName);
-      dr_item->set_reserved_bytes(dr.reservedBytes);
+      dr_item->set_disk_system_name(dr.diskSystemName ? dr.diskSystemName.value() : "");
+      dr_item->set_reserved_bytes(dr.reservedBytes ? dr.reservedBytes.value() : 0);
     }
     dr_item->set_session_elapsed_time(dr.sessionElapsedTime ? dr.sessionElapsedTime.value() : 0);
     auto driveConfig = dr_item->mutable_drive_config();

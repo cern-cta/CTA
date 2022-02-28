@@ -495,8 +495,9 @@ common::dataStructures::TapeDrive TapeDrivesCatalogueState::setTapeDriveStatus(
   tapeDriveStatus.desiredForceDown = desiredState.forceDown;
   if (desiredState.reason) tapeDriveStatus.reasonUpDown = desiredState.reason;
   if (desiredState.comment) tapeDriveStatus.userComment = desiredState.comment;
-  tapeDriveStatus.diskSystemName = "NULL";
-  tapeDriveStatus.reservedBytes = 0;
+  tapeDriveStatus.diskSystemName = nullopt_t();
+  tapeDriveStatus.reservedBytes = nullopt_t();
+  tapeDriveStatus.reservationSessionId = nullopt_t();
   tapeDriveStatus.devFileName = tpConfigLine.devFilename;
   tapeDriveStatus.rawLibrarySlot = tpConfigLine.rawLibrarySlot;
   if (identity.username.empty()) {
