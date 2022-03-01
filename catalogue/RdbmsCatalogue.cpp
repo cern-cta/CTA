@@ -11049,8 +11049,8 @@ void RdbmsCatalogue::updateTapeDriveStatus(const common::dataStructures::TapeDri
     // If the drive is a state incompatible with space reservation, make sure there is none:
     if(tapeDrive.driveStatus == common::dataStructures::DriveStatus::Up) {
       sql += "DISK_SYSTEM_NAME = NULL,";
-      sql += "RESERVED_BYTES = CASE WHEN DISK_SYSTEM_NAME IS NOT NULL THEN NULL ELSE RESERVED_BYTES END,";
-      sql += "RESERVATION_SESSION_ID = CASE WHEN DISK_SYSTEM_NAME IS NOT NULL THEN NULL ELSE RESERVATION_SESSION_ID END,";
+      sql += "RESERVED_BYTES = NULL,";
+      sql += "RESERVATION_SESSION_ID = NULL,";
       sql += "DRIVE_STATUS = CASE WHEN DESIRED_UP = '0' THEN 'DOWN' ELSE 'UP' END,";
     } else {
       sql += "DRIVE_STATUS = '" + driveStatusStr + "',";

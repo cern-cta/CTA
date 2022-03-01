@@ -19500,5 +19500,301 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreArchiveFileAndCopy) {
   }
 }
 
+TEST_P(cta_catalogue_CatalogueTest, addDiskSpaceReservationWhenItsNull) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  tapeDrive.diskSystemName = nullopt_t();
+  tapeDrive.reservedBytes = nullopt_t();
+  tapeDrive.reservationSessionId = nullopt_t();
+  m_catalogue->createTapeDrive(tapeDrive);
+
+  DiskSpaceReservationRequest request;
+  const std::string spaceName = "space1";
+  const uint64_t reservedBytes = 987654;
+  request.addRequest(spaceName, reservedBytes);
+  const uint64_t mountId = 123;
+
+  log::LogContext dummyLc(m_dummyLog);
+  m_catalogue->reserveDiskSpace(tapeDriveName, mountId, request, dummyLc);
+
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive.value().diskSystemName));
+  ASSERT_EQ(storedTapeDrive.value().diskSystemName.value(), spaceName);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive.value().reservedBytes));
+  ASSERT_EQ(storedTapeDrive.value().reservedBytes.value(), reservedBytes);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive.value().reservationSessionId));
+  ASSERT_EQ(storedTapeDrive.value().reservationSessionId.value(), mountId);
+
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, incrementAnExistingDiskSpaceReservation) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  tapeDrive.diskSystemName = "existing_space";
+  tapeDrive.reservedBytes = 1234;
+  tapeDrive.reservationSessionId = 9;
+  m_catalogue->createTapeDrive(tapeDrive);
+
+  DiskSpaceReservationRequest request;
+  const std::string spaceName = tapeDrive.diskSystemName.value();
+  const uint64_t reservedBytes = 852;
+  request.addRequest(spaceName, reservedBytes);
+  const uint64_t mountId = tapeDrive.reservationSessionId.value();
+
+  log::LogContext dummyLc(m_dummyLog);
+  m_catalogue->reserveDiskSpace(tapeDriveName, mountId, request, dummyLc);
+
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive.value().diskSystemName));
+  ASSERT_EQ(storedTapeDrive.value().diskSystemName.value(), spaceName);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive.value().reservedBytes));
+  ASSERT_EQ(storedTapeDrive.value().reservedBytes.value(), reservedBytes + tapeDrive.reservedBytes.value());
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive.value().reservationSessionId));
+  ASSERT_EQ(storedTapeDrive.value().reservationSessionId.value(), mountId);
+
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, decrementANonExistingDiskSpaceReservation) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  tapeDrive.diskSystemName = nullopt_t();
+  tapeDrive.reservedBytes = nullopt_t();
+  tapeDrive.reservationSessionId = nullopt_t();
+  m_catalogue->createTapeDrive(tapeDrive);
+
+  DiskSpaceReservationRequest request;
+  const std::string spaceName = "space1";
+  const uint64_t reservedBytes = 852;
+  request.addRequest(spaceName, reservedBytes);
+  const uint64_t mountId = 123;
+
+  log::LogContext dummyLc(m_dummyLog);
+  m_catalogue->releaseDiskSpace(tapeDriveName, mountId, request, dummyLc);
+
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().diskSystemName));
+  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().reservedBytes));
+  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().reservationSessionId));
+
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, decrementAExistingDiskSpaceReservation) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  tapeDrive.diskSystemName = "existing_space";
+  tapeDrive.reservedBytes = 1234;
+  tapeDrive.reservationSessionId = 9;
+  m_catalogue->createTapeDrive(tapeDrive);
+
+  DiskSpaceReservationRequest request1;
+  const std::string spaceName = tapeDrive.diskSystemName.value();
+  const uint64_t reservedBytes = 852;
+  request1.addRequest(spaceName, reservedBytes);
+  const uint64_t mountId = tapeDrive.reservationSessionId.value();
+
+  log::LogContext dummyLc(m_dummyLog);
+  m_catalogue->releaseDiskSpace(tapeDriveName, mountId, request1, dummyLc);
+
+  const auto storedTapeDrive1 = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive1.value().diskSystemName));
+  ASSERT_EQ(storedTapeDrive1.value().diskSystemName.value(), spaceName);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive1.value().reservedBytes));
+  ASSERT_EQ(storedTapeDrive1.value().reservedBytes.value(), tapeDrive.reservedBytes.value() - reservedBytes);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive1.value().reservationSessionId));
+  ASSERT_EQ(storedTapeDrive1.value().reservationSessionId.value(), mountId);
+
+  DiskSpaceReservationRequest request2;
+  request2.addRequest(tapeDrive.diskSystemName.value(), tapeDrive.reservedBytes.value() - reservedBytes);
+
+  m_catalogue->releaseDiskSpace(tapeDriveName, mountId, request2, dummyLc);
+
+  const auto storedTapeDrive2 = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive2.value().diskSystemName));
+  ASSERT_EQ(storedTapeDrive2.value().diskSystemName.value(), spaceName);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive2.value().reservedBytes));
+  ASSERT_EQ(storedTapeDrive2.value().reservedBytes.value(), 0);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive2.value().reservationSessionId));
+  ASSERT_EQ(storedTapeDrive2.value().reservationSessionId.value(), mountId);
+
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, incrementAnExistingDiskSpaceReservationAndThenLargerDecrement) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  tapeDrive.diskSystemName = "existing_space";
+  tapeDrive.reservedBytes = 10;
+  tapeDrive.reservationSessionId = 9;
+  m_catalogue->createTapeDrive(tapeDrive);
+
+  DiskSpaceReservationRequest increaseRequest;
+  const std::string spaceName = tapeDrive.diskSystemName.value();
+  const uint64_t reservedBytes = 20;
+  increaseRequest.addRequest(spaceName, reservedBytes);
+  const uint64_t mountId = tapeDrive.reservationSessionId.value();
+
+  log::LogContext dummyLc(m_dummyLog);
+  m_catalogue->reserveDiskSpace(tapeDriveName, mountId, increaseRequest, dummyLc);
+
+  const auto storedTapeDrive1 = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive1.value().diskSystemName));
+  ASSERT_EQ(storedTapeDrive1.value().diskSystemName.value(), spaceName);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive1.value().reservedBytes));
+  ASSERT_EQ(storedTapeDrive1.value().reservedBytes.value(), reservedBytes + tapeDrive.reservedBytes.value());
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive1.value().reservationSessionId));
+  ASSERT_EQ(storedTapeDrive1.value().reservationSessionId.value(), mountId);
+
+  DiskSpaceReservationRequest decreaseRequest;
+  decreaseRequest.addRequest(tapeDrive.diskSystemName.value(), 100000);  // Decrease a bigger number of reserved bytes
+
+  m_catalogue->releaseDiskSpace(tapeDriveName, mountId, decreaseRequest, dummyLc);
+
+  const auto storedTapeDrive2 = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive2.value().diskSystemName));
+  ASSERT_EQ(storedTapeDrive2.value().diskSystemName.value(), spaceName);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive2.value().reservedBytes));
+  ASSERT_EQ(storedTapeDrive2.value().reservedBytes.value(), 0);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive2.value().reservationSessionId));
+  ASSERT_EQ(storedTapeDrive2.value().reservationSessionId.value(), mountId);
+
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, failToIncrementAnOldDiskSystem) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  tapeDrive.diskSystemName = "old_space";
+  tapeDrive.reservedBytes = 1234;
+  tapeDrive.reservationSessionId = 9;
+  m_catalogue->createTapeDrive(tapeDrive);
+
+  // New Disk Space
+  DiskSpaceReservationRequest newRequest;
+  const std::string spaceName = "new_space";
+  const uint64_t reservedBytes = 345;
+  newRequest.addRequest(spaceName, reservedBytes);
+  const uint64_t mountId = 3;
+
+  log::LogContext dummyLc(m_dummyLog);
+  m_catalogue->reserveDiskSpace(tapeDriveName, mountId, newRequest, dummyLc);
+
+  // Decrease Old Space
+  DiskSpaceReservationRequest oldRequest;
+  oldRequest.addRequest(tapeDrive.diskSystemName.value(), tapeDrive.reservedBytes.value());
+
+  m_catalogue->releaseDiskSpace(tapeDriveName, tapeDrive.reservationSessionId.value(), oldRequest, dummyLc);
+
+  // Check it keeps the new disk space system values
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive.value().diskSystemName));
+  ASSERT_EQ(storedTapeDrive.value().diskSystemName.value(), spaceName);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive.value().reservedBytes));
+  ASSERT_EQ(storedTapeDrive.value().reservedBytes.value(), reservedBytes);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive.value().reservationSessionId));
+  ASSERT_EQ(storedTapeDrive.value().reservationSessionId.value(), mountId);
+
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, sameSystemNameButDifferentMountID) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  const std::string diskSystemName = "space_name";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  tapeDrive.diskSystemName = diskSystemName;
+  tapeDrive.reservedBytes = 1234;
+  tapeDrive.reservationSessionId = 9;
+  m_catalogue->createTapeDrive(tapeDrive);
+
+  // New Disk Space
+  DiskSpaceReservationRequest request;
+  const std::string spaceName = diskSystemName;
+  const uint64_t reservedBytes = 345;
+  request.addRequest(spaceName, reservedBytes);
+  const uint64_t mountId = 3;
+
+  log::LogContext dummyLc(m_dummyLog);
+  m_catalogue->reserveDiskSpace(tapeDriveName, mountId, request, dummyLc);
+
+  // Check it keeps the new disk space system values
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive.value().diskSystemName));
+  ASSERT_EQ(storedTapeDrive.value().diskSystemName.value(), diskSystemName);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive.value().reservedBytes));
+  ASSERT_EQ(storedTapeDrive.value().reservedBytes.value(), reservedBytes);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive.value().reservationSessionId));
+  ASSERT_EQ(storedTapeDrive.value().reservationSessionId.value(), mountId);
+
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, failToDecrementAnOldMountIDAndDecrementNewAgain) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  const std::string diskSystemName = "space_name";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  tapeDrive.diskSystemName = diskSystemName;
+  tapeDrive.reservedBytes = 1234;
+  tapeDrive.reservationSessionId = 9;
+  m_catalogue->createTapeDrive(tapeDrive);
+
+  // New Disk Space
+  DiskSpaceReservationRequest newRequest;
+  const uint64_t reservedBytes = 345;
+  newRequest.addRequest(diskSystemName, reservedBytes);
+  const uint64_t mountId = 3;
+
+  log::LogContext dummyLc(m_dummyLog);
+  m_catalogue->reserveDiskSpace(tapeDriveName, mountId, newRequest, dummyLc);
+
+  // Decrease Old Space
+  DiskSpaceReservationRequest oldRequest;
+  oldRequest.addRequest(diskSystemName, tapeDrive.reservedBytes.value());
+
+  m_catalogue->releaseDiskSpace(tapeDriveName, tapeDrive.reservationSessionId.value(), oldRequest, dummyLc);
+
+  // Check it keeps the new disk space system values
+  auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive.value().diskSystemName));
+  ASSERT_EQ(storedTapeDrive.value().diskSystemName.value(), diskSystemName);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive.value().reservedBytes));
+  ASSERT_EQ(storedTapeDrive.value().reservedBytes.value(), reservedBytes);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive.value().reservationSessionId));
+  ASSERT_EQ(storedTapeDrive.value().reservationSessionId.value(), mountId);
+
+  // Decrease New Space
+  DiskSpaceReservationRequest decreaseRequest;
+  const uint64_t decreasedBytes = 10;
+  decreaseRequest.addRequest(diskSystemName, decreasedBytes);
+  m_catalogue->releaseDiskSpace(tapeDriveName, mountId, decreaseRequest, dummyLc);
+
+  // Check it keeps the new disk space system values
+  storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive.value().diskSystemName));
+  ASSERT_EQ(storedTapeDrive.value().diskSystemName.value(), diskSystemName);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive.value().reservedBytes));
+  ASSERT_EQ(storedTapeDrive.value().reservedBytes.value(), reservedBytes - decreasedBytes);
+  ASSERT_TRUE(static_cast<bool>(storedTapeDrive.value().reservationSessionId));
+  ASSERT_EQ(storedTapeDrive.value().reservationSessionId.value(), mountId);
+
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
 
 } // namespace unitTests
