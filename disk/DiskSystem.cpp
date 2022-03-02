@@ -88,7 +88,7 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
     try {
       std::vector<std::string> regexResult;
       auto & currentDiskSystem = m_systemList.at(ds);
-      regexResult = eosDiskSystem.exec(currentDiskSystem.freeSpaceQueryURL);
+      regexResult = eosDiskSystem.exec(currentDiskSystem.diskInstanceSpace.freeSpaceQueryURL);
       if (regexResult.size()) {
         //Script, then EOS free space query
         if(!m_systemList.getFetchEosFreeSpaceScript().empty()){
@@ -108,7 +108,7 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
         freeSpace = fetchEosFreeSpace(regexResult.at(1), regexResult.at(2), lc);
         goto found;
       } 
-      regexResult = constantFreeSpaceDiskSystem.exec(m_systemList.at(ds).freeSpaceQueryURL);
+      regexResult = constantFreeSpaceDiskSystem.exec(m_systemList.at(ds).diskInstanceSpace.freeSpaceQueryURL);
       if (regexResult.size()) {
         freeSpace = fetchConstantFreeSpace(regexResult.at(1), lc);
         goto found;

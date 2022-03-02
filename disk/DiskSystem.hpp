@@ -19,6 +19,7 @@
 
 #include "common/utils/Regex.hpp"
 #include "common/dataStructures/EntryLog.hpp"
+#include "common/dataStructures/DiskInstanceSpace.hpp"
 #include "common/log/LogContext.hpp"
 #include <string>
 #include <list>
@@ -42,9 +43,8 @@ CTA_GENERATE_EXCEPTION_CLASS(FetchEosFreeSpaceScriptException);
 
 struct DiskSystem {
   std::string name;
+  common::dataStructures::DiskInstanceSpace diskInstanceSpace;
   std::string fileRegexp;
-  std::string freeSpaceQueryURL;
-  uint64_t refreshInterval;
   uint64_t targetedFreeSpace;
   uint64_t sleepTime;
   cta::common::dataStructures::EntryLog creationLog;

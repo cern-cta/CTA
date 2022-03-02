@@ -325,9 +325,11 @@ TEST_P(SchedulerDatabaseTest, putExistingQueueToSleep) {
 
   cta::SchedulerDatabase &db = getDb();
 
+  cta::common::dataStructures::DiskInstanceSpace diskInstanceSpace{"dis-A", "di-A", "constantFreeSpace:999999999999", 60, 60, 0,
+      "No Comment", common::dataStructures::EntryLog(), common::dataStructures::EntryLog{}};
    // Create the disk system list
   cta::disk::DiskSystemList diskSystemList;
-  cta::disk::DiskSystem diskSystem{"ds-A", "$root://a.disk.system/", "constantFreeSpace:999999999999", 60, 10UL*1000*1000*1000,
+  cta::disk::DiskSystem diskSystem{"ds-A", diskInstanceSpace, "$root://a.disk.system/", 10UL*1000*1000*1000,
       15*60, common::dataStructures::EntryLog(), common::dataStructures::EntryLog{},"No comment"};
   diskSystemList.push_back(diskSystem);
 
@@ -390,8 +392,11 @@ TEST_P(SchedulerDatabaseTest, createQueueAndPutToSleep) {
   cta::SchedulerDatabase &db = getDb();
 
    // Create the disk system list
+  cta::common::dataStructures::DiskInstanceSpace diskInstanceSpace{"dis-A", "di-A", "constantFreeSpace:999999999999", 60, 60, 0,
+      "No Comment", common::dataStructures::EntryLog(), common::dataStructures::EntryLog{}};
+   // Create the disk system list
   cta::disk::DiskSystemList diskSystemList;
-  cta::disk::DiskSystem diskSystem{"ds-A", "$root://a.disk.system/", "constantFreeSpace:999999999999", 60, 10UL*1000*1000*1000,
+  cta::disk::DiskSystem diskSystem{"ds-A", diskInstanceSpace, "$root://a.disk.system/", 10UL*1000*1000*1000,
       15*60, common::dataStructures::EntryLog(), common::dataStructures::EntryLog{},"No comment"};
   diskSystemList.push_back(diskSystem);
 
@@ -540,8 +545,11 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueRetrieveRequests) {
 
   
  // Create the disk system list
+  cta::common::dataStructures::DiskInstanceSpace diskInstanceSpace{"dis-A", "di-A", "constantFreeSpace:999999999999", 60, 60, 0,
+      "No Comment", common::dataStructures::EntryLog(), common::dataStructures::EntryLog{}};
+   // Create the disk system list
   cta::disk::DiskSystemList diskSystemList;
-  cta::disk::DiskSystem diskSystem{"ds-A", "$root://a.disk.system/", "constantFreeSpace:999999999999", 60, 10UL*1000*1000*1000,
+  cta::disk::DiskSystem diskSystem{"ds-A", diskInstanceSpace, "$root://a.disk.system/", 10UL*1000*1000*1000,
       15*60, common::dataStructures::EntryLog(), common::dataStructures::EntryLog{},"No comment"};
   diskSystemList.push_back(diskSystem);
 
@@ -629,10 +637,12 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
   cta::catalogue::Catalogue &catalogue = getCatalogue();
 
   // Create the disk system list
-  catalogue.createDiskSystem(common::dataStructures::SecurityIdentity(), "ds-A", "$root://a.disk.system/", "constantFreeSpace:999999999999", 60, 10UL*1000*1000*1000,
-      15*60, "No comment");
-  catalogue.createDiskSystem(common::dataStructures::SecurityIdentity(), "ds-B", "$root://b.disk.system/", "constantFreeSpace:999999999999", 60, 10UL*1000*1000*1000,
-      15*60,"No comment");
+  catalogue.createDiskInstance(common::dataStructures::SecurityIdentity(), "di", "No comment");
+  catalogue.createDiskInstanceSpace(common::dataStructures::SecurityIdentity(), "dis-A", "di", "constantFreeSpace:999999999999", 60, "No comment");
+  catalogue.createDiskSystem(common::dataStructures::SecurityIdentity(), "ds-A", "di", "dis-A", "$root://a.disk.system/", 10UL*1000*1000*1000, 15*60, "No comment");
+
+  catalogue.createDiskInstanceSpace(common::dataStructures::SecurityIdentity(), "dis-B", "di", "constantFreeSpace:999999999999", 60, "No comment");
+  catalogue.createDiskSystem(common::dataStructures::SecurityIdentity(), "ds-B", "di", "dis-B", "$root://b.disk.system/", 10UL*1000*1000*1000, 15*60,"No comment");
 
   auto diskSystemList = catalogue.getAllDiskSystems();
 
@@ -721,8 +731,11 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
 
   // Create the disk system list
   // only one disk system per queue, like in the production
-  catalogue.createDiskSystem(common::dataStructures::SecurityIdentity(), "ds-A", "$root://a.disk.system/", "constantFreeSpace:6000", 60, 0UL,
-      15*60, "No comment");
+
+  catalogue.createDiskInstance(common::dataStructures::SecurityIdentity(), "di", "No comment");
+  catalogue.createDiskInstanceSpace(common::dataStructures::SecurityIdentity(), "dis-A", "di", "constantFreeSpace:6000", 60, "No comment");
+
+  catalogue.createDiskSystem(common::dataStructures::SecurityIdentity(), "ds-A", "di", "dis-A", "$root://a.disk.system/", 0UL, 15*60, "No comment");
 
   auto diskSystemList = catalogue.getAllDiskSystems();
 
@@ -814,8 +827,10 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
   cta::SchedulerDatabase &db = getDb();
   cta::catalogue::Catalogue &catalogue = getCatalogue();
 
+  catalogue.createDiskInstance(common::dataStructures::SecurityIdentity(), "di", "No comment");
+  catalogue.createDiskInstanceSpace(common::dataStructures::SecurityIdentity(), "dis-error", "di", "constantFreeSpace-6000", 60, "No comment");
   
-  catalogue.createDiskSystem(common::dataStructures::SecurityIdentity(), "ds-Error", "$root://error.disk.system/", "constantFreeSpace-6000", 60, 0UL,
+  catalogue.createDiskSystem(common::dataStructures::SecurityIdentity(), "ds-Error", "di", "dis-error", "$root://error.disk.system/", 0UL,
     15*60,"No comment");
 
   auto diskSystemList = catalogue.getAllDiskSystems();

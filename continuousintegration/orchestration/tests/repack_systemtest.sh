@@ -148,7 +148,9 @@ if [ ! -z $BACKPRESSURE_TEST ]; then
   echo "Backpressure test: setting too high free space requirements"
   # This should be idempotent as we will be called several times
   if [[ $( admin_cta --json ds ls | jq '.[] | select(.name=="repackBuffer") | .name') != '"repackBuffer"' ]]; then
-    admin_cta ds add -n repackBuffer -r "root://${EOSINSTANCE}/${REPACK_BUFFER_BASEDIR}" -u "eos:${EOSINSTANCE}:default" -i 5 -f 111222333444555 -s 20 -m toto
+    admin_cta di add -n repackDiskInstance -m toto
+    admin_cta dis add -n repackDiskInstanceSpace --di repackDiskInstance -u "eos:${EOSINSTANCE}:default" -i 5 -m toto
+    admin_cta ds add -n repackBuffer --di repackDiskInstance --dis repackDiskInstanceSpace -r "root://${EOSINSTANCE}/${REPACK_BUFFER_BASEDIR}" -f 111222333444555 -s 20 -m toto
   else
     echo "Disk system repackBuffer alread defined. Ensuring too high free space requirements."
     admin_cta ds ch -n repackBuffer -f 111222333444555

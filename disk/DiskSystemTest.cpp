@@ -68,32 +68,47 @@ namespace unitTests {
     private:
       void insertDiskSystemSpinner(){
         auto & catalogue = getCatalogue();
+
+        // create disk instance
+        std::string diskInstanceName = "DiskInstanceNameSpinner";
+        std::string diskInstanceComment = "Comment";
+        catalogue.createDiskInstance(m_cliId, diskInstanceName, diskInstanceComment);
+        // create disk instance space
+        std::string diskInstanceSpaceName = "DiskInstanceSpaceSpinner";
+        std::string freeSpaceQueryURL = "eos:ctaeos:spinners";
+        uint64_t refrestInterval = 1; 
+        std::string diskInstanceSpaceComment = "Comment";
+        catalogue.createDiskInstanceSpace(m_cliId, diskInstanceSpaceName, diskInstanceName, freeSpaceQueryURL, refrestInterval, diskInstanceSpaceComment);
+        // create disk system
         m_diskSystemSpinner.name = "DiskSystemNameSpinner";
         m_diskSystemSpinner.fileRegexp = "root://ctaeos.archiveretrieve-1215709git0e38ccd0-xi98.svc.cluster.local//eos/ctaeos/cta(.*)eos.space=spinners";
-        m_diskSystemSpinner.freeSpaceQueryURL = "eos:ctaeos:spinners";
-        m_diskSystemSpinner.refreshInterval = 1;
         m_diskSystemSpinner.targetedFreeSpace = 1;
         m_diskSystemSpinner.sleepTime = 1;
         m_diskSystemSpinner.comment = "Comment";
-
-        catalogue.createDiskSystem(m_cliId,m_diskSystemSpinner.name,m_diskSystemSpinner.fileRegexp,
-        m_diskSystemSpinner.freeSpaceQueryURL,m_diskSystemSpinner.refreshInterval,m_diskSystemSpinner.targetedFreeSpace,
-        m_diskSystemSpinner.sleepTime,m_diskSystemSpinner.comment);
+        catalogue.createDiskSystem(m_cliId,m_diskSystemSpinner.name, diskInstanceName, diskInstanceSpaceName, m_diskSystemSpinner.fileRegexp,
+          m_diskSystemSpinner.targetedFreeSpace, m_diskSystemSpinner.sleepTime,m_diskSystemSpinner.comment);
       }
       
       void insertDiskSystemDefault() {
         auto & catalogue = getCatalogue();
+        // create disk instance
+        std::string diskInstanceName = "DiskInstanceNameDefault";
+        std::string diskInstanceComment = "Comment";
+        catalogue.createDiskInstance(m_cliId, diskInstanceName, diskInstanceComment);
+        // create disk instance space
+        std::string diskInstanceSpaceName = "DiskInstanceSpaceDefault";
+        std::string freeSpaceQueryURL = "eos:ctaeos:default";
+        uint64_t refrestInterval = 1; 
+        std::string diskInstanceSpaceComment = "Comment";
+        catalogue.createDiskInstanceSpace(m_cliId, diskInstanceSpaceName, diskInstanceName, freeSpaceQueryURL, refrestInterval, diskInstanceSpaceComment);
+        // create disk system
         m_diskSystemDefault.name = "DiskSystemNameDefault";
         m_diskSystemDefault.fileRegexp = "root://ctaeos.archiveretrieve-1215709git0e38ccd0-xi98.svc.cluster.local//eos/ctaeos/cta(.*)eos.space=default";
-        m_diskSystemDefault.freeSpaceQueryURL = "eos:ctaeos:default";
-        m_diskSystemDefault.refreshInterval = 1;
         m_diskSystemDefault.targetedFreeSpace = 1;
         m_diskSystemDefault.sleepTime = 1;
         m_diskSystemDefault.comment = "Comment";
-
-        catalogue.createDiskSystem(m_cliId,m_diskSystemDefault.name,m_diskSystemDefault.fileRegexp,
-        m_diskSystemDefault.freeSpaceQueryURL,m_diskSystemDefault.refreshInterval,m_diskSystemDefault.targetedFreeSpace,
-        m_diskSystemDefault.sleepTime,m_diskSystemDefault.comment);
+        catalogue.createDiskSystem(m_cliId,m_diskSystemDefault.name, diskInstanceName, diskInstanceSpaceName, m_diskSystemDefault.fileRegexp,
+          m_diskSystemDefault.targetedFreeSpace, m_diskSystemDefault.sleepTime,m_diskSystemDefault.comment);
       }
   };
   
@@ -120,18 +135,25 @@ namespace unitTests {
     cta::log::LogContext lc(m_dummyLog);
     
     auto & catalogue = getCatalogue();
-    
+    // create disk instance
+    std::string diskInstanceName = "DiskInstanceNameConstantFreeSpace";
+    std::string diskInstanceComment = "Comment";
+    catalogue.createDiskInstance(m_cliId, diskInstanceName, diskInstanceComment);
+    // create disk instance space
+    std::string diskInstanceSpaceName = "DiskInstanceSpaceConstantFreeSpace";
+    std::string freeSpaceQueryURL = "constantFreeSpace:200";
+    uint64_t refrestInterval = 1; 
+    std::string diskInstanceSpaceComment = "Comment";
+    catalogue.createDiskInstanceSpace(m_cliId, diskInstanceSpaceName, diskInstanceName, freeSpaceQueryURL, refrestInterval, diskInstanceSpaceComment);
+    // create disk system
     cta::disk::DiskSystem constantFreeSpaceDiskSystem;
-
     constantFreeSpaceDiskSystem.name = "ConstantFreeSpaceDiskSystem";
     constantFreeSpaceDiskSystem.fileRegexp = "/home/test/buffer";
-    constantFreeSpaceDiskSystem.freeSpaceQueryURL = "constantFreeSpace:200";
-    constantFreeSpaceDiskSystem.refreshInterval = 1;
     constantFreeSpaceDiskSystem.targetedFreeSpace = 1;
     constantFreeSpaceDiskSystem.sleepTime = 1;
     constantFreeSpaceDiskSystem.comment = "Comment";
-    
-    catalogue.createDiskSystem(m_cliId,constantFreeSpaceDiskSystem.name,constantFreeSpaceDiskSystem.fileRegexp,constantFreeSpaceDiskSystem.freeSpaceQueryURL,constantFreeSpaceDiskSystem.refreshInterval, constantFreeSpaceDiskSystem.targetedFreeSpace, constantFreeSpaceDiskSystem.sleepTime, constantFreeSpaceDiskSystem.comment);
+    catalogue.createDiskSystem(m_cliId,constantFreeSpaceDiskSystem.name, diskInstanceName, diskInstanceSpaceName, constantFreeSpaceDiskSystem.fileRegexp,
+      constantFreeSpaceDiskSystem.targetedFreeSpace, constantFreeSpaceDiskSystem.sleepTime,constantFreeSpaceDiskSystem.comment);
     
     auto allDiskSystem = catalogue.getAllDiskSystems();
     
@@ -145,6 +167,7 @@ namespace unitTests {
     
     try {
       diskSystemFreeSpaceList.fetchDiskSystemFreeSpace(diskSystemsToFetch,lc);
+      ASSERT_TRUE(false);
     } catch (const cta::disk::DiskSystemFreeSpaceListException& ex) {
       ASSERT_EQ(2,ex.m_failedDiskSystems.size());
     }
@@ -152,6 +175,7 @@ namespace unitTests {
     diskSystemsToFetch.insert(constantFreeSpaceDiskSystem.name);
     try {
       diskSystemFreeSpaceList.fetchDiskSystemFreeSpace(diskSystemsToFetch,lc);
+      ASSERT_TRUE(false);
     } catch (const cta::disk::DiskSystemFreeSpaceListException& ex) {
       ASSERT_EQ(2,ex.m_failedDiskSystems.size());
     }

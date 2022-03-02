@@ -1894,7 +1894,9 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   auto &schedulerDB = getSchedulerDB();
 
   setupDefaultCatalogue();
-  catalogue.createDiskSystem({"user", "host"}, "diskSystem", "/public_dir/public_file", "constantFreeSpace:10", 10, 10L*1000*1000*1000, 15*60, "no comment");
+  catalogue.createDiskInstance({"user", "host"}, "diskInstance", "no comment");
+  catalogue.createDiskInstanceSpace({"user", "host"}, "diskInstanceSpace", "diskInstance", "constantFreeSpace:10", 10, "no comment");
+  catalogue.createDiskSystem({"user", "host"}, "diskSystem", "diskInstance", "diskInstanceSpace", "/public_dir/public_file", 10L*1000*1000*1000, 15*60, "no comment");
 
 
 #ifdef STDOUT_LOGGING
@@ -4923,7 +4925,10 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
   //cta::objectstore::Backend& backend = schedulerDB.getBackend();
 
   setupDefaultCatalogue();
-  catalogue.createDiskSystem({"user", "host"}, "repackBuffer", tempDirectory.path(), "eos:ctaeos:default", 10, 10L*1000*1000*1000, 15*60, "no comment");
+
+  catalogue.createDiskInstance({"user", "host"}, "diskInstance", "no comment");
+  catalogue.createDiskInstanceSpace({"user", "host"}, "diskInstanceSpace", "diskInstance", "eos:ctaeos:default", 10, "no comment");
+  catalogue.createDiskSystem({"user", "host"}, "repackBuffer", "diskInstance", "diskInstanceSpace", tempDirectory.path(), 10L*1000*1000*1000, 15*60, "no comment");
 
 #ifdef STDOUT_LOGGING
   log::StdoutLogger dl("dummy", "unitTest");
@@ -5315,7 +5320,10 @@ TEST_P(SchedulerTest, expandRepackRequestShouldThrowIfUseBufferNotRecallButNoDir
   auto &scheduler = getScheduler();
 
   setupDefaultCatalogue();
-  catalogue.createDiskSystem({"user", "host"}, "repackBuffer", tempDirectory.path(), "eos:ctaeos:default", 10, 10L*1000*1000*1000, 15*60, "no comment");
+
+  catalogue.createDiskInstance({"user", "host"}, "diskInstance", "no comment");
+  catalogue.createDiskInstanceSpace({"user", "host"}, "diskInstanceSpace", "diskInstance", "eos:ctaeos:default", 10, "no comment");
+  catalogue.createDiskSystem({"user", "host"}, "repackBuffer", "diskInstance", "diskInstanceSpace", tempDirectory.path(), 10L*1000*1000*1000, 15*60, "no comment");
 
 #ifdef STDOUT_LOGGING
   log::StdoutLogger dl("dummy", "unitTest");
@@ -5410,7 +5418,9 @@ TEST_P(SchedulerTest, expandRepackRequestShouldNotThrowIfTapeDisabledButNoRecall
   auto &scheduler = getScheduler();
 
   setupDefaultCatalogue();
-  catalogue.createDiskSystem({"user", "host"}, "repackBuffer", tempDirectory.path(), "eos:ctaeos:default", 10, 10L*1000*1000*1000, 15*60, "no comment");
+  catalogue.createDiskInstance({"user", "host"}, "diskInstance", "no comment");
+  catalogue.createDiskInstanceSpace({"user", "host"}, "diskInstanceSpace", "diskInstance", "eos:ctaeos:default", 10, "no comment");
+  catalogue.createDiskSystem({"user", "host"}, "repackBuffer", "diskInstance", "diskInstanceSpace",tempDirectory.path(), 10L*1000*1000*1000, 15*60, "no comment");
 
 #ifdef STDOUT_LOGGING
   log::StdoutLogger dl("dummy", "unitTest");

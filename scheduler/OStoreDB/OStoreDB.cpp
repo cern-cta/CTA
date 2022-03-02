@@ -3551,7 +3551,7 @@ bool OStoreDB::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRe
       //avoid empty string when no disk space reservation exists for drive
       if (previousDriveReservation.second != 0) { 
         auto previousDiskSystem = diskSystemFreeSpace.getDiskSystemList().at(previousDriveReservation.first);
-        if (diskSystem.freeSpaceQueryURL == previousDiskSystem.freeSpaceQueryURL) {
+        if (diskSystem.diskInstanceSpace.freeSpaceQueryURL == previousDiskSystem.diskInstanceSpace.freeSpaceQueryURL) {
           previousDrivesReservationTotal += previousDriveReservation.second;
         }
       }

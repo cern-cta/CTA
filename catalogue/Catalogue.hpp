@@ -924,9 +924,9 @@ public:
   virtual void createDiskSystem(
     const common::dataStructures::SecurityIdentity &admin,
     const std::string &name,
+    const std::string &diskInstanceName,
+    const std::string &diskInstanceSpaceName,
     const std::string &fileRegexp,
-    const std::string &freeSpaceQueryURL,
-    const uint64_t refreshInterval,
     const uint64_t targetedFreeSpace,
     const uint64_t sleepTime,
     const std::string &comment) = 0;
@@ -940,10 +940,6 @@ public:
 
   virtual void modifyDiskSystemFileRegexp(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name, const std::string &fileRegexp) = 0;
-  virtual void modifyDiskSystemFreeSpaceQueryURL(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const std::string &freeSpaceQueryURL) = 0;
-  virtual void modifyDiskSystemRefreshInterval(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const uint64_t refreshInterval) = 0;
   virtual void modifyDiskSystemTargetedFreeSpace(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name, const uint64_t targetedFreeSpace) = 0;
   virtual void modifyDiskSystemSleepTime(const common::dataStructures::SecurityIdentity &admin,
