@@ -521,7 +521,7 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 %attr(0644,root,root) %{_sysconfdir}/yum/pluginconf.d/versionlock.cta
 %attr(0755,root,root) %{_bindir}/cta-versionlock
 
-%post -n cta-release
+%posttrans -n cta-release
 /usr/bin/cta-versionlock apply
 
 %preun -n cta-release
