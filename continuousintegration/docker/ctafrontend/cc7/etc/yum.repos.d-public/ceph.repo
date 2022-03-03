@@ -1,6 +1,6 @@
 [ceph]
 name=Ceph
-baseurl=https://download.ceph.com/rpm-octopus/el7/x86_64/
+baseurl=https://download.ceph.com/rpm-15.2.15/el7/x86_64/
 gpgkey=file:///etc/pki/rpm-gpg/RPM-ASC-KEY-ceph
 gpgcheck=1
 enabled=1
