@@ -104,7 +104,7 @@ echo -n '0 u:daemon g:daemon n:ctaeos+ N:6361884315374059521 c:1481241620 e:0 f:
     chown daemon:daemon /var/eos/config/${eoshost}/default.eoscf
 
 # quarkDB only for systemd initially...
-cat /etc/config/eos/xrd.cf.mgm | grep mgmofs.nslib | grep -qi eosnsquarkdb && /opt/run/bin/start_quarkdb.sh
+cat /etc/config/eos/xrd.cf.mgm | grep mgmofs.nslib | grep -qi eosnsquarkdb && /opt/run/bin/start_quarkdb.sh ${CI_CONTEXT}
 
 # add taped SSS must be in a kubernetes secret
 #echo >> /etc/eos.keytab

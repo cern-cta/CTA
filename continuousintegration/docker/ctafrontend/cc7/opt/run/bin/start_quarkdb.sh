@@ -15,6 +15,9 @@
 #                 You should have received a copy of the GNU General Public License
 #                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# the only argument of this script is the CI_CONTEXT passed by ctaeos-mgm.sh
+CI_CONTEXT=$1
+
 # I need 2 level of directories for quarkdb:
 # /var/lib/<possible PV mount point>/<directory owned by xrootd>
 # this way I can either use:
@@ -47,6 +50,13 @@ cp /etc/eos.keytab /etc/eos.keytab.xrootd
 chmod 400 /etc/eos.keytab.xrootd
 chown xrootd:xrootd /etc/eos.keytab.xrootd
 
-systemctl start xrootd@quarkdb
+if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
 
-systemctl status xrootd@quarkdb
+  systemctl start xrootd@quarkdb
+
+  systemctl status xrootd@quarkdb
+else
+  # no systemd
+  XRDPROG=/usr/bin/xrootd; test -e /opt/eos/xrootd/bin/xrootd && XRDPROG=/opt/eos/xrootd/bin/xrootd
+  ${XRDPROG} -n quarkdb -l /var/log/xrootd/xrootd.log -c /etc/xrootd/xrootd-quarkdb.cfg -k fifo -s /var/run/xrootd/xrootd-quarkdb.pid -b -Rxrootd
+fi
