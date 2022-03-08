@@ -190,6 +190,16 @@ else
     ${XRDPROG} -n fst -c /etc/xrd.cf.fst -l /var/log/eos/xrdlog.fst -b -Rdaemon
 fi
 
+# EOS service is starting for the first time we need to check if it is ready before
+# feeding the eos server with commands
+echo -n "Waiting for eos to be online before going further"
+for ((i=0;i<60;i++)); do
+  eos version 2>&1 >/dev/null && break
+  sleep 1
+  echo -n .
+done
+eos version 2>&1 >/dev/null && echo OK || exit 1
+
 if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
   if eos ns | grep 'In-flight FileMD' && eos ns | grep 'In-flight ContainerMD'; then
     echo 'The EOS namespace backend is QuarkDB'
