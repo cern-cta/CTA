@@ -1065,6 +1065,22 @@ uint32_t RetrieveRequest::getActiveCopyNumber() {
 }
 
 //------------------------------------------------------------------------------
+// RetrieveRequest::setFailed()
+//------------------------------------------------------------------------------
+void RetrieveRequest::setFailed() {
+  checkPayloadWritable();
+  m_payload.set_isfailed(true);
+}
+
+//------------------------------------------------------------------------------
+// RetrieveRequest::isFailed()
+//------------------------------------------------------------------------------
+bool RetrieveRequest::isFailed() {
+  checkPayloadReadable();
+  return m_payload.isfailed();
+}
+
+//------------------------------------------------------------------------------
 // RetrieveRequest::getRetrieveFileQueueCriteria()
 //------------------------------------------------------------------------------
 cta::common::dataStructures::RetrieveFileQueueCriteria RetrieveRequest::getRetrieveFileQueueCriteria() {

@@ -302,6 +302,7 @@ void Scheduler::deleteArchive(const std::string &instanceName, const common::dat
   if(request.address) {
     //Check if address is provided, we can remove the request from the objectstore
     m_db.cancelArchive(request,lc);
+    // no need to do anything else, if file was failed it will not be in the catalogue.
   }
   tl.insertAndReset("schedulerDbTime",t);
   m_catalogue.moveArchiveFileToRecycleLog(request,lc);

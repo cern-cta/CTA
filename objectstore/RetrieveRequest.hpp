@@ -267,6 +267,12 @@ public:
   void setActiveCopyNumber(uint32_t activeCopyNb);
   uint32_t getActiveCopyNumber();
   void setIsVerifyOnly(bool isVerifyOnly) { m_payload.set_isverifyonly(isVerifyOnly); }
+  
+  /**
+   * Sets the job as failed. Failed jobs are moved to the failed requests and cannot be deleted from the scheduler.
+   */
+  void setFailed();
+  bool isFailed();
   // ===========================================================================
   std::list<JobDump> dumpJobs();
   std::string dump();

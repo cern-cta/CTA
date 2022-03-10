@@ -349,6 +349,22 @@ std::string ArchiveRequest::getSrcURL() {
 }
 
 //------------------------------------------------------------------------------
+// ArchiveRequest::setFailed()
+//------------------------------------------------------------------------------
+void ArchiveRequest::setFailed() {
+  checkPayloadWritable();
+  m_payload.set_isfailed(true);
+}
+
+//------------------------------------------------------------------------------
+// ArchiveRequest::isFailed()
+//------------------------------------------------------------------------------
+bool ArchiveRequest::isFailed() {
+  checkPayloadReadable();
+  return m_payload.isfailed();
+}
+
+//------------------------------------------------------------------------------
 // ArchiveRequest::setEntryLog()
 //------------------------------------------------------------------------------
 void ArchiveRequest::setEntryLog(const cta::common::dataStructures::EntryLog &creationLog) {

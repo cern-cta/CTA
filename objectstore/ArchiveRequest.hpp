@@ -237,6 +237,10 @@ public:
   void setMountPolicy(const cta::common::dataStructures::MountPolicy &mountPolicy);
   cta::common::dataStructures::MountPolicy getMountPolicy();
 
+  void setFailed();
+  bool isFailed();
+
+
   class JobDump {
   public:
     uint32_t copyNb;

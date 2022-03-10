@@ -1500,6 +1500,13 @@ void OStoreDB::cancelRetrieve(const std::string& instanceName, const cta::common
     lc.log(log::ERR, "In OStoreDB::cancelRetrieve(): archive file Id mismatch.");
     throw exception::Exception("In OStoreDB::cancelRetrieve(): archiveFileID mismatch.");
   }
+  if (rr.isFailed()) {
+    log::ScopedParamContainer params(lc);
+    params.add("ArchiveFileID", rqst.archiveFileID)
+          .add("RetrieveRequest", rqst.retrieveRequestId);
+    lc.log(log::ERR, "In OStoreDB::cancelRetrieve(): request is in failed requests, skipping.");
+    return;
+  }
   // Looks fine, we delete the request
   log::ScopedParamContainer params(lc);
   params.add("ArchiveFileID", rqst.archiveFileID)
@@ -1609,6 +1616,13 @@ void OStoreDB::cancelArchive(const common::dataStructures::DeleteArchiveRequest 
           .add("ArchiveFileIdFromRequest", ar.getArchiveFile().archiveFileID);
     lc.log(log::ERR, "In OStoreDB::cancelArchive(): archive file Id mismatch.");
     throw exception::Exception("In OStoreDB::cancelArchive(): archiveFileID mismatch.");
+  }
+  if (ar.isFailed()) {
+    log::ScopedParamContainer params(lc);
+    params.add("ArchiveFileID", request.archiveFileID)
+          .add("archiveRequest", request.address.value());
+    lc.log(log::ERR, "In OStoreDB::cancelArchive(): request is in failed requests, skipping.");
+    return;
   }
   // Looks fine, we delete the request
   log::ScopedParamContainer params(lc);
@@ -4189,6 +4203,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
       return;
   }
   case NextStep::StoreInFailedJobsContainer: {
+      m_archiveRequest.setFailed();
       m_archiveRequest.commit();
       auto tapepool = m_archiveRequest.getTapePoolForJob(tapeFile.copyNb);
       auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
@@ -4265,6 +4280,7 @@ void OStoreDB::ArchiveJob::failReport(const std::string& failureReason, log::Log
       return;
     }
   default: {
+      m_archiveRequest.setFailed();
       m_archiveRequest.commit();
       auto tapepool = m_archiveRequest.getTapePoolForJob(tapeFile.copyNb);
       auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
@@ -4920,15 +4936,15 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
 
     // Set the job status
     m_retrieveRequest.setJobStatus(tf.copyNb, enQueueingNextStep.nextStatus);
-    m_retrieveRequest.commit();
-    auto retryStatus = m_retrieveRequest.getRetryStatus(tf.copyNb);
-    // Algorithms suppose the objects are not locked.
-    rrl.release();
-
+    
     // Apply the decision
     switch (enQueueingNextStep.nextStep) {
       // We have a reduced set of supported next steps as some are not compatible with this event
       case NextStep::EnqueueForReportForUser: {
+        m_retrieveRequest.commit();
+        auto retryStatus = m_retrieveRequest.getRetryStatus(tf.copyNb);
+        // Algorithms suppose the objects are not locked.
+        rrl.release();
         typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReportForUser> CaRqtr;
         CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
         CaRqtr::InsertedElement::list insertedElements;
@@ -4947,6 +4963,11 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
         return;
       }
       default: {
+        m_retrieveRequest.setFailed();
+        m_retrieveRequest.commit();
+        auto retryStatus = m_retrieveRequest.getRetryStatus(tf.copyNb);
+        // Algorithms suppose the objects are not locked.
+        rrl.release();
         typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueFailed> CaRqtr;
         CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
         CaRqtr::InsertedElement::list insertedElements;
@@ -4996,10 +5017,12 @@ void OStoreDB::RetrieveJob::abort(const std::string& abortReason, log::LogContex
   EnqueueingNextStep enQueueingNextStep = m_retrieveRequest.addReportAbort(selectedCopyNb, m_mountId, abortReason, lc);
   m_retrieveRequest.setJobStatus(selectedCopyNb, enQueueingNextStep.nextStatus);
 
-  m_retrieveRequest.commit();
+
   switch(enQueueingNextStep.nextStep){
     case NextStep::EnqueueForReportForRepack:
     case NextStep::StoreInFailedJobsContainer: {
+      m_retrieveRequest.setFailed();
+      m_retrieveRequest.commit();
       Sorter sorter(*m_oStoreDB.m_agentReference,m_oStoreDB.m_objectStore,m_oStoreDB.m_catalogue);
       std::shared_ptr<objectstore::RetrieveRequest> rr = std::make_shared<objectstore::RetrieveRequest>(m_retrieveRequest);
       sorter.insertRetrieveRequest(rr,*this->m_oStoreDB.m_agentReference,cta::optional<uint32_t>(selectedCopyNb),lc);
@@ -5008,6 +5031,7 @@ void OStoreDB::RetrieveJob::abort(const std::string& abortReason, log::LogContex
       return;
     }
     default:
+      m_retrieveRequest.commit();
       throw cta::exception::Exception("In OStoreDB::RetrieveJob::abort(): Wrong EnqueueingNextStep for queueing the RetrieveRequest");
   }
 }

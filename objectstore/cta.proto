@@ -372,6 +372,7 @@ message ArchiveRequest {
   required bool reportdecided = 9093;
   required bool isrepack = 9095;
   optional ArchiveRequestRepackInfo repack_info = 9097;
+  optional bool isfailed = 9099 [default = false];  
 }
 
 // ------------- Retrieve Jobs -------------------------------------------------
@@ -413,6 +414,7 @@ message RetrieveJob {
   required uint32 maxreportretries = 9208;
   required uint32 totalreportretries = 9209;
   repeated string reportfailurelogs = 9210;
+  optional bool isfailed = 9099 [default = false];
 }
 
 message RetrieveRequestArchiveRoute {
@@ -461,6 +463,7 @@ message RetrieveRequest {
   optional LifecycleTimings lifecycle_timings = 9159;
   optional string disk_system_name = 9161;
   required bool isverifyonly = 9162;
+  optional bool isfailed = 9166 [default = false];  
 }
 
 message ValueCountPair {
