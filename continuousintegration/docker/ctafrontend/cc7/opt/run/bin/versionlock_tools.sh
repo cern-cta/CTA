@@ -15,4 +15,21 @@
 #                 You should have received a copy of the GNU General Public License
 #                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-/opt/run/bin/ctaeos-mgm.sh 2>&1 | unbuffer -p tee -a /var/log/ctaeos-mgm.log
+
+VERSIONLOCK_LIST=/etc/yum/pluginconf.d/versionlock.list
+
+versionlock_eos_4_disable () {
+  sed  -i '/#*\s*EOS-4-START/,/#*\s*EOS-4-END/{/#*\s*EOS-4/!{s/^[^#]/#/g}}' $VERSIONLOCK_LIST
+}
+
+versionlock_eos_4_enable () {
+  sed  -i '/#*\s*EOS-4-START/,/#*\s*EOS-4-END/{/#*\s*EOS-4/!{s/^#//g}}' $VERSIONLOCK_LIST
+}
+
+versionlock_eos_5_disable () {
+  sed  -i '/#*\s*EOS-5-START/,/#*\s*EOS-5-END/{/#*\s*EOS-5/!{s/^[^#]/#/g}}' $VERSIONLOCK_LIST
+}
+
+versionlock_eos_5_enable () {
+  sed  -i '/#*\s*EOS-5-START/,/#*\s*EOS-5-END/{/#*\s*EOS-5/!{s/^#//g}}' $VERSIONLOCK_LIST
+}

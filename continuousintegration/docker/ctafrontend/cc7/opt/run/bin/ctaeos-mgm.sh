@@ -15,13 +15,27 @@
 #                 You should have received a copy of the GNU General Public License
 #                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+set -x
+. /opt/run/bin/versionlock_tools.sh
 . /opt/run/bin/init_pod.sh
 
 if [ ! -e /etc/buildtreeRunner ]; then
+
   yum-config-manager --enable cta-artifacts
-  yum-config-manager --enable eos-citrine-commit
-  yum-config-manager --enable eos-citrine-depend
-  yum-config-manager --enable eos-citrine
+
+  if test -f "/etc/config/eos/eos5"; then
+    # Switch to EOS-5 versionlock
+    versionlock_eos_4_disable
+    versionlock_eos_5_enable
+
+    yum-config-manager --disable eos-citrine-commit
+    yum-config-manager --disable eos-citrine-depend
+    yum-config-manager --disable eos-citrine
+    yum-config-manager --enable eos-diopside-commit
+    yum-config-manager --enable eos-diopside-depend
+    yum-config-manager --enable eos-diopside
+    yum-config-manager --enable cta-ci-eos-5
+  fi
 
   # Install missing RPMs
   yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-migration-tools cta-debuginfo sudo logrotate cta-fst-gcd

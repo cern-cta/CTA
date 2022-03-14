@@ -1,0 +1,6 @@
+[eos-diopside]
+name=EOS Diopside
+baseurl=https://storage-ci.web.cern.ch/storage-ci/eos/diopside/tag/testing/el-7/x86_64/
+priority=4
+gpgcheck=0
+enabled=0

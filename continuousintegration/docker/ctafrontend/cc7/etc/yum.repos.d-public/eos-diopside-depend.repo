@@ -1,0 +1,6 @@
+[eos-diopside-depend]
+name=EOS Diopside depend
+baseurl=http://storage-ci.web.cern.ch/storage-ci/eos/diopside-depend/el-7/x86_64/
+priority=4
+gpgcheck=0
+enabled=0

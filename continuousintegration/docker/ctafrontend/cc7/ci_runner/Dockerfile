@@ -54,8 +54,6 @@ ADD build_rpm/RPM ${CTAREPODIR}
 RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
   && \
     yum install --downloadonly --downloaddir=${CTAREPODIR}/RPMS/x86_64 \
-      eos-client \
-      eos-server \
       xrootd-client \
       xrootd-debuginfo \
       xrootd-server \
@@ -82,9 +80,6 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
 
 # Check that CTA packages are in container (from previous artifacts)
 RUN find ${CTAREPODIR}/RPMS/x86_64 | grep cta-taped && echo "cta-taped rpm is present: artifacts seems OK" || (echo "cta-taped rpm was not added from previously built artifact: this is a gitlab issue that must be investigated" 1>&2; exit 1)
-
-# Check that EOS packages are in container (downloaded from ci-repo)
-RUN find ${CTAREPODIR}/RPMS/x86_64 | grep eos-server && echo "eos-server rpm is present: CI repos seem OK" || (echo "eos-server rpm was not downloaded from CI configured repos: this must be investigated" 1>&2; exit 1)
 
 # Check that xrootd packages are in container (downloaded from ci-repo)
 RUN find ${CTAREPODIR}/RPMS/x86_64 | grep xrootd-server && echo "xrootd-server rpm is present: CI repos seem OK" || (echo "xrootd-server rpm was not downloaded from CI configured repos: this must be investigated" 1>&2; exit 1)
