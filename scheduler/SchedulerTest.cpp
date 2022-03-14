@@ -2069,14 +2069,14 @@ TEST_P(SchedulerTest, expandRepackRequest) {
       rrp.startThreads();
       for(auto it = executedJobs.begin(); it != executedJobs.end(); ++it)
       {
-        rrp.reportCompletedJob(std::move(*it));
+        rrp.reportCompletedJob(std::move(*it), lc);
       }
       rrp.setDiskDone();
       rrp.setTapeDone();
 
-      rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
+      rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, cta::nullopt, lc);
 
-      rrp.reportEndOfSession();
+      rrp.reportEndOfSession(lc);
       rrp.waitThread();
 
       ASSERT_EQ(rrp.allThreadsDone(),true);
@@ -2352,18 +2352,18 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
     auto it = executedJobs.begin();
     it++;
     while(it != executedJobs.end()){
-      rrp.reportCompletedJob(std::move(*it));
+      rrp.reportCompletedJob(std::move(*it), lc);
       it++;
     }
     std::unique_ptr<cta::RetrieveJob> failedJobUniqPtr = std::move(*(executedJobs.begin()));
-    rrp.reportFailedJob(std::move(failedJobUniqPtr),cta::exception::Exception("FailedJob expandRepackRequestFailedRetrieve"));
+    rrp.reportFailedJob(std::move(failedJobUniqPtr),cta::exception::Exception("FailedJob expandRepackRequestFailedRetrieve"), lc);
 
     rrp.setDiskDone();
     rrp.setTapeDone();
 
-    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
+    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, cta::nullopt, lc);
 
-    rrp.reportEndOfSession();
+    rrp.reportEndOfSession(lc);
     rrp.waitThread();
 
     ASSERT_EQ(rrp.allThreadsDone(),true);
@@ -2390,14 +2390,14 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
 
         rrp.startThreads();
 
-        rrp.reportFailedJob(std::move(retrieveJob),cta::exception::Exception("FailedJob for unit test expandRepackRequestFailedRetrieve"));
+        rrp.reportFailedJob(std::move(retrieveJob),cta::exception::Exception("FailedJob for unit test expandRepackRequestFailedRetrieve"), lc);
 
         rrp.setDiskDone();
         rrp.setTapeDone();
 
-        rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
+        rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, cta::nullopt, lc);
 
-        rrp.reportEndOfSession();
+        rrp.reportEndOfSession(lc);
         rrp.waitThread();
         ASSERT_EQ(rrp.allThreadsDone(),true);
       }
@@ -2596,15 +2596,15 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
     //Report all jobs as succeeded
     for(auto it = executedJobs.begin(); it != executedJobs.end(); ++it)
     {
-      rrp.reportCompletedJob(std::move(*it));
+      rrp.reportCompletedJob(std::move(*it), lc);
     }
 
     rrp.setDiskDone();
     rrp.setTapeDone();
 
-    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
+    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, cta::nullopt, lc);
 
-    rrp.reportEndOfSession();
+    rrp.reportEndOfSession(lc);
     rrp.waitThread();
 
     ASSERT_TRUE(rrp.allThreadsDone());
@@ -2847,15 +2847,15 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
     //Report all jobs as succeeded
     for(auto it = executedJobs.begin(); it != executedJobs.end(); ++it)
     {
-      rrp.reportCompletedJob(std::move(*it));
+      rrp.reportCompletedJob(std::move(*it), lc);
     }
 
     rrp.setDiskDone();
     rrp.setTapeDone();
 
-    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
+    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, cta::nullopt, lc);
 
-    rrp.reportEndOfSession();
+    rrp.reportEndOfSession(lc);
     rrp.waitThread();
 
     ASSERT_TRUE(rrp.allThreadsDone());
@@ -3915,15 +3915,15 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
     //Report all jobs as succeeded
     for(auto it = executedJobs.begin(); it != executedJobs.end(); ++it)
     {
-      rrp.reportCompletedJob(std::move(*it));
+      rrp.reportCompletedJob(std::move(*it), lc);
     }
 
     rrp.setDiskDone();
     rrp.setTapeDone();
 
-    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
+    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, cta::nullopt, lc);
 
-    rrp.reportEndOfSession();
+    rrp.reportEndOfSession(lc);
     rrp.waitThread();
 
     ASSERT_TRUE(rrp.allThreadsDone());
@@ -4351,15 +4351,15 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
     //Report all jobs as succeeded
     for(auto it = executedJobs.begin(); it != executedJobs.end(); ++it)
     {
-      rrp.reportCompletedJob(std::move(*it));
+      rrp.reportCompletedJob(std::move(*it), lc);
     }
 
     rrp.setDiskDone();
     rrp.setTapeDone();
 
-    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
+    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, cta::nullopt, lc);
 
-    rrp.reportEndOfSession();
+    rrp.reportEndOfSession(lc);
     rrp.waitThread();
 
     ASSERT_TRUE(rrp.allThreadsDone());
@@ -4634,15 +4634,15 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
       //Report all jobs as succeeded
       for(auto it = executedJobs.begin(); it != executedJobs.end(); ++it)
       {
-        rrp.reportCompletedJob(std::move(*it));
+        rrp.reportCompletedJob(std::move(*it), lc);
       }
 
       rrp.setDiskDone();
       rrp.setTapeDone();
 
-      rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
+      rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, cta::nullopt, lc);
 
-      rrp.reportEndOfSession();
+      rrp.reportEndOfSession(lc);
       rrp.waitThread();
     }
     {

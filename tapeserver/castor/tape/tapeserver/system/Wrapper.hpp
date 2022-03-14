@@ -104,7 +104,7 @@ namespace System {
     virtual int close(int fd) { return ::close(fd); }
     virtual int stat(const char * path, struct stat *buf) { return ::stat(path, buf); }
     virtual castor::tape::tapeserver::drive::DriveInterface * 
-      getDriveByPath(const std::string &) { return NULL; }
+      getDriveByPath(const std::string &) { return nullptr; }
   };
   
   /**

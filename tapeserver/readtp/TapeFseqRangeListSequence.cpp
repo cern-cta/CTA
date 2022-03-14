@@ -35,7 +35,7 @@ namespace readtp {
 //------------------------------------------------------------------------------
 TapeFseqRangeListSequence::TapeFseqRangeListSequence()
    {
-  reset(NULL);
+  reset(nullptr);
 }
 
 
@@ -55,7 +55,7 @@ void TapeFseqRangeListSequence::reset(
   const TapeFseqRangeList *const list)  {
   m_list = list;
 
-  if(m_list == NULL) {
+  if(m_list == nullptr) {
     m_isFinite  = true;
     m_totalSize = 0;
   } else {
@@ -90,7 +90,7 @@ void TapeFseqRangeListSequence::reset(
 // hasMore
 //------------------------------------------------------------------------------
 bool TapeFseqRangeListSequence::hasMore() const throw() {
-  if(m_list != NULL) {
+  if(m_list != nullptr) {
     return m_nbSequence.hasMore();
   } else {
     return false;

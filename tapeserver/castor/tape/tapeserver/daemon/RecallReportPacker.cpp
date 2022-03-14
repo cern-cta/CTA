@@ -26,12 +26,6 @@
 #include <iostream>
 #include <cxxabi.h>
 
-namespace{
-  struct failedReportRecallResult : public cta::exception::Exception{
-    failedReportRecallResult(const std::string& s): Exception(s){}
-  };
-}
-
 using cta::log::LogContext;
 using cta::log::Param;
 
@@ -42,67 +36,93 @@ namespace daemon {
 //------------------------------------------------------------------------------
 //Constructor
 //------------------------------------------------------------------------------
-RecallReportPacker::RecallReportPacker(cta::RetrieveMount *retrieveMount, cta::log::LogContext lc):
+RecallReportPacker::RecallReportPacker(cta::RetrieveMount *retrieveMount, cta::log::LogContext& lc) :
   ReportPackerInterface<detail::Recall>(lc),
   m_workerThread(*this), m_errorHappened(false), m_retrieveMount(retrieveMount),
   m_tapeThreadComplete(false), m_diskThreadComplete(false)
 {
 
 }
+
 //------------------------------------------------------------------------------
 //Destructor
 //------------------------------------------------------------------------------
-RecallReportPacker::~RecallReportPacker(){
+RecallReportPacker::~RecallReportPacker() {
   cta::threading::MutexLocker ml(m_producterProtection);
 }
+
 //------------------------------------------------------------------------------
 //reportCompletedJob
 //------------------------------------------------------------------------------
-void RecallReportPacker::reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob){
+void RecallReportPacker::reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob, cta::log::LogContext& lc) {
   std::unique_ptr<Report> rep(new ReportSuccessful(std::move(successfulRetrieveJob)));
+  cta::log::ScopedParamContainer params(lc);
+  params.add("type", "ReportSuccessful");
+  lc.log(cta::log::DEBUG, "In RecallReportPacker::reportCompletedJob(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(rep.release());
 }
+
 //------------------------------------------------------------------------------
 //reportFailedJob
-//------------------------------------------------------------------------------
-void RecallReportPacker::reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const cta::exception::Exception & ex){
+//------------------------------------------------------------------------------  
+void RecallReportPacker::reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const cta::exception::Exception& ex,
+                                         cta::log::LogContext& lc) {
   std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() +
-      " " + ex.getMessageValue();
+                           " " + ex.getMessageValue();
   std::unique_ptr<Report> rep(new ReportError(std::move(failedRetrieveJob), failureLog));
+  cta::log::ScopedParamContainer params(lc);
+  params.add("type", "ReportError");
+  lc.log(cta::log::DEBUG, "In RecallReportPacker::reportFailedJob(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(rep.release());
 }
+
 //------------------------------------------------------------------------------
 //reportEndOfSession
 //------------------------------------------------------------------------------
-void RecallReportPacker::reportEndOfSession(){
+void RecallReportPacker::reportEndOfSession(cta::log::LogContext& lc) {
+  cta::log::ScopedParamContainer params(lc);
+  params.add("type", "ReportEndofSession");
+  lc.log(cta::log::DEBUG, "In RecallReportPacker::reportEndOfSession(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  m_fifo.push(new ReportEndofSession());
+  std::unique_ptr<Report> rep(new ReportEndofSession());
+  m_fifo.push(rep.release());
 }
 
 //------------------------------------------------------------------------------
 //reportDriveStatus
 //------------------------------------------------------------------------------
-void RecallReportPacker::reportDriveStatus(cta::common::dataStructures::DriveStatus status, const cta::optional<std::string> & reason) {
+void RecallReportPacker::reportDriveStatus(cta::common::dataStructures::DriveStatus status, const cta::optional<std::string>& reason,
+                                           cta::log::LogContext& lc) {
+  cta::log::ScopedParamContainer params(lc);
+  params.add("type", "ReportDriveStatus")
+        .add("Status", cta::common::dataStructures::toString(status));
+  lc.log(cta::log::DEBUG, "In RecallReportPacker::reportDriveStatus(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  m_fifo.push(new ReportDriveStatus(status,reason));
+  m_fifo.push(new ReportDriveStatus(status, reason));
 }
 
 
 //------------------------------------------------------------------------------
 //reportEndOfSessionWithErrors
 //------------------------------------------------------------------------------
-void RecallReportPacker::reportEndOfSessionWithErrors(const std::string msg,int error_code){
+void RecallReportPacker::reportEndOfSessionWithErrors(const std::string& msg, int error_code, cta::log::LogContext& lc) {
+  cta::log::ScopedParamContainer params(lc);
+  params.add("type", "ReportEndofSessionWithErrors");
+  lc.log(cta::log::DEBUG, "In RecallReportPacker::reportEndOfSessionWithErrors(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  m_fifo.push(new ReportEndofSessionWithErrors(msg,error_code));
+  m_fifo.push(new ReportEndofSessionWithErrors(msg, error_code));
 }
 
 
 //------------------------------------------------------------------------------
 //reportTestGoingToEnd
 //------------------------------------------------------------------------------
-void RecallReportPacker::reportTestGoingToEnd(){
+void RecallReportPacker::reportTestGoingToEnd(cta::log::LogContext& lc) {
+  cta::log::ScopedParamContainer params(lc);
+  params.add("type", "ReportTestGoingToEnd");
+  lc.log(cta::log::DEBUG, "In RecallReportPacker::reportTestGoingToEnd(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(new ReportTestGoingToEnd());
 }
@@ -110,42 +130,43 @@ void RecallReportPacker::reportTestGoingToEnd(){
 //------------------------------------------------------------------------------
 //ReportSuccessful::execute
 //------------------------------------------------------------------------------
-void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& parent){
-  try{
+void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& parent) {
+  try {
     m_successfulRetrieveJob->asyncSetSuccessful();
     parent.m_successfulRetrieveJobs.push(std::move(m_successfulRetrieveJob));
   } catch (const cta::exception::NoSuchObject &ex){
     cta::log::ScopedParamContainer params(parent.m_lc);
     params.add("ExceptionMSG", ex.getMessageValue())
           .add("fileId", m_successfulRetrieveJob->archiveFile.archiveFileID);
-    parent.m_lc.log(cta::log::WARNING,"In RecallReportPacker::ReportSuccessful::execute(): call to m_successfulRetrieveJob->asyncSetSuccessful() failed, job does not exist in the objectstore.");
+    parent.m_lc.log(cta::log::WARNING,
+                    "In RecallReportPacker::ReportSuccessful::execute(): call to m_successfulRetrieveJob->asyncSetSuccessful() failed, job does not exist in the objectstore.");
   }
 }
 
 //------------------------------------------------------------------------------
 //ReportEndofSession::execute
 //------------------------------------------------------------------------------
-void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& parent){
-  parent.setDiskDone();
-  if(!parent.errorHappened()){
-    parent.m_lc.log(cta::log::INFO,"Nominal RecallReportPacker::EndofSession has been reported");
-    if (parent.m_watchdog) {
-      parent.m_watchdog->addParameter(cta::log::Param("status","success"));
+void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& reportPacker) {
+  reportPacker.setDiskDone();
+  if (!reportPacker.errorHappened()) {
+    reportPacker.m_lc.log(cta::log::INFO, "Nominal RecallReportPacker::EndofSession has been reported");
+    if (reportPacker.m_watchdog) {
+      reportPacker.m_watchdog->addParameter(cta::log::Param("status", "success"));
       // We have a race condition here between the processing of this message by
       // the initial process and the printing of the end-of-session log, triggered
       // by the end our process. To delay the latter, we sleep half a second here.
-      usleep(500*1000);
+      usleep(500 * 1000);
     }
   }
   else {
-    const std::string& msg ="RecallReportPacker::EndofSession has been reported  but an error happened somewhere in the process";
-    parent.m_lc.log(cta::log::ERR,msg);
-    if (parent.m_watchdog) {
-      parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
+    const std::string& msg = "RecallReportPacker::EndofSession has been reported  but an error happened somewhere in the process";
+    reportPacker.m_lc.log(cta::log::ERR, msg);
+    if (reportPacker.m_watchdog) {
+      reportPacker.m_watchdog->addParameter(cta::log::Param("status", "failure"));
       // We have a race condition here between the processing of this message by
       // the initial process and the printing of the end-of-session log, triggered
       // by the end our process. To delay the latter, we sleep half a second here.
-      usleep(500*1000);
+      usleep(500 * 1000);
     }
   }
 }
@@ -160,12 +181,11 @@ bool RecallReportPacker::ReportEndofSession::goingToEnd() {
 //------------------------------------------------------------------------------
 //ReportDriveStatus::execute
 //------------------------------------------------------------------------------
-void RecallReportPacker::ReportDriveStatus::execute(RecallReportPacker& parent){
-  parent.m_retrieveMount->setDriveStatus(m_status,m_reason);
-  if(m_status==cta::common::dataStructures::DriveStatus::Unmounting) {
-    parent.setTapeDone();
-    parent.setTapeComplete();
-  }
+void RecallReportPacker::ReportDriveStatus::execute(RecallReportPacker& parent) {
+  cta::log::ScopedParamContainer params(parent.m_lc);
+  params.add("status", cta::common::dataStructures::toString(m_status));
+  parent.m_lc.log(cta::log::DEBUG, "In RecallReportPacker::ReportDriveStatus::execute(): reporting drive status.");
+  parent.m_retrieveMount->setDriveStatus(m_status, m_reason);
 }
 
 //------------------------------------------------------------------------------
@@ -178,22 +198,22 @@ bool RecallReportPacker::ReportDriveStatus::goingToEnd() {
 //------------------------------------------------------------------------------
 //ReportEndofSessionWithErrors::execute
 //------------------------------------------------------------------------------
-void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacker& parent){
+void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacker& parent) {
   parent.setDiskDone();
-  if(parent.m_errorHappened) {
-    LogContext::ScopedParam(parent.m_lc,Param("errorCode",m_error_code));
-    parent.m_lc.log(cta::log::ERR,m_message);
+  if (parent.m_errorHappened) {
+    LogContext::ScopedParam sp(parent.m_lc, Param("errorCode", m_error_code));
+    parent.m_lc.log(cta::log::ERR, m_message);
   }
-  else{
-    const std::string& msg ="RecallReportPacker::EndofSessionWithErrors has been reported  but NO error was detected during the process";
-    parent.m_lc.log(cta::log::ERR,msg);
+  else {
+    const std::string& msg = "RecallReportPacker::EndofSessionWithErrors has been reported but NO error was detected during the process";
+    parent.m_lc.log(cta::log::ERR, msg);
   }
   if (parent.m_watchdog) {
-    parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
+    parent.m_watchdog->addParameter(cta::log::Param("status", "failure"));
     // We have a race condition here between the processing of this message by
     // the initial process and the printing of the end-of-session log, triggered
     // by the end our process. To delay the latter, we sleep half a second here.
-    usleep(500*1000);
+    usleep(500 * 1000);
   }
 }
 
@@ -207,13 +227,13 @@ bool RecallReportPacker::ReportEndofSessionWithErrors::goingToEnd() {
 //------------------------------------------------------------------------------
 //ReportError::execute
 //------------------------------------------------------------------------------
-void RecallReportPacker::ReportError::execute(RecallReportPacker& reportPacker){
-  reportPacker.m_errorHappened=true;
+void RecallReportPacker::ReportError::execute(RecallReportPacker& reportPacker) {
+  reportPacker.m_errorHappened = true;
   {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add("failureLog", m_failureLog)
           .add("fileId", m_failedRetrieveJob->archiveFile.archiveFileID);
-    reportPacker.m_lc.log(cta::log::ERR,"In RecallReportPacker::ReportError::execute(): failing retrieve job after exception.");
+    reportPacker.m_lc.log(cta::log::ERR, "In RecallReportPacker::ReportError::execute(): failing retrieve job after exception.");
   }
   try {
     m_failedRetrieveJob->transferFailed(m_failureLog, reportPacker.m_lc);
@@ -221,12 +241,13 @@ void RecallReportPacker::ReportError::execute(RecallReportPacker& reportPacker){
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add("ExceptionMSG", ex.getMessageValue())
           .add("fileId", m_failedRetrieveJob->archiveFile.archiveFileID);
-    reportPacker.m_lc.log(cta::log::WARNING,"In RecallReportPacker::ReportError::execute(): call to m_failedRetrieveJob->failed() , job does not exist in the objectstore.");
-  } catch (cta::exception::Exception & ex) {
+    reportPacker.m_lc.log(cta::log::WARNING,
+                          "In RecallReportPacker::ReportError::execute(): call to m_failedRetrieveJob->failed() , job does not exist in the objectstore.");
+  } catch (cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add("ExceptionMSG", ex.getMessageValue())
           .add("fileId", m_failedRetrieveJob->archiveFile.archiveFileID);
-    reportPacker.m_lc.log(cta::log::ERR,"In RecallReportPacker::ReportError::execute(): call to m_failedRetrieveJob->failed() threw an exception.");
+    reportPacker.m_lc.log(cta::log::ERR, "In RecallReportPacker::ReportError::execute(): call to m_failedRetrieveJob->failed() threw an exception.");
     reportPacker.m_lc.logBacktrace(cta::log::ERR, ex.backtrace());
   }
 }
@@ -234,40 +255,42 @@ void RecallReportPacker::ReportError::execute(RecallReportPacker& reportPacker){
 //------------------------------------------------------------------------------
 //WorkerThread::WorkerThread
 //------------------------------------------------------------------------------
-RecallReportPacker::WorkerThread::WorkerThread(RecallReportPacker& parent):
-m_parent(parent) {
+RecallReportPacker::WorkerThread::WorkerThread(RecallReportPacker& parent) :
+  m_parent(parent) {
 }
+
 //------------------------------------------------------------------------------
 //WorkerThread::run
 //------------------------------------------------------------------------------
-void RecallReportPacker::WorkerThread::run(){
+void RecallReportPacker::WorkerThread::run() {
   m_parent.m_lc.pushOrReplace(Param("thread", "RecallReportPacker"));
   m_parent.m_lc.log(cta::log::DEBUG, "Starting RecallReportPacker thread");
   bool endFound = false;
 
-  std::list <std::unique_ptr<Report>> reportedSuccessfully;
+  std::list<std::unique_ptr<Report>> reportedSuccessfully;
   cta::utils::Timer t;
-  while(1) {
+  while (true) {
     std::string debugType;
     std::unique_ptr<Report> rep(m_parent.m_fifo.pop());
     {
       cta::log::ScopedParamContainer spc(m_parent.m_lc);
       int demangleStatus;
-      char * demangledReportType = abi::__cxa_demangle(typeid(*rep.get()).name(), nullptr, nullptr, &demangleStatus);
+      char *demangledReportType = abi::__cxa_demangle(typeid(*rep.get()).name(), nullptr, nullptr, &demangleStatus);
       if (!demangleStatus) {
         spc.add("typeId", demangledReportType);
-      } else {
+      }
+      else {
         spc.add("typeId", typeid(*rep.get()).name());
       }
       free(demangledReportType);
       if (rep->goingToEnd())
         spc.add("goingToEnd", "true");
-      m_parent.m_lc.log(cta::log::DEBUG, "Popping report");
+      m_parent.m_lc.log(cta::log::DEBUG, "In RecallReportPacker::WorkerThread::run(): Got a new report.");
     }
     // Record whether we found end before calling the potentially exception
     // throwing execute().)
     if (rep->goingToEnd())
-      endFound=true;
+      endFound = true;
     // We can afford to see any report to fail and keep passing the following ones
     // as opposed to migrations where one failure fails the session.
     try {
@@ -276,40 +299,41 @@ void RecallReportPacker::WorkerThread::run(){
       // m_parent.fullCheckAndFinishAsyncExecute will execute the shared half of the
       // request updates (individual, asynchronous is done in rep->execute(m_parent);
       if (typeid(*rep) == typeid(RecallReportPacker::ReportSuccessful)
-          && (m_parent.m_successfulRetrieveJobs.size() >= m_parent.RECALL_REPORT_PACKER_FLUSH_SIZE || t.secs() >= m_parent.RECALL_REPORT_PACKER_FLUSH_TIME )){
-        m_parent.m_lc.log(cta::log::INFO,"m_parent.fullCheckAndFinishAsyncExecute()");
+          && (m_parent.m_successfulRetrieveJobs.size() >= m_parent.RECALL_REPORT_PACKER_FLUSH_SIZE ||
+              t.secs() >= m_parent.RECALL_REPORT_PACKER_FLUSH_TIME)) {
+        m_parent.m_lc.log(cta::log::INFO, "m_parent.fullCheckAndFinishAsyncExecute()");
         m_parent.fullCheckAndFinishAsyncExecute();
         t.reset();
       }
-    } catch(const cta::exception::Exception& e){
+    } catch (const cta::exception::Exception& e) {
       //we get there because to tried to close the connection and it failed
       //either from the catch a few lines above or directly from rep->execute
       cta::log::ScopedParamContainer params(m_parent.m_lc);
       params.add("exceptionWhat", e.getMessageValue())
             .add("exceptionType", typeid(e).name());
-      m_parent.m_lc.log(cta::log::ERR, "Tried to report and got a CTA exception.");
+      m_parent.m_lc.log(cta::log::ERR, "In RecallReportPacker::WorkerThread::run(): Received a CTA exception while reporting retrieve mount results.");
       if (m_parent.m_watchdog) {
-        m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
-        m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
+        m_parent.m_watchdog->addToErrorCount("Error_reporting");
+        m_parent.m_watchdog->addParameter(cta::log::Param("status", "failure"));
       }
-    } catch(const std::exception& e){
+    } catch (const std::exception& e) {
       //we get there because to tried to close the connection and it failed
       //either from the catch a few lines above or directly from rep->execute
       cta::log::ScopedParamContainer params(m_parent.m_lc);
       params.add("exceptionWhat", e.what())
             .add("exceptionType", typeid(e).name());
-      m_parent.m_lc.log(cta::log::ERR, "Tried to report and got a standard exception.");
+      m_parent.m_lc.log(cta::log::ERR, "In RecallReportPacker::WorkerThread::run(): Received a standard exception while reporting retrieve mount results.");
       if (m_parent.m_watchdog) {
-        m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
-        m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
+        m_parent.m_watchdog->addToErrorCount("Error_reporting");
+        m_parent.m_watchdog->addParameter(cta::log::Param("status", "failure"));
       }
-    } catch(...){
+    } catch (...) {
       //we get there because to tried to close the connection and it failed
       //either from the catch a few lines above or directly from rep->execute
-      m_parent.m_lc.log(cta::log::ERR, "Tried to report and got an unknown exception.");
+      m_parent.m_lc.log(cta::log::ERR, "In RecallReportPacker::WorkerThread::run(): Received an unknown exception while reporting retrieve mount results.");
       if (m_parent.m_watchdog) {
-        m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
-        m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
+        m_parent.m_watchdog->addToErrorCount("Error_reporting");
+        m_parent.m_watchdog->addParameter(cta::log::Param("status", "failure"));
       }
     }
     if (endFound) break;
@@ -318,41 +342,42 @@ void RecallReportPacker::WorkerThread::run(){
   // Make sure the last batch of reports got cleaned up.
   try {
     m_parent.fullCheckAndFinishAsyncExecute();
-    if(m_parent.isDiskDone()){
+    if (m_parent.isDiskDone()) {
       //The m_parent.m_diskThreadComplete is set to true when a ReportEndOfSession or a ReportAndOfSessionWithError
       //has been put. It is only after the fullCheckandFinishAsyncExecute is finished that we can say to the mount that the disk thread is complete.
-      m_parent.m_lc.log(cta::log::DEBUG, "In RecallReportPacker::WorkerThread::run(): all disk threads are finished, telling the mount that Disk threads are complete");
+      m_parent.m_lc.log(cta::log::DEBUG,
+                        "In RecallReportPacker::WorkerThread::run(): all disk threads are finished, telling the mount that Disk threads are complete");
       m_parent.setDiskComplete();
     }
-  } catch(const cta::exception::Exception& e){
-      cta::log::ScopedParamContainer params(m_parent.m_lc);
-      params.add("exceptionWhat", e.getMessageValue())
-            .add("exceptionType", typeid(e).name());
-      m_parent.m_lc.log(cta::log::ERR, "Tried to report and got a CTA exception.");
-      if (m_parent.m_watchdog) {
-        m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
-        m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
-      }
-  } catch(const std::exception& e){
-      cta::log::ScopedParamContainer params(m_parent.m_lc);
-      params.add("exceptionWhat", e.what())
-            .add("exceptionType", typeid(e).name());
-      m_parent.m_lc.log(cta::log::ERR, "Tried to report and got a standard exception.");
-      if (m_parent.m_watchdog) {
-        m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
-        m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
-      }
-  } catch(...){
-      m_parent.m_lc.log(cta::log::ERR, "Tried to report and got an unknown exception.");
-      if (m_parent.m_watchdog) {
-        m_parent.m_watchdog->addToErrorCount("Error_clientCommunication");
-        m_parent.m_watchdog->addParameter(cta::log::Param("status","failure"));
-      }
+  } catch (const cta::exception::Exception& e) {
+    cta::log::ScopedParamContainer params(m_parent.m_lc);
+    params.add("exceptionWhat", e.getMessageValue())
+          .add("exceptionType", typeid(e).name());
+    m_parent.m_lc.log(cta::log::ERR, "In RecallReportPacker::WorkerThread::run(): Received a CTA exception while reporting retrieve mount results.");
+    if (m_parent.m_watchdog) {
+      m_parent.m_watchdog->addToErrorCount("Error_reporting");
+      m_parent.m_watchdog->addParameter(cta::log::Param("status", "failure"));
+    }
+  } catch (const std::exception& e) {
+    cta::log::ScopedParamContainer params(m_parent.m_lc);
+    params.add("exceptionWhat", e.what())
+          .add("exceptionType", typeid(e).name());
+    m_parent.m_lc.log(cta::log::ERR, "In RecallReportPacker::WorkerThread::run(): Received a standard exception while reporting retrieve mount results.");
+    if (m_parent.m_watchdog) {
+      m_parent.m_watchdog->addToErrorCount("Error_reporting");
+      m_parent.m_watchdog->addParameter(cta::log::Param("status", "failure"));
+    }
+  } catch (...) {
+    m_parent.m_lc.log(cta::log::ERR, "In RecallReportPacker::WorkerThread::run(): Received an unknown exception while reporting retrieve mount results.");
+    if (m_parent.m_watchdog) {
+      m_parent.m_watchdog->addToErrorCount("Error_reporting");
+      m_parent.m_watchdog->addParameter(cta::log::Param("status", "failure"));
+    }
   }
 
   // Drain the fifo in case we got an exception
   if (!endFound) {
-    while (1) {
+    while (true) {
       std::unique_ptr<Report> report(m_parent.m_fifo.pop());
       if (report->goingToEnd())
         break;
@@ -395,17 +420,17 @@ void RecallReportPacker::setTapeDone() {
   m_tapeThreadComplete = true;
 }
 
-void RecallReportPacker::setTapeComplete(){
+void RecallReportPacker::setTapeComplete() {
   cta::threading::MutexLocker mutexLocker(m_mutex);
   m_retrieveMount->tapeComplete();
 }
 
-void RecallReportPacker::setDiskComplete(){
+void RecallReportPacker::setDiskComplete() {
   cta::threading::MutexLocker mutexLocker(m_mutex);
   m_retrieveMount->diskComplete();
 }
 
-bool RecallReportPacker::isDiskDone(){
+bool RecallReportPacker::isDiskDone() {
   cta::threading::MutexLocker mutexLocker(m_mutex);
   return m_diskThreadComplete;
 }
@@ -425,4 +450,7 @@ bool RecallReportPacker::allThreadsDone() {
   return m_tapeThreadComplete && m_diskThreadComplete;
 }
 
-}}}}
+}
+}
+}
+}

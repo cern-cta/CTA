@@ -55,7 +55,9 @@
 #ifdef STDOUT_LOGGING
 #include "common/log/StdoutLogger.hpp"
 #else
+
 #include "common/log/DummyLogger.hpp"
+
 #endif
 
 #include <dirent.h>
@@ -83,12 +85,12 @@ namespace {
  * This structure is used to parameterize scheduler tests.
  */
 struct DataTransferSessionTestParam {
-  cta::SchedulerDatabaseFactory &dbFactory;
+  cta::SchedulerDatabaseFactory& dbFactory;
 
-  DataTransferSessionTestParam(
-    cta::SchedulerDatabaseFactory &dbFactory):
+  explicit DataTransferSessionTestParam(
+    cta::SchedulerDatabaseFactory& dbFactory) :
     dbFactory(dbFactory) {
- }
+  }
 }; // struct DataTransferSessionTest
 
 }
@@ -97,24 +99,24 @@ struct DataTransferSessionTestParam {
  * The data transfer test is a parameterized test.  It takes a pair of name server
  * and scheduler database factories as a parameter.
  */
-class DataTransferSessionTest: public ::testing::TestWithParam<DataTransferSessionTestParam> {
+class DataTransferSessionTest : public ::testing::TestWithParam<DataTransferSessionTestParam> {
 public:
 
-  DataTransferSessionTest():
-    m_dummyLog("dummy", "dummy"){
+  DataTransferSessionTest() :
+    m_dummyLog("dummy", "dummy") {
   }
 
 
-  class FailedToGetCatalogue: public std::exception {
+  class FailedToGetCatalogue : public std::exception {
   public:
-    const char *what() const throw() {
+    const char *what() const noexcept {
       return "Failed to get catalogue";
     }
   };
 
-  class FailedToGetScheduler: public std::exception {
+  class FailedToGetScheduler : public std::exception {
   public:
-    const char *what() const throw() {
+    const char *what() const noexcept {
       return "Failed to get scheduler";
     }
   };
@@ -128,10 +130,10 @@ public:
   };
 #endif
 
-    virtual void SetUp() {
+  void SetUp() override {
     using namespace cta;
 
-    const DataTransferSessionTestParam &param = GetParam();
+    const DataTransferSessionTestParam& param = GetParam();
     const uint64_t nbConns = 1;
     const uint64_t nbArchiveFileListingConns = 1;
 #ifdef USE_ORACLE_CATALOGUE
@@ -154,21 +156,21 @@ public:
     m_catalogue = cta::make_unique<catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns);
 #endif
     m_db = param.dbFactory.create(m_catalogue);
-    m_scheduler = cta::make_unique<Scheduler>(*m_catalogue, *m_db, 5, 2*1000*1000);
+    m_scheduler = cta::make_unique<Scheduler>(*m_catalogue, *m_db, 5, 2 * 1000 * 1000);
 
     strncpy(m_tmpDir, "/tmp/DataTransferSessionTestXXXXXX", sizeof(m_tmpDir));
-    if(!mkdtemp(m_tmpDir)) {
+    if (!mkdtemp(m_tmpDir)) {
       const std::string errMsg = cta::utils::errnoToString(errno);
       std::ostringstream msg;
       msg << "Failed to create directory with template"
-        " /tmp/DataTransferSessionTestXXXXXX: " << errMsg;
-      bzero(m_tmpDir, sizeof(m_tmpDir));
+             " /tmp/DataTransferSessionTestXXXXXX: " << errMsg;
+      memset(m_tmpDir, 0, sizeof(m_tmpDir));
       throw cta::exception::Exception(msg.str());
     }
 
     struct stat statBuf;
-    bzero(&statBuf, sizeof(statBuf));
-    if(stat(m_tmpDir, &statBuf)) {
+    memset(&statBuf, 0, sizeof(statBuf));
+    if (stat(m_tmpDir, &statBuf)) {
       const std::string errMsg = cta::utils::errnoToString(errno);
       std::ostringstream msg;
       msg << "Failed to stat directory " << m_tmpDir << ": " << errMsg;
@@ -180,18 +182,18 @@ public:
     system(cmd.str().c_str());
   }
 
-  virtual void TearDown() {
+  void TearDown() override {
     m_scheduler.reset();
     m_catalogue.reset();
     m_db.reset();
 
     // If Setup() created a temporary directory
-    if(m_tmpDir) {
+    if (m_tmpDir) {
 
       // Open the directory
       std::unique_ptr<DIR, std::function<int(DIR*)>>
         dir(opendir(m_tmpDir), closedir);
-      if(NULL == dir.get()) {
+      if (nullptr == dir) {
         const std::string errMsg = cta::utils::errnoToString(errno);
         std::ostringstream msg;
         msg << "Failed to open directory " << m_tmpDir << ": " << errMsg;
@@ -199,12 +201,12 @@ public:
       }
 
       // Delete each of the files within the directory
-      struct dirent *entry = NULL;
-      while((entry = readdir(dir.get()))) {
+      struct dirent *entry = nullptr;
+      while ((entry = readdir(dir.get()))) {
         const std::string entryName(entry->d_name);
-        if(entryName != "." && entryName != "..") {
+        if (entryName != "." && entryName != "..") {
           const std::string entryPath = std::string(m_tmpDir) + "/" + entryName;
-          if(unlink(entryPath.c_str())) {
+          if (unlink(entryPath.c_str())) {
             const std::string errMsg = cta::utils::errnoToString(errno);
             std::ostringstream msg;
             msg << "Failed to unlink " << entryPath;
@@ -214,7 +216,7 @@ public:
       }
 
       // Delete the now empty directory
-      if(rmdir(m_tmpDir)) {
+      if (rmdir(m_tmpDir)) {
         const std::string errMsg = cta::utils::errnoToString(errno);
         std::ostringstream msg;
         msg << "Failed to delete directory " << m_tmpDir << ": " << errMsg;
@@ -223,23 +225,23 @@ public:
     }
   }
 
-  cta::catalogue::Catalogue &getCatalogue() {
+  cta::catalogue::Catalogue& getCatalogue() {
     cta::catalogue::Catalogue *const ptr = m_catalogue.get();
-    if(NULL == ptr) {
+    if (nullptr == ptr) {
       throw FailedToGetCatalogue();
     }
     return *ptr;
   }
 
-  cta::Scheduler &getScheduler() {
+  cta::Scheduler& getScheduler() {
     cta::Scheduler *const ptr = m_scheduler.get();
-    if(NULL == ptr) {
+    if (nullptr == ptr) {
       throw FailedToGetScheduler();
     }
     return *ptr;
   }
 
-  cta::catalogue::CreateTapeAttributes getDefaultTape(){
+  cta::catalogue::CreateTapeAttributes getDefaultTape() {
     cta::catalogue::CreateTapeAttributes tape;
     tape.vid = s_vid;
     tape.mediaType = s_mediaType;
@@ -284,7 +286,7 @@ public:
     return vo;
   }
 
-  cta::common::dataStructures::TapeDrive getDefaultTapeDrive(const std::string &driveName) {
+  cta::common::dataStructures::TapeDrive getDefaultTapeDrive(const std::string& driveName) {
     cta::common::dataStructures::TapeDrive tapeDrive;
     tapeDrive.driveName = driveName;
     tapeDrive.host = "admin_host";
@@ -301,7 +303,7 @@ public:
 
   void setupDefaultCatalogue() {
     using namespace cta;
-    auto & catalogue=getCatalogue();
+    auto& catalogue = getCatalogue();
 
     auto mountPolicy = getDefaultMountPolicy();
 
@@ -344,7 +346,7 @@ public:
     ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
 
     cta::common::dataStructures::VirtualOrganization vo = getDefaultVirtualOrganization();
-    catalogue.createVirtualOrganization(s_adminOnAdminHost,vo);
+    catalogue.createVirtualOrganization(s_adminOnAdminHost, vo);
 
     common::dataStructures::StorageClass storageClass;
     storageClass.name = s_storageClassName;
@@ -359,11 +361,11 @@ public:
     const cta::optional<std::string> tapePoolSupply("value for the supply pool mechanism");
 
     ASSERT_NO_THROW(catalogue.createTapePool(s_adminOnAdminHost, s_tapePoolName, vo.name, nbPartialTapes, tapePoolEncryption,
-      tapePoolSupply, tapePoolComment));
+                                             tapePoolSupply, tapePoolComment));
     const uint32_t copyNb = 1;
     const std::string archiveRouteComment = "Archive-route comment";
     catalogue.createArchiveRoute(s_adminOnAdminHost, s_storageClassName, copyNb, s_tapePoolName,
-      archiveRouteComment);
+                                 archiveRouteComment);
 
     cta::catalogue::MediaType mediaType;
     mediaType.name = s_mediaType;
@@ -373,7 +375,7 @@ public:
     mediaType.maxLPos = 171097;
     mediaType.nbWraps = 112;
     mediaType.comment = "comment";
-    catalogue.createMediaType(s_adminOnAdminHost,mediaType);
+    catalogue.createMediaType(s_adminOnAdminHost, mediaType);
 
     const std::string driveName = "T10D6116";
     const auto tapeDrive = getDefaultTapeDrive(driveName);
@@ -385,18 +387,18 @@ public:
    * @param log the string containing the CTA logs
    * @return the map that gives for each RAO call, the associated ordered Fseqs according to the RAO algorithm result
    */
-  std::map<size_t, std::vector<std::string>> getRAOFseqs(const std::string & log){
-    std::map<size_t,std::vector<std::string>> ret;
+  std::map<size_t, std::vector<std::string>> getRAOFseqs(const std::string& log) {
+    std::map<size_t, std::vector<std::string>> ret;
     std::string logCopy = log;
     std::string recallRAOOrderMsg = "Recall order of FSEQs using RAO: ";
     size_t recallRAOOrderMsgSize = recallRAOOrderMsg.size();
     size_t posRAOMsg = logCopy.find(recallRAOOrderMsg);
     size_t i = 0;
-    while(posRAOMsg != std::string::npos){
+    while (posRAOMsg != std::string::npos) {
       size_t posFirstFseq = posRAOMsg + recallRAOOrderMsgSize;
-      size_t posLastFseq = logCopy.find("\"",posFirstFseq);
-      std::string stringFseq = logCopy.substr(posFirstFseq,posLastFseq - posFirstFseq);
-      cta::utils::splitString(stringFseq,' ',ret[i]);
+      size_t posLastFseq = logCopy.find('\"', posFirstFseq);
+      std::string stringFseq = logCopy.substr(posFirstFseq, posLastFseq - posFirstFseq);
+      cta::utils::splitString(stringFseq, ' ', ret[i]);
       logCopy = logCopy.substr(posLastFseq);
       posRAOMsg = logCopy.find(recallRAOOrderMsg);
       i++;
@@ -407,27 +409,27 @@ public:
 private:
 
   // Prevent copying
-  DataTransferSessionTest(const DataTransferSessionTest &) = delete;
+  DataTransferSessionTest(const DataTransferSessionTest&) = delete;
 
   // Prevent assignment
-  DataTransferSessionTest & operator= (const DataTransferSessionTest &) = delete;
+  DataTransferSessionTest& operator=(const DataTransferSessionTest&) = delete;
 
   std::unique_ptr<cta::SchedulerDatabase> m_db;
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::unique_ptr<cta::Scheduler> m_scheduler;
 
 protected:
-  #ifdef STDOUT_LOGGING
+#ifdef STDOUT_LOGGING
   cta::log::StdoutLogger m_dummyLog;
-  #else
+#else
   cta::log::DummyLogger m_dummyLog;
-  #endif
+#endif
 
   // Default parameters for storage classes, etc...
   const std::string s_userName = "user_name";
   const std::string s_diskInstance = "disk_instance";
   const std::string s_storageClassName = "TestStorageClass";
-  const cta::common::dataStructures::SecurityIdentity s_adminOnAdminHost = { "admin1", "host1" };
+  const cta::common::dataStructures::SecurityIdentity s_adminOnAdminHost = {"admin1", "host1"};
   const std::string s_tapePoolName = "TestTapePool";
   const std::string s_libraryName = "TestLogicalLibrary";
   const std::string s_vid = "TstVid"; // We really need size <= 6 characters due to tape label format.
@@ -447,7 +449,7 @@ protected:
 
 TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest",cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -466,8 +468,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive;
 
   // 4) Create the scheduler
-  auto & catalogue = getCatalogue();
-  auto & scheduler = getScheduler();
+  auto& catalogue = getCatalogue();
+  auto& scheduler = getScheduler();
 
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester;
@@ -477,10 +479,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   std::list<std::string> remoteFilePaths;
 
   // 5) Create the environment for the migration to happen (library + tape)
-    const std::string libraryComment = "Library comment";
+  const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+                                 libraryIsDisabled, libraryComment);
   {
     auto libraries = catalogue.getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -497,20 +499,20 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   {
     // Label the tape
     castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-        s_vid, false);
+                                            s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
-    volInfo.vid=s_vid;
+    volInfo.vid = s_vid;
     castor::tape::tapeFile::WriteSession ws(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-       volInfo , 0, true, false);
+                                            volInfo, 0, true, false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
     uint8_t data[1000];
-    size_t archiveFileSize=sizeof(data);
+    size_t archiveFileSize = sizeof(data);
     castor::tape::SCSI::Structures::zeroStruct(&data);
-    for (int fseq=1; fseq <= 10 ; fseq ++) {
+    for (int fseq = 1; fseq <= 10; fseq++) {
       // Create a path to a remote destination file
       std::ostringstream remoteFilePath;
       remoteFilePath << "file://" << m_tmpDir << "/test" << fseq;
@@ -518,7 +520,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
 
       // Create an archive file entry in the archive namespace
       auto tapeFileWrittenUP = cta::make_unique<cta::catalogue::TapeFileWritten>();
-      auto &tapeFileWritten=*tapeFileWrittenUP;
+      auto& tapeFileWritten = *tapeFileWrittenUP;
       std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
       tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
 
@@ -535,12 +537,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
       wf.close();
 
       // Create file entry in the archive namespace
-      tapeFileWritten.archiveFileId=fseq;
+      tapeFileWritten.archiveFileId = fseq;
       tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::utils::getAdler32(data, archiveFileSize));
-      tapeFileWritten.vid=volInfo.vid;
-      tapeFileWritten.size=archiveFileSize;
-      tapeFileWritten.fSeq=fseq;
-      tapeFileWritten.copyNb=1;
+      tapeFileWritten.vid = volInfo.vid;
+      tapeFileWritten.size = archiveFileSize;
+      tapeFileWritten.fSeq = fseq;
+      tapeFileWritten.copyNb = 1;
       tapeFileWritten.diskInstance = s_diskInstance;
       tapeFileWritten.diskFileId = fseq;
 
@@ -551,9 +553,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
       catalogue.filesWrittenToTape(tapeFileWrittenSet);
 
       // Schedule the retrieval of the file
-      std::string diskInstance="disk_instance";
+      std::string diskInstance = "disk_instance";
       cta::common::dataStructures::RetrieveRequest rReq;
-      rReq.archiveFileID=fseq;
+      rReq.archiveFileID = fseq;
       rReq.requester.name = s_userName;
       rReq.requester.group = "someGroup";
       rReq.dstURL = remoteFilePaths.back();
@@ -568,9 +570,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   // 6) Report the drive's existence and put it up in the drive register.
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName=driveConfig.unitName;
-  driveInfo.logicalLibrary=driveConfig.logicalLibrary;
-  driveInfo.host="host";
+  driveInfo.driveName = driveConfig.unitName;
+  driveInfo.logicalLibrary = driveConfig.logicalLibrary;
+  driveInfo.host = "host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
@@ -580,9 +582,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
 
   // 7) Create the data transfer session
   DataTransferConfig castorConf;
-  castorConf.bufsz = 1024*1024; // 1 MB memory buffers
+  castorConf.bufsz = 1024 * 1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
   castorConf.bulkRequestRecallMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
   castorConf.tapeLoadTimeout = 300;
@@ -592,8 +594,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
-    driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
-
+                                                             driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
   // 8) Run the data transfer session
   sess.execute();
 
@@ -601,9 +602,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   ASSERT_EQ(s_vid, sess.getVid());
 
   // 10) Check the remote files exist and have the correct size
-  for(auto & path: remoteFilePaths) {
+  for (const auto& path: remoteFilePaths) {
     struct stat statBuf;
-    bzero(&statBuf, sizeof(statBuf));
+    memset(&statBuf, 0, sizeof(statBuf));
     const int statRc = stat(path.substr(7).c_str(), &statBuf); //remove the "file://" for stat-ing
     ASSERT_EQ(0, statRc);
     ASSERT_EQ(1000, statBuf.st_size); //same size of data
@@ -612,10 +613,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   // 10) Check logs
   std::string logToCheck = logger.getLog();
   logToCheck += "";
-  ASSERT_NE(std::string::npos,logToCheck.find("MSG=\"Tape session started\" thread=\"TapeRead\" tapeDrive=\"T10D6116\" tapeVid=\"TstVid\" "
-                                              "mountId=\"1\" vo=\"vo\" mediaType=\"LTO7M\" tapePool=\"TestTapePool\" "
-                                              "logicalLibrary=\"TestLogicalLibrary\" mountType=\"Retrieve\" vendor=\"TestVendor\" "
-                                              "capacityInBytes=\"12345678\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("MSG=\"Tape session started for read\" thread=\"TapeRead\" tapeDrive=\"T10D6116\" tapeVid=\"TstVid\" "
+                                               "mountId=\"1\" vo=\"vo\" mediaType=\"LTO7M\" tapePool=\"TestTapePool\" "
+                                               "logicalLibrary=\"TestLogicalLibrary\" mountType=\"Retrieve\" vendor=\"TestVendor\" "
+                                               "capacityInBytes=\"12345678\""));
   ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
                                                "mountTotalCorrectedReadErrors=\"5\" mountTotalReadBytesProcessed=\"4096\" "
                                                "mountTotalUncorrectedReadErrors=\"1\" mountTotalNonMediumErrorCounts=\"2\""));
@@ -808,7 +809,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   // 10) Check logs
   std::string logToCheck = logger.getLog();
   logToCheck += "";
-  ASSERT_NE(std::string::npos,logToCheck.find("MSG=\"Tape session started\" thread=\"TapeRead\" tapeDrive=\"T10D6116\" tapeVid=\"TstVid\" "
+  ASSERT_NE(std::string::npos,logToCheck.find("MSG=\"Tape session started for read\" thread=\"TapeRead\" tapeDrive=\"T10D6116\" tapeVid=\"TstVid\" "
                                               "mountId=\"1\" vo=\"vo\" mediaType=\"LTO7M\" tapePool=\"TestTapePool\" "
                                               "logicalLibrary=\"TestLogicalLibrary\" mountType=\"Retrieve\" vendor=\"TestVendor\" "
                                               "capacityInBytes=\"12345678\""));
@@ -828,7 +829,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   // to recall the first file and cancel the second.
 
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy","tapeServerUnitTest",cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -847,8 +848,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive;
 
   // 4) Create the scheduler
-  auto & catalogue = getCatalogue();
-  auto & scheduler = getScheduler();
+  auto& catalogue = getCatalogue();
+  auto& scheduler = getScheduler();
 
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester;
@@ -858,10 +859,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   std::list<std::string> remoteFilePaths;
 
   // 5) Create the environment for the migration to happen (library + tape)
-    const std::string libraryComment = "Library comment";
+  const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+                                 libraryIsDisabled, libraryComment);
   {
     auto libraries = catalogue.getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -878,19 +879,19 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   {
     // Label the tape
     castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-        s_vid, false);
+                                            s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
-    volInfo.vid=s_vid;
+    volInfo.vid = s_vid;
     castor::tape::tapeFile::WriteSession ws(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-       volInfo , 0, true, false);
+                                            volInfo, 0, true, false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
     uint8_t data[1000];
     castor::tape::SCSI::Structures::zeroStruct(&data);
-    int fseq=1;
+    int fseq = 1;
     {
       // Create a path to a remote destination file
       std::ostringstream remoteFilePath;
@@ -913,16 +914,16 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
       {
         // Create a fictious file record on the tape to allow adding one to fseq=2 afterwards.
         auto tapeFileWrittenUP = cta::make_unique<cta::catalogue::TapeFileWritten>();
-        auto &tapeFileWritten=*tapeFileWrittenUP;
+        auto& tapeFileWritten = *tapeFileWrittenUP;
         std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
         tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
-        tapeFileWritten.archiveFileId=666;
+        tapeFileWritten.archiveFileId = 666;
         tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::checksum::ChecksumBlob::HexToByteArray("0xDEADBEEF"));
-        tapeFileWritten.vid=volInfo.vid;
-        tapeFileWritten.size=archiveFileSize;
-        tapeFileWritten.fSeq=fseq;
-        tapeFileWritten.blockId=0;
-        tapeFileWritten.copyNb=1;
+        tapeFileWritten.vid = volInfo.vid;
+        tapeFileWritten.size = archiveFileSize;
+        tapeFileWritten.fSeq = fseq;
+        tapeFileWritten.blockId = 0;
+        tapeFileWritten.copyNb = 1;
         tapeFileWritten.diskInstance = s_diskInstance;
         tapeFileWritten.diskFileId = std::to_string(fseq);
         tapeFileWritten.diskFileOwnerUid = DISK_FILE_SOME_USER;
@@ -935,16 +936,16 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
       {
         // Create an archive file entry in the archive catalogue
         auto tapeFileWrittenUP = cta::make_unique<cta::catalogue::TapeFileWritten>();
-        auto &tapeFileWritten=*tapeFileWrittenUP;
+        auto& tapeFileWritten = *tapeFileWrittenUP;
         std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
         tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
-        tapeFileWritten.archiveFileId=1000 + fseq;
+        tapeFileWritten.archiveFileId = 1000 + fseq;
         tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::utils::getAdler32(data, archiveFileSize));
-        tapeFileWritten.vid=volInfo.vid;
-        tapeFileWritten.size=archiveFileSize;
-        tapeFileWritten.fSeq=fseq + 1;
-        tapeFileWritten.blockId=wf.getBlockId() + 10000;
-        tapeFileWritten.copyNb=1;
+        tapeFileWritten.vid = volInfo.vid;
+        tapeFileWritten.size = archiveFileSize;
+        tapeFileWritten.fSeq = fseq + 1;
+        tapeFileWritten.blockId = wf.getBlockId() + 10000;
+        tapeFileWritten.copyNb = 1;
         tapeFileWritten.diskInstance = s_diskInstance;
         tapeFileWritten.diskFileId = std::to_string(fseq + 1);
 
@@ -956,9 +957,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
       }
 
       // Schedule the retrieval of the file
-      std::string diskInstance="disk_instance";
+      std::string diskInstance = "disk_instance";
       cta::common::dataStructures::RetrieveRequest rReq;
-      rReq.archiveFileID=1000 + fseq;
+      rReq.archiveFileID = 1000 + fseq;
       rReq.requester.name = s_userName;
       rReq.requester.group = "someGroup";
       rReq.dstURL = remoteFilePaths.back();
@@ -971,9 +972,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   // 6) Report the drive's existence and put it up in the drive register.
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName=driveConfig.unitName;
-  driveInfo.logicalLibrary=driveConfig.logicalLibrary;
-  driveInfo.host="host";
+  driveInfo.driveName = driveConfig.unitName;
+  driveInfo.logicalLibrary = driveConfig.logicalLibrary;
+  driveInfo.host = "host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
@@ -983,9 +984,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
 
   // 7) Create the data transfer session
   DataTransferConfig castorConf;
-  castorConf.bufsz = 1024*1024; // 1 MB memory buffers
+  castorConf.bufsz = 1024 * 1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
   castorConf.bulkRequestRecallMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
   castorConf.tapeLoadTimeout = 300;
@@ -995,7 +996,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys,
-    driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+                           driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1022,7 +1023,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
 
 TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy","tapeServerUnitTest",cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -1041,8 +1042,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive;
 
   // 4) Create the scheduler
-  auto & catalogue = getCatalogue();
-  auto & scheduler = getScheduler();
+  auto& catalogue = getCatalogue();
+  auto& scheduler = getScheduler();
 
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester;
@@ -1052,10 +1053,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   std::list<std::string> remoteFilePaths;
 
   // 5) Create the environment for the migration to happen (library + tape)
-    const std::string libraryComment = "Library comment";
+  const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+                                 libraryIsDisabled, libraryComment);
   {
     auto libraries = catalogue.getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -1070,27 +1071,27 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
 
   int MAX_RECALLS = 50;
   int MAX_BULK_RECALLS = 31;
-  std::map<size_t,std::vector<std::string>> expectedRAOFseqOrder;
+  std::map<size_t, std::vector<std::string>> expectedRAOFseqOrder;
   //RAO for the fake drive is a std::reverse
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
     castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-        s_vid, false);
+                                            s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
-    volInfo.vid=s_vid;
+    volInfo.vid = s_vid;
     castor::tape::tapeFile::WriteSession ws(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-       volInfo , 0, true, false);
+                                            volInfo, 0, true, false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
     uint8_t data[1000];
-    size_t archiveFileSize=sizeof(data);
+    size_t archiveFileSize = sizeof(data);
     castor::tape::SCSI::Structures::zeroStruct(&data);
     int fseq;
-    for (fseq=1; fseq <= MAX_RECALLS ; fseq ++) {
+    for (fseq = 1; fseq <= MAX_RECALLS; fseq++) {
       expectedRAOFseqOrder[fseq / MAX_BULK_RECALLS].push_back(std::to_string(fseq));
       // Create a path to a remote destination file
       std::ostringstream remoteFilePath;
@@ -1099,7 +1100,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
 
       // Create an archive file entry in the archive namespace
       auto tapeFileWrittenUP = cta::make_unique<cta::catalogue::TapeFileWritten>();
-      auto &tapeFileWritten=*tapeFileWrittenUP;
+      auto& tapeFileWritten = *tapeFileWrittenUP;
       std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
       tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
 
@@ -1116,12 +1117,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
       wf.close();
 
       // Create file entry in the archive namespace
-      tapeFileWritten.archiveFileId=fseq;
+      tapeFileWritten.archiveFileId = fseq;
       tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::utils::getAdler32(data, archiveFileSize));
-      tapeFileWritten.vid=volInfo.vid;
-      tapeFileWritten.size=archiveFileSize;
-      tapeFileWritten.fSeq=fseq;
-      tapeFileWritten.copyNb=1;
+      tapeFileWritten.vid = volInfo.vid;
+      tapeFileWritten.size = archiveFileSize;
+      tapeFileWritten.fSeq = fseq;
+      tapeFileWritten.copyNb = 1;
       tapeFileWritten.diskInstance = s_diskInstance;
       tapeFileWritten.diskFileId = fseq;
 
@@ -1132,9 +1133,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
       catalogue.filesWrittenToTape(tapeFileWrittenSet);
 
       // Schedule the retrieval of the file
-      std::string diskInstance="disk_instance";
+      std::string diskInstance = "disk_instance";
       cta::common::dataStructures::RetrieveRequest rReq;
-      rReq.archiveFileID=fseq;
+      rReq.archiveFileID = fseq;
       rReq.requester.name = s_userName;
       rReq.requester.group = "someGroup";
       rReq.dstURL = remoteFilePaths.back();
@@ -1146,16 +1147,16 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   }
   //As RAO with the fakedrive is a std::reverse of the vector of the files given in parameter,
   //we reverse all expected fseqs vectors
-  std::reverse(expectedRAOFseqOrder[0].begin(),expectedRAOFseqOrder[0].end());
-  std::reverse(expectedRAOFseqOrder[1].begin(),expectedRAOFseqOrder[1].end());
+  std::reverse(expectedRAOFseqOrder[0].begin(), expectedRAOFseqOrder[0].end());
+  std::reverse(expectedRAOFseqOrder[1].begin(), expectedRAOFseqOrder[1].end());
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // 6) Report the drive's existence and put it up in the drive register.
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName=driveConfig.unitName;
-  driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
-  driveInfo.host="host";
+  driveInfo.driveName = driveConfig.unitName;
+  driveInfo.logicalLibrary = driveConfig.rawLibrarySlot;
+  driveInfo.host = "host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
@@ -1165,9 +1166,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
 
   // 7) Create the data transfer session
   DataTransferConfig castorConf;
-  castorConf.bufsz = 1024*1024; // 1 MB memory buffers
+  castorConf.bufsz = 1024 * 1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
   castorConf.bulkRequestRecallMaxFiles = MAX_BULK_RECALLS - 1;
   castorConf.nbDiskThreads = 1;
   castorConf.useRAO = true;
@@ -1178,7 +1179,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
-    driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+                                                             driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1187,9 +1188,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   ASSERT_EQ(s_vid, sess.getVid());
 
   // 10) Check the remote files exist and have the correct size
-  for(auto & path: remoteFilePaths) {
+  for (const auto& path: remoteFilePaths) {
     struct stat statBuf;
-    bzero(&statBuf, sizeof(statBuf));
+    memset(&statBuf, 0, sizeof(statBuf));
     const int statRc = stat(path.substr(7).c_str(), &statBuf); //remove the "file://" for stat-ing
     ASSERT_EQ(0, statRc);
     ASSERT_EQ(1000, statBuf.st_size); //same size of data
@@ -1207,12 +1208,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
                                                "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
                                                "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
 
-  ASSERT_EQ(expectedRAOFseqOrder,getRAOFseqs(logToCheck));
+  ASSERT_EQ(expectedRAOFseqOrder, getRAOFseqs(logToCheck));
 }
 
 TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy","tapeServerUnitTest",cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -1231,8 +1232,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeNonRAODrive;
 
   // 4) Create the scheduler
-  auto & catalogue = getCatalogue();
-  auto & scheduler = getScheduler();
+  auto& catalogue = getCatalogue();
+  auto& scheduler = getScheduler();
 
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester;
@@ -1242,10 +1243,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   std::list<std::string> remoteFilePaths;
 
   // 5) Create the environment for the migration to happen (library + tape)
-    const std::string libraryComment = "Library comment";
+  const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+                                 libraryIsDisabled, libraryComment);
   {
     auto libraries = catalogue.getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -1260,28 +1261,28 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
 
   int MAX_RECALLS = 50;
   int MAX_BULK_RECALLS = 31;
-  std::map<size_t,std::vector<std::string>> expectedRAOOrder;
+  std::map<size_t, std::vector<std::string>> expectedRAOOrder;
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
     castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-        s_vid, false);
+                                            s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
-    volInfo.vid=s_vid;
+    volInfo.vid = s_vid;
     castor::tape::tapeFile::WriteSession ws(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-       volInfo , 0, true, false);
+                                            volInfo, 0, true, false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
     uint8_t data[1000];
-    size_t archiveFileSize=sizeof(data);
+    size_t archiveFileSize = sizeof(data);
     castor::tape::SCSI::Structures::zeroStruct(&data);
     int fseq;
     //For the RAO orders we will have two rao calls : first with 30 files,
     //the second with 20 files
-    for (fseq=1; fseq <= MAX_RECALLS ; fseq ++) {
+    for (fseq = 1; fseq <= MAX_RECALLS; fseq++) {
       expectedRAOOrder[fseq / MAX_BULK_RECALLS].push_back(std::to_string(fseq));
       // Create a path to a remote destination file
       std::ostringstream remoteFilePath;
@@ -1290,7 +1291,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
 
       // Create an archive file entry in the archive namespace
       auto tapeFileWrittenUP = cta::make_unique<cta::catalogue::TapeFileWritten>();
-      auto &tapeFileWritten=*tapeFileWrittenUP;
+      auto& tapeFileWritten = *tapeFileWrittenUP;
       std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
       tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
 
@@ -1307,12 +1308,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
       wf.close();
 
       // Create file entry in the archive namespace
-      tapeFileWritten.archiveFileId=fseq;
+      tapeFileWritten.archiveFileId = fseq;
       tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::utils::getAdler32(data, archiveFileSize));
-      tapeFileWritten.vid=volInfo.vid;
-      tapeFileWritten.size=archiveFileSize;
-      tapeFileWritten.fSeq=fseq;
-      tapeFileWritten.copyNb=1;
+      tapeFileWritten.vid = volInfo.vid;
+      tapeFileWritten.size = archiveFileSize;
+      tapeFileWritten.fSeq = fseq;
+      tapeFileWritten.copyNb = 1;
       tapeFileWritten.diskInstance = s_diskInstance;
       tapeFileWritten.diskFileId = fseq;
 
@@ -1323,9 +1324,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
       catalogue.filesWrittenToTape(tapeFileWrittenSet);
 
       // Schedule the retrieval of the file
-      std::string diskInstance="disk_instance";
+      std::string diskInstance = "disk_instance";
       cta::common::dataStructures::RetrieveRequest rReq;
-      rReq.archiveFileID=fseq;
+      rReq.archiveFileID = fseq;
       rReq.requester.name = s_userName;
       rReq.requester.group = "someGroup";
       rReq.dstURL = remoteFilePaths.back();
@@ -1339,9 +1340,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   // 6) Report the drive's existence and put it up in the drive register.
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName=driveConfig.unitName;
-  driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
-  driveInfo.host="host";
+  driveInfo.driveName = driveConfig.unitName;
+  driveInfo.logicalLibrary = driveConfig.rawLibrarySlot;
+  driveInfo.host = "host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
@@ -1351,9 +1352,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
 
   // 7) Create the data transfer session
   DataTransferConfig castorConf;
-  castorConf.bufsz = 1024*1024; // 1 MB memory buffers
+  castorConf.bufsz = 1024 * 1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
   castorConf.bulkRequestRecallMaxFiles = MAX_BULK_RECALLS - 1;
   castorConf.nbDiskThreads = 1;
   castorConf.useRAO = true;
@@ -1365,7 +1366,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
-    driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+                                                             driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1374,9 +1375,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   ASSERT_EQ(s_vid, sess.getVid());
 
   // 10) Check the remote files exist and have the correct size
-  for(auto & path: remoteFilePaths) {
+  for (const auto& path: remoteFilePaths) {
     struct stat statBuf;
-    bzero(&statBuf, sizeof(statBuf));
+    memset(&statBuf, 0, sizeof(statBuf));
     const int statRc = stat(path.substr(7).c_str(), &statBuf); //remove the "file://" for stat-ing
     ASSERT_EQ(0, statRc);
     ASSERT_EQ(1000, statBuf.st_size); //same size of data
@@ -1394,12 +1395,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
                                                "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
                                                "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
 
-  ASSERT_EQ(expectedRAOOrder,getRAOFseqs(logToCheck));
+  ASSERT_EQ(expectedRAOOrder, getRAOFseqs(logToCheck));
 }
 
 TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistShouldApplyLinear) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy","tapeServerUnitTest",cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -1418,8 +1419,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeNonRAODrive;
 
   // 4) Create the scheduler
-  auto & catalogue = getCatalogue();
-  auto & scheduler = getScheduler();
+  auto& catalogue = getCatalogue();
+  auto& scheduler = getScheduler();
 
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester;
@@ -1429,10 +1430,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   std::list<std::string> remoteFilePaths;
 
   // 5) Create the environment for the migration to happen (library + tape)
-    const std::string libraryComment = "Library comment";
+  const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+                                 libraryIsDisabled, libraryComment);
   {
     auto libraries = catalogue.getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -1447,28 +1448,28 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
 
   int MAX_RECALLS = 50;
   int MAX_BULK_RECALLS = 31;
-  std::map<size_t,std::vector<std::string>> expectedRAOOrder;
+  std::map<size_t, std::vector<std::string>> expectedRAOOrder;
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
     castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-        s_vid, false);
+                                            s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
-    volInfo.vid=s_vid;
+    volInfo.vid = s_vid;
     castor::tape::tapeFile::WriteSession ws(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-       volInfo , 0, true, false);
+                                            volInfo, 0, true, false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
     uint8_t data[1000];
-    size_t archiveFileSize=sizeof(data);
+    size_t archiveFileSize = sizeof(data);
     castor::tape::SCSI::Structures::zeroStruct(&data);
     int fseq;
     //For the RAO orders we will have two rao calls : first with 30 files,
     //the second with 20 files
-    for (fseq=1; fseq <= MAX_RECALLS ; fseq ++) {
+    for (fseq = 1; fseq <= MAX_RECALLS; fseq++) {
       expectedRAOOrder[fseq / MAX_BULK_RECALLS].push_back(std::to_string(fseq));
       // Create a path to a remote destination file
       std::ostringstream remoteFilePath;
@@ -1477,7 +1478,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
 
       // Create an archive file entry in the archive namespace
       auto tapeFileWrittenUP = cta::make_unique<cta::catalogue::TapeFileWritten>();
-      auto &tapeFileWritten=*tapeFileWrittenUP;
+      auto& tapeFileWritten = *tapeFileWrittenUP;
       std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
       tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
 
@@ -1494,12 +1495,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
       wf.close();
 
       // Create file entry in the archive namespace
-      tapeFileWritten.archiveFileId=fseq;
+      tapeFileWritten.archiveFileId = fseq;
       tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::utils::getAdler32(data, archiveFileSize));
-      tapeFileWritten.vid=volInfo.vid;
-      tapeFileWritten.size=archiveFileSize;
-      tapeFileWritten.fSeq=fseq;
-      tapeFileWritten.copyNb=1;
+      tapeFileWritten.vid = volInfo.vid;
+      tapeFileWritten.size = archiveFileSize;
+      tapeFileWritten.fSeq = fseq;
+      tapeFileWritten.copyNb = 1;
       tapeFileWritten.diskInstance = s_diskInstance;
       tapeFileWritten.diskFileId = fseq;
 
@@ -1510,9 +1511,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
       catalogue.filesWrittenToTape(tapeFileWrittenSet);
 
       // Schedule the retrieval of the file
-      std::string diskInstance="disk_instance";
+      std::string diskInstance = "disk_instance";
       cta::common::dataStructures::RetrieveRequest rReq;
-      rReq.archiveFileID=fseq;
+      rReq.archiveFileID = fseq;
       rReq.requester.name = s_userName;
       rReq.requester.group = "someGroup";
       rReq.dstURL = remoteFilePaths.back();
@@ -1526,9 +1527,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   // 6) Report the drive's existence and put it up in the drive register.
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName=driveConfig.unitName;
-  driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
-  driveInfo.host="host";
+  driveInfo.driveName = driveConfig.unitName;
+  driveInfo.logicalLibrary = driveConfig.rawLibrarySlot;
+  driveInfo.host = "host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
@@ -1538,9 +1539,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
 
   // 7) Create the data transfer session
   DataTransferConfig castorConf;
-  castorConf.bufsz = 1024*1024; // 1 MB memory buffers
+  castorConf.bufsz = 1024 * 1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
   castorConf.bulkRequestRecallMaxFiles = MAX_BULK_RECALLS - 1;
   castorConf.nbDiskThreads = 1;
   castorConf.useRAO = true;
@@ -1553,7 +1554,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
-    driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+                                                             driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1562,9 +1563,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   ASSERT_EQ(s_vid, sess.getVid());
 
   // 10) Check the remote files exist and have the correct size
-  for(auto & path: remoteFilePaths) {
+  for (const auto& path: remoteFilePaths) {
     struct stat statBuf;
-    bzero(&statBuf, sizeof(statBuf));
+    memset(&statBuf, 0, sizeof(statBuf));
     const int statRc = stat(path.substr(7).c_str(), &statBuf); //remove the "file://" for stat-ing
     ASSERT_EQ(0, statRc);
     ASSERT_EQ(1000, statBuf.st_size); //same size of data
@@ -1582,14 +1583,15 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
                                                "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
                                                "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
 
-  ASSERT_NE(std::string::npos, logToCheck.find("In RAOAlgorithmFactoryFactory::createAlgorithmFactory(), unable to determine the RAO algorithm to use"));
+  ASSERT_NE(std::string::npos,
+            logToCheck.find("In RAOAlgorithmFactoryFactory::createAlgorithmFactory(), unable to determine the RAO algorithm to use"));
 
-  ASSERT_EQ(expectedRAOOrder,getRAOFseqs(logToCheck));
+  ASSERT_EQ(expectedRAOOrder, getRAOFseqs(logToCheck));
 }
 
 TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy","tapeServerUnitTest",cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -1608,8 +1610,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeNonRAODrive;
 
   // 4) Create the scheduler
-  auto & catalogue = getCatalogue();
-  auto & scheduler = getScheduler();
+  auto& catalogue = getCatalogue();
+  auto& scheduler = getScheduler();
 
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester;
@@ -1619,10 +1621,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   std::list<std::string> remoteFilePaths;
 
   // 5) Create the environment for the migration to happen (library + tape)
-    const std::string libraryComment = "Library comment";
+  const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+                                 libraryIsDisabled, libraryComment);
   {
     auto libraries = catalogue.getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -1637,28 +1639,28 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
 
   int MAX_RECALLS = 30;
   int MAX_BULK_RECALLS = 20;
-  std::map<size_t,std::vector<std::string>> expectedRAOOrder;
+  std::map<size_t, std::vector<std::string>> expectedRAOOrder;
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
     castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-        s_vid, false);
+                                            s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
-    volInfo.vid=s_vid;
+    volInfo.vid = s_vid;
     castor::tape::tapeFile::WriteSession ws(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-       volInfo , 0, true, false);
+                                            volInfo, 0, true, false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
     uint8_t data[1000];
-    size_t archiveFileSize=sizeof(data);
+    size_t archiveFileSize = sizeof(data);
     castor::tape::SCSI::Structures::zeroStruct(&data);
     int fseq;
     //For the RAO orders we will have two rao calls : first with 30 files,
     //the second with 20 files
-    for (fseq=1; fseq <= MAX_RECALLS ; fseq ++) {
+    for (fseq = 1; fseq <= MAX_RECALLS; fseq++) {
       expectedRAOOrder[fseq / MAX_BULK_RECALLS].push_back(std::to_string(fseq));
       // Create a path to a remote destination file
       std::ostringstream remoteFilePath;
@@ -1667,7 +1669,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
 
       // Create an archive file entry in the archive namespace
       auto tapeFileWrittenUP = cta::make_unique<cta::catalogue::TapeFileWritten>();
-      auto &tapeFileWritten=*tapeFileWrittenUP;
+      auto& tapeFileWritten = *tapeFileWrittenUP;
       std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
       tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
 
@@ -1684,12 +1686,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
       wf.close();
 
       // Create file entry in the archive namespace
-      tapeFileWritten.archiveFileId=fseq;
+      tapeFileWritten.archiveFileId = fseq;
       tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::utils::getAdler32(data, archiveFileSize));
-      tapeFileWritten.vid=volInfo.vid;
-      tapeFileWritten.size=archiveFileSize;
-      tapeFileWritten.fSeq=fseq;
-      tapeFileWritten.copyNb=1;
+      tapeFileWritten.vid = volInfo.vid;
+      tapeFileWritten.size = archiveFileSize;
+      tapeFileWritten.fSeq = fseq;
+      tapeFileWritten.copyNb = 1;
       tapeFileWritten.diskInstance = s_diskInstance;
       tapeFileWritten.diskFileId = fseq;
 
@@ -1700,9 +1702,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
       catalogue.filesWrittenToTape(tapeFileWrittenSet);
 
       // Schedule the retrieval of the file
-      std::string diskInstance="disk_instance";
+      std::string diskInstance = "disk_instance";
       cta::common::dataStructures::RetrieveRequest rReq;
-      rReq.archiveFileID=fseq;
+      rReq.archiveFileID = fseq;
       rReq.requester.name = s_userName;
       rReq.requester.group = "someGroup";
       rReq.dstURL = remoteFilePaths.back();
@@ -1716,9 +1718,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   // 6) Report the drive's existence and put it up in the drive register.
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName=driveConfig.unitName;
-  driveInfo.logicalLibrary=driveConfig.rawLibrarySlot;
-  driveInfo.host="host";
+  driveInfo.driveName = driveConfig.unitName;
+  driveInfo.logicalLibrary = driveConfig.rawLibrarySlot;
+  driveInfo.host = "host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
@@ -1728,9 +1730,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
 
   // 7) Create the data transfer session
   DataTransferConfig castorConf;
-  castorConf.bufsz = 1024*1024; // 1 MB memory buffers
+  castorConf.bufsz = 1024 * 1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
   castorConf.bulkRequestRecallMaxFiles = MAX_BULK_RECALLS - 1;
   castorConf.nbDiskThreads = 1;
   castorConf.useRAO = true;
@@ -1743,7 +1745,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
-    driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+                                                             driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1752,9 +1754,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   ASSERT_EQ(s_vid, sess.getVid());
 
   // 10) Check the remote files exist and have the correct size
-  for(auto & path: remoteFilePaths) {
+  for (const auto& path: remoteFilePaths) {
     struct stat statBuf;
-    bzero(&statBuf, sizeof(statBuf));
+    memset(&statBuf, 0, sizeof(statBuf));
     const int statRc = stat(path.substr(7).c_str(), &statBuf); //remove the "file://" for stat-ing
     ASSERT_EQ(0, statRc);
     ASSERT_EQ(1000, statBuf.st_size); //same size of data
@@ -1775,13 +1777,13 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   ASSERT_NE(std::string::npos, logToCheck.find("In RAOManager::queryRAO(), successfully performed RAO."));
   ASSERT_NE(std::string::npos, logToCheck.find("executedRAOAlgorithm=\"sltf\""));
 
-  ASSERT_EQ(expectedRAOOrder,getRAOFseqs(logToCheck));
+  ASSERT_EQ(expectedRAOOrder, getRAOFseqs(logToCheck));
 }
 
 TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
 
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy","tapeServerUnitTest",cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -1800,8 +1802,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive;
 
   // 4) Create the scheduler
-  auto & catalogue = getCatalogue();
-  auto & scheduler = getScheduler();
+  auto& catalogue = getCatalogue();
+  auto& scheduler = getScheduler();
 
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester;
@@ -1811,10 +1813,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   std::list<std::string> remoteFilePaths;
 
   // 5) Create the environment for the migration to happen (library + tape)
-    const std::string libraryComment = "Library comment";
+  const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+                                 libraryIsDisabled, libraryComment);
   {
     auto libraries = catalogue.getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -1831,20 +1833,20 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   {
     // Label the tape
     castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-        s_vid, false);
+                                            s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
-    volInfo.vid=s_vid;
+    volInfo.vid = s_vid;
     castor::tape::tapeFile::WriteSession ws(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-       volInfo , 0, true, false);
+                                            volInfo, 0, true, false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
     uint8_t data[1000];
-    size_t archiveFileSize=sizeof(data);
+    size_t archiveFileSize = sizeof(data);
     castor::tape::SCSI::Structures::zeroStruct(&data);
-    for (int fseq=1; fseq <= 10 ; fseq ++) {
+    for (int fseq = 1; fseq <= 10; fseq++) {
       // Create a path to a remote destination file
       std::ostringstream remoteFilePath;
       remoteFilePath << "file://" << m_tmpDir << "/test" << fseq;
@@ -1852,7 +1854,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
 
       // Create an archive file entry in the archive namespace
       auto tapeFileWrittenUP = cta::make_unique<cta::catalogue::TapeFileWritten>();
-      auto &tapeFileWritten=*tapeFileWrittenUP;
+      auto& tapeFileWritten = *tapeFileWrittenUP;
       std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
       tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
 
@@ -1869,12 +1871,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
       wf.close();
 
       // Create file entry in the archive namespace
-      tapeFileWritten.archiveFileId=fseq;
+      tapeFileWritten.archiveFileId = fseq;
       tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::utils::getAdler32(data, archiveFileSize));
-      tapeFileWritten.vid=volInfo.vid;
-      tapeFileWritten.size=archiveFileSize;
-      tapeFileWritten.fSeq=fseq;
-      tapeFileWritten.copyNb=1;
+      tapeFileWritten.vid = volInfo.vid;
+      tapeFileWritten.size = archiveFileSize;
+      tapeFileWritten.fSeq = fseq;
+      tapeFileWritten.copyNb = 1;
       tapeFileWritten.diskInstance = s_diskInstance;
       tapeFileWritten.diskFileId = fseq;
 
@@ -1885,9 +1887,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
       catalogue.filesWrittenToTape(tapeFileWrittenSet);
 
       // Schedule the retrieval of the file
-      std::string diskInstance="disk_instance";
+      std::string diskInstance = "disk_instance";
       cta::common::dataStructures::RetrieveRequest rReq;
-      rReq.archiveFileID=fseq;
+      rReq.archiveFileID = fseq;
       rReq.requester.name = s_userName;
       rReq.requester.group = "someGroup";
       rReq.dstURL = remoteFilePaths.back();
@@ -1900,9 +1902,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   // 7) Report the drive's existence and put it up in the drive register.
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/noSuchDrive", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName=driveConfig.unitName;
-  driveInfo.logicalLibrary=driveConfig.logicalLibrary;
-  driveInfo.host="host";
+  driveInfo.driveName = driveConfig.unitName;
+  driveInfo.logicalLibrary = driveConfig.logicalLibrary;
+  driveInfo.host = "host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
@@ -1921,7 +1923,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   castor::messages::TapeserverProxyDummy initialProcess;
   cta::server::ProcessCapDummy capUtils;
   DataTransferSession sess("tapeHost", logger, mockSys,
-    driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+                           driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
   ASSERT_NO_THROW(sess.execute());
   std::string temp = logger.getLog();
   ASSERT_NE(std::string::npos, logger.getLog().find("Could not stat path: /dev/noSuchDrive"));
@@ -1930,7 +1932,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
 TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
 
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy","tapeServerUnitTest",cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -1946,12 +1948,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete
-  const bool failOnMount=true;
+  const bool failOnMount = true;
   mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive(failOnMount);
 
   // 4) Create the scheduler
-  auto & catalogue = getCatalogue();
-  auto & scheduler = getScheduler();
+  auto& catalogue = getCatalogue();
+  auto& scheduler = getScheduler();
 
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester;
@@ -1961,10 +1963,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   std::list<std::string> remoteFilePaths;
 
   // 5) Create the environment for the migration to happen (library + tape)
-    const std::string libraryComment = "Library comment";
+  const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+                                 libraryIsDisabled, libraryComment);
   {
     auto libraries = catalogue.getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -1981,20 +1983,20 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   {
     // Label the tape
     castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-        s_vid, false);
+                                            s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
-    volInfo.vid=s_vid;
+    volInfo.vid = s_vid;
     castor::tape::tapeFile::WriteSession ws(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-       volInfo , 0, true, false);
+                                            volInfo, 0, true, false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
     uint8_t data[1000];
-    size_t archiveFileSize=sizeof(data);
+    size_t archiveFileSize = sizeof(data);
     castor::tape::SCSI::Structures::zeroStruct(&data);
-    for (int fseq=1; fseq <= 10 ; fseq ++) {
+    for (int fseq = 1; fseq <= 10; fseq++) {
       // Create a path to a remote destination file
       std::ostringstream remoteFilePath;
       remoteFilePath << "file://" << m_tmpDir << "/test" << fseq;
@@ -2002,7 +2004,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
 
       // Create an archive file entry in the archive namespace
       auto tapeFileWrittenUP = cta::make_unique<cta::catalogue::TapeFileWritten>();
-      auto &tapeFileWritten=*tapeFileWrittenUP;
+      auto& tapeFileWritten = *tapeFileWrittenUP;
       std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
       tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
 
@@ -2019,12 +2021,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
       wf.close();
 
       // Create file entry in the archive namespace
-      tapeFileWritten.archiveFileId=fseq;
+      tapeFileWritten.archiveFileId = fseq;
       tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::utils::getAdler32(data, archiveFileSize));
-      tapeFileWritten.vid=volInfo.vid;
-      tapeFileWritten.size=archiveFileSize;
-      tapeFileWritten.fSeq=fseq;
-      tapeFileWritten.copyNb=1;
+      tapeFileWritten.vid = volInfo.vid;
+      tapeFileWritten.size = archiveFileSize;
+      tapeFileWritten.fSeq = fseq;
+      tapeFileWritten.copyNb = 1;
       tapeFileWritten.diskInstance = s_diskInstance;
       tapeFileWritten.diskFileId = fseq;
 
@@ -2035,9 +2037,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
       catalogue.filesWrittenToTape(tapeFileWrittenSet);
 
       // Schedule the retrieval of the file
-      std::string diskInstance="disk_instance";
+      std::string diskInstance = "disk_instance";
       cta::common::dataStructures::RetrieveRequest rReq;
-      rReq.archiveFileID=fseq;
+      rReq.archiveFileID = fseq;
       rReq.requester.name = s_userName;
       rReq.requester.group = "someGroup";
       rReq.dstURL = remoteFilePaths.back();
@@ -2050,9 +2052,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   // 7) Report the drive's existence and put it up in the drive register.
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName=driveConfig.unitName;
-  driveInfo.logicalLibrary=driveConfig.logicalLibrary;
-  driveInfo.host="host";
+  driveInfo.driveName = driveConfig.unitName;
+  driveInfo.logicalLibrary = driveConfig.logicalLibrary;
+  driveInfo.host = "host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
@@ -2062,9 +2064,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
 
   // 8) Create the data transfer session
   DataTransferConfig castorConf;
-  castorConf.bufsz = 1024*1024; // 1 MB memory buffers
+  castorConf.bufsz = 1024 * 1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
   castorConf.bulkRequestRecallMaxFiles = 1000;
   castorConf.nbDiskThreads = 3;
   castorConf.tapeLoadTimeout = 300;
@@ -2074,7 +2076,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys,
-    driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
+                           driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
   ASSERT_NO_THROW(sess.execute());
   std::string temp = logger.getLog();
   ASSERT_NE(std::string::npos, logger.getLog().find("Failed to mount the tape"));
@@ -2095,7 +2097,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
 TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
 
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy","tapeServerUnitTest",cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -2110,8 +2112,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   mockSys.fake.setupForVirtualDriveSLC6();
 
   // 4) Create the scheduler
-  auto & catalogue = getCatalogue();
-  auto & scheduler = getScheduler();
+  auto& catalogue = getCatalogue();
+  auto& scheduler = getScheduler();
 
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester("user", "group");
@@ -2121,10 +2123,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   std::list<std::string> remoteFilePaths;
 
   // 5) Create the environment for the migration to happen (library + tape)
-    const std::string libraryComment = "Library comment";
+  const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+                                 libraryIsDisabled, libraryComment);
   {
     auto libraries = catalogue.getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -2159,7 +2161,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
     // Create the files and schedule the archivals
-    for(int fseq=1; fseq <= 10 ; fseq ++) {
+    for (int fseq = 1; fseq <= 10; fseq++) {
       // Create a source file.
       sourceFiles.emplace_back(cta::make_unique<unitTests::TempFile>());
       sourceFiles.back()->randomFill(1000);
@@ -2167,8 +2169,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
       // Schedule the archival of the file
       cta::common::dataStructures::ArchiveRequest ar;
       ar.checksumBlob.insert(cta::checksum::ADLER32, sourceFiles.back()->adler32());
-      ar.storageClass=s_storageClassName;
-      ar.srcURL=std::string("file://") + sourceFiles.back()->path();
+      ar.storageClass = s_storageClassName;
+      ar.srcURL = std::string("file://") + sourceFiles.back()->path();
       ar.requester.name = requester.username;
       ar.requester.group = "group";
       ar.fileSize = 1000;
@@ -2178,16 +2180,16 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
       ar.diskFileInfo.gid = DISK_FILE_GID;
       const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
       archiveFileIds.push_back(archiveFileId);
-      scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
+      scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, ar, logContext);
     }
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
   // Report the drive's existence and put it up in the drive register.
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName=driveConfig.unitName;
-  driveInfo.logicalLibrary=driveConfig.logicalLibrary;
-  driveInfo.host="host";
+  driveInfo.driveName = driveConfig.unitName;
+  driveInfo.logicalLibrary = driveConfig.logicalLibrary;
+  driveInfo.host = "host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
@@ -2197,11 +2199,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
 
   // Create the data transfer session
   DataTransferConfig castorConf;
-  castorConf.bufsz = 1024*1024; // 1 MB memory buffers
+  castorConf.bufsz = 1024 * 1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
   castorConf.bulkRequestRecallMaxFiles = 1000;
-  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
   castorConf.bulkRequestMigrationMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
   castorConf.tapeLoadTimeout = 300;
@@ -2216,7 +2218,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   logToCheck += "";
   ASSERT_EQ(s_vid, sess.getVid());
   auto afiiter = archiveFileIds.begin();
-  for(auto & sf: sourceFiles) {
+  for (const auto& sf: sourceFiles) {
     auto afi = *(afiiter++);
     auto afs = catalogue.getArchiveFileById(afi);
     ASSERT_EQ(1, afs.tapeFiles.size());
@@ -2228,14 +2230,14 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
 
   // Check logs for drive statistics
   ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
-                                         "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" "
-                                         "mountTotalWriteBytesProcessed=\"4096\" mountTotalNonMediumErrorCounts=\"2\""));
+                                               "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" "
+                                               "mountTotalWriteBytesProcessed=\"4096\" mountTotalNonMediumErrorCounts=\"2\""));
 
   ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100\" "
-                                         "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
-                                         "mountReadTransients=\"10\" "
-                                         "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
-                                         "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
+                                               "mountReadEfficiencyPrct=\"100\" mountWriteEfficiencyPrct=\"100\" "
+                                               "mountReadTransients=\"10\" "
+                                               "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
+                                               "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
 }
 
 TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
@@ -2792,7 +2794,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
 TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
 
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy","tapeServerUnitTest",cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -2807,8 +2809,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   mockSys.fake.setupForVirtualDriveSLC6();
 
   // 4) Create the scheduler
-  auto & catalogue = getCatalogue();
-  auto & scheduler = getScheduler();
+  auto& catalogue = getCatalogue();
+  auto& scheduler = getScheduler();
 
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester("user", "group");
@@ -2818,10 +2820,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   std::list<std::string> remoteFilePaths;
 
   // 5) Create the environment for the migration to happen (library + tape)
-    const std::string libraryComment = "Library comment";
+  const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+                                 libraryIsDisabled, libraryComment);
   {
     auto libraries = catalogue.getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -2856,7 +2858,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
     // Create the files and schedule the archivals
-    for(int fseq=1; fseq <= 10 ; fseq ++) {
+    for (int fseq = 1; fseq <= 10; fseq++) {
       // Create a source file.
       sourceFiles.emplace_back(cta::make_unique<unitTests::TempFile>());
       sourceFiles.back()->randomFill(1000);
@@ -2864,8 +2866,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
       // Schedule the archival of the file
       cta::common::dataStructures::ArchiveRequest ar;
       ar.checksumBlob.insert(cta::checksum::ADLER32, sourceFiles.back()->adler32());
-      ar.storageClass=s_storageClassName;
-      ar.srcURL=std::string("file://") + sourceFiles.back()->path();
+      ar.storageClass = s_storageClassName;
+      ar.srcURL = std::string("file://") + sourceFiles.back()->path();
       ar.requester.name = requester.username;
       ar.requester.group = "group";
       ar.fileSize = 1000;
@@ -2876,7 +2878,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
       ar.diskFileInfo.gid = DISK_FILE_GID;
       const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
       archiveFileIds.push_back(archiveFileId);
-      scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
+      scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, ar, logContext);
       // Delete the even files: the migration will work for half of them.
       if (!(fseq % 2)) sourceFiles.pop_back();
     }
@@ -2885,9 +2887,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   // Report the drive's existence and put it up in the drive register.
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName=driveConfig.unitName;
-  driveInfo.logicalLibrary=driveConfig.logicalLibrary;
-  driveInfo.host="host";
+  driveInfo.driveName = driveConfig.unitName;
+  driveInfo.logicalLibrary = driveConfig.logicalLibrary;
+  driveInfo.host = "host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
@@ -2897,11 +2899,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
 
   // Create the data transfer session
   DataTransferConfig castorConf;
-  castorConf.bufsz = 1024*1024; // 1 MB memory buffers
+  castorConf.bufsz = 1024 * 1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
   castorConf.bulkRequestRecallMaxFiles = 1000;
-  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
   castorConf.bulkRequestMigrationMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
   castorConf.maxBytesBeforeFlush = 9999999;
@@ -2918,22 +2920,22 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   temp += "";
   ASSERT_EQ(s_vid, sess.getVid());
   // We should now have 5 successfully read files.
-  size_t count=0;
-  std::string::size_type pos=0;
-  std::string successLog="MSG=\"File successfully read from disk\"";
+  size_t count = 0;
+  std::string::size_type pos = 0;
+  std::string successLog = "MSG=\"File successfully read from disk\"";
   while ((pos = logger.getLog().find(successLog, pos)) != std::string::npos) {
-    pos+=successLog.size();
+    pos += successLog.size();
     count++;
   }
   //std::cout << logger.getLog() << std::endl;
   ASSERT_EQ(5, count);
   cta::catalogue::TapeSearchCriteria tapeCriteria;
-  tapeCriteria.vid=s_vid;
+  tapeCriteria.vid = s_vid;
   auto tapeInfo = catalogue.getTapes(tapeCriteria);
   ASSERT_EQ(1, tapeInfo.size());
   // We should have max fseq at least 10. It could be higher is a retry manages to sneak in.
   ASSERT_LE(10, tapeInfo.begin()->lastFSeq);
-  ASSERT_EQ(5*1000, tapeInfo.begin()->dataOnTapeInBytes);
+  ASSERT_EQ(5 * 1000, tapeInfo.begin()->dataOnTapeInBytes);
 
   // Check logs for drive statistics
   std::string logToCheck = logger.getLog();
@@ -2956,7 +2958,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
 //
 TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy","tapeServerUnitTest",cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -2971,8 +2973,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   mockSys.fake.setupForVirtualDriveSLC6();
 
   // 4) Create the scheduler
-  auto & catalogue = getCatalogue();
-  auto & scheduler = getScheduler();
+  auto& catalogue = getCatalogue();
+  auto& scheduler = getScheduler();
 
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester("user", "group");
@@ -2982,10 +2984,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   std::list<std::string> remoteFilePaths;
 
   // 5) Create the environment for the migration to happen (library + tape)
-    const std::string libraryComment = "Library comment";
+  const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+                                 libraryIsDisabled, libraryComment);
   {
     auto libraries = catalogue.getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -3021,7 +3023,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
     // Create the files and schedule the archivals
-    for(int fseq=1; fseq <= 10 ; fseq ++) {
+    for (int fseq = 1; fseq <= 10; fseq++) {
       // Create a source file.
       sourceFiles.emplace_back(cta::make_unique<unitTests::TempFile>());
       sourceFiles.back()->randomFill(1000);
@@ -3029,8 +3031,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
       // Schedule the archival of the file
       cta::common::dataStructures::ArchiveRequest ar;
       ar.checksumBlob.insert(cta::checksum::ADLER32, sourceFiles.back()->adler32());
-      ar.storageClass=s_storageClassName;
-      ar.srcURL=std::string("file://") + sourceFiles.back()->path();
+      ar.storageClass = s_storageClassName;
+      ar.srcURL = std::string("file://") + sourceFiles.back()->path();
       ar.requester.name = requester.username;
       ar.requester.group = "group";
       ar.fileSize = 1000;
@@ -3040,16 +3042,16 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
       ar.diskFileInfo.gid = DISK_FILE_GID;
       const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
       archiveFileIds.push_back(archiveFileId);
-      scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
+      scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, ar, logContext);
     }
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
   // Report the drive's existence and put it up in the drive register.
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName=driveConfig.unitName;
-  driveInfo.logicalLibrary=driveConfig.logicalLibrary;
-  driveInfo.host="host";
+  driveInfo.driveName = driveConfig.unitName;
+  driveInfo.logicalLibrary = driveConfig.logicalLibrary;
+  driveInfo.host = "host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
@@ -3059,11 +3061,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
 
   // Create the data transfer session
   DataTransferConfig castorConf;
-  castorConf.bufsz = 1024*1024; // 1 MB memory buffers
+  castorConf.bufsz = 1024 * 1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
   castorConf.bulkRequestRecallMaxFiles = 1000;
-  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
   castorConf.bulkRequestMigrationMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
   castorConf.tapeLoadTimeout = 300;
@@ -3093,7 +3095,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
       checksumBlob.insert(cta::checksum::ADLER32, (*sourceFiles_front)->adler32());
       ASSERT_EQ(afs.checksumBlob, checksumBlob);
       ASSERT_EQ(1000, afs.fileSize);
-    } else {
+    }
+    else {
       ASSERT_FALSE(afsItor.hasMore());
     }
     // The tape should now be marked as full
@@ -3107,9 +3110,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   // Check logs for drive statistics
   std::string logToCheck = logger.getLog();
   logToCheck += "";
-  ASSERT_NE(std::string::npos,logToCheck.find("MSG=\"Tape session started\" thread=\"TapeWrite\" tapeDrive=\"T10D6116\" tapeVid=\"TstVid\" "
-                                              "mountId=\"1\" vo=\"vo\" mediaType=\"LTO7M\" tapePool=\"TestTapePool\" logicalLibrary=\"TestLogicalLibrary\" "
-                                              "mountType=\"ArchiveForUser\" vendor=\"TestVendor\" capacityInBytes=\"12345678\""));
+  ASSERT_NE(std::string::npos,
+            logToCheck.find("MSG=\"Tape session started for write\" thread=\"TapeWrite\" tapeDrive=\"T10D6116\" tapeVid=\"TstVid\" "
+                            "mountId=\"1\" vo=\"vo\" mediaType=\"LTO7M\" tapePool=\"TestTapePool\" logicalLibrary=\"TestLogicalLibrary\" "
+                            "mountType=\"ArchiveForUser\" vendor=\"TestVendor\" capacityInBytes=\"12345678\""));
   ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
                                                "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" "
                                                "mountTotalWriteBytesProcessed=\"4096\" mountTotalNonMediumErrorCounts=\"2\""));
@@ -3123,7 +3127,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
 
 TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy","tapeServerUnitTest",cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -3137,8 +3141,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   mockSys.fake.setupForVirtualDriveSLC6();
 
   // 4) Create the scheduler
-  auto & catalogue = getCatalogue();
-  auto & scheduler = getScheduler();
+  auto& catalogue = getCatalogue();
+  auto& scheduler = getScheduler();
 
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester("user", "group");
@@ -3148,10 +3152,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   std::list<std::string> remoteFilePaths;
 
   // 5) Create the environment for the migration to happen (library + tape)
-    const std::string libraryComment = "Library comment";
+  const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+                                 libraryIsDisabled, libraryComment);
   {
     auto libraries = catalogue.getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -3175,7 +3179,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   //which will do the delete
   const uint64_t tapeSize = 5000;
   mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive(tapeSize,
-        castor::tape::tapeserver::drive::FakeDrive::OnFlush);
+                                                                                           castor::tape::tapeserver::drive::FakeDrive::OnFlush);
 
   // We can prepare files for writing on the drive.
   // Tempfiles are in this scope so they are kept alive
@@ -3188,7 +3192,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
     // Create the files and schedule the archivals
-    for(int fseq=1; fseq <= 10 ; fseq ++) {
+    for (int fseq = 1; fseq <= 10; fseq++) {
       // Create a source file.
       sourceFiles.emplace_back(cta::make_unique<unitTests::TempFile>());
       sourceFiles.back()->randomFill(1000);
@@ -3196,8 +3200,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
       // Schedule the archival of the file
       cta::common::dataStructures::ArchiveRequest ar;
       ar.checksumBlob.insert(cta::checksum::ADLER32, sourceFiles.back()->adler32());
-      ar.storageClass=s_storageClassName;
-      ar.srcURL=std::string("file://") + sourceFiles.back()->path();
+      ar.storageClass = s_storageClassName;
+      ar.srcURL = std::string("file://") + sourceFiles.back()->path();
       ar.requester.name = requester.username;
       ar.requester.group = "group";
       ar.fileSize = 1000;
@@ -3207,16 +3211,16 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
       ar.diskFileInfo.gid = DISK_FILE_GID;
       const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
       archiveFileIds.push_back(archiveFileId);
-      scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
+      scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, ar, logContext);
     }
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
   // Report the drive's existence and put it up in the drive register.
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName=driveConfig.unitName;
-  driveInfo.logicalLibrary=driveConfig.logicalLibrary;
-  driveInfo.host="host";
+  driveInfo.driveName = driveConfig.unitName;
+  driveInfo.logicalLibrary = driveConfig.logicalLibrary;
+  driveInfo.host = "host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
@@ -3226,11 +3230,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
 
   // Create the data transfer session
   DataTransferConfig castorConf;
-  castorConf.bufsz = 1024*1024; // 1 MB memory buffers
+  castorConf.bufsz = 1024 * 1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
   castorConf.bulkRequestRecallMaxFiles = 1000;
-  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
   castorConf.bulkRequestMigrationMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
   castorConf.tapeLoadTimeout = 300;
@@ -3260,7 +3264,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
       checksumBlob.insert(cta::checksum::ADLER32, (*sourceFiles_front)->adler32());
       ASSERT_EQ(afs.checksumBlob, checksumBlob);
       ASSERT_EQ(1000, afs.fileSize);
-    } else {
+    }
+    else {
       ASSERT_FALSE(afsItor.hasMore());
     }
     // The tape should now be marked as full
@@ -3286,7 +3291,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
 
 TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy","tapeServerUnitTest",cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -3300,8 +3305,8 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
   mockSys.fake.setupForVirtualDriveSLC6();
 
   // 4) Create the scheduler
-  auto & catalogue = getCatalogue();
-  auto & scheduler = getScheduler();
+  auto& catalogue = getCatalogue();
+  auto& scheduler = getScheduler();
 
   // Always use the same requester
   const cta::common::dataStructures::SecurityIdentity requester("user", "group");
@@ -3311,10 +3316,10 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
   std::list<std::string> remoteFilePaths;
 
   // 5) Create the environment for the migration to happen (library + tape)
-    const std::string libraryComment = "Library comment";
+  const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+                                 libraryIsDisabled, libraryComment);
   {
     auto libraries = catalogue.getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -3338,14 +3343,14 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
   //which will do the delete
   const uint64_t tapeSize = 5000;
   mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive(tapeSize,
-        castor::tape::tapeserver::drive::FakeDrive::OnFlush);
+                                                                                           castor::tape::tapeserver::drive::FakeDrive::OnFlush);
 
   // Report the drive's existence and put it up in the drive register.
   cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
   cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName=driveConfig.unitName;
-  driveInfo.logicalLibrary=driveConfig.logicalLibrary;
-  driveInfo.host="host";
+  driveInfo.driveName = driveConfig.unitName;
+  driveInfo.logicalLibrary = driveConfig.logicalLibrary;
+  driveInfo.host = "host";
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
@@ -3355,11 +3360,11 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
 
   // Create cleaner session
   DataTransferConfig castorConf;
-  castorConf.bufsz = 1024*1024; // 1 MB memory buffers
+  castorConf.bufsz = 1024 * 1024; // 1 MB memory buffers
   castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
   castorConf.bulkRequestRecallMaxFiles = 1000;
-  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
   castorConf.bulkRequestMigrationMaxFiles = 1000;
   castorConf.nbDiskThreads = 1;
   castorConf.tapeLoadTimeout = 300;
@@ -3383,9 +3388,9 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
   );
   auto endOfSessionAction = cleanerSession.execute();
   //the tape has not been labeled so the cleanerSession should have failed and put the drive down.
-  cta::common::dataStructures::DesiredDriveState newDriveState = scheduler.getDesiredDriveState(driveConfig.unitName,logContext);
+  cta::common::dataStructures::DesiredDriveState newDriveState = scheduler.getDesiredDriveState(driveConfig.unitName, logContext);
   ASSERT_FALSE(newDriveState.up);
-  ASSERT_EQ(castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN,endOfSessionAction);
+  ASSERT_EQ(castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN, endOfSessionAction);
 }
 
 #undef TEST_MOCK_DB
@@ -3400,7 +3405,7 @@ INSTANTIATE_TEST_CASE_P(MockSchedulerTest, SchedulerTest,
 static cta::OStoreDBFactory<cta::objectstore::BackendVFS> OStoreDBFactoryVFS;
 
 INSTANTIATE_TEST_CASE_P(OStoreDBPlusMockSchedulerTestVFS, DataTransferSessionTest,
-  ::testing::Values(DataTransferSessionTestParam(OStoreDBFactoryVFS)));
+                        ::testing::Values(DataTransferSessionTestParam(OStoreDBFactoryVFS)));
 #endif
 
 #ifdef TEST_RADOS

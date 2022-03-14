@@ -63,7 +63,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,cta::log::LogContext&  
     
     int blockId  = 0;
     unsigned long checksum = Payload::zeroAdler32();
-    while(1) {
+    while(true) {
       if(MemBlock* const mb = m_fifo.pop()) {
         m_stats.waitDataTime+=localTime.secs(cta::utils::Timer::resetCounter);
         AutoReleaseBlock<RecallMemoryManager> releaser(mb,m_memManager);
@@ -108,7 +108,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,cta::log::LogContext&  
         currentErrorToCount = "";
        
         blockId++;
-        //end if block non NULL
+        //end if block non nullptr
       } else if(isVerifyOnly) {
         // No file to close, we are done
         break;
@@ -134,7 +134,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,cta::log::LogContext&  
       cs << std::hex << std::nouppercase << std::setfill('0') << std::setw(8) << (uint32_t)checksum;
       m_retrieveJob->transferredChecksumValue = cs.str();
     }
-    reporter.reportCompletedJob(std::move(m_retrieveJob));
+    reporter.reportCompletedJob(std::move(m_retrieveJob), lc);
     m_stats.waitReportingTime+=localTime.secs(cta::utils::Timer::resetCounter);
     m_stats.transferTime = transferTime.secs();
     m_stats.totalTime = totalTime.secs();
@@ -166,7 +166,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,cta::log::LogContext&  
     params.add("errorMessage", e.getMessageValue());
     logWithStat(cta::log::ERR, isVerifyOnly ? "File verification failed" : "File writing to disk failed", lc);
     lc.logBacktrace(cta::log::ERR, e.backtrace());
-    reporter.reportFailedJob(std::move(m_retrieveJob), e);
+    reporter.reportFailedJob(std::move(m_retrieveJob), e, lc);
 
     watchdog.deleteParameter("stillOpenFileForThread"+
       std::to_string((long long)threadID));

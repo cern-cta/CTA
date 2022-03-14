@@ -36,12 +36,12 @@ TapeLabelCmdLineArgs::TapeLabelCmdLineArgs(const int argc, char *const *const ar
   help(false), m_debug(false), m_force(false) {
 
   static struct option longopts[] = {
-    {"vid", required_argument, NULL, 'v'},
-    {"oldlabel", required_argument, NULL, 'o'},
-    {"debug", no_argument, NULL, 'd'},
-    {"force", no_argument, NULL, 'f'},
-    {"help", no_argument, NULL, 'h'},
-    {NULL  ,           0, NULL,   0}
+    {"vid", required_argument, nullptr, 'v'},
+    {"oldlabel", required_argument, nullptr, 'o'},
+    {"debug", no_argument, nullptr, 'd'},
+    {"force", no_argument, nullptr, 'f'},
+    {"help", no_argument, nullptr, 'h'},
+    {nullptr,          0, nullptr,   0}
   };
  
   // Prevent getopt() from printing an error message if it does not recognize
@@ -50,7 +50,7 @@ TapeLabelCmdLineArgs::TapeLabelCmdLineArgs(const int argc, char *const *const ar
 
   int opt = 0;
 
-  while((opt = getopt_long(argc, argv, ":v:o:hdf", longopts, NULL)) != -1) {
+  while((opt = getopt_long(argc, argv, ":v:o:hdf", longopts, nullptr)) != -1) {
     switch(opt) {
     case 'v':
       if (strlen(optarg) > CA_MAXVIDLEN) {

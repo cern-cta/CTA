@@ -51,20 +51,20 @@ namespace unitTests
   }; // class castor_tape_tapeserver_daemonTest
   
   struct MockRecallReportPacker : public RecallReportPacker {
-    void reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob) override {
+    void reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob, cta::log::LogContext& lc) override {
       cta::threading::MutexLocker ml(m_mutex);
       completeJobs++;
     }
-    void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const cta::exception::Exception & ex) override {
+    void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const cta::exception::Exception & ex, cta::log::LogContext& lc) override {
       cta::threading::MutexLocker ml(m_mutex);
       failedJobs++;
     }
     void disableBulk() override {}
-    void reportEndOfSession() override {
+    void reportEndOfSession(cta::log::LogContext& lc) override {
       cta::threading::MutexLocker ml(m_mutex);
       endSessions++;
     }
-    void reportEndOfSessionWithErrors(const std::string msg, int error_code) override {
+    void reportEndOfSessionWithErrors(const std::string& msg, int error_code, cta::log::LogContext& lc) override {
       cta::threading::MutexLocker ml(m_mutex);
       endSessionsWithError++;
     }
@@ -112,7 +112,7 @@ namespace unitTests
     
     virtual void run () 
     {
-      m_tasks.push(NULL);
+      m_tasks.push(nullptr);
     }
     
     virtual void push(TapeReadTask* t){
@@ -198,9 +198,9 @@ namespace unitTests
       DiskWriteTask* diskWriteTask=diskWrite.m_tasks.pop();
       TapeReadTask* tapeReadTask=tapeRead.m_tasks.pop();
 
-      //static_cast is needed otherwise compilation fails on SL5 with a raw NULL
-      ASSERT_EQ(static_cast<DiskWriteTask*>(NULL), diskWriteTask);
-      ASSERT_EQ(static_cast<TapeReadTask*>(NULL), tapeReadTask);
+      //static_cast is needed otherwise compilation fails on SL5 with a raw nullptr
+      ASSERT_EQ(static_cast<DiskWriteTask*>(nullptr), diskWriteTask);
+      ASSERT_EQ(static_cast<TapeReadTask*>(nullptr), tapeReadTask);
       delete diskWriteTask;
       delete tapeReadTask;
     }

@@ -78,7 +78,7 @@ private:
   /**
    * Circulate the remaining free blocks after an error
    * @param fromBlockId the number of already processed
-   * @param mb pointer to a possible already popped free block (NULL otherwise)
+   * @param mb pointer to a possible already popped free block (nullptr otherwise)
    */
   void circulateAllBlocks(size_t fromBlockId, MemBlock * mb);
   /**

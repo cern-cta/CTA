@@ -89,7 +89,7 @@ public:
     // We will not record errors for an empty string. This will allow us to
     // prevent counting where error happened upstream.
     std::string currentErrorToCount = "";
-    MemBlock* mb=NULL;
+    MemBlock* mb = nullptr;
     try {
       currentErrorToCount = "Error_tapePositionForRead";
       std::unique_ptr<castor::tape::tapeFile::ReadFile> rf(openReadFile(rs,lc));
@@ -146,12 +146,12 @@ public:
         }
         // Pass the block to the disk write task
         m_fifo.pushDataBlock(mb);
-        mb=NULL;
+        mb = nullptr;
         watchdog.notify(blockSize);
         localStats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
       } //end of while(stillReading)
       // We have to signal the end of the tape read to the disk write task.
-      m_fifo.pushDataBlock(NULL);
+      m_fifo.pushDataBlock(nullptr);
       // Log the successful transfer
       localStats.totalTime = localTime.secs();
       // Count the trailer size
@@ -234,7 +234,7 @@ private:
    * @param errorMsg The error message we will give to the client
    * @param mb The mem block we will use
    */
-  void reportErrorToDiskTask(const std::string& msg,int code,MemBlock* mb = NULL){
+  void reportErrorToDiskTask(const std::string& msg, int code, MemBlock* mb = nullptr) {
     //If we are not provided with a block, allocate it and
     // fill it up
     if (!mb) {
@@ -245,7 +245,7 @@ private:
     //mark the block failed and push it (plus signal the end)
      mb->markAsFailed(msg,code);
      m_fifo.pushDataBlock(mb);
-     m_fifo.pushDataBlock(NULL);
+     m_fifo.pushDataBlock(nullptr);
    }
   /** 
    * Open the file on the tape. In case of failure, log and throw

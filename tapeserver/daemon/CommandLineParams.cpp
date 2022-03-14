@@ -28,12 +28,12 @@ CommandLineParams::CommandLineParams(int argc, char** argv):
   helpRequested(false){
   struct ::option longopts[] = {
     // { .name, .has_args, .flag, .val } (see getopt.h))
-    { "foreground", no_argument, NULL, 'f' },
-    { "config", required_argument, NULL, 'c' },
-    { "help", no_argument, NULL, 'h' },
-    { "stdout", no_argument, NULL, 's' },
-    { "log-to-file", required_argument, NULL, 'l' },
-    { NULL, 0, NULL, '\0' }
+    { "foreground", no_argument, nullptr, 'f' },
+    { "config", required_argument, nullptr, 'c' },
+    { "help", no_argument, nullptr, 'h' },
+    { "stdout", no_argument, nullptr, 's' },
+    { "log-to-file", required_argument, nullptr, 'l' },
+    { nullptr, 0, nullptr, '\0' }
   };
 
   char c;
@@ -42,7 +42,7 @@ CommandLineParams::CommandLineParams(int argc, char** argv):
   // Prevent getopt from printing out errors on stdout
   opterr=0;
   // We ask getopt to not reshuffle argv ('+')
-  while ((c = getopt_long(argc, argv, "+fsc:l:h", longopts, NULL)) != -1) {
+  while ((c = getopt_long(argc, argv, "+fsc:l:h", longopts, nullptr)) != -1) {
     switch (c) {
     case 'f':
       foreground = true;

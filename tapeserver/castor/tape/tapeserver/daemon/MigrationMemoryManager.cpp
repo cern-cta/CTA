@@ -103,7 +103,7 @@ size_t MigrationMemoryManager::blockCapacity() {
 //------------------------------------------------------------------------------
 void MigrationMemoryManager::finish()
  {
-  addClient(NULL);
+  addClient(nullptr);
 }
 
 //------------------------------------------------------------------------------
@@ -125,7 +125,7 @@ void MigrationMemoryManager::releaseBlock(MemBlock* mb)
 void MigrationMemoryManager::run()  {
   while (true) {
     DataPipeline* c = m_clientQueue.pop();
-    // If the c is a NULL pointer, that means end of clients
+    // If the c is a nullptr pointer, that means end of clients
     if (!c) return;
     // Spin on the the client. We rely on the fact that he will want
     // at least one block (which is the case currently)

@@ -30,7 +30,7 @@ protected:
   struct Argcv {
     int argc;
     char **argv;
-    Argcv(): argc(0), argv(NULL) {
+    Argcv(): argc(0), argv(nullptr) {
     }
   };
   typedef std::list<Argcv*> ArgcvList;
@@ -76,7 +76,7 @@ TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, help_short) {
   args->argv = new char *[3];
   args->argv[0] = dupString("cta-tape-label");
   args->argv[1] = dupString("-h");
-  args->argv[2] = NULL;
+  args->argv[2] = nullptr;
 
   TapeLabelCmdLineArgs cmdLine(args->argc, args->argv);
 
@@ -94,7 +94,7 @@ TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, help_long) {
   args->argv = new char *[3];
   args->argv[0] = dupString("cta-tape-label");
   args->argv[1] = dupString("--help");
-  args->argv[2] = NULL;
+  args->argv[2] = nullptr;
 
   TapeLabelCmdLineArgs cmdLine(args->argc, args->argv);
 
@@ -114,7 +114,7 @@ TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, debug_short) {
   args->argv[1] = dupString("-v");
   args->argv[2] = dupString("VID001");
   args->argv[3] = dupString("-d");
-  args->argv[4] = NULL;
+  args->argv[4] = nullptr;
 
   TapeLabelCmdLineArgs cmdLine(args->argc, args->argv);
 
@@ -134,7 +134,7 @@ TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, debug_long) {
   args->argv[1] = dupString("-v");
   args->argv[2] = dupString("VID001");
   args->argv[3] = dupString("--debug");
-  args->argv[4] = NULL;
+  args->argv[4] = nullptr;
 
   TapeLabelCmdLineArgs cmdLine(args->argc, args->argv);
 
@@ -154,7 +154,7 @@ TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, force_short) {
   args->argv[1] = dupString("-v");
   args->argv[2] = dupString("VID001");
   args->argv[3] = dupString("-f");
-  args->argv[4] = NULL;
+  args->argv[4] = nullptr;
 
   TapeLabelCmdLineArgs cmdLine(args->argc, args->argv);
 
@@ -174,7 +174,7 @@ TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, force_long) {
   args->argv[1] = dupString("-v");
   args->argv[2] = dupString("VID001");
   args->argv[3] = dupString("--force");
-  args->argv[4] = NULL;
+  args->argv[4] = nullptr;
 
   TapeLabelCmdLineArgs cmdLine(args->argc, args->argv);
 
@@ -193,7 +193,7 @@ TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, vid_short) {
   args->argv[0] = dupString("cta-tape-label");
   args->argv[1] = dupString("-v");
   args->argv[2] = dupString("VID001");
-  args->argv[3] = NULL;
+  args->argv[3] = nullptr;
 
   TapeLabelCmdLineArgs cmdLine(args->argc, args->argv);
 
@@ -211,7 +211,7 @@ TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, vid_long) {
   args->argv[0] = dupString("cta-tape-label");
   args->argv[1] = dupString("--vid");
   args->argv[2] = dupString("VID001");
-  args->argv[3] = NULL;
+  args->argv[3] = nullptr;
 
   TapeLabelCmdLineArgs cmdLine(args->argc, args->argv);
 
@@ -228,7 +228,7 @@ TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, vid_missed) {
   args->argv = new char *[3];
   args->argv[0] = dupString("cta-tape-label");
   args->argv[1] = dupString("--vid");
-  args->argv[2] = NULL;
+  args->argv[2] = nullptr;
 
   ASSERT_THROW(TapeLabelCmdLineArgs cmdLine(args->argc, args->argv),
     cta::exception::CommandLineNotParsed);
@@ -246,7 +246,7 @@ TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, oldVid_short) {
   args->argv[2] = dupString("VID001");
   args->argv[3] = dupString("-o");
   args->argv[4] = dupString("VID002");
-  args->argv[5] = NULL;
+  args->argv[5] = nullptr;
 
   TapeLabelCmdLineArgs cmdLine(args->argc, args->argv);
 
@@ -268,7 +268,7 @@ TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, oldVid_long) {
   args->argv[2] = dupString("VID001");
   args->argv[3] = dupString("--oldlabel");
   args->argv[4] = dupString("VID002");
-  args->argv[5] = NULL;
+  args->argv[5] = nullptr;
 
   TapeLabelCmdLineArgs cmdLine(args->argc, args->argv);
 
@@ -289,7 +289,7 @@ TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, oldVid_missed) {
   args->argv[1] = dupString("-v");
   args->argv[2] = dupString("VID001");
   args->argv[3] = dupString("-o");
-  args->argv[4] = NULL;
+  args->argv[4] = nullptr;
   
   ASSERT_THROW(TapeLabelCmdLineArgs cmdLine(args->argc, args->argv),
     cta::exception::CommandLineNotParsed);

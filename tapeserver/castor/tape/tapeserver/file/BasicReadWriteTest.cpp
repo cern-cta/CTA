@@ -59,7 +59,7 @@ class BasicRetrieveJob: public cta::RetrieveJob {
 class BasicArchiveJob: public cta::ArchiveJob {
 public:
   BasicArchiveJob(): cta::ArchiveJob(nullptr, 
-      *((cta::catalogue::Catalogue *)NULL), cta::common::dataStructures::ArchiveFile(), 
+      *((cta::catalogue::Catalogue *)nullptr), cta::common::dataStructures::ArchiveFile(),
       "", cta::common::dataStructures::TapeFile()) {
   }
 };

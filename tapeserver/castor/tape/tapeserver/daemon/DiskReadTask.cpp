@@ -49,7 +49,7 @@ void DiskReadTask::execute(cta::log::LogContext&  lc, cta::disk::DiskFileFactory
   cta::utils::Timer totalTime(localTime);
   size_t blockId=0;
   size_t migratingFileSize=m_archiveJob->archiveFile.fileSize;
-  MemBlock* mb=NULL;
+  MemBlock* mb = nullptr;
   // This out-of-try-catch variables allows us to record the stage of the 
   // process we're in, and to count the error if it occurs.
   // We will not record errors for an empty string. This will allow us to
@@ -122,7 +122,7 @@ void DiskReadTask::execute(cta::log::LogContext&  lc, cta::disk::DiskFileFactory
       
       // We are done with the block, push it to the write task
       m_nextTask.pushDataBlock(mb);
-      mb=NULL;
+      mb = nullptr;
       
     } //end of while(migratingFileSize>0)
     m_stats.filesCount++;
@@ -157,7 +157,7 @@ void DiskReadTask::execute(cta::log::LogContext&  lc, cta::disk::DiskFileFactory
     }
     mb->markAsFailed(e.getMessageValue(), 666); // TODO - Drop error code
     m_nextTask.pushDataBlock(mb);
-    mb=NULL;
+    mb = nullptr;
     
     cta::log::ScopedParamContainer spc(lc);
     spc.add("blockID",blockId)
@@ -186,7 +186,7 @@ void DiskReadTask::circulateAllBlocks(size_t fromBlockId, MemBlock * mb){
     mb->m_fileid = m_archiveJob->archiveFile.archiveFileID;
     mb->markAsCancelled();
     m_nextTask.pushDataBlock(mb);
-    mb=NULL;
+    mb = nullptr;
   } //end of while
 }
 

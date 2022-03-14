@@ -202,7 +202,7 @@ std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface>
   std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface>
     drive(castor::tape::tapeserver::drive::createDrive(driveInfo, m_sysWrapper));
 
-  if(NULL == drive.get()) {
+  if(nullptr == drive.get()) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to instantiate drive object";
     throw ex;

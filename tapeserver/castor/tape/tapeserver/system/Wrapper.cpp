@@ -33,7 +33,7 @@ DIR* System::fakeWrapper::opendir(const char* name) {
   /* Manage absence of directory */
   if (m_directories.end() == m_directories.find(std::string(name))) {
     errno = ENOENT;
-    return NULL;
+    return nullptr;
   }
   /* Dirty pointer gymnastics. Good enough for a test harness */
   ourDIR * dir = new ourDIR;
@@ -55,7 +55,7 @@ struct dirent * System::fakeWrapper::readdir(DIR* dirp) {
    * opendir.
    */
   if (dir.nextIdx + 1 > m_directories[dir.path].size())
-    return NULL;
+    return nullptr;
   dir.dent_name = m_directories[dir.path][dir.nextIdx++];
   strncpy(dir.dent.d_name, dir.dent_name.c_str(), NAME_MAX);
   return & (dir.dent);
@@ -84,7 +84,7 @@ char * System::fakeWrapper::realpath(const char* name, char* resolved) {
    */
   if (m_realpathes.end() == m_realpathes.find(std::string(name))) {
     errno = ENOENT;
-    return NULL;
+    return nullptr;
   }
   strncpy(resolved, m_realpathes[std::string(name)].c_str(), PATH_MAX);
   return resolved;
@@ -190,7 +190,7 @@ castor::tape::tapeserver::drive::DriveInterface *
   std::map<std::string, castor::tape::tapeserver::drive::DriveInterface *>::iterator drive =
     m_pathToDrive.find(path);
   if (m_pathToDrive.end() == drive) {
-    return NULL;
+    return nullptr;
   } else {
     /* The drive will be deleted by the user, so we remove references to it */
     castor::tape::tapeserver::drive::DriveInterface * ret = drive->second;
@@ -215,14 +215,13 @@ void System::fakeWrapper::referenceFiles() {
  * Destructor: delete leftover drive and device objects
  */
 System::fakeWrapper::~fakeWrapper() {
-  for (auto d=m_pathToDrive.begin(); d!=m_pathToDrive.end(); d++) {
-    delete d->second;
-    d->second = NULL;
+  for (auto & d : m_pathToDrive) {
+    delete d.second;
+    d.second = nullptr;
   }
 
-  for (std::map<std::string, stDeviceFile *>::iterator i = m_stFiles.begin();
-       i != m_stFiles.end(); ++i)
-    delete m_stFiles[i->first];
+  for (const auto & m_stFile : m_stFiles)
+    delete m_stFiles[m_stFile.first];
 }
 
 System::mockWrapper::mockWrapper() {

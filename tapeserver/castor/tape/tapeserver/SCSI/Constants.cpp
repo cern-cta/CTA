@@ -1186,7 +1186,7 @@ const castor::tape::SCSI::senseConstants::error_info castor::tape::SCSI::senseCo
 	{0x7471, "Logical unit access not authorized"},
 	{0x7479, "Security conflict in translated device"},
 
-	{0, NULL}
+	{0, nullptr}
 };
 
 const castor::tape::SCSI::senseConstants::error_range_info castor::tape::SCSI::senseConstants::ascRangesStrings[] =
@@ -1197,7 +1197,7 @@ const castor::tape::SCSI::senseConstants::error_range_info castor::tape::SCSI::s
 	{0x42, 0x00, 0xff, "Power-on or self-test failure (%02x)"},
 	{0x4D, 0x00, 0xff, "Tagged overlapped commands (task tag %02x)"},
 	{0x70, 0x00, 0xff, "Decompression exception short algorithm id of %02x"},
-	{0, 0, 0, NULL}
+	{0, 0, 0, nullptr}
 };
 
 /* description of the sense key values */

@@ -67,20 +67,20 @@ namespace unitTests{
   using namespace castor::tape::tapeserver::client;
   using namespace cta::disk;
   struct MockRecallReportPacker : public RecallReportPacker {
-    void reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob) override {
+    void reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob, cta::log::LogContext& lc) override {
       cta::threading::MutexLocker ml(m_mutex);
       completeJobs++;
     }
-    void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const cta::exception::Exception & ex) override {
+    void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const cta::exception::Exception & ex, cta::log::LogContext& lc) override {
       cta::threading::MutexLocker ml(m_mutex);
       failedJobs++;
     }
     void disableBulk() override {}
-    void reportEndOfSession() override {
+    void reportEndOfSession(cta::log::LogContext& lc) override {
       cta::threading::MutexLocker ml(m_mutex);
       endSessions++;
     }
-    void reportEndOfSessionWithErrors(const std::string msg, int error_code) override {
+    void reportEndOfSessionWithErrors(const std::string& msg, int error_code, cta::log::LogContext& lc) override {
       cta::threading::MutexLocker ml(m_mutex);
       endSessionsWithError++;
     }
@@ -97,7 +97,7 @@ namespace unitTests{
     int endSessions;
     int endSessionsWithError;
   };
-  
+
   TEST(castor_tape_tapeserver_daemon, DiskWriteTaskFailedBlock){
     using ::testing::_;
     
@@ -132,7 +132,7 @@ namespace unitTests{
     MemBlock* mb=mm.getFreeBlock();
 
     t.pushDataBlock(mb);
-    t.pushDataBlock(NULL);
+    t.pushDataBlock(nullptr);
     castor::messages::TapeserverProxyDummy tspd;
     cta::TapeMountDummy tmd;
     RecallWatchDog rwd(1,1,tspd,tmd,"", lc);

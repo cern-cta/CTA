@@ -30,9 +30,9 @@ namespace daemon {
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-EncryptionControl::EncryptionControl(bool useEncryption, const std::string& scriptPath):
-m_useEncryption(useEncryption),
-m_path(scriptPath) {
+EncryptionControl::EncryptionControl(bool useEncryption, const std::string& scriptPath) :
+  m_useEncryption(useEncryption),
+  m_path(scriptPath) {
   if (m_path.size() && m_path[0] != '/') {
     cta::exception::Exception ex("In EncryptionControl::EncryptionControl: the script path is not absolute: ");
     ex.getMessage() << m_path;
@@ -42,18 +42,19 @@ m_path(scriptPath) {
 //------------------------------------------------------------------------------
 // enable
 //------------------------------------------------------------------------------
-auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface &m_drive,
-  const std::string& vid, SetTag st) -> EncryptionStatus {
+auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface& m_drive,
+                               const std::string& vid, SetTag st) -> EncryptionStatus {
+
   EncryptionStatus encStatus;
   if (m_path.empty()) {
     if (m_useEncryption) {
       //if encryption is enabled, an external script is required
       cta::exception::Exception ex;
       ex.getMessage() << "In EncryptionControl::enableEncryption: "
-                       "failed to enable encryption: path provided is empty but tapeserver is configured to use encryption";
+                         "failed to enable encryption: path provided is empty but tapeserver is configured to use encryption";
       throw ex;
     }
-    encStatus = { false, "", "", ""};
+    encStatus = {false, "", "", ""};
     return encStatus;
   }
 
@@ -74,10 +75,11 @@ auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface &
                        "failed to enable encryption: ";
     if (sp.wasKilled()) {
       ex.getMessage() << "script was killed with signal: " << sp.killSignal();
-    } else {
+    }
+    else {
       ex.getMessage() << "script returned: " << sp.exitValue();
     }
-    ex.getMessage() << " called=" << "\'" << argsToString(args, " ")  << "\'"
+    ex.getMessage() << " called=" << "\'" << argsToString(args, " ") << "\'"
                     << " stdout=" << sp.stdout()
                     << " stderr=" << sp.stderr();
     throw ex;
@@ -85,7 +87,8 @@ auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface &
   encStatus = parse_json_script_output(sp.stdout());
   if (encStatus.on) {
     m_drive.setEncryptionKey(encStatus.key);
-  } else {
+  }
+  else {
     /*
      * If tapeserver fails completely and leaves drive in dirty state, we should always clear
      * encryption key from the drive if data are to be written unencrypted.
@@ -98,19 +101,19 @@ auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface &
 //------------------------------------------------------------------------------
 // disable
 //------------------------------------------------------------------------------
-bool EncryptionControl::disable(castor::tape::tapeserver::drive::DriveInterface &m_drive) {
+bool EncryptionControl::disable(castor::tape::tapeserver::drive::DriveInterface& m_drive) {
   return m_drive.clearEncryptionKey();
 }
 
 namespace {
 struct JsonObjectDeleter {
-  void operator() (json_object *jo) { json_object_put(jo); }
+  void operator()(json_object *jo) { json_object_put(jo); }
 };
 }
 
 namespace {
 struct JsonTokenerDeleter {
-  void operator() (json_tokener *jt) { json_tokener_free(jt); }
+  void operator()(json_tokener *jt) { json_tokener_free(jt); }
 };
 }
 
@@ -143,7 +146,7 @@ EncryptionControl::EncryptionStatus EncryptionControl::parse_json_script_output(
     stdout_map.find("key_id") == stdout_map.end() ||
     stdout_map.find("encryption_key") == stdout_map.end() ||
     stdout_map.find("message") == stdout_map.end()
-  ) {
+    ) {
     cta::exception::Exception ex("In EncryptionControl::parse_json_script_output: invalid json interface.");
     throw ex;
   }
@@ -156,24 +159,27 @@ EncryptionControl::EncryptionStatus EncryptionControl::parse_json_script_output(
 }
 
 std::map<std::string, std::string> EncryptionControl::flatten_json_object_to_map(const std::string& prefix,
-  json_object *jobj) {
+                                                                                 json_object *jobj) {
   std::map<std::string, std::string> ret;
 
   json_object_object_foreach(jobj, key, val) {
     if (json_object_get_type(val) == json_type_object) {
       std::map<std::string, std::string> sec_map = flatten_json_object_to_map(key, val);
       ret.insert(sec_map.begin(), sec_map.end());
-    } else {
-      if (json_object_get_type(val) == json_type_string)  // parse only string values at the deepest level
-        ret[prefix+key] = json_object_get_string(val);
+    }
+    else {
+      if (json_object_get_type(val) == json_type_string) {  // parse only string values at the deepest level
+        ret[prefix + key] = json_object_get_string(val);
+      }
     }
   }
   return ret;
 }
 
 std::string EncryptionControl::argsToString(std::list<std::string> args, const std::string& delimiter) {
-  if (args.empty())
+  if (args.empty()) {
     return "";
+  }
   std::ostringstream toBeReturned;
   std::copy(args.begin(), --args.end(),
             std::ostream_iterator<std::string>(toBeReturned, delimiter.c_str()));

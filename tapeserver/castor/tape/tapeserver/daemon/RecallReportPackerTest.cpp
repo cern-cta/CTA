@@ -84,12 +84,12 @@ TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerN
   castor::tape::tapeserver::daemon::RecallReportPacker rrp(&retrieveMount,lc);
   rrp.startThreads();
 
-  rrp.reportCompletedJob(std::move(job1));
-  rrp.reportCompletedJob(std::move(job2));
-
-  rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
-
-  rrp.reportEndOfSession();
+  rrp.reportCompletedJob(std::move(job1), lc);
+  rrp.reportCompletedJob(std::move(job2), lc);
+  
+  rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, cta::nullopt, lc);
+  
+  rrp.reportEndOfSession(lc);
 //  rrp.reportTestGoingToEnd();
   rrp.waitThread();
 
@@ -133,16 +133,16 @@ TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerB
   castor::tape::tapeserver::daemon::RecallReportPacker rrp(&retrieveMount,lc);
   rrp.startThreads();
 
-  rrp.reportCompletedJob(std::move(job1));
-  rrp.reportCompletedJob(std::move(job2));
+  rrp.reportCompletedJob(std::move(job1), lc);
+  rrp.reportCompletedJob(std::move(job2), lc);
 
   const std::string error_msg = "ERROR_TEST_MSG";
   const cta::exception::Exception ex(error_msg);
-  rrp.reportFailedJob(std::move(job3), ex);
+  rrp.reportFailedJob(std::move(job3), ex, lc);
+  
+  rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, cta::nullopt, lc);
 
-  rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
-
-  rrp.reportEndOfSession();
+  rrp.reportEndOfSession(lc);
 //  rrp.reportTestGoingToEnd();
   rrp.waitThread();
 

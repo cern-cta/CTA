@@ -91,7 +91,7 @@ void DiskReadThreadPool::push(DiskReadTask *t) {
 void DiskReadThreadPool::finish() {
   /* Insert one endOfSession per thread */
   for (size_t i=0; i<m_threads.size(); i++) {
-    m_tasks.push(NULL);
+    m_tasks.push(nullptr);
   }
 }
 
@@ -158,7 +158,7 @@ void DiskReadThreadPool::DiskReadWorkerThread::run() {
   while(1) {
     task.reset( m_parent.popAndRequestMore(m_lc));
     m_threadStat.waitInstructionsTime += localTime.secs(cta::utils::Timer::resetCounter);
-    if (NULL!=task.get()) {
+    if (nullptr != task.get()) {
       task->execute(m_lc, m_diskFileFactory,m_parent.m_watchdog, m_threadID);
       m_threadStat += task->getTaskStats();
     }

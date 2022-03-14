@@ -127,7 +127,7 @@ namespace unitTests{
       mb->m_fileid=i+1;
       mb->m_fileBlock=0;
       t->pushDataBlock(mb);
-      t->pushDataBlock(NULL);
+      t->pushDataBlock(nullptr);
       dwtp.push(t);
     }
      

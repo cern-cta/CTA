@@ -38,7 +38,7 @@ class Payload
 public:
   Payload(size_t capacity):
   m_data(new (std::nothrow) unsigned char[capacity]),m_totalCapacity(capacity),m_size(0) {
-    if(NULL == m_data) {
+    if(nullptr == m_data) {
       throw cta::exception::MemException("Failed to allocate memory for a new MemBlock!");
     }
   }

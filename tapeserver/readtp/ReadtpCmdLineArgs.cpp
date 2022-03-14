@@ -51,10 +51,10 @@ ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char *const *const argv):
   m_fSeqRangeList = TapeFileSequenceParser::parse(argv[2]);
   
   static struct option longopts[] = {
-    {"destination_files",      required_argument, NULL, 'f'},
-    {"xroot_private_key", required_argument, NULL, 'p'},
-    {"help",                   no_argument,       NULL, 'h'},
-    {NULL  ,                   0,                 NULL,   0}
+    {"destination_files",      required_argument, nullptr, 'f'},
+    {"xroot_private_key", required_argument, nullptr, 'p'},
+    {"help",                   no_argument,       nullptr, 'h'},
+    {nullptr,                  0,                 nullptr,   0}
   };
 
   opterr = 0;

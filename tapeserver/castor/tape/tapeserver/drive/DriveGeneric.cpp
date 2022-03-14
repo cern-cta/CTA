@@ -1159,7 +1159,7 @@ void drive::DriveGeneric::writeBlock(const void * data, size_t count)  {
       {
         uint8_t * dataWithCrc32c =(new (std::nothrow)
           uint8_t [count+SCSI::logicBlockProtectionMethod::CRC32CLength]);
-        if(NULL == dataWithCrc32c) {
+        if(nullptr == dataWithCrc32c) {
           throw cta::exception::MemException("Failed to allocate memory "
             " for a new MemBlock in DriveGeneric::writeBlock!");
         }
@@ -1213,7 +1213,7 @@ ssize_t drive::DriveGeneric::readBlock(void * data, size_t count)  {
       {
         uint8_t * dataWithCrc32c =(new (std::nothrow)
           uint8_t [count+SCSI::logicBlockProtectionMethod::CRC32CLength]);
-        if(NULL == dataWithCrc32c) {
+        if(nullptr == dataWithCrc32c) {
           throw cta::exception::MemException("In DriveGeneric::readBlock: Failed to allocate memory");
         }
         const ssize_t res = m_sysWrapper.read(m_tapeFD, dataWithCrc32c,
@@ -1273,7 +1273,7 @@ void drive::DriveGeneric::readExactBlock(void * data, size_t count, const std::s
       {
         uint8_t * dataWithCrc32c =(new (std::nothrow)
           uint8_t [count+SCSI::logicBlockProtectionMethod::CRC32CLength]);
-        if(NULL == dataWithCrc32c) {
+        if(nullptr == dataWithCrc32c) {
           throw cta::exception::MemException("Failed to allocate memory "
             " for a new MemBlock in DriveGeneric::readBlock!");
         }

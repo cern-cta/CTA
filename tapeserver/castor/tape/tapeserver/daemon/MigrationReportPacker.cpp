@@ -119,8 +119,8 @@ void MigrationReportPacker::reportTapeFull(cta::log::LogContext& lc) {
 
 //------------------------------------------------------------------------------
 //reportEndOfSession
-//------------------------------------------------------------------------------
-void MigrationReportPacker::reportEndOfSession(cta::log::LogContext & lc) {
+//------------------------------------------------------------------------------ 
+void MigrationReportPacker::reportEndOfSession(cta::log::LogContext& lc) {
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportEndofSession");
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportEndOfSession(), pushing a report.");
@@ -131,8 +131,8 @@ void MigrationReportPacker::reportEndOfSession(cta::log::LogContext & lc) {
 
 //------------------------------------------------------------------------------
 //reportEndOfSessionWithErrors
-//------------------------------------------------------------------------------
-void MigrationReportPacker::reportEndOfSessionWithErrors(std::string msg,int errorCode, cta::log::LogContext & lc){
+//------------------------------------------------------------------------------ 
+void MigrationReportPacker::reportEndOfSessionWithErrors(std::string msg, int errorCode, cta::log::LogContext& lc) {
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportEndofSessionWithErrors");
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportEndOfSessionWithErrors(), pushing a report.");
@@ -155,8 +155,8 @@ void MigrationReportPacker::reportTestGoingToEnd(cta::log::LogContext& lc) {
 
 //------------------------------------------------------------------------------
 //synchronousReportEndWithErrors
-//------------------------------------------------------------------------------
-void MigrationReportPacker::synchronousReportEndWithErrors(const std::string msg, int errorCode, cta::log::LogContext & lc){
+//------------------------------------------------------------------------------ 
+void MigrationReportPacker::synchronousReportEndWithErrors(const std::string& msg, int errorCode, cta::log::LogContext& lc) {
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportEndofSessionWithErrors");
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::synchronousReportEndWithErrors(), reporting asynchronously session complete.");
@@ -169,13 +169,12 @@ void MigrationReportPacker::synchronousReportEndWithErrors(const std::string msg
     lc.log(cta::log::INFO, "Reported end of session with error to client after sending file errors");
   }
   else {
-    const std::string& msg = "Reported end of session with error to client";
     // As a measure of safety we censor any session error which is not ENOSPC into
     // Meaningless 666 (used to be SEINTERNAL in CASTOR). ENOSPC is the only one interpreted by the tape gateway.
     if (ENOSPC != errorCode) {
       errorCode = 666;
     }
-    lc.log(cta::log::INFO, msg);
+    lc.log(cta::log::INFO, "Reported end of session with error to client");
   }
   if (m_watchdog) {
     m_watchdog->addParameter(cta::log::Param("status",
@@ -418,9 +417,9 @@ void MigrationReportPacker::ReportError::execute(MigrationReportPacker& reportPa
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add("ExceptionMSG", ex.getMessageValue())
           .add("fileId", m_failedArchiveJob->archiveFile.archiveFileID);
-    reportPacker.m_lc.log(cta::log::WARNING,"In MigrationReportPacker::ReportError::execute(): call to m_failedArchiveJob->failed(), job does not exist in the objectstore.");
-  }
-  catch (cta::exception::Exception & ex) {
+    reportPacker.m_lc.log(cta::log::WARNING,
+                          "In MigrationReportPacker::ReportError::execute(): call to m_failedArchiveJob->failed(), job does not exist in the objectstore.");
+  } catch (cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add("ExceptionMSG", ex.getMessageValue())
           .add("fileId", m_failedArchiveJob->archiveFile.archiveFileID);
@@ -467,7 +466,7 @@ void MigrationReportPacker::WorkerThread::run() {
     //either from the catch a few lines above or directly from rep->execute
     cta::log::ScopedParamContainer params(lc);
     params.add("exceptionMSG", e.getMessageValue());
-    lc.log(cta::log::ERR, "In MigrationPacker::run(): Received a CTA exception while reporting archive mount results.");
+    lc.log(cta::log::ERR, "In MigrationReportPacker::WorkerThread::run(): Received a CTA exception while reporting archive mount results.");
     if (m_parent.m_watchdog) {
       m_parent.m_watchdog->addToErrorCount("Error_reporting");
       m_parent.m_watchdog->addParameter(cta::log::Param("status", "failure"));
@@ -485,7 +484,7 @@ void MigrationReportPacker::WorkerThread::run() {
     else {
       params.add("exceptionType", typeid(e).name());
     }
-    lc.log(cta::log::ERR, "In MigrationPacker::run(): Received a standard exception while reporting archive mount results.");
+    lc.log(cta::log::ERR, "In MigrationReportPacker::WorkerThread::run(): Received a standard exception while reporting archive mount results.");
     if (m_parent.m_watchdog) {
       m_parent.m_watchdog->addToErrorCount("Error_reporting");
       m_parent.m_watchdog->addParameter(cta::log::Param("status", "failure"));
@@ -493,7 +492,7 @@ void MigrationReportPacker::WorkerThread::run() {
   } catch (...) {
     //we get there because to tried to close the connection and it failed
     //either from the catch a few lines above or directly from rep->execute
-    lc.log(cta::log::ERR, "In MigrationPacker::run(): Received an unknown exception while reporting archive mount results.");
+    lc.log(cta::log::ERR, "In MigrationReportPacker::WorkerThread::run(): Received an unknown exception while reporting archive mount results.");
     if (m_parent.m_watchdog) {
       m_parent.m_watchdog->addToErrorCount("Error_reporting");
       m_parent.m_watchdog->addParameter(cta::log::Param("status", "failure"));

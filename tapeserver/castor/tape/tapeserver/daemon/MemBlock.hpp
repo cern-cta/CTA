@@ -180,7 +180,7 @@ public:
     m_payload.reset();
     
     //delete the previous m_context (if allocated) 
-    //and set the new one to NULL
+    //and set the new one to nullptr
     m_context.reset();
   }
   /** Unique memory block id */

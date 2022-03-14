@@ -19,7 +19,7 @@
 
 #include "common/threading/Thread.hpp"
 #include "common/threading/BlockingQueue.hpp"
-#include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
+#include "VolumeInfo.hpp"
 #include "common/log/LogContext.hpp"
 #include "tapeserver/session/SessionState.hpp"
 #include "tapeserver/session/SessionType.hpp"
@@ -29,18 +29,15 @@
 #include <stdint.h>
 
 namespace castor {
-namespace messages{
-    class TapeserverProxy;
-  }
 namespace tape {
 namespace tapeserver {
 namespace daemon {
-  
+
 class TapeServerReporter : private cta::threading::Thread {
 
 public:
   /**
-   * COnstructor
+   * Constructor
    * @param tapeserverProxy
    * @param driveConfig The configuration of the tape drive we are using.
    * @param hostname The host name of the computer
@@ -49,29 +46,34 @@ public:
    */
   TapeServerReporter(
     cta::tape::daemon::TapedProxy& tapeserverProxy,
-    const cta::tape::daemon::TpconfigLine &driveConfig,
-    const std::string &hostname,
-    const castor::tape::tapeserver::daemon::VolumeInfo &volume,
+    const cta::tape::daemon::TpconfigLine& driveConfig,
+    const std::string& hostname,
+    const castor::tape::tapeserver::daemon::VolumeInfo& volume,
     cta::log::LogContext lc);
-  
+
   /**
    * Put into the waiting list a guard value to signal the thread we want
    * to stop
-   */      
+   */
   void finish();
-  
+
+  /**
+   * Consume the waiting list and exit
+   */
+  void bailout();
+
   /**
    * Will call TapedProxy::reportState();
    */
-  void reportState(cta::tape::session::SessionState state, 
-      cta::tape::session::SessionType type);
+  void reportState(cta::tape::session::SessionState state,
+                   cta::tape::session::SessionType type);
 
   /**
    * Special function managing the special case of retrieves, where disk and
    * tape thread can finish in different orders (tape part)
    */
   void reportTapeUnmountedForRetrieve();
-  
+
   /**
    * Special function managing the special case of retrieves, where disk and
    * tape thread can finish in different orders (disk part)
@@ -81,10 +83,12 @@ public:
 //------------------------------------------------------------------------------
   //start and wait for thread to finish
   void startThreads();
+
   void waitThreads();
-    
+
 private:
-  bool m_threadRunnig;
+  bool m_threadRunning;
+
   /*
   This internal mechanism could (should ?) be easily changed to a queue 
    * of {std/boost}::function coupled with bind. For instance, tapeMountedForWrite
@@ -95,60 +99,64 @@ private:
    *   (m_fifo.push())();
    * But no tr1 neither boost, so, another time ...
   */
-  
+
   class Report {
   public:
-    virtual ~Report(){}
-    virtual void execute(TapeServerReporter&)=0;
+    virtual ~Report() = default;
+
+    virtual void execute(TapeServerReporter&) = 0;
   };
-  
-  class ReportStateChange: public Report {
+
+  class ReportStateChange : public Report {
   public:
-    ReportStateChange(cta::tape::session::SessionState state, 
-      cta::tape::session::SessionType type);
+    ReportStateChange(cta::tape::session::SessionState state,
+                      cta::tape::session::SessionType type);
+
     void execute(TapeServerReporter&) override;
+
   private:
     cta::tape::session::SessionState m_state;
     cta::tape::session::SessionType m_type;
   };
-  
-  class ReportTapeUnmountedForRetrieve: public Report {
+
+  class ReportTapeUnmountedForRetrieve : public Report {
   public:
     void execute(TapeServerReporter&) override;
   };
-  
-  class ReportDiskCompleteForRetrieve: public Report {
+
+  class ReportDiskCompleteForRetrieve : public Report {
   public:
     void execute(TapeServerReporter&) override;
   };
+
   /**
    * Inherited from Thread, it will do the job : pop a request, execute it 
    * and delete it
    */
-  virtual void run();
-  
+  void run() override;
+
   /** 
    * m_fifo is holding all the report waiting to be processed
    */
-  cta::threading::BlockingQueue<Report*> m_fifo;
-  
+  cta::threading::BlockingQueue<Report *> m_fifo;
+
   /**
    A bunch of references to proxies to send messages to the 
    * outside world when we have to
    */
   cta::tape::daemon::TapedProxy& m_tapeserverProxy;
-  
+
   /**
    * Log context, copied because it is in a separated thread
    */
   cta::log::LogContext m_lc;
-  
+
   /**
    * Boolean allowing the management of the special case of recall where
    * end of tape and disk threads can happen in any order (tape side)
    */
   bool m_tapeUnmountedForRecall = false;
-  
+
   /**
    * Boolean allowing the management of the special case of recall where
    * end of tape and disk threads can happen in any order (disk side)
@@ -163,4 +171,7 @@ private:
 
 };
 
-}}}}
+}
+}
+}
+}
