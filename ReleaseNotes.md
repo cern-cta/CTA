@@ -20,6 +20,22 @@ Please consult the [database upgrade documentation](https://tapeoperations.docs.
 ### Continuous Integration
 - cta/CTA#1126 - Create tests for TapeDrivesCatalogueState
 
+# v4.6.1-1
+
+## Summary
+
+### Upgrade Instructions
+
+This CTA release requires a database schema upgrade to CTA catalogue schema v4.6.
+Please consult the [database upgrade documentation](https://tapeoperations.docs.cern.ch/ctaops/upgrade_production_database).
+
+### Features
+- cta/CTA#1137 - Stop deletion of failed retrieve/archive requests
+
+### Bug fixes
+
+### Continuous Integration
+
 # v4.6.0-1
 
 ## Summary
