@@ -62,6 +62,11 @@ namespace SCSI {
      * out virtual table pointer, this will be detected soon enough.
      * @param s pointer the struct/class.
      */
+    // Because memset is problematic, since gcc8 it throws an error in compiling time.
+    // To transforim those errors in warnings
+    // #pragma GCC diagnostic warning "-Wclass-memaccess"
+    // To remove the warnings during compilation process
+    #pragma GCC diagnostic ignored "-Wclass-memaccess"
     template <typename C>
     void zeroStruct(C * s) {
       memset (s, 0, sizeof(C));

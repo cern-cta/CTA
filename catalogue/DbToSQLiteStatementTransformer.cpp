@@ -76,7 +76,6 @@ std::string DeleteStatementTransformer::transform(){
 /* DbToSQLiteStatementTransformerFactory             */
 /*****************************************************/
 std::unique_ptr<DbToSQLiteStatementTransformer> DbToSQLiteStatementTransformerFactory::create(const std::string &statement){
-  typedef DbToSQLiteStatementTransformerFactory::StatementType StatementType;
   StatementType stmtType = statementToStatementType(statement);
   std::unique_ptr<DbToSQLiteStatementTransformer> ret;
   switch(stmtType){
@@ -110,7 +109,6 @@ DbToSQLiteStatementTransformerFactory::StatementType DbToSQLiteStatementTransfor
 
 std::map<std::string,DbToSQLiteStatementTransformerFactory::StatementType> DbToSQLiteStatementTransformerFactory::initializeRegexToStatementMap()
 {
-  typedef DbToSQLiteStatementTransformerFactory::StatementType StatementType;
   std::map<std::string,StatementType> ret;
   ret["CREATE TABLE ([a-zA-Z_]+)"] = StatementType::CREATE_TABLE;
   ret["CREATE INDEX ([a-zA-Z_]+)"] = StatementType::CREATE_INDEX;

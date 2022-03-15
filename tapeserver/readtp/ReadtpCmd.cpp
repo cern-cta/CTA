@@ -364,7 +364,7 @@ void ReadtpCmd::readTapeFiles(
         readTapeFile(drive, fSeq, wf);
         m_nbSuccessReads++; // if readTapeFile returns, file was read successfully
         destinationFile = getNextDestinationUrl();
-      } catch (tapeserver::readtp::NoSuchFSeqException) {
+      } catch (tapeserver::readtp::NoSuchFSeqException&) {
         //Do nothing
       } catch(exception::Exception &ne) {
         std::list<cta::log::Param> params;
@@ -453,7 +453,7 @@ void ReadtpCmd::readTapeFile(
       }
       payload->append(rf);
     }
-  } catch (cta::exception::EndOfFile ex) {
+  } catch (cta::exception::EndOfFile&) {
     //File completely read
   }   
   read_data_size += payload->size();

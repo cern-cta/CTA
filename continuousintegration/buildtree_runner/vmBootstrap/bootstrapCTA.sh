@@ -23,6 +23,9 @@ if [[ $1 == "cern" ]]; then
   echo Going to install from internal CERN repositories
 fi
 
+echo Enabling devtoolset-8
+source /opt/rh/devtoolset-8/enable
+
 echo Preparing CTA sources...
 cd ~/CTA
 git submodule update --init --recursive

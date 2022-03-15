@@ -71,14 +71,14 @@ public:
   
   struct RetrieveQueueJobsToAddLess {
     constexpr bool operator() (const RetrieveQueue::JobToAdd& lhs, 
-      const RetrieveQueue::JobToAdd& rhs) { return lhs.fSeq < rhs.fSeq; }
+      const RetrieveQueue::JobToAdd& rhs) const { return lhs.fSeq < rhs.fSeq; }
   };
   
   typedef std::multiset<RetrieveQueue::JobToAdd, RetrieveQueueJobsToAddLess> JobsToAddSet;
   
   struct RetrieveQueueSerializedJobsToAddLess {
     bool operator() (const serializers::RetrieveJobPointer& lhs, 
-      const serializers::RetrieveJobPointer& rhs) { return lhs.fseq() < rhs.fseq(); }
+      const serializers::RetrieveJobPointer& rhs) const { return lhs.fseq() < rhs.fseq(); }
   };
   typedef std::multiset<serializers::RetrieveJobPointer, 
     RetrieveQueueSerializedJobsToAddLess> SerializedJobsToAddSet;

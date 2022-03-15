@@ -81,7 +81,7 @@ public:
     if (m_crashingChild) return EXIT_FAILURE;
     // Just wait forever for an echo request
     EchoRequestRepy echo;
-    memset(&echo, '\0', sizeof(echo));
+    echo = {};
     cta::server::SocketPair::pollMap pm;
     pm["0"] = &m_socketPair;
     cta::server::SocketPair::poll(pm, 1);

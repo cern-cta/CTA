@@ -431,7 +431,7 @@ bool Scheduler::isBeingRepacked(const std::string &vid) {
   try {
     getRepack(vid);
     return true;
-  } catch(cta::exception::UserError) {
+  } catch(cta::exception::UserError&) {
     return false;
   }
 }

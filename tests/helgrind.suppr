@@ -357,28 +357,28 @@
    fun:_ZNSt10shared_ptrINSt13__future_base11_State_baseEED1Ev
 }
 
-{     
+{
    Rados_context_create
    Helgrind:Race
    ...
-   obj:/usr/lib64/librados.so.2.0.0     
-   obj:/usr/lib64/librados.so.2.0.0     
-   obj:/usr/lib64/librados.so.2.0.0     
-   obj:/usr/lib64/libstdc++.so.6.0.19     
-   fun:mythread_wrapper     
-   fun:start_thread     
+   obj:/usr/lib64/librados.so.2.0.0
+   obj:/usr/lib64/librados.so.2.0.0
+   obj:/usr/lib64/librados.so.2.0.0
+   obj:/usr/lib64/libstdc++.so.6.0.19
+   fun:mythread_wrapper
+   fun:start_thread
    fun:clone
 }
 
-{     
+{
    Rados_context_create_2
    Helgrind:Race
    ...
-   obj:/usr/lib64/librados.so.2.0.0     
-   obj:/usr/lib64/librados.so.2.0.0     
+   obj:/usr/lib64/librados.so.2.0.0
+   obj:/usr/lib64/librados.so.2.0.0
    obj:/usr/lib64/librados.so.2.0.0
    fun:_ZN8librados11RadosClient7connectEv
-   fun:_ZN3cta11objectstore12BackendRadosC1ERKSsS3_S3_   
+   fun:_ZN3cta11objectstore12BackendRadosC1ERKSsS3_S3_
    ...
 }
 
@@ -650,5 +650,167 @@
    fun:_ZNSt10unique_ptrIN3cta11objectstore14AgentReferenceESt14default_deleteIS2_EED1Ev
    fun:_ZN3cta12_GLOBAL__N_115OStoreDBWrapperINS_11objectstore10BackendVFSEED1Ev
    fun:_ZN3cta12_GLOBAL__N_115OStoreDBWrapperINS_11objectstore10BackendVFSEED0Ev
+   ...
+}
+
+{
+    AgentReference::queueAndExecuteAction_race_false_positive
+    Helgrind:Race
+    ...
+    fun:_ZNSt6futureIvE3getEv
+    fun:_ZN3cta11objectstore14AgentReference21queueAndExecuteActionESt10shared_ptrINS1_6ActionEERNS0_7BackendE
+    ...
+}
+
+{
+   Protobuf_In_ArchieveQueueShardPointer
+   Helgrind:Race
+   ...
+   fun:_ZN3cta11objectstore11serializers12ArchiveQueueD1Ev
+   fun:_ZN3cta11objectstore9ObjectOpsINS0_11serializers12ArchiveQueueELNS2_10ObjectTypeE9EED1Ev
+   fun:_ZN3cta11objectstore12ArchiveQueueD1Ev
+   fun:_ZN3cta11objectstore12ArchiveQueueD0Ev
+   ...
+}
+
+{
+    Protobuf_In_RetrieveQueueShardPointer
+    Helgrind:Race
+    ...
+    fun:_ZN3cta11objectstore11serializers13RetrieveQueueD1Ev
+    fun:_ZN3cta11objectstore9ObjectOpsINS0_11serializers13RetrieveQueueELNS2_10ObjectTypeE10EED1Ev
+    fun:_ZN3cta11objectstore13RetrieveQueueD1Ev
+    fun:_ZN3cta11objectstore13RetrieveQueueD0Ev
+    ...
+}
+
+{
+    Protobuf_In_ArchivedJobShardPointer
+    Helgrind:Race
+    ...
+    fun:_ZN3cta11objectstore11serializers10ArchiveJob10SharedDtorEv
+    fun:_ZN3cta11objectstore11serializers10ArchiveJobD1Ev
+    fun:_ZN3cta11objectstore11serializers10ArchiveJobD0Ev
+    ...
+    fun:_ZN3cta11objectstore14ArchiveRequestD1Ev
+    ...
+}
+
+{
+    Protobuf_In_ArchiveRequest
+    Helgrind:Race
+    ...
+    fun:_ZN3cta11objectstore11serializers14ArchiveRequestD1Ev
+    fun:_ZN3cta11objectstore9ObjectOpsINS0_11serializers14ArchiveRequestELNS2_10ObjectTypeE7EED1Ev
+    fun:_ZN3cta11objectstore14ArchiveRequestD1Ev
+    ...
+}
+
+{
+    ArchiveRequest_JobDump
+    Helgrind:Race
+    ...
+    fun:_ZNSsD1Ev
+    fun:_ZN3cta11objectstore14ArchiveRequest7JobDumpD1Ev
+    ...
+}
+
+{
+    Protobuf_In_ArchiveQueue
+    Helgrind:Race
+    ...
+    fun:_ZN3cta11objectstore11serializers24ArchiveQueueShardPointerD0Ev
+    fun:_ZN6google8protobuf8internal18GenericTypeHandlerIN3cta11objectstore11serializers24ArchiveQueueShardPointerEE6DeleteEPS6_PNS0_5ArenaE
+    fun:_ZN6google8protobuf8internal20RepeatedPtrFieldBase7DestroyINS0_16RepeatedPtrFieldIN3cta11objectstore11serializers24ArchiveQueueShardPointerEE11TypeHandlerEEEvv
+    fun:_ZN6google8protobuf16RepeatedPtrFieldIN3cta11objectstore11serializers24ArchiveQueueShardPointerEED1Ev
+    fun:_ZN3cta11objectstore11serializers12ArchiveQueueD1Ev
+    ...
+}
+
+{
+   false_race_condition_for_promise_in_agent_reference
+   Helgrind:Race
+   ...
+   fun:_ZNSt7promiseIvED1Ev
+   fun:_ZN3cta11objectstore14AgentReference6ActionD1Ev
+   fun:_ZNSt15_Sp_counted_ptrIPN3cta11objectstore14AgentReference6ActionELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv
+   ...
+   fun:_ZNSt12__shared_ptrIN3cta11objectstore14AgentReference6ActionELN9__gnu_cxx12_Lock_policyE2EED1Ev
+   fun:_ZNSt10shared_ptrIN3cta11objectstore14AgentReference6ActionEED1Ev
+   fun:_ZN9__gnu_cxx13new_allocatorISt10_List_nodeISt10shared_ptrIN3cta11objectstore14AgentReference6ActionEEEE7destroyIS7_EEvPT_
+   fun:_ZNSt16allocator_traitsISaISt10_List_nodeISt10shared_ptrIN3cta11objectstore14AgentReference6ActionEEEEE7destroyIS6_EEvRS8_PT_
+   ...
+}
+
+{
+   <insert_a_suppression_name_here>
+   Helgrind:Race
+   ...
+   fun:_ZNKSt14__basic_futureIvE4waitEv
+   fun:_ZN3cta11objectstore7Helpers23selectBestRetrieveQueueERKSt3setISsSt4lessISsESaISsEERNS_9catalogue9CatalogueERNS0_7BackendEb
+   fun:_ZN3cta8OStoreDB13queueRetrieveERNS_6common14dataStructures15RetrieveRequestERKNS2_25RetrieveFileQueueCriteriaENS_8optionalISsEERNS_3log10LogContextE
+   fun:_ZN3cta12_GLOBAL__N_115OStoreDBWrapperINS_11objectstore10BackendVFSEE13queueRetrieveERNS_6common14dataStructures15RetrieveRequestERKNS6_25RetrieveFileQueueCriteriaENS_8optionalISsEERNS_3log10LogContextE
+   ...
+}
+
+{
+   MemQueueRequested
+   Helgrind:Race
+   ...
+   fun:_ZN3cta8ostoredb15MemQueueRequestINS_11objectstore14ArchiveRequestENS2_12ArchiveQueueEED1Ev
+   fun:_ZN3cta8ostoredb15MemQueueRequestINS_11objectstore14ArchiveRequestENS2_12ArchiveQueueEED0Ev
+   fun:_ZNSt15_Sp_counted_ptrIPN3cta8ostoredb15MemQueueRequestINS0_11objectstore14ArchiveRequestENS3_12ArchiveQueueEEELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv
+   ...
+}
+
+{
+   MemQueueRequested_RetrieveQueue
+   Helgrind:Race
+   ...
+   fun:_ZNSt7promiseIvED1Ev
+   fun:_ZN3cta8ostoredb15MemQueueRequestINS_11objectstore15RetrieveRequestENS2_13RetrieveQueueEED1Ev
+   fun:_ZN3cta8ostoredb15MemQueueRequestINS_11objectstore15RetrieveRequestENS2_13RetrieveQueueEED0Ev
+   fun:_ZNSt15_Sp_counted_ptrIPN3cta8ostoredb15MemQueueRequestINS0_11objectstore15RetrieveRequestENS3_13RetrieveQueueEEELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv
+   ...
+}
+
+{
+   SharedQueueMemQueue
+   Helgrind:Race
+   ...
+   fun:_ZNSt12__shared_ptrIN3cta8ostoredb15SharedQueueLockINS0_11objectstore12ArchiveQueueENS3_14ArchiveRequestEEELN9__gnu_cxx12_Lock_policyE2EEC1ERKS9_
+   fun:_ZNSt10shared_ptrIN3cta8ostoredb15SharedQueueLockINS0_11objectstore12ArchiveQueueENS3_14ArchiveRequestEEEEC1ERKS7_
+   fun:_ZN3cta8ostoredb8MemQueueINS_11objectstore14ArchiveRequestENS2_12ArchiveQueueEE16sharedAddToQueueERNS3_7JobDumpERKSsRS3_RNS_8OStoreDBERNS_3log10LogContextE
+   ...
+}
+
+{
+   SharedQueue
+   Helgrind:Race
+   fun:_ZN9__gnu_cxxL18__exchange_and_addEPVii
+   fun:_ZN9__gnu_cxxL27__exchange_and_add_dispatchEPii
+   fun:_ZNSt16_Sp_counted_baseILN9__gnu_cxx12_Lock_policyE2EE10_M_releaseEv
+   fun:_ZNSt14__shared_countILN9__gnu_cxx12_Lock_policyE2EED1Ev
+   fun:_ZNSt12__shared_ptrIN3cta8ostoredb15SharedQueueLockINS0_11objectstore12ArchiveQueueENS3_14ArchiveRequestEEELN9__gnu_cxx12_Lock_policyE2EED1Ev
+   fun:_ZNSt10shared_ptrIN3cta8ostoredb15SharedQueueLockINS0_11objectstore12ArchiveQueueENS3_14ArchiveRequestEEEED1Ev
+   ...
+}
+
+{
+    ArchiveRequest_AddToNewQueue
+    Helgrind:Race
+    ...
+    fun:_ZNSt6futureIvE3getEv
+    fun:_ZN3cta8ostoredb8MemQueueINS_11objectstore14ArchiveRequestENS2_12ArchiveQueueEE19sharedAddToNewQueueERNS3_7JobDumpERKSsRS3_RNS_8OStoreDBERNS_3log10LogContextERNS_9threading11MutexLockerE
+    fun:_ZN3cta8ostoredb8MemQueueINS_11objectstore14ArchiveRequestENS2_12ArchiveQueueEE16sharedAddToQueueERNS3_7JobDumpERKSsRS3_RNS_8OStoreDBERNS_3log10LogContextE
+    ...
+}
+
+{
+   ObjectStoreScopedExclusiveLock
+   Helgrind:Race
+   ...
+   fun:_ZN3cta11objectstore10ScopedLock15releaseIfNeededEv
+   fun:_ZN3cta11objectstore19ScopedExclusiveLockD1Ev
    ...
 }

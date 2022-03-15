@@ -567,7 +567,7 @@ bool RestoreFilesCmd::fileExistsEos(const std::string &diskInstance, const std::
     params.push_back(cta::log::Param("diskFilePath", path));
     m_log(cta::log::DEBUG, "eos fxid exists in the EOS namespace");
     return true;
-  } catch(cta::exception::Exception) {
+  } catch(cta::exception::Exception&) {
     m_log(cta::log::DEBUG, "eos fxid does not exist in the EOS namespace");
     return false;
   }

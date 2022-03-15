@@ -182,7 +182,7 @@ bool RecallTaskInjector::reserveSpaceForNextJobBatch() {
   bool ret = true;
   try {
     ret = m_retrieveMount.reserveDiskSpace(spaceToReserve, m_lc);
-  } catch (std::out_of_range) {
+  } catch (std::out_of_range&) {
     //#1076 If the disk system for this mount was removed, process the jobs as if they had no disk system
     // (assuming only one disk system per mount)
     for (auto job: nextJobBatch) {

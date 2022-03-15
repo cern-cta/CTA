@@ -43,7 +43,7 @@ cp gitScripts/.git-* ~
 cat gitScripts/bash_profile.hook >> ~/.bash_profile
 source ~/.bash_profile
 cp tigConf/tigrc ~/.tigrc
-yum install -y git cmake rpm-build gcc gcc-c++ vim gdb cgdb strace ltrace screen tig lsscsi mt-st mtx sg3_utils jq psmisc yum-plugin-versionlock
+yum install -y git cmake rpm-build devtoolset-8 vim gdb cgdb strace ltrace screen tig lsscsi mt-st mtx sg3_utils jq psmisc yum-plugin-versionlock
 ```
 4. Bootstrap CTA :
 ```bash
@@ -62,6 +62,7 @@ Go to the CTA parent's folder and type
 ```bash
 mkdir CTA-build-srpm
 cd CTA-build-srpm
+source /opt/rh/devtoolset-8/enable
 cmake -DPackageOnly:Bool=true ../CTA
 make cta_srpm
 ```
@@ -97,6 +98,7 @@ sudo yum install -y mhvtl-utils kmod-mhvtl mhvtl-utils --enablerepo=castor
 11. Build CTA
 Create a directory near the CTA one called CTA-build, go into it and type
 ```bash
+source /opt/rh/devtoolset-8/enable
 cmake ../CTA
 make -j 4
 ```
