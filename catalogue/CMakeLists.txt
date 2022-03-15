@@ -88,6 +88,7 @@ add_custom_command (OUTPUT sqlite_catalogue_schema.sql oracle_catalogue_schema.s
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
     insert_cta_catalogue_version.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_trailer.sql
+    | sed 's/--.*/ /g'
     | sed 's/UINT8TYPE/INTEGER/g'
     | sed 's/UINT16TYPE/INTEGER/g'
     | sed 's/UINT32TYPE/INTEGER/g'
@@ -99,6 +100,7 @@ add_custom_command (OUTPUT sqlite_catalogue_schema.sql oracle_catalogue_schema.s
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
     insert_cta_catalogue_version.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_trailer.sql
+    | sed 's/--.*/ /g'
     | sed 's/UINT8TYPE/NUMERIC\(3, 0\)/g'
     | sed 's/UINT16TYPE/NUMERIC\(5, 0\)/g'
     | sed 's/UINT32TYPE/NUMERIC\(10, 0\)/g'
@@ -111,6 +113,7 @@ add_custom_command (OUTPUT sqlite_catalogue_schema.sql oracle_catalogue_schema.s
     ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
     insert_cta_catalogue_version.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/postgres_catalogue_schema_trailer.sql
+    | sed 's/--.*/ /g'
     | sed 's/UINT8TYPE/NUMERIC\(3, 0\)/g'
     | sed 's/UINT16TYPE/NUMERIC\(5, 0\)/g'
     | sed 's/UINT32TYPE/NUMERIC\(10, 0\)/g'
