@@ -2364,6 +2364,7 @@ void RequestMessage::processVirtualOrganization_Ch(cta::xrd::Response &response)
   const auto writeMaxDrives = getOptional(OptionUInt64::WRITE_MAX_DRIVES);
   const auto comment = getOptional(OptionString::COMMENT);
   const auto maxFileSize = getOptional(OptionUInt64::MAX_FILE_SIZE);
+  const auto diskInstanceName = getOptional(OptionString::DISK_INSTANCE);
 
   if(comment)
     m_catalogue.modifyVirtualOrganizationComment(m_cliIdentity,name,comment.value());
@@ -2376,6 +2377,9 @@ void RequestMessage::processVirtualOrganization_Ch(cta::xrd::Response &response)
 
   if(maxFileSize)
     m_catalogue.modifyVirtualOrganizationMaxFileSize(m_cliIdentity,name,maxFileSize.value());
+
+  if(diskInstanceName) 
+    m_catalogue.modifyVirtualOrganizationDiskInstanceName(m_cliIdentity, name, diskInstanceName.value());
 
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }

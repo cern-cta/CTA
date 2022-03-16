@@ -16258,6 +16258,26 @@ TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationMaxFileSize) {
   ASSERT_THROW(m_catalogue->modifyVirtualOrganizationMaxFileSize(m_admin,"DOES not exists", maxFileSize),cta::exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationDiskInstanceName) {
+  using namespace cta;
+
+  common::dataStructures::VirtualOrganization vo = getVo();
+
+  ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
+
+  std::string diskInstanceName = "diskInstanceName";
+
+  ASSERT_NO_THROW(m_catalogue->modifyVirtualOrganizationDiskInstanceName(m_admin,vo.name,diskInstanceName));
+
+  auto vos = m_catalogue->getVirtualOrganizations();
+  auto &frontVo = vos.front();
+
+  ASSERT_EQ(diskInstanceName,frontVo.diskInstanceName.value());
+
+  ASSERT_THROW(m_catalogue->modifyVirtualOrganizationDiskInstanceName(m_admin,"DOES not exists","VO_DOES_NOT_EXIST"),cta::exception::UserError);
+}
+
+
 TEST_P(cta_catalogue_CatalogueTest, getVirtualOrganizationOfTapepool) {
   using namespace cta;
 

@@ -19,6 +19,7 @@
  
 #include <string>
 #include "EntryLog.hpp"
+#include "common/optional.hpp"
 
 namespace cta { 
 namespace common {
@@ -56,10 +57,15 @@ struct VirtualOrganization {
    * The last modification log.
    */
   EntryLog lastModificationLog;
+
+  /**
+   * The disk instance name.
+   */
+  cta::optional<std::string> diskInstanceName;
   
   bool operator==(const VirtualOrganization & other) const{
     return (name == other.name && comment == other.comment && readMaxDrives == other.readMaxDrives && 
-      writeMaxDrives == other.writeMaxDrives && maxFileSize == other.maxFileSize);
+      writeMaxDrives == other.writeMaxDrives && maxFileSize == other.maxFileSize && diskInstanceName == other.diskInstanceName);
   }
 };
 

@@ -156,6 +156,10 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyVirtualOrganizationComment(admin,voName,comment);}, m_maxTriesToConnect);
   }
 
+  void modifyVirtualOrganizationDiskInstanceName(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const std::string &diskInstance) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyVirtualOrganizationDiskInstanceName(admin,voName,diskInstance);}, m_maxTriesToConnect);
+  }
+
   void createStorageClass(const common::dataStructures::SecurityIdentity &admin, const common::dataStructures::StorageClass &storageClass) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->createStorageClass(admin, storageClass);}, m_maxTriesToConnect);
   }

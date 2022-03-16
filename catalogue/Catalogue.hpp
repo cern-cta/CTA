@@ -358,6 +358,15 @@ public:
    * @param comment The new comment of the Virtual Organization.
    */
   virtual void modifyVirtualOrganizationComment(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const std::string &comment) = 0;
+  
+  /**
+   * Modifies the comment of the specified Virtual Organization
+   *
+   * @param voName The name of the Virtual Organization.
+   * @param diskInstance The new disk instance of the Virtual Organization.
+   */
+  virtual void modifyVirtualOrganizationDiskInstanceName(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const std::string &diskInstance) = 0;
+  
   /**
    * Creates the specified storage class.
    *

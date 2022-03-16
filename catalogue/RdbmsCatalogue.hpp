@@ -302,6 +302,14 @@ public:
   void modifyVirtualOrganizationComment(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const std::string &comment) override;
 
   /**
+   * Modifies the Disk Instance name of the specified Virtual Organization
+   *
+   * @param voName The name of the Virtual Organization.
+   * @param diskInstance The new Disk Instance name of the Virtual Organization.
+   */
+  void modifyVirtualOrganizationDiskInstanceName(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const std::string &diskInstance) override;
+
+  /**
    * Creates the specified storage class.
    *
    * @param admin The administrator.
