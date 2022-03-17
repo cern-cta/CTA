@@ -9,6 +9,7 @@ Please consult the [database upgrade documentation](https://tapeoperations.docs.
 
 ### Features
 - cta/CTA#1123 - Add mount id to disk space reservations, prevent tape servers from releasing disk space from a previous mount
+- cta/CTA#1147 - Add Disk Instance Column to VO table
 
 ### Bug fixes
 - cta/CTA#1117 - Update masterDataInBytes when writing files to tape
