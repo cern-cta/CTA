@@ -32,6 +32,7 @@ CreateSchemaCmdLineArgs::CreateSchemaCmdLineArgs(const int argc, char *const *co
 
   static struct option longopts[] = {
     {"help", no_argument, NULL, 'h'},
+    {"version" , required_argument, NULL, 'v'},
     {NULL  ,           0, NULL,   0}
   };
 
@@ -40,10 +41,13 @@ CreateSchemaCmdLineArgs::CreateSchemaCmdLineArgs(const int argc, char *const *co
   opterr = 0;
 
   int opt = 0;
-  while((opt = getopt_long(argc, argv, ":h", longopts, NULL)) != -1) {
+  while((opt = getopt_long(argc, argv, ":hv:", longopts, NULL)) != -1) {
     switch(opt) {
     case 'h':
       help = true;
+      break;
+    case 'v':
+      catalogueVersion = optarg;
       break;
     case ':': // Missing parameter
       {
@@ -103,7 +107,9 @@ void CreateSchemaCmdLineArgs::printUsage(std::ostream &os) {
     "        catalogue database" << std::endl <<
     "Options:" << std::endl <<
     "    -h,--help" << std::endl <<
-    "        Prints this usage message" << std::endl;
+    "        Prints this usage message" << std::endl <<
+    "    -v,--version" << std::endl <<
+    "        Version of the catalogue to be created" << std::endl;
 }
 
 } // namespace catalogue

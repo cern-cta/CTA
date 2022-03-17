@@ -11,7 +11,7 @@ Please consult the [database upgrade documentation](https://eoscta.docs.cern.ch/
 - cta/CTA#1123 - Add mount id to disk space reservations, prevent tape servers from releasing disk space from a previous mount
 - cta/CTA#1147 - Add Disk Instance Column to VO table
 - cta/CTA#1137 - Stop deletion of failed retrieve/archive requests
-
+- cta/CTA#1150 - Add option to pass desired catalogue version into cta-catalogue-schema-create
 
 ### Bug fixes
 - cta/CTA#1117 - Update masterDataInBytes when writing files to tape

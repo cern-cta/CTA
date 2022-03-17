@@ -20,6 +20,7 @@
 #include "catalogue/OracleCatalogueSchema.hpp"
 #include "catalogue/PostgresCatalogueSchema.hpp"
 #include "catalogue/SqliteCatalogueSchema.hpp"
+#include "catalogue/VersionedCatalogueSchemas.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/ConnPool.hpp"
@@ -74,14 +75,24 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
     return 1;
   case rdbms::Login::DBTYPE_POSTGRESQL:
     {
-       PostgresCatalogueSchema schema;
-       executeNonQueries(conn, schema.sql);
+      if (cmdLineArgs.catalogueVersion) {
+        PostgresVersionedCatalogueSchema schema(cmdLineArgs.catalogueVersion.value());
+        executeNonQueries(conn, schema.sql);
+      } else {
+        PostgresCatalogueSchema schema;
+        executeNonQueries(conn, schema.sql);
+      }
     }
     break;
   case rdbms::Login::DBTYPE_ORACLE:
     {
-      OracleCatalogueSchema schema;
-      executeNonQueries(conn, schema.sql);
+      if (cmdLineArgs.catalogueVersion) {
+        OracleVersionedCatalogueSchema schema(cmdLineArgs.catalogueVersion.value());
+        executeNonQueries(conn, schema.sql);
+      } else {
+        OracleCatalogueSchema schema;
+        executeNonQueries(conn, schema.sql);
+      }
     }
     break;
   case rdbms::Login::DBTYPE_NONE:

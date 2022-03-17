@@ -29,6 +29,13 @@ namespace catalogue {
  * database.
  */
 struct CatalogueSchema {
+  
+  /**
+   * Constructor.
+   *
+   */
+  CatalogueSchema();
+  
   /**
    * Constructor.
    *
@@ -40,7 +47,7 @@ struct CatalogueSchema {
   /**
    * The schema.
    */
-  const std::string sql;
+  std::string sql;
   
   /**
    * Returns the names of all the tables in the catalogue schema.

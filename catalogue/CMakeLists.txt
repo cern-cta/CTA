@@ -200,8 +200,10 @@ add_executable(cta-catalogue-schema-create
   CreateSchemaCmdLineArgs.cpp
   CreateSchemaCmdMain.cpp
   OracleCatalogueSchema.cpp
+  VersionedCatalogueSchemas.cpp
   SqliteCatalogueSchema.cpp
-  PostgresCatalogueSchema.cpp)
+  PostgresCatalogueSchema.cpp
+  )
 
 set (SCHEMA_CHECKER_LIB_SRC_FILES
   SQLiteSchemaInserter.cpp

@@ -100,6 +100,45 @@ TEST_F(cta_catalogue_CreateSchemaCmdLineArgsTest, help_long) {
   ASSERT_TRUE(cmdLine.dbConfigPath.empty());
 }
 
+TEST_F(cta_catalogue_CreateSchemaCmdLineArgsTest, version_short) {
+  using namespace cta::catalogue;
+
+  Argcv *args = new Argcv();
+  m_argsList.push_back(args);
+  args->argc = 4;
+  args->argv = new char *[5];
+  args->argv[0] = dupString("cta-catalogue-schema-create");
+  args->argv[1] = dupString("dbConfigPath");
+  args->argv[2] = dupString("-v");
+  args->argv[3] = dupString("4.5");
+  args->argv[4] = NULL;
+
+  CreateSchemaCmdLineArgs cmdLine(args->argc, args->argv);
+
+  ASSERT_FALSE(cmdLine.help);
+  ASSERT_EQ(cmdLine.catalogueVersion.value(), "4.5");
+}
+
+TEST_F(cta_catalogue_CreateSchemaCmdLineArgsTest, version_long) {
+  using namespace cta::catalogue;
+
+  Argcv *args = new Argcv();
+  m_argsList.push_back(args);
+  args->argc = 4;
+  args->argv = new char *[5];
+  args->argv[0] = dupString("cta-catalogue-schema-create");
+  args->argv[1] = dupString("dbConfigPath");
+  args->argv[2] = dupString("--version");
+  args->argv[3] = dupString("4.5");
+  args->argv[4] = NULL;
+
+  CreateSchemaCmdLineArgs cmdLine(args->argc, args->argv);
+
+  ASSERT_FALSE(cmdLine.help);
+  ASSERT_EQ(cmdLine.catalogueVersion.value(), "4.5");
+}
+
+
 TEST_F(cta_catalogue_CreateSchemaCmdLineArgsTest, dbConfigPath) {
   using namespace cta::catalogue;
 

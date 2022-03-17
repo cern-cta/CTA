@@ -17,48 +17,25 @@
 
 #pragma once
 
-#include "common/optional.hpp"
+#include "CatalogueSchema.hpp"
+
 #include <string>
 
 namespace cta {
 namespace catalogue {
 
-/**
- * Structure to store the command-line arguments of the command-line tool
- * named cta-catalogue-schema-create.
- */
-struct CreateSchemaCmdLineArgs {
+struct OracleVersionedCatalogueSchema: public CatalogueSchema {
   /**
-   * True if the usage message should be printed.
+   * Constructor.
    */
-  bool help;
+  OracleVersionedCatalogueSchema(std::string catalogueVersion);
+};
 
+struct PostgresVersionedCatalogueSchema: public CatalogueSchema {
   /**
-   * Path to the file containing the connection details of the catalogue
-   * database.
+   * Constructor.
    */
-  std::string dbConfigPath;
-
-    /**
-   * Version of the catalogue to be created
-   */
-  cta::optional<std::string> catalogueVersion;
-
-  /**
-   * Constructor that parses the specified command-line arguments.
-   *
-   * @param argc The number of command-line arguments including the name of the
-   * executable.
-   * @param argv The vector of command-line arguments.
-   */
-  CreateSchemaCmdLineArgs(const int argc, char *const *const argv);
-
-  /**
-   * Prints the usage message of the command-line tool.
-   *
-   * @param os The output stream to which the usage message is to be printed.
-   */
-  static void printUsage(std::ostream &os);
+  PostgresVersionedCatalogueSchema(std::string catalogueVersion);
 };
 
 } // namespace catalogue
