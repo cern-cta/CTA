@@ -554,6 +554,16 @@ public:
   std::list<common::dataStructures::Tape> getTapes(const TapeSearchCriteria &searchCriteria) const override;
 
   /**
+   * Returns the tape with the specified volume identifier.
+   *
+   * This method will throw an exception if it cannot find the specified tape.
+   *
+   * @param vid The tape volume identifier (VIDs).
+   * @return Map from tape volume identifier to tape.
+   */
+  common::dataStructures::VidToTapeMap getTapesByVid(const std::string& vid) const override;
+
+  /**
    * Returns the tapes with the specified volume identifiers.
    *
    * This method will throw an exception if it cannot find ALL of the specified
@@ -2296,12 +2306,13 @@ protected:
   std::string getSelectTapesBy100VidsSql() const;
 
   /**
-   * Executes the specified "getTapesBy100Vids" statement and collects the
-   * results into the specified vidToTapeMap.
-   * @param stmt the "getTapesBy100Vids" statement
+   * Executes the specified "getTapesByVid" statement and collects the results into
+   * the specified vidToTapeMap.
+   *
+   * @param stmt "getTapesByVid" statement
    * @param vidToTapeMap the map from VID to tape
    */
-  void executeGetTapesBy100VidsStmtAndCollectResults(rdbms::Stmt &stmt,
+  void executeGetTapesByVidStmtAndCollectResults(rdbms::Stmt &stmt,
     common::dataStructures::VidToTapeMap &vidToTapeMap) const;
 
   /**

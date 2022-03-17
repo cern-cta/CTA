@@ -633,6 +633,16 @@ public:
     const TapeSearchCriteria &searchCriteria = TapeSearchCriteria()) const = 0;
 
   /**
+   * Returns the tape with the specified volume identifier.
+   *
+   * This method will throw an exception if it cannot find the specified tape.
+   *
+   * @param vids The tape volume identifier (VID).
+   * @return Map from tape volume identifier to tape.
+   */
+  virtual common::dataStructures::VidToTapeMap getTapesByVid(const std::string& vid) const = 0;
+
+  /**
    * Returns the tapes with the specified volume identifiers.
    *
    * This method will throw an exception if it cannot find ALL of the specified

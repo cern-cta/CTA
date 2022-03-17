@@ -344,6 +344,10 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getTapes(searchCriteria);}, m_maxTriesToConnect);
   }
 
+  common::dataStructures::VidToTapeMap getTapesByVid(const std::string& vid) const override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->getTapesByVid(vid);}, m_maxTriesToConnect);
+  }
+
   common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string> &vids) const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getTapesByVid(vids);}, m_maxTriesToConnect);
   }

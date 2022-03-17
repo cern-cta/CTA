@@ -5,7 +5,7 @@
 ### Upgrade Instructions
 
 This CTA release requires a non backwards compatible database schema upgrade to CTA catalogue schema v5.0.
-Please consult the [database upgrade documentation](https://tapeoperations.docs.cern.ch/ctaops/upgrade_production_database).
+Please consult the [database upgrade documentation](https://eoscta.docs.cern.ch/catalogue/upgrade/).
 
 ### Features
 - cta/CTA#1123 - Add mount id to disk space reservations, prevent tape servers from releasing disk space from a previous mount
@@ -14,6 +14,7 @@ Please consult the [database upgrade documentation](https://tapeoperations.docs.
 ### Bug fixes
 - cta/CTA#1117 - Update masterDataInBytes when writing files to tape
 - cta/CTA#1125 - cta-admin dr ls should show '-' instead of "NO_MOUNT" for Mount Type
+- cta/CTA#1138 - sortAndGetTapesForMountInfo only queries tapes in the current logical library
 
 ### Catalogue Schema
 - cta/CTA#1112 - Remove activities_weights table from catalogue

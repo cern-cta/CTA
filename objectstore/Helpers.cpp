@@ -413,7 +413,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
       // Give other threads a chance to access the cache for other vids.
       grqsmLock.unlock();
       // Get the informations (stages, so we don't access the global variable without the mutex.
-      auto tapeStatus=catalogue.getTapesByVid({v});
+      auto tapeStatus=catalogue.getTapesByVid(v);
       // Build a minimal service  retrieve file queue criteria to query queues.
       common::dataStructures::RetrieveFileQueueCriteria rfqc;
       common::dataStructures::TapeFile tf;

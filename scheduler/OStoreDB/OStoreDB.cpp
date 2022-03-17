@@ -347,7 +347,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     // mount candidates list.
     auto rqSummary = rqueue.getJobsSummary();
     bool isPotentialMount = false;
-    auto vidToTapeMap = m_catalogue.getTapesByVid({rqp.vid});
+    auto vidToTapeMap = m_catalogue.getTapesByVid(rqp.vid);
     common::dataStructures::Tape::State tapeState = vidToTapeMap.at(rqp.vid).state;
     bool tapeIsDisabled = tapeState == common::dataStructures::Tape::DISABLED;
     bool tapeIsActive = tapeState == common::dataStructures::Tape::ACTIVE;

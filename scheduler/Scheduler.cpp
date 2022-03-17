@@ -352,9 +352,8 @@ void Scheduler::queueLabel(const common::dataStructures::SecurityIdentity &cliId
 }
 
 void Scheduler::checkTapeCanBeRepacked(const std::string & vid, const SchedulerDatabase::QueueRepackRequest & repackRequest){
-  std::set<std::string> vidToRepack({vid});
   try{
-    auto vidToTapesMap = m_catalogue.getTapesByVid(vidToRepack); //throws an exception if the vid is not found on the database
+    auto vidToTapesMap = m_catalogue.getTapesByVid(vid); //throws an exception if the vid is not found on the database
     cta::common::dataStructures::Tape tapeToCheck = vidToTapesMap.at(vid);
     if(!tapeToCheck.full){
       throw exception::UserError("You must set the tape as full before repacking it.");
@@ -1011,41 +1010,49 @@ std::list<common::dataStructures::TapeDrive> Scheduler::getDriveStates(const com
 // sortAndGetTapesForMountInfo
 //------------------------------------------------------------------------------
 void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>& mountInfo,
-    const std::string & logicalLibraryName, const std::string & driveName, utils::Timer & timer,
-    ExistingMountSummaryPerTapepool & existingMountsDistinctTypeSummaryPerTapepool, ExistingMountSummaryPerVo & existingMountsBasicTypeSummaryPerVo, std::set<std::string> & tapesInUse, std::list<catalogue::TapeForWriting> & tapeList,
-    double & getTapeInfoTime, double & candidateSortingTime, double & getTapeForWriteTime, log::LogContext & lc) {
-  // The library information is not know for the tapes involved in retrieves. We
-  // need to query the catalogue now about all those tapes.
-  // Build the list of tapes.
-  std::set<std::string> retrieveTapeSet;
-  for (auto &m:mountInfo->potentialMounts) {
-    if (m.type==common::dataStructures::MountType::Retrieve) retrieveTapeSet.insert(m.vid);
+    const std::string& logicalLibraryName, const std::string& driveName, utils::Timer& timer,
+    ExistingMountSummaryPerTapepool& existingMountsDistinctTypeSummaryPerTapepool,
+    ExistingMountSummaryPerVo& existingMountsBasicTypeSummaryPerVo, std::set<std::string>& tapesInUse,
+    std::list<catalogue::TapeForWriting>& tapeList, double& getTapeInfoTime, double& candidateSortingTime,
+    double& getTapeForWriteTime, log::LogContext& lc) {
+  // The library information is not known for tapes involved in retrieves. Get the library information from the DB so
+  // we can filter the potential mounts to the ones that this tape server can serve.
+  catalogue::TapeSearchCriteria searchCriteria;
+  searchCriteria.logicalLibrary = logicalLibraryName;
+  auto eligibleTapesList = m_catalogue.getTapes(searchCriteria);
+  std::set<std::string> eligibleTapeSet;
+  for(auto& t : eligibleTapesList) {
+    eligibleTapeSet.insert(t.vid);
   }
+
+  // Filter the potential mounts to keep only the ones that match the logical library for retrieves,
+  // and build the list of tapes that can potentially be mounted by this tape server
+  std::set<std::string> retrieveTapeSet;
+  for(auto m_it = mountInfo->potentialMounts.begin(); m_it != mountInfo->potentialMounts.end(); ) {
+    if(m_it->type == common::dataStructures::MountType::Retrieve) {
+      if(eligibleTapeSet.count(m_it->vid) == 0) {
+        m_it = mountInfo->potentialMounts.erase(m_it);
+        continue;
+      } else {
+        retrieveTapeSet.insert(m_it->vid);
+      }
+    }
+    m_it++;
+  }
+
   common::dataStructures::VidToTapeMap retrieveTapesInfo;
-  if (retrieveTapeSet.size()) {
-    retrieveTapesInfo=m_catalogue.getTapesByVid(retrieveTapeSet);
+  if(!retrieveTapeSet.empty()) {
+    retrieveTapesInfo = m_catalogue.getTapesByVid(retrieveTapeSet);
     getTapeInfoTime = timer.secs(utils::Timer::resetCounter);
-    for (auto &m:mountInfo->potentialMounts) {
-      if (m.type==common::dataStructures::MountType::Retrieve) {
-        m.logicalLibrary=retrieveTapesInfo[m.vid].logicalLibraryName;
-        m.tapePool=retrieveTapesInfo[m.vid].tapePoolName;
+    for(auto& m : mountInfo->potentialMounts) {
+      if(m.type == common::dataStructures::MountType::Retrieve) {
+        m.logicalLibrary = retrieveTapesInfo[m.vid].logicalLibraryName;
+        m.tapePool = retrieveTapesInfo[m.vid].tapePoolName;
         m.vendor = retrieveTapesInfo[m.vid].vendor;
         m.mediaType = retrieveTapesInfo[m.vid].mediaType;
         m.vo = retrieveTapesInfo[m.vid].vo;
         m.capacityInBytes = retrieveTapesInfo[m.vid].capacityInBytes;
       }
-    }
-  }
-
-  // We should now filter the potential mounts to keep only the ones we are
-  // compatible with (match the logical library for retrieves).
-  // We also only want the potential mounts for which we still have
-  // We cannot filter the archives yet
-  for (auto m = mountInfo->potentialMounts.begin(); m!= mountInfo->potentialMounts.end();) {
-    if (m->type == common::dataStructures::MountType::Retrieve && m->logicalLibrary != logicalLibraryName) {
-        m = mountInfo->potentialMounts.erase(m);
-    } else {
-      m++;
     }
   }
 

@@ -6061,8 +6061,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeState) {
   ASSERT_NO_THROW(m_catalogue->modifyTapeState(m_admin,vid,common::dataStructures::Tape::State::BROKEN,reason));
 
   {
-    //catalogue getTapesByVid test
-    auto vidToTapeMap = m_catalogue->getTapesByVid({vid});
+    //catalogue getTapesByVid test (single VID)
+    auto vidToTapeMap = m_catalogue->getTapesByVid(vid);
     auto tape = vidToTapeMap.at(vid);
     ASSERT_EQ(vid,tape.vid);
     ASSERT_EQ(common::dataStructures::Tape::BROKEN,tape.state);
@@ -6085,7 +6085,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeState) {
   }
 
   {
-    auto vidToTapeMap = m_catalogue->getTapesByVid({vid});
+    //catalogue getTapesByVid test (set of VIDs)
+    std::set<std::string> vids = {vid};
+    auto vidToTapeMap = m_catalogue->getTapesByVid(vids);
     auto tape = vidToTapeMap.at(vid);
     ASSERT_EQ(vid,tape.vid);
     ASSERT_EQ(common::dataStructures::Tape::BROKEN,tape.state);
@@ -6119,7 +6121,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeStateResetReasonWhenBackToActiveSt
   ASSERT_NO_THROW(m_catalogue->modifyTapeState(m_admin,vid,common::dataStructures::Tape::State::ACTIVE,cta::nullopt));
 
   {
-    auto vidToTapeMap = m_catalogue->getTapesByVid({vid});
+    auto vidToTapeMap = m_catalogue->getTapesByVid(vid);
     auto tape = vidToTapeMap.at(vid);
     ASSERT_EQ(vid,tape.vid);
     ASSERT_EQ(common::dataStructures::Tape::ACTIVE,tape.state);

@@ -4178,7 +4178,79 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
 }
 
 //------------------------------------------------------------------------------
-// getTapesByVid
+// getTapesByVid (single VID)
+//------------------------------------------------------------------------------
+common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::string& vid) const {
+  try {
+    const char* const sql =
+    "SELECT "
+      "TAPE.VID AS VID,"
+      "MEDIA_TYPE.MEDIA_TYPE_NAME AS MEDIA_TYPE,"
+      "TAPE.VENDOR AS VENDOR,"
+      "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
+      "TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,"
+      "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,"
+      "TAPE.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,"
+      "MEDIA_TYPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
+      "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
+      "TAPE.LAST_FSEQ AS LAST_FSEQ,"
+      "TAPE.IS_FULL AS IS_FULL,"
+      "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"
+      "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
+      "TAPE.LABEL_TIME AS LABEL_TIME,"
+      "TAPE.LAST_READ_DRIVE AS LAST_READ_DRIVE,"
+      "TAPE.LAST_READ_TIME AS LAST_READ_TIME,"
+      "TAPE.LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,"
+      "TAPE.LAST_WRITE_TIME AS LAST_WRITE_TIME,"
+      "TAPE.READ_MOUNT_COUNT AS READ_MOUNT_COUNT,"
+      "TAPE.WRITE_MOUNT_COUNT AS WRITE_MOUNT_COUNT,"
+      "TAPE.USER_COMMENT AS USER_COMMENT,"
+      "TAPE.TAPE_STATE AS TAPE_STATE,"
+      "TAPE.STATE_REASON AS STATE_REASON,"
+      "TAPE.STATE_UPDATE_TIME AS STATE_UPDATE_TIME,"
+      "TAPE.STATE_MODIFIED_BY AS STATE_MODIFIED_BY,"
+      "TAPE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+      "TAPE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+      "TAPE.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+      "TAPE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+      "TAPE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+      "TAPE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+    "FROM "
+      "TAPE "
+    "INNER JOIN TAPE_POOL ON "
+      "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
+    "INNER JOIN LOGICAL_LIBRARY ON "
+      "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID "
+    "INNER JOIN MEDIA_TYPE ON "
+      "TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID "
+    "INNER JOIN VIRTUAL_ORGANIZATION ON "
+      "TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID "
+    "WHERE "
+      "VID = :VID";
+
+    common::dataStructures::VidToTapeMap vidToTapeMap;
+
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":VID", vid);
+    executeGetTapesByVidStmtAndCollectResults(stmt, vidToTapeMap);
+
+    if(vidToTapeMap.size() != 1) {
+      exception::Exception ex;
+      ex.getMessage() << "Not all tapes were found: expected=1 actual=" << vidToTapeMap.size();
+      throw ex;
+    }
+    return vidToTapeMap;
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getTapesByVid (set of VIDs)
 //------------------------------------------------------------------------------
 common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::set<std::string> &vids) const {
   try {
@@ -4206,7 +4278,7 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
         vidNb = 1;
 
         // Execute the query and collect the results
-        executeGetTapesBy100VidsStmtAndCollectResults(stmt, vidToTapeMap);
+        executeGetTapesByVidStmtAndCollectResults(stmt, vidToTapeMap);
 
         // Create a new statement
         stmt = conn.createStmt(selectTapesBy100VidsSql);
@@ -4226,7 +4298,7 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::se
       }
 
       // Execute the query and collect the results
-      executeGetTapesBy100VidsStmtAndCollectResults(stmt, vidToTapeMap);
+      executeGetTapesByVidStmtAndCollectResults(stmt, vidToTapeMap);
     }
 
     if(vids.size() != vidToTapeMap.size()) {
@@ -4314,9 +4386,9 @@ std::string RdbmsCatalogue::getSelectTapesBy100VidsSql() const {
 }
 
 //------------------------------------------------------------------------------
-// executeGetTapesBy100VidsStmtAndCollectResults
+// executeGetTapesByVidStmtAndCollectResults
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::executeGetTapesBy100VidsStmtAndCollectResults(rdbms::Stmt &stmt,
+void RdbmsCatalogue::executeGetTapesByVidStmtAndCollectResults(rdbms::Stmt &stmt,
   common::dataStructures::VidToTapeMap &vidToTapeMap) const {
   auto rset = stmt.executeQuery();
   while (rset.next()) {
