@@ -77,6 +77,8 @@ CTA_PROC_DIR=/eos/${EOS_INSTANCE}/proc/cta
 CTA_WF_DIR=${CTA_PROC_DIR}/workflow
 # dir for cta tests only for eosusers and powerusers
 CTA_TEST_DIR=/eos/${EOS_INSTANCE}/cta
+# dir for cta tests only for eosusers and powerusers, with no p (prepare) permissons
+CTA_TEST_NO_P_DIR=${CTA_TEST_DIR}/no_prepare
 # dir for gRPC tests, should be the same as eos.prefix in client.sh
 GRPC_TEST_DIR=/eos/grpctest
 # dir for eos instance basic tests writable and readable by anyone
@@ -323,6 +325,14 @@ fi
 
   # Link the attributes of CTA worklow directory to the test directory
   eos attr link ${CTA_WF_DIR} ${CTA_TEST_DIR}
+
+  # ${CTA_TEST_NO_P_DIR} must be writable by eosusers and powerusers
+  # but not allow prepare requests.
+  # this is achieved through the ACLs.
+  # This directory is created inside ${CTA_TEST_DIR}.
+  # ACLs in EOS are evaluated when unix permissions are failing, hence the 555 unix permission.
+  eos mkdir ${CTA_TEST_NO_P_DIR}
+  eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+d,u:poweruser2:rwx+d,z:'!'u,u:root:+u ${CTA_TEST_NO_P_DIR}
 
   # Prepare the tmp dir so that we can test that the EOS instance is OK
   eos mkdir ${EOS_TMP_DIR}

@@ -56,9 +56,9 @@ NB_FILES_NO_P=4
 NB_FILES_MISS=4
 
 EOS_BASEDIR=/eos/ctaeos
-EOS_TAPE_BASEDIR=$EOS_BASEDIR/cta  # Exists on tape: for testing files on tape
-EOS_DISK_BASEDIR=$EOS_BASEDIR/tmp  # Exists on disk only: for testing files without prepare permissions
-EOS_NONE_BASEDIR=$EOS_BASEDIR/none # Does not exist: for testing non-existing files
+EOS_TAPE_BASEDIR=$EOS_BASEDIR/cta               # Exists on tape: for testing files on tape
+EOS_NO_P_BASEDIR=$EOS_TAPE_BASEDIR/no_prepare  # Exists on tape but without prepare permissions
+EOS_NONE_BASEDIR=$EOS_BASEDIR/none              # Does not exist: for testing non-existing files
 
 # get some common useful helpers for krb5
 . /root/client_helper.sh
@@ -261,12 +261,12 @@ echo "Test completed successfully"
 #   - Prepare command should succeed and return a request ID
 #   - Query prepare command should indicate which file failed to prepare
 
-TEMP_FILE=${EOS_DISK_BASEDIR}/$(uuidgen)
+TEMP_FILE=${EOS_NO_P_BASEDIR}/$(uuidgen)
 echo
 echo "Testing 'prepare -s' request for 1 file with prepare permissions (reusing ${TEMP_FILE_OK}) and 1 files without prepare permissions (${TEMP_FILE})..."
 
 xrdcp /etc/group root://${EOS_INSTANCE}/${TEMP_FILE}
-echo "File ${TEMP_FILE} written to disk only (no prepare permission)."
+echo "File ${TEMP_FILE} written to directory with no prepare permission."
 
 echo "Trigering EOS retrieve workflow as poweruser1:powerusers..."
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
@@ -315,14 +315,14 @@ echo "Test completed successfully"
 #   - All files should fail to prepare
 #   - Because all files failed, prepare command should return an error
 
-TEMP_FILE_1=${EOS_DISK_BASEDIR}/$(uuidgen)
-TEMP_FILE_2=${EOS_DISK_BASEDIR}/$(uuidgen)
+TEMP_FILE_1=${EOS_NO_P_BASEDIR}/$(uuidgen)
+TEMP_FILE_2=${EOS_NO_P_BASEDIR}/$(uuidgen)
 echo
 echo "Testing 'prepare -s' request for 2 file without prepare permissions (${TEMP_FILE_1}, ${TEMP_FILE_2})..."
 
 xrdcp /etc/group root://${EOS_INSTANCE}/${TEMP_FILE_1}
 xrdcp /etc/group root://${EOS_INSTANCE}/${TEMP_FILE_2}
-echo "Files ${TEMP_FILE_1} ${TEMP_FILE_2} written to disk only (no prepare permission)."
+echo "Files ${TEMP_FILE_1} ${TEMP_FILE_2} written to directory with no prepare permission."
 
 echo "Trigering EOS retrieve workflow as poweruser1:powerusers (expects error)..."
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
@@ -398,8 +398,8 @@ echo "Test completed successfully"
 #   - All files should fail to prepare
 #   - Because all files failed, prepare command should return an error
 
-TEMP_FILE_1=${EOS_DISK_BASEDIR}/$(uuidgen)
-TEMP_FILE_2=${EOS_DISK_BASEDIR}/$(uuidgen)
+TEMP_FILE_1=${EOS_NO_P_BASEDIR}/$(uuidgen)
+TEMP_FILE_2=${EOS_NO_P_BASEDIR}/$(uuidgen)
 echo
 echo "Testing 'prepare -s' request for 2 non-existing files (${TEMP_FILE_1}, ${TEMP_FILE_2})..."
 
@@ -427,7 +427,7 @@ echo "Test completed successfully"
 #   - Query prepare command should indicate which files failed to prepare
 
 TEST_FILES_TAPE_LIST=$(mktemp)
-TEST_FILES_DISK_LIST=$(mktemp)
+TEST_FILES_NO_P_LIST=$(mktemp)
 TEST_FILES_NONE_LIST=$(mktemp)
 
 echo
@@ -442,11 +442,11 @@ put_all_drives_up
 cat ${TEST_FILES_TAPE_LIST} | xargs -iFILE_PATH xrdcp /etc/group root://${EOS_INSTANCE}/FILE_PATH
 wait_for_archive $(cat ${TEST_FILES_TAPE_LIST} | tr "\n" " ")
 
-echo "Files to be written to disk (no prepare/evict permission):"
+echo "Files to be written to directory with no prepare/evict permission:"
 for ((file_idx=0; file_idx < ${NB_FILES_NO_P}; file_idx++)); do
-  echo "${EOS_DISK_BASEDIR}/$(uuidgen)" | tee -a ${TEST_FILES_DISK_LIST}
+  echo "${EOS_NO_P_BASEDIR}/$(uuidgen)" | tee -a ${TEST_FILES_NO_P_LIST}
 done
-cat ${TEST_FILES_DISK_LIST} | xargs -iFILE_PATH xrdcp /etc/group root://${EOS_INSTANCE}/FILE_PATH
+cat ${TEST_FILES_NO_P_LIST} | xargs -iFILE_PATH xrdcp /etc/group root://${EOS_INSTANCE}/FILE_PATH
 
 echo "Files without copy on disk/tape (missing files):"
 for ((file_idx=0; file_idx < ${NB_FILES_MISS}; file_idx++)); do
@@ -455,7 +455,7 @@ done
 
 echo "Trigering EOS retrieve workflow as poweruser1:powerusers..."
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
-REQUEST_ID=$(cat ${TEST_FILES_TAPE_LIST} ${TEST_FILES_DISK_LIST} ${TEST_FILES_NONE_LIST} | KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xargs xrdfs ${EOS_INSTANCE} prepare -s)
+REQUEST_ID=$(cat ${TEST_FILES_TAPE_LIST} ${TEST_FILES_NO_P_LIST} ${TEST_FILES_NONE_LIST} | KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xargs xrdfs ${EOS_INSTANCE} prepare -s)
 
 if [ $? -ne 0 ]; then
   echo "ERROR: Unexpected error returned by prepare command."
@@ -463,7 +463,7 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "Checking 'query prepare' for request status..."
-QUERY_RSP=$(cat ${TEST_FILES_TAPE_LIST} ${TEST_FILES_DISK_LIST} ${TEST_FILES_NONE_LIST} | KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xargs xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID})
+QUERY_RSP=$(cat ${TEST_FILES_TAPE_LIST} ${TEST_FILES_NO_P_LIST} ${TEST_FILES_NONE_LIST} | KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xargs xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID})
 
 # Check that a request ID was produced
 
@@ -503,8 +503,8 @@ fi
 # Files without prepare permission
 
 if [[
-  ${NB_FILES_NO_P} != $(cat ${TEST_FILES_DISK_LIST} | xargs -iFILE_PATH jq '.responses[] | select(.path == "FILE_PATH").path_exists' ${tmpjsonfile} | grep ^true$ | wc -l) ||
-  ${NB_FILES_NO_P} != $(cat ${TEST_FILES_DISK_LIST} | xargs -iFILE_PATH jq '.responses[] | select(.path == "FILE_PATH").error_text' ${tmpjsonfile} | grep -E ^\".+\"$ | wc -l) ]] # 'error_text should not be empty'
+  ${NB_FILES_NO_P} != $(cat ${TEST_FILES_NO_P_LIST} | xargs -iFILE_PATH jq '.responses[] | select(.path == "FILE_PATH").path_exists' ${tmpjsonfile} | grep ^true$ | wc -l) ||
+  ${NB_FILES_NO_P} != $(cat ${TEST_FILES_NO_P_LIST} | xargs -iFILE_PATH jq '.responses[] | select(.path == "FILE_PATH").error_text' ${tmpjsonfile} | grep -E ^\".+\"$ | wc -l) ]] # 'error_text should not be empty'
 then
   echo "ERROR: File without prepare permission not reported properly (error_text)."
   echo $QUERY_RSP
@@ -528,7 +528,7 @@ fi
 
 echo "Cleaning up test files..."
 cat ${TEST_FILES_TAPE_LIST} | xargs -iFILE_PATH eos root://${EOS_INSTANCE} rm FILE_PATH
-cat ${TEST_FILES_DISK_LIST} | xargs -iFILE_PATH eos root://${EOS_INSTANCE} rm FILE_PATH
+cat ${TEST_FILES_NO_P_LIST} | xargs -iFILE_PATH eos root://${EOS_INSTANCE} rm FILE_PATH
 
 echo "Test completed successfully"
 rm ${tmpjsonfile}
