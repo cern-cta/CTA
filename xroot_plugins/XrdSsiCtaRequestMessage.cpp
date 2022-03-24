@@ -2170,16 +2170,16 @@ void RequestMessage::processDiskSystem_Add(cta::xrd::Response &response)
 {
   using namespace cta::admin;
 
-  
   const auto &name              = getRequired(OptionString::DISK_SYSTEM);
   const auto &fileRegexp        = getRequired(OptionString::FILE_REGEXP);
-  const auto &diskInstance      = getRequired(OptionString::DISK_INSTANCE);
-  const auto &diskInstanceSpace = getRequired(OptionString::DISK_INSTANCE_SPACE);
+  const auto &freeSpaceQueryURL = getRequired(OptionString::FREE_SPACE_QUERY_URL);
+  const auto &refreshInterval   = getRequired(OptionUInt64::REFRESH_INTERVAL);
   const auto &targetedFreeSpace = getRequired(OptionUInt64::TARGETED_FREE_SPACE);
   const auto &sleepTime         = getRequired(OptionUInt64::SLEEP_TIME);
   const auto &comment           = getRequired(OptionString::COMMENT);
 
-  m_catalogue.createDiskSystem(m_cliIdentity, name,diskInstance, diskInstanceSpace, fileRegexp, targetedFreeSpace, sleepTime, comment);
+  m_catalogue.createDiskSystem(m_cliIdentity, name, fileRegexp, freeSpaceQueryURL,
+    refreshInterval, targetedFreeSpace, sleepTime, comment);
 
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -2188,11 +2188,15 @@ void RequestMessage::processDiskSystem_Ch(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
-   const auto &name              = getRequired(OptionString::DISK_SYSTEM);
-   const auto &fileRegexp        = getOptional(OptionString::FILE_REGEXP);
-   const auto  targetedFreeSpace = getOptional(OptionUInt64::TARGETED_FREE_SPACE);
-   const auto  sleepTime         = getOptional(OptionUInt64::SLEEP_TIME);
-   const auto  comment           = getOptional(OptionString::COMMENT);
+   const auto &name                  = getRequired(OptionString::DISK_SYSTEM);
+   const auto &fileRegexp            = getOptional(OptionString::FILE_REGEXP);
+   const auto &freeSpaceQueryURL     = getOptional(OptionString::FREE_SPACE_QUERY_URL);
+   const auto  refreshInterval       = getOptional(OptionUInt64::REFRESH_INTERVAL);
+   const auto  targetedFreeSpace     = getOptional(OptionUInt64::TARGETED_FREE_SPACE);
+   const auto  sleepTime             = getOptional(OptionUInt64::SLEEP_TIME);
+   const auto  comment               = getOptional(OptionString::COMMENT);
+   const auto  diskInstanceName      = getOptional(OptionString::DISK_INSTANCE);
+   const auto  diskInstanceSpaceName = getOptional(OptionString::DISK_INSTANCE_SPACE);
 
    if(comment) {
       m_catalogue.modifyDiskSystemComment(m_cliIdentity, name, comment.value());
@@ -2200,11 +2204,23 @@ void RequestMessage::processDiskSystem_Ch(cta::xrd::Response &response)
    if(fileRegexp) {
       m_catalogue.modifyDiskSystemFileRegexp(m_cliIdentity, name, fileRegexp.value());
    }
+   if(freeSpaceQueryURL) {
+      m_catalogue.modifyDiskSystemFreeSpaceQueryURL(m_cliIdentity, name, freeSpaceQueryURL.value());
+   }
    if (sleepTime) {
      m_catalogue.modifyDiskSystemSleepTime(m_cliIdentity, name, sleepTime.value());
    }
+   if(refreshInterval) {
+      m_catalogue.modifyDiskSystemRefreshInterval(m_cliIdentity, name, refreshInterval.value());
+   }
    if(targetedFreeSpace) {
       m_catalogue.modifyDiskSystemTargetedFreeSpace(m_cliIdentity, name, targetedFreeSpace.value());
+   }
+   if (diskInstanceName) {
+      m_catalogue.modifyDiskSystemDiskInstanceName(m_cliIdentity, name, diskInstanceName.value());
+   }
+   if (diskInstanceSpaceName) {
+      m_catalogue.modifyDiskSystemDiskInstanceSpaceName(m_cliIdentity, name, diskInstanceSpaceName.value());
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);

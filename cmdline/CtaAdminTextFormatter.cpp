@@ -991,9 +991,9 @@ void TextFormatter::printDiskSystemLsHeader() {
   push_back("HEADER");
   push_back(
     "name",
-    "instance",
-    "diskspace",
     "regexp",
+    "url",
+    "refresh",
     "space",
     "sleep",
     "c.user",
@@ -1076,9 +1076,9 @@ void TextFormatter::print(const DiskSystemLsItem &dsls_item)
 {
   push_back(
     dsls_item.name(),
-    dsls_item.disk_instance(),
-    dsls_item.disk_instance_space(),
     dsls_item.file_regexp(),
+    dsls_item.free_space_query_url(),
+    dsls_item.refresh_interval(),
     dsls_item.targeted_free_space(),
     dsls_item.sleep_time(),
     dsls_item.creation_log().username(),

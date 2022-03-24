@@ -886,11 +886,11 @@ public:
   void createDiskSystem(
     const common::dataStructures::SecurityIdentity &admin,
     const std::string &name,
-    const std::string &diskInstanceName,
-    const std::string &diskInstanceSpaceName,
     const std::string &fileRegexp,
+    const std::string &freeSpaceQueryURL,
+    const time_t refreshInterval,
     const uint64_t targetedFreeSpace,
-    const uint64_t sleepTime,
+    const time_t sleepTime,
     const std::string &comment) override;
 
   /**
@@ -902,12 +902,20 @@ public:
 
   void modifyDiskSystemFileRegexp(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name, const std::string &fileRegexp) override;
+  void modifyDiskSystemFreeSpaceQueryURL(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const std::string &freeSpaceQueryURL) override;
+  void modifyDiskSystemRefreshInterval(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const uint64_t refreshInterval) override;
   void modifyDiskSystemTargetedFreeSpace(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name, const uint64_t targetedFreeSpace) override;
   void modifyDiskSystemComment(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name, const std::string &comment) override;
   void modifyDiskSystemSleepTime(const common::dataStructures::SecurityIdentity& admin,
     const std::string& name, const uint64_t sleepTime) override;
+  void modifyDiskSystemDiskInstanceName(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const std::string &diskInstanceName) override;
+  void modifyDiskSystemDiskInstanceSpaceName(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const std::string &diskInstanceSpaceName) override;
 
   /**
    * Creates the specified Disk Instance

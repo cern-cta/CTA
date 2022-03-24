@@ -77,6 +77,12 @@ uint64_t JSONCObject::jsonGetValue(const std::string & key){
 }
 
 template<>
+time_t JSONCObject::jsonGetValue(const std::string & key){
+  json_object * jsonObj = getJSONObject(key);
+  return json_object_get_int64(jsonObj);
+}
+
+template<>
 double JSONCObject::jsonGetValue(const std::string & key){
   json_object * jsonObj = getJSONObject(key);
   return json_object_get_double(jsonObj);
@@ -96,6 +102,12 @@ template<>
 void JSONCObject::jsonSetValue(const std::string& key, const uint64_t & value){
   json_object_object_add(m_jsonObject,key.c_str(),json_object_new_int64(value));
 }
+
+template<>
+void JSONCObject::jsonSetValue(const std::string& key, const time_t & value){
+  json_object_object_add(m_jsonObject,key.c_str(),json_object_new_int64(value));
+}
+
 
 JSONCObject::~JSONCObject() {
   //Free the JSON object if initialized
