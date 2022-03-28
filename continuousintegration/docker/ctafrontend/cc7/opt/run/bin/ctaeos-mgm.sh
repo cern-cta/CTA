@@ -69,7 +69,10 @@ yes | cp -r /opt/ci/ctaeos/etc /
 
 eoshost=`hostname -f`
 
-EOS_INSTANCE=`hostname -s`
+# All our scripts are set to exclusively use ctaeos instance name:
+# notably the following directory: `/eos/ctaeos` is hardcoded almost everywhere
+#EOS_INSTANCE=`hostname -s`
+EOS_INSTANCE=ctaeos
 TAPE_FS_ID=65535
 CTA_BIN=/usr/bin/eoscta_stub
 CTA_XrdSecPROTOCOL=sss
