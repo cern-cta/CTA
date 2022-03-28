@@ -338,7 +338,7 @@ bool RecallTaskInjector::synchronousFetch(bool & noFilesToRecall)
     return false;
   }
   if(m_jobs.empty()) {
-    m_lc.log(cta::log::WARNING, "No files left to recall on the queue or in the injector");
+    m_lc.log(cta::log::INFO, "No files left to recall on the queue or in the injector");
     return false;
   }
     cta::log::ScopedParamContainer scoped(m_lc); 
