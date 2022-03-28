@@ -12,16 +12,37 @@ Please consult the [database upgrade documentation](https://eoscta.docs.cern.ch/
 - cta/CTA#1147 - Add Disk Instance Column to VO table
 - cta/CTA#1137 - Stop deletion of failed retrieve/archive requests
 - cta/CTA#1150 - Add option to pass desired catalogue version into cta-catalogue-schema-create
+- cta/CTA#1082 - Review software license text in CTA
 
 ### Bug fixes
 - cta/CTA#1117 - Update masterDataInBytes when writing files to tape
 - cta/CTA#1125 - cta-admin dr ls should show '-' instead of "NO_MOUNT" for Mount Type
 - cta/CTA#1138 - sortAndGetTapesForMountInfo only queries tapes in the current logical library
 
+### Building and Packaging
+- cta/CTA#1082 - Review software license text in CTA
+
 ### Catalogue Schema
 
 ### Continuous Integration
 - cta/CTA#1126 - Create tests for TapeDrivesCatalogueState
+- cta/CTA#1131 - Compile CTA using devtoolset-8 in CI
+
+# v4.6.1-1
+
+## Summary
+
+### Upgrade Instructions
+
+This CTA release requires a database schema upgrade to CTA catalogue schema v4.6.
+Please consult the [database upgrade documentation](https://tapeoperations.docs.cern.ch/ctaops/upgrade_production_database).
+
+### Features
+- cta/CTA#1137 - Stop deletion of failed retrieve/archive requests
+
+### Bug fixes
+
+### Continuous Integration
 
 # v4.6.0-1
 

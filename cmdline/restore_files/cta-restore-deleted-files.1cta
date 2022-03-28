@@ -1,17 +1,17 @@
-.\" @project        The CERN Tape Archive (CTA)
-.\" @copyright      Copyright(C) 2019-2021 CERN
-.\" @license        This program is free software: you can redistribute it and/or modify
-.\"                 it under the terms of the GNU General Public License as published by
-.\"                 the Free Software Foundation, either version 3 of the License, or
-.\"                 (at your option) any later version.
+.\" @project      The CERN Tape Archive (CTA)
+.\" @copyright    Copyright © 2019-2022 CERN
+.\" @license      This program is free software, distributed under the terms of the GNU General Public
+.\"               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
+.\"               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
+.\"               option) any later version.
 .\"
-.\"                 This program is distributed in the hope that it will be useful,
-.\"                 but WITHOUT ANY WARRANTY; without even the implied warranty of
-.\"                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-.\"                 GNU General Public License for more details.
+.\"               This program is distributed in the hope that it will be useful, but WITHOUT ANY
+.\"               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+.\"               PARTICULAR PURPOSE. See the GNU General Public License for more details.
 .\"
-.\"                 You should have received a copy of the GNU General Public License
-.\"                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+.\"               In applying this licence, CERN does not waive the privileges and immunities
+.\"               granted to it by virtue of its status as an Intergovernmental Organization or
+.\"               submit itself to any jurisdiction.
 
 .TH CTA-RESTORE-DELETED-FILES 1CTA "NOVEMBER 2021" CTA CTA
 .SH NAME
@@ -27,17 +27,17 @@ The tool recovers files that have been deleted by a user, by EOS or by an operat
 There are tree scenarios for disk file recovery:
 
 1. The file has been deleted in the EOS namespace and in the CTA catalogue
-   This happens in the case of a normal file removal from the user (eos rm). 
-   The strategy is to reinject the file metadata in EOS and restore the file 
+   This happens in the case of a normal file removal from the user (eos rm).
+   The strategy is to reinject the file metadata in EOS and restore the file
    entry in the cta catalogue (with a new diskFileId)
 
 2. The file has been deleted in the CTA catalogue but the EOS diskFileId remains the same
-   This can happen during a disk draining. The file is kept in the EOS namespace 
-   but the entry is removed from the Catalogue. The strategy is to just 
+   This can happen during a disk draining. The file is kept in the EOS namespace
+   but the entry is removed from the Catalogue. The strategy is to just
    restore the CTA Catalogue entry.
 
 3. The file has been deleted in the CTA catalogue but the EOS diskFileId changed
-   This happens during the conversion of a file from a space to another. The strategy is to recover the 
+   This happens during the conversion of a file from a space to another. The strategy is to recover the
    CTA Catalogue entry and update the diskFileId to the one that corresponds to its EOS entry.
 
 

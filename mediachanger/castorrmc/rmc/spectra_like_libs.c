@@ -1,18 +1,18 @@
 /*
- * @project        The CERN Tape Archive (CTA)
- * @copyright      Copyright(C) 1998-2021 CERN
- * @license        This program is free software: you can redistribute it and/or modify
- *                 it under the terms of the GNU General Public License as published by
- *                 the Free Software Foundation, either version 3 of the License, or
- *                 (at your option) any later version.
+ * @project      The CERN Tape Archive (CTA)
+ * @copyright    Copyright © 1998-2022 CERN
+ * @license      This program is free software, distributed under the terms of the GNU General Public
+ *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
+ *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
+ *               option) any later version.
  *
- *                 This program is distributed in the hope that it will be useful,
- *                 but WITHOUT ANY WARRANTY; without even the implied warranty of
- *                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *                 GNU General Public License for more details.
+ *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
  *
- *                 You should have received a copy of the GNU General Public License
- *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *               In applying this licence, CERN does not waive the privileges and immunities
+ *               granted to it by virtue of its status as an Intergovernmental Organization or
+ *               submit itself to any jurisdiction.
  */
 
 #include <string.h>
@@ -50,7 +50,7 @@ int is_library_spectra_like(const struct robot_info *const robot_info) {
     memcpy (productId, robot_info->inquiry + 8, 16);
     vendorId[8] = '\0';
     productId[16] = '\0';
-    
+
     /* Trim any whitespaces in excess */
     trim_trailing_spaces(vendorId);
     trim_trailing_spaces(productId);
@@ -67,6 +67,6 @@ int is_library_spectra_like(const struct robot_info *const robot_info) {
             }
         }
     }
-    
+
     return isSpectraLike;
 }

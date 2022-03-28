@@ -1,19 +1,19 @@
 #!/bin/bash
 
-# @project        The CERN Tape Archive (CTA)
-# @copyright      Copyright(C) 2021 CERN
-# @license        This program is free software: you can redistribute it and/or modify
-#                 it under the terms of the GNU General Public License as published by
-#                 the Free Software Foundation, either version 3 of the License, or
-#                 (at your option) any later version.
+# @project      The CERN Tape Archive (CTA)
+# @copyright    Copyright © 2022 CERN
+# @license      This program is free software, distributed under the terms of the GNU General Public
+#               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
+#               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
+#               option) any later version.
 #
-#                 This program is distributed in the hope that it will be useful,
-#                 but WITHOUT ANY WARRANTY; without even the implied warranty of
-#                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#                 GNU General Public License for more details.
+#               This program is distributed in the hope that it will be useful, but WITHOUT ANY
+#               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+#               PARTICULAR PURPOSE. See the GNU General Public License for more details.
 #
-#                 You should have received a copy of the GNU General Public License
-#                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#               In applying this licence, CERN does not waive the privileges and immunities
+#               granted to it by virtue of its status as an Intergovernmental Organization or
+#               submit itself to any jurisdiction.
 
 
 ################################################################################
@@ -22,7 +22,7 @@
 #   - This script tests the usage of the evict counter (xattr
 #   sys.retrieve.evict_counter) to handle eviction for multiple staging requests
 #   on the same file.
-#   - This behaviour allows multiple clients to trigger a PREPARE of the same 
+#   - This behaviour allows multiple clients to trigger a PREPARE of the same
 #   file and use it safelly, because it will only be removed once the last
 #   client has sent the EVICT_PREPARE.
 #
@@ -156,7 +156,7 @@ echo "Evict counter value is correct"
 ################################################################################
 
 # Repeat a PREPARE request for the same files. NB_RETRIEVE_EXTRA times for each file.
-# Files are already on disk, so the eviction counter value should be incremented by 
+# Files are already on disk, so the eviction counter value should be incremented by
 # NB_RETRIEVE_EXTRA.
 
 echo
@@ -202,7 +202,7 @@ STARTING_COUNTER_VAL=$((${NB_RETRIEVES}+${NB_RETRIEVES_EXTRA}))
 echo
 echo "Requesting prepare evict until disk replicas are deleted..."
 for ((expected_counter_val=${STARTING_COUNTER_VAL}; expected_counter_val > 0; expected_counter_val--)); do
-  
+
   rm -f ${FAILED_LIST}
   touch ${FAILED_LIST}
   if test 0 != $(cat ${TEST_FILES_LIST} | xargs -iFILE_PATH bash -c "KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query opaquefile FILE_PATH?mgm.pcmd=xattr\&mgm.subcmd=get\&mgm.xattrname=${EVICT_COUNTER_ATTR} | grep -v value=${expected_counter_val} | sed -e 's%\(.*\)%FILE_PATH: \1%g'" | tee ${FAILED_LIST} | wc -l); then
