@@ -154,16 +154,31 @@ int main(const int argc, char *const *const argv) {
     std::shared_ptr<grpc::ServerCredentials> creds;
 
     if (useTLS) {
+        lc.log(log::INFO, "Using gRPC over TLS");
         grpc::SslServerCredentialsOptions tls_options;
         grpc::SslServerCredentialsOptions::PemKeyCertPair cert;
 
-        cert.private_key = file2string(config.getConfEntString("gRPC", "TlsKey"));
-        cert.cert_chain = file2string(config.getConfEntString("gRPC", "TlsCert"));
-        tls_options.pem_root_certs = file2string(config.getConfEntString("gRPC", "TlsChain"));
+        auto key_file = config.getConfEntString("gRPC", "TlsKey");
+        lc.log(log::INFO, "TLS service key file: " + key_file);
+        cert.private_key = file2string(key_file);
+
+        auto cert_file = config.getConfEntString("gRPC", "TlsCert");
+        lc.log(log::INFO, "TLS service certificate file: " + cert_file);
+        cert.cert_chain = file2string(cert_file);
+
+        auto ca_chain = config.getConfEntString("gRPC", "TlsChain", "");
+        if (!ca_chain.empty()) {
+            lc.log(log::INFO, "TLS CA chain file: " + ca_chain);
+            tls_options.pem_root_certs = file2string(cert_file);
+        } else {
+            lc.log(log::INFO, "TLS CA chain file not defined ...");
+            tls_options.pem_root_certs = "";
+        }
         tls_options.pem_key_cert_pairs.emplace_back(std::move(cert));
 
         creds = grpc::SslServerCredentials(tls_options);
     } else {
+        lc.log(log::INFO, "Using gRPC over plaintext socket");
         creds = grpc::InsecureServerCredentials();
     }
 
