@@ -43,6 +43,7 @@ sudo -E bash -c 'cat gitScripts/bash_profile.hook >> $CTAUSERHOME/.bash_profile'
 sudo -u $CTAUSER cp tigConf/tigrc $CTAUSERHOME/.tigrc
 
 echo Installing minimal tools and tape tools
+sudo yum install -y centos-release-scl-rh
 sudo yum install -y git cmake cmake3 rpm-build devtoolset-8 vim gdb cgdb strace ltrace screen tig lsscsi mt-st mtx sg3_utils jq psmisc yum-plugin-versionlock krb5-workstation wget yum-utils epel-release
 
 echo "Getting CTA sources for $CTAUSER..."

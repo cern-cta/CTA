@@ -43,6 +43,7 @@ cp gitScripts/.git-* ~
 cat gitScripts/bash_profile.hook >> ~/.bash_profile
 source ~/.bash_profile
 cp tigConf/tigrc ~/.tigrc
+yum install -y centos-release-scl-rh
 yum install -y git cmake rpm-build devtoolset-8 vim gdb cgdb strace ltrace screen tig lsscsi mt-st mtx sg3_utils jq psmisc yum-plugin-versionlock
 ```
 4. Bootstrap CTA :
@@ -58,7 +59,7 @@ chmod +x ~/path_to_CTA_folder/.git/hooks/post-checkout
 cp ~/path_to_CTA_folder/.git/hooks/post-checkout ~/path_to_CTA_folder/.git/hooks/post-merge
 ```
 5. Build CTA's srpm
-Go to the CTA parent's folder and type 
+Go to the CTA parent's folder and type
 ```bash
 mkdir CTA-build-srpm
 cd CTA-build-srpm
@@ -70,7 +71,7 @@ make cta_srpm
 6. Install repositories necessary for CTA's compilation works
 ```bash
 cd ~/path_to_CTA_folder/continuousintegration/buildtree_runner/vmBootstrap
-sudo yum-config-manager --add-repo=../../docker/ctafrontend/cc7/etc/yum.repos.d/eos-citrine-depend.repo 
+sudo yum-config-manager --add-repo=../../docker/ctafrontend/cc7/etc/yum.repos.d/eos-citrine-depend.repo
 sudo yum-config-manager --add-repo=../../docker/ctafrontend/cc7/etc/yum.repos.d/cta-ci.repo
 sudo yum-config-manager --add-repo=../../docker/ctafrontend/cc7/etc/yum.repos.d/castor.repo
 sudo yum-config-manager --add-repo=ceph-internal.repo
@@ -90,7 +91,7 @@ sudo cp ../../docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list  /etc
 Then, go to the CTA-build-srpm directory and execute :
 ```bash
 sudo yum-builddep -y ./RPM/SRPMS/cta-0-1.src.rpm --nogpgcheck
-``` 
+```
 10. Install mhvtl
 ```bash
 sudo yum install -y mhvtl-utils kmod-mhvtl mhvtl-utils --enablerepo=castor
@@ -136,7 +137,7 @@ sudo /etc/cron.hourly/tnsnames-update.cron
 ```bash
 sudo yum install rlwrap
 ```
-6. Ask for your database credentials : *username*, *database*, *password*. 
+6. Ask for your database credentials : *username*, *database*, *password*.
 7. Try to connect to the database and execute a simple sql query.
 ```bash
 rlwrap sqlplus64 username@database
