@@ -21,9 +21,3 @@ set_property(SOURCE Wrapper.cpp
   APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing
 )
 
-if(CMAKE_COMPILER_IS_GNUCC)
-  if(GCC_VERSION_GE_4_8_0)
-    set_property(SOURCE Wrapper.cpp
-      PROPERTY COMPILE_FLAGS " -Wno-unused-local-typedefs")
-  endif(GCC_VERSION_GE_4_8_0)
-endif(CMAKE_COMPILER_IS_GNUCC)

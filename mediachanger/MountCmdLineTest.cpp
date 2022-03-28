@@ -39,12 +39,12 @@ protected:
   /**
    * Creates a duplicate string using the new operator.
    */
-  char *dupString(const char *str) {
-    const size_t len = strlen(str);
-    char *duplicate = new char[len+1];
-    strncpy(duplicate, str, len);
-    duplicate[len] = '\0';
-    return duplicate;
+  char *dupString(const std::string &str) {
+    const int len = str.size();
+    char *copy = new char[len + 1];
+    std::copy(str.begin(), str.end(), copy);
+    copy[len] = '\0';
+    return copy;
   }
 
   virtual void SetUp() {
@@ -119,7 +119,7 @@ TEST_F(cta_mediachanger_MountCmdLineTest, assignment) {
   args2->argv[1] = dupString("vid");
   args2->argv[2] = dupString("smc2");
   args2->argv[3] = NULL;
-  
+
   MountCmdLine cmdLine2(args2->argc, args2->argv);
   ASSERT_FALSE(cmdLine2.getHelp());
   ASSERT_FALSE(cmdLine2.getDebug());

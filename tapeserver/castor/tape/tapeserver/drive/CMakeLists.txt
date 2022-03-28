@@ -20,24 +20,8 @@ set(TAPEDRIVE_LIBRARY_SRCS
   DriveGeneric.cpp
   FakeDrive.cpp)
 
-if(CMAKE_COMPILER_IS_GNUCC)
-  if(GCC_VERSION_GE_4_8_0)
-    foreach(TAPEDRIVE_LIBRARY_SRC ${TAPEDRIVE_LIBRARY_SRCS})
-      set_property(SOURCE ${TAPEDRIVE_LIBRARY_SRC}
-        PROPERTY COMPILE_FLAGS " -Wno-unused-local-typedefs")
-    endforeach(TAPEDRIVE_LIBRARY_SRC)
-  endif(GCC_VERSION_GE_4_8_0)
-endif(CMAKE_COMPILER_IS_GNUCC)
-
 add_library(TapeDrive ${TAPEDRIVE_LIBRARY_SRCS})
 target_link_libraries(TapeDrive SCSI ctatapedaemon)
-
-if(CMAKE_COMPILER_IS_GNUCC)
-  if(GCC_VERSION_GE_4_8_0)
-    set_property(SOURCE TapeDriveReadWriteTest.cpp
-      PROPERTY COMPILE_FLAGS " -Wno-unused-local-typedefs")
-  endif(GCC_VERSION_GE_4_8_0)
-endif(CMAKE_COMPILER_IS_GNUCC)
 
 add_executable(TapeDriveReadWriteTest
   TapeDriveReadWriteTest.cpp)
@@ -51,13 +35,6 @@ target_link_libraries(TapeDriveReadWriteTest
   ctaTapeServerDaemon
   gtest
   pthread)
-
-if(CMAKE_COMPILER_IS_GNUCC)
-  if(GCC_VERSION_GE_4_8_0)
-    set_property(SOURCE DriveTest.cpp
-      PROPERTY COMPILE_FLAGS " -Wno-unused-local-typedefs")
-  endif(GCC_VERSION_GE_4_8_0)
-endif(CMAKE_COMPILER_IS_GNUCC)
 
 add_library(ctatapeserverdriveunittests SHARED
   DriveTest.cpp)

@@ -65,7 +65,7 @@ public:
   virtual Buffer *GetBuff(XrdSsiErrInfo &eInfo, int &dlen, bool &last) override {
     XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "GetBuff(): XrdSsi buffer fill request (", dlen, " bytes)");
 
-    XrdSsiPb::OStreamBuffer<Data> *streambuf;
+    std::unique_ptr<XrdSsiPb::OStreamBuffer<Data>> streambuf;
 
     try {
       if(isDone()) {
@@ -74,31 +74,28 @@ public:
         return nullptr;
       }
 
-      streambuf = new XrdSsiPb::OStreamBuffer<Data>(dlen);
+      streambuf = std::make_unique<XrdSsiPb::OStreamBuffer<Data>>(dlen);
 
-      dlen = fillBuffer(streambuf);
+      dlen = fillBuffer(streambuf.get());
 
       XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "GetBuff(): Returning buffer with ", dlen, " bytes of data.");
     } catch(cta::exception::Exception &ex) {
       std::ostringstream errMsg;
       errMsg << __FUNCTION__ << " failed: Caught CTA exception: " << ex.what();
       eInfo.Set(errMsg.str().c_str(), ECANCELED);
-      delete streambuf;
       return nullptr;
     } catch(std::exception &ex) {
       std::ostringstream errMsg;
       errMsg << __FUNCTION__ << " failed: " << ex.what();
       eInfo.Set(errMsg.str().c_str(), ECANCELED);
-      delete streambuf;
       return nullptr;
     } catch(...) {
       std::ostringstream errMsg;
       errMsg << __FUNCTION__ << " failed: Caught an unknown exception";
       eInfo.Set(errMsg.str().c_str(), ECANCELED);
-      delete streambuf;
       return nullptr;
     }
-    return streambuf;
+    return streambuf.release();
   }
 
 private:

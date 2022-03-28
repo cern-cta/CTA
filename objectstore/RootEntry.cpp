@@ -857,13 +857,13 @@ void RootEntry::removeRepackQueueAndCommit(common::dataStructures::RepackQueueTy
   checkPayloadWritable();
   // find the address of the repack queue object
   try {
-    bool hasQueue;
+    bool hasQueue = false;
     switch (queueType) {
-    case common::dataStructures::RepackQueueType::Pending:
-      hasQueue = m_payload.has_repackrequestspendingqueuepointer();
-      break;
-    case common::dataStructures::RepackQueueType::ToExpand:
-      hasQueue = m_payload.has_repackrequeststoexpandqueuepointer();
+      case common::dataStructures::RepackQueueType::Pending:
+        hasQueue = m_payload.has_repackrequestspendingqueuepointer();
+        break;
+      case common::dataStructures::RepackQueueType::ToExpand:
+        hasQueue = m_payload.has_repackrequeststoexpandqueuepointer();
     }
     if (!hasQueue) {
       throw NoSuchRepackQueue("In RootEntry::removeRepackQueueAndCommit: trying to remove non-existing repack queue");

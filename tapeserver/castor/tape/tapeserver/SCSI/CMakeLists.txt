@@ -16,17 +16,6 @@ cmake_minimum_required (VERSION 3.17)
 
 include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
 
-if(CMAKE_COMPILER_IS_GNUCC)
-  if(GCC_VERSION_GE_4_8_0)
-    set_property(SOURCE Device.cpp
-      PROPERTY COMPILE_FLAGS " -Wno-unused-local-typedefs")
-    set_property(SOURCE DeviceTest.cpp
-      PROPERTY COMPILE_FLAGS " -Wno-unused-local-typedefs")
-    set_property(SOURCE StructuresTest.cpp
-      PROPERTY COMPILE_FLAGS " -Wno-unused-local-typedefs")
-  endif(GCC_VERSION_GE_4_8_0)
-endif(CMAKE_COMPILER_IS_GNUCC)
-
 add_library(SCSI Device.cpp Structures.cpp Constants.cpp Exception.cpp)
 
 add_library(ctatapeserverscsiunittests SHARED

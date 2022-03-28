@@ -39,16 +39,6 @@ add_library(ctatapedaemon
   TpconfigLine.cpp
   Tpconfig.cpp)
 
-if(CMAKE_COMPILER_IS_GNUCC)
-  if(GCC_VERSION_GE_4_8_0)
-    foreach(CTATAPESERVERDAEMON_LIBRARY_SRC
-      DriveHandler.cpp)
-      set_property(SOURCE ${CTATAPESERVERDAEMON_LIBRARY_SRC}
-        PROPERTY COMPILE_FLAGS " -Wno-unused-local-typedefs")
-    endforeach(CTATAPESERVERDAEMON_LIBRARY_SRC)
-  endif(GCC_VERSION_GE_4_8_0)
-endif(CMAKE_COMPILER_IS_GNUCC)
-
 target_link_libraries(ctatapedaemon
   ctatapesession
   ctaTapeServerDaemon

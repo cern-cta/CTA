@@ -31,42 +31,24 @@ set(CMAKE_CXX_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter
 # to be tested once we have a stable compilation on CC7:
 #-Wno-unused-parameter -Wlogical-op -Wfloat-equal -Wdeclaration-after- statement -Wundef -Wno-endif-labels -Wshadow -Wunsafe-loop- optimizations -Wpointer-arith -Wbad-function-cast -Wcast-align -Wwrite- strings -Wconversion -Wmissing-field-initializers -Wredundant-decls -Wnested-externs -Wunreachable-code -Winline -Wvariadic-macros -Wtraditional -Wmissing-prototypes -Wmissing-declarations -Wold-style- definition -Wc++-compat -Wstrict-prototypes -Wpadded -Wcast-qual -Wnon-virtual-dtor -Wlogical-op -Wmissing-declarations -Wsign-conversion -Wredundant-decls -Wold-style-cast -Wshadow
 
-# Explicitly setting the C and C++ compiler flags for the RelWithDebInfo build
-# in order to prevent the -O2 flag from being used.
-set(CMAKE_C_FLAGS_RELWITHDEBINFO "-g")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g")
-
 set (BUILD_CMDLINE_ONLY FALSE)
 
 execute_process(
   COMMAND ${CMAKE_C_COMPILER} -dumpversion
   OUTPUT_VARIABLE GCC_VERSION)
 
-if (CMAKE_COMPILER_IS_GNUCC)
-  message(STATUS "GCC VERSION ${GCC_VERSION}")
-  if (GCC_VERSION VERSION_GREATER_EQUAL 7.0)
-    message(STATUS "Detected gcc > 7.0 - switching on support for c++17")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
-  elseif (GCC_VERSION VERSION_EQUAL 4.4.7)
-    message(STATUS "Detected gcc = 4.4.7 - build cmdline only with c++0x")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
-    set (BUILD_CMDLINE_ONLY TRUE)
-  elseif (GCC_VERSION VERSION_GREATER 4.4.7)
-    message(STATUS "Detected gcc > 4.4.7 - switching on support for c++1y")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
-  endif ()
-endif ()
+message(STATUS "Setting support for c++17")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+
+if (NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "" FORCE)
+endif()
 
 # CTA continue using the old ABI, so we should force it. This command only works on cmake3,
 # so we should update the requeriments of CMakeLists
 # see: https://gcc.gnu.org/onlinedocs/libstdc++/manual/using_dual_abi.html
 #      https://docs.ceph.com/en/latest/dev/cxx/
 add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=0)
-
-set (GCC_VERSION_GE_4_8_0 FALSE)
-if (CMAKE_COMPILER_IS_GNUCC AND ((GCC_VERSION VERSION_GREATER 4.8.0) OR (GCC_VERSION VERSION_EQUAL 4.8.0)))
-  set (GCC_VERSION_GE_4_8_0 TRUE)
-endif (CMAKE_COMPILER_IS_GNUCC AND ((GCC_VERSION VERSION_GREATER 4.8.0) OR (GCC_VERSION VERSION_EQUAL 4.8.0)))
 
 # To enable logging for testing purposes set -DENABLE_STDOUT_LOGGING=1
 if (ENABLE_STDOUT_LOGGING)
@@ -125,14 +107,6 @@ ELSE(DEFINED PackageOnly)
 
   # OCCI support is on by default
   set (OCCI_SUPPORT ON)
-
-  # Switch OCCI support off if using gcc 5.1 or higher
-  #if (CMAKE_COMPILER_IS_GNUCC)
-  #  if (GCC_VERSION VERSION_GREATER 5.0)
-  #    message (STATUS "Detected gcc >= 5.1 - Switching off OCCI support")
-  #    set (OCCI_SUPPORT OFF)
-  #  endif (GCC_VERSION VERSION_GREATER 5.0)
-  #endif (CMAKE_COMPILER_IS_GNUCC)
 
   if (OCCI_SUPPORT)
     find_package (oracle-instantclient REQUIRED)

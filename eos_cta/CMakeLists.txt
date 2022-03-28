@@ -42,12 +42,6 @@ set_source_files_properties(
 
 foreach(PROTO_SRC ${ProtoSourcesEosCta} ${ProtoSourcesMigration} ${ProtoGrpcSourcesMigration})
   set_property(SOURCE ${PROTO_SRC} PROPERTY COMPILE_FLAGS " -Wno-missing-field-initializers -fPIC -Wno-narrowing -Wno-implicit-fallthrough")
-  # Add -Wno-narrowing -Wno-implicit-fallthrough compiler flags if using gcc version 7 or greater
-  if(CMAKE_COMPILER_IS_GNUCC)
-    if(GCC_VERSION VERSION_EQUAL 7 OR GCC_VERSION VERSION_GREATER 7)
-      set_property(SOURCE ${PROTO_SRC} APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-narrowing -Wno-implicit-fallthrough")
-    endif(GCC_VERSION VERSION_EQUAL 7 OR GCC_VERSION VERSION_GREATER 7)
-  endif(CMAKE_COMPILER_IS_GNUCC)
 endforeach(PROTO_SRC)
 
 add_library(XrdSsiPbEosCta ${ProtoSourcesEosCta})

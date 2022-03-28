@@ -28,12 +28,8 @@ set (RMCD_SRC_FILES
   spectra_like_libs.c
 )
 
-if(CMAKE_COMPILER_IS_GNUCC)
-  # Add -Wno-format-overflow compiler flag if using gcc version 7 or greater
-  if (GCC_VERSION VERSION_EQUAL 7 OR GCC_VERSION VERSION_GREATER 7)
-    set_property(SOURCE rmc_send_scsi_cmd.c APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-format-overflow")
-  endif (GCC_VERSION VERSION_EQUAL 7 OR GCC_VERSION VERSION_GREATER 7)
-endif(CMAKE_COMPILER_IS_GNUCC)
+# Add -Wno-format-overflow compiler flag
+set_property(SOURCE rmc_send_scsi_cmd.c APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-format-overflow")
 
 add_executable(cta-rmcd ${RMCD_SRC_FILES})
 target_link_libraries(cta-rmcd ctarmccommon)

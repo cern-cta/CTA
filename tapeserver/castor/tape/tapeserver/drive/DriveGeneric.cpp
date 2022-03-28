@@ -641,6 +641,7 @@ drive::LBPInfo drive::DriveGeneric::getLBPInfo() {
 //------------------------------------------------------------------------------
 // Encryption interface
 //------------------------------------------------------------------------------
+#pragma GCC diagnostic ignored "-Wstringop-truncation"
 void drive::DriveGeneric::setEncryptionKey(const std::string &encryption_key) {
   if(!isEncryptionCapEnabled())
     throw cta::exception::Exception("In DriveGeneric::setEncryptionKey: Tried to enable encryption on drive "

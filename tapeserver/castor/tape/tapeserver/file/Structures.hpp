@@ -482,6 +482,7 @@ namespace tape {
      * c = century (blank=19; 0=20; 1=21; etc.) 
      * yy= year (00-99) ddd = day (001-366)
      */
+    #pragma GCC diagnostic ignored "-Wformat-overflow"
     inline void setDate(char(& t)[6]) {
       time_t current_time;
       struct tm localTime;

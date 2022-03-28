@@ -39,12 +39,12 @@ protected:
   /**
    * Creates a duplicate string using the new operator.
    */
-  char *dupString(const char *str) {
-    const size_t len = strlen(str);
-    char *duplicate = new char[len+1];
-    strncpy(duplicate, str, len);
-    duplicate[len] = '\0';
-    return duplicate;
+  char *dupString(const std::string &str) {
+    const int len = str.size();
+    char *copy = new char[len + 1];
+    std::copy(str.begin(), str.end(), copy);
+    copy[len] = '\0';
+    return copy;
   }
 
   virtual void SetUp() {
@@ -71,7 +71,7 @@ TEST_F(cta_mediachanger_DismountCmdLineTest, copy_constructor) {
   Argcv *args= new Argcv();
   m_argsList.push_back(args);
   args->argc = 3;
-  args->argv = new char *[4]; 
+  args->argv = new char *[4];
   args->argv[0] = dupString("cta-mediachanger-dismount");
   args->argv[1] = dupString("vid");
   args->argv[2] = dupString("smc1");
@@ -98,7 +98,7 @@ TEST_F(cta_mediachanger_DismountCmdLineTest, assignment) {
   Argcv *args1= new Argcv();
   m_argsList.push_back(args1);
   args1->argc = 3;
-  args1->argv = new char *[4]; 
+  args1->argv = new char *[4];
   args1->argv[0] = dupString("cta-mediachanger-dismount");
   args1->argv[1] = dupString("vid");
   args1->argv[2] = dupString("smc1");
@@ -113,7 +113,7 @@ TEST_F(cta_mediachanger_DismountCmdLineTest, assignment) {
   Argcv *args2= new Argcv();
   m_argsList.push_back(args2);
   args2->argc = 3;
-  args2->argv = new char *[4]; 
+  args2->argv = new char *[4];
   args2->argv[0] = dupString("cta-mediachanger-dismount");
   args2->argv[1] = dupString("vid");
   args2->argv[2] = dupString("smc2");
@@ -140,16 +140,16 @@ TEST_F(cta_mediachanger_DismountCmdLineTest, assignment) {
 
 TEST_F(cta_mediachanger_DismountCmdLineTest, scsi) {
   using namespace cta::mediachanger;
-  
+
   Argcv *args = new Argcv();
   m_argsList.push_back(args);
   args->argc = 3;
-  args->argv = new char *[4]; 
+  args->argv = new char *[4];
   args->argv[0] = dupString("cta-mediachanger-dismount");
   args->argv[1] = dupString("vid");
   args->argv[2] = dupString("smc1");
   args->argv[3] = NULL;
-  
+
   std::unique_ptr<DismountCmdLine> cmdLine;
   ASSERT_NO_THROW(cmdLine.reset(new DismountCmdLine(args->argc, args->argv)));
 

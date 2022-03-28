@@ -25,7 +25,7 @@ namespace checksum {
 
 void ChecksumBlob::insert(ChecksumType type, const std::string &value) {
   // Validate the length of the checksum
-  size_t expectedLength;
+  size_t expectedLength = 0;
   switch(type) {
     case NONE:       expectedLength = 0;  break;
     case ADLER32:

@@ -95,18 +95,19 @@ namespace unitTests {
    
   TEST_F(castorTapeFileTest, throwsWhenUsingSessionTwice) {
     const std::string testString("Hello World!");
-    castor::tape::tapeFile::WriteSession *ws;
-    ASSERT_NO_THROW(ws = new castor::tape::tapeFile::WriteSession(d, volInfo, 0, true, false));
+    std::unique_ptr<castor::tape::tapeFile::WriteSession> ws;
+    ASSERT_NO_THROW(ws = std::make_unique<castor::tape::tapeFile::WriteSession>(
+      castor::tape::tapeFile::WriteSession(d, volInfo, 0, true, false)));
     ASSERT_EQ(ws->m_compressionEnabled, true);
     ASSERT_EQ(ws->m_vid.compare(label), 0);
     ASSERT_EQ(ws->isCorrupted(), false);
     {
       std::unique_ptr<castor::tape::tapeFile::WriteFile> wf;
-      ASSERT_NO_THROW(wf.reset(new castor::tape::tapeFile::WriteFile(ws, fileToMigrate, block_size)));
-      wf->write(testString.c_str(),testString.size());      
+      ASSERT_NO_THROW(wf = std::make_unique<castor::tape::tapeFile::WriteFile>(
+        ws.get(), fileToMigrate, block_size));
+      wf->write(testString.c_str(),testString.size());
       wf->close();
     }
-    delete ws;
     castor::tape::tapeFile::ReadSession *rs;
     rs = new castor::tape::tapeFile::ReadSession(d, volInfo, false);
     {

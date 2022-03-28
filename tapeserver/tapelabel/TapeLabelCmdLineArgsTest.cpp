@@ -39,12 +39,12 @@ protected:
   /**
    * Creates a duplicate string using the new operator.
    */
-  char *dupString(const char *str) {
-    const size_t len = strlen(str);
-    char *duplicate = new char[len+1];
-    strncpy(duplicate, str, len);
-    duplicate[len] = '\0';
-    return duplicate;
+  char *dupString(const std::string &str) {
+    const int len = str.size();
+    char *copy = new char[len + 1];
+    std::copy(str.begin(), str.end(), copy);
+    copy[len] = '\0';
+    return copy;
   }
 
   virtual void SetUp() {
@@ -290,7 +290,7 @@ TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, oldVid_missed) {
   args->argv[2] = dupString("VID001");
   args->argv[3] = dupString("-o");
   args->argv[4] = nullptr;
-  
+
   ASSERT_THROW(TapeLabelCmdLineArgs cmdLine(args->argc, args->argv),
     cta::exception::CommandLineNotParsed);
 }

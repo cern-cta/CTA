@@ -20,11 +20,11 @@
 #include <gmock/gmock-cardinalities.h>
 
 namespace unitTests {
-  
+
   class testVOL1: public castor::tape::tapeFile::VOL1 {
   public:
     void backdoorSetLBPMethodString(const std::string & LBPString) {
-      ::strncpy(m_LBPMethod, LBPString.c_str(), sizeof(m_LBPMethod));
+      strcpy(m_LBPMethod, LBPString.c_str());
     }
   };
 
@@ -68,14 +68,14 @@ namespace unitTests {
     vol1Label.backdoorSetLBPMethodString("XY");
     ASSERT_THROW(vol1Label.getLBPMethod(), cta::exception::Exception);
   }
-  
+
   class testVOL1withCRC: public castor::tape::tapeFile::VOL1withCrc {
   public:
     void backdoorSetLBPMethodString(const std::string & LBPString) {
-      ::strncpy(m_LBPMethod, LBPString.c_str(), sizeof(m_LBPMethod));
+      strcpy(m_LBPMethod, LBPString.c_str());
     }
   };
-  
+
   TEST(castor_tape_AULFile, VOL1WithCRC) {
     typedef castor::tape::SCSI::logicBlockProtectionMethod LBPM;
     testVOL1withCRC vol1LabelWithCRC;
