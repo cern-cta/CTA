@@ -4,7 +4,7 @@ After=syslog.target network-online.target
 
 [Service]
 EnvironmentFile=/etc/sysconfig/cta-dcache
-ExecStart=/usr/bin/cta-dcache --no-log-header --port ${GRPC_PORT}
+ExecStart=/usr/bin/cta-dcache --no-log-header ${GRPC_USE_TLS} --port ${GRPC_PORT}
 Type=simple
 Restart=always
 User=cta

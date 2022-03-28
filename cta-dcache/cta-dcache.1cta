@@ -38,6 +38,11 @@ Include timestamp and host name into the log messages.
 \fB\-s, \-\-no\-log\-header
 Don't include timestamp and host name into the log messages, default behaviour.
 .TP
+\fB\-t, \-\-tls
+Enable TLS for communication. The paths to the TLS certificate, key and root-ca chan files in PEM
+format should be specified by '\fBgRPC TlsCert\fP', '\fBgRPC TlsKey\fP' and '\fBgRPC TlsChain\fP'
+in the cta.conf configuration file.
+.TP
 \fB\-v, \-\-version
 Print the version number and exit.
 

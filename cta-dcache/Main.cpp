@@ -40,7 +40,8 @@ std::string help =
         "\t--port <port>, -p <port>:\tTCP port number to use, defaults to 17017\n"
         "\t--log-header, -n         \tadd hostname and timestamp to log outputs, default\n"
         "\t--no-log-header, -s      \tdon't add hostname and timestamp to log outputs\n"
-        "\t--version, -v            \tprint version and exit.\n"
+        "\t--tls, -t                \tenable Transport Layer Security (TLS)\n"
+        "\t--version, -v            \tprint version and exit\n"
         "\t--help, -h               \tprint this help and exit\n";
 
 static struct option long_options[] =
@@ -49,7 +50,8 @@ static struct option long_options[] =
                 {"log-header", no_argument, 0, 'n'},
                 {"no-log-header", no_argument, 0, 's'},
                 {"help", no_argument, 0, 'h'},
-                { "version", no_argument, 0, 'v'},
+                {"version", no_argument, 0, 'v'},
+                {"tls", no_argument, 0, 't'},
                 {0, 0, 0, 0}
         };
 
@@ -63,6 +65,13 @@ void printVersionAndExit() {
     exit(0);
 }
 
+std::string file2string(std::string filename){
+    std::ifstream as_stream(filename);
+    std::ostringstream as_string;
+    as_string << as_stream.rdbuf();
+    return as_string.str();
+}
+
 int main(const int argc, char *const *const argv) {
 
     std::string port = "17017";
@@ -71,6 +80,7 @@ int main(const int argc, char *const *const argv) {
     bool shortHeader = false;
     int option_index = 0;
     const std::string shortHostName = utils::getShortHostname();
+    bool useTLS = false;
 
     while( (c = getopt_long(argc, argv, "p:nshv", long_options, &option_index)) != EOF) {
 
@@ -89,6 +99,9 @@ int main(const int argc, char *const *const argv) {
                 break;
             case 'v':
                 printVersionAndExit();
+                break;
+            case 't':
+                useTLS = true;
                 break;
             default:
                 printHelpAndExit(1);
@@ -137,8 +150,25 @@ int main(const int argc, char *const *const argv) {
     // start gRPC service
 
     ServerBuilder builder;
+
+    std::shared_ptr<grpc::ServerCredentials> creds;
+
+    if (useTLS) {
+        grpc::SslServerCredentialsOptions tls_options;
+        grpc::SslServerCredentialsOptions::PemKeyCertPair cert;
+
+        cert.private_key = file2string(config.getConfEntString("gRPC", "TlsKey"));
+        cert.cert_chain = file2string(config.getConfEntString("gRPC", "TlsCert"));
+        tls_options.pem_root_certs = file2string(config.getConfEntString("gRPC", "TlsChain"));
+        tls_options.pem_key_cert_pairs.emplace_back(std::move(cert));
+
+        creds = grpc::SslServerCredentials(tls_options);
+    } else {
+        creds = grpc::InsecureServerCredentials();
+    }
+
     // Listen on the given address without any authentication mechanism.
-    builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
+    builder.AddListeningPort(server_address, creds);
 
     // Register "service" as the instance through which we'll communicate with
     // clients. In this case it corresponds to an *synchronous* service.

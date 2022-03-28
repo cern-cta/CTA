@@ -4,3 +4,6 @@
 
 # port number to accept TCP connections
 GRPC_PORT=17017
+
+# change to '--tls' to enable
+GRPC_USE_TLS=""

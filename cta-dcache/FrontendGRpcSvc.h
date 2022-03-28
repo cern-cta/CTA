@@ -3,6 +3,7 @@
 
 #include "version.h"
 #include <grpcpp/grpcpp.h>
+#include <grpcpp/security/server_credentials.h>
 
 #include <scheduler/Scheduler.hpp>
 #include "common/log/Logger.hpp"
