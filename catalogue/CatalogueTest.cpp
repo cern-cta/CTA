@@ -17280,6 +17280,33 @@ TEST_P(cta_catalogue_CatalogueTest, getTapeDriveWithEmptyEntryLog) {
   m_catalogue->deleteTapeDrive(tapeDrive.driveName);
 }
 
+
+TEST_P(cta_catalogue_CatalogueTest, getTapeDriveWithNonExistingLogicalLibrary) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  m_catalogue->createTapeDrive(tapeDrive);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_FALSE(storedTapeDrive.value().logicalLibraryDisabled);
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getTapeDriveWithDisabledLogicalLibrary) {
+  using namespace cta;
+
+  const std::string tapeDriveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  m_catalogue->createLogicalLibrary(m_admin, tapeDrive.logicalLibrary, true, "comment");
+  m_catalogue->createTapeDrive(tapeDrive);
+  const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
+  ASSERT_TRUE(storedTapeDrive.value().logicalLibraryDisabled);
+  
+  m_catalogue->deleteTapeDrive(tapeDrive.driveName);
+  m_catalogue->deleteLogicalLibrary(tapeDrive.logicalLibrary);
+}
+
+
 TEST_P(cta_catalogue_CatalogueTest, failToGetTapeDrive) {
   using namespace cta;
 

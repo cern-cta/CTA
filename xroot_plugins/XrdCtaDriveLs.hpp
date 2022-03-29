@@ -110,6 +110,7 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     dr_item->set_logical_library(dr.logicalLibrary);
     dr_item->set_drive_name(dr.driveName);
     dr_item->set_host(dr.host);
+    dr_item->set_logical_library_disabled(dr.logicalLibraryDisabled);
     dr_item->set_desired_drive_state(dr.desiredUp ? cta::admin::DriveLsItem::UP : cta::admin::DriveLsItem::DOWN);
     dr_item->set_mount_type(cta::admin::MountTypeToProtobuf(dr.mountType));
     dr_item->set_drive_status(cta::admin::DriveStatusToProtobuf(dr.driveStatus));

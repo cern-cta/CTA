@@ -66,6 +66,7 @@ struct TapeDrive {
   std::string driveName;
   std::string host;
   std::string logicalLibrary;
+  bool logicalLibraryDisabled;
   optional<uint64_t> sessionId;
 
   optional<uint64_t> bytesTransferedInSession;

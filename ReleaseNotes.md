@@ -13,6 +13,7 @@ Please consult the [database upgrade documentation](https://eoscta.docs.cern.ch/
 - cta/CTA#1137 - Stop deletion of failed retrieve/archive requests
 - cta/CTA#1150 - Add option to pass desired catalogue version into cta-catalogue-schema-create
 - cta/CTA#1082 - Review software license text in CTA
+- cta/CTA#1163 - cta-admin now prefixes the drivename with a '!' if the respective logical library is disabled
 
 ### Bug fixes
 - cta/CTA#1117 - Update masterDataInBytes when writing files to tape
