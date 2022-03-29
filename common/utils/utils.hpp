@@ -422,8 +422,9 @@ namespace utils {
    * @param str In/out parameter which is the string to be modified.
    * @param search The search string.
    * @param replacement The replacement string.
+   * @return Number of replacements performed.
    */
-  void searchAndReplace(std::string &str, const std::string &search, const std::string& replacement);
+  int searchAndReplace(std::string &str, const std::string &search, const std::string& replacement);
 
   /**
    * Willful segmentation violation (accessing nullptr) ensuring the process will stop hard.

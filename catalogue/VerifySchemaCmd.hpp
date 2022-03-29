@@ -75,6 +75,7 @@ private:
    */
   bool tableExists(const std::string tableName, rdbms::Conn &conn) const;
   
+#if 0
   /**
    * Verifies schema version values in the database against the catalogue schema
    * version values.
@@ -136,6 +137,7 @@ private:
    */
   VerifyStatus verifySequenceNames(const std::list<std::string> &schemaSequenceNames, 
     const std::list<std::string> &dbSequenceNames) const;
+#endif
   
 }; // class VerifySchemaCmd
 

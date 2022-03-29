@@ -37,7 +37,6 @@ DbToSQLiteStatementTransformer::~DbToSQLiteStatementTransformer() {
 std::string DbToSQLiteStatementTransformer::transform(){
   return m_statement;
 }
-
 /**********************************/
 /* DbToSQLiteStatementTransformer */
 /**********************************/
@@ -45,7 +44,6 @@ std::string DbToSQLiteStatementTransformer::transform(){
 /*****************************************************/
 /* CreateGlobalTempTableToSQLiteStatementTransformer */
 /*****************************************************/
-
 CreateGlobalTempTableToSQLiteStatementTransformer::CreateGlobalTempTableToSQLiteStatementTransformer(const std::string &statement):DbToSQLiteStatementTransformer(statement){}
 
 std::string CreateGlobalTempTableToSQLiteStatementTransformer::transform(){
@@ -53,21 +51,35 @@ std::string CreateGlobalTempTableToSQLiteStatementTransformer::transform(){
   utils::searchAndReplace(m_statement,"ON COMMIT DELETE ROWS;",";");
   return m_statement;
 }
-
 /*****************************************************/
 /* CreateGlobalTempTableToSQLiteStatementTransformer */
 /*****************************************************/
 
+/*****************************/
+/* IndexStatementTransformer */
+/*****************************/
+IndexStatementTransformer::IndexStatementTransformer(const std::string& statement):DbToSQLiteStatementTransformer(statement){}
+
+std::string IndexStatementTransformer::transform(){
+  utils::searchAndReplace(m_statement,"UNIQUE "," ");
+  // This is a bit crude, but it will work so long as we don't have indexes with multiple nested functions...
+  if(utils::searchAndReplace(m_statement,"LOWER(","") > 0) {
+    utils::searchAndReplace(m_statement,"))",")");
+  }
+  return m_statement;
+}
+/*****************************/
+/* IndexStatementTransformer */
+/*****************************/
+
 /**********************************/
 /* DeleteStatementTransformer     */
 /**********************************/
-
 DeleteStatementTransformer::DeleteStatementTransformer(const std::string& statement):DbToSQLiteStatementTransformer(statement){}
 
 std::string DeleteStatementTransformer::transform(){
   return "";
 }
-
 /**********************************/
 /* DeleteStatementTransformer     */
 /**********************************/
@@ -82,12 +94,15 @@ std::unique_ptr<DbToSQLiteStatementTransformer> DbToSQLiteStatementTransformerFa
     case StatementType::CREATE_GLOBAL_TEMPORARY_TABLE:
       ret.reset(new CreateGlobalTempTableToSQLiteStatementTransformer(statement));
       break;
+    case StatementType::CREATE_INDEX:
+      ret.reset(new IndexStatementTransformer(statement));
+      break;
     case StatementType::CREATE_SEQUENCE://CREATE SEQUENCE is not SQLite compatible, we delete this statement
     case StatementType::SKIP:
       ret.reset(new DeleteStatementTransformer(statement));
       break;
     default:
-      //CREATE TABLE, CREATE INDEX, INSERT INTO CTA_VERSION, OTHERS
+      //CREATE TABLE, INSERT INTO CTA_VERSION, OTHERS
       //If the statement does not need modification, we return it as it is
       ret.reset(new DbToSQLiteStatementTransformer(statement));
       break;
@@ -111,14 +126,13 @@ std::map<std::string,DbToSQLiteStatementTransformerFactory::StatementType> DbToS
 {
   std::map<std::string,StatementType> ret;
   ret["CREATE TABLE ([a-zA-Z_]+)"] = StatementType::CREATE_TABLE;
-  ret["CREATE INDEX ([a-zA-Z_]+)"] = StatementType::CREATE_INDEX;
+  ret["CREATE (UNIQUE )?INDEX ([a-zA-Z_]+)"] = StatementType::CREATE_INDEX;
   ret["CREATE GLOBAL TEMPORARY TABLE ([a-zA-Z_]+)"] = StatementType::CREATE_GLOBAL_TEMPORARY_TABLE;
   ret["CREATE SEQUENCE ([a-zA-Z_]+)"] = StatementType::CREATE_SEQUENCE;
   ret["INSERT INTO CTA_CATALOGUE([a-zA-Z_]+)"] = StatementType::INSERT_INTO_CTA_VERSION;
   ret["INSERT INTO ([a-zA-Z_]+)"] = StatementType::SKIP;
   return ret;
 }
-
 /*****************************************************/
 /* DbToSQLiteStatementTransformerFactory             */
 /*****************************************************/

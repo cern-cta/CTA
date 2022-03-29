@@ -54,6 +54,18 @@ public:
 };
 
 /**
+ * Transform a CREATE INDEX or CREATE UNIQUE INDEX statement for SQLite.
+ * INDEX statements in SQLite cannot contain functions.
+ *
+ * @param statement the CREATE INDEX statement
+ */
+class IndexStatementTransformer: public DbToSQLiteStatementTransformer {
+public:
+  IndexStatementTransformer(const std::string &statement);
+  std::string transform() override;
+};
+
+/**
  * Delete the statement passed in parameter
  * @param statement the statement to delete
  */

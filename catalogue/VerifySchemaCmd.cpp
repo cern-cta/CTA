@@ -68,7 +68,7 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   const bool ctaCatalogueTableExists = tableExists("CTA_CATALOGUE", conn);
 
   if(!ctaCatalogueTableExists) {
-    std::cerr << "Cannot verify the database schema because the CTA_CATALOGUE table does not exists" << std::endl;
+    std::cerr << "Cannot verify the database schema because the CTA_CATALOGUE table does not exist" << std::endl;
     return 1;
   }
 
@@ -112,6 +112,7 @@ void VerifySchemaCmd::printUsage(std::ostream &os) {
   VerifySchemaCmdLineArgs::printUsage(os);
 }
 
+#if 0
 //------------------------------------------------------------------------------
 // verifySchemaVersion
 //------------------------------------------------------------------------------
@@ -298,6 +299,7 @@ VerifySchemaCmd::VerifyStatus VerifySchemaCmd::verifySequenceNames(const std::li
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
+#endif
 
 } // namespace catalogue
 } // namespace cta

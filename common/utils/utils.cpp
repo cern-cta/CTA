@@ -943,12 +943,15 @@ std::string extractPathFromXrootdPath(const std::string& path){
 //------------------------------------------------------------------------------
 // searchAndReplace
 //------------------------------------------------------------------------------
-void searchAndReplace(std::string &str, const std::string &search, const std::string& replacement) {
+int searchAndReplace(std::string &str, const std::string &search, const std::string& replacement) {
   std::string::size_type pos = 0;
+  int num_replacements = 0;
   while(std::string::npos != (pos = str.find(search, pos))) {
     str.replace(pos, search.length(), replacement);
     pos += replacement.length();
+    ++num_replacements;
   }
+  return num_replacements;
 }
 
 //------------------------------------------------------------------------------
