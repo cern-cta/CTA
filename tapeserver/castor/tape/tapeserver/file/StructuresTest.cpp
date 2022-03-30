@@ -265,4 +265,14 @@ namespace unitTests {
     ASSERT_EQ("0000262144", utl1Label.getBlockSize());
     ASSERT_EQ("0000012345", utl1Label.getfSeq());
   }
+
+  TEST(castor_tape_AULFile, setDateTest) {
+    const size_t lengthOfStr = 6;
+    char str[lengthOfStr];
+    castor::tape::tapeFile::setDate(str);
+    const std::string buff(str);
+    ASSERT_EQ(buff.length(), lengthOfStr);
+    // 22088 is the date at 29/03/2022
+    ASSERT_GT(stoi(buff), 22088);
+  }
 }

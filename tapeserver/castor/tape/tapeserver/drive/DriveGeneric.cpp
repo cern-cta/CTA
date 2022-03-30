@@ -641,7 +641,6 @@ drive::LBPInfo drive::DriveGeneric::getLBPInfo() {
 //------------------------------------------------------------------------------
 // Encryption interface
 //------------------------------------------------------------------------------
-#pragma GCC diagnostic ignored "-Wstringop-truncation"
 void drive::DriveGeneric::setEncryptionKey(const std::string &encryption_key) {
   if(!isEncryptionCapEnabled())
     throw cta::exception::Exception("In DriveGeneric::setEncryptionKey: Tried to enable encryption on drive "
@@ -665,7 +664,7 @@ void drive::DriveGeneric::setEncryptionKey(const std::string &encryption_key) {
     sps.decryptionMode = SCSI::encryption::decryptionModes::modeMixed;
     sps.algorithmIndex = 0x01;
     sps.keyFormat = SCSI::encryption::keyFormatTypes::keyFormatNormal;
-    strncpy((char *)sps.keyData, encryption_key.c_str(), SCSI::encryption::ENC_KEY_LENGTH);
+    std::copy(encryption_key.begin(), encryption_key.end(), sps.keyData);
     /*
      * This means that if the key given is smaller, it's right padded with zeros.
      * If the key given is bigger, we the first 256-bit are used.
@@ -937,7 +936,7 @@ void drive::DriveGeneric::receiveRAO(std::list<SCSI::Structures::RAO::blockLims>
     SCSI::Structures::RAO::udsDescriptor_t *ud = params->udsDescriptors;
     while (files_no > 0) {
         SCSI::Structures::RAO::blockLims bl;
-        strncpy((char*)bl.fseq, (char*)ud->udsName, 10);
+        strcpy(reinterpret_cast<char*>(bl.fseq), reinterpret_cast<char const*>(ud->udsName));
         bl.begin = SCSI::Structures::toU64(ud->beginLogicalObjID);
         bl.end = SCSI::Structures::toU64(ud->endLogicalObjID);
         files.emplace_back(bl);

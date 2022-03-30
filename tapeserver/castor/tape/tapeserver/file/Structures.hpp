@@ -479,22 +479,24 @@ namespace tape {
     /**
      * Helper function to set a current date  into a fixed sized field of a
      * header structure. The date format is cyyddd, where:
-     * c = century (blank=19; 0=20; 1=21; etc.) 
+     * c = century (blank=19; 0=20; 1=21; etc.)
      * yy= year (00-99) ddd = day (001-366)
      */
-    #pragma GCC diagnostic ignored "-Wformat-overflow"
     inline void setDate(char(& t)[6]) {
       time_t current_time;
       struct tm localTime;
 
       time(&current_time);
       localtime_r(&current_time, &localTime);
-      char bufDate[7];
-      sprintf(bufDate, "%c%.2d%.3d", localTime.tm_year / 100 ? '0' : ' ',
-              localTime.tm_year % 100, localTime.tm_yday + 1);
 
-      memcpy(t, bufDate, 6);      
+      std::ostringstream buff;
+      buff << (localTime.tm_year / 100 ? '0' : ' ')
+           << (localTime.tm_year % 100)
+           << std::setfill('0') << std::setw(3) << (localTime.tm_yday + 1);
+      const std::string str = buff.str();
+      std::copy(str.begin(), str.end(), t);
     }
-  } //namespace AULFile
+
+} //namespace tapeFile
 } // namespace tape
 } // namespace castor
