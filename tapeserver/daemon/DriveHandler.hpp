@@ -85,7 +85,7 @@ private:
   /** Representation of the status of the current process. */
   session::SessionState m_sessionState = session::SessionState::PendingFork;
 
-  int setDriveDownForShutdown(const std::unique_ptr<cta::Scheduler>& scheduler, cta::log::LogContext* lc);
+  int setDriveDownForShutdown(const std::string& reason, cta::log::LogContext* lc);
 
   /**
    * Utility function resetting all parameters to pre-fork state

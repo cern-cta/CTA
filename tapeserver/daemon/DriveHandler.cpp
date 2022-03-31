@@ -1117,6 +1117,15 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
     log::ScopedParamContainer param(lc);
     param.add("errorMessage", ex.getMessageValue());
     lc.log(log::CRIT, "In DriveHandler::shutdown(): failed to connect to objectstore or failed to instantiate agent entry. Reporting fatal error.");
+    // Putting the drive down
+    try {
+      setDriveDownForShutdown("Failed to connect to objectstore or failed to instantiate agent entry", &lc);
+    } catch(const cta::exception::Exception &ex) {
+      params.add("tapeVid", m_sessionVid)
+            .add("tapeDrive", m_configLine.unitName)
+            .add("message", ex.getMessageValue());
+      lc.log(cta::log::ERR, "In DriveHandler::shutdown(). Failed to put the drive down.");
+    }
     return exitShutdown();
   }
   std::unique_ptr<SchedulerDB_t> sched_db = sched_db_init->getSchedDB(*m_catalogue, lc.logger());
@@ -1160,7 +1169,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
   }
   // Putting the drive down
   try {
-    setDriveDownForShutdown(scheduler, &lc);
+    setDriveDownForShutdown("Shutdown", &lc);
   } catch(const cta::exception::Exception &ex) {
     params.add("tapeVid", m_sessionVid)
           .add("tapeDrive", m_configLine.unitName)
@@ -1170,13 +1179,13 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
   return exitShutdown();
 }
 
-int DriveHandler::setDriveDownForShutdown(const std::unique_ptr<cta::Scheduler>& scheduler, cta::log::LogContext* lc) {
+int DriveHandler::setDriveDownForShutdown(const std::string& reason, cta::log::LogContext* lc) {
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = m_configLine.unitName;
   driveInfo.logicalLibrary = m_configLine.logicalLibrary;
   driveInfo.host = cta::utils::getShortHostname();
 
-  auto driveState = scheduler->getDriveState(driveInfo.driveName, lc);
+  auto driveState = m_catalogue->getTapeDrive(driveInfo.driveName);
   if (!driveState) {
     lc->log(cta::log::WARNING, "In DriveHandler::setDriveDownForShutdown(). TapeDrive to set down doesn't exist.");
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
@@ -1190,17 +1199,17 @@ int DriveHandler::setDriveDownForShutdown(const std::unique_ptr<cta::Scheduler>&
   // why a drive is down at the shutdown of the tapeserver. If it's setted up a previous Reason From Log
   // it will be change for this new one.
   if (!driveState.value().reasonUpDown) {
-    desiredDriveState.setReasonFromLogMsg(cta::log::INFO, "Shutdown");
+    desiredDriveState.setReasonFromLogMsg(cta::log::INFO, reason);
   } else if (driveState.value().reasonUpDown.value().substr(0, 11) == "[cta-taped]") {
-    desiredDriveState.setReasonFromLogMsg(cta::log::INFO, "Shutdown");
+    desiredDriveState.setReasonFromLogMsg(cta::log::INFO, reason);
   } else {
     desiredDriveState.reason = driveState.value().reasonUpDown.value();
   }
 
-  scheduler->reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
-    cta::common::dataStructures::DriveStatus::Down, *lc);
-  cta::common::dataStructures::SecurityIdentity cliId;
-  scheduler->setDesiredDriveState(cliId, m_configLine.unitName, desiredDriveState, *lc);
+  TapeDrivesCatalogueState driveCatalogue(*m_catalogue);
+  driveCatalogue.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
+    cta::common::dataStructures::DriveStatus::Down, time(nullptr), *lc);
+  driveCatalogue.setDesiredDriveState(m_configLine.unitName, desiredDriveState, *lc);
 
   return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
 }
