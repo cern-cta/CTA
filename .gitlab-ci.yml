@@ -22,7 +22,7 @@ cta_srpm:
   retry: 1
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
   script:
-    - yum install -y devtoolset-8 cmake cmake3 make rpm-build
+    - yum install -y devtoolset-8 cmake3 make rpm-build
     - source /opt/rh/devtoolset-8/enable
     - mkdir build_srpm
     - cd build_srpm
@@ -45,7 +45,7 @@ cta_rpm:
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
   script:
     - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
-    - yum install -y devtoolset-8 cmake cmake3 make rpm-build
+    - yum install -y devtoolset-8 cmake3 make rpm-build
     - yum -y install yum-plugin-priorities yum-plugin-versionlock
     - yum install -y git
     - source /opt/rh/devtoolset-8/enable
@@ -76,7 +76,7 @@ cta_tagged_rpm:
     - if [ -z "${CI_COMMIT_TAG}" ]; then echo "This is not a tagged commit, exiting"; exit 0; fi
     - echo "Building package for tag ${CI_COMMIT_TAG}. CTA_VERSION=${TAG_VERSION} - CTA_RELEASE=${TAG_RELEASE}"
     - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
-    - yum install -y devtoolset-8 cmake cmake3 make rpm-build
+    - yum install -y devtoolset-8 cmake3 make rpm-build
     - yum -y install yum-plugin-priorities yum-plugin-versionlock
     - yum install -y git
     - source /opt/rh/devtoolset-8/enable
