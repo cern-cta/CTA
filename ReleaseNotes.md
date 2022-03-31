@@ -8,26 +8,18 @@ This CTA release requires a backwards compatible database schema upgrade to CTA 
 Please consult the [database upgrade documentation](https://eoscta.docs.cern.ch/catalogue/upgrade/).
 
 ### Features
-- cta/CTA#1123 - Add mount id to disk space reservations, prevent tape servers from releasing disk space from a previous mount
-- cta/CTA#1137 - Stop deletion of failed retrieve/archive requests
-- cta/CTA#1150 - Add option to pass desired catalogue version into cta-catalogue-schema-create
+- cta/CTA#1082 - Review software license text in CTA
 - cta/CTA#1163 - cta-admin now prefixes the drivename with a '!' if the respective logical library is disabled
 
 ### Bug fixes
-- cta/CTA#1117 - Update masterDataInBytes when writing files to tape
-- cta/CTA#1125 - cta-admin dr ls should show '-' instead of "NO_MOUNT" for Mount Type
-- cta/CTA#1138 - sortAndGetTapesForMountInfo only queries tapes in the current logical library
 
 ### Building and Packaging
-- cta/CTA#1082 - Review software license text in CTA
 
 ### Catalogue Schema
-- cta/CTA#1147 - Add Disk Instance Column to VO table
 - cta/CTA#1158 - Check all foreign key references have a full index on both sides of the constraint
+- cta/CTA#1043 - Add verification column to tape table
 
 ### Continuous Integration
-- cta/CTA#1126 - Create tests for TapeDrivesCatalogueState
-- cta/CTA#1131 - Compile CTA using devtoolset-8 in CI
 
 # v4.6.1-1
 
@@ -40,10 +32,19 @@ Please consult the [database upgrade documentation](https://tapeoperations.docs.
 
 ### Features
 - cta/CTA#1137 - Stop deletion of failed retrieve/archive requests
+- cta/CTA#1150 - Add option to pass desired catalogue version into cta-catalogue-schema-create
+- cta/CTA#1147 - Add Disk Instance Column to VO table
+- cta/CTA#1119 - Remove support of manual mode for loading tapes
+- cta/CTA#1123 - Add mount id to disk space reservations, prevent tape servers from releasing disk space from a previous mount
 
 ### Bug fixes
+- cta/CTA#1138 - sortAndGetTapesForMountInfo only queries tapes in the current logical library
+- cta/CTA#1117 - Update masterDataInBytes when writing files to tape
+- cta/CTA#1125 - cta-admin dr ls should show '-' instead of "NO_MOUNT" for Mount Type
 
 ### Continuous Integration
+- cta/CTA#1131 - Compile CTA using devtoolset-8 in CI
+- cta/CTA#1126 - Create tests for TapeDrivesCatalogueState
 
 # v4.6.0-1
 
