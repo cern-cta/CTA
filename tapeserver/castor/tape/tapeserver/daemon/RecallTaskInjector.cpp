@@ -37,12 +37,12 @@ namespace castor{
 namespace tape{
 namespace tapeserver{
 namespace daemon {
-  
-RecallTaskInjector::RecallTaskInjector(RecallMemoryManager & mm, 
+
+RecallTaskInjector::RecallTaskInjector(RecallMemoryManager & mm,
         TapeSingleThreadInterface<TapeReadTask> & tapeReader,
         DiskWriteThreadPool & diskWriter,
         cta::RetrieveMount &retrieveMount,
-        uint64_t maxFiles, uint64_t byteSizeThreshold,cta::log::LogContext lc) : 
+        uint64_t maxFiles, uint64_t byteSizeThreshold,cta::log::LogContext lc) :
         m_thread(*this),m_memManager(mm),
         m_tapeReader(tapeReader),m_diskWriter(diskWriter),
         m_retrieveMount(retrieveMount),
@@ -138,8 +138,11 @@ void RecallTaskInjector::waitForFirstTasksInjectedPromise(){
 //------------------------------------------------------------------------------
 //reserveSpaceForNextJobBatch
 //------------------------------------------------------------------------------
-bool RecallTaskInjector::reserveSpaceForNextJobBatch() {
-  bool useRAO = m_raoManager.useRAO();
+bool RecallTaskInjector::reserveSpaceForNextJobBatch(const bool useRAOManager) {
+  bool useRAO = false;
+  if (useRAOManager) {
+    useRAO = m_raoManager.useRAO();
+  }
   auto nextJobBatch = previewGetNextJobBatch(useRAO);
 
   cta::DiskSpaceReservationRequest necessaryReservedSpace;
@@ -148,7 +151,7 @@ bool RecallTaskInjector::reserveSpaceForNextJobBatch() {
     auto diskSystemName = job->diskSystemName();
     if (diskSystemName) {
       necessaryReservedSpace.addRequest(diskSystemName.value(), job->archiveFile.fileSize);
-    } 
+    }
   }
 
   // See if the free disk space reserved by the injector is enough to fit the new batch
@@ -188,12 +191,12 @@ bool RecallTaskInjector::reserveSpaceForNextJobBatch() {
     for (auto job: nextJobBatch) {
       job->diskSystemName() = cta::nullopt_t();
     }
-    m_lc.log(cta::log::WARNING, 
+    m_lc.log(cta::log::WARNING,
     "In RecallTaskInjector::reserveSpaceForNextJobBatch(): Disk sapce reservation failed "
     "because disk system configuration has been removed, processing job batch as if it had no disk system");
     return true;
   }
-  
+
   if(!ret) {
     m_retrieveMount.requeueJobBatch(m_jobs, m_lc);
     m_files = 0;
@@ -241,7 +244,7 @@ void RecallTaskInjector::injectBulkRecalls() {
   bool useRAO = m_raoManager.useRAO();
   if (useRAO) {
     m_lc.log(cta::log::INFO, "Performing RAO reordering");
-    
+
     raoOrder = m_raoManager.queryRAO(m_jobs,m_lc);
   }
 
@@ -313,7 +316,7 @@ bool RecallTaskInjector::synchronousFetch(bool & noFilesToRecall)
     return true; //No need to pop from the queue, injector already  holds enough files, but we return there is still work to be done
   }
   reqFiles -= m_files;
-  
+
   uint64_t reqSize = (m_raoManager.useRAO() && m_raoManager.hasUDS()) ? 1024L * 1024 * 1024 * 1024 * 1024 : m_maxBatchBytes;
   if (reqSize <= m_bytes) {
      return true; //No need to pop from the queue, injector already holds enough bytes, but we return there is still work to be done
@@ -341,17 +344,17 @@ bool RecallTaskInjector::synchronousFetch(bool & noFilesToRecall)
     m_lc.log(cta::log::INFO, "No files left to recall on the queue or in the injector");
     return false;
   }
-    cta::log::ScopedParamContainer scoped(m_lc); 
+    cta::log::ScopedParamContainer scoped(m_lc);
   scoped.add("requestedBytes",reqSize)
         .add("requestedFiles", reqFiles)
         .add("fetchedFiles", m_fetched);
-  m_lc.log(cta::log::INFO,"Fetched files to recall");  
+  m_lc.log(cta::log::INFO,"Fetched files to recall");
   return true;
 }
 //------------------------------------------------------------------------------
 //signalEndDataMovement
 //------------------------------------------------------------------------------
-void RecallTaskInjector::signalEndDataMovement(){        
+void RecallTaskInjector::signalEndDataMovement(){
   //send the end signal to the threads
   //(do this only one)
   if (!m_sessionEndSignaled) {
@@ -382,7 +385,7 @@ void RecallTaskInjector::WorkerThread::run()
   if (m_parent.m_raoManager.useRAO()) {
     /* RecallTaskInjector is waiting to have access to the drive in order
      * to perform the RAO query;
-     * This waitForPromise() call means that the drive is mounted 
+     * This waitForPromise() call means that the drive is mounted
      */
     m_parent.waitForPromise();
     try {
@@ -424,20 +427,20 @@ void RecallTaskInjector::WorkerThread::run()
       }
       m_parent.m_lc.log(cta::log::DEBUG,"RecallJobInjector:run: about to call client interface");
       LogContext::ScopedParam sp01(m_parent.m_lc, Param("transactionId", m_parent.m_retrieveMount.getMountTransactionId()));
-      
-      /*When disk space reservation fails, we will no longer fetch more files, 
+
+      /*When disk space reservation fails, we will no longer fetch more files,
       just wait for the session to finish naturally
       */
       if (reservationResult) {
         bool noFilesToRecall;
         m_parent.synchronousFetch(noFilesToRecall);
-        
+
         reservationResult = m_parent.reserveSpaceForNextJobBatch();
         if (!reservationResult) {
           m_parent.m_lc.log(cta::log::INFO, "Disk space reservation failed: will inject no more files");
-        }        
+        }
       }
-      
+
       if (m_parent.m_jobs.empty()) {
         if (req.lastCall) {
           m_parent.m_lc.log(cta::log::INFO,"No more file to recall: triggering the end of session.");

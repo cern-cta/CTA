@@ -227,8 +227,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::LogContext& logContext,
                                                                    cta::RetrieveMount *retrieveMount,
                                                                    TapeServerReporter& reporter) {
-  // We are ready to start the session. We need to create the whole machinery 
-  // in order to get the task injector ready to check if we actually have a 
+  // We are ready to start the session. We need to create the whole machinery
+  // in order to get the task injector ready to check if we actually have a
   // file to recall.
   // findDrive does not throw exceptions (it catches them to log errors)
   // A nullptr is returned on failure
@@ -249,7 +249,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
 
     RecallMemoryManager memoryManager(m_castorConf.nbBufs, m_castorConf.bufsz, logContext);
 
-    //we retrieved the detail from the client in execute, so at this point 
+    //we retrieved the detail from the client in execute, so at this point
     //we can already report !
     reporter.reportState(cta::tape::session::SessionState::Mounting,
                            cta::tape::session::SessionType::Retrieve);
@@ -291,10 +291,10 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
     bool reservationResult = false;
     fetchResult = taskInjector.synchronousFetch(noFilesToRecall);
     if (fetchResult) {
-    reservationResult = taskInjector.reserveSpaceForNextJobBatch();
+      reservationResult = taskInjector.reserveSpaceForNextJobBatch(false);
     }
     //only mount the tape if we can confirm that we will do some work, otherwise do an empty mount
-    if (fetchResult && reservationResult) { 
+    if (fetchResult && reservationResult) {
       // We got something to recall. Time to start the machinery
       readSingleThread.setWaitForInstructionsTime(timer.secs());
       watchDog.startThread();
@@ -303,7 +303,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
       reportPacker.startThreads();
       taskInjector.startThreads();
       reporter.startThreads();
-      // This thread is now going to be idle until the system unwinds at the end 
+      // This thread is now going to be idle until the system unwinds at the end
       // of the session
       // All client notifications are done by the report packer, including the
       // end of session
@@ -366,8 +366,8 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logContext,
                                                                     cta::ArchiveMount *archiveMount,
                                                                     TapeServerReporter& reporter) {
-  // We are ready to start the session. We need to create the whole machinery 
-  // in order to get the task injector ready to check if we actually have a 
+  // We are ready to start the session. We need to create the whole machinery
+  // in order to get the task injector ready to check if we actually have a
   // file to migrate.
   // 1) Get hold of the drive error logs are done inside the findDrive function
   std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(findDrive(m_driveConfig, logContext, archiveMount));
@@ -419,7 +419,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
       //the last fseq written on the tape is the first file's fseq minus one
       writeSingleThread.setlastFseq(firstFseqFromClient - 1);
 
-      //we retrieved the detail from the client in execute, so at this point 
+      //we retrieved the detail from the client in execute, so at this point
       //we can report we will mount the tape.
       // TODO: create a "StartingSession" state as the mounting will happen in
       // the to-be-created tape thread.
