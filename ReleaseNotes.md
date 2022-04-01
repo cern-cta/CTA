@@ -4,15 +4,13 @@
 
 ### Upgrade Instructions
 
-This CTA release requires a backwards compatible database schema upgrade to CTA catalogue schema v4.6.
+This CTA release requires a backwards compatible database schema upgrade to CTA catalogue schema v10.0.
 Please consult the [database upgrade documentation](https://eoscta.docs.cern.ch/catalogue/upgrade/).
 
 ### Features
 - cta/CTA#1123 - Add mount id to disk space reservations, prevent tape servers from releasing disk space from a previous mount
-- cta/CTA#1147 - Add Disk Instance Column to VO table
 - cta/CTA#1137 - Stop deletion of failed retrieve/archive requests
 - cta/CTA#1150 - Add option to pass desired catalogue version into cta-catalogue-schema-create
-- cta/CTA#1082 - Review software license text in CTA
 - cta/CTA#1163 - cta-admin now prefixes the drivename with a '!' if the respective logical library is disabled
 
 ### Bug fixes
@@ -24,6 +22,8 @@ Please consult the [database upgrade documentation](https://eoscta.docs.cern.ch/
 - cta/CTA#1082 - Review software license text in CTA
 
 ### Catalogue Schema
+- cta/CTA#1147 - Add Disk Instance Column to VO table
+- cta/CTA#1158 - Check all foreign key references have a full index on both sides of the constraint
 
 ### Continuous Integration
 - cta/CTA#1126 - Create tests for TapeDrivesCatalogueState

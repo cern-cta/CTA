@@ -151,6 +151,29 @@ std::list<std::string> DatabaseMetadataGetter::getErrorLoggingTables() {
   return tableNames;
 }
 
+std::set<std::string> DatabaseMetadataGetter::getMissingIndexes() {
+  // For definition of constraint types, see https://docs.oracle.com/en/database/oracle/oracle-database/12.2/refrn/USER_CONSTRAINTS.html
+  const char* const sql = "SELECT "
+      "A.TABLE_NAME || '.' || A.COLUMN_NAME AS FQ_COL_NAME "
+    "FROM "
+      "USER_CONS_COLUMNS A,"
+      "USER_CONSTRAINTS B "
+    "WHERE "
+      "A.CONSTRAINT_NAME = B.CONSTRAINT_NAME AND "
+      "B.CONSTRAINT_TYPE = 'R' AND " // R = Referential Integrity
+      "(A.TABLE_NAME || '.' || A.COLUMN_NAME) NOT IN"
+        "(SELECT TABLE_NAME || '.' || COLUMN_NAME FROM USER_IND_COLUMNS)";
+
+  auto stmt = m_conn.createStmt(sql);
+  auto rset = stmt.executeQuery();
+
+  std::set<std::string> columnNames;
+  while(rset.next()) {
+    columnNames.insert(rset.columnString("FQ_COL_NAME"));
+  }
+  return columnNames;
+}
+
 DatabaseMetadataGetter::~DatabaseMetadataGetter() {}
 
 SQLiteDatabaseMetadataGetter::SQLiteDatabaseMetadataGetter(cta::rdbms::Conn & conn):DatabaseMetadataGetter(conn){}

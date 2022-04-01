@@ -70,6 +70,10 @@ class DatabaseMetadataGetter: public MetadataGetter {
      * @return the ERROR logging tables (Oracle only)
      */
     virtual std::list<std::string> getErrorLoggingTables();
+    /**
+     * Returns a set of columns which are part of a foreign key constraint but have no index defined
+     */
+    virtual std::set<std::string> getMissingIndexes();
 };
 
 /**

@@ -138,6 +138,16 @@ SchemaCheckerResult SchemaChecker::warnErrorLoggingTables() {
   return res;
 }
 
+SchemaCheckerResult SchemaChecker::warnMissingIndexes() {
+  SchemaCheckerResult res;
+  auto missingIndexes = m_databaseMetadataGetter->getMissingIndexes();
+  for(auto& missingIndex : missingIndexes) {
+    std::string warning = "Column " + missingIndex + " is part of a foreign key constraint but has no index";
+    res.addWarning(warning);
+  }
+  return res;
+}
+
 /////////////////////////////////////////
 // SchemaChecker::Builder
 /////////////////////////////////////////

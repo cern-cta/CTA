@@ -103,6 +103,12 @@ public:
    */
   SchemaCheckerResult warnErrorLoggingTables();
 
+  /**
+   * Checks that all foreign key constraints have an index on both sides of the constraint
+   * @return a SchemaCheckerResult containing warnings if there are missing indexes
+   */
+  SchemaCheckerResult warnMissingIndexes();
+
   class Builder {
   public:
     Builder(const std::string& databaseToCheckName, const cta::rdbms::Login::DbType& dbType, cta::rdbms::Conn &conn);
