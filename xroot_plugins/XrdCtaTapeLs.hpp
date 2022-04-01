@@ -146,6 +146,9 @@ int TapeLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     tape_item->set_state_reason(tape.stateReason ? tape.stateReason.value() : "");
     tape_item->set_state_update_time(tape.stateUpdateTime);
     tape_item->set_state_modified_by(tape.stateModifiedBy);
+    if (tape.verificationStatus) {
+      tape_item->set_verification_status(tape.verificationStatus.value());
+    }
     
     is_buffer_full = streambuf->Push(record);
   }

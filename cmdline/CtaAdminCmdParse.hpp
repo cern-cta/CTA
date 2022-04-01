@@ -345,6 +345,7 @@ const std::map<std::string, OptionString::Key> strOptions = {
    {  "--activityregex",        OptionString::ACTIVITY_REGEX},
    { "--diskinstance",          OptionString::DISK_INSTANCE },
    { "--diskinstancespace",     OptionString::DISK_INSTANCE_SPACE },
+   { "--verificationstatus",    OptionString::VERIFICATION_STATUS },
 };
 
 
@@ -544,6 +545,7 @@ const Option opt_diskinstance         { Option::OPT_STR,  "--diskinstance",     
 const Option opt_diskinstance_alias   { Option::OPT_STR,  "--name",                 "-n",    " <disk_instance_name>", "--diskinstance" };
 const Option opt_diskinstancespace    { Option::OPT_STR,  "--diskinstancespace",         "--dis",  " <disk_instance_space_name>" };
 const Option opt_diskinstancespace_alias { Option::OPT_STR,  "--name",                 "-n",    " <disk_instance_space_name>", "--diskinstancespace" };
+const Option opt_verificationstatus   { Option::OPT_STR,  "--verificationstatus",     "--vs",   " <verification_status>" };
 
 /*!
  * Map valid options to commands
@@ -630,7 +632,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
         opt_state.optional(), opt_reason.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_CH    },
       { opt_vid, opt_mediatype.optional(), opt_vendor.optional(), opt_logicallibrary.optional(),
-        opt_tapepool.optional(), opt_encryptionkeyname.optional(), opt_full.optional(), 
+        opt_tapepool.optional(), opt_encryptionkeyname.optional(), opt_full.optional(), opt_verificationstatus.optional(),
         opt_state.optional(), opt_reason.optional(), opt_comment.optional(), opt_dirtybit.optional() }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_RM    }, { opt_vid }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_RECLAIM }, { opt_vid }},

@@ -3979,6 +3979,8 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
         "TAPE.READ_MOUNT_COUNT AS READ_MOUNT_COUNT,"
         "TAPE.WRITE_MOUNT_COUNT AS WRITE_MOUNT_COUNT,"
 
+        "TAPE.VERIFICATION_STATUS AS VERIFICATION_STATUS,"
+
         "TAPE.USER_COMMENT AS USER_COMMENT,"
 
         "TAPE.TAPE_STATE AS TAPE_STATE,"
@@ -4144,6 +4146,8 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
 
         tape.readMountCount = rset.columnUint64("READ_MOUNT_COUNT");
         tape.writeMountCount = rset.columnUint64("WRITE_MOUNT_COUNT");
+
+        tape.verificationStatus =  rset.columnOptionalString("VERIFICATION_STATUS");
 
         auto optionalComment = rset.columnOptionalString("USER_COMMENT");
         tape.comment = optionalComment ? optionalComment.value() : "";
@@ -5012,6 +5016,51 @@ void RdbmsCatalogue::modifyTapeEncryptionKeyName(const common::dataStructures::S
     throw;
   }
 }
+
+//------------------------------------------------------------------------------
+// modifyTapeVerificationStatus
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::modifyTapeVerificationStatus(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &vid, const std::string &verificationStatus) {
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE TAPE SET "
+        "VERIFICATION_STATUS = :VERIFICATION_STATUS,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "VID = :VID";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":VERIFICATION_STATUS", verificationStatus);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":VID", vid);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
+    }
+
+    log::LogContext lc(m_log);
+    log::ScopedParamContainer spc(lc);
+    spc.add("vid", vid)
+       .add("verificationStatus", verificationStatus)
+       .add("lastUpdateUserName", admin.username)
+       .add("lastUpdateHostName", admin.host)
+       .add("lastUpdateTime", now);
+    lc.log(log::INFO, "Catalogue - user modified tape - verificationStatus");
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
 
 //------------------------------------------------------------------------------
 // modifyTapeState

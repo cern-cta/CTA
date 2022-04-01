@@ -387,7 +387,10 @@ public:
   void modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &encryptionKeyName) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapeEncryptionKeyName(admin, vid, encryptionKeyName);}, m_maxTriesToConnect);
   }
-
+  void modifyTapeVerificationStatus(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &verificationStatus) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapeVerificationStatus(admin, vid, verificationStatus);}, m_maxTriesToConnect);
+  }
+  
   void modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const cta::optional<std::string> & stateReason) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapeState(admin,vid, state, stateReason);}, m_maxTriesToConnect);
   }

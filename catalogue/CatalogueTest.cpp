@@ -5976,6 +5976,84 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName_emptyStringEncry
   }
 }
 
+TEST_P(cta_catalogue_CatalogueTest, modifyTapeVerificationStatus) {
+  using namespace cta;
+
+  const bool logicalLibraryIsDisabled= false;
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const cta::optional<std::string> supply("value for the supply pool mechanism");
+
+  m_catalogue->createMediaType(m_admin, m_mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+
+  m_catalogue->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+
+  m_catalogue->createTape(m_admin, m_tape1);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const common::dataStructures::Tape tape = tapes.front();
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_vo.name, tape.vo);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.full, tape.full);
+
+    ASSERT_FALSE(tape.isFromCastor);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+    ASSERT_FALSE(tape.verificationStatus);
+  }
+
+  const std::string modifiedVerificationStatus = "verification_status";
+  m_catalogue->modifyTapeVerificationStatus(m_admin, m_tape1.vid, modifiedVerificationStatus);
+
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const common::dataStructures::Tape tape = tapes.front();
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_vo.name, tape.vo);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.full, tape.full);
+
+    ASSERT_FALSE(tape.isFromCastor);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+    ASSERT_EQ(tape.verificationStatus.value(), modifiedVerificationStatus);
+
+  }
+}
+
 TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName_nonExistentTape) {
   using namespace cta;
 

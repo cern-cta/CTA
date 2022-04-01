@@ -1921,17 +1921,18 @@ void RequestMessage::processTape_Ch(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
-   auto &vid               = getRequired(OptionString::VID);
-   auto  mediaType         = getOptional(OptionString::MEDIA_TYPE);
-   auto  vendor            = getOptional(OptionString::VENDOR);
-   auto  logicallibrary    = getOptional(OptionString::LOGICAL_LIBRARY);
-   auto  tapepool          = getOptional(OptionString::TAPE_POOL);
-   auto  comment           = getOptional(OptionString::COMMENT);
-   auto  encryptionkeyName = getOptional(OptionString::ENCRYPTION_KEY_NAME);
-   auto  full              = getOptional(OptionBoolean::FULL);
-   auto  state             = getOptional(OptionString::STATE);
-   auto  stateReason       = getOptional(OptionString::REASON);
-   auto  dirty             = getOptional(OptionBoolean::DIRTY_BIT);
+   auto &vid                = getRequired(OptionString::VID);
+   auto  mediaType          = getOptional(OptionString::MEDIA_TYPE);
+   auto  vendor             = getOptional(OptionString::VENDOR);
+   auto  logicallibrary     = getOptional(OptionString::LOGICAL_LIBRARY);
+   auto  tapepool           = getOptional(OptionString::TAPE_POOL);
+   auto  comment            = getOptional(OptionString::COMMENT);
+   auto  encryptionkeyName  = getOptional(OptionString::ENCRYPTION_KEY_NAME);
+   auto  full               = getOptional(OptionBoolean::FULL);
+   auto  state              = getOptional(OptionString::STATE);
+   auto  stateReason        = getOptional(OptionString::REASON);
+   auto  dirty              = getOptional(OptionBoolean::DIRTY_BIT);
+   auto  verificationStatus = getOptional(OptionString::VERIFICATION_STATUS);
 
    if(mediaType) {
       m_catalogue.modifyTapeMediaType(m_cliIdentity, vid, mediaType.value());
@@ -1964,6 +1965,9 @@ void RequestMessage::processTape_Ch(cta::xrd::Response &response)
    }
    if (dirty) {
       m_catalogue.setTapeDirty(m_cliIdentity, vid, dirty.value());
+   }
+   if (verificationStatus) {
+      m_catalogue.modifyTapeVerificationStatus(m_cliIdentity, vid, verificationStatus.value());
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);

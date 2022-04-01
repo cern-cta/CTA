@@ -110,6 +110,7 @@ struct Tape {
   optional<std::string> stateReason;
   std::string stateModifiedBy;
   time_t stateUpdateTime;
+  optional<std::string> verificationStatus;
   
   bool isDisabled() const;
   

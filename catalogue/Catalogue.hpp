@@ -699,6 +699,8 @@ public:
   virtual void modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &logicalLibraryName) = 0;
   virtual void modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &tapePoolName) = 0;
   virtual void modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &encryptionKeyName) = 0;
+  virtual void modifyTapeVerificationStatus(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &verificationStatus) = 0;
+  
   /**
    * Modify the state of the specified tape
    * @param admin, the person or the system who modified the state of the tape
