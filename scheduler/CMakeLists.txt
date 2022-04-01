@@ -52,9 +52,6 @@ install (TARGETS ctascheduler DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 target_link_libraries (ctascheduler ctacommon ctaobjectstore ${PROTOBUF3_LIBRARIES} ctadisk)
 
-#add_library (ctaschedulerutils SHARED
-#  _old_prototype_DummyScheduler.cpp)
-
 add_library (ctaschedulerunittests SHARED
   SchedulerDatabaseFactory.cpp
   SchedulerDatabaseTest.cpp
@@ -62,10 +59,6 @@ add_library (ctaschedulerunittests SHARED
   OStoreDB/OStoreDBTest.cpp)
 set_property(TARGET ctaschedulerunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctaschedulerunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
-
-set_property(SOURCE OStoreDB/OStoreDBTest.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-unused-function")
-set_property(SOURCE SchedulerDatabaseTest.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-unused-function")
-set_property(SOURCE SchedulerTest.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-unused-function")
 
 target_link_libraries (ctaschedulerunittests
   ctascheduler)

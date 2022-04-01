@@ -48,9 +48,6 @@ set(CTATAPESERVERDAEMON_LIBRARY_SRCS
   TapeWriteSingleThread.cpp
   TapeWriteTask.cpp)
 
-# Add -Wno-unused-function compiler flag
-set_property(SOURCE DataTransferSessionTest.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-unused-function")
-
 add_library(ctaTapeServerDaemon
   ${CTATAPESERVERDAEMON_LIBRARY_SRCS})
 
