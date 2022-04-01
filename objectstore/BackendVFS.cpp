@@ -269,7 +269,7 @@ BackendVFS::ScopedLock * BackendVFS::lockHelper(const std::string& name, int typ
     int statResult = ::stat((m_root + '/' + name).c_str(), &sBuff);
     int statErrno = errno;
     if (ENOENT == openErrno && !statResult) {
-      int fd=::open(path.c_str(), O_RDONLY | O_CREAT, S_IRWXU | S_IRGRP | S_IROTH);
+      int fd=::open(path.c_str(), flag | O_CREAT, S_IRWXU | S_IRGRP | S_IROTH);
       exception::Errnum::throwOnMinusOne(fd, "In BackendVFS::lockHelper(): Failed to recreate missing lock file");
       ret->set(fd, path);
     } else {
