@@ -19,7 +19,7 @@ PREPROD_DIR=/eos/ctaeos/preprod
 
 eos mkdir ${PREPROD_DIR}
 eos chmod 555 ${PREPROD_DIR}
-eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+dp,u:poweruser2:rwx+dp,z:'!'u,u:root:+u ${PREPROD_DIR}
+eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+dp,u:poweruser2:rwx+dp,z:'!'u'!'d ${PREPROD_DIR}
 
 eos attr set sys.archive.storage_class=ctaStorageClass ${PREPROD_DIR}
 

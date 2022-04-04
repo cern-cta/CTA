@@ -323,7 +323,7 @@ fi
   # ACLs in EOS are evaluated when unix permissions are failing, hence the 555 unix permission.
   eos mkdir ${CTA_TEST_DIR}
   eos chmod 555 ${CTA_TEST_DIR}
-  eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+dp,u:poweruser2:rwx+dp,z:'!'u,u:root:+u ${CTA_TEST_DIR}
+  eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+dp,u:poweruser2:rwx+dp,z:'!'u'!'d ${CTA_TEST_DIR}
   eos attr set sys.archive.storage_class=ctaStorageClass ${CTA_TEST_DIR}
 
   # Link the attributes of CTA worklow directory to the test directory
@@ -335,7 +335,7 @@ fi
   # This directory is created inside ${CTA_TEST_DIR}.
   # ACLs in EOS are evaluated when unix permissions are failing, hence the 555 unix permission.
   eos mkdir ${CTA_TEST_NO_P_DIR}
-  eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+d,u:poweruser2:rwx+d,z:'!'u,u:root:+u ${CTA_TEST_NO_P_DIR}
+  eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+d,u:poweruser2:rwx+d,z:'!'u'!'d ${CTA_TEST_NO_P_DIR}
 
   # Prepare the tmp dir so that we can test that the EOS instance is OK
   eos mkdir ${EOS_TMP_DIR}
