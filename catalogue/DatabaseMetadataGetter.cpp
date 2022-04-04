@@ -151,29 +151,6 @@ std::list<std::string> DatabaseMetadataGetter::getErrorLoggingTables() {
   return tableNames;
 }
 
-std::set<std::string> DatabaseMetadataGetter::getMissingIndexes() {
-  // For definition of constraint types, see https://docs.oracle.com/en/database/oracle/oracle-database/12.2/refrn/USER_CONSTRAINTS.html
-  const char* const sql = "SELECT "
-      "A.TABLE_NAME || '.' || A.COLUMN_NAME AS FQ_COL_NAME "
-    "FROM "
-      "USER_CONS_COLUMNS A,"
-      "USER_CONSTRAINTS B "
-    "WHERE "
-      "A.CONSTRAINT_NAME = B.CONSTRAINT_NAME AND "
-      "B.CONSTRAINT_TYPE = 'R' AND " // R = Referential Integrity
-      "(A.TABLE_NAME || '.' || A.COLUMN_NAME) NOT IN"
-        "(SELECT TABLE_NAME || '.' || COLUMN_NAME FROM USER_IND_COLUMNS)";
-
-  auto stmt = m_conn.createStmt(sql);
-  auto rset = stmt.executeQuery();
-
-  std::set<std::string> columnNames;
-  while(rset.next()) {
-    columnNames.insert(rset.columnString("FQ_COL_NAME"));
-  }
-  return columnNames;
-}
-
 DatabaseMetadataGetter::~DatabaseMetadataGetter() {}
 
 SQLiteDatabaseMetadataGetter::SQLiteDatabaseMetadataGetter(cta::rdbms::Conn & conn):DatabaseMetadataGetter(conn){}
@@ -197,6 +174,12 @@ cta::rdbms::Login::DbType SQLiteDatabaseMetadataGetter::getDbType(){
   return cta::rdbms::Login::DbType::DBTYPE_SQLITE;
 }
 
+std::set<std::string> SQLiteDatabaseMetadataGetter::getMissingIndexes() {
+  // This check is for indexes on columns used by foreign key constraints. It is an optimisation for
+  // production DBs. No need to check it for SQLite.
+  return std::set<std::string>();
+}
+
 OracleDatabaseMetadataGetter::OracleDatabaseMetadataGetter(cta::rdbms::Conn & conn):DatabaseMetadataGetter(conn){}
 OracleDatabaseMetadataGetter::~OracleDatabaseMetadataGetter(){}
 
@@ -211,10 +194,75 @@ std::list<std::string> OracleDatabaseMetadataGetter::getTableNames(){
   return tableNames;
 }
 
+std::set<std::string> OracleDatabaseMetadataGetter::getMissingIndexes() {
+  // For definition of constraint types, see https://docs.oracle.com/en/database/oracle/oracle-database/12.2/refrn/USER_CONSTRAINTS.html
+  const char* const sql = "SELECT "
+      "A.TABLE_NAME || '.' || A.COLUMN_NAME AS FQ_COL_NAME "
+    "FROM "
+      "USER_CONS_COLUMNS A,"
+      "USER_CONSTRAINTS B "
+    "WHERE "
+      "A.CONSTRAINT_NAME = B.CONSTRAINT_NAME AND "
+      "B.CONSTRAINT_TYPE = 'R' AND " // R = Referential Integrity
+      "(A.TABLE_NAME || '.' || A.COLUMN_NAME) NOT IN"
+        "(SELECT TABLE_NAME || '.' || COLUMN_NAME FROM USER_IND_COLUMNS)";
+
+  auto stmt = m_conn.createStmt(sql);
+  auto rset = stmt.executeQuery();
+
+  std::set<std::string> columnNames;
+  while(rset.next()) {
+    columnNames.insert(rset.columnString("FQ_COL_NAME"));
+  }
+  return columnNames;
+}
+
 PostgresDatabaseMetadataGetter::PostgresDatabaseMetadataGetter(cta::rdbms::Conn& conn):DatabaseMetadataGetter(conn) {}
 PostgresDatabaseMetadataGetter::~PostgresDatabaseMetadataGetter(){}
 cta::rdbms::Login::DbType PostgresDatabaseMetadataGetter::getDbType(){
   return cta::rdbms::Login::DbType::DBTYPE_POSTGRESQL;
+}
+
+std::set<std::string> PostgresDatabaseMetadataGetter::getMissingIndexes() {
+  // Adapted from https://www.cybertec-postgresql.com/en/index-your-foreign-key/
+  const char* const sql = "SELECT "
+        "T.RELNAME || '.' || A.ATTNAME AS FQ_COL_NAME "
+      "FROM "
+        "PG_CLASS T, "
+        "PG_CATALOG.PG_CONSTRAINT C "
+      // enumerated key column numbers per foreign key
+      "CROSS JOIN LATERAL "
+        "unnest(C.CONKEY) WITH ORDINALITY AS X(ATTNUM, n) "
+      // name for each key column
+      "JOIN "
+        "PG_CATALOG.PG_ATTRIBUTE A ON A.ATTNUM = X.ATTNUM AND A.ATTRELID = C.CONRELID "
+      "WHERE "
+        "T.OID = C.CONRELID AND "
+        "C.CONTYPE = 'f' AND "
+        "NOT EXISTS ("
+          "SELECT 1 "
+          "FROM PG_INDEX "
+          "WHERE "
+            "INDRELID = C.CONRELID AND "
+            "(SELECT ARRAY( "
+              "SELECT CONKEY[i] "
+              "FROM generate_series(array_lower(CONKEY, 1), array_upper(CONKEY, 1)) i "
+              "ORDER BY 1))"
+            " = "
+            "(SELECT ARRAY( "
+              "SELECT INDKEY[i] "
+                "FROM generate_series(array_lower(INDKEY, 1), array_upper(INDKEY, 1)) i "
+              "ORDER BY 1)) "
+        ")";
+
+  auto stmt = m_conn.createStmt(sql);
+  auto rset = stmt.executeQuery();
+
+  std::set<std::string> columnNames;
+  while(rset.next()) {
+    columnNames.insert(rset.columnString("FQ_COL_NAME"));
+  }
+  return columnNames;
 }
 
 DatabaseMetadataGetter * DatabaseMetadataGetterFactory::create(const rdbms::Login::DbType dbType, cta::rdbms::Conn & conn) {

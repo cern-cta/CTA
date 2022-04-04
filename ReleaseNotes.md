@@ -23,6 +23,7 @@ Please consult the [database upgrade documentation](https://eoscta.docs.cern.ch/
 ### Catalogue Schema
 - cta/CTA#1043 - Add verification column to tape table
 - cta/CTA#1158 - Check all foreign key references have a full index on both sides of the constraint
+- cta/CTA#1177 - Fix CTA catalogue schema verify index checker for PostgreSQL
 - cta/CTA#1166 - Add SCL-RH Repo to CTA CI boot scripts
 
 ### Continuous Integration

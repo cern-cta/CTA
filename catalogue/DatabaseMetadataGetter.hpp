@@ -73,7 +73,7 @@ class DatabaseMetadataGetter: public MetadataGetter {
     /**
      * Returns a set of columns which are part of a foreign key constraint but have no index defined
      */
-    virtual std::set<std::string> getMissingIndexes();
+    virtual std::set<std::string> getMissingIndexes() = 0;
 };
 
 /**
@@ -81,32 +81,35 @@ class DatabaseMetadataGetter: public MetadataGetter {
  */
 class SQLiteDatabaseMetadataGetter: public DatabaseMetadataGetter{
 public:
-  SQLiteDatabaseMetadataGetter(cta::rdbms::Conn & conn);
+  SQLiteDatabaseMetadataGetter(cta::rdbms::Conn& conn);
   virtual ~SQLiteDatabaseMetadataGetter();
   std::list<std::string> getIndexNames() override;
   std::list<std::string> getTableNames() override;
   cta::rdbms::Login::DbType getDbType() override;
+  virtual std::set<std::string> getMissingIndexes() override;
 };
 
 /**
  * Specific Oracle database metadata getter
  */
 class OracleDatabaseMetadataGetter: public DatabaseMetadataGetter{
-  public:
-  OracleDatabaseMetadataGetter(cta::rdbms::Conn & conn);
+public:
+  OracleDatabaseMetadataGetter(cta::rdbms::Conn& conn);
+  virtual ~OracleDatabaseMetadataGetter();
   cta::rdbms::Login::DbType getDbType() override;
   std::list<std::string> getTableNames() override;
-  virtual ~OracleDatabaseMetadataGetter();
+  virtual std::set<std::string> getMissingIndexes() override;
 };
 
 /**
  * Specific Postgres database metadata getter
  */
 class PostgresDatabaseMetadataGetter: public DatabaseMetadataGetter{
-  public:
-    PostgresDatabaseMetadataGetter(cta::rdbms::Conn &conn);
-    cta::rdbms::Login::DbType getDbType() override;
-    virtual ~PostgresDatabaseMetadataGetter();
+public:
+  PostgresDatabaseMetadataGetter(cta::rdbms::Conn& conn);
+  virtual ~PostgresDatabaseMetadataGetter();
+  cta::rdbms::Login::DbType getDbType() override;
+  virtual std::set<std::string> getMissingIndexes() override;
 };
 
 /**
