@@ -65,12 +65,10 @@ int DropSchemaCmd::exceptionThrowingMain(const int argc, char *const *const argv
     return 0;
   }
 
-  if(isProductionProtectionCheckable(conn,dbLogin.dbType)){
-    if(isProductionSet(conn)){
-      throw cta::exception::Exception("Cannot drop a production database. If you still wish to proceed then please modify the database manually to remove its production status before trying again.");
-    }
+  if (isProductionSet(conn)) {
+    throw cta::exception::Exception("Cannot drop a production database. If you still wish to proceed then please modify the database manually to remove its production status before trying again.");
   }
-  
+
   if(userConfirmsDropOfSchema(dbLogin)) {
     m_out << "DROPPING the schema of the CTA calalogue database" << std::endl;
     dropCatalogueSchema(dbLogin.dbType, conn);
@@ -185,19 +183,6 @@ bool DropSchemaCmd::isProductionSet(cta::rdbms::Conn & conn){
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
   }
-}
-
-//------------------------------------------------------------------------------
-// isProductionProtectionCheckable
-//------------------------------------------------------------------------------
-bool DropSchemaCmd::isProductionProtectionCheckable(rdbms::Conn& conn, const cta::rdbms::Login::DbType dbType) {
-  cta::catalogue::SchemaChecker::Builder builder("catalogue",dbType,conn);
-  auto checker = builder.build();
-  SchemaCheckerResult res = checker->checkTableContainsColumns("CTA_CATALOGUE",{"IS_PRODUCTION"});
-  if(res.getStatus() == SchemaCheckerResult::Status::FAILED){
-    return false;
-  }
-  return true;
 }
 
 //------------------------------------------------------------------------------

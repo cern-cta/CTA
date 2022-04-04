@@ -60,6 +60,7 @@ add_executable(cta-rdbmsUnitTests
   ${GMOCK_SRC})
 
 target_link_libraries(cta-rdbmsUnitTests
+  ctadropschemacmd
   ctadbconfigcatalogueunittests
   ctadbconfigconnunittests
   ctadbconfigstmtunittests

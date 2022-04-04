@@ -46,7 +46,7 @@ BuildRequires: xrootd-client-devel  >= %{xrootdVersion}
 BuildRequires: xrootd-devel         >= %{xrootdVersion}
 BuildRequires: xrootd-server-devel  >= %{xrootdVersion}
 BuildRequires: xrootd-private-devel >= %{xrootdVersion}
-BuildRequires: librados-devel = %{radosVersion}, libradosstriper-devel = %{radosVersion}, 
+BuildRequires: librados-devel = %{radosVersion}, libradosstriper-devel = %{radosVersion},
 BuildRequires: protobuf3-compiler >= 3.3.1 protobuf3-devel >= 3.3.1
 BuildRequires: gmock-devel >= 1.5.0 gtest-devel >= 1.5.0
 BuildRequires: sqlite-devel >= 3.6
@@ -222,6 +222,7 @@ Shared libraries required to access the CTA catalogue
 %files -n cta-lib-catalogue
 %defattr(0755,root,root,-)
 %{_libdir}/libctacatalogue.so*
+%{_libdir}/libctadropschemacmd.so*
 %{_libdir}/libctardbms.so*
 %{_libdir}/libctardbmswrapper.so*
 %{_libdir}/libctaschemachecker.so*
@@ -569,7 +570,7 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 - cta-admin: All short options with more than one character now require two dashes
 - cta/CTA#1013 reportType uninitialized
 - cta/CTA#1044 Fix segmentation fault due to uninitialized optional value and remove diskSpaceReservations from `cta-admin dr ls`
-* Thu Sep 30 2021 jorge.camarero (at) cern.ch - 4.3-1 
+* Thu Sep 30 2021 jorge.camarero (at) cern.ch - 4.3-1
 - cta/CTA#976 Add logical part of Drive Status using Catalogue
 - cta/CTA#988 Add diskSpaceReservations map in cta-admin --json dr ls output.
 - cta/CTA#983 Add cta-versionlock helper script to cta-release package, Update cta repo file to use the new public repo
@@ -737,7 +738,7 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 - fix for xrdfs query prepare on_tape logic
 - more tests on the tape drive (device path must exist, no name duplication in objectstore)
 * Sat Mar 14 2020 julien.leduc (at) cern.ch - 2.0-1
-- Schema version 2.0: DISK_FILE_PATH is now resolved on eos instance using grpc and VIRTUAL_ORGANIZATION has its own table 
+- Schema version 2.0: DISK_FILE_PATH is now resolved on eos instance using grpc and VIRTUAL_ORGANIZATION has its own table
 - eos 4.6.7-1
 - xrootd 4.11.2-1
 * Fri Feb 21 2020 julien.leduc (at) cern.ch - 1.2-0
@@ -753,4 +754,3 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 - CTA Frontend logs which FST sent the archive request
 - New configuration file for gRPC namespace endpoints so CTA can query EOS namespace
 - Archive requests sent to hard-coded fail_on_closew_test storage class will always fail with an error
-

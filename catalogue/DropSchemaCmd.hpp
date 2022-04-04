@@ -45,6 +45,12 @@ public:
    */
   ~DropSchemaCmd() noexcept;
 
+  /**
+   * Checks if the IS_PRODUCTION bit is set on the CTA_CATALOGUE table
+   * @return true if the IS_PRODUCTION bit is set, false otherwise
+   */
+  static bool isProductionSet(rdbms::Conn & conn);
+
 private:
 
   /**
@@ -94,15 +100,9 @@ private:
    * @param conn The database connection.
    */
   void dropDatabaseSequences(rdbms::Conn &conn);
-  
+
   /**
-   * Checks if the IS_PRODUCTION bit is set on the CTA_CATALOGUE table
-   * @return true if the IS_PRODUCTION bit is set, false otherwise
-   */
-  bool isProductionSet(rdbms::Conn & conn);
-  
-  /**
-   * Checks if we can check the IS_PRODUCTION bit. This allows the backward-compatibility of 
+   * Checks if we can check the IS_PRODUCTION bit. This allows the backward-compatibility of
    * this tool if we use it against a schema that does not have the IS_PRODUCTION bit.
    * @param conn the connection to the Catalogue database
    * @param dbType the type of the Catalogue database

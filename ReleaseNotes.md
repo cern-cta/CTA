@@ -8,16 +8,22 @@ This CTA release requires a backwards compatible database schema upgrade to CTA 
 Please consult the [database upgrade documentation](https://eoscta.docs.cern.ch/catalogue/upgrade/).
 
 ### Features
+- cta/CTA#823 - Ensure unit tests CANNOT be executed against a production database
 - cta/CTA#1082 - Review software license text in CTA
 - cta/CTA#1163 - cta-admin now prefixes the drivename with a '!' if the respective logical library is disabled
 
 ### Bug fixes
+- cta/CTA#1156 - failed to instanciate the RAO algorithm
 
 ### Building and Packaging
+- cta/CTA#1153 - Change compiler FLAGS in cmake files
+- cta/CTA#1155 - Remove GCC suppresions in DriveGeneric and file/Structures
+- cta/CTA#1173 - Remove GCC '-Wno-unused-function' suppresion
 
 ### Catalogue Schema
-- cta/CTA#1158 - Check all foreign key references have a full index on both sides of the constraint
 - cta/CTA#1043 - Add verification column to tape table
+- cta/CTA#1158 - Check all foreign key references have a full index on both sides of the constraint
+- cta/CTA#1166 - Add SCL-RH Repo to CTA CI boot scripts
 
 ### Continuous Integration
 

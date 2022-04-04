@@ -16,11 +16,13 @@
  */
 
 #include "catalogue/CatalogueFactoryFactory.hpp"
+#include "catalogue/DropSchemaCmd.hpp"
 #ifdef STDOUT_LOGGING
 #include "common/log/StdoutLogger.hpp"
 #else
 #include "common/log/DummyLogger.hpp"
 #endif
+#include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
 #include "tests/GlobalCatalogueFactoryForUnitTests.hpp"
 #include "tests/RdbmsUnitTestsCmdLineArgs.hpp"
@@ -79,6 +81,11 @@ int main(int argc, char** argv) {
     const uint64_t nbConns = 1;
     const uint64_t nbArchiveFileListingConns = 1;
     const uint64_t maxTriesToConnect = 1;
+    cta::rdbms::ConnPool connPool(login, nbConns);
+    cta::rdbms::Conn conn = connPool.getConn();
+    if (cta::catalogue::DropSchemaCmd::isProductionSet(conn)) {
+      throw cta::exception::Exception("Cannot use a production database for testing.");
+    }
     auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(dummyLogger, login, nbConns,
       nbArchiveFileListingConns, maxTriesToConnect);
     g_catalogueFactoryForUnitTests = catalogueFactory.get();

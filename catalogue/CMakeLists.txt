@@ -197,12 +197,19 @@ set_property(TARGET cta-catalogue-schema-create APPEND PROPERTY INSTALL_RPATH ${
 install (TARGETS cta-catalogue-schema-create DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-create.1cta DESTINATION /usr/share/man/man1)
 
-add_executable(cta-catalogue-schema-drop
+set (DROP_SCHEMA_CMD
   DropSchemaCmd.cpp
   DropSchemaCmdLineArgs.cpp
-  DropSchemaCmdMain.cpp)
+)
+add_library (ctadropschemacmd SHARED ${DROP_SCHEMA_CMD})
+set_property(TARGET ctadropschemacmd PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctadropschemacmd PROPERTY   VERSION "${CTA_LIBVERSION}")
+install (TARGETS ctadropschemacmd DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+target_link_libraries (ctadropschemacmd ctaschemachecker)
 
-target_link_libraries (cta-catalogue-schema-drop ctacatalogue ctaschemachecker)
+add_executable(cta-catalogue-schema-drop DropSchemaCmdMain.cpp)
+
+target_link_libraries (cta-catalogue-schema-drop ctacatalogue ctadropschemacmd)
 set_property(TARGET cta-catalogue-schema-drop APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 set_property(TARGET cta-catalogue-schema-drop APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 
