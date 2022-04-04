@@ -303,16 +303,16 @@ void TextFormatter::print(const DriveLsItem &drls_item)
   timeSinceLastUpdate = std::to_string(drls_item.time_since_last_update()) +
     (drls_item.time_since_last_update() > DRIVE_TIMEOUT ? " [STALE]" : "");
 
-  std::string reportedDriveName =  drls_item.drive_name();
+  std::string reportedLogicalLibrary =  drls_item.logical_library();
   if (drls_item.logical_library_disabled()) {
-    reportedDriveName = "!" + reportedDriveName;
+    reportedLogicalLibrary = "!" + reportedLogicalLibrary;
   }
   //If there is a reason, we only want to display the beginning
   std::string reason = cta::utils::postEllipsis(drls_item.reason(),NB_CHAR_REASON);
 
   push_back(
-    drls_item.logical_library(),
-    reportedDriveName,
+    reportedLogicalLibrary,
+    drls_item.drive_name(),
     drls_item.host(),
     (drls_item.desired_drive_state() == DriveLsItem::UP ? "Up" : "Down"),
     toCamelCaseString(ProtobufToMountType(drls_item.mount_type())),
