@@ -328,6 +328,10 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyLogicalLibraryComment(admin, name, comment);}, m_maxTriesToConnect);
   }
 
+  void modifyLogicalLibraryDisabledReason(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &disabledReason) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyLogicalLibraryDisabledReason(admin, name, disabledReason);}, m_maxTriesToConnect);
+  }
+
   void setLogicalLibraryDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const bool disabledValue) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->setLogicalLibraryDisabled(admin, name, disabledValue);}, m_maxTriesToConnect);
   }

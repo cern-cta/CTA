@@ -25,6 +25,7 @@ Please consult the [database upgrade documentation](https://eoscta.docs.cern.ch/
 - cta/CTA#1158 - Check all foreign key references have a full index on both sides of the constraint
 - cta/CTA#1177 - Fix CTA catalogue schema verify index checker for PostgreSQL
 - cta/CTA#1166 - Add SCL-RH Repo to CTA CI boot scripts
+- cta/CTA#1172 - Add disabled reason column to logical library table
 
 ### Continuous Integration
 

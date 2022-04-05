@@ -4417,6 +4417,88 @@ TEST_P(cta_catalogue_CatalogueTest, modifyLogicalLibraryComment_nonExisentLogica
   ASSERT_THROW(m_catalogue->modifyLogicalLibraryComment(m_admin, logicalLibraryName, comment), exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, modifyLogicalLibraryDisabledReason) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
+
+  const std::string logicalLibraryName = "logical_library";
+  const std::string comment = "Create logical library";
+  const bool logicalLibraryIsDisabled= false;
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, comment);
+
+  {
+    const std::list<common::dataStructures::LogicalLibrary> libs = m_catalogue->getLogicalLibraries();
+
+    ASSERT_EQ(1, libs.size());
+
+    const common::dataStructures::LogicalLibrary lib = libs.front();
+    ASSERT_EQ(logicalLibraryName, lib.name);
+    ASSERT_EQ(comment, lib.comment);
+    ASSERT_FALSE(lib.disabledReason);
+
+    const common::dataStructures::EntryLog creationLog = lib.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = lib.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  const std::string modifiedDisabledReason = "Modified disabled reason";
+  m_catalogue->modifyLogicalLibraryDisabledReason(m_admin, logicalLibraryName, modifiedDisabledReason);
+
+  {
+    const std::list<common::dataStructures::LogicalLibrary> libs = m_catalogue->getLogicalLibraries();
+
+    ASSERT_EQ(1, libs.size());
+
+    const common::dataStructures::LogicalLibrary lib = libs.front();
+    ASSERT_EQ(logicalLibraryName, lib.name);
+    ASSERT_EQ(comment, lib.comment);
+    ASSERT_EQ(modifiedDisabledReason, lib.disabledReason.value());
+
+    const common::dataStructures::EntryLog creationLog = lib.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = lib.lastModificationLog;
+  }
+
+  //setting empty reason should delete it from the DB
+  m_catalogue->modifyLogicalLibraryDisabledReason(m_admin, logicalLibraryName, "");
+  
+  {
+    const std::list<common::dataStructures::LogicalLibrary> libs = m_catalogue->getLogicalLibraries();
+
+    ASSERT_EQ(1, libs.size());
+
+    const common::dataStructures::LogicalLibrary lib = libs.front();
+    ASSERT_EQ(logicalLibraryName, lib.name);
+    ASSERT_EQ(comment, lib.comment);
+    ASSERT_FALSE(lib.disabledReason);
+
+    const common::dataStructures::EntryLog creationLog = lib.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog = lib.lastModificationLog;
+  }
+  
+
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyLogicalLibraryDisabledReason_nonExisentLogicalLibrary) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getLogicalLibraries().empty());
+
+  const std::string logicalLibraryName = "logical_library";
+  const std::string disabledReason = "Create logical library";
+  ASSERT_THROW(m_catalogue->modifyLogicalLibraryDisabledReason(m_admin, logicalLibraryName, disabledReason), exception::UserError);
+}
+
+
 TEST_P(cta_catalogue_CatalogueTest, tapeExists_emptyString) {
   using namespace cta;
 

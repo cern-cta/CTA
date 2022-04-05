@@ -3405,6 +3405,7 @@ std::list<common::dataStructures::LogicalLibrary> RdbmsCatalogue::getLogicalLibr
         "IS_DISABLED AS IS_DISABLED,"
 
         "USER_COMMENT AS USER_COMMENT,"
+        "DISABLED_REASON AS DISABLED_REASON,"
 
         "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
         "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
@@ -3426,6 +3427,7 @@ std::list<common::dataStructures::LogicalLibrary> RdbmsCatalogue::getLogicalLibr
       lib.name = rset.columnString("LOGICAL_LIBRARY_NAME");
       lib.isDisabled = rset.columnBool("IS_DISABLED");
       lib.comment = rset.columnString("USER_COMMENT");
+      lib.disabledReason = rset.columnOptionalString("DISABLED_REASON");
       lib.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
       lib.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
       lib.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
@@ -3508,6 +3510,41 @@ void RdbmsCatalogue::modifyLogicalLibraryComment(const common::dataStructures::S
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":USER_COMMENT", comment);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":LOGICAL_LIBRARY_NAME", name);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify logical library ") + name + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// modifyLogicalLibraryDisabledReason
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::modifyLogicalLibraryDisabledReason(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name, const std::string &disabledReason) {
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE LOGICAL_LIBRARY SET "
+        "DISABLED_REASON = :DISABLED_REASON,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":DISABLED_REASON", disabledReason.empty() ? cta::nullopt : cta::optional<std::string>(disabledReason));
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);

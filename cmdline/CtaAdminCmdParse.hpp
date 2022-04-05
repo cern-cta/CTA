@@ -346,6 +346,7 @@ const std::map<std::string, OptionString::Key> strOptions = {
    { "--diskinstance",          OptionString::DISK_INSTANCE },
    { "--diskinstancespace",     OptionString::DISK_INSTANCE_SPACE },
    { "--verificationstatus",    OptionString::VERIFICATION_STATUS },
+   { "--disabledreason",        OptionString::DISABLED_REASON }, 
 };
 
 
@@ -546,6 +547,7 @@ const Option opt_diskinstance_alias   { Option::OPT_STR,  "--name",             
 const Option opt_diskinstancespace    { Option::OPT_STR,  "--diskinstancespace",         "--dis",  " <disk_instance_space_name>" };
 const Option opt_diskinstancespace_alias { Option::OPT_STR,  "--name",                 "-n",    " <disk_instance_space_name>", "--diskinstancespace" };
 const Option opt_verificationstatus   { Option::OPT_STR,  "--verificationstatus",     "--vs",   " <verification_status>" };
+const Option opt_disabledreason       { Option::OPT_STR,  "--disabledreason",       "--dr",   " <disabled_reason>" };
 
 /*!
  * Map valid options to commands
@@ -584,7 +586,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_ADD   },
       { opt_logicallibrary_alias, opt_disabled.optional(), opt_comment }},
    {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_CH    },
-      { opt_logicallibrary_alias, opt_disabled.optional(), opt_comment.optional() }},
+      { opt_logicallibrary_alias, opt_disabled.optional(), opt_comment.optional(), opt_disabledreason.optional() }},
    {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_RM    }, { opt_logicallibrary_alias }},
    {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/

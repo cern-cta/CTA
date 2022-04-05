@@ -23,6 +23,7 @@
 #include <string>
 
 #include "common/dataStructures/EntryLog.hpp"
+#include "common/optional.hpp"
 
 namespace cta {
 namespace common {
@@ -50,6 +51,7 @@ struct LogicalLibrary {
   EntryLog creationLog;
   EntryLog lastModificationLog;
   std::string comment;
+  cta::optional<std::string> disabledReason;
 
 }; // struct LogicalLibrary
 

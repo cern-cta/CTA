@@ -607,6 +607,7 @@ public:
   virtual void modifyLogicalLibraryName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentName, const std::string &newName) = 0;
 
   virtual void modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) = 0;
+  virtual void modifyLogicalLibraryDisabledReason(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &disabledReason) = 0;
   virtual void setLogicalLibraryDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const bool disabledValue) = 0;
 
   /**

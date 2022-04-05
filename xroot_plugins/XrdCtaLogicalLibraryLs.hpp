@@ -74,6 +74,9 @@ int LogicalLibraryLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf)
 
     ll_item->set_name(ll.name);
     ll_item->set_is_disabled(ll.isDisabled);
+    if (ll.disabledReason) {
+      ll_item->set_disabled_reason(ll.disabledReason.value());
+    }
     ll_item->mutable_creation_log()->set_username(ll.creationLog.username);
     ll_item->mutable_creation_log()->set_host(ll.creationLog.host);
     ll_item->mutable_creation_log()->set_time(ll.creationLog.time);

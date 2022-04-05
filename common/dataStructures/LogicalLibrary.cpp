@@ -1,4 +1,4 @@
-/*
+  /*
  * @project      The CERN Tape Archive (CTA)
  * @copyright    Copyright © 2021-2022 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
@@ -36,7 +36,8 @@ bool LogicalLibrary::operator==(const LogicalLibrary &rhs) const {
   return name==rhs.name
       && creationLog==rhs.creationLog
       && lastModificationLog==rhs.lastModificationLog
-      && comment==rhs.comment;
+      && comment==rhs.comment
+      && disabledReason == rhs.disabledReason;
 }
 
 //------------------------------------------------------------------------------
@@ -53,7 +54,8 @@ std::ostream &operator<<(std::ostream &os, const LogicalLibrary &obj) {
   os << "(name=" << obj.name
      << " creationLog=" << obj.creationLog
      << " lastModificationLog=" << obj.lastModificationLog
-     << " comment=" << obj.comment << ")";
+     << " comment=" << obj.comment
+     << ")";
   return os;
 }
 

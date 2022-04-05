@@ -1287,15 +1287,23 @@ void RequestMessage::processLogicalLibrary_Ch(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
-   auto &name     = getRequired(OptionString::LOGICAL_LIBRARY);
-   auto  disabled = getOptional(OptionBoolean::DISABLED);
-   auto  comment  = getOptional(OptionString::COMMENT);
+   auto &name             = getRequired(OptionString::LOGICAL_LIBRARY);
+   auto  disabled         = getOptional(OptionBoolean::DISABLED);
+   auto  comment          = getOptional(OptionString::COMMENT);
+   auto  disabledReason   = getOptional(OptionString::DISABLED_REASON);
 
    if(disabled) {
       m_catalogue.setLogicalLibraryDisabled(m_cliIdentity, name, disabled.value());
+      if ((!disabled.value()) && (!disabledReason)) {
+         //if enabling the tape and the reason is not specified in the command, erase the reason
+         m_catalogue.modifyLogicalLibraryDisabledReason(m_cliIdentity, name, "");
+      }
    }
    if(comment) {
       m_catalogue.modifyLogicalLibraryComment(m_cliIdentity, name, comment.value());
+   }
+   if (disabledReason) {
+      m_catalogue.modifyLogicalLibraryDisabledReason(m_cliIdentity, name, disabledReason.value());
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
