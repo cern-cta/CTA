@@ -422,8 +422,7 @@ void PostgresCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer
     auto lastEventItor = events.cend();
     lastEventItor--;
     const TapeItemWritten &lastEvent = **lastEventItor;
-    updateTape(conn, lastEvent.vid, lastEvent.fSeq, totalLogicalBytesWritten,
-      lastEvent.tapeDrive);
+    updateTape(conn, lastEvent.vid, lastEvent.fSeq, totalLogicalBytesWritten, filesCount, lastEvent.tapeDrive);
 
     // If we had only placeholders and no file recorded, we are done (but we still commit the update of the tape's fSeq).
     if (fileEvents.empty()) {

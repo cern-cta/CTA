@@ -477,6 +477,7 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
     const uint64_t lastFSeq = getTapeLastFSeq(conn, firstEvent.vid);
     uint64_t expectedFSeq = lastFSeq + 1;
     uint64_t totalLogicalBytesWritten = 0;
+    uint64_t filesCount = 0;
 
     for(const auto &eventP: events) {
       const auto & event = *eventP;
@@ -499,13 +500,14 @@ void SqliteCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
         // If this is a file (as opposed to a placeholder), do the full processing.
         const auto &fileEvent=dynamic_cast<const TapeFileWritten &>(event);
         totalLogicalBytesWritten += fileEvent.size;
+        filesCount++;
       } catch (std::bad_cast&) {}
     }
 
     auto lastEventItor = events.cend();
     lastEventItor--;
     const TapeItemWritten &lastEvent = **lastEventItor;
-    updateTape(conn, lastEvent.vid, lastEvent.fSeq, totalLogicalBytesWritten, lastEvent.tapeDrive);
+    updateTape(conn, lastEvent.vid, lastEvent.fSeq, totalLogicalBytesWritten, filesCount, lastEvent.tapeDrive);
 
     for(const auto &event : events) {
       try {

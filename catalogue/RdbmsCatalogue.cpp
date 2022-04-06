@@ -8816,6 +8816,7 @@ void RdbmsCatalogue::updateTape(
   const std::string &vid,
   const uint64_t lastFSeq,
   const uint64_t compressedBytesWritten,
+  const uint64_t filesWritten,
   const std::string &tapeDrive) {
   try {
     const time_t now = time(nullptr);
@@ -8824,6 +8825,7 @@ void RdbmsCatalogue::updateTape(
         "LAST_FSEQ = :LAST_FSEQ,"
         "DATA_IN_BYTES = DATA_IN_BYTES + :DATA_IN_BYTES,"
         "MASTER_DATA_IN_BYTES = MASTER_DATA_IN_BYTES + :MASTER_DATA_IN_BYTES,"
+        "NB_MASTER_FILES = NB_MASTER_FILES + :MASTER_FILES,"
         "LAST_WRITE_DRIVE = :LAST_WRITE_DRIVE,"
         "LAST_WRITE_TIME = :LAST_WRITE_TIME "
       "WHERE "
@@ -8832,6 +8834,7 @@ void RdbmsCatalogue::updateTape(
     stmt.bindString(":VID", vid);
     stmt.bindUint64(":LAST_FSEQ", lastFSeq);
     stmt.bindUint64(":DATA_IN_BYTES", compressedBytesWritten);
+    stmt.bindUint64(":MASTER_FILES", filesWritten);
     stmt.bindUint64(":MASTER_DATA_IN_BYTES", compressedBytesWritten);
     stmt.bindString(":LAST_WRITE_DRIVE", tapeDrive);
     stmt.bindUint64(":LAST_WRITE_TIME", now);

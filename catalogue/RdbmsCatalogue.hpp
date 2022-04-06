@@ -1694,6 +1694,7 @@ protected:
    * tape.
    * @param compressedBytesWritten The number of compressed bytes written to
    * the tape.
+   * @param filesWritten The number of files written to tape
    * @param tapeDrive The name of the tape drive that last wrote to the tape.
    */
   void updateTape(
@@ -1701,6 +1702,7 @@ protected:
     const std::string &vid,
     const uint64_t lastFSeq,
     const uint64_t compressedBytesWritten,
+    const uint64_t filesWritten,
     const std::string &tapeDrive);
 
   /**
