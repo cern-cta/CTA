@@ -76,6 +76,9 @@ class OStoreDB: public SchedulerDatabase {
    public:
     explicit EnqueueingWorkerThread(cta::threading::BlockingQueue<EnqueueingTask*> & etq)
       : m_enqueueingTasksQueue(etq) {}
+    EnqueueingWorkerThread(cta::threading::BlockingQueue<EnqueueingTask*> & etq, cta::optional<size_t> stackSize)
+      : cta::threading::Thread(stackSize), m_enqueueingTasksQueue(etq) {}
+    
     void start() { cta::threading::Thread::start(); }
     void wait() { cta::threading::Thread::wait(); }
    private:
@@ -90,7 +93,7 @@ class OStoreDB: public SchedulerDatabase {
 
  public:
   void waitSubthreadsComplete() override;
-  void setThreadNumber(uint64_t threadNumber);
+  void setThreadNumber(uint64_t threadNumber, const cta::optional<size_t> &stackSize = cta::nullopt);
   void setBottomHalfQueueSize(uint64_t tasksNumber);
   /*============ Basic IO check: validate object store access ===============*/
   void ping() override;

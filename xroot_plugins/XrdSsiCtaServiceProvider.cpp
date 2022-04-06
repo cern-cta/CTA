@@ -194,9 +194,15 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
   m_scheddb_init = cta::make_unique<SchedulerDBInit_t>("Frontend", db_conn.second, *m_log);
   m_scheddb      = m_scheddb_init->getSchedDB(*m_catalogue, *m_log);
 
+  cta::optional<size_t> schedulerThreadStackOpt;
+  const auto schedulerThreadStackSize = config.getOptionValueInt("ca.schedulerdb.threadstacksize_mb");
+  if (schedulerThreadStackSize.first) {
+    schedulerThreadStackOpt = schedulerThreadStackSize.second * 1024 * 1024;
+  }
+
   auto threadPoolSize = config.getOptionValueInt("cta.schedulerdb.numberofthreads");
   if (threadPoolSize.first) {
-   m_scheddb->setThreadNumber(threadPoolSize.second);
+   m_scheddb->setThreadNumber(threadPoolSize.second, schedulerThreadStackOpt);
   }
   m_scheddb->setBottomHalfQueueSize(25000);
 

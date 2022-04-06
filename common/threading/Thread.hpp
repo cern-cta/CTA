@@ -20,6 +20,7 @@
 #include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/threading/Mutex.hpp"
+#include "common/optional.hpp"
 
 #include <pthread.h>
 #include <semaphore.h>
@@ -40,6 +41,8 @@ CTA_GENERATE_EXCEPTION_CLASS(UncaughtExceptionInThread);
 class Thread {
 public:
   Thread(): m_hadException(false), m_what(""), m_started(false) {}
+  explicit Thread(cta::optional<size_t> stackSize): m_hadException(false), m_what(""), m_started(false), m_stackSize(stackSize) {}
+  
 virtual ~Thread () {}
   void start() ;
   void wait() ;
@@ -52,7 +55,8 @@ private:
   std::string m_what;
   std::string m_type;
   static void * pthread_runner (void * arg);
-  bool m_started;
+  bool m_started; 
+  cta::optional<size_t> m_stackSize;
 };
   
 } // namespace threading

@@ -31,8 +31,18 @@ namespace threading {
 //------------------------------------------------------------------------------
 void Thread::start()
  {
+  pthread_attr_t attr;
   cta::exception::Errnum::throwOnReturnedErrno(
-    pthread_create(&m_thread, NULL, pthread_runner, this),
+    pthread_attr_init(&attr),
+      "Error from pthread_attr_init in cta::threading::Thread::start()");
+
+  if (m_stackSize) {
+    cta::exception::Errnum::throwOnReturnedErrno(
+      pthread_attr_setstacksize(&attr, m_stackSize.value()),
+        "Error from pthread_attr_setstacksize in cta::threading::Thread::start()");
+  }
+  cta::exception::Errnum::throwOnReturnedErrno(
+    pthread_create(&m_thread, &attr, pthread_runner, this),
       "Error from pthread_create in cta::threading::Thread::start()");
   m_started = true;
 }

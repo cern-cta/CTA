@@ -106,7 +106,7 @@ void OStoreDB::waitSubthreadsComplete() {
 //------------------------------------------------------------------------------
 // OStoreDB::setThreadNumber()
 //------------------------------------------------------------------------------
-void OStoreDB::setThreadNumber(uint64_t threadNumber) {
+void OStoreDB::setThreadNumber(uint64_t threadNumber, const cta::optional<size_t> &stackSize) {
   // Clear all threads.
   for (__attribute__((unused)) auto &t: m_enqueueingWorkerThreads) m_enqueueingTasksQueue.push(nullptr);
   for (auto &t: m_enqueueingWorkerThreads) {
@@ -117,7 +117,7 @@ void OStoreDB::setThreadNumber(uint64_t threadNumber) {
   m_enqueueingWorkerThreads.clear();
   // Create the new ones.
   for (size_t i=0; i<threadNumber; i++) {
-    m_enqueueingWorkerThreads.emplace_back(new EnqueueingWorkerThread(m_enqueueingTasksQueue));
+    m_enqueueingWorkerThreads.emplace_back(new EnqueueingWorkerThread(m_enqueueingTasksQueue, stackSize));
     m_enqueueingWorkerThreads.back()->start();
   }
 }
