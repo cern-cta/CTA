@@ -128,6 +128,9 @@ add_library (ctainmemorycatalogueunittests SHARED
   ${IN_MEMORY_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES})
 set_property(TARGET ctainmemorycatalogueunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctainmemorycatalogueunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
+# The test "filesWrittenToTape_many_archive_files" is over 1000 lines long and exceeds the variable tracking size limit.
+# We switch off this compiler option for this file to avoid compiling it twice.
+set_property(TARGET ctainmemorycatalogueunittests PROPERTY COMPILE_FLAGS "-fno-var-tracking-assignments")
 
 target_link_libraries (ctainmemorycatalogueunittests
   ctacatalogue ctadisk)
@@ -142,6 +145,9 @@ add_library (ctadbconfigcatalogueunittests SHARED
   ${DBCONFIG_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES})
 set_property(TARGET ctadbconfigcatalogueunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctadbconfigcatalogueunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
+# The test "filesWrittenToTape_many_archive_files" is over 1000 lines long and exceeds the variable tracking size limit.
+# We switch off this compiler option for this file to avoid compiling it twice.
+set_property(TARGET ctadbconfigcatalogueunittests PROPERTY COMPILE_FLAGS "-fno-var-tracking-assignments")
 
 target_link_libraries (ctadbconfigcatalogueunittests
   ctacatalogue)
