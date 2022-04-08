@@ -626,7 +626,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   logToCheck += "";
   ASSERT_NE(std::string::npos, logToCheck.find("MSG=\"Tape session started for read\" thread=\"TapeRead\" tapeDrive=\"T10D6116\" tapeVid=\"TstVid\" "
                                                "mountId=\"1\" vo=\"vo\" mediaType=\"LTO7M\" tapePool=\"TestTapePool\" "
-                                               "logicalLibrary=\"TestLogicalLibrary\" mountType=\"Retrieve\" vendor=\"TestVendor\" "
+                                               "logicalLibrary=\"TestLogicalLibrary\" mountType=\"Retrieve\" labelFormat=\"0000\" vendor=\"TestVendor\" "
                                                "capacityInBytes=\"12345678\""));
   ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
                                                "mountTotalCorrectedReadErrors=\"5\" mountTotalReadBytesProcessed=\"4096\" "
@@ -822,7 +822,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   logToCheck += "";
   ASSERT_NE(std::string::npos,logToCheck.find("MSG=\"Tape session started for read\" thread=\"TapeRead\" tapeDrive=\"T10D6116\" tapeVid=\"TstVid\" "
                                               "mountId=\"1\" vo=\"vo\" mediaType=\"LTO7M\" tapePool=\"TestTapePool\" "
-                                              "logicalLibrary=\"TestLogicalLibrary\" mountType=\"Retrieve\" vendor=\"TestVendor\" "
+                                              "logicalLibrary=\"TestLogicalLibrary\" mountType=\"Retrieve\" labelFormat=\"0000\" vendor=\"TestVendor\" "
                                               "capacityInBytes=\"12345678\""));
   ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
                                                "mountTotalCorrectedReadErrors=\"5\" mountTotalReadBytesProcessed=\"4096\" "

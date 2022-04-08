@@ -19,6 +19,8 @@
 
 #include "common/dataStructures/MountType.hpp"
 #include "common/dataStructures/DriveStatus.hpp"
+
+#include "common/dataStructures/LabelFormat.hpp"
 #include "common/log/LogContext.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 
@@ -74,6 +76,8 @@ namespace cta {
     virtual std::string getMediaType() const = 0;
 
     virtual std::string getVendor() const = 0;
+
+    virtual cta::common::dataStructures::Label::Format getLabelFormat() const = 0;
 
     /**
     * Returns the capacity in bytes of the tape

@@ -18,6 +18,7 @@
 #pragma once
 
 #include <optional>
+#include "common/dataStructures/LabelFormat.hpp"
 #include <ostream>
 #include <stdint.h>
 #include <string>
@@ -88,6 +89,10 @@ struct TapeForWriting {
    * The total amount of data written to the tape in bytes.
    */
   uint64_t dataOnTapeInBytes;
+  /**
+   * The format type of the tape.
+   */
+  cta::common::dataStructures::Label::Format labelFormat;
 
 }; // struct TapeForWriting
 

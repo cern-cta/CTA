@@ -25,6 +25,7 @@
 #include "catalogue/SqliteCatalogueSchema.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/TapeFile.hpp"
+#include "common/dataStructures/LabelFormat.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/UserError.hpp"
@@ -4013,6 +4014,8 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
 
         "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"
 
+        "TAPE.LABEL_FORMAT AS LABEL_FORMAT,"
+
         "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
         "TAPE.LABEL_TIME AS LABEL_TIME,"
 
@@ -4186,6 +4189,8 @@ std::list<common::dataStructures::Tape> RdbmsCatalogue::getTapes(rdbms::Conn &co
         tape.dirty = rset.columnBool("DIRTY");
         tape.isFromCastor = rset.columnBool("IS_FROM_CASTOR");
 
+        tape.labelFormat = common::dataStructures::Label::validateFormat(rset.columnOptionalUint8("LABEL_FORMAT"), "[RdbmsCatalogue::getTapes()]");
+
         tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
         tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
         tape.lastWriteLog = getTapeLogFromRset(rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
@@ -4246,6 +4251,7 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::st
       "TAPE.LAST_FSEQ AS LAST_FSEQ,"
       "TAPE.IS_FULL AS IS_FULL,"
       "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"
+      "TAPE.LABEL_FORMAT AS LABEL_FORMAT,"
       "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
       "TAPE.LABEL_TIME AS LABEL_TIME,"
       "TAPE.LAST_READ_DRIVE AS LAST_READ_DRIVE,"
@@ -4387,6 +4393,8 @@ std::string RdbmsCatalogue::getSelectTapesBy100VidsSql() const {
       "TAPE.IS_FULL AS IS_FULL,"
       "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"
 
+      "TAPE.LABEL_FORMAT AS LABEL_FORMAT,"
+
       "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
       "TAPE.LABEL_TIME AS LABEL_TIME,"
 
@@ -4456,6 +4464,9 @@ void RdbmsCatalogue::executeGetTapesByVidStmtAndCollectResults(rdbms::Stmt &stmt
     tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
     tape.full = rset.columnBool("IS_FULL");
     tape.isFromCastor = rset.columnBool("IS_FROM_CASTOR");
+
+    tape.labelFormat = common::dataStructures::Label::validateFormat(rset.columnOptionalUint8("LABEL_FORMAT"), "[RdbmsCatalogue::executeGetTapesByVidsStmtAndCollectResults()]");
+
     tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
     tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
     tape.lastWriteLog = getTapeLogFromRset(rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
@@ -9224,7 +9235,8 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
         "VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,"
         "MEDIA_TYPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
         "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
-        "TAPE.LAST_FSEQ AS LAST_FSEQ "
+        "TAPE.LAST_FSEQ AS LAST_FSEQ,"
+        "TAPE.LABEL_FORMAT AS LABEL_FORMAT "
       "FROM "
         "TAPE "
       "INNER JOIN TAPE_POOL ON "
@@ -9259,6 +9271,7 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
       tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
       tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
       tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
+      tape.labelFormat = common::dataStructures::Label::validateFormat(rset.columnOptionalUint8("LABEL_FORMAT"), "[RdbmsCatalogue::getTapesForWriting()]");
 
       tapes.push_back(tape);
     }

@@ -146,8 +146,17 @@ std::string cta::RetrieveMount::getDrive() const
 //------------------------------------------------------------------------------
 uint64_t cta::RetrieveMount::getCapacityInBytes() const {
     if(!m_dbMount.get())
-        throw exception::Exception("In cta::RetrieveMount::getVendor(): got NULL dbMount");
+        throw exception::Exception("In cta::RetrieveMount::getCapacityInBytes(): got NULL dbMount");
     return m_dbMount->mountInfo.capacityInBytes;
+}
+
+//------------------------------------------------------------------------------
+// getLabelFormat()
+//------------------------------------------------------------------------------
+cta::common::dataStructures::Label::Format cta::RetrieveMount::getLabelFormat() const {
+  if(!m_dbMount.get())
+    throw exception::Exception("In cta::RetrieveMount::getLabelFormat(): got NULL dbMount");
+  return m_dbMount->mountInfo.labelFormat;
 }
 
 //------------------------------------------------------------------------------

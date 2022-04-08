@@ -419,6 +419,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
           m.mediaType = "";      // The logical library is not known here, and will be determined by the caller.
           m.vo = "";             // The vo is not known here, and will be determined by the caller.
           m.capacityInBytes = 0; // The capacity is not known here, and will be determined by the caller.
+          m.labelFormat = vidToTapeMap.at(rqp.vid).labelFormat;
           m.activity = ac.activity;
           m.mountPolicyNames = queueMountPolicyNames;
           // We will display the sleep flag only if it is not expired (15 minutes timeout, hardcoded).
@@ -451,6 +452,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
         m.mediaType = "";      // The logical library is not known here, and will be determined by the caller.
         m.vo = "";             // The vo is not known here, and will be determined by the caller.
         m.capacityInBytes = 0; // The capacity is not known here, and will be determined by the caller.
+        m.labelFormat = vidToTapeMap.at(rqp.vid).labelFormat;
         m.mountPolicyNames = queueMountPolicyNames;
         // We will display the sleep flag only if it is not expired (15 minutes timeout, hardcoded).
         // This allows having a single decision point instead of implementing is at the consumer levels.
@@ -799,7 +801,8 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfo
   const std::string& mediaType,
   const std::string& vendor,
   const uint64_t capacityInBytes,
-  time_t startTime) {
+  time_t startTime, const std::optional<std::string>& activity,
+  cta::common::dataStructures::Label::Format labelFormat) {
   throw cta::exception::Exception("In OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount(): This function should not be called");
 }
 
@@ -816,7 +819,8 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInf
   const std::string& mediaType,
   const std::string& vendor,
   const uint64_t capacityInBytes,
-  time_t startTime, const std::optional<std::string> &activity) {
+  time_t startTime, const std::optional<std::string> &activity,
+  cta::common::dataStructures::Label::Format labelFormat) {
   throw cta::exception::Exception("In OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount(): This function should not be called");
 }
 
@@ -3168,7 +3172,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfo
   common::dataStructures::MountType type,
   const catalogue::TapeForWriting & tape, const std::string& driveName,
   const std::string& logicalLibrary, const std::string& hostName, const std::string& vo, const std::string& mediaType,
-  const std::string& vendor, uint64_t capacityInBytes, time_t startTime) {
+  const std::string& vendor, uint64_t capacityInBytes, time_t startTime, const std::optional<std::string>& activity, cta::common::dataStructures::Label::Format labelFormat) {
   // In order to create the mount, we have to:
   // Check we actually hold the scheduling lock
   // Set the drive status to up, and indicate which tape we use.
@@ -3200,6 +3204,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfo
   am.mountInfo.host = hostName;
   am.mountInfo.vo = vo;
   am.mountInfo.mediaType = mediaType;
+  am.mountInfo.labelFormat = labelFormat;
   am.mountInfo.vendor = vendor;
   am.mountInfo.mountId = m_schedulerGlobalLock->getIncreaseCommitMountId();
   am.mountInfo.capacityInBytes = capacityInBytes;
@@ -3249,7 +3254,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInf
   const std::string& vid, const std::string& tapePool, const std::string& driveName,
   const std::string& logicalLibrary, const std::string& hostName, const std::string& vo, const std::string& mediaType,
   const std::string& vendor, const uint64_t capacityInBytes, time_t startTime,
-  const std::optional<std::string>& activity) {
+  const std::optional<std::string>& activity, cta::common::dataStructures::Label::Format labelFormat) {
   // In order to create the mount, we have to:
   // Check we actually hold the scheduling lock
   // Check the tape exists, add it to ownership and set its activity status to
@@ -3281,6 +3286,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInf
   rm.mountInfo.mediaType = mediaType;
   rm.mountInfo.vendor = vendor;
   rm.mountInfo.capacityInBytes = capacityInBytes;
+  rm.mountInfo.labelFormat = labelFormat;
   rm.mountInfo.activity = activity;
   // Update the status of the drive in the registry
   {

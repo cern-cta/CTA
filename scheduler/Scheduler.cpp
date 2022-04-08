@@ -1051,6 +1051,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
         m.mediaType = retrieveTapesInfo[m.vid].mediaType;
         m.vo = retrieveTapesInfo[m.vid].vo;
         m.capacityInBytes = retrieveTapesInfo[m.vid].capacityInBytes;
+        m.labelFormat = retrieveTapesInfo[m.vid].labelFormat;
       }
     }
   }
@@ -1533,7 +1534,9 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
                 t.mediaType,
                 t.vendor,
                 t.capacityInBytes,
-                time(NULL)).release());
+                time(NULL),
+                std::nullopt,
+                t.labelFormat).release());
             mountCreationTime += timer.secs(utils::Timer::resetCounter);
             internalRet->m_sessionRunning = true;
             driveStatusSetTime += timer.secs(utils::Timer::resetCounter);
@@ -1602,7 +1605,9 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
             m->mediaType,
             m->vendor,
             m->capacityInBytes,
-            time(NULL), m->activity).release());
+            time(NULL),
+            m->activity,
+            m->labelFormat).release());
         mountCreationTime += timer.secs(utils::Timer::resetCounter);
         internalRet->m_sessionRunning = true;
         internalRet->m_diskRunning = true;
@@ -1619,10 +1624,13 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
         } catch(...) {}
         schedulerDbTime = getMountInfoTime + queueTrimingTime + mountCreationTime + driveStatusSetTime;
         catalogueTime = getTapeInfoTime + getTapeForWriteTime;
+        std::ostringstream ossLabelFormat;
+        ossLabelFormat << std::showbase << std::internal << std::setfill('0') << std::hex << std::setw(4) << static_cast<unsigned int>(m->labelFormat);
         params.add("tapePool", m->tapePool)
               .add("tapeVid", m->vid)
               .add("vo",m->vo)
               .add("mediaType",m->mediaType)
+              .add("labelFormat",ossLabelFormat.str())
               .add("vendor",m->vendor)
               .add("mountType", common::dataStructures::toString(m->type))
               .add("existingMountsDistinctTypeForThisTapepool", existingMountsDistinctTypeForThisTapepool)

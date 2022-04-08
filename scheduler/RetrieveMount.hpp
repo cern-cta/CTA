@@ -130,6 +130,12 @@ namespace cta {
     uint64_t getCapacityInBytes() const;
 
     /**
+     * Returns the media format of the tape
+     * @return the media format of the tape
+     */
+    virtual cta::common::dataStructures::Label::Format getLabelFormat() const;
+
+    /**
      * Report a drive status change
      */
     virtual void setDriveStatus(cta::common::dataStructures::DriveStatus status, const std::optional<std::string> & reason = std::nullopt);

@@ -239,12 +239,15 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       TapeCleaning tapeCleaner(*this, timer);
       // Before anything, the tape should be mounted
       m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Mounting, std::nullopt, m_logContext);
+      std::ostringstream ossLabelFormat;
+      ossLabelFormat << std::showbase << std::internal << std::setfill('0') << std::hex << std::setw(4) << static_cast<unsigned int>(m_volInfo.labelFormat);
       cta::log::ScopedParamContainer params(m_logContext);
       params.add("vo", m_retrieveMount.getVo());
       params.add("mediaType", m_retrieveMount.getMediaType());
       params.add("tapePool", m_retrieveMount.getPoolName());
       params.add("logicalLibrary", m_drive.config.logicalLibrary);
       params.add("mountType", toCamelCaseString(m_volInfo.mountType));
+      params.add("labelFormat", ossLabelFormat.str());
       params.add("vendor", m_retrieveMount.getVendor());
       params.add("capacityInBytes", m_retrieveMount.getCapacityInBytes());
       m_logContext.log(cta::log::INFO, "Tape session started for read");

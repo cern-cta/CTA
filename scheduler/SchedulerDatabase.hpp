@@ -191,6 +191,7 @@ class SchedulerDatabase {
       std::string host;
       uint64_t mountId;
       uint64_t capacityInBytes;
+      cta::common::dataStructures::Label::Format labelFormat;
       cta::common::dataStructures::MountType mountType;
     } mountInfo;
     virtual const MountInfo & getMountInfo() = 0;
@@ -428,6 +429,7 @@ class SchedulerDatabase {
       uint64_t capacityInBytes;
       uint64_t mountId;
       std::optional<std::string> activity;
+      cta::common::dataStructures::Label::Format labelFormat;
     } mountInfo;
     virtual const MountInfo & getMountInfo() = 0;
     virtual std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> getNextJobBatch(uint64_t filesRequested,
@@ -651,6 +653,7 @@ class SchedulerDatabase {
     std::string mediaType;        // Media type of the tape
     std::string vendor;           // Vendor of the tape
     uint64_t capacityInBytes;     // Capacity in bytes of the tape
+    cta::common::dataStructures::Label::Format labelFormat; // Label format of the tape
 
     uint64_t priority;            /**< The priority for the mount, defined as the highest
                                    * priority of all queued jobs */
@@ -764,7 +767,8 @@ class SchedulerDatabase {
       const std::string& vo, const std::string& mediaType,
       const std::string& vendor,
       const uint64_t capacityInBytes,
-      time_t startTime) = 0;
+      time_t startTime, const std::optional<std::string> &activity,
+      cta::common::dataStructures::Label::Format labelFormat) = 0;
     /**
      * Create a new retrieve mount. This implicitly releases the global scheduling
      * lock.
@@ -775,7 +779,8 @@ class SchedulerDatabase {
       const std::string& vo, const std::string& mediaType,
       const std::string& vendor,
       const uint64_t capacityInBytes,
-      time_t startTime, const std::optional<std::string> &activity) = 0;
+      time_t startTime, const std::optional<std::string> &activity,
+      cta::common::dataStructures::Label::Format labelFormat) = 0;
     /** Destructor: releases the global lock if not already done */
     virtual ~TapeMountDecisionInfo() {};
   };

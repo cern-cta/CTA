@@ -190,6 +190,12 @@ namespace cta {
     uint32_t getNbFiles() const override;
 
     /**
+     * Returns the label format of the tape
+     * @return the label format of the tape
+     */
+    cta::common::dataStructures::Label::Format getLabelFormat() const;
+
+    /**
      * Creates a disk reporter for the ArchiveJob (this is a wrapper).
      * @param URL: report address
      * @param reporterState void promise to be set when the report is done asynchronously.

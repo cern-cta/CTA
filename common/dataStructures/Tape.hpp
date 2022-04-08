@@ -19,6 +19,7 @@
 
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/TapeLog.hpp"
+#include "common/dataStructures/LabelFormat.hpp"
 
 #include <list>
 #include <map>
@@ -84,6 +85,8 @@ struct Tape {
   uint64_t dataOnTapeInBytes;
   uint64_t nbMasterFiles;
   uint64_t masterDataInBytes;
+
+  cta::common::dataStructures::Label::Format  labelFormat;
 
   /**
    * The optional name of the encryption key.

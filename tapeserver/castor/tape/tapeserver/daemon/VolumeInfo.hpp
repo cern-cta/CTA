@@ -19,6 +19,7 @@
 
 #include <string>
 #include <common/dataStructures/MountType.hpp>
+#include "common/dataStructures/LabelFormat.hpp"
 
 namespace castor {
 namespace tape {
@@ -33,6 +34,7 @@ struct VolumeInfo {
   cta::common::dataStructures::MountType mountType;  //!< Mount type: archive or retrieve
   uint32_t nbFiles;                                  //!< Number of files currently on tape
   std::string mountId;                               //!< Mount ID
+  cta::common::dataStructures::Label::Format labelFormat;           //!< Label/Tape format
 };
 
 } // namespace daemon

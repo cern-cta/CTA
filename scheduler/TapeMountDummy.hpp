@@ -56,6 +56,11 @@ class TapeMountDummy: public TapeMount {
   }
 
   void setDriveStatus(cta::common::dataStructures::DriveStatus status, const std::optional<std::string> & reason) override {}
+
+  cta::common::dataStructures::Label::Format getLabelFormat() const override {
+      throw exception::Exception("In DummyTapeMount::getLabelFormat() : not implemented");
+  }
+
   void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override {};
   void setTapeMounted(log::LogContext &logContext) const override {};
 };

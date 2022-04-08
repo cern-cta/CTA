@@ -106,6 +106,13 @@ uint32_t cta::ArchiveMount::getNbFiles() const {
 }
 
 //------------------------------------------------------------------------------
+// getLabelFormat
+//------------------------------------------------------------------------------
+cta::common::dataStructures::Label::Format cta::ArchiveMount::getLabelFormat() const {
+  return m_dbMount->mountInfo.labelFormat;
+}
+
+//------------------------------------------------------------------------------
 // createDiskReporter
 //------------------------------------------------------------------------------
 cta::disk::DiskReporter *cta::ArchiveMount::createDiskReporter(std::string& URL) {

@@ -26,6 +26,7 @@
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
+#include "common/dataStructures/LabelFormat.hpp"
 #include "common/log/Logger.hpp"
 #include "common/threading/BlockingQueue.hpp"
 #include "common/threading/Thread.hpp"
@@ -112,7 +113,9 @@ class OStoreDB: public SchedulerDatabase {
       const std::string& hostName,
       const std::string& vo, const std::string& mediaType,
       const std::string& vendor, uint64_t capacityInBytes,
-      time_t startTime) override;
+      time_t startTime,
+      const std::optional<std::string> &activity,
+      cta::common::dataStructures::Label::Format labelFormat) override;
     std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(
       const std::string& vid, const std::string& tapePool,
       const std::string& driveName,
@@ -121,7 +124,8 @@ class OStoreDB: public SchedulerDatabase {
       const std::string& vendor,
       const uint64_t capacityInBytes,
       time_t startTime,
-      const std::optional<std::string> &activity) override;
+      const std::optional<std::string> &activity,
+      cta::common::dataStructures::Label::Format labelFormat) override;
     virtual ~TapeMountDecisionInfo();
 
    private:
@@ -141,7 +145,9 @@ class OStoreDB: public SchedulerDatabase {
       const std::string& driveName, const std::string& logicalLibrary,
       const std::string& hostName, const std::string& vo, const std::string& mediaType,
       const std::string& vendor, uint64_t capacityInBytes,
-      time_t startTime) override;
+      time_t startTime,
+      const std::optional<std::string> &activity,
+      cta::common::dataStructures::Label::Format labelFormat) override;
     std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(
       const std::string& vid, const std::string & tapePool,
       const std::string& driveName,
@@ -150,7 +156,8 @@ class OStoreDB: public SchedulerDatabase {
       const std::string& vendor,
       const uint64_t capacityInBytes,
       time_t startTime,
-      const std::optional<std::string> &activity) override;
+      const std::optional<std::string> &activity,
+      cta::common::dataStructures::Label::Format labelFormat) override;
     virtual ~TapeMountDecisionInfoNoLock();
   };
 
