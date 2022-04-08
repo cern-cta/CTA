@@ -25,7 +25,7 @@ set(CMAKE_C_FLAGS "-fPIC -Wall -Wextra -Werror -Wno-unused-parameter")
 # following:
 #
 #   ClientSimulator.hpp:65: error: ISO C++ prohibits anonymous structs
-set(CMAKE_CXX_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -Wno-long-long -fstack-protector-all -Wnon-virtual-dtor")
+set(CMAKE_CXX_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all")
 #
 # A maximalist error checking parameter combo has been suggested by S. Ponce and D. Come:
 # to be tested once we have a stable compilation on CC7:
