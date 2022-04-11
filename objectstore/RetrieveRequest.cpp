@@ -161,7 +161,7 @@ queueForFailure:;
     // If there is no candidate, we fail the jobs that are not yet, and queue the request as failed (on any VID).
     for (auto & j: *m_payload.mutable_jobs()) {
       if (j.status() == RetrieveJobStatus::RJS_ToTransfer) {
-        j.set_status(RetrieveJobStatus::RJS_Failed);
+        j.set_status(RetrieveJobStatus::RJS_ToReportToUserForFailure);
     log::ScopedParamContainer params(lc);
         params.add("fileId", m_payload.archivefile().archivefileid())
               .add("copyNb", j.copynb());
