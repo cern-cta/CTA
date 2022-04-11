@@ -320,6 +320,10 @@ void RdbmsCatalogue::createVirtualOrganization(const common::dataStructures::Sec
     if(vo.comment.empty()) {
       throw UserSpecifiedAnEmptyStringComment("Cannot create virtual organization because the comment is an empty string");
     }
+    if(vo.diskInstanceName.empty()) {
+      throw UserSpecifiedAnEmptyStringDiskInstanceName("Cannot create virtual organization because the disk instance is an empty string");
+    }
+    
     auto conn = m_connPool.getConn();
     if(virtualOrganizationExists(conn, vo.name)) {
       throw exception::UserError(std::string("Cannot create vo : ") +
@@ -336,6 +340,8 @@ void RdbmsCatalogue::createVirtualOrganization(const common::dataStructures::Sec
         "WRITE_MAX_DRIVES,"
         "MAX_FILE_SIZE,"
 
+        "DISK_INSTANCE_NAME,"
+
         "USER_COMMENT,"
 
         "CREATION_LOG_USER_NAME,"
@@ -351,6 +357,8 @@ void RdbmsCatalogue::createVirtualOrganization(const common::dataStructures::Sec
         ":READ_MAX_DRIVES,"
         ":WRITE_MAX_DRIVES,"
         ":MAX_FILE_SIZE,"
+
+        ":DISK_INSTANCE_NAME,"
 
         ":USER_COMMENT,"
 
@@ -369,6 +377,8 @@ void RdbmsCatalogue::createVirtualOrganization(const common::dataStructures::Sec
     stmt.bindUint64(":READ_MAX_DRIVES",vo.readMaxDrives);
     stmt.bindUint64(":WRITE_MAX_DRIVES",vo.writeMaxDrives);
     stmt.bindUint64(":MAX_FILE_SIZE", vo.maxFileSize);
+
+    stmt.bindString(":DISK_INSTANCE_NAME", vo.diskInstanceName);
 
     stmt.bindString(":USER_COMMENT", vo.comment);
 
@@ -479,7 +489,7 @@ std::list<common::dataStructures::VirtualOrganization> RdbmsCatalogue::getVirtua
       virtualOrganization.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
       virtualOrganization.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
       virtualOrganization.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
-      virtualOrganization.diskInstanceName = rset.columnOptionalString("DISK_INSTANCE_NAME");
+      virtualOrganization.diskInstanceName = rset.columnString("DISK_INSTANCE_NAME");
 
       virtualOrganizations.push_back(virtualOrganization);
     }
@@ -559,7 +569,7 @@ common::dataStructures::VirtualOrganization RdbmsCatalogue::getVirtualOrganizati
     virtualOrganization.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
     virtualOrganization.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
     virtualOrganization.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
-    virtualOrganization.diskInstanceName = rset.columnOptionalString("DISK_INSTANCE_NAME");
+    virtualOrganization.diskInstanceName = rset.columnString("DISK_INSTANCE_NAME");
     return virtualOrganization;
   } catch(exception::UserError &) {
     throw;
@@ -5798,6 +5808,12 @@ void RdbmsCatalogue::createRequesterActivityMountRule(
         " to requester " + diskInstanceName + ":" + requesterName + " for activities matching " + activityRegex +
         " because mount-policy " + mountPolicyName + " does not exist");
     }
+    if(!diskInstanceExists(conn, diskInstanceName)) {
+      throw exception::UserError(std::string("Cannot create a rule to assign mount-policy ") + mountPolicyName +
+        " to requester " + diskInstanceName + ":" + requesterName + " for activities matching " + activityRegex +
+        " because disk-instance " + diskInstanceName + " does not exist");
+    }
+    
     const uint64_t now = time(nullptr);
     const char *const sql =
       "INSERT INTO REQUESTER_ACTIVITY_MOUNT_RULE("
@@ -5970,6 +5986,12 @@ void RdbmsCatalogue::createRequesterMountRule(
         " to requester " + diskInstanceName + ":" + requesterName + " because mount-policy " + mountPolicyName +
         " does not exist");
     }
+    if(!diskInstanceExists(conn, diskInstanceName)) {
+      throw exception::UserError(std::string("Cannot create a rule to assign mount-policy ") + mountPolicyName +
+        " to requester " + diskInstanceName + ":" + requesterName + " because disk-instance " + diskInstanceName +
+        " does not exist");
+    }
+    
     const uint64_t now = time(nullptr);
     const char *const sql =
       "INSERT INTO REQUESTER_MOUNT_RULE("
@@ -6137,6 +6159,11 @@ void RdbmsCatalogue::createRequesterGroupMountRule(
       throw exception::UserError(std::string("Cannot assign mount-policy ") + mountPolicyName + " to requester-group " +
         diskInstanceName + ":" + requesterGroupName + " because mount-policy " + mountPolicyName + " does not exist");
     }
+    if(!diskInstanceExists(conn, diskInstanceName)) {
+      throw exception::UserError(std::string("Cannot assign mount-policy ") + mountPolicyName + " to requester-group " +
+        diskInstanceName + ":" + requesterGroupName + " because disk-instance " + diskInstanceName + " does not exist");
+    }
+    
     const uint64_t now = time(nullptr);
     const char *const sql =
       "INSERT INTO REQUESTER_GROUP_MOUNT_RULE("

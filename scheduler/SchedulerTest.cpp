@@ -191,6 +191,8 @@ public:
     ASSERT_EQ(minRetrieveRequestAge, group.retrieveMinRequestAge);
     ASSERT_EQ(mountPolicyComment, group.comment);
 
+    m_catalogue->createDiskInstance(s_adminOnAdminHost, s_diskInstance, "comment");
+
     const std::string ruleComment = "create requester mount-rule";
     catalogue.createRequesterMountRule(s_adminOnAdminHost, mountPolicyName, s_diskInstance, s_userName, ruleComment);
 
@@ -212,6 +214,7 @@ public:
     vo.writeMaxDrives = 1;
     vo.readMaxDrives = 1;
     vo.maxFileSize = 0;
+    vo.diskInstanceName = s_diskInstance;
     m_catalogue->createVirtualOrganization(s_adminOnAdminHost,vo);
 
     common::dataStructures::StorageClass storageClass;
@@ -688,8 +691,13 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     ASSERT_EQ(minRetrieveRequestAge, group.retrieveMinRequestAge);
     ASSERT_EQ(mountPolicyComment, group.comment);
 
+    cta::common::dataStructures::DiskInstance di;
+    di.name = s_diskInstance;
+    di.comment = "comment";
+    catalogue.createDiskInstance(s_adminOnAdminHost, di.name, di.comment);
+
     const std::string ruleComment = "create requester mount-rule";
-    catalogue.createRequesterMountRule(s_adminOnAdminHost, mountPolicyName, s_diskInstance, s_userName, ruleComment);
+    catalogue.createRequesterMountRule(s_adminOnAdminHost, mountPolicyName, di.name, s_userName, ruleComment);
 
     const std::list<common::dataStructures::RequesterMountRule> rules = catalogue.getRequesterMountRules();
     ASSERT_EQ(1, rules.size());
@@ -709,6 +717,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     vo.writeMaxDrives = 1;
     vo.readMaxDrives = 1;
     vo.maxFileSize = 0;
+    vo.diskInstanceName = s_diskInstance;
     catalogue.createVirtualOrganization(s_adminOnAdminHost,vo);
 
     common::dataStructures::StorageClass storageClass;

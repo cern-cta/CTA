@@ -276,6 +276,13 @@ public:
     return mountPolicy;
   }
 
+  const cta::common::dataStructures::DiskInstance getDefaultDiskInstance() const {
+    cta::common::dataStructures::DiskInstance di;
+    di.name = s_diskInstance;
+    di.comment = "comment";
+    return di;
+  }
+
   cta::common::dataStructures::VirtualOrganization getDefaultVirtualOrganization() {
     cta::common::dataStructures::VirtualOrganization vo;
     vo.name = "vo";
@@ -283,6 +290,7 @@ public:
     vo.writeMaxDrives = 1;
     vo.maxFileSize = 0;
     vo.comment = "comment";
+    vo.diskInstanceName = getDefaultDiskInstance().name;
     return vo;
   }
 
@@ -330,8 +338,11 @@ public:
     ASSERT_EQ(minRetrieveRequestAge, group.retrieveMinRequestAge);
     ASSERT_EQ(mountPolicyComment, group.comment);
 
+    const auto di = getDefaultDiskInstance();
+    catalogue.createDiskInstance(s_adminOnAdminHost, di.name, di.comment); 
+
     const std::string ruleComment = "create requester mount-rule";
-    catalogue.createRequesterMountRule(s_adminOnAdminHost, mountPolicyName, s_diskInstance, s_userName, ruleComment);
+    catalogue.createRequesterMountRule(s_adminOnAdminHost, mountPolicyName, di.name, s_userName, ruleComment);
 
     const std::list<common::dataStructures::RequesterMountRule> rules = catalogue.getRequesterMountRules();
     ASSERT_EQ(1, rules.size());
@@ -345,6 +356,7 @@ public:
     ASSERT_EQ(s_adminOnAdminHost.host, rule.creationLog.host);
     ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
 
+ 
     cta::common::dataStructures::VirtualOrganization vo = getDefaultVirtualOrganization();
     catalogue.createVirtualOrganization(s_adminOnAdminHost, vo);
 
@@ -553,7 +565,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
       catalogue.filesWrittenToTape(tapeFileWrittenSet);
 
       // Schedule the retrieval of the file
-      std::string diskInstance = "disk_instance";
+      std::string diskInstance = s_diskInstance;
       cta::common::dataStructures::RetrieveRequest rReq;
       rReq.archiveFileID = fseq;
       rReq.requester.name = s_userName;
@@ -739,7 +751,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
       catalogue.filesWrittenToTape(tapeFileWrittenSet);
 
       // Schedule the retrieval of the file
-      std::string diskInstance="disk_instance";
+      std::string diskInstance=s_diskInstance;
       cta::common::dataStructures::RetrieveRequest rReq;
       rReq.archiveFileID=fseq;
       rReq.requester.name = s_userName;
@@ -957,7 +969,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
       }
 
       // Schedule the retrieval of the file
-      std::string diskInstance = "disk_instance";
+      std::string diskInstance = s_diskInstance;
       cta::common::dataStructures::RetrieveRequest rReq;
       rReq.archiveFileID = 1000 + fseq;
       rReq.requester.name = s_userName;
@@ -1133,7 +1145,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
       catalogue.filesWrittenToTape(tapeFileWrittenSet);
 
       // Schedule the retrieval of the file
-      std::string diskInstance = "disk_instance";
+      std::string diskInstance = s_diskInstance;
       cta::common::dataStructures::RetrieveRequest rReq;
       rReq.archiveFileID = fseq;
       rReq.requester.name = s_userName;
@@ -1324,7 +1336,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
       catalogue.filesWrittenToTape(tapeFileWrittenSet);
 
       // Schedule the retrieval of the file
-      std::string diskInstance = "disk_instance";
+      std::string diskInstance = s_diskInstance;
       cta::common::dataStructures::RetrieveRequest rReq;
       rReq.archiveFileID = fseq;
       rReq.requester.name = s_userName;
@@ -1511,7 +1523,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
       catalogue.filesWrittenToTape(tapeFileWrittenSet);
 
       // Schedule the retrieval of the file
-      std::string diskInstance = "disk_instance";
+      std::string diskInstance = s_diskInstance;
       cta::common::dataStructures::RetrieveRequest rReq;
       rReq.archiveFileID = fseq;
       rReq.requester.name = s_userName;
@@ -1702,7 +1714,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
       catalogue.filesWrittenToTape(tapeFileWrittenSet);
 
       // Schedule the retrieval of the file
-      std::string diskInstance = "disk_instance";
+      std::string diskInstance = s_diskInstance;
       cta::common::dataStructures::RetrieveRequest rReq;
       rReq.archiveFileID = fseq;
       rReq.requester.name = s_userName;
@@ -1887,7 +1899,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
       catalogue.filesWrittenToTape(tapeFileWrittenSet);
 
       // Schedule the retrieval of the file
-      std::string diskInstance = "disk_instance";
+      std::string diskInstance = s_diskInstance;
       cta::common::dataStructures::RetrieveRequest rReq;
       rReq.archiveFileID = fseq;
       rReq.requester.name = s_userName;
@@ -2037,7 +2049,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
       catalogue.filesWrittenToTape(tapeFileWrittenSet);
 
       // Schedule the retrieval of the file
-      std::string diskInstance = "disk_instance";
+      std::string diskInstance = s_diskInstance;
       cta::common::dataStructures::RetrieveRequest rReq;
       rReq.archiveFileID = fseq;
       rReq.requester.name = s_userName;
@@ -2143,6 +2155,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   auto mountPolicy = getImmediateMountMountPolicy();
   catalogue.createMountPolicy(requester, mountPolicy);
   std::string mountPolicyName = mountPolicy.name;
+
   catalogue.createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
 
   //delete is unnecessary
@@ -2292,6 +2305,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   auto mountPolicy = getImmediateMountMountPolicy();
   catalogue.createMountPolicy(requester, mountPolicy);
   std::string mountPolicyName = mountPolicy.name;
+  
   catalogue.createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
 
   //delete is unnecessary
@@ -2470,6 +2484,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   auto mountPolicy = getImmediateMountMountPolicy();
   catalogue.createMountPolicy(requester, mountPolicy);
   std::string mountPolicyName = mountPolicy.name;
+
   catalogue.createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
 
   //delete is unnecessary
@@ -2639,6 +2654,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   auto mountPolicy = getImmediateMountMountPolicy();
   catalogue.createMountPolicy(requester, mountPolicy);
   std::string mountPolicyName = mountPolicy.name;
+
   catalogue.createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
 
   //delete is unnecessary
@@ -2840,6 +2856,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   auto mountPolicy = getImmediateMountMountPolicy();
   catalogue.createMountPolicy(requester, mountPolicy);
   std::string mountPolicyName = mountPolicy.name;
+
   catalogue.createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
 
   //delete is unnecessary
@@ -3004,6 +3021,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   auto mountPolicy = getImmediateMountMountPolicy();
   catalogue.createMountPolicy(requester, mountPolicy);
   std::string mountPolicyName = mountPolicy.name;
+
   catalogue.createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
 
   //delete is unnecessary
@@ -3172,6 +3190,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   auto mountPolicy = getImmediateMountMountPolicy();
   catalogue.createMountPolicy(requester, mountPolicy);
   std::string mountPolicyName = mountPolicy.name;
+
   catalogue.createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
 
   //delete is unnecessary
@@ -3336,6 +3355,7 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
   auto mountPolicy = getImmediateMountMountPolicy();
   catalogue.createMountPolicy(requester, mountPolicy);
   std::string mountPolicyName = mountPolicy.name;
+
   catalogue.createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
 
   //delete is unnecessary

@@ -682,7 +682,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    /*----------------------------------------------------------------------------------------------------*/
    
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_ADD   },
-      { opt_vo, opt_read_max_drives, opt_write_max_drives, opt_comment, opt_maxfilesize.optional() }},
+      { opt_vo, opt_read_max_drives, opt_write_max_drives, opt_comment, opt_diskinstance, opt_maxfilesize.optional() }},
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_CH   },
       { opt_vo, opt_comment.optional(), opt_read_max_drives.optional(), opt_write_max_drives.optional(), opt_maxfilesize.optional(), opt_diskinstance.optional() }},
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_RM   },

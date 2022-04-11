@@ -27,6 +27,7 @@ Please consult the [database upgrade documentation](https://eoscta.docs.cern.ch/
 - cta/CTA#1171 - Add LABEL_FORMAT column to TAPE table
 - cta/CTA#1172 - Add disabled reason column to logical library table
 - cta/CTA#1177 - Fix CTA catalogue schema verify index checker for PostgreSQL
+- cta/CTA#1147 - Add foreign key constraint between the disk instance name of a vo and the disk instance table
 
 ### Continuous Integration
 

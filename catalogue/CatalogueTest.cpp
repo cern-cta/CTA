@@ -75,6 +75,15 @@ namespace {
     return admin;
   }
 
+  const cta::common::dataStructures::DiskInstance getDiskInstance() {
+    using namespace cta;
+
+    common::dataStructures::DiskInstance di;
+    di.name = "disk instance";
+    di.comment = "Creation of disk instance";
+    return di;
+  }
+
   cta::common::dataStructures::VirtualOrganization getVo() {
     using namespace cta;
 
@@ -84,6 +93,7 @@ namespace {
     vo.readMaxDrives = 1;
     vo.writeMaxDrives = 1;
     vo.maxFileSize = 0;
+    vo.diskInstanceName = getDiskInstance().name;
     return vo;
   }
 
@@ -96,6 +106,7 @@ namespace {
     vo.readMaxDrives = 1;
     vo.writeMaxDrives = 1;
     vo.maxFileSize = 0;
+    vo.diskInstanceName = getDiskInstance().name;
     return vo;
   }
 
@@ -297,6 +308,7 @@ cta_catalogue_CatalogueTest::cta_catalogue_CatalogueTest():
         m_anotherStorageClass(getAnotherStorageClass()),
         m_storageClassDualCopy(getStorageClassDualCopy()),
         m_storageClassTripleCopy(getStorageClassTripleCopy()),
+        m_diskInstance(getDiskInstance()),
         m_mediaType(getMediaType()),
         m_tape1(getTape1()),
         m_tape2(getTape2()),
@@ -427,15 +439,15 @@ void cta_catalogue_CatalogueTest::SetUp() {
       }
     }
     {
-      const auto diskInstances = m_catalogue->getAllDiskInstances();
-      for(auto &di: diskInstances) {
-        m_catalogue->deleteDiskInstance(di.name);
-      }
-    }
-    {
       const auto virtualOrganizations = m_catalogue->getVirtualOrganizations();
       for(auto &vo: virtualOrganizations) {
         m_catalogue->deleteVirtualOrganization(vo.name);
+      }
+    }
+    {
+      const auto diskInstances = m_catalogue->getAllDiskInstances();
+      for(auto &di: diskInstances) {
+        m_catalogue->deleteDiskInstance(di.name);
       }
     }
     {
@@ -888,6 +900,7 @@ TEST_P(cta_catalogue_CatalogueTest, isAdmin_true) {
 TEST_P(cta_catalogue_CatalogueTest, createStorageClass) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -911,6 +924,7 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass) {
 TEST_P(cta_catalogue_CatalogueTest, createStorageClass_same_twice) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
   ASSERT_THROW(m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy), exception::UserError);
@@ -921,6 +935,7 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass_emptyStringStorageClassNa
 
   auto storageClass = m_storageClassSingleCopy;
   storageClass.name = "";
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   ASSERT_THROW(m_catalogue->createStorageClass(m_admin, storageClass), catalogue::UserSpecifiedAnEmptyStringStorageClassName);
 }
@@ -930,6 +945,7 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass_emptyStringComment) {
 
   auto storageClass = m_storageClassSingleCopy;
   storageClass.comment = "";
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   ASSERT_THROW(m_catalogue->createStorageClass(m_admin, storageClass), catalogue::UserSpecifiedAnEmptyStringComment);
 }
@@ -953,6 +969,7 @@ TEST_P(cta_catalogue_CatalogueTest, createStorageClass_nonExistingVo) {
 TEST_P(cta_catalogue_CatalogueTest, deleteStorageClass) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -984,6 +1001,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteStorageClass_non_existent) {
 TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassNbCopies) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -1035,6 +1053,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassNbCopies_nonExistentStorag
 TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassComment) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -1086,6 +1105,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassComment_nonExistentStorage
 TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassName) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -1137,6 +1157,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassName_nonExistentStorageCla
 TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassName_newNameAlreadyExists) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -1152,6 +1173,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassName_newNameAlreadyExists)
 TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassVo) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -1168,6 +1190,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassVo) {
 TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassEmptyStringVo) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -1177,6 +1200,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassEmptyStringVo) {
 TEST_P(cta_catalogue_CatalogueTest, modifyStorageClassVoDoesNotExist) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -1297,6 +1321,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteMediaType_usedByTapes) {
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, m_tape1);
@@ -1316,6 +1341,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapes_non_existent_tape_pool) {
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, m_tape1);
@@ -1954,6 +1980,7 @@ TEST_P(cta_catalogue_CatalogueTest, getMediaTypeByVid) {
   m_catalogue->createMediaType(m_admin, m_mediaType);
 
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -1994,6 +2021,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, comment);
 
@@ -2063,6 +2091,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_null_supply) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply;
   const std::string comment = "Create tape pool";
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, comment);
 
@@ -2101,6 +2130,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_same_twice) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, comment);
   ASSERT_THROW(m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, comment), exception::UserError);
@@ -2129,6 +2159,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_tapes_of_mixed_state) {
   m_catalogue->createMediaType(m_admin, m_mediaType);
 
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   {
@@ -2250,6 +2281,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool) {
   const std::string tapePoolComment = "Create tape pool";
   {
     const cta::optional<std::string> supply("value for the supply pool mechanism");
+    m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
     m_catalogue->createVirtualOrganization(m_admin, m_vo);
     m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, tapePoolNbPartialTapes, tapePoolIsEncrypted,
       supply, tapePoolComment);
@@ -2365,6 +2397,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_notEmpty) {
   m_catalogue->createMediaType(m_admin, m_mediaType);
 
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   {
@@ -2438,6 +2471,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_emptyStringTapePoolName) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   ASSERT_THROW(m_catalogue->createTapePool(m_admin, tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, comment),
     catalogue::UserSpecifiedAnEmptyStringTapePoolName);
@@ -2465,6 +2499,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_emptyStringComment) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "";
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   ASSERT_THROW(m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, comment),
     catalogue::UserSpecifiedAnEmptyStringComment);
@@ -2479,6 +2514,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_non_existent) {
 TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_used_in_an_archive_route) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -2541,6 +2577,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolVo) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
+  
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, comment);
 
@@ -2611,6 +2649,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolVo_emptyStringVo) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
+
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, comment);
 
@@ -2651,6 +2691,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolVo_VoDoesNotExist) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, comment);
 
@@ -2691,6 +2732,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolNbPartialTapes) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, comment);
 
@@ -2767,6 +2809,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, comment);
 
@@ -2835,6 +2878,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment_emptyStringComment) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, comment);
 
@@ -2883,6 +2927,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapePoolEncryption) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, comment);
 
@@ -2951,6 +2996,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolSupply) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, comment);
 
@@ -3024,6 +3070,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolSupply_emptyStringSupply) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, comment);
 
@@ -3106,6 +3153,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapePools_filterName) {
   const std::string firstPoolComment = "Create first tape pool";
   const std::string secondPoolComment = "Create second tape pool";
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createVirtualOrganization(m_admin, m_anotherVo);
 
@@ -3192,6 +3240,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapePools_filterVO) {
   const std::string firstPoolComment = "Create first tape pool";
   const std::string secondPoolComment = "Create second tape pool";
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createVirtualOrganization(m_admin, m_anotherVo);
 
@@ -3278,6 +3327,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapePools_filterEncrypted) {
   const std::string firstPoolComment = "Create first tape pool";
   const std::string secondPoolComment = "Create second tape pool";
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createVirtualOrganization(m_admin, m_anotherVo);
 
@@ -3335,6 +3385,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapePools_filterEncrypted) {
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
 
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
@@ -3396,6 +3447,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolName) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, comment);
 
@@ -3465,6 +3517,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolName_emptyStringNewTapePoolNam
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, comment);
 
@@ -3500,6 +3553,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolName_emptyStringNewTapePoolNam
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringStorageClassName) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
 
   common::dataStructures::StorageClass storageClass;
@@ -3522,6 +3576,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringStorageClassNa
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_zeroCopyNb) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -3538,6 +3593,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_zeroCopyNb) {
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringTapePoolName) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
 
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
@@ -3551,6 +3607,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringTapePoolName) 
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringComment) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -3572,6 +3629,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_non_existent_storage_clas
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -3583,6 +3641,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_non_existent_storage_clas
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_non_existent_tape_pool) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -3597,6 +3656,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_non_existent_tape_pool) {
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_same_twice) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -3614,6 +3674,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_same_twice) {
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_two_routes_same_pool) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -3634,6 +3695,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_two_routes_same_pool) {
 TEST_P(cta_catalogue_CatalogueTest, deleteArchiveRoute) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -3677,6 +3739,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveRoute_non_existent) {
 TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_deleteStorageClass) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -3713,6 +3776,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_deleteStorageClass) {
 TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -3769,6 +3833,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName) {
 TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName_nonExistentTapePool) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -3809,6 +3874,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName_nonExistentTa
 TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName_nonExistentArchiveRoute) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -3824,6 +3890,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName_nonExistentAr
 TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -3878,6 +3945,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment) {
 TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment_nonExistentArchiveRoute) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -4108,6 +4176,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
   m_catalogue->createMediaType(m_admin, m_mediaType);
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   {
@@ -4228,6 +4297,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary_non_empty) {
   m_catalogue->createMediaType(m_admin, m_mediaType);
 
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -4517,6 +4587,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
   m_catalogue->createMediaType(m_admin, m_mediaType);
 
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   {
@@ -4591,6 +4662,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringVid) {
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   {
@@ -4620,6 +4692,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringMediaType) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   {
@@ -4649,6 +4722,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringVendor) {
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   {
@@ -4678,6 +4752,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringLogicalLibraryName) {
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   {
@@ -4718,6 +4793,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_non_existent_logical_library) {
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   ASSERT_THROW(m_catalogue->createTape(m_admin, m_tape1), exception::UserError);
@@ -4743,6 +4819,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_9_exabytes_capacity) {
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   {
@@ -4816,6 +4893,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_same_twice) {
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   {
@@ -4873,6 +4951,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_StateDoesNotExist) {
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -4892,6 +4971,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_StateNotActiveWithoutReasonShould
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -4916,6 +4996,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   {
@@ -5217,10 +5298,11 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
 TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_without) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
@@ -5398,6 +5480,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTape) {
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -5439,6 +5522,7 @@ TEST_P(cta_catalogue_CatalogueTest, writeToTapeAndCheckMasterBytesAndFiles) {
 
   log::LogContext dummyLc(m_dummyLog);
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -5446,7 +5530,7 @@ TEST_P(cta_catalogue_CatalogueTest, writeToTapeAndCheckMasterBytesAndFiles) {
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -5565,6 +5649,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
 
   log::LogContext dummyLc(m_dummyLog);
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -5572,7 +5657,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -5716,6 +5801,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeMediaType) {
   m_catalogue->createMediaType(m_admin, anotherMediaType);
 
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -5792,6 +5879,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeVendor) {
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -5869,6 +5957,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLogicalLibraryName) {
   m_catalogue->createLogicalLibrary(m_admin, anotherLogicalLibraryName, logicalLibraryIsDisabled,
     "Create another logical library");
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -5954,6 +6043,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName) {
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTapePool(m_admin, anotherTapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create another tape pool");
@@ -6027,6 +6117,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName_nonExistentTape) {
   const cta::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -6044,6 +6135,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName) {
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -6120,6 +6212,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName_emptyStringEncry
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -6196,6 +6289,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeVerificationStatus) {
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -6295,6 +6389,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeState_nonExistentState) {
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -6315,6 +6410,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeState_noReasonWhenNotActive) {
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -6337,6 +6433,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeState) {
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -6395,6 +6492,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeStateResetReasonWhenBackToActiveSt
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -6429,6 +6527,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesSearchCriteriaByState) {
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -6486,6 +6585,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeLabelled) {
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -6570,6 +6670,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -6691,6 +6792,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -6812,6 +6914,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeFull) {
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -6892,6 +6995,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeDirty) {
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -6974,6 +7078,7 @@ TEST_P(cta_catalogue_CatalogueTest, noSpaceLeftOnTape) {
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -7054,6 +7159,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeIsFromCastorInUnitTests) {
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -7162,6 +7268,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting) {
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -7194,6 +7301,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWritingOrderedByDataInBytesDesc) 
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -7228,7 +7336,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWritingOrderedByDataInBytesDesc) 
     std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
     file1WrittenSet.insert(file1WrittenUP.release());
     file1Written.archiveFileId        = 1234;
-    file1Written.diskInstance         = "diskInstance";
+    file1Written.diskInstance         = m_diskInstance.name;
     file1Written.diskFileId           = "5678";
     file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
     file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
@@ -7257,6 +7365,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting_disabled_tape) {
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -7286,6 +7395,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting_full_tape) {
   m_catalogue->createMediaType(m_admin, m_mediaType);
 
   m_catalogue->createLogicalLibrary(m_admin, tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -7308,6 +7418,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_getTapesForWriting_no_labelled_tape
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -7579,12 +7690,12 @@ TEST_P(cta_catalogue_CatalogueTest, createRequesterActivityMountRule) {
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
-
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+ 
   const std::string comment = "Create mount rule for requester";
-  const std::string diskInstanceName = "disk_instance";
   const std::string requesterName = "requester_name";
   const std::string activityRegex = "activity_regex";
-  m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, activityRegex, comment);
+  m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyName, m_diskInstance.name, requesterName, activityRegex, comment);
 
   const std::list<common::dataStructures::RequesterActivityMountRule> rules = m_catalogue->getRequesterActivityMountRules();
   ASSERT_EQ(1, rules.size());
@@ -7598,6 +7709,7 @@ TEST_P(cta_catalogue_CatalogueTest, createRequesterActivityMountRule) {
   ASSERT_EQ(m_admin.host, rule.creationLog.host);
   ASSERT_EQ(activityRegex, rule.activityRegex);
   ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
+  ASSERT_EQ(m_diskInstance.name, rule.diskInstance);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createRequesterActivityMountRule_same_twice) {
@@ -7608,14 +7720,14 @@ TEST_P(cta_catalogue_CatalogueTest, createRequesterActivityMountRule_same_twice)
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string comment = "Create mount rule for requester";
-  const std::string diskInstanceName = "disk_instance";
   const std::string requesterName = "requester_name";
   const std::string activityRegex = "activity_regex";
-  m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, activityRegex, comment);
+  m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyName, m_diskInstance.name, requesterName, activityRegex, comment);
 
-  ASSERT_THROW(m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, activityRegex, comment), exception::UserError);
+  ASSERT_THROW(m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyName, m_diskInstance.name, requesterName, activityRegex, comment), exception::UserError);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createRequesterActivityMountRule_non_existent_mount_policy) {
@@ -7625,13 +7737,30 @@ TEST_P(cta_catalogue_CatalogueTest, createRequesterActivityMountRule_non_existen
 
   const std::string comment = "Create mount rule for requester";
   const std::string mountPolicyName = "non_existent_mount_policy";
-  const std::string diskInstanceName = "disk_instance";
   const std::string requesterName = "requester_name";
   const std::string activityRegex = "activity_regex";
-
-  ASSERT_THROW( m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName,
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  
+  ASSERT_THROW( m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyName, m_diskInstance.name, requesterName,
     activityRegex, comment), exception::UserError);
 }
+
+TEST_P(cta_catalogue_CatalogueTest, createRequesterActivityMountRule_non_existent_disk_instance) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getRequesterActivityMountRules().empty());
+
+  auto mountPolicyToAdd = getMountPolicy1();
+  std::string mountPolicyName = mountPolicyToAdd.name;
+  m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+  
+  const std::string comment = "Create mount rule for requester";
+  const std::string requesterName = "requester_name";
+  const std::string activityRegex = "activity_regex";
+  ASSERT_THROW( m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyName, m_diskInstance.name, requesterName,
+    activityRegex, comment), exception::UserError);
+}
+
 
 TEST_P(cta_catalogue_CatalogueTest, deleteRequesterActivityMountRule) {
   using namespace cta;
@@ -7641,17 +7770,17 @@ TEST_P(cta_catalogue_CatalogueTest, deleteRequesterActivityMountRule) {
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
-
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  
   const std::string comment = "Create mount rule for requester";
-  const std::string diskInstanceName = "disk_instance";
   const std::string requesterName = "requester_name";
   const std::string activityRegex = "activity_regex";
-  m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, activityRegex, comment);
+  m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyName, m_diskInstance.name, requesterName, activityRegex, comment);
 
   const std::list<common::dataStructures::RequesterActivityMountRule> rules = m_catalogue->getRequesterActivityMountRules();
   ASSERT_EQ(1, rules.size());
 
-  m_catalogue->deleteRequesterActivityMountRule(diskInstanceName, requesterName, activityRegex);
+  m_catalogue->deleteRequesterActivityMountRule(m_diskInstance.name, requesterName, activityRegex);
   ASSERT_TRUE(m_catalogue->getRequesterActivityMountRules().empty());
 }
 
@@ -7677,13 +7806,13 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterActivityMountRulePolicy) {
   auto anotherMountPolicy = getMountPolicy1();
   anotherMountPolicy.name = anotherMountPolicyName;
   m_catalogue->createMountPolicy(m_admin,anotherMountPolicy);
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
 
   const std::string comment = "Create mount rule for requester";
-  const std::string diskInstanceName = "disk_instance";
   const std::string requesterName = "requester_name";
   const std::string activityRegex = "activity";
-  m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, activityRegex, comment);
+  m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyName, m_diskInstance.name, requesterName, activityRegex, comment);
 
   {
     const std::list<common::dataStructures::RequesterActivityMountRule> rules = m_catalogue->getRequesterActivityMountRules();
@@ -7698,9 +7827,10 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterActivityMountRulePolicy) {
     ASSERT_EQ(m_admin.username, rule.creationLog.username);
     ASSERT_EQ(m_admin.host, rule.creationLog.host);
     ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
+    ASSERT_EQ(m_diskInstance.name, rule.diskInstance);
   }
 
-  m_catalogue->modifyRequesterActivityMountRulePolicy(m_admin, diskInstanceName, requesterName, activityRegex, anotherMountPolicyName);
+  m_catalogue->modifyRequesterActivityMountRulePolicy(m_admin, m_diskInstance.name, requesterName, activityRegex, anotherMountPolicyName);
 
   {
     const std::list<common::dataStructures::RequesterActivityMountRule> rules = m_catalogue->getRequesterActivityMountRules();
@@ -7714,6 +7844,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterActivityMountRulePolicy) {
     ASSERT_EQ(activityRegex, rule.activityRegex);
     ASSERT_EQ(m_admin.username, rule.creationLog.username);
     ASSERT_EQ(m_admin.host, rule.creationLog.host);
+    ASSERT_EQ(m_diskInstance.name, rule.diskInstance);
   }
 }
 
@@ -7725,12 +7856,12 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterActivityMountRulePolicy_nonEx
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
-  const std::string diskInstanceName = "disk_instance";
   const std::string requesterName = "requester_name";
   const std::string activityRegex = "activity";
 
-  ASSERT_THROW(m_catalogue->modifyRequesterActivityMountRulePolicy(m_admin, diskInstanceName, requesterName, activityRegex, mountPolicyName),
+  ASSERT_THROW(m_catalogue->modifyRequesterActivityMountRulePolicy(m_admin, m_diskInstance.name, requesterName, activityRegex, mountPolicyName),
     exception::UserError);
 }
 
@@ -7742,12 +7873,12 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterActivityMountRuleComment) {
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string comment = "Create mount rule for requester";
-  const std::string diskInstanceName = "disk_instance";
   const std::string requesterName = "requester_name";
   const std::string activityRegex = "activity";
-  m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, activityRegex, comment);
+  m_catalogue->createRequesterActivityMountRule(m_admin, mountPolicyName, m_diskInstance.name, requesterName, activityRegex, comment);
 
   {
     const std::list<common::dataStructures::RequesterActivityMountRule> rules = m_catalogue->getRequesterActivityMountRules();
@@ -7762,10 +7893,11 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterActivityMountRuleComment) {
     ASSERT_EQ(m_admin.username, rule.creationLog.username);
     ASSERT_EQ(m_admin.host, rule.creationLog.host);
     ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
+    ASSERT_EQ(m_diskInstance.name, rule.diskInstance);
   }
 
   const std::string modifiedComment = "Modified comment";
-  m_catalogue->modifyRequesterActivityMountRuleComment(m_admin, diskInstanceName, requesterName, activityRegex, modifiedComment);
+  m_catalogue->modifyRequesterActivityMountRuleComment(m_admin, m_diskInstance.name, requesterName, activityRegex, modifiedComment);
 
   {
     const std::list<common::dataStructures::RequesterActivityMountRule> rules = m_catalogue->getRequesterActivityMountRules();
@@ -7779,6 +7911,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterActivityMountRuleComment) {
     ASSERT_EQ(activityRegex, rule.activityRegex);
     ASSERT_EQ(m_admin.username, rule.creationLog.username);
     ASSERT_EQ(m_admin.host, rule.creationLog.host);
+    ASSERT_EQ(m_diskInstance.name, rule.diskInstance);
   }
 }
 
@@ -7804,11 +7937,11 @@ TEST_P(cta_catalogue_CatalogueTest, createRequesterMountRule) {
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string comment = "Create mount rule for requester";
-  const std::string diskInstanceName = "disk_instance";
   const std::string requesterName = "requester_name";
-  m_catalogue->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, comment);
+  m_catalogue->createRequesterMountRule(m_admin, mountPolicyName, m_diskInstance.name, requesterName, comment);
 
   const std::list<common::dataStructures::RequesterMountRule> rules = m_catalogue->getRequesterMountRules();
   ASSERT_EQ(1, rules.size());
@@ -7821,6 +7954,7 @@ TEST_P(cta_catalogue_CatalogueTest, createRequesterMountRule) {
   ASSERT_EQ(m_admin.username, rule.creationLog.username);
   ASSERT_EQ(m_admin.host, rule.creationLog.host);
   ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
+  ASSERT_EQ(m_diskInstance.name, rule.diskInstance);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createRequesterMountRule_same_twice) {
@@ -7831,12 +7965,12 @@ TEST_P(cta_catalogue_CatalogueTest, createRequesterMountRule_same_twice) {
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string comment = "Create mount rule for requester";
-  const std::string diskInstanceName = "disk_instance";
   const std::string requesterName = "requester_name";
-  m_catalogue->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, comment);
-  ASSERT_THROW(m_catalogue->createRequesterMountRule(m_admin, mountPolicyToAdd.name, diskInstanceName, requesterName,
+  m_catalogue->createRequesterMountRule(m_admin, mountPolicyName, m_diskInstance.name, requesterName, comment);
+  ASSERT_THROW(m_catalogue->createRequesterMountRule(m_admin, mountPolicyToAdd.name, m_diskInstance.name, requesterName,
     comment), exception::UserError);
 }
 
@@ -7845,11 +7979,27 @@ TEST_P(cta_catalogue_CatalogueTest, createRequesterMountRule_non_existent_mount_
 
   ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+
   const std::string comment = "Create mount rule for requester";
   const std::string mountPolicyName = "non_existent_mount_policy";
-  const std::string diskInstanceName = "disk_instance";
   const std::string requesterName = "requester_name";
-  ASSERT_THROW(m_catalogue->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName,
+  ASSERT_THROW(m_catalogue->createRequesterMountRule(m_admin, mountPolicyName, m_diskInstance.name, requesterName,
+    comment), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createRequesterMountRule_non_existent_disk_instance) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
+
+  auto mountPolicyToAdd = getMountPolicy1();
+  std::string mountPolicyName = mountPolicyToAdd.name;
+  m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+
+  const std::string comment = "Create mount rule for requester";
+  const std::string requesterName = "requester_name";
+  ASSERT_THROW(m_catalogue->createRequesterMountRule(m_admin, mountPolicyName, m_diskInstance.name, requesterName,
     comment), exception::UserError);
 }
 
@@ -7861,16 +8011,16 @@ TEST_P(cta_catalogue_CatalogueTest, deleteRequesterMountRule) {
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string comment = "Create mount rule for requester";
-  const std::string diskInstanceName = "disk_instance";
   const std::string requesterName = "requester_name";
-  m_catalogue->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, comment);
+  m_catalogue->createRequesterMountRule(m_admin, mountPolicyName,  m_diskInstance.name, requesterName, comment);
 
   const std::list<common::dataStructures::RequesterMountRule> rules = m_catalogue->getRequesterMountRules();
   ASSERT_EQ(1, rules.size());
 
-  m_catalogue->deleteRequesterMountRule(diskInstanceName, requesterName);
+  m_catalogue->deleteRequesterMountRule(m_diskInstance.name, requesterName);
   ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
 }
 
@@ -7890,6 +8040,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterMountRulePolicy) {
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string anotherMountPolicyName = "another_mount_policy";
 
@@ -7899,9 +8050,8 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterMountRulePolicy) {
 
 
   const std::string comment = "Create mount rule for requester";
-  const std::string diskInstanceName = "disk_instance";
   const std::string requesterName = "requester_name";
-  m_catalogue->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, comment);
+  m_catalogue->createRequesterMountRule(m_admin, mountPolicyName, m_diskInstance.name, requesterName, comment);
 
   {
     const std::list<common::dataStructures::RequesterMountRule> rules = m_catalogue->getRequesterMountRules();
@@ -7915,9 +8065,10 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterMountRulePolicy) {
     ASSERT_EQ(m_admin.username, rule.creationLog.username);
     ASSERT_EQ(m_admin.host, rule.creationLog.host);
     ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
+    ASSERT_EQ(m_diskInstance.name, rule.diskInstance);
   }
 
-  m_catalogue->modifyRequesterMountRulePolicy(m_admin, diskInstanceName, requesterName, anotherMountPolicyName);
+  m_catalogue->modifyRequesterMountRulePolicy(m_admin, m_diskInstance.name, requesterName, anotherMountPolicyName);
 
   {
     const std::list<common::dataStructures::RequesterMountRule> rules = m_catalogue->getRequesterMountRules();
@@ -7930,6 +8081,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterMountRulePolicy) {
     ASSERT_EQ(comment, rule.comment);
     ASSERT_EQ(m_admin.username, rule.creationLog.username);
     ASSERT_EQ(m_admin.host, rule.creationLog.host);
+    ASSERT_EQ(m_diskInstance.name, rule.diskInstance);
   }
 }
 
@@ -7941,11 +8093,11 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterMountRulePolicy_nonExistentRe
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
-  const std::string diskInstanceName = "disk_instance";
   const std::string requesterName = "requester_name";
 
-  ASSERT_THROW(m_catalogue->modifyRequesterMountRulePolicy(m_admin, diskInstanceName, requesterName, mountPolicyName),
+  ASSERT_THROW(m_catalogue->modifyRequesterMountRulePolicy(m_admin, m_diskInstance.name, requesterName, mountPolicyName),
     exception::UserError);
 }
 
@@ -7957,11 +8109,11 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesteMountRuleComment) {
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string comment = "Create mount rule for requester";
-  const std::string diskInstanceName = "disk_instance";
   const std::string requesterName = "requester_name";
-  m_catalogue->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, comment);
+  m_catalogue->createRequesterMountRule(m_admin, mountPolicyName, m_diskInstance.name, requesterName, comment);
 
   {
     const std::list<common::dataStructures::RequesterMountRule> rules = m_catalogue->getRequesterMountRules();
@@ -7975,10 +8127,11 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesteMountRuleComment) {
     ASSERT_EQ(m_admin.username, rule.creationLog.username);
     ASSERT_EQ(m_admin.host, rule.creationLog.host);
     ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
+    ASSERT_EQ(m_diskInstance.name, rule.diskInstance);
   }
 
   const std::string modifiedComment = "Modified comment";
-  m_catalogue->modifyRequesteMountRuleComment(m_admin, diskInstanceName, requesterName, modifiedComment);
+  m_catalogue->modifyRequesteMountRuleComment(m_admin, m_diskInstance.name, requesterName, modifiedComment);
 
   {
     const std::list<common::dataStructures::RequesterMountRule> rules = m_catalogue->getRequesterMountRules();
@@ -7991,6 +8144,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesteMountRuleComment) {
     ASSERT_EQ(modifiedComment, rule.comment);
     ASSERT_EQ(m_admin.username, rule.creationLog.username);
     ASSERT_EQ(m_admin.host, rule.creationLog.host);
+    ASSERT_EQ(m_diskInstance.name, rule.diskInstance);
   }
 }
 
@@ -7999,11 +8153,12 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesteMountRuleComment_nonExistentRe
 
   ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
 
-  const std::string diskInstanceName = "disk_instance";
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+
   const std::string requesterName = "requester_name";
   const std::string comment = "Comment";
 
-  ASSERT_THROW(m_catalogue->modifyRequesteMountRuleComment(m_admin, diskInstanceName, requesterName, comment),
+  ASSERT_THROW(m_catalogue->modifyRequesteMountRuleComment(m_admin,  m_diskInstance.name, requesterName, comment),
     exception::UserError);
 }
 
@@ -8014,6 +8169,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterGroupMountRulePolicy) {
 
   auto mountPolicyToAdd = getMountPolicy1();
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   std::string mountPolicyName = mountPolicyToAdd.name;
 
@@ -8024,7 +8180,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterGroupMountRulePolicy) {
   m_catalogue->createMountPolicy(m_admin,anotherMountPolicy);
 
   const std::string comment = "Create mount rule for requester";
-  const std::string diskInstanceName = "disk_instance";
+  const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterGroupName = "requester_group_name";
   m_catalogue->createRequesterGroupMountRule(m_admin, mountPolicyName, diskInstanceName, requesterGroupName, comment);
 
@@ -8040,6 +8196,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterGroupMountRulePolicy) {
     ASSERT_EQ(m_admin.username, rule.creationLog.username);
     ASSERT_EQ(m_admin.host, rule.creationLog.host);
     ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
+    ASSERT_EQ(diskInstanceName, rule.diskInstance);
   }
 
   m_catalogue->modifyRequesterGroupMountRulePolicy(m_admin, diskInstanceName, requesterGroupName, anotherMountPolicyName);
@@ -8055,6 +8212,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterGroupMountRulePolicy) {
     ASSERT_EQ(comment, rule.comment);
     ASSERT_EQ(m_admin.username, rule.creationLog.username);
     ASSERT_EQ(m_admin.host, rule.creationLog.host);
+    ASSERT_EQ(diskInstanceName, rule.diskInstance);
   }
 }
 
@@ -8066,8 +8224,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterGroupMountRulePolicy_nonExist
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
-  const std::string diskInstanceName = "disk_instance";
+  const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterGroupName = "requester_group_name";
 
   ASSERT_THROW(m_catalogue->modifyRequesterGroupMountRulePolicy(m_admin, diskInstanceName, requesterGroupName,
@@ -8082,9 +8241,10 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterGroupMountRuleComment) {
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string comment = "Create mount rule for requester";
-  const std::string diskInstanceName = "disk_instance";
+  const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterGroupName = "requester_group_name";
   m_catalogue->createRequesterGroupMountRule(m_admin, mountPolicyName, diskInstanceName, requesterGroupName, comment);
 
@@ -8100,6 +8260,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterGroupMountRuleComment) {
     ASSERT_EQ(m_admin.username, rule.creationLog.username);
     ASSERT_EQ(m_admin.host, rule.creationLog.host);
     ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
+    ASSERT_EQ(diskInstanceName, rule.diskInstance);
   }
 
   const std::string modifiedComment = "ModifiedComment";
@@ -8116,6 +8277,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyRequesterGroupMountRuleComment) {
     ASSERT_EQ(modifiedComment, rule.comment);
     ASSERT_EQ(m_admin.username, rule.creationLog.username);
     ASSERT_EQ(m_admin.host, rule.creationLog.host);
+    ASSERT_EQ(diskInstanceName, rule.diskInstance);
   }
 }
 
@@ -8140,9 +8302,10 @@ TEST_P(cta_catalogue_CatalogueTest, createRequesterGroupMountRule) {
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string comment = "Create mount rule for requester group";
-  const std::string diskInstanceName = "disk_instance_name";
+  const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterGroupName = "requester_group";
   m_catalogue->createRequesterGroupMountRule(m_admin, mountPolicyName, diskInstanceName, requesterGroupName, comment);
 
@@ -8158,6 +8321,7 @@ TEST_P(cta_catalogue_CatalogueTest, createRequesterGroupMountRule) {
   ASSERT_EQ(m_admin.username, rule.creationLog.username);
   ASSERT_EQ(m_admin.host, rule.creationLog.host);
   ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
+  ASSERT_EQ(diskInstanceName, rule.diskInstance);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createRequesterGroupMountRule_same_twice) {
@@ -8168,9 +8332,11 @@ TEST_P(cta_catalogue_CatalogueTest, createRequesterGroupMountRule_same_twice) {
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+
 
   const std::string comment = "Create mount rule for requester group";
-  const std::string diskInstanceName = "disk_instance";
+  const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterGroupName = "requester_group";
   m_catalogue->createRequesterGroupMountRule(m_admin, mountPolicyName, diskInstanceName, requesterGroupName, comment);
   ASSERT_THROW(m_catalogue->createRequesterGroupMountRule(m_admin, mountPolicyName, diskInstanceName,
@@ -8182,10 +8348,29 @@ TEST_P(cta_catalogue_CatalogueTest, createRequesterGroupMountRule_non_existent_m
 
   ASSERT_TRUE(m_catalogue->getRequesterGroupMountRules().empty());
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+
   const std::string comment = "Create mount rule for requester group";
   const std::string mountPolicyName = "non_existent_mount_policy";
-  const std::string diskInstanceName = "disk_instance";
+  const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterGroupName = "requester_group";
+  ASSERT_THROW(m_catalogue->createRequesterGroupMountRule(m_admin, mountPolicyName, diskInstanceName,
+    requesterGroupName, comment), exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createRequesterGroupMountRule_non_existent_disk_instance) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getRequesterGroupMountRules().empty());
+  
+  auto mountPolicyToAdd = getMountPolicy1();
+  std::string mountPolicyName = mountPolicyToAdd.name; 
+  m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+
+  const std::string comment = "Create mount rule for requester group";
+  const std::string diskInstanceName = m_diskInstance.name;
+  const std::string requesterGroupName = "requester_group";
+
   ASSERT_THROW(m_catalogue->createRequesterGroupMountRule(m_admin, mountPolicyName, diskInstanceName,
     requesterGroupName, comment), exception::UserError);
 }
@@ -8198,9 +8383,10 @@ TEST_P(cta_catalogue_CatalogueTest, deleteRequesterGroupMountRule) {
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string comment = "Create mount rule for requester group";
-  const std::string diskInstanceName = "disk_instance";
+  const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterGroupName = "requester_group";
   m_catalogue->createRequesterGroupMountRule(m_admin, mountPolicyName, diskInstanceName, requesterGroupName, comment);
 
@@ -8216,6 +8402,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteRequesterGroupMountRule) {
   ASSERT_EQ(m_admin.username, rule.creationLog.username);
   ASSERT_EQ(m_admin.host, rule.creationLog.host);
   ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
+  ASSERT_EQ(diskInstanceName, rule.diskInstance);
 
   m_catalogue->deleteRequesterGroupMountRule(diskInstanceName, requesterGroupName);
   ASSERT_TRUE(m_catalogue->getRequesterGroupMountRules().empty());
@@ -8237,9 +8424,10 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_no_archive_rout
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
-
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+ 
   const std::string comment = "Create mount rule for requester";
-  const std::string diskInstanceName = "disk_instance_name";
+  const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterName = "requester_name";
   m_catalogue->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, comment);
 
@@ -8258,7 +8446,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_no_archive_rout
 
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
 
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   common::dataStructures::RequesterIdentity requesterIdentity;
@@ -8273,8 +8461,9 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_no_mount_rules)
 
   ASSERT_TRUE(m_catalogue->getRequesterMountRules().empty());
 
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -8321,9 +8510,10 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_after_cached_an
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string comment = "Create mount rule for requester";
-  const std::string diskInstanceName = "disk_instance_name";
+  const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterName = "requester_name";
   m_catalogue->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, comment);
 
@@ -8398,9 +8588,10 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
-
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  
   const std::string comment = "Create mount rule for requester";
-  const std::string diskInstanceName = "disk_instance_name";
+  const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterName = "requester_name";
   m_catalogue->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, comment);
 
@@ -8469,9 +8660,9 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_group
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
-
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   const std::string comment = "Create mount rule for requester group";
-  const std::string diskInstanceName = "disk_instance";
+  const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterGroupName = "requester_group";
   m_catalogue->createRequesterGroupMountRule(m_admin, mountPolicyName, diskInstanceName, requesterGroupName, comment);
 
@@ -8538,9 +8729,10 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_after_cached_an
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
-
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  
   const std::string comment = "Create mount rule for requester group";
-  const std::string diskInstanceName = "disk_instance";
+  const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterGroupName = "requester_group";
   m_catalogue->createRequesterGroupMountRule(m_admin, mountPolicyName, diskInstanceName, requesterGroupName, comment);
 
@@ -8614,9 +8806,10 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
-
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  
   const std::string requesterRuleComment = "Create mount rule for requester";
-  const std::string diskInstanceName = "disk_instance_name";
+  const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterName = "requester_name";
   m_catalogue->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName,
     requesterRuleComment);
@@ -8702,9 +8895,10 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_no_archive_route
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string comment = "Create mount rule for requester";
-  const std::string diskInstanceName = "disk_instance_name";
+  const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterName = "requester_name";
   m_catalogue->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, comment);
 
@@ -8739,9 +8933,10 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
-
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  
   const std::string comment = "Create mount rule for requester";
-  const std::string diskInstanceName = "disk_instance_name";
+  const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterName = "requester_name";
   m_catalogue->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, comment);
 
@@ -8802,9 +8997,10 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_group_
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string comment = "Create mount rule for requester group";
-  const std::string diskInstanceName = "disk_instance";
+  const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterGroupName = "requester_group";
   m_catalogue->createRequesterGroupMountRule(m_admin, mountPolicyName, diskInstanceName, requesterGroupName, comment);
 
@@ -8864,9 +9060,10 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_
   auto mountPolicyToAdd = getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string requesterRuleComment = "Create mount rule for requester";
-  const std::string diskInstanceName = "disk_instance_name";
+  const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterName = "requester_name";
   m_catalogue->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName,
     requesterRuleComment);
@@ -8940,7 +9137,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_
 TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   using namespace cta;
 
-  const std::string diskInstanceName1 = "disk_instance_1";
+  const std::string diskInstanceName1 = m_diskInstance.name;
   const std::string diskInstanceName2 = "disk_instance_2";
 
   const bool logicalLibraryIsDisabled= false;
@@ -8950,6 +9147,8 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, diskInstanceName1, "comment");
+  m_catalogue->createDiskInstance(m_admin, diskInstanceName2, "comment");
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -9122,7 +9321,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   uint64_t minArchiveRequestAge = mountPolicyToAdd.minArchiveRequestAge;
   uint64_t archivePriority = mountPolicyToAdd.archivePriority;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
-
+  
   const std::string comment = "Create mount rule for requester";
   const std::string requesterName = "requester_name";
   m_catalogue->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName1, requesterName, comment);
@@ -9160,7 +9359,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
 TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disabledTapes) {
   using namespace cta;
 
-  const std::string diskInstanceName1 = "disk_instance_1";
+  const std::string diskInstanceName1 = m_diskInstance.name;
 
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
@@ -9171,6 +9370,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -9347,7 +9547,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   uint64_t minArchiveRequestAge = mountPolicyToAdd.minArchiveRequestAge;
   uint64_t archivePriority = mountPolicyToAdd.archivePriority;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
-
+  
   const std::string comment = "Create mount rule for requester";
   const std::string requesterName = "requester_name";
   m_catalogue->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName1, requesterName, comment);
@@ -9427,7 +9627,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
 TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_returnNonSupersededFiles) {
   using namespace cta;
 
-  const std::string diskInstanceName1 = "disk_instance_1";
+  const std::string diskInstanceName1 = m_diskInstance.name;
 
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
@@ -9436,6 +9636,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_retu
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -9503,7 +9704,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_retu
   uint64_t minArchiveRequestAge = mountPolicyToAdd.minArchiveRequestAge;
   uint64_t archivePriority = mountPolicyToAdd.archivePriority;
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd);
-
+  
   const std::string comment = "Create mount rule for requester";
   const std::string requesterName = "requester_name";
   m_catalogue->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName1, requesterName, comment);
@@ -9543,7 +9744,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_retu
 TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_ActivityMountPolicy) {
   using namespace cta;
 
-  const std::string diskInstanceName1 = "disk_instance_1";
+  const std::string diskInstanceName1 = m_diskInstance.name;
   const std::string diskInstanceName2 = "disk_instance_2";
 
   const bool logicalLibraryIsDisabled= false;
@@ -9553,6 +9754,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_Acti
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -9724,7 +9926,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_Acti
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd1);
   auto mountPolicyToAdd2 = getMountPolicy2();
   m_catalogue->createMountPolicy(m_admin,mountPolicyToAdd2);
-
+  
     const std::string comment = "Create mount rule for requester+activity";
     const std::string requesterName = "requester_name";
     const std::string activityRegex = "^activity_[a-zA-Z0-9-]+$";
@@ -9812,6 +10014,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_disk_file_id_without_instanc
 TEST_P(cta_catalogue_CatalogueTest, getArchiveFiles_existent_storage_class_without_disk_instance) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -9857,11 +10060,12 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   {
@@ -10988,11 +11192,12 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   {
@@ -11682,10 +11887,11 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, m_tape1);
@@ -11794,7 +12000,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
 TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_copy_deleteStorageClass) {
   using namespace cta;
 
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
@@ -11802,6 +12008,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -11915,7 +12122,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_file_recycle_log_delete
 
   log::LogContext dummyLc(m_dummyLog);
 
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
@@ -11923,6 +12130,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_file_recycle_log_delete
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -12005,10 +12213,11 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -12216,10 +12425,11 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const std::string diskInstance = "disk_sintance";
+  const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, m_tape1);
@@ -12414,10 +12624,11 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, m_tape1);
@@ -12588,10 +12799,11 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, m_tape1);
@@ -12722,10 +12934,11 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, m_tape1);
@@ -12884,10 +13097,11 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, m_tape1);
@@ -13046,10 +13260,11 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, m_tape1);
@@ -13207,10 +13422,11 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, m_tape1);
@@ -13480,7 +13696,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   }
 
   log::LogContext dummyLc(m_dummyLog);
-  m_catalogue->DO_NOT_USE_deleteArchiveFile_DO_NOT_USE("disk_instance", archiveFileId, dummyLc);
+  m_catalogue->DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(diskInstance, archiveFileId, dummyLc);
 
   ASSERT_FALSE(m_catalogue->getArchiveFilesItor().hasMore());
 }
@@ -13492,10 +13708,11 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, m_tape1);
@@ -13798,6 +14015,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesByVid_1_tape) {
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -13853,6 +14071,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesByVid_350_tapes) {
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -13915,6 +14134,7 @@ TEST_P(cta_catalogue_CatalogueTest, getVidToLogicalLibrary_1_tape) {
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -13957,6 +14177,7 @@ TEST_P(cta_catalogue_CatalogueTest, getVidToLogicalLibrary_310_tapes) {
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -15659,6 +15880,7 @@ TEST_P(cta_catalogue_CatalogueTest, getNbFilesOnTape_no_tape_files) {
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -15700,7 +15922,7 @@ TEST_P(cta_catalogue_CatalogueTest, getNbFilesOnTape_no_tape_files) {
 TEST_P(cta_catalogue_CatalogueTest, getNbFilesOnTape_one_tape_file) {
   using namespace cta;
 
-  const std::string diskInstanceName1 = "disk_instance_1";
+  const std::string diskInstanceName1 = m_diskInstance.name;
 
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
@@ -15709,6 +15931,7 @@ TEST_P(cta_catalogue_CatalogueTest, getNbFilesOnTape_one_tape_file) {
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, m_tape1);
@@ -15810,6 +16033,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_no_tape_files) {
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -15851,7 +16075,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_no_tape_files) {
 TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file) {
   using namespace cta;
 
-  const std::string diskInstanceName1 = "disk_instance_1";
+  const std::string diskInstanceName1 = m_diskInstance.name;
 
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
@@ -15860,6 +16084,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file) {
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, m_tape1);
@@ -15953,7 +16178,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file) {
 TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_reclaimed_tape) {
   using namespace cta;
 
-  const std::string diskInstanceName1 = "disk_instance_1";
+  const std::string diskInstanceName1 = m_diskInstance.name;
 
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
@@ -15962,6 +16187,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_reclaimed_ta
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, m_tape1);
@@ -16086,6 +16312,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -16165,6 +16392,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_not_full_lastFSeq_0_no_tape_file
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -16208,7 +16436,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
 
   log::LogContext dummyLc(m_dummyLog);
 
-  const std::string diskInstanceName1 = "disk_instance_1";
+  const std::string diskInstanceName1 = m_diskInstance.name;
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
@@ -16216,6 +16444,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, m_tape1);
@@ -16411,7 +16640,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   using namespace cta;
   log::LogContext dummyLc(m_dummyLog);
 
-  const std::string diskInstanceName1 = "disk_instance_1";
+  const std::string diskInstanceName1 = m_diskInstance.name;
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
@@ -16419,6 +16648,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, m_tape1);
@@ -16568,6 +16798,7 @@ TEST_P(cta_catalogue_CatalogueTest, createVirtualOrganization) {
 
   common::dataStructures::VirtualOrganization vo = getVo();
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
 }
 
@@ -16576,6 +16807,7 @@ TEST_P(cta_catalogue_CatalogueTest, createVirtualOrganizationAlreadyExists) {
 
   common::dataStructures::VirtualOrganization vo = getVo();
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
   ASSERT_THROW(m_catalogue->createVirtualOrganization(m_admin,vo),cta::exception::UserError);
 }
@@ -16586,6 +16818,7 @@ TEST_P(cta_catalogue_CatalogueTest, createVirtualOrganizationEmptyComment) {
   common::dataStructures::VirtualOrganization vo = getVo();
   vo.comment = "";
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   ASSERT_THROW(m_catalogue->createVirtualOrganization(m_admin,vo),cta::exception::UserError);
 }
 
@@ -16597,6 +16830,18 @@ TEST_P(cta_catalogue_CatalogueTest, createVirtualOrganizationEmptyName) {
   vo.name = "";
   vo.comment = "comment";
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  ASSERT_THROW(m_catalogue->createVirtualOrganization(m_admin,vo),cta::exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, createVirtualOrganizationEmptyDiskInstanceName) {
+  using namespace cta;
+
+  common::dataStructures::VirtualOrganization vo = getVo();
+
+  vo.diskInstanceName = "";
+
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   ASSERT_THROW(m_catalogue->createVirtualOrganization(m_admin,vo),cta::exception::UserError);
 }
 
@@ -16605,6 +16850,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteVirtualOrganization) {
 
   common::dataStructures::VirtualOrganization vo = getVo();
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
 
   ASSERT_NO_THROW(m_catalogue->deleteVirtualOrganization(vo.name));
@@ -16618,6 +16864,8 @@ TEST_P(cta_catalogue_CatalogueTest, deleteVirtualOrganizationUsedByTapePool) {
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
+
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, comment);
 
@@ -16629,6 +16877,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteVirtualOrganizationNameDoesNotExist) {
 
   common::dataStructures::VirtualOrganization vo = getVo();
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
 
   ASSERT_THROW(m_catalogue->deleteVirtualOrganization("DOES_NOT_EXIST"),cta::exception::UserError);
@@ -16637,6 +16886,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteVirtualOrganizationNameDoesNotExist) {
 TEST_P(cta_catalogue_CatalogueTest, deleteVirtualOrganizationUsedByStorageClass) {
   using namespace cta;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
   ASSERT_THROW(m_catalogue->deleteVirtualOrganization(m_vo.name),exception::UserError);
@@ -16647,6 +16897,7 @@ TEST_P(cta_catalogue_CatalogueTest, getVirtualOrganizations) {
 
   common::dataStructures::VirtualOrganization vo = getVo();
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
 
   std::list<common::dataStructures::VirtualOrganization> vos = m_catalogue->getVirtualOrganizations();
@@ -16656,7 +16907,9 @@ TEST_P(cta_catalogue_CatalogueTest, getVirtualOrganizations) {
   ASSERT_EQ(vo.name,voRetrieved.name);
   ASSERT_EQ(vo.readMaxDrives,voRetrieved.readMaxDrives);
   ASSERT_EQ(vo.writeMaxDrives,voRetrieved.writeMaxDrives);
+  ASSERT_EQ(vo.diskInstanceName,voRetrieved.diskInstanceName);
   ASSERT_EQ(vo.comment,voRetrieved.comment);
+  
   ASSERT_EQ(m_admin.host,voRetrieved.creationLog.host);
   ASSERT_EQ(m_admin.username,voRetrieved.creationLog.username);
   ASSERT_EQ(m_admin.host,voRetrieved.lastModificationLog.host);
@@ -16673,6 +16926,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationName) {
 
   common::dataStructures::VirtualOrganization vo = getVo();
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
 
   std::string newVoName = "NewVoName";
@@ -16699,6 +16953,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationNameThatAlreadyExis
   std::string vo2Name = "vo2";
   std::string vo1Name = vo.name;
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
 
   vo.name = vo2Name;
@@ -16712,6 +16967,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationComment) {
 
   common::dataStructures::VirtualOrganization vo = getVo();
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
 
   std::string newComment = "newComment";
@@ -16731,6 +16987,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationReadMaxDrives) {
 
   common::dataStructures::VirtualOrganization vo = getVo();
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
 
   uint64_t readMaxDrives = 42;
@@ -16749,6 +17006,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationWriteMaxDrives) {
 
   common::dataStructures::VirtualOrganization vo = getVo();
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
 
   uint64_t writeMaxDrives = 42;
@@ -16767,6 +17025,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationMaxFileSize) {
 
   common::dataStructures::VirtualOrganization vo = getVo();
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
 
   uint64_t maxFileSize = 1;
@@ -16785,18 +17044,37 @@ TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationDiskInstanceName) {
 
   common::dataStructures::VirtualOrganization vo = getVo();
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+
   ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
 
   std::string diskInstanceName = "diskInstanceName";
-
+  m_catalogue->createDiskInstance(m_admin, diskInstanceName, m_diskInstance.comment);
   ASSERT_NO_THROW(m_catalogue->modifyVirtualOrganizationDiskInstanceName(m_admin,vo.name,diskInstanceName));
 
   auto vos = m_catalogue->getVirtualOrganizations();
   auto &frontVo = vos.front();
 
-  ASSERT_EQ(diskInstanceName,frontVo.diskInstanceName.value());
+  ASSERT_EQ(diskInstanceName,frontVo.diskInstanceName);
+
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationDiskInstanceNameNonExistingVO) {
+  using namespace cta;
 
   ASSERT_THROW(m_catalogue->modifyVirtualOrganizationDiskInstanceName(m_admin,"DOES not exists","VO_DOES_NOT_EXIST"),cta::exception::UserError);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyVirtualOrganizationDiskInstanceNameNonExistingDiskInstance) {
+  using namespace cta;
+
+  const common::dataStructures::VirtualOrganization vo = getVo();
+
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
+
+  const std::string diskInstanceName = "diskInstanceName";
+  ASSERT_THROW(m_catalogue->modifyVirtualOrganizationDiskInstanceName(m_admin,vo.name,diskInstanceName), cta::exception::Exception);
 }
 
 
@@ -16809,6 +17087,7 @@ TEST_P(cta_catalogue_CatalogueTest, getVirtualOrganizationOfTapepool) {
 
   common::dataStructures::VirtualOrganization vo = getVo();
 
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin,vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
@@ -16825,10 +17104,12 @@ TEST_P(cta_catalogue_CatalogueTest, updateDiskFileId) {
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTape(m_admin, m_tape1);
@@ -16970,11 +17251,12 @@ TEST_P(cta_catalogue_CatalogueTest, moveFilesToRecycleLog) {
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -17096,10 +17378,11 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTapeRemovesFilesFromRecycleLog) {
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
@@ -17210,11 +17493,12 @@ TEST_P(cta_catalogue_CatalogueTest, filesArePutInTheFileRecycleLogInsteadOfBeing
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -17437,11 +17721,12 @@ TEST_P(cta_catalogue_CatalogueTest, sameFileWrittenToSameTapePutThePreviousCopyO
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -18929,12 +19214,13 @@ TEST_P(cta_catalogue_CatalogueTest, DeleteTapeFileCopyUsingArchiveID) {
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
   const std::string reason = "reason";
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -19060,12 +19346,13 @@ TEST_P(cta_catalogue_CatalogueTest, DeleteTapeFileCopyDoesNotExist) {
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
   const std::string reason = "reason";
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -19097,12 +19384,13 @@ TEST_P(cta_catalogue_CatalogueTest, DeleteTapeFileCopyUsingFXID) {
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
   const std::string reason = "reason";
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -19234,12 +19522,13 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreTapeFileCopy) {
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
   const std::string reason = "reason";
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -19367,12 +19656,13 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreRewrittenTapeFileCopyFails) {
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
   const std::string reason = "reason";
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -19533,12 +19823,13 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreVariousDeletedTapeFileCopies) {
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
   const std::string reason = "reason";
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -19708,12 +19999,13 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreArchiveFileAndCopy) {
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
   const cta::optional<std::string> supply("value for the supply pool mechanism");
-  const std::string diskInstance = "disk_instance";
+  const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
   const std::string reason = "reason";
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
   m_catalogue->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");

@@ -64,7 +64,15 @@ const uint32_t TEST_GROUP_2 = 9754;
       mediaType.comment = "comment";
       m_catalogue->createMediaType(admin,mediaType);
     }
-    
+
+    const cta::common::dataStructures::DiskInstance getDefaultDiskInstance() const {
+      cta::common::dataStructures::DiskInstance di;
+      di.name = "di";
+      di.comment = "comment";
+      return di;
+    }
+
+
     cta::common::dataStructures::VirtualOrganization getDefaultVo(){
       cta::common::dataStructures::VirtualOrganization vo;
       vo.name = "vo";
@@ -72,6 +80,7 @@ const uint32_t TEST_GROUP_2 = 9754;
       vo.writeMaxDrives = 1;
       vo.maxFileSize = 0;
       vo.comment = "comment";
+      vo.diskInstanceName = getDefaultDiskInstance().name;
       return vo;
     }
 
@@ -138,8 +147,9 @@ const uint32_t TEST_GROUP_2 = 9754;
     const bool fullValue = false;
     const std::string createTapeComment = "Create tape";
     cta::common::dataStructures::VirtualOrganization vo = getDefaultVo();
-    
+    const auto di = getDefaultDiskInstance();
     cta::common::dataStructures::SecurityIdentity admin = cta::common::dataStructures::SecurityIdentity("admin","localhost");
+    m_catalogue->createDiskInstance(admin, di.name, di.comment);
     m_catalogue->createVirtualOrganization(admin,vo);
     
     m_catalogue->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -177,7 +187,7 @@ const uint32_t TEST_GROUP_2 = 9754;
       job1.reset(mockJob.release());
     }
     job1->archiveFile.archiveFileID=1;
-    job1->archiveFile.diskInstance="disk_instance";
+    job1->archiveFile.diskInstance=di.name;
     job1->archiveFile.diskFileId="diskFileId1";
     job1->archiveFile.diskFileInfo.path="filePath1";
     job1->archiveFile.diskFileInfo.owner_uid=TEST_USER_1;
@@ -200,7 +210,7 @@ const uint32_t TEST_GROUP_2 = 9754;
       job2.reset(mockJob.release());
     }
     job2->archiveFile.archiveFileID=2;
-    job2->archiveFile.diskInstance="disk_instance";
+    job2->archiveFile.diskInstance=di.name;
     job2->archiveFile.diskFileId="diskFileId2";
     job2->archiveFile.diskFileInfo.path="filePath2";
     job2->archiveFile.diskFileInfo.owner_uid=TEST_USER_2;
@@ -300,7 +310,8 @@ const uint32_t TEST_GROUP_2 = 9754;
     cta::common::dataStructures::SecurityIdentity admin = cta::common::dataStructures::SecurityIdentity("admin","localhost");
 
     cta::common::dataStructures::VirtualOrganization vo = getDefaultVo();
-    
+    const auto &di = getDefaultDiskInstance();
+    m_catalogue->createDiskInstance(admin, di.name, di.comment);
     m_catalogue->createVirtualOrganization(admin,vo);
     
     m_catalogue->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -353,7 +364,7 @@ const uint32_t TEST_GROUP_2 = 9754;
     }
 
     migratedBigFile->archiveFile.archiveFileID=4;
-    migratedBigFile->archiveFile.diskInstance="disk_instance";
+    migratedBigFile->archiveFile.diskInstance=di.name;
     migratedBigFile->archiveFile.diskFileId="diskFileId2";
     migratedBigFile->archiveFile.diskFileInfo.path="filePath2";
     migratedBigFile->archiveFile.diskFileInfo.owner_uid=TEST_USER_2;
@@ -369,7 +380,7 @@ const uint32_t TEST_GROUP_2 = 9754;
     migratedBigFile->tapeFile.checksumBlob.insert(cta::checksum::MD5, cta::checksum::ChecksumBlob::HexToByteArray("b170288bf1f61b26a648358866f4d6c6"));
 
     migratedFileSmall->archiveFile.archiveFileID=5;
-    migratedFileSmall->archiveFile.diskInstance="disk_instance";
+    migratedFileSmall->archiveFile.diskInstance=di.name;
     migratedFileSmall->archiveFile.diskFileId="diskFileId3";
     migratedFileSmall->archiveFile.diskFileInfo.path="filePath3";
     migratedFileSmall->archiveFile.diskFileInfo.owner_uid=TEST_USER_2;
@@ -385,7 +396,7 @@ const uint32_t TEST_GROUP_2 = 9754;
     migratedFileSmall->tapeFile.checksumBlob.insert(cta::checksum::MD5, cta::checksum::ChecksumBlob::HexToByteArray("b170288bf1f61b26a648358866f4d6c6"));
 
     migratedNullFile->archiveFile.archiveFileID=6;
-    migratedNullFile->archiveFile.diskInstance="disk_instance";
+    migratedNullFile->archiveFile.diskInstance=di.name;
     migratedNullFile->archiveFile.diskFileId="diskFileId4";
     migratedNullFile->archiveFile.diskFileInfo.path="filePath4";
     migratedNullFile->archiveFile.diskFileInfo.owner_uid=TEST_USER_2;

@@ -85,11 +85,8 @@ int VirtualOrganizationLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *strea
     vo_item->mutable_last_modification_log()->set_host(vo.lastModificationLog.host);
     vo_item->mutable_last_modification_log()->set_time(vo.lastModificationLog.time);
     vo_item->set_comment(vo.comment);
-
-    if (vo.diskInstanceName) {
-      vo_item->set_diskinstance(vo.diskInstanceName.value());
-    }
-
+    vo_item->set_diskinstance(vo.diskInstanceName);
+    
     is_buffer_full = streambuf->Push(record);
   }
   return streambuf->Size();

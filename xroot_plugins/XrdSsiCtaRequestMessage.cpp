@@ -2366,12 +2366,14 @@ void RequestMessage::processVirtualOrganization_Add(cta::xrd::Response &response
   const auto &writeMaxDrives = getRequired(OptionUInt64::WRITE_MAX_DRIVES);
   const auto &comment = getRequired(OptionString::COMMENT);
   const auto &maxFileSizeOpt = getOptional(OptionUInt64::MAX_FILE_SIZE);
+  const auto &diskInstanceName = getRequired(OptionString::DISK_INSTANCE);
 
   cta::common::dataStructures::VirtualOrganization vo;
   vo.name = name;
   vo.readMaxDrives = readMaxDrives;
   vo.writeMaxDrives = writeMaxDrives;
   vo.comment = comment;
+  vo.diskInstanceName = diskInstanceName;
 
   if (maxFileSizeOpt) {
     vo.maxFileSize = maxFileSizeOpt.value();

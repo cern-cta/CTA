@@ -122,10 +122,15 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
       --comment "ctasystest library mapped to drive ${TAPEDRIVES_IN_USE[${i}]}"
   done
 
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin diskinstance add  \
+    --name ${EOSINSTANCE}                                                    \
+    --comment "di"
+
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin virtualorganization add  \
     --vo vo                                                                          \
     --readmaxdrives 1                                                                \
     --writemaxdrives 1                                                               \
+    --diskinstance ${EOSINSTANCE}                                                    \
     --comment "vo"
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tapepool add       \
     --name ctasystest                                                 \

@@ -61,7 +61,7 @@ struct VirtualOrganization {
   /**
    * The disk instance name.
    */
-  cta::optional<std::string> diskInstanceName;
+  std::string diskInstanceName;
   
   bool operator==(const VirtualOrganization & other) const{
     return (name == other.name && comment == other.comment && readMaxDrives == other.readMaxDrives && 
