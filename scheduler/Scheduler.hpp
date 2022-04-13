@@ -334,6 +334,16 @@ public:
    */
   std::list<common::dataStructures::QueueAndMountSummary> getQueuesAndMountSummaries(log::LogContext & lc);
 
+  /**
+  * Modify the state of the specified tape. Intermediate states may be temporarily applied
+  * until the final desired state is achieved.
+  * @param admin, the person or the system who modified the state of the tape
+  * @param vid the VID of the tape to change the state
+  * @param state the desired final state
+  * @param stateReason the reason why the state changes, if the state is ACTIVE and the stateReason is std::nullopt, the state will be reset to null
+  */
+  void triggerTapeStateChange(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const std::optional<std::string> & stateReason, log::LogContext& logContext);
+
   /*======================== Archive reporting support =======================*/
   /**
    * Batch job factory

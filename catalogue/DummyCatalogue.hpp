@@ -158,7 +158,7 @@ public:
   void modifyTapeComment(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::optional<std::string> &comment) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string& encryptionKeyName) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void modifyTapeVerificationStatus(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string& verificationStatus) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
-  void modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const std::optional<std::string> & stateReason) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
+  // modifyTapeState is implemented bellow
   void modifyTapeMediaType(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string& mediaType) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void modifyTapeVendor(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string& vendor) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string& logicalLibraryName) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
@@ -185,7 +185,6 @@ public:
   void setTapeDirty(const std::string & vid) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void setTapeIsFromCastorInUnitTests(const std::string &vid) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void setTapePoolEncryption(const common::dataStructures::SecurityIdentity& admin, const std::string& name, const bool encryptionValue) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
-  bool tapeExists(const std::string& vid) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   bool diskSystemExists(const std::string& name) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void tapeLabelled(const std::string& vid, const std::string& drive) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void tapeMountedForArchive(const std::string& vid, const std::string& drive) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
@@ -202,6 +201,24 @@ public:
   void addDisabledTape(const std::string & vid) {
     threading::MutexLocker lm(m_tapeEnablingMutex);
     m_tapeEnabling[vid]=common::dataStructures::Tape::DISABLED;
+  }
+  void addRepackingTape(const std::string & vid) {
+    threading::MutexLocker lm(m_tapeEnablingMutex);
+    m_tapeEnabling[vid]=common::dataStructures::Tape::REPACKING;
+  }
+  void addRepackingPendingTape(const std::string & vid) {
+    threading::MutexLocker lm(m_tapeEnablingMutex);
+    m_tapeEnabling[vid]=common::dataStructures::Tape::REPACKING_PENDING;
+  }
+  void modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const std::optional<std::string> & stateReason) override {
+    threading::MutexLocker lm(m_tapeEnablingMutex);
+    m_tapeEnabling[vid]=state;
+  }
+  bool tapeExists(const std::string& vid) const override {
+    return m_tapeEnabling.find(vid) != m_tapeEnabling.end();
+  };
+  common::dataStructures::Tape::State getTapeState(const std::string & vid) {
+    return m_tapeEnabling.at(vid);
   }
   common::dataStructures::VidToTapeMap getTapesByVid(const std::string& vid) const {
     std::set<std::string> vids = {vid};

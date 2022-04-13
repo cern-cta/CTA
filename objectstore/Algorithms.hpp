@@ -98,14 +98,14 @@ public:
       for (const auto & e: elements) {
         if (!failedElementsSet.count(ContainerTraits<Q,C>::getElementAddress(e))) {
           transferedElements.emplace_back(ContainerTraits<Q,C>::getElementAddress(e));
-	}
+	      }
       }
       if (transferedElements.size()) m_agentReference.removeBatchFromOwnership(transferedElements, m_backend);
       failureEx.failedElements = failedOwnershipSwitchElements;
       params.add("errorCount", failedOwnershipSwitchElements.size());
       std::string failedElementsAddresses = "";
       for(auto & failedElement: failedElementsSet){
-	failedElementsAddresses += failedElement + " ";
+      	failedElementsAddresses += failedElement + " ";
       }
       params.add("failedElementsAddresses",failedElementsAddresses);
       lc.log(log::WARNING, "In ContainerAlgorithms::referenceAndSwitchOwnership(): "
