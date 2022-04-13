@@ -37,10 +37,13 @@ namespace dataStructures {
  */
 struct Tape {
 
-  enum State {
+  enum State : unsigned char {
     ACTIVE = 1,
     BROKEN = 2,
-    DISABLED = 3
+    BROKEN_PENDING = 3,
+    DISABLED = 4,
+    REPACKING = 5,
+    REPACKING_PENDING = 6,
   };
 
   static const std::map<State,std::string> STATE_TO_STRING_MAP;
@@ -116,7 +119,8 @@ struct Tape {
   std::optional<std::string> verificationStatus;
 
   bool isDisabled() const;
-
+  bool isRepacking() const;
+  bool isBroken() const;
 }; // struct Tape
 
 std::ostream &operator<<(std::ostream &os, const Tape &obj);

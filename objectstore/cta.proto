@@ -428,7 +428,8 @@ message RetrieveRequestRepackInfo {
   required string repack_request_address = 9520;
   required string file_buffer_url = 9530;
   required uint64 fseq = 9540;
-  required bool force_disabled_tape = 9560;
+  //required bool force_disabled_tape = 9560;
+  reserved 9560; // Field 'force_disabled_tape' was removed. This will guarantee that it cannot be reused.
   optional bool has_user_provided_file = 9163 [default = false];
 }
 
@@ -546,6 +547,12 @@ message RetrieveActivityCountPair {
   required uint64 count = 10601;
 }
 
+message RetrieveQueueCleanupInfo {
+  required bool doCleanup = 14100;
+  optional string assignedAgent = 14110;
+  required uint64 heartbeat = 14120;
+}
+
 message RetrieveQueue {
   required string vid = 10100;
   repeated RetrieveQueueShardPointer retrievequeueshards = 10111;
@@ -562,6 +569,7 @@ message RetrieveQueue {
   optional string disk_system_slept_for = 10190;
   optional uint64 sleep_time = 10200;
   optional uint64 youngestjobcreationtime = 10210 [default = 0];
+  required RetrieveQueueCleanupInfo cleanupInfo = 10220;
 }
 
 // ------------- Repack data strcutures ----------------------------------------
@@ -634,7 +642,8 @@ message RepackRequest {
   required bool is_expand_started = 11562;
   required MountPolicy mount_policy = 11563;
   optional string mountpolicyname = 11575;  //TODO: Once it has been deployed, make it required and remove mountpolicy
-  required bool force_disabled_tape = 11564;
+  //required bool force_disabled_tape = 11564;
+  reserved 11564; //Field 'force_disabled_tape' was removed. This will guarantee that it cannot be reused.
   required bool is_complete = 11565;
   required bool no_recall = 11566;
   repeated RepackSubRequestPointer subrequests = 11570;

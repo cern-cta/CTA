@@ -94,6 +94,7 @@ add_library (ctaobjectstore SHARED
   ProtocolBuffersAlgorithms.cpp
   GenericObject.cpp
   GarbageCollector.cpp
+  QueueCleanupRunner.cpp
   SchedulerGlobalLock.cpp
   ValueCountMap.cpp
   Helpers.cpp
@@ -106,10 +107,14 @@ set_source_files_properties(BackendRados.cpp PROPERTIES COMPILE_FLAGS -Wno-depre
 install (TARGETS ctaobjectstore DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 set(ObjectStoreUnitTests
+  ObjectStoreFixture.cpp
   BackendTest.cpp
   RootEntryTest.cpp
   RetrieveQueueTest.cpp
   GarbageCollectorTest.cpp
+  QueueCleanupRunnerTestUtils.cpp
+  QueueCleanupRunnerTest.cpp
+  QueueCleanupRunnerConcurrentTest.cpp
   AlgorithmsTest.cpp
   SorterTest.cpp
 )

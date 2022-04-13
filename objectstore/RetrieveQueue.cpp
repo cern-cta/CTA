@@ -52,6 +52,8 @@ void RetrieveQueue::initialize(const std::string &vid) {
   m_payload.set_vid(vid);
   m_payload.set_mapsrebuildcount(0);
   m_payload.set_maxshardsize(m_maxShardSize);
+  m_payload.mutable_cleanupinfo()->set_docleanup(false);
+  m_payload.mutable_cleanupinfo()->set_heartbeat(0);
   m_payloadInterpreted = true;
 }
 
@@ -787,6 +789,44 @@ void RetrieveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemo
     }
     commit();
   }
+}
+
+bool RetrieveQueue::getQueueCleanupDoCleanup() {
+  checkPayloadReadable();
+  return m_payload.mutable_cleanupinfo()->docleanup();
+}
+
+std::optional<std::string> RetrieveQueue::getQueueCleanupAssignedAgent() {
+  checkPayloadReadable();
+  if (m_payload.mutable_cleanupinfo()->has_assignedagent()) {
+    return std::optional{m_payload.mutable_cleanupinfo()->assignedagent()};
+  }
+  return std::nullopt;
+}
+
+uint64_t RetrieveQueue::getQueueCleanupHeartbeat() {
+  checkPayloadReadable();
+  return m_payload.mutable_cleanupinfo()->heartbeat();
+}
+
+void RetrieveQueue::setQueueCleanupDoCleanup(bool value) {
+  checkPayloadWritable();
+  m_payload.mutable_cleanupinfo()->set_docleanup(value);
+}
+
+void RetrieveQueue::setQueueCleanupAssignedAgent(std::string agent) {
+  checkPayloadWritable();
+  m_payload.mutable_cleanupinfo()->set_assignedagent(agent);
+}
+
+void RetrieveQueue::clearQueueCleanupAssignedAgent() {
+  checkPayloadWritable();
+  m_payload.mutable_cleanupinfo()->clear_assignedagent();
+}
+
+void RetrieveQueue::tickQueueCleanupHeartbeat() {
+  checkPayloadWritable();
+  m_payload.mutable_cleanupinfo()->set_heartbeat(m_payload.mutable_cleanupinfo()->heartbeat() + 1);
 }
 
 void RetrieveQueue::garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
