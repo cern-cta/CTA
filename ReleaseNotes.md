@@ -1,3 +1,9 @@
+# v4.6.3-1
+
+## Summary
+
+- Patch for stale drives regression
+
 # v4.6.1-1
 
 ## Summary
