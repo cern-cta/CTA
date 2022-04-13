@@ -491,6 +491,11 @@ SubprocessHandler::ProcessingStatus DriveHandler::processRunning(serializers::Wa
                                       "WARNING: In DriveHandler::processMounting(): unexpected previous state/type.");
   }
 
+  // On state change reset the data movement counter
+  if (m_sessionState != static_cast<SessionState>(message.sessionstate())) {
+    m_lastDataMovementTime=std::chrono::steady_clock::now();
+  }
+
   m_sessionVid = message.vid();
   return m_processingStatus;
 }
