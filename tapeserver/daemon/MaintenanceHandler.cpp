@@ -28,6 +28,7 @@
 #include "rdbms/Login.hpp"
 #include "scheduler/DiskReportRunner.hpp"
 #include "scheduler/RepackRequestManager.hpp"
+#include "objectstore/QueueCleanupRunner.hpp"
 
 #include <signal.h>
 #include <sys/wait.h>
@@ -301,6 +302,7 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
 
   // Create the garbage collector and the disk reporter
   auto gc = sched_db_init.getGarbageCollector(*catalogue);
+  auto cleanupRunner = sched_db_init.getQueueCleanupRunner(*catalogue, *sched_db);
   DiskReportRunner diskReportRunner(*scheduler);
   RepackRequestManager repackRequestManager(*scheduler);
 
@@ -309,7 +311,7 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
     "In MaintenanceHandler::exceptionThrowingRunChild(): Repack management is disabled. No repack-related operations will run on this tapeserver.");
   }
 
-  // Run the maintenance in a loop: garbage collector and disk reporter
+  // Run the maintenance in a loop: queue cleanup, garbage collector and disk reporter
   try {
     server::SocketPair::pollMap pollList;
     pollList["0"]=m_socketPair.get();
@@ -318,6 +320,7 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
       utils::Timer t;
       m_processManager.logContext().log(log::DEBUG,
           "In MaintenanceHandler::exceptionThrowingRunChild(): About to do a maintenance pass.");
+      cleanupRunner.runOnePass(m_processManager.logContext());
       gc.runOnePass(m_processManager.logContext());
       diskReportRunner.runOnePass(m_processManager.logContext());
       if(runRepackRequestManager()){

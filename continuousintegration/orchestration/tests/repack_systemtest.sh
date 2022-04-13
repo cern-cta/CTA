@@ -29,7 +29,7 @@ die() {
 }
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -v <vid> -b <bufferURL> -n <mountPolicyName> [-e <eosinstance>] [-t <timeout>] [-r <reportDirectory>] [-a] [-m] [-d]
+Usage: $0 -v <vid> -b <bufferURL> -n <mountPolicyName> [-e <eosinstance>] [-t <timeout>] [-r <reportDirectory>] [-a] [-m]
 (bufferURL example : /eos/ctaeos/repack)
 mountPolicyName: the name of the mountPolicy to be applied to the repack request (example: ctasystest)
 eosinstance : the name of the ctaeos instance to be used (default : $EOSINSTANCE)
@@ -37,7 +37,6 @@ timeout : the timeout in seconds to wait for the repack to be done
 reportDirectory : the directory to generate the report of the repack test (default : $REPORT_DIRECTORY)
 -a : Launch a repack just add copies workflow
 -m : Launch a repack just move workflow
--d : Force a repack on a disabled tape (adds --disabled to the repack add command)
 -p : enable backpressure test
 -u : recall only option flag
 EOF
@@ -62,8 +61,7 @@ then
   usage
 fi;
 
-DISABLED_TAPE_FLAG=""
-while getopts "v:e:b:t:r:n:amdpu" o; do
+while getopts "v:e:b:t:r:n:ampu" o; do
   case "${o}" in
     v)
       VID_TO_REPACK=${OPTARG}
@@ -85,9 +83,6 @@ while getopts "v:e:b:t:r:n:amdpu" o; do
       ;;
     r)
       REPORT_DIRECTORY=${OPTARG}
-      ;;
-    d)
-      DISABLED_TAPE_FLAG="--disabledtape"
       ;;
     p)
       BACKPRESSURE_TEST=1
@@ -165,7 +160,7 @@ if [ ! -z $NO_RECALL ]; then
   NO_RECALL_FLAG="--nr"
 fi
 
-admin_cta repack add --mountpolicy ${MOUNT_POLICY_NAME} --vid ${VID_TO_REPACK} ${REPACK_OPTION} --bufferurl ${FULL_REPACK_BUFFER_URL} ${DISABLED_TAPE_FLAG} ${NO_RECALL_FLAG} || exit 1
+admin_cta repack add --mountpolicy ${MOUNT_POLICY_NAME} --vid ${VID_TO_REPACK} ${REPACK_OPTION} --bufferurl ${FULL_REPACK_BUFFER_URL} ${NO_RECALL_FLAG} || exit 1
 
 if [ ! -z $BACKPRESSURE_TEST ]; then
   echo "Backpressure test: waiting to see a report of sleeping retrieve queue."

@@ -39,9 +39,11 @@
 #include "catalogue/DummyCatalogue.hpp"
 #include "Sorter.hpp"
 
+#include "ObjectStoreFixture.hpp"
+
 namespace unitTests {
 
-TEST(ObjectStore,SorterInsertArchiveRequest){
+TEST_F(ObjectStore,SorterInsertArchiveRequest){
   //cta::log::StdoutLogger dl("dummy", "unitTest");
   cta::log::DummyLogger dl("dummy", "unitTest");
   cta::log::LogContext lc(dl);
@@ -187,7 +189,7 @@ TEST(ObjectStore,SorterInsertArchiveRequest){
   ASSERT_EQ(sorter.getAllArchive().size(),0);
 }
 
-TEST(ObjectStore,SorterInsertRetrieveRequest){
+TEST_F(ObjectStore,SorterInsertRetrieveRequest){
 
   using namespace cta::objectstore;
 
@@ -392,7 +394,7 @@ TEST(ObjectStore,SorterInsertRetrieveRequest){
   }
 }
 
-TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
+TEST_F(ObjectStore,SorterInsertDifferentTypesOfRequests){
 
   using namespace cta::objectstore;
 
@@ -695,7 +697,7 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
   }
 }
 
-TEST(ObjectStore,SorterInsertArchiveRequestNotFetched){
+TEST_F(ObjectStore,SorterInsertArchiveRequestNotFetched){
 
   using namespace cta::objectstore;
 
@@ -839,7 +841,7 @@ TEST(ObjectStore,SorterInsertArchiveRequestNotFetched){
 
 }
 
-TEST(ObjectStore,SorterInsertRetrieveRequestNotFetched){
+TEST_F(ObjectStore,SorterInsertRetrieveRequestNotFetched){
   using namespace cta::objectstore;
 
   //cta::log::StdoutLogger dl("dummy", "unitTest");

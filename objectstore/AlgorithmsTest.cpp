@@ -32,6 +32,8 @@
 #include "RootEntry.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
 
+#include "ObjectStoreFixture.hpp"
+
 std::ostream& operator<<(std::ostream& os, const cta::objectstore::ContainerTraits<cta::objectstore::RetrieveQueue, cta::objectstore::RetrieveQueueToTransfer>::PoppedElementsSummary& s) {
   os <<
     "{"
@@ -154,7 +156,7 @@ void fillArchiveRequests(typename cta::objectstore::ContainerAlgorithms<cta::obj
   }
 }
 
-TEST(ObjectStore, ArchiveQueueAlgorithms) {
+TEST_F(ObjectStore, ArchiveQueueAlgorithms) {
   using namespace cta::objectstore;
   // We will need a log object
 #ifdef STDOUT_LOGGING
@@ -236,7 +238,7 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
   }
 }
 
-TEST(ObjectStore, ArchiveQueueAlgorithmsWithDeletedJobsInQueue) {
+TEST_F(ObjectStore, ArchiveQueueAlgorithmsWithDeletedJobsInQueue) {
   using namespace cta::objectstore;
   // We will need a log object
 #ifdef STDOUT_LOGGING
@@ -350,7 +352,7 @@ TEST(ObjectStore, ArchiveQueueAlgorithmsWithDeletedJobsInQueue) {
   }
 }
 
-TEST(ObjectStore, RetrieveQueueAlgorithms) {
+TEST_F(ObjectStore, RetrieveQueueAlgorithms) {
   using namespace cta::objectstore;
   // We will need a log object
 #ifdef STDOUT_LOGGING
@@ -440,7 +442,7 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
   }
 }
 
-TEST(ObjectStore, RetrieveQueueAlgorithmsUpdatesOldestJobQueueTime) {
+TEST_F(ObjectStore, RetrieveQueueAlgorithmsUpdatesOldestJobQueueTime) {
   using cta::common::dataStructures::JobQueueType;
   using cta::objectstore::RetrieveQueue;
   using cta::objectstore::RetrieveQueueToTransfer;
@@ -529,7 +531,7 @@ TEST(ObjectStore, RetrieveQueueAlgorithmsUpdatesOldestJobQueueTime) {
   ASSERT_TRUE(oldestJobStartTime > firstBatchOldestJobStartTime);
 }
 
-TEST(ObjectStore, ArchiveQueueAlgorithmsUpdatesOldestJobQueueTime) {
+TEST_F(ObjectStore, ArchiveQueueAlgorithmsUpdatesOldestJobQueueTime) {
   using cta::common::dataStructures::JobQueueType;
   using cta::objectstore::ArchiveQueue;
   using cta::objectstore::ArchiveQueueToTransferForUser;

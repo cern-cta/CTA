@@ -297,15 +297,44 @@ void Scheduler::checkTapeCanBeRepacked(const std::string & vid, const SchedulerD
   try{
     auto vidToTapesMap = m_catalogue.getTapesByVid(vid); //throws an exception if the vid is not found on the database
     cta::common::dataStructures::Tape tapeToCheck = vidToTapesMap.at(vid);
+
     if(!tapeToCheck.full){
       throw exception::UserError("You must set the tape as full before repacking it.");
     }
-    if(tapeToCheck.state == common::dataStructures::Tape::BROKEN){
-      throw exception::UserError(std::string("You cannot repack a tape that is ") + common::dataStructures::Tape::stateToString(common::dataStructures::Tape::BROKEN) + ".");
+
+    switch (tapeToCheck.state) {
+
+    case common::dataStructures::Tape::DISABLED:
+    case common::dataStructures::Tape::ACTIVE:
+      throw exception::UserError(
+              std::string("You cannot repack a tape that is ")
+              + common::dataStructures::Tape::stateToString(tapeToCheck.state)
+              + ". You must first change its state to "
+              + common::dataStructures::Tape::stateToString(common::dataStructures::Tape::REPACKING) + ".");
+
+    case common::dataStructures::Tape::BROKEN:
+    case common::dataStructures::Tape::BROKEN_PENDING:
+      throw exception::UserError(
+              std::string("You cannot repack a tape that is ")
+              + common::dataStructures::Tape::stateToString(tapeToCheck.state) + ".");
+
+    case common::dataStructures::Tape::REPACKING_PENDING:
+      throw exception::UserError(
+              std::string("You cannot repack a tape that is ")
+              + common::dataStructures::Tape::stateToString(common::dataStructures::Tape::REPACKING_PENDING)
+              + ". You must wait for its state to complete the transition to "
+                + common::dataStructures::Tape::stateToString(common::dataStructures::Tape::REPACKING) + ".");
+
+    case common::dataStructures::Tape::REPACKING:
+      break; // OK to repack!
+
+    default:
+      throw exception::UserError(
+              std::string("You cannot repack the tape with VID ")
+              + vid
+              + ". The current state is unknown.");
     }
-    if(tapeToCheck.isDisabled() && !repackRequest.m_forceDisabledTape){
-      throw exception::UserError(std::string("You cannot repack a ") + common::dataStructures::Tape::stateToString(common::dataStructures::Tape::DISABLED)+ " tape. You can force it by using the flag --disabledtape.");
-    }
+
   } catch(const exception::UserError& userEx){
     throw userEx;
   } catch(const cta::exception::Exception & ex){
@@ -332,7 +361,6 @@ void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity &cliI
   log::ScopedParamContainer params(lc);
   params.add("tapeVid", vid)
         .add("repackType", toString(repackRequest.m_repackType))
-        .add("forceDisabledTape", repackRequest.m_forceDisabledTape)
         .add("mountPolicy", repackRequest.m_mountPolicy.name)
         .add("noRecall", repackRequest.m_noRecall)
         .add("creationHostName",repackRequestToQueue.m_creationLog.host)
@@ -1820,7 +1848,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       mountOrQueue.filesOnTapes += t.lastFSeq;
       mountOrQueue.dataOnTapes += t.dataOnTapeInBytes;
       if (t.full) mountOrQueue.fullTapes++;
-      if (!t.full && !t.isDisabled()) mountOrQueue.writableTapes++;
+      if (!t.full && !t.isDisabled() && !t.isBroken() && !t.isRepacking()) mountOrQueue.writableTapes++;
       mountOrQueue.tapePool = t.tapePoolName;
     }
   }
@@ -1832,6 +1860,40 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
      .add("catalogueGetTapesTotalTime", catalogueGetTapesTotalTime);
   lc.log(log::INFO, "In Scheduler::getQueuesAndMountSummaries(): success.");
   return ret;
+}
+
+//------------------------------------------------------------------------------
+// triggerTapeStateChange
+//------------------------------------------------------------------------------
+void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State &state, const std::optional<std::string> &stateReason, log::LogContext& logContext) {
+
+  // Tape must exist on catalogue
+  if (!m_catalogue.tapeExists(vid)) {
+    throw cta::exception::UserError("The VID " + vid + " does not exist");
+  }
+
+  switch (state) {
+  case common::dataStructures::Tape::ACTIVE:
+  case common::dataStructures::Tape::DISABLED:
+    // Simply set the new tape state
+    m_catalogue.modifyTapeState(admin, vid, state, stateReason);
+    break;
+  case common::dataStructures::Tape::BROKEN:
+    m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
+    m_catalogue.modifyTapeState(admin, vid, common::dataStructures::Tape::BROKEN_PENDING, stateReason);
+    break;
+  case common::dataStructures::Tape::REPACKING:
+    m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
+    m_catalogue.modifyTapeState(admin, vid, common::dataStructures::Tape::REPACKING_PENDING, stateReason);
+    break;
+  case common::dataStructures::Tape::BROKEN_PENDING:
+  case common::dataStructures::Tape::REPACKING_PENDING:
+    // PENDING states should not be set directly
+    throw cta::exception::UserError("Tape state " + common::dataStructures::Tape::stateToString(state) + " cannot be set directly by user");
+  default:
+    throw cta::exception::UserError("Unknown tape state");
+  }
+
 }
 
 //------------------------------------------------------------------------------
