@@ -412,6 +412,9 @@ class OStoreDB: public SchedulerDatabase {
      log::TimingList & timingList, utils::Timer & t, log::LogContext & lc) override;
 
   /* === Retrieve requests handling  ======================================== */
+  std::list<RetrieveQueueCleanupInfo> getRetrieveQueuesCleanupInfo(log::LogContext & logContext) override;
+  void setRetrieveQueueCleanupFlag(const std::string& vid, bool val, log::LogContext& logContext) override;
+
   std::list<RetrieveQueueStatistics> getRetrieveQueueStatistics(
     const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria, const std::set<std::string>& vidsToConsider) override;
 
@@ -465,6 +468,14 @@ class OStoreDB: public SchedulerDatabase {
 
   // RetrieveQueueItor_t* getRetrieveJobItorPtr(const std::string &vid,
   //   common::dataStructures::JobQueueType queueType = common::dataStructures::JobQueueType::JobsToTransferForUser) const;
+
+  std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsToTransferBatch(
+          std::string & vid, uint64_t filesRequested, log::LogContext &logContext) override;
+  void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob *> &jobs, log::LogContext& logContext) override;
+  virtual void reserveRetrieveQueueForCleanup(std::string & vid, std::optional<uint64_t> cleanupHeartBeatValue) override;
+  virtual void tickRetrieveQueueCleanupHeartbeat(std::string & vid) override;
+  CTA_GENERATE_EXCEPTION_CLASS(RetrieveQueueNotReservedForCleanup);
+  CTA_GENERATE_EXCEPTION_CLASS(RetrieveQueueNotFound);
 
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsToReportBatch(
     uint64_t filesRequested, log::LogContext &logContext) override;

@@ -41,9 +41,11 @@
 #include "RootEntry.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
 
+#include "ObjectStoreFixture.hpp"
+
 namespace unitTests {
 
-TEST(ObjectStore, GarbageCollectorBasicFuctionnality) {
+TEST_F(ObjectStore, GarbageCollectorBasicFuctionnality) {
   // We will need a log object
 #ifdef STDOUT_LOGGING
   cta::log::StdoutLogger dl("dummy", "unitTest");
@@ -100,7 +102,7 @@ TEST(ObjectStore, GarbageCollectorBasicFuctionnality) {
   ASSERT_NO_THROW(re.removeIfEmpty(lc));
 }
 
-TEST(ObjectStore, GarbageCollectorRegister) {
+TEST_F(ObjectStore, GarbageCollectorRegister) {
   // We will need a log object
 #ifdef STDOUT_LOGGING
   cta::log::StdoutLogger dl("dummy", "unitTest");
@@ -163,7 +165,7 @@ TEST(ObjectStore, GarbageCollectorRegister) {
   ASSERT_NO_THROW(re.removeIfEmpty(lc));
 }
 
-TEST(ObjectStore, GarbageCollectorArchiveQueue) {
+TEST_F(ObjectStore, GarbageCollectorArchiveQueue) {
   // We will need a log object
 #ifdef STDOUT_LOGGING
   cta::log::StdoutLogger dl("dummy", "unitTest");
@@ -227,7 +229,7 @@ TEST(ObjectStore, GarbageCollectorArchiveQueue) {
   ASSERT_NO_THROW(re.removeIfEmpty(lc));
 }
 
-TEST(ObjectStore, GarbageCollectorDriveRegister) {
+TEST_F(ObjectStore, GarbageCollectorDriveRegister) {
   // We will need a log object
 #ifdef STDOUT_LOGGING
   cta::log::StdoutLogger dl("dummy", "unitTest");
@@ -291,7 +293,7 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
   ASSERT_NO_THROW(re.removeIfEmpty(lc));
 }
 
-TEST(ObjectStore, GarbageCollectorArchiveRequest) {
+TEST_F(ObjectStore, GarbageCollectorArchiveRequest) {
   using cta::common::dataStructures::JobQueueType;
   // We will need a log object
 #ifdef STDOUT_LOGGING
@@ -480,7 +482,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
   // TODO: this unit test still leaks tape pools and requests
 }
 
-TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
+TEST_F(ObjectStore, GarbageCollectorRetrieveRequest) {
   using cta::common::dataStructures::JobQueueType;
   // We will need a log object
 #ifdef STDOUT_LOGGING
@@ -669,7 +671,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
   // TODO: this unit test still leaks tape pools and requests
 }
 
-TEST(ObjectStore, GarbageCollectorRepackRequestPending) {
+TEST_F(ObjectStore, GarbageCollectorRepackRequestPending) {
 // We will need a log object
 #ifdef STDOUT_LOGGING
   cta::log::StdoutLogger dl("dummy", "unitTest");
@@ -751,7 +753,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestPending) {
   }
 }
 
-TEST(ObjectStore, GarbageCollectorRepackRequestToExpand) {
+TEST_F(ObjectStore, GarbageCollectorRepackRequestToExpand) {
 // We will need a log object
 #ifdef STDOUT_LOGGING
   cta::log::StdoutLogger dl("dummy", "unitTest");
@@ -832,7 +834,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestToExpand) {
   }
 }
 
-TEST(ObjectStore, GarbageCollectorRepackRequestRunningExpandNotFinished) {
+TEST_F(ObjectStore, GarbageCollectorRepackRequestRunningExpandNotFinished) {
   // We will need a log object
 #ifdef STDOUT_LOGGING
   cta::log::StdoutLogger dl("dummy", "unitTest");
@@ -915,7 +917,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestRunningExpandNotFinished) {
   }
 }
 
-TEST(ObjectStore, GarbageCollectorRepackRequestRunningExpandFinished) {
+TEST_F(ObjectStore, GarbageCollectorRepackRequestRunningExpandFinished) {
   // We will need a log object
 #ifdef STDOUT_LOGGING
   cta::log::StdoutLogger dl("dummy", "unitTest");
@@ -1024,7 +1026,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestRunningExpandFinished) {
   ASSERT_NE(std::string::npos,logToCheck.find("MSG=\"In RepackRequest::garbageCollect(): failed to requeue the RepackRequest (leaving it as it is) : The status Running has no corresponding queue type.\""));
 }
 
-TEST(ObjectStore, GarbageCollectorRepackRequestStarting) {
+TEST_F(ObjectStore, GarbageCollectorRepackRequestStarting) {
 // We will need a log object
 #ifdef STDOUT_LOGGING
   cta::log::StdoutLogger dl("dummy", "unitTest");
@@ -1102,7 +1104,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestStarting) {
   ASSERT_NE(std::string::npos,logToCheck.find("MSG=\"In RepackRequest::garbageCollect(): failed to requeue the RepackRequest (leaving it as it is) : The status Starting has no corresponding queue type.\""));
 }
 
-TEST(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
+TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
   using cta::common::dataStructures::JobQueueType;
 // We will need a log object
 #ifdef STDOUT_LOGGING
@@ -1571,7 +1573,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
   }
 }
 
-TEST(ObjectStore, GarbageCollectorRetrieveRequestRepackDisabledTape) {
+TEST_F(ObjectStore, GarbageCollectorRetrieveRequestRepackRepackingTape) {
   using cta::common::dataStructures::JobQueueType;
 // We will need a log object
 #ifdef STDOUT_LOGGING
@@ -1652,7 +1654,6 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequestRepackDisabledTape) {
 
   cta::objectstore::RetrieveRequest::RepackInfo ri;
   ri.isRepack = true;
-  ri.forceDisabledTape = true;
   ri.fSeq = 1;
   ri.fileBufferURL = "testFileBufferURL";
   ri.repackRequestAddress = "repackRequestAddress";
@@ -1667,7 +1668,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequestRepackDisabledTape) {
   gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf(lc);
 
-  catalogue.addDisabledTape("Tape0");
+  catalogue.addRepackingTape("Tape0");
 
   cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
   gc.runOnePass(lc);
@@ -1689,9 +1690,9 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequestRepackDisabledTape) {
   }
 
   {
-    //Test the RetrieveRequest::garbageCollect method for RJS_ToTransferForUser job and a disabled tape
-    cta::objectstore::AgentReference agentRefToTransferDisabledTapeAutoGc("ToReportToRepackForFailureAutoGC", dl);
-    cta::objectstore::Agent agentToReportToRepackForFailureJobAutoGc(agentRefToTransferDisabledTapeAutoGc.getAgentAddress(), be);
+    //Test the RetrieveRequest::garbageCollect method for RJS_ToTransferForUser job and a repacking tape
+    cta::objectstore::AgentReference agentRefToTransferRepackingTapeAutoGc("ToReportToRepackForFailureAutoGC", dl);
+    cta::objectstore::Agent agentToReportToRepackForFailureJobAutoGc(agentRefToTransferRepackingTapeAutoGc.getAgentAddress(), be);
     agentToReportToRepackForFailureJobAutoGc.initialize();
     agentToReportToRepackForFailureJobAutoGc.setTimeout_us(0);
     agentToReportToRepackForFailureJobAutoGc.insertAndRegisterSelf(lc);
@@ -1706,13 +1707,13 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequestRepackDisabledTape) {
     {
       cta::objectstore::ScopedExclusiveLock sel(rr);
       rr.fetch();
-      rr.setOwner(agentRefToTransferDisabledTapeAutoGc.getAgentAddress());
+      rr.setOwner(agentRefToTransferRepackingTapeAutoGc.getAgentAddress());
       rr.setJobStatus(2,cta::objectstore::serializers::RetrieveJobStatus::RJS_ToTransfer);
       rr.commit();
 
-      agentRefToTransferDisabledTapeAutoGc.addToOwnership(rr.getAddressIfSet(),be);
+      agentRefToTransferRepackingTapeAutoGc.addToOwnership(rr.getAddressIfSet(),be);
 
-      ASSERT_NO_THROW(rr.garbageCollect(agentRefToTransferDisabledTapeAutoGc.getAgentAddress(),agentRef,lc,catalogue));
+      ASSERT_NO_THROW(rr.garbageCollect(agentRefToTransferRepackingTapeAutoGc.getAgentAddress(),agentRef,lc,catalogue));
     }
 
     //The Retrieve Request should now be queued in the RetrieveQueueToTransferForUser
@@ -1732,7 +1733,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequestRepackDisabledTape) {
   }
 }
 
-TEST(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
+TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
   using cta::common::dataStructures::JobQueueType;
   // We will need a log object
 #ifdef STDOUT_LOGGING

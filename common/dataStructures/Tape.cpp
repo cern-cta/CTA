@@ -40,13 +40,19 @@ Tape::Tape():
 const std::map<Tape::State,std::string> Tape::STATE_TO_STRING_MAP = {
   {Tape::State::ACTIVE,"ACTIVE"},
   {Tape::State::BROKEN,"BROKEN"},
-  {Tape::State::DISABLED,"DISABLED"}
+  {Tape::State::BROKEN_PENDING,"BROKEN_PENDING"},
+  {Tape::State::DISABLED,"DISABLED"},
+  {Tape::State::REPACKING,"REPACKING"},
+  {Tape::State::REPACKING_PENDING,"REPACKING_PENDING"},
 };
 
 const std::map<std::string,Tape::State> Tape::STRING_TO_STATE_MAP = {
   {"ACTIVE",Tape::State::ACTIVE},
   {"BROKEN",Tape::State::BROKEN},
-  {"DISABLED",Tape::State::DISABLED}
+  {"BROKEN_PENDING",Tape::State::BROKEN_PENDING},
+  {"DISABLED",Tape::State::DISABLED},
+  {"REPACKING",Tape::State::REPACKING},
+  {"REPACKING_PENDING",Tape::State::REPACKING_PENDING}
 };
 
 std::string Tape::getAllPossibleStates(){
@@ -115,6 +121,14 @@ Tape::State Tape::stringToState(const std::string& state) {
 
 bool Tape::isDisabled() const {
   return state == Tape::State::DISABLED;
+}
+
+bool Tape::isRepacking() const {
+  return state == Tape::State::REPACKING;
+}
+
+bool Tape::isBroken() const {
+  return state == Tape::State::BROKEN;
 }
 
 //------------------------------------------------------------------------------

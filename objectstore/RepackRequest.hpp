@@ -55,14 +55,6 @@ public:
   std::list<common::dataStructures::RepackInfo::RepackDestinationInfo> getRepackDestinationInfos();
   void setCreationLog(const common::dataStructures::EntryLog & creationLog);
   common::dataStructures::EntryLog getCreationLog();
-  /**
-   * Set the flag disabledTape to allow the mounting of a
-   * disabled tape for file retrieval
-   * @param disabledTape if true, the disabled tape will be mounted for retrieval, if false, the
-   * tape will not be mounted if it is disabled
-   */
-  void setForceDisabledTape(const bool disabledTape);
-  bool getForceDisabledTape();
 
   /**
    * Set the flag noRecall to only inject files that are in the buffer. This will prevent

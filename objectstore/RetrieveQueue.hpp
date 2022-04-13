@@ -148,6 +148,17 @@ public:
   std::list<std::string> getMountPolicyNames();
   
   void removeJobsAndCommit(const std::list<std::string> & jobsToRemove);
+
+  bool getQueueCleanupDoCleanup();
+  void setQueueCleanupDoCleanup(bool value = true);
+
+  std::optional<std::string> getQueueCleanupAssignedAgent();
+  void setQueueCleanupAssignedAgent(std::string agent);
+  void clearQueueCleanupAssignedAgent();
+
+  uint64_t getQueueCleanupHeartbeat();
+  void tickQueueCleanupHeartbeat();
+
   // -- Generic parameters
   std::string getVid();
   

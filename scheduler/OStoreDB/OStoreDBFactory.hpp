@@ -115,7 +115,7 @@ template <>
 OStoreDBWrapper<cta::objectstore::BackendVFS>::OStoreDBWrapper(
         const std::string &context, std::unique_ptr<cta::catalogue::Catalogue> & catalogue, const std::string &URL) :
 OStoreDBWrapperInterface(m_OStoreDB),
-m_logger(new cta::log::DummyLogger("", "")), m_backend(new cta::objectstore::BackendVFS()),
+m_logger(new cta::log::DummyLogger("", "")), m_backend(URL.empty() ? new cta::objectstore::BackendVFS() : new cta::objectstore::BackendVFS(URL)),
 m_catalogue(catalogue),
 m_OStoreDB(*m_backend, *m_catalogue, *m_logger),
   m_agentReferencePtr(new objectstore::AgentReference("OStoreDBFactory", *m_logger))

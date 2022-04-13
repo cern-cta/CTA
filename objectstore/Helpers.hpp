@@ -87,12 +87,12 @@ class Helpers {
   /**
    * Find the most appropriate queue (bid) to add the retrieve request to. The potential
    * VIDs (VIDs for non-failed copies) is provided by the caller. The status of the
-   * the tapes (disabled or not, and available queue size) are all cached to avoid
+   * the tapes (and available queue size) are all cached to avoid
    * frequent access to the object store. The caching create a small inefficiency
    * to the algorithm, but will help performance drastically for a very similar result
    */
   static std::string selectBestRetrieveQueue(const std::set<std::string> & candidateVids,
-    cta::catalogue::Catalogue & catalogue, objectstore::Backend & objectstore, bool forceDisabledTape = false);
+    cta::catalogue::Catalogue & catalogue, objectstore::Backend & objectstore, bool isRepack = false);
 
   /**
    * Gets the retrieve queue statistics for a set of Vids (extracted from the OStoreDB
