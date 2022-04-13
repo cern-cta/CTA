@@ -29,9 +29,11 @@
 #include "RetrieveQueue.hpp"
 #include "RootEntry.hpp"
 
+#include "ObjectStoreFixture.hpp"
+
 namespace unitTests {
 
-TEST(ObjectStore, RootEntryBasicAccess) {
+TEST_F(ObjectStore, RootEntryBasicAccess) {
   cta::objectstore::BackendVFS be;
   cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
@@ -75,7 +77,7 @@ TEST(ObjectStore, RootEntryBasicAccess) {
   ASSERT_FALSE(re.exists());
 }
 
-TEST(ObjectStore, RootEntryArchiveQueues) {
+TEST_F(ObjectStore, RootEntryArchiveQueues) {
   using cta::common::dataStructures::JobQueueType;
   cta::objectstore::BackendVFS be;
   cta::objectstore::EntryLogSerDeser el("user0",
@@ -138,7 +140,7 @@ TEST(ObjectStore, RootEntryArchiveQueues) {
   ASSERT_FALSE(re.exists());
 }
 
-TEST(ObjectStore, RootEntryDriveRegister) {
+TEST_F(ObjectStore, RootEntryDriveRegister) {
   cta::objectstore::BackendVFS be;
   {
     // Try to create the root entry
@@ -194,7 +196,7 @@ TEST(ObjectStore, RootEntryDriveRegister) {
   ASSERT_FALSE(re.exists());
 }
 
-TEST(ObjectStore, RootEntryAgentRegister) {
+TEST_F(ObjectStore, RootEntryAgentRegister) {
   cta::objectstore::BackendVFS be;
   {
     // Try to create the root entry
@@ -244,7 +246,7 @@ TEST(ObjectStore, RootEntryAgentRegister) {
   ASSERT_FALSE(re.exists());
 }
 
-TEST(ObjectStore, RootEntrySchedulerGlobalLock) {
+TEST_F(ObjectStore, RootEntrySchedulerGlobalLock) {
   cta::objectstore::BackendVFS be;
   {
     // Try to create the root entry
@@ -300,7 +302,7 @@ TEST(ObjectStore, RootEntrySchedulerGlobalLock) {
   ASSERT_FALSE(re.exists());
 }
 
-TEST(ObjectStore, RetrieveQueueToReportToRepackForSuccessRootEntryTest) {
+TEST_F(ObjectStore, RetrieveQueueToReportToRepackForSuccessRootEntryTest) {
   using cta::common::dataStructures::JobQueueType;
   cta::objectstore::BackendVFS be;
   cta::objectstore::EntryLogSerDeser el("user0",

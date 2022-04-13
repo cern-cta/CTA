@@ -202,6 +202,8 @@ public:
   log::LogContext & lc) override;
   void modifyArchiveFileStorageClassId(const uint64_t archiveFileId, const std::string &newStorageClassName) const override;
 
+  common::dataStructures::Tape::State getTapeState(const std::string & vid) const;
+
   common::dataStructures::VidToTapeMap getTapesByVid(const std::string& vid) const override;
 
   common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string>& vids) const override;
@@ -248,6 +250,7 @@ public:
   // This special funcitons for unit tests should be put in private
   void addEnabledTape(const std::string & vid);
   void addDisabledTape(const std::string & vid);
+  void addRepackingTape(const std::string & vid);
 
 private:
   mutable threading::Mutex m_tapeEnablingMutex;

@@ -396,8 +396,6 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
                            "     of the files located on the tape to repack.\n"
 			   "     By default, a hardcoded mount policy is applied (all request priorities and minimum request\n"
                            "     ages = 1).\n"
-			   "   * If the --disabledtape flag is set, the tape to repack will be mounted for retrieval even if it\n"
-                           "     is disabled.\n"
                            "   * If the --no-recall flag is set, no retrieve mount will be triggered. Only the files that are\n"
                            "     located in the buffer will be considered for archival.\n\n"
 					 }},
@@ -534,7 +532,6 @@ const Option opt_vid                  { Option::OPT_STR,  "--vid",              
 const Option opt_vo                   { Option::OPT_STR,  "--virtualorganisation",   "--vo", " <virtual_organisation>" };
 const Option opt_vidfile              { Option::OPT_STR_LIST, "--vidfile",           "-f",   " <filename>" };
 const Option opt_full                 { Option::OPT_BOOL, "--full",                  "-f",   " <\"true\" or \"false\">" };
-const Option opt_disabled_tape        { Option::OPT_FLAG, "--disabledtape",          "-d",   "" };
 const Option opt_disksystem           { Option::OPT_STR,  "--disksystem",            "-n",   " <disk_system_name>" };
 const Option opt_file_regexp          { Option::OPT_STR,  "--fileregexp",            "-r",   " <file_regexp>" };
 const Option opt_free_space_query_url { Option::OPT_STR,  "--freespacequeryurl",     "-u",   " <free_space_query_url>" };
@@ -547,7 +544,7 @@ const Option opt_object_id            { Option::OPT_STR,  "--objectid",         
 const Option opt_read_max_drives      { Option::OPT_UINT,  "--readmaxdrives",        "--rmd", " <read_max_drives>" };
 const Option opt_write_max_drives     { Option::OPT_UINT,  "--writemaxdrives",       "--wmd", " <write_max_drives>" };
 
-const Option opt_state                { Option::OPT_STR,  "--state",                 "-s",   std::string(" <\"") + Tape::stateToString(Tape::ACTIVE) +"\"" + " or \"" + Tape::stateToString(Tape::DISABLED) + "\" or \"" + Tape::stateToString(Tape::BROKEN) + "\">" };
+const Option opt_state                { Option::OPT_STR,  "--state",                 "-s",   std::string(" <\"") + Tape::stateToString(Tape::ACTIVE) +"\"" + " or \"" + Tape::stateToString(Tape::DISABLED) + "\" or \"" + Tape::stateToString(Tape::BROKEN) + "\" or \"" + Tape::stateToString(Tape::REPACKING) + "\">" };
 const Option opt_activityregex        { Option::OPT_STR,  "--activityregex",         "--ar", " <activity_regex>"};
 const Option opt_diskinstance         { Option::OPT_STR,  "--diskinstance",         "--di",  " <disk_instance_name>" };
 const Option opt_diskinstance_alias   { Option::OPT_STR,  "--name",                 "-n",    " <disk_instance_name>", "--diskinstance" };
@@ -618,7 +615,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_MOUNTPOLICY,          AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_ADD   },
-      { opt_vid.optional(), opt_vidfile.optional(), opt_bufferurl.optional(), opt_justmove.optional(), opt_justaddcopies.optional(), opt_mountpolicy, opt_disabled_tape.optional(), opt_no_recall.optional() }},
+      { opt_vid.optional(), opt_vidfile.optional(), opt_bufferurl.optional(), opt_justmove.optional(), opt_justaddcopies.optional(), opt_mountpolicy, opt_no_recall.optional() }},
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_RM    }, { opt_vid }},
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_LS    }, { opt_vid.optional() }},
    {{ AdminCmd::CMD_REPACK,               AdminCmd::SUBCMD_ERR   }, { opt_vid }},

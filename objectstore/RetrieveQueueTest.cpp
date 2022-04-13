@@ -23,9 +23,11 @@
 
 #include <random>
 
+#include "ObjectStoreFixture.hpp"
+
 namespace unitTests {
 
-TEST(ObjectStore, RetrieveQueueBasicAccess) {
+TEST_F(ObjectStore, RetrieveQueueBasicAccess) {
   cta::objectstore::BackendVFS be;
   cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
@@ -53,7 +55,7 @@ TEST(ObjectStore, RetrieveQueueBasicAccess) {
   ASSERT_FALSE(rq.exists());
 }
 
-TEST(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
+TEST_F(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
   cta::objectstore::BackendVFS be;
   cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
@@ -154,7 +156,7 @@ TEST(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
   ASSERT_FALSE(rq.exists());
 }
 
-TEST(ObjectStore, RetrieveQueueActivityCounts) {
+TEST_F(ObjectStore, RetrieveQueueActivityCounts) {
   cta::objectstore::BackendVFS be;
   cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);

@@ -73,7 +73,6 @@ struct RepackInfo {
   uint64_t archivedFiles;
   uint64_t archivedBytes;
   bool isExpandFinished;
-  bool forceDisabledTape;
   bool noRecall;
   common::dataStructures::EntryLog creationLog;
   time_t repackFinishedTime = 0;

@@ -186,6 +186,61 @@ void OStoreDB::ping() {
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::fetchRetrieveQueueCleanupInfo()
+//------------------------------------------------------------------------------
+std::list<SchedulerDatabase::RetrieveQueueCleanupInfo> OStoreDB::getRetrieveQueuesCleanupInfo(log::LogContext& logContext) {
+
+  utils::Timer t;
+  assertAgentAddressSet();
+  std::list<SchedulerDatabase::RetrieveQueueCleanupInfo> ret;
+
+  // Get all tapes with retrieve queues
+  objectstore::RootEntry re(m_objectStore);
+  re.fetchNoLock();
+  auto rootFetchNoLockTime = t.secs(utils::Timer::resetCounter);
+
+  // Walk the retrieve queues for cleanup flag
+  for (auto &rqp: re.dumpRetrieveQueues(common::dataStructures::JobQueueType::JobsToTransferForUser)) {
+    RetrieveQueue rqueue(rqp.address, m_objectStore);
+    double queueLockTime = 0;
+    double queueFetchTime = 0;
+
+    try {
+      rqueue.fetchNoLock();
+      queueFetchTime = t.secs(utils::Timer::resetCounter);
+    } catch (cta::exception::Exception &ex) {
+      log::ScopedParamContainer params(logContext);
+      params.add("queueObject", rqp.address)
+              .add("tapeVid", rqp.vid)
+              .add("exceptionMessage", ex.getMessageValue());
+      logContext.log(log::DEBUG,
+                     "WARNING: In OStoreDB::getRetrieveQueuesCleanupInfo(): failed to lock/fetch a retrieve queue. Skipping it.");
+      continue;
+    }
+
+    ret.push_back(SchedulerDatabase::RetrieveQueueCleanupInfo());
+    ret.back().vid = rqueue.getVid();
+    ret.back().doCleanup = rqueue.getQueueCleanupDoCleanup();
+    ret.back().assignedAgent = rqueue.getQueueCleanupAssignedAgent();
+    ret.back().heartbeat = rqueue.getQueueCleanupHeartbeat();
+
+    auto processingTime = t.secs(utils::Timer::resetCounter);
+    log::ScopedParamContainer params(logContext);
+    params.add("queueObject", rqp.address)
+          .add("tapeVid", rqp.vid)
+          .add("rootFetchNoLockTime", rootFetchNoLockTime)
+          .add("queueLockTime", queueLockTime)
+          .add("queueFetchTime", queueFetchTime)
+          .add("processingTime", processingTime);
+    if (queueLockTime > 1 || queueFetchTime > 1) {
+      logContext.log(log::WARNING,
+                     "In OStoreDB::getRetrieveQueuesCleanupInfo(): fetched a retrieve queue and that lasted more than 1 second.");
+    }
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
 // OStoreDB::fetchMountInfo()
 //------------------------------------------------------------------------------
 void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, RootEntry& re,
@@ -349,29 +404,10 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     bool isPotentialMount = false;
     auto vidToTapeMap = m_catalogue.getTapesByVid(rqp.vid);
     common::dataStructures::Tape::State tapeState = vidToTapeMap.at(rqp.vid).state;
-    bool tapeIsDisabled = tapeState == common::dataStructures::Tape::DISABLED;
     bool tapeIsActive = tapeState == common::dataStructures::Tape::ACTIVE;
-    if (tapeIsActive) {
+    bool tapeIsRepacking = tapeState == common::dataStructures::Tape::REPACKING;
+    if (tapeIsActive || tapeIsRepacking) {
       isPotentialMount = true;
-    }
-    else if(tapeIsDisabled){
-      //In the case there are Repack Retrieve Requests with the force disabled flag set
-      //on a disabled tape, we will trigger a mount.
-      //Mount policies that begin with repack are used for repack requests with force disabled flag
-      //set to true. We only look for those to avoid looping through the retrieve queue
-      //while holding the global scheduler lock.
-      //In the case there are only deleted Retrieve Request on a DISABLED or BROKEN tape
-      //we will no longer trigger a mount. Eventually the oldestRequestAge will pass the configured
-      //threshold and the queue will be flushed
-
-      auto queueMountPolicyNames = rqueue.getMountPolicyNames();
-      auto mountPolicyItor = std::find_if(queueMountPolicyNames.begin(),queueMountPolicyNames.end(), [](const std::string &mountPolicyName){
-        return mountPolicyName.rfind("repack", 0) == 0;
-      });
-
-      if(mountPolicyItor != queueMountPolicyNames.end()){
-        isPotentialMount = true;
-      }
     }
     if (rqSummary.jobs && (isPotentialMount || purpose == SchedulerDatabase::PurposeGetMountInfo::SHOW_QUEUES)) {
       //Getting the default mountPolicies parameters from the queue summary
@@ -1808,7 +1844,6 @@ std::string OStoreDB::queueRepack(const SchedulerDatabase::QueueRepackRequest & 
   common::dataStructures::RepackInfo::Type repackType = repackRequest.m_repackType;
   std::string bufferURL = repackRequest.m_repackBufferURL;
   common::dataStructures::MountPolicy mountPolicy = repackRequest.m_mountPolicy;
-  bool forceDisabledTape = repackRequest.m_forceDisabledTape;
   // Prepare the repack request object in memory.
   assertAgentAddressSet();
   cta::utils::Timer t;
@@ -1820,7 +1855,6 @@ std::string OStoreDB::queueRepack(const SchedulerDatabase::QueueRepackRequest & 
   rr->setType(repackType);
   rr->setBufferURL(bufferURL);
   rr->setMountPolicy(mountPolicy);
-  rr->setForceDisabledTape(forceDisabledTape);
   rr->setNoRecall(repackRequest.m_noRecall);
   rr->setCreationLog(repackRequest.m_creationLog);
   // Try to reference the object in the index (will fail if there is already a request with this VID.
@@ -1920,6 +1954,96 @@ void OStoreDB::requeueRetrieveJobs(std::list<cta::SchedulerDatabase::RetrieveJob
   locks.clear();
   rrlist.clear();
   sorter.flushAll(logContext);
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::resheduleRetrieveRequest()
+//------------------------------------------------------------------------------
+void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob *> &jobs, log::LogContext& logContext) {
+  std::list<std::shared_ptr<objectstore::RetrieveRequest>> rrlist;
+  std::list<objectstore::ScopedExclusiveLock> locks;
+  for (auto &job: jobs) {
+    OStoreDB::RetrieveJob *oStoreJob = dynamic_cast<OStoreDB::RetrieveJob *>(job);
+    auto rr = std::make_shared<objectstore::RetrieveRequest>(oStoreJob->m_retrieveRequest.getAddressIfSet(), m_objectStore);
+    rrlist.push_back(rr);
+    locks.emplace_back(*rr);
+    rr->fetch();
+    rr->garbageCollect(m_agentReference->getAgentAddress(), *m_agentReference, logContext, m_catalogue);
+  }
+  locks.clear();
+  rrlist.clear();
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::reserveRetrieveQueueForCleanup()
+//------------------------------------------------------------------------------
+void OStoreDB::reserveRetrieveQueueForCleanup(std::string & vid, std::optional<uint64_t> cleanupHeartBeatValue) {
+
+  RootEntry re(m_objectStore);
+  RetrieveQueue rq(m_objectStore);
+  ScopedExclusiveLock rql;
+  re.fetchNoLock();
+
+  try {
+    rq.setAddress(re.getRetrieveQueueAddress(vid, common::dataStructures::JobQueueType::JobsToTransferForUser));
+    rql.lock(rq);
+    rq.fetch();
+  } catch (cta::objectstore::RootEntry::NoSuchRetrieveQueue & ex) {
+    throw RetrieveQueueNotFound("Retrieve queue of vid " + vid + " not found. " + ex.getMessageValue());
+  } catch (cta::exception::NoSuchObject &ex) {
+    throw RetrieveQueueNotFound("Retrieve queue of vid " + vid + " not found. " + ex.getMessageValue());
+  } catch (cta::exception::Exception &ex) {
+    throw;
+  }
+
+  // After locking a queue, check again if the cleanup flag is still true
+  if (!rq.getQueueCleanupDoCleanup()) {
+    throw RetrieveQueueNotReservedForCleanup("Queue no longer has the cleanup flag enabled after fetching. Skipping it.");
+  }
+
+  // Check if heartbeat has been updated, which means that another agent is still tracking it
+  if (rq.getQueueCleanupAssignedAgent().has_value() && cleanupHeartBeatValue.has_value()) {
+    if (cleanupHeartBeatValue.value() != rq.getQueueCleanupHeartbeat()) {
+      throw RetrieveQueueNotReservedForCleanup("Another agent is alive and cleaning up the queue. Skipping it.");
+    }
+  }
+
+  // Otherwise, carry on with cleanup of this queue
+  rq.setQueueCleanupAssignedAgent(m_agentReference->getAgentAddress());
+  rq.tickQueueCleanupHeartbeat();
+  rq.commit();
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::tickRetrieveQueueCleanupHeartbeat()
+//------------------------------------------------------------------------------
+void OStoreDB::tickRetrieveQueueCleanupHeartbeat(std::string & vid) {
+
+  RootEntry re(m_objectStore);
+  RetrieveQueue rq(m_objectStore);
+  ScopedExclusiveLock rql;
+  re.fetchNoLock();
+
+  try {
+    rq.setAddress(re.getRetrieveQueueAddress(vid, common::dataStructures::JobQueueType::JobsToTransferForUser));
+    rql.lock(rq);
+    rq.fetch();
+    if (rq.getQueueCleanupAssignedAgent().has_value() &&
+        (rq.getQueueCleanupAssignedAgent() != m_agentReference->getAgentAddress())) {
+      throw RetrieveQueueNotReservedForCleanup(
+              "Another agent is alive and cleaning up the retrieve queue of tape " + vid + ". Heartbeat not ticked.");
+    }
+    rq.tickQueueCleanupHeartbeat();
+    rq.commit();
+  } catch (RetrieveQueueNotReservedForCleanup & ex) {
+    throw; // Just pass this exception to the outside
+  } catch (cta::objectstore::RootEntry::NoSuchRetrieveQueue & ex) {
+    throw RetrieveQueueNotFound("Retrieve queue of vid " + vid + " not found. " + ex.getMessageValue());
+  } catch (cta::exception::NoSuchObject & ex) {
+    throw RetrieveQueueNotFound("Retrieve queue of vid " + vid + " not found. " + ex.getMessageValue());
+  } catch (cta::exception::Exception & ex) {
+    throw;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -2045,6 +2169,120 @@ auto OStoreDB::getRepackStatisticsNoLock() -> std::unique_ptr<SchedulerDatabase:
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::getNextRetrieveJobsToTransferBatch()
+//------------------------------------------------------------------------------
+std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::getNextRetrieveJobsToTransferBatch(
+        std::string & vid, uint64_t filesRequested, log::LogContext &logContext) {
+
+  using RQTTAlgo = objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueToTransfer>;
+  RQTTAlgo rqttAlgo(m_objectStore, *m_agentReference);
+  std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
+
+  // Try to get jobs from the queue. If it is empty, it will be trimmed.
+  RQTTAlgo::PopCriteria criteria;
+  criteria.files = filesRequested;
+  criteria.bytes = std::numeric_limits<decltype(criteria.bytes)>::max();
+
+  // Pop the objects
+  auto jobs = rqttAlgo.popNextBatch(vid, criteria, logContext);
+
+ /**
+  //Get the first one request that is in elements
+  auto repackRequest = jobs.elements.front().repackRequest.get();
+  auto repackInfo = jobs.elements.front().repackInfo;
+  //build the repackRequest with the repack infos
+  std::unique_ptr<SchedulerDatabase::RepackRequest> ret;
+  ret.reset(new OStoreDB::RepackRequest(repackRequest->getAddressIfSet(), *this));
+  ret->repackInfo.vid = repackInfo.vid;
+  ret->repackInfo.type = repackInfo.type;
+  ret->repackInfo.status = repackInfo.status;
+  ret->repackInfo.repackBufferBaseURL = repackInfo.repackBufferBaseURL;
+  ret->repackInfo.noRecall = repackInfo.noRecall;
+  return ret;**/
+
+  for (auto &j : jobs.elements) {
+    std::unique_ptr<OStoreDB::RetrieveJob> rj(new OStoreDB::RetrieveJob(j.retrieveRequest->getAddressIfSet(), *this, nullptr));
+    rj->archiveFile = j.archiveFile;
+    rj->retrieveRequest = j.rr;
+    rj->selectedCopyNb = j.copyNb;
+    rj->errorReportURL = j.errorReportURL;
+    rj->reportType = j.reportType;
+    rj->m_repackInfo = j.repackInfo;
+    rj->setJobOwned();
+    ret.emplace_back(std::move(rj));
+  }
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::setRetrieveQueueCleanupFlag()
+//------------------------------------------------------------------------------
+void OStoreDB::setRetrieveQueueCleanupFlag(const std::string& vid, bool val, log::LogContext& logContext) {
+
+  cta::utils::Timer t;
+  double rootFetchNoLockTime = 0;
+  double rootRelockExclusiveTime = 0;
+  double rootRefetchTime = 0;
+  double addOrGetQueueandCommitTime = 0;
+  double queueLockTime = 0;
+  double queueFetchTime = 0;
+
+  std::string qAddress;
+  RetrieveQueue rqueue(m_objectStore);
+  ScopedExclusiveLock rqlock;
+
+  {
+    RootEntry re(m_objectStore);
+    re.fetchNoLock();
+    rootFetchNoLockTime = t.secs(utils::Timer::resetCounter);
+    try {
+      qAddress = re.getRetrieveQueueAddress(vid, common::dataStructures::JobQueueType::JobsToTransferForUser);
+      rqueue.setAddress(qAddress);
+    } catch (cta::exception::Exception & ex) {
+      ScopedExclusiveLock rexl(re);
+      rootRelockExclusiveTime = t.secs(utils::Timer::resetCounter);
+      re.fetch();
+      rootRefetchTime = t.secs(utils::Timer::resetCounter);
+      qAddress = re.addOrGetRetrieveQueueAndCommit(vid, *m_agentReference, common::dataStructures::JobQueueType::JobsToTransferForUser);
+      rqueue.setAddress(qAddress);
+      addOrGetQueueandCommitTime = t.secs(utils::Timer::resetCounter);
+    }
+  }
+
+  try {
+    rqlock.lock(rqueue);
+    queueLockTime = t.secs(utils::Timer::resetCounter);
+    rqueue.fetch();
+    queueFetchTime = t.secs(utils::Timer::resetCounter);
+    rqueue.setQueueCleanupDoCleanup(val);
+    rqueue.commit();
+  } catch (cta::exception::Exception &ex) {
+    log::ScopedParamContainer params(logContext);
+    params.add("queueObject", qAddress)
+          .add("tapeVid", vid)
+          .add("cleanupFlagValue", val)
+          .add("exceptionMessage", ex.getMessageValue());
+    logContext.log(log::DEBUG, "WARNING: In OStoreDB::setRetrieveQueueCleanupFlag(): failed to set cleanup flag value on retrieve queue.");
+  }
+
+  double processingTime = t.secs(utils::Timer::resetCounter);
+  log::ScopedParamContainer params (logContext);
+  params.add("queueObject", qAddress)
+        .add("tapeVid", vid)
+        .add("cleanupFlagValue", val)
+        .add("rootFetchNoLockTime", rootFetchNoLockTime)
+        .add("rootRelockExclusiveTime", rootRelockExclusiveTime)
+        .add("rootRefetchTime", rootRefetchTime)
+        .add("addOrGetQueueandCommitTime", addOrGetQueueandCommitTime)
+        .add("queueLockTime", queueLockTime)
+        .add("queueFetchTime", queueFetchTime)
+        .add("processingTime", processingTime);
+  if(queueLockTime > 1 || queueFetchTime > 1){
+    logContext.log(log::WARNING, "In OStoreDB::setRetrieveQueueCleanupFlag(): fetched a retrieve queue and that lasted more than 1 second.");
+  }
+}
+
+//------------------------------------------------------------------------------
 // OStoreDB::getNextRepackJobToExpand()
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::RepackRequest> OStoreDB::getNextRepackJobToExpand() {
@@ -2069,7 +2307,6 @@ std::unique_ptr<SchedulerDatabase::RepackRequest> OStoreDB::getNextRepackJobToEx
     ret->repackInfo.type = repackInfo.type;
     ret->repackInfo.status = repackInfo.status;
     ret->repackInfo.repackBufferBaseURL = repackInfo.repackBufferBaseURL;
-    ret->repackInfo.forceDisabledTape = repackInfo.forceDisabledTape;
     ret->repackInfo.noRecall = repackInfo.noRecall;
     return ret;
   }
@@ -2675,7 +2912,6 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequ
   m_repackRequest.setTotalStats(totalStatsFiles);
   uint64_t fSeq = std::max(maxFSeqLowBound + 1, maxAddedFSeq + 1);
   common::dataStructures::MountPolicy mountPolicy = m_repackRequest.getMountPolicy();
-  bool forceDisabledTape = repackInfo.forceDisabledTape;
   bool noRecall = repackInfo.noRecall;
   // We make sure the references to subrequests exist persistently before creating them.
   m_repackRequest.commit();
@@ -2761,7 +2997,6 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequ
         rRRepackInfo.fileBufferURL = rsr.fileBufferURL;
         rRRepackInfo.fSeq = rsr.fSeq;
         rRRepackInfo.isRepack = true;
-        rRRepackInfo.forceDisabledTape = forceDisabledTape;
         rRRepackInfo.repackRequestAddress = m_repackRequest.getAddressIfSet();
         if(rsr.hasUserProvidedFile){
           rRRepackInfo.hasUserProvidedFile = true;
@@ -2784,7 +3019,7 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequ
             if (tc.vid == repackInfo.vid) {
               try {
                 // Try to select the repack VID from a one-vid list.
-                Helpers::selectBestRetrieveQueue({repackInfo.vid}, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore,forceDisabledTape);
+                Helpers::selectBestRetrieveQueue({repackInfo.vid}, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore, true);
                 bestVid = repackInfo.vid;
                 activeCopyNumber = tc.copyNb;
               } catch (Helpers::NoTapeAvailableForRetrieve &) {}
@@ -2797,7 +3032,7 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequ
           std::set<std::string> candidateVids;
           for (auto & tc: rsr.archiveFile.tapeFiles) candidateVids.insert(tc.vid);
           try {
-            bestVid = Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore,forceDisabledTape);
+            bestVid = Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore, true);
           } catch (Helpers::NoTapeAvailableForRetrieve &) {
             // Count the failure for this subrequest.
             notCreatedSubrequests.emplace_back(rsr);
@@ -2805,7 +3040,6 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequ
             failedCreationStats.bytes += rsr.archiveFile.fileSize;
             log::ScopedParamContainer params(lc);
             params.add("fileId", rsr.archiveFile.archiveFileID)
-                  .add("wasRepackSubmittedWithForceDisabledTape",forceDisabledTape)
                   .add("repackVid", repackInfo.vid);
             lc.log(log::ERR,
                 "In OStoreDB::RepackRequest::addSubrequests(): could not queue a retrieve subrequest. Subrequest failed. Maybe the tape to repack is disabled ?");
@@ -4864,13 +5098,13 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
           "In OStoreDB::RetrieveJob::failTransfer(): no active job after addJobFailure() returned false."
         );
       }
-      bool disabledTape = m_retrieveRequest.getRepackInfo().forceDisabledTape;
+      bool isRepack = m_retrieveRequest.getRepackInfo().isRepack;
       m_retrieveRequest.commit();
       rel.release();
 
       // Check that the requested retrieve job (for the provided VID) exists, and record the copy number
       std::string bestVid = Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue,
-        m_oStoreDB.m_objectStore,disabledTape);
+        m_oStoreDB.m_objectStore, isRepack);
 
       auto tf_it = af.tapeFiles.begin();
       for( ; tf_it != af.tapeFiles.end() && tf_it->vid != bestVid; ++tf_it) ;

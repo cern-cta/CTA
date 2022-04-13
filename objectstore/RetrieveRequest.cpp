@@ -153,7 +153,7 @@ void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentRefe
   // filter on tape availability.
   try {
     // If we have to fetch the status of the tapes and queued for the non-disabled vids.
-    bestVid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, m_objectStore,m_payload.repack_info().force_disabled_tape());
+    bestVid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, m_objectStore, m_payload.repack_info().has_repack_request_address());
     goto queueForTransfer;
   } catch (Helpers::NoTapeAvailableForRetrieve &) {}
 queueForFailure:;
@@ -668,7 +668,6 @@ void RetrieveRequest::setRepackInfo(const RepackInfo& repackInfo) {
     }
 
     m_payload.mutable_repack_info()->set_has_user_provided_file(repackInfo.hasUserProvidedFile);
-    m_payload.mutable_repack_info()->set_force_disabled_tape(repackInfo.forceDisabledTape);
     m_payload.mutable_repack_info()->set_file_buffer_url(repackInfo.fileBufferURL);
     m_payload.mutable_repack_info()->set_repack_request_address(repackInfo.repackRequestAddress);
     m_payload.mutable_repack_info()->set_fseq(repackInfo.fSeq);
@@ -966,7 +965,6 @@ auto RetrieveRequest::asyncUpdateJobOwner(uint32_t copyNumber, const std::string
               ri.isRepack = true;
               ri.repackRequestAddress = payload.repack_info().repack_request_address();
               ri.fSeq = payload.repack_info().fseq();
-              ri.forceDisabledTape = payload.repack_info().force_disabled_tape();
             }
             // TODO serialization of payload maybe not necessary
             oh.set_payload(payload.SerializeAsString());

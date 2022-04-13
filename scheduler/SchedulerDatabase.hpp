@@ -153,23 +153,21 @@ class SchedulerDatabase {
    * @param repackBufferURL
    * @param repackType
    * @param mountPolicy
-   * @param forceDisabledTape
    * @param noRecall
    */
   class QueueRepackRequest {
    public:
     QueueRepackRequest(const std::string & vid, const std::string& repackBufferURL,
       const common::dataStructures::RepackInfo::Type& repackType,
-      const common::dataStructures::MountPolicy & mountPolicy, const bool forceDisabledTape,
+      const common::dataStructures::MountPolicy & mountPolicy,
       const bool noRecall)
-    : m_vid(vid), m_repackBufferURL(repackBufferURL), m_repackType(repackType), m_mountPolicy(mountPolicy),
-      m_forceDisabledTape(forceDisabledTape), m_noRecall(noRecall) {}
+    : m_vid(vid), m_repackBufferURL(repackBufferURL), m_repackType(repackType),
+      m_mountPolicy(mountPolicy), m_noRecall(noRecall) {}
 
     std::string m_vid;
     std::string m_repackBufferURL;
     common::dataStructures::RepackInfo::Type m_repackType;
     common::dataStructures::MountPolicy m_mountPolicy;
-    bool m_forceDisabledTape;
     bool m_noRecall;
     common::dataStructures::EntryLog m_creationLog;
   };
@@ -275,6 +273,24 @@ class SchedulerDatabase {
   /*============ Retrieve  management: user side ============================*/
 
   /**
+   * A representation of the cleanup request status of a retrieve queue.
+   */
+  struct RetrieveQueueCleanupInfo {
+    std::string vid;
+    bool doCleanup;
+    std::optional<std::string> assignedAgent;
+    uint64_t heartbeat;
+  };
+
+  /**
+   * Get the retrieve queue cleanup status.
+   * @param vidsToConsider list of vids to considers. If empty, all vids will be considered.
+   * @return the list of cleanup request status.
+   */
+  virtual std::list<RetrieveQueueCleanupInfo> getRetrieveQueuesCleanupInfo(log::LogContext& logContext) = 0;
+  virtual void setRetrieveQueueCleanupFlag(const std::string&vid, bool val, log::LogContext& logContext) = 0;
+
+  /**
    * A representation of an existing retrieve queue. This is a (simpler) relative
    * to the PotentialMount used for mount scheduling. This summary will be used to
    * decide which retrieve job to use for multiple copy files.
@@ -310,6 +326,7 @@ class SchedulerDatabase {
   virtual std::list<RetrieveQueueStatistics> getRetrieveQueueStatistics(
     const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria,
     const std::set<std::string> & vidsToConsider) = 0;
+
   /**
    * Queues the specified request. As the object store has access to the catalogue,
    * the best queue (most likely to go, and not disabled can be chosen directly there).
@@ -583,6 +600,10 @@ class SchedulerDatabase {
 
   /***/
   virtual std::unique_ptr<RepackRequest> getNextRepackJobToExpand() = 0;
+  virtual std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsToTransferBatch(std::string & vid, uint64_t filesRequested, log::LogContext &logContext) = 0;
+  virtual void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob *> &jobs, log::LogContext& logContext) = 0;
+  virtual void reserveRetrieveQueueForCleanup(std::string & vid, std::optional<uint64_t> cleanupHeartBeatValue) = 0;
+  virtual void tickRetrieveQueueCleanupHeartbeat(std::string & vid) = 0;
 
   /*============ Repack management: maintenance process side =========================*/
 
