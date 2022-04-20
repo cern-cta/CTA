@@ -121,7 +121,7 @@ namespace tape {
       /**
        * Throws an exception if the structure does not match expectations.
        */
-      void verify();
+      void verify(const char *const expectedLblStandard = "3");
     };
 
     class VOL1withCrc : public VOL1 {

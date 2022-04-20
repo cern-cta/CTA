@@ -36,14 +36,14 @@ void tapeFile::VOL1::fill(std::string VSN,
   setString(m_LBPMethod, hexLBP.str());
 }
 
-void tapeFile::VOL1::verify() {
+void tapeFile::VOL1::verify(const char *const expectedLblStandard) {
   if (cmpString(m_label, "VOL1"))
     throw cta::exception::Exception(std::string("Failed verify for the VOL1: ") +
           tapeFile::toString(m_label));
   if (!cmpString(m_VSN, ""))
     throw cta::exception::Exception(std::string("Failed verify for the VSN: ") +
           tapeFile::toString(m_VSN));
-  const char *const expectedLblStandard = "3";
+
   if (cmpString(m_lblStandard, expectedLblStandard))
     throw cta::exception::Exception(
           std::string("Failed verify for the label standard: expected=") +

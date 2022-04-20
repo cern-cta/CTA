@@ -20,6 +20,7 @@ Please consult the [database upgrade documentation](https://eoscta.docs.cern.ch/
 - cta/CTA#1155 - Remove GCC suppresions in DriveGeneric and file/Structures
 - cta/CTA#1173 - Remove GCC '-Wno-unused-function' suppresion
 - cta/CTA#1166 - Add SCL-RH Repo to CTA CI boot scripts
+- cta/CTA#1185 - Make expectedLabelStandard default argument (for Enstore reads)
 
 ### Catalogue Schema
 - cta/CTA#1043 - Add verification column to tape table
