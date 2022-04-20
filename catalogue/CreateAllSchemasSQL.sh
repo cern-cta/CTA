@@ -14,7 +14,7 @@ cat ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_header.sql \
     ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_trailer.sql |\
     sed 's/--.*$//' |\
     # SQLite does not allow the use of functions in indexes
-    sed 's/(LOWER\([^\)]*\))/\1/' |\
+    sed 's/LOWER(\([^\)]*\))/\1/g' |\
     sed 's/UINT8TYPE/INTEGER/g' |\
     sed 's/UINT16TYPE/INTEGER/g' |\
     sed 's/UINT32TYPE/INTEGER/g' |\

@@ -16,6 +16,7 @@
  */
 
 #include <iostream>
+#include <regex>
 
 #include "DbToSQLiteStatementTransformer.hpp"
 #include "common/utils/Regex.hpp"
@@ -63,9 +64,8 @@ IndexStatementTransformer::IndexStatementTransformer(const std::string& statemen
 std::string IndexStatementTransformer::transform(){
   utils::searchAndReplace(m_statement,"UNIQUE "," ");
   // This is a bit crude, but it will work so long as we don't have indexes with multiple nested functions...
-  if(utils::searchAndReplace(m_statement,"LOWER(","") > 0) {
-    utils::searchAndReplace(m_statement,"))",")");
-  }
+  std::regex lowerRegex("LOWER\\(([^\\)]*)\\)");
+  m_statement = std::regex_replace(m_statement, lowerRegex, "\\1", std::regex_constants::format_sed);
   return m_statement;
 }
 /*****************************/

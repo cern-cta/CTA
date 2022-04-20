@@ -660,11 +660,10 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_TAPEPOOL,             AdminCmd::SUBCMD_LS    }, { opt_tapepool_alias.optional(), opt_vo.optional(), opt_encrypted.optional()}},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_DISKSYSTEM,           AdminCmd::SUBCMD_ADD   },
-      { opt_disksystem, opt_file_regexp, opt_free_space_query_url, opt_refresh_interval, opt_targeted_free_space, opt_sleep_time,
+      { opt_disksystem, opt_file_regexp, opt_diskinstance, opt_diskinstancespace, opt_targeted_free_space, opt_sleep_time,
         opt_comment }},
    {{ AdminCmd::CMD_DISKSYSTEM,           AdminCmd::SUBCMD_CH    },
-      { opt_disksystem, opt_file_regexp.optional(), opt_free_space_query_url.optional(), opt_refresh_interval.optional(),
-        opt_targeted_free_space.optional(), opt_sleep_time.optional(), opt_comment.optional(), opt_diskinstance.optional(), opt_diskinstancespace.optional() }},
+      { opt_disksystem, opt_file_regexp.optional(), opt_targeted_free_space.optional(), opt_sleep_time.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_DISKSYSTEM,           AdminCmd::SUBCMD_RM    }, { opt_disksystem }},
    {{ AdminCmd::CMD_DISKSYSTEM,           AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/

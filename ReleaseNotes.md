@@ -10,6 +10,7 @@ Please consult the [database upgrade documentation](https://eoscta.docs.cern.ch/
 ### Features
 - cta/CTA#1163 - cta-admin now prefixes the drivename with a '!' if the respective logical library is disabled
 - cta/CTA#1168 - Add configuration option for scheduler stack size to /etc/cta/cta-frontend-xrootd.conf
+- cta/CTA#1151 - Update cta-admin ds add for catalogue schema version 10
 ### Bug fixes
 - cta/CTA#1156 - failed to instantiate the RAO algorithm
 
