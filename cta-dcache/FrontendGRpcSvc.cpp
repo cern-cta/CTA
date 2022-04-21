@@ -130,8 +130,7 @@ Status CtaRpcImpl::Delete(::grpc::ServerContext* context, const ::cta::dcache::r
     try {
         deleteRequest.archiveFile = m_catalogue->getArchiveFileById(deleteRequest.archiveFileID);
     } catch (cta::exception::Exception &ex){
-        lc.log(cta::log::CRIT, ex.getMessageValue());
-        return ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.getMessageValue());
+        lc.log(cta::log::WARNING, "Deleted file is not in catalog.");
     }
     m_scheduler->deleteArchive(instance, deleteRequest, lc);
 
