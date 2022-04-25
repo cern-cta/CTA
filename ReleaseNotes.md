@@ -1,16 +1,26 @@
 # v4.NEXT
 
 ## Summary
+### Upgrade Instructions
+### Features
+### Bug fixes
+### Building and Packaging
+### Catalogue Schema
+
+# v4.7.0-1
+
+## Summary
 
 ### Upgrade Instructions
 
-This CTA release requires a backwards compatible database schema upgrade to CTA catalogue schema v10.0.
+This CTA release requires a non-backwards compatible database schema upgrade to CTA catalogue schema v10.0.
 Please consult the [database upgrade documentation](https://eoscta.docs.cern.ch/catalogue/upgrade/).
 
 ### Features
 - cta/CTA#1163 - cta-admin now prefixes the drivename with a '!' if the respective logical library is disabled
 - cta/CTA#1168 - Add configuration option for scheduler stack size to /etc/cta/cta-frontend-xrootd.conf
 - cta/CTA#1151 - Update cta-admin ds add for catalogue schema version 10
+
 ### Bug fixes
 - cta/CTA#1156 - failed to instantiate the RAO algorithm
 
@@ -31,8 +41,6 @@ Please consult the [database upgrade documentation](https://eoscta.docs.cern.ch/
 - cta/CTA#1177 - Fix CTA catalogue schema verify index checker for PostgreSQL
 - cta/CTA#1147 - Add foreign key constraint between the disk instance name of a vo and the disk instance table
 - cta/CTA#1151 - Drop ACTIVITY_WEIGHTS and TAPE_DRIVE tables
-
-### Continuous Integration
 
 # v4.6.1-1
 
