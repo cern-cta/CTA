@@ -94,12 +94,12 @@ namespace unitTests {
       void insertDiskSystemDefault() {
         auto & catalogue = getCatalogue();
         // create disk instance
-        std::string diskInstanceName = "DiskInstanceNameDefault";
+        std::string diskInstanceName = "ctaeos";
         std::string diskInstanceComment = "Comment";
         catalogue.createDiskInstance(m_cliId, diskInstanceName, diskInstanceComment);
         // create disk instance space
         std::string diskInstanceSpaceName = "DiskInstanceSpaceDefault";
-        std::string freeSpaceQueryURL = "eos:ctaeos:default";
+        std::string freeSpaceQueryURL = "eosSpace:default";
         uint64_t refrestInterval = 1; 
         std::string diskInstanceSpaceComment = "Comment";
         catalogue.createDiskInstanceSpace(m_cliId, diskInstanceSpaceName, diskInstanceName, freeSpaceQueryURL, refrestInterval, diskInstanceSpaceComment);

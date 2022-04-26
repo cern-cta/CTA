@@ -77,6 +77,14 @@ std::string DiskSystemList::getFetchEosFreeSpaceScript() const{
 // DiskSystemFreeSpaceList::fetchFileSystemFreeSpace()
 //------------------------------------------------------------------------------
 void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::string>& diskSystems, log::LogContext & lc) {
+  auto getDiskSystemFreeSpaceQueryURL = [](DiskSystem ds) {
+    auto dsURL = ds.diskInstanceSpace.freeSpaceQueryURL;
+    // Replace URLS starting in eosSpace with eos:{diskInstanceName}
+    if (dsURL.rfind("eosSpace", 0) == 0) {
+      dsURL = "eos:" + ds.diskInstanceSpace.diskInstance + dsURL.substr(8);
+    }
+    return dsURL;
+  };
   // The real deal: go fetch the file system's free space.
   cta::utils::Regex eosDiskSystem("^eos:(.*):(.*)$");
   // For testing purposes
@@ -88,7 +96,7 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
     try {
       std::vector<std::string> regexResult;
       auto & currentDiskSystem = m_systemList.at(ds);
-      regexResult = eosDiskSystem.exec(currentDiskSystem.diskInstanceSpace.freeSpaceQueryURL);
+      regexResult = eosDiskSystem.exec(getDiskSystemFreeSpaceQueryURL(currentDiskSystem));
       if (regexResult.size()) {
         //Script, then EOS free space query
         if(!m_systemList.getFetchEosFreeSpaceScript().empty()){
@@ -108,7 +116,7 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
         freeSpace = fetchEosFreeSpace(regexResult.at(1), regexResult.at(2), lc);
         goto found;
       } 
-      regexResult = constantFreeSpaceDiskSystem.exec(m_systemList.at(ds).diskInstanceSpace.freeSpaceQueryURL);
+      regexResult = constantFreeSpaceDiskSystem.exec(getDiskSystemFreeSpaceQueryURL(m_systemList.at(ds)));
       if (regexResult.size()) {
         freeSpace = fetchConstantFreeSpace(regexResult.at(1), lc);
         goto found;
