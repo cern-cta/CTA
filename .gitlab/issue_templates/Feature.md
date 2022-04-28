@@ -1,14 +1,12 @@
+<!-- After you create the issue, add a link to the operations issue which triggered this feature request, if applicable. -->
+
 ### Problem to solve
 
-<!-- What problem do we solve? -->
+<!-- What problem do we need to solve? Include use cases, benefits, and/or goals. -->
 
-### Intended users
+### Stakeholders
 
-<!-- Who will use this feature? If known, include any of the following: types of users (e.g. Developer, Operations), or specific company roles (e.g. Release Manager). It's okay to write "Unknown" and fill this field in later. -->
-
-### Further details
-
-<!-- Include use cases, benefits, and/or goals -->
+<!-- Who will use or benefit from this feature? -->
 
 ### Proposal
 

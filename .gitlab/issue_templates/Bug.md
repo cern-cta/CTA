@@ -1,34 +1,27 @@
-<!---
-Please read this!
-
-Before opening a new issue, make sure to search for keywords in the issues.
-
-and verify the issue you're about to submit isn't a duplicate.
---->
+<!-- After you create the issue, add a link to the operations issue which triggered this bug. Also add links to any related issues. -->
 
 ### Summary
 
-(Summarize the bug encountered concisely)
+<!-- Concise summary of the bug encountered. -->
 
 ### Steps to reproduce
 
-(How one can reproduce the issue - this is very important)
+<!-- How to reproduce the issue. -->
 
-### What is the current *bug* behavior?
+### What is the current *bug* behaviour?
 
-(What actually happens)
+<!-- What actually happens. -->
 
-### What is the expected *correct* behavior?
+### What is the expected *correct* behaviour?
 
-(What you should see instead)
+<!-- What you should see instead. -->
 
 ### Relevant logs and/or screenshots
 
-(Paste any relevant logs - please use code blocks (```) to format console output,
-logs, and code as it's tough to read otherwise.)
+<!-- Paste any relevant logs. Use code blocks (```) to format console output, logs and code. -->
 
-### Possible fixes
+### Possible causes
 
-(If you can, link to the line of code that might be responsible for the problem)
+<!-- If you have a theory about the possible cause of the bug, include it here. -->
 
 /label ~bug
