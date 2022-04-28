@@ -16,7 +16,6 @@
  */
 
 #include "common/exception/Exception.hpp"
-#include "common/make_unique.hpp"
 #include "rdbms/wrapper/SqliteConn.hpp"
 #include "rdbms/wrapper/SqliteConnFactory.hpp"
 
@@ -42,7 +41,7 @@ SqliteConnFactory::~SqliteConnFactory() {
 //------------------------------------------------------------------------------
 std::unique_ptr<ConnWrapper> SqliteConnFactory::create() {
   try {
-    return cta::make_unique<SqliteConn>(m_filename);
+    return std::make_unique<SqliteConn>(m_filename);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }

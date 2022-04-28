@@ -15,7 +15,6 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/make_unique.hpp"
 #include "Statistics.hpp"
 
 namespace cta {
@@ -96,7 +95,7 @@ time_t Statistics::getUpdateTime() const {
 Statistics::Builder::Builder() {}
 
 std::unique_ptr<Statistics> Statistics::Builder::build(cta::rdbms::Rset* rset) {
-  std::unique_ptr<Statistics> ret = cta::make_unique<Statistics>();
+  std::unique_ptr<Statistics> ret = std::make_unique<Statistics>();
   while (rset->next()) {
     // loop over each VO
     std::string vo = rset->columnString("VO");

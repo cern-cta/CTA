@@ -33,7 +33,6 @@
 #include "common/exception/NoSuchObject.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/StdoutLogger.hpp"
-#include "common/make_unique.hpp"
 #include "common/utils/utils.hpp"
 #include "disk/DiskFile.hpp"
 #include "MemQueues.hpp"
@@ -60,7 +59,7 @@ using namespace objectstore;
 //------------------------------------------------------------------------------
 OStoreDB::OStoreDB(objectstore::Backend& be, catalogue::Catalogue & catalogue, log::Logger &logger):
   m_taskQueueSize(0), m_taskPostingSemaphore(5), m_objectStore(be), m_catalogue(catalogue), m_logger(logger) {
-  m_tapeDrivesState = cta::make_unique<TapeDrivesCatalogueState>(m_catalogue);
+  m_tapeDrivesState = std::make_unique<TapeDrivesCatalogueState>(m_catalogue);
   for (size_t i=0; i<5; i++) {
     m_enqueueingWorkerThreads.emplace_back(new EnqueueingWorkerThread(m_enqueueingTasksQueue));
     m_enqueueingWorkerThreads.back()->start();
@@ -833,11 +832,11 @@ std::string OStoreDB::queueArchive(const std::string &instanceName, const cta::c
         const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId &criteria, log::LogContext &logContext) {
   assertAgentAddressSet();
   cta::utils::Timer timer;
-  auto mutexForHelgrind = cta::make_unique<cta::threading::Mutex>();
+  auto mutexForHelgrind = std::make_unique<cta::threading::Mutex>();
   cta::threading::MutexLocker mlForHelgrind(*mutexForHelgrind);
   auto * mutexForHelgrindAddr = mutexForHelgrind.release();
   // Construct the archive request object in memory
-  auto aReq = cta::make_unique<cta::objectstore::ArchiveRequest> (m_agentReference->nextId("ArchiveRequest"), m_objectStore);
+  auto aReq = std::make_unique<cta::objectstore::ArchiveRequest> (m_agentReference->nextId("ArchiveRequest"), m_objectStore);
   aReq->initialize();
   // Summarize all as an archiveFile
   cta::common::dataStructures::ArchiveFile aFile;
@@ -1041,7 +1040,7 @@ const common::dataStructures::ArchiveJob &OStoreDB::ArchiveJobQueueItor::operato
 //------------------------------------------------------------------------------
 std::unique_ptr<cta::SchedulerDatabase::IArchiveJobQueueItor> OStoreDB::getArchiveJobQueueItor(
   const std::string &tapePoolName, common::dataStructures::JobQueueType queueType) const {
-  return cta::make_unique<ArchiveJobQueueItor>(&m_objectStore, queueType, tapePoolName);
+  return std::make_unique<ArchiveJobQueueItor>(&m_objectStore, queueType, tapePoolName);
 }
 
 //------------------------------------------------------------------------------
@@ -1323,7 +1322,7 @@ SchedulerDatabase::RetrieveRequestInfo OStoreDB::queueRetrieve(cta::common::data
   const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria, const optional<std::string> diskSystemName,
   log::LogContext &logContext) {
   assertAgentAddressSet();
-  auto mutexForHelgrind = cta::make_unique<cta::threading::Mutex>();
+  auto mutexForHelgrind = std::make_unique<cta::threading::Mutex>();
   cta::threading::MutexLocker mlForHelgrind(*mutexForHelgrind);
   cta::utils::Timer timer;
   // Get the best vid from the cache
@@ -1351,7 +1350,7 @@ SchedulerDatabase::RetrieveRequestInfo OStoreDB::queueRetrieve(cta::common::data
   }
   vidFound:
   // In order to post the job, construct it first in memory.
-  auto rReq = cta::make_unique<objectstore::RetrieveRequest> (m_agentReference->nextId("RetrieveRequest"), m_objectStore);
+  auto rReq = std::make_unique<objectstore::RetrieveRequest> (m_agentReference->nextId("RetrieveRequest"), m_objectStore);
   ret.requestId = rReq->getAddressIfSet();
   rReq->initialize();
   rReq->setSchedulerRequest(rqst);
@@ -1793,7 +1792,7 @@ const common::dataStructures::RetrieveJob &OStoreDB::RetrieveJobQueueItor::opera
 //------------------------------------------------------------------------------
 std::unique_ptr<cta::SchedulerDatabase::IRetrieveJobQueueItor> OStoreDB::getRetrieveJobQueueItor(const std::string &vid,
   common::dataStructures::JobQueueType queueType) const {
-  return cta::make_unique<RetrieveJobQueueItor>(&m_objectStore, queueType, vid);
+  return std::make_unique<RetrieveJobQueueItor>(&m_objectStore, queueType, vid);
 }
 
 //------------------------------------------------------------------------------
@@ -1808,7 +1807,7 @@ std::string OStoreDB::queueRepack(const SchedulerDatabase::QueueRepackRequest & 
   // Prepare the repack request object in memory.
   assertAgentAddressSet();
   cta::utils::Timer t;
-  auto rr=cta::make_unique<cta::objectstore::RepackRequest>(m_agentReference->nextId("RepackRequest"), m_objectStore);
+  auto rr=std::make_unique<cta::objectstore::RepackRequest>(m_agentReference->nextId("RepackRequest"), m_objectStore);
   rr->initialize();
   // We need to own the request until it is queued in the the pending queue.
   rr->setOwner(m_agentReference->getAgentAddress());
@@ -2032,7 +2031,7 @@ auto OStoreDB::getRepackStatistics() -> std::unique_ptr<SchedulerDatabase::Repac
 // OStoreDB::getRepackStatisticsNoLock()
 //------------------------------------------------------------------------------
 auto OStoreDB::getRepackStatisticsNoLock() -> std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> {
-  auto typedRet = make_unique<OStoreDB::RepackRequestPromotionStatisticsNoLock>();
+  auto typedRet = std::make_unique<OStoreDB::RepackRequestPromotionStatisticsNoLock>();
   RootEntry re(m_objectStore);
   re.fetchNoLock();
   populateRepackRequestsStatistics(re, *typedRet);
@@ -3458,7 +3457,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::RetrieveMou
   RQAlgos::PopCriteria popCriteria(filesRequested, bytesRequested);
   for (auto &dsts: m_diskSystemsToSkip) popCriteria.diskSystemsToSkip.insert({dsts.name, dsts.sleepTime});
   jobs = rqAlgos.popNextBatch(mountInfo.vid, popCriteria, logContext);
-  // Construct the return value 
+  // Construct the return value
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
   for(auto &j : jobs.elements)
   {
@@ -3486,7 +3485,7 @@ void OStoreDB::RetrieveMount::putQueueToSleep(const std::string &diskSystemName,
   cta::optional<std::string> vid(mountInfo.vid);
 
   Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq, lock, *m_oStoreDB.m_agentReference, vid, queueType, logContext);
-  
+
   rq.setSleepForFreeSpaceStartTimeAndName(::time(nullptr), diskSystemName, sleepTime);
   rq.commit();
   lock.release();
@@ -3495,7 +3494,7 @@ void OStoreDB::RetrieveMount::putQueueToSleep(const std::string &diskSystemName,
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveMount::requeueJobBatch()
 //------------------------------------------------------------------------------
-void OStoreDB::RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobBatch, 
+void OStoreDB::RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobBatch,
       log::LogContext& logContext) {
   objectstore::Sorter sorter(*m_oStoreDB.m_agentReference, m_oStoreDB.m_objectStore, m_oStoreDB.m_catalogue);
   std::list<std::shared_ptr<objectstore::RetrieveRequest>> rrlist;
@@ -3518,7 +3517,7 @@ void OStoreDB::RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<Schedule
 //------------------------------------------------------------------------------
 bool OStoreDB::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest &diskSpaceReservationRequest,
   const std::string &fetchEosFreeSpaceScript, log::LogContext& logContext) {
-  
+
   // Get the current file systems list from the catalogue
   cta::disk::DiskSystemList diskSystemList;
   diskSystemList = m_oStoreDB.m_catalogue.getAllDiskSystems();
@@ -3545,7 +3544,7 @@ bool OStoreDB::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRe
       logContext.log(cta::log::ERR, "In OStoreDB::RetrieveMount::reserveDiskSpace(): unable to request EOS free space for disk system, putting queue to sleep");
       auto sleepTime = diskSystemFreeSpace.getDiskSystemList().at(failedDiskSystem.first).sleepTime;
       putQueueToSleep(failedDiskSystem.first, sleepTime, logContext);
-    } 
+    }
     return false;
   } catch (std::exception &ex) {
     // Leave a log message before letting the possible exception go up the stack.
@@ -3554,8 +3553,8 @@ bool OStoreDB::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRe
     logContext.log(cta::log::ERR, "In OStoreDB::RetrieveMount::reserveDiskSpace(): got an exception from diskSystemFreeSpace.fetchDiskSystemFreeSpace().");
     throw;
   }
-    
-  // If a file system does not have enough space fail the disk space reservation,  put the queue to sleep and 
+
+  // If a file system does not have enough space fail the disk space reservation,  put the queue to sleep and
   // the retrieve mount will immediately stop
   for (auto const &ds: diskSystemNames) {
     uint64_t previousDrivesReservationTotal = 0;
@@ -3563,7 +3562,7 @@ bool OStoreDB::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRe
     // Compute previous drives reservation for the physical space of the current disk system.
     for (auto previousDriveReservation: previousDrivesReservations) {
       //avoid empty string when no disk space reservation exists for drive
-      if (previousDriveReservation.second != 0) { 
+      if (previousDriveReservation.second != 0) {
         auto previousDiskSystem = diskSystemFreeSpace.getDiskSystemList().at(previousDriveReservation.first);
         if (diskSystem.diskInstanceSpace.freeSpaceQueryURL == previousDiskSystem.diskInstanceSpace.freeSpaceQueryURL) {
           previousDrivesReservationTotal += previousDriveReservation.second;
@@ -3579,7 +3578,7 @@ bool OStoreDB::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRe
             .add("spaceToReserve", diskSpaceReservationRequest.at(ds))
             .add("targetedFreeSpace", diskSystemFreeSpace.at(ds).targetedFreeSpace);
       logContext.log(cta::log::WARNING, "In OStoreDB::RetrieveMount::reservediskSpace(): could not allocate disk space for job, applying backpressure");
-      
+
       auto sleepTime = diskSystem.sleepTime;
       putQueueToSleep(ds, sleepTime, logContext);
       return false;
@@ -4729,7 +4728,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
   if (diskSystemName) {
     cta::DiskSpaceReservationRequest dsrr;
     dsrr.addRequest(diskSystemName.value(), archiveFile.fileSize);
-    this->m_oStoreDB.m_catalogue.releaseDiskSpace(m_retrieveMount->getMountInfo().drive, 
+    this->m_oStoreDB.m_catalogue.releaseDiskSpace(m_retrieveMount->getMountInfo().drive,
     m_retrieveMount->getMountInfo().mountId, dsrr, lc);
   }
 
@@ -4936,7 +4935,7 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
 
     // Set the job status
     m_retrieveRequest.setJobStatus(tf.copyNb, enQueueingNextStep.nextStatus);
-    
+
     // Apply the decision
     switch (enQueueingNextStep.nextStep) {
       // We have a reduced set of supported next steps as some are not compatible with this event

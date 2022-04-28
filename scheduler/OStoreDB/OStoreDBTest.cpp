@@ -68,7 +68,7 @@ class OStoreDBTest: public
     // We do a deep reference to the member as the C++ compiler requires the function to be
     // already defined if called implicitly.
     const auto &factory = GetParam().dbFactory;
-    m_catalogue = cta::make_unique<cta::catalogue::DummyCatalogue>();
+    m_catalogue = std::make_unique<cta::catalogue::DummyCatalogue>();
     // Get the OStore DB from the factory.
     auto osdb = std::move(factory.create(m_catalogue));
     // Make sure the type of the SchedulerDatabase is correct (it should be an OStoreDBWrapperInterface).

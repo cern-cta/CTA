@@ -60,7 +60,7 @@ namespace cta {
             job.reset(nullptr);
           }
           while (!skippedFiles.empty()) {
-            auto tiwup = cta::make_unique<cta::catalogue::TapeItemWritten>();
+            auto tiwup = std::make_unique<cta::catalogue::TapeItemWritten>();
             *tiwup = skippedFiles.front();
             skippedFiles.pop();
             tapeItemsWritten.emplace(tiwup.release());

@@ -19,7 +19,6 @@
 #include "catalogue/OracleCatalogueFactory.hpp"
 #include "catalogue/OracleCatalogue.hpp"
 #include "common/exception/Exception.hpp"
-#include "common/make_unique.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -51,9 +50,9 @@ OracleCatalogueFactory::OracleCatalogueFactory(
 //------------------------------------------------------------------------------
 std::unique_ptr<Catalogue> OracleCatalogueFactory::create() {
   try {
-    auto c = cta::make_unique<OracleCatalogue>(m_log, m_login.username, m_login.password, m_login.database, m_nbConns,
+    auto c = std::make_unique<OracleCatalogue>(m_log, m_login.username, m_login.password, m_login.database, m_nbConns,
       m_nbArchiveFileListingConns);
-    return cta::make_unique<CatalogueRetryWrapper>(m_log, std::move(c), m_maxTriesToConnect);
+    return std::make_unique<CatalogueRetryWrapper>(m_log, std::move(c), m_maxTriesToConnect);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }

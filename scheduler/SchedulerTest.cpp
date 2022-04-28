@@ -27,7 +27,6 @@
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/log/DummyLogger.hpp"
-#include "common/make_unique.hpp"
 #include "common/range.hpp"
 #include "common/Timer.hpp"
 #include "objectstore/Algorithms.hpp"
@@ -114,15 +113,15 @@ public:
     const auto &factory = GetParam().dbFactory;
     const uint64_t nbConns = 1;
     const uint64_t nbArchiveFileListingConns = 1;
-    //m_catalogue = cta::make_unique<catalogue::SchemaCreatingSqliteCatalogue>(m_tempSqliteFile.path(), nbConns);
-    m_catalogue = cta::make_unique<catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns);
+    //m_catalogue = std::make_unique<catalogue::SchemaCreatingSqliteCatalogue>(m_tempSqliteFile.path(), nbConns);
+    m_catalogue = std::make_unique<catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns);
     // Get the OStore DB from the factory
     auto osdb = std::move(factory.create(m_catalogue));
     // Make sure the type of the SchedulerDatabase is correct (it should be an OStoreDBWrapperInterface)
     dynamic_cast<cta::objectstore::OStoreDBWrapperInterface*>(osdb.get());
     // We know the cast will not fail, so we can safely do it (otherwise we could leak memory)
     m_db.reset(dynamic_cast<cta::objectstore::OStoreDBWrapperInterface*>(osdb.release()));
-    m_scheduler = cta::make_unique<Scheduler>(*m_catalogue, *m_db, s_minFilesToWarrantAMount, s_minBytesToWarrantAMount);
+    m_scheduler = std::make_unique<Scheduler>(*m_catalogue, *m_db, s_minFilesToWarrantAMount, s_minBytesToWarrantAMount);
     objectstore::Helpers::flushRetrieveQueueStatisticsCache();
   }
 
@@ -1968,7 +1967,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         diskFileId << (12345677 + archiveFileId);
         std::ostringstream diskFilePath;
         diskFilePath << "/public_dir/public_file_"<<i<<"_"<< j;
-        auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+        auto fileWrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
         auto & fileWritten = *fileWrittenUP;
         fileWritten.archiveFileId = archiveFileId++;
         fileWritten.diskInstance = s_diskInstance;
@@ -2286,7 +2285,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
       diskFileId << (12345677 + archiveFileId);
       std::ostringstream diskFilePath;
       diskFilePath << "/public_dir/public_file_"<<1<<"_"<< j;
-      auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto fileWrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
       auto & fileWritten = *fileWrittenUP;
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
@@ -2531,7 +2530,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
       diskFileId << (12345677 + archiveFileId);
       std::ostringstream diskFilePath;
       diskFilePath << "/public_dir/public_file_"<<1<<"_"<< j;
-      auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto fileWrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
       auto & fileWritten = *fileWrittenUP;
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
@@ -2786,7 +2785,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
       diskFileId << (12345677 + archiveFileId);
       std::ostringstream diskFilePath;
       diskFilePath << "/public_dir/public_file_"<<1<<"_"<< j;
-      auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto fileWrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
       auto & fileWritten = *fileWrittenUP;
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
@@ -3082,7 +3081,7 @@ TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
       diskFileId << (12345677 + archiveFileId);
       std::ostringstream diskFilePath;
       diskFilePath << "/public_dir/public_file_"<<1<<"_"<< j;
-      auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto fileWrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
       auto & fileWritten = *fileWrittenUP;
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
@@ -3269,7 +3268,7 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
       diskFileId << (12345677 + archiveFileId);
       std::ostringstream diskFilePath;
       diskFilePath << "/public_dir/public_file_"<<1<<"_"<< j;
-      auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto fileWrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
       auto & fileWritten = *fileWrittenUP;
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
@@ -3443,7 +3442,7 @@ TEST_P(SchedulerTest, emptyMountIsTriggeredWhenCancelledRetrieveRequest) {
       diskFileId << (12345677 + archiveFileId);
       std::ostringstream diskFilePath;
       diskFilePath << "/public_dir/public_file_"<<1<<"_"<< j;
-      auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto fileWrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
       auto & fileWritten = *fileWrittenUP;
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
@@ -3827,7 +3826,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
       diskFileId << (12345677 + archiveFileId);
       std::ostringstream diskFilePath;
       diskFilePath << "/public_dir/public_file_"<<1<<"_"<< j;
-      auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto fileWrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
       auto & fileWritten = *fileWrittenUP;
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
@@ -4073,7 +4072,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldFailIfArchiveRouteMissing) {
       diskFileId << (12345677 + archiveFileId);
       std::ostringstream diskFilePath;
       diskFilePath << "/public_dir/public_file_"<<1<<"_"<< j;
-      auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto fileWrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
       auto & fileWritten = *fileWrittenUP;
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
@@ -4105,7 +4104,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldFailIfArchiveRouteMissing) {
       diskFileId << (12345677 + archiveFileId);
       std::ostringstream diskFilePath;
       diskFilePath << "/public_dir/public_file_"<<1<<"_"<< j;
-      auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto fileWrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
       auto & fileWritten = *fileWrittenUP;
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
@@ -4263,7 +4262,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
       diskFileId << (12345677 + archiveFileId);
       std::ostringstream diskFilePath;
       diskFilePath << "/public_dir/public_file_"<<1<<"_"<< j;
-      auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto fileWrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
       auto & fileWritten = *fileWrittenUP;
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
@@ -4511,7 +4510,7 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
       diskFileId << (12345677 + archiveFileId);
       std::ostringstream diskFilePath;
       diskFilePath << "/public_dir/public_file_"<<1<<"_"<< j;
-      auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto fileWrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
       auto & fileWritten = *fileWrittenUP;
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
@@ -4983,7 +4982,7 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
       diskFileId << (12345677 + archiveFileId);
       std::ostringstream diskFilePath;
       diskFilePath << "/public_dir/public_file_"<<j;
-      auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto fileWrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
       auto & fileWritten = *fileWrittenUP;
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
@@ -5377,7 +5376,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldThrowIfUseBufferNotRecallButNoDir
       diskFileId << (12345677 + archiveFileId);
       std::ostringstream diskFilePath;
       diskFilePath << "/public_dir/public_file_"<<j;
-      auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto fileWrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
       auto & fileWritten = *fileWrittenUP;
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
@@ -5474,7 +5473,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldNotThrowIfTapeDisabledButNoRecall
       diskFileId << (12345677 + archiveFileId);
       std::ostringstream diskFilePath;
       diskFilePath << "/public_dir/public_file_"<<j;
-      auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto fileWrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
       auto & fileWritten = *fileWrittenUP;
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
@@ -5641,7 +5640,7 @@ TEST_P(SchedulerTest, retrieveMaxDrivesVoInFlightChangeScheduleMount)
       diskFileId << (12345677 + archiveFileId);
       std::ostringstream diskFilePath;
       diskFilePath << "/public_dir/public_file_"<<1<<"_"<< j;
-      auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto fileWrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
       auto & fileWritten = *fileWrittenUP;
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;
@@ -5782,7 +5781,7 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
       diskFileId << (12345677 + archiveFileId);
       std::ostringstream diskFilePath;
       diskFilePath << "/public_dir/public_file_"<<1<<"_"<< j;
-      auto fileWrittenUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto fileWrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
       auto & fileWritten = *fileWrittenUP;
       fileWritten.archiveFileId = archiveFileId++;
       fileWritten.diskInstance = s_diskInstance;

@@ -18,7 +18,6 @@
 #include "castor/tape/tapeserver/daemon/TapeWriteSingleThread.hpp"
 #include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationTaskInjector.hpp"
-#include "common/make_unique.hpp"
 
 //------------------------------------------------------------------------------
 // Constructor for TapeWriteSingleThread
@@ -178,7 +177,7 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::openWriteSession() {
         .add("useLbp", m_useLbp);
 
   try {
-    auto writeSession = cta::make_unique<castor::tape::tapeFile::WriteSession>(m_drive, m_volInfo, m_lastFseq, m_compress, m_useLbp);
+    auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(m_drive, m_volInfo, m_lastFseq, m_compress, m_useLbp);
 
     return writeSession;
   } catch (cta::exception::Exception& e) {

@@ -15,7 +15,6 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/make_unique.hpp"
 #include "rdbms/ConstraintError.hpp"
 #include "rdbms/wrapper/PostgresConn.hpp"
 #include "rdbms/wrapper/PostgresRset.hpp"
@@ -42,7 +41,7 @@ protected:
 
   virtual void SetUp() {
     m_connstring = "postgresql://ctaunittest:ctaunittest@localhost/ctaunittest";
-    m_conn = cta::make_unique<cta::rdbms::wrapper::PostgresConn>(m_connstring);
+    m_conn = std::make_unique<cta::rdbms::wrapper::PostgresConn>(m_connstring);
     // Try to drop anything owned by ctaunittest currently in the db
     m_conn->executeNonQuery("drop owned by ctaunittest");
     ASSERT_TRUE(m_conn->getTableNames().empty());

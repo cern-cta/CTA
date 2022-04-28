@@ -41,7 +41,7 @@ namespace cta { namespace objectstore {
     for (auto &cjfq: candidateJobsFromQueue.candidates) {
       ret.elements.emplace_back(PoppedElement());
       PoppedElement & elem = ret.elements.back();
-      elem.archiveRequest = cta::make_unique<ArchiveRequest>(cjfq.address, cont.m_objectStore);
+      elem.archiveRequest = std::make_unique<ArchiveRequest>(cjfq.address, cont.m_objectStore);
       elem.copyNb = cjfq.copyNb;
       elem.bytes = cjfq.size;
       elem.archiveFile = common::dataStructures::ArchiveFile();

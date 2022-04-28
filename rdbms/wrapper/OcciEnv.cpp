@@ -16,7 +16,6 @@
  */
 
 #include "common/exception/Exception.hpp"
-#include "common/make_unique.hpp"
 #include "rdbms/wrapper/OcciConn.hpp"
 #include "rdbms/wrapper/OcciEnv.hpp"
 
@@ -58,7 +57,7 @@ std::unique_ptr<ConnWrapper> OcciEnv::createConn(
       throw exception::Exception("oracle::occi::createConnection() returned a nullptr pointer");
     }
 
-    return cta::make_unique<OcciConn>(m_env, conn);
+    return std::make_unique<OcciConn>(m_env, conn);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   } catch(std::exception &se) {

@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include <common/make_unique.hpp>
 #include <objectstore/BackendPopulator.hpp>
 #include <objectstore/BackendFactory.hpp>
 #include <objectstore/AgentHeartbeatThread.hpp>
@@ -35,7 +34,7 @@ public:
   {
     // Initialise the ObjectStore Backend
     m_backend = std::move(objectstore::BackendFactory::createBackend(db_conn_str, log));
-    m_backendPopulator = cta::make_unique<objectstore::BackendPopulator>(*m_backend, client_process, log::LogContext(log));
+    m_backendPopulator = std::make_unique<objectstore::BackendPopulator>(*m_backend, client_process, log::LogContext(log));
     if(leaveNonEmptyAgentsBehind) {
       m_backendPopulator->leaveNonEmptyAgentsBehind();
     }
@@ -54,7 +53,7 @@ public:
   }
 
   std::unique_ptr<OStoreDBWithAgent> getSchedDB(catalogue::Catalogue& catalogue, log::Logger& log) {
-    return make_unique<OStoreDBWithAgent>(*m_backend, m_backendPopulator->getAgentReference(), catalogue, log);
+    return std::make_unique<OStoreDBWithAgent>(*m_backend, m_backendPopulator->getAgentReference(), catalogue, log);
   }
 
   objectstore::GarbageCollector getGarbageCollector(catalogue::Catalogue& catalogue) {

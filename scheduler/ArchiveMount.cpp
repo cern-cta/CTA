@@ -18,7 +18,6 @@
 #include <iostream>
 
 #include "common/exception/NoSuchObject.hpp"
-#include "common/make_unique.hpp"
 #include "objectstore/Backend.hpp"
 #include "scheduler/ArchiveMount.hpp"
 
@@ -197,7 +196,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
       job.reset();
     }
     while (!skippedFiles.empty()) {
-      auto tiwup = cta::make_unique<cta::catalogue::TapeItemWritten>();
+      auto tiwup = std::make_unique<cta::catalogue::TapeItemWritten>();
       *tiwup = skippedFiles.front();
       skippedFiles.pop();
       tapeItemsWritten.emplace(tiwup.release());

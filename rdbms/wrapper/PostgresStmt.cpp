@@ -18,7 +18,6 @@
 #include "common/utils/utils.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
-#include "common/make_unique.hpp"
 #include "common/threading/RWLockRdLocker.hpp"
 
 #include "rdbms/wrapper/PostgresColumn.hpp"
@@ -96,7 +95,7 @@ void PostgresStmt::bindString(const std::string &paramName, const optional<std::
 
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSqlForException() + ": " + ex.getMessage().str()); 
+      getSqlForException() + ": " + ex.getMessage().str());
   }
 }
 
@@ -390,7 +389,7 @@ std::unique_ptr<RsetWrapper> PostgresStmt::executeQuery() {
 
     doPQsendPrepared();
     const int iret = PQsetSingleRowMode(m_conn.get());
-    auto resItr = cta::make_unique<Postgres::ResultItr>(m_conn.get());
+    auto resItr = std::make_unique<Postgres::ResultItr>(m_conn.get());
 
     if (1 != iret) {
       throwDB(nullptr, "Executing query statement");
@@ -399,7 +398,7 @@ std::unique_ptr<RsetWrapper> PostgresStmt::executeQuery() {
     m_nbAffectedRows = 0;
     m_conn.setAsyncInProgress(true);
 
-    return cta::make_unique<PostgresRset>(m_conn, *this, std::move(resItr));
+    return std::make_unique<PostgresRset>(m_conn, *this, std::move(resItr));
   } catch(exception::LostDatabaseConnection &ex) {
     // reset to initial value
     m_conn.setAsyncInProgress(isasync);

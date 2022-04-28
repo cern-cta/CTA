@@ -25,7 +25,6 @@
 #include "objectstore/BackendRados.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/range.hpp"
-#include "common/make_unique.hpp"
 #ifdef STDOUT_LOGGING
 #include "common/log/StdoutLogger.hpp"
 #endif
@@ -73,8 +72,8 @@ public:
     using namespace cta;
     cta::log::DummyLogger logger("", "");
     const SchedulerDatabaseFactory &factory = GetParam().dbFactory;
-    //m_catalogue = cta::make_unique<cta::catalogue::InMemoryCatalogue>(logger, 1, 1);
-    m_catalogue = cta::make_unique<cta::catalogue::DummyCatalogue>();
+    //m_catalogue = std::make_unique<cta::catalogue::InMemoryCatalogue>(logger, 1, 1);
+    m_catalogue = std::make_unique<cta::catalogue::DummyCatalogue>();
     
     m_db.reset(factory.create(m_catalogue).release());
   }

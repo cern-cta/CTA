@@ -44,7 +44,7 @@ getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, 
   PoppedElementsBatch ret;
   auto candidateJobsFromQueue=cont.getCandidateList(unfulfilledCriteria.bytes, unfulfilledCriteria.files, elemtsToSkip);
   for (auto &cjfq: candidateJobsFromQueue.candidates) {
-    ret.elements.emplace_back(PoppedElement{cta::make_unique<ArchiveRequest>(cjfq.address, cont.m_objectStore), cjfq.copyNb, cjfq.size,
+    ret.elements.emplace_back(PoppedElement{std::make_unique<ArchiveRequest>(cjfq.address, cont.m_objectStore), cjfq.copyNb, cjfq.size,
     common::dataStructures::ArchiveFile(), "", "", "", "", SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired,
     ArchiveRequest::RepackInfo(), {}});
     ret.summary.bytes += cjfq.size;

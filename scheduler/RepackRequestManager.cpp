@@ -16,7 +16,6 @@
  */
 
 #include "common/exception/NoSuchObject.hpp"
-#include "common/make_unique.hpp"
 #include "OStoreDB/OStoreDB.hpp"
 #include "RepackReportThread.hpp"
 #include "RepackRequestManager.hpp"

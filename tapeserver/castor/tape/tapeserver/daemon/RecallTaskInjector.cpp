@@ -16,7 +16,6 @@
  */
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
 #include "common/log/LogContext.hpp"
-#include "common/make_unique.hpp"
 #include "common/optional.hpp"
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"

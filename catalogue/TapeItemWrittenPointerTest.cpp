@@ -17,7 +17,6 @@
 
 #include "catalogue/TapeFileWritten.hpp"
 #include "catalogue/TapeItemWrittenPointer.hpp"
-#include "common/make_unique.hpp"
 
 #include <gtest/gtest.h>
 #include <set>
@@ -39,8 +38,8 @@ TEST_F(cta_catalogue_TapeItemWrittenPointerTest, check_set_order_after_set_fseq_
 
   std::set<TapeItemWrittenPointer> filesWrittenSet;
 
-  auto file1WrittenUP = cta::make_unique<TapeFileWritten>();
-  auto file2WrittenUP = cta::make_unique<TapeFileWritten>();
+  auto file1WrittenUP = std::make_unique<TapeFileWritten>();
+  auto file2WrittenUP = std::make_unique<TapeFileWritten>();
 
   file1WrittenUP->fSeq = 1;
   filesWrittenSet.insert(file1WrittenUP.release());
@@ -62,8 +61,8 @@ TEST_F(cta_catalogue_TapeItemWrittenPointerTest, DISABLED_check_set_order_after_
 
   std::set<TapeItemWrittenPointer> filesWrittenSet;
 
-  auto file1WrittenUP = cta::make_unique<TapeFileWritten>();
-  auto file2WrittenUP = cta::make_unique<TapeFileWritten>();
+  auto file1WrittenUP = std::make_unique<TapeFileWritten>();
+  auto file2WrittenUP = std::make_unique<TapeFileWritten>();
 
   auto file1WrittenPtr = file1WrittenUP.get();
   auto file2WrittenPtr = file2WrittenUP.get();
@@ -104,8 +103,8 @@ TEST_F(cta_catalogue_TapeItemWrittenPointerTest, check_set_order_after_set_fseq_
 
   std::set<TapeItemWrittenPointer> filesWrittenSet;
 
-  auto file1WrittenUP = cta::make_unique<TapeFileWritten>();
-  auto file2WrittenUP = cta::make_unique<TapeFileWritten>();
+  auto file1WrittenUP = std::make_unique<TapeFileWritten>();
+  auto file2WrittenUP = std::make_unique<TapeFileWritten>();
 
   auto file1WrittenPtr = file1WrittenUP.get();
   auto file2WrittenPtr = file2WrittenUP.get();

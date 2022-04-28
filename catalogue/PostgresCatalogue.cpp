@@ -21,7 +21,6 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/UserError.hpp"
-#include "common/make_unique.hpp"
 #include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/AutoRollback.hpp"
@@ -851,7 +850,7 @@ void PostgresCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::strin
     std::set<std::string> vidsToSetDirty;
     while(selectRset.next()) {
       if(nullptr == archiveFile.get()) {
-        archiveFile = cta::make_unique<common::dataStructures::ArchiveFile>();
+        archiveFile = std::make_unique<common::dataStructures::ArchiveFile>();
 
         archiveFile->archiveFileID = selectRset.columnUint64("ARCHIVE_FILE_ID");
         archiveFile->diskInstance = selectRset.columnString("DISK_INSTANCE_NAME");

@@ -16,7 +16,6 @@
  */
 
 #include "common/exception/Exception.hpp"
-#include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "common/utils/utils.hpp"
 #include "common/utils/Regex.hpp"
@@ -138,7 +137,7 @@ std::unique_ptr<StmtWrapper> SqliteConn::createStmt(const std::string &sql) {
       throw exception::Exception("Connection is closed");
     }
 
-    return cta::make_unique<SqliteStmt>(*this, sql);
+    return std::make_unique<SqliteStmt>(*this, sql);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -246,7 +245,7 @@ std::map<std::string, std::string> SqliteConn::getColumns(const std::string &tab
         "TBL_NAME = :TABLE_NAME "
       "AND "
       "TYPE = 'table';";
-    const std::string columnTypes = 
+    const std::string columnTypes =
     "NUMERIC|"
     "INTEGER|"
     "CHAR|"
@@ -260,13 +259,13 @@ std::map<std::string, std::string> SqliteConn::getColumns(const std::string &tab
     "VARBINARY|"
     "BYTEA|"
     "RAW";
-    
+
     auto stmt = createStmt(sql);
     stmt->bindString(":TABLE_NAME", tableName);
     auto rset = stmt->executeQuery();
     if (rset->next()) {
-      auto tableSql = rset->columnOptionalString("SQL").value();     
-      tableSql += std::string(","); // hack for parsing          
+      auto tableSql = rset->columnOptionalString("SQL").value();
+      tableSql += std::string(","); // hack for parsing
       std::string::size_type searchPosComma = 0;
       std::string::size_type findResultComma = std::string::npos;
       while(std::string::npos != (findResultComma = tableSql.find(',', searchPosComma))) {
@@ -281,12 +280,12 @@ std::map<std::string, std::string> SqliteConn::getColumns(const std::string &tab
             columnNamesAndTypes.insert(std::make_pair(columnSql[1], columnSql[2]));
           }
         }
-      }     
+      }
     }
     return columnNamesAndTypes;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  } 
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -393,7 +392,7 @@ std::list<std::string> SqliteConn::getParallelTableNames(){
 std::list<std::string> SqliteConn::getConstraintNames(const std::string &tableName){
   try {
     std::list<std::string> constraintNames;
-    const char *const sql = 
+    const char *const sql =
     "SELECT "
       "SQL AS SQL "
     "FROM "
@@ -408,8 +407,8 @@ std::list<std::string> SqliteConn::getConstraintNames(const std::string &tableNa
     stmt->bindString(":TABLE_NAME", tableName);
     auto rset = stmt->executeQuery();
     if (rset->next()) {
-      auto tableSql = rset->columnOptionalString("SQL").value();     
-      tableSql += std::string(","); // hack for parsing          
+      auto tableSql = rset->columnOptionalString("SQL").value();
+      tableSql += std::string(","); // hack for parsing
       std::string::size_type searchPosComma = 0;
       std::string::size_type findResultComma = std::string::npos;
       while(std::string::npos != (findResultComma = tableSql.find(',', searchPosComma))) {
@@ -424,7 +423,7 @@ std::list<std::string> SqliteConn::getConstraintNames(const std::string &tableNa
             constraintNames.emplace_back(constraintSql[1]);
           }
         }
-      }     
+      }
     }
     return constraintNames;
   } catch(exception::Exception &ex) {

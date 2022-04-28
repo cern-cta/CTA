@@ -22,7 +22,6 @@
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/OStoreDB/OStoreDBInit.hpp"
 #include "rdbms/Login.hpp"
-#include "common/make_unique.hpp"
 #include "scheduler/DiskReportRunner.hpp"
 #include "scheduler/RepackRequestManager.hpp"
 
@@ -124,7 +123,7 @@ void MaintenanceHandler::kill() {
         params.add("WEXITSTATUS", WEXITSTATUS(status));
       } else {
         params.add("WIFSIGNALED", WIFSIGNALED(status));
-      } 
+      }
       m_processManager.logContext().log(log::INFO, "In MaintenanceHandler::kill(): sub process completed");
     } catch (exception::Exception & ex) {
       params.add("Exception", ex.getMessageValue());
@@ -149,7 +148,7 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::processEvent() {
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus MaintenanceHandler::processSigChild() {
   // Check out child process's status. If the child process is still around,
-  // waitpid will return 0. Non zero if process completed (and status needs to 
+  // waitpid will return 0. Non zero if process completed (and status needs to
   // be picked up) and -1 if the process is entirely gone.
   // Of course we might not have a child process to begin with.
   log::ScopedParamContainer params(m_processManager.logContext());
@@ -219,10 +218,10 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::processTimeout() {
   if (!m_shutdownInProgress) {
     m_processManager.logContext().log(log::WARNING, "In MaintenanceHandler::processTimeout(): spurious timeout: no shutdown");
     return m_processingStatus;
-  } 
+  }
   // We were shutting down and the child process did not exit in time. Killing it.
   if (-1!=m_pid) {
-    m_processManager.logContext().log(log::WARNING, 
+    m_processManager.logContext().log(log::WARNING,
         "In MaintenanceHandler::processTimeout(): spurious timeout: no more process");
   } else {
     // We will help the exit of the child process by killing it.
@@ -256,10 +255,10 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
   // and object store, and run the garbage collector.
   // We do not have to care for previous crashed sessions as we will garbage
   // collect them like any other crashed agent.
-  
+
   // Set the thread name for process ID:
   prctl(PR_SET_NAME, "cta-tpd-maint");
-  
+
   // Before anything, we will check for access to the scheduler's central storage.
   // If we fail to access it, we cannot work. We expect the drive processes to
   // fail likewise, so we just wait for shutdown signal (no feedback to main process).
@@ -277,14 +276,14 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
     catalogue = catalogueFactory->create();
     sched_db = sched_db_init.getSchedDB(*catalogue, m_processManager.logContext().logger());
     // TODO: we have hardcoded the mount policy parameters here temporarily we will remove them once we know where to put them
-    scheduler = make_unique<cta::Scheduler>(*catalogue, *sched_db, 5, 2*1000*1000);
+    scheduler = std::make_unique<cta::Scheduler>(*catalogue, *sched_db, 5, 2*1000*1000);
     // Before launching the transfer session, we validate that the scheduler is reachable.
     scheduler->ping(m_processManager.logContext());
   } catch(cta::exception::Exception &ex) {
     {
       log::ScopedParamContainer param(m_processManager.logContext());
       param.add("errorMessage", ex.getMessageValue());
-      m_processManager.logContext().log(log::CRIT, 
+      m_processManager.logContext().log(log::CRIT,
           "In MaintenanceHandler::exceptionThrowingRunChild(): contact central storage. Waiting for shutdown.");
     }
     server::SocketPair::pollMap pollList;
@@ -300,12 +299,12 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
   auto gc = sched_db_init.getGarbageCollector(*catalogue);
   DiskReportRunner diskReportRunner(*scheduler);
   RepackRequestManager repackRequestManager(*scheduler);
-  
+
   if(!runRepackRequestManager()){
-    m_processManager.logContext().log(log::INFO, 
+    m_processManager.logContext().log(log::INFO,
     "In MaintenanceHandler::exceptionThrowingRunChild(): Repack management is disabled. No repack-related operations will run on this tapeserver.");
   }
-  
+
   // Run the maintenance in a loop: garbage collector and disk reporter
   try {
     server::SocketPair::pollMap pollList;
@@ -313,7 +312,7 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
     bool receivedMessage=false;
     do {
       utils::Timer t;
-      m_processManager.logContext().log(log::DEBUG, 
+      m_processManager.logContext().log(log::DEBUG,
           "In MaintenanceHandler::exceptionThrowingRunChild(): About to do a maintenance pass.");
       gc.runOnePass(m_processManager.logContext());
       diskReportRunner.runOnePass(m_processManager.logContext());
@@ -339,11 +338,11 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
   } catch(std::exception &ex) {
     log::ScopedParamContainer params(m_processManager.logContext());
     params.add("Message", ex.what());
-    m_processManager.logContext().log(log::ERR, 
+    m_processManager.logContext().log(log::ERR,
         "In MaintenanceHandler::exceptionThrowingRunChild(): received a std::exception.");
     throw ex;
   } catch(...) {
-    m_processManager.logContext().log(log::ERR, 
+    m_processManager.logContext().log(log::ERR,
         "In MaintenanceHandler::exceptionThrowingRunChild(): received an unknown exception.");
     throw;
   }
@@ -353,7 +352,7 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
 // MaintenanceHandler::shutdown
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus MaintenanceHandler::shutdown() {
-  // We will signal the shutdown to the child process by sending a byte over the 
+  // We will signal the shutdown to the child process by sending a byte over the
   // socket pair (if we have one)
   m_shutdownInProgress=true;
   if (!m_socketPair.get()) {

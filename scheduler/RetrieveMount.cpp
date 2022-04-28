@@ -17,7 +17,6 @@
 
 #include "common/exception/NoSuchObject.hpp"
 #include "common/log/TimingList.hpp"
-#include "common/make_unique.hpp"
 #include "common/Timer.hpp"
 #include "disk/DiskSystem.hpp"
 #include "objectstore/Backend.hpp"

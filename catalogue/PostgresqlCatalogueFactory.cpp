@@ -19,7 +19,6 @@
 #include "catalogue/PostgresqlCatalogueFactory.hpp"
 #include "catalogue/PostgresCatalogue.hpp"
 #include "common/exception/Exception.hpp"
-#include "common/make_unique.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -51,8 +50,8 @@ PostgresqlCatalogueFactory::PostgresqlCatalogueFactory(
 //------------------------------------------------------------------------------
 std::unique_ptr<Catalogue> PostgresqlCatalogueFactory::create() {
   try {
-    auto c = cta::make_unique<PostgresCatalogue>(m_log, m_login, m_nbConns, m_nbArchiveFileListingConns);
-    return cta::make_unique<CatalogueRetryWrapper>(m_log, std::move(c), m_maxTriesToConnect);
+    auto c = std::make_unique<PostgresCatalogue>(m_log, m_login, m_nbConns, m_nbArchiveFileListingConns);
+    return std::make_unique<CatalogueRetryWrapper>(m_log, std::move(c), m_maxTriesToConnect);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }

@@ -1130,7 +1130,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
   }
   std::unique_ptr<SchedulerDB_t> sched_db = sched_db_init->getSchedDB(*m_catalogue, lc.logger());
   lc.log(log::DEBUG, "In DriveHandler::shutdown(): will create scheduler.");
-  auto scheduler = cta::make_unique<Scheduler>(*m_catalogue, *sched_db, 0, 0);
+  auto scheduler = std::make_unique<Scheduler>(*m_catalogue, *sched_db, 0, 0);
 
   std::set<SessionState> statesRequiringCleaner = { SessionState::Mounting,
     SessionState::Running, SessionState::Unmounting };

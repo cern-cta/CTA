@@ -101,7 +101,7 @@ const uint32_t TEST_GROUP_2 = 9754;
 
     virtual void validate() override {}
     virtual cta::catalogue::TapeItemWrittenPointer validateAndGetTapeFileWritten() override {
-      auto fileReportUP=cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto fileReportUP=std::make_unique<cta::catalogue::TapeFileWritten>();
       auto & fileReport = *fileReportUP;
       fileReport.archiveFileId = archiveFile.archiveFileID;
       fileReport.blockId = tapeFile.blockId;

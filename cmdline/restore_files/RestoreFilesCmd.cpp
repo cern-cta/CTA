@@ -18,7 +18,6 @@
 #include "cmdline/restore_files/RestoreFilesCmd.hpp"
 #include "cmdline/restore_files/RestoreFilesCmdLineArgs.hpp"
 #include "common/utils/utils.hpp"
-#include "common/make_unique.hpp"
 #include "CtaFrontendApi.hpp"
 
 #include <XrdSsiPbLog.hpp>
@@ -252,7 +251,7 @@ void RestoreFilesCmd::setNamespaceMap(const std::string &keytab_file) {
     }
     namespaceMap.insert(std::make_pair(diskInstance, ::eos::client::Namespace(endpoint, token)));
   }
-  m_endpointMapPtr = cta::make_unique<::eos::client::EndpointMap>(namespaceMap);
+  m_endpointMapPtr = std::make_unique<::eos::client::EndpointMap>(namespaceMap);
 }
 
 //------------------------------------------------------------------------------

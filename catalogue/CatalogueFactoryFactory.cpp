@@ -21,7 +21,6 @@
 #include "catalogue/InMemoryCatalogueFactory.hpp"
 #include "catalogue/OracleCatalogueFactory.hpp"
 #include "catalogue/PostgresqlCatalogueFactory.hpp"
-#include "common/make_unique.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -38,12 +37,12 @@ std::unique_ptr<CatalogueFactory> CatalogueFactoryFactory::create(
   try {
     switch (login.dbType) {
     case rdbms::Login::DBTYPE_IN_MEMORY:
-      return cta::make_unique<InMemoryCatalogueFactory>(log, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
+      return std::make_unique<InMemoryCatalogueFactory>(log, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
     case rdbms::Login::DBTYPE_ORACLE:
-      return cta::make_unique<OracleCatalogueFactory>(log, login, nbConns, nbArchiveFileListingConns,
+      return std::make_unique<OracleCatalogueFactory>(log, login, nbConns, nbArchiveFileListingConns,
         maxTriesToConnect);
     case rdbms::Login::DBTYPE_POSTGRESQL:
-      return cta::make_unique<PostgresqlCatalogueFactory>(log, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
+      return std::make_unique<PostgresqlCatalogueFactory>(log, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
     case rdbms::Login::DBTYPE_SQLITE:
       throw exception::Exception("Sqlite file based databases are not supported");
     case rdbms::Login::DBTYPE_NONE:

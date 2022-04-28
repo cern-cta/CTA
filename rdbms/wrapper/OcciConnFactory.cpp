@@ -16,7 +16,6 @@
  */
 
 #include "common/exception/Exception.hpp"
-#include "common/make_unique.hpp"
 #include "rdbms/wrapper/OcciConnFactory.hpp"
 #include "rdbms/wrapper/OcciEnvSingleton.hpp"
 

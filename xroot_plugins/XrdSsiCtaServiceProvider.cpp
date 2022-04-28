@@ -23,7 +23,6 @@
 #include "common/log/LogLevel.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/log/SyslogLogger.hpp"
-#include "common/make_unique.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/Login.hpp"
 #include "XrdSsiCtaServiceProvider.hpp"
@@ -191,7 +190,7 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
     log(log::INFO, "Configuration entry", params);
   }
 
-  m_scheddb_init = cta::make_unique<SchedulerDBInit_t>("Frontend", db_conn.second, *m_log);
+  m_scheddb_init = std::make_unique<SchedulerDBInit_t>("Frontend", db_conn.second, *m_log);
   m_scheddb      = m_scheddb_init->getSchedDB(*m_catalogue, *m_log);
 
   cta::optional<size_t> schedulerThreadStackOpt;
@@ -219,7 +218,7 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
   }
 
   // Initialise the Scheduler
-  m_scheduler = cta::make_unique<cta::Scheduler>(*m_catalogue, *m_scheddb, 5, 2*1000*1000);
+  m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_scheddb, 5, 2*1000*1000);
 
   // Initialise the Frontend
   auto archiveFileMaxSize = config.getOptionValueInt("cta.archivefile.max_size_gb");

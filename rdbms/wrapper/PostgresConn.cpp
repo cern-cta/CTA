@@ -18,7 +18,6 @@
 #include "common/utils/utils.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
-#include "common/make_unique.hpp"
 #include "common/threading/RWLockRdLocker.hpp"
 #include "common/threading/RWLockWrLocker.hpp"
 
@@ -91,7 +90,7 @@ void PostgresConn::close() {
 //------------------------------------------------------------------------------
 // commit
 //------------------------------------------------------------------------------
-void PostgresConn::commit() 
+void PostgresConn::commit()
 {
   threading::RWLockWrLocker locker(m_lock);
 
@@ -127,7 +126,7 @@ std::unique_ptr<StmtWrapper> PostgresConn::createStmt(const std::string &sql) {
   }
 
   // PostgresStmt constructor assumes conneciton is rd locked
-  return cta::make_unique<PostgresStmt>(*this, sql);
+  return std::make_unique<PostgresStmt>(*this, sql);
 }
 
 //------------------------------------------------------------------------------
@@ -234,7 +233,7 @@ std::map<std::string, std::string> PostgresConn::getColumns(const std::string &t
     return columnNamesAndTypes;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  } 
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -485,7 +484,7 @@ void PostgresConn::throwDBIfNotStatus(const PGresult *res,
       }
       throw;
     }
-  } 
+  }
 }
 
 } // namespace wrapper

@@ -18,7 +18,6 @@
 #include "scheduler/ArchiveJob.hpp"
 #include "scheduler/ArchiveMount.hpp"
 #include "disk/DiskReporterFactory.hpp"
-#include "common/make_unique.hpp"
 #include <limits>
 #include <cryptopp/base64.h>
 
@@ -53,7 +52,7 @@ double cta::ArchiveJob::reportTime() {
 //------------------------------------------------------------------------------
 cta::catalogue::TapeItemWrittenPointer cta::ArchiveJob::validateAndGetTapeFileWritten() {
   validate();
-  auto fileReportUP = cta::make_unique<catalogue::TapeFileWritten>();
+  auto fileReportUP = std::make_unique<catalogue::TapeFileWritten>();
   auto& fileReport = *fileReportUP;
   fileReport.archiveFileId = archiveFile.archiveFileID;
   fileReport.blockId = tapeFile.blockId;

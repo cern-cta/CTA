@@ -18,7 +18,6 @@
 #pragma once
 
 #include "catalogue/ValueAndTimeBasedCacheInfo.hpp"
-#include "common/make_unique.hpp"
 #include "common/threading/Mutex.hpp"
 #include "common/threading/MutexLocker.hpp"
 
@@ -66,7 +65,7 @@ public:
       }
     } else { // No cache hit
       const auto emplaceResult = m_cache.emplace(std::make_pair(key,
-        cta::make_unique<TimestampedValue>(now, getNonCachedValue())));
+        std::make_unique<TimestampedValue>(now, getNonCachedValue())));
       return ValueAndTimeBasedCacheInfo<Value>(emplaceResult.first->second->value, "First time value entered into cache");
     }
   }

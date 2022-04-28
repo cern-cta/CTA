@@ -23,7 +23,6 @@
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/TapeFseqMismatch.hpp"
 #include "common/exception/UserError.hpp"
-#include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
@@ -163,7 +162,7 @@ std::string OracleCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn, c
       std::string sql = "CREATE PRIVATE TEMPORARY TABLE " + tempTableName +
         "(DISK_FILE_ID VARCHAR2(100))";
       conn.executeNonQuery(sql);
-  
+
       sql = "INSERT INTO " + tempTableName + " VALUES(:DISK_FILE_ID)";
       auto stmt = conn.createStmt(sql);
       for(auto &diskFileId : diskFileIds.value()) {
@@ -411,10 +410,10 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
     // We have a mix of files and items. Only files will be recorded, but items
     // allow checking fSeq coherency.
     // determine the number of files
-    size_t filesCount=std::count_if(events.cbegin(), events.cend(), 
+    size_t filesCount=std::count_if(events.cbegin(), events.cend(),
         [](const TapeItemWrittenPointer &e) -> bool {return typeid(*e)==typeid(TapeFileWritten);});
     TapeFileBatch tapeFileBatch(filesCount);
-    
+
     std::set<TapeFileWritten> fileEvents;
 
     for (const auto &eventP: events) {
@@ -425,7 +424,7 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
       if (event.vid != firstEvent.vid) {
         throw exception::Exception(std::string("VID mismatch: expected=") + firstEvent.vid + " actual=" + event.vid);
       }
-      
+
       if (expectedFSeq != event.fSeq) {
         exception::TapeFseqMismatch ex;
         ex.getMessage() << "FSeq mismatch for tape " << firstEvent.vid << ": expected=" << expectedFSeq << " actual=" <<
@@ -433,17 +432,17 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
         throw ex;
       }
       expectedFSeq++;
-      
+
       try {
         // If this is a file (as opposed to a placeholder), do the full processing.
         const auto &fileEvent=dynamic_cast<const TapeFileWritten &>(event);
 
         checkTapeFileWrittenFieldsAreSet(__FUNCTION__, fileEvent);
-        
+
         totalLogicalBytesWritten += fileEvent.size;
 
         // Store the length of each field and implicitly calculate the maximum field
-        // length of each column 
+        // length of each column
         tapeFileBatch.vid.setFieldLenToValueLen(i, fileEvent.vid);
         tapeFileBatch.fSeq.setFieldLenToValueLen(i, fileEvent.fSeq);
         tapeFileBatch.blockId.setFieldLenToValueLen(i, fileEvent.blockId);
@@ -451,7 +450,7 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
         tapeFileBatch.copyNb.setFieldLenToValueLen(i, fileEvent.copyNb);
         tapeFileBatch.creationTime.setFieldLenToValueLen(i, now);
         tapeFileBatch.archiveFileId.setFieldLenToValueLen(i, fileEvent.archiveFileId);
-        
+
         fileEvents.insert(fileEvent);
         i++;
       } catch (std::bad_cast&) {}
@@ -481,7 +480,7 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
       conn.commit();
       return;
     }
-    
+
     // Create the archive file entries, skipping those that already exist
     idempotentBatchInsertArchiveFiles(conn, fileEvents);
 
@@ -572,7 +571,7 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
     }
 
     std::list<InsertFileRecycleLog> recycledFiles = insertOldCopiesOfFilesIfAnyOnFileRecycleLog(conn);
-        
+
     {
       const char *const sql =
         "INSERT INTO TAPE_FILE (VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES,"              "\n"
@@ -582,20 +581,20 @@ void OracleCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> 
       auto stmt = conn.createStmt(sql);
       stmt.executeNonQuery();
     }
-    
+
     for(auto & recycledFile: recycledFiles){
       const char *const sql =
         "DELETE FROM "
           "TAPE_FILE "
         "WHERE "
           "TAPE_FILE.VID = :VID AND TAPE_FILE.FSEQ = :FSEQ";
-      
+
       auto stmt = conn.createStmt(sql);
       stmt.bindString(":VID",recycledFile.vid);
       stmt.bindUint64(":FSEQ",recycledFile.fSeq);
       stmt.executeNonQuery();
-    } 
-    
+    }
+
     {
       conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_ON);
       conn.commit();
@@ -617,7 +616,7 @@ void OracleCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const
     const time_t now = time(nullptr);
     std::vector<uint32_t> adler32(events.size());
 
-    // Store the length of each field and implicitly calculate the maximum field length of each column 
+    // Store the length of each field and implicitly calculate the maximum field length of each column
     uint32_t i = 0;
     for (const auto &event: events) {
       // Keep transition ADLER32 checksum column up-to-date with the ChecksumBlob
@@ -909,7 +908,7 @@ void OracleCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string 
     std::set<std::string> vidsToSetDirty;
     while(selectRset.next()) {
       if(nullptr == archiveFile.get()) {
-        archiveFile = cta::make_unique<common::dataStructures::ArchiveFile>();
+        archiveFile = std::make_unique<common::dataStructures::ArchiveFile>();
 
         archiveFile->archiveFileID = selectRset.columnUint64("ARCHIVE_FILE_ID");
         archiveFile->diskInstance = selectRset.columnString("DISK_INSTANCE_NAME");
@@ -991,14 +990,14 @@ void OracleCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string 
       stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
       stmt.executeNonQuery();
     }
-    
+
     const auto deleteFromTapeFileTime = t.secs(utils::Timer::resetCounter);
-    
+
     //Set the tapes where the files have been deleted to dirty
     for(auto &vidToSetDirty: vidsToSetDirty){
       setTapeDirty(conn,vidToSetDirty);
     }
-    
+
     const auto setTapeDirtyTime = t.secs(utils::Timer::resetCounter);
 
     {
@@ -1140,19 +1139,19 @@ void OracleCatalogue::copyTapeFileToFileRecyleLogAndDelete(rdbms::Conn & conn, c
     spc.add("diskInstance", file.diskInstance);
     tl.addToLog(spc);
     lc.log(log::INFO,"In OracleCatalogue::copyArchiveFileToRecycleBinAndDelete: ArchiveFile moved to the recycle-bin.");
-    
+
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
-  } 
+  }
 }
 
 //------------------------------------------------------------------------------
 // restoreEntryInRecycleLog
 //------------------------------------------------------------------------------
-void OracleCatalogue::restoreEntryInRecycleLog(rdbms::Conn & conn, FileRecycleLogItor &fileRecycleLogItor, 
+void OracleCatalogue::restoreEntryInRecycleLog(rdbms::Conn & conn, FileRecycleLogItor &fileRecycleLogItor,
   const std::string &newFid, log::LogContext & lc) {
   try {
     utils::Timer t;
@@ -1161,13 +1160,13 @@ void OracleCatalogue::restoreEntryInRecycleLog(rdbms::Conn & conn, FileRecycleLo
     if (!fileRecycleLogItor.hasMore()) {
       throw cta::exception::UserError("No file in the recycle bin matches the parameters passed");
     }
-    auto fileRecycleLog = fileRecycleLogItor.next();  
+    auto fileRecycleLog = fileRecycleLogItor.next();
     if (fileRecycleLogItor.hasMore()) {
       //stop restoring more than one file at once
       throw cta::exception::UserError("More than one recycle bin file matches the parameters passed");
     }
     conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
-    
+
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFilePtr = getArchiveFileById(conn, fileRecycleLog.archiveFileId);
     if (!archiveFilePtr) {
       restoreArchiveFileInRecycleLog(conn, fileRecycleLog, newFid, lc);
@@ -1175,13 +1174,13 @@ void OracleCatalogue::restoreEntryInRecycleLog(rdbms::Conn & conn, FileRecycleLo
       if (archiveFilePtr->tapeFiles.find(fileRecycleLog.copyNb) != archiveFilePtr->tapeFiles.end()) {
         //copy with same copy_nb exists, cannot restore
         UserSpecifiedExistingDeletedFileCopy ex;
-        ex.getMessage() << "Cannot restore file copy with archiveFileId " << std::to_string(fileRecycleLog.archiveFileId) 
+        ex.getMessage() << "Cannot restore file copy with archiveFileId " << std::to_string(fileRecycleLog.archiveFileId)
         << " and copy_nb " << std::to_string(fileRecycleLog.copyNb) << " because a tapefile with same archiveFileId and copy_nb already exists";
         throw ex;
       }
     }
 
-    
+
     restoreFileCopyInRecycleLog(conn, fileRecycleLog, lc);
 
     conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_ON);
@@ -1216,10 +1215,10 @@ void OracleCatalogue::restoreFileCopyInRecycleLog(rdbms::Conn & conn, const comm
 
     insertTapeFile(conn, tapeFile, fileRecycleLog.archiveFileId);
     tl.insertAndReset("insertTapeFileTime",t);
-    
+
     deleteTapeFileCopyFromRecycleBin(conn, fileRecycleLog);
     tl.insertAndReset("deleteTapeFileCopyFromRecycleBinTime",t);
-    
+
     log::ScopedParamContainer spc(lc);
     spc.add("vid", tapeFile.vid);
     spc.add("archiveFileId", fileRecycleLog.archiveFileId);

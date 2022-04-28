@@ -20,7 +20,6 @@
 #include <map>
 
 #include "InterpolationFilePositionEstimator.hpp"
-#include "common/make_unique.hpp"
 #include "RAOHelpers.hpp"
 #include "SLTFRAOAlgorithm.hpp"
 #include "CTACostHeuristic.hpp"
@@ -345,7 +344,7 @@ namespace unitTests {
     std::unique_ptr<rao::CostHeuristic> costHeuristic;
     filePositionEstimator.reset(new rao::InterpolationFilePositionEstimator(RAOTestEnvironment::getLTO7MEndOfWrapPositions(),RAOTestEnvironment::getLTO7MMediaType()));
     costHeuristic.reset(new rao::CTACostHeuristic());
-    std::unique_ptr<rao::SLTFRAOAlgorithm> sltfRAOAlgorithm = cta::make_unique<rao::SLTFRAOAlgorithm>(filePositionEstimator,costHeuristic);
+    std::unique_ptr<rao::SLTFRAOAlgorithm> sltfRAOAlgorithm = std::make_unique<rao::SLTFRAOAlgorithm>(filePositionEstimator,costHeuristic);
     std::vector<uint64_t> raoOrder = sltfRAOAlgorithm->performRAO(jobs);
     std::vector<uint64_t> expectedRAOOrder = {4,6,5,3,2,7,0,1};
     ASSERT_EQ(expectedRAOOrder,raoOrder);

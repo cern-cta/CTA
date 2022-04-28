@@ -22,7 +22,6 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/TimingList.hpp"
-#include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "common/Timer.hpp"
 #include "common/utils/utils.hpp"

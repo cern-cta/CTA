@@ -16,7 +16,6 @@
  */
 
 #include "common/exception/Exception.hpp"
-#include "common/make_unique.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/CheckConstraintError.hpp"
 #include "rdbms/ConnPool.hpp"
@@ -38,7 +37,7 @@ void cta_rdbms_StmtTest::SetUp() {
   if(!m_connPool) {
     m_login = GetParam()->create();
     const uint64_t maxNbConns = 1;
-    m_connPool = cta::make_unique<ConnPool>(m_login, maxNbConns);
+    m_connPool = std::make_unique<ConnPool>(m_login, maxNbConns);
   }
 
   m_conn = m_connPool->getConn();

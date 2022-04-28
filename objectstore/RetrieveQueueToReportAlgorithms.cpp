@@ -36,7 +36,7 @@ getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, 
   auto candidateJobsFromQueue = cont.getCandidateList(std::numeric_limits<uint64_t>::max(), unfulfilledCriteria.files, elemtsToSkip);
   for(auto &cjfq : candidateJobsFromQueue.candidates) {
     ret.elements.emplace_back(PoppedElement{
-      cta::make_unique<RetrieveRequest>(cjfq.address, cont.m_objectStore),
+      std::make_unique<RetrieveRequest>(cjfq.address, cont.m_objectStore),
       cjfq.copyNb,
       cjfq.size,
       common::dataStructures::ArchiveFile(),

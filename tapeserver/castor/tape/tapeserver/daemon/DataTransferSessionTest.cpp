@@ -34,7 +34,6 @@
 #include "common/log/DummyLogger.hpp"
 #include "common/log/StringLogger.hpp"
 #include "common/log/StdoutLogger.hpp"
-#include "common/make_unique.hpp"
 #include "common/processCap/ProcessCapDummy.hpp"
 #include "common/threading/Thread.hpp"
 #include "common/utils/utils.hpp"
@@ -139,7 +138,7 @@ public:
 #ifdef USE_ORACLE_CATALOGUE
     cta::rdbms::Login login=cta::rdbms::Login::parseFile("/etc/cta/cta-catalogue.conf");
 
-    m_catalogue = cta::make_unique<OracleCatalogueExposingConnection>(m_dummyLog, login.username, login.password, login.database,
+    m_catalogue = std::make_unique<OracleCatalogueExposingConnection>(m_dummyLog, login.username, login.password, login.database,
         nbConns, nbArchiveFileListingConns, maxTriesToConnect);
     try {
       // If we decide to create an oracle catalogue, we have to prepare it.
@@ -152,11 +151,11 @@ public:
       conn.executeNonQueries(schema.sql);
     } catch (std::bad_cast &) {}
 #else
-    //m_catalogue = cta::make_unique<catalogue::SchemaCreatingSqliteCatalogue>(m_tempSqliteFile.path(), nbConns);
-    m_catalogue = cta::make_unique<catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns);
+    //m_catalogue = std::make_unique<catalogue::SchemaCreatingSqliteCatalogue>(m_tempSqliteFile.path(), nbConns);
+    m_catalogue = std::make_unique<catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns);
 #endif
     m_db = param.dbFactory.create(m_catalogue);
-    m_scheduler = cta::make_unique<Scheduler>(*m_catalogue, *m_db, 5, 2 * 1000 * 1000);
+    m_scheduler = std::make_unique<Scheduler>(*m_catalogue, *m_db, 5, 2 * 1000 * 1000);
 
     strncpy(m_tmpDir, "/tmp/DataTransferSessionTestXXXXXX", sizeof(m_tmpDir));
     if (!mkdtemp(m_tmpDir)) {
@@ -531,7 +530,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
       remoteFilePaths.push_back(remoteFilePath.str());
 
       // Create an archive file entry in the archive namespace
-      auto tapeFileWrittenUP = cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto tapeFileWrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
       auto& tapeFileWritten = *tapeFileWrittenUP;
       std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
       tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
@@ -711,7 +710,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
       remoteFilePaths.push_back(remoteFilePath.str());
 
       // Create an archive file entry in the archive namespace
-      auto tapeFileWrittenUP = cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto tapeFileWrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
       auto &tapeFileWritten=*tapeFileWrittenUP;
       std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
       tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
@@ -925,7 +924,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
 
       {
         // Create a fictious file record on the tape to allow adding one to fseq=2 afterwards.
-        auto tapeFileWrittenUP = cta::make_unique<cta::catalogue::TapeFileWritten>();
+        auto tapeFileWrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
         auto& tapeFileWritten = *tapeFileWrittenUP;
         std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
         tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
@@ -947,7 +946,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
 
       {
         // Create an archive file entry in the archive catalogue
-        auto tapeFileWrittenUP = cta::make_unique<cta::catalogue::TapeFileWritten>();
+        auto tapeFileWrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
         auto& tapeFileWritten = *tapeFileWrittenUP;
         std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
         tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
@@ -1111,7 +1110,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
       remoteFilePaths.push_back(remoteFilePath.str());
 
       // Create an archive file entry in the archive namespace
-      auto tapeFileWrittenUP = cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto tapeFileWrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
       auto& tapeFileWritten = *tapeFileWrittenUP;
       std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
       tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
@@ -1302,7 +1301,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
       remoteFilePaths.push_back(remoteFilePath.str());
 
       // Create an archive file entry in the archive namespace
-      auto tapeFileWrittenUP = cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto tapeFileWrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
       auto& tapeFileWritten = *tapeFileWrittenUP;
       std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
       tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
@@ -1489,7 +1488,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
       remoteFilePaths.push_back(remoteFilePath.str());
 
       // Create an archive file entry in the archive namespace
-      auto tapeFileWrittenUP = cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto tapeFileWrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
       auto& tapeFileWritten = *tapeFileWrittenUP;
       std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
       tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
@@ -1680,7 +1679,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
       remoteFilePaths.push_back(remoteFilePath.str());
 
       // Create an archive file entry in the archive namespace
-      auto tapeFileWrittenUP = cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto tapeFileWrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
       auto& tapeFileWritten = *tapeFileWrittenUP;
       std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
       tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
@@ -1865,7 +1864,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
       remoteFilePaths.push_back(remoteFilePath.str());
 
       // Create an archive file entry in the archive namespace
-      auto tapeFileWrittenUP = cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto tapeFileWrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
       auto& tapeFileWritten = *tapeFileWrittenUP;
       std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
       tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
@@ -2015,7 +2014,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
       remoteFilePaths.push_back(remoteFilePath.str());
 
       // Create an archive file entry in the archive namespace
-      auto tapeFileWrittenUP = cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto tapeFileWrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
       auto& tapeFileWritten = *tapeFileWrittenUP;
       std::set<cta::catalogue::TapeItemWrittenPointer> tapeFileWrittenSet;
       tapeFileWrittenSet.insert(tapeFileWrittenUP.release());
@@ -2176,7 +2175,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
     // Create the files and schedule the archivals
     for (int fseq = 1; fseq <= 10; fseq++) {
       // Create a source file.
-      sourceFiles.emplace_back(cta::make_unique<unitTests::TempFile>());
+      sourceFiles.emplace_back(std::make_unique<unitTests::TempFile>());
       sourceFiles.back()->randomFill(1000);
       remoteFilePaths.push_back(sourceFiles.back()->path());
       // Schedule the archival of the file
@@ -2328,7 +2327,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
     //First a file with wrong checksum
     {
       int fseq = 1;
-      sourceFiles.emplace_back(cta::make_unique<unitTests::TempFile>());
+      sourceFiles.emplace_back(std::make_unique<unitTests::TempFile>());
       sourceFiles.back()->randomFill(1000);
       remoteFilePaths.push_back(sourceFiles.back()->path());
       // Schedule the archival of the file
@@ -2349,7 +2348,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
     }
     for(int fseq=2; fseq <= 10 ; fseq ++) {
       // Create a source file.
-      sourceFiles.emplace_back(cta::make_unique<unitTests::TempFile>());
+      sourceFiles.emplace_back(std::make_unique<unitTests::TempFile>());
       sourceFiles.back()->randomFill(1000);
       remoteFilePaths.push_back(sourceFiles.back()->path());
       // Schedule the archival of the file
@@ -2507,7 +2506,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
     //First a file with wrong checksum
     {
       int fseq = 1;
-      sourceFiles.emplace_back(cta::make_unique<unitTests::TempFile>());
+      sourceFiles.emplace_back(std::make_unique<unitTests::TempFile>());
       sourceFiles.back()->randomFill(1000);
       remoteFilePaths.push_back(sourceFiles.back()->path());
       // Schedule the archival of the file
@@ -2528,7 +2527,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
     }
     for(int fseq=2; fseq <= 10 ; fseq ++) {
       // Create a source file.
-      sourceFiles.emplace_back(cta::make_unique<unitTests::TempFile>());
+      sourceFiles.emplace_back(std::make_unique<unitTests::TempFile>());
       sourceFiles.back()->randomFill(1000);
       remoteFilePaths.push_back(sourceFiles.back()->path());
       // Schedule the archival of the file
@@ -2675,7 +2674,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
     // Create the files and schedule the archivals
     for(int fseq=1; fseq <= 4 ; fseq ++) {
       // Create a source file.
-      sourceFiles.emplace_back(cta::make_unique<unitTests::TempFile>());
+      sourceFiles.emplace_back(std::make_unique<unitTests::TempFile>());
       sourceFiles.back()->randomFill(1000);
       remoteFilePaths.push_back(sourceFiles.back()->path());
       // Schedule the archival of the file
@@ -2697,7 +2696,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
     {
       //Create a file with wrong file size in the middle of the jobs
       int fseq = 5;
-      sourceFiles.emplace_back(cta::make_unique<unitTests::TempFile>());
+      sourceFiles.emplace_back(std::make_unique<unitTests::TempFile>());
       sourceFiles.back()->randomFill(1000);
       remoteFilePaths.push_back(sourceFiles.back()->path());
       // Schedule the archival of the file
@@ -2719,7 +2718,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
     // Create the rest of the files and schedule the archivals
     for(int fseq=6; fseq <= 10 ; fseq ++) {
       // Create a source file.
-      sourceFiles.emplace_back(cta::make_unique<unitTests::TempFile>());
+      sourceFiles.emplace_back(std::make_unique<unitTests::TempFile>());
       sourceFiles.back()->randomFill(1000);
       remoteFilePaths.push_back(sourceFiles.back()->path());
       // Schedule the archival of the file
@@ -2877,7 +2876,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
     // Create the files and schedule the archivals
     for (int fseq = 1; fseq <= 10; fseq++) {
       // Create a source file.
-      sourceFiles.emplace_back(cta::make_unique<unitTests::TempFile>());
+      sourceFiles.emplace_back(std::make_unique<unitTests::TempFile>());
       sourceFiles.back()->randomFill(1000);
       remoteFilePaths.push_back(sourceFiles.back()->path());
       // Schedule the archival of the file
@@ -3043,7 +3042,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
     // Create the files and schedule the archivals
     for (int fseq = 1; fseq <= 10; fseq++) {
       // Create a source file.
-      sourceFiles.emplace_back(cta::make_unique<unitTests::TempFile>());
+      sourceFiles.emplace_back(std::make_unique<unitTests::TempFile>());
       sourceFiles.back()->randomFill(1000);
       remoteFilePaths.push_back(sourceFiles.back()->path());
       // Schedule the archival of the file
@@ -3213,7 +3212,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
     // Create the files and schedule the archivals
     for (int fseq = 1; fseq <= 10; fseq++) {
       // Create a source file.
-      sourceFiles.emplace_back(cta::make_unique<unitTests::TempFile>());
+      sourceFiles.emplace_back(std::make_unique<unitTests::TempFile>());
       sourceFiles.back()->randomFill(1000);
       remoteFilePaths.push_back(sourceFiles.back()->path());
       // Schedule the archival of the file

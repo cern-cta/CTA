@@ -16,7 +16,6 @@
  */
 
 #include "common/exception/Exception.hpp"
-#include "common/make_unique.hpp"
 #include "rdbms/wrapper/PostgresConn.hpp"
 #include "rdbms/wrapper/PostgresConnFactory.hpp"
 
@@ -44,7 +43,7 @@ PostgresConnFactory::~PostgresConnFactory() {
 //------------------------------------------------------------------------------
 std::unique_ptr<ConnWrapper> PostgresConnFactory::create() {
   try {
-    return cta::make_unique<PostgresConn>(m_conninfo);
+    return std::make_unique<PostgresConn>(m_conninfo);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }

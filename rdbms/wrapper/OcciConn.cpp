@@ -18,7 +18,6 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
-#include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "common/threading/RWLockRdLocker.hpp"
 #include "common/threading/RWLockWrLocker.hpp"
@@ -113,7 +112,7 @@ std::unique_ptr<StmtWrapper> OcciConn::createStmt(const std::string &sql) {
     if (nullptr == stmt) {
       throw exception::Exception("oracle::occi::createStatement() returned a nullptr pointer");
     }
-    return cta::make_unique<OcciStmt>(sql, *this, stmt);
+    return std::make_unique<OcciStmt>(sql, *this, stmt);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": " +
       ex.getMessage().str());
@@ -191,7 +190,7 @@ std::map<std::string, std::string> OcciConn::getColumns(const std::string &table
     return columnNamesAndTypes;
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }         
+  }
 }
 
 //------------------------------------------------------------------------------

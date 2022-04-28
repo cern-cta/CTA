@@ -19,7 +19,6 @@
 
 #include <memory>
 
-#include "common/make_unique.hpp"
 #include "JsonStatisticsService.hpp"
 
 namespace cta {
@@ -29,7 +28,7 @@ class JsonStatisticsServiceFactory {
  public:
   static std::unique_ptr<JsonStatisticsService> create(JsonStatisticsService::OutputStream *output,
     JsonStatisticsService::InputStream *input = nullptr) {
-    return cta::make_unique<JsonStatisticsService>(output, input);
+    return std::make_unique<JsonStatisticsService>(output, input);
   }
 };
 

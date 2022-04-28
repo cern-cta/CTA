@@ -20,7 +20,6 @@
 #include "Algorithms.hpp"
 #include "ArchiveQueue.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
-#include "common/make_unique.hpp"
 #include "common/optional.hpp"
 
 namespace cta { namespace objectstore {

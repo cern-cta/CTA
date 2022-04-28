@@ -16,7 +16,6 @@
  */
 
 #include "common/exception/Exception.hpp"
-#include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "rdbms/CheckConstraintError.hpp"
 #include "rdbms/ConstraintError.hpp"
@@ -71,7 +70,7 @@ SqliteStmt::SqliteStmt(
         continue;
       } else {
         throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() +
-          ": sqlite3_prepare_v2 returned SQLITE_LOCKED the maximum number of " + std::to_string(i) + " times"); 
+          ": sqlite3_prepare_v2 returned SQLITE_LOCKED the maximum number of " + std::to_string(i) + " times");
       }
     }
 
@@ -267,7 +266,7 @@ void SqliteStmt::bindBlob(const std::string &paramName, const std::string &param
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSqlForException() + ": " + ex.getMessage().str()); 
+      getSqlForException() + ": " + ex.getMessage().str());
   }
 }
 
@@ -284,7 +283,7 @@ void SqliteStmt::bindString(const std::string &paramName, const optional<std::st
     int bindRc = 0;
     if(paramValue) {
       bindRc = sqlite3_bind_text(m_stmt, paramIdx, paramValue.value().c_str(), -1, SQLITE_TRANSIENT);
-    } else {    
+    } else {
       bindRc = sqlite3_bind_null(m_stmt, paramIdx);
     }
     if(SQLITE_OK != bindRc) {
@@ -292,7 +291,7 @@ void SqliteStmt::bindString(const std::string &paramName, const optional<std::st
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSqlForException() + ": " + ex.getMessage().str()); 
+      getSqlForException() + ": " + ex.getMessage().str());
   }
 }
 
@@ -302,7 +301,7 @@ void SqliteStmt::bindString(const std::string &paramName, const optional<std::st
 std::unique_ptr<RsetWrapper> SqliteStmt::executeQuery() {
   threading::MutexLocker connLocker(m_conn.m_mutex);
 
-  return cta::make_unique<SqliteRset>(*this);
+  return std::make_unique<SqliteRset>(*this);
 }
 
 //------------------------------------------------------------------------------

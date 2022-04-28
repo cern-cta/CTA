@@ -16,7 +16,6 @@
  */
 
 #include "common/exception/Exception.hpp"
-#include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/wrapper/ConnFactoryFactory.hpp"
@@ -51,9 +50,9 @@ Conn ConnPool::getConn() {
   }
 
   if(m_connsAndStmts.size() == 0) {
-    auto connAndStmts = cta::make_unique<ConnAndStmts>();
+    auto connAndStmts = std::make_unique<ConnAndStmts>();
     connAndStmts->conn = m_connFactory->create();
-    connAndStmts->stmtPool = cta::make_unique<StmtPool>();
+    connAndStmts->stmtPool = std::make_unique<StmtPool>();
     m_connsAndStmts.push_back(std::move(connAndStmts));
   }
 
@@ -63,9 +62,9 @@ Conn ConnPool::getConn() {
   if(connAndStmts->conn->isOpen()) {
     return Conn(std::move(connAndStmts), this);
   } else {
-    auto newConnAndStmts = cta::make_unique<ConnAndStmts>();
+    auto newConnAndStmts = std::make_unique<ConnAndStmts>();
     newConnAndStmts->conn = m_connFactory->create();
-    newConnAndStmts->stmtPool = cta::make_unique<StmtPool>();
+    newConnAndStmts->stmtPool = std::make_unique<StmtPool>();
     return Conn(std::move(newConnAndStmts), this);
   }
 }

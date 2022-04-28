@@ -27,7 +27,6 @@
 #ifdef STDOUT_LOGGING
 #include "common/log/StdoutLogger.hpp"
 #endif
-#include "common/make_unique.hpp"
 #include "objectstore/RetrieveQueueAlgorithms.hpp"
 #include "RetrieveQueueAlgorithms.hpp"
 #include "RootEntry.hpp"

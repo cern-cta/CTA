@@ -19,7 +19,6 @@
 
 #include "scheduler/RetrieveMount.hpp"
 #include "scheduler/RetrieveJob.hpp"
-#include "common/make_unique.hpp"
 #include <memory>
 
 namespace cta {
@@ -44,7 +43,7 @@ namespace cta {
     
     virtual void validate() override  {}
     virtual cta::catalogue::TapeItemWrittenPointer validateAndGetTapeFileWritten() override {
-      auto fileReportUP = cta::make_unique<cta::catalogue::TapeFileWritten>();
+      auto fileReportUP = std::make_unique<cta::catalogue::TapeFileWritten>();
       auto &  fileReport = *fileReportUP;
       fileReport.archiveFileId = archiveFile.archiveFileID;
       fileReport.blockId = tapeFile.blockId;

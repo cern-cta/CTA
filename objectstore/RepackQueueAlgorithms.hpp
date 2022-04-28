@@ -19,7 +19,6 @@
 
 #include "Algorithms.hpp"
 #include "common/exception/NoSuchObject.hpp"
-#include "common/make_unique.hpp"
 #include "common/optional.hpp"
 #include "RepackQueue.hpp"
 #include "RepackRequest.hpp"
@@ -172,7 +171,7 @@ getPoppingElementsCandidates(Container& cont, PopCriteria& unfulfilledCriteria, 
   for (auto& crfq: candidateReqsFromQueue.candidates) {
     ret.elements.emplace_back(PoppedElement());
     PoppedElement & elem = ret.elements.back();
-    elem.repackRequest = cta::make_unique<RepackRequest>(crfq.address, cont.m_objectStore);
+    elem.repackRequest = std::make_unique<RepackRequest>(crfq.address, cont.m_objectStore);
     elem.repackInfo.status = common::dataStructures::RepackInfo::Status::Undefined;
     elem.repackInfo.type = common::dataStructures::RepackInfo::Type::Undefined;
     elem.repackInfo.vid = "";

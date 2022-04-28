@@ -30,7 +30,6 @@
 #include "common/exception/UserError.hpp"
 #include "common/utils/Regex.hpp"
 #include "common/log/TimingList.hpp"
-#include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
@@ -323,7 +322,7 @@ void RdbmsCatalogue::createVirtualOrganization(const common::dataStructures::Sec
     if(vo.diskInstanceName.empty()) {
       throw UserSpecifiedAnEmptyStringDiskInstanceName("Cannot create virtual organization because the disk instance is an empty string");
     }
-    
+
     auto conn = m_connPool.getConn();
     if(virtualOrganizationExists(conn, vo.name)) {
       throw exception::UserError(std::string("Cannot create vo : ") +
@@ -538,7 +537,7 @@ common::dataStructures::VirtualOrganization RdbmsCatalogue::getVirtualOrganizati
         "VIRTUAL_ORGANIZATION.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
         "VIRTUAL_ORGANIZATION.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
-        
+
         "VIRTUAL_ORGANIZATION.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
         "VIRTUAL_ORGANIZATION.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
         "VIRTUAL_ORGANIZATION.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
@@ -5813,7 +5812,7 @@ void RdbmsCatalogue::createRequesterActivityMountRule(
         " to requester " + diskInstanceName + ":" + requesterName + " for activities matching " + activityRegex +
         " because disk-instance " + diskInstanceName + " does not exist");
     }
-    
+
     const uint64_t now = time(nullptr);
     const char *const sql =
       "INSERT INTO REQUESTER_ACTIVITY_MOUNT_RULE("
@@ -5991,7 +5990,7 @@ void RdbmsCatalogue::createRequesterMountRule(
         " to requester " + diskInstanceName + ":" + requesterName + " because disk-instance " + diskInstanceName +
         " does not exist");
     }
-    
+
     const uint64_t now = time(nullptr);
     const char *const sql =
       "INSERT INTO REQUESTER_MOUNT_RULE("
@@ -6163,7 +6162,7 @@ void RdbmsCatalogue::createRequesterGroupMountRule(
       throw exception::UserError(std::string("Cannot assign mount-policy ") + mountPolicyName + " to requester-group " +
         diskInstanceName + ":" + requesterGroupName + " because disk-instance " + diskInstanceName + " does not exist");
     }
-    
+
     const uint64_t now = time(nullptr);
     const char *const sql =
       "INSERT INTO REQUESTER_GROUP_MOUNT_RULE("
@@ -7080,7 +7079,7 @@ disk::DiskSystemList RdbmsCatalogue::getAllDiskSystems() const {
         "DISK_INSTANCE_SPACE.FREE_SPACE_QUERY_URL AS FREE_SPACE_QUERY_URL,"
         "DISK_INSTANCE_SPACE.REFRESH_INTERVAL AS REFRESH_INTERVAL,"
         "DISK_INSTANCE_SPACE.LAST_REFRESH_TIME AS LAST_REFRESH_TIME,"
-        "DISK_INSTANCE_SPACE.FREE_SPACE AS FREE_SPACE "    
+        "DISK_INSTANCE_SPACE.FREE_SPACE AS FREE_SPACE "
       "FROM "
         "DISK_SYSTEM "
       "INNER JOIN DISK_INSTANCE_SPACE ON "
@@ -8465,7 +8464,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
     while (rset.next()) {
       if(nullptr == archiveFile.get()) {
-        archiveFile = cta::make_unique<common::dataStructures::ArchiveFile>();
+        archiveFile = std::make_unique<common::dataStructures::ArchiveFile>();
 
         archiveFile->archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
         archiveFile->diskInstance = rset.columnString("DISK_INSTANCE_NAME");
@@ -9425,7 +9424,7 @@ std::unique_ptr<ArchiveFileRow> RdbmsCatalogue::getArchiveFileRowById(rdbms::Con
 
     std::unique_ptr<ArchiveFileRow> row;
     if (rset.next()) {
-      row = cta::make_unique<ArchiveFileRow>();
+      row = std::make_unique<ArchiveFileRow>();
 
       row->archiveFileId = rset.columnUint64("ARCHIVE_FILE_ID");
       row->diskInstance = rset.columnString("DISK_INSTANCE_NAME");
@@ -9492,7 +9491,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
     while (rset.next()) {
       if(nullptr == archiveFile.get()) {
-        archiveFile = cta::make_unique<common::dataStructures::ArchiveFile>();
+        archiveFile = std::make_unique<common::dataStructures::ArchiveFile>();
 
         archiveFile->archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
         archiveFile->diskInstance = rset.columnString("DISK_INSTANCE_NAME");
@@ -9618,7 +9617,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
     while (rset.next()) {
       if(nullptr == archiveFile.get()) {
-        archiveFile = cta::make_unique<common::dataStructures::ArchiveFile>();
+        archiveFile = std::make_unique<common::dataStructures::ArchiveFile>();
 
         archiveFile->archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
         archiveFile->diskInstance = rset.columnString("DISK_INSTANCE_NAME");
@@ -9706,7 +9705,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
     std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
     while (rset.next()) {
       if(nullptr == archiveFile.get()) {
-        archiveFile = cta::make_unique<common::dataStructures::ArchiveFile>();
+        archiveFile = std::make_unique<common::dataStructures::ArchiveFile>();
 
         archiveFile->archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
         archiveFile->diskInstance = rset.columnString("DISK_INSTANCE_NAME");

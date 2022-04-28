@@ -17,7 +17,6 @@
 
 #include "ArchiveQueueAlgorithms.hpp"
 #include "common/Timer.hpp"
-#include "common/make_unique.hpp"
 
 namespace cta { namespace objectstore {
 
@@ -175,7 +174,7 @@ auto ContainerTraits<ArchiveQueue>::getPoppingElementsCandidates(Container& cont
   PoppedElementsBatch ret;
   auto candidateJobsFromQueue=cont.getCandidateList(unfulfilledCriteria.bytes, unfulfilledCriteria.files, elemtsToSkip);
   for (auto &cjfq: candidateJobsFromQueue.candidates) {
-    ret.elements.emplace_back(PoppedElement{cta::make_unique<ArchiveRequest>(cjfq.address, cont.m_objectStore), cjfq.copyNb, cjfq.size});
+    ret.elements.emplace_back(PoppedElement{std::make_unique<ArchiveRequest>(cjfq.address, cont.m_objectStore), cjfq.copyNb, cjfq.size});
     ret.summary.bytes += cjfq.size;
     ret.summary.files++;
   }

@@ -17,7 +17,6 @@
 
 #include "ArchiveQueueAlgorithms.hpp"
 #include "common/Timer.hpp"
-#include "common/make_unique.hpp"
 
 namespace cta { namespace objectstore {
 

@@ -17,7 +17,6 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
-#include "common/make_unique.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "rdbms/CheckConstraintError.hpp"
 #include "rdbms/PrimaryKeyError.hpp"
@@ -177,7 +176,7 @@ void OcciStmt::bindString(const std::string &paramName, const optional<std::stri
   try {
     if(paramValue && paramValue.value().empty()) {
       throw exception::Exception(std::string("Optional string parameter ") + paramName + " is an empty string. "
-        " An optional string parameter should either have a non-empty string value or no value at all."); 
+        " An optional string parameter should either have a non-empty string value or no value at all.");
     }
 
     const unsigned paramIdx = getParamIdx(paramName);
@@ -215,7 +214,7 @@ std::unique_ptr<RsetWrapper> OcciStmt::executeQuery() {
      throw exception::Exception("Unknown autocommit mode");
     }
 
-    return cta::make_unique<OcciRset>(*this, m_stmt->executeQuery());
+    return std::make_unique<OcciRset>(*this, m_stmt->executeQuery());
   } catch(occi::SQLException &ex) {
     std::ostringstream msg;
     msg << std::string(__FUNCTION__) << " failed for SQL statement " << getSqlForException() << ": " << ex.what();

@@ -17,13 +17,12 @@
 
 #include "SchemaVersion.hpp"
 #include "common/exception/Exception.hpp"
-#include "common/make_unique.hpp"
 
 namespace cta { namespace catalogue {
 
 SchemaVersion::SchemaVersion() :
-  m_schemaVersionMajor(0), m_schemaVersionMinor(0), m_status(UPGRADING) {}  
-  
+  m_schemaVersionMajor(0), m_schemaVersionMinor(0), m_status(UPGRADING) {}
+
 SchemaVersion::SchemaVersion(const SchemaVersion& orig) {
   if(this != &orig){
     m_schemaVersionMajor = orig.m_schemaVersionMajor;
@@ -146,7 +145,7 @@ std::map<std::string,SchemaVersion::Status> SchemaVersion::Builder::s_mapStringS
   {"UPGRADING",Status::UPGRADING}
 };
 
-void SchemaVersion::Builder::validate() const { 
+void SchemaVersion::Builder::validate() const {
   if(!m_schemaVersionMajorSet || !m_schemaVersionMinorSet){
     throw cta::exception::Exception("In SchemaVersion::Builder::validate(), schemaVersionMajor or schemaVersionMinor have not been set.");
   }

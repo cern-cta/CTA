@@ -38,8 +38,8 @@ namespace unitTests {
       virtual void SetUp() {
         const uint64_t nbConns = 1;
         const uint64_t nbArchiveFileListingConns = 1;
-        //m_catalogue = cta::make_unique<catalogue::SchemaCreatingSqliteCatalogue>(m_tempSqliteFile.path(), nbConns);
-        m_catalogue = cta::make_unique<cta::catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns);
+        //m_catalogue = std::make_unique<catalogue::SchemaCreatingSqliteCatalogue>(m_tempSqliteFile.path(), nbConns);
+        m_catalogue = std::make_unique<cta::catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns);
         m_cliId.host = "host";
         m_cliId.username = "userName";
         insertDiskSystemSpinner();

@@ -20,7 +20,6 @@
 #include "common/exception/NonRetryableError.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/exception/UserError.hpp"
-#include "common/make_unique.hpp"
 #include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "disk/DiskFileImplementations.hpp"
@@ -56,7 +55,7 @@ Scheduler::Scheduler(
   SchedulerDatabase &db, const uint64_t minFilesToWarrantAMount, const uint64_t minBytesToWarrantAMount):
     m_catalogue(catalogue), m_db(db), m_minFilesToWarrantAMount(minFilesToWarrantAMount),
     m_minBytesToWarrantAMount(minBytesToWarrantAMount) {
-      m_tapeDrivesState = cta::make_unique<TapeDrivesCatalogueState>(m_catalogue);
+      m_tapeDrivesState = std::make_unique<TapeDrivesCatalogueState>(m_catalogue);
     }
 
 //------------------------------------------------------------------------------

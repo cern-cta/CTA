@@ -20,7 +20,6 @@
 #include <iostream>
 
 #include "Catalogue.hpp"
-#include "common/make_unique.hpp"
 
 namespace cta {
 
