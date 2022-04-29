@@ -3,6 +3,9 @@
 ## Summary
 ### Upgrade Instructions
 ### Features
+- cta/CTA#1179 - Use std::optional instead of cta::optional
+- cta/CTA#1190 - Use std::make_unique instead of cta::make_unique
+
 ### Bug fixes
 ### Building and Packaging
 ### Catalogue Schema

@@ -228,7 +228,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindBlob) {
 TEST_P(cta_rdbms_StmtTest, insert_with_bindDouble_null) {
   using namespace cta::rdbms;
 
-  const cta::optional<double> insertValue; // Null value
+  const std::optional<double> insertValue; // Null value
 
   // Insert a row into the test table
   {
@@ -356,7 +356,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint8_2_pow_8_minus_1) {
 TEST_P(cta_rdbms_StmtTest, insert_with_bindUint8_null) {
   using namespace cta::rdbms;
 
-  const cta::optional<uint8_t> insertValue; // Null value
+  const std::optional<uint8_t> insertValue; // Null value
 
   // Insert a row into the test table
   {
@@ -481,7 +481,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint16_2_pow_16_minus_1) {
 TEST_P(cta_rdbms_StmtTest, insert_with_bindUint16_null) {
   using namespace cta::rdbms;
 
-  const cta::optional<uint16_t> insertValue; // Null value
+  const std::optional<uint16_t> insertValue; // Null value
 
   // Insert a row into the test table
   {
@@ -604,7 +604,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint32_2_pow_32_minus_1) {
 TEST_P(cta_rdbms_StmtTest, insert_with_bindUint32_null) {
   using namespace cta::rdbms;
 
-  const cta::optional<uint32_t> insertValue; // Null value
+  const std::optional<uint32_t> insertValue; // Null value
 
   // Insert a row into the test table
   {
@@ -770,7 +770,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint64_2_pow_64_minus_2) {
 TEST_P(cta_rdbms_StmtTest, insert_with_bindString_null) {
   using namespace cta::rdbms;
 
-  const cta::optional<std::string> insertValue; // Null value
+  const std::optional<std::string> insertValue; // Null value
 
   // Insert a row into the test table
   {
@@ -852,7 +852,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindString) {
 TEST_P(cta_rdbms_StmtTest, insert_with_bindBool_null) {
   using namespace cta::rdbms;
 
-  const cta::optional<bool> insertValue; // Null value
+  const std::optional<bool> insertValue; // Null value
 
   // Insert a row into the test table
   {

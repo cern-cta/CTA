@@ -73,7 +73,6 @@
 #include "common/exception/UserErrorWithCacheInfo.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
-#include "common/optional.hpp"
 #include "disk/DiskSystem.hpp"
 #include "RecyleTapeFileSearchCriteria.hpp"
 #include "CreateMountPolicyAttributes.hpp"
@@ -82,6 +81,7 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <optional>
 #include <set>
 #include <stdint.h>
 #include <string>
@@ -254,7 +254,7 @@ public:
     const std::string &diskInstanceName,
     const uint64_t archiveFileId,
     const common::dataStructures::RequesterIdentity &user,
-    const optional<std::string> & activity,
+    const std::optional<std::string> & activity,
     log::LogContext &lc) = 0;
 
   /**
@@ -358,7 +358,7 @@ public:
    * @param comment The new comment of the Virtual Organization.
    */
   virtual void modifyVirtualOrganizationComment(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const std::string &comment) = 0;
-  
+
   /**
    * Modifies the comment of the specified Virtual Organization
    *
@@ -366,7 +366,7 @@ public:
    * @param diskInstance The new disk instance of the Virtual Organization.
    */
   virtual void modifyVirtualOrganizationDiskInstanceName(const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const std::string &diskInstance) = 0;
-  
+
   /**
    * Creates the specified storage class.
    *
@@ -482,7 +482,7 @@ public:
    * @param name The name of the tape media type.
    * @param nbWraps The new number of tape wraps.
    */
-  virtual void modifyMediaTypeNbWraps(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const cta::optional<std::uint32_t> &nbWraps) = 0;
+  virtual void modifyMediaTypeNbWraps(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::optional<std::uint32_t> &nbWraps) = 0;
 
   /**
    * Modify the minimum longitudinal tape position of a tape media type.
@@ -491,7 +491,7 @@ public:
    * @param name The name of the tape media type.
    * @param minLPos The new minimum longitudinal tape position.
    */
-  virtual void modifyMediaTypeMinLPos(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const cta::optional<std::uint64_t> &minLPos) = 0;
+  virtual void modifyMediaTypeMinLPos(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::optional<std::uint64_t> &minLPos) = 0;
 
   /**
    * Modify the maximum longitudinal tape position of a tape media type.
@@ -500,7 +500,7 @@ public:
    * @param name The name of the tape media type.
    * @param maxLPos The new maximum longitudinal tape position.
    */
-  virtual void modifyMediaTypeMaxLPos(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const cta::optional<std::uint64_t> &maxLPos) = 0;
+  virtual void modifyMediaTypeMaxLPos(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::optional<std::uint64_t> &maxLPos) = 0;
 
   /**
    * Modify the comment of a tape media type.
@@ -511,7 +511,7 @@ public:
    */
   virtual void modifyMediaTypeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) = 0;
 
-  virtual void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue, const cta::optional<std::string> &supply, const std::string &comment) = 0;
+  virtual void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue, const std::optional<std::string> &supply, const std::string &comment) = 0;
 
  /**
   * Deletes the specified tape pool.
@@ -528,7 +528,7 @@ public:
    * @return The tape pool with the specified name.
    * @param tapePoolName The name of the tape pool.
    */
-  virtual cta::optional<TapePool> getTapePool(const std::string &tapePoolName) const = 0;
+  virtual std::optional<TapePool> getTapePool(const std::string &tapePoolName) const = 0;
 
   virtual void modifyTapePoolVo(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo) = 0;
   virtual void modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t nbPartialTapes) = 0;
@@ -701,15 +701,15 @@ public:
   virtual void modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &tapePoolName) = 0;
   virtual void modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &encryptionKeyName) = 0;
   virtual void modifyTapeVerificationStatus(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &verificationStatus) = 0;
-  
+
   /**
    * Modify the state of the specified tape
    * @param admin, the person or the system who modified the state of the tape
    * @param vid the VID of the tape to change the state
    * @param state the new state
-   * @param stateReason the reason why the state changes, if the state is ACTIVE and the stateReason is nullopt, the state will be reset to null
+   * @param stateReason the reason why the state changes, if the state is ACTIVE and the stateReason is std::nullopt, the state will be reset to null
    */
-  virtual void modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const cta::optional<std::string> & stateReason) = 0;
+  virtual void modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const std::optional<std::string> & stateReason) = 0;
   /**
    * Sets the full status of the specified tape.
    *
@@ -748,12 +748,12 @@ public:
 
   /**
    * Modifies the tape comment
-   * If the comment == cta::nullopt, it will delete the comment from the tape table
+   * If the comment == std::nullopt, it will delete the comment from the tape table
    * @param admin the admin who removes the comment
    * @param vid the vid of the tape to remove the comment
-   * @param comment the new comment. If comment == cta::nullopt, the comment will be deleted.
+   * @param comment the new comment. If comment == std::nullopt, the comment will be deleted.
    */
-  virtual void modifyTapeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const cta::optional<std::string> &comment) = 0;
+  virtual void modifyTapeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::optional<std::string> &comment) = 0;
 
   virtual void modifyRequesterActivityMountRulePolicy(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterName, const std::string &activityRegex, const std::string &mountPolicy) = 0;
   virtual void modifyRequesterActivityMountRuleComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterName, const std::string &activityRegex, const std::string &comment) = 0;
@@ -1294,7 +1294,7 @@ public:
    * @param tapeDriveName The name of the tape drive.
    * @return Parameters of the Tape Drive.
    */
-  virtual optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string &tapeDriveName) const = 0;
+  virtual std::optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string &tapeDriveName) const = 0;
 
   /**
    * Modifies the desired state parameters off the specified Tape Drive
@@ -1370,7 +1370,7 @@ public:
    * @param keyName The key of the parameter.
    * @return Returns the category, value and source of a parameter of the configuarion
    */
-  virtual optional<std::tuple<std::string, std::string, std::string>> getTapeDriveConfig( const std::string &tapeDriveName,
+  virtual std::optional<std::tuple<std::string, std::string, std::string>> getTapeDriveConfig( const std::string &tapeDriveName,
     const std::string &keyName) const = 0;
 
   /**

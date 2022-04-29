@@ -188,7 +188,7 @@ public:
     const std::string &diskInstanceName,
     const uint64_t archiveFileId,
     const common::dataStructures::RequesterIdentity &user,
-    const optional<std::string> & activity,
+    const std::optional<std::string> & activity,
     log::LogContext &lc) override;
 
   /**
@@ -423,7 +423,7 @@ public:
    * @param name The name of the tape media type.
    * @param nbWraps The new number of tape wraps.
    */
-  void modifyMediaTypeNbWraps(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const cta::optional<std::uint32_t> &nbWraps) override;
+  void modifyMediaTypeNbWraps(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::optional<std::uint32_t> &nbWraps) override;
 
   /**
    * Modify the minimum longitudinal tape position of a tape media type.
@@ -432,7 +432,7 @@ public:
    * @param name The name of the tape media type.
    * @param minLPos The new minimum longitudinal tape position.
    */
-  void modifyMediaTypeMinLPos(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const cta::optional<std::uint64_t> &minLPos) override;
+  void modifyMediaTypeMinLPos(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::optional<std::uint64_t> &minLPos) override;
 
   /**
    * Modify the maximum longitudinal tape position of a tape media type.
@@ -441,7 +441,7 @@ public:
    * @param name The name of the tape media type.
    * @param maxLPos The new maximum longitudinal tape position.
    */
-  void modifyMediaTypeMaxLPos(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const cta::optional<std::uint64_t> &maxLPos) override;
+  void modifyMediaTypeMaxLPos(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::optional<std::uint64_t> &maxLPos) override;
 
   /**
    * Modify the comment of a tape media type.
@@ -452,7 +452,7 @@ public:
    */
   void modifyMediaTypeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) override;
 
-  void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue, const cta::optional<std::string> &supply, const std::string &comment) override;
+  void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue, const std::optional<std::string> &supply, const std::string &comment) override;
   void deleteTapePool(const std::string &name) override;
   std::list<TapePool> getTapePools(const TapePoolSearchCriteria &searchCriteria) const override;
 
@@ -462,7 +462,7 @@ public:
    * @return The tape pool with the specified name.
    * @param tapePoolName The name of the tape pool.
    */
-  cta::optional<TapePool> getTapePool(const std::string &tapePoolName) const override;
+  std::optional<TapePool> getTapePool(const std::string &tapePoolName) const override;
 
   void modifyTapePoolVo(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo) override;
   void modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t nbPartialTapes) override;
@@ -651,7 +651,7 @@ public:
   void modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &tapePoolName) override;
   void modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &encryptionKeyName) override;
   void modifyTapeVerificationStatus(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &verificationStatus) override;
-  void modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const cta::optional<std::string> & stateReason) override;
+  void modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const std::optional<std::string> & stateReason) override;
   static std::string generateTapeStateModifiedBy(const common::dataStructures::SecurityIdentity & admin);
   /**
    * Sets the full status of the specified tape.
@@ -687,7 +687,7 @@ public:
 
   void setTapeDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string & reason) override;
   void setTapeDirty(const std::string & vid) override;
-  void modifyTapeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,  const cta::optional<std::string> &comment) override;
+  void modifyTapeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,  const std::optional<std::string> &comment) override;
 
   void modifyRequesterActivityMountRulePolicy(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterName, const std::string &activityRegex, const std::string &mountPolicy) override;
   void modifyRequesterActivityMountRuleComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterName, const std::string &activityRegex, const std::string &comment) override;
@@ -1455,15 +1455,15 @@ protected:
   }; // struct User
 
   /**
-   * Returns a cached version of the specified requester mount-policy or nullopt
+   * Returns a cached version of the specified requester mount-policy or std::nullopt
    * if one does not exist.
    *
    * @param user The fully qualified user, in other words the name of the disk
    * instance and the name of the group.
-   * @return The mount policy or nullopt if one does not exists.
+   * @return The mount policy or std::nullopt if one does not exists.
    * @throw UserErrorWithTimeBasedCacheInfo if there was a user error.
    */
-  ValueAndTimeBasedCacheInfo<optional<common::dataStructures::MountPolicy> > getCachedRequesterMountPolicy(const User &user) const;
+  ValueAndTimeBasedCacheInfo<std::optional<common::dataStructures::MountPolicy> > getCachedRequesterMountPolicy(const User &user) const;
 
   /**
    * Returns true if the specified requester+activity mount-policy exists
@@ -1479,15 +1479,15 @@ protected:
   bool requesterActivityMountRuleExists(rdbms::Conn &conn, const std::string &diskInstanceName, const std::string &requesterName, const std::string &activityRegex) const;
 
   /**
-   * Returns the specified requester mount-policy or nullopt if one does not
+   * Returns the specified requester mount-policy or std::nullopt if one does not
    * exist.
    *
    * @param conn The database connection.
    * @param user The fully qualified user, in other words the name of the disk
    * instance and the name of the group.
-   * @return The mount policy or nullopt if one does not exists.
+   * @return The mount policy or std::nullopt if one does not exists.
    */
-  optional<common::dataStructures::MountPolicy> getRequesterMountPolicy(rdbms::Conn &conn, const User &user) const;
+  std::optional<common::dataStructures::MountPolicy> getRequesterMountPolicy(rdbms::Conn &conn, const User &user) const;
 
   /**
    * Returns true if the specified requester-group mount-rule exists.
@@ -1548,9 +1548,9 @@ protected:
    *
    * @param group The fully qualified group, in other words the name of the disk
    * instance and the name of the group.
-   * @return The cached mount policy or nullopt if one does not exists.
+   * @return The cached mount policy or std::nullopt if one does not exists.
    */
-  ValueAndTimeBasedCacheInfo<optional<common::dataStructures::MountPolicy> > getCachedRequesterGroupMountPolicy(const Group &group) const;
+  ValueAndTimeBasedCacheInfo<std::optional<common::dataStructures::MountPolicy> > getCachedRequesterGroupMountPolicy(const Group &group) const;
 
   /**
    * Returns the specified requester-group mount-policy or nullptr if one does
@@ -1559,9 +1559,9 @@ protected:
    * @param conn The database connection.
    * @param group The fully qualified group, in other words the name of the disk
    * instance and the name of the group.
-   * @return The mount policy or nullopt if one does not exists.
+   * @return The mount policy or std::nullopt if one does not exists.
    */
-  optional<common::dataStructures::MountPolicy> getRequesterGroupMountPolicy(rdbms::Conn &conn, const Group &group)
+  std::optional<common::dataStructures::MountPolicy> getRequesterGroupMountPolicy(rdbms::Conn &conn, const Group &group)
     const;
 
   /**
@@ -1574,7 +1574,7 @@ protected:
    * @param timeColNAme The name of the database column that contains the time
    * stamp.
    */
-  optional<common::dataStructures::TapeLog> getTapeLogFromRset(const rdbms::Rset &rset,
+  std::optional<common::dataStructures::TapeLog> getTapeLogFromRset(const rdbms::Rset &rset,
     const std::string &driveColName, const std::string &timeColName) const;
 
   /**
@@ -1840,7 +1840,7 @@ protected:
    * @param diskFileIds List of disk file IDs (fxid).
    * @return Name of the temporary table
    */
-  virtual std::string createAndPopulateTempTableFxid(rdbms::Conn &conn, const optional<std::vector<std::string>> &diskFileIds) const = 0;
+  virtual std::string createAndPopulateTempTableFxid(rdbms::Conn &conn, const std::optional<std::vector<std::string>> &diskFileIds) const = 0;
 
   /**
    * Returns a unique archive ID that can be used by a new archive file within
@@ -2027,7 +2027,7 @@ protected:
    * @param optionalStr The optional string.
    * @return True if the specified optional string is both set and empty.
    */
-  bool isSetAndEmpty(const optional<std::string> &optionalStr) const;
+  bool isSetAndEmpty(const std::optional<std::string> &optionalStr) const;
 
   /**
    * Returns true if the specified optional string list is both set and empty.
@@ -2035,7 +2035,7 @@ protected:
    * @param optionalStr The optional string list.
    * @return True if the specified optional string list is both set and empty.
    */
-  bool isSetAndEmpty(const optional<std::vector<std::string>> &optionalStrList) const;
+  bool isSetAndEmpty(const std::optional<std::vector<std::string>> &optionalStrList) const;
 
   /**
    * Returns true if the specified media type is currently being used by one or
@@ -2092,34 +2092,34 @@ protected:
   bool virtualOrganizationIsUsedByTapepools(rdbms::Conn &conn, const std::string &voName) const;
 
   /**
-   * Returns the ID of the specified logical library or nullopt if the logical
+   * Returns the ID of the specified logical library or std::nullopt if the logical
    * library does not exist.
    *
    * @param conn The database connection.
    * @param name The name of the tape pool.
    * @return the ID of the specified tape pool.
    */
-  optional<uint64_t> getLogicalLibraryId(rdbms::Conn &conn, const std::string &name) const;
+  std::optional<uint64_t> getLogicalLibraryId(rdbms::Conn &conn, const std::string &name) const;
 
   /**
-   * Returns the ID of the specified tape pool or nullopt if it the tape pool
+   * Returns the ID of the specified tape pool or std::nullopt if it the tape pool
    * does not exist.
    *
    * @param conn The database connection.
    * @param name The name of the tape pool.
    * @return the ID of the specified tape pool.
    */
-  optional<uint64_t> getTapePoolId(rdbms::Conn &conn, const std::string &name) const;
+  std::optional<uint64_t> getTapePoolId(rdbms::Conn &conn, const std::string &name) const;
 
   /**
-   * Returns the ID of the specified media type or nullopt if it the media type
+   * Returns the ID of the specified media type or std::nullopt if it the media type
    * does not exist.
    *
    * @param conn The database connection.
    * @param name The name of the media type.
    * @return the ID of the specified tape pool.
    */
-  optional<uint64_t> getMediaTypeId(rdbms::Conn &conn, const std::string &name) const;
+  std::optional<uint64_t> getMediaTypeId(rdbms::Conn &conn, const std::string &name) const;
 
   /**
    * Updates the disk file ID of the specified archive file.
@@ -2355,7 +2355,7 @@ protected:
 
   std::list<common::dataStructures::TapeDrive> getTapeDrives() const override;
 
-  optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string &tapeDriveName) const override;
+  std::optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string &tapeDriveName) const override;
 
   void setDesiredTapeDriveState(const std::string& tapeDriveName,
     const common::dataStructures::DesiredDriveState &desiredState) override;
@@ -2381,7 +2381,7 @@ protected:
 
   std::list<cta::catalogue::Catalogue::DriveConfig> getTapeDriveConfigs() const override;
 
-  optional<std::tuple<std::string, std::string, std::string>> getTapeDriveConfig( const std::string &tapeDriveName,
+  std::optional<std::tuple<std::string, std::string, std::string>> getTapeDriveConfig( const std::string &tapeDriveName,
     const std::string &keyName) const override;
 
   void deleteTapeDriveConfig(const std::string &tapeDriveName, const std::string &keyName) override;
@@ -2402,12 +2402,12 @@ protected:
   /**
    * Cached versions of mount policies for specific user groups.
    */
-  mutable TimeBasedCache<Group, optional<common::dataStructures::MountPolicy> > m_groupMountPolicyCache;
+  mutable TimeBasedCache<Group, std::optional<common::dataStructures::MountPolicy> > m_groupMountPolicyCache;
 
   /**
    * Cached versions of mount policies for specific users.
    */
-  mutable TimeBasedCache<User, optional<common::dataStructures::MountPolicy> > m_userMountPolicyCache;
+  mutable TimeBasedCache<User, std::optional<common::dataStructures::MountPolicy> > m_userMountPolicyCache;
 
   /**
    * Cached versions of all mount policies

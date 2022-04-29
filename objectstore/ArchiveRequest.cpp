@@ -540,7 +540,7 @@ void ArchiveRequest::setJobOwner(
 // ArchiveRequest::asyncUpdateJobOwner()
 //------------------------------------------------------------------------------
 ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint32_t copyNumber,
-  const std::string& owner, const std::string& previousOwner, const cta::optional<serializers::ArchiveJobStatus>& newStatus) {
+  const std::string& owner, const std::string& previousOwner, const std::optional<serializers::ArchiveJobStatus>& newStatus) {
   std::unique_ptr<AsyncJobOwnerUpdater> ret(new AsyncJobOwnerUpdater);
   // The unique pointer will be std::moved so we need to work with its content (bare pointer or here ref to content).
   auto & retRef = *ret;
@@ -878,7 +878,7 @@ auto ArchiveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent jobE
   using serializers::ArchiveJobStatus;
   // Validate the current status.
   // Get status
-  cta::optional<ArchiveJobStatus> currentStatus;
+  std::optional<ArchiveJobStatus> currentStatus;
   for (auto &j:jl) { if (j.copynb() == copyNumberUpdated) currentStatus = j.status(); }
   if (!currentStatus) {
     std::stringstream err;

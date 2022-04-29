@@ -1067,7 +1067,7 @@ void RequestMessage::processDrive_Up(cta::xrd::Response &response)
 {
    using namespace cta::admin;
 
-   cta::optional<std::string> reason = getOptional(OptionString::REASON);
+   std::optional<std::string> reason = getOptional(OptionString::REASON);
    cta::common::dataStructures::DesiredDriveState desiredDS;
    desiredDS.up = true;
    desiredDS.forceDown = false;
@@ -1428,7 +1428,7 @@ void RequestMessage::processMediaType_Ch(cta::xrd::Response &response)
     m_catalogue.modifyMediaTypeSecondaryDensityCode(m_cliIdentity,mediaTypeName,secondaryDensityCode.value());
   }
   if(nbWraps){
-    cta::optional<uint32_t> newNbWraps = nbWraps.value();
+    std::optional<uint32_t> newNbWraps = nbWraps.value();
     m_catalogue.modifyMediaTypeNbWraps(m_cliIdentity,mediaTypeName,newNbWraps);
   }
   if(minlpos){
@@ -1957,7 +1957,7 @@ void RequestMessage::processTape_Ch(cta::xrd::Response &response)
    if(comment) {
       if(comment.value().empty()){
         //If the comment is an empty string, the user meant to delete it
-        comment = cta::nullopt;
+        comment = std::nullopt;
       }
       m_catalogue.modifyTapeComment(m_cliIdentity, vid, comment);
    }

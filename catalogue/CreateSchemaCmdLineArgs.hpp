@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "common/optional.hpp"
+#include <optional>
 #include <string>
 
 namespace cta {
@@ -42,7 +42,7 @@ struct CreateSchemaCmdLineArgs {
     /**
    * Version of the catalogue to be created
    */
-  cta::optional<std::string> catalogueVersion;
+  std::optional<std::string> catalogueVersion;
 
   /**
    * Constructor that parses the specified command-line arguments.

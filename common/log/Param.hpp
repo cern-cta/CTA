@@ -17,9 +17,10 @@
 
 #pragma once
 
+#include <cstdio>
+#include <optional>
 #include <sstream>
 #include <string.h>
-#include <cstdio>
 
 namespace cta {
 namespace log {
@@ -44,14 +45,14 @@ public:
     oss << value;
     m_value = oss.str();
   }
-    
+
   Param(const std::string & name, const uint8_t & value) throw():
   m_name(name) {
     std::ostringstream oss;
     oss << static_cast<int>(value);
     m_value = oss.str();
   }
-  
+
   /**
    * Constructor.
    *
@@ -67,7 +68,12 @@ public:
     buf[sizeof(buf)-1]='\0';
     m_value = buf;
   }
-    
+
+  Param(const std::string &name, const std::nullopt_t &value) throw():
+    m_name(name) {
+    m_value = "";
+  }
+
   /**
    * Value changer. Useful for log contexts.
    * @param value
@@ -114,4 +120,3 @@ public:
 
 } // namespace log
 } // namespace cta
-

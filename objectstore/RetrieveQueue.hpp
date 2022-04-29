@@ -65,8 +65,8 @@ public:
     uint64_t fileSize;
     cta::common::dataStructures::MountPolicy policy;
     time_t startTime;
-    optional<std::string> activity;
-    optional<std::string> diskSystemName;
+    std::optional<std::string> activity;
+    std::optional<std::string> diskSystemName;
   };
   void addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentReference & agentReference, log::LogContext & lc);
   // This version will check for existence of the job in the queue before
@@ -96,7 +96,7 @@ public:
     uint64_t minRetrieveRequestAge;
     std::map<std::string, uint64_t> mountPolicyCountMap;
     std::list<ActivityCount> activityCounts;
-    optional<SleepInfo> sleepInfo;
+    std::optional<SleepInfo> sleepInfo;
 
     JobsSummary() :
         jobs(0),
@@ -107,7 +107,7 @@ public:
         minRetrieveRequestAge(0) {}
     JobsSummary(uint64_t j, uint64_t b, time_t ojst, time_t yjst, uint64_t p, uint64_t mrra,
       const std::map<std::string, uint64_t>& mpcm, const std::list<ActivityCount>& ac,
-      const optional<SleepInfo>& si) :
+      const std::optional<SleepInfo>& si) :
         jobs(j),
         bytes(b),
         oldestJobStartTime(ojst),
@@ -123,8 +123,8 @@ public:
     std::string address;
     uint32_t copyNb;
     uint64_t size;
-    optional<std::string> activity;
-    optional<std::string> diskSystemName;
+    std::optional<std::string> activity;
+    std::optional<std::string> diskSystemName;
   };
   std::list<JobDump> dumpJobs();
   struct CandidateJobList {

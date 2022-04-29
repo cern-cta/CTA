@@ -90,7 +90,7 @@ public:
    * @param colName The name of the column.
    * @return The string value of the specified column.
    */
-  optional<std::string> columnOptionalString(const std::string &colName) const override;
+  std::optional<std::string> columnOptionalString(const std::string &colName) const override;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -100,7 +100,7 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  optional<uint8_t> columnOptionalUint8(const std::string &colName) const override;
+  std::optional<uint8_t> columnOptionalUint8(const std::string &colName) const override;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -110,7 +110,7 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  optional<uint16_t> columnOptionalUint16(const std::string &colName) const override;
+  std::optional<uint16_t> columnOptionalUint16(const std::string &colName) const override;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -120,7 +120,7 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  optional<uint32_t> columnOptionalUint32(const std::string &colName) const override;
+  std::optional<uint32_t> columnOptionalUint32(const std::string &colName) const override;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -130,7 +130,7 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  optional<uint64_t> columnOptionalUint64(const std::string &colName) const override;
+  std::optional<uint64_t> columnOptionalUint64(const std::string &colName) const override;
 
   /**
    * Returns the value of the specified column as a double.
@@ -140,7 +140,7 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  optional<double> columnOptionalDouble(const std::string &colName) const override;
+  std::optional<double> columnOptionalDouble(const std::string &colName) const override;
 
 private:
 

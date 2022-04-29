@@ -20,7 +20,8 @@
 #include "Algorithms.hpp"
 #include "ArchiveQueue.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
-#include "common/optional.hpp"
+
+#include <optional>
 
 namespace cta { namespace objectstore {
 
@@ -39,8 +40,8 @@ struct ContainerTraits<ArchiveQueue,C>
     ArchiveRequest* archiveRequest;
     uint32_t copyNb;
     cta::common::dataStructures::ArchiveFile archiveFile;
-    cta::optional<cta::common::dataStructures::MountPolicy> mountPolicy;
-    cta::optional<serializers::ArchiveJobStatus> newStatus;
+    std::optional<cta::common::dataStructures::MountPolicy> mountPolicy;
+    std::optional<serializers::ArchiveJobStatus> newStatus;
     typedef std::list<InsertedElement> list;
     bool operator==(InsertedElement & other){
       return archiveRequest->getAddressIfSet() == other.archiveRequest->getAddressIfSet() && copyNb == other.copyNb;
@@ -426,7 +427,7 @@ switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const Container
   for (auto & e: poppedElementBatch.elements) {
     ArchiveRequest & ar = *e.archiveRequest;
     auto copyNb = e.copyNb;
-    updaters.emplace_back(ar.asyncUpdateJobOwner(copyNb, contAddress, previousOwnerAddress, cta::nullopt));
+    updaters.emplace_back(ar.asyncUpdateJobOwner(copyNb, contAddress, previousOwnerAddress, std::nullopt));
   }
   timingList.insertAndReset("asyncUpdateLaunchTime", t);
   auto u = updaters.begin();

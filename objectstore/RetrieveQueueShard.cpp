@@ -68,7 +68,7 @@ RetrieveQueue::CandidateJobList RetrieveQueueShard::getCandidateJobList(uint64_t
   ret.remainingFilesAfterCandidates = m_payload.retrievejobs_size();
   for (auto & j: m_payload.retrievejobs()) {
     if (!retrieveRequestsToSkip.count(j.address()) && !diskSystemsToSkip.count(j.destination_disk_system_name())) {
-      ret.candidates.push_back({j.address(), (uint16_t)j.copynb(), j.size(), nullopt, nullopt});
+      ret.candidates.push_back({j.address(), (uint16_t)j.copynb(), j.size(), std::nullopt, std::nullopt});
       if (j.has_activity()) {
         ret.candidates.back().activity = j.activity();
       }
@@ -146,7 +146,7 @@ auto RetrieveQueueShard::dumpJobs() -> std::list<JobInfo> {
   std::list<JobInfo> ret;
   for (auto &j: m_payload.retrievejobs()) {
     ret.emplace_back(JobInfo{j.size(), j.address(), (uint16_t)j.copynb(), j.priority(), 
-        j.minretrieverequestage(), (time_t)j.starttime(), j.fseq(), j.mountpolicyname(), nullopt, nullopt});
+        j.minretrieverequestage(), (time_t)j.starttime(), j.fseq(), j.mountpolicyname(), std::nullopt, std::nullopt});
     if (j.has_activity()) {
       ret.back().activity = j.activity();
     }

@@ -18,12 +18,12 @@
 #pragma once
 
 #include <map>
+#include <optional>
 #include <string>
 
 #include "common/dataStructures/DriveStatus.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/MountType.hpp"
-#include "common/optional.hpp"
 
 namespace cta {
 namespace common {
@@ -67,54 +67,54 @@ struct TapeDrive {
   std::string host;
   std::string logicalLibrary;
   bool logicalLibraryDisabled;
-  optional<uint64_t> sessionId;
+  std::optional<uint64_t> sessionId;
 
-  optional<uint64_t> bytesTransferedInSession;
-  optional<uint64_t> filesTransferedInSession;
+  std::optional<uint64_t> bytesTransferedInSession;
+  std::optional<uint64_t> filesTransferedInSession;
 
-  optional<time_t> sessionStartTime;
-  optional<time_t> sessionElapsedTime;
-  optional<time_t> mountStartTime;
-  optional<time_t> transferStartTime;
-  optional<time_t> unloadStartTime;
-  optional<time_t> unmountStartTime;
-  optional<time_t> drainingStartTime;
-  optional<time_t> downOrUpStartTime;
-  optional<time_t> probeStartTime;
-  optional<time_t> cleanupStartTime;
-  optional<time_t> startStartTime;
-  optional<time_t> shutdownTime;
+  std::optional<time_t> sessionStartTime;
+  std::optional<time_t> sessionElapsedTime;
+  std::optional<time_t> mountStartTime;
+  std::optional<time_t> transferStartTime;
+  std::optional<time_t> unloadStartTime;
+  std::optional<time_t> unmountStartTime;
+  std::optional<time_t> drainingStartTime;
+  std::optional<time_t> downOrUpStartTime;
+  std::optional<time_t> probeStartTime;
+  std::optional<time_t> cleanupStartTime;
+  std::optional<time_t> startStartTime;
+  std::optional<time_t> shutdownTime;
 
   MountType mountType;
   DriveStatus driveStatus;
   bool desiredUp;
   bool desiredForceDown;
-  optional<std::string> reasonUpDown;
+  std::optional<std::string> reasonUpDown;
 
-  optional<std::string> currentVid;
-  optional<std::string> ctaVersion;
-  optional<uint64_t> currentPriority;
-  optional<std::string> currentActivity;
-  optional<std::string> currentTapePool;
+  std::optional<std::string> currentVid;
+  std::optional<std::string> ctaVersion;
+  std::optional<uint64_t> currentPriority;
+  std::optional<std::string> currentActivity;
+  std::optional<std::string> currentTapePool;
   MountType nextMountType; // defaults to NO_MOUNT. This can't be optional, as we have a NOT NULL constraint in the DB.
-  optional<std::string> nextVid;
-  optional<std::string> nextTapePool;
-  optional<uint64_t> nextPriority;
-  optional<std::string> nextActivity;
+  std::optional<std::string> nextVid;
+  std::optional<std::string> nextTapePool;
+  std::optional<uint64_t> nextPriority;
+  std::optional<std::string> nextActivity;
 
-  optional<std::string> devFileName;
-  optional<std::string> rawLibrarySlot;
+  std::optional<std::string> devFileName;
+  std::optional<std::string> rawLibrarySlot;
 
-  optional<std::string> currentVo;
-  optional<std::string> nextVo;
+  std::optional<std::string> currentVo;
+  std::optional<std::string> nextVo;
 
-  optional<std::string> diskSystemName;
-  optional<uint64_t> reservedBytes;
-  optional<uint64_t> reservationSessionId;
+  std::optional<std::string> diskSystemName;
+  std::optional<uint64_t> reservedBytes;
+  std::optional<uint64_t> reservationSessionId;
 
-  optional<std::string> userComment;
-  optional<EntryLog> creationLog;
-  optional<EntryLog> lastModificationLog;
+  std::optional<std::string> userComment;
+  std::optional<EntryLog> creationLog;
+  std::optional<EntryLog> lastModificationLog;
 };  // struct TapeDrive
 
 std::ostream &operator<<(std::ostream &os, const TapeDrive &obj);

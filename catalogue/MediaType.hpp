@@ -17,9 +17,8 @@
 
 #pragma once
 
-#include "common/optional.hpp"
-
 #include <cstdint>
+#include <optional>
 #include <string>
 
 namespace cta {
@@ -58,27 +57,27 @@ struct MediaType {
   /**
    * The primary SCSI density code.
    */
-  cta::optional<std::uint8_t> primaryDensityCode;
+  std::optional<std::uint8_t> primaryDensityCode;
 
   /**
    * The secondary SCSI density code.
    */
-  cta::optional<std::uint8_t> secondaryDensityCode;
+  std::optional<std::uint8_t> secondaryDensityCode;
 
   /**
    * The number of tape wraps.
    */
-  cta::optional<std::uint32_t> nbWraps;
+  std::optional<std::uint32_t> nbWraps;
 
   /**
    * The minimum longitudinal tape position.
    */
-  cta::optional<std::uint64_t> minLPos;
+  std::optional<std::uint64_t> minLPos;
 
   /**
    * The maximum longitudinal tape position.
    */
-  cta::optional<std::uint64_t> maxLPos;
+  std::optional<std::uint64_t> maxLPos;
 
   /**
    * The user comment.

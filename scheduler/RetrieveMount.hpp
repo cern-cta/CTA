@@ -75,7 +75,7 @@ namespace cta {
      *
      * @return
      */
-    optional<std::string> getActivity() const override;
+    std::optional<std::string> getActivity() const override;
 
 
     /**
@@ -132,7 +132,7 @@ namespace cta {
     /**
      * Report a drive status change
      */
-    virtual void setDriveStatus(cta::common::dataStructures::DriveStatus status, const cta::optional<std::string> & reason = cta::nullopt);
+    virtual void setDriveStatus(cta::common::dataStructures::DriveStatus status, const std::optional<std::string> & reason = std::nullopt);
 
     /**
      * Report a tape session statistics

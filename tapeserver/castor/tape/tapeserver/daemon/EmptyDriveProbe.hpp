@@ -24,9 +24,9 @@
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
-#include "common/optional.hpp"
 
 #include <memory>
+#include <optional>
 
 namespace castor {
 namespace tape {
@@ -41,7 +41,7 @@ namespace daemon {
 
     /**
      * Constructor
-     * 
+     *
      * @param log Object representing the API to the CASTOR logging system.
      * @param driveConfig Configuration of the tape drive to be probed.
      * @param sysWrapper Object representing the operating system.
@@ -50,37 +50,37 @@ namespace daemon {
       cta::log::Logger &log,
       const cta::tape::daemon::TpconfigLine &driveConfig,
       System::virtualWrapper &sysWrapper);
-    
-    /** 
+
+    /**
      * Probes the tape drive to determine whether it is empty and accessible.
      *
      * @return True if the drive is empty and accessible.
      */
     bool driveIsEmpty() throw();
-    
+
     /**
      * Returns the eventual probe error message
      */
-    cta::optional<std::string> getProbeErrorMsg();
-    
+    std::optional<std::string> getProbeErrorMsg();
+
   private:
 
     /**
-     * The logging object     
+     * The logging object
      */
     cta::log::Logger &m_log;
-    
+
     /**
      * The configuration of the tape drive to be probed.
      */
     const cta::tape::daemon::TpconfigLine m_driveConfig;
-    
+
     /**
      * The system wrapper used to find the device and instantiate the drive object
      */
     System::virtualWrapper &m_sysWrapper;
 
-    /** 
+    /**
      * Probes the tape drive to determine whether it is empty and accessible.
      *
      * @return True if the drive is empty and accessible.
@@ -94,12 +94,12 @@ namespace daemon {
      * @return The tape drive.
      */
     std::unique_ptr<drive::DriveInterface> createDrive();
-    
+
     /**
      * Eventual error message if we could not check whether the drive is empty or not
      */
-    cta::optional<std::string> m_probeErrorMsg;
-    
+    std::optional<std::string> m_probeErrorMsg;
+
   }; // class EmptyDriveProbe
 
 } // namespace daemon

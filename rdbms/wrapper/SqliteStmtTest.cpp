@@ -265,8 +265,8 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, insert_with_bind) {
         ":COL2,"
         ":COL3);";
     auto stmt = conn.createStmt(sql);
-    stmt->bindString(":COL1", "one");
-    stmt->bindString(":COL2", "two");
+    stmt->bindString(":COL1", std::string("one"));
+    stmt->bindString(":COL2", std::string("two"));
     stmt->bindUint64(":COL3", 3);
     stmt->executeNonQuery();
   }

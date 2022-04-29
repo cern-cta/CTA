@@ -76,7 +76,7 @@ class OStoreDB: public SchedulerDatabase {
    public:
     explicit EnqueueingWorkerThread(cta::threading::BlockingQueue<EnqueueingTask*> & etq)
       : m_enqueueingTasksQueue(etq) {}
-    EnqueueingWorkerThread(cta::threading::BlockingQueue<EnqueueingTask*> & etq, cta::optional<size_t> stackSize)
+    EnqueueingWorkerThread(cta::threading::BlockingQueue<EnqueueingTask*> & etq, std::optional<size_t> stackSize)
       : cta::threading::Thread(stackSize), m_enqueueingTasksQueue(etq) {}
     
     void start() { cta::threading::Thread::start(); }
@@ -93,7 +93,7 @@ class OStoreDB: public SchedulerDatabase {
 
  public:
   void waitSubthreadsComplete() override;
-  void setThreadNumber(uint64_t threadNumber, const cta::optional<size_t> &stackSize = cta::nullopt);
+  void setThreadNumber(uint64_t threadNumber, const std::optional<size_t> &stackSize = std::nullopt);
   void setBottomHalfQueueSize(uint64_t tasksNumber);
   /*============ Basic IO check: validate object store access ===============*/
   void ping() override;
@@ -121,7 +121,7 @@ class OStoreDB: public SchedulerDatabase {
       const std::string& vendor,
       const uint64_t capacityInBytes,
       time_t startTime,
-      const optional<std::string> &activity) override;
+      const std::optional<std::string> &activity) override;
     virtual ~TapeMountDecisionInfo();
 
    private:
@@ -150,7 +150,7 @@ class OStoreDB: public SchedulerDatabase {
       const std::string& vendor,
       const uint64_t capacityInBytes,
       time_t startTime,
-      const optional<std::string> &activity) override;
+      const std::optional<std::string> &activity) override;
     virtual ~TapeMountDecisionInfoNoLock();
   };
 
@@ -246,7 +246,7 @@ class OStoreDB: public SchedulerDatabase {
       uint64_t bytesRequested, log::LogContext &logContext) override;
     void complete(time_t completionTime) override;
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime,
-      const cta::optional<std::string> & reason = cta::nullopt) override;
+      const std::optional<std::string> & reason = std::nullopt) override;
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
    public:
     void setJobBatchTransferred(
@@ -317,7 +317,7 @@ class OStoreDB: public SchedulerDatabase {
     /// Public but non overriding function used by retrieve jobs (on failure to transfer):
     void complete(time_t completionTime) override;
     void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime,
-      const cta::optional<std::string> & reason = cta::nullopt) override;
+      const std::optional<std::string> & reason = std::nullopt) override;
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
     void addDiskSystemToSkip(const SchedulerDatabase::RetrieveMount::DiskSystemToSkip &diskSystemToSkip) override;
     void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch, log::LogContext& lc) override;
@@ -360,8 +360,8 @@ class OStoreDB: public SchedulerDatabase {
     std::unique_ptr<objectstore::RetrieveRequest::AsyncJobDeleter> m_jobDelete;
     std::unique_ptr<objectstore::RetrieveRequest::AsyncJobSucceedForRepackReporter> m_jobSucceedForRepackReporter;
     objectstore::RetrieveRequest::RepackInfo m_repackInfo;
-    optional<std::string> m_activity;
-    optional<std::string> m_diskSystemName;
+    std::optional<std::string> m_activity;
+    std::optional<std::string> m_diskSystemName;
   };
   static RetrieveJob * castFromSchedDBJob(SchedulerDatabase::RetrieveJob * job);
 
@@ -408,7 +408,7 @@ class OStoreDB: public SchedulerDatabase {
   CTA_GENERATE_EXCEPTION_CLASS(RetrieveRequestHasNoCopies);
   CTA_GENERATE_EXCEPTION_CLASS(TapeCopyNumberOutOfRange);
   SchedulerDatabase::RetrieveRequestInfo queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
-    const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria, const optional<std::string> diskSystemName,
+    const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria, const std::optional<std::string> diskSystemName,
     log::LogContext &logContext) override;
   void cancelRetrieve(const std::string& instanceName, const cta::common::dataStructures::CancelRetrieveRequest& rqst,
     log::LogContext& lc) override;

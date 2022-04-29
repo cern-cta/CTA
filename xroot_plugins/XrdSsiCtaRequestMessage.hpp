@@ -95,10 +95,10 @@ public:
    * @param[in]     key           option key to look up in options
    * @param[out]    has_option    Set to true if the option exists, unmodified if it does not
    *
-   * @returns       value of the option if it exists, an object of type nullopt_t if it does not
+   * @returns       value of the option if it exists, an object of type std::nullopt_t if it does not
    */
   template<typename K, typename V>
-  optional<V> getOptional(K key, const std::map<K,V> &options, bool *has_option) const
+  std::optional<V> getOptional(K key, const std::map<K,V> &options, bool *has_option) const
   {
     auto it = options.find(key);
 
@@ -106,7 +106,7 @@ public:
       if(has_option != nullptr) *has_option = true;
       return it->second;
     } else {
-      return cta::nullopt;
+      return std::nullopt;
     }
   }
 
@@ -115,16 +115,16 @@ public:
    *
    * These map the key type to the template specialization of <key,value> pairs
    */
-  optional<std::string> getOptional(cta::admin::OptionString::Key key, bool *has_option = nullptr) const {
+  std::optional<std::string> getOptional(cta::admin::OptionString::Key key, bool *has_option = nullptr) const {
     return getOptional(key, m_option_str, has_option);
   }
-  optional<std::vector<std::string>> getOptional(cta::admin::OptionStrList::Key key, bool *has_option = nullptr) const {
+  std::optional<std::vector<std::string>> getOptional(cta::admin::OptionStrList::Key key, bool *has_option = nullptr) const {
     return getOptional(key, m_option_str_list, has_option);
   }
-  optional<uint64_t> getOptional(cta::admin::OptionUInt64::Key key, bool *has_option = nullptr) const {
+  std::optional<uint64_t> getOptional(cta::admin::OptionUInt64::Key key, bool *has_option = nullptr) const {
     return getOptional(key, m_option_uint64, has_option);
   }
-  optional<bool> getOptional(cta::admin::OptionBoolean::Key key, bool *has_option = nullptr) const {
+  std::optional<bool> getOptional(cta::admin::OptionBoolean::Key key, bool *has_option = nullptr) const {
     return getOptional(key, m_option_bool, has_option);
   }
 
@@ -311,7 +311,7 @@ private:
   cta::catalogue::Catalogue                            &m_catalogue;          //!< Reference to CTA Catalogue
   cta::Scheduler                                       &m_scheduler;          //!< Reference to CTA Scheduler
   uint64_t                                              m_archiveFileMaxSize; //!< Maximum allowed file size for archive requests
-  optional<std::string>				        m_repackBufferURL;    //!< Repack buffer URL
+  std::optional<std::string>				        m_repackBufferURL;    //!< Repack buffer URL
   NamespaceMap_t                                        m_namespaceMap;       //!< Identifiers for namespace queries
   cta::log::LogContext                                  m_lc;                 //!< CTA Log Context
   std::map<cta::admin::OptionBoolean::Key, bool>        m_option_bool;        //!< Boolean options

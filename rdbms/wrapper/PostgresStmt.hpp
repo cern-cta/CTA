@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include "common/optional.hpp"
 #include "common/threading/RWLock.hpp"
 #include "common/threading/RWLockWrLocker.hpp"
 #include "rdbms/wrapper/StmtWrapper.hpp"
@@ -27,6 +26,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -63,7 +63,7 @@ public:
    */
   ~PostgresStmt() override;
 
-  /** 
+  /**
    * Binds an SQL parameter of type optional-string.
    *
    * Please note that this method will throw an exception if the optional string
@@ -72,8 +72,8 @@ public:
    *
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
-   */ 
-  void bindString(const std::string &paramName, const optional<std::string> &paramValue) override;
+   */
+  void bindString(const std::string &paramName, const std::optional<std::string> &paramValue) override;
 
   /**
    * Binds an SQL parameter.
@@ -81,7 +81,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint8(const std::string &paramName, const optional<uint8_t> &paramValue) override;
+  void bindUint8(const std::string &paramName, const std::optional<uint8_t> &paramValue) override;
 
   /**
    * Binds an SQL parameter.
@@ -89,7 +89,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint16(const std::string &paramName, const optional<uint16_t> &paramValue) override;
+  void bindUint16(const std::string &paramName, const std::optional<uint16_t> &paramValue) override;
 
   /**
    * Binds an SQL parameter.
@@ -97,7 +97,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint32(const std::string &paramName, const optional<uint32_t> &paramValue) override;
+  void bindUint32(const std::string &paramName, const std::optional<uint32_t> &paramValue) override;
 
   /**
    * Binds an SQL parameter.
@@ -105,14 +105,14 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint64(const std::string &paramName, const optional<uint64_t> &paramValue) override;
+  void bindUint64(const std::string &paramName, const std::optional<uint64_t> &paramValue) override;
 
-  /** 
+  /**
    * Binds an SQL parameter of type binary string (byte array).
    *
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
-   */ 
+   */
   void bindBlob(const std::string &paramName, const std::string &paramValue) override;
 
   /**
@@ -121,7 +121,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindDouble(const std::string &paramName, const optional<double> &paramValue) override;
+  void bindDouble(const std::string &paramName, const std::optional<double> &paramValue) override;
 
   /**
    * Clears the prepared statement so that it is ready to be reused.
@@ -311,7 +311,7 @@ private:
    * @param paramValue The value to be bound.
    */
   template <typename IntegerType> void bindInteger(const std::string &paramName,
-    const optional<IntegerType> &paramValue) {
+    const std::optional<IntegerType> &paramValue) {
     threading::RWLockWrLocker locker(m_lock);
 
     try {

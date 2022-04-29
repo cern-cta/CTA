@@ -52,8 +52,8 @@ public:
     time_t startTime;
     uint64_t fSeq;
     std::string mountPolicyName;
-    optional<std::string> activity;
-    optional<std::string> diskSystemName;
+    std::optional<std::string> activity;
+    std::optional<std::string> diskSystemName;
   };
   std::list<JobInfo> dumpJobs();
   

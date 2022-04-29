@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <optional>
 #include <stdint.h>
 #include <string>
 #include <vector>
@@ -24,22 +25,21 @@
 #include "DriveStatus.hpp"
 #include "MountType.hpp"
 #include "DesiredDriveState.hpp"
-#include "common/optional.hpp"
 
 namespace cta {
 namespace common {
 namespace dataStructures {
 
 /**
- * This struct holds all drive state information, used to display the equivalent 
- * of the old "showqueues -x -D" CASTOR command 
+ * This struct holds all drive state information, used to display the equivalent
+ * of the old "showqueues -x -D" CASTOR command
  */
 struct DriveState {
 
   bool operator==(const DriveState &rhs) const;
 
   bool operator!=(const DriveState &rhs) const;
-  
+
   struct DriveConfigItem{
     std::string category;
     std::string key;
@@ -73,13 +73,13 @@ struct DriveState {
   std::string currentTapePool;
   std::string currentVo;
   uint64_t currentPriority = 0;
-  optional<std::string> currentActivity;
+  std::optional<std::string> currentActivity;
   MountType nextMountType = MountType::NoMount;
   std::string nextVid;
   std::string nextTapepool;
   std::string nextVo;
   uint64_t nextPriority = 0;
-  optional<std::string> nextActivity;
+  std::optional<std::string> nextActivity;
   std::vector<DriveConfigItem> driveConfigItems;
   std::string devFileName;
   std::string rawLibrarySlot;

@@ -17,40 +17,40 @@
 
 #pragma once
 
-#include <string>
-#include <memory>
 #include <map>
-#include "common/optional.hpp"
+#include <memory>
+#include <optional>
+#include <string>
 
 namespace cta { namespace catalogue {
 
 class SchemaVersion {
 public:
   class Builder;
-  
+
   typedef std::pair<uint64_t,uint64_t> MajorMinor;
-  
+
   enum Status{
     UPGRADING,
     PRODUCTION
   };
-  
+
   SchemaVersion(const SchemaVersion& orig);
   virtual ~SchemaVersion();
-  
+
   template<typename T>
   T getSchemaVersion() const;
   template<typename T>
   T getSchemaVersionNext() const;
   template<typename T>
   T getStatus() const;
-    
+
   SchemaVersion & operator=(const SchemaVersion &other);
 private:
   uint64_t m_schemaVersionMajor;
   uint64_t m_schemaVersionMinor;
-  cta::optional<uint64_t> m_nextSchemaVersionMajor;
-  cta::optional<uint64_t> m_nextSchemaVersionMinor;
+  std::optional<uint64_t> m_nextSchemaVersionMajor;
+  std::optional<uint64_t> m_nextSchemaVersionMinor;
   SchemaVersion::Status m_status;
   SchemaVersion();
 };
@@ -70,7 +70,7 @@ public:
 private:
   void validate() const;
   SchemaVersion m_schemaVersion;
-  
+
   bool m_schemaVersionMajorSet = false;
   bool m_schemaVersionMinorSet = false;
   static std::map<std::string, SchemaVersion::Status> s_mapStringStatus;

@@ -40,7 +40,7 @@ namespace cta { namespace objectstore {
 template <>
 void Helpers::getLockedAndFetchedJobQueue<ArchiveQueue>(ArchiveQueue& archiveQueue,
   ScopedExclusiveLock& archiveQueueLock, AgentReference & agentReference,
-  const cta::optional<std::string>& tapePool, common::dataStructures::JobQueueType queueType, log::LogContext & lc) {
+  const std::optional<std::string>& tapePool, common::dataStructures::JobQueueType queueType, log::LogContext & lc) {
   // TODO: if necessary, we could use a singleton caching object here to accelerate
   // lookups.
   // Getting a locked AQ is the name of the game.
@@ -157,7 +157,7 @@ void Helpers::getLockedAndFetchedJobQueue<ArchiveQueue>(ArchiveQueue& archiveQue
 template <>
 void Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(RetrieveQueue& retrieveQueue,
   ScopedExclusiveLock& retrieveQueueLock, AgentReference& agentReference,
-  const cta::optional<std::string>& vid, common::dataStructures::JobQueueType queueType, log::LogContext & lc) {
+  const std::optional<std::string>& vid, common::dataStructures::JobQueueType queueType, log::LogContext & lc) {
   // TODO: if necessary, we could use a singleton caching object here to accelerate
   // lookups.
   // Getting a locked AQ is the name of the game.

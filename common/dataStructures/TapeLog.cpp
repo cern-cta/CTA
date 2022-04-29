@@ -56,7 +56,7 @@ std::ostream &operator<<(std::ostream &os, const TapeLog &obj) {
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const optional<TapeLog> &obj) {
+std::ostream &operator<<(std::ostream &os, const std::optional<TapeLog> &obj) {
   if(obj) {
     os << "(drive=" << obj.value().drive
        << " time=" << obj.value().time << ")";

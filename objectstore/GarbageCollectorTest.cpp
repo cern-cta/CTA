@@ -603,7 +603,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
       rq.fetch();
       std::list <cta::objectstore::RetrieveQueue::JobToAdd> jta;
       jta.push_back({1,rqc.archiveFile.tapeFiles.front().fSeq, rr.getAddressIfSet(), rqc.archiveFile.fileSize, rqc.mountPolicy,
-          sReq.creationLog.time, cta::nullopt, cta::nullopt});
+          sReq.creationLog.time, std::nullopt, std::nullopt});
       rq.addJobsAndCommit(jta, agentRef, lc);
     }
     if (pass < 5) { pass++; continue; }

@@ -191,7 +191,7 @@ public:
       C &cont,
       ScopedExclusiveLock & contLock,
       PopCriteria &popCriteria,
-      cta::optional<typename ContainerTraits<Q,C>::ElementStatus> &newStatus,
+      std::optional<typename ContainerTraits<Q,C>::ElementStatus> &newStatus,
       log::LogContext &lc) {
     PoppedElementsBatch ret;
     auto previousSummary = ret.summary;

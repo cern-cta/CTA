@@ -18,9 +18,9 @@
 #pragma once
 
 #include "version.h"
-#include "common/optional.hpp"
 
 #include <list>
+#include <optional>
 
 namespace cta {
 namespace admin {
@@ -43,27 +43,27 @@ struct RestoreFilesCmdLineArgs {
   /**
    * Archive file id of the files to restore
    */
-  optional<uint64_t> m_archiveFileId;
+  std::optional<uint64_t> m_archiveFileId;
 
   /**
    * Disk instance of the files to restore
    */
-  optional<std::string> m_diskInstance;
+  std::optional<std::string> m_diskInstance;
 
   /**
    * Fxids of the files to restore
    */
-  optional<std::list<std::string>> m_eosFxids;
+  std::optional<std::list<std::string>> m_eosFxids;
 
   /**
    * Vid of the tape of the files to restore
    */
-  optional<std::string> m_vid;
+  std::optional<std::string> m_vid;
 
   /**
    *Copy number of the files to restore
    */
-  optional<uint64_t> m_copyNumber;
+  std::optional<uint64_t> m_copyNumber;
 
   /**
    * Constructor that parses the specified command-line arguments.

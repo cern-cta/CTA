@@ -17,8 +17,9 @@
 
 #pragma once
 
+#include <optional>
 #include <ostream>
-#include "common/optional.hpp"
+
 #include "common/dataStructures/EntryLog.hpp"
 
 namespace cta {

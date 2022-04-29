@@ -17,9 +17,10 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
+
 #include "common/checksum/ChecksumBlob.hpp"
-#include "common/optional.hpp"
 
 namespace cta{
 namespace common{
@@ -48,11 +49,10 @@ struct  FileRecycleLog {
   std::string storageClassName;
   time_t archiveFileCreationTime;
   time_t reconciliationTime;
-  cta::optional<std::string> collocationHint;
-  cta::optional<std::string> diskFilePath;
+  std::optional<std::string> collocationHint;
+  std::optional<std::string> diskFilePath;
   std::string reasonLog;
   time_t recycleLogTime;
 };
 
 }}}
-

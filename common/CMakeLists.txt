@@ -128,7 +128,6 @@ set (COMMON_LIB_SRC_FILES
   log/StringLogger.cpp
   log/SyslogLogger.cpp
   log/TimingList.cpp
-  optional.cpp
   priorities/DriveQuota.cpp
   priorities/MountCriteria.cpp
   priorities/UserGroup.cpp
@@ -208,7 +207,6 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   utils/GetOptThreadSafeTest.cpp
   utils/RegexTest.cpp
   utils/UtilsTest.cpp
-  optionalTest.cpp
   rangeTest.cpp
   json/test/JSONCTestObject.cpp
   json/test/JSONCObjectTest.cpp

@@ -87,7 +87,7 @@ public:
    * @param reason the comment to a change.
    * @param lc log context provided by the calling thread.
    */
-  virtual void reportDriveStatus(cta::common::dataStructures::DriveStatus status, const cta::optional<std::string>& reason,
+  virtual void reportDriveStatus(cta::common::dataStructures::DriveStatus status, const std::optional<std::string>& reason,
                                  cta::log::LogContext& lc);
 
   /**
@@ -177,10 +177,10 @@ private:
 
   class ReportDriveStatus : public Report {
     cta::common::dataStructures::DriveStatus m_status;
-    cta::optional<std::string> m_reason;
+    std::optional<std::string> m_reason;
 
   public:
-    ReportDriveStatus(cta::common::dataStructures::DriveStatus status, cta::optional<std::string> reason) : m_status(status),
+    ReportDriveStatus(cta::common::dataStructures::DriveStatus status, std::optional<std::string> reason) : m_status(status),
                                                                                                             m_reason(std::move(reason)) {}
 
     void execute(RecallReportPacker& reportPacker) override;

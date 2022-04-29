@@ -19,19 +19,19 @@
 
 #include <list>
 #include <map>
+#include <optional>
 #include <stdint.h>
 #include <string>
 
 #include "common/dataStructures/EntryLog.hpp"
-#include "common/optional.hpp"
 
 namespace cta {
 namespace common {
 namespace dataStructures {
 
 /**
- * The logical library is an attribute of both drives and tapes, it declares 
- * which tapes can be mounted in which drives 
+ * The logical library is an attribute of both drives and tapes, it declares
+ * which tapes can be mounted in which drives
  */
 struct LogicalLibrary {
 
@@ -51,7 +51,7 @@ struct LogicalLibrary {
   EntryLog creationLog;
   EntryLog lastModificationLog;
   std::string comment;
-  cta::optional<std::string> disabledReason;
+  std::optional<std::string> disabledReason;
 
 }; // struct LogicalLibrary
 

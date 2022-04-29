@@ -21,13 +21,12 @@
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/DiskInstanceSpace.hpp"
 #include "common/log/LogContext.hpp"
-#include "common/optional.hpp"
 
-#include <string>
-#include <list>
-#include <set>
 #include <common/exception/Exception.hpp>
-
+#include <list>
+#include <optional>
+#include <set>
+#include <string>
 
 namespace cta { namespace disk {
 
@@ -37,8 +36,8 @@ namespace cta { namespace disk {
  *  - a name used an index
  *  - a regular expression allowing matching destination URLs for this disk system
  *  - a query URL that describes a method to query the free space from the filesystem
- *  - a refresh interval (seconds) defining how long do we use a 
- *  - a targeted free space (margin) based on the free space update latency (inherent to the file system and induced by the refresh 
+ *  - a refresh interval (seconds) defining how long do we use a
+ *  - a targeted free space (margin) based on the free space update latency (inherent to the file system and induced by the refresh
  *  interval), and the expected external bandwidth from sources external to CTA.
  */
 CTA_GENERATE_EXCEPTION_CLASS(FetchEosFreeSpaceException);
@@ -57,30 +56,30 @@ struct DiskSystem {
 
 class DiskSystemList: public std::list<DiskSystem> {
   using std::list<DiskSystem>::list;
-  
+
 public:
   /** Get the filesystem for a given destination URL */
   std::string getDSName(const std::string &fileURL) const;
-  
+
   /** Get the file system parameters from a file system name */
   const DiskSystem & at(const std::string &name) const;
-  
+
   /** Get the fetch EOS free space script path. This script will be used by the backpressure */
   std::string getFetchEosFreeSpaceScript() const;
-  
+
   /** Sets the fetch EOS free space script path. This script will be used by the backpressure */
   void setFetchEosFreeSpaceScript(const std::string & path);
-  
+
 private:
   struct PointerAndRegex {
     PointerAndRegex(const DiskSystem & dsys, const std::string &re): ds(dsys), regex(re) {}
     const DiskSystem & ds;
     utils::Regex regex;
   };
-  
+
   mutable std::list<PointerAndRegex> m_pointersAndRegexes;
   std::string m_fetchEosFreeSpaceScript;
-  
+
 };
 
 struct DiskSystemFreeSpace {
@@ -109,4 +108,3 @@ private:
 };
 
 }} // namespace cta::common
-

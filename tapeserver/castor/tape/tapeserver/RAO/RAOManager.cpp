@@ -95,7 +95,7 @@ void RAOManager::setEnterpriseRAOUdsLimits(const SCSI::Structures::RAO::udsLimit
   m_isDriveEnterpriseEnabled = true;
 }
 
-cta::optional<uint64_t> RAOManager::getMaxFilesSupported() const{
+std::optional<uint64_t> RAOManager::getMaxFilesSupported() const{
   return m_maxFilesSupported;
 }
 

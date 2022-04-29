@@ -46,7 +46,7 @@ void Sorter::executeArchiveAlgorithm(const std::string& tapePool, std::string& q
     SorterArchiveJob job = std::get<0>(jobToAdd->jobToQueue);
     succeededJobs[job.jobDump.copyNb] = jobToAdd;
     previousOwner = job.previousOwner->getAgentAddress();
-    jobsToAdd.push_back({ job.archiveRequest.get(), job.jobDump.copyNb, job.archiveFile, job.mountPolicy, cta::nullopt });
+    jobsToAdd.push_back({ job.archiveRequest.get(), job.jobDump.copyNb, job.archiveFile, job.mountPolicy, std::nullopt });
   }
   try {
     algo.referenceAndSwitchOwnership(tapePool, previousOwner, jobsToAdd, lc);
@@ -238,18 +238,18 @@ Sorter::RetrieveJob Sorter::createRetrieveJob(std::shared_ptr<RetrieveRequest> r
   return jobToAdd;
 }
 
-void Sorter::insertRetrieveRequest(std::shared_ptr<RetrieveRequest> retrieveRequest, AgentReferenceInterface &previousOwner, cta::optional<uint32_t> copyNb, log::LogContext & lc){
+void Sorter::insertRetrieveRequest(std::shared_ptr<RetrieveRequest> retrieveRequest, AgentReferenceInterface &previousOwner, std::optional<uint32_t> copyNb, log::LogContext & lc){
   OStoreRetrieveRequestAccessor requestAccessor(retrieveRequest);
   this->insertRetrieveRequest(requestAccessor, previousOwner, copyNb, lc);
 }
 
-void Sorter::insertRetrieveRequest(SorterRetrieveRequest& retrieveRequest, AgentReferenceInterface &previousOwner,cta::optional<uint32_t> copyNb, log::LogContext& lc){
+void Sorter::insertRetrieveRequest(SorterRetrieveRequest& retrieveRequest, AgentReferenceInterface &previousOwner,std::optional<uint32_t> copyNb, log::LogContext& lc){
   SorterRetrieveRequestAccessor accessor(retrieveRequest);
   this->insertRetrieveRequest(accessor,previousOwner,copyNb,lc);
 }
 
-void Sorter::insertRetrieveRequest(RetrieveRequestInfosAccessorInterface& accessor, AgentReferenceInterface &previousOwner, cta::optional<uint32_t> copyNb, log::LogContext & lc){
-  if(copyNb == cta::nullopt){
+void Sorter::insertRetrieveRequest(RetrieveRequestInfosAccessorInterface& accessor, AgentReferenceInterface &previousOwner, std::optional<uint32_t> copyNb, log::LogContext & lc){
+  if(copyNb == std::nullopt){
     //The job to queue will be a ToTransfer
     std::set<std::string> candidateVidsToTransfer = getCandidateVidsToTransfer(accessor);
     if(!candidateVidsToTransfer.empty()){

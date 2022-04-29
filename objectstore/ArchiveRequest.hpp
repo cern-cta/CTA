@@ -19,6 +19,7 @@
 #pragma once
 
 #include <list>
+#include <optional>
 
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/DiskFileInfo.hpp"
@@ -26,7 +27,6 @@
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/RequesterIdentity.hpp"
-#include "common/optional.hpp"
 #include "common/Timer.hpp"
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
@@ -159,7 +159,7 @@ public:
   // An job owner updater factory. The owner MUST be previousOwner for the update to be executed. If the owner is already the targeted
   // one, the request will do nothing and not fail.
   AsyncJobOwnerUpdater * asyncUpdateJobOwner(uint32_t copyNumber, const std::string & owner, const std::string &previousOwner,
-      const cta::optional<serializers::ArchiveJobStatus>& newStatus);
+      const std::optional<serializers::ArchiveJobStatus>& newStatus);
 
   struct RepackInfoSerDeser: public RepackInfo {
     operator RepackInfo() { return RepackInfo(*this); }

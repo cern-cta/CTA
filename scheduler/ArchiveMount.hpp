@@ -88,11 +88,11 @@ namespace cta {
     std::string getMountTransactionId() const override;
 
     /**
-     * Return nullopt as activities are for retrieve mounts;
+     * Return std::nullopt as activities are for retrieve mounts;
      *
-     * @return nullopt.
+     * @return std::nullopt.
      */
-    optional<std::string> getActivity() const override { return nullopt; }
+    std::optional<std::string> getActivity() const override { return std::nullopt; }
 
 
     /**
@@ -109,7 +109,7 @@ namespace cta {
     /**
      * Report a drive status change
      */
-    void setDriveStatus(cta::common::dataStructures::DriveStatus status, const cta::optional<std::string> & reason = cta::nullopt) override;
+    void setDriveStatus(cta::common::dataStructures::DriveStatus status, const std::optional<std::string> & reason = std::nullopt) override;
 
     /**
      * Report a tape session statistics

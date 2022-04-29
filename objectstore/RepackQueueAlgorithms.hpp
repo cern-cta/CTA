@@ -17,9 +17,10 @@
 
 #pragma once
 
+#include <optional>
+
 #include "Algorithms.hpp"
 #include "common/exception/NoSuchObject.hpp"
-#include "common/optional.hpp"
 #include "RepackQueue.hpp"
 #include "RepackRequest.hpp"
 
@@ -39,7 +40,7 @@ struct ContainerTraits<RepackQueue,C>
 
   struct InsertedElement {
     std::unique_ptr<RepackRequest> repackRequest;
-    cta::optional<serializers::RepackRequestStatus> newStatus;
+    std::optional<serializers::RepackRequestStatus> newStatus;
     typedef std::list<InsertedElement> list;
   };
 
@@ -84,7 +85,7 @@ struct ContainerTraits<RepackQueue,C>
   typedef RepackQueue                                 Container;
   typedef std::string                                 ContainerAddress;
   typedef std::string                                 ElementAddress;
-  typedef cta::nullopt_t                              ContainerIdentifier;
+  typedef std::nullopt_t                              ContainerIdentifier;
   typedef std::list<std::unique_ptr<InsertedElement>> ElementMemoryContainer;
   typedef std::list<ElementDescriptor>                ElementDescriptorContainer;
   typedef std::set<ElementAddress>                    ElementsToSkipSet;
@@ -137,7 +138,7 @@ struct ContainerTraits<RepackQueue,C>
   static typename OpFailure<PoppedElement>::list
   switchElementsOwnershipAndStatus(PoppedElementsBatch &poppedElementBatch, const ContainerAddress &contAddress,
     const ContainerAddress &previousOwnerAddress, log::TimingList &timingList, utils::Timer &t, log::LogContext &lc,
-    cta::optional<ElementStatus> &newStatus = cta::nullopt);
+    std::optional<ElementStatus> &newStatus = std::nullopt);
 
   static PoppedElementsSummary getElementSummary(const PoppedElement &);
   static PoppedElementsBatch getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria,
@@ -339,7 +340,7 @@ switchElementsOwnership(typename InsertedElement::list& elemMemCont, const Conta
   std::list<std::unique_ptr<RepackRequest::AsyncOwnerAndStatusUpdater>> updaters;
   for (auto & e: elemMemCont) {
     RepackRequest & repr = *e.repackRequest;
-    updaters.emplace_back(repr.asyncUpdateOwnerAndStatus(contAddress, previousOwnerAddress, cta::nullopt));
+    updaters.emplace_back(repr.asyncUpdateOwnerAndStatus(contAddress, previousOwnerAddress, std::nullopt));
   }
   timingList.insertAndReset("asyncUpdateLaunchTime", t);
   auto u = updaters.begin();
@@ -368,7 +369,7 @@ auto ContainerTraits<RepackQueue,C>::switchElementsOwnership(PoppedElementsBatch
     std::list<std::unique_ptr<RepackRequest::AsyncOwnerAndStatusUpdater>> updaters;
     for(auto &e : poppedElementBatch.elements){
       RepackRequest & repackRequest = *e.repackRequest;
-      updaters.emplace_back(repackRequest.asyncUpdateOwnerAndStatus(contAddress,previousOwnerAddress,cta::nullopt));
+      updaters.emplace_back(repackRequest.asyncUpdateOwnerAndStatus(contAddress,previousOwnerAddress,std::nullopt));
     }
     timingList.insertAndReset("asyncUpdateLaunchTime", t);
 
@@ -395,7 +396,7 @@ template<typename C>
 auto ContainerTraits<RepackQueue,C>::
 switchElementsOwnershipAndStatus(PoppedElementsBatch &poppedElementBatch, const ContainerAddress &contAddress,
   const ContainerAddress &previousOwnerAddress, log::TimingList &timingList, utils::Timer &t, log::LogContext &lc,
-  cta::optional<ElementStatus> &newStatus)
+  std::optional<ElementStatus> &newStatus)
   -> typename OpFailure<PoppedElement>::list
 {
   std::list<std::unique_ptr<RepackRequest::AsyncOwnerAndStatusUpdater>> updaters;

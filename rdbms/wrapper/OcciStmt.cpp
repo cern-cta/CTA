@@ -88,7 +88,7 @@ void OcciStmt::close() {
 //------------------------------------------------------------------------------
 // bindUint8
 //------------------------------------------------------------------------------
-void OcciStmt::bindUint8(const std::string &paramName, const optional<uint8_t> &paramValue) {
+void OcciStmt::bindUint8(const std::string &paramName, const std::optional<uint8_t> &paramValue) {
   try {
     return bindInteger<uint8_t>(paramName, paramValue);
   } catch(exception::Exception &ex) {
@@ -100,7 +100,7 @@ void OcciStmt::bindUint8(const std::string &paramName, const optional<uint8_t> &
 //------------------------------------------------------------------------------
 // bindUint16
 //------------------------------------------------------------------------------
-void OcciStmt::bindUint16(const std::string &paramName, const optional<uint16_t> &paramValue) {
+void OcciStmt::bindUint16(const std::string &paramName, const std::optional<uint16_t> &paramValue) {
   try {
     return bindInteger<uint16_t>(paramName, paramValue);
   } catch(exception::Exception &ex) {
@@ -112,7 +112,7 @@ void OcciStmt::bindUint16(const std::string &paramName, const optional<uint16_t>
 //------------------------------------------------------------------------------
 // bindUint32
 //------------------------------------------------------------------------------
-void OcciStmt::bindUint32(const std::string &paramName, const optional<uint32_t> &paramValue) {
+void OcciStmt::bindUint32(const std::string &paramName, const std::optional<uint32_t> &paramValue) {
   try {
     return bindInteger<uint32_t>(paramName, paramValue);
   } catch(exception::Exception &ex) {
@@ -124,7 +124,7 @@ void OcciStmt::bindUint32(const std::string &paramName, const optional<uint32_t>
 //------------------------------------------------------------------------------
 // bindUint64
 //------------------------------------------------------------------------------
-void OcciStmt::bindUint64(const std::string &paramName, const optional<uint64_t> &paramValue) {
+void OcciStmt::bindUint64(const std::string &paramName, const std::optional<uint64_t> &paramValue) {
   try {
     return bindInteger<uint64_t>(paramName, paramValue);
   } catch(exception::Exception &ex) {
@@ -151,7 +151,7 @@ void OcciStmt::bindBlob(const std::string &paramName, const std::string &paramVa
 //------------------------------------------------------------------------------
 // bindDouble
 //------------------------------------------------------------------------------
-void OcciStmt::bindDouble(const std::string &paramName, const optional<double> &paramValue) {
+void OcciStmt::bindDouble(const std::string &paramName, const std::optional<double> &paramValue) {
   try {
     const unsigned paramIdx = getParamIdx(paramName);
     if(paramValue) {
@@ -172,7 +172,7 @@ void OcciStmt::bindDouble(const std::string &paramName, const optional<double> &
 //------------------------------------------------------------------------------
 // bindString
 //------------------------------------------------------------------------------
-void OcciStmt::bindString(const std::string &paramName, const optional<std::string> &paramValue) {
+void OcciStmt::bindString(const std::string &paramName, const std::optional<std::string> &paramValue) {
   try {
     if(paramValue && paramValue.value().empty()) {
       throw exception::Exception(std::string("Optional string parameter ") + paramName + " is an empty string. "

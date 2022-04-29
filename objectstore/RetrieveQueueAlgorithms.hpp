@@ -30,7 +30,7 @@ struct ContainerTraits<RetrieveQueue,C>
     ContainerSummary() : RetrieveQueue::JobsSummary() {}
     ContainerSummary(const RetrieveQueue::JobsSummary &c) :
       RetrieveQueue::JobsSummary({c.jobs,c.bytes,c.oldestJobStartTime,c.youngestJobStartTime,c.priority,
-          c.minRetrieveRequestAge,c.mountPolicyCountMap,c.activityCounts,nullopt}) {}
+          c.minRetrieveRequestAge,c.mountPolicyCountMap,c.activityCounts,std::nullopt}) {}
     void addDeltaToLog(const ContainerSummary&, log::ScopedParamContainer&) const;
   };
 
@@ -42,8 +42,8 @@ struct ContainerTraits<RetrieveQueue,C>
     uint64_t fSeq;
     uint64_t filesize;
     cta::common::dataStructures::MountPolicy policy;
-    optional<std::string> activity;
-    optional<std::string> diskSystemName;
+    std::optional<std::string> activity;
+    std::optional<std::string> diskSystemName;
     typedef std::list<InsertedElement> list;
   };
 
@@ -58,8 +58,8 @@ struct ContainerTraits<RetrieveQueue,C>
     std::string errorReportURL;
     SchedulerDatabase::RetrieveJob::ReportType reportType;
     RetrieveRequest::RepackInfo repackInfo;
-    optional<std::string> activity;
-    optional<std::string> diskSystemName;
+    std::optional<std::string> activity;
+    std::optional<std::string> diskSystemName;
   };
   struct PoppedElementsSummary;
   struct PopCriteria {

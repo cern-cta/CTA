@@ -111,7 +111,7 @@ void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentRefe
             std::shared_ptr<RetrieveRequest> rr = std::make_shared<RetrieveRequest>(*this);
             cta::objectstore::Agent agentRR(getOwner(),m_objectStore);
             cta::objectstore::AgentWrapper agentRRWrapper(agentRR);
-            sorter.insertRetrieveRequest(rr,agentRRWrapper,cta::optional<uint32_t>(tf.copynb()),lc);
+            sorter.insertRetrieveRequest(rr,agentRRWrapper,std::optional<uint32_t>(tf.copynb()),lc);
             std::string retrieveQueueAddress = rr->getRepackInfo().repackRequestAddress;
             this->m_exclusiveLock->release();
             cta::objectstore::Sorter::MapRetrieve allRetrieveJobs = sorter.getAllRetrieve();
@@ -204,7 +204,7 @@ queueForFailure:;
     objectstore::MountPolicySerDeser mp;
     std::list<RetrieveQueue::JobToAdd> jta;
     jta.push_back({activeCopyNb, activeFseq, getAddressIfSet(), m_payload.archivefile().filesize(),
-      mp, (signed)m_payload.schedulerrequest().entrylog().time(), nullopt, nullopt});
+      mp, (signed)m_payload.schedulerrequest().entrylog().time(), std::nullopt, std::nullopt});
     if (m_payload.has_activity()) {
       jta.back().activity = m_payload.activity();
     }
@@ -543,9 +543,9 @@ void RetrieveRequest::setActivityIfNeeded(const cta::common::dataStructures::Ret
 //------------------------------------------------------------------------------
 // RetrieveRequest::getActivity()
 //------------------------------------------------------------------------------
-optional<std::string> RetrieveRequest::getActivity() {
+std::optional<std::string> RetrieveRequest::getActivity() {
   checkPayloadReadable();
-  optional<std::string> ret;
+  std::optional<std::string> ret;
   if (m_payload.has_activity()) {
     ret = m_payload.activity();
   }
@@ -563,9 +563,9 @@ void RetrieveRequest::setDiskSystemName(const std::string& diskSystemName) {
 //------------------------------------------------------------------------------
 // RetrieveRequest::getDiskSystemName()
 //------------------------------------------------------------------------------
-optional<std::string> RetrieveRequest::getDiskSystemName() {
+std::optional<std::string> RetrieveRequest::getDiskSystemName() {
   checkPayloadReadable();
-  optional<std::string> ret;
+  std::optional<std::string> ret;
   if (m_payload.has_disk_system_name())
     ret = m_payload.disk_system_name();
   return ret;
@@ -799,7 +799,7 @@ auto RetrieveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent job
   // Validate the current status
   //
   // Get status
-  cta::optional<RetrieveJobStatus> currentStatus;
+  std::optional<RetrieveJobStatus> currentStatus;
   for (auto &j : jl) {
     if(j.copynb() == copyNumberUpdated) currentStatus = j.status();
   }
@@ -1004,14 +1004,14 @@ const RetrieveRequest::RepackInfo& RetrieveRequest::AsyncJobOwnerUpdater::getRep
 //------------------------------------------------------------------------------
 // RetrieveRequest::AsyncJobOwnerUpdater::getActivity()
 //------------------------------------------------------------------------------
-const optional<std::string>& RetrieveRequest::AsyncJobOwnerUpdater::getActivity() {
+const std::optional<std::string>& RetrieveRequest::AsyncJobOwnerUpdater::getActivity() {
   return m_activity;
 }
 
 //------------------------------------------------------------------------------
 // RetrieveRequest::AsyncJobOwnerUpdater::getDiskSystemName()
 //------------------------------------------------------------------------------
-const optional<std::string>& RetrieveRequest::AsyncJobOwnerUpdater::getDiskSystemName() {
+const std::optional<std::string>& RetrieveRequest::AsyncJobOwnerUpdater::getDiskSystemName() {
   return m_diskSystemName;
 }
 

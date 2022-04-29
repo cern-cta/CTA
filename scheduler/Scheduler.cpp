@@ -240,7 +240,7 @@ std::string Scheduler::queueRetrieve(
   }
 
   // Determine disk system for this request, if any
-  optional<std::string> diskSystemName;
+  std::optional<std::string> diskSystemName;
   try {
     diskSystemName = diskSystemList.getDSName(request.dstURL);
   } catch (std::out_of_range&) {}
@@ -981,7 +981,7 @@ std::list<common::dataStructures::RetrieveJob> Scheduler::getPendingRetrieveJobs
 //------------------------------------------------------------------------------
 // getDriveState
 //------------------------------------------------------------------------------
-cta::optional<cta::common::dataStructures::TapeDrive> Scheduler::getDriveState(const std::string& tapeDriveName,
+std::optional<cta::common::dataStructures::TapeDrive> Scheduler::getDriveState(const std::string& tapeDriveName,
   log::LogContext* lc) const {
   utils::Timer t;
   auto ret = m_catalogue.getTapeDrive(tapeDriveName);
@@ -1234,10 +1234,10 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
 //------------------------------------------------------------------------------
 // getLogicalLibrary
 //------------------------------------------------------------------------------
-cta::optional<common::dataStructures::LogicalLibrary> Scheduler::getLogicalLibrary(const std::string& libraryName, double& getLogicalLibraryTime){
+std::optional<common::dataStructures::LogicalLibrary> Scheduler::getLogicalLibrary(const std::string& libraryName, double& getLogicalLibraryTime){
   utils::Timer timer;
   auto logicalLibraries = m_catalogue.getLogicalLibraries();
-  cta::optional<common::dataStructures::LogicalLibrary> ret;
+  std::optional<common::dataStructures::LogicalLibrary> ret;
   auto logicalLibraryItor = std::find_if(logicalLibraries.begin(),logicalLibraries.end(),[libraryName](const cta::common::dataStructures::LogicalLibrary& ll){
     return (ll.name == libraryName);
   });

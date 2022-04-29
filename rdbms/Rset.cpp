@@ -95,7 +95,7 @@ std::string Rset::columnString(const std::string &colName) const {
       throw InvalidResultSet("This result set is invalid");
     }
 
-    const optional<std::string> col = columnOptionalString(colName);
+    const std::optional<std::string> col = columnOptionalString(colName);
     if(col) {
       return col.value();
     } else {
@@ -116,7 +116,7 @@ uint8_t Rset::columnUint8(const std::string &colName) const {
       throw InvalidResultSet("This result set is invalid");
     }
 
-    const optional<uint8_t> col = columnOptionalUint8(colName);
+    const std::optional<uint8_t> col = columnOptionalUint8(colName);
     if(col) {
       return col.value();
     } else {
@@ -137,7 +137,7 @@ uint16_t Rset::columnUint16(const std::string &colName) const {
       throw InvalidResultSet("This result set is invalid");
     }
 
-    const optional<uint16_t> col = columnOptionalUint16(colName);
+    const std::optional<uint16_t> col = columnOptionalUint16(colName);
     if(col) {
       return col.value();
     } else {
@@ -158,7 +158,7 @@ uint32_t Rset::columnUint32(const std::string &colName) const {
       throw InvalidResultSet("This result set is invalid");
     }
 
-    const optional<uint32_t> col = columnOptionalUint32(colName);
+    const std::optional<uint32_t> col = columnOptionalUint32(colName);
     if(col) {
       return col.value();
     } else {
@@ -179,7 +179,7 @@ uint64_t Rset::columnUint64(const std::string &colName) const {
       throw InvalidResultSet("This result set is invalid");
     }
 
-    const optional<uint64_t> col = columnOptionalUint64(colName);
+    const std::optional<uint64_t> col = columnOptionalUint64(colName);
     if(col) {
       return col.value();
     } else {
@@ -200,7 +200,7 @@ bool Rset::columnBool(const std::string &colName) const {
       throw InvalidResultSet("This result set is invalid");
     }
 
-    const optional<bool> col = columnOptionalBool(colName);
+    const std::optional<bool> col = columnOptionalBool(colName);
     if(col) {
       return col.value();
     } else {
@@ -215,7 +215,7 @@ bool Rset::columnBool(const std::string &colName) const {
 //------------------------------------------------------------------------------
 // columnOptionalBool
 //------------------------------------------------------------------------------
-optional<bool> Rset::columnOptionalBool(const std::string &colName) const {
+std::optional<bool> Rset::columnOptionalBool(const std::string &colName) const {
   try {
     if(nullptr == m_impl) {
       throw InvalidResultSet("This result set is invalid");
@@ -223,9 +223,9 @@ optional<bool> Rset::columnOptionalBool(const std::string &colName) const {
 
     const auto column = columnOptionalUint64(colName);
     if(column) {
-      return optional<bool>(column.value() != 0 ? true : false);
+      return std::optional<bool>(column.value() != 0 ? true : false);
     } else {
-      return nullopt;
+      return std::nullopt;
     }
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -297,7 +297,7 @@ bool Rset::columnIsNull(const std::string &colName) const {
 //------------------------------------------------------------------------------
 // columnOptionalString
 //------------------------------------------------------------------------------
-optional<std::string> Rset::columnOptionalString(const std::string &colName) const {
+std::optional<std::string> Rset::columnOptionalString(const std::string &colName) const {
   try {
     if(nullptr == m_impl) {
       throw InvalidResultSet("This result set is invalid");
@@ -312,7 +312,7 @@ optional<std::string> Rset::columnOptionalString(const std::string &colName) con
 //------------------------------------------------------------------------------
 // columnOptionalUint8
 //------------------------------------------------------------------------------
-optional<uint8_t> Rset::columnOptionalUint8(const std::string &colName) const {
+std::optional<uint8_t> Rset::columnOptionalUint8(const std::string &colName) const {
   try {
     if(nullptr == m_impl) {
       throw InvalidResultSet("This result set is invalid");
@@ -327,7 +327,7 @@ optional<uint8_t> Rset::columnOptionalUint8(const std::string &colName) const {
 //------------------------------------------------------------------------------
 // columnOptionalUint16
 //------------------------------------------------------------------------------
-optional<uint16_t> Rset::columnOptionalUint16(const std::string &colName) const {
+std::optional<uint16_t> Rset::columnOptionalUint16(const std::string &colName) const {
   try {
     if(nullptr == m_impl) {
       throw InvalidResultSet("This result set is invalid");
@@ -342,7 +342,7 @@ optional<uint16_t> Rset::columnOptionalUint16(const std::string &colName) const 
 //------------------------------------------------------------------------------
 // columnOptionalUint32
 //------------------------------------------------------------------------------
-optional<uint32_t> Rset::columnOptionalUint32(const std::string &colName) const {
+std::optional<uint32_t> Rset::columnOptionalUint32(const std::string &colName) const {
   try {
     if(nullptr == m_impl) {
       throw InvalidResultSet("This result set is invalid");
@@ -357,7 +357,7 @@ optional<uint32_t> Rset::columnOptionalUint32(const std::string &colName) const 
 //------------------------------------------------------------------------------
 // columnOptionalUint64
 //------------------------------------------------------------------------------
-optional<uint64_t> Rset::columnOptionalUint64(const std::string &colName) const {
+std::optional<uint64_t> Rset::columnOptionalUint64(const std::string &colName) const {
   try {
     if(nullptr == m_impl) {
       throw InvalidResultSet("This result set is invalid");
@@ -378,7 +378,7 @@ double Rset::columnDouble(const std::string &colName) const {
       throw InvalidResultSet("This result set is invalid");
     }
 
-    const optional<double> col = columnOptionalDouble(colName);
+    const std::optional<double> col = columnOptionalDouble(colName);
     if(col) {
       return col.value();
     } else {
@@ -393,7 +393,7 @@ double Rset::columnDouble(const std::string &colName) const {
 //------------------------------------------------------------------------------
 // columnOptionalDouble
 //------------------------------------------------------------------------------
-optional<double> Rset::columnOptionalDouble(const std::string &colName) const {
+std::optional<double> Rset::columnOptionalDouble(const std::string &colName) const {
   try {
     if(nullptr == m_impl) {
       throw InvalidResultSet("This result set is invalid");

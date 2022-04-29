@@ -80,7 +80,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint8(const std::string &paramName, const optional<uint8_t> &paramValue) override;
+  void bindUint8(const std::string &paramName, const std::optional<uint8_t> &paramValue) override;
 
   /**
    * Binds an SQL parameter.
@@ -88,7 +88,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint16(const std::string &paramName, const optional<uint16_t> &paramValue) override;
+  void bindUint16(const std::string &paramName, const std::optional<uint16_t> &paramValue) override;
 
   /**
    * Binds an SQL parameter.
@@ -96,7 +96,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint32(const std::string &paramName, const optional<uint32_t> &paramValue) override;
+  void bindUint32(const std::string &paramName, const std::optional<uint32_t> &paramValue) override;
 
   /**
    * Binds an SQL parameter.
@@ -104,7 +104,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint64(const std::string &paramName, const optional<uint64_t> &paramValue) override;
+  void bindUint64(const std::string &paramName, const std::optional<uint64_t> &paramValue) override;
 
   /**
    * Binds an SQL parameter.
@@ -112,7 +112,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindDouble(const std::string &paramName, const optional<double> &paramValue) override;
+  void bindDouble(const std::string &paramName, const std::optional<double> &paramValue) override;
 
   /** 
    * Binds an SQL parameter of type binary string (byte array).
@@ -132,7 +132,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */ 
-  void bindString(const std::string &paramName, const optional<std::string> &paramValue) override;
+  void bindString(const std::string &paramName, const std::optional<std::string> &paramValue) override;
 
   /**
    * Executes the statement and returns the result set.

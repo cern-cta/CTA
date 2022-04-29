@@ -193,7 +193,7 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
   m_scheddb_init = std::make_unique<SchedulerDBInit_t>("Frontend", db_conn.second, *m_log);
   m_scheddb      = m_scheddb_init->getSchedDB(*m_catalogue, *m_log);
 
-  cta::optional<size_t> schedulerThreadStackOpt;
+  std::optional<size_t> schedulerThreadStackOpt;
   const auto schedulerThreadStackSize = config.getOptionValueInt("ca.schedulerdb.threadstacksize_mb");
   if (schedulerThreadStackSize.first) {
     schedulerThreadStackOpt = schedulerThreadStackSize.second * 1024 * 1024;

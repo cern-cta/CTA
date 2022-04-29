@@ -77,7 +77,7 @@ std::string TapeDrive::getAllPossibleStates(){
 // operator==
 //------------------------------------------------------------------------------
 bool TapeDrive::operator==(const TapeDrive &rhs) const {
-  auto checkOptionalString = [](const optional<std::string> &str) -> std::string {
+  auto checkOptionalString = [](const std::optional<std::string> &str) -> std::string {
     if (!str) return "";
     return str.value();
   };

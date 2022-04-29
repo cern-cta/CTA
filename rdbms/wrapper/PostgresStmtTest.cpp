@@ -248,8 +248,8 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, insert_with_bind) {
         ":COL2,"
         ":COL3);";
     auto stmt = m_conn->createStmt(sql);
-    stmt->bindString(":COL1", "one");
-    stmt->bindString(":COL2", "two");
+    stmt->bindString(":COL1", std::string("one"));
+    stmt->bindString(":COL2", std::string("two"));
     stmt->bindUint64(":COL3", 3);
     stmt->executeNonQuery();
   }
@@ -550,10 +550,10 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, executeCopyInsert_10000_rows
       c3.setFieldValue(i, rval);
     }
 
-    const char *const sql = 
+    const char *const sql =
       "COPY TEST("
-        "COL1,"       
-        "COL2,"       
+        "COL1,"
+        "COL2,"
         "COL3) "
       "FROM STDIN --"
         ":MYCOL1,"
@@ -662,8 +662,8 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, nbaffected) {
       "UPDATE TEST SET COL1=:NEWVAL WHERE COL1=:OLDVAL";
 
     auto stmt = m_conn->createStmt(sql);
-    stmt->bindString(":NEWVAL", "val3");
-    stmt->bindString(":OLDVAL", "val1");
+    stmt->bindString(":NEWVAL", std::string("val3"));
+    stmt->bindString(":OLDVAL", std::string("val1"));
     stmt->executeNonQuery();
     ASSERT_EQ(2, stmt->getNbAffectedRows());
   }
@@ -681,7 +681,7 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, nbaffected) {
     ASSERT_EQ(3, nr);
     ASSERT_EQ(3, stmt->getNbAffectedRows());
   }
-      
+
 }
 
 } // namespace unitTests

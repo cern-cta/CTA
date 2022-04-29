@@ -198,7 +198,7 @@ class SchedulerDatabase {
       uint64_t bytesRequested, log::LogContext& logContext) = 0;
     virtual void complete(time_t completionTime) = 0;
     virtual void setDriveStatus(common::dataStructures::DriveStatus status, time_t completionTime,
-      const cta::optional<std::string> & reason = cta::nullopt) = 0;
+      const std::optional<std::string> & reason = std::nullopt) = 0;
     virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) = 0;
     virtual void setJobBatchTransferred(
       std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> & jobsBatch, log::LogContext & lc) = 0;
@@ -323,7 +323,7 @@ class SchedulerDatabase {
     std::string requestId;
   };
   virtual RetrieveRequestInfo queueRetrieve(cta::common::dataStructures::RetrieveRequest &rqst,
-    const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria, const optional<std::string> diskSystemName,
+    const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria, const std::optional<std::string> diskSystemName,
     log::LogContext &logContext) = 0;
 
   virtual void cancelRetrieve(const std::string & instanceName, const cta::common::dataStructures::CancelRetrieveRequest &rqst,
@@ -427,7 +427,7 @@ class SchedulerDatabase {
       std::string host;
       uint64_t capacityInBytes;
       uint64_t mountId;
-      optional<std::string> activity;
+      std::optional<std::string> activity;
     } mountInfo;
     virtual const MountInfo & getMountInfo() = 0;
     virtual std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> getNextJobBatch(uint64_t filesRequested,
@@ -439,7 +439,7 @@ class SchedulerDatabase {
     
     virtual void complete(time_t completionTime) = 0;
     virtual void setDriveStatus(common::dataStructures::DriveStatus status, time_t completionTime,
-      const cta::optional<std::string> & reason = cta::nullopt) = 0;
+      const std::optional<std::string> & reason = std::nullopt) = 0;
     virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) = 0;
 
     virtual void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob *> & jobsBatch, log::LogContext & lc) = 0;
@@ -467,7 +467,7 @@ class SchedulerDatabase {
     ReportType reportType = ReportType::NoReportRequired;
     cta::common::dataStructures::ArchiveFile archiveFile;
     cta::common::dataStructures::RetrieveRequest retrieveRequest;
-    optional<std::string> diskSystemName;
+    std::optional<std::string> diskSystemName;
     uint32_t selectedCopyNb = 0;
     bool isRepack = false;
     /** Set the job successful (async). Wait() and end of report happen in RetrieveMount::flushAsyncSuccessReports() */
@@ -670,12 +670,12 @@ class SchedulerDatabase {
     uint64_t sleepTime = 0;       /**< Length of time to be slept for for this disk system. */
     uint32_t mountCount;          /**< The number of mounts for this tape pool (which is the current "chargeable" entity for quotas. */
 
-    optional<std::string> activity; /**Activity if we have on for this potential mount */
+    std::optional<std::string> activity; /**Activity if we have on for this potential mount */
 
-    optional<std::string> highestPriorityMountPolicyName;
-    optional<std::string> lowestRequestAgeMountPolicyName;
+    std::optional<std::string> highestPriorityMountPolicyName;
+    std::optional<std::string> lowestRequestAgeMountPolicyName;
     
-    optional<std::list<std::string>> mountPolicyNames; /**< Names of mount policies for the mount*/
+    std::optional<std::list<std::string>> mountPolicyNames; /**< Names of mount policies for the mount*/
 
     bool operator < (const PotentialMount &other) const {
       if (priority < other.priority)
@@ -730,7 +730,7 @@ class SchedulerDatabase {
     uint64_t filesTransferred;
     double averageBandwidth;
     uint64_t priority;
-    optional<std::string> activity;
+    std::optional<std::string> activity;
   };
 
   /**
@@ -775,7 +775,7 @@ class SchedulerDatabase {
       const std::string& vo, const std::string& mediaType,
       const std::string& vendor,
       const uint64_t capacityInBytes,
-      time_t startTime, const optional<std::string> &activity) = 0;
+      time_t startTime, const std::optional<std::string> &activity) = 0;
     /** Destructor: releases the global lock if not already done */
     virtual ~TapeMountDecisionInfo() {};
   };

@@ -30,7 +30,7 @@ namespace cta { namespace xrd {
   class RepackLsStream: public XrdCtaStream {
   public:
     
-    RepackLsStream(cta::Scheduler& scheduler, cta::catalogue::Catalogue& catalogue, const cta::optional<std::string> vid):
+    RepackLsStream(cta::Scheduler& scheduler, cta::catalogue::Catalogue& catalogue, const std::optional<std::string> vid):
     XrdCtaStream(catalogue, scheduler), m_vid(vid) {
       XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "RepackLsStream() constructor");
       if(!vid){
@@ -117,7 +117,7 @@ namespace cta { namespace xrd {
     }
   
   private:
-    const cta::optional<std::string> m_vid;
+    const std::optional<std::string> m_vid;
     std::list<common::dataStructures::RepackInfo> m_repackList;
     static constexpr const char * const LOG_SUFFIX = "RepackLsStream";
   };

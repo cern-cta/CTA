@@ -87,7 +87,7 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->tapeMountedForArchive(vid, drive);}, m_maxTriesToConnect);
   }
 
-  common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(const std::string& diskInstanceName, const uint64_t archiveFileId, const common::dataStructures::RequesterIdentity& user, const optional<std::string>& activity, log::LogContext& lc) override {
+  common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(const std::string& diskInstanceName, const uint64_t archiveFileId, const common::dataStructures::RequesterIdentity& user, const std::optional<std::string>& activity, log::LogContext& lc) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->prepareToRetrieveFile(diskInstanceName, archiveFileId, user, activity, lc);}, m_maxTriesToConnect);
   }
 
@@ -228,15 +228,15 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyMediaTypeSecondaryDensityCode(admin, name, secondaryDensityCode);}, m_maxTriesToConnect);
   }
 
-  void modifyMediaTypeNbWraps(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const cta::optional<std::uint32_t> &nbWraps) override {
+  void modifyMediaTypeNbWraps(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::optional<std::uint32_t> &nbWraps) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyMediaTypeNbWraps(admin, name, nbWraps);}, m_maxTriesToConnect);
   }
 
-  void modifyMediaTypeMinLPos(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const cta::optional<std::uint64_t> &minLPos) override {
+  void modifyMediaTypeMinLPos(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::optional<std::uint64_t> &minLPos) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyMediaTypeMinLPos(admin, name, minLPos);}, m_maxTriesToConnect);
   }
 
-  void modifyMediaTypeMaxLPos(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const cta::optional<std::uint64_t> &maxLPos) override {
+  void modifyMediaTypeMaxLPos(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::optional<std::uint64_t> &maxLPos) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyMediaTypeMaxLPos(admin, name, maxLPos);}, m_maxTriesToConnect);
   }
 
@@ -244,7 +244,7 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyMediaTypeComment(admin, name, comment);}, m_maxTriesToConnect);
   }
 
-  void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue, const cta::optional<std::string> &supply, const std::string &comment) override {
+  void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue, const std::optional<std::string> &supply, const std::string &comment) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->createTapePool(admin, name, vo, nbPartialTapes, encryptionValue, supply, comment);}, m_maxTriesToConnect);
   }
 
@@ -256,7 +256,7 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getTapePools(searchCriteria);}, m_maxTriesToConnect);
   }
 
-  cta::optional<TapePool> getTapePool(const std::string &tapePoolName) const override {
+  std::optional<TapePool> getTapePool(const std::string &tapePoolName) const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getTapePool(tapePoolName);}, m_maxTriesToConnect);
   }
 
@@ -395,7 +395,7 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapeVerificationStatus(admin, vid, verificationStatus);}, m_maxTriesToConnect);
   }
   
-  void modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const cta::optional<std::string> & stateReason) override {
+  void modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const std::optional<std::string> & stateReason) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapeState(admin,vid, state, stateReason);}, m_maxTriesToConnect);
   }
 
@@ -419,7 +419,7 @@ public:
     return retryOnLostConnection(m_log,[&]{ return m_catalogue->setTapeDirty(vid);}, m_maxTriesToConnect);
   }
 
-  void modifyTapeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const cta::optional<std::string> &comment) override {
+  void modifyTapeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::optional<std::string> &comment) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapeComment(admin, vid, comment);}, m_maxTriesToConnect);
   }
 
@@ -702,7 +702,7 @@ public:
     return retryOnLostConnection(m_log,[&]{return m_catalogue->getTapeDrives();},m_maxTriesToConnect);
   }
 
-  optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string &tapeDriveName) const override {
+  std::optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string &tapeDriveName) const override {
     return retryOnLostConnection(m_log,[&]{return m_catalogue->getTapeDrive(tapeDriveName);},m_maxTriesToConnect);
   }
 
@@ -748,7 +748,7 @@ public:
     return retryOnLostConnection(m_log,[&]{return m_catalogue->modifyTapeDriveConfig(driveName, category, keyName, value, source);},m_maxTriesToConnect);
   }
 
-  optional<std::tuple<std::string, std::string, std::string>> getTapeDriveConfig( const std::string &tapeDriveName,
+  std::optional<std::tuple<std::string, std::string, std::string>> getTapeDriveConfig( const std::string &tapeDriveName,
     const std::string &keyName) const {
     return retryOnLostConnection(m_log,[&]{return m_catalogue->getTapeDriveConfig(tapeDriveName, keyName);},m_maxTriesToConnect);
   }

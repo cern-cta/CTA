@@ -51,8 +51,8 @@ struct ReportDriveStatusInputs {
   std::string vid;
   std::string tapepool;
   std::string vo;
-  optional<std::string> activity;
-  optional<std::string> reason;
+  std::optional<std::string> activity;
+  std::optional<std::string> reason;
 };
 
 struct ReportDriveStatsInputs {

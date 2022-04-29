@@ -224,7 +224,7 @@ public:
   }
 
   SchedulerDatabase::RetrieveRequestInfo queueRetrieve(common::dataStructures::RetrieveRequest& rqst,
-    const common::dataStructures::RetrieveFileQueueCriteria &criteria, const optional<std::string> diskSystemName,
+    const common::dataStructures::RetrieveFileQueueCriteria &criteria, const std::optional<std::string> diskSystemName,
     log::LogContext &logContext) override {
     return m_OStoreDB.queueRetrieve(rqst, criteria, diskSystemName, logContext);
   }

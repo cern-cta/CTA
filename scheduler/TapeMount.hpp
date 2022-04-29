@@ -19,10 +19,10 @@
 
 #include "common/dataStructures/MountType.hpp"
 #include "common/dataStructures/DriveStatus.hpp"
-#include "common/optional.hpp"
 #include "common/log/LogContext.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 
+#include <optional>
 #include <string>
 
 namespace cta {
@@ -60,7 +60,7 @@ namespace cta {
      * @return optional, populated with the activity name if appropriate.
      */
 
-    virtual optional<std::string> getActivity() const = 0;
+    virtual std::optional<std::string> getActivity() const = 0;
 
     /**
      * Returns the mount transaction id.
@@ -89,7 +89,7 @@ namespace cta {
     /**
      * Report a drive status change
      */
-    virtual void setDriveStatus(cta::common::dataStructures::DriveStatus status, const cta::optional<std::string> & reason = cta::nullopt) = 0;
+    virtual void setDriveStatus(cta::common::dataStructures::DriveStatus status, const std::optional<std::string> & reason = std::nullopt) = 0;
 
     /**
      * Report a tape session statistics

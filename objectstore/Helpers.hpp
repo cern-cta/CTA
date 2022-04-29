@@ -64,7 +64,7 @@ class Helpers {
   template <class Queue>
   static void getLockedAndFetchedJobQueue(Queue & queue,
     ScopedExclusiveLock & queueLock, AgentReference & agentReference,
-    const cta::optional<std::string> & tapePoolOrVid, common::dataStructures::JobQueueType queueType, log::LogContext & lc);
+    const std::optional<std::string> & tapePoolOrVid, common::dataStructures::JobQueueType queueType, log::LogContext & lc);
 
   /**
    * Find or create a repack queue, and return it locked and fetched to the caller

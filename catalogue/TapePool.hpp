@@ -17,20 +17,20 @@
 
 #pragma once
 
+#include <optional>
 #include <ostream>
 #include <stdint.h>
 #include <string>
 
 #include "common/dataStructures/EntryLog.hpp"
-#include "common/optional.hpp"
 #include "common/dataStructures/VirtualOrganization.hpp"
 
 namespace cta {
 namespace catalogue {
 
 /**
- * A tape pool is a logical grouping of tapes, it is used to separate VOs, types 
- * of data, and multiple copies of data 
+ * A tape pool is a logical grouping of tapes, it is used to separate VOs, types
+ * of data, and multiple copies of data
  */
 struct TapePool {
 
@@ -124,11 +124,11 @@ struct TapePool {
    * number of physical files stored in the tape pool containing that tape.
    */
   uint64_t nbPhysicalFiles;
-  
+
   /**
    * Optional value used by the tape pool supply mechanism.
    */
-  cta::optional<std::string> supply;
+  std::optional<std::string> supply;
 
   /**
    * The creation log.

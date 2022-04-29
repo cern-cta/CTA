@@ -56,7 +56,7 @@ struct QueueAndMountSummary {
     std::string diskSystemName;
     time_t sleepTime;
   };
-  optional<SleepForSpaceInfo> sleepForSpaceInfo;
+  std::optional<SleepForSpaceInfo> sleepForSpaceInfo;
   std::string highestPriorityMountPolicy;
   std::string lowestRequestAgeMountPolicy;
   std::list<std::string> mountPolicies;

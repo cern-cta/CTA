@@ -17,9 +17,9 @@
 
 #pragma once
 
-#include "common/optional.hpp"
 #include "common/dataStructures/Tape.hpp"
 
+#include <optional>
 #include <string>
 
 namespace cta {
@@ -63,18 +63,18 @@ struct CreateTapeAttributes {
   /**
    * Optional comment about the tape.
    */
-  optional<std::string> comment;
+  std::optional<std::string> comment;
 
   /**
    * State of the tape
    */
   cta::common::dataStructures::Tape::State state;
-  
+
   /**
-   * Optional reason for the state 
+   * Optional reason for the state
    */
-  cta::optional<std::string> stateReason;
-  
+  std::optional<std::string> stateReason;
+
   /**
    * Constructor.
    *

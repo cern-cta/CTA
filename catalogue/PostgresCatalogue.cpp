@@ -151,7 +151,7 @@ PostgresCatalogue::~PostgresCatalogue() {
 //------------------------------------------------------------------------------
 // createAndPopulateTempTableFxid
 //------------------------------------------------------------------------------
-std::string PostgresCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn, const optional<std::vector<std::string>> &diskFileIds) const {
+std::string PostgresCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn, const std::optional<std::vector<std::string>> &diskFileIds) const {
   const std::string tempTableName = "TEMP_DISK_FXIDS";
 
   if(diskFileIds) {

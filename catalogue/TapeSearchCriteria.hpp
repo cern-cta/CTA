@@ -17,10 +17,9 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 #include <vector>
-
-#include <common/optional.hpp>
 
 namespace cta {
 namespace catalogue {
@@ -39,58 +38,58 @@ struct TapeSearchCriteria {
   /**
    * The volume identifier of a tape.
    */
-  optional<std::string> vid;
+  std::optional<std::string> vid;
 
   /**
    * The media type of a tape.
    */
-  optional<std::string> mediaType;
+  std::optional<std::string> mediaType;
 
   /**
    * The vendor of a tape.
    */
-  optional<std::string> vendor;
+  std::optional<std::string> vendor;
 
   /**
    * The name of a logical library.
    */
-  optional<std::string> logicalLibrary;
+  std::optional<std::string> logicalLibrary;
 
   /**
    * The name of a tape pool.
    */
-  optional<std::string> tapePool;
+  std::optional<std::string> tapePool;
 
   /**
    * The virtual organisation that owns a tape.
    */
-  optional<std::string> vo;
+  std::optional<std::string> vo;
 
   /**
    * The capacity of a tape in bytes
    */
-  optional<uint64_t> capacityInBytes;
+  std::optional<uint64_t> capacityInBytes;
 
   /**
    * Set to true if searching for full tapes.
    */
-  optional<bool> full;
+  std::optional<bool> full;
 
   /**
    * Set to true if searching for tapes imported from castor.
    */
-  optional<bool> fromCastor;
+  std::optional<bool> fromCastor;
 
   /**
    * List of disk file IDs to search for.
    */
-  optional<std::vector<std::string>> diskFileIds;
-  
+  std::optional<std::vector<std::string>> diskFileIds;
+
   /**
    * The state of the tapes to look for
    */
-  optional<common::dataStructures::Tape::State> state;
-  
+  std::optional<common::dataStructures::Tape::State> state;
+
 }; // struct TapeSearchCriteria
 
 } // namespace catalogue

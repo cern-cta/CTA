@@ -230,8 +230,8 @@ public:
     const common::dataStructures::RetrieveRequest &getRetrieveRequest();
     const common::dataStructures::ArchiveFile &getArchiveFile();
     const RepackInfo &getRepackInfo();
-    const optional<std::string> &getActivity();
-    const optional<std::string> &getDiskSystemName();
+    const std::optional<std::string> &getActivity();
+    const std::optional<std::string> &getDiskSystemName();
   private:
     std::function<std::string(const std::string &)> m_updaterCallback;
     std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
@@ -239,8 +239,8 @@ public:
     common::dataStructures::ArchiveFile m_archiveFile;
     RepackInfo m_repackInfo;
     serializers::RetrieveJobStatus m_jobStatus;
-    optional<std::string> m_activity;
-    optional<std::string> m_diskSystemName;
+    std::optional<std::string> m_activity;
+    std::optional<std::string> m_diskSystemName;
   };
   // An owner updater factory. The owner MUST be previousOwner for the update to be executed.
   AsyncJobOwnerUpdater *asyncUpdateJobOwner(uint32_t copyNumber, const std::string &owner, const std::string &previousOwner);
@@ -251,9 +251,9 @@ public:
   void setRetrieveFileQueueCriteria(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria);
   void setActivityIfNeeded(const cta::common::dataStructures::RetrieveRequest & retrieveRequest,
     const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria);
-  optional<std::string> getActivity();
+  std::optional<std::string> getActivity();
   void setDiskSystemName(const std::string & diskSystemName);
-  optional<std::string> getDiskSystemName();
+  std::optional<std::string> getDiskSystemName();
   cta::common::dataStructures::RetrieveFileQueueCriteria getRetrieveFileQueueCriteria();
   cta::common::dataStructures::ArchiveFile getArchiveFile();
   cta::common::dataStructures::EntryLog getEntryLog();

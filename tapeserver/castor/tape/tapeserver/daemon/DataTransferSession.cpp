@@ -144,7 +144,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
       driveState.up = false;
       driveState.forceDown = false;
       std::string errorMsg = "A tape was detected in the drive. Putting the drive down.";
-      cta::optional<std::string> probeErrorMsg = emptyDriveProbe.getProbeErrorMsg();
+      std::optional<std::string> probeErrorMsg = emptyDriveProbe.getProbeErrorMsg();
       if (probeErrorMsg)
         errorMsg = probeErrorMsg.value();
       int logLevel = cta::log::ERR;

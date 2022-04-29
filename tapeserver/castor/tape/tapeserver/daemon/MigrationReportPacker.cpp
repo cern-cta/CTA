@@ -233,7 +233,7 @@ void MigrationReportPacker::ReportSkipped::execute(MigrationReportPacker& report
 //------------------------------------------------------------------------------
 //reportDriveStatus
 //------------------------------------------------------------------------------
-void MigrationReportPacker::reportDriveStatus(cta::common::dataStructures::DriveStatus status, const cta::optional<std::string>& reason,
+void MigrationReportPacker::reportDriveStatus(cta::common::dataStructures::DriveStatus status, const std::optional<std::string>& reason,
                                               cta::log::LogContext& lc) {
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportDriveStatus")

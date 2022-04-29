@@ -19,6 +19,7 @@
 
 #include <list>
 #include <map>
+#include <optional>
 #include <stdint.h>
 #include <string>
 
@@ -27,14 +28,13 @@
 #include "common/dataStructures/RequesterIdentity.hpp"
 #include "common/dataStructures/ArchiveRoute.hpp"
 #include "LifecycleTimings.hpp"
-#include "common/optional.hpp"
 
 namespace cta {
 namespace common {
 namespace dataStructures {
 
 /**
- * This struct holds all the command line parameters of a CTA retrieve command 
+ * This struct holds all the command line parameters of a CTA retrieve command
  */
 struct RetrieveRequest {
 
@@ -43,7 +43,7 @@ struct RetrieveRequest {
   bool operator==(const RetrieveRequest &rhs) const;
 
   bool operator!=(const RetrieveRequest &rhs) const;
-  
+
   /**
   * Idempotently append the fileSize to the dstURL
   * The fileSize will be append only if the dstURL is an XRootD one
@@ -58,10 +58,10 @@ struct RetrieveRequest {
   DiskFileInfo diskFileInfo;
   EntryLog creationLog;
   bool isVerifyOnly;    // request to retrieve file from tape but do not write a disk copy
-  optional<std::string> vid;    // limit retrieve requests to the specified vid (in the case of dual-copy files)
+  std::optional<std::string> vid;    // limit retrieve requests to the specified vid (in the case of dual-copy files)
 
   LifecycleTimings lifecycleTimings;
-  optional<std::string> activity;
+  std::optional<std::string> activity;
 
 }; // struct RetrieveRequest
 

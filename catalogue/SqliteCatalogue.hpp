@@ -89,7 +89,7 @@ protected:
    * @param diskFileIds List of disk file IDs (fxid).
    * @return Name of the temporary table
    */
-  std::string createAndPopulateTempTableFxid(rdbms::Conn &conn, const optional<std::vector<std::string>> &diskFileIds) const override;
+  std::string createAndPopulateTempTableFxid(rdbms::Conn &conn, const std::optional<std::vector<std::string>> &diskFileIds) const override;
 
   /**
    * Returns a unique archive ID that can be used by a new archive file within

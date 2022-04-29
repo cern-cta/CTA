@@ -751,7 +751,7 @@ void RepackRequest::garbageCollect(const std::string& presumedOwner, AgentRefere
 // RepackRequest::asyncUpdateOwner()
 //------------------------------------------------------------------------------
 RepackRequest::AsyncOwnerAndStatusUpdater* RepackRequest::asyncUpdateOwnerAndStatus(const std::string& owner, const std::string& previousOwner,
-    cta::optional<serializers::RepackRequestStatus> newStatus) {
+    std::optional<serializers::RepackRequestStatus> newStatus) {
   std::unique_ptr<AsyncOwnerAndStatusUpdater> ret(new AsyncOwnerAndStatusUpdater);
   auto & retRef = *ret;
   ret->m_updaterCallback=

@@ -17,8 +17,7 @@
 
 #pragma once
 
-#include "common/optional.hpp"
-
+#include <optional>
 #include <stdint.h>
 #include <string>
 
@@ -77,7 +76,7 @@ public:
    * @param colName The name of the column.
    * @return The string value of the specified column.
    */
-  virtual optional<std::string> columnOptionalString(const std::string &colName) const = 0;
+  virtual std::optional<std::string> columnOptionalString(const std::string &colName) const = 0;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -87,7 +86,7 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  virtual optional<uint8_t> columnOptionalUint8(const std::string &colName) const = 0;
+  virtual std::optional<uint8_t> columnOptionalUint8(const std::string &colName) const = 0;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -97,7 +96,7 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  virtual optional<uint16_t> columnOptionalUint16(const std::string &colName) const = 0;
+  virtual std::optional<uint16_t> columnOptionalUint16(const std::string &colName) const = 0;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -107,7 +106,7 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  virtual optional<uint32_t> columnOptionalUint32(const std::string &colName) const = 0;
+  virtual std::optional<uint32_t> columnOptionalUint32(const std::string &colName) const = 0;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -117,7 +116,7 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  virtual optional<uint64_t> columnOptionalUint64(const std::string &colName) const = 0;
+  virtual std::optional<uint64_t> columnOptionalUint64(const std::string &colName) const = 0;
 
   /**
    * Returns the value of the specified column as a double.
@@ -127,7 +126,7 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  virtual optional<double> columnOptionalDouble(const std::string &colName) const = 0;
+  virtual std::optional<double> columnOptionalDouble(const std::string &colName) const = 0;
 
 }; // class RsetWrapper
 

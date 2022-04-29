@@ -57,7 +57,7 @@ bool castor::tape::tapeserver::daemon::EmptyDriveProbe::driveIsEmpty() throw() {
 //------------------------------------------------------------------------------
 // getProbeErrorMsg()
 //------------------------------------------------------------------------------
-cta::optional<std::string> castor::tape::tapeserver::daemon::EmptyDriveProbe::getProbeErrorMsg(){
+std::optional<std::string> castor::tape::tapeserver::daemon::EmptyDriveProbe::getProbeErrorMsg(){
   return m_probeErrorMsg;
 }
 

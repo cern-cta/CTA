@@ -128,7 +128,7 @@ uint32_t Stmt::getParamIdx(const std::string &paramName) const {
 //-----------------------------------------------------------------------------
 // bindUint8
 //-----------------------------------------------------------------------------
-void Stmt::bindUint8(const std::string &paramName, const optional<uint8_t> &paramValue) {
+void Stmt::bindUint8(const std::string &paramName, const std::optional<uint8_t> &paramValue) {
   try {
     if(nullptr != m_stmt) {
       return m_stmt->bindUint8(paramName, paramValue);
@@ -144,7 +144,7 @@ void Stmt::bindUint8(const std::string &paramName, const optional<uint8_t> &para
 //-----------------------------------------------------------------------------
 // bindUint16
 //-----------------------------------------------------------------------------
-void Stmt::bindUint16(const std::string &paramName, const optional<uint16_t> &paramValue) {
+void Stmt::bindUint16(const std::string &paramName, const std::optional<uint16_t> &paramValue) {
   try {
     if(nullptr != m_stmt) {
       return m_stmt->bindUint16(paramName, paramValue);
@@ -160,7 +160,7 @@ void Stmt::bindUint16(const std::string &paramName, const optional<uint16_t> &pa
 //-----------------------------------------------------------------------------
 // bindUint32
 //-----------------------------------------------------------------------------
-void Stmt::bindUint32(const std::string &paramName, const optional<uint32_t> &paramValue) {
+void Stmt::bindUint32(const std::string &paramName, const std::optional<uint32_t> &paramValue) {
   try {
     if(nullptr != m_stmt) {
       return m_stmt->bindUint32(paramName, paramValue);
@@ -176,7 +176,7 @@ void Stmt::bindUint32(const std::string &paramName, const optional<uint32_t> &pa
 //-----------------------------------------------------------------------------
 // bindUint64
 //-----------------------------------------------------------------------------
-void Stmt::bindUint64(const std::string &paramName, const optional<uint64_t> &paramValue) {
+void Stmt::bindUint64(const std::string &paramName, const std::optional<uint64_t> &paramValue) {
   try {
     if(nullptr != m_stmt) {
       return m_stmt->bindUint64(paramName, paramValue);
@@ -192,7 +192,7 @@ void Stmt::bindUint64(const std::string &paramName, const optional<uint64_t> &pa
 //-----------------------------------------------------------------------------
 // bindDouble
 //-----------------------------------------------------------------------------
-void Stmt::bindDouble(const std::string &paramName, const optional<double> &paramValue) {
+void Stmt::bindDouble(const std::string &paramName, const std::optional<double> &paramValue) {
   try {
     if(nullptr != m_stmt) {
       return m_stmt->bindDouble(paramName, paramValue);
@@ -208,7 +208,7 @@ void Stmt::bindDouble(const std::string &paramName, const optional<double> &para
 //-----------------------------------------------------------------------------
 // bindBool
 //-----------------------------------------------------------------------------
-void Stmt::bindBool(const std::string &paramName, const optional<bool> &paramValue) {
+void Stmt::bindBool(const std::string &paramName, const std::optional<bool> &paramValue) {
   try {
     if(nullptr != m_stmt) {
       return m_stmt->bindBool(paramName, paramValue);
@@ -240,7 +240,7 @@ void Stmt::bindBlob(const std::string &paramName, const std::string &paramValue)
 //-----------------------------------------------------------------------------
 // bindString
 //-----------------------------------------------------------------------------
-void Stmt::bindString(const std::string &paramName, const optional<std::string> &paramValue) {
+void Stmt::bindString(const std::string &paramName, const std::optional<std::string> &paramValue) {
   try {
     if(nullptr != m_stmt) {
       return m_stmt->bindString(paramName, paramValue);

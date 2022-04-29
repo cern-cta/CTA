@@ -285,7 +285,7 @@ public:
    * @param tapeDriveName
    * @return An optional drive state structures.
    */
-  cta::optional<cta::common::dataStructures::TapeDrive> getDriveState(const std::string& tapeDriveName,
+  std::optional<cta::common::dataStructures::TapeDrive> getDriveState(const std::string& tapeDriveName,
     log::LogContext* lc) const;
 
   /**
@@ -332,7 +332,7 @@ private:
    */
   void checkTapeCanBeRepacked(const std::string & vid, const SchedulerDatabase::QueueRepackRequest & repackRequest);
 
-  cta::optional<common::dataStructures::LogicalLibrary> getLogicalLibrary(const std::string &libraryName, double &getLogicalLibraryTime);
+  std::optional<common::dataStructures::LogicalLibrary> getLogicalLibrary(const std::string &libraryName, double &getLogicalLibraryTime);
 
   void deleteRepackBuffer(std::unique_ptr<cta::disk::Directory> repackBuffer, cta::log::LogContext & lc);
 

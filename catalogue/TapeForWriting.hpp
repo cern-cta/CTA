@@ -17,8 +17,7 @@
 
 #pragma once
 
-#include "common/optional.hpp"
-
+#include <optional>
 #include <ostream>
 #include <stdint.h>
 #include <string>
@@ -64,12 +63,12 @@ struct TapeForWriting {
    * The vendor of the tape.
    */
   std::string vendor;
-  
+
   /**
    * The name of the tape pool.
    */
   std::string tapePool;
-  
+
   /**
    * The virtual organisation owning the tape.
    */

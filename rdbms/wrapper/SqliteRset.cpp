@@ -235,11 +235,11 @@ std::string SqliteRset::columnBlob(const std::string &colName) const {
 //------------------------------------------------------------------------------
 // columnOptionalString
 //------------------------------------------------------------------------------
-optional<std::string> SqliteRset::columnOptionalString(const std::string &colName) const {
+std::optional<std::string> SqliteRset::columnOptionalString(const std::string &colName) const {
   try {
     const ColumnNameToIdxAndType::IdxAndType idxAndType = m_colNameToIdxAndType.getIdxAndType(colName);
     if(SQLITE_NULL == idxAndType.colType) {
-      return nullopt;
+      return std::nullopt;
     } else {
       const char *const colValue = (const char *)sqlite3_column_text(m_stmt.get(), idxAndType.colIdx);
       if(NULL == colValue) {
@@ -248,7 +248,7 @@ optional<std::string> SqliteRset::columnOptionalString(const std::string &colNam
           " m_colNameToIdxAndType map states otherwise: colName=" << colName << ",colIdx=" << idxAndType.colIdx;
         throw ex;
       }
-      return optional<std::string>(colValue);
+      return std::optional<std::string>(colValue);
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -258,13 +258,13 @@ optional<std::string> SqliteRset::columnOptionalString(const std::string &colNam
 //------------------------------------------------------------------------------
 // columnOptionalUint8
 //------------------------------------------------------------------------------
-optional<uint8_t> SqliteRset::columnOptionalUint8(const std::string &colName) const {
+std::optional<uint8_t> SqliteRset::columnOptionalUint8(const std::string &colName) const {
   try {
     const ColumnNameToIdxAndType::IdxAndType idxAndType = m_colNameToIdxAndType.getIdxAndType(colName);
     if(SQLITE_NULL == idxAndType.colType) {
-      return nullopt;
+      return std::nullopt;
     } else {
-      return optional<uint8_t>(sqlite3_column_int(m_stmt.get(), idxAndType.colIdx));
+      return std::optional<uint8_t>(sqlite3_column_int(m_stmt.get(), idxAndType.colIdx));
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -274,13 +274,13 @@ optional<uint8_t> SqliteRset::columnOptionalUint8(const std::string &colName) co
 //------------------------------------------------------------------------------
 // columnOptionalUint16
 //------------------------------------------------------------------------------
-optional<uint16_t> SqliteRset::columnOptionalUint16(const std::string &colName) const {
+std::optional<uint16_t> SqliteRset::columnOptionalUint16(const std::string &colName) const {
   try {
     const ColumnNameToIdxAndType::IdxAndType idxAndType = m_colNameToIdxAndType.getIdxAndType(colName);
     if(SQLITE_NULL == idxAndType.colType) {
-      return nullopt;
+      return std::nullopt;
     } else {
-      return optional<uint16_t>(sqlite3_column_int(m_stmt.get(), idxAndType.colIdx));
+      return std::optional<uint16_t>(sqlite3_column_int(m_stmt.get(), idxAndType.colIdx));
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -290,13 +290,13 @@ optional<uint16_t> SqliteRset::columnOptionalUint16(const std::string &colName) 
 //------------------------------------------------------------------------------
 // columnOptionalUint32
 //------------------------------------------------------------------------------
-optional<uint32_t> SqliteRset::columnOptionalUint32(const std::string &colName) const {
+std::optional<uint32_t> SqliteRset::columnOptionalUint32(const std::string &colName) const {
   try {
     const ColumnNameToIdxAndType::IdxAndType idxAndType = m_colNameToIdxAndType.getIdxAndType(colName);
     if(SQLITE_NULL == idxAndType.colType) {
-      return nullopt;
+      return std::nullopt;
     } else {
-      return optional<uint32_t>(sqlite3_column_int(m_stmt.get(), idxAndType.colIdx));
+      return std::optional<uint32_t>(sqlite3_column_int(m_stmt.get(), idxAndType.colIdx));
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -306,13 +306,13 @@ optional<uint32_t> SqliteRset::columnOptionalUint32(const std::string &colName) 
 //------------------------------------------------------------------------------
 // columnOptionalUint64
 //------------------------------------------------------------------------------
-optional<uint64_t> SqliteRset::columnOptionalUint64(const std::string &colName) const {
+std::optional<uint64_t> SqliteRset::columnOptionalUint64(const std::string &colName) const {
   try {
     const ColumnNameToIdxAndType::IdxAndType idxAndType = m_colNameToIdxAndType.getIdxAndType(colName);
     if(SQLITE_NULL == idxAndType.colType) {
-      return nullopt;
+      return std::nullopt;
     } else {
-      return optional<uint64_t>(sqlite3_column_int64(m_stmt.get(), idxAndType.colIdx));
+      return std::optional<uint64_t>(sqlite3_column_int64(m_stmt.get(), idxAndType.colIdx));
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -322,13 +322,13 @@ optional<uint64_t> SqliteRset::columnOptionalUint64(const std::string &colName) 
 //------------------------------------------------------------------------------
 // columnOptionalDouble
 //------------------------------------------------------------------------------
-optional<double> SqliteRset::columnOptionalDouble(const std::string &colName) const {
+std::optional<double> SqliteRset::columnOptionalDouble(const std::string &colName) const {
   try {
     const ColumnNameToIdxAndType::IdxAndType idxAndType = m_colNameToIdxAndType.getIdxAndType(colName);
     if(SQLITE_NULL == idxAndType.colType) {
-      return nullopt;
+      return std::nullopt;
     } else {
-      return optional<double>(sqlite3_column_double(m_stmt.get(), idxAndType.colIdx));
+      return std::optional<double>(sqlite3_column_double(m_stmt.get(), idxAndType.colIdx));
     }
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());

@@ -368,7 +368,7 @@ TEST_P(SchedulerDatabaseTest, putExistingQueueToSleep) {
 
     // Create mount.
   auto moutInfo = db.getMountInfo(lc);
-  auto rm=moutInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789,time(nullptr), cta::nullopt);
+  auto rm=moutInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789,time(nullptr), std::nullopt);
 
   rm->putQueueToSleep(diskSystem.name, diskSystem.sleepTime, lc);
 
@@ -402,7 +402,7 @@ TEST_P(SchedulerDatabaseTest, createQueueAndPutToSleep) {
 
   // Create mount.
   auto moutInfo = db.getMountInfo(lc);
-  auto rm=moutInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789,time(nullptr), cta::nullopt);
+  auto rm=moutInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789,time(nullptr), std::nullopt);
 
   rm->putQueueToSleep(diskSystem.name, diskSystem.sleepTime, lc);
 
@@ -598,7 +598,7 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueRetrieveRequests) {
   // Create mount.
   auto mountInfo = db.getMountInfo(lc);
   ASSERT_EQ(1, mountInfo->potentialMounts.size());
-  auto rm=mountInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789,time(nullptr), cta::nullopt);
+  auto rm=mountInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789,time(nullptr), std::nullopt);
   {
     auto rjb = rm->getNextJobBatch(10,20*1000,lc);
     //Files with successful fetch should be popped
@@ -689,7 +689,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
   // Create mount.
   auto moutInfo = db.getMountInfo(lc);
   ASSERT_EQ(1, moutInfo->potentialMounts.size());
-  auto rm=moutInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789,time(nullptr), cta::nullopt);
+  auto rm=moutInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789,time(nullptr), std::nullopt);
   auto rjb = rm->getNextJobBatch(20,20*1000, lc);
   ASSERT_EQ(filesToDo, rjb.size());
   
@@ -783,7 +783,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
   // Create mount.
   auto moutInfo = db.getMountInfo(lc);
   ASSERT_EQ(1, moutInfo->potentialMounts.size());
-  auto rm=moutInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789,time(nullptr), cta::nullopt);
+  auto rm=moutInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789,time(nullptr), std::nullopt);
   {
     //Batch fails and puts the queue to sleep (not enough space in disk system)
     //leave one job in the queue for the potential mount
@@ -877,7 +877,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
   // Create mount.
   auto mountInfo = db.getMountInfo(lc);
   ASSERT_EQ(1, mountInfo->potentialMounts.size());
-  auto rm=mountInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789,time(nullptr), cta::nullopt);
+  auto rm=mountInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789,time(nullptr), std::nullopt);
   {
     //leave one job in the queue for the potential mount
     auto rjb = rm->getNextJobBatch(9,20*1000,lc);

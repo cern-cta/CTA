@@ -17,18 +17,19 @@
 
 #pragma once
 
-#include <string>
 #include <list>
+#include <optional>
+#include <string>
+
 #include "RepackQueueType.hpp"
 #include "EntryLog.hpp"
-#include "common/optional.hpp"
 
 namespace cta {
 namespace common {
 namespace dataStructures {
 
 /**
- * This is the repack information for a given tape 
+ * This is the repack information for a given tape
  */
 struct RepackInfo {
 
@@ -38,7 +39,7 @@ struct RepackInfo {
     uint64_t bytes = 0;
     typedef std::list<RepackDestinationInfo> List;
   };
-  
+
   std::string vid;
   std::string repackBufferBaseURL;
   enum class Type {

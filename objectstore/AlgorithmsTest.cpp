@@ -93,7 +93,7 @@ void fillRetrieveRequests(
     rqc.mountPolicy.retrievePriority = 1;
     requestPtrs.emplace_back(new cta::objectstore::RetrieveRequest(rrAddr, be));
     requests.emplace_back(ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer>::InsertedElement{
-      requestPtrs.back().get(), 1, startFseq++, 667, mp, cta::nullopt, cta::nullopt
+      requestPtrs.back().get(), 1, startFseq++, 667, mp, std::nullopt, std::nullopt
     });
     auto &rr = *requests.back().retrieveRequest;
     rr.initialize();
@@ -138,7 +138,7 @@ void fillArchiveRequests(typename cta::objectstore::ContainerAlgorithms<cta::obj
     aFile.storageClass = "sc";
     requestPtrs.emplace_back(new cta::objectstore::ArchiveRequest(arAddr, be));
     requests.emplace_back(ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser>::InsertedElement{requestPtrs.back().get(), 1, aFile, mp,
-        cta::nullopt});
+        std::nullopt});
     auto & ar=*requests.back().archiveRequest;
     auto copyNb = requests.back().copyNb;
     ar.initialize();
@@ -201,7 +201,7 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
     aFile.storageClass = "sc";
     archiveRequests.emplace_back(new cta::objectstore::ArchiveRequest(arAddr, be));
     requests.emplace_back(ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser>::InsertedElement{archiveRequests.back().get(), 1, aFile, mp,
-        cta::nullopt});
+        std::nullopt});
     auto & ar=*requests.back().archiveRequest;
     auto copyNb = requests.back().copyNb;
     ar.initialize();
@@ -283,7 +283,7 @@ TEST(ObjectStore, ArchiveQueueAlgorithmsWithDeletedJobsInQueue) {
     aFile.storageClass = "sc";
     archiveRequests.emplace_back(new cta::objectstore::ArchiveRequest(arAddr, be));
     requests.emplace_back(ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser>::InsertedElement{archiveRequests.back().get(), 1, aFile, mp,
-        cta::nullopt});
+        std::nullopt});
     auto & ar=*requests.back().archiveRequest;
     auto copyNb = requests.back().copyNb;
     ar.initialize();

@@ -66,7 +66,7 @@ std::string cta::RetrieveMount::getVid() const{
 //------------------------------------------------------------------------------
 // getActivity()
 //------------------------------------------------------------------------------
-cta::optional<std::string> cta::RetrieveMount::getActivity() const {
+std::optional<std::string> cta::RetrieveMount::getActivity() const {
   return m_dbMount->mountInfo.activity;
 }
 
@@ -330,7 +330,7 @@ void cta::RetrieveMount::abort(const std::string&) {
 //------------------------------------------------------------------------------
 // setDriveStatus()
 //------------------------------------------------------------------------------
-void cta::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status, const cta::optional<std::string> & reason) {
+void cta::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status, const std::optional<std::string> & reason) {
   m_dbMount->setDriveStatus(status, time(NULL), reason);
 }
 

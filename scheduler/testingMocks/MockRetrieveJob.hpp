@@ -37,7 +37,7 @@ namespace cta {
     virtual void asyncSetSuccessful() override { completes++;  }
     void transferFailed(const std::string &failureReason, cta::log::LogContext&) override { failures++; };
 
-    cta::optional<std::string> diskSystemName() override {
+    std::optional<std::string> diskSystemName() override {
       return m_diskSystemName;
     }
 
@@ -48,6 +48,6 @@ namespace cta {
     ~MockRetrieveJob() throw() {} 
   
   private:
-    cta::optional<std::string> m_diskSystemName;
+    std::optional<std::string> m_diskSystemName;
   };
 }

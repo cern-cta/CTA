@@ -19,10 +19,10 @@
 
 #include <list>
 #include <map>
+#include <optional>
 #include <stdint.h>
 #include <string>
 
-#include "common/optional.hpp"
 #include "common/dataStructures/RequesterIdentity.hpp"
 #include "ArchiveFile.hpp"
 
@@ -31,7 +31,7 @@ namespace common {
 namespace dataStructures {
 
 /**
- * This is a request to delete an existing archive file or to cancel an ongoing 
+ * This is a request to delete an existing archive file or to cancel an ongoing
  * archival.
  */
 struct DeleteArchiveRequest {
@@ -44,13 +44,13 @@ struct DeleteArchiveRequest {
 
   RequesterIdentity requester;
   uint64_t archiveFileID;
-  cta::optional<std::string> address;
+  std::optional<std::string> address;
   std::string diskFilePath;
   std::string diskFileId;
   std::string diskInstance;
   time_t recycleTime;
   //In the case the ArchiveFile does not exist yet, it will not be set
-  cta::optional<ArchiveFile> archiveFile;
+  std::optional<ArchiveFile> archiveFile;
 
 }; // struct DeleteArchiveRequest
 

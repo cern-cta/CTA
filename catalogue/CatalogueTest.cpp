@@ -1316,7 +1316,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteMediaType_usedByTapes) {
   const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -1336,7 +1336,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapes_non_existent_tape_pool) {
   const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -1974,7 +1974,7 @@ TEST_P(cta_catalogue_CatalogueTest, getMediaTypeByVid) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
 
@@ -2018,7 +2018,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool) {
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
@@ -2088,7 +2088,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_null_supply) {
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply;
+  const std::optional<std::string> supply;
   const std::string comment = "Create tape pool";
   m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
@@ -2127,7 +2127,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_same_twice) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
@@ -2141,7 +2141,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_vo_does_not_exist) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   ASSERT_THROW(m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, comment),
     exception::UserError);
@@ -2153,7 +2153,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_tapes_of_mixed_state) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
 
@@ -2279,7 +2279,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool) {
   const bool tapePoolIsEncrypted = true;
   const std::string tapePoolComment = "Create tape pool";
   {
-    const cta::optional<std::string> supply("value for the supply pool mechanism");
+    const std::optional<std::string> supply("value for the supply pool mechanism");
     m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
     m_catalogue->createVirtualOrganization(m_admin, m_vo);
     m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, tapePoolNbPartialTapes, tapePoolIsEncrypted,
@@ -2319,7 +2319,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool) {
   const bool anotherTapePoolIsEncrypted = false;
   {
     m_catalogue->createStorageClass(m_admin, m_anotherStorageClass);
-    const cta::optional<std::string> supply("value for the supply pool mechanism");
+    const std::optional<std::string> supply("value for the supply pool mechanism");
     m_catalogue->createVirtualOrganization(m_admin, m_anotherVo);
     m_catalogue->createTapePool(m_admin, anotherTapePoolName, m_anotherVo.name, anotherNbPartialTapes,
       anotherTapePoolIsEncrypted, supply, anotherTapePoolComment);
@@ -2391,7 +2391,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_notEmpty) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
 
@@ -2468,7 +2468,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_emptyStringTapePoolName) {
   const std::string tapePoolName = "";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
@@ -2482,7 +2482,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_emptyStringVO) {
   const std::string vo = "";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   ASSERT_THROW(m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, "", nbPartialTapes, isEncrypted, supply, comment), catalogue::UserSpecifiedAnEmptyStringVo);
 }
@@ -2496,7 +2496,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_emptyStringComment) {
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "";
   m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
@@ -2520,7 +2520,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTapePool_used_in_an_archive_route) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -2574,7 +2574,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolVo) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   
   m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
@@ -2646,7 +2646,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolVo_emptyStringVo) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
 
   m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
@@ -2688,7 +2688,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolVo_VoDoesNotExist) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
@@ -2729,7 +2729,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolNbPartialTapes) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
@@ -2806,7 +2806,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
@@ -2875,7 +2875,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolComment_emptyStringComment) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
@@ -2924,7 +2924,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapePoolEncryption) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
@@ -2993,7 +2993,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolSupply) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
@@ -3067,7 +3067,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolSupply_emptyStringSupply) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
@@ -3146,8 +3146,8 @@ TEST_P(cta_catalogue_CatalogueTest, getTapePools_filterName) {
   const bool firstPoolIsEncrypted = true;
   const bool secondPoolIsEncrypted = false;
 
-  const cta::optional<std::string> firstPoolSupply("value for the supply first pool mechanism");
-  const cta::optional<std::string> secondPoolSupply("value for the supply second pool mechanism");
+  const std::optional<std::string> firstPoolSupply("value for the supply first pool mechanism");
+  const std::optional<std::string> secondPoolSupply("value for the supply second pool mechanism");
 
   const std::string firstPoolComment = "Create first tape pool";
   const std::string secondPoolComment = "Create second tape pool";
@@ -3233,8 +3233,8 @@ TEST_P(cta_catalogue_CatalogueTest, getTapePools_filterVO) {
   const bool firstPoolIsEncrypted = true;
   const bool secondPoolIsEncrypted = false;
 
-  const cta::optional<std::string> firstPoolSupply("value for the supply first pool mechanism");
-  const cta::optional<std::string> secondPoolSupply("value for the supply second pool mechanism");
+  const std::optional<std::string> firstPoolSupply("value for the supply first pool mechanism");
+  const std::optional<std::string> secondPoolSupply("value for the supply second pool mechanism");
 
   const std::string firstPoolComment = "Create first tape pool";
   const std::string secondPoolComment = "Create second tape pool";
@@ -3320,8 +3320,8 @@ TEST_P(cta_catalogue_CatalogueTest, getTapePools_filterEncrypted) {
   const bool firstPoolIsEncrypted = true;
   const bool secondPoolIsEncrypted = false;
 
-  const cta::optional<std::string> firstPoolSupply("value for the supply first pool mechanism");
-  const cta::optional<std::string> secondPoolSupply("value for the supply second pool mechanism");
+  const std::optional<std::string> firstPoolSupply("value for the supply first pool mechanism");
+  const std::optional<std::string> secondPoolSupply("value for the supply second pool mechanism");
 
   const std::string firstPoolComment = "Create first tape pool";
   const std::string secondPoolComment = "Create second tape pool";
@@ -3392,7 +3392,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -3444,7 +3444,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolName) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
@@ -3514,7 +3514,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapePoolName_emptyStringNewTapePoolNam
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
   m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
@@ -3562,7 +3562,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringStorageClassNa
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const std::string storageClassName = "";
@@ -3581,7 +3581,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_zeroCopyNb) {
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 0;
@@ -3612,7 +3612,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_emptyStringComment) {
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -3627,7 +3627,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_non_existent_storage_clas
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
@@ -3661,7 +3661,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_same_twice) {
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -3679,7 +3679,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_two_routes_same_pool) {
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb1 = 1;
@@ -3700,7 +3700,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveRoute) {
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -3744,7 +3744,7 @@ TEST_P(cta_catalogue_CatalogueTest, createArchiveRoute_deleteStorageClass) {
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -3781,7 +3781,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName) {
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const std::string anotherTapePoolName = "another_tape_pool";
@@ -3838,7 +3838,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName_nonExistentTa
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const std::string anotherTapePoolName = "another_tape_pool";
@@ -3879,7 +3879,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteTapePoolName_nonExistentAr
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -3895,7 +3895,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment) {
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -3950,7 +3950,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyArchiveRouteComment_nonExistentArchive
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -4156,7 +4156,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary) {
   const bool libNotToDeleteIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string libNotToDeleteComment = "Create logical library to NOT be deleted";
 
   // Create a tape and a logical library that are not the ones to be deleted
@@ -4291,7 +4291,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteLogicalLibrary_non_empty) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
 
@@ -4581,7 +4581,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
 
@@ -4657,7 +4657,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringVid) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -4689,7 +4689,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringMediaType) {
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
@@ -4717,7 +4717,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringVendor) {
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
 
@@ -4747,7 +4747,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_emptyStringLogicalLibraryName) {
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
 
@@ -4789,7 +4789,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_non_existent_logical_library) {
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
@@ -4813,7 +4813,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_9_exabytes_capacity) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -4887,7 +4887,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_same_twice) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -4945,7 +4945,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_StateDoesNotExist) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -4965,7 +4965,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_StateNotActiveWithoutReasonShould
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -4991,7 +4991,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -5305,7 +5305,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_1_tape_with_write_log_1_tape_with
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -5475,7 +5475,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteTape) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -5528,7 +5528,7 @@ TEST_P(cta_catalogue_CatalogueTest, writeToTapeAndCheckMasterBytesAndFiles) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
@@ -5655,7 +5655,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteNonEmptyTape) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
@@ -5790,7 +5790,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeMediaType) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
 
@@ -5873,7 +5873,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeVendor) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -5949,7 +5949,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeLogicalLibraryName) {
   const std::string anotherLogicalLibraryName = "another_logical_library_name";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -6036,7 +6036,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string anotherTapePoolName = "another_tape_pool_name";
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
@@ -6113,7 +6113,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeTapePoolName_nonExistentTape) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
   m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
@@ -6129,7 +6129,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -6206,7 +6206,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeEncryptionKeyName_emptyStringEncry
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -6283,7 +6283,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeVerificationStatus) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -6368,7 +6368,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeState_nonExistentTape) {
   using namespace cta;
 
   common::dataStructures::Tape::State state = common::dataStructures::Tape::State::ACTIVE;
-  ASSERT_THROW(m_catalogue->modifyTapeState(m_admin,"DOES_NOT_EXIST",state,cta::nullopt),cta::catalogue::UserSpecifiedANonExistentTape);
+  ASSERT_THROW(m_catalogue->modifyTapeState(m_admin,"DOES_NOT_EXIST",state,std::nullopt),cta::catalogue::UserSpecifiedANonExistentTape);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled_nonExistentTape) {
@@ -6383,7 +6383,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeState_nonExistentState) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -6395,7 +6395,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeState_nonExistentState) {
   m_catalogue->createTape(m_admin, m_tape1);
 
   common::dataStructures::Tape::State state = (common::dataStructures::Tape::State)42;
-  ASSERT_THROW(m_catalogue->modifyTapeState(m_admin, m_tape1.vid,state,cta::nullopt),cta::catalogue::UserSpecifiedANonExistentTapeState);
+  ASSERT_THROW(m_catalogue->modifyTapeState(m_admin, m_tape1.vid,state,std::nullopt),cta::catalogue::UserSpecifiedANonExistentTapeState);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyTapeState_noReasonWhenNotActive) {
@@ -6404,7 +6404,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeState_noReasonWhenNotActive) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -6418,7 +6418,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeState_noReasonWhenNotActive) {
   std::string reason = "";
   ASSERT_THROW(m_catalogue->modifyTapeState(m_admin,m_tape1.vid,common::dataStructures::Tape::State::BROKEN,reason),cta::catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);
 
-  ASSERT_THROW(m_catalogue->modifyTapeState(m_admin,m_tape1.vid,common::dataStructures::Tape::State::DISABLED,cta::nullopt),cta::catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);
+  ASSERT_THROW(m_catalogue->modifyTapeState(m_admin,m_tape1.vid,common::dataStructures::Tape::State::DISABLED,std::nullopt),cta::catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyTapeState) {
@@ -6427,7 +6427,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeState) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -6486,7 +6486,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeStateResetReasonWhenBackToActiveSt
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -6502,7 +6502,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeStateResetReasonWhenBackToActiveSt
   std::string reason = "Broken tape";
   ASSERT_NO_THROW(m_catalogue->modifyTapeState(m_admin,vid,common::dataStructures::Tape::State::BROKEN,reason));
 
-  ASSERT_NO_THROW(m_catalogue->modifyTapeState(m_admin,vid,common::dataStructures::Tape::State::ACTIVE,cta::nullopt));
+  ASSERT_NO_THROW(m_catalogue->modifyTapeState(m_admin,vid,common::dataStructures::Tape::State::ACTIVE,std::nullopt));
 
   {
     auto vidToTapeMap = m_catalogue->getTapesByVid(vid);
@@ -6521,7 +6521,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesSearchCriteriaByState) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -6579,7 +6579,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeLabelled) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -6664,7 +6664,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForArchive) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -6786,7 +6786,7 @@ TEST_P(cta_catalogue_CatalogueTest, tapeMountedForRetrieve) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -6908,7 +6908,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeFull) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -6989,7 +6989,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeDirty) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -7072,7 +7072,7 @@ TEST_P(cta_catalogue_CatalogueTest, noSpaceLeftOnTape) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -7153,7 +7153,7 @@ TEST_P(cta_catalogue_CatalogueTest, setTapeIsFromCastorInUnitTests) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -7263,7 +7263,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -7296,7 +7296,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWritingOrderedByDataInBytesDesc) 
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -7360,7 +7360,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting_disabled_tape) {
   const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -7386,7 +7386,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting_full_tape) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   auto tape1 = m_tape1;
   tape1.full = true;
@@ -7413,7 +7413,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_getTapesForWriting_no_labelled_tape
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -8469,7 +8469,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_no_mount_rules)
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -8535,7 +8535,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_after_cached_an
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -8613,7 +8613,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -8683,7 +8683,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_group
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -8753,7 +8753,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_after_cached_an
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -8849,7 +8849,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkAndGetNextArchiveFileId_requester_mount
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -8958,7 +8958,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -9021,7 +9021,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_group_
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -9103,7 +9103,7 @@ TEST_P(cta_catalogue_CatalogueTest, getArchiveFileQueueCriteria_requester_mount_
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
   const uint32_t copyNb = 1;
@@ -9142,7 +9142,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -9344,14 +9344,14 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId) {
   requesterIdentity.name = requesterName;
   requesterIdentity.group = "group";
   const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
-    m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, requesterIdentity, cta::nullopt, dummyLc);
+    m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, requesterIdentity, std::nullopt, dummyLc);
 
   ASSERT_EQ(2, queueCriteria.archiveFile.tapeFiles.size());
   ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archivePriority);
   ASSERT_EQ(minArchiveRequestAge, queueCriteria.mountPolicy.archiveMinRequestAge);
 
   // Check that the diskInstanceName mismatch detection works
-  ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName2, archiveFileId, requesterIdentity, cta::nullopt, dummyLc),
+  ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName2, archiveFileId, requesterIdentity, std::nullopt, dummyLc),
     exception::UserError);
 }
 
@@ -9363,7 +9363,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   std::string disabledReason = "disabledReason";
 
@@ -9572,7 +9572,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
 
   {
     const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
-      m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, requesterIdentity, cta::nullopt, dummyLc);
+      m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, requesterIdentity, std::nullopt, dummyLc);
 
     ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archivePriority);
     ASSERT_EQ(minArchiveRequestAge, queueCriteria.mountPolicy.archiveMinRequestAge);
@@ -9601,7 +9601,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
 
   {
     const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
-      m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, requesterIdentity, cta::nullopt, dummyLc);
+      m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, requesterIdentity, std::nullopt, dummyLc);
 
     ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archivePriority);
     ASSERT_EQ(minArchiveRequestAge, queueCriteria.mountPolicy.archiveMinRequestAge);
@@ -9619,7 +9619,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
 
   m_catalogue->setTapeDisabled(m_admin, m_tape2.vid, disabledReason);
 
-  ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, requesterIdentity, cta::nullopt, dummyLc),
+  ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, requesterIdentity, std::nullopt, dummyLc),
     exception::UserError);
 }
 
@@ -9631,7 +9631,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_retu
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -9716,7 +9716,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_retu
 
   {
     const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
-      m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, requesterIdentity, cta::nullopt, dummyLc);
+      m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, requesterIdentity, std::nullopt, dummyLc);
 
     ASSERT_EQ(archivePriority, queueCriteria.mountPolicy.archivePriority);
     ASSERT_EQ(minArchiveRequestAge, queueCriteria.mountPolicy.archiveMinRequestAge);
@@ -9736,7 +9736,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_retu
   std::string disabledReason = "disabled reason";
   m_catalogue->setTapeDisabled(m_admin, m_tape2.vid, disabledReason);
 
-  ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, requesterIdentity, cta::nullopt, dummyLc),
+  ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, requesterIdentity, std::nullopt, dummyLc),
     exception::UserError);
 }
 
@@ -9749,7 +9749,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_Acti
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -9946,7 +9946,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_Acti
   common::dataStructures::RequesterIdentity requesterIdentity;
   requesterIdentity.name = requesterName;
   requesterIdentity.group = "group";
-  cta::optional<std::string> requestActivity = std::string("activity_retrieve");
+  std::optional<std::string> requestActivity = std::string("activity_retrieve");
 
   {
     const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
@@ -10058,7 +10058,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
@@ -10968,7 +10968,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
   }
 
-  m_catalogue->modifyTapeState(m_admin, tape1.vid, common::dataStructures::Tape::ACTIVE,cta::nullopt);
+  m_catalogue->modifyTapeState(m_admin, tape1.vid, common::dataStructures::Tape::ACTIVE,std::nullopt);
 
   {
     const auto pools = m_catalogue->getTapePools();
@@ -11190,7 +11190,7 @@ TEST_P(cta_catalogue_CatalogueTest, DISABLED_concurrent_filesWrittenToTape_many_
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
@@ -11885,7 +11885,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
@@ -12003,7 +12003,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_1_tape_cop
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -12125,7 +12125,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_file_recycle_log_delete
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -12211,7 +12211,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
@@ -12423,7 +12423,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
@@ -12622,7 +12622,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
@@ -12797,7 +12797,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
@@ -12932,7 +12932,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
@@ -13095,7 +13095,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
@@ -13258,7 +13258,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_1_archive_file_2_tape_cop
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
@@ -13420,7 +13420,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
@@ -13706,7 +13706,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_of_anot
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
@@ -14010,7 +14010,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesByVid_1_tape) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -14066,7 +14066,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesByVid_350_tapes) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -14129,7 +14129,7 @@ TEST_P(cta_catalogue_CatalogueTest, getVidToLogicalLibrary_1_tape) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -14172,7 +14172,7 @@ TEST_P(cta_catalogue_CatalogueTest, getVidToLogicalLibrary_310_tapes) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -15653,7 +15653,7 @@ TEST_P(cta_catalogue_CatalogueTest, getNbFilesOnTape_no_tape_files) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -15704,7 +15704,7 @@ TEST_P(cta_catalogue_CatalogueTest, getNbFilesOnTape_one_tape_file) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -15806,7 +15806,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_no_tape_files) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -15857,7 +15857,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -15960,7 +15960,7 @@ TEST_P(cta_catalogue_CatalogueTest, checkTapeForLabel_one_tape_file_reclaimed_ta
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -16085,7 +16085,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -16165,7 +16165,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_not_full_lastFSeq_0_no_tape_file
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -16217,7 +16217,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -16421,7 +16421,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
   m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
@@ -16639,7 +16639,7 @@ TEST_P(cta_catalogue_CatalogueTest, deleteVirtualOrganizationUsedByTapePool) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string comment = "Create tape pool";
 
   m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
@@ -16860,7 +16860,7 @@ TEST_P(cta_catalogue_CatalogueTest, getVirtualOrganizationOfTapepool) {
 
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
 
   common::dataStructures::VirtualOrganization vo = getVo();
 
@@ -16880,7 +16880,7 @@ TEST_P(cta_catalogue_CatalogueTest, updateDiskFileId) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
@@ -17027,7 +17027,7 @@ TEST_P(cta_catalogue_CatalogueTest, moveFilesToRecycleLog) {
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
 
@@ -17154,7 +17154,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTapeRemovesFilesFromRecycleLog) {
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->createMediaType(m_admin, m_mediaType);
@@ -17269,7 +17269,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesArePutInTheFileRecycleLogInsteadOfBeing
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
 
@@ -17380,8 +17380,8 @@ TEST_P(cta_catalogue_CatalogueTest, filesArePutInTheFileRecycleLogInsteadOfBeing
       ASSERT_EQ(fileRecycleLog.checksumBlob,fileWrittenPtr->checksumBlob);
       ASSERT_EQ(fileRecycleLog.storageClassName,fileWrittenPtr->storageClassName);
       ASSERT_EQ(fileRecycleLog.reconciliationTime,fileRecycleLog.archiveFileCreationTime);
-      ASSERT_EQ(cta::nullopt, fileRecycleLog.collocationHint);
-      ASSERT_EQ(cta::nullopt, fileRecycleLog.diskFilePath);
+      ASSERT_EQ(std::nullopt, fileRecycleLog.collocationHint);
+      ASSERT_EQ(std::nullopt, fileRecycleLog.diskFilePath);
       ASSERT_EQ(cta::catalogue::InsertFileRecycleLog::getRepackReasonLog(),fileRecycleLog.reasonLog);
     }
   }
@@ -17497,7 +17497,7 @@ TEST_P(cta_catalogue_CatalogueTest, sameFileWrittenToSameTapePutThePreviousCopyO
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
 
@@ -17745,7 +17745,7 @@ TEST_P(cta_catalogue_CatalogueTest, setDesiredStateWithEmptyReason) {
     tapeDrivesState->setDesiredDriveState(tapeDriveName, desiredState, dummyLc);
   }
   const auto storedTapeDrive = m_catalogue->getTapeDrive(tapeDrive.driveName);
-  // SqlLite (InMemory) returns an empty string and Oracle returns a nullopt
+  // SqlLite (InMemory) returns an empty string and Oracle returns a std::nullopt
   if (storedTapeDrive.value().reasonUpDown) {
     ASSERT_TRUE(storedTapeDrive.value().reasonUpDown.value().empty());
   } else {
@@ -17832,7 +17832,7 @@ TEST_P(cta_catalogue_CatalogueTest, setDesiredStateEmptyComment) {
   ASSERT_EQ(storedTapeDrive.value().desiredUp , tapeDrive.desiredUp);
   ASSERT_EQ(storedTapeDrive.value().desiredForceDown , tapeDrive.desiredForceDown);
   ASSERT_EQ(storedTapeDrive.value().reasonUpDown.value() , tapeDrive.reasonUpDown);
-  // SqlLite (InMemory) returns an empty string and Oracle returns a nullopt
+  // SqlLite (InMemory) returns an empty string and Oracle returns a std::nullopt
   if (storedTapeDrive.value().userComment) {
     ASSERT_TRUE(storedTapeDrive.value().userComment.value().empty());
   } else {
@@ -18198,9 +18198,9 @@ TEST_P(cta_catalogue_CatalogueTest, updateTapeDriveStatusUpDontCleanSpaceReserva
   const std::string tapeDriveName = "VDSTK11";
   auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
   tapeDrive.driveStatus = common::dataStructures::DriveStatus::Down;  // To force a change of state
-  tapeDrive.diskSystemName = nullopt_t();
-  tapeDrive.reservedBytes = nullopt_t();
-  tapeDrive.reservationSessionId = nullopt_t();
+  tapeDrive.diskSystemName = std::nullopt;
+  tapeDrive.reservedBytes = std::nullopt;
+  tapeDrive.reservationSessionId = std::nullopt;
   m_catalogue->createTapeDrive(tapeDrive);
 
   ReportDriveStatusInputs inputs;
@@ -18990,7 +18990,7 @@ TEST_P(cta_catalogue_CatalogueTest, DeleteTapeFileCopyUsingArchiveID) {
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
   const std::string reason = "reason";
@@ -19122,7 +19122,7 @@ TEST_P(cta_catalogue_CatalogueTest, DeleteTapeFileCopyDoesNotExist) {
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
   const std::string reason = "reason";
@@ -19160,7 +19160,7 @@ TEST_P(cta_catalogue_CatalogueTest, DeleteTapeFileCopyUsingFXID) {
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
   const std::string reason = "reason";
@@ -19298,7 +19298,7 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreTapeFileCopy) {
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
   const std::string reason = "reason";
@@ -19432,7 +19432,7 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreRewrittenTapeFileCopyFails) {
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
   const std::string reason = "reason";
@@ -19599,7 +19599,7 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreVariousDeletedTapeFileCopies) {
   const std::string tapePoolName3 = "tape_pool_name_3";
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
   const std::string reason = "reason";
@@ -19775,7 +19775,7 @@ TEST_P(cta_catalogue_CatalogueTest, RestoreArchiveFileAndCopy) {
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
   const bool isEncrypted = true;
-  const cta::optional<std::string> supply("value for the supply pool mechanism");
+  const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
   const std::string reason = "reason";
@@ -19911,9 +19911,9 @@ TEST_P(cta_catalogue_CatalogueTest, addDiskSpaceReservationWhenItsNull) {
 
   const std::string tapeDriveName = "VDSTK11";
   auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
-  tapeDrive.diskSystemName = nullopt_t();
-  tapeDrive.reservedBytes = nullopt_t();
-  tapeDrive.reservationSessionId = nullopt_t();
+  tapeDrive.diskSystemName = std::nullopt;
+  tapeDrive.reservedBytes = std::nullopt;
+  tapeDrive.reservationSessionId = std::nullopt;
   m_catalogue->createTapeDrive(tapeDrive);
 
   DiskSpaceReservationRequest request;
@@ -19971,9 +19971,9 @@ TEST_P(cta_catalogue_CatalogueTest, decrementANonExistingDiskSpaceReservation) {
 
   const std::string tapeDriveName = "VDSTK11";
   auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
-  tapeDrive.diskSystemName = nullopt_t();
-  tapeDrive.reservedBytes = nullopt_t();
-  tapeDrive.reservationSessionId = nullopt_t();
+  tapeDrive.diskSystemName = std::nullopt;
+  tapeDrive.reservedBytes = std::nullopt;
+  tapeDrive.reservationSessionId = std::nullopt;
   m_catalogue->createTapeDrive(tapeDrive);
 
   DiskSpaceReservationRequest request;

@@ -17,10 +17,10 @@
 
 #pragma once
 
-#include "common/optional.hpp"
 #include "rdbms/InvalidResultSet.hpp"
 
 #include <memory>
+#include <optional>
 #include <stdint.h>
 #include <string>
 
@@ -150,7 +150,7 @@ public:
    * @return The string value of the specified column.
    * @throw InvalidResultSet if the result is invalid.
    */
-  optional<std::string> columnOptionalString(const std::string &colName) const;
+  std::optional<std::string> columnOptionalString(const std::string &colName) const;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -224,7 +224,7 @@ public:
    * @return The value of the specified column.
    * @throw InvalidResultSet if the result is invalid.
    */
-  optional<uint8_t> columnOptionalUint8(const std::string &colName) const;
+  std::optional<uint8_t> columnOptionalUint8(const std::string &colName) const;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -235,7 +235,7 @@ public:
    * @return The value of the specified column.
    * @throw InvalidResultSet if the result is invalid.
    */
-  optional<uint16_t> columnOptionalUint16(const std::string &colName) const;
+  std::optional<uint16_t> columnOptionalUint16(const std::string &colName) const;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -246,7 +246,7 @@ public:
    * @return The value of the specified column.
    * @throw InvalidResultSet if the result is invalid.
    */
-  optional<uint32_t> columnOptionalUint32(const std::string &colName) const;
+  std::optional<uint32_t> columnOptionalUint32(const std::string &colName) const;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -257,7 +257,7 @@ public:
    * @return The value of the specified column.
    * @throw InvalidResultSet if the result is invalid.
    */
-  optional<uint64_t> columnOptionalUint64(const std::string &colName) const;
+  std::optional<uint64_t> columnOptionalUint64(const std::string &colName) const;
 
   /**
    * Returns the value of the specified column as a boolean.
@@ -271,7 +271,7 @@ public:
    * @return The value of the specified column.
    * @throw InvalidResultSet if the result is invalid.
    */
-  optional<bool> columnOptionalBool(const std::string &colName) const;
+  std::optional<bool> columnOptionalBool(const std::string &colName) const;
 
   /**
    * Returns the value of the specified column as a double.
@@ -294,7 +294,7 @@ public:
    * @return The value of the specified column.
    * @throw InvalidResultSet if the result is invalid.
    */
-  optional<double> columnOptionalDouble(const std::string &colName) const;
+  std::optional<double> columnOptionalDouble(const std::string &colName) const;
 
 private:
 

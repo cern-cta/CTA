@@ -19,10 +19,10 @@
 
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/TapeLog.hpp"
-#include "common/optional.hpp"
 
 #include <list>
 #include <map>
+#include <optional>
 #include <stdint.h>
 #include <string>
 #include <vector>
@@ -32,7 +32,7 @@ namespace common {
 namespace dataStructures {
 
 /**
- * This struct holds all tape metadata information 
+ * This struct holds all tape metadata information
  */
 struct Tape {
 
@@ -41,22 +41,22 @@ struct Tape {
     BROKEN = 2,
     DISABLED = 3
   };
-  
+
   static const std::map<State,std::string> STATE_TO_STRING_MAP;
   static const std::map<std::string,State> STRING_TO_STATE_MAP;
-  
+
   static std::string getAllPossibleStates();
-  
+
   Tape();
 
   bool operator==(const Tape &rhs) const;
 
   bool operator!=(const Tape &rhs) const;
-  
+
   void setState(const std::string & state);
-  
+
   std::string getStateStr() const;
-  
+
   /**
    * Return the string representation of the tape State passed in parameter
    * @param state the state to return the string representation
@@ -64,7 +64,7 @@ struct Tape {
    * @throws cta::exception::Exception if the state passed in parameter does not exist
    */
   static std::string stateToString(const State &state);
-  
+
   /**
    * Return the state value according to the state passed in parameter (not case sensitive)
    * @param state the string that identifies the state enum value to return
@@ -91,7 +91,7 @@ struct Tape {
    * This optional should either have a non-empty string value or no value at
    * all.  Empty strings are prohibited.
    */
-  optional<std::string> encryptionKeyName;
+  std::optional<std::string> encryptionKeyName;
 
   bool full;
   bool disabled;
@@ -102,18 +102,18 @@ struct Tape {
   EntryLog creationLog;
   EntryLog lastModificationLog;
   std::string comment;
-  optional<TapeLog> labelLog;
-  optional<TapeLog> lastWriteLog;
-  optional<TapeLog> lastReadLog;
-  
+  std::optional<TapeLog> labelLog;
+  std::optional<TapeLog> lastWriteLog;
+  std::optional<TapeLog> lastReadLog;
+
   State state;
-  optional<std::string> stateReason;
+  std::optional<std::string> stateReason;
   std::string stateModifiedBy;
   time_t stateUpdateTime;
-  optional<std::string> verificationStatus;
-  
+  std::optional<std::string> verificationStatus;
+
   bool isDisabled() const;
-  
+
 }; // struct Tape
 
 std::ostream &operator<<(std::ostream &os, const Tape &obj);

@@ -105,7 +105,7 @@ public:
   /*!
    * Get the repack buffer URL
    */
-  cta::optional<std::string> getRepackBufferURL() const { return m_repackBufferURL; }
+  std::optional<std::string> getRepackBufferURL() const { return m_repackBufferURL; }
 
   /*!
    * Populate the namespace endpoint configuration from a keytab file
@@ -135,7 +135,7 @@ public:
   std::unique_ptr<cta::log::Logger>                   m_log;                     //!< The logger
 
   uint64_t                                            m_archiveFileMaxSize;      //!< Maximum allowed file size for archive requests
-  cta::optional<std::string>                          m_repackBufferURL;         //!< The repack buffer URL
+  std::optional<std::string>                          m_repackBufferURL;         //!< The repack buffer URL
   cta::NamespaceMap_t                                 m_namespaceMap;            //!< Endpoints for namespace queries
   std::string                                         m_catalogue_conn_string;   //!< The catalogue connection string (without the password)
 

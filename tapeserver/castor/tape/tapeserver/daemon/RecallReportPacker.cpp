@@ -93,7 +93,7 @@ void RecallReportPacker::reportEndOfSession(cta::log::LogContext& lc) {
 //------------------------------------------------------------------------------
 //reportDriveStatus
 //------------------------------------------------------------------------------
-void RecallReportPacker::reportDriveStatus(cta::common::dataStructures::DriveStatus status, const cta::optional<std::string>& reason,
+void RecallReportPacker::reportDriveStatus(cta::common::dataStructures::DriveStatus status, const std::optional<std::string>& reason,
                                            cta::log::LogContext& lc) {
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportDriveStatus")

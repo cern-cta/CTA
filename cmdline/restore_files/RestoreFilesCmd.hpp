@@ -22,7 +22,8 @@
 #include "eos_grpc_client/GrpcEndpoint.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/log/StdoutLogger.hpp"
-#include "common/optional.hpp"
+
+#include <optional>
 #include <memory>
 
 #include "CtaFrontendApi.hpp"
@@ -41,7 +42,7 @@ public:
    * @param log The object representing the API of the CTA logging system.
    */
   RestoreFilesCmd(std::istream &inStream, std::ostream &outStream,
-    std::ostream &errStream, cta::log::StdoutLogger &log);  
+    std::ostream &errStream, cta::log::StdoutLogger &log);
 
   /**
    * An exception throwing version of main().
@@ -160,27 +161,27 @@ private:
   /**
    * Archive file id of the files to restore
    */
-  optional<uint64_t> m_archiveFileId;
+  std::optional<uint64_t> m_archiveFileId;
 
   /**
    * Disk instance of the files to restore
    */
-  optional<std::string> m_diskInstance;
+  std::optional<std::string> m_diskInstance;
 
   /**
    * Fxids of the files to restore
    */
-  optional<std::list<std::string>> m_eosFxids;
+  std::optional<std::list<std::string>> m_eosFxids;
 
   /**
    * Vid of the tape of the files to restore
    */
-  optional<std::string> m_vid;
+  std::optional<std::string> m_vid;
 
   /**
    *Copy number of the files to restore
    */
-  optional<uint64_t> m_copyNumber;
+  std::optional<uint64_t> m_copyNumber;
 
   /**
    *Default file layout for restored files in EOS
@@ -201,7 +202,7 @@ private:
    const std::string m_ctaVersion = CTA_VERSION;                      //!< The version of CTA
    const std::string m_xrootdSsiProtobufInterfaceVersion =            //!< The xrootd-ssi-protobuf-interface version (=tag)
       XROOTD_SSI_PROTOBUF_INTERFACE_VERSION;
-   
+
 
 } ; // class RestoreFilesCmd
 

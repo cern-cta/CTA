@@ -226,7 +226,7 @@ public:
     const uint16_t nbPartialTapes = 1;
     const std::string tapePoolComment = "Tape-pool comment";
     const bool tapePoolEncryption = false;
-    const cta::optional<std::string> tapePoolSupply("value for the supply pool mechanism");
+    const std::optional<std::string> tapePoolSupply("value for the supply pool mechanism");
     catalogue.createTapePool(s_adminOnAdminHost, s_tapePoolName, vo.name, nbPartialTapes, tapePoolEncryption, tapePoolSupply,
       tapePoolComment);
     const uint32_t copyNb = 1;
@@ -730,7 +730,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     const std::string tapePool1Comment = "Tape-pool for copy number 1";
     const std::string tapePool2Comment = "Tape-pool for copy number 2";
     const bool tapePoolEncryption = false;
-    const cta::optional<std::string> tapePoolSupply("value for the supply pool mechanism");
+    const std::optional<std::string> tapePoolSupply("value for the supply pool mechanism");
     catalogue.createTapePool(s_adminOnAdminHost, tapePool1Name, vo.name, nbPartialTapes, tapePoolEncryption,
       tapePoolSupply, tapePool1Comment);
     catalogue.createTapePool(s_adminOnAdminHost, tapePool2Name, vo.name, nbPartialTapes, tapePoolEncryption,
@@ -972,7 +972,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     common::dataStructures::RequesterIdentity requester;
     requester.name = s_userName;
     requester.group = "userGroup";
-    optional<std::string> activity;
+    std::optional<std::string> activity;
     const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
       catalogue.prepareToRetrieveFile(s_diskInstance, archiveFileId, requester, activity, lc);
     ASSERT_EQ(2, queueCriteria.archiveFile.tapeFiles.size());
@@ -2082,7 +2082,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
       rrp.setDiskDone();
       rrp.setTapeDone();
 
-      rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, cta::nullopt, lc);
+      rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
 
       rrp.reportEndOfSession(lc);
       rrp.waitThread();
@@ -2369,7 +2369,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
     rrp.setDiskDone();
     rrp.setTapeDone();
 
-    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, cta::nullopt, lc);
+    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
 
     rrp.reportEndOfSession(lc);
     rrp.waitThread();
@@ -2403,7 +2403,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
         rrp.setDiskDone();
         rrp.setTapeDone();
 
-        rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, cta::nullopt, lc);
+        rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
 
         rrp.reportEndOfSession(lc);
         rrp.waitThread();
@@ -2610,7 +2610,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
     rrp.setDiskDone();
     rrp.setTapeDone();
 
-    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, cta::nullopt, lc);
+    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
 
     rrp.reportEndOfSession(lc);
     rrp.waitThread();
@@ -2861,7 +2861,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
     rrp.setDiskDone();
     rrp.setTapeDone();
 
-    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, cta::nullopt, lc);
+    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
 
     rrp.reportEndOfSession(lc);
     rrp.waitThread();
@@ -3312,7 +3312,7 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, "drive0", lc));
 
   //enable the tape
-  catalogue.modifyTapeState(admin,vid,common::dataStructures::Tape::ACTIVE,cta::nullopt);
+  catalogue.modifyTapeState(admin,vid,common::dataStructures::Tape::ACTIVE,std::nullopt);
 
   //A mount should be returned by getNextMount
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName,"drive0",lc));
@@ -3778,7 +3778,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
 
   //Create two different destination tapepool
   std::string tapepool2Name = "tapepool2";
-  const cta::optional<std::string> supply;
+  const std::optional<std::string> supply;
   catalogue.createTapePool(admin,tapepool2Name,"vo",1,false,supply,"comment");
 
   std::string tapepool3Name = "tapepool3";
@@ -3929,7 +3929,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
     rrp.setDiskDone();
     rrp.setTapeDone();
 
-    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, cta::nullopt, lc);
+    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
 
     rrp.reportEndOfSession(lc);
     rrp.waitThread();
@@ -4028,7 +4028,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldFailIfArchiveRouteMissing) {
 
   //Create two different destination tapepool
   std::string tapepool2Name = "tapepool2";
-  const cta::optional<std::string> supply;
+  const std::optional<std::string> supply;
   catalogue.createTapePool(admin,tapepool2Name,"vo",1,false,supply,"comment");
 
   //Create a storage class in the catalogue
@@ -4206,7 +4206,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
 
   //Create two different destination tapepool
   std::string tapepool2Name = "tapepool2";
-  const cta::optional<std::string> supply;
+  const std::optional<std::string> supply;
   catalogue.createTapePool(admin,tapepool2Name,"vo",1,false,supply,"comment");
 
   std::string tapepool3Name = "tapepool3";
@@ -4365,7 +4365,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
     rrp.setDiskDone();
     rrp.setTapeDone();
 
-    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, cta::nullopt, lc);
+    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
 
     rrp.reportEndOfSession(lc);
     rrp.waitThread();
@@ -4648,7 +4648,7 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
       rrp.setDiskDone();
       rrp.setTapeDone();
 
-      rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, cta::nullopt, lc);
+      rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
 
       rrp.reportEndOfSession(lc);
       rrp.waitThread();
@@ -4857,12 +4857,12 @@ TEST_P(SchedulerTest, getNextMountBrokenOrDisabledTapeShouldNotReturnAMount) {
 
   catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::BROKEN,std::string("Test"));
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,cta::nullopt);
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,std::nullopt);
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 
   catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::DISABLED,std::string("Test"));
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,cta::nullopt);
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,std::nullopt);
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 
   {
@@ -4913,12 +4913,12 @@ TEST_P(SchedulerTest, getNextMountBrokenOrDisabledTapeShouldNotReturnAMount) {
   }
   catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::BROKEN,std::string("Test"));
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,cta::nullopt);
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,std::nullopt);
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 
   catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::DISABLED,std::string("Test"));
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,cta::nullopt);
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,std::nullopt);
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 }
 
@@ -5748,7 +5748,7 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
 
   //Create a new tapepool on the same VO
   std::string newTapepool = "new_tapepool";
-  catalogue.createTapePool(s_adminOnAdminHost,newTapepool,s_vo,1,false,cta::nullopt,"Test");
+  catalogue.createTapePool(s_adminOnAdminHost,newTapepool,s_vo,1,false,std::nullopt,"Test");
 
   //Create the third tape in the new tapepool
   auto tape3  = tape1;
@@ -5915,7 +5915,7 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
   //The retrieve mount should not be triggered as the tape 1 is disabled
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,drive3,lc));
   //Setting the state of the tape back to active
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape1.vid,common::dataStructures::Tape::ACTIVE,cta::nullopt);
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape1.vid,common::dataStructures::Tape::ACTIVE,std::nullopt);
   //The mount should be triggered on tape 1
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,drive3,lc));
   //The mount should be a Retrieve mount

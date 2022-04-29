@@ -32,7 +32,7 @@ namespace cta { namespace catalogue {
     uint8_t copyNb;
     time_t tapeFileCreationTime;
     uint64_t archiveFileId;
-    cta::optional<std::string> diskFilePath;
+    std::optional<std::string> diskFilePath;
     std::string reasonLog;
     time_t recycleLogTime;
     

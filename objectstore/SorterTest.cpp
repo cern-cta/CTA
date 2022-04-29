@@ -284,7 +284,7 @@ TEST(ObjectStore,SorterInsertRetrieveRequest){
     cta::objectstore::ScopedExclusiveLock rrl(*retrieveRequest);
     retrieveRequest->fetch();
 
-    sorter.insertRetrieveRequest(retrieveRequest,agentRef,cta::nullopt,lc);
+    sorter.insertRetrieveRequest(retrieveRequest,agentRef,std::nullopt,lc);
     rrl.release();
     cta::objectstore::Sorter::MapRetrieve allRetrieveJobs = sorter.getAllRetrieve();
     std::list<std::tuple<cta::objectstore::Sorter::RetrieveJob,std::future<void>>> allFutures;
@@ -333,7 +333,7 @@ TEST(ObjectStore,SorterInsertRetrieveRequest){
     retrieveRequest->setJobStatus(2,cta::objectstore::serializers::RetrieveJobStatus::RJS_ToTransfer);
     retrieveRequest->commit();
 
-    ASSERT_NO_THROW(sorter.insertRetrieveRequest(retrieveRequest,agentRef,cta::optional<uint32_t>(2),lc));
+    ASSERT_NO_THROW(sorter.insertRetrieveRequest(retrieveRequest,agentRef,std::optional<uint32_t>(2),lc));
 
     sel.release();
 
@@ -379,14 +379,14 @@ TEST(ObjectStore,SorterInsertRetrieveRequest){
     ScopedExclusiveLock sel(*retrieveRequest);
     retrieveRequest->fetch();
     // We should be forbidden to force queueing a non-exsiting copy number.
-    ASSERT_THROW(sorter.insertRetrieveRequest(retrieveRequest,agentRef,cta::optional<uint32_t>(4),lc),cta::exception::Exception);
+    ASSERT_THROW(sorter.insertRetrieveRequest(retrieveRequest,agentRef,std::optional<uint32_t>(4),lc),cta::exception::Exception);
 
     retrieveRequest->setJobStatus(1,serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess);
     retrieveRequest->setJobStatus(2,serializers::RetrieveJobStatus::RJS_Failed);
     retrieveRequest->commit();
 
     // We should be forbidden to requeue a request if no copy is in status ToTranfer.
-    ASSERT_THROW(sorter.insertRetrieveRequest(retrieveRequest,agentRef,cta::nullopt,lc),cta::exception::Exception);
+    ASSERT_THROW(sorter.insertRetrieveRequest(retrieveRequest,agentRef,std::nullopt,lc),cta::exception::Exception);
 
     sel.release();
   }
@@ -522,7 +522,7 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
     ScopedExclusiveLock sel(*retrieveRequest);
     retrieveRequest->fetch();
 
-    ASSERT_NO_THROW(sorter.insertRetrieveRequest(retrieveRequest,agentRef,cta::nullopt,lc));
+    ASSERT_NO_THROW(sorter.insertRetrieveRequest(retrieveRequest,agentRef,std::nullopt,lc));
 
     sel.release();
   }
@@ -532,7 +532,7 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
     ScopedExclusiveLock sel(*retrieveRequest2);
     retrieveRequest2->fetch();
 
-    ASSERT_NO_THROW(sorter.insertRetrieveRequest(retrieveRequest2,agentRef,cta::nullopt,lc));
+    ASSERT_NO_THROW(sorter.insertRetrieveRequest(retrieveRequest2,agentRef,std::nullopt,lc));
 
     sel.release();
   }
@@ -935,7 +935,7 @@ TEST(ObjectStore,SorterInsertRetrieveRequestNotFetched){
   }
 
   Sorter sorter(agentRefSorter,be,catalogue);
-  sorter.insertRetrieveRequest(request,agentRef,cta::nullopt,lc);
+  sorter.insertRetrieveRequest(request,agentRef,std::nullopt,lc);
 
   cta::objectstore::Sorter::MapRetrieve allRetrieveJobs = sorter.getAllRetrieve();
   std::list<std::tuple<cta::objectstore::Sorter::RetrieveJob,std::future<void>>> allFuturesRetrieve;

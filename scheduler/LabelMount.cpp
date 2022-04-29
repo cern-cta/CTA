@@ -54,7 +54,7 @@ std::string LabelMount::getVid() const {
   // TODO
 }
 
-void LabelMount::setDriveStatus(cta::common::dataStructures::DriveStatus status, const cta::optional<std::string> & reason) {
+void LabelMount::setDriveStatus(cta::common::dataStructures::DriveStatus status, const std::optional<std::string> & reason) {
   throw 0;
   // TODO
 }

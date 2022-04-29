@@ -47,7 +47,7 @@ cta::RetrieveJob::RetrieveJob(RetrieveMount *mount,
 //------------------------------------------------------------------------------
 // diskSystemName
 //------------------------------------------------------------------------------
-cta::optional<std::string> cta::RetrieveJob::diskSystemName() {
+std::optional<std::string> cta::RetrieveJob::diskSystemName() {
   return m_dbJob->diskSystemName;
 }
 

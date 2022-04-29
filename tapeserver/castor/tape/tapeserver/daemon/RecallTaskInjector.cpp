@@ -16,7 +16,6 @@
  */
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
 #include "common/log/LogContext.hpp"
-#include "common/optional.hpp"
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadTask.hpp"
@@ -27,6 +26,7 @@
 #include "scheduler/RetrieveJob.hpp"
 #include "castor/tape/tapeserver/drive/DriveGeneric.hpp"
 
+#include <optional>
 #include <stdint.h>
 
 using cta::log::LogContext;
@@ -188,7 +188,7 @@ bool RecallTaskInjector::reserveSpaceForNextJobBatch(const bool useRAOManager) {
     //#1076 If the disk system for this mount was removed, process the jobs as if they had no disk system
     // (assuming only one disk system per mount)
     for (auto job: nextJobBatch) {
-      job->diskSystemName() = cta::nullopt_t();
+      job->diskSystemName() = std::nullopt;
     }
     m_lc.log(cta::log::WARNING,
     "In RecallTaskInjector::reserveSpaceForNextJobBatch(): Disk sapce reservation failed "
@@ -398,7 +398,7 @@ void RecallTaskInjector::WorkerThread::run()
     } catch(const castor::tape::tapeserver::drive::DriveDoesNotSupportRAOException &ex){
       m_parent.m_lc.log(cta::log::INFO, "The drive does not support RAO Enterprise, will run a CTA RAO.");
     }
-    cta::optional<uint64_t> maxFilesSupportedByRAO = m_parent.m_raoManager.getMaxFilesSupported();
+    std::optional<uint64_t> maxFilesSupportedByRAO = m_parent.m_raoManager.getMaxFilesSupported();
     if (maxFilesSupportedByRAO && m_parent.m_fetched < maxFilesSupportedByRAO.value()) {
       /* Fetching until we reach maxSupported for the tape drive RAO */
       //unused boolean here but need to be kept to respect the synchronousFetch signature

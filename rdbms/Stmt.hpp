@@ -19,11 +19,11 @@
 
 #include "rdbms/AutocommitMode.hpp"
 #include "rdbms/Rset.hpp"
-#include "common/optional.hpp"
 
 #include <list>
 #include <memory>
 #include <mutex>
+#include <optional>
 
 namespace cta {
 namespace rdbms {
@@ -116,7 +116,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint8(const std::string &paramName, const optional<uint8_t> &paramValue);
+  void bindUint8(const std::string &paramName, const std::optional<uint8_t> &paramValue);
 
   /**
    * Binds an SQL parameter.
@@ -124,7 +124,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint16(const std::string &paramName, const optional<uint16_t> &paramValue);
+  void bindUint16(const std::string &paramName, const std::optional<uint16_t> &paramValue);
 
   /**
    * Binds an SQL parameter.
@@ -132,7 +132,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint32(const std::string &paramName, const optional<uint32_t> &paramValue);
+  void bindUint32(const std::string &paramName, const std::optional<uint32_t> &paramValue);
 
   /**
    * Binds an SQL parameter.
@@ -140,7 +140,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint64(const std::string &paramName, const optional<uint64_t> &paramValue);
+  void bindUint64(const std::string &paramName, const std::optional<uint64_t> &paramValue);
 
   /**
    * Binds an SQL parameter.
@@ -148,7 +148,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindDouble(const std::string &paramName, const optional<double> &paramValue);
+  void bindDouble(const std::string &paramName, const std::optional<double> &paramValue);
 
   /**
    * Binds an SQL parameter.
@@ -156,17 +156,17 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindBool(const std::string &paramName, const optional<bool> &paramValue);
+  void bindBool(const std::string &paramName, const std::optional<bool> &paramValue);
 
-  /** 
+  /**
    * Binds an SQL parameter of type binary blob.
    *
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
-   */ 
+   */
   void bindBlob(const std::string &paramName, const std::string &paramValue);
 
-  /** 
+  /**
    * Binds an SQL parameter of type optional-string.
    *
    * Please note that this method will throw an exception if the optional string
@@ -175,8 +175,8 @@ public:
    *
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
-   */ 
-  void bindString(const std::string &paramName, const optional<std::string> &paramValue);
+   */
+  void bindString(const std::string &paramName, const std::optional<std::string> &paramValue);
 
   /**
    *  Executes the statement and returns the result set.

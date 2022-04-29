@@ -17,21 +17,19 @@
 
 #pragma once
 
-#include "common/optional.hpp"
-
 #include <list>
 #include <map>
+#include <optional>
 #include <stdint.h>
 #include <string>
-
 
 namespace cta {
 namespace common {
 namespace dataStructures {
 
 /**
- * This struct contains information about which drive was responsible for a 
- * specific tape operation (read/write/label) and when did it happen 
+ * This struct contains information about which drive was responsible for a
+ * specific tape operation (read/write/label) and when did it happen
  */
 struct TapeLog {
 
@@ -48,7 +46,7 @@ struct TapeLog {
 
 std::ostream &operator<<(std::ostream &os, const TapeLog &obj);
 
-std::ostream &operator<<(std::ostream &os, const optional<TapeLog> &obj);
+std::ostream &operator<<(std::ostream &os, const std::optional<TapeLog> &obj);
 
 } // namespace dataStructures
 } // namespace common

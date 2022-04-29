@@ -17,10 +17,9 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 #include <vector>
-
-#include <common/optional.hpp>
 
 namespace cta {
 namespace catalogue {
@@ -39,17 +38,17 @@ struct TapePoolSearchCriteria {
    /**
    * The name of the tapepool.
    */
-    optional<std::string> name;
+    std::optional<std::string> name;
 
     /**
     * The virtual organization of the tapepool.
     */
-    optional<std::string> vo;
+    std::optional<std::string> vo;
 
     /**
     * Set to true if searching for encrypted tape pools.
     */
-    optional<bool> encrypted;
+    std::optional<bool> encrypted;
 
 }; // struct TapePoolSearchCriteria
 

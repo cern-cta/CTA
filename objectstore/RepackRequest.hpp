@@ -181,7 +181,7 @@ public:
   };
   // An owner updater factory. The owner MUST be previousOwner for the update to be executed.
   AsyncOwnerAndStatusUpdater *asyncUpdateOwnerAndStatus(const std::string &owner, const std::string &previousOwner,
-      cta::optional<serializers::RepackRequestStatus> newStatus);
+      std::optional<serializers::RepackRequestStatus> newStatus);
   };
 
 }} // namespace cta::objectstore

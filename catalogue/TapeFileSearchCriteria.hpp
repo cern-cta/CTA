@@ -17,10 +17,9 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 #include <vector>
-
-#include "common/optional.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -35,22 +34,22 @@ struct TapeFileSearchCriteria {
   /**
    * The unique identifier of an archive file.
    */
-  optional<uint64_t> archiveFileId;
+  std::optional<uint64_t> archiveFileId;
 
   /**
    * The name of a disk instance.
    */
-  optional<std::string> diskInstance;
+  std::optional<std::string> diskInstance;
 
   /**
    * The volume identifier of a tape.
    */
-  optional<std::string> vid;
+  std::optional<std::string> vid;
 
   /**
    * The fSeq of the file on tape.
    */
-  optional<uint64_t> fSeq;
+  std::optional<uint64_t> fSeq;
 
   /**
    * List of disk file IDs.
@@ -58,7 +57,7 @@ struct TapeFileSearchCriteria {
    * These are given as a list of strings in DECIMAL format. EOS provides the fxids in hex format. The parsing and
    * conversion into decimal is done in the cta-admin client, ready to be built into a SQL query string.
    */
-  optional<std::vector<std::string>> diskFileIds;
+  std::optional<std::vector<std::string>> diskFileIds;
 }; // struct TapeFileSearchCriteria
 
 } // namespace catalogue

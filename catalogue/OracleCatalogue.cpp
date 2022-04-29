@@ -153,7 +153,7 @@ OracleCatalogue::~OracleCatalogue() {
 //------------------------------------------------------------------------------
 // createAndPopulateTempTableFxid
 //------------------------------------------------------------------------------
-std::string OracleCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn, const optional<std::vector<std::string>> &diskFileIds) const {
+std::string OracleCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn, const std::optional<std::vector<std::string>> &diskFileIds) const {
   const std::string tempTableName = "ORA$PTT_DISK_FXIDS";
 
   try {

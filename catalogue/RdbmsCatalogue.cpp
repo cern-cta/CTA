@@ -1872,7 +1872,7 @@ void RdbmsCatalogue::modifyMediaTypeSecondaryDensityCode(const common::dataStruc
 // modifyMediaTypeNbWraps
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::modifyMediaTypeNbWraps(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-  const cta::optional<std::uint32_t> &nbWraps) {
+  const std::optional<std::uint32_t> &nbWraps) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =
@@ -1907,7 +1907,7 @@ void RdbmsCatalogue::modifyMediaTypeNbWraps(const common::dataStructures::Securi
 // modifyMediaTypeMinLPos
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::modifyMediaTypeMinLPos(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const cta::optional<std::uint64_t> &minLPos) {
+  const std::string &name, const std::optional<std::uint64_t> &minLPos) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =
@@ -1942,7 +1942,7 @@ void RdbmsCatalogue::modifyMediaTypeMinLPos(const common::dataStructures::Securi
 // modifyMediaTypeMaxLPos
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::modifyMediaTypeMaxLPos(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const cta::optional<std::uint64_t> &maxLPos) {
+  const std::string &name, const std::optional<std::uint64_t> &maxLPos) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =
@@ -2017,7 +2017,7 @@ void RdbmsCatalogue::createTapePool(
   const std::string &vo,
   const uint64_t nbPartialTapes,
   const bool encryptionValue,
-  const cta::optional<std::string> &supply,
+  const std::optional<std::string> &supply,
   const std::string &comment) {
   try {
     if(name.empty()) {
@@ -2515,7 +2515,7 @@ std::list<TapePool> RdbmsCatalogue::getTapePools(rdbms::Conn &conn, const TapePo
 //------------------------------------------------------------------------------
 // getTapePool
 //------------------------------------------------------------------------------
-cta::optional<TapePool> RdbmsCatalogue::getTapePool(const std::string &tapePoolName) const {
+std::optional<TapePool> RdbmsCatalogue::getTapePool(const std::string &tapePoolName) const {
   try {
     const char *const sql =
       "SELECT "
@@ -2578,7 +2578,7 @@ cta::optional<TapePool> RdbmsCatalogue::getTapePool(const std::string &tapePoolN
     auto rset = stmt.executeQuery();
 
     if (!rset.next()) {
-      return cta::nullopt;
+      return std::nullopt;
     }
 
     TapePool pool;
@@ -2793,7 +2793,7 @@ void RdbmsCatalogue::modifyTapePoolSupply(const common::dataStructures::Security
         " string");
     }
 
-    optional<std::string> optionalSupply;
+    std::optional<std::string> optionalSupply;
     if(!supply.empty()) {
       optionalSupply = supply;
     }
@@ -3553,7 +3553,7 @@ void RdbmsCatalogue::modifyLogicalLibraryDisabledReason(const common::dataStruct
         "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":DISABLED_REASON", disabledReason.empty() ? cta::nullopt : cta::optional<std::string>(disabledReason));
+    stmt.bindString(":DISABLED_REASON", disabledReason.empty() ? std::nullopt : std::optional<std::string>(disabledReason));
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
@@ -3622,8 +3622,8 @@ void RdbmsCatalogue::createTape(
     std::string tapePoolName = tape.tapePoolName;
     bool full = tape.full;
     // Translate an empty comment string to a NULL database value
-    const optional<std::string> tapeComment = tape.comment && tape.comment->empty() ? nullopt : tape.comment;
-    const optional<std::string> stateReason = tape.stateReason && cta::utils::trimString(tape.stateReason.value()).empty() ? nullopt : tape.stateReason;
+    const std::optional<std::string> tapeComment = tape.comment && tape.comment->empty() ? std::nullopt : tape.comment;
+    const std::optional<std::string> stateReason = tape.stateReason && cta::utils::trimString(tape.stateReason.value()).empty() ? std::nullopt : tape.stateReason;
 
     if(vid.empty()) {
       throw UserSpecifiedAnEmptyStringVid("Cannot create tape because the VID is an empty string");
@@ -4792,14 +4792,14 @@ void RdbmsCatalogue::checkTapeForLabel(const std::string &vid) {
 //------------------------------------------------------------------------------
 // getTapeLogFromRset
 //------------------------------------------------------------------------------
-optional<common::dataStructures::TapeLog> RdbmsCatalogue::getTapeLogFromRset(const rdbms::Rset &rset,
+std::optional<common::dataStructures::TapeLog> RdbmsCatalogue::getTapeLogFromRset(const rdbms::Rset &rset,
   const std::string &driveColName, const std::string &timeColName) const {
   try {
-    const optional<std::string> drive = rset.columnOptionalString(driveColName);
-    const optional<uint64_t> time = rset.columnOptionalUint64(timeColName);
+    const std::optional<std::string> drive = rset.columnOptionalString(driveColName);
+    const std::optional<uint64_t> time = rset.columnOptionalUint64(timeColName);
 
     if(!drive && !time) {
-      return nullopt;
+      return std::nullopt;
     }
 
     if(drive && !time) {
@@ -5020,7 +5020,7 @@ void RdbmsCatalogue::modifyTapeTapePoolName(const common::dataStructures::Securi
 void RdbmsCatalogue::modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity &admin,
   const std::string &vid, const std::string &encryptionKeyName) {
   try {
-    optional<std::string> optionalEncryptionKeyName;
+    std::optional<std::string> optionalEncryptionKeyName;
     if(!encryptionKeyName.empty()) {
       optionalEncryptionKeyName = encryptionKeyName;
     }
@@ -5111,12 +5111,12 @@ void RdbmsCatalogue::modifyTapeVerificationStatus(const common::dataStructures::
 //------------------------------------------------------------------------------
 // modifyTapeState
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const cta::optional<std::string> & stateReason){
+void RdbmsCatalogue::modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const std::optional<std::string> & stateReason){
   try {
     using namespace common::dataStructures;
     const time_t now = time(nullptr);
 
-    const optional<std::string> stateReasonCopy = stateReason && cta::utils::trimString(stateReason.value()).empty() ? nullopt : stateReason;
+    const std::optional<std::string> stateReasonCopy = stateReason && cta::utils::trimString(stateReason.value()).empty() ? std::nullopt : stateReason;
 
     std::string stateStr;
     try {
@@ -5430,7 +5430,7 @@ void RdbmsCatalogue::setTapeDirty(const std::string& vid) {
 // modifyTapeComment
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::modifyTapeComment(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &vid, const cta::optional<std::string> &comment) {
+  const std::string &vid, const std::optional<std::string> &comment) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =
@@ -6223,7 +6223,7 @@ void RdbmsCatalogue::createRequesterGroupMountRule(
 //------------------------------------------------------------------------------
 // getCachedRequesterGroupMountPolicy
 //------------------------------------------------------------------------------
-ValueAndTimeBasedCacheInfo<optional<common::dataStructures::MountPolicy> > RdbmsCatalogue::getCachedRequesterGroupMountPolicy(const Group &group)
+ValueAndTimeBasedCacheInfo<std::optional<common::dataStructures::MountPolicy> > RdbmsCatalogue::getCachedRequesterGroupMountPolicy(const Group &group)
   const {
   try {
     auto getNonCachedValue = [&] {
@@ -6242,7 +6242,7 @@ ValueAndTimeBasedCacheInfo<optional<common::dataStructures::MountPolicy> > Rdbms
 //------------------------------------------------------------------------------
 // getRequesterGroupMountPolicy
 //------------------------------------------------------------------------------
-optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getRequesterGroupMountPolicy(
+std::optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getRequesterGroupMountPolicy(
   rdbms::Conn &conn, const Group &group) const {
   try {
     const char *const sql =
@@ -6298,7 +6298,7 @@ optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getRequesterGroupM
 
       return policy;
     } else {
-      return nullopt;
+      return std::nullopt;
     }
   } catch(exception::UserError &) {
     throw;
@@ -6449,7 +6449,7 @@ bool RdbmsCatalogue::requesterMountRuleExists(rdbms::Conn &conn, const std::stri
 //------------------------------------------------------------------------------
 // getCachedRequesterMountPolicy
 //------------------------------------------------------------------------------
-ValueAndTimeBasedCacheInfo <optional <common::dataStructures::MountPolicy> > RdbmsCatalogue::getCachedRequesterMountPolicy(const User &user) const {
+ValueAndTimeBasedCacheInfo <std::optional <common::dataStructures::MountPolicy> > RdbmsCatalogue::getCachedRequesterMountPolicy(const User &user) const {
   try {
     auto getNonCachedValue = [&] {
       auto conn = m_connPool.getConn();
@@ -6467,7 +6467,7 @@ ValueAndTimeBasedCacheInfo <optional <common::dataStructures::MountPolicy> > Rdb
 //------------------------------------------------------------------------------
 // getRequesterMountPolicy
 //------------------------------------------------------------------------------
-optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getRequesterMountPolicy(rdbms::Conn &conn,
+std::optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getRequesterMountPolicy(rdbms::Conn &conn,
   const User &user) const {
   try {
     const char *const sql =
@@ -6526,7 +6526,7 @@ optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getRequesterMountP
 
       return policy;
     } else {
-      return nullopt;
+      return std::nullopt;
     }
   } catch(exception::UserError &) {
     throw;
@@ -8332,7 +8332,7 @@ common::dataStructures::ArchiveFile RdbmsCatalogue::getArchiveFileForDeletion(co
 
   auto vid = criteria.vid.value();
   TapeFileSearchCriteria searchCriteria = criteria;
-  searchCriteria.vid = nullopt; //unset vid, we want to get all copies of the archive file so we can check that it is not a one copy file
+  searchCriteria.vid = std::nullopt; //unset vid, we want to get all copies of the archive file so we can check that it is not a one copy file
   auto itor = getArchiveFilesItor(searchCriteria);
 
   // itor should have at most one archive file since we always search on unique attributes
@@ -8809,7 +8809,7 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
   const std::string &diskInstanceName,
   const uint64_t archiveFileId,
   const common::dataStructures::RequesterIdentity &user,
-  const optional<std::string>& activity,
+  const std::optional<std::string>& activity,
   log::LogContext &lc) {
   try {
     cta::utils::Timer t;
@@ -9920,21 +9920,21 @@ uint64_t RdbmsCatalogue::getNbTapesInPool(rdbms::Conn &conn, const std::string &
 //------------------------------------------------------------------------------
 // isSetAndEmpty
 //------------------------------------------------------------------------------
-bool RdbmsCatalogue::isSetAndEmpty(const optional<std::string> &optionalStr) const {
+bool RdbmsCatalogue::isSetAndEmpty(const std::optional<std::string> &optionalStr) const {
   return optionalStr && optionalStr->empty();
 }
 
 //------------------------------------------------------------------------------
 // isSetAndEmpty
 //------------------------------------------------------------------------------
-bool RdbmsCatalogue::isSetAndEmpty(const optional<std::vector<std::string>> &optionalStrList) const {
+bool RdbmsCatalogue::isSetAndEmpty(const std::optional<std::vector<std::string>> &optionalStrList) const {
   return optionalStrList && optionalStrList->empty();
 }
 
 //------------------------------------------------------------------------------
 // getLogicalLibraryId
 //------------------------------------------------------------------------------
-optional<uint64_t> RdbmsCatalogue::getLogicalLibraryId(rdbms::Conn &conn, const std::string &name) const {
+std::optional<uint64_t> RdbmsCatalogue::getLogicalLibraryId(rdbms::Conn &conn, const std::string &name) const {
   try {
     const char *const sql =
       "SELECT"                                                         "\n"
@@ -9947,7 +9947,7 @@ optional<uint64_t> RdbmsCatalogue::getLogicalLibraryId(rdbms::Conn &conn, const 
     stmt.bindString(":LOGICAL_LIBRARY_NAME", name);
     auto rset = stmt.executeQuery();
     if(!rset.next()) {
-      return nullopt;
+      return std::nullopt;
     }
     return rset.columnUint64("LOGICAL_LIBRARY_ID");
   } catch(exception::UserError &) {
@@ -9961,7 +9961,7 @@ optional<uint64_t> RdbmsCatalogue::getLogicalLibraryId(rdbms::Conn &conn, const 
 //------------------------------------------------------------------------------
 // getTapePoolId
 //------------------------------------------------------------------------------
-optional<uint64_t> RdbmsCatalogue::getTapePoolId(rdbms::Conn &conn, const std::string &name) const {
+std::optional<uint64_t> RdbmsCatalogue::getTapePoolId(rdbms::Conn &conn, const std::string &name) const {
   try {
     const char *const sql =
       "SELECT"                                       "\n"
@@ -9974,7 +9974,7 @@ optional<uint64_t> RdbmsCatalogue::getTapePoolId(rdbms::Conn &conn, const std::s
     stmt.bindString(":TAPE_POOL_NAME", name);
     auto rset = stmt.executeQuery();
     if(!rset.next()) {
-      return nullopt;
+      return std::nullopt;
     }
     return rset.columnUint64("TAPE_POOL_ID");
   } catch(exception::UserError &) {
@@ -9988,7 +9988,7 @@ optional<uint64_t> RdbmsCatalogue::getTapePoolId(rdbms::Conn &conn, const std::s
 //------------------------------------------------------------------------------
 // getMediaTypeId
 //------------------------------------------------------------------------------
-optional<uint64_t> RdbmsCatalogue::getMediaTypeId(rdbms::Conn &conn, const std::string &name) const {
+std::optional<uint64_t> RdbmsCatalogue::getMediaTypeId(rdbms::Conn &conn, const std::string &name) const {
   try {
     const char *const sql =
       "SELECT"                                       "\n"
@@ -10001,7 +10001,7 @@ optional<uint64_t> RdbmsCatalogue::getMediaTypeId(rdbms::Conn &conn, const std::
     stmt.bindString(":MEDIA_TYPE_NAME", name);
     auto rset = stmt.executeQuery();
     if(!rset.next()) {
-      return nullopt;
+      return std::nullopt;
     }
     return rset.columnUint64("MEDIA_TYPE_ID");
   } catch(exception::UserError &) {
@@ -10732,18 +10732,18 @@ void RdbmsCatalogue::createTapeDrive(const common::dataStructures::TapeDrive &ta
 
 void RdbmsCatalogue::settingSqlTapeDriveValues(cta::rdbms::Stmt *stmt,
   const common::dataStructures::TapeDrive &tapeDrive) const {
-  auto setOptionalString = [&stmt](const std::string& sqlField, const optional<std::string>& optionalField) {
+  auto setOptionalString = [&stmt](const std::string& sqlField, const std::optional<std::string>& optionalField) {
     if(optionalField && !optionalField.value().empty()) {
       stmt->bindString(sqlField, optionalField.value());
     } else {
-      stmt->bindString(sqlField, nullopt_t());
+      stmt->bindString(sqlField, std::nullopt);
     }
   };
-  auto setOptionalTime = [&stmt](const std::string &sqlField, const optional<time_t>& optionalField) {
+  auto setOptionalTime = [&stmt](const std::string &sqlField, const std::optional<time_t>& optionalField) {
     if(optionalField) {
       stmt->bindUint64(sqlField, optionalField.value());
     } else {
-      stmt->bindUint64(sqlField, nullopt_t());
+      stmt->bindUint64(sqlField, std::nullopt);
     }
   };
 
@@ -10794,7 +10794,7 @@ void RdbmsCatalogue::settingSqlTapeDriveValues(cta::rdbms::Stmt *stmt,
   setOptionalString(":USER_COMMENT", tapeDrive.userComment);
 
   auto setEntryLog = [stmt, setOptionalString, setOptionalTime](const std::string &field,
-    const optional<std::string> &username, const optional<std::string> &host, const optional<time_t> &time) {
+    const std::optional<std::string> &username, const std::optional<std::string> &host, const std::optional<time_t> &time) {
       setOptionalString(field + "_USER_NAME", username);
       setOptionalString(field + "_HOST_NAME", host);
       setOptionalTime(field + "_TIME", time);
@@ -10804,14 +10804,14 @@ void RdbmsCatalogue::settingSqlTapeDriveValues(cta::rdbms::Stmt *stmt,
     setEntryLog(":CREATION_LOG", tapeDrive.creationLog.value().username,
       tapeDrive.creationLog.value().host, tapeDrive.creationLog.value().time);
   } else {
-    setEntryLog(":CREATION_LOG", nullopt_t(), nullopt_t(), nullopt_t());
+    setEntryLog(":CREATION_LOG", std::nullopt, std::nullopt, std::nullopt);
   }
 
   if (tapeDrive.lastModificationLog) {
     setEntryLog(":LAST_UPDATE", tapeDrive.lastModificationLog.value().username,
       tapeDrive.lastModificationLog.value().host, tapeDrive.lastModificationLog.value().time);
   } else {
-    setEntryLog(":LAST_UPDATE", nullopt_t(), nullopt_t(), nullopt_t());
+    setEntryLog(":LAST_UPDATE", std::nullopt, std::nullopt, std::nullopt);
   }
 
   setOptionalString(":DISK_SYSTEM_NAME", tapeDrive.diskSystemName);
@@ -10863,8 +10863,8 @@ std::list<std::string> RdbmsCatalogue::getTapeDriveNames() const {
 
 common::dataStructures::TapeDrive RdbmsCatalogue::gettingSqlTapeDriveValues(cta::rdbms::Rset* rset) const {
   common::dataStructures::TapeDrive tapeDrive;
-  auto getOptionalTime = [](const optional<uint64_t> &time) -> optional<time_t> {
-    if (!time) return nullopt_t();
+  auto getOptionalTime = [](const std::optional<uint64_t> &time) -> std::optional<time_t> {
+    if (!time) return std::nullopt;
     return time.value();
   };
   tapeDrive.driveName = rset->columnString("DRIVE_NAME");
@@ -10918,9 +10918,9 @@ common::dataStructures::TapeDrive RdbmsCatalogue::gettingSqlTapeDriveValues(cta:
 
   tapeDrive.userComment = rset->columnOptionalString("USER_COMMENT");
   auto setOptionEntryLog = [&rset](const std::string &username, const std::string &host,
-    const std::string &time) -> optional<common::dataStructures::EntryLog> {
+    const std::string &time) -> std::optional<common::dataStructures::EntryLog> {
     if (!rset->columnOptionalString(username)) {
-      return nullopt_t();
+      return std::nullopt;
     } else {
       return common::dataStructures::EntryLog(
         rset->columnString(username),
@@ -11028,7 +11028,7 @@ std::list<common::dataStructures::TapeDrive> RdbmsCatalogue::getTapeDrives() con
   }
 }
 
-optional<common::dataStructures::TapeDrive> RdbmsCatalogue::getTapeDrive(const std::string &tapeDriveName) const {
+std::optional<common::dataStructures::TapeDrive> RdbmsCatalogue::getTapeDrive(const std::string &tapeDriveName) const {
   try {
     const char *const sql =
       "SELECT "
@@ -11105,7 +11105,7 @@ optional<common::dataStructures::TapeDrive> RdbmsCatalogue::getTapeDrive(const s
     if (rset.next()) {
       return gettingSqlTapeDriveValues(&rset);;
     }
-    return nullopt_t();
+    return std::nullopt;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
@@ -11164,10 +11164,10 @@ void RdbmsCatalogue::setDesiredTapeDriveStateComment(const std::string& tapeDriv
     auto stmt = conn.createStmt(sql);
 
     auto bindOptionalStringIfSet = [&stmt](const std::string& sqlField,
-      const cta::optional<std::string>& optionalString) {
+      const std::optional<std::string>& optionalString) {
       if (optionalString) {
         if (optionalString.value().empty()) {
-          stmt.bindString(sqlField, nullopt_t());
+          stmt.bindString(sqlField, std::nullopt);
         } else {
           stmt.bindString(sqlField, optionalString.value());
         }
@@ -11347,17 +11347,17 @@ void RdbmsCatalogue::updateTapeDriveStatus(const common::dataStructures::TapeDri
     stmt.reset();
     stmt = conn.createStmt(sql.c_str());
 
-    auto setOptionalTime = [&stmt](const std::string& sqlField, const cta::optional<time_t>& optionalField) {
+    auto setOptionalTime = [&stmt](const std::string& sqlField, const std::optional<time_t>& optionalField) {
       if(optionalField) {
         stmt.bindUint64(sqlField, optionalField.value());
       } else {
-        stmt.bindUint64(sqlField, nullopt_t());
+        stmt.bindUint64(sqlField, std::nullopt);
       }
     };
-    auto bindOptionalStringIfSet = [&stmt](const std::string& sqlField, const cta::optional<std::string>& optionalString) {
+    auto bindOptionalStringIfSet = [&stmt](const std::string& sqlField, const std::optional<std::string>& optionalString) {
       if(optionalString) {
         if(optionalString.value().empty()) {
-          stmt.bindString(sqlField, nullopt_t());
+          stmt.bindString(sqlField, std::nullopt);
         } else {
           stmt.bindString(sqlField, optionalString.value());
         }
@@ -11525,7 +11525,7 @@ std::list<cta::catalogue::Catalogue::DriveConfig> RdbmsCatalogue::getTapeDriveCo
   }
 }
 
-optional<std::tuple<std::string, std::string, std::string>> RdbmsCatalogue::getTapeDriveConfig(
+std::optional<std::tuple<std::string, std::string, std::string>> RdbmsCatalogue::getTapeDriveConfig(
   const std::string &tapeDriveName, const std::string &keyName) const {
   try {
     const char *const sql =
@@ -11552,7 +11552,7 @@ optional<std::tuple<std::string, std::string, std::string>> RdbmsCatalogue::getT
       if (source == "NULL") source.clear();
       return std::make_tuple(category, value, source);
     }
-    return nullopt_t();
+    return std::nullopt;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;

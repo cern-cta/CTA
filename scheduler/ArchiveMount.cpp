@@ -325,7 +325,7 @@ cta::ArchiveMount::~ArchiveMount() noexcept = default;
 //------------------------------------------------------------------------------
 // setDriveStatus()
 //------------------------------------------------------------------------------
-void cta::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status, const cta::optional<std::string>& reason) {
+void cta::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status, const std::optional<std::string>& reason) {
   m_dbMount->setDriveStatus(status, time(nullptr), reason);
 }
 

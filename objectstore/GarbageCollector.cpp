@@ -431,7 +431,7 @@ void GarbageCollector::OwnedObjectSorter::executeArchiveAlgorithm(std::list<std:
     // Determine the copy number and feed the queue with it.
     for (auto &j: ar->dumpJobs()) {
       if (j.tapePool == tapepool) {
-        jobsToAdd.push_back({ar.get(), j.copyNb, ar->getArchiveFile(), ar->getMountPolicy(), cta::nullopt});
+        jobsToAdd.push_back({ar.get(), j.copyNb, ar->getArchiveFile(), ar->getMountPolicy(), std::nullopt});
       }
     }
   }
