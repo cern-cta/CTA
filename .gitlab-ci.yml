@@ -11,11 +11,26 @@ stages:
   - release_rpm
   - docs
 
+variables:
+  XROOTD_VERSION: 4
+
 before_script:
   - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
   - echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
   - test -n "${CI_COMMIT_TAG}" && export TAG_VERSION=$(echo ${CI_COMMIT_TAG} | sed -e 's/^v//;s/-.*$//')
   - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | sed -e 's/^[^-]*-//')
+  - major_version=$(echo ${TAG_VERSION} | cut -d. -f1)
+  - if [[ ${major_version} == 5 ]];
+      then echo "Setting to compile with XRootD version 5";
+      XROOTD_VERSION=5;
+    fi
+  - if [[ ${XROOTD_VERSION} -eq 5 ]];
+    then echo "Using XRootD version 5";
+      sed -i 's/define xrootdVersion 1:4.12.4-1/define xrootdVersion 1:5.4.2-1/' cta.spec.in;
+      cp continuousintegration/docker/ctafrontend/cc7/cta-ci-xrootd5-enabled.repo continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/cta-ci.repo;
+      cp -f continuousintegration/docker/ctafrontend/cc7/versionlock-xrootd5.list continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list;
+    else echo "Using XRootD version 4";
+    fi
 
 cta_srpm:
   stage: build:srpm
@@ -26,7 +41,7 @@ cta_srpm:
     - source /opt/rh/devtoolset-8/enable
     - mkdir build_srpm
     - cd build_srpm
-    - cmake3 -DPackageOnly:Bool=true -DVCS_VERSION=${CTA_BUILD_ID} ..
+    - CTA_VERSION=${XROOTD_VERSION} cmake3 -DPackageOnly:Bool=true -DVCS_VERSION=${CTA_BUILD_ID} ..
     - make cta_srpm
 
   artifacts:
@@ -55,7 +70,7 @@ cta_rpm:
     - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
     - mkdir build_rpm
     - cd build_rpm
-    - cmake3 -DVCS_VERSION=${CTA_BUILD_ID} ..
+    - CTA_VERSION=${XROOTD_VERSION} cmake3 -DVCS_VERSION=${CTA_BUILD_ID} ..
     - make cta_rpm
 
   artifacts:
