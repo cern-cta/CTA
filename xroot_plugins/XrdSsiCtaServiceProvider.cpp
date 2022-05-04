@@ -241,6 +241,12 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
    m_repackBufferURL = repackBufferURLConf.second;
   }
 
+  // Get the verification mount policy
+  const auto verificationMountPolicy = config.getOptionValueStr("cta.verification.mount_policy");
+  if(verificationMountPolicy.first){
+   m_verificationMountPolicy = verificationMountPolicy.second;
+  }
+
   {
     // Log cta.repack.repack_buffer_url
     if(repackBufferURLConf.first){
@@ -272,6 +278,8 @@ void XrdSsiCtaServiceProvider::ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiC
        log(log::INFO, "Configuration entry", params);
     }
   }
+
+  // Get the mount policy name for verification requests
 
   // All done
   log(log::INFO, std::string("cta-frontend started"), params);

@@ -192,7 +192,9 @@ std::string Scheduler::queueRetrieve(
   utils::Timer t;
   // Get the queue criteria
   common::dataStructures::RetrieveFileQueueCriteria queueCriteria;
-  queueCriteria = m_catalogue.prepareToRetrieveFile(instanceName, request.archiveFileID, request.requester, request.activity, lc);
+
+  queueCriteria = m_catalogue.prepareToRetrieveFile(instanceName, request.archiveFileID, request.requester, request.activity, lc, request.mountPolicy);
+  
   queueCriteria.archiveFile.diskFileInfo = request.diskFileInfo;
 
   // The following block of code is a temporary fix for the following CTA issue:

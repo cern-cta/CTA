@@ -1,10 +1,12 @@
-# v4.NEXT
+# v4.7.1-1
 
 ## Summary
 ### Upgrade Instructions
 ### Features
 - cta/CTA#1179 - Use std::optional instead of cta::optional
 - cta/CTA#1190 - Use std::make_unique instead of cta::make_unique
+- cta/CTA#1198 - Use hardcoded mount policy for verification requests
+- propagate labelFormat from TAPE catalog to VolumeInfo
 
 ### Bug fixes
 ### Building and Packaging

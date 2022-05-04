@@ -255,7 +255,8 @@ public:
     const uint64_t archiveFileId,
     const common::dataStructures::RequesterIdentity &user,
     const std::optional<std::string> & activity,
-    log::LogContext &lc) = 0;
+    log::LogContext &lc,
+    const std::optional<std::string> &mountPolicyName =  std::nullopt) = 0;
 
   /**
    * Notifies the CTA catalogue that the specified tape has been mounted in
@@ -770,6 +771,14 @@ public:
    * @return the list of all existing mount policies.
    */
   virtual std::list<common::dataStructures::MountPolicy> getMountPolicies() const = 0;
+
+  /**
+   * Returns the mount policy with the specified name.
+   *
+   * @return the specified mount policy
+   */
+  virtual std::optional<common::dataStructures::MountPolicy> getMountPolicy(const std::string &mountPolicyName) const = 0;
+
 
   /**
    * Returns the cached list of all existing mount policies.

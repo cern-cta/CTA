@@ -108,6 +108,12 @@ public:
   std::optional<std::string> getRepackBufferURL() const { return m_repackBufferURL; }
 
   /*!
+   * Get the verification mount policy
+   */
+  std::optional<std::string> getVerificationMountPolicy() const { return m_verificationMountPolicy; }
+
+
+  /*!
    * Populate the namespace endpoint configuration from a keytab file
    */
   void setNamespaceMap(const std::string &keytab_file);
@@ -136,6 +142,7 @@ public:
 
   uint64_t                                            m_archiveFileMaxSize;      //!< Maximum allowed file size for archive requests
   std::optional<std::string>                          m_repackBufferURL;         //!< The repack buffer URL
+  std::optional<std::string>                          m_verificationMountPolicy; //!< The mount policy for verification requests
   cta::NamespaceMap_t                                 m_namespaceMap;            //!< Endpoints for namespace queries
   std::string                                         m_catalogue_conn_string;   //!< The catalogue connection string (without the password)
 

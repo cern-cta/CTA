@@ -39,6 +39,7 @@ public:
     m_scheduler(service->getScheduler()),
     m_archiveFileMaxSize(service->getArchiveFileMaxSize()),
     m_repackBufferURL(service->getRepackBufferURL()),
+    m_verificationMountPolicy(service->getVerificationMountPolicy()),
     m_namespaceMap(service->getNamespaceMap()),
     m_lc(service->getLogContext()),
     m_catalogue_conn_string(service->getCatalogueConnectionString())
@@ -305,24 +306,25 @@ private:
 
   // Member variables
 
-  Protocol                                              m_protocol;           //!< The protocol the client used to connect
-  cta::common::dataStructures::SecurityIdentity         m_cliIdentity;        //!< Client identity: username/host
-  const XrdSsiCtaServiceProvider                       &m_service;            //!< Const reference to the XRootD SSI Service
-  cta::catalogue::Catalogue                            &m_catalogue;          //!< Reference to CTA Catalogue
-  cta::Scheduler                                       &m_scheduler;          //!< Reference to CTA Scheduler
-  uint64_t                                              m_archiveFileMaxSize; //!< Maximum allowed file size for archive requests
-  std::optional<std::string>				        m_repackBufferURL;    //!< Repack buffer URL
-  NamespaceMap_t                                        m_namespaceMap;       //!< Identifiers for namespace queries
-  cta::log::LogContext                                  m_lc;                 //!< CTA Log Context
-  std::map<cta::admin::OptionBoolean::Key, bool>        m_option_bool;        //!< Boolean options
-  std::map<cta::admin::OptionUInt64::Key, uint64_t>     m_option_uint64;      //!< UInt64 options
-  std::map<cta::admin::OptionString::Key, std::string>  m_option_str;         //!< String options
+  Protocol                                              m_protocol;                   //!< The protocol the client used to connect
+  cta::common::dataStructures::SecurityIdentity         m_cliIdentity;                //!< Client identity: username/host
+  const XrdSsiCtaServiceProvider                       &m_service;                    //!< Const reference to the XRootD SSI Service
+  cta::catalogue::Catalogue                            &m_catalogue;                  //!< Reference to CTA Catalogue
+  cta::Scheduler                                       &m_scheduler;                  //!< Reference to CTA Scheduler
+  uint64_t                                              m_archiveFileMaxSize;         //!< Maximum allowed file size for archive requests
+  std::optional<std::string>				                    m_repackBufferURL;            //!< Repack buffer URL
+  std::optional<std::string>				                    m_verificationMountPolicy;    //!< Repack buffer URL
+  NamespaceMap_t                                        m_namespaceMap;               //!< Identifiers for namespace queries
+  cta::log::LogContext                                  m_lc;                         //!< CTA Log Context
+  std::map<cta::admin::OptionBoolean::Key, bool>        m_option_bool;                //!< Boolean options
+  std::map<cta::admin::OptionUInt64::Key, uint64_t>     m_option_uint64;              //!< UInt64 options
+  std::map<cta::admin::OptionString::Key, std::string>  m_option_str;                 //!< String options
   std::map<cta::admin::OptionStrList::Key,
-    std::vector<std::string>>                           m_option_str_list;    //!< String List options
-  Versions                                              m_client_versions;    //!< Client CTA and xrootd-ssi-proto version(tag)
-  std::string m_client_cta_version;                                           //!< Client CTA Version
-  std::string m_client_xrd_ssi_proto_int_version;                             //!< Client xrootd-ssi-protobuf-interface version (tag)  
-  std::string m_catalogue_conn_string;                                        //!< Server catalogue connection string
+    std::vector<std::string>>                           m_option_str_list;            //!< String List options
+  Versions                                              m_client_versions;            //!< Client CTA and xrootd-ssi-proto version(tag)
+  std::string m_client_cta_version;                                                   //!< Client CTA Version
+  std::string m_client_xrd_ssi_proto_int_version;                                     //!< Client xrootd-ssi-protobuf-interface version (tag)  
+  std::string m_catalogue_conn_string;                                                //!< Server catalogue connection string
 };
 
 }} // namespace cta::xrd

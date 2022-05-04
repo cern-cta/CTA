@@ -87,8 +87,8 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->tapeMountedForArchive(vid, drive);}, m_maxTriesToConnect);
   }
 
-  common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(const std::string& diskInstanceName, const uint64_t archiveFileId, const common::dataStructures::RequesterIdentity& user, const std::optional<std::string>& activity, log::LogContext& lc) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->prepareToRetrieveFile(diskInstanceName, archiveFileId, user, activity, lc);}, m_maxTriesToConnect);
+  common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(const std::string& diskInstanceName, const uint64_t archiveFileId, const common::dataStructures::RequesterIdentity& user, const std::optional<std::string>& activity, log::LogContext& lc, const std::optional<std::string> &mountPolicyName) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->prepareToRetrieveFile(diskInstanceName, archiveFileId, user, activity, lc, mountPolicyName);}, m_maxTriesToConnect);
   }
 
   void tapeMountedForRetrieve(const std::string &vid, const std::string &drive) override {
@@ -454,6 +454,11 @@ public:
   std::list<common::dataStructures::MountPolicy> getMountPolicies() const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getMountPolicies();}, m_maxTriesToConnect);
   }
+
+  std::optional<common::dataStructures::MountPolicy> getMountPolicy(const std::string &mountPolicyName) const override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->getMountPolicy(mountPolicyName);}, m_maxTriesToConnect);
+  }
+
 
   std::list<common::dataStructures::MountPolicy> getCachedMountPolicies() const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getCachedMountPolicies();}, m_maxTriesToConnect);

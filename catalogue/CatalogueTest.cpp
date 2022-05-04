@@ -7500,6 +7500,50 @@ TEST_P(cta_catalogue_CatalogueTest, deleteMountPolicy_non_existent) {
   ASSERT_THROW(m_catalogue->deleteMountPolicy("non_existent_mount_policy"), exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, getMountPolicyByName) {
+  using namespace cta;
+
+  ASSERT_TRUE(m_catalogue->getMountPolicies().empty());
+
+  catalogue::CreateMountPolicyAttributes mountPolicyToAdd = getMountPolicy1();
+  std::string mountPolicyName = mountPolicyToAdd.name;
+  m_catalogue->createMountPolicy(m_admin, mountPolicyToAdd);
+  {
+    const std::optional<common::dataStructures::MountPolicy> mountPolicyOpt =
+      m_catalogue->getMountPolicy(mountPolicyName);
+
+    ASSERT_TRUE(static_cast<bool>(mountPolicyOpt));
+
+    const common::dataStructures::MountPolicy mountPolicy = *mountPolicyOpt;
+
+    ASSERT_EQ(mountPolicyName, mountPolicy.name);
+
+    ASSERT_EQ(mountPolicyToAdd.archivePriority, mountPolicy.archivePriority);
+    ASSERT_EQ(mountPolicyToAdd.minArchiveRequestAge, mountPolicy.archiveMinRequestAge);
+
+    ASSERT_EQ(mountPolicyToAdd.retrievePriority, mountPolicy.retrievePriority);
+    ASSERT_EQ(mountPolicyToAdd.minRetrieveRequestAge, mountPolicy.retrieveMinRequestAge);
+
+    ASSERT_EQ(mountPolicyToAdd.comment, mountPolicy.comment);
+
+    const common::dataStructures::EntryLog creationLog = mountPolicy.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const common::dataStructures::EntryLog lastModificationLog =
+      mountPolicy.lastModificationLog;
+    ASSERT_EQ(creationLog, lastModificationLog);
+  }
+
+  {
+    //non existant name
+    const std::optional<common::dataStructures::MountPolicy> mountPolicyOpt =
+      m_catalogue->getMountPolicy("non existant mount policy");
+    ASSERT_FALSE(static_cast<bool>(mountPolicyOpt));
+  }
+}
+
+
 TEST_P(cta_catalogue_CatalogueTest, modifyMountPolicyArchivePriority) {
   using namespace cta;
 

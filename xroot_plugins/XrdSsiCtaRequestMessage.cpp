@@ -631,6 +631,9 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
    request.creationLog.username   = m_cliIdentity.username;
    request.creationLog.time       = time(nullptr);
    request.isVerifyOnly           = notification.wf().verify_only();
+   if (request.isVerifyOnly) {
+      request.mountPolicy = m_verificationMountPolicy;
+   }
 
    // Vid is for tape verification use case (for dual-copy files) so normally is not specified
    if(!notification.wf().vid().empty()) {

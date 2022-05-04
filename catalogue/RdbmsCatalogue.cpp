@@ -6710,6 +6710,85 @@ try {
 }
 
 //------------------------------------------------------------------------------
+// getMountPolicy
+//------------------------------------------------------------------------------
+std::optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getMountPolicy(const std::string &mountPolicyName) const {
+  try {
+    auto conn = m_connPool.getConn();
+    return getMountPolicy(conn, mountPolicyName);
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getMountPolicy
+//------------------------------------------------------------------------------
+std::optional<common::dataStructures::MountPolicy> RdbmsCatalogue::getMountPolicy(rdbms::Conn &conn, const std::string &mountPolicyName) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,"
+
+        "ARCHIVE_PRIORITY AS ARCHIVE_PRIORITY,"
+        "ARCHIVE_MIN_REQUEST_AGE AS ARCHIVE_MIN_REQUEST_AGE,"
+
+        "RETRIEVE_PRIORITY AS RETRIEVE_PRIORITY,"
+        "RETRIEVE_MIN_REQUEST_AGE AS RETRIEVE_MIN_REQUEST_AGE,"
+
+        "USER_COMMENT AS USER_COMMENT,"
+
+        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+
+        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+      "FROM "
+        "MOUNT_POLICY "
+      "WHERE "
+        "MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME";
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":MOUNT_POLICY_NAME", mountPolicyName);
+    auto rset = stmt.executeQuery();
+    if (rset.next()) {
+      common::dataStructures::MountPolicy policy;
+
+      policy.name = rset.columnString("MOUNT_POLICY_NAME");
+
+      policy.archivePriority = rset.columnUint64("ARCHIVE_PRIORITY");
+      policy.archiveMinRequestAge = rset.columnUint64("ARCHIVE_MIN_REQUEST_AGE");
+
+      policy.retrievePriority = rset.columnUint64("RETRIEVE_PRIORITY");
+      policy.retrieveMinRequestAge = rset.columnUint64("RETRIEVE_MIN_REQUEST_AGE");
+
+      policy.comment = rset.columnString("USER_COMMENT");
+
+      policy.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+      policy.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+      policy.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+
+      policy.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+      policy.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+      policy.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
+
+      return policy;
+    }
+    return std::nullopt;
+
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
 // getCachedMountPolicies
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::MountPolicy> RdbmsCatalogue::getCachedMountPolicies() const {
@@ -8821,7 +8900,8 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
   const uint64_t archiveFileId,
   const common::dataStructures::RequesterIdentity &user,
   const std::optional<std::string>& activity,
-  log::LogContext &lc) {
+  log::LogContext &lc,
+  const std::optional<std::string> &mountPolicyName) {
   try {
     cta::utils::Timer t;
     common::dataStructures::RetrieveFileQueueCriteria criteria;
@@ -8850,6 +8930,19 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
         ex.getMessage() << "ERROR: File with archive file ID " << archiveFileId <<
             " exits in CTA namespace but is permanently unavailable on " << brokenState.second << " tape " << brokenState.first;
         throw ex;
+      }
+      if (mountPolicyName) {
+          std::optional<common::dataStructures::MountPolicy> mountPolicy = getMountPolicy(conn, mountPolicyName.value());
+          if (mountPolicy) {
+            criteria.archiveFile = *archiveFile;
+            criteria.mountPolicy = mountPolicy.value();
+            return criteria;
+          } else {
+            log::ScopedParamContainer spc(lc);
+            spc.add("mountPolicyName", mountPolicyName.value())
+               .add("archiveFileId", archiveFileId);
+            lc.log(log::WARNING, "Catalogue::prepareToRetrieve Could not find specified mount policy, falling back to querying mount rules");
+          }
       }
 
       if(diskInstanceName != archiveFile->diskInstance) {

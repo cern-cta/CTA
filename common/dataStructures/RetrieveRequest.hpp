@@ -59,7 +59,7 @@ struct RetrieveRequest {
   EntryLog creationLog;
   bool isVerifyOnly;    // request to retrieve file from tape but do not write a disk copy
   std::optional<std::string> vid;    // limit retrieve requests to the specified vid (in the case of dual-copy files)
-
+  std::optional<std::string> mountPolicy; // limit retrieve requests to a specified mount policy (only used for verification requests)
   LifecycleTimings lifecycleTimings;
   std::optional<std::string> activity;
 
