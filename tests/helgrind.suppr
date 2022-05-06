@@ -800,7 +800,6 @@
     ArchiveRequest_AddToNewQueue
     Helgrind:Race
     ...
-    fun:_ZNSt6futureIvE3getEv
     fun:_ZN3cta8ostoredb8MemQueueINS_11objectstore14ArchiveRequestENS2_12ArchiveQueueEE19sharedAddToNewQueueERNS3_7JobDumpERKSsRS3_RNS_8OStoreDBERNS_3log10LogContextERNS_9threading11MutexLockerE
     fun:_ZN3cta8ostoredb8MemQueueINS_11objectstore14ArchiveRequestENS2_12ArchiveQueueEE16sharedAddToQueueERNS3_7JobDumpERKSsRS3_RNS_8OStoreDBERNS_3log10LogContextE
     ...
@@ -813,4 +812,92 @@
    fun:_ZN3cta11objectstore10ScopedLock15releaseIfNeededEv
    fun:_ZN3cta11objectstore19ScopedExclusiveLockD1Ev
    ...
+}
+
+{
+  AgentReference_ExecuteAction
+  Helgrind:Race
+  ...
+  fun:_ZN3cta11objectstore14AgentReference21queueAndExecuteActionESt10shared_ptrINS1_6ActionEERNS0_7BackendE
+  ...
+}
+
+{
+   ObjectStoreAgentReference
+   Helgrind:Race
+   ...
+   fun:_ZN3cta11objectstore14AgentReferenceD0Ev
+   ...
+}
+
+{
+  AgentReferenceLockPolicy
+  Helgrind:Race
+  ...
+  fun:_ZNSt15_Sp_counted_ptrIPN3cta11objectstore14AgentReference6ActionELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv
+  ...
+  fun:_ZN3cta11objectstore14AgentReference14addToOwnershipERKSsRNS0_7BackendE
+  ...
+}
+
+{
+  objectstore14ArchiveRequest_MemQueueRequest
+  Helgrind:Race
+  ...
+  fun:_ZNSt15_Sp_counted_ptrIPN3cta8ostoredb15MemQueueRequestINS0_11objectstore14ArchiveRequestENS3_12ArchiveQueueEEELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv
+  ...
+  fun:_ZN3cta8ostoredb8MemQueueINS_11objectstore14ArchiveRequestENS2_12ArchiveQueueEE16sharedAddToQueueERNS3_7JobDumpERKSsRS3_RNS_8OStoreDBERNS_3log10LogContextE
+  ...
+}
+
+{
+  Protobug_ArchiveRequest
+  Helgrind:Race
+  ...
+  fun:_ZN6google8protobuf8internal20RepeatedPtrFieldBase7DestroyINS0_16RepeatedPtrFieldIN3cta11objectstore11serializers10ArchiveJobEE11TypeHandlerEEEvv
+  fun:~RepeatedPtrField
+  fun:_ZN3cta11objectstore11serializers14ArchiveRequestD1Ev
+  ...
+}
+
+{
+   <insert_a_suppression_name_here>
+   Helgrind:Race
+   ...
+   fun:_ZZN9unitTests50OStoreDBTest_MemQueuesSharedAddToArchiveQueue_Test8TestBodyEvENKUlvE_clEv
+   ...
+}
+
+{
+  Mutex_properly_throws_exceptions_PthAPIerror
+  Helgrind:PthAPIerror
+  ...
+  fun:_ZN9unitTests51cta_threading_Mutex_properly_throws_exceptions_Test8TestBodyEv.cold.60
+  ...
+}
+
+{
+  Mutex_properly_throws_exceptions_UnlockUnlocked
+  Helgrind:UnlockUnlocked
+  ...
+  fun:_ZN9unitTests51cta_threading_Mutex_properly_throws_exceptions_Test8TestBodyEv.cold.60
+  ...
+}
+
+{
+   TapeServerDaemon_TapeWrite
+   Helgrind:Race
+   ...
+   fun:_ZN6castor4tape10tapeserver6daemon13TapeWriteTaskD1Ev
+   fun:_ZN6castor4tape10tapeserver6daemon13TapeWriteTaskD0Ev
+   ...
+}
+
+{
+  TapeServerDaemon_DiskWrite
+  Helgrind:Race
+  ...
+  fun:_ZN6castor4tape10tapeserver6daemon13DiskWriteTaskD1Ev
+  fun:_ZN6castor4tape10tapeserver6daemon13DiskWriteTaskD0Ev
+  ...
 }
