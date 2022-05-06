@@ -41,7 +41,7 @@ message(STATUS "Setting support for c++17")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 
 if (NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "" FORCE)
+  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "" FORCE)
 endif()
 
 # CTA continue using the old ABI, so we should force it. This command only works on cmake3,
