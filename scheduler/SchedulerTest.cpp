@@ -27,7 +27,6 @@
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/log/DummyLogger.hpp"
-#include "common/range.hpp"
 #include "common/Timer.hpp"
 #include "objectstore/Algorithms.hpp"
 #include "objectstore/BackendRadosTestSwitch.hpp"
@@ -2430,9 +2429,10 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         archiveIdsSeen.insert(archiveFile.archiveFileID);
       }
       // Validate we got all the files we expected.
-      ASSERT_EQ(20, archiveIdsSeen.size());
-      for (auto ai: cta::range<uint64_t>(1,20)) {
-        ASSERT_EQ(1, archiveIdsSeen.count(ai));
+      const uint8_t NUMBER_OF_IDS = 20;
+      ASSERT_EQ(NUMBER_OF_IDS, archiveIdsSeen.size());
+      for (uint8_t id = 1; id <= NUMBER_OF_IDS; id++) {
+        ASSERT_EQ(1, archiveIdsSeen.count(id));
       }
     }
   }
@@ -3747,8 +3747,9 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
   // (A or B) (the other) A B A B A (A or B) (the other) A.
   // We hence need to create files on 10 different tapes and recall them with the respective activities.
   std::map<size_t, uint64_t> archiveFileIds;
-  cta::range<size_t> fileRange(10);
-  for (auto i: fileRange) {
+  // Generates a list of 10 numbers from 0 to 9
+  const uint8_t NUMBER_OF_FILES = 10;
+  for (auto i = 0; i < NUMBER_OF_FILES; i++) {
     // Queue several archive requests.
     cta::common::dataStructures::EntryLog creationLog;
     creationLog.host="host2";
@@ -3784,12 +3785,12 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
   std::map<size_t, bool> found;
   for (auto & tp: scheduler.getPendingArchiveJobs(lc)) {
     for (auto & req: tp.second) {
-      for (auto i:fileRange)
+      for (auto i = 0; i < NUMBER_OF_FILES; i++)
         if (req.archiveFileID == archiveFileIds.at(i))
           found[i] = true;
     }
   }
-  for (auto i:fileRange) {
+  for (auto i = 0; i < NUMBER_OF_FILES; i++) {
     ASSERT_NO_THROW(found.at(i));
     ASSERT_TRUE(found.at(i));
   }
@@ -3806,7 +3807,7 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
   const std::string driveName = "tape_drive";
-  for (auto i:fileRange) {
+  for (auto i = 0; i < NUMBER_OF_FILES; i++) {
     auto tape = getDefaultTape();
     std::string vid = s_vid + std::to_string(i);
     tape.vid = vid;
@@ -3822,7 +3823,7 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
     cta::common::dataStructures::DriveInfo driveInfo = { driveName, "myHost", s_libraryName };
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
-    for (auto i:fileRange) {
+    for (auto i = 0; i < NUMBER_OF_FILES; i++) {
       i=i;
       mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
       ASSERT_NE(nullptr, mount.get());
@@ -3858,8 +3859,7 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
   {
     // Emulate the the reporter process reporting successful transfer to tape to the disk system
     // The jobs get reported by tape, so we need to report 10*1 file (one per tape).
-    for (auto i:fileRange) {
-      i=i;
+    for (auto i = 0; i < NUMBER_OF_FILES; i++) {
       auto jobsToReport = scheduler.getNextArchiveJobsToReportBatch(10, lc);
       ASSERT_EQ(1, jobsToReport.size());
       disk::DiskReporterFactory factory;
@@ -3879,7 +3879,7 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
     diskFileInfo.gid=GROUP_2;
     diskFileInfo.owner_uid=CMS_USER;
     diskFileInfo.path="path/to/file";
-    for (auto i:fileRange) {
+    for (auto i = 0; i < NUMBER_OF_FILES; i++) {
       cta::common::dataStructures::RetrieveRequest request;
       request.archiveFileID = archiveFileIds.at(i);
       request.creationLog = creationLog;
@@ -3911,7 +3911,7 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
       ASSERT_EQ("dstURL", job.request.dstURL);
     }
     // We expect each tape to be seen
-    for (auto i:fileRange) {
+    for (auto i = 0; i < NUMBER_OF_FILES; i++) {
       ASSERT_NO_THROW(rqsts.at(s_vid + std::to_string(i)));
     }
   }

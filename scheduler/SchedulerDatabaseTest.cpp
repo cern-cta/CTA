@@ -24,7 +24,6 @@
 #include "OStoreDB/OStoreDBFactory.hpp"
 #include "objectstore/BackendRados.hpp"
 #include "common/log/DummyLogger.hpp"
-#include "common/range.hpp"
 #ifdef STDOUT_LOGGING
 #include "common/log/StdoutLogger.hpp"
 #endif
@@ -74,7 +73,7 @@ public:
     const SchedulerDatabaseFactory &factory = GetParam().dbFactory;
     //m_catalogue = std::make_unique<cta::catalogue::InMemoryCatalogue>(logger, 1, 1);
     m_catalogue = std::make_unique<cta::catalogue::DummyCatalogue>();
-    
+
     m_db.reset(factory.create(m_catalogue).release());
   }
 
@@ -328,7 +327,7 @@ TEST_P(SchedulerDatabaseTest, putExistingQueueToSleep) {
   cta::disk::DiskSystemList diskSystemList;
   cta::common::dataStructures::DiskInstanceSpace diskInstanceSpace{"dis-A", "di-A", "constantFreeSpace:999999999999", 60, 60, 0,
       "No Comment", common::dataStructures::EntryLog(), common::dataStructures::EntryLog{}};
-  
+
   cta::disk::DiskSystem diskSystem{"ds-A", diskInstanceSpace, "$root://a.disk.system/", 10UL*1000*1000*1000,
       15*60, common::dataStructures::EntryLog(), common::dataStructures::EntryLog{},"No comment"};
   diskSystemList.push_back(diskSystem);
@@ -361,7 +360,7 @@ TEST_P(SchedulerDatabaseTest, putExistingQueueToSleep) {
       std::string dsName = "ds-A";
       db.queueRetrieve(rr, rfqc, dsName, locallc);
     };
-  
+
   std::future<void> jobInsertion = std::async(std::launch::async,lambda);
   jobInsertion.get();
   db.waitSubthreadsComplete();
@@ -395,7 +394,7 @@ TEST_P(SchedulerDatabaseTest, createQueueAndPutToSleep) {
   cta::disk::DiskSystemList diskSystemList;
   cta::common::dataStructures::DiskInstanceSpace diskInstanceSpace{"dis-A", "di-A", "constantFreeSpace:999999999999", 60, 60, 0,
       "No Comment", common::dataStructures::EntryLog(), common::dataStructures::EntryLog{}};
-  
+
   cta::disk::DiskSystem diskSystem{"ds-A", diskInstanceSpace, "$root://a.disk.system/", 10UL*1000*1000*1000,
       15*60, common::dataStructures::EntryLog(), common::dataStructures::EntryLog{},"No comment"};
   diskSystemList.push_back(diskSystem);
@@ -434,7 +433,7 @@ TEST_P(SchedulerDatabaseTest, createQueueAndPutToSleep) {
       std::string dsName = "ds-A";
       db.queueRetrieve(rr, rfqc, dsName, locallc);
     };
-  
+
   std::future<void> jobInsertion = std::async(std::launch::async,lambda);
   jobInsertion.get();
   db.waitSubthreadsComplete();
@@ -464,9 +463,9 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueArchiveRequests) {
   std::list<std::future<void>> jobInsertions;
   std::list<std::function<void()>> lambdas;
   auto creationTime =  time(nullptr);
-  for (auto i: cta::range<size_t>(filesToDo)) {
+  for (size_t id = 0; id < filesToDo; id++) {
     lambdas.emplace_back(
-    [i,&db, creationTime, &lc](){
+    [id,&db, creationTime, &lc](){
       cta::common::dataStructures::ArchiveRequest ar;
       cta::log::LogContext locallc=lc;
       cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId afqc;
@@ -480,7 +479,7 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueArchiveRequests) {
       afqc.mountPolicy.creationLog = { "u", "h", time(nullptr)};
       afqc.mountPolicy.lastModificationLog = { "u", "h", time(nullptr)};
       afqc.mountPolicy.comment = "comment";
-      afqc.fileId = i;
+      afqc.fileId = id;
       ar.archiveReportURL="";
       ar.checksumBlob.insert(cta::checksum::NONE, "");
       ar.creationLog = { "user", "host", creationTime};
@@ -519,7 +518,7 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueArchiveRequests) {
   for (auto &aj: ajb) {
     aj->failTransfer("test", lc);
   }
-  //Jobs in queue should have been requeued with original creationlog time 
+  //Jobs in queue should have been requeued with original creationlog time
   auto pendingArchiveJobs = db.getArchiveJobs();
   ASSERT_EQ(pendingArchiveJobs["tapePool"].size(), filesToDo);
   for(auto &aj: pendingArchiveJobs["tapePool"]) {
@@ -543,12 +542,12 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueRetrieveRequests) {
   cta::SchedulerDatabase &db = getDb();
   //cta::catalogue::Catalogue &catalogue = getCatalogue();
 
-  
+
  // Create the disk system list
   cta::disk::DiskSystemList diskSystemList;
   cta::common::dataStructures::DiskInstanceSpace diskInstanceSpace{"dis-A", "di-A", "constantFreeSpace:999999999999", 60, 60, 0,
       "No Comment", common::dataStructures::EntryLog(), common::dataStructures::EntryLog{}};
-  
+
   cta::disk::DiskSystem diskSystem{"ds-A", diskInstanceSpace, "$root://a.disk.system/", 10UL*1000*1000*1000,
       15*60, common::dataStructures::EntryLog(), common::dataStructures::EntryLog{},"No comment"};
   diskSystemList.push_back(diskSystem);
@@ -558,9 +557,9 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueRetrieveRequests) {
   std::list<std::future<void>> jobInsertions;
   std::list<std::function<void()>> lambdas;
   auto creationTime =  time(nullptr);
-  for (auto i: cta::range<size_t>(filesToDo)) {
+  for (size_t id = 0; id < filesToDo; id++) {
     lambdas.emplace_back(
-    [i,&db,&lc, creationTime, diskSystemList](){
+    [id,&db,&lc, creationTime, diskSystemList](){
       cta::common::dataStructures::RetrieveRequest rr;
       cta::log::LogContext locallc=lc;
       cta::common::dataStructures::RetrieveFileQueueCriteria rfqc;
@@ -574,7 +573,7 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueRetrieveRequests) {
       rfqc.mountPolicy.comment = "comment";
       rfqc.archiveFile.fileSize = 1000;
       rfqc.archiveFile.tapeFiles.push_back(cta::common::dataStructures::TapeFile());
-      rfqc.archiveFile.tapeFiles.back().fSeq = i;
+      rfqc.archiveFile.tapeFiles.back().fSeq = id;
       rfqc.archiveFile.tapeFiles.back().vid = "vid";
       rr.creationLog = { "user", "host", creationTime};
       uuid_t fileUUID;
@@ -616,7 +615,7 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueRetrieveRequests) {
     for (auto &rj: rjb) {
       ASSERT_EQ(creationTime, rj->retrieveRequest.lifecycleTimings.creation_time);
     }
-    
+
   }
   rm->complete(time(nullptr));
   rm.reset(nullptr);
@@ -649,9 +648,9 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
   const size_t filesToDo = 10;
   std::list<std::future<void>> jobInsertions;
   std::list<std::function<void()>> lambdas;
-  for (auto i: cta::range<size_t>(filesToDo)) {
+  for (size_t id = 0; id < filesToDo; id++) {
     lambdas.emplace_back(
-    [i,&db,&lc,diskSystemList](){
+    [id,&db,&lc,diskSystemList](){
       cta::common::dataStructures::RetrieveRequest rr;
       cta::log::LogContext locallc=lc;
       cta::common::dataStructures::RetrieveFileQueueCriteria rfqc;
@@ -665,7 +664,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
       rfqc.mountPolicy.comment = "comment";
       rfqc.archiveFile.fileSize = 1000;
       rfqc.archiveFile.tapeFiles.push_back(cta::common::dataStructures::TapeFile());
-      rfqc.archiveFile.tapeFiles.back().fSeq = i;
+      rfqc.archiveFile.tapeFiles.back().fSeq = id;
       rfqc.archiveFile.tapeFiles.back().vid = "vid";
       rr.creationLog = { "user", "host", time(nullptr)};
       uuid_t fileUUID;
@@ -674,8 +673,8 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
       uuid_unparse(fileUUID, fileUUIDStr);
       rr.diskFileInfo.path = std::string("/uuid/")+fileUUIDStr;
       rr.requester = { "user", "group" };
-      rr.dstURL = std::string ("root://") + (i%2?"b":"a") + ".disk.system/" + std::to_string(i);
-      std::string dsName = (i%2?"ds-B":"ds-A");
+      rr.dstURL = std::string ("root://") + (id%2?"b":"a") + ".disk.system/" + std::to_string(id);
+      std::string dsName = (id%2?"ds-B":"ds-A");
       db.queueRetrieve(rr, rfqc, dsName, locallc);
     });
     jobInsertions.emplace_back(std::async(std::launch::async,lambdas.back()));
@@ -692,7 +691,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
   auto rm=moutInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789,time(nullptr), std::nullopt, cta::common::dataStructures::Label::Format::CTA);
   auto rjb = rm->getNextJobBatch(20,20*1000, lc);
   ASSERT_EQ(filesToDo, rjb.size());
-  
+
   std::list <cta::SchedulerDatabase::RetrieveJob*> jobBatch;
   cta::DiskSpaceReservationRequest reservationRequest;
   for (auto &rj: rjb) {
@@ -702,7 +701,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
     jobBatch.emplace_back(rj.get());
     if (rj->diskSystemName) {
       reservationRequest.addRequest(rj->diskSystemName.value(), rj->archiveFile.fileSize);
-    } 
+    }
   }
   rm->reserveDiskSpace(reservationRequest, "", lc);
   rm->flushAsyncSuccessReports(jobBatch, lc);
@@ -742,9 +741,9 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
   std::atomic<size_t> aFiles(0);
   std::list<std::future<void>> jobInsertions;
   std::list<std::function<void()>> lambdas;
-  for (auto i: cta::range<size_t>(filesToDo)) {
+  for (size_t id = 0; id < filesToDo; id++) {
     lambdas.emplace_back(
-    [i,&db,&lc, diskSystemList](){
+    [id,&db,&lc, diskSystemList](){
       cta::common::dataStructures::RetrieveRequest rr;
       cta::log::LogContext locallc=lc;
       cta::common::dataStructures::RetrieveFileQueueCriteria rfqc;
@@ -758,7 +757,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
       rfqc.mountPolicy.comment = "comment";
       rfqc.archiveFile.fileSize = 1000;
       rfqc.archiveFile.tapeFiles.push_back(cta::common::dataStructures::TapeFile());
-      rfqc.archiveFile.tapeFiles.back().fSeq = i;
+      rfqc.archiveFile.tapeFiles.back().fSeq = id;
       rfqc.archiveFile.tapeFiles.back().vid = "vid";
       rr.creationLog = { "user", "host", time(nullptr)};
       uuid_t fileUUID;
@@ -768,7 +767,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
       rr.diskFileInfo.path = std::string("/uuid/")+fileUUIDStr;
       rr.requester = { "user", "group" };
       std::string dsName;
-      rr.dstURL = std::string("root://a.disk.system/") + std::to_string(i);
+      rr.dstURL = std::string("root://a.disk.system/") + std::to_string(id);
       dsName = "ds-A";
       db.queueRetrieve(rr, rfqc, dsName, locallc);
     });
@@ -796,7 +795,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
       ASSERT_EQ("ds-A", rj->diskSystemName.value());
       if (rj->diskSystemName) {
         reservationRequest.addRequest(rj->diskSystemName.value(), rj->archiveFile.fileSize);
-      } 
+      }
     }
     //reserving disk space will fail (not enough disk space, backpressure is triggered)
     ASSERT_FALSE(rm->reserveDiskSpace(reservationRequest, "", lc));
@@ -807,7 +806,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
   auto mi = db.getMountInfoNoLock(cta::SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT,lc);
   ASSERT_EQ(1, mi->potentialMounts.size()); //all jobs were requeued
   //did not requeue the job batch (the retrive mount normally does this, but cannot do it in the tests due to BackendVFS)
-  ASSERT_EQ(1, mi->potentialMounts.begin()->filesQueued); 
+  ASSERT_EQ(1, mi->potentialMounts.begin()->filesQueued);
   ASSERT_TRUE(mi->potentialMounts.begin()->sleepingMount);
   ASSERT_EQ("ds-A", mi->potentialMounts.begin()->diskSystemSleptFor);
 }
@@ -836,9 +835,9 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
   const size_t filesToDo = 10;
   std::list<std::future<void>> jobInsertions;
   std::list<std::function<void()>> lambdas;
-  for (auto i: cta::range<size_t>(filesToDo)) {
+  for (size_t id = 0; id < filesToDo; id++) {
     lambdas.emplace_back(
-    [i,&db,&lc, diskSystemList](){
+    [id,&db,&lc, diskSystemList](){
       cta::common::dataStructures::RetrieveRequest rr;
       cta::log::LogContext locallc=lc;
       cta::common::dataStructures::RetrieveFileQueueCriteria rfqc;
@@ -852,7 +851,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
       rfqc.mountPolicy.comment = "comment";
       rfqc.archiveFile.fileSize = 1000;
       rfqc.archiveFile.tapeFiles.push_back(cta::common::dataStructures::TapeFile());
-      rfqc.archiveFile.tapeFiles.back().fSeq = i;
+      rfqc.archiveFile.tapeFiles.back().fSeq = id;
       rfqc.archiveFile.tapeFiles.back().vid = "vid";
       rr.creationLog = { "user", "host", time(nullptr)};
       uuid_t fileUUID;
@@ -862,7 +861,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
       rr.diskFileInfo.path = std::string("/uuid/")+fileUUIDStr;
       rr.requester = { "user", "group" };
       std::string dsName;
-      rr.dstURL = std::string("root://error.disk.system/") + std::to_string(i);
+      rr.dstURL = std::string("root://error.disk.system/") + std::to_string(id);
       dsName = "ds-Error";
       db.queueRetrieve(rr, rfqc, dsName, locallc);
     });
@@ -891,7 +890,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
       reservationRequest.addRequest(rj->diskSystemName.value(), rj->archiveFile.fileSize);
     }
     //reserving disk space will fail because the disk instance is not reachable, causing backpressure
-    ASSERT_FALSE(rm->reserveDiskSpace(reservationRequest, "", lc)); 
+    ASSERT_FALSE(rm->reserveDiskSpace(reservationRequest, "", lc));
   }
   rm->complete(time(nullptr));
   rm.reset(nullptr);
@@ -899,7 +898,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
   auto mi = db.getMountInfoNoLock(cta::SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT,lc);
   ASSERT_EQ(1, mi->potentialMounts.size());
   //did not requeue the job batch (the retrive mount normally does this, but cannot do it in the tests due to BackendVFS)
-  ASSERT_EQ(1, mi->potentialMounts.begin()->filesQueued); 
+  ASSERT_EQ(1, mi->potentialMounts.begin()->filesQueued);
   ASSERT_TRUE(mi->potentialMounts.begin()->sleepingMount);
   ASSERT_EQ("ds-Error", mi->potentialMounts.begin()->diskSystemSleptFor);
 }

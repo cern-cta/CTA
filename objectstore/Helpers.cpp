@@ -15,6 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
+#include <algorithm>
 #include <random>
 
 #include "AgentReference.hpp"
@@ -24,7 +25,6 @@
 #include "common/exception/NonRetryableError.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/log/TimingList.hpp"
-#include "common/range.hpp"
 #include "DriveRegister.hpp"
 #include "Helpers.hpp"
 #include "RepackIndex.hpp"
@@ -276,7 +276,8 @@ void Helpers::getLockedAndFetchedRepackQueue(RepackQueue& queue, ScopedExclusive
     common::dataStructures::RepackQueueType queueType, log::LogContext& lc) {
   // Try and find the repack queue.
   Backend & be = queue.m_objectStore;
-  for (auto i: cta::range<size_t>(5)) {
+  const uint8_t MAX_NUMBER_OF_ATTEMPTS = 5;
+  for (uint8_t i = 0; i < MAX_NUMBER_OF_ATTEMPTS; i++) {
     utils::Timer t;
     log::TimingList timings;
     {

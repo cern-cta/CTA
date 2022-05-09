@@ -7,6 +7,7 @@
 - cta/CTA#1190 - Use std::make_unique instead of cta::make_unique
 - cta/CTA#1198 - Use hardcoded mount policy for verification requests
 - propagate labelFormat from TAPE catalog to VolumeInfo
+- cta/CTA#1200 - Remove range class
 
 ### Bug fixes
 ### Building and Packaging

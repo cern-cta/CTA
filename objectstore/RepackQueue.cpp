@@ -21,7 +21,6 @@
 
 #include "RepackQueue.hpp"
 #include "GenericObject.hpp"
-#include "common/range.hpp"
 
 namespace cta {
 namespace objectstore {
