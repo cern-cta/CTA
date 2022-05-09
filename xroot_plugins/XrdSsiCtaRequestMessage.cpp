@@ -668,7 +668,9 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
 
    // Create a log entry
    cta::log::ScopedParamContainer params(m_lc);
-   params.add("fileId", request.archiveFileID).add("schedulerTime", t.secs())
+   params.add("fileId", request.archiveFileID)
+         .add("schedulerTime", t.secs())
+         .add("isVerifyOnly", request.isVerifyOnly)
          .add("retrieveReqId", retrieveReqId);
    if(static_cast<bool>(request.activity)) {
      params.add("activity", request.activity.value());
