@@ -103,7 +103,7 @@ bool DropSchemaCmd::userConfirmsDropOfSchema(const rdbms::Login &dbLogin) {
 //------------------------------------------------------------------------------
 void DropSchemaCmd::dropCatalogueSchema(const rdbms::Login::DbType &dbType, rdbms::Conn &conn) {
   try {
-    switch(dbType) {
+    switch (dbType) {
     case rdbms::Login::DBTYPE_IN_MEMORY:
       throw exception::Exception("Dropping the schema of an in_memory database is not supported");
     case rdbms::Login::DBTYPE_SQLITE:
@@ -111,8 +111,8 @@ void DropSchemaCmd::dropCatalogueSchema(const rdbms::Login::DbType &dbType, rdbm
     case rdbms::Login::DBTYPE_NONE:
       throw exception::Exception("Cannot delete the schema of catalogue database without a database type");
     default:
-      dropDatabaseTables(conn);
       dropDatabaseSequences(conn);
+      dropDatabaseTables(conn);
     }
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -128,8 +128,9 @@ void DropSchemaCmd::dropDatabaseTables(rdbms::Conn &conn) {
     bool droppedAtLeastOneTable = true;
     while (droppedAtLeastOneTable) {
       droppedAtLeastOneTable = false;
-      const auto tables = conn.getTableNames();
-      for(auto table : tables) {
+      auto tables = conn.getTableNames();
+      tables.remove("CTA_CATALOGUE");  // Remove CTA_CATALOGUE to drop it at the end
+      for (const auto table : tables) {
         try {
           conn.executeNonQuery(std::string("DROP TABLE ") + table);
           m_out << "Dropped table " << table << std::endl;
@@ -140,7 +141,19 @@ void DropSchemaCmd::dropDatabaseTables(rdbms::Conn &conn) {
       }
     }
 
-    const auto tables = conn.getTableNames();
+    // Drop CTA_CATALOGUE table
+    auto tables = conn.getTableNames();
+    if (tables.size() != 1) {
+      throw exception::Exception("Failed to delete all tables, except CTA_CATALOGUE.");
+    }
+    try {
+      conn.executeNonQuery("DROP TABLE CTA_CATALOGUE");
+      m_out << "Dropped table CTA_CATALOGUE" << std::endl;
+    } catch(exception::Exception &ex) {
+      // Ignore reason for failure
+    }
+
+    tables = conn.getTableNames();
     if (!tables.empty()) {
       throw exception::Exception("Failed to delete all tables.  Maybe there is a circular dependency.");
     }

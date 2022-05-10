@@ -8,6 +8,7 @@
 - cta/CTA#1198 - Use hardcoded mount policy for verification requests
 - Add verification flag to queued retrieve request log message
 - propagate labelFormat from TAPE catalog to VolumeInfo
+- cta/CTA#1195 - `cta-catalogue-schema-drop` should drop the CTA_CATALOGUE table last
 - cta/CTA#1200 - Remove range class
 
 ### Bug fixes
