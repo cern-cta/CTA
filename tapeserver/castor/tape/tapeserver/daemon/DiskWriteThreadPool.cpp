@@ -66,7 +66,7 @@ DiskWriteThreadPool::~DiskWriteThreadPool() {
 // DiskWriteThreadPool::startThreads
 //------------------------------------------------------------------------------
 void DiskWriteThreadPool::startThreads() {
-  for (const auto & m_thread : m_threads) {
+  for (const auto& m_thread: m_threads) {
     m_thread->start();
   }
   m_lc.log(cta::log::INFO, "Starting threads in DiskWriteThreadPool::DiskWriteThreadPool");
@@ -76,7 +76,7 @@ void DiskWriteThreadPool::startThreads() {
 // DiskWriteThreadPool::waitThreads
 //------------------------------------------------------------------------------
 void DiskWriteThreadPool::waitThreads() {
-  for (const auto & m_thread : m_threads) {
+  for (const auto& m_thread: m_threads) {
     m_thread->wait();
   }
   m_lc.log(cta::log::INFO, "All DiskWriteThreadPool threads are now complete");
@@ -134,7 +134,8 @@ void DiskWriteThreadPool::logWithStat(int level, const std::string& message) {
         .add("poolAverageDiskPerformanceMBps",
              m_pooldStat.transferTime ? 1.0 * m_pooldStat.dataVolume / 1000 / 1000 / m_pooldStat.transferTime : 0.0)
         .add("poolOpenRWCloseToTransferTimeRatio",
-             m_pooldStat.transferTime ? (m_pooldStat.openingTime + m_pooldStat.readWriteTime + m_pooldStat.closingTime) / m_pooldStat.transferTime
+             m_pooldStat.transferTime ?
+             (m_pooldStat.openingTime + m_pooldStat.readWriteTime + m_pooldStat.closingTime) / m_pooldStat.transferTime
                                       : 0.0);
   m_lc.log(level, message);
 }
@@ -174,17 +175,22 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
   logWithStat(cta::log::INFO, "Finishing DiskWriteWorkerThread");
   m_parentThreadPool.addThreadStats(m_threadStat);
   if (0 == --m_parentThreadPool.m_nbActiveThread) {
+    // Notify all disk threads are finished
+    m_parentThreadPool.m_reporter.setDiskDone();
 
     // In the last Thread alive, report end of session
-    if (m_parentThreadPool.m_failedWriteCount == 0) {
-      m_parentThreadPool.m_reporter.reportEndOfSession(m_lc);
-      m_parentThreadPool.logWithStat(cta::log::INFO, "As last exiting DiskWriteWorkerThread, reported a successful end of session");
-    }
-    else {
-      m_parentThreadPool.m_reporter.reportEndOfSessionWithErrors("End of recall session with error(s)", 666, m_lc);
-      cta::log::ScopedParamContainer params(m_lc);
-      params.add("errorCount", m_parentThreadPool.m_failedWriteCount);
-      m_parentThreadPool.logWithStat(cta::log::INFO, "As last exiting DiskWriteWorkerThread, reported an end of session with errors");
+    // Otherwise end of session will be reported in the tape thread
+    if (m_parentThreadPool.m_reporter.allThreadsDone()) {
+      if (m_parentThreadPool.m_failedWriteCount == 0) {
+        m_parentThreadPool.m_reporter.reportEndOfSession(m_lc);
+        m_parentThreadPool.logWithStat(cta::log::INFO,
+                                       "As last exiting DiskWriteWorkerThread, reported a successful end of session");
+      }
+      else {
+        m_parentThreadPool.m_reporter.reportEndOfSessionWithErrors("End of recall session with error(s)", 666, m_lc);
+        m_parentThreadPool.logWithStat(cta::log::INFO,
+                                       "As last exiting DiskWriteWorkerThread, reported an end of session with errors");
+      }
     }
     const double deliveryTime = m_parentThreadPool.m_totalTime.secs();
     m_parentThreadPool.m_watchdog.updateStatsDeliveryTime(deliveryTime);
@@ -213,8 +219,9 @@ logWithStat(int level, const std::string& msg) {
         .add("threadAverageDiskPerformanceMBps",
              m_threadStat.transferTime ? 1.0 * m_threadStat.dataVolume / 1000 / 1000 / m_threadStat.transferTime : 0.0)
         .add("threadOpenRWCloseToTransferTimeRatio",
-             m_threadStat.transferTime ? (m_threadStat.openingTime + m_threadStat.readWriteTime + m_threadStat.closingTime) /
-                                         m_threadStat.transferTime : 0.0);
+             m_threadStat.transferTime ?
+             (m_threadStat.openingTime + m_threadStat.readWriteTime + m_threadStat.closingTime) /
+             m_threadStat.transferTime : 0.0);
   m_lc.log(level, msg);
 }
 }

@@ -168,7 +168,7 @@ namespace cta {
      * Indicates that the we should cancel the mount (equivalent to diskComplete
      * + tapeComeplete).
      */
-    virtual void abort(const std::string& reason);
+    virtual void complete();
 
     /**
      * Tests whether all threads are complete

@@ -115,18 +115,6 @@ void RecallReportPacker::reportEndOfSessionWithErrors(const std::string& msg, in
   m_fifo.push(new ReportEndofSessionWithErrors(msg, error_code));
 }
 
-
-//------------------------------------------------------------------------------
-//reportTestGoingToEnd
-//------------------------------------------------------------------------------
-void RecallReportPacker::reportTestGoingToEnd(cta::log::LogContext& lc) {
-  cta::log::ScopedParamContainer params(lc);
-  params.add("type", "ReportTestGoingToEnd");
-  lc.log(cta::log::DEBUG, "In RecallReportPacker::reportTestGoingToEnd(), pushing a report.");
-  cta::threading::MutexLocker ml(m_producterProtection);
-  m_fifo.push(new ReportTestGoingToEnd());
-}
-
 //------------------------------------------------------------------------------
 //ReportSuccessful::execute
 //------------------------------------------------------------------------------
@@ -147,7 +135,6 @@ void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& parent) {
 //ReportEndofSession::execute
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& reportPacker) {
-  reportPacker.setDiskDone();
   if (!reportPacker.errorHappened()) {
     reportPacker.m_lc.log(cta::log::INFO, "Nominal RecallReportPacker::EndofSession has been reported");
     if (reportPacker.m_watchdog) {
@@ -199,7 +186,6 @@ bool RecallReportPacker::ReportDriveStatus::goingToEnd() {
 //ReportEndofSessionWithErrors::execute
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacker& parent) {
-  parent.setDiskDone();
   if (parent.m_errorHappened) {
     LogContext::ScopedParam sp(parent.m_lc, Param("errorCode", m_error_code));
     parent.m_lc.log(cta::log::ERR, m_message);
@@ -436,7 +422,7 @@ bool RecallReportPacker::isDiskDone() {
 }
 
 //------------------------------------------------------------------------------
-//reportDiskDone()
+//setDiskDone()
 //------------------------------------------------------------------------------
 void RecallReportPacker::setDiskDone() {
   cta::threading::MutexLocker mutexLocker(m_mutex);
@@ -444,9 +430,10 @@ void RecallReportPacker::setDiskDone() {
 }
 
 //------------------------------------------------------------------------------
-//reportDiskDone()
+//allThreadsDone()
 //------------------------------------------------------------------------------
 bool RecallReportPacker::allThreadsDone() {
+  cta::threading::MutexLocker mutexLocker(m_mutex);
   return m_tapeThreadComplete && m_diskThreadComplete;
 }
 

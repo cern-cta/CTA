@@ -86,21 +86,21 @@ public:
 
   class FailedToGetCatalogue: public std::exception {
   public:
-    const char *what() const throw() {
+    const char *what() const noexcept {
       return "Failed to get catalogue";
     }
   };
 
   class FailedToGetScheduler: public std::exception {
   public:
-    const char *what() const throw() {
+    const char *what() const noexcept {
       return "Failed to get scheduler";
     }
   };
 
   class FailedToGetSchedulerDB: public std::exception {
   public:
-    const char *what() const throw() {
+    const char *what() const noexcept {
       return "Failed to get object store db.";
     }
   };
@@ -515,8 +515,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
   }
 
   const std::string driveName = "tape_drive";
-
-  catalogue.tapeLabelled(s_vid, "tape_drive");
+  catalogue.tapeLabelled(s_vid, driveName);
 
   {
     // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
@@ -525,12 +524,12 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     cta::common::dataStructures::DriveInfo driveInfo = { driveName, "myHost", s_libraryName };
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
-    mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     //Test that no mount is available when a logical library is disabled
     ASSERT_EQ(nullptr, mount.get());
     catalogue.setLogicalLibraryDisabled(s_adminOnAdminHost,s_libraryName,false);
     //continue our test
-    mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
     auto & osdb=getSchedulerDB();
@@ -561,7 +560,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
   }
 
   {
-    // Emulate the the reporter process reporting successful transfer to tape to the disk system
+    // Emulate the reporter process reporting successful transfer to tape to the disk system
     auto jobsToReport = scheduler.getNextArchiveJobsToReportBatch(10, lc);
     ASSERT_NE(0, jobsToReport.size());
     disk::DiskReporterFactory factory;
@@ -625,7 +624,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
   {
     // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
     std::unique_ptr<cta::TapeMount> mount;
-    mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, mount.get()->getMountType());
     std::unique_ptr<cta::RetrieveMount> retrieveMount;
@@ -1068,12 +1067,12 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
 
-    mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     //Test that no mount is available when a logical library is disabled
     ASSERT_EQ(nullptr, mount.get());
     catalogue.setLogicalLibraryDisabled(s_adminOnAdminHost,s_libraryName,false);
     //continue our test
-    mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
     auto & osdb=getSchedulerDB();
@@ -1139,12 +1138,12 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     cta::common::dataStructures::DriveInfo driveInfo = { driveName, "myHost", s_libraryName };
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
-    mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     //Test that no mount is available when a logical library is disabled
     ASSERT_EQ(nullptr, mount.get());
     catalogue.setLogicalLibraryDisabled(s_adminOnAdminHost,s_libraryName,false);
     //continue our test
-    mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
     auto & osdb=getSchedulerDB();
@@ -1175,7 +1174,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
   }
 
   {
-    // Emulate the the reporter process reporting successful transfer to tape to the disk system
+    // Emulate the reporter process reporting successful transfer to tape to the disk system
     auto jobsToReport = scheduler.getNextArchiveJobsToReportBatch(10, lc);
     ASSERT_NE(0, jobsToReport.size());
     disk::DiskReporterFactory factory;
@@ -1273,7 +1272,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
   {
     // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
     std::unique_ptr<cta::TapeMount> mount;
-    mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, mount.get()->getMountType());
     std::unique_ptr<cta::RetrieveMount> retrieveMount;
@@ -1367,7 +1366,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
 
   const std::string driveName = "tape_drive";
 
-  catalogue.tapeLabelled(s_vid, "tape_drive");
+  catalogue.tapeLabelled(s_vid, driveName);
 
   {
     // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
@@ -1376,7 +1375,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     cta::common::dataStructures::DriveInfo driveInfo = { driveName, "myHost", s_libraryName };
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
-    mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
     auto & osdb=getSchedulerDB();
@@ -1475,7 +1474,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     {
       // Emulate a tape server by asking for a mount and then a file
       std::unique_ptr<cta::TapeMount> mount;
-      mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+      mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
       ASSERT_NE(nullptr, mount.get());
       ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, mount.get()->getMountType());
       std::unique_ptr<cta::RetrieveMount> retrieveMount;
@@ -1525,7 +1524,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     // The failed queue should be empty
     auto retrieveJobFailedList = scheduler.getNextRetrieveJobsFailedBatch(10,lc);
     ASSERT_EQ(0, retrieveJobFailedList.size());
-    // Emulate the the reporter process
+    // Emulate the reporter process
     auto jobsToReport = scheduler.getNextRetrieveJobsToReportBatch(10, lc);
     ASSERT_EQ(1, jobsToReport.size());
     disk::DiskReporterFactory factory;
@@ -1616,7 +1615,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
 
   const std::string driveName = "tape_drive";
 
-  catalogue.tapeLabelled(s_vid, "tape_drive");
+  catalogue.tapeLabelled(s_vid, driveName);
 
   {
     // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
@@ -1625,7 +1624,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     cta::common::dataStructures::DriveInfo driveInfo = { driveName, "myHost", s_libraryName };
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
-    mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
     auto & osdb=getSchedulerDB();
@@ -1656,7 +1655,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
   }
 
   {
-    // Emulate the the reporter process reporting successful transfer to tape to the disk system
+    // Emulate the reporter process reporting successful transfer to tape to the disk system
     auto jobsToReport = scheduler.getNextArchiveJobsToReportBatch(10, lc);
     ASSERT_NE(0, jobsToReport.size());
     disk::DiskReporterFactory factory;
@@ -1724,7 +1723,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     {
       // Emulate a tape server by asking for a mount and then a file
       std::unique_ptr<cta::TapeMount> mount;
-      mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+      mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
       ASSERT_NE(nullptr, mount.get());
       ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, mount.get()->getMountType());
       std::unique_ptr<cta::RetrieveMount> retrieveMount;
@@ -1841,7 +1840,7 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // Create the environment for the migration to happen (library + tape)
-    const std::string libraryComment = "Library comment";
+  const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryIsDisabled, libraryComment);
@@ -1857,12 +1856,13 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
-  catalogue.tapeLabelled(s_vid, "tape_drive");
+  const std::string driveName = "tape_drive";
+  catalogue.tapeLabelled(s_vid, driveName);
 
   {
     // Emulate a tape server by asking for a mount and then a file
     std::unique_ptr<cta::TapeMount> mount;
-    mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
     std::unique_ptr<cta::ArchiveMount> archiveMount;
@@ -2266,13 +2266,15 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
 
+  const std::string driveName = "tape_drive";
+
   //Now, we need to simulate a retrieve for each file
   {
     // Emulate a tape server by asking for nbTapesForTest mount and then all files
     for(uint64_t i = 1; i<= nbTapesForTest ;++i)
     {
       std::unique_ptr<cta::TapeMount> mount;
-      mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+      mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
       ASSERT_NE(nullptr, mount.get());
       ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, mount.get()->getMountType());
       std::unique_ptr<cta::RetrieveMount> retrieveMount;
@@ -2551,9 +2553,10 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
 
+  const std::string driveName = "tape_drive";
   {
     std::unique_ptr<cta::TapeMount> mount;
-    mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, mount.get()->getMountType());
     std::unique_ptr<cta::RetrieveMount> retrieveMount;
@@ -2600,7 +2603,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
     {
       for(int i = 0; i < 5; ++i){
         std::unique_ptr<cta::TapeMount> mount;
-        mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+        mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
         ASSERT_NE(nullptr, mount.get());
         ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, mount.get()->getMountType());
         std::unique_ptr<cta::RetrieveMount> retrieveMount;
@@ -2796,9 +2799,10 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
     scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
+  const std::string driveName = "tape_drive";
   {
     std::unique_ptr<cta::TapeMount> mount;
-    mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, mount.get()->getMountType());
     std::unique_ptr<cta::RetrieveMount> retrieveMount;
@@ -2848,7 +2852,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   {
     scheduler.waitSchedulerDbSubthreadsComplete();
     std::unique_ptr<cta::TapeMount> mount;
-    mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForRepack, mount.get()->getMountType());
 
@@ -3047,9 +3051,10 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
     scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
+  const std::string driveName = "tape_drive";
   {
     std::unique_ptr<cta::TapeMount> mount;
-    mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, mount.get()->getMountType());
     std::unique_ptr<cta::RetrieveMount> retrieveMount;
@@ -3099,7 +3104,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
   {
     scheduler.waitSchedulerDbSubthreadsComplete();
     std::unique_ptr<cta::TapeMount> mount;
-    mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForRepack, mount.get()->getMountType());
 
@@ -3171,7 +3176,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
         }
       }
       std::unique_ptr<cta::TapeMount> mount;
-      mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+      mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
       ASSERT_NE(nullptr, mount.get());
       ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForRepack, mount.get()->getMountType());
       std::unique_ptr<cta::ArchiveMount> archiveMount;
@@ -3526,19 +3531,20 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
 
   std::string disabledReason = "Disabled reason";
   catalogue.setTapeDisabled(admin,vid,disabledReason);
+  const std::string driveName = "tape_drive";
 
   //No mount should be returned by getNextMount
-  ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, "drive0", lc));
+  ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 
   //enable the tape
   catalogue.modifyTapeState(admin,vid,common::dataStructures::Tape::ACTIVE,std::nullopt);
 
   //A mount should be returned by getNextMount
-  ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName,"drive0",lc));
+  ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName,driveName,lc));
 
   //disable the tape
   catalogue.setTapeDisabled(admin,vid,disabledReason);
-  ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName,"drive0",lc));
+  ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName,driveName,lc));
 
   //create repack mount policy
   const std::string mountPolicyName = s_repackMountPolicyName;
@@ -3589,7 +3595,7 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
    * and the mount policy name begins with repack
    * We will then get the Repack AND USER jobs from the getNextJobBatch
    */
-  auto nextMount = scheduler.getNextMount(s_libraryName,"drive0",lc);
+  auto nextMount = scheduler.getNextMount(s_libraryName,driveName,lc);
   ASSERT_NE(nullptr,nextMount);
   std::unique_ptr<cta::RetrieveMount> retrieveMount;
   retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(nextMount.release()));
@@ -3703,7 +3709,7 @@ TEST_P(SchedulerTest, emptyMountIsTriggeredWhenCancelledRetrieveRequest) {
   catalogue.setTapeDisabled(admin,vid,disabledReason);
 
   //No mount should be returned by getNextMount
-  ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, "drive0", lc));
+  ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 
   //abort the retrieve request
   {
@@ -3722,7 +3728,7 @@ TEST_P(SchedulerTest, emptyMountIsTriggeredWhenCancelledRetrieveRequest) {
   }
 
   //A mount should be returned by getNextMount
-  auto retrieveMount = scheduler.getNextMount(s_libraryName,"drive0",lc);
+  auto retrieveMount = scheduler.getNextMount(s_libraryName,driveName,lc);
   ASSERT_NE(nullptr,retrieveMount);
 
 }
@@ -3812,7 +3818,7 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
     std::string vid = s_vid + std::to_string(i);
     tape.vid = vid;
     catalogue.createTape(s_adminOnAdminHost, tape);
-    catalogue.tapeLabelled(vid, "tape_drive");
+    catalogue.tapeLabelled(vid, driveName);
   }
 
 
@@ -3824,8 +3830,8 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
     scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
     for (auto i = 0; i < NUMBER_OF_FILES; i++) {
-      i=i;
-      mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+      (void) i; // ignore unused variable
+      mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
       ASSERT_NE(nullptr, mount.get());
       ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
       auto & osdb=getSchedulerDB();
@@ -3857,7 +3863,7 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
   }
 
   {
-    // Emulate the the reporter process reporting successful transfer to tape to the disk system
+    // Emulate the reporter process reporting successful transfer to tape to the disk system
     // The jobs get reported by tape, so we need to report 10*1 file (one per tape).
     for (auto i = 0; i < NUMBER_OF_FILES; i++) {
       auto jobsToReport = scheduler.getNextArchiveJobsToReportBatch(10, lc);
@@ -4114,10 +4120,10 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
       ASSERT_EQ(10*archiveFileSize,rr.getTotalStatsFile().totalBytesToRetrieve);
     }
   }
-
+  const std::string driveName = "tape_drive";
   {
     std::unique_ptr<cta::TapeMount> mount;
-    mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, mount.get()->getMountType());
     std::unique_ptr<cta::RetrieveMount> retrieveMount;
@@ -4170,7 +4176,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
     {
       //The first mount given by the scheduler should be the vidDestination1 that belongs to the tapepool1
       std::unique_ptr<cta::TapeMount> mount;
-      mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+      mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
       ASSERT_NE(nullptr, mount.get());
       ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForRepack, mount.get()->getMountType());
 
@@ -4188,7 +4194,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
     {
       //Second mount should be the vidDestination2 that belongs to the tapepool2
       std::unique_ptr<cta::TapeMount> mount;
-      mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+      mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
       ASSERT_NE(nullptr, mount.get());
       ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForRepack, mount.get()->getMountType());
 
@@ -4550,10 +4556,10 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
       ASSERT_EQ(10*archiveFileSize,rr.getTotalStatsFile().totalBytesToRetrieve);
     }
   }
-
+  const std::string driveName = "tape_drive";
   {
     std::unique_ptr<cta::TapeMount> mount;
-    mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, mount.get()->getMountType());
     std::unique_ptr<cta::RetrieveMount> retrieveMount;
@@ -4606,7 +4612,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
     {
       //The first mount given by the scheduler should be the vidMove that belongs to the TapePool tapepool
       std::unique_ptr<cta::TapeMount> mount;
-      mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+      mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
       ASSERT_NE(nullptr, mount.get());
       ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForRepack, mount.get()->getMountType());
 
@@ -4624,7 +4630,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
     {
       //Second mount should be the vidDestination1 that belongs to the tapepool
       std::unique_ptr<cta::TapeMount> mount;
-      mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+      mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
       ASSERT_NE(nullptr, mount.get());
       ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForRepack, mount.get()->getMountType());
 
@@ -4642,7 +4648,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
     {
       //Third mount should be the vidDestination2 that belongs to the same tapepool as the repacked tape
       std::unique_ptr<cta::TapeMount> mount;
-      mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+      mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
       ASSERT_NE(nullptr, mount.get());
       ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForRepack, mount.get()->getMountType());
 
@@ -4838,9 +4844,11 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
     scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc);
 
     scheduler.waitSchedulerDbSubthreadsComplete();
+
+    const std::string driveName = "tape_drive";
     {
       std::unique_ptr<cta::TapeMount> mount;
-      mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+      mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
       std::unique_ptr<cta::RetrieveMount> retrieveMount;
       retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release()));
       std::unique_ptr<cta::RetrieveJob> retrieveJob;
@@ -4966,9 +4974,11 @@ TEST_P(SchedulerTest, getNextMountEmptyArchiveForRepackIfNbFilesQueuedIsLessThan
 
   sorter.flushAll(lc);
 
+  const std::string driveName = "tape_drive";
+
   //As the scheduler minFilesToWarrantAMount is 5 and there is 5 ArchiveForRepack jobs queued
-  //the call to getNextMount should return an nullptr (10 files mini to have an ArchiveForRepack mount)
-  ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName,"drive0",lc));
+  //the call to getNextMount should return a nullptr (10 files mini to have an ArchiveForRepack mount)
+  ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName,driveName,lc));
 
   for(uint64_t i = s_minFilesToWarrantAMount; i < 2 * s_minFilesToWarrantAMount; ++i) {
     std::shared_ptr<cta::objectstore::ArchiveRequest> ar(new cta::objectstore::ArchiveRequest(agentReference.nextId("RepackSubRequest"),backend));
@@ -5002,7 +5012,7 @@ TEST_P(SchedulerTest, getNextMountEmptyArchiveForRepackIfNbFilesQueuedIsLessThan
 
   //As there is now 10 files in the queue, the getNextMount method should return an ArchiveMount
   //with 10 files in it
-  std::unique_ptr<cta::TapeMount> tapeMount = scheduler.getNextMount(s_libraryName,"drive0",lc);
+  std::unique_ptr<cta::TapeMount> tapeMount = scheduler.getNextMount(s_libraryName,driveName,lc);
   ASSERT_NE(nullptr,tapeMount);
   cta::ArchiveMount * archiveMount = dynamic_cast<cta::ArchiveMount *>(tapeMount.get());
   archiveMount->getNextJobBatch(2 * s_minFilesToWarrantAMount,2 * s_minBytesToWarrantAMount, lc);
@@ -5239,9 +5249,11 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
   scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc);
   scheduler.waitSchedulerDbSubthreadsComplete();
 
+  const std::string driveName = "tape_drive";
+
   {
     std::unique_ptr<cta::TapeMount> mount;
-    mount.reset(scheduler.getNextMount(s_libraryName, "drive0", lc).release());
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, mount.get()->getMountType());
     std::unique_ptr<cta::RetrieveMount> retrieveMount;
@@ -5253,11 +5265,11 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
       reservationRequest.addRequest(job->diskSystemName().value(), job->archiveFile.fileSize);
     }
     ASSERT_EQ(10,jobBatch.size());
-    auto diskSpaceReservedBefore = catalogue.getTapeDrive("drive0").value().reservedBytes;
+    auto diskSpaceReservedBefore = catalogue.getTapeDrive(driveName).value().reservedBytes;
     //Trying to reserve disk space should result in 10 jobs should fail
     ASSERT_FALSE(retrieveMount->reserveDiskSpace(reservationRequest, lc));
     //No extra disk space was reserved
-    auto diskSpaceReservedAfter = catalogue.getTapeDrive("drive0").value().reservedBytes;
+    auto diskSpaceReservedAfter = catalogue.getTapeDrive(driveName).value().reservedBytes;
     ASSERT_EQ(diskSpaceReservedAfter, diskSpaceReservedBefore);
   }
   /*
@@ -5778,7 +5790,7 @@ TEST_P(SchedulerTest, archiveMaxDrivesVoInFlightChangeScheduleMount){
 
   const std::string driveName = "tape_drive";
 
-  catalogue.tapeLabelled(s_vid, "tape_drive");
+  catalogue.tapeLabelled(s_vid, driveName);
 
 
   log::DummyLogger dl("", "");
@@ -5954,7 +5966,7 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
   const bool logicalLibraryIsDisabled = false;
   catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
 
-  //This tape will contains files for triggering a Retrieve
+  //This tape will contain files for triggering a Retrieve
   auto tape1 = getDefaultTape();
   catalogue.createTape(s_adminOnAdminHost, tape1);
 
@@ -5983,7 +5995,7 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
 
   catalogue.modifyStorageClassNbCopies(s_adminOnAdminHost,storageClass.name,storageClass.nbCopies);
 
-   //Create the a new archive routes for the second copy
+   //Create the new archive routes for the second copy
   catalogue.createArchiveRoute(s_adminOnAdminHost,storageClass.name,2,newTapepool,"ArchiveRoute2");
 
   const std::string tapeDrive = "tape_drive";

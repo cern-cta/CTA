@@ -197,9 +197,10 @@ class SchedulerDatabase {
     virtual const MountInfo & getMountInfo() = 0;
     virtual std::list<std::unique_ptr<ArchiveJob>> getNextJobBatch(uint64_t filesRequested,
       uint64_t bytesRequested, log::LogContext& logContext) = 0;
-    virtual void complete(time_t completionTime) = 0;
-    virtual void setDriveStatus(common::dataStructures::DriveStatus status, time_t completionTime,
-      const std::optional<std::string> & reason = std::nullopt) = 0;
+
+    virtual void setDriveStatus(common::dataStructures::DriveStatus status, common::dataStructures::MountType mountType,
+                                time_t completionTime, const std::optional<std::string>& reason = std::nullopt) = 0;
+
     virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) = 0;
     virtual void setJobBatchTransferred(
       std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> & jobsBatch, log::LogContext & lc) = 0;
@@ -438,10 +439,10 @@ class SchedulerDatabase {
       const std::string &fetchEosFreeSpaceScript, log::LogContext& logContext) = 0;
     virtual void requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobBatch, 
       log::LogContext& logContext) = 0;
-    
-    virtual void complete(time_t completionTime) = 0;
-    virtual void setDriveStatus(common::dataStructures::DriveStatus status, time_t completionTime,
-      const std::optional<std::string> & reason = std::nullopt) = 0;
+
+    virtual void setDriveStatus(common::dataStructures::DriveStatus status, common::dataStructures::MountType mountType,
+                                time_t completionTime, const std::optional<std::string> & reason = std::nullopt) = 0;
+
     virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) = 0;
 
     virtual void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob *> & jobsBatch, log::LogContext & lc) = 0;

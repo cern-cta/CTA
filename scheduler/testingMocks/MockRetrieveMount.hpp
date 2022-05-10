@@ -60,7 +60,7 @@ namespace cta {
       return "VDSTK11";
     }
 
-    void abort(const std::string&) override { completes ++; }
+    void complete() override { completes ++; }
 
     void diskComplete() override { completes ++;}
 

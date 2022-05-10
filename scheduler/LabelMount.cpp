@@ -24,7 +24,7 @@ LabelMount::LabelMount(catalogue::Catalogue& catalogue): m_catalogue(catalogue) 
   // TODO
 }
 
-void LabelMount::abort(const std::string& reason) {
+void LabelMount::complete() {
   throw 0;
   // TODO
 }

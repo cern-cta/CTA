@@ -3400,29 +3400,6 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob> > OStoreDB::ArchiveMoun
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::ArchiveMount::complete()
-//------------------------------------------------------------------------------
-void OStoreDB::ArchiveMount::complete(time_t completionTime) {
-  // When the session is complete, we can reset the status of the drive.
-  // Tape will be implicitly released
-  // Reset the drive state.
-  common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName=mountInfo.drive;
-  driveInfo.logicalLibrary=mountInfo.logicalLibrary;
-  driveInfo.host=mountInfo.host;
-  ReportDriveStatusInputs inputs;
-  inputs.mountType = common::dataStructures::MountType::NoMount;
-  inputs.mountSessionId = mountInfo.mountId;
-  inputs.reportTime = completionTime;
-  inputs.status = common::dataStructures::DriveStatus::Up;
-  inputs.vid = mountInfo.vid;
-  inputs.tapepool = mountInfo.tapePool;
-  inputs.vo = mountInfo.vo;
-  log::LogContext lc(m_oStoreDB.m_logger);
-  m_oStoreDB.m_tapeDrivesState->updateDriveStatus(driveInfo, inputs, lc);
-}
-
-//------------------------------------------------------------------------------
 // OStoreDB::ArchiveJob::ArchiveJob()
 //------------------------------------------------------------------------------
 OStoreDB::ArchiveJob::ArchiveJob(const std::string& jobAddress, OStoreDB& oStoreDB) :
@@ -3596,32 +3573,12 @@ bool OStoreDB::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRe
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::RetrieveMount::complete()
-//------------------------------------------------------------------------------
-void OStoreDB::RetrieveMount::complete(time_t completionTime) {
-  // When the session is complete, we can reset the status of the tape and the
-  // drive
-  // Reset the drive state.
-  common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName=mountInfo.drive;
-  driveInfo.logicalLibrary=mountInfo.logicalLibrary;
-  driveInfo.host=mountInfo.host;
-  ReportDriveStatusInputs inputs;
-  inputs.mountType = common::dataStructures::MountType::NoMount;
-  inputs.mountSessionId = mountInfo.mountId;
-  inputs.reportTime = completionTime;
-  inputs.status = common::dataStructures::DriveStatus::Up;
-  inputs.vid = mountInfo.vid;
-  inputs.tapepool = mountInfo.tapePool;
-  inputs.vo = mountInfo.vo;
-  log::LogContext lc(m_oStoreDB.m_logger);
-  m_oStoreDB.m_tapeDrivesState->updateDriveStatus(driveInfo, inputs, lc);
-}
-
-//------------------------------------------------------------------------------
 // OStoreDB::RetrieveMount::setDriveStatus()
 //------------------------------------------------------------------------------
-void OStoreDB::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime, const std::optional<std::string> & reason) {
+void OStoreDB::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status,
+                                             cta::common::dataStructures::MountType mountType,
+                                             time_t completionTime,
+                                             const std::optional<std::string>& reason) {
   // We just report the drive status as instructed by the tape thread.
   // Reset the drive state.
   common::dataStructures::DriveInfo driveInfo;
@@ -3629,7 +3586,7 @@ void OStoreDB::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveS
   driveInfo.logicalLibrary=mountInfo.logicalLibrary;
   driveInfo.host=mountInfo.host;
   ReportDriveStatusInputs inputs;
-  inputs.mountType = common::dataStructures::MountType::Retrieve;
+  inputs.mountType = mountType;
   inputs.mountSessionId = mountInfo.mountId;
   inputs.reportTime = completionTime;
   inputs.status = status;
@@ -3837,8 +3794,10 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveMount::setDriveStatus()
 //------------------------------------------------------------------------------
-void OStoreDB::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime,
-  const std::optional<std::string> & reason) {
+void OStoreDB::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status,
+                                            cta::common::dataStructures::MountType mountType,
+                                            time_t completionTime,
+                                            const std::optional<std::string>& reason) {
   // We just report the drive status as instructed by the tape thread.
   // Reset the drive state.
   common::dataStructures::DriveInfo driveInfo;
@@ -3846,8 +3805,7 @@ void OStoreDB::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveSt
   driveInfo.logicalLibrary = mountInfo.logicalLibrary;
   driveInfo.host = mountInfo.host;
   ReportDriveStatusInputs inputs;
-  inputs.mountType = m_queueType == common::dataStructures::JobQueueType::JobsToTransferForUser
-    ? common::dataStructures::MountType::ArchiveForUser : common::dataStructures::MountType::ArchiveForRepack;
+  inputs.mountType = mountType;
   inputs.mountSessionId = mountInfo.mountId;
   inputs.reportTime = completionTime;
   inputs.status = status;

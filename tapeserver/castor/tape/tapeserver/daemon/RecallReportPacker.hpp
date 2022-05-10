@@ -41,7 +41,7 @@ public:
    */
   RecallReportPacker(cta::RetrieveMount *retrieveMount, cta::log::LogContext& lc);
 
-  virtual ~RecallReportPacker();
+  ~RecallReportPacker() override;
 
   /**
     * Create into the RecallReportPacker a report for the successful migration
@@ -65,12 +65,6 @@ public:
    * @param lc log context provided by the calling thread.
    */
   virtual void reportEndOfSession(cta::log::LogContext& lc);
-
-  /**
-   * Function for testing purposes. It is used to tell the report packer that this is the last report
-   * @param lc log context provided by the calling thread.
-   */
-  virtual void reportTestGoingToEnd(cta::log::LogContext& lc);
 
   /**
    * Create into the RecallReportPacker a report for an erroneous end of session
@@ -131,23 +125,11 @@ private:
   //inner classes use to store content while receiving a report 
   class Report {
   public:
-    virtual ~Report() {}
+    virtual ~Report() = default;
 
     virtual void execute(RecallReportPacker& packer) = 0;
 
     virtual bool goingToEnd() { return false; }
-  };
-
-  class ReportTestGoingToEnd : public Report {
-  public:
-    ReportTestGoingToEnd() {}
-
-    void execute(RecallReportPacker& reportPacker) override {
-      reportPacker.m_retrieveMount->diskComplete();
-      reportPacker.m_retrieveMount->tapeComplete();
-    }
-
-    bool goingToEnd() override { return true; }
   };
 
   class ReportSuccessful : public Report {
@@ -156,7 +138,7 @@ private:
      */
     std::unique_ptr<cta::RetrieveJob> m_successfulRetrieveJob;
   public:
-    ReportSuccessful(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob) :
+    explicit ReportSuccessful(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob) :
       m_successfulRetrieveJob(std::move(successfulRetrieveJob)) {}
 
     void execute(RecallReportPacker& reportPacker) override;
@@ -190,7 +172,7 @@ private:
 
   class ReportEndofSession : public Report {
   public:
-    ReportEndofSession() {}
+    ReportEndofSession() = default;
 
     void execute(RecallReportPacker& reportPacker) override;
 
@@ -213,7 +195,7 @@ private:
   class WorkerThread : public cta::threading::Thread {
     RecallReportPacker& m_parent;
   public:
-    WorkerThread(RecallReportPacker& parent);
+    explicit WorkerThread(RecallReportPacker& parent);
 
     void run() override;
   } m_workerThread;
@@ -257,9 +239,6 @@ private:
 
   /*
    * Proceed finish procedure for async execute for all reports.
-   *  
-   * @param reportedSuccessfuly The successful reports to check
-   * @return The number of reports proceeded
    */
   void fullCheckAndFinishAsyncExecute();
 

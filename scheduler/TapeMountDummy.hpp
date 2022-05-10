@@ -27,7 +27,7 @@ namespace cta {
  * Null returning functions do nothing.
  */
 class TapeMountDummy: public TapeMount {
-  void abort(const std::string&) override {};
+  void complete() override {};
   std::string getMountTransactionId() const override {
     throw exception::Exception("In DummyTapeMount::getMountTransactionId() : not implemented");
   }

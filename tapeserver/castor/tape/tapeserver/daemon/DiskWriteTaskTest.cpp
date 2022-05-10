@@ -39,8 +39,12 @@ namespace unitTests{
     std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> > getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
       cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented");}
 
-    void complete(time_t completionTime) override { throw std::runtime_error("Not implemented"); }
-    void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime, const std::optional<std::string> & reason) override { throw std::runtime_error("Not implemented"); }
+    void
+    setDriveStatus(cta::common::dataStructures::DriveStatus status, cta::common::dataStructures::MountType mountType,
+                   time_t completionTime, const std::optional<std::string>& reason) override {
+      throw std::runtime_error("Not implemented");
+    }
+
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override { throw std::runtime_error("Not implemented"); }
     void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch, cta::log::LogContext& lc) override { throw std::runtime_error("Not implemented"); }
     void addDiskSystemToSkip(const cta::SchedulerDatabase::RetrieveMount::DiskSystemToSkip &diskSystemToSkip) override { throw std::runtime_error("Not implemented"); }
@@ -84,9 +88,20 @@ namespace unitTests{
       cta::threading::MutexLocker ml(m_mutex);
       endSessionsWithError++;
     }
-    void setDiskDone() override {}
-    
-    void setTapeDone() override {}
+    void setDiskDone() override {
+      cta::threading::MutexLocker mutexLocker(m_mutex);
+      m_diskThreadComplete = true;
+    }
+
+    void setTapeDone() override {
+      cta::threading::MutexLocker mutexLocker(m_mutex);
+      m_tapeThreadComplete = true;
+    }
+
+    bool allThreadsDone() override {
+      cta::threading::MutexLocker mutexLocker(m_mutex);
+      return m_tapeThreadComplete && m_diskThreadComplete;
+    }
     
     MockRecallReportPacker(cta::RetrieveMount *rm,cta::log::LogContext lc):
      RecallReportPacker(rm,lc), completeJobs(0), failedJobs(0),
@@ -96,6 +111,8 @@ namespace unitTests{
     int failedJobs;
     int endSessions;
     int endSessionsWithError;
+    bool m_tapeThreadComplete;
+    bool m_diskThreadComplete;
   };
 
   TEST(castor_tape_tapeserver_daemon, DiskWriteTaskFailedBlock){

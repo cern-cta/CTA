@@ -1,3 +1,17 @@
+# v4.7.2-1
+
+## Summary
+### Upgrade Instructions
+### Features
+- cta/CTA#1161 - Tape server refactoring, "Decide where m_reportPacker.setTapeDone() should be called"
+### Bug fixes
+- cta/CTA#950 - Eliminate race condition preventing the drive to go down on failure
+- cta/CTA#1160 - Fix DrainingToDisk stale status in case if there is DiskWriteThreadPool thread left
+- cta/operations#708 - Fix "Should run cleaner but VID is missing. Putting the drive down"
+
+### Building and Packaging
+### Catalogue Schema
+
 # v4.7.1-1
 
 ## Summary

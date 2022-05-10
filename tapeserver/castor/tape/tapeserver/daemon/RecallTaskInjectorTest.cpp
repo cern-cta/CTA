@@ -47,9 +47,9 @@ namespace unitTests
 
     void TearDown() {
     }
-    
+
   }; // class castor_tape_tapeserver_daemonTest
-  
+
   struct MockRecallReportPacker : public RecallReportPacker {
     void reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob, cta::log::LogContext& lc) override {
       cta::threading::MutexLocker ml(m_mutex);
@@ -77,12 +77,12 @@ namespace unitTests
     int endSessions;
     int endSessionsWithError;
   };
-  
+
   class FakeDiskWriteThreadPool: public DiskWriteThreadPool
   {
   public:
     using DiskWriteThreadPool::m_tasks;
-    FakeDiskWriteThreadPool(RecallReportPacker &rrp, RecallWatchDog &rwd, 
+    FakeDiskWriteThreadPool(RecallReportPacker &rrp, RecallWatchDog &rwd,
       cta::log::LogContext & lc):
       DiskWriteThreadPool(1,rrp,
       rwd,lc,"/dev/null", 0){}
@@ -97,8 +97,8 @@ namespace unitTests
     FakeSingleTapeReadThread(tapeserver::drive::DriveInterface& drive,
       cta::mediachanger::MediaChangerFacade & mc,
       tapeserver::daemon::TapeServerReporter & tsr,
-      const tapeserver::daemon::VolumeInfo& volInfo, 
-      cta::server::ProcessCap& cap, 
+      const tapeserver::daemon::VolumeInfo& volInfo,
+      cta::server::ProcessCap& cap,
       const uint32_t tapeLoadTimeout,
       cta::log::LogContext & lc):
     TapeSingleThreadInterface<TapeReadTask>(drive, mc, tsr, volInfo,cap, lc, false, "", tapeLoadTimeout){}
@@ -109,12 +109,12 @@ namespace unitTests
         delete m_tasks.pop();
       }
     }
-    
-    virtual void run () 
+
+    virtual void run ()
     {
       m_tasks.push(nullptr);
     }
-    
+
     virtual void push(TapeReadTask* t){
       m_tasks.push(t);
     }
@@ -123,21 +123,25 @@ namespace unitTests
     protected:
       virtual void logSCSIMetrics() {};
   };
-  
+
   class TestingDatabaseRetrieveMount: public cta::SchedulerDatabase::RetrieveMount {
     const MountInfo & getMountInfo() override { throw std::runtime_error("Not implemented"); }
     std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> > getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
       cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented");}
-    void complete(time_t completionTime) override { throw std::runtime_error("Not implemented"); }
-    void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime,const std::optional<std::string> & reason) override { throw std::runtime_error("Not implemented"); }
+
+    void
+    setDriveStatus(cta::common::dataStructures::DriveStatus status, cta::common::dataStructures::MountType mountType,
+                   time_t completionTime, const std::optional<std::string>& reason) override {
+      throw std::runtime_error("Not implemented");
+    }
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override { throw std::runtime_error("Not implemented"); }
     void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch, cta::log::LogContext& lc) override { throw std::runtime_error("Not implemented"); }
     void addDiskSystemToSkip(const cta::SchedulerDatabase::RetrieveMount::DiskSystemToSkip &diskSystemToSkip) override { throw std::runtime_error("Not implemented"); }
     void requeueJobBatch(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>& jobBatch, cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented"); }
     void putQueueToSleep(const std::string &diskSystemName, const uint64_t sleepTime, cta::log::LogContext &logContext) override { throw std::runtime_error("Not implemented"); }
-    bool reserveDiskSpace(const cta::DiskSpaceReservationRequest &request, const std::string &fetchEosFreeSpaceScript, cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented"); } 
+    bool reserveDiskSpace(const cta::DiskSpaceReservationRequest &request, const std::string &fetchEosFreeSpaceScript, cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented"); }
   };
-  
+
   TEST_F(castor_tape_tapeserver_daemonTest, RecallTaskInjectorNominal) {
     const int nbJobs=15;
     const int maxNbJobsInjectedAtOnce = 6;
@@ -145,12 +149,12 @@ namespace unitTests
     cta::log::LogContext lc(log);
     RecallMemoryManager mm(50U, 50U, lc);
     castor::tape::tapeserver::drive::FakeDrive drive;
-    
+
     auto catalogue = cta::catalogue::DummyCatalogue();
     cta::MockRetrieveMount trm(catalogue);
     trm.createRetrieveJobs(nbJobs);
     //EXPECT_CALL(trm, internalGetNextJob()).Times(nbJobs+1);
-    
+
     castor::messages::TapeserverProxyDummy tspd;
     cta::TapeMountDummy tmd;
     RecallWatchDog rwd(1,1,tspd,tmd,"",lc);
@@ -205,7 +209,7 @@ namespace unitTests
       delete tapeReadTask;
     }
   }
-  
+
   TEST_F(castor_tape_tapeserver_daemonTest, RecallTaskInjectorNoFiles) {
     cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_RecallTaskInjectorTest",cta::log::DEBUG);
     cta::log::LogContext lc(log);
@@ -215,7 +219,7 @@ namespace unitTests
     cta::MockRetrieveMount trm(catalogue);
     trm.createRetrieveJobs(0);
     //EXPECT_CALL(trm, internalGetNextJob()).Times(1); //no work: single call to getnextjob
-    
+
     castor::messages::TapeserverProxyDummy tspd;
     cta::TapeMountDummy tmd;
     RecallWatchDog rwd(1,1,tspd,tmd,"",lc);
@@ -224,12 +228,12 @@ namespace unitTests
     FakeDiskWriteThreadPool diskWrite(mrrp,rwd,lc);
     cta::log::DummyLogger dummyLog("dummy","dummy");
     cta::mediachanger::MediaChangerFacade mc(dummyLog);
-    castor::messages::TapeserverProxyDummy initialProcess;  
+    castor::messages::TapeserverProxyDummy initialProcess;
     castor::tape::tapeserver::daemon::VolumeInfo volume;
     volume.vid="V12345";
     volume.mountType=cta::common::dataStructures::MountType::Retrieve;
     cta::server::ProcessCapDummy cap;
-    castor::tape::tapeserver::daemon::TapeServerReporter tsr(initialProcess, cta::tape::daemon::TpconfigLine(), "0.0.0.0", volume, lc);  
+    castor::tape::tapeserver::daemon::TapeServerReporter tsr(initialProcess, cta::tape::daemon::TpconfigLine(), "0.0.0.0", volume, lc);
     FakeSingleTapeReadThread tapeRead(drive, mc, tsr, volume, cap, 60, lc);
     tapeserver::daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, 6, blockSize, lc);
 

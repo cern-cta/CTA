@@ -207,7 +207,7 @@ std::string Scheduler::queueRetrieve(
   // in situations where files with multiple tape copies are being recalled.
   {
 
-    const time_t secondsSinceEpoch = time(NULL);
+    const time_t secondsSinceEpoch = time(nullptr);
     const uint64_t daysSinceEpoch = secondsSinceEpoch / (60*60*24);
     const uint64_t indexToChose = daysSinceEpoch % queueCriteria.archiveFile.tapeFiles.size();
 
@@ -900,10 +900,10 @@ void Scheduler::reportDriveConfig(const cta::tape::daemon::TpconfigLine& tpConfi
 // reportDriveStatus
 //------------------------------------------------------------------------------
 void Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
-  common::dataStructures::MountType type, common::dataStructures::DriveStatus status, log::LogContext & lc) {
-  // TODO: mount type should be transmitted too.
+                                  common::dataStructures::MountType type, common::dataStructures::DriveStatus status,
+                                  log::LogContext& lc) {
   utils::Timer t;
-  m_tapeDrivesState->reportDriveStatus(driveInfo, type, status, time(NULL), lc);
+  m_tapeDrivesState->reportDriveStatus(driveInfo, type, status, time(nullptr), lc);
   auto schedulerDbTime = t.secs();
   if (schedulerDbTime > 1) {
     log::ScopedParamContainer spc(lc);
@@ -1136,7 +1136,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       mountPassesACriteria = true;
     if (m->filesQueued / (1 + effectiveExistingMountsForThisTapepool) >= minFilesToWarrantAMount)
       mountPassesACriteria = true;
-    if (!effectiveExistingMountsForThisTapepool && ((time(NULL) - m->oldestJobStartTime) > m->minRequestAge))
+    if (!effectiveExistingMountsForThisTapepool && ((time(nullptr) - m->oldestJobStartTime) > m->minRequestAge))
       mountPassesACriteria = true;
     if (m->sleepingMount) {
       sleepingMount = true;
@@ -1161,8 +1161,8 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
             .add("minBytesToWarrantMount", minBytesToWarrantAMount)
             .add("filesQueued", m->filesQueued)
             .add("minFilesToWarrantMount", minFilesToWarrantAMount)
-            .add("oldestJobAge", time(NULL) - m->oldestJobStartTime)
-            .add("youngestJobAge", time(NULL) - m->youngestJobStartTime)
+            .add("oldestJobAge", time(nullptr) - m->oldestJobStartTime)
+            .add("youngestJobAge", time(nullptr) - m->youngestJobStartTime)
             .add("minArchiveRequestAge", m->minRequestAge)
             .add("voReadMaxDrives",voOfThisPotentialMount.readMaxDrives)
             .add("voWriteMaxDrives",voOfThisPotentialMount.writeMaxDrives)
@@ -1194,8 +1194,8 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
             .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
             .add("filesQueued", m->filesQueued)
             .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
-            .add("oldestJobAge", time(NULL) - m->oldestJobStartTime)
-            .add("youngestJobAge", time(NULL) - m->youngestJobStartTime)
+            .add("oldestJobAge", time(nullptr) - m->oldestJobStartTime)
+            .add("youngestJobAge", time(nullptr) - m->youngestJobStartTime)
             .add("minArchiveRequestAge", m->minRequestAge)
             .add("maxDrives", maxDrives)
             .add("voReadMaxDrives",voOfThisPotentialMount.readMaxDrives)
@@ -1373,8 +1373,8 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
                 .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
                 .add("filesQueued", m->filesQueued)
                 .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
-                .add("oldestJobAge", time(NULL) - m->oldestJobStartTime)
-                .add("youngestJobAge", time(NULL) - m->youngestJobStartTime)
+                .add("oldestJobAge", time(nullptr) - m->oldestJobStartTime)
+                .add("youngestJobAge", time(nullptr) - m->youngestJobStartTime)
                 .add("minArchiveRequestAge", m->minRequestAge)
                 .add("getMountInfoTime", getMountInfoTime)
                 .add("getTapeInfoTime", getTapeInfoTime)
@@ -1416,8 +1416,8 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
             .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
             .add("filesQueued", m->filesQueued)
             .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
-            .add("oldestJobAge", time(NULL) - m->oldestJobStartTime)
-            .add("youngestJobAge", time(NULL) - m->youngestJobStartTime)
+            .add("oldestJobAge", time(nullptr) - m->oldestJobStartTime)
+            .add("youngestJobAge", time(nullptr) - m->youngestJobStartTime)
             .add("minArchiveRequestAge", m->minRequestAge)
             .add("getMountInfoTime", getMountInfoTime)
             .add("getTapeInfoTime", getTapeInfoTime)
@@ -1566,8 +1566,8 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
                   .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
                   .add("filesQueued", m->filesQueued)
                   .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
-                  .add("oldestJobAge", time(NULL) - m->oldestJobStartTime)
-                  .add("youngestJobAge", time(NULL) - m->youngestJobStartTime)
+                  .add("oldestJobAge", time(nullptr) - m->oldestJobStartTime)
+                  .add("youngestJobAge", time(nullptr) - m->youngestJobStartTime)
                   .add("minArchiveRequestAge", m->minRequestAge)
                   .add("getMountInfoTime", getMountInfoTime)
                   .add("queueTrimingTime", queueTrimingTime)
@@ -1645,8 +1645,8 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
               .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
               .add("filesQueued", m->filesQueued)
               .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
-              .add("oldestJobAge", time(NULL) - m->oldestJobStartTime)
-              .add("youngestJobAge", time(NULL) - m->youngestJobStartTime)
+              .add("oldestJobAge", time(nullptr) - m->oldestJobStartTime)
+              .add("youngestJobAge", time(nullptr) - m->youngestJobStartTime)
               .add("minArchiveRequestAge", m->minRequestAge)
               .add("getMountInfoTime", getMountInfoTime)
               .add("queueTrimingTime", queueTrimingTime)

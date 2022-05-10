@@ -33,8 +33,11 @@ namespace unitTests{
     const MountInfo & getMountInfo() override { throw std::runtime_error("Not implemented"); }
     std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> > getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented");}
 
-    void complete(time_t completionTime) override { throw std::runtime_error("Not implemented"); }
-    void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime, const std::optional<std::string> & reason) override { throw std::runtime_error("Not implemented"); }
+    void setDriveStatus(cta::common::dataStructures::DriveStatus status, cta::common::dataStructures::MountType mountType,
+                        time_t completionTime, const std::optional<std::string>& reason) override {
+      throw std::runtime_error("Not implemented");
+    }
+
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override { throw std::runtime_error("Not implemented"); }
     void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch, cta::log::LogContext& lc) override { throw std::runtime_error("Not implemented"); }
     void addDiskSystemToSkip(const cta::SchedulerDatabase::RetrieveMount::DiskSystemToSkip &diskSystemToSkip) override { throw std::runtime_error("Not implemented"); }
@@ -82,6 +85,7 @@ namespace unitTests{
     MockRecallReportPacker(cta::RetrieveMount *rm, cta::log::LogContext lc):
       RecallReportPacker(rm,lc), completeJobs(0), failedJobs(0),
       endSessions(0), endSessionsWithError(0) {}
+
     cta::threading::Mutex m_mutex;
     int completeJobs;
     int failedJobs;
@@ -109,9 +113,10 @@ namespace unitTests{
     castor::messages::TapeserverProxyDummy tspd;
     cta::TapeMountDummy tmd;
     RecallWatchDog rwd(1,1,tspd,tmd,"", lc);
-    
+
     DiskWriteThreadPool dwtp(2,report,rwd,lc,"/dev/null", 0);
     dwtp.startThreads();
+    report.setTapeDone();
        
     for(int i=0;i<5;++i){
       std::unique_ptr<TestingRetrieveJob> fileToRecall(new TestingRetrieveJob());
@@ -130,7 +135,7 @@ namespace unitTests{
       t->pushDataBlock(nullptr);
       dwtp.push(t);
     }
-     
+
     dwtp.finish();
     dwtp.waitThreads();
     ASSERT_EQ(5, report.completeJobs);

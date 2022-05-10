@@ -91,20 +91,6 @@ void TapeServerReporter::reportState(cta::tape::session::SessionState state,
 }
 
 //------------------------------------------------------------------------------
-//reportTapeUnmountedForRetrieve
-//------------------------------------------------------------------------------ 
-void TapeServerReporter::reportTapeUnmountedForRetrieve() {
-  m_fifo.push(new ReportTapeUnmountedForRetrieve());
-}
-
-//------------------------------------------------------------------------------
-//reportDiskCompleteForRetrieve
-//------------------------------------------------------------------------------ 
-void TapeServerReporter::reportDiskCompleteForRetrieve() {
-  m_fifo.push(new ReportDiskCompleteForRetrieve());
-}
-
-//------------------------------------------------------------------------------
 //run
 //------------------------------------------------------------------------------  
 void TapeServerReporter::run() {
@@ -144,32 +130,6 @@ TapeServerReporter::ReportStateChange::ReportStateChange(cta::tape::session::Ses
 //------------------------------------------------------------------------------  
 void TapeServerReporter::ReportStateChange::execute(TapeServerReporter& parent) {
   parent.m_tapeserverProxy.reportState(m_state, m_type, parent.m_volume.vid);
-}
-
-//------------------------------------------------------------------------------
-// ReportTapeUnmountedForRetrieve::execute())
-//------------------------------------------------------------------------------  
-void TapeServerReporter::ReportTapeUnmountedForRetrieve::execute(TapeServerReporter& parent) {
-  parent.m_tapeUnmountedForRecall = true;
-  if (parent.m_diskCompleteForRecall) {
-    parent.m_tapeserverProxy.reportState(cta::tape::session::SessionState::ShuttingDown,
-                                         cta::tape::session::SessionType::Retrieve, parent.m_volume.vid);
-  }
-  else {
-    parent.m_tapeserverProxy.reportState(cta::tape::session::SessionState::DrainingToDisk,
-                                         cta::tape::session::SessionType::Retrieve, parent.m_volume.vid);
-  }
-}
-
-//------------------------------------------------------------------------------
-// ReportDiskCompleteForRetrieve::execute())
-//------------------------------------------------------------------------------ 
-void TapeServerReporter::ReportDiskCompleteForRetrieve::execute(TapeServerReporter& parent) {
-  parent.m_diskCompleteForRecall = true;
-  if (parent.m_tapeUnmountedForRecall) {
-    parent.m_tapeserverProxy.reportState(cta::tape::session::SessionState::ShuttingDown,
-                                         cta::tape::session::SessionType::Retrieve, parent.m_volume.vid);
-  }
 }
 
 }

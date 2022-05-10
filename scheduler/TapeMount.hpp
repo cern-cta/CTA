@@ -86,9 +86,9 @@ namespace cta {
     uint64_t getCapacityInBytes() const;
 
     /**
-     * Indicates that the mount was aborted.
+     * Indicates that the mount was completed.
      */
-    virtual void abort(const std::string& reason) = 0;
+    virtual void complete() = 0;
 
     /**
      * Report a drive status change

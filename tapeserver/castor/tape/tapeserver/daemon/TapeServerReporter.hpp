@@ -68,18 +68,6 @@ public:
   void reportState(cta::tape::session::SessionState state,
                    cta::tape::session::SessionType type);
 
-  /**
-   * Special function managing the special case of retrieves, where disk and
-   * tape thread can finish in different orders (tape part)
-   */
-  void reportTapeUnmountedForRetrieve();
-
-  /**
-   * Special function managing the special case of retrieves, where disk and
-   * tape thread can finish in different orders (disk part)
-   */
-  void reportDiskCompleteForRetrieve();
-
 //------------------------------------------------------------------------------
   //start and wait for thread to finish
   void startThreads();
@@ -117,16 +105,6 @@ private:
   private:
     cta::tape::session::SessionState m_state;
     cta::tape::session::SessionType m_type;
-  };
-
-  class ReportTapeUnmountedForRetrieve : public Report {
-  public:
-    void execute(TapeServerReporter&) override;
-  };
-
-  class ReportDiskCompleteForRetrieve : public Report {
-  public:
-    void execute(TapeServerReporter&) override;
   };
 
   /**

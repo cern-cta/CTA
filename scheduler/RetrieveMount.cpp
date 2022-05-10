@@ -304,14 +304,8 @@ cta::disk::DiskReporter* cta::RetrieveMount::createDiskReporter(std::string& URL
 void cta::RetrieveMount::tapeComplete() {
   m_tapeRunning = false;
   if (!m_diskRunning) {
-    // Just set the session as complete in the DB.
-    m_dbMount->complete(time(NULL));
-    // and record we are done with the mount
+    // Just record we are done with the mount
     m_sessionRunning = false;
-  } else {
-    // This is a special case: we have to report the tape server is draining
-    // its memory to disk
-    setDriveStatus(cta::common::dataStructures::DriveStatus::DrainingToDisk);
   }
 }
 
@@ -321,17 +315,15 @@ void cta::RetrieveMount::tapeComplete() {
 void cta::RetrieveMount::diskComplete() {
   m_diskRunning = false;
   if (!m_tapeRunning) {
-    // Just set the session as complete in the DB.
-    m_dbMount->complete(time(NULL));
-    // and record we are done with the mount
+    // Just record we are done with the mount
     m_sessionRunning = false;
   }
 }
 
 //------------------------------------------------------------------------------
-// abort()
+// complete()
 //------------------------------------------------------------------------------
-void cta::RetrieveMount::abort(const std::string&) {
+void cta::RetrieveMount::complete() {
   diskComplete();
   tapeComplete();
 }
@@ -340,7 +332,7 @@ void cta::RetrieveMount::abort(const std::string&) {
 // setDriveStatus()
 //------------------------------------------------------------------------------
 void cta::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status, const std::optional<std::string> & reason) {
-  m_dbMount->setDriveStatus(status, time(NULL), reason);
+  m_dbMount->setDriveStatus(status, getMountType(), time(nullptr), reason);
 }
 
 //------------------------------------------------------------------------------

@@ -231,7 +231,6 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   }
 #endif
   ASSERT_EQ(filesToDo, count);
-  am->complete(time(nullptr));
   am.reset(nullptr);
   moutInfo.reset(nullptr);
 #ifdef LOOPING_TEST
@@ -307,7 +306,6 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
       done = true;
   }
   ASSERT_EQ(filesToDo2, count);
-  am->complete(time(nullptr));
   am.reset(nullptr);
   moutInfo.reset(nullptr);
 }
@@ -525,7 +523,6 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueArchiveRequests) {
     ASSERT_EQ(aj.request.creationLog.time, creationTime);
   }
 
-  am->complete(time(nullptr));
   am.reset(nullptr);
   moutInfo.reset(nullptr);
 }
@@ -617,7 +614,6 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueRetrieveRequests) {
     }
 
   }
-  rm->complete(time(nullptr));
   rm.reset(nullptr);
   mountInfo.reset(nullptr);
 }
@@ -707,7 +703,6 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
   rm->flushAsyncSuccessReports(jobBatch, lc);
   rjb.clear();
   ASSERT_EQ(0, rm->getNextJobBatch(20,20*1000, lc).size());
-  rm->complete(time(nullptr));
   rm.reset(nullptr);
   moutInfo.reset(nullptr);
 }
@@ -800,7 +795,6 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
     //reserving disk space will fail (not enough disk space, backpressure is triggered)
     ASSERT_FALSE(rm->reserveDiskSpace(reservationRequest, "", lc));
   }
-  rm->complete(time(nullptr));
   rm.reset(nullptr);
   moutInfo.reset(nullptr);
   auto mi = db.getMountInfoNoLock(cta::SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT,lc);
@@ -892,7 +886,6 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
     //reserving disk space will fail because the disk instance is not reachable, causing backpressure
     ASSERT_FALSE(rm->reserveDiskSpace(reservationRequest, "", lc));
   }
-  rm->complete(time(nullptr));
   rm.reset(nullptr);
   mountInfo.reset(nullptr);
   auto mi = db.getMountInfoNoLock(cta::SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT,lc);

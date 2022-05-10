@@ -251,9 +251,10 @@ class OStoreDB: public SchedulerDatabase {
     const MountInfo & getMountInfo() override;
     std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> getNextJobBatch(uint64_t filesRequested,
       uint64_t bytesRequested, log::LogContext &logContext) override;
-    void complete(time_t completionTime) override;
-    void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime,
-      const std::optional<std::string> & reason = std::nullopt) override;
+
+    void
+    setDriveStatus(cta::common::dataStructures::DriveStatus status, cta::common::dataStructures::MountType mountType,
+                   time_t completionTime, const std::optional<std::string>& reason = std::nullopt) override;
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
    public:
     void setJobBatchTransferred(
@@ -321,10 +322,9 @@ class OStoreDB: public SchedulerDatabase {
     std::set<DiskSystemToSkip> m_diskSystemsToSkip;
 
    public:
-    /// Public but non overriding function used by retrieve jobs (on failure to transfer):
-    void complete(time_t completionTime) override;
-    void setDriveStatus(cta::common::dataStructures::DriveStatus status, time_t completionTime,
-      const std::optional<std::string> & reason = std::nullopt) override;
+    void
+    setDriveStatus(cta::common::dataStructures::DriveStatus status, cta::common::dataStructures::MountType mountType,
+                   time_t completionTime, const std::optional<std::string>& reason = std::nullopt) override;
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
     void addDiskSystemToSkip(const SchedulerDatabase::RetrieveMount::DiskSystemToSkip &diskSystemToSkip) override;
     void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch, log::LogContext& lc) override;

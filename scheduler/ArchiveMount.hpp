@@ -99,12 +99,7 @@ namespace cta {
      * Indicates that the mount was completed.
      * This function is overridden in MockArchiveMount for unit tests.
      */
-    virtual void complete();
-
-    /**
-     * Indicates that the mount was cancelled.
-     */
-    void abort(const std::string& reason) override;
+    void complete() override;
 
     /**
      * Report a drive status change

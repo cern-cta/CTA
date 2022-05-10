@@ -310,21 +310,29 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
 
       switch (static_cast<SessionState>(message.sessionstate())) {
         case SessionState::Checking:
-          return processChecking(message);
+          m_processingStatus = processChecking(message);
+          break;
         case SessionState::Scheduling:
-          return processScheduling(message);
+          m_processingStatus = processScheduling(message);
+          break;
         case SessionState::Mounting:
-          return processMounting(message);
+          m_processingStatus = processMounting(message);
+          break;
         case SessionState::Running:
-          return processRunning(message);
+          m_processingStatus = processRunning(message);
+          break;
         case SessionState::Unmounting:
-          return processUnmounting(message);
+          m_processingStatus = processUnmounting(message);
+          break;
         case SessionState::DrainingToDisk:
-          return processDrainingToDisk(message);
+          m_processingStatus = processDrainingToDisk(message);
+          break;
         case SessionState::ShuttingDown:
-          return processShuttingDown(message);
+          m_processingStatus = processShuttingDown(message);
+          break;
         case SessionState::Fatal:
-          return processFatal(message);
+          m_processingStatus = processFatal(message);
+          break;
         default: {
           exception::Exception ex;
           ex.getMessage() << "In DriveHandler::processEvent(): unexpected session state:"
@@ -481,6 +489,11 @@ SubprocessHandler::ProcessingStatus DriveHandler::processRunning(serializers::Wa
           .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
     m_processManager.logContext().log(log::DEBUG,
                                       "WARNING: In DriveHandler::processMounting(): unexpected previous state/type.");
+  }
+
+  // On state change reset the data movement counter
+  if (m_sessionState != static_cast<SessionState>(message.sessionstate())) {
+    m_lastDataMovementTime=std::chrono::steady_clock::now();
   }
 
   m_sessionVid = message.vid();

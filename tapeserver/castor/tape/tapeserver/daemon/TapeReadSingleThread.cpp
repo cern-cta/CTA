@@ -40,7 +40,8 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
   const cta::RetrieveMount& retrieveMount,
   const uint32_t tapeLoadTimeout) :
   TapeSingleThreadInterface<TapeReadTask>(drive, mediaChanger, reporter, volInfo,
-                                          capUtils, logContext, useEncryption, externalEncryptionKeyScript, tapeLoadTimeout),
+                                          capUtils, logContext, useEncryption, externalEncryptionKeyScript,
+                                          tapeLoadTimeout),
   m_maxFilesRequest(maxFilesRequest),
   m_watchdog(watchdog),
   m_reportPacker(reportPacker),
@@ -52,7 +53,8 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
 //TapeCleaning::~TapeCleaning()
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeCleaning() {
-  m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::CleaningUp, std::nullopt, m_this.m_logContext);
+  m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::CleaningUp, std::nullopt,
+                                          m_this.m_logContext);
 
   // Tell everyone to wrap up the session
   // We now acknowledge to the task injector that read reached the end. There
@@ -64,8 +66,9 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
 
   // Disable encryption (or at least try)
   try {
-    if (m_this.m_encryptionControl.disable(m_this.m_drive))
+    if (m_this.m_encryptionControl.disable(m_this.m_drive)) {
       m_this.m_logContext.log(cta::log::INFO, "Turned encryption off before unmounting");
+    }
   } catch (cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer scoped(m_this.m_logContext);
     scoped.add("exceptionError", ex.getMessageValue());
@@ -100,34 +103,59 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
     } catch (cta::exception::TimeOut&) {}
     if (!m_this.m_drive.hasTapeInPlace()) {
       m_this.m_logContext.log(cta::log::INFO, "TapeReadSingleThread: No tape to unload");
-      goto done;
+      m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Up, std::nullopt,
+                                              m_this.m_logContext);
+      m_this.m_reporter.reportState(cta::tape::session::SessionState::ShuttingDown,
+                                    cta::tape::session::SessionType::Retrieve);
+
+      //then we terminate the global status m_reporter
+      m_this.m_reporter.finish();
+      return;
     }
 
-    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unloading, std::nullopt, m_this.m_logContext);
+    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unloading, std::nullopt,
+                                            m_this.m_logContext);
     m_this.m_drive.unloadTape();
     m_this.m_logContext.log(cta::log::INFO, "TapeReadSingleThread: Tape unloaded");
     m_this.m_stats.unloadTime += m_timer.secs(cta::utils::Timer::resetCounter);
 
     // And return the tape to the library
     currentErrorToCount = "Error_tapeDismount";
-    m_this.m_reporter.reportState(cta::tape::session::SessionState::Unmounting, cta::tape::session::SessionType::Retrieve);
-    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, m_this.m_logContext);
+    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt,
+                                            m_this.m_logContext);
+    m_this.m_reporter.reportState(cta::tape::session::SessionState::Unmounting,
+                                  cta::tape::session::SessionType::Retrieve);
     m_this.m_mediaChanger.dismountTape(m_this.m_volInfo.vid, m_this.m_drive.config.librarySlot());
     m_this.m_drive.disableLogicalBlockProtection();
-    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Up, std::nullopt, m_this.m_logContext);
-    m_this.m_stats.unmountTime += m_timer.secs(cta::utils::Timer::resetCounter);
     m_this.m_logContext.log(cta::log::INFO, "TapeReadSingleThread : tape unmounted");
-    // Report SessionState::ShuttingDown if all tasks finished or
-    // SessionState::DrainingToDisk if there is any DiskWriteWorkerThread still active
-    m_this.m_reporter.reportTapeUnmountedForRetrieve();
+    m_this.m_stats.unmountTime += m_timer.secs(cta::utils::Timer::resetCounter);
+
+    // Report drive UP if disk threads are done
+    // Report drive DrainingToDisk if there are disk write threads still active
+    if (m_this.m_reportPacker.allThreadsDone()) {
+      m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Up, std::nullopt,
+                                              m_this.m_logContext);
+      m_this.m_reporter.reportState(cta::tape::session::SessionState::ShuttingDown,
+                                    cta::tape::session::SessionType::Retrieve);
+    }
+    else {
+      m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::DrainingToDisk, std::nullopt,
+                                              m_this.m_logContext);
+      m_this.m_reporter.reportState(cta::tape::session::SessionState::DrainingToDisk,
+                                    cta::tape::session::SessionType::Retrieve);
+    }
+
     m_this.m_stats.waitReportingTime += m_timer.secs(cta::utils::Timer::resetCounter);
   } catch (const cta::exception::Exception& ex) {
     // Notify something failed during the cleaning
     m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
     const int logLevel = cta::log::ERR;
     const std::string errorMsg = "Exception in TapeReadSingleThread-TapeCleaning when unmounting/unloading the tape. Putting the drive down.";
-    std::optional<std::string> reason = cta::common::dataStructures::DesiredDriveState::generateReasonFromLogMsg(logLevel, errorMsg);
-    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down, reason, m_this.m_logContext);
+    std::optional<std::string> reason = cta::common::dataStructures::DesiredDriveState::generateReasonFromLogMsg(
+      logLevel, errorMsg);
+    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down, reason,
+                                            m_this.m_logContext);
+    m_this.m_reporter.reportState(cta::tape::session::SessionState::Fatal, cta::tape::session::SessionType::Retrieve);
     cta::log::ScopedParamContainer scoped(m_this.m_logContext);
     scoped.add("exceptionMessage", ex.getMessageValue());
     m_this.m_logContext.log(logLevel, errorMsg);
@@ -141,11 +169,14 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
     } catch (...) {}
   } catch (...) {
     // Notify something failed during the cleaning
-    const int logLevel = cta::log::ERR;
-    const std::string errorMsg = "Non-Castor exception in TapeReadSingleThread-TapeCleaning when unmounting the tape. Putting the drive down.";
-    std::optional<std::string> reason = cta::common::dataStructures::DesiredDriveState::generateReasonFromLogMsg(logLevel, errorMsg);
     m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
-    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down, reason, m_this.m_logContext);
+    const int logLevel = cta::log::ERR;
+    const std::string errorMsg = "Non-CTA exception in TapeReadSingleThread-TapeCleaning when unmounting the tape. Putting the drive down.";
+    std::optional<std::string> reason = cta::common::dataStructures::DesiredDriveState::generateReasonFromLogMsg(
+      logLevel, errorMsg);
+    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down, reason,
+                                            m_this.m_logContext);
+    m_this.m_reporter.reportState(cta::tape::session::SessionState::Fatal, cta::tape::session::SessionType::Retrieve);
     m_this.m_logContext.log(logLevel, errorMsg);
     try {
       if (!currentErrorToCount.empty()) {
@@ -153,7 +184,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
       }
     } catch (...) {}
   }
-  done:
+
   //then we terminate the global status m_reporter
   m_this.m_reporter.finish();
 }
@@ -228,19 +259,23 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
     // of crash
     m_watchdog.updateThreadTimer(totalTimer);
 
-    //pair of brackets to create an artificial scope for the tapeCleaner
+    // Pair of brackets to create an artificial scope for the tapeCleaner
     {
-      //log and notify
+      // Log and notify
       m_logContext.log(cta::log::INFO, "Starting tape read thread");
 
       // The tape will be loaded 
       // it has to be unloaded, unmounted at all cost -> RAII
       // will also take care of the TapeServerReporter and of RecallTaskInjector
       TapeCleaning tapeCleaner(*this, timer);
+
       // Before anything, the tape should be mounted
       m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Mounting, std::nullopt, m_logContext);
+      m_reporter.reportState(cta::tape::session::SessionState::Mounting, cta::tape::session::SessionType::Retrieve);
+
       std::ostringstream ossLabelFormat;
       ossLabelFormat << std::showbase << std::internal << std::setfill('0') << std::hex << std::setw(4) << static_cast<unsigned int>(m_volInfo.labelFormat);
+
       cta::log::ScopedParamContainer params(m_logContext);
       params.add("vo", m_retrieveMount.getVo());
       params.add("mediaType", m_retrieveMount.getMediaType());
@@ -251,8 +286,9 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       params.add("vendor", m_retrieveMount.getVendor());
       params.add("capacityInBytes", m_retrieveMount.getCapacityInBytes());
       m_logContext.log(cta::log::INFO, "Tape session started for read");
-      mountTapeReadOnly();
+
       currentErrorToCount = "Error_tapeLoad";
+      mountTapeReadOnly();
       cta::utils::Timer tapeLoadTimer;
       waitForDrive();
       double tapeLoadTime = tapeLoadTimer.secs();
@@ -328,8 +364,6 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
         }
       }
 
-      m_reporter.reportState(cta::tape::session::SessionState::Running,
-                             cta::tape::session::SessionType::Retrieve);
       m_stats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
       // Then we will loop on the tasks as they get from 
       // the task injector
@@ -341,7 +375,9 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       // From now on, the tasks will identify problems when executed.
       currentErrorToCount = "";
       std::unique_ptr<TapeReadTask> task;
-      m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Transferring, std::nullopt, m_logContext);
+      m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Transferring, std::nullopt,
+                                       m_logContext);
+      m_reporter.reportState(cta::tape::session::SessionState::Running, cta::tape::session::SessionType::Retrieve);
       while (true) {
         //get a task
         task.reset(popAndRequestMoreJobs());
@@ -358,7 +394,8 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
         m_watchdog.updateStatsWithoutDeliveryTime(m_stats);
         // The session could have been corrupted (failed positioning)
         if (readSession->isCorrupted()) {
-          throw cta::exception::Exception("Session corrupted: exiting task execution loop in TapeReadSingleThread. Cleanup will follow.");
+          throw cta::exception::Exception(
+            "Session corrupted: exiting task execution loop in TapeReadSingleThread. Cleanup will follow.");
         }
       }
     }
@@ -368,13 +405,27 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
     cta::log::ScopedParamContainer params(m_logContext);
     params.add("status", "success");
     m_stats.totalTime = totalTimer.secs();
-    m_reportPacker.setTapeDone();
-    m_reportPacker.setTapeComplete();
     logWithStat(cta::log::INFO, "Tape thread complete", params);
     // Report one last time the stats, after unloading/unmounting.
     m_watchdog.updateStatsWithoutDeliveryTime(m_stats);
-    // end of session + log are reported by the last active disk thread
-    // in DiskWriteThreadPool::DiskWriteWorkerThread::run()
+
+    // End of session and log are reported by the last active disk thread
+    // in DiskWriteThreadPool::DiskWriteWorkerThread::run() if it finishes after this TapeReadSingleThread
+    // Otherwise end of session is reported here
+    m_reportPacker.setTapeDone();
+    m_reportPacker.setTapeComplete();
+
+    if (m_reportPacker.allThreadsDone()) {
+      // If disk threads finished before (for example, due to write error), report end of session
+      if (!m_watchdog.errorHappened()) {
+        m_reportPacker.reportEndOfSession(m_logContext);
+        m_logContext.log(cta::log::INFO,
+                                "Both DiskWriteWorkerThread and TapeReadSingleThread existed, reported a successful end of session");
+      }
+      else {
+        m_reportPacker.reportEndOfSessionWithErrors("End of recall session with error(s)", 666, m_logContext);
+      }
+    }
   } catch (const cta::exception::Exception& e) {
     // We can still update the session stats one last time (unmount timings
     // should have been updated by the RAII cleaner/unmounter).
@@ -388,8 +439,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
     params.add("status", "error")
           .add("ErrorMessage", e.getMessageValue());
     m_stats.totalTime = totalTimer.secs();
-    logWithStat(cta::log::INFO, "Tape thread complete for reading",
-                params);
+    logWithStat(cta::log::ERR, "Tape thread complete for reading", params);
     // Also transmit the error step to the watchdog
     if (!currentErrorToCount.empty()) {
       m_watchdog.addToErrorCount(currentErrorToCount);
@@ -402,6 +452,22 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       }
       task->reportCancellationToDiskTask();
       delete task;
+    }
+
+    // Notify tape thread is finished to gracefully end the session
+    m_reportPacker.setTapeDone();
+    m_reportPacker.setTapeComplete();
+
+    if (m_reportPacker.allThreadsDone()) {
+      // If disk threads finished before (for example, due to write error), report end of session
+      if (!m_watchdog.errorHappened()) {
+        m_reportPacker.reportEndOfSession(m_logContext);
+        m_logContext.log(cta::log::INFO,
+                         "Both DiskWriteWorkerThread and TapeReadSingleThread existed, reported a successful end of session");
+      }
+      else {
+        m_reportPacker.reportEndOfSessionWithErrors("End of recall session with error(s)", 666, m_logContext);
+      }
     }
   }
 }

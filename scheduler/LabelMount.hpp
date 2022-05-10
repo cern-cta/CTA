@@ -82,9 +82,9 @@ namespace cta {
 
 
     /**
-     * Indicates that the mount was cancelled.
+     * Indicates that the mount was completed.
      */
-    void abort(const std::string& reason) override;
+    void complete() override;
 
     /**
      * Report a drive status change

@@ -310,18 +310,8 @@ void cta::ArchiveMount::reportJobsBatchTransferred(std::queue<std::unique_ptr<ct
 // complete
 //------------------------------------------------------------------------------
 void cta::ArchiveMount::complete() {
-  // Just set the session as complete in the DB.
-  m_dbMount->complete(time(nullptr));
-  // and record we are done with the mount
+  // Just record we are done with the mount
   m_sessionRunning = false;
-}
-
-//------------------------------------------------------------------------------
-// abort
-//------------------------------------------------------------------------------
-void cta::ArchiveMount::abort(const std::string& reason) {
-  complete();
-  setDriveStatus(cta::common::dataStructures::DriveStatus::Down, reason);
 }
 
 //------------------------------------------------------------------------------
@@ -333,7 +323,7 @@ cta::ArchiveMount::~ArchiveMount() noexcept = default;
 // setDriveStatus()
 //------------------------------------------------------------------------------
 void cta::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status, const std::optional<std::string>& reason) {
-  m_dbMount->setDriveStatus(status, time(nullptr), reason);
+  m_dbMount->setDriveStatus(status, getMountType(), time(nullptr), reason);
 }
 
 //------------------------------------------------------------------------------

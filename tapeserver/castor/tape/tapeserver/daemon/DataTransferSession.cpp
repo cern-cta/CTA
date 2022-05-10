@@ -42,12 +42,14 @@
 //------------------------------------------------------------------------------
 //Constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(const std::string& hostname, cta::log::Logger& log,
+castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(const std::string& hostname,
+                                                                           cta::log::Logger& log,
                                                                            System::virtualWrapper& sysWrapper,
                                                                            const cta::tape::daemon::TpconfigLine& driveConfig,
                                                                            cta::mediachanger::MediaChangerFacade& mc,
                                                                            cta::tape::daemon::TapedProxy& initialProcess,
-                                                                           cta::server::ProcessCap& capUtils, const DataTransferConfig& castorConf,
+                                                                           cta::server::ProcessCap& capUtils,
+                                                                           const DataTransferConfig& castorConf,
                                                                            cta::Scheduler& scheduler) :
   m_log(log),
   m_sysWrapper(sysWrapper),
@@ -116,7 +118,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
         downUpTransition = true;
         // We wait a bit before polling the scheduler again.
         // TODO: parametrize the duration?
-        m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down,
+        m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount,
+                                      cta::common::dataStructures::DriveStatus::Down,
                                       lc);
         sleep(5);
       }
@@ -126,27 +129,31 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
     } catch (cta::Scheduler::NoSuchDrive& e) {
       // The object store does not even know about this drive. We will report our state
       // (default status is down).
-      m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
+      m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount,
+                                    cta::common::dataStructures::DriveStatus::Down, lc);
     }
   }
   // If we get here after seeing a down desired state, we are transitioning  from
   // down to up. In such a case, we will run an empty
   if (downUpTransition) {
     downUpTransition = false;
-    m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Probing,
+    m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount,
+                                  cta::common::dataStructures::DriveStatus::Probing,
                                   lc);
     castor::tape::tapeserver::daemon::EmptyDriveProbe emptyDriveProbe(m_log, m_driveConfig, m_sysWrapper);
     lc.log(cta::log::INFO, "Transition from down to up detected. Will check if a tape is in the drive.");
     if (!emptyDriveProbe.driveIsEmpty()) {
-      m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
+      m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount,
+                                    cta::common::dataStructures::DriveStatus::Down, lc);
       cta::common::dataStructures::SecurityIdentity securityIdentity;
       cta::common::dataStructures::DesiredDriveState driveState;
       driveState.up = false;
       driveState.forceDown = false;
       std::string errorMsg = "A tape was detected in the drive. Putting the drive down.";
       std::optional<std::string> probeErrorMsg = emptyDriveProbe.getProbeErrorMsg();
-      if (probeErrorMsg)
+      if (probeErrorMsg) {
         errorMsg = probeErrorMsg.value();
+      }
       int logLevel = cta::log::ERR;
       driveState.setReasonFromLogMsg(logLevel, errorMsg);
       m_scheduler.setDesiredDriveState(securityIdentity, m_driveConfig.unitName, driveState, lc);
@@ -160,12 +167,15 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
   // 2b) Get initial mount information
   std::unique_ptr<cta::TapeMount> tapeMount;
   // As getting next mount could be long, we report the drive as up immediately.
-  m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
-  tapeServerReporter.reportState(cta::tape::session::SessionState::Scheduling, cta::tape::session::SessionType::Undetermined);
+  m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount,
+                                cta::common::dataStructures::DriveStatus::Up, lc);
+  tapeServerReporter.reportState(cta::tape::session::SessionState::Scheduling,
+                                 cta::tape::session::SessionType::Undetermined);
 
   try {
-    if (m_scheduler.getNextMountDryRun(m_driveConfig.logicalLibrary, m_driveConfig.unitName, lc))
+    if (m_scheduler.getNextMountDryRun(m_driveConfig.logicalLibrary, m_driveConfig.unitName, lc)) {
       tapeMount = m_scheduler.getNextMount(m_driveConfig.logicalLibrary, m_driveConfig.unitName, lc);
+    }
   } catch (cta::exception::Exception& e) {
     cta::log::ScopedParamContainer localParams(lc);
     std::string exceptionMsg = e.getMessageValue();
@@ -173,7 +183,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
     localParams.add("errorMessage", exceptionMsg);
     lc.log(logLevel, "Error while scheduling new mount. Putting the drive down. Stack trace follows.");
     lc.logBacktrace(logLevel, e.backtrace());
-    m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
+    m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount,
+                                  cta::common::dataStructures::DriveStatus::Down, lc);
     cta::common::dataStructures::SecurityIdentity cliId;
     cta::common::dataStructures::DesiredDriveState driveState;
     driveState.up = false;
@@ -185,7 +196,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
   // No mount to be done found, that was fast...
   if (!tapeMount) {
     lc.log(cta::log::DEBUG, "No new mount found. (sleeping 10 seconds)");
-    m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Up, lc);
+    m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount,
+                                  cta::common::dataStructures::DriveStatus::Up, lc);
     sleep(10);
     goto schedule;
     // return MARK_DRIVE_AS_UP;
@@ -234,7 +246,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
   // findDrive does not throw exceptions (it catches them to log errors)
   // A nullptr is returned on failure
   retrieveMount->setFetchEosFreeSpaceScript(m_castorConf.fetchEosFreeSpaceScript);
-  std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(findDrive(m_driveConfig, logContext, retrieveMount));
+  std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
+    findDrive(m_driveConfig, logContext, retrieveMount));
 
   if (!drive) {
     reporter.bailout();
@@ -250,15 +263,12 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
 
     RecallMemoryManager memoryManager(m_castorConf.nbBufs, m_castorConf.bufsz, logContext);
 
-    //we retrieved the detail from the client in execute, so at this point
-    //we can already report !
-    reporter.reportState(cta::tape::session::SessionState::Mounting,
-                           cta::tape::session::SessionType::Retrieve);
-
     TapeReadSingleThread readSingleThread(*drive, m_mediaChanger, reporter, m_volInfo,
-                                          m_castorConf.bulkRequestRecallMaxFiles, m_capUtils, watchDog, logContext, reportPacker,
+                                          m_castorConf.bulkRequestRecallMaxFiles, m_capUtils, watchDog, logContext,
+                                          reportPacker,
                                           m_castorConf.useLbp, m_castorConf.useRAO, m_castorConf.useEncryption,
-                                          m_castorConf.externalEncryptionKeyScript, *retrieveMount, m_castorConf.tapeLoadTimeout);
+                                          m_castorConf.externalEncryptionKeyScript, *retrieveMount,
+                                          m_castorConf.tapeLoadTimeout);
 
     DiskWriteThreadPool threadPool(m_castorConf.nbDiskThreads,
                                    reportPacker,
@@ -283,7 +293,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
 
     // The RecallTaskInjector and the TapeReadSingleThread share the promise
     if (m_castorConf.useRAO) {
-      castor::tape::tapeserver::rao::RAOParams raoDataConfig(m_castorConf.useRAO, m_castorConf.raoLtoAlgorithm, m_castorConf.raoLtoAlgorithmOptions,
+      castor::tape::tapeserver::rao::RAOParams raoDataConfig(m_castorConf.useRAO, m_castorConf.raoLtoAlgorithm,
+                                                             m_castorConf.raoLtoAlgorithmOptions,
                                                              m_volInfo.vid);
       taskInjector.initRAO(raoDataConfig, &m_scheduler.getCatalogue());
     }
@@ -304,18 +315,23 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
       reportPacker.startThreads();
       taskInjector.startThreads();
       reporter.startThreads();
-      // This thread is now going to be idle until the system unwinds at the end
-      // of the session
-      // All client notifications are done by the report packer, including the
-      // end of session
+      // This thread is now going to be idle until the system unwinds at the end of the session
+      // All client notifications are done by the report packer, including the end of session
       taskInjector.waitThreads();
       threadPool.waitThreads();
-      reportPacker.setDiskDone();
       readSingleThread.waitThreads();
-      reportPacker.setTapeDone();
       reportPacker.waitThread();
       reporter.waitThreads();
       watchDog.stopAndWaitThread();
+
+      // If the disk thread finished the last, it leaves the drive in DrainingToDisk state
+      // Return the drive back to UP state
+      if (m_scheduler.getDriveState(m_driveInfo.driveName, &logContext)->driveStatus ==
+          cta::common::dataStructures::DriveStatus::DrainingToDisk) {
+        m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::Retrieve,
+                                      cta::common::dataStructures::DriveStatus::Up, logContext);
+      }
+
       return readSingleThread.getHardwareStatus();
     }
     else {
@@ -342,14 +358,17 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
 
       cta::log::LogContext::ScopedParam sp1(logContext, errorMessageParam);
       try {
-        retrieveMount->abort("Aborted: empty recall mount");
+        retrieveMount->complete();
         watchDog.updateStats(TapeSessionStats());
         watchDog.reportStats();
         std::list<cta::log::Param> paramList{errorMessageParam, mountIdParam, mountTypeParam, statusParam};
         m_initialProcess.addLogParams(m_driveConfig.unitName, paramList);
         cta::log::LogContext::ScopedParam sp08(logContext, cta::log::Param("MountTransactionId", mountId));
-        cta::log::LogContext::ScopedParam sp11(logContext, cta::log::Param("errorMessage", "Aborted: empty recall mount"));
+        cta::log::LogContext::ScopedParam sp11(logContext,
+                                               cta::log::Param("errorMessage", "Aborted: empty recall mount"));
         logContext.log(priority, "Notified client of end session with error");
+        m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount,
+                                      cta::common::dataStructures::DriveStatus::Up, logContext);
       } catch (cta::exception::Exception& ex) {
         cta::log::LogContext::ScopedParam sp12(logContext, cta::log::Param("notificationError", ex.getMessageValue()));
         logContext.log(cta::log::ERR, "Failed to notified client of end session with error");
@@ -371,8 +390,12 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
   // in order to get the task injector ready to check if we actually have a
   // file to migrate.
   // 1) Get hold of the drive error logs are done inside the findDrive function
-  std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(findDrive(m_driveConfig, logContext, archiveMount));
-  if (!drive) return MARK_DRIVE_AS_DOWN;
+  std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
+    findDrive(m_driveConfig, logContext, archiveMount));
+  if (!drive) {
+    reporter.bailout();
+    return MARK_DRIVE_AS_DOWN;
+  }
   // Once we got hold of the drive, we can run the session
   {
     //dereferencing configLine is safe, because if configLine were not valid,
@@ -417,29 +440,10 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
     if (taskInjector.synchronousInjection(noFilesToMigrate)) {
       const uint64_t firstFseqFromClient = taskInjector.firstFseqToWrite();
 
-      //the last fseq written on the tape is the first file's fseq minus one
+      // The last fseq written on the tape is the first file's fseq minus one
       writeSingleThread.setlastFseq(firstFseqFromClient - 1);
 
-      //we retrieved the detail from the client in execute, so at this point
-      //we can report we will mount the tape.
-      // TODO: create a "StartingSession" state as the mounting will happen in
-      // the to-be-created tape thread.
-      try {
-        reporter.reportState(cta::tape::session::SessionState::Mounting,
-                               cta::tape::session::SessionType::Archive);
-      } catch (cta::exception::Exception& e) {
-        cta::log::LogContext::ScopedParam sp1(logContext, cta::log::Param("errorMessage", e.getMessage().str()));
-        logContext.log(cta::log::INFO, "Aborting the session after problem with mount details. Notifying the client.");
-        reportPacker.synchronousReportEndWithErrors(e.getMessageValue(), 666, logContext);
-        return MARK_DRIVE_AS_UP;
-      } catch (...) {
-        logContext.log(cta::log::INFO, "Aborting the session after problem with mount details (unknown exception). Notifying the client.");
-        reportPacker.synchronousReportEndWithErrors("Unknown exception while checking session parameters with VMGR", 666, logContext);
-        return MARK_DRIVE_AS_UP;
-      }
-
-      // We have something to do: start the session by starting all the
-      // threads.
+      // We have something to do: start the session by starting all the threads.
       memoryManager.startThreads();
       threadPool.startThreads();
       watchDog.startThread();
@@ -450,18 +454,17 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
       reporter.startThreads();
       // Synchronise with end of threads
       taskInjector.waitThreads();
-      reportPacker.waitThread();
       writeSingleThread.waitThreads();
       threadPool.waitThreads();
       memoryManager.waitThreads();
+      reportPacker.waitThread();
       reporter.waitThreads();
       watchDog.stopAndWaitThread();
 
       return writeSingleThread.getHardwareStatus();
     }
     else {
-      // Just log this was an empty mount and that's it. The memory management
-      // will be deallocated automatically.
+      // Just log this was an empty mount and that's it. The memory management will be deallocated automatically.
       int priority = cta::log::ERR;
       std::string status = "failure";
       if (noFilesToMigrate) {
@@ -490,6 +493,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
         logContext.log(cta::log::ERR, "Failed to notified client of end session with error");
       }
       // Empty mount, hardware safe
+      m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount,
+                                    cta::common::dataStructures::DriveStatus::Up, logContext);
       return MARK_DRIVE_AS_UP;
     }
   }
@@ -499,7 +504,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
 //DataTransferSession::executeLabel
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction
-castor::tape::tapeserver::daemon::DataTransferSession::executeLabel(cta::log::LogContext& logContext, cta::LabelMount *labelMount) {
+castor::tape::tapeserver::daemon::DataTransferSession::executeLabel(cta::log::LogContext& logContext,
+                                                                    cta::LabelMount *labelMount) {
   throw cta::exception::Exception("In DataTransferSession::executeLabel(): not implemented");
   // TODO
 }
@@ -522,7 +528,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeLabel(cta::log::Lo
  * @return the drive if found, nullptr otherwise
  */
 castor::tape::tapeserver::drive::DriveInterface *
-castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const cta::tape::daemon::TpconfigLine& driveConfig, cta::log::LogContext& logContext,
+castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const cta::tape::daemon::TpconfigLine& driveConfig,
+                                                                 cta::log::LogContext& logContext,
                                                                  cta::TapeMount *mount) {
   // Find the drive in the system's SCSI devices
   castor::tape::SCSI::DeviceVector dv(m_sysWrapper);
@@ -537,10 +544,13 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const cta::tape
     std::stringstream errMsg;
     const std::string headerErrMsg = "Drive not found on this path";
     errMsg << headerErrMsg << logContext;
-    mount->abort(headerErrMsg + e.getMessageValue());
-    cta::log::LogContext::ScopedParam sp10(logContext, cta::log::Param("tapebridgeTransId", mount->getMountTransactionId()));
+    mount->complete();
+    cta::log::LogContext::ScopedParam sp10(logContext,
+                                           cta::log::Param("tapebridgeTransId", mount->getMountTransactionId()));
     cta::log::LogContext::ScopedParam sp13(logContext, cta::log::Param("errorMessage", errMsg.str()));
     logContext.log(cta::log::ERR, "Notified client of end session with error");
+    m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount,
+                                  cta::common::dataStructures::DriveStatus::Down, logContext);
     return nullptr;
   } catch (cta::exception::Exception& e) {
     // We could not find this drive in the system's SCSI devices
@@ -551,10 +561,13 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const cta::tape
     std::stringstream errMsg;
     const std::string headerErrMsg = "Error looking to path to tape drive: ";
     errMsg << headerErrMsg << logContext;
-    mount->abort(headerErrMsg + e.getMessageValue());
-    cta::log::LogContext::ScopedParam sp11(logContext, cta::log::Param("tapebridgeTransId", mount->getMountTransactionId()));
+    mount->complete();
+    cta::log::LogContext::ScopedParam sp11(logContext,
+                                           cta::log::Param("tapebridgeTransId", mount->getMountTransactionId()));
     cta::log::LogContext::ScopedParam sp14(logContext, cta::log::Param("errorMessage", errMsg.str()));
     logContext.log(cta::log::ERR, "Notified client of end session with error");
+    m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount,
+                                  cta::common::dataStructures::DriveStatus::Down, logContext);
     return nullptr;
   } catch (...) {
     // We could not find this drive in the system's SCSI devices
@@ -564,16 +577,19 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const cta::tape
     std::stringstream errMsg;
     const std::string headerErrMsg = "Unexpected exception while looking for drive";
     errMsg << headerErrMsg << logContext;
-    mount->abort(headerErrMsg);
-    cta::log::LogContext::ScopedParam sp10(logContext, cta::log::Param("tapebridgeTransId", mount->getMountTransactionId()));
+    mount->complete();
+    cta::log::LogContext::ScopedParam sp10(logContext,
+                                           cta::log::Param("tapebridgeTransId", mount->getMountTransactionId()));
     cta::log::LogContext::ScopedParam sp13(logContext, cta::log::Param("errorMessage", errMsg.str()));
     logContext.log(cta::log::ERR, "Notified client of end session with error");
+    m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount,
+                                  cta::common::dataStructures::DriveStatus::Down, logContext);
     return nullptr;
   }
   try {
     std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive;
     drive.reset(castor::tape::tapeserver::drive::createDrive(driveInfo, m_sysWrapper));
-    if (drive) drive->config = driveConfig;
+    if (drive) { drive->config = driveConfig; }
     return drive.release();
   } catch (cta::exception::Exception& e) {
     // We could not find this drive in the system's SCSI devices
@@ -584,10 +600,13 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const cta::tape
     std::stringstream errMsg;
     const std::string headerErrMsg = "Error opening tape drive";
     errMsg << headerErrMsg << logContext;
-    mount->abort(headerErrMsg);
-    cta::log::LogContext::ScopedParam sp11(logContext, cta::log::Param("tapebridgeTransId", mount->getMountTransactionId()));
+    mount->complete();
+    cta::log::LogContext::ScopedParam sp11(logContext,
+                                           cta::log::Param("tapebridgeTransId", mount->getMountTransactionId()));
     cta::log::LogContext::ScopedParam sp14(logContext, cta::log::Param("errorMessage", errMsg.str()));
     logContext.log(cta::log::ERR, "Notified client of end session with error");
+    m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount,
+                                  cta::common::dataStructures::DriveStatus::Down, logContext);
     return nullptr;
   } catch (...) {
     // We could not find this drive in the system's SCSI devices
@@ -597,10 +616,13 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const cta::tape
     std::stringstream errMsg;
     const std::string headerErrMsg = "Unexpected exception while opening drive";
     errMsg << headerErrMsg << logContext;
-    mount->abort(headerErrMsg);
-    cta::log::LogContext::ScopedParam sp10(logContext, cta::log::Param("tapebridgeTransId", mount->getMountTransactionId()));
+    mount->complete();
+    cta::log::LogContext::ScopedParam sp10(logContext,
+                                           cta::log::Param("tapebridgeTransId", mount->getMountTransactionId()));
     cta::log::LogContext::ScopedParam sp13(logContext, cta::log::Param("errorMessage", errMsg.str()));
     logContext.log(cta::log::ERR, "Notified client of end session with error");
+    m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount,
+                                  cta::common::dataStructures::DriveStatus::Down, logContext);
     return nullptr;
   }
 }
