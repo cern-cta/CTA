@@ -17,8 +17,11 @@
 
 #pragma once
 
+#include <string>
+
 #include <xroot_plugins/XrdCtaStream.hpp>
 #include <xroot_plugins/XrdSsiCtaRequestMessage.hpp>
+#include "catalogue/SchemaVersion.hpp"
 #include "version.h"
 
 namespace cta { namespace xrd {
@@ -27,50 +30,53 @@ namespace cta { namespace xrd {
  * Stream object which implements "tapepool ls" command
  */
 class VersionStream: public XrdCtaStream{
-public:
+ public:
   /*!
    * Constructor
    *
    * @param[in]    requestMsg    RequestMessage containing command-line arguments
    */
-  VersionStream(const RequestMessage &requestMsg,cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string & catalogueConnString);
-  
-private:
+  VersionStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue,
+    cta::Scheduler &scheduler, const std::string &catalogueConnString);
+
+ private:
     static constexpr const char* const LOG_SUFFIX  = "VersionStream";    //!< Identifier for log messages
-    
+
     Versions m_client_versions;
     Versions m_server_versions;
     std::string m_catalogue_conn_string;
     std::string m_catalogue_version;
-    
+    bool m_is_upgrading;
+
     bool m_is_done = false;
-    
+
     /*!
     * Fill the buffer
     */
     virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
-    
+
   /*!
   * Only one item is sent so isDone = true
   */
   virtual bool isDone() const {
     return m_is_done;
   }
-  
 };
 
-VersionStream::VersionStream(const RequestMessage &requestMsg,cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler,const std::string & catalogueConnString):
-XrdCtaStream(catalogue,scheduler),
+VersionStream::VersionStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue,
+  cta::Scheduler &scheduler, const std::string &catalogueConnString) :
+  XrdCtaStream(catalogue, scheduler),
   m_client_versions(requestMsg.getClientVersions()),
   m_catalogue_conn_string(catalogueConnString),
-  m_catalogue_version(m_catalogue.getSchemaVersion().getSchemaVersion<std::string>())
-{
-   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "VersionStream() constructor");
-   m_server_versions.ctaVersion = CTA_VERSION;
-   m_server_versions.xrootdSsiProtoIntVersion = XROOTD_SSI_PROTOBUF_INTERFACE_VERSION;
+  m_catalogue_version(m_catalogue.getSchemaVersion().getSchemaVersion<std::string>()),
+  m_is_upgrading(m_catalogue.getSchemaVersion().getStatus<catalogue::SchemaVersion::Status>()
+    == catalogue::SchemaVersion::Status::UPGRADING) {
+  XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "VersionStream() constructor");
+  m_server_versions.ctaVersion = CTA_VERSION;
+  m_server_versions.xrootdSsiProtoIntVersion = XROOTD_SSI_PROTOBUF_INTERFACE_VERSION;
 }
 
-int VersionStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf){
+int VersionStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
   m_is_done = true;
   Data record;
   auto version = record.mutable_version_item();
@@ -82,9 +88,11 @@ int VersionStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf){
   server_version->set_xrootd_ssi_protobuf_interface_version(m_server_versions.xrootdSsiProtoIntVersion);
   version->set_catalogue_connection_string(m_catalogue_conn_string);
   version->set_catalogue_version(m_catalogue_version);
+  version->set_is_upgrading(m_is_upgrading);
   streambuf->Push(record);
-  
+
   return streambuf->Size();
 }
 
-}}
+}  // namespace xrd
+}  // namespace cta

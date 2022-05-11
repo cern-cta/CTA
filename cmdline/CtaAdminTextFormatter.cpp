@@ -1138,7 +1138,8 @@ void TextFormatter::printVersionHeader(){
     "CTA Frontend",
     "Server xrd-ssi-protobuf",
     "Catalogue schema",
-    "DB connection string"
+    "DB connection string",
+    "Status"
   );
 }
 
@@ -1149,7 +1150,8 @@ void TextFormatter::print(const VersionItem & version_item){
     version_item.server_version().cta_version(),
     version_item.server_version().xrootd_ssi_protobuf_interface_version(),
     version_item.catalogue_version(),
-    version_item.catalogue_connection_string()
+    version_item.catalogue_connection_string(),
+    version_item.is_upgrading() ? "UPGRADING" : "PRODUCTION"
   );
 }
 
