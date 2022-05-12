@@ -1,9 +1,10 @@
-# v4.7.2-1
+# v4.7.3-1
 
 ## Summary
 ### Upgrade Instructions
 ### Features
 - cta/CTA#1161 - Tape server refactoring, "Decide where m_reportPacker.setTapeDone() should be called"
+- cta/CTA#1195 - `cta-catalogue-schema-drop` should drop the CTA_CATALOGUE table last
 ### Bug fixes
 - cta/CTA#950 - Eliminate race condition preventing the drive to go down on failure
 - cta/CTA#1160 - Fix DrainingToDisk stale status in case if there is DiskWriteThreadPool thread left
@@ -12,6 +13,11 @@
 
 ### Building and Packaging
 ### Catalogue Schema
+
+# v4.7.2-1
+
+## Summary
+- Deprecated: Replaced by release v4.7.3-1
 
 # v4.7.1-1
 
@@ -23,7 +29,6 @@
 - cta/CTA#1198 - Use hardcoded mount policy for verification requests
 - Add verification flag to queued retrieve request log message
 - propagate labelFormat from TAPE catalog to VolumeInfo
-- cta/CTA#1195 - `cta-catalogue-schema-drop` should drop the CTA_CATALOGUE table last
 - cta/CTA#1200 - Remove range class
 
 ### Bug fixes
