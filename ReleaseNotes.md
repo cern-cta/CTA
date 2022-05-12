@@ -8,6 +8,7 @@
 - cta/CTA#950 - Eliminate race condition preventing the drive to go down on failure
 - cta/CTA#1160 - Fix DrainingToDisk stale status in case if there is DiskWriteThreadPool thread left
 - cta/operations#708 - Fix "Should run cleaner but VID is missing. Putting the drive down"
+- cta/CTA#1197 - Return code from `cta-catalogue-schema-verify` should indicate if the schema is in UPGRADING state
 
 ### Building and Packaging
 ### Catalogue Schema

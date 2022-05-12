@@ -87,6 +87,10 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   result += schemaChecker->warnErrorLoggingTables();
   result += schemaChecker->warnMissingIndexes();
   result.displayWarnings(std::cout);
+  if(result.getStatus() == SchemaCheckerResult::Status::FAILED
+    && isUpgrading(&conn)) {
+    return 2;
+  }
   if(result.getStatus() == SchemaCheckerResult::Status::FAILED){
     return 1;
   }
@@ -111,6 +115,22 @@ bool VerifySchemaCmd::tableExists(const std::string tableName, rdbms::Conn &conn
 //------------------------------------------------------------------------------
 void VerifySchemaCmd::printUsage(std::ostream &os) {
   VerifySchemaCmdLineArgs::printUsage(os);
+}
+
+bool VerifySchemaCmd::isUpgrading(rdbms::Conn *conn) {
+  const char *const sql =
+    "SELECT "
+      "CTA_CATALOGUE.STATUS AS STATUS "
+    "FROM "
+      "CTA_CATALOGUE";
+
+  auto stmt = conn->createStmt(sql);
+  auto rset = stmt.executeQuery();
+
+  if(!rset.next()) {
+    throw exception::Exception("CTA_CATALOGUE does not contain any STATUS");
+  }
+  return rset.columnString("STATUS") == "UPGRADING";
 }
 
 } // namespace catalogue

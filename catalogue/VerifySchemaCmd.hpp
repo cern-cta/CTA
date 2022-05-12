@@ -74,6 +74,14 @@ private:
    * @return True if the table exists.
    */
   bool tableExists(const std::string tableName, rdbms::Conn &conn) const;
+
+  /*
+   * Returns true if the catalogue is upgrading
+   *
+   * @param conn The database connection
+   * @return True if the catalogue is upgrading
+   */
+  bool isUpgrading(rdbms::Conn *conn);
   
 #if 0
   /**
