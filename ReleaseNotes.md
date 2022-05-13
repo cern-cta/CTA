@@ -10,6 +10,7 @@
 - cta/CTA#1160 - Fix DrainingToDisk stale status in case if there is DiskWriteThreadPool thread left
 - cta/operations#708 - Fix "Should run cleaner but VID is missing. Putting the drive down"
 - cta/CTA#1197 - Return code from `cta-catalogue-schema-verify` should indicate if the schema is in UPGRADING state
+- cta/CTA#1206 - Change NULL for nullptr
 
 ### Building and Packaging
 ### Catalogue Schema

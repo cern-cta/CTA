@@ -54,7 +54,7 @@ TEST(ObjectStore,SorterInsertArchiveRequest){
   re.insert();
   // Create the agent register
     cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
+      "unittesthost", time(nullptr));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
   cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
@@ -203,7 +203,7 @@ TEST(ObjectStore,SorterInsertRetrieveRequest){
   re.insert();
   // Create the agent register
   cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
+      "unittesthost", time(nullptr));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
   cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
@@ -409,7 +409,7 @@ TEST(ObjectStore,SorterInsertDifferentTypesOfRequests){
   re.insert();
   // Create the agent register
   cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
+      "unittesthost", time(nullptr));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
   cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
@@ -712,7 +712,7 @@ TEST(ObjectStore,SorterInsertArchiveRequestNotFetched){
   re.insert();
   // Create the agent register
   cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
+      "unittesthost", time(nullptr));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
   cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
@@ -855,7 +855,7 @@ TEST(ObjectStore,SorterInsertRetrieveRequestNotFetched){
   re.insert();
   // Create the agent register
   cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
+      "unittesthost", time(nullptr));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
   cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);

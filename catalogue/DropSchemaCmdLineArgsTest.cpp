@@ -29,7 +29,7 @@ protected:
   struct Argcv {
     int argc;
     char **argv;
-    Argcv(): argc(0), argv(NULL) {
+    Argcv(): argc(0), argv(nullptr) {
     }
   };
   typedef std::list<Argcv*> ArgcvList;
@@ -75,7 +75,7 @@ TEST_F(cta_catalogue_DropSchemaCmdLineArgsTest, help_short) {
   args->argv = new char *[3];
   args->argv[0] = dupString("cta-catalogue-schema-drop");
   args->argv[1] = dupString("-h");
-  args->argv[2] = NULL;
+  args->argv[2] = nullptr;
 
   DropSchemaCmdLineArgs cmdLine(args->argc, args->argv);
 
@@ -92,7 +92,7 @@ TEST_F(cta_catalogue_DropSchemaCmdLineArgsTest, help_long) {
   args->argv = new char *[3];
   args->argv[0] = dupString("cta-catalogue-schema-drop");
   args->argv[1] = dupString("--help");
-  args->argv[2] = NULL;
+  args->argv[2] = nullptr;
 
   DropSchemaCmdLineArgs cmdLine(args->argc, args->argv);
 
@@ -109,7 +109,7 @@ TEST_F(cta_catalogue_DropSchemaCmdLineArgsTest, dbConfigPath) {
   args->argv = new char *[3];
   args->argv[0] = dupString("cta-catalogue-schema-drop");
   args->argv[1] = dupString("dbConfigPath");
-  args->argv[2] = NULL;
+  args->argv[2] = nullptr;
 
   DropSchemaCmdLineArgs cmdLine(args->argc, args->argv);
 

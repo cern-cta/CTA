@@ -35,17 +35,17 @@ namespace admin{
 //------------------------------------------------------------------------------
 RestoreFilesCmdLineArgs::RestoreFilesCmdLineArgs(const int argc, char *const *const argv):
 m_help(false), m_debug(false) {
-    
+
   static struct option longopts[] = {
-    {"id", required_argument, NULL, 'I'},
-    {"instance", required_argument, NULL, 'i'},
-    {"fxid", required_argument, NULL, 'f'},
-    {"fxidfile", required_argument, NULL, 'F'},
-    {"vid", required_argument, NULL, 'v'},
-    {"copynb", required_argument, NULL, 'c'},
-    {"help", no_argument, NULL, 'h'},
-    {"debug", no_argument, NULL, 'd'},
-    {NULL, 0, NULL, 0}
+    {"id", required_argument, nullptr, 'I'},
+    {"instance", required_argument, nullptr, 'i'},
+    {"fxid", required_argument, nullptr, 'f'},
+    {"fxidfile", required_argument, nullptr, 'F'},
+    {"vid", required_argument, nullptr, 'v'},
+    {"copynb", required_argument, nullptr, 'c'},
+    {"help", no_argument, nullptr, 'h'},
+    {"debug", no_argument, nullptr, 'd'},
+    {nullptr, 0, nullptr, 0}
   };
 
   opterr = 0;
@@ -100,7 +100,7 @@ m_help(false), m_debug(false) {
       }
     case 'h':
       {
-        m_help = true;  
+        m_help = true;
         break;
       }
     case 'd':
@@ -161,7 +161,7 @@ void RestoreFilesCmdLineArgs::readFidListFromFile(const std::string &filename, s
       ss >> item;
       // skip blank lines or lines consisting only of whitespace
       if(item.empty()) continue;
- 
+
       // Special handling for file id lists. The output from "eos find --fid <fid> /path" is:
       //   path=/path fid=<fid>
       // We discard everything except the list of fids. <fid> is a zero-padded hexadecimal number,

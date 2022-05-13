@@ -194,7 +194,7 @@ std::string Scheduler::queueRetrieve(
   common::dataStructures::RetrieveFileQueueCriteria queueCriteria;
 
   queueCriteria = m_catalogue.prepareToRetrieveFile(instanceName, request.archiveFileID, request.requester, request.activity, lc, request.mountPolicy);
-  
+
   queueCriteria.archiveFile.diskFileInfo = request.diskFileInfo;
 
   // The following block of code is a temporary fix for the following CTA issue:
@@ -203,7 +203,7 @@ std::string Scheduler::queueRetrieve(
   //
   // The code tries to force a recall to use the tape copy with the
   // tape copy number equal to the number of days since the epoch.
-  // It reduces the number of overall number tape mounts 
+  // It reduces the number of overall number tape mounts
   // in situations where files with multiple tape copies are being recalled.
   {
 
@@ -213,14 +213,14 @@ std::string Scheduler::queueRetrieve(
 
     std::vector<uint64_t> tapeFileCopyNbs;
 
-    std::transform(queueCriteria.archiveFile.tapeFiles.begin(), queueCriteria.archiveFile.tapeFiles.end(),std::back_inserter(tapeFileCopyNbs), 
+    std::transform(queueCriteria.archiveFile.tapeFiles.begin(), queueCriteria.archiveFile.tapeFiles.end(),std::back_inserter(tapeFileCopyNbs),
        [](const common::dataStructures::TapeFile &a) -> uint64_t {
          return a.copyNb;});
 
     std::sort(tapeFileCopyNbs.begin(), tapeFileCopyNbs.end(),
       [](const uint64_t &a, const uint64_t &b) -> bool
         {return a > b;});
-    
+
     const uint64_t chosenCopyNb = tapeFileCopyNbs.at(indexToChose);
 
     const common::dataStructures::TapeFile chosenTapeFile = queueCriteria.archiveFile.tapeFiles.at(chosenCopyNb);
@@ -1536,7 +1536,7 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
                 t.mediaType,
                 t.vendor,
                 t.capacityInBytes,
-                time(NULL),
+                time(nullptr),
                 std::nullopt,
                 t.labelFormat).release());
             mountCreationTime += timer.secs(utils::Timer::resetCounter);
@@ -1607,7 +1607,7 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
             m->mediaType,
             m->vendor,
             m->capacityInBytes,
-            time(NULL),
+            time(nullptr),
             m->activity,
             m->labelFormat).release());
         mountCreationTime += timer.secs(utils::Timer::resetCounter);
@@ -1783,7 +1783,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       }
       if (pm.highestPriorityMountPolicyName) {
         summary.highestPriorityMountPolicy = pm.highestPriorityMountPolicyName.value();
-      } 
+      }
       if (pm.lowestRequestAgeMountPolicyName) {
         summary.lowestRequestAgeMountPolicy = pm.lowestRequestAgeMountPolicyName.value();
       }
@@ -1801,7 +1801,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       }
       if (pm.highestPriorityMountPolicyName) {
         summary.highestPriorityMountPolicy = pm.highestPriorityMountPolicyName.value();
-      } 
+      }
       if (pm.lowestRequestAgeMountPolicyName) {
         summary.lowestRequestAgeMountPolicy = pm.lowestRequestAgeMountPolicyName.value();
       }

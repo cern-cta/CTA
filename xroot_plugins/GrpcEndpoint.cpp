@@ -25,7 +25,7 @@ std::string cta::grpc::Endpoint::getPath(const std::string &diskFileId) const {
   // diskFileId is sent to CTA as a uint64_t, but we store it as a decimal string, cf.:
   //   XrdSsiCtaRequestMessage.cpp: request.diskFileID = std::to_string(notification.file().fid());
   // Here we convert it back to make the namespace query:
-  uint64_t id = strtoull(diskFileId.c_str(), NULL, 0);
+  uint64_t id = strtoull(diskFileId.c_str(), nullptr, 0);
   if(id == 0) return ("Invalid disk ID");
   auto response = m_grpcClient->GetMD(eos::rpc::FILE, id, "");
 
@@ -36,7 +36,7 @@ std::string cta::grpc::Endpoint::getPathExceptionThrowing(const std::string &dis
   // diskFileId is sent to CTA as a uint64_t, but we store it as a decimal string, cf.:
   //   XrdSsiCtaRequestMessage.cpp: request.diskFileID = std::to_string(notification.file().fid());
   // Here we convert it back to make the namespace query:
-  uint64_t id = strtoull(diskFileId.c_str(), NULL, 0);
+  uint64_t id = strtoull(diskFileId.c_str(), nullptr, 0);
   if(id == 0) throw cta::exception::UserError("Invalid disk ID");
   auto response = m_grpcClient->GetMD(eos::rpc::FILE, id, "");
 

@@ -29,18 +29,18 @@ namespace unitTests {
     void f2();
     Nested();
   };
-  
+
   /* Prevent inlining: it makes this test fail! */
   void __attribute__((noinline)) Nested::f1() {
     throw cta::exception::Exception("Throwing in Nested's constructor");
   }
-  
+
   /* Prevent inlining: it makes this test fail!
    * Even with that, f2 does not show up in the trace */
   void __attribute__((noinline)) Nested::f2() {
     f1();
   }
-  
+
   /* Prevent inlining: it makes this test fail! */
   __attribute__((noinline))  Nested::Nested() {
     f2();
@@ -58,7 +58,7 @@ namespace unitTests {
       ASSERT_NE(std::string::npos, fullWhat.find("Nested::f1"));
     }
   }
-  
+
     TEST(cta_exceptions, stacktrace_in_std_exception) {
     try {
       Nested x;
@@ -68,7 +68,7 @@ namespace unitTests {
       ASSERT_NE(std::string::npos, fullWhat.find("Throwing in Nested's constructor"));
     }
   }
-  
+
   TEST(cta_exceptions, errnum_throwing) {
     /* Mickey Mouse test as we had trouble which throwing Errnum (with errno=ENOENT)*/
     errno = ENOENT;
@@ -85,7 +85,7 @@ namespace unitTests {
     ASSERT_NO_THROW(cta::exception::Errnum::throwOnReturnedErrno(0, "Context"));
     ASSERT_THROW(cta::exception::Errnum::throwOnReturnedErrno(ENOSPC, "Context"),
       cta::exception::Errnum);
-    
+
     ASSERT_NO_THROW(cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException([](){ return 0; }, "Context"));
     ASSERT_THROW(cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException([](){ return ENOSPC; }, "Context"),
       cta::exception::Errnum);
@@ -93,36 +93,36 @@ namespace unitTests {
       cta::exception::Errnum);
     ASSERT_THROW(cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException([](){ throw std::exception(); return 0; }, "Context"),
       cta::exception::Exception);
-    
-    
+
+
     /* throwOnNonZero */
     errno = ENOENT;
     ASSERT_NO_THROW(cta::exception::Errnum::throwOnNonZero(0, "Context"));
     ASSERT_THROW(cta::exception::Errnum::throwOnNonZero(-1, "Context"),
       cta::exception::Errnum);
-    
+
     /* throwOnMinusOne */
     errno = ENOENT;
     ASSERT_NO_THROW(cta::exception::Errnum::throwOnMinusOne(0, "Context"));
     ASSERT_THROW(cta::exception::Errnum::throwOnMinusOne(-1, "Context"),
       cta::exception::Errnum);
-    
+
     /* throwOnNegative */
     errno = ENOENT;
     ASSERT_NO_THROW(cta::exception::Errnum::throwOnNegative(0, "Context"));
     ASSERT_THROW(cta::exception::Errnum::throwOnNegative(-1, "Context"),
-      cta::exception::Errnum); 
+      cta::exception::Errnum);
 
     /* throwOnNull */
     errno = ENOENT;
     ASSERT_NO_THROW(cta::exception::Errnum::throwOnNull(this, "Context"));
-    ASSERT_THROW(cta::exception::Errnum::throwOnNull(NULL, "Context"),
+    ASSERT_THROW(cta::exception::Errnum::throwOnNull(nullptr, "Context"),
       cta::exception::Errnum);
 
     /* throwOnZero */
     errno = ENOENT;
     ASSERT_NO_THROW(cta::exception::Errnum::throwOnZero(1, "Context"));
     ASSERT_THROW(cta::exception::Errnum::throwOnZero(0, "Context"),
-      cta::exception::Errnum); 
+      cta::exception::Errnum);
   }
 }

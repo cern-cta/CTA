@@ -72,11 +72,11 @@ SubProcess::SubProcess(const std::string & executable, const std::list<std::stri
   int stdoutPipe[2];
   int stderrPipe[2];
   int stdinPipe[2];
-  cta::exception::Errnum::throwOnNonZero(::pipe2(stdoutPipe, O_NONBLOCK), 
+  cta::exception::Errnum::throwOnNonZero(::pipe2(stdoutPipe, O_NONBLOCK),
       "In Subprocess::Subprocess failed to create the stdout pipe");
-  cta::exception::Errnum::throwOnNonZero(::pipe2(stderrPipe, O_NONBLOCK), 
+  cta::exception::Errnum::throwOnNonZero(::pipe2(stderrPipe, O_NONBLOCK),
       "In Subprocess::Subprocess failed to create the stderr pipe");
-  cta::exception::Errnum::throwOnNonZero(::pipe2(stdinPipe,O_NONBLOCK), 
+  cta::exception::Errnum::throwOnNonZero(::pipe2(stdinPipe,O_NONBLOCK),
       "In Subprocess::Subprocess failed to create the stdin pipe");
   // Prepare the actions to be taken on file descriptors
   ScopedPosixSpawnFileActions fileActions;
@@ -103,7 +103,7 @@ SubProcess::SubProcess(const std::string & executable, const std::list<std::stri
       "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_addclose() (5)");
   cta::exception::Errnum::throwOnReturnedErrno(posix_spawn_file_actions_addclose(fileActions, stdinPipe[readSide]),
       "In Subprocess::Subprocess(): failed to posix_spawn_file_actions_addclose() (6)");
-  
+
   // And finally spawn the subprocess
   // Prepare the spawn attributes (we need vfork)
   ScopedPosixSpawnAttr attr;
@@ -119,7 +119,7 @@ SubProcess::SubProcess(const std::string & executable, const std::list<std::stri
       cargvStrings.emplace_back(std::move(upStr));
       index++;
     }
-    cargv[argv.size()] = NULL;
+    cargv[argv.size()] = nullptr;
     int spawnRc=::posix_spawnp(&m_child, executable.c_str(), fileActions, attr, cargv.get(), ::environ);
     cta::exception::Errnum::throwOnReturnedErrno(spawnRc, "In Subprocess::Subprocess failed to posix_spawn()");
   }

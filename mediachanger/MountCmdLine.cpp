@@ -42,10 +42,10 @@ cta::mediachanger::MountCmdLine::MountCmdLine(const int argc,
   m_driveLibrarySlot(0) {
 
   static struct option longopts[] = {
-    {"debug"    , 0, NULL, 'd'},
-    {"help"     , 0, NULL, 'h'},
-    {"readonly" , 0, NULL, 'r'},
-    {NULL       , 0, NULL, 0}
+    {"debug"    , 0, nullptr, 'd'},
+    {"help"     , 0, nullptr, 'h'},
+    {"readonly" , 0, nullptr, 'r'},
+    {nullptr       , 0, nullptr, 0}
   };
 
   // Prevent getopt() from printing an error message if it does not recognize
@@ -53,7 +53,7 @@ cta::mediachanger::MountCmdLine::MountCmdLine(const int argc,
   opterr = 0;
 
   int opt = 0;
-  while((opt = getopt_long(argc, argv, ":dhr", longopts, NULL)) != -1) {
+  while((opt = getopt_long(argc, argv, ":dhr", longopts, nullptr)) != -1) {
     processOption(opt);
   }
 

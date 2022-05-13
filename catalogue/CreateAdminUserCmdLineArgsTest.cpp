@@ -28,7 +28,7 @@ protected:
   struct Argcv {
     int argc;
     char **argv;
-    Argcv(): argc(0), argv(NULL) {
+    Argcv(): argc(0), argv(nullptr) {
     }
   };
   typedef std::list<Argcv*> ArgcvList;
@@ -74,7 +74,7 @@ TEST_F(cta_catalogue_CreateAdminUserCmdLineArgsTest, help_short) {
   args->argv = new char *[3];
   args->argv[0] = dupString("cta-catalogue-admin-user-create");
   args->argv[1] = dupString("-h");
-  args->argv[2] = NULL;
+  args->argv[2] = nullptr;
 
   CreateAdminUserCmdLineArgs cmdLine(args->argc, args->argv);
 
@@ -93,7 +93,7 @@ TEST_F(cta_catalogue_CreateAdminUserCmdLineArgsTest, help_long) {
   args->argv = new char *[3];
   args->argv[0] = dupString("cta-catalogue-admin-user-create");
   args->argv[1] = dupString("--help");
-  args->argv[2] = NULL;
+  args->argv[2] = nullptr;
 
   CreateAdminUserCmdLineArgs cmdLine(args->argc, args->argv);
 
@@ -116,7 +116,7 @@ TEST_F(cta_catalogue_CreateAdminUserCmdLineArgsTest, username_short) {
   args->argv[3] = dupString("adminUsername");
   args->argv[4] = dupString("-m");
   args->argv[5] = dupString("comment");
-  args->argv[6] = NULL;
+  args->argv[6] = nullptr;
 
   CreateAdminUserCmdLineArgs cmdLine(args->argc, args->argv);
 
@@ -139,7 +139,7 @@ TEST_F(cta_catalogue_CreateAdminUserCmdLineArgsTest, username_long) {
   args->argv[3] = dupString("adminUsername");
   args->argv[4] = dupString("--comment");
   args->argv[5] = dupString("comment");
-  args->argv[6] = NULL;
+  args->argv[6] = nullptr;
 
   CreateAdminUserCmdLineArgs cmdLine(args->argc, args->argv);
 

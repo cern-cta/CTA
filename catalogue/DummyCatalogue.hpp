@@ -269,7 +269,7 @@ public:
   std::optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string &tapeDriveName) const {
     if (m_tapeDriveStatus.driveName != "") return m_tapeDriveStatus;
     common::dataStructures::TapeDrive tapeDriveStatus;
-    const time_t reportTime = time(NULL);
+    const time_t reportTime = time(nullptr);
 
     tapeDriveStatus.driveName = tapeDriveName;
     tapeDriveStatus.host = "Dummy_Host";
@@ -285,7 +285,7 @@ public:
     tapeDriveStatus.diskSystemName = "Dummy_System";
     tapeDriveStatus.reservedBytes = 0;
     tapeDriveStatus.reservationSessionId = 0;
-    
+
 
     return tapeDriveStatus;
   }
@@ -351,12 +351,12 @@ public:
       tdStatus.value().reservationSessionId = mountId;
       tdStatus.value().reservedBytes = 0;
     }
-    
+
     if (tdStatus.value().reservationSessionId != mountId) {
       tdStatus.value().reservationSessionId = mountId;
       tdStatus.value().reservedBytes = 0;
     }
-    
+
     tdStatus.value().diskSystemName = diskSpaceReservation.begin()->first;
     tdStatus.value().reservedBytes.value() += diskSpaceReservation.begin()->second;
     modifyTapeDrive(tdStatus.value());
@@ -373,7 +373,7 @@ public:
     lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): reservation release request.");
 
     auto tdStatus = getTapeDrive(driveName);
-    
+
     if (!tdStatus) return;
     if (!tdStatus.value().reservationSessionId) {
       return;
@@ -404,7 +404,7 @@ public:
   void createDiskInstanceSpace(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &diskInstance, const std::string &freeSpaceQueryURL, const uint64_t refreshInterval, const std::string &comment) override {
     m_diskInstanceSpaces[name] = {name, diskInstance, freeSpaceQueryURL, refreshInterval, 0, 0, comment, common::dataStructures::EntryLog(), common::dataStructures::EntryLog()};
   }
-  
+
   void createDiskSystem(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &diskInstanceName, const std::string &diskInstanceSpaceName, const std::string &fileRegexp, const uint64_t targetedFreeSpace, const time_t sleepTime, const std::string &comment)  override {
     m_diskSystemList.push_back({name, m_diskInstanceSpaces.at(diskInstanceSpaceName), fileRegexp, targetedFreeSpace, sleepTime, common::dataStructures::EntryLog(), common::dataStructures::EntryLog{}, comment});
   }

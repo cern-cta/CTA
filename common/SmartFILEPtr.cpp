@@ -21,12 +21,12 @@
 #include <unistd.h>
 
 namespace cta {
-  
+
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
 SmartFILEPtr::SmartFILEPtr() throw() :
-  m_file(NULL) {
+  m_file(nullptr) {
 }
 
 //-----------------------------------------------------------------------------
@@ -44,7 +44,7 @@ void SmartFILEPtr::reset(FILE *const file) throw() {
   if(file != m_file) {
 
     // If this smart pointer still owns a pointer, then fclose it
-    if(m_file != NULL) {
+    if(m_file != nullptr) {
       fclose(m_file);
     }
 
@@ -81,7 +81,7 @@ FILE *SmartFILEPtr::get() const throw() {
 //-----------------------------------------------------------------------------
 FILE *SmartFILEPtr::release() {
   // If this smart pointer does not own a pointer
-  if(NULL == m_file) {
+  if(nullptr == m_file) {
     cta::exception::NotAnOwner ex;
     ex.getMessage() << "Smart pointer does not own a FILE pointer";
     throw ex;
@@ -89,8 +89,8 @@ FILE *SmartFILEPtr::release() {
 
   FILE *const tmp = m_file;
 
-  // A NULL value indicates this smart pointer does not own a pointer
-  m_file = NULL;
+  // A nullptr value indicates this smart pointer does not own a pointer
+  m_file = nullptr;
 
   return tmp;
 }

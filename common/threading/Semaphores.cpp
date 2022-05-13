@@ -23,9 +23,9 @@
 #include <errno.h>
 #include <sys/time.h>
 
-namespace cta { 
+namespace cta {
 namespace threading {
-  
+
 //------------------------------------------------------------------------------
 //PosixSemaphore constructor
 //------------------------------------------------------------------------------
@@ -64,7 +64,7 @@ void PosixSemaphore::acquireWithTimeout(uint64_t timeout_us)
  {
   int ret;
   struct timeval tv;
-  gettimeofday(&tv, NULL);
+  gettimeofday(&tv, nullptr);
   struct timespec ts;
   // Add microseconds
   ts.tv_nsec = (tv.tv_usec + (timeout_us % 1000000)) * 1000;
@@ -110,10 +110,10 @@ void PosixSemaphore::release(int n)
 //------------------------------------------------------------------------------
 CondVarSemaphore::CondVarSemaphore(int initial):m_value(initial) {
       cta::exception::Errnum::throwOnReturnedErrno(
-        pthread_cond_init(&m_cond, NULL),
+        pthread_cond_init(&m_cond, nullptr),
         "Error from pthread_cond_init in cta::threading::CondVarSemaphore::CondVarSemaphore()");
       cta::exception::Errnum::throwOnReturnedErrno(
-        pthread_mutex_init(&m_mutex, NULL),
+        pthread_mutex_init(&m_mutex, nullptr),
         "Error from pthread_mutex_init in cta::threading::CondVarSemaphore::CondVarSemaphore()");
     }
 

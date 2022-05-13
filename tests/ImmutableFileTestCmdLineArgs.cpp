@@ -30,8 +30,8 @@ ImmutableFileTestCmdLineArgs::ImmutableFileTestCmdLineArgs(const int argc, char 
   help(false) {
 
   static struct option longopts[] = {
-    {"help", no_argument, NULL, 'h'},
-    {NULL  ,           0, NULL,   0}
+    {"help", no_argument, nullptr, 'h'},
+    {nullptr  ,           0, nullptr,   0}
   };
 
   // Prevent getopt() from printing an error message if it does not recognize
@@ -39,7 +39,7 @@ ImmutableFileTestCmdLineArgs::ImmutableFileTestCmdLineArgs(const int argc, char 
   opterr = 0;
 
   int opt = 0;
-  while((opt = getopt_long(argc, argv, ":h", longopts, NULL)) != -1) {
+  while((opt = getopt_long(argc, argv, ":h", longopts, nullptr)) != -1) {
     switch(opt) {
     case 'h':
       help = true;

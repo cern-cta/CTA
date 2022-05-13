@@ -30,10 +30,10 @@ namespace mediachanger {
 //-----------------------------------------------------------------------------
 size_t marshal(char *const dst, const size_t dstLen, const MessageHeader &src) {
 
-  if(dst == NULL) {
+  if(dst == nullptr) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to marshal MessageHeader"
-      << ": Pointer to destination buffer is NULL";
+      << ": Pointer to destination buffer is nullptr";
     throw ex;
   }
 

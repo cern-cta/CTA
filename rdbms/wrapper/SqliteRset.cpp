@@ -221,7 +221,7 @@ std::string SqliteRset::columnBlob(const std::string &colName) const {
       return std::string();
     } else {
       const char *const colValue = reinterpret_cast<const char*>(sqlite3_column_blob(m_stmt.get(), idxAndType.colIdx));
-      if(NULL == colValue) {
+      if(nullptr == colValue) {
         return std::string();
       }
       int blobsize = sqlite3_column_bytes(m_stmt.get(), idxAndType.colIdx);
@@ -242,7 +242,7 @@ std::optional<std::string> SqliteRset::columnOptionalString(const std::string &c
       return std::nullopt;
     } else {
       const char *const colValue = (const char *)sqlite3_column_text(m_stmt.get(), idxAndType.colIdx);
-      if(NULL == colValue) {
+      if(nullptr == colValue) {
         exception::Exception ex;
         ex.getMessage() << __FUNCTION__ << " failed: sqlite3_column_text() returned NULL when"
           " m_colNameToIdxAndType map states otherwise: colName=" << colName << ",colIdx=" << idxAndType.colIdx;

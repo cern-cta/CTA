@@ -68,7 +68,7 @@ private:
    * Calculates the hash value of the frame body and records the result in the
    * frame header.
    */
-  void calcAndSetHashValueOfBody();  
+  void calcAndSetHashValueOfBody();
 }; // struct Frame
 
 /**
@@ -76,16 +76,16 @@ private:
  *
  * @param t The object.
  * @return The demangled type name.
- */  
+ */
 template <class T>std::string demangledNameOf(const T&t){
   std::string responseType = typeid(t).name();
   int status = -1;
-  char * demangled = abi::__cxa_demangle(responseType.c_str(), NULL, NULL, &status);
+  char * demangled = abi::__cxa_demangle(responseType.c_str(), nullptr, nullptr, &status);
   if (!status) {
-    responseType = demangled; 
+    responseType = demangled;
   }
   free(demangled);
-  
+
   return responseType;
 }
 

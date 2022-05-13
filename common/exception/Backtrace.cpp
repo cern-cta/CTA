@@ -33,11 +33,11 @@ namespace cta {
     private:
       class mutex {
       public:
-        mutex() { pthread_mutex_init(&m_mutex, NULL); }
+        mutex() { pthread_mutex_init(&m_mutex, nullptr); }
         void lock() { pthread_mutex_lock(&m_mutex); }
         void unlock() { pthread_mutex_unlock(&m_mutex); }
       private:
-        pthread_mutex_t m_mutex;    
+        pthread_mutex_t m_mutex;
       };
       mutex m_mutex;
       bfd* m_abfd;
@@ -52,7 +52,7 @@ namespace cta {
 // This code is compiled only in debug mode (where COLLECTEXTRABACKTRACEINFOS will be defined)
 // as it's pretty heavy
 cta::exception::bfdContext::bfdContext():
-m_abfd(NULL), m_syms(NULL), m_text(NULL)
+m_abfd(nullptr), m_syms(nullptr), m_text(nullptr)
 {
   char ename[1024];
   int l = readlink("/proc/self/exe",ename,sizeof(ename));
@@ -74,7 +74,7 @@ m_abfd(NULL), m_syms(NULL), m_text(NULL)
 cta::exception::bfdContext::~bfdContext() {
   free (m_syms);
   /* According the bfd documentation, closing the bfd frees everything */
-  m_text=NULL;
+  m_text=nullptr;
   bfd_close(m_abfd);
 }
 
@@ -91,10 +91,10 @@ std::string cta::exception::bfdContext::collectExtraInfos(const std::string& add
       const char *file;
       const char *func;
       unsigned line;
-      if (bfd_find_nearest_line(m_abfd, m_text, m_syms, offset, &file, &func, &line) 
+      if (bfd_find_nearest_line(m_abfd, m_text, m_syms, offset, &file, &func, &line)
           && file) {
         int status(-1);
-        char * demangledFunc = abi::__cxa_demangle(func, NULL, NULL, &status);
+        char * demangledFunc = abi::__cxa_demangle(func, nullptr, nullptr, &status);
         result << "at " << file << ":" << line << " (" << address << ")";
         free (demangledFunc);
       }
@@ -114,7 +114,7 @@ namespace cta {
 cta::exception::Backtrace::Backtrace(bool fake): m_trace() {
   if (fake) return;
   void * array[200];
-  g_lock.lock();  
+  g_lock.lock();
   size_t depth = ::backtrace(array, sizeof(array)/sizeof(void*));
   char ** strings = ::backtrace_symbols(array, depth);
 
@@ -133,7 +133,7 @@ cta::exception::Backtrace::Backtrace(bool fake): m_trace() {
         after = line.substr(line.find("+"), line.find("[")-line.find("+")+1);
         addr = line.substr(line.find("[")+1, line.find("]")-line.find("[")-1);
         int status(-1);
-        char * demangled = abi::__cxa_demangle(theFunc.c_str(), NULL, NULL, &status);
+        char * demangled = abi::__cxa_demangle(theFunc.c_str(), nullptr, nullptr, &status);
         if (0 == status) {
           m_trace += before;
           m_trace += demangled;
@@ -152,7 +152,7 @@ cta::exception::Backtrace::Backtrace(bool fake): m_trace() {
       } else {
         m_trace += strings[i];
         m_trace += "\n";
-      }  
+      }
     }
     free (strings);
   }

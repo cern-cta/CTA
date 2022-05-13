@@ -22,9 +22,9 @@
 #include <cxxabi.h>
 #include <iostream>
 
-namespace cta { 
+namespace cta {
 namespace threading {
-  
+
 /* Implmentations of the threading primitives */
 //------------------------------------------------------------------------------
 //start
@@ -80,22 +80,22 @@ void Thread::kill()
 //------------------------------------------------------------------------------
 void * Thread::pthread_runner (void * arg) {
 
-  /* static_casting a pointer to and from void* preserves the address. 
+  /* static_casting a pointer to and from void* preserves the address.
    * See https://stackoverflow.com/questions/573294/when-to-use-reinterpret-cast
-   */ 
+   */
   Thread * _this = static_cast<Thread *>(arg);
 
   // Set the thread cancellation type to immediate, for use in the tapeResourceManager tests
-  cta::exception::Errnum::throwOnReturnedErrno(::pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL),
+  cta::exception::Errnum::throwOnReturnedErrno(::pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, nullptr),
       "Error from pthread_setcancelstate in cta::threading::Thread::pthread_runner");
-  cta::exception::Errnum::throwOnReturnedErrno(::pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL),
+  cta::exception::Errnum::throwOnReturnedErrno(::pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, nullptr),
       "Error from pthread_setcanceltype in cta::threading::Thread::pthread_runner");
   try {
     _this->run();
   } catch (std::exception & e) {
     _this->m_hadException = true;
     int status = -1;
-    char * demangled = abi::__cxa_demangle(typeid(e).name(), NULL, NULL, &status);
+    char * demangled = abi::__cxa_demangle(typeid(e).name(), nullptr, nullptr, &status);
     if (!status) {
       _this->m_type += demangled;
     } else {
@@ -109,7 +109,7 @@ void * Thread::pthread_runner (void * arg) {
     _this->m_what = "uncaught non-standard exception";
     throw;
   }
-  return NULL;
+  return nullptr;
 }
 
 } // namespace threading

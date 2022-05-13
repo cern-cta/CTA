@@ -25,12 +25,12 @@ namespace cta { namespace objectstore {
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-BackendPopulator::BackendPopulator(cta::objectstore::Backend & be, 
+BackendPopulator::BackendPopulator(cta::objectstore::Backend & be,
     const std::string &agentType, const cta::log::LogContext & lc): m_backend(be), m_agentReference(agentType, lc.logger()),
     m_lc(lc) {
   cta::objectstore::RootEntry re(m_backend);
   re.fetchNoLock();
-  cta::objectstore::EntryLogSerDeser cl("user0", "systemhost", time(NULL));
+  cta::objectstore::EntryLogSerDeser cl("user0", "systemhost", time(nullptr));
   // We might have to create the agent register (but this is unlikely)
   log::LogContext lc2(lc);
   try {

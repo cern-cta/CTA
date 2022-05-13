@@ -100,7 +100,7 @@ TEST_F(cta_UtilsTest,
 
 TEST_F(cta_UtilsTest, getEnclosingPath_empty_string) {
   using namespace cta;
-    
+
   const std::string dirPath = "";
 
   ASSERT_THROW(utils::getEnclosingPath(dirPath), std::exception);
@@ -108,7 +108,7 @@ TEST_F(cta_UtilsTest, getEnclosingPath_empty_string) {
 
 TEST_F(cta_UtilsTest, getEnclosingPath_root) {
   using namespace cta;
-    
+
   const std::string dirPath = "/";
 
   std::string enclosingPath;
@@ -120,7 +120,7 @@ TEST_F(cta_UtilsTest, getEnclosingPath_grandparent) {
   using namespace cta;
 
   const std::string dirPath = "/grandparent";
-    
+
   std::string enclosingPath;
   ASSERT_NO_THROW(enclosingPath = utils::getEnclosingPath(dirPath));
   ASSERT_EQ(std::string("/"), enclosingPath);
@@ -254,7 +254,7 @@ TEST_F(cta_UtilsTest, endsWith_slash_non_empty_string_without_terminating_slash)
   using namespace cta;
   const std::string str = "abcde";
   ASSERT_FALSE(utils::endsWith(str, '/'));
-} 
+}
 
 TEST_F(cta_UtilsTest, endsWith_slash_non_empty_string_with_terminating_slash) {
   using namespace cta;
@@ -266,7 +266,7 @@ TEST_F(cta_UtilsTest, endsWith_slash_just_a_slash) {
   using namespace cta;
   const std::string str = "/";
   ASSERT_TRUE(utils::endsWith(str, '/'));
-} 
+}
 
 TEST_F(cta_UtilsTest, errnoToString_EACCESS) {
   using namespace cta;
@@ -638,7 +638,7 @@ TEST_F(cta_UtilsTest, adler32_empty_buf) {
   using namespace cta;
 
   // The adler32 of an empty buffer is 1
-  ASSERT_EQ((uint32_t)1, utils::getAdler32(NULL, 0));
+  ASSERT_EQ((uint32_t)1, utils::getAdler32(nullptr, 0));
 }
 
 TEST_F(cta_UtilsTest, adler32_buf_of_character_1) {
@@ -832,7 +832,7 @@ TEST_F(cta_UtilsTest, testCopyStringNullDst) {
   using namespace cta;
   char dummy[6] = "Dummy";
 
-  ASSERT_THROW(utils::copyString(NULL, 0, dummy),
+  ASSERT_THROW(utils::copyString(nullptr, 0, dummy),
     cta::exception::Exception);
 }
 
@@ -847,7 +847,7 @@ TEST_F(cta_UtilsTest, testCopyString) {
 
 TEST_F(cta_UtilsTest, ellipses) {
   using namespace cta::utils;
-  
+
   ASSERT_EQ("1234567890", postEllipsis("1234567890", 12));
   ASSERT_EQ("1234567[...]", postEllipsis("1234567890ABCDEF", 12));
   ASSERT_EQ("1234567890", midEllipsis("1234567890", 12));
@@ -857,7 +857,7 @@ TEST_F(cta_UtilsTest, ellipses) {
 }
 
 TEST_F(cta_UtilsTest, DISABLED_currentTime) {
-  /* This test is disabled as it prints our similar, yet slightly different dates, 
+  /* This test is disabled as it prints our similar, yet slightly different dates,
    * so it would be complex to automate.
    * Just run with: "cta-unitTests --gtest_filter=*currentTime --gtest_also_run_disabled_tests" */
   using namespace cta::utils;
@@ -883,21 +883,21 @@ TEST_F(cta_UtilsTest, appendParameterXRootFileURL){
   cta::utils::appendParameterXRootFileURL(fileURL,"oss.asize","145");
   //nothing should have changed
   ASSERT_EQ(fileURLTest,fileURL);
- 
+
   fileURLTest = "root://ctaeos.cta.svc.cluster.local//eos/ctaeos/preprod/79fe26de-6b8b-437c-b507-06dbfe8d0a79/0/test00000171";
   fileURL = fileURLTest;
   cta::utils::appendParameterXRootFileURL(fileURL,"oss.asize","15360");
   ASSERT_EQ(fileURLTest+"?oss.asize=15360",fileURL);
-  
+
   fileURLTest = "file://path_to_folder/path_to_file";
   fileURL = fileURLTest;
   cta::utils::appendParameterXRootFileURL(fileURL,"oss.asize","15360");
   ASSERT_EQ(fileURLTest,fileURL);
-  
+
   fileURLTest = "root://ctaeos.cta.svc.cluster.local//eos/ctaeos/preprod/79fe26de-6b8b-437c-b507-06dbfe8d0a79/0/test00000171?eos.lfn=fxid:b2&eos.ruid=0&eos.rgid=0&eos.injection=1&eos.workflow=retrieve_written&eos.space=default";
   fileURL = fileURLTest;
   cta::utils::appendParameterXRootFileURL(fileURL,"oss.asize","15360");
-  ASSERT_EQ(fileURLTest+"&oss.asize=15360",fileURL);  
+  ASSERT_EQ(fileURLTest+"&oss.asize=15360",fileURL);
 }
 
 } // namespace unitTests

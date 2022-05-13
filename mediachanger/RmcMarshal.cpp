@@ -30,10 +30,10 @@ namespace mediachanger {
 size_t marshal(char *const dst, const size_t dstLen, const RmcMountMsgBody &src)  {
   const char *task = "marshal RmcMountMsgBody";
 
-  if(dst == NULL) {
+  if(dst == nullptr) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to " << task <<
-      ": Pointer to destination buffer is NULL";
+      ": Pointer to destination buffer is nullptr";
     throw ex;
   }
 
@@ -84,9 +84,9 @@ size_t marshal(char *const dst, const size_t dstLen, const RmcMountMsgBody &src)
     marshalString(src.vid, p);
     marshalUint16(src.side, p);
     marshalUint16(src.drvOrd, p);
-  } catch(cta::exception::Exception &ne) { 
+  } catch(cta::exception::Exception &ne) {
     cta::exception::Exception ex;
-    ex.getMessage() << "Failed to " << task << ": Failed to marshal body: " 
+    ex.getMessage() << "Failed to " << task << ": Failed to marshal body: "
       << ne.getMessage().str();
     throw ex;
   }
@@ -131,10 +131,10 @@ void unmarshal(const char * &src, size_t &srcLen, RmcMountMsgBody &dst)  {
 size_t marshal(char *const dst, const size_t dstLen, const RmcUnmountMsgBody &src)  {
   const char *const task = "marshal RmcUnmountMsgBody";
 
-  if(dst == NULL) {
+  if(dst == nullptr) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to " << task <<
-      ": Pointer to destination buffer is NULL";
+      ": Pointer to destination buffer is nullptr";
     throw ex;
   }
 

@@ -63,7 +63,7 @@ TEST(ObjectStore, GarbageCollectorBasicFuctionnality) {
   re.insert();
   // Create the agent register
     cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
+      "unittesthost", time(nullptr));
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   rel.release();
@@ -119,7 +119,7 @@ TEST(ObjectStore, GarbageCollectorRegister) {
   re.insert();
   // Create the agent register
     cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
+      "unittesthost", time(nullptr));
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   rel.release();
@@ -183,7 +183,7 @@ TEST(ObjectStore, GarbageCollectorArchiveQueue) {
   re.insert();
   // Create the agent register
     cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
+      "unittesthost", time(nullptr));
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   rel.release();
@@ -247,7 +247,7 @@ TEST(ObjectStore, GarbageCollectorDriveRegister) {
   re.insert();
   // Create the agent register
     cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
+      "unittesthost", time(nullptr));
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   rel.release();
@@ -309,7 +309,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
   re.initialize();
   re.insert();
   // Create the agent register
-  cta::objectstore::EntryLogSerDeser el("user0", "unittesthost", time(NULL));
+  cta::objectstore::EntryLogSerDeser el("user0", "unittesthost", time(nullptr));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
   cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
@@ -396,7 +396,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
       policy.archiveMinRequestAge = 0;
       policy.archivePriority = 1;
       std::list <cta::objectstore::ArchiveQueue::JobToAdd> jta;
-      jta.push_back({jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, 1000U+pass, policy, time(NULL)});
+      jta.push_back({jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, 1000U+pass, policy, time(nullptr)});
       aq.addJobsAndCommit(jta, agentRef, lc);
       ar.setJobOwner(1, aq.getAddressIfSet());
       ar.commit();
@@ -416,7 +416,7 @@ TEST(ObjectStore, GarbageCollectorArchiveRequest) {
       policy.archiveMinRequestAge = 0;
       policy.archivePriority = 1;
       std::list <cta::objectstore::ArchiveQueue::JobToAdd> jta;
-      jta.push_back({jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, 1000+pass, policy, time(NULL)});
+      jta.push_back({jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, 1000+pass, policy, time(nullptr)});
       aq.addJobsAndCommit(jta, agentRef, lc);
       ar.setJobOwner(2, aq.getAddressIfSet());
       ar.commit();
@@ -499,7 +499,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequest) {
   re.insert();
   // Create the agent register
   cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
+      "unittesthost", time(nullptr));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
   cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
@@ -687,7 +687,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestPending) {
   re.insert();
   // Create the agent register
   cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
+      "unittesthost", time(nullptr));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
   cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
@@ -769,7 +769,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestToExpand) {
   re.insert();
   // Create the agent register
   cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
+      "unittesthost", time(nullptr));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
   cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
@@ -850,7 +850,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestRunningExpandNotFinished) {
   re.insert();
   // Create the agent register
   cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
+      "unittesthost", time(nullptr));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
   cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
@@ -933,7 +933,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestRunningExpandFinished) {
   re.insert();
   // Create the agent register
   cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
+      "unittesthost", time(nullptr));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
   cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
@@ -1042,7 +1042,7 @@ TEST(ObjectStore, GarbageCollectorRepackRequestStarting) {
   re.insert();
   // Create the agent register
   cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
+      "unittesthost", time(nullptr));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
   cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
@@ -1121,7 +1121,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
   re.insert();
   // Create the agent register
   cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
+      "unittesthost", time(nullptr));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
   cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
@@ -1590,7 +1590,7 @@ TEST(ObjectStore, GarbageCollectorRetrieveRequestRepackDisabledTape) {
   re.insert();
   // Create the agent register
   cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
+      "unittesthost", time(nullptr));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
   cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
@@ -1751,7 +1751,7 @@ TEST(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
   re.insert();
   // Create the agent register
   cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
+      "unittesthost", time(nullptr));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
   cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);

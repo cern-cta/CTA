@@ -124,7 +124,7 @@ int createListenerSock(
   SmartFd sock(socket(PF_INET, SOCK_STREAM, IPPROTO_TCP));
   if(sock.get() < 0) {
     cta::exception::Exception ex;
-    ex.getMessage() << ": Failed to create socket: " 
+    ex.getMessage() << ": Failed to create socket: "
       << cta::utils::errnoToString(errno);
     throw ex;
   }
@@ -291,7 +291,7 @@ int acceptConnection(const int listenSocketFd,
     throw ex;
   }
 
-  const time_t startTime = time(NULL);
+  const time_t startTime = time(nullptr);
 
   pollfd pollFd;
   pollFd.fd = listenSocketFd;
@@ -314,7 +314,7 @@ int acceptConnection(const int listenSocketFd,
   case -1: // poll() encountered an error
     // If poll() was interrupted
     if(pollErrno == EINTR) {
-      const time_t remainingTime = timeout - (time(NULL) - startTime);
+      const time_t remainingTime = timeout - (time(nullptr) - startTime);
 
       cta::exception::AcceptConnectionInterrupted ex(remainingTime);
 
@@ -648,7 +648,7 @@ void readBytes(
       "In io::readBytes: Invalid timeout value: " << timeout;
     throw ex;
   }
-  
+
   cta::utils::Timer timer;
   size_t bytesRemaining = nbBytes;
   char * readPtr = buf;
@@ -660,7 +660,7 @@ void readBytes(
       pollDescr.revents = 0;
       int pollRet = poll(&pollDescr, 1, (timeout * 1000) - (timer.usecs()/1000));
       cta::exception::Errnum::throwOnMinusOne(pollRet, "In io::readBytes: failed to poll socket");
-      if (!pollRet) 
+      if (!pollRet)
         throw cta::exception::Exception("In io::readBytes: timeout");
       if (pollRet != 1) {
         std::stringstream err;
@@ -705,14 +705,14 @@ void writeBytes(
       ": socketFd=" << socketFd;
     throw ex;
   }
-  
+
   if (timeout < 0) {
     cta::exception::InvalidArgument ex;
     ex.getMessage() <<
       "In io::writeBytes: Invalid timeout value: " << timeout;
     throw ex;
   }
-  
+
   cta::utils::Timer timer;
   size_t bytesRemaining = nbBytes;
   char * writePtr = buf;
@@ -724,7 +724,7 @@ void writeBytes(
       pollDescr.revents = 0;
       int pollRet = poll(&pollDescr, 1, (timeout * 1000) - (timer.usecs()/1000));
       cta::exception::Errnum::throwOnMinusOne(pollRet, "In io::writeBytes: failed to poll socket");
-      if (!pollRet) 
+      if (!pollRet)
         throw cta::exception::Exception("In io::writeBytes: timeout");
       if (pollRet != 1) {
         std::stringstream err;
@@ -750,7 +750,7 @@ void writeBytes(
 
 //------------------------------------------------------------------------------
 // getAddrInfoErrorString
-// 
+//
 // Helper function used to know which string is associated with a specific errno
 // returned by getaddrinfo. This function is needed because the standard one
 // (gai_strerror) is not thread-safe on all systems.
@@ -831,8 +831,8 @@ int connectWithTimeout(
     memset(&hints, '\0', sizeof(hints));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
-  
-    struct addrinfo *res = NULL;
+
+    struct addrinfo *res = nullptr;
     {
       const int rc = getaddrinfo(hostName.c_str(), portStream.str().c_str(), &hints, &res);
       // If getaddrinfo() returned a negative value
@@ -855,7 +855,7 @@ int connectWithTimeout(
     int protocol = res->ai_protocol;
     socklen_t length = res->ai_addrlen;
     freeaddrinfo(res);
-  
+
     return connectWithTimeout(AF_INET, SOCK_STREAM, protocol,
       (struct sockaddr *)(&s_in), length, timeout);
   } catch(cta::exception::Exception &ce) {
@@ -938,7 +938,7 @@ int connectWithTimeout(
   // "operation in progress" when trying to start to connect
   if(EINPROGRESS != connectErrno) {
     cta::exception::Exception ex;
-    ex.getMessage() << "Call to connect() failed: " 
+    ex.getMessage() << "Call to connect() failed: "
       << cta::utils::errnoToString(connectErrno);
     throw ex;
   }
@@ -981,13 +981,13 @@ int connectWithTimeout(
   int sockoptError = 0;
   socklen_t sockoptErrorLen = sizeof(sockoptError);
   cta::exception::Errnum::throwOnMinusOne(
-    getsockopt(smartSock.get(), SOL_SOCKET, SO_ERROR, &sockoptError, 
-      &sockoptErrorLen), 
+    getsockopt(smartSock.get(), SOL_SOCKET, SO_ERROR, &sockoptError,
+      &sockoptErrorLen),
     "In io::connectWithTimeout: failed to getsockopt: ");
   if(0 != sockoptError) { // BSD
     cta::exception::Exception ex;
-    ex.getMessage() 
-      << "In io::connectWithTimeout: Connection did not complete successfully: " 
+    ex.getMessage()
+      << "In io::connectWithTimeout: Connection did not complete successfully: "
       << cta::utils::errnoToString(sockoptError);
     throw ex;
   }
@@ -1005,10 +1005,10 @@ int connectWithTimeout(
 //------------------------------------------------------------------------------
 void marshalUint8(const uint8_t src, char * &dst) {
 
-  if(dst == NULL) {
+  if(dst == nullptr) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to marshal uint8_t"
-      ": Pointer to destination buffer is NULL";
+      ": Pointer to destination buffer is nullptr";
     throw ex;
   }
 
@@ -1021,10 +1021,10 @@ void marshalUint8(const uint8_t src, char * &dst) {
 //------------------------------------------------------------------------------
 void marshalInt16(const int16_t src, char * &dst) {
 
-  if(dst == NULL) {
+  if(dst == nullptr) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to marshal int16_t"
-      ": Pointer to destination buffer is NULL";
+      ": Pointer to destination buffer is nullptr";
     throw ex;
   }
 
@@ -1038,10 +1038,10 @@ void marshalInt16(const int16_t src, char * &dst) {
 //------------------------------------------------------------------------------
 void marshalUint16(const uint16_t src, char * &dst) {
 
-  if(dst == NULL) {
+  if(dst == nullptr) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to marshal uint16_t"
-      ": Pointer to destination buffer is NULL";
+      ": Pointer to destination buffer is nullptr";
     throw ex;
   }
 
@@ -1055,10 +1055,10 @@ void marshalUint16(const uint16_t src, char * &dst) {
 //------------------------------------------------------------------------------
 void marshalInt32(const int32_t src, char * &dst) {
 
-  if(dst == NULL) {
+  if(dst == nullptr) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to marshal int32_t"
-      ": Pointer to destination buffer is NULL";
+      ": Pointer to destination buffer is nullptr";
     throw ex;
   }
 
@@ -1072,10 +1072,10 @@ void marshalInt32(const int32_t src, char * &dst) {
 //------------------------------------------------------------------------------
 void marshalUint32(const uint32_t src, char * &dst) {
 
-  if(dst == NULL) {
+  if(dst == nullptr) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to marshal uint32_t"
-      ": Pointer to destination buffer is NULL";
+      ": Pointer to destination buffer is nullptr";
     throw ex;
   }
 
@@ -1089,10 +1089,10 @@ void marshalUint32(const uint32_t src, char * &dst) {
 //------------------------------------------------------------------------------
 void marshalUint64(const uint64_t src, char * &dst) {
 
-  if(dst == NULL) {
+  if(dst == nullptr) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to marshal uint64_t"
-      ": Pointer to destination buffer is NULL";
+      ": Pointer to destination buffer is nullptr";
     throw ex;
   }
 
@@ -1115,10 +1115,10 @@ void marshalUint64(const uint64_t src, char * &dst) {
 //------------------------------------------------------------------------------
 void marshalString(const std::string &src, char * &dst) {
 
-  if(dst == NULL) {
+  if(dst == nullptr) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to marshal string"
-      ": Pointer to destination buffer is NULL";
+      ": Pointer to destination buffer is nullptr";
     throw ex;
   }
 
@@ -1133,10 +1133,10 @@ void marshalString(const std::string &src, char * &dst) {
 void unmarshalUint8(const char * &src, size_t &srcLen,
   uint8_t &dst)  {
 
-  if(src == NULL) {
+  if(src == nullptr) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal uint8_t"
-      ": Pointer to source buffer is NULL";
+      ": Pointer to source buffer is nullptr";
     throw ex;
   }
 
@@ -1159,10 +1159,10 @@ void unmarshalUint8(const char * &src, size_t &srcLen,
 void unmarshalInt16(const char * &src, size_t &srcLen,
   int16_t &dst)  {
 
-  if(src == NULL) {
+  if(src == nullptr) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal int16_t"
-      ": Pointer to source buffer is NULL";
+      ": Pointer to source buffer is nullptr";
     throw ex;
   }
 
@@ -1187,10 +1187,10 @@ void unmarshalInt16(const char * &src, size_t &srcLen,
 void unmarshalUint16(const char * &src, size_t &srcLen,
   uint16_t &dst)  {
 
-  if(src == NULL) {
+  if(src == nullptr) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal uint16_t"
-      ": Pointer to source buffer is NULL";
+      ": Pointer to source buffer is nullptr";
     throw ex;
   }
 
@@ -1215,10 +1215,10 @@ void unmarshalUint16(const char * &src, size_t &srcLen,
 void unmarshalUint32(const char * &src, size_t &srcLen,
   uint32_t &dst)  {
 
-  if(src == NULL) {
+  if(src == nullptr) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal uint32_t"
-      ": Pointer to source buffer is NULL";
+      ": Pointer to source buffer is nullptr";
     throw ex;
   }
 
@@ -1243,10 +1243,10 @@ void unmarshalUint32(const char * &src, size_t &srcLen,
 void unmarshalInt32(const char * &src, size_t &srcLen,
   int32_t &dst)  {
 
-  if(src == NULL) {
+  if(src == nullptr) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal int32_t"
-      ": Pointer to source buffer is NULL";
+      ": Pointer to source buffer is nullptr";
     throw ex;
   }
 
@@ -1271,10 +1271,10 @@ void unmarshalInt32(const char * &src, size_t &srcLen,
 void unmarshalUint64(const char * &src, size_t &srcLen,
   uint64_t &dst)  {
 
-  if(src == NULL) {
+  if(src == nullptr) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal uint64_t"
-      ": Pointer to source buffer is NULL";
+      ": Pointer to source buffer is nullptr";
     throw ex;
   }
 
@@ -1305,10 +1305,10 @@ void unmarshalString(const char * &src,
   size_t &srcLen, char *dst, const size_t dstLen)
    {
 
-  if(src == NULL) {
+  if(src == nullptr) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal string"
-      ": Pointer to source buffer is NULL";
+      ": Pointer to source buffer is nullptr";
     throw ex;
   }
 
@@ -1319,10 +1319,10 @@ void unmarshalString(const char * &src,
     throw ex;
   }
 
-  if(dst == NULL) {
+  if(dst == nullptr) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal string"
-      ": Pointer to destination buffer is NULL";
+      ": Pointer to destination buffer is nullptr";
     throw ex;
   }
 

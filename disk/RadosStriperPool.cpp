@@ -35,7 +35,7 @@ private:
 };
 }
 
-namespace cta { 
+namespace cta {
 namespace disk   {
 
 //------------------------------------------------------------------------------
@@ -79,7 +79,7 @@ libradosstriper::RadosStriper* RadosStriperPool::throwingGetStriper(const std::s
     // we need to create a new radosStriper, as the requested one is not there yet.
     // First find the user id (if any given) in the pool string
     // format is [<userid>@]<poolname>
-    const char* userId = NULL;
+    const char* userId = nullptr;
     size_t pos = userAtPool.find('@');
     std::string user;
     std::string pool;
@@ -94,9 +94,9 @@ libradosstriper::RadosStriper* RadosStriperPool::throwingGetStriper(const std::s
     ReleasingRados cluster;
     cta::exception::Errnum::throwOnReturnedErrno(cluster.init(userId),
         "In RadosStriperPool::throwingGetStriper(): failed to cluster.init(userId): ");
-    cta::exception::Errnum::throwOnReturnedErrno(cluster.conf_read_file(NULL),
-        "In RadosStriperPool::throwingGetStriper(): failed to cluster.conf_read_file(NULL): ");
-    cluster.conf_parse_env(NULL);
+    cta::exception::Errnum::throwOnReturnedErrno(cluster.conf_read_file(nullptr),
+        "In RadosStriperPool::throwingGetStriper(): failed to cluster.conf_read_file(nullptr): ");
+    cluster.conf_parse_env(nullptr);
     cta::exception::Errnum::throwOnReturnedErrno(cluster.connect(),
         "In RadosStriperPool::throwingGetStriper(): failed to cluster.connect(): ");
     librados::IoCtx ioctx;
@@ -129,7 +129,7 @@ libradosstriper::RadosStriper* RadosStriperPool::getStriper(const std::string& u
   try {
     return throwingGetStriper(userAtPool);
   } catch (...) {
-    return NULL;
+    return nullptr;
   }
 }
 

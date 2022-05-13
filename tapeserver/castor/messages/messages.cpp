@@ -68,11 +68,11 @@ std::string castor::messages::computeSHA1Base64(void const* const data,
   EVP_DigestFinal_ex(&ctx, md_value, &md_len);
   // cleanup context
   EVP_MD_CTX_cleanup(&ctx);
-  
-  // base64 encode 
+
+  // base64 encode
   BIO *b64 = BIO_new(BIO_f_base64());
   BIO *bmem = BIO_new(BIO_s_mem());
-  if (NULL == b64 || NULL == bmem) {
+  if (nullptr == b64 || nullptr == bmem) {
     throw cta::exception::Exception("cant set up the environnement for computing the SHA1 in base64");
   }
   b64 = BIO_push(b64, bmem);
@@ -84,6 +84,6 @@ std::string castor::messages::computeSHA1Base64(void const* const data,
   std::string ret(bptr->data,bptr->length);
   BIO_free(bmem);
   BIO_free(b64);
-  
+
   return ret;
 }

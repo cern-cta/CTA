@@ -31,9 +31,9 @@ namespace statistics {
 StatisticsSaveCmdLineArgs::StatisticsSaveCmdLineArgs(const int argc, char *const *const argv):
   help(false) {
   static struct option longopts[] = {
-    {"catalogueconf",  required_argument, NULL, 'c'},
-    {"help",  no_argument, NULL, 'h'},
-    {NULL  ,           0, NULL,   0}
+    {"catalogueconf",  required_argument, nullptr, 'c'},
+    {"help",  no_argument, nullptr, 'h'},
+    {nullptr  ,           0, nullptr,   0}
   };
 
   // Prevent getopt() from printing an error message if it does not recognize
@@ -41,7 +41,7 @@ StatisticsSaveCmdLineArgs::StatisticsSaveCmdLineArgs(const int argc, char *const
   opterr = 0;
 
   int opt = 0;
-  while ((opt = getopt_long(argc, argv, ":hc:j", longopts, NULL)) != -1) {
+  while ((opt = getopt_long(argc, argv, ":hc:j", longopts, nullptr)) != -1) {
     switch (opt) {
     case 'h':
       help = true;

@@ -4,7 +4,7 @@ Development servers
 VDQM servers:
   lxb8294       (dedicated PC)
   lxcastordev04 (virtual PC)
-  
+
 Disk servers:
   lxc2disk07
   lxc2disk08
@@ -17,7 +17,7 @@ Past tape servers (do not use):
   tpsrv250 (ibmlib3)
   tpsrv222 (ibmlib3)
   tpsrv233 (ibmlib1)
-  tpsrv234 (ibmlib1) 
+  tpsrv234 (ibmlib1)
 
 Tape pools:
   vdqm2_test
@@ -469,7 +469,7 @@ please confirm [yes]:
 [INFO] please wait...
 [INFO] commit OK
 <cdbop@cdbserv.cern.ch: ~>
- 
+
 [root@lxb1366 root]# ccm-fetch
 [root@lxb1366 root]# ncm-ncd --co castorconf
 
@@ -528,7 +528,7 @@ Start all daemons
 /etc/init.d/stagerd start
 
 for cname  in `nslistclass | grep NAME | awk '{print $2}'` ; do enterFileClass --Name $cname --GetFromCns ; done
-enterSvcClass --Name default --DiskPools default 
+enterSvcClass --Name default --DiskPools default
 enterSvcClass --Name dev --DiskPools extra
 enterSvcClass --Name diskonly --DiskPools extra --DiskOnlyBehavior yes --ForcedFileClass temp
 moveDiskServer default lxc2disk07.cern.ch
@@ -705,8 +705,8 @@ How to mount, unload and then dismount a tape
 =============================================
 
 [root@lxc2dev4d2 ~]# smc -h localhost -q D
-	 0	    1	free	
-	 1	    2	free	
+	 0	    1	free
+	 1	    2	free
 [root@lxc2dev4d2 ~]# smc -h localhost -q V
 V42001	    1024	slot
 V42002	    1025	slot
@@ -716,7 +716,7 @@ V42005	    1028	slot
 [root@lxc2dev4d2 ~]# smc -m -D 0 -h localhost -V V42001
 [root@lxc2dev4d2 ~]# smc -h localhost -q D
 	 0	    1	loaded	V42001
-	 1	    2	free	
+	 1	    2	free
 [root@lxc2dev4d2 ~]# smc -h localhost -q V
 V42001	       1	drive
 V42002	    1025	slot
@@ -725,15 +725,15 @@ V42004	    1027	slot
 V42005	    1028	slot
 [root@lxc2dev4d2 ~]# smc -d -D 0 -h localhost -V V42001
 [root@lxc2dev4d2 ~]# smc -h localhost -q D
-	 0	    1	free	
-	 1	    2	free	
+	 0	    1	free
+	 1	    2	free
 [root@lxc2dev4d2 ~]# smc -h localhost -q V
 V42001	    1024	slot
 V42002	    1025	slot
 V42003	    1026	slot
 V42004	    1027	slot
 V42005	    1028	slot
-[root@lxc2dev4d2 ~]# 
+[root@lxc2dev4d2 ~]#
 
 How to set the read priority of tape for a single-mount
 =======================================================
@@ -2546,7 +2546,7 @@ media letter and media cost:
 *******************************************************************************
 T10000 T  200
 [root@lxcastordev04 tape]#
-  
+
 The model can now be entered into the tape-development setup:
 
 [root@lxcastordev04 tape]# vmgrentermodel --mo T10000 --ml T --mc 200
@@ -2809,11 +2809,11 @@ SQL>
 How to display the checksum extended file system attribute of a disk file
 =========================================================================
 
-[root@lxfsre4304 59]# getfattr -d 399131859@castorns.1010785562 
-# file: 399131859@castorns.1010785562 
-user.castor.checksum.type="ADLER32" 
-user.castor.checksum.value="99653f32" 
-[root@lxfsre4304 59]# 
+[root@lxfsre4304 59]# getfattr -d 399131859@castorns.1010785562
+# file: 399131859@castorns.1010785562
+user.castor.checksum.type="ADLER32"
+user.castor.checksum.value="99653f32"
+[root@lxfsre4304 59]#
 
 
 How to find the VDQM production server
@@ -2997,7 +2997,7 @@ cdbop console:
 prod/services/castor/service/castoritdc.tpl profiles/profile_c2itdcsrv102.tpl
 [INFO] '/prod/services/castor/service/castoritdc': scheduled to be updated
 [INFO] '/profiles/profile_c2itdcsrv102': scheduled to be updated
-<cdbop@cdbserv.cern.ch: ~/cdbop> 
+<cdbop@cdbserv.cern.ch: ~/cdbop>
 
 Commit the changes and quit.  For example enter the following in the cdbop
 console:
@@ -3051,7 +3051,7 @@ status:
 0-1 => not picked by the mighunter
 2   => attached to a stream
 7   => the mighunter is analyzing them
-3   => detached from the stream and sent to the aggregator  
+3   => detached from the stream and sent to the aggregator
 
 
 How to see the status of the streams in the stager database
@@ -3307,7 +3307,7 @@ SQL>
 Run the following PL/SQL block modified to use your table as opposed to the
 one of this example.  This script deletes the out-of-date tape copies and
 their associated segments. It fails the associated recall disk-copies and
-restarts the associated recall sub-requests. 
+restarts the associated recall sub-requests.
 
 BEGIN
 
@@ -3377,12 +3377,12 @@ VDQM HOST <VDQMhost>
 # /etc/init.d/vdqmd start
 
 5) Chose te tapeserver(s) to be used by the new VDQM
-# ssh tpstvABC 
+# ssh tpstvABC
 
 6) Put DOWN the drive
 # tpmaint stop
 
-7) Modify the VDQM HOST and add VDQM host to ADMIN HOSTS in the castor.conf 
+7) Modify the VDQM HOST and add VDQM host to ADMIN HOSTS in the castor.conf
 # vi /etc/castor/castor.conf
 ...
 ADMIN HOSTS <VDQMhost> ...
@@ -3398,7 +3398,7 @@ VDQM HOST <VDQMhost>
 # /etc/init.d/rsyslog restart
 
 9) Chek that it worked
-[root@tpsrvABC ~]# showqueues 
+[root@tpsrvABC ~]# showqueues
 35921005@tpsrvABC (0 MB) FREE vid:  last update May 26 17:24:14
 
 
@@ -3828,11 +3828,11 @@ will fail with error messages of the form:
 
 In file included from /opt/globus/include/gcc64dbgpthr/globus_common.h:58,
                  from /opt/globus/include/gcc64dbgpthr/gssapi.h:44,
-                 from 
+                 from
 /opt/globus/include/gcc64dbgpthr/globus_gss_assist.h:38,
-                 from 
+                 from
 /var/CASTOR_SVN_CO/trunk/security/Csec_plugin_GSS.c:51:
-/opt/globus/include/gcc64dbgpthr/globus_common_include.h:19:27: error: 
+/opt/globus/include/gcc64dbgpthr/globus_common_include.h:19:27: error:
 globus_config.h: No such file or directory
 
 Run the follwing as root in order to fix the installation of the globus rpms:
@@ -3901,7 +3901,7 @@ Comment: Adding plotutils package in order to get the pic2plot command-line prog
 [murrayc3@lxadm06 ~]$ exit
 logout
 Connection to lxadm closed.
-[root@lxcastordev04 ~]# spma_wrapper.sh 
+[root@lxcastordev04 ~]# spma_wrapper.sh
 
 [INFO] NCM-NCD version 1.2.22 started by root at: Mon Oct 18 11:37:18 2010
 [INFO] executing configure on components....
@@ -3924,7 +3924,7 @@ Connection to lxadm closed.
 [INFO] reading target configuration ..
 [INFO] executing operations..
 [INFO] The following package operations are required:
-       install http://swrep/swrep/x86_64_slc5/ plotutils 2.5 5.el5 x86_64 
+       install http://swrep/swrep/x86_64_slc5/ plotutils 2.5 5.el5 x86_64
 [INFO] Please be patient... 1 operation(s) to verify/execute.
 [OK]   SPMA finished successfully.
 
@@ -3941,7 +3941,7 @@ Connection to lxadm closed.
 =========================================================
 
 [OK]   0 errors, 0 warnings executing configure
-[root@lxcastordev04 ~]# 
+[root@lxcastordev04 ~]#
 
 
 How do I find the source files of the CASTOR web-site?
@@ -3963,9 +3963,9 @@ How to find the locks existing in the DB?
 -- This relies on sql_prev_id, which might or might not point to the sql that took the lock
 select unique s.sid, s.program, s.process, l.type, l.id1, l.id2, l.ctime, l.block, do.object_name,  sq.SQL_TEXT
   from v$session s
- inner join v$lock l on  l.sid = s.sid 
+ inner join v$lock l on  l.sid = s.sid
   left outer join v$sql sq on sq.sql_id = s.prev_sql_id
-  left outer join dba_objects do on do.object_id = l.id1 
+  left outer join dba_objects do on do.object_id = l.id1
 where s.SCHEMANAME = 'STAGER_DEV03'
 order by OBJECT_NAME;
 
@@ -3976,7 +3976,7 @@ How to find the blocked - blocker relationships in the DB?
 -- Find blocker, blocked and what they do or did.
 -- This relies on sql_prev_id, which might or might not point to the sql that took the lock
 select s.sid, s.process, s.program, s_sql.sql_text, blocker.sid "blocker sid", b_sql.sql_text "blocker prev sql"
-  from v$session s 
+  from v$session s
   left outer join v$sql s_sql on s_sql.sql_id = s.sql_id
   left outer join v$session blocker on blocker.sid = s.blocking_session
   left outer join v$sql b_sql on b_sql.sql_id = blocker.prev_sql_id
@@ -3986,10 +3986,10 @@ How to move to subversion 1.5.7 on a dev box
 ============================================
 
 In template prod/cluster/castordev/customization/headnode/dev03.tpl, add:
-  
+
 "/software/packages" = pkg_repl("subversion", "1.5.7-1", ELFMS_ARCH);
 "/software/packages" = pkg_add("neon", DEF, ELFMS_ARCH, "multi");
-"/software/packages" = pkg_add("neon", "0.27.2-1", ELFMS_ARCH, "multi"); 
+"/software/packages" = pkg_add("neon", "0.27.2-1", ELFMS_ARCH, "multi");
 
 (neon is a dependancy).
 

@@ -176,7 +176,7 @@ TEST(ObjectStore, ArchiveQueueAlgorithms) {
   re.insert();
   // Create the agent register
   EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
+      "unittesthost", time(nullptr));
   ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   rel.release();
@@ -258,7 +258,7 @@ TEST(ObjectStore, ArchiveQueueAlgorithmsWithDeletedJobsInQueue) {
   re.insert();
   // Create the agent register
   EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
+      "unittesthost", time(nullptr));
   ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   rel.release();
@@ -375,7 +375,7 @@ TEST(ObjectStore, RetrieveQueueAlgorithms) {
   re.initialize();
   re.insert();
   // Create the agent register
-  EntryLogSerDeser el("user0", "unittesthost", time(NULL));
+  EntryLogSerDeser el("user0", "unittesthost", time(nullptr));
   ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   re.addOrGetAgentRegisterPointerAndCommit(agentRef2, el, lc);
@@ -464,7 +464,7 @@ TEST(ObjectStore, RetrieveQueueAlgorithmsUpdatesOldestJobQueueTime) {
   re.initialize();
   re.insert();
   // Create the agent register
-  cta::objectstore::EntryLogSerDeser el("user0", "unittesthost", time(NULL));
+  cta::objectstore::EntryLogSerDeser el("user0", "unittesthost", time(nullptr));
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   rel.release();
@@ -553,7 +553,7 @@ TEST(ObjectStore, ArchiveQueueAlgorithmsUpdatesOldestJobQueueTime) {
   re.initialize();
   re.insert();
   // Create the agent register
-  cta::objectstore::EntryLogSerDeser el("user0", "unittesthost", time(NULL));
+  cta::objectstore::EntryLogSerDeser el("user0", "unittesthost", time(nullptr));
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   rel.release();

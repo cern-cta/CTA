@@ -51,11 +51,11 @@ public:
    * then it will be freed using cap_free().
    *
    * @param cap The capability state to be owned.  If a capabibility state is
-   * not specified then the default value of NULL will be used.  In this default
+   * not specified then the default value of nullptr will be used.  In this default
    * case the smart pointer will not own a capbility state after the reset()
    * method returns.
    */
-  void reset(cap_t cap = NULL) throw();
+  void reset(cap_t cap = nullptr) throw();
 
   /**
    * SmartCap assignment operator.
@@ -72,15 +72,15 @@ public:
   /**
    * Destructor.
    *
-   * Resets this smart pointer with the default value of NULL.
+   * Resets this smart pointer with the default value of nullptr.
    */
   ~SmartCap() throw();
 
   /**
-   * Returns the owned capbility state or NULL if this smart pointer does not
+   * Returns the owned capbility state or nullptr if this smart pointer does not
    * own one.
    *
-   * @return The owned capbility state or NULL if this smart pointer does not
+   * @return The owned capbility state or nullptr if this smart pointer does not
    * own one.
    */
   cap_t get() const throw();
@@ -95,8 +95,8 @@ public:
 private:
 
   /**
-   * The owned capbility state or NULL if this smart pointer does not own one.
-   */ 
+   * The owned capbility state or nullptr if this smart pointer does not own one.
+   */
   cap_t m_cap;
 
   /**
@@ -110,4 +110,3 @@ private:
 }; // class SmartCap
 
 }} // namespace cta::server
-

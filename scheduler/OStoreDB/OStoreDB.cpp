@@ -3327,7 +3327,7 @@ OStoreDB::TapeMountDecisionInfo::~TapeMountDecisionInfo() {
   // and then destroy the object
   if (m_lockTaken)
     m_lockOnSchedulerGlobalLock.release();
-  m_schedulerGlobalLock.reset(NULL);
+  m_schedulerGlobalLock.reset(nullptr);
 }
 
 //------------------------------------------------------------------------------

@@ -41,9 +41,9 @@ cta::mediachanger::DismountCmdLine::DismountCmdLine(const int argc,
   m_driveLibrarySlot(0) {
 
   static struct option longopts[] = {
-    {"debug", 0, NULL, 'd'},
-    {"help" , 0, NULL, 'h'},
-    {NULL   , 0, NULL, 0}
+    {"debug", 0, nullptr, 'd'},
+    {"help" , 0, nullptr, 'h'},
+    {nullptr   , 0, nullptr, 0}
   };
 
   // Prevent getopt() from printing an error message if it does not recognize
@@ -51,7 +51,7 @@ cta::mediachanger::DismountCmdLine::DismountCmdLine(const int argc,
   opterr = 0;
 
   int opt = 0;
-  while((opt = getopt_long(argc, argv, ":dh", longopts, NULL)) != -1) {
+  while((opt = getopt_long(argc, argv, ":dh", longopts, nullptr)) != -1) {
     processOption(opt);
   }
 
@@ -211,4 +211,3 @@ const cta::mediachanger::LibrarySlot &cta::mediachanger::
 
   return *m_driveLibrarySlot;
 }
-

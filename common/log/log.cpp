@@ -21,7 +21,7 @@
 /**
  * The logger to be used by the CASTOR logging systsem.
  */
-static cta::log::Logger *s_logger = NULL;
+static cta::log::Logger *s_logger = nullptr;
 
 //------------------------------------------------------------------------------
 // init
@@ -40,14 +40,14 @@ void cta::log::init(cta::log::Logger *logger) {
 //------------------------------------------------------------------------------
 void cta::log::shutdown() {
   delete s_logger;
-  s_logger = NULL;
+  s_logger = nullptr;
 }
 
 //------------------------------------------------------------------------------
 // instance
 //------------------------------------------------------------------------------
 cta::log::Logger &cta::log::instance() {
-  if(NULL == s_logger) {
+  if(nullptr == s_logger) {
     throw cta::exception::Exception("Failed to get CASTOR logger"
       ": Logger does not exist");
   }

@@ -57,7 +57,7 @@ int main(int argc, char ** argv) {
     cta::objectstore::AgentReference agr("cta-objectstore-initialize", logger);
     cta::objectstore::Agent ag(agr.getAgentAddress(), *be);
     ag.initialize();
-    cta::objectstore::EntryLogSerDeser el("user0", "systemhost", time(NULL));
+    cta::objectstore::EntryLogSerDeser el("user0", "systemhost", time(nullptr));
     re.addOrGetAgentRegisterPointerAndCommit(agr,el, lc);
     rel.release();
     ag.insertAndRegisterSelf(lc);

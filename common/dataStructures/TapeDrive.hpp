@@ -96,7 +96,7 @@ struct TapeDrive {
   std::optional<uint64_t> currentPriority;
   std::optional<std::string> currentActivity;
   std::optional<std::string> currentTapePool;
-  MountType nextMountType; // defaults to NO_MOUNT. This can't be optional, as we have a NOT NULL constraint in the DB.
+  MountType nextMountType; // defaults to NO_MOUNT. This can't be optional, as we have a NOT nullptr constraint in the DB.
   std::optional<std::string> nextVid;
   std::optional<std::string> nextTapePool;
   std::optional<uint64_t> nextPriority;

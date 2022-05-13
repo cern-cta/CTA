@@ -37,12 +37,12 @@ protected:
     m_hostName("dummy"),
     m_programName("testdaemon"),
     m_argc(0),
-    m_argv(NULL) {
+    m_argv(nullptr) {
   }
 
   virtual void SetUp() {
     m_argc = 0;
-    m_argv = NULL;
+    m_argv = nullptr;
   }
 
   virtual void TearDown() {
@@ -57,7 +57,7 @@ protected:
 TEST_F(cta_threading_DaemonTest, getForegroundBeforeParseCommandLine) {
   cta::log::DummyLogger log(m_hostName, m_programName);
   cta::server::Daemon daemon(log);
-  
+
   ASSERT_THROW(daemon.getForeground(), cta::server::Daemon::CommandLineNotParsed);
 }
 

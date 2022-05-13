@@ -30,7 +30,7 @@ protected:
   struct Argcv {
     int argc;
     char **argv;
-    Argcv(): argc(0), argv(NULL) {
+    Argcv(): argc(0), argv(nullptr) {
     }
   };
   typedef std::list<Argcv*> ArgcvList;
@@ -75,7 +75,7 @@ TEST_F(cta_mediachanger_DismountCmdLineTest, copy_constructor) {
   args->argv[0] = dupString("cta-mediachanger-dismount");
   args->argv[1] = dupString("vid");
   args->argv[2] = dupString("smc1");
-  args->argv[3] = NULL;
+  args->argv[3] = nullptr;
 
   DismountCmdLine cmdLine1(args->argc, args->argv);
   ASSERT_FALSE(cmdLine1.getHelp());
@@ -102,7 +102,7 @@ TEST_F(cta_mediachanger_DismountCmdLineTest, assignment) {
   args1->argv[0] = dupString("cta-mediachanger-dismount");
   args1->argv[1] = dupString("vid");
   args1->argv[2] = dupString("smc1");
-  args1->argv[3] = NULL;
+  args1->argv[3] = nullptr;
 
   DismountCmdLine cmdLine1(args1->argc, args1->argv);
   ASSERT_FALSE(cmdLine1.getHelp());
@@ -117,7 +117,7 @@ TEST_F(cta_mediachanger_DismountCmdLineTest, assignment) {
   args2->argv[0] = dupString("cta-mediachanger-dismount");
   args2->argv[1] = dupString("vid");
   args2->argv[2] = dupString("smc2");
-  args2->argv[3] = NULL;
+  args2->argv[3] = nullptr;
 
   DismountCmdLine cmdLine2(args2->argc, args2->argv);
   ASSERT_FALSE(cmdLine2.getHelp());
@@ -148,7 +148,7 @@ TEST_F(cta_mediachanger_DismountCmdLineTest, scsi) {
   args->argv[0] = dupString("cta-mediachanger-dismount");
   args->argv[1] = dupString("vid");
   args->argv[2] = dupString("smc1");
-  args->argv[3] = NULL;
+  args->argv[3] = nullptr;
 
   std::unique_ptr<DismountCmdLine> cmdLine;
   ASSERT_NO_THROW(cmdLine.reset(new DismountCmdLine(args->argc, args->argv)));

@@ -29,7 +29,7 @@ protected:
   struct Argcv {
     int argc;
     char **argv;
-    Argcv(): argc(0), argv(NULL) {
+    Argcv(): argc(0), argv(nullptr) {
     }
   };
   typedef std::list<Argcv*> ArgcvList;
@@ -75,7 +75,7 @@ TEST_F(cta_catalogue_PollDatabaseCmdLineArgsTest, help_short) {
   args->argv = new char *[3];
   args->argv[0] = dupString("cta-database-poll");
   args->argv[1] = dupString("-h");
-  args->argv[2] = NULL;
+  args->argv[2] = nullptr;
 
   PollDatabaseCmdLineArgs cmdLine(args->argc, args->argv);
 
@@ -93,7 +93,7 @@ TEST_F(cta_catalogue_PollDatabaseCmdLineArgsTest, help_long) {
   args->argv = new char *[3];
   args->argv[0] = dupString("cta-database-poll");
   args->argv[1] = dupString("--help");
-  args->argv[2] = NULL;
+  args->argv[2] = nullptr;
 
   PollDatabaseCmdLineArgs cmdLine(args->argc, args->argv);
 
@@ -112,7 +112,7 @@ TEST_F(cta_catalogue_PollDatabaseCmdLineArgsTest, all_args) {
   args->argv[0] = dupString("cta-database-poll");
   args->argv[1] = dupString("dbConfigPath");
   args->argv[2] = dupString("1234");
-  args->argv[3] = NULL;
+  args->argv[3] = nullptr;
 
   PollDatabaseCmdLineArgs cmdLine(args->argc, args->argv);
 

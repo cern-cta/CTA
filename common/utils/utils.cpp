@@ -429,7 +429,7 @@ void setXattr(const std::string &path, const std::string &name,
 //------------------------------------------------------------------------------
 std::string getXattr(const std::string &path,
   const std::string &name) {
-  const auto sizeOfValue = getxattr(path.c_str(), name.c_str(), NULL, 0);
+  const auto sizeOfValue = getxattr(path.c_str(), name.c_str(), nullptr, 0);
   if(0 > sizeOfValue) {
     const int savedErrno = errno;
     std::stringstream msg;
@@ -502,7 +502,7 @@ uint8_t toUint8(const std::string &str) {
   }
 
   errno = 0;
-  const long int value = strtol(str.c_str(), (char **) NULL, 10);
+  const long int value = strtol(str.c_str(), (char **) nullptr, 10);
   const int savedErrno = errno;
   if(savedErrno) {
     std::ostringstream msg;
@@ -538,7 +538,7 @@ uint16_t toUint16(const std::string &str) {
   }
 
   errno = 0;
-  const long int value = strtol(str.c_str(), (char **) NULL, 10);
+  const long int value = strtol(str.c_str(), (char **) nullptr, 10);
   const int savedErrno = errno;
   if(savedErrno) {
     std::ostringstream msg;
@@ -574,7 +574,7 @@ uint32_t toUint32(const std::string &str) {
   }
 
   errno = 0;
-  const long int value = strtol(str.c_str(), (char **) NULL, 10);
+  const long int value = strtol(str.c_str(), (char **) nullptr, 10);
   const int savedErrno = errno;
   if(savedErrno) {
     std::ostringstream msg;
@@ -610,7 +610,7 @@ uid_t toUid(const std::string &str) {
   }
 
   errno = 0;
-  const long int value = strtol(str.c_str(), (char **) NULL, 10);
+  const long int value = strtol(str.c_str(), (char **) nullptr, 10);
   const int savedErrno = errno;
   if(savedErrno) {
     std::ostringstream msg;
@@ -646,7 +646,7 @@ gid_t toGid(const std::string &str) {
   }
 
   errno = 0;
-  const long int value = strtol(str.c_str(), (char **) NULL, 10);
+  const long int value = strtol(str.c_str(), (char **) nullptr, 10);
   const int savedErrno = errno;
   if(savedErrno) {
     std::ostringstream msg;
@@ -880,11 +880,11 @@ std::string hexDump(const void * mem, unsigned int n ){
 // copyString
 //-----------------------------------------------------------------------------
 void copyString(char *const dst, const size_t dstSize, const std::string &src) {
-  if(dst == NULL) {
+  if(dst == nullptr) {
     cta::exception::Exception ex;
 
     ex.getMessage() << __FUNCTION__
-      << ": Pointer to destination string is NULL";
+      << ": Pointer to destination string is nullptr";
 
     throw ex;
   }
@@ -992,7 +992,7 @@ std::string removePrefix(const std::string& input, char prefixChar){
 
 std::string getEnv(const std::string& variableName){
   const char * envVarC = std::getenv(variableName.c_str());
-  if(envVarC == NULL){
+  if(envVarC == nullptr){
     return "";
   }
   return std::string(envVarC);

@@ -49,11 +49,11 @@ public:
    * owned FILE pointer if there is one and it is not the same as the one
    * specified.
    *
-   * @param file The FILE pointer to be owned, defaults to NULL if not
-   *             specified, where NULL means this smart pointer will not own a
+   * @param file The FILE pointer to be owned, defaults to nullptr if not
+   *             specified, where nullptr means this smart pointer will not own a
    *             pointer after the reset() method returns.
    */
-  void reset(FILE *const file = NULL) throw();
+  void reset(FILE *const file = nullptr) throw();
 
   /**
    * SmartFILEPtr assignment operator.
@@ -76,7 +76,7 @@ public:
   ~SmartFILEPtr() throw();
 
   /**
-   * Returns the owned pointer or NULL if this smart pointer does not own one.
+   * Returns the owned pointer or nullptr if this smart pointer does not own one.
    *
    * @return The owned FILE pointer.
    */
@@ -92,9 +92,9 @@ public:
 private:
 
   /**
-   * The owned pointer.  A value of NULL means this smart pointer does not own
+   * The owned pointer.  A value of nullptr means this smart pointer does not own
    * a pointer.
-   */ 
+   */
   FILE *m_file;
 
   /**
@@ -107,4 +107,3 @@ private:
 }; // class SmartFILEPtr
 
 } // namespace cta
-

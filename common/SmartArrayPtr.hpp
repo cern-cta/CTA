@@ -35,7 +35,7 @@ public:
   /**
    * Constructor.
    */
-  SmartArrayPtr() throw(): m_arrayPtr(NULL) {
+  SmartArrayPtr() throw(): m_arrayPtr(nullptr) {
   }
 
   /**
@@ -53,15 +53,15 @@ public:
    * then it will be deleted using delete[].
    *
    * @param arrayPtr The pointer to be owned.  If no pointer is specified then
-   * the default value of NULL is used.  In this default case the smart pointer
+   * the default value of nullptr is used.  In this default case the smart pointer
    * will not own a pointer after the reset() method returns.
    */
-  void reset(T *const arrayPtr = NULL) throw() {
+  void reset(T *const arrayPtr = nullptr) throw() {
     // If the new pointer is not the one already owned
     if(arrayPtr != m_arrayPtr) {
 
       // If this smart pointer still owns a pointer then call delete[] on it
-      if(m_arrayPtr != NULL) {
+      if(m_arrayPtr != nullptr) {
         delete[] m_arrayPtr;
       }
 
@@ -89,16 +89,16 @@ public:
   /**
    * Destructor.
    *
-   * Resets this smart pointer with the default value of NULL.
+   * Resets this smart pointer with the default value of nullptr.
    */
   ~SmartArrayPtr() throw() {
     reset();
   }
 
   /**
-   * Returns the owned pointer or NULL if this smart pointer does not own one.
+   * Returns the owned pointer or nullptr if this smart pointer does not own one.
    *
-   * @return The owned pointer or NULL if this smart pointer does not own one.
+   * @return The owned pointer or nullptr if this smart pointer does not own one.
    */
   T *get() const throw() {
     return m_arrayPtr;
@@ -111,16 +111,16 @@ public:
    */
   T *release()  {
     // If this smart pointer does not own a pointer
-    if(NULL == m_arrayPtr) {
+    if(nullptr == m_arrayPtr) {
       cta::exception::NotAnOwner ex;
       ex.getMessage() << "Smart pointer does not own a pointer";
       throw(ex);
     }
 
-    // Assigning NULL to m_arrayPtr indicates this smart pointer does not own a
+    // Assigning nullptr to m_arrayPtr indicates this smart pointer does not own a
     // pointer
     T *const tmpArrayPtr = m_arrayPtr;
-    m_arrayPtr = NULL;
+    m_arrayPtr = nullptr;
     return tmpArrayPtr;
   }
 
@@ -134,9 +134,9 @@ public:
 private:
 
   /**
-   * The owned pointer.  A value of NULL means this smart pointer does not own
+   * The owned pointer.  A value of nullptr means this smart pointer does not own
    * a pointer.
-   */ 
+   */
   T *m_arrayPtr;
 
   /**
@@ -150,4 +150,3 @@ private:
 }; // class SmartArrayPtr
 
 } // namespace cta
-

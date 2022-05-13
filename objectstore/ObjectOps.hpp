@@ -62,7 +62,7 @@ class ObjectOpsBase {
   friend ContainerTraits<ArchiveQueue,ArchiveQueueFailed>;
   friend ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForRepack>;
   friend ContainerTraits<ArchiveQueue,ArchiveQueueToReportToRepackForFailure>;
-  friend ContainerTraits<ArchiveQueue,ArchiveQueueToReportToRepackForSuccess>; 
+  friend ContainerTraits<ArchiveQueue,ArchiveQueueToReportToRepackForSuccess>;
   friend ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>;
   friend ContainerTraits<RetrieveQueue,RetrieveQueueToReportForUser>;
   friend ContainerTraits<RetrieveQueue,RetrieveQueueFailed>;
@@ -72,64 +72,64 @@ class ObjectOpsBase {
   friend ContainerTraits<RepackQueue,RepackQueuePending>;
   friend ContainerTraits<RepackQueue,RepackQueueToExpand>;
 protected:
-  ObjectOpsBase(Backend & os): m_nameSet(false), m_objectStore(os), 
+  ObjectOpsBase(Backend & os): m_nameSet(false), m_objectStore(os),
     m_headerInterpreted(false), m_payloadInterpreted(false),
     m_existingObject(false), m_locksCount(0),
     m_locksForWriteCount(0) {}
-  
+
   virtual ~ObjectOpsBase();
 public:
   CTA_GENERATE_EXCEPTION_CLASS(AddressNotSet);
-  CTA_GENERATE_EXCEPTION_CLASS(NotLocked);  
+  CTA_GENERATE_EXCEPTION_CLASS(NotLocked);
   CTA_GENERATE_EXCEPTION_CLASS(WrongType);
   CTA_GENERATE_EXCEPTION_CLASS(NotNewObject);
   CTA_GENERATE_EXCEPTION_CLASS(NewObject);
   CTA_GENERATE_EXCEPTION_CLASS(NotFetched);
-  CTA_GENERATE_EXCEPTION_CLASS(NotInitialized);  
+  CTA_GENERATE_EXCEPTION_CLASS(NotInitialized);
   CTA_GENERATE_EXCEPTION_CLASS(AddressAlreadySet);
   CTA_GENERATE_EXCEPTION_CLASS(InvalidAddress);
   CTA_GENERATE_EXCEPTION_CLASS(FailedToSerialize);
   CTA_GENERATE_EXCEPTION_CLASS(StillLocked);
 protected:
   void checkHeaderWritable() {
-    if (!m_headerInterpreted) 
+    if (!m_headerInterpreted)
       throw NotFetched("In ObjectOps::checkHeaderWritable: header not yet fetched or initialized");
     checkWritable();
   }
-  
+
   void checkHeaderReadable() {
-    if (!m_headerInterpreted) 
+    if (!m_headerInterpreted)
       throw NotFetched("In ObjectOps::checkHeaderReadable: header not yet fetched or initialized");
     checkReadable();
   }
-  
+
   void checkPayloadWritable() {
-    if (!m_payloadInterpreted) 
+    if (!m_payloadInterpreted)
       throw NotFetched("In ObjectOps::checkPayloadWritable: header not yet fetched or initialized");
     checkWritable();
   }
-  
+
   void checkPayloadReadable() {
-    if (!m_payloadInterpreted) 
+    if (!m_payloadInterpreted)
       throw NotFetched("In ObjectOps::checkPayloadReadable: header not yet fetched or initialized");
     checkReadable();
   }
-  
+
   void checkWritable() {
     if (m_existingObject && !m_locksForWriteCount)
       throw NotLocked("In ObjectOps::checkWritable: object not locked for write");
     if (m_existingObject && !m_exclusiveLock && !m_lockForSubObject)
       throw exception::Exception("In ObjectOps::checkWritable: missing reference to exclusive lock");
   }
-  
+
   void checkReadable() {
     // We could still read from a fresh, not yet inserted object.
     if (m_existingObject && (!m_locksCount && !m_noLock))
       throw NotLocked("In ObjectOps::checkReadable: object not locked");
   }
-  
+
 public:
-  
+
   void setAddress(const std::string & name) {
     if (m_nameSet)
       throw AddressAlreadySet("In ObjectOps::setAddress(): trying to overwrite an already set name");
@@ -138,7 +138,7 @@ public:
     m_name = name;
     m_nameSet = true;
   }
-  
+
   void resetAddress() {
     if (m_locksCount || m_locksForWriteCount) {
       throw StillLocked("In ObjectOps::resetAddress: reset the address of a locked object");
@@ -149,14 +149,14 @@ public:
     m_payloadInterpreted = false;
     m_existingObject = false;
   }
-  
+
   std::string & getAddressIfSet() {
     if (!m_nameSet) {
       throw AddressNotSet("In ObjectOpsBase::getNameIfSet: name not set yet");
     }
     return m_name;
   }
-  
+
   void remove () {
     checkWritable();
     m_objectStore.remove(getAddressIfSet());
@@ -164,28 +164,28 @@ public:
     m_headerInterpreted = false;
     m_payloadInterpreted = false;
   }
-   
+
   void resetValues () {
     m_existingObject = false;
     m_headerInterpreted = false;
     m_payloadInterpreted = false;
   }
-   
+
   void setOwner(const std::string & owner) {
     checkHeaderWritable();
     m_header.set_owner(owner);
   }
-  
+
   std::string getOwner() {
     checkHeaderReadable();
     return m_header.owner();
   }
-  
+
   void setBackupOwner(const std::string & owner) {
     checkHeaderWritable();
     m_header.set_backupowner(owner);
   }
-  
+
   std::string getBackupOwner() {
     checkHeaderReadable();
     return m_header.backupowner();
@@ -216,25 +216,25 @@ public:
     checkLocked();
     releaseIfNeeded();
   }
-  
+
   bool isLocked() {
     return m_locked;
   }
-  
+
   /**
    * Virtual function (implemented differently in shared and exclusive locks),
    * marking the object as locked.
    * @param objectOps pointer to the ObjectOpsBase.
    */
   virtual void setObjectLocked(ObjectOpsBase * objectOps) = 0;
-  
+
   /**
    * Virtual function (implemented differently in shared and exclusive locks),
    * marking the object as unlocked.
    * @param objectOps pointer to the ObjectOpsBase.
    */
   virtual void setObjectUnlocked(ObjectOpsBase * objectOps) = 0;
-  
+
   /**
    * Expand the scope of the current lock to a sub object, which will also be covered
    * by this lock. This will allow the sub object to benefit from the same protection
@@ -253,7 +253,7 @@ public:
     // Add a reference to the object.
     m_subObjectsOps.push_back(oob);
   }
-  
+
   /** Move the locked object reference to a new one. This is done when the locked
    * object is a GenericObject and the caller instantiated a derived object from
    * it. The lock follows the move.
@@ -276,12 +276,12 @@ public:
     oldObject.m_lockForSubObject = nullptr;
     oldObject.m_noLock=false;
   }
-  
+
   /**
-   * 
+   *
    * @param subObject
    */
-  
+
   /**
    * Dereference a sub object at destruction time
    * @param subObject
@@ -289,18 +289,18 @@ public:
   void dereferenceSubObject(ObjectOpsBase & subObject) {
     m_subObjectsOps.remove(&subObject);
   }
-  
+
   virtual ~ScopedLock() {
     // Each child class will have to call releaseIfNeeded() in their own destructor
     // as it relies on pure virtual members of this base class.
   }
-  
+
   CTA_GENERATE_EXCEPTION_CLASS(AlreadyLocked);
   CTA_GENERATE_EXCEPTION_CLASS(NotLocked);
   CTA_GENERATE_EXCEPTION_CLASS(MissingAddress);
-  
+
 protected:
-  ScopedLock(): m_objectOps(NULL), m_locked(false) {}
+  ScopedLock(): m_objectOps(nullptr), m_locked(false) {}
   std::unique_ptr<Backend::ScopedLock> m_lock;
   ObjectOpsBase * m_objectOps;
   std::list <ObjectOpsBase *> m_subObjectsOps;
@@ -317,17 +317,17 @@ protected:
     // By default we deal with the main object.
     if (!oob) oob = m_objectOps;
     if (!oob) {
-      throw MissingAddress("In ScopedLock::checkAddressSet: trying to lock a NULL object");
+      throw MissingAddress("In ScopedLock::checkAddressSet: trying to lock a nullptr object");
     } else if (!oob->m_nameSet || oob->m_name.empty()) {
       throw MissingAddress("In ScopedLock::checkAddressSet: trying to lock an object without address");
     }
   }
   virtual void releaseIfNeeded() {
     if(!m_locked) return;
-    m_lock.reset(NULL);
+    m_lock.reset(nullptr);
     m_locked = false;
     setObjectUnlocked(m_objectOps);
-    // Releasing a lock voids the object content in memory as stored object can now change. 
+    // Releasing a lock voids the object content in memory as stored object can now change.
     m_objectOps->m_payloadInterpreted = false;
     // Apply the same to sub objects
     for (auto & oob: m_subObjectsOps) {
@@ -336,14 +336,14 @@ protected:
     }
   }
 };
-  
+
 class ScopedSharedLock: public ScopedLock {
 public:
   ScopedSharedLock() {}
   ScopedSharedLock(ObjectOpsBase & oo) {
     lock(oo);
   }
-  
+
   void setObjectLocked(ObjectOpsBase* objectOps) override final {
     objectOps->m_locksCount++;
   }
@@ -351,7 +351,7 @@ public:
   void setObjectUnlocked(ObjectOpsBase* objectOps) override final {
     objectOps->m_locksCount--;
   }
-  
+
   void lock(ObjectOpsBase & oo) {
     checkNotLocked();
     m_objectOps  = & oo;
@@ -360,7 +360,7 @@ public:
     ScopedSharedLock::setObjectLocked(m_objectOps);
     m_locked = true;
   }
-  
+
   virtual ~ScopedSharedLock() {
     releaseIfNeeded();
   }
@@ -373,12 +373,12 @@ public:
   ScopedExclusiveLock(ObjectOpsBase & oo, uint64_t timeout_us = 0) {
     lock(oo, timeout_us);
   }
-  
+
   void setObjectLocked(ObjectOpsBase* objectOps) override {
     objectOps->m_locksCount++;
     objectOps->m_locksForWriteCount++;
   }
-  
+
   void setObjectUnlocked(ObjectOpsBase* objectOps) override {
     objectOps->m_locksCount--;
     objectOps->m_locksForWriteCount--;
@@ -393,7 +393,7 @@ public:
     m_objectOps->m_exclusiveLock = this;
     m_locked = true;
   }
-  
+
   /** Move the locked object reference to a new one. This is done when the locked
    * object is a GenericObject and the caller instantiated a derived object from
    * it. The lock follows the move.
@@ -414,7 +414,7 @@ public:
     }
     ScopedLock::transfer(*m_objectOps, newObject);
   }
-  
+
   virtual ~ScopedExclusiveLock() {
     releaseIfNeeded();
   }
@@ -427,11 +427,11 @@ protected:
   ObjectOps(Backend & os, const std::string & name): ObjectOpsBase(os) {
     setAddress(name);
   }
-  
+
   ObjectOps(Backend & os): ObjectOpsBase(os) {}
-  
+
   virtual ~ObjectOps() {}
-  
+
 public:
   void fetch() {
     // Check that the object is locked, one way or another
@@ -439,12 +439,12 @@ public:
       throw NotLocked("In ObjectOps::fetch(): object not locked");
     fetchBottomHalf();
   }
-  
+
   void fetchNoLock() {
     m_noLock = true;
     fetchBottomHalf();
   }
-  
+
   void fetchBottomHalf() {
     m_existingObject = true;
     // Get the header from the object store
@@ -452,7 +452,7 @@ public:
     // Interpret the data
     getPayloadFromHeader();
   }
-  
+
   class AsyncLockfreeFetcher {
     friend class ObjectOps;
     AsyncLockfreeFetcher(ObjectOps & obj): m_obj(obj) {}
@@ -471,14 +471,14 @@ public:
     std::unique_ptr<Backend::AsyncLockfreeFetcher> m_asyncLockfreeFetcher;
   };
   friend AsyncLockfreeFetcher;
-  
+
   AsyncLockfreeFetcher * asyncLockfreeFetch () {
     std::unique_ptr<AsyncLockfreeFetcher> ret;
     ret.reset(new AsyncLockfreeFetcher(*this));
     ret->m_asyncLockfreeFetcher.reset(m_objectStore.asyncLockfreeFetch(getAddressIfSet()));
     return ret.release();
   }
-  
+
   class AsyncInserter {
     friend class ObjectOps;
     AsyncInserter(ObjectOps & obj): m_obj(obj) {}
@@ -492,7 +492,7 @@ public:
     std::unique_ptr<Backend::AsyncCreator> m_asyncCreator;
   };
   friend AsyncInserter;
-  
+
   AsyncInserter * asyncInsert() {
     std::unique_ptr<AsyncInserter> ret;
     ret.reset(new AsyncInserter(*this));
@@ -511,10 +511,10 @@ public:
     ret->m_asyncCreator.reset(m_objectStore.asyncCreate(getAddressIfSet(), m_header.SerializeAsString()));
     return ret.release();
   }
- 
+
   void commit() {
     checkPayloadWritable();
-    if (!m_existingObject) 
+    if (!m_existingObject)
       throw NewObject("In ObjectOps::commit: trying to update a new object");
     // Serialise the payload into the header
     try {
@@ -526,16 +526,16 @@ public:
     // Write the object
     m_objectStore.atomicOverwrite(getAddressIfSet(), m_header.SerializeAsString());
   }
-  
+
   CTA_GENERATE_EXCEPTION_CLASS(WrongTypeForGarbageCollection);
   /**
    * This function should be overloaded in the inheriting classes
    */
   virtual void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) = 0;
-  
+
 protected:
-  
+
   virtual void getPayloadFromHeader () {
     if (!m_payload.ParseFromString(m_header.payload())) {
       // Use the tolerant parser to assess the situation.
@@ -546,14 +546,14 @@ protected:
       CryptoPP::StringSource ss1(m_header.payload(), true,
         new CryptoPP::Base64Encoder(
            new CryptoPP::StringSink(payloadBase64), noNewLineInBase64Output));
-      throw cta::exception::Exception(std::string("In <ObjectOps") + typeid(PayloadType).name() + 
-              ">::getPayloadFromHeader(): could not parse payload: " + m_header.InitializationErrorString() + 
-              " size=" + std::to_string(m_header.payload().size()) + " data(b64)=\"" + 
+      throw cta::exception::Exception(std::string("In <ObjectOps") + typeid(PayloadType).name() +
+              ">::getPayloadFromHeader(): could not parse payload: " + m_header.InitializationErrorString() +
+              " size=" + std::to_string(m_header.payload().size()) + " data(b64)=\"" +
               payloadBase64 + "\"");
     }
     m_payloadInterpreted = true;
   }
-  
+
   virtual void getHeaderFromObjectData(const std::string & objData) {
     if (!m_header.ParseFromString(objData)) {
       // Use the tolerant parser to assess the situation.
@@ -564,9 +564,9 @@ protected:
       CryptoPP::StringSource ss1(objData, true,
         new CryptoPP::Base64Encoder(
            new CryptoPP::StringSink(objDataBase64), noNewLineInBase64Output));
-      throw cta::exception::Exception(std::string("In ObjectOps<") + typeid(PayloadType).name() + 
-              ">::getHeaderFromObjectData(): could not parse header: " + m_header.InitializationErrorString() + 
-              " size=" + std::to_string(objData.size()) + " data(b64)=\"" + 
+      throw cta::exception::Exception(std::string("In ObjectOps<") + typeid(PayloadType).name() +
+              ">::getHeaderFromObjectData(): could not parse header: " + m_header.InitializationErrorString() +
+              " size=" + std::to_string(objData.size()) + " data(b64)=\"" +
               objDataBase64 + "\"");
     }
     if (m_header.type() != payloadTypeId) {
@@ -582,7 +582,7 @@ protected:
     auto objData=m_objectStore.read(getAddressIfSet());
     getHeaderFromObjectData(objData);
   }
-  
+
 public:
   /**
    * Fill up the header and object with its default contents
@@ -596,7 +596,7 @@ public:
     m_header.set_backupowner("");
     m_headerInterpreted = true;
   }
-  
+
   void insert() {
     // Check that we are not dealing with an existing object
     if (m_existingObject)
@@ -611,30 +611,30 @@ public:
     m_objectStore.create(getAddressIfSet(), m_header.SerializeAsString());
     m_existingObject = true;
   }
-  
+
   bool exists() {
     return m_objectStore.exists(getAddressIfSet());
   }
-  
+
 private:
   template <class ChildType>
   void writeChild (const std::string & name, ChildType & val) {
     m_objectStore.create(name, val.SerializeAsString());
   }
-  
+
   void removeOther(const std::string & name) {
     m_objectStore.remove(name);
   }
-  
+
   std::string selfName() {
     if(!m_nameSet) throw AddressNotSet("In ObjectOps<>::updateFromObjectStore: name not set");
     return m_name;
   }
-  
+
   Backend & objectStore() {
     return m_objectStore;
   }
-  
+
 protected:
   static const serializers::ObjectType payloadTypeId = PayloadTypeId;
   PayloadType m_payload;

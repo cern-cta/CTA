@@ -84,7 +84,7 @@ class OStoreDBTest: public
 
   cta::objectstore::OStoreDBWrapperInterface &getDb() {
     cta::objectstore::OStoreDBWrapperInterface *const ptr = m_db.get();
-    if (NULL == ptr) {
+    if (nullptr == ptr) {
       throw FailedToGetDatabase();
     }
     return *ptr;

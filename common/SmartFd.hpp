@@ -58,7 +58,7 @@ public:
    * Sets the function to be called back by the SmartFd immediately after
    * the SmartFd has closed the file-descriptor it owns.
    *
-   * Setting the callback function to NULL means that no function will be
+   * Setting the callback function to nullptr means that no function will be
    * called.
    *
    * Please note any exception thrown by the callback function will be

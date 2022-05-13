@@ -84,7 +84,7 @@ public:
 
   cta::SchedulerDatabase &getDb() {
     cta::SchedulerDatabase *const ptr = m_db.get();
-    if(NULL == ptr) {
+    if(nullptr == ptr) {
       throw FailedToGetDatabase();
     }
     return *ptr;

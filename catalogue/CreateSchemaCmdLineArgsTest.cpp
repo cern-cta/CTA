@@ -29,7 +29,7 @@ protected:
   struct Argcv {
     int argc;
     char **argv;
-    Argcv(): argc(0), argv(NULL) {
+    Argcv(): argc(0), argv(nullptr) {
     }
   };
   typedef std::list<Argcv*> ArgcvList;
@@ -75,7 +75,7 @@ TEST_F(cta_catalogue_CreateSchemaCmdLineArgsTest, help_short) {
   args->argv = new char *[3];
   args->argv[0] = dupString("cta-catalogue-schema-create");
   args->argv[1] = dupString("-h");
-  args->argv[2] = NULL;
+  args->argv[2] = nullptr;
 
   CreateSchemaCmdLineArgs cmdLine(args->argc, args->argv);
 
@@ -92,7 +92,7 @@ TEST_F(cta_catalogue_CreateSchemaCmdLineArgsTest, help_long) {
   args->argv = new char *[3];
   args->argv[0] = dupString("cta-catalogue-schema-create");
   args->argv[1] = dupString("--help");
-  args->argv[2] = NULL;
+  args->argv[2] = nullptr;
 
   CreateSchemaCmdLineArgs cmdLine(args->argc, args->argv);
 
@@ -111,7 +111,7 @@ TEST_F(cta_catalogue_CreateSchemaCmdLineArgsTest, version_short) {
   args->argv[1] = dupString("dbConfigPath");
   args->argv[2] = dupString("-v");
   args->argv[3] = dupString("4.5");
-  args->argv[4] = NULL;
+  args->argv[4] = nullptr;
 
   CreateSchemaCmdLineArgs cmdLine(args->argc, args->argv);
 
@@ -130,7 +130,7 @@ TEST_F(cta_catalogue_CreateSchemaCmdLineArgsTest, version_long) {
   args->argv[1] = dupString("dbConfigPath");
   args->argv[2] = dupString("--version");
   args->argv[3] = dupString("4.5");
-  args->argv[4] = NULL;
+  args->argv[4] = nullptr;
 
   CreateSchemaCmdLineArgs cmdLine(args->argc, args->argv);
 
@@ -148,7 +148,7 @@ TEST_F(cta_catalogue_CreateSchemaCmdLineArgsTest, dbConfigPath) {
   args->argv = new char *[3];
   args->argv[0] = dupString("cta-catalogue-schema-create");
   args->argv[1] = dupString("dbConfigPath");
-  args->argv[2] = NULL;
+  args->argv[2] = nullptr;
 
   CreateSchemaCmdLineArgs cmdLine(args->argc, args->argv);
 

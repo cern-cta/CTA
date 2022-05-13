@@ -24,7 +24,7 @@
 #include <radosstriper/libradosstriper.hpp>
 
 namespace cta {
-namespace disk {    
+namespace disk {
 /**
  * Utility singleton managing the rados stripers connections by name.
  * The destructor will implicitly release the pool connections.
@@ -43,7 +43,7 @@ public:
 
   /**
    * Get pointer to a connection to the rados user (or one from the cache).
-   * This function returns NULL in case of problem.
+   * This function returns nullptr in case of problem.
    */
   libradosstriper::RadosStriper * getStriper(const std::string & userAtPool);
 

@@ -30,7 +30,7 @@
 //------------------------------------------------------------------------------
 // getHostName
 //------------------------------------------------------------------------------
-std::string cta::System::getHostName() 
+std::string cta::System::getHostName()
 {
   // All this to get the hostname, thanks to C !
   int len = 64;
@@ -122,19 +122,19 @@ void cta::System::setUserAndGroup(const std::string &userName, const std::string
   const gid_t egid = getegid();
 
   // Get information on generic stage account from password file
-  if ((pwd = getpwnam(userName.c_str())) == NULL) {
+  if ((pwd = getpwnam(userName.c_str())) == nullptr) {
     cta::exception::Exception e;
     e.getMessage() << "Failed to " << task << ": User name not found in password file";
     throw e;
   }
   // verify existence of its primary group id
-  if (getgrgid(pwd->pw_gid) == NULL) {
+  if (getgrgid(pwd->pw_gid) == nullptr) {
     cta::exception::Exception e;
     e.getMessage() << "Failed to " << task << ": User does not have a primary group";
     throw e;
   }
   // Get information about group name from group file
-  if ((grp = getgrnam(groupName.c_str())) == NULL) {
+  if ((grp = getgrnam(groupName.c_str())) == nullptr) {
     cta::exception::Exception e;
     e.getMessage() << "Failed to " << task << ": Group name not found in group file";
     throw e;

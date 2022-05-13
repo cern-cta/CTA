@@ -93,11 +93,11 @@ m_user(userId), m_pool(pool), m_namespace(radosNameSpace), m_cluster(), m_radosC
       "In BackendRados::BackendRados, failed to m_cluster.init");
   try {
     RadosTimeoutLogger rtl;
-    cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException([&]() { return -m_cluster.conf_read_file(NULL);},
+    cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException([&]() { return -m_cluster.conf_read_file(nullptr);},
         "In BackendRados::BackendRados, failed to m_cluster.conf_read_file");
     rtl.logIfNeeded("In BackendRados::BackendRados(): m_cluster.conf_read_file()", "no object");
     rtl.reset();
-    cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException([&](){ return -m_cluster.conf_parse_env(NULL);},
+    cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException([&](){ return -m_cluster.conf_parse_env(nullptr);},
         "In BackendRados::BackendRados, failed to m_cluster.conf_parse_env");
     rtl.logIfNeeded("In BackendRados::BackendRados(): m_cluster.conf_parse_env()", "no object");
     rtl.reset();

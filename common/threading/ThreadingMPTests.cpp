@@ -38,7 +38,7 @@ namespace threadedUnitTests {
       struct timespec ts;
       ts.tv_sec = 0;
       ts.tv_nsec = 100*1000*1000;
-      nanosleep(&ts, NULL);
+      nanosleep(&ts, nullptr);
       return 123;
     }
   };
@@ -62,7 +62,7 @@ namespace threadedUnitTests {
         struct timespec ts;
         ts.tv_sec = 0;
         ts.tv_nsec = 10*1000*1000;
-        nanosleep(&ts, NULL);
+        nanosleep(&ts, nullptr);
       }
       return 321;
     }
@@ -80,7 +80,7 @@ namespace threadedUnitTests {
     struct timespec ts;
     ts.tv_sec = 0;
     ts.tv_nsec = 100*1000*1000;
-    nanosleep(&ts, NULL);
+    nanosleep(&ts, nullptr);
     ASSERT_FALSE(cp.running());
     EXPECT_THROW(cp.exitCode(), cta::threading::ChildProcess::ProcessWasKilled);
   }

@@ -34,12 +34,12 @@ protected:
 
 TEST_F(cta_server_SmartCapTest, default_constructor) {
   cta::server::SmartCap smartPtr;
-  ASSERT_EQ((cap_t)NULL, smartPtr.get());
+  ASSERT_EQ(nullptr, smartPtr.get());
 }
 
 TEST_F(cta_server_SmartCapTest, constructor) {
   cap_t cap = cap_get_proc();
-  ASSERT_NE((cap_t)NULL, cap);
+  ASSERT_NE(nullptr, cap);
 
   cta::server::SmartCap smartPtr(cap);
   ASSERT_EQ(cap, smartPtr.get());
@@ -47,10 +47,10 @@ TEST_F(cta_server_SmartCapTest, constructor) {
 
 TEST_F(cta_server_SmartCapTest, reset) {
   cta::server::SmartCap smartPtr;
-  ASSERT_EQ((cap_t)NULL, smartPtr.get());
+  ASSERT_EQ(nullptr, smartPtr.get());
 
   cap_t cap = cap_get_proc();
-  ASSERT_NE((cap_t)NULL, cap);
+  ASSERT_NE(nullptr, cap);
 
   smartPtr.reset(cap);
   ASSERT_EQ(cap, smartPtr.get());
@@ -58,19 +58,19 @@ TEST_F(cta_server_SmartCapTest, reset) {
 
 TEST_F(cta_server_SmartCapTest, assignment) {
   cap_t cap = cap_get_proc();
-  ASSERT_NE((cap_t)NULL, cap);
+  ASSERT_NE(nullptr, cap);
 
   cta::server::SmartCap smartPtr1;
   cta::server::SmartCap smartPtr2;
 
-  ASSERT_EQ((cap_t)NULL, smartPtr1.get());
-  ASSERT_EQ((cap_t)NULL, smartPtr2.get());
+  ASSERT_EQ(nullptr, smartPtr1.get());
+  ASSERT_EQ(nullptr, smartPtr2.get());
 
   smartPtr1.reset(cap);
   ASSERT_EQ(cap, smartPtr1.get());
 
   smartPtr2 = smartPtr1;
-  ASSERT_EQ((cap_t)NULL, smartPtr1.get());
+  ASSERT_EQ(nullptr, smartPtr1.get());
   ASSERT_EQ(cap, smartPtr2.get());
 }
 

@@ -60,7 +60,7 @@ TEST(ObjectStore, RootEntryBasicAccess) {
     cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
     re.fetch();
     cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(NULL));
+      "unittesthost", time(nullptr));
     re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
     ASSERT_NO_THROW(re.getAgentRegisterAddress());
     re.commit();
@@ -79,7 +79,7 @@ TEST(ObjectStore, RootEntryArchiveQueues) {
   using cta::common::dataStructures::JobQueueType;
   cta::objectstore::BackendVFS be;
   cta::objectstore::EntryLogSerDeser el("user0",
-    "unittesthost", time(NULL));
+    "unittesthost", time(nullptr));
   cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agr("UnitTests", dl);
@@ -147,7 +147,7 @@ TEST(ObjectStore, RootEntryDriveRegister) {
     re.insert();
   }
   cta::objectstore::EntryLogSerDeser el("user0",
-    "unittesthost", time(NULL));
+    "unittesthost", time(nullptr));
   cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agr("UnitTests", dl);
@@ -203,7 +203,7 @@ TEST(ObjectStore, RootEntryAgentRegister) {
     re.insert();
   }
   cta::objectstore::EntryLogSerDeser el("user0",
-    "unittesthost", time(NULL));
+    "unittesthost", time(nullptr));
   cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agr("UnitTests", dl);
@@ -253,7 +253,7 @@ TEST(ObjectStore, RootEntrySchedulerGlobalLock) {
     re.insert();
   }
   cta::objectstore::EntryLogSerDeser el("user0",
-    "unittesthost", time(NULL));
+    "unittesthost", time(nullptr));
   cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agr("UnitTests", dl);
@@ -304,7 +304,7 @@ TEST(ObjectStore, RetrieveQueueToReportToRepackForSuccessRootEntryTest) {
   using cta::common::dataStructures::JobQueueType;
   cta::objectstore::BackendVFS be;
   cta::objectstore::EntryLogSerDeser el("user0",
-    "unittesthost", time(NULL));
+    "unittesthost", time(nullptr));
   cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agr("UnitTests", dl);

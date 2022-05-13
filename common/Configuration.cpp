@@ -30,7 +30,7 @@ cta::common::Configuration::Configuration(const std::string& fileName)
   : m_fileName(fileName),
     m_lastUpdateTime(0) {
   // create internal r/w lock
-  int rc = pthread_rwlock_init(&m_lock, NULL);
+  int rc = pthread_rwlock_init(&m_lock, nullptr);
   if (0 != rc) {
     cta::exception::Errnum e(rc);
     e.getMessage() << "CastorConfiguration constructor Failed"
@@ -47,7 +47,7 @@ cta::common::Configuration::Configuration(
   m_fileName(other.m_fileName), m_lastUpdateTime(other.m_lastUpdateTime),
   m_config(other.m_config) {
   // create a new internal r/w lock
-  int rc = pthread_rwlock_init(&m_lock, NULL);
+  int rc = pthread_rwlock_init(&m_lock, nullptr);
   if (0 != rc) {
     cta::exception::Errnum e(rc);
     e.getMessage() << "CastorConfiguration copy constructor failed"
@@ -75,7 +75,7 @@ cta::common::Configuration &
   m_lastUpdateTime = other.m_lastUpdateTime;
   m_config = other.m_config;
   // create a new internal r/w lock
-  int rc = pthread_rwlock_init(&m_lock, NULL);
+  int rc = pthread_rwlock_init(&m_lock, nullptr);
   if (0 != rc) {
     cta::exception::Errnum e(rc);
     e.getMessage() << "Assignment operator of CastorConfiguration object failed"
@@ -111,7 +111,7 @@ const std::string& cta::common::Configuration::getConfEntString(
       if (catIt->second.end() != entIt) {
         // release the lock
         pthread_rwlock_unlock(&m_lock);
-        if(NULL != log) {
+        if(nullptr != log) {
           std::list<cta::log::Param> params = {
             cta::log::Param("category", category),
             cta::log::Param("key", key),
@@ -123,7 +123,7 @@ const std::string& cta::common::Configuration::getConfEntString(
       }
     }
     // no entry found
-    if(NULL != log) {
+    if(nullptr != log) {
       std::list<cta::log::Param> params = {
         cta::log::Param("category", category),
         cta::log::Param("key", key),
@@ -137,7 +137,7 @@ const std::string& cta::common::Configuration::getConfEntString(
     // exception caught : Unlock and return default
     pthread_rwlock_unlock(&m_lock);
     // log the exception
-    if(NULL != log) {
+    if(nullptr != log) {
       std::list<cta::log::Param> params = {
         cta::log::Param("category", category),
         cta::log::Param("key", key),
@@ -189,7 +189,7 @@ const std::string& cta::common::Configuration::getConfEntString(
       throw e;
     }
 
-    if(NULL != log) {
+    if(nullptr != log) {
       std::list<cta::log::Param> params = {
         cta::log::Param("category", category),
         cta::log::Param("key", key),

@@ -67,7 +67,7 @@ public:
    *
    * @param[in]    rName      The resource name
    * @param[in]    contact    Used by client-initiated queries for a resource at a particular endpoint.
-   *                          It is set to NULL for server-initiated queries.
+   *                          It is set to nullptr for server-initiated queries.
    *
    * @retval    XrdSsiProvider::notPresent    The resource does not exist
    * @retval    XrdSsiProvider::isPresent     The resource exists
@@ -75,7 +75,7 @@ public:
    *                                          only in clustered environments where the resource may be
    *                                          immediately available on some other node.)
    */
-  XrdSsiProvider::rStat QueryResource(const char *rName, const char *contact = 0) override;
+  XrdSsiProvider::rStat QueryResource(const char *rName, const char *contact = nullptr) override;
 
   /*!
    * Get a reference to the Scheduler DB for this Service

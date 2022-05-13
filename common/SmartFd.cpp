@@ -24,14 +24,14 @@
 // constructor
 //-----------------------------------------------------------------------------
 cta::SmartFd::SmartFd() throw():
-  m_fd(-1), m_closedCallback(NULL) {
+  m_fd(-1), m_closedCallback(nullptr) {
 }
 
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
 cta::SmartFd::SmartFd(const int fd) throw():
-  m_fd(fd), m_closedCallback(NULL) {
+  m_fd(fd), m_closedCallback(nullptr) {
 }
 
 //-----------------------------------------------------------------------------

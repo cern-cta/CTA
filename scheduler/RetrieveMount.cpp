@@ -76,7 +76,7 @@ std::optional<std::string> cta::RetrieveMount::getActivity() const {
 std::string cta::RetrieveMount::getMountTransactionId() const{
   std::stringstream id;
   if (!m_dbMount.get())
-    throw exception::Exception("In cta::RetrieveMount::getMountTransactionId(): got NULL dbMount");
+    throw exception::Exception("In cta::RetrieveMount::getMountTransactionId(): got nullptr dbMount");
   id << m_dbMount->mountInfo.mountId;
   return id.str();
 }
@@ -87,7 +87,7 @@ std::string cta::RetrieveMount::getMountTransactionId() const{
 std::string cta::RetrieveMount::getPoolName() const{
   std::stringstream sTapePool;
   if (!m_dbMount.get())
-    throw exception::Exception("In cta::RetrieveMount::getPoolName(): got NULL dbMount");
+    throw exception::Exception("In cta::RetrieveMount::getPoolName(): got nullptr dbMount");
   sTapePool << m_dbMount->mountInfo.tapePool;
   return sTapePool.str();
 }
@@ -99,7 +99,7 @@ std::string cta::RetrieveMount::getVo() const
 {
     std::stringstream sVo;
     if(!m_dbMount.get())
-        throw exception::Exception("In cta::RetrieveMount::getVo(): got NULL dbMount");
+        throw exception::Exception("In cta::RetrieveMount::getVo(): got nullptr dbMount");
     sVo<<m_dbMount->mountInfo.vo;
     return sVo.str();
 }
@@ -111,7 +111,7 @@ std::string cta::RetrieveMount::getMediaType() const
 {
     std::stringstream sMediaType;
     if(!m_dbMount.get())
-        throw exception::Exception("In cta::RetrieveMount::getMediaType(): got NULL dbMount");
+        throw exception::Exception("In cta::RetrieveMount::getMediaType(): got nullptr dbMount");
     sMediaType<<m_dbMount->mountInfo.mediaType;
     return sMediaType.str();
 }
@@ -123,7 +123,7 @@ std::string cta::RetrieveMount::getVendor() const
 {
     std::stringstream sVendor;
     if(!m_dbMount.get())
-        throw exception::Exception("In cta::RetrieveMount::getVendor(): got NULL dbMount");
+        throw exception::Exception("In cta::RetrieveMount::getVendor(): got nullptr dbMount");
     sVendor<<m_dbMount->mountInfo.vendor;
     return sVendor.str();
 }
@@ -135,7 +135,7 @@ std::string cta::RetrieveMount::getDrive() const
 {
     std::stringstream sDrive;
     if(!m_dbMount.get())
-        throw exception::Exception("In cta::RetrieveMount::getDrive(): got NULL dbMount");
+        throw exception::Exception("In cta::RetrieveMount::getDrive(): got nullptr dbMount");
     sDrive<<m_dbMount->mountInfo.drive;
     return sDrive.str();
 }
@@ -146,7 +146,7 @@ std::string cta::RetrieveMount::getDrive() const
 //------------------------------------------------------------------------------
 uint64_t cta::RetrieveMount::getCapacityInBytes() const {
     if(!m_dbMount.get())
-        throw exception::Exception("In cta::RetrieveMount::getCapacityInBytes(): got NULL dbMount");
+        throw exception::Exception("In cta::RetrieveMount::getCapacityInBytes(): got nullptr dbMount");
     return m_dbMount->mountInfo.capacityInBytes;
 }
 
@@ -155,7 +155,7 @@ uint64_t cta::RetrieveMount::getCapacityInBytes() const {
 //------------------------------------------------------------------------------
 cta::common::dataStructures::Label::Format cta::RetrieveMount::getLabelFormat() const {
   if(!m_dbMount.get())
-    throw exception::Exception("In cta::RetrieveMount::getLabelFormat(): got NULL dbMount");
+    throw exception::Exception("In cta::RetrieveMount::getLabelFormat(): got nullptr dbMount");
   return m_dbMount->mountInfo.labelFormat;
 }
 

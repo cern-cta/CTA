@@ -47,7 +47,7 @@ Logger::~Logger() {
 }
 
 //-----------------------------------------------------------------------------
-// operator() 
+// operator()
 //-----------------------------------------------------------------------------
 void Logger::operator() (
   const int priority,
@@ -56,7 +56,7 @@ void Logger::operator() (
 
   const std::string rawParams;
   struct timeval timeStamp;
-  gettimeofday(&timeStamp, NULL);
+  gettimeofday(&timeStamp, nullptr);
   const int pid = getpid();
 
   // Ignore messages whose priority is not of interest
@@ -89,14 +89,14 @@ std::string Logger::cleanString(const std::string &s,
   const bool replaceUnderscores) {
   // Trim both left and right white-space
   std::string result = utils::trimString(s);
-  
+
   for (std::string::iterator it = result.begin(); it != result.end(); ++it) {
 
     // Replace double quote with single quote
     if ('"' == *it) {
       *it = '\'';
     }
-    
+
     // Replace newline and tab with a space
     if ('\t' == *it || '\n' == *it) {
       *it = ' ';

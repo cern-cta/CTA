@@ -55,7 +55,7 @@ void Errnum::throwOnZero(const int status, const std::string &context) {
 }
 
 void Errnum::throwOnNull(const void *const f, const std::string &context) {
-  if (NULL == f) throw Errnum(context);
+  if (nullptr == f) throw Errnum(context);
 }
 
 void Errnum::throwOnNegative(const int ret, const std::string &context) {

@@ -36,11 +36,11 @@ namespace cta {
        */
       class mutex {
       public:
-        mutex() { pthread_mutex_init(&m_mutex, NULL); }
+        mutex() { pthread_mutex_init(&m_mutex, nullptr); }
         void lock() { pthread_mutex_lock(&m_mutex); }
         void unlock() { pthread_mutex_unlock(&m_mutex); }
       private:
-        pthread_mutex_t m_mutex;    
+        pthread_mutex_t m_mutex;
       };
       static mutex g_lock;
     };
