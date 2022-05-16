@@ -1,3 +1,14 @@
+# v4.NEXT
+
+## Summary
+### Upgrade Instructions
+### Features
+- cta/CTA#1205 - Fail pipeline if cppcheck detects errors
+- cta/CTA#1206 - Change NULL for nullptr
+### Bug fixes
+### Building and Packaging
+### Catalogue Schema
+
 # v4.7.3-1
 
 ## Summary

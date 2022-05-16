@@ -24,14 +24,14 @@
 #include <random>
 
 namespace unitTests {
-  
+
 TEST(ObjectStore, RetrieveQueueBasicAccess) {
   cta::objectstore::BackendVFS be;
   cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agentRef("unitTest", dl);
   std::string retrieveQueueAddress = agentRef.nextId("RetrieveQueue");
-  { 
+  {
     // Try to create the retrieve queue
     cta::objectstore::RetrieveQueue rq(retrieveQueueAddress, be);
     rq.initialize("V12345");
@@ -78,7 +78,7 @@ TEST(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
   // By construction, first job has lowest start time.
   auto minStartTime=jobsToAdd.front().startTime;
   std::string retrieveQueueAddress = agentRef.nextId("RetrieveQueue");
-  { 
+  {
     // Try to create the retrieve queue
     cta::objectstore::RetrieveQueue rq(retrieveQueueAddress, be);
     rq.initialize("V12345");
@@ -87,14 +87,15 @@ TEST(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
     rq.insert();
   }
   {
-    // Read the queue and insert jobs 10 by 10 (the insertion size is 
+    // Read the queue and insert jobs 10 by 10 (the insertion size is
     // expected to be << shard size (25 here).
     auto jobsToAddNow = jobsToAdd;
     while (jobsToAddNow.size()) {
       std::list<cta::objectstore::RetrieveQueue::JobToAdd> jobsBatch;
       for (size_t i=0; i<batchSize; i++) {
         if (jobsToAddNow.size()) {
-          auto j=std::next(jobsToAddNow.begin(), (std::uniform_int_distribution<size_t>(0, jobsToAddNow.size() -1))(gen));
+          std::uniform_int_distribution<size_t> distrib(0, jobsToAddNow.size() - 1);
+          auto j = std::next(jobsToAddNow.begin(), distrib(gen));
           jobsBatch.emplace_back(*j);
           jobsToAddNow.erase(j);
         }
@@ -122,7 +123,7 @@ TEST(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
     ASSERT_EQ(minStartTime, rq.getJobsSummary().oldestJobStartTime);
     uint64_t nextExpectedFseq=0;
     while (rq.getJobsSummary().jobs) {
-      auto candidateJobs = rq.getCandidateList(std::numeric_limits<uint64_t>::max(), 50, std::set<std::string>(), 
+      auto candidateJobs = rq.getCandidateList(std::numeric_limits<uint64_t>::max(), 50, std::set<std::string>(),
           std::set<std::string>());
       std::set<std::string> jobsToSkip;
       std::list<std::string> jobsToDelete;
@@ -174,7 +175,7 @@ TEST(ObjectStore, RetrieveQueueActivityCounts) {
     address << "someRequest-" << i;
     jta.retrieveRequestAddress = address.str();
     // Some (but not all) jobs will be assigned an activity (and weight).
-    if (!(i % 3)) { 
+    if (!(i % 3)) {
       std::string activity;
       if (!(i % 2)) {
         activity = "A";
@@ -188,7 +189,7 @@ TEST(ObjectStore, RetrieveQueueActivityCounts) {
   // By construction, first job has lowest start time.
   auto minStartTime=jobsToAdd.front().startTime;
   std::string retrieveQueueAddress = agentRef.nextId("RetrieveQueue");
-  { 
+  {
     // Try to create the retrieve queue
     cta::objectstore::RetrieveQueue rq(retrieveQueueAddress, be);
     rq.initialize("V12345");
@@ -197,14 +198,15 @@ TEST(ObjectStore, RetrieveQueueActivityCounts) {
     rq.insert();
   }
   {
-    // Read the queue and insert jobs 10 by 10 (the insertion size is 
+    // Read the queue and insert jobs 10 by 10 (the insertion size is
     // expected to be << shard size (25 here).
     auto jobsToAddNow = jobsToAdd;
     while (jobsToAddNow.size()) {
       std::list<cta::objectstore::RetrieveQueue::JobToAdd> jobsBatch;
       for (size_t i=0; i<batchSize; i++) {
         if (jobsToAddNow.size()) {
-          auto j=std::next(jobsToAddNow.begin(), (std::uniform_int_distribution<size_t>(0, jobsToAddNow.size() -1))(gen));
+          std::uniform_int_distribution<size_t> distrib(0, jobsToAddNow.size() -1);
+          auto j = std::next(jobsToAddNow.begin(), distrib(gen));
           jobsBatch.emplace_back(*j);
           jobsToAddNow.erase(j);
         }
@@ -225,7 +227,7 @@ TEST(ObjectStore, RetrieveQueueActivityCounts) {
     // no interleaved push and pop.
     auto jobsSummary = rq.getJobsSummary();
     ASSERT_EQ(minStartTime, jobsSummary.oldestJobStartTime);
-    // File fSeqs are in [0, 99], 34 multiples of 3 (0 included) odds are activity A, evens are B, 17 each. 
+    // File fSeqs are in [0, 99], 34 multiples of 3 (0 included) odds are activity A, evens are B, 17 each.
     ASSERT_EQ(2, jobsSummary.activityCounts.size());
     typedef decltype(jobsSummary.activityCounts.front()) acCount;
     auto jsA = std::find_if(jobsSummary.activityCounts.begin(), jobsSummary.activityCounts.end(), [](const acCount &ac){return ac.activity == "A"; });
@@ -277,7 +279,7 @@ TEST(ObjectStore, RetrieveQueueActivityCounts) {
   cta::objectstore::ScopedExclusiveLock lock(rq);
   rq.fetch();
   rq.removeIfEmpty(lc);
-  ASSERT_FALSE(rq.exists()); 
+  ASSERT_FALSE(rq.exists());
 }
 
 }

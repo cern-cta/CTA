@@ -47,7 +47,7 @@ void ArchiveQueueShard::rebuild() {
   m_payload.set_archivejobstotalsize(totalSize);
 }
 
-std::string ArchiveQueueShard::dump() {  
+std::string ArchiveQueueShard::dump() {
   checkPayloadReadable();
   google::protobuf::util::JsonPrintOptions options;
   options.add_whitespace = true;
@@ -61,7 +61,7 @@ void ArchiveQueueShard::garbageCollect(const std::string& presumedOwner, AgentRe
   throw exception::Exception("In ArchiveQueueShard::garbageCollect(): garbage collection should not be necessary for this type of object.");
 }
 
-ArchiveQueue::CandidateJobList ArchiveQueueShard::getCandidateJobList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> archiveRequestsToSkip) {
+ArchiveQueue::CandidateJobList ArchiveQueueShard::getCandidateJobList(uint64_t maxBytes, uint64_t maxFiles, const std::set<std::string> &archiveRequestsToSkip) {
   checkPayloadReadable();
   ArchiveQueue::CandidateJobList ret;
   ret.remainingBytesAfterCandidates = m_payload.archivejobstotalsize();
@@ -130,11 +130,11 @@ void ArchiveQueueShard::initialize(const std::string& owner) {
   m_payloadInterpreted=true;
 }
 
-auto ArchiveQueueShard::dumpJobs() -> std::list<JobInfo> { 
+auto ArchiveQueueShard::dumpJobs() -> std::list<JobInfo> {
   checkPayloadReadable();
   std::list<JobInfo> ret;
   for (auto &j: m_payload.archivejobs()) {
-    ret.emplace_back(JobInfo{j.size(), j.address(), (uint16_t)j.copynb(), j.priority(), 
+    ret.emplace_back(JobInfo{j.size(), j.address(), (uint16_t)j.copynb(), j.priority(),
         j.minarchiverequestage(), (time_t)j.starttime(),j.mountpolicyname()});
   }
   return ret;

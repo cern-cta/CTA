@@ -55,6 +55,8 @@ template<typename Type, typename Key>
 void ValueCountMap<Type, Key>::decCount(const Key& value) {
   // Find the entry for this value. Failing is an error.
   auto counter = std::find_if(m_valueCountMap.begin(), m_valueCountMap.end(),
+      // https://trac.cppcheck.net/ticket/10739
+      // cppcheck-suppress internalAstError
       [&](decltype(*m_valueCountMap.begin()) pair) {
         return pair.value() == value;
       });

@@ -51,20 +51,20 @@ int test = RAO_TEST;
 class BasicRetrieveJob: public cta::RetrieveJob {
   public:
     BasicRetrieveJob() : cta::RetrieveJob(nullptr,
-    cta::common::dataStructures::RetrieveRequest(), 
+    cta::common::dataStructures::RetrieveRequest(),
     cta::common::dataStructures::ArchiveFile(), 1,
     cta::PositioningMethod::ByBlock) {}
   };
 
 class BasicArchiveJob: public cta::ArchiveJob {
 public:
-  BasicArchiveJob(): cta::ArchiveJob(nullptr, 
+  BasicArchiveJob(): cta::ArchiveJob(nullptr,
       *((cta::catalogue::Catalogue *)nullptr), cta::common::dataStructures::ArchiveFile(),
       "", cta::common::dataStructures::TapeFile()) {
   }
 };
 
-std::vector<std::string> split(std::string to_split, std::string delimiter) {
+std::vector<std::string> split(std::string& to_split, const std::string& delimiter) {
   std::vector<std::string> toBeReturned;
   int pos = 0;
   while ((pos = to_split.find(delimiter)) != -1) {
@@ -84,27 +84,27 @@ int main (int argc, char *argv[])
   for(castor::tape::SCSI::DeviceVector::iterator i = dl.begin();
           i != dl.end(); ++i) {
     castor::tape::SCSI::DeviceInfo & dev = (*i);
-    std::cout << std::endl << "-- SCSI device: " 
+    std::cout << std::endl << "-- SCSI device: "
               << dev.sg_dev << " (" << dev.nst_dev << ")" << std::endl;
     if (dev.type == castor::tape::SCSI::Types::tape) {
       try {
         // Create drive object and open tape device
         std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
           castor::tape::tapeserver::drive::createDrive(dev, sWrapper));
-     
+
         /**
          * From now we could use generic SCSI request for the drive object.
-         * We should be aware that there might be a problem with tape in the 
+         * We should be aware that there might be a problem with tape in the
          * drive for example incompatible media installed.
          */
-        
+
         try {
           /**
            * Gets generic device info for the drive object.
            */
-          castor::tape::tapeserver::drive::deviceInfo devInfo;  
+          castor::tape::tapeserver::drive::deviceInfo devInfo;
           devInfo = drive->getDeviceInfo();
-          std::cout << "-- INFO --------------------------------------" << std::endl             
+          std::cout << "-- INFO --------------------------------------" << std::endl
                     << "  devInfo.vendor               : '"  << devInfo.vendor << "'" << std::endl
                     << "  devInfo.product              : '" << devInfo.product << "'" << std::endl
                     << "  devInfo.productRevisionLevel : '" << devInfo.productRevisionLevel << "'" << std::endl
@@ -114,23 +114,23 @@ int main (int argc, char *argv[])
           fail = 1;
           std::string temp = e.what();
           std::cout << "----------------------------------------------" << std::endl
-                    << temp 
+                    << temp
                     << "-- INFO --------------------------------------" << std::endl;
           continue;
-        }  
-        
+        }
+
         try {
           /**
            * Checks if the drive ready to use the tape installed loaded into it.
            */
-          drive->waitUntilReady(5); 
+          drive->waitUntilReady(5);
         } catch(cta::exception::Exception &ne) {
           std::string temp=ne.getMessage().str();
           fail = 1;
           std::cout << "----------------------------------------------" << std::endl
                     << temp  << std::endl
                     << "----------------------------------------------" << std::endl;
-          continue;  
+          continue;
         }
 
         drive->enableCRC32CLogicalBlockProtectionReadWrite();
@@ -139,7 +139,7 @@ int main (int argc, char *argv[])
 
             if (test == BLOCK_TEST) {
                 const size_t count = 10;
-                unsigned char data[count];          
+                unsigned char data[count];
                 memset(data, 0, count);
 
                 std::cout << "Rewinding..." << std::endl;
@@ -150,12 +150,12 @@ int main (int argc, char *argv[])
                 drive->writeBlock((void *)data, count); // write 9 a's + string term
 
                 std::cout << "Writing EOD (2 filemarks)..." << std::endl;
-                drive->writeSyncFileMarks(2); // EOD and flush  
+                drive->writeSyncFileMarks(2); // EOD and flush
 
                 std::cout << "Rewinding..." << std::endl;
                 drive->rewind(); // go back to the beginning of tape
 
-                std::cout << "Reading back 1st block 9 a's)..." << std::endl;                    
+                std::cout << "Reading back 1st block 9 a's)..." << std::endl;
                 memset(data, 0, count);
                 drive->readBlock((void *)data, count); // read 9 a's + string term
 
@@ -196,7 +196,7 @@ int main (int argc, char *argv[])
                   for (uint32_t i = 0; i < block_size - 5; i++)
                       testString += gen_random();
                   for (uint32_t k = 0; k < no_blocks; k++) {
-                      wf->write(testString.c_str(),testString.size());  
+                      wf->write(testString.c_str(),testString.size());
                   }
 
                   wf->close();
@@ -234,7 +234,7 @@ int main (int argc, char *argv[])
                 }
                 else {
                     drive->rewind();
-                    
+
                     std::list<castor::tape::SCSI::Structures::RAO::blockLims> files;
                     std::ifstream ns_file_pick(argv[1]);
                     if (ns_file_pick.is_open()) {
@@ -246,7 +246,7 @@ int main (int argc, char *argv[])
                         tokens[0] += '\0';
                         strcpy((char*)lims.fseq, tokens[0].c_str());
                         lims.begin = std::stoi(tokens[1]);
-                        lims.end = std::stoi(tokens[2]);                        
+                        lims.end = std::stoi(tokens[2]);
                         files.push_back(lims);
                       }
                     }
@@ -270,9 +270,9 @@ int main (int argc, char *argv[])
         std::cout << "----------------------------------------------" << std::endl
                   << temp  << std::endl
                   << "-- object ------------------------------------" << std::endl;
-        break;  
-      } 
-    }  
+        break;
+      }
+    }
   }
   return fail;
 }

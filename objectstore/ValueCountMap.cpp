@@ -39,7 +39,8 @@ uint64_t ValueCountMap<google::protobuf::RepeatedPtrField<serializers::ValueCoun
     throw  cta::exception::Exception("In ValueCountMap::maxValue: empty map");
   uint64_t ret = std::numeric_limits<uint64_t>::min();
   std::for_each(m_valueCountMap.begin(), m_valueCountMap.end(),
-      [&](decltype(*m_valueCountMap.begin()) pair) {
+      // https://trac.cppcheck.net/ticket/10739
+      [&](decltype(*m_valueCountMap.begin()) pair) {  // cppcheck-suppress internalAstError
         if (ret < pair.value()) ret = pair.value();
       });
   return ret;

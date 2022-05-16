@@ -41,7 +41,7 @@ Tpconfig Tpconfig::parseFile(const std::string &filename) {
       ": filename=" << filename;
     throw ex;
   }
-  
+
   std::string line;
   size_t lineNumber=0;
   while(++lineNumber, std::getline(file, line)) {
@@ -50,7 +50,7 @@ Tpconfig Tpconfig::parseFile(const std::string &filename) {
     // get rid of potential tabs
     std::replace(line.begin(),line.end(),'\t',' ');
     std::istringstream sline(line);
-    // This is the expected fields in the line. 
+    // This is the expected fields in the line.
     std::string unitName, logicalLibarry, devFilePath, librarySlot;
     // If there is nothing on the line, ignore it.
     if (!(sline >> unitName)) continue;
@@ -72,7 +72,7 @@ Tpconfig Tpconfig::parseFile(const std::string &filename) {
         " filename=" << filename;
       throw ex;
     }
-    // The constructor implicitly validates the lengths 
+    // The constructor implicitly validates the lengths
     const TpconfigLine configLine(unitName, logicalLibarry, devFilePath, librarySlot);
     // Store the value of the data-columns in the output list parameter
     // Check for duplication
@@ -84,8 +84,9 @@ Tpconfig Tpconfig::parseFile(const std::string &filename) {
     }
     // Check there is not duplicate of the path
     {
-      auto i = std::find_if(ret.begin(), ret.end(), 
-          [&](decltype(*ret.begin()) i)
+      auto i = std::find_if(ret.begin(), ret.end(),
+          // https://trac.cppcheck.net/ticket/10739
+          [&](decltype(*ret.begin()) i)  // cppcheck-suppress internalAstError
           {return i.second.value().devFilename == configLine.devFilename;});
       if (ret.end() != i) {
         DuplicateEntry ex("In Tpconfig::parseFile(): duplicate path for unit ");
@@ -96,7 +97,7 @@ Tpconfig Tpconfig::parseFile(const std::string &filename) {
     }
     // Check there is not duplicate of the library slot
     {
-      auto i = std::find_if(ret.begin(), ret.end(), 
+      auto i = std::find_if(ret.begin(), ret.end(),
           [&](decltype(*ret.begin()) i)
           {return i.second.value().rawLibrarySlot == configLine.rawLibrarySlot;});
       if (ret.end() != i) {
