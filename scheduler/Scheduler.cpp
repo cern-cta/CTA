@@ -270,12 +270,15 @@ std::string Scheduler::queueRetrieve(
      .add("reconciliationTime", queueCriteria.archiveFile.reconciliationTime)
      .add("storageClass", queueCriteria.archiveFile.storageClass);
   queueCriteria.archiveFile.checksumBlob.addFirstChecksumToLog(spc);
-  uint32_t copyNumber=0;
-  for (auto & tf:queueCriteria.archiveFile.tapeFiles) {
-    std::stringstream tc;
-    tc << "tapeTapefile" << copyNumber++;
-    spc.add(tc.str(), tf);
-  }
+  
+  const auto &tapeFile = queueCriteria.archiveFile.tapeFiles.front();
+  spc.add("fSeq", tapeFile.fSeq)
+     .add("vid", tapeFile.vid)
+     .add("blockId", tapeFile.blockId)
+     .add("fileSize", tapeFile.fileSize)
+     .add("copyNb", tapeFile.copyNb)
+     .add("creationTime", tapeFile.creationTime);
+  
   spc.add("selectedVid", requestInfo.selectedVid)
      .add("verifyOnly", request.isVerifyOnly)
      .add("catalogueTime", catalogueTime)

@@ -6,6 +6,7 @@
 - cta/CTA#1205 - Fail pipeline if cppcheck detects errors
 - cta/CTA#1206 - Change NULL for nullptr
 - cta/CTA#1217 - Schema verification should just issue an warning if there are extra indexes in the db that are not in the catalogue
+- cta/CTA#1220 - Improve queued retrieve logging message
 ### Bug fixes
 ### Building and Packaging
 ### Catalogue Schema
