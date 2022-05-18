@@ -84,7 +84,7 @@ public:
   void deleteDiskInstanceSpace(const std::string &name, const std::string &diskInstance) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void modifyDiskInstanceSpaceComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &diskInstance, const std::string &comment) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void modifyDiskInstanceSpaceRefreshInterval(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &diskInstance, const uint64_t refreshInterval) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
-  void modifyDiskInstanceSpaceQueryURL(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &diskInstance, const std::string &freeSpaceQueryURL) override {  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
+  void modifyDiskInstanceSpaceQueryURL(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &diskInstance, const std::string &freeSpaceQueryURL) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   std::list<common::dataStructures::AdminUser> getAdminUsers() const override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   common::dataStructures::ArchiveFile getArchiveFileById(const uint64_t id) const override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   ArchiveFileItor getArchiveFilesItor(const TapeFileSearchCriteria& searchCriteria) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
@@ -408,6 +408,12 @@ public:
   void createDiskSystem(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &diskInstanceName, const std::string &diskInstanceSpaceName, const std::string &fileRegexp, const uint64_t targetedFreeSpace, const time_t sleepTime, const std::string &comment)  override {
     m_diskSystemList.push_back({name, m_diskInstanceSpaces.at(diskInstanceSpaceName), fileRegexp, targetedFreeSpace, sleepTime, common::dataStructures::EntryLog(), common::dataStructures::EntryLog{}, comment});
   }
+
+  void modifyDiskInstanceSpaceFreeSpace(const std::string &name, const std::string &diskInstance, const uint64_t freeSpace) override {
+    m_diskInstanceSpaces[name].freeSpace = freeSpace;
+    m_diskInstanceSpaces[name].lastRefreshTime = time(nullptr);
+  }
+
 
 private:
   mutable threading::Mutex m_tapeEnablingMutex;

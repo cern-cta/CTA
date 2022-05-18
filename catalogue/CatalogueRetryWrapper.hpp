@@ -600,6 +600,10 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyDiskInstanceSpaceQueryURL(admin, name, diskInstance, freeSpaceQueryURL);}, m_maxTriesToConnect);
   }
 
+  void modifyDiskInstanceSpaceFreeSpace(const std::string &name, const std::string &diskInstance, const uint64_t freeSpace) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyDiskInstanceSpaceFreeSpace(name, diskInstance, freeSpace);}, m_maxTriesToConnect); 
+  }
+
   ArchiveFileItor getArchiveFilesItor(const TapeFileSearchCriteria &searchCriteria) const override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getArchiveFilesItor(searchCriteria);}, m_maxTriesToConnect);
   }

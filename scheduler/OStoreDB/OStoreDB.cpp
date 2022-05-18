@@ -3516,7 +3516,7 @@ bool OStoreDB::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRe
   }
 
   try {
-    diskSystemFreeSpace.fetchDiskSystemFreeSpace(diskSystemNames, logContext);
+    diskSystemFreeSpace.fetchDiskSystemFreeSpace(diskSystemNames, m_oStoreDB.m_catalogue, logContext);
   } catch(const cta::disk::DiskSystemFreeSpaceListException &ex){
     // Could not get free space for one of the disk systems. Currently the retrieve mount will only query
     // one disk system, so just log the failure and put the queue to sleep inside the loop.

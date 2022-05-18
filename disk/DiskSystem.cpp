@@ -76,7 +76,7 @@ std::string DiskSystemList::getFetchEosFreeSpaceScript() const{
 //------------------------------------------------------------------------------
 // DiskSystemFreeSpaceList::fetchFileSystemFreeSpace()
 //------------------------------------------------------------------------------
-void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::string>& diskSystems, log::LogContext & lc) {
+void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::string>& diskSystems, cta::catalogue::Catalogue &catalogue, log::LogContext & lc) {
   auto getDiskSystemFreeSpaceQueryURL = [](DiskSystem ds) {
     auto dsURL = ds.diskInstanceSpace.freeSpaceQueryURL;
     // Replace URLS starting in eosSpace with eos:{diskInstanceName}
@@ -93,16 +93,26 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
   std::map<std::string, cta::exception::Exception> failedToFetchDiskSystems;
   for (auto const & ds: diskSystems) {
     uint64_t freeSpace = 0;
+    bool updateCatalogue = false;
+    auto &diskSystem = m_systemList.at(ds);
+    auto &diskInstanceSpace = diskSystem.diskInstanceSpace;  
     try {
       std::vector<std::string> regexResult;
-      auto & currentDiskSystem = m_systemList.at(ds);
-      regexResult = eosDiskSystem.exec(getDiskSystemFreeSpaceQueryURL(currentDiskSystem));
+      const auto currentTime = static_cast<uint64_t>(time(nullptr));
+      if (diskInstanceSpace.lastRefreshTime + diskInstanceSpace.refreshInterval >= currentTime) {
+        // use the value in the catalogue, it is still fresh
+        freeSpace = diskSystem.diskInstanceSpace.freeSpace;
+        goto found;
+      }
+      updateCatalogue = true;
+      const auto &freeSpaceQueryUrl = getDiskSystemFreeSpaceQueryURL(diskSystem);
+      regexResult = eosDiskSystem.exec(freeSpaceQueryUrl);
       if (regexResult.size()) {
         //Script, then EOS free space query
         if(!m_systemList.getFetchEosFreeSpaceScript().empty()){
           //Script is provided
           try {
-            cta::disk::JSONDiskSystem jsoncDiskSystem(currentDiskSystem);
+            cta::disk::JSONDiskSystem jsoncDiskSystem(diskSystem);
             freeSpace = fetchEosFreeSpaceWithScript(m_systemList.getFetchEosFreeSpaceScript(),jsoncDiskSystem.getJSON(),lc);
             goto found;
           } catch(const cta::disk::FetchEosFreeSpaceScriptException &ex){
@@ -116,7 +126,7 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
         freeSpace = fetchEosFreeSpace(regexResult.at(1), regexResult.at(2), lc);
         goto found;
       } 
-      regexResult = constantFreeSpaceDiskSystem.exec(getDiskSystemFreeSpaceQueryURL(m_systemList.at(ds)));
+      regexResult = constantFreeSpaceDiskSystem.exec(freeSpaceQueryUrl);
       if (regexResult.size()) {
         freeSpace = fetchConstantFreeSpace(regexResult.at(1), lc);
         goto found;
@@ -130,6 +140,10 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
     entry.freeSpace = freeSpace;
     entry.fetchTime = ::time(nullptr);
     entry.targetedFreeSpace = m_systemList.at(ds).targetedFreeSpace;
+
+    if (updateCatalogue) {
+      catalogue.modifyDiskInstanceSpaceFreeSpace(diskInstanceSpace.name, diskInstanceSpace.diskInstance, freeSpace);   
+    }
   }
   if(failedToFetchDiskSystems.size()){
     cta::disk::DiskSystemFreeSpaceListException ex;

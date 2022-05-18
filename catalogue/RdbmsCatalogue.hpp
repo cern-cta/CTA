@@ -1000,7 +1000,7 @@ public:
     const std::string &name, const std::string &diskInstance, const uint64_t refreshInterval) override;
   void modifyDiskInstanceSpaceQueryURL(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name, const std::string &diskInstance, const std::string &freeSpaceQueryURL) override;
-
+  void modifyDiskInstanceSpaceFreeSpace(const std::string &name, const std::string &diskInstance, const uint64_t freeSpace) override;
 
   /**
    * Throws a UserError exception if the specified searchCriteria is not valid

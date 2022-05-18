@@ -165,14 +165,14 @@ namespace unitTests {
     
     cta::disk::DiskSystemFreeSpaceList diskSystemFreeSpaceList (allDiskSystem);
     std::set<std::string> diskSystemsToFetch {"DiskSystemNotExists"};
-    ASSERT_THROW(diskSystemFreeSpaceList.fetchDiskSystemFreeSpace(diskSystemsToFetch,lc),std::exception);
+    ASSERT_THROW(diskSystemFreeSpaceList.fetchDiskSystemFreeSpace(diskSystemsToFetch,catalogue, lc),std::exception);
     
     diskSystemsToFetch.clear();
     diskSystemsToFetch.insert(m_diskSystemSpinner.name);
     diskSystemsToFetch.insert(m_diskSystemDefault.name);
     
     try {
-      diskSystemFreeSpaceList.fetchDiskSystemFreeSpace(diskSystemsToFetch,lc);
+      diskSystemFreeSpaceList.fetchDiskSystemFreeSpace(diskSystemsToFetch, catalogue, lc);
       ASSERT_TRUE(false);
     } catch (const cta::disk::DiskSystemFreeSpaceListException& ex) {
       ASSERT_EQ(2,ex.m_failedDiskSystems.size());
@@ -180,7 +180,7 @@ namespace unitTests {
 
     diskSystemsToFetch.insert(constantFreeSpaceDiskSystem.name);
     try {
-      diskSystemFreeSpaceList.fetchDiskSystemFreeSpace(diskSystemsToFetch,lc);
+      diskSystemFreeSpaceList.fetchDiskSystemFreeSpace(diskSystemsToFetch, catalogue, lc);
       ASSERT_TRUE(false);
     } catch (const cta::disk::DiskSystemFreeSpaceListException& ex) {
       ASSERT_EQ(2,ex.m_failedDiskSystems.size());

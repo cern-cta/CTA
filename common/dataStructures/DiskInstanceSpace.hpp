@@ -47,7 +47,7 @@ struct DiskInstanceSpace {
   uint64_t refreshInterval;
 
   /**
-   * The current free space associated to the disk system
+   * The current free space associated to the disk instance space
    */
   uint64_t freeSpace;
 

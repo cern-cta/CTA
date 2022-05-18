@@ -87,6 +87,18 @@
 #include <string>
 
 namespace cta {
+namespace disk {
+
+/**
+ * Forward declaration.
+ */
+class DiskSystemList;
+
+} // namespace disk
+} // namespace cta
+
+
+namespace cta {
 
 namespace catalogue {
 
@@ -1024,8 +1036,10 @@ public:
     const std::string &name, const std::string &diskInstance, const std::string &comment) = 0;
   virtual void modifyDiskInstanceSpaceRefreshInterval(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name, const std::string &diskInstance, const uint64_t refreshInterval) = 0;
-  virtual void modifyDiskInstanceSpaceQueryURL(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const std::string &diskInstance, const std::string &freeSpaceQueryURL) = 0;
+  virtual void modifyDiskInstanceSpaceFreeSpace(const std::string &name, 
+    const std::string &diskInstance, const uint64_t freeSpace) = 0;  
+  virtual void modifyDiskInstanceSpaceQueryURL(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &diskInstance,
+    const std::string &freeSpaceQueryURL) = 0;
 
 
   /**

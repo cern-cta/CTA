@@ -7974,6 +7974,36 @@ void RdbmsCatalogue::modifyDiskInstanceSpaceRefreshInterval(const common::dataSt
   }
 }
 
+void RdbmsCatalogue::modifyDiskInstanceSpaceFreeSpace(const std::string &name, const std::string &diskInstance, const uint64_t freeSpace) {
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE DISK_INSTANCE_SPACE SET "
+        "FREE_SPACE = :FREE_SPACE,"
+        "LAST_REFRESH_TIME = :LAST_REFRESH_TIME "
+      "WHERE "
+        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME "
+      "AND "
+        "DISK_INSTANCE_SPACE_NAME = :DISK_INSTANCE_SPACE_NAME";
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindUint64(":FREE_SPACE", freeSpace);
+    stmt.bindUint64(":LAST_REFRESH_TIME", now);
+    stmt.bindString(":DISK_INSTANCE_NAME", diskInstance);
+    stmt.bindString(":DISK_INSTANCE_SPACE_NAME", name);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw UserSpecifiedANonExistentDiskInstanceSpace(std::string("Cannot modify disk system ") + name + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
 //------------------------------------------------------------------------------
 // insertArchiveFile
 //------------------------------------------------------------------------------

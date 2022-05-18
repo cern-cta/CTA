@@ -22,11 +22,24 @@
 #include "common/dataStructures/DiskInstanceSpace.hpp"
 #include "common/log/LogContext.hpp"
 
-#include <common/exception/Exception.hpp>
+#include "common/exception/Exception.hpp"
+#include "catalogue/Catalogue.hpp"
 #include <list>
 #include <optional>
 #include <set>
 #include <string>
+
+namespace cta {
+namespace catalogue {
+
+/**
+ * Forward declaration.
+ */
+class Catalogue;
+
+} // namespace catalogue
+} // namespace cta
+
 
 namespace cta { namespace disk {
 
@@ -98,7 +111,7 @@ public:
 class DiskSystemFreeSpaceList: public std::map<std::string, DiskSystemFreeSpace> {
 public:
   DiskSystemFreeSpaceList(DiskSystemList &diskSystemList): m_systemList(diskSystemList) {}
-  void fetchDiskSystemFreeSpace(const std::set<std::string> &diskSystems, log::LogContext & lc);
+  void fetchDiskSystemFreeSpace(const std::set<std::string> &diskSystems, cta::catalogue::Catalogue &catalogue, log::LogContext & lc);
   const DiskSystemList &getDiskSystemList() { return m_systemList; }
 private:
   DiskSystemList &m_systemList;
