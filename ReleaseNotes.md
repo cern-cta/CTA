@@ -25,9 +25,6 @@
 - cta/CTA#1197 - Return code from `cta-catalogue-schema-verify` should indicate if the schema is in UPGRADING state
 - cta/CTA#1206 - Change NULL for nullptr
 
-### Building and Packaging
-### Catalogue Schema
-
 # v4.7.2-1
 
 ## Summary
@@ -44,10 +41,6 @@
 - Add verification flag to queued retrieve request log message
 - propagate labelFormat from TAPE catalog to VolumeInfo
 - cta/CTA#1200 - Remove range class
-
-### Bug fixes
-### Building and Packaging
-### Catalogue Schema
 
 # v4.7.0-1
 

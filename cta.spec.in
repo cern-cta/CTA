@@ -530,227 +530,169 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 
 
 %changelog
-* Fri Jan 21 2022 miguel.veloso.barros (at) cern.ch - 4.5.1-1
-- cta/CTA#1101 - Fix disk space reservation logic adding all existing disk space reservations for all disk systems
-- cta/CTA#1023 - Retrieve puts the queue to sleep if the eos disk instance is not reachable
-* Fri Jan 21 2022 miguel.veloso.barros (at) cern.ch - 4.5.0-1
+* Tue May 10 2022 Volodymyr Yurchenko <volodymyr.yurchenko@cern.ch> - 4.7.2-1
+- This release is deprecated, replaced by release v4.7.3-1
+
+* Tue May 10 2022 Julien Leduc <julien.leduc@cern.ch> - 4.7.1-1
+- Various code quality improvements, see ReleaseNotes.md for detail
+
+* Tue Apr 26 2022 Miguel Barros <miguel.veloso.barros@cern.ch> - 4.7.0-1
+- Catalogue schema version 10.0
+
+* Thu Mar 17 2022 mvelosob <miguel.veloso.barros@cern.ch> - 4.6.1-1
+- Catalogue schema version 4.6
+
+* Fri Feb 11 2022 Michael Davis <michael.davis@cern.ch> - 4.6.0-1
+- Catalogue schema version 4.5
+- Updates EOS version in CI to 4.8.75
+
+* Fri Jan 21 2022 mvelosob <miguel.veloso.barros@cern.ch> - 4.5.1-1
+- Fix disk space reservation logic (cta/CTA#1101)
+
+* Tue Jan 18 2022 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4.5.0-1
 - Improve cta-versionlock script
-- cta/CTA#1091 - New Drive State table in CTA Catalogue
-- cta/CTA#1054 - Fix filing of disk buffer when recalling from tapeservers with RAO
-- cta/CTA#1076 - Retrieve fails if disk system configuration is removed
-- cta/CTA#1087 - Add new tapeserver config option UseEncryption
-- cta/CTA#1096 - Better handling of bad checksums in archive/retrieve sessions
-- cta/CTA#1092 - Fix overflow error with drive state latestBandwith causing cta frontend crash
-- cta/CTA#501 - Fix disappearing reason when TapeDrive is reading or writing
-* Fri Dec 10 2021 julien.leduc (at) cern.ch - 4.4.0-1
-- Upgraded EOS to 4.8.67 in CI versionlock.list file
-- cta/CTA#607 - Add client host and username in cta-frontend logs
-- cta/CTA#777 - Minimize mounts for dual copy tape pool recalls
-- cta/CTA#928 - Add youngest request age to cta-admin sq
-- cta/CTA#1020 - cta-restore-deleted-files command for restoring deleted files
-- cta/CTA#1026 - Add activity Mount Policy resolution to CTA
-- cta/CTA#1057 - Remove support for MySQL
-- cta/CTA#1069 - Open BackendVFS ObjectStore files in R/W mode when obtaining exclusive locks
-- cta/CTA#1070 - Update eos to version 4.8.67
-- cta/CTA#1074 - Improve error reporting when retrieving archive
-- cta/CTA#1077 - Remove activity fair scheduling logic
-- cta/CTA#1083 - Upgrade ceph to version 15.2.15
-- cta/CTA#1068 - Build cta with gcc 7.x(C++17) and fix deprecated code
-- cta/CTA#1059 - Clean up warnings reported by static analysis
-- cta/CTA#1062 - cta-admin tf rm should store the diskFilePath when deleting the tape file copy
-- cta/CTA#1073 - Retry failed reporting for archive jobs
-- cta/CTA#1078 - fix STALE message when cta-taped is restarting
-- cta/CTA#1081 - refactor database queries for drive ls
-* Mon Nov 15 2021 julien.leduc (at) cern.ch - 4.3-3
-- cta/CTA#1053 Remove the objectstore presence in another classes
-- cta/CTA#501 cta-taped should set the state to DOWN when machine rebooting
-- cta/CTA#1056 Fix bugs in cta 4.3-2"
-- cta/CTA#1058 Remove helgrind_annotator from production
-* Fri Oct 22 2021 jorge.camarero (at) cern.ch - 4.3-2
-- cta-admin: All short options with more than one character now require two dashes
-- cta/CTA#1013 reportType uninitialized
-- cta/CTA#1044 Fix segmentation fault due to uninitialized optional value and remove diskSpaceReservations from `cta-admin dr ls`
-* Thu Sep 30 2021 jorge.camarero (at) cern.ch - 4.3-1
-- cta/CTA#976 Add logical part of Drive Status using Catalogue
-- cta/CTA#988 Add diskSpaceReservations map in cta-admin --json dr ls output.
-- cta/CTA#983 Add cta-versionlock helper script to cta-release package, Update cta repo file to use the new public repo
-- cta/CTA#1036 Better error reporting in cta-admin tools
-- cta/CTA#1039 Improve logging of cta admin commands in cta frontend
-- cta/CTA#1041 Fix host values in cta-admin commands
-- cta/CTA#501 cta-taped should set the state to DOWN when machine rebooting
-- cta/CTA#955 cta-taped daemon should stop "immediately" and cleanly when systemctl stop/restart is executed
-- cta/CTA#991  Drive is not put down if the device file is removed while cta-taped is running and before a data transfer
-- cta/CTA#996  Removes PARALLEL from migration scripts
-- cta/CTA#1029 Fix segmentatin fault in frontend when list repacks of a tape that has been deleted in the catalogue
-- cta/CTA#1031 Fix Warning in updateDriveStatus
-- cta/CTA#1032 cta-admin dr ls crashes the frontend if executed during an archive/retrieve
-* Wed Sep 1 2021 miguel.barros (at) cern.ch - 4.2-1
+- Fixes to Drive State (cta/CTA#1091, cta/CTA#501)
+
+* Fri Dec 10 2021 Julien Leduc <julien.leduc@cern.ch> - 4.4.0-1
+- Removes support for MySQL
+- Updates EOS to version 4.8.67
+- Updates Ceph to version 15.2.15
+- Build CTA with GCC 8.x (C++17) and fix deprecated code
+- New cta-restore-deleted-files command
+
+* Mon Nov 15 2021 Julien Leduc <julien.leduc@cern.ch> - 4.3-3
+- Various bug fixes, see ReleaseNotes.md for detail
+
+* Fri Oct 22 2021 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4.3-2
+- Various bug fixes, see ReleaseNotes.md for detail
+
+* Thu Sep 30 2021 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4.3-1
+- Moves Drive Status from objectstore to Catalogue DB
+
+* Fri Sep 03 2021 Jorge Camarero Vera <jcamarerov@gmail.com> - 4.2-3
 - Catalogue schema version 4.2
-- cta/CTA#1001 Maximum file size is now defined by VO instead of globally.
-- cta/CTA#1019 New command `cta-readtp` allows reading files from tape and verifying their checksum
-* Wed Aug 18 2021 volodymyr.yurchenko (at) cern.ch - 4.1-1
-- cta/CTA#1016 New options for filtering deleted files using `cta-admin rtf ls` command.
-- cta/CTA#983 Add cta-release package for public binary rpm distribution.
-- cta/CTA#980 Add external encryption script option
-- [frontend] New command "tapefile rm" allows deleting a copy of a file from tape
-- cta/CTA#1014 Fix last column alignment when more than 1000 items are listed.
-* Tue Jul 27 2021 julien.leduc (at) cern.ch - 4.0-5
-- [frontend] Add options to "tapepool ls" to filter tapepools on their name, vo and encryption
-- cta/CTA#898 cta-send-event now gets the requester id and eos instance as command line arguments
-- cta/CTA#1005 "tape ls" now can filter tapes on wether they were imported from CASTOR
-- cta/CTA#1006 "repack ls" now shows the tapepool of the tape being repacked
-- [frontend] Adds missing break after "schedulinginfo ls" command
-- cta/CTA#999 Adds a default mount rule
-- cta/CTA#1003 The expansion of a repack request now fails if the archive route for archiving the repacked files is missing
-* Fri Jul 09 2021 julien.leduc (at) cern.ch - 4.0-4
-- cta/CTA#1002 Do not requeue report jobs when reportType is NoReportRequired
-* Mon Jul 05 2021 julien.leduc (at) cern.ch - 4.0-3
-- Upgraded ceph to version 14.2.20
-- Adds cta-verify-file to cta-cli RPM
-* Tue Jun 01 2021 julien.leduc (at) cern.ch - 4.0-2
-- Upgraded EOS to 4.8.45
-- Upgraded eos-xrootd to 4.12.8
-- cta/CTA#966 Unable to distinguish empty and wrong tape pool
-- cta/CTA#926 Improve MigrationReportPacker::ReportSkipped::execute() exception message
-- cta/CTA#584 Validate checksum when recalling from tape
-* Fri Feb 05 2021 julien.leduc (at) cern.ch - 4.0-1
-- cta/CTA#964 Adds failure log messages to processCLOSEW in CTA Frontend
-- When the operator submits a tape to repack, a check is done about the tape state before queueing the repack request to ensure it can be repacked
+- New command `cta-readtp` allows reading files from tape and verifying their checksum
+
+* Wed Sep 01 2021 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4.2-2
+- See ReleaseNotes.md for detail of this release
+
+* Wed Sep 01 2021 Miguel Barros <miguel.veloso.barros@cern.ch> - 4.2-1
+- See ReleaseNotes.md for detail of this release
+
+* Wed Aug 18 2021 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4.1-1
+- Add cta-release package for binary RPM distribution
+- Add external encryption script option
+
+* Tue Jul 27 2021 Steven Murray <Steven.Murray@cern.ch> - 4.0-5
+- Adds a default mount rule
+
+* Fri Jul 09 2021 Michael Davis <michael.davis@cern.ch> - 4.0-4
+- Do not requeue report jobs when reportType is NoReportRequired (cta/CTA#1002)
+
+* Mon Jul 05 2021 Julien Leduc <julien.leduc@cern.ch> - 4.0-3
+- Updates Ceph to version 14.2.20
+- Adds tape verification tool (cta-verify-file) to cta-cli RPM
+
+* Tue Jun 01 2021 Julien Leduc <julien.leduc@cern.ch> - 4.0-2
+- Updates EOS to 4.8.45
+- Updates eos-xrootd to 4.12.8
+
+* Fri Feb 05 2021 Cedric Caffy <cedric.caffy@cern.ch> - 4.0-1
 - Oracle catalogue migration scripts 3.1to3.2.sql: replaced DELETE FROM table_name by TRUNCATE TABLE table_name
-* Wed Feb 03 2021 julien.leduc (at) cern.ch - 3.2-1
-- Upgraded EOS to 4.8.37-1
-- cta/CTA#922 The superseded concept has been removed and replaced by a new recycle bin
-- cta/CTA#943 A new tape lifecycle logic has been implemented
-- cta/CTA#948 The max drives allowed for reading and writing are now set per virtual organization and not per mount policy anymore
-- cta/CTA#952 Reclaiming a tape resets the IS_FROM_CASTOR flag to 0
-- cta/CTA#951 The query used by RdbmsCatalogueTapeContentsItor has been put back to the state it was in v3.1-13
-- cta/CTA#883 Tape verification tool
-* Thu Jan 07 2021 julien.leduc (at) cern.ch - 3.1-14
-- Upgraded EOS to 4.8.35-1
-- cta/CTA#954 The drive is put down if the CleanerSession fails to eject the tape from it after a shutdown
-- cta/CTA#945 The timeout for tape load action is now configurable
-- cta/CTA#957 The state of the successful Archive for repack jobs is now changed before being queued for reporting
-- cta/CTA#958 The RepackRequest garbage collection now changes the owner of the garbage collected RepackRequest.
-* Thu Jan 07 2021 julien.leduc (at) cern.ch - 3.1-13
-- Upgraded EOS to 4.8.34-1
-- Upgraded xrootd to 4.12.6-1
-- cta/CTA#941 Slow `cta-admin sq` even when there is very little activity
-- cta/CTA#951 Improve the performance of RdbmsCatalogueTapeContentsItor
-- cta/CTA#939 cta-objectstore-dereference-removed-queue removes all kind of manually deleted queues from the RootEntry
-* Fri Dec 04 2020 julien.leduc (at) cern.ch - 3.1-12
-- Upgraded EOS to 4.8.30-1
-* Wed Dec 02 2020 julien.leduc (at) cern.ch - 3.1-11
-- cta/CTA#932 Add environment file for cta-frontend service: frontend configured to use 10 XRootD polling threads by default
-- cta/CTA#292 Allow non interactive usages of cta-admin with sss authentication
-- Upgraded EOS to 4.8.29-1
-- cta/operations#155 Fix for conversion issues
-- cta/operations#154 Improve sys.retrieve.req_id to allow to cancel retrieves on a running instance: adding epoch timestamp in ids
-- EOS-4505 Separate archive and retrieve ACLs in EOS: only needs p ACL for prepare
-- cta/operations#150 high priority Archive job not scheduled when Repack is running: fixed
-* Thu Nov 12 2020 julien.leduc (at) cern.ch - 3.1-10
-- cta/CTA#837 Repack now fails if the repack buffer VID directory cannot be created during expansion
-- cta/CTA#920 Archive and Retrieve error report URL correction on the cta-send-event cmdline tool
-- cta/CTA#923 Corrected the cta-admin showqueues command to display all the retrieve queues of tapes that are on the same tapepool
-- Unuseful WARNING logs are now DEBUG logs
-* Wed Nov 04 2020 julien.leduc (at) cern.ch - 3.1-9
-- Upstream EOS 4.8.26-1
-- cta/CTA#907 For backpressure, the EOS free space can be fetched by calling an external script
-- cta/CTA#917 Corrected the bug in the cta-admin showqueues command in the case ArchiveForUser and ArchiveForRepack exist for the same tapepool
-- cta/CTA#919 Archive queue oldestjobcreationtime is now updated at each pop from the ArchiveQueue
-* Thu Oct 22 2020 julien.leduc (at) cern.ch - 3.1-8
-- CTA software Recommended Access Order (RAO) implemented for LTO drives
-- cta-admin repack ls tabular output improvements
+
+* Wed Feb 03 2021 Cedric Caffy <cedric.caffy@cern.ch> - 3.2-1
+- Updates EOS to 4.8.37-1
+
+* Fri Jan 15 2021 Cedric Caffy <cedric.caffy@cern.ch> - 3.1-14
+- Updates EOS to 4.8.35-1
+
+* Thu Jan 07 2021 Cedric Caffy <cedric.caffy@cern.ch> - 3.1-13
+- Updates EOS to 4.8.34-1
+- Updates XRootD to 4.12.6-1
+
+* Fri Dec 04 2020 Julien Leduc <julien.leduc@cern.ch> - 3.1-12
+- Updates EOS to 4.8.30-1
+
+* Wed Dec 02 2020 Julien Leduc <julien.leduc@cern.ch> - 3.1-11
+- Updates EOS to 4.8.29-1
+
+* Thu Nov 12 2020 Cedric Caffy <cedric.caffy@cern.ch> - 3.1-10
+- See ReleaseNotes.md for detail of this release
+
+* Fri Nov 06 2020 Cedric Caffy <cedric.caffy@cern.ch> - 3.1-9
+- Updates EOS to 4.8.26-1
+
+* Mon Oct 26 2020 Volodymyr Yurchenko <volodymyr.yurchenko@cern.ch> - 3.1-8
+- Implements software Recommended Access Order (RAO) for LTO-8 drives
 - Upstream EOS 4.8.24-1
-- Upstream xrootd to 4.12.5-1
-- Repack management execution can be disabled via the cta-taped configuration file
-- cta/CTA#907 Maintenance process can be disabled via the cta-taped configuration file
-- Catalogue refactoring
-- utils::trimString() now returns an empty string if the string passed in parameter contains only white-space characters
-- cta/CTA#895 [catalogue] RdbmsCatalogue::deleteLogicalLibrary does not delete empty logical library
-- Repack request and sub-requests are now unowned from their Agent when completed
-* Wed Sep 23 2020 julien.leduc (at) cern.ch - 3.1-7
-- cta/CTA#893 Corrected slowliness of RdbmsCatalogue::getArchiveFileToRetrieveByArchiveFileId()
-* Mon Sep 21 2020 julien.leduc (at) cern.ch - 3.1-6
-- cta/CTA#881 cta-fst-gcd logs can be now sent to stdout by command line option for container based deployments
-- cta/CTA#885 cta-admin should be able to query by sys.archive.file_id
-- Upstream eos 4.8.15-1
-- Upstream xrootd 4.12.4-1
-- cta/CTA#890 CTA RPMs should only use the xrootd-client-libs package
-- buildtree installation scripts are made compatible with Centos 7
-- cta/CTA#892 Modified the log level of the triggering of Archive and Retrieve mounts
-- cta/CTA#889 It is not possible to retrieve a file that is not active anymore
-- cta/CTA#877 ObjectStore.RetrieveQueueAlgorithms unit tests fails or succeeds base on version of cmake
-- cta/CTA#888 Garbage collector race condition
-- cta/CTA#891 Corrected Repack Archive subrequest creation time
-* Thu Aug 20 2020 julien.leduc (at) cern.ch - 3.1-5
-- cta/CTA#863 Prevent SQLite database files from being used as the CTA catalogue database backend
-- cta/CTA#861 cta-admin comment column is flush left
-- cta/CTA#862 Unable to delete tabtest tape pool because it is in an archive route
-- cta/CTA#860 Correct contents of cta-lib-catalogue RPM and correct dependencies on it
-- Reinstates "cta-admin failedrequest --summary" option
-- cta/CTA#865 Empty the RetrieveQueue in the case of cancellation of a retrieve request when the drive is down
-* Fri Aug 7 2020 steven.murray (at) cern.ch - 3.1-4
-- cta/CTA#858 Remove dependency between the cta-migration-tools RPM and librados2
-- cta/CTA#857 Remove unnecessary LEFT OUTER JOIN clauses from the CTA catalogue
-- cta/CTA#852 Fixing sqlite CI use case
-- cta/CTA#850 [repack] If the --no-recall flag is passed to the repack request submission the --disabled-flag test should not be done.
-- cta/CTA#846 cta-admin tapefile ls: list by fileid
-- cta/CTA#840 Remove cta-objectstore-unfollow-agent from cta-objectstore-tools
-* Fri Jul 31 2020 julien.leduc (at) cern.ch - 3.1-3
-- Upstream eos 4.8.10-1
-- Added --no-recall option to cta-admin repack command
-- Catalogue connection pool improvements
-* Fri Jul 17 2020 steven.murray (at) cern.ch - 3.1-2
-- Added database upgrade/changelog script oracle/3.0to3.1.sql
-* Thu Jul 16 2020 julien.leduc (at) cern.ch - 3.1-1
-- Corrected bugs on cta-objectstore-create-missing-repack-index tool
-- Corrected a bug that caused crash of all tapeservers while scheduling
-- Catalogue schema version 3.1 : addition of a new index on the TAPE table
-- Catalogue and Unit tests improvements
-* Wed Jun 24 2020 julien.leduc (at) cern.ch - 3.0-3
-- The cta-statistics-update tool updates tape statistics one by one
-* Wed Jun 24 2020 julien.leduc (at) cern.ch - 3.0-2
-- Upstream eos 4.8.3-1
-- Upstream xrootd 4.12.3-1
-- Mount policies are now dynamically updated on queued Archive and Retrieve requests
-- cta-admin sq now display queued retrieves on disabled tapes
-* Thu Jun 18 2020 julien.leduc (at) cern.ch - 3.0-1
-- eos 4.8.2-1
-- xrootd 4.12.1-1
-- Catalogue 3.0
-- Tape media-type management
-- File recycle-bin for file deletion
-- cta-admin modifications
-- cta-send-event allowing to manually retry to Archive or Retrieve a file
-- prevent eos /proc/conversion worfklows from deleting files from CTA
-- Repack submission will fail if no mount policy is given
-- bug fixes
-* Mon May 4 2020 julien.leduc (at) cern.ch - 2.0-5
-- Upstream eos 4.7.12-1
-- Added support for FileID change in EOS that occurs during conversion
-* Wed Apr 15 2020 julien.leduc (at) cern.ch - 2.0-3
-- eos 4.7.9-1
-- Adding reason and comment to cta drive (better track usage and issues)
-* Wed Apr 08 2020 julien.leduc (at) cern.ch - 2.0-2
-- eos 4.7.8-1
-- xrootd 4.11.3-1
-- ceph nautilus 14.2.8-0
-- fix for xrdfs query prepare on_tape logic
-- more tests on the tape drive (device path must exist, no name duplication in objectstore)
-* Sat Mar 14 2020 julien.leduc (at) cern.ch - 2.0-1
-- Schema version 2.0: DISK_FILE_PATH is now resolved on eos instance using grpc and VIRTUAL_ORGANIZATION has its own table
-- eos 4.6.7-1
-- xrootd 4.11.2-1
-* Fri Feb 21 2020 julien.leduc (at) cern.ch - 1.2-0
-- Upgrade the catalogue schema from version 1.0 to 1.1 before updating CTA components.
-- Added cta-admin tapefile ls command
-- Scheduler does not schedule a mount if a tape is disabled (unless for a Repack with the --disabledtape flag set)
-- Added a new schema verification tool (cta-catalogue-schema-verify)
-- Added a new tape statistic updater tool (cta-statistics-update)
-- Added backward-compatible Catalogue schema changes
-- CASTOR-To-CTA migration improvements
-- Various changes and improvements to cta-admin tool
-- CTA Frontend has configurable maximum file size limit (cta.archivefile.max_size_gb), default 2TB
-- CTA Frontend logs which FST sent the archive request
-- New configuration file for gRPC namespace endpoints so CTA can query EOS namespace
-- Archive requests sent to hard-coded fail_on_closew_test storage class will always fail with an error
+- Upstream XRootD to 4.12.5-1
+
+* Wed Sep 23 2020 Cedric Caffy <cedric.caffy@cern.ch> - 3.1-7
+- See ReleaseNotes.md for detail of this release
+
+* Mon Sep 21 2020 Cedric Caffy <cedric.caffy@cern.ch> - 3.1-6
+- Upstream EOS 4.8.15-1
+- Upstream XRootD 4.12.4-1
+- cta/CTA#890 CTA RPMs should only use the XRootD-client-libs package
+
+* Thu Aug 20 2020 Julien Leduc <julien.leduc@cern.ch> - 3.1-5
+- See ReleaseNotes.md for detail of this release
+- Prohibit SQLite from being used as the CTA catalogue database backend
+- Corrects contents and dependencies of cta-lib-catalogue RPM
+
+* Fri Aug 07 2020 Steven Murray <Steven.Murray@cern.ch> - 3.1-4
+- Removes dependency between cta-migration-tools RPM and librados2
+
+* Fri Jul 31 2020 Julien Leduc <julien.leduc@cern.ch> - 3.1-3
+- Upstream EOS 4.8.10-1
+
+* Fri Jul 17 2020 Steven Murray <Steven.Murray@cern.ch> - 3.1-2
+- Added database upgrade/changelog script for schema v3.1
+
+* Thu Jul 16 2020 Cedric Caffy <cedric.caffy@cern.ch> - 3.1-1
+- Catalogue schema version 3.1
+
+* Wed Jun 24 2020 Cedric Caffy <cedric.caffy@cern.ch> - 3.0-3
+- Bug fix to cta-statistics-update tool
+
+* Wed Jun 24 2020 Julien Leduc <julien.leduc@cern.ch> - 3.0-2
+- Upstream EOS 4.8.3-1
+- Upstream XRootD 4.12.3-1
+
+* Fri Jun 19 2020 Julien Leduc <julien.leduc@cern.ch> - 3.0-1
+- EOS 4.8.2-1
+- XRootD 4.12.1-1
+- Catalogue schema version 3.0
+
+* Mon May 04 2020 Julien Leduc <julien.leduc@cern.ch> - 2.0-5
+- Upstream EOS 4.7.12-1
+
+* Tue Apr 28 2020 Steven Murray <Steven.Murray@cern.ch> - 2.0-4
+- See ReleaseNotes.md for detail of this release
+
+* Wed Apr 15 2020 Julien Leduc <julien.leduc@cern.ch> - 2.0-3
+- Upstream EOS 4.7.9-1
+
+* Wed Apr 08 2020 Julien Leduc <julien.leduc@cern.ch> - 2.0-2
+- EOS 4.7.8-1
+- XRootD 4.11.3-1
+- Ceph Nautilus 14.2.8-0
+
+* Sat Mar 14 2020 Julien Leduc <julien.leduc@cern.ch> - 2.0-1
+- Catalogue schema version 2.0
+- EOS 4.6.7-1
+- XRootD 4.11.2-1
+
+* Fri Feb 21 2020 Julien Leduc <julien.leduc@cern.ch> - 1.2-0
+- Upgrade the catalogue schema from version 1.0 to 1.1 before updating CTA components
+- Adds a new schema verification tool (cta-catalogue-schema-verify)
+- Adds a new tape statistic updater tool (cta-statistics-update)
+
+* Fri Jan 10 2020 Steven Murray <Steven.Murray@cern.ch> - 1.0-3
+- Release 1.0-3
+
+* Mon Jan 06 2020 Steven Murray <Steven.Murray@cern.ch> - 1.0-2
+- Release 1.0-2
+
+* Mon Dec 09 2019 Cedric CAFFY <cedric.caffy@cern.ch> - 1.0-1
+- Release 1.0-1
