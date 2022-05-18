@@ -16,6 +16,7 @@
  */
 
 #include <algorithm>
+#include <functional>
 
 #include "SQLiteSchemaComparer.hpp"
 #include "SQLiteSchemaInserter.hpp"
@@ -83,25 +84,36 @@ void SQLiteSchemaComparer::insertSchemaInSQLite() {
   m_isSchemaInserted = true;
 }
 
-SchemaCheckerResult SQLiteSchemaComparer::compareIndexes(){
+SchemaCheckerResult SQLiteSchemaComparer::compareIndexes() {
   insertSchemaInSQLite();
-  std::list<std::string> catalogueIndexes = m_databaseMetadataGetter.getIndexNames();
-  std::list<std::string> schemaIndexes = m_schemaMetadataGetter->getIndexNames();
-  return compareItems("INDEX", catalogueIndexes, schemaIndexes);
+  const Items catalogueIndexes = m_databaseMetadataGetter.getIndexNames();
+  const Items schemaIndexes = m_schemaMetadataGetter->getIndexNames();
+  return compareItems("INDEX", std::make_tuple(catalogueIndexes, Level::Warn), std::make_tuple(schemaIndexes, Level::Error));
 }
 
-SchemaCheckerResult SQLiteSchemaComparer::compareItems(const std::string &itemType, const std::list<std::string>& itemsFromDatabase, const std::list<std::string>& itemsFromSQLite){
+SchemaCheckerResult SQLiteSchemaComparer::compareItems(const std::string &itemType, const LoggedItems& fromDatabase,
+  const LoggedItems& fromSQLite) {
   SchemaCheckerResult result;
-  for(auto &databaseItem: itemsFromDatabase){
-    if(std::find(itemsFromSQLite.begin(),itemsFromSQLite.end(),databaseItem) == itemsFromSQLite.end()){
-      result.addError(itemType+" "+databaseItem+" is missing in the schema but defined in the "+m_databaseToCheckName+" database.");
+  const auto [itemsFromDatabase, logFromDataBase] = fromDatabase;
+  const auto [itemsFromSQLite, logFromSQLite] = fromSQLite;
+
+  auto findMismatchs = [&result, &itemType](const Items& items, const Items& itemsToCompare, const std::string& message,
+    const Level& logLevel) -> void {
+    std::function<void(const std::string&)> addResult;
+    if (logLevel == Level::Error) addResult = [&result](const std::string& msg) {result.addError(msg);};
+    if (logLevel == Level::Warn) addResult = [&result](const std::string& msg) {result.addWarning(msg);};
+    for (auto &item : items) {
+      if (std::find(itemsToCompare.begin(), itemsToCompare.end(), item) == itemsToCompare.end()) {
+        addResult(itemType + " " + item + message);
+      }
     }
-  }
-  for(auto &sqliteItem: itemsFromSQLite){
-    if(std::find(itemsFromDatabase.begin(),itemsFromDatabase.end(),sqliteItem) == itemsFromDatabase.end()){
-      result.addError(itemType+" "+sqliteItem+" is missing in the "+m_databaseToCheckName+" database but is defined in the schema.");
-    }
-  }
+  };
+
+  std::string logMsg = " is missing in the schema but defined in the " + m_databaseToCheckName + " database.";
+  findMismatchs(itemsFromDatabase, itemsFromSQLite, logMsg, logFromDataBase);
+  logMsg = " is missing in the " + m_databaseToCheckName + " database but is defined in the schema.";
+  findMismatchs(itemsFromSQLite, itemsFromDatabase, logMsg, logFromSQLite);
+
   return result;
 }
 
@@ -121,7 +133,9 @@ SchemaCheckerResult SQLiteSchemaComparer::compareTables(const std::list<std::str
     schemaTableColumns[schemaTable] = m_schemaMetadataGetter->getColumns(schemaTable);
     if(m_compareTableConstraints) {
       schemaTableConstraints[schemaTable] = m_schemaMetadataGetter->getConstraintNames(schemaTable);
-      result += compareItems("IN TABLE "+schemaTable+", CONSTRAINT",databaseTableConstraints[schemaTable],schemaTableConstraints[schemaTable]);
+      const LoggedItems databaseConstrains = std::make_tuple(databaseTableConstraints[schemaTable], Level::Error);
+      const LoggedItems schemaConstrains = std::make_tuple(schemaTableConstraints[schemaTable], Level::Error);
+      result += compareItems("IN TABLE " + schemaTable + ", CONSTRAINT", databaseConstrains, schemaConstrains);
     }
   }
 

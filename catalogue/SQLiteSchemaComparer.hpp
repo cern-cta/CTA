@@ -16,6 +16,8 @@
  */
 #pragma once
 
+#include <tuple>
+
 #include "SchemaComparer.hpp"
 
 namespace cta {
@@ -46,7 +48,10 @@ public:
 
 private:
   void insertSchemaInSQLite();
-  SchemaCheckerResult compareItems(const std::string &itemType, const std::list<std::string>& itemsFromDatabase, const std::list<std::string>& itemsFromSQLite);
+  enum Level {Warn, Error};
+  using Items = std::list<std::string>;
+  using LoggedItems = std::tuple<Items, Level>;
+  SchemaCheckerResult compareItems(const std::string &itemType, const LoggedItems& fromDatabase, const LoggedItems& fromSQLite);
   SchemaCheckerResult compareTables(const std::list<std::string> &databaseTables, const std::list<std::string> &schemaTables);
   typedef std::map<std::string, std::map<std::string, std::string>> TableColumns;
   SchemaCheckerResult compareTableColumns(const TableColumns & schema1TableColumns, const std::string &schema1Type,const TableColumns & schema2TableColumns, const std::string &schema2Type);
