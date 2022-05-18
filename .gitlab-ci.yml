@@ -383,10 +383,10 @@ cppcheck_report:
   stage: analysis:report
   image: centos:7
   script:
-    - if cat cppcheck_out.xml | grep -q "\"error\""; then echo "ERRORS have been detected"; exit 1; fi;
     - yum -y install python3-pip
     - python3 -m pip install -U cppcheck_codequality
     - cppcheck-codequality --input-file=cppcheck_out.xml --output-file=cppcheck.json
+    - if cat cppcheck_out.xml | grep -q "\"error\""; then echo "ERRORS have been detected"; exit 1; fi;
   artifacts:
     reports:
       codequality: cppcheck.json
