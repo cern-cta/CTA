@@ -24,7 +24,6 @@
 #include "common/log/StdoutLogger.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/LogLevel.hpp"
-#include "common/make_unique.hpp"
 #include "scheduler/OStoreDB/OStoreDBInit.hpp"
 
 #include <getopt.h>
@@ -140,10 +139,10 @@ int main(const int argc, char *const *const argv) {
     auto backed = config.getConfEntString("ObjectStore", "BackendPath");
     lc.log(log::INFO, "Using scheduler backend: " + backed);
 
-    auto sInit = cta::make_unique<SchedulerDBInit_t>("Frontend", backed, logger);
+    auto sInit = std::make_unique<SchedulerDBInit_t>("Frontend", backed, logger);
     auto scheddb = sInit->getSchedDB(*catalogue, logger);
     scheddb->setBottomHalfQueueSize(25000);
-    auto scheduler = cta::make_unique<cta::Scheduler>(*catalogue, *scheddb, 5, 2*1000*1000);
+    auto scheduler = std::make_unique<cta::Scheduler>(*catalogue, *scheddb, 5, 2*1000*1000);
 
     CtaRpcImpl svc(&logger, catalogue, scheduler);
 
