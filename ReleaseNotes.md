@@ -11,6 +11,7 @@
 
 ### Bug fixes
 - cta/CTA#1120 - Fix negative disk space reservation content
+- cta-verify-file should return 1 on error
 
 ### Building and Packaging
 ### Catalogue Schema

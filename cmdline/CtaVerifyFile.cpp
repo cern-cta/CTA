@@ -214,5 +214,5 @@ int main(int argc, const char **argv)
     std::cerr << "Caught an unknown exception" << std::endl;
   }
 
-  return 0;
+  return 1;
 }
