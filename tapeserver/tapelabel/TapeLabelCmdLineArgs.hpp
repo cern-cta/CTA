@@ -55,6 +55,11 @@ struct TapeLabelCmdLineArgs {
   bool m_force;
 
   /**
+   * The timeout to load the tape in the drive slot in seconds
+   */
+  uint64_t m_tapeLoadTimeout = 2 * 60 * 60; // 2 hours
+
+  /**
    * Constructor that parses the specified command-line arguments.
    *
    * @param argc The number of command-line arguments including the name of the

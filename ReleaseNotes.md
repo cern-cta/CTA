@@ -8,6 +8,7 @@
 - cta/CTA#1217 - Schema verification should just issue an warning if there are extra indexes in the db that are not in the catalogue
 - cta/CTA#1220 - Improve queued retrieve logging message
 - cta/CTA#1152 - Reduce eos free space query load
+- cta/CTA#1231 - Add --loadtimeout option to cta-tape-label and increase default value
 
 ### Bug fixes
 - cta/CTA#1120 - Fix negative disk space reservation content

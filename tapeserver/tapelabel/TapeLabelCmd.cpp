@@ -73,6 +73,7 @@ int TapeLabelCmd::exceptionThrowingMain(const int argc, char *const *const argv)
   params.push_back(cta::log::Param("tapeVid", cmdLineArgs.m_vid));
   params.push_back(cta::log::Param("tapeOldLabel",cmdLineArgs.m_oldLabel));
   params.push_back(cta::log::Param("force", boolToStr(m_force)));
+  params.push_back(cta::log::Param("tapeLoadTimeout", cmdLineArgs.m_tapeLoadTimeout));
   m_log(cta::log::INFO, "Label session started", params);
   
   readAndSetConfiguration(getUsername(), cmdLineArgs.m_vid, cmdLineArgs.m_oldLabel);
@@ -96,7 +97,7 @@ int TapeLabelCmd::exceptionThrowingMain(const int argc, char *const *const argv)
   };
   
   mountTape(m_vid);
-  waitUntilTapeLoaded(drive, TAPE_LABEL_UNITREADY_TIMEOUT);
+  waitUntilTapeLoaded(drive, cmdLineArgs.m_tapeLoadTimeout);
   
   int returnCode = 0;
   if(drive.isWriteProtected()) {

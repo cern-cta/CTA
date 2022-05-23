@@ -39,6 +39,7 @@ TapeLabelCmdLineArgs::TapeLabelCmdLineArgs(const int argc, char *const *const ar
     {"vid", required_argument, nullptr, 'v'},
     {"oldlabel", required_argument, nullptr, 'o'},
     {"debug", no_argument, nullptr, 'd'},
+    {"loadtimeout", required_argument, nullptr, 't'},
     {"force", no_argument, nullptr, 'f'},
     {"help", no_argument, nullptr, 'h'},
     {nullptr,          0, nullptr,   0}
@@ -50,7 +51,7 @@ TapeLabelCmdLineArgs::TapeLabelCmdLineArgs(const int argc, char *const *const ar
 
   int opt = 0;
 
-  while((opt = getopt_long(argc, argv, ":v:o:hdf", longopts, nullptr)) != -1) {
+  while((opt = getopt_long(argc, argv, ":v:o:t:hdf", longopts, nullptr)) != -1) {
     switch(opt) {
     case 'v':
       if (strlen(optarg) > CA_MAXVIDLEN) {
@@ -69,7 +70,25 @@ TapeLabelCmdLineArgs::TapeLabelCmdLineArgs(const int argc, char *const *const ar
         throw ex;
       } else {
         m_oldLabel = std::string(optarg);
-	utils::toUpper(m_oldLabel);
+	      utils::toUpper(m_oldLabel);
+      }
+      break;
+    case 't':
+      try {
+        m_tapeLoadTimeout = std::stoul(optarg, nullptr, 0);
+      } catch (std::invalid_argument &) {
+        exception::CommandLineNotParsed ex;
+        ex.getMessage() << "Invalid value for the tape load timeout: " << optarg;
+        throw ex;
+      } catch (std::out_of_range &) {
+        exception::CommandLineNotParsed ex;
+        ex.getMessage() << "Too large value for the tape load timeout: " << optarg;
+        throw ex;
+      }
+      if (!m_tapeLoadTimeout) {
+        exception::CommandLineNotParsed ex;
+        ex.getMessage() << "The tape load timeout cannot be 0";
+        throw ex;
       }
       break;
     case 'h':
@@ -128,12 +147,13 @@ void TapeLabelCmdLineArgs::printUsage(std::ostream &os) {
     "Usage:" << std::endl <<
     "  cta-tape-label [options] --vid/-v VID" << std::endl <<
     "Where:" << std::endl <<
-    "  -v, --vid        The VID of the tape to be labeled" << std::endl <<
+    "  -v, --vid           The VID of the tape to be labeled" << std::endl <<
     "Options:" <<std::endl <<
-    "  -o, --oldlabel   The vid of the current tape label on the tape if it is not the same as VID" << std::endl <<
-    "  -h, --help       Print this help message and exit" << std::endl <<
-    "  -d, --debug      Print more logs for label operations" << std::endl <<
-    "  -f, --force      Force labeling for not-blank tapes for testing purpose and without label checks. Must only be used manually." << std::endl;  
+    "  -o, --oldlabel      The vid of the current tape label on the tape if it is not the same as VID" << std::endl <<
+    "  -t, --loadtimeout   The timeout to load the tape in the drive slot in seconds (default: 2 hours)" << std::endl <<
+    "  -h, --help          Print this help message and exit" << std::endl <<
+    "  -d, --debug         Print more logs for label operations" << std::endl <<
+    "  -f, --force         Force labeling for not-blank tapes for testing purpose and without label checks. Must only be used manually." << std::endl;  
 }
 
 } // namespace tapelabel
