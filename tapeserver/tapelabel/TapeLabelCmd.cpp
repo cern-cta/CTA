@@ -76,7 +76,7 @@ int TapeLabelCmd::exceptionThrowingMain(const int argc, char *const *const argv)
   params.push_back(cta::log::Param("tapeLoadTimeout", cmdLineArgs.m_tapeLoadTimeout));
   m_log(cta::log::INFO, "Label session started", params);
   
-  readAndSetConfiguration(getUsername(), cmdLineArgs.m_vid, cmdLineArgs.m_oldLabel);
+  readAndSetConfiguration(getUsername(), cmdLineArgs.m_vid, cmdLineArgs.m_oldLabel, cmdLineArgs.m_unitName);
    
   const std::string capabilities("cap_sys_rawio+ep");
   setProcessCapabilities(capabilities);
@@ -412,25 +412,48 @@ void TapeLabelCmd::setProcessCapabilities(const std::string &capabilities) {
 // readConfiguration
 //------------------------------------------------------------------------------
 void TapeLabelCmd::readAndSetConfiguration(const std::string &userName,
-  const std::string &vid, const std::string &oldLabel) {
+  const std::string &vid, const std::string &oldLabel, const std::optional<std::string> &unitName) {
   m_vid = vid;
   m_oldLabel = oldLabel;
   m_userName = userName;
   cta::tape::daemon::Tpconfig tpConfig;
   tpConfig  = cta::tape::daemon::Tpconfig::parseFile(castor::tape::TPCONFIGPATH);
   const int configuredDrives =  tpConfig.size();
-    if( 1 == configuredDrives)
-     for(auto & driveConfig: tpConfig) {
-      m_devFilename = driveConfig.second.value().devFilename;
-      m_rawLibrarySlot = driveConfig.second.value().rawLibrarySlot;
-      m_logicalLibrary = driveConfig.second.value().logicalLibrary;
-      m_unitName = driveConfig.second.value().unitName;
-    } else {
+  
+  if (unitName) {
+    bool found = false;
+    for (auto &driveConfig: tpConfig) {
+      auto currentUnitName = driveConfig.second.value().unitName;
+      if (currentUnitName == unitName.value()) {
+        m_devFilename = driveConfig.second.value().devFilename;
+        m_rawLibrarySlot = driveConfig.second.value().rawLibrarySlot;
+        m_logicalLibrary = driveConfig.second.value().logicalLibrary;
+        m_unitName = driveConfig.second.value().unitName;
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
       cta::exception::Exception ex;
-      ex.getMessage() << "Failed to read configuration: " 
-                      << configuredDrives << " drives configured";
+      ex.getMessage() << "Drive with unit name " << unitName.value() << " does not exist in TPCONFIG";
       throw ex;
     }
+  } else {
+    m_log(cta::log::INFO, "Unit name not specified, choosing first line of TPCONFIG");
+    if (1 == configuredDrives) {
+      for (auto & driveConfig: tpConfig) {
+        m_devFilename = driveConfig.second.value().devFilename;
+        m_rawLibrarySlot = driveConfig.second.value().rawLibrarySlot;
+        m_logicalLibrary = driveConfig.second.value().logicalLibrary;
+        m_unitName = driveConfig.second.value().unitName;
+      }
+    } else {
+      cta::exception::Exception ex;
+      ex.getMessage() << "Failed to read configuration: " << configuredDrives << " drives configured, please use the --drive option";
+      throw ex;
+    }
+  }
+
 
   const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(CATALOGUE_CONFIG_PATH);
   const uint64_t nbConns = 1;

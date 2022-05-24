@@ -18,6 +18,7 @@
 #pragma once
 
 #include <string>
+#include <optional>
 
 namespace cta {
 namespace tapeserver {
@@ -43,6 +44,11 @@ struct TapeLabelCmdLineArgs {
    */
   std::string m_oldLabel;
   
+  /**
+   * The unit name of the drive used to mount the tape.
+   */
+  std::optional<std::string> m_unitName;
+
   /**
    * The boolean variable to enable verbose output in the command line.
    * By default it prints only ERR and WARNING messages. 

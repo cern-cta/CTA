@@ -169,9 +169,10 @@ private:
    * @param username The name of the user running the command-line tool.
    * @param vid The tape VID to be pre-label.
    * @param oldLabel The old label on tape to be checked when pre-labeling. Could be empty.
+   * @param unitName The unit name of the drive used to label the tape
    */
   void readAndSetConfiguration(const std::string &userName,
-    const std::string &vid, const std::string &oldLabel);
+    const std::string &vid, const std::string &oldLabel,  const std::optional<std::string> &unitName);
   
   
   /**

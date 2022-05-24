@@ -39,6 +39,7 @@ TapeLabelCmdLineArgs::TapeLabelCmdLineArgs(const int argc, char *const *const ar
     {"vid", required_argument, nullptr, 'v'},
     {"oldlabel", required_argument, nullptr, 'o'},
     {"debug", no_argument, nullptr, 'd'},
+    {"drive", required_argument, nullptr, 'u'},
     {"loadtimeout", required_argument, nullptr, 't'},
     {"force", no_argument, nullptr, 'f'},
     {"help", no_argument, nullptr, 'h'},
@@ -51,7 +52,7 @@ TapeLabelCmdLineArgs::TapeLabelCmdLineArgs(const int argc, char *const *const ar
 
   int opt = 0;
 
-  while((opt = getopt_long(argc, argv, ":v:o:t:hdf", longopts, nullptr)) != -1) {
+  while((opt = getopt_long(argc, argv, ":v:o:t:u:hdf", longopts, nullptr)) != -1) {
     switch(opt) {
     case 'v':
       if (strlen(optarg) > CA_MAXVIDLEN) {
@@ -90,6 +91,9 @@ TapeLabelCmdLineArgs::TapeLabelCmdLineArgs(const int argc, char *const *const ar
         ex.getMessage() << "The tape load timeout cannot be 0";
         throw ex;
       }
+      break;
+    case 'u':
+      m_unitName = std::string(optarg);
       break;
     case 'h':
       help = true;
@@ -151,6 +155,7 @@ void TapeLabelCmdLineArgs::printUsage(std::ostream &os) {
     "Options:" <<std::endl <<
     "  -o, --oldlabel      The vid of the current tape label on the tape if it is not the same as VID" << std::endl <<
     "  -t, --loadtimeout   The timeout to load the tape in the drive slot in seconds (default: 2 hours)" << std::endl <<
+    "  -u, --drive         The unit name of the drive used (if absent, the first line of TPCONFIG is used)" << std::endl <<
     "  -h, --help          Print this help message and exit" << std::endl <<
     "  -d, --debug         Print more logs for label operations" << std::endl <<
     "  -f, --force         Force labeling for not-blank tapes for testing purpose and without label checks. Must only be used manually." << std::endl;  

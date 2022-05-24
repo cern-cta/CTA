@@ -9,6 +9,7 @@
 - cta/CTA#1220 - Improve queued retrieve logging message
 - cta/CTA#1152 - Reduce eos free space query load
 - cta/CTA#1231 - Add --loadtimeout option to cta-tape-label and increase default value
+- cta/CTA#977 - Add --drive option to cta-tape-label
 
 ### Bug fixes
 - cta/CTA#1120 - Fix negative disk space reservation content
