@@ -23,7 +23,6 @@
 Status CtaRpcImpl::Version(::grpc::ServerContext *context, const ::google::protobuf::Empty *request,
                            ::cta::admin::Version *response) {
     response->set_cta_version(CTA_VERSION);
-    response->set_xrootd_ssi_protobuf_interface_version(CTA_DCACHE_VERSION);
     return Status::OK;
 }
 

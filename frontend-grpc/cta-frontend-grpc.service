@@ -1,0 +1,14 @@
+[Unit]
+Description=gRPC frontend for CERN Tape Archive (CTA)
+After=syslog.target network-online.target
+
+[Service]
+EnvironmentFile=/etc/sysconfig/cta-frontend-grpc
+ExecStart=/usr/bin/cta-frontend-grpc --no-log-header ${GRPC_USE_TLS} --port ${GRPC_PORT}
+Type=simple
+Restart=always
+User=cta
+Group=cta
+
+[Install]
+WantedBy=default.target

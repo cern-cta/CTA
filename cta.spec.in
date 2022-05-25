@@ -176,33 +176,33 @@ The xroot plugin
 %systemd_post cta-frontend.service
 %systemdDaemonReload
 
-%package -n cta-dcache
-Summary: CERN Tape Archive: dCache compatibility frontend
+%package -n cta-frontend-grpc
+Summary: CERN Tape Archive: gRPC based frontend
 Group: Application/CTA
 Requires: logrotate
 Requires: cta-common = %{version}-%{release}
 Requires: cta-lib = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
-%description -n cta-dcache
+%description -n cta-frontend-grpc
 CERN Tape Archive:
 dCache frontend
-%files -n cta-dcache
+%files -n cta-frontend-grpc
 %defattr(0755,root,root)
-%attr(0755,root,root) %{_bindir}/cta-dcache
-%attr(0644,root,root) /etc/systemd/system/cta-dcache.service
-%attr(0644,root,root) /etc/sysconfig/cta-dcache
-%attr(0644,root,root) %doc /usr/share/man/man1/cta-dcache.1cta.gz
+%attr(0755,root,root) %{_bindir}/cta-frontend-grpc
+%attr(0644,root,root) /etc/systemd/system/cta-frontend-grpc.service
+%attr(0644,root,root) /etc/sysconfig/cta-frontend-grpc
+%attr(0644,root,root) %doc /usr/share/man/man1/cta-frontend-grpc.1cta.gz
 
-%post -n cta-dcache
-%systemd_post cta-dcache.service
+%post -n cta-frontend-grpc
+%systemd_post cta-frontend-grpc.service
 %systemdDaemonReload
-%systemdTryRestart cta-dcache.service
+%systemdTryRestart cta-frontend-grpc.service
 
-%preun -n cta-dcache
-%systemd_preun cta-dcache.service
+%preun -n cta-frontend-grpc
+%systemd_preun cta-frontend-grpc.service
 
-%postun -n cta-dcache
-%systemd_postun cta-dcache.service
+%postun -n cta-frontend-grpc
+%systemd_postun cta-frontend-grpc.service
 %systemdDaemonReload
 
 %package -n cta-cli

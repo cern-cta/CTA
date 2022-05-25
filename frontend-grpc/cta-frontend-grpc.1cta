@@ -13,15 +13,15 @@
 .\"                 You should have received a copy of the GNU General Public License
 .\"                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-.TH CTA-DCACHE "1cta" "$Date: 2021/10/29 14:09:00 $" CTA "CTA"
+.TH CTA-FRONTEND-GRPC "1cta" "$Date: 2021/10/29 14:09:00 $" CTA "CTA"
 .SH NAME
-cta-dcache \- CTA frontend for dCache integration
+cta-frontend-grpc \- gRPC based frontend for CTA
 .SH SYNOPSIS
-.BI "cta-dcache [OPTIONS]"
+.BI "cta-frontend-grpc [OPTIONS]"
 
 .SH DESCRIPTION
-\fBcta-dcache\fP is the daemon process providing integration with
-dCache storage system.
+\fBcta-frontend-grpc\fP is the daemon process providing gRPC endpoint for integration with
+storage systems.
 .P
 
 .SH OPTIONS

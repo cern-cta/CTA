@@ -32,16 +32,16 @@ using namespace cta;
 using namespace cta::common;
 
 std::string help =
-        "Usage: cta-dcache [options]\n"
-        "\n"
-        "where options can be:\n"
-        "\n"
-        "\t--port <port>, -p <port>:\tTCP port number to use, defaults to 17017\n"
-        "\t--log-header, -n         \tadd hostname and timestamp to log outputs, default\n"
-        "\t--no-log-header, -s      \tdon't add hostname and timestamp to log outputs\n"
-        "\t--tls, -t                \tenable Transport Layer Security (TLS)\n"
-        "\t--version, -v            \tprint version and exit\n"
-        "\t--help, -h               \tprint this help and exit\n";
+    "Usage: cta-frontend-grpc [options]\n"
+    "\n"
+    "where options can be:\n"
+    "\n"
+    "\t--port <port>, -p <port>:\tTCP port number to use, defaults to 17017\n"
+    "\t--log-header, -n         \tadd hostname and timestamp to log outputs, default\n"
+    "\t--no-log-header, -s      \tdon't add hostname and timestamp to log outputs\n"
+    "\t--tls, -t                \tenable Transport Layer Security (TLS)\n"
+    "\t--version, -v            \tprint version and exit\n"
+    "\t--help, -h               \tprint this help and exit\n";
 
 static struct option long_options[] =
         {
@@ -60,7 +60,7 @@ void printHelpAndExit(int rc) {
 }
 
 void printVersionAndExit() {
-    std::cout << "cta-dcache version: " << CTA_VERSION << std::endl;
+    std::cout << "cta-frontend-grpc version: " << CTA_VERSION << std::endl;
     exit(0);
 }
 
@@ -107,11 +107,10 @@ int main(const int argc, char *const *const argv) {
         }
     }
 
-
-    log::StdoutLogger logger(shortHostName, "cta-dcache", shortHeader);
+    log::StdoutLogger logger(shortHostName, "cta-frontend-grpc", shortHeader);
     log::LogContext lc(logger);
 
-    lc.log(log::INFO, "Starting " + CTA_DCACHE_VERSION);
+    lc.log(log::INFO, "Starting cta-frontend-grpc- " + std::string(CTA_VERSION));
 
     // use castor config to avoid dependency on xroot-ssi
     Configuration config("/etc/cta/cta.conf");

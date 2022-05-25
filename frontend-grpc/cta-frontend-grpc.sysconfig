@@ -1,5 +1,5 @@
 #
-# Config properties of cta-dcache
+# Config properties of cta-frontend-grpc
 #
 
 # port number to accept TCP connections

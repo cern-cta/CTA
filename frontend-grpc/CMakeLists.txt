@@ -20,26 +20,26 @@ find_package(GRPC REQUIRED)
 
 include_directories(${PROTOBUF3_INCLUDE_DIRS})
 
-set(PROTOBUF_CTADCACHE_DIR ${PROJECT_SOURCE_DIR}/cta-dcache/grpc-proto/protobuf)
-file(GLOB ProtoFilesCtaDcache "${PROTOBUF_CTADCACHE_DIR}/*.proto")
+set(PROTOBUF_CtaFrontend_DIR ${PROJECT_SOURCE_DIR}/frontend-grpc/grpc-proto/protobuf)
+file(GLOB ProtoFilesCtaFrontend "${PROTOBUF_CtaFrontend_DIR}/*.proto")
 
 # depends on CTA_EOS definitions
 set(PROTOBUF_EOS_CTA_DIR ${XRD_SSI_PB_DIR}/eos_cta/protobuf)
 file(GLOB ProtoFilesEosCta "${PROTOBUF_EOS_CTA_DIR}/*.proto")
 
-set(PROTOBUF3_INCLUDE_PATH "${PROTOBUF_EOS_CTA_DIR}:${PROTOBUF_CTADCACHE_DIR}:${PROTOBUF3_INCLUDE_DIRS}")
-PROTOBUF3_GENERATE_CPP(ProtoSourcesCtaDcache ProtoHeadersCtaDcache ${ProtoFilesCtaDcache})
+set(PROTOBUF3_INCLUDE_PATH "${PROTOBUF_EOS_CTA_DIR}:${PROTOBUF_CtaFrontend_DIR}:${PROTOBUF3_INCLUDE_DIRS}")
+PROTOBUF3_GENERATE_CPP(ProtoSourcesCtaFrontend ProtoHeadersCtaFrontend ${ProtoFilesCtaFrontend})
 
-set(GRPC_PROTOBUF_PATH "${CMAKE_BINARY_DIR}/cta-dcache")
+set(GRPC_PROTOBUF_PATH "${CMAKE_BINARY_DIR}/frontend-grpc")
 set(PROTOBUF3_IMPORT_DIRS "${PROTOBUF_EOS_CTA_DIR}:${PROTOBUF3_INCLUDE_DIRS}")
-grpc_generate_cpp(ProtoGrpcSourcesCtaDcache ProtoGrpcHeadersCtaDcache ${GRPC_PROTOBUF_PATH} ${ProtoFilesCtaDcache})
+grpc_generate_cpp(ProtoGrpcSourcesCtaFrontend ProtoGrpcHeadersCtaFrontend ${GRPC_PROTOBUF_PATH} ${ProtoFilesCtaFrontend})
 
 set_source_files_properties(
-        ${ProtoSourcesCtaDcache} ${ProtoHeadersCtaDcache}
-        ${ProtoGrpcSourcesCtaDcache} ${ProtoGrpcHeadersCtaDcache}
+        ${ProtoSourcesCtaFrontend} ${ProtoHeadersCtaFrontend}
+        ${ProtoGrpcSourcesCtaFrontend} ${ProtoGrpcHeadersCtaFrontend}
         PROPERTIES GENERATED TRUE)
 
-foreach(PROTO_SRC ${ProtoSourcesCtaDcache} ${ProtoGrpcSourcesCtaDcache})
+foreach(PROTO_SRC ${ProtoSourcesCtaFrontend} ${ProtoGrpcSourcesCtaFrontend})
     set_property(SOURCE ${PROTO_SRC} PROPERTY COMPILE_FLAGS " -Wno-missing-field-initializers -fPIC -Wno-narrowing -Wno-implicit-fallthrough")
     # Add -Wno-narrowing -Wno-implicit-fallthrough compiler flags if using gcc version 7 or greater
     if(CMAKE_COMPILER_IS_GNUCC)
@@ -49,16 +49,16 @@ foreach(PROTO_SRC ${ProtoSourcesCtaDcache} ${ProtoGrpcSourcesCtaDcache})
     endif(CMAKE_COMPILER_IS_GNUCC)
 endforeach(PROTO_SRC)
 
-include_directories(${CMAKE_BINARY_DIR}/cta-dcache ${CMAKE_BINARY_DIR}/eos_cta
+include_directories(${CMAKE_BINARY_DIR}/frontend-grpc ${CMAKE_BINARY_DIR}/eos_cta
                     ${PROTOBUF3_INCLUDE_DIRS})
 
-add_executable(cta-dcache Main.cpp FrontendGRpcSvc.cpp ${ProtoSourcesCtaDcache} ${ProtoGrpcSourcesCtaDcache})
+add_executable(cta-frontend-grpc Main.cpp FrontendGRpcSvc.cpp ${ProtoSourcesCtaFrontend} ${ProtoGrpcSourcesCtaFrontend})
 
-target_link_libraries(cta-dcache ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY}
+target_link_libraries(cta-frontend-grpc ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY}
         ctascheduler ctacommon ctaobjectstore ctacatalogue)
-set_property(TARGET cta-dcache APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+set_property(TARGET cta-frontend-grpc APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
-install(TARGETS cta-dcache DESTINATION usr/bin)
-install (FILES cta-dcache.service DESTINATION etc/systemd/system)
-install (FILES cta-dcache.sysconfig DESTINATION /etc/sysconfig RENAME cta-dcache)
-install (FILES cta-dcache.1cta DESTINATION /usr/share/man/man1)
+install(TARGETS cta-frontend-grpc DESTINATION usr/bin)
+install (FILES cta-frontend-grpc.service DESTINATION etc/systemd/system)
+install (FILES cta-frontend-grpc.sysconfig DESTINATION /etc/sysconfig RENAME cta-frontend-grpc)
+install (FILES cta-frontend-grpc.1cta DESTINATION /usr/share/man/man1)

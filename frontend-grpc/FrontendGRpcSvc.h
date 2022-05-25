@@ -18,8 +18,6 @@ using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
 
-static const std::string CTA_DCACHE_VERSION = "cta-dcache-" + std::string(CTA_VERSION);
-
 class CtaRpcImpl : public CtaRpc::Service {
 
 private:
