@@ -360,12 +360,12 @@ XrootReadFile::XrootReadFile(const std::string &xrootUrl, uint16_t timeout):
   XrootBaseReadFile(timeout) {
   // Setup parent's variables
   m_readPosition = 0;
-  m_URL = xrootUrl;
-
+  
   // and simply open
   using XrdCl::OpenFlags;
-  XrootClEx::throwOnError(m_xrootFile.Open(m_URL, OpenFlags::Read, XrdCl::Access::None, m_timeout),
-    std::string("In XrootReadFile::XrootReadFile failed XrdCl::File::Open() on ")+m_URL);
+  XrootClEx::throwOnError(m_xrootFile.Open(xrootUrl, OpenFlags::Read, XrdCl::Access::None, m_timeout),
+    std::string("In XrootReadFile::XrootReadFile failed XrdCl::File::Open() on ")+xrootUrl);
+  m_xrootFile.GetProperty("LastURL", m_URL);
 }
 
 size_t XrootBaseReadFile::read(void *data, const size_t size) const {
@@ -459,14 +459,11 @@ XrootC2FSWriteFile::XrootC2FSWriteFile(const std::string &url,
 
 XrootWriteFile::XrootWriteFile(const std::string& xrootUrl, uint16_t timeout):
   XrootBaseWriteFile(timeout) {
-  // Setup parent's variables
-  m_URL = xrootUrl;
-  // and simply open
   using XrdCl::OpenFlags;
-  XrootClEx::throwOnError(m_xrootFile.Open(m_URL, OpenFlags::Delete | OpenFlags::Write,
+  XrootClEx::throwOnError(m_xrootFile.Open(xrootUrl, OpenFlags::Delete | OpenFlags::Write,
     XrdCl::Access::None, m_timeout),
-    std::string("In XrootWriteFile::XrootWriteFile failed XrdCl::File::Open() on ")+m_URL);
-
+    std::string("In XrootWriteFile::XrootWriteFile failed XrdCl::File::Open() on ")+xrootUrl);
+  m_xrootFile.GetProperty("LastURL", m_URL);
 }
 
 void XrootBaseWriteFile::write(const void *data, const size_t size)  {
