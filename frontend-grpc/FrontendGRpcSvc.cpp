@@ -37,14 +37,33 @@ Status CtaRpcImpl::Archive(::grpc::ServerContext* context, const ::cta::dcache::
     sp.add("request", "archive");
 
     const std::string storageClass = request->file().storageclass();
+    if (storageClass.empty()) {
+        return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Storage class is not set.");
+    }
+
     lc.log(cta::log::DEBUG, "Archive request for storageClass: " + storageClass);
 
     cta::common::dataStructures::RequesterIdentity requester;
     requester.name = request->cli().user().username();
     requester.group = request->cli().user().groupname();
 
-    auto instance = request->instance().name();
+    // check validate request args
+    if (request->instance().name().empty()) {
+        lc.log(cta::log::WARNING, "CTA instance is not set");
+        return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA instance is not set.");
+    }
 
+    if (request->cli().user().username().empty()) {
+        lc.log(cta::log::WARNING, "CTA username is not set");
+        return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA username is not set.");
+    }
+
+    if (request->cli().user().groupname().empty()) {
+        lc.log(cta::log::WARNING, "CTA groupname is not set");
+        return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA groupname is not set.");
+    }
+
+    auto instance = request->instance().name();
     sp.add("instance", instance);
     sp.add("username", request->cli().user().username());
     sp.add("groupname", request->cli().user().groupname());
@@ -102,6 +121,27 @@ Status CtaRpcImpl::Delete(::grpc::ServerContext* context, const ::cta::dcache::r
     lc.log(cta::log::DEBUG, "Delete request");
     sp.add("request", "delete");
 
+    // check validate request args
+    if (request->instance().name().empty()) {
+        lc.log(cta::log::WARNING, "CTA instance is not set");
+        return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA instance is not set.");
+    }
+
+    if (request->cli().user().username().empty()) {
+        lc.log(cta::log::WARNING, "CTA username is not set");
+        return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA username is not set.");
+    }
+
+    if (request->cli().user().groupname().empty()) {
+        lc.log(cta::log::WARNING, "CTA groupname is not set");
+        return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA groupname is not set.");
+    }
+
+    if (request->archiveid() == 0) {
+        lc.log(cta::log::WARNING, "Invalid archive file id");
+        return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Invalid archive file id.");
+    }
+
     auto instance = request->instance().name();
     // Unpack message
     cta::common::dataStructures::DeleteArchiveRequest deleteRequest;
@@ -148,7 +188,32 @@ Status CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const ::cta::dcache:
     sp.add("request", "retrieve");
 
     const std::string storageClass = request->file().storageclass();
+    if (storageClass.empty()) {
+        return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Storage class is not set.");
+    }
+
     lc.log(cta::log::DEBUG, "Retrieve request for storageClass: " + storageClass);
+
+    // check validate request args
+    if (request->instance().name().empty()) {
+        lc.log(cta::log::WARNING, "CTA instance is not set");
+        return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA instance is not set.");
+    }
+
+    if (request->cli().user().username().empty()) {
+        lc.log(cta::log::WARNING, "CTA username is not set");
+        return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA username is not set.");
+    }
+
+    if (request->cli().user().groupname().empty()) {
+        lc.log(cta::log::WARNING, "CTA groupname is not set");
+        return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA groupname is not set.");
+    }
+
+    if (request->archiveid() == 0) {
+        lc.log(cta::log::WARNING, "Invalid archive file id");
+        return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Invalid archive file id.");
+    }
 
     auto instance = request->instance().name();
 
@@ -204,6 +269,27 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context, const ::cta::d
 
     lc.log(cta::log::DEBUG, "CancelRetrieve request");
     sp.add("request", "cancel");
+
+    // check validate request args
+    if (request->instance().name().empty()) {
+        lc.log(cta::log::WARNING, "CTA instance is not set");
+        return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA instance is not set.");
+    }
+
+    if (request->cli().user().username().empty()) {
+        lc.log(cta::log::WARNING, "CTA username is not set");
+        return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA username is not set.");
+    }
+
+    if (request->cli().user().groupname().empty()) {
+        lc.log(cta::log::WARNING, "CTA groupname is not set");
+        return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA groupname is not set.");
+    }
+
+    if (request->fid() == 0) {
+        lc.log(cta::log::WARNING, "Invalid archive file id");
+        return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Invalid archive file id.");
+    }
 
     auto instance = request->instance().name();
     // Unpack message
