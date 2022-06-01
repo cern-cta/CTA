@@ -3,6 +3,15 @@
 ## Summary
 ### Upgrade Instructions
 ### Features
+### Bug fixes
+### Building and Packaging
+### Catalogue Schema
+
+# v4.7.4-1
+
+## Summary
+### Upgrade Instructions
+### Features
 - cta/CTA#1205 - Fail pipeline if cppcheck detects errors
 - cta/CTA#1206 - Change NULL for nullptr
 - cta/CTA#1217 - Schema verification should just issue an warning if there are extra indexes in the db that are not in the catalogue
@@ -13,7 +22,7 @@
 
 ### Bug fixes
 - cta/CTA#1120 - Fix negative disk space reservation content
-- cta-verify-file should return 1 on error
+- cta/CTA#1235 - cta-verify-file should return 1 on error
 
 ### Building and Packaging
 ### Catalogue Schema
