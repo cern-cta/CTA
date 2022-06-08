@@ -1,8 +1,19 @@
 # v4.NEXT
 
 ## Summary
+### Upgrade Instructions
+### Features
+### Bug fixes
+### Building and Packaging
+### Catalogue Schema
 
-This release introduced an additional gRPC based frontend for storage backends.
+# v4.7.5-1
+
+## Summary
+
+This release introduced an additional gRPC based frontend for storage backends. This is still a work in progress and is not ready for use.
+
+The command `cta-verify-file` now requires the options `eos.instance`, `eos.request.user` and `eos.request.group` to be configured in `/etc/cta/cta-cli.conf`.
 
 ### Upgrade Instructions
 ### Features

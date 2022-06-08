@@ -559,6 +559,15 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 
 
 %changelog
+* Wed Jun 08 2022 Miguel Barros <miguel.veloso.barros@cern.ch> - 4.7.5-1
+- Peformance related bug fix, see ReleaseNotes.md for detail
+
+* Wed Jun 08 2022 Miguel Barros <miguel.veloso.barros@cern.ch> - 4.7.4-1
+- Improvements to cta-tape-label and cta-verify-file, see ReleaseNotes.md for detail
+
+* Wed Jun 08 2022 Miguel Barros <miguel.veloso.barros@cern.ch> - 4.7.3-1
+- Bug fixes for tapeserver archive and retrieve mount logic, see ReleaseNotes.md for detail
+
 * Tue May 10 2022 Volodymyr Yurchenko <volodymyr.yurchenko@cern.ch> - 4.7.2-1
 - This release is deprecated, replaced by release v4.7.3-1
 
