@@ -6,7 +6,10 @@ This release introduced an additional gRPC based frontend for storage backends.
 
 ### Upgrade Instructions
 ### Features
+- cta/CTA#1222 - Add minimal gRPC based frOntend for integration with dCache
+
 ### Bug fixes
+- cta/CTA#1225 - Fix bug causing tapeserver to sometimes pop the entire archive queue at the end of the mount
 ### Building and Packaging
 ### Catalogue Schema
 
@@ -22,7 +25,6 @@ This release introduced an additional gRPC based frontend for storage backends.
 - cta/CTA#1152 - Reduce eos free space query load
 - cta/CTA#1231 - Add --loadtimeout option to cta-tape-label and increase default value
 - cta/CTA#977 - Add --drive option to cta-tape-label
-- cta/CTA#1222 - Add minimal gRPC based forntend for integration with dCache
 
 ### Bug fixes
 - cta/CTA#1120 - Fix negative disk space reservation content

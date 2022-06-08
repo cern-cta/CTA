@@ -145,7 +145,7 @@ private:
     filesRequested(mf), bytesRequested(mb), lastCall(lc), end(false) {}
     
     Request():
-    filesRequested(-1), bytesRequested(-1), lastCall(true),end(true) {}
+    filesRequested(0), bytesRequested(0), lastCall(true), end(true) {}
     
     const uint64_t filesRequested;
     const uint64_t bytesRequested;
