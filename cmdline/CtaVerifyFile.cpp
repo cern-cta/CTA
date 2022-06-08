@@ -45,13 +45,13 @@ typedef std::map<std::string, std::string> AttrMap;
 
 // Usage exception
 const std::runtime_error Usage("Usage: cta-verify-file <archiveFileID> [-v <vid>] "
-                               "-i <instance> -r.user <user> -r.group <group>\n"
+                               "[-i <instance>] [-r.user <user>] [-r.group <group>]\n"
                                "cta-verify-file <archiveFileID> [--vid <id>] "
-                               "--instance <instance> --request.user <user> --request.group <group>");
+                               "[--instance <instance>] [--request.user <user>] [--request.group <group>]");
 
-StringOption option_instance {"--instance", "-i", false};
-StringOption option_request_user {"--request.user", "-r.user", false};
-StringOption option_request_group {"--request.group", "-r.group", false};
+StringOption option_instance {"--instance", "-i", true};
+StringOption option_request_user {"--request.user", "-r.user", true};
+StringOption option_request_group {"--request.group", "-r.group", true};
 StringOption option_vid {"--vid", "-v", true};
 
 std::vector<StringOption*> verify_options = {&option_instance, &option_request_user, &option_request_group, &option_vid};
@@ -98,38 +98,53 @@ void parse_cmd(const int argc, const char *const *const argv) {
  * @param[in]    argv            Command line arguments array
  */
 void fillNotification(cta::eos::Notification &notification, const int argc, const char *const *const argv)
-{
-    parse_cmd(argc, argv);
-    validate_cmd();
-
-    std::string archiveFileId(argv[1]);
-
-    // WF
-    notification.mutable_wf()->set_event(cta::eos::Workflow::PREPARE);
-
-    notification.mutable_wf()->mutable_instance()->set_name(option_instance.get_value());
-    notification.mutable_wf()->set_requester_instance("cta-verify-file");
-    notification.mutable_wf()->set_verify_only(true);
-    notification.mutable_wf()->set_vid(option_vid.get_value());
-
-    // CLI
-    notification.mutable_cli()->mutable_user()->set_username(option_request_user.get_value());
-    notification.mutable_cli()->mutable_user()->set_groupname(option_request_group.get_value());
-
-    // Transport
-    notification.mutable_transport()->set_dst_url("file://dummy");
-
-    // File
-    notification.mutable_file()->set_lpath("dummy");
-
-    // eXtended attributes
-    AttrMap xattrs;
-    xattrs["sys.archive.file_id"] = archiveFileId;
-
-    for(auto &xattr : xattrs) {
-        google::protobuf::MapPair<std::string,std::string> mp(xattr.first, xattr.second);
-        notification.mutable_file()->mutable_xattr()->insert(mp);
+{   
+  XrdSsiPb::Config config(config_file, "eos");
+  for (const auto &conf_option : std::vector<std::string>({ "instance", "requester.user", "requester.group" })) {
+    if (!config.getOptionValueStr(conf_option).first) {
+      throw std::runtime_error(conf_option + " must be specified in " + config_file);
     }
+  }
+  notification.mutable_wf()->mutable_instance()->set_name(config.getOptionValueStr("instance").second);
+  notification.mutable_cli()->mutable_user()->set_username(config.getOptionValueStr("requester.user").second);
+  notification.mutable_cli()->mutable_user()->set_groupname(config.getOptionValueStr("requester.group").second);
+
+  parse_cmd(argc, argv);
+  validate_cmd();
+
+  if (option_instance.is_present()) {
+    notification.mutable_wf()->mutable_instance()->set_name(option_instance.get_value());
+  }
+  if (option_request_user.is_present()) {
+    notification.mutable_cli()->mutable_user()->set_username(option_request_user.get_value());  
+  }
+  if (option_request_group.is_present()) {
+    notification.mutable_cli()->mutable_user()->set_groupname(option_request_group.get_value());
+  }  
+
+  std::string archiveFileId(argv[1]);
+
+  // WF
+  notification.mutable_wf()->set_event(cta::eos::Workflow::PREPARE);
+  notification.mutable_wf()->set_requester_instance("cta-verify-file");
+  notification.mutable_wf()->set_verify_only(true);
+  notification.mutable_wf()->set_vid(option_vid.get_value());
+
+  
+  // Transport
+  notification.mutable_transport()->set_dst_url("file://dummy");
+
+  // File
+  notification.mutable_file()->set_lpath("dummy");
+
+  // eXtended attributes
+  AttrMap xattrs;
+  xattrs["sys.archive.file_id"] = archiveFileId;
+
+  for(auto &xattr : xattrs) {
+      google::protobuf::MapPair<std::string,std::string> mp(xattr.first, xattr.second);
+      notification.mutable_file()->mutable_xattr()->insert(mp);
+  }
 }
 
 
@@ -140,7 +155,7 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 {
   std::string vid;
 
-  if(argc < 6 || argc % 2) { // Since all options need values associated, argc should always be even
+  if (argc == 1 || argc % 2) { // Since all options need values associated, argc should always be even
     throw Usage;
   }
 
@@ -162,7 +177,7 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
   config.getEnv("request_timeout", "XRD_REQUESTTIMEOUT");
 
   // If XRDDEBUG=1, switch on all logging
-  if(getenv("XRDDEBUG")) {
+  if (getenv("XRDDEBUG")) {
     config.set("log", "all");
   }
   // If fine-grained control over log level is required, use XrdSsiPbLogLevel

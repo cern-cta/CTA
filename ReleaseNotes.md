@@ -7,7 +7,7 @@ This release introduced an additional gRPC based frontend for storage backends.
 ### Upgrade Instructions
 ### Features
 - cta/CTA#1222 - Add minimal gRPC based frOntend for integration with dCache
-
+- cta/CTA#1241 - make cta-verify-file get instance, request user and group otions from ctacli config file
 ### Bug fixes
 - cta/CTA#1225 - Fix bug causing tapeserver to sometimes pop the entire archive queue at the end of the mount
 ### Building and Packaging
