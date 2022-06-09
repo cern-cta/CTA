@@ -21,6 +21,7 @@ The command `cta-verify-file` now requires the options `eos.instance`, `eos.requ
 - cta/CTA#1241 - make cta-verify-file get instance, request user and group otions from ctacli config file
 ### Bug fixes
 - cta/CTA#1225 - Fix bug causing tapeserver to sometimes pop the entire archive queue at the end of the mount
+- cta/CTA#1247 - Fix improper initialization of the variable m_lastFseq of type uint64_t with -1 value in the constructor of castor::tape::tapeserver::daemon::TapeWriteSingleThread 
 ### Building and Packaging
 ### Catalogue Schema
 

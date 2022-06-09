@@ -42,7 +42,7 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeWriteSingleThread(
   m_bytesBeforeFlush(bytesBeforeFlush),
   m_drive(drive),
   m_reportPacker(reportPacker),
-  m_lastFseq(-1),
+  m_lastFseq(0),
   m_compress(true),
   m_useLbp(useLbp),
   m_watchdog(watchdog),
