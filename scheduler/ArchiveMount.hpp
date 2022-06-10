@@ -30,7 +30,7 @@
 
 namespace cta {
   /**
-   * The class driving a retrieve mount.
+   * The class driving an archive mount.
    * The class only has private constructors as it is instantiated by
    * the Scheduler class.
    */
@@ -43,7 +43,7 @@ namespace cta {
      *
      * @param catalogue The file catalogue interface.
      */
-    ArchiveMount(catalogue::Catalogue & catalogue);
+    explicit ArchiveMount(catalogue::Catalogue & catalogue);
 
     /**
      * Constructor.
@@ -151,31 +151,31 @@ namespace cta {
      *
      * @return The tape pool of the tape to be mounted.
      */
-    std::string getPoolName() const;
+    std::string getPoolName() const override;
 
     /**
      * Returns the virtual organization of the tape to be mounted
      * @return the vo of the tape to be mounted
      */
-    std::string getVo() const;
+    std::string getVo() const override;
 
     /**
      * Returns the media type of the tape
      * @return de media type of the tape
      */
-    std::string getMediaType() const;
+    std::string getMediaType() const override;
 
     /**
      * Returns the vendor of the tape
      * @return the vendor of the tape
      */
-    std::string getVendor() const;
+    std::string getVendor() const override;
 
     /**
      * Returns the capacity in bytes of the tape
      * @return the capacity in bytes of the tape
      */
-    uint64_t getCapacityInBytes() const;
+    uint64_t getCapacityInBytes() const override;
 
     /**
      * Returns the mount transaction id.
@@ -188,7 +188,7 @@ namespace cta {
      * Returns the label format of the tape
      * @return the label format of the tape
      */
-    cta::common::dataStructures::Label::Format getLabelFormat() const;
+    cta::common::dataStructures::Label::Format getLabelFormat() const override;
 
     /**
      * Creates a disk reporter for the ArchiveJob (this is a wrapper).
@@ -208,7 +208,7 @@ namespace cta {
     /**
      * Destructor.
      */
-    virtual ~ArchiveMount() throw();
+    ~ArchiveMount() noexcept override;
 
   protected:
 

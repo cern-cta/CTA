@@ -61,14 +61,14 @@ namespace cta {
      *
      * @return The type of this tape mount.
      */
-    virtual cta::common::dataStructures::MountType getMountType() const;
+    cta::common::dataStructures::MountType getMountType() const override;
 
     /**
      * Returns the volume identifier of the tape to be mounted.
      *
      * @return The volume identifier of the tape to be mounted.
      */
-    virtual std::string getVid() const;
+    std::string getVid() const override;
 
     /**
      * Returns the (optional) activity for this mount.
@@ -83,7 +83,7 @@ namespace cta {
      *
      * @return The mount transaction id.
      */
-    virtual std::string getMountTransactionId() const;
+    std::string getMountTransactionId() const override;
 
     /**
      * Returns the mount transaction id.
@@ -96,26 +96,26 @@ namespace cta {
      * Returns the tape pool of the tape to be mounted
      * @return The tape pool of the tape to be mounted
      */
-    std::string getPoolName() const;
+    std::string getPoolName() const override;
 
     /**
      * Returns the virtual organization in which the tape
      * belongs
      * @return the vo in which the tape belongs
      */
-    std::string getVo() const;
+    std::string getVo() const override;
 
     /**
      * Returns the media type of the tape
      * @return de media type of the tape
      */
-    std::string getMediaType() const;
+    std::string getMediaType() const override;
 
     /**
      * Returns the vendor of the tape
      * @return the vendor of the tape
      */
-    std::string getVendor() const;
+    std::string getVendor() const override;
 
     /**
      * Returns the tape drive
@@ -127,29 +127,29 @@ namespace cta {
     * Returns the capacity in bytes of the tape
     * @return the capacity in bytes of the tape
     */
-    uint64_t getCapacityInBytes() const;
+    uint64_t getCapacityInBytes() const override;
 
     /**
      * Returns the media format of the tape
      * @return the media format of the tape
      */
-    virtual cta::common::dataStructures::Label::Format getLabelFormat() const;
+    cta::common::dataStructures::Label::Format getLabelFormat() const override;
 
     /**
      * Report a drive status change
      */
-    virtual void setDriveStatus(cta::common::dataStructures::DriveStatus status, const std::optional<std::string> & reason = std::nullopt);
+    void setDriveStatus(cta::common::dataStructures::DriveStatus status, const std::optional<std::string> & reason = std::nullopt) override;
 
     /**
      * Report a tape session statistics
      */
-    virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats);
+    void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
 
     /**
      * Report a tape mounted event
      * @param logContext
      */
-    virtual void setTapeMounted(log::LogContext &logContext) const;
+    void setTapeMounted(log::LogContext &logContext) const override;
 
     /**
      * Indicates that the disk thread of the mount was completed. This
@@ -166,9 +166,9 @@ namespace cta {
 
     /**
      * Indicates that the we should cancel the mount (equivalent to diskComplete
-     * + tapeComeplete).
+     * + tapeComplete).
      */
-    virtual void complete();
+    void complete() override;
 
     /**
      * Tests whether all threads are complete
@@ -249,7 +249,7 @@ namespace cta {
     /**
      * Destructor.
      */
-    virtual ~RetrieveMount() throw();
+    virtual ~RetrieveMount() noexcept;
 
   private:
 

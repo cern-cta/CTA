@@ -3,6 +3,8 @@
 ## Summary
 ### Upgrade Instructions
 ### Features
+- cta/CTA#1238 - All drive down reasons set by cta-taped should start with [cta-taped]
+
 ### Bug fixes
 ### Building and Packaging
 ### Catalogue Schema

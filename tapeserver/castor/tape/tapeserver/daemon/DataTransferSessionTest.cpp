@@ -608,6 +608,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
                                                              driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
   // 8) Run the data transfer session
   sess.execute();
+  std::cout << logger.getLog() << std::endl;
 
   // 9) Check the session git the correct VID
   ASSERT_EQ(s_vid, sess.getVid());
@@ -1937,7 +1938,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
                            driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
   ASSERT_NO_THROW(sess.execute());
   std::string temp = logger.getLog();
-  ASSERT_NE(std::string::npos, logger.getLog().find("Could not stat path: /dev/noSuchDrive"));
+  ASSERT_NE(std::string::npos, logger.getLog().find("Error looking for path to tape drive"));
 }
 
 TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {

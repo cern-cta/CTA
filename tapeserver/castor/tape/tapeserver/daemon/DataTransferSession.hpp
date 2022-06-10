@@ -117,8 +117,14 @@ private:
   /** utility to find the drive on the system. This function logs
    * all errors and hence does not throw exceptions. It returns nullptr
    * in case of failure. */
-  castor::tape::tapeserver::drive::DriveInterface *findDrive(
-    const cta::tape::daemon::TpconfigLine& driveConfig, cta::log::LogContext& logContext, cta::TapeMount *mount);
+  castor::tape::tapeserver::drive::DriveInterface *findDrive(cta::log::LogContext& logContext, cta::TapeMount *mount);
+
+  /**
+   * Put drive down with reason with [cta-taped] prefix, update the desired state (which is also down).
+   * If mount is passed, it will be marked as complete.
+   * Log the error with drive and mount details
+   */
+  void putDriveDown(const std::string &headerErrMsg, cta::TapeMount *mount, cta::log::LogContext &logContext);
 
   /** sub-part of execute for the read sessions */
   EndOfSessionAction executeRead(cta::log::LogContext& logContext, cta::RetrieveMount *retrieveMount, TapeServerReporter& reporter);

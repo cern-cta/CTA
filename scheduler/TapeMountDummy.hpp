@@ -55,6 +55,14 @@ class TapeMountDummy: public TapeMount {
       throw exception::Exception("In DummyTapeMount::getVendor() : not implemented");
   }
 
+  std::string getPoolName() const override{
+    throw exception::Exception("In DummyTapeMount::getPoolName() : not implemented");
+  }
+
+  uint64_t getCapacityInBytes() const override{
+    throw exception::Exception("In DummyTapeMount::getCapacityInBytes() : not implemented");
+  }
+
   void setDriveStatus(cta::common::dataStructures::DriveStatus status, const std::optional<std::string> & reason) override {}
 
   cta::common::dataStructures::Label::Format getLabelFormat() const override {

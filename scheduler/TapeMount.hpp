@@ -79,11 +79,13 @@ namespace cta {
 
     virtual cta::common::dataStructures::Label::Format getLabelFormat() const = 0;
 
+    virtual std::string getPoolName() const = 0;
+
     /**
     * Returns the capacity in bytes of the tape
     * @return the capacity in bytes of the tape
     */
-    uint64_t getCapacityInBytes() const;
+    virtual uint64_t getCapacityInBytes() const = 0;
 
     /**
      * Indicates that the mount was completed.
@@ -109,7 +111,7 @@ namespace cta {
     /**
      * Destructor.
      */
-    virtual ~TapeMount() throw();
+    virtual ~TapeMount() noexcept;
 
   }; // class TapeMount
 
