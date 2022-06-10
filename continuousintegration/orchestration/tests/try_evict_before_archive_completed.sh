@@ -128,7 +128,7 @@ put_all_drives () {
   echo INITIAL_DRIVES_STATE:
   echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | [ .driveName, .driveStatus] | @tsv' | column -t
   echo -n "Will put $next_state those drives : "
-  drivesToModify=`echo ${INITIAL_DRIVES_STATE} | jq -r ".[] | select (.driveStatus == \"${PREV_STATE}\") | .driveName"`
+  drivesToModify=`echo ${INITIAL_DRIVES_STATE} | jq -r ".[].driveName"`
   echo $drivesToModify
   for d in `echo $drivesToModify`; do
     admin_cta drive $next_state $d --reason "PUTTING DRIVE $NEXT_STATE FOR TESTS"
@@ -142,8 +142,16 @@ put_all_drives () {
     oneStatusRemaining=0
     for d in `echo $drivesToModify`; do
       status=`admin_cta --json drive ls | jq -r ". [] | select(.driveName == \"$d\") | .driveStatus"`
-      if [[ $status != $NEXT_STATE ]]; then
-        oneStatusRemaining=1
+      if [[ $NEXT_STATE == "DOWN" ]]; then
+        # Anything except DOWN is not acceptable
+        if [[ $status != "DOWN" ]]; then
+          oneStatusRemaining=1
+        fi;
+      else
+        # Only DOWN is not OK. Starting, Unmounting, Running == UP
+        if [[ $status == "DOWN" ]]; then
+          oneStatusRemaining=1
+        fi;
       fi;
     done
     if [[ $oneStatusRemaining -eq 0 ]]; then

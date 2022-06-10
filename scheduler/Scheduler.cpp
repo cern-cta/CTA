@@ -1513,7 +1513,6 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
                 t.mediaType,
                 t.vendor,
                 t.capacityInBytes,
-                time(nullptr),
                 std::nullopt,
                 t.labelFormat).release());
             mountCreationTime += timer.secs(utils::Timer::resetCounter);
@@ -1584,7 +1583,6 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
             m->mediaType,
             m->vendor,
             m->capacityInBytes,
-            time(nullptr),
             m->activity,
             m->labelFormat).release());
         mountCreationTime += timer.secs(utils::Timer::resetCounter);

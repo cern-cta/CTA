@@ -771,7 +771,7 @@ class SchedulerDatabase {
       const std::string& vo, const std::string& mediaType,
       const std::string& vendor,
       const uint64_t capacityInBytes,
-      time_t startTime, const std::optional<std::string> &activity,
+      const std::optional<std::string> &activity,
       cta::common::dataStructures::Label::Format labelFormat) = 0;
     /**
      * Create a new retrieve mount. This implicitly releases the global scheduling
@@ -783,7 +783,7 @@ class SchedulerDatabase {
       const std::string& vo, const std::string& mediaType,
       const std::string& vendor,
       const uint64_t capacityInBytes,
-      time_t startTime, const std::optional<std::string> &activity,
+      const std::optional<std::string> &activity,
       cta::common::dataStructures::Label::Format labelFormat) = 0;
     /** Destructor: releases the global lock if not already done */
     virtual ~TapeMountDecisionInfo() {};

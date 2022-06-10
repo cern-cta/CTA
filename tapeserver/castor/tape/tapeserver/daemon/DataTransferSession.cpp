@@ -194,14 +194,16 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
   m_volInfo.nbFiles = tapeMount->getNbFiles();
   m_volInfo.mountId = tapeMount->getMountTransactionId();
   m_volInfo.labelFormat = tapeMount->getLabelFormat();
+  // Report drive status and mount info through tapeMount interface
+  tapeMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
   // 2c) ... and log.
   // Make the DGN and TPVID parameter permanent.
   cta::log::ScopedParamContainer params(lc);
   params.add("tapeVid", m_volInfo.vid)
-        .add("mountId", tapeMount->getMountTransactionId());
+        .add("mountId", m_volInfo.mountId);
   {
     cta::log::ScopedParamContainer localParams(lc);
-    localParams.add("tapebridgeTransId", tapeMount->getMountTransactionId())
+    localParams.add("tapebridgeTransId", m_volInfo.mountId)
                .add("mountType", toCamelCaseString(m_volInfo.mountType));
     lc.log(cta::log::INFO, "Got volume from client");
   }
@@ -266,8 +268,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
                                     m_castorConf.bulkRequestRecallMaxFiles,
                                     m_castorConf.bulkRequestRecallMaxBytes, logContext);
     // Workaround for bug CASTOR-4829: tapegateway: should request positioning by blockid for recalls instead of fseq
-    // In order to implement the fix, the task injector needs to know the type
-    // of the client
+    // In order to implement the fix, the task injector needs to know the type of the client
     readSingleThread.setTaskInjector(&taskInjector);
     reportPacker.setWatchdog(watchDog);
 
@@ -314,7 +315,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
       // Return the drive back to UP state
       if (m_scheduler.getDriveState(m_driveInfo.driveName, &logContext)->driveStatus ==
           cta::common::dataStructures::DriveStatus::DrainingToDisk) {
-        m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::Retrieve,
+        m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount,
                                       cta::common::dataStructures::DriveStatus::Up, logContext);
       }
 

@@ -206,7 +206,7 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   cta::catalogue::TapeForWriting tfw;
   tfw.tapePool = "tapePool";
   tfw.vid = "vid";
-  auto am = moutInfo->createArchiveMount(common::dataStructures::MountType::ArchiveForUser, tfw, "drive", "library", "host", "vo","mediaType", "vendor",123456789,time(nullptr), std::nullopt, cta::common::dataStructures::Label::Format::CTA);
+  auto am = moutInfo->createArchiveMount(common::dataStructures::MountType::ArchiveForUser, tfw, "drive", "library", "host", "vo","mediaType", "vendor",123456789, std::nullopt, cta::common::dataStructures::Label::Format::CTA);
   bool done = false;
   size_t count = 0;
   while (!done) {
@@ -284,12 +284,12 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   cta::catalogue::TapeForWriting tfw;
   tfw.tapePool = "tapePool";
   tfw.vid = "vid";
-  auto am = moutInfo->createArchiveMount(tfw, "drive", "library", "host","vo","mediaType", "vendor",123456789, time(nullptr), cta::common::dataStructures::Label::Format::CTA);
+  auto am = moutInfo->createArchiveMount(tfw, "drive", "library", "host","vo","mediaType", "vendor",123456789, cta::common::dataStructures::Label::Format::CTA);
   auto done = false;
   auto count = 0;
 #else
   moutInfo = db.getMountInfo(lc);
-  am = moutInfo->createArchiveMount(common::dataStructures::MountType::ArchiveForUser, tfw, "drive", "library", "host", "vo","mediaType", "vendor",123456789,time(nullptr), std::nullopt, cta::common::dataStructures::Label::Format::CTA);
+  am = moutInfo->createArchiveMount(common::dataStructures::MountType::ArchiveForUser, tfw, "drive", "library", "host", "vo","mediaType", "vendor",123456789, std::nullopt, cta::common::dataStructures::Label::Format::CTA);
   done = false;
   count = 0;
 #endif
@@ -365,7 +365,7 @@ TEST_P(SchedulerDatabaseTest, putExistingQueueToSleep) {
 
     // Create mount.
   auto moutInfo = db.getMountInfo(lc);
-  auto rm=moutInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789,time(nullptr), std::nullopt, cta::common::dataStructures::Label::Format::CTA);
+  auto rm=moutInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789, std::nullopt, cta::common::dataStructures::Label::Format::CTA);
 
   rm->putQueueToSleep(diskSystem.name, diskSystem.sleepTime, lc);
 
@@ -399,7 +399,7 @@ TEST_P(SchedulerDatabaseTest, createQueueAndPutToSleep) {
 
   // Create mount.
   auto moutInfo = db.getMountInfo(lc);
-  auto rm=moutInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789,time(nullptr), std::nullopt, cta::common::dataStructures::Label::Format::CTA);
+  auto rm=moutInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789, std::nullopt, cta::common::dataStructures::Label::Format::CTA);
 
   rm->putQueueToSleep(diskSystem.name, diskSystem.sleepTime, lc);
 
@@ -508,7 +508,7 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueArchiveRequests) {
   cta::catalogue::TapeForWriting tfw;
   tfw.tapePool = "tapePool";
   tfw.vid = "vid";
-  auto am = moutInfo->createArchiveMount(common::dataStructures::MountType::ArchiveForUser, tfw, "drive", "library", "host", "vo","mediaType", "vendor",123456789,time(nullptr), std::nullopt, cta::common::dataStructures::Label::Format::CTA);
+  auto am = moutInfo->createArchiveMount(common::dataStructures::MountType::ArchiveForUser, tfw, "drive", "library", "host", "vo","mediaType", "vendor",123456789, std::nullopt, cta::common::dataStructures::Label::Format::CTA);
   auto ajb = am->getNextJobBatch(filesToDo, 1000 * filesToDo, lc);
   //Files with successful fetch should be popped
   ASSERT_EQ(10, ajb.size());
@@ -594,7 +594,7 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueRetrieveRequests) {
   // Create mount.
   auto mountInfo = db.getMountInfo(lc);
   ASSERT_EQ(1, mountInfo->potentialMounts.size());
-  auto rm=mountInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789,time(nullptr), std::nullopt, cta::common::dataStructures::Label::Format::CTA);
+  auto rm=mountInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789, std::nullopt, cta::common::dataStructures::Label::Format::CTA);
   {
     auto rjb = rm->getNextJobBatch(10,20*1000,lc);
     //Files with successful fetch should be popped
@@ -684,7 +684,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
   // Create mount.
   auto moutInfo = db.getMountInfo(lc);
   ASSERT_EQ(1, moutInfo->potentialMounts.size());
-  auto rm=moutInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789,time(nullptr), std::nullopt, cta::common::dataStructures::Label::Format::CTA);
+  auto rm=moutInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789, std::nullopt, cta::common::dataStructures::Label::Format::CTA);
   auto rjb = rm->getNextJobBatch(20,20*1000, lc);
   ASSERT_EQ(filesToDo, rjb.size());
 
@@ -777,7 +777,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
   // Create mount.
   auto moutInfo = db.getMountInfo(lc);
   ASSERT_EQ(1, moutInfo->potentialMounts.size());
-  auto rm=moutInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789,time(nullptr), std::nullopt, cta::common::dataStructures::Label::Format::CTA);
+  auto rm=moutInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789, std::nullopt, cta::common::dataStructures::Label::Format::CTA);
   {
     //Batch fails and puts the queue to sleep (not enough space in disk system)
     //leave one job in the queue for the potential mount
@@ -870,7 +870,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
   // Create mount.
   auto mountInfo = db.getMountInfo(lc);
   ASSERT_EQ(1, mountInfo->potentialMounts.size());
-  auto rm=mountInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789,time(nullptr), std::nullopt, cta::common::dataStructures::Label::Format::CTA);
+  auto rm=mountInfo->createRetrieveMount("vid", "tapePool", "drive", "library", "host", "vo","mediaType", "vendor",123456789, std::nullopt, cta::common::dataStructures::Label::Format::CTA);
   {
     //leave one job in the queue for the potential mount
     auto rjb = rm->getNextJobBatch(9,20*1000,lc);

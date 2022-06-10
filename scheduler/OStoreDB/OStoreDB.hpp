@@ -113,7 +113,6 @@ class OStoreDB: public SchedulerDatabase {
       const std::string& hostName,
       const std::string& vo, const std::string& mediaType,
       const std::string& vendor, uint64_t capacityInBytes,
-      time_t startTime,
       const std::optional<std::string> &activity,
       cta::common::dataStructures::Label::Format labelFormat) override;
     std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(
@@ -123,7 +122,6 @@ class OStoreDB: public SchedulerDatabase {
       const std::string& vo, const std::string& mediaType,
       const std::string& vendor,
       const uint64_t capacityInBytes,
-      time_t startTime,
       const std::optional<std::string> &activity,
       cta::common::dataStructures::Label::Format labelFormat) override;
     virtual ~TapeMountDecisionInfo();
@@ -145,7 +143,6 @@ class OStoreDB: public SchedulerDatabase {
       const std::string& driveName, const std::string& logicalLibrary,
       const std::string& hostName, const std::string& vo, const std::string& mediaType,
       const std::string& vendor, uint64_t capacityInBytes,
-      time_t startTime,
       const std::optional<std::string> &activity,
       cta::common::dataStructures::Label::Format labelFormat) override;
     std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(
@@ -155,7 +152,6 @@ class OStoreDB: public SchedulerDatabase {
       const std::string& vo, const std::string& mediaType,
       const std::string& vendor,
       const uint64_t capacityInBytes,
-      time_t startTime,
       const std::optional<std::string> &activity,
       cta::common::dataStructures::Label::Format labelFormat) override;
     virtual ~TapeMountDecisionInfoNoLock();

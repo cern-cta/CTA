@@ -143,10 +143,10 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
     // and fork
     m_pid = ::fork();
     exception::Errnum::throwOnMinusOne(m_pid, "In DriveHandler::fork(): failed to fork()");
+    m_sessionState = SessionState::StartingUp;
+    m_lastStateChangeTime = std::chrono::steady_clock::now();
     if (!m_pid) {
       // We are in the child process
-      m_sessionState = SessionState::StartingUp;
-      m_lastStateChangeTime = std::chrono::steady_clock::now();
       SubprocessHandler::ProcessingStatus ret;
       ret.forkState = SubprocessHandler::ForkState::child;
       return ret;
@@ -154,13 +154,9 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
     else {
       // We are in the parent process
       m_processingStatus.forkState = SubprocessHandler::ForkState::parent;
-      // The subprocess will start by deciding what to do based on previous states.
-      // The child process is not forked yet.
-      m_sessionState = SessionState::PendingFork;
-      m_lastStateChangeTime = std::chrono::steady_clock::now();
       // Compute the next timeout
       m_processingStatus.nextTimeout = nextTimeout();
-      // Register our socketpair side for epoll after closing child side.
+      // Register our socket pair side for epoll after closing child side.
       m_socketPair->close(server::SocketPair::Side::child);
       m_processManager.addFile(m_socketPair->getFdForAccess(server::SocketPair::Side::child), this);
       // We are now ready to react to timeouts and messages from the child process.
@@ -687,9 +683,6 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
             .add("TermSignal", WTERMSIG(processStatus))
             .add("CoreDump", WCOREDUMP(processStatus));
       // Record the status of the session to decide whether we will run a cleaner on the next one.
-      m_previousState = m_sessionState;
-      m_previousType = m_sessionType;
-      m_previousVid = m_sessionVid;
       resetToDefault(PreviousSession::Crashed);
       // If we are shutting down, we should not request a new session.
       if (m_sessionState != SessionState::Shutdown) {
@@ -729,9 +722,9 @@ SubprocessHandler::ProcessingStatus DriveHandler::processTimeout() {
     m_processingStatus.forkRequested = true;
     m_processingStatus.nextTimeout = m_processingStatus.nextTimeout.max();
     // Record the status of the session for cleanup startup (not needed here)
-    m_previousState = SessionState::Shutdown;
-    m_previousType = SessionType::Undetermined;
-    m_previousVid = "";
+    m_sessionState = SessionState::Shutdown;
+    m_sessionType = SessionType::Undetermined;
+    m_sessionVid = "";
     resetToDefault(PreviousSession::Crashed);
     return m_processingStatus;
   }

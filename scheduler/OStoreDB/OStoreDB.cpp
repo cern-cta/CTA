@@ -801,7 +801,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfo
   const std::string& mediaType,
   const std::string& vendor,
   const uint64_t capacityInBytes,
-  time_t startTime, const std::optional<std::string>& activity,
+  const std::optional<std::string>& activity,
   cta::common::dataStructures::Label::Format labelFormat) {
   throw cta::exception::Exception("In OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount(): This function should not be called");
 }
@@ -819,7 +819,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInf
   const std::string& mediaType,
   const std::string& vendor,
   const uint64_t capacityInBytes,
-  time_t startTime, const std::optional<std::string> &activity,
+  const std::optional<std::string> &activity,
   cta::common::dataStructures::Label::Format labelFormat) {
   throw cta::exception::Exception("In OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount(): This function should not be called");
 }
@@ -3172,7 +3172,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfo
   common::dataStructures::MountType type,
   const catalogue::TapeForWriting & tape, const std::string& driveName,
   const std::string& logicalLibrary, const std::string& hostName, const std::string& vo, const std::string& mediaType,
-  const std::string& vendor, uint64_t capacityInBytes, time_t startTime, const std::optional<std::string>& activity, cta::common::dataStructures::Label::Format labelFormat) {
+  const std::string& vendor, uint64_t capacityInBytes, const std::optional<std::string>& activity, cta::common::dataStructures::Label::Format labelFormat) {
   // In order to create the mount, we have to:
   // Check we actually hold the scheduling lock
   // Set the drive status to up, and indicate which tape we use.
@@ -3198,42 +3198,21 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfo
   re.fetchNoLock();
   auto driveRegisterAddress = re.getDriveRegisterAddress();
   am.nbFilesCurrentlyOnTape = tape.lastFSeq;
-  am.mountInfo.vid = tape.vid;
   // Fill up the mount info
+  am.mountInfo.vid = tape.vid;
   am.mountInfo.drive = driveName;
   am.mountInfo.host = hostName;
   am.mountInfo.vo = vo;
-  am.mountInfo.mediaType = mediaType;
-  am.mountInfo.labelFormat = labelFormat;
-  am.mountInfo.vendor = vendor;
   am.mountInfo.mountId = m_schedulerGlobalLock->getIncreaseCommitMountId();
-  am.mountInfo.capacityInBytes = capacityInBytes;
-  am.mountInfo.mountType = type;
   m_schedulerGlobalLock->commit();
   am.mountInfo.tapePool = tape.tapePool;
   am.mountInfo.logicalLibrary = logicalLibrary;
-  // Update the status of the drive in the registry
-  {
-    // The drive is already in-session, to prevent double scheduling before it
-    // goes to mount state. If the work to be done gets depleted in the mean time,
-    // we will switch back to up.
-    common::dataStructures::DriveInfo driveInfo;
-    driveInfo.driveName = driveName;
-    driveInfo.logicalLibrary = logicalLibrary;
-    driveInfo.host = hostName;
-    ReportDriveStatusInputs inputs;
-    inputs.mountType = type;  // common::dataStructures::MountType::ArchiveForUser;
-    inputs.byteTransferred = 0;
-    inputs.filesTransferred = 0;
-    inputs.mountSessionId = am.mountInfo.mountId;
-    inputs.reportTime = startTime;
-    inputs.status = common::dataStructures::DriveStatus::Starting;
-    inputs.vid = tape.vid;
-    inputs.tapepool = tape.tapePool;
-    inputs.vo = am.mountInfo.vo;
-    log::LogContext lc(m_oStoreDB.m_logger);
-    m_oStoreDB.m_tapeDrivesState->updateDriveStatus(driveInfo, inputs, lc);
-  }
+  am.mountInfo.mediaType = mediaType;
+  am.mountInfo.labelFormat = labelFormat;
+  am.mountInfo.vendor = vendor;
+  am.mountInfo.capacityInBytes = capacityInBytes;
+  am.mountInfo.mountType = type;
+
   // We committed the scheduling decision. We can now release the scheduling lock.
   m_lockOnSchedulerGlobalLock.release();
   m_lockTaken = false;
@@ -3253,7 +3232,7 @@ OStoreDB::TapeMountDecisionInfo::TapeMountDecisionInfo(OStoreDB & oStoreDb): m_l
 std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInfo::createRetrieveMount(
   const std::string& vid, const std::string& tapePool, const std::string& driveName,
   const std::string& logicalLibrary, const std::string& hostName, const std::string& vo, const std::string& mediaType,
-  const std::string& vendor, const uint64_t capacityInBytes, time_t startTime,
+  const std::string& vendor, const uint64_t capacityInBytes,
   const std::optional<std::string>& activity, cta::common::dataStructures::Label::Format labelFormat) {
   // In order to create the mount, we have to:
   // Check we actually hold the scheduling lock
@@ -3278,38 +3257,17 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInf
   rm.mountInfo.vid = vid;
   rm.mountInfo.drive = driveName;
   rm.mountInfo.host = hostName;
+  rm.mountInfo.vo = vo;
   rm.mountInfo.mountId = m_schedulerGlobalLock->getIncreaseCommitMountId();
   m_schedulerGlobalLock->commit();
   rm.mountInfo.tapePool = tapePool;
   rm.mountInfo.logicalLibrary = logicalLibrary;
-  rm.mountInfo.vo = vo;
   rm.mountInfo.mediaType = mediaType;
+  rm.mountInfo.labelFormat = labelFormat;
   rm.mountInfo.vendor = vendor;
   rm.mountInfo.capacityInBytes = capacityInBytes;
-  rm.mountInfo.labelFormat = labelFormat;
   rm.mountInfo.activity = activity;
-  // Update the status of the drive in the registry
-  {
-    // Get hold of the drive registry
-    // The drive is already in-session, to prevent double scheduling before it
-    // goes to mount state. If the work to be done gets depleted in the mean time,
-    // we will switch back to up.
-    common::dataStructures::DriveInfo driveInfo;
-    driveInfo.driveName=driveName;
-    driveInfo.logicalLibrary=logicalLibrary;
-    driveInfo.host=hostName;
-    ReportDriveStatusInputs inputs;
-    inputs.mountType = common::dataStructures::MountType::Retrieve;
-    inputs.mountSessionId = rm.mountInfo.mountId;
-    inputs.reportTime = startTime;
-    inputs.status = common::dataStructures::DriveStatus::Starting;
-    inputs.vid = rm.mountInfo.vid;
-    inputs.tapepool = rm.mountInfo.tapePool;
-    inputs.vo = rm.mountInfo.vo;
-    inputs.activity = activity;
-    log::LogContext lc(m_oStoreDB.m_logger);
-    m_oStoreDB.m_tapeDrivesState->updateDriveStatus(driveInfo, inputs, lc);
-  }
+
   // We committed the scheduling decision. We can now release the scheduling lock.
   m_lockOnSchedulerGlobalLock.release();
   m_lockTaken = false;
@@ -3670,6 +3628,7 @@ void OStoreDB::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveS
   inputs.tapepool = mountInfo.tapePool;
   inputs.vo = mountInfo.vo;
   inputs.reason = reason;
+  inputs.activity = mountInfo.activity;
   // TODO: statistics!
   inputs.byteTransferred = 0;
   inputs.filesTransferred = 0;

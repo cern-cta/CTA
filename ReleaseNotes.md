@@ -40,6 +40,7 @@ The command `cta-verify-file` now requires the options `eos.instance`, `eos.requ
 - cta/CTA#1152 - Reduce eos free space query load
 - cta/CTA#1231 - Add --loadtimeout option to cta-tape-label and increase default value
 - cta/CTA#977 - Add --drive option to cta-tape-label
+- cta/CTA#1159 - Move `Starting` drive status from OStoreDB to DataTransferSession
 
 ### Bug fixes
 - cta/CTA#1120 - Fix negative disk space reservation content
@@ -56,7 +57,6 @@ The command `cta-verify-file` now requires the options `eos.instance`, `eos.requ
 - cta/CTA#1160 - Fix DrainingToDisk stale status in case if there is DiskWriteThreadPool thread left
 - cta/operations#708 - Fix "Should run cleaner but VID is missing. Putting the drive down"
 - cta/CTA#1197 - Return code from `cta-catalogue-schema-verify` should indicate if the schema is in UPGRADING state
-- cta/CTA#1206 - Change NULL for nullptr
 
 # v4.7.2-1
 
