@@ -35,7 +35,6 @@
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/dataStructures/StorageClass.hpp"
 #include "common/dataStructures/TestSourceType.hpp"
-#include "common/dataStructures/UpdateFileInfoRequest.hpp"
 #include "common/dataStructures/UpdateFileStorageClassRequest.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
 #include "common/dataStructures/QueueAndMountSummary.hpp"
@@ -171,38 +170,6 @@ public:
    * Delete a job from the failed queue.
    */
   void deleteFailed(const std::string &objectId, log::LogContext & lc);
-
-  /**
-   * Update the file information of an archived file.
-   * Throws a UserError exception in case of wrong request parameters (ex. unknown file id)
-   * Throws a (Non)RetryableError exception in case something else goes wrong with the request
-   */
-  void updateFileInfo(const std::string &instanceName,
-    const cta::common::dataStructures::UpdateFileInfoRequest &request);
-
-  /**
-   * Update the storage class of an archived file.
-   * Throws a UserError exception in case of wrong request parameters (ex. unknown storage class)
-   * Throws a (Non)RetryableError exception in case something else goes wrong with the request
-   */
-  void updateFileStorageClass(const std::string &instanceName,
-    const cta::common::dataStructures::UpdateFileStorageClassRequest &request);
-
-  /**
-   * List the storage classes that a specific user is allowed to use (the ones belonging to the instance from where
-   * the command was issued)
-   * Throws a (Non)RetryableError exception in case something else goes wrong with the request
-   */
-  std::list<cta::common::dataStructures::StorageClass> listStorageClass(const std::string &instanceName,
-    const cta::common::dataStructures::ListStorageClassRequest &request);
-
-  /**
-   * Labeling is treated just like archivals and retrievals (no drive dedication is required). When an admin issues a
-   * labeling command, the operation gets queued just like a normal user operation, and the first drive that can
-   * accomplish it will dequeue it.
-   */
-  void queueLabel(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid,
-    const bool force);
 
   void queueRepack(const common::dataStructures::SecurityIdentity &cliIdentity, const SchedulerDatabase::QueueRepackRequest & repackRequest, log::LogContext & lc);
   void cancelRepack(const cta::common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, log::LogContext & lc);

@@ -327,34 +327,6 @@ void Scheduler::deleteFailed(const std::string &objectId, log::LogContext & lc) 
   m_db.deleteFailed(objectId, lc);
 }
 
-//------------------------------------------------------------------------------
-// updateFileInfo
-//------------------------------------------------------------------------------
-void Scheduler::updateFileInfo(const std::string &instanceName, const common::dataStructures::UpdateFileInfoRequest &request) {
-  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
-}
-
-//------------------------------------------------------------------------------
-// updateFileStorageClass
-//------------------------------------------------------------------------------
-void Scheduler::updateFileStorageClass(const std::string &instanceName, const common::dataStructures::UpdateFileStorageClassRequest &request) {
-  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
-}
-
-//------------------------------------------------------------------------------
-// listStorageClass
-//------------------------------------------------------------------------------
-std::list<common::dataStructures::StorageClass> Scheduler::listStorageClass(const std::string &instanceName, const common::dataStructures::ListStorageClassRequest &request) {
-  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
-}
-
-//------------------------------------------------------------------------------
-// labelTape
-//------------------------------------------------------------------------------
-void Scheduler::queueLabel(const common::dataStructures::SecurityIdentity &cliIdentity, const std::string &vid, const bool force) {
-  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
-}
-
 void Scheduler::checkTapeCanBeRepacked(const std::string & vid, const SchedulerDatabase::QueueRepackRequest & repackRequest){
   try{
     auto vidToTapesMap = m_catalogue.getTapesByVid(vid); //throws an exception if the vid is not found on the database

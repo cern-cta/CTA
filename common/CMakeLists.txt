@@ -83,7 +83,6 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/TapeFile.cpp
   dataStructures/TapeLog.cpp
   dataStructures/TestSourceType.cpp
-  dataStructures/UpdateFileInfoRequest.cpp
   dataStructures/UpdateFileStorageClassRequest.cpp
   dataStructures/utils.cpp
   dataStructures/VirtualOrganization.cpp

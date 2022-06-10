@@ -250,7 +250,6 @@ const subcmdLookup_t subcmdLookup = {
    { "add",                     AdminCmd::SUBCMD_ADD },
    { "ch",                      AdminCmd::SUBCMD_CH },
    { "err",                     AdminCmd::SUBCMD_ERR },
-   { "label",                   AdminCmd::SUBCMD_LABEL },
    { "ls",                      AdminCmd::SUBCMD_LS },
    { "reclaim",                 AdminCmd::SUBCMD_RECLAIM },
    { "retry",                   AdminCmd::SUBCMD_RETRY },
@@ -399,7 +398,7 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
    { AdminCmd::CMD_ACTIVITYMOUNTRULE,    { "activitymountrule",    "amr", { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_SHOWQUEUES,           { "showqueues",           "sq",  { } }},
    { AdminCmd::CMD_STORAGECLASS,         { "storageclass",         "sc",  { "add", "ch", "rm", "ls" } }},
-   { AdminCmd::CMD_TAPE,                 { "tape",                 "ta",  { "add", "ch", "rm", "reclaim", "ls", "label" } }},
+   { AdminCmd::CMD_TAPE,                 { "tape",                 "ta",  { "add", "ch", "rm", "reclaim", "ls" } }},
    { AdminCmd::CMD_TAPEFILE,             { "tapefile",             "tf",  { "ls", "rm" },
                             "\n  This command allows to manage files stored on tape\n"
                             "  Tape files can be listed by VID or by EOS disk instance + EOS disk file ID.\n"
@@ -642,8 +641,6 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
       { opt_vid.optional(), opt_mediatype.optional(), opt_vendor.optional(),
         opt_logicallibrary.optional(), opt_tapepool.optional(), opt_vo.optional(), opt_capacity.optional(),
         opt_full.optional(), opt_fidfile.optional(), opt_all.optional(), opt_state.optional(), opt_fromcastor.optional() }},
-   {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_LABEL },
-      { opt_vid, opt_force.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_TAPEFILE,             AdminCmd::SUBCMD_LS    },
       { opt_vid.optional(), opt_instance.optional(), opt_fid.optional(), opt_fidfile.optional(),

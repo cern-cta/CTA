@@ -245,9 +245,6 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_LS):
                   processTape_Ls(response, stream);
                   break;
-               case cmd_pair(AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_LABEL):
-                  processTape_Label(response);
-                  break;
                case cmd_pair(AdminCmd::CMD_TAPEFILE, AdminCmd::SUBCMD_LS):
                   processTapeFile_Ls(response, stream);
                   break;
@@ -2027,18 +2024,6 @@ void RequestMessage::processTape_Ls(cta::xrd::Response &response, XrdSsiStream* 
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
-
-void RequestMessage::processTape_Label(cta::xrd::Response &response)
-{
-   using namespace cta::admin;
-
-   auto &vid   = getRequired(OptionString::VID);
-   auto  force = getOptional(OptionBoolean::FORCE);
-
-   m_scheduler.queueLabel(m_cliIdentity, vid, force ? force.value() : false);
-
-   response.set_type(cta::xrd::Response::RSP_SUCCESS);
-}
 
 
 void RequestMessage::processTapeFile_Ls(cta::xrd::Response &response, XrdSsiStream* &stream)

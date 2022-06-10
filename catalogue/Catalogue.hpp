@@ -62,7 +62,6 @@
 #include "common/dataStructures/TapeDrive.hpp"
 #include "common/dataStructures/TapeDriveStatistics.hpp"
 #include "common/dataStructures/TapeFile.hpp"
-#include "common/dataStructures/UpdateFileInfoRequest.hpp"
 #include "common/dataStructures/RequesterIdentity.hpp"
 #include "common/dataStructures/VirtualOrganization.hpp"
 #include "common/dataStructures/VidToTapeMap.hpp"

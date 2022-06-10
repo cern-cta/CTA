@@ -4,7 +4,7 @@
 ### Upgrade Instructions
 ### Features
 - cta/CTA#1238 - All drive down reasons set by cta-taped should start with [cta-taped]
-
+- cta/CTA#1254 - Remove tape label option from cta-admin
 ### Bug fixes
 ### Building and Packaging
 ### Catalogue Schema
