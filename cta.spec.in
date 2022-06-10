@@ -389,31 +389,6 @@ Scripts and utilities to faciliate working with the CTA catalogue
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-catalogue-schema-verify.1cta.gz
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-database-poll.1cta.gz
 
-%package -n cta-migration-tools
-Summary: Tools for migrating CASTOR to CTA
-Group: Application/CTA
-Requires: cta-lib-catalogue = %{version}-%{release}
-Requires: cx_Oracle >= 7.1
-Requires: xrootd-client-libs >= %{xrootdVersion}
-%description -n cta-migration-tools
-CERN Tape Archive:
-Tools for migrating the CASTOR catalogue to CTA and injecting CASTOR file and
-directory metadata into the EOS namespace.
-%files -n cta-migration-tools
-%attr(0755,root,root) %{_bindir}/eos-import-dirs
-%attr(0755,root,root) %{_bindir}/eos-import-files
-%attr(0755,root,root) %{_bindir}/eos-test-dir-inject
-%attr(0755,root,root) %{_bindir}/eos-test-file-inject
-%attr(0755,root,root) %{_bindir}/json-pretty-print.sh
-%attr(0644,root,root) %{_bindir}/begin_vo_export_to_cta.sh
-%attr(0644,root,root) %{_bindir}/export_production_tapepool_to_cta.sh
-%attr(0755,root,root) %{_bindir}/tapepool_castor_to_cta.py
-%attr(0755,root,root) %{_bindir}/zerolen_castor_to_cta.py
-%attr(0755,root,root) %{_bindir}/complete_cta_export.py
-%attr(0644,root,root) %{_bindir}/vmgr_reenable_tapepool.sh
-%attr(0644,root,root) %{_bindir}/cta-catalogue-remove-castor-tapes.py
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/castor-migration.conf.example
-
 %package -n cta-rmcd
 Summary: The Remote Media Changer daemon (rmcd)
 Group: Application/CTA

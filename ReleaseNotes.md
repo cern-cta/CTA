@@ -15,20 +15,20 @@ This release introduced an additional gRPC based frontend for storage backends. 
 
 The command `cta-verify-file` now requires the options `eos.instance`, `eos.request.user` and `eos.request.group` to be configured in `/etc/cta/cta-cli.conf`.
 
-### Upgrade Instructions
 ### Features
 - cta/CTA#1222 - Add minimal gRPC based frOntend for integration with dCache
 - cta/CTA#1241 - make cta-verify-file get instance, request user and group otions from ctacli config file
+
 ### Bug fixes
 - cta/CTA#1225 - Fix bug causing tapeserver to sometimes pop the entire archive queue at the end of the mount
 - cta/CTA#1247 - Fix improper initialization of the variable m_lastFseq of type uint64_t with -1 value in the constructor of castor::tape::tapeserver::daemon::TapeWriteSingleThread 
+
 ### Building and Packaging
-### Catalogue Schema
+- cta/CTA#1224 - Removes CASTOR to CTA migration tools RPM and references to CASTOR repo
 
 # v4.7.4-1
 
 ## Summary
-### Upgrade Instructions
 ### Features
 - cta/CTA#1205 - Fail pipeline if cppcheck detects errors
 - cta/CTA#1206 - Change NULL for nullptr
@@ -42,13 +42,9 @@ The command `cta-verify-file` now requires the options `eos.instance`, `eos.requ
 - cta/CTA#1120 - Fix negative disk space reservation content
 - cta/CTA#1235 - cta-verify-file should return 1 on error
 
-### Building and Packaging
-### Catalogue Schema
-
 # v4.7.3-1
 
 ## Summary
-### Upgrade Instructions
 ### Features
 - cta/CTA#1161 - Tape server refactoring, "Decide where m_reportPacker.setTapeDone() should be called"
 - cta/CTA#1195 - `cta-catalogue-schema-drop` should drop the CTA_CATALOGUE table last
@@ -67,7 +63,6 @@ The command `cta-verify-file` now requires the options `eos.instance`, `eos.requ
 # v4.7.1-1
 
 ## Summary
-### Upgrade Instructions
 ### Features
 - cta/CTA#1179 - Use std::optional instead of cta::optional
 - cta/CTA#1190 - Use std::make_unique instead of cta::make_unique

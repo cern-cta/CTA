@@ -38,7 +38,7 @@ if [ ! -e /etc/buildtreeRunner ]; then
   fi
 
   # Install missing RPMs
-  yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-migration-tools cta-debuginfo sudo logrotate cta-fst-gcd
+  yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-debuginfo sudo logrotate cta-fst-gcd
 
   ## Keep this temporary fix that may be needed if going to protobuf3-3.5.1 for CTA
   # Install eos-protobuf3 separately as eos is OK with protobuf3 but cannot use it..

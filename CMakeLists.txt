@@ -124,8 +124,6 @@ ELSE(DEFINED PackageOnly)
 
   add_subdirectory(eos_grpc_client)
 
-  add_subdirectory(migration)
-
   add_subdirectory(cmdline)
   add_subdirectory(xroot_plugins)
   add_subdirectory(frontend-grpc)
