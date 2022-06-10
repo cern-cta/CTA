@@ -181,7 +181,7 @@ bool RdbmsCatalogue::virtualOrganizationExists(rdbms::Conn &conn, const std::str
       "FROM "
         "VIRTUAL_ORGANIZATION "
       "WHERE "
-        "VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME";
+        "UPPER(VIRTUAL_ORGANIZATION_NAME) = UPPER(:VIRTUAL_ORGANIZATION_NAME)";
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":VIRTUAL_ORGANIZATION_NAME", voName);
     auto rset = stmt.executeQuery();

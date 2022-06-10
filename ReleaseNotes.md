@@ -5,6 +5,7 @@
 ### Features
 - cta/CTA#1238 - All drive down reasons set by cta-taped should start with [cta-taped]
 - cta/CTA#1254 - Remove tape label option from cta-admin
+- cta/CTA#1253 - add disk instance to cta-admin vo ls output and fix handling of case sensitive names in cta-admin vo add
 ### Bug fixes
 ### Building and Packaging
 ### Catalogue Schema

@@ -16694,6 +16694,17 @@ TEST_P(cta_catalogue_CatalogueTest, createVirtualOrganizationAlreadyExists) {
   ASSERT_THROW(m_catalogue->createVirtualOrganization(m_admin,vo),cta::exception::UserError);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, createVirtualOrganizationAlreadyExistsCaseSensitive) {
+  using namespace cta;
+
+  common::dataStructures::VirtualOrganization vo = getVo();
+
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  ASSERT_NO_THROW(m_catalogue->createVirtualOrganization(m_admin,vo));
+  utils::toUpper(vo.name);
+  ASSERT_THROW(m_catalogue->createVirtualOrganization(m_admin,vo),cta::exception::UserError);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, createVirtualOrganizationEmptyComment) {
   using namespace cta;
 
