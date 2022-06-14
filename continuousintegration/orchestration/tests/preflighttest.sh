@@ -46,6 +46,11 @@ TMPDIR=$(mktemp -d --suffix .testflight)
 
 FLIGHTTEST_RC=0 # flighttest return code
 
+echo "Running preflight checks on the following eos version:"
+kubectl -n ${NAMESPACE} exec ctaeos -- eos version
+echo
+
+
 ###
 # TPC capabilities
 #
@@ -61,17 +66,65 @@ FLIGHTTEST_RC=0 # flighttest return code
 # [root@ctaeos /]# xrdfs root://ctaeos.toto.svc.cluster.local:1095 query config tpc
 # tpc
 
+FLIGHTTEST_TPC_RC=0
 TEST_LOG="${TMPDIR}/tpc_cap.log"
 echo "Checking xrootd TPC capabilities on FSTs:"
 kubectl -n ${NAMESPACE} exec ctaeos -- eos node ls -m | grep status=online | sed -e 's/.*hostport=//;s/ .*//' | xargs -ifoo bash -o pipefail -c "kubectl -n ${NAMESPACE} exec ctaeos -- xrdfs root://foo query config tpc | grep -q 1 && echo foo: OK|| echo foo: KO" | tee ${TEST_LOG}
 
 if $(cat ${TEST_LOG} | grep -q KO); then
   echo "TPC capabilities: FAILED"
-  ((FLIGHTTEST_RC+=1))
+  ((FLIGHTTEST_TPC_RC+=1))
 else
   echo "TPC capabilities: SUCCESS"
 fi
 echo
+
+
+###
+# xrootd API FTS compliance
+#
+# see CTA#1256
+# write 3 files and xrdfs query them in reverse order with duplicates
+# xrdfs query prepare 3 2 1 3 must answer 3 2 1 3
+
+FLIGHTTEST_XROOTD_API_RC=0
+TESTDIR="/eos/ctaeos/tmp"
+FILES_JSON=$(for path in 3 2 1 3; do echo "{\"path\": \"${TESTDIR}/${path}\"}"; done | jq --slurp . )
+echo "Checking xrootd API FTS compliance"
+for TESTFILE in $(echo $FILES_JSON | jq -r '.[].path' | sort -u); do
+  kubectl -n ${NAMESPACE} exec ctaeos -- eos touch ${TESTFILE}
+done
+echo ${FILES_JSON} > ${TMPDIR}/xrootd_API_src.json
+kubectl -n ${NAMESPACE} exec ctaeos -- xrdfs root://localhost query prepare 0 $(echo $FILES_JSON | jq -r '. | map(.path) | join(" ")') > ${TMPDIR}/xrootd_API_query_prepare_result.json
+
+INPUT_FILE_LIST="$(cat ${TMPDIR}/xrootd_API_src.json | jq -r '. | map(.path) | join(" ")')"
+OUTPUT_FILE_LIST="$(cat ${TMPDIR}/xrootd_API_query_prepare_result.json | jq -r '.responses| map(.path) | join(" ")')"
+
+if [ "-${INPUT_FILE_LIST}-" == "-${OUTPUT_FILE_LIST}-" ]; then
+  echo "xrootd_API capabilities: SUCCESS"
+else
+  echo "xrootd_API capabilities: FAILED"
+  ((FLIGHTTEST_XROOTD_API_RC+=1))
+fi
+
+echo "xrootd_API summary"
+echo "# -INPUT-:"
+echo "-${INPUT_FILE_LIST}-"
+echo "# -OUTPUT-:"
+echo "-${OUTPUT_FILE_LIST}-"
+
+
+###
+#
+# End of preflight test
+
+FLIGHTTEST_RC=$((${FLIGHTTEST_TPC_RC}+${FLIGHTTEST_XROOTD_API_RC}))
+echo
+if [ ${FLIGHTTEST_RC} -eq 0 ]; then
+  echo "PREFLIGHT test: SUCCESS"
+else
+  echo "PREFLIGHT test: FAILED"
+fi
 
 rm -fr ${TMPDIR}
 exit ${FLIGHTTEST_RC}
