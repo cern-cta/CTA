@@ -136,10 +136,14 @@ release_public_rpm:
     - docker
 
 cta_valgrind:
-  except:
-    - tags
   stage: test
-  retry: 1
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+      when: manual
+      allow_failure: true
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: on_success
+      allow_failure: false
   variables:
     CTAREPODIR: /tmp/repo
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
@@ -151,7 +155,6 @@ cta_valgrind:
     - createrepo ${CTAREPODIR}; echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
     - yum -y --nogpgcheck install cta-systemtests cta-debuginfo sqlite-debuginfo --enablerepo=debug
     - /usr/bin/cta-unitPlusSystemTests.sh
-
   tags:
     - docker
 
@@ -308,9 +311,10 @@ nightly1:
 
 regressioneos:
   stage: regressions
-  only:
-    - triggers
-    - schedules
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: on_success
+      allow_failure: true
   script:
     - echo "Running nightly eos regression tests"
     - export NAMESPACE="archiveretrieve-${CTA_BUILD_ID}-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 4 | head -n 1)"
