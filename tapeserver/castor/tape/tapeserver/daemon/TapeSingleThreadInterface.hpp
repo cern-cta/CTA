@@ -40,7 +40,7 @@ namespace tapeserver {
 namespace daemon {
 
 // Forward declaration
-class TapeServerReporter;
+class TapeSessionReporter;
 
 /**
  * This class is the base class for the 2 classes that will be executing
@@ -68,7 +68,7 @@ protected:
   cta::mediachanger::MediaChangerFacade& m_mediaChanger;
 
   /** Reference to the Global reporting interface */
-  TapeServerReporter& m_reporter;
+  TapeSessionReporter& m_reporter;
 
   ///The volumeID of the tape on which we want to operate  
   const std::string m_vid;
@@ -279,8 +279,7 @@ public:
    * @param tapeLoadTimeout the timeout after which the mount of the tape is considered failed
    */
   TapeSingleThreadInterface(castor::tape::tapeserver::drive::DriveInterface& drive,
-                            cta::mediachanger::MediaChangerFacade& mc,
-                            TapeServerReporter& tsr,
+                            cta::mediachanger::MediaChangerFacade& mc, TapeSessionReporter& tsr,
                             const VolumeInfo& volInfo,
                             cta::server::ProcessCap& capUtils, cta::log::LogContext& lc,
                             const bool useEncryption,

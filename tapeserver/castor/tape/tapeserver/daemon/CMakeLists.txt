@@ -34,7 +34,7 @@ set(CTATAPESERVERDAEMON_LIBRARY_SRCS
   DiskWriteThreadPool.cpp
   EmptyDriveProbe.cpp
   EncryptionControl.cpp
-  TapeServerReporter.cpp
+  TapeSessionReporter.cpp
   LabelSession.cpp
   MigrationMemoryManager.cpp
   MigrationReportPacker.cpp

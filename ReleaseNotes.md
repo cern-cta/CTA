@@ -7,6 +7,7 @@
 - cta/CTA#1254 - Remove tape label option from cta-admin
 - cta/CTA#1253 - add disk instance to cta-admin vo ls output and fix handling of case sensitive names in cta-admin vo add
 ### Bug fixes
+- cta/CTA#1255 - Resolve "VID is missing in DriveHandler when session is killed"
 - cta/CTA#1256 - Catch and fix EOS regressions in tape specific xrootd API introduced in eos 4.8.79-1 with eos 4.8.87-1
 ### Building and Packaging
 ### Catalogue Schema

@@ -127,10 +127,12 @@ private:
   void putDriveDown(const std::string &headerErrMsg, cta::TapeMount *mount, cta::log::LogContext &logContext);
 
   /** sub-part of execute for the read sessions */
-  EndOfSessionAction executeRead(cta::log::LogContext& logContext, cta::RetrieveMount *retrieveMount, TapeServerReporter& reporter);
+  EndOfSessionAction executeRead(cta::log::LogContext& logContext, cta::RetrieveMount *retrieveMount,
+                                 TapeSessionReporter& reporter);
 
   /** sub-part of execute for a write session */
-  EndOfSessionAction executeWrite(cta::log::LogContext& logContext, cta::ArchiveMount *archiveMount, TapeServerReporter& reporter);
+  EndOfSessionAction executeWrite(cta::log::LogContext& logContext, cta::ArchiveMount *archiveMount,
+                                  TapeSessionReporter& reporter);
 
   /** sub-part of execute for a label session */
   EndOfSessionAction executeLabel(cta::log::LogContext& logContext, cta::LabelMount *labelMount);

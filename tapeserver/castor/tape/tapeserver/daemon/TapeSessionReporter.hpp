@@ -17,23 +17,24 @@
 
 #pragma once
 
-#include "common/threading/Thread.hpp"
-#include "common/threading/BlockingQueue.hpp"
 #include "VolumeInfo.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/threading/BlockingQueue.hpp"
+#include "common/threading/Thread.hpp"
+#include "daemon/TapedProxy.hpp"
+#include "tapeserver/daemon/TpconfigLine.hpp"
 #include "tapeserver/session/SessionState.hpp"
 #include "tapeserver/session/SessionType.hpp"
-#include "tapeserver/daemon/TpconfigLine.hpp"
 #include <memory>
-#include <string>
 #include <stdint.h>
+#include <string>
 
 namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
 
-class TapeServerReporter : private cta::threading::Thread {
+class TapeSessionReporter : private cta::threading::Thread {
 
 public:
   /**
@@ -41,15 +42,10 @@ public:
    * @param tapeserverProxy
    * @param driveConfig The configuration of the tape drive we are using.
    * @param hostname The host name of the computer
-   * @param volume The volume information from the client
    * @param lc 
    */
-  TapeServerReporter(
-    cta::tape::daemon::TapedProxy& tapeserverProxy,
-    const cta::tape::daemon::TpconfigLine& driveConfig,
-    const std::string& hostname,
-    const castor::tape::tapeserver::daemon::VolumeInfo& volume,
-    cta::log::LogContext lc);
+  TapeSessionReporter(cta::tape::daemon::TapedProxy &tapeserverProxy, const cta::tape::daemon::TpconfigLine &driveConfig,
+                     const std::string &hostname, cta::log::LogContext lc);
 
   /**
    * Put into the waiting list a guard value to signal the thread we want
@@ -68,8 +64,11 @@ public:
   void reportState(cta::tape::session::SessionState state,
                    cta::tape::session::SessionType type);
 
-//------------------------------------------------------------------------------
-  //start and wait for thread to finish
+  void setVolInfo(const castor::tape::tapeserver::daemon::VolumeInfo& volumeInfo) { m_volume = volumeInfo; };
+
+  /**
+   * Start and wait for thread to finish
+   */
   void startThreads();
 
   void waitThreads();
@@ -92,7 +91,7 @@ private:
   public:
     virtual ~Report() = default;
 
-    virtual void execute(TapeServerReporter&) = 0;
+    virtual void execute(TapeSessionReporter &) = 0;
   };
 
   class ReportStateChange : public Report {
@@ -100,7 +99,7 @@ private:
     ReportStateChange(cta::tape::session::SessionState state,
                       cta::tape::session::SessionType type);
 
-    void execute(TapeServerReporter&) override;
+    void execute(TapeSessionReporter &) override;
 
   private:
     cta::tape::session::SessionState m_state;
@@ -129,24 +128,11 @@ private:
    */
   cta::log::LogContext m_lc;
 
-  /**
-   * Boolean allowing the management of the special case of recall where
-   * end of tape and disk threads can happen in any order (tape side)
-   */
-  bool m_tapeUnmountedForRecall = false;
-
-  /**
-   * Boolean allowing the management of the special case of recall where
-   * end of tape and disk threads can happen in any order (disk side)
-   */
-  bool m_diskCompleteForRecall = false;
-
   const std::string m_server;
   const std::string m_unitName;
   const std::string m_logicalLibrary;
-  const castor::tape::tapeserver::daemon::VolumeInfo m_volume;
+  castor::tape::tapeserver::daemon::VolumeInfo m_volume;
   const pid_t m_sessionPid;
-
 };
 
 }

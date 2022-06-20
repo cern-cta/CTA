@@ -15,15 +15,12 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "castor/tape/tapeserver/daemon/TapeSessionReporter.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
 #include "tapeserver/daemon/TapedProxy.hpp"
-#include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
 
-#include <sys/types.h>
 #include <unistd.h>
-
-#include <utility>
 
 namespace castor {
 namespace tape {
@@ -32,36 +29,33 @@ namespace daemon {
 
 //-----------------------------------------------------------------------------
 //constructor
-//------------------------------------------------------------------------------  
-TapeServerReporter::TapeServerReporter(
-  cta::tape::daemon::TapedProxy& tapeserverProxy,
-  const cta::tape::daemon::TpconfigLine& driveConfig,
-  const std::string& hostname,
-  const castor::tape::tapeserver::daemon::VolumeInfo& volume,
-  const cta::log::LogContext lc) :
+//------------------------------------------------------------------------------
+TapeSessionReporter::TapeSessionReporter(cta::tape::daemon::TapedProxy &tapeserverProxy,
+                                       const cta::tape::daemon::TpconfigLine &driveConfig, const std::string &hostname,
+                                       cta::log::LogContext lc)
+:
   m_threadRunning(false),
   m_tapeserverProxy(tapeserverProxy),
   m_lc(lc),
   m_server(hostname),
   m_unitName(driveConfig.unitName),
   m_logicalLibrary(driveConfig.logicalLibrary),
-  m_volume(volume),
   m_sessionPid(getpid()) {
   //change the thread's name in the log
-  m_lc.pushOrReplace(cta::log::Param("thread", "TapeServerReporter"));
+  m_lc.pushOrReplace(cta::log::Param("thread", "TapeSessionReporter"));
 }
 
 //------------------------------------------------------------------------------
 //finish
 //------------------------------------------------------------------------------
-void TapeServerReporter::finish() {
+void TapeSessionReporter::finish() {
   m_fifo.push(nullptr);
 }
 
 //------------------------------------------------------------------------------
 //startThreads
 //------------------------------------------------------------------------------   
-void TapeServerReporter::startThreads() {
+void TapeSessionReporter::startThreads() {
   start();
   m_threadRunning = true;
 }
@@ -69,7 +63,7 @@ void TapeServerReporter::startThreads() {
 //------------------------------------------------------------------------------
 //waitThreads
 //------------------------------------------------------------------------------     
-void TapeServerReporter::waitThreads() {
+void TapeSessionReporter::waitThreads() {
   try {
     wait();
     m_threadRunning = false;
@@ -85,7 +79,7 @@ void TapeServerReporter::waitThreads() {
 //------------------------------------------------------------------------------
 //reportState
 //------------------------------------------------------------------------------  
-void TapeServerReporter::reportState(cta::tape::session::SessionState state,
+void TapeSessionReporter::reportState(cta::tape::session::SessionState state,
                                      cta::tape::session::SessionType type) {
   m_fifo.push(new ReportStateChange(state, type));
 }
@@ -93,7 +87,7 @@ void TapeServerReporter::reportState(cta::tape::session::SessionState state,
 //------------------------------------------------------------------------------
 //run
 //------------------------------------------------------------------------------  
-void TapeServerReporter::run() {
+void TapeSessionReporter::run() {
   while (true) {
     std::unique_ptr<Report> currentReport(m_fifo.pop());
     if (nullptr == currentReport) {
@@ -104,7 +98,7 @@ void TapeServerReporter::run() {
     } catch (const std::exception& e) {
       cta::log::ScopedParamContainer sp(m_lc);
       sp.add("what", e.what());
-      m_lc.log(cta::log::ERR, "TapeServerReporter error caught");
+      m_lc.log(cta::log::ERR, "TapeSessionReporter error caught");
     }
   }
 }
@@ -112,7 +106,7 @@ void TapeServerReporter::run() {
 //------------------------------------------------------------------------------
 // ReportStateChange::bailout())
 //------------------------------------------------------------------------------
-void TapeServerReporter::bailout() {
+void TapeSessionReporter::bailout() {
   // Send terminating event to the queue
   finish();
   // Consume queue and exit
@@ -121,14 +115,14 @@ void TapeServerReporter::bailout() {
 
 //------------------------------------------------------------------------------
 // ReportStateChange::ReportStateChange())
-//------------------------------------------------------------------------------   
-TapeServerReporter::ReportStateChange::ReportStateChange(cta::tape::session::SessionState state,
+//------------------------------------------------------------------------------
+TapeSessionReporter::ReportStateChange::ReportStateChange(cta::tape::session::SessionState state,
                                                          cta::tape::session::SessionType type) : m_state(state), m_type(type) {}
 
 //------------------------------------------------------------------------------
 // ReportStateChange::execute())
 //------------------------------------------------------------------------------  
-void TapeServerReporter::ReportStateChange::execute(TapeServerReporter& parent) {
+void TapeSessionReporter::ReportStateChange::execute(TapeSessionReporter & parent) {
   parent.m_tapeserverProxy.reportState(m_state, m_type, parent.m_volume.vid);
 }
 

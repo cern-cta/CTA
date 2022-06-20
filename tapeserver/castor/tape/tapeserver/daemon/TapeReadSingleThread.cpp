@@ -16,7 +16,7 @@
  */
 
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
-#include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
+#include "castor/tape/tapeserver/daemon/TapeSessionReporter.hpp"
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 
@@ -26,7 +26,7 @@
 castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
   castor::tape::tapeserver::drive::DriveInterface& drive,
   cta::mediachanger::MediaChangerFacade& mediaChanger,
-  TapeServerReporter& reporter,
+  TapeSessionReporter& reporter,
   const VolumeInfo& volInfo,
   uint64_t maxFilesRequest,
   cta::server::ProcessCap& capUtils,
@@ -266,7 +266,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
 
       // The tape will be loaded 
       // it has to be unloaded, unmounted at all cost -> RAII
-      // will also take care of the TapeServerReporter and of RecallTaskInjector
+      // will also take care of the TapeSessionReporter and of RecallTaskInjector
       TapeCleaning tapeCleaner(*this, timer);
 
       // Before anything, the tape should be mounted

@@ -16,7 +16,7 @@
  */
 
 #include "castor/tape/tapeserver/daemon/TapeWriteSingleThread.hpp"
-#include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
+#include "castor/tape/tapeserver/daemon/TapeSessionReporter.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationTaskInjector.hpp"
 
 //------------------------------------------------------------------------------
@@ -25,7 +25,7 @@
 castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeWriteSingleThread(
   castor::tape::tapeserver::drive::DriveInterface& drive,
   cta::mediachanger::MediaChangerFacade& mediaChanger,
-  TapeServerReporter& reporter,
+  TapeSessionReporter& reporter,
   MigrationWatchDog& watchdog,
   const VolumeInfo& volInfo,
   cta::log::LogContext& logContext,
@@ -302,7 +302,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
 
       // The tape will be loaded
       // it has to be unloaded, unmounted at all cost -> RAII
-      // will also take care of the TapeServerReporter
+      // will also take care of the TapeSessionReporter
       TapeCleaning cleaner(*this, timer);
       // Before anything, the tape should be mounted
       m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Mounting, std::nullopt, m_logContext);

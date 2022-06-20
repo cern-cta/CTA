@@ -18,7 +18,7 @@
 #include "castor/messages/TapeserverProxyDummy.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
-#include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
+#include "castor/tape/tapeserver/daemon/TapeSessionReporter.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
@@ -96,7 +96,7 @@ namespace unitTests
 
     FakeSingleTapeReadThread(tapeserver::drive::DriveInterface& drive,
       cta::mediachanger::MediaChangerFacade & mc,
-      tapeserver::daemon::TapeServerReporter & tsr,
+      tapeserver::daemon::TapeSessionReporter & tsr,
       const tapeserver::daemon::VolumeInfo& volInfo,
       cta::server::ProcessCap& cap,
       const uint32_t tapeLoadTimeout,
@@ -168,7 +168,8 @@ namespace unitTests
     castor::tape::tapeserver::daemon::VolumeInfo volume;
     volume.vid="V12345";
     volume.mountType=cta::common::dataStructures::MountType::Retrieve;
-    castor::tape::tapeserver::daemon::TapeServerReporter gsr(initialProcess, cta::tape::daemon::TpconfigLine(), "0.0.0.0", volume, lc);
+    castor::tape::tapeserver::daemon::TapeSessionReporter gsr(initialProcess, cta::tape::daemon::TpconfigLine(),
+                                                              "0.0.0.0", lc);
     cta::server::ProcessCapDummy cap;
     FakeSingleTapeReadThread tapeRead(drive, mc, gsr, volume, cap, 60, lc);
     tapeserver::daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, maxNbJobsInjectedAtOnce, blockSize, lc);
@@ -234,7 +235,8 @@ namespace unitTests
     volume.vid="V12345";
     volume.mountType=cta::common::dataStructures::MountType::Retrieve;
     cta::server::ProcessCapDummy cap;
-    castor::tape::tapeserver::daemon::TapeServerReporter tsr(initialProcess, cta::tape::daemon::TpconfigLine(), "0.0.0.0", volume, lc);
+    castor::tape::tapeserver::daemon::TapeSessionReporter tsr(initialProcess, cta::tape::daemon::TpconfigLine(),
+                                                              "0.0.0.0", lc);
     FakeSingleTapeReadThread tapeRead(drive, mc, tsr, volume, cap, 60, lc);
     tapeserver::daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, 6, blockSize, lc);
 

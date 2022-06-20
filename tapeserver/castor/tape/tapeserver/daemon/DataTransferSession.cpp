@@ -33,7 +33,7 @@
 #include "common/exception/Exception.hpp"
 #include "scheduler/RetrieveMount.hpp"
 #include "castor/tape/tapeserver/RAO/RAOParams.hpp"
-#include "TapeServerReporter.hpp"
+#include "TapeSessionReporter.hpp"
 
 #include <google/protobuf/stubs/common.h>
 #include <memory>
@@ -104,7 +104,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
 
   setProcessCapabilities("cap_sys_rawio+ep");
 
-  TapeServerReporter tapeServerReporter(m_initialProcess, m_driveConfig, m_hostname, m_volInfo, lc);
+  TapeSessionReporter tapeServerReporter(m_initialProcess, m_driveConfig, m_hostname, lc);
 
   std::unique_ptr<cta::TapeMount> tapeMount;
 
@@ -194,6 +194,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
   m_volInfo.nbFiles = tapeMount->getNbFiles();
   m_volInfo.mountId = tapeMount->getMountTransactionId();
   m_volInfo.labelFormat = tapeMount->getLabelFormat();
+  tapeServerReporter.setVolInfo(m_volInfo);
   // Report drive status and mount info through tapeMount interface
   tapeMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
   // 2c) ... and log.
@@ -228,7 +229,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::LogContext& logContext,
                                                                    cta::RetrieveMount *retrieveMount,
-                                                                   TapeServerReporter& reporter) {
+                                                                   TapeSessionReporter& reporter) {
   // We are ready to start the session. We need to create the whole machinery
   // in order to get the task injector ready to check if we actually have a
   // file to recall.
@@ -372,7 +373,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logContext,
                                                                     cta::ArchiveMount *archiveMount,
-                                                                    TapeServerReporter& reporter) {
+                                                                    TapeSessionReporter& reporter) {
   // We are ready to start the session. We need to create the whole machinery
   // in order to get the task injector ready to check if we actually have a
   // file to migrate.

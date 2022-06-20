@@ -38,7 +38,7 @@ namespace tapeserver {
 namespace daemon {
 
 //forward declaration
-class TapeServerReporter;
+class TapeSessionReporter;
 
 class RecallTaskInjector;
 
@@ -53,7 +53,7 @@ public:
    */
   TapeReadSingleThread(castor::tape::tapeserver::drive::DriveInterface& drive,
                        cta::mediachanger::MediaChangerFacade& mediaChanger,
-                       TapeServerReporter& reporter,
+                       TapeSessionReporter& reporter,
                        const VolumeInfo& volInfo,
                        uint64_t maxFilesRequest,
                        cta::server::ProcessCap& capUtils,
