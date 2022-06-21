@@ -1,16 +1,17 @@
-# v4.NEXT
+# v4.7.6-1
 
 ## Summary
-### Upgrade Instructions
 ### Features
 - cta/CTA#1238 - All drive down reasons set by cta-taped should start with [cta-taped]
 - cta/CTA#1254 - Remove tape label option from cta-admin
 - cta/CTA#1253 - add disk instance to cta-admin vo ls output and fix handling of case sensitive names in cta-admin vo add
+- cta/CTA#1159 - All drive statuses must be set only in data transfer session and read/write threads
 ### Bug fixes
 - cta/CTA#1255 - Resolve "VID is missing in DriveHandler when session is killed"
 - cta/CTA#1256 - Catch and fix EOS regressions in tape specific xrootd API introduced in eos 4.8.79-1 with eos 4.8.87-1
+- cta/CTA#1247 - Fix improper initialization of the variable m_lastFseq of type uint64_t with -1 value in the constructor of castor::tape::tapeserver::daemon::TapeWriteSingleThread
 ### Building and Packaging
-### Catalogue Schema
+- cta/CTA#1224 - Remove CASTOR to CTA migration tools RPM
 
 # v4.7.5-1
 
@@ -26,7 +27,6 @@ The command `cta-verify-file` now requires the options `eos.instance`, `eos.requ
 
 ### Bug fixes
 - cta/CTA#1225 - Fix bug causing tapeserver to sometimes pop the entire archive queue at the end of the mount
-- cta/CTA#1247 - Fix improper initialization of the variable m_lastFseq of type uint64_t with -1 value in the constructor of castor::tape::tapeserver::daemon::TapeWriteSingleThread 
 
 ### Building and Packaging
 - cta/CTA#1224 - Removes CASTOR to CTA migration tools RPM and references to CASTOR repo

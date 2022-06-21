@@ -534,6 +534,11 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 
 
 %changelog
+* Wed Jun 21 2022 Joao Afonso <joao.afonso@cern.ch> - 4.7.6-1
+- Improvements to the drive handler and other features, see ReleaseNotes.md for details
+- Updates EOS version in CI to 4.8.86
+- Removes CASTOR to CTA migration tools RPM
+
 * Wed Jun 08 2022 Miguel Barros <miguel.veloso.barros@cern.ch> - 4.7.5-1
 - Peformance related bug fix, see ReleaseNotes.md for detail
 
