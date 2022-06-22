@@ -15,17 +15,17 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/log/LogContext.hpp"
-#include "common/threading/System.hpp"
+#include <memory>
+
 #include "castor/tape/tapeserver/daemon/LabelSession.hpp"
 #include "castor/tape/tapeserver/daemon/LabelSessionConfig.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "common/exception/Exception.hpp"
-
-#include <memory>
+#include "common/log/LogContext.hpp"
+#include "common/threading/System.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/LabelSession.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -302,7 +302,7 @@ void castor::tape::tapeserver::daemon::LabelSession::writeLabelToTape(
     m_log(cta::log::WARNING, "LBP mode mismatch. Force labeling without lbp.", params);
   }
   m_log(cta::log::INFO, "Label session is writing label to tape", params);
-  tapeFile::LabelSession ls(drive, m_request.vid, false);
+  tapeFile::LabelSession::label(&drive, m_request.vid, false);
   m_log(cta::log::INFO, "Label session has written label to tape", params);
 }
 
@@ -324,7 +324,7 @@ void castor::tape::tapeserver::daemon::LabelSession::writeLabelWithLbpToTape(
     m_log(cta::log::WARNING, "LBP mode mismatch. Force labeling with lbp.", params);
   }
   m_log(cta::log::INFO, "Label session is writing label with LBP to tape", params);
-  tapeFile::LabelSession ls(drive, m_request.vid, true);
+  tapeFile::LabelSession::label(&drive, m_request.vid, true);
   m_log(cta::log::INFO, "Label session has written label with LBP to tape", params);
 }
 

@@ -15,18 +15,20 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/exception/Errnum.hpp"
-#include "castor/tape/tapeserver/daemon/TapeWriteTask.hpp"
-#include "castor/tape/tapeserver/daemon/DataPipeline.hpp"
-#include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
-#include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
+#include <memory>
+#include <string>
+
 #include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
+#include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
+#include "castor/tape/tapeserver/daemon/DataPipeline.hpp"
+#include "castor/tape/tapeserver/daemon/ErrorFlag.hpp"
+#include "castor/tape/tapeserver/daemon/MemBlock.hpp"
+#include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
-#include "castor/tape/tapeserver/daemon/MemBlock.hpp"
-#include "castor/tape/tapeserver/daemon/ErrorFlag.hpp"
-#include "castor/tape/tapeserver/file/File.hpp" 
+#include "castor/tape/tapeserver/daemon/TapeWriteTask.hpp"
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
+#include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
 
 namespace castor {
@@ -57,7 +59,7 @@ namespace daemon {
 //------------------------------------------------------------------------------
 // execute
 //------------------------------------------------------------------------------  
-   void TapeWriteTask::execute(castor::tape::tapeFile::WriteSession & session,
+   void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteSession> &session,
            MigrationReportPacker & reportPacker, MigrationWatchDog & watchdog,
            cta::log::LogContext&  lc, cta::utils::Timer & timer) {
     using cta::log::LogContext;
@@ -81,12 +83,12 @@ namespace daemon {
     // We will not record errors for an empty string. This will allow us to
     // prevent counting where error happened upstream.
     std::string currentErrorToCount = "Error_tapeFSeqOutOfSequenceForWrite";
-    session.validateNextFSeq(m_archiveJob->tapeFile.fSeq);
+    session->validateNextFSeq(m_archiveJob->tapeFile.fSeq);
     try {
       //try to open the session
       currentErrorToCount = "Error_tapeWriteHeader";
       watchdog.notifyBeginNewJob(m_archiveJob->archiveFile.archiveFileID, m_archiveJob->tapeFile.fSeq);
-      std::unique_ptr<castor::tape::tapeFile::WriteFile> output(openWriteFile(session,lc));
+      std::unique_ptr<castor::tape::tapeFile::FileWriter> output(openFileWriter(session,lc));
       m_LBPMode = output->getLBPMode();
       m_taskStats.readWriteTime += timer.secs(cta::utils::Timer::resetCounter);
       m_taskStats.headerVolume += TapeSessionStats::headerVolumePerFile;
@@ -154,7 +156,7 @@ namespace daemon {
       m_taskStats.headerVolume += TapeSessionStats::trailerVolumePerFile;
       m_taskStats.filesCount ++;
       // Record the fSeq in the tape session
-      session.reportWrittenFSeq(m_archiveJob->tapeFile.fSeq);
+      session->reportWrittenFSeq(m_archiveJob->tapeFile.fSeq);
       m_archiveJob->tapeFile.checksumBlob.insert(cta::checksum::ADLER32, ckSum);
       m_archiveJob->tapeFile.fileSize = m_taskStats.dataVolume;
       m_archiveJob->tapeFile.blockId = output->getBlockId();
@@ -178,14 +180,14 @@ namespace daemon {
     catch(const Skip& s) {
       // We failed to read anything from the file. We can get rid of any block from the queue to
       // recycle them, and pass the report to the report packer. After than, we can carry on with 
-      // the write session.
+      // the write session->
       circulateMemBlocks();
       watchdog.addToErrorCount("Info_fileSkipped");
       m_taskStats.readWriteTime += timer.secs(cta::utils::Timer::resetCounter);
       m_taskStats.headerVolume += TapeSessionStats::trailerVolumePerFile;
       m_taskStats.filesCount ++;
       // Record the fSeq in the tape session
-      session.reportWrittenFSeq(m_archiveJob->tapeFile.fSeq);
+      session->reportWrittenFSeq(m_archiveJob->tapeFile.fSeq);
       reportPacker.reportSkippedJob(std::move(m_archiveJob), s, lc);
       m_taskStats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
       m_taskStats.totalTime = localTime.secs();
@@ -207,7 +209,7 @@ namespace daemon {
   
     } catch(const cta::exception::Exception& e){
       //we can end up there because
-      //we failed to open the WriteFile
+      //we failed to open the FileWriter
       //we received a bad block or a block written failed
       //close failed
       
@@ -319,63 +321,62 @@ namespace daemon {
   
 //------------------------------------------------------------------------------
 // Destructor
-//------------------------------------------------------------------------------   
-   TapeWriteTask::~TapeWriteTask() {
+//------------------------------------------------------------------------------
+  TapeWriteTask::~TapeWriteTask() {
     cta::threading::MutexLocker ml(m_producerProtection);
   }
 //------------------------------------------------------------------------------
-// openWriteFile
+// openFileWriter
 //------------------------------------------------------------------------------
-   std::unique_ptr<tapeFile::WriteFile> TapeWriteTask::openWriteFile(
-   tape::tapeFile::WriteSession & session, cta::log::LogContext&  lc){
-     std::unique_ptr<tape::tapeFile::WriteFile> output;
-     try{
-       const uint64_t tapeBlockSize = 256*1024;
-       output.reset(new tape::tapeFile::WriteFile(&session, *m_archiveJob,tapeBlockSize));
-       lc.log(cta::log::DEBUG, "Successfully opened the tape file for writing");
-     }
-     catch(const cta::exception::Exception & ex){
-       cta::log::LogContext::ScopedParam sp(lc, cta::log::Param("exceptionMessage", ex.getMessageValue()));
-       lc.log(cta::log::ERR, "Failed to open tape file for writing");
-       throw;
-     }
-     return output;
-   }
+  std::unique_ptr<tapeFile::FileWriter> TapeWriteTask::openFileWriter(
+    const std::unique_ptr<tape::tapeFile::WriteSession>& session, cta::log::LogContext& lc) {
+    std::unique_ptr<tape::tapeFile::FileWriter> output;
+    try {
+      const uint64_t tapeBlockSize = 256*1024;
+      output.reset(new tape::tapeFile::FileWriter(session, *m_archiveJob, tapeBlockSize));
+      lc.log(cta::log::DEBUG, "Successfully opened the tape file for writing");
+    }
+    catch (const cta::exception::Exception & ex) {
+      cta::log::LogContext::ScopedParam sp(lc, cta::log::Param("exceptionMessage", ex.getMessageValue()));
+      lc.log(cta::log::ERR, "Failed to open tape file for writing");
+      throw;
+    }
+    return output;
+  }
 //------------------------------------------------------------------------------
 // circulateMemBlocks
-//------------------------------------------------------------------------------   
-   void TapeWriteTask::circulateMemBlocks(){
-     while(!m_fifo.finished()) {
-        m_memManager.releaseBlock(m_fifo.popDataBlock());
-//        watchdog.notify();
-     }
-   }
+//------------------------------------------------------------------------------
+  void TapeWriteTask::circulateMemBlocks() {
+    while (!m_fifo.finished()) {
+      m_memManager.releaseBlock(m_fifo.popDataBlock());
+      // watchdog.notify();
+    }
+  }
 
   void TapeWriteTask::logWithStats(int level, const std::string& msg,
-   cta::log::LogContext&  lc) const{
-     cta::log::ScopedParamContainer params(lc);
-     params.add("readWriteTime", m_taskStats.readWriteTime)
-           .add("checksumingTime",m_taskStats.checksumingTime)
-           .add("waitDataTime",m_taskStats.waitDataTime)
-           .add("waitReportingTime",m_taskStats.waitReportingTime)
-           .add("transferTime",m_taskStats.transferTime())
-           .add("totalTime", m_taskStats.totalTime)
-           .add("dataVolume",m_taskStats.dataVolume)
-           .add("headerVolume",m_taskStats.headerVolume)
-           .add("driveTransferSpeedMBps",m_taskStats.totalTime?
+    cta::log::LogContext&  lc) const {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("readWriteTime", m_taskStats.readWriteTime)
+          .add("checksumingTime", m_taskStats.checksumingTime)
+          .add("waitDataTime", m_taskStats.waitDataTime)
+          .add("waitReportingTime", m_taskStats.waitReportingTime)
+          .add("transferTime", m_taskStats.transferTime())
+          .add("totalTime",  m_taskStats.totalTime)
+          .add("dataVolume", m_taskStats.dataVolume)
+          .add("headerVolume", m_taskStats.headerVolume)
+          .add("driveTransferSpeedMBps", m_taskStats.totalTime?
                   1.0*(m_taskStats.dataVolume+m_taskStats.headerVolume)
                   /1000/1000/m_taskStats.totalTime:0.0)
-           .add("payloadTransferSpeedMBps",m_taskStats.totalTime?
-                   1.0*m_taskStats.dataVolume/1000/1000/m_taskStats.totalTime:0.0)
-           .add("fileSize",m_archiveFile.fileSize)
-           .add("fileId",m_archiveFile.archiveFileID)
-           .add("fSeq",m_tapeFile.fSeq)
-           .add("reconciliationTime",m_archiveFile.reconciliationTime)
-           .add("LBPMode", m_LBPMode);
-     
-     lc.log(level, msg);
+          .add("payloadTransferSpeedMBps", m_taskStats.totalTime?
+                  1.0*m_taskStats.dataVolume/1000/1000/m_taskStats.totalTime:0.0)
+          .add("fileSize", m_archiveFile.fileSize)
+          .add("fileId", m_archiveFile.archiveFileID)
+          .add("fSeq", m_tapeFile.fSeq)
+          .add("reconciliationTime", m_archiveFile.reconciliationTime)
+          .add("LBPMode", m_LBPMode);
 
-   }
+    lc.log(level, msg);
+  }
 //------------------------------------------------------------------------------
 //   getTaskStats
 //------------------------------------------------------------------------------

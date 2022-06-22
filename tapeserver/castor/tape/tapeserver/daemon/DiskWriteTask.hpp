@@ -17,15 +17,15 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/DataPipeline.hpp"
-#include "castor/tape/tapeserver/daemon/RecallMemoryManager.hpp"
-#include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
-#include "castor/tape/tapeserver/file/File.hpp"
-#include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
-#include "castor/tape/tapeserver/daemon/DiskStats.hpp"
-#include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
-
 #include <memory>
+
+#include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
+#include "castor/tape/tapeserver/daemon/DataPipeline.hpp"
+#include "castor/tape/tapeserver/daemon/DiskStats.hpp"
+#include "castor/tape/tapeserver/daemon/RecallMemoryManager.hpp"
+#include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
+#include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
+#include "castor/tape/tapeserver/file/FileWriter.hpp"
 
 namespace castor {
 namespace tape {

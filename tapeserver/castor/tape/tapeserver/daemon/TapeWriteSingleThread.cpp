@@ -185,14 +185,15 @@ setlastFseq(uint64_t lastFseq) {
 //openWriteSession
 //------------------------------------------------------------------------------
 std::unique_ptr<castor::tape::tapeFile::WriteSession>
-castor::tape::tapeserver::daemon::TapeWriteSingleThread::openWriteSession() {
+  castor::tape::tapeserver::daemon::TapeWriteSingleThread::openWriteSession() {
   cta::log::ScopedParamContainer params(m_logContext);
   params.add("lastFseq", m_lastFseq)
         .add("compression", m_compress)
         .add("useLbp", m_useLbp);
 
   try {
-    auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(m_drive, m_volInfo, m_lastFseq, m_compress, m_useLbp);
+    auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(m_drive, m_volInfo, m_lastFseq,
+      m_compress, m_useLbp);
 
     return writeSession;
   } catch (cta::exception::Exception& e) {
@@ -368,7 +369,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       }
       // Then we have to initialize the tape write session
       currentErrorToCount = "Error_tapePositionForWrite";
-      std::unique_ptr<castor::tape::tapeFile::WriteSession> writeSession(openWriteSession());
+      auto writeSession = openWriteSession();
       m_stats.positionTime += timer.secs(cta::utils::Timer::resetCounter);
       //and then report
       {
@@ -419,7 +420,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
           m_logContext.log(cta::log::DEBUG, "writing data to tape has finished");
           break;
         }
-        task->execute(*writeSession, m_reportPacker, m_watchdog, m_logContext, timer);
+        task->execute(writeSession, m_reportPacker, m_watchdog, m_logContext, timer);
         // Add the tasks counts to the session's
         m_stats.add(task->getTaskStats());
         // Transmit the statistics to the watchdog thread

@@ -17,9 +17,9 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/file/File.hpp"
-#include "common/exception/Exception.hpp"
 #include <memory>
+
+#include "common/exception/Exception.hpp"
 #include "castor/tape/tapeserver/daemon/Payload.hpp"
 
 

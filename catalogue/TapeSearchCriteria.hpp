@@ -21,6 +21,8 @@
 #include <string>
 #include <vector>
 
+#include "common/dataStructures/Tape.hpp"
+
 namespace cta {
 namespace catalogue {
 
@@ -34,7 +36,6 @@ namespace catalogue {
  * Please note that no wild cards, for example '*' or '%', are supported.
  */
 struct TapeSearchCriteria {
-
   /**
    * The volume identifier of a tape.
    */
@@ -89,8 +90,7 @@ struct TapeSearchCriteria {
    * The state of the tapes to look for
    */
   std::optional<common::dataStructures::Tape::State> state;
+};  // struct TapeSearchCriteria
 
-}; // struct TapeSearchCriteria
-
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

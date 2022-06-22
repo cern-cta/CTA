@@ -24,16 +24,19 @@
 #include "castor/messages/TapeserverProxyDummy.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
-#include "castor/tape/tapeserver/system/Wrapper.hpp"
-#include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
+#include "castor/tape/tapeserver/file/Exceptions.hpp"
+#include "castor/tape/tapeserver/file/FileWriter.hpp"
+#include "castor/tape/tapeserver/file/LabelSession.hpp"
+#include "castor/tape/tapeserver/file/WriteSession.hpp"
+#include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "catalogue/InMemoryCatalogue.hpp"
 #include "catalogue/OracleCatalogue.hpp"
 #include "catalogue/OracleCatalogueSchema.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/DummyLogger.hpp"
-#include "common/log/StringLogger.hpp"
 #include "common/log/StdoutLogger.hpp"
+#include "common/log/StringLogger.hpp"
 #include "common/processCap/ProcessCapDummy.hpp"
 #include "common/threading/Thread.hpp"
 #include "common/utils/utils.hpp"
@@ -509,14 +512,13 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-                                            s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
     volInfo.vid = s_vid;
-    castor::tape::tapeFile::WriteSession ws(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-                                            volInfo, 0, true, false);
+    auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(*mockSys.fake.m_pathToDrive["/dev/nst0"],
+      volInfo, 0, true, false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
@@ -540,12 +542,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = fseq;
-      castor::tape::tapeFile::WriteFile wf(&ws, *aj, archiveFileSize);
-      tapeFileWritten.blockId = wf.getBlockId();
+      castor::tape::tapeFile::FileWriter writer(writeSession, *aj, archiveFileSize);
+      tapeFileWritten.blockId = writer.getBlockId();
       // Write the data (one block)
-      wf.write(data, archiveFileSize);
+      writer.write(data, archiveFileSize);
       // Close the file
-      wf.close();
+      writer.close();
 
       // Create file entry in the archive namespace
       tapeFileWritten.archiveFileId = fseq;
@@ -690,14 +692,13 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-        s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
     volInfo.vid=s_vid;
-    castor::tape::tapeFile::WriteSession ws(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-       volInfo , 0, true, false);
+    auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(*mockSys.fake.m_pathToDrive["/dev/nst0"],
+      volInfo , 0, true, false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
@@ -721,12 +722,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = fseq;
-      castor::tape::tapeFile::WriteFile wf(&ws, *aj, archiveFileSize);
-      tapeFileWritten.blockId = wf.getBlockId();
+      castor::tape::tapeFile::FileWriter writer(writeSession, *aj, archiveFileSize);
+      tapeFileWritten.blockId = writer.getBlockId();
       // Write the data (one block)
-      wf.write(data, archiveFileSize);
+      writer.write(data, archiveFileSize);
       // Close the file
-      wf.close();
+      writer.close();
 
       // Create file entry in the archive namespace
       tapeFileWritten.archiveFileId=fseq;
@@ -890,14 +891,13 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-                                            s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
     volInfo.vid = s_vid;
-    castor::tape::tapeFile::WriteSession ws(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-                                            volInfo, 0, true, false);
+    auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(*mockSys.fake.m_pathToDrive["/dev/nst0"],
+      volInfo, 0, true, false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
@@ -917,11 +917,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = 1000 + fseq;
-      castor::tape::tapeFile::WriteFile wf(&ws, *aj, archiveFileSize);
+      castor::tape::tapeFile::FileWriter writer(writeSession, *aj, archiveFileSize);
       // Write the data (one block)
-      wf.write(data, sizeof(data));
+      writer.write(data, sizeof(data));
       // Close the file
-      wf.close();
+      writer.close();
 
       {
         // Create a fictious file record on the tape to allow adding one to fseq=2 afterwards.
@@ -956,7 +956,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
         tapeFileWritten.vid = volInfo.vid;
         tapeFileWritten.size = archiveFileSize;
         tapeFileWritten.fSeq = fseq + 1;
-        tapeFileWritten.blockId = wf.getBlockId() + 10000;
+        tapeFileWritten.blockId = writer.getBlockId() + 10000;
         tapeFileWritten.copyNb = 1;
         tapeFileWritten.diskInstance = s_diskInstance;
         tapeFileWritten.diskFileId = std::to_string(fseq + 1);
@@ -1088,14 +1088,13 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-                                            s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
     volInfo.vid = s_vid;
-    castor::tape::tapeFile::WriteSession ws(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-                                            volInfo, 0, true, false);
+    auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(*mockSys.fake.m_pathToDrive["/dev/nst0"],
+      volInfo, 0, true, false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
@@ -1121,12 +1120,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = fseq;
-      castor::tape::tapeFile::WriteFile wf(&ws, *aj, archiveFileSize);
-      tapeFileWritten.blockId = wf.getBlockId();
+      castor::tape::tapeFile::FileWriter writer(writeSession, *aj, archiveFileSize);
+      tapeFileWritten.blockId = writer.getBlockId();
       // Write the data (one block)
-      wf.write(data, archiveFileSize);
+      writer.write(data, archiveFileSize);
       // Close the file
-      wf.close();
+      writer.close();
 
       // Create file entry in the archive namespace
       tapeFileWritten.archiveFileId = fseq;
@@ -1277,14 +1276,13 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-                                            s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
     volInfo.vid = s_vid;
-    castor::tape::tapeFile::WriteSession ws(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-                                            volInfo, 0, true, false);
+    auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(*mockSys.fake.m_pathToDrive["/dev/nst0"],
+      volInfo, 0, true, false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
@@ -1292,8 +1290,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
     size_t archiveFileSize = sizeof(data);
     castor::tape::SCSI::Structures::zeroStruct(&data);
     int fseq;
-    //For the RAO orders we will have two rao calls : first with 30 files,
-    //the second with 20 files
+    // For the RAO orders we will have two rao calls : first with 30 files,
+    // the second with 20 files
     for (fseq = 1; fseq <= MAX_RECALLS; fseq++) {
       expectedRAOOrder[fseq / MAX_BULK_RECALLS].push_back(std::to_string(fseq));
       // Create a path to a remote destination file
@@ -1312,12 +1310,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = fseq;
-      castor::tape::tapeFile::WriteFile wf(&ws, *aj, archiveFileSize);
-      tapeFileWritten.blockId = wf.getBlockId();
+      castor::tape::tapeFile::FileWriter writer(writeSession, *aj, archiveFileSize);
+      tapeFileWritten.blockId = writer.getBlockId();
       // Write the data (one block)
-      wf.write(data, archiveFileSize);
+      writer.write(data, archiveFileSize);
       // Close the file
-      wf.close();
+      writer.close();
 
       // Create file entry in the archive namespace
       tapeFileWritten.archiveFileId = fseq;
@@ -1464,14 +1462,13 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-                                            s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
     volInfo.vid = s_vid;
-    castor::tape::tapeFile::WriteSession ws(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-                                            volInfo, 0, true, false);
+    auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(*mockSys.fake.m_pathToDrive["/dev/nst0"],
+      volInfo, 0, true, false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
@@ -1479,8 +1476,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
     size_t archiveFileSize = sizeof(data);
     castor::tape::SCSI::Structures::zeroStruct(&data);
     int fseq;
-    //For the RAO orders we will have two rao calls : first with 30 files,
-    //the second with 20 files
+    // For the RAO orders we will have two rao calls : first with 30 files,
+    // the second with 20 files
     for (fseq = 1; fseq <= MAX_RECALLS; fseq++) {
       expectedRAOOrder[fseq / MAX_BULK_RECALLS].push_back(std::to_string(fseq));
       // Create a path to a remote destination file
@@ -1499,12 +1496,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = fseq;
-      castor::tape::tapeFile::WriteFile wf(&ws, *aj, archiveFileSize);
-      tapeFileWritten.blockId = wf.getBlockId();
+      castor::tape::tapeFile::FileWriter writer(writeSession, *aj, archiveFileSize);
+      tapeFileWritten.blockId = writer.getBlockId();
       // Write the data (one block)
-      wf.write(data, archiveFileSize);
+      writer.write(data, archiveFileSize);
       // Close the file
-      wf.close();
+      writer.close();
 
       // Create file entry in the archive namespace
       tapeFileWritten.archiveFileId = fseq;
@@ -1655,14 +1652,13 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-                                            s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
     volInfo.vid = s_vid;
-    castor::tape::tapeFile::WriteSession ws(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-                                            volInfo, 0, true, false);
+    auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(*mockSys.fake.m_pathToDrive["/dev/nst0"],
+      volInfo, 0, true, false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
@@ -1670,8 +1666,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
     size_t archiveFileSize = sizeof(data);
     castor::tape::SCSI::Structures::zeroStruct(&data);
     int fseq;
-    //For the RAO orders we will have two rao calls : first with 30 files,
-    //the second with 20 files
+    // For the RAO orders we will have two rao calls : first with 30 files,
+    // the second with 20 files
     for (fseq = 1; fseq <= MAX_RECALLS; fseq++) {
       expectedRAOOrder[fseq / MAX_BULK_RECALLS].push_back(std::to_string(fseq));
       // Create a path to a remote destination file
@@ -1690,12 +1686,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = fseq;
-      castor::tape::tapeFile::WriteFile wf(&ws, *aj, archiveFileSize);
-      tapeFileWritten.blockId = wf.getBlockId();
+      castor::tape::tapeFile::FileWriter writer(writeSession, *aj, archiveFileSize);
+      tapeFileWritten.blockId = writer.getBlockId();
       // Write the data (one block)
-      wf.write(data, archiveFileSize);
+      writer.write(data, archiveFileSize);
       // Close the file
-      wf.close();
+      writer.close();
 
       // Create file entry in the archive namespace
       tapeFileWritten.archiveFileId = fseq;
@@ -1844,14 +1840,13 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-                                            s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
     volInfo.vid = s_vid;
-    castor::tape::tapeFile::WriteSession ws(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-                                            volInfo, 0, true, false);
+    auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(*mockSys.fake.m_pathToDrive["/dev/nst0"],
+      volInfo, 0, true, false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
@@ -1875,12 +1870,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = fseq;
-      castor::tape::tapeFile::WriteFile wf(&ws, *aj, archiveFileSize);
-      tapeFileWritten.blockId = wf.getBlockId();
+      castor::tape::tapeFile::FileWriter writer(writeSession, *aj, archiveFileSize);
+      tapeFileWritten.blockId = writer.getBlockId();
       // Write the data (one block)
-      wf.write(data, archiveFileSize);
+      writer.write(data, archiveFileSize);
       // Close the file
-      wf.close();
+      writer.close();
 
       // Create file entry in the archive namespace
       tapeFileWritten.archiveFileId = fseq;
@@ -1994,14 +1989,13 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-                                            s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
     volInfo.vid = s_vid;
-    castor::tape::tapeFile::WriteSession ws(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-                                            volInfo, 0, true, false);
+    auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(*mockSys.fake.m_pathToDrive["/dev/nst0"],
+      volInfo, 0, true, false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
@@ -2025,12 +2019,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = fseq;
-      castor::tape::tapeFile::WriteFile wf(&ws, *aj, archiveFileSize);
-      tapeFileWritten.blockId = wf.getBlockId();
+      castor::tape::tapeFile::FileWriter writer(writeSession, *aj, archiveFileSize);
+      tapeFileWritten.blockId = writer.getBlockId();
       // Write the data (one block)
-      wf.write(data, archiveFileSize);
+      writer.write(data, archiveFileSize);
       // Close the file
-      wf.close();
+      writer.close();
 
       // Create file entry in the archive namespace
       tapeFileWritten.archiveFileId = fseq;
@@ -2169,7 +2163,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   std::list<uint64_t> archiveFileIds;
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     catalogue.tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
@@ -2319,7 +2313,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   std::list<uint64_t> archiveFileIds;
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     catalogue.tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
@@ -2498,7 +2492,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   std::list<uint64_t> archiveFileIds;
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     catalogue.tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
@@ -2668,7 +2662,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   std::list<uint64_t> archiveFileIds;
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     catalogue.tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
@@ -2870,7 +2864,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   std::list<uint64_t> archiveFileIds;
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     catalogue.tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
@@ -3036,7 +3030,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   std::list<uint64_t> archiveFileIds;
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     catalogue.tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
@@ -3206,7 +3200,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   std::list<uint64_t> archiveFileIds;
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     catalogue.tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 

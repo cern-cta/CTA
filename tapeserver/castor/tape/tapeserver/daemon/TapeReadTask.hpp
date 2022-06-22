@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <memory>
 
 #include "castor/tape/tapeserver/daemon/DataPipeline.hpp"
 #include "castor/tape/tapeserver/daemon/RecallMemoryManager.hpp"
@@ -32,8 +33,8 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
   /**
-   * This class is in charge of 
-   * 
+   * This class is in charge of
+   *
    */
 class TapeReadTask {
 public:
@@ -46,17 +47,17 @@ public:
   TapeReadTask(cta::RetrieveJob *retrieveJob,
     DataConsumer & destination, RecallMemoryManager & mm): 
     m_retrieveJob(retrieveJob), m_fifo(destination), m_mm(mm) {}
-    
+
     /**
      * @param rs the read session holding all we need to be able to read from the tape
      * @param lc the log context for .. logging purpose
      * The actual function that will do the job.
      * The main loop is :
-     * Acquire a free memory block from the memory manager , fill it, push it 
+     * Acquire a free memory block from the memory manager , fill it, push it
      */
-  void execute(castor::tape::tapeFile::ReadSession & rs,
-    cta::log::LogContext & lc,RecallWatchDog& watchdog,
-    TapeSessionStats & stats, cta::utils::Timer & timer) {
+  void execute(const std::unique_ptr<castor::tape::tapeFile::ReadSession> &rs,
+    cta::log::LogContext &lc, RecallWatchDog &watchdog,
+    TapeSessionStats &stats, cta::utils::Timer &timer) {
 
     using cta::log::Param;
 
@@ -70,7 +71,7 @@ public:
           .add("dstURL", m_retrieveJob->retrieveRequest.dstURL)
           .add("isRepack", isRepack)
           .add("isVerifyOnly", isVerifyOnly);
-    
+
     // We will clock the stats for the file itself, and eventually add those
     // stats to the session's.
     TapeSessionStats localStats;
@@ -92,7 +93,7 @@ public:
     MemBlock* mb = nullptr;
     try {
       currentErrorToCount = "Error_tapePositionForRead";
-      std::unique_ptr<castor::tape::tapeFile::ReadFile> rf(openReadFile(rs,lc));
+      auto rf = openFileReader(rs, lc);
       LBPMode = rf->getLBPMode();
       // At that point we already read the header.
       localStats.headerVolume += TapeSessionStats::headerVolumePerFile;
@@ -108,7 +109,7 @@ public:
         // Get a memory block and add information to its metadata
         mb=m_mm.getFreeBlock();
         localStats.waitFreeMemoryTime += timer.secs(cta::utils::Timer::resetCounter);
-        
+
         mb->m_fSeq = m_retrieveJob->selectedTapeFile().fSeq;
         mb->m_fileBlock = fileBlock++;
         mb->m_fileid = m_retrieveJob->retrieveRequest.archiveFileID;
@@ -210,8 +211,8 @@ public:
         cta::log::LogContext lc2(lc.logger());
         lc2.logBacktrace(cta::log::ERR, ex.backtrace());
       }
-      
-      // mb might or might not be allocated at this point, but 
+
+      // mb might or might not be allocated at this point, but
       // reportErrorToDiskTask will deal with the allocation if required.
       reportErrorToDiskTask(ex.getMessageValue(),666,mb); // TODO - Remove error code
     } //end of catch
@@ -247,21 +248,21 @@ private:
      m_fifo.pushDataBlock(mb);
      m_fifo.pushDataBlock(nullptr);
    }
-  /** 
+  /**
    * Open the file on the tape. In case of failure, log and throw
    * Copying the unique_ptr on the calling point will give us the ownership of the 
    * object.
-   * @return if successful, return an unique_ptr on the ReadFile we want
+   * @return if successful, return an unique_ptr on the FileReader we want
    */
-  std::unique_ptr<castor::tape::tapeFile::ReadFile> openReadFile(
-  castor::tape::tapeFile::ReadSession & rs, cta::log::LogContext & lc){
-
+  std::unique_ptr<castor::tape::tapeFile::FileReader> openFileReader(
+    const std::unique_ptr<castor::tape::tapeFile::ReadSession> &session,
+    cta::log::LogContext &lc) {
     using cta::log::Param;
     typedef cta::log::LogContext::ScopedParam ScopedParam;
 
-    std::unique_ptr<castor::tape::tapeFile::ReadFile> rf;
+    std::unique_ptr<castor::tape::tapeFile::FileReader> reader;
     try {
-      rf.reset(new castor::tape::tapeFile::ReadFile(&rs, *m_retrieveJob));
+      reader = std::make_unique<castor::tape::tapeFile::FileReader>(session, *m_retrieveJob);
       lc.log(cta::log::DEBUG, "Successfully opened the tape file");
     } catch (cta::exception::Exception & ex) {
       // Log the error
@@ -269,27 +270,25 @@ private:
       lc.log(cta::log::ERR, "Failed to open tape file for reading");
       throw;
     }
-    return rf;
+    return reader;
   }
-  
+
   /**
    * All we need to know about the file we are recalling
    */
   cta::RetrieveJob *m_retrieveJob;
-  
+
   /**
    * The task (seen as a Y) that will consume all the blocks we read
    */
   DataConsumer & m_fifo;
-  
+
   /**
-   *  The MemoryManager from whom we get free memory blocks 
+   *  The MemoryManager from whom we get free memory blocks
    */
   RecallMemoryManager & m_mm;
-
 };
-}
-}
-}
-}
- 
+}  // namespace daemon
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

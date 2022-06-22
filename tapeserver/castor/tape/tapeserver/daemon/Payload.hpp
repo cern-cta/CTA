@@ -14,12 +14,17 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
+
 #include <zlib.h>
-#include "disk/DiskFile.hpp"
-#include "castor/tape/tapeserver/file/File.hpp"
-#include "common/exception/MemException.hpp"
+
+#include "castor/tape/tapeserver/file/Exceptions.hpp"
+#include "castor/tape/tapeserver/file/FileReader.hpp"
+#include "castor/tape/tapeserver/file/FileWriter.hpp"
 #include "common/exception/EndOfFile.hpp"
-#pragma once 
+#include "common/exception/MemException.hpp"
+#include "disk/DiskFile.hpp"
+
+#pragma once
 
 namespace castor {
 namespace tape {
@@ -92,7 +97,7 @@ public:
    * @param from reference to the tapeFile::ReadFile
    * @return whether another tape block will fit in the memory block.
    */
-  bool append(castor::tape::tapeFile::ReadFile & from){
+  bool append(castor::tape::tapeFile::FileReader & from){
     if (from.getBlockSize() > remainingFreeSpace()) {
       std::stringstream err;
       err << "Trying to read a tape file block with too little space left: BlockSize="
@@ -119,11 +124,11 @@ public:
   }
   
   /**
-   * Write the complete buffer to a tapeFile::WriteFile, tape block by
+   * Write the complete buffer to a tapeFile::FileWriter, tape block by
    * tape block
-   * @param to reference to the tapeFile::WriteFile
+   * @param to reference to the tapeFile::FileWriter
    */
-  void write(tape::tapeFile::WriteFile& to) {
+  void write(tape::tapeFile::FileWriter& to) {
     size_t blockSize = to.getBlockSize();
     size_t writePosition = 0;
     // Write all possible full tape blocks

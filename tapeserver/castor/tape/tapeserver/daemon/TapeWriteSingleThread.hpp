@@ -17,15 +17,17 @@
 
 #pragma once
 
-#include "common/processCap/ProcessCap.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSingleThreadInterface.hpp"
 #include "castor/tape/tapeserver/daemon/TapeWriteTask.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "castor/tape/tapeserver/file/Exceptions.hpp"
+#include "castor/tape/tapeserver/file/FileWriter.hpp"
+#include "castor/tape/tapeserver/file/WriteSession.hpp"
+#include "common/processCap/ProcessCap.hpp"
 #include "common/threading/BlockingQueue.hpp"
 #include "common/threading/Thread.hpp"
-#include "castor/tape/tapeserver/file/File.hpp"
 #include "common/Timer.hpp"
 
 #include <iostream>

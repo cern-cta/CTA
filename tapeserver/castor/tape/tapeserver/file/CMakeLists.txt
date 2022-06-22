@@ -21,8 +21,14 @@ include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
 include_directories (${XROOTD_INCLUDE_DIR})
 
 set(TAPESERVER_FILE_LIBRARY_SRCS
-  File.cpp
-  Structures.cpp)
+  FileReader.cpp
+  FileWriter.cpp
+  HeaderChecker.cpp
+  LabelSession.cpp
+  ReadSession.cpp
+  Structures.cpp
+  WriteSession.cpp
+)
 
 add_executable(BasicReadWriteTest
   BasicReadWriteTest.cpp)

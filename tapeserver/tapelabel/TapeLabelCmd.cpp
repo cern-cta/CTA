@@ -16,12 +16,14 @@
  */
 
 #include "common/Constants.hpp"
+#include "mediachanger/LibrarySlotParser.hpp"
 #include "tapeserver/castor/tape/Constants.hpp"
-#include "tapeserver/castor/tape/tapeserver/file/File.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/Exceptions.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/HeaderChecker.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/LabelSession.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/Structures.hpp"
 #include "tapeserver/tapelabel/TapeLabelCmd.hpp"
 #include "tapeserver/tapelabel/TapeLabelCmdLineArgs.hpp"
-#include "mediachanger/LibrarySlotParser.hpp"
 
 namespace cta {
 namespace tapeserver {
@@ -320,7 +322,7 @@ void TapeLabelCmd::writeLabelWithLbpToTape(
     m_log(cta::log::WARNING, "LBP mode mismatch. Force labeling with LBP.", params);
   }
   m_log(cta::log::INFO, "Label session is writing label with LBP to tape", params);
-  castor::tape::tapeFile::LabelSession ls(drive, m_vid, true);
+  castor::tape::tapeFile::LabelSession::label(&drive, m_vid, true);
   m_log(cta::log::INFO, "Label session has written label with LBP to tape", params);
 }
 
@@ -343,7 +345,7 @@ void TapeLabelCmd::writeLabelToTape(
     m_log(cta::log::WARNING, "LBP mode mismatch. Force labeling without LBP.", params);
   }
   m_log(cta::log::INFO, "Label session is writing label to tape", params);
-  castor::tape::tapeFile::LabelSession ls(drive, m_vid, false);
+  castor::tape::tapeFile::LabelSession::label(&drive, m_vid, false);
   m_log(cta::log::INFO, "Label session has written label to tape", params);
 }
 

@@ -15,21 +15,22 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "catalogue/TapeSearchCriteria.hpp"
 #include "common/Constants.hpp"
 #include "common/log/DummyLogger.hpp"
+#include "disk/DiskFile.hpp"
+#include "disk/RadosStriperPool.hpp"
+#include "mediachanger/LibrarySlotParser.hpp"
+#include "scheduler/RetrieveJob.hpp"
 #include "tapeserver/castor/tape/Constants.hpp"
-#include "tapeserver/castor/tape/tapeserver/file/File.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/Payload.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/ReadSession.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/Structures.hpp"
+#include "tapeserver/daemon/Tpconfig.hpp"
 #include "tapeserver/readtp/ReadtpCmd.hpp"
 #include "tapeserver/readtp/ReadtpCmdLineArgs.hpp"
 #include "tapeserver/readtp/TapeFseqRange.hpp"
 #include "tapeserver/readtp/TapeFseqRangeListSequence.hpp"
-#include "tapeserver/daemon/Tpconfig.hpp"
-#include "tapeserver/castor/tape/tapeserver/daemon/Payload.hpp"
-#include "mediachanger/LibrarySlotParser.hpp"
-#include "disk/DiskFile.hpp"
-#include "disk/RadosStriperPool.hpp"
-#include "catalogue/TapeSearchCriteria.hpp"
 
 
 namespace cta {
@@ -415,7 +416,7 @@ void ReadtpCmd::readTapeFile(
   volInfo.vid=m_vid;
   volInfo.nbFiles = 0;
   volInfo.mountType = cta::common::dataStructures::MountType::Retrieve;
-  castor::tape::tapeFile::ReadSession rs(drive, volInfo, m_useLbp);
+  auto rs = std::make_unique<castor::tape::tapeFile::ReadSession>(drive, volInfo, m_useLbp);
 
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.vid = m_vid;
@@ -437,7 +438,7 @@ void ReadtpCmd::readTapeFile(
   fileToRecall.selectedTapeFile().fSeq = fSeq;
   fileToRecall.positioningMethod = cta::PositioningMethod::ByFSeq;
 
-  castor::tape::tapeFile::ReadFile rf(&rs, fileToRecall); 
+  castor::tape::tapeFile::FileReader rf(rs, fileToRecall);
   auto checksum_adler32 = castor::tape::tapeserver::daemon::Payload::zeroAdler32();
   const size_t buffer_size = 1 * 1024 * 1024 * 1024; //1Gb
   size_t read_data_size = 0;

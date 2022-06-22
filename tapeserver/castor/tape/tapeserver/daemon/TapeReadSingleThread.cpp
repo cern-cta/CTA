@@ -15,10 +15,11 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSessionReporter.hpp"
-#include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/ReadSession.hpp"
 
 //------------------------------------------------------------------------------
 // Constructor for TapeReadSingleThread
@@ -264,7 +265,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       // Log and notify
       m_logContext.log(cta::log::INFO, "Starting tape read thread");
 
-      // The tape will be loaded 
+      // The tape will be loaded
       // it has to be unloaded, unmounted at all cost -> RAII
       // will also take care of the TapeSessionReporter and of RecallTaskInjector
       TapeCleaning tapeCleaner(*this, timer);
@@ -316,8 +317,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
                                .add("encryptionKey", encryptionStatus.keyName)
                                .add("stdout", encryptionStatus.stdout);
             m_logContext.log(cta::log::INFO, "Drive encryption enabled for this mount");
-          }
-          else {
+          } else {
             encryptionLogParams.add("encryption", "off");
             m_logContext.log(cta::log::INFO, "Drive encryption not enabled for this mount");
           }
@@ -336,9 +336,9 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       }
       // Then we have to initialise the tape read session
       currentErrorToCount = "Error_tapesCheckLabelBeforeReading";
-      std::unique_ptr<castor::tape::tapeFile::ReadSession> readSession(openReadSession());
+      auto readSession = openReadSession();
       m_stats.positionTime += timer.secs(cta::utils::Timer::resetCounter);
-      //and then report
+      // and then report
       {
         cta::log::ScopedParamContainer scoped(m_logContext);
         scoped.add("positionTime", m_stats.positionTime);
@@ -365,7 +365,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       }
 
       m_stats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
-      // Then we will loop on the tasks as they get from 
+      // Then we will loop on the tasks as they get from
       // the task injector
 
       // We wait the task injector to finish inserting its first batch
@@ -379,7 +379,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
                                        m_logContext);
       m_reporter.reportState(cta::tape::session::SessionState::Running, cta::tape::session::SessionType::Retrieve);
       while (true) {
-        //get a task
+        // get a task
         task.reset(popAndRequestMoreJobs());
         m_stats.waitInstructionsTime += timer.secs(cta::utils::Timer::resetCounter);
         // If we reached the end
@@ -389,7 +389,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
         }
         // This can lead the session being marked as corrupt, so we test
         // it in the while loop
-        task->execute(*readSession, m_logContext, m_watchdog, m_stats, timer);
+        task->execute(readSession, m_logContext, m_watchdog, m_stats, timer);
         // Transmit the statistics to the watchdog thread
         m_watchdog.updateStatsWithoutDeliveryTime(m_stats);
         // The session could have been corrupted (failed positioning)

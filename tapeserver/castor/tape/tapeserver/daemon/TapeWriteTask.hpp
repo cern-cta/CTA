@@ -18,15 +18,17 @@
 #pragma once
 
 
+#include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 #include "castor/tape/tapeserver/daemon/DataPipeline.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
-#include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
-#include "castor/tape/tapeserver/daemon/TapeWriteSingleThread.hpp"
-#include "common/log/LogContext.hpp"
-#include "common/threading/Thread.hpp"
-#include "common/threading/AtomicFlag.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
+#include "castor/tape/tapeserver/daemon/TapeWriteSingleThread.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
+#include "castor/tape/tapeserver/file/FileWriter.hpp"
+#include "castor/tape/tapeserver/file/WriteSession.hpp"
+#include "common/log/LogContext.hpp"
+#include "common/threading/AtomicFlag.hpp"
+#include "common/threading/Thread.hpp"
 #include "common/Timer.hpp"
 #include "scheduler/ArchiveJob.hpp"
 
@@ -75,7 +77,7 @@ public:
    * @param lc For logging
    * @param timer
    */
-  virtual void execute(castor::tape::tapeFile::WriteSession & session,
+  virtual void execute(const std::unique_ptr<castor::tape::tapeFile::WriteSession> &session,
    MigrationReportPacker & reportPacker, MigrationWatchDog & watchdog,
    cta::log::LogContext&  lc, cta::utils::Timer & timer);
   
@@ -134,14 +136,14 @@ private:
   void checkErrors(MemBlock* mb,int memBlockId,cta::log::LogContext&  lc);
     
   /**
-   * Function in charge of opening the WriteFile for m_fileToMigrate
+   * Function in charge of opening the FileWriter for m_fileToMigrate
    * Throw an exception it it fails
-   * @param session The session on which relies the WriteFile
+   * @param session The session on which relies the FileWriter
    * @param lc for logging purpose
-   * @return the WriteFile if everything went well
+   * @return the FileWriter if everything went well
    */
-  std::unique_ptr<castor::tape::tapeFile::WriteFile> openWriteFile(
-  castor::tape::tapeFile::WriteSession & session,cta::log::LogContext&  lc);
+  std::unique_ptr<castor::tape::tapeFile::FileWriter> openFileWriter(
+    const std::unique_ptr<castor::tape::tapeFile::WriteSession>& session, cta::log::LogContext& lc);
 
   /**
    * All we need to know about the file we are migrating
