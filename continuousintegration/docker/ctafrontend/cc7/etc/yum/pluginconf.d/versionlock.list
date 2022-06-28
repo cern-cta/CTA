@@ -17,20 +17,21 @@
 0:eos-xrootd-debuginfo-4.12.8-1.el7.cern.*
 #### EOS-4-END ####
 #### EOS-5-START ####
-#0:eos-archive-5.0.23-1.el7.cern.x86_64.rpm
-#0:eos-cleanup-5.0.23-1.el7.cern.x86_64.rpm
-#0:eos-client-5.0.23-1.el7.cern.x86_64.rpm
-#0:eos-fuse-5.0.23-1.el7.cern.x86_64.rpm
-#0:eos-fuse-core-5.0.23-1.el7.cern.x86_64.rpm
-#0:eos-fuse-sysv-5.0.23-1.el7.cern.x86_64.rpm
-#0:eos-fusex-5.0.23-1.el7.cern.x86_64.rpm
-#0:eos-fusex-core-5.0.23-1.el7.cern.x86_64.rpm
-#0:eos-fusex-selinux-5.0.23-1.el7.cern.x86_64.rpm
-#0:eos-ns-inspect-5.0.23-1.el7.cern.x86_64.rpm
-#0:eos-server-5.0.23-1.el7.cern.x86_64.rpm
-#0:eos-srm-5.0.23-1.el7.cern.x86_64.rpm
-#0:eos-test-5.0.23-1.el7.cern.x86_64.rpm
-#0:eos-testkeytab-5.0.23-1.el7.cern.x86_64.rpm
+#0:eos-archive-5.0.25-1.el7.cern.x86_64.rpm
+#0:eos-cleanup-5.0.25-1.el7.cern.x86_64.rpm
+#0:eos-client-5.0.25-1.el7.cern.x86_64.rpm
+#0:eos-fuse-5.0.25-1.el7.cern.x86_64.rpm
+#0:eos-fuse-core-5.0.25-1.el7.cern.x86_64.rpm
+#0:eos-fuse-sysv-5.0.25-1.el7.cern.x86_64.rpm
+#0:eos-fusex-5.0.25-1.el7.cern.x86_64.rpm
+#0:eos-fusex-core-5.0.25-1.el7.cern.x86_64.rpm
+#0:eos-fusex-selinux-5.0.25-1.el7.cern.x86_64.rpm
+#0:eos-ns-inspect-5.0.25-1.el7.cern.x86_64.rpm
+#0:eos-server-5.0.25-1.el7.cern.x86_64.rpm
+#0:eos-srm-5.0.25-1.el7.cern.x86_64.rpm
+#0:eos-test-5.0.25-1.el7.cern.x86_64.rpm
+#0:eos-testkeytab-5.0.25-1.el7.cern.x86_64.rpm
+#0:eos-quarkdb-5.0.25-1.el7.cern.x86_64.rpm
 #0:eos-xrootd-5.4.4-1.el7.cern.*
 #0:eos-xrootd-debuginfo-5.4.4-1.el7.cern.*
 #### EOS-5-END ####
