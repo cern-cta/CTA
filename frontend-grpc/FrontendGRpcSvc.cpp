@@ -26,7 +26,7 @@ Status CtaRpcImpl::Version(::grpc::ServerContext *context, const ::google::proto
     return Status::OK;
 }
 
-Status CtaRpcImpl::Archive(::grpc::ServerContext* context, const ::cta::dcache::rpc::ArchiveRequest* request, ::cta::dcache::rpc::ArchiveResponse* response) {
+Status CtaRpcImpl::Archive(::grpc::ServerContext* context, const ::cta::frontend::rpc::ArchiveRequest* request, ::cta::frontend::rpc::ArchiveResponse* response) {
 
     cta::log::LogContext lc(*m_log);
     cta::log::ScopedParamContainer sp(lc);
@@ -63,6 +63,21 @@ Status CtaRpcImpl::Archive(::grpc::ServerContext* context, const ::cta::dcache::
         return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA groupname is not set.");
     }
 
+    if (!request->file().uid()) {
+        lc.log(cta::log::WARNING, "File's owner uid can't be zero");
+        return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's owner uid can't be zero");
+    }
+
+    if (!request->file().gid()) {
+        lc.log(cta::log::WARNING, "File's owner gid can't be zero");
+        return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's owner gid can't be zero");
+    }
+
+    if (request->file().path().empty()) {
+        lc.log(cta::log::WARNING, "File's path can't be empty");
+        return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's path can't be empty");
+    }
+
     auto instance = request->instance().name();
     sp.add("instance", instance);
     sp.add("username", request->cli().user().username());
@@ -77,9 +92,9 @@ Status CtaRpcImpl::Archive(::grpc::ServerContext* context, const ::cta::dcache::
 
         cta::common::dataStructures::ArchiveRequest archiveRequest;
         cta::checksum::ProtobufToChecksumBlob(request->file().csb(), archiveRequest.checksumBlob);
-        archiveRequest.diskFileInfo.owner_uid = 1;
-        archiveRequest.diskFileInfo.gid = 1;
-        archiveRequest.diskFileInfo.path = "/" + request->file().fid();
+        archiveRequest.diskFileInfo.owner_uid = request->file().uid();
+        archiveRequest.diskFileInfo.gid = request->file().gid();
+        archiveRequest.diskFileInfo.path = request->file().path();
         archiveRequest.diskFileID = request->file().fid();
         archiveRequest.fileSize = request->file().size();
         archiveRequest.requester.name = request->cli().user().username();
@@ -111,7 +126,7 @@ Status CtaRpcImpl::Archive(::grpc::ServerContext* context, const ::cta::dcache::
 }
 
 
-Status CtaRpcImpl::Delete(::grpc::ServerContext* context, const ::cta::dcache::rpc::DeleteRequest* request, ::google::protobuf::Empty* response) {
+Status CtaRpcImpl::Delete(::grpc::ServerContext* context, const ::cta::frontend::rpc::DeleteRequest* request, ::google::protobuf::Empty* response) {
 
     cta::log::LogContext lc(*m_log);
     cta::log::ScopedParamContainer sp(lc);
@@ -142,6 +157,21 @@ Status CtaRpcImpl::Delete(::grpc::ServerContext* context, const ::cta::dcache::r
         return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Invalid archive file id.");
     }
 
+    if (!request->file().uid()) {
+        lc.log(cta::log::WARNING, "File's owner uid can't be zero");
+        return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's owner uid can't be zero");
+    }
+
+    if (!request->file().gid()) {
+        lc.log(cta::log::WARNING, "File's owner gid can't be zero");
+        return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's owner gid can't be zero");
+    }
+
+    if (request->file().path().empty()) {
+        lc.log(cta::log::WARNING, "File's path can't be empty");
+        return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's path can't be empty");
+    }
+
     auto instance = request->instance().name();
     // Unpack message
     cta::common::dataStructures::DeleteArchiveRequest deleteRequest;
@@ -153,8 +183,7 @@ Status CtaRpcImpl::Delete(::grpc::ServerContext* context, const ::cta::dcache::r
     sp.add("groupname", request->cli().user().groupname());
     sp.add("fileID", request->file().fid());
 
-
-    deleteRequest.diskFilePath          = "/" + request->file().fid();
+    deleteRequest.diskFilePath = request->file().path();
     deleteRequest.diskFileId = request->file().fid();
     deleteRequest.diskInstance = instance;
 
@@ -178,7 +207,7 @@ Status CtaRpcImpl::Delete(::grpc::ServerContext* context, const ::cta::dcache::r
     return Status::OK;
 }
 
-Status CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const ::cta::dcache::rpc::RetrieveRequest* request, ::cta::dcache::rpc::RetrieveResponse *response) {
+Status CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const ::cta::frontend::rpc::RetrieveRequest* request, ::cta::frontend::rpc::RetrieveResponse *response) {
 
 
     cta::log::LogContext lc(*m_log);
@@ -215,6 +244,21 @@ Status CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const ::cta::dcache:
         return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Invalid archive file id.");
     }
 
+    if (!request->file().uid()) {
+        lc.log(cta::log::WARNING, "File's owner uid can't be zero");
+        return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's owner uid can't be zero");
+    }
+
+    if (!request->file().gid()) {
+        lc.log(cta::log::WARNING, "File's owner gid can't be zero");
+        return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's owner gid can't be zero");
+    }
+
+    if (request->file().path().empty()) {
+        lc.log(cta::log::WARNING, "File's path can't be empty");
+        return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "File's path can't be empty");
+    }
+
     auto instance = request->instance().name();
 
     sp.add("instance", instance);
@@ -230,9 +274,9 @@ Status CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const ::cta::dcache:
     retrieveRequest.requester.group        = request->cli().user().groupname();
     retrieveRequest.dstURL                 = request->transport().dst_url();
     retrieveRequest.errorReportURL         = request->transport().error_report_url();
-    retrieveRequest.diskFileInfo.owner_uid = 1;
-    retrieveRequest.diskFileInfo.gid       = 1;
-    retrieveRequest.diskFileInfo.path      = "/" + request->file().fid();
+    retrieveRequest.diskFileInfo.owner_uid = request->file().uid();
+    retrieveRequest.diskFileInfo.gid       = request->file().gid();
+    retrieveRequest.diskFileInfo.path      = request->file().path();
     retrieveRequest.creationLog.host       = context->peer();
     retrieveRequest.creationLog.username   = instance;
     retrieveRequest.creationLog.time       = time(nullptr);
@@ -260,7 +304,7 @@ Status CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const ::cta::dcache:
     return Status::OK;
 }
 
-Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context, const ::cta::dcache::rpc::CancelRetrieveRequest* request, ::google::protobuf::Empty* response) {
+Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context, const ::cta::frontend::rpc::CancelRetrieveRequest* request, ::google::protobuf::Empty* response) {
 
     cta::log::LogContext lc(*m_log);
     cta::log::ScopedParamContainer sp(lc);
@@ -286,7 +330,7 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context, const ::cta::d
         return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "CTA groupname is not set.");
     }
 
-    if (request->fid() == 0) {
+    if (!request->archiveid()) {
         lc.log(cta::log::WARNING, "Invalid archive file id");
         return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Invalid archive file id.");
     }
@@ -296,13 +340,13 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context, const ::cta::d
     cta::common::dataStructures::CancelRetrieveRequest cancelRequest;
     cancelRequest.requester.name    = request->cli().user().username();
     cancelRequest.requester.group   = request->cli().user().groupname();
-    cancelRequest.archiveFileID = request->fid();
+    cancelRequest.archiveFileID = request->archiveid();
     cancelRequest.retrieveRequestId = request->reqid();
 
     sp.add("instance", instance);
     sp.add("username", request->cli().user().username());
     sp.add("groupname", request->cli().user().groupname());
-    sp.add("fileID", request->fid());
+    sp.add("fileID", request->archiveid());
     sp.add("schedulerJobID", request->reqid());
 
     m_scheduler->abortRetrieve(instance, cancelRequest, lc);

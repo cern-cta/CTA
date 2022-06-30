@@ -1,9 +1,9 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-option java_package = "org.dcache.cta.rpc";
+option java_package = "ch.cern.cta.rpc";
 option optimize_for = CODE_SIZE;
-package cta.dcache.rpc;
+package cta.frontend.rpc;
 
 import "google/protobuf/empty.proto";
 
@@ -23,6 +23,9 @@ message FileInfo {
   uint64 size = 2; // file size
   string storageClass = 3; // tape system related storage class (file family)
   cta.common.ChecksumBlob csb = 4; // set of knows checksums for the given file
+  uint32 uid = 5; // files owner user id
+  uint32 gid = 6; // files owner group id
+  string path = 7; // files path at creation time
 }
 
 /*
@@ -79,7 +82,7 @@ message DeleteRequest {
 message CancelRetrieveRequest {
   cta.common.Service instance = 1;  // client instance ID
   cta.eos.Client cli = 2;      // requester information
-  uint64 fid = 3; // tape system unique file ID
+  uint64 archiveId = 3; // tape system unique file ID
   string reqId = 4; // tape request scheduler ID, used to cancel the request
 }
 

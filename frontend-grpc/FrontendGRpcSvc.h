@@ -7,11 +7,11 @@
 
 #include <scheduler/Scheduler.hpp>
 #include "common/log/Logger.hpp"
-#include "cta_dcache.grpc.pb.h"
+#include "cta_grpc_frontend.grpc.pb.h"
 
 using cta::Scheduler;
 using cta::catalogue::Catalogue;
-using cta::dcache::rpc::CtaRpc;
+using cta::frontend::rpc::CtaRpc;
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -30,9 +30,9 @@ public:
 
     Status Version(::grpc::ServerContext *context, const ::google::protobuf::Empty *request, ::cta::admin::Version *response);
 
-    Status Archive(::grpc::ServerContext* context, const ::cta::dcache::rpc::ArchiveRequest* request, ::cta::dcache::rpc::ArchiveResponse* response);
-    Status Retrieve(::grpc::ServerContext* context, const ::cta::dcache::rpc::RetrieveRequest* request, ::cta::dcache::rpc::RetrieveResponse* response);
-    Status Delete(::grpc::ServerContext* context, const ::cta::dcache::rpc::DeleteRequest* request, ::google::protobuf::Empty* response);
-    Status CancelRetrieve(::grpc::ServerContext* context, const ::cta::dcache::rpc::CancelRetrieveRequest* request, ::google::protobuf::Empty* response);
+    Status Archive(::grpc::ServerContext* context, const ::cta::frontend::rpc::ArchiveRequest* request, ::cta::frontend::rpc::ArchiveResponse* response);
+    Status Retrieve(::grpc::ServerContext* context, const ::cta::frontend::rpc::RetrieveRequest* request, ::cta::frontend::rpc::RetrieveResponse* response);
+    Status Delete(::grpc::ServerContext* context, const ::cta::frontend::rpc::DeleteRequest* request, ::google::protobuf::Empty* response);
+    Status CancelRetrieve(::grpc::ServerContext* context, const ::cta::frontend::rpc::CancelRetrieveRequest* request, ::google::protobuf::Empty* response);
 };
 
