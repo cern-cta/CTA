@@ -28,6 +28,8 @@ set(TAPESERVER_FILE_LIBRARY_SRCS
   FileWriter.cpp
   HeaderChecker.cpp
   LabelSession.cpp
+  OsmFileReader.cpp
+  OsmReadSession.cpp
   ReadSession.cpp
   ReadSessionFactory.cpp
   Structures.cpp

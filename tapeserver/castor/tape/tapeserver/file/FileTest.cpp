@@ -248,7 +248,9 @@ TEST_F(castorTapeFileTest, tapeSessionThrowsOnWrongSequence) {
 }
 
 INSTANTIATE_TEST_CASE_P(FormatLabelsParam, castorTapeFileTest,
-  ::testing::Values(cta::common::dataStructures::Label::Format::CTA));
+  ::testing::Values(cta::common::dataStructures::Label::Format::CTA
+                  // , cta::common::dataStructures::Label::Format::OSM
+));
 
 // Class creating a temporary file of 1kB and deleting it
 // automatically

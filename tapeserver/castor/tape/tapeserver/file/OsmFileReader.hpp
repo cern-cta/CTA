@@ -15,35 +15,42 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <memory>
-#include <sstream>
+#pragma once
 
-#include "castor/tape/tapeserver/file/CtaReadSession.hpp"
-#include "castor/tape/tapeserver/file/OsmReadSession.hpp"
-#include "castor/tape/tapeserver/file/ReadSessionFactory.hpp"
-#include "common/dataStructures/LabelFormat.hpp"
+#include <memory>
+
+#include "castor/tape/tapeserver/file/OsmFileReader.hpp"
+#include "castor/tape/tapeserver/file/FileReader.hpp"
 
 namespace castor {
 namespace tape {
 namespace tapeFile {
 
-std::unique_ptr<ReadSession> ReadSessionFactory::create(tapeserver::drive::DriveInterface &drive,
-  const tapeserver::daemon::VolumeInfo &volInfo, const bool useLbp) {
-  using LabelFormat = cta::common::dataStructures::Label::Format;
-  const LabelFormat labelFormat = volInfo.labelFormat;
-  switch (labelFormat) {
-    case LabelFormat::CTA:
-      return std::make_unique<CtaReadSession>(drive, volInfo, useLbp);
-    case LabelFormat::OSM:
-      return std::make_unique<OsmReadSession>(drive, volInfo, useLbp);
-    default: {
-      std::ostringstream ossLabelFormat;
-      ossLabelFormat << std::showbase << std::internal << std::setfill('0') << std::hex << std::setw(4)
-                     << static_cast<unsigned int>(labelFormat);
-      throw TapeFormatError("In ReadSessionFactory::create(): unknown label format: " + ossLabelFormat.str());
-    }
-  }
-}
+class UHL1;
+
+class OsmFileReader : public FileReader {
+public:
+  CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);
+  /**
+    * Constructor of the FileReader. It will bind itself to an existing read session
+    * and position the tape right at the beginning of the file
+    * @param rs: session to be bound to
+    * @param fileInfo: information about the file we would like to read
+    * @param positioningMode: method used when positioning (see the PositioningMode enum)
+    */
+  OsmFileReader(const std::unique_ptr<ReadSession> &rs, const cta::RetrieveJob &fileToRecall);
+
+  /**
+    * Destructor of the FileReader. It will release the lock on the read session.
+    */
+  ~OsmFileReader() override = default;
+
+  size_t readNextDataBlock(void *data, const size_t size) override;
+
+private:
+  void positionByFseq(const cta::RetrieveJob &fileToRecall) override;
+  void positionByBlockID(const cta::RetrieveJob &fileToRecall) override;
+};
 
 }  // namespace tapeFile
 }  // namespace tape

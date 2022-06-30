@@ -30,7 +30,8 @@ namespace dataStructures {
 
 struct Label {
   enum class Format : std::uint8_t {
-    CTA = 0x00
+    CTA = 0x00,
+    OSM = 0x01
   };
 
   static Format validateFormat(const std::optional<std::uint8_t>& ouiFormat, const std::string& strContext) {
@@ -41,6 +42,7 @@ struct Label {
     Format format = static_cast<Format>(uiFormat);
     switch (format) {
       case Format::CTA:
+      case Format::OSM:
         return format;
       default:
       {

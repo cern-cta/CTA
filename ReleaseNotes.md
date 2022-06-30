@@ -2,8 +2,10 @@
 
 ## Summary
 ### Features
+- cta/CTA#1239 - Add support to CTA for multiple tape label formats
 - cta/CTA#1257 - Refactor CTA/tapeserver/castor/tape/tapeserver/file/File.cpp
 - cta/CTA#1263 - Abstract ReadSession and FileReader
+- cta/CTA#1265 - Create base of the dCache OSM label format
 ### Bug fixes
 ### Building and Packaging
 
