@@ -15,32 +15,39 @@
  *               submit itself to any jurisdiction.
  */
 
+#pragma once
+
+#include <memory>
 #include <string>
 
-#include "castor/tape/tapeserver/file/Exceptions.hpp"
-#include "castor/tape/tapeserver/file/HeaderChecker.hpp"
+#include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "castor/tape/tapeserver/file/ReadSession.hpp"
-#include "castor/tape/tapeserver/file/Structures.hpp"
 
 namespace castor {
 namespace tape {
 namespace tapeFile {
 
-ReadSession::ReadSession(tapeserver::drive::DriveInterface &drive,
-  const tapeserver::daemon::VolumeInfo &volInfo, const bool useLbp)
-  : m_drive(drive), m_vid(volInfo.vid), m_useLbp(useLbp), m_corrupted(false),
-    m_locked(false), m_fseq(1), m_currentFilePart(PartOfFile::Header), m_volInfo(volInfo),
-    m_detectedLbp(false) {
-  if (!m_vid.compare("")) {
-    throw cta::exception::InvalidArgument();
-  }
+/**
+  * Class keeping track of a whole tape read session over an AUL formatted
+  * tape. The session will keep track of the overall coherency of the session
+  * and check for everything to be coherent. The tape should be mounted in
+  * the drive before the AULReadSession is started (i.e. constructed).
+  * Likewise, tape unmount is the business of the user.
+  */
+class CtaReadSession : public ReadSession {
+public:
+  /**
+    * Constructor of the CtaReadSession. It will rewind the tape, and check the
+    * volId value. Throws an exception in case of mismatch.
+    * @param drive: drive object to which we bind the session
+    * @param vid: volume name of the tape we would like to read from
+    * @param useLbp: castor.conf option to use or not to use LBP in tapeserverd
+    */
+  CtaReadSession(tapeserver::drive::DriveInterface &drive, const tapeserver::daemon::VolumeInfo &volInfo,
+    const bool useLbp);
 
-  if (m_drive.isTapeBlank()) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "[ReadSession::ReadSession()] - Tape is blank, cannot proceed with constructing the ReadSession";
-    throw ex;
-  }
-}
+  ~CtaReadSession() override = default;
+};
 
 }  // namespace tapeFile
 }  // namespace tape

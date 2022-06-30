@@ -35,7 +35,7 @@ namespace tapeFile {
   * already mounted and rewound.
   */
 class LabelSession {
- public:
+public:
   /**
     * Constructor of the LabelSession. This constructor will label the
     * tape in the specified drive.  This constructor assumes the tape to be

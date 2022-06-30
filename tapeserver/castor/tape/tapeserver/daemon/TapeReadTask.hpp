@@ -18,13 +18,15 @@
 #pragma once
 
 #include <memory>
+#include <string>
 
+#include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
+#include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 #include "castor/tape/tapeserver/daemon/DataPipeline.hpp"
 #include "castor/tape/tapeserver/daemon/RecallMemoryManager.hpp"
-#include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
-#include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
-#include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
+#include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
+#include "castor/tape/tapeserver/file/FileReaderFactory.hpp"
 #include "common/Timer.hpp"
 #include "common/exception/Exception.hpp"
 
@@ -45,7 +47,7 @@ public:
    * @param mm The memory manager to get free block
    */
   TapeReadTask(cta::RetrieveJob *retrieveJob,
-    DataConsumer & destination, RecallMemoryManager & mm): 
+    DataConsumer & destination, RecallMemoryManager & mm):
     m_retrieveJob(retrieveJob), m_fifo(destination), m_mm(mm) {}
 
     /**
@@ -93,8 +95,8 @@ public:
     MemBlock* mb = nullptr;
     try {
       currentErrorToCount = "Error_tapePositionForRead";
-      auto rf = openFileReader(rs, lc);
-      LBPMode = rf->getLBPMode();
+      auto reader = openFileReader(rs, lc);
+      LBPMode = reader->getLBPMode();
       // At that point we already read the header.
       localStats.headerVolume += TapeSessionStats::headerVolumePerFile;
 
@@ -114,13 +116,13 @@ public:
         mb->m_fileBlock = fileBlock++;
         mb->m_fileid = m_retrieveJob->retrieveRequest.archiveFileID;
         mb->m_tapeFileBlock = tapeBlock;
-        mb->m_tapeBlockSize = rf->getBlockSize();
+        mb->m_tapeBlockSize = reader->getBlockSize();
         try {
           // Fill up the memory block with tape block
           // append conveniently returns false when there will not be more space
           // for an extra tape block, and throws an exception if we reached the
           // end of file. append() also protects against reading too big tape blocks.
-          while (mb->m_payload.append(*rf)) {
+          while (mb->m_payload.append(*reader)) {
             tapeBlock++;
           }
         } catch (const cta::exception::EndOfFile&) {
@@ -236,21 +238,22 @@ private:
    * @param mb The mem block we will use
    */
   void reportErrorToDiskTask(const std::string& msg, int code, MemBlock* mb = nullptr) {
-    //If we are not provided with a block, allocate it and
+    // If we are not provided with a block, allocate it and
     // fill it up
     if (!mb) {
-      mb=m_mm.getFreeBlock();
+      mb = m_mm.getFreeBlock();
       mb->m_fSeq = m_retrieveJob->selectedTapeFile().fSeq;
       mb->m_fileid = m_retrieveJob->retrieveRequest.archiveFileID;
     }
-    //mark the block failed and push it (plus signal the end)
-     mb->markAsFailed(msg,code);
-     m_fifo.pushDataBlock(mb);
-     m_fifo.pushDataBlock(nullptr);
-   }
+    // mark the block failed and push it (plus signal the end)
+    mb->markAsFailed(msg, code);
+    m_fifo.pushDataBlock(mb);
+    m_fifo.pushDataBlock(nullptr);
+  }
+
   /**
    * Open the file on the tape. In case of failure, log and throw
-   * Copying the unique_ptr on the calling point will give us the ownership of the 
+   * Copying the unique_ptr on the calling point will give us the ownership of the
    * object.
    * @return if successful, return an unique_ptr on the FileReader we want
    */
@@ -262,7 +265,7 @@ private:
 
     std::unique_ptr<castor::tape::tapeFile::FileReader> reader;
     try {
-      reader = std::make_unique<castor::tape::tapeFile::FileReader>(session, *m_retrieveJob);
+      reader = castor::tape::tapeFile::FileReaderFactory::create(session, *m_retrieveJob);
       lc.log(cta::log::DEBUG, "Successfully opened the tape file");
     } catch (cta::exception::Exception & ex) {
       // Log the error

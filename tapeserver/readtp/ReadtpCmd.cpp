@@ -20,11 +20,13 @@
 #include "common/log/DummyLogger.hpp"
 #include "disk/DiskFile.hpp"
 #include "disk/RadosStriperPool.hpp"
+#include "castor/tape/tapeserver/file/FileReaderFactory.hpp"
 #include "mediachanger/LibrarySlotParser.hpp"
 #include "scheduler/RetrieveJob.hpp"
 #include "tapeserver/castor/tape/Constants.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/Payload.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/ReadSession.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/ReadSessionFactory.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/Structures.hpp"
 #include "tapeserver/daemon/Tpconfig.hpp"
 #include "tapeserver/readtp/ReadtpCmd.hpp"
@@ -416,7 +418,7 @@ void ReadtpCmd::readTapeFile(
   volInfo.vid=m_vid;
   volInfo.nbFiles = 0;
   volInfo.mountType = cta::common::dataStructures::MountType::Retrieve;
-  auto rs = std::make_unique<castor::tape::tapeFile::ReadSession>(drive, volInfo, m_useLbp);
+  const auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(drive, volInfo, m_useLbp);
 
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.vid = m_vid;
@@ -438,32 +440,33 @@ void ReadtpCmd::readTapeFile(
   fileToRecall.selectedTapeFile().fSeq = fSeq;
   fileToRecall.positioningMethod = cta::PositioningMethod::ByFSeq;
 
-  castor::tape::tapeFile::FileReader rf(rs, fileToRecall);
+  const auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, fileToRecall);
   auto checksum_adler32 = castor::tape::tapeserver::daemon::Payload::zeroAdler32();
-  const size_t buffer_size = 1 * 1024 * 1024 * 1024; //1Gb
+  const size_t buffer_size = 1 * 1024 * 1024 * 1024;  // 1Gb
   size_t read_data_size = 0;
-  auto payload = new castor::tape::tapeserver::daemon::Payload(buffer_size); //allocate one gigabyte buffer 
-  try  {
-    while(1) {
-      if (payload->remainingFreeSpace() <= rf.getBlockSize()) {
-        //buffer is full, flush to file and update checksum
+  // allocate one gigabyte buffer
+  auto payload = new castor::tape::tapeserver::daemon::Payload(buffer_size);
+  try {
+    while (1) {
+      if (payload->remainingFreeSpace() <= reader->getBlockSize()) {
+        // buffer is full, flush to file and update checksum
         read_data_size += payload->size();
         checksum_adler32 = payload->adler32(checksum_adler32);
         payload->write(wf);
         payload->reset();
       }
-      payload->append(rf);
+      payload->append(*reader);
     }
   } catch (cta::exception::EndOfFile&) {
-    //File completely read
-  }   
+    // File completely read
+  }
   read_data_size += payload->size();
   checksum_adler32 = payload->adler32(checksum_adler32);
   payload->write(wf);
   auto cb = cta::checksum::ChecksumBlob(cta::checksum::ChecksumType::ADLER32, checksum_adler32);
 
   archiveFile.checksumBlob.validate(cb);  //exception thrown if checksums differ
-  
+
   params.push_back(cta::log::Param("checksumType", "ADLER32"));
   std::stringstream sstream;
   sstream << std::hex << checksum_adler32;

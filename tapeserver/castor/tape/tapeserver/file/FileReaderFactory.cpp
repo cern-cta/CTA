@@ -15,31 +15,37 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <string>
+#include <memory>
+#include <sstream>
 
-#include "castor/tape/tapeserver/file/Exceptions.hpp"
-#include "castor/tape/tapeserver/file/HeaderChecker.hpp"
+#include "castor/tape/tapeserver/file/CtaFileReader.hpp"
+#include "castor/tape/tapeserver/file/FileReaderFactory.hpp"
 #include "castor/tape/tapeserver/file/ReadSession.hpp"
-#include "castor/tape/tapeserver/file/Structures.hpp"
+#include "common/dataStructures/LabelFormat.hpp"
 
 namespace castor {
 namespace tape {
 namespace tapeFile {
 
-ReadSession::ReadSession(tapeserver::drive::DriveInterface &drive,
-  const tapeserver::daemon::VolumeInfo &volInfo, const bool useLbp)
-  : m_drive(drive), m_vid(volInfo.vid), m_useLbp(useLbp), m_corrupted(false),
-    m_locked(false), m_fseq(1), m_currentFilePart(PartOfFile::Header), m_volInfo(volInfo),
-    m_detectedLbp(false) {
-  if (!m_vid.compare("")) {
-    throw cta::exception::InvalidArgument();
+std::unique_ptr<FileReader> FileReaderFactory::create(const std::unique_ptr<ReadSession> &readSession,
+                                                      const cta::RetrieveJob &fileToRecall) {
+  using LabelFormat = cta::common::dataStructures::Label::Format;
+  const LabelFormat labelFormat = readSession->getVolumeInfo().labelFormat;
+  std::unique_ptr<FileReader> reader;
+  switch (labelFormat) {
+    case LabelFormat::CTA: {
+      reader = std::make_unique<CtaFileReader>(readSession, fileToRecall);
+      break;
+    }
+    default: {
+      std::ostringstream ossLabelFormat;
+      ossLabelFormat << std::showbase << std::internal << std::setfill('0') << std::hex << std::setw(4)
+                     << static_cast<unsigned int>(labelFormat);
+      throw TapeFormatError("In FileReaderFactory::create(): unknown label format: " + ossLabelFormat.str());
+    }
   }
-
-  if (m_drive.isTapeBlank()) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "[ReadSession::ReadSession()] - Tape is blank, cannot proceed with constructing the ReadSession";
-    throw ex;
-  }
+  reader->position(fileToRecall);
+  return reader;
 }
 
 }  // namespace tapeFile

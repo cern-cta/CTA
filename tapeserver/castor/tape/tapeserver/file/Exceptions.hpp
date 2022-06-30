@@ -26,52 +26,52 @@ namespace tape {
 namespace tapeFile {
 
 class TapeFormatError: public cta::exception::Exception {
- public:
+public:
   explicit TapeFormatError(const std::string & what): Exception(what) {}
 };
 
 class TapeMediaError: public cta::exception::Exception {
- public:
+public:
   explicit TapeMediaError(const std::string & what): Exception(what) {}
 };
 
 class EndOfFile: public cta::exception::Exception {
- public:
+public:
   EndOfFile(): Exception("End Of File reached") {}
 };
 
 class SessionAlreadyInUse: public cta::exception::Exception {
- public:
+public:
   SessionAlreadyInUse(): Exception("Session already in use") {}
 };
 
 class SessionCorrupted: public cta::exception::Exception {
- public:
+public:
   SessionCorrupted(): Exception("Session corrupted") {}
 };
 
 class FileClosedTwice: public cta::exception::Exception {
- public:
+public:
   FileClosedTwice(): Exception("Trying to close a file twice") {}
 };
 
 class ZeroFileWritten: public cta::exception::Exception {
- public:
+public:
   ZeroFileWritten(): Exception("Trying to write a file with size 0") {}
 };
 
 class TapeNotEmpty: public cta::exception::Exception {
- public:
+public:
   TapeNotEmpty(): Exception("Trying to label a non-empty tape without the \"force\" setting") {}
 };
 
 class UnsupportedPositioningMode: public cta::exception::Exception {
- public:
+public:
   UnsupportedPositioningMode(): Exception("Trying to use an unsupported positioning mode") {}
 };
 
 class WrongBlockSize: public cta::exception::Exception {
- public:
+public:
   WrongBlockSize(): Exception("Trying to use a wrong block size") {}
 };
 

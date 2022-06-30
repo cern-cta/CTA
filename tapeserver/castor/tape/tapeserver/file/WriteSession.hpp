@@ -40,7 +40,7 @@ namespace tapeFile {
   * Likewise, tape unmount is the business of the user.
   */
 class WriteSession{
- public:
+public:
   /**
     * Constructor of the WriteSession. It will rewind the tape, and check the
     * VSN value. Throws an exception in case of mismatch. Then positions the tape at the
@@ -156,7 +156,7 @@ class WriteSession{
     */
   std::string getLBPMode();
 
- private:
+private:
   /**
     * looks for the site name in /etc/resolv.conf in the search line and saves the upper-cased value in siteName
     */

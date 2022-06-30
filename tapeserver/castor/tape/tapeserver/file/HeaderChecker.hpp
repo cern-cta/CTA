@@ -40,7 +40,7 @@ class UTL1;
 class VOL1;
 
 class HeaderChecker {
- public:
+public:
   /**
     * Checks the hdr1
     * @param hdr1: the hdr1 header of the current file
@@ -72,7 +72,7 @@ class HeaderChecker {
     */
   static void checkVOL1(const VOL1 &vol1, const std::string &volId);
 
- private:
+private:
   enum class HeaderBase {
     octal,
     decimal,

@@ -26,13 +26,15 @@
 #include <string>
 #include <list>
 
-#include "../daemon/VolumeInfo.hpp"
+#include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/file/Exceptions.hpp"
 #include "castor/tape/tapeserver/file/FileReader.hpp"
+#include "castor/tape/tapeserver/file/FileReaderFactory.hpp"
 #include "castor/tape/tapeserver/file/FileWriter.hpp"
 #include "castor/tape/tapeserver/file/LabelSession.hpp"
 #include "castor/tape/tapeserver/file/ReadSession.hpp"
+#include "castor/tape/tapeserver/file/ReadSessionFactory.hpp"
 #include "castor/tape/tapeserver/file/WriteSession.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
@@ -57,7 +59,7 @@ enum {
 int test = RAO_TEST;
 
 class BasicRetrieveJob: public cta::RetrieveJob {
- public:
+public:
   BasicRetrieveJob() : cta::RetrieveJob(nullptr,
   cta::common::dataStructures::RetrieveRequest(),
   cta::common::dataStructures::ArchiveFile(), 1,
@@ -65,7 +67,7 @@ class BasicRetrieveJob: public cta::RetrieveJob {
 };
 
 class BasicArchiveJob: public cta::ArchiveJob {
- public:
+public:
   BasicArchiveJob(): cta::ArchiveJob(nullptr,
     *(static_cast<cta::catalogue::Catalogue *>(nullptr)), cta::common::dataStructures::ArchiveFile(),
     "", cta::common::dataStructures::TapeFile()) {
@@ -207,8 +209,7 @@ int main(int argc, char *argv[]) {
             drive->rewind();
 
             // Now read a random file
-            auto readSession = std::make_unique<castor::tape::tapeFile::ReadSession>(*drive, m_volInfo, true);
-
+            auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(*drive, m_volInfo, true);
             BasicRetrieveJob fileToRecall;
             fileToRecall.selectedCopyNb = 1;
             fileToRecall.archiveFile.tapeFiles.push_back(cta::common::dataStructures::TapeFile());
@@ -217,12 +218,12 @@ int main(int argc, char *argv[]) {
             fileToRecall.retrieveRequest.archiveFileID = 2;
             fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
 
-            castor::tape::tapeFile::FileReader reader(readSession, fileToRecall);
-            size_t bs = reader.getBlockSize();
+            auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, fileToRecall);
+            size_t bs = reader->getBlockSize();
             char *data = new char[bs+1];
             j = 0;
             while (j < 100) {
-                reader.read(data, bs);
+                reader->readNextDataBlock(data, bs);
                 j++;
                 std::cout << data << std::endl;
             }

@@ -49,17 +49,8 @@ enum class PartOfFile {
   * Likewise, tape unmount is the business of the user.
   */
 class ReadSession {
- public:
-  /**
-    * Constructor of the ReadSession. It will rewind the tape, and check the
-    * volId value. Throws an exception in case of mismatch.
-    * @param drive: drive object to which we bind the session
-    * @param vid: volume name of the tape we would like to read from
-    * @param useLbp: castor.conf option to use or not to use LBP in tapeserverd
-    */
-  ReadSession(tapeserver::drive::DriveInterface &drive,
-          tapeserver::daemon::VolumeInfo volInfo,
-          const bool useLbp);
+public:
+  virtual ~ReadSession() = default;
 
   /**
     * DriveGeneric object referencing the drive used during this read session
@@ -136,7 +127,18 @@ class ReadSession {
     throw cta::exception::Exception("In ReadSession::getLBPMode(): unexpected state");
   }
 
- private:
+protected:
+  /**
+    * Constructor of the ReadSession. It will rewind the tape, and check the
+    * volId value. Throws an exception in case of mismatch.
+    * @param drive: drive object to which we bind the session
+    * @param vid: volume name of the tape we would like to read from
+    * @param useLbp: castor.conf option to use or not to use LBP in tapeserverd
+    */
+  ReadSession(tapeserver::drive::DriveInterface &drive,
+          const tapeserver::daemon::VolumeInfo &volInfo,
+          const bool useLbp);
+
   /**
     * set to true in case the destructor of ReadFile finds a missing lock on its session
     */

@@ -21,11 +21,15 @@ include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
 include_directories (${XROOTD_INCLUDE_DIR})
 
 set(TAPESERVER_FILE_LIBRARY_SRCS
+  CtaFileReader.cpp
+  CtaReadSession.cpp
   FileReader.cpp
+  FileReaderFactory.cpp
   FileWriter.cpp
   HeaderChecker.cpp
   LabelSession.cpp
   ReadSession.cpp
+  ReadSessionFactory.cpp
   Structures.cpp
   WriteSession.cpp
 )

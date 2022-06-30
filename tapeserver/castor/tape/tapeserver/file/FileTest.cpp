@@ -21,13 +21,16 @@
 
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
-#include "castor/tape/tapeserver/file/LabelSession.hpp"
 #include "castor/tape/tapeserver/file/FileReader.hpp"
-#include "castor/tape/tapeserver/file/ReadSession.hpp"
+#include "castor/tape/tapeserver/file/FileReaderFactory.hpp"
 #include "castor/tape/tapeserver/file/FileWriter.hpp"
+#include "castor/tape/tapeserver/file/LabelSession.hpp"
+#include "castor/tape/tapeserver/file/ReadSession.hpp"
+#include "castor/tape/tapeserver/file/ReadSessionFactory.hpp"
 #include "castor/tape/tapeserver/file/WriteSession.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
+#include "common/dataStructures/LabelFormat.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
 #include "disk/DiskFile.hpp"
@@ -35,12 +38,11 @@
 #include "disk/RadosStriperPool.hpp"
 #include "scheduler/ArchiveJob.hpp"
 #include "scheduler/RetrieveJob.hpp"
-#include "tapeserver/castor/tape/tapeserver/file/ReadSession.hpp"
 
 namespace unitTests {
 
 class TestingRetrieveJob: public cta::RetrieveJob {
- public:
+public:
   TestingRetrieveJob() : cta::RetrieveJob(nullptr,
   cta::common::dataStructures::RetrieveRequest(),
   cta::common::dataStructures::ArchiveFile(), 1,
@@ -48,184 +50,196 @@ class TestingRetrieveJob: public cta::RetrieveJob {
 };
 
 class TestingArchiveJob: public cta::ArchiveJob {
- public:
+public:
   TestingArchiveJob(): cta::ArchiveJob(nullptr,
       *(static_cast<cta::catalogue::Catalogue *>(nullptr)), cta::common::dataStructures::ArchiveFile(),
       "", cta::common::dataStructures::TapeFile()) {
   }
 };
 
-class castorTapeFileTest : public ::testing::Test {
- protected:
+class castorTapeFileTest : public ::testing::TestWithParam<cta::common::dataStructures::Label::Format> {
+protected:
   virtual void SetUp() {
-    block_size = 262144;
-    label = "K00001";
-    fileToRecall.selectedCopyNb = 1;
+    m_block_size = 262144;
+    m_label = "K00001";
+    m_fileToRecall.selectedCopyNb = 1;
     cta::common::dataStructures::TapeFile tf;
     tf.blockId = 0;
     tf.fSeq = 1;
     tf.copyNb = 1;
-    fileToRecall.archiveFile.tapeFiles.push_back(tf);
-    fileToRecall.retrieveRequest.archiveFileID = 1;
-    fileToMigrate.archiveFile.fileSize = 500;
-    fileToMigrate.archiveFile.archiveFileID = 1;
-    fileToMigrate.tapeFile.fSeq = 1;
-    volInfo.vid = label;
+    m_fileToRecall.archiveFile.tapeFiles.push_back(tf);
+    m_fileToRecall.retrieveRequest.archiveFileID = 1;
+    m_fileToMigrate.archiveFile.fileSize = 500;
+    m_fileToMigrate.archiveFile.archiveFileID = 1;
+    m_fileToMigrate.tapeFile.fSeq = 1;
+    m_volInfo.vid = m_label;
     // Label
-    castor::tape::tapeFile::LabelSession::label(&drive, label, false);
-    castor::tape::tapeFile::LabelSession::label(&drive, label, true);
+    castor::tape::tapeFile::LabelSession::label(&m_drive, m_label, false);
+    castor::tape::tapeFile::LabelSession::label(&m_drive, m_label, true);
   }
 
   virtual void TearDown() {}
 
-  castor::tape::tapeserver::drive::FakeDrive drive;
-  uint32_t block_size;
-  std::string label;
-  TestingRetrieveJob fileToRecall;
-  TestingArchiveJob fileToMigrate;
-  castor::tape::tapeserver::daemon::VolumeInfo volInfo;
+  castor::tape::tapeserver::drive::FakeDrive m_drive;
+  uint32_t m_block_size;
+  std::string m_label;
+  TestingRetrieveJob m_fileToRecall;
+  TestingArchiveJob m_fileToMigrate;
+  castor::tape::tapeserver::daemon::VolumeInfo m_volInfo;
 };
 
-TEST_F(castorTapeFileTest, throwsWhenReadingAnEmptyTape) {
-  auto readSession = std::make_unique<castor::tape::tapeFile::ReadSession>(drive, volInfo, false);
+TEST_P(castorTapeFileTest, throwsWhenReadingAnEmptyTape) {
+  m_volInfo.labelFormat = GetParam();
+  const auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(m_drive, m_volInfo, false);
   ASSERT_NE(readSession, nullptr);
-  fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
+  m_fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
   // cannot read a file on an empty tape
-  ASSERT_THROW(castor::tape::tapeFile::FileReader reader1(readSession, fileToRecall), cta::exception::Exception);
+  ASSERT_THROW(castor::tape::tapeFile::FileReaderFactory::create(readSession, m_fileToRecall),
+    cta::exception::Exception);
 }
 
-TEST_F(castorTapeFileTest, throwsWhenUsingSessionTwice) {
+TEST_F(castorTapeFileTest, throwsWhenUnexpectedLabelFormat) {
+  m_volInfo.labelFormat = static_cast<cta::common::dataStructures::Label::Format>(0xFF);
+  std::unique_ptr<castor::tape::tapeFile::ReadSession> readSession;
+  ASSERT_THROW(readSession = castor::tape::tapeFile::ReadSessionFactory::create(m_drive, m_volInfo, false),
+    castor::tape::tapeFile::TapeFormatError);
+  ASSERT_EQ(readSession, nullptr);
+}
+
+TEST_P(castorTapeFileTest, throwsWhenUsingSessionTwice) {
+  m_volInfo.labelFormat = GetParam();
   const std::string testString("Hello World!");
   std::unique_ptr<castor::tape::tapeFile::WriteSession> writeSession;
   ASSERT_NO_THROW(writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(
-    castor::tape::tapeFile::WriteSession(drive, volInfo, 0, true, false)));
+    castor::tape::tapeFile::WriteSession(m_drive, m_volInfo, 0, true, false)));
   ASSERT_EQ(writeSession->m_compressionEnabled, true);
-  ASSERT_EQ(writeSession->m_vid.compare(label), 0);
+  ASSERT_EQ(writeSession->m_vid.compare(m_label), 0);
   ASSERT_EQ(writeSession->isCorrupted(), false);
   {
     std::unique_ptr<castor::tape::tapeFile::FileWriter> writer;
-    ASSERT_NO_THROW(writer = std::make_unique<castor::tape::tapeFile::FileWriter>(writeSession, fileToMigrate,
-      block_size));
+    ASSERT_NO_THROW(writer = std::make_unique<castor::tape::tapeFile::FileWriter>(writeSession, m_fileToMigrate,
+      m_block_size));
     writer->write(testString.c_str(), testString.size());
     writer->close();
   }
-  auto readSession = std::make_unique<castor::tape::tapeFile::ReadSession>(drive, volInfo, false);
+  const auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(m_drive, m_volInfo, false);
   {
-    fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
-    castor::tape::tapeFile::FileReader reader1(readSession, fileToRecall);
+    m_fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
+    const auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, m_fileToRecall);
     // cannot have two FileReader's on the same session
-    ASSERT_THROW(castor::tape::tapeFile::FileReader reader2(readSession, fileToRecall),
+    ASSERT_THROW(castor::tape::tapeFile::FileReaderFactory::create(readSession, m_fileToRecall),
       castor::tape::tapeFile::SessionAlreadyInUse);
   }
 }
 
 TEST_F(castorTapeFileTest, throwsWhenWritingAnEmptyFileOrSessionCorrupted) {
-  auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(drive, volInfo, 0, true, false);
+  const auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(m_drive, m_volInfo, 0, true, false);
   ASSERT_EQ(writeSession->isCorrupted(), false);
   {
     std::unique_ptr<castor::tape::tapeFile::FileWriter> writer;
-    ASSERT_NO_THROW(writer = std::make_unique<castor::tape::tapeFile::FileWriter>(writeSession, fileToMigrate,
-      block_size));
+    ASSERT_NO_THROW(writer = std::make_unique<castor::tape::tapeFile::FileWriter>(writeSession, m_fileToMigrate,
+      m_block_size));
     ASSERT_THROW(writer->close(), castor::tape::tapeFile::ZeroFileWritten);
   }
   ASSERT_EQ(writeSession->isCorrupted(), true);
   {
-    ASSERT_THROW(castor::tape::tapeFile::FileWriter writer(writeSession, fileToMigrate, block_size),
+    ASSERT_THROW(castor::tape::tapeFile::FileWriter writer(writeSession, m_fileToMigrate, m_block_size),
       castor::tape::tapeFile::SessionCorrupted);
   }
 }
 
 TEST_F(castorTapeFileTest, throwsWhenClosingTwice) {
   const std::string testString("Hello World!");
-  {
-    auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(drive, volInfo, 0, true, false);
-    std::unique_ptr<castor::tape::tapeFile::FileWriter> writer;
-    ASSERT_NO_THROW(writer = std::make_unique<castor::tape::tapeFile::FileWriter>(writeSession, fileToMigrate,
-      block_size));
-    writer->write(testString.c_str(), testString.size());
-    writer->close();
-    ASSERT_THROW(writer->close(), castor::tape::tapeFile::FileClosedTwice);
-  }
+  const auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(m_drive, m_volInfo, 0, true, false);
+  std::unique_ptr<castor::tape::tapeFile::FileWriter> writer;
+  ASSERT_NO_THROW(writer = std::make_unique<castor::tape::tapeFile::FileWriter>(writeSession, m_fileToMigrate,
+    m_block_size));
+  writer->write(testString.c_str(), testString.size());
+  writer->close();
+  ASSERT_THROW(writer->close(), castor::tape::tapeFile::FileClosedTwice);
 }
 
-TEST_F(castorTapeFileTest, throwsWhenWrongBlockSizeOrEOF) {
+TEST_P(castorTapeFileTest, throwsWhenWrongBlockSizeOrEOF) {
+  m_volInfo.labelFormat = GetParam();
   const std::string testString("Hello World!");
   {
-    auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(drive, volInfo, 0, true, false);
+    const auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(
+      m_drive, m_volInfo, 0, true, false);
     std::unique_ptr<castor::tape::tapeFile::FileWriter> writer;
-    ASSERT_NO_THROW(writer = std::make_unique<castor::tape::tapeFile::FileWriter>(writeSession, fileToMigrate,
-     block_size));
+    ASSERT_NO_THROW(writer = std::make_unique<castor::tape::tapeFile::FileWriter>(writeSession, m_fileToMigrate,
+      m_block_size));
     writer->write(testString.c_str(), testString.size());
     writer->close();
   }
 
-  auto readSession = std::make_unique<castor::tape::tapeFile::ReadSession>(drive, volInfo, false);
+  auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(m_drive, m_volInfo, true);
   {
-    fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
-    castor::tape::tapeFile::FileReader reader(readSession, fileToRecall);
-    size_t blockSize = reader.getBlockSize();
+    m_fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
+    const auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, m_fileToRecall);
+    size_t blockSize = reader->getBlockSize();
     char *data = new char[blockSize+1];
     // block size needs to be the same provided by the headers
-    ASSERT_THROW(reader.read(data, 1), castor::tape::tapeFile::WrongBlockSize);
+    ASSERT_THROW(reader->readNextDataBlock(data, 1), castor::tape::tapeFile::WrongBlockSize);
     // it is normal to reach end of file after a loop of reads
     ASSERT_THROW(while(true) {
-        reader.read(data, blockSize);
-      },
-      castor::tape::tapeFile::EndOfFile);
+        reader->readNextDataBlock(data, blockSize);
+    },
+    castor::tape::tapeFile::EndOfFile);
     delete[] data;
   }
 }
 
-TEST_F(castorTapeFileTest, canProperlyVerifyLabelWriteAndReadTape) {
+TEST_P(castorTapeFileTest, canProperlyVerifyLabelWriteAndReadTape) {
   // Verify label
+  m_volInfo.labelFormat = GetParam();
   {
-    auto readSession = std::make_unique<castor::tape::tapeFile::ReadSession>(drive, volInfo, false);
+    const auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(m_drive, m_volInfo, false);
     ASSERT_NE(readSession, nullptr);
     ASSERT_EQ(readSession->getCurrentFilePart(), castor::tape::tapeFile::PartOfFile::Header);
     ASSERT_EQ(readSession->getCurrentFseq(), static_cast<uint32_t>(1));
     ASSERT_EQ(readSession->isCorrupted(), false);
-    ASSERT_EQ(readSession->m_vid.compare(label), 0);
+    ASSERT_EQ(readSession->m_vid.compare(m_label), 0);
   }
 
   // Write AULFile with Hello World
   const std::string testString("Hello World!");
   {
-    auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(drive, volInfo, 0, true, true);
+    const auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(m_drive, m_volInfo, 0, true, true);
     ASSERT_EQ(writeSession->m_compressionEnabled, true);
     ASSERT_EQ(writeSession->m_useLbp, true);
-    ASSERT_EQ(writeSession->m_vid.compare(label), 0);
+    ASSERT_EQ(writeSession->m_vid.compare(m_label), 0);
     ASSERT_EQ(writeSession->isCorrupted(), false);
     std::unique_ptr<castor::tape::tapeFile::FileWriter> writer;
-    ASSERT_NO_THROW(writer = std::make_unique<castor::tape::tapeFile::FileWriter>(writeSession, fileToMigrate,
-      block_size));
+    ASSERT_NO_THROW(writer = std::make_unique<castor::tape::tapeFile::FileWriter>(writeSession, m_fileToMigrate,
+      m_block_size));
     writer->write(testString.c_str(), testString.size());
     writer->close();
   }
 
   // Read it back and compare
-  auto readSession = std::make_unique<castor::tape::tapeFile::ReadSession>(drive, volInfo, true);
+  const auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(m_drive, m_volInfo, true);
   ASSERT_NE(readSession, nullptr);
   ASSERT_EQ(readSession->getCurrentFilePart(), castor::tape::tapeFile::PartOfFile::Header);
   ASSERT_EQ(readSession->getCurrentFseq(), static_cast<uint32_t>(1));
   ASSERT_EQ(readSession->isCorrupted(), false);
-  ASSERT_EQ(readSession->m_vid.compare(label), 0);
+  ASSERT_EQ(readSession->m_vid.compare(m_label), 0);
   ASSERT_EQ(readSession->m_useLbp, true);
   {
-    fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
-    castor::tape::tapeFile::FileReader reader(readSession, fileToRecall);
-    size_t blockSize = reader.getBlockSize();
-    ASSERT_EQ(blockSize, block_size);
+    m_fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
+    const auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, m_fileToRecall);
+    size_t blockSize = reader->getBlockSize();
+    ASSERT_EQ(blockSize, m_block_size);
     char *data = new char[blockSize+1];
-    size_t bytes_read = reader.read(data, blockSize);
+    size_t bytes_read = reader->readNextDataBlock(data, blockSize);
     data[bytes_read] = '\0';
-    ASSERT_EQ(bytes_read, (size_t)testString.size());
+    ASSERT_EQ(bytes_read, static_cast<size_t>(testString.size()));
     ASSERT_EQ(testString.compare(data), 0);
     delete[] data;
   }
 }
 
 TEST_F(castorTapeFileTest, tapeSessionThrowsOnWrongSequence) {
-  castor::tape::tapeFile::WriteSession writeSession(drive, volInfo, 0, true, false);
+  castor::tape::tapeFile::WriteSession writeSession(m_drive, m_volInfo, 0, true, false);
   EXPECT_NO_THROW(writeSession.validateNextFSeq(1));
   EXPECT_THROW(writeSession.reportWrittenFSeq(2), cta::exception::Exception);
   EXPECT_NO_THROW(writeSession.reportWrittenFSeq(1));
@@ -233,10 +247,13 @@ TEST_F(castorTapeFileTest, tapeSessionThrowsOnWrongSequence) {
   EXPECT_THROW(writeSession.validateNextFSeq(1), cta::exception::Exception);
 }
 
+INSTANTIATE_TEST_CASE_P(FormatLabelsParam, castorTapeFileTest,
+  ::testing::Values(cta::common::dataStructures::Label::Format::CTA));
+
 // Class creating a temporary file of 1kB and deleting it
 // automatically
 class TempFile {
- public:
+public:
   TempFile() {
     char path[] = "/tmp/testCTA-XXXXXX";
     int fd = ::mkstemp(path);
@@ -260,7 +277,7 @@ class TempFile {
     }
   }
 
- private:
+private:
   std::string m_path;
 };
 

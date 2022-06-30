@@ -15,32 +15,29 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <string>
+#pragma once
 
-#include "castor/tape/tapeserver/file/Exceptions.hpp"
-#include "castor/tape/tapeserver/file/HeaderChecker.hpp"
-#include "castor/tape/tapeserver/file/ReadSession.hpp"
-#include "castor/tape/tapeserver/file/Structures.hpp"
+#include <memory>
+
+#include "common/dataStructures/LabelFormat.hpp"
 
 namespace castor {
 namespace tape {
+
+namespace tapeserver {
+namespace drive {
+class DriveInterface;
+}
+}
+
 namespace tapeFile {
 
-ReadSession::ReadSession(tapeserver::drive::DriveInterface &drive,
-  const tapeserver::daemon::VolumeInfo &volInfo, const bool useLbp)
-  : m_drive(drive), m_vid(volInfo.vid), m_useLbp(useLbp), m_corrupted(false),
-    m_locked(false), m_fseq(1), m_currentFilePart(PartOfFile::Header), m_volInfo(volInfo),
-    m_detectedLbp(false) {
-  if (!m_vid.compare("")) {
-    throw cta::exception::InvalidArgument();
-  }
+class ReadSession;
 
-  if (m_drive.isTapeBlank()) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "[ReadSession::ReadSession()] - Tape is blank, cannot proceed with constructing the ReadSession";
-    throw ex;
-  }
-}
+class ReadSessionFactory {
+public:
+  static std::unique_ptr<ReadSession> create(tapeserver::drive::DriveInterface &drive, const tapeserver::daemon::VolumeInfo &volInfo, const bool useLbp);
+};
 
 }  // namespace tapeFile
 }  // namespace tape

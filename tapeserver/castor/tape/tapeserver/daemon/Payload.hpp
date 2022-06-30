@@ -107,7 +107,7 @@ public:
     }
     size_t readSize;
     try {
-      readSize = from.read(m_data + m_size, from.getBlockSize());
+      readSize = from.readNextDataBlock(m_data + m_size, from.getBlockSize());
     } catch (castor::tape::tapeFile::EndOfFile&) {
       throw cta::exception::EndOfFile("In castor::tape::tapeserver::daemon::Payload::append: reached end of file");
     }

@@ -19,7 +19,8 @@
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSessionReporter.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "tapeserver/castor/tape/tapeserver/file/ReadSession.hpp"
+#include "castor/tape/tapeserver/file/ReadSession.hpp"
+#include "castor/tape/tapeserver/file/ReadSessionFactory.hpp"
 
 //------------------------------------------------------------------------------
 // Constructor for TapeReadSingleThread
@@ -212,13 +213,13 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::popAndRequestMoreJobs() 
 }
 
 //------------------------------------------------------------------------------
-//TapeReadSingleThread::openReadSession()
+// TapeReadSingleThread::openReadSession()
 //------------------------------------------------------------------------------
 std::unique_ptr<castor::tape::tapeFile::ReadSession>
 castor::tape::tapeserver::daemon::TapeReadSingleThread::openReadSession() {
   try {
-    auto readSession = std::make_unique<castor::tape::tapeFile::ReadSession>(m_drive, m_volInfo, m_useLbp);
-    //m_logContext.log(cta::log::DEBUG, "Created tapeFile::ReadSession with success");
+    auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(m_drive, m_volInfo, m_useLbp);
+    // m_logContext.log(cta::log::DEBUG, "Created tapeFile::ReadSession with success");
 
     return readSession;
   } catch (cta::exception::Exception& ex) {

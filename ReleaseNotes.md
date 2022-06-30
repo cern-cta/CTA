@@ -1,3 +1,12 @@
+# v4.NEXT
+
+## Summary
+### Features
+- cta/CTA#1257 - Refactor CTA/tapeserver/castor/tape/tapeserver/file/File.cpp
+- cta/CTA#1263 - Abstract ReadSession and FileReader
+### Bug fixes
+### Building and Packaging
+
 # v4.7.6-1
 
 ## Summary

@@ -31,7 +31,7 @@ namespace tapeFile {
 class WriteSession;
 
 class FileWriter {
- public:
+public:
   /**
     * Constructor of the FileWriter. It will bind itself to an existing write session
     * and position the tape right at the end of the last file
@@ -84,7 +84,7 @@ class FileWriter {
     */
   std::string getLBPMode();
 
- private:
+private:
   /**
     * Block size in Bytes of the current file
     */
