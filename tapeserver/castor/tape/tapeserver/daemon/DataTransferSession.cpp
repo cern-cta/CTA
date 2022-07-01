@@ -139,6 +139,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
         return MARK_DRIVE_AS_DOWN;
       }
     }
+
     // If we get here after seeing a down desired state, we are transitioning  from
     // down to up. In such a case, we will run an empty
     if (downUpTransition) {
@@ -169,6 +170,16 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
     try {
       if (m_scheduler.getNextMountDryRun(m_driveConfig.logicalLibrary, m_driveConfig.unitName, lc)) {
         tapeMount = m_scheduler.getNextMount(m_driveConfig.logicalLibrary, m_driveConfig.unitName, lc);
+
+        // No mount to be done found, that was fast...
+        if (!tapeMount) {
+          lc.log(cta::log::DEBUG, "No new mount found. (sleeping 10 seconds)");
+          // Refresh the status to trigger the timeout update
+          m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount,
+                                        cta::common::dataStructures::DriveStatus::Up, lc);
+          sleep(10);
+          continue;
+        }
         break;
       }
     } catch (cta::exception::Exception &e) {
@@ -176,14 +187,6 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
       lc.logBacktrace(cta::log::ERR, e.backtrace());
       putDriveDown(e.getMessageValue(), nullptr, lc);
       return MARK_DRIVE_AS_DOWN;
-    }
-    // No mount to be done found, that was fast...
-    if (!tapeMount) {
-      lc.log(cta::log::DEBUG, "No new mount found. (sleeping 10 seconds)");
-      // Refresh the status to trigger the timeout update
-      m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount,
-                                    cta::common::dataStructures::DriveStatus::Up, lc);
-      sleep(10);
     }
   }
   // end of scheduling loop
