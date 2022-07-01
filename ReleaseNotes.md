@@ -1,4 +1,4 @@
-# v4.NEXT
+# v4.7.7-1
 
 ## Summary
 ### Features
@@ -7,7 +7,12 @@
 - cta/CTA#1263 - Abstract ReadSession and FileReader
 - cta/CTA#1265 - Create base of the dCache OSM label format
 ### Bug fixes
-### Building and Packaging
+- cta/CTA#1267 - Fix scheduling bug introduced in 4.7.6
+### Continuous Integration
+- cta/CTA#1266 - Fix eos5 currently failing CI schedules
+- cta/CTA#1262 - Fix unnecessary log dump in unit-tests
+### Other
+- cta/CTA#1251 - Remove dcache leftovers on the grpc-based frontend
 
 # v4.7.6-1
 
