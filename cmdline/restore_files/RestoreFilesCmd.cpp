@@ -36,6 +36,7 @@
 std::atomic<bool> isHeaderSent(false);
 
 std::list<cta::admin::RecycleTapeFileLsItem> deletedTapeFiles;
+std::list<std::pair<std::string,std::string>> listedTapeFiles;
 
 namespace XrdSsiPb {
 
@@ -79,9 +80,14 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
       {
         auto item = record.rtfls_item();
         deletedTapeFiles.push_back(item);
-        break;
       }
+      break;
     case Data::kTflsItem:
+      {
+        auto item = record.tfls_item();
+        auto instanceAndFid = std::make_pair(item.df().disk_instance(), item.df().disk_id());
+        listedTapeFiles.push_back(instanceAndFid);
+      }
       break;
     default:
       throw std::runtime_error("Received invalid stream data from CTA Frontend for the cta-restore-deleted-files command.");
@@ -137,23 +143,33 @@ int RestoreFilesCmd::exceptionThrowingMain(const int argc, char *const *const ar
 
   readAndSetConfiguration(getUsername(), cmdLineArgs);
   listDeletedFilesCta();
-  for (auto &file: deletedTapeFiles) {
-    /*From https://codimd.web.cern.ch/f9JQv3YzSmKJ_W_ezXN3fA#
-    When a user deletes a file, there are tree scenarios for recovery:
-    * The file has been deleted in the EOS namespace and the CTA catalogue 
-      (normal case, must restore in both places)
-    * EOS namespace entry is kept and diskFileId has not changed
-      (just restore in CTA)
-    * EOS namespace entry is kept and diskFileId has changed
-      (restore the file with the new eos disk file id)
-    */
+  for (auto& file : deletedTapeFiles) {
+    /* From https://eoscta.docs.cern.ch/lifecycle/Delete/:
+     *
+     * When a user deletes a file, there are three scenarios for recovery:
+     * - The file has been deleted in the EOS namespace and the CTA catalogue (normal case, must restore in both places)
+     * - EOS namespace entry is kept and diskFileId has not changed (just restore in CTA)
+     * - EOS namespace entry is kept and diskFileId has changed (restore the file with the new EOS disk file id)
+     */
     try {
       if (!fileExistsEos(file.disk_instance(), file.disk_file_id())) {
         uint64_t new_fid = restoreDeletedFileEos(file);
         file.set_disk_file_id(std::to_string(new_fid));    
       }
-      //archive file exists in CTA, so only need to restore the file copy
+      // archive file exists in CTA, so only need to restore the file copy
       restoreDeletedFileCopyCta(file);
+      // sanity check
+      auto diskInstanceAndFxid = getInstanceAndFidFromCTA(file);
+      auto archiveFileId = getArchiveFileIdFromEOS(diskInstanceAndFxid.first, diskInstanceAndFxid.second);
+      if(archiveFileId == file.archive_file_id()) {
+        std::list<cta::log::Param> params;
+        params.push_back(cta::log::Param("archiveFileId", archiveFileId));
+        params.push_back(cta::log::Param("diskInstance", diskInstanceAndFxid.first));
+        params.push_back(cta::log::Param("diskFileId", diskInstanceAndFxid.second));
+        m_log(cta::log::INFO, "File metadata in EOS and CTA matches", params);
+      } else {
+        throw std::runtime_error("Sanity check failed.");
+      }
     } catch (RestoreFilesCmdException &e) {
       m_log(cta::log::ERR,e.what());
     }
@@ -170,7 +186,7 @@ void RestoreFilesCmd::readAndSetConfiguration(
   
   m_vid = cmdLineArgs.m_vid;
   m_diskInstance = cmdLineArgs.m_diskInstance;
-  m_eosFxids = cmdLineArgs.m_eosFxids;
+  m_eosFids = cmdLineArgs.m_eosFids;
   m_copyNumber = cmdLineArgs.m_copyNumber;
   m_archiveFileId = cmdLineArgs.m_archiveFileId;
 
@@ -180,7 +196,7 @@ void RestoreFilesCmd::readAndSetConfiguration(
     m_log.setLogMask("INFO");
   }
 
-  // Set cta frontend configuration options
+  // Set CTA frontend configuration options
   const std::string cli_config_file = "/etc/cta/cta-cli.conf";
   XrdSsiPb::Config cliConfig(cli_config_file, "cta");
   cliConfig.set("resource", "/ctafrontend");
@@ -207,7 +223,7 @@ void RestoreFilesCmd::readAndSetConfiguration(
 
   m_serviceProviderPtr.reset(new XrdSsiPbServiceType(cliConfig));
 
-  // Set cta frontend configuration options to connect to eos
+  // Set CTA frontend configuration options to connect to eos
   const std::string frontend_xrootd_config_file = "/etc/cta/cta-frontend-xrootd.conf";
   XrdSsiPb::Config frontendXrootdConfig(frontend_xrootd_config_file, "cta");
 
@@ -298,23 +314,21 @@ void RestoreFilesCmd::listDeletedFilesCta() const {
     new_opt->set_key(key);
     new_opt->set_value(m_copyNumber.value());
   }
-  if (m_eosFxids) {
+  if (m_eosFids) {
     std::stringstream ss;
     auto key = OptionStrList::FILE_ID;
     auto new_opt = admincmd.add_option_str_list();
     new_opt->set_key(key);
-    for (auto &fxid: m_eosFxids.value()) {
-      new_opt->add_item(fxid);
-      ss << fxid << ",";
+    for (auto &fid : m_eosFids.value()) {
+      new_opt->add_item(std::to_string(fid));
+      ss << fid << ",";
     }
     auto fids = ss.str();
-    fids.pop_back(); //remove last ","
+    fids.pop_back(); // remove last ","
     params.push_back(cta::log::Param("diskFileId", fids));
-    
   }
 
-
-  m_log(cta::log::INFO, "Listing deleted file in cta catalogue", params);  
+  m_log(cta::log::INFO, "Listing deleted file in CTA catalogue", params);  
 
   // Send the Request to the Service and get a Response
   cta::xrd::Response response;
@@ -341,8 +355,7 @@ void RestoreFilesCmd::listDeletedFilesCta() const {
   stream_future.wait();
 
   params.push_back(cta::log::Param("nbFiles", deletedTapeFiles.size()));
-  m_log(cta::log::INFO, "Listed deleted file in cta catalogue", params);  
-
+  m_log(cta::log::INFO, "Listed deleted file in CTA catalogue", params);  
 }
 
 //------------------------------------------------------------------------------
@@ -358,8 +371,6 @@ void RestoreFilesCmd::restoreDeletedFileCopyCta(const RecycleTapeFileLsItem &fil
   params.push_back(cta::log::Param("copyNb", file.copy_nb()));
   params.push_back(cta::log::Param("diskFileId", file.disk_file_id()));
   
-  m_log(cta::log::DEBUG, "Restoring file copy in cta catalogue", params);  
-
   cta::xrd::Request request;
 
   auto &admincmd = *(request.mutable_admincmd());
@@ -396,10 +407,21 @@ void RestoreFilesCmd::restoreDeletedFileCopyCta(const RecycleTapeFileLsItem &fil
   {
     auto key = OptionString::FXID;
     auto new_opt = admincmd.add_option_str();
+
+    // Convert diskFileId from base 10 to base 16 before transmitting to CTA
+    auto fid = strtoul(file.disk_file_id().c_str(), nullptr, 10);
+    if(fid < 1) {
+      throw std::runtime_error(file.disk_file_id() + " (base 10) is not a valid disk file ID");
+    }
+    std::stringstream ss;
+    ss << std::hex << fid;
+    params.push_back(cta::log::Param("fxid", ss.str()));
+
     new_opt->set_key(key);
-    new_opt->set_value(file.disk_file_id());
-    
+    new_opt->set_value(ss.str());
   }
+  m_log(cta::log::DEBUG, "Restoring file copy in CTA catalogue", params);  
+
   // Send the Request to the Service and get a Response
   cta::xrd::Response response;
   m_serviceProviderPtr->Send(request, response);
@@ -412,7 +434,7 @@ void RestoreFilesCmd::restoreDeletedFileCopyCta(const RecycleTapeFileLsItem &fil
     case Response::RSP_SUCCESS:
       // Print message text
       std::cout << response.message_txt();
-      m_log(cta::log::INFO, "Restored file copy in cta catalogue", params);  
+      m_log(cta::log::INFO, "Restored file copy in CTA catalogue", params);  
       break;
     case Response::RSP_ERR_PROTOBUF:                     throw XrdSsiPb::PbException(response.message_txt());
     case Response::RSP_ERR_USER:                         throw XrdSsiPb::UserException(response.message_txt());
@@ -424,13 +446,13 @@ void RestoreFilesCmd::restoreDeletedFileCopyCta(const RecycleTapeFileLsItem &fil
 //------------------------------------------------------------------------------
 // addContainerEos
 //------------------------------------------------------------------------------
-int RestoreFilesCmd::addContainerEos(const std::string &diskInstance, const std::string &path, const std::string &sc) const {
-  int c_id = containerExistsEos(diskInstance, path);
+uint64_t RestoreFilesCmd::addContainerEos(const std::string &diskInstance, const std::string &path, const std::string &sc) const {
+  auto c_id = containerExistsEos(diskInstance, path);
   if (c_id) {
     return c_id;
   }
   auto enclosingPath = cta::utils::getEnclosingPath(path);
-  int parent_id = containerExistsEos(diskInstance, enclosingPath);
+  auto parent_id = containerExistsEos(diskInstance, enclosingPath);
   if (!parent_id) {
     //parent does not exist, need to add it as well
     parent_id = addContainerEos(diskInstance, enclosingPath, sc);
@@ -464,7 +486,7 @@ int RestoreFilesCmd::addContainerEos(const std::string &diskInstance, const std:
 
   m_log(cta::log::DEBUG, "Inserted container in EOS namespace successfully, querying again for its id", params);
   
-  int cont_id = containerExistsEos(diskInstance, path);
+  auto cont_id = containerExistsEos(diskInstance, path);
   if (!cont_id) {
     throw RestoreFilesCmdException(std::string("Container ") + path + " does not exist after being inserted in EOS.");
   }
@@ -474,7 +496,7 @@ int RestoreFilesCmd::addContainerEos(const std::string &diskInstance, const std:
 //------------------------------------------------------------------------------
 // containerExistsEos
 //------------------------------------------------------------------------------
-int RestoreFilesCmd::containerExistsEos(const std::string &diskInstance, const std::string &path) const {
+uint64_t RestoreFilesCmd::containerExistsEos(const std::string &diskInstance, const std::string &path) const {
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("userName", getUsername()));
   params.push_back(cta::log::Param("diskInstance", diskInstance));
@@ -483,18 +505,18 @@ int RestoreFilesCmd::containerExistsEos(const std::string &diskInstance, const s
   m_log(cta::log::DEBUG, "Verifying if the container exists in the EOS namespace", params);
   
   auto md_response = m_endpointMapPtr->getMD(diskInstance, ::eos::rpc::CONTAINER, 0, path, false);
-  int cid = md_response.cmd().id();
+  auto cid = md_response.cmd().id();
   params.push_back(cta::log::Param("containerId", cid));
   if (cid != 0) {
-    m_log(cta::log::DEBUG, "Container exists in the eos namespace", params);
+    m_log(cta::log::DEBUG, "Container exists in the EOS namespace", params);
   } else {
-    m_log(cta::log::DEBUG, "Container does not exist in the eos namespace", params);
+    m_log(cta::log::DEBUG, "Container does not exist in the EOS namespace", params);
   }
   return cid;
 }
 
 bool RestoreFilesCmd::fileWasDeletedByRM(const RecycleTapeFileLsItem &file) const {
-  return file.reason_log().rfind("(Deleted using cta-admin tf rm)", 0) == 0;
+  return file.reason_log().rfind("(Deleted using cta-admin tapefile rm)", 0) == 0;
 }
 
 //------------------------------------------------------------------------------
@@ -506,7 +528,7 @@ bool RestoreFilesCmd::archiveFileExistsCTA(const uint64_t &archiveFileId) const 
   params.push_back(cta::log::Param("userName", getUsername()));
   params.push_back(cta::log::Param("archiveFileId", archiveFileId));
   
-  m_log(cta::log::DEBUG, "Looking for archive file in the cta catalogue", params);  
+  m_log(cta::log::DEBUG, "Looking for archive file in the CTA catalogue", params);  
 
   cta::xrd::Request request;
 
@@ -560,14 +582,14 @@ bool RestoreFilesCmd::fileExistsEos(const std::string &diskInstance, const std::
   params.push_back(cta::log::Param("diskInstance", diskInstance));
   params.push_back(cta::log::Param("diskFileId", diskFileId));
 
-  m_log(cta::log::DEBUG, "Verifying if eos fxid exists in the EOS namespace", params);
+  m_log(cta::log::DEBUG, "Verifying if EOS fid exists in the EOS namespace", params);
   try {
     auto path = m_endpointMapPtr->getPath(diskInstance, diskFileId);
     params.push_back(cta::log::Param("diskFilePath", path));
-    m_log(cta::log::DEBUG, "eos fxid exists in the EOS namespace");
+    m_log(cta::log::DEBUG, "EOS fid exists in the EOS namespace");
     return true;
   } catch(cta::exception::Exception&) {
-    m_log(cta::log::DEBUG, "eos fxid does not exist in the EOS namespace");
+    m_log(cta::log::DEBUG, "EOS fid does not exist in the EOS namespace");
     return false;
   }
 }
@@ -575,20 +597,20 @@ bool RestoreFilesCmd::fileExistsEos(const std::string &diskInstance, const std::
 //------------------------------------------------------------------------------
 // getFileIdEos
 //------------------------------------------------------------------------------
-int RestoreFilesCmd::getFileIdEos(const std::string &diskInstance, const std::string &path) const {
+uint64_t RestoreFilesCmd::getFileIdEos(const std::string &diskInstance, const std::string &path) const {
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("userName", getUsername()));
   params.push_back(cta::log::Param("diskInstance", diskInstance));
   params.push_back(cta::log::Param("path", path));
 
-  m_log(cta::log::DEBUG, "Querying for file metadata in the eos namespace", params);
+  m_log(cta::log::DEBUG, "Querying for file metadata in the EOS namespace", params);
   auto md_response = m_endpointMapPtr->getMD(diskInstance, ::eos::rpc::FILE, 0, path, false);
-  int fid = md_response.fmd().id();
+  auto fid = md_response.fmd().id();
   params.push_back(cta::log::Param("diskFileId", fid));
   if (fid != 0) {
-    m_log(cta::log::DEBUG, "File path exists in the eos namespace", params);
+    m_log(cta::log::DEBUG, "File path exists in the EOS namespace", params);
   } else {
-    m_log(cta::log::DEBUG, "File path does not exist in the eos namespace", params);
+    m_log(cta::log::DEBUG, "File path does not exist in the EOS namespace", params);
   }
   return fid;
 }
@@ -605,7 +627,7 @@ void RestoreFilesCmd::getCurrentEosIds(const std::string &diskInstance) const {
   params.push_back(cta::log::Param("diskInstance", diskInstance));
   params.push_back(cta::log::Param("ContainerId", cid));
   params.push_back(cta::log::Param("FileId", fid));
-  m_log(cta::log::DEBUG, "Obtained current eos container and file id", params);
+  m_log(cta::log::DEBUG, "Obtained current EOS container and file id", params);
 }
 
 
@@ -621,12 +643,12 @@ uint64_t RestoreFilesCmd::restoreDeletedFileEos(const RecycleTapeFileLsItem &rtf
   params.push_back(cta::log::Param("diskFileId", rtfls_item.disk_file_id()));
   params.push_back(cta::log::Param("diskFilePath", rtfls_item.disk_file_path()));
   
-  m_log(cta::log::INFO, "Restoring file in the eos namespace", params);  
+  m_log(cta::log::INFO, "Restoring file in the EOS namespace", params);  
 
   getCurrentEosIds(rtfls_item.disk_instance());
   uint64_t file_id = getFileIdEos(rtfls_item.disk_instance(), rtfls_item.disk_file_path());
   if (file_id) {
-    return file_id; //eos disk file id was changed since the file was deleted, just return the new file id
+    return file_id; // EOS disk file id was changed since the file was deleted, just return the new file id
   }
 
   ::eos::rpc::FileMdProto file;
@@ -689,9 +711,9 @@ uint64_t RestoreFilesCmd::restoreDeletedFileEos(const RecycleTapeFileLsItem &rtf
   auto diskInstance = rtfls_item.disk_instance();
   auto reply = m_endpointMapPtr->fileInsert(diskInstance, file);
 
-  m_log(cta::log::INFO, "File successfully restored in the eos namespace", params);
+  m_log(cta::log::INFO, "File successfully restored in the EOS namespace", params);
 
-  m_log(cta::log::DEBUG, "Querying eos for the new eos file id", params);
+  m_log(cta::log::DEBUG, "Querying EOS for the new EOS file id", params);
   
   auto new_fid = getFileIdEos(rtfls_item.disk_instance(), rtfls_item.disk_file_path());
   return new_fid;
@@ -703,6 +725,95 @@ uint64_t RestoreFilesCmd::restoreDeletedFileEos(const RecycleTapeFileLsItem &rtf
 //------------------------------------------------------------------------------
 void RestoreFilesCmd::printUsage(std::ostream &os) {
   RestoreFilesCmdLineArgs::printUsage(os);
+}
+
+//------------------------------------------------------------------------------
+// getFxidFromCTA
+//------------------------------------------------------------------------------
+std::pair<std::string,std::string> RestoreFilesCmd::getInstanceAndFidFromCTA(const RecycleTapeFileLsItem& file) {
+  {
+    std::list<cta::log::Param> params;
+    params.push_back(cta::log::Param("archiveFileId", file.archive_file_id()));
+    m_log(cta::log::DEBUG, "cta-admin tapefile ls", params);
+  }
+
+  cta::xrd::Request request;
+  auto &admincmd = *(request.mutable_admincmd());
+
+  request.set_client_cta_version(CTA_VERSION);
+  request.set_client_xrootd_ssi_protobuf_interface_version(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
+  admincmd.set_cmd(AdminCmd::CMD_TAPEFILE);
+  admincmd.set_subcmd(AdminCmd::SUBCMD_LS);
+  auto new_opt = admincmd.add_option_uint64();
+  new_opt->set_key(OptionUInt64::ARCHIVE_FILE_ID);
+  new_opt->set_value(file.archive_file_id());
+
+  // Send the Request to the Service and get a Response
+  cta::xrd::Response response;
+  auto stream_future = m_serviceProviderPtr->SendAsync(request, response);
+
+  // Handle responses
+  switch(response.type())
+  {
+    using namespace cta::xrd;
+    using namespace cta::admin;
+    case Response::RSP_SUCCESS:
+      // Print message text
+      std::cout << response.message_txt();
+      // Allow stream processing to commence
+      isHeaderSent = true;
+      break;
+    case Response::RSP_ERR_PROTOBUF:                     throw XrdSsiPb::PbException(response.message_txt());
+    case Response::RSP_ERR_USER:                         throw XrdSsiPb::UserException(response.message_txt());
+    case Response::RSP_ERR_CTA:                          throw std::runtime_error(response.message_txt());
+    default:                                             throw XrdSsiPb::PbException("Invalid response type.");
+  }
+
+  // wait until the data stream has been processed before exiting
+  stream_future.wait();
+  if(listedTapeFiles.size() != 1) {
+    throw std::runtime_error("Unexpected result set: listedTapeFiles size expected=1 received=" + std::to_string(listedTapeFiles.size()));
+  }
+  auto listedTapeFile = listedTapeFiles.back();
+  listedTapeFiles.clear();
+  {
+    std::list<cta::log::Param> params;
+    params.push_back(cta::log::Param("diskInstance", listedTapeFile.first));
+    params.push_back(cta::log::Param("diskFileId", listedTapeFile.second));
+    m_log(cta::log::DEBUG, "Obtained file metadata from CTA", params);
+  }
+  return listedTapeFile;
+}
+
+//------------------------------------------------------------------------------
+// getArchiveFileIdFromEOS
+//------------------------------------------------------------------------------
+uint64_t RestoreFilesCmd::getArchiveFileIdFromEOS(const std::string& diskInstance, const std::string& fidStr) {
+  auto fid = strtoul(fidStr.c_str(), nullptr, 10);
+  if(fid < 1) {
+    throw std::runtime_error(fid + " (base 10) is not a valid disk file ID");
+  }
+  {
+    std::list<cta::log::Param> params;
+    params.push_back(cta::log::Param("diskInstance", diskInstance));
+    params.push_back(cta::log::Param("fid", fid));
+    std::stringstream ss;
+    ss << std::hex << fid;
+    params.push_back(cta::log::Param("fxid", ss.str()));
+    m_log(cta::log::DEBUG, "Querying EOS namespace for archiveFileId", params);
+  }
+  auto md_response = m_endpointMapPtr->getMD(diskInstance, ::eos::rpc::FILE, fid, "", false);
+  auto archiveFileIdItor = md_response.fmd().xattrs().find("sys.archive.file_id");
+  if(md_response.fmd().xattrs().end() == archiveFileIdItor) {
+    throw std::runtime_error("archiveFileId extended attribute not found.");
+  }
+  auto archiveFileId = strtoul(archiveFileIdItor->second.c_str(), nullptr, 10);
+  {
+    std::list<cta::log::Param> params;
+    params.push_back(cta::log::Param("archiveFileId", archiveFileId));
+    m_log(cta::log::DEBUG, "Response from EOS nameserver", params);
+  }
+  return archiveFileId;
 }
 
 } // namespace admin

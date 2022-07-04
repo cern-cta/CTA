@@ -1,3 +1,12 @@
+# v4.NEXT
+
+## Summary
+### Features
+### Bug fixes
+- cta/CTA#1269 - cta-restore-deleted-files injects wrong diskFileId in CTA Catalogue
+### Continuous Integration
+### Building and Packaging
+
 # v4.7.7-1
 
 ## Summary

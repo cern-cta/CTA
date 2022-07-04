@@ -93,14 +93,17 @@ public:
    * @param sc the storage class of the container
    * @returns the container id of the container identified by path
    */
-  int addContainerEos(const std::string &diskInstance, const std::string &path, const std::string &sc) const;
+  uint64_t addContainerEos(const std::string &diskInstance, const std::string &path, const std::string &sc) const;
 
   /**
-   * Returns true (i.e. not zero) if a container exists in the eos namespace
+   * Returns the container id of the container in the EOS namespace
+   *
    * @param diskInstance eos disk instance
    * @param path the path of the container
+   *
+   * @returns the container id of the container in the EOS namespace, or zero if it does not exist
    */
-  int containerExistsEos(const std::string &diskInstance, const std::string &path) const;
+  uint64_t containerExistsEos(const std::string &diskInstance, const std::string &path) const;
 
   /**
    * Returns true (i.e. not zero) if a file with given id exists in the eos namespace
@@ -127,7 +130,7 @@ public:
    * @param diskInstance eos disk instance
    * @param path the path to check
    */
-  int getFileIdEos(const std::string &diskInstance, const std::string &path) const;
+  uint64_t getFileIdEos(const std::string &diskInstance, const std::string &path) const;
 
   /**
    * Restores the deleted file present in the eos namespace
@@ -143,6 +146,23 @@ public:
   void printUsage(std::ostream &os) override;
 
 private:
+  /**
+   * Query CTA for the disk instance and fid of the restored file
+   *
+   * @param file  The restored tape file in CTA
+   * @return      Tuple of EOS disk instance and file ID (fid) as a decimal string
+   */
+  std::pair<std::string,std::string> getInstanceAndFidFromCTA(const RecycleTapeFileLsItem& file);
+
+  /**
+   * Query EOS for the archiveFileId of the restored file
+   *
+   * @param diskInstance  Which EOS disk instance to query
+   * @param fxid          fid of the file in EOS as a decimal string
+   * @return              archiveFileId of the file
+   */
+  uint64_t getArchiveFileIdFromEOS(const std::string& diskInstance, const std::string& fidStr);
+
   /**
    * The object representing the API of the CTA logging system.
    */
@@ -169,9 +189,9 @@ private:
   std::optional<std::string> m_diskInstance;
 
   /**
-   * Fxids of the files to restore
+   * Fids of the files to restore
    */
-  std::optional<std::list<std::string>> m_eosFxids;
+  std::optional<std::list<uint64_t>> m_eosFids;
 
   /**
    * Vid of the tape of the files to restore

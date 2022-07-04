@@ -51,9 +51,9 @@ struct RestoreFilesCmdLineArgs {
   std::optional<std::string> m_diskInstance;
 
   /**
-   * Fxids of the files to restore
+   * Fids of the files to restore
    */
-  std::optional<std::list<std::string>> m_eosFxids;
+  std::optional<std::list<uint64_t>> m_eosFids;
 
   /**
    * Vid of the tape of the files to restore
@@ -78,9 +78,9 @@ struct RestoreFilesCmdLineArgs {
    * Read a list of eos file ids from a file and write the options to a list
    *
    * @param filename The name of the file to read
-   * @param optionList The list to append the options.
+   * @param fidList The list of file IDs
    */
-   void readFidListFromFile(const std::string &filename, std::list<std::string> &optionList);
+   void readFidListFromFile(const std::string &filename, std::list<uint64_t> &fidList);
 
   /**
    * Prints the usage message of the command-line tool.
@@ -88,8 +88,6 @@ struct RestoreFilesCmdLineArgs {
    * @param os The output stream to which the usage message is to be printed.
    */
   static void printUsage(std::ostream &os);
-
-
 
 }; // class RestoreFilesCmdLineArgs
 

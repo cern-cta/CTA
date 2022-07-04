@@ -68,22 +68,22 @@ m_help(false), m_debug(false) {
       }
     case 'f':
       {
-        if (! m_eosFxids) {
-          m_eosFxids = std::list<std::string>();
+        if (! m_eosFids) {
+          m_eosFids = std::list<uint64_t>();
         }
-        auto fid = strtol(optarg, nullptr, 16);
-        if(fid < 1 || fid == LONG_MAX) {
+        auto fid = strtoul(optarg, nullptr, 16);
+        if(fid < 1) {
           throw std::runtime_error(std::string(optarg) + " is not a valid file ID");
         }
-        m_eosFxids->push_back(std::to_string(fid));
+        m_eosFids->push_back(fid);
         break;
       }
     case 'F':
       {
-        if (! m_eosFxids) {
-          m_eosFxids = std::list<std::string>();
+        if (! m_eosFids) {
+          m_eosFids = std::list<uint64_t>();
         }
-        readFidListFromFile(std::string(optarg), m_eosFxids.value());
+        readFidListFromFile(std::string(optarg), m_eosFids.value());
         break;
       }
     case 'v':
@@ -139,7 +139,7 @@ m_help(false), m_debug(false) {
 //------------------------------------------------------------------------------
 // readFidListFromFile
 //------------------------------------------------------------------------------
-void RestoreFilesCmdLineArgs::readFidListFromFile(const std::string &filename, std::list<std::string> &optionList) {
+void RestoreFilesCmdLineArgs::readFidListFromFile(const std::string &filename, std::list<std::uint64_t> &fidList) {
   std::ifstream file(filename);
   if (file.fail()) {
     throw std::runtime_error("Unable to open file " + filename);
@@ -171,7 +171,7 @@ void RestoreFilesCmdLineArgs::readFidListFromFile(const std::string &filename, s
         if(fid < 1 || fid == LONG_MAX) {
           throw std::runtime_error(item + " is not a valid file ID");
         }
-        optionList.push_back(std::to_string(fid));
+        fidList.push_back(fid);
       } else {
         continue;
       }
