@@ -13,20 +13,18 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-# Example of a tape configuration file (/etc/cta/TPCONFIG)
+# Example tape configuration file (/etc/cta/TPCONFIG)
 #
-# A single tape server daemon can control one or two tape drives.  There should
-# be one line per tape drive.  Each line should consist of the following 4
-# columns delimited by spaces:
+# A single tape server daemon can control one or two tape drives. This file should contain one line
+# per tape drive. Each line should consist of the following four elements, delimited by spaces:
 #
-# driveName logicalLibraryName driveDevicePath librarySlot
+# DRIVE_NAME            Label for this drive
+# LOGICAL_LIBRARY_NAME  Logical tape library that this drive belongs to
+# DRIVE_DEVICE          Path to the character special device used to access the drive
+# LIBRARY_SLOT          The SCSI media changer address of the drive. This is "smc" + the drive
+#                       ordinal number of the device, which can by obtained with "cta-smc -q D"
 #
-# Please modify accordingly the UPPERCASE letters and uncomment the following
-# line if you have a tape drive in a SCSI compatible library:
+# Example configuration:
 #
-# DRIVENAME LOGIGICAL_LIBRARY_NAME /dev/XXXX smcDRIVE_ORDINAL
-#
-# Please modify accordingly the UPPERCASE letters and uncomment the following
-# line if you have a tape drive in an ACS library:
-#
-# DRIVENAME LOGIGICALi_LIBRARY_NAME /dev/XXXX acsACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER
+# DRIVE_NAME LOGICAL_LIBRARY_NAME DRIVE_DEVICE LIBRARY_SLOT
+DRIVE0       LIB1                 /dev/nst0    smc1

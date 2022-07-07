@@ -539,7 +539,7 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 - Updates EOS 5 version in CI to 5.0.25
 - See ReleaseNotes.md for more details
 
-* Wed Jun 21 2022 Joao Afonso <joao.afonso@cern.ch> - 4.7.6-1
+* Tue Jun 21 2022 Joao Afonso <joao.afonso@cern.ch> - 4.7.6-1
 - Improvements to the drive handler and other features, see ReleaseNotes.md for details
 - Updates EOS version in CI to 4.8.86
 - Removes CASTOR to CTA migration tools RPM

@@ -1,6 +1,18 @@
 # v4.NEXT
 
 ## Summary
+
+This release makes some minor changes to options and default values for cta-taped. All options are
+detailed in the cta-taped man page and the provided example files. The changes are outlined below:
+
+Options which have been renamed: "general FileCatalogConfigFile" was renamed to "taped CatalogueConfigFile"
+to be consistent with other options. "DisableRepackManagement" and "DisableMaintenanceProcess" were
+renamed to "UseRepackManagement" and "UseMaintenanceProcess" with default changed from "no" to "yes"
+(default semantics are not changed). "FetchEosFreeSpaceScript" renamed to "externalFreeDiskSpaceScript".
+
+Options for which default values have changed: LogMask, MountCriteria, BufferCount, TapeLoadTimeout,
+UseRAO, RAOLTOAlgorithm, RAOLTOAlgorithmOptions.
+
 ### Features
 ### Bug fixes
 - cta/CTA#1269 - cta-restore-deleted-files injects wrong diskFileId in CTA Catalogue

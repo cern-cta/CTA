@@ -121,11 +121,11 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.backendPath.setFromConfigurationFile(cf, generalConfigPath);
   ret.fileCatalogConfigFile.setFromConfigurationFile(cf, generalConfigPath);
   // Repack management configuration
-  ret.disableRepackManagement.setFromConfigurationFile(cf,generalConfigPath);
+  ret.useRepackManagement.setFromConfigurationFile(cf,generalConfigPath);
   // Maintenance process configuration
-  ret.disableMaintenanceProcess.setFromConfigurationFile(cf,generalConfigPath);
-  // Fetch EOS Free space script configuration
-  ret.fetchEosFreeSpaceScript.setFromConfigurationFile(cf,generalConfigPath);
+  ret.useMaintenanceProcess.setFromConfigurationFile(cf,generalConfigPath);
+  // External free disk space script configuration
+  ret.externalFreeDiskSpaceScript.setFromConfigurationFile(cf,generalConfigPath);
   // Timeout for tape load action
   ret.tapeLoadTimeout.setFromConfigurationFile(cf,generalConfigPath);
   // Extract drive list from tpconfig + parsed config file
@@ -162,9 +162,9 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.backendPath.log(log);
   ret.fileCatalogConfigFile.log(log);
   
-  ret.disableRepackManagement.log(log);
-  ret.disableMaintenanceProcess.log(log);
-  ret.fetchEosFreeSpaceScript.log(log);
+  ret.useRepackManagement.log(log);
+  ret.useMaintenanceProcess.log(log);
+  ret.externalFreeDiskSpaceScript.log(log);
   
   ret.tapeLoadTimeout.log(log);
 

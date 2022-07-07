@@ -380,19 +380,26 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
    { AdminCmd::CMD_MEDIATYPE,            { "mediatype",            "mt",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_MOUNTPOLICY,          { "mountpolicy",          "mp",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_REPACK,               { "repack",               "re",  { "add", "rm", "ls", "err" },
-			 "\n  This command allows to manage repack requests.\n\n"
-			   "  Submit a repack request by using the \"add\" subcommand :\n"
-			   "   * Specify the vid (--vid option) or all the vids to repack by giving a file path to the --vidfile option.\n"
-         "   * Specify the mount policy (--mountpolicy parameter) to give a specific mount policy that will be applied to the repack subrequests (retrieve and archive requests).\n"
-			   "   * If the --bufferURL option is set, it will overwrite the default one. It should respect the following format : root://eosinstance//path/to/repack/buffer.\n"
+                         "\n  Submit a repack request by using the \"add\" subcommand :\n"
+			   "   * Specify the vid (--vid option) or all the vids to repack by giving a file path to the --vidfile\n"
+                           "     option.\n"
+                           "   * Specify the mount policy (--mountpolicy parameter) to give a specific mount policy that will be\n"
+                           "     applied to the repack subrequests (retrieve and archive requests).\n"
+			   "   * If the --bufferURL option is set, it will overwrite the default one. It should respect the\n"
+                           "     following format: root://eosinstance//path/to/repack/buffer.\n"
 			   "     The default bufferURL is set in the CTA frontend configuration file.\n"
-			   "   * If the --justmove option is set, the files located on the tape to repack will be migrated on one or multiple tapes.\n"
-			   "     If the --justaddcopies option is set, new (or missing) copies (as defined by the storage class) of the files located on the tape to repack will be created and migrated.\n"
-			   "     By default, CTA will migrate AND add new (or missing) copies (as defined by the storage class) of the files located on the tape to repack.\n"
-			   "     By default, a hardcoded mount policy is applied (every request priorities and minimum request ages = 1).\n"
-			   "   * If the --disabledtape flag is set, the tape to repack will be mounted for retrieval even if it is disabled.\n"
-         "   * If the --no-recall flag is set, no retrieve mount will be triggered and only the files that are located in the buffer will be considered for archival."
-					"\n\n" 
+			   "   * If the --justmove option is set, the files located on the tape to repack will be migrated on\n"
+                           "     one or multiple tapes.\n"
+			   "   * If the --justaddcopies option is set, new (or missing) copies (as defined by the storage class)\n"
+                           "     of the files located on the tape to repack will be created and migrated.\n"
+			   "     By default, CTA will migrate AND add new (or missing) copies (as defined by the storage class)\n"
+                           "     of the files located on the tape to repack.\n"
+			   "     By default, a hardcoded mount policy is applied (all request priorities and minimum request\n"
+                           "     ages = 1).\n"
+			   "   * If the --disabledtape flag is set, the tape to repack will be mounted for retrieval even if it\n"
+                           "     is disabled.\n"
+                           "   * If the --no-recall flag is set, no retrieve mount will be triggered. Only the files that are\n"
+                           "     located in the buffer will be considered for archival.\n\n"
 					 }},
    { AdminCmd::CMD_REQUESTERMOUNTRULE,   { "requestermountrule",   "rmr", { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_ACTIVITYMOUNTRULE,    { "activitymountrule",    "amr", { "add", "ch", "rm", "ls" } }},
@@ -400,70 +407,71 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
    { AdminCmd::CMD_STORAGECLASS,         { "storageclass",         "sc",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_TAPE,                 { "tape",                 "ta",  { "add", "ch", "rm", "reclaim", "ls" } }},
    { AdminCmd::CMD_TAPEFILE,             { "tapefile",             "tf",  { "ls", "rm" },
-                            "\n  This command allows to manage files stored on tape\n"
-                            "  Tape files can be listed by VID or by EOS disk instance + EOS disk file ID.\n"
+                          "\n  Tape files can be listed by VID or by EOS disk instance + EOS disk file ID.\n"
                             "  Disk file IDs should be provided in hexadecimal (fxid). The --fxidfile option\n"
                             "  takes a file in the same format as the output of 'eos find --fid <path>'\n"
                             "  Delete a file copy with the \"rm\" subcommand\n\n"
    }},
    { AdminCmd::CMD_TAPEPOOL,             { "tapepool",             "tp",  { "add", "ch", "rm", "ls" } }},
    { AdminCmd::CMD_DISKSYSTEM,           { "disksystem",           "ds",  { "add", "ch", "rm", "ls" },
-			  "\n  This command allows to manage disk systems (useful for the backpressure).\n"
-			    "  A disksystem contains informations in order to query EOS for the free space remaining in a specific folder.\n\n"
-			    "  Before mounting for a Retrieval, the destination URL of each file to retrieve will be pattern-matched in order to identify the corresponding disksystem.\n"
-			    "  The matched disksystem will give informations to query the free space of the correct EOS space in order to backpressure if not enough free space is available.\n\n"
-			    "  Add a disksystem by using the \"add\" subcommand :\n"
-			    "   * Specify the name (--disksystem) of the disk system. This name must be unique as it is the identifier of the disk system\n"
-			    "   * Specify the file regex pattern (--fileregexp option) in order to assign a disk system name to a file to retrieve according to the destinationURL of this file\n"
-			    "   Example : If the disksystem's fileregexp is ^root://eos_instance//eos/cta(.*)eos.space=spinners, a file to retrieve with the destination URL\n"
-			    "   root://eos_instance//eos/cta/myfile?eos.lfn=fxid:7&eos.space=spinners will then match the corresponding disksystem\n"
-			    "   * Specify the informations to query the EOS free space by using the --freespacequeryurl\n"
-			    "   It should have the following format : eos:name_of_eos_instance:name_of_eos_space. Example : eos:ctaeos:spinners\n"
-			    "   * The refresh interval (--refreshinterval), in seconds, specify how long the queried free space will be use.\n"
-			    "   * The targeted free space (--targetedfreespace) based on the free space update latency (inherent to the file system and induced by the refresh  interval)\n"
-			    "   and the expected external bandwidth from sources external to CTA.\n"
-			    "   * The sleep time (--sleeptime) in seconds will tell the queue containing the Retrieve jobs to sleep so that it will not be popped during this amount of time.\n"
-			    "   If the targeted free space is reach, the queue will sleep during this amount of seconds."
-			    "\n\n"
+			  "\n  The disk system defines the disk buffer to be used for CTA archive and retrieval operations for\n"
+                            "  each VO. It corresponds to a specific directory tree on a disk instance space (specified with a\n"
+                            "  regular expression). Backpressure can be configured separately for each disk system (how much free\n"
+                            "  space should be available before processing a batch of retrieve requests; how long to sleep when\n"
+                            "  the disk is full).\n\n"
+                            "  Before a Retrieve mount, the destination URL of each file is pattern-matched to identify the disk\n"
+                            "  system. The corresponding disk instance space is queried to determine if there is sufficient\n"
+                            "  space to perform the mount. If there is insufficient space, the tape server sleeps for the\n"
+                            "  specified interval.\n\n"
+                            "  Add a disk system with the \"add\" subcommand:\n"
+			    "   * Specify the unique identifier (--disksystem) of the disk system.\n"
+                            "   * Specify the disk instance (--diskinstance) and partition (--diskinstancespace) where this disk\n"
+                            "     system is physically located.\n"
+			    "   * Specify the regular expression (--fileregexp) to match filenames (from destinationURL) to disk\n"
+                            "     systems.\n"
+                            "     Example: destinationURL root://eos_instance//eos/cta/myfile?eos.lfn=fxid:7&eos.space=spinners\n"
+                            "              will match the regular expression ^root://eos_instance//eos/cta(.*)eos.space=spinners\n"
+			    "   * The targeted free space (--targetedfreespace) should be calculated based on the free space\n"
+                            "     update latency (based on diskinstancespace parameters) and the expected bandwidth for transfers\n"
+                            "     to the external Storage Element.\n"
+			    "   * The sleep time (--sleeptime) in seconds tells the tape server how long to sleep before retrying\n"
+                            "     a retrieve mount when the disk system has insufficient space.\n\n"
 					 }},
-   { AdminCmd::CMD_DISKINSTANCE,           { "diskinstance",           "di",  { "add", "ch", "rm", "ls" },
-			  "\n  This command allows to manage disk instances.\n"
-			    "  A disksinstace is an eosctainstance and contains zero or more disk spaces\n\n"
-			    "  Add a diskinstance by using the \"add\" subcommand :\n"
-			    "   * Specify the name (--name) of the disk instance. This name must be unique as it is the identifier of the disk instance and cannot be changed\n"
-			    "\n\n"
+   { AdminCmd::CMD_DISKINSTANCE,           { "diskinstance",        "di",  { "add", "ch", "rm", "ls" },
+                          "\n  A disk instance is a separate namespace. A CTA installation has at least one disk instance and can\n"
+                            "  have multiple disk instances.\n\n"
+			    "  Add a disk instance with the \"add\" subcommand:\n"
+			    "   * Specify the name (--name) of the disk instance. This is the unique identifier of the disk\n"
+                            "     instance and cannot be changed.\n\n"
 					 }},
-   { AdminCmd::CMD_DISKINSTANCESPACE,      { "diskinstancespace",           "dis",  { "add", "ch", "rm", "ls" },
-			  "\n  This command allows to manage disk instance spaces.\n"
-			    "  A disksinstacespace is a partition of an eosctainstance disk space\n\n"
-			    "  Add a diskinstancespace by using the \"add\" subcommand :\n"
-			    "   * Specify the name (--name) of the disk instance space and the respective disk instance (--diskinstance). This pair must be unique as it is the identifier of the disk instance space and cannot be changed\n"
-             "   * Specify the informations to query the EOS free space by using the --freespacequeryurl\n"
-			    "   It should have the following format : eos:name_of_eos_instance:name_of_eos_space. Example : eos:ctaeos:spinners\n"
-			    "   * The refresh interval (--refreshinterval), in seconds, specify how long the queried free space will be use.\n"
-			    "\n\n"
+   { AdminCmd::CMD_DISKINSTANCESPACE,      { "diskinstancespace",   "dis",  { "add", "ch", "rm", "ls" },
+			  "\n  A disk instance space is a partition of an disk instance.\n\n"
+			    "  Add a disk instance space with the \"add\" subcommand:\n"
+			    "   * Specify the name (--name) of the disk instance space and the respective disk instance\n"
+                            "     (--diskinstance). This pair is the unique identifier of the disk instance space and cannot be\n"
+                            "     changed.\n"
+                            "   * Specify the URL to query the free disk space on this disk instance space (--freespacequeryurl).\n"
+			    "     It should have the following format:\n\n"
+                            "       eos:name_of_eos_instance:name_of_eos_space.\n\n"
+                            "     Example: eos:ctaeos:spinners\n"
+			    "   * The refresh interval (--refreshinterval) specifies how long (in seconds) the cached value of the\n"
+                            "     free space query will be used before performing a new query.\n\n"
 					 }},
-   
    { AdminCmd::CMD_VIRTUALORGANIZATION,  { "virtualorganization",   "vo",  { "add", "ch", "rm", "ls" }, 
-                                           "\n  This command allows to manage virtual organizations.\n"
-                                           "  Add a virtual organization by using the \"add\" subcommand:\n"
-                                           "   * Specify the name (--vo) of the virtual organization. It must be unique.\n"
-                                           "   * Specify the maximum number of drives the virtual organization is allowed to use for writing with the --writemaxdrives parameter\n"
-                                           "   * Specify the maximum number of drives the virtual organization is allowed to use for reading with the --readmaxdrives parameter\n"
-                                           "   * Specify the comment (--comment) associated to the virtual organization\n"
-                                           "   * Specify the maximum file size (--maxfilesize) associated to the virtual organization (optional, a value of 0 means no limit)"
-                                           "\n\n"
+                          "\n  Add a virtual organization with the \"add\" subcommand:\n"
+                            "   * Specify the name (--vo) of the virtual organization. It must be unique.\n"
+                            "   * Specify the maximum number of drives the virtual organization is allowed to use for writing (--writemaxdrives)\n"
+                            "   * Specify the maximum number of drives the virtual organization is allowed to use for reading (--readmaxdrives)\n"
+                            "   * Specify a comment (--comment) for this virtual organization\n"
+                            "   * Specify the maximum file size (--maxfilesize) for this virtual organization (optional, 0 means no limit)\n\n"
                                          }},
    { AdminCmd::CMD_VERSION,              { "version",               "v",  { } }},
    { AdminCmd::CMD_SCHEDULINGINFOS,      { "schedulinginfo",        "si",  { "ls" } }},
    { AdminCmd::CMD_RECYCLETAPEFILE,      { "recycletf",        "rtf",  { "ls" },
-                            "  This command allows to manage files in the recycle log.\n"
-                            "  Tape files in the recycle log can be listed by VID, EOS disk file ID, EOS disk instance, ArchiveFileId or copy number.\n"
-                            "  Disk file IDs should be provided in hexadecimal (fxid).\n\n"
+                          "\n  Tape files in the recycle log can be listed by VID, EOS disk file ID, EOS disk instance,\n"
+                            "  ArchiveFileId or copy number. Disk file IDs should be provided in hexadecimal format (fxid).\n\n"
                              }},
 };
-
-
 
 /*
  * Enumerate options

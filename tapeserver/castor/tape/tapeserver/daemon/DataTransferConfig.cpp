@@ -35,5 +35,4 @@ castor::tape::tapeserver::daemon::DataTransferConfig::DataTransferConfig()
   useRAO(false),
   useEncryption(true),
   externalEncryptionKeyScript(""),
-  fetchEosFreeSpaceScript(""){}
-
+  externalFreeDiskSpaceScript("") {}

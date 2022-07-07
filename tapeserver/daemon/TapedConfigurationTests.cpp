@@ -30,21 +30,17 @@ TEST(cta_Daemon, TapedConfiguration) {
   "# My incomplete taped configuration file\n"
   );
   completeConfFile.stringFill(
-  "#A good enough configuration file for taped\n"
+  "# A good enough configuration file for taped\n"
   "ObjectStore BackendPath vfsObjectStore:///tmp/dir\n"
-  "general FileCatalogConfigFile /etc/cta/catalog.conf\n"
-  "taped BufferCount 1\n"
   "taped TpConfigPath ");
   TempFile emptyTpConfig;
   completeConfFile.stringAppend(emptyTpConfig.path());
   ASSERT_THROW(cta::tape::daemon::TapedConfiguration::createFromCtaConf(incompleteConfFile.path()),
-      cta::SourcedParameter<uint64_t>::MandatoryParameterNotDefined);
+    cta::SourcedParameter<std::string>::MandatoryParameterNotDefined);
   auto completeConfig = 
     cta::tape::daemon::TapedConfiguration::createFromCtaConf(completeConfFile.path());
   ASSERT_EQ(completeConfFile.path()+":2", completeConfig.backendPath.source());
   ASSERT_EQ("vfsObjectStore:///tmp/dir", completeConfig.backendPath.value());
-  ASSERT_EQ(completeConfFile.path()+":3", completeConfig.fileCatalogConfigFile.source());
-  ASSERT_EQ("/etc/cta/catalog.conf", completeConfig.fileCatalogConfigFile.value());
 }
 
 TEST(cta_Daemon, TapedConfigurationFull) {
@@ -53,7 +49,7 @@ TEST(cta_Daemon, TapedConfigurationFull) {
   completeConfFile.stringFill(
   "#A good enough configuration file for taped\n"
   "ObjectStore BackendPath vfsObjectStore:///tmp/dir\n"
-  "general FileCatalogConfigFile /etc/cta/catalog.conf\n"
+  "taped CatalogueConfigFile /etc/cta/catalog.conf\n"
   "taped ArchiveFetchBytesFiles 1,2\n"
   "taped ArchiveFlushBytesFiles              3 , 4 \n"
   "taped RetrieveFetchBytesFiles  5,   6\n"

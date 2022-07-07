@@ -161,7 +161,7 @@ void cta::tape::daemon::TapeDaemon::setProcessCapabilities(
 }
 
 bool cta::tape::daemon::TapeDaemon::isMaintenanceProcessDisabled() const{
-  return m_globalConfiguration.disableMaintenanceProcess.value() == "yes";
+  return m_globalConfiguration.useMaintenanceProcess.value() == "no";
 }
 
 }}} // namespace cta::tape::daemon

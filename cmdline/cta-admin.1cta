@@ -13,41 +13,61 @@
 .\"               granted to it by virtue of its status as an Intergovernmental Organization or
 .\"               submit itself to any jurisdiction.
 
-.\" Manpage for cta-admin
-.TH cta-admin 1cta "January 2020" "1.0" "The CERN Tape Archive (CTA)"
+.TH CTA-ADMIN 1cta "2022-06-30" "CTA" "The CERN Tape Archive (CTA)"
+
 .SH NAME
-cta-admin \- administrative command interface for tape system operators
+cta-admin \- administrative command interface for CTA tape system operators
+
 .SH SYNOPSIS
-cta-admin [--json] \fIcommand\fR [\fIsubcommand\fR] [\fIoptions\fR]
 .P
-cta-admin sends the specified command to the CTA Frontend (see \fBCONFIGURATION FILE\fR below).
+\fBcta-admin\fP [--json] \fIcommand\fR [\fIsubcommand\fR] [\fIoptions\fR]
+.P
+\fBcta-admin\fP sends the specified command to the CTA Frontend (see \fBCONFIGURATION\fR below).
 .P
 Commands which return a list of results from the server display on stdout.
+
 .SH DESCRIPTION
-Invoking cta-admin with no command line parameters shows a list of valid commands.
+.P
+Invoking \fBcta-admin\fP with no command line parameters shows a list of valid commands.
 .P
 To show the subcommands and options for a specific command, type:
-    cta-admin \fIcommand\fR help
-.SS Options
-.TP
---json
-Some commands, such as \fBcta-admin tapefile ls\fR, can return an arbitrarily long list of results,
-which are normally returned in plain text format, with one record per line. If the --json option is
-supplied, the results are returned as an array of records in JSON format. This option is intended for
-use by scripts to ease automated processing of results.
+.P
+.RS
+\fBcta-admin\fP \fIcommand\fR help
+.RE
+
 .SS Commands
 Commands have a long version and an abbreviated version (shown in brackets).
 .TP
+activitymountrule (amr)
+Add, change, remove or list the activity mount rules. This is provided as an alternative to requester
+mount rules and group mount rules, where the scheduling priority is based on metadata sent by the
+client rather than the authenticated identity of the requestor.
+.TP
 admin (ad)
-Add, change, remove or list the administrators of the system. In order to use cta-admin, users must
+Add, change, remove or list the administrators of the system. In order to use \fBcta-admin\fP, users must
 exist in the administrator list and must authenticate themselves with a valid Kerberos KRB5 credential.
 .TP
 archiveroute (ar)
 Add, change, remove or list the archive routes, which are the policies linking namespace entries to
 tapepools.
 .TP
+diskinstance (di)
+Add, change, remove or list the disk instances. A disk instance is a separate namespace. A CTA
+installation has at least one disk instance and can have multiple disk instances, for example it
+may be desirable to set up a separate namespace for each Virtual Organization (VO).
+.TP
+diskinstancespace (dis)
+Add, change, remove or list the disk instance spaces. A disk instance can contain zero or more disk
+instance spaces. A disk instance space is a partition of the disk. For examples, it can be desirable
+to have separate spaces for archival and retrieval operations on each instance.
+.TP
 disksystem (ds)
-Query and manage the EOS disk system (disk buffer in front of CTA).
+Add, change, remove or list the disk systems. The disk system defines the disk buffer to be used for
+CTA archive and retrieval operations for each VO. It corresponds to a specific directory tree on a
+disk instance space (specified using a regular expression). Backpressure can be configured separately
+for each disk system (how much free space should be available before processing a batch of retrieve
+requests; how long to sleep when the disk is full).
 .TP
 drive (dr)
 Bring tape drives up or down, list tape drives or remove tape drives from the CTA system.
@@ -58,26 +78,30 @@ List and manage requests which failed and for which all retry attempts failed.
 groupmountrule (gmr)
 Add, change, remove or list the group mount rules.
 .TP
-listpendingarchives (lpa)
-List pending archive requests.
-.TP
-listpendingretrieves (lpr)
-List pending retrieve requests.
-.TP
 logicallibrary (ll)
 Add, change, remove or list the logical libraries, which are logical groupings of tapes and drives based
 on physical location and tape drive capabilities. A tape can be accessed by a drive if it is in the same
 physical library and if the drive is capable of reading or writing the tape. In this case, that tape and
 that drive should normally also be in the same logical library.
 .TP
+mediatype (mt)
+Add, change, remove or list the tape cartridge media types, to specify nominal capacity and parameters
+for software Recommended Access Order (LTO cartridges only).
+.TP
 mountpolicy (mp)
 Add, change, remove or list the mount policies.
+.TP
+recycletf (rtf)
+List tape files in the recycle log.
 .TP
 repack (re)
 Manage tape repacking.
 .TP
 requestermountrule (rmr)
 Add, change, remove or list the requester mount rules.
+.TP
+schedulinginfo (si)
+List information about scheduling of archive and retrieve jobs.
 .TP
 showqueues (sq)
 Show the status of all active queues.
@@ -98,8 +122,17 @@ tapepool (tp)
 Add, change, remove or list the tapepools, which are logical sets of tapes. Tapepools are used to manage
 the life cycle of tapes (label → supply → user pool → erase → label). Listing the tapepools shows
 statistics such as the total number of tapes in the pool, number of free tapes, etc.
-.SH CONFIGURATION FILE
-The cta-admin configuration is specified in \fI/etc/cta/cta-cli.conf\fR. The following configuration
+.TP
+version (v)
+Display the version of \fBcta-admin\fP, the CTA Frontend, the protocol buffer used for client/server
+communication, and the CTA Catalogue schema.
+.TP
+virtualorganization (vo)
+Add, change, remove or list the Virtual Organizations (VOs). Each VO corresponds to an entity whose data
+transfers should be managed independently of the others, for example an experimental collaboration.
+
+.SH CONFIGURATION
+The \fBcta-admin\fP configuration is specified in \fI/etc/cta/cta-cli.conf\fR. The following configuration
 options are available:
 .TP
 cta.endpoint (mandatory)
@@ -107,7 +140,7 @@ Specifies the CTA Frontend hostname (FQDN) and TCP port.
 .TP
 cta.resource.options (default: \fInone\fR)
 Currently the only supported option is \fIReusable\fR. For an explanation of XRootD SSI reusable resources, see:
-    \fIhttp://xrootd.org/doc/dev49/ssi_reference-V2.htm#_Toc506323429\fR
+\fIhttp://xrootd.org/doc/dev49/ssi_reference-V2.htm#_Toc506323429\fR
 .TP
 cta.log (default: \fInone\fR)
 Sets the client log level (see \fBXrdSsiPbLogLevel\fR below).
@@ -117,7 +150,27 @@ Specify whether log timestamps should have second (\fIfalse\fR) or microsecond (
 .SS Example configuration file
     cta.endpoint cta-frontend.cern.ch:10955
     cta.resource.options Reusable
-.SH ENVIRONMENT VARIABLES
+
+.SH OPTIONS
+.TP
+--json
+Some commands, such as \fBcta-admin tapefile ls\fR, can return an arbitrarily long list of results,
+which are normally returned in plain text format, with one record per line. If the --json option is
+supplied, the results are returned as an array of records in JSON format. This option is intended for
+use by scripts to ease automated processing of results.
+
+.SH EXIT STATUS
+\fBcta-admin\fP returns 0 on success.
+
+If there is an error, a message will be printed on \fIstderr\fR. XRootD errors, protocol buffer
+errors and CTA Frontend errors return exit code 1. User errors (e.g. invalid tapepool or vid) return
+with exit code 2.
+
+In the case of user errors, when the --json option is specified, \fBcta-admin\fP will return an empty JSON array
+to \fIstdout\fR in addition to the error message printed on \fIstderr\fR. Scripts using \fBcta-admin\fP should interpret
+the error code to determine whether valid parameters were used.
+
+.SH ENVIRONMENT
 .TP
 XrdSecPROTOCOL
 Sets the XRootD security protocol to use for client/server connections. Note that the CTA Frontend enforces
@@ -159,41 +212,30 @@ Note that the XRootD stream timeout is explicitly disabled by the XRootD server 
 environment variable is \fBnot\fR used.
 .TP
 XRD_CONNECTIONRETRY (default: \fI1\fR)
-By default, if the connection to the CTA Frontend fails for any reason, cta-admin returns immediately with
+By default, if the connection to the CTA Frontend fails for any reason, \fBcta-admin\fP returns immediately with
 \fB[FATAL] Connection error\fR. XRD_CONNECTIONRETRY and XRD_CONNECTIONWINDOW can be used to configure
 retry behaviour. Note that Connection Retry is a misnomer as it sets the total number of attempts, not the
 number of retries.
-.\" .SH EXAMPLES
-.\" Some examples of common usage.
-.SH EXIT CODE
-cta-admin returns 0 on success.
 
-If there is an error, a message will be printed on \fIstderr\fR. XRootD errors, protocol buffer
-errors and CTA Frontend errors return exit code 1. User errors (e.g. invalid tapepool or vid) return
-with exit code 2.
+.SH FILES
+.TP
+.BI /etc/cta/cta-cli.conf
+\fBcta-admin\fP configuration file, specifying the endpoint to use for the CTA Frontend and other options.
 
-In the case of user errors, when the --json option is specified, cta-admin will return an empty JSON array
-to \fIstdout\fR in addition to the error message printed on \fIstderr\fR. Scripts using cta-admin should interpret
-the error code to determine whether valid parameters were used.
-.SH SEE ALSO
-CERN Tape Archive (CTA) Administrator and Operator Guide \fIhttps://tapeoperations.docs.cern.ch/\fR
-.\" cta-objectstore-list(1), cta-objectstore-dump-object(1)
-.SH KNOWN BUGS
+.SH BUGS
+.P
 When using the --json option, 64-bit integer fields are returned as strings. This is a feature of the
 Google Protocol Buffers library, to cope with the fact that JavaScript parsers do not have the ability
 to handle integers with more than 32-bit precision.
-.SH AUTHOR
-\fBCTA\fP Team
+
+.SH SEE ALSO
+.P
+CERN Tape Archive documentation (\fIhttps://eoscta.docs.cern.ch/\fP)
+
 .SH COPYRIGHT
-This program is part of the CERN Tape Archive (CTA). Copyright © 2020 CERN.
 .P
-This program is free software: you can redistribute it and/or modify it under the terms of the GNU
-General Public License as published by the Free Software Foundation, either version 3 of the License,
-or (at your option) any later version.
-.P
-This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
-the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public
-License for more details.
-.P
-You should have received a copy of the GNU General Public License along with this program. If not, see
-\fIhttp://www.gnu.org/licenses/\fR.
+Copyright © 2022 CERN. License GPLv3+: GNU GPL version 3 or later (\fIhttp://gnu.org/licenses/gpl.html\fP).
+This is free software: you are free to change and redistribute it. There is NO WARRANTY, to the
+extent permitted by law. In applying this licence, CERN does not waive the privileges and immunities
+granted to it by virtue of its status as an Intergovernmental Organization or submit itself to any
+jurisdiction.

@@ -436,9 +436,9 @@ class SchedulerDatabase {
     virtual std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> getNextJobBatch(uint64_t filesRequested,
       uint64_t bytesRequested, log::LogContext& logContext) = 0;
     virtual bool reserveDiskSpace(const cta::DiskSpaceReservationRequest &request,
-      const std::string &fetchEosFreeSpaceScript, log::LogContext& logContext) = 0;
+      const std::string &externalFreeDiskSpaceScript, log::LogContext& logContext) = 0;
     virtual bool testReserveDiskSpace(const cta::DiskSpaceReservationRequest &request,
-      const std::string &fetchEosFreeSpaceScript, log::LogContext& logContext) = 0;
+      const std::string &externalFreeDiskSpaceScript, log::LogContext& logContext) = 0;
 
     virtual void requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobBatch, 
       log::LogContext& logContext) = 0;

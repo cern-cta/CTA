@@ -3457,12 +3457,12 @@ void OStoreDB::RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<Schedule
 // OStoreDB::RetrieveMount::testReserveDiskSpace()
 //------------------------------------------------------------------------------
 bool OStoreDB::RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationRequest &diskSpaceReservationRequest,
-  const std::string &fetchEosFreeSpaceScript, log::LogContext& logContext) {
+  const std::string &externalFreeDiskSpaceScript, log::LogContext& logContext) {
   
   // Get the current file systems list from the catalogue
   cta::disk::DiskSystemList diskSystemList;
   diskSystemList = m_oStoreDB.m_catalogue.getAllDiskSystems();
-  diskSystemList.setFetchEosFreeSpaceScript(fetchEosFreeSpaceScript);
+  diskSystemList.setExternalFreeDiskSpaceScript(externalFreeDiskSpaceScript);
   cta::disk::DiskSystemFreeSpaceList diskSystemFreeSpace(diskSystemList);
 
   // Get the existing reservation map from drives.
@@ -3533,12 +3533,12 @@ bool OStoreDB::RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservati
 // OStoreDB::RetrieveMount::reserveDiskSpace()
 //------------------------------------------------------------------------------
 bool OStoreDB::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest &diskSpaceReservationRequest,
-  const std::string &fetchEosFreeSpaceScript, log::LogContext& logContext) {
+  const std::string &externalFreeDiskSpaceScript, log::LogContext& logContext) {
 
   // Get the current file systems list from the catalogue
   cta::disk::DiskSystemList diskSystemList;
   diskSystemList = m_oStoreDB.m_catalogue.getAllDiskSystems();
-  diskSystemList.setFetchEosFreeSpaceScript(fetchEosFreeSpaceScript);
+  diskSystemList.setExternalFreeDiskSpaceScript(externalFreeDiskSpaceScript);
   cta::disk::DiskSystemFreeSpaceList diskSystemFreeSpace(diskSystemList);
 
   // Get the existing reservation map from drives.

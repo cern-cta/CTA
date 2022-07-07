@@ -51,7 +51,7 @@ struct TapedConfiguration {
     "taped", "DaemonGroupName", "tape", "Compile time default"};
   /// The log mask.  Logs with a level lower than this value will be masked.
   cta::SourcedParameter<std::string> logMask{
-    "taped", "LogMask", "DEBUG", "Compile time default"};
+    "taped", "LogMask", "INFO", "Compile time default"};
   /// Path to the file describing the tape drives (TPCONFIG)
   cta::SourcedParameter<std::string> tpConfigPath{
     "taped" , "TpConfigPath", "/etc/cta/TPCONFIG", "Compile time default"};
@@ -63,9 +63,9 @@ struct TapedConfiguration {
   /// Memory buffer size in bytes (with a default of 5MB). TODO-switch to 32MB once validated in CASTOR.
   cta::SourcedParameter<uint64_t> bufferSizeBytes{
     "taped", "BufferSizeBytes", 5*1024*1024, "Compile time default"};
-  /// Memory buffer count per drive. There is no default to this one.
+  /// Memory buffer count per drive. Default 5000.
   cta::SourcedParameter<uint64_t> bufferCount{
-    "taped", "BufferCount"};
+    "taped", "BufferCount", 5000, "Compile time default"};
   //----------------------------------------------------------------------------
   // Batched metadata access and tape write flush parameters 
   //----------------------------------------------------------------------------
@@ -82,7 +82,7 @@ struct TapedConfiguration {
   // Scheduling limits
   //----------------------------------------------------------------------------
   cta::SourcedParameter<FetchReportOrFlushLimits> mountCriteria{
-    "taped", "MountCriteria", {80L*1000*1000*1000, 500}, "Compile time default"};
+    "taped", "MountCriteria", {50L*1000*1000*1000, 10000}, "Compile time default"};
   //----------------------------------------------------------------------------
   // Disk file access parameters
   //----------------------------------------------------------------------------
@@ -94,18 +94,18 @@ struct TapedConfiguration {
   //----------------------------------------------------------------------------
   /// Usage of Recommended Access Order for file recall
   cta::SourcedParameter<std::string> useRAO{
-    "taped", "UseRAO", "no", "Compile time default"};
+    "taped", "UseRAO", "yes", "Compile time default"};
   /// RAO type of algorithm
   cta::SourcedParameter<std::string> raoLtoAlgorithm{
-    "taped", "RAOLTOAlgorithm","linear","Compile time default"};
+    "taped", "RAOLTOAlgorithm","sltf","Compile time default"};
   cta::SourcedParameter<std::string> raoLtoOptions {
-    "taped", "RAOLTOAlgorithmOptions","","Compile time default"
+    "taped", "RAOLTOAlgorithmOptions","cost_heuristic_name:cta","Compile time default"
   };
   //----------------------------------------------------------------------------
-  // Fetch EOS Free space operator's script
+  // External script to get free disk space in the Retrieve buffer
   //----------------------------------------------------------------------------
-  cta::SourcedParameter<std::string> fetchEosFreeSpaceScript {
-    "taped", "FetchEosFreeSpaceScript","", "Compile time default"
+  cta::SourcedParameter<std::string> externalFreeDiskSpaceScript {
+    "taped", "externalFreeDiskSpaceScript","", "Compile time default"
   };
   //----------------------------------------------------------------------------
   // Watchdog: parameters for timeouts in various situations.
@@ -128,10 +128,10 @@ struct TapedConfiguration {
   /// URL of the object store.
   cta::SourcedParameter<std::string> backendPath{
     "ObjectStore", "BackendPath"};
-  /// Path to the file catalog config file
+  /// Path to the CTA catalogue config file
   cta::SourcedParameter<std::string> fileCatalogConfigFile{
-    "general", "FileCatalogConfigFile", "/etc/cta/cta-catalogue.conf", "Compile time default"};
-    
+    "taped", "CatalogueConfigFile", "/etc/cta/cta-catalogue.conf", "Compile time default"};
+
   //----------------------------------------------------------------------------
   // The authentication configuration
   //---------------------------------------------------------------------------- 
@@ -146,20 +146,20 @@ struct TapedConfiguration {
   // Maintenance process configuration
   //----------------------------------------------------------------------------
   /// Usage of RepackRequestManager for repack-related operations
-  cta::SourcedParameter<std::string> disableRepackManagement {
-    "taped","DisableRepackManagement","no","Compile time default"
+  cta::SourcedParameter<std::string> useRepackManagement {
+    "taped","UseRepackManagement","yes","Compile time default"
   };
   
   /// Usage of MaintenanceProcess for repack-related operations, Garbage collection and disk reporting
-  cta::SourcedParameter<std::string> disableMaintenanceProcess {
-    "taped","DisableMaintenanceProcess","no","Compile time default"
+  cta::SourcedParameter<std::string> useMaintenanceProcess {
+    "taped","UseMaintenanceProcess","yes","Compile time default"
   };
   
   //----------------------------------------------------------------------------
   // Tape load actions
   //----------------------------------------------------------------------------
   cta::SourcedParameter<uint32_t> tapeLoadTimeout {
-    "taped", "TapeLoadTimeout",60,"Compile time default"
+    "taped", "TapeLoadTimeout",300,"Compile time default"
   };
 
   //----------------------------------------------------------------------------

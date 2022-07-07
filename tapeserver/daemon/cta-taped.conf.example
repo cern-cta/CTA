@@ -4,49 +4,167 @@
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
 #               option) any later version.
-#
+# 
 #               This program is distributed in the hope that it will be useful, but WITHOUT ANY
 #               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 #               PARTICULAR PURPOSE. See the GNU General Public License for more details.
-#
+# 
 #               In applying this licence, CERN does not waive the privileges and immunities
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
-################################################################################
-#
-# CTA Sample Configuration File
-#
-################################################################################
 
-# The log mask.  Logs with a level lower than this value will be masked.
-# Possible values are:
-#   EMERG
-#   ALERT
-#   CRIT
-#   ERR
-#   WARNING
-#   NOTICE
-#   INFO
-#   DEBUG
-#   USERERR
-# Please note that the USERERR log level is equivalent to NOTICE because it is a convention of CTA to use log level NOTICE to label user errors.
+####################################################################################################
+# 
+# CTA Tape Server Configuration
+# 
+####################################################################################################
+
+#
+# TAPE SERVER CONFIGURATION OPTIONS
+#
+
+# The user of the cta-taped daemon process
+# taped DaemonUserName cta
+#
+# The group of the cta-taped daemon process
+# taped DaemonGroupName tape
+#
+# Logs with a level lower than the LogMask value will be masked. Possible values are EMERG, ALERT,
+# CRIT, ERR, WARNING, NOTICE (USERERR), INFO, DEBUG.
 # taped LogMask INFO
 #
-# Define how many memory buffers should the CTA tape daemon use (compile time buffer size value is 5 MB) on a particular node (depends on physical memory).
+# Path to the tape drive configuration file
+# taped TpConfigPath /etc/cta/TPCONFIG
+#
+# Path to the CTA Catalogue configuration file
+# taped CatalogueConfigFile /etc/cta/cta-catalogue.conf
+#
+# URL of the objectstore (CTA Scheduler Database). Usually this will be the URL of a Ceph RADOS
+# objectstore. For testing or small installations, a file-based objectstore can be used instead.
+ObjectStore BackendPath rados://cta@tapecta:cta
+# ObjectStore BackendPath /path/to/local/objectstore
+
+#
+# MEMORY MANAGEMENT OPTIONS
+#
+
+# Number of memory buffers per drive in the data transfer cache. This value should be configured
+# according to the physical memory available.
 # taped BufferCount 5000
+
+# Size of one memory buffer in the data transfer cache, in bytes. Default is 5 MB.
+# taped BufferSizeBytes 5000000
+
 #
-# Use Recommended Access Ordering if available.
-# taped UseRAO yes
+# BATCHED METADATA ACCESS AND TAPE WRITE FLUSH OPTIONS
 #
-# These options allow to trigger a software RAO algorithm on LTO tape drives.
-# taped RAOLTOAlgorithm sltf
-# taped RAOLTOAlgorithmOptions cost_heuristic_name:cta
+
+# Maximum batch size for processing archive requests, specified as a tuple (number of bytes, number of
+# files). Defaults to 80 GB and 4000 files.
+# taped ArchiveFetchBytesFiles 80000000000,4000
+# 
+# Flush  to tape criteria. During archiving operations, this parameter defines the maximum number of
+# bytes and number of files that will be written to tape before a flush to # tape (synchronised tape
+# mark). Defaults to 32 GB and 200 files.
+# taped ArchiveFlushBytesFiles 32000000000,200
+# 
+# Maximum batch size for processing retrieve requests, specified as a tuple (number of bytes, number of
+# files). When cta-taped fetches a batch of retrieve requests, the batch cannot exceed the number of
+# bytes and number of files specified by this parameter. Defaults to 80 GB and 4000 files.
+# taped RetrieveFetchBytesFiles 80000000000,4000
+
 #
-# Disable Repack management.
-# taped DisableRepackManagement yes
+# SCHEDULING OPTIONS
 #
-# Disable Maintenance process.
-# taped DisableMaintenanceProcess yes
+
+# Criteria to mount a tape, specified as a tuple (number of bytes, number of files). An archival or
+# retrieval queue must contain at least this number of bytes or this number of files before a tape mount
+# will be triggered. This does not apply when the timeout specified in the applicable mount rule is
+# exceeded. Defaults to 500 GB and 10000 files.
+# taped MountCriteria 500000000000,10000
+
 #
-# Enable encryption
+# DISK FILE ACCESS OPTIONS
+#
+
+# The number of disk I/O threads. This determines the maximum number of parallel file transfers.
+# taped NbDiskThreads 10
+
+#
+# TAPE ENCRYPTION SUPPORT
+#
+
+# Enable tape hardware encryption. Encryption will be enabled only for tapes where a valid encryption
+# key has been configured for the tape or tape pool.
 # taped UseEncryption yes
+# 
+# Path to the external script used to obtain encryption keys.
+taped externalEncryptionKeyScript /usr/local/bin/cta-get-encryption-key.sh
+
+# 
+# DISK SPACE MANAGEMENT OPTIONS
+#
+
+# Path to the external script used to determine free disk space in the retrieve buffer.
+taped externalFreeDiskSpaceScript /usr/local/bin/cta-get-free-disk-space.sh
+
+#
+# RECOMMENDED ACCESS ORDER (RAO) OPTIONS
+#
+
+# ##### WARNING #####
+#
+# The default RAO options should provide the best retrieve performance out of the box. These options
+# should only be changed by expert users for specific tests.
+#
+# ##### WARNING #####
+
+# Enable Recommended Access Order (RAO) if available. This setting is used to enable both hardware
+# and software RAO for all drives that support it. Hardware RAO in IBM Enterprise and LTO drives
+# generation 9 or later needs no further configuration. The additional RAO options below are for
+# software RAO on LTO-8 drives.
+# taped UseRAO yes
+# 
+# On LTO-8 tape drives, specify which software RAO algorithm to use. Valid options are linear,
+# random, sltf. This should be set to sltf in production environments.
+# taped RAOLTOAlgorithm sltf
+# 
+# Specify options for the software RAO algorithm.
+# taped RAOLTOAlgorithmOptions cost_heuristic_name:cta
+
+#
+# MAINTENANCE PROCESS CONFIGURATION OPTIONS
+#
+
+# ##### WARNING #####
+#
+# The CTA secheduler is fully distributed. By default, all cta-taped processes will handle reporting
+# jobs and repack requests. These values should only be changed by expert users. Misconfiguration can
+# stop CTA from functioning.
+#
+# ##### WARNING #####
+
+# Enable RepackRequestManager for repack-related operations.
+# taped UseRepackManagement yes
+# 
+# Enable MaintenanceProcess for repack-related operations, garbage collection and disk reporting.
+# taped UseMaintenanceProcess yes
+
+#
+# TIMEOUT OPTIONS
+#
+
+# Maximum time to wait for a tape to load, in seconds.
+# taped TapeLoadTimeout 300
+# 
+# Maximum time allowed to schedule a single mount, in seconds.
+# taped WatchdogScheduleMaxSecs 60
+# 
+# Maximum time allowed to mount a tape, in seconds.
+# taped WatchdogMountMaxSecs 900
+# 
+# Maximum time allowed after mounting without any tape blocks being read/written, in seconds.
+# taped WatchdogNoBlockMoveMaxSecs 1800
+# 
+# Maximum time to wait after scheduling came up idle, in seconds.
+# taped WatchdogIdleSessionTimer 10

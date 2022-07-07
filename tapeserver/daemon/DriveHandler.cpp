@@ -1003,7 +1003,7 @@ int DriveHandler::runChild() {
     dataTransferConfig.useRAO = m_tapedConfig.useRAO.value() == "yes" ? true : false;
     dataTransferConfig.raoLtoAlgorithm = m_tapedConfig.raoLtoAlgorithm.value();
     dataTransferConfig.raoLtoAlgorithmOptions = m_tapedConfig.raoLtoOptions.value();
-    dataTransferConfig.fetchEosFreeSpaceScript = m_tapedConfig.fetchEosFreeSpaceScript.value();
+    dataTransferConfig.externalFreeDiskSpaceScript = m_tapedConfig.externalFreeDiskSpaceScript.value();
     dataTransferConfig.tapeLoadTimeout = m_tapedConfig.tapeLoadTimeout.value();
     dataTransferConfig.xrootPrivateKey = "";
     dataTransferConfig.useEncryption = m_tapedConfig.useEncryption.value() == "yes" ? true : false;

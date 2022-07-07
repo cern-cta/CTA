@@ -53,9 +53,9 @@ void DriveConfig::setTapedConfiguration(const cta::tape::daemon::TapedConfigurat
   setConfigToDB(&config->fileCatalogConfigFile, catalogue, tapeDriveName);
   setConfigToDB(&config->authenticationProtocol, catalogue, tapeDriveName);
   setConfigToDB(&config->authenticationSSSKeytab, catalogue, tapeDriveName);
-  setConfigToDB(&config->disableRepackManagement, catalogue, tapeDriveName);
-  setConfigToDB(&config->disableMaintenanceProcess, catalogue, tapeDriveName);
-  setConfigToDB(&config->fetchEosFreeSpaceScript, catalogue, tapeDriveName);
+  setConfigToDB(&config->useRepackManagement, catalogue, tapeDriveName);
+  setConfigToDB(&config->useMaintenanceProcess, catalogue, tapeDriveName);
+  setConfigToDB(&config->externalFreeDiskSpaceScript, catalogue, tapeDriveName);
   setConfigToDB(&config->tapeLoadTimeout, catalogue, tapeDriveName);
 }
 

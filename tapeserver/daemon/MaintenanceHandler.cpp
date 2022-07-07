@@ -381,7 +381,7 @@ MaintenanceHandler::~MaintenanceHandler() {
 // MaintenanceHandler::runRepackRequestManager
 //------------------------------------------------------------------------------
 bool MaintenanceHandler::runRepackRequestManager() const {
-  return m_tapedConfig.disableRepackManagement.value() == "no";
+  return m_tapedConfig.useRepackManagement.value() == "yes";
 }
 
 }}} // namespace cta::tape::daemon

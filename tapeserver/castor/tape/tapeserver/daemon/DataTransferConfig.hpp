@@ -135,7 +135,7 @@ struct DataTransferConfig {
   /**
    * The path to the operator provided EOS free space fetch script (or empty string)
    */
-  std::string fetchEosFreeSpaceScript;
+  std::string externalFreeDiskSpaceScript;
 
   /**
    * The timeout after which the mount of a tape is considered failed

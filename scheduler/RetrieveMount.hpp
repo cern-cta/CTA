@@ -238,7 +238,7 @@ namespace cta {
      */
     disk::DiskReporter * createDiskReporter(std::string & URL);
 
-    void setFetchEosFreeSpaceScript(const std::string & name);
+    void setExternalFreeDiskSpaceScript(const std::string& name);
 
     /**
      * Adds a disk system to the list of disk systems to skip for this mount
@@ -288,9 +288,9 @@ namespace cta {
 
     /**
      * The name of the script that will be executed
-     * to get the EOS free space
+     * to get the free disk space in the Retrieve space
      */
-    std::string m_fetchEosFreeSpaceScript;
+    std::string m_externalFreeDiskSpaceScript;
 
   }; // class RetrieveMount
 

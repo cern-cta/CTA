@@ -53,8 +53,8 @@ namespace cta { namespace disk {
  *  - a targeted free space (margin) based on the free space update latency (inherent to the file system and induced by the refresh
  *  interval), and the expected external bandwidth from sources external to CTA.
  */
-CTA_GENERATE_EXCEPTION_CLASS(FetchEosFreeSpaceException);
-CTA_GENERATE_EXCEPTION_CLASS(FetchEosFreeSpaceScriptException);
+CTA_GENERATE_EXCEPTION_CLASS(FreeDiskSpaceException);
+CTA_GENERATE_EXCEPTION_CLASS(FreeDiskSpaceScriptException);
 
 struct DiskSystem {
   std::string name;
@@ -78,10 +78,10 @@ public:
   const DiskSystem & at(const std::string &name) const;
 
   /** Get the fetch EOS free space script path. This script will be used by the backpressure */
-  std::string getFetchEosFreeSpaceScript() const;
+  std::string getExternalFreeDiskSpaceScript() const;
 
   /** Sets the fetch EOS free space script path. This script will be used by the backpressure */
-  void setFetchEosFreeSpaceScript(const std::string & path);
+  void setExternalFreeDiskSpaceScript(const std::string & path);
 
 private:
   struct PointerAndRegex {
@@ -91,7 +91,7 @@ private:
   };
 
   mutable std::list<PointerAndRegex> m_pointersAndRegexes;
-  std::string m_fetchEosFreeSpaceScript;
+  std::string m_externalFreeDiskSpaceScript;
 
 };
 
@@ -115,9 +115,9 @@ public:
   const DiskSystemList &getDiskSystemList() { return m_systemList; }
 private:
   DiskSystemList &m_systemList;
-  uint64_t fetchEosFreeSpace(const std::string & instanceAddress, const std::string & spaceName,log::LogContext & lc);
+  uint64_t fetchFreeDiskSpace(const std::string & instanceAddress, const std::string & spaceName,log::LogContext & lc);
   uint64_t fetchConstantFreeSpace(const std::string & instanceAddress, log::LogContext & lc);
-  uint64_t fetchEosFreeSpaceWithScript(const std::string & scriptPath, const std::string & jsonInput, log::LogContext &lc);
+  uint64_t fetchFreeDiskSpaceWithScript(const std::string & scriptPath, const std::string & jsonInput, log::LogContext &lc);
 };
 
 }} // namespace cta::common

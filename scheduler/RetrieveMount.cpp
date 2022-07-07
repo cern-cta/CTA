@@ -197,14 +197,14 @@ void cta::RetrieveMount::requeueJobBatch(std::vector<std::unique_ptr<cta::Retrie
 // reserveDiskSpace()
 //------------------------------------------------------------------------------
 bool cta::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest &request, log::LogContext& logContext) {
-  return m_dbMount->reserveDiskSpace(request, m_fetchEosFreeSpaceScript, logContext);
+  return m_dbMount->reserveDiskSpace(request, m_externalFreeDiskSpaceScript, logContext);
 }
 
 //------------------------------------------------------------------------------
 // testReserveDiskSpace()
 //------------------------------------------------------------------------------
 bool cta::RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationRequest &request, log::LogContext& logContext) {
-  return m_dbMount->testReserveDiskSpace(request, m_fetchEosFreeSpaceScript, logContext);
+  return m_dbMount->testReserveDiskSpace(request, m_externalFreeDiskSpaceScript, logContext);
 }
 
 //------------------------------------------------------------------------------
@@ -376,10 +376,10 @@ bool cta::RetrieveMount::bothSidesComplete() {
 }
 
 //------------------------------------------------------------------------------
-// setEosFreeSpaceScriptName()
+// setExternalFreeDiskSpaceScript()
 //------------------------------------------------------------------------------
-void cta::RetrieveMount::setFetchEosFreeSpaceScript(const std::string& name){
-  m_fetchEosFreeSpaceScript = name;
+void cta::RetrieveMount::setExternalFreeDiskSpaceScript(const std::string& name){
+  m_externalFreeDiskSpaceScript = name;
 }
 
 //------------------------------------------------------------------------------

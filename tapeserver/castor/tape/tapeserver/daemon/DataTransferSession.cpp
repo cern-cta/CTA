@@ -238,7 +238,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
   // file to recall.
   // findDrive does not throw exceptions (it catches them to log errors)
   // A nullptr is returned on failure
-  retrieveMount->setFetchEosFreeSpaceScript(m_castorConf.fetchEosFreeSpaceScript);
+  retrieveMount->setExternalFreeDiskSpaceScript(m_castorConf.externalFreeDiskSpaceScript);
   std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(findDrive(logContext, retrieveMount));
 
   if (!drive) {

@@ -13,146 +13,217 @@
 .\"               granted to it by virtue of its status as an Intergovernmental Organization or
 .\"               submit itself to any jurisdiction.
 
-.TH CTA-TAPED "1cta" "$Date: 2021/03/11 14:44:00 $" CTA "CTA"
+.TH CTA-TAPED "1cta" "2022-06-30" "CTA" "The CERN Tape Archive (CTA)"
+
 .SH NAME
-cta-taped \- Tape server daemon
+cta-taped \- CTA Tape Server daemon
+
 .SH SYNOPSIS
-.BI "cta-taped [OPTIONS]"
+\fBcta-taped\fP [\-\-config \fIconfig_file\fR][\-\-foreground [\-\-stdout]][\-\-log\-to\-file \fIlog_file\fR]
+
+\fBcta-taped\fP --help
 
 .SH DESCRIPTION
-\fBcta-taped\fP is the daemon responsible for controlling one or more tape
-drives.
+\fBcta-taped\fP is the daemon responsible for controlling one or more tape drives.
 .P
-When \fBcta-taped\fP is executed it immediately forks with the parent
-terminating and the child running in the background.  If required the
-\fB\-f, \-\-foreground\fP option can be used to stop \fBcta-taped\fP from
-forking and keep the parent process in the foreground.
+When \fBcta-taped\fP is executed, it immediately forks, with the parent terminating and the child
+running in the background. The \fB\-\-foreground\fP option can be used to keep the parent process
+running in the foreground.
 
-.SH TAPE LIBRARY SUPPORT
+.SS Tape Library Support
 
-CTA supports two types of tape libraries, SCSI compatible ones and Oracle
-Automatic Cartridge System (ACS) ones.  The cta-taped daemon requires a tape
-library daemon to be installed and run on the same tape server as itself.
-There are two types of CTA tape library daemons, one for SCSI compatible tape
-libraries and one for ACS tape libraries.
-
-A SCSI compatible tape library requires the following daemon:
-
-\fBrmcd\fP
-
-The installation RPM for the \fBrmcd\fP daemon and its manual page is:
-
-\fBcta-rmcd-MAJORVERSION-MINORVERSION.el7.cern.x86_64.rpm\fP
-
-The \fBcta-rmcd\fP daemon can be started, stopped and its status queried using
-the usual service commands:
-
-\fBservice cta-rmcd start\fP
-.br
-\fBservice cta-rmcd status\fP
-.br
-\fBservice cta-rmcd stop\fP
+CTA supports SCSI-compatible tape libraries. The \fBcta-taped\fP daemon requires the tape library daemon
+(\fBcta-rmcd\fP) to be installed and running on the same server as itself.
 
 .SH OPTIONS
 .TP
-\fB\-f, \-\-foreground
-Remain in the foreground.
+\-c, \-\-config \fIconfig_file\fR
+Read \fBcta\-taped\fP configuration from \fIconfig_file\fR instead of the default, \fI/etc/cta/cta-taped.conf\fR.
 .TP
-\fB\-h, \-\-help
-Prints the usage message.
+\-f, \-\-foreground
+Do not terminate the \fBcta-taped\fP parent process, keep it in the foreground.
 .TP
-\fB\-c, \-\-config <config-file>
-Set the location of the CTA configuration file (cta-taped.conf).  The default location is /etc/cta/cta-taped.conf.
+\-h, \-\-help
+Display command options and exit.
+.TP
+\-l, \-\-log\-to\-file <log_file>
+Log to a file instead of using syslog.
+.TP
+\-s, \-\-stdout
+Log to standard output instead of using syslog. Requires \-\-foreground.
 
-.SH CTA CONFIGURATION PARAMETERS
-The cta-taped daemon reads and uses the following CTA configuration
-parameters which are specified within the CTA configuration file (the
-default location is /etc/cta/cta-tapd.conf).
+.SH CONFIGURATION
+The \fBcta-taped\fP daemon reads its configuration parameters from the CTA configuration file (by default,
+\fI/etc/cta/cta-taped.conf\fR). Each option is listed with its \fIdefault\fR value.
 
+.SS Tape Server Configuration Options
 .TP
-\fBRMC MAXRQSTATTEMPTS
-Maximum number of attempts a retriable RMC request should be issued.
+.B taped DaemonUserName \fIcta\fR
+The user of the \fBcta\-taped\fP daemon process.
+.TP
+.B taped DaemonGroupName \fItape\fR
+The group of the \fBcta\-taped\fP daemon process.
+.TP
+.B taped LogMask \fIINFO\fR
+Logs with a level lower than this value will be masked. Possible values are EMERG, ALERT, CRIT, ERR,
+WARNING, NOTICE (USERERR), INFO, DEBUG. USERERR log level is equivalent to NOTICE, because by
+convention, CTA uses log level NOTICE for user errors.
+.TP
+.B taped TpConfigPath \fI/etc/cta/TPCONFIG\fR
+Path to the tape drive configuration file. See \fBFILES\fP, below.
+.TP
+.B taped CatalogueConfigFile \fI/etc/cta/cta-catalogue.conf\fR
+Path to the CTA Catalogue configuration file. See \fBFILES\fP, below.
+.TP
+.B ObjectStore BackendPath \fI(no default)\fR
+URL of the objectstore (CTA Scheduler Database). Usually this will be the URL of a Ceph RADOS
+objectstore. For testing or small installations, a file-based objectstore can be used instead.
+See \fBcta-objectstore-initialize\fP.
 
+.SS Memory management options
 .TP
-\fBtaped BlkMoveTimeout
-The maximum time in seconds the data-transfer session of tapeserverd can
-cease to move data blocks
+.B taped BufferCount \fI5000\fR
+Number of memory buffers per drive in the data transfer cache.
+.TP
+.B taped BufferSizeBytes \fI5000000\fR
+Size of a memory buffer in the data transfer cache, in bytes.
 
+.SS Batched metadata access and tape write flush options
 .TP
-\fBtaped BufferCount
-Number of memory buffers in the data-transfer cache.
+.B taped ArchiveFetchBytesFiles \fI80000000000\fR,\fI4000\fR
+Maximum batch size for processing archive requests, specified as a tuple (number of bytes, number of
+files). When \fBcta-taped\fP fetches a batch of archive requests, the batch cannot exceed the number
+of bytes and number of files specified by this parameter. Defaults to 80 GB and 4000 files.
+.TP
+.B taped ArchiveFlushBytesFiles \fI32000000000\fR,\fI200\fR
+Flush to tape criteria, specified as a tuple (number of bytes, number of files). During archiving
+operations, this parameter defines the maximum number of bytes and number of files that will be
+written to tape before a flush to tape (synchronised tape mark). Defaults to 32 GB and 200 files.
+.TP
+.B taped RetrieveFetchBytesFiles \fI80000000000\fR,\fI4000\fR
+Maximum batch size for processing retrieve requests, specified as a tuple (number of bytes, number of
+files). When cta-taped fetches a batch of retrieve requests, the batch cannot exceed the number of
+bytes and number of files specified by this parameter. Defaults to 80 GB and 4000 files.
 
+.SS Scheduling options
 .TP
-\fBtaped BufferSizeBytes
-Size of a memory buffer in the data-transfer cache in bytes (default is 5
-Mebibytes).
+.B taped MountCriteria \fI500000000000\fR,\fI10000\fR
+Criteria to mount a tape, specified as a tuple (number of bytes, number of files). An archival or
+retrieval queue must contain at least this number of bytes or this number of files before a tape mount
+will be triggered. This does not apply when the timeout specified in the applicable mount rule is
+exceeded. Defaults to 500 GB and 10000 files.
 
+.SS Disk file access options
 .TP
-\fBtaped BulkRequestMigrationMaxBytes
-When the tapeserverd daemon requests the tapegatewayd daemon for a set of
-files to migrate to tape, this parameter defines the maximum number of bytes
-the set of files should represent.
+.B taped NbDiskThreads \fI10\fR
+The number of disk I/O threads. This determines the maximum number of parallel file transfers.
 
+.SS Tape encryption support
 .TP
-\fBtaped BulkRequestMigrationMaxFiles
-When the tapeserverd daemon requests the tapegatewayd daemon for a set of
-files to migrate to tape, this parameter defines the maximum number of files
-the set may contain.
+.B taped UseEncryption \fIyes\fR
+Enable tape hardware encryption. Encryption will be enabled only for tapes where a valid encryption
+key has been configured for the tape or tape pool.
+.TP
+.B taped externalEncryptionKeyScript \fI(no default)\fR
+Path to the external script used to obtain encryption keys.
 
+.SS Disk space management options
 .TP
-\fBtaped BulkRequestRecallMaxBytes
-When the tapeserverd daemon requests the tapegatewayd daemon for a set of
-files to recall from tape, this parameter defines the maximum number of bytes
-the set of files should represent.
+.B taped externalFreeDiskSpaceScript \fI(no default)\fR
+Path to the external script used to determine free disk space in the retrieve buffer.
 
+.SS Recommended Access Order (RAO) options
 .TP
-\fBtaped BulkRequestRecallMaxFiles
-When the tapeserverd daemon requests the tapegatewayd daemon for a set of
-files to recall from tape, this parameter defines the maximum number of files
-the set may contain.
+.B taped UseRAO \fIyes\fR
+Enable Recommended Access Order (RAO) if available. This setting is used to enable both hardware
+and software RAO for all drives that support it. Hardware RAO in IBM Enterprise and LTO drives
+generation 9 or later needs no further configuration. The additional RAO options below are for
+software RAO on LTO-8 drives.
+.TP
+.B taped RAOLTOAlgorithm \fIsltf\fR
+On LTO-8 tape drives, specify which software RAO algorithm to use. Valid options are \fBlinear\fP,
+\fBrandom\fP, \fBsltf\fP. \fBlinear\fP means retrieve files ordered by logical file ID. \fBrandom\fP
+means retrieve files in a random order. \fBsltf\fP is the Shortest Locate Time First algorithm, which
+traverses the tape by always picking the nearest (lowest cost) neighbour to the last file selected.
+The cost function is specified in \fBRAOLTOAlgorithmOptions\fP, below.
 
-.TP
-\fBtaped MaxBytesBeforeFlush
-The value of this parameter defines the maximum number of bytes to be written
-to tape before a flush to tape (synchronised tape-mark).  Please note that a
-flush occurs on a file boundary therefore more bytes will normally be written
-to tape before the actual flush occurs.
+.RS
+Linear and random ordering are useful only to establish a baseline for RAO tests. This option
+should be set to \fBsltf\fP in production environments.
+.RE
 
+.RS
+Note: the \fBsltf\fP option requires that the following parameters have been specified in the CTA
+Catalogue for the LTO-8 media type: \fInbwraps\fR, \fIminlpos\fR, \fImaxlpos\fR. See
+\fBcta-admin mediatype\fP.
+.RE
 .TP
-\fBtaped MaxFilesBeforeFlush
-The value of this parameter defines the maximum number of files to be written
-to tape before a flush to tape (synchronised or non-immediate tape-mark).
+.B taped RAOLTOAlgorithmOptions \fIcost_heuristic_name:cta\fR
+Options for the software RAO algorithm specified by \fBRAOLTOAlgorithm\fP, above.
 
+.SS Maintenance process configuration options
 .TP
-\fBtaped MountTimeout
-The maximum time in seconds that the data-transfer session can take to mount a
-tape.
+.B taped UseRepackManagement \fIyes\fR
+Enable RepackRequestManager for repack-related operations.
+.TP
+.B taped UseMaintenanceProcess \fIyes\fR
+Enable MaintenanceProcess for repack-related operations, garbage collection and disk
+reporting.
 
+.SS Timeout options
 .TP
-\fBtaped NbDiskThreads
-The number of disk I/O threads.
+.B taped TapeLoadTimeout \fI300\fR
+Maximum time to wait for a tape to load, in seconds.
+.TP
+.B taped WatchdogScheduleMaxSecs \fI60\fR
+Maximum time allowed to schedule a single mount, in seconds.
+.TP
+.B taped WatchdogMountMaxSecs \fI900\fR
+Maximum time allowed to mount a tape, in seconds.
+.TP
+.B taped WatchdogNoBlockMoveMaxSecs \fI1800\fR
+Maximum time allowed after mounting without any tape blocks being read/written, in seconds. If this
+timeout is exceeded, the session will be terminated.
+.TP
+.B taped WatchdogIdleSessionTimer \fI10\fR
+Maximum time to wait after scheduling came up idle, in seconds.
 
+.SH ENVIRONMENT
 .TP
-\fBtaped externalEncryptionKeyScript
-The Python script to interface with the encryption data store.
-
+.B XrdSecPROTOCOL
+The XRootD security protocol to use for client/server authentication.
 .TP
-\fBtaped TpConfigPath
-The path to tape drive configuration file (defaults is /etc/cta/TPCONFIG).
+.B XrdSecSSSKT
+Path to the XRootD Simple Shared Secrets (SSS) keytab to use for client/server authentication.
 
 .SH FILES
 .TP
-.B /etc/cta/TPCONFIG
-The tape drive configuration file.
-.TP
 .B /etc/cta/cta-taped.conf
-The CTA configuration file.
+The CTA Tape Server configuration file, containing the options described above under \fBCONFIGURATION\fP.
+See \fI/etc/cta/cta-taped.conf.example\fR.
+.TP
+.B /etc/cta/TPCONFIG
+The tape drive configuration file. A single tape server daemon can control one or two tape drives.
+TPCONFIG should contain one line per tape drive. Each line should consist of the following four
+elements, delimited by spaces:
+
+.RS
+DRIVE_NAME LOGICAL_LIBRARY_NAME DRIVE_DEVICE LIBRARY_SLOT
+
+See \fI/etc/cta/TPCONFIG.example\fR.
+.RE
 .TP
 .B /var/log/cta/cta-taped.log
-The tape tapeserver log file.
+Usual location for the tape server log file.
 
-.SH TRADEMARKS
-Oracle is a registered trademark of Oracle Corporation and/or its affiliates.
+.SH SEE ALSO
+.P
+CERN Tape Archive documentation (\fIhttps://eoscta.docs.cern.ch/\fR)
 
-.SH AUTHOR
-\fBCTA\fP Team
+.SH COPYRIGHT
+.P
+Copyright © 2022 CERN. License GPLv3+: GNU GPL version 3 or later (\fIhttp://gnu.org/licenses/gpl.html\fR).
+This is free software: you are free to change and redistribute it. There is NO WARRANTY, to the
+extent permitted by law. In applying this licence, CERN does not waive the privileges and immunities
+granted to it by virtue of its status as an Intergovernmental Organization or submit itself to any
+jurisdiction.
