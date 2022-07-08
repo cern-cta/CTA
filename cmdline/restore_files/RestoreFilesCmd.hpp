@@ -155,13 +155,14 @@ private:
   std::pair<std::string,std::string> getInstanceAndFidFromCTA(const RecycleTapeFileLsItem& file);
 
   /**
-   * Query EOS for the archiveFileId of the restored file
+   * Query EOS for the archiveFileId and checksum of the restored file
    *
    * @param diskInstance  Which EOS disk instance to query
    * @param fxid          fid of the file in EOS as a decimal string
-   * @return              archiveFileId of the file
+   * @return              tuple containing archiveFileId and checksum of the file
    */
-  uint64_t getArchiveFileIdFromEOS(const std::string& diskInstance, const std::string& fidStr);
+  std::pair<uint64_t, std::string> getArchiveFileIdAndChecksumFromEOS(const std::string& diskInstance,
+    const std::string& fidStr);
 
   /**
    * The object representing the API of the CTA logging system.

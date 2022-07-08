@@ -18,6 +18,7 @@
 #include "cmdline/restore_files/RestoreFilesCmd.hpp"
 #include "cmdline/restore_files/RestoreFilesCmdLineArgs.hpp"
 #include "common/utils/utils.hpp"
+#include "common/checksum/ChecksumBlob.hpp"
 #include "CtaFrontendApi.hpp"
 
 #include <XrdSsiPbLog.hpp>
@@ -160,14 +161,21 @@ int RestoreFilesCmd::exceptionThrowingMain(const int argc, char *const *const ar
       restoreDeletedFileCopyCta(file);
       // sanity check
       auto diskInstanceAndFxid = getInstanceAndFidFromCTA(file);
-      auto archiveFileId = getArchiveFileIdFromEOS(diskInstanceAndFxid.first, diskInstanceAndFxid.second);
-      if(archiveFileId == file.archive_file_id()) {
-        std::list<cta::log::Param> params;
-        params.push_back(cta::log::Param("archiveFileId", archiveFileId));
-        params.push_back(cta::log::Param("diskInstance", diskInstanceAndFxid.first));
-        params.push_back(cta::log::Param("diskFileId", diskInstanceAndFxid.second));
+      auto eosArchiveFileIdAndChecksum = getArchiveFileIdAndChecksumFromEOS(diskInstanceAndFxid.first, diskInstanceAndFxid.second);
+      auto &eosArchiveFileId = eosArchiveFileIdAndChecksum.first;
+      auto &eosChecksum = eosArchiveFileIdAndChecksum.second;
+      auto &ctaChecksum = file.checksum().begin()->value();
+      std::list<cta::log::Param> params;
+      params.push_back(cta::log::Param("archiveFileId", file.archive_file_id()));
+      params.push_back(cta::log::Param("diskInstance", diskInstanceAndFxid.first));
+      params.push_back(cta::log::Param("diskFileId", diskInstanceAndFxid.second));
+      params.push_back(cta::log::Param("checksum", ctaChecksum));
+      if(eosArchiveFileId == file.archive_file_id() && eosChecksum == ctaChecksum) {
         m_log(cta::log::INFO, "File metadata in EOS and CTA matches", params);
       } else {
+        params.push_back(cta::log::Param("eosArchiveFileId", eosArchiveFileId));
+        params.push_back(cta::log::Param("eosChecksum", eosChecksum));
+        m_log(cta::log::INFO, "File metadata in EOS and CTA does not match", params);
         throw std::runtime_error("Sanity check failed.");
       }
     } catch (RestoreFilesCmdException &e) {
@@ -688,8 +696,13 @@ uint64_t RestoreFilesCmd::restoreDeletedFileEos(const RecycleTapeFileLsItem &rtf
   const google::protobuf::EnumDescriptor *descriptor = cta::common::ChecksumBlob::Checksum::Type_descriptor();
   checksumType  = descriptor->FindValueByNumber(rtfls_item.checksum().begin()->type())->name();
   checksumValue = rtfls_item.checksum().begin()->value();
-  file.mutable_checksum()->set_type(checksumType); //only support adler for now
-  file.mutable_checksum()->set_value(checksumValue);
+
+  // TODO: The protobuf and supporting code here and in EOS should be refactored to take a ChecksumBlob
+  // rather than passing a single Adler32 checksum. This would avoid the need for format conversions.
+  // For now, only Adler32 is supported.
+  file.mutable_checksum()->set_type(checksumType);
+  auto byteArray = checksum::ChecksumBlob::HexToByteArray(checksumValue);
+  file.mutable_checksum()->set_value(std::string(byteArray.rbegin(),byteArray.rend()));
 
   // Extended attributes:
   //
@@ -788,7 +801,8 @@ std::pair<std::string,std::string> RestoreFilesCmd::getInstanceAndFidFromCTA(con
 //------------------------------------------------------------------------------
 // getArchiveFileIdFromEOS
 //------------------------------------------------------------------------------
-uint64_t RestoreFilesCmd::getArchiveFileIdFromEOS(const std::string& diskInstance, const std::string& fidStr) {
+std::pair<uint64_t, std::string> RestoreFilesCmd::getArchiveFileIdAndChecksumFromEOS(
+  const std::string& diskInstance, const std::string& fidStr) {
   auto fid = strtoul(fidStr.c_str(), nullptr, 10);
   if(fid < 1) {
     throw std::runtime_error(fid + " (base 10) is not a valid disk file ID");
@@ -800,7 +814,7 @@ uint64_t RestoreFilesCmd::getArchiveFileIdFromEOS(const std::string& diskInstanc
     std::stringstream ss;
     ss << std::hex << fid;
     params.push_back(cta::log::Param("fxid", ss.str()));
-    m_log(cta::log::DEBUG, "Querying EOS namespace for archiveFileId", params);
+    m_log(cta::log::DEBUG, "Querying EOS namespace for archiveFileId and checksum", params);
   }
   auto md_response = m_endpointMapPtr->getMD(diskInstance, ::eos::rpc::FILE, fid, "", false);
   auto archiveFileIdItor = md_response.fmd().xattrs().find("sys.archive.file_id");
@@ -808,12 +822,16 @@ uint64_t RestoreFilesCmd::getArchiveFileIdFromEOS(const std::string& diskInstanc
     throw std::runtime_error("archiveFileId extended attribute not found.");
   }
   auto archiveFileId = strtoul(archiveFileIdItor->second.c_str(), nullptr, 10);
+  auto byteArray = md_response.fmd().checksum().value();
+  auto checksumValue = checksum::ChecksumBlob::ByteArrayToHex(std::string(byteArray.rbegin(), byteArray.rend()));
   {
     std::list<cta::log::Param> params;
     params.push_back(cta::log::Param("archiveFileId", archiveFileId));
+    params.push_back(cta::log::Param("checksumValue", checksumValue));
     m_log(cta::log::DEBUG, "Response from EOS nameserver", params);
   }
-  return archiveFileId;
+
+  return std::make_pair(archiveFileId,checksumValue);
 }
 
 } // namespace admin
