@@ -38,7 +38,7 @@ add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.c
                              ../cmdline/CtaAdminCmdParse.cpp
                              GrpcClient.cpp GrpcEndpoint.cpp)
 target_link_libraries(XrdSsiCta ${XROOTD_XRDSSI_LIB} XrdSsiLib XrdSsiPbEosCta ctascheduler ctacommon ctaobjectstore ctacatalogue
-                      EosMigration ${GRPC_LIBRARY} ${GRPC_GRPC++_LIBRARY})
+                      EosCtaGrpc ${GRPC_LIBRARY} ${GRPC_GRPC++_LIBRARY})
 set_property (TARGET XrdSsiCta APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 if (OCCI_SUPPORT)
   set_property (TARGET XrdSsiCta APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})

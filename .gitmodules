@@ -1,7 +1,6 @@
 [submodule "xrootd-ssi-protobuf-interface"]
 	path = xrootd-ssi-protobuf-interface
-   url = https://:@gitlab.cern.ch:8443/eos/xrootd-ssi-protobuf-interface.git
-#   branch = stable
-[submodule "migration/grpc-proto"]
-	path = migration/grpc-proto
+	url = https://:@gitlab.cern.ch:8443/eos/xrootd-ssi-protobuf-interface.git
+[submodule "eos_cta/grpc-proto"]
+	path = eos_cta/grpc-proto
 	url = https://:@gitlab.cern.ch:8443/eos/grpc-proto.git
