@@ -69,7 +69,7 @@ public:
   void printVirtualOrganizationLsHeader();
   void printVersionHeader();
   void printMediaTypeLsHeader();
-  void printSchedulingInfosLsHeader();
+  void printSchedulingInfoLsHeader();
   void printRecycleTapeFileLsHeader();
    
   // Output records
@@ -100,7 +100,7 @@ public:
   void print(const VersionItem & version_item);
   void print(const MediaTypeLsItem &mtls_item);
   void print(const RecycleTapeFileLsItem & rtfls_item);
-  
+  void print(const SchedulingInfoLsItem& sils_item);
 
 private:
   //! Add a line to the buffer

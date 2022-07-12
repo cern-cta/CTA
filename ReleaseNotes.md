@@ -15,8 +15,10 @@ UseRAO, RAOLTOAlgorithm, RAOLTOAlgorithmOptions.
 
 ### Features
 ### Bug fixes
+- cta/CTA#947  - cta-taped should log the FST being used for a data transfer
+- cta/CTA#1106 - "cta-admin schedulinginfo ls" returns records larger than SSI buffer size limit
 - cta/CTA#1269 - cta-restore-deleted-files injects wrong diskFileId in CTA Catalogue
-- cta/CTA#947 - cta-taped should log the FST being used for a data transfer
+
 ### Continuous Integration
 ### Building and Packaging
 

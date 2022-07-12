@@ -24,9 +24,9 @@
 namespace cta { namespace xrd {
 
 /*!
- * Stream object which implements "tapepool ls" command
+ * Stream object which implements "schedulinginfo ls" command
  */
-class SchedulingInfosLsStream: public XrdCtaStream{
+class SchedulingInfosLsStream: public XrdCtaStream {
 public:
   /*!
    * Constructor
@@ -43,7 +43,7 @@ private:
    * Can we close the stream?
    */
   virtual bool isDone() const {
-    return m_schedulingInfosList.empty();
+    return m_schedulingInfoList.empty() && m_potentialMountList.empty();
   }
 
   /*!
@@ -51,15 +51,17 @@ private:
    */
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
 
-  std::list<cta::SchedulingInfos> m_schedulingInfosList;    //!< List of queues and mounts from the scheduler
+  std::list<cta::SchedulingInfos> m_schedulingInfoList;                     //!< List of queues and mounts from the scheduler
+  std::string m_logicalLibrary;                                             //!< Logical library for potential archive mounts
+  std::list<cta::SchedulerDatabase::PotentialMount> m_potentialMountList;   //!< List of potential mounts
 
-  static constexpr const char* const LOG_SUFFIX  = "SchedulingInfosStream";                   //!< Identifier for log messages
+  static constexpr const char* const LOG_SUFFIX  = "SchedulingInfosStream"; //!< Identifier for log messages
 };
 
 SchedulingInfosLsStream::SchedulingInfosLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue,
   cta::Scheduler &scheduler, log::LogContext &lc) :
   XrdCtaStream(catalogue, scheduler),
-  m_schedulingInfosList(scheduler.getSchedulingInformations(lc))
+  m_schedulingInfoList(scheduler.getSchedulingInformations(lc))
 {
   using namespace cta::admin;
 
@@ -69,64 +71,40 @@ SchedulingInfosLsStream::SchedulingInfosLsStream(const RequestMessage &requestMs
 int SchedulingInfosLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
   using namespace cta::admin;
 
-  for(bool is_buffer_full = false; !m_schedulingInfosList.empty() && !is_buffer_full; m_schedulingInfosList.pop_front()) {
+  for(bool is_buffer_full = false; !isDone() && !is_buffer_full; ) {
+    cta::SchedulerDatabase::PotentialMount potentialMount;
+
+    if(m_potentialMountList.empty()) {
+      m_logicalLibrary = m_schedulingInfoList.front().getLogicalLibraryName();
+      m_potentialMountList = m_schedulingInfoList.front().getPotentialMounts();
+      m_schedulingInfoList.pop_front();
+      continue;
+    } else {
+      potentialMount = m_potentialMountList.front();
+      m_potentialMountList.pop_front();
+    }
+
     Data record;
 
-    auto &schedulingInfo      = m_schedulingInfosList.front();
     auto sils_item = record.mutable_sils_item();
-    sils_item->set_logical_library(schedulingInfo.getLogicalLibraryName());
-    auto potentialMounts = schedulingInfo.getPotentialMounts();
-    for(auto & potentialMount: potentialMounts){
-      auto potentialMountToAdd = sils_item->mutable_potential_mounts()->Add();
-      potentialMountToAdd->set_vid(potentialMount.vid);
-      potentialMountToAdd->set_tapepool(potentialMount.tapePool);
-      potentialMountToAdd->set_vo(potentialMount.vo);
-      potentialMountToAdd->set_media_type(potentialMount.mediaType);
-      potentialMountToAdd->set_vendor(potentialMount.vendor);
-      potentialMountToAdd->set_mount_type(MountTypeToProtobuf(potentialMount.type));
-      potentialMountToAdd->set_tape_capacity_in_bytes(potentialMount.capacityInBytes);
-      potentialMountToAdd->set_mount_policy_priority(potentialMount.priority);
-      potentialMountToAdd->set_mount_policy_min_request_age(potentialMount.minRequestAge);
-      potentialMountToAdd->set_files_queued(potentialMount.filesQueued);
-      potentialMountToAdd->set_bytes_queued(potentialMount.bytesQueued);
-      potentialMountToAdd->set_oldest_job_start_time(potentialMount.oldestJobStartTime);
-      potentialMountToAdd->set_sleeping_mount(potentialMount.sleepingMount);
-      potentialMountToAdd->set_sleep_time(potentialMount.sleepTime);
-      potentialMountToAdd->set_disk_system_slept_for(potentialMount.diskSystemSleptFor);
-      potentialMountToAdd->set_mount_count(potentialMount.mountCount);
-      potentialMountToAdd->set_logical_library(potentialMount.logicalLibrary);
-    }
+    sils_item->set_logical_library(m_logicalLibrary);
+    sils_item->set_vid(potentialMount.vid);
+    sils_item->set_tapepool(potentialMount.tapePool);
+    sils_item->set_vo(potentialMount.vo);
+    sils_item->set_media_type(potentialMount.mediaType);
+    sils_item->set_vendor(potentialMount.vendor);
+    sils_item->set_mount_type(MountTypeToProtobuf(potentialMount.type));
+    sils_item->set_tape_capacity_in_bytes(potentialMount.capacityInBytes);
+    sils_item->set_mount_policy_priority(potentialMount.priority);
+    sils_item->set_mount_policy_min_request_age(potentialMount.minRequestAge);
+    sils_item->set_files_queued(potentialMount.filesQueued);
+    sils_item->set_bytes_queued(potentialMount.bytesQueued);
+    sils_item->set_oldest_job_start_time(potentialMount.oldestJobStartTime);
+    sils_item->set_sleeping_mount(potentialMount.sleepingMount);
+    sils_item->set_sleep_time(potentialMount.sleepTime);
+    sils_item->set_disk_system_slept_for(potentialMount.diskSystemSleptFor);
+    sils_item->set_mount_count(potentialMount.mountCount);
     is_buffer_full = streambuf->Push(record);
-    /*
-
-    sq_item->set_mount_type(MountTypeToProtobuf(sq.mountType));
-    sq_item->set_tapepool(sq.tapePool);
-    sq_item->set_logical_library(sq.logicalLibrary);
-    sq_item->set_vid(sq.vid);
-    sq_item->set_queued_files(sq.filesQueued);
-    sq_item->set_queued_bytes(sq.bytesQueued);
-    sq_item->set_oldest_age(sq.oldestJobAge);
-    sq_item->set_cur_mounts(sq.currentMounts);
-    sq_item->set_cur_files(sq.currentFiles);
-    sq_item->set_cur_bytes(sq.currentBytes);
-    sq_item->set_next_mounts(sq.nextMounts);
-    sq_item->set_tapes_capacity(sq.tapesCapacity);
-    sq_item->set_tapes_files(sq.filesOnTapes);
-    sq_item->set_tapes_bytes(sq.dataOnTapes);
-    sq_item->set_full_tapes(sq.fullTapes);
-    sq_item->set_empty_tapes(sq.emptyTapes);
-    sq_item->set_disabled_tapes(sq.disabledTapes);
-    sq_item->set_rdonly_tapes(sq.readOnlyTapes);
-    sq_item->set_writable_tapes(sq.writableTapes);
-    if (sq.sleepForSpaceInfo) {
-      sq_item->set_sleeping_for_space(true);
-      sq_item->set_sleep_start_time(sq.sleepForSpaceInfo.value().startTime);
-      sq_item->set_disk_system_slept_for(sq.sleepForSpaceInfo.value().diskSystemName);
-    } else {
-      sq_item->set_sleeping_for_space(false);
-    }
-
-    is_buffer_full = streambuf->Push(record);*/
   }
   return streambuf->Size();
 }
