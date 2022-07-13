@@ -168,7 +168,7 @@ private:
    * @param fSeq The tape file fSeq.
    */
   void readTapeFile(castor::tape::tapeserver::drive::DriveInterface &drive, const uint64_t &fSeq,
-    cta::disk::WriteFile &wf);
+    cta::disk::WriteFile &wf, const cta::common::dataStructures::Label::Format &labelFormat);
 
 
   /**

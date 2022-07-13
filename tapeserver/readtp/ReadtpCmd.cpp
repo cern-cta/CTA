@@ -364,7 +364,7 @@ void ReadtpCmd::readTapeFiles(
         std::unique_ptr<cta::disk::WriteFile> wfptr;
         wfptr.reset(fileFactory.createWriteFile(destinationFile));
         cta::disk::WriteFile &wf = *wfptr.get();
-        readTapeFile(drive, fSeq, wf);
+        readTapeFile(drive, fSeq, wf, tape.labelFormat);
         m_nbSuccessReads++; // if readTapeFile returns, file was read successfully
         destinationFile = getNextDestinationUrl();
       } catch (tapeserver::readtp::NoSuchFSeqException&) {
@@ -403,7 +403,8 @@ void ReadtpCmd::readTapeFiles(
 // readTapeFile
 //------------------------------------------------------------------------------
 void ReadtpCmd::readTapeFile(
-  castor::tape::tapeserver::drive::DriveInterface &drive, const uint64_t &fSeq, cta::disk::WriteFile &wf) {
+  castor::tape::tapeserver::drive::DriveInterface &drive, const uint64_t &fSeq, cta::disk::WriteFile &wf,
+  const cta::common::dataStructures::Label::Format &labelFormat) {
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("userName", m_userName));
   params.push_back(cta::log::Param("tapeVid", m_vid));
@@ -418,6 +419,7 @@ void ReadtpCmd::readTapeFile(
   volInfo.vid=m_vid;
   volInfo.nbFiles = 0;
   volInfo.mountType = cta::common::dataStructures::MountType::Retrieve;
+  volInfo.labelFormat = labelFormat;
   const auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(drive, volInfo, m_useLbp);
 
   catalogue::TapeFileSearchCriteria searchCriteria;
