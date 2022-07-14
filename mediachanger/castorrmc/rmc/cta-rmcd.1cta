@@ -13,89 +13,95 @@
 .\"               granted to it by virtue of its status as an Intergovernmental Organization or
 .\"               submit itself to any jurisdiction.
 
-.TH CTA-RMCD "1cta" "$Date: 2021/03/11 14:44:00 $" CTA "CTA"
+.TH CTA-RMCD "1cta" "2022-07-12" "CTA" "The CERN Tape Archive (CTA)"
 .SH NAME
-cta-rmcd \- Media changer daemon
+cta-rmcd \- CTA Remote Media Changer Daemon
+
 .SH SYNOPSIS
-.BI "cta-rmcd [OPTIONS]"
+systemctl start \fBcta-rmcd\fP \fIdevice_file\fR
+.br
+systemctl stop \fBcta-rmcd\fP
+.br
+systemctl status \fBcta-rmcd\fP
 
 .SH DESCRIPTION
-CTA supports SCSI-compatible tape libraries. The cta-taped daemon requires a tape
-library daemon to be installed and run on the same tape server as itself.
+\fBcta-rmcd\fP is the Remote Media Changer daemon, used to control SCSI-compatible tape libraries.
 .P
-A SCSI compatible tape library requires the following daemon:
-
-\fBcta-rmcd\fP
-
-The installation RPM for the \fBrmcd\fP daemon and its manual page is:
-
-\fBcta-rmcd-MAJORVERSION-MINORVERSION.el7.cern.x86_64.rpm\fP
-
-The \fBcta-rmcd\fP daemon can be started, stopped and its status queried using
-the usual service commands:
-.LP
-\fBservice cta-rmcd start /device/file/of/the/tape/library\fP
-.br
-\fBservice cta-rmcd status\fP
-.br
-\fBservice cta-rmcd stop\fP
-.LP
 The
-.B cta-rmcd
-command starts the Remote Media Changer daemon.
-This command is usually executed at system startup time
-.RB ( /etc/rc.local ).
-.LP
-If the Remote Media Changer daemon is not active,
-the requests are automatically retried by the client API.
-.LP
-All error messages and statistical information are kept in a log.
-.LP
-The Remote Media Changer daemon listen port number can be defined on client
-hosts and on the Remote Media Changer host itself in either of the following
-ways:
+\fBcta-taped\fP daemon requires that \fBcta-rmcd\fP is installed and running on the same tape server
+as itself. \fBcta-rmcd\fP is usually started at system startup time by \fBsystemd\fP or other system
+service management software.
+
+.SH CONFIGURATION
+The port number that \fBcta-rmcd\fP will listen on should be defined on client hosts and on the
+tapeserver host. The default port number is 5014. It is possible to configure a different port
+number in \fI/etc/services\fR:
+.P
 .RS
-.LP
-setting an environment variable RMC_PORT
-.RS
-.HP
-setenv RMC_PORT 5014
+rmc	657/tcp		# CTA Remote Media Changer (cta-rmcd)
+.br
+rmc	657/udp		# CTA Remote Media Changer (cta-rmcd)
 .RE
-.LP
-an entry in
-.B /etc/cta/cta-rmcd.conf
-like:
+.P
+This value can be overridden in \fI/etc/cta/cta-rmcd.conf\fR:
+.P
 .RS
-.HP
 RMC	PORT	5014
 .RE
-.LP
-an entry in
-.B /etc/services
-like:
-.RS
-.HP
-rmc           5014/tcp                        # CTA Remote Media Changer
-.RE
-.RE
-.LP
-If none of these methods is used, the default port number is taken from the
-definition of RMC_PORT in rmc_constants.h.
-.LP
-.RE
-.RE
-.LP
-In the log each entry has a timestamp.
-For each user command there is one message RMC92 giving information about
-the requestor (hostname, uid, gid) and one message RMC98 giving the command
-itself.
-The completion code of the command is also logged.
-.SH FILES
-.TP 1.5i
-.B /var/log/cta/cta-rmcd.log
-.SH EXAMPLES
+.P
+It can also be set in the \fBRMC_PORT\fP environment variable.
+
+.SH ENVIRONMENT
 .TP
-Here is a small log:
+.B RMC_PORT
+Sets the port number on which \fBcta-rmcd\fP will listen.
+
+.SH FILES
+.TP
+.B /etc/cta/cta-rmcd.conf
+Configuration file. See \fBCONFIGURATION\fP above, and \fI/etc/cta/cta-rmcd.conf.example\fR.
+
+.TP
+.B /var/log/cta/cta-rmcd.log
+Log of error messages and statistical information. Log lines with code \fBRMC92\fP give information
+about the requestor: (uid,gid) and hostname. Log lines with code \fBRMC98\fP contain the command that
+was sent to the library. The exit status of each command is also logged.
+
+.SH EXAMPLE
+.P
+Example configuration of \fI/etc/systemd/system/cta-rmcd.service\fR:
+.P
+.RS
+.nf
+[Unit]
+Description=CERN Tape Archive (CTA) rmcd daemon
+After=syslog.target network-online.target
+
+[Service]
+User=cta
+EnvironmentFile=-/etc/sysconfig/cta-rmcd
+ExecStart=/usr/bin/cta-rmcd ${CTA_RMCD_OPTIONS}
+LimitCORE=infinity
+Type=forking
+Restart=no
+
+[Install]
+WantedBy=default.target
+.fi
+.RE
+.P
+Example configuration of \fI/etc/sysconfig/cta-rmcd\fR:
+.P
+.RS
+.nf
+DAEMON_COREFILE_LIMIT=unlimited
+CTA_RMCD_OPTIONS=/dev/smc
+.fi
+.RE
+.P
+Example excerpt from the \fBcta-rmcd\fP logfile:
+.P
+.RS
 .nf
 12/06 11:40:58  7971 rmc_srv_mount: RMC92 - mount request by 0,0 from tpsrv015.cern.ch
 12/06 11:40:58  7971 rmc_srv_mount: RMC98 - mount 000029/0 on drive 2
@@ -104,5 +110,19 @@ Here is a small log:
 12/06 11:42:43  7971 rmc_srv_unmount: RMC98 - unmount 000029 2 0
 12/06 11:42:48  7971 rmc_srv_unmount: returns 0
 .fi
-.SH AUTHOR
-\fBCTA\fP Team
+.RE
+
+.SH SEE ALSO
+\fBsystemctl\fP(1)
+.br
+\fBcta-taped\fP(1cta)
+.P
+CERN Tape Archive documentation (\fIhttps://eoscta.docs.cern.ch/\fR)
+
+.SH COPYRIGHT
+.P
+Copyright © 2022 CERN. License GPLv3+: GNU GPL version 3 or later (\fIhttp://gnu.org/licenses/gpl.html\fR).
+This is free software: you are free to change and redistribute it. There is NO WARRANTY, to the
+extent permitted by law. In applying this licence, CERN does not waive the privileges and immunities
+granted to it by virtue of its status as an Intergovernmental Organization or submit itself to any
+jurisdiction.

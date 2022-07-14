@@ -377,7 +377,7 @@ Scripts and utilities to faciliate working with the CTA catalogue
 %attr(0755,root,root) %{_bindir}/cta-catalogue-admin-user-create
 %attr(0755,root,root) %{_bindir}/cta-catalogue-schema-create
 %attr(0755,root,root) %{_bindir}/cta-catalogue-schema-drop
-%attr(0755,root,root) %{_bindir}/cta-catalogue-set-production
+%attr(0755,root,root) %{_bindir}/cta-catalogue-schema-set-production
 %attr(0755,root,root) %{_bindir}/cta-catalogue-schema-verify
 %attr(0755,root,root) %{_bindir}/cta-database-poll
 %attr(0755,root,root) %{_bindir}/cta-statistics-save
@@ -385,7 +385,7 @@ Scripts and utilities to faciliate working with the CTA catalogue
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-catalogue-admin-user-create.1cta.gz
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-catalogue-schema-create.1cta.gz
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-catalogue-schema-drop.1cta.gz
-%attr(0644,root,root) %doc /usr/share/man/man1/cta-catalogue-set-production.1cta.gz
+%attr(0644,root,root) %doc /usr/share/man/man1/cta-catalogue-schema-set-production.1cta.gz
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-catalogue-schema-verify.1cta.gz
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-database-poll.1cta.gz
 
@@ -402,7 +402,7 @@ The Remote Media Changer daemon (rmcd)
 %attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-rmcd
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-rmcd.1cta.gz
 %attr(0755,root,root) %{_bindir}/cta-rmcd
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-rmcd.conf
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-rmcd.conf.example
 %attr(0644,root,root) %config(noreplace) /etc/sysconfig/cta-rmcd
 %attr(0644,root,root) /etc/systemd/system/cta-rmcd.service
 
@@ -427,7 +427,6 @@ The client of the Remote Media Changer Daemon (rmcd)
 %files -n cta-smc
 %defattr(-,root,root)
 %attr(0755,root,root) %{_bindir}/cta-smc
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-smc.conf
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-smc.1cta.gz
 
 %package -n cta-tape-label

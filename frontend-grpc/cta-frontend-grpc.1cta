@@ -13,39 +13,37 @@
 .\"                 You should have received a copy of the GNU General Public License
 .\"                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-.TH CTA-FRONTEND-GRPC "1cta" "$Date: 2021/10/29 14:09:00 $" CTA "CTA"
+.TH CTA-FRONTEND-GRPC "1cta" "2022-07-12" "CTA" "The CERN Tape Archive (CTA)"
 .SH NAME
-cta-frontend-grpc \- gRPC based frontend for CTA
+cta-frontend-grpc \- gRPC-based Frontend for CTA
+
 .SH SYNOPSIS
-.BI "cta-frontend-grpc [OPTIONS]"
+\fBcta-frontend-grpc\fP [--port \fIport\fR] [--log-header|--no-log-header] [--tls] [--version] [--help]
 
 .SH DESCRIPTION
-\fBcta-frontend-grpc\fP is the daemon process providing gRPC endpoint for integration with
-storage systems.
-.P
+\fBcta-frontend-grpc\fP is the daemon process providing gRPC endpoint for integration with storage systems.
 
 .SH OPTIONS
 .TP
-\fB\-p, \-\-port  <port>
-TCP port used to accept connections from dCache
+\-p, \-\-port \fIport\fR
+TCP port used to accept connections from dCache.
 .TP
-\fB\-h, \-\-help
-Prints the usage message.
-.TP
-\fB\-n, \-\-log\-header
+\-n, \-\-log\-header
 Include timestamp and host name into the log messages.
 .TP
-\fB\-s, \-\-no\-log\-header
+\-s, \-\-no\-log\-header
 Don't include timestamp and host name into the log messages, default behaviour.
 .TP
-\fB\-t, \-\-tls
+\-t, \-\-tls
 Enable TLS for communication. The paths to the TLS certificate, key and root-ca chan files in PEM
 format should be specified by '\fBgRPC TlsCert\fP', '\fBgRPC TlsKey\fP' and '\fBgRPC TlsChain\fP'
 in the cta.conf configuration file.
 .TP
-\fB\-v, \-\-version
+\-v, \-\-version
 Print the version number and exit.
-
+.TP
+\-h, \-\-help
+Display command options and exit.
 
 .SH FILES
 .TP
@@ -55,5 +53,16 @@ The CTA configuration file.
 .B /etc/cta/cta-catalogue.conf
 The CTA catalog configuration file.
 
-.SH AUTHOR
-\fBCTA\fP Team
+.SH SEE ALSO
+.P
+CERN Tape Archive documentation (\fIhttps://eoscta.docs.cern.ch/\fR)
+.P
+gRPC (\fIhttps://grpc.io/\fR)
+
+.SH COPYRIGHT
+.P
+Copyright © 2022 CERN. License GPLv3+: GNU GPL version 3 or later (\fIhttp://gnu.org/licenses/gpl.html\fR).
+This is free software: you are free to change and redistribute it. There is NO WARRANTY, to the
+extent permitted by law. In applying this licence, CERN does not waive the privileges and immunities
+granted to it by virtue of its status as an Intergovernmental Organization or submit itself to any
+jurisdiction.

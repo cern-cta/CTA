@@ -13,31 +13,43 @@
 .\"               granted to it by virtue of its status as an Intergovernmental Organization or
 .\"               submit itself to any jurisdiction.
 
-.TH CTA-CATALOGUE-SCHEMA-DROP 1CTA "December 2016" CTA CTA
+.TH CTA-CATALOGUE-SCHEMA-DROP "1cta" "2022-07-12" "CTA" "The CERN Tape Archive (CTA)"
 .SH NAME
-cta-catalogue-schema-drop \- Drop the schema of the CTA catalogue database
+cta-catalogue-schema-drop \- Drop the CTA Catalogue schema
+
 .SH SYNOPSIS
-.BI "cta-catalogue-schema-drop databaseConnectionFile [options]"
+\fBcta-catalogue-schema-drop\fP \fIdatabaseConnectionFile\fR [--help]
 
 .SH DESCRIPTION
-\fBcta-catalogue-schema-drop\fP is a command-line tool that will drop \fBALL\fP
-of the tables and sequences in the specified database.
+\fBcta-catalogue-schema-drop\fP is a command-line tool that will drop \fBall\fP of the tables and
+sequences in the specified database. It will abort if the CTA Catalogue database has been marked
+as a production database with \fBcta-catalogue-schema-set-production\fP.
+.P
+\fIdatabaseConnectionFile\fR is the path to the configuration file containing the connection details
+of the CTA Catalogue database.
 
-This command-line tool will abort if the CTA_CATALOGUE database has been marked
-as a production database using the \fBcta-catalogue-set-production\fP command.
-.SH ARGUMENTS
-.TP
-\fBdatabaseConnectionFile
-The path to the configuration file containing the connection details of the
-CTA catalogue database.
 .SH OPTIONS
 .TP
-\fB\-h, \-\-help
-Prints the usage message.
-.SH RETURN VALUE
-Zero on success and non-zero on failure.
-.SH EXAMPLES
+\-h, \-\-help
+Display command options and exit.
+
+.SH EXIT STATUS
+.P
+\fBcta-catalogue-schema-drop\fP returns 0 on success.
+
+.SH EXAMPLE
+.P
 cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf
 
-.SH AUTHOR
-\fBCTA\fP Team
+.SH SEE ALSO
+\fBcta-catalogue-schema-set-production\fP(1cta)
+.P
+CERN Tape Archive documentation (\fIhttps://eoscta.docs.cern.ch/\fR)
+
+.SH COPYRIGHT
+.P
+Copyright © 2022 CERN. License GPLv3+: GNU GPL version 3 or later (\fIhttp://gnu.org/licenses/gpl.html\fR).
+This is free software: you are free to change and redistribute it. There is NO WARRANTY, to the
+extent permitted by law. In applying this licence, CERN does not waive the privileges and immunities
+granted to it by virtue of its status as an Intergovernmental Organization or submit itself to any
+jurisdiction.

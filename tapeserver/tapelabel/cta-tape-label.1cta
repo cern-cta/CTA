@@ -13,35 +13,70 @@
 .\"               granted to it by virtue of its status as an Intergovernmental Organization or
 .\"               submit itself to any jurisdiction.
 
-.TH CTA-TAPE-LABEL 1CTA "July 2019" CTA CTA
+.TH CTA-TAPE-LABEL "1cta" "2022-07-12" "CTA" "The CERN Tape Archive (CTA)"
 .SH NAME
 cta-tape-label \- Pre-label a CTA tape
+
 .SH SYNOPSIS
-.BI "cta-tape-label [options] --vid/-v VID"
+.HP
+\fBcta-tape-label\fP [--oldlabel \fIold_vid\fR] [--loadtimeout \fItimeout\fR] [--drive \fIdrive_name\fR] [--force] [--help] [--debug] --vid \fIvid\fR
 
 .SH DESCRIPTION
-\fBcta-tape-label\fP is a command-line tool for pre-labelling a CTA tape.
+\fBcta-tape-label\fP writes the CTA label file \fBVOL1\fP at the beginning of a tape, to prepare the
+tape to store data files. The label contains the Volume ID specified by \fIvid\fR.
+.P
+If the tape to be labelled already contains files, running \fBcta-tape-label\fP is a destructive
+operation, which writes the label file to the beginning of tape and renders all data beyond the
+label file inaccessible. 
+.P
+For non-blank tapes, \fBcta-tape-label\fP checks that the \fIvid\fR supplied matches the existing
+label of the tape in the drive. This behaviour can be changed with the --oldlabel and --force options
+(see \fBOPTIONS\fP, below).
 
-\fBcta-tape-label\fP writes CTA label to the tape with specified \fBVID\fP.
 .SH OPTIONS
 .TP
-\fB\-o, \-\-oldlabel
-Volume ID from the tape label if the tape non-blank. Needs to be set if the tape has any vid in the label differ from VID.
+-o, --oldlabel \fIold_vid\fR
+The Volume ID (VID) of the current label on the tape, if it is not the same as \fIvid\fR and the tape is not blank.
 .TP
-\fB\-h, \-\-help
-Prints the usage message.
+-t, --loadtimeout \fItimeout\fR
+The timeout to load the tape in the drive slot, in seconds. Defaults to 7200 (two hours), to allow time
+for media initialisation.
 .TP
-\fB\-d, \-\-debug
-Prints more logs for label operations.
+-u, --drive \fIdrive_name\fR
+The unit name of the drive used. Defaults to the first drive listed in TPCONFIG.
 .TP
-\fB\-f, \-\-force
-Force labeling for not-blank tapes for testing purpose and without label checks. Must only be used manually.
-.SH RETURN VALUE
-Zero on success and non-zero on failure.
-.SH EXAMPLES
+-f, --force
+\fBWarning: this option destroys any data on the tape without first performing the label check.\fP
+.P
+.RS
+Force labelling for non-blank tapes. This is intended for testing or use in rare situations by expert
+operators. This option should not be used when calling \fBcta-tape-label\fP from a script.
+.RE
+.TP
+-h, --help
+Display command options and exit.
+.TP
+-d, --debug
+Verbose log messages.
+
+.SH EXIT STATUS
+.P
+\fBcta-readtp\fP returns 0 on success.
+
+.SH EXAMPLE
+.P
 cta-tape-label --vid I54321 --oldvid T12345 --debug
 .br
 cta-tape-label --vid L54321 --force
 
-.SH AUTHOR
-\fBCTA\fP Team
+.SH SEE ALSO
+.P
+CERN Tape Archive documentation (\fIhttps://eoscta.docs.cern.ch/\fR)
+
+.SH COPYRIGHT
+.P
+Copyright © 2022 CERN. License GPLv3+: GNU GPL version 3 or later (\fIhttp://gnu.org/licenses/gpl.html\fR).
+This is free software: you are free to change and redistribute it. There is NO WARRANTY, to the
+extent permitted by law. In applying this licence, CERN does not waive the privileges and immunities
+granted to it by virtue of its status as an Intergovernmental Organization or submit itself to any
+jurisdiction.

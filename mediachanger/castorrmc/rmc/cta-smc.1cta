@@ -13,175 +13,142 @@
 .\"               granted to it by virtue of its status as an Intergovernmental Organization or
 .\"               submit itself to any jurisdiction.
 
-.TH SMC "1cta" "$Date: 2017/12/30 09:43:12 $" CTA "Ctape User Commands"
+.TH CTA-SMC "1cta" "2022-07-12" "CTA" "The CERN Tape Archive (CTA)"
 .SH NAME
-cta-smc \- command line interface to drive robotic devices through SCSI
+cta-smc \- CTA SCSI Media Changer client
+
 .SH SYNOPSIS
-.B cta-smc
-.BI -d
-.BI -D " drive_ordinal"
-[
-.BI -V " vid"
-]
+\fBcta-smc\fP -d -D \fIdrive_ordinal\fR [ -V \fIvid\fR ]
 .br
-.B cta-smc
-.BI -e
-.BI -V " vid"
+\fBcta-smc\fP -e -V \fIvid\fR
 .br
-.B cta-smc
-.BI -i
-[
-.BI -V " vid"
-]
+\fBcta-smc\fP -i [ -V \fIvid\fR ]
 .br
-.B cta-smc
-.BI -m
-.BI -D " drive_ordinal"
-.BI -V " vid"
+\fBcta-smc\fP -m -D \fIdrive_ordinal\fR -V \fIvid\fR
 .br
-.B cta-smc
-.B -q D
-[
-.BI -D " drive_ordinal"
-]
-[
-.BI -j
-]
+\fBcta-smc\fP -q D [ -D \fIdrive_ordinal\fR ] [ --json ]
 .br
-.B cta-smc
-.B -q L
-[
-.BI -j
-]
+\fBcta-smc\fP -q L [ --json ]
 .br
-.B cta-smc
-.B -q P
-[
-.BI -j
-]
+\fBcta-smc\fP -q P [ --json ]
 .br
-.B cta-smc
-.B -q S
-[
-.BI -N " nbelem"
-] [
-.BI -S " starting_slot"
-] [
-.BI -j
-]
+\fBcta-smc\fP -q S [ -N nb_elements ] [ -S starting_slot ] [ --json ]
 .br
-.B cta-smc
-.B -q V
-[
-.BI -N " nbelem"
-] [
-.BI -V " vid"
-] [
-.BI -j
-]
+\fBcta-smc\fP -q V [ -N nb_elements ] [ -V \fIvid\fR ] [ --json ]
+
 .SH DESCRIPTION
-.B cta-smc
-is a program allowing to mount, dismount, export volumes in a robotic
-library through SCSI. It allows also to query various elements of the library.
+\fBcta-smc\fP is the SCSI Media Changer client. It controls the mounting, dismounting and exporting of tapes
+in a robotic tape library and can be used to query the state of the library.
+
 .SH OPTIONS
 .TP
-.BI \-d
-triggers a dismount operation. The drive must be already unloaded.
-The drive must be specified while the vid of the cartridge is optional.
-If
-.B -V
-is specified, the vid must match the vid on the cartridge to be dismounted.
+\-d
+Triggers a dismount operation. The drive must be already unloaded. The drive must be specified, but
+the Volume ID (VID) of the cartridge is optional. If -V \fIvid\fR is specified, \fIvid\fR must match
+the VID on the cartridge to be dismounted.
 .TP
-.BI \-e
-exports a volume. The cartridge must be in a storage slot (not a drive).
-The vid must be specified.
+-D \fIdrive_ordinal\fP
+Specify which drive to control or query. \fIdrive_ordinal\fP is the SCSI bus number of the drive, starting from 0.
 .TP
-.BI \-i
-imports either a specific volume indicated by
-.B -V
-option or all volumes in state "import" in the import/export cells.
+\-e
+Moves a tape from a storage slot to the export slot (which can be virtual). The VID must be specified.
 .TP
-.BI \-m
-triggers a mount operation. The drive must be free.
-The drive and the vid must be specified.
+\-i
+Imports either a specific VID (indicated by -V) or all tapes in state "import" in the import/export slots.
 .TP
-.BI \-N " nbelem"
-allows to specify the maximum number of entries to be reported.
+\-m
+Triggers a mount operation. The drive must be free. The drive and the VID must be specified.
 .TP
-.BI \-q " query_type"
-queries the library and produce a report about the status of various elements
-in the library.
-.I query_type
-may be one of the following:
+\-N \fInb_elements\fR
+Specifies the maximum number of entries to be reported.
+.TP
+\-q \fIquery_type\fR
+Queries the library and produces a report about the state of the library. \fIquery_type\fR may be one
+of the following:
 .RS
 .TP
 .B D
-produce a list of drives with their status and the vid of the mounted tape
-if any. Unless a specific drive is also given with the option
-.BR -D ,
-the status of all drives is reported.
+Produce a list of drives with their status and the VID of the mounted tape (if any). The status of
+all drives is reported, unless a specific drive is selected with the -D option.
 .TP
 .B L
-prints the result of the INQUIRY command (Vendor/Product/Revision).
-It gives also the starting address and the number of slots, drives, ports
-and transports (hands) in the library.
+Prints the result of the SCSI \fBINQUIRY\fP command (Vendor/Product/Revision). It also gives the starting
+address and the number of slots, drives, ports and transports (robotic arms) in the library.
 .TP
 .B P
-prints the status of import/export slots.
+Prints the status of import/export slots.
 .TP
 .B S
-prints the status of slots. By default all slots are reported, but the
-starting address may be specified with the option
-.B -S
-and the number of elements to be reported may be given by the option
-.BR -N .
+Prints the status of slots. By default all slots are reported, but the starting address may be specified
+with the -S option, and the number of elements to be reported may be specified with the -N option.
 .TP
 .B V
-prints the status of volumes. A single vid or a pattern may also be specified
-with the option
-.BR -V .
+Prints the status of volumes (tapes). A single VID or a pattern may also be specified with the -V option.
 .RE
 .TP
-.B \-S " starting_slot"
-specifies the starting slot address for the query operation.
+\-S \fIstarting_slot\fR
+Specifies the starting slot address for the query operation.
 .TP
-.B \-V " vid"
-A full vid or a pattern may be specified. In the latter case wild card
-characters '*' and '?' may be used but must be escaped because of the shell.
+\-V \fIvid\fR
+A full VID or a pattern may be specified using shell wildcard characters '?' and '*'.
 .TP
-.B \-j
-script mode. On query requests it prints json.
+--json
+Return query responses in JSON format (for use in scripts).
 
-.SH EXAMPLES
-.LP
-To mount the volume JK2005 on drive 1:
+.SH EXIT STATUS
+.P
+0	Ok.
 .br
+1	Parameter error or unrecoverable error (just log it).
+.br
+2	Should release drive and retry in 600 seconds.
+.br
+3	Should retry in 60 seconds.
+.br
+4	Should first do a demount force.
+.br
+5	Should configure the drive down.
+.br
+6	Should send a message to the operator and exit.
+.br
+7	Ops msg (nowait) + release drive + slow retry.
+.br
+8	Should send a message to the operator and wait.
+.br
+9	Should unload the tape and retry demount.
+.br
+16	Robot busy.
+
+.SH EXAMPLE
+.P
+To mount the tape with VID JK2005 on drive 1:
+.P
 .RS
 .B "cta-smc -m -D 1 -V JK2005"
 .RE
-.LP
-To dismount the volume present on drive 1 after checking the vid:
-.br
+.P
+To dismount the tape present on drive 1 after checking the VID:
+.P
 .RS
 .B "cta-smc -d -D 1 -V JK2005"
 .RE
-.LP
+.P
 To query the main charateristics of the library:
-.br
+.P
 .RS
 .B "cta-smc -q L"
 .sp
 .nf
-Vendor/Product/Revision = <STK     9714            1500>
+Vendor/Product/Revision = <IBM     03584L32        1802>
 Transport Count = 1, Start = 1000
 Slot Count = 99, Start = 0
 Port Count = 1, Start = 1010
 Device Count = 2, Start = 1030
 .fi
 .RE
-.LP
+.P
 To query the status of all the drives:
-.br
+.P
 .RS
 .B "cta-smc -q D"
 .sp
@@ -193,9 +160,9 @@ Drive Ordinal   Element Addr.   Status          Vid
 .cs R
 .fi
 .RE
-.LP
+.P
 To get the list of a few slots in the library:
-.br
+.P
 .RS
 .B "cta-smc -q S -S 20 -N 10"
 .sp
@@ -215,9 +182,9 @@ Element Addr.   Vid
 .cs R
 .fi
 .RE
-.LP
-To get the status of volumes for which the vid starts with JK200
-.br
+.P
+To get the status of tapes for which the VID starts with JK200
+.P
 .RS
 .B "cta-smc -q V -V 'JK200*'"
 .sp
@@ -236,27 +203,15 @@ JK2005      1031        drive
 .cs R
 .fi
 .RE
-.SH RETURN CODES
-0	Ok.
-.br
-1	Parameter error or unrecoverable error (just log it).
-.br
-2	Should release drive & retry in 600 seconds.
-.br
-3	Should retry in 60 seconds.
-.br
-4	Should do first a demount force.
-.br
-5	Should configure the drive down.
-.br
-6	Should send a msg to operator and exit.
-.br
-7	Ops msg (nowait) + release drive + slow retry.
-.br
-8	Should send a msg to operator and wait.
-.br
-9	Should unload the tape and retry demount.
-.br
-16	Robot busy.
-.SH AUTHOR
-\fBCTA\fP Team
+
+.SH SEE ALSO
+.P
+CERN Tape Archive documentation (\fIhttps://eoscta.docs.cern.ch/\fR)
+
+.SH COPYRIGHT
+.P
+Copyright © 2022 CERN. License GPLv3+: GNU GPL version 3 or later (\fIhttp://gnu.org/licenses/gpl.html\fR).
+This is free software: you are free to change and redistribute it. There is NO WARRANTY, to the
+extent permitted by law. In applying this licence, CERN does not waive the privileges and immunities
+granted to it by virtue of its status as an Intergovernmental Organization or submit itself to any
+jurisdiction.

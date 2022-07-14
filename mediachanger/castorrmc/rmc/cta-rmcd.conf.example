@@ -15,23 +15,9 @@
 
 ################################################################################
 #
-# CTA Sample Configuration File
+# CTA Remote Media Changer Daemon Example Configuration File
 #
 ################################################################################
 
-# The log mask.  Logs with a level lower than this value will be masked.
-# Possible values are:
-#   EMERG
-#   ALERT
-#   CRIT
-#   ERR
-#   WARNING
-#   NOTICE
-#   INFO
-#   DEBUG
-#   USERERR
-#
-# Please note that the USERERR log level is equivalent to NOTICE because it is
-# a convention of CTA to use log level NOTICE to label user errors.
-#
-# taped LogMask INFO
+# Listener port
+# RMC PORT 5014

@@ -19,8 +19,8 @@
 cta-taped \- CTA Tape Server daemon
 
 .SH SYNOPSIS
-\fBcta-taped\fP [\-\-config \fIconfig_file\fR][\-\-foreground [\-\-stdout]][\-\-log\-to\-file \fIlog_file\fR]
-
+\fBcta-taped\fP [\-\-config \fIconfig_file\fR] [\-\-foreground [\-\-stdout]] [\-\-log\-to\-file \fIlog_file\fR]
+.br
 \fBcta-taped\fP --help
 
 .SH DESCRIPTION
@@ -54,7 +54,7 @@ Log to standard output instead of using syslog. Requires \-\-foreground.
 
 .SH CONFIGURATION
 The \fBcta-taped\fP daemon reads its configuration parameters from the CTA configuration file (by default,
-\fI/etc/cta/cta-taped.conf\fR). Each option is listed with its \fIdefault\fR value.
+\fI/etc/cta/cta-taped.conf\fR). Each option is listed here with its \fIdefault\fR value.
 
 .SS Tape Server Configuration Options
 .TP
@@ -203,7 +203,7 @@ The CTA Tape Server configuration file, containing the options described above u
 See \fI/etc/cta/cta-taped.conf.example\fR.
 .TP
 .B /etc/cta/TPCONFIG
-The tape drive configuration file. A single tape server daemon can control one or two tape drives.
+The tape drive configuration file. A single tape server daemon can control one or more tape drives.
 TPCONFIG should contain one line per tape drive. Each line should consist of the following four
 elements, delimited by spaces:
 
@@ -217,6 +217,7 @@ See \fI/etc/cta/TPCONFIG.example\fR.
 Usual location for the tape server log file.
 
 .SH SEE ALSO
+\fBcta-rmcd\fP(1cta)
 .P
 CERN Tape Archive documentation (\fIhttps://eoscta.docs.cern.ch/\fR)
 

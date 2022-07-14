@@ -13,7 +13,25 @@ renamed to "UseRepackManagement" and "UseMaintenanceProcess" with default change
 Options for which default values have changed: LogMask, MountCriteria, BufferCount, TapeLoadTimeout,
 UseRAO, RAOLTOAlgorithm, RAOLTOAlgorithmOptions.
 
+The following manual pages have been updated:
+
+  cta-admin(1cta)
+  cta-catalogue-admin-user-create(1cta)
+  cta-catalogue-schema-create(1cta)
+  cta-catalogue-schema-drop(1cta)
+  cta-catalogue-schema-set-production(1cta)
+  cta-catalogue-schema-verify(1cta)
+  cta-database-poll(1cta)
+  cta-fst-gcd(1cta)
+  cta-readtp(1cta)
+  cta-restore-deleted-files(1cta)
+  cta-rmcd(1cta)
+  cta-smc(1cta)
+  cta-taped(1cta)
+  cta-tape-label(1cta)
+
 ### Features
+- cta/CTA#979  - Document configuration options of daemons and command-line tools
 ### Bug fixes
 - cta/CTA#947  - cta-taped should log the FST being used for a data transfer
 - cta/CTA#1106 - "cta-admin schedulinginfo ls" returns records larger than SSI buffer size limit

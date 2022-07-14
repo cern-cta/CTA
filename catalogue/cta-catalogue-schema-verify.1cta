@@ -13,31 +13,57 @@
 .\"               granted to it by virtue of its status as an Intergovernmental Organization or
 .\"               submit itself to any jurisdiction.
 
-.TH CTA-CATALOGUE-SCHEMA-VERIFY 1CTA "June 2019" CTA CTA
+.TH CTA-CATALOGUE-SCHEMA-VERIFY "1cta" "2022-07-12" "CTA" "The CERN Tape Archive (CTA)"
 .SH NAME
-cta-catalogue-schema-verify \- Verifies the CTA catalogue schema
+cta-catalogue-schema-verify \- Verify the CTA Catalogue schema
+
 .SH SYNOPSIS
-.BI "cta-catalogue-schema-verify databaseConnectionFile [options]"
+\fBcta-catalogue-schema-verify\fP \fIdatabaseConnectionFile\fR [--help]
 
 .SH DESCRIPTION
-\fBcta-catalogue-schema-verify\fP is a command-line tool that verifies the CTA
-catalogue database schema.
+\fBcta-catalogue-schema-verify\fP verifies that the schema of the CTA Catalogue deployed in the
+database conforms to the schema definition defined by the CTA software.
 .P
-This command-line tool will abort if it sees a CTA_CATALOGUE database table
-does not present in the database schema.
-.SH ARGUMENTS
-.TP
-\fBdatabaseConnectionFile
-The path to the configuration file containing the connection details of the
-CTA catalogue database.
+\fIdatabaseConnectionFile\fR is the path to the configuration file containing the connection details
+of the CTA Catalogue database.
+.P
+The tool checks the following items:
+.IP \(bu 4
+Check the schema is the expected version
+.IP \(bu 4
+Compare table names, column names and types
+.IP \(bu 4
+Compare constraint names (except NOT NULL constraints in PostgreSQL)
+.IP \(bu 4
+Compare index names
+.IP \(bu 4
+Display warnings if any constraints do not have an index for the keys on both sides
+.IP \(bu 4
+Display warnings if any tables have been set as PARALLEL (Oracle)
+.IP \(bu 4
+Display warnings if Oracle types, synonyms, stored procedures or error checking tables are detected in the catalogue database
+
 .SH OPTIONS
 .TP
-\fB\-h, \-\-help
-Prints the usage message.
-.SH RETURN VALUE
-Zero on success and non-zero on failure.
-.SH EXAMPLES
+\-h, \-\-help
+Display command options and exit.
+
+.SH EXIT STATUS
+.P
+\fBcta-catalogue-schema-verify\fP returns 0 on success and non-zero if any errors are detected.
+
+.SH EXAMPLE
+.P
 cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf
 
-.SH AUTHOR
-\fBCTA\fP Team
+.SH SEE ALSO
+.P
+CERN Tape Archive documentation (\fIhttps://eoscta.docs.cern.ch/\fR)
+
+.SH COPYRIGHT
+.P
+Copyright © 2022 CERN. License GPLv3+: GNU GPL version 3 or later (\fIhttp://gnu.org/licenses/gpl.html\fR).
+This is free software: you are free to change and redistribute it. There is NO WARRANTY, to the
+extent permitted by law. In applying this licence, CERN does not waive the privileges and immunities
+granted to it by virtue of its status as an Intergovernmental Organization or submit itself to any
+jurisdiction.

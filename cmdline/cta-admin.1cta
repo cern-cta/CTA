@@ -13,24 +13,19 @@
 .\"               granted to it by virtue of its status as an Intergovernmental Organization or
 .\"               submit itself to any jurisdiction.
 
-.TH CTA-ADMIN 1cta "2022-06-30" "CTA" "The CERN Tape Archive (CTA)"
-
+.TH CTA-ADMIN "1cta" "2022-06-30" "CTA" "The CERN Tape Archive (CTA)"
 .SH NAME
-cta-admin \- administrative command interface for CTA tape system operators
+cta-admin \- Administrative command interface for CTA tape system operators
 
 .SH SYNOPSIS
-.P
 \fBcta-admin\fP [--json] \fIcommand\fR [\fIsubcommand\fR] [\fIoptions\fR]
-.P
-\fBcta-admin\fP sends the specified command to the CTA Frontend (see \fBCONFIGURATION\fR below).
-.P
-Commands which return a list of results from the server display on stdout.
 
 .SH DESCRIPTION
 .P
-Invoking \fBcta-admin\fP with no command line parameters shows a list of valid commands.
+\fBcta-admin\fP sends the specified command to the CTA Frontend (see \fBCONFIGURATION\fR below).
 .P
-To show the subcommands and options for a specific command, type:
+Invoking \fBcta-admin\fP with no command line parameters shows a list of valid commands. To show the
+subcommands and options for a specific command, type:
 .P
 .RS
 \fBcta-admin\fP \fIcommand\fR help
@@ -50,12 +45,12 @@ exist in the administrator list and must authenticate themselves with a valid Ke
 .TP
 archiveroute (ar)
 Add, change, remove or list the archive routes, which are the policies linking namespace entries to
-tapepools.
+tape pools.
 .TP
 diskinstance (di)
-Add, change, remove or list the disk instances. A disk instance is a separate namespace. A CTA
-installation has at least one disk instance and can have multiple disk instances, for example it
-may be desirable to set up a separate namespace for each Virtual Organization (VO).
+Add, change, remove or list the disk instances. A CTA installation has one or more disk instances. A
+disk instance is a separate namespace. Multiple disk instances should be configured if it is desired
+to have a separate namespace for each Virtual Organization (VO).
 .TP
 diskinstancespace (dis)
 Add, change, remove or list the disk instance spaces. A disk instance can contain zero or more disk
@@ -71,9 +66,14 @@ requests; how long to sleep when the disk is full).
 .TP
 drive (dr)
 Bring tape drives up or down, list tape drives or remove tape drives from the CTA system.
+.P
+.RS
+\fBcta-admin drive ls\fP displays an exclamation mark (\fB!\fP) in front of the drive name, for drives
+in DISABLED logical libraries.
+.RE
 .TP
 failedrequest (fr)
-List and manage requests which failed and for which all retry attempts failed.
+List and remove requests which failed and for which all retry attempts failed.
 .TP
 groupmountrule (gmr)
 Add, change, remove or list the group mount rules.
@@ -85,8 +85,10 @@ physical library and if the drive is capable of reading or writing the tape. In 
 that drive should normally also be in the same logical library.
 .TP
 mediatype (mt)
-Add, change, remove or list the tape cartridge media types, to specify nominal capacity and parameters
-for software Recommended Access Order (LTO cartridges only).
+Add, change, remove or list the tape cartridge media types. This command is used to specify the nominal
+capacity of each media type, which is used to estimate the total capacity of tape pools. Optionally,
+specify the parameters for software Recommended Access Order (LTO-8 or older tape technology). See
+\fBcta-taped(1cta)\fP for details.
 .TP
 mountpolicy (mp)
 Add, change, remove or list the mount policies.
@@ -95,7 +97,8 @@ recycletf (rtf)
 List tape files in the recycle log.
 .TP
 repack (re)
-Manage tape repacking.
+Add or remove a request to repack one or more tapes. This command can also list repack requests in
+progress and display any errors.
 .TP
 requestermountrule (rmr)
 Add, change, remove or list the requester mount rules.
@@ -108,20 +111,23 @@ Show the status of all active queues.
 .TP
 storageclass (sc)
 Add, change, remove or list the storage classes. Storage classes are associated with directories, to
-specify the number of tape copies the files in the directory should have. Storage classes should be
-changed only rarely.
+specify the number of tape copies for each file, and the corresponding tape pool that each copy
+should be archived to. In EOS, the storage class is added as an extended attribute of the
+directory, which is inherited by the file at creation time.
 .TP
 tape (ta)
 Add, change, remove, reclaim, list or label tapes. This command is used to manage the physical tape
 cartridges in each library.
 .TP
 tapefile (tf)
-List files on a specified tape.
+List files on a specified tape. \fBcta-admin tapefile ls -l\fP allows listing the disk metadata
+as well as tape metadata. Use of this option requires that gRPC is correctly configured on the disk
+system. See \fBFILES\fP, below.
 .TP
 tapepool (tp)
-Add, change, remove or list the tapepools, which are logical sets of tapes. Tapepools are used to manage
-the life cycle of tapes (label → supply → user pool → erase → label). Listing the tapepools shows
-statistics such as the total number of tapes in the pool, number of free tapes, etc.
+Add, change, remove or list tape pools. Tape pools are logical sets of tapes which are used to manage
+the tape lifecycle: label -> supply -> user pool -> erase -> label. \fBcta-admin tapepool ls\fP shows
+statistics such as the total number of tapes in the pool and number of free tapes.
 .TP
 version (v)
 Display the version of \fBcta-admin\fP, the CTA Frontend, the protocol buffer used for client/server
@@ -130,6 +136,14 @@ communication, and the CTA Catalogue schema.
 virtualorganization (vo)
 Add, change, remove or list the Virtual Organizations (VOs). Each VO corresponds to an entity whose data
 transfers should be managed independently of the others, for example an experimental collaboration.
+
+.SH OPTIONS
+.TP
+--json
+Some commands, such as \fBcta-admin tapefile ls\fR, can return an arbitrarily long list of results,
+which are normally returned in plain text format, with one record per line. If the --json option is
+supplied, the results are returned as an array of records in JSON format. This option is intended for
+use by scripts to ease automated processing of results.
 
 .SH CONFIGURATION
 The \fBcta-admin\fP configuration is specified in \fI/etc/cta/cta-cli.conf\fR. The following configuration
@@ -148,22 +162,18 @@ Sets the client log level (see \fBXrdSsiPbLogLevel\fR below).
 cta.log.hiRes (default: \fIfalse\fR)
 Specify whether log timestamps should have second (\fIfalse\fR) or microsecond (\fItrue\fR) resolution.
 .SS Example configuration file
-    cta.endpoint cta-frontend.cern.ch:10955
-    cta.resource.options Reusable
-
-.SH OPTIONS
-.TP
---json
-Some commands, such as \fBcta-admin tapefile ls\fR, can return an arbitrarily long list of results,
-which are normally returned in plain text format, with one record per line. If the --json option is
-supplied, the results are returned as an array of records in JSON format. This option is intended for
-use by scripts to ease automated processing of results.
+.P
+.RS
+cta.endpoint cta-frontend.cern.ch:10955
+.br
+cta.resource.options Reusable
+.RE
 
 .SH EXIT STATUS
 \fBcta-admin\fP returns 0 on success.
 
 If there is an error, a message will be printed on \fIstderr\fR. XRootD errors, protocol buffer
-errors and CTA Frontend errors return exit code 1. User errors (e.g. invalid tapepool or vid) return
+errors and CTA Frontend errors return exit code 1. User errors (e.g. invalid tape pool or VID) return
 with exit code 2.
 
 In the case of user errors, when the --json option is specified, \fBcta-admin\fP will return an empty JSON array
@@ -220,7 +230,18 @@ number of retries.
 .SH FILES
 .TP
 .BI /etc/cta/cta-cli.conf
-\fBcta-admin\fP configuration file, specifying the endpoint to use for the CTA Frontend and other options.
+Configuration file. See \fBCONFIGURATION\fP, above.
+.TP
+.BI /etc/cta/eos.grpc.keytab
+gRPC keys for each instance, used by \fBcta-admin tapefile ls\fP to display disk metadata associated with
+files on tape. The format is one line per disk instance, as follows:
+.P
+.RS
+.nf
+# disk instance  endpoint (host:port)         gRPC token
+eosctaphysics    eosctaphysics.cern.ch:50051  bf8d9c49-2eda-40bd-82aa-630a556caf31
+.fi
+.RE
 
 .SH BUGS
 .P

@@ -33,8 +33,7 @@ set_property(SOURCE rmc_send_scsi_cmd.c APPEND_STRING PROPERTY COMPILE_FLAGS " -
 
 add_executable(cta-rmcd ${RMCD_SRC_FILES})
 target_link_libraries(cta-rmcd ctarmccommon)
-install (FILES cta-rmcd.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
-install (FILES cta-smc.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
+install (FILES cta-rmcd.conf.example DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
 
 install (TARGETS cta-rmcd DESTINATION /usr/bin)
 install (FILES cta-rmcd.1cta DESTINATION /usr/share/man/man1)

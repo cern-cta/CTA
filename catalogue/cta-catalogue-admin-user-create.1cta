@@ -13,39 +13,50 @@
 .\"               granted to it by virtue of its status as an Intergovernmental Organization or
 .\"               submit itself to any jurisdiction.
 
-
-.TH CTA-CATALOGUE-ADMIN-USER-CREATE 1CTA "December 2016" CTA CTA
+.TH CTA-CATALOGUE-ADMIN-USER-CREATE "1cta" "2022-07-12" "CTA" "The CERN Tape Archive (CTA)"
 .SH NAME
 cta-catalogue-admin-user-create \- Create a CTA admin user
+
 .SH SYNOPSIS
-.BI "cta-catalogue-admin-user-create databaseConnectionFile -u <username> -m <comment> [-h]"
+\fBcta-catalogue-admin-user-create\fP \fIdatabaseConnectionFile\fR --username \fIusername\fR --comment \fIcomment\fR [--help]
 
 .SH DESCRIPTION
-\fBcta-catalogue-admin-user-create\fP is a command-line tool that creates an
-admin user in the catalogue database.  \fBcta-catalogue-admin-user-create\fP
-connects directly to the catalogue database as opposed to the cta command-line
-tool that connects to the CTA front end.  \fBcta-catalogue-admin-user-create\fP
-can therefore be used to bootstrap the creation of CTA admin users.
+\fBcta-catalogue-admin-user-create\fP creates an admin user in the CTA Catalogue database. It connects
+directly to the database (unlike \fBcta-admin\fP, which connects to the CTA Frontend).
+\fBcta-catalogue-admin-user-create\fP can therefore be used to bootstrap the creation of admin users
+on a new installation of CTA.
 .P
-.SH ARGUMENTS
-.TP
-\fBdatabaseConnectionFile
-The path to the configuration file containing the connection details of the
-CTA catalogue database.
+\fIdatabaseConnectionFile\fR is the path to the configuration file containing the connection details
+of the CTA Catalogue database.
+
 .SH OPTIONS
 .TP
-\fB\-u, \-\-username <username>
+\-u, \-\-username \fIusername\fR
 The name of the admin user to be created.
 .TP
-\fB\-m, \-\-comment <comment>
+\-m, \-\-comment \fIcomment\fR
 Comment describing the creation of the admin user.
 .TP
-\fB\-h, \-\-help
-Prints the usage message.
-.SH RETURN VALUE
-Zero on success and non-zero on failure.
-.SH EXAMPLES
-cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf -u ctaadmin -c "The CTA admin account"
+\-h, \-\-help
+Display command options and exit.
 
-.SH AUTHOR
-\fBCTA\fP Team
+.SH EXIT STATUS
+.P
+\fBcta-catalogue-admin-user-create\fP returns 0 on success.
+
+.SH EXAMPLE
+.P
+cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf --username ctaadmin --comment "The CTA admin account"
+
+.SH SEE ALSO
+\fBcta-admin\fP(1cta)
+.P
+CERN Tape Archive documentation (\fIhttps://eoscta.docs.cern.ch/\fR)
+
+.SH COPYRIGHT
+.P
+Copyright © 2022 CERN. License GPLv3+: GNU GPL version 3 or later (\fIhttp://gnu.org/licenses/gpl.html\fR).
+This is free software: you are free to change and redistribute it. There is NO WARRANTY, to the
+extent permitted by law. In applying this licence, CERN does not waive the privileges and immunities
+granted to it by virtue of its status as an Intergovernmental Organization or submit itself to any
+jurisdiction.

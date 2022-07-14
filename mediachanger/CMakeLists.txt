@@ -52,12 +52,8 @@ target_link_libraries (ctamediachanger
 install (TARGETS ctamediachanger DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 set (MEDIACHANGER_UNIT_TESTS_LIB_SRC_FILES
-  DismountCmdLine.cpp
-  DismountCmdLineTest.cpp
   IoTest.cpp
   LibrarySlotParserTest.cpp
-  MountCmdLine.cpp
-  MountCmdLineTest.cpp
   ScsiLibrarySlotTest.cpp)
 
 add_library (ctamediachangerunittests SHARED
@@ -70,29 +66,3 @@ target_link_libraries (ctamediachangerunittests
 
 install (TARGETS ctamediachangerunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
-set (MEDIA_CHANGER_MOUNT_SRC_FILES
-  MountCmd.cpp
-  MountCmdLine.cpp
-  MountCmdMain.cpp)
-add_executable (cta-mediachanger-mount ${MEDIA_CHANGER_MOUNT_SRC_FILES})
-set_target_properties (cta-mediachanger-mount PROPERTIES
-  COMPILE_FLAGS -I/usr/include/CDK
-  COMPILE_DEFINITIONS LINUX)
-set_property (TARGET cta-mediachanger-mount APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-target_link_libraries (cta-mediachanger-mount
-  ctacommon
-  ctamediachanger)
-
-set (MEDIA_CHANGER_DISMOUNT_SRC_FILES
-  DismountCmd.cpp
-  DismountCmdLine.cpp
-  DismountCmdMain.cpp)
-add_executable (cta-mediachanger-dismount
-  ${MEDIA_CHANGER_DISMOUNT_SRC_FILES})
-set_target_properties (cta-mediachanger-dismount PROPERTIES
-  COMPILE_FLAGS -I/usr/include/CDK
-  COMPILE_DEFINITIONS LINUX)
-set_property (TARGET cta-mediachanger-dismount APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-target_link_libraries (cta-mediachanger-dismount
-  ctacommon
-  ctamediachanger)

@@ -13,54 +13,88 @@
 .\"               granted to it by virtue of its status as an Intergovernmental Organization or
 .\"               submit itself to any jurisdiction.
 
-.TH CTA-CATALOGUE-SCHEMA-CREATE 1CTA "August 2016" CTA CTA
+.TH CTA-FST-GCD "1cta" "2022-07-12" "CTA" "The CERN Tape Archive (CTA)"
 .SH NAME
-cta-fst-gcd \- Tape aware garbage collector daemon to run on an EOS FST
+cta-fst-gcd \- Garbage Collector Daemon for EOS FSTs with CTA tape back-end enabled
+
 .SH SYNOPSIS
-.BI "cta-fst-gcd [options]"
+\fBcta-fst-gcd\fR [--help] [--config \fIconfig_file\fR] [--stdout]
 
 .SH DESCRIPTION
-\fBcta-fst-gcd\fP is a daemon that runs on an EOS FST and garbage
-collects EOS disk copies that have been safely stored to tape.
+\fBcta-fst-gcd\fP is a daemon that runs on an EOS disk server (FST), to garbage collect (evict) disk
+replicas which have been safely archived to tape.
 .P
-The \fBcta-fst-gcd\fP daemon scans across every single EOS disk file on
-an FST.  A file is garbage collected if:
-.IP \[bu] 2
-The amount of free space on the corresponding file system is considered
-too low.
-.IP \[bu]
+The \fBcta-fst-gcd\fP daemon scans every single EOS disk file on the FST. A file is garbage collected if:
+.IP \(bu 4
+The amount of free space on the corresponding file system is considered too low.
+.IP \(bu 4
 The file is considered old enough to be garbage collected.
 .P
-The \fBcta-fst-gcd\fP daemon garbage collects an EOS disk file by
-extracting the hexadecimal EOS file identifier from the local disk
-filename and then running \fBeos stagerm fxid:<fid-hex>\fP.
-.P
+The \fBcta-fst-gcd\fP daemon garbage collects an EOS disk file by extracting the hexadecimal EOS file
+identifier (\fIfxid\fR) from the local disk filename and then running \fBeos stagerm fxid:\fP\fIfxid\fR.
+
 .SH OPTIONS
 .TP
-\fB\-h, \-\-help
-Prints the usage message.
+\-h, \-\-help
+Display command options and exit.
 .TP
-\fB\-c CONFIG, \-\-config CONFIG
-Sets the path of the configuration file.  If not set then the default value of
-\fB/etc/cta/cta-fst-gcd.conf\fP is used.
+\-c, \-\-config \fIconfig_file\fR
+Set the path of the configuration file. Defaults to \fI/etc/cta/cta-fst-gcd.conf\fR.
 .TP
-\fB\-s, \-\-stdout
+\-s, \-\-stdout
 Sets log output to stdout. This disables use of a log file.
-.SH RETURN VALUE
-Zero on success and non-zero on failure.
+
+.SH CONFIGURATION
+The \fBcta-fst-gcd\fP daemon reads its parameters from its configuration file, by default \fI/etc/cta/cta-fst-gcd.conf\fR.
+.TP
+.B log_file = \fI/var/log/eos/fst/cta-fst-gcd.log\fR
+Path of the garbage collector log file.
+.TP
+.B mgm_host = \fIHOSTNAME.2NDLEVEL.TOPLEVEL\fR
+Fully qualified host name of EOS MGM.
+.TP
+.B eos_spaces = \fIEOS_SPACE_1 EOS_SPACE_2\fR
+Space-separated list of names of the EOS spaces to be garbage collected.
+.TP
+.B eos_space_to_min_free_bytes = \fIEOS_SPACE_1:10000000000 EOS_SPACE_2:10000000000\fR
+Minimum number of free bytes each filesystem should have.
+.TP
+.B gc_age_secs = \fI7200\fR
+Minimum age of a file before it can be considered for garbage collection.
+.TP
+.B absolute_max_age_secs = \fI604800\fR
+Age at which a file will be considered for garbage collection, regardless of the amount of free space.
+.TP
+.B query_period_secs = \fI310\fR
+Delay in seconds between free space queries to the local file systems.
+.TP
+.B main_loop_period_secs = \fI300\fR
+Period in seconds of the main loop of the \fBcta-fst-gcd\fP daemon.
+.TP
+.B xrdsecssskt = \fI/etc/eos.keytab\fR
+Path to Simple Shared Secrets keytab to authenticate with EOS MGM.
+
+.SH EXIT STATUS
+\fBcta-fst-gcd\fR returns 0 on success.
+
 .SH FILES
 .TP
 .B /etc/cta/cta-fst-gcd.conf
-The default configuration file of the \fBcta-fst-gcd\fP daemon.  This can be
-overriden using the \fB\-c\fP/\fB\-\-config\fP option.
-.TP
-.B /etc/cta/cta-fst-gcd.conf.example\fB
-The example configuration file that documents the available configuration
-parameters.
+Default location for the configuration file of the \fBcta-fst-gcd\fP daemon. This can be overriden
+using the --config option. See \fBCONFIGURATION\fP above, and \fI/etc/cta/cta-fst-gcd.conf.example\fR.
 .TP
 .B /var/log/eos/fst/cta-fst-gcd.log
-The default log file of the \fBcta-fst-gcd\fP daemon.  This can be overriden by
-modifying \fBcta-fst-gcd.conf\fP accordingly or disabled using the
-\fB\-s\fP/\fB\-\-stdout\fP option.
-.SH AUTHOR
-\fBCTA\fP Team
+The default log file of the \fBcta-fst-gcd\fP daemon.  This can be changed in \fBcta-fst-gcd.conf\fP
+or disabled with the --stdout option.
+
+.SH SEE ALSO
+.P
+CERN Tape Archive documentation (\fIhttps://eoscta.docs.cern.ch/\fR)
+
+.SH COPYRIGHT
+.P
+Copyright © 2022 CERN. License GPLv3+: GNU GPL version 3 or later (\fIhttp://gnu.org/licenses/gpl.html\fR).
+This is free software: you are free to change and redistribute it. There is NO WARRANTY, to the
+extent permitted by law. In applying this licence, CERN does not waive the privileges and immunities
+granted to it by virtue of its status as an Intergovernmental Organization or submit itself to any
+jurisdiction.

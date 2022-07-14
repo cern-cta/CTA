@@ -13,16 +13,20 @@
 .\"               granted to it by virtue of its status as an Intergovernmental Organization or
 .\"               submit itself to any jurisdiction.
 
-.TH CTA-CATALOGUE-SCHEMA-CREATE "1cta" "2022-07-12" "CTA" "The CERN Tape Archive (CTA)"
+.TH CTA-CATALOGUE-SCHEMA-SET-PRODUCTION "1cta" "2022-07-12" "CTA" "The CERN Tape Archive (CTA)"
 .SH NAME
-cta-catalogue-schema-create \- Create the CTA Catalogue schema
+cta-catalogue-schema-set-production \- Mark the CTA Catalogue as "in production", to prevent accidentally dropping the schema
 
 .SH SYNOPSIS
-\fBcta-catalogue-schema-create\fP \fIdatabaseConnectionFile\fR [--help] [--version \fIschema_version\fR]
+\fBcta-catalogue-schema-set-production\fP \fIdatabaseConnectionFile\fR [--help]
 
 .SH DESCRIPTION
-\fBcta-catalogue-schema-create\fP is a command-line tool that creates the CTA catalogue database schema.
-It will abort if the \fBCTA_CATALOGUE\fP table is already present in the database.
+\fBcta-catalogue-schema-set-production\fP sets the \fBIS_PRODUCTION\fP flag on the \fBCTA_CATALOGUE\fP
+table in the CTA Catalogue database. This prevents \fBcta-catalogue-schema-drop\fP from dropping the
+schema, protecting the schema from accidental deletion due to misconfiguation or human error.
+.P
+By design, there is no tool to unset the \fBIS_PRODUCTION\fP flag. It can only be unset by running an
+SQL UPDATE statement directly on the \fBCTA_CATALOGUE\fP table.
 .P
 \fIdatabaseConnectionFile\fR is the path to the configuration file containing the connection details
 of the CTA Catalogue database.
@@ -31,21 +35,18 @@ of the CTA Catalogue database.
 .TP
 \-h, \-\-help
 Display command options and exit.
-.TP
--v, --version \fIschema_version\fR
-Version of the CTA Catalogue schema to be created. By default, \fBcta-catalogue-schema-create\fP creates
-the latest version of the schema. This option allows the creation of an earlier version. This is useful
-for testing the upgrade from an older schema version to a newer version.
 
 .SH EXIT STATUS
 .P
-\fBcta-catalogue-schema-create\fP returns 0 on success.
+\fBcta-catalogue-schema-set-production\fP returns 0 on success.
 
 .SH EXAMPLE
 .P
-cta-catalogue-schema-create /etc/cta/cta-catalogue.conf
+cta-catalogue-set-production /etc/cta/cta-catalogue.conf
 
 .SH SEE ALSO
+.P
+\fBcta-catalogue-schema-drop\fP(1cta)
 .P
 CERN Tape Archive documentation (\fIhttps://eoscta.docs.cern.ch/\fR)
 
