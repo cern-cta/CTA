@@ -51,7 +51,7 @@ Display command options and exit.
 The CTA configuration file.
 .TP
 .B /etc/cta/cta-catalogue.conf
-The CTA catalog configuration file.
+The CTA catalog configuration file. See \fI/etc/cta/cta-catalogue.conf.example\fR.
 
 .SH SEE ALSO
 .P

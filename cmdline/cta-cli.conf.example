@@ -1,0 +1,25 @@
+#
+# CTA client options
+#
+
+# CTA Frontend hostname (FQDN) and TCP port
+cta.endpoint ctafrontend.cern.ch:10955
+
+# CTA user/group to use for tape verification jobs
+eos.requester.user verification
+eos.requester.group it
+
+#
+# XRootD client options
+#
+
+# XRootD SSI resource options. Defaults to none. Set to Reusable to use use XRootD SSI reusable
+# resources. Documentation at http://xrootd.org/doc/dev49/ssi_reference-V2.htm#_Toc506323429.
+# cta.resource.options none
+
+# Client log level. Can be overridden by setting environment variable XrdSsiPbLogLevel. See
+# cta-admin(1cta) man page for details.
+# cta.log none
+
+# Specify whether log timestamps should have second (false) or microsecond (true) resolution.
+# cta.log.hiRes false

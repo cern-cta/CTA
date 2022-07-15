@@ -54,7 +54,7 @@ to have a separate namespace for each Virtual Organization (VO).
 .TP
 diskinstancespace (dis)
 Add, change, remove or list the disk instance spaces. A disk instance can contain zero or more disk
-instance spaces. A disk instance space is a partition of the disk. For examples, it can be desirable
+instance spaces. A disk instance space is a partition of the disk. For example, it can be desirable
 to have separate spaces for archival and retrieval operations on each instance.
 .TP
 disksystem (ds)
@@ -161,13 +161,6 @@ Sets the client log level (see \fBXrdSsiPbLogLevel\fR below).
 .TP
 cta.log.hiRes (default: \fIfalse\fR)
 Specify whether log timestamps should have second (\fIfalse\fR) or microsecond (\fItrue\fR) resolution.
-.SS Example configuration file
-.P
-.RS
-cta.endpoint cta-frontend.cern.ch:10955
-.br
-cta.resource.options Reusable
-.RE
 
 .SH EXIT STATUS
 \fBcta-admin\fP returns 0 on success.
@@ -230,7 +223,7 @@ number of retries.
 .SH FILES
 .TP
 .BI /etc/cta/cta-cli.conf
-Configuration file. See \fBCONFIGURATION\fP, above.
+See \fBCONFIGURATION\fP above, and \fI/etc/cta/cta-cli.conf.example\fR.
 .TP
 .BI /etc/cta/eos.grpc.keytab
 gRPC keys for each instance, used by \fBcta-admin tapefile ls\fP to display disk metadata associated with

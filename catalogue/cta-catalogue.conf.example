@@ -13,18 +13,11 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-# This file should contain one and only one connection string.  Blank lines and
-# comments are ignored.
-#
-# PLEASE NOTE that comments at the end of a line are not supported.  Only entire
-# line comments are allowed.  A comment line starts a hash '#' character.
-# Leading whitespace is permitted.
+# This file should contain a single line, with the connection string for the CTA Catalogue database.
+# Blank lines and comments are ignored. A comment line starts a hash '#' character. Comments at the
+# end of a line are not supported. Leading whitespace is permitted.
 #
 # The format of the connection string is either:
-#
-#    in_memory
-#
-# or:
 #
 #    oracle:username/password@database
 #
@@ -32,9 +25,10 @@
 #
 #    postgresql:postgresql://username:password@hostname/database
 #
-# or:
+# There are two additional options intended for development and testing only. These should not
+# be used in a production environment:
 #
+#    in_memory
 #    sqlite:filename
 #
-# PLEASE NOTE that the "in_memory" and "sqlite:" connection strings are for
-# development and testing purposes only.
+postgresql:postgresql://username:password@hostname/database

@@ -213,6 +213,10 @@ DRIVE_NAME LOGICAL_LIBRARY_NAME DRIVE_DEVICE LIBRARY_SLOT
 See \fI/etc/cta/TPCONFIG.example\fR.
 .RE
 .TP
+.B /etc/cta/cta-catalogue.conf
+Usual location for the CTA Catalogue configuration file. See \fBtaped CatalogueConfigFile\fP option
+under \fBCONFIGURATION\fP, and \fI/etc/cta/cta-catalogue.conf.example\fR.
+.TP
 .B /var/log/cta/cta-taped.log
 Usual location for the tape server log file.
 

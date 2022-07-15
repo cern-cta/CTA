@@ -157,7 +157,7 @@ The xroot plugin
 %defattr(0755,root,root)
 %{_libdir}/libXrdSsiCta.so*
 %attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-frontend
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-frontend-xrootd.conf
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-frontend-xrootd.conf.example
 %attr(0644,root,root) %config(noreplace) /etc/sysconfig/cta-frontend
 %attr(0644,cta,tape) /etc/systemd/system/cta-frontend.service
 
@@ -222,7 +222,7 @@ The command line utilities
 %attr(0755,root,root) %{_bindir}/cta-send-event
 %attr(0755,root,root) %{_bindir}/cta-send-closew.sh
 %attr(0755,root,root) %{_bindir}/cta-verify-file
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-cli.conf
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-cli.conf.example
 
 %package -n cta-lib-common
 Summary: CERN Tape Archive libraries
