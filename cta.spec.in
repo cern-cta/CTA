@@ -545,6 +545,9 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 
 
 %changelog
+* Tue Jul 12 2022 Joao Afonso <joao.afonso@cern.ch> - 4.7.8-1
+- Catalogue schema version 11.0
+
 * Fri Jul 01 2022 Joao Afonso <joao.afonso@cern.ch> - 4.7.7-1
 - Fixes scheduling bug introduced in 4.7.6-1 and adds support for multiple tape label formats
 - Updates EOS 5 version in CI to 5.0.25

@@ -43,6 +43,15 @@ The following manual pages have been updated:
 ### Building and Packaging
 - cta/CTA#1229 - Introduce build of a new taped, using new type of SchedulerDatabase
 
+# v4.7.8-1
+
+## Summary
+- This is a catalogue schema upgrade release
+- For details on how to do the upgrade check: https://eoscta.docs.cern.ch/catalogue/upgrading_the_schema/
+### Catalogue Schema
+- cta/CTA#1213 - New internal states REPACKING_PENDING & BROKEN_PENDING
+- cta/CTA#1226 - Remove deprecated catalogue columns
+
 # v4.7.7-1
 
 ## Summary
