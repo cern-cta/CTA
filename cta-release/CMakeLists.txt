@@ -56,12 +56,23 @@ safedl("https://yum.oracle.com/RPM-GPG-KEY-oracle-ol${OSV}"
 )
 
 # generate versionlock file
+
+if(NOT CTA_USE_PGSCHED)
 execute_process(
     COMMAND grep "%package" ${CMAKE_CURRENT_SOURCE_DIR}/../cta.spec.in
     COMMAND awk "{print $3}"
     COMMAND grep -v "cta-release"
     OUTPUT_VARIABLE RESULT OUTPUT_STRIP_TRAILING_WHITESPACE
     )
+else()
+execute_process(
+    COMMAND grep "%package" ${CMAKE_CURRENT_SOURCE_DIR}/../cta.spec.in
+    COMMAND awk "{print $3}"
+    COMMAND grep -v "cta-objectstore-tools"
+    COMMAND grep -v "cta-release"
+    OUTPUT_VARIABLE RESULT OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+endif()
 
 string(REPLACE "\n" ";" RESULTS ${RESULT})
 

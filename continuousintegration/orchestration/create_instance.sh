@@ -197,9 +197,9 @@ else
 fi
 
 if [ $keepobjectstore == 1 ] ; then
-    echo "objecstore content will be kept"
+    echo "objecstore content (if used) will be kept"
 else
-    echo "objectstore content will be wiped"
+    echo "objectstore content (if used) will be wiped"
 fi
 
 

@@ -24,7 +24,11 @@
 #include <xroot_plugins/Namespace.hpp>
 #include <XrdSsiPbLog.hpp>
 #include <scheduler/Scheduler.hpp>
+#ifdef CTA_PGSCHED
+#include <scheduler/PostgresSchedDB/PostgresSchedDBInit.hpp>
+#else
 #include <scheduler/OStoreDB/OStoreDBInit.hpp>
+#endif
 
 /*!
  * Global pointer to the Service Provider object.

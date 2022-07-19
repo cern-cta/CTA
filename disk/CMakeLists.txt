@@ -15,6 +15,7 @@
 
 cmake_minimum_required (VERSION 3.17)
 
+find_package (librados2 REQUIRED)
 find_package (xrootd REQUIRED)
 find_package (xrootdclient REQUIRED)
 

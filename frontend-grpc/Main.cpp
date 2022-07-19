@@ -24,9 +24,14 @@
 #include "common/log/StdoutLogger.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/LogLevel.hpp"
+#ifdef CTA_PGSCHED
+#include "scheduler/PostgresSchedDB/PostgresSchedDBInit.hpp"
+#else
 #include "scheduler/OStoreDB/OStoreDBInit.hpp"
+#endif
 
 #include <getopt.h>
+#include <fstream>
 
 using namespace cta;
 using namespace cta::common;

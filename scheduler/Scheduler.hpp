@@ -46,8 +46,6 @@
 #include "scheduler/TapeMount.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/RepackRequest.hpp"
-#include "objectstore/RetrieveRequest.hpp"
-#include "objectstore/ArchiveRequest.hpp"
 
 #include "tapeserver/daemon/TapedConfiguration.hpp"
 

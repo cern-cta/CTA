@@ -25,8 +25,6 @@
 #include "disk/DiskFileImplementations.hpp"
 #include "disk/RadosStriperPool.hpp"
 #include "DiskReportRunner.hpp"
-#include "objectstore/RepackRequest.hpp"
-#include "OStoreDB/OStoreDB.hpp"
 #include "RetrieveMount.hpp"
 #include "RetrieveRequestDump.hpp"
 #include "Scheduler.hpp"
@@ -730,7 +728,7 @@ Scheduler::RepackReportBatch Scheduler::getNextSuccessfulRetrieveRepackReportBat
   Scheduler::RepackReportBatch ret;
   try{
     ret.m_DbBatch.reset(m_db.getNextSuccessfulRetrieveRepackReportBatch(lc).release());
-  } catch (OStoreDB::NoRepackReportBatchFound &){
+  } catch (SchedulerDatabase::NoRepackReportBatchFound &){
     ret.m_DbBatch = nullptr;
   }
   return ret;
@@ -743,7 +741,7 @@ Scheduler::RepackReportBatch Scheduler::getNextFailedRetrieveRepackReportBatch(l
   Scheduler::RepackReportBatch ret;
   try{
     ret.m_DbBatch.reset(m_db.getNextFailedRetrieveRepackReportBatch(lc).release());
-  } catch (OStoreDB::NoRepackReportBatchFound &){
+  } catch (SchedulerDatabase::NoRepackReportBatchFound &){
     ret.m_DbBatch = nullptr;
   }
   return ret;
@@ -756,7 +754,7 @@ Scheduler::RepackReportBatch Scheduler::getNextSuccessfulArchiveRepackReportBatc
   Scheduler::RepackReportBatch ret;
   try{
     ret.m_DbBatch.reset(m_db.getNextSuccessfulArchiveRepackReportBatch(lc).release());
-  } catch (OStoreDB::NoRepackReportBatchFound &){
+  } catch (SchedulerDatabase::NoRepackReportBatchFound &){
     ret.m_DbBatch = nullptr;
   }
   return ret;
@@ -769,7 +767,7 @@ Scheduler::RepackReportBatch Scheduler::getNextFailedArchiveRepackReportBatch(lo
   Scheduler::RepackReportBatch ret;
   try{
     ret.m_DbBatch.reset(m_db.getNextFailedArchiveRepackReportBatch(lc).release());
-  } catch (OStoreDB::NoRepackReportBatchFound &){
+  } catch (SchedulerDatabase::NoRepackReportBatchFound &){
     ret.m_DbBatch = nullptr;
   }
   return ret;

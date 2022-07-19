@@ -665,8 +665,6 @@ class OStoreDB: public SchedulerDatabase {
 
   void requeueRetrieveJobs(std::list<cta::SchedulerDatabase::RetrieveJob *> &jobs, log::LogContext& logContext) override;
 
-  CTA_GENERATE_EXCEPTION_CLASS(NoRepackReportBatchFound);
-
  private:
   const size_t c_repackArchiveReportBatchSize = 10000;
   const size_t c_repackRetrieveReportBatchSize = 10000;

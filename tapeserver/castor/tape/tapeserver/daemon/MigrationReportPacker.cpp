@@ -25,7 +25,6 @@
 #include "catalogue/TapeFileWritten.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/utils/utils.hpp"
-#include "objectstore/Backend.hpp"
 
 using cta::log::LogContext;
 using cta::log::Param;

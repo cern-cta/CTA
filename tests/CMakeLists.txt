@@ -22,7 +22,7 @@ add_executable(cta-unitTests
   unit_tests.cpp
   ${GMOCK_SRC})
 
-target_link_libraries(cta-unitTests
+set (CTA_UNIT_TEST_LIBS
   ctacataloguecmdlineunittests
   ctacommon
   ctacommonunittests
@@ -32,8 +32,6 @@ target_link_libraries(cta-unitTests
   ctainmemorycatalogueunittests
   ctainmemoryconnunittests
   ctainmemorystmtunittests
-  ctaobjectstore
-  ctaobjectstoreunittests
   ctardbmsunittests
   ctardbmswrapperunittests
   ctaschedulerunittests
@@ -45,8 +43,15 @@ target_link_libraries(cta-unitTests
   ctatapelabelunittests
   gtest
   pthread
-  ctatapeserverraounittests
-)
+  ctatapeserverraounittests)
+
+if(NOT CTA_USE_PGSCHED)
+  set (CTA_UNIT_TEST_LIBS ${CTA_UNIT_TEST_LIBS}
+    ctaobjectstore
+    ctaobjectstoreunittests)
+endif()
+
+target_link_libraries(cta-unitTests ${CTA_UNIT_TEST_LIBS})
 
 set_property (TARGET cta-unitTests APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 if (OCCI_SUPPORT)

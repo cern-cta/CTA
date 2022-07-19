@@ -18,7 +18,6 @@
 #include <iostream>
 
 #include "common/exception/NoSuchObject.hpp"
-#include "objectstore/Backend.hpp"
 #include "scheduler/ArchiveMount.hpp"
 
 //------------------------------------------------------------------------------

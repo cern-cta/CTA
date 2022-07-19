@@ -37,8 +37,13 @@ include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.cpp XrdSsiCtaRequestMessage.cpp
                              ../cmdline/CtaAdminCmdParse.cpp
                              GrpcClient.cpp GrpcEndpoint.cpp)
-target_link_libraries(XrdSsiCta ${XROOTD_XRDSSI_LIB} XrdSsiLib XrdSsiPbEosCta ctascheduler ctacommon ctaobjectstore ctacatalogue
-                      EosCtaGrpc ${GRPC_LIBRARY} ${GRPC_GRPC++_LIBRARY})
+if(CTA_USE_PGSCHED)
+  target_link_libraries(XrdSsiCta ${XROOTD_XRDSSI_LIB} XrdSsiLib XrdSsiPbEosCta ctascheduler ctacommon ctacatalogue
+                        EosCtaGrpc ${GRPC_LIBRARY} ${GRPC_GRPC++_LIBRARY})
+else()
+  target_link_libraries(XrdSsiCta ${XROOTD_XRDSSI_LIB} XrdSsiLib XrdSsiPbEosCta ctascheduler ctacommon ctaobjectstore ctacatalogue
+                        EosCtaGrpc ${GRPC_LIBRARY} ${GRPC_GRPC++_LIBRARY})
+endif()
 set_property (TARGET XrdSsiCta APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 if (OCCI_SUPPORT)
   set_property (TARGET XrdSsiCta APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})

@@ -18,12 +18,12 @@
 #pragma once
 
 #include <memory>
+#include "scheduler/SchedulerDatabase.hpp"
+#include "common/dataStructures/SecurityIdentity.hpp"
+#include "scheduler/RetrieveRequestDump.hpp"
 #include "catalogue/Catalogue.hpp"
 
 namespace cta {
-
-// Forward declarations
-class SchedulerDatabase;
 
 /**
  * Asbtract class specifying the interface to a factory of scheduler database
@@ -45,5 +45,196 @@ public:
   virtual std::unique_ptr<SchedulerDatabase> create(std::unique_ptr<cta::catalogue::Catalogue>& catalogue) const = 0;
 
 }; // class SchedulerDatabaseFactory
+
+/**
+ * Base of a wrapper class. This follows the decorator structural pattern. Wrappers are used by
+ * SchedulerDatabase specialisations, in conjunction with the factory calss above, to provide
+ * test classes for unit tests.
+ */
+class SchedulerDatabaseDecorator : public SchedulerDatabase {
+public:
+
+  SchedulerDatabaseDecorator(SchedulerDatabase &db) : m_SchedDB(&db) { }
+
+  void waitSubthreadsComplete() override {
+    m_SchedDB->waitSubthreadsComplete();
+  }
+
+  void ping() override {
+    m_SchedDB->ping();
+  }
+
+  std::string queueArchive(const std::string &instanceName, const cta::common::dataStructures::ArchiveRequest& request, const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId& criteria, log::LogContext &logContext) override {
+    return m_SchedDB->queueArchive(instanceName, request, criteria, logContext);
+  }
+
+  void deleteRetrieveRequest(const common::dataStructures::SecurityIdentity& cliIdentity, const std::string& remoteFile) override {
+    m_SchedDB->deleteRetrieveRequest(cliIdentity, remoteFile);
+  }
+
+  std::list<cta::common::dataStructures::RetrieveJob> getRetrieveJobs(const std::string& tapePoolName) const override {
+    return m_SchedDB->getRetrieveJobs(tapePoolName);
+  }
+
+  std::map<std::string, std::list<common::dataStructures::RetrieveJob> > getRetrieveJobs() const override {
+    return m_SchedDB->getRetrieveJobs();
+  }
+
+  std::map<std::string, std::list<common::dataStructures::ArchiveJob> > getArchiveJobs() const override {
+    return m_SchedDB->getArchiveJobs();
+  }
+
+  std::list<cta::common::dataStructures::ArchiveJob> getArchiveJobs(const std::string& tapePoolName) const override {
+    return m_SchedDB->getArchiveJobs(tapePoolName);
+  }
+
+  std::unique_ptr<IArchiveJobQueueItor> getArchiveJobQueueItor(const std::string &tapePoolName,
+    common::dataStructures::JobQueueType queueType) const override {
+    return m_SchedDB->getArchiveJobQueueItor(tapePoolName, queueType);
+  }
+
+  std::unique_ptr<IRetrieveJobQueueItor> getRetrieveJobQueueItor(const std::string &vid,
+    common::dataStructures::JobQueueType queueType) const override {
+    return m_SchedDB->getRetrieveJobQueueItor(vid, queueType);
+  }
+
+  std::map<std::string, std::list<RetrieveRequestDump> > getRetrieveRequests() const override {
+    return m_SchedDB->getRetrieveRequests();
+  }
+
+  std::list<std::unique_ptr<ArchiveJob>> getNextArchiveJobsToReportBatch(uint64_t filesRequested, log::LogContext &lc) override {
+    return m_SchedDB->getNextArchiveJobsToReportBatch(filesRequested, lc);
+  }
+
+  JobsFailedSummary getArchiveJobsFailedSummary(log::LogContext &lc) override {
+    return m_SchedDB->getArchiveJobsFailedSummary(lc);
+  }
+
+  std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &lc) override {
+    return m_SchedDB->getNextRetrieveJobsToReportBatch(filesRequested, lc);
+  }
+
+  std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext &lc) override {
+    return m_SchedDB->getNextRetrieveJobsFailedBatch(filesRequested, lc);
+  }
+
+  std::unique_ptr<RepackReportBatch> getNextRepackReportBatch(log::LogContext& lc) override {
+    return m_SchedDB->getNextRepackReportBatch(lc);
+  }
+
+  std::unique_ptr<RepackReportBatch> getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) override {
+    return m_SchedDB->getNextSuccessfulRetrieveRepackReportBatch(lc);
+  }
+
+  std::unique_ptr<RepackReportBatch> getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) override {
+    return m_SchedDB->getNextSuccessfulArchiveRepackReportBatch(lc);
+  }
+
+  std::unique_ptr<RepackReportBatch> getNextFailedRetrieveRepackReportBatch(log::LogContext& lc) override {
+    return m_SchedDB->getNextFailedRetrieveRepackReportBatch(lc);
+  }
+
+  std::unique_ptr<RepackReportBatch> getNextFailedArchiveRepackReportBatch(log::LogContext& lc) override {
+    return m_SchedDB->getNextFailedArchiveRepackReportBatch(lc);
+  }
+
+  std::list<std::unique_ptr<SchedulerDatabase::RepackReportBatch>> getRepackReportBatches(log::LogContext &lc) override {
+    return m_SchedDB->getRepackReportBatches(lc);
+  }
+
+  JobsFailedSummary getRetrieveJobsFailedSummary(log::LogContext &lc) override {
+    return m_SchedDB->getRetrieveJobsFailedSummary(lc);
+  }
+
+  void setArchiveJobBatchReported(std::list<cta::SchedulerDatabase::ArchiveJob*>& jobsBatch, log::TimingList & timingList,
+      utils::Timer & t, log::LogContext& lc) override {
+    m_SchedDB->setArchiveJobBatchReported(jobsBatch, timingList, t, lc);
+  }
+
+  void setRetrieveJobBatchReportedToUser(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch, log::TimingList & timingList,
+      utils::Timer & t, log::LogContext& lc) override {
+    m_SchedDB->setRetrieveJobBatchReportedToUser(jobsBatch, timingList, t, lc);
+  }
+
+  std::list<RetrieveRequestDump> getRetrieveRequestsByVid(const std::string& vid) const override {
+    return m_SchedDB->getRetrieveRequestsByVid(vid);
+  }
+
+  std::list<RetrieveRequestDump> getRetrieveRequestsByRequester(const std::string& requester) const override {
+    return m_SchedDB->getRetrieveRequestsByRequester(requester);
+  }
+
+  std::unique_ptr<TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) override {
+    return m_SchedDB->getMountInfo(logContext);
+  }
+
+  void trimEmptyQueues(log::LogContext& lc) override {
+    m_SchedDB->trimEmptyQueues(lc);
+  }
+
+  std::unique_ptr<TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose, log::LogContext& logContext) override {
+    return m_SchedDB->getMountInfoNoLock(purpose,logContext);
+  }
+
+  std::list<RetrieveQueueStatistics> getRetrieveQueueStatistics(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
+          const std::set<std::string> & vidsToConsider) override {
+    return m_SchedDB->getRetrieveQueueStatistics(criteria, vidsToConsider);
+  }
+
+  SchedulerDatabase::RetrieveRequestInfo queueRetrieve(common::dataStructures::RetrieveRequest& rqst,
+    const common::dataStructures::RetrieveFileQueueCriteria &criteria, const std::optional<std::string> diskSystemName,
+    log::LogContext &logContext) override {
+    return m_SchedDB->queueRetrieve(rqst, criteria, diskSystemName, logContext);
+  }
+
+  void cancelArchive(const common::dataStructures::DeleteArchiveRequest& request, log::LogContext & lc) override {
+    m_SchedDB->cancelArchive(request,lc);
+  }
+
+  void cancelRetrieve(const std::string& instanceName, const cta::common::dataStructures::CancelRetrieveRequest& rqst,
+    log::LogContext& lc) override {
+    m_SchedDB->cancelRetrieve(instanceName, rqst, lc);
+  }
+
+  void deleteFailed(const std::string &objectId, log::LogContext & lc) override {
+    m_SchedDB->deleteFailed(objectId, lc);
+  }
+
+  std::string queueRepack(const SchedulerDatabase::QueueRepackRequest & repackRequest, log::LogContext& lc) override {
+    return m_SchedDB->queueRepack(repackRequest, lc);
+  }
+
+  std::list<common::dataStructures::RepackInfo> getRepackInfo() override {
+    return m_SchedDB->getRepackInfo();
+  }
+
+  common::dataStructures::RepackInfo getRepackInfo(const std::string& vid) override {
+    return m_SchedDB->getRepackInfo(vid);
+  }
+
+  void cancelRepack(const std::string& vid, log::LogContext & lc) override {
+    m_SchedDB->cancelRepack(vid, lc);
+  }
+
+  std::unique_ptr<RepackRequestStatistics> getRepackStatistics() override {
+    return m_SchedDB->getRepackStatistics();
+  }
+
+  std::unique_ptr<RepackRequestStatistics> getRepackStatisticsNoLock() override {
+    return m_SchedDB->getRepackStatisticsNoLock();
+  }
+
+  std::unique_ptr<RepackRequest> getNextRepackJobToExpand() override {
+    return m_SchedDB->getNextRepackJobToExpand();
+  }
+
+  void requeueRetrieveJobs(std::list<cta::SchedulerDatabase::RetrieveJob *> &jobs, log::LogContext& logContext) override {
+    return m_SchedDB->requeueRetrieveJobs(jobs, logContext);
+  }
+
+protected:
+  cta::SchedulerDatabase *m_SchedDB;
+
+}; // class SchedulerDatabaseDecorator
 
 } // namespace cta

@@ -20,7 +20,6 @@
 #include "common/exception/NoSuchObject.hpp"
 #include "common/log/Logger.hpp"
 #include "common/utils/utils.hpp"
-#include "objectstore/Backend.hpp"
 
 #include <signal.h>
 #include <iostream>

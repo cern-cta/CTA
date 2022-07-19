@@ -19,7 +19,6 @@
 #include "common/log/TimingList.hpp"
 #include "common/Timer.hpp"
 #include "disk/DiskSystem.hpp"
-#include "objectstore/Backend.hpp"
 #include "scheduler/RetrieveMount.hpp"
 
 #include <numeric>

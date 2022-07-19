@@ -41,18 +41,20 @@
 #include "common/threading/Thread.hpp"
 #include "common/utils/utils.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
-//#include "smc_struct.h"
-//#include "scheduler/DummyScheduler.hpp"
-#include "scheduler/OStoreDB/OStoreDBFactory.hpp"
 #include "scheduler/MountType.hpp"
-//#include "nameserver/NameServer.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/testingMocks/MockRetrieveMount.hpp"
 #include "scheduler/testingMocks/MockArchiveJob.hpp"
 #include "scheduler/testingMocks/MockArchiveMount.hpp"
 #include "tests/TempFile.hpp"
-#include "objectstore/BackendRadosTestSwitch.hpp"
 #include "CleanerSession.hpp"
+
+#ifdef CTA_PGSCHED
+#include "scheduler/PostgresSchedDB/PostgresSchedDBFactory.hpp"
+#else
+#include "scheduler/OStoreDB/OStoreDBFactory.hpp"
+#include "objectstore/BackendRadosTestSwitch.hpp"
+#endif
 
 #ifdef STDOUT_LOGGING
 #include "common/log/StdoutLogger.hpp"
@@ -3409,10 +3411,21 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
 #undef TEST_MOCK_DB
 #ifdef TEST_MOCK_DB
 static cta::MockSchedulerDatabaseFactory mockDbFactory;
+#ifdef CTA_PGSCHED
+INSTANTIATE_TEST_CASE_P(MockSchedulerTest, GenericSchedulerTest,
+  ::testing::Values(SchedulerTestParam(mockDbFactory)));
+#else
 INSTANTIATE_TEST_CASE_P(MockSchedulerTest, SchedulerTest,
   ::testing::Values(SchedulerTestParam(mockDbFactory)));
 #endif
+#endif
 
+#ifdef CTA_PGSCHED
+static cta::PostgresSchedDBFactory PostgresSchedDBFactoryStatic;
+
+INSTANTIATE_TEST_CASE_P(PostgresSchedDBPlusMockSchedulerTest, DataTransferSessionTest,
+                        ::testing::Values(DataTransferSessionTestParam(PostgresSchedDBFactoryStatic)));
+#else
 #define TEST_VFS
 #ifdef TEST_VFS
 static cta::OStoreDBFactory<cta::objectstore::BackendVFS> OStoreDBFactoryVFS;
@@ -3426,6 +3439,7 @@ static cta::OStoreDBFactory<cta::objectstore::BackendRados> OStoreDBFactoryRados
 
 INSTANTIATE_TEST_CASE_P(OStoreDBPlusMockSchedulerTestRados, DataTransferSessionTest,
   ::testing::Values(DataTransferSessionTestParam(OStoreDBFactoryRados)));
+#endif
 #endif
 
 } // namespace unitTest

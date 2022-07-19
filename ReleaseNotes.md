@@ -41,6 +41,7 @@ The following manual pages have been updated:
 
 ### Continuous Integration
 ### Building and Packaging
+- cta/CTA#1229 - Introduce build of a new taped, using new type of SchedulerDatabase
 
 # v4.7.7-1
 

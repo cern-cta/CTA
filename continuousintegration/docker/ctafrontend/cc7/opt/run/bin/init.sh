@@ -32,8 +32,16 @@ if [ ! -e /etc/buildtreeRunner ]; then
   yum-config-manager --enable ceph
 
   # install needed packages
-  yum -y install cta-objectstore-tools mt-st mtx lsscsi sg3_utils cta-catalogueutils ceph-common oracle-instantclient19.3-sqlplus oracle-instantclient-tnsnames.ora
+  # if we are using the postgres scheduler cta-objectstore-tools will not be available:
+  #   cta-objectstore-tools requires cta-lib, which will create /etc/cta/cta-catalogue.conf.example
+  #   the directory /etc/cta is relied on to exist below, so install cta-lib explicitly
+  yum -y install cta-objectstore-tools cta-lib mt-st mtx lsscsi sg3_utils cta-catalogueutils ceph-common oracle-instantclient19.3-sqlplus oracle-instantclient-tnsnames.ora
   yum clean packages
+fi
+
+pgsched=0
+if rpm -q --qf '%{VERSION}' cta-lib-common | grep -Eq '^[0-9]*pgs'; then
+  pgsched=1
 fi
 
 echo "Using this configuration for library:"
@@ -45,7 +53,9 @@ echo "Configuring objectstore:"
 /opt/run/bin/init_objectstore.sh
 . /tmp/objectstore-rc.sh
 
-if [ "$KEEP_OBJECTSTORE" == "0" ]; then
+if [ $pgsched -ne 0 ]; then
+  echo "Detected that we are using the postgres scheduler. For now ignore the objectstore initialize step and proceed."
+elif [ "$KEEP_OBJECTSTORE" == "0" ]; then
   echo "Wiping objectstore"
   if [ "$OBJECTSTORETYPE" == "file" ]; then
     rm -fr $OBJECTSTOREURL

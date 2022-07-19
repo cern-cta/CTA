@@ -15,15 +15,21 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "objectstore/BackendRadosTestSwitch.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/SchedulerDatabaseFactory.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "catalogue/InMemoryCatalogue.hpp"
+#include "common/log/DummyLogger.hpp"
+
+#ifdef CTA_PGSCHED
+#include "scheduler/PostgresSchedDB/PostgresSchedDBFactory.hpp"
+#else
+#include "objectstore/BackendRadosTestSwitch.hpp"
 #include "OStoreDB/OStoreDBFactory.hpp"
 #include "objectstore/BackendRados.hpp"
-#include "common/log/DummyLogger.hpp"
+#endif
+
 #ifdef STDOUT_LOGGING
 #include "common/log/StdoutLogger.hpp"
 #endif
@@ -32,6 +38,7 @@
 #include <gtest/gtest.h>
 #include <algorithm>
 #include <uuid/uuid.h>
+#include <future>
 
 namespace unitTests {
 
@@ -904,6 +911,11 @@ INSTANTIATE_TEST_CASE_P(MockSchedulerDatabaseTest, SchedulerDatabaseTest,
   ::testing::Values(SchedulerDatabaseTestParam(mockDbFactory)));
 #endif
 
+#ifdef CTA_PGSCHED
+static cta::PostgresSchedDBFactory PostgresSchedDBFactoryStatic;
+INSTANTIATE_TEST_CASE_P(PostgresSchedDBSchedulerDatabaseTest, SchedulerDatabaseTest,
+  ::testing::Values(SchedulerDatabaseTestParam(PostgresSchedDBFactoryStatic)));
+#else
 #define TEST_VFS
 #ifdef TEST_VFS
 static cta::OStoreDBFactory<cta::objectstore::BackendVFS> OStoreDBFactoryVFS;
@@ -917,6 +929,7 @@ static cta::OStoreDBFactory<cta::objectstore::BackendRados> OStoreDBFactoryRados
 
 INSTANTIATE_TEST_CASE_P(OStoreSchedulerDatabaseTestRados, SchedulerDatabaseTest,
   ::testing::Values(SchedulerDatabaseTestParam(OStoreDBFactoryRados)));
+#endif
 #endif
 
 } // namespace unitTests

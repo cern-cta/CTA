@@ -22,8 +22,12 @@
 #include "DriveHandler.hpp"
 #include "DriveHandlerProxy.hpp"
 #include "rdbms/Login.hpp"
+#ifdef CTA_PGSCHED
+#include "scheduler/PostgresSchedDB/PostgresSchedDBInit.hpp"
+#else
 #include "scheduler/OStoreDB/OStoreDBInit.hpp"
 #include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
+#endif
 #include "tapeserver/castor/tape/tapeserver/daemon/CleanerSession.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/Session.hpp"

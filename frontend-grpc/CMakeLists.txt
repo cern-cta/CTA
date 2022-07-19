@@ -54,8 +54,13 @@ include_directories(${CMAKE_BINARY_DIR}/frontend-grpc ${CMAKE_BINARY_DIR}/eos_ct
 
 add_executable(cta-frontend-grpc Main.cpp FrontendGRpcSvc.cpp ${ProtoSourcesCtaFrontend} ${ProtoGrpcSourcesCtaFrontend})
 
-target_link_libraries(cta-frontend-grpc ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY}
-        ctascheduler ctacommon ctaobjectstore ctacatalogue)
+if(CTA_USE_PGSCHED)
+  target_link_libraries(cta-frontend-grpc ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY}
+          ctascheduler ctacommon ctacatalogue)
+else()
+  target_link_libraries(cta-frontend-grpc ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY}
+          ctascheduler ctacommon ctaobjectstore ctacatalogue)
+endif()
 set_property(TARGET cta-frontend-grpc APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 install(TARGETS cta-frontend-grpc DESTINATION usr/bin)

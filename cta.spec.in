@@ -7,6 +7,9 @@
 %define ctaVersion @CTA_VERSION@
 %define ctaRelease @CTA_RELEASE@
 
+%define usingObjectstore @RPM_USINGOBJECTSTORE@
+%define schedOpt @RPM_SCHEDOPT@
+
 # Neutral packaging (for srpm)
 #-----------------------------
 %if 0%{?neutralpackage:1} > 0
@@ -77,7 +80,7 @@ The CTA project is the CERN Tape Archive system.
 mkdir -p build
 cd build
 # The cmake step does the selection between client/server compilation or just client
-CTA_VERSION=%{ctaVersion} cmake3 .. -DCOMPILE_PACKAGING:STRING=0 -DVCS_VERSION=%{ctaRelease}
+CTA_VERSION=%{ctaVersion} cmake3 .. -DCOMPILE_PACKAGING:STRING=0 -DVCS_VERSION=%{ctaRelease} %{schedOpt}
 # Workaround for the inability of cmake to handle properly the dependencies to generated code.
 %{__make} -s %{_smp_mflags} -k || true
 %{__make} -s %{_smp_mflags}
@@ -261,6 +264,9 @@ Shared libraries required to access the CTA catalogue
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
 Requires: librados2 = %{radosVersion}
+%if "%{usingObjectstore}" == "0"
+Requires: postgresql-libs
+%endif
 Requires: xrootd-client-libs >= %{xrootdVersion}
 # Explicity require protobuf3 to avoid clash with eos-protobuf3
 Requires: protobuf3
@@ -272,7 +278,9 @@ The shared libraries
 %defattr(0755,root,root,-)
 #TODO: merge util and common
 %{_libdir}/libctascheduler.so*
+%if "%{usingObjectstore}" != "0"
 %{_libdir}/libctaobjectstore.so*
+%endif
 %{_libdir}/libctamediachanger.so*
 %{_libdir}/libctamessages.so*
 %{_libdir}/libctamessagesutils.so*
@@ -315,7 +323,9 @@ Unit tests and system tests with virtual tape drives
 %{_libdir}/libctainmemorycatalogueunittests.so*
 %{_libdir}/libctainmemoryconnunittests.so*
 %{_libdir}/libctainmemorystmtunittests.so*
+%if "%{usingObjectstore}" != "0"
 %{_libdir}/libctaobjectstoreunittests.so*
+%endif
 %{_libdir}/libctardbmsunittests.so*
 %{_libdir}/libctardbmswrapperunittests.so*
 %{_libdir}/libctaschedulerunittests.so*
@@ -345,6 +355,7 @@ Command-line tool for testing immutable files
 %defattr(0755,root,root,-)
 %{_bindir}/cta-immutable-file-test
 
+%if "%{usingObjectstore}" != "0"
 %package -n cta-objectstore-tools
 Summary: CERN Tape Archive: object store tools
 Group: Application/CTA
@@ -360,6 +371,7 @@ Tools allowing initialization and inspection of the object store.
 %attr(0755,root,root) %{_bindir}/cta-objectstore-dereference-removed-queues
 %attr(0755,root,root) %{_bindir}/cta-objectstore-collect-orphaned-object
 %attr(0755,root,root) %{_bindir}/cta-objectstore-create-missing-repack-index
+%endif
 
 #cta-systemtests installs libraries so we need ldconfig.
 %post -n cta-systemtests -p /sbin/ldconfig

@@ -25,10 +25,6 @@ set (CTA_SCHEDULER_SRC_FILES
   LogicalLibrary.cpp
   MountType.cpp
   MountType.cpp
-  OStoreDB/MemQueues.cpp
-  OStoreDB/OStoreDB.cpp
-  OStoreDB/OStoreDBWithAgent.cpp
-  OStoreDB/QueueItor.cpp
   PositioningMethod.cpp
   RepackReportThread.cpp
   RepackRequest.cpp
@@ -41,6 +37,27 @@ set (CTA_SCHEDULER_SRC_FILES
   SchedulingInfos.cpp
   TapeMount.cpp)
 
+if(NOT CTA_USE_PGSCHED)
+  set (CTA_SCHEDULER_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
+    OStoreDB/MemQueues.cpp
+    OStoreDB/OStoreDB.cpp
+    OStoreDB/OStoreDBWithAgent.cpp
+    OStoreDB/QueueItor.cpp)
+else()
+  set (CTA_SCHEDULER_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
+    PostgresSchedDB/PostgresSchedDB.cpp
+    PostgresSchedDB/ArchiveMount.cpp
+    PostgresSchedDB/ArchiveJob.cpp
+    PostgresSchedDB/ArchiveJobQueueItor.cpp
+    PostgresSchedDB/RetrieveMount.cpp
+    PostgresSchedDB/RetrieveJob.cpp
+    PostgresSchedDB/RetrieveJobQueueItor.cpp
+    PostgresSchedDB/RepackRequestPromotionStatistics.cpp
+    PostgresSchedDB/RepackRequest.cpp
+    PostgresSchedDB/RepackReportBatch.cpp
+    PostgresSchedDB/TapeMountDecisionInfo.cpp)
+endif()
+
 find_package(Protobuf3 REQUIRED)
 include_directories (${PROTOBUF3_INCLUDE_DIRS})
 add_library (ctascheduler SHARED
@@ -50,13 +67,25 @@ set_property(TARGET ctascheduler PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 install (TARGETS ctascheduler DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
-target_link_libraries (ctascheduler ctacommon ctaobjectstore ${PROTOBUF3_LIBRARIES} ctadisk)
+if(NOT CTA_USE_PGSCHED)
+  target_link_libraries (ctascheduler ctacommon ctaobjectstore ${PROTOBUF3_LIBRARIES} ctadisk)
+else()
+  target_link_libraries (ctascheduler ctacommon ${PROTOBUF3_LIBRARIES} ctadisk)
+endif()
 
-add_library (ctaschedulerunittests SHARED
-  SchedulerDatabaseFactory.cpp
-  SchedulerDatabaseTest.cpp
-  SchedulerTest.cpp
-  OStoreDB/OStoreDBTest.cpp)
+if(NOT CTA_USE_PGSCHED)
+  add_library (ctaschedulerunittests SHARED
+    SchedulerDatabaseFactory.cpp
+    SchedulerDatabaseTest.cpp
+    SchedulerTest.cpp
+    OStoreDB/OStoreDBTest.cpp)
+else()
+  add_library (ctaschedulerunittests SHARED
+    SchedulerDatabaseFactory.cpp
+    SchedulerDatabaseTest.cpp
+    GenericSchedulerTest.cpp
+    PostgresSchedDB/PostgresSchedDBTest.cpp)
+endif()
 set_property(TARGET ctaschedulerunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctaschedulerunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 

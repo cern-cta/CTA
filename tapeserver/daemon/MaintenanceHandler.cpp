@@ -20,7 +20,11 @@
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "scheduler/Scheduler.hpp"
+#ifdef CTA_PGSCHED
+#include "scheduler/PostgresSchedDB/PostgresSchedDBInit.hpp"
+#else
 #include "scheduler/OStoreDB/OStoreDBInit.hpp"
+#endif
 #include "rdbms/Login.hpp"
 #include "scheduler/DiskReportRunner.hpp"
 #include "scheduler/RepackRequestManager.hpp"

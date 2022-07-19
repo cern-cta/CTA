@@ -96,6 +96,7 @@ namespace cta {
 class SchedulerDatabase {
  public:
   CTA_GENERATE_EXCEPTION_CLASS(DriveAlreadyExistsException);
+  CTA_GENERATE_EXCEPTION_CLASS(NoRepackReportBatchFound);
   /**
    * Destructor.
    */

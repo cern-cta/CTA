@@ -33,6 +33,11 @@ set(CMAKE_CXX_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter
 
 set (BUILD_CMDLINE_ONLY FALSE)
 
+# By default the objectstore based scheduler is used.
+# A postgres scheduler may be enabled and the objectstore one disabled by
+# giving -DCTA_USE_PGSCHED:Bool=true on the cmake command line.
+set (CTA_USE_PGSCHED FALSE CACHE BOOL "Build with the postgres scheduler")
+
 execute_process(
   COMMAND ${CMAKE_C_COMPILER} -dumpversion
   OUTPUT_VARIABLE GCC_VERSION)
@@ -53,6 +58,15 @@ add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=0)
 # To enable logging for testing purposes set -DENABLE_STDOUT_LOGGING=1
 if (ENABLE_STDOUT_LOGGING)
   add_definitions (-DSTDOUT_LOGGING)
+endif ()
+
+if (CTA_USE_PGSCHED)
+  add_definitions (-DCTA_PGSCHED)
+  set(RPM_USINGOBJECTSTORE "0" CACHE STRING "" FORCE)
+  set(RPM_SCHEDOPT "-DCTA_USE_PGSCHED:Bool=true" CACHE STRING "" FORCE)
+else ()
+  set(RPM_USINGOBJECTSTORE "1" CACHE STRING "" FORCE)
+  set(RPM_SCHEDOPT "%{nil}" CACHE STRING "" FORCE)
 endif ()
 
 # Generate the compilation variables, if needed
@@ -132,7 +146,11 @@ ELSE(DEFINED PackageOnly)
   add_subdirectory(common)
   add_subdirectory(disk)
   add_subdirectory(mediachanger)
-  add_subdirectory(objectstore)
+
+  if(NOT CTA_USE_PGSCHED)
+    add_subdirectory(objectstore)
+  endif()
+
   add_subdirectory(python)
   add_subdirectory(rdbms)
   add_subdirectory(scheduler)

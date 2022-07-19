@@ -13,6 +13,9 @@ stages:
 
 variables:
   XROOTD_VERSION: 4
+  SCHED_TYPE: "objectstore"
+  SCHED_OPT: ""
+  SCHED_VERSION: ""
 
 before_script:
   - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
@@ -31,6 +34,13 @@ before_script:
       cp -f continuousintegration/docker/ctafrontend/cc7/versionlock-xrootd5.list continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list;
     else echo "Using XRootD version 4";
     fi
+  - if [ "${SCHED_TYPE}" = "objectstore" ]; then
+      SCHED_TYPE="";
+    else
+      echo "Using specified scheduler database type $SCHED_TYPE";
+      SCHED_OPT="-DCTA_USE_$(echo ${SCHED_TYPE} | tr '[:lower:]' '[:upper:]'):Bool=true";
+      SCHED_VERSION=$(echo ${SCHED_TYPE} | cut -c 1-3);
+    fi
 
 cta_srpm:
   stage: build:srpm
@@ -41,7 +51,7 @@ cta_srpm:
     - source /opt/rh/devtoolset-8/enable
     - mkdir build_srpm
     - cd build_srpm
-    - CTA_VERSION=${XROOTD_VERSION} cmake3 -DPackageOnly:Bool=true -DVCS_VERSION=${CTA_BUILD_ID} ..
+    - CTA_VERSION=${XROOTD_VERSION}${SCHED_VERSION} cmake3 -DPackageOnly:Bool=true -DVCS_VERSION=${CTA_BUILD_ID} ${SCHED_OPT} ..
     - make cta_srpm
 
   artifacts:
@@ -70,7 +80,12 @@ cta_rpm:
     - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
     - mkdir build_rpm
     - cd build_rpm
-    - CTA_VERSION=${XROOTD_VERSION} cmake3 -DVCS_VERSION=${CTA_BUILD_ID} ..
+    - if [ "${SCHED_TYPE}" = "pgsched" ]; then
+        echo "Skipping unit tests during cta_rpm because failed tests are expected with the development version of pgsched";
+        CTA_VERSION=${XROOTD_VERSION}${SCHED_VERSION} cmake3 -DVCS_VERSION=${CTA_BUILD_ID} -DSKIP_UNIT_TESTS:STRING=1 ${SCHED_OPT} ..;
+      else
+        CTA_VERSION=${XROOTD_VERSION}${SCHED_VERSION} cmake3 -DVCS_VERSION=${CTA_BUILD_ID} ${SCHED_OPT} ..;
+      fi;
     - make cta_rpm
 
   artifacts:
@@ -101,7 +116,7 @@ cta_tagged_rpm:
     - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
     - mkdir build_tagged_rpm
     - cd build_tagged_rpm
-    - CTA_VERSION=${TAG_VERSION} cmake3 -DVCS_VERSION=${TAG_RELEASE} ..
+    - CTA_VERSION=${TAG_VERSION} cmake3 -DVCS_VERSION=${TAG_RELEASE} ${SCHED_OPT} ..
     - make cta_rpm
 
   artifacts:
