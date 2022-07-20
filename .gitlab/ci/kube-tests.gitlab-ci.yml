@@ -1,0 +1,111 @@
+.kubernetes_test:
+  script:
+    - export NAMESPACE="${JOB_NAME}-${CTA_BUILD_ID}-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 4 | head -n 1)"
+    - cd continuousintegration/orchestration/
+    - echo "${EXTENDED_OPTIONS}"
+    - ./run_systemtest.sh -n ${NAMESPACE} -p ${CI_PIPELINE_ID} -s ${TEST_SCRIPT} ${EXTENDED_OPTIONS}
+  variables:
+    TEST_SCRIPT:
+    EXTENDED_OPTIONS:
+    JOB_NAME: ${CI_JOB_NAME}
+  artifacts:
+    when: always
+    expire_in: 30 days
+    paths:
+    - pod_logs
+  tags:
+    - kubernetes
+    - mhvtl
+
+.eos5:
+  extends:
+    - .kubernetes_test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+      allow_failure: true
+    - if: $CI_PIPELINE_SOURCE == "push"
+      when: manual
+      allow_failure: true
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: on_success
+      allow_failure: false
+  variables:
+    EXTENDED_OPTIONS: "-O -D -t 2400 -C -e eos5-config-quarkdb.yaml"
+
+archiveretrieve:
+  stage: test
+  extends:
+    - .kubernetes_test
+  except:
+    - tags
+  variables:
+    TEST_SCRIPT: "tests/archive_retrieve.sh"
+    EXTENDED_OPTIONS: "-O -D -t 2400 -C"
+
+archiveretrieve-eos5:
+  stage: test
+  extends:
+    - .eos5
+  variables:
+    TEST_SCRIPT: "tests/archive_retrieve.sh"
+    # I give the name "ar-eos5", because "archiveretrieve-eos5" is too long and it produce an error
+    # of connection with XRootD
+    JOB_NAME: "ar-eos5"
+
+repack:
+  stage: test
+  extends:
+    - .kubernetes_test
+  except:
+    - tags
+  variables:
+    TEST_SCRIPT: "tests/repack_systemtest_wrapper.sh"
+    EXTENDED_OPTIONS: "-O -D -t 2400 -C"
+
+repack-eos5:
+  stage: test
+  extends:
+    - .eos5
+  variables:
+    TEST_SCRIPT: "tests/repack_systemtest_wrapper.sh"
+
+dbunittests-oracle:
+  stage: test
+  extends:
+    - .kubernetes_test
+  except:
+    - tags
+  variables:
+    TEST_SCRIPT: "/usr/bin/true"
+    EXTENDED_OPTIONS: "-O -D -t 600 -C"
+
+nightly1:
+  stage: test
+  extends:
+    - .kubernetes_test
+  only:
+    - triggers
+  variables:
+    TEST_SCRIPT: "tests/test_nightly1.sh"
+    EXTENDED_OPTIONS: "-O -D"
+  tags:
+    - kubernetes
+    - mhvtl
+    - xlarge
+
+regressioneos:
+  stage: regressions
+  extends:
+    - .kubernetes_test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: on_success
+      allow_failure: true
+  variables:
+    TEST_SCRIPT: "tests/upgrade-eos.sh"
+    EXTENDED_OPTIONS: "-O -D -S"
+  tags:
+    - kubernetes
+    - mhvtl
+    - xlarge

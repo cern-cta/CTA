@@ -1,0 +1,67 @@
+cta_valgrind:
+  stage: test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+      allow_failure: true
+    - if: $CI_PIPELINE_SOURCE == "push"
+      when: manual
+      allow_failure: true
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: on_success
+      allow_failure: false
+  variables:
+    CTAREPODIR: /tmp/repo
+  image: gitlab-registry.cern.ch/linuxsupport/cc7-base
+  script:
+    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/* /etc/yum.repos.d/
+    - yum -y install yum-plugin-priorities createrepo
+    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
+    - mkdir -p ${CTAREPODIR}; cp -r build_rpm/RPM ${CTAREPODIR}
+    - createrepo ${CTAREPODIR}; echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
+    - yum -y --nogpgcheck install cta-systemtests cta-debuginfo sqlite-debuginfo --enablerepo=debug
+    - /usr/bin/cta-unitPlusSystemTests.sh
+  tags:
+    - docker
+
+dbunittests_postgresql:
+  except:
+    - tags
+  stage: test
+  variables:
+    CTAREPODIR: /tmp/repo
+  image: gitlab-registry.cern.ch/linuxsupport/cc7-base
+  script:
+    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/* /etc/yum.repos.d/
+    - yum -y install yum-plugin-priorities createrepo
+    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
+    - mkdir -p ${CTAREPODIR}; cp -r build_rpm/RPM ${CTAREPODIR}
+    - createrepo ${CTAREPODIR}; echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
+    - yum -y --nogpgcheck install cta-systemtests cta-debuginfo sqlite-debuginfo --enablerepo=debug
+    - yum -y install cta-catalogueutils
+    - yum -y install rh-postgresql12-postgresql-server
+    - POSTGRESQL_DATA_DIR=/usr/local/cta_test_pgsql_data
+    - POSTGRESQL_LOG_DIR=/var/log/postgres
+    - echo POSTGRESQL_DATA_DIR=${POSTGRESQL_DATA_DIR}
+    - echo POSTGRESQL_LOG_DIR=${POSTGRESQL_LOG_DIR}
+    - mkdir -p ${POSTGRESQL_DATA_DIR}
+    - chown -R postgres:postgres ${POSTGRESQL_DATA_DIR}
+    - mkdir -p ${POSTGRESQL_LOG_DIR}
+    - chown -R postgres:postgres ${POSTGRESQL_LOG_DIR}
+    - export LD_LIBRARY_PATH=/opt/rh/rh-postgresql12/root/usr/lib64
+    - POSTGRES_BIN=/opt/rh/rh-postgresql12/root/usr/bin
+    - echo POSTGRES_BIN=${POSTGRES_BIN}
+    - runuser -u postgres -- ${POSTGRES_BIN}/initdb -D ${POSTGRESQL_DATA_DIR}
+    - runuser -u postgres -- ${POSTGRES_BIN}/pg_ctl start -w -t 10 -D ${POSTGRESQL_DATA_DIR} -l ${POSTGRESQL_LOG_DIR}/cta_test_postgres.log
+    - runuser -u postgres -- ${POSTGRES_BIN}/createdb cta
+    - runuser -u postgres -- ${POSTGRES_BIN}/createuser -E cta
+    - CTA_CATALOGUE_CONF=/etc/cta/cta-catalogue.conf
+    - echo CTA_CATALOGUE_CONF=${CTA_CATALOGUE_CONF}
+    - echo 'postgresql:postgresql://cta@localhost/cta' > ${CTA_CATALOGUE_CONF}
+    - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
+    - /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
+    - valgrind /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
+    - runuser -u postgres -- ${POSTGRES_BIN}/pg_ctl stop -D ${POSTGRESQL_DATA_DIR}
+
+  tags:
+    - docker

@@ -1,0 +1,29 @@
+cppcheck:
+  except:
+    - tags
+  stage: analysis:check
+  image:
+    name: neszt/cppcheck-docker
+    entrypoint: ["/usr/bin/env"]
+  script:
+    - cppcheck --xml --force --enable=warning,performance --inline-suppr --suppressions-list=.cppcheck-suppressions.txt . 2> cppcheck_out.xml
+  artifacts:
+    expire_in: 2 days
+    paths:
+    - cppcheck_out.xml
+
+
+# based on https://gitlab.com/ahogen/cppcheck-codequality
+cppcheck_report:
+  except:
+    - tags
+  stage: analysis:report
+  image: centos:7
+  script:
+    - yum -y install python3-pip
+    - python3 -m pip install -U cppcheck_codequality
+    - cppcheck-codequality --input-file=cppcheck_out.xml --output-file=cppcheck.json
+    - if cat cppcheck_out.xml | grep -q "\"error\""; then echo "ERRORS have been detected"; exit 1; fi;
+  artifacts:
+    reports:
+      codequality: cppcheck.json

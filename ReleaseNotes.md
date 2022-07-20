@@ -39,6 +39,7 @@ The following manual pages have been updated:
 - cta/CTA#1269 - cta-restore-deleted-files injects wrong diskFileId in CTA Catalogue
 - cta/CTA#1276 - Some configuration files should be renamed from `.conf` to `.conf.example`
 - cta/CTA#1278 - Add support for reading multiple tape formats by the ReadtpCmd command
+- cta/CTA#1280 - Refactor .gitlab-ci.yml using templates
 
 ### Continuous Integration
 ### Building and Packaging
