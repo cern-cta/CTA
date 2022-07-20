@@ -65,18 +65,22 @@ The following manual pages have been updated:
 - cta/CTA#64       [new repo] - Adds support for the OSM Tape Label format to the CTA
 - cta/CTA-old#1278 [old repo] - Add support for reading multiple tape formats by the ReadtpCmd command
 - cta/CTA-old#1278 [old repo] - Support multiple tape formats in ReadtpCmd command
+
 ### Bug fixes
-- cta/CTA#29       [new repo] - cta-taped should log the FST being used for a data transfer
+- cta/CTA-old#947  [old repo] - cta-taped should log the FST being used for a data transfer
+- cta/CTA-old#1093 [old repo] - The `cta-taped` manpage showed outdated config options
 - cta/CTA-old#1106 [old repo] - "cta-admin schedulinginfo ls" returns records larger than SSI buffer size limit
 - cta/CTA-old#1269 [old repo] - cta-restore-deleted-files injects wrong diskFileId in CTA Catalogue
-- cta/CTA#1276     [old repo] - Some configuration files should be renamed from `.conf` to `.conf.example`
+- cta/CTA-old#1276 [old repo] - Some configuration files should be renamed from `.conf` to `.conf.example`
 - cta/CTA#28       [new repo] - Do NOT allow capacity change of a cartridge if there a still files registered on that tape
+- cta/CTA#29       [new repo] - cta-taped should log the FST being used for a data transfer
 - cta/CTA#108      [new repo] - Fix broken CTA containerised installation
 - cta/CTA#109      [new repo] - Move logic to minimize mounts for multi-copy tape pool recalls out of scheduler logic
-- cta/CTA-old#1093 [old repo] - The `cta-taped` manpage showed outdated config options
+
 ### Continuous Integration
 - cta/CTA#88       [new repo] - xrootd 5 pipelines failing in CI
 - cta/CTA-old#1187 [old repo] - Run EOS5 CI every night
+- cta/CTA-old#1280 [old repo] - Refactor .gitlab-ci.yml using templates
 ### Building and Packaging
 - cta/CTA-old#1229 [old repo] - Introduce build of a new taped, using new type of SchedulerDatabase
 - cta/CTA#111      [new repo] - Remove daemon/LabelSession

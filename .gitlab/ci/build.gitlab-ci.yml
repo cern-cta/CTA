@@ -1,0 +1,100 @@
+.cta_build:
+  retry: 1
+  image: gitlab-registry.cern.ch/linuxsupport/cc7-base
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+  artifacts:
+    expire_in: 30 days
+    paths:
+    - ${BUILD_PATH}
+  tags:
+    - docker
+
+.cta_srpm:
+  extends:
+    - .cta_build
+  script:
+    - yum install -y devtoolset-8 cmake3 make rpm-build
+    - source /opt/rh/devtoolset-8/enable
+    - mkdir build_srpm
+    - cd build_srpm
+    - cmake3 -DPackageOnly:Bool=true -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
+    - make cta_srpm
+  variables:
+    BUILD_PATH: "build_srpm/RPM/SRPMS/"
+
+.cta_rpm:
+  extends:
+    - .cta_build
+  script:
+    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
+    - yum install -y devtoolset-8 cmake3 make rpm-build
+    - yum -y install yum-plugin-priorities yum-plugin-versionlock
+    - yum install -y git
+    - source /opt/rh/devtoolset-8/enable
+    - git submodule update --init --recursive
+    - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
+    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
+    - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
+    - mkdir build_rpm
+    - cd build_rpm
+    - cmake3 -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
+    - make cta_rpm
+  variables:
+    BUILD_PATH: "build_rpm/RPM/RPMS"
+
+cta_srpm_xrootd4:
+  stage: build:srpm
+  extends:
+    - .cta_srpm
+  rules:
+    - !reference [.cta_build, rules]
+    - if: $XROOTD_VERSION == "4" &&  $SCHED_TYPE == "objectstore"
+
+cta_rpm_xrootd4:
+  stage: build:rpm
+  extends:
+    - .cta_rpm
+  rules:
+    - !reference [.cta_build, rules]
+    - if: $XROOTD_VERSION == "4" &&  $SCHED_TYPE == "objectstore"
+    - if: $CI_COMMIT_TAG
+      when: never
+
+cta_srpm_xrootd4_pgsched:
+  stage: build:srpm
+  extends:
+    - .cta_srpm
+  rules:
+    - !reference [.cta_build, rules]
+    - if: $XROOTD_VERSION == "4" && $SCHED_TYPE == "pgsched"
+
+cta_rpm_xrootd4_pgsched:
+  stage: build:rpm
+  extends:
+    - .cta_rpm
+  rules:
+    - !reference [.cta_build, rules]
+    - if: $XROOTD_VERSION == "4" && $SCHED_TYPE == "pgsched"
+    - if: $CI_COMMIT_TAG
+      when: never
+
+cta_srpm_xrootd5:
+  stage: build:srpm
+  extends:
+    - .cta_srpm
+  rules:
+    - !reference [.cta_build, rules]
+    - if: $XROOTD_VERSION == "5" &&  $SCHED_TYPE == "objectstore"
+
+cta_rpm_xrootd5:
+  stage: build:rpm
+  extends:
+    - .cta_rpm
+  rules:
+    - !reference [.cta_build, rules]
+    - if: $XROOTD_VERSION == "5" &&  $SCHED_TYPE == "objectstore"
+    - if: $CI_COMMIT_TAG
+      when: never
+
