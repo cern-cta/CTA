@@ -12,8 +12,12 @@ stages:
   - docs
 
 variables:
+  # 4 or 5
   XROOTD_VERSION: 4
+  # `objectstore` or `pgsched`
   SCHED_TYPE: "objectstore"
+  # `cc7-base` or `cs8-base`
+  LINUX_IMAGE: "cs8-base"
   CTA_VERSION: "${XROOTD_VERSION}"
   CMAKE_OPTIONS: ""
 
