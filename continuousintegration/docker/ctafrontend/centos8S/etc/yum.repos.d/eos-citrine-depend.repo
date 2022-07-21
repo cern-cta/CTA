@@ -1,0 +1,6 @@
+[eos-citrine-depend]
+name=EOS Citrine depend
+baseurl=https://storage-ci.web.cern.ch/storage-ci/eos/citrine-depend/el-8s/x86_64/
+priority=4
+gpgcheck=0
+enabled=1

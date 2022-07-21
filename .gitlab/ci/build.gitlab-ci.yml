@@ -60,10 +60,10 @@
   extends:
     - .cta_build
   script:
-    # - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
+    - cp -f continuousintegration/docker/ctafrontend/centos8S/etc/yum.repos.d/*.repo /etc/yum.repos.d/
     - yum install -y gcc gcc-c++ cmake3 make rpm-build yum-utils
     # - yum -y install yum-plugin-priorities yum-plugin-versionlock
-    - yum install -y git
+    - yum install -y epel-release git
     - git submodule update --init --recursive
     - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
     # - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
