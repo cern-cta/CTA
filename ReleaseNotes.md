@@ -33,6 +33,7 @@ The following manual pages have been updated:
 ### Features
 - cta/CTA#979  - Document configuration options of daemons and command-line tools
 - cta/CTA#1252 - Adds Liquibase changelog files for PostgreSQL
+- cta/CTA#64   - Adds support for the OSM Tape Label format to the CTA
 ### Bug fixes
 - cta/CTA#947  - cta-taped should log the FST being used for a data transfer
 - cta/CTA#1106 - "cta-admin schedulinginfo ls" returns records larger than SSI buffer size limit

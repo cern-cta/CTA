@@ -36,7 +36,6 @@ namespace tapeFile {
   */
 class OsmReadSession : public ReadSession {
 public:
-  CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);
   /**
     * Constructor of the OsmReadSession. It will rewind the tape, and check the
     * volId value. Throws an exception in case of mismatch.

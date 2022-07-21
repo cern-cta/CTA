@@ -19,9 +19,9 @@
 #include <string>
 
 #include "castor/tape/tapeserver/file/Exceptions.hpp"
-#include "castor/tape/tapeserver/file/HeaderChecker.hpp"
 #include "castor/tape/tapeserver/file/OsmReadSession.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
+#include "castor/tape/tapeserver/file/OsmFileStructure.hpp"
 
 namespace castor {
 namespace tape {
@@ -30,7 +30,66 @@ namespace tapeFile {
 OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface &drive,
   const tapeserver::daemon::VolumeInfo &volInfo, const bool useLbp)
   : ReadSession(drive, volInfo, useLbp) {
-  throw NotImplemented("Constructor not implemented");
+    
+  if (!m_vid.compare("")) {
+    throw cta::exception::InvalidArgument();
+  }
+  if (m_drive.isTapeBlank()) {
+    cta::exception::Exception ex;
+    ex.getMessage() << "[OsmReadSession::OsmReadSession()] - Tape is blank, cannot proceed with constructing the ReadSession";
+    throw ex;
+  }
+
+  m_drive.rewind();
+  m_drive.disableLogicalBlockProtection();
+
+  uint8_t uiLLBPMethod = SCSI::logicBlockProtectionMethod::DoNotUse;
+  osm::LABEL osmLabel;
+
+  m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()), osm::LIMITS::MAXMRECSIZE, "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1");
+  m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel() + osm::LIMITS::MAXMRECSIZE), osm::LIMITS::MAXMRECSIZE, "[OsmReadSession::OsmReadSession] - Reading OSM label - part 2");
+
+  try {
+    osmLabel.decode();
+    uiLLBPMethod = osmLabel.getLBPMethod();
+  } catch (const std::exception& osmExc) {
+    throw TapeFormatError(osmExc.what());
+  }
+
+  switch (uiLLBPMethod) {
+    case SCSI::logicBlockProtectionMethod::CRC32C:
+      m_detectedLbp = true;
+      if (m_useLbp) {
+        m_drive.enableCRC32CLogicalBlockProtectionReadOnly();
+      } else {
+        m_drive.disableLogicalBlockProtection();
+      }
+      break;
+    case SCSI::logicBlockProtectionMethod::ReedSolomon:
+      throw cta::exception::Exception("In OsmReadSession::OsmReadSession(): "
+                                      "ReedSolomon LBP method not supported");
+    case SCSI::logicBlockProtectionMethod::DoNotUse:
+      m_drive.disableLogicalBlockProtection();
+      m_detectedLbp = false;
+      break;
+    default:
+      throw cta::exception::Exception("In OsmReadSession::OsmReadSession(): unknown LBP method");
+  }
+  // from this point the right LBP mode should be set or not set
+  m_drive.rewind();
+  m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()), osm::LIMITS::MAXMRECSIZE, "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1");
+  m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel() + osm::LIMITS::MAXMRECSIZE), osm::LIMITS::MAXMRECSIZE, "[OsmReadSession::OsmReadSession] - Reading OSM label - part 2");
+
+  try {
+    osmLabel.decode();
+    if (osmLabel.name().compare(m_vid) != 0) {
+      std::stringstream ex_str;
+      ex_str<<"[OsmReadSession::OsmReadSession()] - VSN of tape ("<<osmLabel.name()<<") is not the one requested ("<<m_vid<<")";
+      throw TapeFormatError(ex_str.str());
+    }
+  } catch (const std::exception& osmExc) {
+    throw TapeFormatError(osmExc.what());
+  }
 }
 
 }  // namespace tapeFile

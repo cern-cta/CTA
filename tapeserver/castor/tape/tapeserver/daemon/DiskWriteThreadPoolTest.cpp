@@ -67,32 +67,48 @@ namespace unitTests{
   using namespace castor::tape::tapeserver::daemon;
   using namespace castor::tape::tapeserver::client;
   struct MockRecallReportPacker : public RecallReportPacker {
-    void reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob) {
+    void reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob, cta::log::LogContext& lc) override {
       cta::threading::MutexLocker ml(m_mutex);
       completeJobs++;
     }
-    void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob) {
+    void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const cta::exception::Exception & ex, cta::log::LogContext& lc) override {
       cta::threading::MutexLocker ml(m_mutex);
       failedJobs++;
     }
-    void disableBulk() {}
-    void reportEndOfSession() {
+    void disableBulk() override {}
+    void reportEndOfSession(cta::log::LogContext& lc) override {
       cta::threading::MutexLocker ml(m_mutex);
       endSessions++;
     }
-    void reportEndOfSessionWithErrors(const std::string msg, int error_code) {
+    void reportEndOfSessionWithErrors(const std::string& msg, int error_code, cta::log::LogContext& lc) override {
       cta::threading::MutexLocker ml(m_mutex);
       endSessionsWithError++;
     }
-    MockRecallReportPacker(cta::RetrieveMount *rm, cta::log::LogContext lc):
-      RecallReportPacker(rm,lc), completeJobs(0), failedJobs(0),
-      endSessions(0), endSessionsWithError(0) {}
+    void setDiskDone() override {
+      cta::threading::MutexLocker mutexLocker(m_mutex);
+      m_diskThreadComplete = true;
+    }
 
+    void setTapeDone() override {
+      cta::threading::MutexLocker mutexLocker(m_mutex);
+      m_tapeThreadComplete = true;
+    }
+
+    bool allThreadsDone() override {
+      cta::threading::MutexLocker mutexLocker(m_mutex);
+      return m_tapeThreadComplete && m_diskThreadComplete;
+    }
+    
+    MockRecallReportPacker(cta::RetrieveMount *rm,cta::log::LogContext lc):
+     RecallReportPacker(rm,lc), completeJobs(0), failedJobs(0),
+      endSessions(0), endSessionsWithError(0) {}
     cta::threading::Mutex m_mutex;
     int completeJobs;
     int failedJobs;
     int endSessions;
     int endSessionsWithError;
+    bool m_tapeThreadComplete;
+    bool m_diskThreadComplete;
   };
   
   struct MockTaskInjector : public RecallTaskInjector{
