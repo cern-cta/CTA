@@ -60,14 +60,13 @@
   extends:
     - .cta_build
   script:
-    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
-    - yum install -y gcc gcc-c++ cmake3 make rpm-build
-    - yum -y install yum-plugin-priorities yum-plugin-versionlock
+    # - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
+    - yum install -y gcc gcc-c++ cmake3 make rpm-build yum-utils
+    # - yum -y install yum-plugin-priorities yum-plugin-versionlock
     - yum install -y git
-    - source /opt/rh/devtoolset-8/enable
     - git submodule update --init --recursive
     - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
-    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
+    # - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
     - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
     - mkdir build_rpm
     - cd build_rpm
