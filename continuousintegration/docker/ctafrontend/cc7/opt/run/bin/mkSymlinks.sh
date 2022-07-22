@@ -25,7 +25,7 @@ echo Creating symlinks for CTA libraries.
 find ${BUILDTREE_BASE}/${CTA_BUILDTREE_SUBDIR} | grep '.so$' | xargs -itoto ln -s -v -t /usr/lib64 toto
 echo Creating symlink for frontend configuration file.
 CTA_SOURCE_TREE=`perl -e 'while (<>) { if (/cta_SOURCE_DIR:STATIC=(.*)/ ) { print $1."\n"; } }' < ${BUILDTREE_BASE}/${CTA_BUILDTREE_SUBDIR}/CMakeCache.txt`
-ln -s -v -t /etc/cta ${CTA_SOURCE_TREE}/xroot_plugins/cta-frontend-xrootd.conf
+ln -s -v -t /etc/cta ${CTA_SOURCE_TREE}/continuousintegration/docker/ctafrontend/cc7/etc/cta/cta-frontend-xrootd.conf
 echo "Copying cta-fst-gcd (requires a different name)"
 cp -v ${CTA_SOURCE_TREE}/python/eosfstgcd/ctafstgcd.py /usr/bin/cta-fst-gcd
 if [[ -n "${EOS_BUILDTREE_SUBDIR}" ]]; then
