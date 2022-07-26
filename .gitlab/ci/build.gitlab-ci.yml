@@ -65,6 +65,10 @@
     - sed -i 's/protobuf3-/protobuf-/g' cta.spec.in
     - sed -i 's/instantclient19.3/instantclient19.15/g' cta.spec.in
     - sed -i 's/19.3/19.15/g' cmake/Findoracle-instantclient.cmake
+    - sed -i 's/protobuf3/protobuf/g' cmake/FindProtobuf3.cmake
+    - sed -i 's/lib64\/protobuf3/lib64/g' cmake/FindProtobuf3.cmake
+    - sed -i 's/protoc3/protoc/g' cmake/FindProtobuf3.cmake
+    - sed -i 's/include\/protobuf3/include\/google\/protobuf/g' cmake/FindProtobuf3.cmake
     - cp -f continuousintegration/docker/ctafrontend/centos8S/etc/yum.repos.d/*.repo /etc/yum.repos.d/
     - yum install -y gcc gcc-c++ cmake3 make rpm-build yum-utils
     # - yum -y install yum-plugin-priorities yum-plugin-versionlock
