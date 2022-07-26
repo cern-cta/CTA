@@ -29,6 +29,7 @@
     - .cta_build
   script:
     - yum install -y gcc gcc-c++ cmake3 make rpm-build
+    - sed -i 's/protobuf3-/protobuf-/g' cta.spec.in
     - mkdir build_srpm
     - cd build_srpm
     - cmake3 -DPackageOnly:Bool=true -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
@@ -60,6 +61,7 @@
   extends:
     - .cta_build
   script:
+    - sed -i 's/protobuf3-/protobuf-/g' cta.spec.in
     - cp -f continuousintegration/docker/ctafrontend/centos8S/etc/yum.repos.d/*.repo /etc/yum.repos.d/
     - yum install -y gcc gcc-c++ cmake3 make rpm-build yum-utils
     # - yum -y install yum-plugin-priorities yum-plugin-versionlock
