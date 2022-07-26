@@ -30,6 +30,7 @@
   script:
     - yum install -y gcc gcc-c++ cmake3 make rpm-build
     - sed -i 's/protobuf3-/protobuf-/g' cta.spec.in
+    - sed -i 's/instantclient19.3/instantclient19.15/g' cta.spec.in
     - mkdir build_srpm
     - cd build_srpm
     - cmake3 -DPackageOnly:Bool=true -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
@@ -62,6 +63,8 @@
     - .cta_build
   script:
     - sed -i 's/protobuf3-/protobuf-/g' cta.spec.in
+    - sed -i 's/instantclient19.3/instantclient19.15/g' cta.spec.in
+    - sed -i 's/19.3/19.15/g' cmake/Findoracle-instantclient.cmake
     - cp -f continuousintegration/docker/ctafrontend/centos8S/etc/yum.repos.d/*.repo /etc/yum.repos.d/
     - yum install -y gcc gcc-c++ cmake3 make rpm-build yum-utils
     # - yum -y install yum-plugin-priorities yum-plugin-versionlock
