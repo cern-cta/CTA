@@ -84,7 +84,9 @@ class PostgresSchedDB: public SchedulerDatabase {
    std::list<RetrieveQueueStatistics> getRetrieveQueueStatistics(
      const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria, const std::set<std::string>& vidsToConsider) override;
 
-   SchedulerDatabase::RetrieveRequestInfo queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
+  void clearRetrieveQueueStatisticsCache(const std::string & vid) override;
+
+  SchedulerDatabase::RetrieveRequestInfo queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
      const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria, const std::optional<std::string> diskSystemName,
      log::LogContext &logContext) override;
 
