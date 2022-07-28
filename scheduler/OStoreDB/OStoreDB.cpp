@@ -1356,6 +1356,13 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> OStoreDB::getRetrieveQueue
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::clearRetrieveQueueStatisticsCache()
+//------------------------------------------------------------------------------
+void OStoreDB::clearRetrieveQueueStatisticsCache(const std::string & vid) {
+  return Helpers::flushRetrieveQueueStatisticsCacheForVid(vid);
+}
+
+//------------------------------------------------------------------------------
 // OStoreDB::queueRetrieve()
 //------------------------------------------------------------------------------
 SchedulerDatabase::RetrieveRequestInfo OStoreDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
