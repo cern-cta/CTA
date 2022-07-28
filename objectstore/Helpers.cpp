@@ -453,22 +453,19 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
   // Sort the tapes.
   candidateVidsStats.sort(SchedulerDatabase::RetrieveQueueStatistics::leftGreaterThanRight);
   // Get a list of equivalent best tapes
-  std::set<std::string> shortlistVids;
+  std::set<std::string> shortSetVids;
   for (auto & s: candidateVidsStats) {
     if (!(s<candidateVidsStats.front()) && !(s>candidateVidsStats.front()))
-      shortlistVids.insert(s.vid);
+      shortSetVids.insert(s.vid);
   }
   // If there is only one best tape, we're done
-  if (shortlistVids.size()==1) return *shortlistVids.begin();
-  // There are several equivalent entries, choose randomly among them.
-  // First element will always be selected.
-  // We need to get a random number [0, candidateVids.size() -1]
-  std::default_random_engine dre(std::chrono::system_clock::now().time_since_epoch().count());
-  std::uniform_int_distribution<size_t> distribution(0, candidateVids.size() -1);
-  size_t index=distribution(dre);
-  auto it=candidateVids.cbegin();
-  std::advance(it, index);
-  return *it;
+  if (shortSetVids.size()==1) return *shortSetVids.begin();
+  // There are several equivalent entries, choose one among them based on the number of days since epoch
+  std::vector<std::string> shortListVids(shortSetVids.begin(), shortSetVids.end());
+  std::sort(shortListVids.begin(), shortListVids.end());
+  const time_t secondsSinceEpoch = time(nullptr);
+  const uint64_t daysSinceEpoch = secondsSinceEpoch / (60*60*24);
+  return shortListVids[daysSinceEpoch % shortListVids.size()];
 }
 
 //------------------------------------------------------------------------------

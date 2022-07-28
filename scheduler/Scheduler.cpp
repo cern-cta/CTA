@@ -192,39 +192,7 @@ std::string Scheduler::queueRetrieve(
   common::dataStructures::RetrieveFileQueueCriteria queueCriteria;
 
   queueCriteria = m_catalogue.prepareToRetrieveFile(instanceName, request.archiveFileID, request.requester, request.activity, lc, request.mountPolicy);
-
   queueCriteria.archiveFile.diskFileInfo = request.diskFileInfo;
-
-  // The following block of code is a temporary fix for the following CTA issue:
-  //
-  //   cta/CTA#777 Minimize mounts for dual copy tape pool recalls
-  //
-  // The code tries to force a recall to use the tape copy with the
-  // tape copy number equal to the number of days since the epoch.
-  // It reduces the number of overall number tape mounts
-  // in situations where files with multiple tape copies are being recalled.
-  {
-
-    const time_t secondsSinceEpoch = time(nullptr);
-    const uint64_t daysSinceEpoch = secondsSinceEpoch / (60*60*24);
-    const uint64_t indexToChose = daysSinceEpoch % queueCriteria.archiveFile.tapeFiles.size();
-
-    std::vector<uint64_t> tapeFileCopyNbs;
-
-    std::transform(queueCriteria.archiveFile.tapeFiles.begin(), queueCriteria.archiveFile.tapeFiles.end(),std::back_inserter(tapeFileCopyNbs),
-       [](const common::dataStructures::TapeFile &a) -> uint64_t {
-         return a.copyNb;});
-
-    std::sort(tapeFileCopyNbs.begin(), tapeFileCopyNbs.end(),
-      [](const uint64_t &a, const uint64_t &b) -> bool
-        {return a > b;});
-
-    const uint64_t chosenCopyNb = tapeFileCopyNbs.at(indexToChose);
-
-    const common::dataStructures::TapeFile chosenTapeFile = queueCriteria.archiveFile.tapeFiles.at(chosenCopyNb);
-    queueCriteria.archiveFile.tapeFiles.clear();
-    queueCriteria.archiveFile.tapeFiles.push_back(chosenTapeFile);
-  }
 
   auto diskSystemList = m_catalogue.getAllDiskSystems();
   auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
