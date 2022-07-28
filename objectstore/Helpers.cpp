@@ -516,6 +516,11 @@ void Helpers::flushRetrieveQueueStatisticsCache(){
   g_retrieveQueueStatistics.clear();
 }
 
+void Helpers::flushRetrieveQueueStatisticsCacheForVid(const std::string & vid){
+  threading::MutexLocker ml(g_retrieveQueueStatisticsMutex);
+  g_retrieveQueueStatistics.erase(vid);
+}
+
 //------------------------------------------------------------------------------
 // Helpers::g_retrieveQueueStatistics
 //------------------------------------------------------------------------------

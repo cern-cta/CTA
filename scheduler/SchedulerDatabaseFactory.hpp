@@ -210,6 +210,10 @@ public:
     return m_SchedDB->getRetrieveQueueStatistics(criteria, vidsToConsider);
   }
 
+  void clearRetrieveQueueStatisticsCache(const std::string & vid) override {
+    return m_SchedDB->clearRetrieveQueueStatisticsCache(vid);
+  }
+
   SchedulerDatabase::RetrieveRequestInfo queueRetrieve(common::dataStructures::RetrieveRequest& rqst,
     const common::dataStructures::RetrieveFileQueueCriteria &criteria, const std::optional<std::string> diskSystemName,
     log::LogContext &logContext) override {

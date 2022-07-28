@@ -209,12 +209,14 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
                                 + " by cleanup runner] "
                                 + prevReason.value_or("");
         m_catalogue.modifyTapeState(admin, qForCleanup.vid, common::dataStructures::Tape::REPACKING, newReason);
+        m_db.clearRetrieveQueueStatisticsCache(qForCleanup.vid);
       } else if (tapeToModify.state == common::dataStructures::Tape::BROKEN_PENDING) {
         std::string newReason = "[Tape state changed to "
                                 + common::dataStructures::Tape::stateToString(common::dataStructures::Tape::BROKEN)
                                 + " by cleanup runner] "
                                 + prevReason.value_or("");
         m_catalogue.modifyTapeState(admin, qForCleanup.vid, common::dataStructures::Tape::BROKEN, newReason);
+        m_db.clearRetrieveQueueStatisticsCache(qForCleanup.vid);
       } else {
         log::ScopedParamContainer paramsWarnMsg(logContext);
         paramsWarnMsg.add("tapeVid", qForCleanup.vid)

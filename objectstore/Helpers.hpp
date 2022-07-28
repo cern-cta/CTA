@@ -114,6 +114,7 @@ class Helpers {
    * TO BE USED BY UNIT TESTS !
    */
   static void flushRetrieveQueueStatisticsCache();
+  static void flushRetrieveQueueStatisticsCacheForVid(const std::string & vid);
 
  private:
   /** Lock for the retrieve queues stats */

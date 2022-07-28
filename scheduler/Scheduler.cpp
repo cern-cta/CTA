@@ -1851,6 +1851,7 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
     throw cta::exception::UserError("Unknown tape state");
   }
 
+  m_db.clearRetrieveQueueStatisticsCache(vid);
 }
 
 //------------------------------------------------------------------------------
