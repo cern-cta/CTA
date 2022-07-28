@@ -328,16 +328,22 @@ class SchedulerDatabase {
     const std::set<std::string> & vidsToConsider) = 0;
 
   /**
-   * Queues the specified request. As the object store has access to the catalogue,
-   * the best queue (most likely to go, and not disabled can be chosen directly there).
-   *
-   * @param rqst The request.
-   * @param criteria The criteria retrieved from the CTA catalogue to be used to
-   * decide how to quue the request.
-   * @param diskSystemName optional disk system name if the destination matches a declared one.
-   * @param logContext context allowing logging db operation
-   * @return the selected vid (mostly for logging)
+   * Clear the retrieve queue statistics cache.
+   * @param vid the queue vid
    */
+  virtual void clearRetrieveQueueStatisticsCache(const std::string & vid) = 0;
+
+    /**
+     * Queues the specified request. As the object store has access to the catalogue,
+     * the best queue (most likely to go, and not disabled can be chosen directly there).
+     *
+     * @param rqst The request.
+     * @param criteria The criteria retrieved from the CTA catalogue to be used to
+     * decide how to quue the request.
+     * @param diskSystemName optional disk system name if the destination matches a declared one.
+     * @param logContext context allowing logging db operation
+     * @return the selected vid (mostly for logging)
+     */
   struct RetrieveRequestInfo {
     std::string selectedVid;
     std::string requestId;

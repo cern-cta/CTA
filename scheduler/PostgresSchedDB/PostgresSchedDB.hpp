@@ -92,6 +92,8 @@ class PostgresSchedDB: public SchedulerDatabase {
     const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria, const std::optional<std::string> diskSystemName,
     log::LogContext &logContext) override;
 
+  void clearRetrieveQueueStatisticsCache(const std::string & vid) override;
+
   void cancelRetrieve(const std::string& instanceName, const cta::common::dataStructures::CancelRetrieveRequest& rqst,
     log::LogContext& lc) override;
 
