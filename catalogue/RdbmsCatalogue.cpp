@@ -9618,7 +9618,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "TAPE_FILE.VID = TAPE.VID "
       "WHERE "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID AND "
-        "TAPE.TAPE_STATE = 'ACTIVE' "
+        "TAPE.TAPE_STATE IN ('ACTIVE', 'DISABLED') "
       "ORDER BY "
         "TAPE_FILE.CREATION_TIME ASC";
     auto stmt = conn.createStmt(sql);
