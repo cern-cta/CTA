@@ -373,10 +373,16 @@ done
 
 setup_tapes_for_multicopy_test() {
 
-  eos attr set sys.archive.storage_class=ctaStorageClass_1_copy ${MULTICOPY_DIR_1}
-  eos attr set sys.archive.storage_class=ctaStorageClass_2_copy ${MULTICOPY_DIR_2}
-  eos attr set sys.archive.storage_class=ctaStorageClass_3_copy ${MULTICOPY_DIR_3}
-  
+  echo "Setting up tapes and tapepools for multi-copy test..."
+
+  kubectl --namespace ${NAMESPACE} exec ctaeos -- eos mkdir ${MULTICOPY_DIR_1}
+  kubectl --namespace ${NAMESPACE} exec ctaeos -- eos mkdir ${MULTICOPY_DIR_2}
+  kubectl --namespace ${NAMESPACE} exec ctaeos -- eos mkdir ${MULTICOPY_DIR_3}
+
+  kubectl --namespace ${NAMESPACE} exec ctaeos -- eos attr set sys.archive.storage_class=ctaStorageClass_1_copy ${MULTICOPY_DIR_1}
+  kubectl --namespace ${NAMESPACE} exec ctaeos -- eos attr set sys.archive.storage_class=ctaStorageClass_2_copy ${MULTICOPY_DIR_2}
+  kubectl --namespace ${NAMESPACE} exec ctaeos -- eos attr set sys.archive.storage_class=ctaStorageClass_3_copy ${MULTICOPY_DIR_3}
+
   # Find 3 non-full tapes and assign them to each one of the 3 tapepools
   mapfile -t nonFullTapes < <( kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json tape ls --all | jq -r '.[] | select(.full==false) | .vid' )
   if ((${#nonFullTapes[@]} < 3)); then

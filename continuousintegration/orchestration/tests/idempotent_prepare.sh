@@ -69,129 +69,6 @@ eospower_kinit &>/dev/null
 admin_kdestroy &>/dev/null
 admin_kinit &>/dev/null
 
-################################################################
-# Helper functions
-################################################################
-
-# Pass list of files waiting for archival
-
-wait_for_archive () {
-
-  SECONDS_PASSED=0
-  WAIT_FOR_ARCHIVED_FILE_TIMEOUT=90
-
-  while test $# != $(echo "$@" | tr " " "\n" | xargs -iFILE eos root://${EOS_INSTANCE} info FILE | awk '{print $4;}' | grep tape | wc -l); do
-    echo "Waiting for files to be archived to tape: seconds passed = ${SECONDS_PASSED}"
-    sleep 1
-    let SECONDS_PASSED=SECONDS_PASSED+1
-
-    if test ${SECONDS_PASSED} == ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT}; then
-      echo "ERROR: Timed out after ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT} seconds waiting for files to be archived to tape"
-      exit 1
-    fi
-  done
-
-}
-
-# Pass list of files waiting for retrieval
-
-wait_for_retrieve () {
-
-  SECONDS_PASSED=0
-  WAIT_FOR_RETRIEVED_FILE_TIMEOUT=90
-  while test $# != $(echo "$@" | tr " " "\n" | xargs -iFILE eos root://${EOS_INSTANCE} info FILE | awk '{print $4;}' | grep -F "default.0" | wc -l); do
-    echo "Waiting for files to be retrieved from tape: Seconds passed = ${SECONDS_PASSED}"
-    sleep 1
-    let SECONDS_PASSED=SECONDS_PASSED+1
-
-    if test ${SECONDS_PASSED} == ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT}; then
-      echo "Timed out after ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT} seconds waiting for files to be retrieved from tape"
-      exit 1
-    fi
-  done
-
-}
-
-# Pass list of files waiting for eviction
-
-wait_for_evict () {
-
-  SECONDS_PASSED=0
-  WAIT_FOR_EVICTED_FILE_TIMEOUT=90
-  while test 0 != $(echo "$@" | tr " " "\n" | xargs -iFILE eos root://${EOS_INSTANCE} info FILE | awk '{print $4;}' | grep -F "default.0" | wc -l); do
-    echo "Waiting for files to be evicted from disk: Seconds passed = ${SECONDS_PASSED}"
-    sleep 1
-    let SECONDS_PASSED=SECONDS_PASSED+1
-
-    if test ${SECONDS_PASSED} == ${WAIT_FOR_EVICTED_FILE_TIMEOUT}; then
-      echo "Timed out after ${WAIT_FOR_EVICTED_FILE_TIMEOUT} seconds waiting for files to be evicted from disk"
-      exit 1
-    fi
-  done
-
-}
-
-# Pass "UP" or "DOWN" as argument
-
-put_all_drives () {
-
-  NEXT_STATE=$1
-  [ "$1" = "UP" ] && PREV_STATE="DOWN" || PREV_STATE="UP"
-  next_state=$(echo $NEXT_STATE | awk '{print tolower($0)}')
-  prev_state=$(echo $PREV_STATE | awk '{print tolower($0)}')
-
-  # Put all tape drives up/down
-  INITIAL_DRIVES_STATE=`admin_cta --json dr ls`
-  echo INITIAL_DRIVES_STATE:
-  echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | [ .driveName, .driveStatus] | @tsv' | column -t
-  echo -n "Will put $next_state those drives : "
-  drivesToModify=`echo ${INITIAL_DRIVES_STATE} | jq -r ".[].driveName"`
-  echo $drivesToModify
-  for d in `echo $drivesToModify`; do
-    admin_cta drive $next_state $d --reason "PUTTING DRIVE $NEXT_STATE FOR TESTS"
-  done
-
-  echo "$(date +%s): Waiting for the drives to be $next_state"
-  SECONDS_PASSED=0
-  WAIT_FOR_DRIVES_TIMEOUT=$((10))
-  while [[ $SECONDS_PASSED < $WAIT_FOR_DRIVES_TIMEOUT ]]; do
-    sleep 1
-    oneStatusRemaining=0
-    for d in `echo $drivesToModify`; do
-      status=`admin_cta --json drive ls | jq -r ". [] | select(.driveName == \"$d\") | .driveStatus"`
-      if [[ $NEXT_STATE == "DOWN" ]]; then
-        # Anything except DOWN is not acceptable
-        if [[ $status != "DOWN" ]]; then
-          oneStatusRemaining=1
-        fi;
-      else
-        # Only DOWN is not OK. Starting, Unmounting, Running == UP
-        if [[ $status == "DOWN" ]]; then
-          oneStatusRemaining=1
-        fi;
-      fi;
-    done
-    if [[ $oneStatusRemaining -eq 0 ]]; then
-      echo "Drives : $drivesToModify are $next_state"
-      break;
-    fi
-    echo -n "."
-    SECONDS_PASSED=$SECONDS_PASSED+1
-    if [[ $SECONDS_PASSED -gt $WAIT_FOR_DRIVES_TIMEOUT ]]; then
-      die "ERROR: Timeout reach for trying to put all drives $next_state"
-    fi
-  done
-
-}
-
-put_all_drives_up () {
-  put_all_drives "UP"
-}
-
-put_all_drives_down () {
-  put_all_drives "DOWN"
-}
-
 
 ################################################################
 # Test preparing single file (exists on tape)
@@ -207,7 +84,7 @@ echo "Testing normal 'prepare -s' request..."
 put_all_drives_up
 echo "Archiving ${TEMP_FILE_OK}..."
 xrdcp /etc/group root://${EOS_INSTANCE}/${TEMP_FILE_OK}
-wait_for_archive ${TEMP_FILE_OK}
+wait_for_archive ${EOS_INSTANCE} ${TEMP_FILE_OK}
 put_all_drives_down
 
 echo "Trigering EOS retrieve workflow as poweruser1:powerusers..."
@@ -448,7 +325,7 @@ done
 
 put_all_drives_up
 cat ${TEST_FILES_TAPE_LIST} | xargs -iFILE_PATH xrdcp /etc/group root://${EOS_INSTANCE}/FILE_PATH
-wait_for_archive $(cat ${TEST_FILES_TAPE_LIST} | tr "\n" " ")
+wait_for_archive ${EOS_INSTANCE} $(cat ${TEST_FILES_TAPE_LIST} | tr "\n" " ")
 
 echo "Files to be written to directory with no prepare/evict permission:"
 for ((file_idx=0; file_idx < ${NB_FILES_NO_P}; file_idx++)); do
@@ -555,7 +432,7 @@ echo "Testing 'prepare -a' request for file ${TEMP_FILE}..."
 put_all_drives_up
 echo "Archiving ${TEMP_FILE}..."
 xrdcp /etc/group root://${EOS_INSTANCE}/${TEMP_FILE}
-wait_for_archive ${TEMP_FILE}
+wait_for_archive ${EOS_INSTANCE} ${TEMP_FILE}
 echo "Disabling tape drives..."
 put_all_drives_down
 
@@ -609,7 +486,7 @@ echo "Uploading & archiving test file ${TEMP_FILE_TAPE}."
 put_all_drives_up
 echo "Archiving ${TEMP_FILE_TAPE}..."
 xrdcp /etc/group root://${EOS_INSTANCE}/${TEMP_FILE_TAPE}
-wait_for_archive ${TEMP_FILE_TAPE}
+wait_for_archive ${EOS_INSTANCE} ${TEMP_FILE_TAPE}
 echo "Disabling tape drives..."
 put_all_drives_down
 
@@ -661,12 +538,12 @@ put_all_drives_up
 echo "Archiving ${TEMP_FILE}..."
 xrdcp /etc/group root://${EOS_INSTANCE}/${TEMP_FILE}
 echo "Disabling tape drives..."
-wait_for_archive ${TEMP_FILE}
+wait_for_archive ${EOS_INSTANCE} ${TEMP_FILE}
 
 echo "Trigering EOS retrieve workflow as poweruser1:powerusers, for ${TEMP_FILE}..."
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
 REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s ${TEMP_FILE})
-wait_for_retrieve ${TEMP_FILE}
+wait_for_retrieve ${EOS_INSTANCE} ${TEMP_FILE}
 
 echo "Trigering EOS evict workflow as poweruser1:powerusers..."
 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -e ${TEMP_FILE}
@@ -676,7 +553,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-wait_for_evict ${TEMP_FILE}
+wait_for_evict ${EOS_INSTANCE} ${TEMP_FILE}
 
 echo "Test completed successfully"
 
@@ -698,12 +575,12 @@ echo "Uploading & archiving test file ${TEMP_FILE_TAPE}."
 put_all_drives_up
 echo "Archiving ${TEMP_FILE_TAPE}..."
 xrdcp /etc/group root://${EOS_INSTANCE}/${TEMP_FILE_TAPE}
-wait_for_archive ${TEMP_FILE_TAPE}
+wait_for_archive ${EOS_INSTANCE} ${TEMP_FILE_TAPE}
 
 echo "Trigering EOS retrieve workflow as poweruser1:powerusers, for ${TEMP_FILE_TAPE}..."
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
 REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s ${TEMP_FILE_TAPE})
-wait_for_retrieve ${TEMP_FILE_TAPE}
+wait_for_retrieve ${EOS_INSTANCE} ${TEMP_FILE_TAPE}
 
 echo "Trigering EOS abort workflow as poweruser1:powerusers..."
 echo "Error expected"
@@ -714,7 +591,7 @@ if [ $? -eq 0 ]; then
   exit 1
 fi
 
-wait_for_evict ${TEMP_FILE_TAPE}
+wait_for_evict ${EOS_INSTANCE} {TEMP_FILE_TAPE}
 
 echo "Test completed successfully"
 
