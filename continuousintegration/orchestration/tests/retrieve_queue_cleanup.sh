@@ -15,350 +15,360 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-usage() { cat <<EOF 1>&2
-Usage: $0 -n <namespace>
-EOF
-exit 1
-}
+################################################################################
+# DESCRIPTION
+#
+#   - This script tests the new behaviour of the PREPARE request, which treats
+#   all files independently and idempotendly.
+#   - If a file fails to prepare - for any reason - it should not
+#   affect the PREPARE of the remaining files in the list.
+#
+# EXPECTED BEHAVIOUR
+#
+#   # PREPARE -s command
+#
+#   - Both these commands should treat <file_1> the same way, regardless of the
+#   other files being staged:
+#       > prepare -s <file_1> .. <file_N>
+#       > prepare -s <file_1>
+#   - <file_1> is no longer affected if another file <file_M> fails for any reason.
+#   - [Edge case:] We return an error if ALL files fail to prepare.
+#
+#   # QUERY PREPARE
+#
+#   - If a file failed to stage, query prepare must be able to communicate back
+#   that it failed and the reason.
+#   - This error is signaled and communitated through the field "error_text".
+#
+#   # PREPARE -e/-a commands
+#
+#   - We should trigger prepare evict or abort for all files, even if some fail.
+#   - If any file failed, the prepare -e/prepare -a should return an error
+#   (different behaviour from 'prepare -s'). This is necessary because, for
+#   these commands, this is the only way to directly know that they failed.
+#
+################################################################################
 
-while getopts "n:" o; do
-    case "${o}" in
-        n)
-            NAMESPACE=${OPTARG}
-            ;;
-        *)
-            usage
-            ;;
-    esac
-done
-shift $((OPTIND-1))
+EOS_INSTANCE=ctaeos
 
-if [ -z "${NAMESPACE}" ]; then
-    usage
-fi
+MULTICOPY_DIR_1=/eos/ctaeos/preprod/dir_1_copy
+MULTICOPY_DIR_2=/eos/ctaeos/preprod/dir_2_copy
+MULTICOPY_DIR_3=/eos/ctaeos/preprod/dir_3_copy
 
-if [ ! -z "${error}" ]; then
-    echo -e "ERROR:\n${error}"
-    exit 1
-fi
+# get some common useful helpers for krb5
+. /root/client_helper.sh
 
+eospower_kdestroy &>/dev/null
+eospower_kinit &>/dev/null
 
-# eos instance identified by SSS username
-EOSINSTANCE=ctaeos
+admin_kdestroy &>/dev/null
+admin_kinit &>/dev/null
 
-# Check if library configuration has completed
-tempdir=$(mktemp -d) # temporary directory for system test related config
-echo -n "Reading library configuration from tpsrv01"
-SECONDS_PASSED=0
-while test 0 = $(kubectl --namespace ${NAMESPACE} exec tpsrv01 -c taped -- cat /tmp/library-rc.sh | sed -e 's/^export//' | tee ${tempdir}/library-rc.sh | wc -l); do
-  sleep 1
-  echo -n .
-  let SECONDS_PASSED=SECONDS_PASSED+1
+# Find tapes and tape pools
 
-  if test ${SECONDS_PASSED} == 30; then
-    echo "FAILED"
-    echo "Timed out after ${SECONDS_PASSED} seconds waiting for tape library configuration."
-    exit 1
-  fi
-done
-echo "OK"
+STORAGECLASS_1=$( eos root://${EOS_INSTANCE} attr get sys.archive.storage_class ${MULTICOPY_DIR_1} | sed -n -e 's/.*="\(.*\)"/\1/p' ) 
+STORAGECLASS_2=$( eos root://${EOS_INSTANCE} attr get sys.archive.storage_class ${MULTICOPY_DIR_2} | sed -n -e 's/.*="\(.*\)"/\1/p' ) 
+STORAGECLASS_3=$( eos root://${EOS_INSTANCE} attr get sys.archive.storage_class ${MULTICOPY_DIR_3} | sed -n -e 's/.*="\(.*\)"/\1/p' ) 
 
-echo "Using this configuration for library:"
-cat ${tempdir}/library-rc.sh
-. ${tempdir}/library-rc.sh
+mapfile -t TAPEPOOL_LIST_1 < <( admin_cta --json archiveroute ls | jq -r --arg STORAGECLASS "$STORAGECLASS_1" '.[] | select( .storageClass == $STORAGECLASS) | .tapepool' )
+mapfile -t TAPEPOOL_LIST_2 < <( admin_cta --json archiveroute ls | jq -r --arg STORAGECLASS "$STORAGECLASS_2" '.[] | select( .storageClass == $STORAGECLASS) | .tapepool' )
+mapfile -t TAPEPOOL_LIST_3 < <( admin_cta --json archiveroute ls | jq -r --arg STORAGECLASS "$STORAGECLASS_3" '.[] | select( .storageClass == $STORAGECLASS) | .tapepool' )
 
-#clean the  library
-#  echo "Clean the library /dev/${LIBRARYDEVICE} if needed"
-#    mtx -f /dev/${LIBRARYDEVICE} status | sed -e "s/:/ /g"| grep "Full" | awk '{if ($1=="Data" ) { rewind="mt -f /dev/${DRIVEDEVICES["$4"]} rewind"; print rewind; print "Rewind drive "$4>"/dev/stderr"; unload="mtx -f /dev/${LIBRARYDEVICE} unload "$8" "$4; print unload; print "Unloading to storage slot "$8" from data slot "$4"" >"/dev/stderr";}}' |  source /dev/stdin
+mapfile -t TAPE_LIST_1 < <( for t in "${TAPEPOOL_LIST_1[@]}" ; do admin_cta --json tape ls --all | jq -r --arg TAPEPOOL "$t" '.[] | select( .tapepool == $TAPEPOOL) | .vid' ; done )
+mapfile -t TAPE_LIST_2 < <( for t in "${TAPEPOOL_LIST_2[@]}" ; do admin_cta --json tape ls --all | jq -r --arg TAPEPOOL "$t" '.[] | select( .tapepool == $TAPEPOOL) | .vid' ; done )
+mapfile -t TAPE_LIST_3 < <( for t in "${TAPEPOOL_LIST_3[@]}" ; do admin_cta --json tape ls --all | jq -r --arg TAPEPOOL "$t" '.[] | select( .tapepool == $TAPEPOOL) | .vid' ; done )
 
-ctacliIP=`kubectl --namespace ${NAMESPACE} describe pod ctacli | grep IP | sed -E 's/IP:[[:space:]]+//'`
-
-# Get list of tape drives that have a tape server
-TAPEDRIVES_IN_USE=()
-for tapeserver in $(kubectl --namespace ${NAMESPACE} get pods | grep tpsrv | awk '{print $1}'); do
-  TAPEDRIVES_IN_USE+=($(kubectl --namespace ${NAMESPACE} exec ${tapeserver} -c taped -- cat /etc/cta/TPCONFIG | awk '{print $1}'))
-done
-NB_TAPEDRIVES_IN_USE=${#TAPEDRIVES_IN_USE[@]}
-
-echo "Preparing CTA configuration for tests"
-# verify the catalogue DB schema
-kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf
-if [ $? -ne 0 ]; then
-  echo "ERROR: failed to verify the catalogue DB schema"
+if [ "${#TAPEPOOL_LIST_1[@]}" -ne "1" ] || [ "${#TAPE_LIST_1[@]}" -ne "1" ]; then
+  echo "ERROR: Tape pool 1 misconfigured"
   exit 1
 fi
-kubectl --namespace ${NAMESPACE} exec ctafrontend -- cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf --username ctaadmin1 -m "docker cli"
+if [ "${#TAPEPOOL_LIST_2[@]}" -ne "2" ] || [ "${#TAPE_LIST_2[@]}" -ne "2" ]; then
+  echo "ERROR: Tape pool 2 misconfigured"
+  exit 1
+fi
+if [ "${#TAPEPOOL_LIST_3[@]}" -ne "3" ] || [ "${#TAPE_LIST_3[@]}" -ne "3" ]; then
+  echo "ERROR: Tape pool 3 misconfigured"
+  exit 1
+fi
 
-echo 'kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq'
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
+# Save file with 1, 2, 3 replicas
 
-echo "Cleaning up leftovers from potential previous runs."
-kubectl --namespace ${NAMESPACE} exec ctaeos -- eos rm -rf /eos/ctaeos/cta/fail_on_closew_test/
-kubectl --namespace ${NAMESPACE} exec ctaeos -- eos rm /eos/ctaeos/cta/*
-kubectl --namespace ${NAMESPACE} exec ctaeos -- eos find -f /eos/ctaeos/preprod/ | xargs -I{} kubectl --namespace ${NAMESPACE} exec ctaeos -- eos rm -rf {}
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json tape ls --all  |             \
-  jq -r '.[] | .vid ' | xargs -I{} kubectl --namespace ${NAMESPACE} exec ctacli --            \
-  cta-admin tape rm -v {}
+FILE_1_COPY=${MULTICOPY_DIR_1}/$(uuidgen)
+FILE_2_COPY=${MULTICOPY_DIR_2}/$(uuidgen)
+FILE_3_COPY=${MULTICOPY_DIR_3}/$(uuidgen)
 
-kubectl --namespace ${NAMESPACE}  exec ctacli -- cta-admin --json archiveroute ls |           \
-  jq '.[] |  " -s " + .storageClass + " -c " + (.copyNumber|tostring)' | \
-  xargs -I{} bash -c "kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute rm {}"
+put_all_drives_up
+xrdcp /etc/group root://${EOS_INSTANCE}/${FILE_1_COPY}
+xrdcp /etc/group root://${EOS_INSTANCE}/${FILE_2_COPY}
+xrdcp /etc/group root://${EOS_INSTANCE}/${FILE_3_COPY}
 
-kubectl --namespace ${NAMESPACE}  exec ctacli -- cta-admin --json tapepool ls  |              \
-  jq -r '.[] | .name' |                                                                       \
-  xargs -I{} kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tapepool rm -n {}
+wait_for_archive ${EOS_INSTANCE} ${FILE_1_COPY} ${FILE_2_COPY} ${FILE_3_COPY}
+put_all_drives_down
 
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json storageclass ls  |           \
-  jq -r '.[] | " -n  " + .name'  |                                    \
-  xargs -I{} bash -c "kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin storageclass rm {}"
-
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json vo ls  |           \
-  jq -r '.[] | " --vo  " + .name'  |                                    \
-  xargs -I{} bash -c "kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin vo rm {}"
-
-# Configure new tapepools and storageclasses
-for ((i=0; i<${#TAPEDRIVES_IN_USE[@]}; i++)); do
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin logicallibrary add \
-    --name ${TAPEDRIVES_IN_USE[${i}]}                                          \
-    --comment "ctasystest library mapped to drive ${TAPEDRIVES_IN_USE[${i}]}"
-done
-
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin diskinstance add \
-  --name ${EOSINSTANCE}                                                    \
-  --comment "di"
-
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin virtualorganization add \
-  --vo vo                                                                         \
-  --readmaxdrives 1                                                               \
-  --writemaxdrives 1                                                              \
-  --diskinstance ${EOSINSTANCE}                                                   \
-  --comment "vo"
-
-# add the media types of the tapes in production
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mediatype add \
-  --name T10K500G  \
-  --capacity 500000000000 \
-  --primarydensitycode 74 \
-  --cartridge "T10000" \
-  --comment "Oracle T10000 cartridge formated at 500 GB (for developers only)"
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mediatype add \
-  --name 3592JC7T \
-  --capacity 7000000000000 \
-  --primarydensitycode 84 \
-  --cartridge "3592JC" \
-  --comment "IBM 3592JC cartridge formated at 7 TB"
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mediatype add \
-  --name 3592JD15T \
-  --capacity 15000000000000 \
-  --primarydensitycode 85 \
-  --cartridge "3592JD" \
-  --comment "IBM 3592JD cartridge formated at 15 TB"
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mediatype add \
-  --name 3592JE20T \
-  --capacity 20000000000000 \
-  --primarydensitycode 87 \
-  --cartridge "3592JE" \
-  --comment "IBM 3592JE cartridge formated at 20 TB"
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mediatype add \
-  --name LTO7M \
-  --capacity 9000000000000 \
-  --primarydensitycode 93 \
-  --cartridge "LTO-7" \
-  --comment "LTO-7 M8 cartridge formated at 9 TB"
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mediatype add \
-  --name LTO8 \
-  --capacity 12000000000000 \
-  --primarydensitycode 94 \
-  --cartridge "LTO-8" \
-  --comment "LTO-8 cartridge formated at 12 TB"
-
-# Create ${NB_TAPEPOOLS} tapepools
-NB_TAPEPOOLS=3
-for ((i=0; i<${NB_TAPEPOOLS}; i++)); do
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tapepool add \
-    --name "ctasystest_pool_${i}"                                        \
-    --vo vo                                                              \
-    --partialtapesnumber 5                                               \
-    --encrypted false                                                    \
-    --comment "ctasystest tape pool ${i}"
-done
-
-# Distribute the tapes by all tapepools
-for ((i=0; i<${#TAPES[@]}; i++)); do
-  VID=${TAPES[${i}]}
-  TAPEPOOL=$(($i % $NB_TAPEPOOLS))
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tape add     \
-    --mediatype "T10K500G"                                               \
-    --vendor vendor                                                      \
-    --logicallibrary ${TAPEDRIVES_IN_USE[${i}%${NB_TAPEDRIVES_IN_USE}]}  \
-    --tapepool "ctasystest_pool_${TAPEPOOL}"                             \
-    --comment "ctasystest"                                               \
-    --vid ${VID}                                                         \
-    --full false                                                         \
-    --comment "ctasystest"
-done
-
-# CTA storage class 1: 1 replica
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin storageclass add \
-  --name ctaStorageClass_1_cp                                              \
-  --numberofcopies 1                                                       \
-  --vo vo                                                                  \
-  --comment "ctasystest"
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute add \
-  --storageclass ctaStorageClass_1_cp                                      \
-  --copynb 1                                                               \
-  --tapepool ctasystest_pool_0                                             \
-  --comment "ctasystest"
-
-# CTA storage class 2: 2 replicas
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin storageclass add \
-  --name ctaStorageClass_2_cp                                              \
-  --numberofcopies 2                                                       \
-  --vo vo                                                                  \
-  --comment "ctasystest"
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute add \
-  --storageclass ctaStorageClass_2_cp                                      \
-  --copynb 1                                                               \
-  --tapepool ctasystest_pool_0                                             \
-  --comment "ctasystest"
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute add \
-  --storageclass ctaStorageClass_2_cp                                      \
-  --copynb 2                                                               \
-  --tapepool ctasystest_pool_1                                             \
-  --comment "ctasystest"
-
-# CTA storage class 3: 3 replicas
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin storageclass add \
-  --name ctaStorageClass_3_cp                                              \
-  --numberofcopies 3                                                       \
-  --vo vo                                                                  \
-  --comment "ctasystest"
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute add \
-  --storageclass ctaStorageClass_3_cp                                      \
-  --copynb 1                                                               \
-  --tapepool ctasystest_pool_0                                             \
-  --comment "ctasystest"
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute add \
-  --storageclass ctaStorageClass_3_cp                                      \
-  --copynb 2                                                               \
-  --tapepool ctasystest_pool_1                                             \
-  --comment "ctasystest"
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute add \
-  --storageclass ctaStorageClass_3_cp                                      \
-  --copynb 3                                                               \
-  --tapepool ctasystest_pool_2                                             \
-  --comment "ctasystest"
-
-# Configure mount policy and mount rule
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mountpolicy add    \
-  --name ctasystest                                                          \
-  --archivepriority 1                                                        \
-  --minarchiverequestage 1                                                   \
-  --retrievepriority 1                                                       \
-  --minretrieverequestage 1                                                  \
-  --comment "ctasystest"
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin requestermountrule add \
-   --instance ${EOSINSTANCE}                                                     \
-   --name adm                                                                    \
-   --mountpolicy ctasystest --comment "ctasystest"
-
-###
-# This rule exists to allow users from eosusers group to migrate files to tapes
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin groupmountrule add \
-     --instance ${EOSINSTANCE}                                                 \
-     --name eosusers                                                           \
-     --mountpolicy ctasystest --comment "ctasystest"
-###
-# This rule exists to allow users from powerusers group to recall files from tapes
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin groupmountrule add \
-     --instance ${EOSINSTANCE}                                                 \
-     --name powerusers                                                         \
-     --mountpolicy ctasystest --comment "ctasystest"
-###
-# This mount policy is for repack
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mountpolicy add    \
-    --name repack_ctasystest                                                 \
-    --archivepriority 2                                                      \
-    --minarchiverequestage 1                                                 \
-    --retrievepriority 2                                                     \
-    --minretrieverequestage 1                                                \
-    --comment "repack mountpolicy for ctasystest"
-
-###
-# This rule if for retrieves, and matches the retrieve activity used in the tests only
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin activitymountrule add \
-     --instance ${EOSINSTANCE}                                                    \
-     --name powerusers                                                            \
-     --activityregex ^T0Reprocess$                                                \
-     --mountpolicy ctasystest --comment "ctasystest"
-
-#echo "Labeling tapes:"
-## add all tapes
-#for ((i=0; i<${#TAPES[@]}; i++)); do
-#  VID=${TAPES[${i}]}
-#  echo "  cta-tape-label --vid ${VID}"
-#  # for debug use
-#  # kubectl --namespace ${NAMESPACE} exec tpsrv01 -c taped  -- cta-tape-label --vid ${VID} --debug
-#  kubectl --namespace ${NAMESPACE} exec tpsrv01 -c taped  -- cta-tape-label --vid ${VID}
-#  if [ $? -ne 0 ]; then
-#    echo "ERROR: failed to label the tape ${VID}"
-#    exit 1
-#  fi
-#done
-
-echo "Setting drive up: ${DRIVENAMES[${driveslot}]}"
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin drive up ${DRIVENAMES[${driveslot}]}
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin drive ls
-
-# A bit of reporting
-echo "EOS server version is used:"
-kubectl --namespace ${NAMESPACE} exec ctaeos -- rpm -qa|grep eos-server
+trigger_queue_cleanup() {
+  # Get a list of all tapes being used, without duplicates
+  repeatedTapeList=( "${TAPE_LIST_1[@]}" "${TAPE_LIST_2[@]}" "${TAPE_LIST_3[@]}" )
+  tapeList=(); while IFS= read -r -d '' tape; do tapeList+=("$tape"); done < <(printf "%s\0" "${repeatedTapeList[@]}" | sort -uz)
+  for i in ${!tapeList[@]}; do
+    admin_cta tape ch --vid ${tapeList[$i]} --state BROKEN --reason "Trigger cleanup"
+  done
+  for i in ${!tapeList[@]}; do
+    wait_for_tape_state ${tapeList[$i]} BROKEN
+  done
+  for i in ${!tapeList[@]}; do
+    admin_cta tape ch --vid ${tapeList[$i]} --state ACTIVE
+  done
+  for i in ${!tapeList[@]}; do
+    wait_for_tape_state ${tapeList[$i]} ACTIVE
+  done
+}
 
 
+################################################################################
+# Test queueing priority between different tape states
+################################################################################
 
-# Setup new directories
-kubectl --namespace ${NAMESPACE} exec ctaeos -- eos mkdir /eos/ctaeos/cta/replicas_1
-kubectl --namespace ${NAMESPACE} exec ctaeos -- eos mkdir /eos/ctaeos/cta/replicas_2
-kubectl --namespace ${NAMESPACE} exec ctaeos -- eos mkdir /eos/ctaeos/cta/replicas_3
-kubectl --namespace ${NAMESPACE} exec ctaeos -- eos attr set sys.archive.storage_class=ctaStorageClass_1_cp /eos/ctaeos/cta/replicas_1
-kubectl --namespace ${NAMESPACE} exec ctaeos -- eos attr set sys.archive.storage_class=ctaStorageClass_2_cp /eos/ctaeos/cta/replicas_2
-kubectl --namespace ${NAMESPACE} exec ctaeos -- eos attr set sys.archive.storage_class=ctaStorageClass_3_cp /eos/ctaeos/cta/replicas_3
+test_tape_state_queueing_priority() {
+  
+  TEST_NR=$1
+  TAPE_STATE_LIST=("$2" "$3" "$4")
+  EXPECTED_SELECTED_QUEUE=$5
+  FILE_PATH=$FILE_3_COPY
 
-# Have only 1 tape per tapepool, this makes it easier for testing
-mapfile -t TAPEPOOL_0_VIDS < <( kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json tape ls --all | jq -r '.[] | select( .tapepool | endswith("0") ) | .vid' ) 
-mapfile -t TAPEPOOL_1_VIDS < <( kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json tape ls --all | jq -r '.[] | select( .tapepool | endswith("1") ) | .vid' ) 
-mapfile -t TAPEPOOL_2_VIDS < <( kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json tape ls --all | jq -r '.[] | select( .tapepool | endswith("2") ) | .vid' ) 
+  echo
+  echo "########################################################################################################"
+  echo "Testing 'Tape state priority between ${TAPE_STATE_LIST[@]}'"
+  echo "########################################################################################################"
+  echo "Setting up queue ${TAPE_LIST_3[0]} as ${TAPE_STATE_LIST[0]}, ${TAPE_LIST_3[1]} as ${TAPE_STATE_LIST[1]}, ${TAPE_LIST_3[2]} as ${TAPE_STATE_LIST[2]}..."
+  
+  admin_cta tape ch --vid ${TAPE_LIST_3[0]} --state ${TAPE_STATE_LIST[0]} --reason "Testing"
+  admin_cta tape ch --vid ${TAPE_LIST_3[1]} --state ${TAPE_STATE_LIST[1]} --reason "Testing"
+  admin_cta tape ch --vid ${TAPE_LIST_3[2]} --state ${TAPE_STATE_LIST[2]} --reason "Testing"
+  wait_for_tape_state ${TAPE_LIST_3[0]} ${TAPE_STATE_LIST[0]}
+  wait_for_tape_state ${TAPE_LIST_3[1]} ${TAPE_STATE_LIST[1]}
+  wait_for_tape_state ${TAPE_LIST_3[2]} ${TAPE_STATE_LIST[2]}
 
-echo ${TAPEPOOL_0_VIDS[@]}
-echo ${TAPEPOOL_1_VIDS[@]}
-echo ${TAPEPOOL_2_VIDS[@]}
+  echo "Requesting file prepare -s..."
+  REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s ${FILE_PATH})
 
-for ((i=1; i<${#TAPEPOOL_0_VIDS[@]}; i++)); do
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tape rm -v ${TAPEPOOL_0_VIDS[$i]}
-done
-for ((i=1; i<${#TAPEPOOL_1_VIDS[@]}; i++)); do
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tape rm -v ${TAPEPOOL_1_VIDS[$i]}
-done
-for ((i=1; i<${#TAPEPOOL_2_VIDS[@]}; i++)); do
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tape rm -v ${TAPEPOOL_2_VIDS[$i]}
-done
+  echo "Checking if request went to ${TAPE_STATE_LIST[$EXPECTED_SELECTED_QUEUE]} queue ${TAPE_LIST_3[$EXPECTED_SELECTED_QUEUE]}..."
 
-TAPE_0=${TAPEPOOL_0_VIDS[0]}
-TAPE_1=${TAPEPOOL_1_VIDS[0]}
-TAPE_2=${TAPEPOOL_2_VIDS[0]}
+  for i in ${!TAPE_LIST_3[@]}; do
+    echo "Checking tape ${TAPE_LIST_3[$i]}..."
+    if [ $i -eq $EXPECTED_SELECTED_QUEUE ]; then
+      if test "1" != "$(admin_cta --json sq | jq -r --arg VID "${TAPE_LIST_3[$i]}" '.[] | select(.vid == $VID) | .queuedFiles')"; then
+        echo "ERROR: Queue ${TAPE_LIST_3[$i]} does not contain a user request, when one was expected."
+        exit 1
+      else
+        echo "Request found on ${TAPE_STATE_LIST[$i]} queue ${TAPE_LIST_3[$i]}, as expected."
+      fi
+    else
+      if test ! -z "$(admin_cta --json sq | jq -r --arg VID "${TAPE_LIST_3[$i]}" '.[] | select(.vid == $VID) | .queuedFiles')"; then
+        echo "ERROR: Queue ${TAPE_LIST_3[$i]} contains a user request, when none was expected."
+        exit 1
+      else
+        echo "Request not found on ${TAPE_STATE_LIST[$i]} queue ${TAPE_LIST_3[$i]}, as expected."
+      fi
+    fi
+  done
+  
+  echo "Cleaning up request and queues..."
+  KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -a ${REQUEST_ID} ${FILE_PATH}
+  trigger_queue_cleanup > /dev/null
 
-echo $TAPE_0
-echo $TAPE_1
-echo $TAPE_2
-
-#  Execute tests
+  echo "OK"
+}
 
 
+################################################################################
+# Test tape state change that removes queue : 1 copy only
+################################################################################
+
+test_tape_state_change_queue_removed() {
+
+  TEST_NR=$1
+  STATE_START=$2
+  STATE_END=$3
+
+  # Using $FILE_1_COPY, which has 1 replica in the following tape
+  
+  FILE_PATH=$FILE_1_COPY
+  
+  TAPE_0=${TAPE_LIST_1[0]}
+  
+  echo
+  echo "########################################################################################################"
+  echo " ${TEST_NR}. Testing 'Tape state change from $STATE_START to $STATE_END - queue removed (1 copy only)"
+  echo "########################################################################################################"
+  echo "Setting up $TAPE_0 queue as ${STATE_START}..."
+  
+  admin_cta tape ch --vid $TAPE_0 --state $STATE_START --reason "Testing"
+  wait_for_tape_state $TAPE_0 $STATE_START
+  
+  echo "Requesting file prepare -s..."
+  REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s ${FILE_PATH})
+  
+  echo "Checking that the request was queued..."
+  
+  if test "1" != "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
+    echo "ERROR: Request non found on $TAPE_0 queue."
+    exit 1
+  fi
+
+  QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID} ${FILE_PATH})
+  PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").path_exists")
+  REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").requested")
+  HAS_REQID=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").has_reqid")
+  ERROR_TEXT=$( echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").error_text")
+  if [[
+    "true" != "${PATH_EXISTS}" ||
+    "true" != "${REQUESTED}"   ||
+    "true" != "${HAS_REQID}"   ||
+    "\"\"" != "${ERROR_TEXT}" ]]
+  then
+    echo "ERROR: Request for ${FILE_PATH} not configured as expected: ${QUERY_RSP}"
+    exit 1
+  fi
+
+  echo "Changing $TAPE_0 queue to ${STATE_END}..."
+  
+  admin_cta tape ch --vid $TAPE_0 --state $STATE_END --reason "Testing"
+  wait_for_tape_state $TAPE_0 $STATE_END
+   
+  echo "Checking that the request was canceled and the error reported to the user..."
+  
+  if test ! -z "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
+    echo "ERROR: Queue $TAPE_0 contains a user request, when none was expected."
+    exit 1
+  fi
+
+  QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID} ${FILE_PATH})
+  PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").path_exists")
+  REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").requested")
+  HAS_REQID=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").has_reqid")
+  ERROR_TEXT=$( echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").error_text")
+  if [[
+    "true"  != "${PATH_EXISTS}" ||
+    "false" != "${REQUESTED}"   ||
+    "false" != "${HAS_REQID}"   ||
+    "\"\""  == "${ERROR_TEXT}" ]]
+  then
+    echo "ERROR: Request for ${FILE_PATH} not removed as expected: ${QUERY_RSP}"
+    exit 1
+  fi
+
+  echo "Request removed and error reported back to user, as expected."
+  
+  echo "Cleaning up request and queues..."
+  KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -a ${REQUEST_ID} ${FILE_PATH}
+  trigger_queue_cleanup > /dev/null
+
+  echo "OK"
+}
 
 
+################################################################################
+# Test tape state change that preserves queue : 1 copy only
+################################################################################
+
+test_tape_state_change_queue_preserved() {
+
+  TEST_NR=$1
+  STATE_START=$2
+  STATE_END=$3
+
+  # Using $FILE_1_COPY, which has 1 replica in the following tape
+  
+  FILE_PATH=$FILE_1_COPY
+  
+  TAPE_0=${TAPE_LIST_1[0]}
+  
+  echo
+  echo "########################################################################################################"
+  echo " ${TEST_NR}. Testing 'Tape state change from $STATE_START to $STATE_END - queue preserved (1 copy only)"
+  echo "########################################################################################################"
+  echo "Setting up $TAPE_0 queue as ${STATE_START}..."
+  
+  admin_cta tape ch --vid $TAPE_0 --state $STATE_START --reason "Testing"
+  wait_for_tape_state $TAPE_0 $STATE_START
+  
+  echo "Requesting file prepare -s..."
+  REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s ${FILE_PATH})
+  
+  echo "Checking that the request was queued..."
+  
+  if test "1" != "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
+    echo "ERROR: Request non found on $TAPE_0 queue."
+    exit 1
+  fi
+
+  QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID} ${FILE_PATH})
+  PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").path_exists")
+  REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").requested")
+  HAS_REQID=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").has_reqid")
+  ERROR_TEXT=$( echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").error_text")
+  if [[
+    "true" != "${PATH_EXISTS}" ||
+    "true" != "${REQUESTED}"   ||
+    "true" != "${HAS_REQID}"   ||
+    "\"\"" != "${ERROR_TEXT}" ]]
+  then
+    echo "ERROR: Request for ${FILE_PATH} not configured as expected: ${QUERY_RSP}"
+    exit 1
+  fi
+
+  echo "Changing $TAPE_0 queue to ${STATE_END}..."
+  
+  admin_cta tape ch --vid $TAPE_0 --state $STATE_END --reason "Testing"
+  wait_for_tape_state $TAPE_0 $STATE_END
+   
+  echo "Checking that the request was not modified on the queue..."
+  
+  if test "1" != "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
+    echo "ERROR: Request not preserved on $TAPE_0 queue."
+    exit 1
+  fi
+
+  QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID} ${FILE_PATH})
+  PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").path_exists")
+  REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").requested")
+  HAS_REQID=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").has_reqid")
+  ERROR_TEXT=$( echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").error_text")
+  if [[
+    "true" != "${PATH_EXISTS}" ||
+    "true" != "${REQUESTED}"   ||
+    "true" != "${HAS_REQID}"   ||
+    "\"\"" != "${ERROR_TEXT}" ]]
+  then
+    echo "ERROR: Request for ${FILE_PATH} not preserved as expected: ${QUERY_RSP}"
+    exit 1
+  fi
+
+  echo "Request removed and error reported back to user, as expected."
+  
+  echo "Cleaning up request and queues..."
+  KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -a ${REQUEST_ID} ${FILE_PATH}
+  trigger_queue_cleanup > /dev/null
+
+  echo "OK"
+}
 
 
+################################################################
+# Finalize
+################################################################
 
+test_tape_state_queueing_priority 1 DISABLED DISABLED ACTIVE 2
+test_tape_state_queueing_priority 2 DISABLED ACTIVE DISABLED 1
+test_tape_state_queueing_priority 3 REPACKING BROKEN DISABLED 2
+test_tape_state_queueing_priority 4 BROKEN DISABLED REPACKING 1
+test_tape_state_queueing_priority 5 BROKEN REPACKING BROKEN 9999
+test_tape_state_change_queue_removed 6 ACTIVE REPACKING
+test_tape_state_change_queue_removed 7 ACTIVE BROKEN
+test_tape_state_change_queue_removed 8 DISABLED REPACKING
+test_tape_state_change_queue_removed 9 DISABLED BROKEN
+test_tape_state_change_queue_preserved 10 ACTIVE DISABLED
+test_tape_state_change_queue_preserved 11 DISABLED ACTIVE
 
-
-
+echo
+echo "OK: all tests passed"
