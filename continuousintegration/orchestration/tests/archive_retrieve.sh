@@ -44,7 +44,7 @@ if [ ! -z "${error}" ]; then
 fi
 
 echo "Preparing namespace for the tests"
-./prepare_tests.sh -n ${NAMESPACE}
+  . prepare_tests.sh -n ${NAMESPACE}
 if [ $? -ne 0 ]; then
   echo "ERROR: failed to prepare namespace for the tests"
   exit 1
@@ -108,6 +108,17 @@ echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
 kubectl -n ${NAMESPACE} cp try_evict_before_archive_completed.sh client:/root/try_evict_before_archive_completed.sh
 kubectl -n ${NAMESPACE} exec client -- bash /root/try_evict_before_archive_completed.sh || exit 1
+
+kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
+setup_tapes_for_multicopy_test
+
+echo
+echo "Launching retrieve_queue_cleanup.sh on client pod"
+echo " Archiving file: xrdcp as user1"
+echo " Retrieving it as poweruser1"
+kubectl -n ${NAMESPACE} cp retrieve_queue_cleanup.sh client:/root/retrieve_queue_cleanup.sh
+kubectl -n ${NAMESPACE} exec client -- bash /root/retrieve_queue_cleanup.sh || exit 1
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
