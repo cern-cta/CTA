@@ -498,6 +498,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     }
     // Prepare the standard error codes for the session
     std::string errorMessage(e.getMessageValue());
+    int logLevel = cta::log::ERR;
     int errorCode(666);
     // Override if we got en ENOSPC error (end of tape)
     try {
@@ -506,6 +507,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       if (ENOSPC == errnum.errorNumber()) {
         errorCode = ENOSPC;
         errorMessage = "End of migration due to tape full";
+        logLevel = cta::log::WARNING;
       }
     } catch (...) {}
     // then log the end of write thread
@@ -513,7 +515,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     params.add("status", "error")
           .add("ErrorMessage", errorMessage);
     m_stats.totalTime = totalTimer.secs();
-    logWithStats(cta::log::ERR, "Tape thread complete for writing", params);
+    logWithStats(logLevel, "Tape thread complete for writing", params);
     m_reportPacker.reportEndOfSessionWithErrors(errorMessage, errorCode, m_logContext);
   }
 }
