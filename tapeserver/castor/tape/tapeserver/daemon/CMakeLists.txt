@@ -27,7 +27,6 @@ find_package( ZLIB REQUIRED )
 set(CTATAPESERVERDAEMON_LIBRARY_SRCS
   CleanerSession.cpp
   DataTransferConfig.cpp
-  LabelSessionConfig.cpp
   DiskReadThreadPool.cpp
   DiskReadTask.cpp
   DiskWriteTask.cpp
@@ -35,7 +34,6 @@ set(CTATAPESERVERDAEMON_LIBRARY_SRCS
   EmptyDriveProbe.cpp
   EncryptionControl.cpp
   TapeSessionReporter.cpp
-  LabelSession.cpp
   MigrationMemoryManager.cpp
   MigrationReportPacker.cpp
   MigrationTaskInjector.cpp
