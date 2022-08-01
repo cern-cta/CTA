@@ -123,6 +123,34 @@ trigger_queue_cleanup() {
   done
 }
 
+wait_for_request_cancel_report() {
+
+  SECONDS_PASSED=0
+  WAIT_TIMEOUT=90
+  REQUEST_ID=$1
+  FILE_PATH=$2  
+
+  echo "Waiting for request to be reported as canceled..."
+  while true; do
+    QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID} ${FILE_PATH})
+    REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").requested")
+
+    # Check if request has finally been canceled
+    if [[ "false" == "${REQUESTED}" ]]; then
+      break
+    fi
+   
+    if test ${SECONDS_PASSED} == ${WAIT_TIMEOUT}; then
+      echo "Timed out after ${WAIT_TIMEOUT} seconds"
+      break
+    fi 
+    
+    let SECONDS_PASSED=SECONDS_PASSED+1
+    echo "Waiting for request to be reported as canceled: Seconds passed = ${SECONDS_PASSED}"
+  
+  done
+}
+
 
 ################################################################################
 # Test queueing priority between different tape states
@@ -137,7 +165,7 @@ test_tape_state_queueing_priority() {
 
   echo
   echo "########################################################################################################"
-  echo "Testing 'Tape state priority between ${TAPE_STATE_LIST[@]}'"
+  echo " ${TEST_NR}. Testing 'Tape state priority between ${TAPE_STATE_LIST[@]}'"
   echo "########################################################################################################"
   echo "Setting up queue ${TAPE_LIST_3[0]} as ${TAPE_STATE_LIST[0]}, ${TAPE_LIST_3[1]} as ${TAPE_STATE_LIST[1]}, ${TAPE_LIST_3[2]} as ${TAPE_STATE_LIST[2]}..."
   
@@ -241,6 +269,8 @@ test_tape_state_change_queue_removed() {
     echo "ERROR: Queue $TAPE_0 contains a user request, when none was expected."
     exit 1
   fi
+  
+  wait_for_request_cancel_report ${REQUEST_ID} ${FILE_PATH}
 
   QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID} ${FILE_PATH})
   PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").path_exists")
@@ -329,6 +359,9 @@ test_tape_state_change_queue_preserved() {
     exit 1
   fi
 
+  # Wait for a bit, to take in account protocol latencies
+  sleep 1 
+
   QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID} ${FILE_PATH})
   PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").path_exists")
   REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").requested")
@@ -344,8 +377,170 @@ test_tape_state_change_queue_preserved() {
     exit 1
   fi
 
-  echo "Request removed and error reported back to user, as expected."
+  echo "Queue preserved, as expected."
   
+  echo "Cleaning up request and queues..."
+  KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -a ${REQUEST_ID} ${FILE_PATH}
+  trigger_queue_cleanup > /dev/null
+
+  echo "OK"
+}
+
+
+################################################################################
+# Test tape state change that moves queue : 2 copies
+################################################################################
+
+test_tape_state_change_queue_moved() {
+
+  TEST_NR=$1
+  TAPE_0_STATE_START=$2
+  TAPE_1_STATE_START=$3
+  EXPECTED_QUEUE_START=$4
+  TAPE_0_STATE_END=$5
+  TAPE_1_STATE_END=$6
+  EXPECTED_QUEUE_END=$7
+
+  # Using $FILE_1_COPY, which has 1 replica in the following tape
+  
+  FILE_PATH=$FILE_2_COPY
+  
+  TAPE_0=${TAPE_LIST_2[0]}
+  TAPE_1=${TAPE_LIST_2[1]}
+  
+  echo
+  echo "########################################################################################################"
+  echo " ${TEST_NR}. Testing 'Queue moved on tape state changes from ($TAPE_0_STATE_START, $TAPE_1_STATE_START) to ($TAPE_0_STATE_END, $TAPE_1_STATE_END)"
+  echo "########################################################################################################"
+  echo "Setting up ${TAPE_0} queue as ${TAPE_0_STATE_START} and ${TAPE_1} queue as ${TAPE_1_STATE_START}..."
+  
+  if [[ "0" != "${EXPECTED_QUEUE_START}" && "1" != "${EXPECTED_QUEUE_START}" ]]; then
+    echo "Initial request should be put on queue 0 or 1."
+    exit 1
+  fi 
+  
+  admin_cta tape ch --vid $TAPE_0 --state $TAPE_0_STATE_START --reason "Testing"
+  admin_cta tape ch --vid $TAPE_1 --state $TAPE_1_STATE_START --reason "Testing"
+  wait_for_tape_state $TAPE_0 $TAPE_0_STATE_START
+  wait_for_tape_state $TAPE_1 $TAPE_1_STATE_START
+  
+  echo "Requesting file prepare -s..."
+  REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s ${FILE_PATH})
+  
+  echo "Checking that the request was queued..."
+
+  if test "0" == "${EXPECTED_QUEUE_START}"; then
+    if test "1" != "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
+      echo "ERROR: Request non found on $TAPE_0 queue."
+      exit 1
+    fi
+    if test ! -z "$(admin_cta --json sq | jq -r --arg VID "$TAPE_1" '.[] | select(.vid == $VID) | .queuedFiles')"; then
+      echo "ERROR: Queue $TAPE_1 contains a user request, when none was expected."
+      exit 1
+    fi
+  else
+    if test ! -z "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
+      echo "ERROR: Queue $TAPE_0 contains a user request, when none was expected."
+      exit 1
+    fi
+    if test "1" != "$(admin_cta --json sq | jq -r --arg VID "$TAPE_1" '.[] | select(.vid == $VID) | .queuedFiles')"; then
+      echo "ERROR: Request non found on $TAPE_1 queue."
+      exit 1
+    fi
+  fi
+
+  QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID} ${FILE_PATH})
+  PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").path_exists")
+  REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").requested")
+  HAS_REQID=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").has_reqid")
+  ERROR_TEXT=$( echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").error_text")
+  if [[
+    "true" != "${PATH_EXISTS}" ||
+    "true" != "${REQUESTED}"   ||
+    "true" != "${HAS_REQID}"   ||
+    "\"\"" != "${ERROR_TEXT}" ]]
+  then
+    echo "ERROR: Request for ${FILE_PATH} not configured as expected: ${QUERY_RSP}"
+    exit 1
+  fi
+
+  # Change tape states, starting by the tape without queue
+
+  if test "0" == "${EXPECTED_QUEUE_START}"; then
+    echo "Changing $TAPE_1 queue to ${TAPE_1_STATE_END}..."
+    admin_cta tape ch --vid $TAPE_1 --state $TAPE_1_STATE_END --reason "Testing"
+    wait_for_tape_state $TAPE_1 $TAPE_1_STATE_END
+    echo "Changing $TAPE_0 queue to ${TAPE_0_STATE_END}..."
+    admin_cta tape ch --vid $TAPE_0 --state $TAPE_0_STATE_END --reason "Testing"
+    wait_for_tape_state $TAPE_0 $TAPE_0_STATE_END
+  else
+    echo "Changing $TAPE_0 queue to ${TAPE_0_STATE_END}..."
+    admin_cta tape ch --vid $TAPE_0 --state $TAPE_0_STATE_END --reason "Testing"
+    wait_for_tape_state $TAPE_0 $TAPE_0_STATE_END
+    echo "Changing $TAPE_1 queue to ${TAPE_1_STATE_END}..."
+    admin_cta tape ch --vid $TAPE_1 --state $TAPE_1_STATE_END --reason "Testing"
+    wait_for_tape_state $TAPE_1 $TAPE_1_STATE_END
+  fi
+
+  if [[ "0" == "${EXPECTED_QUEUE_END}" || "1" == "${EXPECTED_QUEUE_END}" ]]; then
+  
+    echo "Checking that the request was moved from the queue ${TAPE_LIST_2[$EXPECTED_QUEUE_START]} to the queue ${TAPE_LIST_2[$EXPECTED_QUEUE_END]}..."
+    
+    if test "0" == "${EXPECTED_QUEUE_END}"; then
+      if test "1" != "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
+        echo "ERROR: Request non found on $TAPE_0 queue."
+        exit 1
+      fi
+      if test ! -z "$(admin_cta --json sq | jq -r --arg VID "$TAPE_1" '.[] | select(.vid == $VID) | .queuedFiles')"; then
+        echo "ERROR: Queue $TAPE_1 contains a user request, when none was expected."
+        exit 1
+      fi
+    else
+      if test ! -z "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
+        echo "ERROR: Queue $TAPE_0 contains a user request, when none was expected."
+        exit 1
+      fi
+      if test "1" != "$(admin_cta --json sq | jq -r --arg VID "$TAPE_1" '.[] | select(.vid == $VID) | .queuedFiles')"; then
+        echo "ERROR: Request non found on $TAPE_1 queue."
+        exit 1
+      fi
+    fi
+
+    echo "Request moved to new queue, as expected."
+
+  else
+
+    echo "Checking that the request queue ${TAPE_LIST_2[$EXPECTED_QUEUE_START]} was canceled and the error reported to the user..."
+ 
+    if test ! -z "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
+      echo "ERROR: Queue $TAPE_0 contains a user request, when none was expected."
+      exit 1
+    fi
+    if test ! -z "$(admin_cta --json sq | jq -r --arg VID "$TAPE_1" '.[] | select(.vid == $VID) | .queuedFiles')"; then
+      echo "ERROR: Queue $TAPE_1 contains a user request, when none was expected."
+      exit 1
+    fi
+  
+    wait_for_request_cancel_report ${REQUEST_ID} ${FILE_PATH}
+
+    QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID} ${FILE_PATH})
+    PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").path_exists")
+    REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").requested")
+    HAS_REQID=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").has_reqid")
+    ERROR_TEXT=$( echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").error_text")
+    if [[
+      "true"  != "${PATH_EXISTS}" ||
+      "false" != "${REQUESTED}"   ||
+      "false" != "${HAS_REQID}"   ||
+      "\"\""  == "${ERROR_TEXT}" ]]
+    then
+      echo "ERROR: Request for ${FILE_PATH} not removed as expected: ${QUERY_RSP}"
+      exit 1
+    fi
+
+    echo "Request removed and error reported back to user, as expected."
+  fi
+ 
   echo "Cleaning up request and queues..."
   KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -a ${REQUEST_ID} ${FILE_PATH}
   trigger_queue_cleanup > /dev/null
@@ -358,17 +553,20 @@ test_tape_state_change_queue_preserved() {
 # Finalize
 ################################################################
 
-test_tape_state_queueing_priority 1 DISABLED DISABLED ACTIVE 2
-test_tape_state_queueing_priority 2 DISABLED ACTIVE DISABLED 1
-test_tape_state_queueing_priority 3 REPACKING BROKEN DISABLED 2
-test_tape_state_queueing_priority 4 BROKEN DISABLED REPACKING 1
-test_tape_state_queueing_priority 5 BROKEN REPACKING BROKEN 9999
-test_tape_state_change_queue_removed 6 ACTIVE REPACKING
-test_tape_state_change_queue_removed 7 ACTIVE BROKEN
-test_tape_state_change_queue_removed 8 DISABLED REPACKING
-test_tape_state_change_queue_removed 9 DISABLED BROKEN
-test_tape_state_change_queue_preserved 10 ACTIVE DISABLED
-test_tape_state_change_queue_preserved 11 DISABLED ACTIVE
+test_tape_state_queueing_priority 1 DISABLED DISABLED ACTIVE 2   # ACTIVE queue has priority over DISABLED queue (1)
+test_tape_state_queueing_priority 2 DISABLED ACTIVE DISABLED 1   # ACTIVE queue has priority over DISABLED queue (2)
+test_tape_state_queueing_priority 3 REPACKING BROKEN DISABLED 2  # DISABLED queue selected when no ACTIVE queue is available (1)
+test_tape_state_queueing_priority 4 BROKEN DISABLED REPACKING 1  # DISABLED queue selected when no ACTIVE queue is available (2)
+test_tape_state_queueing_priority 5 BROKEN REPACKING BROKEN 9999 # Request not queued on REPACKING or BROKEN queues
+test_tape_state_change_queue_removed 6 ACTIVE REPACKING   # Request canceled and reported to user, after state changed from ACTIVE to REPACKING
+test_tape_state_change_queue_removed 7 ACTIVE BROKEN      # Request canceled and reported to user, after state changed from ACTIVE to BROKEN
+test_tape_state_change_queue_removed 8 DISABLED REPACKING # Request canceled and reported to user, after state changed from DISABLED to REPACKING
+test_tape_state_change_queue_removed 9 DISABLED BROKEN    # Request canceled and reported to user, after state changed from DISABLED to REPACKING
+test_tape_state_change_queue_preserved 10 ACTIVE DISABLED # Request preserved on queue, after state changed from ACTIVE to DISABLED
+test_tape_state_change_queue_preserved 11 DISABLED ACTIVE # Request preserved on queue, after state changed from DISABLED to ACTIVE
+test_tape_state_change_queue_moved 12 ACTIVE DISABLED 0 REPACKING ACTIVE 1  # State changed from ACTIVE to REPACKING, requests moved to another ACTIVE queue
+test_tape_state_change_queue_moved 13 DISABLED ACTIVE 1 DISABLED BROKEN 0   # State changed from ACTIVE to BROKEN, request moved to another DISABLED queue (ACTIVE queue not available)
+test_tape_state_change_queue_moved 14 ACTIVE BROKEN 0 REPACKING BROKEN 9999 # State changed from ACTIVE to REPACKING, request canceled and reported to user (ACTIVE/DISABLED queue not available)) 
 
 echo
 echo "OK: all tests passed"
