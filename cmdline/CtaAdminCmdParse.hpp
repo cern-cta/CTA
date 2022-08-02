@@ -600,7 +600,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_MEDIATYPE,            AdminCmd::SUBCMD_ADD   },
       { opt_mediatype_alias, opt_cartridge, opt_capacity, opt_primarydensitycode.optional(), opt_secondarydensitycode.optional(), opt_number_of_wraps.optional(), opt_minlpos.optional(), opt_maxlpos.optional(), opt_comment }},
    {{ AdminCmd::CMD_MEDIATYPE,            AdminCmd::SUBCMD_CH    },
-      { opt_mediatype_alias, opt_cartridge.optional(), opt_capacity.optional(), opt_primarydensitycode.optional(), opt_secondarydensitycode.optional(), opt_number_of_wraps.optional(), opt_minlpos.optional(), opt_maxlpos.optional(),opt_comment.optional() }},
+      { opt_mediatype_alias, opt_cartridge.optional(), opt_primarydensitycode.optional(), opt_secondarydensitycode.optional(), opt_number_of_wraps.optional(), opt_minlpos.optional(), opt_maxlpos.optional(),opt_comment.optional() }},
    {{ AdminCmd::CMD_MEDIATYPE,            AdminCmd::SUBCMD_RM    }, { opt_mediatype_alias }},
    {{ AdminCmd::CMD_MEDIATYPE,            AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/

@@ -1389,7 +1389,6 @@ void RequestMessage::processMediaType_Ch(cta::xrd::Response &response)
 
   auto &mediaTypeName = getRequired(OptionString::MEDIA_TYPE);
   auto cartridge = getOptional(OptionString::CARTRIDGE);
-  auto capacityInBytes = getOptional(OptionUInt64::CAPACITY);
   auto primaryDensityCode = getOptional(OptionUInt64::PRIMARY_DENSITY_CODE);
   auto secondaryDensityCode = getOptional(OptionUInt64::SECONDARY_DENSITY_CODE);
   auto nbWraps = getOptional(OptionUInt64::NUMBER_OF_WRAPS);
@@ -1419,9 +1418,6 @@ void RequestMessage::processMediaType_Ch(cta::xrd::Response &response)
 
   if(cartridge){
     m_catalogue.modifyMediaTypeCartridge(m_cliIdentity,mediaTypeName,cartridge.value());
-  }
-  if(capacityInBytes){
-    m_catalogue.modifyMediaTypeCapacityInBytes(m_cliIdentity,mediaTypeName,capacityInBytes.value());
   }
   if(primaryDensityCode){
     m_catalogue.modifyMediaTypePrimaryDensityCode(m_cliIdentity,mediaTypeName,primaryDensityCode.value());
@@ -1945,6 +1941,10 @@ void RequestMessage::processTape_Ch(cta::xrd::Response &response)
    auto  verificationStatus = getOptional(OptionString::VERIFICATION_STATUS);
 
    if(mediaType) {
+      if (m_catalogue.getNbFilesOnTape(vid) != 0) {
+         response.set_type(cta::xrd::Response::RSP_ERR_CTA);
+         return;
+      }
       m_catalogue.modifyTapeMediaType(m_cliIdentity, vid, mediaType.value());
    }
    if(vendor) {
