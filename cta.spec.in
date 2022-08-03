@@ -545,6 +545,12 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 
 
 %changelog
+* Wed Aug 03 2022 Joao Afonso <joao.afonso@cern.ch> - 4.7.9-1
+- Various fixes and improvements to CTA, see ReleaseNotes.md for details
+- Changes to options and default values for cta-taped
+- Updates EOS 5 versionlock for xrootd5 in CI to 5.0.25
+- Updates versionlock for xrootd5 in CI to 5.4.4
+
 * Tue Jul 12 2022 Joao Afonso <joao.afonso@cern.ch> - 4.7.8-1
 - Catalogue schema version 11.0
 

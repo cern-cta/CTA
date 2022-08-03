@@ -1,51 +1,74 @@
-# v4.NEXT
+# v4.7.9-1
 
 ## Summary
+
+***Important NOTE:***
+- This is the first release using the new repo: https://gitlab.cern.ch/cta/CTA
+- Some issues were already closed, so they can only be found on the old repo: https://gitlab.cern.ch/cta/CTA-old
+
+To make the distinction clear, `[old repo]` and `[new repo]` will be used here to distinguish between
+issues on both repositories.
+
+## Changes to options and default values for cta-taped
 
 This release makes some minor changes to options and default values for cta-taped. All options are
 detailed in the cta-taped man page and the provided example files. The changes are outlined below:
 
-Options which have been renamed: "general FileCatalogConfigFile" was renamed to "taped CatalogueConfigFile"
-to be consistent with other options. "DisableRepackManagement" and "DisableMaintenanceProcess" were
-renamed to "UseRepackManagement" and "UseMaintenanceProcess" with default changed from "no" to "yes"
-(default semantics are not changed). "FetchEosFreeSpaceScript" renamed to "externalFreeDiskSpaceScript".
+Options which have been renamed:
 
-Options for which default values have changed: LogMask, MountCriteria, BufferCount, TapeLoadTimeout,
+- "general FileCatalogConfigFile" was renamed to "taped CatalogueConfigFile"
+to be consistent with other options. 
+- "DisableRepackManagement" and "DisableMaintenanceProcess" were
+renamed to "UseRepackManagement" and "UseMaintenanceProcess" with default changed from "no" to "yes"
+(default semantics are not changed). 
+- "FetchEosFreeSpaceScript" renamed to "externalFreeDiskSpaceScript".
+
+Options for which default values have changed: 
+
+- LogMask, MountCriteria, BufferCount, TapeLoadTimeout,
 UseRAO, RAOLTOAlgorithm, RAOLTOAlgorithmOptions.
 
 The following manual pages have been updated:
 
-  cta-admin(1cta)
-  cta-catalogue-admin-user-create(1cta)
-  cta-catalogue-schema-create(1cta)
-  cta-catalogue-schema-drop(1cta)
-  cta-catalogue-schema-set-production(1cta)
-  cta-catalogue-schema-verify(1cta)
-  cta-database-poll(1cta)
-  cta-fst-gcd(1cta)
-  cta-readtp(1cta)
-  cta-restore-deleted-files(1cta)
-  cta-rmcd(1cta)
-  cta-smc(1cta)
-  cta-taped(1cta)
-  cta-tape-label(1cta)
+  - cta-admin(1cta)
+  - cta-catalogue-admin-user-create(1cta)
+  - cta-catalogue-schema-create(1cta)
+  - cta-catalogue-schema-drop(1cta)
+  - cta-catalogue-schema-set-production(1cta)
+  - cta-catalogue-schema-verify(1cta)
+  - cta-database-poll(1cta)
+  - cta-fst-gcd(1cta)
+  - cta-readtp(1cta)
+  - cta-restore-deleted-files(1cta)
+  - cta-rmcd(1cta)
+  - cta-smc(1cta)
+  - cta-taped(1cta)
+  - cta-tape-label(1cta)
 
 ### Features
-- cta/CTA#979  - Document configuration options of daemons and command-line tools
-- cta/CTA#1252 - Adds Liquibase changelog files for PostgreSQL
-- cta/CTA#3    - Implement listing of DISABLED libraries
-- cta/CTA#64   - Adds support for the OSM Tape Label format to the CTA
+- cta/CTA-old#979  [old repo] - Document configuration options of daemons and command-line tools
+- cta/CTA-old#1252 [old repo] - Adds Liquibase changelog files for PostgreSQL
+- cta/CTA#3        [new repo] - Implement listing of DISABLED libraries
+- cta/CTA#64       [new repo] - Adds support for the OSM Tape Label format to the CTA
+- cta/CTA-old#1278 [old repo] - Add support for reading multiple tape formats by the ReadtpCmd command
+- cta/CTA-old#1278 [old repo] - Support multiple tape formats in ReadtpCmd command
 ### Bug fixes
-- cta/CTA#947  - cta-taped should log the FST being used for a data transfer
-- cta/CTA#1106 - "cta-admin schedulinginfo ls" returns records larger than SSI buffer size limit
-- cta/CTA#1269 - cta-restore-deleted-files injects wrong diskFileId in CTA Catalogue
-- cta/CTA#1276 - Some configuration files should be renamed from `.conf` to `.conf.example`
-- cta/CTA#1278 - Add support for reading multiple tape formats by the ReadtpCmd command
-- cta/CTA#28   - Do NOT allow capacity change of a cartridge if there a still files registered on that tape
-
+- cta/CTA#29       [new repo] - cta-taped should log the FST being used for a data transfer
+- cta/CTA-old#1106 [old repo] - "cta-admin schedulinginfo ls" returns records larger than SSI buffer size limit
+- cta/CTA-old#1269 [old repo] - cta-restore-deleted-files injects wrong diskFileId in CTA Catalogue
+- cta/CTA#1276     [old repo] - Some configuration files should be renamed from `.conf` to `.conf.example`
+- cta/CTA#28       [new repo] - Do NOT allow capacity change of a cartridge if there a still files registered on that tape
+- cta/CTA#108      [new repo] - Fix broken CTA containerised installation
+- cta/CTA#109      [new repo] - Move logic to minimize mounts for multi-copy tape pool recalls out of scheduler logic
+- cta/CTA-old#1093 [old repo] - The `cta-taped` manpage showed outdated config options
 ### Continuous Integration
+- cta/CTA#88       [new repo] - xrootd 5 pipelines failing in CI
+- cta/CTA-old#1187 [old repo] - Run EOS5 CI every night
 ### Building and Packaging
-- cta/CTA#1229 - Introduce build of a new taped, using new type of SchedulerDatabase
+- cta/CTA-old#1229 [old repo] - Introduce build of a new taped, using new type of SchedulerDatabase
+- cta/CTA#111      [new repo] - Remove daemon/LabelSession
+- cta/CTA-old#1143 [old repo] - HTTP REST API transition to CTA
+- cta/CTA-old#1224 [old repo] - Remove CASTOR to CTA migration tools RPM
 
 # v4.7.8-1
 
