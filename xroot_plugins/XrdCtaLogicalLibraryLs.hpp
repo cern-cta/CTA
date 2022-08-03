@@ -17,8 +17,10 @@
 
 #pragma once
 
-#include <xroot_plugins/XrdCtaStream.hpp>
-#include <xroot_plugins/XrdSsiCtaRequestMessage.hpp>
+#include <list>
+
+#include "xroot_plugins/XrdCtaStream.hpp"
+#include "xroot_plugins/XrdSsiCtaRequestMessage.hpp"
 
 
 namespace cta { namespace xrd {
@@ -34,43 +36,53 @@ public:
    * @param[in]    requestMsg    RequestMessage containing command-line arguments
    * @param[in]    catalogue     CTA Catalogue
    * @param[in]    scheduler     CTA Scheduler
+   * @param[in]    disabled      Logical Library disable status
    */
-  LogicalLibraryLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
+  LogicalLibraryLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue,
+    cta::Scheduler &scheduler, const std::optional<bool>& disabled);
 
 private:
   /*!
    * Can we close the stream?
    */
-  virtual bool isDone() const {
+  bool isDone() const override {
     return m_logicalLibraryList.empty();
   }
 
   /*!
    * Fill the buffer
    */
-  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
+  int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) override;
 
-  std::list<cta::common::dataStructures::LogicalLibrary> m_logicalLibraryList;    //!< List of logical libraries from the catalogue
+  // List of logical libraries from the catalogue
+  std::list<cta::common::dataStructures::LogicalLibrary> m_logicalLibraryList;
+  const std::optional<bool> m_disabled;
 
   static constexpr const char* const LOG_SUFFIX  = "LogicalLibraryLsStream";      //!< Identifier for log messages
 };
 
 
-LogicalLibraryLsStream::LogicalLibraryLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
+LogicalLibraryLsStream::LogicalLibraryLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue,
+  cta::Scheduler &scheduler, const std::optional<bool>& disabled) :
   XrdCtaStream(catalogue, scheduler),
-  m_logicalLibraryList(catalogue.getLogicalLibraries())
-{
+  m_logicalLibraryList(catalogue.getLogicalLibraries()),
+  m_disabled(disabled) {
   using namespace cta::admin;
 
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "LogicalLibraryLsStream() constructor");
 }
 
 int LogicalLibraryLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
-  for(bool is_buffer_full = false; !m_logicalLibraryList.empty() && !is_buffer_full; m_logicalLibraryList.pop_front()) {
+  for (bool is_buffer_full = false; !m_logicalLibraryList.empty()
+    && !is_buffer_full; m_logicalLibraryList.pop_front()) {
     Data record;
 
     auto &ll      = m_logicalLibraryList.front();
     auto  ll_item = record.mutable_llls_item();
+
+    if (m_disabled && m_disabled.value() != ll.isDisabled) {
+      continue;
+    }
 
     ll_item->set_name(ll.name);
     ll_item->set_is_disabled(ll.isDisabled);
@@ -90,4 +102,5 @@ int LogicalLibraryLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf)
   return streambuf->Size();
 }
 
-}} // namespace cta::xrd
+}  // namespace xrd
+}  // namespace cta

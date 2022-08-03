@@ -33,6 +33,7 @@ The following manual pages have been updated:
 ### Features
 - cta/CTA#979  - Document configuration options of daemons and command-line tools
 - cta/CTA#1252 - Adds Liquibase changelog files for PostgreSQL
+- cta/CTA#3    - Implement listing of DISABLED libraries
 - cta/CTA#64   - Adds support for the OSM Tape Label format to the CTA
 ### Bug fixes
 - cta/CTA#947  - cta-taped should log the FST being used for a data transfer
@@ -40,6 +41,7 @@ The following manual pages have been updated:
 - cta/CTA#1269 - cta-restore-deleted-files injects wrong diskFileId in CTA Catalogue
 - cta/CTA#1276 - Some configuration files should be renamed from `.conf` to `.conf.example`
 - cta/CTA#1278 - Add support for reading multiple tape formats by the ReadtpCmd command
+- cta/CTA#28   - Do NOT allow capacity change of a cartridge if there a still files registered on that tape
 
 ### Continuous Integration
 ### Building and Packaging

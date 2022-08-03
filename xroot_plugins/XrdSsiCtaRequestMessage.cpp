@@ -1330,8 +1330,10 @@ void RequestMessage::processLogicalLibrary_Ls(cta::xrd::Response &response, XrdS
 {
   using namespace cta::admin;
 
+  const auto disabled = getOptional(OptionBoolean::DISABLED);
+
   // Create a XrdSsi stream object to return the results
-  stream = new LogicalLibraryLsStream(*this, m_catalogue, m_scheduler);
+  stream = new LogicalLibraryLsStream(*this, m_catalogue, m_scheduler, disabled);
 
   response.set_show_header(HeaderType::LOGICALLIBRARY_LS);
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
