@@ -1,3 +1,13 @@
+# v4.8.0-1
+
+## Summary
+
+This CTA release modifies the repacking workflow, which may make it incompatible with existing operation tools.
+
+### Features
+- cta/CTA#83 - Add new tape state REPACKING
+- cta/CTA#77 - Add maintenance runner for cleaning-up (retrieve) queue requests and new internal states
+
 # v4.7.12-1
 
 ## Summary
