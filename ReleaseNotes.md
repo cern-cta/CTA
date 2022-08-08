@@ -1,3 +1,16 @@
+# v4.7.9-2
+
+## Summary
+
+This release fixes some packaging issues from v4.7.9-1: when upgrading from v4.7.8-1 to v4.7.9-1 some configuration
+files were renamed to *configurationfile.rpmsave* and thefore some services and cta-cli lost their configuration.
+
+See all details and fix in cta/CTA#119
+
+### Bug fixes
+
+-cta/CTA#119 [new repo] - Packaging issue with CTA 4.7.8-1/4.7.9-1
+
 # v4.7.9-1
 
 ## Summary
