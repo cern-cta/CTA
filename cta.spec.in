@@ -179,6 +179,13 @@ The xroot plugin
 %systemd_post cta-frontend.service
 %systemdDaemonReload
 
+%posttrans -n cta-frontend
+MISSING_CONF=%{_sysconfdir}/cta/cta-frontend-xrootd.conf
+if [[ ! -f "${MISSING_CONF}" ]] && [[ -f "${MISSING_CONF}.rpmsave" ]]
+then
+  mv ${MISSING_CONF}.rpmsave ${MISSING_CONF}
+fi
+
 %package -n cta-frontend-grpc
 Summary: CERN Tape Archive: gRPC based frontend
 Group: Application/CTA
@@ -226,6 +233,13 @@ The command line utilities
 %attr(0755,root,root) %{_bindir}/cta-send-closew.sh
 %attr(0755,root,root) %{_bindir}/cta-verify-file
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-cli.conf.example
+
+%posttrans -n cta-cli
+MISSING_CONF=%{_sysconfdir}/cta/cta-cli.conf
+if [[ ! -f "${MISSING_CONF}" ]] && [[ -f "${MISSING_CONF}.rpmsave" ]]
+then
+  mv ${MISSING_CONF}.rpmsave ${MISSING_CONF}
+fi
 
 %package -n cta-lib-common
 Summary: CERN Tape Archive libraries
@@ -430,6 +444,13 @@ The Remote Media Changer daemon (rmcd)
 %systemd_postun cta-rmcd.service
 %systemdDaemonReload
 
+%posttrans -n cta-rmcd
+MISSING_CONF=%{_sysconfdir}/cta/cta-rmcd.conf
+if [[ ! -f "${MISSING_CONF}" ]] && [[ -f "${MISSING_CONF}.rpmsave" ]]
+then
+  mv ${MISSING_CONF}.rpmsave ${MISSING_CONF}
+fi
+
 %package -n cta-smc
 Summary: The client of the Remote Media Changer Daemon (rmcd)
 Group: Application/CTA
@@ -440,6 +461,13 @@ The client of the Remote Media Changer Daemon (rmcd)
 %defattr(-,root,root)
 %attr(0755,root,root) %{_bindir}/cta-smc
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-smc.1cta.gz
+
+%posttrans -n cta-smc
+MISSING_CONF=%{_sysconfdir}/cta/cta-smc.conf
+if [[ ! -f "${MISSING_CONF}" ]] && [[ -f "${MISSING_CONF}.rpmsave" ]]
+then
+  mv ${MISSING_CONF}.rpmsave ${MISSING_CONF}
+fi
 
 %package -n cta-tape-label
 Summary: The command-line tool for pre-labelling a CTA tape.
