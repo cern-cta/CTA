@@ -403,9 +403,8 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     bool isPotentialMount = false;
     auto vidToTapeMap = m_catalogue.getTapesByVid(rqp.vid);
     common::dataStructures::Tape::State tapeState = vidToTapeMap.at(rqp.vid).state;
-    bool tapeIsActive = tapeState == common::dataStructures::Tape::ACTIVE;
-    bool tapeIsRepacking = tapeState == common::dataStructures::Tape::REPACKING;
-    if (tapeIsActive || tapeIsRepacking) {
+    if (tapeState == common::dataStructures::Tape::ACTIVE ||
+        tapeState == common::dataStructures::Tape::REPACKING) {
       isPotentialMount = true;
     }
     if (rqSummary.jobs && (isPotentialMount || purpose == SchedulerDatabase::PurposeGetMountInfo::SHOW_QUEUES)) {
