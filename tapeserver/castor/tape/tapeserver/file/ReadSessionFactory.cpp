@@ -19,6 +19,7 @@
 #include <sstream>
 
 #include "castor/tape/tapeserver/file/CtaReadSession.hpp"
+#include "castor/tape/tapeserver/file/EnstoreReadSession.hpp"
 #include "castor/tape/tapeserver/file/OsmReadSession.hpp"
 #include "castor/tape/tapeserver/file/ReadSessionFactory.hpp"
 #include "common/dataStructures/LabelFormat.hpp"
@@ -36,6 +37,8 @@ std::unique_ptr<ReadSession> ReadSessionFactory::create(tapeserver::drive::Drive
       return std::make_unique<CtaReadSession>(drive, volInfo, useLbp);
     case LabelFormat::OSM:
       return std::make_unique<OsmReadSession>(drive, volInfo, useLbp);
+    case LabelFormat::Enstore:
+      return std::make_unique<EnstoreReadSession>(drive, volInfo, useLbp);
     default: {
       std::ostringstream ossLabelFormat;
       ossLabelFormat << std::showbase << std::internal << std::setfill('0') << std::hex << std::setw(4)

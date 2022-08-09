@@ -94,12 +94,12 @@ protected:
     */
   const std::unique_ptr<ReadSession> &m_session;
 
-private:
   /**
     * What kind of command we use to position ourself on the tape (fseq or blockid)
     */
   cta::PositioningMethod m_positionCommandCode;
 
+private:
   /**
     * Description of the LBP mode with which the files is read.
     */

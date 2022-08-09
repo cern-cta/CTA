@@ -19,6 +19,7 @@
 #include <sstream>
 
 #include "castor/tape/tapeserver/file/CtaFileReader.hpp"
+#include "castor/tape/tapeserver/file/EnstoreFileReader.hpp"
 #include "castor/tape/tapeserver/file/FileReaderFactory.hpp"
 #include "castor/tape/tapeserver/file/OsmFileReader.hpp"
 #include "castor/tape/tapeserver/file/ReadSession.hpp"
@@ -40,6 +41,10 @@ std::unique_ptr<FileReader> FileReaderFactory::create(const std::unique_ptr<Read
     }
     case LabelFormat::OSM: {
       reader = std::make_unique<OsmFileReader>(readSession, fileToRecall);
+      break;
+    }
+    case LabelFormat::Enstore: {
+      reader = std::make_unique<EnstoreFileReader>(readSession, fileToRecall);
       break;
     }
     default: {

@@ -48,7 +48,7 @@ size_t castor::tape::tapeFile::CPIO::decode(const uint8_t* puiData, const size_t
       &m_uiNlink, &m_uiRdev, reinterpret_cast<uint64_t*>(&m_ulMtime),
       &m_uiNameSize, &m_ui64FileSize, &m_strFid[0]);
   } else {
-    strFormat << "%06c%06o%06o%06o%06o%06o%06o%06o%011lo%06oH%010lX%" <<  CPIO::PATHLEN - 1 << "s";
+    strFormat << "%06c%06o%06o%06o%06o%06o%06o%06o%011lo%06o%011lo%" <<  CPIO::PATHLEN - 1 << "s";
     sscanf(reinterpret_cast<const char*>(puiData), strFormat.str().c_str(),
       &m_strMagic[0], &m_uiDev, &m_uiIno, &m_uiMode, &m_uiUid, &m_uiGid,
       &m_uiNlink, &m_uiRdev, reinterpret_cast<uint64_t*>(&m_ulMtime),
