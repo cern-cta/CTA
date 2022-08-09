@@ -37,13 +37,13 @@ namespace dataStructures {
  */
 struct Tape {
 
-  enum State : unsigned char {
+  enum State {
     ACTIVE = 1,
     BROKEN = 2,
-    BROKEN_PENDING = 3,
-    DISABLED = 4,
-    REPACKING = 5,
-    REPACKING_PENDING = 6,
+    DISABLED = 3,
+    REPACKING = 4,
+    BROKEN_PENDING = 101,
+    REPACKING_PENDING = 102,
   };
 
   static const std::map<State,std::string> STATE_TO_STRING_MAP;
