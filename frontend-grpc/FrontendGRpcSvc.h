@@ -28,11 +28,13 @@ private:
 public:
     CtaRpcImpl(cta::log::Logger *logger, std::unique_ptr<cta::catalogue::Catalogue> &catalogue, std::unique_ptr<cta::Scheduler> &scheduler);
 
+    // Archive/Retrieve interface
+    Status Create(::grpc::ServerContext* context, const ::cta::frontend::rpc::SchedulerRequest* request, ::cta::frontend::rpc::CreateResponse* response);
+    Status Archive(::grpc::ServerContext* context, const ::cta::frontend::rpc::SchedulerRequest* request, ::cta::frontend::rpc::ArchiveResponse* response);
+    Status Retrieve(::grpc::ServerContext* context, const ::cta::frontend::rpc::SchedulerRequest* request, ::cta::frontend::rpc::RetrieveResponse* response);
+    Status CancelRetrieve(::grpc::ServerContext* context, const ::cta::frontend::rpc::SchedulerRequest* request, ::google::protobuf::Empty* response);
+    Status Delete(::grpc::ServerContext* context, const ::cta::frontend::rpc::SchedulerRequest* request, ::google::protobuf::Empty* response);
+
+    // Admin interface
     Status Version(::grpc::ServerContext *context, const ::google::protobuf::Empty *request, ::cta::admin::Version *response);
-
-    Status Archive(::grpc::ServerContext* context, const ::cta::frontend::rpc::ArchiveRequest* request, ::cta::frontend::rpc::ArchiveResponse* response);
-    Status Retrieve(::grpc::ServerContext* context, const ::cta::frontend::rpc::RetrieveRequest* request, ::cta::frontend::rpc::RetrieveResponse* response);
-    Status Delete(::grpc::ServerContext* context, const ::cta::frontend::rpc::DeleteRequest* request, ::google::protobuf::Empty* response);
-    Status CancelRetrieve(::grpc::ServerContext* context, const ::cta::frontend::rpc::CancelRetrieveRequest* request, ::google::protobuf::Empty* response);
 };
-
