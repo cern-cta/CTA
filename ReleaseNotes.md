@@ -1,3 +1,11 @@
+# v4.NEXT
+
+## Summary
+### Features
+- cta/CTA#89 - Create stubs for Enstore tape label format
+### Continuous Integration
+- cta/CTA#49 - Clean up orchestration test scripts
+
 # v4.7.9-2
 
 ## Summary
@@ -8,7 +16,6 @@ files were renamed to *configurationfile.rpmsave* and thefore some services and 
 See all details and fix in cta/CTA#119
 
 ### Bug fixes
-
 -cta/CTA#119 [new repo] - Packaging issue with CTA 4.7.8-1/4.7.9-1
 
 # v4.7.9-1
@@ -30,13 +37,13 @@ detailed in the cta-taped man page and the provided example files. The changes a
 Options which have been renamed:
 
 - "general FileCatalogConfigFile" was renamed to "taped CatalogueConfigFile"
-to be consistent with other options. 
+to be consistent with other options.
 - "DisableRepackManagement" and "DisableMaintenanceProcess" were
 renamed to "UseRepackManagement" and "UseMaintenanceProcess" with default changed from "no" to "yes"
-(default semantics are not changed). 
+(default semantics are not changed).
 - "FetchEosFreeSpaceScript" renamed to "externalFreeDiskSpaceScript".
 
-Options for which default values have changed: 
+Options for which default values have changed:
 
 - LogMask, MountCriteria, BufferCount, TapeLoadTimeout,
 UseRAO, RAOLTOAlgorithm, RAOLTOAlgorithmOptions.
