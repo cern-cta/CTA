@@ -366,7 +366,7 @@ void Helpers::getLockedAndFetchedRepackQueue(RepackQueue& queue, ScopedExclusive
 //------------------------------------------------------------------------------
 std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candidateVids, cta::catalogue::Catalogue & catalogue,
     objectstore::Backend & objectstore, bool isRepack) {
-  // We will build the retrieve stats of the non-disable, non-broken candidate vids here
+  // We will build the retrieve stats of the non-disabled, non-broken candidate vids here
   std::list<SchedulerDatabase::RetrieveQueueStatistics> candidateVidsStats;
   // We will build the retrieve stats of the disabled vids here, as a fallback
   std::list<SchedulerDatabase::RetrieveQueueStatistics> candidateVidsStatsFallback;
@@ -387,7 +387,8 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
         grqsmLock.unlock();
         updateFuture.wait();
         grqsmLock.lock();
-        if ((g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::ACTIVE && !isRepack) || (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::REPACKING && isRepack)) {
+        if ((g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::ACTIVE && !isRepack) ||
+            (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::REPACKING && isRepack)) {
           logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v),"(g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::ACTIVE && !isRepack) || (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::REPACKING && isRepack)");
           candidateVidsStats.emplace_back(g_retrieveQueueStatistics.at(v).stats);
         } else if ((g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::DISABLED && !isRepack)) {
@@ -406,7 +407,8 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
         logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v),"Cache is not updated, timeSinceLastUpdate ("+std::to_string(timeSinceLastUpdate)+
         ") <= c_retrieveQueueCacheMaxAge ("+std::to_string(c_retrieveQueueCacheMaxAge)+")");
         // We're lucky: cache hit (and not stale)
-        if ((g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::ACTIVE && !isRepack) || (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::REPACKING && isRepack)) {
+        if ((g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::ACTIVE && !isRepack) ||
+            (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::REPACKING && isRepack)) {
           candidateVidsStats.emplace_back(g_retrieveQueueStatistics.at(v).stats);
         } else if ((g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::DISABLED && !isRepack)) {
           candidateVidsStatsFallback.emplace_back(g_retrieveQueueStatistics.at(v).stats);
@@ -450,7 +452,8 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
       // Signal to potential waiters
       updatePromise.set_value();
       // Update our own candidate list if needed.
-      if ((g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::ACTIVE && !isRepack) || (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::REPACKING && isRepack)) {
+      if ((g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::ACTIVE && !isRepack) ||
+          (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::REPACKING && isRepack)) {
         candidateVidsStats.emplace_back(g_retrieveQueueStatistics.at(v).stats);
       } else if ((g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::DISABLED && !isRepack)) {
         candidateVidsStatsFallback.emplace_back(g_retrieveQueueStatistics.at(v).stats);
