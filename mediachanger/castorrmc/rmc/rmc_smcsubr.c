@@ -453,15 +453,6 @@ int smc_find_cartridge(
 	strncpy(func, "findWithVT", sizeof(func));
 	func[sizeof(func) - 1] = '\0';
 
-        /* Skip the 0xB6 cdb command if the tape library is Spectra like */
-        if (is_library_spectra_like(robot_info)) {
-          rc = smc_find_cartridgeWithoutSendVolumeTag (fd, rbtdev, find_template, type, start, nbelem,
-                                    element_info);
-          if (rc >= 0)
-            return (rc);
-          return (-1);
-        }
-
 	memset (cdb, 0, sizeof(cdb));
 	cdb[0] = 0xB6;		/* send volume tag */
 	cdb[1] = type;
@@ -470,7 +461,8 @@ int smc_find_cartridge(
 	cdb[5] = 5;
 	cdb[9] = 40;
 	memset (plist, 0, sizeof(plist));
-	strcpy (plist, find_template);
+	strncpy (plist, find_template, sizeof(plist));
+	strncat (plist, "*", sizeof(plist) - strlen(plist));
 
        /* IBM library in pause mode  */
         while (pause_mode && nretries <= 900) {
