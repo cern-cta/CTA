@@ -17,6 +17,32 @@ variables:
   CTA_VERSION: "${XROOTD_VERSION}"
   CMAKE_OPTIONS: ""
 
+.prepare-xrootd5: &prepare-xrootd5
+  - if [[ ${XROOTD_VERSION} -eq 5 ]];
+    then echo "Using XRootD version 5";
+      sed -i 's/define xrootdVersion 1:4.12.4-1/define xrootdVersion 1:5.4.2-1/' cta.spec.in;
+      repodir=$(mktemp -d)
+      awk '/cta-ci-xroot\]/{ n=NR+5 } NR==n{ $0="enabled=0" }1'
+        continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/cta-ci.repo > ${repodir}/cta-ci.repo
+        && mv ${repodir}/cta-ci.repo continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/cta-ci.repo;
+      awk '/cta-ci-xrootd5/{ n=NR+5 } NR==n{ $0="enabled=1" }1'
+        continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/cta-ci.repo > ${repodir}/cta-ci.repo
+        && mv ${repodir}/cta-ci.repo continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/cta-ci.repo;
+      . ./continuousintegration/docker/ctafrontend/cc7/opt/run/bin/versionlock_tools.sh
+        continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list
+        && versionlock_xrootd_4_disable && versionlock_xrootd_5_enable;
+    else echo "Using XRootD version 4";
+    fi
+
+.prepare-scheduler-type: &prepare-scheduler-type
+  - if [[ ${SCHED_TYPE} != "objectstore" ]]; then
+      echo "Using specified scheduler database type $SCHED_TYPE";
+      sched_opt="-DCTA_USE_$(echo ${SCHED_TYPE} | tr '[:lower:]' '[:upper:]'):Bool=true";
+      sched_version=$(echo ${SCHED_TYPE} | cut -c 1-3);
+      CTA_VERSION="${CTA_VERSION}${sched_version}";
+      CMAKE_OPTIONS="-DSKIP_UNIT_TESTS:STRING=1 ${sched_opt}";
+    fi
+
 before_script:
   - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
   - echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
@@ -27,20 +53,8 @@ before_script:
       then echo "Setting to compile with XRootD version 5";
       XROOTD_VERSION=5;
     fi
-  - if [[ ${XROOTD_VERSION} -eq 5 ]];
-    then echo "Using XRootD version 5";
-      sed -i 's/define xrootdVersion 1:4.12.4-1/define xrootdVersion 1:5.4.2-1/' cta.spec.in;
-      cp continuousintegration/docker/ctafrontend/cc7/cta-ci-xrootd5-enabled.repo continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/cta-ci.repo;
-      cp -f continuousintegration/docker/ctafrontend/cc7/versionlock-xrootd5.list continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list;
-    else echo "Using XRootD version 4";
-    fi
-  - if [[ ${SCHED_TYPE} != "objectstore" ]]; then
-      echo "Using specified scheduler database type $SCHED_TYPE";
-      sched_opt="-DCTA_USE_$(echo ${SCHED_TYPE} | tr '[:lower:]' '[:upper:]'):Bool=true";
-      sched_version=$(echo ${SCHED_TYPE} | cut -c 1-3);
-      CTA_VERSION="${CTA_VERSION}${sched_version}";
-      CMAKE_OPTIONS="-DSKIP_UNIT_TESTS:STRING=1 ${sched_opt}";
-    fi
+  - *prepare-xrootd5
+  - *prepare-scheduler-type
 
 include:
   - local: .gitlab/ci/*.gitlab-ci.yml

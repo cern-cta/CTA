@@ -37,6 +37,7 @@
 #### EOS-5-END ####
 0:eos-folly-2019.11.11.00-1.el7.cern.*
 0:eos-folly-deps-2019.11.11.00-1.el7.cern.*
+#### XROOTD-4-START ####
 1:python2-xrootd-4.12.6-1.el7.*
 1:python3-xrootd-4.12.6-1.el7.*
 1:xrootd-4.12.6-1.el7.*
@@ -54,6 +55,26 @@
 1:xrootd-server-devel-4.12.6-1.el7.*
 1:xrootd-server-libs-4.12.6-1.el7.*
 1:xrootd-tests-4.12.6-1.el7.*
+#### XROOTD-4-END ####
+#### XROOTD-5-START ####
+#1:python2-xrootd-5.4.2-1.el7.*
+#1:python3-xrootd-5.4.2-1.el7.*
+#1:xrootd-5.4.2-1.el7.*
+#1:xrootd-client-5.4.2-1.el7.*
+#1:xrootd-client-devel-5.4.2-1.el7.*
+#1:xrootd-client-libs-5.4.2-1.el7.*
+#1:xrootd-debuginfo-5.4.2-1.el7.*
+#1:xrootd-devel-5.4.2-1.el7.*
+#1:xrootd-doc-5.4.2-1.el7.*
+#1:xrootd-fuse-5.4.2-1.el7.*
+#1:xrootd-libs-5.4.2-1.el7.*
+#1:xrootd-private-devel-5.4.2-1.el7.*
+#1:xrootd-selinux-5.4.2-1.el7.*
+#1:xrootd-server-5.4.2-1.el7.*
+#1:xrootd-server-devel-5.4.2-1.el7.*
+#1:xrootd-server-libs-5.4.2-1.el7.*
+#1:xrootd-tests-5.4.2-1.el7.*
+#### XROOTD-5-END ####
 2:ceph-15.2.15-0.el7.x86_64
 2:ceph-base-15.2.15-0.el7.x86_64
 2:ceph-common-15.2.15-0.el7.x86_64

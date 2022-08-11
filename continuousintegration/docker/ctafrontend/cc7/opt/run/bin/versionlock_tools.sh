@@ -1,4 +1,4 @@
-#!/bin/bash
+ #!/bin/bash
 
 # @project      The CERN Tape Archive (CTA)
 # @copyright    Copyright © 2022 CERN
@@ -18,6 +18,10 @@
 
 VERSIONLOCK_LIST=/etc/yum/pluginconf.d/versionlock.list
 
+if [ ! -z $1 ]
+then VERSIONLOCK_LIST=$1
+fi
+
 versionlock_eos_4_disable () {
   sed  -i '/#*\s*EOS-4-START/,/#*\s*EOS-4-END/{/#*\s*EOS-4/!{s/^[^#]/#/g}}' $VERSIONLOCK_LIST
 }
@@ -32,4 +36,20 @@ versionlock_eos_5_disable () {
 
 versionlock_eos_5_enable () {
   sed  -i '/#*\s*EOS-5-START/,/#*\s*EOS-5-END/{/#*\s*EOS-5/!{s/^#//g}}' $VERSIONLOCK_LIST
+}
+
+versionlock_xrootd_4_disable () {
+  sed  -i '/#*\s*XROOTD-4-START/,/#*\s*XROOTD-4-END/{/#*\s*XROOTD-4/!{s/^[^#]/#/g}}' $VERSIONLOCK_LIST
+}
+
+versionlock_xrootd_4_enable () {
+  sed  -i '/#*\s*XROOTD-4-START/,/#*\s*XROOTD-4-END/{/#*\s*XROOTD-4/!{s/^#//g}}' $VERSIONLOCK_LIST
+}
+
+versionlock_xrootd_5_disable () {
+  sed  -i '/#*\s*XROOTD-5-START/,/#*\s*XROOTD-5-END/{/#*\s*XROOTD-5/!{s/^[^#]/#/g}}' $VERSIONLOCK_LIST
+}
+
+versionlock_xrootd_5_enable () {
+  sed  -i '/#*\s*XROOTD-5-START/,/#*\s*XROOTD-5-END/{/#*\s*XROOTD-5/!{s/^#//g}}' $VERSIONLOCK_LIST
 }
