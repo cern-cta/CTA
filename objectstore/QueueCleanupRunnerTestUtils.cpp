@@ -45,12 +45,12 @@ void fillRetrieveRequestsForCleanupRunner(
         typename cta::objectstore::ContainerAlgorithms<cta::objectstore::RetrieveQueue, cta::objectstore::RetrieveQueueToTransfer>::InsertedElement::list &requests,
         uint32_t requestNr,
         std::list<std::unique_ptr<cta::objectstore::RetrieveRequest> > &requestPtrs, //List to avoid memory leak on ArchiveQueueAlgorithms test
-        std::set<std::string> tapeNames, // List of tapes that will contain a replica
-        std::string activeCopyTape,
+        std::set<std::string> & tapeNames, // List of tapes that will contain a replica
+        std::string & activeCopyTape,
         cta::objectstore::BackendVFS &be,
         cta::objectstore::AgentReference &agentRef, uint64_t startFseq) {
   using namespace cta::objectstore;
-  for (size_t i = 0; i < requestNr; ++i) {
+  for (size_t i = 0; i < requestNr; i++) {
     std::string rrAddr = agentRef.nextId("RetrieveRequest");
     agentRef.addToOwnership(rrAddr, be);
     cta::common::dataStructures::MountPolicy mp;
@@ -66,7 +66,7 @@ void fillRetrieveRequestsForCleanupRunner(
     rqc.archiveFile.storageClass = "sc";
     uint32_t currentCopyNb = 0;
     uint32_t activeCopyNr = 0;
-    for (auto tapeName: tapeNames) {
+    for (auto & tapeName: tapeNames) {
       cta::common::dataStructures::TapeFile tf;
       tf.blockId = 0;
       tf.fileSize = 1;

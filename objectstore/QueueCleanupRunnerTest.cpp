@@ -104,26 +104,26 @@ class QueueCleanupRunnerTest: public
                               ::testing::TestWithParam<QueueCleanupRunnerTestParams> {
 public:
 
-  QueueCleanupRunnerTest() throw() {
+  QueueCleanupRunnerTest() noexcept {
   }
 
   class FailedToGetDatabase: public std::exception {
   public:
-    const char *what() const throw() {
+    const char *what() const noexcept override {
       return "Failed to get scheduler database";
     }
   };
 
   class FailedToGetCatalogue: public std::exception {
   public:
-    const char *what() const throw() {
+    const char *what() const noexcept override {
       return "Failed to get catalogue";
     }
   };
 
   class FailedToGetScheduler: public std::exception {
   public:
-    const char *what() const throw() {
+    const char *what() const noexcept override {
       return "Failed to get scheduler";
     }
   };
@@ -152,7 +152,7 @@ public:
 
   cta::objectstore::OStoreDBWrapperInterface &getDb() {
     cta::objectstore::OStoreDBWrapperInterface *const ptr = m_db.get();
-    if (NULL == ptr) {
+    if (nullptr == ptr) {
       throw FailedToGetDatabase();
     }
     return *ptr;
@@ -160,16 +160,7 @@ public:
 
   cta::catalogue::DummyCatalogue &getCatalogue() {
     cta::catalogue::DummyCatalogue *const ptr = dynamic_cast<cta::catalogue::DummyCatalogue*>(m_catalogue.get());
-    if (NULL == ptr) {
-      throw FailedToGetCatalogue();
-    }
-    return *ptr;
-  }
-
-  cta::catalogue::Catalogue &getBackent() {
-
-    cta::catalogue::Catalogue *const ptr = m_catalogue.get();
-    if (NULL == ptr) {
+    if (nullptr == ptr) {
       throw FailedToGetCatalogue();
     }
     return *ptr;
@@ -212,8 +203,9 @@ TEST_P(QueueCleanupRunnerTest, CleanupRunnerParameterizedTest) {
   // Object store
   cta::objectstore::OStoreDBWrapperInterface & oStore = getDb();
   // Backend
-  cta::objectstore::BackendVFS & be = dynamic_cast<cta::objectstore::BackendVFS&>(oStore.getBackend());
-  //be.noDeleteOnExit();
+  auto & be = dynamic_cast<cta::objectstore::BackendVFS&>(oStore.getBackend());
+  // Remove this comment to avoid cleaning the object store files on destruction, useful for debugging
+  // be.noDeleteOnExit();
   // Scheduler
   cta::Scheduler & scheduler = getScheduler();
   // Dummy admin
@@ -228,7 +220,7 @@ TEST_P(QueueCleanupRunnerTest, CleanupRunnerParameterizedTest) {
   cta::objectstore::Agent agentForCleanup(agentForCleanupRef.getAgentAddress(), be);
 
   // Create the root entry
-  cta::objectstore::EntryLogSerDeser el("user0", "unittesthost", time(NULL));
+  cta::objectstore::EntryLogSerDeser el("user0", "unittesthost", time(nullptr));
   cta::objectstore::RootEntry re(be);
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.fetch();
@@ -361,9 +353,6 @@ TEST_P(QueueCleanupRunnerTest, CleanupRunnerParameterizedTest) {
 }
 
 static cta::OStoreDBFactory<cta::objectstore::BackendVFS> OStoreDBFactoryVFS;
-//static cta::OStoreDBFactory<cta::objectstore::BackendVFS> OStoreDBFactoryVFSCustom("/tmp/jobStoreVFSCustom");
-//static cta::OStoreDBFactory<cta::objectstore::BackendVFS> OStoreDBFactoryVFS1("/tmp/jobStoreVFSCustom1");
-//static cta::OStoreDBFactory<cta::objectstore::BackendVFS> OStoreDBFactoryVFS2("/tmp/jobStoreVFSCustom2");
 
 // Testing requests without replicas
 
