@@ -1968,7 +1968,7 @@ void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::Retr
   std::list<std::shared_ptr<objectstore::RetrieveRequest>> rrlist;
   std::list<objectstore::ScopedExclusiveLock> locks;
   for (auto &job: jobs) {
-    OStoreDB::RetrieveJob *oStoreJob = dynamic_cast<OStoreDB::RetrieveJob *>(job);
+    auto oStoreJob = dynamic_cast<OStoreDB::RetrieveJob *>(job);
     auto rr = std::make_shared<objectstore::RetrieveRequest>(oStoreJob->m_retrieveRequest.getAddressIfSet(), m_objectStore);
     rrlist.push_back(rr);
     locks.emplace_back(*rr);
@@ -2190,20 +2190,6 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::getNextRetr
 
   // Pop the objects
   auto jobs = rqttAlgo.popNextBatch(vid, criteria, logContext);
-
- /**
-  //Get the first one request that is in elements
-  auto repackRequest = jobs.elements.front().repackRequest.get();
-  auto repackInfo = jobs.elements.front().repackInfo;
-  //build the repackRequest with the repack infos
-  std::unique_ptr<SchedulerDatabase::RepackRequest> ret;
-  ret.reset(new OStoreDB::RepackRequest(repackRequest->getAddressIfSet(), *this));
-  ret->repackInfo.vid = repackInfo.vid;
-  ret->repackInfo.type = repackInfo.type;
-  ret->repackInfo.status = repackInfo.status;
-  ret->repackInfo.repackBufferBaseURL = repackInfo.repackBufferBaseURL;
-  ret->repackInfo.noRecall = repackInfo.noRecall;
-  return ret;**/
 
   for (auto &j : jobs.elements) {
     std::unique_ptr<OStoreDB::RetrieveJob> rj(new OStoreDB::RetrieveJob(j.retrieveRequest->getAddressIfSet(), *this, nullptr));
