@@ -9,6 +9,7 @@
 
 %define usingObjectstore @RPM_USINGOBJECTSTORE@
 %define schedOpt @RPM_SCHEDOPT@
+%define oracleOpt @RPM_ORACLE@
 
 # Neutral packaging (for srpm)
 #-----------------------------
@@ -80,7 +81,7 @@ The CTA project is the CERN Tape Archive system.
 mkdir -p build
 cd build
 # The cmake step does the selection between client/server compilation or just client
-CTA_VERSION=%{ctaVersion} cmake3 .. -DCOMPILE_PACKAGING:STRING=0 -DVCS_VERSION=%{ctaRelease} %{schedOpt}
+CTA_VERSION=%{ctaVersion} cmake3 .. -DCOMPILE_PACKAGING:STRING=0 -DVCS_VERSION=%{ctaRelease} %{schedOpt} %{oracleOpt}
 # Workaround for the inability of cmake to handle properly the dependencies to generated code.
 %{__make} -s %{_smp_mflags} -k || true
 %{__make} -s %{_smp_mflags}

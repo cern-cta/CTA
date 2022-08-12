@@ -145,6 +145,13 @@ if [ ! -z "${error}" ]; then
     exit 1
 fi
 
+# ORACLE_SUPPORT is an external variable of the gitlab-ci to use postgres when CTA is compiled without Oracle
+if [ $ORACLE_SUPPORT == "OFF" ] ; then
+  database_configmap="internal_postgres.yaml"
+  CREATE_OPTS="${CREATE_OPTS} -d ${database_configmap}"
+  useoracle=0
+fi
+
 if [ $useoracle == 1 ] ; then
     database_configmap=$(find /opt/kubernetes/CTA/ | grep yaml$ | grep database | head -1)
     if [ "-${database_configmap}-" == "--" ]; then

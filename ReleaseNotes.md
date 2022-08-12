@@ -4,7 +4,10 @@
 ### Features
 - cta/CTA#89 - Create stubs for Enstore tape label format
 ### Continuous Integration
+- cta/CTA#7  - Use same versionlock.list file for xrootd4 and 5
 - cta/CTA#49 - Clean up orchestration test scripts
+### Building and Packaging
+- cta/CTA#92 - Refactor CTA code so that it can be build without Oracle dependencies
 
 # v4.7.9-2
 

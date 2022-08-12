@@ -18,23 +18,29 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow")
 
 find_package (sqlite REQUIRED)
 find_package (postgres REQUIRED)
-find_package (oracle-instantclient REQUIRED)
 include_directories (${POSTGRES_INCLUDE_DIRS})
-include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
+
+if (OCCI_SUPPORT)
+  find_package (oracle-instantclient REQUIRED)
+  include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
+  add_definitions( -DSUPPORT_OCCI )
+endif()
 
 set (RDBMS_WRAPPER_LIB_SRC_FILES
   ColumnNameToIdx.cpp
   ColumnNameToIdxAndType.cpp
-        ConnWrapper.cpp
   ConnFactory.cpp
-        RsetWrapper.cpp
-        StmtWrapper.cpp
+  ConnFactoryFactory.cpp
+  ConnWrapper.cpp
   ParamNameToIdx.cpp
+  RsetWrapper.cpp
   Sqlite.cpp
   SqliteConn.cpp
   SqliteConnFactory.cpp
   SqliteRset.cpp
-  SqliteStmt.cpp)
+  SqliteStmt.cpp
+  StmtWrapper.cpp
+)
 
 set (RDBMS_WRAPPER_LIB_SRC_FILES
   ${RDBMS_WRAPPER_LIB_SRC_FILES}
@@ -44,16 +50,17 @@ set (RDBMS_WRAPPER_LIB_SRC_FILES
   PostgresStmt.cpp
   PostgresColumn.cpp)
 
-set (RDBMS_WRAPPER_LIB_SRC_FILES
-  ${RDBMS_WRAPPER_LIB_SRC_FILES}
-  ConnFactoryFactory.cpp
-  OcciColumn.cpp
-  OcciConn.cpp
-  OcciConnFactory.cpp
-  OcciEnv.cpp
-  OcciEnvSingleton.cpp
-  OcciRset.cpp
-  OcciStmt.cpp)
+if (OCCI_SUPPORT)
+  set (RDBMS_WRAPPER_LIB_SRC_FILES
+    ${RDBMS_WRAPPER_LIB_SRC_FILES}
+    OcciColumn.cpp
+    OcciConn.cpp
+    OcciConnFactory.cpp
+    OcciEnv.cpp
+    OcciEnvSingleton.cpp
+    OcciRset.cpp
+    OcciStmt.cpp)
+endif()
 
 add_library (ctardbmswrapper SHARED
   ${RDBMS_WRAPPER_LIB_SRC_FILES})
@@ -63,17 +70,26 @@ set_property(TARGET ctardbmswrapper PROPERTY   VERSION "${CTA_LIBVERSION}")
 target_link_libraries (ctardbmswrapper
   ctacommon
   ${SQLITE_LIBRARIES}
-  ${POSTGRES_LIBRARIES}
-  ${ORACLE-INSTANTCLIENT_LIBRARIES})
+  ${POSTGRES_LIBRARIES})
+
+if (OCCI_SUPPORT)
+  target_link_libraries (ctardbmswrapper ${ORACLE-INSTANTCLIENT_LIBRARIES})
+endif()
 
 install (TARGETS ctardbmswrapper DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 set(RDBMS_WRAPPER_UNIT_TESTS_LIB_SRC_FILES
   ConnTest.cpp
-  OcciColumnTest.cpp
   ParamNameToIdxTest.cpp
   PostgresStmtTest.cpp
   SqliteStmtTest.cpp)
+
+if (OCCI_SUPPORT)
+  set(RDBMS_WRAPPER_UNIT_TESTS_LIB_SRC_FILES
+    ${RDBMS_WRAPPER_UNIT_TESTS_LIB_SRC_FILES}
+    OcciColumnTest.cpp
+  )
+endif()
 
 add_library (ctardbmswrapperunittests SHARED
   ${RDBMS_WRAPPER_UNIT_TESTS_LIB_SRC_FILES})

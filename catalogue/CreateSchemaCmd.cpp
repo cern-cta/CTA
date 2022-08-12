@@ -17,7 +17,9 @@
 
 #include "catalogue/CreateSchemaCmd.hpp"
 #include "catalogue/CreateSchemaCmdLineArgs.hpp"
+#ifdef SUPPORT_OCCI
 #include "catalogue/OracleCatalogueSchema.hpp"
+#endif
 #include "catalogue/PostgresCatalogueSchema.hpp"
 #include "catalogue/SqliteCatalogueSchema.hpp"
 #include "catalogue/VersionedCatalogueSchemas.hpp"
@@ -84,6 +86,7 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
       }
     }
     break;
+#ifdef SUPPORT_OCCI
   case rdbms::Login::DBTYPE_ORACLE:
     {
       if (cmdLineArgs.catalogueVersion) {
@@ -95,6 +98,7 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
       }
     }
     break;
+#endif
   case rdbms::Login::DBTYPE_NONE:
     throw exception::Exception("Cannot create a catalogue without a database type");
   default:

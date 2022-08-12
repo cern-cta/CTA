@@ -19,8 +19,12 @@
 
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "catalogue/InMemoryCatalogueFactory.hpp"
-#include "catalogue/OracleCatalogueFactory.hpp"
 #include "catalogue/PostgresqlCatalogueFactory.hpp"
+
+#ifdef SUPPORT_OCCI
+  #include "catalogue/OracleCatalogueFactory.hpp"
+#endif
+
 
 namespace cta {
 namespace catalogue {
@@ -38,9 +42,11 @@ std::unique_ptr<CatalogueFactory> CatalogueFactoryFactory::create(
     switch (login.dbType) {
     case rdbms::Login::DBTYPE_IN_MEMORY:
       return std::make_unique<InMemoryCatalogueFactory>(log, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
+#ifdef SUPPORT_OCCI
     case rdbms::Login::DBTYPE_ORACLE:
       return std::make_unique<OracleCatalogueFactory>(log, login, nbConns, nbArchiveFileListingConns,
         maxTriesToConnect);
+#endif
     case rdbms::Login::DBTYPE_POSTGRESQL:
       return std::make_unique<PostgresqlCatalogueFactory>(log, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
     case rdbms::Login::DBTYPE_SQLITE:

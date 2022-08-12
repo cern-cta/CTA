@@ -60,6 +60,15 @@ if (ENABLE_STDOUT_LOGGING)
   add_definitions (-DSTDOUT_LOGGING)
 endif ()
 
+set (OCCI_SUPPORT ON)
+if (DISABLE_ORACLE_SUPPORT)
+  message(STATUS "NO ORACLE")
+  unset (OCCI_SUPPORT)
+  set(RPM_ORACLE "-DDISABLE_ORACLE_SUPPORT:BOOL=ON" CACHE STRING "" FORCE)
+else ()
+  set(RPM_ORACLE "%{nil}" CACHE STRING "" FORCE)
+endif ()
+
 if (CTA_USE_PGSCHED)
   add_definitions (-DCTA_PGSCHED)
   set(RPM_USINGOBJECTSTORE "0" CACHE STRING "" FORCE)
@@ -120,8 +129,6 @@ ELSE(DEFINED PackageOnly)
   include_directories(${CMAKE_BINARY_DIR})
 
   # OCCI support is on by default
-  set (OCCI_SUPPORT ON)
-
   if (OCCI_SUPPORT)
     find_package (oracle-instantclient REQUIRED)
   endif (OCCI_SUPPORT)

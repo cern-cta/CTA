@@ -18,7 +18,13 @@ cmake_minimum_required (VERSION 3.17)
 find_package(Protobuf3 REQUIRED)
 find_package(postgres REQUIRED)
 
-include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS} ${POSTGRES_INCLUDE_DIRS})
+include_directories (${POSTGRES_INCLUDE_DIRS})
+
+if (OCCI_SUPPORT)
+  find_package (oracle-instantclient REQUIRED)
+  include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
+  add_definitions( -DSUPPORT_OCCI )
+endif ()
 
 #
 # Compiled protocol buffers (for ChecksumBlob)
@@ -39,8 +45,6 @@ set (CATALOGUE_LIB_SRC_FILES
   DriveConfig.cpp
   InMemoryCatalogue.cpp
   InMemoryCatalogueFactory.cpp
-  OracleCatalogue.cpp
-  OracleCatalogueFactory.cpp
   PostgresCatalogue.cpp
   PostgresqlCatalogueFactory.cpp
   SqliteCatalogueSchema.cpp
@@ -58,6 +62,13 @@ set (CATALOGUE_LIB_SRC_FILES
   SchemaVersion.cpp
   TapeForWriting.cpp
 )
+
+if (OCCI_SUPPORT)
+  set (CATALOGUE_LIB_SRC_FILES
+    ${CATALOGUE_LIB_SRC_FILES}
+    OracleCatalogue.cpp
+    OracleCatalogueFactory.cpp)
+endif()
 
 add_library (ctacatalogue SHARED
    ${CATALOGUE_LIB_SRC_FILES})
@@ -83,7 +94,7 @@ add_custom_target(create_catalogue_schema_directory ALL
     COMMAND ${CMAKE_COMMAND} -E make_directory ${catalogue_schema_directory} DEPENDS
 ${CMAKE_SOURCE_DIR}/cmake/CTAVersions.cmake)
 
-add_custom_command (OUTPUT sqlite_catalogue_schema.sql oracle_catalogue_schema.sql postgres_catalogue_schema.sql
+add_custom_command (OUTPUT sqlite_catalogue_schema.sql postgres_catalogue_schema.sql
   COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasSQL.sh ${CMAKE_CURRENT_SOURCE_DIR} ${catalogue_schema_directory} >/dev/null
   COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasCppFile.sh ${CMAKE_CURRENT_SOURCE_DIR}
   DEPENDS
@@ -93,13 +104,27 @@ add_custom_command (OUTPUT sqlite_catalogue_schema.sql oracle_catalogue_schema.s
     ${CMAKE_CURRENT_SOURCE_DIR}/sqlite_catalogue_schema_trailer.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/postgres_catalogue_schema_header.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/postgres_catalogue_schema_trailer.sql
-    ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_header.sql
-    ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_trailer.sql
     ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasCppFile.sh
     ${CMAKE_CURRENT_SOURCE_DIR}/AllCatalogueSchema.hpp.in
     ${CMAKE_CURRENT_SOURCE_DIR}/insert_cta_catalogue_version.sql.in
     create_catalogue_schema_directory
 )
+
+if (OCCI_SUPPORT)
+  add_custom_command (OUTPUT oracle_catalogue_schema.sql
+    COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasSQL.sh ${CMAKE_CURRENT_SOURCE_DIR} ${catalogue_schema_directory} >/dev/null
+    COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasCppFile.sh ${CMAKE_CURRENT_SOURCE_DIR}
+    DEPENDS
+      ${CMAKE_CURRENT_SOURCE_DIR}/common_catalogue_schema.sql
+      ${CMAKE_SOURCE_DIR}/cmake/CTAVersions.cmake
+      ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_header.sql
+      ${CMAKE_CURRENT_SOURCE_DIR}/oracle_catalogue_schema_trailer.sql
+      ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasCppFile.sh
+      ${CMAKE_CURRENT_SOURCE_DIR}/AllCatalogueSchema.hpp.in
+      ${CMAKE_CURRENT_SOURCE_DIR}/insert_cta_catalogue_version.sql.in
+      create_catalogue_schema_directory
+  )
+endif ()
 
 add_custom_command(OUTPUT sqlite_catalogue_schema.cpp
   COMMAND sed 's/^/\ \ \"/' sqlite_catalogue_schema.sql | sed 's/$$/\"/' > sqlite_catalogue_schema.cpp
@@ -158,23 +183,32 @@ install (FILES cta-catalogue.conf.example
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
-add_custom_command(OUTPUT oracle_catalogue_schema.cpp
-  COMMAND sed 's/^/\ \ \"/' oracle_catalogue_schema.sql | sed 's/$$/\"/' > oracle_catalogue_schema.cpp
-  DEPENDS oracle_catalogue_schema.sql)
+if (OCCI_SUPPORT)
+  add_custom_command(OUTPUT oracle_catalogue_schema.cpp
+    COMMAND sed 's/^/\ \ \"/' oracle_catalogue_schema.sql | sed 's/$$/\"/' > oracle_catalogue_schema.cpp
+    DEPENDS oracle_catalogue_schema.sql)
 
-add_custom_command(OUTPUT OracleCatalogueSchema.cpp
-  COMMAND sed '/CTA_SQL_SCHEMA/r oracle_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/OracleCatalogueSchema.before_SQL.cpp > OracleCatalogueSchema.cpp
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/OracleCatalogueSchema.before_SQL.cpp oracle_catalogue_schema.cpp)
+  add_custom_command(OUTPUT OracleCatalogueSchema.cpp
+    COMMAND sed '/CTA_SQL_SCHEMA/r oracle_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/OracleCatalogueSchema.before_SQL.cpp > OracleCatalogueSchema.cpp
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/OracleCatalogueSchema.before_SQL.cpp oracle_catalogue_schema.cpp)
+endif ()
 
-add_executable(cta-catalogue-schema-create
+set (SCHEMA_CREATE_SRC_FILES
   CreateSchemaCmd.cpp
   CreateSchemaCmdLineArgs.cpp
   CreateSchemaCmdMain.cpp
-  OracleCatalogueSchema.cpp
   VersionedCatalogueSchemas.cpp
   SqliteCatalogueSchema.cpp
   PostgresCatalogueSchema.cpp
-  )
+)
+
+if (OCCI_SUPPORT)
+  set (SCHEMA_CREATE_SRC_FILES
+    ${SCHEMA_CREATE_SRC_FILES}
+    OracleCatalogueSchema.cpp)
+endif()
+
+add_executable(cta-catalogue-schema-create ${SCHEMA_CREATE_SRC_FILES})
 
 set (SCHEMA_CHECKER_LIB_SRC_FILES
   SQLiteSchemaInserter.cpp
@@ -186,10 +220,15 @@ set (SCHEMA_CHECKER_LIB_SRC_FILES
   SchemaChecker.cpp
   DatabaseMetadataGetter.cpp
   CatalogueSchema.cpp
-  OracleCatalogueSchema.cpp
   SqliteCatalogueSchema.cpp
   PostgresCatalogueSchema.cpp
 )
+
+if (OCCI_SUPPORT)
+  set (SCHEMA_CHECKER_LIB_SRC_FILES
+    ${SCHEMA_CHECKER_LIB_SRC_FILES}
+    OracleCatalogueSchema.cpp)
+endif()
 
 add_library (ctaschemachecker SHARED
    ${SCHEMA_CHECKER_LIB_SRC_FILES})
@@ -198,7 +237,9 @@ install (TARGETS ctaschemachecker DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 target_link_libraries (cta-catalogue-schema-create ctacatalogue)
 set_property(TARGET cta-catalogue-schema-create APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-set_property(TARGET cta-catalogue-schema-create APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+if (OCCI_SUPPORT)
+  set_property(TARGET cta-catalogue-schema-create APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+endif()
 
 install (TARGETS cta-catalogue-schema-create DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-create.1cta DESTINATION /usr/share/man/man1)
@@ -217,7 +258,9 @@ add_executable(cta-catalogue-schema-drop DropSchemaCmdMain.cpp)
 
 target_link_libraries (cta-catalogue-schema-drop ctacatalogue ctadropschemacmd)
 set_property(TARGET cta-catalogue-schema-drop APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-set_property(TARGET cta-catalogue-schema-drop APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+if (OCCI_SUPPORT)
+  set_property(TARGET cta-catalogue-schema-drop APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+endif ()
 
 install (TARGETS cta-catalogue-schema-drop DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-drop.1cta DESTINATION /usr/share/man/man1)
@@ -230,7 +273,9 @@ add_executable(cta-catalogue-schema-set-production
 
 target_link_libraries (cta-catalogue-schema-set-production ctacatalogue ctaschemachecker)
 set_property(TARGET cta-catalogue-schema-set-production APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-set_property(TARGET cta-catalogue-schema-set-production APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+if (OCCI_SUPPORT)
+  set_property(TARGET cta-catalogue-schema-set-production APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+endif ()
 
 install (TARGETS cta-catalogue-schema-set-production DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-set-production.1cta DESTINATION /usr/share/man/man1)
@@ -242,7 +287,9 @@ add_executable(cta-database-poll
 
 target_link_libraries (cta-database-poll ctacatalogue)
 set_property(TARGET cta-database-poll APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-set_property(TARGET cta-database-poll APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+if (OCCI_SUPPORT)
+  set_property(TARGET cta-database-poll APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+endif ()
 
 install (TARGETS cta-database-poll DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-database-poll.1cta DESTINATION /usr/share/man/man1)
@@ -254,7 +301,9 @@ add_executable(cta-catalogue-admin-user-create
 
 target_link_libraries(cta-catalogue-admin-user-create ctacatalogue)
 set_property(TARGET cta-catalogue-admin-user-create APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-set_property(TARGET cta-catalogue-admin-user-create APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+if (OCCI_SUPPORT)
+  set_property(TARGET cta-catalogue-admin-user-create APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+endif ()
 
 install(TARGETS cta-catalogue-admin-user-create DESTINATION /usr/bin)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-admin-user-create.1cta DESTINATION /usr/share/man/man1)
@@ -266,7 +315,9 @@ add_executable(cta-catalogue-schema-verify
 
 target_link_libraries(cta-catalogue-schema-verify ctacatalogue ctaschemachecker)
 set_property(TARGET cta-catalogue-schema-verify APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-set_property(TARGET cta-catalogue-schema-verify APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+if (OCCI_SUPPORT)
+  set_property(TARGET cta-catalogue-schema-verify APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
+endif ()
 
 install (TARGETS cta-catalogue-schema-verify DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-verify.1cta DESTINATION /usr/share/man/man1)

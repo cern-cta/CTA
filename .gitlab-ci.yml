@@ -14,6 +14,7 @@ stages:
 variables:
   XROOTD_VERSION: 4
   SCHED_TYPE: "objectstore"
+  ORACLE_SUPPORT: "ON"
   CTA_VERSION: "${XROOTD_VERSION}"
   CMAKE_OPTIONS: ""
 
@@ -43,6 +44,12 @@ variables:
       CMAKE_OPTIONS="-DSKIP_UNIT_TESTS:STRING=1 ${sched_opt}";
     fi
 
+.prepare-no-oracle: &prepare-no-oracle
+  - if [[ ${ORACLE_SUPPORT} != "ON" ]]; then
+      echo "Disabling Oracle Support";
+      CMAKE_OPTIONS="-DDISABLE_ORACLE_SUPPORT:BOOL=ON";
+    fi
+
 before_script:
   - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
   - echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
@@ -55,6 +62,7 @@ before_script:
     fi
   - *prepare-xrootd5
   - *prepare-scheduler-type
+  - *prepare-no-oracle
 
 include:
   - local: .gitlab/ci/*.gitlab-ci.yml

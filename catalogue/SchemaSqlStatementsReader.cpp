@@ -24,7 +24,9 @@
 #include "SchemaSqlStatementsReader.hpp"
 #include "SqliteCatalogueSchema.hpp"
 #include "PostgresCatalogueSchema.hpp"
+#ifdef SUPPORT_OCCI
 #include "OracleCatalogueSchema.hpp"
+#endif
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
 
@@ -59,7 +61,11 @@ std::list<std::string> SchemaSqlStatementsReader::getStatements() {
       schema.reset(new PostgresCatalogueSchema);
       break;
     case rdbms::Login::DBTYPE_ORACLE:
+#ifdef SUPPORT_OCCI
       schema.reset(new OracleCatalogueSchema);
+#else
+      throw exception::Exception("Oracle Catalogue Schema is not supported. Compile CTA with Oracle support.");
+#endif
       break;
     case rdbms::Login::DBTYPE_NONE:
       throw exception::Exception("Cannot get statements without a database type");
@@ -95,8 +101,10 @@ std::string SchemaSqlStatementsReader::getDatabaseType() {
       return "sqlite";
     case rdbms::Login::DBTYPE_POSTGRESQL:
       return "postgres";
+#ifdef SUPPORT_OCCI
     case rdbms::Login::DBTYPE_ORACLE:
       return "oracle";
+#endif
     case rdbms::Login::DBTYPE_NONE:
       throw exception::Exception("The database type should not be DBTYPE_NONE");
     default:
