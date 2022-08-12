@@ -111,26 +111,26 @@ class QueueCleanupRunnerConcurrentTest: public
                               ::testing::TestWithParam<QueueCleanupRunnerConcurrentTestParams> {
 public:
 
-  QueueCleanupRunnerConcurrentTest() throw() {
+  QueueCleanupRunnerConcurrentTest() noexcept {
   }
 
   class FailedToGetDatabase: public std::exception {
   public:
-    const char *what() const throw() {
+    const char *what() const noexcept override {
       return "Failed to get scheduler database";
     }
   };
 
   class FailedToGetCatalogue: public std::exception {
   public:
-    const char *what() const throw() {
+    const char *what() const noexcept override {
       return "Failed to get catalogue";
     }
   };
 
   class FailedToGetScheduler: public std::exception {
   public:
-    const char *what() const throw() {
+    const char *what() const noexcept override {
       return "Failed to get scheduler";
     }
   };
@@ -159,7 +159,7 @@ public:
 
   cta::objectstore::OStoreDBWrapperInterface &getDb() {
     cta::objectstore::OStoreDBWrapperInterface *const ptr = m_db.get();
-    if (NULL == ptr) {
+    if (nullptr == ptr) {
       throw FailedToGetDatabase();
     }
     return *ptr;
@@ -167,16 +167,7 @@ public:
 
   cta::catalogue::DummyCatalogue &getCatalogue() {
     cta::catalogue::DummyCatalogue *const ptr = dynamic_cast<cta::catalogue::DummyCatalogue*>(m_catalogue.get());
-    if (NULL == ptr) {
-      throw FailedToGetCatalogue();
-    }
-    return *ptr;
-  }
-
-  cta::catalogue::Catalogue &getBackent() {
-
-    cta::catalogue::Catalogue *const ptr = m_catalogue.get();
-    if (NULL == ptr) {
+    if (nullptr == ptr) {
       throw FailedToGetCatalogue();
     }
     return *ptr;
@@ -207,7 +198,7 @@ class OStoreDBWithAgentBroken : public cta::OStoreDBWithAgent {
 public:
   class TriggeredException: public std::exception {
   public:
-    const char *what() const throw() {
+    const char *what() const noexcept override {
       return "Triggered exception";
     }
   };
@@ -236,8 +227,9 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
   // Broken object store, pointing to same as `oKOStore`
   auto brokenOStore = OStoreDBWithAgentBroken(oKOStore.getBackend(), oKOStore.getAgentReference(), catalogue, dl);
   // Backend
-  cta::objectstore::BackendVFS & be = dynamic_cast<cta::objectstore::BackendVFS&>(oKOStore.getBackend());
-  //be.noDeleteOnExit();
+  auto & be = dynamic_cast<cta::objectstore::BackendVFS&>(oKOStore.getBackend());
+  // Remove this comment to avoid cleaning the object store files on destruction, useful for debugging
+  // be.noDeleteOnExit();
   // Scheduler
   cta::Scheduler & scheduler = getScheduler();
   // Dummy admin
@@ -252,7 +244,7 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
   cta::objectstore::Agent agentForCleanup(agentForCleanupRef.getAgentAddress(), be);
 
   // Create the root entry
-  cta::objectstore::EntryLogSerDeser el("user0", "unittesthost", time(NULL));
+  cta::objectstore::EntryLogSerDeser el("user0", "unittesthost", time(nullptr));
   cta::objectstore::RootEntry re(be);
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.fetch();
@@ -272,15 +264,15 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
   for (auto & retrieveRequestSetupList : GetParam().retrieveRequestSetupList) {
 
     // Identify list of vids where copies exist, including active copy
-    std::set<std::string> allVIds;
-    allVIds.insert(retrieveRequestSetupList.replicaCopyVids.begin(), retrieveRequestSetupList.replicaCopyVids.end());
-    allVIds.insert(retrieveRequestSetupList.activeCopyVid);
+    std::set<std::string> allVids;
+    allVids.insert(retrieveRequestSetupList.replicaCopyVids.begin(), retrieveRequestSetupList.replicaCopyVids.end());
+    allVids.insert(retrieveRequestSetupList.activeCopyVid);
     std::string activeVid = retrieveRequestSetupList.activeCopyVid;
 
     // Generate requests
     std::list<std::unique_ptr<cta::objectstore::RetrieveRequest> > requestsPtrs;
     cta::objectstore::ContainerAlgorithms<cta::objectstore::RetrieveQueue, cta::objectstore::RetrieveQueueToTransfer>::InsertedElement::list requests;
-    unitTests::fillRetrieveRequestsForCleanupRunner(requests, retrieveRequestSetupList.numberOfRequests, requestsPtrs, allVIds, activeVid, be, agentForSetupRef); //memory leak avoided here with 'requestsPtrs'
+    unitTests::fillRetrieveRequestsForCleanupRunner(requests, retrieveRequestSetupList.numberOfRequests, requestsPtrs, allVids, activeVid, be, agentForSetupRef); //memory leak avoided here with 'requestsPtrs'
 
     // Create queue for requests to active copy
     std::string agentForSetupAddr = agentForSetupRef.getAgentAddress();

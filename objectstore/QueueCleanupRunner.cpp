@@ -25,8 +25,6 @@ QueueCleanupRunner::QueueCleanupRunner(AgentReference &agentReference, Scheduler
         m_batchSize(batchSize.value_or(DEFAULT_BATCH_SIZE)), m_heartBeatTimeout(heartBeatTimeout.value_or(DEFAULT_HEARTBEAT_TIMEOUT)) {
 }
 
-QueueCleanupRunner::~QueueCleanupRunner() {}
-
 void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
 
   cta::common::dataStructures::SecurityIdentity admin;
