@@ -45,7 +45,7 @@ public:
   QueueCleanupRunner(AgentReference &agentReference, SchedulerDatabase & oStoreDb, catalogue::Catalogue &catalogue,
                      std::optional<double> heartBeatTimeout = std::nullopt, std::optional<int> batchSize = std::nullopt);
 
-  ~QueueCleanupRunner();
+  ~QueueCleanupRunner() = default;
 
   void runOnePass(log::LogContext &lc);
 
