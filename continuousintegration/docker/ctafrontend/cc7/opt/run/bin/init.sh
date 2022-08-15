@@ -32,16 +32,8 @@ if [ ! -e /etc/buildtreeRunner ]; then
   yum-config-manager --enable ceph
 
   # install needed packages
-  # if we are using the postgres scheduler cta-objectstore-tools will not be available:
-  #   cta-objectstore-tools requires cta-lib, which will create /etc/cta/cta-catalogue.conf.example
-  #   the directory /etc/cta is relied on to exist below, so install cta-lib explicitly
-  yum -y install cta-objectstore-tools cta-lib mt-st mtx lsscsi sg3_utils cta-catalogueutils ceph-common oracle-instantclient19.3-sqlplus oracle-instantclient-tnsnames.ora
+  yum -y install cta-objectstore-tools mt-st mtx lsscsi sg3_utils cta-catalogueutils ceph-common oracle-instantclient19.3-sqlplus oracle-instantclient-tnsnames.ora
   yum clean packages
-fi
-
-pgsched=0
-if rpm -q --qf '%{VERSION}' cta-lib-common | grep -Eq '^[0-9]*pgs'; then
-  pgsched=1
 fi
 
 echo "Using this configuration for library:"
@@ -53,9 +45,7 @@ echo "Configuring objectstore:"
 /opt/run/bin/init_objectstore.sh
 . /tmp/objectstore-rc.sh
 
-if [ $pgsched -ne 0 ]; then
-  echo "Detected that we are using the postgres scheduler. For now ignore the objectstore initialize step and proceed."
-elif [ "$KEEP_OBJECTSTORE" == "0" ]; then
+if [ "$KEEP_OBJECTSTORE" == "0" ]; then
   echo "Wiping objectstore"
   if [ "$OBJECTSTORETYPE" == "file" ]; then
     rm -fr $OBJECTSTOREURL
@@ -96,16 +86,16 @@ if [ "$KEEP_DATABASE" == "0" ]; then
 
   if [ "$DATABASETYPE" == "sqlite" ]; then
     mkdir -p $(dirname $(echo ${DATABASEURL} | cut -d: -f2))
-    cta-catalogue-schema-create /etc/cta/cta-catalogue.conf || die "ERROR: Could not create database schema. cta-catalogue-schema-create /etc/cta/cta-catalogue.conf FAILED"
+    cta-catalogue-schema-create -v $SCHEMA_VERSION /etc/cta/cta-catalogue.conf || die "ERROR: Could not create database schema. cta-catalogue-schema-create /etc/cta/cta-catalogue.conf FAILED"
     chmod -R 777 $(dirname $(echo ${DATABASEURL} | cut -d: -f2)) # needed?
   elif [ "$DATABASETYPE" == "oracle" ]; then
     echo "Purging Oracle recycle bin"
     test -f ${ORACLE_SQLPLUS} || echo "ERROR: ORACLE SQLPLUS client is not present, cannot purge recycle bin: ${ORACLE_SQLPLUS}"
     LD_LIBRARY_PATH=$(readlink ${ORACLE_SQLPLUS} | sed -e 's;/bin/[^/]\+;/lib;') ${ORACLE_SQLPLUS} $(echo $DATABASEURL | sed -e 's/oracle://') @/opt/ci/init/purge_database.ext
     LD_LIBRARY_PATH=$(readlink ${ORACLE_SQLPLUS} | sed -e 's;/bin/[^/]\+;/lib;') ${ORACLE_SQLPLUS} $(echo $DATABASEURL | sed -e 's/oracle://') @/opt/ci/init/purge_recyclebin.ext
-    cta-catalogue-schema-create /etc/cta/cta-catalogue.conf || die "ERROR: Could not create database schema. cta-catalogue-schema-create /etc/cta/cta-catalogue.conf FAILED"
+    cta-catalogue-schema-create -v $SCHEMA_VERSION /etc/cta/cta-catalogue.conf || die "ERROR: Could not create database schema. cta-catalogue-schema-create /etc/cta/cta-catalogue.conf FAILED"
   elif [ "$DATABASETYPE" == "postgres" ]; then
-    cta-catalogue-schema-create /etc/cta/cta-catalogue.conf || die "ERROR: Could not create database schema. cta-catalogue-schema-create /etc/cta/cta-catalogue.conf FAILED"
+    cta-catalogue-schema-create -v $SCHEMA_VERSION /etc/cta/cta-catalogue.conf || die "ERROR: Could not create database schema. cta-catalogue-schema-create /etc/cta/cta-catalogue.conf FAILED"
   else
     die "ERROR: Unsupported database type: ${DATABASETYPE}"
   fi

@@ -80,6 +80,24 @@ dbunittests-oracle:
     TEST_SCRIPT: "/usr/bin/true"
     EXTENDED_OPTIONS: "-O -D -t 600 -C"
 
+liquibase-update:
+  stage: test
+  extends:
+    - .kubernetes_test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+      allow_failure: true
+    - if: $CI_PIPELINE_SOURCE == "push"
+      when: manual
+      allow_failure: true
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: on_success
+      allow_failure: false
+  variables:
+    TEST_SCRIPT: "tests/update_db_test.sh"
+    EXTENDED_OPTIONS: "-O -D -t 2400 -C -u"
+
 nightly1:
   stage: test
   extends:

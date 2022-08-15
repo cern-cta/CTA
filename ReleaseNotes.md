@@ -5,6 +5,7 @@
 - cta/CTA#89 - Create stubs for Enstore tape label format
 ### Continuous Integration
 - cta/CTA#7  - Use same versionlock.list file for xrootd4 and 5
+- cta/CTA#18 - CI - Testing of DB schema upgrade script
 - cta/CTA#49 - Clean up orchestration test scripts
 ### Building and Packaging
 - cta/CTA#92 - Refactor CTA code so that it can be build without Oracle dependencies
@@ -75,7 +76,6 @@ The following manual pages have been updated:
 - cta/CTA#64       [new repo] - Adds support for the OSM Tape Label format to the CTA
 - cta/CTA-old#1278 [old repo] - Add support for reading multiple tape formats by the ReadtpCmd command
 - cta/CTA-old#1278 [old repo] - Support multiple tape formats in ReadtpCmd command
-
 ### Bug fixes
 - cta/CTA-old#947  [old repo] - cta-taped should log the FST being used for a data transfer
 - cta/CTA-old#1093 [old repo] - The `cta-taped` manpage showed outdated config options

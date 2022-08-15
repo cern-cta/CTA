@@ -41,6 +41,8 @@ spec:
         configMapKeyRef:
           name: buildtree
           key: cta_subdir
+    - name: SCHEMA_VERSION
+      value: "SCHEMA_VERSION_VALUE"
     command: ['/opt/run/bin/init.sh']
     args: ["none"]
     volumeMounts:

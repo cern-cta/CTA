@@ -1,0 +1,64 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dbupdatetest
+  labels:
+    k8s-app: dbupdatetest
+spec:
+  restartPolicy: Never
+  containers:
+  - name: dbupdatetest
+    image: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-catalogue-updater:testing
+    imagePullPolicy: IfNotPresent
+    stdin: true
+    env:
+    - name: MY_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+    - name: MY_NAMESPACE
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.namespace
+    - name: INSTANCE_NAME
+      value: "$(MY_NAMESPACE)"
+    - name: CATALOGUE_SOURCE_VERSION
+      value: "CATALOGUE_SOURCE_VERSION_VALUE"
+    - name: CATALOGUE_DESTINATION_VERSION
+      value: "CATALOGUE_DESTINATION_VERSION_VALUE"
+    - name: CTA_VERSION
+      value: "CTA_VERSION_VALUE"
+    - name: COMMIT_ID
+      value: "COMMIT_ID_VALUE"
+    - name: TERM
+      value: "xterm"
+    command: ["/shared/scripts/dbupdatetest.sh"]
+    args: ["none"]
+    volumeMounts:
+    - mountPath: /etc/config/database
+      name: mydatabase
+    - mountPath: /shared/etc_yum.repos.d/
+      name: repos
+    - mountPath: /shared/scripts
+      name: scripts
+    - mountPath: /mnt/logs
+      name: logstorage
+    securityContext:
+      privileged: true
+
+  volumes:
+  - name: repos
+    hostPath:
+      path: REPOS_PATH
+  - name: scripts
+    hostPath:
+      path: SCRIPTS_PATH
+  - name: mydatabase
+    configMap:
+      name: database-config
+  - name: logstorage
+    persistentVolumeClaim:
+      claimName: claimlogs
+
+  imagePullSecrets:
+  - name: ctaregsecret
