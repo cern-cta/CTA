@@ -74,6 +74,7 @@ void OsmFileReader::positionByBlockID(const cta::RetrieveJob &fileToRecall) {
            << fileToRecall.selectedTapeFile().blockId;
     throw cta::exception::Exception(ex_str.str());
   }
+  useBlockID(fileToRecall);
   m_session->setCurrentFilePart(PartOfFile::Payload);
   setBlockSize(PAYLOAD_BOLCK_SIZE);
 }

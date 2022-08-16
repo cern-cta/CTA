@@ -20,7 +20,8 @@ files were renamed to *configurationfile.rpmsave* and thefore some services and 
 See all details and fix in cta/CTA#119
 
 ### Bug fixes
--cta/CTA#119 [new repo] - Packaging issue with CTA 4.7.8-1/4.7.9-1
+- cta/CTA#119 [new repo] - Packaging issue with CTA 4.7.8-1/4.7.9-1
+- #125 - Problem with reading OSM tapes using position by block id
 
 # v4.7.9-1
 
