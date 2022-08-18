@@ -170,17 +170,6 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
     try {
       if (m_scheduler.getNextMountDryRun(m_driveConfig.logicalLibrary, m_driveConfig.unitName, lc)) {
         tapeMount = m_scheduler.getNextMount(m_driveConfig.logicalLibrary, m_driveConfig.unitName, lc);
-
-        // No mount to be done found, that was fast...
-        if (!tapeMount) {
-          lc.log(cta::log::DEBUG, "No new mount found. (sleeping 10 seconds)");
-          // Refresh the status to trigger the timeout update
-          m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount,
-                                        cta::common::dataStructures::DriveStatus::Up, lc);
-          sleep(10);
-          continue;
-        }
-        break;
       }
     } catch (cta::exception::Exception &e) {
       lc.log(cta::log::ERR, "Error while scheduling new mount. Putting the drive down. Stack trace follows.");
@@ -188,6 +177,17 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
       putDriveDown(e.getMessageValue(), nullptr, lc);
       return MARK_DRIVE_AS_DOWN;
     }
+
+    // No mount to be done found, that was fast...
+    if (!tapeMount) {
+      lc.log(cta::log::DEBUG, "No new mount found. (sleeping 10 seconds)");
+      // Refresh the status to trigger the timeout update
+      m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount,
+                                    cta::common::dataStructures::DriveStatus::Up, lc);
+      sleep(10);
+      continue;
+    }
+    break;
   }
   // end of scheduling loop
   // -----------------------------------------------------------------------------------
