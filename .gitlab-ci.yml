@@ -50,19 +50,21 @@ variables:
       CMAKE_OPTIONS="-DDISABLE_ORACLE_SUPPORT:BOOL=ON";
     fi
 
-before_script:
-  - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
-  - echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
-  - test -n "${CI_COMMIT_TAG}" && export TAG_VERSION=$(echo ${CI_COMMIT_TAG} | sed -e 's/^v//;s/-.*$//')
-  - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | sed -e 's/^[^-]*-//')
-  - major_version=$(echo ${TAG_VERSION} | cut -d. -f1)
-  - if [[ ${major_version} == 5 ]];
-      then echo "Setting to compile with XRootD version 5";
-      XROOTD_VERSION=5;
-    fi
-  - *prepare-xrootd5
-  - *prepare-scheduler-type
-  - *prepare-no-oracle
+default:
+  interruptible: true
+  before_script:
+    - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
+    - echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
+    - test -n "${CI_COMMIT_TAG}" && export TAG_VERSION=$(echo ${CI_COMMIT_TAG} | sed -e 's/^v//;s/-.*$//')
+    - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | sed -e 's/^[^-]*-//')
+    - major_version=$(echo ${TAG_VERSION} | cut -d. -f1)
+    - if [[ ${major_version} == 5 ]];
+        then echo "Setting to compile with XRootD version 5";
+        XROOTD_VERSION=5;
+      fi
+    - *prepare-xrootd5
+    - *prepare-scheduler-type
+    - *prepare-no-oracle
 
 include:
   - local: .gitlab/ci/*.gitlab-ci.yml

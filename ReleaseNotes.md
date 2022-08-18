@@ -7,6 +7,7 @@
 - cta/CTA#7  - Use same versionlock.list file for xrootd4 and 5
 - cta/CTA#18 - CI - Testing of DB schema upgrade script
 - cta/CTA#49 - Clean up orchestration test scripts
+- cta/CTA#101 - CI should cancel running jobs for a branch after a force push
 ### Building and Packaging
 - cta/CTA#92 - Refactor CTA code so that it can be build without Oracle dependencies
 
