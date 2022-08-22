@@ -5,6 +5,7 @@
 - cta/CTA#89 - Create stubs for Enstore tape label format
 ### Bug fixes
 - cta/CTA#127 - DataTransferSession keeps busy while waiting for a mount to be required
+- cta/CTA#130 - Liquibase-update test fails when CTA is update without oracle support
 ### Continuous Integration
 - cta/CTA#7  - Use same versionlock.list file for xrootd4 and 5
 - cta/CTA#18 - CI - Testing of DB schema upgrade script
