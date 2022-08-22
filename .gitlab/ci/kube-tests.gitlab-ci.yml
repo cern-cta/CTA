@@ -91,11 +91,9 @@ liquibase-update:
     - if: $CI_PIPELINE_SOURCE == "push"
       when: manual
       allow_failure: true
-    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $ORACLE_SUPPORT == "ON"
       when: on_success
       allow_failure: false
-    - if: $ORACLE_SUPPORT == "OFF"
-      when: never
   variables:
     TEST_SCRIPT: "tests/update_db_test.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C -u"
