@@ -13,6 +13,8 @@
 - cta/CTA#101 - CI should cancel running jobs for a branch after a force push
 ### Building and Packaging
 - cta/CTA#92 - Refactor CTA code so that it can be build without Oracle dependencies
+### Bug fixes
+- cta/CTA#30 - Check size of comments before commit them to the Catalogue
 
 # v4.7.9-2
 

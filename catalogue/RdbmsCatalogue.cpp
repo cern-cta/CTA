@@ -84,13 +84,14 @@ void RdbmsCatalogue::createAdminUser(
   const std::string &username,
   const std::string &comment) {
   try {
-    if(username.empty()) {
+    if (username.empty()) {
       throw UserSpecifiedAnEmptyStringUsername("Cannot create admin user because the username is an empty string");
     }
 
-    if(comment.empty()) {
+    if (comment.empty()) {
       throw UserSpecifiedAnEmptyStringComment("Cannot create admin user because the comment is an empty string");
     }
+    checkCommentOrReasonMaxLength(comment);
 
     auto conn = m_connPool.getConn();
     if (adminUserExists(conn, username)) {
@@ -272,13 +273,14 @@ std::list<common::dataStructures::AdminUser> RdbmsCatalogue::getAdminUsers() con
 void RdbmsCatalogue::modifyAdminUserComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &username, const std::string &comment) {
   try {
-    if(username.empty()) {
+    if (username.empty()) {
       throw UserSpecifiedAnEmptyStringUsername("Cannot modify admin user because the username is an empty string");
     }
 
-    if(comment.empty()) {
+    if (comment.empty()) {
       throw UserSpecifiedAnEmptyStringComment("Cannot modify admin user because the comment is an empty string");
     }
+    checkCommentOrReasonMaxLength(comment);
 
     const time_t now = time(nullptr);
     const char *const sql =
@@ -313,19 +315,20 @@ void RdbmsCatalogue::modifyAdminUserComment(const common::dataStructures::Securi
 // createVirtualOrganization
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::createVirtualOrganization(const common::dataStructures::SecurityIdentity &admin, const common::dataStructures::VirtualOrganization &vo){
-  try{
-    if(vo.name.empty()){
+  try {
+    if (vo.name.empty()){
       throw UserSpecifiedAnEmptyStringVo("Cannot create virtual organization because the name is an empty string");
     }
-    if(vo.comment.empty()) {
+    if (vo.comment.empty()) {
       throw UserSpecifiedAnEmptyStringComment("Cannot create virtual organization because the comment is an empty string");
     }
-    if(vo.diskInstanceName.empty()) {
+    checkCommentOrReasonMaxLength(vo.comment);
+    if (vo.diskInstanceName.empty()) {
       throw UserSpecifiedAnEmptyStringDiskInstanceName("Cannot create virtual organization because the disk instance is an empty string");
     }
 
     auto conn = m_connPool.getConn();
-    if(virtualOrganizationExists(conn, vo.name)) {
+    if (virtualOrganizationExists(conn, vo.name)) {
       throw exception::UserError(std::string("Cannot create vo : ") +
         vo.name + " because it already exists");
     }
@@ -751,6 +754,7 @@ void RdbmsCatalogue::modifyVirtualOrganizationMaxFileSize(const common::dataStru
 
 void RdbmsCatalogue::modifyVirtualOrganizationComment(const common::dataStructures::SecurityIdentity& admin, const std::string& voName, const std::string& comment) {
 try {
+    checkCommentOrReasonMaxLength(comment);
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE VIRTUAL_ORGANIZATION SET "
@@ -832,10 +836,10 @@ void RdbmsCatalogue::createStorageClass(
         " an empty string");
     }
 
-    if(storageClass.comment.empty()) {
+    if (storageClass.comment.empty()) {
       throw UserSpecifiedAnEmptyStringComment("Cannot create storage class because the comment is an empty string");
     }
-
+    checkCommentOrReasonMaxLength(storageClass.comment);
     std::string vo = storageClass.vo.name;
 
     if(vo.empty()) {
@@ -1304,6 +1308,8 @@ void RdbmsCatalogue::modifyStorageClassNbCopies(const common::dataStructures::Se
 void RdbmsCatalogue::modifyStorageClassComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &comment) {
   try {
+    checkCommentOrReasonMaxLength(comment);
+
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE STORAGE_CLASS SET "
@@ -1421,25 +1427,26 @@ void RdbmsCatalogue::createMediaType(
   const common::dataStructures::SecurityIdentity &admin,
   const MediaType &mediaType) {
   try {
-    if(mediaType.name.empty()) {
+    if (mediaType.name.empty()) {
       throw UserSpecifiedAnEmptyStringMediaTypeName("Cannot create media type because the media type name is an"
         " empty string");
     }
 
-    if(mediaType.cartridge.empty()) {
+    if (mediaType.cartridge.empty()) {
       throw UserSpecifiedAnEmptyStringCartridge(std::string("Cannot create media type ") + mediaType.name +
         " because the cartridge is an empty string");
     }
 
-    if(mediaType.comment.empty()) {
+    if (mediaType.comment.empty()) {
       throw UserSpecifiedAnEmptyStringComment(std::string("Cannot create media type ") + mediaType.name +
         " because the comment is an empty string");
     }
-    if(mediaType.capacityInBytes == 0){
+    checkCommentOrReasonMaxLength(mediaType.comment);
+    if (mediaType.capacityInBytes == 0){
       throw UserSpecifiedAZeroCapacity(std::string("Cannot create media type ") + mediaType.name + " because the capacity is zero");
     }
     auto conn = m_connPool.getConn();
-    if(mediaTypeExists(conn, mediaType.name)) {
+    if (mediaTypeExists(conn, mediaType.name)) {
       throw exception::UserError(std::string("Cannot create media type ") + mediaType.name +
         " because it already exists");
     }
@@ -1980,6 +1987,7 @@ void RdbmsCatalogue::modifyMediaTypeMaxLPos(const common::dataStructures::Securi
 void RdbmsCatalogue::modifyMediaTypeComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &comment) {
   try {
+    checkCommentOrReasonMaxLength(comment);
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE MEDIA_TYPE SET "
@@ -2029,9 +2037,10 @@ void RdbmsCatalogue::createTapePool(
       throw UserSpecifiedAnEmptyStringVo("Cannot create tape pool because the VO is an empty string");
     }
 
-    if(comment.empty()) {
+    if (comment.empty()) {
       throw UserSpecifiedAnEmptyStringComment("Cannot create tape pool because the comment is an empty string");
     }
+    checkCommentOrReasonMaxLength(comment);
 
     auto conn = m_connPool.getConn();
 
@@ -2718,6 +2727,7 @@ void RdbmsCatalogue::modifyTapePoolComment(const common::dataStructures::Securit
     if(comment.empty()) {
       throw UserSpecifiedAnEmptyStringComment("Cannot modify tape pool because the new comment is an empty string");
     }
+    checkCommentOrReasonMaxLength(comment);
 
     const time_t now = time(nullptr);
     const char *const sql =
@@ -2899,6 +2909,7 @@ void RdbmsCatalogue::createArchiveRoute(
     if(comment.empty()) {
       throw UserSpecifiedAnEmptyStringComment("Cannot create archive route because comment is an empty string");
     }
+    checkCommentOrReasonMaxLength(comment);
 
     const time_t now = time(nullptr);
     auto conn = m_connPool.getConn();
@@ -3229,6 +3240,7 @@ void RdbmsCatalogue::modifyArchiveRouteComment(const common::dataStructures::Sec
   const std::string &storageClassName, const uint32_t copyNb,
   const std::string &comment) {
   try {
+    checkCommentOrReasonMaxLength(comment);
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE ARCHIVE_ROUTE SET "
@@ -3278,6 +3290,7 @@ void RdbmsCatalogue::createLogicalLibrary(
   const bool isDisabled,
   const std::string &comment) {
   try {
+    checkCommentOrReasonMaxLength(comment);
     auto conn = m_connPool.getConn();
     if(logicalLibraryExists(conn, name)) {
       throw exception::UserError(std::string("Cannot create logical library ") + name +
@@ -3508,6 +3521,7 @@ void RdbmsCatalogue::modifyLogicalLibraryName(const common::dataStructures::Secu
 void RdbmsCatalogue::modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &comment) {
   try {
+    checkCommentOrReasonMaxLength(comment);
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE LOGICAL_LIBRARY SET "
@@ -3543,6 +3557,7 @@ void RdbmsCatalogue::modifyLogicalLibraryComment(const common::dataStructures::S
 void RdbmsCatalogue::modifyLogicalLibraryDisabledReason(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &disabledReason) {
   try {
+    checkCommentOrReasonMaxLength(disabledReason);
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE LOGICAL_LIBRARY SET "
@@ -3624,8 +3639,9 @@ void RdbmsCatalogue::createTape(
     bool full = tape.full;
     // Translate an empty comment string to a NULL database value
     const std::optional<std::string> tapeComment = tape.comment && tape.comment->empty() ? std::nullopt : tape.comment;
+    checkCommentOrReasonMaxLength(tapeComment);
     const std::optional<std::string> stateReason = tape.stateReason && cta::utils::trimString(tape.stateReason.value()).empty() ? std::nullopt : tape.stateReason;
-
+    checkCommentOrReasonMaxLength(stateReason);
     if(vid.empty()) {
       throw UserSpecifiedAnEmptyStringVid("Cannot create tape because the VID is an empty string");
     }
@@ -5128,6 +5144,7 @@ void RdbmsCatalogue::modifyTapeState(const common::dataStructures::SecurityIdent
     const time_t now = time(nullptr);
 
     const std::optional<std::string> stateReasonCopy = stateReason && cta::utils::trimString(stateReason.value()).empty() ? std::nullopt : stateReason;
+    checkCommentOrReasonMaxLength(stateReasonCopy);
 
     std::string stateStr;
     try {
@@ -5443,6 +5460,7 @@ void RdbmsCatalogue::setTapeDirty(const std::string& vid) {
 void RdbmsCatalogue::modifyTapeComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &vid, const std::optional<std::string> &comment) {
   try {
+    checkCommentOrReasonMaxLength(comment);
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE TAPE SET "
@@ -5528,6 +5546,7 @@ void RdbmsCatalogue::modifyRequesterActivityMountRulePolicy(const common::dataSt
 void RdbmsCatalogue::modifyRequesterActivityMountRuleComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &instanceName, const std::string &requesterName, const std::string &activityRegex, const std::string &comment) {
   try {
+    checkCommentOrReasonMaxLength(comment);
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE REQUESTER_ACTIVITY_MOUNT_RULE SET "
@@ -5606,6 +5625,7 @@ void RdbmsCatalogue::modifyRequesterMountRulePolicy(const common::dataStructures
 void RdbmsCatalogue::modifyRequesteMountRuleComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &instanceName, const std::string &requesterName, const std::string &comment) {
   try {
+    checkCommentOrReasonMaxLength(comment);
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE REQUESTER_MOUNT_RULE SET "
@@ -5682,6 +5702,7 @@ void RdbmsCatalogue::modifyRequesterGroupMountRulePolicy(const common::dataStruc
 void RdbmsCatalogue::modifyRequesterGroupMountRuleComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &instanceName, const std::string &requesterGroupName, const std::string &comment) {
   try {
+    checkCommentOrReasonMaxLength(comment);
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE REQUESTER_GROUP_MOUNT_RULE SET "
@@ -5720,8 +5741,9 @@ void RdbmsCatalogue::modifyRequesterGroupMountRuleComment(const common::dataStru
 void RdbmsCatalogue::createMountPolicy(const common::dataStructures::SecurityIdentity &admin, const CreateMountPolicyAttributes & mountPolicy) {
   std::string name = mountPolicy.name;
   try {
+    checkCommentOrReasonMaxLength(mountPolicy.comment);
     auto conn = m_connPool.getConn();
-    if(mountPolicyExists(conn, name)) {
+    if (mountPolicyExists(conn, name)) {
       throw exception::UserError(std::string("Cannot create mount policy ") + name +
         " because a mount policy with the same name already exists");
     }
@@ -5807,6 +5829,7 @@ void RdbmsCatalogue::createRequesterActivityMountRule(
   const std::string &activityRegex,
   const std::string &comment) {
   try {
+    checkCommentOrReasonMaxLength(comment);
     auto conn = m_connPool.getConn();
     if(requesterActivityMountRuleExists(conn, diskInstanceName, requesterName, activityRegex)) {
       throw exception::UserError(std::string("Cannot create rule to assign mount-policy ") + mountPolicyName +
@@ -5983,6 +6006,7 @@ void RdbmsCatalogue::createRequesterMountRule(
   const std::string &requesterName,
   const std::string &comment) {
   try {
+    checkCommentOrReasonMaxLength(comment);
     const auto user = User(diskInstanceName, requesterName);
     auto conn = m_connPool.getConn();
     const auto mountPolicy = getRequesterMountPolicy(conn, user);
@@ -6154,6 +6178,7 @@ void RdbmsCatalogue::createRequesterGroupMountRule(
   const std::string &requesterGroupName,
   const std::string &comment) {
   try {
+    checkCommentOrReasonMaxLength(comment);
     auto conn = m_connPool.getConn();
     {
       const auto group = Group(diskInstanceName, requesterGroupName);
@@ -6969,6 +6994,7 @@ void RdbmsCatalogue::modifyMountPolicyRetrieveMinRequestAge(const common::dataSt
 void RdbmsCatalogue::modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &comment) {
   try {
+    checkCommentOrReasonMaxLength(comment);
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE MOUNT_POLICY SET "
@@ -7037,6 +7063,7 @@ void RdbmsCatalogue::createDiskSystem(
     if(comment.empty()) {
       throw UserSpecifiedAnEmptyStringComment("Cannot create disk system because the comment is an empty string");
     }
+    checkCommentOrReasonMaxLength(comment);
 
     auto conn = m_connPool.getConn();
     if(diskSystemExists(conn, name)) {
@@ -7305,6 +7332,7 @@ void RdbmsCatalogue::modifyDiskSystemComment(const common::dataStructures::Secur
       throw UserSpecifiedAnEmptyStringComment("Cannot modify disk system "
         "because the new comment is an empty string");
     }
+    checkCommentOrReasonMaxLength(comment);
 
     const time_t now = time(nullptr);
     const char *const sql =
@@ -7477,6 +7505,7 @@ void RdbmsCatalogue::createDiskInstance(
     if(comment.empty()) {
       throw UserSpecifiedAnEmptyStringComment("Cannot create disk system because the comment is an empty string");
     }
+    checkCommentOrReasonMaxLength(comment);
 
     auto conn = m_connPool.getConn();
     if(diskInstanceExists(conn, name)) {
@@ -7627,6 +7656,7 @@ void RdbmsCatalogue::modifyDiskInstanceComment(const common::dataStructures::Sec
       throw UserSpecifiedAnEmptyStringComment("Cannot modify disk instance "
         "because the new comment is an empty string");
     }
+    checkCommentOrReasonMaxLength(comment);
 
     const time_t now = time(nullptr);
     const char *const sql =
@@ -7676,6 +7706,7 @@ void RdbmsCatalogue::modifyDiskInstanceComment(const common::dataStructures::Sec
     if(comment.empty()) {
       throw UserSpecifiedAnEmptyStringComment("Cannot create disk instance space because the comment is an empty string");
     }
+    checkCommentOrReasonMaxLength(comment);
 
     auto conn = m_connPool.getConn();
     if(!diskInstanceExists(conn, diskInstance)) {
@@ -7900,6 +7931,7 @@ void RdbmsCatalogue::modifyDiskInstanceSpaceComment(const common::dataStructures
       throw UserSpecifiedAnEmptyStringComment("Cannot modify disk instance space "
         "because the new comment is an empty string");
     }
+    checkCommentOrReasonMaxLength(comment);
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE DISK_INSTANCE_SPACE SET "
@@ -10329,6 +10361,7 @@ void RdbmsCatalogue::copyTapeFilesToFileRecycleLog(rdbms::Conn & conn, const com
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::insertFileInFileRecycleLog(rdbms::Conn& conn, const InsertFileRecycleLog& fileRecycleLog){
   try{
+    checkCommentOrReasonMaxLength(fileRecycleLog.reasonLog);
     uint64_t fileRecycleLogId = getNextFileRecyleLogId(conn);
     const char *const sql =
     "INSERT INTO FILE_RECYCLE_LOG("
@@ -11251,6 +11284,7 @@ std::optional<common::dataStructures::TapeDrive> RdbmsCatalogue::getTapeDrive(co
 void RdbmsCatalogue::setDesiredTapeDriveState(const std::string& tapeDriveName,
   const common::dataStructures::DesiredDriveState &desiredState) {
   try {
+    checkCommentOrReasonMaxLength(desiredState.reason);
     std::string sql =
       "UPDATE DRIVE_STATE SET "
         "DESIRED_UP = :DESIRED_UP,"
@@ -11893,6 +11927,19 @@ void RdbmsCatalogue::releaseDiskSpace(const std::string& driveName, const uint64
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
+  }
+}
+
+void RdbmsCatalogue::checkCommentOrReasonMaxLength(const std::optional<std::string>& str) const {
+  const size_t MAX_CHAR_COMMENT = 1000;
+  if (!str.has_value()) return;
+  if (str.value().length() > MAX_CHAR_COMMENT) {
+    log::LogContext lc(m_log);
+    log::ScopedParamContainer spc(lc);
+    spc.add("Large_Message: ", str.value());
+    lc.log(log::ERR, "The reason or comment has more characters than the maximun allowed.");
+    throw CommentOrReasonWithMoreSizeThanMaximunAllowed(
+      "The comment or reason string value has more than 1000 characters");
   }
 }
 

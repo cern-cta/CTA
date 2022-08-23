@@ -26,6 +26,7 @@
 #include "InsertFileRecycleLog.hpp"
 
 #include <memory>
+#include <string>
 
 namespace cta {
 namespace common {
@@ -2451,6 +2452,8 @@ private:
   void settingSqlTapeDriveValues(cta::rdbms::Stmt *stmt, const common::dataStructures::TapeDrive &tapeDrive) const;
 
   common::dataStructures::TapeDrive gettingSqlTapeDriveValues(cta::rdbms::Rset* rset) const;
+
+  void checkCommentOrReasonMaxLength(const std::optional<std::string>& comment) const;
 }; // class RdbmsCatalogue
 
 } // namespace catalogue
