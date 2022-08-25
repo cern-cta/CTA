@@ -41,6 +41,7 @@
 #include <random>
 #include <chrono>
 #include <cstdlib>
+#include <regex>
 #include <time.h>
 
 namespace cta {
@@ -1831,16 +1832,28 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
     break;
   case common::dataStructures::Tape::BROKEN:
     m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
-    m_catalogue.modifyTapeState(admin, vid, common::dataStructures::Tape::BROKEN_PENDING, stateReason);
+    try {
+      m_catalogue.modifyTapeState(admin, vid, common::dataStructures::Tape::BROKEN_PENDING, stateReason);
+    } catch (catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive & ex) {
+      auto state_str_pending = common::dataStructures::Tape::stateToString(common::dataStructures::Tape::BROKEN_PENDING);
+      auto state_str = common::dataStructures::Tape::stateToString(common::dataStructures::Tape::BROKEN);
+      throw catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(std::regex_replace(ex.what(), std::regex(state_str_pending), state_str));
+    }
     break;
   case common::dataStructures::Tape::REPACKING:
     m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
-    m_catalogue.modifyTapeState(admin, vid, common::dataStructures::Tape::REPACKING_PENDING, stateReason);
+    try {
+      m_catalogue.modifyTapeState(admin, vid, common::dataStructures::Tape::REPACKING_PENDING, stateReason);
+    } catch (catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive & ex) {
+      auto state_str_pending = common::dataStructures::Tape::stateToString(common::dataStructures::Tape::REPACKING_PENDING);
+      auto state_str = common::dataStructures::Tape::stateToString(common::dataStructures::Tape::REPACKING);
+      throw catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(std::regex_replace(ex.what(), std::regex(state_str_pending), state_str));
+    }
     break;
   case common::dataStructures::Tape::BROKEN_PENDING:
   case common::dataStructures::Tape::REPACKING_PENDING:
     // PENDING states should not be set directly
-    throw cta::exception::UserError("Tape state " + common::dataStructures::Tape::stateToString(state) + " cannot be set directly by user");
+    throw cta::exception::UserError("Tape state " + common::dataStructures::Tape::stateToString(state) + " is an internal state and cannot be set directly by the user");
   default:
     throw cta::exception::UserError("Unknown tape state");
   }
