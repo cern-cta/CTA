@@ -80,7 +80,7 @@ TapeLsStream::TapeLsStream(const RequestMessage &requestMsg, cta::catalogue::Cat
   searchCriteria.diskFileIds     = requestMsg.getOptional(OptionStrList::FILE_ID,        &has_any);
   auto stateOpt                  = requestMsg.getOptional(OptionString::STATE,           &has_any);
   if(stateOpt){
-    searchCriteria.state = common::dataStructures::Tape::stringToState(stateOpt.value());
+    searchCriteria.state = common::dataStructures::Tape::stringToState(stateOpt.value(), true);
   }
   if(!(requestMsg.has_flag(OptionBoolean::ALL) || has_any)) {
     throw cta::exception::UserError("Must specify at least one search option, or --all");
