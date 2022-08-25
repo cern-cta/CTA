@@ -69,16 +69,22 @@ void RetrieveRequest::initialize() {
 // RetrieveRequest::garbageCollect()
 //------------------------------------------------------------------------------
 void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentReference & agentReference, log::LogContext & lc,
-    cta::catalogue::Catalogue & catalogue) {
+                                     cta::catalogue::Catalogue & catalogue) {
+  garbageCollectRetrieveRequest(presumedOwner, agentReference, lc, catalogue, false);
+}
+
+void RetrieveRequest::garbageCollectRetrieveRequest(const std::string& presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue, bool isQueueCleanup) {
   checkPayloadWritable();
   utils::Timer t;
+  std::string logHead = std::string("In RetrieveRequest::garbageCollect()") + (isQueueCleanup ? " [queue cleanup]" : "") + ": ";
   // Check the request is indeed owned by the right owner.
   if (getOwner() != presumedOwner) {
     log::ScopedParamContainer params(lc);
     params.add("jobObject", getAddressIfSet())
           .add("presumedOwner", presumedOwner)
           .add("owner", getOwner());
-    lc.log(log::INFO, "In RetrieveRequest::garbageCollect(): no garbage collection needed.");
+    lc.log(log::INFO, logHead + "no garbage collection needed.");
   }
   // The owner is indeed the right one. We should requeue the request either to
   // the to tranfer queue for one vid, or to the to report (or failed) queue (for one arbitrary VID).
@@ -97,7 +103,7 @@ void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentRefe
         }
         {
           std::stringstream err;
-          err << "In RetrieveRequest::garbageCollect(): could not find tapefile for copynb " << j.copynb();
+          err << (logHead + "could not find tapefile for copynb ") << j.copynb();
           throw exception::Exception(err.str());
         }
         break;
@@ -136,7 +142,7 @@ void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentRefe
                   .add("copynb", tf.copynb())
                   .add("tapeVid", tf.vid());
             tl.addToLog(params);
-            lc.log(log::INFO, "In RetrieveRequest::garbageCollect(): requeued the repack retrieve request.");
+            lc.log(log::INFO, logHead + "requeued the repack retrieve request.");
             return;
           }
         }
@@ -174,8 +180,8 @@ queueForFailure:;
         }
         // Generate the last failure for this job (tape unavailable).
         *j.mutable_failurelogs()->Add() = utils::getCurrentLocalTime() + " " +
-            utils::getShortHostname() + " In RetrieveRequest::garbageCollect(): No VID available to requeue the request. Failing it.";
-        lc.log(log::ERR, "In RetrieveRequest::garbageCollect(): No VID available to requeue the request. Failing all jobs.");
+            utils::getShortHostname() + logHead + "No VID available to requeue the request. Failing it.";
+        lc.log(log::ERR, logHead + "No VID available to requeue the request. Failing all jobs.");
       }
     }
     // Ok, the request is ready to be queued. We will queue it to the VID corresponding
@@ -192,7 +198,7 @@ queueForFailure:;
     }
     {
       std::stringstream err;
-      err << "In RetrieveRequest::garbageCollect(): could not find tapefile for copynb " << activeCopyNb;
+      err << (logHead + "could not find tapefile for copynb ") << activeCopyNb;
       throw exception::Exception(err.str());
     }
   failedVidFound:;
@@ -224,7 +230,7 @@ queueForFailure:;
             .add("tapeVid", activeVid)
             .add("queueUpdateTime", queueUpdateTime)
             .add("commitUnlockQueueTime", commitUnlockQueueTime);
-      lc.log(log::INFO, "In RetrieveRequest::garbageCollect(): queued the request to the failed queue.");
+      lc.log(log::INFO, logHead + "queued the request to the failed queue.");
     }
     return;
   }
@@ -240,7 +246,7 @@ queueForTransfer:;
     }
     {
       std::stringstream err;
-      err << "In RetrieveRequest::garbageCollect(): could not find tapefile for vid " << bestVid;
+      err << (logHead + "could not find tapefile for vid ") << bestVid;
       throw exception::Exception(err.str());
     }
   tapeFileFound:;
@@ -253,7 +259,7 @@ queueForTransfer:;
     }
     {
       std::stringstream err;
-      err << "In RetrieveRequest::garbageCollect(): could not find job for copynb " << bestTapeFile->copynb();
+      err << (logHead + "could not find job for copynb ") << bestTapeFile->copynb();
       throw exception::Exception(err.str());
     }
   jobFound:;
@@ -291,7 +297,7 @@ queueForTransfer:;
             .add("tapeSelectionTime", tapeSelectionTime)
             .add("queueUpdateTime", queueUpdateTime)
             .add("commitUnlockQueueTime", commitUnlockQueueTime);
-      lc.log(log::INFO, "In RetrieveRequest::garbageCollect(): requeued the request.");
+      lc.log(log::INFO, logHead + "requeued the request.");
     }
     timespec ts;
     // We will sleep a bit to make sure other processes can also access the queue
@@ -316,7 +322,7 @@ queueForTransfer:;
             .add("queueUpdateTime", queueUpdateTime)
             .add("commitUnlockQueueTime", commitUnlockQueueTime)
             .add("sleepTime", sleepTime);
-      lc.log(log::INFO, "In RetrieveRequest::garbageCollect(): slept some time to not sit on the queue after GC requeueing.");
+      lc.log(log::INFO, logHead + "slept some time to not sit on the queue after GC requeueing.");
     }
   }
 }
