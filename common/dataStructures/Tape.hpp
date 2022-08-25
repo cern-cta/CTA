@@ -23,6 +23,7 @@
 
 #include <list>
 #include <map>
+#include <set>
 #include <optional>
 #include <stdint.h>
 #include <string>
@@ -48,8 +49,9 @@ struct Tape {
 
   static const std::map<State,std::string> STATE_TO_STRING_MAP;
   static const std::map<std::string,State> STRING_TO_STATE_MAP;
+  static const std::set<State> PENDING_STATES_SET;
 
-  static std::string getAllPossibleStates();
+  static std::string getAllPossibleStates(bool hidePendingStates = false);
 
   Tape();
 
@@ -75,7 +77,7 @@ struct Tape {
    * @return the state corresponding to the State enum value
    * @throws cta::exception::Exception if the state passed in parameter does not match any existing State enum value
    */
-  static State stringToState(const std::string & state);
+  static State stringToState(const std::string & state, bool hidePendingStates = false);
 
   std::string vid;
   std::string mediaType;

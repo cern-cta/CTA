@@ -46,6 +46,11 @@ const std::map<Tape::State,std::string> Tape::STATE_TO_STRING_MAP = {
   {Tape::State::REPACKING_PENDING,"REPACKING_PENDING"},
 };
 
+const std::set<Tape::State> Tape::PENDING_STATES_SET = {
+  Tape::State::BROKEN_PENDING,
+  Tape::State::REPACKING_PENDING,
+};
+
 const std::map<std::string,Tape::State> Tape::STRING_TO_STATE_MAP = {
   {"ACTIVE",Tape::State::ACTIVE},
   {"BROKEN",Tape::State::BROKEN},
@@ -55,9 +60,12 @@ const std::map<std::string,Tape::State> Tape::STRING_TO_STATE_MAP = {
   {"REPACKING_PENDING",Tape::State::REPACKING_PENDING}
 };
 
-std::string Tape::getAllPossibleStates(){
+std::string Tape::getAllPossibleStates(bool hidePendingStates){
   std::string ret;
   for(auto &kv: STRING_TO_STATE_MAP){
+    if(hidePendingStates && PENDING_STATES_SET.count(kv.second)) {
+      continue;
+    }
     ret += kv.first + " ";
   }
   if(ret.size())
@@ -109,13 +117,13 @@ std::string Tape::stateToString(const Tape::State & state) {
   }
 }
 
-Tape::State Tape::stringToState(const std::string& state) {
-  std::string stateUpperCase = state;
+Tape::State Tape::stringToState(const std::string& stateStr, bool hidePendingStates) {
+  std::string stateUpperCase = stateStr;
   cta::utils::toUpper(stateUpperCase);
   try {
     return Tape::STRING_TO_STATE_MAP.at(stateUpperCase);
   } catch(std::out_of_range &ex){
-    throw cta::exception::Exception(std::string("The state given (") + stateUpperCase + ") does not exist. Possible values are " + Tape::getAllPossibleStates());
+    throw cta::exception::Exception(std::string("The state given (") + stateUpperCase + ") does not exist. Possible values are " + Tape::getAllPossibleStates(hidePendingStates));
   }
 }
 
