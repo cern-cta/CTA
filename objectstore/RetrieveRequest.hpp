@@ -46,6 +46,8 @@ public:
   void initialize();
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) override;
+  void garbageCollectRetrieveRequest(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue, bool isQueueCleanup);
   // Job management ============================================================
   void addJob(uint32_t copyNumber, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries);
   std::string getLastActiveVid();

@@ -1973,7 +1973,7 @@ void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::Retr
     rrlist.push_back(rr);
     locks.emplace_back(*rr);
     rr->fetch();
-    rr->garbageCollect(m_agentReference->getAgentAddress(), *m_agentReference, logContext, m_catalogue);
+    rr->garbageCollectRetrieveRequest(m_agentReference->getAgentAddress(), *m_agentReference, logContext, m_catalogue, true);
   }
   locks.clear();
   rrlist.clear();
