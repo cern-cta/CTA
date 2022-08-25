@@ -1902,7 +1902,7 @@ void RequestMessage::processTape_Add(cta::xrd::Response &response)
      tape.state = common::dataStructures::Tape::ACTIVE;
    } else {
      //State has been provided by the user, assign it. Will throw an exception if the state provided does not exist.
-     tape.state = common::dataStructures::Tape::stringToState(state.value());
+     tape.state = common::dataStructures::Tape::stringToState(state.value(), true);
    }
    tape.stateReason = stateReason;
    m_catalogue.createTape(m_cliIdentity, tape);
@@ -1959,7 +1959,7 @@ void RequestMessage::processTape_Ch(cta::xrd::Response &response)
       m_catalogue.setTapeFull(m_cliIdentity, vid, full.value());
    }
    if(state){
-     auto stateEnumValue = common::dataStructures::Tape::stringToState(state.value());
+     auto stateEnumValue = common::dataStructures::Tape::stringToState(state.value(), true);
      m_scheduler.triggerTapeStateChange(m_cliIdentity,vid,stateEnumValue,stateReason, m_lc);
    }
    if (dirty) {
