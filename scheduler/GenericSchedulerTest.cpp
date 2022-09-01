@@ -2346,14 +2346,14 @@ TEST_P(SchedulerTest, getNextMountBrokenOrDisabledTapeShouldNotReturnAMount) {
 
   scheduler.waitSchedulerDbSubthreadsComplete();
 
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::BROKEN,std::string("Test"));
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::BROKEN,std::nullopt,std::string("Test"));
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,std::nullopt);
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::BROKEN, std::nullopt);
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::DISABLED,std::string("Test"));
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::DISABLED,std::nullopt,std::string("Test"));
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,std::nullopt);
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::DISABLED,std::nullopt);
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 
   {
@@ -2402,14 +2402,14 @@ TEST_P(SchedulerTest, getNextMountBrokenOrDisabledTapeShouldNotReturnAMount) {
     scheduler.queueRetrieve(s_diskInstance, request, lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::BROKEN,std::string("Test"));
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::BROKEN,std::nullopt,std::string("Test"));
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,std::nullopt);
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::BROKEN,std::nullopt);
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::DISABLED,std::string("Test"));
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::DISABLED,std::nullopt,std::string("Test"));
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,std::nullopt);
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::DISABLED,std::nullopt);
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 }
 

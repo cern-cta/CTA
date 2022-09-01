@@ -399,8 +399,8 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapeVerificationStatus(admin, vid, verificationStatus);}, m_maxTriesToConnect);
   }
   
-  void modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const std::optional<std::string> & stateReason) override {
-    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapeState(admin,vid, state, stateReason);}, m_maxTriesToConnect);
+  void modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const std::optional<common::dataStructures::Tape::State> & prev_state, const std::optional<std::string> & stateReason) override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapeState(admin,vid, state, prev_state, stateReason);}, m_maxTriesToConnect);
   }
 
   void setTapeFull(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool fullValue) override {
