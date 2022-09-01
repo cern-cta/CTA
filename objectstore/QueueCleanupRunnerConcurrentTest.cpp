@@ -298,7 +298,7 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
     auto initialRetrieveQueueToReportJobs = tapeQueueStateTrans.initialSetup.retrieveQueueToReportJobs;
 
     // Initial tape state
-    catalogue.modifyTapeState(dummyAdmin, vid, initialState, "Testing");
+    catalogue.modifyTapeState(dummyAdmin, vid, initialState, std::nullopt, "Testing");
 
     // Assert initial queue setup, for pre-validation of tests
     {

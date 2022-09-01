@@ -1823,43 +1823,64 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
 //------------------------------------------------------------------------------
 // triggerTapeStateChange
 //------------------------------------------------------------------------------
-void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State &state, const std::optional<std::string> &stateReason, log::LogContext& logContext) {
+void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State &new_state, const std::optional<std::string> &stateReason, log::LogContext& logContext) {
 
   // Tape must exist on catalogue
   if (!m_catalogue.tapeExists(vid)) {
     throw cta::exception::UserError("The VID " + vid + " does not exist");
   }
 
-  switch (state) {
+  // Validate tape state change based on previous state
+  auto prev_state = m_catalogue.getTapesByVid(vid)[vid].state;
+  if (prev_state == new_state) return;
+
+  switch (prev_state) {
+  case common::dataStructures::Tape::REPACKING:
+    if (isBeingRepacked(vid)) {
+      throw cta::exception::UserError("Cannot modify tape " + vid + " state because there is a repack for that tape");
+    }
+    break;
+  case common::dataStructures::Tape::BROKEN_PENDING:
+    if (new_state == common::dataStructures::Tape::BROKEN) return; // Ok, because this is the transition currently in place
+    throw cta::exception::UserError("Cannot modify tape " + vid + " state while it is in a temporary internal state");
+  case common::dataStructures::Tape::REPACKING_PENDING:
+    if (new_state == common::dataStructures::Tape::REPACKING) return; // Ok, because this is the transition currently in place
+    throw cta::exception::UserError("Cannot modify tape " + vid + " state while it is in a temporary internal state");
+  default: // Proceed normally for remaining states
+    break;
+  }
+
+  // Perform tape state change
+  switch (new_state) {
   case common::dataStructures::Tape::ACTIVE:
   case common::dataStructures::Tape::DISABLED:
     // Simply set the new tape state
-    m_catalogue.modifyTapeState(admin, vid, state, stateReason);
+    m_catalogue.modifyTapeState(admin, vid, new_state, prev_state, stateReason);
     break;
   case common::dataStructures::Tape::BROKEN:
-    m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
     try {
-      m_catalogue.modifyTapeState(admin, vid, common::dataStructures::Tape::BROKEN_PENDING, stateReason);
+      m_catalogue.modifyTapeState(admin, vid, common::dataStructures::Tape::BROKEN_PENDING, prev_state, stateReason);
     } catch (catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive & ex) {
       auto state_str_pending = common::dataStructures::Tape::stateToString(common::dataStructures::Tape::BROKEN_PENDING);
       auto state_str = common::dataStructures::Tape::stateToString(common::dataStructures::Tape::BROKEN);
       throw catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(std::regex_replace(ex.what(), std::regex(state_str_pending), state_str));
     }
+    m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
     break;
   case common::dataStructures::Tape::REPACKING:
-    m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
     try {
-      m_catalogue.modifyTapeState(admin, vid, common::dataStructures::Tape::REPACKING_PENDING, stateReason);
+      m_catalogue.modifyTapeState(admin, vid, common::dataStructures::Tape::REPACKING_PENDING, prev_state, stateReason);
     } catch (catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive & ex) {
       auto state_str_pending = common::dataStructures::Tape::stateToString(common::dataStructures::Tape::REPACKING_PENDING);
       auto state_str = common::dataStructures::Tape::stateToString(common::dataStructures::Tape::REPACKING);
       throw catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(std::regex_replace(ex.what(), std::regex(state_str_pending), state_str));
     }
+    m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
     break;
   case common::dataStructures::Tape::BROKEN_PENDING:
   case common::dataStructures::Tape::REPACKING_PENDING:
     // PENDING states should not be set directly
-    throw cta::exception::UserError("Tape state " + common::dataStructures::Tape::stateToString(state) + " is an internal state and cannot be set directly by the user");
+    throw cta::exception::UserError("Internal states cannot be set directly by the user");
   default:
     throw cta::exception::UserError("Unknown tape state");
   }
