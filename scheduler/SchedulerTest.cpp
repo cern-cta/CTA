@@ -3661,7 +3661,7 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 
   //enable the tape
-  catalogue.modifyTapeState(admin,vid,common::dataStructures::Tape::ACTIVE,std::nullopt);
+  catalogue.modifyTapeState(admin,vid,common::dataStructures::Tape::ACTIVE,std::nullopt,std::nullopt);
 
   //A mount should be returned by getNextMount
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName,driveName,lc));
@@ -5215,14 +5215,14 @@ TEST_P(SchedulerTest, getNextMountBrokenTapeShouldNotReturnAMount) {
 
   scheduler.waitSchedulerDbSubthreadsComplete();
 
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::BROKEN,std::string("Test"));
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::BROKEN,std::nullopt,std::string("Test"));
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,std::nullopt);
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::BROKEN,std::nullopt);
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::DISABLED,std::string("Test"));
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::DISABLED,std::nullopt,std::string("Test"));
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,std::nullopt);
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::DISABLED,std::nullopt);
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 
   {
@@ -5271,14 +5271,14 @@ TEST_P(SchedulerTest, getNextMountBrokenTapeShouldNotReturnAMount) {
     scheduler.queueRetrieve(s_diskInstance, request, lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::BROKEN,std::string("Test"));
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::BROKEN,std::nullopt,std::string("Test"));
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,std::nullopt);
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::BROKEN,std::nullopt);
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::DISABLED,std::string("Test"));
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::DISABLED,std::nullopt,std::string("Test"));
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,std::nullopt);
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::DISABLED,std::nullopt);
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 }
 
@@ -6038,7 +6038,7 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
   //The retrieve mount should not be triggered as the tape 1 state is broken
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,drive3,lc));
   //Setting the state of the tape back to active
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape1.vid,common::dataStructures::Tape::ACTIVE,std::nullopt);
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape1.vid,common::dataStructures::Tape::ACTIVE,std::nullopt,std::nullopt);
   //The mount should be triggered on tape 1
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,drive3,lc));
   //The mount should be a Retrieve mount

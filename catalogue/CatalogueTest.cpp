@@ -6368,7 +6368,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeState_nonExistentTape) {
   using namespace cta;
 
   common::dataStructures::Tape::State state = common::dataStructures::Tape::State::ACTIVE;
-  ASSERT_THROW(m_catalogue->modifyTapeState(m_admin,"DOES_NOT_EXIST",state,std::nullopt),cta::catalogue::UserSpecifiedANonExistentTape);
+  ASSERT_THROW(m_catalogue->modifyTapeState(m_admin,"DOES_NOT_EXIST",state,std::nullopt,std::nullopt),cta::catalogue::UserSpecifiedANonExistentTape);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled_nonExistentTape) {
@@ -6395,7 +6395,54 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeState_nonExistentState) {
   m_catalogue->createTape(m_admin, m_tape1);
 
   common::dataStructures::Tape::State state = (common::dataStructures::Tape::State)42;
-  ASSERT_THROW(m_catalogue->modifyTapeState(m_admin, m_tape1.vid,state,std::nullopt),cta::catalogue::UserSpecifiedANonExistentTapeState);
+  ASSERT_THROW(m_catalogue->modifyTapeState(m_admin, m_tape1.vid,state,std::nullopt,std::nullopt),cta::catalogue::UserSpecifiedANonExistentTapeState);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyTapeState_nonExistentPrevState) {
+  using namespace cta;
+
+  const bool logicalLibraryIsDisabled= false;
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const std::optional<std::string> supply("value for the supply pool mechanism");
+
+  m_catalogue->createMediaType(m_admin, m_mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  m_catalogue->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+
+  m_catalogue->createTape(m_admin, m_tape1);
+
+  common::dataStructures::Tape::State state = common::dataStructures::Tape::State::ACTIVE;
+  common::dataStructures::Tape::State prevState = (common::dataStructures::Tape::State)42;
+  ASSERT_THROW(m_catalogue->modifyTapeState(m_admin, m_tape1.vid,state,prevState,std::nullopt),cta::catalogue::UserSpecifiedANonExistentTapeState);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, modifyTapeState_wrongPrevState) {
+  using namespace cta;
+
+  const bool logicalLibraryIsDisabled= false;
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const std::optional<std::string> supply("value for the supply pool mechanism");
+
+  m_catalogue->createMediaType(m_admin, m_mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  m_catalogue->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+
+  m_catalogue->createTape(m_admin, m_tape1);
+
+  common::dataStructures::Tape::State prevState = common::dataStructures::Tape::State::ACTIVE;
+  common::dataStructures::Tape::State prevStateGuess = common::dataStructures::Tape::State::REPACKING;
+  common::dataStructures::Tape::State nextState = common::dataStructures::Tape::State::DISABLED;
+  std::string reason = "modify for testing";
+  m_catalogue->modifyTapeState(m_admin, m_tape1.vid,prevState,std::nullopt,std::nullopt);
+  ASSERT_THROW(m_catalogue->modifyTapeState(m_admin, m_tape1.vid,nextState,prevStateGuess,reason),cta::catalogue::UserSpecifiedANonExistentTape);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyTapeState_noReasonWhenNotActive) {
@@ -6416,9 +6463,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeState_noReasonWhenNotActive) {
   m_catalogue->createTape(m_admin, m_tape1);
 
   std::string reason = "";
-  ASSERT_THROW(m_catalogue->modifyTapeState(m_admin,m_tape1.vid,common::dataStructures::Tape::State::BROKEN,reason),cta::catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);
+  ASSERT_THROW(m_catalogue->modifyTapeState(m_admin,m_tape1.vid,common::dataStructures::Tape::State::BROKEN,std::nullopt,reason),cta::catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);
 
-  ASSERT_THROW(m_catalogue->modifyTapeState(m_admin,m_tape1.vid,common::dataStructures::Tape::State::DISABLED,std::nullopt),cta::catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);
+  ASSERT_THROW(m_catalogue->modifyTapeState(m_admin,m_tape1.vid,common::dataStructures::Tape::State::DISABLED,std::nullopt,std::nullopt),cta::catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);
 }
 
 TEST_P(cta_catalogue_CatalogueTest, modifyTapeState) {
@@ -6441,7 +6488,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeState) {
   std::string reason = "tape broken";
 
   std::string vid = m_tape1.vid;
-  ASSERT_NO_THROW(m_catalogue->modifyTapeState(m_admin,vid,common::dataStructures::Tape::State::BROKEN,reason));
+  ASSERT_NO_THROW(m_catalogue->modifyTapeState(m_admin,vid,common::dataStructures::Tape::State::BROKEN,std::nullopt,reason));
 
   {
     //catalogue getTapesByVid test (single VID)
@@ -6500,9 +6547,9 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeStateResetReasonWhenBackToActiveSt
   std::string vid = m_tape1.vid;
 
   std::string reason = "Broken tape";
-  ASSERT_NO_THROW(m_catalogue->modifyTapeState(m_admin,vid,common::dataStructures::Tape::State::BROKEN,reason));
+  ASSERT_NO_THROW(m_catalogue->modifyTapeState(m_admin,vid,common::dataStructures::Tape::State::BROKEN,std::nullopt,reason));
 
-  ASSERT_NO_THROW(m_catalogue->modifyTapeState(m_admin,vid,common::dataStructures::Tape::State::ACTIVE,std::nullopt));
+  ASSERT_NO_THROW(m_catalogue->modifyTapeState(m_admin,vid,common::dataStructures::Tape::State::ACTIVE,std::nullopt,std::nullopt));
 
   {
     auto vidToTapeMap = m_catalogue->getTapesByVid(vid);
@@ -6550,7 +6597,7 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesSearchCriteriaByState) {
   }
 
   std::string reason = "Broken tape";
-  ASSERT_NO_THROW(m_catalogue->modifyTapeState(m_admin,vidTape1,common::dataStructures::Tape::State::BROKEN,reason));
+  ASSERT_NO_THROW(m_catalogue->modifyTapeState(m_admin,vidTape1,common::dataStructures::Tape::State::BROKEN,std::nullopt,reason));
 
   {
     cta::catalogue::TapeSearchCriteria criteria;
@@ -9915,7 +9962,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_repa
     ASSERT_EQ(file2Written.checksumBlob, tapeFile2.checksumBlob);
   }
 
-  m_catalogue->modifyTapeState(m_admin, m_tape1.vid, common::dataStructures::Tape::State::REPACKING, repackingReason);
+  m_catalogue->modifyTapeState(m_admin, m_tape1.vid, common::dataStructures::Tape::State::REPACKING, std::nullopt, repackingReason);
 
   {
     const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
@@ -9935,7 +9982,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_repa
     ASSERT_EQ(file2Written.checksumBlob, tapeFile2.checksumBlob);
   }
 
-  m_catalogue->modifyTapeState(m_admin, m_tape2.vid, common::dataStructures::Tape::State::REPACKING, repackingReason);
+  m_catalogue->modifyTapeState(m_admin, m_tape2.vid, common::dataStructures::Tape::State::REPACKING, std::nullopt, repackingReason);
 
   ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, requesterIdentity, std::nullopt, dummyLc),
     exception::UserError);
@@ -10052,7 +10099,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_retu
   }
 
   std::string repackingReason = "repackingReason";
-  m_catalogue->modifyTapeState(m_admin, m_tape2.vid, common::dataStructures::Tape::State::REPACKING, repackingReason);
+  m_catalogue->modifyTapeState(m_admin, m_tape2.vid, common::dataStructures::Tape::State::REPACKING, std::nullopt, repackingReason);
 
   ASSERT_THROW(m_catalogue->prepareToRetrieveFile(diskInstanceName1, archiveFileId, requesterIdentity, std::nullopt, dummyLc),
     exception::UserError);
@@ -11286,7 +11333,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
   }
 
-  m_catalogue->modifyTapeState(m_admin, tape1.vid, common::dataStructures::Tape::ACTIVE,std::nullopt);
+  m_catalogue->modifyTapeState(m_admin, tape1.vid, common::dataStructures::Tape::ACTIVE,std::nullopt,std::nullopt);
 
   {
     const auto pools = m_catalogue->getTapePools();

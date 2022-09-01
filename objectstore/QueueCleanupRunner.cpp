@@ -202,10 +202,10 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
       // The STATE_REASON set by operator will be preserved, with just an extra message prepended.
       std::optional<std::string> prevReason = tapeToModify.stateReason;
       if (tapeToModify.state == common::dataStructures::Tape::REPACKING_PENDING) {
-        m_catalogue.modifyTapeState(admin, qForCleanup.vid, common::dataStructures::Tape::REPACKING, prevReason.value_or(""));
+        m_catalogue.modifyTapeState(admin, qForCleanup.vid, common::dataStructures::Tape::REPACKING, common::dataStructures::Tape::REPACKING_PENDING, prevReason.value_or(""));
         m_db.clearRetrieveQueueStatisticsCache(qForCleanup.vid);
       } else if (tapeToModify.state == common::dataStructures::Tape::BROKEN_PENDING) {
-        m_catalogue.modifyTapeState(admin, qForCleanup.vid, common::dataStructures::Tape::BROKEN, prevReason.value_or(""));
+        m_catalogue.modifyTapeState(admin, qForCleanup.vid, common::dataStructures::Tape::BROKEN, common::dataStructures::Tape::BROKEN_PENDING, prevReason.value_or(""));
         m_db.clearRetrieveQueueStatisticsCache(qForCleanup.vid);
       } else {
         log::ScopedParamContainer paramsWarnMsg(logContext);
