@@ -5204,7 +5204,7 @@ void RdbmsCatalogue::modifyTapeVerificationStatus(const common::dataStructures::
 //------------------------------------------------------------------------------
 // modifyTapeState
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const std::optional<std::string> & stateReason){
+void RdbmsCatalogue::modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const std::optional<common::dataStructures::Tape::State> & prev_state, const std::optional<std::string> & stateReason){
   try {
     using namespace common::dataStructures;
     const time_t now = time(nullptr);
@@ -5220,6 +5220,16 @@ void RdbmsCatalogue::modifyTapeState(const common::dataStructures::SecurityIdent
       throw UserSpecifiedANonExistentTapeState(errorMsg);
     }
 
+    std::string prevStateStr;
+    if (prev_state.has_value()) {
+      try {
+        prevStateStr = cta::common::dataStructures::Tape::stateToString(prev_state.value());
+      } catch (cta::exception::Exception &ex) {
+        std::string errorMsg = "The previous state provided in parameter (" + std::to_string(prev_state.value()) + ") is not known or has not been initialized existing states are:" + common::dataStructures::Tape::getAllPossibleStates();
+        throw UserSpecifiedANonExistentTapeState(errorMsg);
+      }
+    }
+
     //Check the reason is set for all the status except the ACTIVE one, this is the only state that allows the reason to be set to null.
     if(state != Tape::State::ACTIVE){
       if(!stateReasonCopy){
@@ -5227,7 +5237,7 @@ void RdbmsCatalogue::modifyTapeState(const common::dataStructures::SecurityIdent
       }
     }
 
-    const char *const sql =
+    std::string sql =
       "UPDATE TAPE SET "
         "TAPE_STATE = :TAPE_STATE,"
         "STATE_REASON = :STATE_REASON,"
@@ -5235,6 +5245,11 @@ void RdbmsCatalogue::modifyTapeState(const common::dataStructures::SecurityIdent
         "STATE_MODIFIED_BY = :STATE_MODIFIED_BY "
       "WHERE "
         "VID = :VID";
+
+    if (prev_state.has_value()) {
+      sql += " AND TAPE_STATE = :PREV_TAPE_STATE";
+    }
+
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
 
@@ -5243,10 +5258,13 @@ void RdbmsCatalogue::modifyTapeState(const common::dataStructures::SecurityIdent
     stmt.bindUint64(":STATE_UPDATE_TIME", now);
     stmt.bindString(":STATE_MODIFIED_BY",generateTapeStateModifiedBy(admin));
     stmt.bindString(":VID",vid);
+    if (prev_state.has_value()) {
+      stmt.bindString(":PREV_TAPE_STATE",prevStateStr);
+    }
     stmt.executeNonQuery();
 
     if (0 == stmt.getNbAffectedRows()) {
-      throw UserSpecifiedANonExistentTape(std::string("Cannot modify the state of the tape ") + vid + " because it does not exist");
+      throw UserSpecifiedANonExistentTape(std::string("Cannot modify the state of the tape ") + vid + " because it does not exist or because a recent state change has been detected");
     }
 
   } catch(exception::UserError &) {
@@ -5500,7 +5518,7 @@ void RdbmsCatalogue::setTapeDisabled(const common::dataStructures::SecurityIdent
   const std::string &vid, const std::string & reason) {
 
   try {
-    modifyTapeState(admin,vid,common::dataStructures::Tape::DISABLED,reason);
+    modifyTapeState(admin,vid,common::dataStructures::Tape::DISABLED,std::nullopt,reason);
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {

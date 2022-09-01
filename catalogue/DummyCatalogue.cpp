@@ -210,8 +210,11 @@ void DummyCatalogue::addRepackingTape(const std::string & vid) {
   threading::MutexLocker lm(m_tapeEnablingMutex);
   m_tapeEnabling[vid]=common::dataStructures::Tape::REPACKING;
 }
-void DummyCatalogue::modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const std::optional<std::string> & stateReason) {
+void DummyCatalogue::modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const std::optional<common::dataStructures::Tape::State> & prev_state, const std::optional<std::string> & stateReason) {
   threading::MutexLocker lm(m_tapeEnablingMutex);
+  if (prev_state.has_value() && prev_state.value() != m_tapeEnabling[vid]) {
+    throw exception::Exception("Previous state mismatch");
+  }
   m_tapeEnabling[vid]=state;
 }
 bool DummyCatalogue::tapeExists(const std::string& vid) const {

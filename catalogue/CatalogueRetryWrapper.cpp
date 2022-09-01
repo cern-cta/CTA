@@ -388,8 +388,8 @@ void CatalogueRetryWrapper::modifyTapeVerificationStatus(const common::dataStruc
   return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapeVerificationStatus(admin, vid, verificationStatus);}, m_maxTriesToConnect);
 }
 
-void CatalogueRetryWrapper::modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const std::optional<std::string> & stateReason) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapeState(admin,vid, state, stateReason);}, m_maxTriesToConnect);
+void CatalogueRetryWrapper::modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const std::optional<common::dataStructures::Tape::State> & prev_state, const std::optional<std::string> & stateReason) {
+  return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapeState(admin,vid, state, prev_state, stateReason);}, m_maxTriesToConnect);
 }
 
 void CatalogueRetryWrapper::setTapeFull(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const bool fullValue) {
