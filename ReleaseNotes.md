@@ -26,6 +26,7 @@
 - cta/CTA#135 - Added EXPORTED and EXPORTED_PENDING states to catalogue
 - cta/CTA#131 - Fix indexes on columns in CTA Catalogue which use LOWER()
 - cta/CTA#140 - Added REPACKING_DISABLED state to catalogue
+- cta/CTA#137 - Added a new column ENCRYPTION_KEY_NAME in the table TAPE_POOL
 
 # v4.7.9-2
 
