@@ -574,6 +574,9 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 
 
 %changelog
+* Mon Sep 05 2022 Joao Afonso <joao.afonso@cern.ch> - 4.7.10-1
+- Catalogue schema version 12.0
+
 * Mon Aug 08 2022 Julien Leduc <julien.leduc@cern.ch> - 4.7.9-2
 - Fixes packaging issue upgrading from CTA 4.7.8-1 to 4.7.9-1
 
