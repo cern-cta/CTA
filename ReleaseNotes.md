@@ -15,6 +15,7 @@
 - cta/CTA#92 - Refactor CTA code so that it can be build without Oracle dependencies
 ### Bug fixes
 - cta/CTA#30 - Check size of comments before commit them to the Catalogue
+- cta/CTA#142 - Save logs in liquibase-update test
 
 # v4.7.9-2
 

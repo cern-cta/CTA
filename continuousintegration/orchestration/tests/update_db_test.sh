@@ -96,8 +96,10 @@ CURRENT_SCHEMA_VERSION=$(kubectl -n ${NAMESPACE} exec ctafrontend -- cta-catalog
   | grep -o -E '[0-9]+\.[0-9]')
 if [ ${CURRENT_SCHEMA_VERSION} ==  ${NEW_SCHEMA_VERSION} ]; then
   echo "The current Catalogue Schema Version is: ${CURRENT_SCHEMA_VERSION}"
+  kubectl -n ${NAMESPACE} logs dbupdatetest &> "../../../pod_logs/${NAMESPACE}/liquibase-update.log"
 else
   echo "Error. Unexpected Catalogue Schema Version: ${CURRENT_SCHEMA_VERSION}, it should be: ${NEW_SCHEMA_VERSION}"
+  kubectl -n ${NAMESPACE} logs dbupdatetest &> "../../../pod_logs/${NAMESPACE}/liquibase-update.log"
   exit 1
 fi
 
