@@ -16,6 +16,16 @@
 ### Bug fixes
 - cta/CTA#30 - Check size of comments before commit them to the Catalogue
 
+# v4.7.10-1
+
+## Summary
+- This is a schema upgrade release for catalogue version 12.0.
+- For details on how to do the upgrade check: https://eoscta.docs.cern.ch/catalogue/upgrading_the_schema/
+### Catalogue Schema
+- cta/CTA#135 - Added EXPORTED and EXPORTED_PENDING states to catalogue
+- cta/CTA#131 - Fix indexes on columns in CTA Catalogue which use LOWER()
+- cta/CTA#140 - Added REPACKING_DISABLED state to catalogue
+
 # v4.7.9-2
 
 ## Summary
