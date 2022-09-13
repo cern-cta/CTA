@@ -103,9 +103,6 @@ progress and display any errors.
 requestermountrule (rmr)
 Add, change, remove or list the requester mount rules.
 .TP
-schedulinginfo (si)
-List information about scheduling of archive and retrieve jobs.
-.TP
 showqueues (sq)
 Show the status of all active queues.
 .TP

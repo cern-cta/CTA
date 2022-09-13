@@ -52,7 +52,6 @@
 #include "disk/DiskFile.hpp"
 #include "disk/DiskReporter.hpp"
 #include "disk/DiskReporterFactory.hpp"
-#include "SchedulingInfos.hpp"
 
 #include <list>
 #include <map>
@@ -327,13 +326,6 @@ public:
    * @return unique pointer to the tape mount structure. Next step for the user will be find which type of mount this is.
    */
   std::unique_ptr<TapeMount> getNextMount(const std::string &logicalLibraryName, const std::string &driveName, log::LogContext & lc);
-
-  /**
-   * Returns scheduling informations for the cta-admin schedulinginfos ls command
-   * @param lc the log context
-   * @return the list of the scheduling informations for the cta-admin schedulinginfos ls command
-   */
-  std::list<SchedulingInfos> getSchedulingInformations(log::LogContext & lc);
 
   /**
    * A function returning

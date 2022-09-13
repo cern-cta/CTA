@@ -254,7 +254,6 @@ private:
   admincmdstream_t processDiskInstanceSpace_Ls;
   admincmdstream_t processVirtualOrganization_Ls;
   admincmdstream_t processVersion;
-  admincmdstream_t processSchedulingInfos_Ls;
   admincmdstream_t processRecycleTapeFile_Ls;
 
   /*!

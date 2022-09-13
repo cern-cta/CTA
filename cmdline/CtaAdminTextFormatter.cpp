@@ -1157,51 +1157,6 @@ void TextFormatter::print(const VersionItem & version_item){
   );
 }
 
-void TextFormatter::printSchedulingInfoLsHeader(){
-  push_back("HEADER");
-  push_back(
-    "logical library",
-    "vid",
-    "tapepool",
-    "vo",
-    "media type",
-    "vendor",
-    "mount type",
-    "tape capacity",
-    "priority",
-    "min request age",
-    "files queued",
-    "bytes queued",
-    "oldest job start time",
-    "sleeping mount",
-    "sleep time",
-    "disk system slept for",
-    "mount count"
-  );
-}
-
-void TextFormatter::print(const SchedulingInfoLsItem& sils_item) {
-  push_back(
-    sils_item.logical_library(),
-    sils_item.vid(),
-    sils_item.tapepool(),
-    sils_item.vo(),
-    sils_item.media_type(),
-    sils_item.vendor(),
-    sils_item.mount_type(),
-    sils_item.tape_capacity_in_bytes(),
-    sils_item.mount_policy_priority(),
-    sils_item.mount_policy_min_request_age(),
-    sils_item.files_queued(),
-    sils_item.bytes_queued(),
-    sils_item.oldest_job_start_time(),
-    sils_item.sleeping_mount(),
-    sils_item.sleep_time(),
-    sils_item.disk_system_slept_for(),
-    sils_item.mount_count()
-  );
-}
-
 void TextFormatter::printRecycleTapeFileLsHeader() {
   push_back("HEADER");
   push_back(

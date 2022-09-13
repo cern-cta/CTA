@@ -34,7 +34,6 @@ set (CTA_SCHEDULER_SRC_FILES
   Scheduler.cpp
   SchedulerDatabase.cpp
   SchedulerDatabaseFactory.cpp
-  SchedulingInfos.cpp
   TapeMount.cpp)
 
 if(NOT CTA_USE_PGSCHED)

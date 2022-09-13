@@ -42,7 +42,6 @@ using XrdSsiPb::PbException;
 #include "XrdCtaDiskInstanceSpaceLs.hpp"
 #include "XrdCtaVirtualOrganizationLs.hpp"
 #include "XrdCtaVersion.hpp"
-#include "XrdCtaSchedulingInfosLs.hpp"
 #include "XrdCtaRecycleTapeFileLs.hpp"
 
 #include <limits>
@@ -313,9 +312,6 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                   break;
                case cmd_pair(AdminCmd::CMD_VERSION, AdminCmd::SUBCMD_NONE):
                   processVersion(response, stream);
-                  break;
-               case cmd_pair(AdminCmd::CMD_SCHEDULINGINFOS, AdminCmd::SUBCMD_LS):
-                  processSchedulingInfos_Ls(response,stream);
                   break;
                case cmd_pair(AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_LS):
                   processRecycleTapeFile_Ls(response,stream);
@@ -2492,15 +2488,6 @@ void RequestMessage::processVersion(cta::xrd::Response &response, XrdSsiStream *
   stream = new VersionStream(*this,m_catalogue,m_scheduler,m_catalogue_conn_string);
 
   response.set_show_header(HeaderType::VERSION_CMD);
-  response.set_type(cta::xrd::Response::RSP_SUCCESS);
-}
-
-void RequestMessage::processSchedulingInfos_Ls(cta::xrd::Response &response, XrdSsiStream * & stream) {
-  using namespace cta::admin;
-
-  stream = new SchedulingInfosLsStream(*this,m_catalogue,m_scheduler,m_lc);
-
-  response.set_show_header(HeaderType::SCHEDULINGINFOS_LS);
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 

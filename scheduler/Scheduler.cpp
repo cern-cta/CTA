@@ -1630,55 +1630,6 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
 }
 
 //------------------------------------------------------------------------------
-// getSchedulingInformations
-//------------------------------------------------------------------------------
-std::list<SchedulingInfos> Scheduler::getSchedulingInformations(log::LogContext& lc) {
-
-  std::list<SchedulingInfos> ret;
-
-  utils::Timer timer;
-  double getTapeInfoTime = 0;
-  double candidateSortingTime = 0;
-  double getTapeForWriteTime = 0;
-
-  ExistingMountSummaryPerTapepool existingMountsDistinctTypeSummaryPerTapepool;
-  ExistingMountSummaryPerVo existingMountBasicTypeSummaryPerVo;
-  std::set<std::string> tapesInUse;
-  std::list<catalogue::TapeForWriting> tapeList;
-
-  //get all drive informations and sort them by logical library name
-  cta::common::dataStructures::SecurityIdentity admin;
-  auto drives = getDriveStates(admin,lc);
-
-  std::map<std::string,std::list<std::string>> logicalLibraryDriveNamesMap;
-  for(auto & drive : drives){
-    logicalLibraryDriveNamesMap[drive.logicalLibrary].push_back(drive.driveName);
-  }
-
-  for(auto & kv: logicalLibraryDriveNamesMap){
-     //get mount informations
-    std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> mountInfo;
-    mountInfo = m_db.getMountInfoNoLock(cta::SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT,lc);
-    std::string logicalLibrary = kv.first;
-    cta::SchedulingInfos schedulingInfos(logicalLibrary);
-    for(auto & driveName: kv.second){
-      sortAndGetTapesForMountInfo(mountInfo, logicalLibrary, driveName, timer,
-      existingMountsDistinctTypeSummaryPerTapepool, existingMountBasicTypeSummaryPerVo, tapesInUse, tapeList,
-      getTapeInfoTime, candidateSortingTime, getTapeForWriteTime, lc);
-      //schedulingInfos.addDrivePotentialMount
-      std::vector<cta::SchedulerDatabase::PotentialMount> potentialMounts = mountInfo->potentialMounts;
-      for(auto & potentialMount: potentialMounts){
-        schedulingInfos.addPotentialMount(potentialMount);
-      }
-    }
-    if(!schedulingInfos.getPotentialMounts().empty()){
-      ret.push_back(schedulingInfos);
-    }
-  }
-  return ret;
-}
-
-//------------------------------------------------------------------------------
 // getQueuesAndMountSummaries
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndMountSummaries(log::LogContext& lc) {
