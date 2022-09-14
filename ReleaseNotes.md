@@ -1,21 +1,27 @@
-# v4.NEXT
+# v4.7.11-1
 
 ## Summary
 ### Features
 - cta/CTA#89 - Create stubs for Enstore tape label format
-### Bug fixes
-- cta/CTA#127 - DataTransferSession keeps busy while waiting for a mount to be required
-- cta/CTA#130 - Liquibase-update test fails when CTA is update without oracle support
+- cta/CTA#126 - Remove cta-admin schedulinginfo subcommand
 ### Continuous Integration
 - cta/CTA#7  - Use same versionlock.list file for xrootd4 and 5
 - cta/CTA#18 - CI - Testing of DB schema upgrade script
 - cta/CTA#49 - Clean up orchestration test scripts
-- cta/CTA#101 - CI should cancel running jobs for a branch after a force push
+- cta/CTA#101 - CI should cancel running jobs for a branch after a force pushi
+- cta/CTA#130 - Do not fail liquibase-update test when CTA is updated without oracle support
+- cta/CTA#112 - Add postgres 10.0 to 11.0 liquibase Schema migration script
+- cta/CTA#132 - Support postgres migrations
 ### Building and Packaging
 - cta/CTA#92 - Refactor CTA code so that it can be build without Oracle dependencies
+- cta/CTA#63 - CTA Frontend protobuf changes to support dCache
 ### Bug fixes
 - cta/CTA#30 - Check size of comments before commit them to the Catalogue
 - cta/CTA#142 - Save logs in liquibase-update test
+- cta/CTA#127 - DataTransferSession keeps busy while waiting for a mount to be required
+- cta/CTA#130 - Liquibase-update test fails when CTA is update without oracle support
+- cta/CTA#127 - DataTransferSession keeps busy while waiting for a mount to be required
+- cta/CTA#125 - Problem with reading OSM tapes using position by block id
 
 # v4.7.10-1
 
@@ -39,7 +45,6 @@ See all details and fix in cta/CTA#119
 
 ### Bug fixes
 - cta/CTA#119 [new repo] - Packaging issue with CTA 4.7.8-1/4.7.9-1
-- #125 - Problem with reading OSM tapes using position by block id
 
 # v4.7.9-1
 
