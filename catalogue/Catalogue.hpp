@@ -746,6 +746,7 @@ public:
   virtual void setTapeIsFromCastorInUnitTests(const std::string &vid) = 0;
 
   virtual void setTapeDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string & reason) = 0;
+  virtual void setTapeRepackingDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string & reason) = 0;
 
   virtual void setTapeDirty(const std::string & vid) = 0;
 

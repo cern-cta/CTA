@@ -43,8 +43,11 @@ struct Tape {
     BROKEN = 2,
     DISABLED = 3,
     REPACKING = 4,
+    EXPORTED = 5,
+    REPACKING_DISABLED = 6,
     BROKEN_PENDING = 101,
     REPACKING_PENDING = 102,
+    EXPORTED_PENDING = 103,
   };
 
   static const std::map<State,std::string> STATE_TO_STRING_MAP;
@@ -120,9 +123,11 @@ struct Tape {
   time_t stateUpdateTime;
   std::optional<std::string> verificationStatus;
 
+  bool isActive() const;
   bool isDisabled() const;
   bool isRepacking() const;
   bool isBroken() const;
+  bool isExported() const;
 }; // struct Tape
 
 std::ostream &operator<<(std::ostream &os, const Tape &obj);
