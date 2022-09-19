@@ -5461,6 +5461,22 @@ void RdbmsCatalogue::setTapeDisabled(const common::dataStructures::SecurityIdent
   }
 }
 
+//------------------------------------------------------------------------------
+// setTapeRepackingDisabled
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::setTapeRepackingDisabled(const common::dataStructures::SecurityIdentity &admin,
+                                     const std::string &vid, const std::string & reason) {
+
+  try {
+    modifyTapeState(admin,vid,common::dataStructures::Tape::REPACKING_DISABLED,std::nullopt,reason);
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
 void RdbmsCatalogue::setTapeDirty(const std::string& vid) {
   try {
     auto conn = m_connPool.getConn();
@@ -8998,7 +9014,12 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
           throw ex;
         }
         const auto nonBrokenState = std::find_if(std::begin(tapeFileStateList), std::end(tapeFileStateList),
-          [](std::pair<std::string, std::string> state) {return state.second != "BROKEN";});
+          [](std::pair<std::string, std::string> state) {
+            return (state.second != "BROKEN")
+                   && (state.second != "BROKEN_PENDING")
+                   && (state.second != "EXPORTED")
+                   && (state.second != "EXPORTED_PENDING");
+        });
 
         if (nonBrokenState != std::end(tapeFileStateList)) {
           ex.getMessage() << "WARNING: File with archive file ID " << archiveFileId <<

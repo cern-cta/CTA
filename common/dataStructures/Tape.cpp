@@ -44,11 +44,15 @@ const std::map<Tape::State,std::string> Tape::STATE_TO_STRING_MAP = {
   {Tape::State::DISABLED,"DISABLED"},
   {Tape::State::REPACKING,"REPACKING"},
   {Tape::State::REPACKING_PENDING,"REPACKING_PENDING"},
+  {Tape::State::EXPORTED,"EXPORTED"},
+  {Tape::State::EXPORTED_PENDING,"EXPORTED_PENDING"},
+  {Tape::State::REPACKING_DISABLED,"REPACKING_DISABLED"},
 };
 
 const std::set<Tape::State> Tape::PENDING_STATES_SET = {
   Tape::State::BROKEN_PENDING,
   Tape::State::REPACKING_PENDING,
+  Tape::State::EXPORTED_PENDING,
 };
 
 const std::map<std::string,Tape::State> Tape::STRING_TO_STATE_MAP = {
@@ -57,7 +61,10 @@ const std::map<std::string,Tape::State> Tape::STRING_TO_STATE_MAP = {
   {"BROKEN_PENDING",Tape::State::BROKEN_PENDING},
   {"DISABLED",Tape::State::DISABLED},
   {"REPACKING",Tape::State::REPACKING},
-  {"REPACKING_PENDING",Tape::State::REPACKING_PENDING}
+  {"REPACKING_PENDING",Tape::State::REPACKING_PENDING},
+  {"EXPORTED", Tape::State::EXPORTED},
+  {"EXPORTED_PENDING", Tape::State::EXPORTED_PENDING},
+  {"REPACKING_DISABLED",Tape::State::REPACKING_DISABLED},
 };
 
 std::string Tape::getAllPossibleStates(bool hidePendingStates){
@@ -127,6 +134,10 @@ Tape::State Tape::stringToState(const std::string& stateStr, bool hidePendingSta
   }
 }
 
+bool Tape::isActive() const {
+  return state == Tape::State::ACTIVE;
+}
+
 bool Tape::isDisabled() const {
   return state == Tape::State::DISABLED;
 }
@@ -137,6 +148,10 @@ bool Tape::isRepacking() const {
 
 bool Tape::isBroken() const {
   return state == Tape::State::BROKEN;
+}
+
+bool Tape::isExported() const {
+  return state == Tape::State::EXPORTED;
 }
 
 //------------------------------------------------------------------------------

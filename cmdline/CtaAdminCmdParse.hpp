@@ -542,7 +542,7 @@ const Option opt_object_id            { Option::OPT_STR,  "--objectid",         
 const Option opt_read_max_drives      { Option::OPT_UINT,  "--readmaxdrives",        "--rmd", " <read_max_drives>" };
 const Option opt_write_max_drives     { Option::OPT_UINT,  "--writemaxdrives",       "--wmd", " <write_max_drives>" };
 
-const Option opt_state                { Option::OPT_STR,  "--state",                 "-s",   std::string(" <\"") + Tape::stateToString(Tape::ACTIVE) +"\"" + " or \"" + Tape::stateToString(Tape::DISABLED) + "\" or \"" + Tape::stateToString(Tape::BROKEN) + "\" or \"" + Tape::stateToString(Tape::REPACKING) + "\">" };
+const Option opt_state                { Option::OPT_STR,  "--state",                 "-s",   std::string(" <\"") + Tape::stateToString(Tape::ACTIVE) +"\"" + " or \"" + Tape::stateToString(Tape::DISABLED) + "\" or \"" + Tape::stateToString(Tape::BROKEN) + "\" or \"" + Tape::stateToString(Tape::EXPORTED) + "\" or \"" + Tape::stateToString(Tape::REPACKING) + "\" or \"" + Tape::stateToString(Tape::REPACKING_DISABLED) + "\">" };
 const Option opt_activityregex        { Option::OPT_STR,  "--activityregex",         "--ar", " <activity_regex>"};
 const Option opt_diskinstance         { Option::OPT_STR,  "--diskinstance",         "--di",  " <disk_instance_name>" };
 const Option opt_diskinstance_alias   { Option::OPT_STR,  "--name",                 "-n",    " <disk_instance_name>", "--diskinstance" };
