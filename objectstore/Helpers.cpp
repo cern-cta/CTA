@@ -366,7 +366,7 @@ void Helpers::getLockedAndFetchedRepackQueue(RepackQueue& queue, ScopedExclusive
 //------------------------------------------------------------------------------
 std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candidateVids, cta::catalogue::Catalogue & catalogue,
     objectstore::Backend & objectstore, bool isRepack) {
-  // We will build the retrieve stats of the non-disabled, non-broken candidate vids here
+  // We will build the retrieve stats of the non-disabled, non-broken/exported candidate vids here
   std::list<SchedulerDatabase::RetrieveQueueStatistics> candidateVidsStats;
   // We will build the retrieve stats of the disabled vids here, as a fallback
   std::list<SchedulerDatabase::RetrieveQueueStatistics> candidateVidsStatsFallback;
@@ -391,8 +391,9 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
             (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::REPACKING && isRepack)) {
           logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v),"(g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::ACTIVE && !isRepack) || (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::REPACKING && isRepack)");
           candidateVidsStats.emplace_back(g_retrieveQueueStatistics.at(v).stats);
-        } else if ((g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::DISABLED && !isRepack)) {
-          logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v),"(g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::DISABLED && !isRepack)");
+        } else if ((g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::DISABLED && !isRepack) ||
+                  (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::REPACKING_DISABLED && isRepack)) {
+          logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v),"(g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::DISABLED && !isRepack) || (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::REPACKING_DISABLED && isRepack)");
           candidateVidsStatsFallback.emplace_back(g_retrieveQueueStatistics.at(v).stats);
         }
       } else {
@@ -410,7 +411,8 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
         if ((g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::ACTIVE && !isRepack) ||
             (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::REPACKING && isRepack)) {
           candidateVidsStats.emplace_back(g_retrieveQueueStatistics.at(v).stats);
-        } else if ((g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::DISABLED && !isRepack)) {
+        } else if ((g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::DISABLED && !isRepack) ||
+                   (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::REPACKING_DISABLED && isRepack)) {
           candidateVidsStatsFallback.emplace_back(g_retrieveQueueStatistics.at(v).stats);
         }
       }
