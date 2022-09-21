@@ -2198,6 +2198,12 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_tapes_of_mixed_state) {
   tape_broken_01.stateReason = "unit Test";
   m_catalogue->createTape(m_admin, tape_broken_01);
 
+  auto tape_exported_01 = m_tape1;
+  tape_exported_01.vid = "E000001";
+  tape_exported_01.state = common::dataStructures::Tape::EXPORTED;
+  tape_exported_01.stateReason = "unit Test";
+  m_catalogue->createTape(m_admin, tape_exported_01);
+
   auto tape_full_01 = m_tape1;
   tape_full_01.vid = "F000001";
   tape_full_01.full = true;
@@ -2220,6 +2226,13 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_tapes_of_mixed_state) {
   tape_broken_full_01.full = true;
   m_catalogue->createTape(m_admin, tape_broken_full_01);
 
+  auto tape_exported_full_01 = m_tape1;
+  tape_exported_full_01.vid = "EFO001";
+  tape_exported_full_01.state = common::dataStructures::Tape::EXPORTED;
+  tape_exported_full_01.stateReason = "unit Test";
+  tape_exported_full_01.full = true;
+  m_catalogue->createTape(m_admin, tape_exported_full_01);
+
   auto tape_disabled_full_01 = m_tape1;
   tape_disabled_full_01.vid = "DFO001";
   tape_disabled_full_01.state = common::dataStructures::Tape::DISABLED;
@@ -2236,7 +2249,7 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_tapes_of_mixed_state) {
 
   const auto tapes = m_catalogue->getTapes();
 
-  ASSERT_EQ(10, tapes.size());
+  ASSERT_EQ(12, tapes.size());
 
   {
     const auto pools = m_catalogue->getTapePools();
@@ -2245,12 +2258,12 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_tapes_of_mixed_state) {
     const auto &pool = pools.front();
     ASSERT_EQ(m_tape1.tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
-    ASSERT_EQ(10, pool.nbTapes);
-    ASSERT_EQ(10, pool.nbEmptyTapes);
+    ASSERT_EQ(12, pool.nbTapes);
+    ASSERT_EQ(12, pool.nbEmptyTapes);
     ASSERT_EQ(4, pool.nbDisabledTapes);
-    ASSERT_EQ(6, pool.nbFullTapes);
+    ASSERT_EQ(7, pool.nbFullTapes);
     ASSERT_EQ(1, pool.nbWritableTapes);
-    ASSERT_EQ(10 * m_mediaType.capacityInBytes, pool.capacityBytes);
+    ASSERT_EQ(12 * m_mediaType.capacityInBytes, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
@@ -2261,12 +2274,12 @@ TEST_P(cta_catalogue_CatalogueTest, createTapePool_tapes_of_mixed_state) {
 
     ASSERT_EQ(m_tape1.tapePoolName, pool->name);
     ASSERT_EQ(m_vo.name, pool->vo.name);
-    ASSERT_EQ(10, pool->nbTapes);
-    ASSERT_EQ(10, pool->nbEmptyTapes);
+    ASSERT_EQ(12, pool->nbTapes);
+    ASSERT_EQ(12, pool->nbEmptyTapes);
     ASSERT_EQ(4, pool->nbDisabledTapes);
-    ASSERT_EQ(6, pool->nbFullTapes);
+    ASSERT_EQ(7, pool->nbFullTapes);
     ASSERT_EQ(1, pool->nbWritableTapes);
-    ASSERT_EQ(10 * m_mediaType.capacityInBytes, pool->capacityBytes);
+    ASSERT_EQ(12 * m_mediaType.capacityInBytes, pool->capacityBytes);
     ASSERT_EQ(0, pool->dataBytes);
     ASSERT_EQ(0, pool->nbPhysicalFiles);
   }
@@ -4974,15 +4987,23 @@ TEST_P(cta_catalogue_CatalogueTest, createTape_StateNotActiveWithoutReasonShould
   m_catalogue->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
 
-  auto tape = m_tape1;
-  tape.state = cta::common::dataStructures::Tape::DISABLED;
-  ASSERT_THROW(m_catalogue->createTape(m_admin, tape),cta::catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);
+  auto tape1 = m_tape1;
+  tape1.state = cta::common::dataStructures::Tape::DISABLED;
+  ASSERT_THROW(m_catalogue->createTape(m_admin, tape1),cta::catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);
 
-  tape.state = cta::common::dataStructures::Tape::BROKEN;
-  ASSERT_THROW(m_catalogue->createTape(m_admin, tape),cta::catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);
+  auto tape2 = m_tape2;
+  tape2.state = cta::common::dataStructures::Tape::BROKEN;
+  ASSERT_THROW(m_catalogue->createTape(m_admin, tape2),cta::catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);
 
-  tape.stateReason = "Tape broken";
-  ASSERT_NO_THROW(m_catalogue->createTape(m_admin, tape));
+  tape2.stateReason = "Tape broken";
+  ASSERT_NO_THROW(m_catalogue->createTape(m_admin, tape2));
+
+  auto tape3 = m_tape3;
+  tape3.state = cta::common::dataStructures::Tape::EXPORTED;
+  ASSERT_THROW(m_catalogue->createTape(m_admin, tape3),cta::catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive);
+
+  tape3.stateReason = "Tape exported";
+  ASSERT_NO_THROW(m_catalogue->createTape(m_admin, tape3));
 }
 
 TEST_P(cta_catalogue_CatalogueTest, createTape_many_tapes) {
