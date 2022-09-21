@@ -44,7 +44,7 @@ RUN chmod 744 /etc/rc.local
 ADD ${BASEDIR}/etc/yum/pluginconf.d /etc/yum/pluginconf.d
 
 #Install the libs necessary for EOS to run
-RUN yum install -y eos-protobuf3 libisa-l libisa-l_crypto-devel xxhash-devel grpc
+RUN yum install -y eos-protobuf3 libisa-l libisa-l_crypto libisa-l_crypto-devel xxhash-devel grpc
 
 # disable selinux so that systemd works if the container is booted
 # with an image that already contains selinux
