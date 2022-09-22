@@ -21,7 +21,7 @@
 #include "common/log/LogContext.hpp"
 #include "common/threading/BlockingQueue.hpp"
 #include "common/threading/Thread.hpp"
-#include "daemon/TapedProxy.hpp"
+#include "tapeserver/daemon/TapedProxy.hpp"
 #include "tapeserver/daemon/TpconfigLine.hpp"
 #include "tapeserver/session/SessionState.hpp"
 #include "tapeserver/session/SessionType.hpp"

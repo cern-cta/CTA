@@ -55,6 +55,7 @@ DriveHandler::DriveHandler(const TapedConfiguration& tapedConfig, const Tpconfig
   SubprocessHandler(std::string("drive:") + driveConfig.unitName), m_processManager(pm),
   m_tapedConfig(tapedConfig), m_driveConfig(driveConfig),
   m_sessionEndContext(m_processManager.logContext().logger()) {
+
   // As the handler is started, its first duty is to create a new subprocess. This
   // will be managed by the process manager (initial request in getInitialStatus)
 }
@@ -283,7 +284,6 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
   log::ScopedParamContainer scoped(m_processManager.logContext());
   scoped.add("tapeDrive", m_driveConfig.unitName);
   m_lastHeartBeatTime = std::chrono::steady_clock::now();
-
   // Read from the socket pair
   try {
     serializers::WatchdogMessage message;
@@ -1099,7 +1099,6 @@ int DriveHandler::runChild() {
         return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
       }
     }
-
     castor::tape::tapeserver::daemon::DataTransferSession dataTransferSession(
       cta::utils::getShortHostname(),
       lc.logger(),
