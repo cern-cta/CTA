@@ -31,7 +31,7 @@ enum class SessionState: uint32_t  {
   Unmounting, ///< The subprocess is unmounting the tape.
   DrainingToDisk, ///< The subprocess is flushing the memory to disk (retrieves only)
   ShuttingDown, ///< The subprocess completed all tasks and will exit
-  Shutdown,   ///< The subprocess is finished after a shutdown was requested and will not be retarted (internal state)
+  Shutdown,   ///< The subprocess is finished after a shutdown was requested and will not be restarted (internal state)
   Killed,     ///< The subprocess was killed and a restart is expected.
   Fatal       ///< The subprocess reported a fatal error (like scheduling inaccessible).
 };

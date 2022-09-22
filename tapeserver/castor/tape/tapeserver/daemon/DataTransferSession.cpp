@@ -104,7 +104,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
 
   setProcessCapabilities("cap_sys_rawio+ep");
 
-  TapeSessionReporter tapeServerReporter(m_initialProcess, m_driveConfig, m_hostname, lc);
+  TapeSessionReporter tapeSessionReporter(m_initialProcess, m_driveConfig, m_hostname, lc);
 
   std::unique_ptr<cta::TapeMount> tapeMount;
 
@@ -118,6 +118,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
   while (true) {
     // Down-up transition loop
     while (true) {
+      m_initialProcess.reportHeartbeat(0,0);
       try {
         auto desiredState = m_scheduler.getDesiredDriveState(m_driveConfig.unitName, lc);
         if (!desiredState.up) {
@@ -164,7 +165,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
     // As getting next mount could be long, we report the drive as up immediately.
     m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount,
                                   cta::common::dataStructures::DriveStatus::Up, lc);
-    tapeServerReporter.reportState(cta::tape::session::SessionState::Scheduling,
+    tapeSessionReporter.reportState(cta::tape::session::SessionState::Scheduling,
                                    cta::tape::session::SessionType::Undetermined);
 
     try {
@@ -197,7 +198,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
   m_volInfo.nbFiles = tapeMount->getNbFiles();
   m_volInfo.mountId = tapeMount->getMountTransactionId();
   m_volInfo.labelFormat = tapeMount->getLabelFormat();
-  tapeServerReporter.setVolInfo(m_volInfo);
+  tapeSessionReporter.setVolInfo(m_volInfo);
   // Report drive status and mount info through tapeMount interface
   tapeMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
   // 2c) ... and log.
@@ -215,10 +216,10 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
   // Depending on the type of session, branch into the right execution
   switch (m_volInfo.mountType) {
     case cta::common::dataStructures::MountType::Retrieve:
-      return executeRead(lc, dynamic_cast<cta::RetrieveMount *>(tapeMount.get()), tapeServerReporter);
+      return executeRead(lc, dynamic_cast<cta::RetrieveMount *>(tapeMount.get()), tapeSessionReporter);
     case cta::common::dataStructures::MountType::ArchiveForUser:
     case cta::common::dataStructures::MountType::ArchiveForRepack:
-      return executeWrite(lc, dynamic_cast<cta::ArchiveMount *>(tapeMount.get()), tapeServerReporter);
+      return executeWrite(lc, dynamic_cast<cta::ArchiveMount *>(tapeMount.get()), tapeSessionReporter);
     case cta::common::dataStructures::MountType::Label:
       return executeLabel(lc, dynamic_cast<cta::LabelMount *>(tapeMount.get()));
     default:

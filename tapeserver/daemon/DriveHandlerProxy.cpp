@@ -21,7 +21,7 @@
 namespace cta { namespace tape { namespace daemon {
 
 DriveHandlerProxy::DriveHandlerProxy(server::SocketPair& socketPair): m_socketPair(socketPair) {
-  m_socketPair.close(server::SocketPair::Side::parent);  
+  m_socketPair.close(server::SocketPair::Side::parent);
 }
 
 // TODO: me might want to group the messages to reduce the rate.
@@ -76,6 +76,26 @@ void DriveHandlerProxy::reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t t
         watchdogMessage.InitializationErrorString());
   }
   m_socketPair.send(buffer);
+
+  // Listen for any possible messages from the parent process
+  // If it is a state change, echo it back to parent
+  // This is used by DriveHandlerTest unit tests
+  try {
+    serializers::WatchdogMessage message;
+    auto datagram = m_socketPair.receive();
+    if (!message.ParseFromString(datagram)) {
+      // Use the tolerant parser to assess the situation.
+      message.ParsePartialFromString(datagram);
+      throw cta::exception::Exception(std::string("In SubprocessHandler::ProcessingStatus(): could not parse message: ") +
+                                      message.InitializationErrorString());
+    }
+    if (message.reportingstate()) {
+      reportState(static_cast<session::SessionState>(message.sessionstate()),
+                  static_cast<session::SessionType>(message.sessiontype()),
+                  message.vid());
+    }
+  }
+  catch (server::SocketPair::NothingToReceive&) {}
 }
 
 void DriveHandlerProxy::reportState(const cta::tape::session::SessionState state, const cta::tape::session::SessionType type, const std::string& vid) {
@@ -96,7 +116,7 @@ void DriveHandlerProxy::reportState(const cta::tape::session::SessionState state
 }
 
 
-DriveHandlerProxy::~DriveHandlerProxy() { }
+DriveHandlerProxy::~DriveHandlerProxy() = default;
 
 
 
