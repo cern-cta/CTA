@@ -261,6 +261,9 @@ if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
   fi
 fi
 
+  # enable report (needed for eos4, enabled by default on eos5 but does not hurt...)
+  eos io enable -r
+
   eos vid enable krb5
   eos vid enable sss
   eos vid enable unix
