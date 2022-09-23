@@ -66,18 +66,6 @@ void TapeDrivesCatalogueState::checkDriveCanBeCreated(const cta::common::dataStr
   }
 }
 
-std::list<cta::common::dataStructures::TapeDrive> TapeDrivesCatalogueState::getDriveStates(
-  log::LogContext & lc) const {
-  std::list<cta::common::dataStructures::TapeDrive> tapeDrivesList;
-  const auto driveNames = m_catalogue.getTapeDriveNames();
-  for (const auto& driveName : driveNames) {
-    const auto tapeDrive = m_catalogue.getTapeDrive(driveName);
-    if (!tapeDrive) continue;
-    tapeDrivesList.push_back(tapeDrive.value());
-  }
-  return tapeDrivesList;
-}
-
 void TapeDrivesCatalogueState::removeDrive(const std::string& drive, log::LogContext &lc) {
   try {
     m_catalogue.deleteTapeDrive(drive);

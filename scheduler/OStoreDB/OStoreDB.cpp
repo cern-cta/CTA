@@ -483,7 +483,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
   // If a next mount exists the drive "counts double", but the corresponding drive
   // is either about to mount, or about to replace its current mount.
   double registerFetchTime = 0;
-  auto driveStates = m_tapeDrivesState->getDriveStates(logContext);
+  const auto driveStates = m_catalogue.getTapeDrives();
   registerFetchTime = t.secs(utils::Timer::resetCounter);
   using common::dataStructures::DriveStatus;
   std::set<int> activeDriveStatuses = {

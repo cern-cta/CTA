@@ -757,10 +757,10 @@ void Scheduler::RepackReportBatch::report(log::LogContext& lc) {
 //------------------------------------------------------------------------------
 common::dataStructures::DesiredDriveState Scheduler::getDesiredDriveState(const std::string& driveName, log::LogContext & lc) {
   utils::Timer t;
-  auto driveStates = m_tapeDrivesState->getDriveStates(lc);
-  for (auto & driveState : driveStates) {
+  const auto driveStates = m_catalogue.getTapeDrives();
+  for (const auto & driveState : driveStates) {
     if (driveState.driveName == driveName) {
-      auto schedulerDbTime = t.secs();
+      const auto schedulerDbTime = t.secs();
       if (schedulerDbTime > 1) {
         log::ScopedParamContainer spc(lc);
         spc.add("drive", driveName)
@@ -940,7 +940,7 @@ std::optional<cta::common::dataStructures::TapeDrive> Scheduler::getDriveState(c
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::TapeDrive> Scheduler::getDriveStates(const common::dataStructures::SecurityIdentity &cliIdentity, log::LogContext & lc) const {
   utils::Timer t;
-  auto ret = m_tapeDrivesState->getDriveStates(lc);
+  const auto ret = m_catalogue.getTapeDrives();
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("schedulerDbTime", schedulerDbTime);

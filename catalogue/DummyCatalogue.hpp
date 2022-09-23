@@ -18,6 +18,7 @@
 #pragma once
 
 #include <iostream>
+#include <list>
 
 #include "Catalogue.hpp"
 
@@ -93,7 +94,6 @@ public:
   void deleteFileFromRecycleBin(const uint64_t archiveFileId, log::LogContext &lc) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void deleteFilesFromRecycleLog(const std::string & vid, log::LogContext & lc) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void createTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
-  std::list<common::dataStructures::TapeDrive> getTapeDrives() const {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void deleteTapeDrive(const std::string &tapeDriveName) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   void createTapeDriveConfig(const std::string &tapeDriveName, const std::string &category, const std::string &keyName, const std::string &value, const std::string &source) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
   std::list<cta::catalogue::Catalogue::DriveConfig> getTapeDriveConfigs() const {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
@@ -266,7 +266,7 @@ public:
     return {m_tapeDriveStatus.driveName};
   }
 
-  std::optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string &tapeDriveName) const {
+  std::optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string &tapeDriveName) const override {
     if (m_tapeDriveStatus.driveName != "") return m_tapeDriveStatus;
     common::dataStructures::TapeDrive tapeDriveStatus;
     const time_t reportTime = time(nullptr);
@@ -288,6 +288,13 @@ public:
 
 
     return tapeDriveStatus;
+  }
+
+  std::list<common::dataStructures::TapeDrive> getTapeDrives() const override {
+    std::list<common::dataStructures::TapeDrive> tapeDrives;
+    const auto tapeDrive = getTapeDrive(m_tapeDriveStatus.driveName);
+    if (tapeDrive.has_value()) tapeDrives.push_back(tapeDrive.value());
+    return tapeDrives;
   }
 
   void setDesiredTapeDriveState(const std::string&,

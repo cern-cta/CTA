@@ -71,7 +71,6 @@ public:
     const common::dataStructures::SecurityIdentity& identity, log::LogContext & lc);
   CTA_GENERATE_EXCEPTION_CLASS(DriveAlreadyExistsException);
   void checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo);
-  std::list<cta::common::dataStructures::TapeDrive> getDriveStates(log::LogContext & lc) const;
   void removeDrive(const std::string& drive, log::LogContext &lc);
   void setDesiredDriveState(const std::string& drive, const common::dataStructures::DesiredDriveState & desiredState,
     log::LogContext &lc);
