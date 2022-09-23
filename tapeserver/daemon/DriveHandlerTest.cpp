@@ -215,9 +215,6 @@ TEST_P(DriveHandlerTest, TriggerCleanerSessionAtTheEndOfSession) {
 
   processManager.addHandler(std::move(driveHandler));
 
-  // Make sure the handler started the child process with the tape session
-  processManager.runForkManagement();
-
   // Get back the drive handler and let the reporter send messages
   DriveHandler& handler = dynamic_cast<DriveHandler&>(processManager.at("drive:T10D6116"));
   DummyTapeSessionReporter reporter(handler);
@@ -233,83 +230,6 @@ TEST_P(DriveHandlerTest, TriggerCleanerSessionAtTheEndOfSession) {
   }
 
   // Run the process manager that should exit after Fatal state
-  processManager.run();
-  reporter.waitThreads();
-
-  std::string logToCheck = dlog.getLog();
-  ASSERT_EQ(std::string::npos, logToCheck.find("Should run cleaner but VID is missing"));
-  ASSERT_NE(std::string::npos, logToCheck.find("starting cleaner"));
-}
-
-
-TEST_P(DriveHandlerTest, TriggerCleanerNextSession) {
-
-  // Create the log context
-  cta::log::StringLogger dlog("dummy", "unitTest", cta::log::DEBUG);
-  cta::log::LogContext lc(dlog);
-
-  // Create the config files and initiate the catalogue and the scheduler
-  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
-  cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName = driveConfig.unitName;
-  driveInfo.logicalLibrary = driveConfig.logicalLibrary;
-  driveInfo.host = "host";
-
-  m_catalogue.reset(nullptr);
-
-  char envXrdSecPROTOCOL[] = "XrdSecPROTOCOL=krb5";
-  char envKRB5CCNAME[] = "KRB5CCNAME=/tmp/cta/krb5cc_0";
-  char envXrdSecSSSKT[] = "XrdSecSSSKT=/var/tmp/cta-test-temporary-kt";
-
-  putenv(envXrdSecPROTOCOL);
-  putenv(envKRB5CCNAME);
-  putenv(envXrdSecSSSKT);
-
-  TempFile ctaConf, catalogueConfig, tpConfig;
-  catalogueConfig.stringFill("in_memory");
-  ctaConf.stringFill("ObjectStore BackendPath ");
-  ctaConf.stringAppend(getSchedulerDB().getBackend().getParams()->toURL());
-  ctaConf.stringAppend("\n"
-                       "taped CatalogueConfigFile ");
-  ctaConf.stringAppend(catalogueConfig.path());
-  ctaConf.stringAppend("\n"
-                       "taped BufferCount 1\n"
-                       "taped TpConfigPath ");
-  ctaConf.stringAppend(tpConfig.path());
-  auto completeConfig = cta::tape::daemon::TapedConfiguration::createFromCtaConf(ctaConf.path());
-
-  // Create the process manager and drive handler
-  cta::tape::daemon::ProcessManager processManager(lc);
-
-  std::unique_ptr<cta::tape::daemon::DriveHandler> driveHandler(
-    new cta::tape::daemon::DriveHandler(completeConfig, driveConfig, processManager));
-
-  processManager.addHandler(std::move(driveHandler));
-
-  // Make sure the handler started the child process with the tape session
-  processManager.runForkManagement();
-
-  // Get back the drive handler and let the reporter send messages
-  DriveHandler& handler = dynamic_cast<DriveHandler&>(processManager.at("drive:T10D6116"));
-  DummyTapeSessionReporter reporter(handler);
-
-  {
-    reporter.startThreads();
-    reporter.reportState(cta::tape::session::SessionState::Scheduling);
-    reporter.setVid("T12345");
-    reporter.reportState(cta::tape::session::SessionState::Mounting);
-    reporter.reportState(cta::tape::session::SessionState::Running);
-
-    //DriveHandler & es = dynamic_cast<DriveHandler&>(pm.at("drive:T10D6116"));
-    //es.kill();
-    //::kill(::getpid(), SIGTERM);
-    //::kill(es.m_pid, SIGCHLD);
-    //reporter.killDriveHandler(dynamic_cast<DriveHandler&>(pm.at("drive:T10D6116")));
-
-    //reporter.reportState(cta::tape::session::SessionState::Fatal);
-    reporter.finish();
-  }
-
   processManager.run();
   reporter.waitThreads();
 
