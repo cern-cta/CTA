@@ -158,7 +158,7 @@ std::list<std::string> Login::readNonEmptyLines(std::istream &inputStream) {
     {
       const std::string::size_type newlinePos = line.find("\n");
       if (newlinePos != std::string::npos) {
-        line = line.substr(0, newlinePos);
+        line.resize(newlinePos);
       }
     }
 

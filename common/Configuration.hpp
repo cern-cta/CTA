@@ -152,7 +152,7 @@ namespace cta { namespace common {
 
         T value;
         std::stringstream ss;
-        ss << strValue.c_str();
+        ss << strValue;
         ss >> value;
 
         if(nullptr != log) {
@@ -193,7 +193,7 @@ namespace cta { namespace common {
 
         T value;
         std::stringstream ss;
-        ss << strValue.c_str();
+        ss << strValue;
         ss >> value;
 
         if(nullptr != log) {

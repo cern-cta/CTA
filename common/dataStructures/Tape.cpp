@@ -55,7 +55,7 @@ std::string Tape::getAllPossibleStates(){
     ret += kv.first + " ";
   }
   if(ret.size())
-    ret = ret.substr(0,ret.size() - 1);
+    ret.pop_back();
   return ret;
 }
 

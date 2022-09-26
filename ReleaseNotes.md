@@ -1,3 +1,10 @@
+# v4.NEXT
+
+## Summary
+### Bug fixes
+- cta/CTA#160 - Improve DB access to get all the Tape Drive States
+- cta/CTA#164 - Cppcheck job is not failing when there are errors
+
 # v4.7.11-1
 
 ## Summary
