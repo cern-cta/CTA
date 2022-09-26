@@ -126,7 +126,7 @@ Status CtaRpcImpl::Archive(::grpc::ServerContext* context, const ::cta::frontend
         archiveRequest.requester.group = request->md().cli().user().groupname();
         archiveRequest.storageClass = storageClass;
         archiveRequest.srcURL = request->md().transport().dst_url();
-        archiveRequest.archiveReportURL = request->md().transport().report_url() + "?archiveid=" + std::to_string(archiveFileId);
+        archiveRequest.archiveReportURL = request->md().transport().report_url();
         archiveRequest.archiveErrorReportURL = request->md().transport().error_report_url();
         archiveRequest.creationLog.host = context->peer();
         archiveRequest.creationLog.username = instance;
