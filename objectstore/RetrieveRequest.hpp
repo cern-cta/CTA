@@ -172,6 +172,7 @@ public:
       rrri.set_file_buffer_url(fileBufferURL);
       rrri.set_repack_request_address(repackRequestAddress);
       rrri.set_fseq(fSeq);
+      rrri.set_force_disabled_tape(false); // TODO: To remove after REPACKING state is fully deployed
       if(rrri.has_has_user_provided_file()){
 	rrri.set_has_user_provided_file(hasUserProvidedFile);
       }
