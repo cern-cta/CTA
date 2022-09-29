@@ -1888,14 +1888,19 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
     m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
     break;
   case common::dataStructures::Tape::REPACKING:
-    try {
-      m_catalogue.modifyTapeState(admin, vid, common::dataStructures::Tape::REPACKING_PENDING, prev_state, stateReason);
-    } catch (catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive & ex) {
-      auto state_str_pending = common::dataStructures::Tape::stateToString(common::dataStructures::Tape::REPACKING_PENDING);
-      auto state_str = common::dataStructures::Tape::stateToString(common::dataStructures::Tape::REPACKING);
-      throw catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(std::regex_replace(ex.what(), std::regex(state_str_pending), state_str));
+    if (prev_state == common::dataStructures::Tape::REPACKING_DISABLED) {
+      // If tape is on REPACKING_DISABLED, move directly to REPACKING
+      m_catalogue.modifyTapeState(admin, vid, new_state, prev_state, stateReason);
+    } else {
+      try {
+        m_catalogue.modifyTapeState(admin, vid, common::dataStructures::Tape::REPACKING_PENDING, prev_state, stateReason);
+      } catch (catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive & ex) {
+        auto state_str_pending = common::dataStructures::Tape::stateToString(common::dataStructures::Tape::REPACKING_PENDING);
+        auto state_str = common::dataStructures::Tape::stateToString(common::dataStructures::Tape::REPACKING);
+        throw catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(std::regex_replace(ex.what(), std::regex(state_str_pending), state_str));
+      }
+      m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
     }
-    m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
     break;
   case common::dataStructures::Tape::EXPORTED:
     try {
