@@ -553,20 +553,23 @@ test_tape_state_change_queue_moved() {
 # Finalize
 ################################################################
 
-test_tape_state_queueing_priority 1 DISABLED DISABLED ACTIVE 2   # ACTIVE queue has priority over DISABLED queue (1)
-test_tape_state_queueing_priority 2 DISABLED ACTIVE DISABLED 1   # ACTIVE queue has priority over DISABLED queue (2)
-test_tape_state_queueing_priority 3 REPACKING BROKEN DISABLED 2  # DISABLED queue selected when no ACTIVE queue is available (1)
-test_tape_state_queueing_priority 4 BROKEN DISABLED REPACKING 1  # DISABLED queue selected when no ACTIVE queue is available (2)
-test_tape_state_queueing_priority 5 BROKEN REPACKING BROKEN 9999 # Request not queued on REPACKING or BROKEN queues
-test_tape_state_change_queue_removed 6 ACTIVE REPACKING   # Request canceled and reported to user, after state changed from ACTIVE to REPACKING
-test_tape_state_change_queue_removed 7 ACTIVE BROKEN      # Request canceled and reported to user, after state changed from ACTIVE to BROKEN
-test_tape_state_change_queue_removed 8 DISABLED REPACKING # Request canceled and reported to user, after state changed from DISABLED to REPACKING
-test_tape_state_change_queue_removed 9 DISABLED BROKEN    # Request canceled and reported to user, after state changed from DISABLED to REPACKING
-test_tape_state_change_queue_preserved 10 ACTIVE DISABLED # Request preserved on queue, after state changed from ACTIVE to DISABLED
-test_tape_state_change_queue_preserved 11 DISABLED ACTIVE # Request preserved on queue, after state changed from DISABLED to ACTIVE
-test_tape_state_change_queue_moved 12 ACTIVE DISABLED 0 REPACKING ACTIVE 1  # State changed from ACTIVE to REPACKING, requests moved to another ACTIVE queue
-test_tape_state_change_queue_moved 13 DISABLED ACTIVE 1 DISABLED BROKEN 0   # State changed from ACTIVE to BROKEN, request moved to another DISABLED queue (ACTIVE queue not available)
-test_tape_state_change_queue_moved 14 ACTIVE BROKEN 0 REPACKING BROKEN 9999 # State changed from ACTIVE to REPACKING, request canceled and reported to user (ACTIVE/DISABLED queue not available)) 
+test_tape_state_queueing_priority 1 DISABLED DISABLED ACTIVE 2                  # ACTIVE queue has priority over DISABLED queue (1)
+test_tape_state_queueing_priority 2 DISABLED ACTIVE DISABLED 1                  # ACTIVE queue has priority over DISABLED queue (2)
+test_tape_state_queueing_priority 3 REPACKING BROKEN DISABLED 2                 # DISABLED queue selected when no ACTIVE queue is available (1)
+test_tape_state_queueing_priority 4 BROKEN DISABLED REPACKING 1                 # DISABLED queue selected when no ACTIVE queue is available (2)
+test_tape_state_queueing_priority 5 BROKEN REPACKING EXPORTED 9999              # Request not queued on REPACKING or BROKEN or EXPORTED queues
+test_tape_state_queueing_priority 6 REPACKING REPACKING REPACKING_DISABLED 9999 # Request not queued on REPACKING or REPACKING_DISABLED queues
+test_tape_state_change_queue_removed 7 ACTIVE REPACKING                         # Request canceled and reported to user, after state changed from ACTIVE to REPACKING
+test_tape_state_change_queue_removed 8 ACTIVE BROKEN                            # Request canceled and reported to user, after state changed from ACTIVE to BROKEN
+test_tape_state_change_queue_removed 9 ACTIVE EXPORTED                          # Request canceled and reported to user, after state changed from ACTIVE to EXPORTED
+test_tape_state_change_queue_removed 10 DISABLED REPACKING                      # Request canceled and reported to user, after state changed from DISABLED to REPACKING
+test_tape_state_change_queue_removed 11 DISABLED BROKEN                         # Request canceled and reported to user, after state changed from DISABLED to BROKEN
+test_tape_state_change_queue_removed 12 DISABLED EXPORTED                       # Request canceled and reported to user, after state changed from DISABLED to EXPORTED
+test_tape_state_change_queue_preserved 13 ACTIVE DISABLED                       # Request preserved on queue, after state changed from ACTIVE to DISABLED
+test_tape_state_change_queue_preserved 14 DISABLED ACTIVE                       # Request preserved on queue, after state changed from DISABLED to ACTIVE
+test_tape_state_change_queue_moved 15 ACTIVE DISABLED 0 REPACKING ACTIVE 1      # State changed from ACTIVE to REPACKING, requests moved to another ACTIVE queue
+test_tape_state_change_queue_moved 16 DISABLED ACTIVE 1 DISABLED BROKEN 0       # State changed from ACTIVE to BROKEN, request moved to another DISABLED queue (ACTIVE queue not available)
+test_tape_state_change_queue_moved 17 ACTIVE BROKEN 0 REPACKING BROKEN 9999     # State changed from ACTIVE to REPACKING, request canceled and reported to user (ACTIVE/DISABLED queue not available))
 
 echo
 echo "OK: all tests passed"
