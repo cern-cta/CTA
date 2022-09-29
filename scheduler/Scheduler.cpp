@@ -1822,6 +1822,8 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
 //------------------------------------------------------------------------------
 void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State &new_state, const std::optional<std::string> &stateReason, log::LogContext& logContext) {
 
+  using Tape = common::dataStructures::Tape;
+
   // Tape must exist on catalogue
   if (!m_catalogue.tapeExists(vid)) {
     throw cta::exception::UserError("The VID " + vid + " does not exist");
@@ -1829,89 +1831,99 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
 
   // Validate tape state change based on previous state
   auto prev_state = m_catalogue.getTapesByVid(vid)[vid].state;
+
+  // If previous and desired states are the same, do nothing
   if (prev_state == new_state) return;
 
-  switch (prev_state) {
-  case common::dataStructures::Tape::REPACKING:
-    if (isBeingRepacked(vid) && new_state != common::dataStructures::Tape::REPACKING_DISABLED) {
-      throw cta::exception::UserError("Cannot modify tape " + vid + " state because there is a repack for that tape");
-    }
-    break;
-  case common::dataStructures::Tape::BROKEN_PENDING:
-    if (new_state == common::dataStructures::Tape::BROKEN) return; // Ok, because this is the transition currently in place
+  // If previous state is already in transition (temporary state) to the desired state, do nothing
+  if (prev_state == Tape::BROKEN_PENDING && new_state == Tape::BROKEN) return;
+  if (prev_state == Tape::EXPORTED_PENDING && new_state == Tape::EXPORTED) return;
+  if (prev_state == Tape::REPACKING_PENDING && new_state == Tape::REPACKING) return;
+
+  // If previous state is temporary, user should wait for it to complete
+  if (
+          prev_state == Tape::BROKEN_PENDING
+          || prev_state == Tape::EXPORTED_PENDING
+          || prev_state == Tape::REPACKING_PENDING
+          ) {
     throw cta::exception::UserError("Cannot modify tape " + vid + " state while it is in a temporary internal state");
-  case common::dataStructures::Tape::REPACKING_PENDING:
-    if (new_state == common::dataStructures::Tape::REPACKING) return; // Ok, because this is the transition currently in place
-    throw cta::exception::UserError("Cannot modify tape " + vid + " state while it is in a temporary internal state");
-  case common::dataStructures::Tape::EXPORTED_PENDING:
-    if (new_state == common::dataStructures::Tape::EXPORTED) return; // Ok, because this is the transition currently in place
-    throw cta::exception::UserError("Cannot modify tape " + vid + " state while it is in a temporary internal state");
-  case common::dataStructures::Tape::REPACKING_DISABLED:
-    if (isBeingRepacked(vid) && new_state != common::dataStructures::Tape::REPACKING) {
-      throw cta::exception::UserError("Cannot modify tape " + vid + " state because there is a repack for that tape");
-    }
-    if ((new_state != common::dataStructures::Tape::REPACKING)
-        && (new_state != common::dataStructures::Tape::BROKEN)
-        && (new_state != common::dataStructures::Tape::EXPORTED)) { // Only these transitions are allowed from REPACKING_DISABLED
-      throw cta::exception::UserError("Cannot modify tape " + vid + " state from " + common::dataStructures::Tape::stateToString(prev_state) + " to " + common::dataStructures::Tape::stateToString(new_state));
-    }
-    break;
-  default: // Proceed normally for remaining states
-    if (new_state == common::dataStructures::Tape::REPACKING_DISABLED) {
-      throw cta::exception::UserError("Cannot modify tape " + vid + " state from " + common::dataStructures::Tape::stateToString(prev_state) + " to " + common::dataStructures::Tape::stateToString(new_state));
-    }
-    break;
   }
 
-  // Perform tape state change
+  // User is not allowed to select explicitly a temporary state
+  if (
+          new_state == Tape::BROKEN_PENDING
+          || new_state == Tape::EXPORTED_PENDING
+          || new_state == Tape::REPACKING_PENDING
+          ) {
+    throw cta::exception::UserError("Internal states cannot be set directly by the user");
+  }
+
+  // Moving out of REPACKING/REPACKING_DISABLED is only allowed if there is no repacking ongoing
+  if (
+          (prev_state == Tape::REPACKING || prev_state == Tape::REPACKING_DISABLED)
+          && !(new_state == Tape::REPACKING || new_state == Tape::REPACKING_DISABLED)
+          && isBeingRepacked(vid)
+          ) {
+    throw cta::exception::UserError("Cannot modify tape " + vid + " state because there is a repack for that tape");
+  }
+
+  // REPACKING_DISABLED can only be set while in REPACKING
+  if (prev_state != Tape::REPACKING && new_state == Tape::REPACKING_DISABLED) {
+    throw cta::exception::UserError("Cannot modify tape " + vid + " state from " + Tape::stateToString(prev_state) + " to " + Tape::stateToString(new_state));
+  }
+
+  // REPACKING_DISABLED can only be modified to REPACKING, BROKEN or EXPORTED
+  if (
+          prev_state == Tape::REPACKING_DISABLED
+          && !(new_state == Tape::REPACKING || new_state == Tape::BROKEN || new_state == Tape::EXPORTED)
+          ) {
+    throw cta::exception::UserError("Cannot modify tape " + vid + " state from " + Tape::stateToString(prev_state) + " to " + Tape::stateToString(new_state));
+  }
+
+  // Validation of tape state change request is complete
+  // Proceed with tape state change...
+
   switch (new_state) {
-  case common::dataStructures::Tape::ACTIVE:
-  case common::dataStructures::Tape::DISABLED:
-  case common::dataStructures::Tape::REPACKING_DISABLED:
+  case Tape::ACTIVE:
+  case Tape::DISABLED:
+  case Tape::REPACKING_DISABLED:
     // Simply set the new tape state
     m_catalogue.modifyTapeState(admin, vid, new_state, prev_state, stateReason);
     break;
-  case common::dataStructures::Tape::BROKEN:
+  case Tape::BROKEN:
     try {
-      m_catalogue.modifyTapeState(admin, vid, common::dataStructures::Tape::BROKEN_PENDING, prev_state, stateReason);
+      m_catalogue.modifyTapeState(admin, vid, Tape::BROKEN_PENDING, prev_state, stateReason);
     } catch (catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive & ex) {
-      auto state_str_pending = common::dataStructures::Tape::stateToString(common::dataStructures::Tape::BROKEN_PENDING);
-      auto state_str = common::dataStructures::Tape::stateToString(common::dataStructures::Tape::BROKEN);
-      throw catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(std::regex_replace(ex.what(), std::regex(state_str_pending), state_str));
+      throw catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(
+              std::regex_replace(ex.what(), std::regex(Tape::stateToString(Tape::BROKEN_PENDING)), Tape::stateToString(Tape::BROKEN)));
     }
     m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
     break;
-  case common::dataStructures::Tape::REPACKING:
-    if (prev_state == common::dataStructures::Tape::REPACKING_DISABLED) {
-      // If tape is on REPACKING_DISABLED, move directly to REPACKING
+  case Tape::REPACKING:
+    if (prev_state == Tape::REPACKING_DISABLED) {
+      // If tape is on REPACKING_DISABLED state, move it directly to REPACKING
       m_catalogue.modifyTapeState(admin, vid, new_state, prev_state, stateReason);
     } else {
       try {
-        m_catalogue.modifyTapeState(admin, vid, common::dataStructures::Tape::REPACKING_PENDING, prev_state, stateReason);
+        m_catalogue.modifyTapeState(admin, vid, Tape::REPACKING_PENDING, prev_state, stateReason);
       } catch (catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive & ex) {
-        auto state_str_pending = common::dataStructures::Tape::stateToString(common::dataStructures::Tape::REPACKING_PENDING);
-        auto state_str = common::dataStructures::Tape::stateToString(common::dataStructures::Tape::REPACKING);
-        throw catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(std::regex_replace(ex.what(), std::regex(state_str_pending), state_str));
+        throw catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(
+                std::regex_replace(ex.what(), std::regex(Tape::stateToString(Tape::REPACKING_PENDING)), Tape::stateToString(Tape::REPACKING)));
       }
       m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
     }
     break;
-  case common::dataStructures::Tape::EXPORTED:
+  case Tape::EXPORTED:
     try {
-      m_catalogue.modifyTapeState(admin, vid, common::dataStructures::Tape::EXPORTED_PENDING, prev_state, stateReason);
+      m_catalogue.modifyTapeState(admin, vid, Tape::EXPORTED_PENDING, prev_state, stateReason);
     } catch (catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive & ex) {
-      auto state_str_pending = common::dataStructures::Tape::stateToString(common::dataStructures::Tape::EXPORTED_PENDING);
-      auto state_str = common::dataStructures::Tape::stateToString(common::dataStructures::Tape::EXPORTED);
-      throw catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(std::regex_replace(ex.what(), std::regex(state_str_pending), state_str));
+      throw catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(
+              std::regex_replace(ex.what(), std::regex(Tape::stateToString(Tape::EXPORTED_PENDING)), Tape::stateToString(Tape::EXPORTED)));
     }
     m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
     break;
-  case common::dataStructures::Tape::BROKEN_PENDING:
-  case common::dataStructures::Tape::REPACKING_PENDING:
-    // PENDING states should not be set directly
-    throw cta::exception::UserError("Internal states cannot be set directly by the user");
   default:
-    throw cta::exception::UserError("Unknown tape state");
+    throw cta::exception::UserError("Unknown procedure to change tape state to " + Tape::stateToString(new_state));
   }
 
   m_db.clearRetrieveQueueStatisticsCache(vid);
