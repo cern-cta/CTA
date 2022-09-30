@@ -151,6 +151,15 @@ uint64_t cta::RetrieveMount::getCapacityInBytes() const {
 }
 
 //------------------------------------------------------------------------------
+// getEncryptionKeyName()
+//------------------------------------------------------------------------------
+std::string cta::RetrieveMount::getEncryptionKeyName() const {
+  if(!m_dbMount)
+    throw exception::Exception("In cta::RetrieveMount::getEncryptionKeyName(): got nullptr dbMount");
+  return m_dbMount->mountInfo.encryptionKeyName;
+}
+
+//------------------------------------------------------------------------------
 // getLabelFormat()
 //------------------------------------------------------------------------------
 cta::common::dataStructures::Label::Format cta::RetrieveMount::getLabelFormat() const {

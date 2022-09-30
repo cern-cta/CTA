@@ -59,7 +59,7 @@ class EncryptionControl {
    * @param st in order for the encryption script to set the VMGR tag or not.
    * @return {true, keyName, key, stdout} if the encryption has been set, {false, "", "", stdout} otherwise.
    */
-  EncryptionStatus enable(castor::tape::tapeserver::drive::DriveInterface &m_drive, const std::string & vid, SetTag st);
+  EncryptionStatus enable(castor::tape::tapeserver::drive::DriveInterface &m_drive, const std::string & keyId, SetTag st);
 
   /**
    * Wrapper function to clear the encryption parameters from the drive - essentially meaning disabling the encryption.

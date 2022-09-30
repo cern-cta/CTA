@@ -198,6 +198,12 @@ public:
   cta::common::dataStructures::Label::Format getLabelFormat() const override;
 
   /**
+    * Returns the encryption key ID of the tape
+    * @return the encryption key ID of the tape
+    */
+  std::string getEncryptionKeyName() const override;
+
+  /**
     * Creates a disk reporter for the ArchiveJob (this is a wrapper).
     * @param URL: report address
     * @param reporterState void promise to be set when the report is done asynchronously.
