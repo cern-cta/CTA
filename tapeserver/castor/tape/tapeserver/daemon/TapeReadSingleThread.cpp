@@ -326,7 +326,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
         // status:
         cta::log::ScopedParamContainer encryptionLogParams(m_logContext);
         {
-          auto encryptionStatus = m_encryptionControl.enable(m_drive, m_volInfo.vid,
+          auto encryptionStatus = m_encryptionControl.enable(m_drive, m_volInfo.encryptionKeyName,
                                                              EncryptionControl::SetTag::NO_SET_TAG);
           if (encryptionStatus.on) {
             encryptionLogParams.add("encryption", "on")

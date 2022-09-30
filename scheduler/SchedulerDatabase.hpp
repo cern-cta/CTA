@@ -188,6 +188,7 @@ class SchedulerDatabase {
       std::string vendor;
       std::string drive;
       std::string host;
+      std::string encryptionKeyName;
       uint64_t mountId;
       uint64_t capacityInBytes;
       cta::common::dataStructures::Label::Format labelFormat;
@@ -451,6 +452,7 @@ class SchedulerDatabase {
       std::string vendor;
       std::string drive;
       std::string host;
+      std::string encryptionKeyName;
       uint64_t capacityInBytes;
       uint64_t mountId;
       std::optional<std::string> activity;

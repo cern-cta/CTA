@@ -43,7 +43,7 @@ EncryptionControl::EncryptionControl(bool useEncryption, const std::string& scri
 // enable
 //------------------------------------------------------------------------------
 auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface& m_drive,
-                               const std::string& vid, SetTag st) -> EncryptionStatus {
+                               const std::string& keyId, SetTag st) -> EncryptionStatus {
 
   EncryptionStatus encStatus;
   if (m_path.empty()) {
@@ -58,7 +58,7 @@ auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface& 
     return encStatus;
   }
 
-  std::list<std::string> args({m_path, "--vid", vid});
+  std::list<std::string> args({m_path, "--encryption-key-id", keyId});
 
   switch (st) {
     case SetTag::NO_SET_TAG:

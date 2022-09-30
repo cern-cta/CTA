@@ -30,11 +30,12 @@ namespace daemon {
  * Struct holding the result of a Volume request
  */
 struct VolumeInfo {
-  std::string vid;                                   //!< The Volume ID (tape) we will work on
-  cta::common::dataStructures::MountType mountType;  //!< Mount type: archive or retrieve
-  uint32_t nbFiles;                                  //!< Number of files currently on tape
-  std::string mountId;                               //!< Mount ID
-  cta::common::dataStructures::Label::Format labelFormat;           //!< Label/Tape format
+  std::string vid;                                           //!< The Volume ID (tape) we will work on
+  cta::common::dataStructures::MountType mountType;          //!< Mount type: archive or retrieve
+  uint32_t nbFiles;                                          //!< Number of files currently on tape
+  std::string mountId;                                       //!< Mount ID
+  cta::common::dataStructures::Label::Format labelFormat;    //!< Label/Tape format
+  std::string encryptionKeyName;                             //!< Encryption key ID
 };
 
 } // namespace daemon

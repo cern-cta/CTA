@@ -98,6 +98,15 @@ uint64_t cta::ArchiveMount::getCapacityInBytes() const {
 }
 
 //------------------------------------------------------------------------------
+// getEncryptionKeyName()
+//------------------------------------------------------------------------------
+std::string cta::ArchiveMount::getEncryptionKeyName() const {
+  if(!m_dbMount)
+    throw exception::Exception("In cta::RetrieveMount::getEncryptionKeyName(): got nullptr dbMount");
+  return m_dbMount->mountInfo.encryptionKeyName;
+}
+
+//------------------------------------------------------------------------------
 // getNbFiles
 //------------------------------------------------------------------------------
 uint32_t cta::ArchiveMount::getNbFiles() const {
