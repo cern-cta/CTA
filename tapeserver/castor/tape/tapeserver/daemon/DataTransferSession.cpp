@@ -214,6 +214,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
   m_volInfo.mountId = tapeMount->getMountTransactionId();
   m_volInfo.labelFormat = tapeMount->getLabelFormat();
   m_volInfo.encryptionKeyName = tapeMount->getEncryptionKeyName();
+  m_volInfo.tapePool = tapeMount->getPoolName();
   tapeServerReporter.setVolInfo(m_volInfo);
   // Report drive status and mount info through tapeMount interface
   tapeMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
