@@ -151,6 +151,24 @@ wait_for_request_cancel_report() {
   done
 }
 
+change_tape_state() {
+  VID=$1
+  LAST_STATE=$2
+  CURR_STATE=$(admin_cta --json tape ls --vid $VID | jq -r ".[] | .state")
+
+  # If current or desired state is REPACKING_DISABLED, revert to REPACKING
+  # Any state transition can be done from REPACKING, but not from REPACKING_DISABLED
+  if [[
+    "${CURR_STATE}" == "REPACKING_DISABLED" ||
+    "${LAST_STATE}" == "REPACKING_DISABLED" ]]
+  then
+    admin_cta tape ch --vid $VID --state REPACKING --reason "Testing"
+    wait_for_tape_state $VID REPACKING
+  fi
+  admin_cta tape ch --vid $VID --state $LAST_STATE --reason "Testing"
+  wait_for_tape_state $VID $LAST_STATE
+}
+
 
 ################################################################################
 # Test queueing priority between different tape states
@@ -163,18 +181,28 @@ test_tape_state_queueing_priority() {
   EXPECTED_SELECTED_QUEUE=$5
   FILE_PATH=$FILE_3_COPY
 
+  pid=()
+  ret=()
+
   echo
   echo "########################################################################################################"
   echo " ${TEST_NR}. Testing 'Tape state priority between ${TAPE_STATE_LIST[@]}'"
   echo "########################################################################################################"
   echo "Setting up queue ${TAPE_LIST_3[0]} as ${TAPE_STATE_LIST[0]}, ${TAPE_LIST_3[1]} as ${TAPE_STATE_LIST[1]}, ${TAPE_LIST_3[2]} as ${TAPE_STATE_LIST[2]}..."
-  
-  admin_cta tape ch --vid ${TAPE_LIST_3[0]} --state ${TAPE_STATE_LIST[0]} --reason "Testing"
-  admin_cta tape ch --vid ${TAPE_LIST_3[1]} --state ${TAPE_STATE_LIST[1]} --reason "Testing"
-  admin_cta tape ch --vid ${TAPE_LIST_3[2]} --state ${TAPE_STATE_LIST[2]} --reason "Testing"
-  wait_for_tape_state ${TAPE_LIST_3[0]} ${TAPE_STATE_LIST[0]}
-  wait_for_tape_state ${TAPE_LIST_3[1]} ${TAPE_STATE_LIST[1]}
-  wait_for_tape_state ${TAPE_LIST_3[2]} ${TAPE_STATE_LIST[2]}
+ 
+  change_tape_state ${TAPE_LIST_3[0]} ${TAPE_STATE_LIST[0]} & pid[0]=$!
+  change_tape_state ${TAPE_LIST_3[1]} ${TAPE_STATE_LIST[1]} & pid[1]=$!
+  change_tape_state ${TAPE_LIST_3[2]} ${TAPE_STATE_LIST[2]} & pid[2]=$!
+
+  wait ${pid[0]}; ret[0]=$?
+  wait ${pid[1]}; ret[1]=$?
+  wait ${pid[2]}; ret[2]=$?
+ 
+  if [ ${ret[0]} -ne 0 ] || [ ${ret[1]} -ne 0 ] || [ ${ret[2]} -ne 0 ]
+  then
+    echo "Failed to change tape state"
+    exit 1
+  fi
 
   echo "Requesting file prepare -s..."
   REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s ${FILE_PATH})
@@ -230,8 +258,7 @@ test_tape_state_change_queue_removed() {
   echo "########################################################################################################"
   echo "Setting up $TAPE_0 queue as ${STATE_START}..."
   
-  admin_cta tape ch --vid $TAPE_0 --state $STATE_START --reason "Testing"
-  wait_for_tape_state $TAPE_0 $STATE_START
+  change_tape_state $TAPE_0 $STATE_START
   
   echo "Requesting file prepare -s..."
   REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s ${FILE_PATH})
@@ -260,8 +287,7 @@ test_tape_state_change_queue_removed() {
 
   echo "Changing $TAPE_0 queue to ${STATE_END}..."
   
-  admin_cta tape ch --vid $TAPE_0 --state $STATE_END --reason "Testing"
-  wait_for_tape_state $TAPE_0 $STATE_END
+  change_tape_state $TAPE_0 $STATE_END
    
   echo "Checking that the request was canceled and the error reported to the user..."
   
@@ -319,8 +345,7 @@ test_tape_state_change_queue_preserved() {
   echo "########################################################################################################"
   echo "Setting up $TAPE_0 queue as ${STATE_START}..."
   
-  admin_cta tape ch --vid $TAPE_0 --state $STATE_START --reason "Testing"
-  wait_for_tape_state $TAPE_0 $STATE_START
+  change_tape_state $TAPE_0 $STATE_START
   
   echo "Requesting file prepare -s..."
   REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s ${FILE_PATH})
@@ -349,8 +374,7 @@ test_tape_state_change_queue_preserved() {
 
   echo "Changing $TAPE_0 queue to ${STATE_END}..."
   
-  admin_cta tape ch --vid $TAPE_0 --state $STATE_END --reason "Testing"
-  wait_for_tape_state $TAPE_0 $STATE_END
+  change_tape_state $TAPE_0 $STATE_END
    
   echo "Checking that the request was not modified on the queue..."
   
@@ -407,7 +431,10 @@ test_tape_state_change_queue_moved() {
   
   TAPE_0=${TAPE_LIST_2[0]}
   TAPE_1=${TAPE_LIST_2[1]}
-  
+ 
+  pid=()
+  ret=()
+ 
   echo
   echo "########################################################################################################"
   echo " ${TEST_NR}. Testing 'Queue moved on tape state changes from ($TAPE_0_STATE_START, $TAPE_1_STATE_START) to ($TAPE_0_STATE_END, $TAPE_1_STATE_END)"
@@ -419,10 +446,17 @@ test_tape_state_change_queue_moved() {
     exit 1
   fi 
   
-  admin_cta tape ch --vid $TAPE_0 --state $TAPE_0_STATE_START --reason "Testing"
-  admin_cta tape ch --vid $TAPE_1 --state $TAPE_1_STATE_START --reason "Testing"
-  wait_for_tape_state $TAPE_0 $TAPE_0_STATE_START
-  wait_for_tape_state $TAPE_1 $TAPE_1_STATE_START
+  change_tape_state $TAPE_0 $TAPE_0_STATE_START & pid[0]=$!
+  change_tape_state $TAPE_1 $TAPE_1_STATE_START & pid[1]=$!
+
+  wait ${pid[0]}; ret[0]=$?
+  wait ${pid[1]}; ret[1]=$?
+ 
+  if [ ${ret[0]} -ne 0 ] || [ ${ret[1]} -ne 0 ]
+  then
+    echo "Failed to change tape state"
+    exit 1
+  fi
   
   echo "Requesting file prepare -s..."
   REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s ${FILE_PATH})
@@ -468,18 +502,14 @@ test_tape_state_change_queue_moved() {
 
   if test "0" == "${EXPECTED_QUEUE_START}"; then
     echo "Changing $TAPE_1 queue to ${TAPE_1_STATE_END}..."
-    admin_cta tape ch --vid $TAPE_1 --state $TAPE_1_STATE_END --reason "Testing"
-    wait_for_tape_state $TAPE_1 $TAPE_1_STATE_END
+    change_tape_state $TAPE_1 $TAPE_1_STATE_END
     echo "Changing $TAPE_0 queue to ${TAPE_0_STATE_END}..."
-    admin_cta tape ch --vid $TAPE_0 --state $TAPE_0_STATE_END --reason "Testing"
-    wait_for_tape_state $TAPE_0 $TAPE_0_STATE_END
+    change_tape_state $TAPE_0 $TAPE_0_STATE_END
   else
     echo "Changing $TAPE_0 queue to ${TAPE_0_STATE_END}..."
-    admin_cta tape ch --vid $TAPE_0 --state $TAPE_0_STATE_END --reason "Testing"
-    wait_for_tape_state $TAPE_0 $TAPE_0_STATE_END
+    change_tape_state $TAPE_0 $TAPE_0_STATE_END
     echo "Changing $TAPE_1 queue to ${TAPE_1_STATE_END}..."
-    admin_cta tape ch --vid $TAPE_1 --state $TAPE_1_STATE_END --reason "Testing"
-    wait_for_tape_state $TAPE_1 $TAPE_1_STATE_END
+    change_tape_state $TAPE_1 $TAPE_1_STATE_END
   fi
 
   if [[ "0" == "${EXPECTED_QUEUE_END}" || "1" == "${EXPECTED_QUEUE_END}" ]]; then
