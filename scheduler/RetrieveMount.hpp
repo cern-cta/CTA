@@ -142,9 +142,16 @@ public:
   cta::common::dataStructures::Label::Format getLabelFormat() const override;
 
   /**
+    * Returns the encryption key ID of the tape
+    * @return the encryption key ID of the tape
+    */
+  std::string getEncryptionKeyName() const override;
+
+  /**
     * Report a drive status change
     */
-  void setDriveStatus(cta::common::dataStructures::DriveStatus status, const std::optional<std::string> & reason = std::nullopt) override;
+  void setDriveStatus(cta::common::dataStructures::DriveStatus status,
+                      const std::optional<std::string> &reason = std::nullopt) override;
 
   /**
     * Report a tape session statistics
