@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: externaltapetests
+spec:
+  restartPolicy: Never
+  containers:
+  - name: externaltapetests
+    image: gitlab-registry.cern.ch/cta/ctageneric:78673git921a9300
+    stdin: true
+    env:
+    - name: MY_CONTAINER
+      value: "externaltapetests"
+    - name: MY_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+    - name: MY_NAMESPACE
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.namespace
+    - name: INSTANCE_NAME
+      value: "$(MY_NAMESPACE)"
+    - name: DEVICE_NAME
+      value: "DEVICE_NAME_VALUE"
+    - name: DRIVE_DEVICE
+      value: "DEVICE_PATH"
+    - name: BUILDTREE_BASE
+      valueFrom:
+        configMapKeyRef:
+          name: buildtree
+          key: base
+    - name: CTA_BUILDTREE_SUBDIR
+      valueFrom:
+        configMapKeyRef:
+          name: buildtree
+          key: cta_subdir
+    - name: EOS_BUILDTREE_SUBDIR
+      valueFrom:
+        configMapKeyRef:
+          name: buildtree
+          key: eos_subdir
+    - name: TERM
+      value: "xterm"
+    - name: driveslot
+      value: "0"
+    command: ['/opt/run/bin/externaltapetests.sh']
+    args: ["none"]
+    volumeMounts:
+    - mountPath: /shared
+      name: shared
+    - mountPath: /etc/config/objectstore
+      name: myobjectstore
+    - mountPath: /etc/config/database
+      name: mydatabase
+    - mountPath: /etc/config/library
+      name: mylibrary
+    - mountPath: /mnt/logs
+      name: logstorage
+    securityContext:
+      privileged: true
+
+  volumes:
+  - name: shared
+    hostPath:
+      path: /opt/cta
+  - name: myobjectstore
+    configMap:
+      name: objectstore-config
+  - name: mydatabase
+    configMap:
+      name: database-config
+  - name: mylibrary
+    configMap:
+      name: library-config
+  - name: logstorage
+    persistentVolumeClaim:
+      claimName: claimlogs
+
+  imagePullSecrets:
+  - name: ctaregsecret

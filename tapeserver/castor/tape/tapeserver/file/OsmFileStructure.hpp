@@ -16,12 +16,13 @@
  */
 
 #pragma once
- 
+
+#include <string>
+
 #include "tapeserver/castor/tape/tapeserver/SCSI/Structures.hpp"
 #include "common/Constants.hpp"
 
-#include <string>
- 
+
 namespace castor {
 namespace tape {
 /**
@@ -38,10 +39,10 @@ namespace osm {
 struct LIMITS {
 public:
   static const uint64_t MVOLMAGIC = 0x070460;
-  static const size_t LABELVERSIONLEN = 9; // label version string
-  static const size_t VOLNAMELEN = 16;     // volume name
-  static const size_t CIDLEN = 33;         // client id length
-  static const size_t MAXMRECSIZE = 32768; // half of label block
+  static const size_t LABELVERSIONLEN = 9;  // label version string
+  static const size_t VOLNAMELEN = 16;      // volume name
+  static const size_t CIDLEN = 33;          // client id length
+  static const size_t MAXMRECSIZE = 32768;  // half of label block
   static const size_t MMAXCHK = 2048;
 
 // prevent the generation of default public constructor and destructor
@@ -63,8 +64,8 @@ public:
   inline char* rawLabel() {
     return m_tcRawLabel;
   }
-  
-  void decode(); // can throw
+
+  void decode();  // can throw
 
   inline std::string owner() {
     return std::string(m_tcOwner);
@@ -72,8 +73,8 @@ public:
   inline std::string version() {
     return std::string(m_tcVersion);
   }
-  inline std::string name() {
-    // Returns truncated name of the label 
+  inline std::string name() const {
+    // Returns truncated name of the label
     return std::string(m_tcName, cta::CA_MAXVIDLEN);
   }
   inline uint64_t createTime() {
@@ -96,7 +97,6 @@ public:
     // SCSI::logicBlockProtectionMethod::DoNotUse
     // SCSI::logicBlockProtectionMethod::ReedSolomon
     // SCSI::logicBlockProtectionMethod::CRC32C
-    
     return SCSI::logicBlockProtectionMethod::CRC32C;
   }
 
@@ -106,11 +106,11 @@ protected:
   char m_tcName[LIMITS::VOLNAMELEN];
   char m_tcRawLabel[2 * LIMITS::MAXMRECSIZE];
   uint64_t m_ulCreateTime;
-  uint64_t m_ulExpireTime; 
+  uint64_t m_ulExpireTime;
   uint64_t m_ulRecSize;
   uint64_t m_ulVolId;
 };
-  
+
 } /* namespace osm */
 } /* namespace tapeFile */
 } /* namespace tape */

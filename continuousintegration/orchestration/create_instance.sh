@@ -46,6 +46,9 @@ runoracleunittests=0
 # By default doesn't prepare the images with the previous schema version
 updatedatabasetest=0
 
+# By default doesn't run the tests for external tape formats
+runexternaltapetests=0
+
 usage() { cat <<EOF 1>&2
 Usage: $0 -n <namespace> [-o <objectstore_configmap>] [-d <database_configmap>] \
       [-e <eos_configmap>] [-a <additional_k8_resources>]\
@@ -63,13 +66,14 @@ Options:
   -a    additional kubernetes resources added to the kubernetes namespace
   -U    Run database unit test only
   -u    Prepare the pods to run the liquibase test
+  -T    Execute tests for external tape formats
 EOF
 exit 1
 }
 
 die() { echo "$@" 1>&2 ; exit 1; }
 
-while getopts "n:o:d:e:a:p:b:B:E:SDOUum" o; do
+while getopts "n:o:d:e:a:p:b:B:E:SDOUumT" o; do
     case "${o}" in
         o)
             config_objectstore=${OPTARG}
@@ -94,7 +98,7 @@ while getopts "n:o:d:e:a:p:b:B:E:SDOUum" o; do
         n)
             instance=${OPTARG}
             ;;
-	p)
+	      p)
             pipelineid=${OPTARG}
             ;;
         b)
@@ -117,6 +121,9 @@ while getopts "n:o:d:e:a:p:b:B:E:SDOUum" o; do
             ;;
         U)
             runoracleunittests=1
+            ;;
+        T)
+            runexternaltapetests=1
             ;;
         u)
             updatedatabasetest=1
@@ -462,5 +469,22 @@ fi
 
 echo "Instance ${instance} successfully created:"
 kubectl get pods -a --namespace=${instance}
+
+if [ $runexternaltapetests == 1 ] ; then
+  echo "Running database unit-tests"
+  ./tests/external_tapes_test.sh -n ${instance} -P ${poddir}
+
+  kubectl --namespace=${instance} logs externaltapetests
+
+  # database unit-tests went wrong => exit now with error
+  if $(kubectl get pod externaltapetests -a --namespace=${instance} | grep -q Error); then
+    echo "init pod in Error status here are its last log lines:"
+    kubectl --namespace=${instance} logs externaltapetests --tail 10
+    die "ERROR: externaltapetests pod in Error state. Initialization failed."
+  fi
+
+  # database unit-tests were successful => exit now with success
+  exit 0
+fi
 
 exit 0

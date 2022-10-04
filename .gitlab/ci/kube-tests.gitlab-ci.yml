@@ -1,8 +1,19 @@
+.manual_rules:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+      allow_failure: true
+    - if: $CI_PIPELINE_SOURCE == "push"
+      when: manual
+      allow_failure: true
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: on_success
+      allow_failure: false
+
 .kubernetes_test:
   script:
     - export NAMESPACE="${JOB_NAME}-${CTA_BUILD_ID}-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 4 | head -n 1)"
     - cd continuousintegration/orchestration/
-    - echo "${EXTENDED_OPTIONS}"
     - ./run_systemtest.sh -n ${NAMESPACE} -p ${CI_PIPELINE_ID} -s ${TEST_SCRIPT} ${EXTENDED_OPTIONS}
   variables:
     TEST_SCRIPT:
@@ -21,15 +32,7 @@
   extends:
     - .kubernetes_test
   rules:
-    - if: $CI_PIPELINE_SOURCE == "web"
-      when: manual
-      allow_failure: true
-    - if: $CI_PIPELINE_SOURCE == "push"
-      when: manual
-      allow_failure: true
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: on_success
-      allow_failure: false
+    - !reference [.manual_rules, rules]
   variables:
     EXTENDED_OPTIONS: "-O -D -t 2400 -C -e eos5-config-quarkdb.yaml"
 
@@ -85,18 +88,21 @@ liquibase-update:
   extends:
     - .kubernetes_test
   rules:
-    - if: $CI_PIPELINE_SOURCE == "web"
-      when: manual
-      allow_failure: true
-    - if: $CI_PIPELINE_SOURCE == "push"
-      when: manual
-      allow_failure: true
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: on_success
-      allow_failure: false
+    - !reference [.manual_rules, rules]
   variables:
     TEST_SCRIPT: "tests/update_db_test.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C -u"
+
+external-tape-formats:
+  stage: test
+  extends:
+    - .kubernetes_test
+  rules:
+    - !reference [.manual_rules, rules]
+  variables:
+    TEST_SCRIPT: "/usr/bin/true"
+    EXTENDED_OPTIONS: "-O -D -t 2400 -C -T"
+    JOB_NAME: "external-tape"
 
 nightly1:
   stage: test

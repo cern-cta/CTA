@@ -21,7 +21,6 @@
 #include <string>
 
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "castor/tape/tapeserver/file/HeaderChecker.hpp"
 #include "castor/tape/tapeserver/file/OsmFileReader.hpp"
 #include "castor/tape/tapeserver/file/OsmReadSession.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
@@ -80,9 +79,9 @@ void OsmFileReader::positionByBlockID(const cta::RetrieveJob &fileToRecall) {
 }
 
 void OsmFileReader::moveToFirstFile() {
-  // special case: we can rewind the tape to be faster 
-  //(TODO: in the future we could also think of a threshold above 
-  //which we rewind the tape anyway and then space forward)       
+  // special case: we can rewind the tape to be faster
+  // (TODO: in the future we could also think of a threshold above
+  // which we rewind the tape anyway and then space forward)
   m_session->m_drive.rewind();
   osm::LABEL osmLabel;
   m_session->m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()), osm::LIMITS::MAXMRECSIZE, "[FileReader::position] - Reading OSM label - part 1");
@@ -145,22 +144,24 @@ size_t OsmFileReader::readNextDataBlock(void *data, const size_t size) {
    * Cpio filter for OSM file
    * - caclulate the file size and position of the trailer
    */
-  if(size < CPIO::MAXHEADERSIZE) {
+  if (size < CPIO::MAXHEADERSIZE) {
     std::ostringstream ex_str;
-    ex_str << "Invalid block size: " << size << " - " << "the block size is smaller then max size of a CPIO header: " << CPIO::MAXHEADERSIZE;
+    ex_str << "Invalid block size: " << size << " - "
+           << "the block size is smaller then max size of a CPIO header: "
+           << CPIO::MAXHEADERSIZE;
     throw TapeFormatError(ex_str.str());
   }
-  if(!m_cpioHeader.valid()) {
+  if (!m_cpioHeader.valid()) {
     size_t uiHeaderSize = 0;
     size_t uiResiduesSize = 0;
     uint8_t* pucTmpData = new uint8_t[size];
-    
+
     bytes_read = m_session->m_drive.readBlock(pucTmpData, size);
     uiHeaderSize = m_cpioHeader.decode(pucTmpData, size);
     uiResiduesSize = bytes_read - uiHeaderSize;
-    
+
     // Copy the rest of data to the buffer
-    if(uiResiduesSize >= m_cpioHeader.m_ui64FileSize) {
+    if (uiResiduesSize >= m_cpioHeader.m_ui64FileSize) {
       bytes_read = m_cpioHeader.m_ui64FileSize;
       m_ui64CPIODataSize = bytes_read;
       memcpy(data, pucTmpData + uiHeaderSize, bytes_read);
@@ -170,26 +171,25 @@ size_t OsmFileReader::readNextDataBlock(void *data, const size_t size) {
       m_ui64CPIODataSize = bytes_read >= m_cpioHeader.m_ui64FileSize ? m_cpioHeader.m_ui64FileSize : bytes_read;
     }
     delete[] pucTmpData;
-    
   } else {
     bytes_read = m_session->m_drive.readBlock(data, size);
     m_ui64CPIODataSize += bytes_read;
-    if(m_ui64CPIODataSize > m_cpioHeader.m_ui64FileSize && bytes_read > 0) {
+    if (m_ui64CPIODataSize > m_cpioHeader.m_ui64FileSize && bytes_read > 0) {
       // File is ready
       // size_t uiOldSize = bytes_read;
       bytes_read = bytes_read - (m_ui64CPIODataSize - m_cpioHeader.m_ui64FileSize);
       // m_ui64CPIODataSize += bytes_read - uiOldSize;
     }
   }
-  
+
   // end of file reached! keep reading until the header of the next file
-  if(!bytes_read) {
-    m_session->setCurrentFseq(m_session->getCurrentFseq() + 1); // moving on to the header of the next file 
+  if (!bytes_read) {
+    m_session->setCurrentFseq(m_session->getCurrentFseq() + 1); // moving on to the header of the next file
     m_session->setCurrentFilePart(PartOfFile::Header);
     // the following is a normal day exception: end of files exceptions are thrown at the end of each file being read
     throw EndOfFile();
   }
-  
+
   return bytes_read;
 }
 

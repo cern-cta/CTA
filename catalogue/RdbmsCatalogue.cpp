@@ -9439,6 +9439,33 @@ std::list<TapeForWriting> RdbmsCatalogue::getTapesForWriting(const std::string &
   }
 }
 
+common::dataStructures::Label::Format RdbmsCatalogue::getTapeLabelFormat(const std::string& vid) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "TAPE.LABEL_FORMAT AS LABEL_FORMAT "
+      "FROM "
+        "TAPE "
+      "WHERE "
+        "VID = :VID";
+
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":VID", vid);
+    auto rset = stmt.executeQuery();
+    if(rset.next()) {
+      return common::dataStructures::Label::validateFormat(rset.columnOptionalUint8("LABEL_FORMAT"), "[RdbmsCatalogue::getTapeLabelFormat()]");
+    } else {
+      throw exception::Exception(std::string("No such tape with vid=") + vid);
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
 //------------------------------------------------------------------------------
 // insertTapeFile
 //------------------------------------------------------------------------------

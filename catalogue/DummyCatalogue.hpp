@@ -21,6 +21,7 @@
 #include <list>
 
 #include "Catalogue.hpp"
+#include "common/threading/MutexLocker.hpp"
 
 namespace cta {
 
@@ -120,6 +121,7 @@ public:
   std::list<common::dataStructures::Tape> getTapes(const TapeSearchCriteria& searchCriteria) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
  // getTapesByVid is implemented below (and works).
   std::map<std::string, std::string> getVidToLogicalLibrary(const std::set<std::string> &vids) const override { throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented"); }
+  common::dataStructures::Label::Format getTapeLabelFormat(const std::string& vid) const override { throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented"); }
   std::list<TapeForWriting> getTapesForWriting(const std::string& logicalLibraryName) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   bool isAdmin(const common::dataStructures::SecurityIdentity& admin) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
   void modifyAdminUserComment(const common::dataStructures::SecurityIdentity& admin, const std::string& username, const std::string& comment) override { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }

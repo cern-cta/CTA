@@ -156,6 +156,8 @@ public:
    */
   std::list<TapeForWriting> getTapesForWriting(const std::string &logicalLibraryName) const override;
 
+  common::dataStructures::Label::Format getTapeLabelFormat(const std::string& vid) const override;
+
   /**
    * Notifies the CTA catalogue that the specified tape has been mounted in
    * order to archive files.

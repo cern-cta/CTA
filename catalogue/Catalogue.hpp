@@ -224,6 +224,8 @@ public:
    */
   virtual std::list<TapeForWriting> getTapesForWriting(const std::string &logicalLibraryName) const = 0;
 
+  virtual common::dataStructures::Label::Format getTapeLabelFormat(const std::string& vid) const = 0;
+
   /**
    * Notifies the catalogue that the specified files have been written to tape.
    *

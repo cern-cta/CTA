@@ -79,6 +79,10 @@ public:
     return retryOnLostConnection(m_log, [&]{return m_catalogue->getTapesForWriting(logicalLibraryName);}, m_maxTriesToConnect);
   }
 
+  common::dataStructures::Label::Format getTapeLabelFormat(const std::string& vid) const override {
+    return retryOnLostConnection(m_log, [&]{return m_catalogue->getTapeLabelFormat(vid);}, m_maxTriesToConnect);
+  }
+
   void filesWrittenToTape(const std::set<TapeItemWrittenPointer> &event) override {
     return retryOnLostConnection(m_log, [&]{return m_catalogue->filesWrittenToTape(event);}, m_maxTriesToConnect);
   }

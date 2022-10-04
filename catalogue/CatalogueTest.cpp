@@ -7290,6 +7290,30 @@ TEST_P(cta_catalogue_CatalogueTest, getTapesForWriting) {
   ASSERT_EQ(0, tape.dataOnTapeInBytes);
 }
 
+TEST_P(cta_catalogue_CatalogueTest, getTapeLabelFormat) {
+  const bool logicalLibraryIsDisabled= false;
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const std::optional<std::string> supply("value for the supply pool mechanism");
+
+  m_catalogue->createMediaType(m_admin, m_mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  m_catalogue->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createTape(m_admin, m_tape1);
+
+  // Get Tape
+  const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+  ASSERT_EQ(1, tapes.size());
+  const cta::common::dataStructures::Tape tape = tapes.front();
+  ASSERT_EQ(m_tape1.vid, tape.vid);
+
+  // Get label format and compare
+  const auto labelFormat = m_catalogue->getTapeLabelFormat(m_tape1.vid);
+  ASSERT_EQ(tape.labelFormat, labelFormat);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, getTapesForWritingOrderedByDataInBytesDesc) {
   using namespace cta;
 

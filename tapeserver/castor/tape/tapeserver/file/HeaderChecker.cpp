@@ -19,8 +19,10 @@
 #include <string>
 
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
+#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/file/Exceptions.hpp"
 #include "castor/tape/tapeserver/file/HeaderChecker.hpp"
+#include "castor/tape/tapeserver/file/OsmFileStructure.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
 #include "scheduler/RetrieveJob.hpp"
 
@@ -33,6 +35,15 @@ void HeaderChecker::checkVOL1(const VOL1 &vol1, const std::string &volId)  {
     std::ostringstream ex_str;
     ex_str << "[HeaderChecker::checkVOL1()] - VSN of tape (" << vol1.getVSN()
            << ") is not the one requested (" << volId << ")";
+    throw TapeFormatError(ex_str.str());
+  }
+}
+
+void HeaderChecker::checkOSM(const osm::LABEL &osmLabel, const std::string &volId) {
+  if (osmLabel.name().compare(volId) != 0) {
+    std::stringstream ex_str;
+    ex_str << "[OsmReadSession::OsmReadSession()] - VSN of tape (" << osmLabel.name()
+            << ") is not the one requested (" << volId << ")";
     throw TapeFormatError(ex_str.str());
   }
 }
@@ -101,6 +112,56 @@ void HeaderChecker::checkUTL1(const UTL1 &utl1, const uint32_t fSeq)  {
             << utl1.getfSeq() << "\". Wanted: " << fSeq;
     throw TapeFormatError(ex_str.str());
   }
+}
+
+std::string HeaderChecker::checkVolumeLabel(tapeserver::drive::DriveInterface &drive, LabelFormat labelFormat) {
+  std::string volumeLabelVSN;
+  auto vol1Label = [](tapeserver::drive::DriveInterface &drive, const std::string &expectedLblStandard) {
+    tapeFile::VOL1 vol1;
+    drive.readExactBlock(reinterpret_cast<void *>(&vol1), sizeof(vol1),
+      "[HeaderChecker::checkVolumeLabel()] - Reading header VOL1");
+    vol1.verify(expectedLblStandard.c_str());
+    return vol1.getVSN();
+  };
+
+  auto osmLabel = [](tapeserver::drive::DriveInterface &drive) {
+    tapeFile::osm::LABEL osmLabel;
+    drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
+    tapeFile::osm::LIMITS::MAXMRECSIZE,
+    "[HeaderChecker::checkVolumeLabel()] - Reading OSM label - part 1");
+    drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel() + tapeFile::osm::LIMITS::MAXMRECSIZE),
+    tapeFile::osm::LIMITS::MAXMRECSIZE,
+    "[HeaderChecker::checkVolumeLabel()] - Reading OSM label - part 2");
+    osmLabel.decode();
+    return osmLabel.name();
+  };
+
+  try {
+    switch (labelFormat) {
+      case LabelFormat::CTA:
+        volumeLabelVSN = vol1Label(drive, "3");
+        break;
+      case LabelFormat::OSM:
+        volumeLabelVSN = osmLabel(drive);
+        break;
+      case LabelFormat::Enstore:
+        volumeLabelVSN = vol1Label(drive, "0");
+        break;
+      default: {
+        cta::exception::Exception ex;
+        ex.getMessage() << "In HeaderChecker::checkVolumeLabel(): unknown label format: ";
+        ex.getMessage() << std::showbase << std::internal << std::setfill('0') << std::hex << std::setw(4)
+                        << static_cast<unsigned int>(labelFormat);
+        throw ex;
+      }
+    }
+  } catch(cta::exception::Exception &ne) {
+    std::ostringstream ex_str;
+    ex_str << "Failed to check volume label: " << ne.getMessageValue();
+    throw TapeFormatError(ex_str.str());
+  }
+
+  return volumeLabelVSN;
 }
 
 }  // namespace tapeFile

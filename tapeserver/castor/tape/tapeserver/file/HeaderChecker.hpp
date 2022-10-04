@@ -19,6 +19,8 @@
 
 #include <string>
 
+#include "common/dataStructures/LabelFormat.hpp"
+
 namespace cta {
 class RetrieveJob;
 }
@@ -30,6 +32,10 @@ namespace tapeserver {
 namespace daemon {
 class VolumeInfo;
 }
+
+namespace drive {
+class DriveInterface;
+}
 }
 
 namespace tapeFile {
@@ -38,6 +44,10 @@ class HDR1;
 class UHL1;
 class UTL1;
 class VOL1;
+
+namespace osm {
+class LABEL;
+}
 
 class HeaderChecker {
 public:
@@ -71,6 +81,16 @@ public:
     * @param volId: the volume id of the tape in the drive
     */
   static void checkVOL1(const VOL1 &vol1, const std::string &volId);
+
+  /**
+    * Checks the osm::LABEL
+    * @param osm: the osm header of the current file
+    * @param volId: the volume id of the tape in the drive
+    */
+  static void checkOSM(const osm::LABEL &osmLabel, const std::string &volId);
+
+  using LabelFormat = cta::common::dataStructures::Label::Format;
+  static std::string checkVolumeLabel(tapeserver::drive::DriveInterface &drive, LabelFormat labelFormat);
 
 private:
   enum class HeaderBase {

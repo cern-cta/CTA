@@ -20,6 +20,8 @@ include_directories(/usr/include/shift)
 include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
 include_directories (${XROOTD_INCLUDE_DIR})
 
+find_package(Protobuf3 REQUIRED)
+
 set(TAPESERVER_FILE_LIBRARY_SRCS
   CtaFileReader.cpp
   CtaReadSession.cpp
@@ -69,3 +71,17 @@ set_property(TARGET ctatapeserverfileunittests PROPERTY SOVERSION "${CTA_SOVERSI
 set_property(TARGET ctatapeserverfileunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 install(TARGETS ctatapeserverfileunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+
+include_directories(${PROTOBUF3_INCLUDE_DIRS})
+add_executable(cta-osmReaderTest
+  OsmReaderTest.cpp)
+
+target_link_libraries(cta-osmReaderTest
+  ctacommon
+  ctaTapeServerDaemon
+  File
+  gtest
+)
+set_property(TARGET cta-osmReaderTest APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+
+install(TARGETS cta-osmReaderTest DESTINATION usr/bin)
