@@ -50,7 +50,7 @@ cta_srpm_xrootd4:
     - .cta_srpm
   rules:
     - !reference [.cta_build, rules]
-    - if: $XROOTD_VERSION == "4" &&  $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
+    - if: ($CI_COMMIT_TAG =~ /^v?4\./ || ($CI_COMMIT_TAG == null && $XROOTD_VERSION == "4")) && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
 
 cta_rpm_xrootd4:
   stage: build:rpm
@@ -60,7 +60,7 @@ cta_rpm_xrootd4:
     - !reference [.cta_build, rules]
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $XROOTD_VERSION == "4" &&  $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
+    - if: $XROOTD_VERSION == "4" && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
 
 cta_srpm_xrootd4_pgsched:
   stage: build:srpm
@@ -68,7 +68,7 @@ cta_srpm_xrootd4_pgsched:
     - .cta_srpm
   rules:
     - !reference [.cta_build, rules]
-    - if: $XROOTD_VERSION == "4" && $SCHED_TYPE == "pgsched" && $ORACLE_SUPPORT == "OFF"
+    - if: ($CI_COMMIT_TAG =~ /^v?4\./ || ($CI_COMMIT_TAG == null && $XROOTD_VERSION == "4")) && $SCHED_TYPE == "pgsched" && $ORACLE_SUPPORT == "OFF"
 
 cta_rpm_xrootd4_pgsched:
   stage: build:rpm
@@ -86,7 +86,7 @@ cta_srpm_xrootd5:
     - .cta_srpm
   rules:
     - !reference [.cta_build, rules]
-    - if: $XROOTD_VERSION == "5" &&  $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
+    - if: ($CI_COMMIT_TAG =~ /^v?5\./ || ($CI_COMMIT_TAG == null && $XROOTD_VERSION == "5")) && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
 
 cta_rpm_xrootd5:
   stage: build:rpm
@@ -96,7 +96,7 @@ cta_rpm_xrootd5:
     - !reference [.cta_build, rules]
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $XROOTD_VERSION == "5" &&  $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
+    - if: $XROOTD_VERSION == "5" && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
 
 cta_srpm_no_oracle:
   stage: build:srpm
@@ -104,7 +104,7 @@ cta_srpm_no_oracle:
     - .cta_srpm
   rules:
     - !reference [.cta_build, rules]
-    - if: $XROOTD_VERSION == "4" &&  $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "OFF"
+    - if: ($CI_COMMIT_TAG =~ /^v?4\./ || ($CI_COMMIT_TAG == null && $XROOTD_VERSION == "4")) && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "OFF"
 
 cta_rpm_no_oracle:
   stage: build:rpm
@@ -114,4 +114,4 @@ cta_rpm_no_oracle:
     - !reference [.cta_build, rules]
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $XROOTD_VERSION == "4" &&  $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "OFF"
+    - if: $XROOTD_VERSION == "4" && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "OFF"
