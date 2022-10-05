@@ -1,6 +1,11 @@
-# v4.NEXT
+# v4.7.12-1
 
 ## Summary
+### Features
+- cta/CTA#144 - frontend-grpc: use provided archiveReportURL AS-IS
+### Continuous Integration
+- cta/CTA#157 - Upgrade eos5 to 5.1.1-1
+- cta/CTA#158 - Install 'libisa-l_crypto' in 'doublebuildtree-stage2b-scripts/Dockerfile'
 ### Bug fixes
 - cta/CTA#122 - Problem with handling of the non-native formats by the CleanerSession
 - cta/CTA#160 - Improve DB access to get all the Tape Drive States
