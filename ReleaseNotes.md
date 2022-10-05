@@ -11,6 +11,7 @@
 - cta/CTA#160 - Improve DB access to get all the Tape Drive States
 - cta/CTA#164 - Cppcheck job is not failing when there are errors
 - cta/CTA#165 - Fix oracle dbunittests
+- cta/CTA#169 - Fix misconfigured rules in .gitlab-ci.yml files
 
 # v4.7.11-1
 
