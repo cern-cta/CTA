@@ -4,7 +4,7 @@
 
 ### Initial code references for release
 
-This release should be based on `<commit_id>` from branch `master`.
+This release should be based on `<commit_id>` from branch `main`.
 
 This release will be tagged as version `vX.Y.Z-R`.
 
