@@ -15,11 +15,13 @@
 
 cmake_minimum_required (VERSION 3.17)
 
+add_subdirectory (restore_files)
+
 find_package(xrootdclient REQUIRED)
 find_package(Protobuf3 REQUIRED)
 
 # XRootD SSI
-include_directories(${XROOTD_INCLUDE_DIR} ${XROOTD_INCLUDE_DIR}/private )
+include_directories(${XROOTD_INCLUDE_DIR} ${XROOTD_INCLUDE_DIR}/private)
 
 # XRootD SSI Protocol Buffer bindings
 include_directories(${XRD_SSI_PB_DIR}/include ${XRD_SSI_PB_DIR}/eos_cta/include)
@@ -27,10 +29,21 @@ include_directories(${XRD_SSI_PB_DIR}/include ${XRD_SSI_PB_DIR}/eos_cta/include)
 # Compiled protocol buffers
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
-add_executable(cta-restore-deleted-files RestoreFilesCmdLineArgs.cpp RestoreFilesCmdMain.cpp CmdLineTool.cpp RestoreFilesCmd.cpp)
-target_link_libraries(cta-restore-deleted-files ${PROTOBUF3_LIBRARIES} ${GRPC_LIBRARY} ${GRPC_GRPC++_LIBRARY} XrdSsiPbEosCta XrdSsiLib XrdUtils ctacommon EosCtaGrpc EosGrpcClient)
-set_property (TARGET cta-restore-deleted-files APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+#
+# cta-send-event CLOSEW|PREPARE|ABORT_PREPARE
+# injects a workflow event into the CTA Frontend
+#
+add_executable(cta-send-event CtaSendEvent.cpp common/CmdLineArgs.cpp)
+target_link_libraries(cta-send-event ctacommon XrdSsiPbEosCta XrdSsiLib XrdUtils)
+set_property(TARGET cta-send-event APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
+#
+# verify-file <archiveFileId> <vid>
+# recalls a file from tape without writing a disk copy
+#
+add_executable(cta-verify-file CtaVerifyFile.cpp common/CmdLineArgs.cpp)
+target_link_libraries(cta-verify-file ctacommon XrdSsiPbEosCta XrdSsiLib XrdUtils)
+set_property (TARGET cta-verify-file APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
-install(TARGETS cta-restore-deleted-files DESTINATION usr/bin)
-install(FILES cta-restore-deleted-files.1cta DESTINATION usr/share/man/man1)
+install(TARGETS cta-send-event DESTINATION usr/bin)
+install(TARGETS cta-verify-file DESTINATION usr/bin)

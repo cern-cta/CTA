@@ -15,13 +15,11 @@
 
 cmake_minimum_required (VERSION 3.17)
 
-add_subdirectory (standalone_cli_tools)
-
 find_package(xrootdclient REQUIRED)
 find_package(Protobuf3 REQUIRED)
 
 # XRootD SSI
-include_directories(${XROOTD_INCLUDE_DIR} ${XROOTD_INCLUDE_DIR}/private)
+include_directories(${XROOTD_INCLUDE_DIR} ${XROOTD_INCLUDE_DIR}/private )
 
 # XRootD SSI Protocol Buffer bindings
 include_directories(${XRD_SSI_PB_DIR}/include ${XRD_SSI_PB_DIR}/eos_cta/include)
@@ -29,25 +27,10 @@ include_directories(${XRD_SSI_PB_DIR}/include ${XRD_SSI_PB_DIR}/eos_cta/include)
 # Compiled protocol buffers
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
-#
-# cta-admin <admin_command> is the SSI version of "cta <admin_command>"
-#
-add_executable(cta-admin CtaAdminCmd.cpp CtaAdminCmdParse.cpp CtaAdminTextFormatter.cpp)
-target_link_libraries(cta-admin XrdSsiPbEosCta XrdSsiLib XrdUtils ctacommon)
-set_property (TARGET cta-admin APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+add_executable(cta-restore-deleted-files RestoreFilesCmdMain.cpp ../common/CmdLineTool.cpp ../common/CmdLineArgs.cpp RestoreFilesCmd.cpp ../../CtaAdminCmdParse.cpp)
+target_link_libraries(cta-restore-deleted-files ${PROTOBUF3_LIBRARIES} ${GRPC_LIBRARY} ${GRPC_GRPC++_LIBRARY} XrdSsiPbEosCta XrdSsiLib XrdUtils ctacommon EosCtaGrpc EosGrpcClient)
+set_property (TARGET cta-restore-deleted-files APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
-#
-# cta-wfe-test archive|retrieve|delete <options> allows testing of the SSI WorkFlow Engine hooks
-# without invoking EOS.
-#
-# Previously this was the eoscta_stub which was called by a script invoked by the EOS WFE.
-#
-find_package(cryptopp REQUIRED)
-add_executable(cta-wfe-test EosCtaStub.cpp)
-target_link_libraries(cta-wfe-test cryptopp ctacommon XrdSsiPbEosCta XrdSsiLib XrdUtils)
-set_property (TARGET cta-wfe-test APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
-install(TARGETS cta-admin DESTINATION usr/bin)
-install(FILES cta-admin.1cta DESTINATION usr/share/man/man1)
-install(FILES cta-send-closew.sh DESTINATION usr/bin)
-install(FILES cta-cli.conf.example DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
+install(TARGETS cta-restore-deleted-files DESTINATION usr/bin)
+install(FILES cta-restore-deleted-files.1cta DESTINATION usr/share/man/man1)

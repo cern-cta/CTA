@@ -25,7 +25,7 @@
 #include <common/checksum/ChecksumBlobSerDeser.hpp>
 #include "CtaFrontendApi.hpp"
 #include "version.h"
-#include "CtaCmdOptions.hpp"
+#include "common/CmdLineArgs.hpp"
 
 const std::string config_file = "/etc/cta/cta-cli.conf";
 
@@ -51,48 +51,6 @@ typedef std::map<std::string, std::string> AttrMap;
 const std::runtime_error Usage("Usage: eos --json fileinfo /eos/path | cta-send-event CLOSEW|PREPARE "
                                "-i/--eos.instance <instance> [-e/--eos.endpoint <url>] "
                                "-u/--request.user <user> -g/--request.group <group>");
-
-StringOption option_instance {"--eos.instance", "-i", false};
-StringOption option_endpoint {"--eos.endpoint", "-e", true};
-StringOption option_user {"--request.user", "-u", false};
-StringOption option_group {"--request.group", "-g", false};
-
-
-std::map<std::string, StringOption*> option_map = {
-        {"-i", &option_instance},
-        {"--eos.instance", &option_instance},
-        {"-e", &option_endpoint},
-        {"--eos.endpoint", &option_endpoint},
-        {"-u", &option_user},
-        {"--request.user", &option_user},
-        {"-g", &option_group},
-        {"--request.group", &option_group},
-};
-
-
-void validate_cmd() {
-    for (auto &it: option_map) {
-        auto option = it.second;
-        if (!option->is_optional() && !option->is_present()) {
-            std::cout << "Error: Option " << option->get_name() << " is mandatory but not present." << std::endl;
-            throw Usage;
-        }
-    }
-}
-
-void parse_cmd(const int argc, const char *const *const argv) {
-    for (int i = 2; i < argc; i += 2) {
-        auto search = option_map.find(argv[i]);
-        if (search == option_map.end()) {
-            std::cout << "Error: Unknown option: " << argv[i] << std::endl;
-            throw Usage;
-        }
-        auto option = search->second;
-        option->set_present();
-        option->set_value(argv[i + 1]);
-    }
-}
-
 
 // remove leading spaces and quotes
 void ltrim(std::string &s) {
@@ -151,16 +109,15 @@ void parseFileInfo(std::istream &in, AttrMap &attr, AttrMap &xattr)
  * @param[in]    wf_command      The workflow command (CLOSEW or PREPARE)
  */
 void fillNotification(cta::eos::Notification &notification, const std::string &wf_command,
-                      const int argc, const char *const *const argv)
+                      const int argc, char *const *const argv)
 {
 
-  parse_cmd(argc, argv);
-  validate_cmd();
+  cta::cliTool::CmdLineArgs cmdLineArgs(argc, argv, cta::cliTool::StandaloneCliTool::CTA_SEND_EVENT);
 
-  const std::string &eos_instance = option_instance.get_value();
-  const std::string &eos_endpoint = option_endpoint.is_present() ?option_endpoint.get_value() : "localhost:1095";
-  const std::string &requester_user = option_user.get_value();
-  const std::string &requester_group = option_group.get_value();
+  const std::string &eos_instance = cmdLineArgs.m_diskInstance.value();
+  const std::string &eos_endpoint = cmdLineArgs.m_eosEndpoint.has_value() ? cmdLineArgs.m_eosEndpoint.value() : "localhost:1095";
+  const std::string &requester_user = cmdLineArgs.m_requestUser.value();
+  const std::string &requester_group = cmdLineArgs.m_requestGroup.value();
 
   // Set the event type
   if(wf_command == "CLOSEW") {
@@ -236,7 +193,7 @@ void fillNotification(cta::eos::Notification &notification, const std::string &w
 /*
  * Sends a Notification to the CTA XRootD SSI server
  */
-int exceptionThrowingMain(int argc, const char *const *const argv)
+int exceptionThrowingMain(int argc, char *const *const argv)
 {
   if(argc % 2) {
     throw Usage;
@@ -299,8 +256,7 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 /*
  * Start here
  */
-int main(int argc, const char **argv)
-{
+int main(int argc, char *const *const argv) {
   try {    
     return exceptionThrowingMain(argc, argv);
   } catch (XrdSsiPb::PbException &ex) {

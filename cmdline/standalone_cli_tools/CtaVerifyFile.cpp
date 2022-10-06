@@ -21,7 +21,9 @@
 
 #include "CtaFrontendApi.hpp"
 #include "version.h"
-#include "CtaCmdOptions.hpp"
+#include "common/CmdLineArgs.hpp"
+
+using namespace cta::cliTool;
 
 const std::string config_file = "/etc/cta/cta-cli.conf";
 
@@ -43,53 +45,6 @@ void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
 // Attribute map type
 typedef std::map<std::string, std::string> AttrMap;
 
-// Usage exception
-const std::runtime_error Usage("Usage: cta-verify-file <archiveFileID> [-v <vid>] "
-                               "[-i <instance>] [-r.user <user>] [-r.group <group>]\n"
-                               "cta-verify-file <archiveFileID> [--vid <id>] "
-                               "[--instance <instance>] [--request.user <user>] [--request.group <group>]");
-
-StringOption option_instance {"--instance", "-i", true};
-StringOption option_request_user {"--request.user", "-r.user", true};
-StringOption option_request_group {"--request.group", "-r.group", true};
-StringOption option_vid {"--vid", "-v", true};
-
-std::vector<StringOption*> verify_options = {&option_instance, &option_request_user, &option_request_group, &option_vid};
-
-std::map<std::string, StringOption*> option_map = {
-        {"-i", &option_instance},
-        {"--instance", &option_instance},
-        {"-r.user", &option_request_user},
-        {"--request.user", &option_request_user},
-        {"-r.group", &option_request_group},
-        {"--request.group", &option_request_group},
-        {"-v", &option_vid},
-        {"--vid", &option_vid},
-};
-
-void validate_cmd() {
-    for (auto &it: option_map) {
-        auto option = it.second;
-        if (!option->is_optional() && !option->is_present()) {
-            std::cout << "Error: Option " << option->get_name() << " is mandatory but not present." << std::endl;
-            throw Usage;
-        }
-    }
-}
-
-void parse_cmd(const int argc, const char *const *const argv) {
-    for (int i = 2; i < argc; i += 2) {
-        auto search = option_map.find(argv[i]);
-        if (search == option_map.end()) {
-            std::cout << "Error: Unknown option: " << argv[i] << std::endl;
-            throw Usage;
-        }
-        auto option = search->second;
-        option->set_present();
-        option->set_value(argv[i + 1]);
-    }
-}
-
 /*
  * Fill a Notification message from the command-line parameters and stdin
  *
@@ -97,7 +52,7 @@ void parse_cmd(const int argc, const char *const *const argv) {
  * @param[in]    argc            Number of arguments passed on the command line
  * @param[in]    argv            Command line arguments array
  */
-void fillNotification(cta::eos::Notification &notification, const int argc, const char *const *const argv)
+void fillNotification(cta::eos::Notification &notification, const int argc, char *const *const argv, const CmdLineArgs &cmdLineArgs)
 {   
   XrdSsiPb::Config config(config_file, "eos");
   for (const auto &conf_option : std::vector<std::string>({ "instance", "requester.user", "requester.group" })) {
@@ -108,27 +63,31 @@ void fillNotification(cta::eos::Notification &notification, const int argc, cons
   notification.mutable_wf()->mutable_instance()->set_name(config.getOptionValueStr("instance").second);
   notification.mutable_cli()->mutable_user()->set_username(config.getOptionValueStr("requester.user").second);
   notification.mutable_cli()->mutable_user()->set_groupname(config.getOptionValueStr("requester.group").second);
+  
+  if(cmdLineArgs.m_help) { cmdLineArgs.printUsage(std::cout); exit(0); }
 
-  parse_cmd(argc, argv);
-  validate_cmd();
+  if(!cmdLineArgs.m_archiveFileId && !cmdLineArgs.m_vid) { 
+    cmdLineArgs.printUsage(std::cout);
+    throw std::runtime_error("ERROR: Usage");
+  }
 
-  if (option_instance.is_present()) {
-    notification.mutable_wf()->mutable_instance()->set_name(option_instance.get_value());
+  if (cmdLineArgs.m_diskInstance) {
+    notification.mutable_wf()->mutable_instance()->set_name(cmdLineArgs.m_diskInstance.value());
   }
-  if (option_request_user.is_present()) {
-    notification.mutable_cli()->mutable_user()->set_username(option_request_user.get_value());  
+  if (cmdLineArgs.m_requestUser) {
+    notification.mutable_cli()->mutable_user()->set_username(cmdLineArgs.m_requestUser.value());  
   }
-  if (option_request_group.is_present()) {
-    notification.mutable_cli()->mutable_user()->set_groupname(option_request_group.get_value());
+  if (cmdLineArgs.m_requestGroup) {
+    notification.mutable_cli()->mutable_user()->set_groupname(cmdLineArgs.m_requestGroup.value());
   }  
 
-  std::string archiveFileId(argv[1]);
+  const std::string archiveFileId(std::to_string(cmdLineArgs.m_archiveFileId.value()));
 
   // WF
   notification.mutable_wf()->set_event(cta::eos::Workflow::PREPARE);
   notification.mutable_wf()->set_requester_instance("cta-verify-file");
   notification.mutable_wf()->set_verify_only(true);
-  notification.mutable_wf()->set_vid(option_vid.get_value());
+  notification.mutable_wf()->set_vid(cmdLineArgs.m_vid.value());
 
   
   // Transport
@@ -151,13 +110,13 @@ void fillNotification(cta::eos::Notification &notification, const int argc, cons
 /*
  * Sends a Notification to the CTA XRootD SSI server
  */
-int exceptionThrowingMain(int argc, const char *const *const argv)
+int exceptionThrowingMain(int argc, char *const *const argv)
 {
+  using namespace cta::cliTool;
+
   std::string vid;
 
-  if (argc == 1 || argc % 2) { // Since all options need values associated, argc should always be even
-    throw Usage;
-  }
+  cta::cliTool::CmdLineArgs cmdLineArgs(argc, argv, StandaloneCliTool::CTA_VERIFY_FILE);
 
   // Verify that the Google Protocol Buffer header and linked library versions are compatible
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -184,7 +143,7 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
   config.getEnv("log", "XrdSsiPbLogLevel");
 
   // Parse the command line arguments: fill the Notification fields
-  fillNotification(notification, argc, argv);
+  fillNotification(notification, argc, argv, cmdLineArgs);
 
   // Obtain a Service Provider
   XrdSsiPbServiceType cta_service(config);
@@ -215,8 +174,7 @@ int exceptionThrowingMain(int argc, const char *const *const argv)
 /*
  * Start here
  */
-int main(int argc, const char **argv)
-{
+int main(int argc, char *const *const argv) {
   try {
     return exceptionThrowingMain(argc, argv);
   } catch (XrdSsiPb::PbException &ex) {

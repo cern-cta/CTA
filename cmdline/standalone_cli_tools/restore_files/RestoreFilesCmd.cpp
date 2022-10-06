@@ -15,8 +15,8 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "cmdline/restore_files/RestoreFilesCmd.hpp"
-#include "cmdline/restore_files/RestoreFilesCmdLineArgs.hpp"
+#include "cmdline/standalone_cli_tools/restore_files/RestoreFilesCmd.hpp"
+#include "cmdline/CtaAdminCmdParse.hpp"
 #include "common/utils/utils.hpp"
 #include "common/checksum/ChecksumBlob.hpp"
 #include "CtaFrontendApi.hpp"
@@ -99,7 +99,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
 
 
 namespace cta{
-namespace admin {
+namespace cliTool {
 
 /*!
  * RestoreFilesCmdException
@@ -136,9 +136,9 @@ RestoreFilesCmd::RestoreFilesCmd(std::istream &inStream, std::ostream &outStream
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 int RestoreFilesCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
-  RestoreFilesCmdLineArgs cmdLineArgs(argc, argv);
+  CmdLineArgs cmdLineArgs(argc, argv, StandaloneCliTool::RESTORE_FILES);
   if (cmdLineArgs.m_help) {
-    printUsage(m_out);
+    cmdLineArgs.printUsage(m_out);
     return 0;
   }
 
@@ -190,7 +190,7 @@ int RestoreFilesCmd::exceptionThrowingMain(const int argc, char *const *const ar
 //------------------------------------------------------------------------------
 void RestoreFilesCmd::readAndSetConfiguration(
   const std::string &userName, 
-  const RestoreFilesCmdLineArgs &cmdLineArgs) {
+  const CmdLineArgs &cmdLineArgs) {
   
   m_vid = cmdLineArgs.m_vid;
   m_diskInstance = cmdLineArgs.m_diskInstance;
@@ -291,40 +291,40 @@ void RestoreFilesCmd::listDeletedFilesCta() const {
    
   request.set_client_cta_version(CTA_VERSION);
   request.set_client_xrootd_ssi_protobuf_interface_version(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
-  admincmd.set_cmd(AdminCmd::CMD_RECYCLETAPEFILE);
-  admincmd.set_subcmd(AdminCmd::SUBCMD_LS);
+  admincmd.set_cmd(cta::admin::AdminCmd::CMD_RECYCLETAPEFILE);
+  admincmd.set_subcmd(cta::admin::AdminCmd::SUBCMD_LS);
 
   if (m_vid) {
     params.push_back(cta::log::Param("tapeVid", m_vid.value()));
-    auto key = OptionString::VID;
+    auto key = cta::admin::OptionString::VID;
     auto new_opt = admincmd.add_option_str();
     new_opt->set_key(key);
     new_opt->set_value(m_vid.value());
   }
   if (m_diskInstance) {
     params.push_back(cta::log::Param("diskInstance", m_diskInstance.value()));
-    auto key = OptionString::INSTANCE;
+    auto key = cta::admin::OptionString::INSTANCE;
     auto new_opt = admincmd.add_option_str();
     new_opt->set_key(key);
     new_opt->set_value(m_diskInstance.value());
   }
   if (m_archiveFileId) {
     params.push_back(cta::log::Param("archiveFileId", m_archiveFileId.value()));
-    auto key = OptionUInt64::ARCHIVE_FILE_ID;
+    auto key = cta::admin::OptionUInt64::ARCHIVE_FILE_ID;
     auto new_opt = admincmd.add_option_uint64();
     new_opt->set_key(key);
     new_opt->set_value(m_archiveFileId.value());
   }
   if (m_copyNumber) {
     params.push_back(cta::log::Param("copyNb", m_copyNumber.value()));
-    auto key = OptionUInt64::COPY_NUMBER;
+    auto key = cta::admin::OptionUInt64::COPY_NUMBER;
     auto new_opt = admincmd.add_option_uint64();
     new_opt->set_key(key);
     new_opt->set_value(m_copyNumber.value());
   }
   if (m_eosFids) {
     std::stringstream ss;
-    auto key = OptionStrList::FILE_ID;
+    auto key = cta::admin::OptionStrList::FILE_ID;
     auto new_opt = admincmd.add_option_str_list();
     new_opt->set_key(key);
     for (auto &fid : m_eosFids.value()) {
@@ -369,7 +369,7 @@ void RestoreFilesCmd::listDeletedFilesCta() const {
 //------------------------------------------------------------------------------
 // restoreDeletedFileCopyCta
 //------------------------------------------------------------------------------
-void RestoreFilesCmd::restoreDeletedFileCopyCta(const RecycleTapeFileLsItem &file) const {
+void RestoreFilesCmd::restoreDeletedFileCopyCta(const cta::admin::RecycleTapeFileLsItem &file) const {
 
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("userName", getUsername()));
@@ -385,35 +385,35 @@ void RestoreFilesCmd::restoreDeletedFileCopyCta(const RecycleTapeFileLsItem &fil
    
   request.set_client_cta_version(CTA_VERSION);
   request.set_client_xrootd_ssi_protobuf_interface_version(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
-  admincmd.set_cmd(AdminCmd::CMD_RECYCLETAPEFILE);
-  admincmd.set_subcmd(AdminCmd::SUBCMD_RESTORE);
+  admincmd.set_cmd(cta::admin::AdminCmd::CMD_RECYCLETAPEFILE);
+  admincmd.set_subcmd(cta::admin::AdminCmd::SUBCMD_RESTORE);
 
   {
-    auto key = OptionString::VID;
+    auto key = cta::admin::OptionString::VID;
     auto new_opt = admincmd.add_option_str();
     new_opt->set_key(key);
     new_opt->set_value(file.vid());
   }
   {
-    auto key = OptionString::INSTANCE;
+    auto key = cta::admin::OptionString::INSTANCE;
     auto new_opt = admincmd.add_option_str();
     new_opt->set_key(key);
     new_opt->set_value(file.disk_instance());
   }
   {
-    auto key = OptionUInt64::ARCHIVE_FILE_ID;
+    auto key = cta::admin::OptionUInt64::ARCHIVE_FILE_ID;
     auto new_opt = admincmd.add_option_uint64();
     new_opt->set_key(key);
     new_opt->set_value(file.archive_file_id());
   }
   {
-    auto key = OptionUInt64::COPY_NUMBER;
+    auto key = cta::admin::OptionUInt64::COPY_NUMBER;
     auto new_opt = admincmd.add_option_uint64();
     new_opt->set_key(key);
     new_opt->set_value(file.copy_nb());
   }
   {
-    auto key = OptionString::FXID;
+    auto key = cta::admin::OptionString::FXID;
     auto new_opt = admincmd.add_option_str();
 
     // Convert diskFileId from base 10 to base 16 before transmitting to CTA
@@ -429,6 +429,9 @@ void RestoreFilesCmd::restoreDeletedFileCopyCta(const RecycleTapeFileLsItem &fil
     new_opt->set_value(ss.str());
   }
   m_log(cta::log::DEBUG, "Restoring file copy in CTA catalogue", params);  
+
+  // This validation will also be done at the server side
+  cta::admin::validateCmd(admincmd);
 
   // Send the Request to the Service and get a Response
   cta::xrd::Response response;
@@ -523,7 +526,7 @@ uint64_t RestoreFilesCmd::containerExistsEos(const std::string &diskInstance, co
   return cid;
 }
 
-bool RestoreFilesCmd::fileWasDeletedByRM(const RecycleTapeFileLsItem &file) const {
+bool RestoreFilesCmd::fileWasDeletedByRM(const cta::admin::RecycleTapeFileLsItem &file) const {
   return file.reason_log().rfind("(Deleted using cta-admin tapefile rm)", 0) == 0;
 }
 
@@ -544,10 +547,10 @@ bool RestoreFilesCmd::archiveFileExistsCTA(const uint64_t &archiveFileId) const 
    
   request.set_client_cta_version(CTA_VERSION);
   request.set_client_xrootd_ssi_protobuf_interface_version(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
-  admincmd.set_cmd(AdminCmd::CMD_TAPEFILE);
-  admincmd.set_subcmd(AdminCmd::SUBCMD_LS);
+  admincmd.set_cmd(cta::admin::AdminCmd::CMD_TAPEFILE);
+  admincmd.set_subcmd(cta::admin::AdminCmd::SUBCMD_LS);
   
-  auto key = OptionUInt64::ARCHIVE_FILE_ID;
+  auto key = cta::admin::OptionUInt64::ARCHIVE_FILE_ID;
   auto new_opt = admincmd.add_option_uint64();
   new_opt->set_key(key);
   new_opt->set_value(archiveFileId);
@@ -642,7 +645,7 @@ void RestoreFilesCmd::getCurrentEosIds(const std::string &diskInstance) const {
 //------------------------------------------------------------------------------
 // restoreDeletedFileEos
 //------------------------------------------------------------------------------
-uint64_t RestoreFilesCmd::restoreDeletedFileEos(const RecycleTapeFileLsItem &rtfls_item) const {
+uint64_t RestoreFilesCmd::restoreDeletedFileEos(const cta::admin::RecycleTapeFileLsItem &rtfls_item) const {
 
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("userName", getUsername()));
@@ -734,16 +737,9 @@ uint64_t RestoreFilesCmd::restoreDeletedFileEos(const RecycleTapeFileLsItem &rtf
 }
 
 //------------------------------------------------------------------------------
-// printUsage
-//------------------------------------------------------------------------------
-void RestoreFilesCmd::printUsage(std::ostream &os) {
-  RestoreFilesCmdLineArgs::printUsage(os);
-}
-
-//------------------------------------------------------------------------------
 // getFxidFromCTA
 //------------------------------------------------------------------------------
-std::pair<std::string,std::string> RestoreFilesCmd::getInstanceAndFidFromCTA(const RecycleTapeFileLsItem& file) {
+std::pair<std::string,std::string> RestoreFilesCmd::getInstanceAndFidFromCTA(const cta::admin::RecycleTapeFileLsItem& file) {
   {
     std::list<cta::log::Param> params;
     params.push_back(cta::log::Param("archiveFileId", file.archive_file_id()));
@@ -755,10 +751,10 @@ std::pair<std::string,std::string> RestoreFilesCmd::getInstanceAndFidFromCTA(con
 
   request.set_client_cta_version(CTA_VERSION);
   request.set_client_xrootd_ssi_protobuf_interface_version(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
-  admincmd.set_cmd(AdminCmd::CMD_TAPEFILE);
-  admincmd.set_subcmd(AdminCmd::SUBCMD_LS);
+  admincmd.set_cmd(cta::admin::AdminCmd::CMD_TAPEFILE);
+  admincmd.set_subcmd(cta::admin::AdminCmd::SUBCMD_LS);
   auto new_opt = admincmd.add_option_uint64();
-  new_opt->set_key(OptionUInt64::ARCHIVE_FILE_ID);
+  new_opt->set_key(cta::admin::OptionUInt64::ARCHIVE_FILE_ID);
   new_opt->set_value(file.archive_file_id());
 
   // Send the Request to the Service and get a Response

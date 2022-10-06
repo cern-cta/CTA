@@ -21,15 +21,25 @@
 
 #include <list>
 #include <optional>
+#include <string>
 
 namespace cta {
-namespace admin {
+namespace cliTool {
+
+/**
+* Enum value for each of the tools
+*/
+enum class StandaloneCliTool {
+  RESTORE_FILES,
+  CTA_SEND_EVENT,
+  CTA_VERIFY_FILE
+};
 
 /**
  * Structure to store the command-line arguments of the command-line tool
  * named cta-restore-deleted-archive.
  */
-struct RestoreFilesCmdLineArgs {
+struct CmdLineArgs {
   /**
    * True if the usage message should be printed.
    */
@@ -55,6 +65,11 @@ struct RestoreFilesCmdLineArgs {
    */
   std::optional<std::list<uint64_t>> m_eosFids;
 
+    /**
+   * Fids of the files to restore
+   */
+  std::optional<std::string> m_eosInstance;
+
   /**
    * Vid of the tape of the files to restore
    */
@@ -66,13 +81,34 @@ struct RestoreFilesCmdLineArgs {
   std::optional<uint64_t> m_copyNumber;
 
   /**
+   * Eos endpoint 
+   */
+  std::optional<std::string> m_eosEndpoint;
+
+  /**
+   * Request user
+   */ 
+  std::optional<std::string> m_requestUser;
+
+  /**
+   * Request user
+   */ 
+  std::optional<std::string> m_requestGroup;
+
+  /**
+   * The tool parsing the arguments
+   */ 
+  StandaloneCliTool m_standaloneCliTool;
+
+  /**
    * Constructor that parses the specified command-line arguments.
    *
    * @param argc The number of command-line arguments including the name of the
    * executable.
    * @param argv The vector of command-line arguments.
+   * @param standaloneCliTool The tool calling the constructor
    */
-  RestoreFilesCmdLineArgs(const int argc, char *const *const argv);
+  CmdLineArgs(const int &argc, char *const *const &argv, const StandaloneCliTool &standaloneCliTool);
 
    /**
    * Read a list of eos file ids from a file and write the options to a list
@@ -87,7 +123,7 @@ struct RestoreFilesCmdLineArgs {
    *
    * @param os The output stream to which the usage message is to be printed.
    */
-  static void printUsage(std::ostream &os);
+  void printUsage(std::ostream &os) const;
 
 }; // class RestoreFilesCmdLineArgs
 

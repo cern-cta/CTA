@@ -15,13 +15,15 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "cmdline/restore_files/CmdLineTool.hpp"
+#include "cmdline/standalone_cli_tools/common/CmdLineTool.hpp"
 #include "common/exception/CommandLineNotParsed.hpp"
 
+#include <iostream>
+#include <string>
 #include <unistd.h>
 
 namespace cta {
-namespace admin {
+namespace cliTool {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -72,14 +74,12 @@ std::string CmdLineTool::getHostname() {
 // main
 //------------------------------------------------------------------------------
 int CmdLineTool::main(const int argc, char *const *const argv) {
-  bool cmdLineNotParsed = false;
   std::string errorMessage;
 
   try {
     return exceptionThrowingMain(argc, argv);
   } catch(exception::CommandLineNotParsed &ue) {
     errorMessage = ue.getMessage().str();
-    cmdLineNotParsed = true;
   } catch(exception::Exception &ex) {
     errorMessage = ex.getMessage().str();
   } catch(std::exception &se) {
@@ -87,15 +87,8 @@ int CmdLineTool::main(const int argc, char *const *const argv) {
   } catch(...) {
     errorMessage = "An unknown exception was thrown";
   }
-
-  // Reaching this point means the command has failed, an exception was throw
-  // and errorMessage has been set accordingly
-
-  m_err << "Aborting: " << errorMessage << std::endl;
-  if(cmdLineNotParsed) {
-    m_err << std::endl;
-    printUsage(m_err);
-  }
+  
+  std::cout << errorMessage << std::endl;
   return 1;
 }
 

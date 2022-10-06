@@ -1,3 +1,9 @@
+# v4.NEXT
+
+## Summary
+### Features
+- cta/CTA#146 - Refactoring of operation tools cmd line parsing 
+
 # v4.7.12-1
 
 ## Summary

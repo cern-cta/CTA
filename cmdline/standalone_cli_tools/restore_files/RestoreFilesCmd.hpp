@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "cmdline/restore_files/CmdLineTool.hpp"
-#include "cmdline/restore_files/RestoreFilesCmdLineArgs.hpp"
+#include "cmdline/standalone_cli_tools/common/CmdLineTool.hpp"
+#include "cmdline/standalone_cli_tools/common/CmdLineArgs.hpp"
 #include "eos_grpc_client/GrpcEndpoint.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/log/StdoutLogger.hpp"
@@ -29,7 +29,7 @@
 #include "CtaFrontendApi.hpp"
 
 namespace cta {
-namespace admin {
+namespace cliTool {
 
 class RestoreFilesCmd: public CmdLineTool {
 public:
@@ -60,7 +60,7 @@ public:
    * @param username The name of the user running the command-line tool.
    * @param cmdLineArgs The arguments parsed from the command line.
    */
-  void readAndSetConfiguration(const std::string &userName, const RestoreFilesCmdLineArgs &cmdLineArgs);
+  void readAndSetConfiguration(const std::string &userName, const CmdLineArgs &cmdLineArgs);
 
   /**
    * Populate the namespace endpoint configuration from a keytab file
@@ -84,7 +84,7 @@ public:
    * Restores the deleted file present in the cta catalogue recycle bin
    * @param file the deleted tape file
    */
-  void restoreDeletedFileCopyCta(const RecycleTapeFileLsItem &file) const;
+  void restoreDeletedFileCopyCta(const cta::admin::RecycleTapeFileLsItem &file) const;
 
   /**
    * Adds a container in the eos namespace, if it does not exist
@@ -117,7 +117,7 @@ public:
    * @param diskInstance eos disk instance
    * @param diskFileId the eos file id to check
    */
-  bool fileWasDeletedByRM(const RecycleTapeFileLsItem &file) const;
+  bool fileWasDeletedByRM(const cta::admin::RecycleTapeFileLsItem &file) const;
 
   /**
    * Returns true (i.e. not zero) if an archive file with given id exists in the cta catalogue
@@ -136,14 +136,7 @@ public:
    * Restores the deleted file present in the eos namespace
    * @param file the deleted tape file
    */
-  uint64_t restoreDeletedFileEos(const RecycleTapeFileLsItem &file) const;
-
-  /**
-   * Prints the usage message of the command-line tool.
-   *
-   * @param os The output stream to which the usage message is to be printed.
-   */
-  void printUsage(std::ostream &os) override;
+  uint64_t restoreDeletedFileEos(const cta::admin::RecycleTapeFileLsItem &file) const;
 
 private:
   /**
@@ -152,7 +145,7 @@ private:
    * @param file  The restored tape file in CTA
    * @return      Tuple of EOS disk instance and file ID (fid) as a decimal string
    */
-  std::pair<std::string,std::string> getInstanceAndFidFromCTA(const RecycleTapeFileLsItem& file);
+  std::pair<std::string,std::string> getInstanceAndFidFromCTA(const cta::admin::RecycleTapeFileLsItem& file);
 
   /**
    * Query EOS for the archiveFileId and checksum of the restored file

@@ -21,7 +21,7 @@
 #include <ostream>
 
 namespace cta {
-namespace admin {
+namespace cliTool {
 
 /**
  * Abstract class implementing common code and data structures for a
@@ -63,13 +63,6 @@ protected:
    * @return The exit value of the program.
    */
   virtual int exceptionThrowingMain(const int argc, char *const *const argv) = 0;
-
-  /**
-   * Prints the usage message of the command-line tool.
-   *
-   * @param os The output stream to which the usage message is to be printed.
-   */
-  virtual void printUsage(std::ostream &os) = 0;
 
   /**
    * Standard input stream.

@@ -15,50 +15,94 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "RestoreFilesCmdLineArgs.hpp"
+#include "cmdline/standalone_cli_tools/common/CmdLineArgs.hpp"
 #include "common/exception/CommandLineNotParsed.hpp"
 
-#include <getopt.h>
-#include <ostream>
-#include <sstream>
-#include <iostream>
-#include <string>
-#include <limits.h>
+#include <climits>
 #include <fstream>
-
+#include <getopt.h>
+#include <map>
+#include <string>
 
 namespace cta {
-namespace admin{
+namespace cliTool{
+
+
+//------------------------------------------------------------------------------
+// Options for each tool
+//------------------------------------------------------------------------------
+static struct option restoreFilesLongOption[] = {
+  {"id", required_argument, nullptr, 'I'},
+  {"instance", required_argument, nullptr, 'i'},
+  {"fxid", required_argument, nullptr, 'f'},
+  {"fxidfile", required_argument, nullptr, 'F'},
+  {"vid", required_argument, nullptr, 'v'},
+  {"copynb", required_argument, nullptr, 'c'},
+  {"help", no_argument, nullptr, 'h'},
+  {"debug", no_argument, nullptr, 'd'},
+  {nullptr, 0, nullptr, 0}
+};
+
+static struct option sendFileLongOption[] = {
+  {"instance", required_argument, nullptr, 'i'},
+  {"eos.endpoint", required_argument, nullptr, 'e'},
+  {"request.user", required_argument, nullptr, 'u'},
+  {"request.group", required_argument, nullptr, 'g'},
+  {nullptr, 0, nullptr, 0}
+};
+
+static struct option verifyFileLongOption[] = {
+  {"id", required_argument, nullptr, 'I'},
+  {"instance", required_argument, nullptr, 'i'},
+  {"request.user", required_argument, nullptr, 'u'},
+  {"request.group", required_argument, nullptr, 'g'},
+  {"vid", required_argument, nullptr, 'v'},
+  {"help", no_argument, nullptr, 'h'},
+  {nullptr, 0, nullptr, 0}
+};
+
+std::map<StandaloneCliTool, const option*> longopts = {
+  {StandaloneCliTool::RESTORE_FILES, restoreFilesLongOption},
+  {StandaloneCliTool::CTA_SEND_EVENT, sendFileLongOption},
+  {StandaloneCliTool::CTA_VERIFY_FILE, verifyFileLongOption},
+};
+
+std::map<StandaloneCliTool, const char*> shortopts = {
+  {StandaloneCliTool::RESTORE_FILES, "I:i:f:F:v:c:hd:"},
+  {StandaloneCliTool::CTA_SEND_EVENT, "i:e:u:g:"},
+  {StandaloneCliTool::CTA_VERIFY_FILE, "I:i:u:g:v:h:"},
+};
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RestoreFilesCmdLineArgs::RestoreFilesCmdLineArgs(const int argc, char *const *const argv):
-m_help(false), m_debug(false) {
-
-  static struct option longopts[] = {
-    {"id", required_argument, nullptr, 'I'},
-    {"instance", required_argument, nullptr, 'i'},
-    {"fxid", required_argument, nullptr, 'f'},
-    {"fxidfile", required_argument, nullptr, 'F'},
-    {"vid", required_argument, nullptr, 'v'},
-    {"copynb", required_argument, nullptr, 'c'},
-    {"help", no_argument, nullptr, 'h'},
-    {"debug", no_argument, nullptr, 'd'},
-    {nullptr, 0, nullptr, 0}
-  };
+CmdLineArgs::CmdLineArgs(const int &argc, char *const *const &argv, const StandaloneCliTool &standaloneCliTool):
+m_help(false), m_debug(false), m_standaloneCliTool{standaloneCliTool} {
 
   opterr = 0;
   int opt = 0;
-  int opt_index = 3;
+  int opt_index;
 
-  while ((opt = getopt_long(argc, argv, "I:i:f:F:v:c:hd", longopts, &opt_index)) != -1) {
+  switch (standaloneCliTool) {
+  case StandaloneCliTool::RESTORE_FILES:
+    opt_index = 3;
+    break;
+  case StandaloneCliTool::CTA_SEND_EVENT:
+    opt_index = 3;
+    break;
+  case StandaloneCliTool::CTA_VERIFY_FILE:
+    opt_index = 2;
+    break;
+  default:
+    opt_index = 3;
+    break;
+  }
+
+  while ((opt = getopt_long(argc, argv, shortopts[m_standaloneCliTool], longopts[m_standaloneCliTool], &opt_index)) != -1) {
     switch(opt) {
     case 'I':
       {
-        int64_t archiveId = std::stol(std::string(optarg));
-        if(archiveId < 0) throw std::out_of_range("archive id value cannot be negative");
-        m_archiveFileId = archiveId;
+        m_archiveFileId = std::stol(std::string(optarg));
         break;
       }
     case 'i':
@@ -108,10 +152,25 @@ m_help(false), m_debug(false) {
         m_debug = true;
         break;
       }
+    case 'e':
+      {
+        m_eosEndpoint = std::string(optarg);
+        break;
+      }
+    case 'u':
+      {
+        m_requestUser = std::string(optarg);
+        break;
+      }
+    case 'g':
+      {
+        m_requestGroup = std::string(optarg);
+        break;
+      }
     case ':': // Missing parameter
       {
         exception::CommandLineNotParsed ex;
-        ex.getMessage() << "The -" << (char)optopt << " option requires a parameter";
+        ex.getMessage() << "The -" << static_cast<char>(optopt) << " option requires a parameter";
         throw ex;
       }
     case '?': // Unknown option
@@ -120,8 +179,9 @@ m_help(false), m_debug(false) {
         if(0 == optopt) {
           ex.getMessage() << "Unknown command-line option";
         } else {
-          ex.getMessage() << "Unknown command-line option: -" << (char)optopt;
+          ex.getMessage() << "Unknown command-line option: -" << static_cast<char>(optopt) << std::endl;
         }
+        printUsage(ex.getMessage());
         throw ex;
       }
     default:
@@ -129,7 +189,7 @@ m_help(false), m_debug(false) {
         exception::CommandLineNotParsed ex;
         ex.getMessage() <<
         "getopt_long returned the following unknown value: 0x" <<
-        std::hex << (int)opt;
+        std::hex << static_cast<int>(optopt);
         throw ex;
       }
     }
@@ -139,7 +199,7 @@ m_help(false), m_debug(false) {
 //------------------------------------------------------------------------------
 // readFidListFromFile
 //------------------------------------------------------------------------------
-void RestoreFilesCmdLineArgs::readFidListFromFile(const std::string &filename, std::list<std::uint64_t> &fidList) {
+void CmdLineArgs::readFidListFromFile(const std::string &filename, std::list<std::uint64_t> &fidList) {
   std::ifstream file(filename);
   if (file.fail()) {
     throw std::runtime_error("Unable to open file " + filename);
@@ -182,11 +242,27 @@ void RestoreFilesCmdLineArgs::readFidListFromFile(const std::string &filename, s
 //------------------------------------------------------------------------------
 // printUsage
 //------------------------------------------------------------------------------
-void RestoreFilesCmdLineArgs::printUsage(std::ostream &os) {
-    os << "Usage:" << std::endl <<
-    "  cta-restore-deleted-files [--id/-I <archive_file_id>] [--instance/-i <disk_instance>]" << std::endl <<
-    "                            [--fxid/-f <eos_fxid>] [--fxidfile/-F <filename>]" << std::endl <<
-    "                            [--vid/-v <vid>] [--copynb/-c <copy_number>] [--debug/-d]" << std::endl;
+void CmdLineArgs::printUsage(std::ostream &os) const {
+  switch (m_standaloneCliTool) {
+  case StandaloneCliTool::RESTORE_FILES: 
+    os << "   Usage:" << std::endl <<
+    "      cta-restore-deleted-files [--id/-I <archive_file_id>] [--instance/-i <disk_instance>]" << std::endl <<
+    "                                [--fxid/-f <eos_fxid>] [--fxidfile/-F <filename>]" << std::endl <<
+    "                                [--vid/-v <vid>] [--copynb/-c <copy_number>] [--debug/-d]" << std::endl; 
+    break;
+  case StandaloneCliTool::CTA_SEND_EVENT:
+    os << "    Usage:" << std::endl <<
+    "    eos --json fileinfo /eos/path | cta-send-event CLOSEW|PREPARE " << std::endl <<
+    "                        -i/--eos.instance <instance> [-e/--eos.endpoint <url>]" << std::endl << 
+    "                        -u/--request.user <user> -g/--request.group <group>" << std::endl;
+    break;
+  case StandaloneCliTool::CTA_VERIFY_FILE :
+    os << "    Usage:" << std::endl <<
+    "    cta-verify-file --id/-I <archiveFileID> --vid/-v <vid> [--instance/-i <instance>] [--request.user/-u <user>] [request.group/-g <group>]\n" << std::endl;
+    break;
+  default:
+    break;
+  }
 }
 
 } // namespace admin
