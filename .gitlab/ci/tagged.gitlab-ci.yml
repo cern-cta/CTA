@@ -46,6 +46,6 @@ release_public_rpm:
       allow_failure: true
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
   script:
-    - EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME} EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} CI_OUTPUT_DIR='build_tagged_rpm/RPM/RPMS/x86_64' EOS_PATH='/eos/user/c/ctareg/www/public/cta-public-repo/7' HOOK='/eos/user/c/ctareg/www/public/update_repos.sh' continuousintegration/ci_helpers/deploy-eos.sh
+    - EOS_ACCOUNT_USERNAME=${DOCKER_LOGIN_USERNAME} EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} CI_OUTPUT_DIR="build_tagged_rpm/RPM/RPMS/x86_64" EOS_PATH="/eos/user/c/ctareg/www/public/cta-public-repo/cta-$XROOTD_VERSION/el-7/cta" HOOK="/eos/user/c/ctareg/www/public/update_repos.sh" continuousintegration/ci_helpers/deploy-eos.sh
   tags:
     - docker
