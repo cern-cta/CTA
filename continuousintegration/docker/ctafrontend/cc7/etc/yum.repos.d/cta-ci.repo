@@ -39,3 +39,10 @@ baseurl=https://cta-ci-repo.web.cern.ch/cta-ci-repo/xrootd5/
 priority=4
 gpgcheck=0
 enabled=0
+
+[cta-ci-dependencies]
+name=CTA CI repo dependencies
+baseurl=https://cta-ci-repo.web.cern.ch/cta-ci-repo/cta-dependencies/
+priority=4
+gpgcheck=0
+enabled=1

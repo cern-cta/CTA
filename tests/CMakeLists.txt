@@ -14,13 +14,11 @@
 #               submit itself to any jurisdiction.
 cmake_minimum_required (VERSION 3.17)
 
-find_package(gmock REQUIRED)
 find_package(Protobuf3 REQUIRED)
 
 include_directories(${PROTOBUF3_INCLUDE_DIRS})
 add_executable(cta-unitTests
-  unit_tests.cpp
-  ${GMOCK_SRC})
+  unit_tests.cpp)
 
 set (CTA_UNIT_TEST_LIBS
   ctacataloguecmdlineunittests
@@ -42,6 +40,7 @@ set (CTA_UNIT_TEST_LIBS
   ctadiskunittests
   ctatapelabelunittests
   gtest
+  gmock
   pthread
   ctatapeserverraounittests)
 
@@ -61,8 +60,7 @@ endif (OCCI_SUPPORT)
 add_executable(cta-rdbmsUnitTests
   GlobalCatalogueFactoryForUnitTests.cpp
   RdbmsUnitTestsCmdLineArgs.cpp
-  rdbmsUnitTests.cpp
-  ${GMOCK_SRC})
+  rdbmsUnitTests.cpp)
 
 target_link_libraries(cta-rdbmsUnitTests
   ctadropschemacmd
@@ -72,6 +70,7 @@ target_link_libraries(cta-rdbmsUnitTests
   ctardbmsunittests
   ctadisk
   gtest
+  gmock
   pthread
   ${PROTOBUF3_LIBRARIES})
 
@@ -81,13 +80,13 @@ if (OCCI_SUPPORT)
 endif (OCCI_SUPPORT)
 
 add_executable(cta-unitTests-multiProcess
-  unit_tests.cpp
-  ${GMOCK_SRC})
+  unit_tests.cpp)
 
 target_link_libraries(cta-unitTests-multiProcess
   ctadaemonunittests-multiprocess
   ctacommon
   gtest
+  gmock
   pthread
   ${PROTOBUF3_LIBRAIRES}
   sqlite3)
@@ -109,8 +108,7 @@ target_link_libraries(systemTestHelperTests
   ctacommon)
 
 add_executable(cta-systemTests
-  system_tests.cpp
-  ${GMOCK_SRC})
+  system_tests.cpp)
 
 set_property (TARGET cta-systemTests APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
