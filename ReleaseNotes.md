@@ -1,31 +1,27 @@
-# v4.NEXT
-
-## Summary
-### Features
-- cta/CTA#146 - Refactoring of operation tools cmd line parsing
-### Building and Packaging
-- cta/CTA#107 - Check latest version of gtest suite
-### Bug fixes
-- cta/CTA#171 - CI runner randomly crashing in cta-tape-label
-
 # v4.7.12-1
 
 ## Summary
 ### Features
 - cta/CTA#144 - frontend-grpc: use provided archiveReportURL AS-IS
+- cta/CTA#146 - Refactoring of operation tools cmd line parsing
 ### Continuous Integration
 - cta/CTA#157 - Upgrade eos5 to 5.1.1-1
 - cta/CTA#158 - Install 'libisa-l_crypto' in 'doublebuildtree-stage2b-scripts/Dockerfile'
+- cta/CTA#15 - Configuring CI for public binary RPM distribution
 ### Bug fixes
 - cta/CTA#122 - Problem with handling of the non-native formats by the CleanerSession
 - cta/CTA#160 - Improve DB access to get all the Tape Drive States
 - cta/CTA#164 - Cppcheck job is not failing when there are errors
 - cta/CTA#165 - Fix oracle dbunittests
 - cta/CTA#169 - Fix misconfigured rules in .gitlab-ci.yml files
+- cta/CTA#171 - CI runner randomly crashing in cta-tape-label
+### Building and Packaging
+- cta/CTA#107 - Check latest version of gtest suite
 
 # v4.7.11-1
 
 ## Summary
+- Note: When using Spectra Logic libraries, this release requires Spectra Logic firmware version >= BlueScale12.8.08.01
 ### Features
 - cta/CTA#89 - Create stubs for Enstore tape label format
 - cta/CTA#126 - Remove cta-admin schedulinginfo subcommand

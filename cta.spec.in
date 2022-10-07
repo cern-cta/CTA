@@ -584,6 +584,7 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 * Fri Sep 16 2022 Joao Afonso <joao.afonso@cern.ch> - 4.7.11-1
 - Various fixes and improvements to CTA, see ReleaseNotes.md for details
 - Enabled build option without Oracle dependencies
+- When using Spectra Logic libraries, this release requires Spectra Logic firmware version >= BlueScale12.8.08.0
 
 * Tue Sep 13 2022 Joao Afonso <joao.afonso@cern.ch> - 4.7.10-1
 - Catalogue schema version 12.0
