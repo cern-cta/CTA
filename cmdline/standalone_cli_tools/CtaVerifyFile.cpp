@@ -66,7 +66,7 @@ void fillNotification(cta::eos::Notification &notification, const int argc, char
   
   if(cmdLineArgs.m_help) { cmdLineArgs.printUsage(std::cout); exit(0); }
 
-  if(!cmdLineArgs.m_archiveFileId && !cmdLineArgs.m_vid) { 
+  if(!cmdLineArgs.m_archiveFileId || !cmdLineArgs.m_vid) { 
     cmdLineArgs.printUsage(std::cout);
     throw std::runtime_error("ERROR: Usage");
   }
@@ -81,7 +81,7 @@ void fillNotification(cta::eos::Notification &notification, const int argc, char
     notification.mutable_cli()->mutable_user()->set_groupname(cmdLineArgs.m_requestGroup.value());
   }  
 
-  const std::string archiveFileId(std::to_string(cmdLineArgs.m_archiveFileId.value()));
+  const std::string archiveFileId(argv[1]);
 
   // WF
   notification.mutable_wf()->set_event(cta::eos::Workflow::PREPARE);

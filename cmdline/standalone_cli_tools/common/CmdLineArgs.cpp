@@ -52,7 +52,6 @@ static struct option sendFileLongOption[] = {
 };
 
 static struct option verifyFileLongOption[] = {
-  {"id", required_argument, nullptr, 'I'},
   {"instance", required_argument, nullptr, 'i'},
   {"request.user", required_argument, nullptr, 'u'},
   {"request.group", required_argument, nullptr, 'g'},
@@ -70,7 +69,7 @@ std::map<StandaloneCliTool, const option*> longopts = {
 std::map<StandaloneCliTool, const char*> shortopts = {
   {StandaloneCliTool::RESTORE_FILES, "I:i:f:F:v:c:hd:"},
   {StandaloneCliTool::CTA_SEND_EVENT, "i:e:u:g:"},
-  {StandaloneCliTool::CTA_VERIFY_FILE, "I:i:u:g:v:h:"},
+  {StandaloneCliTool::CTA_VERIFY_FILE, "i:u:g:v:h:"},
 };
 
 //------------------------------------------------------------------------------
@@ -81,22 +80,7 @@ m_help(false), m_debug(false), m_standaloneCliTool{standaloneCliTool} {
 
   opterr = 0;
   int opt = 0;
-  int opt_index;
-
-  switch (standaloneCliTool) {
-  case StandaloneCliTool::RESTORE_FILES:
-    opt_index = 3;
-    break;
-  case StandaloneCliTool::CTA_SEND_EVENT:
-    opt_index = 3;
-    break;
-  case StandaloneCliTool::CTA_VERIFY_FILE:
-    opt_index = 2;
-    break;
-  default:
-    opt_index = 3;
-    break;
-  }
+  int opt_index = 0;
 
   while ((opt = getopt_long(argc, argv, shortopts[m_standaloneCliTool], longopts[m_standaloneCliTool], &opt_index)) != -1) {
     switch(opt) {
@@ -258,7 +242,7 @@ void CmdLineArgs::printUsage(std::ostream &os) const {
     break;
   case StandaloneCliTool::CTA_VERIFY_FILE :
     os << "    Usage:" << std::endl <<
-    "    cta-verify-file --id/-I <archiveFileID> --vid/-v <vid> [--instance/-i <instance>] [--request.user/-u <user>] [request.group/-g <group>]\n" << std::endl;
+    "    cta-verify-file <archiveFileID> --vid/-v <vid> [--instance/-i <instance>] [--request.user/-u <user>] [request.group/-g <group>]\n" << std::endl;
     break;
   default:
     break;
