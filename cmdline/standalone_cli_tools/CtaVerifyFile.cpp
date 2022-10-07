@@ -52,7 +52,7 @@ typedef std::map<std::string, std::string> AttrMap;
  * @param[in]    argc            Number of arguments passed on the command line
  * @param[in]    argv            Command line arguments array
  */
-void fillNotification(cta::eos::Notification &notification, const int argc, char *const *const argv, const CmdLineArgs &cmdLineArgs, std::string archiveFileId)
+void fillNotification(cta::eos::Notification &notification, const CmdLineArgs &cmdLineArgs, std::string archiveFileId)
 {   
   XrdSsiPb::Config config(config_file, "eos");
   for (const auto &conf_option : std::vector<std::string>({ "instance", "requester.user", "requester.group" })) {
@@ -142,7 +142,7 @@ int exceptionThrowingMain(int argc, char *const *const argv)
   config.getEnv("log", "XrdSsiPbLogLevel");
 
   // Parse the command line arguments: fill the Notification fields
-  fillNotification(notification, argc, argv, cmdLineArgs, archiveFileId);
+  fillNotification(notification, cmdLineArgs, archiveFileId);
 
   // Obtain a Service Provider
   XrdSsiPbServiceType cta_service(config);
