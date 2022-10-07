@@ -38,7 +38,7 @@ echo Prepare kubernetes environment
 curl -o /opt/calico.yaml https://docs.projectcalico.org/manifests/calico.yaml
 
 echo Creating cluster
-kubeadm init --config=./kubeadm-crio.yaml --upload-certs --node-name $HOSTNAME | tee /root/kubeadm-init.out
+kubeadm init --v=5 --config=./kubeadm-crio.yaml --upload-certs --node-name $HOSTNAME | tee /root/kubeadm-init.out
 
 echo Setting up local authentication
 mkdir -p $HOME/.kube
