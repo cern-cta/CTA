@@ -5,6 +5,8 @@
 - cta/CTA#146 - Refactoring of operation tools cmd line parsing
 ### Building and Packaging
 - cta/CTA#107 - Check latest version of gtest suite
+### Bug fixes
+- cta/CTA#171 - CI runner randomly crashing in cta-tape-label
 
 # v4.7.12-1
 
