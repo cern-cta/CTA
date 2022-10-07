@@ -35,7 +35,8 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeWriteSingleThread(
   const bool useLbp, const bool useEncryption,
   const std::string& externalEncryptionKeyScript,
   const cta::ArchiveMount& archiveMount,
-  const uint64_t tapeLoadTimeout) :
+  const uint64_t tapeLoadTimeout,
+  cta::Scheduler& scheduler) :
   TapeSingleThreadInterface<TapeWriteTask>(drive, mediaChanger, reporter, volInfo,
                                            capUtils, logContext, useEncryption, externalEncryptionKeyScript, tapeLoadTimeout),
   m_filesBeforeFlush(filesBeforeFlush),
@@ -46,7 +47,8 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeWriteSingleThread(
   m_compress(true),
   m_useLbp(useLbp),
   m_watchdog(watchdog),
-  m_archiveMount(archiveMount) {}
+  m_archiveMount(archiveMount),
+  m_scheduler(scheduler) {}
 
 //------------------------------------------------------------------------------
 //TapeCleaning::~TapeCleaning()
@@ -346,8 +348,8 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
         // status:
         cta::log::ScopedParamContainer encryptionLogParams(m_logContext);
         {
-          auto encryptionStatus = m_encryptionControl.enable(m_drive, m_volInfo.encryptionKeyName, m_volInfo.tapePool,
-                                                             EncryptionControl::SetTag::SET_TAG);
+          auto encryptionStatus = m_encryptionControl.enable(m_drive, m_volInfo.vid, m_volInfo.encryptionKeyName,
+                                                             m_volInfo.tapePool, m_scheduler, true);
           if (encryptionStatus.on) {
             encryptionLogParams.add("encryption", "on")
                                .add("encryptionKey", encryptionStatus.keyName)

@@ -42,17 +42,16 @@ EncryptionControl::EncryptionControl(bool useEncryption, const std::string& scri
 //------------------------------------------------------------------------------
 // enable
 //------------------------------------------------------------------------------
-auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface& m_drive,
-                               const std::string& keyId, const std::string& tapePool, SetTag st) -> EncryptionStatus {
-
+auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface& m_drive, const std::string& vid,
+                               const std::string& keyId, const std::string& tapePool,
+                               cta::Scheduler& scheduler, bool isWriteSession) -> EncryptionStatus {
   EncryptionStatus encStatus;
   if (m_path.empty()) {
     if (m_useEncryption) {
-      //if encryption is enabled, an external script is required
-      cta::exception::Exception ex;
-      ex.getMessage() << "In EncryptionControl::enableEncryption: "
-                         "failed to enable encryption: path provided is empty but tapeserver is configured to use encryption";
-      throw ex;
+      // If encryption is enabled, an external script is required
+      throw cta::exception::Exception("In EncryptionControl::enableEncryption: "
+                                      "failed to enable encryption: path provided is empty "
+                                      "but tapeserver is configured to use encryption");
     }
     encStatus = {false, "", "", ""};
     return encStatus;
@@ -60,31 +59,35 @@ auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface& 
 
   std::list<std::string> args({m_path, "--encryption-key-id", keyId, "--pool-name", tapePool});
 
-  switch (st) {
-    case SetTag::NO_SET_TAG:
-      break;
-    case SetTag::SET_TAG:
-      args.emplace_back("--set-tag");
-      break;
-  }
   cta::threading::SubProcess sp(m_path, args);
   sp.wait();
   if (sp.wasKilled() || sp.exitValue() != EXIT_SUCCESS) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "In EncryptionControl::enableEncryption: "
+    std::ostringstream ex;
+    ex << "In EncryptionControl::enableEncryption: "
                        "failed to enable encryption: ";
     if (sp.wasKilled()) {
-      ex.getMessage() << "script was killed with signal: " << sp.killSignal();
+      ex << "script was killed with signal: " << sp.killSignal();
     }
     else {
-      ex.getMessage() << "script returned: " << sp.exitValue();
+      ex << "script returned: " << sp.exitValue();
     }
-    ex.getMessage() << " called=" << "\'" << argsToString(args, " ") << "\'"
+    ex << " called=" << "\'" << argsToString(args, " ") << "\'"
                     << " stdout=" << sp.stdout()
                     << " stderr=" << sp.stderr();
-    throw ex;
+    throw cta::exception::Exception(ex.str());
   }
   encStatus = parse_json_script_output(sp.stdout());
+
+  // In write session check if we need to set the key name (key ID) for the new tape
+  // If key ID is empty, it means we are writing to the new tape
+  // TODO: use encryptionKeyName from TAPEPOOL table instead of encStatus.key returned by the external script
+  if (isWriteSession && encStatus.key == "-") {
+    cta::common::dataStructures::SecurityIdentity m_cliIdentity("ctaops", cta::utils::getShortHostname(),
+                                                                cta::utils::getShortHostname());
+
+    scheduler.getCatalogue().modifyTapeEncryptionKeyName(m_cliIdentity, vid, encStatus.key);
+  }
+
   if (encStatus.on) {
     m_drive.setEncryptionKey(encStatus.key);
   }
