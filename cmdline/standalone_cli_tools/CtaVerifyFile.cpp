@@ -52,7 +52,7 @@ typedef std::map<std::string, std::string> AttrMap;
  * @param[in]    argc            Number of arguments passed on the command line
  * @param[in]    argv            Command line arguments array
  */
-void fillNotification(cta::eos::Notification &notification, const int argc, char *const *const argv, const CmdLineArgs &cmdLineArgs)
+void fillNotification(cta::eos::Notification &notification, const int argc, char *const *const argv, const CmdLineArgs &cmdLineArgs, std::string archiveFileId)
 {   
   XrdSsiPb::Config config(config_file, "eos");
   for (const auto &conf_option : std::vector<std::string>({ "instance", "requester.user", "requester.group" })) {
@@ -66,7 +66,7 @@ void fillNotification(cta::eos::Notification &notification, const int argc, char
   
   if(cmdLineArgs.m_help) { cmdLineArgs.printUsage(std::cout); exit(0); }
 
-  if(!cmdLineArgs.m_archiveFileId || !cmdLineArgs.m_vid) { 
+  if(!cmdLineArgs.m_vid) { 
     cmdLineArgs.printUsage(std::cout);
     throw std::runtime_error("ERROR: Usage");
   }
@@ -79,9 +79,7 @@ void fillNotification(cta::eos::Notification &notification, const int argc, char
   }
   if (cmdLineArgs.m_requestGroup) {
     notification.mutable_cli()->mutable_user()->set_groupname(cmdLineArgs.m_requestGroup.value());
-  }  
-
-  const std::string archiveFileId(argv[1]);
+  } 
 
   // WF
   notification.mutable_wf()->set_event(cta::eos::Workflow::PREPARE);
@@ -116,6 +114,7 @@ int exceptionThrowingMain(int argc, char *const *const argv)
 
   std::string vid;
 
+  std::string archiveFileId = argv[1];
   cta::cliTool::CmdLineArgs cmdLineArgs(argc, argv, StandaloneCliTool::CTA_VERIFY_FILE);
 
   // Verify that the Google Protocol Buffer header and linked library versions are compatible
@@ -143,7 +142,7 @@ int exceptionThrowingMain(int argc, char *const *const argv)
   config.getEnv("log", "XrdSsiPbLogLevel");
 
   // Parse the command line arguments: fill the Notification fields
-  fillNotification(notification, argc, argv, cmdLineArgs);
+  fillNotification(notification, argc, argv, cmdLineArgs, archiveFileId);
 
   // Obtain a Service Provider
   XrdSsiPbServiceType cta_service(config);
