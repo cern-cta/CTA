@@ -9,7 +9,10 @@ export KRB5RCACHETYPE=none
 # e.g. /etc/sysconfig/xrd.<role>. The role based mechanism allows for
 # multiple xrd's running with different options to be controlled via
 # the same initd script
-export XRD_ROLES="mq mgm fst"
+export XRD_ROLES="mq mgm fst sync"
+
+# For EOS4 sync should be started separately (sync is gone in EOS5 -> EOS5 does not care)
+EOS_START_SYNC_SEPARATELY=true
 
 # ------------------------------------------------------------------
 # EOS Configuration

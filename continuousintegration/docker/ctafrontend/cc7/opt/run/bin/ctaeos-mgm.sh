@@ -95,6 +95,7 @@ EOS_TMP_DIR=/eos/${EOS_INSTANCE}/tmp
   sed -i -e "s/DUMMY_HOST_TO_REPLACE/${eoshost}/" /etc/xrd.cf.mq
   sed -i -e "s/DUMMY_HOST_TO_REPLACE/${eoshost}/" /etc/xrd.cf.fst
 
+
 # Add this for SSI prococol buffer workflow (xrootd >=4.8.2)
 echo "mgmofs.protowfendpoint ctafrontend:10955" >> /etc/xrd.cf.mgm
 echo "mgmofs.protowfresource /ctafrontend"  >> /etc/xrd.cf.mgm
@@ -173,12 +174,16 @@ if test -f /var/log/eos/fst/cta-fst-gcd.log; then
   NB_STARTED_CTA_FST_GCD=`grep "cta-fst-gcd started" /var/log/eos/fst/cta-fst-gcd.log | wc -l`
 fi
 
+# get EOSVERSION: this is a 4 or 5
+EOSVERSION=$(rpm -q eos-server --qf "%{VERSION}" | sed -e 's/^\([^\.]*\)\..*/\1/')
+
 if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
   # generate eos_env file for systemd
   cat /etc/sysconfig/eos | sed -e 's/^export\s*//' > /etc/sysconfig/eos_env
   test -e /usr/lib64/libjemalloc.so.1 && echo LD_PRELOAD=/usr/lib64/libjemalloc.so.1 >> /etc/sysconfig/eos_env
 
   # start eos
+  test ${EOSVERSION} -eq 4 && systemctl start eos@sync # start sync service if EOS4
   systemctl start eos@mq
   systemctl start eos@mgm
   systemctl start eos@fst
@@ -204,6 +209,7 @@ else
   XRDPROG=/usr/bin/xrootd; test -e /opt/eos/xrootd/bin/xrootd && XRDPROG=/opt/eos/xrootd/bin/xrootd
   # start and setup eos for xrdcp to the ${CTA_TEST_DIR}
   #/etc/init.d/eos start
+    test ${EOSVERSION} -eq 4 && ${XRDPROG} -n sync -c /etc/xrd.cf.sync -l /var/log/eos/xrdlog.sync -b -Rdaemon
     ${XRDPROG} -n mq -c /etc/xrd.cf.mq -l /var/log/eos/xrdlog.mq -b -Rdaemon
     ${XRDPROG} -n mgm -c /etc/xrd.cf.mgm -m -l /var/log/eos/xrdlog.mgm -b -Rdaemon
     ${XRDPROG} -n fst -c /etc/xrd.cf.fst -l /var/log/eos/xrdlog.fst -b -Rdaemon

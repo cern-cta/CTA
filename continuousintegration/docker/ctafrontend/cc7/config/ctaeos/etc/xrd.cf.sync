@@ -1,0 +1,8 @@
+xrootd.async off nosf
+xrd.network keepalive
+xrootd.seclib libXrdSec.so
+sec.protocol sss -c /etc/eos.keytab -s /etc/eos.keytab
+all.export /var/eos/ nolock
+all.trace none
+ofs.trace open close
+xrd.port 1096
