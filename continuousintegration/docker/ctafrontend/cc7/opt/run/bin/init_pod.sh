@@ -18,6 +18,14 @@
 
 LOGMOUNT=/mnt/logs
 
+# Setting pod fqdn from kubernetes internal NS
+# this is idempotent and works for both internal and externally resolved pod DNS names
+SHORTHOSTNAME=$(hostname -s)
+DNSHOSTNAME=$(nslookup -type=A ${SHORTHOSTNAME}  | egrep '^Name' | awk '{print $2}')
+echo "SHORTHOSTNAME:${SHORTHOSTNAME} resolved in ${DNSHOSTNAME}"
+echo ${DNSHOSTNAME} > /etc/hostname
+hostname --file /etc/hostname
+
 PV_PATH=""
 
 if [ "-${MY_CONTAINER}-" != "--" ]; then
