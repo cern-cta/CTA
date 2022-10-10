@@ -1,3 +1,13 @@
+# v4.NEXT
+
+## Summary
+### Features
+- cta/CTA#146 - Refactoring of operation tools cmd line parsing
+### Building and Packaging
+- cta/CTA#107 - Check latest version of gtest suite
+### Bug fixes 
+- cta/CTA#161 - Fix bug when using temporary tables with PostgreSQL
+
 # v4.7.12-1
 
 ## Summary

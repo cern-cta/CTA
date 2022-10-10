@@ -254,10 +254,14 @@ std::list<std::string> PostgresConn::getTableNames() {
     }
 
     Postgres::Result res(PQexec(m_pgsqlConn,
-       "SELECT c.tablename AS TABLE_NAME FROM pg_catalog.pg_tables c "
-         "WHERE c.schemaname NOT IN ('pg_catalog', 'information_schema') "
-         "ORDER BY TABLE_NAME"
-       ));
+      "SELECT "
+        "tablename "
+      "FROM "
+        "pg_catalog.pg_tables "
+      "WHERE "
+        "pg_catalog.pg_tables.schemaname = current_schema() "
+      "ORDER BY tablename"
+    ));
 
     throwDBIfNotStatus(res.get(), PGRES_TUPLES_OK, "Listing table names in the DB");
 
