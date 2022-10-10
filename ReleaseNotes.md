@@ -2,6 +2,7 @@
 
 ## Summary
 ### Features
+- cta/CTA#41 - Delete verification_status of tape when tape is reclaimed
 - cta/CTA#153 - Allow verification status to be cleared with cta-admin
 ### Bug fixes
 - cta/CTA#161 - Fix bug when using temporary tables with PostgreSQL

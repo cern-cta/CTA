@@ -4718,6 +4718,7 @@ void RdbmsCatalogue::resetTapeCounters(rdbms::Conn& conn, const common::dataStru
         "COPY_NB_GT_1_IN_BYTES = 0,"
         "IS_FULL = '0',"
         "IS_FROM_CASTOR = '0',"
+        "VERIFICATION_STATUS = :VERIFICATION_STATUS,"
         "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
         "LAST_UPDATE_TIME = :LAST_UPDATE_TIME,"
@@ -4725,6 +4726,7 @@ void RdbmsCatalogue::resetTapeCounters(rdbms::Conn& conn, const common::dataStru
       "WHERE "
         "VID = :VID";
     auto stmt = conn.createStmt(sql);
+    stmt.bindString(":VERIFICATION_STATUS", std::nullopt);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
@@ -4748,29 +4750,29 @@ void RdbmsCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity 
     TapeSearchCriteria searchCriteria;
     searchCriteria.vid = vid;
     const auto tapes = getTapes(conn, searchCriteria);
-    tl.insertAndReset("getTapesTime",t);
+    tl.insertAndReset("getTapesTime", t);
 
-    if(tapes.empty()) {
+    if (tapes.empty()) {
       throw exception::UserError(std::string("Cannot reclaim tape ") + vid + " because it does not exist");
     }  else {
-      if(!tapes.front().full){
+      if (!tapes.front().full) {
         throw exception::UserError(std::string("Cannot reclaim tape ") + vid + " because it is not FULL");
       }
     }
-    //The tape exists and is full, we can try to reclaim it
-    if(this->getNbFilesOnTape(conn,vid) == 0){
-      tl.insertAndReset("getNbFilesOnTape",t);
-      //There is no files on the tape, we can reclaim it : delete the files and reset the counters
-      deleteFilesFromRecycleLog(conn,vid,lc);
-      tl.insertAndReset("deleteFileFromRecycleLogTime",t);
-      resetTapeCounters(conn,admin,vid);
-      tl.insertAndReset("resetTapeCountersTime",t);
+    // The tape exists and is full, we can try to reclaim it
+    if (this->getNbFilesOnTape(conn, vid) == 0) {
+      tl.insertAndReset("getNbFilesOnTape", t);
+      // There is no files on the tape, we can reclaim it : delete the files and reset the counters
+      deleteFilesFromRecycleLog(conn, vid, lc);
+      tl.insertAndReset("deleteFileFromRecycleLogTime", t);
+      resetTapeCounters(conn, admin, vid);
+      tl.insertAndReset("resetTapeCountersTime", t);
       log::ScopedParamContainer spc(lc);
-      spc.add("vid",vid);
-      spc.add("host",admin.host);
-      spc.add("username",admin.username);
+      spc.add("vid", vid);
+      spc.add("host", admin.host);
+      spc.add("username", admin.username);
       tl.addToLog(spc);
-      lc.log(log::INFO,"In RdbmsCatalogue::reclaimTape(), tape reclaimed.");
+      lc.log(log::INFO, "In RdbmsCatalogue::reclaimTape(), tape reclaimed.");
     } else {
       throw exception::UserError(std::string("Cannot reclaim tape ") + vid + " because there is at least one tape"
             " file in the catalogue that is on the tape");

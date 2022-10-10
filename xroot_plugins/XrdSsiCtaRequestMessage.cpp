@@ -2005,7 +2005,7 @@ void RequestMessage::processTape_Reclaim(cta::xrd::Response &response)
 
    auto &vid = getRequired(OptionString::VID);
 
-   m_catalogue.reclaimTape(m_cliIdentity, vid,m_lc);
+   m_catalogue.reclaimTape(m_cliIdentity, vid, m_lc);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }

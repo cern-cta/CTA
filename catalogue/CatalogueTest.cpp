@@ -6363,7 +6363,7 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeVerificationStatus) {
 
     const common::dataStructures::Tape tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
-    ASSERT_EQ(tape.verificationStatus.has_value(), false);
+    ASSERT_FALSE(tape.verificationStatus);
   }
 }
 
@@ -16284,6 +16284,7 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
     ASSERT_FALSE(tape.full);
+    ASSERT_FALSE(tape.verificationStatus);
 
     ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(m_tape1.comment, tape.comment);
