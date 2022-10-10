@@ -5107,7 +5107,11 @@ void RdbmsCatalogue::modifyTapeVerificationStatus(const common::dataStructures::
         "VID = :VID";
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":VERIFICATION_STATUS", verificationStatus);
+    if (verificationStatus.empty()) {
+      stmt.bindString(":VERIFICATION_STATUS", std::nullopt);
+    } else {
+      stmt.bindString(":VERIFICATION_STATUS", verificationStatus);
+    }
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);

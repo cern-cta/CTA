@@ -6352,7 +6352,18 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeVerificationStatus) {
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
     ASSERT_EQ(tape.verificationStatus.value(), modifiedVerificationStatus);
+  }
 
+  // Clear verification status
+  m_catalogue->modifyTapeVerificationStatus(m_admin, m_tape1.vid, "");
+  {
+    const std::list<common::dataStructures::Tape> tapes = m_catalogue->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const common::dataStructures::Tape tape = tapes.front();
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(tape.verificationStatus.has_value(), false);
   }
 }
 
