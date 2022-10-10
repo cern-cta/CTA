@@ -39,6 +39,7 @@ RUN wget https://public-yum.oracle.com/RPM-GPG-KEY-oracle-ol7 -O /etc/pki/rpm-gp
 RUN wget https://git.ceph.com/release.asc -O /etc/pki/rpm-gpg/RPM-ASC-KEY-ceph
 
 RUN yum install -y \
+      bind-utils \
       yum-plugin-downloadonly \
       yum-plugin-priorities \
       yum-plugin-versionlock \

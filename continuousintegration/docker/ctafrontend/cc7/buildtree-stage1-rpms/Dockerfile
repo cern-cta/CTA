@@ -29,6 +29,7 @@ ADD ${BASEDIR}/etc /etc
 
 # yum update could be added at some point.
 RUN yum install -y \
+      bind-utils \
       yum-plugin-downloadonly \
       yum-plugin-priorities \
       yum-plugin-versionlock \

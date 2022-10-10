@@ -27,7 +27,9 @@ ENV ORCHESTRATIONDIR="continuousintegration/orchestration/pods" \
 # Manage repos before running yum
 ADD ${BASEDIR}/etc /etc
 
+# bind-utils needed to resolve pod fqdns from internal kubernetes DNS
 RUN yum install -y \
+      bind-utils \
       yum-plugin-downloadonly \
       yum-plugin-priorities \
       yum-plugin-versionlock \
