@@ -54,10 +54,7 @@ echo "DONE"
 
 # Setting pod fqdn from kubernetes internal NS (or /etc/hosts)
 # this is idempotent and works for both internal and externally resolved pod DNS names
-SHORTHOSTNAME=$(hostname -s)
-DNSHOSTNAME=$(nslookup -type=A ${SHORTHOSTNAME}  | egrep '^Name' | awk '{print $2}')
-echo "SHORTHOSTNAME:${SHORTHOSTNAME} resolved in ${DNSHOSTNAME}"
-echo ${DNSHOSTNAME} > /etc/hostname
+echo "$(hostname -s).$(grep search /etc/resolv.conf | cut -d\  -f2)" > /etc/hostname
 hostname --file /etc/hostname
 ## END FUZZY LOGIC
 
