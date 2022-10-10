@@ -18,14 +18,6 @@
 
 LOGMOUNT=/mnt/logs
 
-# Setting pod fqdn from kubernetes internal NS
-# this is idempotent and works for both internal and externally resolved pod DNS names
-SHORTHOSTNAME=$(hostname -s)
-DNSHOSTNAME=$(nslookup -type=A ${SHORTHOSTNAME}  | egrep '^Name' | awk '{print $2}')
-echo "SHORTHOSTNAME:${SHORTHOSTNAME} resolved in ${DNSHOSTNAME}"
-echo ${DNSHOSTNAME} > /etc/hostname
-hostname --file /etc/hostname
-
 PV_PATH=""
 
 if [ "-${MY_CONTAINER}-" != "--" ]; then
@@ -52,9 +44,22 @@ touch /var/log/cta-rados-locking.log
 #Creating the symbolic link to /var/log/cta-rados-locking.log
 ln -s /var/log/cta-rados-locking.log /var/tmp/cta-rados-locking.log
 
+## BEGIN FUZZY LOGIC
+# there is something strange here: we should have something better to solve DNS resolution...
+
+# Here we locally add reverse DNS in /etc/hosts
 echo -n "Fixing reverse DNS for $(hostname) for xrootd: "
 sed -i -c "s/^\($(hostname -i)\)\s\+.*$/\1 $(hostname -s).$(grep search /etc/resolv.conf | cut -d\  -f2) $(hostname -s)/" /etc/hosts
 echo "DONE"
+
+# Setting pod fqdn from kubernetes internal NS (or /etc/hosts)
+# this is idempotent and works for both internal and externally resolved pod DNS names
+SHORTHOSTNAME=$(hostname -s)
+DNSHOSTNAME=$(nslookup -type=A ${SHORTHOSTNAME}  | egrep '^Name' | awk '{print $2}')
+echo "SHORTHOSTNAME:${SHORTHOSTNAME} resolved in ${DNSHOSTNAME}"
+echo ${DNSHOSTNAME} > /etc/hostname
+hostname --file /etc/hostname
+## END FUZZY LOGIC
 
 # Not needed anymore, keep it in case it comes back
 echo -n "Yum should resolve names using IPv4 DNS: "
