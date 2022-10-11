@@ -81,22 +81,7 @@ m_help(false), m_debug(false), m_standaloneCliTool{standaloneCliTool} {
 
   opterr = 0;
   int opt = 0;
-  int opt_index;
-
-  switch (standaloneCliTool) {
-  case StandaloneCliTool::RESTORE_FILES:
-    opt_index = 3;
-    break;
-  case StandaloneCliTool::CTA_SEND_EVENT:
-    opt_index = 3;
-    break;
-  case StandaloneCliTool::CTA_VERIFY_FILE:
-    opt_index = 2;
-    break;
-  default:
-    opt_index = 3;
-    break;
-  }
+  int opt_index = 0;
 
   while ((opt = getopt_long(argc, argv, shortopts[m_standaloneCliTool], longopts[m_standaloneCliTool], &opt_index)) != -1) {
     switch(opt) {

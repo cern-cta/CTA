@@ -66,7 +66,7 @@ void fillNotification(cta::eos::Notification &notification, const int argc, char
   
   if(cmdLineArgs.m_help) { cmdLineArgs.printUsage(std::cout); exit(0); }
 
-  if(!cmdLineArgs.m_archiveFileId && !cmdLineArgs.m_vid) { 
+  if(!cmdLineArgs.m_archiveFileId || !cmdLineArgs.m_vid) { 
     cmdLineArgs.printUsage(std::cout);
     throw std::runtime_error("ERROR: Usage");
   }
