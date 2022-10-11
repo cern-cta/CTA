@@ -196,17 +196,32 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeReadTask *
 castor::tape::tapeserver::daemon::TapeReadSingleThread::popAndRequestMoreJobs() {
-  cta::threading::BlockingQueue<TapeReadTask *>::valueRemainingPair
-    vrp = m_tasks.popGetSize();
-  // If we just passed (down) the half full limit, ask for more
-  // (the remaining value is after pop)
-  if (0 == vrp.remaining) {
-    // This is a last call: if the task injector comes up empty on this
-    // one, he'll call it the end.
+  // Take the next task for the tape thread to execute and check how many left.
+  // m_tasks queue gets more tasks when requestInjection() is called.
+  // The queue may contain many small files that will be processed quickly
+  // or a few big files that take time. We define several thresholds to make injection in time
+
+  cta::threading::BlockingQueue<TapeReadTask *>::valueRemainingPair vrp = m_tasks.popGetSize();
+  if (vrp.remaining == 0) {
+    // This is a last call: the task injector will make the last attempt to fetch more jobs.
+    // In any case, the injector thread will terminate
     m_taskInjector->requestInjection(true);
   }
-  else if (vrp.remaining + 1 == m_maxFilesRequest / 2) {
-    // This is not a last call
+  else if (vrp.remaining == m_maxFilesRequest / 2 - 1) {
+    // This is not a last call: we just passed half of the maximum file limit.
+    // Probably there are many small files queued, that will be processed quickly,
+    // so we need to request injection of new batch of tasks early
+    m_taskInjector->requestInjection(false);
+  }
+  else if (vrp.remaining == 10) {
+    // This is not a last call: we are close to the end of current tasks queue.
+    // 10 is a magic number that will allow us to get new tasks 
+    // before we are done with current batch
+    m_taskInjector->requestInjection(false);
+  }
+  else if (vrp.remaining == 1) {
+    // This is not a last call: given there is only one big file in the queue,
+    // it's time to request the next batch
     m_taskInjector->requestInjection(false);
   }
   return vrp.value;

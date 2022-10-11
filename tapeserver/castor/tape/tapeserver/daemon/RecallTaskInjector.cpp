@@ -314,7 +314,7 @@ bool RecallTaskInjector::synchronousFetch(bool & noFilesToRecall)
   }
   reqFiles -= m_files;
 
-  uint64_t reqSize = (m_raoManager.useRAO() && m_raoManager.hasUDS()) ? 1024L * 1024 * 1024 * 1024 * 1024 : m_maxBatchBytes;
+  uint64_t reqSize = 1024L * 1024 * 1024 * 1024 * 1024;
   if (reqSize <= m_bytes) {
      return true; //No need to pop from the queue, injector already holds enough bytes, but we return there is still work to be done
   }
