@@ -15,13 +15,23 @@
  *               submit itself to any jurisdiction.
  */
 
-#define __STDC_CONSTANT_MACROS // For using stdint macros (stdint is included
+#define __STDC_CONSTANT_MACROS  // For using stdint macros (stdint is included
 // by inttypes.h, so we shoot first)
-#include <stdint.h>
-#include <inttypes.h>
+#include <dirent.h>
+#include <fcntl.h>
 #include <gtest/gtest.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <zlib.h>
+
+#include <stdexcept>
 
 #include "castor/messages/TapeserverProxyDummy.hpp"
+#include "castor/tape/tapeserver/daemon/CleanerSession.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
@@ -30,12 +40,19 @@
 #include "castor/tape/tapeserver/file/LabelSession.hpp"
 #include "castor/tape/tapeserver/file/WriteSession.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
+#include "catalogue/CatalogueItor.hpp"
+#include "catalogue/CreateMountPolicyAttributes.hpp"
+#include "catalogue/CreateTapeAttributes.hpp"
 #include "catalogue/InMemoryCatalogue.hpp"
+#include "catalogue/MediaType.hpp"
 #include "catalogue/OracleCatalogue.hpp"
 #include "catalogue/OracleCatalogueSchema.hpp"
+#include "catalogue/TapeItemWrittenPointer.hpp"
+#include "common/dataStructures/DiskInstance.hpp"
+#include "common/dataStructures/LogicalLibrary.hpp"
+#include "common/dataStructures/MountPolicy.hpp"
+#include "common/dataStructures/RequesterMountRule.hpp"
 #include "common/exception/Exception.hpp"
-#include "common/log/DummyLogger.hpp"
-#include "common/log/StdoutLogger.hpp"
 #include "common/log/StringLogger.hpp"
 #include "common/processCap/ProcessCapDummy.hpp"
 #include "common/threading/Thread.hpp"
@@ -43,11 +60,10 @@
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "scheduler/MountType.hpp"
 #include "scheduler/Scheduler.hpp"
-#include "scheduler/testingMocks/MockRetrieveMount.hpp"
 #include "scheduler/testingMocks/MockArchiveJob.hpp"
 #include "scheduler/testingMocks/MockArchiveMount.hpp"
+#include "scheduler/testingMocks/MockRetrieveMount.hpp"
 #include "tests/TempFile.hpp"
-#include "CleanerSession.hpp"
 
 #ifdef CTA_PGSCHED
 #include "scheduler/PostgresSchedDB/PostgresSchedDBFactory.hpp"
@@ -59,19 +75,10 @@
 #ifdef STDOUT_LOGGING
 #include "common/log/StdoutLogger.hpp"
 #else
-
 #include "common/log/DummyLogger.hpp"
-
 #endif
 
-#include <dirent.h>
-#include <fcntl.h>
-#include <stdexcept>
-#include <sys/mman.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <zlib.h>
+
 
 using namespace castor::tape::tapeserver;
 using namespace castor::tape::tapeserver::daemon;

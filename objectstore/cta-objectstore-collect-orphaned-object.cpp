@@ -20,22 +20,26 @@
  * it will be garbage collected.
  */
 
-#include "Agent.hpp"
-#include "AgentReference.hpp"
-#include "ArchiveRequest.hpp"
-#include "BackendFactory.hpp"
-#include "BackendVFS.hpp"
+#include <bits/unique_ptr.h>
+
+#include <iostream>
+#include <stdexcept>
+
+#include "catalogue/Catalogue.hpp"
+#include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/Configuration.hpp"
 #include "common/log/StringLogger.hpp"
 #include "common/utils/utils.hpp"
-#include "GenericObject.hpp"
-#include "RetrieveRequest.hpp"
-#include "RootEntry.hpp"
-
-#include <iostream>
-#include <stdexcept>
-#include <bits/unique_ptr.h>
+#include "objectstore/Agent.hpp"
+#include "objectstore/AgentReference.hpp"
+#include "objectstore/ArchiveRequest.hpp"
+#include "objectstore/BackendFactory.hpp"
+#include "objectstore/BackendVFS.hpp"
+#include "objectstore/GenericObject.hpp"
+#include "objectstore/RetrieveRequest.hpp"
+#include "objectstore/RootEntry.hpp"
+#include "rdbms/Login.hpp"
 
 int main(int argc, char ** argv) {
   try {

@@ -15,11 +15,13 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "common/dataStructures/ArchiveJob.hpp"
 #include "common/exception/NoSuchObject.hpp"
-#include "QueueItor.hpp"
-#include <objectstore/ArchiveQueue.hpp>
-#include <objectstore/RetrieveQueue.hpp>
-#include <objectstore/RootEntry.hpp>
+#include "common/exception/UserError.hpp"
+#include "objectstore/ArchiveQueue.hpp"
+#include "objectstore/RetrieveQueue.hpp"
+#include "objectstore/RootEntry.hpp"
+#include "scheduler/OStoreDB/QueueItor.hpp"
 
 namespace cta {
 

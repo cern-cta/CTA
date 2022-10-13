@@ -17,26 +17,36 @@
 
 #pragma once
 
-#include "catalogue/ArchiveFileRow.hpp"
-#include "catalogue/CatalogueFactory.hpp"
-#include "catalogue/CreateTapeAttributes.hpp"
-#include "common/exception/Exception.hpp"
-#include "common/log/DummyLogger.hpp"
-
 #include <gtest/gtest.h>
+
+#include <list>
 #include <map>
 #include <memory>
 #include <set>
+#include <string>
+
+#include "catalogue/Catalogue.hpp"
+#include "catalogue/CatalogueFactory.hpp"
+#include "catalogue/CatalogueItor.hpp"
+#include "catalogue/CreateTapeAttributes.hpp"
+#include "catalogue/MediaTypeWithLogs.hpp"
+#include "catalogue/TapePool.hpp"
+#include "common/dataStructures/AdminUser.hpp"
+#include "common/dataStructures/ArchiveFile.hpp"
+#include "common/dataStructures/DiskInstance.hpp"
+#include "common/dataStructures/LogicalLibrary.hpp"
+#include "common/dataStructures/SecurityIdentity.hpp"
+#include "common/dataStructures/StorageClass.hpp"
+#include "common/dataStructures/VirtualOrganization.hpp"
+#include "common/log/DummyLogger.hpp"
 
 namespace unitTests {
 
 class cta_catalogue_CatalogueTest : public ::testing::TestWithParam<cta::catalogue::CatalogueFactory **> {
 public:
-
   cta_catalogue_CatalogueTest();
 
 protected:
-
   cta::log::DummyLogger m_dummyLog;
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   const cta::common::dataStructures::SecurityIdentity m_localAdmin;
@@ -128,6 +138,6 @@ protected:
   std::map<std::string, cta::catalogue::TapePool> tapePoolListToMap(
     const std::list<cta::catalogue::TapePool> &listOfTapePools);
 
-}; // cta_catalogue_CatalogueTest
+};  // cta_catalogue_CatalogueTest
 
-} // namespace unitTests
+}  // namespace unitTests

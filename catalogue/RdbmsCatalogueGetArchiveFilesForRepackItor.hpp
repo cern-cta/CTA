@@ -19,11 +19,11 @@
 
 #include "catalogue/ArchiveFileBuilder.hpp"
 #include "catalogue/Catalogue.hpp"
+#include "common/dataStructures/ArchiveFile.hpp"
 #include "common/log/Logger.hpp"
 #include "rdbms/ConnPool.hpp"
-#include "rdbms/Stmt.hpp"
 #include "rdbms/Rset.hpp"
-#include "common/dataStructures/ArchiveFile.hpp"
+#include "rdbms/Stmt.hpp"
 
 namespace cta {
 namespace catalogue {

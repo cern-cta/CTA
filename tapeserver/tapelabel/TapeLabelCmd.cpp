@@ -15,8 +15,12 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "catalogue/Catalogue.hpp"
+#include "catalogue/CatalogueFactory.hpp"
+#include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/Constants.hpp"
 #include "mediachanger/LibrarySlotParser.hpp"
+#include "rdbms/Login.hpp"
 #include "tapeserver/castor/tape/Constants.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/Exceptions.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/HeaderChecker.hpp"

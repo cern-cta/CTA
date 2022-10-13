@@ -15,8 +15,8 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <iostream>
-
+#include "catalogue/Catalogue.hpp"
+#include "catalogue/TapeItemWrittenPointer.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "scheduler/ArchiveMount.hpp"
 

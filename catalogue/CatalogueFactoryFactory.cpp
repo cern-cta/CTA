@@ -20,6 +20,8 @@
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "catalogue/InMemoryCatalogueFactory.hpp"
 #include "catalogue/PostgresqlCatalogueFactory.hpp"
+#include "common/exception/Exception.hpp"
+#include "common/log/Logger.hpp"
 
 #ifdef SUPPORT_OCCI
   #include "catalogue/OracleCatalogueFactory.hpp"

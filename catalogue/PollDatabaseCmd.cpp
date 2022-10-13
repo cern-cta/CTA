@@ -15,12 +15,13 @@
  *               submit itself to any jurisdiction.
  */
 
+#include <unistd.h>
+
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "catalogue/PollDatabaseCmd.hpp"
 #include "catalogue/PollDatabaseCmdLineArgs.hpp"
 #include "rdbms/ConnPool.hpp"
-
-#include <unistd.h>
+#include "rdbms/Login.hpp"
 
 namespace cta {
 namespace catalogue {

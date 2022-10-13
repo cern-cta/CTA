@@ -17,13 +17,21 @@
 
 #pragma once
 
+#include <list>
+#include <map>
 #include <memory>
+#include <set>
+#include <string>
+
 #include "scheduler/SchedulerDatabase.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "scheduler/RetrieveRequestDump.hpp"
-#include "catalogue/Catalogue.hpp"
 
 namespace cta {
+
+namespace catalogue {
+class Catalogue;
+}
 
 /**
  * Asbtract class specifying the interface to a factory of scheduler database
@@ -31,7 +39,6 @@ namespace cta {
  */
 class SchedulerDatabaseFactory {
 public:
-
   /**
    * Destructor.
    */
@@ -43,8 +50,7 @@ public:
    * @return A newly created scheduler database object.
    */
   virtual std::unique_ptr<SchedulerDatabase> create(std::unique_ptr<cta::catalogue::Catalogue>& catalogue) const = 0;
-
-}; // class SchedulerDatabaseFactory
+};  // class SchedulerDatabaseFactory
 
 /**
  * Base of a wrapper class. This follows the decorator structural pattern. Wrappers are used by
@@ -53,8 +59,7 @@ public:
  */
 class SchedulerDatabaseDecorator : public SchedulerDatabase {
 public:
-
-  SchedulerDatabaseDecorator(SchedulerDatabase &db) : m_SchedDB(&db) { }
+  explicit SchedulerDatabaseDecorator(SchedulerDatabase &db) : m_SchedDB(&db) { }
 
   void waitSubthreadsComplete() override {
     m_SchedDB->waitSubthreadsComplete();
@@ -173,7 +178,7 @@ public:
   }
 
   std::unique_ptr<TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose, log::LogContext& logContext) override {
-    return m_SchedDB->getMountInfoNoLock(purpose,logContext);
+    return m_SchedDB->getMountInfoNoLock(purpose, logContext);
   }
 
   std::list<RetrieveQueueStatistics> getRetrieveQueueStatistics(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
@@ -188,7 +193,7 @@ public:
   }
 
   void cancelArchive(const common::dataStructures::DeleteArchiveRequest& request, log::LogContext & lc) override {
-    m_SchedDB->cancelArchive(request,lc);
+    m_SchedDB->cancelArchive(request, lc);
   }
 
   void cancelRetrieve(const std::string& instanceName, const cta::common::dataStructures::CancelRetrieveRequest& rqst,
@@ -234,7 +239,6 @@ public:
 
 protected:
   cta::SchedulerDatabase *m_SchedDB;
+};  // class SchedulerDatabaseDecorator
 
-}; // class SchedulerDatabaseDecorator
-
-} // namespace cta
+}  // namespace cta

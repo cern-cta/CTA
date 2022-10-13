@@ -27,6 +27,7 @@
 #include <time.h>       /* time */
 #include <tuple>
 
+#include "catalogue/Catalogue.hpp"
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/exception/Exception.hpp"
@@ -45,9 +46,9 @@
 #include "objectstore/RepackQueueAlgorithms.hpp"
 #include "objectstore/RepackRequest.hpp"
 #include "objectstore/Sorter.hpp"
-#include "OStoreDB.hpp"
 #include "Scheduler.hpp"
 #include "scheduler/LogicalLibrary.hpp"
+#include "scheduler/OStoreDB/OStoreDB.hpp"
 #include "scheduler/RetrieveJob.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 

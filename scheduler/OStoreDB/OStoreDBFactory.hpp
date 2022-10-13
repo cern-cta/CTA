@@ -17,22 +17,26 @@
 
 #pragma once
 
-#include "scheduler/SchedulerDatabaseFactory.hpp"
-#include "scheduler/OStoreDB/OStoreDB.hpp"
-#include "common/dataStructures/SecurityIdentity.hpp"
-#include "scheduler/LogicalLibrary.hpp"
-#include "scheduler/RetrieveRequestDump.hpp"
-#include "objectstore/RootEntry.hpp"
-#include "objectstore/Agent.hpp"
-#include "objectstore/AgentReference.hpp"
-#include "objectstore/BackendVFS.hpp"
-#include "objectstore/BackendRados.hpp"
-#include "objectstore/BackendFactory.hpp"
-#include "common/log/DummyLogger.hpp"
-#include "catalogue/DummyCatalogue.hpp"
 #include <memory>
 
+#include "common/dataStructures/SecurityIdentity.hpp"
+#include "common/log/DummyLogger.hpp"
+#include "objectstore/Agent.hpp"
+#include "objectstore/AgentReference.hpp"
+#include "objectstore/BackendFactory.hpp"
+#include "objectstore/BackendRados.hpp"
+#include "objectstore/BackendVFS.hpp"
+#include "objectstore/RootEntry.hpp"
+#include "scheduler/LogicalLibrary.hpp"
+#include "scheduler/OStoreDB/OStoreDB.hpp"
+#include "scheduler/RetrieveRequestDump.hpp"
+#include "scheduler/SchedulerDatabaseFactory.hpp"
+
 namespace cta {
+
+namespace catalogue {
+class Catalogue;
+}
 
 namespace objectstore {
   class Backend;

@@ -17,7 +17,10 @@
 
 #pragma once
 
-#include "Catalogue.hpp"
+#include <string>
+
+#include "catalogue/Catalogue.hpp"
+#include "common/dataStructures/FileRecycleLog.hpp"
 #include "rdbms/ConnPool.hpp"
 
 namespace cta {
@@ -32,9 +35,9 @@ public:
    * @param conn A database connection.
    */
   RdbmsCatalogueGetFileRecycleLogItor(
-    log::Logger &log, 
-    rdbms::Conn &&conn, 
-    const RecycleTapeFileSearchCriteria & searchCriteria, 
+    log::Logger &log,
+    rdbms::Conn &&conn,
+    const RecycleTapeFileSearchCriteria & searchCriteria,
     const std::string &tempDiskFxidsTableName);
 
   /**
@@ -64,7 +67,6 @@ private:
    */
   rdbms::Conn m_conn;
 
-  
   /**
    * The search criteria to be used when listing recycled tape files.
    */
@@ -101,9 +103,9 @@ private:
    * This method is idempotent.
    */
   void releaseDbResources() noexcept;
-  
-  common::dataStructures::FileRecycleLog populateFileRecycleLog();
 
+  common::dataStructures::FileRecycleLog populateFileRecycleLog();
 };
 
-}}
+}  // namespace catalogue
+}  // namespace cta

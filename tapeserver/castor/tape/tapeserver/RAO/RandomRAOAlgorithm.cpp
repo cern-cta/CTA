@@ -15,10 +15,15 @@
  *               submit itself to any jurisdiction.
  */
 
+#include <memory>
 #include <numeric>
+#include <string>
+#include <vector>
 
-#include "RandomRAOAlgorithm.hpp"
 #include "common/Timer.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/RandomRAOAlgorithm.hpp"
+#include "tapeserver/castor/tape/tapeserver/SCSI/Structures.hpp"
+
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 
@@ -28,9 +33,9 @@ RandomRAOAlgorithm::RandomRAOAlgorithm() {
 std::vector<uint64_t> RandomRAOAlgorithm::performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob> >& jobs) {
   std::vector<uint64_t> raoIndices(jobs.size());
   cta::utils::Timer totalTimer;
-  std::iota(raoIndices.begin(),raoIndices.end(),0);
+  std::iota(raoIndices.begin(), raoIndices.end(), 0);
   std::random_shuffle(raoIndices.begin(), raoIndices.end());
-  m_raoTimings.insertAndReset("RAOAlgorithmTime",totalTimer);
+  m_raoTimings.insertAndReset("RAOAlgorithmTime", totalTimer);
   return raoIndices;
 }
 

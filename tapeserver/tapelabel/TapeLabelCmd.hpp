@@ -17,19 +17,24 @@
 
 #pragma once
 
-#include "common/log/StdoutLogger.hpp"
-#include "common/log/LogContext.hpp"
-#include "common/processCap/ProcessCap.hpp"
-#include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "tapeserver/castor/tape/tapeserver/drive/DriveGeneric.hpp"
-#include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
-#include "tapeserver/daemon/Tpconfig.hpp"
-#include "tapeserver/tapelabel/CmdLineTool.hpp"
-#include "catalogue/CatalogueFactoryFactory.hpp"
-#include "mediachanger/MediaChangerFacade.hpp"
 #include <memory>
 
+#include "common/log/LogContext.hpp"
+#include "common/log/StdoutLogger.hpp"
+#include "common/processCap/ProcessCap.hpp"
+#include "mediachanger/MediaChangerFacade.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
+#include "tapeserver/castor/tape/tapeserver/drive/DriveGeneric.hpp"
+#include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "tapeserver/daemon/Tpconfig.hpp"
+#include "tapeserver/tapelabel/CmdLineTool.hpp"
+
 namespace cta {
+
+namespace catalogue {
+class Catalogue;
+}
+
 namespace tapeserver {
 namespace tapelabel {
 

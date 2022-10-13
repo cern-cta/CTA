@@ -15,12 +15,20 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "tests/TestsCompileTimeSwitches.hpp"
+#include <gtest/gtest.h>
+#include <uuid/uuid.h>
+
+#include <algorithm>
+#include <exception>
+#include <future>
+
+#include "catalogue/DummyCatalogue.hpp"
+#include "catalogue/InMemoryCatalogue.hpp"
+#include "common/dataStructures/SecurityIdentity.hpp"
+#include "common/log/DummyLogger.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/SchedulerDatabaseFactory.hpp"
-#include "common/dataStructures/SecurityIdentity.hpp"
-#include "catalogue/InMemoryCatalogue.hpp"
-#include "common/log/DummyLogger.hpp"
+#include "tests/TestsCompileTimeSwitches.hpp"
 
 #ifdef CTA_PGSCHED
 #include "scheduler/PostgresSchedDB/PostgresSchedDBFactory.hpp"
@@ -33,12 +41,6 @@
 #ifdef STDOUT_LOGGING
 #include "common/log/StdoutLogger.hpp"
 #endif
-
-#include <exception>
-#include <gtest/gtest.h>
-#include <algorithm>
-#include <uuid/uuid.h>
-#include <future>
 
 namespace unitTests {
 

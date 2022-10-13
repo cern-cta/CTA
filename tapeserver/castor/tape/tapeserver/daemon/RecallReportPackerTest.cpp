@@ -15,14 +15,15 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
-#include "common/log/StringLogger.hpp"
-#include "common/exception/Exception.hpp"
-#include "scheduler/testingMocks/MockRetrieveMount.hpp"
-#include "scheduler/testingMocks/MockRetrieveJob.hpp"
-
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
+#include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
+#include "catalogue/DummyCatalogue.hpp"
+#include "common/exception/Exception.hpp"
+#include "common/log/StringLogger.hpp"
+#include "scheduler/testingMocks/MockRetrieveJob.hpp"
+#include "scheduler/testingMocks/MockRetrieveMount.hpp"
 
 using ::testing::_;
 using ::testing::Invoke;

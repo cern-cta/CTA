@@ -17,20 +17,27 @@
 
 #pragma once
 
-#include "catalogue/CatalogueFactory.hpp"
-#include "rdbms/Login.hpp"
-
 #include <memory>
 
 namespace cta {
+
+namespace log {
+class Logger;
+}
+
+namespace rdbms {
+class Login;
+}
+
 namespace catalogue {
+
+class CatalogueFactory;
 
 /**
  * Factory of catalogue factories.  This class is a singleton.
  */
 class CatalogueFactoryFactory {
 public:
-
   /**
    * Prevent objects of this class from being instantiated.
    */
@@ -60,8 +67,7 @@ public:
     const uint64_t nbConns,
     const uint64_t nbArchiveFileListingConns,
     const uint32_t maxTriesToConnect = 3);
+};  // class CatalogueFactoryFactory
 
-}; // class CatalogueFactoryFactory
-
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

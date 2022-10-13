@@ -15,8 +15,27 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "ArchiveMount.hpp"
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
+
+#include <algorithm>
+#include <chrono>
+#include <cstdlib>
+#include <iomanip>
+#include <iostream>
+#include <random>
+#include <sstream>
+
+#include "catalogue/Catalogue.hpp"
+#include "catalogue/CatalogueItor.hpp"
+#include "catalogue/DriveConfig.hpp"
+#include "catalogue/TapeDrivesCatalogueState.hpp"
+#include "catalogue/TapePool.hpp"
+#include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteriaAndFileId.hpp"
+#include "common/dataStructures/LogicalLibrary.hpp"
 #include "common/exception/NonRetryableError.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/exception/UserError.hpp"
@@ -24,24 +43,11 @@
 #include "common/utils/utils.hpp"
 #include "disk/DiskFileImplementations.hpp"
 #include "disk/RadosStriperPool.hpp"
-#include "DiskReportRunner.hpp"
-#include "RetrieveMount.hpp"
-#include "RetrieveRequestDump.hpp"
-#include "Scheduler.hpp"
-#include "catalogue/TapeDrivesCatalogueState.hpp"
-#include "catalogue/DriveConfig.hpp"
-
-#include <iostream>
-#include <sstream>
-#include <iomanip>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <algorithm>
-#include <random>
-#include <chrono>
-#include <cstdlib>
-#include <time.h>
+#include "scheduler/ArchiveMount.hpp"
+#include "scheduler/DiskReportRunner.hpp"
+#include "scheduler/RetrieveMount.hpp"
+#include "scheduler/RetrieveRequestDump.hpp"
+#include "scheduler/Scheduler.hpp"
 
 namespace cta {
 

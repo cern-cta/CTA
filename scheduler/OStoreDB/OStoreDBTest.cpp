@@ -21,18 +21,19 @@
 #include <string>
 #include <utility>
 
+#include "catalogue/DummyCatalogue.hpp"
 #include "catalogue/InMemoryCatalogue.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/StringLogger.hpp"
-#include "MemQueues.hpp"
 #include "objectstore/BackendPopulator.hpp"
 #include "objectstore/BackendRados.hpp"
 #include "objectstore/BackendRadosTestSwitch.hpp"
 #include "objectstore/BackendVFS.hpp"
-#include "OStoreDB.hpp"
-#include "OStoreDBFactory.hpp"
-#include "OStoreDBTest.hpp"
+#include "scheduler/OStoreDB/MemQueues.hpp"
+#include "scheduler/OStoreDB/OStoreDB.hpp"
+#include "scheduler/OStoreDB/OStoreDBFactory.hpp"
+#include "scheduler/OStoreDB/OStoreDBTest.hpp"
 
 namespace unitTests {
 

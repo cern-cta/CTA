@@ -17,25 +17,30 @@
 
 #pragma once
 
-#include "common/log/StdoutLogger.hpp"
-#include "common/log/DummyLogger.hpp"
-#include "common/log/LogContext.hpp"
-#include "common/processCap/ProcessCap.hpp"
-#include "tapeserver/readtp/ReadtpCmdLineArgs.hpp"
-#include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "tapeserver/castor/tape/tapeserver/drive/DriveGeneric.hpp"
-#include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
-#include "tapeserver/daemon/Tpconfig.hpp"
-#include "tapeserver/readtp/CmdLineTool.hpp"
-#include "tapeserver/readtp/TapeFseqRange.hpp"
-#include "tapeserver/readtp/TapeFseqRangeListSequence.hpp"
-#include "catalogue/CatalogueFactoryFactory.hpp"
-#include "mediachanger/MediaChangerFacade.hpp"
-#include "disk/DiskFile.hpp"
-
 #include <memory>
 
+#include "common/dataStructures/LabelFormat.hpp"
+#include "common/log/DummyLogger.hpp"
+#include "common/log/LogContext.hpp"
+#include "common/log/StdoutLogger.hpp"
+#include "common/processCap/ProcessCap.hpp"
+#include "disk/DiskFile.hpp"
+#include "mediachanger/MediaChangerFacade.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
+#include "tapeserver/castor/tape/tapeserver/drive/DriveGeneric.hpp"
+#include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "tapeserver/daemon/Tpconfig.hpp"
+#include "tapeserver/readtp/CmdLineTool.hpp"
+#include "tapeserver/readtp/ReadtpCmdLineArgs.hpp"
+#include "tapeserver/readtp/TapeFseqRange.hpp"
+#include "tapeserver/readtp/TapeFseqRangeListSequence.hpp"
+
 namespace cta {
+
+namespace catalogue {
+class Catalogue;
+}
+
 namespace tapeserver {
 namespace readtp {
 

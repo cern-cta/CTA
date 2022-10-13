@@ -20,9 +20,16 @@
 #include <limits>
 #include <string>
 
-#include "catalogue/Catalogue.hpp"
+#include "common/dataStructures/DriveStatus.hpp"
+#include "common/dataStructures/MountType.hpp"
+#include "common/exception/UserError.hpp"
 
 namespace cta {
+
+namespace catalogue {
+class Catalogue;
+}
+
 namespace log {
 class LogContext;
 }
@@ -30,8 +37,9 @@ class LogContext;
 namespace common {
 namespace dataStructures {
 class DesiredDriveState;
-class DriveInfo;
-class TapeDrive;
+struct DriveInfo;
+struct TapeDrive;
+struct SecurityIdentity;
 }
 }
 
@@ -63,7 +71,7 @@ struct ReportDriveStatsInputs {
 
 class TapeDrivesCatalogueState {
 public:
-  TapeDrivesCatalogueState(catalogue::Catalogue &catalogue);
+  explicit TapeDrivesCatalogueState(catalogue::Catalogue &catalogue);
   ~TapeDrivesCatalogueState() = default;
   void createTapeDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
     const common::dataStructures::DesiredDriveState & desiredState, const common::dataStructures::MountType& type,

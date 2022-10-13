@@ -15,6 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "catalogue/CatalogueItor.hpp"
 #include "catalogue/RdbmsCatalogueGetArchiveFilesItor.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"

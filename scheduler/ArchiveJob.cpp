@@ -15,11 +15,15 @@
  *               submit itself to any jurisdiction.
  */
 
+#include <cryptopp/base64.h>
+
+#include <limits>
+
+#include "catalogue/TapeFileWritten.hpp"
+#include "catalogue/TapeItemWrittenPointer.hpp"
+#include "disk/DiskReporterFactory.hpp"
 #include "scheduler/ArchiveJob.hpp"
 #include "scheduler/ArchiveMount.hpp"
-#include "disk/DiskReporterFactory.hpp"
-#include <limits>
-#include <cryptopp/base64.h>
 
 //------------------------------------------------------------------------------
 // destructor

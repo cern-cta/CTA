@@ -18,6 +18,12 @@
 #include "cta_frontend.pb.h"
 #include "version.h"
 
+#include <XrdSsiPbAlert.hpp>
+#include <XrdSsiPbConfig.hpp>
+#include <XrdSsiPbService.hpp>
+
+#include "catalogue/Catalogue.hpp"
+#include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/log/FileLogger.hpp"
 #include "common/log/LogLevel.hpp"
@@ -25,10 +31,7 @@
 #include "common/log/SyslogLogger.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/Login.hpp"
-#include "XrdSsiCtaServiceProvider.hpp"
-#include "XrdSsiPbAlert.hpp"
-#include "XrdSsiPbConfig.hpp"
-#include "XrdSsiPbService.hpp"
+#include "xroot_plugins/XrdSsiCtaServiceProvider.hpp"
 
 /*
  * Global pointer to the Service Provider object.

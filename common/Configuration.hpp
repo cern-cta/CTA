@@ -17,12 +17,13 @@
 
 #pragma once
 
-#include "common/exception/Exception.hpp"
-#include "common/log/Logger.hpp"
-#include "common/utils/utils.hpp"
-
 #include <string>
 #include <map>
+
+#include "common/exception/Exception.hpp"
+#include "common/log/LogContext.hpp"
+#include "common/log/Logger.hpp"
+#include "common/utils/utils.hpp"
 
 namespace cta { namespace common {
 

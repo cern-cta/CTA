@@ -23,7 +23,6 @@
 #include <tuple>
 #include <vector>
 
-#include "catalogue/Catalogue.hpp"
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/LabelFormat.hpp"
@@ -47,6 +46,10 @@
 #include "scheduler/RetrieveJob.hpp"
 
 namespace cta {
+
+namespace catalogue {
+class Catalogue;
+}
 
 namespace ostoredb {
 template <class, class>

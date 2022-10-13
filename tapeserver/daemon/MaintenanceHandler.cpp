@@ -15,23 +15,25 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "MaintenanceHandler.hpp"
-#include "common/exception/Errnum.hpp"
+#include <signal.h>
+#include <sys/wait.h>
+#include <sys/prctl.h>
+
 #include "catalogue/Catalogue.hpp"
+#include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
+#include "common/exception/Errnum.hpp"
+#include "rdbms/Login.hpp"
+#include "scheduler/DiskReportRunner.hpp"
+#include "scheduler/RepackRequestManager.hpp"
 #include "scheduler/Scheduler.hpp"
+#include "tapeserver/daemon/MaintenanceHandler.hpp"
+
 #ifdef CTA_PGSCHED
 #include "scheduler/PostgresSchedDB/PostgresSchedDBInit.hpp"
 #else
 #include "scheduler/OStoreDB/OStoreDBInit.hpp"
 #endif
-#include "rdbms/Login.hpp"
-#include "scheduler/DiskReportRunner.hpp"
-#include "scheduler/RepackRequestManager.hpp"
-
-#include <signal.h>
-#include <sys/wait.h>
-#include <sys/prctl.h>
 
 namespace cta { namespace tape { namespace  daemon {
 

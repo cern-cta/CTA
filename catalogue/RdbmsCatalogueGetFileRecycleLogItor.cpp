@@ -15,13 +15,15 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "RdbmsCatalogueGetFileRecycleLogItor.hpp"
-#include "common/log/LogContext.hpp"
-#include "common/exception/UserError.hpp"
+#include "catalogue/CatalogueItor.hpp"
+#include "catalogue/RdbmsCatalogueGetFileRecycleLogItor.hpp"
 #include "common/dataStructures/FileRecycleLog.hpp"
+#include "common/exception/UserError.hpp"
+#include "common/log/LogContext.hpp"
+
 namespace cta {
 namespace catalogue {
-  
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------

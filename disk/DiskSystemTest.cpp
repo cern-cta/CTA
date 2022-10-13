@@ -16,10 +16,12 @@
  */
 #include <gtest/gtest.h>
 
-#include "common/utils/Regex.hpp"
-#include "common/log/DummyLogger.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/InMemoryCatalogue.hpp"
+#include "common/dataStructures/SecurityIdentity.hpp"
+#include "common/log/DummyLogger.hpp"
+#include "common/utils/Regex.hpp"
+#include "disk/DiskSystem.hpp"
 
 namespace unitTests {
   

@@ -21,26 +21,30 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <tuple>
 
-#include "Agent.hpp"
-#include "Algorithms.hpp"
-#include "ArchiveQueue.hpp"
-#include "ArchiveQueueAlgorithms.hpp"
-#include "ArchiveRequest.hpp"
-#include "catalogue/Catalogue.hpp"
 #include "common/dataStructures/ArchiveJob.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/threading/Mutex.hpp"
-#include "GenericObject.hpp"
-#include "RetrieveQueue.hpp"
-#include "RetrieveQueueAlgorithms.hpp"
-#include "RetrieveRequest.hpp"
-#include "SorterArchiveJob.hpp"
+#include "objectstore/Agent.hpp"
+#include "objectstore/Algorithms.hpp"
+#include "objectstore/ArchiveQueue.hpp"
+#include "objectstore/ArchiveQueueAlgorithms.hpp"
+#include "objectstore/ArchiveRequest.hpp"
+#include "objectstore/GenericObject.hpp"
+#include "objectstore/RetrieveQueue.hpp"
+#include "objectstore/RetrieveQueueAlgorithms.hpp"
+#include "objectstore/RetrieveRequest.hpp"
+#include "objectstore/SorterArchiveJob.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta {
+namespace catalogue {
+class Catalogue;
+}
+namespace objectstore {
 
 // forward declarations
 struct ArchiveJobQueueInfo;
@@ -56,7 +60,7 @@ public:
   Sorter(AgentReference& agentReference, Backend &objectstore, catalogue::Catalogue& catalogue);
   ~Sorter();
 
-  //std::string = containerIdentifier
+  // std::string = containerIdentifier
   typedef std::map<std::tuple<std::string, common::dataStructures::JobQueueType>, std::list<std::shared_ptr<ArchiveJobQueueInfo>>> MapArchive;
   typedef std::map<std::tuple<std::string, common::dataStructures::JobQueueType>, std::list<std::shared_ptr<RetrieveJobQueueInfo>>> MapRetrieve;
 
@@ -79,7 +83,7 @@ public:
    * The Sorter::ArchiveJob have to be created by the user with all fields filled
    * @param archiveRequest The SorterArchiveRequest to insert into the sorter
    */
-  void insertArchiveRequest(const SorterArchiveRequest& archiveRequest,AgentReferenceInterface& previousOwner, log::LogContext& lc);
+  void insertArchiveRequest(const SorterArchiveRequest& archiveRequest, AgentReferenceInterface& previousOwner, log::LogContext& lc);
 
   /**
    * This method will take the first list<ArchiveJobQueueInfo> contained in the MapArchive, queue all Archive jobs contained in it and delete the list from the map
@@ -156,7 +160,7 @@ public:
    * @throws Exception if no ToTransfer jobs are found in the RetrieveRequest passed in parameter (in the case where copyNb == std::nullopt)
    * @throws Exception if the destination queue could not have been determined according to the copyNb passed in parameter
    */
-  void insertRetrieveRequest(SorterRetrieveRequest& retrieveRequest, AgentReferenceInterface &previousOwner,std::optional<uint32_t> copyNb, log::LogContext & lc);
+  void insertRetrieveRequest(SorterRetrieveRequest& retrieveRequest, AgentReferenceInterface &previousOwner, std::optional<uint32_t> copyNb, log::LogContext & lc);
 
   /**
    * This method will take the first list<RetrieveJobQueueInfo> contained in the MapRetrieve, queue all Retrieve jobs contained in it and delete the list from the map
@@ -224,12 +228,12 @@ private:
 };
 
 struct ArchiveJobQueueInfo{
-  std::tuple<SorterArchiveJob,std::promise<void>> jobToQueue;
+  std::tuple<SorterArchiveJob, std::promise<void>> jobToQueue;
   // TODO : Job reporting
 };
 
 struct RetrieveJobQueueInfo{
-  std::tuple<Sorter::RetrieveJob,std::promise<void>> jobToQueue;
+  std::tuple<Sorter::RetrieveJob, std::promise<void>> jobToQueue;
   // TODO : Job reporting
 };
 

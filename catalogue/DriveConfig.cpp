@@ -19,9 +19,10 @@
 #include <string>
 #include <utility>
 
-#include "DriveConfig.hpp"
-#include "tapeserver/daemon/FetchReportOrFlushLimits.hpp"
+#include "catalogue/Catalogue.hpp"
+#include "catalogue/DriveConfig.hpp"
 #include "common/SourcedParameter.hpp"
+#include "tapeserver/daemon/FetchReportOrFlushLimits.hpp"
 
 namespace cta {
 

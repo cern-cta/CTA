@@ -17,11 +17,12 @@
 
 #pragma once
 
+#include "common/dataStructures/RetrieveJob.hpp"
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
+#include "RetrieveActivityCountMap.hpp"
 #include "RetrieveRequest.hpp"
 #include "scheduler/RetrieveRequestDump.hpp"
-#include "RetrieveActivityCountMap.hpp"
 
 namespace cta { namespace objectstore {
   

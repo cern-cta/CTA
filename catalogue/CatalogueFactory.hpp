@@ -17,19 +17,18 @@
 
 #pragma once
 
-#include "catalogue/Catalogue.hpp"
-
 #include <memory>
 
 namespace cta {
 namespace catalogue {
+
+class Catalogue;
 
 /**
  * Specifies the interface to a factory Catalogue objects.
  */
 class CatalogueFactory {
 public:
-
   /**
    * Destructor.
    */
@@ -39,8 +38,7 @@ public:
    * Returns a newly created CTA catalogue object.
    */
   virtual std::unique_ptr<Catalogue> create() = 0;
+};  // class CatalogueFactory
 
-}; // class CatalogueFactory
-
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

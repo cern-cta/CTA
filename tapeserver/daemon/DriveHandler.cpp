@@ -15,29 +15,32 @@
  *               submit itself to any jurisdiction.
  */
 
+#include <unistd.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <sys/prctl.h>
+
+#include <set>
+
+#include "catalogue/Catalogue.hpp"
+#include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/processCap/ProcessCap.hpp"
-#include "DriveHandler.hpp"
-#include "DriveHandlerProxy.hpp"
 #include "rdbms/Login.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/CleanerSession.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/DataTransferSession.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/Session.hpp"
+#include "tapeserver/daemon/DriveHandler.hpp"
+#include "tapeserver/daemon/DriveHandlerProxy.hpp"
+#include "tapeserver/daemon/WatchdogMessage.pb.h"
 #ifdef CTA_PGSCHED
 #include "scheduler/PostgresSchedDB/PostgresSchedDBInit.hpp"
 #else
 #include "scheduler/OStoreDB/OStoreDBInit.hpp"
 #include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
 #endif
-#include "tapeserver/castor/tape/tapeserver/daemon/CleanerSession.hpp"
-#include "tapeserver/castor/tape/tapeserver/daemon/DataTransferSession.hpp"
-#include "tapeserver/castor/tape/tapeserver/daemon/Session.hpp"
-#include "tapeserver/daemon/WatchdogMessage.pb.h"
-
-#include <unistd.h>
-#include <signal.h>
-#include <sys/wait.h>
-#include <set>
-#include <sys/prctl.h>
 
 namespace cta {
 namespace tape {

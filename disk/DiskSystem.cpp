@@ -15,15 +15,19 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "DiskSystem.hpp"
-#include "JSONDiskSystem.hpp"
 #include <algorithm>
-#include "common/exception/Exception.hpp"
-#include "common/threading/SubProcess.hpp"
+#include <map>
+#include <string>
+
+#include "catalogue/Catalogue.hpp"
 #include "common/exception/Errnum.hpp"
-#include "common/utils/utils.hpp"
-#include "JSONFreeSpace.hpp"
+#include "common/exception/Exception.hpp"
 #include "common/json/object/JSONObjectException.hpp"
+#include "common/threading/SubProcess.hpp"
+#include "common/utils/utils.hpp"
+#include "disk/DiskSystem.hpp"
+#include "disk/JSONDiskSystem.hpp"
+#include "disk/JSONFreeSpace.hpp"
 
 namespace cta {
 namespace disk {
@@ -43,12 +47,12 @@ const DiskSystem& DiskSystemList::at(const std::string& name) const {
 std::string DiskSystemList::getDSName(const std::string& fileURL) const {
   // First if the regexes have not been created yet, do so.
   if (m_pointersAndRegexes.empty() && size()) {
-    for (const auto &ds: *this) {
+    for (const auto &ds : *this) {
       m_pointersAndRegexes.emplace_back(ds, ds.fileRegexp);
     }
   }
   // Try and find the fileURL
-  auto pri = std::find_if(m_pointersAndRegexes.begin(), m_pointersAndRegexes.end(), 
+  auto pri = std::find_if(m_pointersAndRegexes.begin(), m_pointersAndRegexes.end(),
       [&](const PointerAndRegex & pr){ return !pr.regex.exec(fileURL).empty(); });
   if (pri != m_pointersAndRegexes.end()) {
     // We found a match. Let's move the pointer and regex to the front so next file will be faster (most likely).
@@ -62,7 +66,7 @@ std::string DiskSystemList::getDSName(const std::string& fileURL) const {
 //------------------------------------------------------------------------------
 // DiskSystemList::setExternalFreeDiskSpaceScript()
 //------------------------------------------------------------------------------
-void DiskSystemList::setExternalFreeDiskSpaceScript(const std::string& path){
+void DiskSystemList::setExternalFreeDiskSpaceScript(const std::string& path) {
   m_externalFreeDiskSpaceScript = path;
 }
 
@@ -89,13 +93,13 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
   cta::utils::Regex eosDiskSystem("^eos:(.*):(.*)$");
   // For testing purposes
   cta::utils::Regex constantFreeSpaceDiskSystem("^constantFreeSpace:(.*)");
-  //Key = diskSystemName, Value = failureReason
+  // Key = diskSystemName, Value = failureReason
   std::map<std::string, cta::exception::Exception> failedToFetchDiskSystems;
-  for (auto const & ds: diskSystems) {
+  for (auto const & ds : diskSystems) {
     uint64_t freeSpace = 0;
     bool updateCatalogue = false;
     auto &diskSystem = m_systemList.at(ds);
-    auto &diskInstanceSpace = diskSystem.diskInstanceSpace;  
+    auto &diskInstanceSpace = diskSystem.diskInstanceSpace;
     try {
       std::vector<std::string> regexResult;
       const auto currentTime = static_cast<uint64_t>(time(nullptr));
@@ -108,24 +112,24 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
       const auto &freeSpaceQueryUrl = getDiskSystemFreeSpaceQueryURL(diskSystem);
       regexResult = eosDiskSystem.exec(freeSpaceQueryUrl);
       if (regexResult.size()) {
-        //Script, then EOS free space query
-        if(!m_systemList.getExternalFreeDiskSpaceScript().empty()){
-          //Script is provided
+        // Script, then EOS free space query
+        if (!m_systemList.getExternalFreeDiskSpaceScript().empty()) {
+          // Script is provided
           try {
             cta::disk::JSONDiskSystem jsoncDiskSystem(diskSystem);
-            freeSpace = fetchFreeDiskSpaceWithScript(m_systemList.getExternalFreeDiskSpaceScript(),jsoncDiskSystem.getJSON(),lc);
+            freeSpace = fetchFreeDiskSpaceWithScript(m_systemList.getExternalFreeDiskSpaceScript(), jsoncDiskSystem.getJSON(), lc);
             goto found;
-          } catch(const cta::disk::FreeDiskSpaceScriptException &ex){
+          } catch (const cta::disk::FreeDiskSpaceScriptException &ex) {
             cta::log::ScopedParamContainer spc(lc);
-            spc.add("exceptionMsg",ex.getMessageValue());
-            std::string errorMsg = "In DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(), unable to get the EOS free space with the script " 
+            spc.add("exceptionMsg", ex.getMessageValue());
+            std::string errorMsg = "In DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(), unable to get the EOS free space with the script "
                     + m_systemList.getExternalFreeDiskSpaceScript() + ". Will run eos space ls -m to fetch the free space for backpressure";
-            lc.log(cta::log::INFO,errorMsg);
+            lc.log(cta::log::INFO, errorMsg);
           }
         }
         freeSpace = fetchFreeDiskSpace(regexResult.at(1), regexResult.at(2), lc);
         goto found;
-      } 
+      }
       regexResult = constantFreeSpaceDiskSystem.exec(freeSpaceQueryUrl);
       if (regexResult.size()) {
         freeSpace = fetchConstantFreeSpace(regexResult.at(1), lc);
@@ -136,7 +140,7 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
       failedToFetchDiskSystems[ds] = ex;
     }
   found:
-    DiskSystemFreeSpace & entry = operator [](ds);
+    DiskSystemFreeSpace & entry = operator[](ds);
     entry.freeSpace = freeSpace;
     entry.fetchTime = ::time(nullptr);
     entry.targetedFreeSpace = m_systemList.at(ds).targetedFreeSpace;

@@ -17,10 +17,11 @@
 
 #pragma once
 
+#include "catalogue/CatalogueItor.hpp"
+#include <common/checksum/ChecksumBlobSerDeser.hpp>
+#include <xroot_plugins/GrpcEndpoint.hpp>
 #include <xroot_plugins/XrdCtaStream.hpp>
 #include <xroot_plugins/XrdSsiCtaRequestMessage.hpp>
-#include <xroot_plugins/GrpcEndpoint.hpp>
-#include <common/checksum/ChecksumBlobSerDeser.hpp>
 
 
 namespace cta { namespace xrd {
@@ -28,8 +29,7 @@ namespace cta { namespace xrd {
 /*!
  * Stream object which implements "tapefile ls" command.
  */
-class TapeFileLsStream : public XrdCtaStream
-{
+class TapeFileLsStream : public XrdCtaStream {
 public:
   // Constructor when we need gRPC namespace lookups
   TapeFileLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler,

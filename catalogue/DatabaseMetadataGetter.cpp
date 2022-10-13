@@ -15,8 +15,10 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "DatabaseMetadataGetter.hpp"
 #include <algorithm>
+
+#include "catalogue/DatabaseMetadataGetter.hpp"
+#include "common/utils/Regex.hpp"
 
 namespace cta {
 namespace catalogue {

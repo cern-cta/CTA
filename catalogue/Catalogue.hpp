@@ -17,89 +17,76 @@
 
 #pragma once
 
-#include "catalogue/CatalogueItor.hpp"
-#include "catalogue/CreateTapeAttributes.hpp"
-#include "catalogue/MediaType.hpp"
-#include "catalogue/MediaTypeWithLogs.hpp"
-#include "catalogue/SchemaVersion.hpp"
-#include "catalogue/TapeFileSearchCriteria.hpp"
-#include "catalogue/TapeItemWrittenPointer.hpp"
-#include "catalogue/TapeFileWritten.hpp"
-#include "catalogue/TapeForWriting.hpp"
-#include "catalogue/TapePool.hpp"
-#include "catalogue/TapeSearchCriteria.hpp"
-#include "common/dataStructures/AdminUser.hpp"
-#include "common/dataStructures/ArchiveFile.hpp"
-#include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
-#include "common/dataStructures/ArchiveFileQueueCriteriaAndFileId.hpp"
-#include "common/dataStructures/ArchiveFileSummary.hpp"
-#include "common/dataStructures/ArchiveJob.hpp"
-#include "common/dataStructures/ArchiveRoute.hpp"
-#include "common/dataStructures/CancelRetrieveRequest.hpp"
-#include "common/dataStructures/DiskSpaceReservationRequest.hpp"
-#include "common/dataStructures/DeleteArchiveRequest.hpp"
-#include "common/dataStructures/DiskFileInfo.hpp"
-#include "common/dataStructures/DiskInstance.hpp"
-#include "common/dataStructures/DiskInstanceSpace.hpp"
-#include "common/dataStructures/DriveState.hpp"
-#include "common/dataStructures/FileRecycleLog.hpp"
-#include "common/dataStructures/EntryLog.hpp"
-#include "common/dataStructures/ListStorageClassRequest.hpp"
-#include "common/dataStructures/LogicalLibrary.hpp"
-#include "common/dataStructures/MountType.hpp"
-#include "common/dataStructures/MountPolicy.hpp"
-#include "common/dataStructures/ReadTestResult.hpp"
-#include "common/dataStructures/RequesterGroupMountRule.hpp"
-#include "common/dataStructures/RequesterMountRule.hpp"
-#include "common/dataStructures/RequesterActivityMountRule.hpp"
-#include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
-#include "common/dataStructures/RetrieveJob.hpp"
-#include "common/dataStructures/RetrieveRequest.hpp"
-#include "common/dataStructures/SecurityIdentity.hpp"
-#include "common/dataStructures/StorageClass.hpp"
-#include "common/dataStructures/Tape.hpp"
-#include "common/dataStructures/TapeCopyToPoolMap.hpp"
-#include "common/dataStructures/TapeDrive.hpp"
-#include "common/dataStructures/TapeDriveStatistics.hpp"
-#include "common/dataStructures/TapeFile.hpp"
-#include "common/dataStructures/RequesterIdentity.hpp"
-#include "common/dataStructures/VirtualOrganization.hpp"
-#include "common/dataStructures/VidToTapeMap.hpp"
-#include "common/dataStructures/WriteTestResult.hpp"
-#include "common/exception/FileSizeMismatch.hpp"
-#include "common/exception/TapeFseqMismatch.hpp"
-#include "common/exception/UserError.hpp"
-#include "common/exception/UserErrorWithCacheInfo.hpp"
-#include "common/log/LogContext.hpp"
-#include "common/log/Logger.hpp"
-#include "disk/DiskSystem.hpp"
-#include "RecyleTapeFileSearchCriteria.hpp"
-#include "CreateMountPolicyAttributes.hpp"
-#include "TapePoolSearchCriteria.hpp"
-
 #include <list>
 #include <map>
 #include <memory>
 #include <optional>
 #include <set>
-#include <stdint.h>
 #include <string>
+#include <tuple>
+#include <utility>
+
+#include "catalogue/RecyleTapeFileSearchCriteria.hpp"
+#include "catalogue/TapeFileSearchCriteria.hpp"
+#include "catalogue/TapePoolSearchCriteria.hpp"
+#include "catalogue/TapeSearchCriteria.hpp"
+#include "common/dataStructures/DiskSpaceReservationRequest.hpp"
+#include "common/dataStructures/VidToTapeMap.hpp"
+#include "common/exception/UserError.hpp"
 
 namespace cta {
+namespace common {
+namespace dataStructures {
+struct AdminUser;
+struct ArchiveFile;
+struct ArchiveFileQueueCriteria;
+struct ArchiveFileSummary;
+struct ArchiveRoute;
+struct DeleteArchiveRequest;
+struct DesiredDriveState;
+struct DiskInstance;
+struct DiskInstanceSpace;
+struct DriveState;
+struct FileRecycleLog;
+struct LogicalLibrary;
+struct MountPolicy;
+struct RequesterActivityMountRule;
+struct RequesterGroupMountRule;
+struct RequesterIdentity;
+struct RequesterMountRule;
+struct RetrieveFileQueueCriteria;
+struct SecurityIdentity;
+struct StorageClass;
+struct Tape;
+struct TapeDrive;
+struct TapeDriveStatistics;
+struct TapeFile;
+struct VirtualOrganization;
+}  // namespace dataStructures
+}  // namespace common
+
 namespace disk {
-
-/**
- * Forward declaration.
- */
+class DiskSystem;
 class DiskSystemList;
+}
 
-} // namespace disk
-} // namespace cta
-
-
-namespace cta {
+namespace log {
+class LogContext;
+}
 
 namespace catalogue {
+
+template <typename Item>
+class CatalogueItor;
+
+struct CreateMountPolicyAttributes;
+struct CreateTapeAttributes;
+struct MediaType;
+struct MediaTypeWithLogs;
+struct SchemaVersion;
+struct TapeForWriting;
+struct TapeItemWrittenPointer;
+struct TapePool;
 
 CTA_GENERATE_EXCEPTION_CLASS(CommentOrReasonWithMoreSizeThanMaximunAllowed);
 CTA_GENERATE_EXCEPTION_CLASS(NegativeDiskSpaceReservationReached);
@@ -155,7 +142,6 @@ CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedTapePoolUsedInAnArchiveRoute);
  */
 class Catalogue {
 public:
-
   /**
    * Destructor.
    */
@@ -245,7 +231,7 @@ public:
    * @param vid The volume identifier of the tape.
    * @param drive The name of the drive where the tape was mounted.
    */
-  virtual void tapeMountedForArchive(const std::string &vid, const std::string &drive) = 0; // internal function (noCLI)
+  virtual void tapeMountedForArchive(const std::string &vid, const std::string &drive) = 0;  // internal function (noCLI)
 
   /**
    * Prepares for a file retrieval by returning the information required to
@@ -282,7 +268,7 @@ public:
    * @param vid The volume identifier of the tape.
    * @param drive The name of the drive where the tape was mounted.
    */
-  virtual void tapeMountedForRetrieve(const std::string &vid, const std::string &drive) = 0; // internal function (noCLI)
+  virtual void tapeMountedForRetrieve(const std::string &vid, const std::string &drive) = 0;  // internal function (noCLI)
 
   /**
    * This method notifies the CTA catalogue that there is no more free space on
@@ -685,7 +671,7 @@ public:
    * This method will throw an exception if the specified tape is not FULL.
    *
    * This method will throw an exception if there is still at least one tape
-   * file recorded in the cataligue as being on the specified tape.
+   * file recorded in the catalogue as being on the specified tape.
    *
    * @param admin The administrator.
    * @param vid The volume identifier of the tape to be reclaimed.
@@ -708,7 +694,7 @@ public:
    * @param vid the vid in which we will the number of files
    * @return the number of files on the tape
    */
-  virtual uint64_t getNbFilesOnTape(const std::string &vid) const = 0 ;
+  virtual uint64_t getNbFilesOnTape(const std::string &vid) const = 0;
 
   virtual void modifyTapeMediaType(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &mediaType) = 0;
   virtual void modifyTapeVendor(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string &vendor) = 0;
@@ -724,7 +710,7 @@ public:
    * @param state the new state
    * @param stateReason the reason why the state changes, if the state is ACTIVE and the stateReason is std::nullopt, the state will be reset to null
    */
-  virtual void modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const std::optional<std::string> & stateReason) = 0;
+  virtual void modifyTapeState(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const common::dataStructures::Tape::State & state, const std::optional<std::string> & stateReason) = 0;
   /**
    * Sets the full status of the specified tape.
    *
@@ -777,7 +763,7 @@ public:
   virtual void modifyRequesterGroupMountRulePolicy(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterGroupName, const std::string &mountPolicy) = 0;
   virtual void modifyRequesterGroupMountRuleComment(const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName, const std::string &requesterGroupName, const std::string &comment) = 0;
 
-   virtual void createMountPolicy(const common::dataStructures::SecurityIdentity &admin, const CreateMountPolicyAttributes & mountPolicy) = 0;
+  virtual void createMountPolicy(const common::dataStructures::SecurityIdentity &admin, const CreateMountPolicyAttributes & mountPolicy) = 0;
 
   /**
    * Returns the list of all existing mount policies.
@@ -1038,8 +1024,8 @@ public:
     const std::string &name, const std::string &diskInstance, const std::string &comment) = 0;
   virtual void modifyDiskInstanceSpaceRefreshInterval(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name, const std::string &diskInstance, const uint64_t refreshInterval) = 0;
-  virtual void modifyDiskInstanceSpaceFreeSpace(const std::string &name, 
-    const std::string &diskInstance, const uint64_t freeSpace) = 0;  
+  virtual void modifyDiskInstanceSpaceFreeSpace(const std::string &name,
+    const std::string &diskInstance, const uint64_t freeSpace) = 0;
   virtual void modifyDiskInstanceSpaceQueryURL(const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &diskInstance,
     const std::string &freeSpaceQueryURL) = 0;
 
@@ -1395,7 +1381,7 @@ public:
    * @param keyName The key of the parameter.
    * @return Returns the category, value and source of a parameter of the configuarion
    */
-  virtual std::optional<std::tuple<std::string, std::string, std::string>> getTapeDriveConfig( const std::string &tapeDriveName,
+  virtual std::optional<std::tuple<std::string, std::string, std::string>> getTapeDriveConfig(const std::string &tapeDriveName,
     const std::string &keyName) const = 0;
 
   /**
@@ -1420,9 +1406,7 @@ public:
    * If the amount released exceeds the current reservation, the reservation will be reduced to zero.
    */
   virtual void releaseDiskSpace(const std::string& driveName, const uint64_t mountId, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) = 0;
+};  // class Catalogue
 
-
-}; // class Catalogue
-
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

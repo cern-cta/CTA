@@ -15,14 +15,22 @@
  *               submit itself to any jurisdiction.
  */
 
+#include <algorithm>
+
 #include "catalogue/ArchiveFileRow.hpp"
+#include "catalogue/CatalogueItor.hpp"
+#include "catalogue/InsertFileRecycleLog.hpp"
 #include "catalogue/OracleCatalogue.hpp"
 #include "catalogue/retryOnLostConnection.hpp"
-#include "catalogue/InsertFileRecycleLog.hpp"
+#include "catalogue/TapeItemWrittenPointer.hpp"
+#include "common/dataStructures/DeleteArchiveRequest.hpp"
+#include "common/dataStructures/FileRecycleLog.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/FileSizeMismatch.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/TapeFseqMismatch.hpp"
 #include "common/exception/UserError.hpp"
+#include "common/log/TimingList.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
@@ -30,8 +38,6 @@
 #include "rdbms/rdbms.hpp"
 #include "rdbms/wrapper/OcciColumn.hpp"
 #include "rdbms/wrapper/OcciStmt.hpp"
-#include "common/log/TimingList.hpp"
-#include <algorithm>
 
 namespace cta {
 namespace catalogue {

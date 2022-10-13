@@ -15,8 +15,8 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "ArchiveQueueAlgorithms.hpp"
 #include "common/Timer.hpp"
+#include "objectstore/ArchiveQueueAlgorithms.hpp"
 
 namespace cta { namespace objectstore {
 

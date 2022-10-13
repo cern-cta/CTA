@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include "catalogue/Catalogue.hpp"
 #include "catalogue/CmdLineTool.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/Login.hpp"
@@ -30,7 +29,6 @@ namespace catalogue {
  */
 class DropSchemaCmd: public CmdLineTool {
 public:
-
   /**
    * Constructor.
    *
@@ -52,7 +50,6 @@ public:
   static bool isProductionSet(rdbms::Conn & conn);
 
 private:
-
   /**
    * An exception throwing version of main().
    *
@@ -109,8 +106,7 @@ private:
    * @return true if the production bit is set, false otherwise
    */
   bool isProductionProtectionCheckable(rdbms::Conn & conn, const cta::rdbms::Login::DbType dbType);
+};  // class DropSchemaCmd
 
-}; // class DropSchemaCmd
-
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

@@ -17,16 +17,21 @@
 
 #pragma once
 
-#include "scheduler/SchedulerDatabaseFactory.hpp"
-#include "scheduler/PostgresSchedDB/PostgresSchedDB.hpp"
-#include "common/dataStructures/SecurityIdentity.hpp"
-#include "scheduler/LogicalLibrary.hpp"
-#include "scheduler/RetrieveRequestDump.hpp"
-#include "common/log/DummyLogger.hpp"
-#include "catalogue/DummyCatalogue.hpp"
 #include <memory>
+#include <string>
+
+#include "common/dataStructures/SecurityIdentity.hpp"
+#include "common/log/DummyLogger.hpp"
+#include "scheduler/LogicalLibrary.hpp"
+#include "scheduler/PostgresSchedDB/PostgresSchedDB.hpp"
+#include "scheduler/RetrieveRequestDump.hpp"
+#include "scheduler/SchedulerDatabaseFactory.hpp"
 
 namespace cta {
+
+namespace catalogue {
+class Catalogue;
+}
 
 class PostgresSchedDBWrapper: public SchedulerDatabaseDecorator {
 public:
@@ -34,7 +39,7 @@ public:
     SchedulerDatabaseDecorator(m_PostgresSchedDB), m_logger(new cta::log::DummyLogger("", "")), m_catalogue(catalogue),
     m_PostgresSchedDB(nullptr, *m_catalogue, *m_logger) {}
 
-  ~PostgresSchedDBWrapper() throw () {}
+  ~PostgresSchedDBWrapper() throw() {}
 
 private:
   std::unique_ptr <cta::log::Logger> m_logger;
@@ -51,7 +56,7 @@ public:
   /**
    * Constructor
    */
-  PostgresSchedDBFactory(const std::string & URL = ""): m_URL(URL) {}
+  explicit PostgresSchedDBFactory(const std::string & URL = ""): m_URL(URL) {}
 
   /**
    * Destructor.
@@ -69,6 +74,6 @@ public:
 
   private:
     std::string m_URL;
-}; // class PostgresSchedDBFactory
+};  // class PostgresSchedDBFactory
 
-} // namespace cta
+}  // namespace cta

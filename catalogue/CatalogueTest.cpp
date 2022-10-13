@@ -15,27 +15,9 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "catalogue/ArchiveFileRow.hpp"
-#include "catalogue/CatalogueTest.hpp"
-#include "catalogue/SchemaVersion.hpp"
-#include "catalogue/TapeDrivesCatalogueState.hpp"
-#include "common/Constants.hpp"
-#include "common/dataStructures/DriveInfo.hpp"
-#include "common/dataStructures/EntryLog.hpp"
-#include "common/exception/Exception.hpp"
-#include "common/exception/UserError.hpp"
-#include "common/exception/UserErrorWithCacheInfo.hpp"
-#include "common/SourcedParameter.hpp"
-#include "common/threading/Mutex.hpp"
-#include "common/threading/MutexLocker.hpp"
-#include "common/threading/Thread.hpp"
-#include "InsertFileRecycleLog.hpp"
-#include "rdbms/Conn.hpp"
-#include "rdbms/wrapper/ConnFactoryFactory.hpp"
-#include "RdbmsCatalogue.hpp"
+#include <gtest/gtest.h>
 
 #include <algorithm>
-#include <gtest/gtest.h>
 #include <iomanip>
 #include <limits>
 #include <list>
@@ -43,6 +25,43 @@
 #include <memory>
 #include <set>
 #include <string>
+
+#include "catalogue/CatalogueTest.hpp"
+#include "catalogue/CreateMountPolicyAttributes.hpp"
+#include "catalogue/InsertFileRecycleLog.hpp"
+#include "catalogue/RdbmsCatalogue.hpp"
+#include "catalogue/SchemaVersion.hpp"
+#include "catalogue/TapeDrivesCatalogueState.hpp"
+#include "catalogue/TapeForWriting.hpp"
+#include "catalogue/TapeItemWrittenPointer.hpp"
+#include "common/Constants.hpp"
+#include "common/dataStructures/AdminUser.hpp"
+#include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
+#include "common/dataStructures/ArchiveFileSummary.hpp"
+#include "common/dataStructures/ArchiveRoute.hpp"
+#include "common/dataStructures/DeleteArchiveRequest.hpp"
+#include "common/dataStructures/DesiredDriveState.hpp"
+#include "common/dataStructures/DriveInfo.hpp"
+#include "common/dataStructures/EntryLog.hpp"
+#include "common/dataStructures/FileRecycleLog.hpp"
+#include "common/dataStructures/LogicalLibrary.hpp"
+#include "common/dataStructures/RequesterActivityMountRule.hpp"
+#include "common/dataStructures/RequesterGroupMountRule.hpp"
+#include "common/dataStructures/RequesterMountRule.hpp"
+#include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
+#include "common/dataStructures/SecurityIdentity.hpp"
+#include "common/dataStructures/Tape.hpp"
+#include "common/dataStructures/TapeDrive.hpp"
+#include "common/exception/Exception.hpp"
+#include "common/exception/FileSizeMismatch.hpp"
+#include "common/exception/TapeFseqMismatch.hpp"
+#include "common/exception/UserError.hpp"
+#include "common/exception/UserErrorWithCacheInfo.hpp"
+#include "common/SourcedParameter.hpp"
+#include "common/threading/Mutex.hpp"
+#include "common/threading/MutexLocker.hpp"
+#include "common/threading/Thread.hpp"
+#include "disk/DiskSystem.hpp"
 
 namespace unitTests {
 

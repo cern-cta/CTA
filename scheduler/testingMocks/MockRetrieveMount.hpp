@@ -17,13 +17,24 @@
 
 #pragma once
 
-#include "catalogue/DummyCatalogue.hpp"
+#include <list>
+#include <memory>
+#include <queue>
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "scheduler/RetrieveJob.hpp"
 #include "scheduler/RetrieveMount.hpp"
 #include "scheduler/testingMocks/MockRetrieveJob.hpp"
-#include <memory>
 
 namespace cta {
+
+namespace catalogue {
+class Catalogue;
+}
+
 class MockRetrieveMount : public cta::RetrieveMount {
 public:
   int getJobs;

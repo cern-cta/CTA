@@ -21,12 +21,17 @@
 #include "common/exception/Exception.hpp"
 #include "objectstore/cta.pb.h"
 #include "common/log/LogContext.hpp"
-#include "catalogue/Catalogue.hpp"
 #include <memory>
 #include <stdint.h>
 #include <cryptopp/base64.h>
 
-namespace cta { namespace objectstore {
+namespace cta {
+
+namespace catalogue {
+class Catalogue;
+}
+
+namespace objectstore {
 
 class AgentReference;
 class ScopedLock;

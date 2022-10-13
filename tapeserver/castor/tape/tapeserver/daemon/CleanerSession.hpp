@@ -20,7 +20,6 @@
 #include <memory>
 #include <string>
 
-#include "catalogue/Catalogue.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
 #include "common/processCap/ProcessCap.hpp"
@@ -32,6 +31,12 @@
 #include "tapeserver/castor/tape/tapeserver/file/Structures.hpp"
 #include "tapeserver/castor/tape/tapeserver/SCSI/Device.hpp"
 #include "tapeserver/daemon/TpconfigLine.hpp"
+
+namespace cta {
+namespace catalogue {
+class Catalogue;
+}
+}
 
 namespace castor {
 namespace tape {

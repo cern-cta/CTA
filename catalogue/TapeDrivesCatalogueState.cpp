@@ -18,11 +18,15 @@
 #include <algorithm>
 #include <list>
 
+#include "catalogue/Catalogue.hpp"
+#include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "common/dataStructures/DesiredDriveState.hpp"
 #include "common/dataStructures/DriveInfo.hpp"
+#include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/dataStructures/TapeDrive.hpp"
+#include "common/dataStructures/TapeDriveStatistics.hpp"
+#include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
-#include "TapeDrivesCatalogueState.hpp"
 #include "tapeserver/daemon/TpconfigLine.hpp"
 #include "version.h"
 

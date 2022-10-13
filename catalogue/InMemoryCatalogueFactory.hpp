@@ -18,7 +18,7 @@
 #pragma once
 
 #include "catalogue/CatalogueFactory.hpp"
-#include "rdbms/Login.hpp"
+#include "common/log/Logger.hpp"
 
 namespace cta {
 namespace catalogue {

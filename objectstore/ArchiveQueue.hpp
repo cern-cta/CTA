@@ -17,18 +17,21 @@
 
 #pragma once
 
-#include "Backend.hpp"
-#include "ObjectOps.hpp"
-#include <string>
-#include "objectstore/cta.pb.h"
-#include "common/CreationLog.hpp"
-#include "common/MountControl.hpp"
-#include "ArchiveRequest.hpp"
-#include "ArchiveRequest.hpp"
-#include "EntryLogSerDeser.hpp"
 #include "Agent.hpp"
+#include "ArchiveRequest.hpp"
+#include "ArchiveRequest.hpp"
+#include "Backend.hpp"
+#include "common/CreationLog.hpp"
+#include "common/dataStructures/ArchiveJob.hpp"
+#include "common/MountControl.hpp"
+#include "EntryLogSerDeser.hpp"
+#include "ObjectOps.hpp"
+#include "objectstore/cta.pb.h"
+#include <string>
 
-namespace cta { namespace objectstore {
+namespace cta {
+
+namespace objectstore {
   
 class GenericObject;
 

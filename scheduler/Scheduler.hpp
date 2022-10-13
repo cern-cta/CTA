@@ -17,7 +17,13 @@
 
 #pragma once
 
-#include "catalogue/Catalogue.hpp"
+#include <list>
+#include <map>
+#include <memory>
+#include <set>
+#include <string>
+#include <utility>
+
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 
 #include "common/dataStructures/ArchiveFile.hpp"
@@ -28,6 +34,7 @@
 #include "common/dataStructures/DriveInfo.hpp"
 #include "common/dataStructures/DriveState.hpp"
 #include "common/dataStructures/ListStorageClassRequest.hpp"
+#include "common/dataStructures/QueueAndMountSummary.hpp"
 #include "common/dataStructures/ReadTestResult.hpp"
 #include "common/dataStructures/RepackInfo.hpp"
 #include "common/dataStructures/RetrieveJob.hpp"
@@ -37,33 +44,35 @@
 #include "common/dataStructures/TestSourceType.hpp"
 #include "common/dataStructures/UpdateFileStorageClassRequest.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
-#include "common/dataStructures/QueueAndMountSummary.hpp"
 #include "common/Timer.hpp"
-
-#include "common/exception/Exception.hpp"
-#include "common/log/LogContext.hpp"
-#include "common/log/TimingList.hpp"
-#include "scheduler/TapeMount.hpp"
-#include "scheduler/SchedulerDatabase.hpp"
-#include "scheduler/RepackRequest.hpp"
-
-#include "tapeserver/daemon/TapedConfiguration.hpp"
 
 #include "disk/DiskFile.hpp"
 #include "disk/DiskReporter.hpp"
 #include "disk/DiskReporterFactory.hpp"
 
-#include <list>
-#include <map>
-#include <memory>
-#include <stdint.h>
-#include <string>
+#include "common/exception/Exception.hpp"
+#include "common/log/LogContext.hpp"
+#include "common/log/TimingList.hpp"
+#include "scheduler/RepackRequest.hpp"
+#include "scheduler/SchedulerDatabase.hpp"
+#include "scheduler/TapeMount.hpp"
+
+#include "tapeserver/daemon/TapedConfiguration.hpp"
 
 namespace cta {
+
+namespace catalogue {
+class Catalogue;
+}
 
 class ArchiveJob;
 class RetrieveJob;
 
+namespace common {
+namespace dataStructures {
+struct LogicalLibrary;
+}
+}
 /**
  * Class implementing a tape resource scheduler. This class is the main entry point
  * for most of the operations on both the tape file catalogue and the object store for
@@ -75,16 +84,14 @@ class RetrieveJob;
 CTA_GENERATE_EXCEPTION_CLASS(ExpandRepackRequestException);
 
 class Scheduler {
-
 public:
-
   /**
    * Constructor.
    */
   Scheduler(
     cta::catalogue::Catalogue &catalogue,
     SchedulerDatabase &db, const uint64_t minFilesToWarrantAMount, const uint64_t minBytesToWarrantAMount);
-    //TODO: we have out the mount policy parameters here temporarily we will remove them once we know where to put them
+    // TODO: we have out the mount policy parameters here temporarily we will remove them once we know where to put them
 
   /**
    * Destructor.
@@ -262,7 +269,6 @@ public:
 
   /*============== Actual mount scheduling and queue status reporting ========*/
 private:
-
   typedef std::pair<std::string, common::dataStructures::MountType> TapePoolMountPair;
   typedef std::pair<std::string, common::dataStructures::MountType> VirtualOrganizationMountPair;
 
@@ -419,7 +425,6 @@ public:
   cta::catalogue::Catalogue & getCatalogue();
 
 private:
-
   /**
    * The catalogue.
    */
@@ -434,6 +439,6 @@ private:
   const uint64_t m_minBytesToWarrantAMount;
 
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
-}; // class Scheduler
+};  // class Scheduler
 
-} // namespace cta
+}  // namespace cta

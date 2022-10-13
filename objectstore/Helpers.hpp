@@ -26,9 +26,9 @@
 #include <set>
 #include <string>
 
-#include "catalogue/Catalogue.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/RepackQueueType.hpp"
+#include "common/dataStructures/Tape.hpp"
 #include "common/threading/Mutex.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "scheduler/OStoreDB/OStoreDB.hpp"
@@ -42,7 +42,13 @@
  * A collection of helper functions for commonly used multi-object operations
  */
 
-namespace cta { namespace objectstore {
+namespace cta {
+
+namespace catalogue {
+class Catalogue;
+}
+
+namespace objectstore {
 
 class ScopedExclusiveLock;
 class AgentReference;

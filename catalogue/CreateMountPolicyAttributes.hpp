@@ -17,21 +17,19 @@
 
 #pragma once
 
-#include "common/dataStructures/Tape.hpp"
-
 #include <optional>
 #include <string>
 
 namespace cta {
 namespace catalogue {
 
-  struct CreateMountPolicyAttributes {
-    std::string name;
-    uint64_t archivePriority;
-    uint64_t minArchiveRequestAge;
-    uint64_t retrievePriority;
-    uint64_t minRetrieveRequestAge;
-    std::string comment;
-  };
+struct CreateMountPolicyAttributes {
+  std::string name;
+  uint64_t archivePriority;
+  uint64_t minArchiveRequestAge;
+  uint64_t retrievePriority;
+  uint64_t minRetrieveRequestAge;
+  std::string comment;
+};
 
 }}

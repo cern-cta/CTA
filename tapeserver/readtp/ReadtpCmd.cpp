@@ -15,13 +15,18 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "castor/tape/tapeserver/file/FileReaderFactory.hpp"
+#include "catalogue/Catalogue.hpp"
+#include "catalogue/CatalogueFactory.hpp"
+#include "catalogue/CatalogueFactoryFactory.hpp"
+#include "catalogue/CatalogueItor.hpp"
 #include "catalogue/TapeSearchCriteria.hpp"
 #include "common/Constants.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "disk/DiskFile.hpp"
 #include "disk/RadosStriperPool.hpp"
-#include "castor/tape/tapeserver/file/FileReaderFactory.hpp"
 #include "mediachanger/LibrarySlotParser.hpp"
+#include "rdbms/Login.hpp"
 #include "scheduler/RetrieveJob.hpp"
 #include "tapeserver/castor/tape/Constants.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/Payload.hpp"

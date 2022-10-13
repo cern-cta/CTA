@@ -17,18 +17,23 @@
 
 #pragma once
 
-#include "SubprocessHandler.hpp"
-#include "ProcessManager.hpp"
-#include "TapedConfiguration.hpp"
+#include <memory>
+
 #include "common/threading/SocketPair.hpp"
+#include "scheduler/Scheduler.hpp"
+#include "tapeserver/daemon/ProcessManager.hpp"
+#include "tapeserver/daemon/SubprocessHandler.hpp"
+#include "tapeserver/daemon/TapedConfiguration.hpp"
 #include "tapeserver/daemon/WatchdogMessage.pb.h"
 #include "tapeserver/session/SessionState.hpp"
 #include "tapeserver/session/SessionType.hpp"
-#include "catalogue/Catalogue.hpp"
-#include "scheduler/Scheduler.hpp"
-#include <memory>
 
 namespace cta {
+
+namespace catalogue {
+class Catalogue;
+}
+
 namespace tape {
 namespace daemon {
 

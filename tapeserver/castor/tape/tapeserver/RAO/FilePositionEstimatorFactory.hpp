@@ -17,10 +17,19 @@
 
 #pragma once
 
-#include "catalogue/Catalogue.hpp"
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "FilePositionEstimator.hpp"
 #include "common/log/TimingList.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/FilePositionEstimator.hpp"
+
+namespace cta {
+namespace catalogue {
+class Catalogue;
+}
+}
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 

@@ -15,22 +15,23 @@
  *               submit itself to any jurisdiction.
  */
 
+#include <gtest/gtest.h>
+
 #include "castor/messages/TapeserverProxyDummy.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
-#include "castor/tape/tapeserver/daemon/TapeSessionReporter.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
+#include "castor/tape/tapeserver/daemon/TapeSessionReporter.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
+#include "catalogue/DummyCatalogue.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/log/StringLogger.hpp"
 #include "common/processCap/ProcessCapDummy.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
-#include "scheduler/testingMocks/MockRetrieveMount.hpp"
 #include "scheduler/TapeMountDummy.hpp"
-
-#include <gtest/gtest.h>
+#include "scheduler/testingMocks/MockRetrieveMount.hpp"
 
 using namespace castor::tape::tapeserver::daemon;
 using namespace castor::tape;

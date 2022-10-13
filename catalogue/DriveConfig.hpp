@@ -20,11 +20,14 @@
 #include <memory>
 #include <string>
 
-#include "catalogue/Catalogue.hpp"
 #include "common/SourcedParameter.hpp"
 #include "tapeserver/daemon/TapedConfiguration.hpp"
 
 namespace cta {
+
+namespace catalogue {
+class Catalogue;
+}
 
 /**
  * Static class to set TapedConfiguration in Database

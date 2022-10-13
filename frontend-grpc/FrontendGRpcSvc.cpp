@@ -17,6 +17,7 @@
  */
 #include "FrontendGRpcSvc.h"
 
+#include "catalogue/Catalogue.hpp"
 #include "common/log/LogLevel.hpp"
 #include <common/checksum/ChecksumBlobSerDeser.hpp>
 

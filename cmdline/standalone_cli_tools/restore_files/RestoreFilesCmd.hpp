@@ -17,14 +17,13 @@
 
 #pragma once
 
-#include "cmdline/standalone_cli_tools/common/CmdLineTool.hpp"
-#include "cmdline/standalone_cli_tools/common/CmdLineArgs.hpp"
-#include "eos_grpc_client/GrpcEndpoint.hpp"
-#include "catalogue/Catalogue.hpp"
-#include "common/log/StdoutLogger.hpp"
-
-#include <optional>
 #include <memory>
+#include <optional>
+
+#include "cmdline/standalone_cli_tools/common/CmdLineArgs.hpp"
+#include "cmdline/standalone_cli_tools/common/CmdLineTool.hpp"
+#include "common/log/StdoutLogger.hpp"
+#include "eos_grpc_client/GrpcEndpoint.hpp"
 
 #include "CtaFrontendApi.hpp"
 

@@ -22,9 +22,16 @@
 #include <memory>
 #include <utility>
 
+#include "catalogue/CreateMountPolicyAttributes.hpp"
+#include "catalogue/CreateTapeAttributes.hpp"
 #include "catalogue/InMemoryCatalogue.hpp"
+#include "catalogue/MediaType.hpp"
 #include "catalogue/SchemaCreatingSqliteCatalogue.hpp"
+#include "catalogue/TapeItemWrittenPointer.hpp"
+#include "common/dataStructures/DiskInstance.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
+#include "common/dataStructures/LogicalLibrary.hpp"
+#include "common/dataStructures/RequesterMountRule.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/Timer.hpp"

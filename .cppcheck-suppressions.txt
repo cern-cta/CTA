@@ -3,3 +3,4 @@ syntaxError:*Tests.cpp
 localMutex:common/threading/MutexLtrace.cpp
 unknownMacro:tapeserver/castor/tape/tapeserver/file/FileTest.cpp
 nullPointer:common/utils/utils.cpp
+uninitStructMember:objectstore/RetrieveRequest.cpp

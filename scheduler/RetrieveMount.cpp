@@ -15,15 +15,16 @@
  *               submit itself to any jurisdiction.
  */
 
+#include <numeric>
+#include <algorithm>
+#include <iterator>
+
+#include "catalogue/Catalogue.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/log/TimingList.hpp"
 #include "common/Timer.hpp"
 #include "disk/DiskSystem.hpp"
 #include "scheduler/RetrieveMount.hpp"
-
-#include <numeric>
-#include <algorithm>
-#include <iterator>
 
 //------------------------------------------------------------------------------
 // constructor

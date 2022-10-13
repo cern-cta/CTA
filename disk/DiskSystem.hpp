@@ -17,17 +17,16 @@
 
 #pragma once
 
-#include "common/utils/Regex.hpp"
-#include "common/dataStructures/EntryLog.hpp"
-#include "common/dataStructures/DiskInstanceSpace.hpp"
-#include "common/log/LogContext.hpp"
-
-#include "common/exception/Exception.hpp"
-#include "catalogue/Catalogue.hpp"
 #include <list>
 #include <optional>
 #include <set>
 #include <string>
+
+#include "common/dataStructures/DiskInstanceSpace.hpp"
+#include "common/dataStructures/EntryLog.hpp"
+#include "common/exception/Exception.hpp"
+#include "common/log/LogContext.hpp"
+#include "common/utils/Regex.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -37,8 +36,8 @@ namespace catalogue {
  */
 class Catalogue;
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta
 
 
 namespace cta { namespace disk {
@@ -120,4 +119,4 @@ private:
   uint64_t fetchFreeDiskSpaceWithScript(const std::string & scriptPath, const std::string & jsonInput, log::LogContext &lc);
 };
 
-}} // namespace cta::common
+}}  // namespace cta::common

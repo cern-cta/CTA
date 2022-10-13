@@ -18,12 +18,15 @@
 #include "FrontendGRpcSvc.h"
 #include "version.h"
 
+#include "catalogue/Catalogue.hpp"
+#include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
-#include <common/Configuration.hpp>
-#include "rdbms/Login.hpp"
-#include "common/log/StdoutLogger.hpp"
+#include "catalogue/SchemaVersion.hpp"
+#include "common/Configuration.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/LogLevel.hpp"
+#include "common/log/StdoutLogger.hpp"
+#include "rdbms/Login.hpp"
 #ifdef CTA_PGSCHED
 #include "scheduler/PostgresSchedDB/PostgresSchedDBInit.hpp"
 #else

@@ -17,8 +17,12 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
+
 #include <XrdSsi/XrdSsiProvider.hh>
 
+#include "catalogue/Catalogue.hpp"
 #include <common/Configuration.hpp>
 #include <common/utils/utils.hpp>
 #include <xroot_plugins/Namespace.hpp>

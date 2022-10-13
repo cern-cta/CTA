@@ -17,14 +17,17 @@
 
 #pragma once
 
-#include "PostgresSchedDB.hpp"
-#include "common/log/Logger.hpp"
-#include "catalogue/Catalogue.hpp"
-
 #include <memory>
 #include <string>
 
+#include "catalogue/PostgresSchedDB.hpp"
+#include "common/log/Logger.hpp"
+
 namespace cta {
+
+namespace catalogue {
+class Catalogue;
+}
 
 class PostgresSchedDBGC {
 public:

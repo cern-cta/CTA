@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include "catalogue/Catalogue.hpp"
 #include "catalogue/CmdLineTool.hpp"
 
 namespace cta {
@@ -28,7 +27,6 @@ namespace catalogue {
  */
 class CreateAdminUserCmd: public CmdLineTool {
 public:
-
   /**
    * Constructor.
    *
@@ -44,7 +42,6 @@ public:
   ~CreateAdminUserCmd() noexcept;
 
 private:
-
   /**
    * An exception throwing version of main().
    *
@@ -60,8 +57,7 @@ private:
    * @param os The output stream to which the usage message is to be printed.
    */
   void printUsage(std::ostream &os) override;
+};  // class CreateAdminUserCmd
 
-}; // class CreateAdminUserCmd
-
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

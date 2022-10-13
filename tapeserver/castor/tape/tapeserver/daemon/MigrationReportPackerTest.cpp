@@ -15,14 +15,23 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/log/DummyLogger.hpp"
-#include "common/log/StringLogger.hpp"
+#include <gtest/gtest.h>
+
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include <catalogue/Catalogue.hpp>
+#include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
+#include "catalogue/CreateTapeAttributes.hpp"
+#include "catalogue/MediaType.hpp"
+#include "catalogue/TapeFileWritten.hpp"
+#include "catalogue/TapeItemWrittenPointer.hpp"
+#include "common/dataStructures/DiskInstance.hpp"
+#include "common/dataStructures/StorageClass.hpp"
+#include "common/log/DummyLogger.hpp"
+#include "common/log/StringLogger.hpp"
+#include "rdbms/Login.hpp"
 #include "scheduler/testingMocks/MockArchiveMount.hpp"
-
-#include <gtest/gtest.h>
 
 using ::testing::_;
 using ::testing::Invoke;

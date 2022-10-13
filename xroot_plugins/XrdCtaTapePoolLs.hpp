@@ -17,10 +17,10 @@
 
 #pragma once
 
+#include "catalogue/TapePool.hpp"
+#include <catalogue/TapePoolSearchCriteria.hpp>
 #include <xroot_plugins/XrdCtaStream.hpp>
 #include <xroot_plugins/XrdSsiCtaRequestMessage.hpp>
-#include <catalogue/TapePoolSearchCriteria.hpp>
-
 
 namespace cta { namespace xrd {
 

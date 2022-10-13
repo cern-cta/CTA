@@ -17,9 +17,9 @@
 
 #pragma once
 
-#include <xroot_plugins/XrdCtaStream.hpp>
-#include <xroot_plugins/XrdSsiCtaRequestMessage.hpp>
-
+#include "common/dataStructures/RequesterMountRule.hpp"
+#include "xroot_plugins/XrdCtaStream.hpp"
+#include "xroot_plugins/XrdSsiCtaRequestMessage.hpp"
 
 namespace cta { namespace xrd {
 

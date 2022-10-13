@@ -17,20 +17,27 @@
 
 #pragma once
 
+#include <list>
+#include <map>
+#include <memory>
+#include <set>
+#include <string>
+
+#include "catalogue/SchemaCreatingSqliteCatalogue.hpp"
+#include "catalogue/SchemaVersion.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/Login.hpp"
-#include "SchemaCreatingSqliteCatalogue.hpp"
-#include "SchemaVersion.hpp"
-#include <list>
 
 namespace cta {
-namespace catalogue {
+namespace utils {
+class Regex;
+}
 
+namespace catalogue {
 /**
  * Interface class to get database metadata
  */
 class MetadataGetter{
-
 protected:
   void removeObjectNameContaining(std::list<std::string>& objects, const std::list<std::string> &wordsToTriggerRemoval);
   void removeObjectNameNotContaining(std::list<std::string>& objects, const std::list<std::string> &wordsNotToTriggerRemoval);
@@ -39,7 +46,7 @@ protected:
 public:
   virtual std::list<std::string> getIndexNames() = 0;
   virtual std::list<std::string> getTableNames() = 0;
-  virtual std::map<std::string,std::string> getColumns(const std::string& tableName) = 0;
+  virtual std::map<std::string, std::string> getColumns(const std::string& tableName) = 0;
   virtual std::list<std::string> getConstraintNames(const std::string& tableName) = 0;
   virtual ~MetadataGetter() = 0;
 };
@@ -49,31 +56,31 @@ public:
  * It will simply call the methods from the connection (Conn) instance and adapt or not the metadata returned.
  */
 class DatabaseMetadataGetter: public MetadataGetter {
-  protected:
-    rdbms::Conn& m_conn;
-  public:
-    DatabaseMetadataGetter(cta::rdbms::Conn & conn);
-    virtual ~DatabaseMetadataGetter();
-    SchemaVersion getCatalogueVersion();
-    virtual std::list<std::string> getIndexNames();
-    virtual std::list<std::string> getTableNames();
-    virtual std::map<std::string,std::string> getColumns(const std::string& tableName);
-    virtual std::list<std::string> getConstraintNames(const std::string& tableName);
-    virtual std::list<std::string> getParallelTableNames();
-    virtual cta::rdbms::Login::DbType getDbType() = 0;
-    virtual std::list<std::string> getStoredProcedures();
-    virtual std::list<std::string> getSynonyms();
-    virtual std::list<std::string> getTypes();
-    /**
-     * Returns ERROR logging tables.
-     * (Oracle only : ERR$_TABLE_NAME)
-     * @return the ERROR logging tables (Oracle only)
-     */
-    virtual std::list<std::string> getErrorLoggingTables();
-    /**
-     * Returns a set of columns which are part of a foreign key constraint but have no index defined
-     */
-    virtual std::set<std::string> getMissingIndexes() = 0;
+protected:
+  rdbms::Conn& m_conn;
+public:
+  explicit DatabaseMetadataGetter(cta::rdbms::Conn & conn);
+  virtual ~DatabaseMetadataGetter();
+  SchemaVersion getCatalogueVersion();
+  virtual std::list<std::string> getIndexNames();
+  virtual std::list<std::string> getTableNames();
+  virtual std::map<std::string, std::string> getColumns(const std::string& tableName);
+  virtual std::list<std::string> getConstraintNames(const std::string& tableName);
+  virtual std::list<std::string> getParallelTableNames();
+  virtual cta::rdbms::Login::DbType getDbType() = 0;
+  virtual std::list<std::string> getStoredProcedures();
+  virtual std::list<std::string> getSynonyms();
+  virtual std::list<std::string> getTypes();
+  /**
+    * Returns ERROR logging tables.
+    * (Oracle only : ERR$_TABLE_NAME)
+    * @return the ERROR logging tables (Oracle only)
+    */
+  virtual std::list<std::string> getErrorLoggingTables();
+  /**
+    * Returns a set of columns which are part of a foreign key constraint but have no index defined
+    */
+  virtual std::set<std::string> getMissingIndexes() = 0;
 };
 
 /**
@@ -81,12 +88,12 @@ class DatabaseMetadataGetter: public MetadataGetter {
  */
 class SQLiteDatabaseMetadataGetter: public DatabaseMetadataGetter{
 public:
-  SQLiteDatabaseMetadataGetter(cta::rdbms::Conn& conn);
+  explicit SQLiteDatabaseMetadataGetter(cta::rdbms::Conn& conn);
   virtual ~SQLiteDatabaseMetadataGetter();
   std::list<std::string> getIndexNames() override;
   std::list<std::string> getTableNames() override;
   cta::rdbms::Login::DbType getDbType() override;
-  virtual std::set<std::string> getMissingIndexes() override;
+  std::set<std::string> getMissingIndexes() override;
 };
 
 /**
@@ -94,11 +101,11 @@ public:
  */
 class OracleDatabaseMetadataGetter: public DatabaseMetadataGetter{
 public:
-  OracleDatabaseMetadataGetter(cta::rdbms::Conn& conn);
+  explicit OracleDatabaseMetadataGetter(cta::rdbms::Conn& conn);
   virtual ~OracleDatabaseMetadataGetter();
   cta::rdbms::Login::DbType getDbType() override;
   std::list<std::string> getTableNames() override;
-  virtual std::set<std::string> getMissingIndexes() override;
+  std::set<std::string> getMissingIndexes() override;
 };
 
 /**
@@ -106,10 +113,10 @@ public:
  */
 class PostgresDatabaseMetadataGetter: public DatabaseMetadataGetter{
 public:
-  PostgresDatabaseMetadataGetter(cta::rdbms::Conn& conn);
+  explicit PostgresDatabaseMetadataGetter(cta::rdbms::Conn& conn);
   virtual ~PostgresDatabaseMetadataGetter();
   cta::rdbms::Login::DbType getDbType() override;
-  virtual std::set<std::string> getMissingIndexes() override;
+  std::set<std::string> getMissingIndexes() override;
 };
 
 /**
@@ -129,14 +136,15 @@ public:
 class SchemaMetadataGetter: public MetadataGetter{
 protected:
   std::unique_ptr<SQLiteDatabaseMetadataGetter> m_sqliteDatabaseMetadataGetter;
-  //The database type we would like to compare the SQLite schema against (used for filtering the results)
+  // The database type we would like to compare the SQLite schema against (used for filtering the results)
   cta::rdbms::Login::DbType m_dbType;
 public:
   SchemaMetadataGetter(std::unique_ptr<SQLiteDatabaseMetadataGetter> sqliteCatalogueMetadataGetter, const cta::rdbms::Login::DbType dbType);
-  virtual std::list<std::string> getIndexNames() override;
-  virtual std::list<std::string> getTableNames() override;
-  virtual std::map<std::string,std::string> getColumns(const std::string& tableName) override;
-  virtual std::list<std::string> getConstraintNames(const std::string& tableName) override;
+  std::list<std::string> getIndexNames() override;
+  std::list<std::string> getTableNames() override;
+  std::map<std::string, std::string> getColumns(const std::string& tableName) override;
+  std::list<std::string> getConstraintNames(const std::string& tableName) override;
 };
 
-}}
+}  // namespace catalogue
+}  // namespace cta

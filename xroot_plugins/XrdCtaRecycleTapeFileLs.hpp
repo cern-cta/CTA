@@ -18,6 +18,7 @@
 #pragma once
 
 #include "catalogue/Catalogue.hpp"
+#include "common/dataStructures/FileRecycleLog.hpp"
 
 namespace cta { namespace xrd {
 

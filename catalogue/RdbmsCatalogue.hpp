@@ -17,49 +17,33 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
+
 #include "catalogue/Catalogue.hpp"
+#include "catalogue/InsertFileRecycleLog.hpp"
 #include "catalogue/RequesterAndGroupMountPolicies.hpp"
 #include "catalogue/TimeBasedCache.hpp"
+#include "common/dataStructures/TapeCopyToPoolMap.hpp"
 #include "common/threading/Mutex.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
-#include "InsertFileRecycleLog.hpp"
-
-#include <memory>
-#include <string>
 
 namespace cta {
 namespace common {
 namespace dataStructures {
-
-/**
- * Forward declaration.
- */
 class TapeFile;
-
-} // namespace dataStructures
-} // namespace catalogue
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta
 
 namespace cta {
 namespace catalogue {
 
-/**
- * Forward declaration.
- */
 class ArchiveFileRow;
-
-class RsetWrapper;
-
-/**
- * Forward declaration.
- */
 class ArchiveFileRowWithoutTimestamps;
-
-/**
- * Forward declaration.
- */
 class RdbmsCatalogueGetArchiveFilesItor;
+class RsetWrapper;
 
 /**
  * CTA catalogue implemented using a relational database backend.
@@ -595,7 +579,7 @@ public:
    * This method will throw an exception if the specified tape is not FULL.
    *
    * This method will throw an exception if there is still at least one tape
-   * file recorded in the cataligue as being on the specified tape.
+   * file recorded in the catalogue as being on the specified tape.
    *
    * @param admin The administrator.
    * @param vid The volume identifier of the tape to be reclaimed.

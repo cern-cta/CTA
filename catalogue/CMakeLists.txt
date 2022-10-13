@@ -40,27 +40,29 @@ set (CATALOGUE_LIB_SRC_FILES
   Catalogue.cpp
   CatalogueFactory.cpp
   CatalogueFactoryFactory.cpp
+  CatalogueRetryWrapper.cpp
   CatalogueSchema.cpp
   CmdLineTool.cpp
   DriveConfig.cpp
+  DummyCatalogue.cpp
   InMemoryCatalogue.cpp
   InMemoryCatalogueFactory.cpp
   PostgresCatalogue.cpp
   PostgresqlCatalogueFactory.cpp
-  SqliteCatalogueSchema.cpp
-  TapeFileWritten.cpp
-  TapeItemImplementation.cpp
-  TapePool.cpp
   RdbmsCatalogue.cpp
   RdbmsCatalogueGetArchiveFilesForRepackItor.cpp
   RdbmsCatalogueGetArchiveFilesItor.cpp
-  RdbmsCatalogueTapeContentsItor.cpp
   RdbmsCatalogueGetFileRecycleLogItor.cpp
+  RdbmsCatalogueTapeContentsItor.cpp
   SchemaCreatingSqliteCatalogue.cpp
-  TapeDrivesCatalogueState.cpp
-  SqliteCatalogue.cpp
   SchemaVersion.cpp
+  SqliteCatalogue.cpp
+  SqliteCatalogueSchema.cpp
+  TapeDrivesCatalogueState.cpp
+  TapeFileWritten.cpp
   TapeForWriting.cpp
+  TapeItemImplementation.cpp
+  TapePool.cpp
 )
 
 if (OCCI_SUPPORT)
