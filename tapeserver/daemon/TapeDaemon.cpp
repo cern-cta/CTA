@@ -14,18 +14,20 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
-
-#include "TapeDaemon.hpp"
-#include "common/exception/Errnum.hpp"
-#include "common/utils/utils.hpp"
-#include "tapeserver/daemon/CommandLineParams.hpp"
-#include "ProcessManager.hpp"
-#include "SignalHandler.hpp"
-#include "DriveHandler.hpp"
-#include "MaintenanceHandler.hpp"
-#include <google/protobuf/service.h>
 #include <limits.h>
 #include <sys/prctl.h>
+
+#include <google/protobuf/service.h>
+
+#include "common/exception/Errnum.hpp"
+#include "common/exception/NoSuchObject.hpp"
+#include "common/utils/utils.hpp"
+#include "tapeserver/daemon/CommandLineParams.hpp"
+#include "tapeserver/daemon/DriveHandler.hpp"
+#include "tapeserver/daemon/MaintenanceHandler.hpp"
+#include "tapeserver/daemon/ProcessManager.hpp"
+#include "tapeserver/daemon/SignalHandler.hpp"
+#include "tapeserver/daemon/TapeDaemon.hpp"
 
 namespace cta { namespace tape { namespace daemon {
 
@@ -49,6 +51,9 @@ TapeDaemon::~TapeDaemon() {
 int TapeDaemon::main() {
   try {
     exceptionThrowingMain();
+  } catch (cta::exception::NoSuchObject &ex) {
+    m_log(log::ERR, "Aborting cta-taped. Not starting because: " + ex.getMessage().str());
+    return 2;
   } catch (cta::exception::Exception &ex) {
     // Log the error
     m_log(log::ERR, "Aborting cta-taped on uncaught exception. Stack trace follows.", {{"Message", ex.getMessage().str()}});
@@ -73,8 +78,8 @@ std::string cta::tape::daemon::TapeDaemon::getHostName() const {
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 void  cta::tape::daemon::TapeDaemon::exceptionThrowingMain()  {
-  if(m_globalConfiguration.driveConfigs.empty())
-    throw cta::exception::Exception("No drive found in configuration");
+  if (m_globalConfiguration.driveConfigs.empty())
+    throw cta::exception::NoSuchObject("No drive found in configuration");
 
   // Process must be able to change user now and should be permitted to perform
   // raw IO in the future
