@@ -7,6 +7,7 @@
 - cta/CTA#173 - Update release notes and small changes to refactoring of operation tools cmd line parsing - Compatible with operations 0.4-95 or later
 ### Bug fixes
 - cta/CTA#48 - Catch tape server exception and log an error instead
+- cta/CTA#123 - Change some tape server errors into warnings
 - cta/CTA#161 - Fix bug when using temporary tables with PostgreSQL
 
 # v4.7.12-1

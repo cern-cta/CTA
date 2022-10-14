@@ -159,19 +159,18 @@ bool RecallTaskInjector::testDiskSpaceReservationWorking() {
 }
 
 //------------------------------------------------------------------------------
-//reserveSpaceForNextJobBatch
+// reserveSpaceForNextJobBatch
 //------------------------------------------------------------------------------
-bool RecallTaskInjector::reserveSpaceForNextJobBatch(std::list<std::unique_ptr<cta::RetrieveJob>> &nextJobBatch) {  
-  
+bool RecallTaskInjector::reserveSpaceForNextJobBatch(std::list<std::unique_ptr<cta::RetrieveJob>> &nextJobBatch) {
   cta::DiskSpaceReservationRequest diskSpaceReservation;
-  for (auto &job: nextJobBatch) {
+  for (auto &job : nextJobBatch) {
     auto diskSystemName = job->diskSystemName();
     if (diskSystemName) {
       diskSpaceReservation.addRequest(diskSystemName.value(), job->archiveFile.fileSize);
-    } 
+    }
   }
 
-  for (const auto &reservation: diskSpaceReservation) {
+  for (const auto &reservation : diskSpaceReservation) {
     cta::log::ScopedParamContainer spc(m_lc);
     spc.add("diskSystemName", reservation.first);
     spc.add("bytes", reservation.second);
@@ -182,28 +181,28 @@ bool RecallTaskInjector::reserveSpaceForNextJobBatch(std::list<std::unique_ptr<c
   try {
     ret = m_retrieveMount.reserveDiskSpace(diskSpaceReservation, m_lc);
   } catch (std::out_of_range&) {
-    //#1076 If the disk system for this mount was removed, process the jobs as if they had no disk system
+    // #1076 If the disk system for this mount was removed, process the jobs as if they had no disk system
     // (assuming only one disk system per mount)
-    for (auto &job: nextJobBatch) {
+    for (auto &job : nextJobBatch) {
       job->diskSystemName() = std::nullopt;
     }
     m_lc.log(cta::log::WARNING,
-    "In RecallTaskInjector::reserveSpaceForNextJobBatch(): Disk sapce reservation failed "
+    "In RecallTaskInjector::reserveSpaceForNextJobBatch(): Disk space reservation failed "
     "because disk system configuration has been removed, processing job batch as if it had no disk system");
     return true;
   }
 
-  if(!ret) {
-    for(auto &jobptr: nextJobBatch) {
+  if (!ret) {
+    for (auto &jobptr : nextJobBatch) {
       m_jobs.push_back(std::unique_ptr<cta::RetrieveJob>(jobptr.release()));
     }
     m_retrieveMount.requeueJobBatch(m_jobs, m_lc);
     m_files = 0;
     m_bytes = 0;
-    m_lc.log(cta::log::ERR, "In RecallTaskInjector::reserveSpaceForNextJobBatch(): Disk space reservation failed, requeued all pending jobs");
+    m_lc.log(cta::log::WARNING, "In RecallTaskInjector::reserveSpaceForNextJobBatch(): Disk space reservation failed, "
+      "requeued all pending jobs");
     m_diskSpaceReservationFailed = true;
-  }
-  else {
+  } else {
     m_lc.log(cta::log::INFO, "In RecallTaskInjector::reserveSpaceForNextJobBatch(): Disk space reservation for next job batch succeeded");
   }
   return ret;
