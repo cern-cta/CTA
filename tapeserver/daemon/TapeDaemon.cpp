@@ -53,7 +53,7 @@ int TapeDaemon::main() {
     exceptionThrowingMain();
   } catch (cta::exception::NoSuchObject &ex) {
     m_log(log::ERR, "Aborting cta-taped. Not starting because: " + ex.getMessage().str());
-    return 2;
+    return 1;
   } catch (cta::exception::Exception &ex) {
     // Log the error
     m_log(log::ERR, "Aborting cta-taped on uncaught exception. Stack trace follows.", {{"Message", ex.getMessage().str()}});
