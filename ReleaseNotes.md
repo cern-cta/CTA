@@ -1,3 +1,15 @@
+# v4.7.13-3
+
+## Summary
+### Building and Packaging
+- cta/CTA#15 - Repackaging CTA for easy installation of public RPMs
+
+# v4.7.13-2
+
+## Summary
+### Building and Packaging
+- cta/CTA#207 - Fix tag pipeline
+
 # v4.7.13-1
 ## Summary
 ### Features
@@ -27,6 +39,12 @@
 - cta/CTA#175 - Consistency issue in volume names format
 - cta/CTA#182 - Fix cta_valgrind error
 - cta/CTA#197 - Include order in XrdSsiCtaRequestMessage.cpp
+
+# v4.7.12-2
+
+## Summary
+### Building and Packaging
+- cta/CTA#15 - Repackaging CTA for easy installation of public RPMs
 
 # v4.7.12-1
 
