@@ -1,0 +1,7 @@
+[cta-xrootd]
+name=XRootD Stable repository
+baseurl=https://xrootd.slac.stanford.edu/binaries/stable/slc/7/$basearch http://xrootd.cern.ch/sw/repos/stable/slc/7/$basearch
+gpgcheck=1
+enabled=0
+protect=0
+gpgkey=http://xrootd.cern.ch/sw/releases/RPM-GPG-KEY.txt

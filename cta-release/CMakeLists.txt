@@ -101,5 +101,7 @@ install (FILES ${KEY_FILES}
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/pki/rpm-gpg)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/versionlock.cta
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/yum/pluginconf.d)
+install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-release-conf.json
+  DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/yum/pluginconf.d)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-versionlock
   DESTINATION usr/${CMAKE_INSTALL_BINDIR})
