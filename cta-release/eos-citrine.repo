@@ -3,5 +3,5 @@ name=EOS citrine releases from EOS project
 baseurl=http://storage-ci.web.cern.ch/storage-ci/eos/citrine/tag/testing/el-$releasever/$basearch/
 enabled=1
 gpgcheck=1
-priority=10
+priority=4
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-storageci

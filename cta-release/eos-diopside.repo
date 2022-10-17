@@ -1,0 +1,7 @@
+[eos-diopside]
+name=EOS diopside releases from EOS project
+baseurl=http://storage-ci.web.cern.ch/storage-ci/eos/diopside/tag/testing/el-$releasever/$basearch/
+enabled=1
+gpgcheck=1
+priority=4
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-storageci

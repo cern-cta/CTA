@@ -1,0 +1,6 @@
+[eos-diopside-depend]
+name=dependencies for EOS diopside releases from EOS project
+baseurl=http://storage-ci.web.cern.ch/storage-ci/eos/diopside-depend/el-$releasever/$basearch/
+enabled=1
+gpgcheck=0
+priority=4
