@@ -1,6 +1,27 @@
-[cta-public]
-name=CTA public releases for CTA project
-baseurl=https://cta-public-repo.web.cern.ch/$releasever/$basearch/
-enabled=1
+[cta-public-4]
+name=CTA public releases for CTA 4 project
+baseurl=https://cta-public-repo.web.cern.ch/cta-4/el-$releasever/cta/
+enabled=0
 gpgcheck=0
 priority=10
+
+[cta-public-4-depend]
+name=CTA public releases for CTA 4 project - dependencies
+baseurl=https://cta-public-repo.web.cern.ch/cta-4/el-$releasever/cta-dependencies/
+enabled=0
+gpgcheck=0
+priority=3
+
+[cta-public-5]
+name=CTA public releases for CTA 5 project
+baseurl=https://cta-public-repo.web.cern.ch/cta-5/el-$releasever/cta/
+enabled=0
+gpgcheck=0
+priority=10
+
+[cta-public-5-depend]
+name=CTA public releases for CTA 5 project - dependencies
+baseurl=https://cta-public-repo.web.cern.ch/cta-5/el-$releasever/cta-dependencies/
+enabled=0
+gpgcheck=0
+priority=3

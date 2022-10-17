@@ -7,16 +7,19 @@ import json
 import rpm
 from rpmUtils.miscutils import splitFilename
 from collections import defaultdict
+import yum
 
+conf_file = '/etc/cta/cta-release.conf'
 
 vfiles = {
   'cta': '/etc/yum/pluginconf.d/versionlock.cta', 
   'yum': '/etc/yum/pluginconf.d/versionlock.list'
 }
-actions = ('help', 'check', 'apply', 'forceupdate', 'checkpkg', 'remove')
+actions = ('help', 'check', 'apply', 'forceupdate', 'checkpkg', 'remove', 'config')
 retcode = 0
 jsonoutput = False
 no_vlock = '/etc/cta.novlock'
+eos_version=0
 
 try:
   FileNotFoundError
@@ -28,17 +31,96 @@ def usage():
   print("\n%s: command line tool to manage cta packages versionlock\n \
 \n \
 usage: %s help|check|apply|forceupdate|checkpkg|remove [--json]\n \
+       %s config eos4|eos5 [--json]\n \
   help: print this message\n \
   check: show consistency of versionlock.list with cta versionlock requirements\n \
   apply: add cta versions to versionlock.list\n \
   forceupdate: add cta versions to versionlock.list and overwrite already defined packages\n \
   checkpkg: check consistency between installed packages and cta versionlock requirements\n \
   remove: remove all cta packages and dependencies from versionlock.list\n \
+  config eos4|eos5: select EOS version\n \
   [--json]: format output in json\n \
   \n \
   to prevent cta-versionlock to alter versionlock.list create a %s file.\n \
-  " % (sys.argv[0], sys.argv[0], no_vlock))
+  " % (sys.argv[0], sys.argv[0], sys.argv[0], no_vlock))
   exit(1)
+
+START_EXPR = "\s*#+\s*%s-START\s*#+"
+END_EXPR = "\s*#+\s*%s-END\s*#+"
+
+yb = yum.YumBase()
+yb.preconf.debuglevel = 0
+yb.preconf.errorlevel = 0
+repos_all = [repo.id for repo in yb.repos.findRepos("cta-*")]
+
+with open(conf_file) as f:
+  cta_conf_json = json.load(f)
+
+def get_repo_set_for_eos_version(eos_major_version):
+  if eos_major_version is 4:
+    return {repo_id for repo_id in repos_all if "eos" in repo_id and "diopside" not in repo_id}
+  elif eos_major_version is 5:
+    return {repo_id for repo_id in repos_all if "eos" in repo_id and "citrine" not in repo_id}
+  else:
+    raise RuntimeError("Unknown EOS major version '%s'." % eos_major_version)
+
+def get_repo_set_for_cta_version(cta_major_version):
+  if cta_major_version is 4:
+    return {repo_id for repo_id in repos_all if "eos" not in repo_id and "public-5" not in repo_id}
+  elif cta_major_version is 5:
+    return {repo_id for repo_id in repos_all if "eos" not in repo_id and "public-4" not in repo_id}
+  else:
+    raise RuntimeError("Unknown CTA major version '%s'." % cta_major_version)
+
+repos_selected = set()
+repos_selected |= get_repo_set_for_cta_version(cta_conf_json["cta_major_version"])
+repos_selected |= get_repo_set_for_eos_version(cta_conf_json["eos_major_version"])
+
+def switch_repos(repo_id_list, enable):
+  for repo_id in repo_id_list:
+    yb.repos.enableRepo(repo_id) if enable else yb.repos.disableRepo(repo_id)
+    repo_obj = yb.repos.findRepos(repo_id)[0]
+    with open(repo_obj.repofile, "w") as f:
+      repo_obj.write(f, always=("enabled",))
+
+def enable_repos(repo_id_list):
+  switch_repos(repo_id_list, True)
+
+def disable_repos(repo_id_list):
+  switch_repos(repo_id_list, False)
+
+def switch_packages(file_path, key, enable_packages):
+
+  start_expr_key = START_EXPR % key
+  end_expr_key = END_EXPR % key
+
+  new_lines = []
+
+  with open(file_path) as f:
+    plist = f.read().splitlines()
+    found_key = False
+    for p in plist:
+
+      if not found_key and re.match(start_expr_key, p):
+        found_key = True
+        new_lines.append(p)
+        continue
+
+      if found_key and re.match(end_expr_key, p):
+        found_key = False
+        new_lines.append(p)
+        continue
+
+      if found_key and enable_packages and p.startswith('#'):
+        new_lines.append(p[1:].strip())
+      elif found_key and not enable_packages and not p.startswith('#'):
+        new_lines.append("# " + p.strip())
+      else:
+        new_lines.append(p.strip())
+
+  with open(file_path, 'w') as f:
+    for p in new_lines:
+      f.write(p + '\n')
 
 def _exit():
   printer(message)
@@ -144,25 +226,53 @@ def clearVfile(pkglist):
 
 
 # check arguments
-if not 2 <= len(sys.argv) <= 3:
+if not 2 <= len(sys.argv) <= 4:
   usage()
 
 for arg in sys.argv[1:]:
   if arg == '--json':
     jsonoutput = True
+  elif arg == 'eos4':
+    eos_version=4
+  elif arg == 'eos5':
+    eos_version=5
   elif arg in actions:
     action = arg
   else:
     print("Error: option %s is not valid" % sys.argv[1])
     usage()
 
+if (action == 'help'):
+  usage()
+
+if not eos_version and (action == 'config'):
+  print("Error: no EOS version was provided")
+  usage()
+
+message = defaultdict(dict)
+
+if (action == 'config'):
+  if eos_version is 4:
+    message['title'] = "Enabling EOS-4 dependencies"
+    cta_conf_json["eos_major_version"] = 4
+    switch_packages(vfiles['cta'], "EOS-4", True)
+    switch_packages(vfiles['cta'], "EOS-5", False)
+  elif eos_version is 5:
+    message['title'] = "Enabling EOS-5 dependencies"
+    cta_conf_json["eos_major_version"] = 5
+    switch_packages(vfiles['cta'], "EOS-4", False)
+    switch_packages(vfiles['cta'], "EOS-5", True)
+  repos_selected = set()
+  repos_selected | get_repo_set_for_cta_version(cta_conf_json["cta_major_version"])
+  repos_selected |= get_repo_set_for_eos_version(cta_conf_json["eos_major_version"])
+  # Update value in config file
+  with open(conf_file, "w") as f:
+    f.write(json.dumps(cta_conf_json))
+  _exit()
+
 # check if CTA packages exist in versionlock.list (ignore arch)
 versions = readVer(vfiles)
 versionlock = checkVfile(versions['cta'])
-message = defaultdict(dict)
-
-if (action == 'help'):
-  usage()
 
 # return versionlock summary
 if (action == 'check'):
@@ -176,6 +286,10 @@ if (action == 'check'):
 # add CTA packages to versionlock.list
 elif (action == 'apply'):
   message['title'] = "Adding CTA packages and dependencies to versionlock.list"
+
+  # Enable CTA repos
+  enable_repos(repos_selected)
+
   if os.path.isfile(no_vlock):
     message['adding']['count'] = 0
     message['adding']['content'] = [ "cta_novlock file present, doing nothing" ]
@@ -197,6 +311,10 @@ elif (action == 'apply'):
 # add CTA packages and overwrite existing versions in versionlock.list
 elif (action == 'forceupdate'):
   message['title'] = "Adding and updating CTA packages and dependencies in versionlock.list"
+
+  # Enable CTA repos
+  enable_repos(repos_selected)
+
   if os.path.isfile(no_vlock):
     message['updating']['count'] = 0
     message['updating']['content'] = [ "cta_novlock file present, doing nothing" ]
@@ -227,6 +345,10 @@ elif (action == 'checkpkg'):
 # remove CTA related packages from versionlock.list
 elif (action == 'remove'):
   message['title'] = "Removing CTA packages and dependencies from versionlock.list"
+
+  # Disable all CTA repos
+  disable_repos(repos_all)
+
   if os.path.isfile(no_vlock):
     message['removing']['count'] = 0
     message['removing']['content'] = [ "cta_novlock file present, doing nothing" ]
