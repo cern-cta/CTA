@@ -13,10 +13,11 @@ vfiles = {
   'cta': '/etc/yum/pluginconf.d/versionlock.cta', 
   'yum': '/etc/yum/pluginconf.d/versionlock.list'
 }
-actions = ('help', 'check', 'apply', 'forceupdate', 'checkpkg', 'remove')
+actions = ('help', 'check', 'apply', 'forceupdate', 'checkpkg', 'remove', 'config')
 retcode = 0
 jsonoutput = False
 no_vlock = '/etc/cta.novlock'
+eos_version=0
 
 try:
   FileNotFoundError
@@ -28,17 +29,55 @@ def usage():
   print("\n%s: command line tool to manage cta packages versionlock\n \
 \n \
 usage: %s help|check|apply|forceupdate|checkpkg|remove [--json]\n \
+       %s config eos4|eos5 [--json]\n \
   help: print this message\n \
   check: show consistency of versionlock.list with cta versionlock requirements\n \
   apply: add cta versions to versionlock.list\n \
   forceupdate: add cta versions to versionlock.list and overwrite already defined packages\n \
   checkpkg: check consistency between installed packages and cta versionlock requirements\n \
   remove: remove all cta packages and dependencies from versionlock.list\n \
+  config eos4|eos5: select EOS version\n \
   [--json]: format output in json\n \
   \n \
   to prevent cta-versionlock to alter versionlock.list create a %s file.\n \
-  " % (sys.argv[0], sys.argv[0], no_vlock))
+  " % (sys.argv[0], sys.argv[0], sys.argv[0], no_vlock))
   exit(1)
+
+START_EXPR = "\s*#+\s*%s-START\s*#+"
+END_EXPR = "\s*#+\s*%s-END\s*#+"
+
+def switch_packages(file_path, key, enable_packages):
+
+  start_expr_key = START_EXPR % key
+  end_expr_key = END_EXPR % key
+
+  new_lines = []
+
+  with open(file_path) as f:
+    plist = f.read().splitlines()
+    found_key = False
+    for p in plist:
+
+      if not found_key and re.match(start_expr_key, p):
+        found_key = True
+        new_lines.append(p)
+        continue
+
+      if found_key and re.match(end_expr_key, p):
+        found_key = False
+        new_lines.append(p)
+        continue
+
+      if found_key and enable_packages and p.startswith('#'):
+        new_lines.append(p[1:].strip())
+      elif found_key and not enable_packages and not p.startswith('#'):
+        new_lines.append("# " + p.strip())
+      else:
+        new_lines.append(p.strip())
+
+  with open(file_path, 'w') as f:
+    for p in new_lines:
+      f.write(p + '\n')
 
 def _exit():
   printer(message)
@@ -144,25 +183,45 @@ def clearVfile(pkglist):
 
 
 # check arguments
-if not 2 <= len(sys.argv) <= 3:
+if not 2 <= len(sys.argv) <= 4:
   usage()
 
 for arg in sys.argv[1:]:
   if arg == '--json':
     jsonoutput = True
+  elif arg == 'eos4':
+    eos_version=4
+  elif arg == 'eos5':
+    eos_version=5
   elif arg in actions:
     action = arg
   else:
     print("Error: option %s is not valid" % sys.argv[1])
     usage()
 
+if (action == 'help'):
+  usage()
+
+if not eos_version and (action == 'config'):
+  print("Error: no EOS version was provided")
+  usage()
+
+message = defaultdict(dict)
+
+if (action == 'config'):
+  if eos_version is 4:
+    message['title'] = "Enabling EOS-4 dependencies"
+    switch_packages(vfiles['cta'], "EOS-4", True)
+    switch_packages(vfiles['cta'], "EOS-5", False)
+  elif eos_version is 5:
+    message['title'] = "Enabling EOS-5 dependencies"
+    switch_packages(vfiles['cta'], "EOS-4", False)
+    switch_packages(vfiles['cta'], "EOS-5", True)
+  _exit()
+
 # check if CTA packages exist in versionlock.list (ignore arch)
 versions = readVer(vfiles)
 versionlock = checkVfile(versions['cta'])
-message = defaultdict(dict)
-
-if (action == 'help'):
-  usage()
 
 # return versionlock summary
 if (action == 'check'):

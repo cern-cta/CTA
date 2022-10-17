@@ -1,6 +1,6 @@
 [Ceph]
-name=Ceph packages for $basearch
-baseurl=http://download.ceph.com/rpm-nautilus/el$releasever/$basearch
+name=Ceph version 15.2.15 packages for $basearch
+baseurl=http://download.ceph.com/rpm-15.2.15/el$releasever/$basearch
 enabled=1
 gpgcheck=1
 protect=1

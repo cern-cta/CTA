@@ -558,6 +558,7 @@ Currently contains a helper for the client-ar script, which should be installed 
 Summary: Repository configuration for CTA and its dependencies
 Group: Application/CTA
 Requires: yum-plugin-versionlock
+Requires: yum-plugin-priorities
 %description -n cta-release
 Repository configuration for CTA and its dependencies
 This package contains .repo files, gpg keys and yum-versionlock configuration for CTA
@@ -568,10 +569,10 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 %attr(0644,root,root) %{_sysconfdir}/yum/pluginconf.d/versionlock.cta
 %attr(0755,root,root) %{_bindir}/cta-versionlock
 
-%posttrans -n cta-release
-/usr/bin/cta-versionlock apply
-
 %preun -n cta-release
+/usr/bin/cta-versionlock config eos4
+/usr/bin/cta-versionlock remove
+/usr/bin/cta-versionlock config eos5
 /usr/bin/cta-versionlock remove
 
 
