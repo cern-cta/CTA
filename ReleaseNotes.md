@@ -2,6 +2,7 @@
 
 ## Summary
 ### Features
+- cta/CTA#23 - Change Owner Identifier String and System Code of Creating System values in tape labels
 - cta/CTA#41 - Delete verification_status of tape when tape is reclaimed
 - cta/CTA#153 - Allow verification status to be cleared with cta-admin
 - cta/CTA#173 - Update release notes and small changes to refactoring of operation tools cmd line parsing - Compatible with operations 0.4-95 or later

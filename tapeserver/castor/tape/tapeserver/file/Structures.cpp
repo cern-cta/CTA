@@ -15,22 +15,23 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "castor/tape/tapeserver/file/Structures.hpp"
-#include "common/exception/Exception.hpp"
 #include <time.h>
 #include <stdio.h>
 
+#include "version.h"
+
+#include "castor/tape/tapeserver/file/Structures.hpp"
+#include "common/exception/Exception.hpp"
+
 using namespace castor::tape;
 
-#define BASEVERSION "2.1.15"
-
-void tapeFile::VOL1::fill(std::string VSN, 
+void tapeFile::VOL1::fill(std::string VSN,
   unsigned char LBPMethod) {
   setString(m_label, "VOL1");
   setString(m_VSN, VSN);
   setString(m_lblStandard, "3");
-  setString(m_ownerID, "CASTOR");
-  std::stringstream hexLBP; 
+  setString(m_ownerID, "CTA");
+  std::stringstream hexLBP;
   hexLBP << std::setfill('0') << std::setw(2) << std::hex
       << std::noshowbase << static_cast<int>(LBPMethod);
   setString(m_LBPMethod, hexLBP.str());
@@ -61,9 +62,7 @@ void tapeFile::VOL1::verify(const char *const expectedLblStandard) {
     throw cta::exception::Exception("reserved2 is not empty");
 }
 
-void tapeFile::HDR1EOF1::fillCommon(
-  std::string fileId, std::string VSN, int fSeq) {
-
+void tapeFile::HDR1EOF1::fillCommon(std::string fileId, std::string VSN, int fSeq) {
   setString(m_fileId, fileId);
   setString(m_VSN, VSN);
   setInt(m_fSeq, fSeq);
@@ -80,7 +79,7 @@ void tapeFile::HDR1EOF1::fillCommon(
    * overwritten immediately.
    */
   setDate(m_expirationDate);
-  setString(m_sysCode, std::string("CASTOR ") + BASEVERSION); /* TODO: CASTOR BASEVERSION */
+  setString(m_sysCode, std::string("CTA ") + CTA_VERSION);
 }
 
 void tapeFile::HDR1EOF1::verifyCommon()
