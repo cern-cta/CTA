@@ -1,13 +1,13 @@
 [cta-public-4]
 name=CTA public releases for CTA 4 project
 baseurl=https://cta-public-repo.web.cern.ch/cta-4/el-$releasever/cta/
-enabled=0
+enabled=1
 gpgcheck=0
 priority=10
 
 [cta-public-5]
 name=CTA public releases for CTA 5 project
 baseurl=https://cta-public-repo.web.cern.ch/cta-5/el-$releasever/cta/
-enabled=0
+enabled=1
 gpgcheck=0
 priority=10
