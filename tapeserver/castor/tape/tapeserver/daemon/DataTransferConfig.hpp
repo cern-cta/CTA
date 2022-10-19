@@ -28,7 +28,7 @@ namespace tapeserver {
 namespace daemon {
 
 /**
- * The contents of the castor.conf file to be used by a DataTransferSession.
+ * The contents of the cta.conf file to be used by a DataTransferSession.
  */
 struct DataTransferConfig {
 
@@ -143,10 +143,20 @@ struct DataTransferConfig {
   uint32_t tapeLoadTimeout;
 
   /**
+   * Maximum time allowed after mounting without a single tape block move
+   */
+  time_t wdNoBlockMoveMaxSecs;
+
+  /**
+   * Time to wait after scheduling came up idle
+   */
+  time_t wdIdleSessionTimer;
+
+  /**
    * Constructor that sets all integer member-variables to 0 and all string
    * member-variables to the empty string.
    */
-  DataTransferConfig() throw();
+  DataTransferConfig() noexcept;
 
 }; // DataTransferConfig
 

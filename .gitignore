@@ -10,3 +10,4 @@ cta-release/RPM-GPG-KEY-*
 cta-release/versionlock.cta
 *.swp
 tags
+/.clion.source.upload.marker

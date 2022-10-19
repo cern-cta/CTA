@@ -134,7 +134,7 @@ private:
   /** Convenience type */
   typedef std::chrono::milliseconds Timeout;
   /** Values for the state change timeouts where applicable */
-  static const std::map<session::SessionState, Timeout> m_stateChangeTimeouts;
+  static std::map<session::SessionState, Timeout> m_stateChangeTimeouts;
   /** Values for the heartbeat timeouts, where applicable */
   static const std::map<session::SessionState, Timeout> m_heartbeatTimeouts;
   /** Values for the data movement timeouts, where applicable */

@@ -110,15 +110,27 @@ struct TapedConfiguration {
   //----------------------------------------------------------------------------
   // Watchdog: parameters for timeouts in various situations.
   //----------------------------------------------------------------------------
-  /// Maximum time allowed to complete a single mount scheduling.
+  /// Maximum time allowed to determine a drive is ready.
+  cta::SourcedParameter<time_t> wdCheckMaxSecs{
+    "taped", "WatchdogCheckMaxSecs", 2 * 60, "Compile time default"};
+  /// Maximum time allowed to schedule a single mount.
   cta::SourcedParameter<time_t> wdScheduleMaxSecs{
-    "taped", "WatchdogScheduleMaxSecs", 60, "Compile time default"};
-  /// Maximum time allowed to complete mount a tape.
+    "taped", "WatchdogScheduleMaxSecs", 5 * 60, "Compile time default"};
+  /// Maximum time allowed to mount a tape.
   cta::SourcedParameter<time_t> wdMountMaxSecs{
-    "taped", "WatchdogMountMaxSecs", 900, "Compile time default"};
+    "taped", "WatchdogMountMaxSecs", 10 * 60, "Compile time default"};
+  /// Maximum time allowed to unmount a tape.
+  cta::SourcedParameter<time_t> wdUnmountMaxSecs{
+    "taped", "WatchdogUnmountMaxSecs", 10 * 60, "Compile time default"};
+  /// Maximum time allowed to drain a file to disk during retrieve.
+  cta::SourcedParameter<time_t> wdDrainMaxSecs{
+    "taped", "WatchdogDrainMaxSecs", 30 * 60, "Compile time default"};
+  /// Maximum time allowed to shutdown of a tape session.
+  cta::SourcedParameter<time_t> wdShutdownMaxSecs{
+    "taped", "WatchdogShutdownMaxSecs", 15 * 60, "Compile time default"};
   /// Maximum time allowed after mounting without a single tape block move
   cta::SourcedParameter<time_t> wdNoBlockMoveMaxSecs{
-    "taped", "WatchdogNoBlockMoveMaxSecs", 1800, "Compile time default"};
+    "taped", "WatchdogNoBlockMoveMaxSecs", 10 * 60, "Compile time default"};
   /// Time to wait after scheduling came up idle
   cta::SourcedParameter<time_t> wdIdleSessionTimer{
     "taped", "WatchdogIdleSessionTimer", 10, "Compile time default"};

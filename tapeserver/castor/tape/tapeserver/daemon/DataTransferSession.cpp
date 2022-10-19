@@ -49,12 +49,12 @@ castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(const
                                                                            cta::mediachanger::MediaChangerFacade& mc,
                                                                            cta::tape::daemon::TapedProxy& initialProcess,
                                                                            cta::server::ProcessCap& capUtils,
-                                                                           const DataTransferConfig& castorConf,
+                                                                           const DataTransferConfig& dataTransferConfig,
                                                                            cta::Scheduler& scheduler) :
   m_log(log),
   m_sysWrapper(sysWrapper),
   m_driveConfig(driveConfig),
-  m_castorConf(castorConf),
+  m_dataTransferConfig(dataTransferConfig),
   m_driveInfo({driveConfig.unitName, cta::utils::getShortHostname(), driveConfig.logicalLibrary}),
   m_mediaChanger(mc),
   m_initialProcess(initialProcess),
@@ -184,7 +184,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
       // Refresh the status to trigger the timeout update
       m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount,
                                     cta::common::dataStructures::DriveStatus::Up, lc);
-      sleep(10);
+      sleep(m_dataTransferConfig.wdIdleSessionTimer);
       continue;
     }
     break;
@@ -238,7 +238,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
   // file to recall.
   // findDrive does not throw exceptions (it catches them to log errors)
   // A nullptr is returned on failure
-  retrieveMount->setExternalFreeDiskSpaceScript(m_castorConf.externalFreeDiskSpaceScript);
+  retrieveMount->setExternalFreeDiskSpaceScript(m_dataTransferConfig.externalFreeDiskSpaceScript);
   std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(findDrive(logContext, retrieveMount));
 
   if (!drive) {
@@ -251,26 +251,27 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
     // to refer them to each other)
     RecallReportPacker reportPacker(retrieveMount, logContext);
     reportPacker.disableBulk(); //no bulk needed anymore
-    RecallWatchDog watchDog(15, 60 * 10, m_initialProcess, *retrieveMount, m_driveConfig.unitName, logContext);
+    RecallWatchDog watchDog(15, m_dataTransferConfig.wdNoBlockMoveMaxSecs, m_initialProcess, *retrieveMount,
+                            m_driveConfig.unitName, logContext);
 
-    RecallMemoryManager memoryManager(m_castorConf.nbBufs, m_castorConf.bufsz, logContext);
+    RecallMemoryManager memoryManager(m_dataTransferConfig.nbBufs, m_dataTransferConfig.bufsz, logContext);
 
     TapeReadSingleThread readSingleThread(*drive, m_mediaChanger, reporter, m_volInfo,
-                                          m_castorConf.bulkRequestRecallMaxFiles, m_capUtils, watchDog, logContext,
+                                          m_dataTransferConfig.bulkRequestRecallMaxFiles, m_capUtils, watchDog, logContext,
                                           reportPacker,
-                                          m_castorConf.useLbp, m_castorConf.useRAO, m_castorConf.useEncryption,
-                                          m_castorConf.externalEncryptionKeyScript, *retrieveMount,
-                                          m_castorConf.tapeLoadTimeout);
+                                          m_dataTransferConfig.useLbp, m_dataTransferConfig.useRAO, m_dataTransferConfig.useEncryption,
+                                          m_dataTransferConfig.externalEncryptionKeyScript, *retrieveMount,
+                                          m_dataTransferConfig.tapeLoadTimeout);
 
-    DiskWriteThreadPool threadPool(m_castorConf.nbDiskThreads,
+    DiskWriteThreadPool threadPool(m_dataTransferConfig.nbDiskThreads,
                                    reportPacker,
                                    watchDog,
                                    logContext,
-                                   m_castorConf.xrootPrivateKey,
-                                   m_castorConf.xrootTimeout);
+                                   m_dataTransferConfig.xrootPrivateKey,
+                                   m_dataTransferConfig.xrootTimeout);
     RecallTaskInjector taskInjector(memoryManager, readSingleThread, threadPool, *retrieveMount,
-                                    m_castorConf.bulkRequestRecallMaxFiles,
-                                    m_castorConf.bulkRequestRecallMaxBytes, logContext);
+                                    m_dataTransferConfig.bulkRequestRecallMaxFiles,
+                                    m_dataTransferConfig.bulkRequestRecallMaxBytes, logContext);
     // Workaround for bug CASTOR-4829: tapegateway: should request positioning by blockid for recalls instead of fseq
     // In order to implement the fix, the task injector needs to know the type of the client
     readSingleThread.setTaskInjector(&taskInjector);
@@ -283,9 +284,9 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
     cta::utils::Timer timer;
 
     // The RecallTaskInjector and the TapeReadSingleThread share the promise
-    if (m_castorConf.useRAO) {
-      castor::tape::tapeserver::rao::RAOParams raoDataConfig(m_castorConf.useRAO, m_castorConf.raoLtoAlgorithm,
-                                                             m_castorConf.raoLtoAlgorithmOptions,
+    if (m_dataTransferConfig.useRAO) {
+      castor::tape::tapeserver::rao::RAOParams raoDataConfig(m_dataTransferConfig.useRAO, m_dataTransferConfig.raoLtoAlgorithm,
+                                                             m_dataTransferConfig.raoLtoAlgorithmOptions,
                                                              m_volInfo.vid);
       taskInjector.initRAO(raoDataConfig, &m_scheduler.getCatalogue());
     }
@@ -390,10 +391,11 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
   {
     //dereferencing configLine is safe, because if configLine were not valid,
     //then findDrive would have return nullptr and we would have not end up there
-    MigrationMemoryManager memoryManager(m_castorConf.nbBufs,
-                                         m_castorConf.bufsz, logContext);
+    MigrationMemoryManager memoryManager(m_dataTransferConfig.nbBufs,
+                                         m_dataTransferConfig.bufsz, logContext);
     MigrationReportPacker reportPacker(archiveMount, logContext);
-    MigrationWatchDog watchDog(15, 60 * 10, m_initialProcess, *archiveMount, m_driveConfig.unitName, logContext);
+    MigrationWatchDog watchDog(15, m_dataTransferConfig.wdNoBlockMoveMaxSecs, m_initialProcess, *archiveMount,
+                               m_driveConfig.unitName, logContext);
     TapeWriteSingleThread writeSingleThread(*drive,
                                             m_mediaChanger,
                                             reporter,
@@ -402,25 +404,25 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
                                             logContext,
                                             reportPacker,
                                             m_capUtils,
-                                            m_castorConf.maxFilesBeforeFlush,
-                                            m_castorConf.maxBytesBeforeFlush,
-                                            m_castorConf.useLbp,
-                                            m_castorConf.useEncryption,
-                                            m_castorConf.externalEncryptionKeyScript,
+                                            m_dataTransferConfig.maxFilesBeforeFlush,
+                                            m_dataTransferConfig.maxBytesBeforeFlush,
+                                            m_dataTransferConfig.useLbp,
+                                            m_dataTransferConfig.useEncryption,
+                                            m_dataTransferConfig.externalEncryptionKeyScript,
                                             *archiveMount,
-                                            m_castorConf.tapeLoadTimeout);
+                                            m_dataTransferConfig.tapeLoadTimeout);
 
 
-    DiskReadThreadPool threadPool(m_castorConf.nbDiskThreads,
-                                  m_castorConf.bulkRequestMigrationMaxFiles,
-                                  m_castorConf.bulkRequestMigrationMaxBytes,
+    DiskReadThreadPool threadPool(m_dataTransferConfig.nbDiskThreads,
+                                  m_dataTransferConfig.bulkRequestMigrationMaxFiles,
+                                  m_dataTransferConfig.bulkRequestMigrationMaxBytes,
                                   watchDog,
                                   logContext,
-                                  m_castorConf.xrootPrivateKey,
-                                  m_castorConf.xrootTimeout);
+                                  m_dataTransferConfig.xrootPrivateKey,
+                                  m_dataTransferConfig.xrootTimeout);
     MigrationTaskInjector taskInjector(memoryManager, threadPool, writeSingleThread, *archiveMount,
-                                       m_castorConf.bulkRequestMigrationMaxFiles,
-                                       m_castorConf.bulkRequestMigrationMaxBytes, logContext);
+                                       m_dataTransferConfig.bulkRequestMigrationMaxFiles,
+                                       m_dataTransferConfig.bulkRequestMigrationMaxBytes, logContext);
     threadPool.setTaskInjector(&taskInjector);
     writeSingleThread.setTaskInjector(&taskInjector);
     reportPacker.setWatchdog(watchDog);

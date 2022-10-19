@@ -55,7 +55,7 @@ public:
                       const cta::tape::daemon::TpconfigLine& driveConfig,
                       cta::mediachanger::MediaChangerFacade& mc,
                       cta::tape::daemon::TapedProxy& initialProcess,
-                      cta::server::ProcessCap& capUtils, const DataTransferConfig& castorConf,
+                      cta::server::ProcessCap& capUtils, const DataTransferConfig& dataTransferConfig,
                       cta::Scheduler& scheduler);
 
   /**
@@ -107,7 +107,7 @@ private:
    * The configuration of the tape drive to be used by this session.
    */
   const cta::tape::daemon::TpconfigLine m_driveConfig;
-  const DataTransferConfig& m_castorConf;
+  const DataTransferConfig& m_dataTransferConfig;
   /**
    * The drive information bundle allowing drive register update.
    * Filled up at construction time.

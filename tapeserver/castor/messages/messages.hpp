@@ -21,7 +21,6 @@
 #include "castor/messages/Exception.pb.h"
 #include "castor/messages/Frame.hpp"
 #include "castor/messages/Header.pb.h"
-#include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "common/exception/Exception.hpp"
 
 #include <openssl/rsa.h>

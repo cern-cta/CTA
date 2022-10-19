@@ -69,7 +69,7 @@ using session::SessionType;
 // (if needed).
 // The session type is not taken into account as a given state gets the same timeout regardless
 // of the type session it is used in.
-const std::map<SessionState, DriveHandler::Timeout> DriveHandler::m_stateChangeTimeouts = {
+std::map<SessionState, DriveHandler::Timeout> DriveHandler::m_stateChangeTimeouts = {
   // Determining the drive is ready takes 1 minute, so waiting 2 should be enough.
   {SessionState::Checking,       std::chrono::duration_cast<Timeout>(std::chrono::minutes(2))},
   // Scheduling is expected to take little time, so 5 minutes is plenty. When the scheduling
@@ -992,18 +992,12 @@ int DriveHandler::runChild() {
 
     castor::tape::tapeserver::daemon::DataTransferConfig dataTransferConfig;
     dataTransferConfig.bufsz = m_tapedConfig.bufferSizeBytes.value();
-    dataTransferConfig.bulkRequestMigrationMaxBytes =
-      m_tapedConfig.archiveFetchBytesFiles.value().maxBytes;
-    dataTransferConfig.bulkRequestMigrationMaxFiles =
-      m_tapedConfig.archiveFetchBytesFiles.value().maxFiles;
-    dataTransferConfig.bulkRequestRecallMaxBytes =
-      m_tapedConfig.retrieveFetchBytesFiles.value().maxBytes;
-    dataTransferConfig.bulkRequestRecallMaxFiles =
-      m_tapedConfig.retrieveFetchBytesFiles.value().maxFiles;
-    dataTransferConfig.maxBytesBeforeFlush =
-      m_tapedConfig.archiveFlushBytesFiles.value().maxBytes;
-    dataTransferConfig.maxFilesBeforeFlush =
-      m_tapedConfig.archiveFlushBytesFiles.value().maxFiles;
+    dataTransferConfig.bulkRequestMigrationMaxBytes = m_tapedConfig.archiveFetchBytesFiles.value().maxBytes;
+    dataTransferConfig.bulkRequestMigrationMaxFiles = m_tapedConfig.archiveFetchBytesFiles.value().maxFiles;
+    dataTransferConfig.bulkRequestRecallMaxBytes = m_tapedConfig.retrieveFetchBytesFiles.value().maxBytes;
+    dataTransferConfig.bulkRequestRecallMaxFiles = m_tapedConfig.retrieveFetchBytesFiles.value().maxFiles;
+    dataTransferConfig.maxBytesBeforeFlush = m_tapedConfig.archiveFlushBytesFiles.value().maxBytes;
+    dataTransferConfig.maxFilesBeforeFlush = m_tapedConfig.archiveFlushBytesFiles.value().maxFiles;
     dataTransferConfig.nbBufs = m_tapedConfig.bufferCount.value();
     dataTransferConfig.nbDiskThreads = m_tapedConfig.nbDiskThreads.value();
     dataTransferConfig.useLbp = true;
@@ -1015,6 +1009,19 @@ int DriveHandler::runChild() {
     dataTransferConfig.xrootPrivateKey = "";
     dataTransferConfig.useEncryption = m_tapedConfig.useEncryption.value() == "yes" ? true : false;
     dataTransferConfig.externalEncryptionKeyScript = m_tapedConfig.externalEncryptionKeyScript.value();
+    dataTransferConfig.wdIdleSessionTimer = m_tapedConfig.wdIdleSessionTimer.value();
+    m_stateChangeTimeouts[session::SessionState::Checking] = std::chrono::duration_cast<Timeout>(
+      std::chrono::minutes(m_tapedConfig.wdCheckMaxSecs.value()));
+    m_stateChangeTimeouts[session::SessionState::Scheduling] = std::chrono::duration_cast<Timeout>(
+      std::chrono::minutes(m_tapedConfig.wdScheduleMaxSecs.value()));
+    m_stateChangeTimeouts[session::SessionState::Mounting] = std::chrono::duration_cast<Timeout>(
+      std::chrono::minutes(m_tapedConfig.wdMountMaxSecs.value()));
+    m_stateChangeTimeouts[session::SessionState::Unmounting] = std::chrono::duration_cast<Timeout>(
+      std::chrono::minutes(m_tapedConfig.wdUnmountMaxSecs.value()));
+    m_stateChangeTimeouts[session::SessionState::DrainingToDisk] = std::chrono::duration_cast<Timeout>(
+      std::chrono::minutes(m_tapedConfig.wdDrainMaxSecs.value()));
+    m_stateChangeTimeouts[session::SessionState::ShuttingDown] = std::chrono::duration_cast<Timeout>(
+      std::chrono::minutes(m_tapedConfig.wdShutdownMaxSecs.value()));
 
     // Before launching, and if this is the first session since daemon start, we will
     // put the drive down.

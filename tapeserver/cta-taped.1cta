@@ -175,11 +175,23 @@ reporting.
 .B taped TapeLoadTimeout \fI300\fR
 Maximum time to wait for a tape to load, in seconds.
 .TP
-.B taped WatchdogScheduleMaxSecs \fI60\fR
+.B taped WatchdogCheckMaxSecs \fI120\fR
+Maximum time allowed to determine a drive is ready, in seconds.
+.TP
+.B taped WatchdogScheduleMaxSecs \fI300\fR
 Maximum time allowed to schedule a single mount, in seconds.
 .TP
-.B taped WatchdogMountMaxSecs \fI900\fR
+.B taped WatchdogMountMaxSecs \fI600\fR
 Maximum time allowed to mount a tape, in seconds.
+.TP
+.B taped WatchdogUnmountMaxSecs \fI600\fR
+Maximum time allowed to unmount a tape, in seconds.
+.TP
+.B taped WatchdogDrainMaxSecs \fI1800\fR
+Maximum time allowed to drain a file to disk during retrieve, in seconds.
+.TP
+.B taped WatchdogShutdownMaxSecs \fI900\fR
+Maximum time allowed to shutdown of a tape session, in seconds.
 .TP
 .B taped WatchdogNoBlockMoveMaxSecs \fI1800\fR
 Maximum time allowed after mounting without any tape blocks being read/written, in seconds. If this

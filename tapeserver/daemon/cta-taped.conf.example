@@ -156,12 +156,24 @@ taped externalFreeDiskSpaceScript /usr/local/bin/cta-get-free-disk-space.sh
 
 # Maximum time to wait for a tape to load, in seconds.
 # taped TapeLoadTimeout 300
-# 
+#
+# Maximum time allowed to determine a drive is ready, in seconds.
+# taped WatchdogCheckMaxSecs 120
+#
 # Maximum time allowed to schedule a single mount, in seconds.
-# taped WatchdogScheduleMaxSecs 60
-# 
+# taped WatchdogScheduleMaxSecs 300
+#
 # Maximum time allowed to mount a tape, in seconds.
-# taped WatchdogMountMaxSecs 900
+# taped WatchdogMountMaxSecs 600
+#
+# Maximum time allowed to unmount a tape, in seconds.
+# taped WatchdogUnmountMaxSecs 600
+#
+# Maximum time allowed to drain a file to disk during retrieve, in seconds.
+# taped WatchdogDrainMaxSecs 1800
+#
+# Maximum time allowed to shutdown of a tape session, in seconds.
+# taped WatchdogShutdownMaxSecs 900
 # 
 # Maximum time allowed after mounting without any tape blocks being read/written, in seconds.
 # taped WatchdogNoBlockMoveMaxSecs 1800
