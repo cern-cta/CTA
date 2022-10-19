@@ -164,7 +164,6 @@ private:
   /** PID for the subprocess */
   pid_t m_pid = -1;
   /** Socket pair allowing communication with the subprocess */
-
   std::unique_ptr<cta::server::SocketPair> m_socketPair;
 
   /** Helper function accumulating logs */
