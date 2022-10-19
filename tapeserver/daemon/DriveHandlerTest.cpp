@@ -48,6 +48,9 @@ struct DriveHandlerTestParam {
 };
 }
 
+/**
+ * The data handler test is a parameterized test. It takes a scheduler database factory as a parameter.
+ */
 class DriveHandlerTest : public ::testing::TestWithParam<DriveHandlerTestParam> {
 public:
   std::unique_ptr<cta::SchedulerDatabase> m_db;
@@ -90,15 +93,12 @@ public:
   }
 };
 
+/**
+ * Class that mimics the tape session reporter to change the data session states
+ */
 class DummyTapeSessionReporter : cta::threading::Thread {
-private:
-  cta::tape::daemon::DriveHandler& m_handler;
-  std::string m_vid;
-
 public:
-  explicit DummyTapeSessionReporter(cta::tape::daemon::DriveHandler& handler) : m_handler(handler) {
-
-  }
+  explicit DummyTapeSessionReporter(cta::tape::daemon::DriveHandler& handler) : m_handler(handler) {}
 
   void reportState(cta::tape::session::SessionState state) {
     m_fifo.push(new Report(state));
@@ -168,6 +168,17 @@ private:
    * m_fifo is holding all the report waiting to be processed
    */
   cta::threading::BlockingQueue<Report *> m_fifo;
+
+  /**
+   * Drive handler that listens for our state change messages
+   */
+  cta::tape::daemon::DriveHandler& m_handler;
+
+  /**
+   * Tape VID will be passed to the tape session reporter at specific point of time.
+   * It is essential for the cleaner session that VID is reported during state change
+   */
+  std::string m_vid;
 };
 
 
