@@ -147,7 +147,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
       throw exception::Exception(err.str());
     }
     // First prepare a socket pair for this new subprocess
-    m_socketPair.reset(new cta::server::SocketPair());
+    m_socketPair = std::make_unique<cta::server::SocketPair>();
     // and fork
     m_pid = ::fork();
     exception::Errnum::throwOnMinusOne(m_pid, "In DriveHandler::fork(): failed to fork()");
@@ -823,7 +823,7 @@ int DriveHandler::runChild() {
     log::ScopedParamContainer params(lc);
     params.add("processName", processName);
     lc.log(log::DEBUG, "In DriveHandler::runChild(): will create agent entry. Enabling leaving non-empty agent behind.");
-    sched_db_init.reset(new SchedulerDBInit_t(processName, m_tapedConfig.backendPath.value(), m_processManager.logContext().logger(), true));
+    sched_db_init = std::make_unique<SchedulerDBInit_t>(processName, m_tapedConfig.backendPath.value(), m_processManager.logContext().logger(), true);
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer param(lc);
     param.add("errorMessage", ex.getMessageValue());
@@ -1148,7 +1148,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
     log::ScopedParamContainer params(lc);
     params.add("processName", processName);
     lc.log(log::DEBUG, "In DriveHandler::shutdown(): will create agent entry. Enabling leaving non-empty agent behind.");
-    sched_db_init.reset(new SchedulerDBInit_t(processName, m_tapedConfig.backendPath.value(), lc.logger(), true));
+    sched_db_init = std::make_unique<SchedulerDBInit_t>(processName, m_tapedConfig.backendPath.value(), lc.logger(), true);
   } catch (cta::exception::Exception &ex) {
     log::ScopedParamContainer param(lc);
     param.add("errorMessage", ex.getMessageValue());

@@ -184,6 +184,9 @@ TEST_P(DriveHandlerTest, TriggerCleanerSessionAtTheEndOfSession) {
   driveInfo.logicalLibrary = driveConfig.logicalLibrary;
   driveInfo.host = "host";
 
+  // DriveHandler will try to re-init the catalogue. SQLite (InMemory) catalogue will try to create new schema,
+  // it will fail. We need to reset m_catalogue here to work around this bug
+  // TODO: fix the bug in SchemaCreatingSqliteCatalogue()
   m_catalogue.reset(nullptr);
 
   char envXrdSecPROTOCOL[] = "XrdSecPROTOCOL=krb5";
@@ -197,7 +200,8 @@ TEST_P(DriveHandlerTest, TriggerCleanerSessionAtTheEndOfSession) {
   TempFile ctaConf, catalogueConfig, tpConfig;
   catalogueConfig.stringFill("in_memory");
   ctaConf.stringFill("ObjectStore BackendPath ");
-  ctaConf.stringAppend(getSchedulerDB().getBackend().getParams()->toURL());
+  std::unique_ptr<cta::objectstore::Backend::Parameters> params(getSchedulerDB().getBackend().getParams());
+  ctaConf.stringAppend(params->toURL());
   ctaConf.stringAppend("\n"
                        "taped CatalogueConfigFile ");
   ctaConf.stringAppend(catalogueConfig.path());
