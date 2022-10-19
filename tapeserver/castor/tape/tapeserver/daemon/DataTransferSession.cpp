@@ -118,7 +118,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
   while (true) {
     // Down-up transition loop
     while (true) {
-      m_initialProcess.reportHeartbeat(0,0);
+      m_initialProcess.reportHeartbeat(0, 0);
       try {
         auto desiredState = m_scheduler.getDesiredDriveState(m_driveConfig.unitName, lc);
         if (!desiredState.up) {
