@@ -27,7 +27,6 @@
 #include "tapeserver/castor/tape/tapeserver/daemon/TapeSessionReporter.hpp"
 #include "tests/TempFile.hpp"
 #include "scheduler/Scheduler.hpp"
-#include "scheduler/testingMocks/MockArchiveMount.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/FileWriter.hpp"
 
 #include <utility>
