@@ -55,9 +55,14 @@ public:
   std::unique_ptr<cta::SchedulerDatabase> m_db;
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::unique_ptr<cta::Scheduler> m_scheduler;
-  cta::log::DummyLogger m_dummyLog;
+  cta::log::StringLogger m_dummyLog;
+  cta::log::LogContext m_lc;
+  cta::tape::daemon::TpconfigLine m_driveConfig;
 
-  DriveHandlerTest() : m_dummyLog("dummy", "dummy") {}
+  TapedConfiguration m_completeConfig;
+
+  DriveHandlerTest() : m_dummyLog("dummy", "unitTest", cta::log::DEBUG), m_lc(m_dummyLog),
+                       m_driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy") {}
 
   class FailedToGetSchedulerDB : public std::exception {
   public:
@@ -83,6 +88,39 @@ public:
     m_catalogue = std::make_unique<catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns);
     m_db = param.dbFactory.create(m_catalogue);
     m_scheduler = std::make_unique<Scheduler>(*m_catalogue, *m_db, 5, 2 * 1000 * 1000);
+
+    // Create the config files and initiate the catalogue and the scheduler
+    cta::common::dataStructures::DriveInfo driveInfo;
+    driveInfo.driveName = m_driveConfig.unitName;
+    driveInfo.logicalLibrary = m_driveConfig.logicalLibrary;
+    driveInfo.host = "host";
+
+    // DriveHandler will try to re-init the catalogue. SQLite (InMemory) catalogue will try to create new schema,
+    // it will fail. We need to reset m_catalogue here to work around this bug
+    // TODO: fix the bug in SchemaCreatingSqliteCatalogue()
+    m_catalogue.reset(nullptr);
+
+    char envXrdSecPROTOCOL[] = "XrdSecPROTOCOL=krb5";
+    char envKRB5CCNAME[] = "KRB5CCNAME=/tmp/cta/krb5cc_0";
+    char envXrdSecSSSKT[] = "XrdSecSSSKT=/var/tmp/cta-test-temporary-kt";
+
+    putenv(envXrdSecPROTOCOL);
+    putenv(envKRB5CCNAME);
+    putenv(envXrdSecSSSKT);
+
+    TempFile ctaConf, catalogueConfig, tpConfig;
+    catalogueConfig.stringFill("in_memory");
+    ctaConf.stringFill("ObjectStore BackendPath ");
+    std::unique_ptr<cta::objectstore::Backend::Parameters> params(getSchedulerDB().getBackend().getParams());
+    ctaConf.stringAppend(params->toURL());
+    ctaConf.stringAppend("\n"
+                         "taped CatalogueConfigFile ");
+    ctaConf.stringAppend(catalogueConfig.path());
+    ctaConf.stringAppend("\n"
+                         "taped BufferCount 1\n"
+                         "taped TpConfigPath ");
+    ctaConf.stringAppend(tpConfig.path());
+    m_completeConfig = cta::tape::daemon::TapedConfiguration::createFromCtaConf(ctaConf.path());
   }
 
   void TearDown() override {
@@ -182,50 +220,11 @@ private:
 
 
 TEST_P(DriveHandlerTest, TriggerCleanerSessionAtTheEndOfSession) {
-
-  // Create the log context
-  cta::log::StringLogger dlog("dummy", "unitTest", cta::log::DEBUG);
-  cta::log::LogContext lc(dlog);
-
-  // Create the config files and initiate the catalogue and the scheduler
-  cta::tape::daemon::TpconfigLine driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
-  cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName = driveConfig.unitName;
-  driveInfo.logicalLibrary = driveConfig.logicalLibrary;
-  driveInfo.host = "host";
-
-  // DriveHandler will try to re-init the catalogue. SQLite (InMemory) catalogue will try to create new schema,
-  // it will fail. We need to reset m_catalogue here to work around this bug
-  // TODO: fix the bug in SchemaCreatingSqliteCatalogue()
-  m_catalogue.reset(nullptr);
-
-  char envXrdSecPROTOCOL[] = "XrdSecPROTOCOL=krb5";
-  char envKRB5CCNAME[] = "KRB5CCNAME=/tmp/cta/krb5cc_0";
-  char envXrdSecSSSKT[] = "XrdSecSSSKT=/var/tmp/cta-test-temporary-kt";
-
-  putenv(envXrdSecPROTOCOL);
-  putenv(envKRB5CCNAME);
-  putenv(envXrdSecSSSKT);
-
-  TempFile ctaConf, catalogueConfig, tpConfig;
-  catalogueConfig.stringFill("in_memory");
-  ctaConf.stringFill("ObjectStore BackendPath ");
-  std::unique_ptr<cta::objectstore::Backend::Parameters> params(getSchedulerDB().getBackend().getParams());
-  ctaConf.stringAppend(params->toURL());
-  ctaConf.stringAppend("\n"
-                       "taped CatalogueConfigFile ");
-  ctaConf.stringAppend(catalogueConfig.path());
-  ctaConf.stringAppend("\n"
-                       "taped BufferCount 1\n"
-                       "taped TpConfigPath ");
-  ctaConf.stringAppend(tpConfig.path());
-  auto completeConfig = cta::tape::daemon::TapedConfiguration::createFromCtaConf(ctaConf.path());
-
   // Create the process manager and drive handler
-  cta::tape::daemon::ProcessManager processManager(lc);
+  cta::tape::daemon::ProcessManager processManager(m_lc);
 
   std::unique_ptr<cta::tape::daemon::DriveHandler> driveHandler(
-    new cta::tape::daemon::DriveHandler(completeConfig, driveConfig, processManager));
+    new cta::tape::daemon::DriveHandler(m_completeConfig, m_driveConfig, processManager));
 
   processManager.addHandler(std::move(driveHandler));
 
@@ -233,6 +232,7 @@ TEST_P(DriveHandlerTest, TriggerCleanerSessionAtTheEndOfSession) {
   DriveHandler& handler = dynamic_cast<DriveHandler&>(processManager.at("drive:T10D6116"));
   DummyTapeSessionReporter reporter(handler);
 
+  // Imitate intercommunication
   {
     reporter.startThreads();
     reporter.reportState(cta::tape::session::SessionState::Scheduling);
@@ -247,7 +247,7 @@ TEST_P(DriveHandlerTest, TriggerCleanerSessionAtTheEndOfSession) {
   processManager.run();
   reporter.waitThreads();
 
-  std::string logToCheck = dlog.getLog();
+  std::string logToCheck = m_dummyLog.getLog();
   ASSERT_EQ(std::string::npos, logToCheck.find("Should run cleaner but VID is missing"));
   ASSERT_NE(std::string::npos, logToCheck.find("starting cleaner"));
 }
