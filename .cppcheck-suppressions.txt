@@ -2,5 +2,6 @@ syntaxError:*Test.cpp
 syntaxError:*Tests.cpp
 localMutex:common/threading/MutexLtrace.cpp
 unknownMacro:tapeserver/castor/tape/tapeserver/file/FileTest.cpp
+unknownMacro:tapeserver/castor/tape/tapeserver/file/OSMFileTest.cpp
 nullPointer:common/utils/utils.cpp
 uninitStructMember:objectstore/RetrieveRequest.cpp

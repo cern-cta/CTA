@@ -67,6 +67,9 @@ public:
 
   void decode();  // can throw
 
+  void encode(uint64_t ulCreateTime, uint64_t ulExpireTime, uint64_t ulRecSize, uint64_t ulVolId,
+              const std::string& strVolName, const std::string& strOwner, const std::string& strVersion); // can throw
+
   inline std::string owner() {
     return std::string(m_tcOwner);
   }

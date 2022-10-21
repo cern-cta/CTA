@@ -61,6 +61,7 @@ add_library(File
 add_library(ctatapeserverfileunittests SHARED
   StructuresTest.cpp
   FileTest.cpp
+  OSMFileTest.cpp
 )
 
 target_link_libraries(ctatapeserverfileunittests

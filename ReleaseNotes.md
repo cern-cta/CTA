@@ -6,6 +6,8 @@
 - cta/CTA#41 - Delete verification_status of tape when tape is reclaimed
 - cta/CTA#153 - Allow verification status to be cleared with cta-admin
 - cta/CTA#173 - Update release notes and small changes to refactoring of operation tools cmd line parsing - Compatible with operations 0.4-95 or later
+### Continuous Integration
+- cta/CTA#118 - Add unit tests for OSM label
 ### Bug fixes
 - cta/CTA#48 - Catch tape server exception and log an error instead
 - cta/CTA#123 - Change some tape server errors into warnings
