@@ -149,8 +149,8 @@ private:
       watchdogMessage.set_reportingbytes(false);
       watchdogMessage.set_totaldiskbytesmoved(0);
       watchdogMessage.set_totaltapebytesmoved(0);
-      watchdogMessage.set_sessionstate((uint32_t) m_state);
-      watchdogMessage.set_sessiontype((uint32_t) cta::tape::session::SessionType::Undetermined);
+      watchdogMessage.set_sessionstate(static_cast<uint32_t>(m_state));
+      watchdogMessage.set_sessiontype(static_cast<uint32_t>(cta::tape::session::SessionType::Undetermined));
       watchdogMessage.set_vid(parent.m_vid);
       std::string buffer;
       if (!watchdogMessage.SerializeToString(&buffer)) {

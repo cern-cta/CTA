@@ -82,7 +82,7 @@ void DriveHandlerProxy::reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t t
   // This is used by DriveHandlerTest unit tests
   try {
     serializers::WatchdogMessage message;
-    auto datagram = m_socketPair.receive();
+    const auto datagram = m_socketPair.receive();
     if (!message.ParseFromString(datagram)) {
       // Use the tolerant parser to assess the situation.
       message.ParsePartialFromString(datagram);
