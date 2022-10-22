@@ -8,6 +8,7 @@
 - cta/CTA#173 - Update release notes and small changes to refactoring of operation tools cmd line parsing - Compatible with operations 0.4-95 or later
 ### Continuous Integration
 - cta/CTA#118 - Add unit tests for OSM label
+- cta/CTA#191 - Block merge until cta_valgrind success
 ### Bug fixes
 - cta/CTA#48 - Catch tape server exception and log an error instead
 - cta/CTA#123 - Change some tape server errors into warnings
