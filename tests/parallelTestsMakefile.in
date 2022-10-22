@@ -1,7 +1,7 @@
 .phony: all
 
-all: baretests valgrind valgrindMultiprocess helgrindBase helgrindScheduler helgrindOStoreDB helgrindDataTransfer helgrindInMemoryCatalogue helgrindMultiprocess
-	
+all: baretests valgrind valgrindOsmTape valgrindMultiprocess helgrindBase helgrindScheduler helgrindOStoreDB helgrindDataTransfer helgrindInMemoryCatalogue helgrindMultiprocess
+
 baretests:
 	MALLOC_CHECK_=3 /usr/bin/cta-unitTests | ts "bt: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
 	MALLOC_CHECK_=3 /usr/bin/cta-unitTests-multiProcess | ts "btmp: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
@@ -9,7 +9,15 @@ baretests:
 valgrind: valgrindMultiprocess helgrindMultiprocess baretests
 	valgrind -q @VALGRIND_OPTS_STR@                                               \
 	--suppressions=/usr/share/cta-@CTA_VERSION@/unittest/valgrind.suppr           \
-	/usr/bin/cta-unitTests 2>&1 | ts "vg: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
+	/usr/bin/cta-unitTests                                                        \
+	--gtest_filter="-OSMTapeFileTest.*" 2>&1 | ts "vg: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
+
+valgrindOsmTape: valgrindMultiprocess helgrindMultiprocess baretests
+	valgrind -q @VALGRIND_OPTS_STR@                                               \
+	--show-mismatched-frees=no                                                    \
+	--suppressions=/usr/share/cta-@CTA_VERSION@/unittest/valgrind.suppr           \
+  /usr/bin/cta-unitTests                                                        \
+	--gtest_filter="OSMTapeFileTest.*" 2>&1 | ts "vgot: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
 
 valgrindMultiprocess: baretests
 	valgrind -q @VALGRIND_OPTS_STR@ --child-silent-after-fork=yes                 \
