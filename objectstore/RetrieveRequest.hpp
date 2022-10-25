@@ -173,9 +173,7 @@ public:
       rrri.set_repack_request_address(repackRequestAddress);
       rrri.set_fseq(fSeq);
       rrri.set_force_disabled_tape(false); // TODO: To remove after REPACKING state is fully deployed
-      if(rrri.has_has_user_provided_file()){
-	rrri.set_has_user_provided_file(hasUserProvidedFile);
-      }
+      rrri.set_has_user_provided_file(hasUserProvidedFile);
     }
 
     void deserialize(const cta::objectstore::serializers::RetrieveRequestRepackInfo & rrri) {
@@ -186,7 +184,7 @@ public:
       repackRequestAddress = rrri.repack_request_address();
       fSeq = rrri.fseq();
       if(rrri.has_has_user_provided_file()){
-	hasUserProvidedFile = rrri.has_user_provided_file();
+        hasUserProvidedFile = rrri.has_user_provided_file();
       }
     }
   };

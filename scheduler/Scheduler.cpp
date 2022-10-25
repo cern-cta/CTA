@@ -1895,7 +1895,7 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
       m_catalogue.modifyTapeState(admin, vid, Tape::BROKEN_PENDING, prev_state, stateReason);
     } catch (catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive & ex) {
       throw catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(
-              std::regex_replace(ex.what(), std::regex(Tape::stateToString(Tape::BROKEN_PENDING)), Tape::stateToString(Tape::BROKEN)));
+              std::regex_replace(ex.getMessageValue(), std::regex(Tape::stateToString(Tape::BROKEN_PENDING)), Tape::stateToString(Tape::BROKEN)));
     }
     m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
     break;
@@ -1908,7 +1908,7 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
         m_catalogue.modifyTapeState(admin, vid, Tape::REPACKING_PENDING, prev_state, stateReason);
       } catch (catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive & ex) {
         throw catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(
-                std::regex_replace(ex.what(), std::regex(Tape::stateToString(Tape::REPACKING_PENDING)), Tape::stateToString(Tape::REPACKING)));
+                std::regex_replace(ex.getMessageValue(), std::regex(Tape::stateToString(Tape::REPACKING_PENDING)), Tape::stateToString(Tape::REPACKING)));
       }
       m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
     }
@@ -1918,7 +1918,7 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
       m_catalogue.modifyTapeState(admin, vid, Tape::EXPORTED_PENDING, prev_state, stateReason);
     } catch (catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive & ex) {
       throw catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(
-              std::regex_replace(ex.what(), std::regex(Tape::stateToString(Tape::EXPORTED_PENDING)), Tape::stateToString(Tape::EXPORTED)));
+              std::regex_replace(ex.getMessageValue(), std::regex(Tape::stateToString(Tape::EXPORTED_PENDING)), Tape::stateToString(Tape::EXPORTED)));
     }
     m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
     break;
