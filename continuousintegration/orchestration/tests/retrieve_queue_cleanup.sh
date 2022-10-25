@@ -262,13 +262,8 @@ test_tape_state_change_queue_removed() {
   
   echo "Requesting file prepare -s..."
   REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s ${FILE_PATH})
-  
+
   echo "Checking that the request was queued..."
-  
-  if test "1" != "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
-    echo "ERROR: Request non found on $TAPE_0 queue."
-    exit 1
-  fi
 
   QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID} ${FILE_PATH})
   PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").path_exists")
@@ -285,16 +280,16 @@ test_tape_state_change_queue_removed() {
     exit 1
   fi
 
+  if test "1" != "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
+    echo "ERROR: Request non found on $TAPE_0 queue."
+    exit 1
+  fi
+
   echo "Changing $TAPE_0 queue to ${STATE_END}..."
   
   change_tape_state $TAPE_0 $STATE_END
    
   echo "Checking that the request was canceled and the error reported to the user..."
-  
-  if test ! -z "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
-    echo "ERROR: Queue $TAPE_0 contains a user request, when none was expected."
-    exit 1
-  fi
   
   wait_for_request_cancel_report ${REQUEST_ID} ${FILE_PATH}
 
@@ -310,6 +305,11 @@ test_tape_state_change_queue_removed() {
     "\"\""  == "${ERROR_TEXT}" ]]
   then
     echo "ERROR: Request for ${FILE_PATH} not removed as expected: ${QUERY_RSP}"
+    exit 1
+  fi
+
+  if test ! -z "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
+    echo "ERROR: Queue $TAPE_0 contains a user request, when none was expected."
     exit 1
   fi
 
@@ -351,11 +351,6 @@ test_tape_state_change_queue_preserved() {
   REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} prepare -s ${FILE_PATH})
   
   echo "Checking that the request was queued..."
-  
-  if test "1" != "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
-    echo "ERROR: Request non found on $TAPE_0 queue."
-    exit 1
-  fi
 
   QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID} ${FILE_PATH})
   PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").path_exists")
@@ -372,16 +367,16 @@ test_tape_state_change_queue_preserved() {
     exit 1
   fi
 
+  if test "1" != "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
+    echo "ERROR: Request non found on $TAPE_0 queue."
+    exit 1
+  fi
+
   echo "Changing $TAPE_0 queue to ${STATE_END}..."
   
   change_tape_state $TAPE_0 $STATE_END
    
   echo "Checking that the request was not modified on the queue..."
-  
-  if test "1" != "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
-    echo "ERROR: Request not preserved on $TAPE_0 queue."
-    exit 1
-  fi
 
   # Wait for a bit, to take in account protocol latencies
   sleep 1 
@@ -398,6 +393,11 @@ test_tape_state_change_queue_preserved() {
     "\"\"" != "${ERROR_TEXT}" ]]
   then
     echo "ERROR: Request for ${FILE_PATH} not preserved as expected: ${QUERY_RSP}"
+    exit 1
+  fi
+
+  if test "1" != "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
+    echo "ERROR: Request not preserved on $TAPE_0 queue."
     exit 1
   fi
 
@@ -463,6 +463,21 @@ test_tape_state_change_queue_moved() {
   
   echo "Checking that the request was queued..."
 
+  QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID} ${FILE_PATH})
+  PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").path_exists")
+  REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").requested")
+  HAS_REQID=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").has_reqid")
+  ERROR_TEXT=$( echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").error_text")
+  if [[
+    "true" != "${PATH_EXISTS}" ||
+    "true" != "${REQUESTED}"   ||
+    "true" != "${HAS_REQID}"   ||
+    "\"\"" != "${ERROR_TEXT}" ]]
+  then
+    echo "ERROR: Request for ${FILE_PATH} not configured as expected: ${QUERY_RSP}"
+    exit 1
+  fi
+
   if test "0" == "${EXPECTED_QUEUE_START}"; then
     if test "1" != "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
       echo "ERROR: Request non found on $TAPE_0 queue."
@@ -481,21 +496,6 @@ test_tape_state_change_queue_moved() {
       echo "ERROR: Request non found on $TAPE_1 queue."
       exit 1
     fi
-  fi
-
-  QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_INSTANCE} query prepare ${REQUEST_ID} ${FILE_PATH})
-  PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").path_exists")
-  REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").requested")
-  HAS_REQID=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").has_reqid")
-  ERROR_TEXT=$( echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${FILE_PATH}\").error_text")
-  if [[
-    "true" != "${PATH_EXISTS}" ||
-    "true" != "${REQUESTED}"   ||
-    "true" != "${HAS_REQID}"   ||
-    "\"\"" != "${ERROR_TEXT}" ]]
-  then
-    echo "ERROR: Request for ${FILE_PATH} not configured as expected: ${QUERY_RSP}"
-    exit 1
   fi
 
   # Change tape states, starting by the tape without queue
@@ -541,15 +541,6 @@ test_tape_state_change_queue_moved() {
   else
 
     echo "Checking that the request queue ${TAPE_LIST_2[$EXPECTED_QUEUE_START]} was canceled and the error reported to the user..."
- 
-    if test ! -z "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
-      echo "ERROR: Queue $TAPE_0 contains a user request, when none was expected."
-      exit 1
-    fi
-    if test ! -z "$(admin_cta --json sq | jq -r --arg VID "$TAPE_1" '.[] | select(.vid == $VID) | .queuedFiles')"; then
-      echo "ERROR: Queue $TAPE_1 contains a user request, when none was expected."
-      exit 1
-    fi
   
     wait_for_request_cancel_report ${REQUEST_ID} ${FILE_PATH}
 
@@ -565,6 +556,15 @@ test_tape_state_change_queue_moved() {
       "\"\""  == "${ERROR_TEXT}" ]]
     then
       echo "ERROR: Request for ${FILE_PATH} not removed as expected: ${QUERY_RSP}"
+      exit 1
+    fi
+
+    if test ! -z "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
+      echo "ERROR: Queue $TAPE_0 contains a user request, when none was expected."
+      exit 1
+    fi
+    if test ! -z "$(admin_cta --json sq | jq -r --arg VID "$TAPE_1" '.[] | select(.vid == $VID) | .queuedFiles')"; then
+      echo "ERROR: Queue $TAPE_1 contains a user request, when none was expected."
       exit 1
     fi
 
