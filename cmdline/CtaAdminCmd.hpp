@@ -61,6 +61,9 @@ private:
    //! Return the request timeout value (to pass to the ServiceClientSide constructor)
    int GetRequestTimeout() const;
 
+   //! Returns user config path if specified, if not looks in $HOME/.cta, then in /etc/cta
+   const std::string getConfigFilePath() const;
+
    // Member variables
 
    const std::string StreamBufferSize      = "1024";                  //!< Buffer size for Data/Stream Responses
@@ -76,6 +79,8 @@ private:
    
    static std::atomic<bool> is_json;                                  //!< Display results in JSON format
    static std::atomic<bool> is_first_record;                          //!< Delimiter for JSON records
+
+   std::optional<std::string> m_config;                                 //!< User defined config file
 
    static constexpr const char* const LOG_SUFFIX  = "CtaAdminCmd";    //!< Identifier for log messages
 };

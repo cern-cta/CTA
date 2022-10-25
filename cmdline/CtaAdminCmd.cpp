@@ -15,6 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
+#include <filesystem>
 #include <sstream>
 #include <iostream>
 
@@ -33,8 +34,9 @@ std::atomic<bool> isHeaderSent(false);
 // initialise an output buffer of 1000 lines
 cta::admin::TextFormatter formattedText(1000);
 
-
+const std::filesystem::path DEFAULT_CLI_CONFIG = "/etc/cta/cta-cli.conf";
 std::string tp_config_file = "/etc/cta/TPCONFIG";
+
 
 namespace XrdSsiPb {
 
@@ -184,6 +186,8 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
 
    if(std::string(argv[argno]) == "--json") { is_json = true; ++argno; }
 
+   if(std::string(argv[argno]) == "--config") { m_config = argv[++argno]; ++argno; }
+
    // Commands, subcommands and server-side options
 
    if(argc <= argno || (cmd_it = cmdLookup.find(argv[argno++])) == cmdLookup.end()) {
@@ -226,7 +230,18 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
    parseOptions(has_subcommand ? argno+1 : argno, argc, argv, option_list_it->second);
 }
 
+const std::string CtaAdminCmd::getConfigFilePath() const {
+  std::filesystem::path config_file = DEFAULT_CLI_CONFIG;
+   
+  const std::filesystem::path home = std::getenv("HOME");
+  const std::filesystem::path home_dir_config_file = home / ".cta/cta-cli.conf";
+  if(std::filesystem::exists(home_dir_config_file)) { config_file = home_dir_config_file; }
 
+  if(m_config) {
+    config_file = m_config.value();
+  }
+  return config_file;
+}
 
 void CtaAdminCmd::send() const
 {
@@ -237,8 +252,9 @@ void CtaAdminCmd::send() const
       throwUsage(ex.what());
    }
 
+   const std::filesystem::path config_file = getConfigFilePath(); 
+
    // Set configuration options
-   const std::string config_file = "/etc/cta/cta-cli.conf";
    XrdSsiPb::Config config(config_file, "cta");
    config.set("resource", "/ctafrontend");
    config.set("response_bufsize", StreamBufferSize);         // default value = 1024 bytes
@@ -256,7 +272,7 @@ void CtaAdminCmd::send() const
 
    // Validate that endpoint was specified in the config file
    if(!config.getOptionValueStr("endpoint").first) {
-      throw std::runtime_error("Configuration error: cta.endpoint missing from " + config_file);
+      throw std::runtime_error("Configuration error: cta.endpoint missing from " + config_file.string());
    }
 
    // If the server is down, we want an immediate failure. Set client retry to a single attempt.
@@ -504,7 +520,7 @@ void CtaAdminCmd::throwUsage(const std::string &error_txt) const
    {
       // Command has not been set: show generic help
       help << "CTA Administration Tool" << std::endl << std::endl
-           << "Usage: " << m_execname << " [--json] <command> [<subcommand> [<option>...]]" << std::endl
+           << "Usage: " << m_execname << " [--json] [--config <configpath>] <command> [<subcommand> [<option>...]]" << std::endl
            << "       " << m_execname << " <command> help" << std::endl << std::endl
            << "By default, the output is in tabular format. If the --json option is supplied, the output is a JSON array." << std::endl
            << "Commands have a long and short version. Subcommands (add/ch/ls/rm/etc.) do not have short versions. For" << std::endl
