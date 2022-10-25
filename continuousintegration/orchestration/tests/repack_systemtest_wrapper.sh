@@ -56,7 +56,7 @@ removeRepackRequest() {
 
 modifyTapeState() {
   reason="${3:-Testing}"
-  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape ch --state $2 --reason $reason --vid $1
+  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape ch --state $2 --reason "$reason" --vid $1
 }
 
 modifyTapeStateAndWait() {
