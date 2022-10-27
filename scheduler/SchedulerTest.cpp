@@ -301,7 +301,7 @@ protected:
   const cta::common::dataStructures::SecurityIdentity s_adminOnAdminHost = { "admin1", "host1" };
   const std::string s_tapePoolName = "TapePool";
   const std::string s_libraryName = "TestLogicalLibrary";
-  const std::string s_vid = "TestVid";
+  const std::string s_vid = "TESTVID";
   const std::string s_mediaType = "TestMediaType";
   const std::string s_vendor = "TestVendor";
   const std::string s_mountPolicyName = "mount_group";
@@ -537,7 +537,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     auto mi=osdb.getMountInfo(lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
     ASSERT_EQ("TapePool", mi->existingOrNextMounts.front().tapePool);
-    ASSERT_EQ("TestVid", mi->existingOrNextMounts.front().vid);
+    ASSERT_EQ("TESTVID", mi->existingOrNextMounts.front().vid);
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
@@ -742,7 +742,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     auto mi=osdb.getMountInfo(lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
     ASSERT_EQ("TapePool", mi->existingOrNextMounts.front().tapePool);
-    ASSERT_EQ("TestVid", mi->existingOrNextMounts.front().vid);
+    ASSERT_EQ("TESTVID", mi->existingOrNextMounts.front().vid);
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
@@ -1040,7 +1040,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
 
-  const std::string copy1TapeVid = "copy_1_tape";
+  const std::string copy1TapeVid = "COPY_1_TAPE";
   {
     using namespace cta;
 
@@ -1115,7 +1115,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
   // Create the environment for the migration of copy 2 to happen (library +
   // tape)
   catalogue.setLogicalLibraryDisabled(s_adminOnAdminHost,s_libraryName,true);
-  const std::string copy2TapeVid = "copy_2_tape";
+  const std::string copy2TapeVid = "COPY_2_TAPE";
   {
     using namespace cta;
 
@@ -1387,7 +1387,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     auto mi=osdb.getMountInfo(lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
     ASSERT_EQ("TapePool", mi->existingOrNextMounts.front().tapePool);
-    ASSERT_EQ("TestVid", mi->existingOrNextMounts.front().vid);
+    ASSERT_EQ("TESTVID", mi->existingOrNextMounts.front().vid);
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
@@ -1637,7 +1637,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     auto mi=osdb.getMountInfo(lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
     ASSERT_EQ("TapePool", mi->existingOrNextMounts.front().tapePool);
-    ASSERT_EQ("TestVid", mi->existingOrNextMounts.front().vid);
+    ASSERT_EQ("TESTVID", mi->existingOrNextMounts.front().vid);
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
@@ -1986,7 +1986,7 @@ TEST_P(SchedulerTest, repack) {
   common::dataStructures::SecurityIdentity cliId;
   cliId.host = "host";
   cliId.username = s_userName;
-  std::string tape1 = "Tape";
+  std::string tape1 = "TAPE";
 
   {
     auto tape = getDefaultTape();
@@ -2016,7 +2016,7 @@ TEST_P(SchedulerTest, repack) {
   scheduler.cancelRepack(cliId, tape1, lc);
   ASSERT_EQ(0, scheduler.getRepacks().size());
   // Recreate a repack and get it moved to ToExpand
-  std::string tape2 = "Tape2";
+  std::string tape2 = "TAPE2";
   {
     auto tape = getDefaultTape();
     catalogue.createTape(s_adminOnAdminHost, tape);
@@ -2061,7 +2061,7 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
   common::dataStructures::SecurityIdentity cliId;
   cliId.host = "host";
   cliId.username = s_userName;
-  std::string tape1 = "Tape";
+  std::string tape1 = "TAPE";
   {
     auto tape = getDefaultTape();
     tape.vid = tape1;
@@ -2074,7 +2074,7 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
     common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
   scheduler.queueRepack(cliId, qrr, lc);
 
-  std::string tape2 = "Tape2";
+  std::string tape2 = "TAPE2";
 
   {
     auto tape = getDefaultTape();
@@ -2730,7 +2730,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   }
 
   //Create a repack destination tape
-  std::string vidDestination = "vidDestination";
+  std::string vidDestination = "VIDDESTINATION";
 
   {
     auto tape = getDefaultTape();
@@ -2987,7 +2987,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
   }
 
   //Create a repack destination tape
-  std::string vidDestinationRepack = "vidDestinationRepack";
+  std::string vidDestinationRepack = "VIDDESTINATIONREPACK";
   {
     auto tape = getDefaultTape();
     tape.vid = vidDestinationRepack;
@@ -3999,7 +3999,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
   catalogue.createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
 
   //Create the source tape
-  std::string vid = "vidSource";
+  std::string vid = "VIDSOURCE";
   {
     auto tape = getDefaultTape();
     tape.vid = vid;
@@ -4027,7 +4027,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
   catalogue.createArchiveRoute(admin,storageClass.name,3,tapepool3Name,"ArchiveRoute3");
 
   //Create two other destinationTape
-  std::string vidDestination1 = "vidDestination1";
+  std::string vidDestination1 = "VIDDESTINATION1";
   {
     auto tape = getDefaultTape();
     tape.vid = vidDestination1;
@@ -4035,7 +4035,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
-  std::string vidDestination2 = "vidDestination2";
+  std::string vidDestination2 = "VIDDESTINATION2";
   {
     auto tape = getDefaultTape();
     tape.vid = vidDestination2;
@@ -4249,7 +4249,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldFailIfArchiveRouteMissing) {
   catalogue.createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
 
   //Create the source tape
-  std::string vidCopyNb1 = "vidSource";
+  std::string vidCopyNb1 = "VIDSOURCE";
   {
     auto tape = getDefaultTape();
     tape.vid = vidCopyNb1;
@@ -4273,7 +4273,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldFailIfArchiveRouteMissing) {
   catalogue.createArchiveRoute(admin,storageClass.name,2,tapepool2Name,"ArchiveRoute3");
 
   //Create two other destinationTape
-  std::string vidCopyNb2_source = "vidCopyNb2-source";
+  std::string vidCopyNb2_source = "VIDCOPYNB2_SOURCE";
   {
     auto tape = getDefaultTape();
     tape.vid = vidCopyNb2_source;
@@ -4281,7 +4281,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldFailIfArchiveRouteMissing) {
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
-  std::string vidCopyNb2_destination = "vidCopyNb2-destination";
+  std::string vidCopyNb2_destination = "VIDCOPYNB2_DESTINATION";
   {
     auto tape = getDefaultTape();
     tape.vid = vidCopyNb2_destination;
@@ -4427,7 +4427,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
   catalogue.createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
 
   //Create the source tape
-  std::string vid = "vidSource";
+  std::string vid = "VIDSOURCE";
   {
     auto tape = getDefaultTape();
     tape.vid = vid;
@@ -4455,7 +4455,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
   catalogue.createArchiveRoute(admin,storageClass.name,3,tapepool3Name,"ArchiveRoute3");
 
   //Create two other destinationTape and one for the move workflow
-  std::string vidDestination1 = "vidDestination1";
+  std::string vidDestination1 = "VIDDESTINATION1";
   {
     auto tape = getDefaultTape();
     tape.vid = vidDestination1;
@@ -4463,7 +4463,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
-  std::string vidDestination2 = "vidDestination2";
+  std::string vidDestination2 = "VIDDESTINATION2";
   {
     auto tape = getDefaultTape();
     tape.vid = vidDestination2;
@@ -4472,7 +4472,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
-  std::string vidMove = "vidMove";
+  std::string vidMove = "VIDMOVE";
   {
     auto tape = getDefaultTape();
     tape.vid = vidMove;
@@ -4714,7 +4714,7 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
   //Create a repack destination tape
-  std::string vidDestination = "vidDestination";
+  std::string vidDestination = "VIDDESTINATION";
   {
     auto tape = getDefaultTape();
     tape.vid = vidDestination;
@@ -5728,8 +5728,8 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
   catalogue.createTape(s_adminOnAdminHost, tape1);
 
   //Two tapes for ArchiveForUser and ArchiveForRepack mounts
-  std::string vid2 = "vid_2";
-  std::string vid3 = "vid_3";
+  std::string vid2 = "VID_2";
+  std::string vid3 = "VID_3";
   auto tape2 = tape1;
   tape2.vid = vid2;
   catalogue.createTape(s_adminOnAdminHost, tape2);

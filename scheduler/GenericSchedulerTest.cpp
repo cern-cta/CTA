@@ -296,7 +296,7 @@ protected:
   const cta::common::dataStructures::SecurityIdentity s_adminOnAdminHost = { "admin1", "host1" };
   const std::string s_tapePoolName = "TapePool";
   const std::string s_libraryName = "TestLogicalLibrary";
-  const std::string s_vid = "TestVid";
+  const std::string s_vid = "TESTVID";
   const std::string s_mediaType = "TestMediaType";
   const std::string s_vendor = "TestVendor";
   const std::string s_mountPolicyName = "mount_group";
@@ -465,7 +465,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     auto mi=osdb.getMountInfo(lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
     ASSERT_EQ("TapePool", mi->existingOrNextMounts.front().tapePool);
-    ASSERT_EQ("TestVid", mi->existingOrNextMounts.front().vid);
+    ASSERT_EQ("TESTVID", mi->existingOrNextMounts.front().vid);
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
@@ -670,7 +670,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     auto mi=osdb.getMountInfo(lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
     ASSERT_EQ("TapePool", mi->existingOrNextMounts.front().tapePool);
-    ASSERT_EQ("TestVid", mi->existingOrNextMounts.front().vid);
+    ASSERT_EQ("TESTVID", mi->existingOrNextMounts.front().vid);
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
@@ -968,7 +968,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
 
-  const std::string copy1TapeVid = "copy_1_tape";
+  const std::string copy1TapeVid = "COPY_1_TAPE";
   {
     using namespace cta;
 
@@ -1043,7 +1043,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
   // Create the environment for the migration of copy 2 to happen (library +
   // tape)
   catalogue.setLogicalLibraryDisabled(s_adminOnAdminHost,s_libraryName,true);
-  const std::string copy2TapeVid = "copy_2_tape";
+  const std::string copy2TapeVid = "COPY_2_TAPE";
   {
     using namespace cta;
 
@@ -1315,7 +1315,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     auto mi=osdb.getMountInfo(lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
     ASSERT_EQ("TapePool", mi->existingOrNextMounts.front().tapePool);
-    ASSERT_EQ("TestVid", mi->existingOrNextMounts.front().vid);
+    ASSERT_EQ("TESTVID", mi->existingOrNextMounts.front().vid);
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
@@ -1546,7 +1546,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     auto mi=osdb.getMountInfo(lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
     ASSERT_EQ("TapePool", mi->existingOrNextMounts.front().tapePool);
-    ASSERT_EQ("TestVid", mi->existingOrNextMounts.front().vid);
+    ASSERT_EQ("TESTVID", mi->existingOrNextMounts.front().vid);
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
