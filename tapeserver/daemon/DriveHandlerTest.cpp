@@ -59,6 +59,8 @@ public:
   cta::log::LogContext m_lc;
   cta::tape::daemon::TpconfigLine m_driveConfig;
 
+  TempFile m_ctaConf, m_catalogueConfig, m_tpConfig;
+
   TapedConfiguration m_completeConfig;
 
   DriveHandlerTest() : m_dummyLog("dummy", "unitTest", cta::log::DEBUG), m_lc(m_dummyLog),
@@ -100,27 +102,18 @@ public:
     // TODO: fix the bug in SchemaCreatingSqliteCatalogue()
     m_catalogue.reset(nullptr);
 
-    char envXrdSecPROTOCOL[] = "XrdSecPROTOCOL=krb5";
-    char envKRB5CCNAME[] = "KRB5CCNAME=/tmp/cta/krb5cc_0";
-    char envXrdSecSSSKT[] = "XrdSecSSSKT=/var/tmp/cta-test-temporary-kt";
-
-    putenv(envXrdSecPROTOCOL);
-    putenv(envKRB5CCNAME);
-    putenv(envXrdSecSSSKT);
-
-    TempFile ctaConf, catalogueConfig, tpConfig;
-    catalogueConfig.stringFill("in_memory");
-    ctaConf.stringFill("ObjectStore BackendPath ");
+    m_catalogueConfig.stringFill("in_memory");
+    m_ctaConf.stringFill("ObjectStore BackendPath ");
     std::unique_ptr<cta::objectstore::Backend::Parameters> params(getSchedulerDB().getBackend().getParams());
-    ctaConf.stringAppend(params->toURL());
-    ctaConf.stringAppend("\n"
+    m_ctaConf.stringAppend(params->toURL());
+    m_ctaConf.stringAppend("\n"
                          "taped CatalogueConfigFile ");
-    ctaConf.stringAppend(catalogueConfig.path());
-    ctaConf.stringAppend("\n"
+    m_ctaConf.stringAppend(m_catalogueConfig.path());
+    m_ctaConf.stringAppend("\n"
                          "taped BufferCount 1\n"
                          "taped TpConfigPath ");
-    ctaConf.stringAppend(tpConfig.path());
-    m_completeConfig = cta::tape::daemon::TapedConfiguration::createFromCtaConf(ctaConf.path());
+    m_ctaConf.stringAppend(m_tpConfig.path());
+    m_completeConfig = cta::tape::daemon::TapedConfiguration::createFromCtaConf(m_ctaConf.path());
   }
 
   void TearDown() override {
@@ -218,6 +211,15 @@ private:
   std::string m_vid;
 };
 
+char envXrdSecPROTOCOL[] = "XrdSecPROTOCOL=krb5";
+char envKRB5CCNAME[] = "KRB5CCNAME=/tmp/cta/krb5cc_0";
+char envXrdSecSSSKT[] = "XrdSecSSSKT=/var/tmp/cta-test-temporary-kt";
+
+void setEnvVars() {
+  putenv(envXrdSecPROTOCOL);
+  putenv(envKRB5CCNAME);
+  putenv(envXrdSecSSSKT);
+}
 
 TEST_P(DriveHandlerTest, TriggerCleanerSessionAtTheEndOfSession) {
   // Create the process manager and drive handler
@@ -244,6 +246,7 @@ TEST_P(DriveHandlerTest, TriggerCleanerSessionAtTheEndOfSession) {
   }
 
   // Run the process manager that should exit after Fatal state
+  setEnvVars();
   processManager.run();
   reporter.waitThreads();
 
