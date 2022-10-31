@@ -18,6 +18,8 @@
 #pragma once
 
 #include "catalogue/Catalogue.hpp"
+#include "catalogue/CatalogueItor.hpp"
+#include "common/checksum/ChecksumBlobSerDeser.hpp"
 #include "common/dataStructures/FileRecycleLog.hpp"
 
 namespace cta { namespace xrd {

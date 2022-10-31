@@ -1,7 +1,6 @@
 # v4.NEXT
-### Features 
+### Features
 - cta/CTA#16 - Add option for a user config file
-
 ## Summary
 ### Features
 - cta/CTA#23 - Change Owner Identifier String and System Code of Creating System values in tape labels
@@ -15,6 +14,7 @@
 - cta/CTA#48 - Catch tape server exception and log an error instead
 - cta/CTA#123 - Change some tape server errors into warnings
 - cta/CTA#161 - Fix bug when using temporary tables with PostgreSQL
+- cta/CTA#197 - Include order in XrdSsiCtaRequestMessage.cpp
 
 # v4.7.12-1
 

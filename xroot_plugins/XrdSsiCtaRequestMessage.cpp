@@ -20,7 +20,6 @@
 #include <string>
 
 #include <XrdSsiPbException.hpp>
-using XrdSsiPb::PbException;
 
 #include "catalogue/CreateMountPolicyAttributes.hpp"
 #include "catalogue/CreateTapeAttributes.hpp"
@@ -28,29 +27,30 @@ using XrdSsiPb::PbException;
 #include "common/dataStructures/LogicalLibrary.hpp"
 #include "common/dataStructures/RequesterActivityMountRule.hpp"
 #include "common/utils/Regex.hpp"
-#include "XrdCtaActivityMountRuleLs.hpp"
-#include "XrdCtaAdminLs.hpp"
-#include "XrdCtaArchiveRouteLs.hpp"
-#include "XrdCtaDriveLs.hpp"
-#include "XrdCtaFailedRequestLs.hpp"
-#include "XrdCtaGroupMountRuleLs.hpp"
-#include "XrdCtaLogicalLibraryLs.hpp"
-#include "XrdCtaMediaTypeLs.hpp"
-#include "XrdCtaMountPolicyLs.hpp"
-#include "XrdCtaRepackLs.hpp"
-#include "XrdSsiCtaRequestMessage.hpp"
-#include "XrdCtaRequesterMountRuleLs.hpp"
-#include "XrdCtaShowQueues.hpp"
-#include "XrdCtaDiskInstanceLs.hpp"
-#include "XrdCtaDiskSystemLs.hpp"
-#include "XrdCtaStorageClassLs.hpp"
-#include "XrdCtaTapeFileLs.hpp"
-#include "XrdCtaTapeLs.hpp"
-#include "XrdCtaTapePoolLs.hpp"
-#include "XrdCtaDiskInstanceSpaceLs.hpp"
-#include "XrdCtaRecycleTapeFileLs.hpp"
-#include "XrdCtaVersion.hpp"
-#include "XrdCtaVirtualOrganizationLs.hpp"
+
+#include "xroot_plugins/XrdCtaActivityMountRuleLs.hpp"
+#include "xroot_plugins/XrdCtaAdminLs.hpp"
+#include "xroot_plugins/XrdCtaArchiveRouteLs.hpp"
+#include "xroot_plugins/XrdCtaDiskInstanceLs.hpp"
+#include "xroot_plugins/XrdCtaDiskInstanceSpaceLs.hpp"
+#include "xroot_plugins/XrdCtaDiskSystemLs.hpp"
+#include "xroot_plugins/XrdCtaDriveLs.hpp"
+#include "xroot_plugins/XrdCtaFailedRequestLs.hpp"
+#include "xroot_plugins/XrdCtaGroupMountRuleLs.hpp"
+#include "xroot_plugins/XrdCtaLogicalLibraryLs.hpp"
+#include "xroot_plugins/XrdCtaMediaTypeLs.hpp"
+#include "xroot_plugins/XrdCtaMountPolicyLs.hpp"
+#include "xroot_plugins/XrdCtaRecycleTapeFileLs.hpp"
+#include "xroot_plugins/XrdCtaRepackLs.hpp"
+#include "xroot_plugins/XrdCtaRequesterMountRuleLs.hpp"
+#include "xroot_plugins/XrdCtaShowQueues.hpp"
+#include "xroot_plugins/XrdCtaStorageClassLs.hpp"
+#include "xroot_plugins/XrdCtaTapeFileLs.hpp"
+#include "xroot_plugins/XrdCtaTapeLs.hpp"
+#include "xroot_plugins/XrdCtaTapePoolLs.hpp"
+#include "xroot_plugins/XrdCtaVersion.hpp"
+#include "xroot_plugins/XrdCtaVirtualOrganizationLs.hpp"
+#include "xroot_plugins/XrdSsiCtaRequestMessage.hpp"
 
 namespace cta {
 namespace xrd {
@@ -325,7 +325,7 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                   break;
 
                default:
-                  throw PbException("Admin command pair <" +
+                  throw XrdSsiPb::PbException("Admin command pair <" +
                         AdminCmd_Cmd_Name(request.admincmd().cmd()) + ", " +
                         AdminCmd_SubCmd_Name(request.admincmd().subcmd()) +
                         "> is not implemented.");
@@ -333,7 +333,7 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
             
             // Log the admin command
             logAdminCmd(__FUNCTION__, "success", "", request.admincmd(), t);
-         } catch(PbException &ex) {
+         } catch(XrdSsiPb::PbException &ex) {
             logAdminCmd(__FUNCTION__, "failure", ex.what(), request.admincmd(), t);
             throw ex;
          } catch(cta::exception::UserError &ex) {
@@ -376,7 +376,7 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                m_scheduler.authorizeAdmin(m_cliIdentity, m_lc);
                m_cliIdentity.username = request.notification().wf().instance().name();
             } else {
-               throw PbException("Instance name \"" + request.notification().wf().instance().name() +
+               throw XrdSsiPb::PbException("Instance name \"" + request.notification().wf().instance().name() +
                                  "\" does not match key identifier \"" + m_cliIdentity.username + "\"");
             }
          }
@@ -390,7 +390,7 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
            if(shortInstanceName.empty()) {
              std::ostringstream msg;
              msg << "Short instance name is an empty string: instance=" << longInstanceName;
-             throw PbException(msg.str());
+             throw XrdSsiPb::PbException(msg.str());
            }
            const std::string procFullPath = std::string("/eos/") + shortInstanceName + "/proc/";
            if(request.notification().file().lpath().find(procFullPath) == 0) {
@@ -398,7 +398,7 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
              msg << "Cannot process a workflow event for a file in " << procFullPath << " instance=" << longInstanceName
                << " event=" << Workflow_EventType_Name(request.notification().wf().event()) << " lpath=" <<
                request.notification().file().lpath();
-             throw PbException(msg.str());
+             throw XrdSsiPb::PbException(msg.str());
            }
          }
 
@@ -429,17 +429,17 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                break;
 
             default:
-               throw PbException("Workflow event " +
+               throw XrdSsiPb::PbException("Workflow event " +
                      Workflow_EventType_Name(request.notification().wf().event()) +
                      " is not implemented.");
          }
          break;
 
       case Request::REQUEST_NOT_SET:
-         throw PbException("Request message has not been set.");
+         throw XrdSsiPb::PbException("Request message has not been set.");
 
       default:
-         throw PbException("Unrecognized Request message. "
+         throw XrdSsiPb::PbException("Unrecognized Request message. "
                            "Possible Protocol Buffer version mismatch between client and server.");
    }
 }
@@ -478,12 +478,12 @@ void RequestMessage::processCREATE(const cta::eos::Notification &notification, c
      // Fall back to old xattr format
      storageClassItor = notification.file().xattr().find("CTA_StorageClass");
      if(notification.file().xattr().end() == storageClassItor) {
-       throw PbException(std::string(__FUNCTION__) + ": sys.archive.storage_class extended attribute is not set");
+       throw XrdSsiPb::PbException(std::string(__FUNCTION__) + ": sys.archive.storage_class extended attribute is not set");
      }
    }
    const std::string storageClass = storageClassItor->second;
    if(storageClass.empty()) {
-     throw PbException(std::string(__FUNCTION__) + ": sys.archive.storage_class extended attribute is set to an empty string");
+     throw XrdSsiPb::PbException(std::string(__FUNCTION__) + ": sys.archive.storage_class extended attribute is set to an empty string");
    }
 
    cta::utils::Timer t;
@@ -528,7 +528,7 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    // Unpack message
    const auto storageClassItor = notification.file().xattr().find("sys.archive.storage_class");
    if(notification.file().xattr().end() == storageClassItor) {
-     throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.storage_class");
+     throw XrdSsiPb::PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.storage_class");
    }
 
    // For testing: this storage class will always fail
@@ -571,7 +571,7 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
    if(notification.file().xattr().end() == archiveFileIdItor) {
      logMessage += "sys.archive.file_id is not present in extended attributes";
      m_lc.log(cta::log::INFO, logMessage);
-     throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
+     throw XrdSsiPb::PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
    }
    const std::string archiveFileIdStr = archiveFileIdItor->second;
    uint64_t archiveFileId = 0;
@@ -580,7 +580,7 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
       params.add("sys.archive.file_id", archiveFileIdStr);
       logMessage += "sys.archive.file_id is not a positive integer";
       m_lc.log(cta::log::INFO, logMessage);
-      throw PbException("Invalid archiveFileID " + archiveFileIdStr);
+      throw XrdSsiPb::PbException("Invalid archiveFileID " + archiveFileIdStr);
    }
    params.add("fileId", archiveFileId);
 
@@ -644,13 +644,13 @@ void RequestMessage::processPREPARE(const cta::eos::Notification &notification, 
      // Fall back to the old xattr format
      archiveFileIdItor = notification.file().xattr().find("CTA_ArchiveFileId");
      if(notification.file().xattr().end() == archiveFileIdItor) {
-       throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
+       throw XrdSsiPb::PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
      }
    }
    const std::string archiveFileIdStr = archiveFileIdItor->second;
    if((request.archiveFileID = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0)
    {
-      throw PbException("Invalid archiveFileID " + archiveFileIdStr);
+      throw XrdSsiPb::PbException("Invalid archiveFileID " + archiveFileIdStr);
    }
 
    // Activity value is a string. The parameter might be present or not.
@@ -699,19 +699,19 @@ void RequestMessage::processABORT_PREPARE(const cta::eos::Notification &notifica
      // Fall back to the old xattr format
      archiveFileIdItor = notification.file().xattr().find("CTA_ArchiveFileId");
      if(notification.file().xattr().end() == archiveFileIdItor) {
-       throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
+       throw XrdSsiPb::PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
      }
    }
    const std::string archiveFileIdStr = archiveFileIdItor->second;
    if((request.archiveFileID = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0)
    {
-      throw PbException("Invalid archiveFileID " + archiveFileIdStr);
+      throw XrdSsiPb::PbException("Invalid archiveFileID " + archiveFileIdStr);
    }
 
    // The request Id should be stored as an extended attribute
    const auto retrieveRequestIdItor = notification.file().xattr().find("sys.cta.objectstore.id");
    if(notification.file().xattr().end() == retrieveRequestIdItor) {
-     throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.cta.objectstore.id");
+     throw XrdSsiPb::PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.cta.objectstore.id");
    }
    const std::string retrieveRequestId = retrieveRequestIdItor->second;
    request.retrieveRequestId = retrieveRequestId;
@@ -760,13 +760,13 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
      // Fall back to the old xattr format
      archiveFileIdItor = notification.file().xattr().find("CTA_ArchiveFileId");
      if(notification.file().xattr().end() == archiveFileIdItor) {
-       throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
+       throw XrdSsiPb::PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
      }
    }
    const std::string archiveFileIdStr = archiveFileIdItor->second;
    if((request.archiveFileID = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0)
    {
-      throw PbException("Invalid archiveFileID " + archiveFileIdStr);
+      throw XrdSsiPb::PbException("Invalid archiveFileID " + archiveFileIdStr);
    }
 
    auto archiveRequestAddrItor = notification.file().xattr().find("sys.cta.archive.objectstore.id");
@@ -822,13 +822,13 @@ void RequestMessage::processUPDATE_FID(const cta::eos::Notification &notificatio
      // Fall back to the old xattr format
      archiveFileIdItor = notification.file().xattr().find("CTA_ArchiveFileId");
      if(notification.file().xattr().end() == archiveFileIdItor) {
-       throw PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
+       throw XrdSsiPb::PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
      }
    }
    const std::string archiveFileIdStr = archiveFileIdItor->second;
    const uint64_t archiveFileId = strtoul(archiveFileIdStr.c_str(), nullptr, 10);
    if(0 == archiveFileId) {
-      throw PbException("Invalid archiveFileID " + archiveFileIdStr);
+      throw XrdSsiPb::PbException("Invalid archiveFileID " + archiveFileIdStr);
    }
 
    // Update the disk file ID
