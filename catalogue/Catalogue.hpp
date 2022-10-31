@@ -1406,7 +1406,16 @@ public:
    * If the amount released exceeds the current reservation, the reservation will be reduced to zero.
    */
   virtual void releaseDiskSpace(const std::string& driveName, const uint64_t mountId, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) = 0;
-};  // class Catalogue
 
-}  // namespace catalogue
-}  // namespace cta
+  /**
+  * Changes the name of hte storage class
+  * @param archiveFileId Id for file found in ARCHIVE_FILE
+  * @param newStorageClassName The name of the storage class
+  */
+  virtual void modifyArchiveFileStorageClassId(const uint64_t archiveFileId, const std::string& newStorageClassName) const = 0;
+
+}; // class Catalogue
+
+} // namespace catalogue
+} // namespace cta
+

@@ -36,6 +36,8 @@ public:
   ::eos::rpc::InsertReply containerInsert(const ::eos::rpc::ContainerMdProto &container) const;
   void getCurrentIds(uint64_t &cid, uint64_t &fid) const;
   ::eos::rpc::MDResponse getMD(::eos::rpc::TYPE type, uint64_t id, const std::string &path, bool showJson) const;
+  using QueryStatus = int;
+  [[nodiscard]] QueryStatus setXAttr(const std::string &path, const std::string &attrKey, const std::string &attrValue) const;
 
 private:
   std::unique_ptr<::eos::client::GrpcClient> m_grpcClient;
@@ -94,6 +96,16 @@ public:
       throw cta::exception::UserError("Namespace for disk instance \"" + diskInstance + "\" is not configured in the CTA Frontend");
     } else {
       return ep_it->second.getMD(type, id, path, showJson);
+    }
+  }
+
+  using QueryStatus = int;
+  [[nodiscard]] QueryStatus setXAttr(const std::string &diskInstance, const std::string &path, const std::string &attrKey, const std::string &attrValue) const {
+    auto ep_it = m_endpointMap.find(diskInstance);
+    if(ep_it == m_endpointMap.end()) {
+      throw cta::exception::UserError("Namespace for disk instance \"" + diskInstance + "\" is not configured in the CTA Frontend");
+    } else {
+      return ep_it->second.setXAttr(path, attrKey, attrValue);
     }
   }
 

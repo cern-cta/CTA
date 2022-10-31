@@ -61,3 +61,14 @@ void eos::client::Endpoint::getCurrentIds(uint64_t &cid, uint64_t &fid) const {
 eos::rpc::MDResponse eos::client::Endpoint::getMD(eos::rpc::TYPE type, uint64_t id, const std::string &path, bool showJson) const {
   return m_grpcClient->GetMD(type, id, path, showJson);
 }
+
+int eos::client::Endpoint::setXAttr(const std::string &path, const std::string &attrKey, const std::string &attrValue) const {
+  eos::rpc::NSRequest request;
+  eos::rpc::NSResponse reply;
+
+  request.mutable_xattr()->mutable_id()->set_path(path);
+  (*(request.mutable_xattr()->mutable_xattrs()))[attrKey] = attrValue;
+
+  return m_grpcClient->Exec(request, reply);
+}
+

@@ -1447,6 +1447,39 @@ void RdbmsCatalogue::modifyStorageClassName(const common::dataStructures::Securi
   }
 }
 
+// -----------------------------------------------------------------------------
+// modifyArchiveFileStorageClassId
+// -----------------------------------------------------------------------------
+void RdbmsCatalogue::modifyArchiveFileStorageClassId(const uint64_t archiveFileId, const std::string& newStorageClassName) const {
+  try {
+    auto conn = m_connPool.getConn();
+    if(!storageClassExists(conn, newStorageClassName)) {
+      exception::UserError ue;
+      ue.getMessage() << "Cannot modify archive file " << ": " << archiveFileId << " because storage class "
+      << ":" << newStorageClassName << " does not exist";
+      throw ue;
+    }
+
+    const char *const sql =
+    "UPDATE ARCHIVE_FILE   "
+    "SET STORAGE_CLASS_ID = ("
+      "SELECT STORAGE_CLASS_ID FROM STORAGE_CLASS WHERE STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME "
+    ") "
+    "WHERE "
+      "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
+
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":STORAGE_CLASS_NAME", newStorageClassName);
+    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+    auto rset = stmt.executeQuery();
+
+  } catch(exception::UserError &ue) {
+      throw ue;
+  } catch(exception::Exception &ex) {
+      ex.getMessage().str(std::string(__FUNCTION__) + ": " +  ex.getMessage().str());
+  }
+}
+
 //------------------------------------------------------------------------------
 // createMediaType
 //------------------------------------------------------------------------------

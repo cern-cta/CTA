@@ -200,6 +200,7 @@ public:
   void updateDiskFileId(uint64_t archiveFileId, const std::string &diskInstance, const std::string &diskFileId) override;
   void moveArchiveFileToRecycleLog(const common::dataStructures::DeleteArchiveRequest &request,
   log::LogContext & lc) override;
+  void modifyArchiveFileStorageClassId(const uint64_t archiveFileId, const std::string &newStorageClassName) const override;
 
   common::dataStructures::VidToTapeMap getTapesByVid(const std::string& vid) const override;
 

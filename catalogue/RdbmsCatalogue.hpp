@@ -1267,6 +1267,12 @@ protected:
   bool archiveFileIdExists(rdbms::Conn &conn, const uint64_t archiveFileId) const;
 
   /**
+  * @param newStorageClassName The name of the storage class
+  * @param archiveFileId Id for file found in ARCHIVE_FILE
+  */
+  void modifyArchiveFileStorageClassId(const uint64_t archiveFileId, const std::string& newStorageClassName) const override;
+  
+/**
    * Returns true if the specified disk file identifier exists.
    *
    * @param conn The database connection.

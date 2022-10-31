@@ -31,6 +31,7 @@
 #include "xroot_plugins/XrdCtaActivityMountRuleLs.hpp"
 #include "xroot_plugins/XrdCtaAdminLs.hpp"
 #include "xroot_plugins/XrdCtaArchiveRouteLs.hpp"
+#include "xroot_plugins/XrdCtaChangeStorageClass.hpp"
 #include "xroot_plugins/XrdCtaDiskInstanceLs.hpp"
 #include "xroot_plugins/XrdCtaDiskInstanceSpaceLs.hpp"
 #include "xroot_plugins/XrdCtaDiskSystemLs.hpp"
@@ -322,6 +323,9 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                   break;
                case cmd_pair(AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_RESTORE):
                   processRecycleTapeFile_Restore(response);
+                  break;
+               case cmd_pair(AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_CH):
+                  processChangeStorageClass(response);
                   break;
 
                default:
@@ -2530,6 +2534,22 @@ void RequestMessage::processRecycleTapeFile_Restore(cta::xrd::Response& response
   }
   m_catalogue.restoreFileInRecycleLog(searchCriteria, std::to_string(fid));
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+void RequestMessage::processChangeStorageClass(cta::xrd::Response& response) {
+   try {
+      using namespace cta::admin;
+
+      std::string newStorageClassName = getRequired(OptionString::STORAGE_CLASS_NAME);
+      auto archiveFileIds = getRequired(OptionStrList::FILE_ID);
+
+      XrdCtaChangeStorageClass xrdCtaChangeStorageClass(m_catalogue, m_lc);
+      xrdCtaChangeStorageClass.updateCatalogue(archiveFileIds, newStorageClassName);
+      response.set_type(cta::xrd::Response::RSP_SUCCESS);
+   } catch(exception::UserError &ue) {
+      response.set_message_txt(ue.getMessage().str());
+      response.set_type(Response::RSP_ERR_USER);
+   }
 }
 
 }} // namespace cta::xrd

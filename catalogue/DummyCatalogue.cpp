@@ -197,6 +197,7 @@ bool DummyCatalogue::tapePoolExists(const std::string& tapePoolName) const { thr
 void DummyCatalogue::updateDiskFileId(uint64_t archiveFileId, const std::string &diskInstance, const std::string &diskFileId) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
 void DummyCatalogue::moveArchiveFileToRecycleLog(const common::dataStructures::DeleteArchiveRequest &request,
   log::LogContext & lc) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
+void DummyCatalogue::modifyArchiveFileStorageClassId(const uint64_t archiveFileId, const std::string &newStorageClassName) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
 
 // Special functions for unit tests.
 void DummyCatalogue::addEnabledTape(const std::string & vid) {

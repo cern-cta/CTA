@@ -71,7 +71,7 @@ TapeLabelCmdLineArgs::TapeLabelCmdLineArgs(const int argc, char *const *const ar
         throw ex;
       } else {
         m_oldLabel = std::string(optarg);
-	      utils::toUpper(m_oldLabel);
+              utils::toUpper(m_oldLabel);
       }
       break;
     case 't':

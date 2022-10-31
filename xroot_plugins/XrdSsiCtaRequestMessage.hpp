@@ -223,6 +223,7 @@ private:
   void processVirtualOrganization_Ch(cta::xrd::Response &response);
   void processVirtualOrganization_Rm(cta::xrd::Response &response);
   void processRecycleTapeFile_Restore(cta::xrd::Response &response);
+  void processChangeStorageClass    (cta::xrd::Response &response);
   
   /*!
    * Process AdminCmd events which can return a stream response

@@ -174,7 +174,7 @@ private:
   /**
    * Archive file id of the files to restore
    */
-  std::optional<uint64_t> m_archiveFileId;
+  std::optional<std::string> m_archiveFileId;
 
   /**
    * Disk instance of the files to restore
@@ -184,7 +184,7 @@ private:
   /**
    * Fids of the files to restore
    */
-  std::optional<std::list<uint64_t>> m_eosFids;
+  std::optional<std::list<std::string>> m_archiveFileIds;
 
   /**
    * Vid of the tape of the files to restore

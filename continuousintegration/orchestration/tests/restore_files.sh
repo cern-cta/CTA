@@ -53,7 +53,6 @@ echo
 echo "ADD FRONTEND GATEWAY TO EOS"
 echo "kubectl -n ${NAMESPACE} exec ctaeos -- bash eos root://${EOSINSTANCE} -r 0 0 vid add gateway ${FRONTEND_IP} grpc"
 kubectl -n ${NAMESPACE} exec ctaeos -- eos -r 0 0 vid add gateway ${FRONTEND_IP} grpc
-eos vid set map -grpc key:<your key aks any uuid string> vuid:2 vgid:2
 
 echo 
 echo "eos vid ls"
@@ -64,7 +63,7 @@ echo "Launching restore_files_client.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 kubectl -n ${NAMESPACE} cp common/archive_file.sh client:/root/archive_file.sh
 kubectl -n ${NAMESPACE} cp client_helper.sh client:/root/client_helper.sh
-kubectl -n ${NAMESPACE} exec client -- bash /root/archive_file.sh -n ${TEST_FILE_NAME} || exit 1
+kubectl -n ${NAMESPACE} exec client -- bash /root/archive_file.sh -f ${TEST_FILE_NAME} || exit 1
 
 echo
 METADATA_FILE_PATH=$(mktemp -d).json

@@ -344,6 +344,7 @@ const std::map<std::string, OptionString::Key> strOptions = {
    { "--diskinstancespace",     OptionString::DISK_INSTANCE_SPACE },
    { "--verificationstatus",    OptionString::VERIFICATION_STATUS },
    { "--disabledreason",        OptionString::DISABLED_REASON }, 
+   { "--storage.class.name",    OptionString::STORAGE_CLASS_NAME }
 };
 
 
@@ -353,7 +354,8 @@ const std::map<std::string, OptionString::Key> strOptions = {
  */
 const std::map<std::string, OptionStrList::Key> strListOptions = {
    { "--fxidfile",              OptionStrList::FILE_ID },
-   { "--vidfile",               OptionStrList::VID }
+   { "--vidfile",               OptionStrList::VID },
+   { "--id",                   OptionStrList::FILE_ID }
 };
 
 
@@ -554,6 +556,9 @@ const Option opt_diskinstancespace_alias { Option::OPT_STR,  "--name",          
 const Option opt_verificationstatus   { Option::OPT_STR,  "--verificationstatus",     "--vs",   " <verification_status>" };
 const Option opt_disabledreason       { Option::OPT_STR,  "--disabledreason",       "--dr",   " <disabled_reason>" };
 
+const Option opt_storage_class_name   { Option::OPT_STR,  "--storage.class.name",    "-n",   " <storage_class_name>" };
+const Option opt_archive_file_ids     { Option::OPT_STR_LIST,  "--id",               "-I",   " <archive_file_id>" };
+
 /*!
  * Map valid options to commands
  */
@@ -703,6 +708,9 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
       { opt_instance, opt_username_alias, opt_activityregex, opt_mountpolicy.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_ACTIVITYMOUNTRULE,   AdminCmd::SUBCMD_RM    }, { opt_instance, opt_username_alias, opt_activityregex }},
    {{ AdminCmd::CMD_ACTIVITYMOUNTRULE,   AdminCmd::SUBCMD_LS    }, { }},
+   /*----------------------------------------------------------------------------------------------------*/
+   {{ AdminCmd::CMD_ARCHIVEFILE,   AdminCmd::SUBCMD_CH   },
+      { opt_storage_class_name, opt_archive_file_ids }},
 };
 
 
@@ -711,6 +719,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
  * Validate that all required command line options are present
  *
  * Throws a std::runtime_error if the command is invalid
+ * This function is used on the server side
  */
 void validateCmd(const cta::admin::AdminCmd &admincmd);
 }} // namespace cta::admin

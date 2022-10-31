@@ -35,7 +35,7 @@ static struct option restoreFilesLongOption[] = {
   {"id", required_argument, nullptr, 'I'},
   {"instance", required_argument, nullptr, 'i'},
   {"fxid", required_argument, nullptr, 'f'},
-  {"fxidfile", required_argument, nullptr, 'F'},
+  {"filename", required_argument, nullptr, 'F'},
   {"vid", required_argument, nullptr, 'v'},
   {"copynb", required_argument, nullptr, 'c'},
   {"help", no_argument, nullptr, 'h'},
@@ -61,16 +61,27 @@ static struct option verifyFileLongOption[] = {
   {nullptr, 0, nullptr, 0}
 };
 
+static struct option changeStorageClassLongOption[] = {
+  {"id", required_argument, nullptr, 'I'},
+  {"filename", required_argument, nullptr, 'F'},
+  {"storage.class.name", required_argument, nullptr, 'n'},
+  {"frequenzy", required_argument, nullptr, 't'},
+  {"help", no_argument, nullptr, 'h'},
+  {nullptr, 0, nullptr, 0}
+};
+
 std::map<StandaloneCliTool, const option*> longopts = {
   {StandaloneCliTool::RESTORE_FILES, restoreFilesLongOption},
   {StandaloneCliTool::CTA_SEND_EVENT, sendFileLongOption},
   {StandaloneCliTool::CTA_VERIFY_FILE, verifyFileLongOption},
+  {StandaloneCliTool::CTA_CHANGE_STORAGE_CLASS, changeStorageClassLongOption},
 };
 
 std::map<StandaloneCliTool, const char*> shortopts = {
   {StandaloneCliTool::RESTORE_FILES, "I:i:f:F:v:c:hd:"},
   {StandaloneCliTool::CTA_SEND_EVENT, "i:e:u:g:"},
   {StandaloneCliTool::CTA_VERIFY_FILE, "I:i:u:g:v:h:"},
+  {StandaloneCliTool::CTA_CHANGE_STORAGE_CLASS, "I:F:n:t:h:"},
 };
 
 //------------------------------------------------------------------------------
@@ -85,51 +96,11 @@ m_help(false), m_debug(false), m_standaloneCliTool{standaloneCliTool} {
 
   while ((opt = getopt_long(argc, argv, shortopts[m_standaloneCliTool], longopts[m_standaloneCliTool], &opt_index)) != -1) {
     switch(opt) {
-    case 'I':
-      {
-        m_archiveFileId = std::stol(std::string(optarg));
-        break;
-      }
-    case 'i':
-      {
-        m_diskInstance = std::string(optarg);
-        break;
-      }
-    case 'f':
-      {
-        if (! m_eosFids) {
-          m_eosFids = std::list<uint64_t>();
-        }
-        auto fid = strtoul(optarg, nullptr, 16);
-        if(fid < 1) {
-          throw std::runtime_error(std::string(optarg) + " is not a valid file ID");
-        }
-        m_eosFids->push_back(fid);
-        break;
-      }
-    case 'F':
-      {
-        if (! m_eosFids) {
-          m_eosFids = std::list<uint64_t>();
-        }
-        readFidListFromFile(std::string(optarg), m_eosFids.value());
-        break;
-      }
-    case 'v':
-      {
-        m_vid = std::string(optarg);
-        break;
-      }
     case 'c':
       {
         int64_t copyNumber = std::stol(std::string(optarg));
         if(copyNumber < 0) throw std::out_of_range("copy number value cannot be negative");
         m_copyNumber = copyNumber;
-        break;
-      }
-    case 'h':
-      {
-        m_help = true;
         break;
       }
     case 'd':
@@ -142,14 +113,57 @@ m_help(false), m_debug(false), m_standaloneCliTool{standaloneCliTool} {
         m_eosEndpoint = std::string(optarg);
         break;
       }
-    case 'u':
+    case 'f':
       {
-        m_requestUser = std::string(optarg);
+        if (! m_fxIds) {
+          m_fxIds = std::list<std::string>();
+        }
+        m_fxIds->push_back(optarg);
+        break;
+      }
+    case 'F':
+      {
+        readIdListFromFile(std::string(optarg));
         break;
       }
     case 'g':
       {
         m_requestGroup = std::string(optarg);
+        break;
+      }
+    case 'h':
+      {
+        m_help = true;
+        break;
+      }
+    case 'I':
+      {
+        m_archiveFileId = std::string(optarg);
+        break;
+      }
+    case 'i':
+      {
+        m_diskInstance = std::string(optarg);
+        break;
+      }
+    case 'n':
+      {
+        m_storageClassName = std::string(optarg);
+        break;
+      }
+    case 't':
+      {
+        m_frequency = std::stol(std::string(optarg));
+        break;
+      }
+    case 'u':
+      {
+        m_requestUser = std::string(optarg);
+        break;
+      }
+    case 'v':
+      {
+        m_vid = std::string(optarg);
         break;
       }
     case ':': // Missing parameter
@@ -162,7 +176,7 @@ m_help(false), m_debug(false), m_standaloneCliTool{standaloneCliTool} {
       {
         exception::CommandLineNotParsed ex;
         if(0 == optopt) {
-          ex.getMessage() << "Unknown command-line option";
+          ex.getMessage() << "Unknown command-line option" << std::endl;
         } else {
           ex.getMessage() << "Unknown command-line option: -" << static_cast<char>(optopt) << std::endl;
         }
@@ -184,7 +198,7 @@ m_help(false), m_debug(false), m_standaloneCliTool{standaloneCliTool} {
 //------------------------------------------------------------------------------
 // readFidListFromFile
 //------------------------------------------------------------------------------
-void CmdLineArgs::readFidListFromFile(const std::string &filename, std::list<std::uint64_t> &fidList) {
+void CmdLineArgs::readIdListFromFile(const std::string &filename) {
   std::ifstream file(filename);
   if (file.fail()) {
     throw std::runtime_error("Unable to open file " + filename);
@@ -192,35 +206,23 @@ void CmdLineArgs::readFidListFromFile(const std::string &filename, std::list<std
 
   std::string line;
 
-  while(std::getline(file, line)) {
-    // Strip out comments
-    auto pos = line.find('#');
-    if(pos != std::string::npos) {
-      line.resize(pos);
-    }
-
-    // Extract the list items
-    std::stringstream ss(line);
-    while(!ss.eof()) {
-      std::string item;
-      ss >> item;
-      // skip blank lines or lines consisting only of whitespace
-      if(item.empty()) continue;
-
-      // Special handling for file id lists. The output from "eos find --fid <fid> /path" is:
-      //   path=/path fid=<fid>
-      // We discard everything except the list of fids. <fid> is a zero-padded hexadecimal number,
-      // but in the CTA catalogue we store disk IDs as a decimal string, so we need to convert it.
-      if(item.substr(0, 4) == "fid=") {
-        auto fid = strtol(item.substr(4).c_str(), nullptr, 16);
-        if(fid < 1 || fid == LONG_MAX) {
-          throw std::runtime_error(item + " is not a valid file ID");
+  while(file >> line) {
+    switch (m_standaloneCliTool) {
+      case StandaloneCliTool::RESTORE_FILES:
+        m_archiveFileIds.value().push_back(line);
+        break;
+      case StandaloneCliTool::CTA_VERIFY_FILE:
+        m_fxIds.value().push_back(line);
+        break;
+      case StandaloneCliTool::CTA_CHANGE_STORAGE_CLASS:
+        if (!m_archiveFileIds) {
+          m_archiveFileIds = std::list<std::string>();
         }
-        fidList.push_back(fid);
-      } else {
-        continue;
+        m_archiveFileIds.value().push_back(line);
+        break;
+      default:
+        break;
       }
-    }
   }
 }
 
@@ -229,21 +231,25 @@ void CmdLineArgs::readFidListFromFile(const std::string &filename, std::list<std
 //------------------------------------------------------------------------------
 void CmdLineArgs::printUsage(std::ostream &os) const {
   switch (m_standaloneCliTool) {
-  case StandaloneCliTool::RESTORE_FILES: 
+  case StandaloneCliTool::RESTORE_FILES:
     os << "   Usage:" << std::endl <<
     "      cta-restore-deleted-files [--id/-I <archive_file_id>] [--instance/-i <disk_instance>]" << std::endl <<
     "                                [--fxid/-f <eos_fxid>] [--fxidfile/-F <filename>]" << std::endl <<
-    "                                [--vid/-v <vid>] [--copynb/-c <copy_number>] [--debug/-d]" << std::endl; 
+    "                                [--vid/-v <vid>] [--copynb/-c <copy_number>] [--debug/-d]" << std::endl;
     break;
   case StandaloneCliTool::CTA_SEND_EVENT:
     os << "    Usage:" << std::endl <<
     "    eos --json fileinfo /eos/path | cta-send-event CLOSEW|PREPARE " << std::endl <<
-    "                        -i/--eos.instance <instance> [-e/--eos.endpoint <url>]" << std::endl << 
+    "                        -i/--eos.instance <instance> [-e/--eos.endpoint <url>]" << std::endl <<
     "                        -u/--request.user <user> -g/--request.group <group>" << std::endl;
     break;
   case StandaloneCliTool::CTA_VERIFY_FILE :
     os << "    Usage:" << std::endl <<
-    "    cta-verify-file --id/-I <archiveFileID> --vid/-v <vid> [--instance/-i <instance>] [--request.user/-u <user>] [request.group/-g <group>]\n" << std::endl;
+    "    cta-verify-file --id/-I <archiveFileID> --vid/-v <vid> [--instance/-i <instance>] [--request.user/-u <user>] [request.group/-g <group>]" << std::endl;
+    break;
+  case StandaloneCliTool::CTA_CHANGE_STORAGE_CLASS :
+    os << "    Usage:" << std::endl <<
+    "    cta-change-storage-class --id/-I <archiveFileID> | --filename/-F <filename> --storage.class.name/-n <storageClassName> [--frequenzy/-t <eosRequestFrequency>]" << std::endl;
     break;
   default:
     break;

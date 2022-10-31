@@ -81,7 +81,7 @@ void fillNotification(cta::eos::Notification &notification, const int argc, char
     notification.mutable_cli()->mutable_user()->set_groupname(cmdLineArgs.m_requestGroup.value());
   }  
 
-  const std::string archiveFileId(std::to_string(cmdLineArgs.m_archiveFileId.value()));
+  const std::string archiveFileId(cmdLineArgs.m_archiveFileId.value());
 
   // WF
   notification.mutable_wf()->set_event(cta::eos::Workflow::PREPARE);

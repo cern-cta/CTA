@@ -763,5 +763,10 @@ void CatalogueRetryWrapper::releaseDiskSpace(const std::string& driveName, const
   return retryOnLostConnection(m_log, [&]{return m_catalogue->releaseDiskSpace(driveName, mountId, diskSpaceReservation, lc);}, m_maxTriesToConnect);
 }
 
+void CatalogueRetryWrapper::modifyArchiveFileStorageClassId(const uint64_t archiveFileId, const std::string& newStorageClassName) const {
+  return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyArchiveFileStorageClassId(archiveFileId, newStorageClassName);}, m_maxTriesToConnect);
+}
+
+
 }  // namespace catalogue
 }  // namespace cta

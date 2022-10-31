@@ -23,9 +23,9 @@ EOF
 exit 1
 }
 
-while getopts "n:" o; do
+while getopts "f:" o; do
   case "${o}" in
-    n)
+    f)
       TEST_FILE_NAME=${OPTARG}
       ;;
     *)

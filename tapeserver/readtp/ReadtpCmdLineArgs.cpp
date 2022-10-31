@@ -47,7 +47,7 @@ ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char *const *const argv):
   }
   m_vid = std::string(argv[1]);
   utils::toUpper(m_vid);
-
+  
   m_fSeqRangeList = TapeFileSequenceParser::parse(argv[2]);
   
   static struct option longopts[] = {

@@ -17,6 +17,7 @@
 
 #include "cmdline/standalone_cli_tools/common/CmdLineTool.hpp"
 #include "common/exception/CommandLineNotParsed.hpp"
+#include "common/exception/UserError.hpp"
 
 #include <iostream>
 #include <string>
@@ -80,6 +81,8 @@ int CmdLineTool::main(const int argc, char *const *const argv) {
     return exceptionThrowingMain(argc, argv);
   } catch(exception::CommandLineNotParsed &ue) {
     errorMessage = ue.getMessage().str();
+  } catch(exception::UserError &ue) {
+    errorMessage = ue.getMessage().str();
   } catch(exception::Exception &ex) {
     errorMessage = ex.getMessage().str();
   } catch(std::exception &se) {
@@ -87,7 +90,7 @@ int CmdLineTool::main(const int argc, char *const *const argv) {
   } catch(...) {
     errorMessage = "An unknown exception was thrown";
   }
-  
+
   std::cout << errorMessage << std::endl;
   return 1;
 }

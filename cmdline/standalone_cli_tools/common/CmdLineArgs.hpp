@@ -32,7 +32,8 @@ namespace cliTool {
 enum class StandaloneCliTool {
   RESTORE_FILES,
   CTA_SEND_EVENT,
-  CTA_VERIFY_FILE
+  CTA_VERIFY_FILE,
+  CTA_CHANGE_STORAGE_CLASS
 };
 
 /**
@@ -53,7 +54,12 @@ struct CmdLineArgs {
   /**
    * Archive file id of the files to restore
    */
-  std::optional<uint64_t> m_archiveFileId;
+  std::optional<std::string> m_archiveFileId;
+
+  /**
+   * Archive file id of the files to restore
+   */
+  std::optional<std::list<std::string>> m_archiveFileIds;
 
   /**
    * Disk instance of the files to restore
@@ -61,14 +67,9 @@ struct CmdLineArgs {
   std::optional<std::string> m_diskInstance;
 
   /**
-   * Fids of the files to restore
+   * Fxids of the files to restore
    */
-  std::optional<std::list<uint64_t>> m_eosFids;
-
-    /**
-   * Fids of the files to restore
-   */
-  std::optional<std::string> m_eosInstance;
+  std::optional<std::list<std::string>> m_fxIds;
 
   /**
    * Vid of the tape of the files to restore
@@ -81,24 +82,34 @@ struct CmdLineArgs {
   std::optional<uint64_t> m_copyNumber;
 
   /**
-   * Eos endpoint 
+   * Eos endpoint
    */
   std::optional<std::string> m_eosEndpoint;
 
   /**
    * Request user
-   */ 
+   */
   std::optional<std::string> m_requestUser;
 
   /**
    * Request user
-   */ 
+   */
   std::optional<std::string> m_requestGroup;
 
   /**
    * The tool parsing the arguments
-   */ 
+   */
   StandaloneCliTool m_standaloneCliTool;
+
+  /**
+   * The tool parsing the arguments
+   */
+  std::optional<std::string> m_storageClassName;
+
+  /**
+   * Frequency
+   */
+  std::optional<uint64_t> m_frequency;
 
   /**
    * Constructor that parses the specified command-line arguments.
@@ -116,7 +127,7 @@ struct CmdLineArgs {
    * @param filename The name of the file to read
    * @param fidList The list of file IDs
    */
-   void readFidListFromFile(const std::string &filename, std::list<uint64_t> &fidList);
+   void readIdListFromFile(const std::string &filename);
 
   /**
    * Prints the usage message of the command-line tool.

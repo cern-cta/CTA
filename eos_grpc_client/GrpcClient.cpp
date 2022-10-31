@@ -263,4 +263,30 @@ eos::rpc::MDResponse GrpcClient::GetMD(eos::rpc::TYPE type, uint64_t id, const s
   return response;
 }
 
+using QueryStatus = int;
+QueryStatus GrpcClient::Exec(eos::rpc::NSRequest& request, eos::rpc::NSResponse& reply) const {
+
+  request.set_authkey(token());
+
+  grpc::ClientContext context;
+  grpc::CompletionQueue cq;
+  grpc::Status status;
+  std::unique_ptr<grpc::ClientAsyncResponseReader<eos::rpc::NSResponse> > rpc(
+    stub_->AsyncExec(&context, request, &cq));
+  rpc->Finish(&reply, &status, (void*) 1);
+
+  void* got_tag;
+  bool ok = false;
+  GPR_ASSERT(cq.Next(&got_tag, &ok));
+  GPR_ASSERT(got_tag == (void*) 1);
+  GPR_ASSERT(ok);
+
+  // Act upon the status of the actual RPC.
+  if (status.ok()) {
+    return reply.error().code();
+  } else {
+    return -1;
+  }
+}
+
 }} // namespace eos::client
