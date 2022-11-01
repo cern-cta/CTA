@@ -7,6 +7,7 @@
 - cta/CTA#78 - Tool to update the storage class
 - cta/CTA#153 - Allow verification status to be cleared with cta-admin
 - cta/CTA#173 - Update release notes and small changes to refactoring of operation tools cmd line parsing - Compatible with operations 0.4-95 or later
+- cta/CTA#180 - Allow to submit multiple files for verification
 ### Continuous Integration
 - cta/CTA#118 - Add unit tests for OSM label
 - cta/CTA#191 - Block merge until cta_valgrind success

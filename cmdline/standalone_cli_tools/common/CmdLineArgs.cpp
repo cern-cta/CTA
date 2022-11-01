@@ -53,6 +53,7 @@ static struct option sendFileLongOption[] = {
 
 static struct option verifyFileLongOption[] = {
   {"id", required_argument, nullptr, 'I'},
+  {"filename", required_argument, nullptr, 'F'},
   {"instance", required_argument, nullptr, 'i'},
   {"request.user", required_argument, nullptr, 'u'},
   {"request.group", required_argument, nullptr, 'g'},
@@ -80,7 +81,7 @@ std::map<StandaloneCliTool, const option*> longopts = {
 std::map<StandaloneCliTool, const char*> shortopts = {
   {StandaloneCliTool::RESTORE_FILES, "I:i:f:F:v:c:hd:"},
   {StandaloneCliTool::CTA_SEND_EVENT, "i:e:u:g:"},
-  {StandaloneCliTool::CTA_VERIFY_FILE, "I:i:u:g:v:h:"},
+  {StandaloneCliTool::CTA_VERIFY_FILE, "I:F:i:u:g:v:h:"},
   {StandaloneCliTool::CTA_CHANGE_STORAGE_CLASS, "I:F:n:t:h:"},
 };
 
@@ -212,7 +213,10 @@ void CmdLineArgs::readIdListFromFile(const std::string &filename) {
         m_archiveFileIds.value().push_back(line);
         break;
       case StandaloneCliTool::CTA_VERIFY_FILE:
-        m_fxIds.value().push_back(line);
+        if (!m_archiveFileIds) {
+          m_archiveFileIds = std::list<std::string>();
+        }
+        m_archiveFileIds.value().push_back(line);
         break;
       case StandaloneCliTool::CTA_CHANGE_STORAGE_CLASS:
         if (!m_archiveFileIds) {
@@ -245,7 +249,16 @@ void CmdLineArgs::printUsage(std::ostream &os) const {
     break;
   case StandaloneCliTool::CTA_VERIFY_FILE :
     os << "    Usage:" << std::endl <<
-    "    cta-verify-file --id/-I <archiveFileID> --vid/-v <vid> [--instance/-i <instance>] [--request.user/-u <user>] [request.group/-g <group>]" << std::endl;
+    "    cta-verify-file --id/-I <archiveFileID,archiveFileID,...,archiveFileID> | --filename/-F <filename> " << std::endl <<
+    "                            --vid/-v <vid>" << std::endl <<
+    "                            [--instance/-i <instance>]" << std::endl <<
+    "                            [--request.user/-u <user>]" << std::endl <<
+    "                            [request.group/-g <group>]" << std::endl << std::endl <<
+    "                            If a filename is used to provide archive file ids, it should be following the format:" << std::endl << std::endl <<
+    "                            <archiveFileId_1>" << std::endl <<
+    "                            <archiveFileId_2>" << std::endl <<
+    "                            ..." << std::endl <<
+    "                            <archiveFileId_n>" << std::endl;
     break;
   case StandaloneCliTool::CTA_CHANGE_STORAGE_CLASS :
     os << "    Usage:" << std::endl <<

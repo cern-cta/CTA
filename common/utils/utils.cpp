@@ -998,5 +998,21 @@ std::string getEnv(const std::string& variableName){
   return std::string(envVarC);
 }
 
+std::vector<std::string> commaSeparatedStringToVector(const std::string &commaSeparated) {
+  std::string str = commaSeparated;
+  std::vector<std::string> result;
+  // Remove white spaces
+  str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+
+  // Separate the string by ,
+  std::istringstream ss(str);
+  while(ss.good()) {
+      std::string substr;
+      std::getline(ss, substr, ',' );
+      result.push_back( substr );
+  }
+  return result;
+}
+
 } // namespace utils
 } // namespace cta

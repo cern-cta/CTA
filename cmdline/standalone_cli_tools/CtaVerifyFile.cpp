@@ -19,9 +19,10 @@
 #include <iostream>
 #include <map>
 
+#include "common/CmdLineArgs.hpp"
+#include "common/utils/utils.hpp"
 #include "CtaFrontendApi.hpp"
 #include "version.h"
-#include "common/CmdLineArgs.hpp"
 
 using namespace cta::cliTool;
 
@@ -49,11 +50,10 @@ typedef std::map<std::string, std::string> AttrMap;
  * Fill a Notification message from the command-line parameters and stdin
  *
  * @param[out]   notification    The protobuf to fill
- * @param[in]    argc            Number of arguments passed on the command line
- * @param[in]    argv            Command line arguments array
+ * @param[in]    cmdLineArgs     Command line arguments
+ * @param[in]    archiveFileId   Archive file id to verify
  */
-void fillNotification(cta::eos::Notification &notification, const int argc, char *const *const argv, const CmdLineArgs &cmdLineArgs)
-{   
+void fillNotification(cta::eos::Notification &notification, const CmdLineArgs &cmdLineArgs, const std::string &archiveFileId) {
   XrdSsiPb::Config config(config_file, "eos");
   for (const auto &conf_option : std::vector<std::string>({ "instance", "requester.user", "requester.group" })) {
     if (!config.getOptionValueStr(conf_option).first) {
@@ -63,25 +63,16 @@ void fillNotification(cta::eos::Notification &notification, const int argc, char
   notification.mutable_wf()->mutable_instance()->set_name(config.getOptionValueStr("instance").second);
   notification.mutable_cli()->mutable_user()->set_username(config.getOptionValueStr("requester.user").second);
   notification.mutable_cli()->mutable_user()->set_groupname(config.getOptionValueStr("requester.group").second);
-  
-  if(cmdLineArgs.m_help) { cmdLineArgs.printUsage(std::cout); exit(0); }
-
-  if(!cmdLineArgs.m_archiveFileId || !cmdLineArgs.m_vid) { 
-    cmdLineArgs.printUsage(std::cout);
-    throw std::runtime_error("ERROR: Usage");
-  }
 
   if (cmdLineArgs.m_diskInstance) {
     notification.mutable_wf()->mutable_instance()->set_name(cmdLineArgs.m_diskInstance.value());
   }
   if (cmdLineArgs.m_requestUser) {
-    notification.mutable_cli()->mutable_user()->set_username(cmdLineArgs.m_requestUser.value());  
+    notification.mutable_cli()->mutable_user()->set_username(cmdLineArgs.m_requestUser.value());
   }
   if (cmdLineArgs.m_requestGroup) {
     notification.mutable_cli()->mutable_user()->set_groupname(cmdLineArgs.m_requestGroup.value());
-  }  
-
-  const std::string archiveFileId(cmdLineArgs.m_archiveFileId.value());
+  }
 
   // WF
   notification.mutable_wf()->set_event(cta::eos::Workflow::PREPARE);
@@ -89,7 +80,7 @@ void fillNotification(cta::eos::Notification &notification, const int argc, char
   notification.mutable_wf()->set_verify_only(true);
   notification.mutable_wf()->set_vid(cmdLineArgs.m_vid.value());
 
-  
+
   // Transport
   notification.mutable_transport()->set_dst_url("file://dummy");
 
@@ -106,17 +97,8 @@ void fillNotification(cta::eos::Notification &notification, const int argc, char
   }
 }
 
-
-/*
- * Sends a Notification to the CTA XRootD SSI server
- */
-int exceptionThrowingMain(int argc, char *const *const argv)
-{
-  using namespace cta::cliTool;
-
+void sendVerifyRequest(const CmdLineArgs &cmdLineArgs, const std::string &archiveFileId) {
   std::string vid;
-
-  cta::cliTool::CmdLineArgs cmdLineArgs(argc, argv, StandaloneCliTool::CTA_VERIFY_FILE);
 
   // Verify that the Google Protocol Buffer header and linked library versions are compatible
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -143,7 +125,7 @@ int exceptionThrowingMain(int argc, char *const *const argv)
   config.getEnv("log", "XrdSsiPbLogLevel");
 
   // Parse the command line arguments: fill the Notification fields
-  fillNotification(notification, argc, argv, cmdLineArgs);
+  fillNotification(notification, cmdLineArgs, archiveFileId);
 
   // Obtain a Service Provider
   XrdSsiPbServiceType cta_service(config);
@@ -166,6 +148,42 @@ int exceptionThrowingMain(int argc, char *const *const argv)
 
   // Delete all global objects allocated by libprotobuf
   google::protobuf::ShutdownProtobufLibrary();
+}
+
+/*
+ * Sends a Notification to the CTA XRootD SSI server
+ */
+int exceptionThrowingMain(int argc, char *const *const argv)
+{
+  using namespace cta::cliTool;
+
+  cta::cliTool::CmdLineArgs cmdLineArgs(argc, argv, StandaloneCliTool::CTA_VERIFY_FILE);
+
+  if(cmdLineArgs.m_help) { cmdLineArgs.printUsage(std::cout); exit(0); }
+
+  std::vector<std::string> archiveFileIds;
+
+  if((!cmdLineArgs.m_archiveFileId && !cmdLineArgs.m_archiveFileIds) || !cmdLineArgs.m_vid) {
+    cmdLineArgs.printUsage(std::cout);
+    throw std::runtime_error("Error: Usage");
+  }
+
+  if(cmdLineArgs.m_archiveFileId) {
+    const std::vector<std::string> ids = cta::utils::commaSeparatedStringToVector(cmdLineArgs.m_archiveFileId.value());
+    for (const auto &id : ids) {
+      archiveFileIds.push_back(id);
+    }
+  }
+
+  if(cmdLineArgs.m_archiveFileIds) {
+    for (const auto &id : cmdLineArgs.m_archiveFileIds.value()) {
+      archiveFileIds.push_back(id);
+    }
+  }
+
+  for(const auto &archiveFileId : archiveFileIds) {
+    sendVerifyRequest(cmdLineArgs, archiveFileId);
+  }
 
   return 0;
 }

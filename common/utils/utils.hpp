@@ -479,6 +479,13 @@ namespace utils {
    */
   std::string getEnv(const std::string & variableName);
 
+   /**
+   * Transorms a comma separated list to a vector
+   * @param commaSeparated the string hat will be transformed to a vector
+   * @return the transformed vecor
+   */
+  std::vector<std::string> commaSeparatedStringToVector(const std::string &commaSeparated);
+
 } // namespace utils
 
 } // namespace cta
