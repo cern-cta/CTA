@@ -16,6 +16,7 @@
 - cta/CTA#123 - Change some tape server errors into warnings
 - cta/CTA#161 - Fix bug when using temporary tables with PostgreSQL
 - cta/CTA#197 - Include order in XrdSsiCtaRequestMessage.cpp
+- cta/CTA#80 - Fix tape thread complete success/failure message parameter
 
 # v4.7.12-1
 

@@ -419,7 +419,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
     // The session completed successfully, and the cleaner (unmount) executed
     // at the end of the previous block. Log the results.
     cta::log::ScopedParamContainer params(m_logContext);
-    params.add("status", "success");
+    params.add("status", m_watchdog.errorHappened() ? "error" : "success");
     m_stats.totalTime = totalTimer.secs();
     logWithStat(cta::log::INFO, "Tape thread complete", params);
     // Report one last time the stats, after unloading/unmounting.
