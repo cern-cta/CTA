@@ -123,12 +123,21 @@ public:
   }
 };
 
+
+class MockDriveHandler: public DriveHandler {
+public:
+  MockDriveHandler(const TapedConfiguration& tapedConfig, const TpconfigLine& configline, ProcessManager& pm)
+    : DriveHandler(tapedConfig, configline, pm) {}
+
+  cta::server::SocketPair &getSocketPair() { return *m_socketPair; };
+};
+
 /**
  * Class that mimics the tape session reporter to change the data session states
  */
 class DummyTapeSessionReporter : cta::threading::Thread {
 public:
-  explicit DummyTapeSessionReporter(cta::tape::daemon::DriveHandler& handler) : m_handler(handler) {}
+  explicit DummyTapeSessionReporter(MockDriveHandler& handler) : m_handler(handler) {}
 
   void reportState(cta::tape::session::SessionState state) {
     m_fifo.push(new Report(state));
@@ -202,7 +211,7 @@ private:
   /**
    * Drive handler that listens for our state change messages
    */
-  cta::tape::daemon::DriveHandler& m_handler;
+  MockDriveHandler& m_handler;
 
   /**
    * Tape VID will be passed to the tape session reporter at specific point of time.
@@ -225,13 +234,12 @@ TEST_P(DriveHandlerTest, TriggerCleanerSessionAtTheEndOfSession) {
   // Create the process manager and drive handler
   cta::tape::daemon::ProcessManager processManager(m_lc);
 
-  std::unique_ptr<cta::tape::daemon::DriveHandler> driveHandler(
-    new cta::tape::daemon::DriveHandler(m_completeConfig, m_driveConfig, processManager));
+  std::unique_ptr<MockDriveHandler> driveHandler(new MockDriveHandler(m_completeConfig, m_driveConfig, processManager));
 
   processManager.addHandler(std::move(driveHandler));
 
   // Get back the drive handler and let the reporter send messages
-  DriveHandler& handler = dynamic_cast<DriveHandler&>(processManager.at("drive:T10D6116"));
+  MockDriveHandler& handler = dynamic_cast<MockDriveHandler&>(processManager.at("drive:T10D6116"));
   DummyTapeSessionReporter reporter(handler);
 
   // Imitate intercommunication
