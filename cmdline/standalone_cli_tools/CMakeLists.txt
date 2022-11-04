@@ -42,7 +42,7 @@ set_property(TARGET cta-send-event APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPA
 # verify-file <archiveFileId> <vid>
 # recalls a file from tape without writing a disk copy
 #
-add_executable(cta-verify-file CtaVerifyFile.cpp common/CmdLineArgs.cpp)
+add_executable(cta-verify-file CtaVerifyFile.cpp common/CmdLineArgs.cpp common/CatalogueFetch.cpp)
 target_link_libraries(cta-verify-file ctacommon XrdSsiPbEosCta XrdSsiLib XrdUtils)
 set_property (TARGET cta-verify-file APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 

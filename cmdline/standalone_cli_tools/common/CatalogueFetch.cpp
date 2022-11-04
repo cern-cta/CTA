@@ -38,6 +38,7 @@ std::atomic<bool> isHeaderSent = false;
 std::list<cta::admin::RecycleTapeFileLsItem> deletedTapeFiles;
 std::list<std::pair<std::string,std::string>> listedTapeFiles;
 std::list<std::string> g_storageClasses;
+std::list<std::string> g_listedVids;
 
 namespace XrdSsiPb {
 
@@ -49,7 +50,7 @@ namespace XrdSsiPb {
 template<>
 void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
 {
-   Log::DumpProtobuf(Log::PROTOBUF, &alert);
+  Log::DumpProtobuf(Log::PROTOBUF, &alert);
 }
 
 /*!
@@ -86,6 +87,12 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
         g_storageClasses.push_back(item.name());
       }
       break;
+    case Data::kTalsItem:
+      {
+        const auto item = record.tals_item();
+        g_listedVids.push_back(item.vid());
+      }
+      break;
     default:
       throw std::runtime_error("Received invalid stream data from CTA Frontend for the cta-restore-deleted-files command.");
    }
@@ -96,13 +103,6 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
 namespace cta {
 namespace cliTool {
 
-  /**
-   * Fetches the instance and fid from the CTA catalogue
-   *
-   * @param archiveFileId The arhive file id.
-   * @param serviceProviderPtr Service provider for communication with the catalogue.
-   * @return a pair with the instance and the fid.
-   */
 std::tuple<std::string,std::string> CatalogueFetch::getInstanceAndFid(const std::string& archiveFileId, std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr, cta::log::StdoutLogger &log) {
   {
     std::list<cta::log::Param> params;
@@ -135,6 +135,24 @@ std::tuple<std::string,std::string> CatalogueFetch::getInstanceAndFid(const std:
     log(cta::log::DEBUG, "Obtained file metadata from CTA", params);
   }
   return listedTapeFile;
+}
+
+std::list<std::string> CatalogueFetch::getVids(std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr, cta::log::StdoutLogger &log) {
+  cta::xrd::Request request;
+  auto admincmd = request.mutable_admincmd();
+
+  request.set_client_cta_version(CTA_VERSION);
+  request.set_client_xrootd_ssi_protobuf_interface_version(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
+  admincmd->set_cmd(cta::admin::AdminCmd::CMD_TAPE);
+  admincmd->set_subcmd(cta::admin::AdminCmd::SUBCMD_LS);
+
+  auto new_opt = admincmd->add_option_bool();
+  new_opt->set_key(cta::admin::OptionBoolean::ALL);
+  new_opt->set_value(true);
+
+  handleResponse(request, serviceProviderPtr);
+
+  return g_listedVids;
 }
 
 void CatalogueFetch::handleResponse(const cta::xrd::Request &request, std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr) {

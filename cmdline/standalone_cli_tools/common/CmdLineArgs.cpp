@@ -21,6 +21,7 @@
 #include <climits>
 #include <fstream>
 #include <getopt.h>
+#include <iostream>
 #include <map>
 #include <string>
 
@@ -175,18 +176,18 @@ m_help(false), m_debug(false), m_standaloneCliTool{standaloneCliTool} {
       }
     case '?': // Unknown option
       {
-        exception::CommandLineNotParsed ex;
+        exception::CommandLineNotParsed ex("", false);
         if(0 == optopt) {
           ex.getMessage() << "Unknown command-line option" << std::endl;
         } else {
           ex.getMessage() << "Unknown command-line option: -" << static_cast<char>(optopt) << std::endl;
         }
-        printUsage(ex.getMessage());
+        printUsage(std::cout);
         throw ex;
       }
     default:
       {
-        exception::CommandLineNotParsed ex;
+        exception::CommandLineNotParsed ex("", false);
         ex.getMessage() <<
         "getopt_long returned the following unknown value: 0x" <<
         std::hex << static_cast<int>(optopt);
@@ -239,30 +240,23 @@ void CmdLineArgs::printUsage(std::ostream &os) const {
     os << "   Usage:" << std::endl <<
     "      cta-restore-deleted-files [--id/-I <archive_file_id>] [--instance/-i <disk_instance>]" << std::endl <<
     "                                [--fxid/-f <eos_fxid>] [--fxidfile/-F <filename>]" << std::endl <<
-    "                                [--vid/-v <vid>] [--copynb/-c <copy_number>] [--debug/-d]" << std::endl;
+    "                                [--vid/-v <vid>] [--copynb/-c <copy_number>] [--debug/-d]" << std::endl << std::endl;
     break;
   case StandaloneCliTool::CTA_SEND_EVENT:
     os << "    Usage:" << std::endl <<
     "    eos --json fileinfo /eos/path | cta-send-event CLOSEW|PREPARE " << std::endl <<
     "                        -i/--eos.instance <instance> [-e/--eos.endpoint <url>]" << std::endl <<
-    "                        -u/--request.user <user> -g/--request.group <group>" << std::endl;
+    "                        -u/--request.user <user> -g/--request.group <group>" << std::endl << std::endl;
     break;
   case StandaloneCliTool::CTA_VERIFY_FILE :
-    os << "    Usage:" << std::endl <<
-    "    cta-verify-file --id/-I <archiveFileID,archiveFileID,...,archiveFileID> | --filename/-F <filename> " << std::endl <<
-    "                            --vid/-v <vid>" << std::endl <<
-    "                            [--instance/-i <instance>]" << std::endl <<
-    "                            [--request.user/-u <user>]" << std::endl <<
-    "                            [request.group/-g <group>]" << std::endl << std::endl <<
-    "                            If a filename is used to provide archive file ids, it should be following the format:" << std::endl << std::endl <<
-    "                            <archiveFileId_1>" << std::endl <<
-    "                            <archiveFileId_2>" << std::endl <<
-    "                            ..." << std::endl <<
-    "                            <archiveFileId_n>" << std::endl;
+    os <<
+    "cta-verify-file --vid/-v <vid> [--id/-I <archiveFileID,...>] [--filename/-F <filename>] [--instance/-i <instance>] [--request.user/-u <user>] [request.group/-g <group>]" << std::endl << std::endl <<
+    "  Submit a verification request for a given list of archive file IDs on a given tape." << std::endl <<
+    "   * If the --filename option is used, each line in the provided file should contain exactly one <archiveFileID>." << std::endl << std::endl;
     break;
   case StandaloneCliTool::CTA_CHANGE_STORAGE_CLASS :
     os << "    Usage:" << std::endl <<
-    "    cta-change-storage-class --id/-I <archiveFileID> | --filename/-F <filename> --storage.class.name/-n <storageClassName> [--frequenzy/-t <eosRequestFrequency>]" << std::endl;
+    "    cta-change-storage-class --id/-I <archiveFileID> | --filename/-F <filename> --storage.class.name/-n <storageClassName> [--frequenzy/-t <eosRequestFrequency>]" << std::endl << std::endl;
     break;
   default:
     break;

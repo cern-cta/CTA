@@ -19,32 +19,17 @@
 #include <iostream>
 #include <map>
 
+#include "cmdline/standalone_cli_tools/common/CatalogueFetch.hpp"
+#include "cmdline/standalone_cli_tools/common/ConnectionConfiguration.hpp"
 #include "common/CmdLineArgs.hpp"
+#include "common/exception/CommandLineNotParsed.hpp"
 #include "common/utils/utils.hpp"
 #include "CtaFrontendApi.hpp"
 #include "version.h"
 
 using namespace cta::cliTool;
 
-const std::string config_file = "/etc/cta/cta-cli.conf";
-
-// Define XRootD SSI Alert message callback
-namespace XrdSsiPb {
-/*
- * Alert callback.
- *
- * Defines how Alert messages should be logged by EOS (or directed to the User)
- */
-template<>
-void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
-{
-  std::cout << "AlertCallback():" << std::endl;
-  XrdSsiPb::Log::DumpProtobuf(XrdSsiPb::Log::PROTOBUF, &alert);
-}
-} // namespace XrdSsiPb
-
-// Attribute map type
-typedef std::map<std::string, std::string> AttrMap;
+const std::string g_config_file = "/etc/cta/cta-cli.conf";
 
 /*
  * Fill a Notification message from the command-line parameters and stdin
@@ -54,10 +39,10 @@ typedef std::map<std::string, std::string> AttrMap;
  * @param[in]    archiveFileId   Archive file id to verify
  */
 void fillNotification(cta::eos::Notification &notification, const CmdLineArgs &cmdLineArgs, const std::string &archiveFileId) {
-  XrdSsiPb::Config config(config_file, "eos");
+  XrdSsiPb::Config config(g_config_file, "eos");
   for (const auto &conf_option : std::vector<std::string>({ "instance", "requester.user", "requester.group" })) {
     if (!config.getOptionValueStr(conf_option).first) {
-      throw std::runtime_error(conf_option + " must be specified in " + config_file);
+      throw std::runtime_error(conf_option + " must be specified in " + g_config_file);
     }
   }
   notification.mutable_wf()->mutable_instance()->set_name(config.getOptionValueStr("instance").second);
@@ -87,7 +72,8 @@ void fillNotification(cta::eos::Notification &notification, const CmdLineArgs &c
   // File
   notification.mutable_file()->set_lpath("dummy");
 
-  // eXtended attributes
+  // Attribute map type
+  using AttrMap= std::map<std::string, std::string>;
   AttrMap xattrs;
   xattrs["sys.archive.file_id"] = archiveFileId;
 
@@ -97,21 +83,27 @@ void fillNotification(cta::eos::Notification &notification, const CmdLineArgs &c
   }
 }
 
-void sendVerifyRequest(const CmdLineArgs &cmdLineArgs, const std::string &archiveFileId) {
-  std::string vid;
+/*
+ * Checks if the provided vid exists
+ */
+void vidExists(cta::cliTool::CmdLineArgs cmdLineArgs, const XrdSsiPb::Config &config) {
+  std::string hostName = std::getenv("HOSTNAME");
+  if(hostName.empty()) {
+    hostName = "UNKNOWN";
+  }
+  cta::log::StdoutLogger log(hostName, "cta-verify-file");
+  auto serviceProviderPtr = std::make_unique<XrdSsiPbServiceType>(config);
+  auto vidsInCatalogue = CatalogueFetch::getVids(serviceProviderPtr, log);
 
-  // Verify that the Google Protocol Buffer header and linked library versions are compatible
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
+  std::list<std::string>::iterator findIter = std::find(vidsInCatalogue.begin(), vidsInCatalogue.end(), cmdLineArgs.m_vid);
+  if(vidsInCatalogue.end() == findIter) {
+    throw std::runtime_error("The provided --vid does not exist in the Catalogue.");
+  }
+}
 
-  cta::xrd::Request request;
-  cta::eos::Notification &notification = *(request.mutable_notification());
-
-  // Set client version
-  request.set_client_cta_version(CTA_VERSION);
-  request.set_client_xrootd_ssi_protobuf_interface_version(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
-
+XrdSsiPb::Config getConfig() {
   // Set configuration options
-  XrdSsiPb::Config config(config_file, "cta");
+  XrdSsiPb::Config config(g_config_file, "cta");
   config.set("resource", "/ctafrontend");
 
   // Allow environment variables to override config file
@@ -123,6 +115,22 @@ void sendVerifyRequest(const CmdLineArgs &cmdLineArgs, const std::string &archiv
   }
   // If fine-grained control over log level is required, use XrdSsiPbLogLevel
   config.getEnv("log", "XrdSsiPbLogLevel");
+
+  return config;
+}
+
+void sendVerifyRequest(const CmdLineArgs &cmdLineArgs, const std::string &archiveFileId, const XrdSsiPb::Config &config) {
+  std::string vid;
+
+  // Verify that the Google Protocol Buffer header and linked library versions are compatible
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  cta::xrd::Request request;
+  cta::eos::Notification &notification = *(request.mutable_notification());
+
+  // Set client version
+  request.set_client_cta_version(CTA_VERSION);
+  request.set_client_xrootd_ssi_protobuf_interface_version(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
 
   // Parse the command line arguments: fill the Notification fields
   fillNotification(notification, cmdLineArgs, archiveFileId);
@@ -150,6 +158,7 @@ void sendVerifyRequest(const CmdLineArgs &cmdLineArgs, const std::string &archiv
   google::protobuf::ShutdownProtobufLibrary();
 }
 
+
 /*
  * Sends a Notification to the CTA XRootD SSI server
  */
@@ -163,9 +172,16 @@ int exceptionThrowingMain(int argc, char *const *const argv)
 
   std::vector<std::string> archiveFileIds;
 
-  if((!cmdLineArgs.m_archiveFileId && !cmdLineArgs.m_archiveFileIds) || !cmdLineArgs.m_vid) {
+  if((!cmdLineArgs.m_archiveFileId && !cmdLineArgs.m_archiveFileIds)) {
     cmdLineArgs.printUsage(std::cout);
-    throw std::runtime_error("Error: Usage");
+    std::cout << "Missing command-line option: --id or --filename must be provided" << std::endl;
+    throw std::runtime_error("");
+  }
+
+  if(!cmdLineArgs.m_vid) {
+    cmdLineArgs.printUsage(std::cout);
+    std::cout << "Missing command-line option: --vid must be provided" << std::endl;
+    throw std::runtime_error("");
   }
 
   if(cmdLineArgs.m_archiveFileId) {
@@ -181,13 +197,16 @@ int exceptionThrowingMain(int argc, char *const *const argv)
     }
   }
 
+  const XrdSsiPb::Config config = getConfig();
+
+  vidExists(cmdLineArgs, config);
+
   for(const auto &archiveFileId : archiveFileIds) {
-    sendVerifyRequest(cmdLineArgs, archiveFileId);
+    sendVerifyRequest(cmdLineArgs, archiveFileId, config);
   }
 
   return 0;
 }
-
 
 /*
  * Start here

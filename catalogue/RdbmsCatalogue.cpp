@@ -9042,7 +9042,7 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
         exception::UserError ex;
         auto tapeFileStateList = getTapeFileStateListForArchiveFileId(conn, archiveFileId);
         if (tapeFileStateList.empty()) {
-          ex.getMessage() << "CRITICAL: File with archive file ID " << archiveFileId << " does not exist in CTA namespace";
+          ex.getMessage() << "File with archive file ID " << archiveFileId << " does not exist in CTA namespace";
           throw ex;
         }
         const auto nonBrokenState = std::find_if(std::begin(tapeFileStateList), std::end(tapeFileStateList),

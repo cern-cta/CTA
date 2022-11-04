@@ -37,14 +37,22 @@ namespace cliTool {
 
 class CatalogueFetch {
 public:
-    /**
-    * Fetches the instance and fid from the CTA catalogue
-    *
-    * @param archiveFileId The arhive file id.
-    * @param serviceProviderPtr Service provider for communication with the catalogue.
-    * @return a pair with the instance and the fid.
-    */
+  /**
+  * Fetches the instance and fid from the CTA catalogue
+  *
+  * @param archiveFileId The arhive file id.
+  * @param serviceProviderPtr Service provider for communication with the catalogue.
+  * @return a pair with the instance and the fid.
+  */
   static std::tuple<std::string,std::string> getInstanceAndFid(const std::string& archiveFileId, std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr, cta::log::StdoutLogger &log);
+
+  /**
+  * Fetches the vids form the CTA catalogue
+  *
+  * @param serviceProviderPtr Service provider for communication with the catalogue.
+  * @return A list of vids.
+  */
+  static std::list<std::string> getVids(std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr, cta::log::StdoutLogger &log);
 
 private:
   static void handleResponse(const cta::xrd::Request &request, std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr);
