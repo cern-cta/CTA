@@ -244,19 +244,15 @@ namespace daemon {
       // if of type Errnum AND the errorCode is ENOSPC, we will propagate it.
       // This is how we communicate the fact that a tape is full to the client.
       // We also change the log level to INFO for the case of end of tape.
-      int errorCode = 666; // TODO - Remove error code
       int errorLevel = cta::log::ERR;
       bool doReportJobError = true;
       try {
-        const cta::exception::Errnum & errnum = 
-            dynamic_cast<const cta::exception::Errnum &> (e);
+        const auto & errnum = dynamic_cast<const cta::exception::Errnum &> (e);
         if (ENOSPC == errnum.errorNumber()) {
-          errorCode = ENOSPC;
           errorLevel = cta::log::INFO;
           doReportJobError = false;
         }
       } catch (...) {}
-      LogContext::ScopedParam sp(lc, Param("exceptionCode",errorCode));
       LogContext::ScopedParam sp1(lc, Param("exceptionMessage", e.getMessageValue()));
       lc.log(errorLevel,"An error occurred for this file. End of migrations.");
       circulateMemBlocks();

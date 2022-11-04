@@ -51,7 +51,7 @@ namespace unitTests{
     void reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, 
         const cta::exception::Exception& ex, cta::log::LogContext & lc) override {}
     void reportEndOfSession(cta::log::LogContext & lc) override {}
-    void reportEndOfSessionWithErrors(const std::string msg, int error_code, cta::log::LogContext & lc) override {}
+    void reportEndOfSessionWithErrors(const std::string& msg, bool isTapeFull, cta::log::LogContext & lc) override {}
     void disableBulk() override {}
     MockMigrationReportPacker(cta::ArchiveMount *rm,cta::log::LogContext lc):
       MigrationReportPacker(rm,lc) {}

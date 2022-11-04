@@ -439,7 +439,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
                                 "Both DiskWriteWorkerThread and TapeReadSingleThread existed, reported a successful end of session");
       }
       else {
-        m_reportPacker.reportEndOfSessionWithErrors("End of recall session with error(s)", 666, m_logContext);
+        m_reportPacker.reportEndOfSessionWithErrors("End of recall session with error(s)", m_logContext);
       }
     }
   } catch (const cta::exception::Exception& e) {
@@ -482,7 +482,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
                          "Both DiskWriteWorkerThread and TapeReadSingleThread existed, reported a successful end of session");
       }
       else {
-        m_reportPacker.reportEndOfSessionWithErrors("End of recall session with error(s)", 666, m_logContext);
+        m_reportPacker.reportEndOfSessionWithErrors("End of recall session with error(s)", m_logContext);
       }
     }
   }

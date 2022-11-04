@@ -72,7 +72,7 @@ public:
    * @param error_code The error code given by the drive
    * @param lc log context provided by the calling thread.
    */
-  virtual void reportEndOfSessionWithErrors(const std::string& msg, int error_code, cta::log::LogContext& lc);
+  virtual void reportEndOfSessionWithErrors(const std::string& msg, cta::log::LogContext& lc);
 
   /**
    * Report the drive state and set it in the central drive register. This
@@ -182,10 +182,9 @@ private:
 
   class ReportEndofSessionWithErrors : public Report {
     std::string m_message;
-    int m_error_code;
   public:
-    ReportEndofSessionWithErrors(std::string msg, int error_code) :
-      m_message(std::move(msg)), m_error_code(error_code) {}
+    ReportEndofSessionWithErrors(std::string msg) :
+      m_message(std::move(msg)) {}
 
     void execute(RecallReportPacker& reportPacker) override;
 

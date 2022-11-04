@@ -107,18 +107,10 @@ public:
   /**
    * Create into the MigrationReportPacker a report for an erroneous end of session
    * @param msg The error message 
-   * @param error_code The error code given by the drive
+   * @param isTapeFull True if the drive returned ENOSPC code (end of space)
    * @param lc log context provided by the calling thread.
    */
-  virtual void reportEndOfSessionWithErrors(std::string msg, int error_code, cta::log::LogContext& lc);
-
-  /**
-   * Immediately report the end of session to the client.
-   * @param msg The error message 
-   * @param error_code The error code given by the drive
-   * @param lc log context provided by the calling thread.
-   */
-  virtual void synchronousReportEndWithErrors(const std::string& msg, int error_code, cta::log::LogContext& lc);
+  virtual void reportEndOfSessionWithErrors(const std::string& msg, bool isTapeFull, cta::log::LogContext& lc);
 
   void startThreads() { m_workerThread.start(); }
 
@@ -220,10 +212,10 @@ private:
 
   class ReportEndofSessionWithErrors : public Report {
     std::string m_message;
-    int m_errorCode;
+    bool m_isTapeFull;
   public:
-    ReportEndofSessionWithErrors(std::string msg, int errorCode) :
-      m_message(std::move(msg)), m_errorCode(errorCode) {}
+    ReportEndofSessionWithErrors(std::string msg, bool isTapeFull) :
+      m_message(std::move(msg)), m_isTapeFull(isTapeFull) {}
 
     void execute(MigrationReportPacker& reportPacker) override;
   };

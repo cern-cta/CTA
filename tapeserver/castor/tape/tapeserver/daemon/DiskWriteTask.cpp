@@ -225,16 +225,11 @@ void DiskWriteTask::releaseAllBlock(){
       };
       tape::utils::suppresUnusedVariable(sp);
       std::string errorMsg;
-      //int errCode;
       if(mb->isFailed()){
         errorMsg=mb->errorMsg();
-        
-        //disabled temporarily (see comment in MemBlock)
-        //errCode=mb->errorCode();
       }
       else{
         errorMsg="Mismatch between expected and received fileid or blockid";
-        //errCode=666;
       }
       lc.log(cta::log::ERR,errorMsg);
       throw cta::exception::Exception(errorMsg);

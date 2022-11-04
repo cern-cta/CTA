@@ -60,19 +60,14 @@ class MemBlock {
      */
     std::string m_errorMsg;
     
-    /**
-     * in case of error, the error message 
-     */
-    int m_errorCode;
-    
-    AlterationContext(const std::string& msg,int errorCode,Failed_t):
-    m_failed(true),m_cancelled(false),m_verifyonly(false),m_errorMsg(msg),m_errorCode(errorCode){}
+    AlterationContext(const std::string& msg,Failed_t):
+    m_failed(true),m_cancelled(false),m_verifyonly(false),m_errorMsg(msg){}
     
     AlterationContext(Cancelled_t):
-    m_failed(false),m_cancelled(true),m_verifyonly(false),m_errorMsg(""),m_errorCode(0){}
+    m_failed(false),m_cancelled(true),m_verifyonly(false),m_errorMsg(""){}
     
     AlterationContext(VerifyOnly_t):
-    m_failed(false),m_cancelled(false),m_verifyonly(true),m_errorMsg(""),m_errorCode(0){}
+    m_failed(false),m_cancelled(false),m_verifyonly(true),m_errorMsg(""){}
   };
   
   std::unique_ptr<AlterationContext> m_context;
@@ -102,20 +97,6 @@ public:
   }
 
   /**
-   * Get the error code from the context, 
-   * Throw an exception if there is no context
-   * @return 
-   */
-  int errorCode() const {
-    if(m_context.get()) {
-      return m_context->m_errorCode;
-    }
-
-    throw cta::exception::Exception("Error Context is not set ="
-            " no error code to give");
-  }
-  
-  /**
    * Return true if the block has been marked as failed 
    * @return 
    */
@@ -144,8 +125,8 @@ public:
    * m_failed is true, m_fileBlock and m_tapeFileBlock are set at -1
    * Other members do not change
    */
-  void markAsFailed(const std::string msg,int errCode){
-    m_context.reset(new AlterationContext(msg,errCode,AlterationContext::Failed));
+  void markAsFailed(const std::string msg){
+    m_context.reset(new AlterationContext(msg,AlterationContext::Failed));
     m_fileBlock = -1;
     m_tapeFileBlock = -1;
   }

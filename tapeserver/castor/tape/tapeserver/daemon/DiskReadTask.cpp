@@ -111,7 +111,7 @@ void DiskReadTask::execute(cta::log::LogContext&  lc, cta::disk::DiskFileFactory
               .add("BytesNotYetRead", migratingFileSize);
         lc.log(cta::log::ERR, "Error while reading a file: memory block not filled up, but the file is not fully read yet");
         // Mark the block as failed
-        mb->markAsFailed(erroMsg,666);
+        mb->markAsFailed(erroMsg);
         // Transmit to the tape write task, which will finish the session
         m_nextTask.pushDataBlock(mb);
         // Fail the disk side.
@@ -155,7 +155,7 @@ void DiskReadTask::execute(cta::log::LogContext&  lc, cta::disk::DiskFileFactory
       mb=m_nextTask.getFreeBlock();
       ++blockId;
     }
-    mb->markAsFailed(e.getMessageValue(), 666); // TODO - Drop error code
+    mb->markAsFailed(e.getMessageValue());
     m_nextTask.pushDataBlock(mb);
     mb = nullptr;
     

@@ -131,12 +131,12 @@ void MigrationReportPacker::reportEndOfSession(cta::log::LogContext& lc) {
 //------------------------------------------------------------------------------
 //reportEndOfSessionWithErrors
 //------------------------------------------------------------------------------ 
-void MigrationReportPacker::reportEndOfSessionWithErrors(std::string msg, int errorCode, cta::log::LogContext& lc) {
+void MigrationReportPacker::reportEndOfSessionWithErrors(const std::string& msg, bool isTapeFull, cta::log::LogContext& lc) {
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportEndofSessionWithErrors");
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportEndOfSessionWithErrors(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  std::unique_ptr<Report> rep(new ReportEndofSessionWithErrors(msg, errorCode));
+  std::unique_ptr<Report> rep(new ReportEndofSessionWithErrors(msg, isTapeFull));
   m_fifo.push(std::move(rep));
 }
 
@@ -150,39 +150,6 @@ void MigrationReportPacker::reportTestGoingToEnd(cta::log::LogContext& lc) {
   cta::threading::MutexLocker ml(m_producterProtection);
   std::unique_ptr<Report> rep(new ReportTestGoingToEnd());
   m_fifo.push(std::move(rep));
-}
-
-//------------------------------------------------------------------------------
-//synchronousReportEndWithErrors
-//------------------------------------------------------------------------------ 
-void MigrationReportPacker::synchronousReportEndWithErrors(const std::string& msg, int errorCode, cta::log::LogContext& lc) {
-  cta::log::ScopedParamContainer params(lc);
-  params.add("type", "ReportEndofSessionWithErrors");
-  lc.log(cta::log::DEBUG, "In MigrationReportPacker::synchronousReportEndWithErrors(), reporting asynchronously session complete.");
-  m_continue = false;
-  m_archiveMount->complete();
-  if (m_errorHappened) {
-    cta::log::ScopedParamContainer sp(lc);
-    sp.add("errorMessage", msg)
-      .add("errorCode", errorCode);
-    lc.log(cta::log::INFO, "Reported end of session with error to client after sending file errors");
-  }
-  else {
-    // As a measure of safety we censor any session error which is not ENOSPC into
-    // Meaningless 666 (used to be SEINTERNAL in CASTOR). ENOSPC is the only one interpreted by the tape gateway.
-    if (ENOSPC != errorCode) {
-      errorCode = 666;
-    }
-    lc.log(cta::log::INFO, "Reported end of session with error to client");
-  }
-  if (m_watchdog) {
-    m_watchdog->addParameter(cta::log::Param("status",
-                                             ENOSPC == errorCode ? "success" : "failure"));
-    // We have a race condition here between the processing of this message by
-    // the initial process and the printing of the end-of-session log, triggered
-    // by the end our process. To delay the latter, we sleep half a second here.
-    usleep(500 * 1000);
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -377,21 +344,14 @@ void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationRepor
   if (reportPacker.m_errorHappened) {
     cta::log::ScopedParamContainer sp(reportPacker.m_lc);
     sp.add("errorMessage", m_message)
-      .add("errorCode", m_errorCode);
+      .add("isTapeFull", m_isTapeFull);
     reportPacker.m_lc.log(cta::log::INFO, "Reported end of session with error to client after sending file errors");
   }
   else {
-    const std::string& msg = "Reported end of session with error to client";
-    // As a measure of safety we censor any session error which is not ENOSPC into
-    // SEINTERNAL. ENOSPC is the only one interpreted by the tape gateway.
-    if (ENOSPC != m_errorCode) {
-      m_errorCode = 666;
-    }
-    reportPacker.m_lc.log(cta::log::INFO, msg);
+    reportPacker.m_lc.log(cta::log::INFO, "Reported end of session with error to client");
   }
   if (reportPacker.m_watchdog) {
-    reportPacker.m_watchdog->addParameter(cta::log::Param("status",
-                                                          ENOSPC == m_errorCode ? "success" : "failure"));
+    reportPacker.m_watchdog->addParameter(cta::log::Param("status", m_isTapeFull ? "success" : "failure"));
     // We have a race condition here between the processing of this message by
     // the initial process and the printing of the end-of-session log, triggered
     // by the end our process. To delay the latter, we sleep half a second here.

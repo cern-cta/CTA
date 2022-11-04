@@ -106,12 +106,12 @@ void RecallReportPacker::reportDriveStatus(cta::common::dataStructures::DriveSta
 //------------------------------------------------------------------------------
 //reportEndOfSessionWithErrors
 //------------------------------------------------------------------------------
-void RecallReportPacker::reportEndOfSessionWithErrors(const std::string& msg, int error_code, cta::log::LogContext& lc) {
+void RecallReportPacker::reportEndOfSessionWithErrors(const std::string& msg, cta::log::LogContext& lc) {
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportEndofSessionWithErrors");
   lc.log(cta::log::DEBUG, "In RecallReportPacker::reportEndOfSessionWithErrors(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  m_fifo.push(new ReportEndofSessionWithErrors(msg, error_code));
+  m_fifo.push(new ReportEndofSessionWithErrors(msg));
 }
 
 //------------------------------------------------------------------------------
@@ -186,7 +186,6 @@ bool RecallReportPacker::ReportDriveStatus::goingToEnd() {
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacker& parent) {
   if (parent.m_errorHappened) {
-    LogContext::ScopedParam sp(parent.m_lc, Param("errorCode", m_error_code));
     parent.m_lc.log(cta::log::ERR, m_message);
   }
   else {

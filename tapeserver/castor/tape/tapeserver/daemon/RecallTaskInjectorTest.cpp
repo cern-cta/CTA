@@ -65,7 +65,7 @@ namespace unitTests
       cta::threading::MutexLocker ml(m_mutex);
       endSessions++;
     }
-    void reportEndOfSessionWithErrors(const std::string& msg, int error_code, cta::log::LogContext& lc) override {
+    void reportEndOfSessionWithErrors(const std::string& msg, cta::log::LogContext& lc) override {
       cta::threading::MutexLocker ml(m_mutex);
       endSessionsWithError++;
     }

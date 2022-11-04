@@ -187,7 +187,7 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
                                        "As last exiting DiskWriteWorkerThread, reported a successful end of session");
       }
       else {
-        m_parentThreadPool.m_reporter.reportEndOfSessionWithErrors("End of recall session with error(s)", 666, m_lc);
+        m_parentThreadPool.m_reporter.reportEndOfSessionWithErrors("End of recall session with error(s)", m_lc);
         m_parentThreadPool.logWithStat(cta::log::INFO,
                                        "As last exiting DiskWriteWorkerThread, reported an end of session with errors");
       }

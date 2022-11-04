@@ -99,8 +99,7 @@ protected:
         .add("NSFSEQ", (*it)->fseq())
         .add("NSHOST", (*it)->nshost())
         .add("NSFILETRANSACTIONID", (*it)->fileTransactionId())
-        .add("ErrorMessage", (*it)->errorMessage())
-        .add("ErrorCode", (*it)->errorCode());
+        .add("ErrorMessage", (*it)->errorMessage());
       m_lc.log(cta::log::INFO, msg);
     }
   }

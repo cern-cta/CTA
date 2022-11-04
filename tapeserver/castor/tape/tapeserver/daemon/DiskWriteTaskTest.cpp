@@ -85,7 +85,7 @@ namespace unitTests{
       cta::threading::MutexLocker ml(m_mutex);
       endSessions++;
     }
-    void reportEndOfSessionWithErrors(const std::string& msg, int error_code, cta::log::LogContext& lc) override {
+    void reportEndOfSessionWithErrors(const std::string& msg, cta::log::LogContext& lc) override {
       cta::threading::MutexLocker ml(m_mutex);
       endSessionsWithError++;
     }
@@ -143,7 +143,7 @@ namespace unitTests{
       mb->m_fileid=0;
       mb->m_fileBlock=i;
       if(5==i){
-        mb->markAsFailed("Test error",666);
+        mb->markAsFailed("Test error");
       }
       t.pushDataBlock(mb);
     }
