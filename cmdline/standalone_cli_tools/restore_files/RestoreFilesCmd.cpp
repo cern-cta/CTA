@@ -81,6 +81,13 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
         deletedTapeFiles.push_back(item);
       }
       break;
+    case Data::kTflsItem:
+      {
+        const auto item = record.tfls_item();
+        const auto instanceAndFid = std::make_pair(item.df().disk_instance(), item.df().disk_id());
+        listedTapeFiles.push_back(instanceAndFid);
+      }
+      break;
     default:
       throw std::runtime_error("Received invalid stream data from CTA Frontend for the cta-restore-deleted-files command.");
    }
@@ -183,7 +190,7 @@ void RestoreFilesCmd::readAndSetConfiguration(
 
   m_vid = cmdLineArgs.m_vid;
   m_diskInstance = cmdLineArgs.m_diskInstance;
-  m_archiveFileIds = cmdLineArgs.m_archiveFileIds;
+  m_fids = cmdLineArgs.m_fids;
   m_copyNumber = cmdLineArgs.m_copyNumber;
   m_archiveFileId = cmdLineArgs.m_archiveFileId;
 
@@ -191,6 +198,10 @@ void RestoreFilesCmd::readAndSetConfiguration(
     m_log.setLogMask("DEBUG");
   } else {
     m_log.setLogMask("INFO");
+  }
+
+  if (m_fids && !m_diskInstance) {
+    throw XrdSsiPb::UserException("Disk instance must be provided when fids are used as input.");
   }
 
   // Set CTA frontend configuration options
@@ -311,12 +322,12 @@ void RestoreFilesCmd::listDeletedFilesCta() const {
     new_opt->set_key(key);
     new_opt->set_value(m_copyNumber.value());
   }
-  if (m_archiveFileIds) {
+  if (m_fids) {
     std::stringstream ss;
     auto key = cta::admin::OptionStrList::FILE_ID;
     auto new_opt = admincmd.add_option_str_list();
     new_opt->set_key(key);
-    for (auto &fid : m_archiveFileIds.value()) {
+    for (const auto &fid : m_fids.value()) {
       new_opt->add_item(fid);
       ss << fid << ",";
     }

@@ -35,7 +35,7 @@ namespace cliTool{
 static struct option restoreFilesLongOption[] = {
   {"id", required_argument, nullptr, 'I'},
   {"instance", required_argument, nullptr, 'i'},
-  {"fxid", required_argument, nullptr, 'f'},
+  {"fid", required_argument, nullptr, 'f'},
   {"filename", required_argument, nullptr, 'F'},
   {"vid", required_argument, nullptr, 'v'},
   {"copynb", required_argument, nullptr, 'c'},
@@ -117,10 +117,10 @@ m_help(false), m_debug(false), m_standaloneCliTool{standaloneCliTool} {
       }
     case 'f':
       {
-        if (! m_fxIds) {
-          m_fxIds = std::list<std::string>();
+        if (! m_fids) {
+          m_fids = std::list<std::string>();
         }
-        m_fxIds->push_back(optarg);
+        m_fids->push_back(optarg);
         break;
       }
     case 'F':
@@ -211,7 +211,10 @@ void CmdLineArgs::readIdListFromFile(const std::string &filename) {
   while(file >> line) {
     switch (m_standaloneCliTool) {
       case StandaloneCliTool::RESTORE_FILES:
-        m_archiveFileIds.value().push_back(line);
+        if (!m_fids) {
+          m_fids = std::list<std::string>();
+        }
+        m_fids.value().push_back(line);
         break;
       case StandaloneCliTool::CTA_VERIFY_FILE:
         if (!m_archiveFileIds) {
@@ -239,8 +242,8 @@ void CmdLineArgs::printUsage(std::ostream &os) const {
   case StandaloneCliTool::RESTORE_FILES:
     os << "   Usage:" << std::endl <<
     "      cta-restore-deleted-files [--id/-I <archive_file_id>] [--instance/-i <disk_instance>]" << std::endl <<
-    "                                [--fxid/-f <eos_fxid>] [--fxidfile/-F <filename>]" << std::endl <<
-    "                                [--vid/-v <vid>] [--copynb/-c <copy_number>] [--debug/-d]" << std::endl << std::endl;
+    "                                [--fid/-f <eos_fxid>] [--filename/-F <filename>]" << std::endl <<
+    "                                [--vid/-v <vid>] [--copynb/-c <copy_number>] [--debug/-d]" << std::endl;
     break;
   case StandaloneCliTool::CTA_SEND_EVENT:
     os << "    Usage:" << std::endl <<

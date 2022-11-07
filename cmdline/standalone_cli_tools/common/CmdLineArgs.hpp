@@ -67,9 +67,9 @@ struct CmdLineArgs {
   std::optional<std::string> m_diskInstance;
 
   /**
-   * Fxids of the files to restore
+   * Fids of the files to restore
    */
-  std::optional<std::list<std::string>> m_fxIds;
+  std::optional<std::list<std::string>> m_fids;
 
   /**
    * Vid of the tape of the files to restore
