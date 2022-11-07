@@ -15,9 +15,6 @@
 
 cmake_minimum_required (VERSION 3.17)
 
-add_subdirectory (change_storage_class)
-add_subdirectory (restore_files)
-
 find_package(xrootdclient REQUIRED)
 find_package(Protobuf3 REQUIRED)
 
@@ -30,12 +27,27 @@ include_directories(${XRD_SSI_PB_DIR}/include ${XRD_SSI_PB_DIR}/eos_cta/include)
 # Compiled protocol buffers
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
+set(CMD_LINE_TOOLS_COMMON_LIB_SRC_FILES
+  common/CatalogueFetch.cpp
+  common/CmdLineArgs.cpp
+  common/CmdLineTool.cpp
+  common/ConnectionConfiguration.cpp
+)
+
+add_library (ctaCmdlineToolsCommon STATIC
+  ${CMD_LINE_TOOLS_COMMON_LIB_SRC_FILES})
+
+target_link_libraries(ctaCmdlineToolsCommon ctacommon XrdSsiPbEosCta XrdSsiLib XrdUtils EosCtaGrpc EosGrpcClient)
+
+set_property(TARGET ctaCmdlineToolsCommon PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctaCmdlineToolsCommon PROPERTY   VERSION "${CTA_LIBVERSION}")
+
 #
 # cta-send-event CLOSEW|PREPARE|ABORT_PREPARE
 # injects a workflow event into the CTA Frontend
 #
 add_executable(cta-send-event CtaSendEvent.cpp common/CmdLineArgs.cpp)
-target_link_libraries(cta-send-event ctacommon XrdSsiPbEosCta XrdSsiLib XrdUtils)
+target_link_libraries(cta-send-event ctaCmdlineToolsCommon)
 set_property(TARGET cta-send-event APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 #
@@ -48,3 +60,6 @@ set_property (TARGET cta-verify-file APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_R
 
 install(TARGETS cta-send-event DESTINATION usr/bin)
 install(TARGETS cta-verify-file DESTINATION usr/bin)
+
+add_subdirectory (change_storage_class)
+add_subdirectory (restore_files)

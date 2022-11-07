@@ -10,6 +10,7 @@
 - cta/CTA#180 - Allow to submit multiple files for verification
 - cta/CTA#94 - Remove tape session error codes
 - cta/CTA#198 - Add vid existence check and update usage message for cta-verify-file
+- cta/CTA#199 - Add static library ctaCmdlineToolsCommon
 ### Continuous Integration
 - cta/CTA#118 - Add unit tests for OSM label
 - cta/CTA#191 - Block merge until cta_valgrind success
