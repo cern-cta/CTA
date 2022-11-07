@@ -583,6 +583,11 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 - Performance improvement: optimized DB queries for getting tape drive states
 - Upgrade eos5 to 5.1.1-1
 
+* Tue Oct 04 2022 Joao Afonso <joao.afonso@cern.ch> - 4.7.12-1
+- Various fixes and improvements to CTA, see ReleaseNotes.md for details
+- Performance improvement: optimized DB queries for getting tape drive states
+- Upgrade eos5 to 5.1.1-1
+
 * Fri Sep 16 2022 Joao Afonso <joao.afonso@cern.ch> - 4.7.11-1
 - Various fixes and improvements to CTA, see ReleaseNotes.md for details
 - Enabled build option without Oracle dependencies

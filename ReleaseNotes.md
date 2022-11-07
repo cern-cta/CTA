@@ -1,14 +1,18 @@
-# v4.NEXT
+# v4.7.13-1
 ## Summary
 ### Features
 - cta/CTA#16 - Add option for a user config file
 - cta/CTA#23 - Change Owner Identifier String and System Code of Creating System values in tape labels
 - cta/CTA#41 - Delete verification_status of tape when tape is reclaimed
 - cta/CTA#78 - Tool to update the storage class
+- cta/CTA#80 - Revise tape thread complete success/failure logic
+- cta/CTA#94 - Remove tape session error codes
+- cta/CTA#106 - Investigate cta-taped Watchdog timer configuration
 - cta/CTA#153 - Allow verification status to be cleared with cta-admin
+- cta/CTA#156 - Change handeling of multilple fxids as input to the cta-restore-files tool
+- cta/CTA#166 - Removing Catalogue headers from hpp files and small refactoring of Catalogue classes.
 - cta/CTA#173 - Update release notes and small changes to refactoring of operation tools cmd line parsing - Compatible with operations 0.4-95 or later
 - cta/CTA#180 - Allow to submit multiple files for verification
-- cta/CTA#94 - Remove tape session error codes
 - cta/CTA#198 - Add vid existence check and update usage message for cta-verify-file
 - cta/CTA#199 - Add static library ctaCmdlineToolsCommon
 ### Continuous Integration
@@ -18,7 +22,10 @@
 - cta/CTA#48 - Catch tape server exception and log an error instead
 - cta/CTA#80 - Fix tape thread complete success/failure message parameter
 - cta/CTA#123 - Change some tape server errors into warnings
+- cta/CTA#150 - Fix job fetching logic in RecallTaskInjector
 - cta/CTA#161 - Fix bug when using temporary tables with PostgreSQL
+- cta/CTA#175 - Consistency issue in volume names format
+- cta/CTA#182 - Fix cta_valgrind error
 - cta/CTA#197 - Include order in XrdSsiCtaRequestMessage.cpp
 
 # v4.7.12-1
