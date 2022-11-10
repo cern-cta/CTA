@@ -2009,7 +2009,7 @@ reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>> & retrieveJobsBa
         .add("failedReports", retrieveJobsBatch.size() - reportedJobs.size())
         .add("successfulReports", reportedJobs.size());
   timingList.addToLog(params);
-  lc.log(log::ERR, "In Scheduler::reportRetrieveJobsBatch(): reported a batch of retrieve jobs.");
+  lc.log(log::INFO, "In Scheduler::reportRetrieveJobsBatch(): reported a batch of retrieve jobs.");
 }
 
 cta::catalogue::Catalogue & Scheduler::getCatalogue(){

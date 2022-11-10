@@ -1,6 +1,7 @@
 # v4.NEXT
 ## Summary
 ### Features
+- cta/CTA#133 - Change severity from ERROR to INFO for "reported a batch of retrieve jobs" log message in Scheduler.cpp
 - cta/CTA#201 - Improve error message when oracle configured without oracle support
 
 # v4.7.13-1
