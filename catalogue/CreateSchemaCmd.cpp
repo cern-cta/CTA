@@ -24,6 +24,7 @@
 #include "catalogue/SqliteCatalogueSchema.hpp"
 #include "catalogue/VersionedCatalogueSchemas.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/NoSupportedDB.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
@@ -86,8 +87,8 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
       }
     }
     break;
-#ifdef SUPPORT_OCCI
   case rdbms::Login::DBTYPE_ORACLE:
+#ifdef SUPPORT_OCCI
     {
       if (cmdLineArgs.catalogueVersion) {
         OracleVersionedCatalogueSchema schema(cmdLineArgs.catalogueVersion.value());
@@ -98,12 +99,14 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
       }
     }
     break;
+#else
+    throw exception::NoSupportedDB("Oracle Catalogue Schema is not supported. Compile CTA with Oracle support.");
 #endif
   case rdbms::Login::DBTYPE_NONE:
     throw exception::Exception("Cannot create a catalogue without a database type");
   default:
     {
-      exception::Exception ex;
+      exception::NoSupportedDB ex;
       ex.getMessage() << "Unknown database type: value=" << login.dbType;
       throw ex;
     }

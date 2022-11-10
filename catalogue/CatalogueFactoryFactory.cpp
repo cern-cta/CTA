@@ -21,6 +21,7 @@
 #include "catalogue/InMemoryCatalogueFactory.hpp"
 #include "catalogue/PostgresqlCatalogueFactory.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/NoSupportedDB.hpp"
 #include "common/log/Logger.hpp"
 
 #ifdef SUPPORT_OCCI
@@ -44,10 +45,12 @@ std::unique_ptr<CatalogueFactory> CatalogueFactoryFactory::create(
     switch (login.dbType) {
     case rdbms::Login::DBTYPE_IN_MEMORY:
       return std::make_unique<InMemoryCatalogueFactory>(log, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
-#ifdef SUPPORT_OCCI
     case rdbms::Login::DBTYPE_ORACLE:
+#ifdef SUPPORT_OCCI
       return std::make_unique<OracleCatalogueFactory>(log, login, nbConns, nbArchiveFileListingConns,
         maxTriesToConnect);
+#else
+      throw exception::NoSupportedDB("Oracle Catalogue Schema is not supported. Compile CTA with Oracle support.");
 #endif
     case rdbms::Login::DBTYPE_POSTGRESQL:
       return std::make_unique<PostgresqlCatalogueFactory>(log, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
@@ -57,7 +60,7 @@ std::unique_ptr<CatalogueFactory> CatalogueFactoryFactory::create(
       throw exception::Exception("Cannot create a catalogue without a database type");
     default:
       {
-        exception::Exception ex;
+        exception::NoSupportedDB ex;
         ex.getMessage() << "Unknown database type: value=" << login.dbType;
         throw ex;
       }

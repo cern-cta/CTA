@@ -18,9 +18,10 @@
 #include <string>
 
 #include "common/exception/Exception.hpp"
+#include "common/exception/NoSupportedDB.hpp"
 #include "rdbms/wrapper/ConnFactoryFactory.hpp"
-#include "rdbms/wrapper/SqliteConnFactory.hpp"
 #include "rdbms/wrapper/PostgresConnFactory.hpp"
+#include "rdbms/wrapper/SqliteConnFactory.hpp"
 
 #ifdef SUPPORT_OCCI
   #include "rdbms/wrapper/OcciConnFactory.hpp"
@@ -38,9 +39,11 @@ std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
     switch (login.dbType) {
     case Login::DBTYPE_IN_MEMORY:
       return std::make_unique<SqliteConnFactory>("file::memory:?cache=shared");
-#ifdef SUPPORT_OCCI
     case Login::DBTYPE_ORACLE:
+#ifdef SUPPORT_OCCI
       return std::make_unique<OcciConnFactory>(login.username, login.password, login.database);
+#else
+      throw exception::NoSupportedDB("Oracle Catalogue Schema is not supported. Compile CTA with Oracle support.");
 #endif
     case Login::DBTYPE_SQLITE:
       return std::make_unique<SqliteConnFactory>(login.database);

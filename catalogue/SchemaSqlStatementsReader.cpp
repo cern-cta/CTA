@@ -28,6 +28,7 @@
 #include "OracleCatalogueSchema.hpp"
 #endif
 #include "common/exception/Exception.hpp"
+#include "common/exception/NoSupportedDB.hpp"
 #include "common/utils/utils.hpp"
 
 #include "AllCatalogueSchema.hpp"
@@ -64,7 +65,7 @@ std::list<std::string> SchemaSqlStatementsReader::getStatements() {
 #ifdef SUPPORT_OCCI
       schema.reset(new OracleCatalogueSchema);
 #else
-      throw exception::Exception("Oracle Catalogue Schema is not supported. Compile CTA with Oracle support.");
+      throw exception::NoSupportedDB("Oracle Catalogue Schema is not supported. Compile CTA with Oracle support.");
 #endif
       break;
     case rdbms::Login::DBTYPE_NONE:

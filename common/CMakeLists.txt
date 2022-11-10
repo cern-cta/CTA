@@ -105,6 +105,7 @@ set (COMMON_LIB_SRC_FILES
   exception/NoEntry.cpp
   exception/NonRetryableError.cpp
   exception/NoPortInRange.cpp
+  exception/NoSupportedDB.cpp
   exception/NotAnOwner.cpp
   exception/OutOfMemory.cpp
   exception/QueryVolumeFailed.cpp

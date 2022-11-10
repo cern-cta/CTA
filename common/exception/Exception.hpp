@@ -17,10 +17,11 @@
 
 #pragma once
 
-#include "Backtrace.hpp"
-
 #include <exception>
 #include <sstream>
+#include <string>
+
+#include "Backtrace.hpp"
 
 namespace cta { namespace exception {
 /**
@@ -29,7 +30,6 @@ namespace cta { namespace exception {
  */
 class Exception : public std::exception {
 public:
-
   /**
    * Constructor.
    *
@@ -55,7 +55,6 @@ public:
    * inheritance)
    */
   virtual ~Exception();
-  
   /**
    * Get the value of m_message
    * A message explaining why this exception was raised
@@ -64,13 +63,13 @@ public:
   std::ostringstream& getMessage() {
     return m_message;
   }
-  
+
   /**
    * Get the value of m_message
    * A message explaining why this exception was raised
    * @return the value of m_message
    */
-  
+
   const std::ostringstream& getMessage() const {
     return m_message;
   }
@@ -78,7 +77,7 @@ public:
    * Get the value of m_message as a sting, for const-c orrectness
    * @return the value as a string.
    */
-  
+
   std::string getMessageValue() const {
     return m_message.str();
   }

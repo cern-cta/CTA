@@ -1,3 +1,8 @@
+# v4.NEXT
+## Summary
+### Features
+- cta/CTA#201 - Improve error message when oracle configured without oracle support
+
 # v4.7.13-1
 ## Summary
 ### Features
