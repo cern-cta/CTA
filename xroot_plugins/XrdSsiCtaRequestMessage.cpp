@@ -252,6 +252,9 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                case cmd_pair(AdminCmd::CMD_TAPEFILE, AdminCmd::SUBCMD_LS):
                   processTapeFile_Ls(response, stream);
                   break;
+               case cmd_pair(AdminCmd::CMD_TAPEFILE, AdminCmd::SUBCMD_CH):
+                  processTapeFile_Ch(response);
+                  break;
                case cmd_pair(AdminCmd::CMD_TAPEFILE, AdminCmd::SUBCMD_RM):
                   processTapeFile_Rm(response);
                   break;
@@ -2048,6 +2051,39 @@ void RequestMessage::processTapeFile_Ls(cta::xrd::Response &response, XrdSsiStre
 
   response.set_show_header(HeaderType::TAPEFILE_LS);
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
+}
+
+void RequestMessage::processTapeFile_Ch(cta::xrd::Response &response)
+{
+  using namespace cta::admin;
+  auto &vid           = getRequired(OptionString::VID);
+  //auto &reason        = getRequired(OptionString::REASON);
+  auto archiveFileId  = getOptional(OptionUInt64::ARCHIVE_FILE_ID);
+  auto instance       = getOptional(OptionString::INSTANCE);
+  auto diskFileId     = getOptional(OptionString::FXID);
+
+  cta::catalogue::TapeFileSearchCriteria searchCriteria;
+  searchCriteria.vid = vid;
+
+  if (archiveFileId) {
+    searchCriteria.archiveFileId = archiveFileId.value();
+  }
+  if (diskFileId) {
+    auto fid = strtol(diskFileId.value().c_str(), nullptr, 16);
+    if(fid < 1 || fid == LONG_MAX) {
+      throw cta::exception::UserError(diskFileId.value() + " is not a valid file ID");
+    }
+    searchCriteria.diskFileIds = std::vector<std::string>();
+    searchCriteria.diskFileIds.value().push_back(std::to_string(fid));
+  }
+  if (instance) {
+    searchCriteria.diskInstance = instance.value();
+  }
+
+  auto archiveFile = m_catalogue.getArchiveFileForDeletion(searchCriteria);
+  grpc::EndpointMap endpoints(m_namespaceMap);
+  auto diskFilePath = endpoints.getPath(archiveFile.diskInstance, archiveFile.diskFileId);
+  archiveFile.diskFileInfo.path = diskFilePath;
 }
 
 void RequestMessage::processTapeFile_Rm(cta::xrd::Response &response)
