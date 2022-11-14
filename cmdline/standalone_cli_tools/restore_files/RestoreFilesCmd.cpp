@@ -315,7 +315,6 @@ bool RestoreFilesCmd::fileWasDeletedByRM(const cta::admin::RecycleTapeFileLsItem
   return file.reason_log().rfind("(Deleted using cta-admin tapefile rm)", 0) == 0;
 }
 
-
 //------------------------------------------------------------------------------
 // fileExistsEos
 //------------------------------------------------------------------------------
@@ -372,7 +371,6 @@ void RestoreFilesCmd::getCurrentEosIds(const std::string &diskInstance) const {
   params.push_back(cta::log::Param("FileId", fid));
   m_log(cta::log::DEBUG, "Obtained current EOS container and file id", params);
 }
-
 
 //------------------------------------------------------------------------------
 // restoreDeletedFileEos
@@ -466,7 +464,6 @@ uint64_t RestoreFilesCmd::restoreDeletedFileEos(const cta::admin::RecycleTapeFil
   auto new_fid = getFileIdEos(rtfls_item.disk_instance(), rtfls_item.disk_file_path());
   return new_fid;
 }
-
 
 //------------------------------------------------------------------------------
 // getArchiveFileIdFromEOS
