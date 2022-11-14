@@ -100,12 +100,6 @@ public:
   bool fileWasDeletedByRM(const cta::admin::RecycleTapeFileLsItem &file) const;
 
   /**
-   * Returns true (i.e. not zero) if an archive file with given id exists in the cta catalogue
-   * @param archiveFileId the archive file id to check
-   */
-  bool archiveFileExistsCTA(const uint64_t &archiveFileId) const;
-
-  /**
    * Returns the id of a given file in eos or zero if the files does not exist
    * @param diskInstance eos disk instance
    * @param path the path to check

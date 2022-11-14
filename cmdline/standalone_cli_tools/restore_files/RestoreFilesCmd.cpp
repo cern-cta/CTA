@@ -315,59 +315,6 @@ bool RestoreFilesCmd::fileWasDeletedByRM(const cta::admin::RecycleTapeFileLsItem
   return file.reason_log().rfind("(Deleted using cta-admin tapefile rm)", 0) == 0;
 }
 
-//------------------------------------------------------------------------------
-// archiveFileExistsCTA
-//------------------------------------------------------------------------------
-bool RestoreFilesCmd::archiveFileExistsCTA(const uint64_t &archiveFileId) const {
-
-  std::list<cta::log::Param> params;
-  params.push_back(cta::log::Param("userName", getUsername()));
-  params.push_back(cta::log::Param("archiveFileId", archiveFileId));
-
-  m_log(cta::log::DEBUG, "Looking for archive file in the CTA catalogue", params);
-
-  cta::xrd::Request request;
-
-  auto &admincmd = *(request.mutable_admincmd());
-
-  request.set_client_cta_version(CTA_VERSION);
-  request.set_client_xrootd_ssi_protobuf_interface_version(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
-  admincmd.set_cmd(cta::admin::AdminCmd::CMD_TAPEFILE);
-  admincmd.set_subcmd(cta::admin::AdminCmd::SUBCMD_LS);
-
-  auto key = cta::admin::OptionUInt64::ARCHIVE_FILE_ID;
-  auto new_opt = admincmd.add_option_uint64();
-  new_opt->set_key(key);
-  new_opt->set_value(archiveFileId);
-
-  // Send the Request to the Service and get a Response
-  cta::xrd::Response response;
-  auto stream_future = m_serviceProviderPtr->SendAsync(request, response);
-
-  bool ret;
-  // Handle responses
-  switch(response.type())
-  {
-    using namespace cta::xrd;
-    using namespace cta::admin;
-    case Response::RSP_SUCCESS:                          ret = true; break; //success sent if archive file does not exist
-    case Response::RSP_ERR_PROTOBUF:                     throw XrdSsiPb::PbException(response.message_txt());
-    case Response::RSP_ERR_USER:                         ret = false; break; //user error sent if archive file does not exist
-    case Response::RSP_ERR_CTA:                          throw std::runtime_error(response.message_txt());
-    default:                                             throw XrdSsiPb::PbException("Invalid response type.");
-  }
-
-  // wait until the data stream has been processed before exiting
-  if (ret) {
-    stream_future.wait();
-  }
-  if (ret) {
-    m_log(cta::log::DEBUG, "Archive file is present in the CTA catalogue", params);  
-  } else {
-    m_log(cta::log::DEBUG, "Archive file is missing in the CTA catalogue", params);
-  }
-  return ret;
-}
 
 //------------------------------------------------------------------------------
 // fileExistsEos
@@ -459,7 +406,7 @@ uint64_t RestoreFilesCmd::restoreDeletedFileEos(const cta::admin::RecycleTapeFil
   file.set_size(rtfls_item.size_in_bytes());
   file.set_layout_id(m_defaultFileLayout);
 
-  // Filemode: filter out S_ISUID, S_ISGID and S_ISVTX because EOS does not follow POSIX semantics for these bits  
+  // Filemode: filter out S_ISUID, S_ISGID and S_ISVTX because EOS does not follow POSIX semantics for these bits
   uint64_t filemode = (S_IRWXU | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH); // 0755
   filemode &= ~(S_ISUID | S_ISGID | S_ISVTX);
   file.set_flags(filemode);
