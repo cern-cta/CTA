@@ -35,8 +35,8 @@
 // global synchronisation flag
 std::atomic<bool> isHeaderSent = false;
 
-std::list<cta::admin::RecycleTapeFileLsItem> deletedTapeFiles;
-std::list<std::pair<std::string,std::string>> listedTapeFiles;
+std::list<cta::admin::RecycleTapeFileLsItem> g_deletedTapeFiles;
+std::list<std::pair<std::string,std::string>> g_instanceAndFids;
 std::list<std::string> g_storageClasses;
 std::list<std::string> g_listedVids;
 
@@ -71,14 +71,14 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
     case Data::kRtflsItem:
       {
         auto item = record.rtfls_item();
-        deletedTapeFiles.push_back(item);
+        g_deletedTapeFiles.push_back(item);
       }
       break;
     case Data::kTflsItem:
       {
         auto item = record.tfls_item();
         auto instanceAndFid = std::make_pair(item.df().disk_instance(), item.df().disk_id());
-        listedTapeFiles.push_back(instanceAndFid);
+        g_instanceAndFids.push_back(instanceAndFid);
       }
       break;
     case Data::kSclsItem:
@@ -103,6 +103,9 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
 namespace cta {
 namespace cliTool {
 
+//------------------------------------------------------------------------------
+// getInstanceAndFid
+//------------------------------------------------------------------------------
 std::tuple<std::string,std::string> CatalogueFetch::getInstanceAndFid(const std::string& archiveFileId, std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr, cta::log::StdoutLogger &log) {
   {
     std::list<cta::log::Param> params;
@@ -123,20 +126,23 @@ std::tuple<std::string,std::string> CatalogueFetch::getInstanceAndFid(const std:
 
   handleResponse(request, serviceProviderPtr);
 
-  if(listedTapeFiles.size() != 1) {
-    throw std::runtime_error("Unexpected result set: listedTapeFiles size expected=1 received=" + std::to_string(listedTapeFiles.size()));
+  if(g_instanceAndFids.size() != 1) {
+    throw std::runtime_error("Unexpected result set: g_instanceAndFid size expected=1 received=" + std::to_string(g_instanceAndFids.size()));
   }
-  auto listedTapeFile = listedTapeFiles.back();
-  listedTapeFiles.clear();
+  auto instanceAndFid = g_instanceAndFids.back();
+  g_instanceAndFids.clear();
   {
     std::list<cta::log::Param> params;
-    params.push_back(cta::log::Param("diskInstance", listedTapeFile.first));
-    params.push_back(cta::log::Param("diskFileId", listedTapeFile.second));
+    params.push_back(cta::log::Param("diskInstance", instanceAndFid.first));
+    params.push_back(cta::log::Param("diskFileId", instanceAndFid.second));
     log(cta::log::DEBUG, "Obtained file metadata from CTA", params);
   }
-  return listedTapeFile;
+  return instanceAndFid;
 }
 
+//------------------------------------------------------------------------------
+// getVids
+//------------------------------------------------------------------------------
 std::list<std::string> CatalogueFetch::getVids(std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr, cta::log::StdoutLogger &log) {
   cta::xrd::Request request;
   auto admincmd = request.mutable_admincmd();
@@ -155,6 +161,86 @@ std::list<std::string> CatalogueFetch::getVids(std::unique_ptr<XrdSsiPbServiceTy
   return g_listedVids;
 }
 
+//------------------------------------------------------------------------------
+// listDeletedFilesCta
+//------------------------------------------------------------------------------
+std::list<cta::admin::RecycleTapeFileLsItem> CatalogueFetch::listDeletedFilesCta(
+  const std::optional<std::string> &vid,
+  const std::optional<std::string> &diskInstance,
+  const std::optional<std::string> &archiveFileId,
+  const std::optional<std::uint64_t> &copyNumber,
+  const std::optional<std::list<std::string>> &fids,
+  std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr,
+  cta::log::StdoutLogger &log
+) {
+  std::list<cta::log::Param> params;
+
+  cta::xrd::Request request;
+
+  auto &admincmd = *(request.mutable_admincmd());
+
+  request.set_client_cta_version(CTA_VERSION);
+  request.set_client_xrootd_ssi_protobuf_interface_version(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
+  admincmd.set_cmd(cta::admin::AdminCmd::CMD_RECYCLETAPEFILE);
+  admincmd.set_subcmd(cta::admin::AdminCmd::SUBCMD_LS);
+
+  if (vid) {
+    params.push_back(cta::log::Param("tapeVid", vid.value()));
+    auto key = cta::admin::OptionString::VID;
+    auto new_opt = admincmd.add_option_str();
+    new_opt->set_key(key);
+    new_opt->set_value(vid.value());
+  }
+  if (diskInstance) {
+    params.push_back(cta::log::Param("diskInstance", diskInstance.value()));
+    auto key = cta::admin::OptionString::INSTANCE;
+    auto new_opt = admincmd.add_option_str();
+    new_opt->set_key(key);
+    new_opt->set_value(diskInstance.value());
+  }
+  if (archiveFileId) {
+    params.push_back(cta::log::Param("archiveFileId", archiveFileId.value()));
+    auto key = cta::admin::OptionUInt64::ARCHIVE_FILE_ID;
+    auto new_opt = admincmd.add_option_uint64();
+    new_opt->set_key(key);
+    new_opt->set_value(std::stoi(archiveFileId.value()));
+  }
+  if (copyNumber) {
+    params.push_back(cta::log::Param("copyNb", copyNumber.value()));
+    auto key = cta::admin::OptionUInt64::COPY_NUMBER;
+    auto new_opt = admincmd.add_option_uint64();
+    new_opt->set_key(key);
+    new_opt->set_value(copyNumber.value());
+  }
+  if (fids) {
+    std::stringstream ss;
+    auto key = cta::admin::OptionStrList::FILE_ID;
+    auto new_opt = admincmd.add_option_str_list();
+    new_opt->set_key(key);
+    for (const auto &fid : fids.value()) {
+      new_opt->add_item(fid);
+      ss << fid << ",";
+    }
+    auto fids = ss.str();
+    fids.pop_back(); // remove last ","
+    params.push_back(cta::log::Param("diskFileId", fids));
+  }
+
+  log(cta::log::INFO, "Listing deleted file in CTA catalogue", params);
+
+  handleResponse(request, serviceProviderPtr);
+
+  params.push_back(cta::log::Param("nbFiles", g_deletedTapeFiles.size()));
+  log(cta::log::INFO, "Listed deleted file in CTA catalogue", params);
+
+  return g_deletedTapeFiles;
+}
+
+// Private functions
+
+//------------------------------------------------------------------------------
+// handleResponse
+//------------------------------------------------------------------------------
 void CatalogueFetch::handleResponse(const cta::xrd::Request &request, std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr) {
   // Send the Request to the Service and get a Response
   cta::xrd::Response response;
@@ -179,6 +265,8 @@ void CatalogueFetch::handleResponse(const cta::xrd::Request &request, std::uniqu
   // wait until the data stream has been processed before exiting
   stream_future.wait();
 }
+
+
 
 } // cliTool
 } // cta

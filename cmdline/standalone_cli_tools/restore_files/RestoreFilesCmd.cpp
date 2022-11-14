@@ -33,12 +33,6 @@
 #include <iostream>
 #include <memory>
 
-// GLOBAL VARIABLES : used to pass information between main thread and stream handler thread
-
-// global synchronisation flag
-std::atomic<bool> isHeaderSent;
-std::list<cta::admin::RecycleTapeFileLsItem> deletedTapeFiles;
-std::list<std::pair<std::string,std::string>> listedTapeFiles;
 
 namespace XrdSsiPb {
 /*!
@@ -49,50 +43,6 @@ class UserException : public std::runtime_error
 public:
   UserException(const std::string &err_msg) : std::runtime_error(err_msg) {}
 }; // class UserException
-
-/*!
- * Alert callback.
- *
- * Defines how Alert messages should be logged
- */
-template<>
-void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
-{
-   Log::DumpProtobuf(Log::PROTOBUF, &alert);
-}
-
-/*!
- * Data/Stream callback.
- *
- * Defines how incoming records from the stream should be handled
- */
-template<>
-void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
-{
-  using namespace cta::xrd;
-  using namespace cta::admin;
-
-  // Wait for primary response to be handled before allowing stream response
-  while(!isHeaderSent) { std::this_thread::yield(); }
-
-  switch(record.data_case()) {
-    case Data::kRtflsItem:
-      {
-        auto item = record.rtfls_item();
-        deletedTapeFiles.push_back(item);
-      }
-      break;
-    case Data::kTflsItem:
-      {
-        const auto item = record.tfls_item();
-        const auto instanceAndFid = std::make_pair(item.df().disk_instance(), item.df().disk_id());
-        listedTapeFiles.push_back(instanceAndFid);
-      }
-      break;
-    default:
-      throw std::runtime_error("Received invalid stream data from CTA Frontend for the cta-restore-deleted-files command.");
-   }
-}
 
 }
 
@@ -107,7 +57,6 @@ class RestoreFilesCmdException : public std::runtime_error
 public:
   RestoreFilesCmdException(const std::string &err_msg) : std::runtime_error(err_msg) {}
 }; // class UserException
-
 
 
 //------------------------------------------------------------------------------
@@ -149,7 +98,6 @@ int RestoreFilesCmd::exceptionThrowingMain(const int argc, char *const *const ar
     throw XrdSsiPb::UserException("Disk instance must be provided when fids are used as input.");
   }
 
-
   if (cmdLineArgs.m_debug) {
     m_log.setLogMask("DEBUG");
   } else {
@@ -160,7 +108,8 @@ int RestoreFilesCmd::exceptionThrowingMain(const int argc, char *const *const ar
   m_serviceProviderPtr = std::move(serviceProvider);
   m_endpointMapPtr = std::move(endpointmap);
 
-  listDeletedFilesCta();
+  std::list<cta::admin::RecycleTapeFileLsItem> deletedTapeFiles = CatalogueFetch::listDeletedFilesCta(m_vid, m_diskInstance, m_archiveFileId, m_copyNumber, m_fids, m_serviceProviderPtr, m_log);
+
   for (auto& file : deletedTapeFiles) {
     /* From https://eoscta.docs.cern.ch/lifecycle/Delete/:
      *
@@ -177,15 +126,15 @@ int RestoreFilesCmd::exceptionThrowingMain(const int argc, char *const *const ar
       // archive file exists in CTA, so only need to restore the file copy
       restoreDeletedFileCopyCta(file);
       // sanity check
-      auto diskInstanceAndFxid = getInstanceAndFidFromCTA(file);
-      auto eosArchiveFileIdAndChecksum = getArchiveFileIdAndChecksumFromEOS(diskInstanceAndFxid.first, diskInstanceAndFxid.second);
+      const auto [diskInstance, diskFileId] = CatalogueFetch::getInstanceAndFid(std::to_string(file.archive_file_id()), m_serviceProviderPtr, m_log);
+      auto eosArchiveFileIdAndChecksum = getArchiveFileIdAndChecksumFromEOS(diskInstance, diskFileId);
       auto &eosArchiveFileId = eosArchiveFileIdAndChecksum.first;
       auto &eosChecksum = eosArchiveFileIdAndChecksum.second;
       auto &ctaChecksum = file.checksum().begin()->value();
       std::list<cta::log::Param> params;
       params.push_back(cta::log::Param("archiveFileId", file.archive_file_id()));
-      params.push_back(cta::log::Param("diskInstance", diskInstanceAndFxid.first));
-      params.push_back(cta::log::Param("diskFileId", diskInstanceAndFxid.second));
+      params.push_back(cta::log::Param("diskInstance", diskInstance));
+      params.push_back(cta::log::Param("diskFileId", diskFileId));
       params.push_back(cta::log::Param("checksum", ctaChecksum));
       if(eosArchiveFileId == file.archive_file_id() && eosChecksum == ctaChecksum) {
         m_log(cta::log::INFO, "File metadata in EOS and CTA matches", params);
@@ -200,94 +149,6 @@ int RestoreFilesCmd::exceptionThrowingMain(const int argc, char *const *const ar
     }
   }
   return 0;
-}
-
-//------------------------------------------------------------------------------
-// listDeletedFilesCta
-//------------------------------------------------------------------------------
-void RestoreFilesCmd::listDeletedFilesCta() const {
-  std::list<cta::log::Param> params;
-  params.push_back(cta::log::Param("userName", getUsername()));
-
-  cta::xrd::Request request;
-
-  auto &admincmd = *(request.mutable_admincmd());
-
-  request.set_client_cta_version(CTA_VERSION);
-  request.set_client_xrootd_ssi_protobuf_interface_version(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
-  admincmd.set_cmd(cta::admin::AdminCmd::CMD_RECYCLETAPEFILE);
-  admincmd.set_subcmd(cta::admin::AdminCmd::SUBCMD_LS);
-
-  if (m_vid) {
-    params.push_back(cta::log::Param("tapeVid", m_vid.value()));
-    auto key = cta::admin::OptionString::VID;
-    auto new_opt = admincmd.add_option_str();
-    new_opt->set_key(key);
-    new_opt->set_value(m_vid.value());
-  }
-  if (m_diskInstance) {
-    params.push_back(cta::log::Param("diskInstance", m_diskInstance.value()));
-    auto key = cta::admin::OptionString::INSTANCE;
-    auto new_opt = admincmd.add_option_str();
-    new_opt->set_key(key);
-    new_opt->set_value(m_diskInstance.value());
-  }
-  if (m_archiveFileId) {
-    params.push_back(cta::log::Param("archiveFileId", m_archiveFileId.value()));
-    auto key = cta::admin::OptionUInt64::ARCHIVE_FILE_ID;
-    auto new_opt = admincmd.add_option_uint64();
-    new_opt->set_key(key);
-    new_opt->set_value(std::stoi(m_archiveFileId.value()));
-  }
-  if (m_copyNumber) {
-    params.push_back(cta::log::Param("copyNb", m_copyNumber.value()));
-    auto key = cta::admin::OptionUInt64::COPY_NUMBER;
-    auto new_opt = admincmd.add_option_uint64();
-    new_opt->set_key(key);
-    new_opt->set_value(m_copyNumber.value());
-  }
-  if (m_fids) {
-    std::stringstream ss;
-    auto key = cta::admin::OptionStrList::FILE_ID;
-    auto new_opt = admincmd.add_option_str_list();
-    new_opt->set_key(key);
-    for (const auto &fid : m_fids.value()) {
-      new_opt->add_item(fid);
-      ss << fid << ",";
-    }
-    auto fids = ss.str();
-    fids.pop_back(); // remove last ","
-    params.push_back(cta::log::Param("diskFileId", fids));
-  }
-
-  m_log(cta::log::INFO, "Listing deleted file in CTA catalogue", params);
-
-  // Send the Request to the Service and get a Response
-  cta::xrd::Response response;
-  auto stream_future = m_serviceProviderPtr->SendAsync(request, response);
-
-  // Handle responses
-  switch(response.type())
-  {
-    using namespace cta::xrd;
-    using namespace cta::admin;
-    case Response::RSP_SUCCESS:
-      // Print message text
-      std::cout << response.message_txt();
-      // Allow stream processing to commence
-      isHeaderSent = true;
-      break;
-    case Response::RSP_ERR_PROTOBUF:                     throw XrdSsiPb::PbException(response.message_txt());
-    case Response::RSP_ERR_USER:                         throw XrdSsiPb::UserException(response.message_txt());
-    case Response::RSP_ERR_CTA:                          throw std::runtime_error(response.message_txt());
-    default:                                             throw XrdSsiPb::PbException("Invalid response type.");
-  }
-
-  // wait until the data stream has been processed before exiting
-  stream_future.wait();
-
-  params.push_back(cta::log::Param("nbFiles", deletedTapeFiles.size()));
-  m_log(cta::log::INFO, "Listed deleted file in CTA catalogue", params);
 }
 
 //------------------------------------------------------------------------------
@@ -657,66 +518,8 @@ uint64_t RestoreFilesCmd::restoreDeletedFileEos(const cta::admin::RecycleTapeFil
 
   auto new_fid = getFileIdEos(rtfls_item.disk_instance(), rtfls_item.disk_file_path());
   return new_fid;
-
 }
 
-//------------------------------------------------------------------------------
-// getFxidFromCTA
-//------------------------------------------------------------------------------
-std::pair<std::string,std::string> RestoreFilesCmd::getInstanceAndFidFromCTA(const cta::admin::RecycleTapeFileLsItem& file) {
-  {
-    std::list<cta::log::Param> params;
-    params.push_back(cta::log::Param("archiveFileId", file.archive_file_id()));
-    m_log(cta::log::DEBUG, "cta-admin tapefile ls", params);
-  }
-
-  cta::xrd::Request request;
-  auto &admincmd = *(request.mutable_admincmd());
-
-  request.set_client_cta_version(CTA_VERSION);
-  request.set_client_xrootd_ssi_protobuf_interface_version(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
-  admincmd.set_cmd(cta::admin::AdminCmd::CMD_TAPEFILE);
-  admincmd.set_subcmd(cta::admin::AdminCmd::SUBCMD_LS);
-  auto new_opt = admincmd.add_option_uint64();
-  new_opt->set_key(cta::admin::OptionUInt64::ARCHIVE_FILE_ID);
-  new_opt->set_value(file.archive_file_id());
-
-  // Send the Request to the Service and get a Response
-  cta::xrd::Response response;
-  auto stream_future = m_serviceProviderPtr->SendAsync(request, response);
-
-  // Handle responses
-  switch(response.type())
-  {
-    using namespace cta::xrd;
-    using namespace cta::admin;
-    case Response::RSP_SUCCESS:
-      // Print message text
-      std::cout << response.message_txt();
-      // Allow stream processing to commence
-      isHeaderSent = true;
-      break;
-    case Response::RSP_ERR_PROTOBUF:                     throw XrdSsiPb::PbException(response.message_txt());
-    case Response::RSP_ERR_USER:                         throw XrdSsiPb::UserException(response.message_txt());
-    case Response::RSP_ERR_CTA:                          throw std::runtime_error(response.message_txt());
-    default:                                             throw XrdSsiPb::PbException("Invalid response type.");
-  }
-
-  // wait until the data stream has been processed before exiting
-  stream_future.wait();
-  if(listedTapeFiles.size() != 1) {
-    throw std::runtime_error("Unexpected result set: listedTapeFiles size expected=1 received=" + std::to_string(listedTapeFiles.size()));
-  }
-  auto listedTapeFile = listedTapeFiles.back();
-  listedTapeFiles.clear();
-  {
-    std::list<cta::log::Param> params;
-    params.push_back(cta::log::Param("diskInstance", listedTapeFile.first));
-    params.push_back(cta::log::Param("diskFileId", listedTapeFile.second));
-    m_log(cta::log::DEBUG, "Obtained file metadata from CTA", params);
-  }
-  return listedTapeFile;
-}
 
 //------------------------------------------------------------------------------
 // getArchiveFileIdFromEOS

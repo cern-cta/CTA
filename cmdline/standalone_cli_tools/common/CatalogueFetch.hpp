@@ -54,6 +54,21 @@ public:
   */
   static std::list<std::string> getVids(std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr, cta::log::StdoutLogger &log);
 
+  /**
+  * Fetches the deleted files form the CTA catalogue
+  *
+  * @return A list of deleted files
+  */
+  static std::list<cta::admin::RecycleTapeFileLsItem> listDeletedFilesCta(
+    const std::optional<std::string> &vid,
+    const std::optional<std::string> &diskInstance,
+    const std::optional<std::string> &archiveFileId,
+    const std::optional<std::uint64_t> &copyNumber,
+    const std::optional<std::list<std::string>> &fids,
+    std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr,
+    cta::log::StdoutLogger &log
+  );
+
 private:
   static void handleResponse(const cta::xrd::Request &request, std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr);
 };

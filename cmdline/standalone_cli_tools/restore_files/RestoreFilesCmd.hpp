@@ -53,25 +53,6 @@ public:
   int exceptionThrowingMain(const int argc, char *const *const argv) override;
 
   /**
-   * Sets internal configuration parameters to be used for reading.
-   * It reads cta frontend parameters from /etc/cta/cta-cli.conf
-   *
-   * @param username The name of the user running the command-line tool.
-   * @param cmdLineArgs The arguments parsed from the command line.
-   */
-  void readAndSetConfiguration(const std::string &userName, const CmdLineArgs &cmdLineArgs);
-
-  /**
-   * Populate the namespace endpoint configuration from a keytab file
-   */
-  void setNamespaceMap(const std::string &keytab_file);
-
-  /**
-   * Restores the specified deleted files in the cta catalogue
-   */
-  void listDeletedFilesCta() const;
-
-  /**
    * Queries the eos mgm for the current eos file and container id
    * Must be called before any other call to EOS, to initialize the grpc
    * client cid and fid
@@ -138,13 +119,6 @@ public:
   uint64_t restoreDeletedFileEos(const cta::admin::RecycleTapeFileLsItem &file) const;
 
 private:
-  /**
-   * Query CTA for the disk instance and fid of the restored file
-   *
-   * @param file  The restored tape file in CTA
-   * @return      Tuple of EOS disk instance and file ID (fid) as a decimal string
-   */
-  std::pair<std::string,std::string> getInstanceAndFidFromCTA(const cta::admin::RecycleTapeFileLsItem& file);
 
   /**
    * Query EOS for the archiveFileId and checksum of the restored file
