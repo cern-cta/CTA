@@ -15,11 +15,12 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "cmdline/standalone_cli_tools/restore_files/RestoreFilesCmd.hpp"
-#include "cmdline/standalone_cli_tools/common/CatalogueFetch.hpp"
 #include "cmdline/CtaAdminCmdParse.hpp"
-#include "common/utils/utils.hpp"
+#include "cmdline/standalone_cli_tools/common/CatalogueFetch.hpp"
+#include "cmdline/standalone_cli_tools/common/ConnectionConfiguration.hpp"
+#include "cmdline/standalone_cli_tools/restore_files/RestoreFilesCmd.hpp"
 #include "common/checksum/ChecksumBlob.hpp"
+#include "common/utils/utils.hpp"
 #include "CtaFrontendApi.hpp"
 
 #include <XrdSsiPbLog.hpp>
@@ -123,7 +124,7 @@ RestoreFilesCmd::RestoreFilesCmd(std::istream &inStream, std::ostream &outStream
   const int kStripeSize    = (0x0 <<  8); // 1 stripe
   const int kStripeWidth   = (0x0 << 16); // 4K blocks
   const int kBlockChecksum = (0x1 << 20);
-  
+
   // Default single replica layout id should be 00100012
   m_defaultFileLayout = kReplica | kAdler | kStripeSize | kStripeWidth | kBlockChecksum;
 }
@@ -138,7 +139,27 @@ int RestoreFilesCmd::exceptionThrowingMain(const int argc, char *const *const ar
     return 0;
   }
 
-  readAndSetConfiguration(getUsername(), cmdLineArgs);
+  m_vid = cmdLineArgs.m_vid;
+  m_diskInstance = cmdLineArgs.m_diskInstance;
+  m_fids = cmdLineArgs.m_fids;
+  m_copyNumber = cmdLineArgs.m_copyNumber;
+  m_archiveFileId = cmdLineArgs.m_archiveFileId;
+
+  if (m_fids && !m_diskInstance) {
+    throw XrdSsiPb::UserException("Disk instance must be provided when fids are used as input.");
+  }
+
+
+  if (cmdLineArgs.m_debug) {
+    m_log.setLogMask("DEBUG");
+  } else {
+    m_log.setLogMask("INFO");
+  }
+
+  auto [serviceProvider, endpointmap] = ConnConfiguration::readAndSetConfiguration(m_log, getUsername(), cmdLineArgs);
+  m_serviceProviderPtr = std::move(serviceProvider);
+  m_endpointMapPtr = std::move(endpointmap);
+
   listDeletedFilesCta();
   for (auto& file : deletedTapeFiles) {
     /* From https://eoscta.docs.cern.ch/lifecycle/Delete/:
@@ -179,103 +200,6 @@ int RestoreFilesCmd::exceptionThrowingMain(const int argc, char *const *const ar
     }
   }
   return 0;
-}
-
-//------------------------------------------------------------------------------
-// readAndSetConfiguration
-//------------------------------------------------------------------------------
-void RestoreFilesCmd::readAndSetConfiguration(
-  const std::string &userName,
-  const CmdLineArgs &cmdLineArgs) {
-
-  m_vid = cmdLineArgs.m_vid;
-  m_diskInstance = cmdLineArgs.m_diskInstance;
-  m_fids = cmdLineArgs.m_fids;
-  m_copyNumber = cmdLineArgs.m_copyNumber;
-  m_archiveFileId = cmdLineArgs.m_archiveFileId;
-
-  if (cmdLineArgs.m_debug) {
-    m_log.setLogMask("DEBUG");
-  } else {
-    m_log.setLogMask("INFO");
-  }
-
-  if (m_fids && !m_diskInstance) {
-    throw XrdSsiPb::UserException("Disk instance must be provided when fids are used as input.");
-  }
-
-  // Set CTA frontend configuration options
-  const std::string cli_config_file = "/etc/cta/cta-cli.conf";
-  XrdSsiPb::Config cliConfig(cli_config_file, "cta");
-  cliConfig.set("resource", "/ctafrontend");
-  cliConfig.set("response_bufsize", StreamBufferSize);         // default value = 1024 bytes
-  cliConfig.set("request_timeout", DefaultRequestTimeout);     // default value = 10s
-
-  // Allow environment variables to override config file
-  cliConfig.getEnv("request_timeout", "XRD_REQUESTTIMEOUT");
-
-  // If XRDDEBUG=1, switch on all logging
-  if(getenv("XRDDEBUG")) {
-    cliConfig.set("log", "all");
-  }
-  // If fine-grained control over log level is required, use XrdSsiPbLogLevel
-  cliConfig.getEnv("log", "XrdSsiPbLogLevel");
-
-  // Validate that endpoint was specified in the config file
-  if(!cliConfig.getOptionValueStr("endpoint").first) {
-    throw std::runtime_error("Configuration error: cta.endpoint missing from " + cli_config_file);
-  }
-
-  // If the server is down, we want an immediate failure. Set client retry to a single attempt.
-  XrdSsiProviderClient->SetTimeout(XrdSsiProvider::connect_N, 1);
-
-  m_serviceProviderPtr.reset(new XrdSsiPbServiceType(cliConfig));
-
-  // Set CTA frontend configuration options to connect to eos
-  const std::string frontend_xrootd_config_file = "/etc/cta/cta-frontend-xrootd.conf";
-  XrdSsiPb::Config frontendXrootdConfig(frontend_xrootd_config_file, "cta");
-
-  // Get the endpoint for namespace queries
-  auto nsConf = frontendXrootdConfig.getOptionValueStr("ns.config");
-  if(nsConf.first) {
-    setNamespaceMap(nsConf.second);
-  } else {
-    throw std::runtime_error("Configuration error: cta.ns.config missing from " + frontend_xrootd_config_file);
-  }
-}
-
-void RestoreFilesCmd::setNamespaceMap(const std::string &keytab_file) {
-  // Open the keytab file for reading
-  std::ifstream file(keytab_file);
-  if(!file) {
-    throw cta::exception::UserError("Failed to open namespace keytab configuration file " + keytab_file);
-  }
-  ::eos::client::NamespaceMap_t namespaceMap;
-  // Parse the keytab line by line
-  std::string line;
-  for(int lineno = 0; std::getline(file, line); ++lineno) {
-    // Strip out comments
-    auto pos = line.find('#');
-    if(pos != std::string::npos) {
-      line.resize(pos);
-    }
-
-    // Parse one line
-    std::stringstream ss(line);
-    std::string diskInstance;
-    std::string endpoint;
-    std::string token;
-    std::string eol;
-    ss >> diskInstance >> endpoint >> token >> eol;
-
-    // Ignore blank lines, all other lines must have exactly 3 elements
-    if(token.empty() || !eol.empty()) {
-      if(diskInstance.empty() && endpoint.empty() && token.empty()) continue;
-      throw cta::exception::UserError("Could not parse namespace keytab configuration file line " + std::to_string(lineno) + ": " + line);
-    }
-    namespaceMap.insert(std::make_pair(diskInstance, ::eos::client::Namespace(endpoint, token)));
-  }
-  m_endpointMapPtr = std::make_unique<::eos::client::EndpointMap>(namespaceMap);
 }
 
 //------------------------------------------------------------------------------

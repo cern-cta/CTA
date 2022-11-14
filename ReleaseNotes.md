@@ -3,6 +3,7 @@
 ### Features
 - cta/CTA#133 - Change severity from ERROR to INFO for "reported a batch of retrieve jobs" log message in Scheduler.cpp
 - cta/CTA#201 - Improve error message when oracle configured without oracle support
+- cta/CTA#203 - Refactor cta-restore-deletes-files by using the connection configuration class in standalone_cli_tools/common
 
 # v4.7.13-1
 ## Summary
