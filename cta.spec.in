@@ -578,10 +578,13 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 
 
 %changelog
-* Tue Oct 04 2022 Joao Afonso <joao.afonso@cern.ch> - 4.7.12-1
+* Tue Nov 08 2022 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4.7.13-2
+- Fix gitlab release tagging pipeline
+
+* Mon Nov 07 2022 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4.7.13-1
 - Various fixes and improvements to CTA, see ReleaseNotes.md for details
-- Performance improvement: optimized DB queries for getting tape drive states
-- Upgrade eos5 to 5.1.1-1
+- Change Owner Identifier in the header of Tapes
+- Tool to update the storage class
 
 * Tue Oct 04 2022 Joao Afonso <joao.afonso@cern.ch> - 4.7.12-1
 - Various fixes and improvements to CTA, see ReleaseNotes.md for details
