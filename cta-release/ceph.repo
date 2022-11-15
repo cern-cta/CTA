@@ -1,8 +1,0 @@
-[Ceph]
-name=Ceph packages for $basearch
-baseurl=http://download.ceph.com/rpm-nautilus/el$releasever/$basearch
-enabled=1
-gpgcheck=1
-protect=1
-type=rpm-md
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-ceph

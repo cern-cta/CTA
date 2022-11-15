@@ -37,6 +37,12 @@
 - cta/CTA#182 - Fix cta_valgrind error
 - cta/CTA#197 - Include order in XrdSsiCtaRequestMessage.cpp
 
+# v4.7.12-2
+
+## Summary
+### Building and Packaging
+- cta/CTA#15 - Repackaging CTA for easy installation of public RPMs
+
 # v4.7.12-1
 
 ## Summary
