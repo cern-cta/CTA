@@ -1,4 +1,5 @@
 # v4.NEXT
+
 ## Summary
 ### Features
 - cta/CTA#133 - Change severity from ERROR to INFO for "reported a batch of retrieve jobs" log message in Scheduler.cpp
@@ -7,7 +8,20 @@
 ### Bug fixes
 - cta/CTA#209 - handle if $HOME is not defined when choosing config file for cta-admin
 
+# v4.7.13-3
+
+## Summary
+### Building and Packaging
+- cta/CTA#15 - Repackaging CTA for easy installation of public RPMs
+
+# v4.7.13-2
+
+## Summary
+### Building and Packaging
+- cta/CTA#207 - Fix tag pipeline
+
 # v4.7.13-1
+
 ## Summary
 ### Features
 - cta/CTA#16 - Add option for a user config file
