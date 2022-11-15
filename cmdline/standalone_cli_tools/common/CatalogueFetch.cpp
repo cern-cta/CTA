@@ -70,14 +70,14 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
   switch(record.data_case()) {
     case Data::kRtflsItem:
       {
-        auto item = record.rtfls_item();
+        const auto item = record.rtfls_item();
         g_deletedTapeFiles.push_back(item);
       }
       break;
     case Data::kTflsItem:
       {
-        auto item = record.tfls_item();
-        auto instanceAndFid = std::make_pair(item.df().disk_instance(), item.df().disk_id());
+        const auto item = record.tfls_item();
+        const auto instanceAndFid = std::make_pair(item.df().disk_instance(), item.df().disk_id());
         g_instanceAndFids.push_back(instanceAndFid);
       }
       break;
@@ -127,9 +127,9 @@ std::tuple<std::string,std::string> CatalogueFetch::getInstanceAndFid(const std:
   handleResponse(request, serviceProviderPtr);
 
   if(g_instanceAndFids.size() != 1) {
-    throw std::runtime_error("Unexpected result set: g_instanceAndFid size expected=1 received=" + std::to_string(g_instanceAndFids.size()));
+    throw std::runtime_error("Unexpected result set: g_instanceAndFid size expected=1, received=" + std::to_string(g_instanceAndFids.size()));
   }
-  const auto instanceAndFid = g_instanceAndFids.back();
+  const auto instanceAndFid = g_instanceAndFids.front();
   g_instanceAndFids.clear();
   {
     std::list<cta::log::Param> params;
