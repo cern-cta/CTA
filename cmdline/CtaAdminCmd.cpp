@@ -165,10 +165,10 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
    m_execname(argv[0])
 {
    auto &admincmd = *(m_request.mutable_admincmd());
-   
+
    m_request.set_client_cta_version(CTA_VERSION);
    m_request.set_client_xrootd_ssi_protobuf_interface_version(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
-   
+
    // Strip path from execname
 
    size_t p = m_execname.find_last_of('/');
@@ -197,7 +197,7 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
    }
 
    // Help is a special subcommand which suppresses errors and prints usage
-   
+
    if(argc > argno && std::string(argv[argno]) == "help") {
       throwUsage();
    }
@@ -231,16 +231,17 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
 }
 
 const std::string CtaAdminCmd::getConfigFilePath() const {
-  std::filesystem::path config_file = DEFAULT_CLI_CONFIG;
-   
-  const std::filesystem::path home = std::getenv("HOME");
-  const std::filesystem::path home_dir_config_file = home / ".cta/cta-cli.conf";
-  if(std::filesystem::exists(home_dir_config_file)) { config_file = home_dir_config_file; }
+   std::filesystem::path config_file = DEFAULT_CLI_CONFIG;
 
-  if(m_config) {
+   if(std::getenv("HOME")) {
+      const std::filesystem::path home = std::getenv("HOME");
+      const std::filesystem::path home_dir_config_file = home / ".cta/cta-cli.conf";
+      if(std::filesystem::exists(home_dir_config_file)) { config_file = home_dir_config_file; }
+   }
+   if(m_config) {
     config_file = m_config.value();
-  }
-  return config_file;
+   }
+   return config_file;
 }
 
 void CtaAdminCmd::send() const
