@@ -229,6 +229,8 @@ public:
 
   void setTapeDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string & reason) override;
 
+  void setTapeRepackingDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string & reason) override;
+
   void setTapeDirty(const std::string & vid) override;
 
   void modifyTapeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::optional<std::string> &comment) override;

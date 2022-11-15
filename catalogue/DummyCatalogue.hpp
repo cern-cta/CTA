@@ -186,6 +186,7 @@ public:
   void checkTapeForLabel(const std::string& vid) override;
   uint64_t getNbFilesOnTape(const std::string& vid) const  override;
   void setTapeDisabled(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string & reason) override;
+  void setTapeRepackingDisabled(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string & reason) override;
   void setTapeFull(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const bool fullValue) override;
   void setTapeDirty(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const bool dirtyValue) override;
   void setTapeDirty(const std::string & vid) override;

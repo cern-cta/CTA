@@ -408,6 +408,10 @@ void CatalogueRetryWrapper::setTapeDisabled(const common::dataStructures::Securi
   return retryOnLostConnection(m_log, [&]{return m_catalogue->setTapeDisabled(admin, vid, reason);}, m_maxTriesToConnect);
 }
 
+void CatalogueRetryWrapper::setTapeRepackingDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string & reason) {
+  return retryOnLostConnection(m_log, [&]{return m_catalogue->setTapeRepackingDisabled(admin, vid, reason);}, m_maxTriesToConnect);
+}
+
 void CatalogueRetryWrapper::setTapeDirty(const std::string & vid) {
   return retryOnLostConnection(m_log,[&]{ return m_catalogue->setTapeDirty(vid);}, m_maxTriesToConnect);
 }
