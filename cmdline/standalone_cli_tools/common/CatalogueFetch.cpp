@@ -129,7 +129,7 @@ std::tuple<std::string,std::string> CatalogueFetch::getInstanceAndFid(const std:
   if(g_instanceAndFids.size() != 1) {
     throw std::runtime_error("Unexpected result set: g_instanceAndFid size expected=1 received=" + std::to_string(g_instanceAndFids.size()));
   }
-  auto instanceAndFid = g_instanceAndFids.back();
+  const auto instanceAndFid = g_instanceAndFids.back();
   g_instanceAndFids.clear();
   {
     std::list<cta::log::Param> params;
