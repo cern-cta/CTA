@@ -2079,11 +2079,6 @@ void RequestMessage::processTapeFile_Ch(cta::xrd::Response &response)
   if (instance) {
     searchCriteria.diskInstance = instance.value();
   }
-
-  auto archiveFile = m_catalogue.getArchiveFileForDeletion(searchCriteria);
-  grpc::EndpointMap endpoints(m_namespaceMap);
-  auto diskFilePath = endpoints.getPath(archiveFile.diskInstance, archiveFile.diskFileId);
-  archiveFile.diskFileInfo.path = diskFilePath;
 }
 
 void RequestMessage::processTapeFile_Rm(cta::xrd::Response &response)
