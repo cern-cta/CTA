@@ -22,6 +22,8 @@ EOF
 exit 1
 }
 
+die() { echo "$@" 1>&2 ; exit 1; }
+
 CTA_VERSION=""
 
 while getopts "n:v:" o; do
@@ -102,6 +104,9 @@ else
   kubectl -n ${NAMESPACE} logs dbupdatetest &> "../../../pod_logs/${NAMESPACE}/liquibase-update.log"
   exit 1
 fi
+
+# Check if cta-catalogue-schema-verify has a successing output
+kubectl -n ${NAMESPACE} exec ctafrontend -- cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf || die "Error verifying catalogue"
 
 # If the previous and new schema has same major version, we can run a simple archive-retrieve test
 PREVIOUS_MAJOR=$(echo ${PREVIOUS_SCHEMA_VERSION} | cut -d. -f1)

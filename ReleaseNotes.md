@@ -6,6 +6,7 @@
 - cta/CTA#201 - Improve error message when oracle configured without oracle support
 - cta/CTA#203 - Refactor cta-restore-deletes-files by using the connection configuration class in standalone_cli_tools/common
 ### Bug fixes
+- cta/CTA#13 - Fix `cta-catalogue-schema-verify` checking of NOT NULL constraints in Postgres
 - cta/CTA#209 - handle if $HOME is not defined when choosing config file for cta-admin
 
 # v4.7.13-3

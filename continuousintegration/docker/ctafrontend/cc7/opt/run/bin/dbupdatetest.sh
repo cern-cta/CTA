@@ -43,8 +43,7 @@ yum install --assumeyes wget libaio;
 mkdir -p /shared/etc_cta;
 echo ${DATABASEURL} &> /shared/etc_cta/cta-catalogue.conf;
 
-echo $CTA_VERSION
-
+cd /root
 if [[ $CTA_VERSION ]]
 then
   echo "CTA_VERSION"
