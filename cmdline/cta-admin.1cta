@@ -18,7 +18,7 @@
 cta-admin \- Administrative command interface for CTA tape system operators
 
 .SH SYNOPSIS
-\fBcta-admin\fP [--json] \fIcommand\fR [\fIsubcommand\fR] [\fIoptions\fR]
+\fBcta-admin\fP [--json] [--config] <path> \fIcommand\fR [\fIsubcommand\fR] [\fIoptions\fR]
 
 .SH DESCRIPTION
 .P
@@ -141,6 +141,12 @@ Some commands, such as \fBcta-admin tapefile ls\fR, can return an arbitrarily lo
 which are normally returned in plain text format, with one record per line. If the --json option is
 supplied, the results are returned as an array of records in JSON format. This option is intended for
 use by scripts to ease automated processing of results.
+
+.TP
+--config
+This option is intended for users who want to specify the location of the config file as an argument in the cli.
+If the option is not provided, the script will look for the config file ~/.cta/cta-cli.conf. The default config file
+/etc/cta/cta-cli.conf is used if the user does not provide one.
 
 .SH CONFIGURATION
 The \fBcta-admin\fP configuration is specified in \fI/etc/cta/cta-cli.conf\fR. The following configuration

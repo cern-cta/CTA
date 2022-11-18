@@ -2,6 +2,7 @@
 
 ### Features
 - cta/CTA#211 - Add functionality for reading encrypted tapes with cta-readtp
+- cta/CTA#214 - Update manual page for cta-admin to include info about user defined config files.
 
 # v4.7.14-1
 
