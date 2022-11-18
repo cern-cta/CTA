@@ -41,6 +41,7 @@ namespace catalogue {
 class Catalogue;
 }
 
+
 namespace tapeserver {
 namespace readtp {
 
@@ -62,7 +63,8 @@ public:
   ReadtpCmd(std::istream &inStream, std::ostream &outStream,
     std::ostream &errStream, cta::log::StdoutLogger &log,
     cta::log::DummyLogger &dummyLog,
-    cta::mediachanger::MediaChangerFacade &mc);
+    cta::mediachanger::MediaChangerFacade &mc, const bool useEncryption,
+    const std::string& externalEncryptionKeyScript);
 
   /**
    * Destructor.
@@ -96,6 +98,14 @@ private:
    * @param cmdLineArgs The arguments parsed from the command line.
    */
   void readAndSetConfiguration(const std::string &userName, const ReadtpCmdLineArgs &cmdLineArgs);
+
+  /**
+  * Configures encryption to be able to read from an encrypted tape
+  *
+  * @param vid The volume identifier of the tape to be mounted.
+  * @param drive The tape drive.
+  */
+  void configureEncryption(const std::string &vid, castor::tape::tapeserver::drive::DriveInterface &drive);
 
   /**
    * Reads a file line by line, strips comments and returns a list of the file lines.
@@ -286,7 +296,7 @@ private:
    * The object representing the media changer.
    */
   cta::mediachanger::MediaChangerFacade &m_mc;
-  
+
   /**
    * The boolean variable which determinate logical block protection usage by
    * readtp commands. Hard coded when we create the class.
@@ -307,6 +317,12 @@ private:
    * Number of failed reads.
    */
   uint64_t m_nbFailedReads;
+
+  /**
+  * Encryption helper object 
+  */
+  castor::tape::tapeserver::daemon::EncryptionControl m_encryptionControl;
+
 }; // class ReadtpCmd
 
 CTA_GENERATE_EXCEPTION_CLASS(NoSuchFSeqException);

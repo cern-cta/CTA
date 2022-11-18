@@ -1,3 +1,8 @@
+# v.NEXT
+
+### Features
+- cta/CTA#211 - Add functionality for reading encrypted tapes with cta-readtp
+
 # v4.7.14-1
 
 ## Summary

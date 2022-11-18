@@ -29,6 +29,7 @@
 #include "rdbms/Login.hpp"
 #include "scheduler/RetrieveJob.hpp"
 #include "tapeserver/castor/tape/Constants.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/Payload.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/ReadSession.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/ReadSessionFactory.hpp"
@@ -39,7 +40,6 @@
 #include "tapeserver/readtp/TapeFseqRange.hpp"
 #include "tapeserver/readtp/TapeFseqRangeListSequence.hpp"
 
-
 namespace cta {
 namespace tapeserver {
 namespace readtp {
@@ -49,14 +49,16 @@ namespace readtp {
 //------------------------------------------------------------------------------
 ReadtpCmd::ReadtpCmd(std::istream &inStream, std::ostream &outStream,
   std::ostream &errStream, cta::log::StdoutLogger &log, cta::log::DummyLogger &dummyLog,
-  cta::mediachanger::MediaChangerFacade &mc):
+  cta::mediachanger::MediaChangerFacade &mc, const bool useEncryption, 
+  const std::string& externalEncryptionKeyScript):
   CmdLineTool(inStream, outStream, errStream),
   m_log(log),
   m_dummyLog(dummyLog),
   m_mc(mc),
   m_useLbp(true),
   m_nbSuccessReads(0),
-  m_nbFailedReads(0) {
+  m_nbFailedReads(0),
+  m_encryptionControl(useEncryption, externalEncryptionKeyScript) {
 }
 
 //------------------------------------------------------------------------------
@@ -107,6 +109,16 @@ int ReadtpCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
     returnCode = 1; 
   }
   unloadTape(m_vid, drive);
+
+  // Disable encryption (or at least try)
+  try {
+    if (m_encryptionControl.disable(drive)) {
+      m_log(cta::log::INFO, "Turned encryption off before unmounting");
+    }
+  } catch (cta::exception::Exception& ex) {
+    m_log(cta::log::ERR, "Failed to turn off encryption before unmounting");
+  }
+
   dismountTape(m_vid);
 
   return returnCode;
@@ -425,6 +437,9 @@ void ReadtpCmd::readTapeFile(
   volInfo.nbFiles = 0;
   volInfo.mountType = cta::common::dataStructures::MountType::Retrieve;
   volInfo.labelFormat = labelFormat;
+
+  configureEncryption(m_vid, drive);
+
   const auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(drive, volInfo, m_useLbp);
 
   catalogue::TapeFileSearchCriteria searchCriteria;
@@ -559,6 +574,38 @@ void ReadtpCmd::rewindDrive(
   m_log(cta::log::INFO, "Rewinding tape", params);
   drive.rewind();
   m_log(cta::log::INFO, "Successfully rewound tape", params);
+}
+
+//------------------------------------------------------------------------------
+// enableEncryption
+//------------------------------------------------------------------------------
+void ReadtpCmd::configureEncryption(
+  const std::string &vid,
+  castor::tape::tapeserver::drive::DriveInterface &drive) {
+  try {
+    // We want those scoped params to last for the whole mount.
+    // This will allow each session to be logged with its encryption
+    // status:
+    std::list<cta::log::Param> params;
+    {
+      auto encryptionStatus = m_encryptionControl.enable(drive, vid, castor::tape::tapeserver::daemon::EncryptionControl::SetTag::NO_SET_TAG);
+      if (encryptionStatus.on) {
+        params.push_back(cta::log::Param("encryption", "on"));
+        params.push_back(cta::log::Param("encryptionKey", encryptionStatus.keyName));
+        params.push_back(cta::log::Param("stdout", encryptionStatus.stdout));
+        m_log(cta::log::INFO, "Drive encryption enabled for this mount", params);
+      } else {
+        params.push_back(cta::log::Param("encryption", "off"));
+        m_log(cta::log::INFO, "Drive encryption not enabled for this mount", params);
+      }
+    }
+  }
+  catch (cta::exception::Exception& ex) {
+    std::list<cta::log::Param> params;
+    params.push_back(cta::log::Param("ErrorMessage", ex.getMessage().str()));
+    m_log(cta::log::ERR, "Drive encryption could not be enabled for this mount.", params);
+    throw;
+  }
 }
 
 //------------------------------------------------------------------------------

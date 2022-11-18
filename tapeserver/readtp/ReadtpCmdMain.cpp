@@ -17,12 +17,17 @@
 
 #include <iostream>
 
+#include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
+#include "tapeserver/daemon/TapedConfiguration.hpp"
 #include "tapeserver/readtp/ReadtpCmd.hpp"
 
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
 int main(const int argc, char *const *const argv) {
+
+  const std::string DAEMON_CONFIG = "/etc/cta/cta-taped.conf";
+
   char buf[256];
   std::string hostName;
   if (gethostname(buf, sizeof(buf))) {
@@ -35,6 +40,22 @@ int main(const int argc, char *const *const argv) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::MediaChangerFacade mc(log);
 
-  cta::tapeserver::readtp::ReadtpCmd cmd(std::cin, std::cout, std::cerr, log, dummyLog, mc);
+  bool useEncryption;
+  std::string externalEncryptionKeyScript;
+
+  try {
+    // Config file needed to find the cta-get-encryption-key script
+    const cta::tape::daemon::TapedConfiguration tapedConfig =
+      cta::tape::daemon::TapedConfiguration::createFromCtaConf(DAEMON_CONFIG, log);
+    externalEncryptionKeyScript = tapedConfig.externalEncryptionKeyScript.value();
+    useEncryption = tapedConfig.useEncryption.value() == "yes" ? true : false;
+  }
+  catch(...) {
+    cta::exception::Exception ex;
+    ex.getMessage() << "ReadtpCmd: Error while trying to read TapedConfiguration config file: " << DAEMON_CONFIG;
+    throw ex;
+  }
+
+  cta::tapeserver::readtp::ReadtpCmd cmd(std::cin, std::cout, std::cerr, log, dummyLog, mc, useEncryption, externalEncryptionKeyScript);
   return cmd.main(argc, argv);
 }
