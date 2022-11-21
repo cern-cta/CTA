@@ -114,11 +114,11 @@ roundTripRepack() {
     exit 1
   fi
 
-  echo "Reclaiming tape ${VID_TO_REPACK}"
-  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
   removeRepackRequest ${VID_TO_REPACK}
   echo "Setting the tape ${VID_TO_REPACK} back to ACTIVE"
   modifyTapeState ${VID_TO_REPACK} ACTIVE
+  echo "Reclaiming tape ${VID_TO_REPACK}"
+  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
 
   VID_TO_REPACK=$(getFirstVidContainingFiles)
   if [ "$VID_TO_REPACK" != "null" ]
@@ -133,11 +133,11 @@ roundTripRepack() {
     exit 1
   fi
 
-  echo "Reclaiming tape ${VID_TO_REPACK}"
-  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
   removeRepackRequest ${VID_TO_REPACK}
   echo "Setting the tape ${VID_TO_REPACK} back to ACTIVE"
   modifyTapeState ${VID_TO_REPACK} ACTIVE
+  echo "Reclaiming tape ${VID_TO_REPACK}"
+  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
 
   echo
   echo "*******************************************************************"
@@ -185,11 +185,11 @@ repackNonRepackingTape() {
   echo "Launching the repack request test on VID ${VID_TO_REPACK} with REPACKING state"
   kubectl -n ${NAMESPACE} exec client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackDisabledTape -n repack_ctasystest  || exit 1
 
-  echo "Reclaiming tape ${VID_TO_REPACK}"
-  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
   removeRepackRequest ${VID_TO_REPACK}
   echo "Setting the tape ${VID_TO_REPACK} back to ACTIVE"
   modifyTapeState ${VID_TO_REPACK} ACTIVE
+  echo "Reclaiming tape ${VID_TO_REPACK}"
+  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
 
   echo
   echo "***********************************************************************************************"
@@ -216,11 +216,11 @@ repackJustMove() {
     exit 1
   fi
 
-  echo "Reclaiming tape ${VID_TO_REPACK}"
-  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
   removeRepackRequest ${VID_TO_REPACK}
   echo "Setting the tape ${VID_TO_REPACK} back to ACTIVE"
   modifyTapeState ${VID_TO_REPACK} ACTIVE
+  echo "Reclaiming tape ${VID_TO_REPACK}"
+  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
 
   echo
   echo "*****************************************************"
@@ -450,11 +450,11 @@ repackMoveAndAddCopies() {
      echo "ArchivedFiles ($archivedFiles) == totalFilesToArchive ($totalFilesToArchive), OK"
   fi
 
-  echo "Reclaimimg tape ${VID_TO_REPACK}"
-  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
   removeRepackRequest ${VID_TO_REPACK}
   echo "Setting the tape ${VID_TO_REPACK} back to ACTIVE"
   modifyTapeState ${VID_TO_REPACK} ACTIVE
+  echo "Reclaimimg tape ${VID_TO_REPACK}"
+  kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
 
   echo
   echo "***************************************************************"
@@ -547,11 +547,11 @@ repackTapeRepair() {
        echo "archivedFiles ($archivedFiles) == totalFilesToArchive ($totalFilesToArchive), OK"
     fi
 
-    echo "Reclaiming tape ${VID_TO_REPACK}"
-    kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
     removeRepackRequest ${VID_TO_REPACK}
     echo "Setting the tape ${VID_TO_REPACK} back to ACTIVE"
     modifyTapeState ${VID_TO_REPACK} ACTIVE
+    echo "Reclaiming tape ${VID_TO_REPACK}"
+    kubectl -n ${NAMESPACE} exec ctacli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
 
   else
     echo "No file to inject, test not OK"

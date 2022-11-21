@@ -17756,6 +17756,120 @@ TEST_P(cta_catalogue_CatalogueTest, reclaimTapeRemovesFilesFromRecycleLog) {
   }
 }
 
+TEST_P(cta_catalogue_CatalogueTest, reclaimTapeActiveState) {
+  using namespace cta;
+
+  const bool logicalLibraryIsDisabled= false;
+  const std::string tapePoolName1 = "tape_pool_name_1";
+  const uint64_t nbPartialTapes = 1;
+  const bool isEncrypted = true;
+  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::string diskInstance = m_diskInstance.name;
+
+  log::LogContext dummyLc(m_dummyLog);
+
+  m_catalogue->createMediaType(m_admin, m_mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  m_catalogue->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
+
+  auto tape1 = m_tape1;
+  tape1.tapePoolName = tapePoolName1;
+
+  m_catalogue->createTape(m_admin, tape1);
+  m_catalogue->setTapeFull(m_admin, tape1.vid, true);
+
+  // ACTIVE - Reclaim allowed
+  m_catalogue->modifyTapeState(m_admin, tape1.vid, common::dataStructures::Tape::ACTIVE, std::nullopt, "Testing");
+  ASSERT_NO_THROW(m_catalogue->reclaimTape(m_admin, tape1.vid, dummyLc));
+}
+
+TEST_P(cta_catalogue_CatalogueTest, reclaimTapeDisabledState) {
+using namespace cta;
+
+  const bool logicalLibraryIsDisabled= false;
+  const std::string tapePoolName1 = "tape_pool_name_1";
+  const uint64_t nbPartialTapes = 1;
+  const bool isEncrypted = true;
+  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::string diskInstance = m_diskInstance.name;
+
+  log::LogContext dummyLc(m_dummyLog);
+
+  m_catalogue->createMediaType(m_admin, m_mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  m_catalogue->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
+
+  auto tape1 = m_tape1;
+  tape1.tapePoolName = tapePoolName1;
+
+  m_catalogue->createTape(m_admin, tape1);
+  m_catalogue->setTapeFull(m_admin, tape1.vid, true);
+
+  // ACTIVE - Reclaim allowed
+  m_catalogue->modifyTapeState(m_admin, tape1.vid, common::dataStructures::Tape::DISABLED, std::nullopt, "Testing");
+  ASSERT_NO_THROW(m_catalogue->reclaimTape(m_admin, tape1.vid, dummyLc));
+}
+
+TEST_P(cta_catalogue_CatalogueTest, reclaimTapeNotAllowedStates) {
+  using namespace cta;
+
+  const bool logicalLibraryIsDisabled= false;
+  const std::string tapePoolName1 = "tape_pool_name_1";
+  const uint64_t nbPartialTapes = 1;
+  const bool isEncrypted = true;
+  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const std::string diskInstance = m_diskInstance.name;
+
+  log::LogContext dummyLc(m_dummyLog);
+
+  m_catalogue->createMediaType(m_admin, m_mediaType);
+  m_catalogue->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+  m_catalogue->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  m_catalogue->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->createStorageClass(m_admin, m_storageClassSingleCopy);
+
+  auto tape1 = m_tape1;
+  tape1.tapePoolName = tapePoolName1;
+
+  m_catalogue->createTape(m_admin, tape1);
+  m_catalogue->setTapeFull(m_admin, tape1.vid, true);
+
+  // REPACKING - Reclaim not allowed
+  m_catalogue->modifyTapeState(m_admin, tape1.vid, common::dataStructures::Tape::REPACKING, std::nullopt, "Testing");
+  ASSERT_THROW(m_catalogue->reclaimTape(m_admin, tape1.vid, dummyLc), exception::UserError);
+
+  // REPACKING_DISABLED - Reclaim not allowed
+  m_catalogue->modifyTapeState(m_admin, tape1.vid, common::dataStructures::Tape::REPACKING_DISABLED, std::nullopt, "Testing");
+  ASSERT_THROW(m_catalogue->reclaimTape(m_admin, tape1.vid, dummyLc), exception::UserError);
+
+  // REPACKING_PENDING - Reclaim not allowed
+  m_catalogue->modifyTapeState(m_admin, tape1.vid, common::dataStructures::Tape::REPACKING_PENDING, std::nullopt, "Testing");
+  ASSERT_THROW(m_catalogue->reclaimTape(m_admin, tape1.vid, dummyLc), exception::UserError);
+
+  // BROKEN - Reclaim not allowed
+  m_catalogue->modifyTapeState(m_admin, tape1.vid, common::dataStructures::Tape::BROKEN, std::nullopt, "Testing");
+  ASSERT_THROW(m_catalogue->reclaimTape(m_admin, tape1.vid, dummyLc), exception::UserError);
+
+  // BROKEN_PENDING - Reclaim not allowed
+  m_catalogue->modifyTapeState(m_admin, tape1.vid, common::dataStructures::Tape::BROKEN_PENDING, std::nullopt, "Testing");
+  ASSERT_THROW(m_catalogue->reclaimTape(m_admin, tape1.vid, dummyLc), exception::UserError);
+
+  // EXPORTED - Reclaim not allowed
+  m_catalogue->modifyTapeState(m_admin, tape1.vid, common::dataStructures::Tape::EXPORTED, std::nullopt, "Testing");
+  ASSERT_THROW(m_catalogue->reclaimTape(m_admin, tape1.vid, dummyLc), exception::UserError);
+
+  // EXPORTED_PENDING - Reclaim not allowed
+  m_catalogue->modifyTapeState(m_admin, tape1.vid, common::dataStructures::Tape::EXPORTED_PENDING, std::nullopt, "Testing");
+  ASSERT_THROW(m_catalogue->reclaimTape(m_admin, tape1.vid, dummyLc), exception::UserError);
+}
+
 TEST_P(cta_catalogue_CatalogueTest, emptyFileRecycleLogItorTest) {
   using namespace cta;
   auto itor = m_catalogue->getFileRecycleLogItor();
