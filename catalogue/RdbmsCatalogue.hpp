@@ -2211,6 +2211,13 @@ protected:
   void deleteArchiveFile(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest & request);
 
   /**
+   * Modifies accessibility
+   * @param criteria The tape file search criteria
+   * @param accessible The accessibility to set
+   */
+  void modifyTapeFileAccessibility(const TapeFileSearchCriteria &criteria, const bool accessible) const;
+
+  /**
    * Delete the TapeFile from the TAPE_FILE table
    * @param conn the database connection
    * @param request the DeleteArchiveRequest that contains the archiveFileId to delete the corresponding tape files

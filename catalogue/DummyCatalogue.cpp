@@ -116,6 +116,7 @@ std::list<common::dataStructures::StorageClass> DummyCatalogue::getStorageClasse
 common::dataStructures::StorageClass DummyCatalogue::getStorageClass(const std::string &name) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
 common::dataStructures::ArchiveFileSummary DummyCatalogue::getTapeFileSummary(const TapeFileSearchCriteria& searchCriteria) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
 common::dataStructures::ArchiveFile DummyCatalogue::getArchiveFileForDeletion(const TapeFileSearchCriteria &searchCriteria) const {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
+void DummyCatalogue::modifyTapeFileAccessibility(const TapeFileSearchCriteria &criteria, const bool accessible) const {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
 void DummyCatalogue::deleteTapeFileCopy(common::dataStructures::ArchiveFile &file, const std::string &reason) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
 std::list<TapePool> DummyCatalogue::getTapePools(const TapePoolSearchCriteria &searchCriteria) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
 std::optional<TapePool> DummyCatalogue::getTapePool(const std::string &tapePoolName) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }

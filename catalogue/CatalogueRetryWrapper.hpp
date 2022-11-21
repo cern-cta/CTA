@@ -341,6 +341,8 @@ public:
 
   common::dataStructures::ArchiveFile getArchiveFileForDeletion(const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const override;
 
+  void modifyTapeFileAccessibility(const TapeFileSearchCriteria &criteria, const bool accessible) const override;
+
   void deleteTapeFileCopy(common::dataStructures::ArchiveFile &file, const std::string &reason) override;
 
   common::dataStructures::ArchiveFile getArchiveFileById(const uint64_t id) const override;

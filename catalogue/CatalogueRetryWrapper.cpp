@@ -635,6 +635,10 @@ common::dataStructures::ArchiveFile CatalogueRetryWrapper::getArchiveFileForDele
   return retryOnLostConnection(m_log, [&]{return m_catalogue->getArchiveFileForDeletion(searchCriteria);}, m_maxTriesToConnect);
 }
 
+void CatalogueRetryWrapper::modifyTapeFileAccessibility(const TapeFileSearchCriteria &criteria, const bool accessible) const {
+  return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyTapeFileAccessibility(criteria, accessible);}, m_maxTriesToConnect);
+}
+
 void CatalogueRetryWrapper::deleteTapeFileCopy(common::dataStructures::ArchiveFile &file, const std::string &reason) {
   return retryOnLostConnection(m_log, [&]{return m_catalogue->deleteTapeFileCopy(file, reason);}, m_maxTriesToConnect);
 }

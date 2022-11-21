@@ -118,6 +118,7 @@ public:
   common::dataStructures::StorageClass getStorageClass(const std::string &name) const;
   common::dataStructures::ArchiveFileSummary getTapeFileSummary(const TapeFileSearchCriteria& searchCriteria) const;
   common::dataStructures::ArchiveFile getArchiveFileForDeletion(const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const override;
+  void modifyTapeFileAccessibility(const TapeFileSearchCriteria &criteria, const bool accessible) const override;
   void deleteTapeFileCopy(common::dataStructures::ArchiveFile &file, const std::string &reason) override;
   std::list<TapePool> getTapePools(const TapePoolSearchCriteria &searchCriteria) const;
   std::optional<TapePool> getTapePool(const std::string &tapePoolName) const override;

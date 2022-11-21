@@ -2057,7 +2057,7 @@ void RequestMessage::processTapeFile_Ch(cta::xrd::Response &response)
 {
   using namespace cta::admin;
   auto &vid           = getRequired(OptionString::VID);
-  //auto &reason        = getRequired(OptionString::REASON);
+  auto accessible     = getOptional(OptionBoolean::ACCESSIBLE);
   auto archiveFileId  = getOptional(OptionUInt64::ARCHIVE_FILE_ID);
   auto instance       = getOptional(OptionString::INSTANCE);
   auto diskFileId     = getOptional(OptionString::FXID);
@@ -2079,6 +2079,11 @@ void RequestMessage::processTapeFile_Ch(cta::xrd::Response &response)
   if (instance) {
     searchCriteria.diskInstance = instance.value();
   }
+  if(accessible) {
+    m_catalogue.modifyTapeFileAccessibility(searchCriteria, accessible.value());
+  }
+
+  response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
 void RequestMessage::processTapeFile_Rm(cta::xrd::Response &response)

@@ -10526,6 +10526,96 @@ void RdbmsCatalogue::insertFileInFileRecycleLog(rdbms::Conn& conn, const InsertF
   }
 }
 
+// -----------------------------------------------------------------------------
+// modifyArchiveFileStorageClassId
+// -----------------------------------------------------------------------------
+void RdbmsCatalogue::modifyTapeFileAccessibility(const TapeFileSearchCriteria &criteria, const bool accessible) const {
+  try {
+    if (!criteria.diskFileIds && !criteria.archiveFileId) {
+    throw exception::UserError("To update a file copy either the diskFileId+diskInstanceName or archiveFileId must be specified");
+    }
+    if (criteria.diskFileIds && !criteria.diskInstance) {
+      throw exception::UserError("Use of DiskFileId requires a disk instance");
+    }
+    if (!criteria.vid) {
+      throw exception::UserError("Vid must be specified");
+    }
+
+    auto vid = criteria.vid.value();
+    TapeFileSearchCriteria searchCriteria = criteria;
+    searchCriteria.vid = std::nullopt; //unset vid, we want to get all copies of the archive file so we can check that it is not a one copy file
+    auto itor = getArchiveFilesItor(searchCriteria);
+
+    // itor should have at most one archive file since we always search on unique attributes
+    if (!itor.hasMore()) {
+      if (criteria.archiveFileId) {
+        throw exception::UserError(std::string("Cannot update a copy of the file with archiveFileId ") +
+                                  std::to_string(criteria.archiveFileId.value()) +
+                                  " because the file does not exist");
+      } else {
+        throw exception::UserError(std::string("Cannot update a copy of the file with eosFxid ") +
+                                  criteria.diskFileIds.value().front() + " and diskInstance " +
+                                  criteria.diskInstance.value() + " because the file does not exist");
+      }
+    }
+
+    cta::common::dataStructures::ArchiveFile archiveFile = itor.next();
+
+    if (archiveFile.tapeFiles.size() == 1) {
+      if (criteria.archiveFileId) {
+        throw exception::UserError(std::string("Cannot update a copy of the file with archiveFileId ") +
+                                  std::to_string(criteria.archiveFileId.value()) +
+                                  " because it is the only copy");
+      } else {
+        throw exception::UserError(std::string("Cannot update a copy of the file with eosFxid ") +
+                                  criteria.diskFileIds.value().front() + " and diskInstance " +
+                                  criteria.diskInstance.value() + " because it is the only copy");
+      }
+    }
+    archiveFile.tapeFiles.removeAllVidsExcept(vid); // assume there is only one copy per vid, this should return a list with at most one item
+    if (archiveFile.tapeFiles.empty()) {
+      if (criteria.archiveFileId) {
+        throw exception::UserError(std::string("No copy of the file with archiveFileId ") +
+                                  std::to_string(criteria.archiveFileId.value()) +
+                                  " on vid " + vid);
+      } else {
+        throw exception::UserError(std::string("No copy of the file with eosFxid ") +
+                                  criteria.diskFileIds.value().front() + " and diskInstance " +
+                                  criteria.diskInstance.value() + " on vid " + vid);
+      }
+    }
+    if (archiveFile.tapeFiles.size() > 1){
+      if (criteria.archiveFileId) {
+        throw exception::UserError(std::string("Error: More than one copy of the file with archiveFileId ") +
+                                  std::to_string(criteria.archiveFileId.value()) +
+                                  " on vid " + vid);
+      } else {
+        throw exception::UserError(std::string("Error: More than one copy of the file with eosFxid ") +
+                                  criteria.diskFileIds.value().front() + " and diskInstance " +
+                                  criteria.diskInstance.value() + " on vid " + vid);
+      }
+    }
+
+    auto conn = m_connPool.getConn();
+
+    const char *const sql =
+    "UPDATE TAPE_FILE   "
+    "SET ACCESSIBLE = :ACCESSIBLE "
+    "WHERE "
+      "TAPE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
+
+    auto stmt = conn.createStmt(sql);
+    stmt.bindBool(":ACCESSIBLE", accessible);
+    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFile.archiveFileID);
+    stmt.executeNonQuery();
+
+  } catch(exception::UserError &ue) {
+      throw ue;
+  } catch(exception::Exception &ex) {
+      ex.getMessage().str(std::string(__FUNCTION__) + ": " +  ex.getMessage().str());
+  }
+}
+
 void RdbmsCatalogue::deleteTapeFiles(rdbms::Conn & conn, const common::dataStructures::DeleteArchiveRequest& request){
   try {
     //Delete the tape files after.

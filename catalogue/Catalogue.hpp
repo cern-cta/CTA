@@ -1134,6 +1134,13 @@ public:
   virtual common::dataStructures::ArchiveFileSummary getTapeFileSummary(
     const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const = 0;
 
+    /**
+   * Modifies accessibility
+   * @param criteria The tape file search criteria
+   * @param accessible The accessibility to set
+   */
+  virtual void modifyTapeFileAccessibility(const TapeFileSearchCriteria &criteria, const bool accessible) const = 0;
+
   /**
   * Deletes a tape file copy
   *
