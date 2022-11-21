@@ -4802,6 +4802,7 @@ void RdbmsCatalogue::resetTapeCounters(rdbms::Conn& conn, const common::dataStru
 // reclaimTape
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, cta::log::LogContext & lc) {
+  using namespace common::dataStructures;
   try{
     log::TimingList tl;
     utils::Timer t;
@@ -4814,11 +4815,12 @@ void RdbmsCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity 
 
     if (tapes.empty()) {
       throw exception::UserError(std::string("Cannot reclaim tape ") + vid + " because it does not exist");
-    }  else {
-      if (!tapes.front().full) {
-        throw exception::UserError(std::string("Cannot reclaim tape ") + vid + " because it is not FULL");
-      }
+    } else if (tapes.front().state != Tape::State::ACTIVE && tapes.front().state != Tape::State::DISABLED) {
+      throw exception::UserError(std::string("Cannot reclaim tape ") + vid + " because it is not on ACTIVE or DISABLED state");
+    } else if (!tapes.front().full) {
+      throw exception::UserError(std::string("Cannot reclaim tape ") + vid + " because it is not FULL");
     }
+
     // The tape exists and is full, we can try to reclaim it
     if (this->getNbFilesOnTape(conn, vid) == 0) {
       tl.insertAndReset("getNbFilesOnTape", t);
