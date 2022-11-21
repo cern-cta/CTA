@@ -398,6 +398,9 @@ fi
   # enable the 'file archived' garbage collector
   eos space config default space.filearchivedgc=on
 
+# Enable EOS token
+eos space config default space.token.generation=1
+
 # configure preprod directory separately
 /opt/run/bin/eos_configure_preprod.sh
 
