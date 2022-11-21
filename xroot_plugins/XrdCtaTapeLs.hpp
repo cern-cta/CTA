@@ -17,9 +17,8 @@
 
 #pragma once
 
-#include <xroot_plugins/XrdCtaStream.hpp>
-#include <xroot_plugins/XrdSsiCtaRequestMessage.hpp>
-
+#include "XrdCtaStream.hpp"
+#include "XrdSsiCtaRequestMessage.hpp"
 
 namespace cta { namespace xrd {
 

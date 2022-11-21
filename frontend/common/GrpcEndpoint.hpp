@@ -17,11 +17,9 @@
 
 #pragma once
 
-#include <xroot_plugins/Namespace.hpp>
-#include <xroot_plugins/GrpcClient.hpp>
-
 #include "common/exception/UserError.hpp"
-
+#include "frontend/common/GrpcClient.hpp"
+#include "Namespace.hpp"
 
 namespace cta { namespace grpc { 
 

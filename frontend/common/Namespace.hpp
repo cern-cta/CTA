@@ -18,7 +18,6 @@
 #pragma once
 
 #include <map>
-#include <iostream> // for testing
 
 namespace cta { 
 
@@ -26,13 +25,12 @@ struct Namespace
 {
   Namespace(const std::string &ep, const std::string &tk) :
     endpoint(ep), token(tk) {
-std::cerr << "Created namespace endpoint " << endpoint << " with token " << token << std::endl;
   }
 
   std::string endpoint;
   std::string token;
 };
 
-typedef std::map<std::string, Namespace> NamespaceMap_t;
+using NamespaceMap_t = std::map<std::string, Namespace>;
 
-} // namespace cta::grpc
+} // namespace cta

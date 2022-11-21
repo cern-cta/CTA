@@ -15,11 +15,9 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <xroot_plugins/GrpcEndpoint.hpp>
-
 #include "common/exception/UserError.hpp"
 #include "common/exception/Exception.hpp"
-
+#include "frontend/common/GrpcEndpoint.hpp"
 
 std::string cta::grpc::Endpoint::getPath(const std::string &diskFileId) const {
   // diskFileId is sent to CTA as a uint64_t, but we store it as a decimal string, cf.:

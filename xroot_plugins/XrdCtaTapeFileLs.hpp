@@ -18,11 +18,10 @@
 #pragma once
 
 #include "catalogue/CatalogueItor.hpp"
-#include <common/checksum/ChecksumBlobSerDeser.hpp>
-#include <xroot_plugins/GrpcEndpoint.hpp>
-#include <xroot_plugins/XrdCtaStream.hpp>
-#include <xroot_plugins/XrdSsiCtaRequestMessage.hpp>
-
+#include "common/checksum/ChecksumBlobSerDeser.hpp"
+#include "frontend/common/GrpcEndpoint.hpp"
+#include "XrdCtaStream.hpp"
+#include "XrdSsiCtaRequestMessage.hpp"
 
 namespace cta { namespace xrd {
 

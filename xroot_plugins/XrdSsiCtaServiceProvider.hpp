@@ -19,20 +19,20 @@
 
 #include <memory>
 #include <string>
-
 #include <XrdSsi/XrdSsiProvider.hh>
+#include <XrdSsiPbLog.hpp>
 
 #include "catalogue/Catalogue.hpp"
-#include <common/Configuration.hpp>
-#include <common/utils/utils.hpp>
-#include <xroot_plugins/Namespace.hpp>
-#include <XrdSsiPbLog.hpp>
-#include <scheduler/Scheduler.hpp>
+#include "common/Configuration.hpp"
+#include "common/utils/utils.hpp"
+#include "scheduler/Scheduler.hpp"
 #ifdef CTA_PGSCHED
-#include <scheduler/PostgresSchedDB/PostgresSchedDBInit.hpp>
+#include "scheduler/PostgresSchedDB/PostgresSchedDBInit.hpp"
 #else
-#include <scheduler/OStoreDB/OStoreDBInit.hpp>
+#include "scheduler/OStoreDB/OStoreDBInit.hpp"
 #endif
+#include "frontend/common/Namespace.hpp"
+#include "frontend/common/FrontendService.hpp"
 
 /*!
  * Global pointer to the Service Provider object.
@@ -44,7 +44,7 @@ extern XrdSsiProvider *XrdSsiProviderServer;
  */
 class XrdSsiCtaServiceProvider : public XrdSsiProvider {
 public:
-  XrdSsiCtaServiceProvider() : m_archiveFileMaxSize(0) {
+  XrdSsiCtaServiceProvider() {
     XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "XrdSsiCtaServiceProvider() constructor");
   }
 
@@ -86,73 +86,12 @@ public:
   XrdSsiProvider::rStat QueryResource(const char *rName, const char *contact = nullptr) override;
 
   /*!
-   * Get a reference to the Scheduler DB for this Service
+   * Get a reference to the FrontendService object
    */
-  cta::SchedulerDB_t &getSchedDb() const { return *m_scheddb; }
-
-  /*!
-   * Get a reference to the Catalogue for this Service
-   */
-  cta::catalogue::Catalogue &getCatalogue() const { return *m_catalogue; }
-
-  /*!
-   * Get a reference to the Scheduler for this Service
-   */
-  cta::Scheduler &getScheduler() const { return *m_scheduler; }
-
-  /*!
-   * Get the log context for this Service
-   */
-  cta::log::LogContext getLogContext() const { return cta::log::LogContext(*m_log); }
-
-  /*!
-   * Get the maximum file size for an archive request
-   */
-  uint64_t getArchiveFileMaxSize() const { return m_archiveFileMaxSize; }
-
-  /*!
-   * Get the repack buffer URL
-   */
-  std::optional<std::string> getRepackBufferURL() const { return m_repackBufferURL; }
-
-  /*!
-   * Get the verification mount policy
-   */
-  std::optional<std::string> getVerificationMountPolicy() const { return m_verificationMountPolicy; }
-
-
-  /*!
-   * Populate the namespace endpoint configuration from a keytab file
-   */
-  void setNamespaceMap(const std::string &keytab_file);
-
-  /*!
-   * Get the endpoints for namespace queries
-   */
-  cta::NamespaceMap_t getNamespaceMap() const { return m_namespaceMap; }
-
-  const std::string getCatalogueConnectionString() const {return m_catalogue_conn_string; }
+  cta::frontend::FrontendService& getFrontendService() const { return *m_frontendService; }
 
  private:
-  /*!
-   * Version of Init() that throws exceptions in case of problems
-   */
-  void ExceptionThrowingInit(XrdSsiLogger *logP, XrdSsiCluster *clsP, const std::string &cfgFn,
-                            const std::string &parms, int argc, char **argv);
-
   // Member variables
-
-  std::unique_ptr<cta::catalogue::Catalogue>          m_catalogue;               //!< Catalogue of tapes and tape files
-  std::unique_ptr<cta::SchedulerDB_t>                 m_scheddb;                 //!< Scheduler DB for persistent objects (queues and requests)
-  std::unique_ptr<cta::SchedulerDBInit_t>             m_scheddb_init;            //!< Wrapper to manage Scheduler DB initialisation
-  std::unique_ptr<cta::Scheduler>                     m_scheduler;               //!< The scheduler
-  std::unique_ptr<cta::log::Logger>                   m_log;                     //!< The logger
-
-  uint64_t                                            m_archiveFileMaxSize;      //!< Maximum allowed file size for archive requests
-  std::optional<std::string>                          m_repackBufferURL;         //!< The repack buffer URL
-  std::optional<std::string>                          m_verificationMountPolicy; //!< The mount policy for verification requests
-  cta::NamespaceMap_t                                 m_namespaceMap;            //!< Endpoints for namespace queries
-  std::string                                         m_catalogue_conn_string;   //!< The catalogue connection string (without the password)
-
+  std::unique_ptr<cta::frontend::FrontendService> m_frontendService;             //!< protocol-neutral CTA Frontend Service object
   static constexpr const char* const LOG_SUFFIX = "XrdSsiCtaServiceProvider";    //!< Identifier for log messages
 };

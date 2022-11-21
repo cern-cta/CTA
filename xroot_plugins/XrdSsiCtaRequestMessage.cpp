@@ -18,7 +18,6 @@
 #include <limits>
 #include <sstream>
 #include <string>
-
 #include <XrdSsiPbException.hpp>
 
 #include "catalogue/CreateMountPolicyAttributes.hpp"
@@ -27,31 +26,30 @@
 #include "common/dataStructures/LogicalLibrary.hpp"
 #include "common/dataStructures/RequesterActivityMountRule.hpp"
 #include "common/utils/Regex.hpp"
-
-#include "xroot_plugins/XrdCtaActivityMountRuleLs.hpp"
-#include "xroot_plugins/XrdCtaAdminLs.hpp"
-#include "xroot_plugins/XrdCtaArchiveRouteLs.hpp"
-#include "xroot_plugins/XrdCtaChangeStorageClass.hpp"
-#include "xroot_plugins/XrdCtaDiskInstanceLs.hpp"
-#include "xroot_plugins/XrdCtaDiskInstanceSpaceLs.hpp"
-#include "xroot_plugins/XrdCtaDiskSystemLs.hpp"
-#include "xroot_plugins/XrdCtaDriveLs.hpp"
-#include "xroot_plugins/XrdCtaFailedRequestLs.hpp"
-#include "xroot_plugins/XrdCtaGroupMountRuleLs.hpp"
-#include "xroot_plugins/XrdCtaLogicalLibraryLs.hpp"
-#include "xroot_plugins/XrdCtaMediaTypeLs.hpp"
-#include "xroot_plugins/XrdCtaMountPolicyLs.hpp"
-#include "xroot_plugins/XrdCtaRecycleTapeFileLs.hpp"
-#include "xroot_plugins/XrdCtaRepackLs.hpp"
-#include "xroot_plugins/XrdCtaRequesterMountRuleLs.hpp"
-#include "xroot_plugins/XrdCtaShowQueues.hpp"
-#include "xroot_plugins/XrdCtaStorageClassLs.hpp"
-#include "xroot_plugins/XrdCtaTapeFileLs.hpp"
-#include "xroot_plugins/XrdCtaTapeLs.hpp"
-#include "xroot_plugins/XrdCtaTapePoolLs.hpp"
-#include "xroot_plugins/XrdCtaVersion.hpp"
-#include "xroot_plugins/XrdCtaVirtualOrganizationLs.hpp"
-#include "xroot_plugins/XrdSsiCtaRequestMessage.hpp"
+#include "XrdCtaActivityMountRuleLs.hpp"
+#include "XrdCtaAdminLs.hpp"
+#include "XrdCtaArchiveRouteLs.hpp"
+#include "XrdCtaChangeStorageClass.hpp"
+#include "XrdCtaDiskInstanceLs.hpp"
+#include "XrdCtaDiskInstanceSpaceLs.hpp"
+#include "XrdCtaDiskSystemLs.hpp"
+#include "XrdCtaDriveLs.hpp"
+#include "XrdCtaFailedRequestLs.hpp"
+#include "XrdCtaGroupMountRuleLs.hpp"
+#include "XrdCtaLogicalLibraryLs.hpp"
+#include "XrdCtaMediaTypeLs.hpp"
+#include "XrdCtaMountPolicyLs.hpp"
+#include "XrdCtaRecycleTapeFileLs.hpp"
+#include "XrdCtaRepackLs.hpp"
+#include "XrdCtaRequesterMountRuleLs.hpp"
+#include "XrdCtaShowQueues.hpp"
+#include "XrdCtaStorageClassLs.hpp"
+#include "XrdCtaTapeFileLs.hpp"
+#include "XrdCtaTapeLs.hpp"
+#include "XrdCtaTapePoolLs.hpp"
+#include "XrdCtaVersion.hpp"
+#include "XrdCtaVirtualOrganizationLs.hpp"
+#include "XrdSsiCtaRequestMessage.hpp"
 
 namespace cta {
 namespace xrd {
@@ -1189,7 +1187,7 @@ void RequestMessage::processFailedRequest_Ls(cta::xrd::Response &response, XrdSs
 {
   using namespace cta::admin;
 
-  stream = new FailedRequestLsStream(*this, m_catalogue, m_scheduler, m_service.getSchedDb(), m_lc);
+  stream = new FailedRequestLsStream(*this, m_catalogue, m_scheduler, m_service.getFrontendService().getSchedDb(), m_lc);
 
   // Display the correct column headers
   response.set_show_header(has_flag(OptionBoolean::SUMMARY) ? HeaderType::FAILEDREQUEST_LS_SUMMARY

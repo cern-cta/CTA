@@ -1,8 +1,11 @@
-# v.NEXT
+# v4.NEXT
 
+## Summary
 ### Features
 - cta/CTA#211 - Add functionality for reading encrypted tapes with cta-readtp
 - cta/CTA#214 - Update manual page for cta-admin to include info about user defined config files.
+### Bug fixes
+- cta/CTA#93 - Refactor Frontend code to allow code sharing between SSI and gRPC implementations
 
 # v4.7.14-1
 

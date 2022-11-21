@@ -19,11 +19,10 @@
 
 #include <XrdSsi/XrdSsiEntity.hh>
 
-#include "XrdSsiCtaServiceProvider.hpp"
-#include "cta_frontend.pb.h"
 #include "common/utils/utils.hpp"
 #include "Versions.hpp"
-
+#include "XrdSsiCtaServiceProvider.hpp"
+#include "cta_frontend.pb.h"
 
 namespace cta { namespace xrd {
 
@@ -35,14 +34,14 @@ class RequestMessage
 public:
   RequestMessage(const XrdSsiEntity &client, const XrdSsiCtaServiceProvider *service) :
     m_service(*service),
-    m_catalogue(service->getCatalogue()),
-    m_scheduler(service->getScheduler()),
-    m_archiveFileMaxSize(service->getArchiveFileMaxSize()),
-    m_repackBufferURL(service->getRepackBufferURL()),
-    m_verificationMountPolicy(service->getVerificationMountPolicy()),
-    m_namespaceMap(service->getNamespaceMap()),
-    m_lc(service->getLogContext()),
-    m_catalogue_conn_string(service->getCatalogueConnectionString())
+    m_catalogue(service->getFrontendService().getCatalogue()),
+    m_scheduler(service->getFrontendService().getScheduler()),
+    m_archiveFileMaxSize(service->getFrontendService().getArchiveFileMaxSize()),
+    m_repackBufferURL(service->getFrontendService().getRepackBufferURL()),
+    m_verificationMountPolicy(service->getFrontendService().getVerificationMountPolicy()),
+    m_namespaceMap(service->getFrontendService().getNamespaceMap()),
+    m_lc(service->getFrontendService().getLogContext()),
+    m_catalogue_conn_string(service->getFrontendService().getCatalogueConnectionString())
     {
       m_cliIdentity.username   = client.name;
       m_cliIdentity.host       = cta::utils::getShortHostname(); // Host should be of the machine that executes the command
