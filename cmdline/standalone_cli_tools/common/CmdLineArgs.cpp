@@ -44,8 +44,8 @@ static struct option restoreFilesLongOption[] = {
   {nullptr, 0, nullptr, 0}
 };
 
-static struct option sendFileLongOption[] = {
-  {"instance", required_argument, nullptr, 'i'},
+static struct option sendEventLongOption[] = {
+  {"eos.instance", required_argument, nullptr, 'i'},
   {"eos.endpoint", required_argument, nullptr, 'e'},
   {"request.user", required_argument, nullptr, 'u'},
   {"request.group", required_argument, nullptr, 'g'},
@@ -74,7 +74,7 @@ static struct option changeStorageClassLongOption[] = {
 
 std::map<StandaloneCliTool, const option*> longopts = {
   {StandaloneCliTool::RESTORE_FILES, restoreFilesLongOption},
-  {StandaloneCliTool::CTA_SEND_EVENT, sendFileLongOption},
+  {StandaloneCliTool::CTA_SEND_EVENT, sendEventLongOption},
   {StandaloneCliTool::CTA_VERIFY_FILE, verifyFileLongOption},
   {StandaloneCliTool::CTA_CHANGE_STORAGE_CLASS, changeStorageClassLongOption},
 };
@@ -170,7 +170,7 @@ m_help(false), m_debug(false), m_standaloneCliTool{standaloneCliTool} {
       }
     case ':': // Missing parameter
       {
-        exception::CommandLineNotParsed ex;
+        exception::CommandLineNotParsed ex("", false);
         ex.getMessage() << "The -" << static_cast<char>(optopt) << " option requires a parameter";
         throw ex;
       }

@@ -6,6 +6,7 @@
 - cta/CTA#214 - Update manual page for cta-admin to include info about user defined config files.
 ### Bug fixes
 - cta/CTA#93 - Refactor Frontend code to allow code sharing between SSI and gRPC implementations
+- cta/CTA#221 - Change option in cta-send-event from instance to eos.instance
 
 # v4.7.14-1
 

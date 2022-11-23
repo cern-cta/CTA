@@ -26,6 +26,7 @@
 #include "CtaFrontendApi.hpp"
 #include "version.h"
 #include "common/CmdLineArgs.hpp"
+#include "common/exception/CommandLineNotParsed.hpp"
 
 const std::string config_file = "/etc/cta/cta-cli.conf";
 
@@ -111,9 +112,7 @@ void parseFileInfo(std::istream &in, AttrMap &attr, AttrMap &xattr)
 void fillNotification(cta::eos::Notification &notification, const std::string &wf_command,
                       const int argc, char *const *const argv)
 {
-
   cta::cliTool::CmdLineArgs cmdLineArgs(argc, argv, cta::cliTool::StandaloneCliTool::CTA_SEND_EVENT);
-
   const std::string &eos_instance = cmdLineArgs.m_diskInstance.value();
   const std::string &eos_endpoint = cmdLineArgs.m_eosEndpoint.has_value() ? cmdLineArgs.m_eosEndpoint.value() : "localhost:1095";
   const std::string &requester_user = cmdLineArgs.m_requestUser.value();
@@ -135,10 +134,10 @@ void fillNotification(cta::eos::Notification &notification, const std::string &w
 
   std::string accessUrl = "root://" + eos_endpoint + "/" + attr["path"] + "?eos.lfn=fxid:" + attr["fxid"];
   std::string reportUrl = "eosQuery://" + eos_endpoint + "//eos/wfe/passwd?mgm.pcmd=event&mgm.fid=" + attr["fxid"] +
-     "&mgm.logid=cta&mgm.event=sync::archived&mgm.workflow=default&mgm.path=/dummy_path&mgm.ruid=0&mgm.rgid=0&cta_archive_file_id=" +
-     xattrs["sys.archive.file_id"];
+    "&mgm.logid=cta&mgm.event=sync::archived&mgm.workflow=default&mgm.path=/dummy_path&mgm.ruid=0&mgm.rgid=0&cta_archive_file_id=" +
+    xattrs["sys.archive.file_id"];
   std::string destUrl = "root://" + eos_endpoint + "/" + attr["path"] + "?eos.lfn=fxid:" + attr["fxid"] +
-     "&eos.ruid=0&eos.rgid=0&eos.injection=1&eos.workflow=retrieve_written&eos.space=default";
+    "&eos.ruid=0&eos.rgid=0&eos.injection=1&eos.workflow=retrieve_written&eos.space=default";
 
   // WF
   notification.mutable_wf()->mutable_instance()->set_name(eos_instance);
@@ -257,10 +256,12 @@ int exceptionThrowingMain(int argc, char *const *const argv)
  * Start here
  */
 int main(int argc, char *const *const argv) {
-  try {    
+  try {
     return exceptionThrowingMain(argc, argv);
   } catch (XrdSsiPb::PbException &ex) {
     std::cerr << "Error in Google Protocol Buffers: " << ex.what() << std::endl;
+  } catch(cta::exception::CommandLineNotParsed &ex) {
+    std::cerr << ex.what() << std::endl;
   } catch (XrdSsiPb::XrdSsiException &ex) {
     std::cerr << "Error from XRootD SSI Framework: " << ex.what() << std::endl;
   } catch (std::exception &ex) {
