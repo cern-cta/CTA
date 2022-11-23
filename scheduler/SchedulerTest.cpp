@@ -98,6 +98,20 @@ struct SchedulerTestParam {
   }
 }; // struct SchedulerTestParam
 
+std::ostream& operator<<(std::ostream& os, const SchedulerTestParam& c) {
+  if (!c.m_triggerTapeStateChangeBehaviour.has_value()) {
+    return os << "Test";
+  } else {
+    auto & params = c.m_triggerTapeStateChangeBehaviour.value();
+    return os << "{ "
+              << "\"from\": "               << "\"" << cta::common::dataStructures::Tape::stateToString(params.fromState)     << "\"" << ", "
+              << "\"to\": "                 << "\"" << cta::common::dataStructures::Tape::stateToString(params.toState)       << "\"" << ", "
+              << "\"expected_state\": "     << "\"" << cta::common::dataStructures::Tape::stateToString(params.observedState) << "\"" << ", "
+              << "\"expected_exception\": " << "\"" << (params.changeRaisedException ? "yes" : "no")                          << "\"" << ", "
+              << "\"expected_cleanup\": "   << "\"" << (params.cleanupFlagActivated  ? "yes" : "no")                          << "\"" << " }";
+  }
+}
+
 }
 
 /**
