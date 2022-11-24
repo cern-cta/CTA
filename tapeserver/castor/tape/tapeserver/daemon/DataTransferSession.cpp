@@ -280,7 +280,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
                                           m_dataTransferConfig.useLbp, m_dataTransferConfig.useRAO, m_dataTransferConfig.useEncryption,
                                           m_dataTransferConfig.externalEncryptionKeyScript, *retrieveMount,
                                           m_dataTransferConfig.tapeLoadTimeout,
-                                          m_scheduler);
+                                          m_scheduler.getCatalogue());
 
     DiskWriteThreadPool threadPool(m_dataTransferConfig.nbDiskThreads,
                                    reportPacker,
@@ -430,7 +430,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
                                             m_dataTransferConfig.externalEncryptionKeyScript,
                                             *archiveMount,
                                             m_dataTransferConfig.tapeLoadTimeout,
-                                            m_scheduler);
+                                            m_scheduler.getCatalogue());
 
 
     DiskReadThreadPool threadPool(m_dataTransferConfig.nbDiskThreads,

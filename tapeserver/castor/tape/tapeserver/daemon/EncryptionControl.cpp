@@ -42,9 +42,9 @@ EncryptionControl::EncryptionControl(bool useEncryption, const std::string& scri
 //------------------------------------------------------------------------------
 // enable
 //------------------------------------------------------------------------------
-auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface& m_drive, const std::string& vid,
-                               const std::string& keyId, const std::string& tapePool,
-                               cta::Scheduler& scheduler, bool isWriteSession) -> EncryptionStatus {
+auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface &m_drive,
+                               castor::tape::tapeserver::daemon::VolumeInfo &volInfo,
+                               cta::catalogue::Catalogue &catalogue, bool isWriteSession) -> EncryptionStatus {
   EncryptionStatus encStatus;
   if (m_path.empty()) {
     if (m_useEncryption) {
@@ -57,7 +57,8 @@ auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface& 
     return encStatus;
   }
 
-  std::list<std::string> args({m_path, "--encryption-key-id", keyId, "--pool-name", tapePool});
+  std::list<std::string> args(
+    {m_path, "--encryption-key-id", volInfo.encryptionKeyName, "--pool-name", volInfo.tapePool});
 
   cta::threading::SubProcess sp(m_path, args);
   sp.wait();
@@ -85,7 +86,7 @@ auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface& 
     cta::common::dataStructures::SecurityIdentity m_cliIdentity("ctaops", cta::utils::getShortHostname(),
                                                                 cta::utils::getShortHostname());
 
-    scheduler.getCatalogue().modifyTapeEncryptionKeyName(m_cliIdentity, vid, encStatus.key);
+    catalogue.modifyTapeEncryptionKeyName(m_cliIdentity, volInfo.vid, encStatus.key);
   }
 
   if (encStatus.on) {
