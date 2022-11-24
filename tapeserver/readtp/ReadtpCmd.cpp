@@ -403,7 +403,7 @@ void ReadtpCmd::readTapeFiles(
         std::unique_ptr<cta::disk::WriteFile> wfptr;
         wfptr.reset(fileFactory.createWriteFile(destinationFile));
         cta::disk::WriteFile &wf = *wfptr.get();
-        readTapeFile(drive, fSeq, wf, tape.labelFormat);
+        readTapeFile(drive, fSeq, wf, tape);
         m_nbSuccessReads++; // if readTapeFile returns, file was read successfully
         destinationFile = getNextDestinationUrl();
       } catch (tapeserver::readtp::NoSuchFSeqException&) {
@@ -443,7 +443,7 @@ void ReadtpCmd::readTapeFiles(
 //------------------------------------------------------------------------------
 void ReadtpCmd::readTapeFile(
   castor::tape::tapeserver::drive::DriveInterface &drive, const uint64_t &fSeq, cta::disk::WriteFile &wf,
-  const cta::common::dataStructures::Label::Format &labelFormat) {
+  const cta::common::dataStructures::Tape &tape) {
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("userName", m_userName));
   params.push_back(cta::log::Param("tapeVid", m_vid));
@@ -455,10 +455,12 @@ void ReadtpCmd::readTapeFile(
   params.push_back(cta::log::Param("destinationURL", wf.URL()));
 
   castor::tape::tapeserver::daemon::VolumeInfo volInfo;
-  volInfo.vid=m_vid;
-  volInfo.nbFiles = 0;
+  volInfo.vid = tape.vid;
+  volInfo.nbFiles = tape.nbMasterFiles;
   volInfo.mountType = cta::common::dataStructures::MountType::Retrieve;
-  volInfo.labelFormat = labelFormat;
+  volInfo.labelFormat = tape.labelFormat;
+  volInfo.encryptionKeyName = tape.encryptionKeyName.value();
+  volInfo.tapePool = tape.tapePoolName;
 
   const auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(drive, volInfo, m_useLbp);
 
@@ -599,9 +601,8 @@ void ReadtpCmd::rewindDrive(
 //------------------------------------------------------------------------------
 // configureEncryption
 //------------------------------------------------------------------------------
-void ReadtpCmd::configureEncryption(
-  const std::string &vid,
-  castor::tape::tapeserver::drive::DriveInterface &drive) {
+void ReadtpCmd::configureEncryption(castor::tape::tapeserver::daemon::VolumeInfo &volInfo,
+                                    castor::tape::tapeserver::drive::DriveInterface &drive) {
   try {
     const std::string DAEMON_CONFIG = "/etc/cta/cta-taped.conf";
 
@@ -617,7 +618,7 @@ void ReadtpCmd::configureEncryption(
     // status:
     std::list<cta::log::Param> params;
     {
-      auto encryptionStatus = m_encryptionControl->enable(drive, vid, castor::tape::tapeserver::daemon::EncryptionControl::SetTag::NO_SET_TAG);
+      auto encryptionStatus = m_encryptionControl.enable(drive, volInfo, *m_catalogue, false);
       if (encryptionStatus.on) {
         params.push_back(cta::log::Param("encryption", "on"));
         params.push_back(cta::log::Param("encryptionKey", encryptionStatus.keyName));

@@ -27,6 +27,7 @@
 #include "disk/DiskFile.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/DriveGeneric.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "tapeserver/daemon/Tpconfig.hpp"
@@ -112,7 +113,8 @@ private:
   * @param vid The volume identifier of the tape to be mounted.
   * @param drive The tape drive.
   */
-  void configureEncryption(const std::string &vid, castor::tape::tapeserver::drive::DriveInterface &drive);
+  void configureEncryption(castor::tape::tapeserver::daemon::VolumeInfo &volInfo,
+                           castor::tape::tapeserver::drive::DriveInterface &drive);
 
   /**
   * Disable encryption
@@ -197,7 +199,7 @@ private:
    * @param fSeq The tape file fSeq.
    */
   void readTapeFile(castor::tape::tapeserver::drive::DriveInterface &drive, const uint64_t &fSeq,
-    cta::disk::WriteFile &wf, const cta::common::dataStructures::Label::Format &labelFormat);
+                    cta::disk::WriteFile &wf, const cta::common::dataStructures::Tape &tape);
 
 
   /**
