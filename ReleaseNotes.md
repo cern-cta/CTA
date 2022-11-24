@@ -7,6 +7,7 @@
 ### Bug fixes
 - cta/CTA#93 - Refactor Frontend code to allow code sharing between SSI and gRPC implementations
 - cta/CTA#221 - Change option in cta-send-event from instance to eos.instance
+- cta/CTA#223 - Remove vid check to improve run time of cta-verify-file, fix possible _S_construct null not valid error
 
 # v4.7.14-1
 

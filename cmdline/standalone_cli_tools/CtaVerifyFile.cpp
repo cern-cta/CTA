@@ -83,24 +83,6 @@ void fillNotification(cta::eos::Notification &notification, const CmdLineArgs &c
   }
 }
 
-/*
- * Checks if the provided vid exists
- */
-void vidExists(cta::cliTool::CmdLineArgs cmdLineArgs, const XrdSsiPb::Config &config) {
-  std::string hostName = std::getenv("HOSTNAME");
-  if(hostName.empty()) {
-    hostName = "UNKNOWN";
-  }
-  cta::log::StdoutLogger log(hostName, "cta-verify-file");
-  auto serviceProviderPtr = std::make_unique<XrdSsiPbServiceType>(config);
-  auto vidsInCatalogue = CatalogueFetch::getVids(serviceProviderPtr, log);
-
-  std::list<std::string>::iterator findIter = std::find(vidsInCatalogue.begin(), vidsInCatalogue.end(), cmdLineArgs.m_vid);
-  if(vidsInCatalogue.end() == findIter) {
-    throw std::runtime_error("The provided --vid does not exist in the Catalogue.");
-  }
-}
-
 XrdSsiPb::Config getConfig() {
   // Set configuration options
   XrdSsiPb::Config config(g_config_file, "cta");
@@ -198,8 +180,6 @@ int exceptionThrowingMain(int argc, char *const *const argv)
   }
 
   const XrdSsiPb::Config config = getConfig();
-
-  vidExists(cmdLineArgs, config);
 
   for(const auto &archiveFileId : archiveFileIds) {
     sendVerifyRequest(cmdLineArgs, archiveFileId, config);
