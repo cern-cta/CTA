@@ -23,8 +23,10 @@
 
 #include <json-c/json.h>
 
-#include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "VolumeInfo.hpp"
+#include "catalogue/Catalogue.hpp"
 #include "scheduler/Scheduler.hpp"
+#include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
 
 namespace castor {
 namespace tape {
@@ -58,8 +60,8 @@ class EncryptionControl {
    * @param isWriteSession if true, set encryption key when writing to the new tape.
    * @return {true, keyName, key, stdout} if the encryption has been set, {false, "", "", stdout} otherwise.
    */
-  EncryptionStatus enable(castor::tape::tapeserver::drive::DriveInterface& m_drive, const std::string& vid,
-                          const std::string& keyId, const std::string& tapePool, cta::Scheduler& scheduler,
+  EncryptionStatus enable(castor::tape::tapeserver::drive::DriveInterface &m_drive,
+                          castor::tape::tapeserver::daemon::VolumeInfo &volInfo, cta::catalogue::Catalogue &catalogue,
                           bool isWriteSession = false);
 
   /**

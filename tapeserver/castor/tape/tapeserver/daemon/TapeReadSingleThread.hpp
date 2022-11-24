@@ -66,7 +66,7 @@ public:
                        const std::string& externalEncryptionKeyScript,
                        const cta::RetrieveMount& retrieveMount,
                        const uint32_t tapeLoadTimeout,
-                       cta::Scheduler& scheduler);
+                       cta::catalogue::Catalogue& catalogue);
 
   /**
    * Sets up the pointer to the task injector. This cannot be done at
@@ -155,9 +155,9 @@ private:
   const cta::RetrieveMount& m_retrieveMount;
 
   /**
-   * Reference to the scheduler. It is only used in EncryptionControl to modify tape information
+   * Reference to the catalogue. It is only used in EncryptionControl to modify tape information
    */
-  cta::Scheduler& m_scheduler;
+  cta::catalogue::Catalogue& m_catalogue;
 
   /// Helper virtual function to access the watchdog from parent class
   void countTapeLogError(const std::string& error) override {

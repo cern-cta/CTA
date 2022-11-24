@@ -68,7 +68,7 @@ public:
     const std::string& externalEncryptionKeyScript,
     const cta::ArchiveMount& archiveMount,
     const uint64_t tapeLoadTimeout,
-    cta::Scheduler& scheduler);
+    cta::catalogue::Catalogue& catalogue);
 
   /**
    * Sets up the pointer to the task injector. This cannot be done at
@@ -195,9 +195,9 @@ private:
   const cta::ArchiveMount& m_archiveMount;
 
   /**
-   * Reference to the scheduler. It is only used in EncryptionControl to modify tape information
+   * Reference to the catalogue. It is only used in EncryptionControl to modify tape information
    */
-  cta::Scheduler& m_scheduler;
+  cta::catalogue::Catalogue& m_catalogue;
 
 protected:
   /***
