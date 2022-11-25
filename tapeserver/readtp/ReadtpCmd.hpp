@@ -109,7 +109,7 @@ private:
   /**
   * Configures encryption to be able to read from an encrypted tape
   *
-  * @param vid The volume identifier of the tape to be mounted.
+  * @param volInfo The volume info of the tape to be mounted.
   * @param drive The tape drive.
   */
   void configureEncryption(castor::tape::tapeserver::daemon::VolumeInfo &volInfo,
