@@ -53,10 +53,8 @@ class EncryptionControl {
    * Will call the encryption script provided by the operators to acquire the encryption key and then enable the
    * encryption if necessary.
    * @param m_drive The drive object on which the encryption is to be enabled.
-   * @param vid VID for the tape cartridge we are about to mount.
-   * @param keyId Encryption key name for the tape cartridge we are about to mount.
-   * @param tapePool Tape pool name of a given tape
-   * @param scheduler Scheduler instance to modify tape encryption key
+   * @param volInfo The volume info used by encryption script: VID, tape pool name, encryption ID
+   * @param catalogue Catalogue instance to modify tape encryption key
    * @param isWriteSession if true, set encryption key when writing to the new tape.
    * @return {true, keyName, key, stdout} if the encryption has been set, {false, "", "", stdout} otherwise.
    */
