@@ -68,16 +68,49 @@ const uint32_t PUBLIC_GID = 9754;
 namespace {
 
 /**
+ * This structure is used to describe a tape state change during the 'triggerTapeStateChangeValidScenarios' test
+ */
+struct TriggerTapeStateChangeBehaviour {
+  cta::common::dataStructures::Tape::State fromState;
+  cta::common::dataStructures::Tape::State toState;
+  cta::common::dataStructures::Tape::State observedState;
+  bool changeRaisedException;
+  bool cleanupFlagActivated;
+};
+
+/**
  * This structure is used to parameterize scheduler tests.
  */
 struct SchedulerTestParam {
-  cta::SchedulerDatabaseFactory &dbFactory;
+  cta::SchedulerDatabaseFactory &m_dbFactory;
+  std::optional<TriggerTapeStateChangeBehaviour> m_triggerTapeStateChangeBehaviour;
 
   SchedulerTestParam(
     cta::SchedulerDatabaseFactory &dbFactory):
-    dbFactory(dbFactory) {
- }
+    m_dbFactory(dbFactory) {
+  }
+
+  SchedulerTestParam(
+          cta::SchedulerDatabaseFactory &dbFactory,
+          TriggerTapeStateChangeBehaviour triggerTapeStateChangeBehaviour):
+          m_dbFactory(dbFactory),
+          m_triggerTapeStateChangeBehaviour(triggerTapeStateChangeBehaviour) {
+  }
 }; // struct SchedulerTestParam
+
+std::ostream& operator<<(std::ostream& os, const SchedulerTestParam& c) {
+  if (!c.m_triggerTapeStateChangeBehaviour.has_value()) {
+    return os << "Test";
+  } else {
+    auto & params = c.m_triggerTapeStateChangeBehaviour.value();
+    return os << "{ "
+              << "\"from\": "               << "\"" << cta::common::dataStructures::Tape::stateToString(params.fromState)     << "\"" << ", "
+              << "\"to\": "                 << "\"" << cta::common::dataStructures::Tape::stateToString(params.toState)       << "\"" << ", "
+              << "\"expected_state\": "     << "\"" << cta::common::dataStructures::Tape::stateToString(params.observedState) << "\"" << ", "
+              << "\"expected_exception\": " << "\"" << (params.changeRaisedException ? "yes" : "no")                          << "\"" << ", "
+              << "\"expected_cleanup\": "   << "\"" << (params.cleanupFlagActivated  ? "yes" : "no")                          << "\"" << " }";
+  }
+}
 
 }
 
@@ -116,7 +149,7 @@ public:
     using namespace cta;
 
     // We do a deep reference to the member as the C++ compiler requires the function to be already defined if called implicitly
-    const auto &factory = GetParam().dbFactory;
+    const auto &factory = GetParam().m_dbFactory;
     const uint64_t nbConns = 1;
     const uint64_t nbArchiveFileListingConns = 1;
     //m_catalogue = std::make_unique<catalogue::SchemaCreatingSqliteCatalogue>(m_tempSqliteFile.path(), nbConns);
@@ -313,7 +346,6 @@ protected:
   const std::string s_vendor = "TestVendor";
   const std::string s_mountPolicyName = "mount_group";
   const std::string s_repackMountPolicyName = "repack_mount_group";
-  const bool s_defaultRepackDisabledTapeFlag = false;
   const bool s_defaultRepackNoRecall = false;
   const uint64_t s_minFilesToWarrantAMount = 5;
   const uint64_t s_minBytesToWarrantAMount = 2*1000*1000;
@@ -326,6 +358,12 @@ protected:
   //TempFile m_tempSqliteFile;
 
 }; // class SchedulerTest
+
+/**
+ * The trigger tape state change is a parameterized test.  In addition to the default parameters,
+ * it should take a 'TriggerTapeStateChangeBehaviour' reference.
+ */
+class SchedulerTestTriggerTapeStateChangeBehaviour : public SchedulerTest {};
 
 TEST_P(SchedulerTest, archive_to_new_file) {
   using namespace cta;
@@ -1998,12 +2036,14 @@ TEST_P(SchedulerTest, repack) {
   {
     auto tape = getDefaultTape();
     tape.vid = tape1;
+    tape.state = common::dataStructures::Tape::REPACKING;
+    tape.stateReason = "Test";
     catalogue.createTape(cliId, tape);
   }
 
   //The queueing of a repack request should fail if the tape to repack is not full
   cta::SchedulerDatabase::QueueRepackRequest qrr(tape1,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
-    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
+    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
   ASSERT_THROW(scheduler.queueRepack(cliId, qrr, lc),cta::exception::UserError);
   //The queueing of a repack request in a vid that does not exist should throw an exception
   qrr.m_vid = "NOT_EXIST";
@@ -2028,6 +2068,8 @@ TEST_P(SchedulerTest, repack) {
     auto tape = getDefaultTape();
     catalogue.createTape(s_adminOnAdminHost, tape);
     tape.vid = tape2;
+    tape.state = common::dataStructures::Tape::REPACKING;
+    tape.stateReason = "Test";
     tape.full = true;
     catalogue.createTape(cliId, tape);
   }
@@ -2073,12 +2115,14 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
     auto tape = getDefaultTape();
     tape.vid = tape1;
     tape.full = true;
+    tape.state = common::dataStructures::Tape::REPACKING;
+    tape.stateReason = "Test";
     catalogue.createTape(cliId, tape);
   }
 
   //Queue the first repack request
   cta::SchedulerDatabase::QueueRepackRequest qrr(tape1,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
-    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
+    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
   scheduler.queueRepack(cliId, qrr, lc);
 
   std::string tape2 = "Tape2";
@@ -2087,6 +2131,8 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
     auto tape = getDefaultTape();
     tape.vid = tape2;
     tape.full = true;
+    tape.state = common::dataStructures::Tape::REPACKING;
+    tape.stateReason = "Test";
     catalogue.createTape(cliId, tape);
   }
 
@@ -2173,6 +2219,8 @@ TEST_P(SchedulerTest, expandRepackRequest) {
     auto tape = getDefaultTape();
     tape.vid = vid;
     tape.full = true;
+    tape.state = common::dataStructures::Tape::REPACKING;
+    tape.stateReason = "Test";
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -2227,7 +2275,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
     for(uint64_t i = 0; i < nbTapesToRepack ; ++i) {
       //Queue the first repack request
       cta::SchedulerDatabase::QueueRepackRequest qrr(allVid.at(i),"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
-        common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
+        common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
       scheduler.queueRepack(admin,qrr,lc);
     }
     scheduler.waitSchedulerDbSubthreadsComplete();
@@ -2494,8 +2542,9 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
   {
     auto tape = getDefaultTape();
     tape.vid = vid;
-
     tape.full = true;
+    tape.state = common::dataStructures::Tape::REPACKING;
+    tape.stateReason = "Test";
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -2547,7 +2596,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
 
   {
     cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
-        common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
+        common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
     scheduler.queueRepack(admin,qrr,lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
@@ -2733,6 +2782,8 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
     auto tape = getDefaultTape();
     tape.vid = vid;
     tape.full = true;
+    tape.state = common::dataStructures::Tape::REPACKING;
+    tape.stateReason = "Test";
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -2793,7 +2844,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
 
   {
     cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
-    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
+    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
     scheduler.queueRepack(admin,qrr,lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
     //scheduler.waitSchedulerDbSubthreadsComplete();
@@ -2990,6 +3041,8 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
     auto tape = getDefaultTape();
     tape.vid = vid;
     tape.full = true;
+    tape.state = common::dataStructures::Tape::REPACKING;
+    tape.stateReason = "Test";
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -3049,7 +3102,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
 
   {
     cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
-    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
+    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
     scheduler.queueRepack(admin,qrr, lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
@@ -3253,7 +3306,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
   }
 }
 
-TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
+TEST_P(SchedulerTest, expandRepackRequestRepackingTape) {
   using namespace cta;
   using namespace cta::objectstore;
   unitTests::TempDirectory tempDirectory;
@@ -3293,7 +3346,7 @@ TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
     auto tape = getDefaultTape();
     tape.vid = vid;
     tape.full = true;
-    tape.state = common::dataStructures::Tape::DISABLED;
+    tape.state = common::dataStructures::Tape::REPACKING;
     tape.stateReason = "Test";
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
@@ -3341,14 +3394,12 @@ TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
     catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
     tapeFilesWrittenCopy1.clear();
   }
-  //Test the expanding requeue the Repack after the creation of
-  //one retrieve request
-  scheduler.waitSchedulerDbSubthreadsComplete();
+  // Queue the repack request for a repacking tape
+  // Should work
   {
-    bool forceDisableTape = false;
     cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
-    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,forceDisableTape,s_defaultRepackNoRecall);
-    ASSERT_THROW(scheduler.queueRepack(admin,qrr,lc),cta::exception::UserError);
+    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
+    ASSERT_NO_THROW(scheduler.queueRepack(admin,qrr,lc));
     scheduler.waitSchedulerDbSubthreadsComplete();
 
     log::TimingList tl;
@@ -3358,13 +3409,103 @@ TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
     scheduler.waitSchedulerDbSubthreadsComplete();
 
     auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
-    ASSERT_EQ(nullptr,repackRequestToExpand);
+    ASSERT_NE(nullptr,repackRequestToExpand);
   }
-  //Queue the repack request with the force disabled tape flag
+}
+
+TEST_P(SchedulerTest, expandRepackRequestRepackingDisabledTape) {
+  using namespace cta;
+  using namespace cta::objectstore;
+  unitTests::TempDirectory tempDirectory;
+  auto &catalogue = getCatalogue();
+  auto &scheduler = getScheduler();
+  auto &schedulerDB = getSchedulerDB();
+
+  cta::objectstore::Backend& backend = schedulerDB.getBackend();
+  setupDefaultCatalogue();
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+
+  //Create an agent to represent this test process
+  cta::objectstore::AgentReference agentReference("expandRepackRequestTest", dl);
+  cta::objectstore::Agent agent(agentReference.getAgentAddress(), backend);
+  agent.initialize();
+  agent.setTimeout_us(0);
+  agent.insertAndRegisterSelf(lc);
+
+  cta::common::dataStructures::SecurityIdentity admin;
+  admin.username = "admin_user_name";
+  admin.host = "admin_host";
+
+  //Create a logical library in the catalogue
+  const bool logicalLibraryIsDisabled = false;
+  catalogue.createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+
+  std::ostringstream ossVid;
+  ossVid << s_vid << "_" << 1;
+  std::string vid = ossVid.str();
+
   {
-    bool forceDisableTape = true;
+    auto tape = getDefaultTape();
+    tape.vid = vid;
+    tape.full = true;
+    tape.state = common::dataStructures::Tape::REPACKING_DISABLED;
+    tape.stateReason = "Test";
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
+
+  //Create a storage class in the catalogue
+  common::dataStructures::StorageClass storageClass;
+  storageClass.name = s_storageClassName;
+  storageClass.nbCopies = 2;
+  storageClass.comment = "Create storage class";
+
+  const std::string tapeDrive = "tape_drive";
+  const uint64_t nbArchiveFilesPerTape = 10;
+  const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
+
+  //Simulate the writing of 10 files in 1 tape in the catalogue
+  std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
+  {
+    uint64_t archiveFileId = 1;
+    std::string currentVid = vid;
+    for(uint64_t j = 1; j <= nbArchiveFilesPerTape; ++j) {
+      std::ostringstream diskFileId;
+      diskFileId << (12345677 + archiveFileId);
+      std::ostringstream diskFilePath;
+      diskFilePath << "/public_dir/public_file_"<<1<<"_"<< j;
+      auto fileWrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
+      auto & fileWritten = *fileWrittenUP;
+      fileWritten.archiveFileId = archiveFileId++;
+      fileWritten.diskInstance = s_diskInstance;
+      fileWritten.diskFileId = diskFileId.str();
+
+      fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
+      fileWritten.diskFileGid = PUBLIC_GID;
+      fileWritten.size = archiveFileSize;
+      fileWritten.checksumBlob.insert(cta::checksum::ADLER32,"1234");
+      fileWritten.storageClassName = s_storageClassName;
+      fileWritten.vid = currentVid;
+      fileWritten.fSeq = j;
+      fileWritten.blockId = j * 100;
+      fileWritten.size = archiveFileSize;
+      fileWritten.copyNb = 1;
+      fileWritten.tapeDrive = tapeDrive;
+      tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
+    }
+    //update the DB tape
+    catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
+    tapeFilesWrittenCopy1.clear();
+  }
+  // Queue the repack request for a repacking tape
+  // Should work
+  {
     cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
-    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,forceDisableTape,s_defaultRepackNoRecall);
+                                                   common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
     ASSERT_NO_THROW(scheduler.queueRepack(admin,qrr,lc));
     scheduler.waitSchedulerDbSubthreadsComplete();
 
@@ -3425,9 +3566,8 @@ TEST_P(SchedulerTest, expandRepackRequestBrokenTape) {
   }
 
   {
-    bool forceDisableTape = false;
     cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
-    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,forceDisableTape,s_defaultRepackNoRecall);
+    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
     ASSERT_THROW(scheduler.queueRepack(admin,qrr,lc),cta::exception::UserError);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
@@ -3442,6 +3582,130 @@ TEST_P(SchedulerTest, expandRepackRequestBrokenTape) {
   }
 }
 
+TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
+  using namespace cta;
+  using namespace cta::objectstore;
+  unitTests::TempDirectory tempDirectory;
+  auto &catalogue = getCatalogue();
+  auto &scheduler = getScheduler();
+  auto &schedulerDB = getSchedulerDB();
+
+  cta::objectstore::Backend& backend = schedulerDB.getBackend();
+  setupDefaultCatalogue();
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+
+  //Create an agent to represent this test process
+  cta::objectstore::AgentReference agentReference("expandRepackRequestTest", dl);
+  cta::objectstore::Agent agent(agentReference.getAgentAddress(), backend);
+  agent.initialize();
+  agent.setTimeout_us(0);
+  agent.insertAndRegisterSelf(lc);
+
+  cta::common::dataStructures::SecurityIdentity admin;
+  admin.username = "admin_user_name";
+  admin.host = "admin_host";
+
+  //Create a logical library in the catalogue
+  const bool logicalLibraryIsDisabled = false;
+  catalogue.createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+
+  std::ostringstream ossVid;
+  ossVid << s_vid << "_" << 1;
+  std::string vid = ossVid.str();
+
+  {
+    auto tape = getDefaultTape();
+    tape.vid = vid;
+    tape.full = true;
+    tape.state = common::dataStructures::Tape::DISABLED;
+    tape.stateReason = "Test";
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
+
+  {
+    cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
+                                                   common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
+    ASSERT_THROW(scheduler.queueRepack(admin,qrr,lc),cta::exception::UserError);
+    scheduler.waitSchedulerDbSubthreadsComplete();
+
+    log::TimingList tl;
+    utils::Timer t;
+
+    scheduler.promoteRepackRequestsToToExpand(lc);
+    scheduler.waitSchedulerDbSubthreadsComplete();
+
+    auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
+    ASSERT_EQ(nullptr,repackRequestToExpand);
+  }
+}
+
+TEST_P(SchedulerTest, expandRepackRequestActiveTape) {
+  using namespace cta;
+  using namespace cta::objectstore;
+  unitTests::TempDirectory tempDirectory;
+  auto &catalogue = getCatalogue();
+  auto &scheduler = getScheduler();
+  auto &schedulerDB = getSchedulerDB();
+
+  cta::objectstore::Backend& backend = schedulerDB.getBackend();
+  setupDefaultCatalogue();
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+
+  //Create an agent to represent this test process
+  cta::objectstore::AgentReference agentReference("expandRepackRequestTest", dl);
+  cta::objectstore::Agent agent(agentReference.getAgentAddress(), backend);
+  agent.initialize();
+  agent.setTimeout_us(0);
+  agent.insertAndRegisterSelf(lc);
+
+  cta::common::dataStructures::SecurityIdentity admin;
+  admin.username = "admin_user_name";
+  admin.host = "admin_host";
+
+  //Create a logical library in the catalogue
+  const bool logicalLibraryIsDisabled = false;
+  catalogue.createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+
+  std::ostringstream ossVid;
+  ossVid << s_vid << "_" << 1;
+  std::string vid = ossVid.str();
+
+  {
+    auto tape = getDefaultTape();
+    tape.vid = vid;
+    tape.full = true;
+    tape.state = common::dataStructures::Tape::ACTIVE;
+    tape.stateReason = "Test";
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
+
+  {
+    cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
+                                                   common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
+    ASSERT_THROW(scheduler.queueRepack(admin,qrr,lc),cta::exception::UserError);
+    scheduler.waitSchedulerDbSubthreadsComplete();
+
+    log::TimingList tl;
+    utils::Timer t;
+
+    scheduler.promoteRepackRequestsToToExpand(lc);
+    scheduler.waitSchedulerDbSubthreadsComplete();
+
+    auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
+    ASSERT_EQ(nullptr,repackRequestToExpand);
+  }
+}
+/* Disabled tapes should be ok to be mounted, because it is a transient state
 TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
   using namespace cta;
   using namespace cta::objectstore;
@@ -3550,7 +3814,7 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 
   //enable the tape
-  catalogue.modifyTapeState(admin,vid,common::dataStructures::Tape::ACTIVE,std::nullopt);
+  catalogue.modifyTapeState(admin,vid,common::dataStructures::Tape::ACTIVE,std::nullopt,std::nullopt);
 
   //A mount should be returned by getNextMount
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName,driveName,lc));
@@ -3585,9 +3849,8 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
 
   ASSERT_NE(mountPolicyItor, mountPolicies.end());
 
-  //Queue a Repack Request with --disabledtape flag set to force Retrieve Mount for disabled tape with repack prefix in the mount policy
   cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
-    *mountPolicyItor,true,s_defaultRepackNoRecall);
+    *mountPolicyItor,s_defaultRepackNoRecall);
   scheduler.queueRepack(admin,qrr, lc);
   scheduler.waitSchedulerDbSubthreadsComplete();
 
@@ -3602,19 +3865,17 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
   scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc);
   scheduler.waitSchedulerDbSubthreadsComplete();
 
-  /*
-   * Test expected behaviour for NOW:
-   * The getNextMount should return a mount as the tape is disabled, there are repack --disabledtape retrieve jobs in it
-   * and the mount policy name begins with repack
-   * We will then get the Repack AND USER jobs from the getNextJobBatch
-   */
+  //Test expected behaviour for NOW:
+  //The getNextMount should return a mount as the tape is disabled, there are repack --disabledtape retrieve jobs in it
+  //and the mount policy name begins with repack
+  //We will then get the Repack AND USER jobs from the getNextJobBatch
   auto nextMount = scheduler.getNextMount(s_libraryName,driveName,lc);
   ASSERT_NE(nullptr,nextMount);
   std::unique_ptr<cta::RetrieveMount> retrieveMount;
   retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(nextMount.release()));
   auto jobBatch = retrieveMount->getNextJobBatch(20,20*archiveFileSize,lc);
   ASSERT_EQ(11,jobBatch.size()); //1 user job + 10 Repack jobs = 11 jobs in the batch
-}
+}*/
 /*
 TEST_P(SchedulerTest, emptyMountIsTriggeredWhenCancelledRetrieveRequest) {
 
@@ -4011,6 +4272,8 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
     auto tape = getDefaultTape();
     tape.vid = vid;
     tape.full = true;
+    tape.state = common::dataStructures::Tape::REPACKING;
+    tape.stateReason = "Test";
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -4092,7 +4355,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
   scheduler.waitSchedulerDbSubthreadsComplete();
   {
     cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::AddCopiesOnly,
-    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
+    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
     scheduler.queueRepack(admin,qrr,lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
@@ -4261,6 +4524,8 @@ TEST_P(SchedulerTest, expandRepackRequestShouldFailIfArchiveRouteMissing) {
     auto tape = getDefaultTape();
     tape.vid = vidCopyNb1;
     tape.full = true;
+    tape.state = common::dataStructures::Tape::REPACKING;
+    tape.stateReason = "Test";
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -4285,6 +4550,8 @@ TEST_P(SchedulerTest, expandRepackRequestShouldFailIfArchiveRouteMissing) {
     auto tape = getDefaultTape();
     tape.vid = vidCopyNb2_source;
     tape.tapePoolName = tapepool2Name;
+    tape.state = common::dataStructures::Tape::REPACKING;
+    tape.stateReason = "Test";
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -4371,7 +4638,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldFailIfArchiveRouteMissing) {
   {
     std::string vid = vidCopyNb2_source;
     cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveAndAddCopies,
-    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
+    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
     scheduler.queueRepack(admin,qrr,lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
@@ -4439,6 +4706,8 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
     auto tape = getDefaultTape();
     tape.vid = vid;
     tape.full = true;
+    tape.state = common::dataStructures::Tape::REPACKING;
+    tape.stateReason = "Test";
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -4528,7 +4797,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
   scheduler.waitSchedulerDbSubthreadsComplete();
   {
     cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveAndAddCopies,
-    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
+    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
     scheduler.queueRepack(admin,qrr, lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
@@ -4718,6 +4987,8 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
     auto tape = getDefaultTape();
     tape.vid = vid;
     tape.full = true;
+    tape.state = common::dataStructures::Tape::REPACKING;
+    tape.stateReason = "Test";
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
   //Create a repack destination tape
@@ -4776,7 +5047,7 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
 
   {
     cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
-    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
+    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
     scheduler.queueRepack(admin,qrr,lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
@@ -4828,7 +5099,7 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
   //Do another test to check the deletion of ArchiveSubrequests
   {
     cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
-    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
+    common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
     scheduler.queueRepack(admin,qrr,lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
@@ -5032,7 +5303,7 @@ TEST_P(SchedulerTest, getNextMountEmptyArchiveForRepackIfNbFilesQueuedIsLessThan
   ASSERT_EQ(2 * s_minFilesToWarrantAMount,tapeMount->getNbFiles());
 }
 
-TEST_P(SchedulerTest, getNextMountBrokenOrDisabledTapeShouldNotReturnAMount) {
+TEST_P(SchedulerTest, getNextMountTapeStatesThatShouldNotReturnAMount) {
   //Queue 2 archive requests in two different logical libraries
   using namespace cta;
 
@@ -5097,14 +5368,24 @@ TEST_P(SchedulerTest, getNextMountBrokenOrDisabledTapeShouldNotReturnAMount) {
 
   scheduler.waitSchedulerDbSubthreadsComplete();
 
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::BROKEN,std::string("Test"));
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::BROKEN,std::nullopt,std::string("Test"));
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,std::nullopt);
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::BROKEN,std::nullopt);
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::DISABLED,std::string("Test"));
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::EXPORTED,std::nullopt,std::string("Test"));
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,std::nullopt);
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::EXPORTED,std::nullopt);
+  ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
+
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::REPACKING_DISABLED,std::nullopt,std::string("Test"));
+  ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::REPACKING_DISABLED,std::nullopt);
+  ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
+
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::DISABLED,std::nullopt,std::string("Test"));
+  ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::DISABLED,std::nullopt);
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 
   {
@@ -5153,14 +5434,24 @@ TEST_P(SchedulerTest, getNextMountBrokenOrDisabledTapeShouldNotReturnAMount) {
     scheduler.queueRetrieve(s_diskInstance, request, lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::BROKEN,std::string("Test"));
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::BROKEN,std::nullopt,std::string("Test"));
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,std::nullopt);
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::BROKEN,std::nullopt);
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::DISABLED,std::string("Test"));
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::EXPORTED,std::nullopt,std::string("Test"));
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,std::nullopt);
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::EXPORTED,std::nullopt);
+  ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
+
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::REPACKING_DISABLED,std::nullopt,std::string("Test"));
+  ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::REPACKING_DISABLED,std::nullopt);
+  ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
+
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::DISABLED,std::nullopt,std::string("Test"));
+  ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::DISABLED,std::nullopt);
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 }
 
@@ -5201,6 +5492,8 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
   {
     auto tape = getDefaultTape();
     tape.full = true;
+    tape.state = common::dataStructures::Tape::REPACKING;
+    tape.stateReason = "Test";
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -5250,7 +5543,7 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   cta::SchedulerDatabase::QueueRepackRequest qrr(s_vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
-  common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,s_defaultRepackNoRecall);
+  common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
   scheduler.queueRepack(admin,qrr, lc);
   scheduler.waitSchedulerDbSubthreadsComplete();
 
@@ -5348,6 +5641,8 @@ TEST_P(SchedulerTest, expandRepackRequestShouldThrowIfUseBufferNotRecallButNoDir
   {
     auto tape = getDefaultTape();
     tape.full = true;
+    tape.state = common::dataStructures::Tape::REPACKING;
+    tape.stateReason = "Test";
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -5399,7 +5694,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldThrowIfUseBufferNotRecallButNoDir
   bool noRecall = true;
 
   cta::SchedulerDatabase::QueueRepackRequest qrr(s_vid,"file://DOES_NOT_EXIST",common::dataStructures::RepackInfo::Type::MoveOnly,
-  common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,noRecall);
+  common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,noRecall);
   scheduler.queueRepack(admin,qrr, lc);
   scheduler.waitSchedulerDbSubthreadsComplete();
 
@@ -5445,6 +5740,8 @@ TEST_P(SchedulerTest, expandRepackRequestShouldNotThrowIfTapeDisabledButNoRecall
   {
     auto tape = getDefaultTape();
     tape.full = true;
+    tape.state = common::dataStructures::Tape::REPACKING;
+    tape.stateReason = "Test";
     catalogue.createTape(s_adminOnAdminHost, tape);
   }
 
@@ -5498,7 +5795,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldNotThrowIfTapeDisabledButNoRecall
   tempDirectory.append("/"+s_vid);
   tempDirectory.mkdir();
   cta::SchedulerDatabase::QueueRepackRequest qrr(s_vid,pathRepackBuffer,common::dataStructures::RepackInfo::Type::MoveOnly,
-  common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackDisabledTapeFlag,noRecall);
+  common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,noRecall);
   scheduler.queueRepack(admin,qrr, lc);
   scheduler.waitSchedulerDbSubthreadsComplete();
 
@@ -5736,7 +6033,6 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
 
   //Two tapes for ArchiveForUser and ArchiveForRepack mounts
   std::string vid2 = "vid_2";
-  std::string vid3 = "vid_3";
   auto tape2 = tape1;
   tape2.vid = vid2;
   catalogue.createTape(s_adminOnAdminHost, tape2);
@@ -5746,6 +6042,7 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
   catalogue.createTapePool(s_adminOnAdminHost,newTapepool,s_vo,1,false,std::nullopt,"Test");
 
   //Create the third tape in the new tapepool
+  std::string vid3 = "vid_3";
   auto tape3  = tape1;
   tape3.vid = vid3;
   tape3.tapePoolName = newTapepool;
@@ -5862,7 +6159,7 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
   //Allow one drive for write and trigger the mount
   catalogue.modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,1);
 
-  //Disable the tape 1 to prevent the mount in it (should be the Retrieve)
+  //Set the tape 1 to disabled state to prevent the mount in it (should be the Retrieve)
   catalogue.setTapeDisabled(s_adminOnAdminHost,tape1.vid,"test");
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,drive1,lc));
   {
@@ -5911,10 +6208,10 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,drive3,lc));
   //Now allocate one drive for Retrieve
   catalogue.modifyVirtualOrganizationReadMaxDrives(s_adminOnAdminHost,s_vo,1);
-  //The retrieve mount should not be triggered as the tape 1 is disabled
+  //The retrieve mount should not be triggered as the tape 1 state is broken
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,drive3,lc));
   //Setting the state of the tape back to active
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape1.vid,common::dataStructures::Tape::ACTIVE,std::nullopt);
+  catalogue.modifyTapeState(s_adminOnAdminHost,tape1.vid,common::dataStructures::Tape::ACTIVE,std::nullopt,std::nullopt);
   //The mount should be triggered on tape 1
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,drive3,lc));
   //The mount should be a Retrieve mount
@@ -6291,6 +6588,56 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,drive2,lc));
 }
 
+// This checks valid tape state changes
+TEST_P(SchedulerTestTriggerTapeStateChangeBehaviour, triggerTapeStateChangeValidScenarios){
+//Queue 2 archive requests in two different logical libraries
+  using namespace cta;
+
+  Scheduler &scheduler = getScheduler();
+  auto &catalogue = getCatalogue();
+  auto &schedulerDB = getSchedulerDB();
+
+  setupDefaultCatalogue();
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+
+  if (!GetParam().m_triggerTapeStateChangeBehaviour.has_value()) {
+    throw exception::Exception("Test needs 'TriggerTapeStateChangeBehaviour' parameters");
+  }
+
+  auto triggerTapeStateChangeBehaviour = GetParam().m_triggerTapeStateChangeBehaviour.value();
+
+  // Create the environment for the migration to happen (library + tape)
+  const std::string libraryComment = "Library comment";
+  const bool libraryIsDisabled = false;
+  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+                                 libraryIsDisabled, libraryComment);
+
+  auto tape = getDefaultTape();
+  {
+    catalogue.createTape(s_adminOnAdminHost, tape);
+  }
+
+  // Setup initial conditions
+  schedulerDB.setRetrieveQueueCleanupFlag(tape.vid, false, lc);
+  catalogue.modifyTapeState(s_adminOnAdminHost, tape.vid,triggerTapeStateChangeBehaviour.fromState,std::nullopt,"Test");
+
+  // Trigger change
+  if (triggerTapeStateChangeBehaviour.changeRaisedException) {
+    ASSERT_THROW(scheduler.triggerTapeStateChange(s_adminOnAdminHost, tape.vid, triggerTapeStateChangeBehaviour.toState, "Test", lc), exception::UserError);
+  } else {
+    ASSERT_NO_THROW(scheduler.triggerTapeStateChange(s_adminOnAdminHost, tape.vid, triggerTapeStateChangeBehaviour.toState, "Test", lc));
+  }
+
+  // Observe results
+  ASSERT_EQ(catalogue.getTapesByVid(tape.vid).at(tape.vid).state, triggerTapeStateChangeBehaviour.observedState);
+  ASSERT_EQ(schedulerDB.getRetrieveQueuesCleanupInfo(lc).front().doCleanup, triggerTapeStateChangeBehaviour.cleanupFlagActivated);
+}
+
 #undef TEST_MOCK_DB
 #ifdef TEST_MOCK_DB
 static cta::MockSchedulerDatabaseFactory mockDbFactory;
@@ -6304,6 +6651,62 @@ static cta::OStoreDBFactory<cta::objectstore::BackendVFS> OStoreDBFactoryVFS;
 
 INSTANTIATE_TEST_CASE_P(OStoreDBPlusMockSchedulerTestVFS, SchedulerTest,
   ::testing::Values(SchedulerTestParam(OStoreDBFactoryVFS)));
+
+using Tape = cta::common::dataStructures::Tape;
+
+INSTANTIATE_TEST_CASE_P(OStoreDBPlusMockSchedulerTestVFS, SchedulerTestTriggerTapeStateChangeBehaviour,
+                        ::testing::Values(
+                                /* { fromState, toState, observedState, changeRaisedException, cleanupFlagActivated } */
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::ACTIVE,             Tape::ACTIVE,             Tape::ACTIVE,             false, false}),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::ACTIVE,             Tape::DISABLED,           Tape::DISABLED,           false, false}),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::ACTIVE,             Tape::REPACKING,          Tape::REPACKING_PENDING,  false, true }),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::ACTIVE,             Tape::REPACKING_PENDING,  Tape::ACTIVE,             true,  false}),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::ACTIVE,             Tape::REPACKING_DISABLED, Tape::ACTIVE,             true,  false}),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::ACTIVE,             Tape::BROKEN,             Tape::BROKEN_PENDING,     false, true }),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::ACTIVE,             Tape::BROKEN_PENDING,     Tape::ACTIVE,             true,  false}),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::ACTIVE,             Tape::EXPORTED,           Tape::EXPORTED_PENDING,   false, true }),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::ACTIVE,             Tape::EXPORTED_PENDING,   Tape::ACTIVE,             true,  false}),
+
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::DISABLED,           Tape::ACTIVE,             Tape::ACTIVE,             false, false}),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::DISABLED,           Tape::DISABLED,           Tape::DISABLED,           false, false}),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::DISABLED,           Tape::REPACKING,          Tape::REPACKING_PENDING,  false, true }),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::DISABLED,           Tape::REPACKING_DISABLED, Tape::DISABLED,           true,  false}),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::DISABLED,           Tape::BROKEN,             Tape::BROKEN_PENDING,     false, true }),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::DISABLED,           Tape::EXPORTED,           Tape::EXPORTED_PENDING,   false, true }),
+
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING,          Tape::ACTIVE,             Tape::ACTIVE,             false, false}),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING,          Tape::DISABLED,           Tape::DISABLED,           false, false}),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING,          Tape::REPACKING,          Tape::REPACKING,          false, false}),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING,          Tape::REPACKING_DISABLED, Tape::REPACKING_DISABLED, false, false}),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING,          Tape::BROKEN,             Tape::BROKEN_PENDING,     false, true }),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING,          Tape::EXPORTED,           Tape::EXPORTED_PENDING,   false, true }),
+
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING_DISABLED, Tape::ACTIVE,             Tape::REPACKING_DISABLED, true,  false}),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING_DISABLED, Tape::DISABLED,           Tape::REPACKING_DISABLED, true,  false}),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING_DISABLED, Tape::REPACKING,          Tape::REPACKING,          false, false}),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING_DISABLED, Tape::REPACKING_DISABLED, Tape::REPACKING_DISABLED, false, false}),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING_DISABLED, Tape::BROKEN,             Tape::BROKEN_PENDING,     false, true }),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING_DISABLED, Tape::EXPORTED,           Tape::EXPORTED_PENDING,   false, true }),
+
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::BROKEN,             Tape::ACTIVE,             Tape::ACTIVE,             false, false}),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::BROKEN,             Tape::DISABLED,           Tape::DISABLED,           false, false}),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::BROKEN,             Tape::REPACKING,          Tape::REPACKING_PENDING,  false, true }),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::BROKEN,             Tape::REPACKING_DISABLED, Tape::BROKEN,             true,  false}),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::BROKEN,             Tape::BROKEN,             Tape::BROKEN,             false, false}),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::BROKEN,             Tape::EXPORTED,           Tape::EXPORTED_PENDING,   false, true }),
+
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::EXPORTED,           Tape::ACTIVE,             Tape::ACTIVE,             false, false}),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::EXPORTED,           Tape::DISABLED,           Tape::DISABLED,           false, false}),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::EXPORTED,           Tape::REPACKING,          Tape::REPACKING_PENDING,  false, true }),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::EXPORTED,           Tape::REPACKING_DISABLED, Tape::EXPORTED,           true,  false}),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::EXPORTED,           Tape::BROKEN,             Tape::BROKEN_PENDING,     false, true }),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::EXPORTED,           Tape::EXPORTED,           Tape::EXPORTED,           false, false}),
+
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING_PENDING,  Tape::ACTIVE,             Tape::REPACKING_PENDING,  true, false}),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::BROKEN_PENDING,     Tape::ACTIVE,             Tape::BROKEN_PENDING,     true, false}),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::EXPORTED_PENDING,   Tape::ACTIVE,             Tape::EXPORTED_PENDING,   true, false})
+                        ));
+
 #endif
 
 #ifdef TEST_RADOS

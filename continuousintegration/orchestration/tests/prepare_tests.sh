@@ -42,9 +42,12 @@ if [ ! -z "${error}" ]; then
     exit 1
 fi
 
-
 # eos instance identified by SSS username
 EOSINSTANCE=ctaeos
+
+MULTICOPY_DIR_1=/eos/ctaeos/preprod/dir_1_copy
+MULTICOPY_DIR_2=/eos/ctaeos/preprod/dir_2_copy
+MULTICOPY_DIR_3=/eos/ctaeos/preprod/dir_3_copy
 
 tempdir=$(mktemp -d) # temporary directory for system test related config
 echo -n "Reading library configuration from tpsrv01"
@@ -94,6 +97,9 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
   echo "Cleaning up leftovers from potential previous runs."
   kubectl --namespace ${NAMESPACE} exec ctaeos -- eos rm -rf /eos/ctaeos/cta/fail_on_closew_test/
   kubectl --namespace ${NAMESPACE} exec ctaeos -- eos rm /eos/ctaeos/cta/*
+  kubectl --namespace ${NAMESPACE} exec ctaeos -- eos rm -rf ${MULTICOPY_DIR_1}/
+  kubectl --namespace ${NAMESPACE} exec ctaeos -- eos rm -rf ${MULTICOPY_DIR_2}/
+  kubectl --namespace ${NAMESPACE} exec ctaeos -- eos rm -rf ${MULTICOPY_DIR_3}/
   kubectl --namespace ${NAMESPACE} exec ctaeos -- eos find -f /eos/ctaeos/preprod/ | xargs -I{} kubectl --namespace ${NAMESPACE} exec ctaeos -- eos rm -rf {}
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json tape ls --all  |             \
     jq -r '.[] | .vid ' | xargs -I{} kubectl --namespace ${NAMESPACE} exec ctacli --            \
@@ -132,12 +138,7 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
     --writemaxdrives 1                                                               \
     --diskinstance ${EOSINSTANCE}                                                    \
     --comment "vo"
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tapepool add       \
-    --name ctasystest                                                 \
-    --vo vo                                                           \
-    --partialtapesnumber 5                                            \
-    --encrypted false                                                 \
-    --comment "ctasystest"
+  
   # add the media types of the tapes in production
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mediatype add \
     --name T10K500G  \
@@ -175,11 +176,99 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
     --primarydensitycode 94 \
     --cartridge "LTO-8" \
     --comment "LTO-8 cartridge formated at 12 TB"
-  # add all tapes
+  
+  # Setup default tapepool and storage class
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tapepool add \
+    --name ctasystest                                                    \
+    --vo vo                                                              \
+    --partialtapesnumber 5                                               \
+    --encrypted false                                                    \
+    --comment "ctasystest"
+
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin storageclass add \
+    --name ctaStorageClass                                                   \
+    --numberofcopies 1                                                       \
+    --vo vo                                                                  \
+    --comment "ctasystest"
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute add \
+    --storageclass ctaStorageClass                                           \
+    --copynb 1                                                               \
+    --tapepool ctasystest                                                    \
+    --comment "ctasystest"
+ 
+  # Setup tapepools and storage classes for multiple tape copies 
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tapepool add \
+    --name ctasystest_A                                                  \
+    --vo vo                                                              \
+    --partialtapesnumber 5                                               \
+    --encrypted false                                                    \
+    --comment "ctasystest_A"
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tapepool add \
+    --name ctasystest_B                                                  \
+    --vo vo                                                              \
+    --partialtapesnumber 5                                               \
+    --encrypted false                                                    \
+    --comment "ctasystest_B"
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tapepool add \
+    --name ctasystest_C                                                  \
+    --vo vo                                                              \
+    --partialtapesnumber 5                                               \
+    --encrypted false                                                    \
+    --comment "ctasystest_C"
+
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin storageclass add \
+    --name ctaStorageClass_1_copy                                            \
+    --numberofcopies 1                                                       \
+    --vo vo                                                                  \
+    --comment "ctasystest"
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute add \
+    --storageclass ctaStorageClass_1_copy                                    \
+    --copynb 1                                                               \
+    --tapepool ctasystest_A                                                  \
+    --comment "ctasystest"
+  
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin storageclass add \
+    --name ctaStorageClass_2_copy                                            \
+    --numberofcopies 2                                                       \
+    --vo vo                                                                  \
+    --comment "ctasystest"
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute add \
+    --storageclass ctaStorageClass_2_copy                                    \
+    --copynb 1                                                               \
+    --tapepool ctasystest_A                                                  \
+    --comment "ctasystest"
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute add \
+    --storageclass ctaStorageClass_2_copy                                    \
+    --copynb 2                                                               \
+    --tapepool ctasystest_B                                                  \
+    --comment "ctasystest"
+  
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin storageclass add \
+    --name ctaStorageClass_3_copy                                            \
+    --numberofcopies 1                                                       \
+    --vo vo                                                                  \
+    --comment "ctasystest"
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute add \
+    --storageclass ctaStorageClass_3_copy                                    \
+    --copynb 1                                                               \
+    --tapepool ctasystest_A                                                  \
+    --comment "ctasystest"
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute add \
+    --storageclass ctaStorageClass_3_copy                                    \
+    --copynb 2                                                               \
+    --tapepool ctasystest_B                                                  \
+    --comment "ctasystest"
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute add \
+    --storageclass ctaStorageClass_3_copy                                    \
+    --copynb 3                                                               \
+    --tapepool ctasystest_C                                                  \
+    --comment "ctasystest"
+  
+  # add all tapes to default tape pool
   for ((i=0; i<${#TAPES[@]}; i++)); do
     VID=${TAPES[${i}]}
     kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tape add     \
-      --mediatype "T10K500G"                                              \
+      --mediatype "T10K500G"                                               \
       --vendor vendor                                                      \
       --logicallibrary ${TAPEDRIVES_IN_USE[${i}%${NB_TAPEDRIVES_IN_USE}]}  \
       --tapepool ctasystest                                                \
@@ -188,16 +277,6 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
       --full false                                                         \
       --comment "ctasystest"
   done
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin storageclass add   \
-    --name ctaStorageClass                                            \
-    --numberofcopies 1                                                        \
-    --vo vo                                                           \
-    --comment "ctasystest"
-  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin archiveroute add   \
-    --storageclass ctaStorageClass                                    \
-    --copynb 1                                                        \
-    --tapepool ctasystest                                             \
-    --comment "ctasystest"
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mountpolicy add    \
     --name ctasystest                                                 \
     --archivepriority 1                                               \
@@ -291,3 +370,28 @@ done > ${TMP_HOSTS}
 kubectl -n ${NAMESPACE} get pods -o json | jq -r '.items[] | select(.status.phase=="Running") | {name: .metadata.name, containers: .spec.containers[].name} | {command: (.name + " -c " + .containers)}|to_entries[]|(.value)' | while read container; do
   cat ${TMP_HOSTS} | grep -v $(echo ${container} | awk '{print $1}')| kubectl -n ${NAMESPACE} exec ${container} -i -- bash -c "cat >> /etc/hosts"
 done
+
+setup_tapes_for_multicopy_test() {
+
+  echo "Setting up tapes and tapepools for multi-copy test..."
+
+  kubectl --namespace ${NAMESPACE} exec ctaeos -- eos mkdir ${MULTICOPY_DIR_1}
+  kubectl --namespace ${NAMESPACE} exec ctaeos -- eos mkdir ${MULTICOPY_DIR_2}
+  kubectl --namespace ${NAMESPACE} exec ctaeos -- eos mkdir ${MULTICOPY_DIR_3}
+
+  kubectl --namespace ${NAMESPACE} exec ctaeos -- eos attr set sys.archive.storage_class=ctaStorageClass_1_copy ${MULTICOPY_DIR_1}
+  kubectl --namespace ${NAMESPACE} exec ctaeos -- eos attr set sys.archive.storage_class=ctaStorageClass_2_copy ${MULTICOPY_DIR_2}
+  kubectl --namespace ${NAMESPACE} exec ctaeos -- eos attr set sys.archive.storage_class=ctaStorageClass_3_copy ${MULTICOPY_DIR_3}
+
+  # Find 3 non-full tapes and assign them to each one of the 3 tapepools
+  mapfile -t nonFullTapes < <( kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json tape ls --all | jq -r '.[] | select(.full==false) | .vid' )
+  if ((${#nonFullTapes[@]} < 3)); then
+    echo "Not enought non-full tapes"
+    return 1
+  fi
+
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tape ch --vid ${nonFullTapes[0]} --tapepool ctasystest_A
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tape ch --vid ${nonFullTapes[1]} --tapepool ctasystest_B
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin tape ch --vid ${nonFullTapes[2]} --tapepool ctasystest_C
+
+}

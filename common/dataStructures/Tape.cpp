@@ -40,18 +40,39 @@ Tape::Tape():
 const std::map<Tape::State,std::string> Tape::STATE_TO_STRING_MAP = {
   {Tape::State::ACTIVE,"ACTIVE"},
   {Tape::State::BROKEN,"BROKEN"},
-  {Tape::State::DISABLED,"DISABLED"}
+  {Tape::State::BROKEN_PENDING,"BROKEN_PENDING"},
+  {Tape::State::DISABLED,"DISABLED"},
+  {Tape::State::REPACKING,"REPACKING"},
+  {Tape::State::REPACKING_PENDING,"REPACKING_PENDING"},
+  {Tape::State::EXPORTED,"EXPORTED"},
+  {Tape::State::EXPORTED_PENDING,"EXPORTED_PENDING"},
+  {Tape::State::REPACKING_DISABLED,"REPACKING_DISABLED"},
+};
+
+const std::set<Tape::State> Tape::PENDING_STATES_SET = {
+  Tape::State::BROKEN_PENDING,
+  Tape::State::REPACKING_PENDING,
+  Tape::State::EXPORTED_PENDING,
 };
 
 const std::map<std::string,Tape::State> Tape::STRING_TO_STATE_MAP = {
   {"ACTIVE",Tape::State::ACTIVE},
   {"BROKEN",Tape::State::BROKEN},
-  {"DISABLED",Tape::State::DISABLED}
+  {"BROKEN_PENDING",Tape::State::BROKEN_PENDING},
+  {"DISABLED",Tape::State::DISABLED},
+  {"REPACKING",Tape::State::REPACKING},
+  {"REPACKING_PENDING",Tape::State::REPACKING_PENDING},
+  {"EXPORTED", Tape::State::EXPORTED},
+  {"EXPORTED_PENDING", Tape::State::EXPORTED_PENDING},
+  {"REPACKING_DISABLED",Tape::State::REPACKING_DISABLED},
 };
 
-std::string Tape::getAllPossibleStates(){
+std::string Tape::getAllPossibleStates(bool hidePendingStates){
   std::string ret;
   for(auto &kv: STRING_TO_STATE_MAP){
+    if(hidePendingStates && PENDING_STATES_SET.count(kv.second)) {
+      continue;
+    }
     ret += kv.first + " ";
   }
   if(ret.size())
@@ -103,18 +124,34 @@ std::string Tape::stateToString(const Tape::State & state) {
   }
 }
 
-Tape::State Tape::stringToState(const std::string& state) {
-  std::string stateUpperCase = state;
+Tape::State Tape::stringToState(const std::string& stateStr, bool hidePendingStates) {
+  std::string stateUpperCase = stateStr;
   cta::utils::toUpper(stateUpperCase);
   try {
     return Tape::STRING_TO_STATE_MAP.at(stateUpperCase);
   } catch(std::out_of_range &ex){
-    throw cta::exception::Exception(std::string("The state given (") + stateUpperCase + ") does not exist. Possible values are " + Tape::getAllPossibleStates());
+    throw cta::exception::Exception(std::string("The state given (") + stateUpperCase + ") does not exist. Possible values are " + Tape::getAllPossibleStates(hidePendingStates));
   }
+}
+
+bool Tape::isActive() const {
+  return state == Tape::State::ACTIVE;
 }
 
 bool Tape::isDisabled() const {
   return state == Tape::State::DISABLED;
+}
+
+bool Tape::isRepacking() const {
+  return state == Tape::State::REPACKING;
+}
+
+bool Tape::isBroken() const {
+  return state == Tape::State::BROKEN;
+}
+
+bool Tape::isExported() const {
+  return state == Tape::State::EXPORTED;
 }
 
 //------------------------------------------------------------------------------

@@ -4802,6 +4802,7 @@ void RdbmsCatalogue::resetTapeCounters(rdbms::Conn& conn, const common::dataStru
 // reclaimTape
 //------------------------------------------------------------------------------
 void RdbmsCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, cta::log::LogContext & lc) {
+  using namespace common::dataStructures;
   try{
     log::TimingList tl;
     utils::Timer t;
@@ -4814,11 +4815,12 @@ void RdbmsCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity 
 
     if (tapes.empty()) {
       throw exception::UserError(std::string("Cannot reclaim tape ") + vid + " because it does not exist");
-    }  else {
-      if (!tapes.front().full) {
-        throw exception::UserError(std::string("Cannot reclaim tape ") + vid + " because it is not FULL");
-      }
+    } else if (tapes.front().state != Tape::State::ACTIVE && tapes.front().state != Tape::State::DISABLED) {
+      throw exception::UserError(std::string("Cannot reclaim tape ") + vid + " because it is not on ACTIVE or DISABLED state");
+    } else if (!tapes.front().full) {
+      throw exception::UserError(std::string("Cannot reclaim tape ") + vid + " because it is not FULL");
     }
+
     // The tape exists and is full, we can try to reclaim it
     if (this->getNbFilesOnTape(conn, vid) == 0) {
       tl.insertAndReset("getNbFilesOnTape", t);
@@ -5204,7 +5206,7 @@ void RdbmsCatalogue::modifyTapeVerificationStatus(const common::dataStructures::
 //------------------------------------------------------------------------------
 // modifyTapeState
 //------------------------------------------------------------------------------
-void RdbmsCatalogue::modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const std::optional<std::string> & stateReason){
+void RdbmsCatalogue::modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const std::optional<common::dataStructures::Tape::State> & prev_state, const std::optional<std::string> & stateReason){
   try {
     using namespace common::dataStructures;
     const time_t now = time(nullptr);
@@ -5220,6 +5222,16 @@ void RdbmsCatalogue::modifyTapeState(const common::dataStructures::SecurityIdent
       throw UserSpecifiedANonExistentTapeState(errorMsg);
     }
 
+    std::string prevStateStr;
+    if (prev_state.has_value()) {
+      try {
+        prevStateStr = cta::common::dataStructures::Tape::stateToString(prev_state.value());
+      } catch (cta::exception::Exception &ex) {
+        std::string errorMsg = "The previous state provided in parameter (" + std::to_string(prev_state.value()) + ") is not known or has not been initialized existing states are:" + common::dataStructures::Tape::getAllPossibleStates();
+        throw UserSpecifiedANonExistentTapeState(errorMsg);
+      }
+    }
+
     //Check the reason is set for all the status except the ACTIVE one, this is the only state that allows the reason to be set to null.
     if(state != Tape::State::ACTIVE){
       if(!stateReasonCopy){
@@ -5227,7 +5239,7 @@ void RdbmsCatalogue::modifyTapeState(const common::dataStructures::SecurityIdent
       }
     }
 
-    const char *const sql =
+    std::string sql =
       "UPDATE TAPE SET "
         "TAPE_STATE = :TAPE_STATE,"
         "STATE_REASON = :STATE_REASON,"
@@ -5235,6 +5247,11 @@ void RdbmsCatalogue::modifyTapeState(const common::dataStructures::SecurityIdent
         "STATE_MODIFIED_BY = :STATE_MODIFIED_BY "
       "WHERE "
         "VID = :VID";
+
+    if (prev_state.has_value()) {
+      sql += " AND TAPE_STATE = :PREV_TAPE_STATE";
+    }
+
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
 
@@ -5243,10 +5260,13 @@ void RdbmsCatalogue::modifyTapeState(const common::dataStructures::SecurityIdent
     stmt.bindUint64(":STATE_UPDATE_TIME", now);
     stmt.bindString(":STATE_MODIFIED_BY",generateTapeStateModifiedBy(admin));
     stmt.bindString(":VID",vid);
+    if (prev_state.has_value()) {
+      stmt.bindString(":PREV_TAPE_STATE",prevStateStr);
+    }
     stmt.executeNonQuery();
 
     if (0 == stmt.getNbAffectedRows()) {
-      throw UserSpecifiedANonExistentTape(std::string("Cannot modify the state of the tape ") + vid + " because it does not exist");
+      throw UserSpecifiedANonExistentTape(std::string("Cannot modify the state of the tape ") + vid + " because it does not exist or because a recent state change has been detected");
     }
 
   } catch(exception::UserError &) {
@@ -5500,7 +5520,23 @@ void RdbmsCatalogue::setTapeDisabled(const common::dataStructures::SecurityIdent
   const std::string &vid, const std::string & reason) {
 
   try {
-    modifyTapeState(admin,vid,common::dataStructures::Tape::DISABLED,reason);
+    modifyTapeState(admin,vid,common::dataStructures::Tape::DISABLED,std::nullopt,reason);
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// setTapeRepackingDisabled
+//------------------------------------------------------------------------------
+void RdbmsCatalogue::setTapeRepackingDisabled(const common::dataStructures::SecurityIdentity &admin,
+                                     const std::string &vid, const std::string & reason) {
+
+  try {
+    modifyTapeState(admin,vid,common::dataStructures::Tape::REPACKING_DISABLED,std::nullopt,reason);
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -9046,7 +9082,12 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsCatalogue::prepareToRetri
           throw ex;
         }
         const auto nonBrokenState = std::find_if(std::begin(tapeFileStateList), std::end(tapeFileStateList),
-          [](std::pair<std::string, std::string> state) {return state.second != "BROKEN";});
+          [](std::pair<std::string, std::string> state) {
+            return (state.second != "BROKEN")
+                   && (state.second != "BROKEN_PENDING")
+                   && (state.second != "EXPORTED")
+                   && (state.second != "EXPORTED_PENDING");
+        });
 
         if (nonBrokenState != std::end(tapeFileStateList)) {
           ex.getMessage() << "WARNING: File with archive file ID " << archiveFileId <<
@@ -9743,7 +9784,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsCatalogue::getArchiveF
         "TAPE_FILE.VID = TAPE.VID "
       "WHERE "
         "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID AND "
-        "TAPE.TAPE_STATE = 'ACTIVE' "
+        "TAPE.TAPE_STATE IN ('ACTIVE', 'DISABLED') "
       "ORDER BY "
         "TAPE_FILE.CREATION_TIME ASC";
     auto stmt = conn.createStmt(sql);

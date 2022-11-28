@@ -115,6 +115,30 @@ public:
     return m_SchedDB->getArchiveJobsFailedSummary(lc);
   }
 
+  std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsToTransferBatch(std::string & vid, uint64_t filesRequested, log::LogContext &lc) override {
+    return m_SchedDB->getNextRetrieveJobsToTransferBatch(vid, filesRequested, lc);
+  }
+
+  void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob *> &jobs, log::LogContext &lc) override {
+    m_SchedDB->requeueRetrieveRequestJobs(jobs, lc);
+  }
+
+  void reserveRetrieveQueueForCleanup(std::string & vid, std::optional<uint64_t> cleanupHeartBeatValue) override {
+    m_SchedDB->reserveRetrieveQueueForCleanup(vid, cleanupHeartBeatValue);
+  }
+
+  void tickRetrieveQueueCleanupHeartbeat(std::string & vid) override {
+    m_SchedDB->tickRetrieveQueueCleanupHeartbeat(vid);
+  }
+
+  std::list<RetrieveQueueCleanupInfo> getRetrieveQueuesCleanupInfo(log::LogContext& logContext) override {
+    return m_SchedDB->getRetrieveQueuesCleanupInfo(logContext);
+  }
+
+  void setRetrieveQueueCleanupFlag(const std::string& vid, bool val, log::LogContext& lc) override {
+    m_SchedDB->setRetrieveQueueCleanupFlag(vid, val, lc);
+  }
+
   std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext &lc) override {
     return m_SchedDB->getNextRetrieveJobsToReportBatch(filesRequested, lc);
   }
@@ -184,6 +208,10 @@ public:
   std::list<RetrieveQueueStatistics> getRetrieveQueueStatistics(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
           const std::set<std::string> & vidsToConsider) override {
     return m_SchedDB->getRetrieveQueueStatistics(criteria, vidsToConsider);
+  }
+
+  void clearRetrieveQueueStatisticsCache(const std::string & vid) override {
+    return m_SchedDB->clearRetrieveQueueStatisticsCache(vid);
   }
 
   SchedulerDatabase::RetrieveRequestInfo queueRetrieve(common::dataStructures::RetrieveRequest& rqst,

@@ -161,7 +161,6 @@ void DummyCatalogue::modifyStorageClassNbCopies(const common::dataStructures::Se
 void DummyCatalogue::modifyTapeComment(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::optional<std::string> &comment) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
 void DummyCatalogue::modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string& encryptionKeyName) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
 void DummyCatalogue::modifyTapeVerificationStatus(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string& verificationStatus) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
-void DummyCatalogue::modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const std::optional<std::string> & stateReason) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
 void DummyCatalogue::modifyTapeMediaType(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string& mediaType) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
 void DummyCatalogue::modifyTapeVendor(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string& vendor) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
 void DummyCatalogue::modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string& logicalLibraryName) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
@@ -183,12 +182,12 @@ void DummyCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity&
 void DummyCatalogue::checkTapeForLabel(const std::string& vid) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
 uint64_t DummyCatalogue::getNbFilesOnTape(const std::string& vid) const  { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
 void DummyCatalogue::setTapeDisabled(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string & reason) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
+void DummyCatalogue::setTapeRepackingDisabled(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string & reason) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
 void DummyCatalogue::setTapeFull(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const bool fullValue) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
 void DummyCatalogue::setTapeDirty(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const bool dirtyValue) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
 void DummyCatalogue::setTapeDirty(const std::string & vid) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
 void DummyCatalogue::setTapeIsFromCastorInUnitTests(const std::string &vid) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
 void DummyCatalogue::setTapePoolEncryption(const common::dataStructures::SecurityIdentity& admin, const std::string& name, const bool encryptionValue) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
-bool DummyCatalogue::tapeExists(const std::string& vid) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
 bool DummyCatalogue::diskSystemExists(const std::string& name) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
 void DummyCatalogue::tapeLabelled(const std::string& vid, const std::string& drive) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
 void DummyCatalogue::tapeMountedForArchive(const std::string& vid, const std::string& drive) { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
@@ -207,6 +206,23 @@ void DummyCatalogue::addEnabledTape(const std::string & vid) {
 void DummyCatalogue::addDisabledTape(const std::string & vid) {
   threading::MutexLocker lm(m_tapeEnablingMutex);
   m_tapeEnabling[vid]=common::dataStructures::Tape::DISABLED;
+}
+void DummyCatalogue::addRepackingTape(const std::string & vid) {
+  threading::MutexLocker lm(m_tapeEnablingMutex);
+  m_tapeEnabling[vid]=common::dataStructures::Tape::REPACKING;
+}
+void DummyCatalogue::modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const std::optional<common::dataStructures::Tape::State> & prev_state, const std::optional<std::string> & stateReason) {
+  threading::MutexLocker lm(m_tapeEnablingMutex);
+  if (prev_state.has_value() && prev_state.value() != m_tapeEnabling[vid]) {
+    throw exception::Exception("Previous state mismatch");
+  }
+  m_tapeEnabling[vid]=state;
+}
+bool DummyCatalogue::tapeExists(const std::string& vid) const {
+  return m_tapeEnabling.find(vid) != m_tapeEnabling.end();
+}
+common::dataStructures::Tape::State DummyCatalogue::getTapeState(const std::string & vid) const {
+  return m_tapeEnabling.at(vid);
 }
 common::dataStructures::VidToTapeMap DummyCatalogue::getTapesByVid(const std::string& vid) const {
   std::set<std::string> vids = {vid};

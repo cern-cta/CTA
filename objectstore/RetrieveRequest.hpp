@@ -46,6 +46,8 @@ public:
   void initialize();
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) override;
+  void garbageCollectRetrieveRequest(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
+    cta::catalogue::Catalogue & catalogue, bool isQueueCleanup);
   // Job management ============================================================
   void addJob(uint32_t copyNumber, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries);
   std::string getLastActiveVid();
@@ -147,7 +149,6 @@ public:
   };
   struct RepackInfo {
     bool isRepack = false;
-    bool forceDisabledTape = false;
     std::map<uint32_t, std::string> archiveRouteMap;
     std::set<uint32_t> copyNbsToRearchive;
     std::string repackRequestAddress;
@@ -171,10 +172,8 @@ public:
       rrri.set_file_buffer_url(fileBufferURL);
       rrri.set_repack_request_address(repackRequestAddress);
       rrri.set_fseq(fSeq);
-      rrri.set_force_disabled_tape(forceDisabledTape);
-      if(rrri.has_has_user_provided_file()){
-	rrri.set_has_user_provided_file(hasUserProvidedFile);
-      }
+      rrri.set_force_disabled_tape(false); // TODO: To remove after REPACKING state is fully deployed
+      rrri.set_has_user_provided_file(hasUserProvidedFile);
     }
 
     void deserialize(const cta::objectstore::serializers::RetrieveRequestRepackInfo & rrri) {
@@ -184,9 +183,8 @@ public:
       fileBufferURL = rrri.file_buffer_url();
       repackRequestAddress = rrri.repack_request_address();
       fSeq = rrri.fseq();
-      forceDisabledTape = rrri.force_disabled_tape();
       if(rrri.has_has_user_provided_file()){
-	hasUserProvidedFile = rrri.has_user_provided_file();
+        hasUserProvidedFile = rrri.has_user_provided_file();
       }
     }
   };

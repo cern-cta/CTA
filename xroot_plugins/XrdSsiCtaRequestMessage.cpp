@@ -1618,20 +1618,11 @@ void RequestMessage::processRepack_Add(cta::xrd::Response &response)
      type = cta::common::dataStructures::RepackInfo::Type::MoveAndAddCopies;
   }
 
-  bool forceDisabledTape = has_flag(OptionBoolean::DISABLED);
-
-  if (forceDisabledTape) {
-   //repacks on a disabled tape must be from a mount policy whose name starts with repack
-   if (mountPolicy.name.rfind("repack", 0) != 0) { 
-      throw cta::exception::UserError("--disabledtape requires a mount policy whose name starts with repack");
-   }
-  }
-
   bool noRecall = has_flag(OptionBoolean::NO_RECALL);
 
   // Process each item in the list
   for(auto it = vid_list.begin(); it != vid_list.end(); ++it) {
-    SchedulerDatabase::QueueRepackRequest repackRequest(*it,bufferURL,type,mountPolicy,forceDisabledTape, noRecall);
+    SchedulerDatabase::QueueRepackRequest repackRequest(*it,bufferURL,type,mountPolicy, noRecall);
     m_scheduler.queueRepack(m_cliIdentity, repackRequest, m_lc);
   }
 
@@ -1917,7 +1908,7 @@ void RequestMessage::processTape_Add(cta::xrd::Response &response)
      tape.state = common::dataStructures::Tape::ACTIVE;
    } else {
      //State has been provided by the user, assign it. Will throw an exception if the state provided does not exist.
-     tape.state = common::dataStructures::Tape::stringToState(state.value());
+     tape.state = common::dataStructures::Tape::stringToState(state.value(), true);
    }
    tape.stateReason = stateReason;
    m_catalogue.createTape(m_cliIdentity, tape);
@@ -1974,8 +1965,8 @@ void RequestMessage::processTape_Ch(cta::xrd::Response &response)
       m_catalogue.setTapeFull(m_cliIdentity, vid, full.value());
    }
    if(state){
-     auto stateEnumValue = common::dataStructures::Tape::stringToState(state.value());
-     m_catalogue.modifyTapeState(m_cliIdentity,vid,stateEnumValue,stateReason);
+     auto stateEnumValue = common::dataStructures::Tape::stringToState(state.value(), true);
+     m_scheduler.triggerTapeStateChange(m_cliIdentity,vid,stateEnumValue,stateReason, m_lc);
    }
    if (dirty) {
       m_catalogue.setTapeDirty(m_cliIdentity, vid, dirty.value());

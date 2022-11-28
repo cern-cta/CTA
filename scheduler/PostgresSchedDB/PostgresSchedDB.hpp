@@ -82,6 +82,17 @@ class PostgresSchedDB: public SchedulerDatabase {
 
   JobsFailedSummary getArchiveJobsFailedSummary(log::LogContext &logContext) override;
 
+  std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsToTransferBatch(std::string & vid, uint64_t filesRequested, log::LogContext &lc) override;
+
+  void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob *> &jobs, log::LogContext &lc) override;
+
+  void reserveRetrieveQueueForCleanup(std::string & vid, std::optional<uint64_t> cleanupHeartBeatValue) override;
+
+  void tickRetrieveQueueCleanupHeartbeat(std::string & vid) override;
+
+  void setArchiveJobBatchReported(std::list<SchedulerDatabase::ArchiveJob*> & jobsBatch,
+    log::TimingList & timingList, utils::Timer & t, log::LogContext & lc) override;
+
   void setArchiveJobBatchReported(std::list<SchedulerDatabase::ArchiveJob*> & jobsBatch,
     log::TimingList & timingList, utils::Timer & t, log::LogContext & lc) override;
 
@@ -91,6 +102,8 @@ class PostgresSchedDB: public SchedulerDatabase {
   SchedulerDatabase::RetrieveRequestInfo queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria, const std::optional<std::string> diskSystemName,
     log::LogContext &logContext) override;
+
+  void clearRetrieveQueueStatisticsCache(const std::string & vid) override;
 
   void cancelRetrieve(const std::string& instanceName, const cta::common::dataStructures::CancelRetrieveRequest& rqst,
     log::LogContext& lc) override;

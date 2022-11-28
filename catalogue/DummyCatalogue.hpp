@@ -164,7 +164,7 @@ public:
   void modifyTapeComment(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::optional<std::string> &comment) override;
   void modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string& encryptionKeyName) override;
   void modifyTapeVerificationStatus(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string& verificationStatus) override;
-  void modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const std::optional<std::string> & stateReason) override;
+  void modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const std::optional<common::dataStructures::Tape::State> & prev_state, const std::optional<std::string> & stateReason) override;
   void modifyTapeMediaType(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string& mediaType) override;
   void modifyTapeVendor(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string& vendor) override;
   void modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string& logicalLibraryName) override;
@@ -186,6 +186,7 @@ public:
   void checkTapeForLabel(const std::string& vid) override;
   uint64_t getNbFilesOnTape(const std::string& vid) const  override;
   void setTapeDisabled(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string & reason) override;
+  void setTapeRepackingDisabled(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const std::string & reason) override;
   void setTapeFull(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const bool fullValue) override;
   void setTapeDirty(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const bool dirtyValue) override;
   void setTapeDirty(const std::string & vid) override;
@@ -198,9 +199,10 @@ public:
   void tapeMountedForRetrieve(const std::string& vid, const std::string& drive) override;
   bool tapePoolExists(const std::string& tapePoolName) const;
   void updateDiskFileId(uint64_t archiveFileId, const std::string &diskInstance, const std::string &diskFileId) override;
-  void moveArchiveFileToRecycleLog(const common::dataStructures::DeleteArchiveRequest &request,
-  log::LogContext & lc) override;
+  void moveArchiveFileToRecycleLog(const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc) override;
   void modifyArchiveFileStorageClassId(const uint64_t archiveFileId, const std::string &newStorageClassName) const override;
+
+  common::dataStructures::Tape::State getTapeState(const std::string & vid) const;
 
   common::dataStructures::VidToTapeMap getTapesByVid(const std::string& vid) const override;
 
@@ -248,6 +250,7 @@ public:
   // This special funcitons for unit tests should be put in private
   void addEnabledTape(const std::string & vid);
   void addDisabledTape(const std::string & vid);
+  void addRepackingTape(const std::string & vid);
 
 private:
   mutable threading::Mutex m_tapeEnablingMutex;

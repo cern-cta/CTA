@@ -428,7 +428,7 @@ message RetrieveRequestRepackInfo {
   required string repack_request_address = 9520;
   required string file_buffer_url = 9530;
   required uint64 fseq = 9540;
-  required bool force_disabled_tape = 9560;
+  required bool force_disabled_tape = 9560 [deprecated=true];
   optional bool has_user_provided_file = 9163 [default = false];
 }
 
@@ -450,7 +450,7 @@ message RetrieveActivityWeight {
 message RetrieveRequest {
   required SchedulerRetrieveRequest schedulerrequest = 9150;
   required MountPolicy mountpolicy = 9151;
-  optional string mountpolicyname = 9165;  //TODO: Once it has been deployed, make it required and remove mountpolicy
+  optional string mountpolicyname = 9165;
   optional RetrieveActivityWeight activity_weight = 9160 [deprecated=true]; // Deprecated for cta/CTA#1077
   optional string activity = 9164;
   required ArchiveFile archivefile = 9152;
@@ -546,6 +546,12 @@ message RetrieveActivityCountPair {
   required uint64 count = 10601;
 }
 
+message RetrieveQueueCleanupInfo {
+  required bool doCleanup = 14100;
+  optional string assignedAgent = 14110;
+  required uint64 heartbeat = 14120;
+}
+
 message RetrieveQueue {
   required string vid = 10100;
   repeated RetrieveQueueShardPointer retrievequeueshards = 10111;
@@ -562,6 +568,7 @@ message RetrieveQueue {
   optional string disk_system_slept_for = 10190;
   optional uint64 sleep_time = 10200;
   optional uint64 youngestjobcreationtime = 10210 [default = 0];
+  required RetrieveQueueCleanupInfo cleanupInfo = 10220;
 }
 
 // ------------- Repack data strcutures ----------------------------------------
@@ -634,7 +641,7 @@ message RepackRequest {
   required bool is_expand_started = 11562;
   required MountPolicy mount_policy = 11563;
   optional string mountpolicyname = 11575;  //TODO: Once it has been deployed, make it required and remove mountpolicy
-  required bool force_disabled_tape = 11564;
+  required bool force_disabled_tape = 11564 [deprecated=true];
   required bool is_complete = 11565;
   required bool no_recall = 11566;
   repeated RepackSubRequestPointer subrequests = 11570;

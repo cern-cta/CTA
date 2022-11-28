@@ -159,7 +159,12 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
       try {
         std::string disabledReason = cta::utils::getCurrentLocalTime("%F %T") + ":" + currentExceptionMsg;
-        m_catalogue.setTapeDisabled(admin, m_vid, disabledReason);
+        auto curr_state = m_catalogue.getTapesByVid(m_vid).at(m_vid).state;
+        if (curr_state == cta::common::dataStructures::Tape::REPACKING) {
+          m_catalogue.setTapeRepackingDisabled(admin, m_vid, disabledReason);
+        } else {
+          m_catalogue.setTapeDisabled(admin, m_vid, disabledReason);
+        }
       } catch(cta::exception::Exception &ex) {
         cta::log::Param param("exceptionMsg", ex.getMessageValue());
         params.push_back(param);

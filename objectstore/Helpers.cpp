@@ -365,9 +365,11 @@ void Helpers::getLockedAndFetchedRepackQueue(RepackQueue& queue, ScopedExclusive
 // Helpers::selectBestRetrieveQueue()
 //------------------------------------------------------------------------------
 std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candidateVids, cta::catalogue::Catalogue & catalogue,
-    objectstore::Backend & objectstore, bool forceDisabledTape) {
-  // We will build the retrieve stats of the non-disable candidate vids here
+    objectstore::Backend & objectstore, bool isRepack) {
+  // We will build the retrieve stats of the non-disabled, non-broken/exported candidate vids here
   std::list<SchedulerDatabase::RetrieveQueueStatistics> candidateVidsStats;
+  // We will build the retrieve stats of the disabled vids here, as a fallback
+  std::list<SchedulerDatabase::RetrieveQueueStatistics> candidateVidsStatsFallback;
   // A promise we create so we can make users wait on it.
   // Take the global lock
   cta::threading::MutexLocker grqsmLock(g_retrieveQueueStatisticsMutex);
@@ -385,9 +387,14 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
         grqsmLock.unlock();
         updateFuture.wait();
         grqsmLock.lock();
-        if(g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::ACTIVE || (g_retrieveQueueStatistics.at(v).tapeStatus.isDisabled() && forceDisabledTape)) {
-          logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v),"g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::ACTIVE || (g_retrieveQueueStatistics.at(v).tapeStatus.isDisabled() && forceDisabledTape)");
+        if ((g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::ACTIVE && !isRepack) ||
+            (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::REPACKING && isRepack)) {
+          logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v),"(g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::ACTIVE && !isRepack) || (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::REPACKING && isRepack)");
           candidateVidsStats.emplace_back(g_retrieveQueueStatistics.at(v).stats);
+        } else if ((g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::DISABLED && !isRepack) ||
+                  (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::REPACKING_DISABLED && isRepack)) {
+          logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v),"(g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::DISABLED && !isRepack) || (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::REPACKING_DISABLED && isRepack)");
+          candidateVidsStatsFallback.emplace_back(g_retrieveQueueStatistics.at(v).stats);
         }
       } else {
         // We have a cache hit, check it's not stale.
@@ -401,8 +408,13 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
         logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v),"Cache is not updated, timeSinceLastUpdate ("+std::to_string(timeSinceLastUpdate)+
         ") <= c_retrieveQueueCacheMaxAge ("+std::to_string(c_retrieveQueueCacheMaxAge)+")");
         // We're lucky: cache hit (and not stale)
-        if (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::ACTIVE || (g_retrieveQueueStatistics.at(v).tapeStatus.isDisabled() && forceDisabledTape))
+        if ((g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::ACTIVE && !isRepack) ||
+            (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::REPACKING && isRepack)) {
           candidateVidsStats.emplace_back(g_retrieveQueueStatistics.at(v).stats);
+        } else if ((g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::DISABLED && !isRepack) ||
+                   (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::REPACKING_DISABLED && isRepack)) {
+          candidateVidsStatsFallback.emplace_back(g_retrieveQueueStatistics.at(v).stats);
+        }
       }
     } catch (std::out_of_range &) {
       // We need to update the entry in the cache (miss or stale, we handle the same way).
@@ -442,14 +454,22 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
       // Signal to potential waiters
       updatePromise.set_value();
       // Update our own candidate list if needed.
-      if (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::ACTIVE || (g_retrieveQueueStatistics.at(v).tapeStatus.isDisabled() && forceDisabledTape)) {
+      if ((g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::ACTIVE && !isRepack) ||
+          (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::REPACKING && isRepack)) {
         candidateVidsStats.emplace_back(g_retrieveQueueStatistics.at(v).stats);
+      } else if ((g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::DISABLED && !isRepack)) {
+        candidateVidsStatsFallback.emplace_back(g_retrieveQueueStatistics.at(v).stats);
       }
     }
   }
   // We now have all the candidates listed (if any).
-  if (candidateVidsStats.empty())
-    throw NoTapeAvailableForRetrieve("In Helpers::selectBestRetrieveQueue(): no tape available to recall from.");
+  if (candidateVidsStats.empty()) {
+    if (candidateVidsStatsFallback.empty()) {
+      throw NoTapeAvailableForRetrieve("In Helpers::selectBestRetrieveQueue(): no tape available to recall from.");
+    }
+    // If `candidateVidsStats` is empty, insert the DISABLED tapes
+    candidateVidsStats.insert(candidateVidsStats.end(), candidateVidsStatsFallback.begin(), candidateVidsStatsFallback.end());
+  }
   // Sort the tapes.
   candidateVidsStats.sort(SchedulerDatabase::RetrieveQueueStatistics::leftGreaterThanRight);
   // Get a list of equivalent best tapes
@@ -499,6 +519,11 @@ void Helpers::updateRetrieveQueueStatisticsCache(const std::string& vid, uint64_
 void Helpers::flushRetrieveQueueStatisticsCache(){
   threading::MutexLocker ml(g_retrieveQueueStatisticsMutex);
   g_retrieveQueueStatistics.clear();
+}
+
+void Helpers::flushRetrieveQueueStatisticsCacheForVid(const std::string & vid){
+  threading::MutexLocker ml(g_retrieveQueueStatisticsMutex);
+  g_retrieveQueueStatistics.erase(vid);
 }
 
 //------------------------------------------------------------------------------

@@ -708,9 +708,11 @@ public:
    * @param admin, the person or the system who modified the state of the tape
    * @param vid the VID of the tape to change the state
    * @param state the new state
+   * @param prev_state the previous state, if value is not std::nullopt then it will be used to validate that the state transition proceeds as expected
    * @param stateReason the reason why the state changes, if the state is ACTIVE and the stateReason is std::nullopt, the state will be reset to null
    */
-  virtual void modifyTapeState(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const common::dataStructures::Tape::State & state, const std::optional<std::string> & stateReason) = 0;
+  virtual void modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid, const common::dataStructures::Tape::State & state, const std::optional<common::dataStructures::Tape::State> & prev_state, const std::optional<std::string> & stateReason) = 0;
+
   /**
    * Sets the full status of the specified tape.
    *
@@ -744,6 +746,7 @@ public:
   virtual void setTapeIsFromCastorInUnitTests(const std::string &vid) = 0;
 
   virtual void setTapeDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string & reason) = 0;
+  virtual void setTapeRepackingDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &vid, const std::string & reason) = 0;
 
   virtual void setTapeDirty(const std::string & vid) = 0;
 

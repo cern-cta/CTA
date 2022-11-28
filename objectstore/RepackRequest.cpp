@@ -80,7 +80,7 @@ void RepackRequest::initialize() {
   m_payload.set_lastexpandedfseq(0);
   m_payload.set_is_expand_finished(false);
   m_payload.set_is_expand_started(false);
-  m_payload.set_force_disabled_tape(false);
+  m_payload.set_force_disabled_tape(false); // TODO: To remove after REPACKING state is fully deployed
   m_payload.set_no_recall(false);
   m_payload.set_is_complete(false);
   m_payload.set_repack_finished_time(0);
@@ -156,7 +156,6 @@ common::dataStructures::RepackInfo RepackRequest::getInfo() {
   ret.lastExpandedFseq = m_payload.lastexpandedfseq();
   ret.userProvidedFiles = m_payload.userprovidedfiles();
   ret.isExpandFinished = m_payload.is_expand_finished();
-  ret.forceDisabledTape = m_payload.force_disabled_tape();
   ret.noRecall = m_payload.no_recall();
   EntryLogSerDeser creationLog;
   creationLog.deserialize(m_payload.creation_log());
@@ -296,16 +295,6 @@ common::dataStructures::EntryLog RepackRequest::getCreationLog() {
   cta::objectstore::EntryLogSerDeser ret;
   ret.deserialize(m_payload.creation_log());
   return ret;
-}
-
-void RepackRequest::setForceDisabledTape(const bool disabledTape){
-  checkPayloadWritable();
-  m_payload.set_force_disabled_tape(disabledTape);
-}
-
-bool RepackRequest::getForceDisabledTape() {
-  checkPayloadReadable();
-  return m_payload.force_disabled_tape();
 }
 
 void RepackRequest::setNoRecall(const bool noRecall) {
@@ -789,7 +778,6 @@ RepackRequest::AsyncOwnerAndStatusUpdater* RepackRequest::asyncUpdateOwnerAndSta
       retRef.m_repackInfo.status = (RepackInfo::Status) payload.status();
       retRef.m_repackInfo.vid = payload.vid();
       retRef.m_repackInfo.repackBufferBaseURL = payload.buffer_url();
-      retRef.m_repackInfo.forceDisabledTape = payload.force_disabled_tape();
       retRef.m_repackInfo.noRecall = payload.no_recall();
       if (payload.move_mode()) {
         if (payload.add_copies_mode()) {
