@@ -51,10 +51,11 @@ CTA_GENERATE_EXCEPTION_CLASS(DriveAlreadyExistException);
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-DriveHandler::DriveHandler(const TapedConfiguration& tapedConfig, const TpconfigLine& driveConfig, ProcessManager& pm) :
-  SubprocessHandler(std::string("drive:") + driveConfig.unitName), m_processManager(pm),
-  m_tapedConfig(tapedConfig), m_driveConfig(driveConfig),
-  m_sessionEndContext(m_processManager.logContext().logger()) {
+DriveHandler::DriveHandler(const TapedConfiguration& tapedConfig, const TpconfigLine& configline, ProcessManager& pm,
+                           DriveHandlerProxy& driveHandlerProxy, server::SocketPair& socketPair) :
+  SubprocessHandler(std::string("drive:") + configline.unitName), m_socketPair(&socketPair), m_processManager(pm),
+  m_tapedConfig(tapedConfig), m_configLine(configline),
+  m_sessionEndContext(m_processManager.logContext().logger()), m_driveHandlerProxy(driveHandlerProxy) {
   // As the handler is started, its first duty is to create a new subprocess. This
   // will be managed by the process manager (initial request in getInitialStatus)
 }
@@ -154,6 +155,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
     m_lastStateChangeTime = std::chrono::steady_clock::now();
     if (!m_pid) {
       // We are in the child process
+      m_socketPair->close(server::SocketPair::Side::parent);
       SubprocessHandler::ProcessingStatus ret;
       ret.forkState = SubprocessHandler::ForkState::child;
       return ret;
@@ -804,9 +806,6 @@ int DriveHandler::runChild() {
   threadName += m_driveConfig.unitName;
   prctl(PR_SET_NAME, threadName.c_str());
 
-  // Create the channel to talk back to the parent process.
-  cta::tape::daemon::DriveHandlerProxy driveHandlerProxy(*m_socketPair);
-
   std::string hostname = cta::utils::getShortHostname();
 
   auto& lc = m_processManager.logContext();
@@ -828,7 +827,7 @@ int DriveHandler::runChild() {
     log::ScopedParamContainer param(lc);
     param.add("errorMessage", ex.getMessageValue());
     lc.log(log::CRIT, "In DriveHandler::runChild(): failed to connect to objectstore or failed to instantiate agent entry. Reporting fatal error.");
-    driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+    m_driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
     sleep(1);
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
   }
@@ -842,7 +841,7 @@ int DriveHandler::runChild() {
     log::ScopedParamContainer param(lc);
     param.add("errorMessage", ex.getMessageValue());
     lc.log(log::CRIT, "In DriveHandler::runChild(): failed to instantiate catalogue. Reporting fatal error.");
-    driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+    m_driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
     sleep(1);
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
   }
@@ -857,13 +856,13 @@ int DriveHandler::runChild() {
     log::ScopedParamContainer param(lc);
     param.add("errorMessage", ex.getMessageValue());
     lc.log(log::CRIT, "In DriveHandler::runChild(): catalogue MAJOR version mismatch. Reporting fatal error.");
-    driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+    m_driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer param(lc);
     param.add("errorMessage", ex.getMessageValue());
     lc.log(log::CRIT, "In DriveHandler::runChild(): failed to ping central storage before session. Reporting fatal error.");
-    driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+    m_driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
   }
 
@@ -892,7 +891,7 @@ int DriveHandler::runChild() {
       log::ScopedParamContainer param(lc);
       param.add("errorMessage", ex.getMessageValue());
       lc.log(log::CRIT, "In DriveHandler::runChild(): failed to set the drive down. Reporting fatal error.");
-      driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+      m_driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
       sleep(1);
       return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
     }
@@ -924,7 +923,7 @@ int DriveHandler::runChild() {
         log::ScopedParamContainer param(lc);
         param.add("errorMessage", ex.getMessageValue());
         lc.log(log::CRIT, "In DriveHandler::runChild(): failed to set the drive down. Reporting fatal error.");
-        driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+        m_driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
         sleep(1);
         return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
       }
@@ -964,13 +963,13 @@ int DriveHandler::runChild() {
       log::ScopedParamContainer param(lc);
       param.add("errorMessage", ex.getMessageValue());
       lc.log(log::CRIT, "In DriveHandler::runChild() before cleanerSession: catalogue MAJOR version mismatch. Reporting fatal error.");
-      driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+      m_driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
       return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
     } catch (cta::exception::Exception& ex) {
       log::ScopedParamContainer param(lc);
       param.add("errorMessage", ex.getMessageValue());
       lc.log(log::CRIT, "In DriveHandler::runChild() before cleanerSession: failed to ping central storage before session. Reporting fatal error.");
-      driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+      m_driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
       return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
     }
 
@@ -1059,7 +1058,7 @@ int DriveHandler::runChild() {
 
         // Checking the drive does not already exist in the database
         if (!scheduler.checkDriveCanBeCreated(driveInfo, lc)) {
-          driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+          m_driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
           return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
         }
 
@@ -1095,7 +1094,7 @@ int DriveHandler::runChild() {
               .add("Backtrace", ex.backtrace());
         lc.log(log::CRIT, "In DriveHandler::runChild(): failed to set drive down");
         // This is a fatal error (failure to access the scheduler). Shut daemon down.
-        driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+        m_driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
         return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
       }
     }
@@ -1105,7 +1104,7 @@ int DriveHandler::runChild() {
       sWrapper,
       m_driveConfig,
       mediaChangerFacade,
-      driveHandlerProxy,
+      m_driveHandlerProxy,
       capUtils,
       dataTransferConfig,
       scheduler);

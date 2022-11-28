@@ -28,6 +28,7 @@
 #include "tapeserver/daemon/ProcessManager.hpp"
 #include "tapeserver/daemon/SignalHandler.hpp"
 #include "tapeserver/daemon/TapeDaemon.hpp"
+#include "DriveHandlerProxy.hpp"
 
 namespace cta { namespace tape { namespace daemon {
 
@@ -112,7 +113,10 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
   pm.addHandler(std::move(sh));
   // Create the drive handlers
   for (auto & d: m_globalConfiguration.driveConfigs) {
-    std::unique_ptr<DriveHandler> dh(new DriveHandler(m_globalConfiguration, d.second.value(), pm));
+    std::unique_ptr<cta::server::SocketPair> socketPair = std::make_unique<cta::server::SocketPair>();
+    DriveHandlerProxy handlerProxy(*socketPair);
+    std::unique_ptr<DriveHandler> dh(
+      new DriveHandler(m_globalConfiguration, d.second.value(), pm, handlerProxy, *socketPair));
     pm.addHandler(std::move(dh));
   }
   // Create the garbage collector

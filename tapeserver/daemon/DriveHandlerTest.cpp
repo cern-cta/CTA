@@ -15,8 +15,10 @@
  *               submit itself to any jurisdiction.
  */
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 #include "DriveHandler.hpp"
+#include "DriveHandlerProxy.hpp"
 #include "ProcessManager.hpp"
 #include "catalogue/InMemoryCatalogue.hpp"
 #include "common/log/Constants.hpp"
@@ -35,6 +37,8 @@
 namespace unitTests {
 
 using namespace cta::tape::daemon;
+
+using testing::_;
 
 namespace {
 /**
@@ -71,9 +75,8 @@ public:
     const char *what() const noexcept override { return "Failed to get object store db."; }
   };
 
-  cta::objectstore::OStoreDBWrapperInterface& getSchedulerDB() {
-    cta::objectstore::OStoreDBWrapperInterface *const ptr =
-      dynamic_cast<cta::objectstore::OStoreDBWrapperInterface *const>(m_db.get());
+  cta::objectstore::OStoreDBWrapperInterface& getSchedulerDB() const {
+    auto *const ptr = dynamic_cast<cta::objectstore::OStoreDBWrapperInterface *const>(m_db.get());
     if (nullptr == ptr) {
       throw FailedToGetSchedulerDB();
     }
@@ -107,11 +110,11 @@ public:
     std::unique_ptr<cta::objectstore::Backend::Parameters> params(getSchedulerDB().getBackend().getParams());
     m_ctaConf.stringAppend(params->toURL());
     m_ctaConf.stringAppend("\n"
-                         "taped CatalogueConfigFile ");
+                           "taped CatalogueConfigFile ");
     m_ctaConf.stringAppend(m_catalogueConfig.path());
     m_ctaConf.stringAppend("\n"
-                         "taped BufferCount 1\n"
-                         "taped TpConfigPath ");
+                           "taped BufferCount 1\n"
+                           "taped TpConfigPath ");
     m_ctaConf.stringAppend(m_tpConfig.path());
     m_completeConfig = cta::tape::daemon::TapedConfiguration::createFromCtaConf(m_ctaConf.path());
   }
@@ -123,13 +126,68 @@ public:
   }
 };
 
+class MockDriveHandlerProxy;
 
-class MockDriveHandler: public DriveHandler {
+/**
+ * Class identical to DriveHandler, but can return the socket pair for the sake of testing
+ */
+class MockDriveHandler : public DriveHandler {
 public:
-  MockDriveHandler(const TapedConfiguration& tapedConfig, const TpconfigLine& configline, ProcessManager& pm)
-    : DriveHandler(tapedConfig, configline, pm) {}
+  MockDriveHandler(const TapedConfiguration& tapedConfig, const TpconfigLine& configline, ProcessManager& pm,
+                   DriveHandlerProxy& mockProxy, cta::server::SocketPair& socketPair)
+    : DriveHandler(tapedConfig, configline, pm, mockProxy, socketPair) {}
 
-  cta::server::SocketPair &getSocketPair() { return *m_socketPair; };
+  cta::server::SocketPair& getSocketPair() { return *m_socketPair; };
+};
+
+/**
+ * Fake class identical to DriveHandlerProxy, listens for any possible messages from the parent process
+ */
+class FakeDriveHandlerProxy : public DriveHandlerProxy {
+public:
+  explicit FakeDriveHandlerProxy(cta::server::SocketPair& socketPair) : DriveHandlerProxy(socketPair) {}
+
+  void reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved) override {
+    DriveHandlerProxy::reportHeartbeat(totalTapeBytesMoved, totalDiskBytesMoved);
+
+    // Listen for any possible messages from the parent process
+    // If it is a state change, echo it back to parent
+    // This is used by DriveHandlerTest unit tests
+    try {
+      serializers::WatchdogMessage message;
+      const auto datagram = m_socketPair.receive();
+      if (!message.ParseFromString(datagram)) {
+        // Use the tolerant parser to assess the situation.
+        message.ParsePartialFromString(datagram);
+        throw cta::exception::Exception(
+          std::string("In SubprocessHandler::ProcessingStatus(): could not parse message: ") +
+          message.InitializationErrorString());
+      }
+      if (message.reportingstate()) {
+        reportState(static_cast<cta::tape::session::SessionState>(message.sessionstate()),
+                    static_cast<cta::tape::session::SessionType>(message.sessiontype()),
+                    message.vid());
+      }
+    }
+    catch (cta::server::SocketPair::NothingToReceive&) {}
+  }
+};
+
+/**
+ * Mock class for DriveHandlerProxy to call fake reportHeartbeat()
+ */
+class MockDriveHandlerProxy : public DriveHandlerProxy {
+public:
+  explicit MockDriveHandlerProxy(cta::server::SocketPair& socketPair) : DriveHandlerProxy(socketPair),
+                                                                        fake(socketPair) {
+    ON_CALL(*this, reportHeartbeat(_, _)).WillByDefault(
+      testing::Invoke(&fake, &FakeDriveHandlerProxy::reportHeartbeat));
+  }
+
+  MOCK_METHOD2(reportHeartbeat, void(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved));
+
+private:
+  FakeDriveHandlerProxy fake;
 };
 
 /**
@@ -234,7 +292,10 @@ TEST_P(DriveHandlerTest, TriggerCleanerSessionAtTheEndOfSession) {
   // Create the process manager and drive handler
   cta::tape::daemon::ProcessManager processManager(m_lc);
 
-  std::unique_ptr<MockDriveHandler> driveHandler(new MockDriveHandler(m_completeConfig, m_driveConfig, processManager));
+  std::unique_ptr<cta::server::SocketPair> socketPair = std::make_unique<cta::server::SocketPair>();
+  MockDriveHandlerProxy mockProxy(*socketPair);
+  std::unique_ptr<MockDriveHandler> driveHandler(
+    new MockDriveHandler(m_completeConfig, m_driveConfig, processManager, mockProxy, *socketPair));
 
   processManager.addHandler(std::move(driveHandler));
 
@@ -254,6 +315,7 @@ TEST_P(DriveHandlerTest, TriggerCleanerSessionAtTheEndOfSession) {
   }
 
   // Run the process manager that should exit after Fatal state
+  EXPECT_CALL(mockProxy, reportHeartbeat(_, _));
   setEnvVars();
   processManager.run();
   reporter.waitThreads();
@@ -273,8 +335,8 @@ INSTANTIATE_TEST_CASE_P(MockSchedulerTest, SchedulerTest, ::testing::Values(Sche
 #ifdef TEST_VFS
 static cta::OStoreDBFactory<cta::objectstore::BackendVFS> OStoreDBFactoryVFS;
 
-INSTANTIATE_TEST_CASE_P(OStoreDBPlusMockSchedulerTestVFS, DriveHandlerTest,
-                        ::testing::Values(DriveHandlerTestParam(OStoreDBFactoryVFS)));
+INSTANTIATE_TEST_SUITE_P(OStoreDBPlusMockSchedulerTestVFS, DriveHandlerTest,
+                         ::testing::Values(DriveHandlerTestParam(OStoreDBFactoryVFS)));
 #endif
 
 #ifdef TEST_RADOS
