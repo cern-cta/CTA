@@ -29,6 +29,8 @@ EOSPOWER_USER="poweruser1"
 CTAADMIN_USER="ctaadmin2"
 EOSADMIN_USER="eosadmin1"
 USER="user1"
+# Timeout in 7 days
+TOKEN_TIMEOUT=604800
 
 die() {
   echo "$@" 1>&2
@@ -76,6 +78,23 @@ eospower_kdestroy() {
   eospower_klist
 }
 
+eospower_get_token() {
+  time_now=$(date +%s);
+  token_expire=$((time_now+TOKEN_TIMEOUT))
+
+  if [ "$2" = "-f" ]; then
+      directory_flag=""
+  elif [ "$2" = "-d" ]; then
+      directory_flag="--tree"
+  else
+    die "Pass -f/-d to get file/directory token"
+  fi
+
+  path=$3
+  permission="rwx+dp"
+  XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 eos $1 token --path $path $directory_flag --permission $permission --expires $token_expire
+}
+
 eosadmin_eos() {
   XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 eos -r 0 0 $@
 }
@@ -92,4 +111,21 @@ eosadmin_kinit() {
 eosadmin_kdestroy() {
   KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 kdestroy
   eosadmin_klist
+}
+
+eosadmin_get_token() {
+  time_now=$(date +%s);
+  token_expire=$((time_now+TOKEN_TIMEOUT))
+
+  if [ "$2" = "-f" ]; then
+      directory_flag=""
+  elif [ "$2" = "-d" ]; then
+      directory_flag="--tree"
+  else
+    die "Pass -f/-d to get file/directory token"
+  fi
+
+  path=$3
+  permission="rwx+dp"
+  XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 eos $1 token --path $path $directory_flag --permission $permission --expires $token_expire
 }
