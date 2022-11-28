@@ -587,6 +587,11 @@ echo $(jq --argjson CTA_MAJOR_VERSION $cta_major_version '. += {"cta_major_versi
 
 
 %changelog
+* Mon Nov 28 2022 Joao Afonso <joao.afonso@cern.ch> - 4.8.0-1
+- This CTA release contains significant changes related to repacking, including the addition of new final and temporary states
+- Minor fixes and improvements to CTA
+- See ReleaseNotes.md for details
+
 * Wed Nov 16 2022 Joao Afonso <joao.afonso@cern.ch> - 4.7.14-1
 - Fixes to CTA and cta-admin tool, see ReleaseNotes.md for details
 

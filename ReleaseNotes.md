@@ -1,16 +1,19 @@
 # v4.8.0-1
 
 ## Summary
-This CTA release modifies the repacking workflow, which may make it incompatible with existing operation tools.
+This CTA release contains significant changes related to repacking, including the addition of new final and temporary states.
+It may make be incompatible with pre-existing operational tools that relied on the old repacking behaviour.
 ### Features
-- cta/CTA#83 - Add new tape state REPACKING
-- cta/CTA#77 - Add maintenance runner for cleaning-up (retrieve) queue requests and new internal states
+- cta/CTA#83 - Setup new tape state REPACKING
+- cta/CTA#226 - Setup new tape state EXPORTED
+- cta/CTA#77 - Add maintenance runner for cleaning-up (retrieve) queue requests and managing new internal states
 - cta/CTA#211 - Add functionality for reading encrypted tapes with cta-readtp
 - cta/CTA#214 - Update manual page for cta-admin to include info about user defined config files.
 ### Bug fixes
 - cta/CTA#93 - Refactor Frontend code to allow code sharing between SSI and gRPC implementations
 - cta/CTA#221 - Change option in cta-send-event from instance to eos.instance
 - cta/CTA#223 - Remove vid check to improve run time of cta-verify-file, fix possible _S_construct null not valid error
+- cta/CTA#13 - Fix `cta-catalogue-schema-verify` checking of NOT NULL constraints in Postgres
 
 # v4.7.14-1
 
@@ -20,7 +23,6 @@ This CTA release modifies the repacking workflow, which may make it incompatible
 - cta/CTA#201 - Improve error message when oracle configured without oracle support
 - cta/CTA#203 - Refactor cta-restore-deletes-files by using the connection configuration class in standalone_cli_tools/common
 ### Bug fixes
-- cta/CTA#13 - Fix `cta-catalogue-schema-verify` checking of NOT NULL constraints in Postgres
 - cta/CTA#209 - handle if $HOME is not defined when choosing config file for cta-admin
 
 # v4.7.13-3
