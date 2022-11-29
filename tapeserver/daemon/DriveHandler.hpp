@@ -45,7 +45,7 @@ class DriveHandlerProxy;
 class DriveHandler : public SubprocessHandler {
 public:
   DriveHandler(const TapedConfiguration& tapedConfig, const TpconfigLine& configline, ProcessManager& pm,
-               DriveHandlerProxy& driveHandlerProxy, server::SocketPair& socketPair);
+               std::shared_ptr<DriveHandlerProxy> driveHandlerProxy);
 
   ~DriveHandler() override;
 
@@ -66,10 +66,6 @@ public:
   SubprocessHandler::ProcessingStatus processSigChild() override;
 
   SubprocessHandler::ProcessingStatus processTimeout() override;
-
-protected:
-  /** Socket pair allowing communication with the subprocess */
-  std::unique_ptr<cta::server::SocketPair> m_socketPair;
 
 private:
   /** Reference to the process manager*/
@@ -178,7 +174,7 @@ private:
 
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
 
-  cta::tape::daemon::DriveHandlerProxy& m_driveHandlerProxy;
+  std::shared_ptr<cta::tape::daemon::DriveHandlerProxy> m_driveHandlerProxy;
 };
 
 // TODO: remove/merge ChildProcess.

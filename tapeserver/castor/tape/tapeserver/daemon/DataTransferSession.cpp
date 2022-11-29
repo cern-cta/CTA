@@ -79,7 +79,7 @@ void castor::tape::tapeserver::daemon::DataTransferSession::setProcessCapabiliti
     lc.log(cta::log::INFO, "Set process capabilities for using tape");
   } catch (const cta::exception::Exception& ne) {
     lc.log(cta::log::ERR,
-           "Failed to set process capabilities for using the tape ");
+           "Failed to set process capabilities for using the tape: " + ne.getMessageValue());
   }
 }
 

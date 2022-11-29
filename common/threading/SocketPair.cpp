@@ -15,15 +15,18 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/threading/SocketPair.hpp"
-#include "common/exception/Errnum.hpp"
+#include <poll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <poll.h>
-#include <memory>
-#include <list>
+
 #include <algorithm>
+#include <list>
+#include <memory>
+#include <string>
+
+#include "common/exception/Errnum.hpp"
+#include "common/threading/SocketPair.hpp"
 
 namespace cta { namespace server {
 
@@ -31,6 +34,17 @@ namespace cta { namespace server {
 // Constructor
 //------------------------------------------------------------------------------
 SocketPair::SocketPair() {
+  open();
+}
+
+//------------------------------------------------------------------------------
+// Destructor
+//------------------------------------------------------------------------------
+SocketPair::~SocketPair() {
+  close();
+}
+
+void SocketPair::open() {
   int fd[2];
   cta::exception::Errnum::throwOnMinusOne(
     ::socketpair(AF_LOCAL, SOCK_SEQPACKET, 0, fd),
@@ -45,10 +59,7 @@ SocketPair::SocketPair() {
   }
 }
 
-//------------------------------------------------------------------------------
-// Destructor
-//------------------------------------------------------------------------------
-SocketPair::~SocketPair() {
+void SocketPair::close() {
   if (m_parentFd != -1)
     ::close(m_parentFd);
   if (m_childFd != -1)
@@ -118,7 +129,7 @@ void SocketPair::poll(pollMap& socketPairs, time_t timeout, Side sourceToPoll) {
 //------------------------------------------------------------------------------
 int SocketPair::getFdForAccess(Side sourceOrDestination) {
   // First, make sure the source to access makes sense.
-  // There is a double inversion here. If our current side is parent, we should 
+  // There is a double inversion here. If our current side is parent, we should
   // read from the child and vice versa. And then then talking to parent, we use
   // the child socket, and vice-versa.
   Side sideForThisPair = sourceOrDestination;

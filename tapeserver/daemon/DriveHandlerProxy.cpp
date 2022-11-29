@@ -20,7 +20,7 @@
 
 namespace cta { namespace tape { namespace daemon {
 
-DriveHandlerProxy::DriveHandlerProxy(server::SocketPair& socketPair): m_socketPair(socketPair) {
+DriveHandlerProxy::DriveHandlerProxy(const std::unique_ptr<server::SocketPair>& socketPair) : m_socketPair(socketPair) {
 }
 
 // TODO: me might want to group the messages to reduce the rate.
@@ -39,7 +39,7 @@ void DriveHandlerProxy::addLogParams(const std::string& unitName, const std::lis
     throw cta::exception::Exception(std::string("In DriveHandlerProxy::addLogParams(): could not serialize: ")+
         watchdogMessage.InitializationErrorString());
   }
-  m_socketPair.send(buffer);
+  m_socketPair->send(buffer);
 }
 
 void DriveHandlerProxy::deleteLogParams(const std::string& unitName, const std::list<std::string>& paramNames) {
@@ -55,7 +55,7 @@ void DriveHandlerProxy::deleteLogParams(const std::string& unitName, const std::
     throw cta::exception::Exception(std::string("In DriveHandlerProxy::deleteLogParams(): could not serialize: ")+
         watchdogMessage.InitializationErrorString());
   }
-  m_socketPair.send(buffer);
+  m_socketPair->send(buffer);
 }
 
 void DriveHandlerProxy::labelError(const std::string& unitName, const std::string& message) {
@@ -74,7 +74,7 @@ void DriveHandlerProxy::reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t t
     throw cta::exception::Exception(std::string("In DriveHandlerProxy::reportHeartbeat(): could not serialize: ")+
         watchdogMessage.InitializationErrorString());
   }
-  m_socketPair.send(buffer);
+  m_socketPair->send(buffer);
 }
 
 void DriveHandlerProxy::reportState(const cta::tape::session::SessionState state, const cta::tape::session::SessionType type, const std::string& vid) {
@@ -91,12 +91,11 @@ void DriveHandlerProxy::reportState(const cta::tape::session::SessionState state
     throw cta::exception::Exception(std::string("In DriveHandlerProxy::reportState(): could not serialize: ")+
         watchdogMessage.InitializationErrorString());
   }
-  m_socketPair.send(buffer);
+  m_socketPair->send(buffer);
 }
 
-
-DriveHandlerProxy::~DriveHandlerProxy() = default;
-
-
+const std::unique_ptr<server::SocketPair>& DriveHandlerProxy::socketPair() {
+  return m_socketPair;
+}
 
 }}} // namespace cta::tape::daemon

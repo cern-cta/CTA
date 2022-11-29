@@ -31,6 +31,9 @@
 #include "scheduler/Scheduler.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/FileWriter.hpp"
 
+#include "common/log/StdoutLogger.hpp"
+#include <iostream>
+
 #include <utility>
 #include <sys/signalfd.h>
 
@@ -52,6 +55,104 @@ struct DriveHandlerTestParam {
 }
 
 /**
+ * Class that mimics the tape session reporter to change the data session states
+ */
+class DummyTapeSessionReporter : cta::threading::Thread {
+public:
+  explicit DummyTapeSessionReporter(const std::unique_ptr<cta::server::SocketPair>& socketPair)
+    : m_socketPair(socketPair) {}
+
+  void reportState(cta::tape::session::SessionState state) {
+    m_fifo.push(new Report(state));
+  }
+
+  void setVid(const std::string& vid) {
+    m_vid = vid;
+  }
+
+  void finish() {
+    m_fifo.push(nullptr);
+  }
+
+  void startThreads() {
+    start();
+  }
+
+  void waitThreads() {
+    try {
+      wait();
+    } catch (...) {
+
+    }
+  }
+
+private:
+  void run() override {
+    while (true) {
+      // sleep(1);
+      std::unique_ptr<Report> currentReport(m_fifo.pop());
+      if (nullptr == currentReport) {
+        break;
+      }
+      try {
+        currentReport->execute(*this);
+      } catch (const std::exception& e) {}
+    }
+  }
+
+  class Report {
+  public:
+    explicit Report(cta::tape::session::SessionState state) : m_state(state) {};
+
+    ~Report() = default;
+
+    void execute(DummyTapeSessionReporter& parent) const {
+      serializers::WatchdogMessage watchdogMessage;
+      watchdogMessage.set_reportingstate(true);
+      watchdogMessage.set_reportingbytes(false);
+      watchdogMessage.set_totaldiskbytesmoved(0);
+      watchdogMessage.set_totaltapebytesmoved(0);
+      watchdogMessage.set_sessionstate(static_cast<uint32_t>(m_state));
+      watchdogMessage.set_sessiontype(static_cast<uint32_t>(cta::tape::session::SessionType::Undetermined));
+      watchdogMessage.set_vid(parent.m_vid);
+      std::string buffer;
+      if (!watchdogMessage.SerializeToString(&buffer)) {
+        throw cta::exception::Exception(std::string("In DriveHandlerProxy::reportState(): could not serialize: ") +
+                                        watchdogMessage.InitializationErrorString());
+      }
+      parent.m_socketPair->send(buffer);
+    }
+
+    cta::tape::session::SessionState m_state;
+  };
+
+  /**
+   * m_fifo is holding all the report waiting to be processed
+   */
+  cta::threading::BlockingQueue<Report *> m_fifo;
+
+  const std::unique_ptr<cta::server::SocketPair>& m_socketPair;
+
+  /**
+   * Tape VID will be passed to the tape session reporter at specific point of time.
+   * It is essential for the cleaner session that VID is reported during state change
+   */
+  std::string m_vid;
+};
+
+/**
+ * Mock class for DriveHandlerProxy to call fake reportHeartbeat()
+ */
+class MockDriveHandlerProxy : public DriveHandlerProxy {
+public:
+  explicit MockDriveHandlerProxy(const std::unique_ptr<cta::server::SocketPair>& socketPair)
+    : DriveHandlerProxy(socketPair) {
+  }
+
+  MOCK_METHOD2(reportHeartbeat, void(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved));
+};
+
+/**
  * The data handler test is a parameterized test. It takes a scheduler database factory as a parameter.
  */
 class DriveHandlerTest : public ::testing::TestWithParam<DriveHandlerTestParam> {
@@ -59,6 +160,7 @@ public:
   std::unique_ptr<cta::SchedulerDatabase> m_db;
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::unique_ptr<cta::Scheduler> m_scheduler;
+  // cta::log::StdoutLogger m_dummyLog;
   cta::log::StringLogger m_dummyLog;
   cta::log::LogContext m_lc;
   cta::tape::daemon::TpconfigLine m_driveConfig;
@@ -117,6 +219,11 @@ public:
                            "taped TpConfigPath ");
     m_ctaConf.stringAppend(m_tpConfig.path());
     m_completeConfig = cta::tape::daemon::TapedConfiguration::createFromCtaConf(m_ctaConf.path());
+
+    m_socketPair = std::make_unique<cta::server::SocketPair>();
+    m_mockProxy = std::make_shared<testing::NiceMock<MockDriveHandlerProxy>>(m_socketPair);
+    ON_CALL(*m_mockProxy, reportHeartbeat(_, _)).WillByDefault(
+      testing::Invoke(this, &DriveHandlerTest::reportHeartbeat));
   }
 
   void TearDown() override {
@@ -124,38 +231,31 @@ public:
     m_catalogue.reset();
     m_db.reset();
   }
-};
 
-class MockDriveHandlerProxy;
-
-/**
- * Class identical to DriveHandler, but can return the socket pair for the sake of testing
- */
-class MockDriveHandler : public DriveHandler {
-public:
-  MockDriveHandler(const TapedConfiguration& tapedConfig, const TpconfigLine& configline, ProcessManager& pm,
-                   DriveHandlerProxy& mockProxy, cta::server::SocketPair& socketPair)
-    : DriveHandler(tapedConfig, configline, pm, mockProxy, socketPair) {}
-
-  cta::server::SocketPair& getSocketPair() { return *m_socketPair; };
-};
-
-/**
- * Fake class identical to DriveHandlerProxy, listens for any possible messages from the parent process
- */
-class FakeDriveHandlerProxy : public DriveHandlerProxy {
-public:
-  explicit FakeDriveHandlerProxy(cta::server::SocketPair& socketPair) : DriveHandlerProxy(socketPair) {}
-
-  void reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved) override {
-    DriveHandlerProxy::reportHeartbeat(totalTapeBytesMoved, totalDiskBytesMoved);
+  void reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved) {
+    m_lc.log(cta::log::DEBUG, "DriveHandlerTest::reportHeartbeat()");
+    serializers::WatchdogMessage watchdogMessage;
+    watchdogMessage.set_reportingstate(false);
+    watchdogMessage.set_reportingbytes(true);
+    watchdogMessage.set_totaltapebytesmoved(totalTapeBytesMoved);
+    watchdogMessage.set_totaldiskbytesmoved(totalDiskBytesMoved);
+    std::string buffer;
+    if (!watchdogMessage.SerializeToString(&buffer)) {
+      throw cta::exception::Exception(std::string("In DriveHandlerProxy::reportHeartbeat(): could not serialize: ")+
+          watchdogMessage.InitializationErrorString());
+    }
+    m_lc.log(cta::log::DEBUG, "DriveHandlerTest::reportHeartbeat(): Send Message");
+    m_socketPair->send(buffer);
+    m_lc.log(cta::log::DEBUG, "DriveHandlerTest::reportHeartbeat(): Message has been sent");
 
     // Listen for any possible messages from the parent process
     // If it is a state change, echo it back to parent
     // This is used by DriveHandlerTest unit tests
     try {
       serializers::WatchdogMessage message;
-      const auto datagram = m_socketPair.receive();
+      m_lc.log(cta::log::DEBUG, "DriveHandlerTest::reportHeartbeat(): Receive Message");
+      const auto datagram = m_socketPair->receive();
+      m_lc.log(cta::log::DEBUG, "DriveHandlerTest::reportHeartbeat(): Message has been received");
       if (!message.ParseFromString(datagram)) {
         // Use the tolerant parser to assess the situation.
         message.ParsePartialFromString(datagram);
@@ -164,118 +264,19 @@ public:
           message.InitializationErrorString());
       }
       if (message.reportingstate()) {
-        reportState(static_cast<cta::tape::session::SessionState>(message.sessionstate()),
-                    static_cast<cta::tape::session::SessionType>(message.sessiontype()),
-                    message.vid());
+        m_mockProxy->reportState(static_cast<cta::tape::session::SessionState>(message.sessionstate()),
+                                 static_cast<cta::tape::session::SessionType>(message.sessiontype()),
+                                 message.vid());
       }
     }
-    catch (cta::server::SocketPair::NothingToReceive&) {}
-  }
-};
-
-/**
- * Mock class for DriveHandlerProxy to call fake reportHeartbeat()
- */
-class MockDriveHandlerProxy : public DriveHandlerProxy {
-public:
-  explicit MockDriveHandlerProxy(cta::server::SocketPair& socketPair) : DriveHandlerProxy(socketPair),
-                                                                        fake(socketPair) {
-    ON_CALL(*this, reportHeartbeat(_, _)).WillByDefault(
-      testing::Invoke(&fake, &FakeDriveHandlerProxy::reportHeartbeat));
-  }
-
-  MOCK_METHOD2(reportHeartbeat, void(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved));
-
-private:
-  FakeDriveHandlerProxy fake;
-};
-
-/**
- * Class that mimics the tape session reporter to change the data session states
- */
-class DummyTapeSessionReporter : cta::threading::Thread {
-public:
-  explicit DummyTapeSessionReporter(MockDriveHandler& handler) : m_handler(handler) {}
-
-  void reportState(cta::tape::session::SessionState state) {
-    m_fifo.push(new Report(state));
-  }
-
-  void setVid(const std::string& vid) {
-    m_vid = vid;
-  }
-
-  void finish() {
-    m_fifo.push(nullptr);
-  }
-
-  void startThreads() {
-    start();
-  }
-
-  void waitThreads() {
-    try {
-      wait();
-    } catch (...) {
-
+    catch (cta::server::SocketPair::NothingToReceive&) {
+      m_lc.log(cta::log::DEBUG, "DriveHandlerTest::reportHeartbeat(): Nothing to Receive");
     }
   }
 
-private:
-  void run() override {
-    while (true) {
-      sleep(1);
-      std::unique_ptr<Report> currentReport(m_fifo.pop());
-      if (nullptr == currentReport) {
-        break;
-      }
-      try {
-        currentReport->execute(*this);
-      } catch (const std::exception& e) {}
-    }
-  }
-
-  class Report {
-  public:
-    explicit Report(cta::tape::session::SessionState state) : m_state(state) {};
-
-    ~Report() = default;
-
-    void execute(DummyTapeSessionReporter& parent) const {
-      serializers::WatchdogMessage watchdogMessage;
-      watchdogMessage.set_reportingstate(true);
-      watchdogMessage.set_reportingbytes(false);
-      watchdogMessage.set_totaldiskbytesmoved(0);
-      watchdogMessage.set_totaltapebytesmoved(0);
-      watchdogMessage.set_sessionstate(static_cast<uint32_t>(m_state));
-      watchdogMessage.set_sessiontype(static_cast<uint32_t>(cta::tape::session::SessionType::Undetermined));
-      watchdogMessage.set_vid(parent.m_vid);
-      std::string buffer;
-      if (!watchdogMessage.SerializeToString(&buffer)) {
-        throw cta::exception::Exception(std::string("In DriveHandlerProxy::reportState(): could not serialize: ") +
-                                        watchdogMessage.InitializationErrorString());
-      }
-      parent.m_handler.getSocketPair().send(buffer);
-    }
-
-    cta::tape::session::SessionState m_state;
-  };
-
-  /**
-   * m_fifo is holding all the report waiting to be processed
-   */
-  cta::threading::BlockingQueue<Report *> m_fifo;
-
-  /**
-   * Drive handler that listens for our state change messages
-   */
-  MockDriveHandler& m_handler;
-
-  /**
-   * Tape VID will be passed to the tape session reporter at specific point of time.
-   * It is essential for the cleaner session that VID is reported during state change
-   */
-  std::string m_vid;
+protected:
+  std::unique_ptr<cta::server::SocketPair> m_socketPair;
+  std::shared_ptr<testing::NiceMock<MockDriveHandlerProxy>> m_mockProxy;
 };
 
 char envXrdSecPROTOCOL[] = "XrdSecPROTOCOL=krb5";
@@ -292,16 +293,12 @@ TEST_P(DriveHandlerTest, TriggerCleanerSessionAtTheEndOfSession) {
   // Create the process manager and drive handler
   cta::tape::daemon::ProcessManager processManager(m_lc);
 
-  std::unique_ptr<cta::server::SocketPair> socketPair = std::make_unique<cta::server::SocketPair>();
-  MockDriveHandlerProxy mockProxy(*socketPair);
-  std::unique_ptr<MockDriveHandler> driveHandler(
-    new MockDriveHandler(m_completeConfig, m_driveConfig, processManager, mockProxy, *socketPair));
+  auto driveHandler = std::make_unique<DriveHandler>(m_completeConfig, m_driveConfig, processManager, m_mockProxy);
 
   processManager.addHandler(std::move(driveHandler));
 
   // Get back the drive handler and let the reporter send messages
-  MockDriveHandler& handler = dynamic_cast<MockDriveHandler&>(processManager.at("drive:T10D6116"));
-  DummyTapeSessionReporter reporter(handler);
+  DummyTapeSessionReporter reporter(m_socketPair);
 
   // Imitate intercommunication
   {
@@ -315,7 +312,6 @@ TEST_P(DriveHandlerTest, TriggerCleanerSessionAtTheEndOfSession) {
   }
 
   // Run the process manager that should exit after Fatal state
-  EXPECT_CALL(mockProxy, reportHeartbeat(_, _));
   setEnvVars();
   processManager.run();
   reporter.waitThreads();

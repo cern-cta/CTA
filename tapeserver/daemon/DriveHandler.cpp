@@ -52,8 +52,8 @@ CTA_GENERATE_EXCEPTION_CLASS(DriveAlreadyExistException);
 // constructor
 //------------------------------------------------------------------------------
 DriveHandler::DriveHandler(const TapedConfiguration& tapedConfig, const TpconfigLine& configline, ProcessManager& pm,
-                           DriveHandlerProxy& driveHandlerProxy, server::SocketPair& socketPair) :
-  SubprocessHandler(std::string("drive:") + configline.unitName), m_socketPair(&socketPair), m_processManager(pm),
+                           std::shared_ptr<DriveHandlerProxy> driveHandlerProxy) :
+  SubprocessHandler(std::string("drive:") + configline.unitName), m_processManager(pm),
   m_tapedConfig(tapedConfig), m_configLine(configline),
   m_sessionEndContext(m_processManager.logContext().logger()), m_driveHandlerProxy(driveHandlerProxy) {
   // As the handler is started, its first duty is to create a new subprocess. This
@@ -126,7 +126,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::getInitialStatus() {
 void DriveHandler::postForkCleanup() {
   // We are in the child process of another handler. We can close our socket pair
   // without re-registering it from poll.
-  m_socketPair.reset(nullptr);
+  m_driveHandlerProxy->socketPair()->close();
 }
 
 //------------------------------------------------------------------------------
@@ -137,6 +137,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
   // failed and ask for a shutdown by sending the TERM signal to the parent process
   // This will ensure the shutdown-kill sequence managed by the signal handler without code duplication.
   // Record we no longer ask for fork
+  m_processManager.logContext().log(cta::log::DEBUG, "DriveHandler::fork()");
   m_processingStatus.forkRequested = false;
   try {
     // Check we are in the right state (sanity check)
@@ -147,27 +148,29 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
       throw exception::Exception(err.str());
     }
     // First prepare a socket pair for this new subprocess
-    m_socketPair = std::make_unique<cta::server::SocketPair>();
+    m_driveHandlerProxy->socketPair()->open();
     // and fork
     m_pid = ::fork();
     exception::Errnum::throwOnMinusOne(m_pid, "In DriveHandler::fork(): failed to fork()");
     m_sessionState = SessionState::StartingUp;
     m_lastStateChangeTime = std::chrono::steady_clock::now();
     if (!m_pid) {
+      m_processManager.logContext().log(cta::log::DEBUG, "DriveHandler::fork(): We are in the child process");
       // We are in the child process
-      m_socketPair->close(server::SocketPair::Side::parent);
+      m_driveHandlerProxy->socketPair()->close(server::SocketPair::Side::parent);
       SubprocessHandler::ProcessingStatus ret;
       ret.forkState = SubprocessHandler::ForkState::child;
       return ret;
-    }
-    else {
+    } else {
+      m_processManager.logContext().log(cta::log::DEBUG, "DriveHandler::fork(): We are in the parent process");
       // We are in the parent process
       m_processingStatus.forkState = SubprocessHandler::ForkState::parent;
       // Compute the next timeout
       m_processingStatus.nextTimeout = nextTimeout();
       // Register our socket pair side for epoll after closing child side.
-      m_socketPair->close(server::SocketPair::Side::child);
-      m_processManager.addFile(m_socketPair->getFdForAccess(server::SocketPair::Side::child), this);
+      m_driveHandlerProxy->socketPair()->close(server::SocketPair::Side::child);
+      m_processManager.logContext().log(cta::log::DEBUG, "DriveHandler::fork() getFdForAccess");
+      m_processManager.addFile(m_driveHandlerProxy->socketPair()->getFdForAccess(server::SocketPair::Side::child), this);
       // We are now ready to react to timeouts and messages from the child process.
       return m_processingStatus;
     }
@@ -243,9 +246,9 @@ void DriveHandler::kill() {
   if (m_pid != -1) {
     params.add("SubProcessId", m_pid);
     // The socket pair will be reopened on the next fork. Clean it up.
-    if (m_socketPair) {
-      m_processManager.removeFile(m_socketPair->getFdForAccess(server::SocketPair::Side::child));
-      m_socketPair.reset(nullptr);
+    if (m_driveHandlerProxy->socketPair()) {
+      m_processManager.removeFile(m_driveHandlerProxy->socketPair()->getFdForAccess(server::SocketPair::Side::child));
+      m_driveHandlerProxy->socketPair()->close();
     }
     try {
       exception::Errnum::throwOnMinusOne(::kill(m_pid, SIGKILL), "Failed to kill() subprocess");
@@ -289,7 +292,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
   // Read from the socket pair
   try {
     serializers::WatchdogMessage message;
-    auto datagram = m_socketPair->receive();
+    auto datagram = m_driveHandlerProxy->socketPair()->receive();
     if (!message.ParseFromString(datagram)) {
       // Use the tolerant parser to assess the situation.
       message.ParsePartialFromString(datagram);
@@ -361,9 +364,9 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
     return m_processingStatus;
   } catch (cta::server::SocketPair::PeerDisconnected& ex) {
     // The peer disconnected: close the socket pair and remove it from the epoll list.
-    if (m_socketPair) {
-      m_processManager.removeFile(m_socketPair->getFdForAccess(server::SocketPair::Side::child));
-      m_socketPair.reset(nullptr);
+    if (m_driveHandlerProxy->socketPair()) {
+      m_processManager.removeFile(m_driveHandlerProxy->socketPair()->getFdForAccess(server::SocketPair::Side::child));
+      m_driveHandlerProxy->socketPair()->close();
     }
     else {
       m_processManager.logContext().log(log::ERR,
@@ -668,9 +671,9 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
     // We did collect the exit code of our child process
     // How well did it finish? (exit() or killed?)
     // The socket pair will be reopened on the next fork. Clean it up.
-    if (m_socketPair) {
-      m_processManager.removeFile(m_socketPair->getFdForAccess(server::SocketPair::Side::child));
-      m_socketPair.reset(nullptr);
+    if (m_driveHandlerProxy->socketPair()) {
+      m_processManager.removeFile(m_driveHandlerProxy->socketPair()->getFdForAccess(server::SocketPair::Side::child));
+      m_driveHandlerProxy->socketPair()->close();
     }
     params.add("pid", m_pid);
     if (WIFEXITED(processStatus)) {
@@ -827,7 +830,7 @@ int DriveHandler::runChild() {
     log::ScopedParamContainer param(lc);
     param.add("errorMessage", ex.getMessageValue());
     lc.log(log::CRIT, "In DriveHandler::runChild(): failed to connect to objectstore or failed to instantiate agent entry. Reporting fatal error.");
-    m_driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+    m_driveHandlerProxy->reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
     sleep(1);
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
   }
@@ -841,7 +844,7 @@ int DriveHandler::runChild() {
     log::ScopedParamContainer param(lc);
     param.add("errorMessage", ex.getMessageValue());
     lc.log(log::CRIT, "In DriveHandler::runChild(): failed to instantiate catalogue. Reporting fatal error.");
-    m_driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+    m_driveHandlerProxy->reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
     sleep(1);
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
   }
@@ -856,13 +859,13 @@ int DriveHandler::runChild() {
     log::ScopedParamContainer param(lc);
     param.add("errorMessage", ex.getMessageValue());
     lc.log(log::CRIT, "In DriveHandler::runChild(): catalogue MAJOR version mismatch. Reporting fatal error.");
-    m_driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+    m_driveHandlerProxy->reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer param(lc);
     param.add("errorMessage", ex.getMessageValue());
     lc.log(log::CRIT, "In DriveHandler::runChild(): failed to ping central storage before session. Reporting fatal error.");
-    m_driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+    m_driveHandlerProxy->reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
   }
 
@@ -891,7 +894,7 @@ int DriveHandler::runChild() {
       log::ScopedParamContainer param(lc);
       param.add("errorMessage", ex.getMessageValue());
       lc.log(log::CRIT, "In DriveHandler::runChild(): failed to set the drive down. Reporting fatal error.");
-      m_driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+      m_driveHandlerProxy->reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
       sleep(1);
       return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
     }
@@ -923,7 +926,7 @@ int DriveHandler::runChild() {
         log::ScopedParamContainer param(lc);
         param.add("errorMessage", ex.getMessageValue());
         lc.log(log::CRIT, "In DriveHandler::runChild(): failed to set the drive down. Reporting fatal error.");
-        m_driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+        m_driveHandlerProxy->reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
         sleep(1);
         return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
       }
@@ -963,13 +966,13 @@ int DriveHandler::runChild() {
       log::ScopedParamContainer param(lc);
       param.add("errorMessage", ex.getMessageValue());
       lc.log(log::CRIT, "In DriveHandler::runChild() before cleanerSession: catalogue MAJOR version mismatch. Reporting fatal error.");
-      m_driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+      m_driveHandlerProxy->reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
       return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
     } catch (cta::exception::Exception& ex) {
       log::ScopedParamContainer param(lc);
       param.add("errorMessage", ex.getMessageValue());
       lc.log(log::CRIT, "In DriveHandler::runChild() before cleanerSession: failed to ping central storage before session. Reporting fatal error.");
-      m_driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+      m_driveHandlerProxy->reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
       return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
     }
 
@@ -1058,7 +1061,7 @@ int DriveHandler::runChild() {
 
         // Checking the drive does not already exist in the database
         if (!scheduler.checkDriveCanBeCreated(driveInfo, lc)) {
-          m_driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+          m_driveHandlerProxy->reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
           return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
         }
 
@@ -1094,7 +1097,7 @@ int DriveHandler::runChild() {
               .add("Backtrace", ex.backtrace());
         lc.log(log::CRIT, "In DriveHandler::runChild(): failed to set drive down");
         // This is a fatal error (failure to access the scheduler). Shut daemon down.
-        m_driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+        m_driveHandlerProxy->reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
         return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
       }
     }
@@ -1104,7 +1107,7 @@ int DriveHandler::runChild() {
       sWrapper,
       m_driveConfig,
       mediaChangerFacade,
-      m_driveHandlerProxy,
+      *m_driveHandlerProxy,
       capUtils,
       dataTransferConfig,
       scheduler);

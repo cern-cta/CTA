@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include <string> 
+#include <string>
 #include <stdint.h>
 #include <map>
 #include "common/exception/Exception.hpp"
@@ -34,7 +34,7 @@ class SocketPair {
 public:
   /// Constructor: opens the socket pair.
   SocketPair();
-  /// Destructor: closes the remaining socketpairs 
+  /// Destructor: closes the remaining socketpairs
   ~SocketPair();
   /// Enum allowing description of sides (parent, child)
   enum class Side: uint8_t {
@@ -43,6 +43,8 @@ public:
     current,
     both
   };
+  void open();
+  void close();
   CTA_GENERATE_EXCEPTION_CLASS(CloseAlreadyCalled);
   /// Close one side (after forking)
   void close(Side sideToClose);
@@ -58,9 +60,9 @@ public:
   typedef std::map<std::string, SocketPair *> pollMap;
   CTA_GENERATE_EXCEPTION_CLASS(Timeout);
   CTA_GENERATE_EXCEPTION_CLASS(Overflow);
-  /// Poll the socketpairs listed in the map for reading (optional side 
+  /// Poll the socketpairs listed in the map for reading (optional side
   /// parameter allows use without closing, useful for testing).
-  static void poll(pollMap & socketPairs, time_t timeout, 
+  static void poll(pollMap & socketPairs, time_t timeout,
     Side sourceToPoll = Side::current);
   /// Flag holding the result of a poll for a given socketpair.
   bool pollFlag();
@@ -68,7 +70,7 @@ public:
   /// a given source or destination. With checks.
   int getFdForAccess(Side sourceOrDestination);
 private:
-  int m_parentFd = -1;               ///< The file descriptor for the 
+  int m_parentFd = -1;               ///< The file descriptor for the
   int m_childFd = -1;
   Side m_currentSide = Side::both;
   bool m_pollFlag = false;
