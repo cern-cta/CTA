@@ -21,6 +21,7 @@
 #include <sys/prctl.h>
 
 #include <set>
+#include <utility>
 
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/CatalogueFactory.hpp"
@@ -52,10 +53,10 @@ CTA_GENERATE_EXCEPTION_CLASS(DriveAlreadyExistException);
 // constructor
 //------------------------------------------------------------------------------
 DriveHandler::DriveHandler(const TapedConfiguration& tapedConfig, const TpconfigLine& configline, ProcessManager& pm,
-                           std::shared_ptr<DriveHandlerProxy> driveHandlerProxy) :
+                           std::shared_ptr<TapedProxy> driveHandlerProxy) :
   SubprocessHandler(std::string("drive:") + configline.unitName), m_processManager(pm),
   m_tapedConfig(tapedConfig), m_driveConfig(configline),
-  m_sessionEndContext(m_processManager.logContext().logger()), m_driveHandlerProxy(driveHandlerProxy) {
+  m_sessionEndContext(m_processManager.logContext().logger()), m_driveHandlerProxy(std::move(driveHandlerProxy)) {
   // As the handler is started, its first duty is to create a new subprocess. This
   // will be managed by the process manager (initial request in getInitialStatus)
 }

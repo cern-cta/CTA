@@ -45,8 +45,8 @@ deleteLogParams(const std::string &unitName,
 }
 
 //------------------------------------------------------------------------------
-// labelError
+// socketPair
 //------------------------------------------------------------------------------
-void castor::messages::TapeserverProxyDummy::labelError(
-  const std::string &unitName, const std::string &message) {
+const std::unique_ptr<cta::server::SocketPair> &castor::messages::TapeserverProxyDummy::socketPair() {
+  throw cta::exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }

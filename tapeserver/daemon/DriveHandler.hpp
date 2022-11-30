@@ -36,7 +36,7 @@ class Catalogue;
 
 namespace tape {
 namespace daemon {
-class DriveHandlerProxy;
+class TapedProxy;
 
 /**
  * Handler for tape drive session subprocesses. On process/session will handle
@@ -45,7 +45,7 @@ class DriveHandlerProxy;
 class DriveHandler : public SubprocessHandler {
 public:
   DriveHandler(const TapedConfiguration& tapedConfig, const TpconfigLine& configline, ProcessManager& pm,
-               std::shared_ptr<DriveHandlerProxy> driveHandlerProxy);
+               std::shared_ptr<TapedProxy> driveHandlerProxy);
 
   ~DriveHandler() override;
 
@@ -174,7 +174,7 @@ private:
 
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
 
-  std::shared_ptr<cta::tape::daemon::DriveHandlerProxy> m_driveHandlerProxy;
+  std::shared_ptr<cta::tape::daemon::TapedProxy> m_driveHandlerProxy;
 };
 
 // TODO: remove/merge ChildProcess.

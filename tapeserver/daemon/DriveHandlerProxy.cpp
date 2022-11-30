@@ -58,11 +58,6 @@ void DriveHandlerProxy::deleteLogParams(const std::string& unitName, const std::
   m_socketPair->send(buffer);
 }
 
-void DriveHandlerProxy::labelError(const std::string& unitName, const std::string& message) {
-  // TODO
-  throw cta::exception::Exception("In DriveHandlerProxy::labelError(): not implemented");
-}
-
 void DriveHandlerProxy::reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved) {
   serializers::WatchdogMessage watchdogMessage;
   watchdogMessage.set_reportingstate(false);

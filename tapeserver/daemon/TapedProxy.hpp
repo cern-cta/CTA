@@ -84,14 +84,9 @@ public:
     const std::list<std::string> & paramNames) = 0;
 
   /**
-   * Notifies the tapeserverd daemon that a label session has encountered the
-   * specified error.
-   *
-   * @param unitName The unit name of the tape drive.
-   * @param message The error message.
+   * Returns the socket pair used for communication between DriveHandler and DataTransferSession
    */
-  virtual void labelError(const std::string &unitName,
-    const std::string &message) = 0;
+  virtual const std::unique_ptr<server::SocketPair>& socketPair() = 0;
 };  // class TapeserverProxy
 
 }}}  // namespace cta::tape::daemon
