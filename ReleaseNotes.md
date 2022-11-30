@@ -1,3 +1,9 @@
+# v4.NEXT
+
+## Summary
+### Continuous Integration
+- cta/CTA#205 -  Updating EOS4/EOS4 in versionlock for v4.8.95/v5.1.4
+
 # v4.8.0-1
 
 ## Summary
