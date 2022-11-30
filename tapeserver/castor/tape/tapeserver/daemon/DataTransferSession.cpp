@@ -130,8 +130,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
                                         cta::common::dataStructures::DriveStatus::Down, lc);
 
           // We wait a bit before polling the scheduler again.
-          // TODO: parametrize the duration?
-          sleep(5);
+          sleep(m_dataTransferConfig.wdDownUpTransitionTimeout);
         } else {
           break;
         }

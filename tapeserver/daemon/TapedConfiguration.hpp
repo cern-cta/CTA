@@ -137,6 +137,9 @@ struct TapedConfiguration {
   /// Time to wait after which the tape server stops trying to get the next mount
   cta::SourcedParameter<time_t> wdGlobalLockAcqMaxSecs{
     "taped", "WatchdogGlobalLockAcqMaxSecs", 15 * 60, "Compile time default"};
+  /// Time to wait between polling the drive changing it's state from down to up
+  cta::SourcedParameter<time_t> wdDownUpTransitionTimeout{
+    "taped", "WatchdogDownUpTransitionTimeout", 5, "Compile time default"};
   //----------------------------------------------------------------------------
   // The central storage access configuration
   //---------------------------------------------------------------------------- 

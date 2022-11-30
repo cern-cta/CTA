@@ -114,6 +114,7 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.raoLtoOptions.setFromConfigurationFile(cf,generalConfigPath);
   // Watchdog: parameters for timeouts in various situations.
   ret.wdIdleSessionTimer.setFromConfigurationFile(cf, generalConfigPath);
+  ret.wdDownUpTransitionTimeout.setFromConfigurationFile(cf, generalConfigPath);
   ret.wdMountMaxSecs.setFromConfigurationFile(cf, generalConfigPath);
   ret.wdNoBlockMoveMaxSecs.setFromConfigurationFile(cf, generalConfigPath);
   ret.wdScheduleMaxSecs.setFromConfigurationFile(cf, generalConfigPath);

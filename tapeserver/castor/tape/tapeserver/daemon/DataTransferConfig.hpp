@@ -158,6 +158,11 @@ struct DataTransferConfig {
   time_t wdGlobalLockAcqMaxSecs;
 
   /**
+   * Time to wait after scheduling came up idle
+   */
+  time_t wdDownUpTransitionTimeout;
+
+  /**
    * Constructor that sets all integer member-variables to 0 and all string
    * member-variables to the empty string.
    */

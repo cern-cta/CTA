@@ -88,8 +88,9 @@ public:
 
 private:
   void run() override {
+    // Wait for 1 second - the drive handler should be configured by that time
+    sleep(1);
     while (true) {
-      // sleep(1);
       std::unique_ptr<Report> currentReport(m_fifo.pop());
       if (nullptr == currentReport) {
         break;
@@ -160,7 +161,6 @@ public:
   std::unique_ptr<cta::SchedulerDatabase> m_db;
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::unique_ptr<cta::Scheduler> m_scheduler;
-  // cta::log::StdoutLogger m_dummyLog;
   cta::log::StringLogger m_dummyLog;
   cta::log::LogContext m_lc;
   cta::tape::daemon::TpconfigLine m_driveConfig;
@@ -218,6 +218,8 @@ public:
                            "taped BufferCount 1\n"
                            "taped TpConfigPath ");
     m_ctaConf.stringAppend(m_tpConfig.path());
+    m_ctaConf.stringAppend("\n"
+                           "taped WatchdogDownUpTransitionTimeout 0");
     m_completeConfig = cta::tape::daemon::TapedConfiguration::createFromCtaConf(m_ctaConf.path());
 
     m_socketPair = std::make_unique<cta::server::SocketPair>();
@@ -250,7 +252,6 @@ public:
 
     // Listen for any possible messages from the parent process
     // If it is a state change, echo it back to parent
-    // This is used by DriveHandlerTest unit tests
     try {
       serializers::WatchdogMessage message;
       m_lc.log(cta::log::DEBUG, "DriveHandlerTest::reportHeartbeat(): Receive Message");
@@ -294,7 +295,6 @@ TEST_P(DriveHandlerTest, TriggerCleanerSessionAtTheEndOfSession) {
   cta::tape::daemon::ProcessManager processManager(m_lc);
 
   auto driveHandler = std::make_unique<DriveHandler>(m_completeConfig, m_driveConfig, processManager, m_mockProxy);
-
   processManager.addHandler(std::move(driveHandler));
 
   // Get back the drive handler and let the reporter send messages

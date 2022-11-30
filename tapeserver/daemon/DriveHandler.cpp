@@ -54,7 +54,7 @@ CTA_GENERATE_EXCEPTION_CLASS(DriveAlreadyExistException);
 DriveHandler::DriveHandler(const TapedConfiguration& tapedConfig, const TpconfigLine& configline, ProcessManager& pm,
                            std::shared_ptr<DriveHandlerProxy> driveHandlerProxy) :
   SubprocessHandler(std::string("drive:") + configline.unitName), m_processManager(pm),
-  m_tapedConfig(tapedConfig), m_configLine(configline),
+  m_tapedConfig(tapedConfig), m_driveConfig(configline),
   m_sessionEndContext(m_processManager.logContext().logger()), m_driveHandlerProxy(driveHandlerProxy) {
   // As the handler is started, its first duty is to create a new subprocess. This
   // will be managed by the process manager (initial request in getInitialStatus)
@@ -1028,7 +1028,7 @@ int DriveHandler::runChild() {
     dataTransferConfig.wdIdleSessionTimer = m_tapedConfig.wdIdleSessionTimer.value();
     dataTransferConfig.wdGlobalLockAcqMaxSecs = m_tapedConfig.wdGlobalLockAcqMaxSecs.value();
     dataTransferConfig.wdNoBlockMoveMaxSecs = m_tapedConfig.wdNoBlockMoveMaxSecs.value();
-
+    dataTransferConfig.wdDownUpTransitionTimeout = m_tapedConfig.wdDownUpTransitionTimeout.value();
     m_stateChangeTimeouts[session::SessionState::Checking] = std::chrono::duration_cast<Timeout>(
       std::chrono::minutes(m_tapedConfig.wdCheckMaxSecs.value()));
     m_stateChangeTimeouts[session::SessionState::Scheduling] = std::chrono::duration_cast<Timeout>(

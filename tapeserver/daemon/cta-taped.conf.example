@@ -198,3 +198,6 @@ taped externalFreeDiskSpaceScript /usr/local/bin/cta-get-free-disk-space.sh
 #
 # The number of attempts a retriable RMC request should be issued.
 # taped RmcRequestAttempts 10
+#
+# Maximum time to wait between polling the drive changing it's state from down to up, in seconds.
+# taped WatchdogDownUpTransitionTimeout 5

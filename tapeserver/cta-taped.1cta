@@ -199,6 +199,8 @@ timeout is exceeded, the session will be terminated.
 .TP
 .B taped WatchdogIdleSessionTimer \fI10\fR
 Maximum time to wait after scheduling came up idle, in seconds.
+.B taped WatchdogDownUpTransitionTimeout \fI5\fR
+Maximum time to wait between polling the drive changing it's state from down to up, in seconds.
 
 .SH ENVIRONMENT
 .TP
