@@ -59,9 +59,12 @@ TapeLabelCmdLineArgs::TapeLabelCmdLineArgs(const int argc, char *const *const ar
         exception::CommandLineNotParsed ex;
         ex.getMessage() << "The -" << (char)opt << " option too big";
         throw ex;
-      } else {
-        m_vid = std::string(optarg);
-        utils::toUpper(m_vid);
+      }
+      m_vid = std::string(optarg);
+      if (!utils::isUpper(m_vid)) {
+        exception::CommandLineNotParsed ex;
+        ex.getMessage() << "The -" << (char)opt << " option must only contain uppercase alphanumeric characters";
+        throw ex;
       }
       break;
     case 'o':
@@ -69,9 +72,12 @@ TapeLabelCmdLineArgs::TapeLabelCmdLineArgs(const int argc, char *const *const ar
         exception::CommandLineNotParsed ex;
         ex.getMessage() << "The -" << (char)opt << " option too big";
         throw ex;
-      } else {
-        m_oldLabel = std::string(optarg);
-	      utils::toUpper(m_oldLabel);
+      }
+      m_oldLabel = std::string(optarg);
+      if (!utils::isUpper(m_vid)) {
+        exception::CommandLineNotParsed ex;
+        ex.getMessage() << "The -" << (char)opt << " option must only contain uppercase alphanumeric characters";
+        throw ex;
       }
       break;
     case 't':
