@@ -482,7 +482,7 @@ void PostgresCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer
 
     const char *const sql =
     "CREATE TEMPORARY TABLE TEMP_TAPE_FILE_INSERTION_BATCH ("                        "\n"
-      "LIKE TAPE_FILE) "                                                             "\n"
+      "LIKE TAPE_FILE INCLUDING DEFAULTS) "                                          "\n"
       "ON COMMIT DROP;"                                                              "\n"
     "COPY TEMP_TAPE_FILE_INSERTION_BATCH("                                           "\n"
       "VID,"                                                                         "\n"
