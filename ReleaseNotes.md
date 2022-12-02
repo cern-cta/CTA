@@ -2,7 +2,9 @@
 
 ## Summary
 ### Continuous Integration
-- cta/CTA#205 -  Updating EOS4/EOS4 in versionlock for v4.8.95/v5.1.4
+- cta/CTA#205 - Updating EOS4/EOS4 in versionlock for v4.8.95/v5.1.4
+### Catalogue Schema
+- cta/CTA#124 - Preparing code for new IS_ACCESSIBLE column in TAPE_FILE table
 
 # v4.8.0-1
 
