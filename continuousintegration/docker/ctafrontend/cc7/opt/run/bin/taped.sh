@@ -53,6 +53,7 @@ echo ${DATABASEURL} > /etc/cta/cta-catalogue.conf
   echo "taped WatchdogIdleSessionTimer 2" >> /etc/cta/cta-taped.conf # Make tape servers more responsive, thus improving CI test speed
   echo "ObjectStore BackendPath $OBJECTSTOREURL" >> /etc/cta/cta-taped.conf
   echo "taped UseEncryption no" >> /etc/cta/cta-taped.conf
+  echo "taped LogMask DEBUG" >> /etc/cta/cta-taped.conf
   echo "${tpconfig}" > /etc/cta/TPCONFIG
 
 ####
