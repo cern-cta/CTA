@@ -455,7 +455,7 @@ protected:
   const cta::common::dataStructures::SecurityIdentity s_adminOnAdminHost = {"admin1", "host1"};
   const std::string s_tapePoolName = "TestTapePool";
   const std::string s_libraryName = "TestLogicalLibrary";
-  const std::string s_vid = "TstVid"; // We really need size <= 6 characters due to tape label format.
+  const std::string s_vid = "TSTVID"; // We really need size <= 6 characters due to tape label format.
   const std::string s_mediaType = "LTO7M";
   const std::string s_vendor = "TestVendor";
   //TempFile m_tempSqliteFile;
@@ -636,7 +636,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   // 10) Check logs
   std::string logToCheck = logger.getLog();
   logToCheck += "";
-  ASSERT_NE(std::string::npos, logToCheck.find("MSG=\"Tape session started for read\" thread=\"TapeRead\" tapeDrive=\"T10D6116\" tapeVid=\"TstVid\" "
+  ASSERT_NE(std::string::npos, logToCheck.find("MSG=\"Tape session started for read\" thread=\"TapeRead\" tapeDrive=\"T10D6116\" tapeVid=\"TSTVID\" "
                                                "mountId=\"1\" vo=\"vo\" mediaType=\"LTO7M\" tapePool=\"TestTapePool\" "
                                                "logicalLibrary=\"TestLogicalLibrary\" mountType=\"Retrieve\" labelFormat=\"0000\" vendor=\"TestVendor\" "
                                                "capacityInBytes=\"12345678\""));
@@ -832,7 +832,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   // 10) Check logs
   std::string logToCheck = logger.getLog();
   logToCheck += "";
-  ASSERT_NE(std::string::npos,logToCheck.find("MSG=\"Tape session started for read\" thread=\"TapeRead\" tapeDrive=\"T10D6116\" tapeVid=\"TstVid\" "
+  ASSERT_NE(std::string::npos,logToCheck.find("MSG=\"Tape session started for read\" thread=\"TapeRead\" tapeDrive=\"T10D6116\" tapeVid=\"TSTVID\" "
                                               "mountId=\"1\" vo=\"vo\" mediaType=\"LTO7M\" tapePool=\"TestTapePool\" "
                                               "logicalLibrary=\"TestLogicalLibrary\" mountType=\"Retrieve\" labelFormat=\"0000\" vendor=\"TestVendor\" "
                                               "capacityInBytes=\"12345678\""));
@@ -3146,7 +3146,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   std::string logToCheck = logger.getLog();
   logToCheck += "";
   ASSERT_NE(std::string::npos,
-            logToCheck.find("MSG=\"Tape session started for write\" thread=\"TapeWrite\" tapeDrive=\"T10D6116\" tapeVid=\"TstVid\" "
+            logToCheck.find("MSG=\"Tape session started for write\" thread=\"TapeWrite\" tapeDrive=\"T10D6116\" tapeVid=\"TSTVID\" "
                             "mountId=\"1\" vo=\"vo\" mediaType=\"LTO7M\" tapePool=\"TestTapePool\" logicalLibrary=\"TestLogicalLibrary\" "
                             "mountType=\"ArchiveForUser\" vendor=\"TestVendor\" capacityInBytes=\"12345678\""));
   ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "

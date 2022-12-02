@@ -320,6 +320,14 @@ namespace utils {
   void toUpper(std::string &str);
 
   /**
+  * Checks if the specified string is uppercase.
+  *
+  * @param In/out parameter: The string to be checked.
+  * @return true if the string is uppercase.
+  */
+  bool isUpper(const std::string &str);
+
+  /**
    * Converts the specified string to lowercase.
    *
    * @param In/out parameter: The string to be converted.

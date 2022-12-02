@@ -57,21 +57,27 @@ TapeLabelCmdLineArgs::TapeLabelCmdLineArgs(const int argc, char *const *const ar
     case 'v':
       if (strlen(optarg) > CA_MAXVIDLEN) {
         exception::CommandLineNotParsed ex;
-        ex.getMessage() << "The -" << (char)opt << " option too big";
+        ex.getMessage() << "The -" << static_cast<char>(opt) << " option too big";
         throw ex;
-      } else {
-        m_vid = std::string(optarg);
-        utils::toUpper(m_vid);
+      }
+      m_vid = std::string(optarg);
+      if (!utils::isUpper(m_vid)) {
+        exception::CommandLineNotParsed ex;
+        ex.getMessage() << "The -" << static_cast<char>(opt) << " option must only contain uppercase alphanumeric characters";
+        throw ex;
       }
       break;
     case 'o':
       if (strlen(optarg) > CA_MAXVIDLEN) {
         exception::CommandLineNotParsed ex;
-        ex.getMessage() << "The -" << (char)opt << " option too big";
+        ex.getMessage() << "The -" << static_cast<char>(opt) << " option too big";
         throw ex;
-      } else {
-        m_oldLabel = std::string(optarg);
-              utils::toUpper(m_oldLabel);
+      }
+      m_oldLabel = std::string(optarg);
+      if (!utils::isUpper(m_vid)) {
+        exception::CommandLineNotParsed ex;
+        ex.getMessage() << "The -" << static_cast<char>(opt) << " option must only contain uppercase alphanumeric characters";
+        throw ex;
       }
       break;
     case 't':
@@ -107,7 +113,7 @@ TapeLabelCmdLineArgs::TapeLabelCmdLineArgs(const int argc, char *const *const ar
     case ':': // Missing parameter
       {
         exception::CommandLineNotParsed ex;
-        ex.getMessage() << "The -" << (char)optopt << " option requires a parameter";
+        ex.getMessage() << "The -" << static_cast<char>(optopt) << " option requires a parameter";
         throw ex;
       }
     case '?': // Unknown option
@@ -116,7 +122,7 @@ TapeLabelCmdLineArgs::TapeLabelCmdLineArgs(const int argc, char *const *const ar
         if(0 == optopt) {
           ex.getMessage() << "Unknown command-line option";
         } else {
-          ex.getMessage() << "Unknown command-line option: -" << (char)optopt;
+          ex.getMessage() << "Unknown command-line option: -" << static_cast<char>(optopt);
         }
         throw ex;
       }
@@ -125,7 +131,7 @@ TapeLabelCmdLineArgs::TapeLabelCmdLineArgs(const int argc, char *const *const ar
         exception::CommandLineNotParsed ex;
         ex.getMessage() <<
           "getopt_long returned the following unknown value: 0x" <<
-          std::hex << (int)opt;
+          std::hex << static_cast<int>(opt);
         throw ex;
       }
     } // switch(opt)
