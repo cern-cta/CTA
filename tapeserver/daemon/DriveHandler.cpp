@@ -149,10 +149,13 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
       throw exception::Exception(err.str());
     }
     // First prepare a socket pair for this new subprocess
+    m_processManager.logContext().log(cta::log::DEBUG, "DriveHandler::fork(): opening the socket pair");
     m_driveHandlerProxy->socketPair()->open();
     // and fork
+    m_processManager.logContext().log(cta::log::DEBUG, "DriveHandler::fork(): forking");
     m_pid = ::fork();
     exception::Errnum::throwOnMinusOne(m_pid, "In DriveHandler::fork(): failed to fork()");
+    m_processManager.logContext().log(cta::log::DEBUG, "DriveHandler::fork(): fork successful");
     m_sessionState = SessionState::StartingUp;
     m_lastStateChangeTime = std::chrono::steady_clock::now();
     if (!m_pid) {
