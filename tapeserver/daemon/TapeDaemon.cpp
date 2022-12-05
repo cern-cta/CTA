@@ -113,7 +113,7 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
   pm.addHandler(std::move(sh));
   // Create the drive handlers
   for (auto & d: m_globalConfiguration.driveConfigs) {
-    auto socketPair = std::make_unique<cta::server::SocketPair>();
+    auto socketPair = std::make_shared<cta::server::SocketPair>();
     auto handlerProxy = std::make_shared<DriveHandlerProxy>(socketPair);
     auto dh = std::make_unique<DriveHandler>(m_globalConfiguration, d.second.value(), pm, handlerProxy);
     pm.addHandler(std::move(dh));

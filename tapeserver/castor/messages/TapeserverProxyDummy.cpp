@@ -47,6 +47,6 @@ deleteLogParams(const std::string &unitName,
 //------------------------------------------------------------------------------
 // socketPair
 //------------------------------------------------------------------------------
-const std::unique_ptr<cta::server::SocketPair> &castor::messages::TapeserverProxyDummy::socketPair() {
+const std::shared_ptr<cta::server::SocketPair> &castor::messages::TapeserverProxyDummy::socketPair() {
   throw cta::exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }

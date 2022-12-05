@@ -59,7 +59,7 @@ struct DriveHandlerTestParam {
  */
 class DummyTapeSessionReporter : cta::threading::Thread {
 public:
-  explicit DummyTapeSessionReporter(const std::unique_ptr<cta::server::SocketPair>& socketPair)
+  explicit DummyTapeSessionReporter(const std::shared_ptr<cta::server::SocketPair>& socketPair)
     : m_socketPair(socketPair) {}
 
   void reportState(cta::tape::session::SessionState state) {
@@ -132,7 +132,7 @@ private:
    */
   cta::threading::BlockingQueue<Report *> m_fifo;
 
-  const std::unique_ptr<cta::server::SocketPair>& m_socketPair;
+  const std::shared_ptr<cta::server::SocketPair>& m_socketPair;
 
   /**
    * Tape VID will be passed to the tape session reporter at specific point of time.
@@ -146,7 +146,7 @@ private:
  */
 class MockDriveHandlerProxy : public DriveHandlerProxy {
 public:
-  explicit MockDriveHandlerProxy(const std::unique_ptr<cta::server::SocketPair>& socketPair)
+  explicit MockDriveHandlerProxy(const std::shared_ptr<cta::server::SocketPair>& socketPair)
     : DriveHandlerProxy(socketPair) {
   }
 
@@ -222,7 +222,7 @@ public:
                            "taped WatchdogDownUpTransitionTimeout 0");
     m_completeConfig = cta::tape::daemon::TapedConfiguration::createFromCtaConf(m_ctaConf.path());
 
-    m_socketPair = std::make_unique<cta::server::SocketPair>();
+    m_socketPair = std::make_shared<cta::server::SocketPair>();
     m_mockProxy = std::make_shared<testing::NiceMock<MockDriveHandlerProxy>>(m_socketPair);
     ON_CALL(*m_mockProxy, reportHeartbeat(_, _)).WillByDefault(
       testing::Invoke(this, &DriveHandlerTest::reportHeartbeat));
@@ -276,7 +276,7 @@ public:
   }
 
 protected:
-  std::unique_ptr<cta::server::SocketPair> m_socketPair;
+  std::shared_ptr<cta::server::SocketPair> m_socketPair;
   std::shared_ptr<testing::NiceMock<MockDriveHandlerProxy>> m_mockProxy;
 };
 

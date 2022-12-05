@@ -40,7 +40,7 @@ public:
   void deleteLogParams(const std::string &unitName,
     const std::list<std::string> & paramNames) override;
   
-  const std::unique_ptr<cta::server::SocketPair>& socketPair() override;
+  const std::shared_ptr<cta::server::SocketPair>& socketPair() override;
 
 }; // class TapeserverProxyDummy
 

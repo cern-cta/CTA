@@ -86,7 +86,7 @@ public:
   /**
    * Returns the socket pair used for communication between DriveHandler and DataTransferSession
    */
-  virtual const std::unique_ptr<server::SocketPair>& socketPair() = 0;
+  virtual const std::shared_ptr<server::SocketPair>& socketPair() = 0;
 };  // class TapeserverProxy
 
 }}}  // namespace cta::tape::daemon

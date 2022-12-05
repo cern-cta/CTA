@@ -20,7 +20,7 @@
 
 namespace cta { namespace tape { namespace daemon {
 
-DriveHandlerProxy::DriveHandlerProxy(const std::unique_ptr<server::SocketPair>& socketPair) : m_socketPair(socketPair) {
+DriveHandlerProxy::DriveHandlerProxy(const std::shared_ptr<server::SocketPair>& socketPair) : m_socketPair(socketPair) {
 }
 
 // TODO: me might want to group the messages to reduce the rate.
@@ -89,7 +89,7 @@ void DriveHandlerProxy::reportState(const cta::tape::session::SessionState state
   m_socketPair->send(buffer);
 }
 
-const std::unique_ptr<server::SocketPair>& DriveHandlerProxy::socketPair() {
+const std::shared_ptr<server::SocketPair>& DriveHandlerProxy::socketPair() {
   return m_socketPair;
 }
 
