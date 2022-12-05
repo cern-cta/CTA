@@ -4,7 +4,7 @@
 ### Features
 - cta/CTA#230 - Modify CTA code to enforce VID uppercase
 ### Continuous Integration
-- cta/CTA#205 - Updating EOS4/EOS4 in versionlock for v4.8.95/v5.1.4
+- cta/CTA#205 - Updating EOS4/EOS4 in versionlock for v4.8.95/v5.1.5
 ### Catalogue Schema
 - cta/CTA#124 - Preparing code for new IS_ACCESSIBLE column in TAPE_FILE table
 
