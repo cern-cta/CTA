@@ -16,11 +16,13 @@
  */
 
 #include "DriveHandlerProxy.hpp"
+
+#include <utility>
 #include "tapeserver/daemon/WatchdogMessage.pb.h"
 
 namespace cta { namespace tape { namespace daemon {
 
-DriveHandlerProxy::DriveHandlerProxy(const std::shared_ptr<server::SocketPair>& socketPair) : m_socketPair(socketPair) {
+DriveHandlerProxy::DriveHandlerProxy(std::shared_ptr<server::SocketPair> socketPair) : m_socketPair(std::move(socketPair)) {
 }
 
 // TODO: me might want to group the messages to reduce the rate.

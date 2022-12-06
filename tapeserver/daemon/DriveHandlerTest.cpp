@@ -132,7 +132,7 @@ private:
    */
   cta::threading::BlockingQueue<Report *> m_fifo;
 
-  const std::shared_ptr<cta::server::SocketPair>& m_socketPair;
+  const std::shared_ptr<cta::server::SocketPair> m_socketPair;
 
   /**
    * Tape VID will be passed to the tape session reporter at specific point of time.
@@ -146,8 +146,8 @@ private:
  */
 class MockDriveHandlerProxy : public DriveHandlerProxy {
 public:
-  explicit MockDriveHandlerProxy(const std::shared_ptr<cta::server::SocketPair>& socketPair)
-    : DriveHandlerProxy(socketPair) {
+  explicit MockDriveHandlerProxy(std::shared_ptr<cta::server::SocketPair> socketPair)
+    : DriveHandlerProxy(std::move(socketPair)) {
   }
 
   MOCK_METHOD2(reportHeartbeat, void(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved));

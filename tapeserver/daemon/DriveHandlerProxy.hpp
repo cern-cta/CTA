@@ -37,7 +37,7 @@ public:
    * pair.
    * @param socketPair Reference to the socket pair.
    */
-  explicit DriveHandlerProxy(const std::shared_ptr<server::SocketPair>& socketPair);
+  explicit DriveHandlerProxy(std::shared_ptr<server::SocketPair> socketPair);
   ~DriveHandlerProxy() override = default;
   void reportState(const cta::tape::session::SessionState state, const cta::tape::session::SessionType type, const std::string& vid) override;
   void reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved) override;
@@ -45,7 +45,7 @@ public:
   void deleteLogParams(const std::string& unitName, const std::list<std::string>& paramNames) override;
   const std::shared_ptr<server::SocketPair>& socketPair() override;
 protected:
-  const std::shared_ptr<server::SocketPair>& m_socketPair;
+  const std::shared_ptr<server::SocketPair> m_socketPair;
 };
 
 }}} // namespace cta::tape::daemon
