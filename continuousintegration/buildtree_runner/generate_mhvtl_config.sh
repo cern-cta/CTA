@@ -30,8 +30,8 @@ for ((lib=1; lib<=${nlib}; lib++)); do
   libid="${lib}0"
   cat <<EOF >> /etc/mhvtl/device.conf
 Library: ${libid} CHANNEL: $(printf %.2d ${lib}) TARGET: 00 LUN: 00
- Vendor identification: STK
- Product identification: VLSTK${libid}
+ Vendor identification: IBM
+ Product identification: 03584L32
  Unit serial number: LIB${libid}
  NAA: 30:22:33:44:ab:$(printf %.2x ${lib}):00:00
  Compression: factor 1 enabled 1
@@ -48,9 +48,9 @@ EOF
     cat <<EOF >> /etc/mhvtl/device.conf
 Drive: ${lib}${drive} CHANNEL: $(printf %.2d ${lib}) TARGET: $(printf %.2d ${drive}) LUN: 00
  Library ID: ${libid} Slot: $(printf %.2d ${drive})
- Vendor identification: STK
- Product identification: MHVTL
- Unit serial number: VDSTK${lib}${drive}
+ Vendor identification: MHVTL
+ Product identification: ULTRIUM-TD8
+ Unit serial number: ULT${lib}${drive}
  NAA: 30:22:33:44:ab:$(printf %.2x ${lib}):$(printf %.2x ${drive}):00
  Compression: factor 1 enabled 1
  Compression type: lzo
@@ -58,7 +58,7 @@ Drive: ${lib}${drive} CHANNEL: $(printf %.2d ${lib}) TARGET: $(printf %.2d ${dri
 
 EOF
 
-    echo "Drive ${drive}: VDSTK${lib}${drive}" >> /etc/mhvtl/library_contents.${libid}
+    echo "Drive ${drive}: ULT${lib}${drive}" >> /etc/mhvtl/library_contents.${libid}
 
   done
 
@@ -96,7 +96,7 @@ MAP 1:
 EOF
 
     for ((tape=1; tape<=${ntape}; tape++)); do
-      echo "Slot ${tape}: V$(printf %.2d ${lib})$(printf %.3d ${tape})TA" >> /etc/mhvtl/library_contents.${libid}
+      echo "Slot ${tape}: V$(printf %.2d ${lib})$(printf %.3d ${tape})L8" >> /etc/mhvtl/library_contents.${libid}
     done
 
     for ((i=1;i<=${freetapeslots};i++)); do

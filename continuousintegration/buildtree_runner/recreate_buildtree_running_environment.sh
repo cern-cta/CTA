@@ -32,8 +32,8 @@ mount -t tmpfs -o size=512m tmpfs /opt/mhvtl
 ################################################################################
 ### puppet:///modules/hg_cta/00-cta-tape.rules
 echo Installing udev rules...
-cp -v 00-cta-tape.rules /etc/udev/rules.d/00-cta-tape.rules
-chmod 0644 /etc/udev/rules.d/00-cta-tape.rules
+# cp -v 00-cta-tape.rules /etc/udev/rules.d/00-cta-tape.rules
+# chmod 0644 /etc/udev/rules.d/00-cta-tape.rules
 
 ################################################################################
 ### mhvtl config directory
@@ -63,7 +63,7 @@ ls -lR /opt/mhvtl
 mkdir -p /opt/mhvtl
 sudo groupadd vtl || true
 sudo adduser vtl -g vtl || true
-sudo make_vtl_media -C /etc/mhvtl
+sudo make_vtl_media --config-dir=/etc/mhvtl --home-dir=/opt/mhvtl
 chown -R vtl.vtl /opt/mhvtl
 
 ################################################################################

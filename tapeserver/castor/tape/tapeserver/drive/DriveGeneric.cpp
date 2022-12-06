@@ -35,14 +35,14 @@ namespace tapeserver {
 
 drive::DriveInterface * drive::createDrive(SCSI::DeviceInfo di,
     System::virtualWrapper& sw) {
-  if (std::string::npos != di.product.find("T10000")) {
+  if (std::string::npos != di.product.find("MHVTL") || std::string::npos != di.vendor.find("MHVTL")) {
+    return new DriveMHVTL(di, sw);
+  } else if (std::string::npos != di.product.find("T10000")) {
     return new DriveT10000(di, sw);
   } else if (std::string::npos != di.product.find("ULT") || std::string::npos != di.product.find("Ultrium")) {
     return new DriveLTO(di, sw);
   } else if (std::string::npos != di.product.find("03592")) {
     return new DriveIBM3592(di, sw);
-  } else if (std::string::npos != di.product.find("MHVTL")) {
-    return new DriveMHVTL(di, sw);
   } else if (std::string::npos != di.product.find("VIRTUAL")) {
     /* In case of a VIRTUAL drive, it could have been pre-allocated
      * for testing purposes (with "pre-cooked" contents). */
@@ -197,7 +197,8 @@ drive::deviceInfo drive::DriveMHVTL::getDeviceInfo()  {
   devInfo.productRevisionLevel = SCSI::Structures::toString(inquiryData.prodRevLvl);
   devInfo.vendor = SCSI::Structures::toString(inquiryData.T10Vendor);
   devInfo.serialNumber = getSerialNumber();
-  devInfo.isPIsupported = inquiryData.protect;
+  // It's set to false because Logical Block Protection is not implemented for DriveMHVTL
+  devInfo.isPIsupported = false;
   return devInfo;
 }
 
