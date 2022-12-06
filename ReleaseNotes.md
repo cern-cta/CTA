@@ -1,3 +1,11 @@
+# v4.8.2-1
+
+## Summary
+- This is a schema upgrade release for catalogue version 13.0.
+### Catalogue Schema
+- cta/CTA#175 - Adding UPPERCASE constraint to TAPE VID
+- cta/CTA#124 - Add column IS_ACCESSIBLE to table TAPE_FILE
+
 # v4.8.1-1
 
 ## Summary
