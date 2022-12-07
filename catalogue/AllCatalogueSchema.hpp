@@ -7451,7 +7451,7 @@ namespace catalogue{
       },
   {"postgres",  "CREATE SEQUENCE ARCHIVE_FILE_ID_SEQ"
   "  INCREMENT BY 1"
-  "  START WITH 1"
+  "  START WITH 4294967296"
   "  NO MAXVALUE"
   "  MINVALUE 1"
   "  NO CYCLE"
@@ -7472,7 +7472,7 @@ namespace catalogue{
   "  CACHE 20;"
   "CREATE SEQUENCE STORAGE_CLASS_ID_SEQ"
   "  INCREMENT BY 1"
-  "  START WITH 1"
+  "  START WITH 10000"
   "  NO MAXVALUE"
   "  MINVALUE 1"
   "  NO CYCLE"

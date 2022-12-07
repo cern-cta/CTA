@@ -5,6 +5,7 @@
 ### Catalogue Schema
 - cta/CTA#175 - Adding UPPERCASE constraint to TAPE VID
 - cta/CTA#124 - Add column IS_ACCESSIBLE to table TAPE_FILE
+- cta/CTA#236 - Start with the same values in both Oracle and Postgres sequences
 
 # v4.8.1-1
 
