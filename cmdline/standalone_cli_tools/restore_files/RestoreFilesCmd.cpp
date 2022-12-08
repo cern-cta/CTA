@@ -237,7 +237,7 @@ void RestoreFilesCmd::listDeletedFilesCta() const {
     auto key = cta::admin::OptionUInt64::ARCHIVE_FILE_ID;
     auto new_opt = admincmd.add_option_uint64();
     new_opt->set_key(key);
-    new_opt->set_value(std::stoi(m_archiveFileId.value()));
+    new_opt->set_value(cta::utils::toUint64(m_archiveFileId.value()));
   }
   if (m_copyNumber) {
     params.push_back(cta::log::Param("copyNb", m_copyNumber.value()));

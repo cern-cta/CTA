@@ -26,6 +26,7 @@
 #include "cmdline/standalone_cli_tools/common/CatalogueFetch.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/StdoutLogger.hpp"
+#include "common/utils/utils.hpp"
 #include "cta_frontend.pb.h"                               //!< Auto-generated message types from .proto file
 
 #include "version.h"
@@ -119,7 +120,7 @@ std::tuple<std::string,std::string> CatalogueFetch::getInstanceAndFid(const std:
   admincmd->set_subcmd(cta::admin::AdminCmd::SUBCMD_LS);
   auto new_opt = admincmd->add_option_uint64();
   new_opt->set_key(cta::admin::OptionUInt64::ARCHIVE_FILE_ID);
-  new_opt->set_value(std::stoi(archiveFileId));
+  new_opt->set_value(cta::utils::toUint64(archiveFileId));
 
   handleResponse(request, serviceProviderPtr);
 

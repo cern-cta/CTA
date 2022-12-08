@@ -128,7 +128,7 @@ void ChangeStorageClass::updateStorageClassInEosNamespace() {
     const auto [diskInstance, diskFileId] = CatalogueFetch::getInstanceAndFid(archiveFileId, m_serviceProviderPtr, m_log);
 
     // No files in flight should change storage class
-    const auto md_response = m_endpointMapPtr->getMD(diskInstance, ::eos::rpc::FILE, std::stoi(diskFileId), "", false);
+    const auto md_response = m_endpointMapPtr->getMD(diskInstance, ::eos::rpc::FILE, cta::utils::toUint64(diskFileId), "", false);
     if (fileInFlight(md_response.fmd().locations())) {
       m_archiveIdsNotUpdatedInEos.push_back(archiveFileId);
       std::list<cta::log::Param> params;

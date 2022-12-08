@@ -1,3 +1,11 @@
+# v.NEXT
+
+## Summary
+### Features
+
+### Bug Fixes
+- cta/CTA#234 - Replace stoi with toUint64 in standalone cli tool
+
 # v4.8.2-1
 
 ## Summary
