@@ -138,7 +138,7 @@ std::tuple<std::string,std::string> CatalogueFetch::getInstanceAndFid(const std:
   return listedTapeFile;
 }
 
-std::list<std::string> CatalogueFetch::getVids(std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr, cta::log::StdoutLogger &log) {
+bool CatalogueFetch::vidExists(const std::string &vid, std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr) {
   cta::xrd::Request request;
   auto admincmd = request.mutable_admincmd();
 
@@ -147,13 +147,16 @@ std::list<std::string> CatalogueFetch::getVids(std::unique_ptr<XrdSsiPbServiceTy
   admincmd->set_cmd(cta::admin::AdminCmd::CMD_TAPE);
   admincmd->set_subcmd(cta::admin::AdminCmd::SUBCMD_LS);
 
-  auto new_opt = admincmd->add_option_bool();
-  new_opt->set_key(cta::admin::OptionBoolean::ALL);
-  new_opt->set_value(true);
+  auto new_opt = admincmd->add_option_str();
+  new_opt->set_key(cta::admin::OptionString::VID);
+  new_opt->set_value(vid);
 
   handleResponse(request, serviceProviderPtr);
 
-  return g_listedVids;
+  if(g_listedVids.empty()) {
+    return false;
+  }
+  return true;
 }
 
 void CatalogueFetch::handleResponse(const cta::xrd::Request &request, std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr) {

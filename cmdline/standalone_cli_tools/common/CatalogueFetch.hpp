@@ -50,9 +50,9 @@ public:
   * Fetches the vids form the CTA catalogue
   *
   * @param serviceProviderPtr Service provider for communication with the catalogue.
-  * @return A list of vids.
+  * @return True if vid exists, false if it does not exist
   */
-  static std::list<std::string> getVids(std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr, cta::log::StdoutLogger &log);
+  static bool vidExists(const std::string &vid, std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr);
 
 private:
   static void handleResponse(const cta::xrd::Request &request, std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr);

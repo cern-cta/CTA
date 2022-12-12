@@ -2,6 +2,7 @@
 
 ## Summary
 ### Features
+- cta/CTA#224 - Improve error message for cta-verify-file whn VID does not exist
 
 ### Bug Fixes
 - cta/CTA#234 - Replace stoi with toUint64 in standalone cli tool

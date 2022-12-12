@@ -31,6 +31,9 @@ using namespace cta::cliTool;
 
 const std::string g_config_file = "/etc/cta/cta-cli.conf";
 
+// Global variable from CtaCatalogueFetch
+extern std::list<std::string> g_listedVids;
+
 /*
  * Fill a Notification message from the command-line parameters and stdin
  *
@@ -140,6 +143,17 @@ void sendVerifyRequest(const CmdLineArgs &cmdLineArgs, const std::string &archiv
   google::protobuf::ShutdownProtobufLibrary();
 }
 
+/*
+ * Checks if the provided vid exists
+ */
+void vidExists(const std::string &vid, const XrdSsiPb::Config &config) {
+  auto serviceProviderPtr = std::make_unique<XrdSsiPbServiceType>(config);
+  bool vidExists = CatalogueFetch::vidExists(vid, serviceProviderPtr);
+
+  if(!vidExists) {
+    throw std::runtime_error("The provided --vid does not exist in the Catalogue.");
+  }
+}
 
 /*
  * Sends a Notification to the CTA XRootD SSI server
@@ -180,6 +194,8 @@ int exceptionThrowingMain(int argc, char *const *const argv)
   }
 
   const XrdSsiPb::Config config = getConfig();
+
+  vidExists(cmdLineArgs.m_vid.value(), config);
 
   for(const auto &archiveFileId : archiveFileIds) {
     sendVerifyRequest(cmdLineArgs, archiveFileId, config);
