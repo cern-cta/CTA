@@ -197,17 +197,13 @@ std::list<SchedulerDatabase::RetrieveQueueCleanupInfo> OStoreDB::getRetrieveQueu
   // Get all tapes with retrieve queues
   objectstore::RootEntry re(m_objectStore);
   re.fetchNoLock();
-  auto rootFetchNoLockTime = t.secs(utils::Timer::resetCounter);
 
   // Walk the retrieve queues for cleanup flag
   for (auto &rqp: re.dumpRetrieveQueues(common::dataStructures::JobQueueType::JobsToTransferForUser)) {
     RetrieveQueue rqueue(rqp.address, m_objectStore);
-    double queueLockTime = 0;
-    double queueFetchTime = 0;
 
     try {
       rqueue.fetchNoLock();
-      queueFetchTime = t.secs(utils::Timer::resetCounter);
     } catch (cta::exception::Exception &ex) {
       log::ScopedParamContainer params(logContext);
       params.add("queueObject", rqp.address)
@@ -223,19 +219,6 @@ std::list<SchedulerDatabase::RetrieveQueueCleanupInfo> OStoreDB::getRetrieveQueu
     ret.back().doCleanup = rqueue.getQueueCleanupDoCleanup();
     ret.back().assignedAgent = rqueue.getQueueCleanupAssignedAgent();
     ret.back().heartbeat = rqueue.getQueueCleanupHeartbeat();
-
-    auto processingTime = t.secs(utils::Timer::resetCounter);
-    log::ScopedParamContainer params(logContext);
-    params.add("queueObject", rqp.address)
-          .add("tapeVid", rqp.vid)
-          .add("rootFetchNoLockTime", rootFetchNoLockTime)
-          .add("queueLockTime", queueLockTime)
-          .add("queueFetchTime", queueFetchTime)
-          .add("processingTime", processingTime);
-    if (queueLockTime > 1 || queueFetchTime > 1) {
-      logContext.log(log::WARNING,
-                     "In OStoreDB::getRetrieveQueuesCleanupInfo(): fetched a retrieve queue and that lasted more than 1 second.");
-    }
   }
   return ret;
 }
@@ -2008,8 +1991,8 @@ void OStoreDB::reserveRetrieveQueueForCleanup(std::string & vid, std::optional<u
   }
 
   // Check if heartbeat has been updated, which means that another agent is still tracking it
-  if (rq.getQueueCleanupAssignedAgent().has_value() && cleanupHeartBeatValue.has_value()) {
-    if (cleanupHeartBeatValue.value() != rq.getQueueCleanupHeartbeat()) {
+  if (rq.getQueueCleanupAssignedAgent().has_value()) {
+    if (rq.getQueueCleanupHeartbeat() != cleanupHeartBeatValue.has_value() ? cleanupHeartBeatValue.value() : 0) {
       throw RetrieveQueueNotReservedForCleanup("Another agent is alive and cleaning up the queue. Skipping it.");
     }
   }

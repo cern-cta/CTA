@@ -39,20 +39,6 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
 
   for (auto queue: queuesForCleanup) {
 
-    cta::common::dataStructures::Tape tapeToCheck;
-
-    try {
-      auto vidToTapesMap = m_catalogue.getTapesByVid(queue.vid); //throws an exception if the vid is not found on the database
-      tapeToCheck = vidToTapesMap.at(queue.vid);
-    } catch (const exception::UserError &ex) {
-      log::ScopedParamContainer params(logContext);
-      params.add("tapeVid", queue.vid)
-            .add("cleanupFlag", queue.doCleanup)
-            .add("exceptionMessage", ex.getMessageValue());
-      logContext.log(log::WARNING, "WARNING: In QueueCleanupRunner::runOnePass(): failed to find a tape in the database. Skipping it.");
-      continue; // Ignore queue
-    }
-
     if (!queue.doCleanup) {
       // Do not clean a queue that does not have the cleanup flag set true
       continue; // Ignore queue
@@ -87,16 +73,30 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
       }
     }
 
+    cta::common::dataStructures::Tape tapeToCheck;
+
+    try {
+      auto vidToTapesMap = m_catalogue.getTapesByVid(queue.vid); //throws an exception if the vid is not found on the database
+      tapeToCheck = vidToTapesMap.at(queue.vid);
+    } catch (const exception::UserError &ex) {
+      log::ScopedParamContainer params(logContext);
+      params.add("tapeVid", queue.vid)
+              .add("cleanupFlag", queue.doCleanup)
+              .add("exceptionMessage", ex.getMessageValue());
+      logContext.log(log::WARNING, "WARNING: In QueueCleanupRunner::runOnePass(): failed to find a tape in the database. Skipping it.");
+      continue; // Ignore queue
+    }
+
     if (tapeToCheck.state != common::dataStructures::Tape::REPACKING_PENDING
         && tapeToCheck.state != common::dataStructures::Tape::BROKEN_PENDING
         && tapeToCheck.state != common::dataStructures::Tape::EXPORTED_PENDING) {
       // Do not cleanup a tape that is not in a X_PENDING state
       log::ScopedParamContainer params(logContext);
       params.add("tapeVid", queue.vid)
-            .add("cleanupFlag", queue.doCleanup)
-            .add("tapeState", common::dataStructures::Tape::stateToString(tapeToCheck.state));
+              .add("cleanupFlag", queue.doCleanup)
+              .add("tapeState", common::dataStructures::Tape::stateToString(tapeToCheck.state));
       logContext.log(
-              log::WARNING,
+              log::INFO,
               "In QueueCleanupRunner::runOnePass(): Queue is has cleanup flag enabled but is not in the expected PENDING state. Skipping it.");
       continue;
     }
@@ -124,13 +124,13 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
     } catch (OStoreDB::RetrieveQueueNotFound & ex) {
       log::ScopedParamContainer paramsExcMsg(logContext);
       paramsExcMsg.add("exceptionMessage", ex.getMessageValue());
-      logContext.log(log::WARNING,
+      logContext.log(log::DEBUG,
                      "In QueueCleanupRunner::runOnePass(): Unable to find the retrieve queue for cleanup. Queue may have already been deleted. Skipping it.");
       continue;
     } catch (OStoreDB::RetrieveQueueNotReservedForCleanup & ex) {
       log::ScopedParamContainer paramsExcMsg(logContext);
       paramsExcMsg.add("exceptionMessage", ex.getMessageValue());
-      logContext.log(log::WARNING,
+      logContext.log(log::DEBUG,
                      "In QueueCleanupRunner::runOnePass(): Unable to reserve the retrieve queue due to it not being available for cleanup. Skipping it.");
       continue;
     } catch (cta::exception::Exception & ex) {
@@ -220,7 +220,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
         paramsWarnMsg.add("tapeVid", qForCleanup.vid)
                 .add("expectedPrevState", common::dataStructures::Tape::stateToString(qForCleanup.tapeState))
                 .add("actualPrevState", common::dataStructures::Tape::stateToString(tapeToModify.state));
-        logContext.log(log::WARNING, "WARNING: In QueueCleanupRunner::runOnePass(): Cleaned up tape is not in a PENDING state. Unable to change it to its corresponding final state.");
+        logContext.log(log::WARNING, "In QueueCleanupRunner::runOnePass(): Cleaned up tape is not in a PENDING state. Unable to change it to its corresponding final state.");
         break;
       }
     }
