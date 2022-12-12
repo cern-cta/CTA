@@ -3,28 +3,11 @@
 ## Summary
 ### Features
 - cta/CTA#224 - Improve error message for cta-verify-file whn VID does not exist
-
+- cta/CTA#230 - Modify CTA code to enforce VID uppercase
 ### Bug Fixes
 - cta/CTA#234 - Replace stoi with toUint64 in standalone cli tool
-
-# v4.8.2-1
-
-## Summary
-- This is a schema upgrade release for catalogue version 13.0.
-### Catalogue Schema
-- cta/CTA#175 - Adding UPPERCASE constraint to TAPE VID
-- cta/CTA#124 - Add column IS_ACCESSIBLE to table TAPE_FILE
-- cta/CTA#236 - Start with the same values in both Oracle and Postgres sequences
-
-# v4.8.1-1
-
-## Summary
-### Features
-- cta/CTA#230 - Modify CTA code to enforce VID uppercase
 ### Continuous Integration
 - cta/CTA#205 - Updating EOS4/EOS4 in versionlock for v4.8.95/v5.1.5
-### Catalogue Schema
-- cta/CTA#124 - Preparing code for new IS_ACCESSIBLE column in TAPE_FILE table
 
 # v4.8.0-1
 

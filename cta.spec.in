@@ -587,9 +587,6 @@ echo $(jq --argjson CTA_MAJOR_VERSION $cta_major_version '. += {"cta_major_versi
 
 
 %changelog
-* Tue Dec 6 2022 Joao Afonso <joao.afonso@cern.ch> - 4.8.2-1
-- Catalogue schema version 13.0
-
 * Tue Dec 6 2022 Joao Afonso <joao.afonso@cern.ch> - 4.8.1-1
 - Upgrade eos4/eos5 to 4.8.94/5.1.5
 - Minor changes in preparation for next catalogue schema release
