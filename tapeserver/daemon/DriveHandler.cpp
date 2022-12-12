@@ -150,6 +150,11 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
     }
     // First prepare a socket pair for this new subprocess
     m_processManager.logContext().log(cta::log::DEBUG, "DriveHandler::fork(): opening the socket pair");
+    auto socketPair = m_driveHandlerProxy->socketPair();
+    if (!socketPair) {
+      m_processManager.logContext().log(cta::log::DEBUG, "DriveHandler::fork(): socket pair is null, trying to reset");
+      socketPair.reset(new cta::server::SocketPair());
+    }
     m_driveHandlerProxy->socketPair()->open();
     // and fork
     m_processManager.logContext().log(cta::log::DEBUG, "DriveHandler::fork(): forking");
