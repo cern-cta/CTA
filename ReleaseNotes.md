@@ -1,3 +1,9 @@
+# v4.8.1-1
+
+## Summary
+### Bug fixes
+- cta/CTA#243 - Modify new queue cleanup protobuf fields from 'required' to 'optional'
+
 # v4.8.0-1
 
 ## Summary
