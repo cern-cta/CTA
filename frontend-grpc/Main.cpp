@@ -175,7 +175,7 @@ int main(const int argc, char *const *const argv) {
         auto ca_chain = config.getConfEntString("gRPC", "TlsChain", "");
         if (!ca_chain.empty()) {
             lc.log(log::INFO, "TLS CA chain file: " + ca_chain);
-            tls_options.pem_root_certs = file2string(cert_file);
+            tls_options.pem_root_certs = file2string(ca_chain);
         } else {
             lc.log(log::INFO, "TLS CA chain file not defined ...");
             tls_options.pem_root_certs = "";
