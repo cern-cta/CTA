@@ -2,6 +2,7 @@
 
 ## Summary
 ### Features
+- cta/CTA#155 - Tape server querying DB at very high rate
 - cta/CTA#224 - Improve error message for cta-verify-file whn VID does not exist
 - cta/CTA#230 - Modify CTA code to enforce VID uppercase
 ### Bug Fixes
