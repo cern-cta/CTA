@@ -547,9 +547,9 @@ message RetrieveActivityCountPair {
 }
 
 message RetrieveQueueCleanupInfo {
-  required bool doCleanup = 14100;
+  optional bool doCleanup = 14100;
   optional string assignedAgent = 14110;
-  required uint64 heartbeat = 14120;
+  optional uint64 heartbeat = 14120;
 }
 
 message RetrieveQueue {
@@ -568,7 +568,7 @@ message RetrieveQueue {
   optional string disk_system_slept_for = 10190;
   optional uint64 sleep_time = 10200;
   optional uint64 youngestjobcreationtime = 10210 [default = 0];
-  required RetrieveQueueCleanupInfo cleanupInfo = 10220;
+  optional RetrieveQueueCleanupInfo cleanupInfo = 10220;
 }
 
 // ------------- Repack data strcutures ----------------------------------------

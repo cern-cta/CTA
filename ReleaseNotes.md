@@ -12,6 +12,12 @@
 ### Continuous Integration
 - cta/CTA#205 - Updating EOS4/EOS4 in versionlock for v4.8.95/v5.1.5
 
+# v4.8.1-1
+
+## Summary
+### Bug fixes
+- cta/CTA#243 - Modify new queue cleanup protobuf fields from 'required' to 'optional'
+
 # v4.8.0-1
 
 ## Summary
