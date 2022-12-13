@@ -1,3 +1,9 @@
+# v4.8.2-1
+
+## Summary
+### Features
+- cta/CTA#155 - Tape server querying DB at very high rate
+
 # v4.8.1-1
 
 ## Summary
