@@ -232,7 +232,7 @@ void RecallReportPacker::ReportError::execute(RecallReportPacker& reportPacker) 
     params.add("ExceptionMSG", ex.getMessageValue())
           .add("fileId", m_failedRetrieveJob->archiveFile.archiveFileID);
     reportPacker.m_lc.log(cta::log::ERR, "In RecallReportPacker::ReportError::execute(): call to m_failedRetrieveJob->failed() threw an exception.");
-    reportPacker.m_lc.logBacktrace(cta::log::ERR, ex.backtrace());
+    reportPacker.m_lc.logBacktrace(cta::log::INFO, ex.backtrace());
   }
 }
 

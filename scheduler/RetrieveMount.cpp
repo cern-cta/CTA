@@ -279,7 +279,7 @@ void cta::RetrieveMount::flushAsyncSuccessReports(std::queue<std::unique_ptr<cta
     }
     const std::string msg_error="In cta::RetrieveMount::flushAsyncSuccessReports(): got an exception";
     logContext.log(cta::log::ERR, msg_error);
-    logContext.logBacktrace(cta::log::ERR, e.backtrace());
+    logContext.logBacktrace(cta::log::INFO, e.backtrace());
     // Failing here does not really affect the session so we can carry on. Reported jobs are reported, non-reported ones
     // will be retried.
   } catch(const std::exception& e){

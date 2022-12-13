@@ -165,7 +165,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,cta::log::LogContext&  
     cta::log::ScopedParamContainer params(lc);
     params.add("errorMessage", e.getMessageValue());
     logWithStat(cta::log::ERR, isVerifyOnly ? "File verification failed" : "File writing to disk failed", lc);
-    lc.logBacktrace(cta::log::ERR, e.backtrace());
+    lc.logBacktrace(cta::log::INFO, e.backtrace());
     reporter.reportFailedJob(std::move(m_retrieveJob), e, lc);
 
     watchdog.deleteParameter("stillOpenFileForThread"+

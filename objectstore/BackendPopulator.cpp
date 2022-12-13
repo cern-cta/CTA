@@ -77,7 +77,7 @@ BackendPopulator::~BackendPopulator() throw() {
     cta::log::ScopedParamContainer params(m_lc);
     params.add("errorMessage", ex.getMessageValue());
     m_lc.log(log::CRIT, "In BackendPopulator::~BackendPopulator(): error deleting agent (cta::exception::Exception). Backtrace follows.");
-    m_lc.logBacktrace(log::ERR, ex.backtrace());
+    m_lc.logBacktrace(log::INFO, ex.backtrace());
     // We have an exception (we should not), let's core dump.
     cta::utils::segfault();
   } catch (std::exception & ex) {

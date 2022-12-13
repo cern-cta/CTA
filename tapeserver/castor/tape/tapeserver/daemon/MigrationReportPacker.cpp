@@ -187,7 +187,7 @@ void MigrationReportPacker::ReportSkipped::execute(MigrationReportPacker& report
           .add("fileId", m_skippedArchiveJob->archiveFile.archiveFileID);
     reportPacker.m_lc.log(cta::log::ERR,
                           "In MigrationReportPacker::ReportSkipped::execute(): call to m_failedArchiveJob->failed() threw an exception.");
-    reportPacker.m_lc.logBacktrace(cta::log::ERR, ex.backtrace());
+    reportPacker.m_lc.logBacktrace(cta::log::INFO, ex.backtrace());
   }
   reportPacker.m_skippedFiles.push(cta::catalogue::TapeItemWritten());
   auto& tapeItem = reportPacker.m_skippedFiles.back();
@@ -384,7 +384,7 @@ void MigrationReportPacker::ReportError::execute(MigrationReportPacker& reportPa
           .add("fileId", m_failedArchiveJob->archiveFile.archiveFileID);
     reportPacker.m_lc.log(cta::log::ERR,
                           "In MigrationReportPacker::ReportError::execute(): call to m_failedArchiveJob->failed() threw an exception.");
-    reportPacker.m_lc.logBacktrace(cta::log::ERR, ex.backtrace());
+    reportPacker.m_lc.logBacktrace(cta::log::INFO, ex.backtrace());
   }
 }
 

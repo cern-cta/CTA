@@ -819,7 +819,7 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
       log::ScopedParamContainer params(lc);
       params.add("exceptionMessage", ex.getMessageValue());
       lc.log(log::ERR, "In OStoreDB::trimEmptyQueues(): got an exception. Stack trace follows.");
-      lc.logBacktrace(log::ERR, ex.backtrace());
+      lc.logBacktrace(log::INFO, ex.backtrace());
     }
   }
 }
@@ -4195,7 +4195,7 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<ct
         params.add("tapeVid", list.first)
               .add("exceptionMSG", ex.getMessageValue());
         lc.log(log::ERR, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): failed to queue a batch of requests for reporting to user.");
-        lc.logBacktrace(log::ERR, ex.backtrace());
+        lc.logBacktrace(log::INFO, ex.backtrace());
       }
     }
     timingList.insertAndReset("queueingToReportToUserTime", t);
@@ -4259,7 +4259,7 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<ct
         params.add("tapeVid", list.first)
               .add("exceptionMSG", ex.getMessageValue());
         lc.log(log::ERR, "In OStoreDB::ArchiveMount::setJobBatchTransferred(): failed to queue a batch of requests for reporting to repack.");
-        lc.logBacktrace(log::ERR, ex.backtrace());
+        lc.logBacktrace(log::INFO, ex.backtrace());
       }
     }
     timingList.insertAndReset("queueingToReportToRepackTime", t);

@@ -205,7 +205,7 @@ namespace daemon {
       
       cta::log::ScopedParamContainer container( m_parent.m_lc);
       container.add("exception message",ex.getMessageValue());
-      m_parent.m_lc.logBacktrace(cta::log::ERR,ex.backtrace());
+      m_parent.m_lc.logBacktrace(cta::log::INFO, ex.backtrace());
       m_parent.m_lc.log(cta::log::ERR,"In MigrationTaskInjector::WorkerThread::run(): "
       "could not retrieve a list of file to migrate, indicating finish of run");
       

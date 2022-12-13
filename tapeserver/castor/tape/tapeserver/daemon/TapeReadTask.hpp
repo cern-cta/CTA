@@ -211,7 +211,7 @@ public:
       }
       {
         cta::log::LogContext lc2(lc.logger());
-        lc2.logBacktrace(cta::log::ERR, ex.backtrace());
+        lc2.logBacktrace(cta::log::INFO, ex.backtrace());
       }
 
       // mb might or might not be allocated at this point, but

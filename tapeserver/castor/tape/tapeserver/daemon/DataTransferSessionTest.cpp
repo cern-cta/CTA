@@ -412,19 +412,17 @@ public:
    */
   std::map<size_t, std::vector<std::string>> getRAOFseqs(const std::string& log) {
     std::map<size_t, std::vector<std::string>> ret;
-    std::string logCopy = log;
-    std::string recallRAOOrderMsg = "Recall order of FSEQs using RAO: ";
-    size_t recallRAOOrderMsgSize = recallRAOOrderMsg.size();
-    size_t posRAOMsg = logCopy.find(recallRAOOrderMsg);
     size_t i = 0;
-    while (posRAOMsg != std::string::npos) {
-      size_t posFirstFseq = posRAOMsg + recallRAOOrderMsgSize;
-      size_t posLastFseq = logCopy.find('\"', posFirstFseq);
-      std::string stringFseq = logCopy.substr(posFirstFseq, posLastFseq - posFirstFseq);
-      cta::utils::splitString(stringFseq, ' ', ret[i]);
-      logCopy = logCopy.substr(posLastFseq);
-      posRAOMsg = logCopy.find(recallRAOOrderMsg);
-      i++;
+    for(size_t endPos, logPos = 0; logPos != std::string::npos; logPos = endPos) {
+      logPos = log.find("Recall order of FSEQs", logPos);
+      logPos = log.find("useRAO=\"true\"", logPos);
+      logPos = log.find("recallOrder=", logPos);
+      logPos = log.find('\"', logPos);
+      if(logPos == std::string::npos) break;
+      endPos = log.find('\"', ++logPos);
+      if(endPos == logPos) continue;
+      auto strFseq = log.substr(logPos, endPos-logPos);
+      cta::utils::splitString(strFseq, ' ', ret[i++]);
     }
     return ret;
   }

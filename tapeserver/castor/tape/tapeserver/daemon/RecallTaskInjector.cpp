@@ -245,11 +245,6 @@ void RecallTaskInjector::injectBulkRecalls() {
   }
 
   std::ostringstream recallOrderLog;
-  if(useRAO) {
-    recallOrderLog << "Recall order of FSEQs using RAO:";
-  } else {
-    recallOrderLog << "Recall order of FSEQs:";
-  }
   uint64_t nFiles = 0;
   uint64_t nBytes = 0;
   std::list<std::unique_ptr<cta::RetrieveJob>> retrieveJobsBatch;
@@ -286,14 +281,17 @@ void RecallTaskInjector::injectBulkRecalls() {
     //it can start its infinite loop
     setFirstTasksInjectedPromise();
   }
-  m_lc.log(cta::log::INFO, recallOrderLog.str());
+  // log the recall order
+  cta::log::ScopedParamContainer params(m_lc);
+  params.add("useRAO", useRAO ? "true" : "false");
+  params.add("recallOrder", recallOrderLog.str());
+  m_lc.log(cta::log::INFO, "Recall order of FSEQs");
   // keep the rest for later injection
   m_jobs.erase(std::remove_if(m_jobs.begin(), m_jobs.end(), [](const std::unique_ptr<cta::RetrieveJob> &jobptr) {
     return jobptr.get() == nullptr;
   }), m_jobs.end());
   LogContext::ScopedParam sp03(m_lc, Param("nbFile", njobs));
   m_lc.log(cta::log::INFO, "Finished processing batch of recall tasks from client");
-
 }
 
 //------------------------------------------------------------------------------
@@ -446,7 +444,7 @@ catch(const cta::exception::Exception& ex){
     //we end up there because we could not talk to the client
     cta::log::ScopedParamContainer container( m_parent.m_lc);
     container.add("exception message",ex.getMessageValue());
-    m_parent.m_lc.logBacktrace(cta::log::ERR,ex.backtrace());
+    m_parent.m_lc.logBacktrace(cta::log::INFO, ex.backtrace());
     m_parent.m_lc.log(cta::log::ERR,"In RecallJobInjector::WorkerThread::run(): "
     "could not retrieve a list of file to recall. End of session");
     m_parent.signalEndDataMovement();

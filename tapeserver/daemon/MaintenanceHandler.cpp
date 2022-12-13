@@ -342,7 +342,7 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
       m_processManager.logContext().log(log::ERR,
         "In MaintenanceHandler::exceptionThrowingRunChild(): received an exception. Backtrace follows.");
     }
-    m_processManager.logContext().logBacktrace(log::ERR, ex.backtrace());
+    m_processManager.logContext().logBacktrace(log::INFO, ex.backtrace());
     throw ex;
   } catch(std::exception &ex) {
     log::ScopedParamContainer params(m_processManager.logContext());

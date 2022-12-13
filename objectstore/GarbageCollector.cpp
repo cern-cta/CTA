@@ -68,7 +68,7 @@ void GarbageCollector::trimGoneTargets(log::LogContext & lc) {
       log::ScopedParamContainer params(lc);
       params.add("agentAddress", wa->first);
       m_watchedAgents.erase(wa++);
-      lc.log(log::INFO, "In GarbageCollector::trimGoneTargets(): removed now gone agent.");
+      lc.log(log::DEBUG, "In GarbageCollector::trimGoneTargets(): removed now gone agent.");
     } else {
       ++wa;
     }
@@ -107,7 +107,7 @@ void GarbageCollector::acquireTargets(log::LogContext & lc) {
       log::ScopedParamContainer params(lc);
       params.add("agentAddress", ag.getAddressIfSet())
             .add("gcAgentAddress", m_ourAgentReference.getAgentAddress());
-      lc.log(log::INFO, "In GarbageCollector::acquireTargets(): started tracking an untracked agent");
+      lc.log(log::DEBUG, "In GarbageCollector::acquireTargets(): started tracking an untracked agent");
       // Agent is to be tracked, let's track it.
       double timeout=ag.getTimeout();
       // The creation of the watchdog could fail as well (if agent gets deleted in the meantime).

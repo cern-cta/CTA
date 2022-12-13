@@ -173,7 +173,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
       }
     } catch (cta::exception::Exception &e) {
       lc.log(cta::log::ERR, "Error while scheduling new mount. Putting the drive down. Stack trace follows.");
-      lc.logBacktrace(cta::log::ERR, e.backtrace());
+      lc.logBacktrace(cta::log::INFO, e.backtrace());
       putDriveDown(e.getMessageValue(), nullptr, lc);
       return MARK_DRIVE_AS_DOWN;
     }

@@ -294,7 +294,8 @@ namespace daemon {
         //so we use a different exception to distinguish this case
         errorMsg=mb->errorMsg();
         m_errorFlag.set();
-        lc.log(cta::log::ERR,errorMsg);
+        LogContext::ScopedParam sp1(lc, Param("errorMessage", errorMsg));
+        lc.log(cta::log::ERR, "Error while reading a file");
         throw RecoverableMigrationErrorException(errorMsg);
       } else if (mb->isCanceled()) {
         errorMsg="Received a block marked as cancelled";
