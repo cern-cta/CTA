@@ -33,7 +33,9 @@ namespace cta { namespace server {
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-SocketPair::SocketPair() = default;
+SocketPair::SocketPair() {
+  open();
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -43,6 +45,7 @@ SocketPair::~SocketPair() {
 }
 
 void SocketPair::open() {
+  close();
   int fd[2];
   cta::exception::Errnum::throwOnMinusOne(
     ::socketpair(AF_LOCAL, SOCK_SEQPACKET, 0, fd),
