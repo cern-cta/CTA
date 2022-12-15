@@ -82,12 +82,6 @@ int GrpcClient::FileInsert(const std::vector<eos::rpc::FileMdProto> &files, eos:
 {
   eos::rpc::FileInsertRequest request;
   for(auto &file : files) {
-    if(file.id() >= m_eos_fid) {
-      std::stringstream err;
-      err << "FATAL ERROR: attempt to inject file with id=" << file.id()
-          << ", which exceeds EOS current file id=" << m_eos_fid;
-      throw std::runtime_error(err.str());
-    }
     *(request.add_files()) = file;
   }
 

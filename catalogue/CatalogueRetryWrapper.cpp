@@ -771,6 +771,9 @@ void CatalogueRetryWrapper::modifyArchiveFileStorageClassId(const uint64_t archi
   return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyArchiveFileStorageClassId(archiveFileId, newStorageClassName);}, m_maxTriesToConnect);
 }
 
+void CatalogueRetryWrapper::modifyArchiveFileFxIdAndDiskInstance(const uint64_t archiveId, const std::string& fxId, const std::string &diskInstance) const {
+  return retryOnLostConnection(m_log, [&]{return m_catalogue->modifyArchiveFileFxIdAndDiskInstance(archiveId, fxId, diskInstance);}, m_maxTriesToConnect);
+}
 
 }  // namespace catalogue
 }  // namespace cta

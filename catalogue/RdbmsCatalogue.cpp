@@ -12081,5 +12081,21 @@ void RdbmsCatalogue::checkCommentOrReasonMaxLength(const std::optional<std::stri
   }
 }
 
+void RdbmsCatalogue::modifyArchiveFileFxIdAndDiskInstance(const uint64_t archiveId, const std::string& fxId, const std::string &diskInstance) const {
+    const char *const sql =
+    "UPDATE ARCHIVE_FILE SET "
+      "DISK_FILE_ID = :FXID,"
+      "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME "
+    "WHERE "
+      "ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID";
+
+    auto conn = m_connPool.getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":FXID", fxId);
+    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveId);
+    stmt.bindString(":DISK_INSTANCE_NAME", diskInstance);
+    stmt.executeNonQuery();
+}
+
 }  // namespace catalogue
 }  // namespace cta

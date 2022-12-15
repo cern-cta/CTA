@@ -197,6 +197,8 @@ void DummyCatalogue::updateDiskFileId(uint64_t archiveFileId, const std::string 
 void DummyCatalogue::moveArchiveFileToRecycleLog(const common::dataStructures::DeleteArchiveRequest &request,
   log::LogContext & lc) {throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");}
 void DummyCatalogue::modifyArchiveFileStorageClassId(const uint64_t archiveFileId, const std::string &newStorageClassName) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
+void DummyCatalogue::modifyArchiveFileFxIdAndDiskInstance(const uint64_t archiveId, const std::string& fxId, const std::string &diskInstance) const { throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); }
+
 
 // Special functions for unit tests.
 void DummyCatalogue::addEnabledTape(const std::string & vid) {

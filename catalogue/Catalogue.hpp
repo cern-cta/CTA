@@ -1417,6 +1417,14 @@ public:
   */
   virtual void modifyArchiveFileStorageClassId(const uint64_t archiveFileId, const std::string& newStorageClassName) const = 0;
 
+  /**
+  * Changes the fxid in for a archive file
+  * @param archiveId The archive file id
+  * @param fxId The eos fxid related to the archive file
+  * @param diskInstance Disk instace
+  */
+  virtual void modifyArchiveFileFxIdAndDiskInstance(const uint64_t archiveId, const std::string& fxId, const std::string &diskInstance) const = 0;
+
 }; // class Catalogue
 
 } // namespace catalogue

@@ -41,8 +41,7 @@ CmdLineTool::CmdLineTool(
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-CmdLineTool::~CmdLineTool() noexcept {
-}
+CmdLineTool::~CmdLineTool() noexcept = default;
 
 //------------------------------------------------------------------------------
 // getUsername
@@ -83,6 +82,8 @@ int CmdLineTool::main(const int argc, char *const *const argv) {
     errorMessage = ue.getMessage().str();
   } catch(exception::UserError &ue) {
     errorMessage = ue.getMessage().str();
+  } catch(std::runtime_error &ex) {
+    errorMessage = ex.what();
   } catch(exception::Exception &ex) {
     errorMessage = ex.getMessage().str();
   } catch(std::exception &se) {
@@ -91,7 +92,7 @@ int CmdLineTool::main(const int argc, char *const *const argv) {
     errorMessage = "An unknown exception was thrown";
   }
 
-  std::cout << errorMessage << std::endl;
+  std::cerr << errorMessage << std::endl;
   return 1;
 }
 

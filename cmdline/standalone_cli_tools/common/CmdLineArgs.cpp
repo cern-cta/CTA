@@ -25,9 +25,7 @@
 #include <map>
 #include <string>
 
-namespace cta {
-namespace cliTool{
-
+namespace cta::cliTool {
 
 //------------------------------------------------------------------------------
 // Options for each tool
@@ -72,11 +70,18 @@ static struct option changeStorageClassLongOption[] = {
   {nullptr, 0, nullptr, 0}
 };
 
+static struct option eosNamespaceinjectionLongOption[] = {
+  {"help", no_argument, nullptr, 'h'},
+  {"json", required_argument, nullptr, 'j'},
+  {nullptr, 0, nullptr, 0}
+};
+
 std::map<StandaloneCliTool, const option*> longopts = {
   {StandaloneCliTool::RESTORE_FILES, restoreFilesLongOption},
   {StandaloneCliTool::CTA_SEND_EVENT, sendEventLongOption},
   {StandaloneCliTool::CTA_VERIFY_FILE, verifyFileLongOption},
   {StandaloneCliTool::CTA_CHANGE_STORAGE_CLASS, changeStorageClassLongOption},
+  {StandaloneCliTool::EOS_NAMESPACE_INJECTION, eosNamespaceinjectionLongOption},
 };
 
 std::map<StandaloneCliTool, const char*> shortopts = {
@@ -84,6 +89,7 @@ std::map<StandaloneCliTool, const char*> shortopts = {
   {StandaloneCliTool::CTA_SEND_EVENT, "i:e:u:g:"},
   {StandaloneCliTool::CTA_VERIFY_FILE, "I:F:i:u:g:v:h:"},
   {StandaloneCliTool::CTA_CHANGE_STORAGE_CLASS, "I:F:n:t:h:"},
+  {StandaloneCliTool::EOS_NAMESPACE_INJECTION, "j:h:"},
 };
 
 //------------------------------------------------------------------------------
@@ -146,6 +152,11 @@ m_help(false), m_debug(false), m_standaloneCliTool{standaloneCliTool} {
     case 'i':
       {
         m_diskInstance = std::string(optarg);
+        break;
+      }
+    case 'j':
+      {
+        m_json = std::string(optarg);
         break;
       }
     case 'n':
@@ -261,10 +272,14 @@ void CmdLineArgs::printUsage(std::ostream &os) const {
     os << "    Usage:" << std::endl <<
     "    cta-change-storage-class --id/-I <archiveFileID> | --filename/-F <filename> --storage.class.name/-n <storageClassName> [--frequenzy/-t <eosRequestFrequency>]" << std::endl << std::endl;
     break;
+  case StandaloneCliTool::EOS_NAMESPACE_INJECTION :
+    os << "    Usage:" << std::endl <<
+    "    cta-eos-namespace-inject --json/--j <jsonPath> [--help/--h] \n";
+    break;
   default:
     break;
   }
 }
 
-} // namespace admin
+// namespace admin
 } // namespace cta

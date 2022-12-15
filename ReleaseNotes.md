@@ -4,6 +4,7 @@
 ### Features
 - cta/CTA#222 - Review what gets logged in CTA
 - cta/CTA#155 - Tape server querying DB at very high rate
+- cta/CTA#213 - Add tool for injecting file into eos
 - cta/CTA#224 - Improve error message for cta-verify-file whn VID does not exist
 - cta/CTA#230 - Modify CTA code to enforce VID uppercase
 ### Bug Fixes

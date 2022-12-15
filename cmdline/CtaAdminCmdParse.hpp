@@ -706,8 +706,9 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_ACTIVITYMOUNTRULE,   AdminCmd::SUBCMD_RM    }, { opt_instance, opt_username_alias, opt_activityregex }},
    {{ AdminCmd::CMD_ACTIVITYMOUNTRULE,   AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/
+   // The command below is used for cta-change-storageclass and cta-eos-namespace-inject
    {{ AdminCmd::CMD_ARCHIVEFILE,   AdminCmd::SUBCMD_CH   },
-      { opt_storage_class_name, opt_archive_file_ids }},
+      { opt_storage_class_name.optional(), opt_archive_file_ids, opt_fid.optional(), opt_diskinstance.optional() }},
 };
 
 

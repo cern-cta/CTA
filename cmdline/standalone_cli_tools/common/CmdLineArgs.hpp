@@ -33,7 +33,8 @@ enum class StandaloneCliTool {
   RESTORE_FILES,
   CTA_SEND_EVENT,
   CTA_VERIFY_FILE,
-  CTA_CHANGE_STORAGE_CLASS
+  CTA_CHANGE_STORAGE_CLASS,
+  EOS_NAMESPACE_INJECTION
 };
 
 /**
@@ -60,6 +61,11 @@ struct CmdLineArgs {
    * Archive file id of the files to restore
    */
   std::optional<std::list<std::string>> m_archiveFileIds;
+
+  /**
+   * Location of json file
+   */
+  std::optional<std::string> m_json;
 
   /**
    * Disk instance of the files to restore

@@ -323,7 +323,7 @@ void RequestMessage::process(const cta::xrd::Request &request, cta::xrd::Respons
                   processRecycleTapeFile_Restore(response);
                   break;
                case cmd_pair(AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_CH):
-                  processChangeStorageClass(response);
+                  processModifyArchiveFile(response);
                   break;
 
                default:
@@ -2525,15 +2525,26 @@ void RequestMessage::processRecycleTapeFile_Restore(cta::xrd::Response& response
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
-void RequestMessage::processChangeStorageClass(cta::xrd::Response& response) {
+void RequestMessage::processModifyArchiveFile(cta::xrd::Response& response) {
    try {
       using namespace cta::admin;
 
-      std::string newStorageClassName = getRequired(OptionString::STORAGE_CLASS_NAME);
+      std::optional<std::string> newStorageClassName = getOptional(OptionString::STORAGE_CLASS_NAME);
+
+      std::optional<std::string> fxId = getOptional(OptionString::FXID);
+      std::optional<std::string> diskInstance = getOptional(OptionString::DISK_INSTANCE);
+
       auto archiveFileIds = getRequired(OptionStrList::FILE_ID);
 
-      XrdCtaChangeStorageClass xrdCtaChangeStorageClass(m_catalogue, m_lc);
-      xrdCtaChangeStorageClass.updateCatalogue(archiveFileIds, newStorageClassName);
+      // call is from cta-change-storageclass
+      if(newStorageClassName) {
+         XrdCtaChangeStorageClass xrdCtaChangeStorageClass(m_catalogue, m_lc);
+         xrdCtaChangeStorageClass.updateCatalogue(archiveFileIds, newStorageClassName.value());
+      }
+      // call is from cta-eos-namespace-inject
+      if(fxId && diskInstance) {
+         m_catalogue.modifyArchiveFileFxIdAndDiskInstance(cta::utils::toUint64(archiveFileIds[0]), fxId.value(), diskInstance.value());
+      }
       response.set_type(cta::xrd::Response::RSP_SUCCESS);
    } catch(exception::UserError &ue) {
       response.set_message_txt(ue.getMessage().str());

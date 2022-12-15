@@ -1272,7 +1272,14 @@ protected:
   * @param archiveFileId Id for file found in ARCHIVE_FILE
   */
   void modifyArchiveFileStorageClassId(const uint64_t archiveFileId, const std::string& newStorageClassName) const override;
-  
+
+    /**
+  * Changes the fxid in for a archive file
+  * @param archiveId The archive file id
+  * @param fxId The eos fxid related to the archive file
+  * @param diskInstance Disk instace
+  */
+  void modifyArchiveFileFxIdAndDiskInstance(const uint64_t archiveId, const std::string& fxId, const std::string &diskInstance) const override;
 /**
    * Returns true if the specified disk file identifier exists.
    *

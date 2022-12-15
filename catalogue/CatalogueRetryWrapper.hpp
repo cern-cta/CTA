@@ -410,6 +410,9 @@ public:
   void releaseDiskSpace(const std::string& driveName, const uint64_t mountId, const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) override;
 
   void modifyArchiveFileStorageClassId(const uint64_t archiveFileId, const std::string& newStorageClassName) const override;
+
+  void modifyArchiveFileFxIdAndDiskInstance(const uint64_t archiveId, const std::string& fxId, const std::string &diskInstance) const override;
+
 protected:
   /**
    * Object representing the API to the CTA logging system.

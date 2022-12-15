@@ -63,3 +63,4 @@ install(TARGETS cta-verify-file DESTINATION usr/bin)
 
 add_subdirectory (change_storage_class)
 add_subdirectory (restore_files)
+add_subdirectory (eos_namespace_injection)

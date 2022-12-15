@@ -1,0 +1,150 @@
+/*
+ * @project      The CERN Tape Archive (CTA)
+ * @copyright    Copyright © 2021-2022 CERN
+ * @license      This program is free software, distributed under the terms of the GNU General Public
+ *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
+ *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
+ *               option) any later version.
+ *
+ *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ *               In applying this licence, CERN does not waive the privileges and immunities
+ *               granted to it by virtue of its status as an Intergovernmental Organization or
+ *               submit itself to any jurisdiction.
+ */
+
+#pragma once
+
+#include <filesystem>
+#include <XrdSsiPbIStreamBuffer.hpp>
+#include <XrdSsiPbLog.hpp>
+
+#include "cmdline/standalone_cli_tools/common/CmdLineTool.hpp"
+#include "cmdline/standalone_cli_tools/eos_namespace_injection/MetaData.hpp"
+#include "CtaFrontendApi.hpp"
+#include "eos_grpc_client/GrpcEndpoint.hpp"
+
+namespace {
+using cid = uint64_t;
+using uid = uint64_t;
+using gid = uint64_t;
+
+using ArchiveId = uint64_t;
+using Checksum = std::string;
+}
+
+namespace cta::log {
+class StdoutLogger;
+} //namespace cta::log
+
+namespace cta::cliTool {
+
+class EosNamespaceInjection: public CmdLineTool {
+  public:
+    /**
+    * Constructor.
+    *
+    * @param inStream Standard input stream.
+    * @param outStream Standard output stream.
+    * @param errStream Standard error stream.
+    * @param log The object representing the API of the CTA logging system.
+    */
+    EosNamespaceInjection(std::istream &inStream, std::ostream &outStream,
+      std::ostream &errStream, cta::log::StdoutLogger &log);
+
+    /**
+    * An exception throwing version of main().
+    *
+    * @param argc The number of command-line arguments including the program name.
+    * @param argv The command-line arguments.
+    * @return The exit value of the program.
+    */
+    int exceptionThrowingMain(const int argc, char *const *const argv) override;
+
+  private:
+    /**
+    * Returns the meta data from the catalogue
+    * @param archiveId the archive file id to check
+    */
+    bool getMetaDataFromCatalogue(const uint64_t &archiveId) const;
+
+    /**
+    * Updates the fxid and the disk instance in the catalogue.
+    * @param archiveId the archive file id to check
+    * @param fxId The new fxId
+    * @param diskInstnace The new disk instance
+    */
+    void updateFxidAndDiskInstanceInCatalogue(const std::string &archiveId, const std::string &fxId, const std::string &diskInstance) const;
+
+    /**
+    * Compares the meta data from the provided json and from the Catalogue
+    * @param metaDataJson Meta data from the provided json file
+    * @param metaDataCatalogue Meta data from the catalogue
+    */
+    void compareJsonAndCtaMetaData(const MetaDataObject &metaDataJson, const MetaDataObject &metaDataCatalogue) const;
+
+    /**
+    * Returns cid, uid and gid
+    * @param diskInstance the disk instance to check
+    * @param path the path to check
+    */
+    std::tuple<cid, uid, gid> getContainerIdsEos(const std::string &diskInstance, const std::string &path) const;
+
+    /**
+    * Creates a new file in eos
+    * @param metaDataObject metaData for the eos file
+    * @param parentId the id of the parent container
+    * @return the new fid
+    */
+    uint64_t createFileInEos(const MetaDataObject &metaDataObject, const uint64_t &parentId, const uint64_t uid, const uint64_t gid) const;
+
+    /**
+    * Returns the id of a given file in eos or zero if the files does not exist
+    * @param diskInstance eos disk instance
+    * @param path the path to check
+    */
+    uint64_t getFileIdEos(const std::string &diskInstance, const std::string &path) const;
+
+    /**
+    * Gets the archive file id and checksum from eos
+    * @param diskInstance The eos disk instance
+    * @param fxId The eos file id
+    */
+    std::pair<ArchiveId, Checksum> getArchiveFileIdAndChecksumFromEOS(const std::string& diskInstance, const std::string& fxId);
+
+    /**
+    * Meta data from CTA catalogue
+    */
+    MetaDataObject m_metaDataObjectCatalogue;
+
+    /**
+    *Default file layout for restored files in EOS
+    */
+    int m_defaultFileLayout;
+
+    /**
+    * Path to the json file with eos meta data
+    */
+    std::filesystem::path m_jsonPath;
+
+    /**
+    * Disk instance of the destination path
+    */
+    std::string m_diskInstance;
+
+    /**
+    * The object representing the API of the CTA logging system.
+    */
+    cta::log::StdoutLogger &m_log;
+
+    /**
+    * CTA Frontend service provider
+    */
+    std::unique_ptr<XrdSsiPbServiceType> m_serviceProviderPtr;
+
+    std::unique_ptr<::eos::client::EndpointMap> m_endpointMapPtr;
+
+};
+} // namespace cta::cliTool
