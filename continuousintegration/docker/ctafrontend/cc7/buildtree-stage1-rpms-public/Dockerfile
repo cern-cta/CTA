@@ -36,7 +36,7 @@ ADD ${BASEDIR}/etc/yum /etc/yum
 ADD ${BASEDIR}/etc/yum.repos.d-public /etc/yum.repos.d
 
 RUN wget https://public-yum.oracle.com/RPM-GPG-KEY-oracle-ol7 -O /etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
-RUN wget https://git.ceph.com/release.asc -O /etc/pki/rpm-gpg/RPM-ASC-KEY-ceph
+RUN rpm --import 'https://download.ceph.com/keys/release.asc'
 
 RUN yum install -y \
       yum-plugin-downloadonly \
