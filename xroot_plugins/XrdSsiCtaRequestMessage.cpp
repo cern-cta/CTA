@@ -1872,8 +1872,10 @@ void RequestMessage::processStorageClass_Ls(cta::xrd::Response &response, XrdSsi
 {
   using namespace cta::admin;
 
+  std::optional<std::string> scn = getOptional(OptionString::STORAGE_CLASS);
+
   // Create a XrdSsi stream object to return the results
-  stream = new StorageClassLsStream(*this, m_catalogue, m_scheduler);
+  stream = new StorageClassLsStream(*this, m_catalogue, m_scheduler, scn);
 
   response.set_show_header(HeaderType::STORAGECLASS_LS);
   response.set_type(cta::xrd::Response::RSP_SUCCESS);

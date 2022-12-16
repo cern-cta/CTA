@@ -19,6 +19,7 @@
 
 #include <xroot_plugins/XrdCtaStream.hpp>
 #include <xroot_plugins/XrdSsiCtaRequestMessage.hpp>
+#include <optional>
 
 
 namespace cta { namespace xrd {
@@ -35,7 +36,7 @@ public:
    * @param[in]    catalogue     CTA Catalogue
    * @param[in]    scheduler     CTA Scheduler
    */
-  StorageClassLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
+  StorageClassLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::optional<std::string> storageClassName);
 
 private:
   /*!
@@ -52,17 +53,27 @@ private:
 
   std::list<cta::common::dataStructures::StorageClass> m_storageClassList;    //!< List of storage classes from the catalogue
 
+  std::optional<std::string> m_storageClassName;
+
   static constexpr const char* const LOG_SUFFIX  = "StorageClassLsStream";    //!< Identifier for log messages
 };
 
 
-StorageClassLsStream::StorageClassLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
+StorageClassLsStream::StorageClassLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::optional<std::string> storageClassName) :
   XrdCtaStream(catalogue, scheduler),
-  m_storageClassList(catalogue.getStorageClasses())
+  m_storageClassName(storageClassName)
 {
   using namespace cta::admin;
 
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "StorageClassLsStream() constructor");
+
+  if(m_storageClassName) {
+    m_storageClassList.push_back(m_catalogue.getStorageClass(m_storageClassName.value()));
+  } else {
+    for(const auto &storageClass : m_catalogue.getStorageClasses()) {
+      m_storageClassList.push_back(storageClass);
+    }
+  }
 }
 
 int StorageClassLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {

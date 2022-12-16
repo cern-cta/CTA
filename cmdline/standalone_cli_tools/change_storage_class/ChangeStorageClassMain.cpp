@@ -35,7 +35,7 @@ int main(const int argc, char *const *const argv) {
 
   cta::log::StdoutLogger log(hostName, "cta-change-storage-class");
 
-  cta::cliTool::ChangeStorageClass cmd(std::cin, std::cout, std::cerr, log, argc, argv);
+  cta::cliTool::ChangeStorageClass cmd(std::cin, std::cout, std::cerr, log);
   int ret = cmd.main(argc, argv);
   // Delete all global objects allocated by libprotobuf
   google::protobuf::ShutdownProtobufLibrary();

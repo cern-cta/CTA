@@ -50,9 +50,7 @@ public:
     std::istream &inStream,
     std::ostream &outStream,
     std::ostream &errStream,
-    cta::log::StdoutLogger &log,
-    const int& argc,
-    char *const *const argv);
+    cta::log::StdoutLogger &log);
 
 private:
 
@@ -105,22 +103,22 @@ private:
    *  Checks if the storage class provided to the tool is defined,
    * and throws an exception::UserError if it is not found
   */
-  void storageClassExists();
+  void storageClassExists() const;
 
   /**
   * Updates the storage class name in the catalogue
   */
-  void updateStorageClassInCatalogue();
+  void updateStorageClassInCatalogue() const;
 
   /**
   * Writes the skipped archive ids to file
   */
-  void writeSkippedArchiveIdsToFile();
+  void writeSkippedArchiveIdsToFile() const;
 
   /**
    * Checks if a file is in flight
   */
-  bool fileInFlight(const google::protobuf::RepeatedField<unsigned int> &locations);
+  bool fileInFlight(const google::protobuf::RepeatedField<unsigned int> &locations) const;
 
   /**
    * An exception throwing version of main().
