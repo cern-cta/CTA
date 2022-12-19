@@ -17,6 +17,7 @@
 
 #include <iostream>
 
+#include "common/exception/Exception.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
 #include "tapeserver/daemon/TapedConfiguration.hpp"
 #include "tapeserver/readtp/ReadtpCmd.hpp"
@@ -46,16 +47,14 @@ int main(const int argc, char *const *const argv) {
   try {
     // Config file needed to find the cta-get-encryption-key script
     const cta::tape::daemon::TapedConfiguration tapedConfig =
-      cta::tape::daemon::TapedConfiguration::createFromCtaConf(DAEMON_CONFIG, log);
+      cta::tape::daemon::TapedConfiguration::createFromCtaConf(DAEMON_CONFIG, dummyLog);
     externalEncryptionKeyScript = tapedConfig.externalEncryptionKeyScript.value();
-    useEncryption = tapedConfig.useEncryption.value() == "yes" ? true : false;
-  }
-  catch(...) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "ReadtpCmd: Error while trying to read TapedConfiguration config file: " << DAEMON_CONFIG;
-    throw ex;
-  }
+    useEncryption = tapedConfig.useEncryption.value() == "yes";
 
-  cta::tapeserver::readtp::ReadtpCmd cmd(std::cin, std::cout, std::cerr, log, dummyLog, mc, useEncryption, externalEncryptionKeyScript);
-  return cmd.main(argc, argv);
+    cta::tapeserver::readtp::ReadtpCmd cmd(std::cin, std::cout, std::cerr, log, dummyLog, mc, useEncryption, externalEncryptionKeyScript);
+    return cmd.main(argc, argv);
+  } catch(cta::exception::Exception &ex) {
+    std::cerr << ex.getMessageValue() << std::endl;
+    return 1;
+  }
 }

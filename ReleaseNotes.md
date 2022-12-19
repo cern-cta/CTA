@@ -8,6 +8,7 @@
 - cta/CTA#224 - Improve error message for cta-verify-file whn VID does not exist
 - cta/CTA#230 - Modify CTA code to enforce VID uppercase
 - cta/CTA#239 - Add improvments to the cta-change-storage-class tool
+- cta/CTA#248 - Clean up output from cta-readtp
 ### Bug Fixes
 - cta/CTA#234 - Replace stoi with toUint64 in standalone cli tool
 - cta/CTA#238 - Compilation fails when using cta::common::Configuration::getConfEntInt(...)
