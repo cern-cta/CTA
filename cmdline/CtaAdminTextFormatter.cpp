@@ -271,7 +271,7 @@ void TextFormatter::print(const DriveLsItem &drls_item)
 {
   //using namespace cta::common::dataStructures;
 
-  const int DRIVE_TIMEOUT = 600; // Time after which a drive will be marked as STALE
+  const int DRIVE_TIMEOUT = 14400; // Time after which a drive will be marked as STALE (4 hours)
 
   std::string driveStatusSince;
   std::string filesTransferredInSession;
