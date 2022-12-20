@@ -10,6 +10,7 @@
 - cta/CTA#239 - Add improvments to the cta-change-storage-class tool
 - cta/CTA#248 - Clean up output from cta-readtp
 - cta/CTA#251 - Increase free drive STALE threshold to 4 hours
+- cta/CTA#218 - Do not retry during repack requests
 ### Bug Fixes
 - cta/CTA#234 - Replace stoi with toUint64 in standalone cli tool
 - cta/CTA#238 - Compilation fails when using cta::common::Configuration::getConfEntInt(...)

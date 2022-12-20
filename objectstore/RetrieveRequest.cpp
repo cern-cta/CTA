@@ -522,16 +522,24 @@ void RetrieveRequest::setRetrieveFileQueueCriteria(const cta::common::dataStruct
     MountPolicySerDeser(criteria.mountPolicy).serialize(*m_payload.mutable_mountpolicy());
     m_payload.set_mountpolicyname(criteria.mountPolicy.name);
     /*
-     * Explaination about these hardcoded retries :
-     * The hardcoded RetriesWithinMount will ensure that we will try to retrieve the file 3 times
-     * in the same mount.
-     * The hardcoded TotalRetries ensure that we will never try more than 6 times to retrieve a file.
-     * As totalretries = 6 and retrieswithinmount = 3, this will ensure that the file will be retried by maximum 2 mounts.
-     * (2 mounts * 3 retrieswithinmount = 6 totalretries)
+     * Explanation about these hardcoded retries :
+     *
+     * For user requests:
+     *   - The hardcoded RetriesWithinMount will ensure that we will try to retrieve the file 3 times in the same mount.
+     *   - The hardcoded TotalRetries ensure that we will never try more than 6 times to retrieve a file.
+     *   - As totalretries = 6 and retrieswithinmount = 3, this will ensure that the file will be retried by maximum 2 mounts.
+     *   (2 mounts * 3 retrieswithinmount = 6 totalretries)
+     *
+     * For repack requests:
+     *   - The hardcoded RetriesWithinMount is 1 to ensure that we will only try to retrieve the file 1 time in a mount.
+     *   - The hardcoded TotalRetries is also 1 to ensure that we do not retry the retrieve in a different mount.
+     *   - As totalretries = 1 and retrieswithinmount = 1, this will ensure that the file will be retried by maximum 1 mount.
+     *   (1 mounts * 1 retrieswithinmount = 1 totalretries)
      */
-    const uint32_t hardcodedRetriesWithinMount = 3;
-    const uint32_t hardcodedTotalRetries = 6;
-    const uint32_t hardcodedReportRetries = 2;
+    bool isRepack = getRepackInfo().isRepack;
+    const uint32_t hardcodedRetriesWithinMount = isRepack ? 1 : 3;
+    const uint32_t hardcodedTotalRetries       = isRepack ? 1 : 6;
+    const uint32_t hardcodedReportRetries      = 2;
     addJob(tf.copyNb, hardcodedRetriesWithinMount, hardcodedTotalRetries, hardcodedReportRetries);
   }
 }

@@ -2663,81 +2663,48 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
     scheduler.waitSchedulerDbSubthreadsComplete();
 
     {
-      for(int i = 0; i < 5; ++i){
-        std::unique_ptr<cta::TapeMount> mount;
-        mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
-        ASSERT_NE(nullptr, mount.get());
-        ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, mount.get()->getMountType());
-        std::unique_ptr<cta::RetrieveMount> retrieveMount;
-        retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release()));
-        ASSERT_NE(nullptr, retrieveMount.get());
-        std::unique_ptr<cta::RetrieveJob> retrieveJob;
+      //Verify that the job is in the RetrieveQueueToReportToRepackForFailure
+      cta::objectstore::RootEntry re(backend);
+      cta::objectstore::ScopedExclusiveLock sel(re);
+      re.fetch();
 
-        //For each tape we will see if the retrieve jobs are not null
-        auto jobBatch = retrieveMount->getNextJobBatch(1,archiveFileSize,lc);
-        retrieveJob.reset(jobBatch.front().release());
-        ASSERT_NE(nullptr, retrieveJob.get());
+      //Get the retrieveQueueToReportToRepackForFailure
+      // The queue is named after the repack request: we need to query the repack index
+      objectstore::RepackIndex ri(re.getRepackIndexAddress(), schedulerDB.getBackend());
+      ri.fetchNoLock();
 
-        castor::tape::tapeserver::daemon::RecallReportPacker rrp(retrieveMount.get(),lc);
+      std::string retrieveQueueToReportToRepackForFailureAddress = re.getRetrieveQueueAddress(ri.getRepackRequestAddress(vid),JobQueueType::JobsToReportToRepackForFailure);
+      cta::objectstore::RetrieveQueue rq(retrieveQueueToReportToRepackForFailureAddress,backend);
 
-        rrp.startThreads();
+      //Fetch the queue so that we can get the retrieveRequests from it
+      cta::objectstore::ScopedExclusiveLock rql(rq);
+      rq.fetch();
 
-        rrp.reportFailedJob(std::move(retrieveJob),cta::exception::Exception("FailedJob for unit test expandRepackRequestFailedRetrieve"), lc);
-
-        rrp.setDiskDone();
-        rrp.setTapeDone();
-
-        rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
-
-        rrp.reportEndOfSession(lc);
-        rrp.waitThread();
-        ASSERT_EQ(rrp.allThreadsDone(),true);
+      ASSERT_EQ(rq.dumpJobs().size(),1);
+      for(auto& job: rq.dumpJobs()){
+        ASSERT_EQ(1,job.copyNb);
+        ASSERT_EQ(archiveFileSize,job.size);
       }
+    }
 
-      {
-        //Verify that the job is in the RetrieveQueueToReportToRepackForFailure
-        cta::objectstore::RootEntry re(backend);
-        cta::objectstore::ScopedExclusiveLock sel(re);
-        re.fetch();
+    {
+      Scheduler::RepackReportBatch reports = scheduler.getNextRepackReportBatch(lc);
+      reports.report(lc);
+      reports = scheduler.getNextRepackReportBatch(lc);
+      reports.report(lc);
+    }
+    {
+      //After the reporting, the RetrieveQueueToReportToRepackForFailure should not exist anymore.
+      cta::objectstore::RootEntry re(backend);
+      cta::objectstore::ScopedExclusiveLock sel(re);
+      re.fetch();
 
-        //Get the retrieveQueueToReportToRepackForFailure
-        // The queue is named after the repack request: we need to query the repack index
-        objectstore::RepackIndex ri(re.getRepackIndexAddress(), schedulerDB.getBackend());
-        ri.fetchNoLock();
+      //Get the retrieveQueueToReportToRepackForFailure
+      // The queue is named after the repack request: we need to query the repack index
+      objectstore::RepackIndex ri(re.getRepackIndexAddress(), schedulerDB.getBackend());
+      ri.fetchNoLock();
 
-        std::string retrieveQueueToReportToRepackForFailureAddress = re.getRetrieveQueueAddress(ri.getRepackRequestAddress(vid),JobQueueType::JobsToReportToRepackForFailure);
-        cta::objectstore::RetrieveQueue rq(retrieveQueueToReportToRepackForFailureAddress,backend);
-
-        //Fetch the queue so that we can get the retrieveRequests from it
-        cta::objectstore::ScopedExclusiveLock rql(rq);
-        rq.fetch();
-
-        ASSERT_EQ(rq.dumpJobs().size(),1);
-        for(auto& job: rq.dumpJobs()){
-          ASSERT_EQ(1,job.copyNb);
-          ASSERT_EQ(archiveFileSize,job.size);
-        }
-      }
-
-      {
-        Scheduler::RepackReportBatch reports = scheduler.getNextRepackReportBatch(lc);
-        reports.report(lc);
-        reports = scheduler.getNextRepackReportBatch(lc);
-        reports.report(lc);
-      }
-      {
-        //After the reporting, the RetrieveQueueToReportToRepackForFailure should not exist anymore.
-        cta::objectstore::RootEntry re(backend);
-        cta::objectstore::ScopedExclusiveLock sel(re);
-        re.fetch();
-
-        //Get the retrieveQueueToReportToRepackForFailure
-        // The queue is named after the repack request: we need to query the repack index
-        objectstore::RepackIndex ri(re.getRepackIndexAddress(), schedulerDB.getBackend());
-        ri.fetchNoLock();
-
-        ASSERT_THROW(re.getRetrieveQueueAddress(ri.getRepackRequestAddress(vid),JobQueueType::JobsToReportToRepackForFailure),cta::exception::Exception);
-      }
+      ASSERT_THROW(re.getRetrieveQueueAddress(ri.getRepackRequestAddress(vid),JobQueueType::JobsToReportToRepackForFailure),cta::exception::Exception);
     }
   }
 }
@@ -3223,47 +3190,6 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
         aq.fetchNoLock();
         ASSERT_EQ(9,aq.dumpJobs().size());
       }
-    }
-
-    for(int i = 0; i < 5; ++i){
-      {
-        //The failed job should be queued into the ArchiveQueueToTransferForRepack
-        cta::objectstore::RootEntry re(backend);
-        re.fetchNoLock();
-
-        std::string archiveQueueToTransferForRepackAddress = re.getArchiveQueueAddress(s_tapePoolName,JobQueueType::JobsToTransferForRepack);
-        cta::objectstore::ArchiveQueue aq(archiveQueueToTransferForRepackAddress,backend);
-
-        aq.fetchNoLock();
-
-        for(auto &job: aq.dumpJobs()){
-          ASSERT_EQ(1,job.copyNb);
-          ASSERT_EQ(archiveFileSize,job.size);
-        }
-      }
-      std::unique_ptr<cta::TapeMount> mount;
-      mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
-      ASSERT_NE(nullptr, mount.get());
-      ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForRepack, mount.get()->getMountType());
-      std::unique_ptr<cta::ArchiveMount> archiveMount;
-      archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
-      ASSERT_NE(nullptr, archiveMount.get());
-      std::unique_ptr<cta::ArchiveJob> archiveJob;
-
-      auto jobBatch = archiveMount->getNextJobBatch(1,archiveFileSize,lc);
-      archiveJob.reset(jobBatch.front().release());
-      ASSERT_NE(nullptr, archiveJob.get());
-
-      castor::tape::tapeserver::daemon::MigrationReportPacker mrp(archiveMount.get(),lc);
-      mrp.startThreads();
-
-      mrp.reportFailedJob(std::move(archiveJob),cta::exception::Exception("FailedJob expandRepackRequestFailedArchive"),lc);
-
-      castor::tape::tapeserver::drive::compressionStats compressStats;
-      mrp.reportFlush(compressStats,lc);
-      mrp.reportEndOfSession(lc);
-      mrp.reportTestGoingToEnd(lc);
-      mrp.waitThread();
     }
 
     //Test that the failed job is queued in the ArchiveQueueToReportToRepackForFailure
