@@ -3,7 +3,6 @@
 ## Summary
 ### Features
 - cta/CTA#222 - Review what gets logged in CTA
-- cta/CTA#155 - Tape server querying DB at very high rate
 - cta/CTA#213 - Add tool for injecting file into eos
 - cta/CTA#224 - Improve error message for cta-verify-file whn VID does not exist
 - cta/CTA#230 - Modify CTA code to enforce VID uppercase
@@ -17,6 +16,12 @@
 ### Continuous Integration
 - cta/CTA#205 - Updating EOS4/EOS4 in versionlock for v4.8.95/v5.1.5
 - cta/CTA#253 - Allow Failure for cta_valgrind tests
+
+# v4.8.2-1
+
+## Summary
+### Features
+- cta/CTA#155 - Tape server querying DB at very high rate 
 
 # v4.8.1-1
 
