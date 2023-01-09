@@ -194,6 +194,8 @@ else
     else
       echo "Creating instance for image built on commit ${COMMITID} with gitlab pipeline ID ${pipelineid}"
       imagetag=$(../ci_helpers/list_images.sh 2>/dev/null | grep ${COMMITID} | grep ^${pipelineid}git | sort -n | tail -n1)
+      # just a shortcut to avoid time lost checking against the docker registry...
+      #imagetag=${pipelineid}git${COMMITID}
     fi
     if [ "${imagetag}" == "" ]; then
       echo "commit:${COMMITID} has no docker image available in gitlab registry, please check pipeline status and registry images available."
@@ -234,6 +236,11 @@ echo -n "Creating ${instance} instance "
 
 kubectl create namespace ${instance} || die "FAILED"
 
+# Does kubernetes version supports `get pod --show-all=true`?
+# use it for older versions and this is not needed for new versions of kubernetes
+KUBECTL_DEPRECATED_SHOWALL=$(kubectl get pod --show-all=true >/dev/null 2>&1 && echo "--show-all=true")
+test -z ${KUBECTL_DEPRECATED_SHOWALL} || echo "WARNING: you are running a old version of kubernetes and should think about updating it."
+
 # The CTA registry secret must be copied in the instance namespace to be usable
 kubectl get secret ${ctareg_secret} &> /dev/null
 if [ $? -eq 0 ]; then
@@ -248,7 +255,7 @@ kubectl --namespace ${instance} create configmap buildtree --from-literal=base=$
 
 if [ ! -z "${additional_resources}" ]; then
   kubectl --namespace ${instance} create -f ${additional_resources} || die "Could not create additional resources described in ${additional_resources}"
-  kubectl --namespace ${instance} get pods -a
+  kubectl --namespace ${instance} get pod ${KUBECTL_DEPRECATED_SHOWALL}
 fi
 
 echo "creating configmaps in instance"
@@ -267,7 +274,7 @@ for ((i=0; i<120; i++)); do
 done
 kubectl get persistentvolumeclaim claimlibrary --namespace=${instance} | grep -q Bound || die "TIMED OUT"
 echo "OK"
-LIBRARY_DEVICE=$(kubectl get persistentvolumeclaim claimlibrary --namespace=${instance} -o yaml| grep -i volumeName | sed -e 's%.*sg%sg%')
+LIBRARY_DEVICE=$(kubectl get persistentvolumeclaim claimlibrary --namespace=${instance} -o json | jq -r '.spec.volumeName')
 
 kubectl --namespace=${instance} create -f /opt/kubernetes/CTA/library/config/library-config-${LIBRARY_DEVICE}.yaml
 
@@ -293,18 +300,18 @@ sed "s/SCHEMA_VERSION_VALUE/${SCHEMA_VERSION}/g" ${poddir}/pod-init.yaml | kubec
 echo -n "Waiting for init"
 for ((i=0; i<400; i++)); do
   echo -n "."
-  kubectl get pod init -a --namespace=${instance} | egrep -q 'Completed|Error' && break
+  kubectl --namespace=${instance} get pod init ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r .status.phase | egrep -q 'Succeeded|Failed' && break
   sleep 1
 done
 
 # initialization went wrong => exit now with error
-if $(kubectl get pod init -a --namespace=${instance} | grep -q Error); then
+if $(kubectl --namespace=${instance} get pod init ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r .status.phase | grep -q Failed); then
 	echo "init pod in Error status here are its last log lines:"
 	kubectl --namespace=${instance} logs init --tail 10
 	die "ERROR: init pod in ErERROR: init pod in Error state. Initialization failed."
 fi
 
-kubectl get pod init -a --namespace=${instance} | grep -q Completed || die "TIMED OUT"
+kubectl --namespace=${instance} get pod init ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r .status.phase | grep -q Succeeded || die "TIMED OUT"
 echo OK
 
 if [ $runoracleunittests == 1 ] ; then
@@ -314,7 +321,7 @@ if [ $runoracleunittests == 1 ] ; then
   echo -n "Waiting for oracleunittests"
   for ((i=0; i<400; i++)); do
     echo -n "."
-    kubectl get pod oracleunittests -a --namespace=${instance} | egrep -q 'Completed|Error' && break
+    kubectl --namespace=${instance} get pod oracleunittests ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r .status.phase | egrep -q 'Succeeded|Failed' && break
     sleep 1
   done
   echo "\n"
@@ -322,8 +329,8 @@ if [ $runoracleunittests == 1 ] ; then
   kubectl --namespace=${instance} logs oracleunittests
 
   # database unit-tests went wrong => exit now with error
-  if $(kubectl get pod oracleunittests -a --namespace=${instance} | grep -q Error); then
-    echo "init pod in Error status here are its last log lines:"
+  if $(kubectl --namespace=${instance} get pod oracleunittests ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r .status.phase | grep -q Failed); then
+    echo "oracleunittests pod in Error status here are its last log lines:"
     kubectl --namespace=${instance} logs oracleunittests --tail 10
     die "ERROR: oracleunittests pod in Error state. Initialization failed."
   fi
@@ -342,14 +349,14 @@ echo -n "Waiting for other pods"
 for ((i=0; i<240; i++)); do
   echo -n "."
   # exit loop when all pods are in Running state
-  kubectl get pods -a --namespace=${instance} | grep -v init | grep -v oracleunittests | tail -n+2 | grep -q -v Running || break
+  kubectl -n ${instance} get pod ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r '.items[] | select(.metadata.name != "init") | select(.metadata.name != "oracleunittests") | .status.phase'| grep -q -v Running || break
   sleep 1
 done
 
-if [[ $(kubectl get pods -a --namespace=${instance} | grep -v init | grep -v oracleunittests | tail -n+2 | grep -q -v Running) ]]; then
+if [[ $(kubectl -n toto get pod ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r '.items[] | select(.metadata.name != "init") | select(.metadata.name != "oracleunittests") | .status.phase'| grep -q -v Running) ]]; then
   echo "TIMED OUT"
   echo "Some pods have not been initialized properly:"
-  kubectl get pods -a --namespace=${instance}
+  kubectl --namespace=${instance} get pod ${KUBECTL_DEPRECATED_SHOWALL}
   exit 1
 fi
 echo OK
@@ -366,15 +373,15 @@ done
 echo OK
 
 echo -n "Configuring KDC clients (frontend, cli...) "
-kubectl --namespace=${instance} exec kdc cat /etc/krb5.conf | kubectl --namespace=${instance} exec -i client --  bash -c "cat > /etc/krb5.conf"
-kubectl --namespace=${instance} exec kdc cat /etc/krb5.conf | kubectl --namespace=${instance} exec -i ctacli --  bash -c "cat > /etc/krb5.conf"
-kubectl --namespace=${instance} exec kdc cat /etc/krb5.conf | kubectl --namespace=${instance} exec -i ctafrontend --  bash -c "cat > /etc/krb5.conf"
-kubectl --namespace=${instance} exec kdc cat /etc/krb5.conf | kubectl --namespace=${instance} exec -i ctaeos --  bash -c "cat > /etc/krb5.conf"
-kubectl --namespace=${instance} exec kdc cat /root/ctaadmin1.keytab | kubectl --namespace=${instance} exec -i ctacli --  bash -c "cat > /root/ctaadmin1.keytab"
-kubectl --namespace=${instance} exec kdc cat /root/user1.keytab | kubectl --namespace=${instance} exec -i client --  bash -c "cat > /root/user1.keytab"
+kubectl --namespace=${instance} exec kdc -- cat /etc/krb5.conf | kubectl --namespace=${instance} exec -i client --  bash -c "cat > /etc/krb5.conf"
+kubectl --namespace=${instance} exec kdc -- cat /etc/krb5.conf | kubectl --namespace=${instance} exec -i ctacli --  bash -c "cat > /etc/krb5.conf" 
+kubectl --namespace=${instance} exec kdc -- cat /etc/krb5.conf | kubectl --namespace=${instance} exec -i ctafrontend --  bash -c "cat > /etc/krb5.conf"
+kubectl --namespace=${instance} exec kdc -- cat /etc/krb5.conf | kubectl --namespace=${instance} exec -i ctaeos --  bash -c "cat > /etc/krb5.conf"
+kubectl --namespace=${instance} exec kdc -- cat /root/ctaadmin1.keytab | kubectl --namespace=${instance} exec -i ctacli --  bash -c "cat > /root/ctaadmin1.keytab"
+kubectl --namespace=${instance} exec kdc -- cat /root/user1.keytab | kubectl --namespace=${instance} exec -i client --  bash -c "cat > /root/user1.keytab"
 # need to mkdir /etc/cta folder as cta rpm may not already be installed (or put it somewhere else and move it later???)
-kubectl --namespace=${instance} exec kdc cat /root/cta-frontend.keytab | kubectl --namespace=${instance} exec -i ctafrontend --  bash -c "mkdir -p /etc/cta; cat > /etc/cta/cta-frontend.krb5.keytab"
-kubectl --namespace=${instance} exec kdc cat /root/eos-server.keytab | kubectl --namespace=${instance} exec -i ctaeos --  bash -c "cat > /etc/eos-server.krb5.keytab"
+kubectl --namespace=${instance} exec kdc -- cat /root/cta-frontend.keytab | kubectl --namespace=${instance} exec -i ctafrontend --  bash -c "mkdir -p /etc/cta; cat > /etc/cta/cta-frontend.krb5.keytab"
+kubectl --namespace=${instance} exec kdc -- cat /root/eos-server.keytab | kubectl --namespace=${instance} exec -i ctaeos --  bash -c "cat > /etc/eos-server.krb5.keytab"
 kubectl --namespace=${instance} exec ctacli -- kinit -kt /root/ctaadmin1.keytab ctaadmin1@TEST.CTA
 kubectl --namespace=${instance} exec client -- kinit -kt /root/user1.keytab user1@TEST.CTA
 
@@ -401,10 +408,10 @@ echo "XrdSecPROTOCOL=krb5,unix" | kubectl --namespace=${instance} exec -i client
 echo OK
 
 echo "klist for client:"
-kubectl --namespace=${instance} exec client klist
+kubectl --namespace=${instance} exec client -- klist
 
 echo "klist for ctacli:"
-kubectl --namespace=${instance} exec ctacli klist
+kubectl --namespace=${instance} exec ctacli -- klist
 
 
 echo -n "Configuring cta SSS for ctafrontend access from ctaeos"
@@ -448,8 +455,8 @@ done
 
 
 echo -n "Copying eos SSS on ctacli and client pods to allow recalls"
-kubectl --namespace=${instance} exec ctaeos cat /etc/eos.keytab | kubectl --namespace=${instance} exec -i ctacli --  bash -c "cat > /etc/eos.keytab; chmod 600 /etc/eos.keytab"
-kubectl --namespace=${instance} exec ctaeos cat /etc/eos.keytab | kubectl --namespace=${instance} exec -i client --  bash -c "cat > /etc/eos.keytab; chmod 600 /etc/eos.keytab"
+kubectl --namespace=${instance} exec ctaeos -- cat /etc/eos.keytab | kubectl --namespace=${instance} exec -i ctacli --  bash -c "cat > /etc/eos.keytab; chmod 600 /etc/eos.keytab"
+kubectl --namespace=${instance} exec ctaeos -- cat /etc/eos.keytab | kubectl --namespace=${instance} exec -i client --  bash -c "cat > /etc/eos.keytab; chmod 600 /etc/eos.keytab"
 echo OK
 
 # In case of testing to update the database using liquibase.
@@ -468,7 +475,7 @@ if [ "${MAJOR}" == "${NEW_MAJOR}" ] ; then
 fi
 
 echo "Instance ${instance} successfully created:"
-kubectl get pods -a --namespace=${instance}
+kubectl --namespace=${instance} get pod ${KUBECTL_DEPRECATED_SHOWALL}
 
 if [ $runexternaltapetests == 1 ] ; then
   echo "Running database unit-tests"
@@ -477,8 +484,8 @@ if [ $runexternaltapetests == 1 ] ; then
   kubectl --namespace=${instance} logs externaltapetests
 
   # database unit-tests went wrong => exit now with error
-  if $(kubectl get pod externaltapetests -a --namespace=${instance} | grep -q Error); then
-    echo "init pod in Error status here are its last log lines:"
+  if $(kubectl --namespace=${instance} get pod externaltapetests ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r .status.phase | egrep -q 'Failed'); then
+    echo "externaltapetests pod in Failed status here are its last log lines:"
     kubectl --namespace=${instance} logs externaltapetests --tail 10
     die "ERROR: externaltapetests pod in Error state. Initialization failed."
   fi

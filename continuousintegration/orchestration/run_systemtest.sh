@@ -43,6 +43,9 @@ PREFLIGHTTEST_TIMEOUT=60
 SYSTEMTEST_TIMEOUT=3600
 # by default do not cleanup leftover namespaces
 cleanup_namespaces=0
+# By default assume that ORACLE_SUPPORT is ON
+# if this script is running outside of gitlab CI
+test -z ${ORACLE_SUPPORT+x} && ORACLE_SUPPORT="ON"
 
 die() { echo "$@" 1>&2 ; exit 1; }
 
