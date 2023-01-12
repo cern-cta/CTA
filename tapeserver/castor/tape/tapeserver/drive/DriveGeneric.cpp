@@ -1285,6 +1285,12 @@ void drive::DriveGeneric::readExactBlock(void * data, size_t count, const std::s
           delete[] dataWithCrc32c;
           throw UnexpectedSize(context);
         }
+        // ENOMEM may be returned if the tape block size is larger than 'count'
+        if (-1 == res && ENOMEM == errno) {
+          delete[] dataWithCrc32c;
+          throw cta::exception::Errnum(errno, context +
+                                              ": Failed ST read in DriveGeneric::readExactBlock. Tape volume label size not be in the CTA/CASTOR format.");
+        }
         // Generic handling of other errors
         if (-1 == res) {
           delete[] dataWithCrc32c;
@@ -1316,6 +1322,10 @@ void drive::DriveGeneric::readExactBlock(void * data, size_t count, const std::s
         // First handle block too big
         if (-1 == res && ENOSPC == errno)
           throw UnexpectedSize(context);
+        // ENOMEM may be returned if the tape block size is larger than 'count'
+        if (-1 == res && ENOMEM == errno)
+          throw cta::exception::Errnum(errno, context +
+                                              ": Failed ST read in DriveGeneric::readExactBlock. Tape volume label size not be in the CTA/CASTOR format.");
         // Generic handling of other errors
         cta::exception::Errnum::throwOnMinusOne(res,
             context+": Failed ST read in DriveGeneric::readExactBlock");
