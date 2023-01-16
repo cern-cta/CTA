@@ -1,3 +1,9 @@
+# v4.8.3-1
+
+## Summary
+### Bug Fixes
+- cta/CTA#155 - Tape server querying DB at very high rate (log query-count patch)
+
 # v4.8.2-1
 
 ## Summary

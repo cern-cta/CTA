@@ -337,7 +337,7 @@ std::set<std::string> Sorter::getCandidateVidsToTransfer(RetrieveRequestInfosAcc
 std::string Sorter::getBestVidForQueueingRetrieveRequest(RetrieveRequestInfosAccessorInterface &requestAccessor, std::set<std::string>& candidateVids, log::LogContext &lc){
   std::string vid;
   try{
-    vid = Helpers::selectBestRetrieveQueue(candidateVids,m_catalogue,m_objectstore);
+    vid = Helpers::selectBestRetrieveQueue(candidateVids,m_catalogue,m_objectstore,cta::catalogue::countGetTapesByVid::SBRQ_SRT);
   } catch (Helpers::NoTapeAvailableForRetrieve & ex) {
     log::ScopedParamContainer params(lc);
     params.add("fileId", requestAccessor.getArchiveFile().archiveFileID);

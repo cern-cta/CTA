@@ -167,7 +167,7 @@ class OStoreDB: public SchedulerDatabase {
    * @param re A RootEntry object that should be locked and fetched.
    */
   void fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo &tmdi, objectstore::RootEntry &re,
-    SchedulerDatabase::PurposeGetMountInfo purpose, log::LogContext & logContext);
+    SchedulerDatabase::PurposeGetMountInfo purpose, bool locked, log::LogContext & logContext);
 
   /**
    * An internal helper function to build a list of mount policies with the map of the

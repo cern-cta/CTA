@@ -42,6 +42,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
     cta::common::dataStructures::Tape tapeToCheck;
 
     try {
+      m_catalogue.countGetTapesByVid(cta::catalogue::countGetTapesByVid::QCR1);
       auto vidToTapesMap = m_catalogue.getTapesByVid(queue.vid); //throws an exception if the vid is not found on the database
       tapeToCheck = vidToTapesMap.at(queue.vid);
     } catch (const exception::UserError &ex) {
@@ -189,6 +190,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
       cta::common::dataStructures::Tape tapeToModify;
 
       try {
+        m_catalogue.countGetTapesByVid(cta::catalogue::countGetTapesByVid::QCR2);
         auto vidToTapesMap = m_catalogue.getTapesByVid(qForCleanup.vid); //throws an exception if the vid is not found on the database
         tapeToModify = vidToTapesMap.at(qForCleanup.vid);
       } catch (const exception::UserError &ex) {

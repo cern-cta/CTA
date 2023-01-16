@@ -159,6 +159,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
       try {
         std::string disabledReason = cta::utils::getCurrentLocalTime("%F %T") + ":" + currentExceptionMsg;
+        m_catalogue.countGetTapesByVid(cta::catalogue::countGetTapesByVid::CS);
         auto curr_state = m_catalogue.getTapesByVid(m_vid).at(m_vid).state;
         if (curr_state == cta::common::dataStructures::Tape::REPACKING) {
           m_catalogue.setTapeRepackingDisabled(admin, m_vid, disabledReason);

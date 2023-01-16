@@ -384,7 +384,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
         // Back to the transfer case.
         std::string vid;
         try {
-          vid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, objectStore, isRepack);
+          vid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, objectStore, cta::catalogue::countGetTapesByVid::SBRQ_GCOOS, isRepack);
         } catch (Helpers::NoTapeAvailableForRetrieve & ex) {
           log::ScopedParamContainer params3(lc);
           params3.add("fileId", rr->getArchiveFile().archiveFileID);

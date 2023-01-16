@@ -26,6 +26,7 @@
 #include <set>
 #include <string>
 
+#include "catalogue/CountGetTapesByVid.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/RepackQueueType.hpp"
 #include "common/dataStructures/Tape.hpp"
@@ -92,7 +93,8 @@ class Helpers {
    * to the algorithm, but will help performance drastically for a very similar result
    */
   static std::string selectBestRetrieveQueue(const std::set<std::string> & candidateVids,
-    cta::catalogue::Catalogue & catalogue, objectstore::Backend & objectstore, bool isRepack = false);
+    cta::catalogue::Catalogue & catalogue, objectstore::Backend & objectstore,
+    const cta::catalogue::countGetTapesByVid::Enum loc, bool isRepack = false);
 
   /**
    * Gets the retrieve queue statistics for a set of Vids (extracted from the OStoreDB

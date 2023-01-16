@@ -19,6 +19,7 @@
 
 #include <pthread.h>
 #include <semaphore.h>
+#include <vector>
 
 namespace cta {
 namespace threading {
@@ -36,6 +37,7 @@ class CondVar;
 class Mutex {
 public:
   Mutex() ;
+  Mutex(const std::vector<int> &attrVals);
   ~Mutex();
   void lock() ;
   void unlock();

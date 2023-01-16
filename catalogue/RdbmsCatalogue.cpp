@@ -4365,6 +4365,12 @@ common::dataStructures::VidToTapeMap RdbmsCatalogue::getTapesByVid(const std::st
     auto conn = m_connPool.getConn();
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":VID", vid);
+
+    {
+      g_counterLog = &m_log;
+      countGetTapesByVid(countGetTapesByVid::RDBMS_GETTAPESBYVID);
+      g_counterLog = nullptr;
+    }
     executeGetTapesByVidStmtAndCollectResults(stmt, vidToTapeMap);
 
     if(vidToTapeMap.size() != 1) {
