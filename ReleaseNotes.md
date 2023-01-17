@@ -2,6 +2,7 @@
 
 ## Summary
 ### Features
+- cta/CTA#144 - Fix issus with cta-readtp encryption
 - cta/CTA#222 - Review what gets logged in CTA
 - cta/CTA#213 - Add tool for injecting file into eos
 - cta/CTA#224 - Improve error message for cta-verify-file whn VID does not exist
