@@ -22,6 +22,7 @@
 #include "catalogue/CatalogueItor.hpp"
 #include "catalogue/TapeSearchCriteria.hpp"
 #include "common/Constants.hpp"
+#include "common/exception/EncryptionException.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "disk/DiskFile.hpp"
 #include "disk/RadosStriperPool.hpp"
@@ -57,8 +58,7 @@ ReadtpCmd::ReadtpCmd(std::istream &inStream, std::ostream &outStream,
   m_mc(mc),
   m_useLbp(true),
   m_nbSuccessReads(0),
-  m_nbFailedReads(0),
-  m_encryptionControl(useEncryption, externalEncryptionKeyScript) {
+  m_nbFailedReads(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -76,47 +76,46 @@ int ReadtpCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
     printUsage(m_out);
     return 0;
   }
-  
+
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("userName", getUsername()));
   params.push_back(cta::log::Param("tapeVid", cmdLineArgs.m_vid));
   m_log(cta::log::INFO, "Started", params);
-  
+
   readAndSetConfiguration(getUsername(), cmdLineArgs);
 
   setProcessCapabilities("cap_sys_rawio+ep");
 
   std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drivePtr = createDrive();
   castor::tape::tapeserver::drive::DriveInterface &drive = *drivePtr.get();
-  
+
   if (!isDriveSupportLbp(drive)) {
     m_log(cta::log::WARNING, "Drive does not support LBP", params);
     m_driveSupportLbp = false;
   } else {
     m_driveSupportLbp = true;
   };
-  
+
   mountTape(m_vid);
   waitUntilTapeLoaded(drive, TAPE_LABEL_UNITREADY_TIMEOUT);
 
   int returnCode = 0;
   try {
     readTapeFiles(drive);
-      
+  } catch(cta::exception::EncryptionException &ex) {
+    params.push_back(cta::log::Param("tapeReadError", ex.getMessage().str()));
+    m_log(cta::log::ERR, "Failed to enable encrypyion for read of drive", params);
+    throw cta::exception::EncryptionException(ex.what(), false);
   } catch(cta::exception::Exception &ne) {
     params.push_back(cta::log::Param("tapeReadError", ne.getMessage().str()));
     m_log(cta::log::ERR, "Failed to read the tape", params);
-    returnCode = 1; 
+    returnCode = 1;
   }
   unloadTape(m_vid, drive);
 
   // Disable encryption (or at least try)
-  try {
-    if (m_encryptionControl.disable(drive)) {
-      m_log(cta::log::INFO, "Turned encryption off before unmounting");
-    }
-  } catch (cta::exception::Exception& ex) {
-    m_log(cta::log::ERR, "Failed to turn off encryption before unmounting");
+  if(m_isTapeEncrypted) {
+    disableEncryption(drive);
   }
 
   dismountTape(m_vid);
@@ -135,7 +134,7 @@ void ReadtpCmd::readAndSetConfiguration(const std::string &userName, const Readt
   m_destinationFiles = readListFromFile(cmdLineArgs.m_destinationFileListURL);
   cta::tape::daemon::Tpconfig tpConfig;
   tpConfig  = cta::tape::daemon::Tpconfig::parseFile(castor::tape::TPCONFIGPATH);
-  
+
   if (tpConfig.empty()) {
     cta::exception::Exception ex;
     ex.getMessage() << "Unable to obtain drive info as TPCONFIG is empty";
@@ -150,11 +149,11 @@ void ReadtpCmd::readAndSetConfiguration(const std::string &userName, const Readt
   const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(CATALOGUE_CONFIG_PATH);
   const uint64_t nbConns = 1;
   const uint64_t nbArchiveFileListingConns = 1;
-  
+
   auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(m_dummyLog, // to supress catalogue output messages
     catalogueLogin, nbConns, nbArchiveFileListingConns);
   m_catalogue = catalogueFactory->create();
-    
+
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("catalogueDbType", catalogueLogin.dbTypeToString(catalogueLogin.dbType)));
   params.push_back(cta::log::Param("catalogueDatabase", catalogueLogin.database));
@@ -164,6 +163,16 @@ void ReadtpCmd::readAndSetConfiguration(const std::string &userName, const Readt
   params.push_back(cta::log::Param("logicalLibrary", m_logicalLibrary));
   params.push_back(cta::log::Param("unitName", m_unitName));
   m_log(cta::log::INFO, "Read configuration", params);
+}
+
+//------------------------------------------------------------------------------
+// isEncrypted
+//------------------------------------------------------------------------------
+bool ReadtpCmd::isEncrypted(const cta::common::dataStructures::Tape &tape) const {
+  if(tape.encryptionKeyName) {
+    return true;
+  }
+  return false;
 }
 
 //------------------------------------------------------------------------------
@@ -215,9 +224,9 @@ void ReadtpCmd::setProcessCapabilities(const std::string &capabilities) {
 //------------------------------------------------------------------------------
 std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface>
   ReadtpCmd::createDrive() {
-  castor::tape::SCSI::DeviceVector dv(m_sysWrapper);    
+  castor::tape::SCSI::DeviceVector dv(m_sysWrapper);
   castor::tape::SCSI::DeviceInfo driveInfo = dv.findBySymlink(m_devFilename);
-  
+
   // Instantiate the drive object
   std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface>
     drive(castor::tape::tapeserver::drive::createDrive(driveInfo, m_sysWrapper));
@@ -227,7 +236,7 @@ std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface>
     ex.getMessage() << "Failed to instantiate drive object";
     throw ex;
   }
-  
+
   return drive;
 }
 
@@ -256,7 +265,7 @@ void ReadtpCmd::setLbpMode(
   params.push_back(cta::log::Param("logicalLibrary", m_logicalLibrary));
   params.push_back(cta::log::Param("useLbp",boolToStr(m_useLbp)));
   params.push_back(cta::log::Param("driveSupportLbp",boolToStr(m_driveSupportLbp)));
-  
+
   if(m_useLbp) {
     if (m_driveSupportLbp) {
       // only crc32c lbp mode is supported
@@ -281,7 +290,7 @@ void ReadtpCmd::mountTape(const std::string &vid) {
   librarySlotPtr.reset(
     cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot));
   const cta::mediachanger::LibrarySlot &librarySlot = *librarySlotPtr.get();
-    
+
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("userName", m_userName));
   params.push_back(cta::log::Param("tapeVid", vid));
@@ -290,7 +299,7 @@ void ReadtpCmd::mountTape(const std::string &vid) {
   params.push_back(cta::log::Param("librarySlot", librarySlot.str()));
   params.push_back(cta::log::Param("useLbp",boolToStr(m_useLbp)));
   params.push_back(cta::log::Param("driveSupportLbp",boolToStr(m_driveSupportLbp)));
-  
+
   m_log(cta::log::INFO, "Mounting tape", params);
   m_mc.mountTapeReadOnly(vid, librarySlot);
   m_log(cta::log::INFO, "Mounted tape", params);
@@ -300,7 +309,7 @@ void ReadtpCmd::mountTape(const std::string &vid) {
 // waitUntilTapeLoaded
 //------------------------------------------------------------------------------
 void ReadtpCmd::waitUntilTapeLoaded(
-  castor::tape::tapeserver::drive::DriveInterface &drive, const int timeoutSecond) { 
+  castor::tape::tapeserver::drive::DriveInterface &drive, const int timeoutSecond) {
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("userName", m_userName));
   params.push_back(cta::log::Param("tapeVid", m_vid));
@@ -308,7 +317,7 @@ void ReadtpCmd::waitUntilTapeLoaded(
   params.push_back(cta::log::Param("logicalLibrary", m_logicalLibrary));
   params.push_back(cta::log::Param("useLbp",boolToStr(m_useLbp)));
   params.push_back(cta::log::Param("driveSupportLbp",boolToStr(m_driveSupportLbp)));
-  
+
   try {
     m_log(cta::log::INFO, "Loading tape", params);
     drive.waitUntilReady(timeoutSecond);
@@ -325,7 +334,7 @@ void ReadtpCmd::waitUntilTapeLoaded(
 class BasicRetrieveJob: public cta::RetrieveJob {
 public:
   BasicRetrieveJob() : cta::RetrieveJob(nullptr,
-    cta::common::dataStructures::RetrieveRequest(), 
+    cta::common::dataStructures::RetrieveRequest(),
     cta::common::dataStructures::ArchiveFile(), 1,
     cta::PositioningMethod::ByFSeq) {}
 };
@@ -351,10 +360,10 @@ void ReadtpCmd::readTapeFiles(
   castor::tape::tapeserver::drive::DriveInterface &drive) {
     cta::disk::RadosStriperPool striperPool;
     cta::disk::DiskFileFactory fileFactory(m_xrootPrivateKeyPath, 0, striperPool);
-    
+
     catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = m_vid;
-    
+
     auto tapeList = m_catalogue->getTapes(searchCriteria);
     if (tapeList.empty()) {
       std::list<cta::log::Param> params;
@@ -364,10 +373,23 @@ void ReadtpCmd::readTapeFiles(
         params.push_back(cta::log::Param("logicalLibrary", m_logicalLibrary));
         params.push_back(cta::log::Param("useLbp",boolToStr(m_useLbp)));
         params.push_back(cta::log::Param("driveSupportLbp",boolToStr(m_driveSupportLbp)));
-        m_log(cta::log::ERR, "Failed to get tape from catalogue", params);  
+        m_log(cta::log::ERR, "Failed to get tape from catalogue", params);
         return;
     }
-    auto tape = tapeList.front();
+    auto const& tape = tapeList.front();
+
+    m_isTapeEncrypted = isEncrypted(tape);
+
+    if(m_isTapeEncrypted) {
+      try {
+        configureEncryption(m_vid, drive);
+      } catch(cta::exception::Exception &ex) {
+        std::list<cta::log::Param> params;
+        params.push_back(cta::log::Param("vid", m_vid));
+        m_log(cta::log::ERR, "Configuring encryption failed", params);
+        throw cta::exception::EncryptionException(ex.what(), false);
+      }
+    }
 
     TapeFseqRangeListSequence fSeqRangeListSequence(&m_fSeqRangeList);
     std::string destinationFile = getNextDestinationUrl();
@@ -390,14 +412,14 @@ void ReadtpCmd::readTapeFiles(
         std::list<cta::log::Param> params;
         params.push_back(cta::log::Param("userName", getUsername()));
         params.push_back(cta::log::Param("tapeVid", m_vid));
-        params.push_back(cta::log::Param("destinationFile", destinationFile));   
+        params.push_back(cta::log::Param("destinationFile", destinationFile));
         params.push_back(cta::log::Param("tapeDrive", m_unitName));
         params.push_back(cta::log::Param("logicalLibrary", m_logicalLibrary));
         params.push_back(cta::log::Param("useLbp",boolToStr(m_useLbp)));
         params.push_back(cta::log::Param("driveSupportLbp",boolToStr(m_driveSupportLbp)));
         params.push_back(cta::log::Param("fSeq", fSeq));
         params.push_back(cta::log::Param("tapeReadError", ne.getMessage().str()));
-        m_log(cta::log::ERR, "Failed to read file from tape", params);  
+        m_log(cta::log::ERR, "Failed to read file from tape", params);
         m_nbFailedReads++; 
       }
     }
@@ -411,9 +433,9 @@ void ReadtpCmd::readTapeFiles(
   params.push_back(cta::log::Param("nbReads", m_nbSuccessReads + m_nbFailedReads));
   params.push_back(cta::log::Param("nbSuccessfullReads", m_nbSuccessReads));
   params.push_back(cta::log::Param("nbFailedReads", m_nbFailedReads));
-  
-  m_log(cta::log::INFO, "Finished reading tape", params);  
-        
+
+  m_log(cta::log::INFO, "Finished reading tape", params);
+
 }
 
 //------------------------------------------------------------------------------
@@ -431,14 +453,12 @@ void ReadtpCmd::readTapeFile(
   params.push_back(cta::log::Param("useLbp",boolToStr(m_useLbp)));
   params.push_back(cta::log::Param("driveSupportLbp",boolToStr(m_driveSupportLbp)));
   params.push_back(cta::log::Param("destinationURL", wf.URL()));
-  
+
   castor::tape::tapeserver::daemon::VolumeInfo volInfo;
   volInfo.vid=m_vid;
   volInfo.nbFiles = 0;
   volInfo.mountType = cta::common::dataStructures::MountType::Retrieve;
   volInfo.labelFormat = labelFormat;
-
-  configureEncryption(m_vid, drive);
 
   const auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(drive, volInfo, m_useLbp);
 
@@ -452,7 +472,7 @@ void ReadtpCmd::readTapeFile(
   }
 
   m_log(cta::log::INFO, "Reading file from tape", params);
-  
+
   const auto archiveFile = itor.next();
 
   BasicRetrieveJob fileToRecall;
@@ -506,7 +526,7 @@ void ReadtpCmd::unloadTape(
   librarySlotPtr.reset(
     cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot));
   const cta::mediachanger::LibrarySlot &librarySlot = *librarySlotPtr.get();
-  
+
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("userName", m_userName));
   params.push_back(cta::log::Param("tapeVid", m_vid));
@@ -536,7 +556,7 @@ void ReadtpCmd::dismountTape(const std::string &vid) {
   librarySlotPtr.reset(
     cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot));
   const cta::mediachanger::LibrarySlot &librarySlot = *librarySlotPtr.get();
-  
+
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("userName", m_userName));
   params.push_back(cta::log::Param("tapeVid", m_vid));
@@ -545,7 +565,7 @@ void ReadtpCmd::dismountTape(const std::string &vid) {
   params.push_back(cta::log::Param("librarySlot", librarySlot.str()));
   params.push_back(cta::log::Param("useLbp",boolToStr(m_useLbp)));
   params.push_back(cta::log::Param("driveSupportLbp",boolToStr(m_driveSupportLbp)));
-  
+
   try {
     m_log(cta::log::INFO, "Dismounting tape", params);
     m_mc.dismountTape(vid, librarySlot);
@@ -570,25 +590,34 @@ void ReadtpCmd::rewindDrive(
   params.push_back(cta::log::Param("logicalLibrary", m_logicalLibrary));
   params.push_back(cta::log::Param("useLbp",boolToStr(m_useLbp)));
   params.push_back(cta::log::Param("driveSupportLbp",boolToStr(m_driveSupportLbp)));
-  
+
   m_log(cta::log::INFO, "Rewinding tape", params);
   drive.rewind();
   m_log(cta::log::INFO, "Successfully rewound tape", params);
 }
 
 //------------------------------------------------------------------------------
-// enableEncryption
+// configureEncryption
 //------------------------------------------------------------------------------
 void ReadtpCmd::configureEncryption(
   const std::string &vid,
   castor::tape::tapeserver::drive::DriveInterface &drive) {
   try {
+    const std::string DAEMON_CONFIG = "/etc/cta/cta-taped.conf";
+
+    // Config file needed to find the cta-get-encryption-key script
+    const cta::tape::daemon::TapedConfiguration tapedConfig =
+      cta::tape::daemon::TapedConfiguration::createFromCtaConf(DAEMON_CONFIG, m_dummyLog);
+    const std::string externalEncryptionKeyScript = tapedConfig.externalEncryptionKeyScript.value();
+    const bool useEncryption = tapedConfig.useEncryption.value() == "yes";
+    m_encryptionControl = std::make_unique<castor::tape::tapeserver::daemon::EncryptionControl>(useEncryption, externalEncryptionKeyScript);
+
     // We want those scoped params to last for the whole mount.
     // This will allow each session to be logged with its encryption
     // status:
     std::list<cta::log::Param> params;
     {
-      auto encryptionStatus = m_encryptionControl.enable(drive, vid, castor::tape::tapeserver::daemon::EncryptionControl::SetTag::NO_SET_TAG);
+      auto encryptionStatus = m_encryptionControl->enable(drive, vid, castor::tape::tapeserver::daemon::EncryptionControl::SetTag::NO_SET_TAG);
       if (encryptionStatus.on) {
         params.push_back(cta::log::Param("encryption", "on"));
         params.push_back(cta::log::Param("encryptionKey", encryptionStatus.keyName));
@@ -604,7 +633,18 @@ void ReadtpCmd::configureEncryption(
     std::list<cta::log::Param> params;
     params.push_back(cta::log::Param("ErrorMessage", ex.getMessage().str()));
     m_log(cta::log::ERR, "Drive encryption could not be enabled for this mount.", params);
-    throw;
+    throw ex;
+  }
+}
+
+void ReadtpCmd::disableEncryption(castor::tape::tapeserver::drive::DriveInterface &drive) {
+  // Disable encryption (or at least try)
+  try {
+    if (m_encryptionControl->disable(drive)) {
+      m_log(cta::log::INFO, "Turned encryption off before unmounting");
+    }
+  } catch (cta::exception::Exception& ex) {
+    m_log(cta::log::ERR, "Failed to turn off encryption before unmounting");
   }
 }
 

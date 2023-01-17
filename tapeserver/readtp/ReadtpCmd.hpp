@@ -40,7 +40,9 @@ namespace cta {
 namespace catalogue {
 class Catalogue;
 }
-
+namespace common::dataStructures {
+class Tape;
+}
 
 namespace tapeserver {
 namespace readtp {
@@ -100,12 +102,24 @@ private:
   void readAndSetConfiguration(const std::string &userName, const ReadtpCmdLineArgs &cmdLineArgs);
 
   /**
+   * Checks if the tape is encrypted
+   */
+  bool isEncrypted(const cta::common::dataStructures::Tape &tape) const;
+
+  /**
   * Configures encryption to be able to read from an encrypted tape
   *
   * @param vid The volume identifier of the tape to be mounted.
   * @param drive The tape drive.
   */
   void configureEncryption(const std::string &vid, castor::tape::tapeserver::drive::DriveInterface &drive);
+
+  /**
+  * Disable encryption
+  *
+  * @param drive The tape drive.
+  */
+  void disableEncryption(castor::tape::tapeserver::drive::DriveInterface &drive);
 
   /**
    * Reads a file line by line, strips comments and returns a list of the file lines.
@@ -321,7 +335,13 @@ private:
   /**
   * Encryption helper object 
   */
-  castor::tape::tapeserver::daemon::EncryptionControl m_encryptionControl;
+  std::unique_ptr<castor::tape::tapeserver::daemon::EncryptionControl> m_encryptionControl;
+
+  /**
+   * Encryption on/off
+   */
+  bool m_isTapeEncrypted;
+
 
 }; // class ReadtpCmd
 

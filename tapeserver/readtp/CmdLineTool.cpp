@@ -17,6 +17,7 @@
 
 #include "tapeserver/readtp/CmdLineTool.hpp"
 #include "common/exception/CommandLineNotParsed.hpp"
+#include "common/exception/EncryptionException.hpp"
 
 #include <unistd.h>
 
@@ -81,6 +82,8 @@ int CmdLineTool::main(const int argc, char *const *const argv) {
   } catch(exception::CommandLineNotParsed &ue) {
     errorMessage = ue.getMessage().str();
     cmdLineNotParsed = true;
+  } catch(exception::EncryptionException &ue) {
+    errorMessage = ue.getMessage().str();
   } catch(exception::Exception &ex) {
     errorMessage = ex.getMessage().str();
   } catch(std::exception &se) {

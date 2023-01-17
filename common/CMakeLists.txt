@@ -114,6 +114,7 @@ set (COMMON_LIB_SRC_FILES
   exception/TimeOut.cpp
   exception/UserError.cpp
   exception/XrootCl.cpp
+  exception/EncryptionException.cpp
   json/object/JSONCObject.cpp
   json/object/JSONObject.cpp
   log/DummyLogger.cpp
