@@ -1,6 +1,8 @@
 # v4.8.3-1
 
 ## Summary
+This release is the same as '4.8.2-1', except for the addition of some DB query counters which will be used for profiling purposes. \
+The counters are expected to be removed in a future release, when the analysis is no longer necessary.
 ### Bug Fixes
 - cta/CTA#155 - Tape server querying DB at very high rate (log query-count patch)
 
