@@ -105,6 +105,14 @@ void PostgresConn::commit()
     throw exception::Exception(std::string(__FUNCTION__) + " can not execute sql, another query is in progress");
   }
 
+  if (PQTRANS_IDLE == PQtransactionStatus(m_pgsqlConn)) {
+    // Commit is always called when returning a conneciton to the pool.
+    // Postgres logs a warning if we commit without a transaction. To avoid
+    // this a check is made, using client side server status tracking information:
+    // if we're not in a transaction return, otherwise attempt the commit.
+    return;
+  }
+
   Postgres::Result res(PQexec(m_pgsqlConn, "COMMIT"));
   throwDBIfNotStatus(res.get(), PGRES_COMMAND_OK, std::string(__FUNCTION__) + " problem committing the DB transaction");
 }

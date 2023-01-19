@@ -13,6 +13,7 @@
 - cta/CTA#218 - Do not retry during repack requests
 ### Bug Fixes
 - cta/CTA#181 - cta-statistics-update can fail for catalogues in postgres
+- cta/CTA#189 - Avoid postgres logging frequent warnings about no transaction in progress
 - cta/CTA#234 - Replace stoi with toUint64 in standalone cli tool
 - cta/CTA#238 - Compilation fails when using cta::common::Configuration::getConfEntInt(...)
 ### Continuous Integration
