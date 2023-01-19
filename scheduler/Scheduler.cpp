@@ -1841,16 +1841,11 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
   // If previous and desired states are the same, do nothing
   if (prev_state == new_state) return;
 
-  // If previous state is already in transition (temporary state) to the desired state, do nothing
-  if (prev_state == Tape::BROKEN_PENDING && new_state == Tape::BROKEN) return;
-  if (prev_state == Tape::EXPORTED_PENDING && new_state == Tape::EXPORTED) return;
-  if (prev_state == Tape::REPACKING_PENDING && new_state == Tape::REPACKING) return;
-
-  // If previous state is temporary, user should wait for it to complete
+  // If previous state is PENDING (not of the same type), user should wait for it to complete
   if (
-          prev_state == Tape::BROKEN_PENDING
-          || prev_state == Tape::EXPORTED_PENDING
-          || prev_state == Tape::REPACKING_PENDING
+          (prev_state == Tape::BROKEN_PENDING && new_state != Tape::BROKEN)
+          || (prev_state == Tape::EXPORTED_PENDING && new_state != Tape::EXPORTED)
+          || (prev_state == Tape::REPACKING_PENDING && new_state != Tape::REPACKING)
           ) {
     throw cta::exception::UserError("Cannot modify tape " + vid + " state while it is in a temporary internal state");
   }

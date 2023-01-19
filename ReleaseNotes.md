@@ -16,6 +16,7 @@
 - cta/CTA#189 - Avoid postgres logging frequent warnings about no transaction in progress
 - cta/CTA#234 - Replace stoi with toUint64 in standalone cli tool
 - cta/CTA#238 - Compilation fails when using cta::common::Configuration::getConfEntInt(...)
+- cta/CTA#273 - Fix tape state change command idempotency when resetting REPACKING/BROKEN/PENDING
 ### Continuous Integration
 - cta/CTA#205 - Updating EOS4/EOS4 in versionlock for v4.8.95/v5.1.5
 - cta/CTA#253 - Allow Failure for cta_valgrind tests

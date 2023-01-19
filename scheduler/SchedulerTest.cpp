@@ -6630,7 +6630,12 @@ INSTANTIATE_TEST_CASE_P(OStoreDBPlusMockSchedulerTestVFS, SchedulerTestTriggerTa
 
                                 SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING_PENDING,  Tape::ACTIVE,             Tape::REPACKING_PENDING,  true, false}),
                                 SchedulerTestParam(OStoreDBFactoryVFS, {Tape::BROKEN_PENDING,     Tape::ACTIVE,             Tape::BROKEN_PENDING,     true, false}),
-                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::EXPORTED_PENDING,   Tape::ACTIVE,             Tape::EXPORTED_PENDING,   true, false})
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::EXPORTED_PENDING,   Tape::ACTIVE,             Tape::EXPORTED_PENDING,   true, false}),
+
+                                // The 'cleanup' flag should be reactivated when the same PENDING state is re-triggered
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING_PENDING,  Tape::REPACKING,          Tape::REPACKING_PENDING,  false, true}),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::BROKEN_PENDING,     Tape::BROKEN,             Tape::BROKEN_PENDING,     false, true}),
+                                SchedulerTestParam(OStoreDBFactoryVFS, {Tape::EXPORTED_PENDING,   Tape::EXPORTED,           Tape::EXPORTED_PENDING,   false, true})
                         ));
 
 #endif
