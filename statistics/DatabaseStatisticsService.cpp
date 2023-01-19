@@ -16,6 +16,7 @@
  */
 
 #include <string>
+#include <vector>
 
 #include "DatabaseStatisticsService.hpp"
 
@@ -92,10 +93,16 @@ void DatabaseStatisticsService::updateStatisticsPerTape() {
   try {
     auto selectStmt = m_conn.createStmt(selectVids);
     auto rset = selectStmt.executeQuery();
+    // Make a list of all dirty vids. The memory required for the list is
+    // expected to be acceptable.
+    std::vector<std::string> dirtyVids;
     while (rset.next()) {
+      dirtyVids.push_back(rset.columnString("VID"));
+    }
+    for (const auto & vid : dirtyVids) {
       // For all DIRTY tapes, update its statistics
       auto updateStmt = m_conn.createStmt(updateSql);
-      updateStmt.bindString(":VID", rset.columnString("VID"));
+      updateStmt.bindString(":VID", vid);
       updateStmt.executeNonQuery();
       m_nbUpdatedTapes += updateStmt.getNbAffectedRows();
     }
