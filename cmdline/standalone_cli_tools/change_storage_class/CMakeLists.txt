@@ -27,7 +27,7 @@ include_directories(${XRD_SSI_PB_DIR}/include ${XRD_SSI_PB_DIR}/eos_cta/include)
 # Compiled protocol buffers
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
-add_executable(cta-change-storage-class ChangeStorageClass.cpp ChangeStorageClassMain.cpp ../../CtaAdminCmdParse.cpp)
+add_executable(cta-change-storage-class ChangeStorageClass.cpp ChangeStorageClassMain.cpp ../../CtaAdminCmdParse.cpp JsonFileData.cpp)
 target_link_libraries(cta-change-storage-class XrdSsiLib XrdUtils ctacommon EosCtaGrpc EosGrpcClient stdc++fs ctaCmdlineToolsCommon)
 set_property (TARGET cta-change-storage-class APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 

@@ -29,6 +29,7 @@
 
 #include "cmdline/CtaAdminCmdParse.hpp"
 #include "cmdline/standalone_cli_tools/change_storage_class/ChangeStorageClass.hpp"
+#include "cmdline/standalone_cli_tools/change_storage_class/JsonFileData.hpp"
 #include "cmdline/standalone_cli_tools/common/CatalogueFetch.hpp"
 #include "cmdline/standalone_cli_tools/common/CmdLineArgs.hpp"
 #include "cmdline/standalone_cli_tools/common/ConnectionConfiguration.hpp"
@@ -63,40 +64,8 @@ ChangeStorageClass::ChangeStorageClass(
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 int ChangeStorageClass::exceptionThrowingMain(const int argc, char *const *const argv) {
-    CmdLineArgs cmdLineArgs(argc, argv, StandaloneCliTool::CTA_CHANGE_STORAGE_CLASS);
-
-  if (cmdLineArgs.m_help) {
-    cmdLineArgs.printUsage(std::cout);
-    throw exception::UserError("");
-  }
-
-  if (!cmdLineArgs.m_storageClassName) {
-    cmdLineArgs.printUsage(std::cout);
-    throw exception::UserError("Missing requried option: storage.class.name");
-  }
-
-  if (!cmdLineArgs.m_archiveFileId && !cmdLineArgs.m_archiveFileIds) {
-    cmdLineArgs.printUsage(std::cout);
-    throw exception::UserError("filename or id must be provided");
-  }
-
-  m_storageClassName = cmdLineArgs.m_storageClassName.value();
-
-  if (cmdLineArgs.m_archiveFileId) {
-    m_archiveFileIds.push_back(cmdLineArgs.m_archiveFileId.value());
-  }
-
-  if (cmdLineArgs.m_archiveFileIds) {
-    for (const auto& archiveFileId : cmdLineArgs.m_archiveFileIds.value() ) {
-      m_archiveFileIds.push_back(archiveFileId);
-    }
-  }
-
-  if (cmdLineArgs.m_frequency) {
-    m_eosUpdateFrequency = cmdLineArgs.m_frequency.value();
-  } else {
-    m_eosUpdateFrequency = 100;
-  }
+  CmdLineArgs cmdLineArgs(argc, argv, StandaloneCliTool::CTA_CHANGE_STORAGE_CLASS);
+  handleArguments(cmdLineArgs);
 
   auto [serviceProvider, endpointmap] = ConnConfiguration::readAndSetConfiguration(m_log, getUsername(), cmdLineArgs);
   m_serviceProviderPtr = std::move(serviceProvider);
@@ -107,6 +76,45 @@ int ChangeStorageClass::exceptionThrowingMain(const int argc, char *const *const
   updateStorageClassInCatalogue();
   writeSkippedArchiveIdsToFile();
   return 0;
+}
+
+//------------------------------------------------------------------------------
+// handleArguments
+//------------------------------------------------------------------------------
+void ChangeStorageClass::handleArguments(const CmdLineArgs &cmdLineArgs) {
+  if (cmdLineArgs.m_help) {
+    cmdLineArgs.printUsage(std::cout);
+    throw exception::UserError("");
+  }
+
+  if(cmdLineArgs.m_json) {
+    JsonFileData jsonFilaData(cmdLineArgs.m_json.value());
+    for(const auto &jsonFileDataObject : jsonFilaData.m_jsonArgumentsCollection) {
+      m_archiveFileIds.push_back(jsonFileDataObject.archiveId);
+    }
+  }
+
+  if (!cmdLineArgs.m_storageClassName) {
+    cmdLineArgs.printUsage(std::cout);
+    throw exception::UserError("Missing requried option: storage.class.name");
+  }
+
+  if (!cmdLineArgs.m_archiveFileId && !cmdLineArgs.m_json) {
+    cmdLineArgs.printUsage(std::cout);
+    throw exception::UserError("filename or id must be provided");
+  }
+
+  m_storageClassName = cmdLineArgs.m_storageClassName.value();
+
+  if (cmdLineArgs.m_archiveFileId) {
+    m_archiveFileIds.push_back(cmdLineArgs.m_archiveFileId.value());
+  }
+
+  if (cmdLineArgs.m_frequency) {
+    m_eosUpdateFrequency = cmdLineArgs.m_frequency.value();
+  } else {
+    m_eosUpdateFrequency = 100;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -143,6 +151,11 @@ void ChangeStorageClass::updateStorageClassInEosNamespace() {
     }
 
     const auto path = m_endpointMapPtr->getPath(diskInstance, diskFileId);
+    {
+      std::list<cta::log::Param> params;
+      params.push_back(cta::log::Param("path", path));
+      m_log(cta::log::INFO, "Path found", params);
+    }
     const auto status = m_endpointMapPtr->setXAttr(diskInstance, path, "sys.archive.storage_class", m_storageClassName);
     if (status != 0) {
       m_archiveIdsNotUpdatedInEos.push_back(archiveFileId);
@@ -196,6 +209,12 @@ void ChangeStorageClass::storageClassExists() const {
 
   // wait until the data stream has been processed before exiting
   stream_future.wait();
+
+  for(const auto &storageClass : g_storageClasses) {
+    std::list<cta::log::Param> params;
+    params.push_back(cta::log::Param("storageClass", storageClass));
+    m_log(cta::log::INFO, "Storage class found", params);
+  }
 
   if (g_storageClasses.empty()){
     throw(exception::UserError("The storage class provided has not been defined."));
@@ -261,7 +280,7 @@ void ChangeStorageClass::updateStorageClassInCatalogue() const {
 // writeSkippedArchiveIdsToFile
 //------------------------------------------------------------------------------
 void ChangeStorageClass::writeSkippedArchiveIdsToFile() const {
-  const std::filesystem::path filePath = "/var/log/skippedArchiveIds.txt";
+  const std::filesystem::path filePath = "/tmp/skippedArchiveIds.txt";
   std::ofstream archiveIdFile(filePath);
 
   if (archiveIdFile.fail()) {
@@ -270,7 +289,7 @@ void ChangeStorageClass::writeSkippedArchiveIdsToFile() const {
 
   if (archiveIdFile.is_open()) {
     for (const auto& archiveId : m_archiveIdsNotUpdatedInEos) {
-      archiveIdFile << archiveId << std::endl;
+      archiveIdFile << "{ archiveId : " << archiveId << " }" << std::endl;
     }
     archiveIdFile.close();
     std::cout << m_archiveIdsNotUpdatedInEos.size() << " files did not update the storage class." << std::endl;

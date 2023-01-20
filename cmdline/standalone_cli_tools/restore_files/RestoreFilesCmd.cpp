@@ -145,10 +145,14 @@ int RestoreFilesCmd::exceptionThrowingMain(const int argc, char *const *const ar
   m_copyNumber = cmdLineArgs.m_copyNumber;
   m_archiveFileId = cmdLineArgs.m_archiveFileId;
 
-  if (m_fids && !m_diskInstance) {
-    throw XrdSsiPb::UserException("Disk instance must be provided when fids are used as input.");
+  if(argc == 1) {
+    cmdLineArgs.printUsage(m_out);
+    throw RestoreFilesCmdException("No arguments were provided");
   }
-
+  if(m_fids && !m_diskInstance) {
+    cmdLineArgs.printUsage(m_out);
+    throw RestoreFilesCmdException("Disk instance must be provided when fids are used as input.");
+  }
 
   if (cmdLineArgs.m_debug) {
     m_log.setLogMask("DEBUG");

@@ -82,15 +82,16 @@ cd ~
 IDS_FILEPATH=~/archiveFileIds.txt
 rm ${IDS_FILEPATH}
 touch ${IDS_FILEPATH}
-echo ${EOS_ARCHIVE_ID_1} | tee -a ${IDS_FILEPATH}
-echo ${EOS_ARCHIVE_ID_2} | tee -a ${IDS_FILEPATH}
+echo '{"archiveId": '${EOS_ARCHIVE_ID_1}'}' >> ${IDS_FILEPATH}
+echo '{"archiveId": '${EOS_ARCHIVE_ID_2}'}' >> ${IDS_FILEPATH}
+sleep 1
 
 echo
 kubectl cp ~/CTA-build/cmdline/standalone_cli_tools/change_storage_class/cta-change-storage-class ${NAMESPACE}/ctafrontend:/usr/bin/
 echo "kubectl cp ${IDS_FILEPATH} ${NAMESPACE}/ctafrontend:~/"
 kubectl cp ${IDS_FILEPATH} ${NAMESPACE}/ctafrontend:/root/
-echo "kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c XrdSecPROTOCOL=sss XrdSecSSSKT=/etc/cta/eos.sss.keytab cta-change-storage-class --storage.class.name ${NEW_STORAGE_CLASS_NAME} --filename ${IDS_FILEPATH}"
-kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c "XrdSecPROTOCOL=sss XrdSecSSSKT=/etc/cta/eos.sss.keytab cta-change-storage-class --storage.class.name ${NEW_STORAGE_CLASS_NAME} --filename ${IDS_FILEPATH} -t 1"
+echo "kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c XrdSecPROTOCOL=sss XrdSecSSSKT=/etc/cta/eos.sss.keytab cta-change-storage-class --storageclassname ${NEW_STORAGE_CLASS_NAME} --json ${IDS_FILEPATH}"
+kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c "XrdSecPROTOCOL=sss XrdSecSSSKT=/etc/cta/eos.sss.keytab cta-change-storage-class --storageclassname ${NEW_STORAGE_CLASS_NAME} --json ${IDS_FILEPATH} -t 1"
 
 EOS_METADATA_PATH_AFTER_CHANGE_1=$(mktemp -d).json
 echo "SEND EOS METADATA TO JSON FILE: ${EOS_METADATA_PATH_AFTER_CHANGE_1}"

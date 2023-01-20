@@ -33,6 +33,7 @@ class StdoutLogger;
 }
 
 namespace cliTool {
+class CmdLineArgs;
 
 class ChangeStorageClass: public CmdLineTool {
 public:
@@ -119,6 +120,11 @@ private:
    * Checks if a file is in flight
   */
   bool fileInFlight(const google::protobuf::RepeatedField<unsigned int> &locations) const;
+
+  /**
+  * Fills the member variables with data, based on the arguments that were provided
+  */
+  void handleArguments(const CmdLineArgs &cmdLineArgs);
 
   /**
    * An exception throwing version of main().
