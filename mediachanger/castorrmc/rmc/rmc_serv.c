@@ -29,22 +29,22 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include "Cinit.h"
-#include "getconfent.h"
-#include "marshall.h"
-#include "net.h"
-#include "rbtsubr_constants.h"
-#include "rmc_constants.h"
-#include "rmc_logit.h"
-#include "rmc_procreq.h"
-#include "rmc_sendrep.h"
-#include "rmc_smcsubr.h"
-#include "scsictl.h"
-#include "serrno.h"
-#include "Cdomainname.h"
+#include "mediachanger/castorrmc/h/Cinit.h"
+#include "mediachanger/castorrmc/h/getconfent.h"
+#include "mediachanger/castorrmc/h/marshall.h"
+#include "mediachanger/castorrmc/h/net.h"
+#include "mediachanger/castorrmc/h/rbtsubr_constants.h"
+#include "mediachanger/castorrmc/h/rmc_constants.h"
+#include "mediachanger/castorrmc/h/rmc_logit.h"
+#include "mediachanger/castorrmc/h/rmc_procreq.h"
+#include "mediachanger/castorrmc/h/rmc_sendrep.h"
+#include "mediachanger/castorrmc/h/rmc_smcsubr.h"
+#include "mediachanger/castorrmc/h/scsictl.h"
+#include "mediachanger/castorrmc/h/serrno.h"
+#include "mediachanger/castorrmc/h/Cdomainname.h"
 #include <sys/types.h>
 #include <sys/stat.h>
-#include "rmc_send_scsi_cmd.h"
+#include "mediachanger/castorrmc/h/rmc_send_scsi_cmd.h"
 
 #define PATH_CONF "/etc/cta/cta-rmcd.conf"
 

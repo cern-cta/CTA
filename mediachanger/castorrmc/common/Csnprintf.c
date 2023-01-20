@@ -15,7 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "Csnprintf.h"
+#include "mediachanger/castorrmc/h/Csnprintf.h"
 
 /* Hide the snprintf and al. call v.s. different OS. */
 /* Sometimes a different name, sometimes do not exist */

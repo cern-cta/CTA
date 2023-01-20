@@ -20,8 +20,8 @@
  */
 
 #include <string.h>
-#include "marshall.h"
-#include "osdep.h"
+#include "mediachanger/castorrmc/h/marshall.h"
+#include "mediachanger/castorrmc/h/osdep.h"
 
 int
 _unmarshall_STRINGN(char **ptr,

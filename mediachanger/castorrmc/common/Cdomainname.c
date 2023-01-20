@@ -24,9 +24,9 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include "Castor_limits.h"
-#include "Cnetdb.h"
-#include "serrno.h"
+#include "mediachanger/castorrmc/h/Castor_limits.h"
+#include "mediachanger/castorrmc/h/Cnetdb.h"
+#include "mediachanger/castorrmc/h/serrno.h"
 
 /* Cdomainname - get domain name */
 

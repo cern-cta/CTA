@@ -19,7 +19,7 @@
 #include <XrdSsiPbConfig.hpp>
 #include <XrdSsiPbService.hpp>
 
-#include "XrdSsiCtaServiceProvider.hpp"
+#include "xroot_plugins/XrdSsiCtaServiceProvider.hpp"
 #include "cta_frontend.pb.h"
 
 /*

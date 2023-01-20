@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "osdep.h"
+#include "mediachanger/castorrmc/h/osdep.h"
 
 	/* structure to be used with Cinitdaemon()/Cinitservice() */
 

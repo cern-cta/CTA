@@ -15,9 +15,9 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "rmc_constants.h"
-#include "rmc_logit.h"
-#include "rmc_logreq.h"
+#include "mediachanger/castorrmc/h/rmc_constants.h"
+#include "mediachanger/castorrmc/h/rmc_logit.h"
+#include "mediachanger/castorrmc/h/rmc_logreq.h"
 
 #include <string.h>
 

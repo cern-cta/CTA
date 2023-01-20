@@ -18,11 +18,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "Cglobals.h"
-#include "serrno.h"
-#include "getconfent.h"
-#include "Csnprintf.h"
-#include "Castor_limits.h"
+#include "mediachanger/castorrmc/h/Cglobals.h"
+#include "mediachanger/castorrmc/h/serrno.h"
+#include "mediachanger/castorrmc/h/getconfent.h"
+#include "mediachanger/castorrmc/h/Csnprintf.h"
+#include "mediachanger/castorrmc/h/Castor_limits.h"
 
 #ifndef PATH_CONFIG
 #define PATH_CONFIG "/etc/castor/castor.conf"

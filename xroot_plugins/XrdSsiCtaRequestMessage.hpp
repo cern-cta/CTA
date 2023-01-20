@@ -20,8 +20,8 @@
 #include <XrdSsi/XrdSsiEntity.hh>
 
 #include "common/utils/utils.hpp"
-#include "Versions.hpp"
-#include "XrdSsiCtaServiceProvider.hpp"
+#include "xroot_plugins/Versions.hpp"
+#include "xroot_plugins/XrdSsiCtaServiceProvider.hpp"
 #include "cta_frontend.pb.h"
 
 namespace cta { namespace xrd {

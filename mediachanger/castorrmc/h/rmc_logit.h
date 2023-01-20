@@ -17,6 +17,6 @@
 
 #pragma once
 
-#include "osdep.h"
+#include "mediachanger/castorrmc/h/osdep.h"
 
 EXTERN_C int rmc_logit(const char *const func, const char *const msg, ...);

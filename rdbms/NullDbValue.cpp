@@ -15,7 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "NullDbValue.hpp"
+#include "rdbms/NullDbValue.hpp"
 
 namespace cta {
 namespace rdbms {

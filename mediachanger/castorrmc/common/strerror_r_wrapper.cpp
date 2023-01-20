@@ -15,7 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "strerror_r_wrapper.h"
+#include "mediachanger/castorrmc/h/strerror_r_wrapper.h"
 
 #if defined(__linux__)
 /*

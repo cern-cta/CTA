@@ -16,9 +16,9 @@
  */
 
 /* serror.c     Global error reporting routines                         */
-#include "serrno.h"   /* special error numbers and codes              */
-#include "Cglobals.h"
-#include "strerror_r_wrapper.h"
+#include "mediachanger/castorrmc/h/serrno.h"   /* special error numbers and codes              */
+#include "mediachanger/castorrmc/h/Cglobals.h"
+#include "mediachanger/castorrmc/h/strerror_r_wrapper.h"
 
 #include <stdio.h>      /* standard input/output                        */
 #include <errno.h>      /* error numbers and codes                      */

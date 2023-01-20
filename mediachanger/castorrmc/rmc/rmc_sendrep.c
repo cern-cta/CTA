@@ -20,11 +20,11 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include "marshall.h"
-#include "net.h"
-#include "rmc_constants.h"
-#include "rmc_logit.h"
-#include "rmc_sendrep.h"
+#include "mediachanger/castorrmc/h/marshall.h"
+#include "mediachanger/castorrmc/h/net.h"
+#include "mediachanger/castorrmc/h/rmc_constants.h"
+#include "mediachanger/castorrmc/h/rmc_logit.h"
+#include "mediachanger/castorrmc/h/rmc_sendrep.h"
 #include <unistd.h>
 
 static const char *rep_type_to_str(const int rep_type) {

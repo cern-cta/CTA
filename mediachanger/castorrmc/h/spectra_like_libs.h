@@ -17,6 +17,6 @@
 
 #pragma once
 
-#include "smc_struct.h"
+#include "mediachanger/castorrmc/h/smc_struct.h"
 
 int is_library_spectra_like(const struct robot_info *const robot_info);

@@ -31,7 +31,7 @@
 /* ======================================= */
 /* Local headers for thread-safe variables */
 /* ======================================= */
-#include "Cglobals.h"
+#include "mediachanger/castorrmc/h/Cglobals.h"
 
 /* ============== */
 /* System headers */
@@ -52,7 +52,7 @@
 /* ============= */
 /* Local headers */
 /* ============= */
-#include "serrno.h"
+#include "mediachanger/castorrmc/h/serrno.h"
 #include "Cregexp.h"
 #include "Cregexp_magic.h"
 

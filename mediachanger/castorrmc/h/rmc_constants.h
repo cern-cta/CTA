@@ -16,7 +16,7 @@
  */
 
 #pragma once
-#include "Castor_limits.h"
+#include "mediachanger/castorrmc/h/Castor_limits.h"
 
 #define RMC_CHECKI  5   /* max interval to check for work to be done */
 #define RMC_PRTBUFSZ 180

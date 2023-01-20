@@ -18,7 +18,7 @@
 #ifndef __getconfent_h
 #define __getconfent_h
 
-#include "osdep.h"
+#include "mediachanger/castorrmc/h/osdep.h"
 
 EXTERN_C char *getconfent (const char *, const char *, int);
 EXTERN_C char *getconfent_fromfile (const char *, const char *, const char *, int);

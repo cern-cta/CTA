@@ -20,8 +20,8 @@
 
 #include "common/dataStructures/ArchiveRequest.hpp"
 #include "frontend/common/PbException.hpp"
-#include "XrdSsiCtaServiceProvider.hpp"
-#include "XrdSsiCtaRequestMessage.hpp"
+#include "xroot_plugins/XrdSsiCtaServiceProvider.hpp"
+#include "xroot_plugins/XrdSsiCtaRequestMessage.hpp"
 
 namespace XrdSsiPb {
 

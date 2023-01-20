@@ -23,18 +23,18 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-#include "getconfent.h"
-#include "rbtsubr_constants.h"
-#include "rmc_constants.h"
-#include "rmc_logit.h"
-#include "rmc_send_scsi_cmd.h"
-#include "rmc_sendrep.h"
-#include "rmc_smcsubr.h"
-#include "rmc_smcsubr2.h"
-#include "scsictl.h"
-#include "serrno.h"
-#include "smc_constants.h"
-#include "spectra_like_libs.h"
+#include "mediachanger/castorrmc/h/getconfent.h"
+#include "mediachanger/castorrmc/h/rbtsubr_constants.h"
+#include "mediachanger/castorrmc/h/rmc_constants.h"
+#include "mediachanger/castorrmc/h/rmc_logit.h"
+#include "mediachanger/castorrmc/h/rmc_send_scsi_cmd.h"
+#include "mediachanger/castorrmc/h/rmc_sendrep.h"
+#include "mediachanger/castorrmc/h/rmc_smcsubr.h"
+#include "mediachanger/castorrmc/h/rmc_smcsubr2.h"
+#include "mediachanger/castorrmc/h/scsictl.h"
+#include "mediachanger/castorrmc/h/serrno.h"
+#include "mediachanger/castorrmc/h/smc_constants.h"
+#include "mediachanger/castorrmc/h/spectra_like_libs.h"
 
 #define	RBT_XTRA_PROC 10
 static struct smc_status smc_status;

@@ -26,9 +26,9 @@
 #include <sys/ioctl.h>
 #include <poll.h>
 
-#include "net.h"
-#include "serrno.h"
-#include "string.h"
+#include "mediachanger/castorrmc/h/net.h"
+#include "mediachanger/castorrmc/h/serrno.h"
+#include <string.h>
 
 /* Signal handler - Simplify the POSIX sigaction calls */
 typedef void    Sigfunc(int);

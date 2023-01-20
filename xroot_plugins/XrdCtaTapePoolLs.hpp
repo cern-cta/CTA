@@ -19,8 +19,8 @@
 
 #include "catalogue/TapePool.hpp"
 #include "catalogue/TapePoolSearchCriteria.hpp"
-#include "XrdCtaStream.hpp"
-#include "XrdSsiCtaRequestMessage.hpp"
+#include "xroot_plugins/XrdCtaStream.hpp"
+#include "xroot_plugins/XrdSsiCtaRequestMessage.hpp"
 
 namespace cta { namespace xrd {
 

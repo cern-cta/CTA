@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "osdep.h"
+#include "mediachanger/castorrmc/h/osdep.h"
 
 EXTERN_C int rmc_send_scsi_cmd (
   const int tapefd,

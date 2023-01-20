@@ -21,10 +21,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <netinet/in.h>
-#include "marshall.h"
-#include "rmc_api.h"
-#include "rmc_constants.h"
-#include "serrno.h"
+#include "mediachanger/castorrmc/h/marshall.h"
+#include "mediachanger/castorrmc/h/rmc_api.h"
+#include "mediachanger/castorrmc/h/rmc_constants.h"
+#include "mediachanger/castorrmc/h/serrno.h"
 int rmc_dismount(
 	const char *const server,
 	const char *const vid,

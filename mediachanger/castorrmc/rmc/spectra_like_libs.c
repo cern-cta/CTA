@@ -17,7 +17,7 @@
 
 #include <string.h>
 #include <ctype.h>
-#include "spectra_like_libs.h"
+#include "mediachanger/castorrmc/h/spectra_like_libs.h"
 
 #define N_LIBS (sizeof(spectra_like_libs) / sizeof(spectra_like_libs[0]))
 

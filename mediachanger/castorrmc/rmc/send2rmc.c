@@ -22,12 +22,12 @@
 #include <unistd.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include "Cnetdb.h"
-#include "marshall.h"
-#include "net.h"
-#include "rmc_api.h"
-#include "rmc_constants.h"
-#include "serrno.h"
+#include "mediachanger/castorrmc/h/Cnetdb.h"
+#include "mediachanger/castorrmc/h/marshall.h"
+#include "mediachanger/castorrmc/h/net.h"
+#include "mediachanger/castorrmc/h/rmc_api.h"
+#include "mediachanger/castorrmc/h/rmc_constants.h"
+#include "mediachanger/castorrmc/h/serrno.h"
 
 #define PATH_CONF "/etc/cta/cta-rmcd.conf"
 /* send2tpd - send a request to the SCSI media changer server and wait for the reply */

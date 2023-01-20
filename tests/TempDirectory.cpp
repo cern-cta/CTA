@@ -15,7 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "TempDirectory.hpp"
+#include "tests/TempDirectory.hpp"
 #include "common/exception/Errnum.hpp"
 
 namespace unitTests {

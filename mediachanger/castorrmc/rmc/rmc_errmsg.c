@@ -21,7 +21,7 @@
 #include <stdarg.h>
 #include <sys/types.h>
 
-#include "rmc_constants.h"
+#include "mediachanger/castorrmc/h/rmc_constants.h"
 
 static char *errbufp = NULL;
 static int errbuflen;

@@ -24,16 +24,16 @@
 #include <time.h>
 #include <sys/types.h>
 #include <netinet/in.h>
-#include "marshall.h"
-#include "serrno.h"
-#include "rmc_constants.h"
-#include "rmc_logit.h"
-#include "rmc_logreq.h"
-#include "rmc_marshall_element.h"
-#include "rmc_procreq.h"
-#include "rmc_smcsubr.h"
-#include "rmc_smcsubr2.h"
-#include "rmc_sendrep.h"
+#include "mediachanger/castorrmc/h/marshall.h"
+#include "mediachanger/castorrmc/h/serrno.h"
+#include "mediachanger/castorrmc/h/rmc_constants.h"
+#include "mediachanger/castorrmc/h/rmc_logit.h"
+#include "mediachanger/castorrmc/h/rmc_logreq.h"
+#include "mediachanger/castorrmc/h/rmc_marshall_element.h"
+#include "mediachanger/castorrmc/h/rmc_procreq.h"
+#include "mediachanger/castorrmc/h/rmc_smcsubr.h"
+#include "mediachanger/castorrmc/h/rmc_smcsubr2.h"
+#include "mediachanger/castorrmc/h/rmc_sendrep.h"
 #include <string.h>
 extern struct extended_robot_info extended_robot_info;
 

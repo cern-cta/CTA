@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "osdep.h"
+#include "mediachanger/castorrmc/h/osdep.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>

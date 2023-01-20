@@ -21,13 +21,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "rbtsubr_constants.h"
-#include "rmc_api.h"
-#include "serrno.h"
-#include "smc_constants.h"
-#include "getconfent.h"
+#include "mediachanger/castorrmc/h/rbtsubr_constants.h"
+#include "mediachanger/castorrmc/h/rmc_api.h"
+#include "mediachanger/castorrmc/h/serrno.h"
+#include "mediachanger/castorrmc/h/smc_constants.h"
+#include "mediachanger/castorrmc/h/getconfent.h"
 #include "getopt.h"
-#include "spectra_like_libs.h"
+#include "mediachanger/castorrmc/h/spectra_like_libs.h"
 
 #include <ctype.h>
 			/* exit codes */

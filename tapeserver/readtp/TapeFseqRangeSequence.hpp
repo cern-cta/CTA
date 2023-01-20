@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "TapeFseqRange.hpp"
+#include "tapeserver/readtp/TapeFseqRange.hpp"
 
 #include <list>
 

@@ -15,8 +15,8 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "marshall.h"
-#include "rmc_marshall_element.h"
+#include "mediachanger/castorrmc/h/marshall.h"
+#include "mediachanger/castorrmc/h/rmc_marshall_element.h"
 
 int rmc_marshall_element (
 	char **const sbpp,

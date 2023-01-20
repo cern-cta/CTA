@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "osdep.h"
-#include "smc_struct.h"
+#include "mediachanger/castorrmc/h/osdep.h"
+#include "mediachanger/castorrmc/h/smc_struct.h"
 
 EXTERN_C int smc_dismount (
   const int rpfd,
