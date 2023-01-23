@@ -1976,7 +1976,7 @@ void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::Retr
 //------------------------------------------------------------------------------
 // OStoreDB::reserveRetrieveQueueForCleanup()
 //------------------------------------------------------------------------------
-void OStoreDB::reserveRetrieveQueueForCleanup(std::string & vid, std::optional<uint64_t> cleanupHeartBeatValue) {
+void OStoreDB::reserveRetrieveQueueForCleanup(const std::string & vid, std::optional<uint64_t> cleanupHeartBeatValue) {
 
   RootEntry re(m_objectStore);
   RetrieveQueue rq(m_objectStore);
@@ -2016,7 +2016,7 @@ void OStoreDB::reserveRetrieveQueueForCleanup(std::string & vid, std::optional<u
 //------------------------------------------------------------------------------
 // OStoreDB::tickRetrieveQueueCleanupHeartbeat()
 //------------------------------------------------------------------------------
-void OStoreDB::tickRetrieveQueueCleanupHeartbeat(std::string & vid) {
+void OStoreDB::tickRetrieveQueueCleanupHeartbeat(const std::string & vid) {
 
   RootEntry re(m_objectStore);
   RetrieveQueue rq(m_objectStore);
@@ -2171,7 +2171,7 @@ auto OStoreDB::getRepackStatisticsNoLock() -> std::unique_ptr<SchedulerDatabase:
 // OStoreDB::getNextRetrieveJobsToTransferBatch()
 //------------------------------------------------------------------------------
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::getNextRetrieveJobsToTransferBatch(
-        std::string & vid, uint64_t filesRequested, log::LogContext &logContext) {
+        const std::string & vid, uint64_t filesRequested, log::LogContext &logContext) {
 
   using RQTTAlgo = objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueToTransfer>;
   RQTTAlgo rqttAlgo(m_objectStore, *m_agentReference);

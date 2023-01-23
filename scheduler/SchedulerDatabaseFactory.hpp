@@ -115,7 +115,7 @@ public:
     return m_SchedDB->getArchiveJobsFailedSummary(lc);
   }
 
-  std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsToTransferBatch(std::string & vid, uint64_t filesRequested, log::LogContext &lc) override {
+  std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsToTransferBatch(const std::string & vid, uint64_t filesRequested, log::LogContext &lc) override {
     return m_SchedDB->getNextRetrieveJobsToTransferBatch(vid, filesRequested, lc);
   }
 
@@ -123,11 +123,11 @@ public:
     m_SchedDB->requeueRetrieveRequestJobs(jobs, lc);
   }
 
-  void reserveRetrieveQueueForCleanup(std::string & vid, std::optional<uint64_t> cleanupHeartBeatValue) override {
+  void reserveRetrieveQueueForCleanup(const std::string & vid, std::optional<uint64_t> cleanupHeartBeatValue) override {
     m_SchedDB->reserveRetrieveQueueForCleanup(vid, cleanupHeartBeatValue);
   }
 
-  void tickRetrieveQueueCleanupHeartbeat(std::string & vid) override {
+  void tickRetrieveQueueCleanupHeartbeat(const std::string & vid) override {
     m_SchedDB->tickRetrieveQueueCleanupHeartbeat(vid);
   }
 

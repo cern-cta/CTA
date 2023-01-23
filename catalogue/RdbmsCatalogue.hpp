@@ -564,6 +564,18 @@ public:
   common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string> &vids) const override;
 
   /**
+   * Returns the tapes with the specified volume identifiers.
+   *
+   * This method will throw an exception if it cannot find ALL of the specified
+   * tapes.
+   *
+   * @param vids The tape volume identifiers (VIDs).
+   * @param ignoreMissingVids Allow non-existing VIDs to be ignored.
+   * @return Map from tape volume identifier to tape.
+   */
+  common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string> &vids, bool ignoreMissingVids) const override;
+
+  /**
    * Returns map from VID to logical library name for specified set of VIDs.
    *
    * @param vids The tape volume identifiers (VIDs).

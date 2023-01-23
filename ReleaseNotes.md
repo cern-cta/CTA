@@ -4,6 +4,7 @@
 This release reduces the number of DB queries issued to the CTA catalogue.
 ### Bug Fixes
 - cta/CTA#275 - Avoid DB queries via getTapesByVid in OStoreDB::fetchMountInfo
+- cta/CTA#274 - Remove unnecessary catalogue DB queries from QueueCleanupRunner
 
 # v4.8.3-1
 

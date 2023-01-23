@@ -75,7 +75,7 @@ SchedulerDatabase::JobsFailedSummary PostgresSchedDB::getArchiveJobsFailedSummar
    throw cta::exception::Exception("Not implemented");
 }
 
-std::list<std::unique_ptr<RetrieveJob>> PostgresSchedDB::getNextRetrieveJobsToTransferBatch(std::string & vid, uint64_t filesRequested, log::LogContext &lc)
+std::list<std::unique_ptr<RetrieveJob>> PostgresSchedDB::getNextRetrieveJobsToTransferBatch(const std::string & vid, uint64_t filesRequested, log::LogContext &lc)
 {
    throw cta::exception::Exception("Not implemented");
 }
@@ -85,12 +85,12 @@ void PostgresSchedDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabas
 throw cta::exception::Exception("Not implemented");
 }
 
-void PostgresSchedDB::reserveRetrieveQueueForCleanup(std::string & vid, std::optional<uint64_t> cleanupHeartBeatValue)
+void PostgresSchedDB::reserveRetrieveQueueForCleanup(const std::string & vid, std::optional<uint64_t> cleanupHeartBeatValue)
 {
   throw cta::exception::Exception("Not implemented");
 }
 
-void PostgresSchedDB::tickRetrieveQueueCleanupHeartbeat(std::string & vid)
+void PostgresSchedDB::tickRetrieveQueueCleanupHeartbeat(const std::string & vid)
 {
   throw cta::exception::Exception("Not implemented");
 }

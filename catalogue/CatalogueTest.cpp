@@ -14430,11 +14430,18 @@ TEST_P(cta_catalogue_CatalogueTest, deleteArchiveFile_by_archive_file_id_non_exi
   m_catalogue->DO_NOT_USE_deleteArchiveFile_DO_NOT_USE("disk_instance", 12345678, dummyLc);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, getTapesByVid_non_existent_tape) {
+TEST_P(cta_catalogue_CatalogueTest, getTapesByVid_non_existent_tape_set) {
   using namespace cta;
 
   std::set<std::string> vids = {{"non_existent_tape"}};
   ASSERT_THROW(m_catalogue->getTapesByVid(vids), exception::Exception);
+}
+
+TEST_P(cta_catalogue_CatalogueTest, getTapesByVid_non_existent_tape_set_ignore_missing) {
+  using namespace cta;
+
+  std::set<std::string> vids = {{"non_existent_tape"}};
+  ASSERT_NO_THROW(m_catalogue->getTapesByVid(vids, true));
 }
 
 TEST_P(cta_catalogue_CatalogueTest, getTapesByVid_no_vids) {

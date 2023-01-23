@@ -205,7 +205,7 @@ public:
 
   using OStoreDBWithAgent::OStoreDBWithAgent;
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsToTransferBatch(
-          std::string & vid, uint64_t filesRequested, cta::log::LogContext &logContext) override {
+          const std::string & vid, uint64_t filesRequested, cta::log::LogContext &logContext) override {
     throw TriggeredException();
   }
 };

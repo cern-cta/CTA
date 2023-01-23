@@ -229,6 +229,9 @@ common::dataStructures::VidToTapeMap DummyCatalogue::getTapesByVid(const std::st
   return getTapesByVid(vids);
 }
 common::dataStructures::VidToTapeMap DummyCatalogue::getTapesByVid(const std::set<std::string>& vids) const {
+  return getTapesByVid(vids, false);
+}
+common::dataStructures::VidToTapeMap DummyCatalogue::getTapesByVid(const std::set<std::string>& vids, bool ignoreMissingVids) const {
   // Minimal implementation of VidToMap for retrieve request unit tests. We just support
   // disabled status for the tapes.
   // If the tape is not listed, it is listed as enabled in the return value.

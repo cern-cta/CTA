@@ -208,6 +208,8 @@ public:
 
   common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string>& vids) const override;
 
+  common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string>& vids, bool ignoreMissingVids) const override;
+
   std::list<common::dataStructures::MountPolicy> getMountPolicies() const override;
 
   std::list<common::dataStructures::MountPolicy> getCachedMountPolicies() const override;
