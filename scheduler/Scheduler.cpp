@@ -996,14 +996,25 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
     ExistingMountSummaryPerVo& existingMountsBasicTypeSummaryPerVo, std::set<std::string>& tapesInUse,
     std::list<catalogue::TapeForWriting>& tapeList, double& getTapeInfoTime, double& candidateSortingTime,
     double& getTapeForWriteTime, log::LogContext& lc) {
-  // The library information is not known for tapes involved in retrieves. Get the library information from the DB so
+  // Neither the library information nor the tape status is known for tapes involved in retrieves.
+  // Build the eligible set of tapes in the library and with required status so
   // we can filter the potential mounts to the ones that this tape server can serve.
-  catalogue::TapeSearchCriteria searchCriteria;
-  searchCriteria.logicalLibrary = logicalLibraryName;
-  auto eligibleTapesList = m_catalogue.getTapes(searchCriteria);
   std::set<std::string> eligibleTapeSet;
-  for(auto& t : eligibleTapesList) {
-    eligibleTapeSet.insert(t.vid);
+  {
+    catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.logicalLibrary = logicalLibraryName;
+    searchCriteria.state = common::dataStructures::Tape::ACTIVE;
+    m_catalogue.countGetTapesByVid(cta::catalogue::countGetTapesByVid::GT);
+    auto eligibleTapesList = m_catalogue.getTapes(searchCriteria);
+    for(auto& t : eligibleTapesList) {
+      eligibleTapeSet.insert(t.vid);
+    }
+    searchCriteria.state = common::dataStructures::Tape::REPACKING;
+    m_catalogue.countGetTapesByVid(cta::catalogue::countGetTapesByVid::GT);
+    eligibleTapesList = m_catalogue.getTapes(searchCriteria);
+    for(auto& t : eligibleTapesList) {
+      eligibleTapeSet.insert(t.vid);
+    }
   }
 
   // Filter the potential mounts to keep only the ones that match the logical library for retrieves,
@@ -1589,7 +1600,7 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
             m->vendor,
             m->capacityInBytes,
             m->activity,
-            m->labelFormat).release());
+            m->labelFormat.value()).release());
         mountCreationTime += timer.secs(utils::Timer::resetCounter);
         internalRet->m_sessionRunning = true;
         internalRet->m_diskRunning = true;
@@ -1607,7 +1618,7 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
         schedulerDbTime = getMountInfoTime + queueTrimingTime + mountCreationTime + driveStatusSetTime;
         catalogueTime = getTapeInfoTime + getTapeForWriteTime;
         std::ostringstream ossLabelFormat;
-        ossLabelFormat << std::showbase << std::internal << std::setfill('0') << std::hex << std::setw(4) << static_cast<unsigned int>(m->labelFormat);
+        ossLabelFormat << std::showbase << std::internal << std::setfill('0') << std::hex << std::setw(4) << static_cast<unsigned int>(m->labelFormat.value());
         params.add("tapePool", m->tapePool)
               .add("tapeVid", m->vid)
               .add("vo",m->vo)

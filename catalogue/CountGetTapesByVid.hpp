@@ -42,6 +42,7 @@ enum Enum {
   FCTCBR,
   TTSC,
   CS,
+  GT,
   EMAX
 };
 
@@ -64,7 +65,8 @@ static struct Logstr {
                {FMIUNLCK, "OStoreDB::fetchMountInfo_unlocked" },
                {FCTCBR, "Scheduler::checkTapeCanBeRepacked" },
                {TTSC, "Scheduler::triggerTapeStateChange" },
-               {CS, "castor::tape::tapeserver::daemon::CleanerSession::exceptionThrowingExecute" }
+               {CS, "castor::tape::tapeserver::daemon::CleanerSession::exceptionThrowingExecute" },
+               {GT, "Scheduler::sortAndGetTapesForMountInfo_getTapes()" }
     };
 
 struct CounterSpace {

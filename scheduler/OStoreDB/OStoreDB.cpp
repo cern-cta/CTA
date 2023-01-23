@@ -244,7 +244,7 @@ std::list<SchedulerDatabase::RetrieveQueueCleanupInfo> OStoreDB::getRetrieveQueu
 // OStoreDB::fetchMountInfo()
 //------------------------------------------------------------------------------
 void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, RootEntry& re,
-  SchedulerDatabase::PurposeGetMountInfo purpose, bool locked, log::LogContext & logContext) {
+  SchedulerDatabase::PurposeGetMountInfo /* not used */, bool /* not used */, log::LogContext & logContext) {
   utils::Timer t, t2;
   std::list<common::dataStructures::MountPolicy> mountPolicies = m_catalogue.getCachedMountPolicies();
   // Walk the archive queues for USER for statistics
@@ -401,19 +401,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     // If there are files queued, we create an entry for this retrieve queue in the
     // mount candidates list.
     auto rqSummary = rqueue.getJobsSummary();
-    bool isPotentialMount = false;
-    if (locked) {
-      m_catalogue.countGetTapesByVid(cta::catalogue::countGetTapesByVid::FMILCK);
-    } else {
-      m_catalogue.countGetTapesByVid(cta::catalogue::countGetTapesByVid::FMIUNLCK);
-    }
-    auto vidToTapeMap = m_catalogue.getTapesByVid(rqp.vid);
-    common::dataStructures::Tape::State tapeState = vidToTapeMap.at(rqp.vid).state;
-    if (tapeState == common::dataStructures::Tape::ACTIVE ||
-        tapeState == common::dataStructures::Tape::REPACKING) {
-      isPotentialMount = true;
-    }
-    if (rqSummary.jobs && (isPotentialMount || purpose == SchedulerDatabase::PurposeGetMountInfo::SHOW_QUEUES)) {
+    if (rqSummary.jobs) {
       //Getting the default mountPolicies parameters from the queue summary
       uint64_t minRetrieveRequestAge = rqSummary.minRetrieveRequestAge;
       uint64_t priority = rqSummary.priority;
@@ -460,7 +448,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
           m.mediaType = "";      // The logical library is not known here, and will be determined by the caller.
           m.vo = "";             // The vo is not known here, and will be determined by the caller.
           m.capacityInBytes = 0; // The capacity is not known here, and will be determined by the caller.
-          m.labelFormat = vidToTapeMap.at(rqp.vid).labelFormat;
+          m.labelFormat = std::nullopt; // The labelFormat is not known here, and may be determined by the caller.
           m.activity = ac.activity;
           m.mountPolicyNames = queueMountPolicyNames;
           // We will display the sleep flag only if it is not expired (15 minutes timeout, hardcoded).
@@ -493,7 +481,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
         m.mediaType = "";      // The logical library is not known here, and will be determined by the caller.
         m.vo = "";             // The vo is not known here, and will be determined by the caller.
         m.capacityInBytes = 0; // The capacity is not known here, and will be determined by the caller.
-        m.labelFormat = vidToTapeMap.at(rqp.vid).labelFormat;
+        m.labelFormat = std::nullopt; // The labelFormat is not known here, and may be determined by the caller.
         m.mountPolicyNames = queueMountPolicyNames;
         // We will display the sleep flag only if it is not expired (15 minutes timeout, hardcoded).
         // This allows having a single decision point instead of implementing is at the consumer levels.

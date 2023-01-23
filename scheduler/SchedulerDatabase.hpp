@@ -685,7 +685,7 @@ class SchedulerDatabase {
     std::string mediaType;        // Media type of the tape
     std::string vendor;           // Vendor of the tape
     uint64_t capacityInBytes;     // Capacity in bytes of the tape
-    cta::common::dataStructures::Label::Format labelFormat; // Label format of the tape
+    std::optional<cta::common::dataStructures::Label::Format> labelFormat; // Label format of the tape
 
     uint64_t priority;            /**< The priority for the mount, defined as the highest
                                    * priority of all queued jobs */
