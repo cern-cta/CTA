@@ -24,7 +24,7 @@
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include "castor/messages/TapeserverProxyDummy.hpp"
 #include "scheduler/TapeMountDummy.hpp"
-#include "catalogue/DummyCatalogue.hpp"
+#include "catalogue/dummy/DummyCatalogue.hpp"
 #include <gtest/gtest.h>
 
 namespace unitTests{

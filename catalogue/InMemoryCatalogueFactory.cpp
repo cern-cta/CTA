@@ -15,9 +15,13 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "catalogue/CatalogueRetryWrapper.hpp"
-#include "catalogue/InMemoryCatalogueFactory.hpp"
+#include <memory>
+#include <string>
+#include <utility>
+
 #include "catalogue/InMemoryCatalogue.hpp"
+#include "catalogue/InMemoryCatalogueFactory.hpp"
+#include "catalogue/retrywrappers/CatalogueRetryWrapper.hpp"
 #include "common/exception/Exception.hpp"
 
 namespace cta {

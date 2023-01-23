@@ -115,7 +115,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
       catalogue_numberofconnections.value(), nbArchiveFileListingConns);
     m_catalogue = catalogueFactory->create();
     try {
-      m_catalogue->ping();
+      m_catalogue->Schema()->ping();
     } catch(cta::exception::Exception& ex) {
       auto lc = getLogContext();
       lc.log(cta::log::CRIT, ex.getMessageValue());

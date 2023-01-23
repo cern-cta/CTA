@@ -87,7 +87,7 @@ int TapeLabelCmd::exceptionThrowingMain(const int argc, char *const *const argv)
   const std::string capabilities("cap_sys_rawio+ep");
   setProcessCapabilities(capabilities);
   
-  m_catalogue->checkTapeForLabel(m_vid);
+  m_catalogue->Tape()->checkTapeForLabel(m_vid);
   
   std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drivePtr = createDrive();
   castor::tape::tapeserver::drive::DriveInterface &drive = *drivePtr.get();
@@ -145,7 +145,7 @@ int TapeLabelCmd::exceptionThrowingMain(const int argc, char *const *const argv)
   dismountTape(m_vid);
   drive.disableLogicalBlockProtection();
   if(!returnCode) {
-    m_catalogue->tapeLabelled(m_vid, m_unitName);
+    m_catalogue->Tape()->tapeLabelled(m_vid, m_unitName);
   }
   return returnCode;
 }

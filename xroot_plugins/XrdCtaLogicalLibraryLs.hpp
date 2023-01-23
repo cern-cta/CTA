@@ -65,7 +65,7 @@ private:
 LogicalLibraryLsStream::LogicalLibraryLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue,
   cta::Scheduler &scheduler, const std::optional<bool>& disabled) :
   XrdCtaStream(catalogue, scheduler),
-  m_logicalLibraryList(catalogue.getLogicalLibraries()),
+  m_logicalLibraryList(catalogue.LogicalLibrary()->getLogicalLibraries()),
   m_disabled(disabled) {
   using namespace cta::admin;
 

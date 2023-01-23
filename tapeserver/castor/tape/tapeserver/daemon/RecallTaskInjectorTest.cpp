@@ -24,7 +24,7 @@
 #include "castor/tape/tapeserver/daemon/TapeSessionReporter.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
-#include "catalogue/DummyCatalogue.hpp"
+#include "catalogue/dummy/DummyCatalogue.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/log/StringLogger.hpp"
 #include "common/processCap/ProcessCapDummy.hpp"

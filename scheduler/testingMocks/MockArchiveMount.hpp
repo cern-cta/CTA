@@ -67,7 +67,7 @@ public:
         skippedFiles.pop();
         tapeItemsWritten.emplace(tiwup.release());
       }
-      m_catalogue.filesWrittenToTape(tapeItemsWritten);
+      m_catalogue.TapeFile()->filesWrittenToTape(tapeItemsWritten);
       catalogue_updated = true;
       for (auto &job : validatedSuccessfulArchiveJobs) {
         auto *maj = dynamic_cast<MockArchiveJob *>(job.get());

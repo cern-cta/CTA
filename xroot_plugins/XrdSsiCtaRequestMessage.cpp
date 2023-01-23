@@ -538,7 +538,7 @@ void RequestMessage::processCLOSEW(const cta::eos::Notification &notification, c
       throw cta::exception::UserError("File is in fail_on_closew_test storage class, which always fails.");
    }
 
-   auto storageClass = m_catalogue.getStorageClass(storageClassItor->second);
+   auto storageClass = m_catalogue.StorageClass()->getStorageClass(storageClassItor->second);
 
    // Disallow archival of files above the specified limit
    if(storageClass.vo.maxFileSize && notification.file().size() > storageClass.vo.maxFileSize) {
@@ -784,7 +784,7 @@ void RequestMessage::processDELETE(const cta::eos::Notification &notification, c
    cta::utils::Timer t;
    cta::log::TimingList tl;
    try {
-     request.archiveFile = m_catalogue.getArchiveFileById(request.archiveFileID);
+     request.archiveFile = m_catalogue.ArchiveFile()->getArchiveFileById(request.archiveFileID);
      tl.insertAndReset("catalogueGetArchiveFileByIdTime",t);
    } catch (cta::exception::Exception &ex){
     log::ScopedParamContainer spc(m_lc);
@@ -835,7 +835,7 @@ void RequestMessage::processUPDATE_FID(const cta::eos::Notification &notificatio
 
    // Update the disk file ID
    cta::utils::Timer t;
-   m_catalogue.updateDiskFileId(archiveFileId, diskInstance, diskFileId);
+   m_catalogue.ArchiveFile()->updateDiskFileId(archiveFileId, diskInstance, diskFileId);
 
    // Create a log entry
    cta::log::ScopedParamContainer params(m_lc);
@@ -958,7 +958,7 @@ void RequestMessage::processAdmin_Add(cta::xrd::Response &response)
    auto &username = getRequired(OptionString::USERNAME);
    auto &comment  = getRequired(OptionString::COMMENT);
 
-   m_catalogue.createAdminUser(m_cliIdentity, username, comment);
+   m_catalogue.AdminUser()->createAdminUser(m_cliIdentity, username, comment);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -972,7 +972,7 @@ void RequestMessage::processAdmin_Ch(cta::xrd::Response &response)
    auto &username = getRequired(OptionString::USERNAME);
    auto &comment  = getRequired(OptionString::COMMENT);
 
-   m_catalogue.modifyAdminUserComment(m_cliIdentity, username, comment);
+   m_catalogue.AdminUser()->modifyAdminUserComment(m_cliIdentity, username, comment);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -985,7 +985,7 @@ void RequestMessage::processAdmin_Rm(cta::xrd::Response &response)
 
    auto &username = getRequired(OptionString::USERNAME);
 
-   m_catalogue.deleteAdminUser(username);
+   m_catalogue.AdminUser()->deleteAdminUser(username);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1012,7 +1012,7 @@ void RequestMessage::processArchiveRoute_Add(cta::xrd::Response &response)
    auto &tapepool = getRequired(OptionString::TAPE_POOL);
    auto &comment  = getRequired(OptionString::COMMENT);
 
-   m_catalogue.createArchiveRoute(m_cliIdentity, scn, cn, tapepool, comment);
+   m_catalogue.ArchiveRoute()->createArchiveRoute(m_cliIdentity, scn, cn, tapepool, comment);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1029,10 +1029,10 @@ void RequestMessage::processArchiveRoute_Ch(cta::xrd::Response &response)
    auto  comment  = getOptional(OptionString::COMMENT);
 
    if(comment) {
-      m_catalogue.modifyArchiveRouteComment(m_cliIdentity, scn, cn, comment.value());
+      m_catalogue.ArchiveRoute()->modifyArchiveRouteComment(m_cliIdentity, scn, cn, comment.value());
    }
    if(tapepool) {
-      m_catalogue.modifyArchiveRouteTapePoolName(m_cliIdentity, scn, cn, tapepool.value());
+      m_catalogue.ArchiveRoute()->modifyArchiveRouteTapePoolName(m_cliIdentity, scn, cn, tapepool.value());
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -1047,7 +1047,7 @@ void RequestMessage::processArchiveRoute_Rm(cta::xrd::Response &response)
    auto &scn = getRequired(OptionString::STORAGE_CLASS);
    auto &cn  = getRequired(OptionUInt64::COPY_NUMBER);
 
-   m_catalogue.deleteArchiveRoute(scn, cn);
+   m_catalogue.ArchiveRoute()->deleteArchiveRoute(scn, cn);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1146,7 +1146,7 @@ void RequestMessage::processDrive_Rm(cta::xrd::Response &response)
   regex = '^' + regex + '$';
   cta::utils::Regex driveNameRegex(regex.c_str());
 
-  const auto tapeDriveNames = m_catalogue.getTapeDriveNames();
+  const auto tapeDriveNames = m_catalogue.DriveState()->getTapeDriveNames();
   bool drivesFound = false;
 
   for (auto tapeDriveName : tapeDriveNames)
@@ -1154,7 +1154,7 @@ void RequestMessage::processDrive_Rm(cta::xrd::Response &response)
     const auto regexResult = driveNameRegex.exec(tapeDriveName);
     if (!regexResult.empty())
     {
-      const auto tapeDrive = m_catalogue.getTapeDrive(tapeDriveName).value();
+      const auto tapeDrive = m_catalogue.DriveState()->getTapeDrive(tapeDriveName).value();
 
       if (tapeDrive.driveStatus == cta::common::dataStructures::DriveStatus::Down     ||
           tapeDrive.driveStatus == cta::common::dataStructures::DriveStatus::Shutdown ||
@@ -1220,7 +1220,7 @@ void RequestMessage::processGroupMountRule_Add(cta::xrd::Response &response)
    auto &name        = getRequired(OptionString::USERNAME);
    auto &comment     = getRequired(OptionString::COMMENT);
 
-   m_catalogue.createRequesterGroupMountRule(m_cliIdentity, mountpolicy, in, name, comment);
+   m_catalogue.RequesterGroupMountRule()->createRequesterGroupMountRule(m_cliIdentity, mountpolicy, in, name, comment);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1237,10 +1237,10 @@ void RequestMessage::processGroupMountRule_Ch(cta::xrd::Response &response)
    auto  comment     = getOptional(OptionString::COMMENT);
 
    if(comment) {
-      m_catalogue.modifyRequesterGroupMountRuleComment(m_cliIdentity, in, name, comment.value());
+      m_catalogue.RequesterGroupMountRule()->modifyRequesterGroupMountRuleComment(m_cliIdentity, in, name, comment.value());
    }
    if(mountpolicy) {
-      m_catalogue.modifyRequesterGroupMountRulePolicy(m_cliIdentity, in, name, mountpolicy.value());
+      m_catalogue.RequesterGroupMountRule()->modifyRequesterGroupMountRulePolicy(m_cliIdentity, in, name, mountpolicy.value());
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -1255,7 +1255,7 @@ void RequestMessage::processGroupMountRule_Rm(cta::xrd::Response &response)
    auto &in   = getRequired(OptionString::INSTANCE);
    auto &name = getRequired(OptionString::USERNAME);
 
-   m_catalogue.deleteRequesterGroupMountRule(in, name);
+   m_catalogue.RequesterGroupMountRule()->deleteRequesterGroupMountRule(in, name);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1280,7 +1280,7 @@ void RequestMessage::processLogicalLibrary_Add(cta::xrd::Response &response)
    auto isDisabled = getOptional(OptionBoolean::DISABLED);
    auto &comment   = getRequired(OptionString::COMMENT);
 
-   m_catalogue.createLogicalLibrary(m_cliIdentity, name, isDisabled ? isDisabled.value() : false, comment);
+   m_catalogue.LogicalLibrary()->createLogicalLibrary(m_cliIdentity, name, isDisabled ? isDisabled.value() : false, comment);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1297,17 +1297,17 @@ void RequestMessage::processLogicalLibrary_Ch(cta::xrd::Response &response)
    auto  disabledReason   = getOptional(OptionString::DISABLED_REASON);
 
    if(disabled) {
-      m_catalogue.setLogicalLibraryDisabled(m_cliIdentity, name, disabled.value());
+      m_catalogue.LogicalLibrary()->setLogicalLibraryDisabled(m_cliIdentity, name, disabled.value());
       if ((!disabled.value()) && (!disabledReason)) {
          //if enabling the tape and the reason is not specified in the command, erase the reason
-         m_catalogue.modifyLogicalLibraryDisabledReason(m_cliIdentity, name, "");
+         m_catalogue.LogicalLibrary()->modifyLogicalLibraryDisabledReason(m_cliIdentity, name, "");
       }
    }
    if(comment) {
-      m_catalogue.modifyLogicalLibraryComment(m_cliIdentity, name, comment.value());
+      m_catalogue.LogicalLibrary()->modifyLogicalLibraryComment(m_cliIdentity, name, comment.value());
    }
    if (disabledReason) {
-      m_catalogue.modifyLogicalLibraryDisabledReason(m_cliIdentity, name, disabledReason.value());
+      m_catalogue.LogicalLibrary()->modifyLogicalLibraryDisabledReason(m_cliIdentity, name, disabledReason.value());
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -1321,7 +1321,7 @@ void RequestMessage::processLogicalLibrary_Rm(cta::xrd::Response &response)
 
    auto &name = getRequired(OptionString::LOGICAL_LIBRARY);
 
-   m_catalogue.deleteLogicalLibrary(name);
+   m_catalogue.LogicalLibrary()->deleteLogicalLibrary(name);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1380,7 +1380,7 @@ void RequestMessage::processMediaType_Add(cta::xrd::Response &response)
    mediaType.minLPos              = getOptional(OptionUInt64::MIN_LPOS);
    mediaType.maxLPos              = getOptional(OptionUInt64::MAX_LPOS);
    mediaType.comment              = getRequired(OptionString::COMMENT);
-   m_catalogue.createMediaType(m_cliIdentity, mediaType);
+   m_catalogue.MediaType()->createMediaType(m_cliIdentity, mediaType);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1421,26 +1421,26 @@ void RequestMessage::processMediaType_Ch(cta::xrd::Response &response)
   }
 
   if(cartridge){
-    m_catalogue.modifyMediaTypeCartridge(m_cliIdentity,mediaTypeName,cartridge.value());
+    m_catalogue.MediaType()->modifyMediaTypeCartridge(m_cliIdentity,mediaTypeName,cartridge.value());
   }
   if(primaryDensityCode){
-    m_catalogue.modifyMediaTypePrimaryDensityCode(m_cliIdentity,mediaTypeName,primaryDensityCode.value());
+    m_catalogue.MediaType()->modifyMediaTypePrimaryDensityCode(m_cliIdentity,mediaTypeName,primaryDensityCode.value());
   }
   if(secondaryDensityCode){
-    m_catalogue.modifyMediaTypeSecondaryDensityCode(m_cliIdentity,mediaTypeName,secondaryDensityCode.value());
+    m_catalogue.MediaType()->modifyMediaTypeSecondaryDensityCode(m_cliIdentity,mediaTypeName,secondaryDensityCode.value());
   }
   if(nbWraps){
     std::optional<uint32_t> newNbWraps = nbWraps.value();
-    m_catalogue.modifyMediaTypeNbWraps(m_cliIdentity,mediaTypeName,newNbWraps);
+    m_catalogue.MediaType()->modifyMediaTypeNbWraps(m_cliIdentity,mediaTypeName,newNbWraps);
   }
   if(minlpos){
-    m_catalogue.modifyMediaTypeMinLPos(m_cliIdentity, mediaTypeName, minlpos);
+    m_catalogue.MediaType()->modifyMediaTypeMinLPos(m_cliIdentity, mediaTypeName, minlpos);
   }
   if(maxlpos){
-    m_catalogue.modifyMediaTypeMaxLPos(m_cliIdentity,mediaTypeName,maxlpos);
+    m_catalogue.MediaType()->modifyMediaTypeMaxLPos(m_cliIdentity,mediaTypeName,maxlpos);
   }
   if(comment){
-    m_catalogue.modifyMediaTypeComment(m_cliIdentity,mediaTypeName,comment.value());
+    m_catalogue.MediaType()->modifyMediaTypeComment(m_cliIdentity,mediaTypeName,comment.value());
   }
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1453,7 +1453,7 @@ void RequestMessage::processMediaType_Rm(cta::xrd::Response &response)
 
    const auto &mtn = getRequired(OptionString::MEDIA_TYPE);
 
-   m_catalogue.deleteMediaType(mtn);
+   m_catalogue.MediaType()->deleteMediaType(mtn);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1492,7 +1492,7 @@ void RequestMessage::processMountPolicy_Add(cta::xrd::Response &response)
    mountPolicy.minRetrieveRequestAge = minretrieverequestage;
    mountPolicy.comment = comment;
 
-   m_catalogue.createMountPolicy(m_cliIdentity, mountPolicy);
+   m_catalogue.MountPolicy()->createMountPolicy(m_cliIdentity, mountPolicy);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1511,19 +1511,19 @@ void RequestMessage::processMountPolicy_Ch(cta::xrd::Response &response)
    auto  comment               = getOptional(OptionString::COMMENT);
 
    if(archivepriority) {
-      m_catalogue.modifyMountPolicyArchivePriority(m_cliIdentity, group, archivepriority.value());
+      m_catalogue.MountPolicy()->modifyMountPolicyArchivePriority(m_cliIdentity, group, archivepriority.value());
    }
    if(minarchiverequestage) {
-      m_catalogue.modifyMountPolicyArchiveMinRequestAge(m_cliIdentity, group, minarchiverequestage.value());
+      m_catalogue.MountPolicy()->modifyMountPolicyArchiveMinRequestAge(m_cliIdentity, group, minarchiverequestage.value());
    }
    if(retrievepriority) {
-      m_catalogue.modifyMountPolicyRetrievePriority(m_cliIdentity, group, retrievepriority.value());
+      m_catalogue.MountPolicy()->modifyMountPolicyRetrievePriority(m_cliIdentity, group, retrievepriority.value());
    }
    if(minretrieverequestage) {
-      m_catalogue.modifyMountPolicyRetrieveMinRequestAge(m_cliIdentity, group, minretrieverequestage.value());
+      m_catalogue.MountPolicy()->modifyMountPolicyRetrieveMinRequestAge(m_cliIdentity, group, minretrieverequestage.value());
    }
    if(comment) {
-      m_catalogue.modifyMountPolicyComment(m_cliIdentity, group, comment.value());
+      m_catalogue.MountPolicy()->modifyMountPolicyComment(m_cliIdentity, group, comment.value());
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -1537,7 +1537,7 @@ void RequestMessage::processMountPolicy_Rm(cta::xrd::Response &response)
 
    auto &group = getRequired(OptionString::MOUNT_POLICY);
 
-   m_catalogue.deleteMountPolicy(group);
+   m_catalogue.MountPolicy()->deleteMountPolicy(group);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1579,7 +1579,7 @@ void RequestMessage::processRepack_Add(cta::xrd::Response &response)
   //Get the mountpolicy from the catalogue
   common::dataStructures::MountPolicy mountPolicy;
   typedef std::list<common::dataStructures::MountPolicy> MountPolicyList;
-  MountPolicyList mountPolicies = m_catalogue.getMountPolicies();
+  MountPolicyList mountPolicies = m_catalogue.MountPolicy()->getMountPolicies();
   MountPolicyList::const_iterator repackMountPolicyItor = std::find_if(mountPolicies.begin(),mountPolicies.end(),[mountPolicyProvidedByUser](const common::dataStructures::MountPolicy & mp){
     return mp.name == mountPolicyProvidedByUser;
   });
@@ -1678,7 +1678,7 @@ void RequestMessage::processRequesterMountRule_Add(cta::xrd::Response &response)
    auto &name        = getRequired(OptionString::USERNAME);
    auto &comment     = getRequired(OptionString::COMMENT);
 
-   m_catalogue.createRequesterMountRule(m_cliIdentity, mountpolicy, in, name, comment);
+   m_catalogue.RequesterMountRule()->createRequesterMountRule(m_cliIdentity, mountpolicy, in, name, comment);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1695,10 +1695,10 @@ void RequestMessage::processRequesterMountRule_Ch(cta::xrd::Response &response)
    auto  mountpolicy = getOptional(OptionString::MOUNT_POLICY);
 
    if(comment) {
-      m_catalogue.modifyRequesteMountRuleComment(m_cliIdentity, in, name, comment.value());
+      m_catalogue.RequesterMountRule()->modifyRequesteMountRuleComment(m_cliIdentity, in, name, comment.value());
    }
    if(mountpolicy) {
-      m_catalogue.modifyRequesterMountRulePolicy(m_cliIdentity, in, name, mountpolicy.value());
+      m_catalogue.RequesterMountRule()->modifyRequesterMountRulePolicy(m_cliIdentity, in, name, mountpolicy.value());
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -1713,7 +1713,7 @@ void RequestMessage::processRequesterMountRule_Rm(cta::xrd::Response &response)
    auto &in   = getRequired(OptionString::INSTANCE);
    auto &name = getRequired(OptionString::USERNAME);
 
-   m_catalogue.deleteRequesterMountRule(in, name);
+   m_catalogue.RequesterMountRule()->deleteRequesterMountRule(in, name);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1743,7 +1743,8 @@ void RequestMessage::processActivityMountRule_Add(cta::xrd::Response &response)
    auto &comment       = getRequired(OptionString::COMMENT);
    auto &activityRegex = getRequired(OptionString::ACTIVITY_REGEX);
 
-   m_catalogue.createRequesterActivityMountRule(m_cliIdentity, mountpolicy, in, name, activityRegex, comment);
+   m_catalogue.RequesterActivityMountRule()->createRequesterActivityMountRule(m_cliIdentity, mountpolicy, in, name,
+      activityRegex, comment);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1762,10 +1763,12 @@ void RequestMessage::processActivityMountRule_Ch(cta::xrd::Response &response)
    auto  mountpolicy   = getOptional(OptionString::MOUNT_POLICY);
 
    if(comment) {
-      m_catalogue.modifyRequesterActivityMountRuleComment(m_cliIdentity, in, name, activityRegex, comment.value());
+      m_catalogue.RequesterActivityMountRule()->modifyRequesterActivityMountRuleComment(m_cliIdentity, in, name,
+         activityRegex, comment.value());
    }
    if(mountpolicy) {
-      m_catalogue.modifyRequesterActivityMountRulePolicy(m_cliIdentity, in, name, activityRegex, mountpolicy.value());
+      m_catalogue.RequesterActivityMountRule()->modifyRequesterActivityMountRulePolicy(m_cliIdentity, in, name,
+         activityRegex, mountpolicy.value());
    }
    
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -1781,7 +1784,7 @@ void RequestMessage::processActivityMountRule_Rm(cta::xrd::Response &response)
    auto &name = getRequired(OptionString::USERNAME);
    auto &activityRegex = getRequired(OptionString::ACTIVITY_REGEX);
 
-   m_catalogue.deleteRequesterActivityMountRule(in, name, activityRegex);
+   m_catalogue.RequesterActivityMountRule()->deleteRequesterActivityMountRule(in, name, activityRegex);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1824,7 +1827,7 @@ void RequestMessage::processStorageClass_Add(cta::xrd::Response &response)
    storageClass.comment      = getRequired(OptionString::COMMENT);
    storageClass.vo.name      = getRequired(OptionString::VO);
 
-   m_catalogue.createStorageClass(m_cliIdentity, storageClass);
+   m_catalogue.StorageClass()->createStorageClass(m_cliIdentity, storageClass);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1841,13 +1844,13 @@ void RequestMessage::processStorageClass_Ch(cta::xrd::Response &response)
    auto vo       = getOptional(OptionString::VO);
 
    if(comment) {
-      m_catalogue.modifyStorageClassComment(m_cliIdentity, scn, comment.value());
+      m_catalogue.StorageClass()->modifyStorageClassComment(m_cliIdentity, scn, comment.value());
    }
    if(cn) {
-      m_catalogue.modifyStorageClassNbCopies(m_cliIdentity, scn, cn.value());
+      m_catalogue.StorageClass()->modifyStorageClassNbCopies(m_cliIdentity, scn, cn.value());
    }
    if(vo){
-     m_catalogue.modifyStorageClassVo(m_cliIdentity,scn,vo.value());
+     m_catalogue.StorageClass()->modifyStorageClassVo(m_cliIdentity,scn,vo.value());
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -1861,7 +1864,7 @@ void RequestMessage::processStorageClass_Rm(cta::xrd::Response &response)
 
    auto &scn = getRequired(OptionString::STORAGE_CLASS);
 
-   m_catalogue.deleteStorageClass(scn);
+   m_catalogue.StorageClass()->deleteStorageClass(scn);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1913,7 +1916,7 @@ void RequestMessage::processTape_Add(cta::xrd::Response &response)
      tape.state = common::dataStructures::Tape::stringToState(state.value(), true);
    }
    tape.stateReason = stateReason;
-   m_catalogue.createTape(m_cliIdentity, tape);
+   m_catalogue.Tape()->createTape(m_cliIdentity, tape);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -1938,43 +1941,43 @@ void RequestMessage::processTape_Ch(cta::xrd::Response &response)
    auto  verificationStatus = getOptional(OptionString::VERIFICATION_STATUS);
 
    if(mediaType) {
-      if (m_catalogue.getNbFilesOnTape(vid) != 0) {
+      if (m_catalogue.Tape()->getNbFilesOnTape(vid) != 0) {
          response.set_type(cta::xrd::Response::RSP_ERR_CTA);
          return;
       }
-      m_catalogue.modifyTapeMediaType(m_cliIdentity, vid, mediaType.value());
+      m_catalogue.Tape()->modifyTapeMediaType(m_cliIdentity, vid, mediaType.value());
    }
    if(vendor) {
-      m_catalogue.modifyTapeVendor(m_cliIdentity, vid, vendor.value());
+      m_catalogue.Tape()->modifyTapeVendor(m_cliIdentity, vid, vendor.value());
    }
    if(logicallibrary) {
-      m_catalogue.modifyTapeLogicalLibraryName(m_cliIdentity, vid, logicallibrary.value());
+      m_catalogue.Tape()->modifyTapeLogicalLibraryName(m_cliIdentity, vid, logicallibrary.value());
    }
    if(tapepool) {
-      m_catalogue.modifyTapeTapePoolName(m_cliIdentity, vid, tapepool.value());
+      m_catalogue.Tape()->modifyTapeTapePoolName(m_cliIdentity, vid, tapepool.value());
    }
    if(comment) {
       if(comment.value().empty()){
         //If the comment is an empty string, the user meant to delete it
         comment = std::nullopt;
       }
-      m_catalogue.modifyTapeComment(m_cliIdentity, vid, comment);
+      m_catalogue.Tape()->modifyTapeComment(m_cliIdentity, vid, comment);
    }
    if(encryptionkeyName) {
-      m_catalogue.modifyTapeEncryptionKeyName(m_cliIdentity, vid, encryptionkeyName.value());
+      m_catalogue.Tape()->modifyTapeEncryptionKeyName(m_cliIdentity, vid, encryptionkeyName.value());
    }
    if(full) {
-      m_catalogue.setTapeFull(m_cliIdentity, vid, full.value());
+      m_catalogue.Tape()->setTapeFull(m_cliIdentity, vid, full.value());
    }
    if(state){
      auto stateEnumValue = common::dataStructures::Tape::stringToState(state.value(), true);
      m_scheduler.triggerTapeStateChange(m_cliIdentity,vid,stateEnumValue,stateReason, m_lc);
    }
    if (dirty) {
-      m_catalogue.setTapeDirty(m_cliIdentity, vid, dirty.value());
+      m_catalogue.Tape()->setTapeDirty(m_cliIdentity, vid, dirty.value());
    }
    if (verificationStatus) {
-      m_catalogue.modifyTapeVerificationStatus(m_cliIdentity, vid, verificationStatus.value());
+      m_catalogue.Tape()->modifyTapeVerificationStatus(m_cliIdentity, vid, verificationStatus.value());
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -1991,7 +1994,7 @@ void RequestMessage::processTape_Rm(cta::xrd::Response &response)
    if (m_scheduler.isBeingRepacked(vid)) {
      throw cta::exception::UserError("Cannot delete tape " + vid + " because there is a repack for that tape");
    }  
-   m_catalogue.deleteTape(vid);
+   m_catalogue.Tape()->deleteTape(vid);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -2004,7 +2007,7 @@ void RequestMessage::processTape_Reclaim(cta::xrd::Response &response)
 
    auto &vid = getRequired(OptionString::VID);
 
-   m_catalogue.reclaimTape(m_cliIdentity, vid, m_lc);
+   m_catalogue.Tape()->reclaimTape(m_cliIdentity, vid, m_lc);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -2068,12 +2071,12 @@ void RequestMessage::processTapeFile_Rm(cta::xrd::Response &response)
     searchCriteria.diskInstance = instance.value();
   }
   
-  auto archiveFile = m_catalogue.getArchiveFileForDeletion(searchCriteria);
+  auto archiveFile = m_catalogue.ArchiveFile()->getArchiveFileForDeletion(searchCriteria);
   grpc::EndpointMap endpoints(m_namespaceMap);
   auto diskFilePath = endpoints.getPath(archiveFile.diskInstance, archiveFile.diskFileId);
   archiveFile.diskFileInfo.path = diskFilePath;
 
-  m_catalogue.deleteTapeFileCopy(archiveFile, reason);
+  m_catalogue.TapeFile()->deleteTapeFileCopy(archiveFile, reason);
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -2089,7 +2092,7 @@ void RequestMessage::processTapePool_Add(cta::xrd::Response &response)
    auto &encrypted = getRequired(OptionBoolean::ENCRYPTED);
    auto  supply    = getOptional(OptionString::SUPPLY);
 
-   m_catalogue.createTapePool(m_cliIdentity, name, vo, ptn, encrypted, supply, comment);
+   m_catalogue.TapePool()->createTapePool(m_cliIdentity, name, vo, ptn, encrypted, supply, comment);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -2108,19 +2111,19 @@ void RequestMessage::processTapePool_Ch(cta::xrd::Response &response)
    auto  supply    = getOptional(OptionString::SUPPLY);
 
    if(comment) {
-      m_catalogue.modifyTapePoolComment(m_cliIdentity, name, comment.value());
+      m_catalogue.TapePool()->modifyTapePoolComment(m_cliIdentity, name, comment.value());
    }
    if(vo) {
-      m_catalogue.modifyTapePoolVo(m_cliIdentity, name, vo.value());
+      m_catalogue.TapePool()->modifyTapePoolVo(m_cliIdentity, name, vo.value());
    }
    if(ptn) {
-      m_catalogue.modifyTapePoolNbPartialTapes(m_cliIdentity, name, ptn.value());
+      m_catalogue.TapePool()->modifyTapePoolNbPartialTapes(m_cliIdentity, name, ptn.value());
    }
    if(encrypted) {
-      m_catalogue.setTapePoolEncryption(m_cliIdentity, name, encrypted.value());
+      m_catalogue.TapePool()->setTapePoolEncryption(m_cliIdentity, name, encrypted.value());
    }
    if(supply) {
-      m_catalogue.modifyTapePoolSupply(m_cliIdentity, name, supply.value());
+      m_catalogue.TapePool()->modifyTapePoolSupply(m_cliIdentity, name, supply.value());
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -2134,7 +2137,7 @@ void RequestMessage::processTapePool_Rm(cta::xrd::Response &response)
 
    auto &name = getRequired(OptionString::TAPE_POOL);
 
-   m_catalogue.deleteTapePool(name);
+   m_catalogue.TapePool()->deleteTapePool(name);
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -2177,7 +2180,8 @@ void RequestMessage::processDiskSystem_Add(cta::xrd::Response &response)
   const auto &sleepTime         = getRequired(OptionUInt64::SLEEP_TIME);
   const auto &comment           = getRequired(OptionString::COMMENT);
 
-  m_catalogue.createDiskSystem(m_cliIdentity, name,diskInstance, diskInstanceSpace, fileRegexp, targetedFreeSpace, sleepTime, comment);
+  m_catalogue.DiskSystem()->createDiskSystem(m_cliIdentity, name,diskInstance, diskInstanceSpace, fileRegexp,
+   targetedFreeSpace, sleepTime, comment);
 
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -2195,22 +2199,22 @@ void RequestMessage::processDiskSystem_Ch(cta::xrd::Response &response)
    const auto  diskInstanceSpaceName = getOptional(OptionString::DISK_INSTANCE_SPACE);
 
    if(comment) {
-      m_catalogue.modifyDiskSystemComment(m_cliIdentity, name, comment.value());
+      m_catalogue.DiskSystem()->modifyDiskSystemComment(m_cliIdentity, name, comment.value());
    }
    if(fileRegexp) {
-      m_catalogue.modifyDiskSystemFileRegexp(m_cliIdentity, name, fileRegexp.value());
+      m_catalogue.DiskSystem()->modifyDiskSystemFileRegexp(m_cliIdentity, name, fileRegexp.value());
    }
    if (sleepTime) {
-     m_catalogue.modifyDiskSystemSleepTime(m_cliIdentity, name, sleepTime.value());
+     m_catalogue.DiskSystem()->modifyDiskSystemSleepTime(m_cliIdentity, name, sleepTime.value());
    }
    if(targetedFreeSpace) {
-      m_catalogue.modifyDiskSystemTargetedFreeSpace(m_cliIdentity, name, targetedFreeSpace.value());
+      m_catalogue.DiskSystem()->modifyDiskSystemTargetedFreeSpace(m_cliIdentity, name, targetedFreeSpace.value());
    }
    if (diskInstanceName) {
-      m_catalogue.modifyDiskSystemDiskInstanceName(m_cliIdentity, name, diskInstanceName.value());
+      m_catalogue.DiskSystem()->modifyDiskSystemDiskInstanceName(m_cliIdentity, name, diskInstanceName.value());
    }
    if (diskInstanceSpaceName) {
-      m_catalogue.modifyDiskSystemDiskInstanceSpaceName(m_cliIdentity, name, diskInstanceSpaceName.value());
+      m_catalogue.DiskSystem()->modifyDiskSystemDiskInstanceSpaceName(m_cliIdentity, name, diskInstanceSpaceName.value());
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -2222,7 +2226,7 @@ void RequestMessage::processDiskSystem_Rm(cta::xrd::Response &response)
 
   const auto &name = getRequired(OptionString::DISK_SYSTEM);
 
-  m_catalogue.deleteDiskSystem(name);
+  m_catalogue.DiskSystem()->deleteDiskSystem(name);
 
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -2245,7 +2249,7 @@ void RequestMessage::processDiskInstance_Add(cta::xrd::Response &response)
   const auto &name              = getRequired(OptionString::DISK_INSTANCE);
   const auto &comment           = getRequired(OptionString::COMMENT);
 
-  m_catalogue.createDiskInstance(m_cliIdentity, name, comment);
+  m_catalogue.DiskInstance()->createDiskInstance(m_cliIdentity, name, comment);
 
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -2258,7 +2262,7 @@ void RequestMessage::processDiskInstance_Ch(cta::xrd::Response &response)
    const auto comment            = getOptional(OptionString::COMMENT);
 
    if(comment) {
-      m_catalogue.modifyDiskInstanceComment(m_cliIdentity, name, comment.value());
+      m_catalogue.DiskInstance()->modifyDiskInstanceComment(m_cliIdentity, name, comment.value());
    }
 
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -2270,7 +2274,7 @@ void RequestMessage::processDiskInstance_Rm(cta::xrd::Response &response)
 
   const auto &name = getRequired(OptionString::DISK_INSTANCE);
 
-  m_catalogue.deleteDiskInstance(name);
+  m_catalogue.DiskInstance()->deleteDiskInstance(name);
 
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -2296,7 +2300,8 @@ void RequestMessage::processDiskInstanceSpace_Add(cta::xrd::Response &response)
   const auto &freeSpaceQueryURL = getRequired(OptionString::FREE_SPACE_QUERY_URL);
   const auto refreshInterval    = getRequired(OptionUInt64::REFRESH_INTERVAL);
    
-  m_catalogue.createDiskInstanceSpace(m_cliIdentity, name, diskInstance, freeSpaceQueryURL, refreshInterval, comment);
+  m_catalogue.DiskInstanceSpace()->createDiskInstanceSpace(m_cliIdentity, name, diskInstance, freeSpaceQueryURL,
+   refreshInterval, comment);
 
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -2312,13 +2317,16 @@ void RequestMessage::processDiskInstanceSpace_Ch(cta::xrd::Response &response)
    const auto refreshInterval    = getOptional(OptionUInt64::REFRESH_INTERVAL);
    
    if(comment) {
-      m_catalogue.modifyDiskInstanceSpaceComment(m_cliIdentity, name, diskInstance, comment.value());
+      m_catalogue.DiskInstanceSpace()->modifyDiskInstanceSpaceComment(m_cliIdentity, name, diskInstance,
+         comment.value());
    }
    if(freeSpaceQueryURL) {
-      m_catalogue.modifyDiskInstanceSpaceQueryURL(m_cliIdentity, name, diskInstance, freeSpaceQueryURL.value());
+      m_catalogue.DiskInstanceSpace()->modifyDiskInstanceSpaceQueryURL(m_cliIdentity, name, diskInstance,
+         freeSpaceQueryURL.value());
    }
    if(refreshInterval) {
-      m_catalogue.modifyDiskInstanceSpaceRefreshInterval(m_cliIdentity, name, diskInstance, refreshInterval.value());
+      m_catalogue.DiskInstanceSpace()->modifyDiskInstanceSpaceRefreshInterval(m_cliIdentity, name, diskInstance,
+         refreshInterval.value());
    }
    
    response.set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -2331,7 +2339,7 @@ void RequestMessage::processDiskInstanceSpace_Rm(cta::xrd::Response &response)
   const auto &name         = getRequired(OptionString::DISK_INSTANCE_SPACE);
   const auto &diskInstance = getRequired(OptionString::DISK_INSTANCE);
 
-  m_catalogue.deleteDiskInstanceSpace(name, diskInstance);
+  m_catalogue.DiskInstanceSpace()->deleteDiskInstanceSpace(name, diskInstance);
 
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -2359,7 +2367,7 @@ void RequestMessage::processVirtualOrganization_Add(cta::xrd::Response &response
     vo.maxFileSize = m_archiveFileMaxSize;
   }
 
-  m_catalogue.createVirtualOrganization(m_cliIdentity,vo);
+  m_catalogue.VO()->createVirtualOrganization(m_cliIdentity,vo);
 
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -2375,19 +2383,19 @@ void RequestMessage::processVirtualOrganization_Ch(cta::xrd::Response &response)
   const auto diskInstanceName = getOptional(OptionString::DISK_INSTANCE);
 
   if(comment)
-    m_catalogue.modifyVirtualOrganizationComment(m_cliIdentity,name,comment.value());
+    m_catalogue.VO()->modifyVirtualOrganizationComment(m_cliIdentity,name,comment.value());
 
   if(readMaxDrives)
-    m_catalogue.modifyVirtualOrganizationReadMaxDrives(m_cliIdentity,name,readMaxDrives.value());
+    m_catalogue.VO()->modifyVirtualOrganizationReadMaxDrives(m_cliIdentity,name,readMaxDrives.value());
 
   if(writeMaxDrives)
-    m_catalogue.modifyVirtualOrganizationWriteMaxDrives(m_cliIdentity,name,writeMaxDrives.value());
+    m_catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(m_cliIdentity,name,writeMaxDrives.value());
 
   if(maxFileSize)
-    m_catalogue.modifyVirtualOrganizationMaxFileSize(m_cliIdentity,name,maxFileSize.value());
+    m_catalogue.VO()->modifyVirtualOrganizationMaxFileSize(m_cliIdentity,name,maxFileSize.value());
 
-  if(diskInstanceName) 
-    m_catalogue.modifyVirtualOrganizationDiskInstanceName(m_cliIdentity, name, diskInstanceName.value());
+  if(diskInstanceName)
+    m_catalogue.VO()->modifyVirtualOrganizationDiskInstanceName(m_cliIdentity, name, diskInstanceName.value());
 
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -2397,7 +2405,7 @@ void RequestMessage::processVirtualOrganization_Rm(cta::xrd::Response& response)
 
   const auto &name = getRequired(OptionString::VO);
 
-  m_catalogue.deleteVirtualOrganization(name);
+  m_catalogue.VO()->deleteVirtualOrganization(name);
 
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
@@ -2421,7 +2429,7 @@ std::string RequestMessage::setDriveState(const std::string &regex, const cta::c
 
   cta::utils::Regex driveNameRegex(regex.c_str());
 
-  const auto tapeDriveNames = m_catalogue.getTapeDriveNames();
+  const auto tapeDriveNames = m_catalogue.DriveState()->getTapeDriveNames();
   bool is_found = false;
 
   for(auto tapeDriveName: tapeDriveNames)
@@ -2523,7 +2531,7 @@ void RequestMessage::processRecycleTapeFile_Restore(cta::xrd::Response& response
   if(!has_any){
     throw cta::exception::UserError("Must specify at least one of the following search options: vid, fxid, fxidfile or archiveFileId");
   }
-  m_catalogue.restoreFileInRecycleLog(searchCriteria, std::to_string(fid));
+  m_catalogue.FileRecycleLog()->restoreFileInRecycleLog(searchCriteria, std::to_string(fid));
   response.set_type(cta::xrd::Response::RSP_SUCCESS);
 }
 
@@ -2545,7 +2553,8 @@ void RequestMessage::processModifyArchiveFile(cta::xrd::Response& response) {
       }
       // call is from cta-eos-namespace-inject
       if(fxId && diskInstance) {
-         m_catalogue.modifyArchiveFileFxIdAndDiskInstance(cta::utils::toUint64(archiveFileIds[0]), fxId.value(), diskInstance.value());
+         m_catalogue.ArchiveFile()->modifyArchiveFileFxIdAndDiskInstance(cta::utils::toUint64(archiveFileIds[0]),
+            fxId.value(), diskInstance.value());
       }
       response.set_type(cta::xrd::Response::RSP_SUCCESS);
    } catch(exception::UserError &ue) {

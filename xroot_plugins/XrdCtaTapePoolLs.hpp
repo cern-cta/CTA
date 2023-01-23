@@ -59,7 +59,7 @@ private:
 
 TapePoolLsStream::TapePoolLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
-  m_tapePoolList(catalogue.getTapePools())
+  m_tapePoolList(catalogue.TapePool()->getTapePools())
 {
   using namespace cta::admin;
 
@@ -70,7 +70,7 @@ TapePoolLsStream::TapePoolLsStream(const RequestMessage &requestMsg, cta::catalo
   searchCriteria.vo = requestMsg.getOptional(OptionString::VO);
   searchCriteria.encrypted = requestMsg.getOptional(OptionBoolean::ENCRYPTED);
 
-  m_tapePoolList = m_catalogue.getTapePools(searchCriteria);
+  m_tapePoolList = m_catalogue.TapePool()->getTapePools(searchCriteria);
 }
 
 int TapePoolLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {

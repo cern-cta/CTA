@@ -60,7 +60,7 @@ private:
 
 DiskInstanceSpaceLsStream::DiskInstanceSpaceLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
-  m_diskInstanceSpaceList(catalogue.getAllDiskInstanceSpaces())
+  m_diskInstanceSpaceList(catalogue.DiskInstanceSpace()->getAllDiskInstanceSpaces())
 {
   using namespace cta::admin;
 

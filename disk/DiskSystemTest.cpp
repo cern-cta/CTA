@@ -74,13 +74,13 @@ namespace unitTests {
         // create disk instance
         std::string diskInstanceName = "DiskInstanceNameSpinner";
         std::string diskInstanceComment = "Comment";
-        catalogue.createDiskInstance(m_cliId, diskInstanceName, diskInstanceComment);
+        catalogue.DiskInstance()->createDiskInstance(m_cliId, diskInstanceName, diskInstanceComment);
         // create disk instance space
         std::string diskInstanceSpaceName = "DiskInstanceSpaceSpinner";
         std::string freeSpaceQueryURL = "eos:ctaeos:spinners";
         uint64_t refrestInterval = 1; 
         std::string diskInstanceSpaceComment = "Comment";
-        catalogue.createDiskInstanceSpace(m_cliId, diskInstanceSpaceName, diskInstanceName, freeSpaceQueryURL, refrestInterval, diskInstanceSpaceComment);
+        catalogue.DiskInstanceSpace()->createDiskInstanceSpace(m_cliId, diskInstanceSpaceName, diskInstanceName, freeSpaceQueryURL, refrestInterval, diskInstanceSpaceComment);
 
         m_diskSystemSpinner.name = "DiskSystemNameSpinner";
         m_diskSystemSpinner.fileRegexp = "root://ctaeos.archiveretrieve-1215709git0e38ccd0-xi98.svc.cluster.local//eos/ctaeos/cta(.*)eos.space=spinners";
@@ -88,7 +88,7 @@ namespace unitTests {
         m_diskSystemSpinner.sleepTime = 1;
         m_diskSystemSpinner.comment = "Comment";
 
-        catalogue.createDiskSystem(m_cliId,m_diskSystemSpinner.name, diskInstanceName, diskInstanceSpaceName, m_diskSystemSpinner.fileRegexp,
+        catalogue.DiskSystem()->createDiskSystem(m_cliId,m_diskSystemSpinner.name, diskInstanceName, diskInstanceSpaceName, m_diskSystemSpinner.fileRegexp,
           m_diskSystemSpinner.targetedFreeSpace, m_diskSystemSpinner.sleepTime,m_diskSystemSpinner.comment);
 
       }
@@ -98,13 +98,13 @@ namespace unitTests {
         // create disk instance
         std::string diskInstanceName = "ctaeos";
         std::string diskInstanceComment = "Comment";
-        catalogue.createDiskInstance(m_cliId, diskInstanceName, diskInstanceComment);
+        catalogue.DiskInstance()->createDiskInstance(m_cliId, diskInstanceName, diskInstanceComment);
         // create disk instance space
         std::string diskInstanceSpaceName = "DiskInstanceSpaceDefault";
         std::string freeSpaceQueryURL = "eosSpace:default";
         uint64_t refrestInterval = 1; 
         std::string diskInstanceSpaceComment = "Comment";
-        catalogue.createDiskInstanceSpace(m_cliId, diskInstanceSpaceName, diskInstanceName, freeSpaceQueryURL, refrestInterval, diskInstanceSpaceComment);
+        catalogue.DiskInstanceSpace()->createDiskInstanceSpace(m_cliId, diskInstanceSpaceName, diskInstanceName, freeSpaceQueryURL, refrestInterval, diskInstanceSpaceComment);
         // create disk system
         m_diskSystemDefault.name = "DiskSystemNameDefault";
         m_diskSystemDefault.fileRegexp = "root://ctaeos.archiveretrieve-1215709git0e38ccd0-xi98.svc.cluster.local//eos/ctaeos/cta(.*)eos.space=default";
@@ -112,7 +112,7 @@ namespace unitTests {
         m_diskSystemDefault.sleepTime = 1;
         m_diskSystemDefault.comment = "Comment";
 
-        catalogue.createDiskSystem(m_cliId,m_diskSystemDefault.name, diskInstanceName, diskInstanceSpaceName, m_diskSystemDefault.fileRegexp,
+        catalogue.DiskSystem()->createDiskSystem(m_cliId,m_diskSystemDefault.name, diskInstanceName, diskInstanceSpaceName, m_diskSystemDefault.fileRegexp,
           m_diskSystemDefault.targetedFreeSpace, m_diskSystemDefault.sleepTime,m_diskSystemDefault.comment);
 
       }
@@ -122,7 +122,7 @@ namespace unitTests {
     
     auto & catalogue = getCatalogue();
     
-    auto allDiskSystem = catalogue.getAllDiskSystems();
+    auto allDiskSystem = catalogue.DiskSystem()->getAllDiskSystems();
     
     std::string dstURL = "root://ctaeos.archiveretrieve-1215709git0e38ccd0-xi98.svc.cluster.local//eos/ctaeos/cta/54065a67-a3ea-4a44-b213-6f6a6f4e2cf4?eos.lfn=fxid:7&eos.ruid=0&eos.rgid=0&eos.injection=1&eos.workflow=retrieve_written&eos.space=spinners&toto=5";
     
@@ -144,13 +144,13 @@ namespace unitTests {
     // create disk instance
     std::string diskInstanceName = "DiskInstanceNameConstantFreeSpace";
     std::string diskInstanceComment = "Comment";
-    catalogue.createDiskInstance(m_cliId, diskInstanceName, diskInstanceComment);
+    catalogue.DiskInstance()->createDiskInstance(m_cliId, diskInstanceName, diskInstanceComment);
     // create disk instance space
     std::string diskInstanceSpaceName = "DiskInstanceSpaceConstantFreeSpace";
     std::string freeSpaceQueryURL = "constantFreeSpace:200";
     uint64_t refrestInterval = 1; 
     std::string diskInstanceSpaceComment = "Comment";
-    catalogue.createDiskInstanceSpace(m_cliId, diskInstanceSpaceName, diskInstanceName, freeSpaceQueryURL, refrestInterval, diskInstanceSpaceComment);
+    catalogue.DiskInstanceSpace()->createDiskInstanceSpace(m_cliId, diskInstanceSpaceName, diskInstanceName, freeSpaceQueryURL, refrestInterval, diskInstanceSpaceComment);
     // create disk system
     cta::disk::DiskSystem constantFreeSpaceDiskSystem;
 
@@ -160,10 +160,10 @@ namespace unitTests {
     constantFreeSpaceDiskSystem.sleepTime = 1;
     constantFreeSpaceDiskSystem.comment = "Comment";
     
-    catalogue.createDiskSystem(m_cliId,constantFreeSpaceDiskSystem.name, diskInstanceName, diskInstanceSpaceName, constantFreeSpaceDiskSystem.fileRegexp,
+    catalogue.DiskSystem()->createDiskSystem(m_cliId,constantFreeSpaceDiskSystem.name, diskInstanceName, diskInstanceSpaceName, constantFreeSpaceDiskSystem.fileRegexp,
       constantFreeSpaceDiskSystem.targetedFreeSpace, constantFreeSpaceDiskSystem.sleepTime,constantFreeSpaceDiskSystem.comment);
 
-    auto allDiskSystem = catalogue.getAllDiskSystems();
+    auto allDiskSystem = catalogue.DiskSystem()->getAllDiskSystems();
     
     cta::disk::DiskSystemFreeSpaceList diskSystemFreeSpaceList (allDiskSystem);
     std::set<std::string> diskSystemsToFetch {"DiskSystemNotExists"};

@@ -19,7 +19,7 @@
 #include <gtest/gtest.h>
 
 #include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
-#include "catalogue/DummyCatalogue.hpp"
+#include "catalogue/dummy/DummyCatalogue.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/StringLogger.hpp"
 #include "scheduler/testingMocks/MockRetrieveJob.hpp"

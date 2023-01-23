@@ -36,7 +36,7 @@
 #include "ArchiveQueue.hpp"
 #include "RetrieveQueue.hpp"
 #include "EntryLogSerDeser.hpp"
-#include "catalogue/DummyCatalogue.hpp"
+#include "catalogue/dummy/DummyCatalogue.hpp"
 #include "Sorter.hpp"
 
 #include "ObjectStoreFixture.hpp"

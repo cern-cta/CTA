@@ -146,7 +146,8 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
     entry.targetedFreeSpace = m_systemList.at(ds).targetedFreeSpace;
 
     if (updateCatalogue) {
-      catalogue.modifyDiskInstanceSpaceFreeSpace(diskInstanceSpace.name, diskInstanceSpace.diskInstance, freeSpace);   
+      catalogue.DiskInstanceSpace()->modifyDiskInstanceSpaceFreeSpace(diskInstanceSpace.name,
+        diskInstanceSpace.diskInstance, freeSpace);
     }
   }
   if(failedToFetchDiskSystems.size()){

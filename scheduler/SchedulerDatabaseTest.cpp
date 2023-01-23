@@ -22,7 +22,7 @@
 #include <exception>
 #include <future>
 
-#include "catalogue/DummyCatalogue.hpp"
+#include "catalogue/dummy/DummyCatalogue.hpp"
 #include "catalogue/InMemoryCatalogue.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/DummyLogger.hpp"
@@ -640,14 +640,14 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
   cta::SchedulerDatabase &db = getDb();
   cta::catalogue::Catalogue &catalogue = getCatalogue();
 
-  catalogue.createDiskInstance(common::dataStructures::SecurityIdentity(), "di", "No comment");
-  catalogue.createDiskInstanceSpace(common::dataStructures::SecurityIdentity(), "dis-A", "di", "constantFreeSpace:999999999999", 60, "No comment");
-  catalogue.createDiskSystem(common::dataStructures::SecurityIdentity(), "ds-A", "di", "dis-A", "$root://a.disk.system/", 10UL*1000*1000*1000, 15*60, "No comment");
+  catalogue.DiskInstance()->createDiskInstance(common::dataStructures::SecurityIdentity(), "di", "No comment");
+  catalogue.DiskInstanceSpace()->createDiskInstanceSpace(common::dataStructures::SecurityIdentity(), "dis-A", "di", "constantFreeSpace:999999999999", 60, "No comment");
+  catalogue.DiskSystem()->createDiskSystem(common::dataStructures::SecurityIdentity(), "ds-A", "di", "dis-A", "$root://a.disk.system/", 10UL*1000*1000*1000, 15*60, "No comment");
 
-  catalogue.createDiskInstanceSpace(common::dataStructures::SecurityIdentity(), "dis-B", "di", "constantFreeSpace:999999999999", 60, "No comment");
-  catalogue.createDiskSystem(common::dataStructures::SecurityIdentity(), "ds-B", "di", "dis-B", "$root://b.disk.system/", 10UL*1000*1000*1000, 15*60,"No comment");
+  catalogue.DiskInstanceSpace()->createDiskInstanceSpace(common::dataStructures::SecurityIdentity(), "dis-B", "di", "constantFreeSpace:999999999999", 60, "No comment");
+  catalogue.DiskSystem()->createDiskSystem(common::dataStructures::SecurityIdentity(), "ds-B", "di", "dis-B", "$root://b.disk.system/", 10UL*1000*1000*1000, 15*60,"No comment");
 
-  auto diskSystemList = catalogue.getAllDiskSystems();
+  auto diskSystemList = catalogue.DiskSystem()->getAllDiskSystems();
 
   // Inject 10 retrieve jobs to the db.
   const size_t filesToDo = 10;
@@ -734,11 +734,11 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
   // Create the disk system list
   // only one disk system per queue, like in the production
 
-  catalogue.createDiskInstance(common::dataStructures::SecurityIdentity(), "di", "No comment");
-  catalogue.createDiskInstanceSpace(common::dataStructures::SecurityIdentity(), "dis-A", "di", "constantFreeSpace:6000", 60, "No comment");
-  catalogue.createDiskSystem(common::dataStructures::SecurityIdentity(), "ds-A", "di", "dis-A", "$root://a.disk.system/", 0UL, 15*60, "No comment");
+  catalogue.DiskInstance()->createDiskInstance(common::dataStructures::SecurityIdentity(), "di", "No comment");
+  catalogue.DiskInstanceSpace()->createDiskInstanceSpace(common::dataStructures::SecurityIdentity(), "dis-A", "di", "constantFreeSpace:6000", 60, "No comment");
+  catalogue.DiskSystem()->createDiskSystem(common::dataStructures::SecurityIdentity(), "ds-A", "di", "dis-A", "$root://a.disk.system/", 0UL, 15*60, "No comment");
 
-  auto diskSystemList = catalogue.getAllDiskSystems();
+  auto diskSystemList = catalogue.DiskSystem()->getAllDiskSystems();
 
   // Inject 10 retrieve jobs to the db.
   const size_t filesToDo = 10;
@@ -827,13 +827,13 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
   cta::SchedulerDatabase &db = getDb();
   cta::catalogue::Catalogue &catalogue = getCatalogue();
 
-  catalogue.createDiskInstance(common::dataStructures::SecurityIdentity(), "di", "No comment");
-  catalogue.createDiskInstanceSpace(common::dataStructures::SecurityIdentity(), "dis-error", "di", "constantFreeSpace-6000", 60, "No comment");
+  catalogue.DiskInstance()->createDiskInstance(common::dataStructures::SecurityIdentity(), "di", "No comment");
+  catalogue.DiskInstanceSpace()->createDiskInstanceSpace(common::dataStructures::SecurityIdentity(), "dis-error", "di", "constantFreeSpace-6000", 60, "No comment");
 
-  catalogue.createDiskSystem(common::dataStructures::SecurityIdentity(), "ds-Error", "di", "dis-error", "$root://error.disk.system/", 0UL,
+  catalogue.DiskSystem()->createDiskSystem(common::dataStructures::SecurityIdentity(), "ds-Error", "di", "dis-error", "$root://error.disk.system/", 0UL,
     15*60,"No comment");
 
-  auto diskSystemList = catalogue.getAllDiskSystems();
+  auto diskSystemList = catalogue.DiskSystem()->getAllDiskSystems();
   // Inject 10 retrieve jobs to the db.
   const size_t filesToDo = 10;
   std::list<std::future<void>> jobInsertions;

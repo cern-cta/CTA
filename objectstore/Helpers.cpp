@@ -392,7 +392,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
       }
     }
     // Add in all the entries we need for this batch of candidates
-    auto tapeStatuses = catalogue.getTapesByVid(candidateVids);
+    auto tapeStatuses = catalogue.Tape()->getTapesByVid(candidateVids);
     for(auto& ts : tapeStatuses) {
       g_tapeStatuses[ts.first].tapeStatus = ts.second;
       g_tapeStatuses[ts.first].updateTime = time(nullptr);
@@ -450,7 +450,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
       // Get the cached tape status value before releasing the lock
       if(g_tapeStatuses.find(v) == g_tapeStatuses.end()) {
         // Handle corner case where there are two candidate vids and the second candidate was evicted because it is stale
-        auto tapeStatuses = catalogue.getTapesByVid(v);
+        auto tapeStatuses = catalogue.Tape()->getTapesByVid(v);
         if(tapeStatuses.size() != 1) {
           throw cta::exception::Exception("In Helpers::selectBestRetrieveQueue(): candidate vid not found in the TAPE table.");
         }

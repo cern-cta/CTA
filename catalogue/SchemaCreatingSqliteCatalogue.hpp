@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "catalogue/SqliteCatalogue.hpp"
+#include "catalogue/rdbms/sqlite/SqliteCatalogue.hpp"
 
 namespace cta {
 namespace catalogue {

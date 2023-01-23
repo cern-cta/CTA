@@ -68,8 +68,8 @@ VersionStream::VersionStream(const RequestMessage &requestMsg, cta::catalogue::C
   XrdCtaStream(catalogue, scheduler),
   m_client_versions(requestMsg.getClientVersions()),
   m_catalogue_conn_string(catalogueConnString),
-  m_catalogue_version(m_catalogue.getSchemaVersion().getSchemaVersion<std::string>()),
-  m_is_upgrading(m_catalogue.getSchemaVersion().getStatus<catalogue::SchemaVersion::Status>()
+  m_catalogue_version(m_catalogue.Schema()->getSchemaVersion().getSchemaVersion<std::string>()),
+  m_is_upgrading(m_catalogue.Schema()->getSchemaVersion().getStatus<catalogue::SchemaVersion::Status>()
     == catalogue::SchemaVersion::Status::UPGRADING) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "VersionStream() constructor");
   m_server_versions.ctaVersion = CTA_VERSION;

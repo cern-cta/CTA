@@ -68,9 +68,9 @@ StorageClassLsStream::StorageClassLsStream(const RequestMessage &requestMsg, cta
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "StorageClassLsStream() constructor");
 
   if(m_storageClassName) {
-    m_storageClassList.push_back(m_catalogue.getStorageClass(m_storageClassName.value()));
+    m_storageClassList.push_back(m_catalogue.StorageClass()->getStorageClass(m_storageClassName.value()));
   } else {
-    for(const auto &storageClass : m_catalogue.getStorageClasses()) {
+    for(const auto &storageClass : m_catalogue.StorageClass()->getStorageClasses()) {
       m_storageClassList.push_back(storageClass);
     }
   }

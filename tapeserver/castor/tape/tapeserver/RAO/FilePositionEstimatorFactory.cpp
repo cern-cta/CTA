@@ -26,7 +26,7 @@ namespace castor { namespace tape { namespace tapeserver { namespace rao {
   std::unique_ptr<FilePositionEstimator> FilePositionEstimatorFactory::createInterpolationFilePositionEstimator(const std::string & vid, cta::catalogue::Catalogue *catalogue, drive::DriveInterface *drive, cta::log::TimingList &tl){
     std::unique_ptr<FilePositionEstimator> ret;
     cta::utils::Timer t;
-    cta::catalogue::MediaType tapeMediaType = catalogue->getMediaTypeByVid(vid);
+    cta::catalogue::MediaType tapeMediaType = catalogue->MediaType()->getMediaTypeByVid(vid);
     tl.insertAndReset("catalogueGetMediaTypeByVidTime",t);
     std::vector<drive::endOfWrapPosition> endOfWrapPositions = drive->getEndOfWrapPositions();
     tl.insertAndReset("getEndOfWrapPositionsTime",t);

@@ -76,7 +76,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
     cta::common::dataStructures::Tape tapeToCheck;
 
     try {
-      auto vidToTapesMap = m_catalogue.getTapesByVid(queue.vid); //throws an exception if the vid is not found on the database
+      auto vidToTapesMap = m_catalogue.Tape()->getTapesByVid(queue.vid); //throws an exception if the vid is not found on the database
       tapeToCheck = vidToTapesMap.at(queue.vid);
     } catch (const exception::UserError &ex) {
       log::ScopedParamContainer params(logContext);
@@ -189,7 +189,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
       cta::common::dataStructures::Tape tapeToModify;
 
       try {
-        auto vidToTapesMap = m_catalogue.getTapesByVid(qForCleanup.vid); //throws an exception if the vid is not found on the database
+        auto vidToTapesMap = m_catalogue.Tape()->getTapesByVid(qForCleanup.vid); //throws an exception if the vid is not found on the database
         tapeToModify = vidToTapesMap.at(qForCleanup.vid);
       } catch (const exception::UserError &ex) {
         log::ScopedParamContainer params(logContext);
@@ -204,15 +204,18 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
       std::optional<std::string> prevReason = tapeToModify.stateReason;
       switch (tapeToModify.state) {
       case common::dataStructures::Tape::REPACKING_PENDING:
-        m_catalogue.modifyTapeState(admin, qForCleanup.vid, common::dataStructures::Tape::REPACKING, common::dataStructures::Tape::REPACKING_PENDING, prevReason.value_or("QueueCleanupRunner: changed tape state to REPACKING"));
+        m_catalogue.Tape()->modifyTapeState(admin, qForCleanup.vid, common::dataStructures::Tape::REPACKING,
+          common::dataStructures::Tape::REPACKING_PENDING, prevReason.value_or("QueueCleanupRunner: changed tape state to REPACKING"));
         m_db.clearRetrieveQueueStatisticsCache(qForCleanup.vid);
         break;
       case common::dataStructures::Tape::BROKEN_PENDING:
-        m_catalogue.modifyTapeState(admin, qForCleanup.vid, common::dataStructures::Tape::BROKEN, common::dataStructures::Tape::BROKEN_PENDING, prevReason.value_or("QueueCleanupRunner: changed tape state to BROKEN"));
+        m_catalogue.Tape()->modifyTapeState(admin, qForCleanup.vid, common::dataStructures::Tape::BROKEN,
+          common::dataStructures::Tape::BROKEN_PENDING, prevReason.value_or("QueueCleanupRunner: changed tape state to BROKEN"));
         m_db.clearRetrieveQueueStatisticsCache(qForCleanup.vid);
         break;
       case common::dataStructures::Tape::EXPORTED_PENDING:
-        m_catalogue.modifyTapeState(admin, qForCleanup.vid, common::dataStructures::Tape::EXPORTED, common::dataStructures::Tape::EXPORTED_PENDING, prevReason.value_or("QueueCleanupRunner: changed tape state to EXPORTED"));
+        m_catalogue.Tape()->modifyTapeState(admin, qForCleanup.vid, common::dataStructures::Tape::EXPORTED,
+          common::dataStructures::Tape::EXPORTED_PENDING, prevReason.value_or("QueueCleanupRunner: changed tape state to EXPORTED"));
         m_db.clearRetrieveQueueStatisticsCache(qForCleanup.vid);
         break;
       default:

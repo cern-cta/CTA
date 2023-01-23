@@ -15,10 +15,12 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "catalogue/CatalogueRetryWrapper.hpp"
 #include "catalogue/PostgresqlCatalogueFactory.hpp"
-#include "catalogue/PostgresCatalogue.hpp"
+#include "catalogue/rdbms/postgres/PostgresCatalogue.hpp"
+#include "catalogue/retrywrappers/CatalogueRetryWrapper.hpp"
+#include "common/dataStructures/VirtualOrganization.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/log/LogContext.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -40,7 +42,7 @@ PostgresqlCatalogueFactory::PostgresqlCatalogueFactory(
   if(rdbms::Login::DBTYPE_POSTGRESQL != login.dbType) {
     exception::Exception ex;
     ex.getMessage() << __FUNCTION__ << "failed: Incorrect database type: expected=DBTYPE_POSTGRESQL actual=" <<
-      login.dbTypeToString(login.dbType);
+      rdbms::Login::dbTypeToString(login.dbType);
     throw ex;
   }
 }

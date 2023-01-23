@@ -88,7 +88,7 @@ TapeLsStream::TapeLsStream(const RequestMessage &requestMsg, cta::catalogue::Cat
     throw cta::exception::UserError("Cannot specify --all together with other search options");
   }
 
-  m_tapeList = m_catalogue.getTapes(searchCriteria);
+  m_tapeList = m_catalogue.Tape()->getTapes(searchCriteria);
 }
 
 

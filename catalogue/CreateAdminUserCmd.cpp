@@ -62,7 +62,7 @@ int CreateAdminUserCmd::exceptionThrowingMain(const int argc, char *const *const
   auto catalogue = catalogueFactory->create();
   const common::dataStructures::SecurityIdentity adminRunningCommand(getUsername(), getHostname());
 
-  catalogue->createAdminUser(adminRunningCommand, cmdLineArgs.adminUsername, cmdLineArgs.comment);
+  catalogue->AdminUser()->createAdminUser(adminRunningCommand, cmdLineArgs.adminUsername, cmdLineArgs.comment);
   return 0;
 }
 

@@ -21,7 +21,7 @@
 #include <string>
 #include <utility>
 
-#include "catalogue/DummyCatalogue.hpp"
+#include "catalogue/dummy/DummyCatalogue.hpp"
 #include "catalogue/InMemoryCatalogue.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/Logger.hpp"

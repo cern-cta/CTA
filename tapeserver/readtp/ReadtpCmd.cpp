@@ -363,8 +363,8 @@ void ReadtpCmd::readTapeFiles(
 
     catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = m_vid;
-
-    auto tapeList = m_catalogue->getTapes(searchCriteria);
+    
+    auto tapeList = m_catalogue->Tape()->getTapes(searchCriteria);
     if (tapeList.empty()) {
       std::list<cta::log::Param> params;
         params.push_back(cta::log::Param("userName", getUsername()));
@@ -465,7 +465,7 @@ void ReadtpCmd::readTapeFile(
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.vid = m_vid;
   searchCriteria.fSeq = fSeq;
-  auto itor = m_catalogue->getArchiveFilesItor(searchCriteria);
+  auto itor = m_catalogue->ArchiveFile()->getArchiveFilesItor(searchCriteria);
 
   if (!itor.hasMore()) {
     throw tapeserver::readtp::NoSuchFSeqException();

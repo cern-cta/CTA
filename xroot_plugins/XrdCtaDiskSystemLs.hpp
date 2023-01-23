@@ -60,7 +60,7 @@ private:
 
 DiskSystemLsStream::DiskSystemLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
-  m_diskSystemList(catalogue.getAllDiskSystems())
+  m_diskSystemList(catalogue.DiskSystem()->getAllDiskSystems())
 {
   using namespace cta::admin;
 

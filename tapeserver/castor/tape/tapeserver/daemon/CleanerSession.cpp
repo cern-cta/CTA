@@ -159,11 +159,11 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 
       try {
         std::string disabledReason = cta::utils::getCurrentLocalTime("%F %T") + ":" + currentExceptionMsg;
-        auto curr_state = m_catalogue.getTapesByVid(m_vid).at(m_vid).state;
+        auto curr_state = m_catalogue.Tape()->getTapesByVid(m_vid).at(m_vid).state;
         if (curr_state == cta::common::dataStructures::Tape::REPACKING) {
-          m_catalogue.setTapeRepackingDisabled(admin, m_vid, disabledReason);
+          m_catalogue.Tape()->setTapeRepackingDisabled(admin, m_vid, disabledReason);
         } else {
-          m_catalogue.setTapeDisabled(admin, m_vid, disabledReason);
+          m_catalogue.Tape()->setTapeDisabled(admin, m_vid, disabledReason);
         }
       } catch(cta::exception::Exception &ex) {
         cta::log::Param param("exceptionMsg", ex.getMessageValue());
@@ -340,7 +340,7 @@ std::string castor::tape::tapeserver::daemon::CleanerSession::checkVolumeLabel(
   params.push_back(cta::log::Param("tapeDrive", m_driveConfig.unitName));
 
   using LabelFormat = cta::common::dataStructures::Label::Format;
-  const LabelFormat labelFormat = m_catalogue.getTapeLabelFormat(m_vid);
+  const LabelFormat labelFormat = m_catalogue.Tape()->getTapeLabelFormat(m_vid);
 
   const std::string volumeLabelVSN = tapeFile::HeaderChecker::checkVolumeLabel(drive, labelFormat);
 

@@ -1205,7 +1205,7 @@ int DriveHandler::setDriveDownForShutdown(const std::string& reason, cta::log::L
   driveInfo.logicalLibrary = m_configLine.logicalLibrary;
   driveInfo.host = cta::utils::getShortHostname();
 
-  auto driveState = m_catalogue->getTapeDrive(driveInfo.driveName);
+  auto driveState = m_catalogue->DriveState()->getTapeDrive(driveInfo.driveName);
   if (!driveState) {
     lc->log(cta::log::WARNING, "In DriveHandler::setDriveDownForShutdown(). TapeDrive to set down doesn't exist.");
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;

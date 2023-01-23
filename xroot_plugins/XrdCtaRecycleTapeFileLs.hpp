@@ -51,7 +51,7 @@ private:
    */
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
 
-  cta::catalogue::Catalogue::FileRecycleLogItor m_fileRecycleLogItor;     //!< List of recycle tape files from the catalogue
+  cta::catalogue::FileRecycleLogItor m_fileRecycleLogItor;     //!< List of recycle tape files from the catalogue
 
   static constexpr const char* const LOG_SUFFIX  = "RecycleTapeFileLsStream";    //!< Identifier for log messages
 };
@@ -95,7 +95,7 @@ RecycleTapeFileLsStream::RecycleTapeFileLsStream(const RequestMessage &requestMs
     throw cta::exception::UserError("Must specify at least one of the following search options: vid, fxid, fxidfile or archiveFileId");
   }
   
-  m_fileRecycleLogItor = catalogue.getFileRecycleLogItor(searchCriteria);
+  m_fileRecycleLogItor = catalogue.FileRecycleLog()->getFileRecycleLogItor(searchCriteria);
           
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "RecycleTapeFileLsStream() constructor");
 }

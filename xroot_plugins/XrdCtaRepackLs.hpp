@@ -60,7 +60,7 @@ namespace cta { namespace xrd {
                  std::inserter(tapeVids, tapeVids.begin()),
                  [](cta::common::dataStructures::RepackInfo &ri) {return ri.vid;});
       
-      cta::common::dataStructures::VidToTapeMap tapeVidMap = m_catalogue.getTapesByVid(tapeVids); // throws an exception if a vid does not exist
+      cta::common::dataStructures::VidToTapeMap tapeVidMap = m_catalogue.Tape()->getTapesByVid(tapeVids); // throws an exception if a vid does not exist
 
       for(bool is_buffer_full = false; !m_repackList.empty() && !is_buffer_full; m_repackList.pop_front()){
         Data record;

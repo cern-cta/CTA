@@ -21,6 +21,11 @@
 #include "rdbms/Login.hpp"
 
 namespace cta {
+
+namespace log {
+class Logger;
+}
+
 namespace catalogue {
 
 /**

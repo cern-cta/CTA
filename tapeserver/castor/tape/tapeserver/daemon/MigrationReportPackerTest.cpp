@@ -71,7 +71,7 @@ const uint32_t TEST_GROUP_2 = 9754;
       mediaType.capacityInBytes = 10;
       mediaType.cartridge = "cartridge";
       mediaType.comment = "comment";
-      m_catalogue->createMediaType(admin,mediaType);
+      m_catalogue->MediaType()->createMediaType(admin,mediaType);
     }
 
     const cta::common::dataStructures::DiskInstance getDefaultDiskInstance() const {
@@ -158,11 +158,11 @@ const uint32_t TEST_GROUP_2 = 9754;
     cta::common::dataStructures::VirtualOrganization vo = getDefaultVo();
     const auto di = getDefaultDiskInstance();
     cta::common::dataStructures::SecurityIdentity admin = cta::common::dataStructures::SecurityIdentity("admin","localhost");
-    m_catalogue->createDiskInstance(admin, di.name, di.comment);
-    m_catalogue->createVirtualOrganization(admin,vo);
-    
-    m_catalogue->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
-    m_catalogue->createTapePool(admin, tapePoolName, vo.name, 2, true, supply, "Create tape pool");
+    m_catalogue->DiskInstance()->createDiskInstance(admin, di.name, di.comment);
+    m_catalogue->VO()->createVirtualOrganization(admin,vo);
+
+    m_catalogue->LogicalLibrary()->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+    m_catalogue->TapePool()->createTapePool(admin, tapePoolName, vo.name, 2, true, supply, "Create tape pool");
     createMediaType(mediaType);
 
     {
@@ -176,7 +176,7 @@ const uint32_t TEST_GROUP_2 = 9754;
       tape.comment = createTapeComment;
       tape.state = cta::common::dataStructures::Tape::DISABLED;
       tape.stateReason = "Test";
-      m_catalogue->createTape(admin, tape);
+      m_catalogue->Tape()->createTape(admin, tape);
     }
 
     cta::common::dataStructures::StorageClass storageClass;
@@ -185,7 +185,7 @@ const uint32_t TEST_GROUP_2 = 9754;
     storageClass.nbCopies = 1;
     storageClass.vo.name = vo.name;
     storageClass.comment = "Create storage class";
-    m_catalogue->createStorageClass(admin, storageClass);
+    m_catalogue->StorageClass()->createStorageClass(admin, storageClass);
 
     ::testing::InSequence dummy;
     std::unique_ptr<cta::ArchiveJob> job1;
@@ -320,11 +320,11 @@ const uint32_t TEST_GROUP_2 = 9754;
 
     cta::common::dataStructures::VirtualOrganization vo = getDefaultVo();
     const auto &di = getDefaultDiskInstance();
-    m_catalogue->createDiskInstance(admin, di.name, di.comment);
-    m_catalogue->createVirtualOrganization(admin,vo);
-    
-    m_catalogue->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
-    m_catalogue->createTapePool(admin, tapePoolName, vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+    m_catalogue->DiskInstance()->createDiskInstance(admin, di.name, di.comment);
+    m_catalogue->VO()->createVirtualOrganization(admin,vo);
+
+    m_catalogue->LogicalLibrary()->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+    m_catalogue->TapePool()->createTapePool(admin, tapePoolName, vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
     createMediaType(mediaType);
 
     {
@@ -338,7 +338,7 @@ const uint32_t TEST_GROUP_2 = 9754;
       tape.comment = createTapeComment;
       tape.state = cta::common::dataStructures::Tape::DISABLED;
       tape.stateReason = "test";
-      m_catalogue->createTape(admin, tape);
+      m_catalogue->Tape()->createTape(admin, tape);
     }
 
     cta::common::dataStructures::StorageClass storageClass;
@@ -347,7 +347,7 @@ const uint32_t TEST_GROUP_2 = 9754;
     storageClass.nbCopies = 1;
     storageClass.vo.name = vo.name;
     storageClass.comment = "Create storage class";
-    m_catalogue->createStorageClass(admin, storageClass);
+    m_catalogue->StorageClass()->createStorageClass(admin, storageClass);
 
     ::testing::InSequence dummy;
     std::unique_ptr<cta::ArchiveJob> migratedBigFile;

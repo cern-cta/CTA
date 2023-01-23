@@ -60,7 +60,7 @@ private:
 
 VirtualOrganizationLsStream::VirtualOrganizationLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
-  m_virtualOrganizationList(catalogue.getVirtualOrganizations())
+  m_virtualOrganizationList(catalogue.VO()->getVirtualOrganizations())
 {
   using namespace cta::admin;
 

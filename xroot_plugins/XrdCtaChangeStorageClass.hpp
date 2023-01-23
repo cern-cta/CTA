@@ -28,7 +28,7 @@ public:
   XrdCtaChangeStorageClass(cta::catalogue::Catalogue &catalogue, cta::log::LogContext &lc);
   void updateCatalogue(const std::vector<std::basic_string<char>>& archiveFileIds, const std::string& newStorageClassName);
 private:
-  const cta::catalogue::Catalogue &m_catalogue;
+  cta::catalogue::Catalogue &m_catalogue;
   cta::log::LogContext &m_lc;
 };
 
@@ -37,7 +37,7 @@ XrdCtaChangeStorageClass::XrdCtaChangeStorageClass(cta::catalogue::Catalogue &ca
 void XrdCtaChangeStorageClass::updateCatalogue(const std::vector<std::basic_string<char>>& archiveFileIds, const std::string& newStorageClassName) {
   for (auto & id : archiveFileIds) {
     const uint64_t archiveFileId = std::stoul(id);
-    m_catalogue.modifyArchiveFileStorageClassId(archiveFileId, newStorageClassName);
+    m_catalogue.ArchiveFile()->modifyArchiveFileStorageClassId(archiveFileId, newStorageClassName);
   }
 }
 } // namespace xrd

@@ -27,6 +27,7 @@
 #include "catalogue/InMemoryCatalogue.hpp"
 #include "catalogue/MediaType.hpp"
 #include "catalogue/SchemaCreatingSqliteCatalogue.hpp"
+#include "catalogue/TapeFileWritten.hpp"
 #include "catalogue/TapeItemWrittenPointer.hpp"
 #include "common/dataStructures/DiskInstance.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
@@ -213,13 +214,13 @@ public:
     mountPolicy.minRetrieveRequestAge = minRetrieveRequestAge;
     mountPolicy.comment = mountPolicyComment;
 
-    ASSERT_TRUE(catalogue.getMountPolicies().empty());
+    ASSERT_TRUE(catalogue.MountPolicy()->getMountPolicies().empty());
 
-    catalogue.createMountPolicy(
+    catalogue.MountPolicy()->createMountPolicy(
       s_adminOnAdminHost,
       mountPolicy);
 
-    const std::list<common::dataStructures::MountPolicy> groups = catalogue.getMountPolicies();
+    const std::list<common::dataStructures::MountPolicy> groups = catalogue.MountPolicy()->getMountPolicies();
     ASSERT_EQ(1, groups.size());
     const common::dataStructures::MountPolicy group = groups.front();
     ASSERT_EQ(mountPolicyName, group.name);
@@ -229,12 +230,12 @@ public:
     ASSERT_EQ(minRetrieveRequestAge, group.retrieveMinRequestAge);
     ASSERT_EQ(mountPolicyComment, group.comment);
 
-    m_catalogue->createDiskInstance(s_adminOnAdminHost, s_diskInstance, "comment");
+    m_catalogue->DiskInstance()->createDiskInstance(s_adminOnAdminHost, s_diskInstance, "comment");
 
     const std::string ruleComment = "create requester mount-rule";
-    catalogue.createRequesterMountRule(s_adminOnAdminHost, mountPolicyName, s_diskInstance, s_userName, ruleComment);
+    catalogue.RequesterMountRule()->createRequesterMountRule(s_adminOnAdminHost, mountPolicyName, s_diskInstance, s_userName, ruleComment);
 
-    const std::list<common::dataStructures::RequesterMountRule> rules = catalogue.getRequesterMountRules();
+    const auto rules = catalogue.RequesterMountRule()->getRequesterMountRules();
     ASSERT_EQ(1, rules.size());
 
     const common::dataStructures::RequesterMountRule rule = rules.front();
@@ -253,24 +254,24 @@ public:
     vo.readMaxDrives = 1;
     vo.maxFileSize = 0;
     vo.diskInstanceName = s_diskInstance;
-    m_catalogue->createVirtualOrganization(s_adminOnAdminHost,vo);
+    m_catalogue->VO()->createVirtualOrganization(s_adminOnAdminHost,vo);
 
     common::dataStructures::StorageClass storageClass;
     storageClass.name = s_storageClassName;
     storageClass.nbCopies = 1;
     storageClass.vo.name = vo.name;
     storageClass.comment = "create storage class";
-    m_catalogue->createStorageClass(s_adminOnAdminHost, storageClass);
+    m_catalogue->StorageClass()->createStorageClass(s_adminOnAdminHost, storageClass);
 
     const uint16_t nbPartialTapes = 1;
     const std::string tapePoolComment = "Tape-pool comment";
     const bool tapePoolEncryption = false;
     const std::optional<std::string> tapePoolSupply("value for the supply pool mechanism");
-    catalogue.createTapePool(s_adminOnAdminHost, s_tapePoolName, vo.name, nbPartialTapes, tapePoolEncryption, tapePoolSupply,
-      tapePoolComment);
+    catalogue.TapePool()->createTapePool(s_adminOnAdminHost, s_tapePoolName, vo.name, nbPartialTapes, tapePoolEncryption,
+      tapePoolSupply, tapePoolComment);
     const uint32_t copyNb = 1;
     const std::string archiveRouteComment = "Archive-route comment";
-    catalogue.createArchiveRoute(s_adminOnAdminHost, s_storageClassName, copyNb, s_tapePoolName,
+    catalogue.ArchiveRoute()->createArchiveRoute(s_adminOnAdminHost, s_storageClassName, copyNb, s_tapePoolName,
       archiveRouteComment);
 
     cta::catalogue::MediaType mediaType;
@@ -278,14 +279,14 @@ public:
     mediaType.capacityInBytes = s_mediaTypeCapacityInBytes;
     mediaType.cartridge = "cartridge";
     mediaType.comment = "comment";
-    catalogue.createMediaType(s_adminOnAdminHost, mediaType);
+    catalogue.MediaType()->createMediaType(s_adminOnAdminHost, mediaType);
 
     const std::string driveName = "tape_drive";
     const auto tapeDrive = getDefaultTapeDrive(driveName);
-    catalogue.createTapeDrive(tapeDrive);
+    catalogue.DriveState()->createTapeDrive(tapeDrive);
     const std::string driveName2 = "drive0";
     const auto tapeDrive2 = getDefaultTapeDrive(driveName2);
-    catalogue.createTapeDrive(tapeDrive2);
+    catalogue.DriveState()->createTapeDrive(tapeDrive2);
   }
 
   cta::catalogue::CreateTapeAttributes getDefaultTape() {
@@ -545,10 +546,10 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
   // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = true;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryIsDisabled, libraryComment);
   {
-    auto libraries = catalogue.getLogicalLibraries();
+    auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
@@ -556,11 +557,11 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
 
   {
     auto tape = getDefaultTape();
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   const std::string driveName = "tape_drive";
-  catalogue.tapeLabelled(s_vid, driveName);
+  catalogue.Tape()->tapeLabelled(s_vid, driveName);
 
   {
     // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
@@ -572,7 +573,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     //Test that no mount is available when a logical library is disabled
     ASSERT_EQ(nullptr, mount.get());
-    catalogue.setLogicalLibraryDisabled(s_adminOnAdminHost,s_libraryName,false);
+    catalogue.LogicalLibrary()->setLogicalLibraryDisabled(s_adminOnAdminHost,s_libraryName,false);
     //continue our test
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
@@ -749,10 +750,10 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
   // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = true;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryIsDisabled, libraryComment);
   {
-    auto libraries = catalogue.getLogicalLibraries();
+    auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
@@ -760,12 +761,12 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
 
   {
     auto tape = getDefaultTape();
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   const std::string driveName = "tape_drive";
 
-  catalogue.tapeLabelled(s_vid, "tape_drive");
+  catalogue.Tape()->tapeLabelled(s_vid, "tape_drive");
 
   {
     // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
@@ -777,7 +778,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     //Test that no mount is available when a logical library is disabled
     ASSERT_EQ(nullptr, mount.get());
-    catalogue.setLogicalLibraryDisabled(s_adminOnAdminHost,s_libraryName,false);
+    catalogue.LogicalLibrary()->setLogicalLibraryDisabled(s_adminOnAdminHost,s_libraryName,false);
     //continue our test
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
@@ -831,7 +832,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     mountPolicy.minRetrieveRequestAge = s_minRetrieveRequestAge;
     mountPolicy.comment = "custom mount policy";
 
-    catalogue.createMountPolicy(s_adminOnAdminHost, mountPolicy);
+    catalogue.MountPolicy()->createMountPolicy(s_adminOnAdminHost, mountPolicy);
   }
 
   {
@@ -938,13 +939,13 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     mountPolicy.minRetrieveRequestAge = minRetrieveRequestAge;
     mountPolicy.comment = mountPolicyComment;
 
-    ASSERT_TRUE(catalogue.getMountPolicies().empty());
+    ASSERT_TRUE(catalogue.MountPolicy()->getMountPolicies().empty());
 
-    catalogue.createMountPolicy(
+    catalogue.MountPolicy()->createMountPolicy(
       s_adminOnAdminHost,
       mountPolicy);
 
-    const std::list<common::dataStructures::MountPolicy> groups = catalogue.getMountPolicies();
+    const std::list<common::dataStructures::MountPolicy> groups = catalogue.MountPolicy()->getMountPolicies();
     ASSERT_EQ(1, groups.size());
     const common::dataStructures::MountPolicy group = groups.front();
     ASSERT_EQ(mountPolicyName, group.name);
@@ -957,12 +958,13 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     cta::common::dataStructures::DiskInstance di;
     di.name = s_diskInstance;
     di.comment = "comment";
-    catalogue.createDiskInstance(s_adminOnAdminHost, di.name, di.comment);
+    catalogue.DiskInstance()->createDiskInstance(s_adminOnAdminHost, di.name, di.comment);
 
     const std::string ruleComment = "create requester mount-rule";
-    catalogue.createRequesterMountRule(s_adminOnAdminHost, mountPolicyName, di.name, s_userName, ruleComment);
+    catalogue.RequesterMountRule()->createRequesterMountRule(s_adminOnAdminHost, mountPolicyName, di.name, s_userName,
+      ruleComment);
 
-    const std::list<common::dataStructures::RequesterMountRule> rules = catalogue.getRequesterMountRules();
+    const auto rules = catalogue.RequesterMountRule()->getRequesterMountRules();
     ASSERT_EQ(1, rules.size());
 
     const common::dataStructures::RequesterMountRule rule = rules.front();
@@ -981,32 +983,32 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     vo.readMaxDrives = 1;
     vo.maxFileSize = 0;
     vo.diskInstanceName = s_diskInstance;
-    catalogue.createVirtualOrganization(s_adminOnAdminHost,vo);
+    catalogue.VO()->createVirtualOrganization(s_adminOnAdminHost,vo);
 
     common::dataStructures::StorageClass storageClass;
     storageClass.name = dualCopyStorageClassName;
     storageClass.nbCopies = 2;
     storageClass.vo.name = vo.name;
     storageClass.comment = "create dual copy storage class";
-    catalogue.createStorageClass(s_adminOnAdminHost, storageClass);
+    catalogue.StorageClass()->createStorageClass(s_adminOnAdminHost, storageClass);
 
     const uint16_t nbPartialTapes = 1;
     const std::string tapePool1Comment = "Tape-pool for copy number 1";
     const std::string tapePool2Comment = "Tape-pool for copy number 2";
     const bool tapePoolEncryption = false;
     const std::optional<std::string> tapePoolSupply("value for the supply pool mechanism");
-    catalogue.createTapePool(s_adminOnAdminHost, tapePool1Name, vo.name, nbPartialTapes, tapePoolEncryption,
+    catalogue.TapePool()->createTapePool(s_adminOnAdminHost, tapePool1Name, vo.name, nbPartialTapes, tapePoolEncryption,
       tapePoolSupply, tapePool1Comment);
-    catalogue.createTapePool(s_adminOnAdminHost, tapePool2Name, vo.name, nbPartialTapes, tapePoolEncryption,
+    catalogue.TapePool()->createTapePool(s_adminOnAdminHost, tapePool2Name, vo.name, nbPartialTapes, tapePoolEncryption,
       tapePoolSupply, tapePool2Comment);
 
     const std::string archiveRoute1Comment = "Archive-route for copy number 1";
     const std::string archiveRoute2Comment = "Archive-route for copy number 2";
     const uint32_t archiveRoute1CopyNb = 1;
     const uint32_t archiveRoute2CopyNb = 2;
-    catalogue.createArchiveRoute(s_adminOnAdminHost, dualCopyStorageClassName, archiveRoute1CopyNb, tapePool1Name,
+    catalogue.ArchiveRoute()->createArchiveRoute(s_adminOnAdminHost, dualCopyStorageClassName, archiveRoute1CopyNb, tapePool1Name,
       archiveRoute1Comment);
-    catalogue.createArchiveRoute(s_adminOnAdminHost, dualCopyStorageClassName, archiveRoute2CopyNb, tapePool2Name,
+    catalogue.ArchiveRoute()->createArchiveRoute(s_adminOnAdminHost, dualCopyStorageClassName, archiveRoute2CopyNb, tapePool2Name,
       archiveRoute1Comment);
 
     cta::catalogue::MediaType mediaType;
@@ -1014,14 +1016,14 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     mediaType.capacityInBytes = s_mediaTypeCapacityInBytes;
     mediaType.cartridge = "cartridge";
     mediaType.comment = "comment";
-    catalogue.createMediaType(s_adminOnAdminHost, mediaType);
+    catalogue.MediaType()->createMediaType(s_adminOnAdminHost, mediaType);
 
     const std::string driveName = "tape_drive";
     const auto tapeDrive = getDefaultTapeDrive(driveName);
-    catalogue.createTapeDrive(tapeDrive);
+    catalogue.DriveState()->createTapeDrive(tapeDrive);
     const std::string driveName2 = "drive0";
     const auto tapeDrive2 = getDefaultTapeDrive(driveName2);
-    catalogue.createTapeDrive(tapeDrive2);
+    catalogue.DriveState()->createTapeDrive(tapeDrive2);
   }
 
 #ifdef STDOUT_LOGGING
@@ -1076,10 +1078,10 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
   // tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = true;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryIsDisabled, libraryComment);
   {
-    auto libraries = catalogue.getLogicalLibraries();
+    auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
@@ -1098,12 +1100,12 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     tape.full = false;
     tape.state = common::dataStructures::Tape::ACTIVE;
     tape.comment = "Comment";
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   const std::string driveName = "tape_drive";
 
-  catalogue.tapeLabelled(copy1TapeVid, driveName);
+  catalogue.Tape()->tapeLabelled(copy1TapeVid, driveName);
 
   // Archive copy 1 to tape
   {
@@ -1117,7 +1119,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     //Test that no mount is available when a logical library is disabled
     ASSERT_EQ(nullptr, mount.get());
-    catalogue.setLogicalLibraryDisabled(s_adminOnAdminHost,s_libraryName,false);
+    catalogue.LogicalLibrary()->setLogicalLibraryDisabled(s_adminOnAdminHost,s_libraryName,false);
     //continue our test
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
@@ -1159,7 +1161,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
 
   // Create the environment for the migration of copy 2 to happen (library +
   // tape)
-  catalogue.setLogicalLibraryDisabled(s_adminOnAdminHost,s_libraryName,true);
+  catalogue.LogicalLibrary()->setLogicalLibraryDisabled(s_adminOnAdminHost,s_libraryName,true);
   const std::string copy2TapeVid = "COPY_2_TAPE";
   {
     using namespace cta;
@@ -1173,10 +1175,10 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     tape.full = false;
     tape.state = common::dataStructures::Tape::ACTIVE;
     tape.comment = "Comment";
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
-  catalogue.tapeLabelled(copy2TapeVid, driveName);
+  catalogue.Tape()->tapeLabelled(copy2TapeVid, driveName);
 
   // Archive copy 2 to tape
   {
@@ -1189,7 +1191,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     //Test that no mount is available when a logical library is disabled
     ASSERT_EQ(nullptr, mount.get());
-    catalogue.setLogicalLibraryDisabled(s_adminOnAdminHost,s_libraryName,false);
+    catalogue.LogicalLibrary()->setLogicalLibraryDisabled(s_adminOnAdminHost,s_libraryName,false);
     //continue our test
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
@@ -1240,7 +1242,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     requester.group = "userGroup";
     std::optional<std::string> activity;
     const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
-      catalogue.prepareToRetrieveFile(s_diskInstance, archiveFileId, requester, activity, lc);
+      catalogue.TapeFile()->prepareToRetrieveFile(s_diskInstance, archiveFileId, requester, activity, lc);
     ASSERT_EQ(2, queueCriteria.archiveFile.tapeFiles.size());
 
     std::map<uint8_t, common::dataStructures::TapeFile> copyNbToTape;
@@ -1399,10 +1401,10 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
   // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryIsDisabled, libraryComment);
   {
-    auto libraries = catalogue.getLogicalLibraries();
+    auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
@@ -1410,12 +1412,12 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
 
   {
     auto tape = getDefaultTape();
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   const std::string driveName = "tape_drive";
 
-  catalogue.tapeLabelled(s_vid, driveName);
+  catalogue.Tape()->tapeLabelled(s_vid, driveName);
 
   {
     // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
@@ -1649,10 +1651,10 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
   // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryIsDisabled, libraryComment);
   {
-    auto libraries = catalogue.getLogicalLibraries();
+    auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
@@ -1660,12 +1662,12 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
 
   {
     auto tape = getDefaultTape();
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   const std::string driveName = "tape_drive";
 
-  catalogue.tapeLabelled(s_vid, driveName);
+  catalogue.Tape()->tapeLabelled(s_vid, driveName);
 
   {
     // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
@@ -1893,10 +1895,10 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
   // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryIsDisabled, libraryComment);
   {
-    auto libraries = catalogue.getLogicalLibraries();
+    auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
@@ -1904,11 +1906,11 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
 
   {
     auto tape = getDefaultTape();
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   const std::string driveName = "tape_drive";
-  catalogue.tapeLabelled(s_vid, driveName);
+  catalogue.Tape()->tapeLabelled(s_vid, driveName);
 
   {
     // Emulate a tape server by asking for a mount and then a file
@@ -2025,7 +2027,7 @@ TEST_P(SchedulerTest, repack) {
    // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryIsDisabled, libraryComment);
 
   common::dataStructures::SecurityIdentity cliId;
@@ -2038,7 +2040,7 @@ TEST_P(SchedulerTest, repack) {
     tape.vid = tape1;
     tape.state = common::dataStructures::Tape::REPACKING;
     tape.stateReason = "Test";
-    catalogue.createTape(cliId, tape);
+    catalogue.Tape()->createTape(cliId, tape);
   }
 
   //The queueing of a repack request should fail if the tape to repack is not full
@@ -2049,7 +2051,7 @@ TEST_P(SchedulerTest, repack) {
   qrr.m_vid = "NOT_EXIST";
   ASSERT_THROW(scheduler.queueRepack(cliId, qrr, lc),cta::exception::UserError);
 
-  catalogue.setTapeFull(cliId,tape1,true);
+  catalogue.Tape()->setTapeFull(cliId,tape1,true);
 
   // Create and then cancel repack
   qrr.m_vid = tape1;
@@ -2066,12 +2068,12 @@ TEST_P(SchedulerTest, repack) {
   std::string tape2 = "TAPE2";
   {
     auto tape = getDefaultTape();
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
     tape.vid = tape2;
     tape.state = common::dataStructures::Tape::REPACKING;
     tape.stateReason = "Test";
     tape.full = true;
-    catalogue.createTape(cliId, tape);
+    catalogue.Tape()->createTape(cliId, tape);
   }
   qrr.m_vid = tape2;
   scheduler.queueRepack(cliId, qrr, lc);
@@ -2104,7 +2106,7 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
   // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryIsDisabled, libraryComment);
 
   common::dataStructures::SecurityIdentity cliId;
@@ -2117,7 +2119,7 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
     tape.full = true;
     tape.state = common::dataStructures::Tape::REPACKING;
     tape.stateReason = "Test";
-    catalogue.createTape(cliId, tape);
+    catalogue.Tape()->createTape(cliId, tape);
   }
 
   //Queue the first repack request
@@ -2133,7 +2135,7 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
     tape.full = true;
     tape.state = common::dataStructures::Tape::REPACKING;
     tape.stateReason = "Test";
-    catalogue.createTape(cliId, tape);
+    catalogue.Tape()->createTape(cliId, tape);
   }
 
   //Queue the second repack request
@@ -2179,9 +2181,9 @@ TEST_P(SchedulerTest, expandRepackRequest) {
   auto &schedulerDB = getSchedulerDB();
 
   setupDefaultCatalogue();
-  catalogue.createDiskInstance({"user", "host"}, "diskInstance", "no comment");
-  catalogue.createDiskInstanceSpace({"user", "host"}, "diskInstanceSpace", "diskInstance", "constantFreeSpace:10", 10, "no comment");
-  catalogue.createDiskSystem({"user", "host"}, "diskSystem", "diskInstance", "diskInstanceSpace", "/public_dir/public_file", 10L*1000*1000*1000, 15*60, "no comment");
+  catalogue.DiskInstance()->createDiskInstance({"user", "host"}, "diskInstance", "no comment");
+  catalogue.DiskInstanceSpace()->createDiskInstanceSpace({"user", "host"}, "diskInstanceSpace", "diskInstance", "constantFreeSpace:10", 10, "no comment");
+  catalogue.DiskSystem()->createDiskSystem({"user", "host"}, "diskSystem", "diskInstance", "diskInstanceSpace", "/public_dir/public_file", 10L*1000*1000*1000, 15*60, "no comment");
 
 
 #ifdef STDOUT_LOGGING
@@ -2202,7 +2204,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
 
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
 
   uint64_t nbTapesToRepack = 10;
   uint64_t nbTapesForTest = 2; //corresponds to the targetAvailableRequests variable in the Scheduler::promoteRepackRequestsToToExpand() method
@@ -2221,7 +2223,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
     tape.full = true;
     tape.state = common::dataStructures::Tape::REPACKING;
     tape.stateReason = "Test";
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   //Create a storage class in the catalogue
@@ -2265,7 +2267,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
       }
       //update the DB tape
-      catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
+      catalogue.TapeFile()->filesWrittenToTape(tapeFilesWrittenCopy1);
       tapeFilesWrittenCopy1.clear();
     }
   }
@@ -2533,7 +2535,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
 
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
 
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
@@ -2545,7 +2547,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
     tape.full = true;
     tape.state = common::dataStructures::Tape::REPACKING;
     tape.stateReason = "Test";
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   //Create a storage class in the catalogue
@@ -2588,7 +2590,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
       tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
     }
     //update the DB tape
-    catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
+    catalogue.TapeFile()->filesWrittenToTape(tapeFilesWrittenCopy1);
     tapeFilesWrittenCopy1.clear();
   }
   //Test the expandRepackRequest method
@@ -2739,7 +2741,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
 
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
 
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
@@ -2751,7 +2753,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
     tape.full = true;
     tape.state = common::dataStructures::Tape::REPACKING;
     tape.stateReason = "Test";
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   //Create a repack destination tape
@@ -2760,7 +2762,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
   {
     auto tape = getDefaultTape();
     tape.vid = vidDestination;
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   //Create a storage class in the catalogue
@@ -2803,7 +2805,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
       tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
     }
     //update the DB tape
-    catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
+    catalogue.TapeFile()->filesWrittenToTape(tapeFilesWrittenCopy1);
     tapeFilesWrittenCopy1.clear();
   }
   //Test the expandRepackRequest method
@@ -2998,7 +3000,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
 
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
 
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
@@ -3010,7 +3012,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
     tape.full = true;
     tape.state = common::dataStructures::Tape::REPACKING;
     tape.stateReason = "Test";
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   //Create a repack destination tape
@@ -3018,7 +3020,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
   {
     auto tape = getDefaultTape();
     tape.vid = vidDestinationRepack;
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   //Create a storage class in the catalogue
@@ -3061,7 +3063,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
       tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
     }
     //update the DB tape
-    catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
+    catalogue.TapeFile()->filesWrittenToTape(tapeFilesWrittenCopy1);
     tapeFilesWrittenCopy1.clear();
   }
   //Test the expandRepackRequest method
@@ -3262,7 +3264,7 @@ TEST_P(SchedulerTest, expandRepackRequestRepackingTape) {
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
-  catalogue.createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
 
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
@@ -3274,7 +3276,7 @@ TEST_P(SchedulerTest, expandRepackRequestRepackingTape) {
     tape.full = true;
     tape.state = common::dataStructures::Tape::REPACKING;
     tape.stateReason = "Test";
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   //Create a storage class in the catalogue
@@ -3317,7 +3319,7 @@ TEST_P(SchedulerTest, expandRepackRequestRepackingTape) {
       tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
     }
     //update the DB tape
-    catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
+    catalogue.TapeFile()->filesWrittenToTape(tapeFilesWrittenCopy1);
     tapeFilesWrittenCopy1.clear();
   }
   // Queue the repack request for a repacking tape
@@ -3369,7 +3371,8 @@ TEST_P(SchedulerTest, expandRepackRequestRepackingDisabledTape) {
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
-  catalogue.createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled,
+    "Create logical library");
 
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
@@ -3381,7 +3384,7 @@ TEST_P(SchedulerTest, expandRepackRequestRepackingDisabledTape) {
     tape.full = true;
     tape.state = common::dataStructures::Tape::REPACKING_DISABLED;
     tape.stateReason = "Test";
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   //Create a storage class in the catalogue
@@ -3424,7 +3427,7 @@ TEST_P(SchedulerTest, expandRepackRequestRepackingDisabledTape) {
       tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
     }
     //update the DB tape
-    catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
+    catalogue.TapeFile()->filesWrittenToTape(tapeFilesWrittenCopy1);
     tapeFilesWrittenCopy1.clear();
   }
   // Queue the repack request for a repacking tape
@@ -3476,7 +3479,7 @@ TEST_P(SchedulerTest, expandRepackRequestBrokenTape) {
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
-  catalogue.createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
 
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
@@ -3488,7 +3491,7 @@ TEST_P(SchedulerTest, expandRepackRequestBrokenTape) {
     tape.full = true;
     tape.state = common::dataStructures::Tape::BROKEN;
     tape.stateReason = "Test";
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   {
@@ -3538,7 +3541,7 @@ TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
-  catalogue.createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
 
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
@@ -3550,12 +3553,12 @@ TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
     tape.full = true;
     tape.state = common::dataStructures::Tape::DISABLED;
     tape.stateReason = "Test";
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   {
     cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
-                                                   common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
+                                                  common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
     ASSERT_THROW(scheduler.queueRepack(admin,qrr,lc),cta::exception::UserError);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
@@ -3600,7 +3603,7 @@ TEST_P(SchedulerTest, expandRepackRequestActiveTape) {
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
-  catalogue.createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
 
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
@@ -3612,12 +3615,12 @@ TEST_P(SchedulerTest, expandRepackRequestActiveTape) {
     tape.full = true;
     tape.state = common::dataStructures::Tape::ACTIVE;
     tape.stateReason = "Test";
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   {
     cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
-                                                   common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
+      common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,s_defaultRepackNoRecall);
     ASSERT_THROW(scheduler.queueRepack(admin,qrr,lc),cta::exception::UserError);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
@@ -3631,7 +3634,8 @@ TEST_P(SchedulerTest, expandRepackRequestActiveTape) {
     ASSERT_EQ(nullptr,repackRequestToExpand);
   }
 }
-/* Disabled tapes should be ok to be mounted, because it is a transient state
+
+/*
 TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
   using namespace cta;
   using namespace cta::objectstore;
@@ -3662,7 +3666,7 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
-  catalogue.createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
 
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
@@ -3672,7 +3676,7 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
     auto tape = getDefaultTape();
     tape.vid = vid;
     tape.full = true;
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   //Create a storage class in the catalogue
@@ -3715,7 +3719,7 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
       tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
     }
     //update the DB tape
-    catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
+    catalogue.TapeFile()->filesWrittenToTape(tapeFilesWrittenCopy1);
     tapeFilesWrittenCopy1.clear();
   }
   //Test the queueing of the Retrieve Request and try to mount after having disabled the tape
@@ -3733,20 +3737,20 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
   //disabled the tape
 
   std::string disabledReason = "Disabled reason";
-  catalogue.setTapeDisabled(admin,vid,disabledReason);
+  catalogue.Tape()->setTapeDisabled(admin,vid,disabledReason);
   const std::string driveName = "tape_drive";
 
   //No mount should be returned by getNextMount
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 
   //enable the tape
-  catalogue.modifyTapeState(admin,vid,common::dataStructures::Tape::ACTIVE,std::nullopt,std::nullopt);
+  catalogue.Tape()->modifyTapeState(admin, vid, common::dataStructures::Tape::ACTIVE, std::nullopt, std::nullopt);
 
   //A mount should be returned by getNextMount
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName,driveName,lc));
 
   //disable the tape
-  catalogue.setTapeDisabled(admin,vid,disabledReason);
+  catalogue.Tape()->setTapeDisabled(admin,vid,disabledReason);
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName,driveName,lc));
 
   //create repack mount policy
@@ -3765,9 +3769,9 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
   mountPolicy.minRetrieveRequestAge = minRetrieveRequestAge;
   mountPolicy.comment = mountPolicyComment;
 
-  catalogue.createMountPolicy(s_adminOnAdminHost, mountPolicy);
+  catalogue.MountPolicy()->createMountPolicy(s_adminOnAdminHost, mountPolicy);
 
-  auto mountPolicies = catalogue.getMountPolicies();
+  auto mountPolicies = catalogue.MountPolicy()->getMountPolicies();
 
   auto mountPolicyItor = std::find_if(mountPolicies.begin(),mountPolicies.end(), [](const common::dataStructures::MountPolicy &mountPolicy){
         return mountPolicy.name.rfind("repack", 0) == 0;
@@ -3834,7 +3838,7 @@ TEST_P(SchedulerTest, emptyMountIsTriggeredWhenCancelledRetrieveRequest) {
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
-  catalogue.createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
 
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
@@ -3844,7 +3848,7 @@ TEST_P(SchedulerTest, emptyMountIsTriggeredWhenCancelledRetrieveRequest) {
     auto tape = getDefaultTape();
     tape.vid = vid;
     tape.full = true;
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   //Create a storage class in the catalogue
@@ -3887,7 +3891,7 @@ TEST_P(SchedulerTest, emptyMountIsTriggeredWhenCancelledRetrieveRequest) {
       tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
     }
     //update the DB tape
-    catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
+    catalogue.TapeFile()->filesWrittenToTape(tapeFilesWrittenCopy1);
     tapeFilesWrittenCopy1.clear();
   }
   //Test the queueing of the Retrieve Request and try to mount after having disabled the tape
@@ -3906,7 +3910,7 @@ TEST_P(SchedulerTest, emptyMountIsTriggeredWhenCancelledRetrieveRequest) {
   }
   //disabled the tape
   std::string disabledReason = "reason";
-  catalogue.setTapeDisabled(admin,vid,disabledReason);
+  catalogue.Tape()->setTapeDisabled(admin,vid,disabledReason);
 
   //No mount should be returned by getNextMount
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
@@ -4004,10 +4008,10 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
   // Create the environment for the migrations to happen (library + tapes)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryIsDisabled, libraryComment);
   {
-    auto libraries = catalogue.getLogicalLibraries();
+    auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
@@ -4017,8 +4021,8 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
     auto tape = getDefaultTape();
     std::string vid = s_vid + std::to_string(i);
     tape.vid = vid;
-    catalogue.createTape(s_adminOnAdminHost, tape);
-    catalogue.tapeLabelled(vid, driveName);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->tapeLabelled(vid, driveName);
   }
 
 
@@ -4190,7 +4194,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
-  catalogue.createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
 
   //Create the source tape
   std::string vid = "VIDSOURCE";
@@ -4200,27 +4204,27 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
     tape.full = true;
     tape.state = common::dataStructures::Tape::REPACKING;
     tape.stateReason = "Test";
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   //Create two different destination tapepool
   std::string tapepool2Name = "tapepool2";
   const std::optional<std::string> supply;
-  catalogue.createTapePool(admin,tapepool2Name,"vo",1,false,supply,"comment");
+  catalogue.TapePool()->createTapePool(admin,tapepool2Name,"vo",1,false,supply,"comment");
 
   std::string tapepool3Name = "tapepool3";
-  catalogue.createTapePool(admin,tapepool3Name,"vo",1,false,supply,"comment");
+  catalogue.TapePool()->createTapePool(admin,tapepool3Name,"vo",1,false,supply,"comment");
 
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
   storageClass.name = s_storageClassName;
   storageClass.nbCopies = 3;
   storageClass.comment = "Create storage class";
-  catalogue.modifyStorageClassNbCopies(admin,storageClass.name,storageClass.nbCopies);
+  catalogue.StorageClass()->modifyStorageClassNbCopies(admin,storageClass.name,storageClass.nbCopies);
 
   //Create the two archive routes for the new copies
-  catalogue.createArchiveRoute(admin,storageClass.name,2,tapepool2Name,"ArchiveRoute2");
-  catalogue.createArchiveRoute(admin,storageClass.name,3,tapepool3Name,"ArchiveRoute3");
+  catalogue.ArchiveRoute()->createArchiveRoute(admin,storageClass.name,2,tapepool2Name,"ArchiveRoute2");
+  catalogue.ArchiveRoute()->createArchiveRoute(admin,storageClass.name,3,tapepool3Name,"ArchiveRoute3");
 
   //Create two other destinationTape
   std::string vidDestination1 = "VIDDESTINATION1";
@@ -4228,7 +4232,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
     auto tape = getDefaultTape();
     tape.vid = vidDestination1;
     tape.tapePoolName = tapepool2Name;
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   std::string vidDestination2 = "VIDDESTINATION2";
@@ -4236,7 +4240,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
     auto tape = getDefaultTape();
     tape.vid = vidDestination2;
     tape.tapePoolName = tapepool3Name;
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   const std::string tapeDrive = "tape_drive";
@@ -4273,7 +4277,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
       tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
     }
     //update the DB tape
-    catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
+    catalogue.TapeFile()->filesWrittenToTape(tapeFilesWrittenCopy1);
     tapeFilesWrittenCopy1.clear();
   }
   //Test the expanding requeue the Repack after the creation of
@@ -4442,7 +4446,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldFailIfArchiveRouteMissing) {
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
-  catalogue.createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
 
   //Create the source tape
   std::string vidCopyNb1 = "VIDSOURCE";
@@ -4452,23 +4456,23 @@ TEST_P(SchedulerTest, expandRepackRequestShouldFailIfArchiveRouteMissing) {
     tape.full = true;
     tape.state = common::dataStructures::Tape::REPACKING;
     tape.stateReason = "Test";
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   //Create two different destination tapepool
   std::string tapepool2Name = "tapepool2";
   const std::optional<std::string> supply;
-  catalogue.createTapePool(admin,tapepool2Name,"vo",1,false,supply,"comment");
+  catalogue.TapePool()->createTapePool(admin,tapepool2Name,"vo",1,false,supply,"comment");
 
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
   storageClass.name = s_storageClassName;
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
-  catalogue.modifyStorageClassNbCopies(admin,storageClass.name,storageClass.nbCopies);
+  catalogue.StorageClass()->modifyStorageClassNbCopies(admin,storageClass.name,storageClass.nbCopies);
 
   //Create the one archive route for the second copy
-  catalogue.createArchiveRoute(admin,storageClass.name,2,tapepool2Name,"ArchiveRoute3");
+  catalogue.ArchiveRoute()->createArchiveRoute(admin,storageClass.name,2,tapepool2Name,"ArchiveRoute3");
 
   //Create two other destinationTape
   std::string vidCopyNb2_source = "VIDCOPYNB2_SOURCE";
@@ -4478,7 +4482,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldFailIfArchiveRouteMissing) {
     tape.tapePoolName = tapepool2Name;
     tape.state = common::dataStructures::Tape::REPACKING;
     tape.stateReason = "Test";
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   std::string vidCopyNb2_destination = "VIDCOPYNB2_DESTINATION";
@@ -4486,7 +4490,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldFailIfArchiveRouteMissing) {
     auto tape = getDefaultTape();
     tape.vid = vidCopyNb2_destination;
     tape.tapePoolName = tapepool2Name;
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   const std::string tapeDrive = "tape_drive";
@@ -4523,7 +4527,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldFailIfArchiveRouteMissing) {
       tapeFilesWrittenCopy.emplace(fileWrittenUP.release());
     }
     //update the DB tape
-    catalogue.filesWrittenToTape(tapeFilesWrittenCopy);
+    catalogue.TapeFile()->filesWrittenToTape(tapeFilesWrittenCopy);
     tapeFilesWrittenCopy.clear();
   }
   //Archive the second copy of the files in the tape located in the tapepool2
@@ -4555,12 +4559,12 @@ TEST_P(SchedulerTest, expandRepackRequestShouldFailIfArchiveRouteMissing) {
       tapeFilesWrittenCopy.emplace(fileWrittenUP.release());
     }
     //update the DB tape
-    catalogue.filesWrittenToTape(tapeFilesWrittenCopy);
+    catalogue.TapeFile()->filesWrittenToTape(tapeFilesWrittenCopy);
     tapeFilesWrittenCopy.clear();
   }
-  catalogue.setTapeFull(admin,vidCopyNb2_source,true);
+  catalogue.Tape()->setTapeFull(admin,vidCopyNb2_source,true);
   //Delete the archive route of the second copy and repack the tape that contains these second copies
-  catalogue.deleteArchiveRoute(storageClass.name,2);
+  catalogue.ArchiveRoute()->deleteArchiveRoute(storageClass.name,2);
   {
     std::string vid = vidCopyNb2_source;
     cta::SchedulerDatabase::QueueRepackRequest qrr(vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveAndAddCopies,
@@ -4624,7 +4628,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
-  catalogue.createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
 
   //Create the source tape
   std::string vid = "VIDSOURCE";
@@ -4634,27 +4638,27 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
     tape.full = true;
     tape.state = common::dataStructures::Tape::REPACKING;
     tape.stateReason = "Test";
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   //Create two different destination tapepool
   std::string tapepool2Name = "tapepool2";
   const std::optional<std::string> supply;
-  catalogue.createTapePool(admin,tapepool2Name,"vo",1,false,supply,"comment");
+  catalogue.TapePool()->createTapePool(admin,tapepool2Name,"vo",1,false,supply,"comment");
 
   std::string tapepool3Name = "tapepool3";
-  catalogue.createTapePool(admin,tapepool3Name,"vo",1,false,supply,"comment");
+  catalogue.TapePool()->createTapePool(admin,tapepool3Name,"vo",1,false,supply,"comment");
 
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
   storageClass.name = s_storageClassName;
   storageClass.nbCopies = 3;
   storageClass.comment = "Create storage class";
-  catalogue.modifyStorageClassNbCopies(admin,storageClass.name,storageClass.nbCopies);
+  catalogue.StorageClass()->modifyStorageClassNbCopies(admin,storageClass.name,storageClass.nbCopies);
 
   //Create the two archive routes for the new copies
-  catalogue.createArchiveRoute(admin,storageClass.name,2,tapepool2Name,"ArchiveRoute2");
-  catalogue.createArchiveRoute(admin,storageClass.name,3,tapepool3Name,"ArchiveRoute3");
+  catalogue.ArchiveRoute()->createArchiveRoute(admin,storageClass.name,2,tapepool2Name,"ArchiveRoute2");
+  catalogue.ArchiveRoute()->createArchiveRoute(admin,storageClass.name,3,tapepool3Name,"ArchiveRoute3");
 
   //Create two other destinationTape and one for the move workflow
   std::string vidDestination1 = "VIDDESTINATION1";
@@ -4662,7 +4666,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
     auto tape = getDefaultTape();
     tape.vid = vidDestination1;
     tape.tapePoolName = tapepool2Name;
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   std::string vidDestination2 = "VIDDESTINATION2";
@@ -4671,14 +4675,14 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
     tape.vid = vidDestination2;
     tape.tapePoolName = tapepool3Name;
     tape.full = false;
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   std::string vidMove = "VIDMOVE";
   {
     auto tape = getDefaultTape();
     tape.vid = vidMove;
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   const std::string tapeDrive = "tape_drive";
@@ -4715,7 +4719,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
       tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
     }
     //update the DB tape
-    catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
+    catalogue.TapeFile()->filesWrittenToTape(tapeFilesWrittenCopy1);
     tapeFilesWrittenCopy1.clear();
   }
   //Test the expanding requeue the Repack after the creation of
@@ -4904,7 +4908,7 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
 
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
 
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
@@ -4915,14 +4919,14 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
     tape.full = true;
     tape.state = common::dataStructures::Tape::REPACKING;
     tape.stateReason = "Test";
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
   //Create a repack destination tape
   std::string vidDestination = "VIDDESTINATION";
   {
     auto tape = getDefaultTape();
     tape.vid = vidDestination;
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   //Create a storage class in the catalogue
@@ -4965,7 +4969,7 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
       tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
     }
     //update the DB tape
-    catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
+    catalogue.TapeFile()->filesWrittenToTape(tapeFilesWrittenCopy1);
     tapeFilesWrittenCopy1.clear();
   }
   //Test the expandRepackRequest method
@@ -5143,15 +5147,15 @@ TEST_P(SchedulerTest, getNextMountEmptyArchiveForRepackIfNbFilesQueuedIsLessThan
   //Create environment for the test
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryIsDisabled, libraryComment);
 
   {
     auto tape = getDefaultTape();
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
-  catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,10000);
+  catalogue.MountPolicy()->modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,10000);
 
   Sorter sorter(agentReference,backend,catalogue);
   for(uint64_t i = 0; i < s_minFilesToWarrantAMount; ++i) {
@@ -5247,17 +5251,17 @@ TEST_P(SchedulerTest, getNextMountTapeStatesThatShouldNotReturnAMount) {
   // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryIsDisabled, libraryComment);
 
   auto tape = getDefaultTape();
   {
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   const std::string driveName = "tape_drive";
 
-  catalogue.tapeLabelled(s_vid, driveName);
+  catalogue.Tape()->tapeLabelled(s_vid, driveName);
 
   {
     // This first initialization is normally done by the dataSession function.
@@ -5294,24 +5298,24 @@ TEST_P(SchedulerTest, getNextMountTapeStatesThatShouldNotReturnAMount) {
 
   scheduler.waitSchedulerDbSubthreadsComplete();
 
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::BROKEN,std::nullopt,std::string("Test"));
+  catalogue.Tape()->modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::BROKEN,std::nullopt,std::string("Test"));
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::BROKEN,std::nullopt);
+  catalogue.Tape()->modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::BROKEN,std::nullopt);
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::EXPORTED,std::nullopt,std::string("Test"));
+  catalogue.Tape()->modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::EXPORTED,std::nullopt,std::string("Test"));
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::EXPORTED,std::nullopt);
+  catalogue.Tape()->modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::EXPORTED,std::nullopt);
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::REPACKING_DISABLED,std::nullopt,std::string("Test"));
+  catalogue.Tape()->modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::REPACKING_DISABLED,std::nullopt,std::string("Test"));
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::REPACKING_DISABLED,std::nullopt);
+  catalogue.Tape()->modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::REPACKING_DISABLED,std::nullopt);
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::DISABLED,std::nullopt,std::string("Test"));
+  catalogue.Tape()->modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::DISABLED,std::nullopt,std::string("Test"));
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::DISABLED,std::nullopt);
+  catalogue.Tape()->modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::DISABLED,std::nullopt);
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 
   {
@@ -5360,24 +5364,24 @@ TEST_P(SchedulerTest, getNextMountTapeStatesThatShouldNotReturnAMount) {
     scheduler.queueRetrieve(s_diskInstance, request, lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::BROKEN,std::nullopt,std::string("Test"));
+  catalogue.Tape()->modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::BROKEN,std::nullopt,std::string("Test"));
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::BROKEN,std::nullopt);
+  catalogue.Tape()->modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::BROKEN,std::nullopt);
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::EXPORTED,std::nullopt,std::string("Test"));
+  catalogue.Tape()->modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::EXPORTED,std::nullopt,std::string("Test"));
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::EXPORTED,std::nullopt);
+  catalogue.Tape()->modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::EXPORTED,std::nullopt);
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::REPACKING_DISABLED,std::nullopt,std::string("Test"));
+  catalogue.Tape()->modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::REPACKING_DISABLED,std::nullopt,std::string("Test"));
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::REPACKING_DISABLED,std::nullopt);
+  catalogue.Tape()->modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::REPACKING_DISABLED,std::nullopt);
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::DISABLED,std::nullopt,std::string("Test"));
+  catalogue.Tape()->modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::DISABLED,std::nullopt,std::string("Test"));
   ASSERT_EQ(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::DISABLED,std::nullopt);
+  catalogue.Tape()->modifyTapeState(s_adminOnAdminHost,tape.vid,common::dataStructures::Tape::ACTIVE,common::dataStructures::Tape::DISABLED,std::nullopt);
   ASSERT_NE(nullptr,scheduler.getNextMount(s_libraryName, driveName, lc));
 }
 
@@ -5392,9 +5396,9 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
   //cta::objectstore::Backend& backend = schedulerDB.getBackend();
 
   setupDefaultCatalogue();
-  catalogue.createDiskInstance({"user", "host"}, "diskInstance", "no comment");
-  catalogue.createDiskInstanceSpace({"user", "host"}, "diskInstanceSpace", "diskInstance", "eos:ctaeos:default", 10, "no comment");
-  catalogue.createDiskSystem({"user", "host"}, "repackBuffer", "diskInstance", "diskInstanceSpace", tempDirectory.path(), 10L*1000*1000*1000, 15*60, "no comment");
+  catalogue.DiskInstance()->createDiskInstance({"user", "host"}, "diskInstance", "no comment");
+  catalogue.DiskInstanceSpace()->createDiskInstanceSpace({"user", "host"}, "diskInstanceSpace", "diskInstance", "eos:ctaeos:default", 10, "no comment");
+  catalogue.DiskSystem()->createDiskSystem({"user", "host"}, "repackBuffer", "diskInstance", "diskInstanceSpace", tempDirectory.path(), 10L*1000*1000*1000, 15*60, "no comment");
 
 #ifdef STDOUT_LOGGING
   log::StdoutLogger dl("dummy", "unitTest");
@@ -5413,14 +5417,14 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
 
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
 
   {
     auto tape = getDefaultTape();
     tape.full = true;
     tape.state = common::dataStructures::Tape::REPACKING;
     tape.stateReason = "Test";
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   //Create a storage class in the catalogue
@@ -5462,7 +5466,7 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
       tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
     }
     //update the DB tape
-    catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
+    catalogue.TapeFile()->filesWrittenToTape(tapeFilesWrittenCopy1);
     tapeFilesWrittenCopy1.clear();
   }
 
@@ -5497,11 +5501,11 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
       reservationRequest.addRequest(job->diskSystemName().value(), job->archiveFile.fileSize);
     }
     ASSERT_EQ(10,jobBatch.size());
-    auto diskSpaceReservedBefore = catalogue.getTapeDrive(driveName).value().reservedBytes;
+    auto diskSpaceReservedBefore = catalogue.DriveState()->getTapeDrive(driveName).value().reservedBytes;
     //Trying to reserve disk space should result in 10 jobs should fail
     ASSERT_FALSE(retrieveMount->reserveDiskSpace(reservationRequest, lc));
     //No extra disk space was reserved
-    auto diskSpaceReservedAfter = catalogue.getTapeDrive(driveName).value().reservedBytes;
+    auto diskSpaceReservedAfter = catalogue.DriveState()->getTapeDrive(driveName).value().reservedBytes;
     ASSERT_EQ(diskSpaceReservedAfter, diskSpaceReservedBefore);
   }
   /*
@@ -5541,9 +5545,9 @@ TEST_P(SchedulerTest, expandRepackRequestShouldThrowIfUseBufferNotRecallButNoDir
   auto &scheduler = getScheduler();
 
   setupDefaultCatalogue();
-  catalogue.createDiskInstance({"user", "host"}, "diskInstance", "no comment");
-  catalogue.createDiskInstanceSpace({"user", "host"}, "diskInstanceSpace", "diskInstance", "eos:ctaeos:default", 10, "no comment");
-  catalogue.createDiskSystem({"user", "host"}, "repackBuffer", "diskInstance", "diskInstanceSpace", tempDirectory.path(), 10L*1000*1000*1000, 15*60, "no comment");
+  catalogue.DiskInstance()->createDiskInstance({"user", "host"}, "diskInstance", "no comment");
+  catalogue.DiskInstanceSpace()->createDiskInstanceSpace({"user", "host"}, "diskInstanceSpace", "diskInstance", "eos:ctaeos:default", 10, "no comment");
+  catalogue.DiskSystem()->createDiskSystem({"user", "host"}, "repackBuffer", "diskInstance", "diskInstanceSpace", tempDirectory.path(), 10L*1000*1000*1000, 15*60, "no comment");
 
 #ifdef STDOUT_LOGGING
   log::StdoutLogger dl("dummy", "unitTest");
@@ -5562,14 +5566,14 @@ TEST_P(SchedulerTest, expandRepackRequestShouldThrowIfUseBufferNotRecallButNoDir
 
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
 
   {
     auto tape = getDefaultTape();
     tape.full = true;
     tape.state = common::dataStructures::Tape::REPACKING;
     tape.stateReason = "Test";
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   //Create a storage class in the catalogue
@@ -5611,7 +5615,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldThrowIfUseBufferNotRecallButNoDir
       tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
     }
     //update the DB tape
-    catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
+    catalogue.TapeFile()->filesWrittenToTape(tapeFilesWrittenCopy1);
     tapeFilesWrittenCopy1.clear();
   }
 
@@ -5640,9 +5644,9 @@ TEST_P(SchedulerTest, expandRepackRequestShouldNotThrowIfTapeDisabledButNoRecall
   auto &scheduler = getScheduler();
 
   setupDefaultCatalogue();
-  catalogue.createDiskInstance({"user", "host"}, "diskInstance", "no comment");
-  catalogue.createDiskInstanceSpace({"user", "host"}, "diskInstanceSpace", "diskInstance", "eos:ctaeos:default", 10, "no comment");
-  catalogue.createDiskSystem({"user", "host"}, "repackBuffer", "diskInstance", "diskInstanceSpace",tempDirectory.path(), 10L*1000*1000*1000, 15*60, "no comment");
+  catalogue.DiskInstance()->createDiskInstance({"user", "host"}, "diskInstance", "no comment");
+  catalogue.DiskInstanceSpace()->createDiskInstanceSpace({"user", "host"}, "diskInstanceSpace", "diskInstance", "eos:ctaeos:default", 10, "no comment");
+  catalogue.DiskSystem()->createDiskSystem({"user", "host"}, "repackBuffer", "diskInstance", "diskInstanceSpace",tempDirectory.path(), 10L*1000*1000*1000, 15*60, "no comment");
 
 #ifdef STDOUT_LOGGING
   log::StdoutLogger dl("dummy", "unitTest");
@@ -5661,14 +5665,14 @@ TEST_P(SchedulerTest, expandRepackRequestShouldNotThrowIfTapeDisabledButNoRecall
 
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
 
   {
     auto tape = getDefaultTape();
     tape.full = true;
     tape.state = common::dataStructures::Tape::REPACKING;
     tape.stateReason = "Test";
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   //Create a storage class in the catalogue
@@ -5710,7 +5714,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldNotThrowIfTapeDisabledButNoRecall
       tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
     }
     //update the DB tape
-    catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
+    catalogue.TapeFile()->filesWrittenToTape(tapeFilesWrittenCopy1);
     tapeFilesWrittenCopy1.clear();
   }
 
@@ -5763,21 +5767,21 @@ TEST_P(SchedulerTest, archiveMaxDrivesVoInFlightChangeScheduleMount){
   // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryIsDisabled, libraryComment);
   {
-    auto libraries = catalogue.getLogicalLibraries();
+    auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
   }
 
   auto tape = getDefaultTape();
-  catalogue.createTape(s_adminOnAdminHost, tape);
+  catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
 
   const std::string driveName = "tape_drive";
 
-  catalogue.tapeLabelled(s_vid, driveName);
+  catalogue.Tape()->tapeLabelled(s_vid, driveName);
 
 
   log::DummyLogger dl("", "");
@@ -5787,7 +5791,7 @@ TEST_P(SchedulerTest, archiveMaxDrivesVoInFlightChangeScheduleMount){
   scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   scheduler.waitSchedulerDbSubthreadsComplete();
 
-  catalogue.modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,0);
+  catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,0);
 
   {
     // Emulate a tape server
@@ -5799,7 +5803,7 @@ TEST_P(SchedulerTest, archiveMaxDrivesVoInFlightChangeScheduleMount){
     bool nextMount = scheduler.getNextMountDryRun(s_libraryName, driveName, lc);
     //nextMount should be false as the VO write max drives is 0
     ASSERT_FALSE(nextMount);
-    catalogue.modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,1);
+    catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,1);
     //Reset the VO write max drives to a positive number should give a new mount
     nextMount = scheduler.getNextMountDryRun(s_libraryName,driveName,lc);
     ASSERT_TRUE(nextMount);
@@ -5833,10 +5837,10 @@ TEST_P(SchedulerTest, retrieveMaxDrivesVoInFlightChangeScheduleMount)
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
 
   auto tape = getDefaultTape();
-  catalogue.createTape(s_adminOnAdminHost, tape);
+  catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
 
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
@@ -5878,7 +5882,7 @@ TEST_P(SchedulerTest, retrieveMaxDrivesVoInFlightChangeScheduleMount)
       tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
     }
     //update the DB tape
-    catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
+    catalogue.TapeFile()->filesWrittenToTape(tapeFilesWrittenCopy1);
     tapeFilesWrittenCopy1.clear();
   }
   //Test the queueing of the Retrieve Request and try to mount after having changed the readMaxDrives of the VO
@@ -5896,11 +5900,11 @@ TEST_P(SchedulerTest, retrieveMaxDrivesVoInFlightChangeScheduleMount)
 
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,"drive",lc));
 
-  catalogue.modifyVirtualOrganizationReadMaxDrives(s_adminOnAdminHost,s_vo,0);
+  catalogue.VO()->modifyVirtualOrganizationReadMaxDrives(s_adminOnAdminHost,s_vo,0);
 
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,"drive",lc));
 
-  catalogue.modifyVirtualOrganizationReadMaxDrives(s_adminOnAdminHost,s_vo,1);
+  catalogue.VO()->modifyVirtualOrganizationReadMaxDrives(s_adminOnAdminHost,s_vo,1);
 
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,"drive",lc));
 }
@@ -5936,43 +5940,43 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
   std::string drive1 = "drive1";
   {
     const auto tapeDrive = getDefaultTapeDrive(drive1);
-    catalogue.createTapeDrive(tapeDrive);
+    catalogue.DriveState()->createTapeDrive(tapeDrive);
   }
   std::string drive2 = "drive2";
   {
     const auto tapeDrive = getDefaultTapeDrive(drive2);
-    catalogue.createTapeDrive(tapeDrive);
+    catalogue.DriveState()->createTapeDrive(tapeDrive);
   }
   std::string drive3 = "drive3";
   {
     const auto tapeDrive = getDefaultTapeDrive(drive3);
-    catalogue.createTapeDrive(tapeDrive);
+    catalogue.DriveState()->createTapeDrive(tapeDrive);
   }
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
 
   //This tape will contain files for triggering a Retrieve
   auto tape1 = getDefaultTape();
-  catalogue.createTape(s_adminOnAdminHost, tape1);
+  catalogue.Tape()->createTape(s_adminOnAdminHost, tape1);
 
   //Two tapes for ArchiveForUser and ArchiveForRepack mounts
   std::string vid2 = "VID_2";
   auto tape2 = tape1;
   tape2.vid = vid2;
-  catalogue.createTape(s_adminOnAdminHost, tape2);
+  catalogue.Tape()->createTape(s_adminOnAdminHost, tape2);
 
   //Create a new tapepool on the same VO
   std::string newTapepool = "new_tapepool";
-  catalogue.createTapePool(s_adminOnAdminHost,newTapepool,s_vo,1,false,std::nullopt,"Test");
+  catalogue.TapePool()->createTapePool(s_adminOnAdminHost,newTapepool,s_vo,1,false,std::nullopt,"Test");
 
   //Create the third tape in the new tapepool
   std::string vid3 = "VID_3";
   auto tape3  = tape1;
   tape3.vid = vid3;
   tape3.tapePoolName = newTapepool;
-  catalogue.createTape(s_adminOnAdminHost,tape3);
+  catalogue.Tape()->createTape(s_adminOnAdminHost,tape3);
 
   //Create a storage class in the catalogue
   common::dataStructures::StorageClass storageClass;
@@ -5980,10 +5984,10 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
   storageClass.nbCopies = 2;
   storageClass.comment = "Create storage class";
 
-  catalogue.modifyStorageClassNbCopies(s_adminOnAdminHost,storageClass.name,storageClass.nbCopies);
+  catalogue.StorageClass()->modifyStorageClassNbCopies(s_adminOnAdminHost,storageClass.name,storageClass.nbCopies);
 
    //Create the new archive routes for the second copy
-  catalogue.createArchiveRoute(s_adminOnAdminHost,storageClass.name,2,newTapepool,"ArchiveRoute2");
+  catalogue.ArchiveRoute()->createArchiveRoute(s_adminOnAdminHost,storageClass.name,2,newTapepool,"ArchiveRoute2");
 
   const std::string tapeDrive = "tape_drive";
   const uint64_t nbArchiveFilesPerTape = 10;
@@ -6019,7 +6023,7 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
       tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
     }
     //update the DB tape
-    catalogue.filesWrittenToTape(tapeFilesWrittenCopy1);
+    catalogue.TapeFile()->filesWrittenToTape(tapeFilesWrittenCopy1);
     tapeFilesWrittenCopy1.clear();
   }
   //Queue the Retrieve request
@@ -6068,8 +6072,8 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
 
   sorter.flushAll(lc);
 
-  catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,0);
-  catalogue.modifyMountPolicyRetrieveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,0);
+  catalogue.MountPolicy()->modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,0);
+  catalogue.MountPolicy()->modifyMountPolicyRetrieveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,0);
 
   //Wait 2 second to be sure the minRequestAge will not prevent a mount
   ::sleep(1);
@@ -6077,16 +6081,16 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,drive1,lc));
 
   //No read nor write allowed
-  catalogue.modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,0);
-  catalogue.modifyVirtualOrganizationReadMaxDrives(s_adminOnAdminHost,s_vo,0);
+  catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,0);
+  catalogue.VO()->modifyVirtualOrganizationReadMaxDrives(s_adminOnAdminHost,s_vo,0);
 
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,drive1,lc));
 
   //Allow one drive for write and trigger the mount
-  catalogue.modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,1);
+  catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,1);
 
   //Set the tape 1 to disabled state to prevent the mount in it (should be the Retrieve)
-  catalogue.setTapeDisabled(s_adminOnAdminHost,tape1.vid,"test");
+  catalogue.Tape()->setTapeDisabled(s_adminOnAdminHost,tape1.vid,"test");
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,drive1,lc));
   {
     std::unique_ptr<cta::TapeMount> tapeMount = scheduler.getNextMount(s_libraryName,drive1,lc);
@@ -6109,7 +6113,7 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,drive2,lc));
 
   //Now allocate one more drive for Archival
-  catalogue.modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,2);
+  catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,2);
 
   //A new Archive mount should be triggered
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,drive2,lc));
@@ -6133,11 +6137,12 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
   //As 2 drives are writing and only 2 drives are allowed on this VO, the third drive should not trigger a new mount
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,drive3,lc));
   //Now allocate one drive for Retrieve
-  catalogue.modifyVirtualOrganizationReadMaxDrives(s_adminOnAdminHost,s_vo,1);
-  //The retrieve mount should not be triggered as the tape 1 state is broken
+  catalogue.VO()->modifyVirtualOrganizationReadMaxDrives(s_adminOnAdminHost,s_vo,1);
+  //The retrieve mount should not be triggered as the tape 1 is disabled
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,drive3,lc));
   //Setting the state of the tape back to active
-  catalogue.modifyTapeState(s_adminOnAdminHost,tape1.vid,common::dataStructures::Tape::ACTIVE,std::nullopt,std::nullopt);
+  catalogue.Tape()->modifyTapeState(s_adminOnAdminHost, tape1.vid, common::dataStructures::Tape::ACTIVE, std::nullopt,
+    std::nullopt);
   //The mount should be triggered on tape 1
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,drive3,lc));
   //The mount should be a Retrieve mount
@@ -6187,15 +6192,15 @@ TEST_P(SchedulerTest, getQueuesAndMountSummariesTest)
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
 
   //Create two tapes
   auto tape = getDefaultTape();
-  catalogue.createTape(s_adminOnAdminHost, tape);
+  catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
 
   std::string vid2 = s_vid + "2";
   tape.vid = vid2;
-  catalogue.createTape(s_adminOnAdminHost,tape);
+  catalogue.Tape()->createTape(s_adminOnAdminHost,tape);
 
   //Create a RetrieveQueue with the vid s_vid
   std::string retrieveQueueAddress;
@@ -6343,33 +6348,33 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
   //Create environment for the test
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryIsDisabled, libraryComment);
 
-  catalogue.modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,1);
+  catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,1);
 
   std::string drive0 = "drive0";
   std::string drive1 = "drive1";
   {
     const auto tapeDrive = getDefaultTapeDrive(drive1);
-    catalogue.createTapeDrive(tapeDrive);
+    catalogue.DriveState()->createTapeDrive(tapeDrive);
   }
   std::string drive2 = "drive2";
   {
     const auto tapeDrive = getDefaultTapeDrive(drive2);
-    catalogue.createTapeDrive(tapeDrive);
+    catalogue.DriveState()->createTapeDrive(tapeDrive);
   }
 
   //Create two tapes (ArchiveForRepack and ArchiveForUser)
   {
     auto tape = getDefaultTape();
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   {
     auto tape = getDefaultTape();
     tape.vid = s_vid+"_1";
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   uint64_t fileSize = 667;
@@ -6405,13 +6410,13 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
     ar->insert();
   }
 
-  catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,100);
+  catalogue.MountPolicy()->modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,100);
 
   sorter.flushAll(lc);
 
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,drive0,lc));
 
-  catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,0);
+  catalogue.MountPolicy()->modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,0);
 
   //The archiveMinRequestAge should have 1 second to trigger a mount
   ::sleep(1);
@@ -6467,23 +6472,23 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
 
   sorter.flushAll(lc);
 
-  catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,100);
+  catalogue.MountPolicy()->modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,100);
   //mount should not be triggered
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,drive0,lc));
 
-  catalogue.modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,0);
+  catalogue.MountPolicy()->modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,0);
 
   //Sleeping one seconds to trigger a mount
   ::sleep(1);
 
-  catalogue.modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,1);
+  catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,1);
 
   //Test the per VO writeMaxDrives: no mount should be triggered as only one drive for write
   //has been configured for this VO
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,drive1,lc));
 
   //Adding a second drive for write for this VO
-  catalogue.modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,2);
+  catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,2);
 
   //The next mount should be an ArchiveForUser mount as there is already a mount ongoing with an ArchiveForRepack
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,drive1,lc));
@@ -6509,7 +6514,7 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
   {
     auto tape = getDefaultTape();
     tape.vid = s_vid+"_2";
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,drive2,lc));
 }
@@ -6540,17 +6545,17 @@ TEST_P(SchedulerTestTriggerTapeStateChangeBehaviour, triggerTapeStateChangeValid
   // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
                                  libraryIsDisabled, libraryComment);
 
   auto tape = getDefaultTape();
   {
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   // Setup initial conditions
   schedulerDB.setRetrieveQueueCleanupFlag(tape.vid, false, lc);
-  catalogue.modifyTapeState(s_adminOnAdminHost, tape.vid,triggerTapeStateChangeBehaviour.fromState,std::nullopt,"Test");
+  catalogue.Tape()->modifyTapeState(s_adminOnAdminHost, tape.vid,triggerTapeStateChangeBehaviour.fromState,std::nullopt,"Test");
 
   // Trigger change
   if (triggerTapeStateChangeBehaviour.changeRaisedException) {
@@ -6560,7 +6565,7 @@ TEST_P(SchedulerTestTriggerTapeStateChangeBehaviour, triggerTapeStateChangeValid
   }
 
   // Observe results
-  ASSERT_EQ(catalogue.getTapesByVid(tape.vid).at(tape.vid).state, triggerTapeStateChangeBehaviour.observedState);
+  ASSERT_EQ(catalogue.Tape()->getTapesByVid(tape.vid).at(tape.vid).state, triggerTapeStateChangeBehaviour.observedState);
   ASSERT_EQ(schedulerDB.getRetrieveQueuesCleanupInfo(lc).front().doCleanup, triggerTapeStateChangeBehaviour.cleanupFlagActivated);
 }
 

@@ -135,8 +135,9 @@ int main(const int argc, char *const *const argv) {
                                                                        nbArchiveFileListingConns);
     auto catalogue = catalogueFactory->create();
     try {
-        catalogue->ping();
-        lc.log(log::INFO, "Connected to catalog " + catalogue->getSchemaVersion().getSchemaVersion<std::string>());
+        catalogue->Schema()->ping();
+        lc.log(log::INFO, "Connected to catalog " + catalogue->Schema()->getSchemaVersion().
+            getSchemaVersion<std::string>());
     } catch (cta::exception::Exception &ex) {
         lc.log(cta::log::CRIT, ex.getMessageValue());
         exit(1);

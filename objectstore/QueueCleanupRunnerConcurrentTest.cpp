@@ -32,15 +32,16 @@
 #include <algorithm>
 #include <uuid/uuid.h>
 
-#include "objectstore/ObjectStoreFixture.hpp"
-#include "catalogue/DummyCatalogue.hpp"
+#include "catalogue/dummy/DummyCatalogue.hpp"
+#include "catalogue/dummy/DummyTapeCatalogue.hpp"
+#include "common/log/StdoutLogger.hpp"
 #include "objectstore/BackendVFS.hpp"
 #include "objectstore/GarbageCollector.hpp"
+#include "objectstore/ObjectStoreFixture.hpp"
 #include "objectstore/QueueCleanupRunner.hpp"
 #include "scheduler/OStoreDB/OStoreDBFactory.hpp"
 #include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
 #include "scheduler/Scheduler.hpp"
-#include "common/log/StdoutLogger.hpp"
 
 #include "objectstore/QueueCleanupRunnerTestUtils.hpp"
 
@@ -298,7 +299,7 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
     auto initialRetrieveQueueToReportJobs = tapeQueueStateTrans.initialSetup.retrieveQueueToReportJobs;
 
     // Initial tape state
-    catalogue.modifyTapeState(dummyAdmin, vid, initialState, std::nullopt, "Testing");
+    catalogue.Tape()->modifyTapeState(dummyAdmin, vid, initialState, std::nullopt, "Testing");
 
     // Assert initial queue setup, for pre-validation of tests
     {
@@ -355,7 +356,8 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
     auto expectedRetrieveQueueToReportJobs = tapeQueueStateTrans.finalSetup.retrieveQueueToReportJobs;
 
     // Check final tape state
-    ASSERT_EQ(expectedState, catalogue.getTapeState(vid));
+    const auto tapeState = static_cast<cta::catalogue::DummyTapeCatalogue*>(catalogue.Tape().get())->getTapeState(vid);
+    ASSERT_EQ(expectedState, tapeState);
 
     // Assert final queue setup
     {

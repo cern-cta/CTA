@@ -229,7 +229,7 @@ std::list<SchedulerDatabase::RetrieveQueueCleanupInfo> OStoreDB::getRetrieveQueu
 void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, RootEntry& re,
   SchedulerDatabase::PurposeGetMountInfo purpose, log::LogContext & logContext) {
   utils::Timer t, t2;
-  std::list<common::dataStructures::MountPolicy> mountPolicies = m_catalogue.getCachedMountPolicies();
+  std::list<common::dataStructures::MountPolicy> mountPolicies = m_catalogue.MountPolicy()->getCachedMountPolicies();
   // Walk the archive queues for USER for statistics
   for (auto & aqp : re.dumpArchiveQueues(common::dataStructures::JobQueueType::JobsToTransferForUser)) {
     objectstore::ArchiveQueue aqueue(aqp.address, m_objectStore);
@@ -385,7 +385,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     // mount candidates list.
     auto rqSummary = rqueue.getJobsSummary();
     bool isPotentialMount = false;
-    auto vidToTapeMap = m_catalogue.getTapesByVid(rqp.vid);
+    auto vidToTapeMap = m_catalogue.Tape()->getTapesByVid(rqp.vid);
     common::dataStructures::Tape::State tapeState = vidToTapeMap.at(rqp.vid).state;
     if (tapeState == common::dataStructures::Tape::ACTIVE ||
         tapeState == common::dataStructures::Tape::REPACKING) {
@@ -502,7 +502,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
   // If a next mount exists the drive "counts double", but the corresponding drive
   // is either about to mount, or about to replace its current mount.
   double registerFetchTime = 0;
-  const auto driveStates = m_catalogue.getTapeDrives();
+  const auto driveStates = m_catalogue.DriveState()->getTapeDrives();
   registerFetchTime = t.secs(utils::Timer::resetCounter);
   using common::dataStructures::DriveStatus;
   std::set<int> activeDriveStatuses = {
@@ -3671,12 +3671,12 @@ bool OStoreDB::RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservati
   
   // Get the current file systems list from the catalogue
   cta::disk::DiskSystemList diskSystemList;
-  diskSystemList = m_oStoreDB.m_catalogue.getAllDiskSystems();
+  diskSystemList = m_oStoreDB.m_catalogue.DiskSystem()->getAllDiskSystems();
   diskSystemList.setExternalFreeDiskSpaceScript(externalFreeDiskSpaceScript);
   cta::disk::DiskSystemFreeSpaceList diskSystemFreeSpace(diskSystemList);
 
   // Get the existing reservation map from drives.
-  auto previousDrivesReservations = m_oStoreDB.m_catalogue.getDiskSpaceReservations();
+  auto previousDrivesReservations = m_oStoreDB.m_catalogue.DriveState()->getDiskSpaceReservations();
   // Get the free space from disk systems involved.
   std::set<std::string> diskSystemNames;
   for (auto const & dsrr: diskSpaceReservationRequest) {
@@ -3747,12 +3747,12 @@ bool OStoreDB::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRe
 
   // Get the current file systems list from the catalogue
   cta::disk::DiskSystemList diskSystemList;
-  diskSystemList = m_oStoreDB.m_catalogue.getAllDiskSystems();
+  diskSystemList = m_oStoreDB.m_catalogue.DiskSystem()->getAllDiskSystems();
   diskSystemList.setExternalFreeDiskSpaceScript(externalFreeDiskSpaceScript);
   cta::disk::DiskSystemFreeSpaceList diskSystemFreeSpace(diskSystemList);
 
   // Get the existing reservation map from drives.
-  auto previousDrivesReservations = m_oStoreDB.m_catalogue.getDiskSpaceReservations();
+  auto previousDrivesReservations = m_oStoreDB.m_catalogue.DriveState()->getDiskSpaceReservations();
   // Get the free space from disk systems involved.
   std::set<std::string> diskSystemNames;
   for (auto const & dsrr: diskSpaceReservationRequest) {
@@ -3812,7 +3812,8 @@ bool OStoreDB::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRe
     }
   }
 
-  m_oStoreDB.m_catalogue.reserveDiskSpace(mountInfo.drive, mountInfo.mountId, diskSpaceReservationRequest, logContext);
+  m_oStoreDB.m_catalogue.DriveState()->reserveDiskSpace(mountInfo.drive, mountInfo.mountId, diskSpaceReservationRequest,
+    logContext);
   return true;
 }
 
@@ -3975,7 +3976,8 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
       }
     }
   }
-  this->m_oStoreDB.m_catalogue.releaseDiskSpace(mountInfo.drive, mountInfo.mountId, diskSpaceReservationRequest, lc);
+  this->m_oStoreDB.m_catalogue.DriveState()->releaseDiskSpace(mountInfo.drive, mountInfo.mountId,
+    diskSpaceReservationRequest, lc);
   // 2) Queue the retrieve requests for repack.
   for (auto & repackRequestQueue: jobsToRequeueForRepackMap) {
     typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReportToRepackForSuccess> RQTRTRFSAlgo;
@@ -4573,7 +4575,7 @@ objectstore::ArchiveRequest::RepackInfo OStoreDB::ArchiveJob::getRepackInfoAfter
 void OStoreDB::RepackArchiveSuccessesReportBatch::report(log::LogContext& lc) {
   objectstore::RepackRequest req(m_repackRequest.getAddressIfSet(),this->m_oStoreDb.m_objectStore);
   req.fetchNoLock();
-  this->m_oStoreDb.m_catalogue.setTapeDirty(req.getInfo().vid);
+  this->m_oStoreDb.m_catalogue.Tape()->setTapeDirty(req.getInfo().vid);
   OStoreDB::RepackArchiveReportBatch::report(lc);
 }
 
@@ -4937,7 +4939,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
   if (diskSystemName) {
     cta::DiskSpaceReservationRequest dsrr;
     dsrr.addRequest(diskSystemName.value(), archiveFile.fileSize);
-    this->m_oStoreDB.m_catalogue.releaseDiskSpace(m_retrieveMount->getMountInfo().drive,
+    this->m_oStoreDB.m_catalogue.DriveState()->releaseDiskSpace(m_retrieveMount->getMountInfo().drive,
     m_retrieveMount->getMountInfo().mountId, dsrr, lc);
   }
 

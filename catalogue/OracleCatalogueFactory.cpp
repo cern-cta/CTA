@@ -15,9 +15,13 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "catalogue/CatalogueRetryWrapper.hpp"
+#include <memory>
+#include <string>
+#include <utility>
+
 #include "catalogue/OracleCatalogueFactory.hpp"
-#include "catalogue/OracleCatalogue.hpp"
+#include "catalogue/rdbms/oracle/OracleCatalogue.hpp"
+#include "catalogue/retrywrappers/CatalogueRetryWrapper.hpp"
 #include "common/exception/Exception.hpp"
 
 namespace cta {
@@ -37,7 +41,7 @@ OracleCatalogueFactory::OracleCatalogueFactory(
   m_nbConns(nbConns),
   m_nbArchiveFileListingConns(nbArchiveFileListingConns),
   m_maxTriesToConnect(maxTriesToConnect) {
-  if(rdbms::Login::DBTYPE_ORACLE != login.dbType) {
+  if (rdbms::Login::DBTYPE_ORACLE != login.dbType) {
     exception::Exception ex;
     ex.getMessage() << __FUNCTION__ << "failed: Incorrect database type: expected=DBTYPE_ORACLE actual=" <<
       login.dbTypeToString(login.dbType);
@@ -58,5 +62,5 @@ std::unique_ptr<Catalogue> OracleCatalogueFactory::create() {
   }
 }
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

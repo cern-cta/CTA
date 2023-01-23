@@ -24,7 +24,8 @@
 #include "ArchiveQueue.hpp"
 #include "ArchiveRequest.hpp"
 #include "BackendVFS.hpp"
-#include "catalogue/DummyCatalogue.hpp"
+#include "catalogue/dummy/DummyCatalogue.hpp"
+#include "catalogue/dummy/DummyTapeCatalogue.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/exception/Exception.hpp"
@@ -618,9 +619,9 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveRequest) {
     break;
   }
   // Mark the tape as enabled
-  catalogue.addEnabledTape("Tape0");
+  static_cast<cta::catalogue::DummyTapeCatalogue*>(catalogue.Tape().get())->addEnabledTape("Tape0");
   // Mark the other tape as disabled
-  catalogue.addDisabledTape("Tape1");
+  static_cast<cta::catalogue::DummyTapeCatalogue*>(catalogue.Tape().get())->addDisabledTape("Tape1");
   // Create the garbage collector and run it twice.
   cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
   cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
@@ -1668,7 +1669,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveRequestRepackRepackingTape) {
   gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf(lc);
 
-  catalogue.addRepackingTape("Tape0");
+  static_cast<cta::catalogue::DummyTapeCatalogue*>(catalogue.Tape().get())->addRepackingTape("Tape0");
 
   cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
   gc.runOnePass(lc);

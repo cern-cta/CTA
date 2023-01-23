@@ -22,10 +22,11 @@
 #include <string>
 #include <utility>
 
-#include <common/dataStructures/DriveStatusSerDeser.hpp>
-#include <common/dataStructures/MountTypeSerDeser.hpp>
-#include <xroot_plugins/XrdCtaStream.hpp>
-#include <xroot_plugins/XrdSsiCtaRequestMessage.hpp>
+#include "catalogue/Catalogue.hpp"
+#include "common/dataStructures/DriveStatusSerDeser.hpp"
+#include "common/dataStructures/MountTypeSerDeser.hpp"
+#include "xroot_plugins/XrdCtaStream.hpp"
+#include "xroot_plugins/XrdSsiCtaRequestMessage.hpp"
 
 namespace cta { namespace xrd {
 
@@ -62,7 +63,7 @@ class DriveLsStream: public XrdCtaStream{
   static constexpr const char* const LOG_SUFFIX  = "DriveLsStream";    //!< Identifier for log messages
 
   std::list<common::dataStructures::TapeDrive> m_tapeDrives;
-  std::list<cta::catalogue::Catalogue::DriveConfig> m_tapeDrivesConfigs;
+  std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig> m_tapeDrivesConfigs;
 };
 
 
@@ -71,8 +72,8 @@ DriveLsStream::DriveLsStream(const RequestMessage &requestMsg, cta::catalogue::C
   log::LogContext &lc) :
   XrdCtaStream(catalogue, scheduler),
   m_lc(lc),
-  m_tapeDrives(m_catalogue.getTapeDrives()),
-  m_tapeDrivesConfigs(m_catalogue.getTapeDriveConfigs()) {
+  m_tapeDrives(m_catalogue.DriveState()->getTapeDrives()),
+  m_tapeDrivesConfigs(m_catalogue.DriveConfig()->getTapeDriveConfigs()) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "DriveLsStream() constructor");
 
   auto driveRegexOpt = requestMsg.getOptional(cta::admin::OptionString::DRIVE);

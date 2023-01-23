@@ -58,7 +58,7 @@ private:
 
 MountPolicyLsStream::MountPolicyLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
-  m_mountPolicyList(catalogue.getMountPolicies())
+  m_mountPolicyList(catalogue.MountPolicy()->getMountPolicies())
 {
   using namespace cta::admin;
 

@@ -356,7 +356,7 @@ void cta::RetrieveMount::setTapeMounted(cta::log::LogContext& logContext) const 
   utils::Timer t;
   log::ScopedParamContainer spc(logContext);
   try {
-    m_catalogue.tapeMountedForRetrieve(m_dbMount->getMountInfo().vid, m_dbMount->getMountInfo().drive);
+    m_catalogue.Tape()->tapeMountedForRetrieve(m_dbMount->getMountInfo().vid, m_dbMount->getMountInfo().drive);
     auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
     spc.add("catalogueTime", catalogueTime);
     logContext.log(log::INFO, "In RetrieveMount::setTapeMounted(): success.");

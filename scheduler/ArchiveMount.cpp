@@ -133,7 +133,7 @@ std::string cta::ArchiveMount::getMountTransactionId() const {
 // updateCatalogueWithTapeFilesWritten
 //------------------------------------------------------------------------------
 void cta::ArchiveMount::updateCatalogueWithTapeFilesWritten(const std::set<cta::catalogue::TapeItemWrittenPointer>& tapeFilesWritten) {
-  m_catalogue.filesWrittenToTape(tapeFilesWritten);
+  m_catalogue.TapeFile()->filesWrittenToTape(tapeFilesWritten);
 }
 
 //------------------------------------------------------------------------------
@@ -339,7 +339,7 @@ void cta::ArchiveMount::setTapeMounted(cta::log::LogContext& logContext) const {
   utils::Timer t;
   log::ScopedParamContainer spc(logContext);
   try {
-    m_catalogue.tapeMountedForArchive(m_dbMount->getMountInfo().vid, m_dbMount->getMountInfo().drive);
+    m_catalogue.Tape()->tapeMountedForArchive(m_dbMount->getMountInfo().vid, m_dbMount->getMountInfo().drive);
     auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
     spc.add("catalogueTime", catalogueTime);
     logContext.log(log::INFO, "In ArchiveMount::setTapeMounted(): success.");
@@ -355,5 +355,5 @@ void cta::ArchiveMount::setTapeMounted(cta::log::LogContext& logContext) const {
 // setTapeFull()
 //------------------------------------------------------------------------------
 void cta::ArchiveMount::setTapeFull() {
-  m_catalogue.noSpaceLeftOnTape(m_dbMount->getMountInfo().vid);
+  m_catalogue.Tape()->noSpaceLeftOnTape(m_dbMount->getMountInfo().vid);
 }

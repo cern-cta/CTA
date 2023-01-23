@@ -21,7 +21,7 @@
 #include "AgentReference.hpp"
 #include "ArchiveQueueAlgorithms.hpp"
 #include "BackendVFS.hpp"
-#include "catalogue/DummyCatalogue.hpp"
+#include "catalogue/dummy/DummyCatalogue.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/log/DummyLogger.hpp"
 #ifdef STDOUT_LOGGING

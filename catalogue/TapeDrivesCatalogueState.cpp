@@ -39,22 +39,22 @@ void TapeDrivesCatalogueState::createTapeDriveStatus(const common::dataStructure
   const common::dataStructures::DriveStatus& status, const tape::daemon::TpconfigLine& tpConfigLine,
   const common::dataStructures::SecurityIdentity& identity, log::LogContext & lc) {
   auto tapeDriveStatus = setTapeDriveStatus(driveInfo, desiredState, type, status, tpConfigLine, identity);
-  auto driveNames = m_catalogue.getTapeDriveNames();
+  auto driveNames = m_catalogue.DriveState()->getTapeDriveNames();
   auto it = std::find(driveNames.begin(), driveNames.end(), tapeDriveStatus.driveName);
   if (it != driveNames.end()) {
-    m_catalogue.deleteTapeDrive(tapeDriveStatus.driveName);
+    m_catalogue.DriveState()->deleteTapeDrive(tapeDriveStatus.driveName);
   }
   tapeDriveStatus.ctaVersion = CTA_VERSION;
-  m_catalogue.createTapeDrive(tapeDriveStatus);
+  m_catalogue.DriveState()->createTapeDrive(tapeDriveStatus);
   log::ScopedParamContainer spc(lc);
   spc.add("drive", driveInfo.driveName);
   lc.log(log::DEBUG, "In TapeDrivesCatalogueState::createTapeDriveStatus(): success.");
 }
 
 void TapeDrivesCatalogueState::checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo) {
-  const auto driveNames = m_catalogue.getTapeDriveNames();
+  const auto driveNames = m_catalogue.DriveState()->getTapeDriveNames();
   try {
-    const auto tapeDrive = m_catalogue.getTapeDrive(driveInfo.driveName);
+    const auto tapeDrive = m_catalogue.DriveState()->getTapeDrive(driveInfo.driveName);
     if (!tapeDrive) return;  // tape drive does not exist
     if (tapeDrive.value().logicalLibrary != driveInfo.logicalLibrary || tapeDrive.value().host != driveInfo.host) {
       throw DriveAlreadyExistsException(std::string("The drive name=") + driveInfo.driveName +
@@ -72,7 +72,7 @@ void TapeDrivesCatalogueState::checkDriveCanBeCreated(const cta::common::dataStr
 
 void TapeDrivesCatalogueState::removeDrive(const std::string& drive, log::LogContext &lc) {
   try {
-    m_catalogue.deleteTapeDrive(drive);
+    m_catalogue.DriveState()->deleteTapeDrive(drive);
     log::ScopedParamContainer params(lc);
     params.add("driveName", drive);
     lc.log(log::INFO, "In TapeDrivesCatalogueState::removeDrive(): removed tape drive from database.");
@@ -83,10 +83,10 @@ void TapeDrivesCatalogueState::removeDrive(const std::string& drive, log::LogCon
 
 void TapeDrivesCatalogueState::setDesiredDriveState(const std::string& drive,
   const common::dataStructures::DesiredDriveState & desiredState, log::LogContext &lc) {
-  if(!desiredState.comment){
-    m_catalogue.setDesiredTapeDriveState(drive, desiredState);
+  if (!desiredState.comment) {
+    m_catalogue.DriveState()->setDesiredTapeDriveState(drive, desiredState);
   } else {
-    m_catalogue.setDesiredTapeDriveStateComment(drive, desiredState.comment.value());
+    m_catalogue.DriveState()->setDesiredTapeDriveStateComment(drive, desiredState.comment.value());
   }
 }
 
@@ -98,7 +98,8 @@ void TapeDrivesCatalogueState::updateDriveStatistics(const common::dataStructure
   statistics.bytesTransferedInSession = inputs.bytesTransferred;
   statistics.filesTransferedInSession = inputs.filesTransferred;
   statistics.reportTime = inputs.reportTime;
-  m_catalogue.updateTapeDriveStatistics(driveInfo.driveName, driveInfo.host, driveInfo.logicalLibrary, statistics);
+  m_catalogue.DriveState()->updateTapeDriveStatistics(driveInfo.driveName, driveInfo.host, driveInfo.logicalLibrary,
+                                                      statistics);
 }
 
 void TapeDrivesCatalogueState::reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
@@ -168,7 +169,7 @@ void TapeDrivesCatalogueState::updateDriveStatus(const common::dataStructures::D
       throw exception::Exception("Unexpected status in DriveRegister::reportDriveStatus");
   }
 
-  m_catalogue.updateTapeDriveStatus(driveState);
+  m_catalogue.DriveState()->updateTapeDriveStatus(driveState);
 }
 
 void TapeDrivesCatalogueState::setDriveDown(common::dataStructures::TapeDrive & driveState,

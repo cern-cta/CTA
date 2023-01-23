@@ -15,9 +15,11 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "catalogue/SqliteCatalogueSchema.hpp"
 #include "catalogue/SchemaCreatingSqliteCatalogue.hpp"
+#include "catalogue/SqliteCatalogueSchema.hpp"
+#include "common/dataStructures/VirtualOrganization.hpp"
 #include "common/utils/utils.hpp"
+#include "rdbms/ConnPool.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -44,7 +46,7 @@ SchemaCreatingSqliteCatalogue::SchemaCreatingSqliteCatalogue(
 void SchemaCreatingSqliteCatalogue::createCatalogueSchema() {
   try {
     const SqliteCatalogueSchema schema;
-    auto conn = m_connPool.getConn();
+    auto conn = m_connPool->getConn();
     executeNonQueries(conn, schema.sql);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());

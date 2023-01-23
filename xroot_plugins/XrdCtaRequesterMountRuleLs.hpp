@@ -58,7 +58,7 @@ private:
 
 RequesterMountRuleLsStream::RequesterMountRuleLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
-  m_requesterMountRuleList(catalogue.getRequesterMountRules())
+  m_requesterMountRuleList(catalogue.RequesterMountRule()->getRequesterMountRules())
 {
   using namespace cta::admin;
 

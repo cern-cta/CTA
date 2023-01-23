@@ -58,7 +58,7 @@ private:
 
 ArchiveRouteLsStream::ArchiveRouteLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
-  m_archiveRouteList(catalogue.getArchiveRoutes())
+  m_archiveRouteList(catalogue.ArchiveRoute()->getArchiveRoutes())
 {
   using namespace cta::admin;
 

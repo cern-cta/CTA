@@ -45,7 +45,7 @@
 #include "catalogue/CreateTapeAttributes.hpp"
 #include "catalogue/InMemoryCatalogue.hpp"
 #include "catalogue/MediaType.hpp"
-#include "catalogue/OracleCatalogue.hpp"
+#include "catalogue/rdbms/oracle/OracleCatalogue.hpp"
 #include "catalogue/OracleCatalogueSchema.hpp"
 #include "catalogue/TapeItemWrittenPointer.hpp"
 #include "common/dataStructures/DiskInstance.hpp"
@@ -333,13 +333,13 @@ public:
     const uint64_t minRetrieveRequestAge = mountPolicy.minRetrieveRequestAge;
     const std::string mountPolicyComment = "create mount group";
 
-    ASSERT_TRUE(catalogue.getMountPolicies().empty());
+    ASSERT_TRUE(catalogue.MountPolicy()->getMountPolicies().empty());
 
-    catalogue.createMountPolicy(
+    catalogue.MountPolicy()->createMountPolicy(
       s_adminOnAdminHost,
       mountPolicy);
 
-    const std::list<common::dataStructures::MountPolicy> groups = catalogue.getMountPolicies();
+    const std::list<common::dataStructures::MountPolicy> groups = catalogue.MountPolicy()->getMountPolicies();
     ASSERT_EQ(1, groups.size());
     const common::dataStructures::MountPolicy group = groups.front();
     ASSERT_EQ(mountPolicyName, group.name);
@@ -350,12 +350,12 @@ public:
     ASSERT_EQ(mountPolicyComment, group.comment);
 
     const auto di = getDefaultDiskInstance();
-    catalogue.createDiskInstance(s_adminOnAdminHost, di.name, di.comment); 
+    catalogue.DiskInstance()->createDiskInstance(s_adminOnAdminHost, di.name, di.comment); 
 
     const std::string ruleComment = "create requester mount-rule";
-    catalogue.createRequesterMountRule(s_adminOnAdminHost, mountPolicyName, di.name, s_userName, ruleComment);
+    catalogue.RequesterMountRule()->createRequesterMountRule(s_adminOnAdminHost, mountPolicyName, di.name, s_userName, ruleComment);
 
-    const std::list<common::dataStructures::RequesterMountRule> rules = catalogue.getRequesterMountRules();
+    const std::list<common::dataStructures::RequesterMountRule> rules = catalogue.RequesterMountRule()->getRequesterMountRules();
     ASSERT_EQ(1, rules.size());
 
     const common::dataStructures::RequesterMountRule rule = rules.front();
@@ -367,28 +367,27 @@ public:
     ASSERT_EQ(s_adminOnAdminHost.host, rule.creationLog.host);
     ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
 
- 
     cta::common::dataStructures::VirtualOrganization vo = getDefaultVirtualOrganization();
-    catalogue.createVirtualOrganization(s_adminOnAdminHost, vo);
+    catalogue.VO()->createVirtualOrganization(s_adminOnAdminHost, vo);
 
     common::dataStructures::StorageClass storageClass;
     storageClass.name = s_storageClassName;
     storageClass.nbCopies = 1;
     storageClass.vo.name = vo.name;
     storageClass.comment = "create storage class";
-    m_catalogue->createStorageClass(s_adminOnAdminHost, storageClass);
+    m_catalogue->StorageClass()->createStorageClass(s_adminOnAdminHost, storageClass);
 
     const uint16_t nbPartialTapes = 1;
     const std::string tapePoolComment = "Tape-pool comment";
     const bool tapePoolEncryption = false;
     const std::optional<std::string> tapePoolSupply("value for the supply pool mechanism");
 
-    ASSERT_NO_THROW(catalogue.createTapePool(s_adminOnAdminHost, s_tapePoolName, vo.name, nbPartialTapes, tapePoolEncryption,
-                                             tapePoolSupply, tapePoolComment));
+    ASSERT_NO_THROW(catalogue.TapePool()->createTapePool(s_adminOnAdminHost, s_tapePoolName, vo.name, nbPartialTapes,
+      tapePoolEncryption, tapePoolSupply, tapePoolComment));
     const uint32_t copyNb = 1;
     const std::string archiveRouteComment = "Archive-route comment";
-    catalogue.createArchiveRoute(s_adminOnAdminHost, s_storageClassName, copyNb, s_tapePoolName,
-                                 archiveRouteComment);
+    catalogue.ArchiveRoute()->createArchiveRoute(s_adminOnAdminHost, s_storageClassName, copyNb, s_tapePoolName,
+      archiveRouteComment);
 
     cta::catalogue::MediaType mediaType;
     mediaType.name = s_mediaType;
@@ -398,11 +397,11 @@ public:
     mediaType.maxLPos = 171097;
     mediaType.nbWraps = 112;
     mediaType.comment = "comment";
-    catalogue.createMediaType(s_adminOnAdminHost, mediaType);
+    catalogue.MediaType()->createMediaType(s_adminOnAdminHost, mediaType);
 
     const std::string driveName = "T10D6116";
     const auto tapeDrive = getDefaultTapeDrive(driveName);
-    catalogue.createTapeDrive(tapeDrive);
+    catalogue.DriveState()->createTapeDrive(tapeDrive);
   }
 
   /**
@@ -502,10 +501,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   // 5) Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
                                  libraryIsDisabled, libraryComment);
   {
-    auto libraries = catalogue.getLogicalLibraries();
+    auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
@@ -513,7 +512,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
 
   {
     auto tape = getDefaultTape();
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   // 6) Prepare files for reading by writing them to the mock system
@@ -570,7 +569,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
       tapeFileWritten.diskFileGid = DISK_FILE_SOME_GROUP;
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
-      catalogue.filesWrittenToTape(tapeFileWrittenSet);
+      catalogue.TapeFile()->filesWrittenToTape(tapeFileWrittenSet);
 
       // Schedule the retrieval of the file
       std::string diskInstance = s_diskInstance;
@@ -682,10 +681,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   // 5) Create the environment for the migration to happen (library + tape)
     const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryIsDisabled, libraryComment);
   {
-    auto libraries = catalogue.getLogicalLibraries();
+    auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
@@ -693,7 +692,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
 
   {
     auto tape = getDefaultTape();
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   // 6) Prepare files for reading by writing them to the mock system
@@ -756,7 +755,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
       tapeFileWritten.diskFileGid = DISK_FILE_SOME_GROUP;
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
-      catalogue.filesWrittenToTape(tapeFileWrittenSet);
+      catalogue.TapeFile()->filesWrittenToTape(tapeFileWrittenSet);
 
       // Schedule the retrieval of the file
       std::string diskInstance=s_diskInstance;
@@ -882,10 +881,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   // 5) Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
                                  libraryIsDisabled, libraryComment);
   {
-    auto libraries = catalogue.getLogicalLibraries();
+    auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
@@ -893,7 +892,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
 
   {
     auto tape = getDefaultTape();
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   // 6) Prepare files for reading by writing them to the mock system
@@ -950,7 +949,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
         tapeFileWritten.diskFileGid = DISK_FILE_SOME_GROUP;
         tapeFileWritten.storageClassName = s_storageClassName;
         tapeFileWritten.tapeDrive = "drive0";
-        catalogue.filesWrittenToTape(tapeFileWrittenSet);
+        catalogue.TapeFile()->filesWrittenToTape(tapeFileWrittenSet);
       }
 
       {
@@ -973,7 +972,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
         tapeFileWritten.diskFileGid = DISK_FILE_SOME_GROUP;
         tapeFileWritten.storageClassName = s_storageClassName;
         tapeFileWritten.tapeDrive = "drive0";
-        catalogue.filesWrittenToTape(tapeFileWrittenSet);
+        catalogue.TapeFile()->filesWrittenToTape(tapeFileWrittenSet);
       }
 
       // Schedule the retrieval of the file
@@ -1076,10 +1075,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   // 5) Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
                                  libraryIsDisabled, libraryComment);
   {
-    auto libraries = catalogue.getLogicalLibraries();
+    auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
@@ -1087,7 +1086,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
 
   {
     auto tape = getDefaultTape();
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   int MAX_RECALLS = 50;
@@ -1150,7 +1149,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
       tapeFileWritten.diskFileGid = DISK_FILE_SOME_GROUP;
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
-      catalogue.filesWrittenToTape(tapeFileWrittenSet);
+      catalogue.TapeFile()->filesWrittenToTape(tapeFileWrittenSet);
 
       // Schedule the retrieval of the file
       std::string diskInstance = s_diskInstance;
@@ -1266,10 +1265,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   // 5) Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
                                  libraryIsDisabled, libraryComment);
   {
-    auto libraries = catalogue.getLogicalLibraries();
+    auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
@@ -1277,7 +1276,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
 
   {
     auto tape = getDefaultTape();
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   int MAX_RECALLS = 50;
@@ -1341,7 +1340,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
       tapeFileWritten.diskFileGid = DISK_FILE_SOME_GROUP;
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
-      catalogue.filesWrittenToTape(tapeFileWrittenSet);
+      catalogue.TapeFile()->filesWrittenToTape(tapeFileWrittenSet);
 
       // Schedule the retrieval of the file
       std::string diskInstance = s_diskInstance;
@@ -1453,10 +1452,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   // 5) Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
                                  libraryIsDisabled, libraryComment);
   {
-    auto libraries = catalogue.getLogicalLibraries();
+    auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
@@ -1464,7 +1463,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
 
   {
     auto tape = getDefaultTape();
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   int MAX_RECALLS = 50;
@@ -1528,7 +1527,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
       tapeFileWritten.diskFileGid = DISK_FILE_SOME_GROUP;
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
-      catalogue.filesWrittenToTape(tapeFileWrittenSet);
+      catalogue.TapeFile()->filesWrittenToTape(tapeFileWrittenSet);
 
       // Schedule the retrieval of the file
       std::string diskInstance = s_diskInstance;
@@ -1644,10 +1643,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   // 5) Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
                                  libraryIsDisabled, libraryComment);
   {
-    auto libraries = catalogue.getLogicalLibraries();
+    auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
@@ -1655,7 +1654,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
 
   {
     auto tape = getDefaultTape();
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   int MAX_RECALLS = 30;
@@ -1719,7 +1718,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
       tapeFileWritten.diskFileGid = DISK_FILE_SOME_GROUP;
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
-      catalogue.filesWrittenToTape(tapeFileWrittenSet);
+      catalogue.TapeFile()->filesWrittenToTape(tapeFileWrittenSet);
 
       // Schedule the retrieval of the file
       std::string diskInstance = s_diskInstance;
@@ -1836,10 +1835,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   // 5) Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
                                  libraryIsDisabled, libraryComment);
   {
-    auto libraries = catalogue.getLogicalLibraries();
+    auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
@@ -1847,7 +1846,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
 
   {
     auto tape = getDefaultTape();
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   // 6) Prepare files for reading by writing them to the mock system
@@ -1904,7 +1903,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
       tapeFileWritten.diskFileGid = DISK_FILE_SOME_GROUP;
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
-      catalogue.filesWrittenToTape(tapeFileWrittenSet);
+      catalogue.TapeFile()->filesWrittenToTape(tapeFileWrittenSet);
 
       // Schedule the retrieval of the file
       std::string diskInstance = s_diskInstance;
@@ -1986,10 +1985,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   // 5) Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
                                  libraryIsDisabled, libraryComment);
   {
-    auto libraries = catalogue.getLogicalLibraries();
+    auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
@@ -1997,7 +1996,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
 
   {
     auto tape = getDefaultTape();
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   // 6) Prepare files for reading by writing them to the mock system
@@ -2054,7 +2053,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
       tapeFileWritten.diskFileGid = DISK_FILE_SOME_GROUP;
       tapeFileWritten.storageClassName = s_storageClassName;
       tapeFileWritten.tapeDrive = "drive0";
-      catalogue.filesWrittenToTape(tapeFileWrittenSet);
+      catalogue.TapeFile()->filesWrittenToTape(tapeFileWrittenSet);
 
       // Schedule the retrieval of the file
       std::string diskInstance = s_diskInstance;
@@ -2146,10 +2145,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   // 5) Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
                                  libraryIsDisabled, libraryComment);
   {
-    auto libraries = catalogue.getLogicalLibraries();
+    auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
@@ -2157,15 +2156,15 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
 
   {
     auto tape = getDefaultTape();
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   // Create the mount criteria
   auto mountPolicy = getImmediateMountMountPolicy();
-  catalogue.createMountPolicy(requester, mountPolicy);
+  catalogue.MountPolicy()->createMountPolicy(requester, mountPolicy);
   std::string mountPolicyName = mountPolicy.name;
 
-  catalogue.createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
+  catalogue.RequesterMountRule()->createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
 
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
@@ -2179,7 +2178,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   {
     // Label the tape
     castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
-    catalogue.tapeLabelled(s_vid, "T10D6116");
+    catalogue.Tape()->tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
     // Create the files and schedule the archivals
@@ -2243,7 +2242,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   auto afiiter = archiveFileIds.begin();
   for (const auto& sf: sourceFiles) {
     auto afi = *(afiiter++);
-    auto afs = catalogue.getArchiveFileById(afi);
+    auto afs = catalogue.ArchiveFile()->getArchiveFileById(afi);
     ASSERT_EQ(1, afs.tapeFiles.size());
     cta::checksum::ChecksumBlob checksumBlob;
     checksumBlob.insert(cta::checksum::ADLER32, sf->adler32());
@@ -2297,10 +2296,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   // 5) Create the environment for the migration to happen (library + tape)
     const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryIsDisabled, libraryComment);
   {
-    auto libraries = catalogue.getLogicalLibraries();
+    auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
@@ -2308,15 +2307,15 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
 
   {
     auto tape = getDefaultTape();
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   // Create the mount criteria
   auto mountPolicy = getImmediateMountMountPolicy();
-  catalogue.createMountPolicy(requester, mountPolicy);
+  catalogue.MountPolicy()->createMountPolicy(requester, mountPolicy);
   std::string mountPolicyName = mountPolicy.name;
   
-  catalogue.createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
+  catalogue.RequesterMountRule()->createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
 
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
@@ -2330,7 +2329,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   {
     // Label the tape
     castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
-    catalogue.tapeLabelled(s_vid, "T10D6116");
+    catalogue.Tape()->tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
     // Create the files and schedule the archivals
@@ -2420,9 +2419,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   for(auto & sf: sourceFiles) {
     auto afi = *(afiiter++);
     if (afi == 1) {
-      ASSERT_THROW(catalogue.getArchiveFileById(afi), cta::exception::Exception);
+      ASSERT_THROW(catalogue.ArchiveFile()->getArchiveFileById(afi), cta::exception::Exception);
     } else {
-      auto afs = catalogue.getArchiveFileById(afi);
+      auto afs = catalogue.ArchiveFile()->getArchiveFileById(afi);
       ASSERT_EQ(1, afs.tapeFiles.size());
       cta::checksum::ChecksumBlob checksumBlob;
       checksumBlob.insert(cta::checksum::ADLER32, sf->adler32());
@@ -2477,10 +2476,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   // 5) Create the environment for the migration to happen (library + tape)
     const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryIsDisabled, libraryComment);
   {
-    auto libraries = catalogue.getLogicalLibraries();
+    auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
@@ -2488,15 +2487,15 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
 
   {
     auto tape = getDefaultTape();
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   // Create the mount criteria
   auto mountPolicy = getImmediateMountMountPolicy();
-  catalogue.createMountPolicy(requester, mountPolicy);
+  catalogue.MountPolicy()->createMountPolicy(requester, mountPolicy);
   std::string mountPolicyName = mountPolicy.name;
 
-  catalogue.createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
+  catalogue.RequesterMountRule()->createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
 
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
@@ -2510,7 +2509,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   {
     // Label the tape
     castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
-    catalogue.tapeLabelled(s_vid, "T10D6116");
+    catalogue.Tape()->tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
     // Create the files and schedule the archivals
@@ -2599,7 +2598,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   // None of the files made it to the catalogue
   for(__attribute__ ((unused)) auto & sf: sourceFiles) {
     auto afi = *(afiiter++);
-    ASSERT_THROW(catalogue.getArchiveFileById(afi), cta::exception::Exception);
+    ASSERT_THROW(catalogue.ArchiveFile()->getArchiveFileById(afi), cta::exception::Exception);
   }
 
   // Check logs for drive statistics
@@ -2648,10 +2647,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   // 5) Create the environment for the migration to happen (library + tape)
     const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryIsDisabled, libraryComment);
   {
-    auto libraries = catalogue.getLogicalLibraries();
+    auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
@@ -2659,15 +2658,15 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
 
   {
     auto tape = getDefaultTape();
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   // Create the mount criteria
   auto mountPolicy = getImmediateMountMountPolicy();
-  catalogue.createMountPolicy(requester, mountPolicy);
+  catalogue.MountPolicy()->createMountPolicy(requester, mountPolicy);
   std::string mountPolicyName = mountPolicy.name;
 
-  catalogue.createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
+  catalogue.RequesterMountRule()->createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
 
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
@@ -2681,7 +2680,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   {
     // Label the tape
     castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
-    catalogue.tapeLabelled(s_vid, "T10D6116");
+    catalogue.Tape()->tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
     // Create the files and schedule the archivals
@@ -2792,14 +2791,14 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
     auto afi = *(afiiter++);
     if (fseq != 5) {
       // Files queued without the wrong file size made it to the catalogue
-      auto afs = catalogue.getArchiveFileById(afi);
+      auto afs = catalogue.ArchiveFile()->getArchiveFileById(afi);
       ASSERT_EQ(1, afs.tapeFiles.size());
       cta::checksum::ChecksumBlob checksumBlob;
       checksumBlob.insert(cta::checksum::ADLER32, sf->adler32());
       ASSERT_EQ(afs.checksumBlob, checksumBlob);
       ASSERT_EQ(1000, afs.fileSize);
     } else {
-      ASSERT_THROW(catalogue.getArchiveFileById(afi), cta::exception::Exception);
+      ASSERT_THROW(catalogue.ArchiveFile()->getArchiveFileById(afi), cta::exception::Exception);
     }
     fseq++;
   }
@@ -2851,10 +2850,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   // 5) Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
                                  libraryIsDisabled, libraryComment);
   {
-    auto libraries = catalogue.getLogicalLibraries();
+    auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
@@ -2862,15 +2861,15 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
 
   {
     auto tape = getDefaultTape();
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   // Create the mount criteria
   auto mountPolicy = getImmediateMountMountPolicy();
-  catalogue.createMountPolicy(requester, mountPolicy);
+  catalogue.MountPolicy()->createMountPolicy(requester, mountPolicy);
   std::string mountPolicyName = mountPolicy.name;
 
-  catalogue.createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
+  catalogue.RequesterMountRule()->createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
 
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
@@ -2884,7 +2883,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   {
     // Label the tape
     castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
-    catalogue.tapeLabelled(s_vid, "T10D6116");
+    catalogue.Tape()->tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
     // Create the files and schedule the archivals
@@ -2962,7 +2961,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   ASSERT_EQ(5, count);
   cta::catalogue::TapeSearchCriteria tapeCriteria;
   tapeCriteria.vid = s_vid;
-  auto tapeInfo = catalogue.getTapes(tapeCriteria);
+  auto tapeInfo = catalogue.Tape()->getTapes(tapeCriteria);
   ASSERT_EQ(1, tapeInfo.size());
   // We should have max fseq at least 10. It could be higher is a retry manages to sneak in.
   ASSERT_LE(10, tapeInfo.begin()->lastFSeq);
@@ -3017,10 +3016,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   // 5) Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
                                  libraryIsDisabled, libraryComment);
   {
-    auto libraries = catalogue.getLogicalLibraries();
+    auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
@@ -3029,14 +3028,14 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
 
   {
     auto tape = getDefaultTape();
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   auto mountPolicy = getImmediateMountMountPolicy();
-  catalogue.createMountPolicy(requester, mountPolicy);
+  catalogue.MountPolicy()->createMountPolicy(requester, mountPolicy);
   std::string mountPolicyName = mountPolicy.name;
 
-  catalogue.createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
+  catalogue.RequesterMountRule()->createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
 
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
@@ -3051,7 +3050,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   {
     // Label the tape
     castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
-    catalogue.tapeLabelled(s_vid, "T10D6116");
+    catalogue.Tape()->tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
     // Create the files and schedule the archivals
@@ -3113,7 +3112,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   temp += "";
   ASSERT_EQ(s_vid, sess.getVid());
   cta::catalogue::TapeFileSearchCriteria criteria;
-  auto afsItor = catalogue.getArchiveFilesItor(criteria);
+  auto afsItor = catalogue.ArchiveFile()->getArchiveFilesItor(criteria);
   for (size_t i = 1; i <= sourceFiles.size(); ++i) {
     // Only the first files made it through.
     if (i <= 3) {
@@ -3135,7 +3134,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
     // The tape should now be marked as full
     cta::catalogue::TapeSearchCriteria crit;
     crit.vid = s_vid;
-    auto tapes = catalogue.getTapes(crit);
+    auto tapes = catalogue.Tape()->getTapes(crit);
     ASSERT_EQ(1, tapes.size());
     ASSERT_EQ(s_vid, tapes.front().vid);
     ASSERT_EQ(true, tapes.front().full);
@@ -3187,10 +3186,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   // 5) Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
                                  libraryIsDisabled, libraryComment);
   {
-    auto libraries = catalogue.getLogicalLibraries();
+    auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
@@ -3198,15 +3197,15 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
 
   {
     auto tape = getDefaultTape();
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   // Create the mount criteria
   auto mountPolicy = getImmediateMountMountPolicy();
-  catalogue.createMountPolicy(requester, mountPolicy);
+  catalogue.MountPolicy()->createMountPolicy(requester, mountPolicy);
   std::string mountPolicyName = mountPolicy.name;
 
-  catalogue.createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
+  catalogue.RequesterMountRule()->createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
 
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
@@ -3222,7 +3221,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   {
     // Label the tape
     castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
-    catalogue.tapeLabelled(s_vid, "T10D6116");
+    catalogue.Tape()->tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
     // Create the files and schedule the archivals
@@ -3284,7 +3283,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   temp += "";
   ASSERT_EQ(s_vid, sess.getVid());
   cta::catalogue::TapeFileSearchCriteria criteria;
-  auto afsItor = catalogue.getArchiveFilesItor(criteria);
+  auto afsItor = catalogue.ArchiveFile()->getArchiveFilesItor(criteria);
   for (size_t i = 1; i <= sourceFiles.size(); ++i) {
     // Only the first files made it through.
     if (i <= 3) {
@@ -3306,7 +3305,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
     // The tape should now be marked as full
     cta::catalogue::TapeSearchCriteria crit;
     crit.vid = s_vid;
-    auto tapes = catalogue.getTapes(crit);
+    auto tapes = catalogue.Tape()->getTapes(crit);
     ASSERT_EQ(1, tapes.size());
     ASSERT_EQ(s_vid, tapes.front().vid);
     ASSERT_EQ(true, tapes.front().full);
@@ -3353,10 +3352,10 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
   // 5) Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
-  catalogue.createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
                                  libraryIsDisabled, libraryComment);
   {
-    auto libraries = catalogue.getLogicalLibraries();
+    auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
     ASSERT_EQ(s_libraryName, libraries.front().name);
     ASSERT_EQ(libraryComment, libraries.front().comment);
@@ -3364,15 +3363,15 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
 
   {
     cta::catalogue::CreateTapeAttributes tape = getDefaultTape();
-    catalogue.createTape(s_adminOnAdminHost, tape);
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
   }
 
   // Create the mount criteria
   auto mountPolicy = getImmediateMountMountPolicy();
-  catalogue.createMountPolicy(requester, mountPolicy);
+  catalogue.MountPolicy()->createMountPolicy(requester, mountPolicy);
   std::string mountPolicyName = mountPolicy.name;
 
-  catalogue.createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
+  catalogue.RequesterMountRule()->createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
 
   //delete is unnecessary
   //pointer with ownership will be passed to the application,

@@ -59,7 +59,7 @@ private:
 
 GroupMountRuleLsStream::GroupMountRuleLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
-  m_groupMountRuleList(catalogue.getRequesterGroupMountRules())
+  m_groupMountRuleList(catalogue.RequesterGroupMountRule()->getRequesterGroupMountRules())
 {
   using namespace cta::admin;
 

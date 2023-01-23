@@ -61,7 +61,7 @@ private:
 
 AdminLsStream::AdminLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
-  m_adminList(catalogue.getAdminUsers())
+  m_adminList(catalogue.AdminUser()->getAdminUsers())
 {
   using namespace cta::admin;
 

@@ -17,9 +17,11 @@
 
 #pragma once
 
-#include "scheduler/RetrieveMount.hpp"
-#include "scheduler/RetrieveJob.hpp"
 #include <memory>
+
+#include "catalogue/TapeFileWritten.hpp"
+#include "scheduler/RetrieveJob.hpp"
+#include "scheduler/RetrieveMount.hpp"
 
 namespace cta {
   class MockArchiveJob: public cta::ArchiveJob {

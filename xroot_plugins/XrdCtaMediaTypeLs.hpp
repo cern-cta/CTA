@@ -58,7 +58,7 @@ private:
 
 MediaTypeLsStream::MediaTypeLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
-  m_mediaTypeList(catalogue.getMediaTypes())
+  m_mediaTypeList(catalogue.MediaType()->getMediaTypes())
 {
   using namespace cta::admin;
 

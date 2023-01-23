@@ -220,7 +220,7 @@ Status CtaRpcImpl::Delete(::grpc::ServerContext* context, const ::cta::frontend:
     // Delete the file from the catalogue or from the objectstore if archive request is created
     cta::utils::Timer t;
     try {
-        deleteRequest.archiveFile = m_catalogue->getArchiveFileById(deleteRequest.archiveFileID);
+        deleteRequest.archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(deleteRequest.archiveFileID);
     } catch (cta::exception::Exception &ex){
         lc.log(cta::log::WARNING, "Deleted file is not in catalog.");
     }

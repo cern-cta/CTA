@@ -53,9 +53,9 @@ private:
    */
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
 
-  catalogue::Catalogue::ArchiveFileItor m_tapeFileItor;       //!< Iterator across files which have been archived
-  grpc::EndpointMap                     m_endpoints;          //!< List of gRPC endpoints
-  bool                                  m_LookupNamespace;    //!< True if namespace lookup is required
+  catalogue::ArchiveFileItor m_tapeFileItor;       //!< Iterator across files which have been archived
+  grpc::EndpointMap          m_endpoints;          //!< List of gRPC endpoints
+  bool                       m_LookupNamespace;    //!< True if namespace lookup is required
 
   static constexpr const char* const LOG_SUFFIX  = "TapeFileLsStream";    //!< Identifier for log messages
 };
@@ -101,7 +101,7 @@ TapeFileLsStream::TapeFileLsStream(const RequestMessage &requestMsg,
     throw cta::exception::UserError("Must specify at least one of the following search options: vid, fxid, fxidfile or archiveFileId");
   }
 
-  m_tapeFileItor = m_catalogue.getArchiveFilesItor(searchCriteria);
+  m_tapeFileItor = m_catalogue.ArchiveFile()->getArchiveFilesItor(searchCriteria);
 }
 
 

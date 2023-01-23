@@ -33,31 +33,24 @@ include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow")
 
-set (CATALOGUE_LIB_SRC_FILES
+file (GLOB CATALOGUE_LIB_SRC_FILES
   ArchiveFileBuilder.cpp
   ArchiveFileRow.cpp
   ArchiveFileRowWithoutTimestamps.cpp
-  Catalogue.cpp
   CatalogueFactory.cpp
   CatalogueFactoryFactory.cpp
-  CatalogueRetryWrapper.cpp
   CatalogueSchema.cpp
+  CatalogueUtils.cpp
   CmdLineTool.cpp
   DriveConfig.cpp
-  DummyCatalogue.cpp
+  dummy/*.cpp
   InMemoryCatalogue.cpp
   InMemoryCatalogueFactory.cpp
-  PostgresCatalogue.cpp
   PostgresqlCatalogueFactory.cpp
-  RdbmsCatalogue.cpp
-  RdbmsCatalogueGetArchiveFilesForRepackItor.cpp
-  RdbmsCatalogueGetArchiveFilesItor.cpp
-  RdbmsCatalogueGetFileRecycleLogItor.cpp
-  RdbmsCatalogueTapeContentsItor.cpp
-  SchemaCreatingSqliteCatalogue.cpp
-  SchemaVersion.cpp
-  SqliteCatalogue.cpp
-  SqliteCatalogueSchema.cpp
+  rdbms/*.cpp
+  rdbms/postgres/*.cpp
+  rdbms/sqlite/*.cpp
+  retrywrappers/*.cpp
   TapeDrivesCatalogueState.cpp
   TapeFileWritten.cpp
   TapeForWriting.cpp
@@ -66,11 +59,20 @@ set (CATALOGUE_LIB_SRC_FILES
 )
 
 if (OCCI_SUPPORT)
-  set (CATALOGUE_LIB_SRC_FILES
+  file (GLOB CATALOGUE_LIB_SRC_FILES
     ${CATALOGUE_LIB_SRC_FILES}
-    OracleCatalogue.cpp
-    OracleCatalogueFactory.cpp)
+    OracleCatalogueFactory.cpp
+    rdbms/oracle/*.cpp
+  )
 endif()
+
+# It use set because it was giving linking error
+set (CATALOGUE_LIB_SRC_FILES
+  ${CATALOGUE_LIB_SRC_FILES}
+  SchemaCreatingSqliteCatalogue.cpp
+  SchemaVersion.cpp
+  SqliteCatalogueSchema.cpp
+)
 
 add_library (ctacatalogue SHARED
    ${CATALOGUE_LIB_SRC_FILES})
@@ -145,11 +147,17 @@ add_custom_command(OUTPUT PostgresCatalogueSchema.cpp
   COMMAND sed -e '/CTA_SQL_SCHEMA/r postgres_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/PostgresCatalogueSchema.before_SQL.cpp > PostgresCatalogueSchema.cpp
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/PostgresCatalogueSchema.before_SQL.cpp postgres_catalogue_schema.cpp)
 
+file (GLOB CATALOGUE_MODULES_TESTS_SRC_FILES
+  tests/modules/*.cpp
+)
+
 set(IN_MEMORY_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
-  CatalogueTest.cpp
-  InMemoryCatalogueTest.cpp
-  InMemoryVersionOfCatalogueTest.cpp
-  TapeItemWrittenPointerTest.cpp)
+  ${CATALOGUE_MODULES_TESTS_SRC_FILES}
+  TapeItemWrittenPointerTest.cpp
+  tests/CatalogueTestUtils.cpp
+  tests/InMemoryCatalogueTest.cpp
+  tests/InMemoryVersionOfCatalogueTest.cpp
+)
 
 add_library (ctainmemorycatalogueunittests SHARED
   ${IN_MEMORY_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES})
@@ -165,8 +173,10 @@ target_link_libraries (ctainmemorycatalogueunittests
 install (TARGETS ctainmemorycatalogueunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 set (DBCONFIG_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
-  CatalogueTest.cpp
-  DbConfigVersionOfCatalogueTest.cpp)
+  ${CATALOGUE_MODULES_TESTS_SRC_FILES}
+  tests/CatalogueTestUtils.cpp
+  tests/DbConfigVersionOfCatalogueTest.cpp
+)
 
 add_library (ctadbconfigcatalogueunittests SHARED
   ${DBCONFIG_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES})

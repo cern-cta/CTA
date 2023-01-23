@@ -29,25 +29,33 @@
 #include "castor/tape/tapeserver/file/ReadSessionFactory.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
-#include "scheduler/RetrieveJob.hpp"
-#include "catalogue/DummyCatalogue.hpp"
-#include "common/processCap/ProcessCapDummy.hpp"
+#include "catalogue/dummy/DummyCatalogue.hpp"
+#include "catalogue/dummy/DummyTapeCatalogue.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/log/StringLogger.hpp"
+#include "common/processCap/ProcessCapDummy.hpp"
 #include "scheduler/OStoreDB/OStoreDBFactory.hpp"
+#include "scheduler/RetrieveJob.hpp"
 
 namespace {
 std::string g_device_name;
 std::string g_device_path;
 }
 
-class OSMCatalogue: public cta::catalogue::DummyCatalogue {
+class OSMTapeCatalogue: public cta::catalogue::DummyTapeCatalogue {
 public:
   using LabelFormat = cta::common::dataStructures::Label::Format;
-  OSMCatalogue() = default;
+  OSMTapeCatalogue() = default;
 
   LabelFormat getTapeLabelFormat(const std::string& vid) const override {
     return LabelFormat::OSM;
+  }
+};
+
+class OSMCatalogue: public cta::catalogue::DummyCatalogue {
+public:
+  OSMCatalogue() : DummyCatalogue() {
+    DummyCatalogue::m_tape = std::make_unique<OSMTapeCatalogue>();
   }
 };
 
@@ -128,7 +136,7 @@ TEST_F(OsmReaderTest, ReadOsmTape) {
     castor::tape::tapeserver::daemon::VolumeInfo m_volInfo;
     m_volInfo.vid = m_vid;
     m_volInfo.nbFiles = 1;
-    m_volInfo.labelFormat = m_catalogue->getTapeLabelFormat(m_volInfo.vid);
+    m_volInfo.labelFormat = static_cast<OSMTapeCatalogue*>(m_catalogue->Tape().get())->getTapeLabelFormat(m_volInfo.vid);
     m_volInfo.mountType = cta::common::dataStructures::MountType::Retrieve;
 
     // Now read a random file
