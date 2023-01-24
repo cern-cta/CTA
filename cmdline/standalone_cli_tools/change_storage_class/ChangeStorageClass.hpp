@@ -18,7 +18,6 @@
 #pragma once
 
 #include "cmdline/standalone_cli_tools/common/CmdLineTool.hpp"
-#include "eos_grpc_client/GrpcEndpoint.hpp"
 
 #include <optional>
 #include <memory>
@@ -26,16 +25,13 @@
 
 #include "CtaFrontendApi.hpp"
 
-namespace cta {
+namespace eos::client { class EndpointMap;  }
+namespace cta::log    { class StdoutLogger; }
 
-namespace log {
-class StdoutLogger;
-}
-
-namespace cliTool {
+namespace cta::cliTool {
 class CmdLineArgs;
 
-class ChangeStorageClass: public CmdLineTool {
+class ChangeStorageClass final: public CmdLineTool {
 public:
   /**
    * Constructor.
@@ -52,6 +48,11 @@ public:
     std::ostream &outStream,
     std::ostream &errStream,
     cta::log::StdoutLogger &log);
+
+  /*
+   * Destructor
+   */
+   ~ChangeStorageClass() override;
 
 private:
 
@@ -138,5 +139,4 @@ private:
 
 } ; // class CtaChangeStorageClass
 
-} // namespace admin
-} // namespace cta
+} // namespace cta::admin

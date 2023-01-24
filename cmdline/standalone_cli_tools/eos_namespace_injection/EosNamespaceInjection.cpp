@@ -28,6 +28,7 @@
 #include "common/log/StdoutLogger.hpp"
 #include "common/utils/utils.hpp"
 #include "CtaFrontendApi.hpp"
+#include "eos_grpc_client/GrpcEndpoint.hpp"
 #include "Rpc.grpc.pb.h"
 #include "XrdSsiPbIStreamBuffer.hpp"
 #include "XrdSsiPbLog.hpp"
@@ -96,6 +97,9 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const {
 namespace cta {
 namespace cliTool {
 
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
 EosNamespaceInjection::EosNamespaceInjection(std::istream &inStream, std::ostream &outStream,
   std::ostream &errStream, cta::log::StdoutLogger &log):
   CmdLineTool(inStream, outStream, errStream),
@@ -111,6 +115,11 @@ EosNamespaceInjection::EosNamespaceInjection(std::istream &inStream, std::ostrea
   // Default single replica layout id should be 00100012
   m_defaultFileLayout = kReplica | kAdler | kStripeSize | kStripeWidth | kBlockChecksum;
 }
+
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+EosNamespaceInjection::~EosNamespaceInjection() = default;
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain

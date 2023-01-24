@@ -22,6 +22,7 @@
 #include "common/checksum/ChecksumBlob.hpp"
 #include "common/utils/utils.hpp"
 #include "CtaFrontendApi.hpp"
+#include "eos_grpc_client/GrpcEndpoint.hpp"
 
 #include <XrdSsiPbLog.hpp>
 #include <XrdSsiPbIStreamBuffer.hpp>
@@ -128,6 +129,11 @@ RestoreFilesCmd::RestoreFilesCmd(std::istream &inStream, std::ostream &outStream
   // Default single replica layout id should be 00100012
   m_defaultFileLayout = kReplica | kAdler | kStripeSize | kStripeWidth | kBlockChecksum;
 }
+
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+RestoreFilesCmd::~RestoreFilesCmd() = default;
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain

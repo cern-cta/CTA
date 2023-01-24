@@ -22,15 +22,16 @@
 
 #include "cmdline/standalone_cli_tools/common/CmdLineArgs.hpp"
 #include "cmdline/standalone_cli_tools/common/CmdLineTool.hpp"
-#include "common/log/StdoutLogger.hpp"
-#include "eos_grpc_client/GrpcEndpoint.hpp"
 
 #include "CtaFrontendApi.hpp"
 
-namespace cta {
-namespace cliTool {
+namespace eos::client { class EndpointMap;  }
+namespace cta::log    { class StdoutLogger; }
+namespace cta::admin  { class RecycleTapeFileLsItem; }
 
-class RestoreFilesCmd: public CmdLineTool {
+namespace cta::cliTool {
+
+class RestoreFilesCmd final: public CmdLineTool {
 public:
   /**
    * Constructor.
@@ -42,6 +43,11 @@ public:
    */
   RestoreFilesCmd(std::istream &inStream, std::ostream &outStream,
     std::ostream &errStream, cta::log::StdoutLogger &log);
+
+  /**
+  * Destructor
+  */
+  ~RestoreFilesCmd() override;
 
   /**
    * An exception throwing version of main().
@@ -219,5 +225,5 @@ private:
 
 } ; // class RestoreFilesCmd
 
-} // namespace admin
-} // namespace cta
+// namespace admin
+} // namespace cta::cliTool

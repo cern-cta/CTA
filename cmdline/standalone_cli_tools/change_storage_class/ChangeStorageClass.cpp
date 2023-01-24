@@ -39,6 +39,7 @@
 #include "common/log/StdoutLogger.hpp"
 #include "common/utils/utils.hpp"
 #include "CtaFrontendApi.hpp"
+#include "eos_grpc_client/GrpcEndpoint.hpp"
 
 // GLOBAL VARIABLES : used to pass information between main thread and stream handler thread
 
@@ -59,6 +60,11 @@ ChangeStorageClass::ChangeStorageClass(
   cta::log::StdoutLogger &log):
   CmdLineTool(inStream, outStream, errStream),
   m_log(log) {}
+
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+ChangeStorageClass::~ChangeStorageClass() = default;
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain

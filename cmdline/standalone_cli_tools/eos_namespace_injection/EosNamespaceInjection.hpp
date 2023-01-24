@@ -18,13 +18,10 @@
 #pragma once
 
 #include <filesystem>
-#include <XrdSsiPbIStreamBuffer.hpp>
-#include <XrdSsiPbLog.hpp>
 
 #include "cmdline/standalone_cli_tools/common/CmdLineTool.hpp"
 #include "cmdline/standalone_cli_tools/eos_namespace_injection/MetaData.hpp"
-#include "CtaFrontendApi.hpp"
-#include "eos_grpc_client/GrpcEndpoint.hpp"
+#include "xrootd-ssi-protobuf-interface/eos_cta/include/CtaFrontendApi.hpp"
 
 namespace {
 using cid = uint64_t;
@@ -35,13 +32,12 @@ using ArchiveId = uint64_t;
 using Checksum = std::string;
 }
 
-namespace cta::log {
-class StdoutLogger;
-} //namespace cta::log
+namespace eos::client { class EndpointMap;  }
+namespace cta::log    { class StdoutLogger; }
 
 namespace cta::cliTool {
 
-class EosNamespaceInjection: public CmdLineTool {
+class EosNamespaceInjection final: public CmdLineTool {
   public:
     /**
     * Constructor.
@@ -53,6 +49,11 @@ class EosNamespaceInjection: public CmdLineTool {
     */
     EosNamespaceInjection(std::istream &inStream, std::ostream &outStream,
       std::ostream &errStream, cta::log::StdoutLogger &log);
+
+    /**
+    * Destructor
+    */
+    ~EosNamespaceInjection() override;
 
     /**
     * An exception throwing version of main().
