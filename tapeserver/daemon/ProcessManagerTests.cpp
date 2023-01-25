@@ -17,8 +17,8 @@
 
 #include <gtest/gtest.h>
 
-#include "ProcessManager.hpp"
-#include "TestSubprocessHandlers.hpp"
+#include "tapeserver/daemon/ProcessManager.hpp"
+#include "tapeserver/daemon/TestSubprocessHandlers.hpp"
 #include "common/log/StringLogger.hpp"
 #include "common/log/LogContext.hpp"
 

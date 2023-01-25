@@ -17,10 +17,10 @@
 
 #pragma once 
 
-#include "castor/messages/Constants.hpp"
-#include "castor/messages/Exception.pb.h"
-#include "castor/messages/Frame.hpp"
-#include "castor/messages/Header.pb.h"
+#include "tapeserver/castor/messages/Constants.hpp"
+#include "tapeserver/castor/messages/Exception.pb.h"
+#include "tapeserver/castor/messages/Frame.hpp"
+#include "tapeserver/castor/messages/Header.pb.h"
 #include "common/exception/Exception.hpp"
 
 #include <openssl/rsa.h>

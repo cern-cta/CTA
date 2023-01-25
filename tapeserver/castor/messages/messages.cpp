@@ -15,10 +15,10 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "castor/messages/messages.hpp"
+#include "tapeserver/castor/messages/messages.hpp"
 #include "common/utils/utils.hpp"
 #include "common/utils/strerror_r_wrapper.hpp"
-#include "castor/legacymsg/TapeConstants.h"
+#include "tapeserver/castor/legacymsg/TapeConstants.h"
 
 #include <string.h>
 

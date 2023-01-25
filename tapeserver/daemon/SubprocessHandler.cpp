@@ -15,7 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "SubprocessHandler.hpp"
+#include "tapeserver/daemon/SubprocessHandler.hpp"
 
 namespace cta {
 namespace tape {

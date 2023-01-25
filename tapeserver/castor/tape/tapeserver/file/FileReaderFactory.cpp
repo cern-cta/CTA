@@ -18,11 +18,11 @@
 #include <memory>
 #include <sstream>
 
-#include "castor/tape/tapeserver/file/CtaFileReader.hpp"
-#include "castor/tape/tapeserver/file/EnstoreFileReader.hpp"
-#include "castor/tape/tapeserver/file/FileReaderFactory.hpp"
-#include "castor/tape/tapeserver/file/OsmFileReader.hpp"
-#include "castor/tape/tapeserver/file/ReadSession.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/CtaFileReader.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/EnstoreFileReader.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/FileReaderFactory.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/OsmFileReader.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/ReadSession.hpp"
 #include "common/dataStructures/LabelFormat.hpp"
 
 namespace castor {

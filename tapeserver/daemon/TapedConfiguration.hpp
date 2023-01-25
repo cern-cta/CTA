@@ -23,8 +23,8 @@
 #include "common/log/DummyLogger.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/SourcedParameter.hpp"
-#include "FetchReportOrFlushLimits.hpp"
-#include "Tpconfig.hpp"
+#include "tapeserver/daemon/FetchReportOrFlushLimits.hpp"
+#include "tapeserver/daemon/Tpconfig.hpp"
 
 namespace cta {
 namespace tape {

@@ -15,7 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "SessionState.hpp"
+#include "tapeserver/session/SessionState.hpp"
 #include <sstream>
 
 namespace cta { namespace tape { namespace session {

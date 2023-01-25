@@ -20,7 +20,7 @@
 
 #include "version.h"
 
-#include "castor/tape/tapeserver/file/Structures.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/Structures.hpp"
 #include "common/exception/Exception.hpp"
 
 using namespace castor::tape;

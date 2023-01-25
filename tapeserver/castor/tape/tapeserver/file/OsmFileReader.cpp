@@ -20,10 +20,10 @@
 #include <sstream>
 #include <string>
 
-#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "castor/tape/tapeserver/file/OsmFileReader.hpp"
-#include "castor/tape/tapeserver/file/OsmReadSession.hpp"
-#include "castor/tape/tapeserver/file/Structures.hpp"
+#include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/OsmFileReader.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/OsmReadSession.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/Structures.hpp"
 #include "scheduler/RetrieveJob.hpp"
 
 namespace castor {

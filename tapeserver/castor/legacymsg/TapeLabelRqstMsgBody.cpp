@@ -15,7 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
+#include "tapeserver/castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 
 #include <string.h>
 

@@ -15,7 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "castor/messages/TapeserverProxyDummy.hpp"
+#include "tapeserver/castor/messages/TapeserverProxyDummy.hpp"
 
 //------------------------------------------------------------------------------
 // reportState

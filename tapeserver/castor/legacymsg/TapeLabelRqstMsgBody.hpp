@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "h/Castor_limits.h"
+#include "tapeserver/h/Castor_limits.h"
 #include "common/Constants.hpp"
 #include <stdint.h>
 

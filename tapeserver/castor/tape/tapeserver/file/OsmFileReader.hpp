@@ -18,9 +18,9 @@
 #pragma once
 
 
-#include "castor/tape/tapeserver/file/CpioFileHeaderStructure.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/CpioFileHeaderStructure.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/OsmFileStructure.hpp"
-#include "castor/tape/tapeserver/file/FileReader.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/FileReader.hpp"
 
 #include <memory>
 

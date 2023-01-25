@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "TapedProxy.hpp"
+#include "tapeserver/daemon/TapedProxy.hpp"
 #include "common/threading/SocketPair.hpp"
 
 namespace cta  { namespace tape { namespace daemon {

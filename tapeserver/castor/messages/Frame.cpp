@@ -15,9 +15,9 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "castor/messages/Constants.hpp"
-#include "castor/messages/Frame.hpp"
-#include "castor/messages/messages.hpp"
+#include "tapeserver/castor/messages/Constants.hpp"
+#include "tapeserver/castor/messages/Frame.hpp"
+#include "tapeserver/castor/messages/messages.hpp"
 #include "common/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------

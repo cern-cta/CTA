@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "castor/messages/Header.pb.h"
+#include "tapeserver/castor/messages/Header.pb.h"
 
 #include <google/protobuf/message.h>
 #include <string>

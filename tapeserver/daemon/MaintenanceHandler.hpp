@@ -17,9 +17,9 @@
 
 #pragma once
 
-#include "SubprocessHandler.hpp"
-#include "ProcessManager.hpp"
-#include "TapedConfiguration.hpp"
+#include "tapeserver/daemon/SubprocessHandler.hpp"
+#include "tapeserver/daemon/ProcessManager.hpp"
+#include "tapeserver/daemon/TapedConfiguration.hpp"
 #include "common/threading/SocketPair.hpp"
 
 namespace cta { namespace tape { namespace  daemon {

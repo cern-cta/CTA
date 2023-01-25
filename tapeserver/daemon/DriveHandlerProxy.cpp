@@ -15,7 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "DriveHandlerProxy.hpp"
+#include "tapeserver/daemon/DriveHandlerProxy.hpp"
 #include "tapeserver/daemon/WatchdogMessage.pb.h"
 
 namespace cta { namespace tape { namespace daemon {

@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "SubprocessHandler.hpp"
+#include "tapeserver/daemon/SubprocessHandler.hpp"
 #include "common/log/LogContext.hpp"
 #include <memory>
 #include <list>

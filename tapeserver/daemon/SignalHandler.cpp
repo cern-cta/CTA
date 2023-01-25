@@ -15,8 +15,8 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "SignalHandler.hpp"
-#include "ProcessManager.hpp"
+#include "tapeserver/daemon/SignalHandler.hpp"
+#include "tapeserver/daemon/ProcessManager.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/log/LogContext.hpp"
 #include <signal.h>

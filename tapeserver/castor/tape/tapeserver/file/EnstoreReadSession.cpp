@@ -18,10 +18,10 @@
 #include <memory>
 #include <string>
 
-#include "castor/tape/tapeserver/file/Exceptions.hpp"
-#include "castor/tape/tapeserver/file/HeaderChecker.hpp"
-#include "castor/tape/tapeserver/file/EnstoreReadSession.hpp"
-#include "castor/tape/tapeserver/file/Structures.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/Exceptions.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/HeaderChecker.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/EnstoreReadSession.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/Structures.hpp"
 
 namespace castor {
 namespace tape {

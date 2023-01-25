@@ -15,7 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "TapedConfiguration.hpp"
+#include "tapeserver/daemon/TapedConfiguration.hpp"
 #include "common/ConfigurationFile.hpp"
 #include "Tpconfig.hpp"
 

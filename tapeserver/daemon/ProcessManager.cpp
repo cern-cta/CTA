@@ -15,7 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "ProcessManager.hpp"
+#include "tapeserver/daemon/ProcessManager.hpp"
 #include "common/exception/Errnum.hpp"
 #include <sys/epoll.h>
 #include <unistd.h>
