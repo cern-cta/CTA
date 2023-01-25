@@ -23,3 +23,6 @@ eos.requester.group it
 
 # Specify whether log timestamps should have second (false) or microsecond (true) resolution.
 # cta.log.hiRes false
+
+# STALE drive timeout (seconds)
+# cta.drive_timeout 1200

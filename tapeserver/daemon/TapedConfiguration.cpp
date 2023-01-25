@@ -117,6 +117,7 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.wdMountMaxSecs.setFromConfigurationFile(cf, generalConfigPath);
   ret.wdNoBlockMoveMaxSecs.setFromConfigurationFile(cf, generalConfigPath);
   ret.wdScheduleMaxSecs.setFromConfigurationFile(cf, generalConfigPath);
+  ret.wdGlobalLockAcqMaxSecs.setFromConfigurationFile(cf, generalConfigPath);
   // The central storage access configuration
   ret.backendPath.setFromConfigurationFile(cf, generalConfigPath);
   ret.fileCatalogConfigFile.setFromConfigurationFile(cf, generalConfigPath);
@@ -158,6 +159,7 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.wdMountMaxSecs.log(log);
   ret.wdNoBlockMoveMaxSecs.log(log);
   ret.wdScheduleMaxSecs.log(log);
+  ret.wdGlobalLockAcqMaxSecs.log(log);
   
   ret.backendPath.log(log);
   ret.fileCatalogConfigFile.log(log);

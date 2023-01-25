@@ -31,6 +31,10 @@ namespace admin {
  ** Generic utility methods
  **/
 
+void TextFormatter::setDriveTimeout(unsigned int driveTimeoutSec)  {
+  m_driveTimeoutSec = driveTimeoutSec;
+}
+
 std::string TextFormatter::doubleToStr(double value, char unit) {
   std::stringstream ss;
   ss << std::fixed << std::setprecision(1) << value;
@@ -271,8 +275,6 @@ void TextFormatter::print(const DriveLsItem &drls_item)
 {
   //using namespace cta::common::dataStructures;
 
-  const int DRIVE_TIMEOUT = 14400; // Time after which a drive will be marked as STALE (4 hours)
-
   std::string driveStatusSince;
   std::string filesTransferredInSession;
   std::string bytesTransferredInSession;
@@ -301,7 +303,7 @@ void TextFormatter::print(const DriveLsItem &drls_item)
   }
 
   timeSinceLastUpdate = std::to_string(drls_item.time_since_last_update()) +
-    (drls_item.time_since_last_update() > DRIVE_TIMEOUT ? " [STALE]" : "");
+    (drls_item.time_since_last_update() > m_driveTimeoutSec ? " [STALE]" : "");
 
   std::string reportedLogicalLibrary =  drls_item.logical_library();
   if (drls_item.logical_library_disabled()) {

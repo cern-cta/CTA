@@ -167,10 +167,16 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
     tapeServerReporter.reportState(cta::tape::session::SessionState::Scheduling,
                                    cta::tape::session::SessionType::Undetermined);
 
+    bool globalLockTimeout = false;
     try {
       if (m_scheduler.getNextMountDryRun(m_driveConfig.logicalLibrary, m_driveConfig.unitName, lc)) {
-        tapeMount = m_scheduler.getNextMount(m_driveConfig.logicalLibrary, m_driveConfig.unitName, lc);
+        tapeMount = m_scheduler.getNextMount(m_driveConfig.logicalLibrary, m_driveConfig.unitName, lc,
+                                             m_dataTransferConfig.wdGlobalLockAcqMaxSecs * 1000000);
       }
+    } catch (cta::exception::TimeoutException &e) {
+      // Print warning and try again, after refreshing the tape drive states
+      lc.log(cta::log::WARNING, "Timeout while scheduling new mount.");
+      globalLockTimeout = true;
     } catch (cta::exception::Exception &e) {
       lc.log(cta::log::ERR, "Error while scheduling new mount. Putting the drive down. Stack trace follows.");
       lc.logBacktrace(cta::log::INFO, e.backtrace());
@@ -180,11 +186,13 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
 
     // No mount to be done found, that was fast...
     if (!tapeMount) {
-      lc.log(cta::log::DEBUG, "No new mount found. (sleeping 10 seconds)");
       // Refresh the status to trigger the timeout update
       m_scheduler.reportDriveStatus(m_driveInfo, cta::common::dataStructures::MountType::NoMount,
                                     cta::common::dataStructures::DriveStatus::Up, lc);
-      sleep(m_dataTransferConfig.wdIdleSessionTimer);
+      if (!globalLockTimeout) {
+        lc.log(cta::log::DEBUG, "No new mount found. (sleeping " + std::to_string(m_dataTransferConfig.wdIdleSessionTimer) + " seconds)");
+        sleep(m_dataTransferConfig.wdIdleSessionTimer);
+      }
       continue;
     }
     break;

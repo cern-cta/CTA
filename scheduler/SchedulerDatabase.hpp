@@ -831,6 +831,7 @@ class SchedulerDatabase {
    * a global lock on for scheduling).
    */
   virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) = 0;
+  virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext, uint64_t globalLockTimeout_us) = 0;
 
   /**
    * A function running a queue trim. This should be called if the corresponding

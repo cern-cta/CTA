@@ -696,7 +696,15 @@ std::string OStoreDB::getLowestRequestAgeRetrieveMountPolicyName(const std::list
 // OStoreDB::getMountInfo()
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
-  OStoreDB::getMountInfo(log::LogContext& logContext) {
+OStoreDB::getMountInfo(log::LogContext& logContext) {
+  return OStoreDB::getMountInfo(logContext, 0);
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::getMountInfo()
+//------------------------------------------------------------------------------
+std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
+  OStoreDB::getMountInfo(log::LogContext& logContext, uint64_t globalLockTimeout_us) {
   utils::Timer t;
   //Allocate the getMountInfostructure to return.
   assertAgentAddressSet();
@@ -709,7 +717,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
   // Take an exclusive lock on the scheduling and fetch it.
   tmdi.m_schedulerGlobalLock.reset(
     new SchedulerGlobalLock(re.getSchedulerGlobalLock(), m_objectStore));
-  tmdi.m_lockOnSchedulerGlobalLock.lock(*tmdi.m_schedulerGlobalLock);
+  tmdi.m_lockOnSchedulerGlobalLock.lock(*tmdi.m_schedulerGlobalLock, globalLockTimeout_us);
   auto lockSchedGlobalTime = t.secs(utils::Timer::resetCounter);
   tmdi.m_lockTaken = true;
   tmdi.m_schedulerGlobalLock->fetch();

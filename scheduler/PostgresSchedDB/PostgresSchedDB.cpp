@@ -262,6 +262,11 @@ SchedulerDatabase::JobsFailedSummary PostgresSchedDB::getRetrieveJobsFailedSumma
 
 std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> PostgresSchedDB::getMountInfo(log::LogContext& logContext)
 {
+  throw cta::exception::Exception("Not implemented");
+}
+
+std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> PostgresSchedDB::getMountInfo(log::LogContext& logContext, uint64_t globalLockTimeout_us)
+{
    throw cta::exception::Exception("Not implemented");
 }
 

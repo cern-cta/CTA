@@ -296,7 +296,7 @@ BackendVFS::ScopedLock * BackendVFS::lockHelper(const std::string& name, int typ
         throw ex;
       }
       if (t.usecs() > (int64_t)timeout_us) {
-        throw exception::Exception("In BackendVFS::lockHelper(): timeout while locking");
+        throw exception::TimeoutException("In BackendVFS::lockHelper(): timeout while locking");
       }
     }
   } else {

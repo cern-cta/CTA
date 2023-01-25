@@ -80,7 +80,7 @@ private:
    static std::atomic<bool> is_json;                                  //!< Display results in JSON format
    static std::atomic<bool> is_first_record;                          //!< Delimiter for JSON records
 
-   std::optional<std::string> m_config;                                 //!< User defined config file
+   std::optional<std::string> m_config;                               //!< User defined config file
 
    static constexpr const char* const LOG_SUFFIX  = "CtaAdminCmd";    //!< Identifier for log messages
 };

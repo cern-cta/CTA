@@ -1435,7 +1435,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName, const 
 //------------------------------------------------------------------------------
 // getNextMount
 //------------------------------------------------------------------------------
-std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLibraryName, const std::string &driveName, log::LogContext & lc) {
+std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string &logicalLibraryName, const std::string &driveName, log::LogContext & lc, uint64_t globalLockTimeout_us) {
   // In order to decide the next mount to do, we have to take a global lock on
   // the scheduling, retrieve a list of all running mounts, queues sizes for
   // tapes and tape pools, order the candidates by priority

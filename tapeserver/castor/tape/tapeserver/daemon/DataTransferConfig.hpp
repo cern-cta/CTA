@@ -153,6 +153,11 @@ struct DataTransferConfig {
   time_t wdIdleSessionTimer;
 
   /**
+  * The timeout after which the tape server stops trying to get the next mount
+  */
+  time_t wdGlobalLockAcqMaxSecs;
+
+  /**
    * Constructor that sets all integer member-variables to 0 and all string
    * member-variables to the empty string.
    */

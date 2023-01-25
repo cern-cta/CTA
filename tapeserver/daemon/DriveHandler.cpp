@@ -1010,6 +1010,7 @@ int DriveHandler::runChild() {
     dataTransferConfig.useEncryption = m_tapedConfig.useEncryption.value() == "yes" ? true : false;
     dataTransferConfig.externalEncryptionKeyScript = m_tapedConfig.externalEncryptionKeyScript.value();
     dataTransferConfig.wdIdleSessionTimer = m_tapedConfig.wdIdleSessionTimer.value();
+    dataTransferConfig.wdGlobalLockAcqMaxSecs = m_tapedConfig.wdGlobalLockAcqMaxSecs.value();
     m_stateChangeTimeouts[session::SessionState::Checking] = std::chrono::duration_cast<Timeout>(
       std::chrono::minutes(m_tapedConfig.wdCheckMaxSecs.value()));
     m_stateChangeTimeouts[session::SessionState::Scheduling] = std::chrono::duration_cast<Timeout>(

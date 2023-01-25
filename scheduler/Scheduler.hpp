@@ -326,12 +326,14 @@ public:
   bool getNextMountDryRun(const std::string &logicalLibraryName, const std::string &driveName, log::LogContext & lc);
   /**
    * Actually decide which mount to do next for a given drive.
+   * Throws a TimeoutException in case the timeout goes out
    * @param logicalLibraryName library for the drive we are scheduling
    * @param driveName name of the drive we are scheduling
    * @param lc log context
+   * @param globalLockTimeout_us global lock timeout
    * @return unique pointer to the tape mount structure. Next step for the user will be find which type of mount this is.
    */
-  std::unique_ptr<TapeMount> getNextMount(const std::string &logicalLibraryName, const std::string &driveName, log::LogContext & lc);
+  std::unique_ptr<TapeMount> getNextMount(const std::string &logicalLibraryName, const std::string &driveName, log::LogContext & lc, uint64_t globalLockTimeout_us = 0);
 
   /**
    * A function returning

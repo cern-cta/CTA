@@ -117,6 +117,14 @@ protected:
 
 } ;
 
+/**
+ * class TimeoutException
+ * A simple exception used for timeout handling in cts
+ */
+class TimeoutException : public Exception {
+  using Exception::Exception;
+};
+
 }} // namespace cta::exception
 
 #define CTA_GENERATE_EXCEPTION_CLASS(A) class A: public cta::exception::Exception { using Exception::Exception; }

@@ -22,6 +22,10 @@
 namespace cta {
 namespace admin {
 
+// Time after which a drive will be marked as STALE
+// By default it's the default global lock timeout (15 mins) + 5 extra mins
+const int DRIVE_TIMEOUT_S_DEFAULT = (15 + 5) * 60;
+
 class TextFormatter
 {
 public:
@@ -100,6 +104,9 @@ public:
   void print(const MediaTypeLsItem &mtls_item);
   void print(const RecycleTapeFileLsItem & rtfls_item);
 
+  // Modify drive timeout
+  void setDriveTimeout(unsigned int driveTimeoutSec);
+
 private:
   //! Add a line to the buffer
   template<typename... Args>
@@ -166,6 +173,7 @@ private:
   static constexpr const char* const TEXT_RED    = "\x1b[31;1m";    //!< Terminal formatting code for red text
   static constexpr const char* const TEXT_NORMAL = "\x1b[0m";       //!< Terminal formatting code for normal text
   static constexpr const int NB_CHAR_REASON = 50;                   //!< Reason max length to display in tabular output (DriveLs and TapeLs)
+  unsigned int m_driveTimeoutSec = DRIVE_TIMEOUT_S_DEFAULT;         //!< Time after which a drive will be marked as STALE
 };
 
 }}
