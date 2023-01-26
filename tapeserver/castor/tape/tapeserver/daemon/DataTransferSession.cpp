@@ -107,6 +107,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
   TapeSessionReporter tapeServerReporter(m_initialProcess, m_driveConfig, m_hostname, lc);
 
   std::unique_ptr<cta::TapeMount> tapeMount;
+  cta::utils::Timer t;
+  bool globalLockTimeout = false;
 
   // 2a) Determine if we want to mount at all (for now)
   // This variable will allow us to see if we switched from down to up and start an
@@ -167,7 +169,11 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
     tapeServerReporter.reportState(cta::tape::session::SessionState::Scheduling,
                                    cta::tape::session::SessionType::Undetermined);
 
-    bool globalLockTimeout = false;
+    if (!globalLockTimeout) {
+      t.reset();
+    }
+
+    globalLockTimeout = false;
     try {
       if (m_scheduler.getNextMountDryRun(m_driveConfig.logicalLibrary, m_driveConfig.unitName, lc)) {
         tapeMount = m_scheduler.getNextMount(m_driveConfig.logicalLibrary, m_driveConfig.unitName, lc,
@@ -175,7 +181,9 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
       }
     } catch (cta::exception::TimeoutException &e) {
       // Print warning and try again, after refreshing the tape drive states
-      lc.log(cta::log::WARNING, "Timeout while scheduling new mount.");
+      lc.log(cta::log::WARNING,
+               "Global lock timeout while getting new mount (" + std::to_string(m_dataTransferConfig.wdGlobalLockAcqMaxSecs) + " seconds reached). "
+               "Total time trying to get new mount is " + std::to_string(t.secs()) + " seconds.");
       globalLockTimeout = true;
     } catch (cta::exception::Exception &e) {
       lc.log(cta::log::ERR, "Error while scheduling new mount. Putting the drive down. Stack trace follows.");

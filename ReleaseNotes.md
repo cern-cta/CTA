@@ -10,7 +10,6 @@
 - cta/CTA#230 - Modify CTA code to enforce VID uppercase
 - cta/CTA#239 - Add improvments to the cta-change-storage-class tool
 - cta/CTA#248 - Clean up output from cta-readtp
-- cta/CTA#251 - Increase free drive STALE threshold to 4 hours
 - cta/CTA#218 - Do not retry during repack requests
 - cta/CTA#252 - Update cta-change-storage-class to accept json file as input
 - cta/CTA#136 - Add missing forward declarations to standalone cli tools

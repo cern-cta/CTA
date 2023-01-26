@@ -180,3 +180,6 @@ taped externalFreeDiskSpaceScript /usr/local/bin/cta-get-free-disk-space.sh
 # 
 # Maximum time to wait after scheduling came up idle, in seconds.
 # taped WatchdogIdleSessionTimer 10
+
+# Time to wait after which the tape server stops trying to get the next mount, in seconds.
+# taped WatchdogGlobalLockAcqMaxSecs 900

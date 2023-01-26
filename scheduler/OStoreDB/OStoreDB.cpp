@@ -717,11 +717,31 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
   // Take an exclusive lock on the scheduling and fetch it.
   tmdi.m_schedulerGlobalLock.reset(
     new SchedulerGlobalLock(re.getSchedulerGlobalLock(), m_objectStore));
-  tmdi.m_lockOnSchedulerGlobalLock.lock(*tmdi.m_schedulerGlobalLock, globalLockTimeout_us);
+  try {
+    tmdi.m_lockOnSchedulerGlobalLock.lock(*tmdi.m_schedulerGlobalLock, globalLockTimeout_us);
+  } catch (cta::exception::TimeoutException &e) {
+    auto lockSchedGlobalTime = t.secs(utils::Timer::resetCounter);
+    log::ScopedParamContainer params(logContext);
+    params.add("rootFetchNoLockTime", rootFetchNoLockTime)
+          .add("lockSchedGlobalTime", lockSchedGlobalTime)
+          .add("fetchSchedGlobalTime", 0.0)
+          .add("status", "FAILURE");
+    logContext.log(log::INFO, "In OStoreDB::getMountInfo(): global lock acquisition.");
+    throw;
+  }
   auto lockSchedGlobalTime = t.secs(utils::Timer::resetCounter);
   tmdi.m_lockTaken = true;
   tmdi.m_schedulerGlobalLock->fetch();
-  auto fetchSchedGlobalTime = t.secs(utils::Timer::resetCounter);;
+  auto fetchSchedGlobalTime = t.secs(utils::Timer::resetCounter);
+  {
+
+    log::ScopedParamContainer params(logContext);
+    params.add("rootFetchNoLockTime", rootFetchNoLockTime)
+          .add("lockSchedGlobalTime", lockSchedGlobalTime)
+          .add("fetchSchedGlobalTime", fetchSchedGlobalTime)
+          .add("status", "SUCCESS");
+    logContext.log(log::INFO, "In OStoreDB::getMountInfo(): global lock acquisition.");
+  }
   fetchMountInfo(tmdi, re, SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT, logContext);
   auto fetchMountInfoTime = t.secs(utils::Timer::resetCounter);
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> ret(std::move(privateRet));
@@ -731,8 +751,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
           .add("lockSchedGlobalTime", lockSchedGlobalTime)
           .add("fetchSchedGlobalTime", fetchSchedGlobalTime)
           .add("fetchMountInfoTime", fetchMountInfoTime);
-    if ((rootFetchNoLockTime > 1) || (lockSchedGlobalTime > 1) || (fetchSchedGlobalTime > 1) || fetchMountInfoTime > 1)
-      logContext.log(log::INFO, "In OStoreDB::getMountInfo(): success.");
+    logContext.log(log::INFO, "In OStoreDB::getMountInfo(): success.");
   }
   return ret;
 }
