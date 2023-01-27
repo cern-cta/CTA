@@ -15,6 +15,17 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+###################################################
+################# HOW TO RUN TEST #################
+###################################################
+## To run the test in CI:                        ##
+## 1. Create the pods                            ##
+## 2. Run ./prepare_tests.sh -n <namespace>      ##
+## 3. Run ./eosNamespaceInject.sh -n <namespace> ##
+###################################################
+###################################################
+###################################################
+
 usage() { cat <<EOF 1>&2
 Usage: $0 -n <namespace>
 EOF
@@ -42,21 +53,57 @@ if [ ! -z "${error}" ]; then
     exit 1
 fi
 
+EOSINSTANCE=ctaeos
+
+FILE_1=`uuidgen`
+FILE_2=`uuidgen`
+echo
+echo "Creating files: ${FILE_1} ${FILE_2}"
+
+kubectl -n ${NAMESPACE} cp common/archive_file.sh client:/usr/bin/
+kubectl -n ${NAMESPACE} cp client_helper.sh client:/root/
+kubectl -n ${NAMESPACE} exec client -- bash /usr/bin/archive_file.sh -f ${FILE_1} || exit 1
+kubectl -n ${NAMESPACE} exec client -- bash /usr/bin/archive_file.sh -f ${FILE_2} || exit 1
+
+EOS_METADATA_PATH_1=$(mktemp -d).json
+echo "SEND EOS METADATA TO JSON FILE: ${EOS_METADATA_PATH_1}"
+touch ${EOS_METADATA_PATH_1}
+kubectl -n ${NAMESPACE} exec client -- eos -j root://${EOSINSTANCE} file info /eos/ctaeos/cta/${FILE_1} | jq . | tee ${EOS_METADATA_PATH_1}
+EOS_ARCHIVE_ID_1=$(jq -r '.xattr | .["sys.archive.file_id"]' ${EOS_METADATA_PATH_1})
+EOS_CHECKSUM_1=$(jq -r '.checksumvalue' ${EOS_METADATA_PATH_1})
+EOS_SIZE_1=$(jq -r '.size' ${EOS_METADATA_PATH_1})
+
+EOS_METADATA_PATH_2=$(mktemp -d).json
+echo "SEND EOS METADATA TO JSON FILE: ${EOS_METADATA_PATH_2}"
+touch ${EOS_METADATA_PATH_2}
+kubectl -n ${NAMESPACE} exec client -- eos -j root://${EOSINSTANCE} file info /eos/ctaeos/cta/${FILE_2} | jq . | tee ${EOS_METADATA_PATH_2}
+EOS_ARCHIVE_ID_2=$(jq -r '.xattr | .["sys.archive.file_id"]' ${EOS_METADATA_PATH_2})
+EOS_CHECKSUM_2=$(jq -r '.checksumvalue' ${EOS_METADATA_PATH_2})
+EOS_SIZE_2=$(jq -r '.size' ${EOS_METADATA_PATH_2})
+
 echo "Create json meta data input file"
 rm /tmp/metaData
 touch /tmp/metaData
-echo '{"eosPath": "/eos/ctaeos/file3", "diskInstance": "ctaeos", "archiveId": "4294967296", "size": "420", "checksumType": "ADLER32", "checksumValue": "ac94824f"}' >> /tmp/metaData
-echo '{"eosPath": "/eos/ctaeos/file4", "diskInstance": "ctaeos", "archiveId": "4294967297", "size": "420", "checksumType": "ADLER32", "checksumValue": "ac94824f"}' >> /tmp/metaData
+FILE_PATH_1=`uuidgen`
+FILE_PATH_2=`uuidgen`
+echo '{"eosPath": "/eos/ctaeos/'${FILE_PATH_1}'", "diskInstance": "ctaeos", "archiveId": '${EOS_ARCHIVE_ID_1}', "size": "'${EOS_SIZE_1}'", "checksumType": "ADLER32", "checksumValue": "'${EOS_CHECKSUM_1}'"}' >> /tmp/metaData
+echo '{"eosPath": "/eos/ctaeos/'${FILE_PATH_2}'", "diskInstance": "ctaeos", "archiveId": '${EOS_ARCHIVE_ID_2}', "size": "'${EOS_SIZE_2}'", "checksumType": "ADLER32", "checksumValue": "'${EOS_CHECKSUM_2}'"}' >> /tmp/metaData
 kubectl cp /tmp/metaData ${NAMESPACE}/ctafrontend:/root/
 
 echo
 echo "ENABLE CTAFRONTEND TO EXECUTE CTA ADMIN COMMANDS"
-kubectl -n ${NAMESPACE} exec ctacli -- cta-admin admin add --username ctafrontend --comment "for restore files test"
-kubectl -n ${NAMESPACE} exec ctacli -- cta-admin admin add --username ctaeos --comment "for restore files test"
+kubectl --namespace=${NAMESPACE} exec kdc -- cat /root/ctaadmin2.keytab | kubectl --namespace=${NAMESPACE} exec -i ctafrontend --  bash -c "cat > /root/ctaadmin2.keytab; mkdir -p /tmp/ctaadmin2"
+kubectl -n ${NAMESPACE} cp client_helper.sh ctafrontend:/root/client_helper.sh
+rm /tmp/init_kerb.sh
+touch /tmp/init_kerb.sh
+echo '. /root/client_helper.sh; admin_kinit' >> /tmp/init_kerb.sh
+kubectl -n ${NAMESPACE} cp /tmp/init_kerb.sh ctafrontend:/tmp/init_kerb.sh
+kubectl -n ${NAMESPACE} exec ctafrontend -- bash /tmp/init_kerb.sh
 
 echo
 echo "ADD FRONTEND GATEWAY TO EOS"
-echo "kubectl -n ${NAMESPACE} exec ctaeos -- bash eos root://${EOSINSTANCE} -r 0 0 vid add gateway ${FRONTEND_IP} grpc"
+FRONTEND_IP=$(kubectl -n ${NAMESPACE} get pods ctafrontend -o json | jq .status.podIP | tr -d '"')
+echo "kubectl -n ${NAMESPACE} exec ctaeos -- eos root://${EOSINSTANCE} -r 0 0 vid add gateway ${FRONTEND_IP} grpc"
 kubectl -n ${NAMESPACE} exec ctaeos -- eos -r 0 0 vid add gateway ${FRONTEND_IP} grpc
 
 echo
@@ -67,6 +114,5 @@ sudo kubectl cp ${NAMESPACE}/ctacli:/etc/cta/cta-cli.conf /etc/cta/cta-cli.conf
 sudo kubectl cp /etc/cta/cta-cli.conf ${NAMESPACE}/ctafrontend:/etc/cta/cta-cli.conf
 
 echo
-kubectl cp ~/CTA-build/cmdline/standalone_cli_tools/eos_namespace_injection/cta-eos-namespace-inject ${NAMESPACE}/ctafrontend:/usr/bin/
-echo "kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c XrdSecPROTOCOL=sss XrdSecSSSKT=/etc/cta/eos.sss.keytab cta-eos-namespace-inject --json /root/json.json"
-kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c "XrdSecPROTOCOL=sss XrdSecSSSKT=/etc/cta/eos.sss.keytab cta-eos-namespace-inject --json /root/metaData"
+echo "kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c cta-eos-namespace-inject --json /root/metaData"
+kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c "XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/ctaadmin2/krb5cc_0 cta-eos-namespace-inject --json /root/metaData"

@@ -6,6 +6,7 @@
 - cta/CTA#166 - Refactor Catalogue and RdbmsCatalogue classes
 - cta/CTA#222 - Review what gets logged in CTA
 - cta/CTA#213 - Add tool for injecting file into eos
+- cta/CTA#213 - Improve test for eos injection tool
 - cta/CTA#224 - Improve error message for cta-verify-file whn VID does not exist
 - cta/CTA#230 - Modify CTA code to enforce VID uppercase
 - cta/CTA#239 - Add improvments to the cta-change-storage-class tool
