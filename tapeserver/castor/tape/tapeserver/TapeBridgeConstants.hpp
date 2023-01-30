@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "mediachanger/castorrmc/h/Castor_limits.h"
+#include "tapeserver/h/Castor_limits.h"
 
 #include <stdint.h>
 #include <stdlib.h>
