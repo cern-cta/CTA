@@ -244,7 +244,7 @@ std::list<SchedulerDatabase::RetrieveQueueCleanupInfo> OStoreDB::getRetrieveQueu
 // OStoreDB::fetchMountInfo()
 //------------------------------------------------------------------------------
 void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, RootEntry& re,
-  SchedulerDatabase::PurposeGetMountInfo /* not used */, bool /* not used */, log::LogContext & logContext) {
+  SchedulerDatabase::PurposeGetMountInfo /* not used */, log::LogContext & logContext) {
   utils::Timer t, t2;
   std::list<common::dataStructures::MountPolicy> mountPolicies = m_catalogue.getCachedMountPolicies();
   // Walk the archive queues for USER for statistics
@@ -724,7 +724,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
   tmdi.m_lockTaken = true;
   tmdi.m_schedulerGlobalLock->fetch();
   auto fetchSchedGlobalTime = t.secs(utils::Timer::resetCounter);;
-  fetchMountInfo(tmdi, re, SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT, true, logContext);
+  fetchMountInfo(tmdi, re, SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT, logContext);
   auto fetchMountInfoTime = t.secs(utils::Timer::resetCounter);
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> ret(std::move(privateRet));
   {
@@ -752,7 +752,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> OStoreDB::getMountInfo
   re.fetchNoLock();
   auto rootFetchNoLockTime = t.secs(utils::Timer::resetCounter);
   TapeMountDecisionInfoNoLock & tmdi=*privateRet;
-  fetchMountInfo(tmdi, re, purpose, false, logContext);
+  fetchMountInfo(tmdi, re, purpose, logContext);
   auto fetchMountInfoTime = t.secs(utils::Timer::resetCounter);
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> ret(std::move(privateRet));
   {
@@ -1369,7 +1369,7 @@ SchedulerDatabase::RetrieveRequestInfo OStoreDB::queueRetrieve(cta::common::data
   std::set<std::string> candidateVids;
   for (auto & tf:criteria.archiveFile.tapeFiles) candidateVids.insert(tf.vid);
   SchedulerDatabase::RetrieveRequestInfo ret;
-  ret.selectedVid=Helpers::selectBestRetrieveQueue(candidateVids, m_catalogue, m_objectStore, cta::catalogue::countGetTapesByVid::SBRQ_QR);
+  ret.selectedVid=Helpers::selectBestRetrieveQueue(candidateVids, m_catalogue, m_objectStore);
   // Check that the requested retrieve job (for the provided vid) exists, and record the copynb.
   uint64_t bestCopyNb;
   for (auto & tf: criteria.archiveFile.tapeFiles) {
@@ -3004,7 +3004,7 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequ
             if (tc.vid == repackInfo.vid) {
               try {
                 // Try to select the repack VID from a one-vid list.
-                Helpers::selectBestRetrieveQueue({repackInfo.vid}, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore, cta::catalogue::countGetTapesByVid::SBRQ_ASAUS1, true);
+                Helpers::selectBestRetrieveQueue({repackInfo.vid}, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore, true);
                 bestVid = repackInfo.vid;
                 activeCopyNumber = tc.copyNb;
               } catch (Helpers::NoTapeAvailableForRetrieve &) {}
@@ -3017,7 +3017,7 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequ
           std::set<std::string> candidateVids;
           for (auto & tc: rsr.archiveFile.tapeFiles) candidateVids.insert(tc.vid);
           try {
-            bestVid = Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore, cta::catalogue::countGetTapesByVid::SBRQ_ASAUS2, true);
+            bestVid = Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore, true);
           } catch (Helpers::NoTapeAvailableForRetrieve &) {
             // Count the failure for this subrequest.
             notCreatedSubrequests.emplace_back(rsr);
@@ -5021,7 +5021,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
 
       // Check that the requested retrieve job (for the provided VID) exists, and record the copy number
       std::string bestVid = Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue,
-        m_oStoreDB.m_objectStore, cta::catalogue::countGetTapesByVid::SBRQ_FT1);
+        m_oStoreDB.m_objectStore);
 
       auto tf_it = af.tapeFiles.begin();
       for( ; tf_it != af.tapeFiles.end() && tf_it->vid != bestVid; ++tf_it) ;
@@ -5089,7 +5089,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
 
       // Check that the requested retrieve job (for the provided VID) exists, and record the copy number
       std::string bestVid = Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue,
-        m_oStoreDB.m_objectStore, isRepack ? cta::catalogue::countGetTapesByVid::SBRQ_FT2R : cta::catalogue::countGetTapesByVid::SBRQ_FT2, isRepack);
+        m_oStoreDB.m_objectStore, isRepack);
 
       auto tf_it = af.tapeFiles.begin();
       for( ; tf_it != af.tapeFiles.end() && tf_it->vid != bestVid; ++tf_it) ;

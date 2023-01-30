@@ -1,3 +1,9 @@
+# v.NEXT
+
+## Summary
+### Bug Fixes
+- cta/CTA#290 - Remove temporary counters used to track single-vid-GetTapesByVid calls
+
 # v4.8.4-1
 
 ## Summary

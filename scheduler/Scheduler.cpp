@@ -302,7 +302,6 @@ void Scheduler::deleteFailed(const std::string &objectId, log::LogContext & lc) 
 
 void Scheduler::checkTapeCanBeRepacked(const std::string & vid, const SchedulerDatabase::QueueRepackRequest & repackRequest){
   try{
-    m_catalogue.countGetTapesByVid(cta::catalogue::countGetTapesByVid::FCTCBR);
     auto vidToTapesMap = m_catalogue.getTapesByVid(vid); //throws an exception if the vid is not found on the database
     cta::common::dataStructures::Tape tapeToCheck = vidToTapesMap.at(vid);
 
@@ -1004,13 +1003,11 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
     catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.logicalLibrary = logicalLibraryName;
     searchCriteria.state = common::dataStructures::Tape::ACTIVE;
-    m_catalogue.countGetTapesByVid(cta::catalogue::countGetTapesByVid::GT);
     auto eligibleTapesList = m_catalogue.getTapes(searchCriteria);
     for(auto& t : eligibleTapesList) {
       eligibleTapeSet.insert(t.vid);
     }
     searchCriteria.state = common::dataStructures::Tape::REPACKING;
-    m_catalogue.countGetTapesByVid(cta::catalogue::countGetTapesByVid::GT);
     eligibleTapesList = m_catalogue.getTapes(searchCriteria);
     for(auto& t : eligibleTapesList) {
       eligibleTapeSet.insert(t.vid);
@@ -1848,7 +1845,6 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
   }
 
   // Validate tape state change based on previous state
-  m_catalogue.countGetTapesByVid(cta::catalogue::countGetTapesByVid::TTSC);
   auto prev_state = m_catalogue.getTapesByVid(vid)[vid].state;
 
   // If previous and desired states are the same, do nothing

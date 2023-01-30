@@ -78,7 +78,6 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
 
   if (!queueVidSet.empty()){
     try {
-      m_catalogue.countGetTapesByVid(cta::catalogue::countGetTapesByVid::QCR1);
       vidToTapesMap = m_catalogue.getTapesByVid(queueVidSet, true);
     } catch (const exception::UserError &ex) {
       log::ScopedParamContainer params(logContext);
@@ -193,7 +192,6 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
       cta::common::dataStructures::Tape tapeDataRefreshed;
 
       try {
-        m_catalogue.countGetTapesByVid(cta::catalogue::countGetTapesByVid::QCR2);
         auto vidToTapesMapRefreshed = m_catalogue.getTapesByVid(queueVid); //throws an exception if the vid is not found on the database
         tapeDataRefreshed = vidToTapesMapRefreshed.at(queueVid);
       } catch (const exception::UserError &ex) {

@@ -45,32 +45,6 @@ Mutex::Mutex()  {
     throw;
   }
 }
-
-Mutex::Mutex(const std::vector<int> &attrVals)  {
-  pthread_mutexattr_t attr;
-  cta::exception::Errnum::throwOnReturnedErrno(
-    pthread_mutexattr_init(&attr),
-    "Error from pthread_mutexattr_init in cta::threading::Mutex::Mutex(attrVals)");
-  cta::exception::Errnum::throwOnReturnedErrno(
-    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK),
-    "Error from pthread_mutexattr_settype in cta::threading::Mutex::Mutex(attrVals)");
-  for(auto x: attrVals) {
-    cta::exception::Errnum::throwOnReturnedErrno(
-      pthread_mutexattr_settype(&attr, x),
-      "Error from pthread_mutexattr_settype in cta::threading::Mutex::Mutex(attrVals)");
-  }
-  cta::exception::Errnum::throwOnReturnedErrno(
-    pthread_mutex_init(&m_mutex, &attr),
-    "Error from pthread_mutex_init in cta::threading::Mutex::Mutex(attrVals)");
-  try {
-    cta::exception::Errnum::throwOnReturnedErrno(
-      pthread_mutexattr_destroy(&attr),
-      "Error from pthread_mutexattr_destroy in cta::threading::Mutex::Mutex(attrVals)");
-  } catch (...) {
-    pthread_mutex_destroy(&m_mutex);
-    throw;
-  }
-}
 //------------------------------------------------------------------------------
 //destructor
 //------------------------------------------------------------------------------

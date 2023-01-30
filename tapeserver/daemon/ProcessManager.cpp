@@ -16,7 +16,6 @@
  */
 
 #include "ProcessManager.hpp"
-#include "catalogue/Catalogue.hpp"
 #include "common/exception/Errnum.hpp"
 #include <sys/epoll.h>
 #include <unistd.h>
@@ -30,7 +29,6 @@ ProcessManager::ProcessManager(log::LogContext & log): m_logContext(log) {
   m_epollFd = ::epoll_create1(0);
   cta::exception::Errnum::throwOnMinusOne(m_epollFd,
       "In ProcessManager::ProcessManager(), failed to create an epoll file descriptor: ");
-  cta::catalogue::Catalogue::countGetTapesByVidInitShared();
 }
 
 ProcessManager::~ProcessManager() {

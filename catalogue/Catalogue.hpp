@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include <atomic>
 #include <list>
 #include <map>
 #include <memory>
@@ -27,7 +26,6 @@
 #include <tuple>
 #include <utility>
 
-#include "catalogue/CountGetTapesByVid.hpp"
 #include "catalogue/RecyleTapeFileSearchCriteria.hpp"
 #include "catalogue/TapeFileSearchCriteria.hpp"
 #include "catalogue/TapePoolSearchCriteria.hpp"
@@ -35,7 +33,6 @@
 #include "common/dataStructures/DiskSpaceReservationRequest.hpp"
 #include "common/dataStructures/VidToTapeMap.hpp"
 #include "common/exception/UserError.hpp"
-#include "common/log/LogContext.hpp"
 
 namespace cta {
 namespace common {
@@ -1431,17 +1428,6 @@ public:
   * @param newStorageClassName The name of the storage class
   */
   virtual void modifyArchiveFileStorageClassId(const uint64_t archiveFileId, const std::string& newStorageClassName) const = 0;
-
-  /**
-  * Used by the catalogue and users of the catalogue to maintain and periodically
-  * log a count of code paths that lead to getTapesByVid (single Vid version).
-  */
-  virtual void countGetTapesByVid(const countGetTapesByVid::Enum location) const;
-
-  static void countGetTapesByVidInitShared();
-
-  static std::atomic<cta::catalogue::countGetTapesByVid::CounterSpace *> g_cs;
-  static std::atomic<log::Logger *> g_counterLog;
 
 }; // class Catalogue
 

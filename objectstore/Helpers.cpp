@@ -365,7 +365,7 @@ void Helpers::getLockedAndFetchedRepackQueue(RepackQueue& queue, ScopedExclusive
 // Helpers::selectBestRetrieveQueue()
 //------------------------------------------------------------------------------
 std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candidateVids, cta::catalogue::Catalogue & catalogue,
-    objectstore::Backend & objectstore, const cta::catalogue::countGetTapesByVid::Enum loc, bool isRepack) {
+    objectstore::Backend & objectstore, bool isRepack) {
   // We will build the retrieve stats of the non-disabled, non-broken/exported candidate vids here
   std::list<SchedulerDatabase::RetrieveQueueStatistics> candidateVidsStats;
   // We will build the retrieve stats of the disabled vids here, as a fallback
@@ -450,7 +450,6 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string>& candid
       // Get the cached tape status value before releasing the lock
       if(g_tapeStatuses.find(v) == g_tapeStatuses.end()) {
         // Handle corner case where there are two candidate vids and the second candidate was evicted because it is stale
-        catalogue.countGetTapesByVid(loc);
         auto tapeStatuses = catalogue.getTapesByVid(v);
         if(tapeStatuses.size() != 1) {
           throw cta::exception::Exception("In Helpers::selectBestRetrieveQueue(): candidate vid not found in the TAPE table.");
