@@ -39,8 +39,14 @@ FRONTEND_IP=$(kubectl -n ${NAMESPACE} get pods ctafrontend -o json | jq .status.
 
 echo
 echo "ENABLE CTAFRONTEND TO EXECUTE CTA ADMIN COMMANDS"
-kubectl -n ${NAMESPACE} exec ctacli -- cta-admin admin add --username ctafrontend --comment "for restore files test"
-kubectl -n ${NAMESPACE} exec ctacli -- cta-admin admin add --username ctaeos --comment "for restore files test"
+kubectl --namespace=${NAMESPACE} exec kdc -- cat /root/ctaadmin2.keytab | kubectl --namespace=${NAMESPACE} exec -i ctafrontend --  bash -c "cat > /root/ctaadmin2.keytab; mkdir -p /tmp/ctaadmin2"
+kubectl -n ${NAMESPACE} cp client_helper.sh ctafrontend:/root/client_helper.sh
+rm /tmp/init_kerb.sh
+touch /tmp/init_kerb.sh
+echo '. /root/client_helper.sh; admin_kinit' >> /tmp/init_kerb.sh
+kubectl -n ${NAMESPACE} cp /tmp/init_kerb.sh ctafrontend:/tmp/init_kerb.sh
+kubectl -n ${NAMESPACE} exec ctafrontend -- bash /tmp/init_kerb.sh
+
 
 echo
 echo "ADD FRONTEND GATEWAY TO EOS"
@@ -90,8 +96,8 @@ echo
 kubectl cp ~/CTA-build/cmdline/standalone_cli_tools/change_storage_class/cta-change-storage-class ${NAMESPACE}/ctafrontend:/usr/bin/
 echo "kubectl cp ${IDS_FILEPATH} ${NAMESPACE}/ctafrontend:~/"
 kubectl cp ${IDS_FILEPATH} ${NAMESPACE}/ctafrontend:/root/
-echo "kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c XrdSecPROTOCOL=sss XrdSecSSSKT=/etc/cta/eos.sss.keytab cta-change-storage-class --storageclassname ${NEW_STORAGE_CLASS_NAME} --json ${IDS_FILEPATH}"
-kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c "XrdSecPROTOCOL=sss XrdSecSSSKT=/etc/cta/eos.sss.keytab cta-change-storage-class --storageclassname ${NEW_STORAGE_CLASS_NAME} --json ${IDS_FILEPATH} -t 1"
+echo "kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/ctaadmin2/krb5cc_0 cta-change-storage-class --storageclassname ${NEW_STORAGE_CLASS_NAME} --json ${IDS_FILEPATH}"
+kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c "XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/ctaadmin2/krb5cc_0 cta-change-storage-class --storageclassname ${NEW_STORAGE_CLASS_NAME} --json ${IDS_FILEPATH} -t 1"
 
 EOS_METADATA_PATH_AFTER_CHANGE_1=$(mktemp -d).json
 echo "SEND EOS METADATA TO JSON FILE: ${EOS_METADATA_PATH_AFTER_CHANGE_1}"
@@ -143,8 +149,3 @@ fi
 
 echo
 echo "All tests passed"
-
-# Remove authorization
-kubectl -n ${NAMESPACE} exec ctacli -- cta-admin admin rm --username ctafrontend
-kubectl -n ${NAMESPACE} exec ctacli -- cta-admin admin rm --username ctaeos
-

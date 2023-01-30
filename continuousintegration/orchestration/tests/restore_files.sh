@@ -54,7 +54,7 @@ echo "ADD FRONTEND GATEWAY TO EOS"
 echo "kubectl -n ${NAMESPACE} exec ctaeos -- bash eos root://${EOSINSTANCE} -r 0 0 vid add gateway ${FRONTEND_IP} grpc"
 kubectl -n ${NAMESPACE} exec ctaeos -- eos -r 0 0 vid add gateway ${FRONTEND_IP} grpc
 
-echo 
+echo
 echo "eos vid ls"
 kubectl -n ${NAMESPACE} exec ctaeos -- eos root://${EOSINSTANCE} vid ls
 
@@ -96,16 +96,21 @@ sudo kubectl cp /etc/cta/cta-cli.conf ${NAMESPACE}/ctafrontend:/etc/cta/cta-cli.
 
 echo
 echo "ENABLE CTAFRONTEND TO EXECUTE CTA ADMIN COMMANDS"
-kubectl -n ${NAMESPACE} exec ctacli -- cta-admin admin add --username ctafrontend --comment "for restore files test"
-kubectl -n ${NAMESPACE} exec ctacli -- cta-admin admin add --username ctaeos --comment "for restore files test"
+kubectl --namespace=${NAMESPACE} exec kdc -- cat /root/ctaadmin2.keytab | kubectl --namespace=${NAMESPACE} exec -i ctafrontend --  bash -c "cat > /root/ctaadmin2.keytab; mkdir -p /tmp/ctaadmin2"
+kubectl -n ${NAMESPACE} cp client_helper.sh ctafrontend:/root/client_helper.sh
+rm /tmp/init_kerb.sh
+touch /tmp/init_kerb.sh
+echo '. /root/client_helper.sh; admin_kinit' >> /tmp/init_kerb.sh
+kubectl -n ${NAMESPACE} cp /tmp/init_kerb.sh ctafrontend:/tmp/init_kerb.sh
+kubectl -n ${NAMESPACE} exec ctafrontend -- bash /tmp/init_kerb.sh
 
-echo 
+echo
 echo "RESTORE FILES"
 kubectl -n ${NAMESPACE} cp client_helper.sh ctafrontend:/root/client_helper.sh
 kubectl cp ~/CTA-build/cmdline/standalone_cli_tools/restore_files/cta-restore-deleted-files ${NAMESPACE}/ctafrontend:/usr/bin/cta-restore-deleted-files
 kubectl cp restore_files_ctafrontend.sh ${NAMESPACE}/ctafrontend:/root/restore_files_ctafrontend.sh
 kubectl -n ${NAMESPACE} exec ctafrontend -- chmod +x /root/restore_files_ctafrontend.sh
-kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c "XrdSecPROTOCOL=sss XrdSecSSSKT=/etc/cta/eos.sss.keytab /root/restore_files_ctafrontend.sh -I ${ARCHIVE_FILE_ID} -f ${TEST_FILE_NAME} -i ${EOSINSTANCE}"
+kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c "XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/ctaadmin2/krb5cc_0 /root/restore_files_ctafrontend.sh -I ${ARCHIVE_FILE_ID} -f ${TEST_FILE_NAME} -i ${EOSINSTANCE}"
 
 SECONDS_PASSED=0
 WAIT_FOR_RETRIEVED_FILE_TIMEOUT=10
@@ -175,5 +180,3 @@ echo "kubectl -n ${NAMESPACE} exec ctacli -- cta-admin admin rm --username ctaeo
 sudo rm ${METADATA_FILE_AFTER_RESTORE_PATH}
 sudo rm ${METADATA_FILE_PATH}
 sudo rm ${EOS_METADATA_AFTER_RESTORE_PATH}
-kubectl -n ${NAMESPACE} exec ctacli -- cta-admin admin rm --username ctafrontend
-kubectl -n ${NAMESPACE} exec ctacli -- cta-admin admin rm --username ctaeos
