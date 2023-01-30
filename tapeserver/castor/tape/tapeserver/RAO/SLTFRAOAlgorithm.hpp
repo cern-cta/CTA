@@ -17,12 +17,12 @@
 
 #pragma once
 
-#include "RAOAlgorithm.hpp"
-#include "RAOParams.hpp"
-#include "CostHeuristic.hpp"
-#include "FilePositionEstimator.hpp"
-#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "RAOFile.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/RAOAlgorithm.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/RAOParams.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/CostHeuristic.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/FilePositionEstimator.hpp"
+#include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/RAOFile.hpp"
 
 #include <map>
 

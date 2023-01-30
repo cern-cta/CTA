@@ -24,10 +24,10 @@
 #include <vector>
 #include <string>
 
-#include "../system/Wrapper.hpp"
+#include "tapeserver/castor/tape/tapeserver/system/Wrapper.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/utils/Regex.hpp"
-#include "Constants.hpp"
+#include "tapeserver/castor/tape/tapeserver/SCSI/Constants.hpp"
 
 namespace castor {
 namespace tape {

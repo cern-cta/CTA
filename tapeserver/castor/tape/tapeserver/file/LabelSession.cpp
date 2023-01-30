@@ -17,8 +17,8 @@
 
 #include <string>
 
-#include "castor/tape/tapeserver/file/LabelSession.hpp"
-#include "castor/tape/tapeserver/file/Structures.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/LabelSession.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/Structures.hpp"
 
 namespace castor {
 namespace tape {

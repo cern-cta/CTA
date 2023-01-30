@@ -17,8 +17,8 @@
 
 #pragma once 
 
-#include "RAOParams.hpp"
-#include "RAOAlgorithmFactory.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/RAOParams.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/RAOAlgorithmFactory.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
   

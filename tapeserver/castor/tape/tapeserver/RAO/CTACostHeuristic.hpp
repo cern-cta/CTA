@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "CostHeuristic.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/CostHeuristic.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 

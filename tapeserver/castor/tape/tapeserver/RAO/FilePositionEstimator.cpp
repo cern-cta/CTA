@@ -15,7 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "FilePositionEstimator.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/FilePositionEstimator.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 

@@ -15,8 +15,8 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "CostHeuristicFactory.hpp"
-#include "CTACostHeuristic.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/CostHeuristicFactory.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/CTACostHeuristic.hpp"
 #include "common/exception/Exception.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {

@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/file/FileReader.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/FileReader.hpp"
 #include "tapeserver/castor/tape/tapeserver/SCSI/Structures.hpp"
 #include "common/Constants.hpp"
 

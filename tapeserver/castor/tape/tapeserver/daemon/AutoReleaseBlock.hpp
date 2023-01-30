@@ -17,7 +17,7 @@
 
 #pragma once 
 #include <memory>
-#include "castor/tape/tapeserver/daemon/MemBlock.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/MemBlock.hpp"
 
 namespace castor {
 namespace tape {

@@ -18,16 +18,16 @@
 #include <memory>
 #include <string>
 
-#include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
-#include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
-#include "castor/tape/tapeserver/daemon/DataPipeline.hpp"
-#include "castor/tape/tapeserver/daemon/ErrorFlag.hpp"
-#include "castor/tape/tapeserver/daemon/MemBlock.hpp"
-#include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
-#include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
-#include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
-#include "castor/tape/tapeserver/daemon/TapeWriteTask.hpp"
-#include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/DataConsumer.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/DataPipeline.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/ErrorFlag.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/MemBlock.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/TapeWriteTask.hpp"
+#include "tapeserver/castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
 

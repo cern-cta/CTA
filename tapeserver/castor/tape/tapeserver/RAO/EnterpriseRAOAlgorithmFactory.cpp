@@ -15,8 +15,8 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "EnterpriseRAOAlgorithmFactory.hpp"
-#include "EnterpriseRAOAlgorithm.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/EnterpriseRAOAlgorithmFactory.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/EnterpriseRAOAlgorithm.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
   

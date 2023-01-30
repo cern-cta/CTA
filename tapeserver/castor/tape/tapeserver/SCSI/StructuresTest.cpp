@@ -17,10 +17,10 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock-cardinalities.h>
-#include "Device.hpp"
-#include "Structures.hpp"
-#include "../system/Wrapper.hpp"
-#include "Exception.hpp"
+#include "tapeserver/castor/tape/tapeserver/SCSI/Device.hpp"
+#include "tapeserver/castor/tape/tapeserver/SCSI/Structures.hpp"
+#include "tapeserver/castor/tape/tapeserver/system/Wrapper.hpp"
+#include "tapeserver/castor/tape/tapeserver/SCSI/Exception.hpp"
 
 using ::testing::AtLeast;
 using ::testing::Return;

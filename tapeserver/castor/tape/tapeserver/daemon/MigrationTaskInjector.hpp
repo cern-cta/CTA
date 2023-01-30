@@ -17,11 +17,11 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
-#include "castor/tape/tapeserver/daemon/TapeWriteSingleThread.hpp"
-#include "castor/tape/tapeserver/daemon/TapeWriteTask.hpp"
-#include "castor/tape/tapeserver/daemon/DiskReadThreadPool.hpp"
-#include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/TapeWriteSingleThread.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/TapeWriteTask.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/DiskReadThreadPool.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/DiskReadTask.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/threading/AtomicCounter.hpp"
 #include "scheduler/ArchiveMount.hpp"

@@ -15,9 +15,9 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
-#include "castor/tape/tapeserver/daemon/MemBlock.hpp"
-#include "castor/tape/tapeserver/daemon/DataPipeline.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/MemBlock.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/DataPipeline.hpp"
 
 namespace castor {
 namespace tape {

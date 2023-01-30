@@ -27,7 +27,7 @@
 #include <climits>
 #include <cstdio>
 
-#include "Constants.hpp"
+#include "tapeserver/castor/tape/tapeserver/SCSI/Constants.hpp"
 #include "common/exception/Exception.hpp"
 
 namespace castor {

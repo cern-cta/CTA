@@ -18,7 +18,7 @@
 #pragma once
 
 #include "common/log/LogContext.hpp"
-#include "RAOManager.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/RAOManager.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 

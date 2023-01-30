@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "Position.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/Position.hpp"
 
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {

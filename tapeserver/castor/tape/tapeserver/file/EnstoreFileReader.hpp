@@ -20,8 +20,8 @@
 #include <fstream>
 #include <memory>
 
-#include "castor/tape/tapeserver/file/CpioFileHeaderStructure.hpp"
-#include "castor/tape/tapeserver/file/FileReader.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/CpioFileHeaderStructure.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/FileReader.hpp"
 
 namespace castor {
 namespace tape {

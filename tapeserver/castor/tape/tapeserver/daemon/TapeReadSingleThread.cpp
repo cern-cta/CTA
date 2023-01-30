@@ -15,12 +15,12 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
-#include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
-#include "castor/tape/tapeserver/daemon/TapeSessionReporter.hpp"
-#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "castor/tape/tapeserver/file/ReadSession.hpp"
-#include "castor/tape/tapeserver/file/ReadSessionFactory.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/TapeSessionReporter.hpp"
+#include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/ReadSession.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/ReadSessionFactory.hpp"
 
 //------------------------------------------------------------------------------
 // Constructor for TapeReadSingleThread

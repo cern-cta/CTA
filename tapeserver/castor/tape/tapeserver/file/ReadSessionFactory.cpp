@@ -18,10 +18,10 @@
 #include <memory>
 #include <sstream>
 
-#include "castor/tape/tapeserver/file/CtaReadSession.hpp"
-#include "castor/tape/tapeserver/file/EnstoreReadSession.hpp"
-#include "castor/tape/tapeserver/file/OsmReadSession.hpp"
-#include "castor/tape/tapeserver/file/ReadSessionFactory.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/CtaReadSession.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/EnstoreReadSession.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/OsmReadSession.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/ReadSessionFactory.hpp"
 #include "common/dataStructures/LabelFormat.hpp"
 
 namespace castor {

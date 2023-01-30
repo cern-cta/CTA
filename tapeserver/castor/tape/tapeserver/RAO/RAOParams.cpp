@@ -15,7 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "RAOParams.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/RAOParams.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
 

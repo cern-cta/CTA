@@ -20,10 +20,10 @@
 #include <sstream>
 #include <string>
 
-#include "castor/tape/tapeserver/file/Exceptions.hpp"
-#include "castor/tape/tapeserver/file/Structures.hpp"
-#include "castor/tape/tapeserver/file/FileWriter.hpp"
-#include "castor/tape/tapeserver/file/WriteSession.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/Exceptions.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/Structures.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/FileWriter.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/WriteSession.hpp"
 #include "scheduler/ArchiveJob.hpp"
 
 namespace castor {

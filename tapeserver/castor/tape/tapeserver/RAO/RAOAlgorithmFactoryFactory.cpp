@@ -16,11 +16,11 @@
  */
 
 
-#include "RAOAlgorithmFactoryFactory.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/RAOAlgorithmFactoryFactory.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/EnterpriseRAOAlgorithmFactory.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/NonConfigurableRAOAlgorithmFactory.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/ConfigurableRAOAlgorithmFactory.hpp"
 #include "common/log/LogContext.hpp"
-#include "EnterpriseRAOAlgorithmFactory.hpp"
-#include "NonConfigurableRAOAlgorithmFactory.hpp"
-#include "ConfigurableRAOAlgorithmFactory.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 

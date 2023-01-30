@@ -15,7 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "Constants.hpp"
+#include "tapeserver/castor/tape/tapeserver/SCSI/Constants.hpp"
 #include <sstream>
 
 std::string castor::tape::SCSI::tapeAlertToString(uint16_t parameterCode)

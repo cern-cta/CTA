@@ -15,7 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "Structures.hpp"
+#include "tapeserver/castor/tape/tapeserver/SCSI/Structures.hpp"
 
 #include <sstream>
 #include <cstdio>

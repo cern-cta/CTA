@@ -16,8 +16,8 @@
  */
 
 
-#include "ConfigurableRAOAlgorithmFactory.hpp"
-#include "SLTFRAOAlgorithm.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/ConfigurableRAOAlgorithmFactory.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/SLTFRAOAlgorithm.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 

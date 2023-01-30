@@ -15,7 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "castor/tape/tapeserver/file/Structures.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/Structures.hpp"
 #include <gtest/gtest.h>
 #include <gmock/gmock-cardinalities.h>
 

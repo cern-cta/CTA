@@ -19,8 +19,8 @@
 
 #include <memory>
 
-#include "castor/tape/tapeserver/file/CtaReadSession.hpp"
-#include "castor/tape/tapeserver/file/FileReader.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/CtaReadSession.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/FileReader.hpp"
 
 namespace castor {
 namespace tape {

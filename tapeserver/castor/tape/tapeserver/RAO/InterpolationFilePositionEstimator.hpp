@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "FilePositionEstimator.hpp"
-#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/FilePositionEstimator.hpp"
+#include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "catalogue/MediaType.hpp"
 #include <vector>
 

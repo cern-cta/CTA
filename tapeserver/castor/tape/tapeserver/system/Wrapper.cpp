@@ -15,8 +15,8 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "Wrapper.hpp"
-#include "../drive/DriveInterface.hpp"
+#include "tapeserver/castor/tape/tapeserver/system/Wrapper.hpp"
+#include "tapeserver/castor/tape/tapeserver//drive/DriveInterface.hpp"
 #include <errno.h>
 #include <limits.h>
 #include <stdexcept>

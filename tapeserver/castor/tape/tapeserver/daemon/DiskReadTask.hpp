@@ -17,11 +17,11 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/DataPipeline.hpp"
-#include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
-#include "castor/tape/tapeserver/daemon/DiskStats.hpp"
-#include "castor/tape/tapeserver/daemon/ErrorFlag.hpp"
-#include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/DataPipeline.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/DataConsumer.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/DiskStats.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/ErrorFlag.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "common/threading/AtomicFlag.hpp"
 #include "common/log/LogContext.hpp"
 #include "disk/DiskFile.hpp"

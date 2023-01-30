@@ -16,8 +16,8 @@
  */
 
 
-#include "RAOAlgorithmFactory.hpp"
-#include "LinearRAOAlgorithm.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/RAOAlgorithmFactory.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/LinearRAOAlgorithm.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 

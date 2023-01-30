@@ -15,7 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "RAOFile.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/RAOFile.hpp"
 
 #include <algorithm>
 

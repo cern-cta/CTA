@@ -15,7 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "RAOHelpers.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/RAOHelpers.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {

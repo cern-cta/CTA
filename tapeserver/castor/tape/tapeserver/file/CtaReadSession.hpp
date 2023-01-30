@@ -20,8 +20,8 @@
 #include <memory>
 #include <string>
 
-#include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
-#include "castor/tape/tapeserver/file/ReadSession.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/VolumeInfo.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/ReadSession.hpp"
 
 namespace castor {
 namespace tape {

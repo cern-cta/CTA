@@ -20,13 +20,13 @@
 #include <memory>
 #include <string>
 
-#include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
-#include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
-#include "castor/tape/tapeserver/daemon/DataPipeline.hpp"
-#include "castor/tape/tapeserver/daemon/RecallMemoryManager.hpp"
-#include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
-#include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
-#include "castor/tape/tapeserver/file/FileReaderFactory.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/DataConsumer.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/DataPipeline.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/RecallMemoryManager.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/FileReaderFactory.hpp"
 #include "common/Timer.hpp"
 #include "common/exception/Exception.hpp"
 

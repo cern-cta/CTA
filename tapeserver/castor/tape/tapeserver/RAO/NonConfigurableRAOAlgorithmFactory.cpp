@@ -15,9 +15,9 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "NonConfigurableRAOAlgorithmFactory.hpp"
-#include "LinearRAOAlgorithm.hpp"
-#include "RandomRAOAlgorithm.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/NonConfigurableRAOAlgorithmFactory.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/LinearRAOAlgorithm.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/RandomRAOAlgorithm.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 

@@ -20,8 +20,8 @@
 #include <stdexcept> 
 #include <sys/mtio.h>
 
-#include "FileWrappers.hpp"
-#include "../SCSI/Structures.hpp"
+#include "tapeserver/castor/tape/tapeserver/system/FileWrappers.hpp"
+#include "tapeserver/castor/tape/tapeserver//SCSI/Structures.hpp"
 
 using namespace castor::tape;
 

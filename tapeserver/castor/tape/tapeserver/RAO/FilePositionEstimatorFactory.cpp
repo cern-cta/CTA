@@ -17,9 +17,9 @@
 
 #include "catalogue/Catalogue.hpp"
 #include "common/Timer.hpp"
-#include "FilePositionEstimatorFactory.hpp"
-#include "InterpolationFilePositionEstimator.hpp"
-#include "RAOHelpers.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/FilePositionEstimatorFactory.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/InterpolationFilePositionEstimator.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/RAOHelpers.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 

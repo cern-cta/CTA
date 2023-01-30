@@ -17,8 +17,8 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock-cardinalities.h>
-#include "Device.hpp"
-#include "../system/Wrapper.hpp"
+#include "tapeserver/castor/tape/tapeserver/SCSI/Device.hpp"
+#include "tapeserver/castor/tape/tapeserver/system/Wrapper.hpp"
 #include "common/exception/Errnum.hpp"
 
 using ::testing::AtLeast;

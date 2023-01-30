@@ -19,9 +19,9 @@
 #include <numeric>
 #include <cstdio>
 
-#include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
-#include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
-#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
+#include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "catalogue/TapeFileWritten.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/utils/utils.hpp"

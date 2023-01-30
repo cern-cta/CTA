@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "FilePositionInfos.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/FilePositionInfos.hpp"
 #include "scheduler/RetrieveJob.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {

@@ -15,8 +15,8 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "castor/tape/tapeserver/file/CpioFileHeaderStructure.hpp"
-#include "castor/tape/tapeserver/file/Exceptions.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/CpioFileHeaderStructure.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/Exceptions.hpp"
 
 #include <cstring> // memeset
 #include <string> // std::string to_string

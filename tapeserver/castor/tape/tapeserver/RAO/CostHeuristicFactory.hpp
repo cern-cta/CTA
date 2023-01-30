@@ -18,8 +18,8 @@
 #pragma once
 #include <memory>
 
-#include "CostHeuristic.hpp"
-#include "RAOOptions.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/CostHeuristic.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/RAOOptions.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 

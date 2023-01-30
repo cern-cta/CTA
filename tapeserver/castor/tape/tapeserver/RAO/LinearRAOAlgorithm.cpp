@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <numeric>
 
-#include "LinearRAOAlgorithm.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/LinearRAOAlgorithm.hpp"
 #include "common/Timer.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {

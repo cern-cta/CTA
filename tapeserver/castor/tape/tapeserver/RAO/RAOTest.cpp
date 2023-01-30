@@ -19,10 +19,10 @@
 #include <vector>
 #include <map>
 
-#include "InterpolationFilePositionEstimator.hpp"
-#include "RAOHelpers.hpp"
-#include "SLTFRAOAlgorithm.hpp"
-#include "CTACostHeuristic.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/InterpolationFilePositionEstimator.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/RAOHelpers.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/SLTFRAOAlgorithm.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/CTACostHeuristic.hpp"
 
 namespace unitTests {
   

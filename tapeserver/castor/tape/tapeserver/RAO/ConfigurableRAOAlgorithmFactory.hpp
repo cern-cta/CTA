@@ -21,7 +21,7 @@
 
 #include "tapeserver/castor/tape/tapeserver/RAO/RAOParams.hpp"
 #include "tapeserver/castor/tape/tapeserver/RAO/RAOAlgorithmFactory.hpp"
-#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
 
 namespace cta {
 namespace catalogue {

@@ -15,9 +15,9 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "castor/tape/tapeserver/file/OsmFileStructure.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/OsmFileStructure.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/OsmXdrStructure.hpp"
-#include "castor/tape/tapeserver/file/Exceptions.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/Exceptions.hpp"
 #include "common/exception/Exception.hpp"
 
 #include <rpc/xdr.h> // xdrmem_create for decode_legato

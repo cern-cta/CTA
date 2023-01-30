@@ -17,8 +17,8 @@
 
 #include <list>
 
-#include "EnterpriseRAOAlgorithm.hpp"
-#include "castor/tape/tapeserver/SCSI/Structures.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/EnterpriseRAOAlgorithm.hpp"
+#include "tapeserver/castor/tape/tapeserver/SCSI/Structures.hpp"
 #include "common/Timer.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {

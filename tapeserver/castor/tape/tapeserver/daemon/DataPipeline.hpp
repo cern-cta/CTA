@@ -18,7 +18,7 @@
 #pragma once
 
 #include "common/threading/BlockingQueue.hpp"
-#include "castor/tape/tapeserver/daemon/MemBlock.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include "common/exception/Exception.hpp"
 
 namespace castor {

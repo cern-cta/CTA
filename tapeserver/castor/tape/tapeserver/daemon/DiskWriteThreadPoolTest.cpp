@@ -14,15 +14,15 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
-#include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
-#include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
-#include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
-#include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/StringLogger.hpp"
-#include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
-#include "castor/tape/tapeserver/daemon/MemBlock.hpp"
-#include "castor/messages/TapeserverProxyDummy.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/MemBlock.hpp"
+#include "tapeserver/castor/messages/TapeserverProxyDummy.hpp"
 #include "scheduler/TapeMountDummy.hpp"
 #include "catalogue/DummyCatalogue.hpp"
 #include <gtest/gtest.h>

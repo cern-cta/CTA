@@ -15,7 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 #include "common/Timer.hpp"
 #include "common/log/LogContext.hpp"
 

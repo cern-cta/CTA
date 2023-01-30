@@ -16,13 +16,13 @@
  */
 
 
-#include "RAOManager.hpp"
-#include "EnterpriseRAOAlgorithm.hpp"
-#include "EnterpriseRAOAlgorithmFactory.hpp"
-#include "NonConfigurableRAOAlgorithmFactory.hpp"
-#include "RAOAlgorithmFactoryFactory.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/RAOManager.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/EnterpriseRAOAlgorithm.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/EnterpriseRAOAlgorithmFactory.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/NonConfigurableRAOAlgorithmFactory.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/RAOAlgorithmFactoryFactory.hpp"
 #include "catalogue/Catalogue.hpp"
-#include "LinearRAOAlgorithm.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/LinearRAOAlgorithm.hpp"
 #include "common/Timer.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {

@@ -15,13 +15,13 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "SLTFRAOAlgorithm.hpp"
-#include "InterpolationFilePositionEstimator.hpp"
-#include "RAOHelpers.hpp"
-#include "CTACostHeuristic.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/SLTFRAOAlgorithm.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/InterpolationFilePositionEstimator.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/RAOHelpers.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/CTACostHeuristic.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/CostHeuristicFactory.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/FilePositionEstimatorFactory.hpp"
 #include "common/Timer.hpp"
-#include "CostHeuristicFactory.hpp"
-#include "FilePositionEstimatorFactory.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
 

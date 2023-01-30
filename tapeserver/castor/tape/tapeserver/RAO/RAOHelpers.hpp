@@ -18,8 +18,8 @@
 #pragma once
 
 #include <vector>
-#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "FilePositionInfos.hpp"
+#include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/FilePositionInfos.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {
   

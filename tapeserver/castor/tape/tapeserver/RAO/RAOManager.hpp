@@ -21,11 +21,11 @@
 #include <optional>
 #include <vector>
 
-#include "castor/tape/tapeserver/RAO/RAOParams.hpp"
-#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "castor/tape/tapeserver/SCSI/Structures.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/RAOParams.hpp"
+#include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "tapeserver/castor/tape/tapeserver/SCSI/Structures.hpp"
 #include "scheduler/RetrieveJob.hpp"
-#include "RAOAlgorithmFactory.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/RAOAlgorithmFactory.hpp"
 #include "common/log/LogContext.hpp"
 
 namespace castor { namespace tape { namespace tapeserver { namespace rao {

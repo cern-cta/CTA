@@ -18,7 +18,7 @@
 #include <cstdlib>
 
 #include "common/exception/Errnum.hpp"
-#include "Device.hpp"
+#include "tapeserver/castor/tape/tapeserver/SCSI/Device.hpp"
 
 using namespace castor::tape;
 

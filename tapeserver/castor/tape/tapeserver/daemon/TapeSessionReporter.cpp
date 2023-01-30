@@ -15,7 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "castor/tape/tapeserver/daemon/TapeSessionReporter.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/TapeSessionReporter.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
 #include "tapeserver/daemon/TapedProxy.hpp"

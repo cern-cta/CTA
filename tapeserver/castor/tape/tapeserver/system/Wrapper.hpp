@@ -30,7 +30,7 @@
 #include <string>
 #include <fstream>
 
-#include "FileWrappers.hpp"
+#include "tapeserver/castor/tape/tapeserver/system/FileWrappers.hpp"
 
 namespace castor {
 namespace tape {

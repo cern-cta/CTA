@@ -19,8 +19,8 @@
 #include <string>
 
 #include "common/exception/Exception.hpp"
-#include "Structures.hpp"
-#include "Constants.hpp"
+#include "tapeserver/castor/tape/tapeserver/SCSI/Structures.hpp"
+#include "tapeserver/castor/tape/tapeserver/SCSI/Constants.hpp"
 
 namespace castor {
 namespace tape {

@@ -20,7 +20,7 @@
 #include <memory>
 
 #include "common/exception/Exception.hpp"
-#include "castor/tape/tapeserver/daemon/Payload.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/Payload.hpp"
 
 
 namespace castor {
