@@ -4,3 +4,6 @@
 [submodule "eos_cta/grpc-proto"]
 	path = eos_cta/grpc-proto
 	url = https://:@gitlab.cern.ch:8443/eos/grpc-proto.git
+[submodule "catalogue/cta-catalogue-schema"]
+	path = catalogue/cta-catalogue-schema
+	url = https://:@gitlab.cern.ch:8443/cta/cta-catalogue-schema.git

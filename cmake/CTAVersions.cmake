@@ -18,8 +18,7 @@ set(CTA_RELEASE 1)
 set(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION "v0.0")
 
 # Catalogue Schema Version
-set(CTA_CATALOGUE_SCHEMA_VERSION_MAJOR 12)
-set(CTA_CATALOGUE_SCHEMA_VERSION_MINOR 0)
+include(catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake)
 
 # Shared object internal version (used in SONAME)
 set(CTA_SOVERSION 0)

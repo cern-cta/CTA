@@ -51,8 +51,8 @@ if [ ! -z "${error}" ]; then
 fi
 
 # Get Catalogue Schema version
-MAJOR=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MAJOR ../../../cmake/CTAVersions.cmake | sed 's/[^0-9]*//g')
-MINOR=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MINOR ../../../cmake/CTAVersions.cmake | sed 's/[^0-9]*//g')
+MAJOR=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MAJOR ../../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
+MINOR=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MINOR ../../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
 NEW_SCHEMA_VERSION="$MAJOR.$MINOR"
 MIGRATION_FILE=$(find ../../../catalogue/ -name "*to${NEW_SCHEMA_VERSION}.sql")
 PREVIOUS_SCHEMA_VERSION=$(echo $MIGRATION_FILE | grep -o -E '[0-9]+\.[0-9]' | head -1)

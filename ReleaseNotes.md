@@ -15,6 +15,7 @@
 - cta/CTA#252 - Update cta-change-storage-class to accept json file as input
 - cta/CTA#136 - Add missing forward declarations to standalone cli tools
 - cta/CTA#284 - Add kerberos authentication for standalone cli tool tests
+- cta/CTA#254 - Create git submodule for CTA catalogue schema
 ### Bug Fixes
 - cta/CTA#181 - cta-statistics-update can fail for catalogues in postgres
 - cta/CTA#189 - Avoid postgres logging frequent warnings about no transaction in progress

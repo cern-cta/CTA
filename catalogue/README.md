@@ -109,7 +109,7 @@ SCHEMA_VERSION_MAJOR.SCHEMA_VERSION_MINOR
 
 In order to modify the Catalogue schema, please follow the following steps.
 
-1. Modify the **CTA_CATALOGUE_SCHEMA_VERSION_MAJOR** and the **CTA_CATALOGUE_SCHEMA_VERSION_MINOR** variables that are located in the directory *cmake/CTAVersions.cmake*. Update *ReleaseNotes.md* to reflect schema change.
+1. Modify the **CTA_CATALOGUE_SCHEMA_VERSION_MAJOR** and the **CTA_CATALOGUE_SCHEMA_VERSION_MINOR** variables that are located in the directory *catalogue/cta-schema/CTACatalogueSchemaVersion.cmake*. Update *ReleaseNotes.md* to reflect schema change.
 2. Run the build of CTA
 
     --> It will create a new folder that will be named according to the schema versions variables modified at step 1. (Example: if the new schema version is 1.1, the directory 1.1 will be created in the catalogue directory).

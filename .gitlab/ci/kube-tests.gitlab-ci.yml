@@ -13,6 +13,8 @@
 .kubernetes_test:
   script:
     - export NAMESPACE="${JOB_NAME}-${CTA_BUILD_ID}-$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 4 | head -n 1)"
+    - yum install -y git
+    - git submodule update --init --recursive
     - cd continuousintegration/orchestration/
     - ./run_systemtest.sh -n ${NAMESPACE} -p ${CI_PIPELINE_ID} -s ${TEST_SCRIPT} ${EXTENDED_OPTIONS}
   variables:
