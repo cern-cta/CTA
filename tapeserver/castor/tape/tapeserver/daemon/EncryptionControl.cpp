@@ -86,7 +86,7 @@ auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface &
     cta::common::dataStructures::SecurityIdentity m_cliIdentity("ctaops", cta::utils::getShortHostname(),
                                                                 cta::utils::getShortHostname());
 
-    catalogue.modifyTapeEncryptionKeyName(m_cliIdentity, volInfo.vid, encStatus.key);
+    catalogue.Tape()->modifyTapeEncryptionKeyName(m_cliIdentity, volInfo.vid, encStatus.key);
   }
 
   if (encStatus.on) {
