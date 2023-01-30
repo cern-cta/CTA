@@ -483,7 +483,7 @@ struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PoppedElementsSum
   uint64_t bytes;
   bool diskSystemFull = false;
   std::string fullDiskSystem;
-  PoppedElementsSummary(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}
+  PoppedElementsSummary(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}  // cppcheck-suppress uninitMemberVar
   bool operator==(const PoppedElementsSummary &pes) const {
     return bytes == pes.bytes && files == pes.files;
   }

@@ -22,6 +22,7 @@
 - cta/CTA#238 - Compilation fails when using cta::common::Configuration::getConfEntInt(...)
 - cta/CTA#273 - Fix tape state change command idempotency when resetting REPACKING/BROKEN/PENDING
 - cta/CTA#280 - Add a timeout to tape server global lock on the object store
+- cta/CTA#292 - Problem with cppcheck
 ### Continuous Integration
 - cta/CTA#205 - Updating EOS4/EOS4 in versionlock for v4.8.95/v5.1.5
 - cta/CTA#253 - Allow Failure for cta_valgrind tests
