@@ -51,6 +51,8 @@ public:
 
   common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string> &vids) const override;
 
+  common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string> &vids, bool ignoreMissingVids) const override;
+
   std::map<std::string, std::string> getVidToLogicalLibrary(const std::set<std::string> &vids) const override;
 
   void reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,

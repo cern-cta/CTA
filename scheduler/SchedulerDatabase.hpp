@@ -606,10 +606,10 @@ class SchedulerDatabase {
 
   /***/
   virtual std::unique_ptr<RepackRequest> getNextRepackJobToExpand() = 0;
-  virtual std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsToTransferBatch(std::string & vid, uint64_t filesRequested, log::LogContext &logContext) = 0;
+  virtual std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsToTransferBatch(const std::string & vid, uint64_t filesRequested, log::LogContext &logContext) = 0;
   virtual void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob *> &jobs, log::LogContext& logContext) = 0;
-  virtual void reserveRetrieveQueueForCleanup(std::string & vid, std::optional<uint64_t> cleanupHeartBeatValue) = 0;
-  virtual void tickRetrieveQueueCleanupHeartbeat(std::string & vid) = 0;
+  virtual void reserveRetrieveQueueForCleanup(const std::string & vid, std::optional<uint64_t> cleanupHeartBeatValue) = 0;
+  virtual void tickRetrieveQueueCleanupHeartbeat(const std::string & vid) = 0;
 
   /*============ Repack management: maintenance process side =========================*/
 
@@ -685,7 +685,7 @@ class SchedulerDatabase {
     std::string mediaType;        // Media type of the tape
     std::string vendor;           // Vendor of the tape
     uint64_t capacityInBytes;     // Capacity in bytes of the tape
-    cta::common::dataStructures::Label::Format labelFormat; // Label format of the tape
+    std::optional<cta::common::dataStructures::Label::Format> labelFormat; // Label format of the tape
 
     uint64_t priority;            /**< The priority for the mount, defined as the highest
                                    * priority of all queued jobs */

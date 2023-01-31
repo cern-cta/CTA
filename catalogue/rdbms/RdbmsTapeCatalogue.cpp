@@ -354,6 +354,10 @@ common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(const std
 }
 
 common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(const std::set<std::string> &vids) const {
+  return getTapesByVid(vids, false);
+}
+
+common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(const std::set<std::string> &vids, bool ignoreMissingVids) const {
   try {
     common::dataStructures::VidToTapeMap vidToTapeMap;
 
@@ -402,7 +406,7 @@ common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(const std
       executeGetTapesByVidStmtAndCollectResults(stmt, vidToTapeMap);
     }
 
-    if(vids.size() != vidToTapeMap.size()) {
+    if(!ignoreMissingVids && vids.size() != vidToTapeMap.size()) {
       exception::Exception ex;
       ex.getMessage() << "Not all tapes were found: expected=" << vids.size() << " actual=" << vidToTapeMap.size();
       throw ex;

@@ -53,6 +53,10 @@ common::dataStructures::VidToTapeMap TapeCatalogueRetryWrapper::getTapesByVid(co
   return retryOnLostConnection(m_log, [&]{return m_catalogue->Tape()->getTapesByVid(vids);}, m_maxTriesToConnect);
 }
 
+common::dataStructures::VidToTapeMap TapeCatalogueRetryWrapper::getTapesByVid(const std::set<std::string> &vids, bool ignoreMissingVids) const {
+  return retryOnLostConnection(m_log, [&]{return m_catalogue->Tape()->getTapesByVid(vids, ignoreMissingVids);}, m_maxTriesToConnect);
+}
+
 std::map<std::string, std::string> TapeCatalogueRetryWrapper::getVidToLogicalLibrary(
   const std::set<std::string> &vids) const {
   return retryOnLostConnection(m_log, [&]{return m_catalogue->Tape()->getVidToLogicalLibrary(vids);},

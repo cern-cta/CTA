@@ -227,7 +227,7 @@ std::list<SchedulerDatabase::RetrieveQueueCleanupInfo> OStoreDB::getRetrieveQueu
 // OStoreDB::fetchMountInfo()
 //------------------------------------------------------------------------------
 void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, RootEntry& re,
-  SchedulerDatabase::PurposeGetMountInfo purpose, log::LogContext & logContext) {
+  SchedulerDatabase::PurposeGetMountInfo /* not used */, log::LogContext & logContext) {
   utils::Timer t, t2;
   std::list<common::dataStructures::MountPolicy> mountPolicies = m_catalogue.MountPolicy()->getCachedMountPolicies();
   // Walk the archive queues for USER for statistics
@@ -384,14 +384,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     // If there are files queued, we create an entry for this retrieve queue in the
     // mount candidates list.
     auto rqSummary = rqueue.getJobsSummary();
-    bool isPotentialMount = false;
-    auto vidToTapeMap = m_catalogue.Tape()->getTapesByVid(rqp.vid);
-    common::dataStructures::Tape::State tapeState = vidToTapeMap.at(rqp.vid).state;
-    if (tapeState == common::dataStructures::Tape::ACTIVE ||
-        tapeState == common::dataStructures::Tape::REPACKING) {
-      isPotentialMount = true;
-    }
-    if (rqSummary.jobs && (isPotentialMount || purpose == SchedulerDatabase::PurposeGetMountInfo::SHOW_QUEUES)) {
+    if (rqSummary.jobs) {
       //Getting the default mountPolicies parameters from the queue summary
       uint64_t minRetrieveRequestAge = rqSummary.minRetrieveRequestAge;
       uint64_t priority = rqSummary.priority;
@@ -438,7 +431,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
           m.mediaType = "";      // The logical library is not known here, and will be determined by the caller.
           m.vo = "";             // The vo is not known here, and will be determined by the caller.
           m.capacityInBytes = 0; // The capacity is not known here, and will be determined by the caller.
-          m.labelFormat = vidToTapeMap.at(rqp.vid).labelFormat;
+          m.labelFormat = std::nullopt; // The labelFormat is not known here, and may be determined by the caller.
           m.activity = ac.activity;
           m.mountPolicyNames = queueMountPolicyNames;
           // We will display the sleep flag only if it is not expired (15 minutes timeout, hardcoded).
@@ -471,7 +464,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
         m.mediaType = "";      // The logical library is not known here, and will be determined by the caller.
         m.vo = "";             // The vo is not known here, and will be determined by the caller.
         m.capacityInBytes = 0; // The capacity is not known here, and will be determined by the caller.
-        m.labelFormat = vidToTapeMap.at(rqp.vid).labelFormat;
+        m.labelFormat = std::nullopt; // The labelFormat is not known here, and may be determined by the caller.
         m.mountPolicyNames = queueMountPolicyNames;
         // We will display the sleep flag only if it is not expired (15 minutes timeout, hardcoded).
         // This allows having a single decision point instead of implementing is at the consumer levels.
@@ -1993,7 +1986,7 @@ void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::Retr
 //------------------------------------------------------------------------------
 // OStoreDB::reserveRetrieveQueueForCleanup()
 //------------------------------------------------------------------------------
-void OStoreDB::reserveRetrieveQueueForCleanup(std::string & vid, std::optional<uint64_t> cleanupHeartBeatValue) {
+void OStoreDB::reserveRetrieveQueueForCleanup(const std::string & vid, std::optional<uint64_t> cleanupHeartBeatValue) {
 
   RootEntry re(m_objectStore);
   RetrieveQueue rq(m_objectStore);
@@ -2033,7 +2026,7 @@ void OStoreDB::reserveRetrieveQueueForCleanup(std::string & vid, std::optional<u
 //------------------------------------------------------------------------------
 // OStoreDB::tickRetrieveQueueCleanupHeartbeat()
 //------------------------------------------------------------------------------
-void OStoreDB::tickRetrieveQueueCleanupHeartbeat(std::string & vid) {
+void OStoreDB::tickRetrieveQueueCleanupHeartbeat(const std::string & vid) {
 
   RootEntry re(m_objectStore);
   RetrieveQueue rq(m_objectStore);
@@ -2188,7 +2181,7 @@ auto OStoreDB::getRepackStatisticsNoLock() -> std::unique_ptr<SchedulerDatabase:
 // OStoreDB::getNextRetrieveJobsToTransferBatch()
 //------------------------------------------------------------------------------
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::getNextRetrieveJobsToTransferBatch(
-        std::string & vid, uint64_t filesRequested, log::LogContext &logContext) {
+        const std::string & vid, uint64_t filesRequested, log::LogContext &logContext) {
 
   using RQTTAlgo = objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueToTransfer>;
   RQTTAlgo rqttAlgo(m_objectStore, *m_agentReference);

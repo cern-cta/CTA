@@ -32,19 +32,18 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
   admin.username = "Queue cleanup runner";
   admin.host = cta::utils::getShortHostname();
 
-  std::list<QueueCleanupInfo> queuesForCleanupInfo;
+  auto queueVidSet = std::set<std::string>();
   auto queuesForCleanup = m_db.getRetrieveQueuesCleanupInfo(logContext);
 
-  // Check which queues need and can be cleaned up
+  // Check, one-by-one, queues need to be cleaned up
+  for (const auto &queue: queuesForCleanup) {
 
-  for (auto queue: queuesForCleanup) {
-
+    // Do not clean a queue that does not have the cleanup flag set true
     if (!queue.doCleanup) {
-      // Do not clean a queue that does not have the cleanup flag set true
       continue; // Ignore queue
     }
 
-    // Check heartbeat of other agents
+    // Check heartbeat of other queues being cleaned up
     if (queue.assignedAgent.has_value()) {
       bool newEntry = false;
 
@@ -72,55 +71,61 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
         }
       }
     }
+    queueVidSet.insert(queue.vid);
+  }
 
-    cta::common::dataStructures::Tape tapeToCheck;
+  common::dataStructures::VidToTapeMap vidToTapesMap;
 
+  if (!queueVidSet.empty()){
     try {
-      auto vidToTapesMap = m_catalogue.Tape()->getTapesByVid(queue.vid); //throws an exception if the vid is not found on the database
-      tapeToCheck = vidToTapesMap.at(queue.vid);
+      vidToTapesMap = m_catalogue.Tape()->getTapesByVid(queueVidSet, true);
     } catch (const exception::UserError &ex) {
       log::ScopedParamContainer params(logContext);
-      params.add("tapeVid", queue.vid)
-              .add("cleanupFlag", queue.doCleanup)
-              .add("exceptionMessage", ex.getMessageValue());
-      logContext.log(log::WARNING, "WARNING: In QueueCleanupRunner::runOnePass(): failed to find a tape in the database. Skipping it.");
-      continue; // Ignore queue
+      params.add("exceptionMessage", ex.getMessageValue());
+      logContext.log(log::ERR,
+                     "ERROR: In QueueCleanupRunner::runOnePass(): failed to read set of tapes from the database. Aborting cleanup.");
+      return; // Unable to proceed from here...
     }
 
-    if (tapeToCheck.state != common::dataStructures::Tape::REPACKING_PENDING
-        && tapeToCheck.state != common::dataStructures::Tape::BROKEN_PENDING
-        && tapeToCheck.state != common::dataStructures::Tape::EXPORTED_PENDING) {
+    for (const auto &vid: queueVidSet) {
+      if (vidToTapesMap.count(vid) == 0) {
+        log::ScopedParamContainer params(logContext);
+        params.add("tapeVid", vid);
+        logContext.log(log::ERR,
+                       "ERROR: In QueueCleanupRunner::runOnePass(): failed to find the tape " + vid + " in the database. Skipping it.");
+      }
+    }
+  } else {
+    logContext.log(log::DEBUG,
+                   "DEBUG: In QueueCleanupRunner::runOnePass(): no queues requested a cleanup.");
+    return;
+  }
+
+  for (const auto &[queueVid, tapeData]: vidToTapesMap) {
+
+    // Check if tape state is the expected one (PENDING)
+    if (tapeData.state != common::dataStructures::Tape::REPACKING_PENDING
+        && tapeData.state != common::dataStructures::Tape::BROKEN_PENDING
+        && tapeData.state != common::dataStructures::Tape::EXPORTED_PENDING) {
       // Do not cleanup a tape that is not in a X_PENDING state
       log::ScopedParamContainer params(logContext);
-      params.add("tapeVid", queue.vid)
-              .add("cleanupFlag", queue.doCleanup)
-              .add("tapeState", common::dataStructures::Tape::stateToString(tapeToCheck.state));
+      params.add("tapeVid", queueVid)
+            .add("tapeState", common::dataStructures::Tape::stateToString(tapeData.state));
       logContext.log(
               log::INFO,
               "In QueueCleanupRunner::runOnePass(): Queue is has cleanup flag enabled but is not in the expected PENDING state. Skipping it.");
       continue;
     }
 
-    queuesForCleanupInfo.push_back(QueueCleanupInfo());
-    queuesForCleanupInfo.back().vid = queue.vid;
-    queuesForCleanupInfo.back().tapeState = tapeToCheck.state;
-  }
-
-  // Cleanup queues one by one
-
-  for (auto qForCleanup: queuesForCleanupInfo) {
-
-    utils::Timer t;
-
     log::ScopedParamContainer loopParams(logContext);
-    loopParams.add("tapeVid", qForCleanup.vid)
-              .add("tapeState", common::dataStructures::Tape::stateToString(qForCleanup.tapeState));
+    loopParams.add("tapeVid", queueVid)
+              .add("tapeState", common::dataStructures::Tape::stateToString(tapeData.state));
 
     try {
-      bool prevHeartbeatExists = (m_heartbeatCheck.find(qForCleanup.vid) != m_heartbeatCheck.end());
+      bool prevHeartbeatExists = (m_heartbeatCheck.find(queueVid) != m_heartbeatCheck.end());
       m_db.reserveRetrieveQueueForCleanup(
-              qForCleanup.vid,
-              prevHeartbeatExists ? std::optional(m_heartbeatCheck[qForCleanup.vid].heartbeat) : std::nullopt);
+              queueVid,
+              prevHeartbeatExists ? std::optional(m_heartbeatCheck[queueVid].heartbeat) : std::nullopt);
     } catch (OStoreDB::RetrieveQueueNotFound & ex) {
       log::ScopedParamContainer paramsExcMsg(logContext);
       paramsExcMsg.add("exceptionMessage", ex.getMessageValue());
@@ -141,14 +146,13 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
       continue;
     }
 
-    // Transfer all the jobs to a different queue, or report to the user if no replicas exist
-
+    // Transfer all the jobs to a different queue (if there are replicas) or report the error back to the user
     while (true) {
 
       utils::Timer tLoop;
       log::ScopedParamContainer paramsLoopMsg(logContext);
 
-      auto dbRet = m_db.getNextRetrieveJobsToTransferBatch(qForCleanup.vid, m_batchSize, logContext);
+      auto dbRet = m_db.getNextRetrieveJobsToTransferBatch(queueVid, m_batchSize, logContext);
       if (dbRet.empty()) break;
       std::list<cta::SchedulerDatabase::RetrieveJob *> jobPtList;
       for (auto &j: dbRet) {
@@ -160,12 +164,12 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
 
       paramsLoopMsg.add("numberOfJobsMoved", dbRet.size())
                    .add("jobMovingTime", jobMovingTime)
-                   .add("tapeVid", qForCleanup.vid);
+                   .add("tapeVid", queueVid);
       logContext.log(cta::log::INFO,"In DiskReportRunner::runOnePass(): Queue jobs moved.");
 
       // Tick heartbeat
       try {
-        m_db.tickRetrieveQueueCleanupHeartbeat(qForCleanup.vid);
+        m_db.tickRetrieveQueueCleanupHeartbeat(queueVid);
       } catch (OStoreDB::RetrieveQueueNotFound & ex) {
         break; // Queue was already deleted, probably after all the requests have been removed
       } catch (OStoreDB::RetrieveQueueNotReservedForCleanup & ex) {
@@ -183,17 +187,16 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
       }
     }
 
-    // Finally, update the tape state
-
+    // Finally, update the tape state out of PENDING
     {
-      cta::common::dataStructures::Tape tapeToModify;
+      cta::common::dataStructures::Tape tapeDataRefreshed;
 
       try {
-        auto vidToTapesMap = m_catalogue.Tape()->getTapesByVid(qForCleanup.vid); //throws an exception if the vid is not found on the database
-        tapeToModify = vidToTapesMap.at(qForCleanup.vid);
+        auto vidToTapesMapRefreshed = m_catalogue.Tape()->getTapesByVid(queueVid); //throws an exception if the vid is not found on the database
+        tapeDataRefreshed = vidToTapesMapRefreshed.at(queueVid);
       } catch (const exception::UserError &ex) {
         log::ScopedParamContainer params(logContext);
-        params.add("tapeVid", qForCleanup.vid)
+        params.add("tapeVid", queueVid)
               .add("exceptionMessage", ex.getMessageValue());
         logContext.log(log::WARNING, "WARNING: In QueueCleanupRunner::runOnePass(): Failed to find a tape in the database. Unable to update tape state.");
         continue; // Ignore queue
@@ -201,29 +204,26 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
 
       // Finally, modify tape state to REPACKING or BROKEN
       // The STATE_REASON set by operator will be preserved, with just an extra message prepended.
-      std::optional<std::string> prevReason = tapeToModify.stateReason;
-      switch (tapeToModify.state) {
+      std::optional<std::string> prevReason = tapeDataRefreshed.stateReason;
+      switch (tapeDataRefreshed.state) {
       case common::dataStructures::Tape::REPACKING_PENDING:
-        m_catalogue.Tape()->modifyTapeState(admin, qForCleanup.vid, common::dataStructures::Tape::REPACKING,
-          common::dataStructures::Tape::REPACKING_PENDING, prevReason.value_or("QueueCleanupRunner: changed tape state to REPACKING"));
-        m_db.clearRetrieveQueueStatisticsCache(qForCleanup.vid);
+        m_catalogue.Tape()->modifyTapeState(admin, queueVid, common::dataStructures::Tape::REPACKING, common::dataStructures::Tape::REPACKING_PENDING, prevReason.value_or("QueueCleanupRunner: changed tape state to REPACKING"));
+        m_db.clearRetrieveQueueStatisticsCache(queueVid);
         break;
       case common::dataStructures::Tape::BROKEN_PENDING:
-        m_catalogue.Tape()->modifyTapeState(admin, qForCleanup.vid, common::dataStructures::Tape::BROKEN,
-          common::dataStructures::Tape::BROKEN_PENDING, prevReason.value_or("QueueCleanupRunner: changed tape state to BROKEN"));
-        m_db.clearRetrieveQueueStatisticsCache(qForCleanup.vid);
+        m_catalogue.Tape()->modifyTapeState(admin, queueVid, common::dataStructures::Tape::BROKEN, common::dataStructures::Tape::BROKEN_PENDING, prevReason.value_or("QueueCleanupRunner: changed tape state to BROKEN"));
+        m_db.clearRetrieveQueueStatisticsCache(queueVid);
         break;
       case common::dataStructures::Tape::EXPORTED_PENDING:
-        m_catalogue.Tape()->modifyTapeState(admin, qForCleanup.vid, common::dataStructures::Tape::EXPORTED,
-          common::dataStructures::Tape::EXPORTED_PENDING, prevReason.value_or("QueueCleanupRunner: changed tape state to EXPORTED"));
-        m_db.clearRetrieveQueueStatisticsCache(qForCleanup.vid);
+        m_catalogue.Tape()->modifyTapeState(admin, queueVid, common::dataStructures::Tape::EXPORTED, common::dataStructures::Tape::EXPORTED_PENDING, prevReason.value_or("QueueCleanupRunner: changed tape state to EXPORTED"));
+        m_db.clearRetrieveQueueStatisticsCache(queueVid);
         break;
       default:
         log::ScopedParamContainer paramsWarnMsg(logContext);
-        paramsWarnMsg.add("tapeVid", qForCleanup.vid)
-                .add("expectedPrevState", common::dataStructures::Tape::stateToString(qForCleanup.tapeState))
-                .add("actualPrevState", common::dataStructures::Tape::stateToString(tapeToModify.state));
-        logContext.log(log::WARNING, "In QueueCleanupRunner::runOnePass(): Cleaned up tape is not in a PENDING state. Unable to change it to its corresponding final state.");
+        paramsWarnMsg.add("tapeVid", queueVid)
+                     .add("expectedPrevState", common::dataStructures::Tape::stateToString(tapeData.state))
+                     .add("actualPrevState", common::dataStructures::Tape::stateToString(tapeDataRefreshed.state));
+        logContext.log(log::WARNING, "WARNING: In QueueCleanupRunner::runOnePass(): Cleaned up tape is not in a PENDING state. Unable to change it to its corresponding final state.");
         break;
       }
     }

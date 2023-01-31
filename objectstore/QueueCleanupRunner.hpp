@@ -51,11 +51,6 @@ public:
 
 private:
 
-  struct QueueCleanupInfo {
-    std::string vid;
-    cta::common::dataStructures::Tape::State tapeState;
-  };
-
   struct HeartbeatStatus {
     std::string agent;
     uint64_t heartbeat;

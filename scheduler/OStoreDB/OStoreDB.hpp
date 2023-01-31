@@ -473,10 +473,10 @@ class OStoreDB: public SchedulerDatabase {
   //   common::dataStructures::JobQueueType queueType = common::dataStructures::JobQueueType::JobsToTransferForUser) const;
 
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsToTransferBatch(
-          std::string & vid, uint64_t filesRequested, log::LogContext &logContext) override;
+          const std::string & vid, uint64_t filesRequested, log::LogContext &logContext) override;
   void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob *> &jobs, log::LogContext& logContext) override;
-  void reserveRetrieveQueueForCleanup(std::string & vid, std::optional<uint64_t> cleanupHeartBeatValue) override;
-  void tickRetrieveQueueCleanupHeartbeat(std::string & vid) override;
+  void reserveRetrieveQueueForCleanup(const std::string & vid, std::optional<uint64_t> cleanupHeartBeatValue) override;
+  void tickRetrieveQueueCleanupHeartbeat(const std::string & vid) override;
   CTA_GENERATE_EXCEPTION_CLASS(RetrieveQueueNotReservedForCleanup);
   CTA_GENERATE_EXCEPTION_CLASS(RetrieveQueueNotFound);
 

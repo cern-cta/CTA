@@ -25,16 +25,33 @@
 - cta/CTA#280 - Add a timeout to tape server global lock on the object store
 - cta/CTA#292 - Problem with cppcheck
 - cta/CTA#288 - Do not allow tape server to transition from REPACKING_DISABLED to DISABLED
+- cta/CTA#290 - Remove temporary counters used to track single-vid-GetTapesByVid calls
 ### Continuous Integration
 - cta/CTA#205 - Updating EOS4/EOS4 in versionlock for v4.8.95/v5.1.5
 - cta/CTA#253 - Allow Failure for cta_valgrind tests
 - cta/CTA#286 - Upgrade eos to 4.8.98/5.1.9 fixing operation critical eosreport see EOS-5367
 
+# v4.8.4-1
+
+## Summary
+This release reduces the number of DB queries issued to the CTA catalogue.
+### Bug Fixes
+- cta/CTA#275 - Avoid DB queries via getTapesByVid in OStoreDB::fetchMountInfo
+- cta/CTA#274 - Remove unnecessary catalogue DB queries from QueueCleanupRunner
+
+# v4.8.3-1
+
+## Summary
+This release is the same as '4.8.2-1', except for the addition of some DB query counters which will be used for profiling purposes. \
+The counters are expected to be removed in a future release, when the analysis is no longer necessary.
+### Bug Fixes
+- cta/CTA#155 - Tape server querying DB at very high rate (log query-count patch)
+
 # v4.8.2-1
 
 ## Summary
 ### Features
-- cta/CTA#155 - Tape server querying DB at very high rate 
+- cta/CTA#155 - Tape server querying DB at very high rate
 
 # v4.8.1-1
 
