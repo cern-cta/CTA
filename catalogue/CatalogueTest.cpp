@@ -6422,12 +6422,6 @@ TEST_P(cta_catalogue_CatalogueTest, modifyTapeState_nonExistentTape) {
   ASSERT_THROW(m_catalogue->modifyTapeState(m_admin,"DOES_NOT_EXIST",state,std::nullopt,std::nullopt),cta::catalogue::UserSpecifiedANonExistentTape);
 }
 
-TEST_P(cta_catalogue_CatalogueTest, setTapeDisabled_nonExistentTape) {
-  using namespace cta;
-
-  ASSERT_THROW(m_catalogue->setTapeDisabled(m_admin, m_tape1.vid, "Test"), exception::UserError);
-}
-
 TEST_P(cta_catalogue_CatalogueTest, modifyTapeState_nonExistentState) {
   using namespace cta;
 
@@ -9764,7 +9758,7 @@ TEST_P(cta_catalogue_CatalogueTest, prepareToRetrieveFileUsingArchiveFileId_disa
     ASSERT_EQ(file2Written.copyNb, tapeFile2.copyNb);
   }
 
-  m_catalogue->setTapeDisabled(m_admin, m_tape1.vid, disabledReason);
+  m_catalogue->modifyTapeState(m_admin, m_tape1.vid, common::dataStructures::Tape::State::REPACKING, std::nullopt, disabledReason);
 
   {
     const common::dataStructures::RetrieveFileQueueCriteria queueCriteria =
@@ -11386,7 +11380,7 @@ TEST_P(cta_catalogue_CatalogueTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
   }
 
-  m_catalogue->setTapeDisabled(m_admin, tape1.vid, "unit Test");
+  m_catalogue->modifyTapeState(m_admin, tape1.vid, common::dataStructures::Tape::State::REPACKING, std::nullopt, "unit Test");
 
   {
     const auto pools = m_catalogue->getTapePools();

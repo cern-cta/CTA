@@ -1167,10 +1167,6 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeState_nonExistentTape) {
     cta::catalogue::UserSpecifiedANonExistentTape);
 }
 
-TEST_P(cta_catalogue_TapeTest, setTapeDisabled_nonExistentTape) {
-  ASSERT_THROW(m_catalogue->Tape()->setTapeDisabled(m_admin, m_tape1.vid, "Test"), cta::exception::UserError);
-}
-
 TEST_P(cta_catalogue_TapeTest, modifyTapeState_nonExistentState) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;

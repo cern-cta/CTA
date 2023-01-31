@@ -1162,30 +1162,6 @@ void RdbmsTapeCatalogue::setTapeIsFromCastorInUnitTests(const std::string &vid) 
   }
 }
 
-void RdbmsTapeCatalogue::setTapeDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
-  const std::string & reason) {
-  try {
-    modifyTapeState(admin,vid,common::dataStructures::Tape::DISABLED,std::nullopt,reason);
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
-}
-
-void RdbmsTapeCatalogue::setTapeRepackingDisabled(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &vid, const std::string & reason) {
-  try {
-    modifyTapeState(admin,vid,common::dataStructures::Tape::REPACKING_DISABLED,std::nullopt,reason);
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
-}
-
 void RdbmsTapeCatalogue::setTapeDirty(const std::string & vid) {
   try {
     auto conn = m_connPool->getConn();

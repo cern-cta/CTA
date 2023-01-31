@@ -1875,7 +1875,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
   }
 
-  m_catalogue->Tape()->setTapeDisabled(m_admin, tape1.vid, "unit Test");
+  m_catalogue->Tape()->modifyTapeState(m_admin, tape1.vid, cta::common::dataStructures::Tape::State::DISABLED,std::nullopt, "unit Test");
 
   {
     const auto pools = m_catalogue->TapePool()->getTapePools();

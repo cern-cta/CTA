@@ -131,12 +131,6 @@ void TapeCatalogueRetryWrapper::setTapeFull(const common::dataStructures::Securi
     m_maxTriesToConnect);
 }
 
-void TapeCatalogueRetryWrapper::setTapeRepackingDisabled(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &vid, const std::string & reason) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->Tape()->setTapeRepackingDisabled(admin, vid, reason);},
-    m_maxTriesToConnect);
-}
-
 void TapeCatalogueRetryWrapper::setTapeDirty(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
   const bool dirtyValue) {
   return retryOnLostConnection(m_log, [&]{return m_catalogue->Tape()->setTapeDirty(admin, vid, dirtyValue);},
@@ -145,12 +139,6 @@ void TapeCatalogueRetryWrapper::setTapeDirty(const common::dataStructures::Secur
 
 void TapeCatalogueRetryWrapper::setTapeIsFromCastorInUnitTests(const std::string &vid) {
   return retryOnLostConnection(m_log, [&]{return m_catalogue->Tape()->setTapeIsFromCastorInUnitTests(vid);},
-    m_maxTriesToConnect);
-}
-
-void TapeCatalogueRetryWrapper::setTapeDisabled(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &vid, const std::string & reason) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->Tape()->setTapeDisabled(admin, vid, reason);},
     m_maxTriesToConnect);
 }
 

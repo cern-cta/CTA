@@ -1229,7 +1229,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_disab
     ASSERT_EQ(file2Written.copyNb, tapeFile2.copyNb);
   }
 
-  m_catalogue->Tape()->setTapeDisabled(m_admin, m_tape1.vid, disabledReason);
+  m_catalogue->Tape()->modifyTapeState(m_admin, m_tape1.vid, cta::common::dataStructures::Tape::State::DISABLED,std::nullopt, disabledReason);
 
   {
     const cta::common::dataStructures::RetrieveFileQueueCriteria queueCriteria =

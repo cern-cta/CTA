@@ -115,11 +115,6 @@ void DummyTapeCatalogue::modifyTapeVerificationStatus(const common::dataStructur
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 
-void DummyTapeCatalogue::setTapeRepackingDisabled(const common::dataStructures::SecurityIdentity& admin,
-  const std::string& vid, const std::string & reason) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
-}
-
 void DummyTapeCatalogue::setTapeFull(const common::dataStructures::SecurityIdentity &admin,
   const std::string &vid, const bool fullValue) {
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
@@ -131,11 +126,6 @@ void DummyTapeCatalogue::setTapeDirty(const common::dataStructures::SecurityIden
 }
 
 void DummyTapeCatalogue::setTapeIsFromCastorInUnitTests(const std::string &vid) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
-}
-
-void DummyTapeCatalogue::setTapeDisabled(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &vid, const std::string & reason) {
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 

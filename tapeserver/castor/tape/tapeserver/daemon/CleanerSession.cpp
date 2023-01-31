@@ -158,12 +158,17 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
       admin.host = hostname;
 
       try {
+        using cta::common::dataStructures::Tape;
         std::string disabledReason = cta::utils::getCurrentLocalTime("%F %T") + ":" + currentExceptionMsg;
         auto curr_state = m_catalogue.Tape()->getTapesByVid(m_vid).at(m_vid).state;
-        if (curr_state == cta::common::dataStructures::Tape::REPACKING) {
-          m_catalogue.Tape()->setTapeRepackingDisabled(admin, m_vid, disabledReason);
+        if (curr_state == Tape::REPACKING || curr_state == Tape::REPACKING_DISABLED) {
+          m_catalogue.Tape()->modifyTapeState(admin, m_vid, Tape::REPACKING_DISABLED, curr_state, disabledReason);
+        } else if (curr_state == Tape::ACTIVE){
+          m_catalogue.Tape()->modifyTapeState(admin, m_vid, Tape::DISABLED, curr_state, disabledReason);
         } else {
-          m_catalogue.Tape()->setTapeDisabled(admin, m_vid, disabledReason);
+          cta::log::Param param("currState", curr_state);
+          params.push_back(param);
+          m_log(cta::log::ERR, "In CleanerSession::exceptionThrowingExecute(), failed to disable the tape. Current tape state can't be disabled automatically.", params);
         }
       } catch(cta::exception::Exception &ex) {
         cta::log::Param param("exceptionMsg", ex.getMessageValue());

@@ -6090,7 +6090,7 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
   catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,1);
 
   //Set the tape 1 to disabled state to prevent the mount in it (should be the Retrieve)
-  catalogue.Tape()->setTapeDisabled(s_adminOnAdminHost,tape1.vid,"test");
+  catalogue.Tape()->modifyTapeState(s_adminOnAdminHost,tape1.vid,cta::common::dataStructures::Tape::State::DISABLED,std::nullopt,"test");
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,drive1,lc));
   {
     std::unique_ptr<cta::TapeMount> tapeMount = scheduler.getNextMount(s_libraryName,drive1,lc);
