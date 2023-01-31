@@ -23,7 +23,7 @@
 #include <utility>
 
 #include "catalogue/CatalogueExceptions.hpp"
-#include "catalogue/CatalogueUtils.hpp"
+#include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
 #include "catalogue/rdbms/RdbmsDriveStateCatalogue.hpp"
 #include "common/dataStructures/DesiredDriveState.hpp"
 #include "common/dataStructures/TapeDrive.hpp"
@@ -609,7 +609,7 @@ std::optional<common::dataStructures::TapeDrive> RdbmsDriveStateCatalogue::getTa
 void RdbmsDriveStateCatalogue::setDesiredTapeDriveState(const std::string& tapeDriveName,
   const common::dataStructures::DesiredDriveState &desiredState) {
   try {
-    CatalogueUtils::checkCommentOrReasonMaxLength(desiredState.reason, m_log);
+    RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(desiredState.reason, &m_log);
     std::string sql =
       "UPDATE DRIVE_STATE SET "
         "DESIRED_UP = :DESIRED_UP,"

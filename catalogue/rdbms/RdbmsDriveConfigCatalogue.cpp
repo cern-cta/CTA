@@ -23,7 +23,6 @@
 #include <utility>
 
 #include "catalogue/CatalogueExceptions.hpp"
-#include "catalogue/CatalogueUtils.hpp"
 #include "catalogue/rdbms/RdbmsDriveConfigCatalogue.hpp"
 #include "common/dataStructures/DesiredDriveState.hpp"
 #include "common/dataStructures/TapeDrive.hpp"

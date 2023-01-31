@@ -42,7 +42,6 @@ file (GLOB CATALOGUE_LIB_SRC_FILES
   CatalogueFactory.cpp
   CatalogueFactoryFactory.cpp
   CatalogueSchema.cpp
-  CatalogueUtils.cpp
   CmdLineTool.cpp
   DriveConfig.cpp
   dummy/*.cpp
