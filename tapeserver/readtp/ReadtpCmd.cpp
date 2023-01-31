@@ -451,7 +451,7 @@ void ReadtpCmd::readTapeFiles(
 //------------------------------------------------------------------------------
 void ReadtpCmd::readTapeFile(
   castor::tape::tapeserver::drive::DriveInterface &drive, const uint64_t &fSeq, cta::disk::WriteFile &wf,
-  castor::tape::tapeserver::daemon::VolumeInfo &volInfo) {
+  const castor::tape::tapeserver::daemon::VolumeInfo &volInfo) {
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("userName", m_userName));
   params.push_back(cta::log::Param("tapeVid", m_vid));
@@ -618,7 +618,7 @@ void ReadtpCmd::configureEncryption(castor::tape::tapeserver::daemon::VolumeInfo
     // status:
     std::list<cta::log::Param> params;
     {
-      auto encryptionStatus = m_encryptionControl.enable(drive, volInfo, *m_catalogue, false);
+      auto encryptionStatus = m_encryptionControl->enable(drive, volInfo, *m_catalogue, false);
       if (encryptionStatus.on) {
         params.push_back(cta::log::Param("encryption", "on"));
         params.push_back(cta::log::Param("encryptionKey", encryptionStatus.keyName));
