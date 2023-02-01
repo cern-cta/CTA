@@ -2784,7 +2784,7 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes) {
   // Effectively clone the tapes from m_tape1 but give each one its own VID
   for(uint64_t i = 1; i <= nbTapes; i++) {
     std::ostringstream vid;
-    vid << "vid" << i;
+    vid << "VID" << i;
 
     auto tape = m_tape1;
     tape.vid = vid.str();
@@ -2812,7 +2812,7 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes) {
 
     for(uint64_t i = 1; i <= nbTapes; i++) {
       std::ostringstream vid;
-      vid << "vid" << i;
+      vid << "VID" << i;
 
       auto vidAndTapeItor = vidToTape.find(vid.str());
       ASSERT_NE(vidToTape.end(), vidAndTapeItor);
@@ -2893,13 +2893,13 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes) {
 
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
-    searchCriteria.vid = "vid1";
+    searchCriteria.vid = "VID1";
     const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
     const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
     ASSERT_EQ(1, vidToTape.size());
-    ASSERT_EQ("vid1", vidToTape.begin()->first);
-    ASSERT_EQ("vid1", vidToTape.begin()->second.vid);
+    ASSERT_EQ("VID1", vidToTape.begin()->first);
+    ASSERT_EQ("VID1", vidToTape.begin()->second.vid);
   }
 
   {
@@ -3000,7 +3000,7 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes) {
 
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
-    searchCriteria.vid = "vid1";
+    searchCriteria.vid = "VID1";
     searchCriteria.logicalLibrary = m_tape1.logicalLibraryName;
     searchCriteria.tapePool = m_tape1.tapePoolName;
     searchCriteria.capacityInBytes = m_mediaType.capacityInBytes;
@@ -3009,8 +3009,8 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes) {
     const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
     ASSERT_EQ(1, vidToTape.size());
-    ASSERT_EQ("vid1", vidToTape.begin()->first);
-    ASSERT_EQ("vid1", vidToTape.begin()->second.vid);
+    ASSERT_EQ("VID1", vidToTape.begin()->first);
+    ASSERT_EQ("VID1", vidToTape.begin()->second.vid);
     ASSERT_EQ(m_tape1.logicalLibraryName, vidToTape.begin()->second.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, vidToTape.begin()->second.tapePoolName);
     ASSERT_EQ(m_mediaType.capacityInBytes, vidToTape.begin()->second.capacityInBytes);
@@ -3022,7 +3022,7 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes) {
     std::set<std::string> vids;
     for(uint64_t i = 1; i <= nbTapes; i++) {
       std::ostringstream vid;
-      vid << "vid" << i;
+      vid << "VID" << i;
       vids.insert(vid.str());
     }
 
@@ -3031,7 +3031,7 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes) {
 
     for(uint64_t i = 1; i <= nbTapes; i++) {
       std::ostringstream vid;
-      vid << "vid" << i;
+      vid << "VID" << i;
 
       auto vidAndTapeItor = vidToTape.find(vid.str());
       ASSERT_NE(vidToTape.end(), vidAndTapeItor);
@@ -3063,10 +3063,16 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes) {
 }
 
 
-TEST_P(cta_catalogue_TapeTest, getTapesByVid_non_existent_tape) {
+TEST_P(cta_catalogue_TapeTest, getTapesByVid_non_existent_tape_set) {
 
   std::set<std::string> vids = {{"non_existent_tape"}};
   ASSERT_THROW(m_catalogue->Tape()->getTapesByVid(vids), cta::exception::Exception);
+}
+
+TEST_P(cta_catalogue_TapeTest, getTapesByVid_non_existent_tape_set_ignore_missing) {
+  using namespace cta;
+  std::set<std::string> vids = {{"non_existent_tape"}};
+  ASSERT_NO_THROW(m_catalogue->Tape()->getTapesByVid(vids, true));
 }
 
 TEST_P(cta_catalogue_TapeTest, getTapesByVid_no_vids) {

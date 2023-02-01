@@ -72,6 +72,10 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
       throw UserSpecifiedAnEmptyStringVid("Cannot create tape because the VID is an empty string");
     }
 
+    if(!utils::isUpper(vid)) {
+      throw UserSpecifiedAnEmptyStringVid("Cannot create tape because the VID has non uppercase characters");
+    }
+
     if(mediaTypeName.empty()) {
       throw UserSpecifiedAnEmptyStringMediaType("Cannot create tape because the media type is an empty string");
     }
