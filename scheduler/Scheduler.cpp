@@ -998,53 +998,61 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
     ExistingMountSummaryPerVo& existingMountsBasicTypeSummaryPerVo, std::set<std::string>& tapesInUse,
     std::list<catalogue::TapeForWriting>& tapeList, double& getTapeInfoTime, double& candidateSortingTime,
     double& getTapeForWriteTime, log::LogContext& lc) {
-  // Neither the library information nor the tape status is known for tapes involved in retrieves.
-  // Build the eligible set of tapes in the library and with required status so
-  // we can filter the potential mounts to the ones that this tape server can serve.
-  std::set<std::string> eligibleTapeSet;
+  // Check if there are any potential mounts for retrieve
+  bool anyRetr;
   {
-    catalogue::TapeSearchCriteria searchCriteria;
-    searchCriteria.logicalLibrary = logicalLibraryName;
-    searchCriteria.state = common::dataStructures::Tape::ACTIVE;
-    auto eligibleTapesList = m_catalogue.Tape()->getTapes(searchCriteria);
-    for(auto& t : eligibleTapesList) {
-      eligibleTapeSet.insert(t.vid);
-    }
-    searchCriteria.state = common::dataStructures::Tape::REPACKING;
-    eligibleTapesList = m_catalogue.Tape()->getTapes(searchCriteria);
-    for(auto& t : eligibleTapesList) {
-      eligibleTapeSet.insert(t.vid);
-    }
+    auto &v = mountInfo->potentialMounts;
+    anyRetr = std::any_of(v.begin(), v.end(),
+      [](const SchedulerDatabase::PotentialMount &pm)
+    {
+      return pm.type == common::dataStructures::MountType::Retrieve;
+    });
   }
-
-  // Filter the potential mounts to keep only the ones that match the logical library for retrieves,
-  // and build the list of tapes that can potentially be mounted by this tape server
-  std::set<std::string> retrieveTapeSet;
-  for(auto m_it = mountInfo->potentialMounts.begin(); m_it != mountInfo->potentialMounts.end(); ) {
-    if(m_it->type == common::dataStructures::MountType::Retrieve) {
-      if(eligibleTapeSet.count(m_it->vid) == 0) {
-        m_it = mountInfo->potentialMounts.erase(m_it);
-        continue;
-      } else {
-        retrieveTapeSet.insert(m_it->vid);
+  if (anyRetr) {
+    // Neither the library information nor the tape status is known for tapes involved in retrieves.
+    // Build the eligible set of tapes in the library and with required status so
+    // we can filter the potential retrieve mounts to the ones that this tape server can serve.
+    common::dataStructures::VidToTapeMap eligibleTapeMap;
+    {
+      catalogue::TapeSearchCriteria searchCriteria;
+      searchCriteria.logicalLibrary = logicalLibraryName;
+      searchCriteria.state = common::dataStructures::Tape::ACTIVE;
+      auto eligibleTapesList = m_catalogue.Tape()->getTapes(searchCriteria);
+      for(auto& t : eligibleTapesList) {
+        eligibleTapeMap[t.vid] = t;
+      }
+      searchCriteria.state = common::dataStructures::Tape::REPACKING;
+      eligibleTapesList = m_catalogue.Tape()->getTapes(searchCriteria);
+      for(auto& t : eligibleTapesList) {
+        eligibleTapeMap[t.vid] = t;
       }
     }
-    m_it++;
-  }
 
-  common::dataStructures::VidToTapeMap retrieveTapesInfo;
-  if(!retrieveTapeSet.empty()) {
-    retrieveTapesInfo = m_catalogue.Tape()->getTapesByVid(retrieveTapeSet);
+    // Filter the potential retrieve mounts to keep only the ones that match
+    {
+      auto &v = mountInfo->potentialMounts;
+      v.erase(std::remove_if(v.begin(), v.end(),
+        [&eligibleTapeMap](const SchedulerDatabase::PotentialMount &pm)
+      {
+        return (pm.type == common::dataStructures::MountType::Retrieve &&
+                eligibleTapeMap.count(pm.vid) == 0);
+      }), v.end());
+    }
+
+    // fill in some of the information for the potentialMounts that getMountInfo
+    // may not have provided
     getTapeInfoTime = timer.secs(utils::Timer::resetCounter);
     for(auto& m : mountInfo->potentialMounts) {
       if(m.type == common::dataStructures::MountType::Retrieve) {
-        m.logicalLibrary = retrieveTapesInfo[m.vid].logicalLibraryName;
-        m.tapePool = retrieveTapesInfo[m.vid].tapePoolName;
-        m.vendor = retrieveTapesInfo[m.vid].vendor;
-        m.mediaType = retrieveTapesInfo[m.vid].mediaType;
-        m.vo = retrieveTapesInfo[m.vid].vo;
-        m.capacityInBytes = retrieveTapesInfo[m.vid].capacityInBytes;
-        m.labelFormat = retrieveTapesInfo[m.vid].labelFormat;
+        const auto &tp = eligibleTapeMap.at(m.vid);
+
+        m.logicalLibrary  = tp.logicalLibraryName;
+        m.tapePool        = tp.tapePoolName;
+        m.vendor          = tp.vendor;
+        m.mediaType       = tp.mediaType;
+        m.vo              = tp.vo;
+        m.capacityInBytes = tp.capacityInBytes;
+        m.labelFormat     = tp.labelFormat;
       }
     }
   }
@@ -1095,7 +1103,8 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
   // is not yet met, filter out the potential mounts for which the maximum mount
   // quota is already reached, filter out the retrieve requests put to sleep for lack of disk space,
   // and weight the remaining by how much of their quota is reached.
-  for (auto m = mountInfo->potentialMounts.begin(); m!= mountInfo->potentialMounts.end();) {
+  std::set<std::vector<SchedulerDatabase::PotentialMount>::iterator> toFilterSet;
+  for (auto m = mountInfo->potentialMounts.begin(); m!= mountInfo->potentialMounts.end(); ++m) {
     // Get summary data
     uint32_t existingMountsDistinctTypesForThisTapepool = 0;
     uint32_t existingMountsBasicTypeForThisVo = 0;
@@ -1160,7 +1169,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
             .add("maxDrives", maxDrives);
       if (sleepingMount) params.add("fullDiskSystem", m->diskSystemSleptFor);
       lc.log(log::DEBUG, "In Scheduler::sortAndGetTapesForMountInfo(): Removing potential mount not passing criteria");
-      m = mountInfo->potentialMounts.erase(m);
+      toFilterSet.insert(m);
     } else {
       // For the implementation of this ticket: https://gitlab.cern.ch/cta/CTA/-/issues/948
       // The max drives allowed is not per-tapepool anymore and is not set by the mount policy neither
@@ -1193,8 +1202,20 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
             .add("voWriteMaxDrives",voOfThisPotentialMount.writeMaxDrives)
             .add("ratioOfMountQuotaUsed", m->ratioOfMountQuotaUsed);
       lc.log(log::DEBUG, "In Scheduler::sortAndGetTapesForMountInfo(): Will consider potential mount");
-      m++;
-   }
+    }
+  }
+
+  // keep those not filtered out
+  if (toFilterSet.size() > 0) {
+    auto &v = mountInfo->potentialMounts;
+    std::vector<SchedulerDatabase::PotentialMount> tmpPm;
+    tmpPm.swap(v);
+    v.reserve(tmpPm.size());
+    for(auto it = tmpPm.begin(); it != tmpPm.end(); ++it) {
+      if (toFilterSet.count(it) == 0) {
+        v.push_back(std::move(*it));
+      }
+    }
   }
 
   // We can now sort the potential mounts in decreasing priority order.

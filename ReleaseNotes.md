@@ -23,6 +23,7 @@
 - cta/CTA#238 - Compilation fails when using cta::common::Configuration::getConfEntInt(...)
 - cta/CTA#273 - Fix tape state change command idempotency when resetting REPACKING/BROKEN/PENDING
 - cta/CTA#280 - Add a timeout to tape server global lock on the object store
+- cta/CTA#289 - Avoid a DB query and improve filtering time in sortAndGetTapesForMountInfo
 - cta/CTA#292 - Problem with cppcheck
 - cta/CTA#288 - Do not allow tape server to transition from REPACKING_DISABLED to DISABLED
 - cta/CTA#290 - Remove temporary counters used to track single-vid-GetTapesByVid calls
