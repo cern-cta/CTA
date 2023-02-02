@@ -1,35 +1,38 @@
-# v.NEXT
+# v4.8.5-1
 
 ## Summary
 ### Features
-- cta/CTA#144 - Fix issus with cta-readtp encryption
 - cta/CTA#166 - Refactor Catalogue and RdbmsCatalogue classes
-- cta/CTA#222 - Review what gets logged in CTA
+- cta/CTA#211 - Fix issues with cta-readtp encryption
 - cta/CTA#213 - Add tool for injecting file into eos
 - cta/CTA#213 - Improve test for eos injection tool
+- cta/CTA#218 - Do not retry during repack requests
+- cta/CTA#222 - Review what gets logged in CTA
 - cta/CTA#224 - Improve error message for cta-verify-file whn VID does not exist
 - cta/CTA#230 - Modify CTA code to enforce VID uppercase
 - cta/CTA#239 - Add improvments to the cta-change-storage-class tool
+- cta/CTA#241 - Add missing forward declarations to standalone cli tools
 - cta/CTA#248 - Clean up output from cta-readtp
-- cta/CTA#218 - Do not retry during repack requests
 - cta/CTA#252 - Update cta-change-storage-class to accept json file as input
-- cta/CTA#136 - Add missing forward declarations to standalone cli tools
-- cta/CTA#284 - Add kerberos authentication for standalone cli tool tests
 - cta/CTA#254 - Create git submodule for CTA catalogue schema
+- cta/CTA#284 - Add kerberos authentication for standalone cli tool tests
 ### Bug Fixes
+- cta/CTA#174 - Improving error description in cta-tape-label in case of wrong volume label format
 - cta/CTA#181 - cta-statistics-update can fail for catalogues in postgres
 - cta/CTA#189 - Avoid postgres logging frequent warnings about no transaction in progress
 - cta/CTA#234 - Replace stoi with toUint64 in standalone cli tool
+- cta/CTA#237 - Fix misplaced ERROR/WARNING messages triggered by the queue cleanup runner
 - cta/CTA#238 - Compilation fails when using cta::common::Configuration::getConfEntInt(...)
+- cta/CTA#242 - cta-frontend-grpc - problem with loading pem_root_certs
 - cta/CTA#273 - Fix tape state change command idempotency when resetting REPACKING/BROKEN/PENDING
 - cta/CTA#280 - Add a timeout to tape server global lock on the object store
-- cta/CTA#289 - Avoid a DB query and improve filtering time in sortAndGetTapesForMountInfo
-- cta/CTA#292 - Problem with cppcheck
 - cta/CTA#288 - Do not allow tape server to transition from REPACKING_DISABLED to DISABLED
+- cta/CTA#289 - Avoid a DB query and improve filtering time in sortAndGetTapesForMountInfo
 - cta/CTA#290 - Remove temporary counters used to track single-vid-GetTapesByVid calls
+- cta/CTA#292 - Problem with cppcheck
 ### Continuous Integration
-- cta/CTA#205 - Updating EOS4/EOS4 in versionlock for v4.8.95/v5.1.5
 - cta/CTA#253 - Allow Failure for cta_valgrind tests
+- cta/CTA#255 - Updating CI to run with old and latest kubernetes versions
 - cta/CTA#286 - Upgrade eos to 4.8.98/5.1.9 fixing operation critical eosreport see EOS-5367
 
 # v4.8.4-1
