@@ -46,7 +46,7 @@ void RdbmsVirtualOrganizationCatalogue::createVirtualOrganization(const common::
     if (vo.comment.empty()) {
       throw UserSpecifiedAnEmptyStringComment("Cannot create virtual organization because the comment is an empty string");
     }
-    RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(vo.comment, &m_log);
+    const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(vo.comment, &m_log);
     if (vo.diskInstanceName.empty()) {
       throw UserSpecifiedAnEmptyStringDiskInstanceName("Cannot create virtual organization because the disk instance is an empty string");
     }
@@ -107,7 +107,7 @@ void RdbmsVirtualOrganizationCatalogue::createVirtualOrganization(const common::
 
     stmt.bindString(":DISK_INSTANCE_NAME", vo.diskInstanceName);
 
-    stmt.bindString(":USER_COMMENT", vo.comment);
+    stmt.bindString(":USER_COMMENT", trimmedComment);
 
     stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
     stmt.bindString(":CREATION_LOG_HOST_NAME", admin.host);
@@ -468,7 +468,7 @@ void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationMaxFileSize(
 void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationComment(
   const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const std::string &comment) {
   try {
-    RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
+    const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE VIRTUAL_ORGANIZATION SET "
@@ -481,7 +481,7 @@ void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationComment(
     auto conn = m_connPool->getConn();
 
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":USER_COMMENT", comment);
+    stmt.bindString(":USER_COMMENT", trimmedComment);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);

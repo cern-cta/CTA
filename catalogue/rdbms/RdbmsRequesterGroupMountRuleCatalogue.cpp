@@ -74,7 +74,7 @@ void RdbmsRequesterGroupMountRuleCatalogue::modifyRequesterGroupMountRuleComment
   const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName,
   const std::string &requesterGroupName, const std::string &comment) {
   try {
-    RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
+    const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE REQUESTER_GROUP_MOUNT_RULE SET "
@@ -87,7 +87,7 @@ void RdbmsRequesterGroupMountRuleCatalogue::modifyRequesterGroupMountRuleComment
         "REQUESTER_GROUP_NAME = :REQUESTER_GROUP_NAME";
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":USER_COMMENT", comment);
+    stmt.bindString(":USER_COMMENT", trimmedComment);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
@@ -114,7 +114,7 @@ void RdbmsRequesterGroupMountRuleCatalogue::createRequesterGroupMountRule(
   const std::string &requesterGroupName,
   const std::string &comment) {
   try {
-    RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
+    const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
     auto conn = m_connPool->getConn();
     {
       const auto group = Group(diskInstanceName, requesterGroupName);
@@ -172,7 +172,7 @@ void RdbmsRequesterGroupMountRuleCatalogue::createRequesterGroupMountRule(
     stmt.bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
     stmt.bindString(":MOUNT_POLICY_NAME", mountPolicyName);
 
-    stmt.bindString(":USER_COMMENT", comment);
+    stmt.bindString(":USER_COMMENT", trimmedComment);
 
     stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
     stmt.bindString(":CREATION_LOG_HOST_NAME", admin.host);

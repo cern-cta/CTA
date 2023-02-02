@@ -47,7 +47,8 @@ CTA_GENERATE_EXCEPTION_CLASS(CommentOrReasonWithMoreSizeThanMaximunAllowed);
 class RdbmsCatalogueUtils {
 public:
   static bool diskSystemExists(rdbms::Conn &conn, const std::string &name);
-  static void checkCommentOrReasonMaxLength(const std::optional<std::string>& str, log::Logger* log);
+  [[nodiscard]] static std::optional<std::string> checkCommentOrReasonMaxLength(const std::optional<std::string>& str,
+    log::Logger* log);
   static bool storageClassExists(rdbms::Conn &conn, const std::string &storageClassName);
   static bool virtualOrganizationExists(rdbms::Conn &conn, const std::string &voName);
   static bool mediaTypeExists(rdbms::Conn &conn, const std::string &name);

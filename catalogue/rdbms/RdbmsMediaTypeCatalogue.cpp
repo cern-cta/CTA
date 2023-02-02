@@ -51,7 +51,7 @@ void RdbmsMediaTypeCatalogue::createMediaType(const common::dataStructures::Secu
       throw UserSpecifiedAnEmptyStringComment(std::string("Cannot create media type ") + mediaType.name +
         " because the comment is an empty string");
     }
-    RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(mediaType.comment, &m_log);
+    const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(mediaType.comment, &m_log);
     if (mediaType.capacityInBytes == 0){
       throw UserSpecifiedAZeroCapacity(std::string("Cannot create media type ") + mediaType.name
         + " because the capacity is zero");
@@ -116,7 +116,7 @@ void RdbmsMediaTypeCatalogue::createMediaType(const common::dataStructures::Secu
     stmt.bindUint64(":MIN_LPOS", mediaType.minLPos);
     stmt.bindUint64(":MAX_LPOS", mediaType.maxLPos);
 
-    stmt.bindString(":USER_COMMENT", mediaType.comment);
+    stmt.bindString(":USER_COMMENT", trimmedComment);
 
     stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
     stmt.bindString(":CREATION_LOG_HOST_NAME", admin.host);
@@ -541,7 +541,7 @@ void RdbmsMediaTypeCatalogue::modifyMediaTypeMaxLPos(const common::dataStructure
 void RdbmsMediaTypeCatalogue::modifyMediaTypeComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &comment) {
   try {
-    RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
+    const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE MEDIA_TYPE SET "
@@ -553,7 +553,7 @@ void RdbmsMediaTypeCatalogue::modifyMediaTypeComment(const common::dataStructure
         "MEDIA_TYPE_NAME = :MEDIA_TYPE_NAME";
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":USER_COMMENT", comment);
+    stmt.bindString(":USER_COMMENT", trimmedComment);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);

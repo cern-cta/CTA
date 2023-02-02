@@ -51,17 +51,20 @@ bool RdbmsCatalogueUtils::diskSystemExists(rdbms::Conn &conn, const std::string 
   }
 }
 
-void RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(const std::optional<std::string>& str, log::Logger* log) {
+std::optional<std::string> RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(const std::optional<std::string>& str,
+  log::Logger* log) {
   const size_t MAX_CHAR_COMMENT = 1000;
-  if (!str.has_value()) return;
+  if (!str.has_value()) return std::nullopt;
+  if (str.value().empty()) return std::nullopt;
   if (str.value().length() > MAX_CHAR_COMMENT) {
     log::LogContext lc(*log);
     log::ScopedParamContainer spc(lc);
     spc.add("Large_Message: ", str.value());
-    lc.log(log::ERR, "The reason or comment has more characters than the maximun allowed.");
-    throw CommentOrReasonWithMoreSizeThanMaximunAllowed(
-      "The comment or reason string value has more than 1000 characters");
+    lc.log(log::WARNING, "The reason or comment has more characters than the maximum allowed, 1000 characters."
+      " It will be truncated");
+    return str.value().substr(0, MAX_CHAR_COMMENT);
   }
+  return str;
 }
 
 bool RdbmsCatalogueUtils::storageClassExists(rdbms::Conn &conn, const std::string &storageClassName) {

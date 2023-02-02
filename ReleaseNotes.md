@@ -1,3 +1,11 @@
+# v4.NEXT
+
+## Summary
+### Features
+- cta/CTA#250 - Trim SQL query length in catalogue DB failure reason
+### Bug Fixes
+### Continuous Integration
+
 # v4.8.5-1
 
 ## Summary

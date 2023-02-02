@@ -230,7 +230,7 @@ void RdbmsFileRecycleLogCatalogue::deleteTapeFileCopyFromRecycleBin(cta::rdbms::
 void RdbmsFileRecycleLogCatalogue::insertFileInFileRecycleLog(rdbms::Conn& conn,
   const InsertFileRecycleLog& fileRecycleLog) const {
   try{
-    RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(fileRecycleLog.reasonLog, &m_log);
+    const auto trimmedReason = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(fileRecycleLog.reasonLog, &m_log);
     uint64_t fileRecycleLogId = getNextFileRecyleLogId(conn);
     const char *const sql =
     "INSERT INTO FILE_RECYCLE_LOG("
@@ -292,7 +292,7 @@ void RdbmsFileRecycleLogCatalogue::insertFileInFileRecycleLog(rdbms::Conn& conn,
     stmt.bindUint64(":TAPE_FILE_CREATION_TIME",fileRecycleLog.tapeFileCreationTime);
     stmt.bindString(":DISK_FILE_PATH",fileRecycleLog.diskFilePath);
     stmt.bindUint64(":ARCHIVE_FILE_ID",fileRecycleLog.archiveFileId);
-    stmt.bindString(":REASON_LOG",fileRecycleLog.reasonLog);
+    stmt.bindString(":REASON_LOG",trimmedReason);
     stmt.bindUint64(":RECYCLE_LOG_TIME",fileRecycleLog.recycleLogTime);
     stmt.bindUint64(":ARCHIVE_FILE_ID_2",fileRecycleLog.archiveFileId);
     stmt.executeNonQuery();

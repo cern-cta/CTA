@@ -40,7 +40,7 @@ RdbmsLogicalLibraryCatalogue::RdbmsLogicalLibraryCatalogue(log::Logger &log, std
 void RdbmsLogicalLibraryCatalogue::createLogicalLibrary(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const bool isDisabled, const std::string &comment) {
   try {
-    RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
+    const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
     auto conn = m_connPool->getConn();
     if(RdbmsCatalogueUtils::logicalLibraryExists(conn, name)) {
       throw exception::UserError(std::string("Cannot create logical library ") + name +
@@ -83,7 +83,7 @@ void RdbmsLogicalLibraryCatalogue::createLogicalLibrary(const common::dataStruct
     stmt.bindString(":LOGICAL_LIBRARY_NAME", name);
     stmt.bindBool(":IS_DISABLED", isDisabled);
 
-    stmt.bindString(":USER_COMMENT", comment);
+    stmt.bindString(":USER_COMMENT", trimmedComment);
 
     stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
     stmt.bindString(":CREATION_LOG_HOST_NAME", admin.host);
@@ -236,7 +236,7 @@ void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryName(const common::dataSt
 void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &comment) {
   try {
-    RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
+    const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE LOGICAL_LIBRARY SET "
@@ -248,7 +248,7 @@ void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryComment(const common::dat
         "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":USER_COMMENT", comment);
+    stmt.bindString(":USER_COMMENT", trimmedComment);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
@@ -269,7 +269,7 @@ void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryComment(const common::dat
 void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryDisabledReason(
   const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &disabledReason) {
   try {
-    RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(disabledReason, &m_log);
+    const auto trimmedReason = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(disabledReason, &m_log);
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE LOGICAL_LIBRARY SET "
@@ -281,8 +281,7 @@ void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryDisabledReason(
         "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":DISABLED_REASON",
-      disabledReason.empty() ? std::nullopt : std::optional<std::string>(disabledReason));
+    stmt.bindString(":DISABLED_REASON", trimmedReason);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);

@@ -86,7 +86,7 @@ void RdbmsDiskInstanceSpaceCatalogue::createDiskInstanceSpace(const common::data
     if(comment.empty()) {
       throw UserSpecifiedAnEmptyStringComment("Cannot create disk instance space because the comment is an empty string");
     }
-    RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
+    const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
 
     auto conn = m_connPool->getConn();
     if(!RdbmsCatalogueUtils::diskInstanceExists(conn, diskInstance)) {
@@ -146,7 +146,7 @@ void RdbmsDiskInstanceSpaceCatalogue::createDiskInstanceSpace(const common::data
    stmt.bindUint64(":LAST_REFRESH_TIME", 0);
    stmt.bindUint64(":FREE_SPACE", 0);
 
-   stmt.bindString(":USER_COMMENT", comment);
+   stmt.bindString(":USER_COMMENT", trimmedComment);
 
    stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
    stmt.bindString(":CREATION_LOG_HOST_NAME", admin.host);
@@ -227,7 +227,7 @@ void RdbmsDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceComment(
       throw UserSpecifiedAnEmptyStringComment("Cannot modify disk instance space "
         "because the new comment is an empty string");
     }
-    RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
+    const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE DISK_INSTANCE_SPACE SET "
@@ -241,7 +241,7 @@ void RdbmsDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceComment(
         "DISK_INSTANCE_SPACE_NAME = :DISK_INSTANCE_SPACE_NAME";
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":USER_COMMENT", comment);
+    stmt.bindString(":USER_COMMENT", trimmedComment);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);

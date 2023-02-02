@@ -50,7 +50,7 @@ void RdbmsStorageClassCatalogue::createStorageClass(
     if (storageClass.comment.empty()) {
       throw UserSpecifiedAnEmptyStringComment("Cannot create storage class because the comment is an empty string");
     }
-    RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(storageClass.comment, &m_log);
+    const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(storageClass.comment, &m_log);
     std::string vo = storageClass.vo.name;
 
     if(vo.empty()) {
@@ -106,7 +106,7 @@ void RdbmsStorageClassCatalogue::createStorageClass(
     stmt.bindUint64(":NB_COPIES", storageClass.nbCopies);
     stmt.bindString(":VO",vo);
 
-    stmt.bindString(":USER_COMMENT", storageClass.comment);
+    stmt.bindString(":USER_COMMENT", trimmedComment);
 
     stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
     stmt.bindString(":CREATION_LOG_HOST_NAME", admin.host);
@@ -310,7 +310,7 @@ void RdbmsStorageClassCatalogue::modifyStorageClassNbCopies(const common::dataSt
 void RdbmsStorageClassCatalogue::modifyStorageClassComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &comment) {
   try {
-    RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
+    const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
 
     const time_t now = time(nullptr);
     const char *const sql =
@@ -323,7 +323,7 @@ void RdbmsStorageClassCatalogue::modifyStorageClassComment(const common::dataStr
         "STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME";
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":USER_COMMENT", comment);
+    stmt.bindString(":USER_COMMENT", trimmedComment);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);

@@ -609,7 +609,7 @@ std::optional<common::dataStructures::TapeDrive> RdbmsDriveStateCatalogue::getTa
 void RdbmsDriveStateCatalogue::setDesiredTapeDriveState(const std::string& tapeDriveName,
   const common::dataStructures::DesiredDriveState &desiredState) {
   try {
-    RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(desiredState.reason, &m_log);
+    const auto trimmedReason = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(desiredState.reason, &m_log);
     std::string sql =
       "UPDATE DRIVE_STATE SET "
         "DESIRED_UP = :DESIRED_UP,"
@@ -630,8 +630,8 @@ void RdbmsDriveStateCatalogue::setDesiredTapeDriveState(const std::string& tapeD
     stmt.bindString(":DRIVE_NAME", tapeDriveName);
     stmt.bindBool(":DESIRED_UP", desiredState.up);
     stmt.bindBool(":DESIRED_FORCE_DOWN", desiredState.forceDown);
-    if (desiredState.reason && !desiredState.reason.value().empty()) {
-      stmt.bindString(":REASON_UP_DOWN", desiredState.reason.value());
+    if (trimmedReason&& !trimmedReason.value().empty()) {
+      stmt.bindString(":REASON_UP_DOWN", trimmedReason.value());
     }
     stmt.executeNonQuery();
 

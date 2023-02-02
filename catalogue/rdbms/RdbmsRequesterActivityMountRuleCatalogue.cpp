@@ -75,7 +75,7 @@ void RdbmsRequesterActivityMountRuleCatalogue::modifyRequesterActivityMountRuleC
   const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName,
   const std::string &requesterName, const std::string &activityRegex, const std::string &comment) {
   try {
-    RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
+    const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE REQUESTER_ACTIVITY_MOUNT_RULE SET "
@@ -89,7 +89,7 @@ void RdbmsRequesterActivityMountRuleCatalogue::modifyRequesterActivityMountRuleC
         "ACTIVITY_REGEX = :ACTIVITY_REGEX";
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":USER_COMMENT", comment);
+    stmt.bindString(":USER_COMMENT", trimmedComment);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
@@ -115,7 +115,7 @@ void RdbmsRequesterActivityMountRuleCatalogue::createRequesterActivityMountRule(
   const std::string &mountPolicyName, const std::string &diskInstanceName, const std::string &requesterName,
   const std::string &activityRegex, const std::string &comment) {
    try {
-    RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
+    const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
     auto conn = m_connPool->getConn();
     if(RdbmsCatalogueUtils::requesterActivityMountRuleExists(conn, diskInstanceName, requesterName, activityRegex)) {
       throw exception::UserError(std::string("Cannot create rule to assign mount-policy ") + mountPolicyName +
@@ -172,7 +172,7 @@ void RdbmsRequesterActivityMountRuleCatalogue::createRequesterActivityMountRule(
     stmt.bindString(":MOUNT_POLICY_NAME", mountPolicyName);
     stmt.bindString(":ACTIVITY_REGEX", activityRegex);
 
-    stmt.bindString(":USER_COMMENT", comment);
+    stmt.bindString(":USER_COMMENT", trimmedComment);
 
     stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
     stmt.bindString(":CREATION_LOG_HOST_NAME", admin.host);

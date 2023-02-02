@@ -55,7 +55,7 @@ void RdbmsArchiveRouteCatalogue::createArchiveRoute(const common::dataStructures
     if(comment.empty()) {
       throw UserSpecifiedAnEmptyStringComment("Cannot create archive route because comment is an empty string");
     }
-    RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
+    const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
 
     const time_t now = time(nullptr);
     auto conn = m_connPool->getConn();
@@ -127,7 +127,7 @@ void RdbmsArchiveRouteCatalogue::createArchiveRoute(const common::dataStructures
     stmt.bindUint64(":COPY_NB", copyNb);
     stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
 
-    stmt.bindString(":USER_COMMENT", comment);
+    stmt.bindString(":USER_COMMENT", trimmedComment);
 
     stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
     stmt.bindString(":CREATION_LOG_HOST_NAME", admin.host);
@@ -364,7 +364,7 @@ void RdbmsArchiveRouteCatalogue::modifyArchiveRouteTapePoolName(const common::da
 void RdbmsArchiveRouteCatalogue::modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &storageClassName, const uint32_t copyNb, const std::string &comment) {
   try {
-    RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
+    const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE ARCHIVE_ROUTE SET "
@@ -383,7 +383,7 @@ void RdbmsArchiveRouteCatalogue::modifyArchiveRouteComment(const common::dataStr
         "COPY_NB = :COPY_NB";
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":USER_COMMENT", comment);
+    stmt.bindString(":USER_COMMENT", trimmedComment);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);

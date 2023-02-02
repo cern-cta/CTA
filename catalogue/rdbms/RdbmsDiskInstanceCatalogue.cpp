@@ -42,7 +42,7 @@ void RdbmsDiskInstanceCatalogue::createDiskInstance(const common::dataStructures
     if(comment.empty()) {
       throw UserSpecifiedAnEmptyStringComment("Cannot create disk system because the comment is an empty string");
     }
-    RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
+    const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
 
     auto conn = m_connPool->getConn();
     if(RdbmsCatalogueUtils::diskInstanceExists(conn, name)) {
@@ -80,7 +80,7 @@ void RdbmsDiskInstanceCatalogue::createDiskInstance(const common::dataStructures
 
    stmt.bindString(":DISK_INSTANCE_NAME", name);
 
-   stmt.bindString(":USER_COMMENT", comment);
+   stmt.bindString(":USER_COMMENT", trimmedComment);
 
    stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
    stmt.bindString(":CREATION_LOG_HOST_NAME", admin.host);
@@ -140,7 +140,7 @@ void RdbmsDiskInstanceCatalogue::modifyDiskInstanceComment(const common::dataStr
       throw UserSpecifiedAnEmptyStringComment("Cannot modify disk instance "
         "because the new comment is an empty string");
     }
-    RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
+    const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
 
     const time_t now = time(nullptr);
     const char *const sql =
@@ -153,7 +153,7 @@ void RdbmsDiskInstanceCatalogue::modifyDiskInstanceComment(const common::dataStr
         "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME";
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":USER_COMMENT", comment);
+    stmt.bindString(":USER_COMMENT", trimmedComment);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);

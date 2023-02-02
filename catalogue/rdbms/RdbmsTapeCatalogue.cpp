@@ -64,10 +64,10 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
     bool full = tape.full;
     // Translate an empty comment string to a NULL database value
     const std::optional<std::string> tapeComment = tape.comment && tape.comment->empty() ? std::nullopt : tape.comment;
-    RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(tapeComment, &m_log);
+    const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(tapeComment, &m_log);
     const std::optional<std::string> stateReason = tape.stateReason
       && cta::utils::trimString(tape.stateReason.value()).empty() ? std::nullopt : tape.stateReason;
-    RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(stateReason, &m_log);
+    const auto trimmedReason = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(stateReason, &m_log);
     if(vid.empty()) {
       throw UserSpecifiedAnEmptyStringVid("Cannot create tape because the VID is an empty string");
     }
@@ -197,11 +197,11 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
     stmt.bindBool(":IS_FULL", full);
     stmt.bindBool(":IS_FROM_CASTOR", isFromCastor);
 
-    stmt.bindString(":USER_COMMENT", tapeComment);
+    stmt.bindString(":USER_COMMENT", trimmedComment);
 
     std::string stateModifiedBy = RdbmsCatalogueUtils::generateTapeStateModifiedBy(admin);
     stmt.bindString(":TAPE_STATE",cta::common::dataStructures::Tape::stateToString(tape.state));
-    stmt.bindString(":STATE_REASON",stateReason);
+    stmt.bindString(":STATE_REASON",trimmedReason);
     stmt.bindUint64(":STATE_UPDATE_TIME",now);
     stmt.bindString(":STATE_MODIFIED_BY", stateModifiedBy);
 
@@ -857,8 +857,7 @@ void RdbmsTapeCatalogue::modifyTapeState(const common::dataStructures::SecurityI
     using namespace common::dataStructures;
     const time_t now = time(nullptr);
 
-    const std::optional<std::string> stateReasonCopy = stateReason && cta::utils::trimString(stateReason.value()).empty() ? std::nullopt : stateReason;
-    RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(stateReasonCopy, &m_log);
+    const auto trimmedReason = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(stateReason, &m_log);
 
     std::string stateStr;
     try {
@@ -880,7 +879,7 @@ void RdbmsTapeCatalogue::modifyTapeState(const common::dataStructures::SecurityI
 
     //Check the reason is set for all the status except the ACTIVE one, this is the only state that allows the reason to be set to null.
     if(state != Tape::State::ACTIVE){
-      if(!stateReasonCopy){
+      if(!trimmedReason){
         throw UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(std::string("Cannot modify the state of the tape ") + vid + " to " + stateStr + " because the reason has not been provided.");
       }
     }
@@ -902,7 +901,7 @@ void RdbmsTapeCatalogue::modifyTapeState(const common::dataStructures::SecurityI
     auto stmt = conn.createStmt(sql);
 
     stmt.bindString(":TAPE_STATE", stateStr);
-    stmt.bindString(":STATE_REASON", stateReasonCopy);
+    stmt.bindString(":STATE_REASON", trimmedReason);
     stmt.bindUint64(":STATE_UPDATE_TIME", now);
     stmt.bindString(":STATE_MODIFIED_BY", RdbmsCatalogueUtils::generateTapeStateModifiedBy(admin));
     stmt.bindString(":VID",vid);
@@ -1183,7 +1182,7 @@ void RdbmsTapeCatalogue::setTapeDirty(const std::string & vid) {
 void RdbmsTapeCatalogue::modifyTapeComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &vid, const std::optional<std::string> &comment) {
   try {
-    RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
+    const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE TAPE SET "
@@ -1195,7 +1194,7 @@ void RdbmsTapeCatalogue::modifyTapeComment(const common::dataStructures::Securit
         "VID = :VID";
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(sql);
-    stmt.bindString(":USER_COMMENT", comment);
+    stmt.bindString(":USER_COMMENT", trimmedComment);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
@@ -1210,7 +1209,7 @@ void RdbmsTapeCatalogue::modifyTapeComment(const common::dataStructures::Securit
     log::LogContext lc(m_log);
     log::ScopedParamContainer spc(lc);
     spc.add("vid", vid)
-       .add("userComment", comment ? comment.value() : "")
+       .add("userComment", trimmedComment ? trimmedComment.value() : "")
        .add("lastUpdateUserName", admin.username)
        .add("lastUpdateHostName", admin.host)
        .add("lastUpdateTime", now);
