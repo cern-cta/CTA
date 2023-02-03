@@ -9,7 +9,6 @@ stages:
   - shouldfail
   - publish_rpm
   - release_rpm
-  - docs
 
 variables:
   XROOTD_VERSION: 4
