@@ -52,7 +52,7 @@ if [[ "$PUBLIC" == false ]] ; then
   done
 else
   sudo wget https://public-yum.oracle.com/RPM-GPG-KEY-oracle-ol7 -O /etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
-  sudo wget https://git.ceph.com/release.asc -O /etc/pki/rpm-gpg/RPM-ASC-KEY-ceph
+  sudo wget https://download.ceph.com/keys/release.asc -O /etc/pki/rpm-gpg/RPM-ASC-KEY-ceph
   for i in ~/CTA/continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d-public/*.repo; do
     sudo yum-config-manager --add-repo=$i
   done
