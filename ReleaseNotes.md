@@ -3,6 +3,7 @@
 ## Summary
 ### Features
 - cta/CTA#250 - Trim SQL query length in catalogue DB failure reason
+- cta/CTA#301 - Switch from new to unique pointer in CtaReadTp to fix memory leak
 ### Bug Fixes
 ### Continuous Integration
 

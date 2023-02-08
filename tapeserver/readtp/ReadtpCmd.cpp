@@ -487,7 +487,7 @@ void ReadtpCmd::readTapeFile(
   const size_t buffer_size = 1 * 1024 * 1024 * 1024;  // 1Gb
   size_t read_data_size = 0;
   // allocate one gigabyte buffer
-  auto payload = new castor::tape::tapeserver::daemon::Payload(buffer_size);
+  auto payload = std::make_unique<castor::tape::tapeserver::daemon::Payload>(buffer_size);
   try {
     while (1) {
       if (payload->remainingFreeSpace() <= reader->getBlockSize()) {
