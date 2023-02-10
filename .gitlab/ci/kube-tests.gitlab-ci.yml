@@ -48,14 +48,14 @@ archiveretrieve:
     TEST_SCRIPT: "tests/archive_retrieve.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
-gfal2-retrieve:
+ar-gfal2:
   stage: test
   extends:
     - .kubernetes_test
   rules:
     - if: $XROOTD_VERSION == "5"
   variables:
-    TEST_SCRIPT: "tests/gfal2_retrieve.sh"
+    TEST_SCRIPT: "tests/archive_retrieve-gfal2.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
 archiveretrieve-eos5:
