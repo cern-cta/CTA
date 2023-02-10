@@ -54,7 +54,7 @@ if [ ! -z "${error}" ]; then
 fi
 
 EOSINSTANCE=ctaeos
-
+TMP_DIR=$(mktemp -d)
 FILE_1=`uuidgen`
 FILE_2=`uuidgen`
 echo
@@ -82,23 +82,22 @@ EOS_CHECKSUM_2=$(jq -r '.checksumvalue' ${EOS_METADATA_PATH_2})
 EOS_SIZE_2=$(jq -r '.size' ${EOS_METADATA_PATH_2})
 
 echo "Create json meta data input file"
-rm /tmp/metaData
-touch /tmp/metaData
+touch ${TMP_DIR}/metaData
 FILE_PATH_1=`uuidgen`
 FILE_PATH_2=`uuidgen`
-echo '{"eosPath": "/eos/ctaeos/'${FILE_PATH_1}'", "diskInstance": "ctaeos", "archiveId": '${EOS_ARCHIVE_ID_1}', "size": "'${EOS_SIZE_1}'", "checksumType": "ADLER32", "checksumValue": "'${EOS_CHECKSUM_1}'"}' >> /tmp/metaData
-echo '{"eosPath": "/eos/ctaeos/'${FILE_PATH_2}'", "diskInstance": "ctaeos", "archiveId": '${EOS_ARCHIVE_ID_2}', "size": "'${EOS_SIZE_2}'", "checksumType": "ADLER32", "checksumValue": "'${EOS_CHECKSUM_2}'"}' >> /tmp/metaData
-kubectl cp /tmp/metaData ${NAMESPACE}/ctafrontend:/root/
+echo '{"eosPath": "/eos/ctaeos/'${FILE_PATH_1}'", "diskInstance": "ctaeos", "archiveId": '${EOS_ARCHIVE_ID_1}', "size": "'${EOS_SIZE_1}'", "checksumType": "ADLER32", "checksumValue": "'${EOS_CHECKSUM_1}'"}' >> ${TMP_DIR}/metaData
+echo '{"eosPath": "/eos/ctaeos/'${FILE_PATH_2}'", "diskInstance": "ctaeos", "archiveId": '${EOS_ARCHIVE_ID_2}', "size": "'${EOS_SIZE_2}'", "checksumType": "ADLER32", "checksumValue": "'${EOS_CHECKSUM_2}'"}' >> ${TMP_DIR}/metaData
+kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c "mkdir -p ${TMP_DIR}"
+kubectl cp ${TMP_DIR}/metaData ${NAMESPACE}/ctafrontend:${TMP_DIR}/
 
 echo
 echo "ENABLE CTAFRONTEND TO EXECUTE CTA ADMIN COMMANDS"
 kubectl --namespace=${NAMESPACE} exec kdc -- cat /root/ctaadmin2.keytab | kubectl --namespace=${NAMESPACE} exec -i ctafrontend --  bash -c "cat > /root/ctaadmin2.keytab; mkdir -p /tmp/ctaadmin2"
-kubectl -n ${NAMESPACE} cp client_helper.sh ctafrontend:/root/client_helper.sh
-rm /tmp/init_kerb.sh
-touch /tmp/init_kerb.sh
-echo '. /root/client_helper.sh; admin_kinit' >> /tmp/init_kerb.sh
-kubectl -n ${NAMESPACE} cp /tmp/init_kerb.sh ctafrontend:/tmp/init_kerb.sh
-kubectl -n ${NAMESPACE} exec ctafrontend -- bash /tmp/init_kerb.sh
+kubectl -n ${NAMESPACE} cp client_helper.sh ctafrontend:${TMP_DIR}/client_helper.sh
+touch ${TMP_DIR}/init_kerb.sh
+echo '. '${TMP_DIR}'/client_helper.sh; admin_kinit' >> ${TMP_DIR}/init_kerb.sh
+kubectl -n ${NAMESPACE} cp ${TMP_DIR}/init_kerb.sh ctafrontend:${TMP_DIR}/init_kerb.sh
+kubectl -n ${NAMESPACE} exec ctafrontend -- bash ${TMP_DIR}/init_kerb.sh
 
 echo
 echo "ADD FRONTEND GATEWAY TO EOS"
@@ -108,11 +107,11 @@ kubectl -n ${NAMESPACE} exec ctaeos -- eos -r 0 0 vid add gateway ${FRONTEND_IP}
 
 echo
 echo "COPY REQUIRED FILES TO FRONTEND POD"
-echo "sudo kubectl cp ${NAMESPACE}/ctacli:/etc/cta/cta-cli.conf /etc/cta/cta-cli.conf"
-echo "sudo kubectl cp /etc/cta/cta-cli.conf ${NAMESPACE}/ctafrontend:/etc/cta/cta-cli.conf"
-sudo kubectl cp ${NAMESPACE}/ctacli:/etc/cta/cta-cli.conf /etc/cta/cta-cli.conf
-sudo kubectl cp /etc/cta/cta-cli.conf ${NAMESPACE}/ctafrontend:/etc/cta/cta-cli.conf
+echo "kubectl cp ${NAMESPACE}/ctacli:/etc/cta/cta-cli.conf ${TMP_DIR}/cta-cli.conf"
+echo "kubectl cp ${TMP_DIR}/cta-cli.conf ${NAMESPACE}/ctafrontend:/etc/cta/cta-cli.conf"
+kubectl cp ${NAMESPACE}/ctacli:/etc/cta/cta-cli.conf ${TMP_DIR}/cta-cli.conf
+kubectl cp ${TMP_DIR}/cta-cli.conf ${NAMESPACE}/ctafrontend:/etc/cta/cta-cli.conf
 
 echo
-echo "kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c cta-eos-namespace-inject --json /root/metaData"
-kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c "XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/ctaadmin2/krb5cc_0 cta-eos-namespace-inject --json /root/metaData"
+echo "kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c cta-eos-namespace-inject --json ${TMP_DIR}/metaData"
+kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c "XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/ctaadmin2/krb5cc_0 cta-eos-namespace-inject --json ${TMP_DIR}/metaData"

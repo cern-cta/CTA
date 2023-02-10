@@ -16,7 +16,7 @@
 #               submit itself to any jurisdiction.
 
 EOSINSTANCE=ctaeos
-LOGFILE_PATH=/var/log/restore_files.log
+LOGFILE_PATH=$(mktemp -d)/restore_files.log
 TEST_FILE_NAME=`uuidgen`
 WAIT_FOR_RETRIEVED_FILE_TIMEOUT=10
 
@@ -87,30 +87,28 @@ echo "VALIDATE THAT THE FILE IS IN THE RECYCLE BIN"
 echo "kubectl -n ${NAMESPACE} exec ctacli -- cta-admin rtf ls --fxid ${FXID} || exit 1"
 kubectl -n ${NAMESPACE} exec ctacli -- cta-admin rtf ls --fxid ${FXID} || exit 1
 
-echo 
+echo
 echo "COPY REQUIRED FILES TO FRONTEND POD"
-echo "sudo kubectl cp ${NAMESPACE}/ctacli:/etc/cta/cta-cli.conf /etc/cta/cta-cli.conf"
-echo "sudo kubectl cp /etc/cta/cta-cli.conf ${NAMESPACE}/ctafrontend:/etc/cta/cta-cli.conf"
-sudo kubectl cp ${NAMESPACE}/ctacli:/etc/cta/cta-cli.conf /etc/cta/cta-cli.conf
-sudo kubectl cp /etc/cta/cta-cli.conf ${NAMESPACE}/ctafrontend:/etc/cta/cta-cli.conf
+TMP_DIR=$(mktemp -d)
+kubectl --namespace=${NAMESPACE} exec ctafrontend -- bash -c "mkdir -p ${TMP_DIR}"
+echo "kubectl cp ${NAMESPACE}/ctacli:/etc/cta/cta-cli.conf ${TMP_DIR}/cta-cli.conf"
+echo "kubectl cp ${TMP_DIR}/cta/cta-cli.conf ${NAMESPACE}/ctafrontend:/etc/cta-cli.conf"
+
+kubectl cp ${NAMESPACE}/ctacli:/etc/cta/cta-cli.conf ${TMP_DIR}/cta-cli.conf
+kubectl cp ${TMP_DIR}/cta-cli.conf ${NAMESPACE}/ctafrontend:/etc/cta/cta-cli.conf
 
 echo
 echo "ENABLE CTAFRONTEND TO EXECUTE CTA ADMIN COMMANDS"
 kubectl --namespace=${NAMESPACE} exec kdc -- cat /root/ctaadmin2.keytab | kubectl --namespace=${NAMESPACE} exec -i ctafrontend --  bash -c "cat > /root/ctaadmin2.keytab; mkdir -p /tmp/ctaadmin2"
 kubectl -n ${NAMESPACE} cp client_helper.sh ctafrontend:/root/client_helper.sh
-rm /tmp/init_kerb.sh
-touch /tmp/init_kerb.sh
-echo '. /root/client_helper.sh; admin_kinit' >> /tmp/init_kerb.sh
-kubectl -n ${NAMESPACE} cp /tmp/init_kerb.sh ctafrontend:/tmp/init_kerb.sh
-kubectl -n ${NAMESPACE} exec ctafrontend -- bash /tmp/init_kerb.sh
+touch ${TMP_DIR}/init_kerb.sh
+echo '. /root/client_helper.sh; admin_kinit' >> ${TMP_DIR}/init_kerb.sh
+kubectl -n ${NAMESPACE} cp ${TMP_DIR}/init_kerb.sh ctafrontend:${TMP_DIR}/init_kerb.sh
+kubectl -n ${NAMESPACE} exec ctafrontend -- bash ${TMP_DIR}/init_kerb.sh
 
 echo
 echo "RESTORE FILES"
-kubectl -n ${NAMESPACE} cp client_helper.sh ctafrontend:/root/client_helper.sh
-kubectl cp ~/CTA-build/cmdline/standalone_cli_tools/restore_files/cta-restore-deleted-files ${NAMESPACE}/ctafrontend:/usr/bin/cta-restore-deleted-files
-kubectl cp restore_files_ctafrontend.sh ${NAMESPACE}/ctafrontend:/root/restore_files_ctafrontend.sh
-kubectl -n ${NAMESPACE} exec ctafrontend -- chmod +x /root/restore_files_ctafrontend.sh
-kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c "XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/ctaadmin2/krb5cc_0 /root/restore_files_ctafrontend.sh -I ${ARCHIVE_FILE_ID} -f ${TEST_FILE_NAME} -i ${EOSINSTANCE}"
+kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c "XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/ctaadmin2/krb5cc_0 cta-restore-deleted-files --id ${ARCHIVE_FILE_ID} --copynb 1 --debug"
 
 SECONDS_PASSED=0
 WAIT_FOR_RETRIEVED_FILE_TIMEOUT=10
@@ -130,7 +128,7 @@ METADATA_FILE_AFTER_RESTORE_PATH=$(mktemp -d).json
 echo "SEND FILE METADATA TO JSON FILE: ${METADATA_FILE_AFTER_RESTORE_PATH}"
 touch ${METADATA_FILE_AFTER_RESTORE_PATH}
 kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json tf ls --id ${ARCHIVE_FILE_ID} --instance ${EOSINSTANCE} | jq '.[0]' |& tee ${METADATA_FILE_AFTER_RESTORE_PATH}
-kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json tf ls --id ${ARCHIVE_FILE_ID} --instance ${EOSINSTANCE} | jq '.[0]' | sudo tee -a ${LOGFILE_PATH}
+kubectl -n ${NAMESPACE} exec ctacli -- cta-admin --json tf ls --id ${ARCHIVE_FILE_ID} --instance ${EOSINSTANCE} | jq '.[0]' | tee -a ${LOGFILE_PATH}
 
 # Extract values from the meta data from the restored file
 FILE_SIZE_AFTER_RESTORE=$(jq -r '.af | .["size"]' ${METADATA_FILE_AFTER_RESTORE_PATH})
@@ -142,7 +140,7 @@ EOS_METADATA_AFTER_RESTORE_PATH=$(mktemp -d).json
 echo "SEND EOS METADATA TO JSON FILE: ${EOS_METADATA_AFTER_RESTORE_PATH}"
 touch ${EOS_METADATA_AFTER_RESTORE_PATH}
 kubectl -n ${NAMESPACE} exec client -- eos -j root://${EOSINSTANCE} file info /eos/ctaeos/cta/${TEST_FILE_NAME} | jq . |& tee ${EOS_METADATA_AFTER_RESTORE_PATH}
-kubectl -n ${NAMESPACE} exec client -- eos -j root://${EOSINSTANCE} file info /eos/ctaeos/cta/${TEST_FILE_NAME} | jq . | sudo tee -a ${LOGFILE_PATH}
+kubectl -n ${NAMESPACE} exec client -- eos -j root://${EOSINSTANCE} file info /eos/ctaeos/cta/${TEST_FILE_NAME} | jq . | tee -a ${LOGFILE_PATH}
 
 EOS_NS_FXID_AFTER_RESTORE=$(jq -r '.fxid' ${EOS_METADATA_AFTER_RESTORE_PATH})
 EOS_NS_FXID_AFTER_RESTORE_DEC=$(( 16#$EOS_NS_FXID_AFTER_RESTORE ))
@@ -170,13 +168,11 @@ if test ${FXID_AFTER_RESTORE} != ${EOS_NS_FXID_AFTER_RESTORE_DEC}; then
   exit 1
 fi
 
-echo 
+echo
 echo "ALL TESTS PASSED FOR cta-restore-deleted-files"
 
 echo
 echo "CLEAN UP TEMPORARY FILES AND REMOVE TEMPORARY CTA ADMIN ACCESS"
-echo "kubectl -n ${NAMESPACE} exec ctacli -- cta-admin admin rm --username ctafrontend"
-echo "kubectl -n ${NAMESPACE} exec ctacli -- cta-admin admin rm --username ctaeos"
-sudo rm ${METADATA_FILE_AFTER_RESTORE_PATH}
-sudo rm ${METADATA_FILE_PATH}
-sudo rm ${EOS_METADATA_AFTER_RESTORE_PATH}
+rm ${METADATA_FILE_AFTER_RESTORE_PATH}
+rm ${METADATA_FILE_PATH}
+rm ${EOS_METADATA_AFTER_RESTORE_PATH}

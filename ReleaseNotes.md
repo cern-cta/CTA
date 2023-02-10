@@ -5,6 +5,7 @@
 - cta/CTA#250 - Trim SQL query length in catalogue DB failure reason
 - cta/CTA#301 - Switch from new to unique pointer in CtaReadTp to fix memory leak
 - cta/CTA#219 - Update Ceph repo public key in dev env and buildtree
+- cta/CTA#295 - Update standalone cli tool tests, remove sudo and use more generated tmp folders
 ### Bug Fixes
 ### Continuous Integration
 
