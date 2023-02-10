@@ -17,6 +17,8 @@
 
 . /opt/run/bin/init_pod.sh
 
+yum install -y gfal2-util gfal2-all
+
 if [ ! -e /etc/buildtreeRunner ]; then
   yum-config-manager --enable cta-artifacts
   yum-config-manager --enable ceph

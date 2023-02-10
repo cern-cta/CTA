@@ -48,6 +48,15 @@ archiveretrieve:
     TEST_SCRIPT: "tests/archive_retrieve.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
+gfal2-retrieve:
+  stage: test
+  extends:
+    - .kubernetes_test
+  except:
+    - tags
+  variables:
+    TEST_SCRIPT: "tests/gfal2_retrieve.sh"
+
 archiveretrieve-eos5:
   stage: test
   extends:
