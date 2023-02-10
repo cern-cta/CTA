@@ -54,6 +54,8 @@ gfal2-retrieve:
     - .kubernetes_test
   except:
     - tags
+  rules:
+    - if: $XROOTD_VERSION == 5
   variables:
     TEST_SCRIPT: "tests/gfal2_retrieve.sh"
 
