@@ -50,6 +50,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+kubectl -n ${NAMESPACE} cp client_helper.sh client:/root/client_helper.sh
 
 echo
 echo "Launching gfal2_retrieve.sh on client pod"
