@@ -43,6 +43,7 @@ if [ ! -z "${error}" ]; then
     exit 1
 fi
 
+# Client pod setup.
 echo "Preparing namespace for the tests"
   . prepare_tests.sh -n ${NAMESPACE}
 if [ $? -ne 0 ]; then
@@ -50,8 +51,11 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-kubectl -n ${NAMESPACE} cp client_helper.sh client:/root/client_helper.sh
 
+kubectl -n ${NAMESPACE} cp client_helper.sh client:/root/client_helper.sh
+kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh ctaeos:/root/grep_xrdlog_mgm_for_error.sh
+
+# Tests
 echo
 echo "Launching gfal2_retrieve.sh on client pod"
 echo " Archiving file: xrdcp as user1"
