@@ -588,6 +588,10 @@ echo $(jq --argjson CTA_MAJOR_VERSION $cta_major_version '. += {"cta_major_versi
 
 
 %changelog
+* Thu Feb 16 2023 Joao Afonso <joao.afonso@cern.ch> - 4.8.5-1
+- Various fixes and improvements to CTA
+- See ReleaseNotes.md for details
+
 * Tue Jan 24 2023 Joao Afonso <joao.afonso@cern.ch> - 4.8.4-1
 - Major reduction of the number of DB queries issued to the CTA catalogue
 - See ReleaseNotes.md for more details

@@ -1,14 +1,3 @@
-# v4.NEXT
-
-## Summary
-### Features
-- cta/CTA#250 - Trim SQL query length in catalogue DB failure reason
-- cta/CTA#301 - Switch from new to unique pointer in CtaReadTp to fix memory leak
-- cta/CTA#219 - Update Ceph repo public key in dev env and buildtree
-- cta/CTA#295 - Update standalone cli tool tests, remove sudo and use more generated tmp folders
-### Bug Fixes
-### Continuous Integration
-
 # v4.8.5-1
 
 ## Summary
@@ -18,15 +7,19 @@
 - cta/CTA#213 - Add tool for injecting file into eos
 - cta/CTA#213 - Improve test for eos injection tool
 - cta/CTA#218 - Do not retry during repack requests
+- cta/CTA#219 - Update Ceph repo public key in dev env and buildtree
 - cta/CTA#222 - Review what gets logged in CTA
 - cta/CTA#224 - Improve error message for cta-verify-file whn VID does not exist
 - cta/CTA#230 - Modify CTA code to enforce VID uppercase
 - cta/CTA#239 - Add improvments to the cta-change-storage-class tool
 - cta/CTA#241 - Add missing forward declarations to standalone cli tools
 - cta/CTA#248 - Clean up output from cta-readtp
+- cta/CTA#250 - Trim SQL query length in catalogue DB failure reason
 - cta/CTA#252 - Update cta-change-storage-class to accept json file as input
 - cta/CTA#254 - Create git submodule for CTA catalogue schema
 - cta/CTA#284 - Add kerberos authentication for standalone cli tool tests
+- cta/CTA#295 - Update standalone cli tool tests, remove sudo and use more generated tmp folders
+- cta/CTA#301 - Switch from new to unique pointer in CtaReadTp to fix memory leak
 ### Bug Fixes
 - cta/CTA#174 - Improving error description in cta-tape-label in case of wrong volume label format
 - cta/CTA#181 - cta-statistics-update can fail for catalogues in postgres
@@ -45,6 +38,7 @@
 - cta/CTA#253 - Allow Failure for cta_valgrind tests
 - cta/CTA#255 - Updating CI to run with old and latest kubernetes versions
 - cta/CTA#286 - Upgrade eos to 4.8.98/5.1.9 fixing operation critical eosreport see EOS-5367
+- cta/CTA#298 - Remove docs CI stage, moved to submodule
 
 # v4.8.4-1
 
