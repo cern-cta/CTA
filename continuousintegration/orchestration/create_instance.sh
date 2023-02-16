@@ -341,7 +341,7 @@ fi
 
 echo "Launching pods"
 
-for podname in client ctacli tpsrv01 tpsrv02 ctaeos ctafrontend kdc; do
+for podname in client client-gfal2 ctacli tpsrv01 tpsrv02 ctaeos ctafrontend kdc; do
   kubectl create -f ${poddir}/pod-${podname}.yaml --namespace=${instance}
 done
 

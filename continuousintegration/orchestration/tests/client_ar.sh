@@ -218,6 +218,8 @@ test -z ${COMMENT} || annotate "test ${TESTID} STARTED" "comment: ${COMMENT}<br/
 # CALL RETRIEVE
 . client_retrieve.sh
 
+. client_retrieve-gfal2.sh
+
 # OTHER TESTS??
 . client_abortPrepare.sh
 
