@@ -1,3 +1,7 @@
+# v4.Next
+### Features
+- cta/CTA#305 - AllCatalogueSchema file not created when updating schema
+
 # v4.8.5-1
 
 ## Summary

@@ -76,7 +76,8 @@ set (CATALOGUE_LIB_SRC_FILES
 )
 
 add_library (ctacatalogue SHARED
-   ${CATALOGUE_LIB_SRC_FILES})
+  ${CATALOGUE_LIB_SRC_FILES}
+)
 
 set_property(TARGET ctacatalogue PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacatalogue PROPERTY   VERSION "${CTA_LIBVERSION}")
@@ -88,35 +89,47 @@ target_link_libraries (ctacatalogue
   ctardbms
 )
 
-add_custom_command (OUTPUT AllCatalogueSchema.hpp
+add_custom_target(create_all_catalogue_schema_hpp ALL
   COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasCppFile.sh ${CMAKE_CURRENT_SOURCE_DIR}
+  BYPRODUCTS AllCatalogueSchema.hpp
   DEPENDS
-    create_all_schemas_SQL
     ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasCppFile.sh
     ${CMAKE_CURRENT_SOURCE_DIR}/AllCatalogueSchema.hpp.in
-    create_catalogue_schema_directory
 )
 
-add_custom_command(OUTPUT sqlite_catalogue_schema.cpp
+# add_custom_target(create_catalogue_schemas_cpp
+add_custom_target(create_pre_catalogue_schema_cpp ALL
   COMMAND sed 's/^/\ \ \"/' cta-catalogue-schema/sqlite_catalogue_schema.sql | sed 's/$$/\"/' > sqlite_catalogue_schema.cpp
-  DEPENDS
-    create_all_schemas_SQL
-    cta-catalogue-schema/sqlite_catalogue_schema.sql)
-
-add_custom_command(OUTPUT SqliteCatalogueSchema.cpp
-  COMMAND sed '/CTA_SQL_SCHEMA/r sqlite_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/SqliteCatalogueSchema.before_SQL.cpp > SqliteCatalogueSchema.cpp
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/SqliteCatalogueSchema.before_SQL.cpp sqlite_catalogue_schema.cpp)
-
-# For Postgres
-add_custom_command(OUTPUT postgres_catalogue_schema.cpp
   COMMAND sed 's/^/\ \ \"/' cta-catalogue-schema/postgres_catalogue_schema.sql | sed 's/$$/\"/' > postgres_catalogue_schema.cpp
   DEPENDS
     create_all_schemas_SQL
-    cta-catalogue-schema/postgres_catalogue_schema.sql)
+    create_all_catalogue_schema_hpp
+    cta-catalogue-schema/sqlite_catalogue_schema.sql
+    cta-catalogue-schema/postgres_catalogue_schema.sql
+)
 
-add_custom_command(OUTPUT PostgresCatalogueSchema.cpp
+add_custom_command(OUTPUT SqliteCatalogueSchema.cpp PostgresCatalogueSchema.cpp
+  COMMAND sed '/CTA_SQL_SCHEMA/r sqlite_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/SqliteCatalogueSchema.before_SQL.cpp > SqliteCatalogueSchema.cpp
   COMMAND sed -e '/CTA_SQL_SCHEMA/r postgres_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/PostgresCatalogueSchema.before_SQL.cpp > PostgresCatalogueSchema.cpp
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/PostgresCatalogueSchema.before_SQL.cpp postgres_catalogue_schema.cpp)
+  DEPENDS
+    create_pre_catalogue_schema_cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/SqliteCatalogueSchema.before_SQL.cpp sqlite_catalogue_schema.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/PostgresCatalogueSchema.before_SQL.cpp postgres_catalogue_schema.cpp
+)
+
+if (OCCI_SUPPORT)
+  add_custom_target(create_pre_oracle_catalogue_schema_cpp ALL
+    COMMAND sed 's/^/\ \ \"/' cta-catalogue-schema/oracle_catalogue_schema.sql | sed 's/$$/\"/' > oracle_catalogue_schema.cpp
+    DEPENDS
+      create_all_schemas_SQL
+      cta-catalogue-schema/oracle_catalogue_schema.sql)
+
+  add_custom_command(OUTPUT OracleCatalogueSchema.cpp
+    COMMAND sed '/CTA_SQL_SCHEMA/r oracle_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/OracleCatalogueSchema.before_SQL.cpp > OracleCatalogueSchema.cpp
+    DEPENDS
+      create_pre_oracle_catalogue_schema_cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/OracleCatalogueSchema.before_SQL.cpp oracle_catalogue_schema.cpp)
+endif ()
 
 file (GLOB CATALOGUE_MODULES_TESTS_SRC_FILES
   tests/modules/*.cpp
@@ -165,18 +178,6 @@ install (TARGETS ctadbconfigcatalogueunittests DESTINATION usr/${CMAKE_INSTALL_L
 install (FILES cta-catalogue.conf.example
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
-
-if (OCCI_SUPPORT)
-  add_custom_command(OUTPUT oracle_catalogue_schema.cpp
-    COMMAND sed 's/^/\ \ \"/' cta-catalogue-schema/oracle_catalogue_schema.sql | sed 's/$$/\"/' > oracle_catalogue_schema.cpp
-    DEPENDS
-      create_all_schemas_SQL
-      cta-catalogue-schema/oracle_catalogue_schema.sql)
-
-  add_custom_command(OUTPUT OracleCatalogueSchema.cpp
-    COMMAND sed '/CTA_SQL_SCHEMA/r oracle_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/OracleCatalogueSchema.before_SQL.cpp > OracleCatalogueSchema.cpp
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/OracleCatalogueSchema.before_SQL.cpp oracle_catalogue_schema.cpp)
-endif ()
 
 set (SCHEMA_CREATE_SRC_FILES
   CreateSchemaCmd.cpp

@@ -44,7 +44,7 @@ die() {
 
 databaseTypes=('oracle' 'sqlite' 'postgres')
 schemaPostfix='_catalogue_schema.sql'
-cd $1
+cd $1/cta-catalogue-schema
 tempFilePath="./temp"
 
 trap "rm -f $tempFilePath" EXIT
@@ -76,7 +76,7 @@ do
 done
 mapSchemaCode+="};"
 echo "$mapSchemaCode" > $tempFilePath
-sed "/ALL_SCHEMA_MAP/r $tempFilePath" ./AllCatalogueSchema.hpp.in > ./AllCatalogueSchema.hpp || die "Unable to create the map containing all catalogue schemas"
+sed "/ALL_SCHEMA_MAP/r $tempFilePath" ../AllCatalogueSchema.hpp.in > ../AllCatalogueSchema.hpp || die "Unable to create the map containing all catalogue schemas"
 #awk -v r="$mapSchemaCode" '{gsub(/ALL_SCHEMA_MAP/,r)}1' ./AllCatalogueSchema.hpp.in > ./AllCatalogueSchema.hpp || die "Unable to create the map containing all catalogue schemas"
 
 exit 0
