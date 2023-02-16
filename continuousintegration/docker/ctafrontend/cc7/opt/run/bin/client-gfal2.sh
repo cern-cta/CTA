@@ -17,6 +17,18 @@
 
 . /opt/run/bin/init_pod.sh
 
+# gfal2's xrootd plugin needs some xrd 5 libraries.
+# Modify version lock to allow this in case we are running the CI
+# with xrd v4.
+yum versionlock clear
+
+
+# Install gfal cli and plugins
+yum install -y gfal2-util gfal2-plugin-xrootd gfal2-plugin-http
+
+# Configure DB to track progress.
+
+
 if [ ! -e /etc/buildtreeRunner ]; then
   yum-config-manager --enable cta-artifacts
   yum-config-manager --enable ceph
