@@ -65,7 +65,7 @@ static struct option changeStorageClassLongOption[] = {
   {"id", required_argument, nullptr, 'I'},
   {"json", required_argument, nullptr, 'j'},
   {"storageclassname", required_argument, nullptr, 'n'},
-  {"frequenzy", required_argument, nullptr, 't'},
+  {"frequency", required_argument, nullptr, 't'},
   {"help", no_argument, nullptr, 'h'},
   {nullptr, 0, nullptr, 0}
 };
@@ -270,7 +270,7 @@ void CmdLineArgs::printUsage(std::ostream &os) const {
     break;
   case StandaloneCliTool::CTA_CHANGE_STORAGE_CLASS :
     os << "    Usage:" << std::endl <<
-    "    cta-change-storage-class --id/-I <archiveFileID> | --json/-j <path> --storageclassname/-n <storageClassName> [--frequenzy/-t <eosRequestFrequency>]" << std::endl << std::endl;
+    "    cta-change-storage-class --id/-I <archiveFileID> | --json/-j <path> --storageclassname/-n <storageClassName> [--frequency/-t <eosRequestFrequency>]" << std::endl << std::endl;
     break;
   case StandaloneCliTool::EOS_NAMESPACE_INJECTION :
     os << "    Usage:" << std::endl <<

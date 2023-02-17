@@ -153,12 +153,16 @@ int EosNamespaceInjection::exceptionThrowingMain(const int argc, char *const *co
     const auto enclosingPath = cta::utils::getEnclosingPath(metaDataObject.eosPath);
     const auto [parentId, uid, gid] = getContainerIdsEos(metaDataObject.diskInstance, enclosingPath);
     if(!parentId) {
-      throw exception::UserError("Path: " + enclosingPath + " does not exist.");
+      throw exception::UserError("Could not find: " + enclosingPath + ". Check that gRPC authentication is set up correctly, and that the path exists");
     }
-    const auto newFid = createFileInEos(metaDataObject, parentId, uid, gid);
 
+    if(const auto fid = getFileIdEos(metaDataObject.diskInstance, metaDataObject.eosPath); fid != 0) {
+      throw std::runtime_error("The file with path " + metaDataObject.eosPath + " already exists for instance " + metaDataObject.diskInstance + ". This tool does not overwrite existing files");
+    }
+
+    const auto newFid = createFileInEos(metaDataObject, parentId, uid, gid);
     if(newFid == 0) {
-      throw std::runtime_error("The file was with path " + metaDataObject.eosPath + "was not created");
+      throw std::runtime_error("The file with path " + metaDataObject.eosPath + " was not created");
     }
 
     auto decimalToHexadecimal = [](const std::string &decimalNumber) {
@@ -177,15 +181,16 @@ int EosNamespaceInjection::exceptionThrowingMain(const int argc, char *const *co
     const auto& ctaChecksum = g_metaDataObjectCatalogue.checksumValue;
     std::list<cta::log::Param> params;
     params.push_back(cta::log::Param("archiveFileId", archiveId));
-    params.push_back(cta::log::Param("diskInstance", g_metaDataObjectCatalogue.diskInstance));
-    params.push_back(cta::log::Param("diskFileId", g_metaDataObjectCatalogue.fxId));
+    params.push_back(cta::log::Param("diskFileId in EOS for new file", fxId));
+    params.push_back(cta::log::Param("diskFileId in Catalogue", g_metaDataObjectCatalogue.fxId));
+    params.push_back(cta::log::Param("diskInstance in Catalogue", g_metaDataObjectCatalogue.diskInstance));
     params.push_back(cta::log::Param("checksum", ctaChecksum));
-    if(eosArchiveFileId ==  archiveId && eosChecksum == ctaChecksum) {
+    if(eosArchiveFileId == archiveId && eosChecksum == ctaChecksum && g_metaDataObjectCatalogue.fxId == fxId) {
       m_log(cta::log::INFO, "File metadata in EOS and CTA matches", params);
     } else {
       params.push_back(cta::log::Param("eosArchiveFileId", eosArchiveFileId));
       params.push_back(cta::log::Param("eosChecksum", eosChecksum));
-      m_log(cta::log::INFO, "File metadata in EOS and CTA does not match", params);
+      m_log(cta::log::WARNING, "File metadata in EOS and CTA does not match", params);
       throw std::runtime_error("Sanity check failed.");
     }
   }
@@ -323,9 +328,9 @@ bool EosNamespaceInjection::getMetaDataFromCatalogue(const uint64_t &archiveId) 
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("containerId", cid));
   if (cid != 0) {
-    m_log(cta::log::DEBUG, "Container exists in the EOS namespace", params);
+    m_log(cta::log::INFO, "Container exists in the EOS namespace", params);
   } else {
-    m_log(cta::log::DEBUG, "Container does not exist in the EOS namespace", params);
+    m_log(cta::log::WARNING, "Container does not exist in the EOS namespace", params);
   }
   return std::make_tuple(cid, uid, gid);
 }
@@ -344,9 +349,9 @@ uint64_t EosNamespaceInjection::getFileIdEos(const std::string &diskInstance, co
   const auto fid = md_response.fmd().id();
   params.push_back(cta::log::Param("diskFileId", fid));
   if (fid != 0) {
-    m_log(cta::log::DEBUG, "File path exists in the EOS namespace", params);
+    m_log(cta::log::INFO, "File path exists in the EOS namespace", params);
   } else {
-    m_log(cta::log::DEBUG, "File path does not exist in the EOS namespace", params);
+    m_log(cta::log::WARNING, "Could not find path in the EOS namespace. Check that gRPC authentication is set up correctly, and that the path exists", params);
   }
   return fid;
 }
@@ -442,7 +447,7 @@ std::pair<ArchiveId, Checksum> EosNamespaceInjection::getArchiveFileIdAndChecksu
     std::list<cta::log::Param> params;
     params.push_back(cta::log::Param("archiveFileId", archiveFileId));
     params.push_back(cta::log::Param("checksumValue", checksumValue));
-    m_log(cta::log::DEBUG, "Response from EOS nameserver", params);
+    m_log(cta::log::INFO, "Response from EOS nameserver", params);
   }
 
   return std::make_pair(archiveFileId,checksumValue);
