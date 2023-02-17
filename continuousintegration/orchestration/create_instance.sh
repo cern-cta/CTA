@@ -416,7 +416,7 @@ echo "klist for client:"
 kubectl --namespace=${instance} exec client -- klist
 
 echo "klist for client-gfal2"
-kubectl --nmaespace=${instance} exec client-gfal2 -- klist
+kubectl --namespace=${instance} exec client-gfal2 -- klist
 
 echo "klist for ctacli:"
 kubectl --namespace=${instance} exec ctacli -- klist
