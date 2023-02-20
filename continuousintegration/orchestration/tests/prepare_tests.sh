@@ -346,19 +346,14 @@ echo "EOS server version is used:"
 
 # Super client capabilities
 echo "Adding super client capabilities"
-
-clientIP=`kubectl --namespace ${NAMESPACE} describe pod client | grep IP | sed -E 's/IP:[[:space:]]+//'`
 kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin admin add --username ctaadmin2 --comment "ctaadmin2"
 
 kubectl --namespace=${NAMESPACE} exec kdc -- cat /root/ctaadmin2.keytab | kubectl --namespace=${NAMESPACE} exec -i client --  bash -c "cat > /root/ctaadmin2.keytab; mkdir -p /tmp/ctaadmin2"
 kubectl --namespace=${NAMESPACE} exec kdc -- cat /root/poweruser1.keytab | kubectl --namespace=${NAMESPACE} exec -i client --  bash -c "cat > /root/poweruser1.keytab; mkdir -p /tmp/poweruser1"
 kubectl --namespace=${NAMESPACE} exec kdc -- cat /root/eosadmin1.keytab | kubectl --namespace=${NAMESPACE} exec -i client --  bash -c "cat > /root/eosadmin1.keytab; mkdir -p /tmp/eosadmin1"
 
-# Super client-gfal2 capabilities.
-client-gfal2IP=`kubectl --namespace ${NAMESPACE} describe pod client-gfal2 | grep IP | sed -E 's/IP:[[:space:]]+//'`
-kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin admin add --username ctaadmin3 --comment "ctaadmin3"
-
-kubectl --namespace=${NAMESPACE} exec kdc -- cat /root/ctaadmin3.keytab | kubectl --namespace=${NAMESPACE} exec -i client-gfal2 --  bash -c "cat > /root/ctaadmin3.keytab; mkdir -p /tmp/ctaadmin3"
+# Super client-gfal2 capabilities. use same keytabs as client.
+kubectl --namespace=${NAMESPACE} exec kdc -- cat /root/ctaadmin2.keytab | kubectl --namespace=${NAMESPACE} exec -i client-gfal2 --  bash -c "cat > /root/ctaadmin2.keytab; mkdir -p /tmp/ctaadmin2"
 kubectl --namespace=${NAMESPACE} exec kdc -- cat /root/poweruser1.keytab | kubectl --namespace=${NAMESPACE} exec -i client-gfal2 --  bash -c "cat > /root/poweruser1.keytab; mkdir -p /tmp/poweruser1"
 kubectl --namespace=${NAMESPACE} exec kdc -- cat /root/eosadmin1.keytab | kubectl --namespace=${NAMESPACE} exec -i client-gfal2 --  bash -c "cat > /root/eosadmin1.keytab; mkdir -p /tmp/eosadmin1"
 

@@ -219,6 +219,7 @@ test -z ${COMMENT} || annotate "test ${TESTID} STARTED" "comment: ${COMMENT}<br/
 . client_retrieve.sh
 
 # OTHER TESTS??
+RESTAGEDFILES=0
 . client_abortPrepare.sh
 
 . client_deleteFiles.sh

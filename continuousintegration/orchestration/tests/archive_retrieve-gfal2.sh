@@ -52,15 +52,13 @@ if [ $? -ne 0 ]; then
 fi
 
 
-kubectl -n ${NAMESPACE} cp client_helper.sh client:/root/client_helper.sh
-kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh ctaeos:/root/grep_xrdlog_mgm_for_error.sh
+kubectl -n ${NAMESPACE} cp . client-gfal2:/root/client_helper.sh
 
 # Tests
 echo
 echo "Launching gfal2_retrieve.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} cp gfal2_retrieve.sh client:/root/gfal2_retrieve.sh
 kubectl -n ${NAMESPACE} exec client -- bash /root/gfal2_retrieve.sh || exit 1
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1

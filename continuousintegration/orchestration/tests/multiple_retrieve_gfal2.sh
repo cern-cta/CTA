@@ -38,6 +38,7 @@ touch ${FAILED_LIST}
 
 TEST_FILES_LIST=$(mktemp)
 TEST_FILES_SURL=$(mktemp)
+SURLs=$(mktemp)
 
 echo
 echo "Test files list (${NB_FILES} files):"
@@ -46,6 +47,7 @@ for ((file_idx=0; file_idx < ${NB_FILES}; file_idx++)); do
   BASE_FILENAME="${EOS_BASEDIR}/${FILE_UUID}"
   echo "${BASE_FILENAME}" | tee -a ${TEST_FILES_LIST}
   echo "root://${EOS_INSTANCE}/${BASE_FILENAME}" | tee -a ${TEST_FILES_SURL}
+
 done
 
 

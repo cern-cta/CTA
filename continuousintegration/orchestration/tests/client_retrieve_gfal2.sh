@@ -22,26 +22,24 @@ echo "$(date +%s): Trigerring EOS retrieve workflow as poweruser1:powerusers (12
 rm -f ${STATUS_FILE}
 touch ${STATUS_FILE}
 # Generate SURLs file for gfal2.
-touch ${SURLs}
+SURLs=$(mktemp)
+
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   TMP_FILE=$(mktemp)
   eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | grep 'd0::t1' >> ${TMP_FILE}
   cat ${TMP_FILE} | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${subdir}/\1%" >> ${STATUS_FILE}
-  cat ${TMP_FILE} |  sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%root://${EOSINSTANCE}/${EOS_DIR}/${subdir}/\1%" >> SURLs
+  cat ${TMP_FILE} | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%root://${EOSINSTANCE}/${EOS_DIR}/${subdir}/\1%" >> SURLs
   rm ${TMP_FILE}
   # sleep 3 # do not hammer eos too hard
 done
 
-# We need the -s as we are staging the files from tape (see xrootd prepare definition)
-#for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  echo -n "Retrieving files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes..."
-  #cat ${STATUS_FILE} | grep ^${subdir}/ | cut -d/ -f2 | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -s ${EOS_DIR}/${subdir}/TEST_FILE_NAME?activity=T0Reprocess 2>${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME && rm ${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME || echo ERROR with xrootd prepare stage for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME" | tee ${LOGDIR}/prepare_${subdir}.log | grep ^ERROR
-  # THIS MIGHT KILL SOMETHING.
-  XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 gfal-bringonline --from-file ${SURLs}
+
+for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
+  echo -n "Retrieving files to ${EOS_DIR}/${subdir} using gfal-bringonline and ${NB_PROCS} processes..."
+  cat ${SURLs} | grep /${subdir}/ | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 gfal-bringonline TEST_FILE_NAME  2>${ERROR_DIR}/RETRIEVE_${subdir} && rm ${ERROR_DIR}/RETRIEVE_${subdir} || echo Error with gfal-bringonline prepare stage for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/RETRIEVE_${subdir}" | tee ${LOGDIR}/prepare_${subdir}.log | grep ^ERROR
   echo Done.
-  # TODO: Try to do this with gfal2.
   cat ${STATUS_FILE} | grep ^${subdir}/ | cut -d/ -f2 | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} query opaquefile ${EOS_DIR}/${subdir}/TEST_FILE_NAME?mgm.pcmd=xattr\&mgm.subcmd=get\&mgm.xattrname=sys.retrieve.req_id 2>${ERROR_DIR}/XATTRGET_TEST_FILE_NAME && rm ${ERROR_DIR}/XATTRGET_TEST_FILE_NAME || echo ERROR with xrootd xattr get for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/XATTRGET_TEST_FILE_NAME" | tee ${LOGDIR}/prepare_sys.retrieve.req_id_${subdir}.log | grep ^ERROR
-#done
+done
 if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
   # there were some prepare errors
   echo "Several prepare errors occured during retrieval!"
@@ -49,7 +47,7 @@ if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
   mv ${ERROR_DIR}/* ${LOGDIR}/xrd_errors/
 fi
 
-ARCHIVED=$(cat ${STATUS_FILE} | wc -l)
+ARCHIVED=$(cat ${SURLs} | wc -l)
 TO_BE_RETRIEVED=$(( ${ARCHIVED} - $(ls ${ERROR_DIR}/RETRIEVE_* 2>/dev/null | wc -l) ))
 RETRIEVING=${TO_BE_RETRIEVED}
 RETRIEVED=0
@@ -69,9 +67,7 @@ while test 0 -lt ${RETRIEVING}; do
 
   RETRIEVED=0
   for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-   #RETRIEVED=$(( ${RETRIEVED} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | wc -l) ))
-    # TODO: This doesn't tell us if this is the file has only been retrieved once or not.
-    RETRIEVED=$(( ${RETRIEVED} + $(gfal-ls root://${EOSINSTANCE}//${EOS_DIR}/${subdir} | wc -l )))
+    RETRIEVED=$(( ${RETRIEVED} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | wc -l) ))
     sleep 1 # do not hammer eos too hard
   done
 
@@ -89,21 +85,16 @@ rm -f ${STATUS_FILE}
 touch ${STATUS_FILE}
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep 'd[1-9][0-9]*::t1' | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${subdir}/\1%" >> ${STATUS_FILE}
-  gfal-ls root://${EOSINSTANCE}//${EOS_DIR}/${subdir} |
 done
 
 TO_EVICT=$(cat ${STATUS_FILE} | wc -l)
 
-echo "$(date +%s): $TO_EVICT files to be evicted from EOS using 'xrdfs prepare -e'"
-# We need the -e as we are evicting the files from disk cache (see xrootd prepare definition)
-cat ${STATUS_FILE} | sed -e "s%^%${EOS_DIR}/%" | XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 xargs --max-procs=10 -n 40 xrdfs ${EOSINSTANCE} prepare -e > /dev/null
-# XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0
+echo "$(date +%s): $TO_EVICT files to be evicted from EOS using 'gfal-evict SURL'"
+cat ${SURLs} | xargs --max-procs=${NB_PROCS}  -iTEST_FILE_NAME bash -c "XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 xargs --max-procs=10 gfal-evict TEST_FILE_NAME"
 
 LEFTOVER=0
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   LEFTOVER=$(( ${LEFTOVER} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | wc -l) ))
-  # TODO: Cant do this at the momento becasue no dx::t1 info is retrieved by default with gfal-ls.
-  #LEFTOVER=$(( ${LEFTOVER} + $(gfal-ls root://${EOSINSTANCE}//${EOS_DIR}/${subdir} | wc -l ) ))
 done
 
 EVICTED=$((${TO_EVICT}-${LEFTOVER}))

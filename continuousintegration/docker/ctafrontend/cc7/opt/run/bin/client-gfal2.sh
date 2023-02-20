@@ -17,18 +17,6 @@
 
 . /opt/run/bin/init_pod.sh
 
-# gfal2's xrootd plugin needs some xrd 5 libraries.
-# Modify version lock to allow this in case we are running the CI
-# with xrd v4.
-yum versionlock clear
-
-
-# Install gfal cli and plugins
-yum install -y gfal2-util gfal2-plugin-xrootd gfal2-plugin-http
-
-# Configure DB to track progress.
-
-
 if [ ! -e /etc/buildtreeRunner ]; then
   yum-config-manager --enable cta-artifacts
   yum-config-manager --enable ceph
@@ -47,6 +35,20 @@ cat <<EOF > /etc/cta/cta-cli.conf
 # solved by kubernetes DNS server so KIS...
 cta.endpoint ctafrontend:10955
 EOF
+
+# gfal2's xrootd plugin needs some xrd 5 libraries.
+# Modify version lock to allow this in case we are running the CI
+# with xrd v4.
+yum versionlock clear
+
+
+# Install gfal cli and plugins
+yum install -y gfal2-util gfal2-plugin-xrootd gfal2-plugin-http
+
+# Configure DB to track progress.
+
+
+
 
 if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
   # sleep forever but exit immediately when pod is deleted

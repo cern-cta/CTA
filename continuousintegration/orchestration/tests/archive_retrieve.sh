@@ -51,14 +51,14 @@ if [ $? -ne 0 ]; then
 fi
 
 echo
+echo "Copying test scripts to client pod."
+kubectl -n ${NAMESPACE} cp . client:/root/
+
+echo
 echo "Launching simple_client_ar.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} cp simple_client_ar.sh client:/root/simple_client_ar.sh
-kubectl -n ${NAMESPACE} cp client_helper.sh client:/root/client_helper.sh
 kubectl -n ${NAMESPACE} exec client -- bash /root/simple_client_ar.sh || exit 1
-
-kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh ctaeos:/root/grep_xrdlog_mgm_for_error.sh
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 NB_FILES=10000
@@ -69,8 +69,6 @@ echo "Launching client_ar.sh on client pod"
 echo " Archiving ${NB_FILES} files of ${FILE_SIZE_KB}kB each"
 echo " Archiving files: xrdcp as user1"
 echo " Retrieving them as poweruser1"
-kubectl -n ${NAMESPACE} cp client_ar.sh client:/root/client_ar.sh
-kubectl -n ${NAMESPACE} cp client_ar_abortPrepare.py client:/root/client_abortPrepare.sh
 kubectl -n ${NAMESPACE} exec client -- bash /root/client_ar.sh -n ${NB_FILES} -s ${FILE_SIZE_KB} -p 100 -d /eos/ctaeos/preprod -v -r || exit 1
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
