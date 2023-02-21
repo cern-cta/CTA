@@ -111,12 +111,12 @@ wait_for_archive () {
   WAIT_FOR_ARCHIVED_FILE_TIMEOUT=90
 
   while test $(($# - 1)) != $(echo "${@:2}" | tr " " "\n" | xargs -iFILE eos root://${EOS_INSTANCE} info FILE | awk '{print $4;}' | grep tape | wc -l); do
-    echo "Waiting for files to be archived to tape: seconds passed = ${SECONDS_PASSED}"
+    echo "$(date +%s) Waiting for files to be archived to tape: seconds passed = ${SECONDS_PASSED}"
     sleep 1
     let SECONDS_PASSED=SECONDS_PASSED+1
 
     if test ${SECONDS_PASSED} == ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT}; then
-      echo "ERROR: Timed out after ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT} seconds waiting for files to be archived to tape"
+      echo "$(date +%s) ERROR: Timed out after ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT} seconds waiting for files to be archived to tape"
       exit 1
     fi
   done
@@ -131,12 +131,12 @@ wait_for_retrieve () {
   SECONDS_PASSED=0
   WAIT_FOR_RETRIEVED_FILE_TIMEOUT=90
   while test $(($# - 1)) != $(echo "${@:2}" | tr " " "\n" | xargs -iFILE eos root://${EOS_INSTANCE} info FILE | awk '{print $4;}' | grep -F "default.0" | wc -l); do
-    echo "Waiting for files to be retrieved from tape: Seconds passed = ${SECONDS_PASSED}"
+    echo "$(date +%s) Waiting for files to be retrieved from tape: Seconds passed = ${SECONDS_PASSED}"
     sleep 1
     let SECONDS_PASSED=SECONDS_PASSED+1
 
     if test ${SECONDS_PASSED} == ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT}; then
-      echo "Timed out after ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT} seconds waiting for files to be retrieved from tape"
+      echo "$(date +%s) ERROR: Timed out after ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT} seconds waiting for files to be retrieved from tape"
       exit 1
     fi
   done
@@ -151,12 +151,12 @@ wait_for_evict () {
   SECONDS_PASSED=0
   WAIT_FOR_EVICTED_FILE_TIMEOUT=90
   while test 0 != $(echo "${@:2}" | tr " " "\n" | xargs -iFILE eos root://${EOS_INSTANCE} info FILE | awk '{print $4;}' | grep -F "default.0" | wc -l); do
-    echo "Waiting for files to be evicted from disk: Seconds passed = ${SECONDS_PASSED}"
+    echo "$(date +%s) Waiting for files to be evicted from disk: Seconds passed = ${SECONDS_PASSED}"
     sleep 1
     let SECONDS_PASSED=SECONDS_PASSED+1
 
     if test ${SECONDS_PASSED} == ${WAIT_FOR_EVICTED_FILE_TIMEOUT}; then
-      echo "Timed out after ${WAIT_FOR_EVICTED_FILE_TIMEOUT} seconds waiting for files to be evicted from disk"
+      echo "$(date +%s) ERROR: Timed out after ${WAIT_FOR_EVICTED_FILE_TIMEOUT} seconds waiting for files to be evicted from disk"
       exit 1
     fi
   done
@@ -169,14 +169,14 @@ wait_for_tape_state() {
 
   SECONDS_PASSED=0
   WAIT_FOR_EVICTED_FILE_TIMEOUT=90
-  echo "Waiting for tape $1 state to change to $2: Seconds passed = ${SECONDS_PASSED}"
+  echo "$(date +%s) Waiting for tape $1 state to change to $2: Seconds passed = ${SECONDS_PASSED}"
   while test $2 != $(admin_cta --json tape ls --vid $1 | jq -r '.[] | .state'); do
     sleep 1
     let SECONDS_PASSED=SECONDS_PASSED+1
-    echo "Waiting for tape $1 state to change to $2: Seconds passed = ${SECONDS_PASSED}"
+    echo "$(date +%s) Waiting for tape $1 state to change to $2: Seconds passed = ${SECONDS_PASSED}"
 
     if test ${SECONDS_PASSED} == ${WAIT_FOR_EVICTED_FILE_TIMEOUT}; then
-      echo "Timed out after ${WAIT_FOR_EVICTED_FILE_TIMEOUT} seconds waiting for tape $1 state to change to $2"
+      echo "$(date +%s) ERROR: Timed out after ${WAIT_FOR_EVICTED_FILE_TIMEOUT} seconds waiting for tape $1 state to change to $2"
       exit 1
     fi
   done
@@ -224,13 +224,13 @@ put_all_drives () {
       fi;
     done
     if [[ $oneStatusRemaining -eq 0 ]]; then
-      echo "Drives : $drivesToModify are $next_state"
+      echo "$(date +%s) Drives : $drivesToModify are $next_state"
       break;
     fi
     echo -n "."
     SECONDS_PASSED=$SECONDS_PASSED+1
     if [[ $SECONDS_PASSED -gt $WAIT_FOR_DRIVES_TIMEOUT ]]; then
-      die "ERROR: Timeout reach for trying to put all drives $next_state"
+      die "$(date +%s) ERROR: Timeout reach for trying to put all drives $next_state"
     fi
   done
 
@@ -242,4 +242,24 @@ put_all_drives_up () {
 
 put_all_drives_down () {
   put_all_drives "DOWN"
+}
+
+###################################################
+# Helper functions to update the tracker DB status.
+###################################################
+DB_NAME="trackerdb"
+TEST_TABLE="client_tests"
+df_info() {
+  sqlite3 ${DB_NAME} "SELECT $1 FROM ${TEST_TABLE};"
+}
+
+# INSERT created files for test into the db.
+db_init() {
+  sqlite3 ${DB_NAME} "INSERT INTO ${TEST_TABLE} ('filename') VALUES ('$1')"
+}
+
+db_update() {
+  command="$(sqlite3 ${DB_NAME} SELECT $1 FROM ${TEST_TABLE} WHERE filename = '$2')  $4 $3"
+  new_val=eval $command
+  sqlite ${DB_NAME} "UPDATE ${TEST_TABLE} SET $1 = $new_val WHERE filename = '$2;'"
 }

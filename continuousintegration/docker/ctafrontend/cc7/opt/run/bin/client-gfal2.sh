@@ -16,6 +16,7 @@
 #               submit itself to any jurisdiction.
 
 . /opt/run/bin/init_pod.sh
+. /opt/run/bin/init_tracker_db.sh
 
 if [ ! -e /etc/buildtreeRunner ]; then
   yum-config-manager --enable cta-artifacts

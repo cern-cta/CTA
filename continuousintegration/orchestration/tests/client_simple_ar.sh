@@ -17,13 +17,15 @@
 
 EOSINSTANCE=ctaeos
 TEST_FILE_NAME=`uuidgen`
-  TEST_DIR=/eos/ctaeos/cta/
+TEST_DIR=/eos/ctaeos/cta/
 
 # get some common useful helpers for krb5
 . /root/client_helper.sh
 
 eospower_kdestroy
 eospower_kinit
+
+db_init ${TEST_FILE_NAME}
 
 echo "xrdcp /etc/group root://${EOSINSTANCE}/${TEST_DIR}${TEST_FILE_NAME}"
 xrdcp /etc/group root://${EOSINSTANCE}/${TEST_DIR}${TEST_FILE_NAME}
@@ -34,12 +36,17 @@ echo
 echo "FILE ARCHIVED TO TAPE"
 echo
 eos root://${EOSINSTANCE} info ${TEST_DIR}${TEST_FILE_NAME}
+echo "Updating test DB"
+db_update "archived" ${TEST_FILE_NAME} 1 "+"
+db_info "*"
+
 echo
 echo "Information about the testing file:"
 echo "********"
   eos root://${EOSINSTANCE} attr ls ${TEST_DIR}${TEST_FILE_NAME}
   eos root://${EOSINSTANCE} ls -l ${TEST_DIR}${TEST_FILE_NAME}
-  eos root://${EOSINSTANCE} info ${TEST_DIR}${TEST_FILE_NAME}
+eos root://${EOSINSTANCE} info ${TEST_DIR}${TEST_FILE_NAME}
+
 echo
 echo "Removing disk replica as poweruser1:powerusers (12001:1200)"
 # XrdSecPROTOCOL=sss eos -r 12001 1200 root://${EOSINSTANCE} file drop /eos/ctaeos/cta/${TEST_FILE_NAME} 1
@@ -62,6 +69,8 @@ KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANC
 
 # Wait for the copy to appear on disk
 wait_for_retrieve(${EOSINSTANCE}, "${TEST_DIR}${TEST_FILE_NAME}")
+db_update "staged" ${TEST_FILE_NAME} 1 "+"
+db_info "*"
 
 echo
 echo "FILE RETRIEVED FROM DISK"
@@ -75,6 +84,10 @@ echo "********"
 # Delete the file so it doesn't interfere with tests in client_ar.sh
 echo "eos root://${EOSINSTANCE} rm ${TEST_DIR}${TEST_FILE_NAME}"
 eos root://${EOSINSTANCE} rm ${TEST_DIR}${TEST_FILE_NAME}
+db_update "archived" ${TEST_FILE_NAME} 1 "-"
+db_update "deleted" ${TEST_FILE_NAME} 1 "+"
+db_info "filename, archived, staged, deleted"
+
 
 #
 # Check we can copy zero-length files into the namespace by touch and copy
