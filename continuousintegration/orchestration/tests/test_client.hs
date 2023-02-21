@@ -55,10 +55,10 @@ echo "Copying test scripts to client pod."
 kubectl -n ${NAMESPACE} cp . client:/root/
 
 echo
-echo "Launching simple_client_ar.sh on client pod"
+echo "Launching client_simple_ar.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} exec client -- bash /root/simple_client_ar.sh || exit 1
+kubectl -n ${NAMESPACE} exec client -- bash /root/client_simple_ar.sh || exit 1
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 NB_FILES=10000
@@ -77,8 +77,8 @@ echo
 echo "Launching multiple_retrieve.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} cp multiple_retrieve.sh client:/root/multiple_retrieve.sh
-kubectl -n ${NAMESPACE} exec client -- bash /root/multiple_retrieve.sh || exit 1
+kubectl -n ${NAMESPACE} cp client_multiple_retrieve.sh client:/root/client_multiple_retrieve.sh
+kubectl -n ${NAMESPACE} exec client -- bash /root/client_multiple_retrieve.sh || exit 1
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
