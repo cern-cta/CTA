@@ -25,7 +25,23 @@ TEST_DIR=/eos/ctaeos/cta/
 eospower_kdestroy
 eospower_kinit
 
-db_init ${TEST_FILE_NAME}
+cat <<EOF > /opt/run/bin/tracker_simple.schema
+
+CREATE TABLE client_simple_tests_${TEST_FILE_NAME}(
+       filename TEXT PRIMARY KEY,
+       archived INTEGER DEFAULT 1,
+       staged   INTEGER DEFAULT 0,
+       deleted  INTEGER DEFAULT 0,
+       evicted  INTEGER DEFAULT 0
+);
+EOF
+
+sqlite3 /root/trackerdb_simple.db < /opt/run/bin/tracker_simple.schema
+export DB_NAME="/root/trackerdb_simple.db"
+export TEST_TABLE="client_simple_tests_${TEST_FILE_NAME}"
+
+
+db_insert ${TEST_FILE_NAME}
 
 echo "xrdcp /etc/group root://${EOSINSTANCE}/${TEST_DIR}${TEST_FILE_NAME}"
 xrdcp /etc/group root://${EOSINSTANCE}/${TEST_DIR}${TEST_FILE_NAME}
@@ -37,8 +53,8 @@ echo "FILE ARCHIVED TO TAPE"
 echo
 eos root://${EOSINSTANCE} info ${TEST_DIR}${TEST_FILE_NAME}
 echo "Updating test DB"
-db_update "archived" ${TEST_FILE_NAME} 1 "+"
-db_info "*"
+db_update 'archived' ${TEST_FILE_NAME} 1 '='
+db_info '*'
 
 echo
 echo "Information about the testing file:"
@@ -50,7 +66,7 @@ eos root://${EOSINSTANCE} info ${TEST_DIR}${TEST_FILE_NAME}
 echo
 echo "Removing disk replica as poweruser1:powerusers (12001:1200)"
 # XrdSecPROTOCOL=sss eos -r 12001 1200 root://${EOSINSTANCE} file drop /eos/ctaeos/cta/${TEST_FILE_NAME} 1
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOSINSTANCE} file drop ${TEST_DIR}${TEST_FILE_NAME} 1
+XrdSecPROTOCOL=sss eos -r 0 0 root://${EOSINSTANCE} file drop "${TEST_DIR}${TEST_FILE_NAME}" 1
 
 
 echo
