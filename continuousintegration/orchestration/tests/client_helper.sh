@@ -259,9 +259,9 @@ db_insert() {
 
 db_update() {
   query="SELECT $1 FROM ${TEST_TABLE} WHERE filename = '$2'"
-  query_res=$(sqlite3 -header ${DB_NAME} "${query}")
+  query_res=$(sqlite3 ${DB_NAME} "${query}")
   if [[ $4 != "=" ]]; then
-     new_val="$(($query_res $4 $3))"
+     new_val=$(expr $query_res $4 $3)
   else
     new_val=$3
   fi
