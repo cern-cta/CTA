@@ -35,6 +35,7 @@
 #include "cmdline/standalone_cli_tools/common/ConnectionConfiguration.hpp"
 #include "common/checksum/ChecksumBlob.hpp"
 #include "common/exception/CommandLineNotParsed.hpp"
+#include "common/exception/GrpcError.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/utils/utils.hpp"
@@ -49,6 +50,11 @@ extern std::list<std::string> g_storageClasses;
 
 namespace cta {
 namespace cliTool {
+
+class ChangeStorageClassError : public std::runtime_error {
+public:
+  using runtime_error::runtime_error;
+}; // class ChangeStorageClassError
 
 //------------------------------------------------------------------------------
 // constructor
@@ -147,13 +153,17 @@ void ChangeStorageClass::updateStorageClassInEosNamespace() {
     const auto [diskInstance, diskFileId] = CatalogueFetch::getInstanceAndFid(archiveFileId, m_serviceProviderPtr, m_log);
 
     // No files in flight should change storage class
-    if (const auto md_response = m_endpointMapPtr->getMD(diskInstance, ::eos::rpc::FILE, cta::utils::toUint64(diskFileId), "", false);
+    const bool showJson = false;
+    if(const auto md_response = m_endpointMapPtr->getMD(diskInstance, ::eos::rpc::FILE, cta::utils::toUint64(diskFileId), "", showJson);
       fileInFlight(md_response.fmd().locations())) {
-      m_archiveIdsNotUpdatedInEos.push_back(archiveFileId);
-      std::list<cta::log::Param> params;
-      params.push_back(cta::log::Param("archiveFileId", archiveFileId));
-      m_log(cta::log::WARNING, "File did not change storage class because the file was in flight", params);
-      continue;
+        if (md_response.fmd().locations().empty()){
+          throw ChangeStorageClassError("Metadata from EOS could not be fetched: disk file id " + diskFileId + " does not exist or authentication is failing");
+        }
+        m_archiveIdsNotUpdatedInEos.push_back(archiveFileId);
+        std::list<cta::log::Param> params;
+        params.push_back(cta::log::Param("archiveFileId", archiveFileId));
+        m_log(cta::log::WARNING, "File did not change storage class because the file was in flight", params);
+        continue;
     }
 
     const auto path = m_endpointMapPtr->getPath(diskInstance, diskFileId);
@@ -162,15 +172,15 @@ void ChangeStorageClass::updateStorageClassInEosNamespace() {
       params.push_back(cta::log::Param("path", path));
       m_log(cta::log::INFO, "Path found", params);
     }
-    const auto status = m_endpointMapPtr->setXAttr(diskInstance, path, "sys.archive.storage_class", m_storageClassName);
-    if (status != 0) {
+
+    if(auto status = m_endpointMapPtr->setXAttr(diskInstance, path, "sys.archive.storage_class", m_storageClassName); status.ok()) {
+      m_archiveIdsUpdatedInEos.push_back(archiveFileId);
+    } else {
       m_archiveIdsNotUpdatedInEos.push_back(archiveFileId);
       std::list<cta::log::Param> params;
       params.push_back(cta::log::Param("archiveFileId", archiveFileId));
+      params.push_back(cta::log::Param("error", status.error_message()));
       m_log(cta::log::WARNING, "File did not change storage class because query to EOS failed", params);
-    }
-    else {
-      m_archiveIdsUpdatedInEos.push_back(archiveFileId);
     }
   }
 }

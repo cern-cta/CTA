@@ -96,6 +96,7 @@ set (COMMON_LIB_SRC_FILES
   exception/Errnum.cpp
   exception/Exception.cpp
   exception/ForceDismountFailed.cpp
+  exception/GrpcError.cpp
   exception/InvalidArgument.cpp
   exception/InvalidConfigEntry.cpp
   exception/LostDatabaseConnection.cpp

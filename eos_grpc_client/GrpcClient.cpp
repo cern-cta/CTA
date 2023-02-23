@@ -18,6 +18,7 @@
 #include <sys/stat.h>
 #include <sstream>
 #include "GrpcClient.hpp"
+#include "common/exception/GrpcError.hpp"
 
 namespace eos {
 namespace client {
@@ -73,7 +74,7 @@ std::string GrpcClient::ping(const std::string& payload)
   if(status.ok()) {
     return reply.message();
   } else {
-    throw std::runtime_error("Ping failed with error: " + status.error_message());
+    throw cta::exception::GrpcError("Ping failed with error: " + status.error_message());
   }
 }
 
@@ -119,7 +120,7 @@ int GrpcClient::FileInsert(const std::vector<eos::rpc::FileMdProto> &files, eos:
     }
     return num_errors;
   } else {
-    throw std::runtime_error("FileInsert failed with error: " + status.error_message());
+    throw cta::exception::GrpcError("FileInsert failed with error: " + status.error_message());
   }
 }
 
@@ -175,7 +176,7 @@ int GrpcClient::ContainerInsert(const std::vector<eos::rpc::ContainerMdProto> &d
     }
     return num_errors;
   } else {
-    throw std::runtime_error("ContainerInsert failed with error: " + status.error_message());
+    throw cta::exception::GrpcError("ContainerInsert failed with error: " + status.error_message());
   }
 }
 
@@ -207,7 +208,7 @@ void GrpcClient::GetCurrentIds(uint64_t &cid, uint64_t &fid)
     cid = m_eos_cid = response.current_cid();
     fid = m_eos_fid = response.current_fid();
   } else {
-    throw std::runtime_error("EOS namespace query failed with error: " + status.error_message());
+    throw cta::exception::GrpcError("GetCurrentIds namespace query failed with error: " + status.error_message());
   }
 }
 
@@ -257,30 +258,27 @@ eos::rpc::MDResponse GrpcClient::GetMD(eos::rpc::TYPE type, uint64_t id, const s
   return response;
 }
 
-using QueryStatus = int;
-QueryStatus GrpcClient::Exec(eos::rpc::NSRequest& request, eos::rpc::NSResponse& reply) const {
+grpc::Status GrpcClient::Exec(eos::rpc::NSRequest& request) {
 
   request.set_authkey(token());
 
+  auto tag = nextTag();
+
+  eos::rpc::NSResponse response;
   grpc::ClientContext context;
   grpc::CompletionQueue cq;
   grpc::Status status;
   std::unique_ptr<grpc::ClientAsyncResponseReader<eos::rpc::NSResponse> > rpc(
     stub_->AsyncExec(&context, request, &cq));
-  rpc->Finish(&reply, &status, (void*) 1);
+  rpc->Finish(&response, &status, tag);
 
   void* got_tag;
   bool ok = false;
   GPR_ASSERT(cq.Next(&got_tag, &ok));
-  GPR_ASSERT(got_tag == (void*) 1);
+  GPR_ASSERT(got_tag == tag);
   GPR_ASSERT(ok);
 
-  // Act upon the status of the actual RPC.
-  if (status.ok()) {
-    return reply.error().code();
-  } else {
-    return -1;
-  }
+  return status;
 }
 
 }} // namespace eos::client

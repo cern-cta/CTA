@@ -49,8 +49,7 @@ public:
   // Obtain container or file metadata
   eos::rpc::MDResponse GetMD(eos::rpc::TYPE type, uint64_t id, const std::string &path, bool showJson = false);
 
-  using QueryStatus = int;
-  QueryStatus Exec(eos::rpc::NSRequest& request, eos::rpc::NSResponse& reply) const;
+  grpc::Status Exec(eos::rpc::NSRequest& request);
 
   void set_ssl(bool onoff) {
     m_SSL = onoff;

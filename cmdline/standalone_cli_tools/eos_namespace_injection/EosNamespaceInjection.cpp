@@ -94,8 +94,12 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const {
 
 }
 
-namespace cta {
-namespace cliTool {
+namespace cta::cliTool {
+
+class EosNameSpaceInjectionError : public std::runtime_error {
+public:
+  using runtime_error::runtime_error;
+}; // class EosNameSpaceInjectionError
 
 //------------------------------------------------------------------------------
 // constructor
@@ -157,12 +161,18 @@ int EosNamespaceInjection::exceptionThrowingMain(const int argc, char *const *co
     }
 
     if(const auto fid = getFileIdEos(metaDataObject.diskInstance, metaDataObject.eosPath); fid != 0) {
-      throw std::runtime_error("The file with path " + metaDataObject.eosPath + " already exists for instance " + metaDataObject.diskInstance + ". This tool does not overwrite existing files");
+      throw cta::cliTool::EosNameSpaceInjectionError("The file with path " + metaDataObject.eosPath + " already exists for instance " + metaDataObject.diskInstance + ". This tool does not overwrite existing files");
     }
 
     const auto newFid = createFileInEos(metaDataObject, parentId, uid, gid);
-    if(newFid == 0) {
-      throw std::runtime_error("The file with path " + metaDataObject.eosPath + " was not created");
+    if (newFid != 0) {
+      std::list<cta::log::Param> params;
+      params.push_back(cta::log::Param("diskFileId", newFid));
+      m_log(cta::log::INFO, "File was created in the EOS namespace", params);
+    } else {
+      std::list<cta::log::Param> params;
+      params.push_back(cta::log::Param("diskFileId", newFid));
+      m_log(cta::log::WARNING, "Could not find file in the EOS namespace. Check that gRPC authentication is set up correctly, and that the path exists", params);
     }
 
     auto decimalToHexadecimal = [](const std::string &decimalNumber) {
@@ -191,7 +201,7 @@ int EosNamespaceInjection::exceptionThrowingMain(const int argc, char *const *co
       params.push_back(cta::log::Param("eosArchiveFileId", eosArchiveFileId));
       params.push_back(cta::log::Param("eosChecksum", eosChecksum));
       m_log(cta::log::WARNING, "File metadata in EOS and CTA does not match", params);
-      throw std::runtime_error("Sanity check failed.");
+      throw cta::cliTool::EosNameSpaceInjectionError("Sanity check failed.");
     }
   }
   return 0;
@@ -347,12 +357,6 @@ uint64_t EosNamespaceInjection::getFileIdEos(const std::string &diskInstance, co
   m_log(cta::log::DEBUG, "Querying for file metadata in the EOS namespace", params);
   const auto md_response = m_endpointMapPtr->getMD(diskInstance, ::eos::rpc::FILE, 0, path, false);
   const auto fid = md_response.fmd().id();
-  params.push_back(cta::log::Param("diskFileId", fid));
-  if (fid != 0) {
-    m_log(cta::log::INFO, "File path exists in the EOS namespace", params);
-  } else {
-    m_log(cta::log::WARNING, "Could not find path in the EOS namespace. Check that gRPC authentication is set up correctly, and that the path exists", params);
-  }
   return fid;
 }
 
@@ -453,5 +457,4 @@ std::pair<ArchiveId, Checksum> EosNamespaceInjection::getArchiveFileIdAndChecksu
   return std::make_pair(archiveFileId,checksumValue);
 }
 
-} // namespace cliTool
-} // namespace cta
+} // namespace cta::cliTool
