@@ -23,6 +23,14 @@ tapefile_ls()
   done
 }
 
+# Get list of files currently on tape.
+tmp_file=$(mktemp)
+initial_files_on_tape=$(mktemp)
+for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
+    eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[0-9][0-9]*::t1' | awk '{print $10}' > tmp_file
+    cat $tmp_file | xargs -iFILE_NAME echo ${subdir}/FILE_NAME >> $initial_files_on_tape
+done
+
 
 # We can now delete the files
 DELETED=0
@@ -44,7 +52,7 @@ echo "Before starting deletion there are ${INITIALFILESONTAPE} files on tape."
 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOSINSTANCE} rm -Fr ${EOS_DIR} &
 EOSRMPID=$!
 # wait a bit in case eos prematurely fails...
-sleep 0.1
+sleep 0.1i
 if test ! -d /proc/${EOSRMPID}; then
   # eos rm process died, get its status
   wait ${EOSRMPID}
@@ -67,6 +75,7 @@ while test 0 != ${FILESONTAPE}; do
     break
   fi
   FILESONTAPE=$(tapefile_ls ${VIDLIST} > >(wc -l) 2> >(cat > /tmp/ctaerr))
+
   if [[ $(cat /tmp/ctaerr | wc -l) -gt 0 ]]; then
     echo "cta-admin COMMAND FAILED!!"
     echo "ERROR CTA ERROR MESSAGE:"
@@ -77,8 +86,32 @@ while test 0 != ${FILESONTAPE}; do
   echo "${DELETED}/${INITIALFILESONTAPE} deleted"
 done
 
+
 # kill eos rm command that may run in the background
 kill ${EOSRMPID} &> /dev/null
+
+# Get list of files on directory after deletion.
+# Files on tape after rm.
+error_files_on_tape=$(mktemp)
+for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
+    eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[0-9]*::t1' | awk '{print $10}' > $tmp_file
+    cat $tmp_file
+    cat $tmp_file | xargs -iFILE_NAME echo ${subdir}/FILE_NAME >> $error_files_on_tape
+done
+
+echo "Non deleted files on tape "
+cat $error_files_on_tape
+
+
+# Update DB with deleted list of files.
+comm -2 -3 $initial_files_on_tape $error_files_on_tape | xargs -iFILE_NAME bash -c "db_update 'deleted' FILE_NAME 1 '='"
+
+
+# Generate list of deleted files.
+deleted_files=$(mktemp)
+comm -2 -3  $start $end > $deleted_files
+
+cat $deleted_files | xargs -iFILE_NAME
 
 # As we deleted the directory we may have deleted more files than the ones we retrieved
 # therefore we need to take the smallest of the 2 values to decide if the system test was

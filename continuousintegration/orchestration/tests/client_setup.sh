@@ -46,22 +46,23 @@ SSH_OPTIONS='-o BatchMode=yes -o ConnectTimeout=10'
 # Setup sqlite3 DB.
 # Table client_tests
 #   filename
-#   archived  - amount of time a file has been archived, for copies.
-#   staged - amount of time the evict
-#   deleted   - if the file is currently not on tape because it has been deleted.
-#   evicted   - amount of times the evict call has been called for the file.
+#   archived     - amount of time a file has been archived
+#   staged       - amount of times a file has been evicted
+#   evicted      - amount of times the evict call has been called for the file.
+#   deleted      - deleted files.
 cat <<EOF > /opt/run/bin/tracker.schema
 
-CREATE TABLE client_tests(
-       subdir   TEXT,
-       filename TEXT,
+CREATE TABLE client_tests_${TESTID}(
+       filename TEXT PRIMARY KEY,
        archived INTEGER DEFAULT 1,
        staged   INTEGER DEFAULT 0,
-       deleted  INTEGER DEFAULT 0,
        evicted  INTEGER DEFAULT 0,
-       PRIMARY KEY (subdir, filename)
+       deleted  INTEGER DEFAULT 0
 );
 EOF
+
+export DB_NAME="/root/trackerdb.db"
+export TEST_TABLE="client_tests_${TESTID}"
 
 sqlite3 /root/trackerdb.db < /opt/run/bin/tracker.schema
 
@@ -92,7 +93,6 @@ annotate() {
   curlcmd="curl --connect-timeout 2 -X POST 'https://ctapps-influx02.cern.ch:8086/write?db=annotations&u=annotations&p=annotations&precision=s' --data-binary '${LINE}'"
   eval ${curlcmd}
 }
-
 
 while getopts "d:e:n:N:s:p:vS:rAPGt:m:" o; do
     case "${o}" in
@@ -204,9 +204,6 @@ klist -s || die "Cannot get kerberos credentials for user ${USER}"
 # Get kerberos credentials for poweruser1
 eospower_kdestroy
 eospower_kinit
-
-# For abortPrepare test.
-RESTAGEDFILES=0
 
 # TODO: Specify specific test information. ie, archive test, retrieve test, etc?
 echo "Starting test ${TESTID}: ${COMMENT}"

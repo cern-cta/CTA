@@ -83,7 +83,7 @@ while test 0 != ${ARCHIVING}; do
   for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
     eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | grep '^d0::t1' | awk '{print $10}'> $status2
     ARCHIVED=$(( ${ARCHIVED} + $(cat ${status2} | wc -l) ))
-    cat $status2 | xargs -iTEST_FILE_NAME db_insert '${subdir}/TEST_FILE_NAME'
+    cat $status2 | xargs -iTEST_FILE_NAME bash -c "db_insert '${subdir}/TEST_FILE_NAME'"
     sleep 1 # do not hammer eos too hard
   done
 

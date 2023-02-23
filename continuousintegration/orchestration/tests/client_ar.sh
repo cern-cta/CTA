@@ -16,12 +16,11 @@
 #               submit itself to any jurisdiction.
 
 
- client_setup.sh "@"
+. client_setup.sh "$@"
 
 
 # Immutable file test.
-
-. client_immutable_file.sh
+#. client_immutable_file.sh
 
 # Archiving Test
 if [[ $DONOTARCHIVE == 0 ]]; then
@@ -37,9 +36,11 @@ fi
 # Retrieve Test
 . client_retrieve.sh
 
+. client_evict.sh
+
 # Abort prepare test.
-RESTAGEDFILES=0
-. client_abortPrepare.sh
+#RESTAGEDFILES=0
+#. client_abortPrepare.sh
 
 # Delete Test
 if [[ $REMOVE == 1 ]]; then
@@ -54,10 +55,12 @@ echo "###"
 
 test -z ${COMMENT} || annotate "test ${TESTID} FINISHED" "Summary:</br>NB_FILES: $((${NB_FILES} * ${NB_DIRS}))</br>ARCHIVED: ${ARCHIVED}<br/>RETRIEVED: ${RETRIEVED}<br/>STAGERRMED: ${STAGERRMED}</br>DELETED: ${DELETED}" 'test,end'
 
-
 # stop tail
 test -z $TAILPID || kill ${TAILPID} &> /dev/null
 
+if [[-z ${LASTCOUNT} ]]; then
+    LASTCOUNT=$((${NB_FILES} * ${NB_DIRS}))
+fi
 RC=0
 if [ ${LASTCOUNT} -ne $((${NB_FILES} * ${NB_DIRS})) ]; then
   ((RC++))

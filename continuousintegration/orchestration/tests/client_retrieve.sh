@@ -29,8 +29,9 @@ done
 
 
 # Get initial stage value.
-curre_stage_val=$(db_info 'archive')
-NEW_STAGE_VAL=$((${current_s_val} + 1 ))
+#current_stage_val=$(db_info 'archived')
+current_stage_val=0
+NEW_STAGE_VAL=$((${current_stage_val} + 1 ))
 
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
@@ -75,11 +76,10 @@ while test 0 -lt ${RETRIEVING}; do
     # If, in the future, we have multiple clients running simultaneously,
     # this will make the DB inconsistent. If not, we would have to check
     # if the entry has already been updated in every outer loop iteration.
-    cat $status | xargs -iTEST_FILE_NAME db_update "staged" TEST_FILE_NAME ${NEW_STAGE_VAL} "="
+    cat $status | xargs -iTEST_FILE_NAME bash -c "db_update 'staged' ${subdir}/TEST_FILE_NAME ${NEW_STAGE_VAL} '='"
 
     sleep 1 # do not hammer eos too hard
   done
-
   RETRIEVING=$((${TO_BE_RETRIEVED} - ${RETRIEVED}))
 
   echo "${RETRIEVED}/${TO_BE_RETRIEVED} retrieved"
