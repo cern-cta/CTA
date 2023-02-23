@@ -1,13 +1,7 @@
-.idea
-nbproject/
-/build/
-.project
-.cproject
-.settings/
-workbench.xmi
-.vscode/
+
+# catalogue
+catalogue/AllCatalogueSchema.hpp
+
+# cta-release
 cta-release/RPM-GPG-KEY-*
 cta-release/versionlock.cta
-*.swp
-tags
-/.clion.source.upload.marker
