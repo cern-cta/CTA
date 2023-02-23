@@ -30,7 +30,7 @@ db_init ${TEST_FILE_NAME}
 echo "xrdcp /etc/group root://${EOSINSTANCE}/${TEST_DIR}${TEST_FILE_NAME}"
 xrdcp /etc/group root://${EOSINSTANCE}/${TEST_DIR}${TEST_FILE_NAME}
 
-wait_for_archive(${EOSINSTANCE}, "${TEST_DIR}${TEST_FILE_NAME}")
+wait_for_archive ${EOSINSTANCE} "${TEST_DIR}${TEST_FILE_NAME}"
 
 echo
 echo "FILE ARCHIVED TO TAPE"
@@ -68,7 +68,7 @@ echo "Trigerring EOS retrieve workflow as poweruser1:powerusers (12001:1200)"
 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -s ${TEST_DIR}${TEST_FILE_NAME}
 
 # Wait for the copy to appear on disk
-wait_for_retrieve(${EOSINSTANCE}, "${TEST_DIR}${TEST_FILE_NAME}")
+wait_for_retrieve ${EOSINSTANCE} "${TEST_DIR}${TEST_FILE_NAME}"
 db_update "staged" ${TEST_FILE_NAME} 1 "+"
 db_info "*"
 
@@ -85,8 +85,9 @@ echo "********"
 echo "eos root://${EOSINSTANCE} rm ${TEST_DIR}${TEST_FILE_NAME}"
 eos root://${EOSINSTANCE} rm ${TEST_DIR}${TEST_FILE_NAME}
 db_update "archived" ${TEST_FILE_NAME} 1 "-"
+db_update "staged" ${TEST_FILE_NAME} 1 "-"
 db_update "deleted" ${TEST_FILE_NAME} 1 "+"
-db_info "filename, archived, staged, deleted"
+db_info "filename, evicted, deleted"
 
 
 #

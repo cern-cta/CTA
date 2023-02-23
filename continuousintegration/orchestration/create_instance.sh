@@ -341,7 +341,7 @@ fi
 
 echo "Launching pods"
 
-for podname in client client-gfal2 ctacli tpsrv01 tpsrv02 ctaeos ctafrontend kdc; do
+for podname in client ctacli tpsrv01 tpsrv02 ctaeos ctafrontend kdc; do
   kubectl create -f ${poddir}/pod-${podname}.yaml --namespace=${instance}
 done
 
@@ -375,19 +375,16 @@ echo OK
 # TODO: Mov this into for loop?
 echo -n "Configuring KDC clients (frontend, cli...) "
 kubectl --namespace=${instance} exec kdc -- cat /etc/krb5.conf | kubectl --namespace=${instance} exec -i client --  bash -c "cat > /etc/krb5.conf"
-kubectl --namespace=${instance} exec kdc -- cat /etc/krb5.conf | kubectl --namespace=${instance} exec -i client-gfal2 --  bash -c "cat > /etc/krb5.conf"
-kubectl --namespace=${instance} exec kdc -- cat /etc/krb5.conf | kubectl --namespace=${instance} exec -i ctacli --  bash -c "cat > /etc/krb5.conf" 
+kubectl --namespace=${instance} exec kdc -- cat /etc/krb5.conf | kubectl --namespace=${instance} exec -i ctacli --  bash -c "cat > /etc/krb5.conf"
 kubectl --namespace=${instance} exec kdc -- cat /etc/krb5.conf | kubectl --namespace=${instance} exec -i ctafrontend --  bash -c "cat > /etc/krb5.conf"
 kubectl --namespace=${instance} exec kdc -- cat /etc/krb5.conf | kubectl --namespace=${instance} exec -i ctaeos --  bash -c "cat > /etc/krb5.conf"
 kubectl --namespace=${instance} exec kdc -- cat /root/ctaadmin1.keytab | kubectl --namespace=${instance} exec -i ctacli --  bash -c "cat > /root/ctaadmin1.keytab"
 kubectl --namespace=${instance} exec kdc -- cat /root/user1.keytab | kubectl --namespace=${instance} exec -i client --  bash -c "cat > /root/user1.keytab"
-kubectl --namespace=${instance} exec kdc -- cat /root/user1.keytab | kubectl --namespace=${instance} exec -i client-gfal2 --  bash -c "cat > /root/user1.keytab"
 # need to mkdir /etc/cta folder as cta rpm may not already be installed (or put it somewhere else and move it later???)
 kubectl --namespace=${instance} exec kdc -- cat /root/cta-frontend.keytab | kubectl --namespace=${instance} exec -i ctafrontend --  bash -c "mkdir -p /etc/cta; cat > /etc/cta/cta-frontend.krb5.keytab"
 kubectl --namespace=${instance} exec kdc -- cat /root/eos-server.keytab | kubectl --namespace=${instance} exec -i ctaeos --  bash -c "cat > /etc/eos-server.krb5.keytab"
 kubectl --namespace=${instance} exec ctacli -- kinit -kt /root/ctaadmin1.keytab ctaadmin1@TEST.CTA
 kubectl --namespace=${instance} exec client -- kinit -kt /root/user1.keytab user1@TEST.CTA
-kubectl --namespace=${instance} exec client-gfal2 -- kinit -kt /root/user1.keytab user1@TEST.CTA
 
 ## THE FILE IS MOVED THERE MUCH LATER AND OVERWRITES THIS
 # THIS HAS TO BE IMPROVED (DEFINITELY) SO THAT WE CAN ASYNCHRONOUSLY UPDATE THE CONFIGURATION FILES...
@@ -407,7 +404,6 @@ kubectl --namespace=${instance} exec ctaeos -- touch /CANSTART
 
 # use krb5 and then unix fod xrootd protocol on the client pod for eos, xrdcp and cta everything should be fine!
 echo "XrdSecPROTOCOL=krb5,unix" | kubectl --namespace=${instance} exec -i client -- bash -c "cat >> /etc/xrootd/client.conf"
-echo "XrdSecPROTOCOL=krb5.unix" | kubectl --namespace=${instance} exec -i client-gfal2 -- bash -c "cat >> /etc/xrootd/client.conf"
 # May be needed for the client to make sure that SSS is not used by default but krb5...
 #echo "XrdSecPROTOCOL=krb5,unix" | kubectl --namespace=${instance} exec -i client -- bash -c "cat >> /etc/xrootd/client.conf"
 echo OK
@@ -415,8 +411,6 @@ echo OK
 echo "klist for client:"
 kubectl --namespace=${instance} exec client -- klist
 
-echo "klist for client-gfal2"
-kubectl --namespace=${instance} exec client-gfal2 -- klist
 
 echo "klist for ctacli:"
 kubectl --namespace=${instance} exec ctacli -- klist
@@ -465,7 +459,6 @@ done
 echo -n "Copying eos SSS on ctacli and client pods to allow recalls"
 kubectl --namespace=${instance} exec ctaeos -- cat /etc/eos.keytab | kubectl --namespace=${instance} exec -i ctacli --  bash -c "cat > /etc/eos.keytab; chmod 600 /etc/eos.keytab"
 kubectl --namespace=${instance} exec ctaeos -- cat /etc/eos.keytab | kubectl --namespace=${instance} exec -i client --  bash -c "cat > /etc/eos.keytab; chmod 600 /etc/eos.keytab"
-kubectl --namespace=${instance} exec ctaeos -- cat /etc/eos.keytab | kubectl --namespace=${instance} exec -i client-gfal2 --  bash -c "cat > /etc/eos.keytab; chmod 600 /etc/eos.keytab"
 echo OK
 
 # In case of testing to update the database using liquibase.

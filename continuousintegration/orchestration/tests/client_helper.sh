@@ -247,19 +247,33 @@ put_all_drives_down () {
 ###################################################
 # Helper functions to update the tracker DB status.
 ###################################################
-DB_NAME="trackerdb"
+DB_NAME="/root/trackerdb"
 TEST_TABLE="client_tests"
-df_info() {
-  sqlite3 ${DB_NAME} "SELECT $1 FROM ${TEST_TABLE};"
+db_info() {
+  sqlite3 -header ${DB_NAME} "SELECT $1 FROM ${TEST_TABLE};"
 }
 
 # INSERT created files for test into the db.
-db_init() {
+db_insert() {
   sqlite3 ${DB_NAME} "INSERT INTO ${TEST_TABLE} ('filename') VALUES ('$1')"
 }
 
 db_update() {
-  command="$(sqlite3 ${DB_NAME} SELECT $1 FROM ${TEST_TABLE} WHERE filename = '$2')  $4 $3"
-  new_val=eval $command
-  sqlite ${DB_NAME} "UPDATE ${TEST_TABLE} SET $1 = $new_val WHERE filename = '$2;'"
+  query="SELECT $1 FROM ${TEST_TABLE} WHERE filename = '$2'"
+  query_res=$(sqlite3 -header ${DB_NAME} "${query}")
+  if [[ $4 != "=" ]]; then
+     new_val=$(($query_res $4 $3))
+  else
+    new_val=$3
+  fi
+  sqlite3 ${DB_NAME} "UPDATE ${TEST_TABLE} SET $1 = $new_val WHERE filename = '$2';"
 }
+
+
+#db_coherence() {
+
+#}
+
+#db_dump () {
+#
+#}

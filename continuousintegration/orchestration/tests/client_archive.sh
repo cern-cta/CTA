@@ -30,10 +30,9 @@ eos root://${EOSINSTANCE} attr ls ${EOS_DIR}
 echo
 
 
-# Create directory for xrootd error reports
-ERROR_DIR="/dev/shm/$(basename ${EOS_DIR})"
-mkdir ${ERROR_DIR}
-echo "$(date +%s): ERROR_DIR=${ERROR_DIR}"
+# As we are skipping n bytes per file we need a bit more than the file size to accomodate dd to read ${FILE_KB_SIZE} skipping the n first bytes
+dd if=/dev/urandom of=/tmp/testfile bs=1k count=$((${FILE_KB_SIZE} + ${NB_FILES}*${NB_DIRS}/1024 + 1)) || exit 1
+
 # not more than 100k files per directory so that we can rm and find as a standard user
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   eos root://${EOSINSTANCE} mkdir -p ${EOS_DIR}/${subdir} || die "Cannot create directory ${EOS_DIR}/{subdir} in eos instance ${EOSINSTANCE}."
@@ -69,6 +68,7 @@ ARCHIVED=0
 echo "$(date +%s): Waiting for files to be on tape:"
 SECONDS_PASSED=0
 WAIT_FOR_ARCHIVED_FILE_TIMEOUT=$((40+${NB_FILES}/5))
+status2=$(mktemp)
 while test 0 != ${ARCHIVING}; do
   echo "$(date +%s): Waiting for files to be archived to tape: Seconds passed = ${SECONDS_PASSED}"
   sleep 3
@@ -81,7 +81,9 @@ while test 0 != ${ARCHIVING}; do
 
   ARCHIVED=0
   for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-    ARCHIVED=$(( ${ARCHIVED} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | grep '^d0::t1' | wc -l) ))
+    eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | grep '^d0::t1' | awk '{print $10}'> $status2
+    ARCHIVED=$(( ${ARCHIVED} + $(cat ${status2} | wc -l) ))
+    cat $status2 | xargs -iTEST_FILE_NAME db_insert '${subdir}/TEST_FILE_NAME'
     sleep 1 # do not hammer eos too hard
   done
 

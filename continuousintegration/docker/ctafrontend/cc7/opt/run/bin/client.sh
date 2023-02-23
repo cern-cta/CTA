@@ -16,7 +16,6 @@
 #               submit itself to any jurisdiction.
 
 . /opt/run/bin/init_pod.sh
-. /opt/run/bin/init_tracker_db.sh
 
 if [ ! -e /etc/buildtreeRunner ]; then
   yum-config-manager --enable cta-artifacts
@@ -36,6 +35,16 @@ cat <<EOF > /etc/cta/cta-cli.conf
 # solved by kubernetes DNS server so KIS...
 cta.endpoint ctafrontend:10955
 EOF
+
+# Install gfal cli and http plugin.
+yum install -y gfal2-util gfal2-plugin-http
+
+# If we are on xrd5 install also the xrd plugin.
+xrdVersion=$(yum versionlock | grep xrootd-4 | wc -l)
+if [[ $xrdVersion -eq 5 ]]; then
+    yum install -y gfal2-plugin-xrootd
+fi
+
 
 if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
   # sleep forever but exit immediately when pod is deleted

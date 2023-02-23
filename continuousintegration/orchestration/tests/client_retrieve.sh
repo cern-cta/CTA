@@ -25,6 +25,13 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   # sleep 3 # do not hammer eos too hard
 done
 
+# Check coherence between DB status and files on tape.
+
+
+# Get initial stage value.
+curre_stage_val=$(db_info 'archive')
+NEW_STAGE_VAL=$((${current_s_val} + 1 ))
+
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   echo -n "Retrieving files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes..."
@@ -44,6 +51,7 @@ ARCHIVED=$(cat ${STATUS_FILE} | wc -l)
 TO_BE_RETRIEVED=$(( ${ARCHIVED} - $(ls ${ERROR_DIR}/RETRIEVE_* 2>/dev/null | wc -l) ))
 RETRIEVING=${TO_BE_RETRIEVED}
 RETRIEVED=0
+status=$(mktemp)
 # Wait for the copy to appear on disk
 echo "$(date +%s): Waiting for files to be back on disk:"
 SECONDS_PASSED=0
@@ -60,7 +68,15 @@ while test 0 -lt ${RETRIEVING}; do
 
   RETRIEVED=0
   for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-    RETRIEVED=$(( ${RETRIEVED} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | wc -l) ))
+    eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | awk '{print $10}'  > $status
+    RETRIEVED=$(( ${RETRIEVED} + $(cat $status | wc -l) ))
+
+    # For 'speed' we are always updating to the expected value for
+    # If, in the future, we have multiple clients running simultaneously,
+    # this will make the DB inconsistent. If not, we would have to check
+    # if the entry has already been updated in every outer loop iteration.
+    cat $status | xargs -iTEST_FILE_NAME db_update "staged" TEST_FILE_NAME ${NEW_STAGE_VAL} "="
+
     sleep 1 # do not hammer eos too hard
   done
 
@@ -72,34 +88,3 @@ done
 echo "###"
 echo "${RETRIEVED}/${TO_BE_RETRIEVED} retrieved files"
 echo "###"
-
-# Build the list of files with more than 1 disk copy that have been archived before (ie d>=1::t1)
-rm -f ${STATUS_FILE}
-touch ${STATUS_FILE}
-for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep 'd[1-9][0-9]*::t1' | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${subdir}/\1%" >> ${STATUS_FILE}
-done
-
-TO_EVICT=$(cat ${STATUS_FILE} | wc -l)
-
-echo "$(date +%s): $TO_EVICT files to be evicted from EOS using 'xrdfs prepare -e'"
-# We need the -e as we are evicting the files from disk cache (see xrootd prepare definition)
-cat ${STATUS_FILE} | sed -e "s%^%${EOS_DIR}/%" | XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 xargs --max-procs=10 -n 40 xrdfs ${EOSINSTANCE} prepare -e > /dev/null
-
-
-LEFTOVER=0
-for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  LEFTOVER=$(( ${LEFTOVER} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | wc -l) ))
-done
-
-EVICTED=$((${TO_EVICT}-${LEFTOVER}))
-echo "$(date +%s): $EVICTED/$TO_EVICT files evicted from EOS 'xrdfs prepare -e'"
-
-LASTCOUNT=${EVICTED}
-
-# Build the list of tape only files.
-rm -f ${STATUS_FILE}
-touch ${STATUS_FILE}
-for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep 'd0::t[^0]' | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${subdir}/\1%" >> ${STATUS_FILE}
-done

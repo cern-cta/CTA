@@ -73,11 +73,47 @@ kubectl -n ${NAMESPACE} exec client -- bash /root/client_ar.sh -n ${NB_FILES} -s
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
+#echo
+#echo "Launching client_archive.sh on client pod"
+#echo " Archiving file: xrdcp as user1"
+#kubectl -n ${NAMESPACE} exec client -- bash /root/client_archive.sh || exit 1
+
+#kubectl -n ${NAMESPACE} exec client -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
+#echo
+#echo "Launching client_retireve.sh on client pod"
+#echo " Retrieving them as poweruser1"
+#kubectl -n ${NAMESPACE} exec client -- bash /root/client_retrieve.sh || exit 1
+#kubectl -n ${NAMESPACE} exec client -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
+
+
+# Only run gfal with xrd when xrd version == 5
+#echo
+#echo "Launching client_retrieve_gfal.sh on client pod"
+#echo " Retrieving as , using xrootd"
+#kubectl -n ${NAMESPACE} exec client -- bash /root/client_retrieve_gfal2.sh || exit 1
+
+#kubectl -n ${NAMESPACE} exec client -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
+#echo
+#echo "Launching client_retrieve_gfal.sh on client pod"
+#echo " Retrieving as , using HTPP"
+
+
+#echo "Launching client_abortPrepare.sh on client pod"
+#echo " Retrieving it as poweruser1"
+#kubectl -n ${NAMESPACE} exec client -- bash /root/client_abortPrepare.sh || exit 1
+
+#kubectl -n ${NAMESPACE} exec client -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
+
+
+
 echo
-echo "Launching multiple_retrieve.sh on client pod"
+echo "Launching client_multiple_retrieve.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} cp client_multiple_retrieve.sh client:/root/client_multiple_retrieve.sh
 kubectl -n ${NAMESPACE} exec client -- bash /root/client_multiple_retrieve.sh || exit 1
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
@@ -86,7 +122,6 @@ echo
 echo "Launching idempotent_prepare.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} cp idempotent_prepare.sh client:/root/idempotent_prepare.sh
 kubectl -n ${NAMESPACE} exec client -- bash /root/idempotent_prepare.sh || exit 1
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
@@ -95,7 +130,6 @@ echo
 echo "Launching delete_on_closew_error.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} cp delete_on_closew_error.sh client:/root/delete_on_closew_error.sh
 kubectl -n ${NAMESPACE} exec client -- bash /root/delete_on_closew_error.sh || exit 1
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
@@ -104,7 +138,6 @@ echo
 echo "Launching try_evict_before_archive_completed.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} cp try_evict_before_archive_completed.sh client:/root/try_evict_before_archive_completed.sh
 kubectl -n ${NAMESPACE} exec client -- bash /root/try_evict_before_archive_completed.sh || exit 1
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
@@ -115,7 +148,6 @@ echo
 echo "Launching retrieve_queue_cleanup.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} cp retrieve_queue_cleanup.sh client:/root/retrieve_queue_cleanup.sh
 kubectl -n ${NAMESPACE} exec client -- bash /root/retrieve_queue_cleanup.sh || exit 1
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1

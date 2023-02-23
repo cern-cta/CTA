@@ -23,14 +23,26 @@ rm -f ${STATUS_FILE}
 touch ${STATUS_FILE}
 # Generate SURLs file for gfal2.
 SURLs=$(mktemp)
+inconsistent=$(mktemp)
 
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   TMP_FILE=$(mktemp)
   eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | grep 'd0::t1' >> ${TMP_FILE}
   cat ${TMP_FILE} | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${subdir}/\1%" >> ${STATUS_FILE}
   cat ${TMP_FILE} | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%root://${EOSINSTANCE}/${EOS_DIR}/${subdir}/\1%" >> SURLs
+
+  # Check DB coherence.
+  cat $TMP_FILE | xargs -I TEST_FILE_NAME sqlite3 /root/trackerdb "SELECT filename FROM client_tests WHERE filename = 'TEST_FILE_NAME' AND retrieved <> 0;" >> $inconsistent
+
+  # We should check that the files in the inconsistent file are target files for the current test.
+
   rm ${TMP_FILE}
   # sleep 3 # do not hammer eos too hard
+done
+
+if [[ $(cat ${inconsistent}) -s ]]; then
+    echo "Evict counter inconsistencies found for the following files."
+    cat $inconsistent
 done
 
 
@@ -51,6 +63,7 @@ ARCHIVED=$(cat ${SURLs} | wc -l)
 TO_BE_RETRIEVED=$(( ${ARCHIVED} - $(ls ${ERROR_DIR}/RETRIEVE_* 2>/dev/null | wc -l) ))
 RETRIEVING=${TO_BE_RETRIEVED}
 RETRIEVED=0
+status=$(mktemp)
 # Wait for the copy to appear on disk
 echo "$(date +%s): Waiting for files to be back on disk:"
 SECONDS_PASSED=0
@@ -67,7 +80,12 @@ while test 0 -lt ${RETRIEVING}; do
 
   RETRIEVED=0
   for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-    RETRIEVED=$(( ${RETRIEVED} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | wc -l) ))
+    # Get retrieve status
+    eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' > $status
+    RETRIEVED=$(( ${RETRIEVED} + $(cat $status | wc -l) ))
+    cat $status | xargs --max-procs=1 -iTEST_FILE_NAME db_update 'staged' TEST_FILE_NAME 1 '+'
+
+
     sleep 1 # do not hammer eos too hard
   done
 
@@ -80,31 +98,9 @@ echo "###"
 echo "${RETRIEVED}/${TO_BE_RETRIEVED} retrieved files"
 echo "###"
 
-# Build the list of files with more than 1 disk copy that have been archived before (ie d>=1::t1)
-rm -f ${STATUS_FILE}
-touch ${STATUS_FILE}
-for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep 'd[1-9][0-9]*::t1' | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${subdir}/\1%" >> ${STATUS_FILE}
-done
-
-TO_EVICT=$(cat ${STATUS_FILE} | wc -l)
-
-echo "$(date +%s): $TO_EVICT files to be evicted from EOS using 'gfal-evict SURL'"
-cat ${SURLs} | xargs --max-procs=${NB_PROCS}  -iTEST_FILE_NAME bash -c "XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 xargs --max-procs=10 gfal-evict TEST_FILE_NAME"
-
-LEFTOVER=0
-for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  LEFTOVER=$(( ${LEFTOVER} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | wc -l) ))
-done
-
-EVICTED=$((${TO_EVICT}-${LEFTOVER}))
-echo "$(date +%s): $EVICTED/$TO_EVICT files evicted from EOS 'xrdfs prepare -e'"
-
-LASTCOUNT=${EVICTED}
-
 # Build the list of tape only files.
-rm -f ${STATUS_FILE}
-touch ${STATUS_FILE}
-for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep 'd0::t[^0]' | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${subdir}/\1%" >> ${STATUS_FILE}
-done
+#rm -f ${STATUS_FILE}
+#touch ${STATUS_FILE}
+#for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
+#  eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep 'd0::t[^0]' | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${subdir}/\1%" >> ${STATUS_FILE}
+#done

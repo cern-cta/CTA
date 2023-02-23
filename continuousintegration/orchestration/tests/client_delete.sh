@@ -1,5 +1,29 @@
 #!/usr/bin/env sh
 
+# Provide an EOS directory and return the list of tapes containing files under that directory
+nsls_tapes()
+{
+  EOS_DIR=${1:-${EOS_BASEDIR}}
+
+  # 1. Query EOS namespace to get a list of file IDs
+  # 2. Pipe to "tape ls" to get the list of tapes where those files are archived
+  eos root://${EOSINSTANCE} find --fid ${EOS_DIR} |\
+    admin_cta --json tape ls --fxidfile /dev/stdin |\
+    jq '.[] | .vid' | sed 's/"//g'
+}
+
+
+# Provide a list of tapes and list the filenames of the files stored on those tapes
+tapefile_ls()
+{
+  for vid in $*
+  do
+    admin_cta --json tapefile ls --lookupnamespace --vid ${vid} |\
+    jq '.[] | .df.path'
+  done
+}
+
+
 # We can now delete the files
 DELETED=0
 echo "Waiting for files to be removed from EOS and tapes"

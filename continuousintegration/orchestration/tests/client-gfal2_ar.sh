@@ -16,8 +16,7 @@
 #               submit itself to any jurisdiction.
 
 
- client_setup.sh "@"
-
+. client_setup.sh "@"
 
 # Immutable file test.
 
@@ -35,7 +34,10 @@ if [[ $ARCHIVEONLY == 1 ]]; then
 fi
 
 # Retrieve Test
-. client_retrieve.sh
+. client-gfal2_retrieve.sh
+
+# Evict Test
+. client-gfal2_evict.sh
 
 # Abort prepare test.
 RESTAGEDFILES=0
