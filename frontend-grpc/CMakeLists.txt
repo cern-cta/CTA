@@ -67,3 +67,45 @@ install(TARGETS cta-frontend-grpc DESTINATION usr/bin)
 install (FILES cta-frontend-grpc.service DESTINATION etc/systemd/system)
 install (FILES cta-frontend-grpc.sysconfig DESTINATION /etc/sysconfig RENAME cta-frontend-grpc)
 install (FILES cta-frontend-grpc.1cta DESTINATION /usr/share/man/man1)
+
+##
+## cta-frontend-grpc-stream-server
+##
+
+# XRootD SSI Protocol Buffer bindings
+# CtaFrontendApi.hpp
+include_directories(${XRD_SSI_PB_DIR}/include ${XRD_SSI_PB_DIR}/eos_cta/include)
+# XRootD SSI
+include_directories(${XROOTD_INCLUDE_DIR} ${XROOTD_INCLUDE_DIR}/private)
+
+add_executable(cta-frontend-async-grpc
+              FrontendCmd.cpp
+              AsyncServer.cpp
+              TokenStorage.cpp
+              ServiceAuthProcessor.cpp
+              ServerTapeLsRequestHandler.cpp
+              ServerNegotiationRequestHandler.cpp
+              RequestMessage.cpp
+              utils.cpp
+              ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParse.cpp ${ProtoSourcesCtaFrontend} ${ProtoGrpcSourcesCtaFrontend})
+
+target_link_libraries(cta-frontend-async-grpc ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY} ${GRPC_LIBRARY}
+                      ctascheduler ctacommon ctaobjectstore ctacatalogue
+                      gssapi_krb5)
+
+##
+## cta-frontend-grpc-stream-client
+##
+
+add_executable(cta-admin-grpc
+              CtaAdminGrpcCmd.cpp
+              ClientTapeLsRequestHandler.cpp
+              ClientNegotiationRequestHandler.cpp
+              utils.cpp
+              ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParse.cpp ${ProtoSourcesCtaFrontend} ${ProtoGrpcSourcesCtaFrontend})
+
+
+target_link_libraries(cta-admin-grpc ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY} ${GRPC_LIBRARY}
+        ctascheduler ctacommon ctaobjectstore ctacatalogue
+        cryptopp)
+              

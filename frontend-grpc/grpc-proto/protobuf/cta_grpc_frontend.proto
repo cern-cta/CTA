@@ -66,6 +66,26 @@ message RetrieveResponse {
                                  //< used to cancel the request
 }
 
+message StreamResponse {
+    oneof contents {
+        cta.xrd.Response header = 1;
+        cta.xrd.Data data = 2;
+    }
+}
+
+// Negotiation
+message KerberosAuthenticationRequest {
+    bytes challenge = 1;                  //< GSS challenge
+    string service_principal_name = 2;    //< KRB5 service principal name
+};
+
+message KerberosAuthenticationResponse {
+    bytes challenge = 1;                  //< GSS challenge
+    bool is_complete = 2;
+    bytes token = 3;                      //< KRB5 token
+    string error_msg = 4;
+};
+
 /*
  * gRPC request-response pairs
  */
@@ -88,3 +108,11 @@ service CtaRpc {
   rpc Version (google.protobuf.Empty) returns (cta.admin.Version) {}
 }
 
+service CtaRpcStream {
+//  rpc Version (google.protobuf.Empty) returns (cta.admin.Version) {}
+  rpc TapeLs (AdminRequest) returns (stream StreamResponse) {}
+}
+
+service Negotiation {
+    rpc Negotiate (stream KerberosAuthenticationRequest) returns (stream KerberosAuthenticationResponse) {}
+}
