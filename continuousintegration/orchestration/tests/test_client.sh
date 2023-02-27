@@ -183,6 +183,15 @@ kubectl -n ${NAMESPACE} exec client -- bash /root/try_evict_before_archive_compl
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
+echo
+echo "Launching stagerrm_tests.sh on client pod"
+echo " Archiving file: xrdcp as user1"
+echo " Retrieving it as poweruser1"
+kubectl -n ${NAMESPACE} cp stagerrm_tests.sh client:/root/stagerrm_tests.sh
+kubectl -n ${NAMESPACE} exec client -- bash /root/stagerrm_tests.sh || exit 1
+
+kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
 setup_tapes_for_multicopy_test
 
 echo
