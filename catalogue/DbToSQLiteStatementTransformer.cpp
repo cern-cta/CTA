@@ -66,6 +66,8 @@ std::string IndexStatementTransformer::transform(){
   // This is a bit crude, but it will work so long as we don't have indexes with multiple nested functions...
   std::regex lowerRegex("LOWER\\(([^\\)]*)\\)");
   m_statement = std::regex_replace(m_statement, lowerRegex, "\\1", std::regex_constants::format_sed);
+  std::regex nullifRegex("NULLIF\\(([^,]*)[^)]*\\)");
+  m_statement = std::regex_replace(m_statement, nullifRegex, "\\1", std::regex_constants::format_sed);
   return m_statement;
 }
 /*****************************/
