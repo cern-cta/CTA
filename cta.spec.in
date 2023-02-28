@@ -50,6 +50,7 @@ BuildRequires: xrootd-client-devel  >= %{xrootdVersion}
 BuildRequires: xrootd-devel         >= %{xrootdVersion}
 BuildRequires: xrootd-server-devel  >= %{xrootdVersion}
 BuildRequires: xrootd-private-devel >= %{xrootdVersion}
+BuildRequires: libcurl-devel
 BuildRequires: librados-devel = %{radosVersion}, libradosstriper-devel = %{radosVersion},
 BuildRequires: protobuf3-compiler >= 3.3.1 protobuf3-devel >= 3.3.1
 BuildRequires: gtest-devel >= 1.12.0

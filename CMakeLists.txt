@@ -18,6 +18,7 @@ project(cta)
 
 
 set(CMAKE_C_FLAGS "-fPIC -Wall -Wextra -Werror -Wno-unused-parameter")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Please note that the -fms-extensions option should be dropped when this
 # project gets to be compiled on a fully C++ 11 compliant compiler.  The option
@@ -143,6 +144,7 @@ ELSE(DEFINED PackageOnly)
 
   add_subdirectory(eos_cta)
 
+  add_subdirectory(eos_rest_client)
   add_subdirectory(eos_grpc_client)
 
   add_subdirectory(cmdline)
