@@ -86,11 +86,8 @@ TapeFileLsStream::TapeFileLsStream(const frontend::AdminCmdStream& requestMsg,
 
     // cta-admin converts the list from EOS fxid (hex) to fid (dec). In the case of the 
     // single option on the command line we need to do the conversion ourselves.
-    auto fid = strtol(diskFileId->c_str(), nullptr, 16);
-    if(fid < 1 || fid == LONG_MAX) {
-       throw cta::exception::UserError(*diskFileId + " is not a valid file ID");
-    }
-    searchCriteria.diskFileIds->push_back(std::to_string(fid));
+    cta::utils::checkDiskFileID(&diskFileId.value());
+    searchCriteria.diskFileIds->push_back(diskFileId.value());
   }
   searchCriteria.diskInstance = requestMsg.getOptional(OptionString::INSTANCE, &has_any);
 
