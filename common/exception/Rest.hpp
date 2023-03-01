@@ -17,15 +17,19 @@
 
 #pragma once
 
-#include <nlohmann/json.hpp>
+#include "common/exception/Exception.hpp"
 
-namespace cta::rest {
+namespace cta::exception {
 
-class RestClient {
-public:
-  explicit RestClient() = default;
+    class Rest : public cta::exception::Exception {
 
-  nlohmann::json getFileInfo();
-};
+    public:
 
-} // namespace cta::rest
+      /**
+       * Constructor
+       */
+      Rest(const std::string &context, const bool embedBacktrace = true);
+
+    }; // class Rest
+
+} // namespace cta exception

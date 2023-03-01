@@ -15,28 +15,12 @@
  *               submit itself to any jurisdiction.
  */
 
-#pragma once
+#include "common/exception/Rest.hpp"
 
-#include <any>
-#include <unordered_map>
-#include <string>
 
-#include "common/json/object/JSONCObject.hpp"
-#include "eos_rest_client/JsonStructureLayer.hpp"
-
-namespace cta::rest {
-
-class JsonStructure {
-  public:
-    friend class JsonStructureLayer;
-    /**
-    * Constructor
-    */
-    explicit JsonStructure(const std::string& jsonString);
-
-    std::unordered_map<std::string, std::any> getFileInfo() const;
-
-  private:
-    std::string m_jsonString;
- };
- } // namespace cta::rest
+// -----------------------------------------------------------------------------
+// Constructor
+// -----------------------------------------------------------------------------
+cta::exception::Rest::Rest(const std::string &context, const bool embedBacktrace):
+  cta::exception::Exception(context, embedBacktrace) {
+}

@@ -110,6 +110,7 @@ set (COMMON_LIB_SRC_FILES
   exception/NotAnOwner.cpp
   exception/OutOfMemory.cpp
   exception/QueryVolumeFailed.cpp
+  exception/Rest.cpp
   exception/RequestFailed.cpp
   exception/RetryableError.cpp
   exception/TimeOut.cpp
