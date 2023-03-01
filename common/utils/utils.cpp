@@ -15,8 +15,9 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/exception/Exception.hpp"
 #include "common/exception/Errnum.hpp"
+#include "common/exception/Exception.hpp"
+#include "common/exception/UserError.hpp"
 #include "common/utils/Regex.hpp"
 #include "common/utils/strerror_r_wrapper.hpp"
 #include "common/utils/utils.hpp"
@@ -29,6 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <regex>
 #include <sys/types.h>
 #include <uuid/uuid.h>
 #include <zlib.h>
@@ -397,6 +399,47 @@ std::string generateUuid() {
   uuid_unparse_lower(uuid, str);
 
   return str;
+}
+
+bool isUuidFormat(const std::string& str) {
+  // Define the regex pattern for UUID format
+  std::regex pattern("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
+
+  // Match the input string with the pattern
+  return std::regex_match(str, pattern);
+}
+
+bool isHexadecimalFormat(const std::string& str) {
+  // Define the regex pattern for hexadecimal format
+  std::regex pattern("0x[0-9a-fA-F]+");
+
+  // Match the input string with the pattern
+  return std::regex_match(str, pattern);
+}
+
+bool isDecimalFormat(const std::string& str) {
+  // Define the regex pattern for decimal format
+  std::regex pattern("[0-9]+");
+
+  // Match the input string with the pattern
+  return std::regex_match(str, pattern);
+}
+
+void checkDiskFileID(std::string *diskFileId) {
+  if (isHexadecimalFormat(*diskFileId)) {
+    auto fid = strtol(diskFileId->c_str(), nullptr, 16);
+    if(fid < 1 || fid == LONG_MAX) {
+      throw cta::exception::UserError(*diskFileId + " is not a valid file ID in hexadecimal format");
+    }
+    *diskFileId = std::to_string(fid);
+  } else if (std::all_of(diskFileId->begin(), diskFileId->end(), [](char c){return isdigit(c);})) {
+    auto fid = strtol(diskFileId->c_str(), nullptr, 10);
+    if(fid < 1 || fid == LONG_MAX) {
+      throw cta::exception::UserError(*diskFileId + " is not a valid file ID in decimal format");
+    }
+  } else if (!isUuidFormat(*diskFileId)) {
+    throw cta::exception::UserError(*diskFileId + " is not a valid file ID in uuid format");  
+  }
 }
 
 //-----------------------------------------------------------------------------

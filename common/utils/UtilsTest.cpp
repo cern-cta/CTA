@@ -17,6 +17,7 @@
 
 #include "common/utils/utils.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/UserError.hpp"
 
 #include <gtest/gtest.h>
 
@@ -242,6 +243,60 @@ TEST_F(cta_UtilsTest, generateUuid) {
   ASSERT_NO_THROW(uuid1 = utils::generateUuid());
   ASSERT_NO_THROW(uuid2 = utils::generateUuid());
   ASSERT_NE(uuid1, uuid2);
+}
+
+TEST_F(cta_UtilsTest, isUuidFormat) {
+  std::string uuid1;
+  ASSERT_NO_THROW(uuid1 = cta::utils::generateUuid());
+  const std::string uuid2 = "f81d4fae-7dec-11d0-a765-00a0c91e6bf6";
+  const std::string uuid3 = "f81d4fae-7dec-11d0-a765-00a0c91e6bf"; // Invalid UUID format
+  const std::string uuid4 = "hello world"; // Invalid UUID format
+  ASSERT_TRUE(cta::utils::isUuidFormat(uuid1));
+  ASSERT_TRUE(cta::utils::isUuidFormat(uuid2));
+  ASSERT_FALSE(cta::utils::isUuidFormat(uuid3));
+  ASSERT_FALSE(cta::utils::isUuidFormat(uuid4));
+}
+
+TEST_F(cta_UtilsTest, isHexadecimalFormat) {
+  const std::string hex1 = "0x1234567890abcdef";
+  const std::string hex2 = "0x1234567890ABCDEF";
+  const std::string hex3 = "0x1234567890abcdefg"; // Invalid hexadecimal format
+  const std::string hex4 = "hello world"; // Invalid hexadecimal format
+  ASSERT_TRUE(cta::utils::isHexadecimalFormat(hex1));
+  ASSERT_TRUE(cta::utils::isHexadecimalFormat(hex2));
+  ASSERT_FALSE(cta::utils::isHexadecimalFormat(hex3));
+  ASSERT_FALSE(cta::utils::isHexadecimalFormat(hex4));
+}
+
+TEST_F(cta_UtilsTest, isDecimalFormat) {
+  const std::string dec1 = "1234567890";
+  const std::string dec2 = "0";
+  const std::string dec3 = "hello world"; // Invalid decimal format
+  const std::string dec4 = "0a"; // Invalid decimal format
+  ASSERT_TRUE(cta::utils::isDecimalFormat(dec1));
+  ASSERT_TRUE(cta::utils::isDecimalFormat(dec2));
+  ASSERT_FALSE(cta::utils::isDecimalFormat(dec3));
+  ASSERT_FALSE(cta::utils::isDecimalFormat(dec4));
+}
+
+TEST_F(cta_UtilsTest, checkDiskFileID) {
+  std::string diskFileID1 = "diskFileID";
+  std::string diskFileID2 = "123456";
+  std::string diskFileID3 = "0x12FFFF";
+  std::string diskFileID4 = "0x12XXXX";
+  std::string diskFileID5 = cta::utils::generateUuid();
+  std::string diskFileID6 = "f81d4fae-7dec-11d0-a765-00a0c91e6bf"; // Invalid UUID format
+  
+  ASSERT_THROW(cta::utils::checkDiskFileID(&diskFileID1), cta::exception::UserError);
+  ASSERT_NO_THROW(cta::utils::checkDiskFileID(&diskFileID2));
+  ASSERT_EQ(std::to_string(123456), diskFileID2);
+  ASSERT_NO_THROW(cta::utils::checkDiskFileID(&diskFileID3));
+  // convert diskFileID3 to decimal string
+  std::stringstream ss;
+  ss << std::hex << diskFileID3;
+  ASSERT_THROW(cta::utils::checkDiskFileID(&diskFileID4), cta::exception::UserError);
+  ASSERT_NO_THROW(cta::utils::checkDiskFileID(&diskFileID5));
+  ASSERT_THROW(cta::utils::checkDiskFileID(&diskFileID6), cta::exception::UserError);
 }
 
 TEST_F(cta_UtilsTest, endsWith_slash_empty_string) {
