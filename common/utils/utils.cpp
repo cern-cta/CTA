@@ -15,29 +15,30 @@
  *               submit itself to any jurisdiction.
  */
 
+#include <attr/xattr.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/prctl.h>
+#include <sys/types.h>
+#include <sys/utsname.h>
+#include <uuid/uuid.h>
+#include <xrootd/XrdCl/XrdClURL.hh>
+
+#include <climits>
+#include <iomanip>
+#include <iostream>
+#include <memory>
+#include <regex>
+#include <sstream>
+#include <zlib.h>
+
 #include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/utils/Regex.hpp"
 #include "common/utils/strerror_r_wrapper.hpp"
 #include "common/utils/utils.hpp"
-
-#include <attr/xattr.h>
-#include <limits>
-#include <memory>
-#include <sstream>
-#include <iostream>
-#include <stdlib.h>
-#include <string.h>
-#include <strings.h>
-#include <regex>
-#include <sys/types.h>
-#include <uuid/uuid.h>
-#include <zlib.h>
-#include <sys/utsname.h>
-#include <sys/prctl.h>
-#include <iomanip>
-#include <xrootd/XrdCl/XrdClURL.hh>
 
 using cta::exception::Exception;
 
