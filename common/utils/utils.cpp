@@ -15,7 +15,6 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <attr/xattr.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
@@ -23,7 +22,7 @@
 #include <sys/types.h>
 #include <sys/utsname.h>
 #include <uuid/uuid.h>
-#include <xrootd/XrdCl/XrdClURL.hh>
+#include <zlib.h>
 
 #include <climits>
 #include <iomanip>
@@ -31,7 +30,9 @@
 #include <memory>
 #include <regex>
 #include <sstream>
-#include <zlib.h>
+
+#include <attr/xattr.h>
+#include <xrootd/XrdCl/XrdClURL.hh>
 
 #include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
