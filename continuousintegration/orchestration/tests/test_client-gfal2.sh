@@ -67,14 +67,14 @@ V5=$(yum list installed | grep xrootd | grep -e ':5.')
 if [[ ! -z ${V5} ]]; then
     TEST_PROTOCOL='root'
     echo "Installing gfal2-plugin-xrootd for xrd gfal tests."
-    kubectl -n ${NAMESPACE} exec client -- bash -c "if [[ $(sudo yum list installed | grep xrootd | grep -e ':5.' | wc -l ) != 0 ]]; then sudo yum -y install gfal2-plugin-xrootd; fi"
+    kubectl -n ${NAMESPACE} exec client -- bash -c "sudo yum -y install gfal2-plugin-xrootd"
 
     echo
     echo "Launching client-gfal2_ar.sh on client pod using ${TEST_PROTOCOL} protocol"
     echo " Archiving files: xrdcp as user1"
     echo " Retrieving files with gfal xrootd"
 
-    kubectl -n ${NAMESPACE} exec client -- bash /root/client-gfal2_ar.sh -n ${NB_FILES} -s ${FILE_SIZE_KB} -p 100 -d /eos/ctaeos/preprod -v -r || exit 1
+    kubectl -n ${NAMESPACE} exec client -- bash /root/client-gfal2_ar.sh -n ${NB_FILES} -s ${FILE_SIZE_KB} -p 100 -d /eos/ctaeos/preprod -v -r -Z ${TEST_PROTOCOL} || exit 1
     kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 fi
 
