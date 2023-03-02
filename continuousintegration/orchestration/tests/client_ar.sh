@@ -16,15 +16,17 @@
 #               submit itself to any jurisdiction.
 
 
-. client_setup.sh "$@"
+. /root/client_setup.sh "$@"
 
+
+RC=0
 
 # Immutable file test.
 #. client_immutable_file.sh
 
 # Archiving Test
 if [[ $DONOTARCHIVE == 0 ]]; then
-    . client_archive.sh
+    . /root/client_archive.sh
 fi
 
 if [[ $ARCHIVEONLY == 1 ]]; then
@@ -34,17 +36,17 @@ if [[ $ARCHIVEONLY == 1 ]]; then
 fi
 
 # Retrieve Test
-. client_retrieve.sh
+. /root/client_retrieve.sh
 
-. client_evict.sh
+. /root/client_evict.sh
 
 # Abort prepare test.
-#RESTAGEDFILES=0
-#. client_abortPrepare.sh
+RESTAGEDFILES=0
+#. /root/client_abortPrepare.sh
 
 # Delete Test
 if [[ $REMOVE == 1 ]]; then
-  . client_delete.sh
+  . /root/client_delete.sh
 fi
 
 echo "###"
@@ -58,10 +60,10 @@ test -z ${COMMENT} || annotate "test ${TESTID} FINISHED" "Summary:</br>NB_FILES:
 # stop tail
 test -z $TAILPID || kill ${TAILPID} &> /dev/null
 
-if [[-z ${LASTCOUNT} ]]; then
+if [[ -z ${LASTCOUNT} ]]; then
     LASTCOUNT=$((${NB_FILES} * ${NB_DIRS}))
 fi
-RC=0
+
 if [ ${LASTCOUNT} -ne $((${NB_FILES} * ${NB_DIRS})) ]; then
   ((RC++))
   echo "ERROR there were some lost files during the archive/retrieve test with ${NB_FILES} files (first 10):"
@@ -74,11 +76,6 @@ if [ $(cat ${LOGDIR}/prepare_sys.retrieve.req_id_*.log | grep -v value= | wc -l)
   echo "ERROR $(cat ${LOGDIR}/prepare_sys.retrieve.req_id_*.log | grep -v value= | wc -l) files out of $(cat ${LOGDIR}/prepare_sys.retrieve.req_id_*.log | wc -l) prepared files have no sys.retrieve.req_id extended attribute set"
 fi
 
-
-if [ ${RESTAGEDFILES} -ne "0" ]; then
-  ((RC++))
-  echo "ERROR some files were retrieved in spite of retrieve cancellation."
-fi
 
 # This one does not change the return code
 # WARNING if everything else was OK

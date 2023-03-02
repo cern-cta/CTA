@@ -16,7 +16,6 @@
 #               submit itself to any jurisdiction.
 
 
-
 echo "$(date +%s): Trigerring EOS evict workflow as poweruser1:powerusers (12001:1200)"
 
 # Build the list of files with more than 1 disk copy that have been archived before (ie d>=1::t1)

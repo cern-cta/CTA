@@ -1,6 +1,13 @@
 #!/usr/bin/env sh
 
 
+# Build the list of tape only files.
+rm -f ${STATUS_FILE}
+touch ${STATUS_FILE}
+for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
+  eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep 'd0::t[^0]' | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${subdir}/\1%" >> ${STATUS_FILE}
+done
+
 # Put drives down.
 echo "Sleeping 3 seconds to let previous sessions finish."
 sleep 3
@@ -40,58 +47,46 @@ while [[ $SECONDS_PASSED < WAIT_FOR_DRIVES_DOWN_TIMEOUT ]]; do
   fi
 done
 
-
-# Prepare-stage the files
-#cat ${STATUS_FILE} | perl -p -e "s|^(.*)$|${EOS_DIR}/\$1?activity=T0Reprocess|" | \
-#  XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xargs  -n 40 --max-procs=10 \
-#     echo bash -c "echo xrdfs ${EOSINSTANCE} prepare -s $@" bash
-# | \
-#  tee ${LOGDIR}/prepare_${subdir}.log | grep -i error
-
-
-
 # Stage.
-
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  echo -n "Retrieving files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes (prepare2)..."
-  cat ${STATUS_FILE} | grep ^${subdir}/ | cut -d/ -f2 | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -s ${EOS_DIR}/${subdir}/TEST_FILE_NAME?activity=T0Reprocess 2>${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME && rm ${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME || echo ERROR with xrootd prepare stage for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME" | tee ${LOGDIR}/prepare2_${subdir}.log | grep ^ERROR
-  echo Done.
-  echo -n "Checking the presence of the sys.retrieve.req_id extended attributes..."
-  cat ${STATUS_FILE} | grep ^${subdir}/ | cut -d/ -f2 | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} query opaquefile ${EOS_DIR}/${subdir}/TEST_FILE_NAME?mgm.pcmd=xattr\&mgm.subcmd=get\&mgm.xattrname=sys.retrieve.req_id 2>${ERROR_DIR}/XATTRGET_TEST_FILE_NAME && rm ${ERROR_DIR}/XATTRGET_TEST_FILE_NAME || echo ERROR with xrootd xattr get for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/XATTRGET_TEST_FILE_NAME" | tee ${LOGDIR}/prepare2_sys.retrieve.req_id_${subdir}.log | grep ^ERROR
-  echo Done.
-done
-if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
-  # there were some prepare errors
-  echo "Several prepare errors occured during retrieval!"
-  echo "Please check client pod logs in artifacts"
-  mv ${ERROR_DIR}/* ${LOGDIR}/xrd_errors/
-fi
+    echo -n "Retrieving files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes (prepare2)..."
+    cat ${STATUS_FILE} | grep ^${subdir}/ | cut -d/ -f2 | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -s ${EOS_DIR}/${subdir}/TEST_FILE_NAME?activity=T0Reprocess 2>${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME | sed \"s|$| ${EOS_DIR}/${subdir}/TEST_FILE|g\" && rm ${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME || echo ERROR with xrootd prepare stage for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME" |  tee ${LOGDIR}/prepare2_${subdir}.log | grep ^ERROR
+    echo Done.
+    echo -n "Checking the presence of the sys.retrieve.req_id extended attributes..."
+    cat ${STATUS_FILE} | grep ^${subdir}/ | cut -d/ -f2 | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} query opaquefile ${EOS_DIR}/${subdir}/TEST_FILE_NAME?mgm.pcmd=xattr\&mgm.subcmd=get\&mgm.xattrname=sys.retrieve.req_id 2>${ERROR_DIR}/XATTRGET_TEST_FILE_NAME && rm ${ERROR_DIR}/XATTRGET_TEST_FILE_NAME || echo ERROR with xrootd xattr get for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/XATTRGET_TEST_FILE_NAME" | tee ${LOGDIR}/prepare2_sys.retrieve.req_id_${subdir}.log | grep ^ERROR
+    echo Done.
+  done
+  if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
+    # there were some prepare errors
+    echo "Several prepare errors occured during retrieval!"
+    echo "Please check client pod logs in artifacts"
+    mv ${ERROR_DIR}/* ${LOGDIR}/xrd_errors/
+  fi
 
-# Ensure all requests files are queued
-requestsTotal=`admin_cta --json sq | jq 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add'`
-echo "Retrieve requests count: ${requestsTotal}"
-filesCount=`cat ${STATUS_FILE} | wc -l`
-if [ ${requestsTotal} -ne ${filesCount} ]; then
-  echo "ERROR: Retrieve queue(s) size mismatch: ${requestsTotal} requests queued for ${filesCount} files."
-fi
-
-
-# Cancel Stage
-# Abort prepare -s requests
-for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  echo -n "Cancelling prepare for files in ${EOS_DIR}/${subdir} using ${NB_PROCS} processes (prepare_abort)..."
-  cat ${STATUS_FILE} | grep ^${subdir}/ | cut -d/ -f2                                                                         \
-  | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME cta-client-ar-abortPrepare --eos-instance ${EOSINSTANCE}                   \
-      --eos-poweruser ${EOSPOWER_USER} --eos-dir ${EOS_DIR} --subdir ${subdir} --file TEST_FILE_NAME --error-dir ${ERROR_DIR} \
-  | tee ${LOGDIR}/prepare_abort_sys.retrieve.req_id_${subdir}.log # | grep ^ERROR
-  echo Done.
-done
+  # Ensure all requests files are queued
+  requestsTotal=`admin_cta --json sq | jq 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add'`
+  echo "Retrieve requests count: ${requestsTotal}"
+  filesCount=`cat ${STATUS_FILE} | wc -l`
+  if [ ${requestsTotal} -ne ${filesCount} ]; then
+    echo "ERROR: Retrieve queue(s) size mismatch: ${requestsTotal} requests queued for ${filesCount} files."
+  fi
 
 
-# Put drive(s) back up to clear the queue
-echo -n "Will put back up those drives : "
-echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "UP") | .driveName'
-for d in `echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "UP") | .driveName'`; do
+  # Cancel Stage
+  # Abort prepare -s requests
+  for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
+    echo -n "Cancelling prepare for files in ${EOS_DIR}/${subdir} using ${NB_PROCS} processes (prepare_abort)..."
+    cat ${LOGDIR}/prepare2_${subdir}.log | grep ^${subdir}/ | cut -d/ -f2 \
+        | xargs --max-procs=${NB_PROCS} -iID_FILE bash -c \
+        "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -a  ID_FILE?activity=T0Reprocess 2>${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME && rm ${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME || echo ERROR with xrootd prepare stage for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME" | tee ${LOGDIR}/prepare2_${subdir}.log | grep ^ERROR
+    echo Done.
+  done
+
+
+  # Put drive(s) back up to clear the queue
+  echo -n "Will put back up those drives : "
+  echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "UP") | .driveName'
+  for d in `echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "UP") | .driveName'`; do
   admin_cta dr up $d
 done
 
@@ -135,4 +130,9 @@ if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
   echo "Several errors occured during prepare cancel test!"
   echo "Please check client pod logs in artifacts"
   mv ${ERROR_DIR}/* ${LOGDIR}/xrd_errors/
+fi
+
+if [ ${RESTAGEDFILES} -ne "0" ]; then
+  ((RC++))
+  echo "ERROR some files were retrieved in spite of retrieve cancellation."
 fi

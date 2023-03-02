@@ -82,6 +82,7 @@ while test 0 != ${ARCHIVING}; do
   ARCHIVED=0
   for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
     eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | grep '^d0::t1' | awk '{print $10}'> $status2
+    # TODO: Filter out already included files.
     ARCHIVED=$(( ${ARCHIVED} + $(cat ${status2} | wc -l) ))
     cat $status2 | xargs -iTEST_FILE_NAME bash -c "db_insert '${subdir}/TEST_FILE_NAME'"
     sleep 1 # do not hammer eos too hard
@@ -110,3 +111,4 @@ echo "###"
 echo "Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion."
 sleep 10
 echo "###"
+db_info "*" 10

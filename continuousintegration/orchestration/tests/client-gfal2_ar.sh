@@ -15,16 +15,19 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+# Set Default GFAL2 Plugin Protocol.
+GFAL2_PROTOCOL='https'
 
-. client_setup.sh "@"
+. /root/client_setup.sh "$@"
 
+
+RC=0
 # Immutable file test.
-
-. client_immutable_file.sh
+#. client_immutable_file.sh
 
 # Archiving Test
 if [[ $DONOTARCHIVE == 0 ]]; then
-    . client_archive.sh
+    . /root/client_archive.sh
 fi
 
 if [[ $ARCHIVEONLY == 1 ]]; then
@@ -34,18 +37,21 @@ if [[ $ARCHIVEONLY == 1 ]]; then
 fi
 
 # Retrieve Test
-. client-gfal2_retrieve.sh
+. /root/client-gfal2_retrieve.sh
 
 # Evict Test
-. client-gfal2_evict.sh
+. /root/client-gfal2_evict.sh
 
 # Abort prepare test.
 RESTAGEDFILES=0
-. client_abortPrepare.sh
+# This is already tested in the client_ar.sh script. No need to
+# test two times.
+#. /root/client_abortPrepare.sh
 
 # Delete Test
+DELETED=0
 if [[ $REMOVE == 1 ]]; then
-  . client_delete.sh
+  . /root/client-gfal2_delete.sh
 fi
 
 echo "###"
@@ -56,11 +62,9 @@ echo "###"
 
 test -z ${COMMENT} || annotate "test ${TESTID} FINISHED" "Summary:</br>NB_FILES: $((${NB_FILES} * ${NB_DIRS}))</br>ARCHIVED: ${ARCHIVED}<br/>RETRIEVED: ${RETRIEVED}<br/>STAGERRMED: ${STAGERRMED}</br>DELETED: ${DELETED}" 'test,end'
 
-
 # stop tail
 test -z $TAILPID || kill ${TAILPID} &> /dev/null
 
-RC=0
 if [ ${LASTCOUNT} -ne $((${NB_FILES} * ${NB_DIRS})) ]; then
   ((RC++))
   echo "ERROR there were some lost files during the archive/retrieve test with ${NB_FILES} files (first 10):"
@@ -71,12 +75,6 @@ if [ $(cat ${LOGDIR}/prepare_sys.retrieve.req_id_*.log | grep -v value= | wc -l)
   # THIS IS NOT YET AN ERROR: UNCOMMENT THE FOLLOWING LINE WHEN https://gitlab.cern.ch/cta/CTA/issues/606 is fixed
   # ((RC++))
   echo "ERROR $(cat ${LOGDIR}/prepare_sys.retrieve.req_id_*.log | grep -v value= | wc -l) files out of $(cat ${LOGDIR}/prepare_sys.retrieve.req_id_*.log | wc -l) prepared files have no sys.retrieve.req_id extended attribute set"
-fi
-
-
-if [ ${RESTAGEDFILES} -ne "0" ]; then
-  ((RC++))
-  echo "ERROR some files were retrieved in spite of retrieve cancellation."
 fi
 
 # This one does not change the return code

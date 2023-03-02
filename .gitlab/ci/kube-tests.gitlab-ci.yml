@@ -55,22 +55,22 @@ client-eos5:
   variables:
     TEST_SCRIPT: "tests/test_client.sh"
 
-client-gfal:
+client-gfal2:
   stage: test
   extends:
     - .kubernetes_test
   except:
     - tags
   variables:
-    TEST_SCRIPT: "tests/test_client_gfal.sh"
+    TEST_SCRIPT: "tests/test_client-gfal2.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
-client-gfal-eos5:
+client-gfal2-eos5:
   stage: test
   extends:
     - .eos5
   variables:
-    TEST_SCRIPT: "tests/test_client_gfal.sh"
+    TEST_SCRIPT: "tests/test_client-gfal2.sh"
 
 repack:
   stage: test

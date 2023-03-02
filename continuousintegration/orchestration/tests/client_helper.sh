@@ -249,7 +249,13 @@ put_all_drives_down () {
 ###################################################
 
 db_info() {
-  sqlite3 -header ${DB_NAME} "SELECT $1 FROM ${TEST_TABLE};"
+  ROW_LIMIT=""
+
+  if [[ -n $2 ]]; then
+    ROW_LIMIT="LIMIT $2"
+  fi
+
+  sqlite3 -header ${DB_NAME} "SELECT $1 FROM ${TEST_TABLE} ${ROW_LIMIT};"
 }
 
 # INSERT created files for test into the db.
@@ -268,10 +274,19 @@ db_update() {
   sqlite3 ${DB_NAME} "UPDATE ${TEST_TABLE} SET $1 = $new_val WHERE filename = '$2';"
 }
 
+db_update_col() {
+  sqlite3 ${DB_NAME} "UPDATE ${TEST_TABLE} SET $1=$1 $2 $3;"
+}
+
+db_custom_query() {
+  sqlite3 ${DB_NAME} "${1} ${TEST_TABLE} ${2}"
+}
 
 export -f db_info
 export -f db_insert
 export -f db_update
+export -f db_update_col
+export -f db_custom_query
 #db_coherence() {
 
 #}

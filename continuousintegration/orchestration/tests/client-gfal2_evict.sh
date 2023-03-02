@@ -16,21 +16,33 @@
 #               submit itself to any jurisdiction.
 
 
+echo "$(date +%s): Trigerring EOS evict workflow as poweruser1:powerusers (12001:1200)"
+
 # Build the list of files with more than 1 disk copy that have been archived before (ie d>=1::t1)
 rm -f ${STATUS_FILE}
+rm -f ${SURLs}
 touch ${STATUS_FILE}
+touch ${SURLs}
+TMP_FILE=$(mktemp)
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep 'd[1-9][0-9]*::t1' | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${subdir}/\1%" >> ${STATUS_FILE}
+  eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep 'd[1-9][0-9]*::t1' > ${TMP_FILE}
+  cat ${TMP_FILE} | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${subdir}/\1%" >> ${STATUS_FILE}
+  cat ${TMP_FILE} | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${GFAL2_PROTOCOL}://${EOSINSTANCE}/${EOS_DIR}/${subdir}/\1%" >> ${SURLs}
 done
+rm -f ${TMP_FILE}
 
 TO_EVICT=$(cat ${STATUS_FILE} | wc -l)
 
 echo "$(date +%s): $TO_EVICT files to be evicted from EOS using 'gfal-evict SURL'"
-cat ${SURLs} | xargs --max-procs=${NB_PROCS}  -iTEST_FILE_NAME bash -c "XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 xargs --max-procs=10 gfal-evict TEST_FILE_NAME"
+cat ${SURLs} | xargs --max-procs=${NB_PROCS}  -iTEST_FILE_NAME bash -c "XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 xargs --max-procs=10 -n 40 gfal-evict TEST_FILE_NAME"
 
 LEFTOVER=0
+status=$(mktemp)
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   LEFTOVER=$(( ${LEFTOVER} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | wc -l) ))
+
+  eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[0][0-9]*::t1' | awk '{print $10}' > $status
+  cat $status | xargs -iTEST_FILE_NAME bash -c "db_update 'evicted' ${subdir}/TEST_FILE_NAME ${NEW_EVICT_VAL} '='"
 done
 
 EVICTED=$((${TO_EVICT}-${LEFTOVER}))

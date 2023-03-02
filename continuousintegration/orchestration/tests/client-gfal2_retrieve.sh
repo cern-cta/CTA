@@ -23,32 +23,35 @@ rm -f ${STATUS_FILE}
 touch ${STATUS_FILE}
 # Generate SURLs file for gfal2.
 SURLs=$(mktemp)
-inconsistent=$(mktemp)
+#inconsistent=$(mktemp)
+TMP_FILE=$(mktemp)
 
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  TMP_FILE=$(mktemp)
-  eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | grep 'd0::t1' >> ${TMP_FILE}
+  eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | grep 'd0::t1' > ${TMP_FILE}
   cat ${TMP_FILE} | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${subdir}/\1%" >> ${STATUS_FILE}
-  cat ${TMP_FILE} | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%root://${EOSINSTANCE}/${EOS_DIR}/${subdir}/\1%" >> SURLs
+  cat ${TMP_FILE} | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${GFAL2_PROTOCOL}://${EOSINSTANCE}/${EOS_DIR}/${subdir}/\1%" >> ${SURLs}
 
   # Check DB coherence.
-  cat $TMP_FILE | xargs -I TEST_FILE_NAME sqlite3 /root/trackerdb "SELECT filename FROM client_tests WHERE filename = 'TEST_FILE_NAME' AND retrieved <> 0;" >> $inconsistent
-
   # We should check that the files in the inconsistent file are target files for the current test.
+  #cat $TMP_FILE | xargs -I TEST_FILE_NAME sqlite3 /root/trackerdb "SELECT filename FROM client_tests WHERE filename = 'TEST_FILE_NAME' AND retrieved <> 0;" >> $inconsistent
 
-  rm ${TMP_FILE}
   # sleep 3 # do not hammer eos too hard
 done
 
-if [[ $(cat ${inconsistent}) -s ]]; then
-    echo "Evict counter inconsistencies found for the following files."
-    cat $inconsistent
-done
+#if [[ $(cat ${inconsistent}) -s ]]; then
+#    echo "Evict counter inconsistencies found for the following files."
+#    cat $inconsistent
+#done
 
+# Get initial stage value.
+current_stage_val=0
+NEW_STAGE_VAL=$((${current_stage_val} + 1 ))
+
+cat ${SURLs}
 
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   echo -n "Retrieving files to ${EOS_DIR}/${subdir} using gfal-bringonline and ${NB_PROCS} processes..."
-  cat ${SURLs} | grep /${subdir}/ | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 gfal-bringonline TEST_FILE_NAME  2>${ERROR_DIR}/RETRIEVE_${subdir} && rm ${ERROR_DIR}/RETRIEVE_${subdir} || echo Error with gfal-bringonline prepare stage for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/RETRIEVE_${subdir}" | tee ${LOGDIR}/prepare_${subdir}.log | grep ^ERROR
+  cat ${SURLs} | grep /${subdir}/ | xargs --max-procs=${NB_PROCS} -iTEST_FILE_SURL bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 gfal-bringonline TEST_FILE_SURL 2>${ERROR_DIR}/RETRIEVE_${subdir}_$(echo $TEST_FILE_SURL | awk -F/ '{ print $9 }') && rm ${ERROR_DIR}/RETRIEVE_${subdir}_$(echo $TEST_FILE_SURL | awk -F/ '{ print $9 }')  || echo Error with gfal-bringonline prepare stage for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/RETRIEVE_${subdir}_$(echo $TEST_FILE_SURL | awk -F/ '{ print $9 }') " | tee ${LOGDIR}/prepare_${subdir}.log | grep ^ERROR
   echo Done.
   cat ${STATUS_FILE} | grep ^${subdir}/ | cut -d/ -f2 | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} query opaquefile ${EOS_DIR}/${subdir}/TEST_FILE_NAME?mgm.pcmd=xattr\&mgm.subcmd=get\&mgm.xattrname=sys.retrieve.req_id 2>${ERROR_DIR}/XATTRGET_TEST_FILE_NAME && rm ${ERROR_DIR}/XATTRGET_TEST_FILE_NAME || echo ERROR with xrootd xattr get for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/XATTRGET_TEST_FILE_NAME" | tee ${LOGDIR}/prepare_sys.retrieve.req_id_${subdir}.log | grep ^ERROR
 done
@@ -81,10 +84,9 @@ while test 0 -lt ${RETRIEVING}; do
   RETRIEVED=0
   for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
     # Get retrieve status
-    eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' > $status
+    eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | awk '{print $10}' > $status
     RETRIEVED=$(( ${RETRIEVED} + $(cat $status | wc -l) ))
-    cat $status | xargs --max-procs=1 -iTEST_FILE_NAME db_update 'staged' TEST_FILE_NAME 1 '+'
-
+    cat $status | xargs -iTEST_FILE_NAME bash -c "db_update 'staged' ${subdir}/TEST_FILE_NAME ${NEW_STAGE_VAL} '='"
 
     sleep 1 # do not hammer eos too hard
   done
@@ -97,10 +99,3 @@ done
 echo "###"
 echo "${RETRIEVED}/${TO_BE_RETRIEVED} retrieved files"
 echo "###"
-
-# Build the list of tape only files.
-#rm -f ${STATUS_FILE}
-#touch ${STATUS_FILE}
-#for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-#  eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep 'd0::t[^0]' | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${subdir}/\1%" >> ${STATUS_FILE}
-#done

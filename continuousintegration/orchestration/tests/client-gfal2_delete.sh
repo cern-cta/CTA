@@ -23,14 +23,6 @@ tapefile_ls()
   done
 }
 
-# Get list of files currently on tape.
-tmp_file=$(mktemp)
-initial_files_on_tape=$(mktemp)
-for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-    eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[0-9][0-9]*::t1' | awk '{print $10}' > tmp_file
-    cat $tmp_file | xargs -iFILE_NAME echo ${subdir}/FILE_NAME >> $initial_files_on_tape
-done
-
 
 # We can now delete the files
 echo "Waiting for files to be removed from EOS and tapes"
@@ -48,8 +40,10 @@ VIDLIST=$(nsls_tapes ${EOS_DIR})
 INITIALFILESONTAPE=$(tapefile_ls ${VIDLIST} | wc -l)
 echo "Before starting deletion there are ${INITIALFILESONTAPE} files on tape."
 #XrdSecPROTOCOL=sss eos -r 0 0 root://${EOSINSTANCE} rm -Fr ${EOS_DIR} &
-KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOSINSTANCE} rm -Fr ${EOS_DIR} &
-EOSRMPID=$!
+#KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOSINSTANCE} rm -Fr ${EOS_DIR} &
+#EOSRMPID=$!
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 gfal-rm -r ${GFAL2_PROTOCOL}://${EOSINSTANCE}/${EOS_DIR}
+
 # wait a bit in case eos prematurely fails...
 sleep 0.1i
 if test ! -d /proc/${EOSRMPID}; then
@@ -92,15 +86,8 @@ kill ${EOSRMPID} &> /dev/null
 if [[ ${DELETED} == ${INITIALFILESONTAPE} ]]; then
     db_update_col "deleted" "+" "1"
 fi
-# Generate list of deleted files.
-#deleted_files=$(mktemp)
-#comm -2 -3  $start $end > $deleted_files
 
-#cat $deleted_files | xargs -iFILE_NAME
 
-# As we deleted the directory we may have deleted more files than the ones we retrieved
-# therefore we need to take the smallest of the 2 values to decide if the system test was
-# successful or not
 if [[ ${RETRIEVED} -gt ${DELETED} ]]; then
   LASTCOUNT=${DELETED}
   echo "Some files have not been deleted:"
