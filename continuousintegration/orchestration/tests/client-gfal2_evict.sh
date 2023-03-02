@@ -46,6 +46,6 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
 done
 
 EVICTED=$((${TO_EVICT}-${LEFTOVER}))
-echo "$(date +%s): $EVICTED/$TO_EVICT files evicted from EOS 'xrdfs prepare -e'"
+echo "$(date +%s): $EVICTED/$TO_EVICT files evicted from EOS 'gfal-evict SURL'"
 
 LASTCOUNT=${EVICTED}
