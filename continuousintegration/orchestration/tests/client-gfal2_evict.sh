@@ -33,6 +33,8 @@ rm -f ${TMP_FILE}
 
 TO_EVICT=$(cat ${STATUS_FILE} | wc -l)
 
+NEW_STAGE_VAL=1
+
 echo "$(date +%s): $TO_EVICT files to be evicted from EOS using 'gfal-evict SURL'"
 cat ${SURLs} | xargs --max-procs=${NB_PROCS}  -iTEST_FILE_NAME bash -c "XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 xargs --max-procs=10 -n 40 gfal-evict TEST_FILE_NAME"
 
