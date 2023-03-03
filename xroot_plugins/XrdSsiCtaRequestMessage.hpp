@@ -20,7 +20,7 @@
 #include <XrdSsi/XrdSsiEntity.hh>
 
 #include "common/utils/utils.hpp"
-#include "Versions.hpp"
+#include "frontend/common/Version.hpp"
 #include "XrdSsiCtaServiceProvider.hpp"
 #include "cta_frontend.pb.h"
 
@@ -33,26 +33,18 @@ class RequestMessage
 {
 public:
   RequestMessage(const XrdSsiEntity &client, const XrdSsiCtaServiceProvider *service) :
+    m_cliIdentity(client.name, cta::utils::getShortHostname(), client.host, client.prot),
     m_service(*service),
     m_catalogue(service->getFrontendService().getCatalogue()),
     m_scheduler(service->getFrontendService().getScheduler()),
     m_archiveFileMaxSize(service->getFrontendService().getArchiveFileMaxSize()),
     m_repackBufferURL(service->getFrontendService().getRepackBufferURL()),
-    m_verificationMountPolicy(service->getFrontendService().getVerificationMountPolicy()),
     m_namespaceMap(service->getFrontendService().getNamespaceMap()),
     m_lc(service->getFrontendService().getLogContext()),
     m_catalogue_conn_string(service->getFrontendService().getCatalogueConnectionString())
-    {
-      m_cliIdentity.username   = client.name;
-      m_cliIdentity.host       = cta::utils::getShortHostname(); // Host should be of the machine that executes the command
-      m_cliIdentity.clientHost = client.host;
-
-      m_lc.pushOrReplace({"user", m_cliIdentity.username + "@" + m_cliIdentity.host});
-
-      // Map the client protocol string to an enum value
-      auto proto_it = m_protomap.find(client.prot);
-      m_protocol = proto_it != m_protomap.end() ? proto_it->second : Protocol::OTHER;
-    }
+  {
+    m_lc.pushOrReplace({"user", m_cliIdentity.username + "@" + m_cliIdentity.host});
+  }
 
   /*!
    * Process a Notification request or an Admin command request
@@ -78,7 +70,7 @@ public:
   const bool &getRequired(cta::admin::OptionBoolean::Key key) const {
     return m_option_bool.at(key);
   }
-  const Versions &getClientVersions() const {
+  const frontend::Version &getClientVersions() const {
     return m_client_versions;
   }
   const std::string &getClientXrdSsiProtoIntVersion() const {
@@ -146,20 +138,6 @@ public:
   }
 
 private:
-  /*!
-   * Process Notification events
-   *
-   * @param[in]     notification    Notification request message from EOS WFE
-   * @param[out]    response        Response message to return to EOS
-   */
-  void processOPENW        (const cta::eos::Notification &notification, cta::xrd::Response &response);    //!< Ignore OPENW event
-  void processCREATE       (const cta::eos::Notification &notification, cta::xrd::Response &response);    //!< New archive file ID event
-  void processCLOSEW       (const cta::eos::Notification &notification, cta::xrd::Response &response);    //!< Archive file event
-  void processPREPARE      (const cta::eos::Notification &notification, cta::xrd::Response &response);    //!< Retrieve file event
-  void processABORT_PREPARE(const cta::eos::Notification &notification, cta::xrd::Response &response);    //!< Abort retrieve file event
-  void processDELETE       (const cta::eos::Notification &notification, cta::xrd::Response &response);    //!< Delete file event
-  void processUPDATE_FID   (const cta::eos::Notification &notification, cta::xrd::Response &response);    //!< Disk file ID update event
-
   /*!
    * Process AdminCmd events
    *
@@ -287,32 +265,14 @@ private:
    */
   void importOptions(const cta::admin::AdminCmd &admincmd);
 
-  /*!
-   * Throw an exception for empty protocol buffer strings
-   */
-  void checkIsNotEmptyString(const std::string &value, const std::string &error_txt) {
-    if(value.empty()) throw XrdSsiPb::PbException("Protocol buffer field " + error_txt + " is an empty string.");
-  }
-
-  // Security protocol used to connect
-
-  enum class Protocol { SSS, KRB5, OTHER };
-
-  const std::map<std::string, Protocol> m_protomap = {
-    { "sss",  Protocol::SSS  },
-    { "krb5", Protocol::KRB5 },
-  };
-
   // Member variables
 
-  Protocol                                              m_protocol;                   //!< The protocol the client used to connect
   cta::common::dataStructures::SecurityIdentity         m_cliIdentity;                //!< Client identity: username/host
   const XrdSsiCtaServiceProvider                       &m_service;                    //!< Const reference to the XRootD SSI Service
   cta::catalogue::Catalogue                            &m_catalogue;                  //!< Reference to CTA Catalogue
   cta::Scheduler                                       &m_scheduler;                  //!< Reference to CTA Scheduler
   uint64_t                                              m_archiveFileMaxSize;         //!< Maximum allowed file size for archive requests
   std::optional<std::string>				                    m_repackBufferURL;            //!< Repack buffer URL
-  std::optional<std::string>				                    m_verificationMountPolicy;    //!< Repack buffer URL
   NamespaceMap_t                                        m_namespaceMap;               //!< Identifiers for namespace queries
   cta::log::LogContext                                  m_lc;                         //!< CTA Log Context
   std::map<cta::admin::OptionBoolean::Key, bool>        m_option_bool;                //!< Boolean options
@@ -320,7 +280,7 @@ private:
   std::map<cta::admin::OptionString::Key, std::string>  m_option_str;                 //!< String options
   std::map<cta::admin::OptionStrList::Key,
     std::vector<std::string>>                           m_option_str_list;            //!< String List options
-  Versions                                              m_client_versions;            //!< Client CTA and xrootd-ssi-proto version(tag)
+  frontend::Version                                     m_client_versions;            //!< Client CTA and xrootd-ssi-proto version(tag)
   std::string m_client_cta_version;                                                   //!< Client CTA Version
   std::string m_client_xrd_ssi_proto_int_version;                                     //!< Client xrootd-ssi-protobuf-interface version (tag)  
   std::string m_catalogue_conn_string;                                                //!< Server catalogue connection string

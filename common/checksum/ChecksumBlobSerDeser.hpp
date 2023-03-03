@@ -23,7 +23,7 @@
 namespace cta {
 namespace checksum {
 
-void ProtobufToChecksumBlob(const common::ChecksumBlob &p_csb, checksum::ChecksumBlob &csb) {
+inline void ProtobufToChecksumBlob(const common::ChecksumBlob &p_csb, checksum::ChecksumBlob &csb) {
   csb.clear();
   for(auto &cs : p_csb.cs()) {
     checksum::ChecksumType type;
@@ -40,7 +40,7 @@ void ProtobufToChecksumBlob(const common::ChecksumBlob &p_csb, checksum::Checksu
   }
 }
 
-void ChecksumBlobToProtobuf(const checksum::ChecksumBlob &csb, common::ChecksumBlob &p_csb) {
+inline void ChecksumBlobToProtobuf(const checksum::ChecksumBlob &csb, common::ChecksumBlob &p_csb) {
   for(auto &cs : csb.getMap()) {
     common::ChecksumBlob::Checksum::Type type;
     switch(cs.first) {

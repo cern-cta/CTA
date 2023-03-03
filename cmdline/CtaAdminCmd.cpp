@@ -166,8 +166,8 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char *const *const argv) :
 {
    auto &admincmd = *(m_request.mutable_admincmd());
 
-   m_request.set_client_cta_version(CTA_VERSION);
-   m_request.set_client_xrootd_ssi_protobuf_interface_version(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
+   admincmd.set_client_version(CTA_VERSION);
+   admincmd.set_protobuf_tag(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
 
    // Strip path from execname
 

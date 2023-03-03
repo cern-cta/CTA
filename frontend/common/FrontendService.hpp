@@ -32,6 +32,8 @@ class FrontendService {
 public:
   explicit FrontendService(const std::string& configFilename);
 
+  FrontendService(const FrontendService &) = delete;
+
   ~FrontendService() = default;
 
   /*!
@@ -72,7 +74,7 @@ public:
   /*!
    * Get the verification mount policy
    */
-  std::optional<std::string> getVerificationMountPolicy() const { return m_verificationMountPolicy; }
+  std::string getVerificationMountPolicy() const { return m_verificationMountPolicy; }
 
   /*!
    * Get the endpoints for namespace queries
@@ -100,7 +102,7 @@ private:
   std::string                                   m_catalogue_conn_string;   //!< The catalogue connection string (without the password)
   uint64_t                                      m_archiveFileMaxSize;      //!< Maximum allowed file size for archive requests
   std::optional<std::string>                    m_repackBufferURL;         //!< The repack buffer URL
-  std::optional<std::string>                    m_verificationMountPolicy; //!< The mount policy for verification requests
+  std::string                                   m_verificationMountPolicy; //!< The mount policy for verification requests
   cta::NamespaceMap_t                           m_namespaceMap;            //!< Endpoints for namespace queries
 };
 

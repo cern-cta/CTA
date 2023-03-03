@@ -223,8 +223,8 @@ void RestoreFilesCmd::listDeletedFilesCta() const {
 
   auto &admincmd = *(request.mutable_admincmd());
 
-  request.set_client_cta_version(CTA_VERSION);
-  request.set_client_xrootd_ssi_protobuf_interface_version(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
+  admincmd.set_client_version(CTA_VERSION);
+  admincmd.set_protobuf_tag(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
   admincmd.set_cmd(cta::admin::AdminCmd::CMD_RECYCLETAPEFILE);
   admincmd.set_subcmd(cta::admin::AdminCmd::SUBCMD_LS);
 
@@ -317,8 +317,8 @@ void RestoreFilesCmd::restoreDeletedFileCopyCta(const cta::admin::RecycleTapeFil
 
   auto &admincmd = *(request.mutable_admincmd());
 
-  request.set_client_cta_version(CTA_VERSION);
-  request.set_client_xrootd_ssi_protobuf_interface_version(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
+  admincmd.set_client_version(CTA_VERSION);
+  admincmd.set_protobuf_tag(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
   admincmd.set_cmd(cta::admin::AdminCmd::CMD_RECYCLETAPEFILE);
   admincmd.set_subcmd(cta::admin::AdminCmd::SUBCMD_RESTORE);
 
@@ -479,8 +479,8 @@ bool RestoreFilesCmd::archiveFileExistsCTA(const uint64_t &archiveFileId) const 
 
   auto &admincmd = *(request.mutable_admincmd());
 
-  request.set_client_cta_version(CTA_VERSION);
-  request.set_client_xrootd_ssi_protobuf_interface_version(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
+  admincmd.set_client_version(CTA_VERSION);
+  admincmd.set_protobuf_tag(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
   admincmd.set_cmd(cta::admin::AdminCmd::CMD_TAPEFILE);
   admincmd.set_subcmd(cta::admin::AdminCmd::SUBCMD_LS);
 
@@ -683,8 +683,8 @@ std::pair<std::string,std::string> RestoreFilesCmd::getInstanceAndFidFromCTA(con
   cta::xrd::Request request;
   auto &admincmd = *(request.mutable_admincmd());
 
-  request.set_client_cta_version(CTA_VERSION);
-  request.set_client_xrootd_ssi_protobuf_interface_version(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
+  admincmd.set_client_version(CTA_VERSION);
+  admincmd.set_protobuf_tag(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
   admincmd.set_cmd(cta::admin::AdminCmd::CMD_TAPEFILE);
   admincmd.set_subcmd(cta::admin::AdminCmd::SUBCMD_LS);
   auto new_opt = admincmd.add_option_uint64();

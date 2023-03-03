@@ -113,10 +113,6 @@ void sendVerifyRequest(const CmdLineArgs &cmdLineArgs, const std::string &archiv
   cta::xrd::Request request;
   cta::eos::Notification &notification = *(request.mutable_notification());
 
-  // Set client version
-  request.set_client_cta_version(CTA_VERSION);
-  request.set_client_xrootd_ssi_protobuf_interface_version(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
-
   // Parse the command line arguments: fill the Notification fields
   fillNotification(notification, cmdLineArgs, archiveFileId);
 

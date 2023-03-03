@@ -169,8 +169,8 @@ void EosNamespaceInjection::updateFxidAndDiskInstanceInCatalogue(const std::stri
 
   const auto admincmd = request.mutable_admincmd();
 
-  request.set_client_cta_version(CTA_VERSION);
-  request.set_client_xrootd_ssi_protobuf_interface_version(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
+  admincmd->set_client_version(CTA_VERSION);
+  admincmd->set_protobuf_tag(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
   admincmd->set_cmd(cta::admin::AdminCmd::CMD_ARCHIVEFILE);
   admincmd->set_subcmd(cta::admin::AdminCmd::SUBCMD_CH);
 
@@ -248,8 +248,8 @@ bool EosNamespaceInjection::getMetaDataFromCatalogue(const uint64_t &archiveId) 
 
   auto &admincmd = *(request.mutable_admincmd());
 
-  request.set_client_cta_version(CTA_VERSION);
-  request.set_client_xrootd_ssi_protobuf_interface_version(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
+  admincmd.set_client_version(CTA_VERSION);
+  admincmd.set_protobuf_tag(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
   admincmd.set_cmd(cta::admin::AdminCmd::CMD_TAPEFILE);
   admincmd.set_subcmd(cta::admin::AdminCmd::SUBCMD_LS);
 

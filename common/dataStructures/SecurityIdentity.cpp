@@ -26,20 +26,26 @@ namespace dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SecurityIdentity::SecurityIdentity() {}
+SecurityIdentity::SecurityIdentity() :
+  authProtocol(Protocol::NONE) {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SecurityIdentity::SecurityIdentity(const std::string& username, const std::string& host):
-  username(username), host(host) {}
-
+SecurityIdentity::SecurityIdentity(const std::string& username, const std::string& host) :
+  username(username), host(host), authProtocol(Protocol::NONE) {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SecurityIdentity::SecurityIdentity(const std::string& username, const std::string& host, const std::string & clientHost):
-  username(username), host(host), clientHost(clientHost) {}
+SecurityIdentity::SecurityIdentity(const std::string& username, const std::string& host, const std::string& clientHost, const std::string& auth) :
+  username(username), host(host), clientHost(clientHost), authProtocol(Protocol::NONE) {
+  if(!auth.empty()) {
+    // Map the client protocol string to enum value
+    auto proto_it = m_authProtoMap.find(auth);
+    authProtocol = proto_it != m_authProtoMap.end() ? proto_it->second : Protocol::OTHER;
+  }
+}
 
 //------------------------------------------------------------------------------
 // operator==

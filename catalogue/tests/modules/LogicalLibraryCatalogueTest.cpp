@@ -33,7 +33,7 @@ namespace unitTests {
 
 cta_catalogue_LogicalLibraryTest::cta_catalogue_LogicalLibraryTest()
   : m_dummyLog("dummy", "dummy"),
-    m_admin("admin", "admin", "admin"),
+    m_admin("admin", "admin", "admin", ""),
     m_vo(CatalogueTestUtils::getVo()),
     m_diskInstance(CatalogueTestUtils::getDiskInstance()),
     m_mediaType(CatalogueTestUtils::getMediaType()),

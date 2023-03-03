@@ -42,8 +42,8 @@ class VersionStream: public XrdCtaStream{
  private:
     static constexpr const char* const LOG_SUFFIX  = "VersionStream";    //!< Identifier for log messages
 
-    Versions m_client_versions;
-    Versions m_server_versions;
+    frontend::Version m_client_versions;
+    frontend::Version m_server_versions;
     std::string m_catalogue_conn_string;
     std::string m_catalogue_version;
     bool m_is_upgrading;
@@ -73,7 +73,7 @@ VersionStream::VersionStream(const RequestMessage &requestMsg, cta::catalogue::C
     == catalogue::SchemaVersion::Status::UPGRADING) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "VersionStream() constructor");
   m_server_versions.ctaVersion = CTA_VERSION;
-  m_server_versions.xrootdSsiProtoIntVersion = XROOTD_SSI_PROTOBUF_INTERFACE_VERSION;
+  m_server_versions.protobufTag = XROOTD_SSI_PROTOBUF_INTERFACE_VERSION;
 }
 
 int VersionStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
@@ -82,10 +82,10 @@ int VersionStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
   auto version = record.mutable_version_item();
   auto client_version = version->mutable_client_version();
   client_version->set_cta_version(m_client_versions.ctaVersion);
-  client_version->set_xrootd_ssi_protobuf_interface_version(m_client_versions.xrootdSsiProtoIntVersion);
+  client_version->set_xrootd_ssi_protobuf_interface_version(m_client_versions.protobufTag);
   auto server_version = version->mutable_server_version();
   server_version->set_cta_version(m_server_versions.ctaVersion);
-  server_version->set_xrootd_ssi_protobuf_interface_version(m_server_versions.xrootdSsiProtoIntVersion);
+  server_version->set_xrootd_ssi_protobuf_interface_version(m_server_versions.protobufTag);
   version->set_catalogue_connection_string(m_catalogue_conn_string);
   version->set_catalogue_version(m_catalogue_version);
   version->set_is_upgrading(m_is_upgrading);

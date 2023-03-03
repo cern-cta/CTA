@@ -114,8 +114,8 @@ std::tuple<std::string,std::string> CatalogueFetch::getInstanceAndFid(const std:
   cta::xrd::Request request;
   auto admincmd = request.mutable_admincmd();
 
-  request.set_client_cta_version(CTA_VERSION);
-  request.set_client_xrootd_ssi_protobuf_interface_version(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
+  admincmd->set_client_version(CTA_VERSION);
+  admincmd->set_protobuf_tag(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
   admincmd->set_cmd(cta::admin::AdminCmd::CMD_TAPEFILE);
   admincmd->set_subcmd(cta::admin::AdminCmd::SUBCMD_LS);
   auto new_opt = admincmd->add_option_uint64();
@@ -142,8 +142,8 @@ bool CatalogueFetch::vidExists(const std::string &vid, std::unique_ptr<XrdSsiPbS
   cta::xrd::Request request;
   auto admincmd = request.mutable_admincmd();
 
-  request.set_client_cta_version(CTA_VERSION);
-  request.set_client_xrootd_ssi_protobuf_interface_version(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
+  admincmd->set_client_version(CTA_VERSION);
+  admincmd->set_protobuf_tag(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
   admincmd->set_cmd(cta::admin::AdminCmd::CMD_TAPE);
   admincmd->set_subcmd(cta::admin::AdminCmd::SUBCMD_LS);
 

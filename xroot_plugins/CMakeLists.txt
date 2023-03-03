@@ -38,6 +38,8 @@ add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.c
                              ../cmdline/CtaAdminCmdParse.cpp
                              ../frontend/common/Config.cpp
                              ../frontend/common/FrontendService.cpp
+                             ../frontend/common/WorkflowEvent.cpp
+                             ../frontend/common/AdminCmd.cpp
                              ../frontend/common/GrpcClient.cpp ../frontend/common/GrpcEndpoint.cpp)
 if(CTA_USE_PGSCHED)
   target_link_libraries(XrdSsiCta ${XROOTD_XRDSSI_LIB} XrdSsiLib XrdSsiPbEosCta ctascheduler ctacommon ctacatalogue
