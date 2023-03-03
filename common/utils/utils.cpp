@@ -1023,5 +1023,11 @@ std::vector<std::string> commaSeparatedStringToVector(const std::string &commaSe
   return result;
 }
 
+std::string decimalToHexadecimal(const std::string &decimalNumber) {
+  std::stringstream fxIdStream;
+  fxIdStream << std::hex << decimalNumber;
+  return fxIdStream.str();
+}
+
 } // namespace utils
 } // namespace cta

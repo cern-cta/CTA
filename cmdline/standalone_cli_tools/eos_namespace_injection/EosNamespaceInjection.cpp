@@ -14,6 +14,8 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
+
+#include <ctime>
 #include <sys/stat.h>
 #include <string>
 #include <memory>
@@ -129,81 +131,33 @@ EosNamespaceInjection::~EosNamespaceInjection() = default;
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 int EosNamespaceInjection::exceptionThrowingMain(const int argc, char *const *const argv) {
-  CmdLineArgs cmdLineArgs(argc, argv, StandaloneCliTool::EOS_NAMESPACE_INJECTION);
-  auto [serviceProvider, endpointmap] = ConnConfiguration::readAndSetConfiguration(m_log, getUsername(), cmdLineArgs);
-  m_serviceProviderPtr = std::move(serviceProvider);
-  m_endpointMapPtr = std::move(endpointmap);
 
-  if(cmdLineArgs.m_help) {
-    cmdLineArgs.printUsage(std::cout);
-    throw exception::UserError("");
+  setCmdLineArguments(argc, argv);
+
+  MetaData userInput(m_jsonPath);
+  for(const auto &metaDataFromUser : userInput.m_mdCollection) {
+    const uint64_t archiveId = cta::utils::toUint64(metaDataFromUser.archiveId);
+    checkArchiveIdExistsInCatalogue(archiveId);
+    compareJsonAndCtaMetaData(metaDataFromUser, g_metaDataObjectCatalogue);
+
+    const auto enclosingPath = cta::utils::getEnclosingPath(metaDataFromUser.eosPath);
+    const auto [parentId, uid, gid] = getContainerIdsEos(metaDataFromUser.diskInstance, enclosingPath);
+    checkParentContainerExists(parentId, enclosingPath);
+
+    if(const auto& fid = getFileIdEos(metaDataFromUser.diskInstance, metaDataFromUser.eosPath); pathExists(fid)) {
+      checkExistingPathHasInvalidMetadata(archiveId, fid, metaDataFromUser);
+      continue;
+    }
+
+    const auto newFid = createFileInEos(metaDataFromUser, parentId, uid, gid);
+    checkFileCreated(newFid);
+
+    std::string newFxId = cta::utils::decimalToHexadecimal(std::to_string(newFid));
+    updateFxidAndDiskInstanceInCatalogue(metaDataFromUser.archiveId, newFxId, metaDataFromUser.diskInstance);
+
+    checkEosCtaConsistency(archiveId, newFxId, metaDataFromUser);
   }
-
-  if(cmdLineArgs.m_json) {
-    m_jsonPath = cmdLineArgs.m_json.value();
-  } else {
-    cmdLineArgs.printUsage(std::cout);
-    throw exception::UserError("The required json file was not provided.");
-  }
-
-  MetaData metaData(m_jsonPath);
-  for(const auto &metaDataObject : metaData.m_mdCollection) {
-    const uint64_t archiveId = cta::utils::toUint64(metaDataObject.archiveId);
-    if(const bool archiveIdExists = getMetaDataFromCatalogue(archiveId); !archiveIdExists) {
-      throw exception::UserError("archivefile id " + metaDataObject.archiveId + " does not exist");
-    }
-    compareJsonAndCtaMetaData(metaDataObject, g_metaDataObjectCatalogue);
-
-    const auto enclosingPath = cta::utils::getEnclosingPath(metaDataObject.eosPath);
-    const auto [parentId, uid, gid] = getContainerIdsEos(metaDataObject.diskInstance, enclosingPath);
-    if(!parentId) {
-      throw exception::UserError("Could not find: " + enclosingPath + ". Check that gRPC authentication is set up correctly, and that the path exists");
-    }
-
-    if(const auto fid = getFileIdEos(metaDataObject.diskInstance, metaDataObject.eosPath); fid != 0) {
-      throw cta::cliTool::EosNameSpaceInjectionError("The file with path " + metaDataObject.eosPath + " already exists for instance " + metaDataObject.diskInstance + ". This tool does not overwrite existing files");
-    }
-
-    const auto newFid = createFileInEos(metaDataObject, parentId, uid, gid);
-    if (newFid != 0) {
-      std::list<cta::log::Param> params;
-      params.push_back(cta::log::Param("diskFileId", newFid));
-      m_log(cta::log::INFO, "File was created in the EOS namespace", params);
-    } else {
-      std::list<cta::log::Param> params;
-      params.push_back(cta::log::Param("diskFileId", newFid));
-      m_log(cta::log::WARNING, "Could not find file in the EOS namespace. Check that gRPC authentication is set up correctly, and that the path exists", params);
-    }
-
-    auto decimalToHexadecimal = [](const std::string &decimalNumber) {
-      std::stringstream fxIdStream;
-      fxIdStream << std::hex << decimalNumber;
-      return fxIdStream.str();
-    };
-
-    std::string fxId = decimalToHexadecimal(std::to_string(newFid));
-    updateFxidAndDiskInstanceInCatalogue(metaDataObject.archiveId, fxId, metaDataObject.diskInstance);
-
-    // sanity check
-    getMetaDataFromCatalogue(archiveId);
-    const auto [eosArchiveFileId, eosChecksumDecimal] = getArchiveFileIdAndChecksumFromEOS(metaDataObject.diskInstance, fxId);
-    const std::string eosChecksum = decimalToHexadecimal(eosChecksumDecimal);
-    const auto& ctaChecksum = g_metaDataObjectCatalogue.checksumValue;
-    std::list<cta::log::Param> params;
-    params.push_back(cta::log::Param("archiveFileId", archiveId));
-    params.push_back(cta::log::Param("diskFileId in EOS for new file", fxId));
-    params.push_back(cta::log::Param("diskFileId in Catalogue", g_metaDataObjectCatalogue.fxId));
-    params.push_back(cta::log::Param("diskInstance in Catalogue", g_metaDataObjectCatalogue.diskInstance));
-    params.push_back(cta::log::Param("checksum", ctaChecksum));
-    if(eosArchiveFileId == archiveId && eosChecksum == ctaChecksum && g_metaDataObjectCatalogue.fxId == fxId) {
-      m_log(cta::log::INFO, "File metadata in EOS and CTA matches", params);
-    } else {
-      params.push_back(cta::log::Param("eosArchiveFileId", eosArchiveFileId));
-      params.push_back(cta::log::Param("eosChecksum", eosChecksum));
-      m_log(cta::log::WARNING, "File metadata in EOS and CTA does not match", params);
-      throw cta::cliTool::EosNameSpaceInjectionError("Sanity check failed.");
-    }
-  }
+  createTxtFileWithSkippedMetadata();
   return 0;
 }
 
@@ -362,18 +316,18 @@ uint64_t EosNamespaceInjection::getFileIdEos(const std::string &diskInstance, co
 
 
 //------------------------------------------------------------------------------
-// restoreDeletedFileEos
+// createFileInEos
 //------------------------------------------------------------------------------
-uint64_t EosNamespaceInjection::createFileInEos(const MetaDataObject &metaDataObject, const uint64_t &parentId, const uint64_t uid, const uint64_t gid) const {
+uint64_t EosNamespaceInjection::createFileInEos(const MetaDataObject &metaDataFromUser, const uint64_t &parentId, const uint64_t uid, const uint64_t gid) const {
   ::eos::rpc::FileMdProto file;
 
-  const auto& fullPath = metaDataObject.eosPath;
+  const auto& fullPath = metaDataFromUser.eosPath;
 
   file.set_id(0); // Setting a fid as 0 will tell eos to generate a new ID
   file.set_cont_id(parentId);
   file.set_uid(uid);
   file.set_gid(gid);
-  file.set_size(cta::utils::toUint64(metaDataObject.size));
+  file.set_size(cta::utils::toUint64(metaDataFromUser.size));
   file.set_layout_id(m_defaultFileLayout);
 
   // Filemode: filter out S_ISUID, S_ISGID and S_ISVTX because EOS does not follow POSIX semantics for these bits
@@ -393,15 +347,15 @@ uint64_t EosNamespaceInjection::createFileInEos(const MetaDataObject &metaDataOb
   file.set_name(cta::utils::getEnclosedName(fullPath));
 
   // Checksums
-  file.mutable_checksum()->set_type(metaDataObject.checksumType);{{{{{}}}}}
-  const auto byteArray = checksum::ChecksumBlob::HexToByteArray(metaDataObject.checksumValue);
+  file.mutable_checksum()->set_type(metaDataFromUser.checksumType);{{{{{}}}}}
+  const auto byteArray = checksum::ChecksumBlob::HexToByteArray(metaDataFromUser.checksumValue);
   file.mutable_checksum()->set_value(std::string(byteArray.rbegin(),byteArray.rend()));
 
   // Extended attributes:
   //
   // 1. Archive File ID
-  std::string archiveId(metaDataObject.archiveId);
-  file.mutable_xattrs()->insert(google::protobuf::MapPair<std::string,std::string>("sys.archive.file_id", metaDataObject.archiveId));
+  std::string archiveId(metaDataFromUser.archiveId);
+  file.mutable_xattrs()->insert(google::protobuf::MapPair<std::string,std::string>("sys.archive.file_id", metaDataFromUser.archiveId));
   // 2. Storage Class
   file.mutable_xattrs()->insert(google::protobuf::MapPair<std::string,std::string>("sys.archive.storage_class", g_metaDataObjectCatalogue.storageClass));
   // 3. Birth Time
@@ -414,9 +368,9 @@ uint64_t EosNamespaceInjection::createFileInEos(const MetaDataObject &metaDataOb
     file.mutable_locations()->Add(65535);
   }
 
-  auto reply = m_endpointMapPtr->fileInsert(metaDataObject.diskInstance, file);
+  auto reply = m_endpointMapPtr->fileInsert(metaDataFromUser.diskInstance, file);
 
-  const auto new_fid = getFileIdEos(metaDataObject.diskInstance, metaDataObject.eosPath);
+  const auto new_fid = getFileIdEos(metaDataFromUser.diskInstance, metaDataFromUser.eosPath);
   return new_fid;
 
 }
@@ -455,6 +409,134 @@ std::pair<ArchiveId, Checksum> EosNamespaceInjection::getArchiveFileIdAndChecksu
   }
 
   return std::make_pair(archiveFileId,checksumValue);
+}
+
+//------------------------------------------------------------------------------
+// setCmdLineArguments
+//------------------------------------------------------------------------------
+void EosNamespaceInjection::setCmdLineArguments(const int argc, char *const *const argv) {
+  CmdLineArgs cmdLineArgs(argc, argv, StandaloneCliTool::EOS_NAMESPACE_INJECTION);
+  auto [serviceProvider, endpointmap] = ConnConfiguration::readAndSetConfiguration(m_log, getUsername(), cmdLineArgs);
+  m_serviceProviderPtr = std::move(serviceProvider);
+  m_endpointMapPtr     = std::move(endpointmap);
+
+  if(cmdLineArgs.m_help) {
+    cmdLineArgs.printUsage(std::cout);
+    throw exception::UserError("");
+  }
+
+  if(cmdLineArgs.m_json) {
+    m_jsonPath = cmdLineArgs.m_json.value();
+  } else {
+    cmdLineArgs.printUsage(std::cout);
+    throw exception::UserError("The required json file was not provided.");
+  }
+}
+
+//------------------------------------------------------------------------------
+// checkEosCtaConsistency
+//------------------------------------------------------------------------------
+bool EosNamespaceInjection::checkEosCtaConsistency(const uint64_t& archiveId, const std::string& newFxIdEos, const MetaDataObject &metaDataFromUser) {
+  getMetaDataFromCatalogue(archiveId);
+  const auto [eosArchiveFileId, eosChecksumDecimal] = getArchiveFileIdAndChecksumFromEOS(metaDataFromUser.diskInstance, newFxIdEos);
+  const std::string eosChecksum = cta::utils::decimalToHexadecimal(eosChecksumDecimal);
+  const auto& ctaChecksum = g_metaDataObjectCatalogue.checksumValue;
+  std::list<cta::log::Param> params;
+  params.push_back(cta::log::Param("archiveFileId", archiveId));
+  params.push_back(cta::log::Param("diskFileId in EOS for new file", newFxIdEos));
+  params.push_back(cta::log::Param("diskFileId in Catalogue", g_metaDataObjectCatalogue.fxId));
+  params.push_back(cta::log::Param("diskInstance in Catalogue", g_metaDataObjectCatalogue.diskInstance));
+  params.push_back(cta::log::Param("checksum", ctaChecksum));
+  if(eosArchiveFileId == archiveId && eosChecksum == ctaChecksum && g_metaDataObjectCatalogue.fxId == newFxIdEos) {
+    m_log(cta::log::INFO, "File metadata in EOS and CTA matches", params);
+    return true;
+  } else {
+    params.push_back(cta::log::Param("eosArchiveFileId", eosArchiveFileId));
+    params.push_back(cta::log::Param("eosChecksum", eosChecksum));
+    m_log(cta::log::WARNING, "File metadata in EOS and CTA does not match", params);
+    m_inconsistentMetadata.push_back(metaDataFromUser);
+    return false;
+  }
+}
+
+//------------------------------------------------------------------------------
+// pathExists
+//------------------------------------------------------------------------------
+bool EosNamespaceInjection::pathExists(const uint64_t fid) const {
+  return (fid != 0);
+}
+
+//------------------------------------------------------------------------------
+// checkFileCreated
+//------------------------------------------------------------------------------
+void EosNamespaceInjection::checkFileCreated(const uint64_t newFid) {
+  if (pathExists(newFid)) {
+    std::list<cta::log::Param> params;
+    params.push_back(cta::log::Param("diskFileId", newFid));
+    m_log(cta::log::INFO, "File was created in the EOS namespace", params);
+  } else {
+    std::list<cta::log::Param> params;
+    params.push_back(cta::log::Param("diskFileId", newFid));
+    m_log(cta::log::WARNING, "Could not find file in the EOS namespace. Check that gRPC authentication is set up correctly, and that the path exists", params);
+  }
+}
+
+//------------------------------------------------------------------------------
+// checkParentContainerExists
+//------------------------------------------------------------------------------
+void EosNamespaceInjection::checkParentContainerExists(const uint64_t parentId, const std::string& enclosingPath) const {
+  if(!pathExists(parentId)) {
+    throw exception::UserError("Could not find: " + enclosingPath + ". Check that gRPC authentication is set up correctly, and that the path exists");
+  }
+}
+
+//------------------------------------------------------------------------------
+// checkArchiveIdExistsInCatalogue
+//------------------------------------------------------------------------------
+void EosNamespaceInjection::checkArchiveIdExistsInCatalogue(const uint64_t &archiveId) const {
+  if(!getMetaDataFromCatalogue(archiveId)) {
+    throw exception::UserError("archive file id " + std::to_string(archiveId) + " does not exist");
+  }
+}
+
+//------------------------------------------------------------------------------
+// checkExistingPathHasInvalidMetadata
+//------------------------------------------------------------------------------
+void EosNamespaceInjection::checkExistingPathHasInvalidMetadata(const uint64_t &archiveId, const uint64_t& fid, const MetaDataObject& metaDataFromUser) {
+  const std::string fxId = cta::utils::decimalToHexadecimal(std::to_string(fid));
+  if(!checkEosCtaConsistency(archiveId, fxId, metaDataFromUser)) {
+    throw cta::cliTool::EosNameSpaceInjectionError("The file with path " + metaDataFromUser.eosPath + " already exists for instance " + metaDataFromUser.diskInstance + ". This tool does not overwrite existing files");
+  }
+}
+
+//------------------------------------------------------------------------------
+// writeSkippedArchiveIdsToFile
+//------------------------------------------------------------------------------
+void EosNamespaceInjection::createTxtFileWithSkippedMetadata() const {
+  auto unix_epoch_time = std::time(0);
+  const std::string currentTime = std::to_string(unix_epoch_time);
+  const std::filesystem::path filePath = "/tmp/skippedMetadataEosInjection" + currentTime + ".txt";
+  std::ofstream archiveIdFile(filePath);
+
+  if (archiveIdFile.fail()) {
+    throw std::runtime_error("Unable to open file " + filePath.string());
+  }
+
+  if (archiveIdFile.is_open()) {
+    for (const auto& metadata : m_inconsistentMetadata) {
+      archiveIdFile          <<
+      "{ eosPath: "          << metadata.eosPath       <<
+      " , diskInstance: "    << metadata.diskInstance  <<
+      " , archiveId: "       << metadata.archiveId     <<
+      " , size: "            << metadata.size          <<
+      " , checksumType: "    << metadata.checksumType  <<
+      " , checksumValue: "   << metadata.checksumValue <<
+      " }" << std::endl;
+    }
+    archiveIdFile.close();
+    std::cout << m_inconsistentMetadata.size() << " entries finished with inconsistent metadata." << std::endl;
+    std::cout << "The skipped metadata can be found here: " << filePath << std::endl;
+  }
 }
 
 } // namespace cta::cliTool

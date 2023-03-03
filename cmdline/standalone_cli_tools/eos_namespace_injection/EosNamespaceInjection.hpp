@@ -18,6 +18,7 @@
 #pragma once
 
 #include <filesystem>
+#include <vector>
 
 #include "cmdline/standalone_cli_tools/common/CmdLineTool.hpp"
 #include "cmdline/standalone_cli_tools/eos_namespace_injection/MetaData.hpp"
@@ -36,6 +37,7 @@ namespace eos::client { class EndpointMap;  }
 namespace cta::log    { class StdoutLogger; }
 
 namespace cta::cliTool {
+class CmdLineArgs;
 
 class EosNamespaceInjection final: public CmdLineTool {
   public:
@@ -116,6 +118,59 @@ class EosNamespaceInjection final: public CmdLineTool {
     std::pair<ArchiveId, Checksum> getArchiveFileIdAndChecksumFromEOS(const std::string& diskInstance, const std::string& fxId);
 
     /**
+    * Validates the command line arguments
+    * @param argc The number of command-line arguments including the program name.
+    * @param argv The command-line arguments.
+    */
+    void setCmdLineArguments(const int argc, char *const *const argv);
+
+    /**
+    * Checks if path exists in EOS
+    * @param fid EOS file id
+    */
+    bool pathExists(const uint64_t fid) const;
+
+    /**
+    * Checks consistency between EOS and CTA
+    * @param archiveId CTA archive file id
+    * @param fxId The eos file id
+    * @param metaDataFromUser metaData for the eos file
+    */
+    bool checkEosCtaConsistency(const uint64_t& archiveId, const std::string& newFxIdEos, const MetaDataObject &metaDataFromUser);
+
+    /**
+    * Checks if file was created in EOS
+    * @param newFid EOS file id
+    */
+    void checkFileCreated(const uint64_t newFid);
+
+    /**
+    * Checks if parent container exists in EOS
+    * @param parentId The id of the parent container in EOS
+    * @param enclosingPath The full EOS path of the parent container
+    */
+    void checkParentContainerExists(const uint64_t parentId, const std::string& enclosingPath) const;
+
+    /**
+    * Checks if archive id exists
+    * @param CTA archive file id
+    */
+    void checkArchiveIdExistsInCatalogue(const uint64_t &archiveId) const;
+
+    /**
+    * Throws error if existing path has invalid metadata
+    * @param archiveId CTA archive file id
+    * @param fid The eos file id
+    * @param metaDataFromUser metaData for the eos file
+    */
+    void checkExistingPathHasInvalidMetadata(const uint64_t &archiveId, const uint64_t& fid, const MetaDataObject& metaDataFromUser);
+
+    /**
+    * Writes the skipped metadata for file to txt file
+    */
+    void createTxtFileWithSkippedMetadata() const;
+
+    /**
     * Meta data from CTA catalogue
     */
     MetaDataObject m_metaDataObjectCatalogue;
@@ -139,6 +194,12 @@ class EosNamespaceInjection final: public CmdLineTool {
     * The object representing the API of the CTA logging system.
     */
     cta::log::StdoutLogger &m_log;
+
+    /**
+    * When a file is skipped due to inconsistent meta data between EOS and CTA, 
+    * they are added to this vector
+    */
+    std::vector<MetaDataObject> m_inconsistentMetadata;
 
     /**
     * CTA Frontend service provider

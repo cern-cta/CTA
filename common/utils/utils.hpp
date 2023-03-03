@@ -494,6 +494,13 @@ namespace utils {
    */
   std::vector<std::string> commaSeparatedStringToVector(const std::string &commaSeparated);
 
+   /**
+   * Converts a number from a decimal number to a hexidecimal number
+   * @param decimalNumber The number that will be transformed
+   * @return the hexadecimal version of the number
+   */
+  std::string decimalToHexadecimal(const std::string &decimalNumber);
+
 } // namespace utils
 
 } // namespace cta
