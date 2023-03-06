@@ -46,7 +46,7 @@ client:
     - tags
   variables:
     TEST_SCRIPT: "tests/test_client.sh"
-    EXTENDEDED_OPTIONS: "-O -D -t 2400 -C"
+    EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
 client-eos5:
   stage: test
