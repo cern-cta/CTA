@@ -35,18 +35,19 @@ set(PROTOBUF3_IMPORT_DIRS "${PROTOBUF_EOS_CTA_DIR}:${PROTOBUF3_INCLUDE_DIRS}")
 grpc_generate_cpp(ProtoGrpcSourcesCtaFrontend ProtoGrpcHeadersCtaFrontend ${GRPC_PROTOBUF_PATH} ${ProtoFilesCtaFrontend})
 
 set_source_files_properties(
-        ${ProtoSourcesCtaFrontend} ${ProtoHeadersCtaFrontend}
-        ${ProtoGrpcSourcesCtaFrontend} ${ProtoGrpcHeadersCtaFrontend}
-        PROPERTIES GENERATED TRUE)
+  ${ProtoSourcesCtaFrontend} ${ProtoHeadersCtaFrontend}
+  ${ProtoGrpcSourcesCtaFrontend} ${ProtoGrpcHeadersCtaFrontend}
+  PROPERTIES GENERATED TRUE
+)
 
 foreach(PROTO_SRC ${ProtoSourcesCtaFrontend} ${ProtoGrpcSourcesCtaFrontend})
-    set_property(SOURCE ${PROTO_SRC} PROPERTY COMPILE_FLAGS " -Wno-missing-field-initializers -fPIC -Wno-narrowing -Wno-implicit-fallthrough")
-    # Add -Wno-narrowing -Wno-implicit-fallthrough compiler flags if using gcc version 7 or greater
-    if(CMAKE_COMPILER_IS_GNUCC)
-        if(GCC_VERSION VERSION_EQUAL 7 OR GCC_VERSION VERSION_GREATER 7)
-            set_property(SOURCE ${PROTO_SRC} APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-narrowing -Wno-implicit-fallthrough")
-        endif(GCC_VERSION VERSION_EQUAL 7 OR GCC_VERSION VERSION_GREATER 7)
-    endif(CMAKE_COMPILER_IS_GNUCC)
+  set_property(SOURCE ${PROTO_SRC} PROPERTY COMPILE_FLAGS " -Wno-missing-field-initializers -fPIC -Wno-narrowing -Wno-implicit-fallthrough")
+  # Add -Wno-narrowing -Wno-implicit-fallthrough compiler flags if using gcc version 7 or greater
+  if(CMAKE_COMPILER_IS_GNUCC)
+    if(GCC_VERSION VERSION_EQUAL 7 OR GCC_VERSION VERSION_GREATER 7)
+      set_property(SOURCE ${PROTO_SRC} APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-narrowing -Wno-implicit-fallthrough")
+    endif(GCC_VERSION VERSION_EQUAL 7 OR GCC_VERSION VERSION_GREATER 7)
+  endif(CMAKE_COMPILER_IS_GNUCC)
 endforeach(PROTO_SRC)
 
 include_directories(${CMAKE_BINARY_DIR}/frontend-grpc ${CMAKE_BINARY_DIR}/eos_cta
@@ -56,10 +57,10 @@ add_executable(cta-frontend-grpc Main.cpp FrontendGRpcSvc.cpp ${ProtoSourcesCtaF
 
 if(CTA_USE_PGSCHED)
   target_link_libraries(cta-frontend-grpc ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY}
-          ctascheduler ctacommon ctacatalogue)
+    ctascheduler ctacommon ctacatalogue)
 else()
   target_link_libraries(cta-frontend-grpc ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY}
-          ctascheduler ctacommon ctaobjectstore ctacatalogue)
+    ctascheduler ctacommon ctaobjectstore ctacatalogue)
 endif()
 set_property(TARGET cta-frontend-grpc APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
@@ -79,33 +80,41 @@ include_directories(${XRD_SSI_PB_DIR}/include ${XRD_SSI_PB_DIR}/eos_cta/include)
 include_directories(${XROOTD_INCLUDE_DIR} ${XROOTD_INCLUDE_DIR}/private)
 
 add_executable(cta-frontend-async-grpc
-              FrontendCmd.cpp
-              AsyncServer.cpp
-              TokenStorage.cpp
-              ServiceAuthProcessor.cpp
-              ServerTapeLsRequestHandler.cpp
-              ServerNegotiationRequestHandler.cpp
-              RequestMessage.cpp
-              utils.cpp
-              ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParse.cpp ${ProtoSourcesCtaFrontend} ${ProtoGrpcSourcesCtaFrontend})
+  FrontendCmd.cpp
+  AsyncServer.cpp
+  TokenStorage.cpp
+  ServiceAuthProcessor.cpp
+  ServerTapeLsRequestHandler.cpp
+  ServerNegotiationRequestHandler.cpp
+  RequestMessage.cpp
+  utils.cpp
+  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParse.cpp ${ProtoSourcesCtaFrontend} ${ProtoGrpcSourcesCtaFrontend}
+)
 
-target_link_libraries(cta-frontend-async-grpc ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY} ${GRPC_LIBRARY}
-                      ctascheduler ctacommon ctaobjectstore ctacatalogue
-                      gssapi_krb5)
+target_link_libraries(cta-frontend-async-grpc ${PROTOBUF3_LIBRARIES}
+  ${GRPC_GRPC++_LIBRARY} ${GRPC_LIBRARY}
+  ctascheduler ctacommon ctaobjectstore ctacatalogue gssapi_krb5
+)
 
 ##
 ## cta-frontend-grpc-stream-client
 ##
 
 add_executable(cta-admin-grpc
-              CtaAdminGrpcCmd.cpp
-              ClientTapeLsRequestHandler.cpp
-              ClientNegotiationRequestHandler.cpp
-              utils.cpp
-              ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParse.cpp ${ProtoSourcesCtaFrontend} ${ProtoGrpcSourcesCtaFrontend})
+  CtaAdminGrpcCmd.cpp
+  ClientTapeLsRequestHandler.cpp
+  ClientNegotiationRequestHandler.cpp
+  utils.cpp
+  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
+  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParse.cpp
+  ${ProtoSourcesCtaFrontend}
+  ${ProtoGrpcSourcesCtaFrontend}
+)
 
 
-target_link_libraries(cta-admin-grpc ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY} ${GRPC_LIBRARY}
-        ctascheduler ctacommon ctaobjectstore ctacatalogue
-        cryptopp)
-              
+target_link_libraries(cta-admin-grpc
+  ${PROTOBUF3_LIBRARIES}
+  ${GRPC_GRPC++_LIBRARY}
+  ${GRPC_LIBRARY}
+  ctascheduler ctacommon ctaobjectstore ctacatalogue cryptopp gssapi_krb5
+)

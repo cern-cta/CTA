@@ -8,6 +8,7 @@
 - cta/CTA#213 - Skip files with paths that have valid metadata
 ### Bug Fixes
 - cta/CTA#305 - AllCatalogueSchema file not created when updating schema
+- cta/CTA#320 - CTA No Oracle is failing
 
 # v4.8.5-1
 
