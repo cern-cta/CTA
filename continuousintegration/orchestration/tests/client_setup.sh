@@ -148,11 +148,14 @@ while getopts "Z:d:e:n:N:s:p:vS:rAPGt:m:" o; do
 done
 shift $((OPTIND-1))
 
-# Test gfal protocol is supported.
-if [[ ! "${GFAL2_PROTOCOL}" =~ ^(https|root)$ ]]; then
-  echo "Invalid gfal2 protocol: ${GFAL2_PROTOCOL}"
-  echo "Current supported protocols: https, root"
-  exit 1
+
+if [[ -n ${GFAL2_PROTOCOL} ]]; then
+    # Test gfal protocol is supported.
+    if [[ ! "${GFAL2_PROTOCOL}" =~ ^(https|root)$ ]]; then
+      echo "Invalid gfal2 protocol: ${GFAL2_PROTOCOL}"
+      echo "Current supported protocols: https, root"
+      exit 1
+    fi
 fi
 
 if [ ! -z "${error}" ]; then
