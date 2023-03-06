@@ -85,7 +85,7 @@ archiveFiles() {
 }
 
 echo
-kubectl -n ${NAMESPACE} cp client_ar.sh client:/root/client_ar.sh
+kubectl -n ${NAMESPACE}  cp . client:/root/client_ar.sh
 
 REPACK_BUFFER_URL=/eos/ctaeos/repack
 echo "Creating the repack buffer URL directory (${REPACK_BUFFER_URL})"
