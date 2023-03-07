@@ -2012,7 +2012,7 @@ void OStoreDB::reserveRetrieveQueueForCleanup(const std::string & vid, std::opti
 
   // Check if heartbeat has been updated, which means that another agent is still tracking it
   if (rq.getQueueCleanupAssignedAgent().has_value()) {
-    if (rq.getQueueCleanupHeartbeat() != cleanupHeartBeatValue.has_value() ? cleanupHeartBeatValue.value() : 0) {
+    if (rq.getQueueCleanupHeartbeat() != (cleanupHeartBeatValue.has_value() ? cleanupHeartBeatValue.value() : 0)) {
       throw RetrieveQueueNotReservedForCleanup("Another agent is alive and cleaning up the queue. Skipping it.");
     }
   }

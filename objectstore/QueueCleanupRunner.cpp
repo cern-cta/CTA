@@ -43,23 +43,14 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
       continue; // Ignore queue
     }
 
-    // Check heartbeat of other queues being cleaned up
+    // Check heartbeat of queues to know if they are being cleaned up
     if (queue.assignedAgent.has_value()) {
-      bool newEntry = false;
-
-      // We must register all new queues that are being cleaned up
-      if (m_heartbeatCheck.find(queue.vid) == m_heartbeatCheck.end()) {
-        newEntry = true;
+      if ((m_heartbeatCheck.count(queue.vid) == 0) || (m_heartbeatCheck[queue.vid].heartbeat != queue.heartbeat)) {
+        // If this queue was never seen before, wait for another turn to check if its heartbeat has timed out.
+        // If heartbeat has been updated, then the queue is being actively processed by another agent.
+        // Record new timestamp and move on.
         m_heartbeatCheck[queue.vid].agent = queue.assignedAgent.value();
         m_heartbeatCheck[queue.vid].heartbeat = queue.heartbeat;
-        m_heartbeatCheck[queue.vid].lastUpdateTimestamp = m_timer.secs();
-      }
-
-      auto oldHeartbeatValue = m_heartbeatCheck[queue.vid].heartbeat;
-
-      if (newEntry || queue.heartbeat != oldHeartbeatValue) {
-        // If heartbeat has been updated, then the queue is being actively processed by another agent
-        // Record new timestamp and move on
         m_heartbeatCheck[queue.vid].lastUpdateTimestamp = m_timer.secs();
         continue; // Ignore queue
       } else {

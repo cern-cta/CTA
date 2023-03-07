@@ -1,3 +1,7 @@
+# v4.8.6-1
+### Bug Fixes
+- cta/CTA#322 - Queues with cleanup heartbeat above zero are not being picked for cleanup
+
 # v4.8.5-1
 
 ## Summary
