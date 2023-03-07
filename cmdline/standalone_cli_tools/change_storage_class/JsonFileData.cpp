@@ -42,6 +42,8 @@ void JsonFileData::readJson(const std::filesystem::path &jsonPath) {
 
       JsonFileDataObject JsonFileDataObject;
       JsonFileDataObject.archiveId = jsonGetValue<std::string>("archiveId");
+      JsonFileDataObject.fid       = std::to_string(jsonGetValue<uint64_t>("fid"));
+      JsonFileDataObject.instance  = jsonGetValue<std::string>("instance");
 
       m_jsonArgumentsCollection.push_back(JsonFileDataObject);
     }

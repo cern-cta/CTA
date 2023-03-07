@@ -77,11 +77,12 @@ ChangeStorageClass::~ChangeStorageClass() = default;
 //------------------------------------------------------------------------------
 int ChangeStorageClass::exceptionThrowingMain(const int argc, char *const *const argv) {
   CmdLineArgs cmdLineArgs(argc, argv, StandaloneCliTool::CTA_CHANGE_STORAGE_CLASS);
-  handleArguments(cmdLineArgs);
 
   auto [serviceProvider, endpointmap] = ConnConfiguration::readAndSetConfiguration(m_log, getUsername(), cmdLineArgs);
   m_serviceProviderPtr = std::move(serviceProvider);
   m_endpointMapPtr = std::move(endpointmap);
+
+  handleArguments(cmdLineArgs);
 
   storageClassExists();
   updateStorageClassInEosNamespace();
@@ -102,24 +103,30 @@ void ChangeStorageClass::handleArguments(const CmdLineArgs &cmdLineArgs) {
   if(cmdLineArgs.m_json) {
     JsonFileData jsonFilaData(cmdLineArgs.m_json.value());
     for(const auto &jsonFileDataObject : jsonFilaData.m_jsonArgumentsCollection) {
+      if(!validateUserInputFileMetadata(jsonFileDataObject.archiveId, jsonFileDataObject.fid, jsonFileDataObject.instance)) {
+        throw exception::UserError("Archive id does not match with disk file id or disk instance, are you sure the correct file metadata was provided?");
+      }
       m_archiveFileIds.push_back(jsonFileDataObject.archiveId);
     }
   }
 
   if (!cmdLineArgs.m_storageClassName) {
     cmdLineArgs.printUsage(std::cout);
-    throw exception::UserError("Missing requried option: storage.class.name");
+    throw exception::UserError("Missing required option: storage.class.name");
   }
 
-  if (!cmdLineArgs.m_archiveFileId && !cmdLineArgs.m_json) {
+  if ((!cmdLineArgs.m_archiveFileId || !cmdLineArgs.m_fids || !cmdLineArgs.m_diskInstance) && !cmdLineArgs.m_json) {
     cmdLineArgs.printUsage(std::cout);
-    throw exception::UserError("filename or id must be provided");
+    throw exception::UserError("Archive id, eos file id and disk instance must be provided must be provided");
   }
 
   m_storageClassName = cmdLineArgs.m_storageClassName.value();
 
   if (cmdLineArgs.m_archiveFileId) {
     m_archiveFileIds.push_back(cmdLineArgs.m_archiveFileId.value());
+    if(!validateUserInputFileMetadata(cmdLineArgs.m_archiveFileId.value(), cmdLineArgs.m_fids.value().front(), cmdLineArgs.m_diskInstance.value())) {
+      throw exception::UserError("Archive id does not match with disk file id or disk instance, are you sure the correct file metadata was provided?");
+    }
   }
 
   if (cmdLineArgs.m_frequency) {
@@ -136,7 +143,6 @@ bool ChangeStorageClass::fileInFlight(const google::protobuf::RepeatedField<uint
   // file is not in flight if fsid==65535
   return std::all_of(std::begin(locations), std::end(locations), [](const int &location) { return location != 65535; });
 }
-
 
 //------------------------------------------------------------------------------
 // updateStorageClassInEosNamespace
@@ -305,12 +311,17 @@ void ChangeStorageClass::writeSkippedArchiveIdsToFile() const {
 
   if (archiveIdFile.is_open()) {
     for (const auto& archiveId : m_archiveIdsNotUpdatedInEos) {
-      archiveIdFile << "{ archiveId : " << archiveId << " }" << std::endl;
+      archiveIdFile << "{ \"archiveId\" : " << archiveId << " }" << std::endl;
     }
     archiveIdFile.close();
     std::cout << m_archiveIdsNotUpdatedInEos.size() << " files did not update the storage class." << std::endl;
     std::cout << "The skipped archive ids can be found here: " << filePath << std::endl;
   }
+}
+
+bool ChangeStorageClass::validateUserInputFileMetadata(const std::string& archiveId, const std::string& operatorProvidedFid, const std::string& operatorProvidedInstance) {
+  const auto [diskDiskInstance, diskFileId] = CatalogueFetch::getInstanceAndFid(archiveId, m_serviceProviderPtr, m_log);
+  return ((operatorProvidedInstance == diskDiskInstance) && (operatorProvidedFid == diskFileId));
 }
 
 } // namespace admin

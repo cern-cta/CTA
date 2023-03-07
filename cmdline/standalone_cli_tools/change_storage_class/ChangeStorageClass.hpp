@@ -128,6 +128,14 @@ private:
   void handleArguments(const CmdLineArgs &cmdLineArgs);
 
   /**
+  * Checks that the provided archive id is related to the correct disk file id and disk instance
+  * @param archiveId the archive file id to check
+  * @param operatorProvidedFid The disk file id provided by the operator, either from a json file or an command line argument
+  * @param operatorProvidedInstance The disk instance provided by the operator, either from a json file or an command line argument
+  */
+  bool validateUserInputFileMetadata(const std::string& archiveId, const std::string& operatorProvidedFid, const std::string& operatorProvidedInstance);
+
+  /**
    * An exception throwing version of main().
    *
    * @param argc The number of command-line arguments including the program name.
@@ -135,6 +143,7 @@ private:
    * @return The exit value of the program.
    */
   int exceptionThrowingMain(const int argc, char *const *const argv) override;
+
 
 
 } ; // class CtaChangeStorageClass

@@ -65,6 +65,8 @@ static struct option changeStorageClassLongOption[] = {
   {"id", required_argument, nullptr, 'I'},
   {"json", required_argument, nullptr, 'j'},
   {"storageclassname", required_argument, nullptr, 'n'},
+  {"fid", required_argument, nullptr, 'f'},
+  {"instance", required_argument, nullptr, 'i'},
   {"frequency", required_argument, nullptr, 't'},
   {"help", no_argument, nullptr, 'h'},
   {nullptr, 0, nullptr, 0}
@@ -88,7 +90,7 @@ std::map<StandaloneCliTool, const char*> shortopts = {
   {StandaloneCliTool::RESTORE_FILES, "I:i:f:F:v:c:hd:"},
   {StandaloneCliTool::CTA_SEND_EVENT, "i:e:u:g:"},
   {StandaloneCliTool::CTA_VERIFY_FILE, "I:F:i:u:g:v:h:"},
-  {StandaloneCliTool::CTA_CHANGE_STORAGE_CLASS, "I:j:n:t:h:"},
+  {StandaloneCliTool::CTA_CHANGE_STORAGE_CLASS, "I:f:i:j:n:t:h:"},
   {StandaloneCliTool::EOS_NAMESPACE_INJECTION, "j:h:"},
 };
 

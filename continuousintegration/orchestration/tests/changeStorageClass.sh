@@ -77,20 +77,23 @@ echo "SEND EOS METADATA TO JSON FILE: ${EOS_METADATA_PATH}"
 touch ${EOS_METADATA_PATH_1}
 kubectl -n ${NAMESPACE} exec client -- eos -j root://${EOSINSTANCE} file info /eos/ctaeos/cta/${FILE_1} | jq . | tee ${EOS_METADATA_PATH_1}
 EOS_ARCHIVE_ID_1=$(jq -r '.xattr | .["sys.archive.file_id"]' ${EOS_METADATA_PATH_1})
+EOS_FILE_ID_1=$(jq -r '.id' ${EOS_METADATA_PATH_1})
+
 
 EOS_METADATA_PATH_2=$(mktemp -d).json
 echo "SEND EOS METADATA TO JSON FILE: ${EOS_METADATA_PATH_2}"
 touch ${EOS_METADATA_PATH_2}
 kubectl -n ${NAMESPACE} exec client -- eos -j root://${EOSINSTANCE} file info /eos/ctaeos/cta/${FILE_2} | jq . | tee ${EOS_METADATA_PATH_2}
 EOS_ARCHIVE_ID_2=$(jq -r '.xattr | .["sys.archive.file_id"]' ${EOS_METADATA_PATH_2})
+EOS_FILE_ID_2=$(jq -r '.id' ${EOS_METADATA_PATH_2})
 
 echo
 echo "CHANGE FILES WITH IDS"
 cd ~
 IDS_FILEPATH=${TMP_DIR}/archiveFileIds.txt
 touch ${IDS_FILEPATH}
-echo '{"archiveId": '${EOS_ARCHIVE_ID_1}'}' >> ${IDS_FILEPATH}
-echo '{"archiveId": '${EOS_ARCHIVE_ID_2}'}' >> ${IDS_FILEPATH}
+echo '{"archiveId": '${EOS_ARCHIVE_ID_1}', "fid": '${EOS_FILE_ID_1}', "instance": "'${EOSINSTANCE}'"}' >> ${IDS_FILEPATH}
+echo '{"archiveId": '${EOS_ARCHIVE_ID_2}', "fid": '${EOS_FILE_ID_2}', "instance": "'${EOSINSTANCE}'"}' >> ${IDS_FILEPATH}
 sleep 1
 
 echo

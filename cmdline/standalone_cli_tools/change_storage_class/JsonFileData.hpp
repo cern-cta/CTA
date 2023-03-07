@@ -27,6 +27,8 @@ namespace cta::cliTool {
 
 struct JsonFileDataObject {
   std::string archiveId;
+  std::string fid;
+  std::string instance;
 };
 
 class JsonFileData : public cta::utils::json::object::JSONCObject{
