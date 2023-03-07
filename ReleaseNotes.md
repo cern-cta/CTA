@@ -9,6 +9,7 @@
 ### Bug Fixes
 - cta/CTA#305 - AllCatalogueSchema file not created when updating schema
 - cta/CTA#309 - Ignore 'NoSuchObject' exceptions thrown by non-existing objects during retrieve job requeuing
+- cta/CTA#310 - Trigger cleanup session if taped child process did not exit with success code
 - cta/CTA#320 - CTA No Oracle is failing
 
 # v4.8.5-1

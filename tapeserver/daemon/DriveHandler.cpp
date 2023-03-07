@@ -671,8 +671,11 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
     }
     params.add("pid", m_pid);
     if (WIFEXITED(processStatus)) {
-      // Child process exited properly. The new child process will not need to start
-      // a cleanup session.
+      // Child process exited properly.
+      // The new child process should start a cleanup session if the exit status was not success.
+      if (WEXITSTATUS(processStatus) != EXIT_SUCCESS) {
+        resetToDefault(PreviousSession::Crashed);
+      }
       params.add("exitCode", WEXITSTATUS(processStatus));
       // If we are shutting down, we should not request a new session.
       if (m_sessionState != SessionState::Shutdown) {
