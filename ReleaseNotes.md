@@ -1,6 +1,7 @@
 # v4.8.6-1
 ### Bug Fixes
 - cta/CTA#322 - Queues with cleanup heartbeat above zero are not being picked for cleanup
+- cta/CTA#325 - Fix logging for "no tape block movement" message
 
 # v4.8.5-1
 
