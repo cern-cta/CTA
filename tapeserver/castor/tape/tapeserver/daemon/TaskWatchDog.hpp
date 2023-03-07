@@ -91,7 +91,7 @@ protected:
   /**
    *  How often to we send heartbeat notifications (in second)
    */
-  const double m_reportPeriod; 
+  const double m_reportPeriod;
   
   /**
    *  How long to we have to wait before saying we are stuck (in second)
@@ -477,13 +477,14 @@ private:
   uint64_t m_fileId;
   uint64_t m_fSeq;
   
-  virtual void logStuckFile() {
+  void logStuckFile() override {
     cta::log::ScopedParamContainer params(m_lc);
     params.add("TimeSinceLastBlockMove", m_blockMovementTimer.secs())
+          .add("TimeSinceLastBlockMoveReport", m_blockMovementReportTimer.secs())
+          .add("NoBlockMoveMaxSecs", m_stuckPeriod)
           .add("fileId", m_fileId)
-          .add("fileId",m_fileId)
-          .add("fSeq",m_fSeq);
-    m_lc.log(cta::log::ERR, "No tape block movement for too long");
+          .add("fSeq", m_fSeq);
+    m_lc.log(cta::log::WARNING, "No tape block movement for too long during recalling");
   }
   
 public:
@@ -530,12 +531,14 @@ private:
   uint64_t m_fileId;
   uint64_t m_fSeq;
  
-  virtual void logStuckFile() {
+  void logStuckFile() override {
     cta::log::ScopedParamContainer params(m_lc);
     params.add("TimeSinceLastBlockMove", m_blockMovementTimer.secs())
-          .add("fileId",m_fileId)
-          .add("fSeq",m_fSeq);
-    m_lc.log(cta::log::ERR, "No tape block movement for too long");
+          .add("TimeSinceLastBlockMoveReport", m_blockMovementReportTimer.secs())
+          .add("NoBlockMoveMaxSecs", m_stuckPeriod)
+          .add("fileId", m_fileId)
+          .add("fSeq", m_fSeq);
+    m_lc.log(cta::log::WARNING, "No tape block movement for too long during archiving");
   }
   
 public:
