@@ -35,15 +35,36 @@ dd if=/dev/urandom of=/tmp/testfile bs=1k count=$((${FILE_KB_SIZE} + ${NB_FILES}
 
 # not more than 100k files per directory so that we can rm and find as a standard user
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
+  for((slot=1; slot <= ${NB_PROCS}; slot++)); do
+    touch "slot${slot}"
+  done
+
   eos root://${EOSINSTANCE} mkdir -p ${EOS_DIR}/${subdir} || die "Cannot create directory ${EOS_DIR}/{subdir} in eos instance ${EOSINSTANCE}."
+
   echo -n "Copying files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes..."
   TEST_FILE_NAME_SUBDIR=${TEST_FILE_NAME_BASE}$(printf %.2d ${subdir}) # this is the target filename of xrdcp processes just need to add the filenumber in each directory
-  # xargs must iterate on the individual file number no subshell can be spawned even for a simple addition in xargs
+  
+  file_creation="dd if=/tmp/testfile bs=1k 2>/dev/null | (dd bs=$((${subdir}*${NB_FILES})) count=1 of=/dev/null 2>/dev/null; dd bs=TEST_FILE_NUM count=1 of=/dev/null 2>/dev/null; dd bs=1k count=${FILE_KB_SIZE} 2>/dev/null) "
+  
+  xrdcp_call="XRD_LOGLEVEL=Dump xrdcp - root://${EOSINSTANCE}/${EOS_DIR}/${subdir}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM 2>${ERROR_DIR}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM"
+  
+  xrdcp_succes=" rm ${ERROR_DIR}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM  && echo ${subdir}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM  >> slot\"{%}\""
+
+  xrdcp_error="ERROR with xrootd transfer for file ${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM, full logs in ${ERROR_DIR}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM"
+
+  command_str="${file_creation} | ${xrdcp_call} && ${xrdcp_succes} || ${xrdcp_error}"
+   
   for ((i=0;i<${NB_FILES};i++)); do
     echo $(printf %.6d $i)
-done | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NUM bash -c "dd if=/tmp/testfile bs=1k 2>/dev/null | (dd bs=$((${subdir}*${NB_FILES})) count=1 of=/dev/null 2>/dev/null; dd bs=TEST_FILE_NUM count=1 of=/dev/null 2>/dev/null; dd bs=1k count=${FILE_KB_SIZE} 2>/dev/null) | XRD_LOGLEVEL=Dump xrdcp - root://${EOSINSTANCE}/${EOS_DIR}/${subdir}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM 2>${ERROR_DIR}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM && rm ${ERROR_DIR}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM || echo ERROR with xrootd transfer for file ${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM, full logs in ${ERROR_DIR}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM"
-  #done | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME xrdcp --silent /tmp/testfile root://${EOSINSTANCE}/${EOS_DIR}/${subdir}/TEST_FILE_NAME
-  #  done | xargs -n ${BATCH_SIZE} --max-procs=${NB_BATCH_PROCS} ./batch_xrdcp /tmp/testfile root://${EOSINSTANCE}/${EOS_DIR}/${subdir}
+  done | parallel --max-procs=${NB_PROCS} -iTEST_FILE_NUM bash -c "true && $command_str"
+  #TODO: Figure out why we need that 'true &&' in parallel and not for xargs.
+
+  # Initialize db
+  for((i=1; i <= ${NB_PROCS}; i++)); do
+    cat slot${i} | xargs -iFILE bash -c "db_insert FILE"
+    rm -f slot${i}
+  done
+
   echo Done.
 done
 if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
@@ -63,13 +84,12 @@ done
 # Only not empty files are archived by CTA
 TO_BE_ARCHIVED=$((${COPIED} - ${COPIED_EMPTY}))
 
-ARCHIVING=${TO_BE_ARCHIVED}
 ARCHIVED=0
 echo "$(date +%s): Waiting for files to be on tape:"
 SECONDS_PASSED=0
 WAIT_FOR_ARCHIVED_FILE_TIMEOUT=$((40+${NB_FILES}/5))
-status2=$(mktemp)
-while test 0 != ${ARCHIVING}; do
+TMPFILE=$(mktemp)
+while test ${TO_BE_ARCHIVED} != ${ARCHIVED}; do
   echo "$(date +%s): Waiting for files to be archived to tape: Seconds passed = ${SECONDS_PASSED}"
   sleep 3
   let SECONDS_PASSED=SECONDS_PASSED+1
@@ -81,16 +101,14 @@ while test 0 != ${ARCHIVING}; do
 
   ARCHIVED=0
   for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-    eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | grep '^d0::t1' | awk '{print $10}'> $status2
-    # TODO: Filter out already included files.
-    ARCHIVED=$(( ${ARCHIVED} + $(cat ${status2} | wc -l) ))
-    cat $status2 | xargs -iTEST_FILE_NAME bash -c "db_insert '${subdir}/TEST_FILE_NAME'"
+    eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | grep '^d0::t1' | awk '{ print $10 }' | sed "s|^|${subdir}/|" > ${TMPFILE}
+    db_update_from_file ${TMPFILE} archived 0
+    ARCHIVED=$(( ${ARCHIVED} + $(cat ${TMPFILE} | wc -l) ))
     sleep 1 # do not hammer eos too hard
   done
 
   echo "${ARCHIVED}/${TO_BE_ARCHIVED} archived"
 
-  ARCHIVING=$((${TO_BE_ARCHIVED} - ${ARCHIVED}))
   NB_TAPE_NOT_FULL=`admin_cta --json ta ls --all | jq "[.[] | select(.full == false)] | length"`
   if [[ ${NB_TAPE_NOT_FULL} == 0 ]]
   then
@@ -98,7 +116,7 @@ while test 0 != ${ARCHIVING}; do
     break
   fi
 done
-
+rm -f ${TMPFILE}
 
 echo "###"
 echo "${ARCHIVED}/${TO_BE_ARCHIVED} archived"

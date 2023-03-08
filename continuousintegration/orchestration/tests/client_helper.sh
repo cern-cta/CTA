@@ -258,9 +258,17 @@ db_info() {
   sqlite3 -header ${DB_NAME} "SELECT $1 FROM ${TEST_TABLE} ${ROW_LIMIT};"
 }
 
+db_get_files() {
+  sqlite3 ${DB_NAME} "SELECT filename FROM ${TEST_TABLE};"
+}
+
 # INSERT created files for test into the db.
 db_insert() {
-  sqlite3 ${DB_NAME} "INSERT INTO ${TEST_TABLE} ('filename') VALUES ('$1')"
+  sqlite3 ${DB_NAME} "INSERT INTO ${TEST_TABLE} ('filename') VALUES ('$1');"
+}
+
+db_status_count() {
+  sqlite3 ${DB_NAME} "SELECT filename FROM ${TEST_TABLE} WHERE $1 == $2;" | wc -l
 }
 
 db_update() {
@@ -271,7 +279,22 @@ db_update() {
   else
     new_val=$3
   fi
-  sqlite3 ${DB_NAME} "UPDATE ${TEST_TABLE} SET $1 = $new_val WHERE filename = '$2';"
+  sqlite3 ${DB_NAME} "UPDATE ${TEST_TABLE} SET $1 = '$new_val' WHERE filename = '$2';"
+}
+
+
+# Positional arguments:
+# $1: Filename
+# $2: Column to update
+# $3: 'Source column value'. TODO: Rethink this.
+db_update_from_file() {
+  # Get list of archive files.
+  archived=$(mktemp)
+
+  sqlite3 ${DB_NAME} "SELECT filename FROM ${TEST_TABLE} WHERE $2 != $3" | sort > $archived
+  comm -2 -3 $1 $archived | xargs --max-procs=1 -iFILE bash -c "db_update $2 FILE 1 '+'"
+
+  rm -f archived
 }
 
 db_update_col() {
@@ -283,10 +306,13 @@ db_custom_query() {
 }
 
 export -f db_info
+export -f db_get_files
 export -f db_insert
+export -f db_status_count
 export -f db_update
 export -f db_update_col
 export -f db_custom_query
+export -f db_update_from_file
 #db_coherence() {
 
 #}

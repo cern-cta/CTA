@@ -15,6 +15,7 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+echo 'will cite' | parallel --bibtex
 
 EOSINSTANCE=ctaeos
 EOS_BASEDIR=/eos/ctaeos/cta
@@ -54,7 +55,7 @@ cat <<EOF > /opt/run/bin/tracker.schema
 
 CREATE TABLE client_tests_${TESTID}(
        filename TEXT PRIMARY KEY,
-       archived INTEGER DEFAULT 1,
+       archived INTEGER DEFAULT 0,
        staged   INTEGER DEFAULT 0,
        evicted  INTEGER DEFAULT 0,
        deleted  INTEGER DEFAULT 0

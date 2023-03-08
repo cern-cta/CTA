@@ -50,6 +50,9 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+echo "Installing parallel"
+kubectl -n ${NAMESPACE} exec client -- bash -c "yum -y install parallel"
+
 echo
 echo "Copying test scripts to client pod."
 kubectl -n ${NAMESPACE} cp . client:/root/
