@@ -225,8 +225,6 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
   cta::catalogue::DummyCatalogue & catalogue = getCatalogue();
   // Object store
   cta::objectstore::OStoreDBWrapperInterface & oKOStore = getDb();
-  // Broken object store, pointing to same as `oKOStore`
-  auto brokenOStore = OStoreDBWithAgentBroken(oKOStore.getBackend(), oKOStore.getAgentReference(), catalogue, dl);
   // Backend
   auto & be = dynamic_cast<cta::objectstore::BackendVFS&>(oKOStore.getBackend());
   // Remove this comment to avoid cleaning the object store files on destruction, useful for debugging
@@ -243,6 +241,13 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
   //AgentB for popping
   cta::objectstore::AgentReference agentForCleanupRef("AgentForCleanup", dl);
   cta::objectstore::Agent agentForCleanup(agentForCleanupRef.getAgentAddress(), be);
+
+  //AgentC for popping (for broken OStoreDB)
+  cta::objectstore::AgentReference agentForCleanupFailRef("AgentForCleanupFail", dl);
+  cta::objectstore::Agent agentForCleanupFail(agentForCleanupFailRef.getAgentAddress(), be);
+
+  // Broken object store, pointing to same as `oKOStore`
+  auto brokenOStore = OStoreDBWithAgentBroken(oKOStore.getBackend(), agentForCleanupFailRef, catalogue, dl);
 
   // Create the root entry
   cta::objectstore::EntryLogSerDeser el("user0", "unittesthost", time(nullptr));
@@ -343,6 +348,11 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
     cta::objectstore::QueueCleanupRunner qCleanupRunnerOk(agentForCleanupRef, oKOStore, catalogue, GetParam().cleanupTimeout);
 
     ASSERT_THROW(qCleanupRunnerBroken.runOnePass(lc), OStoreDBWithAgentBroken::TriggeredException);
+    for (auto & tapeQueueStateTrans : GetParam().tapeQueueTransitionList) {
+      // Tick the queue cleanup heartbeat a few times
+      brokenOStore.tickRetrieveQueueCleanupHeartbeat(tapeQueueStateTrans.vid);
+      brokenOStore.tickRetrieveQueueCleanupHeartbeat(tapeQueueStateTrans.vid);
+    }
     ASSERT_NO_THROW(qCleanupRunnerOk.runOnePass(lc)); // Two passes are needed for the other cleanup runner to be able to track the heartbeats
     ASSERT_NO_THROW(qCleanupRunnerOk.runOnePass(lc));
   }
