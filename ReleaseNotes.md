@@ -12,8 +12,12 @@
 - cta/CTA#309 - Ignore 'NoSuchObject' exceptions thrown by non-existing objects during retrieve job requeuing
 - cta/CTA#310 - Trigger cleanup session if taped child process did not exit with success code
 - cta/CTA#320 - CTA No Oracle is failing
-- cta/CTA#322 - Queues with cleanup heartbeat above zero are not being picked for cleanup
 - cta/CTA#329 - Correctly set previous session state to enable cleaner session
+
+# v4.8.6-1
+### Bug Fixes
+- cta/CTA#322 - Queues with cleanup heartbeat above zero are not being picked for cleanup
+- cta/CTA#325 - Fix logging for "no tape block movement" message
 
 # v4.8.5-1
 
