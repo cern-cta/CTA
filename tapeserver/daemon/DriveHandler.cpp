@@ -304,8 +304,10 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
     if (message.reportingstate()) {
       // Log a session state change
       if (m_sessionState != static_cast<SessionState>(message.sessionstate())) {
-        scoped.add("PreviousState", session::toString(m_sessionState))
-              .add("PreviousType", session::toString(m_sessionType))
+        m_previousState = m_sessionState;
+        m_previousType = m_sessionType;
+        scoped.add("PreviousState", session::toString(m_previousState))
+              .add("PreviousType", session::toString(m_previousType))
               .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
               .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
         m_processManager.logContext().log(log::INFO, "In DriveHandler::processEvent(): changing session state");
@@ -585,7 +587,6 @@ SubprocessHandler::ProcessingStatus DriveHandler::processFatal(serializers::Watc
   // shut down (central storage unavailable).
   log::ScopedParamContainer params(m_processManager.logContext());
   params.add("tapeDrive", m_configLine.unitName);
-  m_sessionVid = "";
   m_processingStatus.shutdownRequested = true;
   m_processManager.logContext().log(log::CRIT,
                                     "In DriveHandler::processFatal(): shutting down after fatal failure.");
@@ -1158,8 +1159,8 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
 
   std::set<SessionState> statesRequiringCleaner = { SessionState::Mounting,
     SessionState::Running, SessionState::Unmounting };
-  if (statesRequiringCleaner.count(m_sessionState)) {
-    if (!m_sessionVid.size()) {
+  if (statesRequiringCleaner.count(m_previousState)) {
+    if (m_sessionVid.empty()) {
       lc.log(log::ERR, "In DriveHandler::shutdown(): Should run cleaner but VID is missing. Do nothing.");
     }
     else {
