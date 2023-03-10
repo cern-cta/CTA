@@ -13,12 +13,12 @@
 .\"                 You should have received a copy of the GNU General Public License
 .\"                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-.TH CTA-FRONTEND-GRPC "1cta" "2022-07-12" "CTA" "The CERN Tape Archive (CTA)"
+.TH CTA-FRONTEND-GRPC "1cta" "2023-03-07" "CTA" "The CERN Tape Archive (CTA)"
 .SH NAME
 cta-frontend-grpc \- gRPC-based Frontend for CTA
 
 .SH SYNOPSIS
-\fBcta-frontend-grpc\fP [--port \fIport\fR] [--log-header|--no-log-header] [--tls] [--version] [--help]
+\fBcta-frontend-grpc\fP [--port \fIport\fR] [--log-header|--no-log-header] [--tls] [--threads \fIN\fR] [--version] [--help]
 
 .SH DESCRIPTION
 \fBcta-frontend-grpc\fP is the daemon process providing gRPC endpoint for integration with storage systems.
@@ -27,6 +27,9 @@ cta-frontend-grpc \- gRPC-based Frontend for CTA
 .TP
 \-p, \-\-port \fIport\fR
 TCP port used to accept connections from dCache.
+.TP
+\-c, \-\-threads \fIN\fR
+Maximal number of threads to process gRPC requests. The dafaults to 8x #CPUs.
 .TP
 \-n, \-\-log\-header
 Include timestamp and host name into the log messages.

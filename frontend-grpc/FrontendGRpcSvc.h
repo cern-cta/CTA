@@ -3,6 +3,7 @@
 
 #include "version.h"
 #include <grpcpp/grpcpp.h>
+#include <grpcpp/resource_quota.h>
 #include <grpcpp/security/server_credentials.h>
 
 #include <scheduler/Scheduler.hpp>
@@ -13,6 +14,7 @@ using cta::Scheduler;
 using cta::catalogue::Catalogue;
 using cta::frontend::rpc::CtaRpc;
 
+using grpc::ResourceQuota;
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;

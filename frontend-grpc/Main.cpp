@@ -44,7 +44,8 @@ std::string help =
     "\n"
     "where options can be:\n"
     "\n"
-    "\t--port <port>, -p <port>:\tTCP port number to use, defaults to 17017\n"
+    "\t--threads <N>, -c <N>    \tnumber of threads to process concurrent requests, defaults to 8x#CPUs\n"
+    "\t--port <port>, -p <port> \tTCP port number to use, defaults to 17017\n"
     "\t--log-header, -n         \tadd hostname and timestamp to log outputs, default\n"
     "\t--no-log-header, -s      \tdon't add hostname and timestamp to log outputs\n"
     "\t--tls, -t                \tenable Transport Layer Security (TLS)\n"
@@ -53,6 +54,7 @@ std::string help =
 
 static struct option long_options[] =
         {
+                {"threads", required_argument, 0, 'c'},
                 {"port", required_argument, 0, 'p'},
                 {"log-header", no_argument, 0, 'n'},
                 {"no-log-header", no_argument, 0, 's'},
@@ -88,8 +90,9 @@ int main(const int argc, char *const *const argv) {
     int option_index = 0;
     const std::string shortHostName = utils::getShortHostname();
     bool useTLS = false;
+    int threads = 8 * std::thread::hardware_concurrency();
 
-    while( (c = getopt_long(argc, argv, "p:nshv", long_options, &option_index)) != EOF) {
+    while( (c = getopt_long(argc, argv, "c:p:nshv", long_options, &option_index)) != EOF) {
 
         switch(c) {
             case 'p':
@@ -109,6 +112,9 @@ int main(const int argc, char *const *const argv) {
                 break;
             case 't':
                 useTLS = true;
+                break;
+            case 'c':
+                threads = std::atoi(optarg);
                 break;
             default:
                 printHelpAndExit(1);
@@ -191,6 +197,12 @@ int main(const int argc, char *const *const argv) {
 
     // Listen on the given address without any authentication mechanism.
     builder.AddListeningPort(server_address, creds);
+
+    // fixed the number of request threads
+    ResourceQuota quota;
+    quota.SetMaxThreads(threads);
+    lc.log(log::INFO, "Using " + std::to_string(threads) + " request processing threads");
+    builder.SetResourceQuota(quota);
 
     // Register "service" as the instance through which we'll communicate with
     // clients. In this case it corresponds to an *synchronous* service.

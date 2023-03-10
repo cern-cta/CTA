@@ -7,6 +7,7 @@
 - cta/CTA#245 - Implements cta-admin functions in cta-frontend-grpc
 - cta/CTA#213 - Skip files with paths that have valid metadata
 - cta/CTA#321 - Add arguments to cta-change-storage-class to validate that the correct files are being changed
+- cta/CTA#318 - Limit the number of frontend-grpc request processing threads
 ### Bug Fixes
 - cta/CTA#305 - AllCatalogueSchema file not created when updating schema
 - cta/CTA#309 - Ignore 'NoSuchObject' exceptions thrown by non-existing objects during retrieve job requeuing
