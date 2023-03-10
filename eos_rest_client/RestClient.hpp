@@ -17,7 +17,9 @@
 
 #pragma once
 
-#include <nlohmann/json.hpp>
+#include<any>
+#include<unordered_map>
+#include<string>
 
 namespace cta::rest {
 
@@ -25,7 +27,13 @@ class RestClient {
 public:
   explicit RestClient() = default;
 
-  nlohmann::json getFileInfo();
+  std::unordered_map<std::string, std::any> getFileInfo() const;
+
+private:
+
+  void connectToEndpoint(const std::string& keytabFile);
+
+  std::unordered_map<std::string, std::pair<std::string, std::string>> instanceToHostTokenMap;
 };
 
 } // namespace cta::rest

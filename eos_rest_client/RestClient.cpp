@@ -17,11 +17,13 @@
 
 #include "RestClient.hpp"
 #include "common/exception/Rest.hpp"
+#include "common/exception/UserError.hpp"
 
 #include <curl/curl.h>
 #include <string>
 #include <unordered_map>
 #include <iostream>
+#include <fstream>
 #include <nlohmann/json.hpp>
 
 namespace cta::rest {
@@ -31,8 +33,41 @@ size_t writeFunction(void *ptr, size_t size, size_t nmemb, std::string* data) {
     return size * nmemb;
 }
 
-nlohmann::json RestClient::getFileInfo() {
+void RestClient::connectToEndpoint(const std::string& keytabFile) {
+  // Open the keytab file for reading
+  std::ifstream file(keytabFile);
+  if(!file) {
+    throw cta::exception::UserError("Failed to open namespace keytab configuration file " + keytabFile);
+  }
+
+  // Parse the keytab line by line
+  for(std::string line; std::getline(file, line);) {
+    // Strip out comments
+    if(auto pos = line.find('#'); pos != std::string::npos) {
+      line.resize(pos);
+    }
+
+    // Parse one line
+    std::stringstream ss(line);
+    std::string diskInstance;
+    std::string endpoint;
+    std::string token;
+    std::string eol;
+    ss >> diskInstance >> endpoint >> token >> eol;
+
+    // Ignore blank lines, all other lines must have exactly 3 elements
+    if(diskInstance.empty() && endpoint.empty() && token.empty()) continue;
+    if(token.empty() || !eol.empty()) {
+      throw cta::exception::UserError("Could not parse namespace keytab configuration file");
+    }
+    instanceToHostTokenMap.try_emplace(diskInstance, endpoint, token);
+  }
+}
+
+
+std::unordered_map<std::string, std::any> RestClient::getFileInfo() const {
   if (auto curl = curl_easy_init()) {
+
       curl_easy_setopt(curl, CURLOPT_URL, "http://eosctaatlaspps:8444/proc/user/?mgm.cmd=fileinfo&mgm.path=fxid:10074c131&eos.ruid=0&eos.rgid=0&mgm.format=json");
       curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1L);
       curl_easy_setopt(curl, CURLOPT_MAXREDIRS, 50L);
@@ -61,7 +96,11 @@ nlohmann::json RestClient::getFileInfo() {
 
       nlohmann::json j3 = nlohmann::json::parse(response_string);
 
-      return j3;
+      for (const auto& [key, val] : j3.items()) {
+        std::cout << "key: " << key << ", value: " << val << std::endl;
+      }
+
+      return std::unordered_map<std::string, std::any>();
   }
   throw cta::exception::Rest("Unable to initialize curl");
 }
