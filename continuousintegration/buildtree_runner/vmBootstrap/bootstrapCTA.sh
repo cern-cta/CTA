@@ -29,15 +29,7 @@ source /opt/rh/devtoolset-8/enable
 echo Preparing CTA sources...
 cd ~/CTA
 git submodule update --init --recursive
-
-cat > ~/CTA/.git/hooks/post-checkout << EOFGitHook
-#!/bin/sh
-cd `git rev-parse --show-toplevel`
-git submodule update --init --recursive
-EOFGitHook
-
-chmod +x ~/CTA/.git/hooks/post-checkout
-cp ~/CTA/.git/hooks/post-checkout ~/CTA/.git/hooks/post-merge
+git config submodule.recurse true
 
 echo Creating source rpm
 rm -rf ~/CTA-build-srpm
@@ -68,6 +60,6 @@ sudo yum-builddep -y ~/CTA-build-srpm/RPM/SRPMS/cta-0-1.src.rpm
 echo Building CTA
 rm -rf ~/CTA-build
 mkdir -p ~/CTA-build
-(cd ~/CTA-build && cmake3 ../CTA; make -j 4)
+(cd ~/CTA-build && cmake3 -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE ../CTA; make -j 4)
 
 echo CTA setup finished successfully
