@@ -25,7 +25,7 @@ namespace rdbms {
 /**
  * The maximum length an SQL statement can have in exception error message.
  */
-const std::string::size_type MAX_SQL_LEN_IN_EXCEPTIONS = 80;
+const std::string::size_type MAX_SQL_LEN_IN_EXCEPTIONS = 1024;
 
 } // namespace rdbms
 } // namespace cta
