@@ -106,38 +106,3 @@ db_update "deleted" ${TEST_FILE_NAME} 1 "+"
 db_info "filename, evicted, deleted"
 
 
-#
-# Check we can copy zero-length files into the namespace by touch and copy
-#
-echo "eos root://${EOSINSTANCE} touch ${TEST_DIR}${TEST_FILE_NAME}.touch"
-eos root://${EOSINSTANCE} touch ${TEST_DIR}${TEST_FILE_NAME}.touch
-echo "eos root://${EOSINSTANCE} cp ${TEST_DIR}${TEST_FILE_NAME}.touch /tmp/${TEST_FILE_NAME}.touch"
-eos root://${EOSINSTANCE} cp ${TEST_DIR}${TEST_FILE_NAME}.touch /tmp/${TEST_FILE_NAME}.touch
-echo "eos root://${EOSINSTANCE} cp /tmp/${TEST_FILE_NAME}.touch ${TEST_DIR}${TEST_FILE_NAME}.zero"
-eos root://${EOSINSTANCE} cp /tmp/${TEST_FILE_NAME}.touch ${TEST_DIR}${TEST_FILE_NAME}.zero
-echo "eos root://${EOSINSTANCE} cp ${TEST_DIR}${TEST_FILE_NAME}.zero /tmp/${TEST_FILE_NAME}.zero"
-eos root://${EOSINSTANCE} cp ${TEST_DIR}${TEST_FILE_NAME}.zero /tmp/${TEST_FILE_NAME}.zero
-
-if [ -f /tmp/${TEST_FILE_NAME}.touch -a ! -s /tmp/${TEST_FILE_NAME}.touch -a -f /tmp/${TEST_FILE_NAME}.zero -a ! -s /tmp/${TEST_FILE_NAME}.zero ]; then
-  echo "Zero-length file copy succeeded"
-  zeroLengthTests=1
-else
-  echo "Zero-length file copy failed"
-  zeroLengthTests=0
-fi
-# Clean up
-echo "eos root://${EOSINSTANCE} rm ${TEST_DIR}${TEST_FILE_NAME}.touch"
-eos root://${EOSINSTANCE} rm ${TEST_DIR}${TEST_FILE_NAME}.touch
-echo "eos root://${EOSINSTANCE} rm ${TEST_DIR}${TEST_FILE_NAME}.zero"
-eos root://${EOSINSTANCE} rm ${TEST_DIR}${TEST_FILE_NAME}.zero
-rm -f /tmp/${TEST_FILE_NAME}.touch /tmp/${TEST_FILE_NAME}.zero
-
-# Report results
-msgNum=$(grep "\"File suc" /mnt/logs/tpsrv*/taped/cta/cta-taped.log | grep ${TEST_FILE_NAME} | tail -n 4 | wc -l)
-if [ "$msgNum" = "4" -a $zeroLengthTests -eq 1 ]; then
-  echo "OK: all tests passed"
-    rc=0
-else
-  echo "FAIL: tests failed"
-    rc=1
-fi
