@@ -3,8 +3,8 @@
 # Provide an EOS directory and return the list of tapes containing files under that directory
 nsls_tapes()
 {
-  EOS_DIR=${1:-${EOS_BASEDIR}}
-
+  # EOS_DIR=${1:-${EOS_BASEDIR}}
+  #  |-> Commented to get only the VID of the files the test setup is working with.
   # 1. Query EOS namespace to get a list of file IDs
   # 2. Pipe to "tape ls" to get the list of tapes where those files are archived
   eos root://${EOSINSTANCE} find --fid ${EOS_DIR} |\
@@ -64,6 +64,7 @@ echo "Waiting for files to be deleted:"
 SECONDS_PASSED=0
 WAIT_FOR_DELETED_FILE_TIMEOUT=$((5+${NB_FILES}/9))
 FILESONTAPE=${INITIALFILESONTAPE}
+
 while test 0 != ${FILESONTAPE}; do
   echo "Waiting for files to be deleted from tape: Seconds passed = ${SECONDS_PASSED}"
   sleep 1
@@ -73,6 +74,7 @@ while test 0 != ${FILESONTAPE}; do
     echo "Timed out after ${WAIT_FOR_DELETED_FILE_TIMEOUT} seconds waiting for file to be deleted from tape"
     break
   fi
+
   FILESONTAPE=$(tapefile_ls ${VIDLIST} > >(wc -l) 2> >(cat > /tmp/ctaerr))
 
   if [[ $(cat /tmp/ctaerr | wc -l) -gt 0 ]]; then
@@ -81,22 +83,15 @@ while test 0 != ${FILESONTAPE}; do
     cat /tmp/ctaerr
     break
   fi
+
   DELETED=$((${INITIALFILESONTAPE} - ${FILESONTAPE}))
+
   echo "${DELETED}/${INITIALFILESONTAPE} deleted"
 done
 
 
 # kill eos rm command that may run in the background
 kill ${EOSRMPID} &> /dev/null
-
-if [[ ${DELETED} == ${INITIALFILESONTAPE} ]]; then
-    db_update_col "deleted" "+" "1"
-fi
-# Generate list of deleted files.
-#deleted_files=$(mktemp)
-#comm -2 -3  $start $end > $deleted_files
-
-#cat $deleted_files | xargs -iFILE_NAME
 
 # As we deleted the directory we may have deleted more files than the ones we retrieved
 # therefore we need to take the smallest of the 2 values to decide if the system test was
@@ -105,7 +100,12 @@ if [[ ${RETRIEVED} -gt ${DELETED} ]]; then
   LASTCOUNT=${DELETED}
   echo "Some files have not been deleted:"
   tapefile_ls ${VIDLIST}
+  # For some reason the tapefile_ls command return "Bad response from nameserver"
+  # So, we cant compare against the list of files for the current test. An
+  # alternative would be to check directly with EOS.
+  # TODO: Update db delete column with the actual deleted files.
 else
   echo "All files have been deleted"
   LASTCOUNT=${RETRIEVED}
+  db_update_col "deleted" "+" "1"
 fi
