@@ -95,45 +95,20 @@ echo " Retrieving it as poweruser1"
 kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_simple_ar.sh ${TEST_POSTRUN}" || exit 1
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
-NB_FILES=10000
-FILE_SIZE_KB=15
 
 echo
 echo "Launching client_ar.sh on client pod"
 echo " Archiving ${NB_FILES} files of ${FILE_SIZE_KB}kB each"
 echo " Archiving files: xrdcp as user1"
 echo " Retrieving them as poweruser1"
-kubectl -n ${NAMESPACE} exec client -- bash /root/client_ar.sh -n ${NB_FILES} -s ${FILE_SIZE_KB} -p 100 -d /eos/ctaeos/preprod -v -r || exit 1
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_ar.sh ${TEST_POSTRUN}" || exit 1
+
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
+
+
+#
 #echo
-#echo "Launching client_archive.sh on client pod"
-#echo " Archiving file: xrdcp as user1"
-#kubectl -n ${NAMESPACE} exec client -- bash /root/client_archive.sh || exit 1
-
-#kubectl -n ${NAMESPACE} exec client -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-
-#echo
-#echo "Launching client_retireve.sh on client pod"
-#echo " Retrieving them as poweruser1"
-#kubectl -n ${NAMESPACE} exec client -- bash /root/client_retrieve.sh || exit 1
-#kubectl -n ${NAMESPACE} exec client -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-
-
-
-# Only run gfal with xrd when xrd version == 5
-#echo
-#echo "Launching client_retrieve_gfal.sh on client pod"
-#echo " Retrieving as , using xrootd"
-#kubectl -n ${NAMESPACE} exec client -- bash /root/client_retrieve_gfal2.sh || exit 1
-
-#kubectl -n ${NAMESPACE} exec client -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-
-#echo
-#echo "Launching client_retrieve_gfal.sh on client pod"
-#echo " Retrieving as , using HTPP"
-
-
 #echo "Launching client_abortPrepare.sh on client pod"
 #echo " Archiving file: xrdcp as user1"
 #echo " Retriving it as powerser 1"
