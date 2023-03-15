@@ -16,12 +16,10 @@
 #               submit itself to any jurisdiction.
 
 EOSINSTANCE=ctaeos
-TEST_FILE_NAME=`uuidgen`
+TEST_FILE_NAME=$(uuidgen | sed 's/-//g')
 TEST_DIR=/eos/ctaeos/cta/
 
 # get some common useful helpers for krb5
-. /root/client_helper.sh
-
 eospower_kdestroy
 eospower_kinit
 
@@ -37,9 +35,8 @@ CREATE TABLE client_simple_tests_${TEST_FILE_NAME}(
 EOF
 
 sqlite3 /root/trackerdb_simple.db < /opt/run/bin/tracker_simple.schema
-export DB_NAME="/root/trackerdb_simple.db"
-export TEST_TABLE="client_simple_tests_${TEST_FILE_NAME}"
-
+DB_NAME="/root/trackerdb_simple.db"
+TEST_TABLE="client_simple_tests_${TEST_FILE_NAME}"
 
 db_insert ${TEST_FILE_NAME}
 
@@ -100,9 +97,5 @@ echo "********"
 # Delete the file so it doesn't interfere with tests in client_ar.sh
 echo "eos root://${EOSINSTANCE} rm ${TEST_DIR}${TEST_FILE_NAME}"
 eos root://${EOSINSTANCE} rm ${TEST_DIR}${TEST_FILE_NAME}
-db_update "archived" ${TEST_FILE_NAME} 1 "-"
-db_update "staged" ${TEST_FILE_NAME} 1 "-"
 db_update "deleted" ${TEST_FILE_NAME} 1 "+"
-db_info "filename, evicted, deleted"
-
-
+db_info "*"
