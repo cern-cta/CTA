@@ -16,13 +16,6 @@
 #               submit itself to any jurisdiction.
 
 
-. /root/client_setup.sh "$@"
-
-
-RC=0
-
-# Immutable file test.
-#. client_immutable_file.sh
 
 # Archiving Test
 if [[ $DONOTARCHIVE == 0 ]]; then

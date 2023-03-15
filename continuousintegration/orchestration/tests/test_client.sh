@@ -52,12 +52,37 @@ fi
 
 echo "Installing parallel"
 kubectl -n ${NAMESPACE} exec client -- bash -c "yum -y install parallel"
+kubectl -n ${NAMESPACE} exec client -- bash -c "echo 'will cite' | parallel --bibtex"
 
 echo
 echo "Copying test scripts to client pod."
 kubectl -n ${NAMESPACE} cp . client:/root/
 kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh ctaeos:/root/
 
+NB_FILES=10000
+FILE_SIZE_KB=15
+NB_PROCS=100
+
+echo
+echo "Setting up environment for tests."
+kubectl -n ${NAMESPACE} exec client -- bash -c "/root/client_setup.sh -n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -d /eos/ctaeos/preprod -v -r" || exit 1
+
+# Test are run under the cta user account which doesn't have a login
+# option so to be able to export the test setup we need to source the file
+# client_env (file generated in client_setup with all env varss and fucntions)
+#
+# Also, to show the output of tpsrv0X rmcd to the logs we need to tail the files
+# before every related script and kill it a the end. Another way to do this would
+# require to change the stdin/out/err of the tail process and set//reset it
+# at the beginning and end of each kubectl exec command.
+TEST_PRERUN=". /root/client_env "
+TEST_POSTRUN=""
+
+VERBOSE=1
+if [[ $VERBOSE == 1 ]]; then
+  TEST_PRERUN="tail -v -f /mnt/logs/tpsrv0*/rmcd/cta/cta-rmcd.log & export TAILPID=\$! && ${TEST_PRERUN}"
+  TEST_POSTRUN=" && kill \${TAILPID} &> /dev/null"
+fi
 
 echo
 echo "Launching immutable file test on client pod"
@@ -67,7 +92,7 @@ echo
 echo "Launching client_simple_ar.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} exec client -- bash /root/client_simple_ar.sh || exit 1
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_simple_ar.sh ${TEST_POSTRUN}" || exit 1
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 NB_FILES=10000
@@ -110,13 +135,12 @@ kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh |
 
 
 #echo "Launching client_abortPrepare.sh on client pod"
-#echo " Retrieving it as poweruser1"
-#kubectl -n ${NAMESPACE} exec client -- bash /root/client_abortPrepare.sh || exit 1
-
-#kubectl -n ${NAMESPACE} exec client -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-
+#echo " Archiving file: xrdcp as user1"
+#echo " Retriving it as powerser 1"
+#kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_abortPrepare.sh ${TEST_POSTRUN}" || exit 1
 
 
+#kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 echo
 echo "Launching client_multiple_retrieve.sh on client pod"

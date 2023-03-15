@@ -15,7 +15,7 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-echo 'will cite' | parallel --bibtex
+set -a
 
 EOSINSTANCE=ctaeos
 EOS_BASEDIR=/eos/ctaeos/cta
@@ -36,7 +36,6 @@ NB_DIRS=1
 FILE_KB_SIZE=1
 VERBOSE=0
 REMOVE=0
-TAILPID=''
 TAPEAWAREGC=0
 
 NB_BATCH_PROCS=500  # number of parallel batch processes
@@ -58,6 +57,7 @@ CREATE TABLE client_tests_${TESTID}(
        archived INTEGER DEFAULT 0,
        staged   INTEGER DEFAULT 0,
        evicted  INTEGER DEFAULT 0,
+       aborted  INTEGER DEFAULT 0,
        deleted  INTEGER DEFAULT 0
 );
 EOF
@@ -191,8 +191,8 @@ LOGDIR="${LOGDIR}/$(basename ${EOS_DIR})"
 mkdir -p ${LOGDIR} || die "Cannot create directory LOGDIR: ${LOGDIR}"
 mkdir -p ${LOGDIR}/xrd_errors || die "Cannot create directory LOGDIR/xrd_errors: ${LOGDIR}/xrd_errors"
 
-STATUS_FILE=$(mktemp)
-echo "$(date +%s): STATUS_FILE=${STATUS_FILE}"
+echo "$(date +%s): TRACKERDB_FILE=${DB_NAME}"
+echo "$(date +%s): TRACKERDB_TABLE=${DB_TABLE}"
 ERROR_FILE=$(mktemp)
 echo "$(date +%s): ERROR_FILE=${ERROR_FILE}"
 EOS_BATCHFILE=$(mktemp --suffix=.eosh)
@@ -202,11 +202,6 @@ echo "$(date +%s): EOS_BATCHFILE=${EOS_BATCHFILE}"
 ERROR_DIR="/dev/shm/$(basename ${EOS_DIR})"
 mkdir ${ERROR_DIR}
 echo "$(date +%s): ERROR_DIR=${ERROR_DIR}"
-
-if [[ $VERBOSE == 1 ]]; then
-  tail -v -f /mnt/logs/tpsrv0*/rmcd/cta/cta-rmcd.log &
-  TAILPID=$!
-fi
 
 # get some common useful helpers for krb5
 . /root/client_helper.sh
@@ -219,10 +214,18 @@ klist -s || die "Cannot get kerberos credentials for user ${USER}"
 eospower_kdestroy
 eospower_kinit
 
-# TODO: Specify specific test information. ie, archive test, retrieve test, etc?
 echo "Starting test ${TESTID}: ${COMMENT}"
 
 #echo "$(date +%s): Dumping objectstore list"
 #ssh root@ctappsfrontend cta-objectstore-list
 
 test -z ${COMMENT} || annotate "test ${TESTID} STARTED" "comment: ${COMMENT}<br/>files: $((${NB_DIRS}*${NB_FILES}))<br/>filesize: ${FILE_KB_SIZE}kB" 'test,start'
+
+
+set +a
+
+# Store the setup environment into a file and
+# source it every time we spawn a shell in the
+# pod.
+export -p > /root/client_env
+export -f -p >> /root/client_env
