@@ -6,13 +6,16 @@
 - cta/CTA#294 - Improve error messages for 'Exec' in the gRPC client
 - cta/CTA#245 - Implements cta-admin functions in cta-frontend-grpc
 - cta/CTA#213 - Skip files with paths that have valid metadata
-- cta/CTA#321 - Add arguments to cta-change-storage-class to validate that the correct files are being changed
 - cta/CTA#318 - Limit the number of frontend-grpc request processing threads
+- cta/CTA#321 - Add arguments to cta-change-storage-class to validate that the correct files are being changed
+
 ### Bug Fixes
 - cta/CTA#305 - AllCatalogueSchema file not created when updating schema
 - cta/CTA#309 - Ignore 'NoSuchObject' exceptions thrown by non-existing objects during retrieve job requeuing
 - cta/CTA#310 - Trigger cleanup session if taped child process did not exit with success code
 - cta/CTA#320 - CTA No Oracle is failing
+- cta/CTA#322 - Queues with cleanup heartbeat above zero are not being picked for cleanup
+- cta/CTA#328 - Make root user able to read encrypted files with cta-readtp
 - cta/CTA#329 - Correctly set previous session state to enable cleaner session
 
 # v4.8.6-1

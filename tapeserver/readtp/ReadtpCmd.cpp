@@ -50,8 +50,7 @@ namespace readtp {
 //------------------------------------------------------------------------------
 ReadtpCmd::ReadtpCmd(std::istream &inStream, std::ostream &outStream,
   std::ostream &errStream, cta::log::StdoutLogger &log, cta::log::DummyLogger &dummyLog,
-  cta::mediachanger::MediaChangerFacade &mc, const bool useEncryption, 
-  const std::string& externalEncryptionKeyScript):
+  cta::mediachanger::MediaChangerFacade &mc):
   CmdLineTool(inStream, outStream, errStream),
   m_log(log),
   m_dummyLog(dummyLog),
@@ -84,8 +83,6 @@ int ReadtpCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
 
   readAndSetConfiguration(getUsername(), cmdLineArgs);
 
-  setProcessCapabilities("cap_sys_rawio+ep");
-
   std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drivePtr = createDrive();
   castor::tape::tapeserver::drive::DriveInterface &drive = *drivePtr.get();
 
@@ -104,7 +101,7 @@ int ReadtpCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
     readTapeFiles(drive);
   } catch(cta::exception::EncryptionException &ex) {
     params.push_back(cta::log::Param("tapeReadError", ex.getMessage().str()));
-    m_log(cta::log::ERR, "Failed to enable encrypyion for read of drive", params);
+    m_log(cta::log::ERR, "Failed to enable encryption for read of drive", params);
     throw cta::exception::EncryptionException(ex.what(), false);
   } catch(cta::exception::Exception &ne) {
     params.push_back(cta::log::Param("tapeReadError", ne.getMessage().str()));
@@ -300,7 +297,6 @@ void ReadtpCmd::mountTape(const std::string &vid) {
   params.push_back(cta::log::Param("useLbp",boolToStr(m_useLbp)));
   params.push_back(cta::log::Param("driveSupportLbp",boolToStr(m_driveSupportLbp)));
 
-  m_log(cta::log::INFO, "Mounting tape", params);
   m_mc.mountTapeReadOnly(vid, librarySlot);
   m_log(cta::log::INFO, "Mounted tape", params);
 }

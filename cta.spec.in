@@ -502,7 +502,7 @@ CERN Tape Archive:
 The command-line tool for reading files from a CTA tape.
 %files -n cta-readtp
 %defattr(-,root,root)
-%attr(0750,cta,tape) %{_bindir}/cta-readtp
+%attr(4750,cta,tape) %{_bindir}/cta-readtp
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-readtp.1cta.gz
 %post -n cta-readtp
 /usr/sbin/setcap cap_sys_rawio+ep  %{_bindir}/cta-readtp

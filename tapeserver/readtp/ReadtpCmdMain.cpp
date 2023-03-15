@@ -41,20 +41,6 @@ int main(const int argc, char *const *const argv) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::MediaChangerFacade mc(log);
 
-  bool useEncryption;
-  std::string externalEncryptionKeyScript;
-
-  try {
-    // Config file needed to find the cta-get-encryption-key script
-    const cta::tape::daemon::TapedConfiguration tapedConfig =
-      cta::tape::daemon::TapedConfiguration::createFromCtaConf(DAEMON_CONFIG, dummyLog);
-    externalEncryptionKeyScript = tapedConfig.externalEncryptionKeyScript.value();
-    useEncryption = tapedConfig.useEncryption.value() == "yes";
-
-    cta::tapeserver::readtp::ReadtpCmd cmd(std::cin, std::cout, std::cerr, log, dummyLog, mc, useEncryption, externalEncryptionKeyScript);
-    return cmd.main(argc, argv);
-  } catch(cta::exception::Exception &ex) {
-    std::cerr << ex.getMessageValue() << std::endl;
-    return 1;
-  }
+  cta::tapeserver::readtp::ReadtpCmd cmd(std::cin, std::cout, std::cerr, log, dummyLog, mc);
+  return cmd.main(argc, argv);
 }

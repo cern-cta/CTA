@@ -65,8 +65,7 @@ public:
   ReadtpCmd(std::istream &inStream, std::ostream &outStream,
     std::ostream &errStream, cta::log::StdoutLogger &log,
     cta::log::DummyLogger &dummyLog,
-    cta::mediachanger::MediaChangerFacade &mc, const bool useEncryption,
-    const std::string& externalEncryptionKeyScript);
+    cta::mediachanger::MediaChangerFacade &mc);
 
   /**
    * Destructor.
