@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # @project      The CERN Tape Archive (CTA)
 # @copyright    Copyright © 2022 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
@@ -36,6 +38,7 @@ USER="user1"
 
 die() {
   echo "$@" 1>&2
+  test -z ${TAILPID} || kill ${TAILPID} &> /dev/null
   exit 1
 }
 
@@ -103,7 +106,7 @@ eosadmin_kdestroy() {
 ################################################################
 
 # Pass list of files waiting for archival
-
+# This sciprt fails if there are files stored in the target directory as it just counts the lines.
 wait_for_archive () {
 
   EOS_INSTANCE=$1
@@ -248,6 +251,10 @@ put_all_drives_down () {
 # Helper functions to update the tracker DB status.
 ###################################################
 
+db_results() {
+  sqlite3 ${DB_NAME} "SELECT SUM(archived), SUM(staged), SUM(evicted), SUM(aborted), SUM(deleted) FROM ${TEST_TABLE};"
+}
+
 db_info() {
   ROW_LIMIT=""
 
@@ -282,7 +289,6 @@ db_update() {
   sqlite3 ${DB_NAME} "UPDATE ${TEST_TABLE} SET $1 = '$new_val' WHERE filename = '$2';"
 }
 
-
 # Positional arguments:
 # $1: Filename
 # $2: Column to update
@@ -294,7 +300,7 @@ db_update_from_file() {
   sqlite3 ${DB_NAME} "SELECT filename FROM ${TEST_TABLE} WHERE $2 != $3" | sort > $archived
   comm -2 -3 $1 $archived | xargs --max-procs=1 -iFILE bash -c "db_update $2 FILE 1 '+'"
 
-  rm -f archived
+  rm -f ${archived}
 }
 
 db_update_col() {
@@ -305,18 +311,3 @@ db_custom_query() {
   sqlite3 ${DB_NAME} "${1} ${TEST_TABLE} ${2}"
 }
 
-export -f db_info
-export -f db_get_files
-export -f db_insert
-export -f db_status_count
-export -f db_update
-export -f db_update_col
-export -f db_custom_query
-export -f db_update_from_file
-#db_coherence() {
-
-#}
-
-#db_dump () {
-#
-#}
