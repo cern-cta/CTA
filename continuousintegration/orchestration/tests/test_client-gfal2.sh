@@ -50,6 +50,10 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+echo "Installing parallel"
+kubectl -n ${NAMESPACE} exec client -- bash -c "yum -y install parallel"
+kubectl -n ${NAMESPACE} exec client -- bash -c "echo 'will cite' | parallel --bibtex"
+
 echo "Installing gfal2 utility"
 kubectl -n ${NAMESPACE} exec client -- bash -c "sudo yum -y install gfal2-util"
 
@@ -60,6 +64,18 @@ kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh ctaeos:/root/
 
 NB_FILES=10000
 FILE_SIZE_KB=15
+NB_PROCS=100
+
+TEST_PRERUN=". /root/client_env "
+TEST_POSTRUN=""
+
+VERBOSE=1
+if [[ $VERBOSE == 1 ]]; then
+  TEST_PRERUN="tail -v -f /mnt/logs/tpsrv0*/rmcd/cta/cta-rmcd.log & export TAILPID=\$! && ${TEST_PRERUN}"
+  TEST_POSTRUN=" && kill \${TAILPID} &> /dev/null"
+fi
+
+clientgfal2_options='-n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -d /eos/ctaeos/preprod -v -r -Z ${TEST_PROTOCOL}'
 
 # Tests
 # Check for xrd vesion as xrd gfal plugin only runs under xrd version 5.
@@ -74,7 +90,7 @@ if [[ ! -z ${V5} ]]; then
     echo " Archiving files: xrdcp as user1"
     echo " Retrieving files with gfal xrootd"
 
-    kubectl -n ${NAMESPACE} exec client -- bash /root/client-gfal2_ar.sh -n ${NB_FILES} -s ${FILE_SIZE_KB} -p 100 -d /eos/ctaeos/preprod -v -r -Z ${TEST_PROTOCOL} || exit 1
+    kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client-gfal2_ar.sh ${clientgfal2_options} && ${TEST_POSTRUN}" || exit 1
     kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 fi
 
@@ -87,5 +103,5 @@ fi
 #echo "Launching client-gfal2_ar.sh on client pod using ${TEST_PROTOCOL} protocol"
 #echo " Archiving files: xrdcp as user1"
 #echo " Retrieving files with gfal https"
-#kubectl -n ${NAMESPACE} exec client -- bash /root/client-gfal2_ar.sh -Z ${TEST_PROTOCOL} -n ${NB_FILES} -s ${FILE_SIZE_KB} -p 100 -d /eos/ctaeos/preprod -v -r || exit 1
+#kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client-gfal2_ar.sh ${clientgfal2_options} && ${TEST_POSTRUN}" || exit 1
 #kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
