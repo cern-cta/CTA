@@ -1,12 +1,31 @@
-#!/usr/bin/env sh
+#!/bin/bash
+
+# @project      The CERN Tape Archive (CTA)
+# @copyright    Copyright © 2022 CERN
+# @license      This program is free software, distributed under the terms of the GNU General Public
+#               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
+#               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
+#               option) any later version.
+#
+#               This program is distributed in the hope that it will be useful, but WITHOUT ANY
+#               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+#               PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+#               In applying this licence, CERN does not waive the privileges and immunities
+#               granted to it by virtue of its status as an Intergovernmental Organization or
+#               submit itself to any jurisdiction.
 
 
 # Build the list of tape only files.
-rm -f ${STATUS_FILE}
-touch ${STATUS_FILE}
+STATUS_FILE=$(mktemp)
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep 'd0::t[^0]' | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${subdir}/\1%" >> ${STATUS_FILE}
+  eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep 'd0::t[^0]' | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%\1%" >> ${STATUS_FILE}
 done
+
+if [[ $(cat ${STATUS_FILE} | wc -l )  -eq 0 ]]; then
+  echo "ERROR: Can't run abort prepare test as there are no tape only files."
+  exit 1
+fi
 
 # Put drives down.
 echo "Sleeping 3 seconds to let previous sessions finish."
@@ -117,10 +136,14 @@ done
 # Check that the files were not retrieved
 echo "Checking restaged files..."
 RESTAGEDFILES=0
+
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  RF=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | wc -l)
+  eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | awk -v sd="${subdir}/"  '{print sd$10}' > ${STATUS_FILE}
+
+  RF=$(cat $STATUS_FILE | wc -l)
   echo "Restaged files in directory ${subdir}: ${RF}"
   (( RESTAGEDFILES += ${RF} ))
+  cat ${STATUS_FILE} | xargs -iFILE bash -c "db_update aborted FILE 1 '='"
 done
 echo "Total restaged files found: ${RESTAGEDFILES}"
 
@@ -136,3 +159,5 @@ if [ ${RESTAGEDFILES} -ne "0" ]; then
   ((RC++))
   echo "ERROR some files were retrieved in spite of retrieve cancellation."
 fi
+
+rm -f ${STATUS_FILE}
