@@ -35,58 +35,14 @@ if [[ $ARCHIVEONLY == 1 ]]; then
   exit 0
 fi
 
-# Retrieve Test
 . /root/client_retrieve.sh
 
 . /root/client_evict.sh
 
-# Abort prepare test.
-RESTAGEDFILES=0
-#. /root/client_abortPrepare.sh
+. /root/client_abortPrepare.sh
 
-# Delete Test
 if [[ $REMOVE == 1 ]]; then
   . /root/client_delete.sh
 fi
 
-echo "###"
-echo "$(date +%s): Results:"
-echo "REMOVED/EVICTED/RETRIEVED/ARCHIVED/RESTAGEDFILES/NB_FILES"
-echo "${DELETED}/${EVICTED}/${RETRIEVED}/${ARCHIVED}/${RESTAGEDFILES}/$((${NB_FILES} * ${NB_DIRS}))"
-echo "###"
-
-test -z ${COMMENT} || annotate "test ${TESTID} FINISHED" "Summary:</br>NB_FILES: $((${NB_FILES} * ${NB_DIRS}))</br>ARCHIVED: ${ARCHIVED}<br/>RETRIEVED: ${RETRIEVED}<br/>STAGERRMED: ${STAGERRMED}</br>DELETED: ${DELETED}" 'test,end'
-
-# stop tail
-test -z $TAILPID || kill ${TAILPID} &> /dev/null
-
-if [[ -z ${LASTCOUNT} ]]; then
-    LASTCOUNT=$((${NB_FILES} * ${NB_DIRS}))
-fi
-
-if [ ${LASTCOUNT} -ne $((${NB_FILES} * ${NB_DIRS})) ]; then
-  ((RC++))
-  echo "ERROR there were some lost files during the archive/retrieve test with ${NB_FILES} files (first 10):"
-  grep -v retrieved ${STATUS_FILE} | sed -e "s;^;${EOS_DIR}/;" | head -10
-fi
-
-if [ $(cat ${LOGDIR}/prepare_sys.retrieve.req_id_*.log | grep -v value= | wc -l) -ne 0 ]; then
-  # THIS IS NOT YET AN ERROR: UNCOMMENT THE FOLLOWING LINE WHEN https://gitlab.cern.ch/cta/CTA/issues/606 is fixed
-  # ((RC++))
-  echo "ERROR $(cat ${LOGDIR}/prepare_sys.retrieve.req_id_*.log | grep -v value= | wc -l) files out of $(cat ${LOGDIR}/prepare_sys.retrieve.req_id_*.log | wc -l) prepared files have no sys.retrieve.req_id extended attribute set"
-fi
-
-
-# This one does not change the return code
-# WARNING if everything else was OK
-# ERROR otherwise as these xrootd failures could be the reason of the failure
-if [ $(ls ${LOGDIR}/xrd_errors | wc -l) -ne 0 ]; then
-  # ((RC++)) # do not change RC
-  if [ ${RC} -eq 0 ]; then
-    echo "WARNING several xrootd failures occured during this run, please check client dumps in ${LOGDIR}/xrd_errors."
-  else
-    echo "ERROR several xrootd failures occured during this run, please check client dumps in ${LOGDIR}/xrd_errors."
-  fi
-fi
-
-exit ${RC}
+. /root/client_results.sh
