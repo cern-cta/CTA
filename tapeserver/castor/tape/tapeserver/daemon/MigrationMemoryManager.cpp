@@ -27,14 +27,12 @@ namespace daemon {
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-MigrationMemoryManager::MigrationMemoryManager(const size_t numberOfBlocks, 
-    const size_t blockSize, cta::log::LogContext lc)
-:
-    m_blockCapacity(blockSize), m_totalNumberOfBlocks(0),
-    m_totalMemoryAllocated(0), m_blocksProvided(0), 
-    m_blocksReturned(0), m_lc(lc)
-{
-  for (size_t i = 0; i < numberOfBlocks; i++) {
+MigrationMemoryManager::MigrationMemoryManager(const uint32_t numberOfBlocks, const uint32_t blockSize,
+                                               const cta::log::LogContext& lc) :
+m_blockCapacity(blockSize),
+m_totalNumberOfBlocks(0), m_totalMemoryAllocated(0), m_blocksProvided(0), m_blocksReturned(0), m_lc(lc) {
+
+  for (uint32_t i = 0; i < numberOfBlocks; i++) {
     m_freeBlocks.push(new MemBlock(i, blockSize));
     m_totalNumberOfBlocks++;
     m_totalMemoryAllocated += blockSize;
@@ -45,7 +43,7 @@ MigrationMemoryManager::MigrationMemoryManager(const size_t numberOfBlocks,
 //------------------------------------------------------------------------------
 // MigrationMemoryManager::~MigrationMemoryManager
 //------------------------------------------------------------------------------
-MigrationMemoryManager::~MigrationMemoryManager() throw() {
+MigrationMemoryManager::~MigrationMemoryManager() noexcept {
   // Make sure the thread is finished: this should be done by the caller,
   // who should have called waitThreads.
   // castor::server::Thread::wait();
@@ -86,8 +84,7 @@ void MigrationMemoryManager::addClient(DataPipeline* c)
 //------------------------------------------------------------------------------
 // MigrationMemoryManager::areBlocksAllBack
 //------------------------------------------------------------------------------
-bool MigrationMemoryManager::areBlocksAllBack()
-throw(){
+bool MigrationMemoryManager::areBlocksAllBack() noexcept{
   return m_totalNumberOfBlocks == m_freeBlocks.size();
 }
 

@@ -213,7 +213,7 @@ void DiskWriteTask::releaseAllBlock(){
 //------------------------------------------------------------------------------
 // checkErrors
 //------------------------------------------------------------------------------  
-  void DiskWriteTask::checkErrors(MemBlock* mb,int blockId,cta::log::LogContext&  lc){
+  void DiskWriteTask::checkErrors(MemBlock* mb, uint64_t blockId, cta::log::LogContext& lc){
     using namespace cta::log;
     if(m_retrieveJob->retrieveRequest.archiveFileID != mb->m_fileid
             || blockId != mb->m_fileBlock  || mb->isFailed() ){

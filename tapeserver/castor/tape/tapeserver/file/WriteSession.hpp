@@ -78,23 +78,23 @@ public:
   */
   const bool m_useLbp;
 
-  inline std::string getSiteName() throw() {
+  inline std::string getSiteName() noexcept {
     return m_siteName;
   }
 
-  inline std::string getHostName() throw() {
+  inline std::string getHostName() noexcept {
     return m_hostName;
   }
 
-  inline void setCorrupted() throw() {
+  inline void setCorrupted() noexcept {
     m_corrupted = true;
   }
 
-  inline bool isCorrupted() throw() {
+  inline bool isCorrupted() noexcept {
     return m_corrupted;
   }
 
-  inline bool isTapeWithLbp() throw() {
+  inline bool isTapeWithLbp() noexcept {
     return m_detectedLbp;
   }
 
@@ -126,12 +126,10 @@ public:
     * This is to be used by the tapeWriteTask right before writing the file
     * @param nextFSeq The fSeq we are about to write.
     */
-  inline void validateNextFSeq(int nextFSeq) const {
+  inline void validateNextFSeq(uint64_t nextFSeq) const {
     if (nextFSeq != m_lastWrittenFSeq + 1) {
-      cta::exception::Exception e;
-      e.getMessage() << "In WriteSession::validateNextFSeq: wrong fSeq sequence: lastWrittenFSeq="
-        << m_lastWrittenFSeq << " nextFSeq=" << nextFSeq;
-      throw e;
+      throw cta::exception::Exception("In WriteSession::validateNextFSeq: wrong fSeq sequence: lastWrittenFSeq="
+                                      + std::to_string(m_lastWrittenFSeq) + " nextFSeq=" + std::to_string(nextFSeq));
     }
   }
 
@@ -141,12 +139,11 @@ public:
     * file.
     * @param writtenFSeq the fSeq of the file
     */
-  inline void reportWrittenFSeq(int writtenFSeq) {
+  inline void reportWrittenFSeq(uint64_t writtenFSeq) {
     if (writtenFSeq != m_lastWrittenFSeq + 1) {
-      cta::exception::Exception e;
-      e.getMessage() << "In WriteSession::reportWrittenFSeq: wrong fSeq reported: lastWrittenFSeq="
-        << m_lastWrittenFSeq << " writtenFSeq=" << writtenFSeq;
-      throw e;
+      throw cta::exception::Exception("In WriteSession::reportWrittenFSeq: wrong fSeq reported: lastWrittenFSeq="
+                                      + std::to_string(m_lastWrittenFSeq)
+                                      + " writtenFSeq=" + std::to_string(writtenFSeq));
     }
     m_lastWrittenFSeq = writtenFSeq;
   }
@@ -180,7 +177,7 @@ private:
   /**
     * keep track of the fSeq we are writing to tape
     */
-  int m_lastWrittenFSeq;
+  uint64_t m_lastWrittenFSeq;
 
   /**
     * set to true in case the write operations do (or try to do) something illegal

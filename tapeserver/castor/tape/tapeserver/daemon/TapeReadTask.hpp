@@ -85,8 +85,8 @@ public:
     bool stillReading = true;
     //for counting how many mem blocks have used and how many tape blocks
     //(because one mem block can hold several tape blocks
-    int fileBlock = 0;
-    int tapeBlock = 0;
+    uint64_t fileBlock = 0;
+    size_t tapeBlock = 0;
     // This out-of-try-catch variables allows us to record the stage of the 
     // process we're in, and to count the error if it occurs.
     // We will not record errors for an empty string. This will allow us to

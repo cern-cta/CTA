@@ -27,7 +27,7 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
   
-// Antcipated declaration to hasten compilation
+// Anticipated declaration to hasten compilation
 class MemBlock;
 
 class DataConsumer {
@@ -48,7 +48,7 @@ public:
   /**
    * Destructor
    */
-  virtual ~DataConsumer() {}
+  virtual ~DataConsumer() = default;
 };
 
 }

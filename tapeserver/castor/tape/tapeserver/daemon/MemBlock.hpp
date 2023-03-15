@@ -77,18 +77,15 @@ public:
    * @param id the block ID for its whole life
    * @param capacity the capacity (in byte) of the embed payload 
    */
-  MemBlock(const int id, const size_t capacity) : 
-  m_memoryBlockId(id),m_payload(capacity){
-    reset();
-  }
-  
+  MemBlock(const uint32_t id, const uint32_t capacity) : m_memoryBlockId(id), m_payload(capacity) { reset(); }
+
   /**
    * Get the error message from the context, 
    * Throw an exception if there is no context
    * @return 
    */
   std::string errorMsg() const {
-    if(m_context.get()) {
+    if (m_context) {
       return m_context->m_errorMsg;
     }
 
@@ -125,7 +122,7 @@ public:
    * m_failed is true, m_fileBlock and m_tapeFileBlock are set at -1
    * Other members do not change
    */
-  void markAsFailed(const std::string msg){
+  void markAsFailed(const std::string& msg){
     m_context.reset(new AlterationContext(msg,AlterationContext::Failed));
     m_fileBlock = -1;
     m_tapeFileBlock = -1;
@@ -153,7 +150,7 @@ public:
    * Reset all the members.
    * Numerical ones are set at -1.and m_failed to false.
    */
-  void reset() throw() {
+  void reset() noexcept {
     m_fileid = -1;
     m_fileBlock = -1;
     m_fSeq = -1;
@@ -165,7 +162,7 @@ public:
     m_context.reset();
   }
   /** Unique memory block id */
-  const int m_memoryBlockId;
+  const uint32_t m_memoryBlockId;
   
   /** handle to the raw data to be migrated/recalled */
   Payload m_payload;
@@ -174,16 +171,16 @@ public:
   uint64_t m_fileid;
 
   /** number of the memory-chunk of the current file we are manipulating */
-  int m_fileBlock;
+  uint64_t m_fileBlock;
   
   /** order of file on the tape */
-  uint32_t m_fSeq;
+  uint64_t m_fSeq;
   
   /** Sequence number of the first tape block file in this memory block */
-  int m_tapeFileBlock;
+  size_t m_tapeFileBlock;
   
   /** Size of the tape blocks, allowing sanity checks on the disk write side in recalls */
-  int m_tapeBlockSize;
+  size_t m_tapeBlockSize;
   
 };
 

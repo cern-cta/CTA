@@ -1109,8 +1109,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
     uint8_t data[1000];
     size_t archiveFileSize = sizeof(data);
     castor::tape::SCSI::Structures::zeroStruct(&data);
-    int fseq;
-    for (fseq = 1; fseq <= MAX_RECALLS; fseq++) {
+
+    for (int fseq = 1; fseq <= MAX_RECALLS; fseq++) {
       expectedRAOFseqOrder[fseq / MAX_BULK_RECALLS].push_back(std::to_string(fseq));
       // Create a path to a remote destination file
       std::ostringstream remoteFilePath;
@@ -1298,10 +1298,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
     uint8_t data[1000];
     size_t archiveFileSize = sizeof(data);
     castor::tape::SCSI::Structures::zeroStruct(&data);
-    int fseq;
+
     // For the RAO orders we will have two rao calls : first with 30 files,
     // the second with 20 files
-    for (fseq = 1; fseq <= MAX_RECALLS; fseq++) {
+    for (int fseq = 1; fseq <= MAX_RECALLS; fseq++) {
       expectedRAOOrder[fseq / MAX_BULK_RECALLS].push_back(std::to_string(fseq));
       // Create a path to a remote destination file
       std::ostringstream remoteFilePath;
@@ -1485,10 +1485,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
     uint8_t data[1000];
     size_t archiveFileSize = sizeof(data);
     castor::tape::SCSI::Structures::zeroStruct(&data);
-    int fseq;
+
     // For the RAO orders we will have two rao calls : first with 30 files,
     // the second with 20 files
-    for (fseq = 1; fseq <= MAX_RECALLS; fseq++) {
+    for (int fseq = 1; fseq <= MAX_RECALLS; fseq++) {
       expectedRAOOrder[fseq / MAX_BULK_RECALLS].push_back(std::to_string(fseq));
       // Create a path to a remote destination file
       std::ostringstream remoteFilePath;
@@ -1676,10 +1676,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
     uint8_t data[1000];
     size_t archiveFileSize = sizeof(data);
     castor::tape::SCSI::Structures::zeroStruct(&data);
-    int fseq;
+
     // For the RAO orders we will have two rao calls : first with 30 files,
     // the second with 20 files
-    for (fseq = 1; fseq <= MAX_RECALLS; fseq++) {
+    for (int fseq = 1; fseq <= MAX_RECALLS; fseq++) {
       expectedRAOOrder[fseq / MAX_BULK_RECALLS].push_back(std::to_string(fseq));
       // Create a path to a remote destination file
       std::ostringstream remoteFilePath;
@@ -2333,30 +2333,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
     // Create the files and schedule the archivals
-
-    //First a file with wrong checksum
-    {
-      int fseq = 1;
-      sourceFiles.emplace_back(std::make_unique<unitTests::TempFile>());
-      sourceFiles.back()->randomFill(1000);
-      remoteFilePaths.push_back(sourceFiles.back()->path());
-      // Schedule the archival of the file
-      cta::common::dataStructures::ArchiveRequest ar;
-      ar.checksumBlob.insert(cta::checksum::ADLER32, sourceFiles.back()->adler32());
-      ar.storageClass=s_storageClassName;
-      ar.srcURL=std::string("file://") + sourceFiles.back()->path();
-      ar.requester.name = requester.username;
-      ar.requester.group = "group";
-      ar.fileSize = 900;  // Wrong file size
-      ar.diskFileID = std::to_string(fseq);
-      ar.diskFileInfo.path = "y";
-      ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
-      ar.diskFileInfo.gid = DISK_FILE_GID;
-      const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
-      archiveFileIds.push_back(archiveFileId);
-      scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
-    }
-    for(int fseq=2; fseq <= 10 ; fseq ++) {
+    const int problematicFseq = 1;
+    for (int fseq=1; fseq <= 10 ; fseq ++) {
       // Create a source file.
       sourceFiles.emplace_back(std::make_unique<unitTests::TempFile>());
       sourceFiles.back()->randomFill(1000);
@@ -2368,7 +2346,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
       ar.srcURL=std::string("file://") + sourceFiles.back()->path();
       ar.requester.name = requester.username;
       ar.requester.group = "group";
-      ar.fileSize = 1000;
+      ar.fileSize = (fseq != problematicFseq) ? 1000 : 900; // 900 is wrong reported size
       ar.diskFileID = std::to_string(fseq);
       ar.diskFileInfo.path = "y";
       ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
@@ -2506,6 +2484,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   // Tempfiles are in this scope so they are kept alive
   std::list<std::unique_ptr<unitTests::TempFile>> sourceFiles;
   std::list<uint64_t> archiveFileIds;
+  const uint64_t problematicFseq = 5;
   {
     // Label the tape
     castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
@@ -2515,35 +2494,17 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
     // Create the files and schedule the archivals
 
     //First a file with wrong checksum
-    {
-      int fseq = 1;
-      sourceFiles.emplace_back(std::make_unique<unitTests::TempFile>());
-      sourceFiles.back()->randomFill(1000);
-      remoteFilePaths.push_back(sourceFiles.back()->path());
-      // Schedule the archival of the file
-      cta::common::dataStructures::ArchiveRequest ar;
-      ar.checksumBlob.insert(cta::checksum::ADLER32, sourceFiles.back()->adler32() + 1); // Wrong reported checksum
-      ar.storageClass=s_storageClassName;
-      ar.srcURL=std::string("file://") + sourceFiles.back()->path();
-      ar.requester.name = requester.username;
-      ar.requester.group = "group";
-      ar.fileSize = 1000;
-      ar.diskFileID = std::to_string(fseq);
-      ar.diskFileInfo.path = "y";
-      ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
-      ar.diskFileInfo.gid = DISK_FILE_GID;
-      const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
-      archiveFileIds.push_back(archiveFileId);
-      scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
-    }
-    for(int fseq=2; fseq <= 10 ; fseq ++) {
+    for (uint64_t fseq=1; fseq <= 10 ; fseq ++) {
       // Create a source file.
       sourceFiles.emplace_back(std::make_unique<unitTests::TempFile>());
       sourceFiles.back()->randomFill(1000);
       remoteFilePaths.push_back(sourceFiles.back()->path());
       // Schedule the archival of the file
       cta::common::dataStructures::ArchiveRequest ar;
-      ar.checksumBlob.insert(cta::checksum::ADLER32, sourceFiles.back()->adler32());
+      ar.checksumBlob.insert(cta::checksum::ADLER32, (fseq != problematicFseq) ?
+                                                       sourceFiles.back()->adler32() :      // Correct reported checksum
+                                                       sourceFiles.back()->adler32() + 1);  // Wrong reported checksum
+
       ar.storageClass=s_storageClassName;
       ar.srcURL=std::string("file://") + sourceFiles.back()->path();
       ar.requester.name = requester.username;
@@ -2593,12 +2554,17 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   std::string logToCheck = logger.getLog();
   logToCheck += "";
   ASSERT_EQ(s_vid, sess.getVid());
-  
-  auto afiiter = archiveFileIds.begin();
-  // None of the files made it to the catalogue
-  for(__attribute__ ((unused)) auto & sf: sourceFiles) {
-    auto afi = *(afiiter++);
-    ASSERT_THROW(catalogue.ArchiveFile()->getArchiveFileById(afi), cta::exception::Exception);
+
+  std::cout << logToCheck << std::endl;
+
+  for (const auto & fileNumber : archiveFileIds) {
+    if (fileNumber < problematicFseq) {
+      // Files queued without the wrong checksum made it to the catalogue
+      auto afs = catalogue.ArchiveFile()->getArchiveFileById(fileNumber);
+    } else {
+      // Remaining files were re-queued
+      ASSERT_THROW(catalogue.ArchiveFile()->getArchiveFileById(fileNumber), cta::exception::Exception);
+    }
   }
 
   // Check logs for drive statistics
@@ -2677,6 +2643,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   // Tempfiles are in this scope so they are kept alive
   std::list<std::unique_ptr<unitTests::TempFile>> sourceFiles;
   std::list<uint64_t> archiveFileIds;
+  const uint64_t problematicFseq = 5;
   {
     // Label the tape
     castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
@@ -2684,7 +2651,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
     // Create the files and schedule the archivals
-    for(int fseq=1; fseq <= 4 ; fseq ++) {
+    for (uint64_t fseq=1; fseq <= 10 ; fseq ++) {
       // Create a source file.
       sourceFiles.emplace_back(std::make_unique<unitTests::TempFile>());
       sourceFiles.back()->randomFill(1000);
@@ -2696,51 +2663,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
       ar.srcURL=std::string("file://") + sourceFiles.back()->path();
       ar.requester.name = requester.username;
       ar.requester.group = "group";
-      ar.fileSize = 1000;
-      ar.diskFileID = std::to_string(fseq);
-      ar.diskFileInfo.path = "y";
-      ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
-      ar.diskFileInfo.gid = DISK_FILE_GID;
-      const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
-      archiveFileIds.push_back(archiveFileId);
-      scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
-    }
-    {
-      //Create a file with wrong file size in the middle of the jobs
-      int fseq = 5;
-      sourceFiles.emplace_back(std::make_unique<unitTests::TempFile>());
-      sourceFiles.back()->randomFill(1000);
-      remoteFilePaths.push_back(sourceFiles.back()->path());
-      // Schedule the archival of the file
-      cta::common::dataStructures::ArchiveRequest ar;
-      ar.checksumBlob.insert(cta::checksum::ADLER32, sourceFiles.back()->adler32());
-      ar.storageClass=s_storageClassName;
-      ar.srcURL=std::string("file://") + sourceFiles.back()->path();
-      ar.requester.name = requester.username;
-      ar.requester.group = "group";
-      ar.fileSize = 900; // Wrong reported size
-      ar.diskFileID = std::to_string(fseq);
-      ar.diskFileInfo.path = "y";
-      ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
-      ar.diskFileInfo.gid = DISK_FILE_GID;
-      const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
-      archiveFileIds.push_back(archiveFileId);
-      scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
-    }
-    // Create the rest of the files and schedule the archivals
-    for(int fseq=6; fseq <= 10 ; fseq ++) {
-      // Create a source file.
-      sourceFiles.emplace_back(std::make_unique<unitTests::TempFile>());
-      sourceFiles.back()->randomFill(1000);
-      remoteFilePaths.push_back(sourceFiles.back()->path());
-      // Schedule the archival of the file
-      cta::common::dataStructures::ArchiveRequest ar;
-      ar.checksumBlob.insert(cta::checksum::ADLER32, sourceFiles.back()->adler32());
-      ar.storageClass=s_storageClassName;
-      ar.srcURL=std::string("file://") + sourceFiles.back()->path();
-      ar.requester.name = requester.username;
-      ar.requester.group = "group";
-      ar.fileSize = 1000;
+      ar.fileSize = (fseq != problematicFseq) ? 1000 : 900; // 900 is wrong reported size
       ar.diskFileID = std::to_string(fseq);
       ar.diskFileInfo.path = "y";
       ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
@@ -2786,10 +2709,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   logToCheck += "";
   ASSERT_EQ(s_vid, sess.getVid());
   auto afiiter = archiveFileIds.begin();
-  int fseq = 1;
+  uint64_t fseq = 1;
   for(auto & sf: sourceFiles) {
     auto afi = *(afiiter++);
-    if (fseq != 5) {
+    if (fseq != problematicFseq) {
       // Files queued without the wrong file size made it to the catalogue
       auto afs = catalogue.ArchiveFile()->getArchiveFileById(afi);
       ASSERT_EQ(1, afs.tapeFiles.size());

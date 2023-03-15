@@ -55,7 +55,7 @@ public:
   MigrationTaskInjector(MigrationMemoryManager & mm, 
         DiskReadThreadPool & diskReader,
         TapeSingleThreadInterface<TapeWriteTask> & tapeWriter,cta::ArchiveMount &archiveMount,
-        uint64_t maxFiles, uint64_t byteSizeThreshold,cta::log::LogContext lc);
+        uint64_t maxFiles, uint64_t byteSizeThreshold,const cta::log::LogContext& lc);
 
   /**
    * Wait for the inner thread to finish
@@ -122,8 +122,9 @@ private:
   void injectBulkMigrations(std::list<std::unique_ptr<cta::ArchiveJob>>& jobs);
   
   /*Compute how many blocks are needed for a file of fileSize bytes*/
-  size_t howManyBlocksNeeded(size_t fileSize,size_t blockCapacity){
-    return fileSize/blockCapacity + ((fileSize%blockCapacity==0) ? 0 : 1); 
+  uint64_t howManyBlocksNeeded(uint64_t fileSize, size_t blockCapacity){
+    const auto extraBlock = ((fileSize%blockCapacity) == 0) ? 0 : 1;
+    return fileSize/blockCapacity + extraBlock;
   }
   
   /**

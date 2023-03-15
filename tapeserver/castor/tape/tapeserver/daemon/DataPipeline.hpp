@@ -48,10 +48,10 @@ public:
   * Constructor
   * @param bn :how many memory block we want in the fifo (its size)
   */
-  DataPipeline(int bn)  : m_blocksNeeded(bn), m_freeBlocksProvided(0),
-  m_dataBlocksPushed(0), m_dataBlocksPopped(0) {};
-  
-  ~DataPipeline() throw() { 
+  explicit DataPipeline(uint64_t bn) :
+  m_blocksNeeded(bn), m_freeBlocksProvided(0), m_dataBlocksPushed(0), m_dataBlocksPopped(0){};
+
+  ~DataPipeline() noexcept {
     cta::threading::MutexLocker ml(m_freeBlockProviderProtection); 
   }
 
@@ -129,7 +129,7 @@ public:
    */
   bool finished() {
     // No need to lock because only one int variable is read.
-    //TODO : are we sure the operation is atomic ? It is plateform dependant
+    //TODO : are we sure the operation is atomic ? It is platform dependant
     cta::threading::MutexLocker ml(m_countersMutex);
     return m_dataBlocksPopped >= m_blocksNeeded;
   }
@@ -139,16 +139,16 @@ private:
   cta::threading::Mutex m_freeBlockProviderProtection;
   
   ///the number of memory blocks we want to be provided to the object (its size).
-  const int m_blocksNeeded;
+  const uint64_t m_blocksNeeded;
   
   ///how many blocks have been currently provided 
-  volatile int m_freeBlocksProvided;
+  volatile uint64_t m_freeBlocksProvided;
   
   ///how many data blocks have been currently pushed
-  volatile int m_dataBlocksPushed;
+  volatile uint64_t m_dataBlocksPushed;
 
   ///how many data blocks have been currently taken
-  volatile int m_dataBlocksPopped;
+  volatile uint64_t m_dataBlocksPopped;
   
     ///thread sage storage of all free blocks
   cta::threading::BlockingQueue<MemBlock *> m_freeBlocks;

@@ -123,7 +123,7 @@ std::string cta::ArchiveJob::reportURL() noexcept {
   try {
     return exceptionThrowingReportURL();
   } catch (exception::Exception& ex) {
-    return ex.what();
+    return ex.getMessageValue();
   } catch (...) {
     return "In ArchiveJob::reportURL(): unknown exception";
   }

@@ -17,7 +17,6 @@
 
 #pragma once
 
-
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 #include "castor/tape/tapeserver/daemon/DataPipeline.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
@@ -61,15 +60,14 @@ public:
    * @param blockCount: number of memory blocks (TODO:?)
    * @param mm: reference to the memory manager in use
    */
-  TapeWriteTask(int blockCount, cta::ArchiveJob *archiveJob,
-          MigrationMemoryManager& mm,cta::threading::AtomicFlag& errorFlag);
-  
-  
+  TapeWriteTask(uint64_t blockCount, cta::ArchiveJob* archiveJob, MigrationMemoryManager& mm,
+                cta::threading::AtomicFlag& errorFlag);
+
   /**
    * @return the size of the file in byte
    */
   virtual uint64_t fileSize();
-    
+
   /**
    * Main execution routine
    * @param session
@@ -77,64 +75,64 @@ public:
    * @param lc For logging
    * @param timer
    */
-  virtual void execute(const std::unique_ptr<castor::tape::tapeFile::WriteSession> &session,
-   MigrationReportPacker & reportPacker, MigrationWatchDog & watchdog,
-   cta::log::LogContext&  lc, cta::utils::Timer & timer);
-  
+  virtual void execute(const std::unique_ptr<castor::tape::tapeFile::WriteSession>& session,
+                       MigrationReportPacker& reportPacker, MigrationWatchDog& watchdog, cta::log::LogContext& lc,
+                       cta::utils::Timer& timer);
+
 private:
   /** Utility class used in execute()'s implementation*/
-  class Skip: public std::string {
+  class Skip : public std::string {
   public:
-    template<typename T> Skip(const T&t): std::string(t) {}
+    template<typename T>
+    explicit Skip(const T& t) : std::string(t) {}
   };
-  
+
 public:
   /**
    * Used to reclaim used memory blocks
    * @return the recyclable memory block
    */
-  virtual MemBlock * getFreeBlock();
-  
+  MemBlock* getFreeBlock() override;
+
   /**
    * This is to enqueue one memory block full of data to be written on tape
    * @param mb: the memory block in question
    */
-  virtual void pushDataBlock(MemBlock *mb) ;
-  
+  void pushDataBlock(MemBlock* mb) override;
+
   /**
    * Destructor
    */
-  virtual ~TapeWriteTask();
+  ~TapeWriteTask() override;
 
   /**
    * Should only be called in case of error !!
    * Just pop data block and put in back into the memory manager
    */
   void circulateMemBlocks();
-  
+
   /**
    * Return the task stats. Should only be called after execute
    * @return 
    */
-  const TapeSessionStats getTaskStats() const ;
+  const TapeSessionStats getTaskStats() const;
 
 private:
   /**
    * Log  all localStats' stats +  m_fileToMigrate's parameters
    * into lc with msg at the given level
    */
-  void logWithStats(int level, const std::string& msg,
-   cta::log::LogContext&  lc) const;
-       
+  void logWithStats(int level, const std::string& msg, cta::log::LogContext& lc) const;
+
   /**
    * This function will check the consistency of the mem block and 
    * throw exception is something goes wrong
    * @param mb The mem block to check
-   * @param memBlockId The block id the mem blopck should be at
+   * @param memBlockId The block id the mem block should be at
    * @param lc FOr logging
    */
-  void checkErrors(MemBlock* mb,int memBlockId,cta::log::LogContext&  lc);
-    
+  void checkErrors(MemBlock* mb, uint64_t memBlockId, cta::log::LogContext& lc);
+
   /**
    * Function in charge of opening the FileWriter for m_fileToMigrate
    * Throw an exception it it fails
@@ -142,40 +140,40 @@ private:
    * @param lc for logging purpose
    * @return the FileWriter if everything went well
    */
-  std::unique_ptr<castor::tape::tapeFile::FileWriter> openFileWriter(
-    const std::unique_ptr<castor::tape::tapeFile::WriteSession>& session, cta::log::LogContext& lc);
+  std::unique_ptr<castor::tape::tapeFile::FileWriter>
+    openFileWriter(const std::unique_ptr<castor::tape::tapeFile::WriteSession>& session, cta::log::LogContext& lc);
 
   /**
    * All we need to know about the file we are migrating
    */
   std::unique_ptr<cta::ArchiveJob> m_archiveJob;
-  
+
   /**
    * reference to the memory manager in use   
    */
-  MigrationMemoryManager & m_memManager;
-  
+  MigrationMemoryManager& m_memManager;
+
   /**
    * The fifo containing the memory blocks holding data to be written to tape
    */
   DataPipeline m_fifo;
-  
+
   /**
    * Mutex forcing serial access to the fifo
    */
   cta::threading::Mutex m_producerProtection;
-  
+
   /**
    * The number of memory blocks to be used
    */
-  int m_blockCount;
-  
+  uint64_t m_blockCount;
+
   /**
    * A shared flag among the the tasks and the task injector, set as true as soon
    * as task failed to do its job 
    */
   cta::threading::AtomicFlag& m_errorFlag;
-  
+
   /**
    * Stats
    */
@@ -185,22 +183,24 @@ private:
    * LBP mode tracking
    */
   std::string m_LBPMode;
-  
+
   /**
    * The NS archive file information
    */
   cta::common::dataStructures::ArchiveFile m_archiveFile;
-  
+
   /**
    * The file archive result for the NS
    */
   cta::common::dataStructures::TapeFile m_tapeFile;
-  
+
   /**
    * The remote file information
    */
-  std::string m_srcURL; 
+  std::string m_srcURL;
 };
 
-}}}}
-
+}  // namespace daemon
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

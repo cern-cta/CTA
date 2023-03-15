@@ -46,9 +46,7 @@ public:
    * @param numberOfBlocks: number of blocks to allocate
    * @param blockSize: size of each block
    */
-  MigrationMemoryManager(const size_t numberOfBlocks, const size_t blockSize, 
-          cta::log::LogContext lc) 
-          ;
+  MigrationMemoryManager(const uint32_t numberOfBlocks, const uint32_t blockSize, const cta::log::LogContext& lc);
   
   /**
    * 
@@ -60,7 +58,7 @@ public:
    * Are all sheep back to the farm?
    * @return 
    */
-  bool areBlocksAllBack() throw();
+  bool areBlocksAllBack() noexcept;
   
   /**
    * Start serving clients (in the dedicated thread)
@@ -93,10 +91,9 @@ public:
   /**
    * Destructor
    */
-  ~MigrationMemoryManager() throw();
+  ~MigrationMemoryManager() noexcept override;
+
 private:
-  
-  
   const size_t m_blockCapacity;
   
   /**
@@ -144,7 +141,7 @@ private:
   /**
    * Thread routine: pops a client and provides him blocks until he is happy!
    */
-  void run() ;
+  void run() override;
   
 };
 
