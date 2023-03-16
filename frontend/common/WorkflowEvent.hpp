@@ -47,13 +47,13 @@ private:
    * @param[in]     event      Workflow event and metadata received from client
    * @param[out]    response   Response protobuf to return to client
    */
-  void processOPENW         (const eos::Notification& event, xrd::Response& response);    //!< Open for write event
-  void processCREATE        (const eos::Notification& event, xrd::Response& response);    //!< New archive file ID event
-  void processCLOSEW        (const eos::Notification& event, xrd::Response& response);    //!< Archive file event
-  void processPREPARE       (const eos::Notification& event, xrd::Response& response);    //!< Retrieve file event
-  void processABORT_PREPARE (const eos::Notification& event, xrd::Response& response);    //!< Abort retrieve file event
-  void processDELETE        (const eos::Notification& event, xrd::Response& response);    //!< Delete file event
-  void processUPDATE_FID    (const eos::Notification& event, xrd::Response& response);    //!< Update disk file ID event
+  void processOPENW         (xrd::Response& response);    //!< Open for write event
+  void processCREATE        (xrd::Response& response);    //!< New archive file ID event
+  void processCLOSEW        (xrd::Response& response);    //!< Archive file event
+  void processPREPARE       (xrd::Response& response);    //!< Retrieve file event
+  void processABORT_PREPARE (xrd::Response& response);    //!< Abort retrieve file event
+  void processDELETE        (xrd::Response& response);    //!< Delete file event
+  void processUPDATE_FID    (xrd::Response& response);    //!< Update disk file ID event
 
   /*!
    * Throw an exception for empty protocol buffer strings
@@ -64,7 +64,7 @@ private:
     }
   }
 
-  eos::Notification                           m_event;                      //!< Workflow Event protocol buffer
+  const eos::Notification                     m_event;                      //!< Workflow Event protocol buffer
   common::dataStructures::SecurityIdentity    m_cliIdentity;                //!< Client identity: username, host, authentication
   catalogue::Catalogue                       &m_catalogue;                  //!< Reference to CTA Catalogue
   cta::Scheduler                             &m_scheduler;                  //!< Reference to CTA Scheduler

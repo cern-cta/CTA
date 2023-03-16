@@ -32,6 +32,8 @@ WorkflowEvent::WorkflowEvent(const frontend::FrontendService& frontendService,
   m_lc(frontendService.getLogContext()),
   m_verificationMountPolicy(frontendService.getVerificationMountPolicy())
 {
+  m_lc.pushOrReplace({"user", m_cliIdentity.username + "@" + m_cliIdentity.host});
+
   // Log event before processing. This corresponds to the entry in WFE.log in EOS.
   {
     const std::string& eventTypeName = Workflow_EventType_Name(event.wf().event());
@@ -89,25 +91,25 @@ xrd::Response WorkflowEvent::process() {
     using namespace cta::eos;
 
     case Workflow::OPENW:
-      processOPENW(m_event, response);
+      processOPENW(response);
       break;
     case Workflow::CREATE:
-      processCREATE(m_event, response);
+      processCREATE(response);
       break;
     case Workflow::CLOSEW:
-      processCLOSEW(m_event, response);
+      processCLOSEW(response);
       break;
     case Workflow::PREPARE:
-      processPREPARE(m_event, response);
+      processPREPARE(response);
       break;
     case Workflow::ABORT_PREPARE:
-      processABORT_PREPARE(m_event, response);
+      processABORT_PREPARE(response);
       break;
     case Workflow::DELETE:
-      processDELETE(m_event, response);
+      processDELETE(response);
       break;
     case Workflow::UPDATE_FID:
-      processUPDATE_FID(m_event, response);
+      processUPDATE_FID(response);
       break;
     default:
       throw exception::PbException("Workflow event " + Workflow_EventType_Name(m_event.wf().event()) +
@@ -116,7 +118,7 @@ xrd::Response WorkflowEvent::process() {
   return response;
 }
 
-void WorkflowEvent::processOPENW(const eos::Notification& event, xrd::Response& response) {
+void WorkflowEvent::processOPENW(xrd::Response& response) {
   // Create a log entry
   log::ScopedParamContainer params(m_lc);
   m_lc.log(log::INFO, "In WorkflowEvent::processOPENW(): ignoring OPENW event.");
@@ -125,21 +127,21 @@ void WorkflowEvent::processOPENW(const eos::Notification& event, xrd::Response& 
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void WorkflowEvent::processCREATE(const eos::Notification& event, xrd::Response& response) {
+void WorkflowEvent::processCREATE(xrd::Response& response) {
   // Validate received protobuf
-  checkIsNotEmptyString(event.cli().user().username(),  "event.cli.user.username");
-  checkIsNotEmptyString(event.cli().user().groupname(), "event.cli.user.groupname");
+  checkIsNotEmptyString(m_event.cli().user().username(),  "m_event.cli.user.username");
+  checkIsNotEmptyString(m_event.cli().user().groupname(), "m_event.cli.user.groupname");
 
   // Unpack message
   common::dataStructures::RequesterIdentity requester;
-  requester.name  = event.cli().user().username();
-  requester.group = event.cli().user().groupname();
+  requester.name  = m_event.cli().user().username();
+  requester.group = m_event.cli().user().groupname();
 
-  auto storageClassItor = event.file().xattr().find("sys.archive.storage_class");
-  if(event.file().xattr().end() == storageClassItor) {
+  auto storageClassItor = m_event.file().xattr().find("sys.archive.storage_class");
+  if(m_event.file().xattr().end() == storageClassItor) {
     // Fall back to old xattr format
-    storageClassItor = event.file().xattr().find("CTA_StorageClass");
-    if(event.file().xattr().end() == storageClassItor) {
+    storageClassItor = m_event.file().xattr().find("CTA_StorageClass");
+    if(m_event.file().xattr().end() == storageClassItor) {
       throw exception::PbException(std::string(__FUNCTION__) + ": sys.archive.storage_class extended attribute is not set");
     }
   }
@@ -160,8 +162,8 @@ void WorkflowEvent::processCREATE(const eos::Notification& event, xrd::Response&
 
   // Create a log entry
   log::ScopedParamContainer params(m_lc);
-  params.add("diskFileId", std::to_string(event.file().fid()))
-        .add("diskFilePath", event.file().lpath())
+  params.add("diskFileId", std::to_string(m_event.file().fid()))
+        .add("diskFilePath", m_event.file().lpath())
         .add("fileId", archiveFileId)
         .add("schedulerTime", t.secs());
   m_lc.log(log::INFO, "In WorkflowEvent::processCREATE(): assigning new archive file ID.");
@@ -176,17 +178,17 @@ void WorkflowEvent::processCREATE(const eos::Notification& event, xrd::Response&
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void WorkflowEvent::processCLOSEW(const eos::Notification& event, xrd::Response& response) {
+void WorkflowEvent::processCLOSEW(xrd::Response& response) {
   // Validate received protobuf
-  checkIsNotEmptyString(event.cli().user().username(),    "event.cli.user.username");
-  checkIsNotEmptyString(event.cli().user().groupname(),   "event.cli.user.groupname");
-  checkIsNotEmptyString(event.file().lpath(),             "event.file.lpath");
-  checkIsNotEmptyString(event.wf().instance().url(),      "event.wf.instance.url");
-  checkIsNotEmptyString(event.transport().report_url(),   "event.transport.report_url");
+  checkIsNotEmptyString(m_event.cli().user().username(),    "m_event.cli.user.username");
+  checkIsNotEmptyString(m_event.cli().user().groupname(),   "m_event.cli.user.groupname");
+  checkIsNotEmptyString(m_event.file().lpath(),             "m_event.file.lpath");
+  checkIsNotEmptyString(m_event.wf().instance().url(),      "m_event.wf.instance.url");
+  checkIsNotEmptyString(m_event.transport().report_url(),   "m_event.transport.report_url");
 
   // Unpack message
-  const auto storageClassItor = event.file().xattr().find("sys.archive.storage_class");
-  if(event.file().xattr().end() == storageClassItor) {
+  const auto storageClassItor = m_event.file().xattr().find("sys.archive.storage_class");
+  if(m_event.file().xattr().end() == storageClassItor) {
     throw exception::PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.storage_class");
   }
 
@@ -198,36 +200,36 @@ void WorkflowEvent::processCLOSEW(const eos::Notification& event, xrd::Response&
   auto storageClass = m_catalogue.StorageClass()->getStorageClass(storageClassItor->second);
 
   // Disallow archival of files above the specified limit
-  if(storageClass.vo.maxFileSize && event.file().size() > storageClass.vo.maxFileSize) {
-     throw exception::UserError("Archive request rejected: file size (" + std::to_string(event.file().size()) +
+  if(storageClass.vo.maxFileSize && m_event.file().size() > storageClass.vo.maxFileSize) {
+     throw exception::UserError("Archive request rejected: file size (" + std::to_string(m_event.file().size()) +
                                 " bytes) exceeds maximum allowed size (" + std::to_string(storageClass.vo.maxFileSize) + " bytes)");
   }
 
   common::dataStructures::ArchiveRequest request;
-  checksum::ProtobufToChecksumBlob(event.file().csb(), request.checksumBlob);
-  request.diskFileInfo.owner_uid = event.file().owner().uid();
-  request.diskFileInfo.gid       = event.file().owner().gid();
-  request.diskFileInfo.path      = event.file().lpath();
-  request.diskFileID             = std::to_string(event.file().fid());
-  request.fileSize               = event.file().size();
-  request.requester.name         = event.cli().user().username();
-  request.requester.group        = event.cli().user().groupname();
-  request.srcURL                 = event.wf().instance().url();
+  checksum::ProtobufToChecksumBlob(m_event.file().csb(), request.checksumBlob);
+  request.diskFileInfo.owner_uid = m_event.file().owner().uid();
+  request.diskFileInfo.gid       = m_event.file().owner().gid();
+  request.diskFileInfo.path      = m_event.file().lpath();
+  request.diskFileID             = std::to_string(m_event.file().fid());
+  request.fileSize               = m_event.file().size();
+  request.requester.name         = m_event.cli().user().username();
+  request.requester.group        = m_event.cli().user().groupname();
+  request.srcURL                 = m_event.wf().instance().url();
   request.storageClass           = storageClassItor->second;
-  request.archiveReportURL       = event.transport().report_url();
-  request.archiveErrorReportURL  = event.transport().error_report_url();
+  request.archiveReportURL       = m_event.transport().report_url();
+  request.archiveErrorReportURL  = m_event.transport().error_report_url();
   request.creationLog.host       = m_cliIdentity.host;
   request.creationLog.username   = m_cliIdentity.username;
   request.creationLog.time       = time(nullptr);
 
   log::ScopedParamContainer params(m_lc);
-  params.add("requesterInstance", event.wf().requester_instance());
+  params.add("requesterInstance", m_event.wf().requester_instance());
   std::string logMessage = "In WorkflowEvent::processCLOSEW(): ";
 
   // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which
   // must be converted to a valid uint64_t
-  const auto archiveFileIdItor = event.file().xattr().find("sys.archive.file_id");
-  if(event.file().xattr().end() == archiveFileIdItor) {
+  const auto archiveFileIdItor = m_event.file().xattr().find("sys.archive.file_id");
+  if(m_event.file().xattr().end() == archiveFileIdItor) {
     logMessage += "sys.archive.file_id is not present in extended attributes";
     m_lc.log(log::INFO, logMessage);
     throw exception::PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
@@ -265,42 +267,42 @@ void WorkflowEvent::processCLOSEW(const eos::Notification& event, xrd::Response&
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void WorkflowEvent::processPREPARE(const eos::Notification& event, xrd::Response& response) {
+void WorkflowEvent::processPREPARE(xrd::Response& response) {
   // Validate received protobuf
-  checkIsNotEmptyString(event.cli().user().username(),    "event.cli.user.username");
-  checkIsNotEmptyString(event.cli().user().groupname(),   "event.cli.user.groupname");
-  checkIsNotEmptyString(event.file().lpath(),             "event.file.lpath");
-  checkIsNotEmptyString(event.transport().dst_url(),      "event.transport.dst_url");
+  checkIsNotEmptyString(m_event.cli().user().username(),    "m_event.cli.user.username");
+  checkIsNotEmptyString(m_event.cli().user().groupname(),   "m_event.cli.user.groupname");
+  checkIsNotEmptyString(m_event.file().lpath(),             "m_event.file.lpath");
+  checkIsNotEmptyString(m_event.transport().dst_url(),      "m_event.transport.dst_url");
 
   // Unpack message
   common::dataStructures::RetrieveRequest request;
-  request.requester.name         = event.cli().user().username();
-  request.requester.group        = event.cli().user().groupname();
-  request.dstURL                 = event.transport().dst_url();
-  request.errorReportURL         = event.transport().error_report_url();
-  request.diskFileInfo.owner_uid = event.file().owner().uid();
-  request.diskFileInfo.gid       = event.file().owner().gid();
-  request.diskFileInfo.path      = event.file().lpath();
+  request.requester.name         = m_event.cli().user().username();
+  request.requester.group        = m_event.cli().user().groupname();
+  request.dstURL                 = m_event.transport().dst_url();
+  request.errorReportURL         = m_event.transport().error_report_url();
+  request.diskFileInfo.owner_uid = m_event.file().owner().uid();
+  request.diskFileInfo.gid       = m_event.file().owner().gid();
+  request.diskFileInfo.path      = m_event.file().lpath();
   request.creationLog.host       = m_cliIdentity.host;
   request.creationLog.username   = m_cliIdentity.username;
   request.creationLog.time       = time(nullptr);
-  request.isVerifyOnly           = event.wf().verify_only();
+  request.isVerifyOnly           = m_event.wf().verify_only();
   if (request.isVerifyOnly) {
      request.mountPolicy = m_verificationMountPolicy;
   }
 
   // Vid is for tape verification use case (for dual-copy files) so normally is not specified
-  if(!event.wf().vid().empty()) {
-    request.vid = event.wf().vid();
+  if(!m_event.wf().vid().empty()) {
+    request.vid = m_event.wf().vid();
   }
 
   // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which must be
   // converted to a valid uint64_t
-  auto archiveFileIdItor = event.file().xattr().find("sys.archive.file_id");
-  if(event.file().xattr().end() == archiveFileIdItor) {
+  auto archiveFileIdItor = m_event.file().xattr().find("sys.archive.file_id");
+  if(m_event.file().xattr().end() == archiveFileIdItor) {
     // Fall back to the old xattr format
-    archiveFileIdItor = event.file().xattr().find("CTA_ArchiveFileId");
-    if(event.file().xattr().end() == archiveFileIdItor) {
+    archiveFileIdItor = m_event.file().xattr().find("CTA_ArchiveFileId");
+    if(m_event.file().xattr().end() == archiveFileIdItor) {
       throw exception::PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
     }
   }
@@ -311,8 +313,8 @@ void WorkflowEvent::processPREPARE(const eos::Notification& event, xrd::Response
   }
 
   // Activity value is a string. The parameter might be present or not.
-  if(event.file().xattr().find("activity") != event.file().xattr().end()) {
-    request.activity = event.file().xattr().at("activity");
+  if(m_event.file().xattr().find("activity") != m_event.file().xattr().end()) {
+    request.activity = m_event.file().xattr().at("activity");
   }
 
   utils::Timer t;
@@ -336,23 +338,23 @@ void WorkflowEvent::processPREPARE(const eos::Notification& event, xrd::Response
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void WorkflowEvent::processABORT_PREPARE(const eos::Notification& event, xrd::Response& response) {
+void WorkflowEvent::processABORT_PREPARE(xrd::Response& response) {
   // Validate received protobuf
-  checkIsNotEmptyString(event.cli().user().username(),    "event.cli.user.username");
-  checkIsNotEmptyString(event.cli().user().groupname(),   "event.cli.user.groupname");
+  checkIsNotEmptyString(m_event.cli().user().username(),    "m_event.cli.user.username");
+  checkIsNotEmptyString(m_event.cli().user().groupname(),   "m_event.cli.user.groupname");
 
   // Unpack message
   common::dataStructures::CancelRetrieveRequest request;
-  request.requester.name   = event.cli().user().username();
-  request.requester.group  = event.cli().user().groupname();
+  request.requester.name   = m_event.cli().user().username();
+  request.requester.group  = m_event.cli().user().groupname();
 
   // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which must be
   // converted to a valid uint64_t
-  auto archiveFileIdItor = event.file().xattr().find("sys.archive.file_id");
-  if(event.file().xattr().end() == archiveFileIdItor) {
+  auto archiveFileIdItor = m_event.file().xattr().find("sys.archive.file_id");
+  if(m_event.file().xattr().end() == archiveFileIdItor) {
     // Fall back to the old xattr format
-    archiveFileIdItor = event.file().xattr().find("CTA_ArchiveFileId");
-    if(event.file().xattr().end() == archiveFileIdItor) {
+    archiveFileIdItor = m_event.file().xattr().find("CTA_ArchiveFileId");
+    if(m_event.file().xattr().end() == archiveFileIdItor) {
       throw exception::PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
     }
   }
@@ -363,8 +365,8 @@ void WorkflowEvent::processABORT_PREPARE(const eos::Notification& event, xrd::Re
   }
 
   // The request Id should be stored as an extended attribute
-  const auto retrieveRequestIdItor = event.file().xattr().find("sys.cta.objectstore.id");
-  if(event.file().xattr().end() == retrieveRequestIdItor) {
+  const auto retrieveRequestIdItor = m_event.file().xattr().find("sys.cta.objectstore.id");
+  if(m_event.file().xattr().end() == retrieveRequestIdItor) {
     throw exception::PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.cta.objectstore.id");
   }
   const std::string retrieveRequestId = retrieveRequestIdItor->second;
@@ -388,29 +390,29 @@ void WorkflowEvent::processABORT_PREPARE(const eos::Notification& event, xrd::Re
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void WorkflowEvent::processDELETE(const eos::Notification& event, xrd::Response& response) {
+void WorkflowEvent::processDELETE(xrd::Response& response) {
   // Validate received protobuf
-  checkIsNotEmptyString(event.cli().user().username(),    "event.cli.user.username");
-  checkIsNotEmptyString(event.cli().user().groupname(),   "event.cli.user.groupname");
-  checkIsNotEmptyString(event.file().lpath(),             "event.file.lpath");
+  checkIsNotEmptyString(m_event.cli().user().username(),    "m_event.cli.user.username");
+  checkIsNotEmptyString(m_event.cli().user().groupname(),   "m_event.cli.user.groupname");
+  checkIsNotEmptyString(m_event.file().lpath(),             "m_event.file.lpath");
 
   // Unpack message
   common::dataStructures::DeleteArchiveRequest request;
-  request.requester.name    = event.cli().user().username();
-  request.requester.group   = event.cli().user().groupname();
+  request.requester.name    = m_event.cli().user().username();
+  request.requester.group   = m_event.cli().user().groupname();
 
-  std::string lpath         = event.file().lpath();
-  uint64_t diskFileId       = event.file().fid();
+  std::string lpath         = m_event.file().lpath();
+  uint64_t diskFileId       = m_event.file().fid();
   request.diskFilePath          = lpath;
   request.diskFileId = std::to_string(diskFileId);
   request.diskInstance = m_cliIdentity.username;
   // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which
   // must be converted to a valid uint64_t
-  auto archiveFileIdItor = event.file().xattr().find("sys.archive.file_id");
-  if(event.file().xattr().end() == archiveFileIdItor) {
+  auto archiveFileIdItor = m_event.file().xattr().find("sys.archive.file_id");
+  if(m_event.file().xattr().end() == archiveFileIdItor) {
     // Fall back to the old xattr format
-    archiveFileIdItor = event.file().xattr().find("CTA_ArchiveFileId");
-    if(event.file().xattr().end() == archiveFileIdItor) {
+    archiveFileIdItor = m_event.file().xattr().find("CTA_ArchiveFileId");
+    if(m_event.file().xattr().end() == archiveFileIdItor) {
       throw exception::PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
     }
   }
@@ -420,8 +422,8 @@ void WorkflowEvent::processDELETE(const eos::Notification& event, xrd::Response&
      throw exception::PbException("Invalid archiveFileID " + archiveFileIdStr);
   }
 
-  auto archiveRequestAddrItor = event.file().xattr().find("sys.cta.archive.objectstore.id");
-  if(archiveRequestAddrItor != event.file().xattr().end()){
+  auto archiveRequestAddrItor = m_event.file().xattr().find("sys.cta.archive.objectstore.id");
+  if(archiveRequestAddrItor != m_event.file().xattr().end()){
     //We have the ArchiveRequest's objectstore address.
     std::string objectstoreAddress = archiveRequestAddrItor->second;
     if(!objectstoreAddress.empty()){
@@ -454,22 +456,22 @@ void WorkflowEvent::processDELETE(const eos::Notification& event, xrd::Response&
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void WorkflowEvent::processUPDATE_FID(const eos::Notification& event, xrd::Response& response) {
+void WorkflowEvent::processUPDATE_FID(xrd::Response& response) {
   // Validate received protobuf
-  checkIsNotEmptyString(event.file().lpath(),  "event.file.lpath");
+  checkIsNotEmptyString(m_event.file().lpath(),  "m_event.file.lpath");
 
   // Unpack message
   const std::string &diskInstance = m_cliIdentity.username;
-  const std::string &diskFilePath = event.file().lpath();
-  const std::string diskFileId = std::to_string(event.file().fid());
+  const std::string &diskFilePath = m_event.file().lpath();
+  const std::string diskFileId = std::to_string(m_event.file().fid());
 
   // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which must be
   // converted to a valid uint64_t
-  auto archiveFileIdItor = event.file().xattr().find("sys.archive.file_id");
-  if(event.file().xattr().end() == archiveFileIdItor) {
+  auto archiveFileIdItor = m_event.file().xattr().find("sys.archive.file_id");
+  if(m_event.file().xattr().end() == archiveFileIdItor) {
     // Fall back to the old xattr format
-    archiveFileIdItor = event.file().xattr().find("CTA_ArchiveFileId");
-    if(event.file().xattr().end() == archiveFileIdItor) {
+    archiveFileIdItor = m_event.file().xattr().find("CTA_ArchiveFileId");
+    if(m_event.file().xattr().end() == archiveFileIdItor) {
       throw exception::PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
     }
   }

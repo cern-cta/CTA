@@ -17,11 +17,8 @@
 
 #pragma once
 
-#include <xroot_plugins/XrdCtaStream.hpp>
-#include <xroot_plugins/XrdSsiCtaRequestMessage.hpp>
-
+#include "xroot_plugins/XrdCtaStream.hpp"
 #include "common/dataStructures/DiskInstance.hpp"
-
 
 namespace cta { namespace xrd {
 
@@ -37,7 +34,7 @@ public:
    * @param[in]    catalogue     CTA Catalogue
    * @param[in]    scheduler     CTA Scheduler
    */
-  DiskInstanceLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
+  DiskInstanceLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
 
 private:
   /*!
@@ -58,7 +55,7 @@ private:
 };
 
 
-DiskInstanceLsStream::DiskInstanceLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
+DiskInstanceLsStream::DiskInstanceLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
   m_diskInstanceList(catalogue.DiskInstance()->getAllDiskInstances())
 {

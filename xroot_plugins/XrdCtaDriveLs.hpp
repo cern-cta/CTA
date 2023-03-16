@@ -26,7 +26,6 @@
 #include "common/dataStructures/DriveStatusSerDeser.hpp"
 #include "common/dataStructures/MountTypeSerDeser.hpp"
 #include "xroot_plugins/XrdCtaStream.hpp"
-#include "xroot_plugins/XrdSsiCtaRequestMessage.hpp"
 
 namespace cta { namespace xrd {
 
@@ -42,8 +41,8 @@ class DriveLsStream: public XrdCtaStream{
    * @param[in]    catalogue     CTA Catalogue
    * @param[in]    scheduler     CTA Scheduler
    */
-  DriveLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler,
-    const cta::common::dataStructures::SecurityIdentity &clientID, log::LogContext &lc);
+  DriveLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue& catalogue,
+    cta::Scheduler& scheduler, log::LogContext& lc);
 
  private:
   /*!
@@ -67,9 +66,8 @@ class DriveLsStream: public XrdCtaStream{
 };
 
 
-DriveLsStream::DriveLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue,
-  cta::Scheduler &scheduler, const cta::common::dataStructures::SecurityIdentity &clientID,
-  log::LogContext &lc) :
+DriveLsStream::DriveLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue& catalogue,
+  cta::Scheduler& scheduler, log::LogContext& lc) :
   XrdCtaStream(catalogue, scheduler),
   m_lc(lc),
   m_tapeDrives(m_catalogue.DriveState()->getTapeDrives()),

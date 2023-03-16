@@ -18,8 +18,6 @@
 #pragma once
 
 #include <xroot_plugins/XrdCtaStream.hpp>
-#include <xroot_plugins/XrdSsiCtaRequestMessage.hpp>
-
 
 namespace cta { namespace xrd {
 
@@ -35,7 +33,7 @@ public:
    * @param[in]    catalogue     CTA Catalogue
    * @param[in]    scheduler     CTA Scheduler
    */
-  ArchiveRouteLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
+  ArchiveRouteLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
 
 private:
   /*!
@@ -56,7 +54,7 @@ private:
 };
 
 
-ArchiveRouteLsStream::ArchiveRouteLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
+ArchiveRouteLsStream::ArchiveRouteLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
   m_archiveRouteList(catalogue.ArchiveRoute()->getArchiveRoutes())
 {

@@ -19,8 +19,6 @@
 
 #include "common/dataStructures/RequesterGroupMountRule.hpp"
 #include "xroot_plugins/XrdCtaStream.hpp"
-#include "xroot_plugins/XrdSsiCtaRequestMessage.hpp"
-
 
 namespace cta { namespace xrd {
 
@@ -36,7 +34,7 @@ public:
    * @param[in]    catalogue     CTA Catalogue
    * @param[in]    scheduler     CTA Scheduler
    */
-  GroupMountRuleLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
+  GroupMountRuleLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
 
 private:
   /*!
@@ -57,7 +55,7 @@ private:
 };
 
 
-GroupMountRuleLsStream::GroupMountRuleLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
+GroupMountRuleLsStream::GroupMountRuleLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
   m_groupMountRuleList(catalogue.RequesterGroupMountRule()->getRequesterGroupMountRules())
 {

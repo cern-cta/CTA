@@ -19,7 +19,6 @@
 
 #include "common/dataStructures/RequesterMountRule.hpp"
 #include "xroot_plugins/XrdCtaStream.hpp"
-#include "xroot_plugins/XrdSsiCtaRequestMessage.hpp"
 
 namespace cta { namespace xrd {
 
@@ -35,7 +34,7 @@ public:
    * @param[in]    catalogue     CTA Catalogue
    * @param[in]    scheduler     CTA Scheduler
    */
-  RequesterMountRuleLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
+  RequesterMountRuleLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
 
 private:
   /*!
@@ -56,7 +55,7 @@ private:
 };
 
 
-RequesterMountRuleLsStream::RequesterMountRuleLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
+RequesterMountRuleLsStream::RequesterMountRuleLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
   m_requesterMountRuleList(catalogue.RequesterMountRule()->getRequesterMountRules())
 {

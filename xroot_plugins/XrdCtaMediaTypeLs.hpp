@@ -19,7 +19,6 @@
 
 #include "catalogue/MediaTypeWithLogs.hpp"
 #include "xroot_plugins/XrdCtaStream.hpp"
-#include "xroot_plugins/XrdSsiCtaRequestMessage.hpp"
 
 namespace cta { namespace xrd {
 
@@ -35,7 +34,7 @@ public:
    * @param[in]    catalogue     CTA Catalogue
    * @param[in]    scheduler     CTA Scheduler
    */
-  MediaTypeLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
+  MediaTypeLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
 
 private:
   /*!
@@ -56,7 +55,7 @@ private:
 };
 
 
-MediaTypeLsStream::MediaTypeLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
+MediaTypeLsStream::MediaTypeLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
   m_mediaTypeList(catalogue.MediaType()->getMediaTypes())
 {

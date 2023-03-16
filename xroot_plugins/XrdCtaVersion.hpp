@@ -19,8 +19,8 @@
 
 #include <string>
 
-#include <xroot_plugins/XrdCtaStream.hpp>
-#include <xroot_plugins/XrdSsiCtaRequestMessage.hpp>
+#include "xroot_plugins/XrdCtaStream.hpp"
+#include "frontend/common/Version.hpp"
 #include "catalogue/SchemaVersion.hpp"
 #include "version.h"
 
@@ -36,7 +36,7 @@ class VersionStream: public XrdCtaStream{
    *
    * @param[in]    requestMsg    RequestMessage containing command-line arguments
    */
-  VersionStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue,
+  VersionStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue,
     cta::Scheduler &scheduler, const std::string &catalogueConnString);
 
  private:
@@ -63,14 +63,15 @@ class VersionStream: public XrdCtaStream{
   }
 };
 
-VersionStream::VersionStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue,
+VersionStream::VersionStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue,
   cta::Scheduler &scheduler, const std::string &catalogueConnString) :
   XrdCtaStream(catalogue, scheduler),
-  m_client_versions(requestMsg.getClientVersions()),
+  m_client_versions(requestMsg.getClientVersion()),
   m_catalogue_conn_string(catalogueConnString),
   m_catalogue_version(m_catalogue.Schema()->getSchemaVersion().getSchemaVersion<std::string>()),
   m_is_upgrading(m_catalogue.Schema()->getSchemaVersion().getStatus<catalogue::SchemaVersion::Status>()
-    == catalogue::SchemaVersion::Status::UPGRADING) {
+    == catalogue::SchemaVersion::Status::UPGRADING)
+{
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "VersionStream() constructor");
   m_server_versions.ctaVersion = CTA_VERSION;
   m_server_versions.protobufTag = XROOTD_SSI_PROTOBUF_INTERFACE_VERSION;

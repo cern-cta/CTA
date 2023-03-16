@@ -20,8 +20,6 @@
 #include <list>
 
 #include "xroot_plugins/XrdCtaStream.hpp"
-#include "xroot_plugins/XrdSsiCtaRequestMessage.hpp"
-
 
 namespace cta { namespace xrd {
 
@@ -38,7 +36,7 @@ public:
    * @param[in]    scheduler     CTA Scheduler
    * @param[in]    disabled      Logical Library disable status
    */
-  LogicalLibraryLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue,
+  LogicalLibraryLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue,
     cta::Scheduler &scheduler, const std::optional<bool>& disabled);
 
 private:
@@ -62,7 +60,7 @@ private:
 };
 
 
-LogicalLibraryLsStream::LogicalLibraryLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue,
+LogicalLibraryLsStream::LogicalLibraryLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue,
   cta::Scheduler &scheduler, const std::optional<bool>& disabled) :
   XrdCtaStream(catalogue, scheduler),
   m_logicalLibraryList(catalogue.LogicalLibrary()->getLogicalLibraries()),

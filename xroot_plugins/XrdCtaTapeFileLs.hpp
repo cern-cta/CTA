@@ -21,7 +21,6 @@
 #include "common/checksum/ChecksumBlobSerDeser.hpp"
 #include "frontend/common/GrpcEndpoint.hpp"
 #include "XrdCtaStream.hpp"
-#include "XrdSsiCtaRequestMessage.hpp"
 
 namespace cta { namespace xrd {
 
@@ -31,11 +30,11 @@ namespace cta { namespace xrd {
 class TapeFileLsStream : public XrdCtaStream {
 public:
   // Constructor when we need gRPC namespace lookups
-  TapeFileLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler,
+  TapeFileLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler,
                    const NamespaceMap_t &nsMap);
 
   // Constructor when we do not require namespace lookups
-  TapeFileLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
+  TapeFileLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
     TapeFileLsStream(requestMsg, catalogue, scheduler, NamespaceMap_t()) {
     m_LookupNamespace = false;
   }
@@ -61,7 +60,7 @@ private:
 };
 
 
-TapeFileLsStream::TapeFileLsStream(const RequestMessage &requestMsg,
+TapeFileLsStream::TapeFileLsStream(const frontend::AdminCmdStream& requestMsg,
   cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler,
   const NamespaceMap_t &nsMap) :
     XrdCtaStream(catalogue, scheduler),

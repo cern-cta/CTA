@@ -19,9 +19,7 @@
 
 #include <memory>
 
-#include <xroot_plugins/XrdCtaStream.hpp>
-#include <xroot_plugins/XrdSsiCtaRequestMessage.hpp>
-
+#include "xroot_plugins/XrdCtaStream.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 
 namespace cta { namespace xrd {
@@ -40,7 +38,7 @@ class FailedRequestLsStream : public XrdCtaStream {
    * @param[in]    schedDb       CTA ObjectStore
    * @param[in]    lc            CTA Log Context
    */
-  FailedRequestLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue,
+  FailedRequestLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue,
     cta::Scheduler &scheduler, SchedulerDatabase &schedDb, log::LogContext &lc);
 
  private:
@@ -96,7 +94,7 @@ class FailedRequestLsStream : public XrdCtaStream {
 };
 
 
-FailedRequestLsStream::FailedRequestLsStream(const RequestMessage &requestMsg,
+FailedRequestLsStream::FailedRequestLsStream(const frontend::AdminCmdStream& requestMsg,
   cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, SchedulerDatabase &schedDb,
   log::LogContext &lc) :
     XrdCtaStream(catalogue, scheduler),

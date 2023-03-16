@@ -20,7 +20,6 @@
 #include "catalogue/TapePool.hpp"
 #include "catalogue/TapePoolSearchCriteria.hpp"
 #include "XrdCtaStream.hpp"
-#include "XrdSsiCtaRequestMessage.hpp"
 
 namespace cta { namespace xrd {
 
@@ -36,7 +35,7 @@ public:
    * @param[in]    catalogue     CTA Catalogue
    * @param[in]    scheduler     CTA Scheduler
    */
-  TapePoolLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
+  TapePoolLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
 
 private:
   /*!
@@ -57,7 +56,7 @@ private:
 };
 
 
-TapePoolLsStream::TapePoolLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
+TapePoolLsStream::TapePoolLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
   m_tapePoolList(catalogue.TapePool()->getTapePools())
 {

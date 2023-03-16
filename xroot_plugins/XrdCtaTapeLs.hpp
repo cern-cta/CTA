@@ -18,7 +18,6 @@
 #pragma once
 
 #include "XrdCtaStream.hpp"
-#include "XrdSsiCtaRequestMessage.hpp"
 
 namespace cta { namespace xrd {
 
@@ -34,7 +33,7 @@ public:
    * @param[in]    catalogue     CTA Catalogue
    * @param[in]    scheduler     CTA Scheduler
    */
-  TapeLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
+  TapeLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
 
 private:
   /*!
@@ -55,7 +54,7 @@ private:
 };
 
 
-TapeLsStream::TapeLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
+TapeLsStream::TapeLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler)
 {
   using namespace cta::admin;

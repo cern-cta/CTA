@@ -17,9 +17,8 @@
 
 #pragma once
 
-#include <xroot_plugins/XrdCtaStream.hpp>
-#include <xroot_plugins/XrdSsiCtaRequestMessage.hpp>
-#include <common/dataStructures/MountTypeSerDeser.hpp>
+#include "xroot_plugins/XrdCtaStream.hpp"
+#include "common/dataStructures/MountTypeSerDeser.hpp"
 
 namespace cta { namespace xrd {
 
@@ -35,7 +34,7 @@ public:
    * @param[in]    catalogue     CTA Catalogue
    * @param[in]    scheduler     CTA Scheduler
    */
-  SchedulingInfosLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue,
+  SchedulingInfosLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue,
     cta::Scheduler &scheduler, log::LogContext &lc);
 
 private:
@@ -58,7 +57,7 @@ private:
   static constexpr const char* const LOG_SUFFIX  = "SchedulingInfosStream"; //!< Identifier for log messages
 };
 
-SchedulingInfosLsStream::SchedulingInfosLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue,
+SchedulingInfosLsStream::SchedulingInfosLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue,
   cta::Scheduler &scheduler, log::LogContext &lc) :
   XrdCtaStream(catalogue, scheduler),
   m_schedulingInfoList(scheduler.getSchedulingInformations(lc))

@@ -17,9 +17,7 @@
 
 #pragma once
 
-#include <xroot_plugins/XrdCtaStream.hpp>
-#include <xroot_plugins/XrdSsiCtaRequestMessage.hpp>
-
+#include "xroot_plugins/XrdCtaStream.hpp"
 #include "disk/DiskSystem.hpp"
 
 
@@ -37,7 +35,7 @@ public:
    * @param[in]    catalogue     CTA Catalogue
    * @param[in]    scheduler     CTA Scheduler
    */
-  VirtualOrganizationLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
+  VirtualOrganizationLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
 
 private:
   /*!
@@ -58,7 +56,7 @@ private:
 };
 
 
-VirtualOrganizationLsStream::VirtualOrganizationLsStream(const RequestMessage &requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
+VirtualOrganizationLsStream::VirtualOrganizationLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
   m_virtualOrganizationList(catalogue.VO()->getVirtualOrganizations())
 {
