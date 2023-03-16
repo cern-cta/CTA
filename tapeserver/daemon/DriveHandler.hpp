@@ -43,7 +43,7 @@ namespace daemon {
  */
 class DriveHandler : public SubprocessHandler {
 public:
-  DriveHandler(const TapedConfiguration& tapedConfig, const TpconfigLine& configline, ProcessManager& pm);
+  DriveHandler(const TapedConfiguration& tapedConfig, const TpconfigLine& driveConfig, ProcessManager& pm);
 
   ~DriveHandler() override;
 
@@ -71,7 +71,7 @@ private:
   /** The parameters */
   const TapedConfiguration& m_tapedConfig;
   /** This drive's parameters */
-  const TpconfigLine& m_configLine;
+  const TpconfigLine& m_driveConfig;
   /** Possible outcomes of the previous session/child process.  */
   enum class PreviousSession {
     Initiating, ///< The process is the first to run after daemon startup. A cleanup will be run beforehand.

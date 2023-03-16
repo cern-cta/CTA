@@ -20,8 +20,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DataTransferConfig::DataTransferConfig()
-  throw():
+castor::tape::tapeserver::daemon::DataTransferConfig::DataTransferConfig() noexcept:
   bufsz(0),
   nbBufs(0),
   bulkRequestMigrationMaxBytes(0),
@@ -31,8 +30,11 @@ castor::tape::tapeserver::daemon::DataTransferConfig::DataTransferConfig()
   maxBytesBeforeFlush(0),
   maxFilesBeforeFlush(0),
   nbDiskThreads(0),
+  xrootTimeout(0),
   useLbp(false),
   useRAO(false),
   useEncryption(true),
-  externalEncryptionKeyScript(""),
-  externalFreeDiskSpaceScript("") {}
+  tapeLoadTimeout(300),
+  wdNoBlockMoveMaxSecs(10 * 60),
+  wdIdleSessionTimer(10),
+  wdGlobalLockAcqMaxSecs(15 * 60) {}

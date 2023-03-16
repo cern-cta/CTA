@@ -18,6 +18,7 @@
 - cta/CTA#322 - Queues with cleanup heartbeat above zero are not being picked for cleanup
 - cta/CTA#328 - Make root user able to read encrypted files with cta-readtp
 - cta/CTA#329 - Correctly set previous session state to enable cleaner session
+- cta/CTA#330 - Fix no tape block movement regression
 
 # v4.8.6-1
 ### Bug Fixes
