@@ -6,6 +6,8 @@ ctageneric_docker:
     name: gitlab-registry.cern.ch/ci-tools/docker-image-builder
     entrypoint: [""]
   retry: 1
+  before_script:
+    - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
   script:
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"${DOCKER_LOGIN_USERNAME}\",\"password\":\"${DOCKER_LOGIN_PASSWORD}\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $DOCKERFILE --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}

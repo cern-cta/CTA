@@ -64,6 +64,7 @@ default:
     - *prepare-xrootd5
     - *prepare-scheduler-type
     - *prepare-no-oracle
+    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
 
 include:
   - local: .gitlab/ci/*.gitlab-ci.yml
