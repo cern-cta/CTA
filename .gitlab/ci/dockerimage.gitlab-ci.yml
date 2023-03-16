@@ -8,6 +8,29 @@ ctageneric_docker:
   retry: 1
   before_script:
     - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
+    - echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
+    - test -n "${CI_COMMIT_TAG}" && export TAG_VERSION=$(echo ${CI_COMMIT_TAG} | sed -e 's/^v//;s/-.*$//')
+    - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | sed -e 's/^[^-]*-//')
+    - major_version=$(echo ${TAG_VERSION} | cut -d. -f1)
+    - if [[ ${major_version} == 5 ]]; then
+        echo "Setting to compile with XRootD version 5";
+        XROOTD_VERSION=5;
+      fi
+    - if [[ ${XROOTD_VERSION} -eq 5 ]];
+      then echo "Using XRootD version 5";
+        sed -i 's/define xrootdVersion 1:4.12.4-1/define xrootdVersion 1:5.4.2-1/' cta.spec.in;
+        repodir=$(mktemp -d)
+        awk '/cta-ci-xroot\]/{ n=NR+5 } NR==n{ $0="enabled=0" }1'
+          continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/cta-ci.repo > ${repodir}/cta-ci.repo
+          && mv ${repodir}/cta-ci.repo continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/cta-ci.repo;
+        awk '/cta-ci-xrootd5/{ n=NR+5 } NR==n{ $0="enabled=1" }1'
+          continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/cta-ci.repo > ${repodir}/cta-ci.repo
+          && mv ${repodir}/cta-ci.repo continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/cta-ci.repo;
+        . ./continuousintegration/docker/ctafrontend/cc7/opt/run/bin/versionlock_tools.sh
+          continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list
+          && versionlock_xrootd_4_disable && versionlock_xrootd_5_enable;
+      else echo "Using XRootD version 4";
+      fi
   script:
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"${DOCKER_LOGIN_USERNAME}\",\"password\":\"${DOCKER_LOGIN_PASSWORD}\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $DOCKERFILE --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}
