@@ -81,6 +81,7 @@ archiveFiles() {
   echo "Launching client_ar.sh on client pod"
   echo " Archiving ${NB_FILES} files of ${FILE_SIZE_KB}kB each"
   echo " Archiving files: xrdcp as user1"
+  kubectl -n ${NAMESPACE} exec client -- bash -c "yum -y install parallel && echo 'will cite ' | parallel --bibtex"
   kubectl -n ${NAMESPACE} exec client -- bash -c "/root/client_setup.sh" -n ${NB_FILES} -s ${FILE_SIZE_KB} -p 100 -d /eos/ctaeos/preprod -v -A || exit 1
   kubectl -n ${NAMESPACE} exec client -- bash -c "tail -v -f /mnt/logs/tpsrv0*/rmcd/cta/cta-rmcd.log & export TAILPID=\$! && . /root/client_env && /root/client_archive.sh && kill \${TAILPID} &> /dev/null" || exit 1
 }
