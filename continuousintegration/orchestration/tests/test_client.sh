@@ -51,8 +51,8 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "Installing parallel"
-kubectl -n ${NAMESPACE} exec client -- bash -c "yum -y install parallel"
-kubectl -n ${NAMESPACE} exec client -- bash -c "echo 'will cite' | parallel --bibtex"
+kubectl -n ${NAMESPACE} exec client -- bash -c "yum -y install parallel" || exit 1
+kubectl -n ${NAMESPACE} exec client -- bash -c "echo 'will cite' | parallel --bibtex" || exit 1
 
 echo
 echo "Copying test scripts to client pod."
