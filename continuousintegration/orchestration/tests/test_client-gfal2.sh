@@ -77,16 +77,9 @@ fi
 
 clientgfal2_options="-n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -d /eos/ctaeos/preprod -v -r"
 
-env
-yum list installed | grep xrootd
-
 # Tests
 # Check for xrd vesion as xrd gfal plugin only runs under xrd version 5.
-V5=$(yum list installed | grep xrootd | grep -e ':5.')
-
-echo ${V5}
-
-if [[ ! -z "${V5}" ]]; then
+if [[ ${XROOTD_VERSION} == 5 ]]; then
     GFAL2_PROTOCOL='root'
     echo "Installing gfal2-plugin-xrootd for gfal-${GFAL2_PROTOCOL} tests."
     kubectl -n ${NAMESPACE} exec client -- bash -c "sudo yum -y install gfal2-plugin-xrootd"
