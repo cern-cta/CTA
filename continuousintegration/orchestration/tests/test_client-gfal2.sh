@@ -51,11 +51,11 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "Installing parallel"
-kubectl -n ${NAMESPACE} exec client -- bash -c "yum -y install parallel"
-kubectl -n ${NAMESPACE} exec client -- bash -c "echo 'will cite' | parallel --bibtex"
+kubectl -n ${NAMESPACE} exec client -- bash -c "yum -y install parallel" || exit 1
+kubectl -n ${NAMESPACE} exec client -- bash -c "echo 'will cite' | parallel --bibtex" || exit 1
 
 echo "Installing gfal2 utility"
-kubectl -n ${NAMESPACE} exec client -- bash -c "sudo yum -y install gfal2-util"
+kubectl -n ${NAMESPACE} exec client -- bash -c "yum -y install gfal2-util" || exit 1
 
 echo
 echo "Copying test scripts to client pod"
@@ -75,33 +75,39 @@ if [[ $VERBOSE == 1 ]]; then
   TEST_POSTRUN=" && kill \${TAILPID} &> /dev/null"
 fi
 
-clientgfal2_options='-n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -d /eos/ctaeos/preprod -v -r -Z ${TEST_PROTOCOL}'
+clientgfal2_options="-n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -d /eos/ctaeos/preprod -v -r"
 
 # Tests
 # Check for xrd vesion as xrd gfal plugin only runs under xrd version 5.
 V5=$(yum list installed | grep xrootd | grep -e ':5.')
 if [[ ! -z ${V5} ]]; then
-    TEST_PROTOCOL='root'
-    echo "Installing gfal2-plugin-xrootd for xrd gfal tests."
+    GFAL2_PROTOCOL='root'
+    echo "Installing gfal2-plugin-xrootd for gfal-${GFAL2_PROTOCOL} tests."
     kubectl -n ${NAMESPACE} exec client -- bash -c "sudo yum -y install gfal2-plugin-xrootd"
+
+    echo "Setting up environment for gfal-${GFAL2_PROTOCOL} test."
+    kubectl -n ${NAMESPACE} exec client -- bash -c "/root/client_setup.sh ${clientgfal2_options} -Z ${GFAL2_PROTOCOL}"
 
     echo
     echo "Launching client-gfal2_ar.sh on client pod using ${TEST_PROTOCOL} protocol"
     echo " Archiving files: xrdcp as user1"
     echo " Retrieving files with gfal xrootd"
 
-    kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client-gfal2_ar.sh ${clientgfal2_options} && ${TEST_POSTRUN}" || exit 1
+    kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client-gfal2_ar.sh ${TEST_POSTRUN}" || exit 1
     kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 fi
 
 
 # Test gfal http plugin.
-#TEST_PROTOCOL='https'
+#GFAL2_PROTOCOL='https'
+#
+# echo "Setting up environment for gfal-${GFAL2_PROTOCOL} tests
+# kubectl -n ${NAMESPACE} exec client -- bash -c "/root/client_setup.sh ${clientgfal2_options}"
 # echo "Installing gfal2-plugin-http for http gfal test."
-# kubectl -n ${NAMESPACE} exec client -- bash -c "sudo yum -y install gfal2-plugin-http"
+# kubectl -n ${NAMESPACE} exec client -- bash -c "sudo yum -y install gfal2-plugin-http" || exit 1
 #echo
 #echo "Launching client-gfal2_ar.sh on client pod using ${TEST_PROTOCOL} protocol"
 #echo " Archiving files: xrdcp as user1"
 #echo " Retrieving files with gfal https"
-#kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client-gfal2_ar.sh ${clientgfal2_options} && ${TEST_POSTRUN}" || exit 1
+#kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client-gfal2_ar.sh && ${TEST_POSTRUN}" || exit 1
 #kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1

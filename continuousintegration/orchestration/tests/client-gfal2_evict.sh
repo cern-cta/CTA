@@ -19,35 +19,39 @@
 echo "$(date +%s): Trigerring EOS evict workflow as poweruser1:powerusers (12001:1200)"
 
 # Build the list of files with more than 1 disk copy that have been archived before (ie d>=1::t1)
-rm -f ${STATUS_FILE}
-rm -f ${SURLs}
-touch ${STATUS_FILE}
-touch ${SURLs}
 TMP_FILE=$(mktemp)
+TO_EVICT=0
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep 'd[1-9][0-9]*::t1' > ${TMP_FILE}
-  cat ${TMP_FILE} | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${subdir}/\1%" >> ${STATUS_FILE}
-  cat ${TMP_FILE} | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${GFAL2_PROTOCOL}://${EOSINSTANCE}/${EOS_DIR}/${subdir}/\1%" >> ${SURLs}
+  eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep 'd[1-9][0-9]*::t1' | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%\1%"  > "${TMP_FILE}${subdir}"
+  #cat ${TMP_FILE} | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${subdir}/\1%" >> "${TMP_FILE}${subdir}"
+  TO_EVICT=$(( ${TO_EVICT} + $(cat ${TMP_FILE}${subdir} | wc -l ) ))
 done
 rm -f ${TMP_FILE}
 
-TO_EVICT=$(cat ${STATUS_FILE} | wc -l)
-
-NEW_STAGE_VAL=1
+#
+current_evict_val=0
+NEW_EVICT_VAL=$(( ${current_evict_val} + 1 ))
 
 echo "$(date +%s): $TO_EVICT files to be evicted from EOS using 'gfal-evict SURL'"
-cat ${SURLs} | xargs --max-procs=${NB_PROCS}  -iTEST_FILE_NAME bash -c "XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 xargs --max-procs=10 -n 40 gfal-evict TEST_FILE_NAME"
+
+for (( subdir=0; subdir < ${NB_DIRS}; subdir++ )); do
+  cat "${TMP_FILE}0" | xargs -iFILE --max-procs=10 bash -c "XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 gfal-evict ${GFAL2_PROTOCOL}://${EOSINSTANCE}/${EOS_DIR}/${subdir}/FILE"
+
+  rm -f "${TMP_FILE}${subdir}"
+done
+
 
 LEFTOVER=0
-status=$(mktemp)
+TMP_FILE=$(mktemp)
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   LEFTOVER=$(( ${LEFTOVER} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | wc -l) ))
 
-  eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[0][0-9]*::t1' | awk '{print $10}' > $status
-  cat $status | xargs -iTEST_FILE_NAME bash -c "db_update 'evicted' ${subdir}/TEST_FILE_NAME ${NEW_EVICT_VAL} '='"
+  eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[0][0-9]*::t1' | awk '{print $10}' > ${TMP_FILE}
+
+  cat ${TMP_FILE} | xargs -iTEST_FILE_NAME bash -c "db_update 'evicted' ${subdir}/TEST_FILE_NAME ${NEW_EVICT_VAL} '='"
 done
+rm -f ${TMP_FILE}
 
 EVICTED=$((${TO_EVICT}-${LEFTOVER}))
 echo "$(date +%s): $EVICTED/$TO_EVICT files evicted from EOS 'gfal-evict SURL'"
 
-LASTCOUNT=${EVICTED}
