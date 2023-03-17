@@ -82,7 +82,7 @@ clientgfal2_options="-n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -d /eos/ct
 if [[ ${XROOTD_VERSION} == 5 ]]; then
     GFAL2_PROTOCOL='root'
     echo "Installing gfal2-plugin-xrootd for gfal-${GFAL2_PROTOCOL} tests."
-    kubectl -n ${NAMESPACE} exec client -- bash -c "sudo yum -y install gfal2-plugin-xrootd"
+    kubectl -n ${NAMESPACE} exec client -- bash -c "yum -y install gfal2-plugin-xrootd"
 
     echo "Setting up environment for gfal-${GFAL2_PROTOCOL} test."
     kubectl -n ${NAMESPACE} exec client -- bash -c "/root/client_setup.sh ${clientgfal2_options} -Z ${GFAL2_PROTOCOL}"
