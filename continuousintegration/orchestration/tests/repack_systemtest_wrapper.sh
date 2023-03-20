@@ -503,7 +503,7 @@ repackTapeRepair() {
       pathOfFilesToInject[$i]=$pathFileToInject
     done
 
-    kubectl -n ${NAMESPACE} exec client -- bash /root/client_prepare_file.sh `for file in ${pathOfFilesToInject[@]}; do echo -n "-f $file "; done`
+    kubectl -n ${NAMESPACE} exec client -- bash . /root/client_env && .  /root/client_prepare_file.sh `for file in ${pathOfFilesToInject[@]}; do echo -n "-f $file "; done`
 
     echo "Copying the retrieved files into the repack buffer $bufferDirectory"
 
@@ -612,7 +612,7 @@ repackTapeRepairNoRecall() {
       pathOfFilesToInject[$i]=$pathFileToInject
     done
 
-    kubectl -n ${NAMESPACE} exec client -- bash /root/client_prepare_file.sh `for file in ${pathOfFilesToInject[@]}; do echo -n "-f $file "; done`
+    kubectl -n ${NAMESPACE} exec client -- bash . /root/client_env && .  /root/client_prepare_file.sh `for file in ${pathOfFilesToInject[@]}; do echo -n "-f $file "; done`
 
     echo "Copying the retrieved files into the repack buffer $bufferDirectory"
 
