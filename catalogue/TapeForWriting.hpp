@@ -89,10 +89,16 @@ struct TapeForWriting {
    * The total amount of data written to the tape in bytes.
    */
   uint64_t dataOnTapeInBytes;
+
   /**
    * The format type of the tape.
    */
   cta::common::dataStructures::Label::Format labelFormat;
+
+  /**
+   * Encryption key name to pass to external encryption script
+   */
+   std::string encryptionKeyName;
 
 }; // struct TapeForWriting
 
