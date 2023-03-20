@@ -3456,6 +3456,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfo
   am.mountInfo.vendor = vendor;
   am.mountInfo.capacityInBytes = capacityInBytes;
   am.mountInfo.mountType = type;
+  am.mountInfo.encryptionKeyName = tape.encryptionKeyName;
 
   // We committed the scheduling decision. We can now release the scheduling lock.
   m_lockOnSchedulerGlobalLock.release();
