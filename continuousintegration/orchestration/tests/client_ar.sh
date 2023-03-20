@@ -16,8 +16,6 @@
 #               submit itself to any jurisdiction.
 
 
-
-# Archiving Test
 if [[ $DONOTARCHIVE == 0 ]]; then
     . /root/client_archive.sh
 fi

@@ -15,7 +15,7 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-# Archiving Test
+
 if [[ $DONOTARCHIVE == 0 ]]; then
     . /root/client_archive.sh
 fi
@@ -26,17 +26,14 @@ if [[ $ARCHIVEONLY == 1 ]]; then
   exit 0
 fi
 
-# Retrieve Test
 . /root/client-gfal2_retrieve.sh
 
-# Evict Test
 . /root/client-gfal2_evict.sh
 
-# Abort prepare test.
 . /root/client_abortPrepare.sh
 
-# Delete Test
-DELETED=0
 if [[ $REMOVE == 1 ]]; then
   . /root/client-gfal2_delete.sh
 fi
+
+. /root/client_results.sh
