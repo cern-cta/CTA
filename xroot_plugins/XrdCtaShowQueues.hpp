@@ -98,7 +98,6 @@ int ShowQueuesStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     sq_item->set_cur_mounts(sq.currentMounts);
     sq_item->set_cur_files(sq.currentFiles);
     sq_item->set_cur_bytes(sq.currentBytes);
-    sq_item->set_bytes_per_second(sq.averageBandwidth);
     sq_item->set_tapes_capacity(sq.tapesCapacity);
     sq_item->set_tapes_files(sq.filesOnTapes);
     sq_item->set_tapes_bytes(sq.dataOnTapes);

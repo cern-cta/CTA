@@ -525,7 +525,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       tmdi.existingOrNextMounts.back().filesTransferred = driveState.filesTransferedInSession
         ? driveState.filesTransferedInSession.value() : 0;
       if(driveState.filesTransferedInSession && driveState.sessionElapsedTime && driveState.sessionElapsedTime.value() > 0) {
-        tmdi.existingOrNextMounts.back().averageBandwidth = driveState.filesTransferedInSession.value() / driveState.sessionElapsedTime.value();
+        tmdi.existingOrNextMounts.back().averageBandwidth = driveState.bytesTransferedInSession.value() / driveState.sessionElapsedTime.value();
       } else {
         tmdi.existingOrNextMounts.back().averageBandwidth = 0.0;
       }

@@ -19,6 +19,7 @@
 - cta/CTA#328 - Make root user able to read encrypted files with cta-readtp
 - cta/CTA#329 - Correctly set previous session state to enable cleaner session
 - cta/CTA#330 - Fix no tape block movement regression
+- cta/CTA#313 - Average bandwidth not being calculated correctly inside 'fetchMountInfo'
 
 # v4.8.6-1
 ### Bug Fixes
