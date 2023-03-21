@@ -1061,7 +1061,8 @@ std::list<TapeForWriting> RdbmsTapeCatalogue::getTapesForWriting(const std::stri
         "MEDIA_TYPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,"
         "TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,"
         "TAPE.LAST_FSEQ AS LAST_FSEQ,"
-        "TAPE.LABEL_FORMAT AS LABEL_FORMAT "
+        "TAPE.LABEL_FORMAT AS LABEL_FORMAT,"
+        "TAPE.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME "
       "FROM "
         "TAPE "
       "INNER JOIN TAPE_POOL ON "
@@ -1098,7 +1099,8 @@ std::list<TapeForWriting> RdbmsTapeCatalogue::getTapesForWriting(const std::stri
       tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
       tape.labelFormat = common::dataStructures::Label::validateFormat(rset.columnOptionalUint8("LABEL_FORMAT"),
         "[RdbmsCatalogue::getTapesForWriting()]");
-      tape.encryptionKeyName = rset.columnString("ENCRYPTION_KEY_NAME");
+      tape.encryptionKeyName =
+        (rset.columnIsNull("ENCRYPTION_KEY_NAME") ? "-" : rset.columnString("ENCRYPTION_KEY_NAME"));
 
       tapes.push_back(tape);
     }

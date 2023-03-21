@@ -83,8 +83,7 @@ auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface &
   // If key ID is empty, it means we are writing to the new tape
   // TODO: use encryptionKeyName from TAPEPOOL table instead of encStatus.key returned by the external script
   if (isWriteSession && encStatus.key == "-") {
-    cta::common::dataStructures::SecurityIdentity m_cliIdentity("ctaops", cta::utils::getShortHostname(),
-                                                                cta::utils::getShortHostname());
+    cta::common::dataStructures::SecurityIdentity m_cliIdentity("ctaops", cta::utils::getShortHostname());
 
     catalogue.Tape()->modifyTapeEncryptionKeyName(m_cliIdentity, volInfo.vid, encStatus.key);
   }
