@@ -19,7 +19,6 @@
 #include "frontend/common/WorkflowEvent.hpp"
 #include "frontend/common/AdminCmd.hpp"
 #include "AdminCmdStream.hpp"
-#include "AdminCmdStreamExceptions.hpp"
 #include "XrdSsiCtaRequestMessage.hpp"
 
 namespace cta {
@@ -28,20 +27,14 @@ namespace xrd {
 void RequestMessage::process(const cta::xrd::Request& request, cta::xrd::Response& response, XrdSsiStream*& stream)
 {
   // Branch on the Request payload type
-  switch(request.request_case())
-  {
+  switch(request.request_case()) {
     using namespace cta::xrd;
 
     case Request::kAdmincmd:
-      // Admin commands can be synchronous or streaming. Currently there is no way to discriminate,
-      // so we try streaming and fall back to synchronous. This could be improved by creating separate
-      // synchronous and streaming Admin Command message types in the protocol buffer.
-      try {
-        // Process stream admin commands
+      if(frontend::AdminCmdStream::isStreamCmd(request.admincmd())) {
         frontend::AdminCmdStream adminCmdStream(m_service.getFrontendService(), m_cliIdentity, request.admincmd(), stream);
         response = adminCmdStream.process();
-      } catch(frontend::NotAStreamCommand& ex) {
-        // Process non-stream admin commands
+      } else {
         frontend::AdminCmd adminCmd(m_service.getFrontendService(), m_cliIdentity, request.admincmd());
         response = adminCmd.process();
       }

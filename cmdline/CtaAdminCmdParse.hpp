@@ -557,6 +557,34 @@ const Option opt_storage_class_name   { Option::OPT_STR,  "--storage.class.name"
 const Option opt_archive_file_ids     { Option::OPT_STR_LIST,  "--id",               "-I",   " <archive_file_id>" };
 
 /*!
+ * Subset of commands that return streaming output
+ */
+const std::set<cmd_key_t> streamCmds = {
+  { AdminCmd::CMD_ACTIVITYMOUNTRULE,   AdminCmd::SUBCMD_LS },
+  { AdminCmd::CMD_ADMIN,               AdminCmd::SUBCMD_LS },
+  { AdminCmd::CMD_ARCHIVEROUTE,        AdminCmd::SUBCMD_LS },
+  { AdminCmd::CMD_DISKINSTANCE,        AdminCmd::SUBCMD_LS },
+  { AdminCmd::CMD_DISKINSTANCESPACE,   AdminCmd::SUBCMD_LS },
+  { AdminCmd::CMD_DISKSYSTEM,          AdminCmd::SUBCMD_LS },
+  { AdminCmd::CMD_DRIVE,               AdminCmd::SUBCMD_LS },
+  { AdminCmd::CMD_FAILEDREQUEST,       AdminCmd::SUBCMD_LS },
+  { AdminCmd::CMD_GROUPMOUNTRULE,      AdminCmd::SUBCMD_LS },
+  { AdminCmd::CMD_LOGICALLIBRARY,      AdminCmd::SUBCMD_LS },
+  { AdminCmd::CMD_MEDIATYPE,           AdminCmd::SUBCMD_LS },
+  { AdminCmd::CMD_MOUNTPOLICY,         AdminCmd::SUBCMD_LS },
+  { AdminCmd::CMD_RECYCLETAPEFILE,     AdminCmd::SUBCMD_LS },
+  { AdminCmd::CMD_REPACK,              AdminCmd::SUBCMD_LS },
+  { AdminCmd::CMD_REQUESTERMOUNTRULE,  AdminCmd::SUBCMD_LS },
+  { AdminCmd::CMD_SHOWQUEUES,          AdminCmd::SUBCMD_NONE },
+  { AdminCmd::CMD_STORAGECLASS,        AdminCmd::SUBCMD_LS },
+  { AdminCmd::CMD_TAPE,                AdminCmd::SUBCMD_LS },
+  { AdminCmd::CMD_TAPEFILE,            AdminCmd::SUBCMD_LS },
+  { AdminCmd::CMD_TAPEPOOL,            AdminCmd::SUBCMD_LS },
+  { AdminCmd::CMD_VERSION,             AdminCmd::SUBCMD_NONE },
+  { AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_LS }
+};
+
+/*!
  * Map valid options to commands
  */
 const std::map<cmd_key_t, cmd_val_t> cmdOptions = {

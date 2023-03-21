@@ -46,7 +46,6 @@
 #include "frontend/common/PbException.hpp"
 #include "frontend/common/GrpcEndpoint.hpp"
 #include "frontend/common/AdminCmd.hpp"
-#include "AdminCmdStreamExceptions.hpp"
 
 namespace cta {
 namespace frontend {
@@ -137,16 +136,13 @@ xrd::Response AdminCmdStream::process() {
         processRecycleTapeFile_Ls(response);
         break;
       default:
-        throw NotAStreamCommand("Admin command pair <" +
+        throw exception::PbException("Admin command pair <" +
               AdminCmd_Cmd_Name(m_adminCmd.cmd()) + ", " +
               AdminCmd_SubCmd_Name(m_adminCmd.subcmd()) + "> is not a stream command.");
     }
      
     // Log the admin command
     logAdminCmd(__FUNCTION__, "success", "", t);
-  } catch(NotAStreamCommand& ex) {
-    // No logging, the calling method will handle it
-    throw;
   } catch(exception::PbException& ex) {
     logAdminCmd(__FUNCTION__, "failure", ex.what(), t);
     throw ex;
@@ -170,6 +166,10 @@ frontend::Version AdminCmdStream::getClientVersion() const {
   clientVersion.protobufTag = m_adminCmd.protobuf_tag();
 
   return clientVersion;
+}
+
+bool AdminCmdStream::isStreamCmd(const admin::AdminCmd& adminCmd) {
+  return admin::streamCmds.count(std::make_pair(adminCmd.cmd(), adminCmd.subcmd())) > 0;
 }
 
 void AdminCmdStream::processAdmin_Ls(xrd::Response& response) {

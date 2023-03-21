@@ -49,6 +49,11 @@ public:
    */
   frontend::Version getClientVersion() const;
 
+  /*!
+   * Checks if an admin command is a stream command
+   */
+  static bool isStreamCmd(const admin::AdminCmd& adminCmd);
+
 private:
   /*!
    * Process admin commands which return a stream response
