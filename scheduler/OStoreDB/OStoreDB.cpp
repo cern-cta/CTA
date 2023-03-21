@@ -525,7 +525,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       tmdi.existingOrNextMounts.back().filesTransferred = driveState.filesTransferedInSession
         ? driveState.filesTransferedInSession.value() : 0;
       if(driveState.filesTransferedInSession && driveState.sessionElapsedTime && driveState.sessionElapsedTime.value() > 0) {
-        tmdi.existingOrNextMounts.back().averageBandwidth = driveState.filesTransferedInSession.value() / driveState.sessionElapsedTime.value();
+        tmdi.existingOrNextMounts.back().averageBandwidth = driveState.bytesTransferedInSession.value() / driveState.sessionElapsedTime.value();
       } else {
         tmdi.existingOrNextMounts.back().averageBandwidth = 0.0;
       }
@@ -1970,6 +1970,10 @@ void OStoreDB::requeueRetrieveJobs(std::list<cta::SchedulerDatabase::RetrieveJob
   locks.clear();
   rrlist.clear();
   sorter.flushAll(logContext);
+  for (auto &job: jobs) {
+    OStoreDB::RetrieveJob *oStoreJob = dynamic_cast<OStoreDB::RetrieveJob *>(job);
+    oStoreJob->m_jobOwned = false;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -3702,6 +3706,10 @@ void OStoreDB::RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<Schedule
   locks.clear();
   rrlist.clear();
   sorter.flushAll(logContext);
+  for (auto & j: jobBatch) {
+    OStoreDB::RetrieveJob *job = dynamic_cast<OStoreDB::RetrieveJob *>(j.get());
+    job->m_jobOwned = false;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -5095,6 +5103,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
       sorter.insertRetrieveRequest(rr,*this->m_oStoreDB.m_agentReference,std::optional<uint32_t>(selectedCopyNb),lc);
       rel.release();
       sorter.flushOneRetrieve(lc);
+      m_jobOwned = false;
       return;
     }
 
@@ -5279,6 +5288,7 @@ void OStoreDB::RetrieveJob::abort(const std::string& abortReason, log::LogContex
       sorter.insertRetrieveRequest(rr,*this->m_oStoreDB.m_agentReference,std::optional<uint32_t>(selectedCopyNb),lc);
       rrl.release();
       sorter.flushOneRetrieve(lc);
+      m_jobOwned = false;
       return;
     }
     default:
