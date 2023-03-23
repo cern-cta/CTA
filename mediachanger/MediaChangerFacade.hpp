@@ -42,7 +42,7 @@ public:
    * object will be used by the dummy media changer to communicate with the
    * tape operator.
    */
-  MediaChangerFacade(log::Logger &log);
+  MediaChangerFacade(const RmcProxy& rmcProxy, log::Logger &log);
 
   /**
    * Requests the media changer to mount the specified tape for read-only
@@ -77,14 +77,14 @@ public:
 private:
 
   /**
-   * Manual media changer proxy.
-   */
-  DmcProxy m_dmcProxy;
-
-  /**
    * SCSI media changer proxy.
    */
   RmcProxy m_rmcProxy;
+
+  /**
+   * Manual media changer proxy.
+   */
+  DmcProxy m_dmcProxy;
 
   /**
    * Returns the media changer proxy for the specified library type.

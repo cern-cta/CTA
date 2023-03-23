@@ -48,9 +48,9 @@ public:
    * request should be issued.
    */
   RmcProxy(
-    const unsigned short rmcPort = RMC_PORT,
-    const int netTimeout = RMC_NET_TIMEOUT,
-    const unsigned int maxRqstAttempts = RMC_MAX_RQST_ATTEMPTS);
+    const uint16_t rmcPort = RMC_PORT,
+    const uint32_t netTimeout = RMC_NET_TIMEOUT,
+    const uint32_t maxRqstAttempts = RMC_MAX_RQST_ATTEMPTS);
 
   /**
    * Destructor.

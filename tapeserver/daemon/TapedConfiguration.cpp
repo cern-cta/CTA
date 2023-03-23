@@ -134,6 +134,10 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   
   ret.authenticationProtocol.set(cta::utils::getEnv("XrdSecPROTOCOL"),"Environment variable");
   ret.authenticationSSSKeytab.set(cta::utils::getEnv("XrdSecSSSKT"),"Environment variable");
+  // rmcd connection options
+  ret.rmcPort.setFromConfigurationFile(cf, generalConfigPath);
+  ret.rmcNetTimeout.setFromConfigurationFile(cf, generalConfigPath);
+  ret.rmcRequestAttempts.setFromConfigurationFile(cf, generalConfigPath);
   
   // If we get here, the configuration file is good enough to be logged.
   ret.daemonUserName.log(log);
@@ -169,6 +173,10 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.externalFreeDiskSpaceScript.log(log);
   
   ret.tapeLoadTimeout.log(log);
+
+  ret.rmcPort.log(log);
+  ret.rmcNetTimeout.log(log);
+  ret.rmcRequestAttempts.log(log);
 
   for (auto & i:ret.driveConfigs) {
     i.second.log(log);

@@ -37,6 +37,20 @@ void SourcedParameter<time_t>::set(const std::string & value, const std::string 
 }
 
 template<>
+void SourcedParameter<uint16_t>:: set(const std::string &value, const std::string & source){
+  if (!utils::isValidUInt(value)) {
+    BadlyFormattedInteger ex;
+    ex.getMessage() << "In SourcedParameter<uint16_t>::set() : badly formatted integer"
+        << " for category=" << m_category << " key=" << m_key 
+        << " value=\'" << value << "' at:" << source;
+    throw ex;
+  }
+  std::istringstream(value) >> m_value;
+  m_source = source;
+  m_set = true;
+}
+
+template<>
 void SourcedParameter<uint32_t>:: set(const std::string &value, const std::string & source){
   if (!utils::isValidUInt(value)) {
     BadlyFormattedInteger ex;
@@ -73,6 +87,11 @@ void SourcedParameter<std::string>::set(const std::string & value, const std::st
 
 template<>
 void SourcedParameter<time_t>::addLogParamForValue(log::LogContext & lc) {
+  lc.pushOrReplace({"value", m_value});
+}
+
+template<>
+void SourcedParameter<uint16_t>::addLogParamForValue(log::LogContext & lc) {
   lc.pushOrReplace({"value", m_value});
 }
 

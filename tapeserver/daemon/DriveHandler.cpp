@@ -942,7 +942,11 @@ int DriveHandler::runChild() {
     cta::server::ProcessCap capUtils;
 
     // Mounting management.
-    cta::mediachanger::MediaChangerFacade mediaChangerFacade(lc.logger());
+    cta::mediachanger::RmcProxy rmcProxy(
+      m_tapedConfig.rmcPort.value(),
+      m_tapedConfig.rmcNetTimeout.value(),
+      m_tapedConfig.rmcRequestAttempts.value());
+    cta::mediachanger::MediaChangerFacade mediaChangerFacade(rmcProxy, lc.logger());
 
     castor::tape::System::realWrapper sWrapper;
 
@@ -989,7 +993,11 @@ int DriveHandler::runChild() {
     cta::server::ProcessCap capUtils;
 
     // Mounting management.
-    cta::mediachanger::MediaChangerFacade mediaChangerFacade(lc.logger());
+    cta::mediachanger::RmcProxy rmcProxy(
+      m_tapedConfig.rmcPort.value(),
+      m_tapedConfig.rmcNetTimeout.value(),
+      m_tapedConfig.rmcRequestAttempts.value());
+    cta::mediachanger::MediaChangerFacade mediaChangerFacade(rmcProxy, lc.logger());
 
     castor::tape::System::realWrapper sWrapper;
 
@@ -1177,7 +1185,11 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
       // Capabilities management.
       cta::server::ProcessCap capUtils;
 
-      cta::mediachanger::MediaChangerFacade mediaChangerFacade(m_processManager.logContext().logger());
+      cta::mediachanger::RmcProxy rmcProxy(
+        m_tapedConfig.rmcPort.value(),
+        m_tapedConfig.rmcNetTimeout.value(),
+        m_tapedConfig.rmcRequestAttempts.value());
+      cta::mediachanger::MediaChangerFacade mediaChangerFacade(rmcProxy, m_processManager.logContext().logger());
       castor::tape::System::realWrapper sWrapper;
       castor::tape::tapeserver::daemon::CleanerSession cleanerSession(
         capUtils,

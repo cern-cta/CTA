@@ -27,7 +27,7 @@
 //------------------------------------------------------------------------------
 int main(const int argc, char *const *const argv) {
 
-  const std::string DAEMON_CONFIG = "/etc/cta/cta-taped.conf";
+  const std::string tapeConfigFile = "/etc/cta/cta-taped.conf";
 
   char buf[256];
   std::string hostName;
@@ -39,7 +39,13 @@ int main(const int argc, char *const *const argv) {
   }
   cta::log::StdoutLogger log(hostName, "cta-readtp");
   cta::log::DummyLogger dummyLog("dummy", "dummy");
-  cta::mediachanger::MediaChangerFacade mc(log);
+  const cta::tape::daemon::TapedConfiguration tapeConfig
+    = cta::tape::daemon::TapedConfiguration::createFromCtaConf(tapeConfigFile);
+  cta::mediachanger::RmcProxy rmcProxy(
+    tapeConfig.rmcPort.value(),
+    tapeConfig.rmcNetTimeout.value(),
+    tapeConfig.rmcRequestAttempts.value());
+  cta::mediachanger::MediaChangerFacade mc(rmcProxy, log);
 
   cta::tapeserver::readtp::ReadtpCmd cmd(std::cin, std::cout, std::cerr, log, dummyLog, mc);
   return cmd.main(argc, argv);

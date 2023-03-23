@@ -9,6 +9,7 @@
 - cta/CTA#213 - Skip files with paths that have valid metadata
 - cta/CTA#318 - Limit the number of frontend-grpc request processing threads
 - cta/CTA#321 - Add arguments to cta-change-storage-class to validate that the correct files are being changed
+- cta/CTA#302 - Make RMC maxRqstAttempts variable configurable
 
 ### Bug Fixes
 - cta/CTA#305 - AllCatalogueSchema file not created when updating schema

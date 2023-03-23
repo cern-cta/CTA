@@ -30,9 +30,9 @@ namespace mediachanger {
 // constructor
 //------------------------------------------------------------------------------
 RmcProxy::RmcProxy(
-  const unsigned short rmcPort,
-  const int netTimeout,
-  const unsigned int maxRqstAttempts):
+  const uint16_t rmcPort,
+  const uint32_t netTimeout,
+  const uint32_t maxRqstAttempts):
   m_rmcPort(rmcPort),
   m_netTimeout(netTimeout),
   m_maxRqstAttempts(maxRqstAttempts) {

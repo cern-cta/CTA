@@ -183,3 +183,18 @@ taped externalFreeDiskSpaceScript /usr/local/bin/cta-get-free-disk-space.sh
 
 # Time to wait after which the tape server stops trying to get the next mount, in seconds.
 # taped WatchdogGlobalLockAcqMaxSecs 900
+
+#
+# RMC Connection Options
+#
+
+# The default TCP/IP port on which the CASTOR rmcd daemon listens for incoming\
+# TCP/IP connections from the tape server.
+# taped RmcPort 5014
+#
+# The network timeout of rmc communications should be several minutes due
+# to the time it takes to mount and unmount tapes.
+# taped RmcNetTimeout 600
+#
+# The number of attempts a retriable RMC request should be issued.
+# taped RmcRequestAttempts 10

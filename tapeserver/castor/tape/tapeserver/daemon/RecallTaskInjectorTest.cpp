@@ -164,7 +164,8 @@ namespace unitTests
     MockRecallReportPacker mrrp(&trm,lc);
     FakeDiskWriteThreadPool diskWrite(mrrp,rwd,lc);
     cta::log::DummyLogger dummyLog("dummy","dummy");
-    cta::mediachanger::MediaChangerFacade mc(dummyLog);
+    cta::mediachanger::RmcProxy rmcProxy;
+    cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
     castor::messages::TapeserverProxyDummy initialProcess;
     castor::tape::tapeserver::daemon::VolumeInfo volume;
     volume.vid="V12345";
@@ -230,7 +231,8 @@ namespace unitTests
     MockRecallReportPacker mrrp(&trm,lc);
     FakeDiskWriteThreadPool diskWrite(mrrp,rwd,lc);
     cta::log::DummyLogger dummyLog("dummy","dummy");
-    cta::mediachanger::MediaChangerFacade mc(dummyLog);
+    cta::mediachanger::RmcProxy rmcProxy;
+    cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
     castor::messages::TapeserverProxyDummy initialProcess;
     castor::tape::tapeserver::daemon::VolumeInfo volume;
     volume.vid="V12345";

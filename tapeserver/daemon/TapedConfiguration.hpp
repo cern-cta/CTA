@@ -188,7 +188,22 @@ struct TapedConfiguration {
   cta::SourcedParameter<std::string> externalEncryptionKeyScript {
     "taped", "externalEncryptionKeyScript","","Compile time default"
   };
-  
+
+  //----------------------------------------------------------------------------
+  // RMC Connection Options
+  //----------------------------------------------------------------------------  
+  cta::SourcedParameter<uint16_t> rmcPort {
+    "taped", "RmcPort", 5014, "Compile time default"
+  };
+
+  cta::SourcedParameter<uint32_t> rmcNetTimeout {
+    "taped", "RmcNetTimeout", 600, "Compile time default"
+  };
+
+  cta::SourcedParameter<uint32_t> rmcRequestAttempts {
+    "taped", "RmcRequestAttempts", 10, "Compile time default"
+  };
+
 private:
   /** A private dummy logger which will simplify the implementation of the 
    * functions (just unconditionally log things). */

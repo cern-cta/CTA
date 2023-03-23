@@ -610,7 +610,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
-  cta::mediachanger::MediaChangerFacade mc(dummyLog);
+  cta::mediachanger::RmcProxy rmcProxy;
+  cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
@@ -796,7 +797,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
-  cta::mediachanger::MediaChangerFacade mc(dummyLog);
+  cta::mediachanger::RmcProxy rmcProxy;
+  cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
@@ -1012,7 +1014,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
-  cta::mediachanger::MediaChangerFacade mc(dummyLog);
+  cta::mediachanger::RmcProxy rmcProxy;
+  cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys,
@@ -1195,7 +1198,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
-  cta::mediachanger::MediaChangerFacade mc(dummyLog);
+  cta::mediachanger::RmcProxy rmcProxy;
+  cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
@@ -1382,7 +1386,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
-  cta::mediachanger::MediaChangerFacade mc(dummyLog);
+  cta::mediachanger::RmcProxy rmcProxy;
+  cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
@@ -1570,7 +1575,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   castorConf.wdNoBlockMoveMaxSecs = 600;
 
   cta::log::DummyLogger dummyLog("dummy", "dummy");
-  cta::mediachanger::MediaChangerFacade mc(dummyLog);
+  cta::mediachanger::RmcProxy rmcProxy;
+  cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
@@ -1761,7 +1767,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
-  cta::mediachanger::MediaChangerFacade mc(dummyLog);
+  cta::mediachanger::RmcProxy rmcProxy;
+  cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
@@ -1939,7 +1946,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
-  cta::mediachanger::MediaChangerFacade mc(dummyLog);
+  cta::mediachanger::RmcProxy rmcProxy;
+  cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   castor::messages::TapeserverProxyDummy initialProcess;
   cta::server::ProcessCapDummy capUtils;
   DataTransferSession sess("tapeHost", logger, mockSys,
@@ -2092,7 +2100,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
-  cta::mediachanger::MediaChangerFacade mc(dummyLog);
+  cta::mediachanger::RmcProxy rmcProxy;
+  cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys,
@@ -2231,7 +2240,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
-  cta::mediachanger::MediaChangerFacade mc(dummyLog);
+  cta::mediachanger::RmcProxy rmcProxy;
+  cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
@@ -2383,7 +2393,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
-  cta::mediachanger::MediaChangerFacade mc(dummyLog);
+  cta::mediachanger::RmcProxy rmcProxy;
+  cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
@@ -2546,7 +2557,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
-  cta::mediachanger::MediaChangerFacade mc(dummyLog);
+  cta::mediachanger::RmcProxy rmcProxy;
+  cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
@@ -2700,7 +2712,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
-  cta::mediachanger::MediaChangerFacade mc(dummyLog);
+  cta::mediachanger::RmcProxy rmcProxy;
+  cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
@@ -2864,7 +2877,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
-  cta::mediachanger::MediaChangerFacade mc(dummyLog);
+  cta::mediachanger::RmcProxy rmcProxy;
+  cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
@@ -3026,7 +3040,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
-  cta::mediachanger::MediaChangerFacade mc(dummyLog);
+  cta::mediachanger::RmcProxy rmcProxy;
+  cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
@@ -3197,7 +3212,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
-  cta::mediachanger::MediaChangerFacade mc(dummyLog);
+  cta::mediachanger::RmcProxy rmcProxy;
+  cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, capUtils, castorConf, scheduler);
@@ -3329,7 +3345,8 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
   castorConf.useEncryption = false;
   castorConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
-  cta::mediachanger::MediaChangerFacade mc(dummyLog);
+  cta::mediachanger::RmcProxy rmcProxy;
+  cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   cta::server::ProcessCapDummy capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   CleanerSession cleanerSession(
