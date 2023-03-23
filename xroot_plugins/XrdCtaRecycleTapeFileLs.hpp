@@ -73,12 +73,7 @@ RecycleTapeFileLsStream::RecycleTapeFileLsStream(const frontend::AdminCmdStream&
   searchCriteria.diskFileIds = requestMsg.getOptional(OptionStrList::FILE_ID, &has_any);
   
   if(diskFileId) {
-    // single option on the command line we need to do the conversion ourselves.
     if(!searchCriteria.diskFileIds) searchCriteria.diskFileIds = std::vector<std::string>();
-
-    cta::utils::checkDiskFileID(&diskFileId.value());
-
-
     searchCriteria.diskFileIds->push_back(diskFileId.value());
   }
   // Disk instance on its own does not give a valid set of search criteria (no &has_any)
