@@ -427,23 +427,6 @@ bool isDecimalFormat(const std::string& str) {
   return std::regex_match(str, pattern);
 }
 
-void checkDiskFileID(std::string *diskFileId) {
-  if (isHexadecimalFormat(*diskFileId)) {
-    auto fid = strtol(diskFileId->c_str(), nullptr, 16);
-    if(fid < 1 || fid == LONG_MAX) {
-      throw cta::exception::UserError(*diskFileId + " is not a valid file ID in hexadecimal format");
-    }
-    *diskFileId = std::to_string(fid);
-  } else if (std::all_of(diskFileId->begin(), diskFileId->end(), [](char c){return isdigit(c);})) {
-    auto fid = strtol(diskFileId->c_str(), nullptr, 10);
-    if(fid < 1 || fid == LONG_MAX) {
-      throw cta::exception::UserError(*diskFileId + " is not a valid file ID in decimal format");
-    }
-  } else if (!isUuidFormat(*diskFileId)) {
-    throw cta::exception::UserError(*diskFileId + " is not a valid file ID in uuid format");  
-  }
-}
-
 //-----------------------------------------------------------------------------
 // endsWith
 //-----------------------------------------------------------------------------

@@ -279,26 +279,6 @@ TEST_F(cta_UtilsTest, isDecimalFormat) {
   ASSERT_FALSE(cta::utils::isDecimalFormat(dec4));
 }
 
-TEST_F(cta_UtilsTest, checkDiskFileID) {
-  std::string diskFileID1 = "diskFileID";
-  std::string diskFileID2 = "123456";
-  std::string diskFileID3 = "0x12FFFF";
-  std::string diskFileID4 = "0x12XXXX";
-  std::string diskFileID5 = cta::utils::generateUuid();
-  std::string diskFileID6 = "f81d4fae-7dec-11d0-a765-00a0c91e6bf"; // Invalid UUID format
-  
-  ASSERT_THROW(cta::utils::checkDiskFileID(&diskFileID1), cta::exception::UserError);
-  ASSERT_NO_THROW(cta::utils::checkDiskFileID(&diskFileID2));
-  ASSERT_EQ(std::to_string(123456), diskFileID2);
-  ASSERT_NO_THROW(cta::utils::checkDiskFileID(&diskFileID3));
-  // convert diskFileID3 to decimal string
-  std::stringstream ss;
-  ss << std::hex << diskFileID3;
-  ASSERT_THROW(cta::utils::checkDiskFileID(&diskFileID4), cta::exception::UserError);
-  ASSERT_NO_THROW(cta::utils::checkDiskFileID(&diskFileID5));
-  ASSERT_THROW(cta::utils::checkDiskFileID(&diskFileID6), cta::exception::UserError);
-}
-
 TEST_F(cta_UtilsTest, endsWith_slash_empty_string) {
   using namespace cta;
   const std::string str = "";

@@ -206,14 +206,6 @@ namespace utils {
   bool isDecimalFormat(const std::string& str);
 
   /**
-    * Converts the specified string to a decimal file id or uuid.
-    *
-    * @param str The string to be tested.
-    * @return True if the specified string is a valid disk file id.
-    */
-  void checkDiskFileID(std::string *diskFileId);
-
-  /**
    * Returns true if the specified string ends with the specifie character.
    *
    * @param str The string to be tested.
