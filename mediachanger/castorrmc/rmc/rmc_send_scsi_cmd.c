@@ -164,7 +164,6 @@ int rmc_send_scsi_cmd (
 	int n;
 	int resid = 0;
 	struct stat sbuf;
-	struct stat sbufa;
 	static char *sg_buffer;
 	static int sg_bufsiz = 0;
 	struct sg_header *sg_hd;
@@ -220,19 +219,15 @@ int rmc_send_scsi_cmd (
 			return (-1);
 		}
 
-                /* get the major device ID of the sg devices ... */
-		if (stat ("/dev/sg0", &sbufa) < 0) {
-			serrno = errno;
-			snprintf (rmc_err_msgbuf, sizeof(rmc_err_msgbuf), "/dev/sg0 : stat error : %s\n", strerror(errno));
-			rmc_err_msgbuf[sizeof(rmc_err_msgbuf) - 1] = '\0';
-			*msgaddr = rmc_err_msgbuf;
-			return (-1);
-		}
-                /* ... to detect links and use the path directly! */
-		if (major(sbuf.st_rdev) == major(sbufa.st_rdev)) {
-			strcpy (sgpath, path);
+		struct stat sbufa;
+		if (stat("/dev/sg0", &sbufa) == 0 && major(sbuf.st_rdev) == major(sbufa.st_rdev)) {
+		  /* If the major device ID of the specified device is the same as the major device ID of sg0,
+                   * we can use the path directly */
+		  strcpy(sgpath, path);
 		} else {
-                        find_sgpath(sgpath, major(sbuf.st_rdev), minor(sbuf.st_rdev));
+		  /* Otherwise, look up the path using the (major,minor) device ID. If no match is found,
+                   * sgpath is set to an empty string */
+		  find_sgpath(sgpath, major(sbuf.st_rdev), minor(sbuf.st_rdev));
 		}
 
 		if ((fd = open (sgpath, O_RDWR)) < 0) {

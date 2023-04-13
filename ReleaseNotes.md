@@ -1,3 +1,9 @@
+# v4.NEXT
+
+### Features
+### Bug Fixes
+- cta/CTA#259 - cta-rmcd should not exit if /dev/sg0 is missing
+
 # v4.8.7-1
 
 ### Features
