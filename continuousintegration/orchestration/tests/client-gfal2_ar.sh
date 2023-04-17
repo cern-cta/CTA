@@ -30,8 +30,6 @@ fi
 
 . /root/client-gfal2_evict.sh
 
-. /root/client_abortPrepare.sh
-
 if [[ $REMOVE == 1 ]]; then
   . /root/client-gfal2_delete.sh
 fi
