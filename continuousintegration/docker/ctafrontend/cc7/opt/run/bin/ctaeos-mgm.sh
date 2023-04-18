@@ -36,9 +36,6 @@ if [ ! -e /etc/buildtreeRunner ]; then
     yum-config-manager --enable cta-ci-eos-5
   fi
 
-  # Check packages are installed
-  yum info eos-client
-
   # Install missing RPMs
   yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-debuginfo sudo logrotate cta-fst-gcd
 
