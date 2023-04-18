@@ -403,30 +403,6 @@ std::string generateUuid() {
   return str;
 }
 
-bool isUuidFormat(const std::string& str) {
-  // Define the regex pattern for UUID format
-  std::regex pattern("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
-
-  // Match the input string with the pattern
-  return std::regex_match(str, pattern);
-}
-
-bool isHexadecimalFormat(const std::string& str) {
-  // Define the regex pattern for hexadecimal format
-  std::regex pattern("0x[0-9a-fA-F]+");
-
-  // Match the input string with the pattern
-  return std::regex_match(str, pattern);
-}
-
-bool isDecimalFormat(const std::string& str) {
-  // Define the regex pattern for decimal format
-  std::regex pattern("[0-9]+");
-
-  // Match the input string with the pattern
-  return std::regex_match(str, pattern);
-}
-
 //-----------------------------------------------------------------------------
 // endsWith
 //-----------------------------------------------------------------------------

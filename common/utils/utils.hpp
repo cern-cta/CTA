@@ -182,30 +182,6 @@ namespace utils {
   std::string generateUuid();
 
   /**
-   * Returns true if the specified string is a valid uuid.
-   *
-   * @param str The string to be tested.
-   * @return True if the specified string is a valid uuid.
-   */
-  bool isUuidFormat(const std::string& str);
-
-  /**
-   * Returns true if the specified string is a valid hexadecimal number.
-   *
-   * @param str The string to be tested.
-   * @return True if the specified string is a valid hexadecimal number.
-   */
-  bool isHexadecimalFormat(const std::string& str);
-
-  /**
-   * Returns true if the specified string is a valid decimal number.
-   *
-   * @param str The string to be tested.
-   * @return True if the specified string is a valid decimal number.
-   */
-  bool isDecimalFormat(const std::string& str);
-
-  /**
    * Returns true if the specified string ends with the specifie character.
    *
    * @param str The string to be tested.
