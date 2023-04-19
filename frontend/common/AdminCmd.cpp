@@ -1159,8 +1159,12 @@ void AdminCmd::processTapeFile_Rm(xrd::Response& response) {
     searchCriteria.archiveFileId = archiveFileId.value();
   }
   if(diskFileId) {
+    auto fid = strtol(diskFileId.value().c_str(), nullptr, 16);
+    if(fid < 1 || fid == LONG_MAX) {
+      throw exception::UserError(diskFileId.value() + " is not a valid file ID");
+    }
     searchCriteria.diskFileIds = std::vector<std::string>();
-    searchCriteria.diskFileIds.value().push_back(diskFileId.value());
+    searchCriteria.diskFileIds.value().push_back(std::to_string(fid));
   }
   if(instance) {
     searchCriteria.diskInstance = instance.value();
@@ -1484,6 +1488,11 @@ void AdminCmd::processRecycleTapeFile_Restore(xrd::Response& response) {
   searchCriteria.vid = getOptional(OptionString::VID, &has_any);
   auto diskFileId = getRequired(OptionString::FXID);
 
+  auto fid = strtol(diskFileId.c_str(), nullptr, 16);
+  if(fid < 1 || fid == LONG_MAX) {
+    throw exception::UserError(diskFileId + " is not a valid file ID");
+  }
+
   // Disk instance on its own does not give a valid set of search criteria (no &has_any)
   searchCriteria.diskInstance = getOptional(OptionString::INSTANCE);
   searchCriteria.archiveFileId = getOptional(OptionUInt64::ARCHIVE_FILE_ID, &has_any);
@@ -1493,7 +1502,7 @@ void AdminCmd::processRecycleTapeFile_Restore(xrd::Response& response) {
   if(!has_any) {
     throw exception::UserError("Must specify at least one of the following search options: vid, fxid, fxidfile or archiveFileId");
   }
-  m_catalogue.FileRecycleLog()->restoreFileInRecycleLog(searchCriteria, diskFileId);
+  m_catalogue.FileRecycleLog()->restoreFileInRecycleLog(searchCriteria, std::to_string(fid));
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
