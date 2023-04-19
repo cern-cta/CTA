@@ -35,12 +35,10 @@
 #include "cmdline/standalone_cli_tools/common/ConnectionConfiguration.hpp"
 #include "common/checksum/ChecksumBlob.hpp"
 #include "common/exception/CommandLineNotParsed.hpp"
-#include "common/exception/GrpcError.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/utils/utils.hpp"
 #include "CtaFrontendApi.hpp"
-#include "eos_grpc_client/GrpcEndpoint.hpp"
 
 // GLOBAL VARIABLES : used to pass information between main thread and stream handler thread
 
@@ -80,14 +78,11 @@ int ChangeStorageClass::exceptionThrowingMain(const int argc, char *const *const
 
   auto [serviceProvider, endpointmap] = ConnConfiguration::readAndSetConfiguration(m_log, getUsername(), cmdLineArgs);
   m_serviceProviderPtr = std::move(serviceProvider);
-  m_endpointMapPtr = std::move(endpointmap);
 
   handleArguments(cmdLineArgs);
 
   storageClassExists();
-  updateStorageClassInEosNamespace();
   updateStorageClassInCatalogue();
-  writeSkippedArchiveIdsToFile();
   return 0;
 }
 
@@ -128,68 +123,8 @@ void ChangeStorageClass::handleArguments(const CmdLineArgs &cmdLineArgs) {
       throw exception::UserError("Archive id does not match with disk file id or disk instance, are you sure the correct file metadata was provided?");
     }
   }
-
-  if (cmdLineArgs.m_frequency) {
-    m_eosUpdateFrequency = cmdLineArgs.m_frequency.value();
-  } else {
-    m_eosUpdateFrequency = 100;
-  }
 }
 
-//------------------------------------------------------------------------------
-// fileInFlight
-//------------------------------------------------------------------------------
-bool ChangeStorageClass::fileInFlight(const google::protobuf::RepeatedField<uint32_t> &locations) const {
-  // file is not in flight if fsid==65535
-  return std::all_of(std::begin(locations), std::end(locations), [](const int &location) { return location != 65535; });
-}
-
-//------------------------------------------------------------------------------
-// updateStorageClassInEosNamespace
-//------------------------------------------------------------------------------
-void ChangeStorageClass::updateStorageClassInEosNamespace() {
-  uint64_t requestCounter = 0;
-  for(const auto &archiveFileId : m_archiveFileIds) {
-    requestCounter++;
-    if(requestCounter >= m_eosUpdateFrequency) {
-      requestCounter = 0;
-      sleep(1);
-    }
-
-    const auto [diskInstance, diskFileId] = CatalogueFetch::getInstanceAndFid(archiveFileId, m_serviceProviderPtr, m_log);
-
-    // No files in flight should change storage class
-    const bool showJson = false;
-    if(const auto md_response = m_endpointMapPtr->getMD(diskInstance, ::eos::rpc::FILE, cta::utils::toUint64(diskFileId), "", showJson);
-      fileInFlight(md_response.fmd().locations())) {
-        if (md_response.fmd().locations().empty()){
-          throw ChangeStorageClassError("Metadata from EOS could not be fetched: disk file id " + diskFileId + " does not exist or authentication is failing");
-        }
-        m_archiveIdsNotUpdatedInEos.push_back(archiveFileId);
-        std::list<cta::log::Param> params;
-        params.push_back(cta::log::Param("archiveFileId", archiveFileId));
-        m_log(cta::log::WARNING, "File did not change storage class because the file was in flight", params);
-        continue;
-    }
-
-    const auto path = m_endpointMapPtr->getPath(diskInstance, diskFileId);
-    {
-      std::list<cta::log::Param> params;
-      params.push_back(cta::log::Param("path", path));
-      m_log(cta::log::INFO, "Path found", params);
-    }
-
-    if(auto status = m_endpointMapPtr->setXAttr(diskInstance, path, "sys.archive.storage_class", m_storageClassName); status.ok()) {
-      m_archiveIdsUpdatedInEos.push_back(archiveFileId);
-    } else {
-      m_archiveIdsNotUpdatedInEos.push_back(archiveFileId);
-      std::list<cta::log::Param> params;
-      params.push_back(cta::log::Param("archiveFileId", archiveFileId));
-      params.push_back(cta::log::Param("error", status.error_message()));
-      m_log(cta::log::WARNING, "File did not change storage class because query to EOS failed", params);
-    }
-  }
-}
 
 //------------------------------------------------------------------------------
 // storageClassExists
@@ -267,7 +202,7 @@ void ChangeStorageClass::updateStorageClassInCatalogue() const {
     const auto key = cta::admin::OptionStrList::FILE_ID;
     const auto new_opt = admincmd->add_option_str_list();
     new_opt->set_key(key);
-    for (const auto &archiveFileId : m_archiveIdsUpdatedInEos) {
+    for (const auto &archiveFileId : m_archiveFileIds) {
       new_opt->add_item(archiveFileId);
     }
   }
@@ -295,27 +230,6 @@ void ChangeStorageClass::updateStorageClassInCatalogue() const {
     case Response::RSP_ERR_USER:                         throw exception::UserError(response.message_txt());
     case Response::RSP_ERR_CTA:                          throw std::runtime_error(response.message_txt());
     default:                                             throw XrdSsiPb::PbException("Invalid response type.");
-  }
-}
-
-//------------------------------------------------------------------------------
-// writeSkippedArchiveIdsToFile
-//------------------------------------------------------------------------------
-void ChangeStorageClass::writeSkippedArchiveIdsToFile() const {
-  const std::filesystem::path filePath = "/tmp/skippedArchiveIds.txt";
-  std::ofstream archiveIdFile(filePath);
-
-  if (archiveIdFile.fail()) {
-    throw std::runtime_error("Unable to open file " + filePath.string());
-  }
-
-  if (archiveIdFile.is_open()) {
-    for (const auto& archiveId : m_archiveIdsNotUpdatedInEos) {
-      archiveIdFile << "{ \"archiveId\" : " << archiveId << " }" << std::endl;
-    }
-    archiveIdFile.close();
-    std::cout << m_archiveIdsNotUpdatedInEos.size() << " files did not update the storage class." << std::endl;
-    std::cout << "The skipped archive ids can be found here: " << filePath << std::endl;
   }
 }
 

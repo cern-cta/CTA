@@ -77,31 +77,6 @@ private:
   std::unique_ptr<XrdSsiPbServiceType> m_serviceProviderPtr;
 
   /**
-   * Endpoint map for interaction with EOS
-   */
-  std::unique_ptr<::eos::client::EndpointMap> m_endpointMapPtr;
-
-  /**
-   * Endpoint map for interaction with EOS
-   */
-  std::vector<std::string> m_archiveIdsNotUpdatedInEos;
-
-  /**
-   * Endpoint map for interaction with EOS
-   */
-  std::vector<std::string> m_archiveIdsUpdatedInEos;
-
-  /**
-   * Endpoint map for interaction with EOS
-   */
-  uint64_t m_eosUpdateFrequency;
-
-  /**
-   *  Updates the storage class name in the EOS namespace
-  */
-  void updateStorageClassInEosNamespace();
-
-  /**
    *  Checks if the storage class provided to the tool is defined,
    * and throws an exception::UserError if it is not found
   */
@@ -111,16 +86,6 @@ private:
   * Updates the storage class name in the catalogue
   */
   void updateStorageClassInCatalogue() const;
-
-  /**
-  * Writes the skipped archive ids to file
-  */
-  void writeSkippedArchiveIdsToFile() const;
-
-  /**
-   * Checks if a file is in flight
-  */
-  bool fileInFlight(const google::protobuf::RepeatedField<unsigned int> &locations) const;
 
   /**
   * Fills the member variables with data, based on the arguments that were provided

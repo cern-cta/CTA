@@ -1,6 +1,8 @@
 # v4.NEXT
 
 ### Features
+- cta/CTA#78 - Remove gRPC and ability to change the storage class in EOS from the cta-change-storage-class C++ script
+
 ### Bug Fixes
 - cta/CTA#259 - cta-rmcd should not exit if /dev/sg0 is missing
 
