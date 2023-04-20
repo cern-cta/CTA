@@ -1,5 +1,5 @@
 # v4.NEXT
-
+### EOS Version - 4.8.101 / 5.1.15
 ### Features
 - cta/CTA#78 - Remove gRPC and ability to change the storage class in EOS from the cta-change-storage-class C++ script
 - cta/CTA#342 - Compile CTA using devtoolset-11
