@@ -25,8 +25,7 @@ if [ ! -e /etc/buildtreeRunner ]; then
 
   if test -f "/etc/config/eos/eos5"; then
     # Switch to EOS-5 versionlock
-    versionlock_eos_4_disable
-    versionlock_eos_5_enable
+    /opt/run/bin/cta-versionlock --file /etc/yum/pluginconf.d/versionlock.list config eos5
 
     yum-config-manager --disable eos-citrine-commit
     yum-config-manager --disable eos-citrine-depend

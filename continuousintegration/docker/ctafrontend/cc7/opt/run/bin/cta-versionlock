@@ -1,37 +1,41 @@
 #!/usr/bin/python
 
-import os.path
-import sys
-import re
-import json
-import rpm
-from rpmUtils.miscutils import splitFilename
 from collections import defaultdict
+from rpmUtils.miscutils import splitFilename
+import argparse
+import json
+import os.path
+import re
+import rpm
+import sys
 import yum
 
 conf_file = '/etc/cta/cta-release.conf'
 
 vfiles = {
-  'cta': '/etc/yum/pluginconf.d/versionlock.cta', 
+  'cta': '/etc/yum/pluginconf.d/versionlock.cta',
   'yum': '/etc/yum/pluginconf.d/versionlock.list'
 }
-actions = ('help', 'check', 'apply', 'forceupdate', 'checkpkg', 'remove', 'config')
+versionlock_file = '/etc/yum/pluginconf.d/versionlock.cta'
+actions = ('check', 'apply', 'forceupdate', 'checkpkg', 'remove')
+configs = ('eos4', 'eos5', 'xrootd4', 'xrootd5')
 retcode = 0
 jsonoutput = False
 no_vlock = '/etc/cta.novlock'
 eos_version=0
+xrootd_version=0
 
 try:
   FileNotFoundError
 except NameError:
   FileNotFoundError = IOError
 
-
 def usage():
   print("\n%s: command line tool to manage cta packages versionlock\n \
 \n \
 usage: %s help|check|apply|forceupdate|checkpkg|remove [--json]\n \
        %s config eos4|eos5 [--json]\n \
+       %s config xrootd4|xrootd5 [--json]\n \
   help: print this message\n \
   check: show consistency of versionlock.list with cta versionlock requirements\n \
   apply: add cta versions to versionlock.list\n \
@@ -39,6 +43,7 @@ usage: %s help|check|apply|forceupdate|checkpkg|remove [--json]\n \
   checkpkg: check consistency between installed packages and cta versionlock requirements\n \
   remove: remove all cta packages and dependencies from versionlock.list\n \
   config eos4|eos5: select EOS version\n \
+  config xrootd4|xrootd5: select XRootD version\n \
   [--json]: format output in json\n \
   \n \
   to prevent cta-versionlock to alter versionlock.list create a %s file.\n \
@@ -53,6 +58,15 @@ yb.preconf.debuglevel = 0
 yb.preconf.errorlevel = 0
 repos_all = [repo.id for repo in yb.repos.findRepos("cta-*")]
 
+# if path doesn't exist, create it
+if not os.path.exists(os.path.dirname(conf_file)):
+  os.makedirs(os.path.dirname(conf_file))
+# If file doesn't exists, create a new file
+if not os.path.isfile(conf_file):
+  with open(conf_file, 'w') as f:
+    print("Creating new config file %s" % conf_file)
+    cta_conf_json = {'eos_major_version': 4, 'xrootd_major_version': 4, 'cta_major_version': 4}
+    f.write(json.dumps(cta_conf_json))
 with open(conf_file) as f:
   cta_conf_json = json.load(f)
 
@@ -71,10 +85,6 @@ def get_repo_set_for_cta_version(cta_major_version):
     return {repo_id for repo_id in repos_all if "eos" not in repo_id and "public-4" not in repo_id}
   else:
     raise RuntimeError("Unknown CTA major version '%s'." % cta_major_version)
-
-repos_selected = set()
-repos_selected |= get_repo_set_for_cta_version(cta_conf_json["cta_major_version"])
-repos_selected |= get_repo_set_for_eos_version(cta_conf_json["eos_major_version"])
 
 def switch_repos(repo_id_list, enable):
   for repo_id in repo_id_list:
@@ -224,51 +234,80 @@ def clearVfile(pkglist):
     f.write(content)
     f.truncate()
 
+# Write previous statements but using argparse
+parser = argparse.ArgumentParser(description='Manage CTA dependencies')
+subparsers = parser.add_subparsers(dest='command')
+config_parser = subparsers.add_parser('config')
+config_parser.add_argument('config_name', choices=configs, help='Name of the configuration file')
+for action in actions:
+  subparsers.add_parser(action)
+parser.add_argument('--file', help='use yum versionlock file')
+parser.add_argument('--json', action='store_true', help='output in json format')
+args = parser.parse_args()
+
+# Parse config
+if args.command == 'config':
+  if args.config_name == 'eos4':
+    eos_version = 4
+  elif args.config_name == 'eos5':
+    eos_version = 5
+  elif args.config_name == 'xrootd4':
+    xrootd_version = 4
+  elif args.config_name == 'xrootd5':
+    xrootd_version = 5
+
+if args.json:
+  jsonoutput = True
+
+if args.file:
+  versionlock_file = args.file
+  print("Using yum versionlock file: %s" % versionlock_file)  
 
 # check arguments
-if not 2 <= len(sys.argv) <= 4:
-  usage()
-
-for arg in sys.argv[1:]:
-  if arg == '--json':
-    jsonoutput = True
-  elif arg == 'eos4':
-    eos_version=4
-  elif arg == 'eos5':
-    eos_version=5
-  elif arg in actions:
-    action = arg
-  else:
-    print("Error: option %s is not valid" % sys.argv[1])
+if (args.command == 'check'):
+  if (eos_version and xrootd_version):
+    print("Error: cannot check both EOS and XRootD versions")
+    usage()
+  elif (not eos_version and not xrootd_version):
+    print("Error: no EOS or XRootD version was provided")
     usage()
 
-if (action == 'help'):
-  usage()
-
-if not eos_version and (action == 'config'):
+if (not eos_version and not xrootd_version)  and (action == 'config'):
   print("Error: no EOS version was provided")
   usage()
 
 message = defaultdict(dict)
 
-if (action == 'config'):
+if (args.command == 'config'):
   if eos_version is 4:
     message['title'] = "Enabling EOS-4 dependencies"
     cta_conf_json["eos_major_version"] = 4
-    switch_packages(vfiles['cta'], "EOS-4", True)
-    switch_packages(vfiles['cta'], "EOS-5", False)
+    switch_packages(versionlock_file, "EOS-4", True)
+    switch_packages(versionlock_file, "EOS-5", False)
   elif eos_version is 5:
     message['title'] = "Enabling EOS-5 dependencies"
     cta_conf_json["eos_major_version"] = 5
-    switch_packages(vfiles['cta'], "EOS-4", False)
-    switch_packages(vfiles['cta'], "EOS-5", True)
-  repos_selected = set()
-  repos_selected | get_repo_set_for_cta_version(cta_conf_json["cta_major_version"])
-  repos_selected |= get_repo_set_for_eos_version(cta_conf_json["eos_major_version"])
+    switch_packages(versionlock_file, "EOS-4", False)
+    switch_packages(versionlock_file, "EOS-5", True)
+  if xrootd_version is 4:
+    message['title'] = "Enabling XROOTD-4 dependencies"
+    cta_conf_json["xrootd_major_version"] = 4
+    switch_packages(versionlock_file, "XROOTD-4", True)
+    switch_packages(versionlock_file, "XROOTD-5", False)
+  elif xrootd_version is 5:
+    message['title'] = "Enabling XROOTD-5 dependencies"
+    cta_conf_json["xrootd_major_version"] = 5
+    switch_packages(versionlock_file, "XROOTD-4", False)
+    switch_packages(versionlock_file, "XROOTD-5", True)
+
   # Update value in config file
   with open(conf_file, "w") as f:
     f.write(json.dumps(cta_conf_json))
   _exit()
+
+repos_selected = set()
+repos_selected |= get_repo_set_for_cta_version(cta_conf_json["cta_major_version"])
+repos_selected |= get_repo_set_for_eos_version(cta_conf_json["eos_major_version"])
 
 # check if CTA packages exist in versionlock.list (ignore arch)
 versions = readVer(vfiles)

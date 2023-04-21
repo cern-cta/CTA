@@ -27,6 +27,9 @@ ENV ORCHESTRATIONDIR="continuousintegration/orchestration/pods" \
 # Manage repos before running yum
 ADD ${BASEDIR}/etc /etc
 
+# Add orchestration run scripts locally
+ADD ${BASEDIR}/opt /opt
+
 RUN yum install -y \
       yum-plugin-downloadonly \
       yum-plugin-priorities \
@@ -53,24 +56,9 @@ ADD build_rpm/RPM ${CTAREPODIR}
 # Populate local repository and enable it
 RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
   && \
-    yum install --downloadonly --downloaddir=${CTAREPODIR}/RPMS/x86_64 \
-      xrootd-client \
-      xrootd-debuginfo \
-      xrootd-server \
-  && \
     createrepo ${CTAREPODIR} \
   && \
     echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo \
-  && \
-    # Install needed packages
-    #RUN yum -y install cta-frontend cta-debuginfo cgdb less psmisc lynx strace ltrace
-    # add cta-cli to get already some RPMs installed
-    yum -y install cgdb \
-      less \
-      psmisc \
-      lynx \
-      strace \
-      ltrace \
   && \
     yum clean all \
   && \
@@ -81,14 +69,14 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
 # Check that CTA packages are in container (from previous artifacts)
 RUN find ${CTAREPODIR}/RPMS/x86_64 | grep cta-taped && echo "cta-taped rpm is present: artifacts seems OK" || (echo "cta-taped rpm was not added from previously built artifact: this is a gitlab issue that must be investigated" 1>&2; exit 1)
 
-# Check that xrootd packages are in container (downloaded from ci-repo)
-RUN find ${CTAREPODIR}/RPMS/x86_64 | grep xrootd-server && echo "xrootd-server rpm is present: CI repos seem OK" || (echo "xrootd-server rpm was not downloaded from CI configured repos: this must be investigated" 1>&2; exit 1)
+# Check if we need to enable cta-ci-xrootd5 repository
+RUN if find ${CTAREPODIR}/RPMS/x86_64 | grep cta-taped-5; then \
+  /opt/run/bin/cta-versionlock --file /etc/yum/pluginconf.d/versionlock.list config xrootd5; \
+  yum-config-manager --enable cta-ci-xrootd5; \
+fi
 
 # Add pod specific configuration
 ADD ${BASEDIR}/config ${LOCALORCHESTRATIONDIR}
-
-# Add orchestration run scripts locally
-ADD ${BASEDIR}/opt /opt
 
 # Docker image run setup
 ADD ${BASEDIR}/run.sh /

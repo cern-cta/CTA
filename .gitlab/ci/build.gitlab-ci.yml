@@ -29,7 +29,6 @@
   extends:
     - .cta_build
   script:
-    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
     - yum install -y devtoolset-8 cmake3 make rpm-build
     - yum -y install yum-plugin-priorities yum-plugin-versionlock
     - yum install -y git

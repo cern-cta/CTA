@@ -1,6 +1,0 @@
-[eos-citrine]
-name=EOS Citrine
-baseurl=https://storage-ci.web.cern.ch/storage-ci/eos/citrine/tag/testing/el-7/x86_64/
-priority=4
-gpgcheck=0
-enabled=1

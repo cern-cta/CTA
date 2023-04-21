@@ -6,6 +6,9 @@
 ### Bug Fixes
 - cta/CTA#259 - cta-rmcd should not exit if /dev/sg0 is missing
 
+### Continuous Integration
+- cta/CTA#262 - Manage CI repositories with `cta-release` code
+
 # v4.8.7-1
 
 ### Features

@@ -86,7 +86,7 @@ file(GENERATE OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/versionlock.cta CONTENT "${CTAV
 
 # Repos files
 file (GLOB REPO_FILES
-  "${CMAKE_CURRENT_SOURCE_DIR}/*.repo"
+  "${CMAKE_SOURCE_DIR}/continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d-public/*.repo"
 )
 
 # Signing keys
@@ -103,5 +103,5 @@ install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/versionlock.cta
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/yum/pluginconf.d)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-release.conf
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
-install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-versionlock
+install (FILES ${CMAKE_SOURCE_DIR}/continuousintegration/docker/ctafrontend/cc7/opt/run/bin/cta-versionlock
   DESTINATION usr/${CMAKE_INSTALL_BINDIR})
