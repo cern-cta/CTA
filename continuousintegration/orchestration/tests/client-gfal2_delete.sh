@@ -117,5 +117,7 @@ if [[ ${RETRIEVED} -gt ${DELETED} ]]; then
 else
   echo "All files have been deleted"
   LASTCOUNT=${RETRIEVED}
+  db_begin_transaction
   db_update_col "deleted" "+" "1"
+  db_commit_transaction
 fi

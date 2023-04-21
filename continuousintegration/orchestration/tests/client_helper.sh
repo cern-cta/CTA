@@ -255,6 +255,19 @@ db_results() {
   sqlite3 ${DB_NAME} "SELECT SUM(archived), SUM(staged), SUM(evicted), SUM(aborted), SUM(deleted) FROM ${TEST_TABLE};"
 }
 
+# Thousands of sqlite3 "SELECT/INSERT blabla" are too slow, generate a file as a trnsaction and feed it to sqlite3.
+db_begin_transaction() {
+  rm -f new_transaction
+  touch new_transaction
+  echo 'BEGIN TRANSACTION;' > new_transaction
+}
+
+db_commit_transaction() {
+  echo 'COMMIT;' >> new_transaction
+
+  sqlite3 ${DB_NAME} < new_transaction
+}
+
 db_info() {
   ROW_LIMIT=""
 
@@ -271,7 +284,8 @@ db_get_files() {
 
 # INSERT created files for test into the db.
 db_insert() {
-  sqlite3 ${DB_NAME} "INSERT INTO ${TEST_TABLE} ('filename') VALUES ('$1');"
+  #sqlite3 ${DB_NAME} "INSERT INTO ${TEST_TABLE} ('filename') VALUES ('$1');"
+  echo "INSERT INTO ${TEST_TABLE} ('filename') VALUES ('$1');" >> new_transaction
 }
 
 db_status_count() {
@@ -286,7 +300,8 @@ db_update() {
   else
     new_val=$3
   fi
-  sqlite3 ${DB_NAME} "UPDATE ${TEST_TABLE} SET $1 = '$new_val' WHERE filename = '$2';"
+  #sqlite3 ${DB_NAME} "UPDATE ${TEST_TABLE} SET $1 = '$new_val' WHERE filename = '$2';"
+  echo "UPDATE ${TEST_TABLE} SET $1 = '$new_val' WHERE filename = '$2';" >> new_transaction
 }
 
 # Positional arguments:
@@ -304,10 +319,12 @@ db_update_from_file() {
 }
 
 db_update_col() {
-  sqlite3 ${DB_NAME} "UPDATE ${TEST_TABLE} SET $1=$1 $2 $3;"
+  #sqlite3 ${DB_NAME} "UPDATE ${TEST_TABLE} SET $1=$1 $2 $3;"
+  echo "UPDATE ${TEST_TABLE} SET $1=$1 $2 $3;" >> new_transaction
 }
 
 db_custom_query() {
-  sqlite3 ${DB_NAME} "${1} ${TEST_TABLE} ${2}"
+  #sqlite3 ${DB_NAME} "${1} ${TEST_TABLE} ${2}"
+  echo "${1} ${TEST_TABLE} ${2}" >> new_transaction
 }
 

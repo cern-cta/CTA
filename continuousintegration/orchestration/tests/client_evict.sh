@@ -40,6 +40,7 @@ for (( subdir=0; subdir < ${NB_DIRS}; subdir++ )); do
 done
 
 
+db_begin_transaction
 LEFTOVER=0
 TMP_FILE=$(mktemp)
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
@@ -49,8 +50,8 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
 
   cat ${TMP_FILE} | xargs -iTEST_FILE_NAME bash -c "db_update 'evicted' ${subdir}/TEST_FILE_NAME ${NEW_EVICT_VAL} '='"
 done
-
 rm -f ${TMP_FILE}
+db_commit_transaction
 
 EVICTED=$((${TO_EVICT}-${LEFTOVER}))
 echo "$(date +%s): $EVICTED/$TO_EVICT files evicted from EOS 'xrdfs prepare -e'"

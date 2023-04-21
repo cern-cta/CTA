@@ -33,6 +33,9 @@ echo
 # As we are skipping n bytes per file we need a bit more than the file size to accomodate dd to read ${FILE_KB_SIZE} skipping the n first bytes
 dd if=/dev/urandom of=/tmp/testfile bs=1k count=$((${FILE_KB_SIZE} + ${NB_FILES}*${NB_DIRS}/1024 + 1)) || exit 1
 
+
+db_begin_transaction
+
 # not more than 100k files per directory so that we can rm and find as a standard user
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   for((slot=1; slot <= ${NB_PROCS}; slot++)); do
@@ -67,6 +70,8 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
 
   echo Done.
 done
+db_commit_transaction
+db_begin_transaction
 if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
   # there were some xrdcp errors
   echo "Several xrdcp errors occured during archival!"
@@ -117,6 +122,8 @@ while test ${TO_BE_ARCHIVED} != ${ARCHIVED}; do
   fi
 done
 rm -f ${TMPFILE}
+db_commit_transaction
+
 
 echo "###"
 echo "${ARCHIVED}/${TO_BE_ARCHIVED} archived"
