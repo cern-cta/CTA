@@ -99,6 +99,7 @@ add_custom_target(create_all_catalogue_schema_hpp ALL
 
 # add_custom_target(create_catalogue_schemas_cpp
 add_custom_target(create_pre_catalogue_schema_cpp ALL
+  BYPRODUCTS sqlite_catalogue_schema.cpp postgres_catalogue_schema.cpp
   COMMAND sed 's/^/\ \ \"/' cta-catalogue-schema/sqlite_catalogue_schema.sql | sed 's/$$/\"/' > sqlite_catalogue_schema.cpp
   COMMAND sed 's/^/\ \ \"/' cta-catalogue-schema/postgres_catalogue_schema.sql | sed 's/$$/\"/' > postgres_catalogue_schema.cpp
   DEPENDS
@@ -108,17 +109,23 @@ add_custom_target(create_pre_catalogue_schema_cpp ALL
     cta-catalogue-schema/postgres_catalogue_schema.sql
 )
 
-add_custom_command(OUTPUT SqliteCatalogueSchema.cpp PostgresCatalogueSchema.cpp
+
+add_custom_command(
+  OUTPUT SqliteCatalogueSchema.cpp 
+  OUTPUT PostgresCatalogueSchema.cpp
   COMMAND sed '/CTA_SQL_SCHEMA/r sqlite_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/SqliteCatalogueSchema.before_SQL.cpp > SqliteCatalogueSchema.cpp
   COMMAND sed -e '/CTA_SQL_SCHEMA/r postgres_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/PostgresCatalogueSchema.before_SQL.cpp > PostgresCatalogueSchema.cpp
   DEPENDS
+    sqlite_catalogue_schema.cpp
+    postgres_catalogue_schema.cpp
     create_pre_catalogue_schema_cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/SqliteCatalogueSchema.before_SQL.cpp sqlite_catalogue_schema.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/PostgresCatalogueSchema.before_SQL.cpp postgres_catalogue_schema.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/SqliteCatalogueSchema.before_SQL.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/PostgresCatalogueSchema.before_SQL.cpp
 )
 
 if (OCCI_SUPPORT)
   add_custom_target(create_pre_oracle_catalogue_schema_cpp ALL
+    BYPRODUCTS oracle_catalogue_schema.cpp
     COMMAND sed 's/^/\ \ \"/' cta-catalogue-schema/oracle_catalogue_schema.sql | sed 's/$$/\"/' > oracle_catalogue_schema.cpp
     DEPENDS
       create_all_schemas_SQL
@@ -127,6 +134,7 @@ if (OCCI_SUPPORT)
   add_custom_command(OUTPUT OracleCatalogueSchema.cpp
     COMMAND sed '/CTA_SQL_SCHEMA/r oracle_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/OracleCatalogueSchema.before_SQL.cpp > OracleCatalogueSchema.cpp
     DEPENDS
+      oracle_catalogue_schema.cpp
       create_pre_oracle_catalogue_schema_cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/OracleCatalogueSchema.before_SQL.cpp oracle_catalogue_schema.cpp)
 endif ()
