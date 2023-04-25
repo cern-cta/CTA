@@ -25,7 +25,7 @@ IFS='|' read -a results_array <<< $(db_results)
 ARCHIVED=${results_array[0]}
 RETRIEVED=${results_array[1]}
 EVICTED=${results_array[2]}
-ABORTED=$(( ${TOTAL_FILES} - ${results_array[3]}))
+ABORTED=${results_array[3]}
 DELETED=${results_array[4]}
 
 names_arr=("ARCHIVED" "RETRIEVED" "EVICTED" "ABORTED" "DELETED")
@@ -45,11 +45,6 @@ for i in "${!resuls_array[@]}"; do
   fi
 done
 
-if [ ${LASTCOUNT} -ne $((${NB_FILES} * ${NB_DIRS})) ]; then
-  ((RC++))
-  echo "ERROR there were some lost files during the archive/retrieve test with ${NB_FILES} files (first 10):"
-  grep -v retrieved ${STATUS_FILE} | sed -e "s;^;${EOS_DIR}/;" | head -10
-fi
 
 if [ $(cat ${LOGDIR}/prepare_sys.retrieve.req_id_*.log | grep -v value= | wc -l) -ne 0 ]; then
   # THIS IS NOT YET AN ERROR: UNCOMMENT THE FOLLOWING LINE WHEN https://gitlab.cern.ch/cta/CTA/issues/606 is fixed
@@ -63,11 +58,12 @@ fi
 # ERROR otherwise as these xrootd failures could be the reason of the failure
 if [ $(ls ${LOGDIR}/xrd_errors | wc -l) -ne 0 ]; then
   # ((RC++)) # do not change RC
-  if [ ${RC} -eq 0 ]; then
+  #if [ ${RC} -eq 0 ]; then
+  if [[ $(cat /tmp/RC | wc -l) -eq 0 ]]; then
     echo "WARNING several xrootd failures occured during this run, please check client dumps in ${LOGDIR}/xrd_errors."
   else
     echo "ERROR several xrootd failures occured during this run, please check client dumps in ${LOGDIR}/xrd_errors."
   fi
 fi
 
-exit ${RC}
+exit $(cat /tmp/RC | wc -l)

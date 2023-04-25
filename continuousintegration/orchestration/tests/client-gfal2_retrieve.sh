@@ -34,7 +34,6 @@ rm -f ${TMP_FILE}
 current_stage_val=0
 NEW_STAGE_VAL=$((${current_stage_val} + 1 ))
 
-db_begin_transaction
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   echo -n "Retrieving files to ${EOS_DIR}/${subdir} using gfal-bringonline and ${NB_PROCS} processes..."
 
@@ -59,8 +58,8 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
 
   rm -f "${TMP_FILE}${subdir}"
 done
-db_commit_transaction
-db_begin_transaction
+
+
 if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
   # there were some prepare errors
   echo "Several prepare errors occured during retrieval!"
@@ -106,9 +105,10 @@ while test 0 -lt ${RETRIEVING}; do
 
   echo "${RETRIEVED}/${TO_BE_RETRIEVED} retrieved"
 done
-db_commit_transaction
 
+db_begin_transaction
 cat $status | xargs -iFILE bash -c "db_update staged FILE 1 '='"
+db_commit_transaction
 rm -f ${status}
 
 echo "###"

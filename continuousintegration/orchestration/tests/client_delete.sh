@@ -113,6 +113,7 @@ kill ${EOSRMPID} &> /dev/null
 # As we deleted the directory we may have deleted more files than the ones we retrieved
 # therefore we need to take the smallest of the 2 values to decide if the system test was
 # successful or not
+LASTCOUNT=0
 if [[ ${RETRIEVED} -gt ${DELETED} ]]; then
   LASTCOUNT=${DELETED}
   echo "Some files have not been deleted:"
@@ -127,4 +128,10 @@ else
   db_begin_transaction
   db_update_col "deleted" "+" "1"
   db_commit_transaction
+fi
+
+if [ ${LASTCOUNT} -ne $((${NB_FILES} * ${NB_DIRS})) ]; then
+  echo "ERROR there were some lost files during the archive/retrieve test with ${NB_FILES} files" >> /tmp/RC
+  echo "ERROR there were some lost files during the archive/retrieve test with ${NB_FILES} files (first 10):"
+  grep -v retrieved ${STATUS_FILE} | sed -e "s;^;${EOS_DIR}/;" | head -10
 fi

@@ -109,6 +109,7 @@ done
 kill ${EOSRMPID} &> /dev/null
 
 
+LASTCOUNT=0
 
 if [[ ${RETRIEVED} -gt ${DELETED} ]]; then
   LASTCOUNT=${DELETED}
@@ -120,4 +121,11 @@ else
   db_begin_transaction
   db_update_col "deleted" "+" "1"
   db_commit_transaction
+fi
+
+if [ ${LASTCOUNT} -ne $((${NB_FILES} * ${NB_DIRS})) ]; then
+  #((RC++))
+  echo "ERROR there were some lost files during the archive/retrieve test with ${NB_FILES} files" >> /tmp/RC
+  echo "ERROR there were some lost files during the archive/retrieve test with ${NB_FILES} files (first 10):"
+  grep -v retrieved ${STATUS_FILE} | sed -e "s;^;${EOS_DIR}/;" | head -10
 fi

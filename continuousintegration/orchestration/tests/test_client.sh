@@ -106,16 +106,35 @@ kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_a
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 
+echo
+echo "Launching client_evict.sh on client pod"
+echo " Evicting files: xrdfs as poweruser1"
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_evict.sh ${TEST_POSTRUN}" || exit 1
 
-#
-#echo
-#echo "Launching client_abortPrepare.sh on client pod"
-#echo " Archiving file: xrdcp as user1"
-#echo " Retriving it as powerser 1"
-#kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_abortPrepare.sh ${TEST_POSTRUN}" || exit 1
+kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 
-#kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+echo
+echo "Launching client_abortPrepare.sh on client pod"
+echo "  Retrieving files: xrdfs as poweruser1"
+echo "  Aborting prepare: xrdfs as poweruser1"
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_abortPrepare.sh ${TEST_POSTRUN}" || exit 1
+
+kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
+
+echo
+echo "Launching client_delete.sh on client pod"
+echo " Deleting files:"
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
+
+kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
+
+echo
+echo "Results for base client tests."
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_results.sh ${TEST_POSTRUN}" || exit 1
+
 
 echo
 echo "Launching client_multiple_retrieve.sh on client pod"

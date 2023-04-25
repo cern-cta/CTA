@@ -17,6 +17,7 @@
 
 set -a
 
+touch /tmp/RC
 EOSINSTANCE=ctaeos
 EOS_BASEDIR=/eos/ctaeos/cta
 TEST_FILE_NAME_BASE=test

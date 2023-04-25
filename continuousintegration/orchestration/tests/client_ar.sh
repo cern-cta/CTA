@@ -27,13 +27,3 @@ if [[ $ARCHIVEONLY == 1 ]]; then
 fi
 
 . /root/client_retrieve.sh
-
-. /root/client_evict.sh
-
-. /root/client_abortPrepare.sh
-
-if [[ $REMOVE == 1 ]]; then
-  . /root/client_delete.sh
-fi
-
-. /root/client_results.sh
