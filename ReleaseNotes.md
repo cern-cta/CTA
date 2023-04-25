@@ -8,6 +8,8 @@
 
 ### Continuous Integration
 - cta/CTA#262 - Manage CI repositories with `cta-release` code
+- cta/CTA#297 - Add gfal2 tests to CI
+- cta/CTA#297 - Refactor client pod tests and switched test tracking status to sqlite db
 
 # v4.8.7-1
 
