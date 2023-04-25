@@ -51,7 +51,7 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   cat ${TMP_FILE} | xargs -iTEST_FILE_NAME bash -c "db_update 'evicted' ${subdir}/TEST_FILE_NAME ${NEW_EVICT_VAL} '='"
 done
 rm -f ${TMP_FILE}
-db_commit_transacion
+db_commit_transaction
 
 EVICTED=$((${TO_EVICT}-${LEFTOVER}))
 echo "$(date +%s): $EVICTED/$TO_EVICT files evicted from EOS 'gfal-evict SURL'"
