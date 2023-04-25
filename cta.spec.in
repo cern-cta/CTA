@@ -45,9 +45,8 @@ BuildRequires: cmake3 >= 3.17 redhat-rpm-config
 # The CTA client is the only component of CTA that can be compiled on both SLC6
 # and C77, therefore only the packages it depends on are required for SLC6
 
-%if "%{ctaVersion}" == "4"
 %define xrootdVersion 1:4.12.4-1
-%else
+%if "%{ctaVersion}" == "5"
 %define xrootdVersion 1:5.4.2-1
 %endif
 
