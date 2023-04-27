@@ -80,12 +80,15 @@ done
 
 # Stage.
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-    echo -n "Retrieving files to ${EOS_DIR}/${subdir} using 1 process (prepare2)..."
+    echo -n "Retrieving files to ${EOS_DIR}/${subdir} using ?? process (prepare2)..."
 
     for((slot=1; slot <= ${NB_PROCS}; slot++)); do
       touch "slot${slot}"
     done
 
+    # NOTE: Parallel max-procs options are in alpha testing according to
+    # the docs. At the moment just run parallel without the flag making
+    # parallel take the decission.
     cat ${STATUS_FILE} | parallel bash -c "true && XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -s ${EOS_DIR}/${subdir}/{} 2>${ERROR_DIR}/RETRIEVE_{} | tee -a slot\"{%}\" && echo ${subdir}/{} >> slot\"{%}\" && rm ${ERROR_DIR}/RETRIEVE_{} || echo ERROR with xrootd prepare stage for file {}, full logs in ${ERROR_DIR}/RETRIEVE_{}" | grep ^ERROR
     find . -size 0 | xargs rm -f
     echo Done.
@@ -108,7 +111,7 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   # Cancel Stage
   # Abort prepare -s requests
   for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-    echo -n "Cancelling prepare for files in ${EOS_DIR}/${subdir} using 1 process (prepare_abort)..."
+    echo -n "Cancelling prepare for files in ${EOS_DIR}/${subdir} using ??  process (prepare_abort)..."
     ls slot* | parallel abortFile {}
     echo Done.
   done
