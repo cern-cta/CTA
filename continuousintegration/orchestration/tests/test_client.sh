@@ -135,6 +135,7 @@ echo
 echo "Results for base client tests."
 kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_results.sh ${TEST_POSTRUN}" || exit 1
 
+kubectl -n ${NAMESPACE} cp client:/root/trackerdb.db ../../../pod_logs/${NAMESPACE}/trackerdb.db 2>/dev/null
 
 echo
 echo "Launching client_multiple_retrieve.sh on client pod"
