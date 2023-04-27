@@ -90,7 +90,7 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
     # the docs. At the moment just run parallel without the flag making
     # parallel take the decission.
     cat ${STATUS_FILE} | parallel bash -c "true && XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -s ${EOS_DIR}/${subdir}/{} 2>${ERROR_DIR}/RETRIEVE_{} | tee -a slot\"{%}\" && echo ${subdir}/{} >> slot\"{%}\" && rm ${ERROR_DIR}/RETRIEVE_{} || echo ERROR with xrootd prepare stage for file {}, full logs in ${ERROR_DIR}/RETRIEVE_{}" | grep ^ERROR
-    find . -size 0 | xargs rm -f
+    find /root/ -size 0 | xargs rm -f
     echo Done.
   done
   if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
