@@ -61,8 +61,6 @@ client-gfal2:
     - .kubernetes_test
   rules:
     - !reference [.manual_rules, rules]
-  except:
-    - tags
   variables:
     TEST_SCRIPT: "tests/test_client-gfal2.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
