@@ -59,6 +59,8 @@ client-gfal2:
   stage: test
   extends:
     - .kubernetes_test
+  rules:
+    - !reference [.manual_rules, rules]
   except:
     - tags
   variables:
