@@ -96,10 +96,12 @@ if [[ ${XROOTD_VERSION} == 5 ]]; then
     kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 fi
 
+kubectl -n ${NAMESPACE} cp client:/root/trackerdb.db ../../../pod_logs/${NAMESPACE}/trackerdb_gfalxrd.db 2>/dev/null
+
 
 # Test gfal http plugin.
 #GFAL2_PROTOCOL='https'
-#
+# TODO: Reset DB, etc.
 # echo "Setting up environment for gfal-${GFAL2_PROTOCOL} tests
 # kubectl -n ${NAMESPACE} exec client -- bash -c "/root/client_setup.sh ${clientgfal2_options}"
 # echo "Installing gfal2-plugin-http for http gfal test."
@@ -110,5 +112,4 @@ fi
 #echo " Retrieving files with gfal https"
 #kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} &&  /root/client-gfal2_ar.sh && ${TEST_POSTRUN}" || exit 1
 #kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-
-kubectl -n ${NAMESPACE} cp client:/root/trackerdb.db ../../../pod_logs/${NAMESPACE}/trackerdb.db 2>/dev/null
+exit 0
