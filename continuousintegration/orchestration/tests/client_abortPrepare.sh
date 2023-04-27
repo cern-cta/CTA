@@ -16,6 +16,18 @@
 #               submit itself to any jurisdiction.
 
 
+# Quick function to abort the prepare of files.
+# $1: file containing even number of lines, odd lines == req id; even lines == file_name
+abortFile(){
+  while read -r REQ_ID; do
+    read -r FILE_PATH
+    FILE_NAME=$(echo ${FILE_PATH} | cut -d/ -f2)
+    XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -a ${REQ_ID} ${EOS_DIR}/${FILE_PATH} 2>${ERROR_DIR}/RETRIEVE_${FILE_NAME} && rm ${ERROR_DIR}/RETRIEVE_${FILE_NAME} || echo ERROR with xrootd prepare stage for file ${FILE_NAME}, full logs in ${ERROR_DIR}/RETRIEVE_${FILE_NAME} | grep ^ERROR
+  done < $1
+}
+
+export -f abortFile
+
 # Build the list of tape only files.
 STATUS_FILE=$(mktemp)
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
@@ -69,7 +81,13 @@ done
 # Stage.
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
     echo -n "Retrieving files to ${EOS_DIR}/${subdir} using 1 process (prepare2)..."
-    cat ${STATUS_FILE} | xargs -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -s ${EOS_DIR}/${subdir}/TEST_FILE_NAME 2>${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME | tee -a ${LOGDIR}/prepare2_${subdir}.log && echo TEST_FILE_NAME >> ${LOGDIR}/prepare2_${subdir}.log && rm ${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME || echo ERROR with xrootd prepare stage for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME" | grep ^ERROR
+
+    for((slot=1; slot <= ${NB_PROCS}; slot++)); do
+      touch "slot${slot}"
+    done
+
+    cat ${STATUS_FILE} | parallel bash -c "true && XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -s ${EOS_DIR}/${subdir}/{} 2>${ERROR_DIR}/RETRIEVE_{} | tee -a slot\"{%}\" && echo ${subdir}/{} >> slot\"{%}\" && rm ${ERROR_DIR}/RETRIEVE_{} || echo ERROR with xrootd prepare stage for file {}, full logs in ${ERROR_DIR}/RETRIEVE_{}" | grep ^ERROR
+    find . -size 0 | xargs rm -f
     echo Done.
   done
   if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
@@ -91,11 +109,10 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   # Abort prepare -s requests
   for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
     echo -n "Cancelling prepare for files in ${EOS_DIR}/${subdir} using 1 process (prepare_abort)..."
-    cat ${LOGDIR}/prepare2_${subdir}.log | parallel -N2 bash -c \
-        "echo {} && XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOSINSTANCE} prepare -a {1} ${EOS_DIR}/${subdir}/{2} 2>${ERROR_DIR}/RETRIEVE_{2} && rm ${ERROR_DIR}/RETRIEVE_{2} || echo ERROR with xrootd prepare stage for file {2}, full logs in ${ERROR_DIR}/RETRIEVE_{2}" | grep ^ERROR
+    ls slot* | parallel abortFile {}
     echo Done.
   done
-
+  rm -f slot*
   # Put drive(s) back up to clear the queue
   echo -n "Will put back up those drives : "
   echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "UP") | .driveName'
