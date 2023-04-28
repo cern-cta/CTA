@@ -35,6 +35,8 @@ namespace dataStructures {
 struct MountPolicy {
   MountPolicy();
 
+  MountPolicy(const MountPolicy& other);
+
   bool operator==(const MountPolicy &rhs) const;
 
   bool operator!=(const MountPolicy &rhs) const;

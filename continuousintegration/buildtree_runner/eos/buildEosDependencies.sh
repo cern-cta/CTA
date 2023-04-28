@@ -17,7 +17,7 @@
 
 set -e
 
-DEVTOOLSET_ENABLE_SCRIPT=/opt/rh/devtoolset-8/enable
+DEVTOOLSET_ENABLE_SCRIPT=/opt/rh/devtoolset-11/enable
 EOS_BUILD_DIR=~/eos_build
 EOS_SRC_DIR=~/eos
 

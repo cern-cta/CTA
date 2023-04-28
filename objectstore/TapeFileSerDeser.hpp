@@ -33,9 +33,7 @@ class TapeFileSerDeser: public cta::common::dataStructures::TapeFile {
 public:
   TapeFileSerDeser (): cta::common::dataStructures::TapeFile() {}
   TapeFileSerDeser (const cta::common::dataStructures::TapeFile & tf): cta::common::dataStructures::TapeFile(tf) {}
-  operator cta::common::dataStructures::TapeFile() {
-    return cta::common::dataStructures::TapeFile(*this);
-  } 
+
   void serialize (cta::objectstore::serializers::TapeFile & ostf) const {
     ostf.set_vid(vid);
     ostf.set_fseq(fSeq);

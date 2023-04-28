@@ -15,8 +15,8 @@
   extends:
     - .cta_build
   script:
-    - yum install -y devtoolset-8 cmake3 make rpm-build git
-    - source /opt/rh/devtoolset-8/enable
+    - yum install -y devtoolset-11 cmake3 make rpm-build git
+    - source /opt/rh/devtoolset-11/enable
     - git submodule update --init --recursive
     - mkdir build_srpm
     - cd build_srpm
@@ -29,10 +29,10 @@
   extends:
     - .cta_build
   script:
-    - yum install -y devtoolset-8 cmake3 make rpm-build
+    - yum install -y devtoolset-11 cmake3 make rpm-build
     - yum -y install yum-plugin-priorities yum-plugin-versionlock
     - yum install -y git
-    - source /opt/rh/devtoolset-8/enable
+    - source /opt/rh/devtoolset-11/enable
     - git submodule update --init --recursive
     - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
     - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/

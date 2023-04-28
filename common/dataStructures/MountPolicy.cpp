@@ -37,6 +37,18 @@ MountPolicy::MountPolicy(const std::string& name, const uint64_t archivePriority
   const uint64_t retrievePriority, const uint64_t retrieveMinRequestAge)
   : name(name), archivePriority(archivePriority), archiveMinRequestAge(archiveMinRequestAge),
     retrievePriority(retrievePriority), retrieveMinRequestAge(retrieveMinRequestAge) {}
+
+MountPolicy::MountPolicy(const MountPolicy& other) {
+  this->archiveMinRequestAge = other.archiveMinRequestAge;
+  this->archivePriority = other.archivePriority;
+  this->comment = other.comment;
+  this->creationLog = other.creationLog;
+  this->lastModificationLog = other.lastModificationLog;
+  this->name = other.name;
+  this->retrieveMinRequestAge = other.retrieveMinRequestAge;
+  this->retrievePriority = other.retrievePriority;
+}
+
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------

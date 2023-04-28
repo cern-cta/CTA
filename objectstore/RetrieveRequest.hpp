@@ -160,7 +160,6 @@ public:
   RepackInfo getRepackInfo();
 
   struct RepackInfoSerDeser: public RepackInfo {
-    operator RepackInfo() { return RepackInfo(*this); }
     void serialize(cta::objectstore::serializers::RetrieveRequestRepackInfo & rrri) {
       if (!isRepack) throw exception::Exception("In RetrieveRequest::RepackInfoSerDeser::serialize(): isRepack is false.");
       for (auto &route: archiveRouteMap) {

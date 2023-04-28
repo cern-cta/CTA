@@ -901,3 +901,34 @@
   fun:_ZN6castor4tape10tapeserver6daemon13DiskWriteTaskD0Ev
   ...
 }
+
+{
+   <insert_a_suppression_name_here>
+   Helgrind:Race
+   fun:_ZNSsD1Ev
+   fun:_ZN6google8protobuf8internal14ArenaStringPtr14DestroyNoArenaEPKSs
+   fun:_ZN3cta11objectstore11serializers12ObjectHeader10SharedDtorEv
+   ...
+}
+
+{
+   <insert_a_suppression_name_here>
+   Helgrind:Misc
+   fun:do_futex_wait.constprop.1
+   fun:__new_sem_wait_slow.constprop.0
+   fun:sem_wait@@GLIBC_2.2.5
+   fun:sem_wait_WRK
+   fun:sem_wait@*
+   fun:_ZN3cta9threading14PosixSemaphore7acquireEv
+   fun:_ZN3cta8OStoreDB16delayIfNecessaryERNS_3log10LogContextE
+   ...
+}
+
+{                                                                                                        
+   <insert_a_suppression_name_here>
+   Helgrind:Race                              
+   fun:_ZN6google8protobuf8internal29InternalMetadataWithArenaBaseINS0_15UnknownFieldSetENS1_25InternalMetadataWithArenaEED1Ev
+   fun:_ZN6google8protobuf8internal25InternalMetadataWithArenaD1Ev
+   fun:_ZN3cta11objectstore11serializers8TapeFileD1Ev
+   ...
+}

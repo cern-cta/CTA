@@ -130,7 +130,7 @@ void DropSchemaCmd::dropDatabaseTables(rdbms::Conn &conn) {
       droppedAtLeastOneTable = false;
       auto tables = conn.getTableNames();
       tables.remove("CTA_CATALOGUE");  // Remove CTA_CATALOGUE to drop it at the end
-      for (const auto table : tables) {
+      for (const auto& table : tables) {
         try {
           conn.executeNonQuery(std::string("DROP TABLE ") + table);
           m_out << "Dropped table " << table << std::endl;

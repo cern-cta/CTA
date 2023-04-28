@@ -33,10 +33,6 @@ struct DiskFileInfoSerDeser: public cta::common::dataStructures::DiskFileInfo {
   DiskFileInfoSerDeser() : cta::common::dataStructures::DiskFileInfo() {}
   DiskFileInfoSerDeser(const cta::common::dataStructures::DiskFileInfo &dfi) : cta::common::dataStructures::DiskFileInfo(dfi) {}
 
-  operator cta::common::dataStructures::DiskFileInfo() {
-    return cta::common::dataStructures::DiskFileInfo(*this);
-  }
-
   void serialize (cta::objectstore::serializers::DiskFileInfo & osdfi) const {
     osdfi.set_path(path);
     osdfi.set_owner_uid(owner_uid);

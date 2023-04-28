@@ -30,7 +30,8 @@ class LifecycleTimings {
 public:
   LifecycleTimings();
   LifecycleTimings(const LifecycleTimings& orig);
-  virtual ~LifecycleTimings();
+  LifecycleTimings operator=(const LifecycleTimings& orig);
+  virtual ~LifecycleTimings() = default;
   /**
    * Returns the elapsed time between the creation of the request
    * and the selection of the request for mounting

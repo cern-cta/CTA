@@ -23,8 +23,8 @@ if [[ $1 == "cern" ]]; then
   echo Going to install from internal CERN repositories
 fi
 
-echo Enabling devtoolset-8
-source /opt/rh/devtoolset-8/enable
+echo Enabling devtoolset-11
+source /opt/rh/devtoolset-11/enable
 
 echo Preparing CTA sources...
 cd ~/CTA

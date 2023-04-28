@@ -35,9 +35,7 @@ class ArchiveFileSerDeser: public cta::common::dataStructures::ArchiveFile {
 public:
   ArchiveFileSerDeser (): cta::common::dataStructures::ArchiveFile() {}
   ArchiveFileSerDeser (const cta::common::dataStructures::ArchiveFile & af): cta::common::dataStructures::ArchiveFile(af) {}
-  operator cta::common::dataStructures::ArchiveFile() {
-    return cta::common::dataStructures::ArchiveFile(*this);
-  } 
+
   void serialize (cta::objectstore::serializers::ArchiveFile & osaf) const {
     osaf.set_archivefileid(archiveFileID);
     osaf.set_creationtime(creationTime);

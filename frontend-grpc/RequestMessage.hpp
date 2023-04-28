@@ -20,6 +20,7 @@
 #include "cta_grpc_frontend.grpc.pb.h"
 
 #include <map>
+#include <optional>
 #include <string>
 
 namespace cta {

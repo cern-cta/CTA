@@ -18,6 +18,7 @@
 #pragma once
 
 #include <map>
+#include <optional>
 #include <sstream>
 
 namespace cta {

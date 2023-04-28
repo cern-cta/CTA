@@ -28,4 +28,10 @@ RetrieveFileQueueCriteria& RetrieveFileQueueCriteria::operator=(const RetrieveFi
     return *this;
 }
 
+// Copy constructor
+RetrieveFileQueueCriteria::RetrieveFileQueueCriteria(const RetrieveFileQueueCriteria& other){
+    this->archiveFile = other.archiveFile;
+    this->mountPolicy = other.mountPolicy;
+}
+
 }}}

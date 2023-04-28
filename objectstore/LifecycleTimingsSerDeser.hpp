@@ -22,9 +22,11 @@ namespace objectstore{
     public:
       LifecycleTimingsSerDeser() : cta::common::dataStructures::LifecycleTimings() {}
       LifecycleTimingsSerDeser(const cta::common::dataStructures::LifecycleTimings& lifecycleTimings) : cta::common::dataStructures::LifecycleTimings(lifecycleTimings) {}
-      operator cta::common::dataStructures::LifecycleTimings() {
-	return cta::common::dataStructures::LifecycleTimings(*this);
-      } 
+
+      // Assignment operator
+      LifecycleTimingsSerDeser operator=(const cta::common::dataStructures::LifecycleTimings& lifecycleTimings) {
+            return cta::common::dataStructures::LifecycleTimings(*this);
+      }
 
       void deserialize(const cta::objectstore::serializers::LifecycleTimings& ostoreLifecycleTimings){
 	completed_time = ostoreLifecycleTimings.completed_time();

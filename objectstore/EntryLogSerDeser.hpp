@@ -38,9 +38,7 @@ public:
     host=hn;
     time=t;
   }
-  operator cta::common::dataStructures::EntryLog() {
-    return cta::common::dataStructures::EntryLog(*this);
-  } 
+
   void serialize (cta::objectstore::serializers::EntryLog & log) const {
     log.set_username(username);
     log.set_host(host);

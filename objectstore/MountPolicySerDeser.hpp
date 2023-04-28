@@ -33,9 +33,7 @@ class MountPolicySerDeser: public cta::common::dataStructures::MountPolicy {
 public:
   MountPolicySerDeser (): cta::common::dataStructures::MountPolicy() {}
   MountPolicySerDeser (const cta::common::dataStructures::MountPolicy & mp): cta::common::dataStructures::MountPolicy(mp) {}
-  operator cta::common::dataStructures::MountPolicy() {
-    return cta::common::dataStructures::MountPolicy(*this);
-  }
+
   void serialize (cta::objectstore::serializers::MountPolicy & osmp) const {
     osmp.set_name(name);
     osmp.set_archivepriority(archivePriority);

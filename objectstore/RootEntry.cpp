@@ -15,6 +15,8 @@
  *               submit itself to any jurisdiction.
  */
 
+#include <thread>
+
 #include <cxxabi.h>
 #include <google/protobuf/util/json_util.h>
 

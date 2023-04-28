@@ -162,7 +162,6 @@ public:
       const std::optional<serializers::ArchiveJobStatus>& newStatus);
 
   struct RepackInfoSerDeser: public RepackInfo {
-    operator RepackInfo() { return RepackInfo(*this); }
     void serialize(cta::objectstore::serializers::ArchiveRequestRepackInfo & arri) {
       if (!isRepack) throw exception::Exception("In ArchiveRequest::RepackInfoSerDeser::serialize(): isRepack is false.");
       arri.set_repack_request_address(repackRequestAddress);

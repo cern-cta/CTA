@@ -959,7 +959,7 @@ void ArchiveRequest::setRepackInfo(const RepackInfo& repackInfo){
   repackInfoToWrite->set_repack_request_address(repackInfo.repackRequestAddress);
   repackInfoToWrite->set_file_buffer_url(repackInfo.fileBufferURL);
   repackInfoToWrite->set_fseq(repackInfo.fSeq);
-  for(const auto kv: repackInfo.jobsDestination){
+  for(const auto& kv: repackInfo.jobsDestination){
     auto jobDestination = repackInfoToWrite->mutable_jobs_destination()->Add();
     jobDestination->set_copy_nb(kv.first);
     jobDestination->set_destination_vid(kv.second);

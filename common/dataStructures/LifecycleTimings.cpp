@@ -22,10 +22,18 @@ namespace dataStructures{
 
 LifecycleTimings::LifecycleTimings() : creation_time(0), first_selected_time(0), completed_time(0) {}
 
-LifecycleTimings::LifecycleTimings(const LifecycleTimings& orig): creation_time(orig.creation_time), first_selected_time(orig.first_selected_time), completed_time(orig.completed_time) {
+LifecycleTimings::LifecycleTimings(const LifecycleTimings& orig)
+  : creation_time(orig.creation_time),
+    first_selected_time(orig.first_selected_time),
+    completed_time(orig.completed_time) {
 }
 
-LifecycleTimings::~LifecycleTimings() {
+// Assignment operator
+LifecycleTimings LifecycleTimings::operator=(const LifecycleTimings& orig) {
+  creation_time = orig.creation_time;
+  first_selected_time = orig.first_selected_time;
+  completed_time = orig.completed_time;
+  return *this;
 }
 
 time_t LifecycleTimings::getTimeForSelection(){
