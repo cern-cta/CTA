@@ -38,25 +38,39 @@
   variables:
     EXTENDED_OPTIONS: "-O -D -t 2400 -C -e eos5-config-quarkdb.yaml"
 
-archiveretrieve:
+client:
   stage: test
   extends:
     - .kubernetes_test
   except:
     - tags
   variables:
-    TEST_SCRIPT: "tests/archive_retrieve.sh"
+    TEST_SCRIPT: "tests/test_client.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
 
-archiveretrieve-eos5:
+client-eos5:
   stage: test
   extends:
     - .eos5
   variables:
-    TEST_SCRIPT: "tests/archive_retrieve.sh"
-    # I give the name "ar-eos5", because "archiveretrieve-eos5" is too long and it produce an error
-    # of connection with XRootD
-    JOB_NAME: "ar-eos5"
+    TEST_SCRIPT: "tests/test_client.sh"
+
+client-gfal2:
+  stage: test
+  extends:
+    - .kubernetes_test
+  rules:
+    - !reference [.manual_rules, rules]
+  variables:
+    TEST_SCRIPT: "tests/test_client-gfal2.sh"
+    EXTENDED_OPTIONS: "-O -D -t 2400 -C"
+
+client-gfal2-eos5:
+  stage: test
+  extends:
+    - .eos5
+  variables:
+    TEST_SCRIPT: "tests/test_client-gfal2.sh"
 
 repack:
   stage: test

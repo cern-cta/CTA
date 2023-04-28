@@ -374,7 +374,7 @@ echo OK
 
 echo -n "Configuring KDC clients (frontend, cli...) "
 kubectl --namespace=${instance} exec kdc -- cat /etc/krb5.conf | kubectl --namespace=${instance} exec -i client --  bash -c "cat > /etc/krb5.conf"
-kubectl --namespace=${instance} exec kdc -- cat /etc/krb5.conf | kubectl --namespace=${instance} exec -i ctacli --  bash -c "cat > /etc/krb5.conf" 
+kubectl --namespace=${instance} exec kdc -- cat /etc/krb5.conf | kubectl --namespace=${instance} exec -i ctacli --  bash -c "cat > /etc/krb5.conf"
 kubectl --namespace=${instance} exec kdc -- cat /etc/krb5.conf | kubectl --namespace=${instance} exec -i ctafrontend --  bash -c "cat > /etc/krb5.conf"
 kubectl --namespace=${instance} exec kdc -- cat /etc/krb5.conf | kubectl --namespace=${instance} exec -i ctaeos --  bash -c "cat > /etc/krb5.conf"
 kubectl --namespace=${instance} exec kdc -- cat /root/ctaadmin1.keytab | kubectl --namespace=${instance} exec -i ctacli --  bash -c "cat > /root/ctaadmin1.keytab"
@@ -409,6 +409,7 @@ echo OK
 
 echo "klist for client:"
 kubectl --namespace=${instance} exec client -- klist
+
 
 echo "klist for ctacli:"
 kubectl --namespace=${instance} exec ctacli -- klist

@@ -50,37 +50,98 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-echo
-echo "Launching simple_client_ar.sh on client pod"
-echo " Archiving file: xrdcp as user1"
-echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} cp simple_client_ar.sh client:/root/simple_client_ar.sh
-kubectl -n ${NAMESPACE} cp client_helper.sh client:/root/client_helper.sh
-kubectl -n ${NAMESPACE} exec client -- bash /root/simple_client_ar.sh || exit 1
+echo "Installing parallel"
+kubectl -n ${NAMESPACE} exec client -- bash -c "yum -y install parallel" || exit 1
+kubectl -n ${NAMESPACE} exec client -- bash -c "echo 'will cite' | parallel --bibtex" || exit 1
 
-kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh ctaeos:/root/grep_xrdlog_mgm_for_error.sh
-kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+echo
+echo "Copying test scripts to client pod."
+kubectl -n ${NAMESPACE} cp . client:/root/
+kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh ctaeos:/root/
 
 NB_FILES=10000
 FILE_SIZE_KB=15
+NB_PROCS=100
+
+echo
+echo "Setting up environment for tests."
+kubectl -n ${NAMESPACE} exec client -- bash -c "/root/client_setup.sh -n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -d /eos/ctaeos/preprod -v -r" || exit 1
+
+# Test are run under the cta user account which doesn't have a login
+# option so to be able to export the test setup we need to source the file
+# client_env (file generated in client_setup with all env varss and fucntions)
+#
+# Also, to show the output of tpsrv0X rmcd to the logs we need to tail the files
+# before every related script and kill it a the end. Another way to do this would
+# require to change the stdin/out/err of the tail process and set//reset it
+# at the beginning and end of each kubectl exec command.
+TEST_PRERUN=". /root/client_env "
+TEST_POSTRUN=""
+
+VERBOSE=1
+if [[ $VERBOSE == 1 ]]; then
+  TEST_PRERUN="tail -v -f /mnt/logs/tpsrv0*/rmcd/cta/cta-rmcd.log & export TAILPID=\$! && ${TEST_PRERUN}"
+  TEST_POSTRUN=" && kill \${TAILPID} &> /dev/null"
+fi
+
+echo
+echo "Launching immutable file test on client pod"
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && echo yes | cta-immutable-file-test root://\${EOSINSTANCE}/\${EOS_DIR}/immutable_file ${TEST_POSTRUN} || die 'The cta-immutable-file-test failed.'" || exit 1
+
+echo
+echo "Launching client_simple_ar.sh on client pod"
+echo " Archiving file: xrdcp as user1"
+echo " Retrieving it as poweruser1"
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_simple_ar.sh ${TEST_POSTRUN}" || exit 1
+kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
 
 echo
 echo "Launching client_ar.sh on client pod"
 echo " Archiving ${NB_FILES} files of ${FILE_SIZE_KB}kB each"
 echo " Archiving files: xrdcp as user1"
 echo " Retrieving them as poweruser1"
-kubectl -n ${NAMESPACE} cp client_ar.sh client:/root/client_ar.sh
-kubectl -n ${NAMESPACE} cp client_ar_abortPrepare.py client:/root/client_abortPrepare.sh
-kubectl -n ${NAMESPACE} exec client -- bash /root/client_ar.sh -n ${NB_FILES} -s ${FILE_SIZE_KB} -p 100 -d /eos/ctaeos/preprod -v -r || exit 1
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_ar.sh ${TEST_POSTRUN}" || exit 1
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
+
 echo
-echo "Launching multiple_retrieve.sh on client pod"
+echo "Launching client_evict.sh on client pod"
+echo " Evicting files: xrdfs as poweruser1"
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_evict.sh ${TEST_POSTRUN}" || exit 1
+
+kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
+
+echo
+echo "Launching client_abortPrepare.sh on client pod"
+echo "  Retrieving files: xrdfs as poweruser1"
+echo "  Aborting prepare: xrdfs as poweruser1"
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_abortPrepare.sh ${TEST_POSTRUN}" || exit 1
+
+kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
+
+echo
+echo "Launching client_delete.sh on client pod"
+echo " Deleting files:"
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
+
+kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
+
+echo
+echo "Results for base client tests."
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_results.sh ${TEST_POSTRUN}" || exit 1
+
+kubectl -n ${NAMESPACE} cp client:/root/trackerdb.db ../../../pod_logs/${NAMESPACE}/trackerdb.db 2>/dev/null
+
+echo
+echo "Launching client_multiple_retrieve.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} cp multiple_retrieve.sh client:/root/multiple_retrieve.sh
-kubectl -n ${NAMESPACE} exec client -- bash /root/multiple_retrieve.sh || exit 1
+kubectl -n ${NAMESPACE} exec client -- bash /root/client_multiple_retrieve.sh || exit 1
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
@@ -88,7 +149,6 @@ echo
 echo "Launching idempotent_prepare.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} cp idempotent_prepare.sh client:/root/idempotent_prepare.sh
 kubectl -n ${NAMESPACE} exec client -- bash /root/idempotent_prepare.sh || exit 1
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
@@ -97,7 +157,6 @@ echo
 echo "Launching delete_on_closew_error.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} cp delete_on_closew_error.sh client:/root/delete_on_closew_error.sh
 kubectl -n ${NAMESPACE} exec client -- bash /root/delete_on_closew_error.sh || exit 1
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
@@ -106,7 +165,6 @@ echo
 echo "Launching try_evict_before_archive_completed.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} cp try_evict_before_archive_completed.sh client:/root/try_evict_before_archive_completed.sh
 kubectl -n ${NAMESPACE} exec client -- bash /root/try_evict_before_archive_completed.sh || exit 1
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
@@ -117,7 +175,6 @@ echo
 echo "Launching retrieve_queue_cleanup.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} cp retrieve_queue_cleanup.sh client:/root/retrieve_queue_cleanup.sh
 kubectl -n ${NAMESPACE} exec client -- bash /root/retrieve_queue_cleanup.sh || exit 1
 
 kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1

@@ -1,5 +1,7 @@
+#!/bin/bash
+
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2015-2022 CERN
+# @copyright    Copyright © 2022 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -13,15 +15,23 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-cmake_minimum_required (VERSION 3.17)
 
-find_package(xrootd REQUIRED)
-find_package(xrootdclient REQUIRED)
-find_package(Protobuf3 REQUIRED)
+if [[ $DONOTARCHIVE == 0 ]]; then
+    . /root/client_archive.sh
+fi
 
-include_directories(${XROOTD_INCLUDE_DIR} ${CMAKE_SOURCE_DIR})
+if [[ $ARCHIVEONLY == 1 ]]; then
+  echo "Archiveonly mode: exiting"
+  test -z $TAILPID || kill ${TAILPID} &> /dev/null
+  exit 0
+fi
 
-add_executable(cta-client-ar-abortPrepare client-ar-abortPrepare.cpp)
-target_link_libraries(cta-client-ar-abortPrepare XrdCl ctacommon)
-install(TARGETS cta-client-ar-abortPrepare DESTINATION usr/bin)
-set_property(TARGET cta-client-ar-abortPrepare APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+. /root/client-gfal2_retrieve.sh
+
+. /root/client-gfal2_evict.sh
+
+if [[ $REMOVE == 1 ]]; then
+  . /root/client-gfal2_delete.sh
+fi
+
+. /root/client_results.sh

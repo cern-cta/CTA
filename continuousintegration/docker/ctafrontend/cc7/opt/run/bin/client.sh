@@ -22,7 +22,7 @@ if [ ! -e /etc/buildtreeRunner ]; then
   yum-config-manager --enable ceph
 
   # Install missing RPMs
-  yum -y install cta-cli cta-immutable-file-test cta-systemtest-helpers cta-debuginfo xrootd-client eos-client jq python36
+  yum -y install cta-cli cta-immutable-file-test cta-debuginfo xrootd-client eos-client jq python36
 
   ## Keep this temporary fix that may be needed if going to protobuf3-3.5.1 for CTA
   # Install eos-protobuf3 separately as eos is OK with protobuf3 but cannot use it..
@@ -35,6 +35,7 @@ cat <<EOF > /etc/cta/cta-cli.conf
 # solved by kubernetes DNS server so KIS...
 cta.endpoint ctafrontend:10955
 EOF
+
 
 if [ "-${CI_CONTEXT}-" == '-nosystemd-' ]; then
   # sleep forever but exit immediately when pod is deleted

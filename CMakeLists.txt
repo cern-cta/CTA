@@ -165,8 +165,6 @@ ELSE(DEFINED PackageOnly)
 
   add_subdirectory(statistics)
 
-  add_subdirectory(continuousintegration/orchestration/tests)
-
   add_subdirectory(cta-release)
 
   #Generate version information

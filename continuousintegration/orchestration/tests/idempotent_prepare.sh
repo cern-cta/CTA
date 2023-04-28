@@ -591,7 +591,7 @@ if [ $? -eq 0 ]; then
   exit 1
 fi
 
-wait_for_evict ${EOS_INSTANCE} {TEMP_FILE_TAPE}
+wait_for_evict ${EOS_INSTANCE} ${TEMP_FILE_TAPE}
 
 echo "Test completed successfully"
 
