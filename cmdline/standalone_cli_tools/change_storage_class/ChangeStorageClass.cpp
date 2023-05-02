@@ -23,6 +23,7 @@
 #include <string>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <unordered_set>
 
 #include <XrdSsiPbLog.hpp>
 #include <XrdSsiPbIStreamBuffer.hpp>
@@ -81,8 +82,11 @@ int ChangeStorageClass::exceptionThrowingMain(const int argc, char *const *const
 
   handleArguments(cmdLineArgs);
 
-  storageClassExists();
-  updateStorageClassInCatalogue();
+  storageClassesExist();
+
+  for(const auto& [archiveFileId, storageClass]: m_archiveFileIdsAndStorageClasses) {
+    updateStorageClassInCatalogue(archiveFileId, storageClass);
+  }
   return 0;
 }
 
@@ -98,38 +102,46 @@ void ChangeStorageClass::handleArguments(const CmdLineArgs &cmdLineArgs) {
   if(cmdLineArgs.m_json) {
     JsonFileData jsonFilaData(cmdLineArgs.m_json.value());
     for(const auto &jsonFileDataObject : jsonFilaData.m_jsonArgumentsCollection) {
-      if(!validateUserInputFileMetadata(jsonFileDataObject.archiveId, jsonFileDataObject.fid, jsonFileDataObject.instance)) {
+      if(!validateUserInputFileMetadata(jsonFileDataObject.archiveFileId, jsonFileDataObject.fid, jsonFileDataObject.instance)) {
         throw exception::UserError("Archive id does not match with disk file id or disk instance, are you sure the correct file metadata was provided?");
       }
-      m_archiveFileIds.push_back(jsonFileDataObject.archiveId);
+      m_archiveFileIdsAndStorageClasses.push_back(std::make_pair(jsonFileDataObject.archiveFileId, jsonFileDataObject.storageClass));
     }
-  }
+  } else {
+    if (!cmdLineArgs.m_storageClassName) {
+      cmdLineArgs.printUsage(std::cout);
+      throw exception::UserError("Missing required option when not providing a path to an input file: storage.class.name");
+    }
 
-  if (!cmdLineArgs.m_storageClassName) {
-    cmdLineArgs.printUsage(std::cout);
-    throw exception::UserError("Missing required option: storage.class.name");
-  }
+    if ((!cmdLineArgs.m_archiveFileId || !cmdLineArgs.m_fids || !cmdLineArgs.m_diskInstance)) {
+      cmdLineArgs.printUsage(std::cout);
+      throw exception::UserError("Archive id, eos file id and disk instance must be provided must be provided");
+    }
 
-  if ((!cmdLineArgs.m_archiveFileId || !cmdLineArgs.m_fids || !cmdLineArgs.m_diskInstance) && !cmdLineArgs.m_json) {
-    cmdLineArgs.printUsage(std::cout);
-    throw exception::UserError("Archive id, eos file id and disk instance must be provided must be provided");
-  }
+    m_storageClassName = cmdLineArgs.m_storageClassName.value();
 
-  m_storageClassName = cmdLineArgs.m_storageClassName.value();
-
-  if (cmdLineArgs.m_archiveFileId) {
-    m_archiveFileIds.push_back(cmdLineArgs.m_archiveFileId.value());
+    m_archiveFileIdsAndStorageClasses.push_back(std::make_pair(cmdLineArgs.m_archiveFileId.value(), cmdLineArgs.m_storageClassName.value()));
     if(!validateUserInputFileMetadata(cmdLineArgs.m_archiveFileId.value(), cmdLineArgs.m_fids.value().front(), cmdLineArgs.m_diskInstance.value())) {
       throw exception::UserError("Archive id does not match with disk file id or disk instance, are you sure the correct file metadata was provided?");
     }
   }
+
 }
 
+void ChangeStorageClass::storageClassesExist() const {
+  std::unordered_set<std::string> storageClasses;
+  for(const auto& archiveFileIdAndStorageClass : m_archiveFileIdsAndStorageClasses) {
+    storageClasses.insert(archiveFileIdAndStorageClass.second);
+  }
+  for(const auto& storageClass : storageClasses) {
+    storageClassExists(storageClass);
+  }
+}
 
 //------------------------------------------------------------------------------
 // storageClassExists
 //------------------------------------------------------------------------------
-void ChangeStorageClass::storageClassExists() const {
+void ChangeStorageClass::storageClassExists(const std::string& storageClass) const {
   cta::xrd::Request request;
   const auto admincmd = request.mutable_admincmd();
 
@@ -142,7 +154,7 @@ void ChangeStorageClass::storageClassExists() const {
     const auto key = cta::admin::OptionString::STORAGE_CLASS;
     const auto new_opt = admincmd->add_option_str();
     new_opt->set_key(key);
-    new_opt->set_value(m_storageClassName);
+    new_opt->set_value(storageClass);
   }
 
   cta::xrd::Response response;
@@ -174,14 +186,14 @@ void ChangeStorageClass::storageClassExists() const {
   }
 
   if (g_storageClasses.empty()){
-    throw(exception::UserError("The storage class provided has not been defined."));
+    throw(exception::UserError("The storage class " + storageClass + " has not been defined."));
   }
 }
 
 //------------------------------------------------------------------------------
 // updateCatalogue
 //------------------------------------------------------------------------------
-void ChangeStorageClass::updateStorageClassInCatalogue() const {
+void ChangeStorageClass::updateStorageClassInCatalogue(const std::string& archiveFileId, const std::string& storageClass) const {
   cta::xrd::Request request;
 
   const auto admincmd = request.mutable_admincmd();
@@ -195,16 +207,14 @@ void ChangeStorageClass::updateStorageClassInCatalogue() const {
     const auto key = cta::admin::OptionString::STORAGE_CLASS_NAME;
     const auto new_opt = admincmd->add_option_str();
     new_opt->set_key(key);
-    new_opt->set_value(m_storageClassName);
+    new_opt->set_value(storageClass);
   }
 
   {
     const auto key = cta::admin::OptionStrList::FILE_ID;
     const auto new_opt = admincmd->add_option_str_list();
     new_opt->set_key(key);
-    for (const auto &archiveFileId : m_archiveFileIds) {
-      new_opt->add_item(archiveFileId);
-    }
+    new_opt->add_item(archiveFileId);
   }
 
   // Validate the Protocol Buffer
@@ -233,8 +243,8 @@ void ChangeStorageClass::updateStorageClassInCatalogue() const {
   }
 }
 
-bool ChangeStorageClass::validateUserInputFileMetadata(const std::string& archiveId, const std::string& operatorProvidedFid, const std::string& operatorProvidedInstance) {
-  const auto [diskDiskInstance, diskFileId] = CatalogueFetch::getInstanceAndFid(archiveId, m_serviceProviderPtr, m_log);
+bool ChangeStorageClass::validateUserInputFileMetadata(const std::string& archiveFileId, const std::string& operatorProvidedFid, const std::string& operatorProvidedInstance) {
+  const auto [diskDiskInstance, diskFileId] = CatalogueFetch::getInstanceAndFid(archiveFileId, m_serviceProviderPtr, m_log);
   return ((operatorProvidedInstance == diskDiskInstance) && (operatorProvidedFid == diskFileId));
 }
 

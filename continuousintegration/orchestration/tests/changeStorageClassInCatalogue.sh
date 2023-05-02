@@ -85,8 +85,8 @@ EOS_FILE_ID_2=$(jq -r '.id' ${EOS_METADATA_PATH_2})
 ############## CREATE INPUT FILE TO USE FOR TOOL ##############
 IDS_FILEPATH=${TMP_DIR}/archiveFileIds.txt
 touch ${IDS_FILEPATH}
-echo '{"archiveId": '${EOS_ARCHIVE_ID_1}', "fid": '${EOS_FILE_ID_1}', "instance": "'${EOSINSTANCE}'"}' >> ${IDS_FILEPATH}
-echo '{"archiveId": '${EOS_ARCHIVE_ID_2}', "fid": '${EOS_FILE_ID_2}', "instance": "'${EOSINSTANCE}'"}' >> ${IDS_FILEPATH}
+echo '{"archiveFileId": '${EOS_ARCHIVE_ID_1}', "fid": '${EOS_FILE_ID_1}', "instance": "'${EOSINSTANCE}'", "storageclass": "'${NEW_STORAGE_CLASS_NAME}'"}' >> ${IDS_FILEPATH}
+echo '{"archiveFileId": '${EOS_ARCHIVE_ID_2}', "fid": '${EOS_FILE_ID_2}', "instance": "'${EOSINSTANCE}'", "storageclass": "'${NEW_STORAGE_CLASS_NAME}'"}' >> ${IDS_FILEPATH}
 
 ############## RUN TOOL ##############
 kubectl cp ${IDS_FILEPATH} ${NAMESPACE}/ctafrontend:${IDS_FILEPATH}

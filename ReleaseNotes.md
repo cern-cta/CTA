@@ -3,6 +3,7 @@
 ### Features
 - cta/CTA#78 - Remove gRPC and ability to change the storage class in EOS from the cta-change-storage-class C++ script
 - cta/CTA#342 - Compile CTA using devtoolset-11
+- cta/CTA#356 - Add support for changing to different storage classes during one execution for cta-change-storage-class-in-catalogue
 
 ### Bug Fixes
 - cta/CTA#259 - cta-rmcd should not exit if /dev/sg0 is missing

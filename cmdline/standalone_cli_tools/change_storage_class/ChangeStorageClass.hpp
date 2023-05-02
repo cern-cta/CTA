@@ -22,6 +22,7 @@
 #include <optional>
 #include <memory>
 #include <vector>
+#include <utility>
 
 #include "CtaFrontendApi.hpp"
 
@@ -64,7 +65,7 @@ private:
   /**
    * Archive file ids of the files to change
    */
-  std::vector<std::string> m_archiveFileIds;
+  std::vector<std::pair<std::string, std::string>> m_archiveFileIdsAndStorageClasses;
 
   /**
    * Archive file id of the files to change
@@ -77,15 +78,23 @@ private:
   std::unique_ptr<XrdSsiPbServiceType> m_serviceProviderPtr;
 
   /**
-   *  Checks if the storage class provided to the tool is defined,
-   * and throws an exception::UserError if it is not found
+   * Creates a set of the provided storage classes and checks that they exist
   */
-  void storageClassExists() const;
+  void storageClassesExist() const;
+
+  /**
+  * Checks if the storage classes provided to the tool is defined,
+  * and throws an exception::UserError if it is not found
+  * @param storageClass The new storage class
+  */
+  void storageClassExists(const std::string& storageClass) const;
 
   /**
   * Updates the storage class name in the catalogue
+  * @param archiveFileId the archive file id to check
+  * @param storageClass The new storage class
   */
-  void updateStorageClassInCatalogue() const;
+  void updateStorageClassInCatalogue(const std::string& archiveFileId, const std::string& storageClass) const;
 
   /**
   * Fills the member variables with data, based on the arguments that were provided
@@ -94,11 +103,11 @@ private:
 
   /**
   * Checks that the provided archive id is related to the correct disk file id and disk instance
-  * @param archiveId the archive file id to check
+  * @param archiveFileId the archive file id to check
   * @param operatorProvidedFid The disk file id provided by the operator, either from a json file or an command line argument
   * @param operatorProvidedInstance The disk instance provided by the operator, either from a json file or an command line argument
   */
-  bool validateUserInputFileMetadata(const std::string& archiveId, const std::string& operatorProvidedFid, const std::string& operatorProvidedInstance);
+  bool validateUserInputFileMetadata(const std::string& archiveFileId, const std::string& operatorProvidedFid, const std::string& operatorProvidedInstance);
 
   /**
    * An exception throwing version of main().
