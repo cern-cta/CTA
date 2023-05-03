@@ -76,6 +76,7 @@ TapeLsStream::TapeLsStream(const frontend::AdminCmdStream& requestMsg, cta::cata
   searchCriteria.vid             = requestMsg.getOptional(OptionString::VID,             &has_any);
   searchCriteria.mediaType       = requestMsg.getOptional(OptionString::MEDIA_TYPE,      &has_any);
   searchCriteria.vendor          = requestMsg.getOptional(OptionString::VENDOR,          &has_any);
+  searchCriteria.purchaseOrder   = requestMsg.getOptional(OptionString::PURCHASE_ORDER,  &has_any);
   searchCriteria.diskFileIds     = requestMsg.getOptional(OptionStrList::FILE_ID,        &has_any);
   auto stateOpt                  = requestMsg.getOptional(OptionString::STATE,           &has_any);
   if(stateOpt){

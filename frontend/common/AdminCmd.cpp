@@ -1073,6 +1073,7 @@ void AdminCmd::processTape_Ch(xrd::Response& response) {
   auto  tapepool           = getOptional(OptionString::TAPE_POOL);
   auto  comment            = getOptional(OptionString::COMMENT);
   auto  encryptionkeyName  = getOptional(OptionString::ENCRYPTION_KEY_NAME);
+  auto  purchaseOrder      = getOptional(OptionString::PURCHASE_ORDER);
   auto  full               = getOptional(OptionBoolean::FULL);
   auto  state              = getOptional(OptionString::STATE);
   auto  stateReason        = getOptional(OptionString::REASON);
@@ -1104,6 +1105,9 @@ void AdminCmd::processTape_Ch(xrd::Response& response) {
   }
   if(encryptionkeyName) {
     m_catalogue.Tape()->modifyTapeEncryptionKeyName(m_cliIdentity, vid, encryptionkeyName.value());
+  }
+  if(purchaseOrder) {
+    m_catalogue.Tape()->modifyPurchaseOrder(m_cliIdentity, vid, encryptionkeyName.value());
   }
   if(full) {
     m_catalogue.Tape()->setTapeFull(m_cliIdentity, vid, full.value());
