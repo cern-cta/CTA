@@ -838,7 +838,7 @@ void RdbmsTapeCatalogue::modifyPurchaseOrder(const common::dataStructures::Secur
     log::LogContext lc(m_log);
     log::ScopedParamContainer spc(lc);
     spc.add("vid", vid)
-       .add("encryptionKeyName", optionalPurchaseOrder ? optionalPurchaseOrder.value() : "NULL")
+       .add("optionalPurchaseOrder", optionalPurchaseOrder ? optionalPurchaseOrder.value() : "NULL")
        .add("lastUpdateUserName", admin.username)
        .add("lastUpdateHostName", admin.host)
        .add("lastUpdateTime", now);

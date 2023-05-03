@@ -1107,7 +1107,7 @@ void AdminCmd::processTape_Ch(xrd::Response& response) {
     m_catalogue.Tape()->modifyTapeEncryptionKeyName(m_cliIdentity, vid, encryptionkeyName.value());
   }
   if(purchaseOrder) {
-    m_catalogue.Tape()->modifyPurchaseOrder(m_cliIdentity, vid, encryptionkeyName.value());
+    m_catalogue.Tape()->modifyPurchaseOrder(m_cliIdentity, vid, purchaseOrder.value());
   }
   if(full) {
     m_catalogue.Tape()->setTapeFull(m_cliIdentity, vid, full.value());
