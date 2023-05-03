@@ -303,6 +303,7 @@ common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(const std
       "TAPE.LAST_FSEQ AS LAST_FSEQ,"
       "TAPE.IS_FULL AS IS_FULL,"
       "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"
+      "TAPE.PURCHASE_ORDER AS PURCHASE_ORDER,"
       "TAPE.LABEL_FORMAT AS LABEL_FORMAT,"
       "TAPE.LABEL_DRIVE AS LABEL_DRIVE,"
       "TAPE.LABEL_TIME AS LABEL_TIME,"
@@ -796,6 +797,52 @@ void RdbmsTapeCatalogue::modifyTapeEncryptionKeyName(const common::dataStructure
        .add("lastUpdateHostName", admin.host)
        .add("lastUpdateTime", now);
     lc.log(log::INFO, "Catalogue - user modified tape - encryptionKeyName");
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+void RdbmsTapeCatalogue::modifyPurchaseOrder(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &vid, const std::string &purchaseOrder) {
+  try {
+    std::optional<std::string> optionalPurchaseOrder;
+    if(!purchaseOrder.empty()) {
+      optionalPurchaseOrder = purchaseOrder;
+    }
+
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE TAPE SET "
+        "PURCHASE_ORDER = :PURCHASE_ORDER,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "VID = :VID";
+    auto conn = m_connPool->getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":PURCHASE_ORDER", optionalPurchaseOrder);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":VID", vid);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
+    }
+
+    log::LogContext lc(m_log);
+    log::ScopedParamContainer spc(lc);
+    spc.add("vid", vid)
+       .add("encryptionKeyName", optionalPurchaseOrder ? optionalPurchaseOrder.value() : "NULL")
+       .add("lastUpdateUserName", admin.username)
+       .add("lastUpdateHostName", admin.host)
+       .add("lastUpdateTime", now);
+    lc.log(log::INFO, "Catalogue - user modified tape - optionalPurchaseOrder");
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -1335,6 +1382,8 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
     throw exception::UserError("Tape pool cannot be an empty string");
   if(RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.vo))
     throw exception::UserError("Virtual organisation cannot be an empty string");
+  if(RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.purchaseOrder))
+    throw exception::UserError("Purchase order cannot be an empty string");
   if(RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.diskFileIds))
     throw exception::UserError("Disk file ID list cannot be empty");
 
@@ -1362,6 +1411,7 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
         "TAPE.LAST_FSEQ AS LAST_FSEQ,"
         "TAPE.IS_FULL AS IS_FULL,"
         "TAPE.DIRTY AS DIRTY,"
+        "TAPE.PURCHASE_ORDER AS PURCHASE_ORDER,"
 
         "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"
 
@@ -1416,7 +1466,8 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
        searchCriteria.full ||
        searchCriteria.diskFileIds ||
        searchCriteria.state ||
-       searchCriteria.fromCastor) {
+       searchCriteria.fromCastor ||
+       searchCriteria.purchaseOrder) {
       sql += " WHERE";
     }
 
@@ -1485,6 +1536,11 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
       sql += " TAPE.IS_FROM_CASTOR = :FROM_CASTOR";
       addedAWhereConstraint = true;
     }
+    if(searchCriteria.purchaseOrder) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += " TAPE.PURCHASE_ORDER = :PURCHASE_ORDER";
+      addedAWhereConstraint = true;
+    }
 
     sql += " ORDER BY TAPE.VID";
 
@@ -1496,6 +1552,7 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
     if(searchCriteria.logicalLibrary) stmt.bindString(":LOGICAL_LIBRARY_NAME", searchCriteria.logicalLibrary.value());
     if(searchCriteria.tapePool) stmt.bindString(":TAPE_POOL_NAME", searchCriteria.tapePool.value());
     if(searchCriteria.vo) stmt.bindString(":VO", searchCriteria.vo.value());
+    if(searchCriteria.purchaseOrder) stmt.bindString(":PURCHASE_ORDER", searchCriteria.purchaseOrder.value());
     if(searchCriteria.capacityInBytes) stmt.bindUint64(":CAPACITY_IN_BYTES", searchCriteria.capacityInBytes.value());
     if(searchCriteria.full) stmt.bindBool(":IS_FULL", searchCriteria.full.value());
     if(searchCriteria.fromCastor) stmt.bindBool(":FROM_CASTOR", searchCriteria.fromCastor.value());
@@ -1533,6 +1590,7 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
         tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
         tape.vo = rset.columnString("VO");
         tape.encryptionKeyName = rset.columnOptionalString("ENCRYPTION_KEY_NAME");
+        tape.purchaseOrder = rset.columnOptionalString("PURCHASE_ORDER");
         tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
         tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
         tape.nbMasterFiles = rset.columnUint64("NB_MASTER_FILES");
@@ -1732,6 +1790,7 @@ std::string RdbmsTapeCatalogue::getSelectTapesBy100VidsSql() const {
       "TAPE.LAST_FSEQ AS LAST_FSEQ,"
       "TAPE.IS_FULL AS IS_FULL,"
       "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"
+      "TAPE.PURCHASE_ORDER AS PURCHASE_ORDER,"
 
       "TAPE.LABEL_FORMAT AS LABEL_FORMAT,"
 
@@ -1796,6 +1855,7 @@ void RdbmsTapeCatalogue::executeGetTapesByVidStmtAndCollectResults(rdbms::Stmt &
     tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
     tape.vo = rset.columnString("VO");
     tape.encryptionKeyName = rset.columnOptionalString("ENCRYPTION_KEY_NAME");
+    tape.purchaseOrder = rset.columnOptionalString("PURCHASE_ORDER");
     tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
     tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
     tape.lastFSeq = rset.columnUint64("LAST_FSEQ");

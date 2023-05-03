@@ -175,6 +175,9 @@ public:
   virtual void modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity &admin,
     const std::string &vid, const std::string &encryptionKeyName) = 0;
 
+  virtual void modifyPurchaseOrder(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &vid, const std::string &purchaseOrder) = 0;
+
   virtual void modifyTapeVerificationStatus(const common::dataStructures::SecurityIdentity &admin,
     const std::string &vid, const std::string &verificationStatus) = 0;
 

@@ -67,6 +67,11 @@ struct TapeSearchCriteria {
   std::optional<std::string> vo;
 
   /**
+   * The purchase order related to the tape
+   */
+  std::optional<std::string> purchaseOrder;
+
+  /**
    * The capacity of a tape in bytes
    */
   std::optional<uint64_t> capacityInBytes;
