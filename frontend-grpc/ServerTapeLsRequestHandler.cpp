@@ -98,12 +98,13 @@ bool cta::frontend::grpc::server::TapeLsRequestHandler::next(const bool bOk) {
             m_searchCriteria.vid             = requestMsg.getOptional(cta::admin::OptionString::VID,             &bHasAny);
             m_searchCriteria.mediaType       = requestMsg.getOptional(cta::admin::OptionString::MEDIA_TYPE,      &bHasAny);
             m_searchCriteria.vendor          = requestMsg.getOptional(cta::admin::OptionString::VENDOR,          &bHasAny);
+            m_searchCriteria.purchaseOrder   = requestMsg.getOptional(cta::admin::OptionString::PURCHASE_ORDER,  &bHasAny);
             m_searchCriteria.diskFileIds     = requestMsg.getOptional(cta::admin::OptionStrList::FILE_ID,        &bHasAny);
             auto stateOpt                    = requestMsg.getOptional(cta::admin::OptionString::STATE,           &bHasAny);
             if(stateOpt){
               m_searchCriteria.state = common::dataStructures::Tape::stringToState(stateOpt.value());
             }
-            
+
             if(!(requestMsg.hasFlag(cta::admin::OptionBoolean::ALL) || bHasAny)) {
               lc.log(cta::log::ERR, "In grpc::server::TapeLsRequestHandler::next(): Must specify at least one search option, or --all.");
               m_response.mutable_header()->set_type(cta::xrd::Response::RSP_ERR_USER);
@@ -170,7 +171,7 @@ bool cta::frontend::grpc::server::TapeLsRequestHandler::next(const bool bOk) {
         pTapeLsItem->set_write_mount_count(tape.writeMountCount);
         pTapeLsItem->set_nb_master_files(tape.nbMasterFiles);
         pTapeLsItem->set_master_data_in_bytes(tape.masterDataInBytes);
-        pTapeLsItem->set_purchase_order((bool)tape.encryptionKeyName ? tape.purchaseOrder.value() : "-");
+        pTapeLsItem->set_purchase_order((bool)tape.purchaseOrder ? tape.purchaseOrder.value() : "-");
 
         if(tape.labelLog) {
           ::cta::common::TapeLog* pLabelLog = pTapeLsItem->mutable_label_log();

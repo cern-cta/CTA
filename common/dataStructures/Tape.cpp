@@ -91,6 +91,7 @@ bool Tape::operator==(const Tape &rhs) const {
       && capacityInBytes==rhs.capacityInBytes
       && dataOnTapeInBytes==rhs.dataOnTapeInBytes
       && encryptionKeyName==rhs.encryptionKeyName
+      && purchaseOrder==rhs.purchaseOrder
       && full==rhs.full
       && state==rhs.state
       && creationLog==rhs.creationLog

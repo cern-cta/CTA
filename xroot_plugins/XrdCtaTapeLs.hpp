@@ -140,15 +140,16 @@ int TapeLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     lastModificationLog->set_host(tape.lastModificationLog.host);
     lastModificationLog->set_time(tape.lastModificationLog.time);
     tape_item->set_comment(tape.comment);
-    
+
     tape_item->set_state(tape.getStateStr());
     tape_item->set_state_reason(tape.stateReason ? tape.stateReason.value() : "");
+    tape_item->set_purchase_order(tape.purchaseOrder ? tape.purchaseOrder.value() : "");
     tape_item->set_state_update_time(tape.stateUpdateTime);
     tape_item->set_state_modified_by(tape.stateModifiedBy);
     if (tape.verificationStatus) {
       tape_item->set_verification_status(tape.verificationStatus.value());
     }
-    
+
     is_buffer_full = streambuf->Push(record);
   }
   return streambuf->Size();

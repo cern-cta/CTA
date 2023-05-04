@@ -820,8 +820,8 @@ void TextFormatter::printTapeLsHeader() {
     "vid",
     "media type",
     "vendor",
-    "order"
     "library",
+    "order"
     "tapepool",
     "vo",
     "encryption key name",
