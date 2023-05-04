@@ -150,9 +150,9 @@ bool cta::frontend::grpc::server::TapeLsRequestHandler::next(const bool bOk) {
           m_streamState = StreamState::ERROR;
           break;
         }
-        
+
         common::dataStructures::Tape &tape = m_tapeList.front();
-        
+
         pTapeLsItem->set_vid(tape.vid);
         pTapeLsItem->set_media_type(tape.mediaType);
         pTapeLsItem->set_vendor(tape.vendor);
@@ -170,7 +170,8 @@ bool cta::frontend::grpc::server::TapeLsRequestHandler::next(const bool bOk) {
         pTapeLsItem->set_write_mount_count(tape.writeMountCount);
         pTapeLsItem->set_nb_master_files(tape.nbMasterFiles);
         pTapeLsItem->set_master_data_in_bytes(tape.masterDataInBytes);
-        
+        pTapeLsItem->set_purchase_order((bool)tape.encryptionKeyName ? tape.purchaseOrder.value() : "-");
+
         if(tape.labelLog) {
           ::cta::common::TapeLog* pLabelLog = pTapeLsItem->mutable_label_log();
           pLabelLog->set_drive(tape.labelLog.value().drive);
