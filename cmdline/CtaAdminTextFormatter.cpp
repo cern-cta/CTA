@@ -821,7 +821,7 @@ void TextFormatter::printTapeLsHeader() {
     "media type",
     "vendor",
     "library",
-    "order"
+    "order",
     "tapepool",
     "vo",
     "encryption key name",
