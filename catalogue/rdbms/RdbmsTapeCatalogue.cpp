@@ -62,6 +62,7 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
     std::string logicalLibraryName = tape.logicalLibraryName;
     std::string tapePoolName = tape.tapePoolName;
     bool full = tape.full;
+    const std::string purchaseOrder = tape.purchaseOrder ? tape.purchaseOrder.value() : "";
     // Translate an empty comment string to a NULL database value
     const std::optional<std::string> tapeComment = tape.comment && tape.comment->empty() ? std::nullopt : tape.comment;
     const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(tapeComment, &m_log);
@@ -146,6 +147,7 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
         "IS_FROM_CASTOR, "
 
         "USER_COMMENT, "
+        "PURCHASE_ORDER, "
 
         "TAPE_STATE, "
         "STATE_REASON, "
@@ -159,6 +161,7 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
         "LAST_UPDATE_USER_NAME, "
         "LAST_UPDATE_HOST_NAME, "
         "LAST_UPDATE_TIME) "
+
       "VALUES("
         ":VID, "
         ":MEDIA_TYPE_ID, "
@@ -171,6 +174,7 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
         ":IS_FROM_CASTOR, "
 
         ":USER_COMMENT, "
+        ":PURCHASE_ORDER, "
 
         ":TAPE_STATE, "
         ":STATE_REASON, "
@@ -184,6 +188,7 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
         ":LAST_UPDATE_USER_NAME, "
         ":LAST_UPDATE_HOST_NAME, "
         ":LAST_UPDATE_TIME"
+
       ")";
     auto stmt = conn.createStmt(sql);
 
@@ -198,6 +203,7 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
     stmt.bindBool(":IS_FROM_CASTOR", isFromCastor);
 
     stmt.bindString(":USER_COMMENT", trimmedComment);
+    stmt.bindString(":PURCHASE_ORDER", purchaseOrder);
 
     std::string stateModifiedBy = RdbmsCatalogueUtils::generateTapeStateModifiedBy(admin);
     stmt.bindString(":TAPE_STATE",cta::common::dataStructures::Tape::stateToString(tape.state));
@@ -225,6 +231,7 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
        .add("isFull", full ? 1 : 0)
        .add("isFromCastor", isFromCastor ? 1 : 0)
        .add("userComment", tape.comment ? tape.comment.value() : "")
+       .add("purchaseOrder", purchaseOrder)
        .add("tapeState",cta::common::dataStructures::Tape::stateToString(tape.state))
        .add("stateReason",stateReason ? stateReason.value() : "")
        .add("stateUpdateTime",now)
