@@ -1038,6 +1038,7 @@ void AdminCmd::processTape_Add(xrd::Response& response) {
   auto& logicallibrary = getRequired(OptionString::LOGICAL_LIBRARY);
   auto& tapepool       = getRequired(OptionString::TAPE_POOL);
   auto& full           = getRequired(OptionBoolean::FULL);
+  auto purchaseOrder   = getOptional(OptionString::PURCHASE_ORDER);
   auto state           = getOptional(OptionString::STATE);
   auto stateReason     = getOptional(OptionString::REASON);
   auto comment         = getOptional(OptionString::COMMENT);
@@ -1049,6 +1050,7 @@ void AdminCmd::processTape_Add(xrd::Response& response) {
   tape.logicalLibraryName = logicallibrary;
   tape.tapePoolName = tapepool;
   tape.full = full;
+  tape.purchaseOrder = purchaseOrder ? purchaseOrder.value() : "";
   tape.comment = comment ? comment.value() : "";
   if(!state) {
     // By default, the state of the tape will be ACTIVE
