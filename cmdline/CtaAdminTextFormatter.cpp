@@ -820,6 +820,7 @@ void TextFormatter::printTapeLsHeader() {
     "vid",
     "media type",
     "vendor",
+    "order"
     "library",
     "tapepool",
     "vo",
@@ -856,6 +857,7 @@ void TextFormatter::print(const TapeLsItem &tals_item) {
     tals_item.media_type(),
     tals_item.vendor(),
     tals_item.logical_library(),
+    tals_item.purchase_order(),
     tals_item.tapepool(),
     tals_item.vo(),
     tals_item.encryption_key_name(),
