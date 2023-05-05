@@ -1214,4 +1214,49 @@ void TextFormatter::print(const RecycleTapeFileLsItem & rtfls_item){
   );
 }
 
+void TextFormatter::printPhysicalLibraryLsHeader() {
+  push_back("HEADER");
+  push_back(
+    "name",
+    "manufacturer",
+    "model",
+    "type",
+    "gui",
+    "webcam",
+    "location",
+    "nb physical cartridge slots",
+    "nb available cartridge slots",
+    "nb available drive slots",
+    "comment",
+    "c.user",
+    "c.host",
+    "c.time",
+    "m.user",
+    "m.host",
+    "m.time"
+  );
+}
+
+void TextFormatter::print(const PhysicalLibraryLsItem & plls_item){
+  push_back(
+    plls_item.name(),
+    plls_item.manufacturer(),
+    plls_item.model(),
+    plls_item.type(),
+    plls_item.gui_url(),
+    plls_item.webcam_url(),
+    plls_item.location(),
+    plls_item.nb_physical_cartridge_slots(),
+    plls_item.nb_available_cartridge_slots(),
+    plls_item.nb_physical_drive_slots(),
+    plls_item.comment(),
+    plls_item.creation_log().username(),
+    plls_item.creation_log().host(),
+    timeToStr(plls_item.creation_log().time()),
+    plls_item.last_modification_log().username(),
+    plls_item.last_modification_log().host(),
+    timeToStr(plls_item.last_modification_log().time())
+  );
+}
+
 }}
