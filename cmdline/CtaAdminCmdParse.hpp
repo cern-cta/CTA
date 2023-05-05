@@ -235,8 +235,9 @@ const cmdLookup_t cmdLookup = {
    { "diskinstance",            AdminCmd::CMD_DISKINSTANCE },
    { "di",                      AdminCmd::CMD_DISKINSTANCE }, 
    { "diskinstancespace",       AdminCmd::CMD_DISKINSTANCESPACE },
-   { "dis",                     AdminCmd::CMD_DISKINSTANCESPACE }, 
-   
+   { "dis",                     AdminCmd::CMD_DISKINSTANCESPACE },
+   { "physicallibrary",         AdminCmd::CMD_PHYSICALLIBRARY },
+   { "pl",                      AdminCmd::CMD_PHYSICALLIBRARY }
 };
 
 
@@ -468,6 +469,20 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
                           "\n  Tape files in the recycle log can be listed by VID, EOS disk file ID, EOS disk instance,\n"
                             "  ArchiveFileId or copy number. Disk file IDs should be provided in hexadecimal format (fxid).\n\n"
                              }},
+   { AdminCmd::CMD_PHYSICALLIBRARY,      { "physicallibrary",        "pl",  { "add", "ch", "rm", "ls" },
+                          "\n  Add a physical library with the \"add\" subcommand:\n"
+                            "   * Specify the name (--physicallibrary). It must be unique.\n"
+                            "   * Specify the manufacturer (--manufacturer)\n"
+                            "   * Specify the library model (--model)\n"
+                            "   * Specify the library type (--type)\n"
+                            "   * Specify the gui url (--guiurl)\n"
+                            "   * Specify the webcam url (--webcamurl)\n"
+                            "   * Specify the location (--location)\n"
+                            "   * Specify the number of physical cartridge slots(--nbphysicalcartridgeslots)\n"
+                            "   * Specify the number of available cartridge slots(--nbavailablecartridgeslots)\n"
+                            "   * Specify the number of physical drive slots(--nbphysicaldriveslots)\n"
+                            "   * Specify a comment (--comment)\n"
+                             }},
 };
 
 /*
@@ -555,6 +570,17 @@ const Option opt_disabledreason       { Option::OPT_STR,  "--disabledreason",   
 
 const Option opt_archive_file_ids     { Option::OPT_STR_LIST,  "--id",               "-I",   " <archive_file_id>" };
 
+const Option opt_physical_library              { Option::OPT_STR,  "--physicallibrary",           "--pl",   " <physical_library>" };
+const Option opt_manufacturer                  { Option::OPT_STR,  "--manufacturer",              "-m",     " <manufacturer>" };
+const Option opt_model                         { Option::OPT_STR,  "--model",                     "--mo",   " <model>" };
+const Option opt_type                          { Option::OPT_STR,  "--type",                      "-t",     " <type>" };
+const Option opt_gui_url                       { Option::OPT_STR,  "--guiurl",                    "-g",     " <gui_url>" };
+const Option opt_webcam_url                    { Option::OPT_STR,  "--webcamurl",                 "-w",     " <webcam_url>" };
+const Option opt_location                      { Option::OPT_STR,  "--location",                  "-l",     " <location>" };
+const Option opt_nb_physical_cartridge_slots   { Option::OPT_STR,  "--nbphysicalcartridgeslots",  "--npcs", " <nb_physical_cartridge_slots>" };
+const Option opt_nb_available_cartridge_slots  { Option::OPT_STR,  "--nbavailablecartridgeslots", "--nacs", " <nb_available_cartridge_slots>" };
+const Option opt_nb_physical_drive_slots       { Option::OPT_STR,  "--nbphysicaldriveslots",      "--npds", " <nb_physical_drive_slots >" };
+
 /*!
  * Subset of commands that return streaming output
  */
@@ -581,6 +607,7 @@ const std::set<cmd_key_t> streamCmds = {
   { AdminCmd::CMD_TAPEPOOL,            AdminCmd::SUBCMD_LS },
   { AdminCmd::CMD_VERSION,             AdminCmd::SUBCMD_NONE },
   { AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_LS }
+  { AdminCmd::CMD_PHYSICALLIBRARY,     AdminCmd::SUBCMD_LS },
 };
 
 /*!
