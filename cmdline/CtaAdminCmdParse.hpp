@@ -606,7 +606,7 @@ const std::set<cmd_key_t> streamCmds = {
   { AdminCmd::CMD_TAPEFILE,            AdminCmd::SUBCMD_LS },
   { AdminCmd::CMD_TAPEPOOL,            AdminCmd::SUBCMD_LS },
   { AdminCmd::CMD_VERSION,             AdminCmd::SUBCMD_NONE },
-  { AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_LS }
+  { AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_LS },
   { AdminCmd::CMD_PHYSICALLIBRARY,     AdminCmd::SUBCMD_LS },
 };
 
@@ -738,7 +738,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_DISKINSTANCESPACE,           AdminCmd::SUBCMD_RM    }, { opt_diskinstancespace_alias, opt_diskinstance }},
    {{ AdminCmd::CMD_DISKINSTANCESPACE,           AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/
-   
+
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_ADD   },
       { opt_vo, opt_read_max_drives, opt_write_max_drives, opt_comment, opt_diskinstance, opt_maxfilesize.optional() }},
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_CH   },
@@ -748,9 +748,9 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_LS   },
       { }},
    {{ AdminCmd::CMD_VERSION,           AdminCmd::SUBCMD_NONE   }, { }},
-   {{ AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_LS }, 
+   {{ AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_LS },
    { opt_vid.optional(), opt_fid.optional(), opt_fidfile.optional(), opt_copynb.optional(), opt_archivefileid.optional(), opt_instance.optional() }},
-   {{ AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_RESTORE }, 
+   {{ AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_RESTORE },
    { opt_vid.optional(), opt_fid, opt_copynb.optional(), opt_archivefileid.optional(), opt_instance.optional() }},
       /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_ACTIVITYMOUNTRULE,   AdminCmd::SUBCMD_ADD   },
@@ -763,6 +763,16 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    // The command below is used for cta-change-storageclass and cta-eos-namespace-inject
    {{ AdminCmd::CMD_ARCHIVEFILE,   AdminCmd::SUBCMD_CH   },
       { opt_storageclass.optional(), opt_archive_file_ids, opt_fid.optional(), opt_diskinstance.optional() }},
+      /*----------------------------------------------------------------------------------------------------*/
+   {{ AdminCmd::CMD_PHYSICALLIBRARY,   AdminCmd::SUBCMD_ADD   },
+      { opt_physical_library, opt_manufacturer, opt_model, opt_type.optional(), opt_gui_url.optional(), opt_webcam_url.optional(), opt_location.optional(), opt_nb_physical_cartridge_slots,
+        opt_nb_available_cartridge_slots.optional(), opt_nb_physical_drive_slots ,opt_comment.optional() }},
+   {{ AdminCmd::CMD_PHYSICALLIBRARY,   AdminCmd::SUBCMD_CH    },
+      { opt_physical_library, opt_manufacturer.optional(), opt_model.optional(), opt_type.optional(), opt_gui_url.optional(), opt_webcam_url.optional(), opt_location.optional(), opt_nb_physical_cartridge_slots.optional(),
+        opt_nb_available_cartridge_slots.optional(), opt_nb_physical_drive_slots.optional() ,opt_comment.optional() }},
+   {{ AdminCmd::CMD_PHYSICALLIBRARY,   AdminCmd::SUBCMD_RM    }, { opt_physical_library }},
+   {{ AdminCmd::CMD_PHYSICALLIBRARY,   AdminCmd::SUBCMD_LS    }, { }},
+   /*----------------------------------------------------------------------------------------------------*/
 };
 
 
