@@ -221,6 +221,15 @@ xrd::Response AdminCmd::process() {
       case cmd_pair(admin::AdminCmd::CMD_VIRTUALORGANIZATION, admin::AdminCmd::SUBCMD_RM):
         processVirtualOrganization_Rm(response);
         break;
+      case cmd_pair(admin::AdminCmd::CMD_PHYSICALLIBRARY, admin::AdminCmd::SUBCMD_ADD):
+        processVirtualOrganization_Add(response);
+        break;
+      case cmd_pair(admin::AdminCmd::CMD_PHYSICALLIBRARY, admin::AdminCmd::SUBCMD_CH):
+        processVirtualOrganization_Ch(response);
+        break;
+      case cmd_pair(admin::AdminCmd::CMD_PHYSICALLIBRARY, admin::AdminCmd::SUBCMD_RM):
+        processVirtualOrganization_Rm(response);
+        break;
       case cmd_pair(admin::AdminCmd::CMD_RECYCLETAPEFILE, admin::AdminCmd::SUBCMD_RESTORE):
         processRecycleTapeFile_Restore(response);
         break;
@@ -1449,6 +1458,18 @@ void AdminCmd::processVirtualOrganization_Rm(xrd::Response& response) {
   m_catalogue.VO()->deleteVirtualOrganization(name);
 
   response.set_type(xrd::Response::RSP_SUCCESS);
+}
+
+void AdminCmd::processPhysicalLibrary_Add(xrd::Response& response) {
+
+}
+
+void AdminCmd::processPhysicalLibrary_Ch(xrd::Response& response) {
+
+}
+
+void AdminCmd::processPhysicalLibrary_Rm(xrd::Response& response) {
+
 }
 
 std::string AdminCmd::setDriveState(const std::string& regex, const common::dataStructures::DesiredDriveState& desiredDriveState) {
