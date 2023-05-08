@@ -33,7 +33,7 @@ namespace dataStructures {
  * The logical library is an attribute of both drives and tapes, it declares
  * which tapes can be mounted in which drives
  */
-struct LogicalLibrary {
+struct PhysicalLibrary {
   std::string name;
   std::string manufacturer;
   std::string model;
@@ -41,9 +41,9 @@ struct LogicalLibrary {
   std::optional<std::string> guiUrl;
   std::optional<std::string> webcamUrl;
   std::optional<std::string> location;
-  uint64_t nb_physical_cartridge_slots;
-  std::optional<uint64_t> nb_available_cartridge_slots;
-  uint64_t nb_physical_drive_slots;
+  uint64_t nbPhysicalCartridgeSlots;
+  std::optional<uint64_t> nbAvailableCartridgeSlots;
+  uint64_t nbPhysicalDriveSlots;
   EntryLog creationLog;
   EntryLog lastModificationLog;
   std::string comment;
