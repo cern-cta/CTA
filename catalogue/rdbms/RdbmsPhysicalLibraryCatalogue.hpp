@@ -43,7 +43,7 @@ class RdbmsPhysicalLibraryCatalogue: public PhysicalLibraryCatalogue {
 public:
   ~RdbmsPhysicalLibraryCatalogue() override = default;
 
-  void createPhysicalLibrary(const common::dataStructures::SecurityIdentity &admin, const common::dataStructures::PhysicalLibrary pl) override;
+  void createPhysicalLibrary(const common::dataStructures::SecurityIdentity &admin, const common::dataStructures::PhysicalLibrary& pl) override;
 
   void deletePhysicalLibrary(const std::string &name) override;
 
