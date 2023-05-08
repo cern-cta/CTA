@@ -45,7 +45,7 @@ struct PhysicalLibrary {
   uint64_t nbPhysicalDriveSlots;
   EntryLog creationLog;
   EntryLog lastModificationLog;
-  std::string comment;
+  std::optional<std::string> comment;
 
 }; // struct PhysicalLibrary
 
