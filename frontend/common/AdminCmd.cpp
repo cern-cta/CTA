@@ -1471,8 +1471,16 @@ void AdminCmd::processPhysicalLibrary_Add(xrd::Response& response) {
   pl.nbPhysicalCartridgeSlots = getRequired(OptionUInt64::NB_PHYSICAL_CARTRIDGE_SLOTS);
   pl.nbPhysicalDriveSlots     = getRequired(OptionUInt64::NB_PHYSICAL_DRIVE_SLOTS);
 
+  pl.type                      = getOptional(OptionString::TYPE);
+  pl.guiUrl                    = getOptional(OptionString::GUI_URL);
+  pl.webcamUrl                 = getOptional(OptionString::WEBCAM_URL);
+  pl.location                  = getOptional(OptionString::LOCATION);
+  pl.nbAvailableCartridgeSlots = getOptional(OptionUInt64::NB_AVAILABLE_CARTRIDGE_SLOTS);
+  pl.comment                   = getOptional(OptionString::COMMENT);
+
   m_catalogue.PhysicalLibrary()->createPhysicalLibrary(m_cliIdentity, pl);
 
+  response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
 void AdminCmd::processPhysicalLibrary_Ch(xrd::Response& response) {
