@@ -47,7 +47,7 @@ struct PhysicalLibrary {
   EntryLog lastModificationLog;
   std::string comment;
 
-}; // struct LogicalLibrary
+}; // struct PhysicalLibrary
 
 } // namespace dataStructures
 } // namespace common
