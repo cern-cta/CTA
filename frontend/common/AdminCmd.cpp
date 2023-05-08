@@ -1484,7 +1484,53 @@ void AdminCmd::processPhysicalLibrary_Add(xrd::Response& response) {
 }
 
 void AdminCmd::processPhysicalLibrary_Ch(xrd::Response& response) {
+  using namespace cta::admin;
 
+  const auto& name = getRequired(OptionString::PHYSICAL_LIBRARY);
+
+  const auto manufacturer              = getOptional(OptionString::MANUFACTURER);
+  const auto model                     = getOptional(OptionString::MODEL);
+  const auto type                      = getOptional(OptionString::TYPE);
+  const auto guiUrl                    = getOptional(OptionString::GUI_URL);
+  const auto webcamUrl                 = getOptional(OptionString::WEBCAM_URL);
+  const auto location                  = getOptional(OptionString::LOCATION);
+  const auto nbPhysicalCartridgeSlots  = getOptional(OptionUInt64::NB_PHYSICAL_CARTRIDGE_SLOTS);
+  const auto nbAvailableCartridgeSlots = getOptional(OptionUInt64::NB_AVAILABLE_CARTRIDGE_SLOTS);
+  const auto nbPhysicalDriveSlots      = getOptional(OptionUInt64::NB_PHYSICAL_DRIVE_SLOTS);
+  const auto comment                   = getOptional(OptionString::COMMENT);
+
+  if (manufacturer) {
+    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryManufacturer(m_cliIdentity, name, manufacturer.value());
+  }
+  if (model) {
+    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryModel(m_cliIdentity, name, model.value());
+  }
+  if (type) {
+    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryManufacturer(m_cliIdentity, name, type.value());
+  }
+  if (guiUrl) {
+    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryGuiUrl(m_cliIdentity, name, guiUrl.value());
+  }
+  if (webcamUrl) {
+    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryWebcamUrl(m_cliIdentity, name, webcamUrl.value());
+  }
+  if (location)  {
+    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryLocation(m_cliIdentity, name, location.value());
+  }
+  if (nbPhysicalCartridgeSlots) {
+    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryNbPhysicalCartridgeSlots(m_cliIdentity, name, nbPhysicalCartridgeSlots.value());
+  }
+  if (nbAvailableCartridgeSlots) {
+    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryNbAvailableCartridgeSlots(m_cliIdentity, name, nbAvailableCartridgeSlots.value());
+  }
+  if (nbPhysicalDriveSlots) {
+    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryNbPhysicalDriveSlots(m_cliIdentity, name, nbPhysicalDriveSlots.value());
+  }
+  if (comment) {
+    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryComment(m_cliIdentity, name, comment.value());
+  }
+
+  response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
 void AdminCmd::processPhysicalLibrary_Rm(xrd::Response& response) {
