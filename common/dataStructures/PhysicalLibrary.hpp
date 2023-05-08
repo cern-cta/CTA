@@ -30,8 +30,7 @@ namespace common {
 namespace dataStructures {
 
 /**
- * The logical library is an attribute of both drives and tapes, it declares
- * which tapes can be mounted in which drives
+ * The attributes of a physical library
  */
 struct PhysicalLibrary {
   std::string name;
