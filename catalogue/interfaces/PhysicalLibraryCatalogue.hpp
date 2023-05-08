@@ -40,7 +40,7 @@ class PhysicalLibraryCatalogue {
 public:
   virtual ~PhysicalLibraryCatalogue() = default;
 
-  virtual void createPhysicalLibrary(const common::dataStructures::SecurityIdentity &admin, const common::dataStructures::PhysicalLibrary pl) = 0;
+  virtual void createPhysicalLibrary(const common::dataStructures::SecurityIdentity &admin, const common::dataStructures::PhysicalLibrary& pl) = 0;
 
   virtual void deletePhysicalLibrary(const std::string &name) = 0;
 
