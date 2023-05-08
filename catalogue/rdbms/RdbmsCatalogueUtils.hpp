@@ -55,6 +55,7 @@ public:
   static bool diskInstanceExists(rdbms::Conn &conn, const std::string &name);
   static bool tapePoolExists(rdbms::Conn &conn, const std::string &tapePoolName);
   static bool logicalLibraryExists(rdbms::Conn &conn, const std::string &logicalLibraryName);
+  static bool physicalLibraryExists(rdbms::Conn &conn, const std::string &physicalLibraryName);
   static bool tapeExists(rdbms::Conn &conn, const std::string &vid);
   static bool archiveFileIdExists(rdbms::Conn &conn, const uint64_t archiveFileId);
   static bool mountPolicyExists(rdbms::Conn &conn, const std::string &mountPolicyName);
