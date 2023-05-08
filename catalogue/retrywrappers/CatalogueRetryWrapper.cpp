@@ -40,6 +40,7 @@
 #include "catalogue/retrywrappers/TapeFileCatalogueRetryWrapper.hpp"
 #include "catalogue/retrywrappers/TapePoolCatalogueRetryWrapper.hpp"
 #include "catalogue/retrywrappers/VirtualOrganizationCatalogueRetryWrapper.hpp"
+#include "CatalogueRetryWrapper.hpp"
 
 namespace cta {
 
@@ -139,7 +140,11 @@ const std::unique_ptr<LogicalLibraryCatalogue>& CatalogueRetryWrapper::LogicalLi
   return m_logicalLibrary;
 }
 
-const std::unique_ptr<TapeFileCatalogue>& CatalogueRetryWrapper::TapeFile() {
+const std::unique_ptr<PhysicalLibraryCatalogue> &CatalogueRetryWrapper::PhysicalLibrary() {
+  return m_physicalLibrary;
+}
+const std::unique_ptr<TapeFileCatalogue> &CatalogueRetryWrapper::TapeFile()
+{
   return m_tapeFile;
 }
 

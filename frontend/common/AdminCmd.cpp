@@ -20,9 +20,10 @@
 #include "catalogue/CreateTapeAttributes.hpp"
 #include "catalogue/MediaType.hpp"
 #include "cmdline/CtaAdminCmdParse.hpp"
-#include "PbException.hpp"
+#include "common/dataStructures/PhysicalLibrary.hpp"
 #include "AdminCmd.hpp"
 #include "GrpcEndpoint.hpp"
+#include "PbException.hpp"
 
 namespace cta {
 namespace frontend {
@@ -1461,6 +1462,16 @@ void AdminCmd::processVirtualOrganization_Rm(xrd::Response& response) {
 }
 
 void AdminCmd::processPhysicalLibrary_Add(xrd::Response& response) {
+  using namespace cta::admin;
+
+  common::dataStructures::PhysicalLibrary pl;
+  pl.name                     = getRequired(OptionString::PHYSICAL_LIBRARY);
+  pl.manufacturer             = getRequired(OptionString::MANUFACTURER);
+  pl.model                    = getRequired(OptionString::MODEL);
+  pl.nbPhysicalCartridgeSlots = getRequired(OptionUInt64::NB_PHYSICAL_CARTRIDGE_SLOTS);
+  pl.nbPhysicalDriveSlots     = getRequired(OptionUInt64::NB_PHYSICAL_DRIVE_SLOTS);
+
+  m_catalogue.PhysicalLibrary()->createPhysicalLibrary(m_cliIdentity, pl);
 
 }
 

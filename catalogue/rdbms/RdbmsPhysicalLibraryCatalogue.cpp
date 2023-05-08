@@ -45,6 +45,15 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
       throw exception::UserError(std::string("Cannot create physical library ") + pl.name +
         " because a physical library with the same name already exists");
     }
+
+    const std::optional<std::string> type      = pl.type      && !pl.type->empty()      ? pl.type      : std::nullopt;
+    const std::optional<std::string> guiUrl    = pl.guiUrl    && !pl.guiUrl->empty()    ? pl.guiUrl    : std::nullopt;
+    const std::optional<std::string> webcamUrl = pl.webcamUrl && !pl.webcamUrl->empty() ? pl.webcamUrl : std::nullopt;
+    const std::optional<std::string> location  = pl.location  && !pl.location->empty()  ? pl.location  : std::nullopt;
+    const std::optional<std::string> comment   = pl.comment   && !pl.comment->empty()   ? pl.comment   : std::nullopt;
+
+    const std::optional<uint64_t> nbAvailableCartridgeSlots = pl.nbAvailableCartridgeSlots ? pl.nbAvailableCartridgeSlots : std::nullopt;
+
     const uint64_t physicalLibraryId = getNextPhysicalLibraryId(conn);
     const time_t now = time(nullptr);
     const char *const sql =
@@ -53,8 +62,13 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
         "PHYSICAL_LIBRARY_NAME,"
         "PHYSICAL_LIBRARY_MANUFACTURER,"
         "PHYSICAL_LIBRARY_MODEL,"
+        "PHYSICAL_LIBRARY_TYPE,"
+        "GUI_URL,"
+        "WEBCAM_URL,"
+        "PHYSICAL_LOCATION,"
 
         "NB_PHYSICAL_CARTRIDGE_SLOTS,"
+        "NB_AVAILABLE_CARTRIDGE_SLOTS,"
         "NB_PHYSICAL_DRIVE_SLOTS,"
 
         "CREATION_LOG_USER_NAME,"
@@ -63,14 +77,21 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
 
         "LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME)"
+        "LAST_UPDATE_TIME, "
+
+        "USER_COMMENT) "
       "VALUES("
         ":PHYSICAL_LIBRARY_ID,"
         ":PHYSICAL_LIBRARY_NAME,"
         ":PHYSICAL_LIBRARY_MANUFACTURER,"
         ":PHYSICAL_LIBRARY_MODEL,"
+        ":PHYSICAL_LIBRARY_TYPE,"
+        ":GUI_URL,"
+        ":WEBCAM_URL,"
+        ":PHYSICAL_LOCATION,"
 
         ":NB_PHYSICAL_CARTRIDGE_SLOTS,"
+        ":NB_AVAILABLE_CARTRIDGE_SLOTS,"
         ":NB_PHYSICAL_DRIVE_SLOTS,"
 
         ":CREATION_LOG_USER_NAME,"
@@ -79,23 +100,33 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
 
         ":LAST_UPDATE_USER_NAME,"
         ":LAST_UPDATE_HOST_NAME,"
-        ":LAST_UPDATE_TIME)";
+        ":LAST_UPDATE_TIME,"
+
+        ":USER_COMMENT)";
     auto stmt = conn.createStmt(sql);
 
-    stmt.bindUint64(":PHYSICAL_LIBRARY_ID", physicalLibraryId);
-    stmt.bindString(":PHYSICAL_LIBRARY_NAME", pl.name);
+    stmt.bindUint64(":PHYSICAL_LIBRARY_ID"          , physicalLibraryId);
+    stmt.bindString(":PHYSICAL_LIBRARY_NAME"        , pl.name);
     stmt.bindString(":PHYSICAL_LIBRARY_MANUFACTURER", pl.manufacturer);
-    stmt.bindString(":PHYSICAL_LIBRARY_MODEL", pl.model);
-    stmt.bindUint64(":NB_PHYSICAL_CARTRIDGE_SLOTS", pl.nbPhysicalCartridgeSlots);
-    stmt.bindUint64(":NB_PHYSICAL_DRIVE_SLOTS", pl.nbPhysicalDriveSlots);
+    stmt.bindString(":PHYSICAL_LIBRARY_MODEL"       , pl.model);
+    stmt.bindString(":PHYSICAL_LIBRARY_TYPE"        , type);
+    stmt.bindString(":GUI_URL"                      , guiUrl);
+    stmt.bindString(":WEBCAM_URL"                   , webcamUrl);
+    stmt.bindString(":PHYSICAL_LOCATION"            , location);
+
+    stmt.bindUint64(":NB_PHYSICAL_CARTRIDGE_SLOTS" , pl.nbPhysicalCartridgeSlots);
+    stmt.bindUint64(":NB_AVAILABLE_CARTRIDGE_SLOTS", nbAvailableCartridgeSlots);
+    stmt.bindUint64(":NB_PHYSICAL_DRIVE_SLOTS"     , pl.nbPhysicalDriveSlots);
 
     stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
     stmt.bindString(":CREATION_LOG_HOST_NAME", admin.host);
-    stmt.bindUint64(":CREATION_LOG_TIME", now);
+    stmt.bindUint64(":CREATION_LOG_TIME"     , now);
 
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
-    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindUint64(":LAST_UPDATE_TIME"     , now);
+
+    stmt.bindString(":USER_COMMENT", comment);
 
     stmt.executeNonQuery();
   } catch(exception::UserError &) {
@@ -164,11 +195,11 @@ std::list<common::dataStructures::PhysicalLibrary> RdbmsPhysicalLibraryCatalogue
         "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
         "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
-        "USER_COMMENT AS USER_COMMENT,"
-
         "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME, "
+
+        "USER_COMMENT AS USER_COMMENT "
       "FROM "
         "PHYSICAL_LIBRARY "
       "ORDER BY "

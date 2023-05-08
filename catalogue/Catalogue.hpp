@@ -31,10 +31,11 @@
 #include "catalogue/interfaces/LogicalLibraryCatalogue.hpp"
 #include "catalogue/interfaces/MediaTypeCatalogue.hpp"
 #include "catalogue/interfaces/MountPolicyCatalogue.hpp"
+#include "catalogue/interfaces/PhysicalLibraryCatalogue.hpp"
 #include "catalogue/interfaces/RequesterActivityMountRuleCatalogue.hpp"
 #include "catalogue/interfaces/RequesterGroupMountRuleCatalogue.hpp"
-#include "catalogue/interfaces/RequesterMountRuleCatalogue.hpp"
 #include "catalogue/interfaces/RequesterGroupMountRuleCatalogue.hpp"
+#include "catalogue/interfaces/RequesterMountRuleCatalogue.hpp"
 #include "catalogue/interfaces/RequesterMountRuleCatalogue.hpp"
 #include "catalogue/interfaces/SchemaCatalogue.hpp"
 #include "catalogue/interfaces/StorageClassCatalogue.hpp"
@@ -74,6 +75,7 @@ public:
   virtual const std::unique_ptr<RequesterMountRuleCatalogue>& RequesterMountRule() = 0;
   virtual const std::unique_ptr<RequesterGroupMountRuleCatalogue>& RequesterGroupMountRule() = 0;
   virtual const std::unique_ptr<LogicalLibraryCatalogue>& LogicalLibrary() = 0;
+  virtual const std::unique_ptr<PhysicalLibraryCatalogue>& PhysicalLibrary() = 0;
   virtual const std::unique_ptr<TapeFileCatalogue>& TapeFile() = 0;
   virtual const std::unique_ptr<FileRecycleLogCatalogue>& FileRecycleLog() = 0;
   virtual const std::unique_ptr<DriveConfigCatalogue>& DriveConfig() = 0;
