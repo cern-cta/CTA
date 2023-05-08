@@ -1534,7 +1534,13 @@ void AdminCmd::processPhysicalLibrary_Ch(xrd::Response& response) {
 }
 
 void AdminCmd::processPhysicalLibrary_Rm(xrd::Response& response) {
+  using namespace cta::admin;
 
+  const auto& name = getRequired(OptionString::PHYSICAL_LIBRARY);
+
+  m_catalogue.PhysicalLibrary()->deletePhysicalLibrary(name);
+
+  response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
 std::string AdminCmd::setDriveState(const std::string& regex, const common::dataStructures::DesiredDriveState& desiredDriveState) {
