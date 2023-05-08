@@ -44,7 +44,7 @@ public:
 
   virtual void deletePhysicalLibrary(const std::string &name) = 0;
 
-  virtual std::list<common::dataStructures::PhysicalLibrary> getLogicalLibraries() const = 0;
+  virtual std::list<common::dataStructures::PhysicalLibrary> getPhysicalLibraries() const = 0;
 
   virtual void modifyPhysicalLibraryName(const common::dataStructures::SecurityIdentity &admin,
    const std::string &currentName, const std::string &newName) = 0;
