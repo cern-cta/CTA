@@ -210,7 +210,47 @@ std::list<common::dataStructures::PhysicalLibrary> RdbmsPhysicalLibraryCatalogue
 }
 
 void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryName(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &currentName, const std::string &newName) {}
+  const std::string &currentName, const std::string &newName) {
+  try {
+    if(currentName.empty()) {
+      throw UserSpecifiedAnEmptyStringPhysicalLibraryName(
+        "Cannot modify physical library because the physical library name is an empty string");
+    }
+
+    if(newName.empty()) {
+      throw UserSpecifiedAnEmptyStringPhysicalLibraryName(
+        "Cannot modify physical library because the new name is an empty string");
+    }
+
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE PHYSICAL_LIBRARY SET "
+        "PHYSICAL_LIBRARY_NAME = :NEW_PHYSICAL_LIBRARY_NAME,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "PHYSICAL_LIBRARY_NAME = :CURRENT_PHYSICAL_LIBRARY_NAME";
+    auto conn = m_connPool->getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":NEW_PHYSICAL_LIBRARY_NAME", newName);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":CURRENT_PHYSICAL_LIBRARY_NAME", currentName);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify physical library ") + currentName
+        + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
 
 void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryManufacturer(const common::dataStructures::SecurityIdentity &admin,
   const std::string& name, const std::string &manufacturer) {}
