@@ -253,10 +253,68 @@ void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryName(const common::data
 }
 
 void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryManufacturer(const common::dataStructures::SecurityIdentity &admin,
-  const std::string& name, const std::string &manufacturer) {}
+  const std::string& name, const std::string &manufacturer) {
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE PHYSICAL_LIBRARY SET "
+        "PHYSICAL_LIBRARY_MANUFACTURER = :PHYSICAL_LIBRARY_MANUFACTURER,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
+    auto conn = m_connPool->getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":PHYSICAL_LIBRARY_MANUFACTURER", manufacturer);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":PHYSICAL_LIBRARY_NAME", name);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify physical library ") + name + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
 
 void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryModel(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &model) {}
+  const std::string &name, const std::string &model) {
+  try {
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE PHYSICAL_LIBRARY SET "
+        "PHYSICAL_LIBRARY_MODEL = :PHYSICAL_LIBRARY_MODEL,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
+    auto conn = m_connPool->getConn();
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":PHYSICAL_LIBRARY_MODEL", model);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":PHYSICAL_LIBRARY_NAME", name);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify physical library ") + name + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
 
 void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryType(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &type) {}
