@@ -69,7 +69,6 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
         ":PHYSICAL_LIBRARY_NAME,"
         ":PHYSICAL_LIBRARY_MANUFACTURER,"
         ":PHYSICAL_LIBRARY_MODEL,"
-        ":PHYSICAL_LIBRARY_MANUFACTURER,"
 
         ":NB_PHYSICAL_CARTRIDGE_SLOTS,"
         ":NB_PHYSICAL_DRIVE_SLOTS,"
@@ -87,8 +86,8 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
     stmt.bindString(":PHYSICAL_LIBRARY_NAME", pl.name);
     stmt.bindString(":PHYSICAL_LIBRARY_MANUFACTURER", pl.manufacturer);
     stmt.bindString(":PHYSICAL_LIBRARY_MODEL", pl.model);
-    stmt.bindString(":NB_PHYSICAL_CARTRIDGE_SLOTS", pl.nbPhysicalCartridgeSlots);
-    stmt.bindString(":NB_PHYSICAL_DRIVE_SLOTS", pl.nbPhysicalDriveSlots);
+    stmt.bindUint64(":NB_PHYSICAL_CARTRIDGE_SLOTS", pl.nbPhysicalCartridgeSlots);
+    stmt.bindUint64(":NB_PHYSICAL_DRIVE_SLOTS", pl.nbPhysicalDriveSlots);
 
     stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
     stmt.bindString(":CREATION_LOG_HOST_NAME", admin.host);
@@ -107,7 +106,7 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
   }
 }
 
-void deletePhysicalLibrary(const std::string &name) {
+void RdbmsPhysicalLibraryCatalogue::deletePhysicalLibrary(const std::string &name) {
   try {
     const char *const sql =
       "DELETE FROM PHYSICAL_LIBRARY "
@@ -144,40 +143,104 @@ void deletePhysicalLibrary(const std::string &name) {
   }
 }
 
-std::list<common::dataStructures::PhysicalLibrary> getPhysicalLibraries() const override;
+std::list<common::dataStructures::PhysicalLibrary> RdbmsPhysicalLibraryCatalogue::getPhysicalLibraries() const {
+  try {
+    std::list<common::dataStructures::PhysicalLibrary> libs;
+    const char *const sql =
+      "SELECT "
+        "PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME,"
+        "PHYSICAL_LIBRARY_MANUFACTURER AS PHYSICAL_LIBRARY_MANUFACTURER,"
+        "PHYSICAL_LIBRARY_MODEL AS PHYSICAL_LIBRARY_MODEL,"
+        "PHYSICAL_LIBRARY_TYPE AS PHYSICAL_LIBRARY_TYPE,"
+        "GUI_URL AS GUI_URL,"
+        "WEBCAM_URL AS WEBCAM_URL,"
+        "PHYSICAL_LOCATION AS PHYSICAL_LOCATION,"
 
-void modifyPhysicalLibraryName(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &currentName, const std::string &newName) override;
+        "NB_PHYSICAL_CARTRIDGE_SLOTS AS NB_PHYSICAL_CARTRIDGE_SLOTS,"
+        "NB_AVAILABLE_CARTRIDGE_SLOTS AS NB_AVAILABLE_CARTRIDGE_SLOTS,"
+        "NB_PHYSICAL_DRIVE_SLOTS AS NB_PHYSICAL_DRIVE_SLOTS,"
 
-void modifyPhysicalLibraryManufacturer(const common::dataStructures::SecurityIdentity &admin,
-  const std::string& name, const std::string &manufacturer) override;
+        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
-void modifyPhysicalLibraryModel(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &model) override;
+        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+      "FROM "
+        "PHYSICAL_LIBRARY "
+      "ORDER BY "
+        "PHYSICAL_LIBRARY_NAME";
+    auto conn = m_connPool->getConn();
+    auto stmt = conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+    while (rset.next()) {
+      common::dataStructures::PhysicalLibrary pl;
 
-void modifyPhysicalLibraryType     (const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &type) override;
+      pl.name         = rset.columnString("PHYSICAL_LIBRARY_NAME");
+      pl.manufacturer = rset.columnString("PHYSICAL_LIBRARY_MANUFACTURER");
+      pl.model        = rset.columnString("PHYSICAL_LIBRARY_MODEL");
+      pl.type         = rset.columnOptionalString("PHYSICAL_LIBRARY_TYPE");
+      pl.guiUrl       = rset.columnOptionalString("GUI_URL");
+      pl.webcamUrl    = rset.columnOptionalString("WEBCAM_URL");
+      pl.location     = rset.columnOptionalString("PHYSICAL_LOCATION");
 
-void modifyPhysicalLibraryGuiUrl   (const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &guiUrl) override;
+      pl.nbPhysicalCartridgeSlots  = rset.columnUint64("NB_PHYSICAL_CARTRIDGE_SLOTS");
+      pl.nbAvailableCartridgeSlots = rset.columnOptionalUint16("NB_AVAILABLE_CARTRIDGE_SLOTS");
+      pl.nbPhysicalDriveSlots      = rset.columnUint64("NB_PHYSICAL_DRIVE_SLOTS");
 
-void modifyPhysicalLibraryWebcamUrl(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &webcamUrl) override;
+      pl.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+      pl.creationLog.host     = rset.columnString("CREATION_LOG_HOST_NAME");
+      pl.creationLog.time     = rset.columnUint64("CREATION_LOG_TIME");
 
-void modifyPhysicalLibraryLocation (const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &location) override;
+      pl.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+      pl.lastModificationLog.host     = rset.columnString("LAST_UPDATE_HOST_NAME");
+      pl.lastModificationLog.time     = rset.columnUint64("LAST_UPDATE_TIME");
 
-void modifyPhysicalLibraryNbPhysicalCartridgeSlots  (const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const uint64_t &nbPhysicalCartridgeSlots) override;
+      libs.push_back(pl);
+    }
 
-void modifyPhysicalLibraryNbAvailableCartridgeSlots (const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const uint64_t &nbAvailableCartridgeSlots) override;
+    return libs;
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
 
-void modifyPhysicalLibraryNbPhysicalDriveSlots (const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const uint64_t &nbPhysicalDriveSlots) override;
+void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryName(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &currentName, const std::string &newName) {}
 
-void modifyPhysicalLibraryComment (const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &comment) override;
+void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryManufacturer(const common::dataStructures::SecurityIdentity &admin,
+  const std::string& name, const std::string &manufacturer) {}
+
+void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryModel(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name, const std::string &model) {}
+
+void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryType(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name, const std::string &type) {}
+
+void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryGuiUrl(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name, const std::string &guiUrl) {}
+
+void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryWebcamUrl(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name, const std::string &webcamUrl) {}
+
+void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryLocation(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name, const std::string &location) {}
+
+void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryNbPhysicalCartridgeSlots(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name, const uint64_t &nbPhysicalCartridgeSlots) {}
+
+void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryNbAvailableCartridgeSlots(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name, const uint64_t &nbAvailableCartridgeSlots) {}
+
+void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryNbPhysicalDriveSlots(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name, const uint64_t &nbPhysicalDriveSlots) {}
+
+void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryComment(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name, const std::string &comment) {}
 
 } // namespace catalogue
 } // namespace cta

@@ -47,7 +47,7 @@ public:
 
   void deletePhysicalLibrary(const std::string &name) override;
 
-  std::list<common::dataStructures::PhysicalLibrary> getLogicalLibraries() const override;
+  std::list<common::dataStructures::PhysicalLibrary> getPhysicalLibraries() const override;
 
   void modifyPhysicalLibraryName(const common::dataStructures::SecurityIdentity &admin,
    const std::string &currentName, const std::string &newName) override;
