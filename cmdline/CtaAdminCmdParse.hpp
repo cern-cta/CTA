@@ -311,7 +311,7 @@ const std::map<std::string, OptionUInt64::Key> uint64Options = {
    { "--writemaxdrives",             OptionUInt64::WRITE_MAX_DRIVES },
    { "--nbphysicalcartridgeslots",   OptionUInt64::NB_PHYSICAL_CARTRIDGE_SLOTS },
    { "--nbavailablecartridgeslots",  OptionUInt64::NB_AVAILABLE_CARTRIDGE_SLOTS },
-   { "--nbphysicaldriveslots",       OptionUInt64::NB_PHYSICAL_DRIVE_SLOTS },
+   { "--nbphysicaldriveslots",       OptionUInt64::NB_PHYSICAL_DRIVE_SLOTS }
 };
 
 
@@ -580,16 +580,16 @@ const Option opt_disabledreason       { Option::OPT_STR,  "--disabledreason",   
 
 const Option opt_archive_file_ids     { Option::OPT_STR_LIST,  "--id",               "-I",   " <archive_file_id>" };
 
-const Option opt_physical_library              { Option::OPT_STR,  "--physicallibrary",           "--pl",   " <physical_library>" };
-const Option opt_manufacturer                  { Option::OPT_STR,  "--manufacturer",              "--ma",     " <manufacturer>" };
-const Option opt_model                         { Option::OPT_STR,  "--model",                     "--mo",   " <model>" };
-const Option opt_type                          { Option::OPT_STR,  "--type",                      "-t",     " <type>" };
-const Option opt_gui_url                       { Option::OPT_STR,  "--guiurl",                    "-g",     " <gui_url>" };
-const Option opt_webcam_url                    { Option::OPT_STR,  "--webcamurl",                 "-w",     " <webcam_url>" };
-const Option opt_location                      { Option::OPT_STR,  "--location",                  "-l",     " <location>" };
-const Option opt_nb_physical_cartridge_slots   { Option::OPT_STR,  "--nbphysicalcartridgeslots",  "--npcs", " <nb_physical_cartridge_slots>" };
-const Option opt_nb_available_cartridge_slots  { Option::OPT_STR,  "--nbavailablecartridgeslots", "--nacs", " <nb_available_cartridge_slots>" };
-const Option opt_nb_physical_drive_slots       { Option::OPT_STR,  "--nbphysicaldriveslots",      "--npds", " <nb_physical_drive_slots >" };
+const Option opt_physical_library              { Option::OPT_STR,   "--physicallibrary",           "--pl",   " <physical_library>" };
+const Option opt_manufacturer                  { Option::OPT_STR,   "--manufacturer",              "--ma",     " <manufacturer>" };
+const Option opt_model                         { Option::OPT_STR,   "--model",                     "--mo",   " <model>" };
+const Option opt_type                          { Option::OPT_STR,   "--type",                      "-t",     " <type>" };
+const Option opt_gui_url                       { Option::OPT_STR,   "--guiurl",                    "-g",     " <gui_url>" };
+const Option opt_webcam_url                    { Option::OPT_STR,   "--webcamurl",                 "-w",     " <webcam_url>" };
+const Option opt_location                      { Option::OPT_STR,   "--location",                  "-l",     " <location>" };
+const Option opt_nb_physical_cartridge_slots   { Option::OPT_UINT,  "--nbphysicalcartridgeslots",  "--npcs", " <nb_physical_cartridge_slots>" };
+const Option opt_nb_available_cartridge_slots  { Option::OPT_UINT,  "--nbavailablecartridgeslots", "--nacs", " <nb_available_cartridge_slots>" };
+const Option opt_nb_physical_drive_slots       { Option::OPT_UINT,  "--nbphysicaldriveslots",      "--npds", " <nb_physical_drive_slots >" };
 
 /*!
  * Subset of commands that return streaming output
