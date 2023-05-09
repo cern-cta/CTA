@@ -223,13 +223,13 @@ xrd::Response AdminCmd::process() {
         processVirtualOrganization_Rm(response);
         break;
       case cmd_pair(admin::AdminCmd::CMD_PHYSICALLIBRARY, admin::AdminCmd::SUBCMD_ADD):
-        processVirtualOrganization_Add(response);
+        processPhysicalLibrary_Add(response);
         break;
       case cmd_pair(admin::AdminCmd::CMD_PHYSICALLIBRARY, admin::AdminCmd::SUBCMD_CH):
-        processVirtualOrganization_Ch(response);
+        processPhysicalLibrary_Ch(response);
         break;
       case cmd_pair(admin::AdminCmd::CMD_PHYSICALLIBRARY, admin::AdminCmd::SUBCMD_RM):
-        processVirtualOrganization_Rm(response);
+        processPhysicalLibrary_Rm(response);
         break;
       case cmd_pair(admin::AdminCmd::CMD_RECYCLETAPEFILE, admin::AdminCmd::SUBCMD_RESTORE):
         processRecycleTapeFile_Restore(response);
@@ -1463,6 +1463,8 @@ void AdminCmd::processVirtualOrganization_Rm(xrd::Response& response) {
 
 void AdminCmd::processPhysicalLibrary_Add(xrd::Response& response) {
   using namespace cta::admin;
+
+  m_lc.log(cta::log::INFO, "processPhysicalLibrary_Add");
 
   common::dataStructures::PhysicalLibrary pl;
   pl.name                     = getRequired(OptionString::PHYSICAL_LIBRARY);
