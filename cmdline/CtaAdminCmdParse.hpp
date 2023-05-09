@@ -308,6 +308,7 @@ const std::map<std::string, OptionUInt64::Key> uint64Options = {
    { "--targetedfreespace",          OptionUInt64::TARGETED_FREE_SPACE },
    { "--sleeptime",                  OptionUInt64::SLEEP_TIME },
    { "--readmaxdrives",              OptionUInt64::READ_MAX_DRIVES },
+   { "--writemaxdrives",             OptionUInt64::WRITE_MAX_DRIVES },
    { "--nbphysicalcartridgeslots",   OptionUInt64::NB_PHYSICAL_CARTRIDGE_SLOTS },
    { "--nbavailablecartridgeslots",  OptionUInt64::NB_AVAILABLE_CARTRIDGE_SLOTS },
    { "--nbphysicaldriveslots",       OptionUInt64::NB_PHYSICAL_DRIVE_SLOTS },
