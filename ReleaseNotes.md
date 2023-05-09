@@ -12,6 +12,7 @@
 - cta/CTA#262 - Manage CI repositories with `cta-release` code
 - cta/CTA#297 - Add gfal2 tests to CI
 - cta/CTA#297 - Refactor client pod tests and switched test tracking status to sqlite db
+- cta/CTA#332 - Add systemtests for cta-admin commands
 
 # v4.8.7-1
 

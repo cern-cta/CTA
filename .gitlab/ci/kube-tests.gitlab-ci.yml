@@ -134,6 +134,16 @@ nightly1:
     - mhvtl
     - xlarge
 
+cta-admin:
+  stage: test
+  extends:
+    - .kubernetes_test
+  except:
+    - tags
+  variables:
+    TEST_SCRIPT: "tests/test_cta-admin.sh"
+    EXTENDED_OPTIONS: "-O -D -t 2400 -C"
+
 regressioneos:
   stage: regressions
   extends:
