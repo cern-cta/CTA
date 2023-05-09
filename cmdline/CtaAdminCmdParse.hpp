@@ -354,7 +354,8 @@ const std::map<std::string, OptionString::Key> strOptions = {
    { "--model",                 OptionString::MODEL },
    { "--type",                  OptionString::TYPE },
    { "--guiurl",                OptionString::GUI_URL },
-   { "--webcamurl",             OptionString::WEBCAM_URL }
+   { "--webcamurl",             OptionString::WEBCAM_URL },
+   { "--location ",             OptionString::LOCATION }
 };
 
 
@@ -580,7 +581,7 @@ const Option opt_disabledreason       { Option::OPT_STR,  "--disabledreason",   
 const Option opt_archive_file_ids     { Option::OPT_STR_LIST,  "--id",               "-I",   " <archive_file_id>" };
 
 const Option opt_physical_library              { Option::OPT_STR,  "--physicallibrary",           "--pl",   " <physical_library>" };
-const Option opt_manufacturer                  { Option::OPT_STR,  "--manufacturer",              "-m",     " <manufacturer>" };
+const Option opt_manufacturer                  { Option::OPT_STR,  "--manufacturer",              "--ma",     " <manufacturer>" };
 const Option opt_model                         { Option::OPT_STR,  "--model",                     "--mo",   " <model>" };
 const Option opt_type                          { Option::OPT_STR,  "--type",                      "-t",     " <type>" };
 const Option opt_gui_url                       { Option::OPT_STR,  "--guiurl",                    "-g",     " <gui_url>" };
