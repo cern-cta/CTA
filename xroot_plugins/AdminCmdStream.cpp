@@ -30,6 +30,7 @@
 #include "XrdCtaFailedRequestLs.hpp"
 #include "XrdCtaGroupMountRuleLs.hpp"
 #include "XrdCtaLogicalLibraryLs.hpp"
+#include "XrdCtaPhysicalLibraryLs.hpp"
 #include "XrdCtaMediaTypeLs.hpp"
 #include "XrdCtaMountPolicyLs.hpp"
 #include "XrdCtaRecycleTapeFileLs.hpp"
