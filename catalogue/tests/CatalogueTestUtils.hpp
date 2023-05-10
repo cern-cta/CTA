@@ -38,6 +38,7 @@ class AdminUser;
 class ArchiveFile;
 class DiskInstance;
 class LogicalLibrary;
+class PhysicalLibrary;
 class SecurityIdentity;
 class StorageClass;
 class Tape;
@@ -72,6 +73,8 @@ public:
   static cta::common::dataStructures::StorageClass getAnotherStorageClass();
   static cta::common::dataStructures::StorageClass getStorageClassDualCopy();
   static cta::common::dataStructures::StorageClass getStorageClassTripleCopy();
+  static cta::common::dataStructures::PhysicalLibrary getPhysicalLibrary1();
+  static cta::common::dataStructures::PhysicalLibrary getPhysicalLibrary2();
   static cta::catalogue::MediaType getMediaType();
   static cta::catalogue::CreateTapeAttributes getTape1();
   static cta::catalogue::CreateTapeAttributes getTape2();

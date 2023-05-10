@@ -47,6 +47,7 @@
 #include "common/dataStructures/StorageClass.hpp"
 #include "common/dataStructures/Tape.hpp"
 #include "common/dataStructures/VirtualOrganization.hpp"
+#include "common/dataStructures/PhysicalLibrary.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "disk/DiskSystem.hpp"
@@ -336,6 +337,38 @@ cta::common::dataStructures::StorageClass CatalogueTestUtils::getStorageClassTri
   storageClass.vo.name = getVo().name;
   storageClass.comment = "Creation of storage class with 3 copies on tape";
   return storageClass;
+}
+
+cta::common::dataStructures::PhysicalLibrary CatalogueTestUtils::getPhysicalLibrary1() {
+  cta::common::dataStructures::PhysicalLibrary pl;
+  pl.name                      = "pl_name_1";
+  pl.manufacturer              = "manufacturer_1";
+  pl.model                     = "model_1";
+  pl.nbPhysicalCartridgeSlots  = 10;
+  pl.nbPhysicalDriveSlots      = 10;
+  pl.type                      = "type_1";
+  pl.guiUrl                    = "url_1";
+  pl.webcamUrl                 = "webcam_1";
+  pl.location                  = "location_1";
+  pl.nbAvailableCartridgeSlots = 5;
+  pl.comment                   = "comment_1";
+  return pl;
+}
+
+cta::common::dataStructures::PhysicalLibrary CatalogueTestUtils::getPhysicalLibrary2() {
+  cta::common::dataStructures::PhysicalLibrary pl;
+  pl.name                      = "pl_name_2";
+  pl.manufacturer              = "manufacturer_2";
+  pl.model                     = "model_2";
+  pl.nbPhysicalCartridgeSlots  = 10;
+  pl.nbPhysicalDriveSlots      = 10;
+  pl.type                      = "type_2";
+  pl.guiUrl                    = "url_2";
+  pl.webcamUrl                 = "webcam_2";
+  pl.location                  = "location_2";
+  pl.nbAvailableCartridgeSlots = 5;
+  pl.comment                   = "comment_2";
+  return pl;
 }
 
 cta::catalogue::MediaType CatalogueTestUtils::getMediaType() {
