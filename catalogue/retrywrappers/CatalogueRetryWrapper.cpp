@@ -28,6 +28,7 @@
 #include "catalogue/retrywrappers/DriveStateCatalogueRetryWrapper.hpp"
 #include "catalogue/retrywrappers/FileRecycleLogCatalogueRetryWrapper.hpp"
 #include "catalogue/retrywrappers/LogicalLibraryCatalogueRetryWrapper.hpp"
+#include "catalogue/retrywrappers/PhysicalLibraryCatalogueRetryWrapper.hpp"
 #include "catalogue/retrywrappers/MediaTypeCatalogueRetryWrapper.hpp"
 #include "catalogue/retrywrappers/MountPolicyCatalogueRetryWrapper.hpp"
 #include "catalogue/retrywrappers/RequesterActivityMountRuleCatalogueRetryWrapper.hpp"
@@ -69,6 +70,7 @@ CatalogueRetryWrapper::CatalogueRetryWrapper(log::Logger &log, std::unique_ptr<C
   m_requesterGroupMountRule(std::make_unique<RequesterGroupMountRuleCatalogueRetryWrapper>(m_catalogue, m_log,
     m_maxTriesToConnect)),
   m_logicalLibrary(std::make_unique<LogicalLibraryCatalogueRetryWrapper>(m_catalogue, m_log, m_maxTriesToConnect)),
+  m_physicalLibrary(std::make_unique<PhysicalLibraryCatalogueRetryWrapper>(m_catalogue, m_log, m_maxTriesToConnect)),
   m_tapeFile(std::make_unique<TapeFileCatalogueRetryWrapper>(m_catalogue, m_log, m_maxTriesToConnect)),
   m_fileRecycleLog(std::make_unique<FileRecycleLogCatalogueRetryWrapper>(m_catalogue, m_log, m_maxTriesToConnect)),
   m_driveConfig(std::make_unique<DriveConfigCatalogueRetryWrapper>(m_catalogue, m_log, m_maxTriesToConnect)),
