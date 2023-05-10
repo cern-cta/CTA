@@ -34,7 +34,6 @@
 #include "common/log/StdoutLogger.hpp"
 #include "common/log/StringLogger.hpp"
 #include "common/processCap/ProcessCapDummy.hpp"
-#include "scheduler/OStoreDB/OStoreDBFactory.hpp"
 #include "scheduler/RetrieveJob.hpp"
 
 namespace {
@@ -70,7 +69,6 @@ public:
 class OsmReaderTest : public ::testing::Test {
 protected:
   OsmReaderTest() : m_sWrapper(), m_dev(), m_catalogue(std::make_unique<OSMCatalogue>()) {
-    cta::OStoreDBFactory<cta::objectstore::BackendVFS> factory;
   }
 
   void SetUp() override {

@@ -15,6 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "catalogue/Catalogue.hpp"
 #include "common/checksum/ChecksumBlobSerDeser.hpp"
 #include "PbException.hpp"
 #include "WorkflowEvent.hpp"

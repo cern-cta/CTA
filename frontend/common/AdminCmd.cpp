@@ -15,6 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "catalogue/Catalogue.hpp"
 #include "catalogue/CreateMountPolicyAttributes.hpp"
 #include "catalogue/CreateTapeAttributes.hpp"
 #include "catalogue/MediaType.hpp"

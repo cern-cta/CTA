@@ -27,6 +27,8 @@
 #include "FrontendService.hpp"
 #include "Config.hpp"
 
+#include <fstream>
+
 namespace cta {
 namespace frontend {
 

@@ -26,7 +26,6 @@
 #include "rdbms/Login.hpp"
 #include "scheduler/DiskReportRunner.hpp"
 #include "scheduler/RepackRequestManager.hpp"
-#include "objectstore/QueueCleanupRunner.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "tapeserver/daemon/MaintenanceHandler.hpp"
 
