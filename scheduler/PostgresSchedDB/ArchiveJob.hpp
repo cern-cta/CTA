@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "PostgresSchedDB.hpp"
+#include "scheduler/PostgresSchedDB/PostgresSchedDB.hpp"
 #include "common/log/LogContext.hpp"
 
 #include <list>
@@ -28,8 +28,11 @@
 #include <time.h>
 
 namespace cta {
+namespace postgresscheddb {
 
-class PostgresSchedDB::ArchiveJob : public SchedulerDatabase::ArchiveJob {
+class ArchiveJob : public SchedulerDatabase::ArchiveJob {
+ friend class cta::PostgresSchedDB;
+
  public:
 
    ArchiveJob();
@@ -40,6 +43,11 @@ class PostgresSchedDB::ArchiveJob : public SchedulerDatabase::ArchiveJob {
 
    void bumpUpTapeFileCount(uint64_t newFileCount) override;
 
+   bool m_jobOwned = false;
+   uint64_t m_mountId = 0;
+   std::string m_tapePool;
+   std::string reportType;
 };
 
+} //namespace postgresscheddb
 } //namespace cta

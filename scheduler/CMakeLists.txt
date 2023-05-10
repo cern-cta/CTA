@@ -17,6 +17,10 @@ cmake_minimum_required (VERSION 3.17)
 include_directories (${CMAKE_CURRENT_SOURCE_DIR}
   ${PROJECT_SOURCE_DIR} ${CMAKE_BINARY_DIR} ${XROOTD_INCLUDE_DIR})
 
+if(CTA_USE_PGSCHED)
+  add_subdirectory(PostgresSchedDB/schema)
+endif()
+
 set (CTA_SCHEDULER_SRC_FILES
   ArchiveJob.cpp
   ArchiveMount.cpp
@@ -36,6 +40,9 @@ set (CTA_SCHEDULER_SRC_FILES
   SchedulerDatabaseFactory.cpp
   TapeMount.cpp)
 
+find_package(Protobuf3 REQUIRED)
+include_directories (${PROTOBUF3_INCLUDE_DIRS})
+
 if(NOT CTA_USE_PGSCHED)
   set (CTA_SCHEDULER_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
     OStoreDB/MemQueues.cpp
@@ -43,22 +50,58 @@ if(NOT CTA_USE_PGSCHED)
     OStoreDB/OStoreDBWithAgent.cpp
     OStoreDB/QueueItor.cpp)
 else()
+
+  set (CTAProtoFiles
+    PostgresSchedDB/rowblobs.proto)
+
+  # Generate should be used on protofile in the current directory
+  # This needs to be changed. todo
+  PROTOBUF3_GENERATE_CPP(CTAProtoSources0 CTAProtoHeaders0 ${CTAProtoFiles})
+
+  set (CTAProtoSources
+    ${CMAKE_BINARY_DIR}/scheduler/PostgresSchedDB/rowblobs.pb.cc)
+
+  set (CTAProtoHeaders
+    ${CMAKE_BINARY_DIR}/scheduler/PostgresSchedDB/rowblobs.pb.h)
+
+  SET_SOURCE_FILES_PROPERTIES(${CTAProtoSources} PROPERTIES OBJECT_DEPENDS ${CTAProtoSources0})
+  SET_SOURCE_FILES_PROPERTIES(${CTAProtoHeaders} PROPERTIES OBJECT_DEPENDS ${CTAProtoHeaders0})
+
+  SET_SOURCE_FILES_PROPERTIES(
+    ${CTAProtoSources} ${CTAProtoHeaders}
+    PROPERTIES GENERATED TRUE)
+
+  include_directories (${CMAKE_BINARY_DIR}/scheduler)
+
+  set (CTAProtoDependants
+    PostgresSchedDB/RetrieveRequest.cpp
+    PostgresSchedDB/RepackRequest.cpp)
+
+  SET_SOURCE_FILES_PROPERTIES(${CTAProtoDependants}
+    PROPERTIES OBJECT_DEPENDS ${CTAProtoHeaders})
+
   set (CTA_SCHEDULER_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
+    ${CTAProtoSources}
     PostgresSchedDB/PostgresSchedDB.cpp
     PostgresSchedDB/ArchiveMount.cpp
     PostgresSchedDB/ArchiveJob.cpp
     PostgresSchedDB/ArchiveJobQueueItor.cpp
+    PostgresSchedDB/ArchiveRequest.cpp
+    PostgresSchedDB/Helpers.cpp
     PostgresSchedDB/RetrieveMount.cpp
+    PostgresSchedDB/RetrieveRequest.cpp
     PostgresSchedDB/RetrieveJob.cpp
     PostgresSchedDB/RetrieveJobQueueItor.cpp
     PostgresSchedDB/RepackRequestPromotionStatistics.cpp
     PostgresSchedDB/RepackRequest.cpp
     PostgresSchedDB/RepackReportBatch.cpp
-    PostgresSchedDB/TapeMountDecisionInfo.cpp)
+    PostgresSchedDB/TapeMountDecisionInfo.cpp
+    PostgresSchedDB/sql/ArchiveJobQueue.cpp
+    PostgresSchedDB/sql/RetrieveJobQueue.cpp
+    PostgresSchedDB/sql/RepackJobQueue.cpp
+    PostgresSchedDB/sql/Transaction.cpp)
 endif()
 
-find_package(Protobuf3 REQUIRED)
-include_directories (${PROTOBUF3_INCLUDE_DIRS})
 add_library (ctascheduler SHARED
   ${CTA_SCHEDULER_SRC_FILES})
 set_property(TARGET ctascheduler PROPERTY SOVERSION "${CTA_SOVERSION}")

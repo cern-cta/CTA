@@ -17,12 +17,15 @@
 
 #pragma once
 
-#include "PostgresSchedDB.hpp"
+#include "scheduler/PostgresSchedDB/PostgresSchedDB.hpp"
 #include "common/log/LogContext.hpp"
 
 namespace cta {
+namespace postgresscheddb {
 
-class PostgresSchedDB::RepackReportBatch : public SchedulerDatabase::RepackReportBatch {
+class RepackReportBatch : public SchedulerDatabase::RepackReportBatch {
+ friend class cta::PostgresSchedDB;
+
  public:
 
    RepackReportBatch();
@@ -30,4 +33,5 @@ class PostgresSchedDB::RepackReportBatch : public SchedulerDatabase::RepackRepor
    void report(log::LogContext & lc) override;
 };
 
+} //namespace postgresscheddb
 } //namespace cta

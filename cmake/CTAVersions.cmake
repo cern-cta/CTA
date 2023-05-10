@@ -20,6 +20,10 @@ set(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION "v0.0")
 # Catalogue Schema Version
 include(catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake)
 
+# Scheduler Schema Version
+set(CTA_SCHEDULER_SCHEMA_VERSION_MAJOR 1)
+set(CTA_SCHEDULER_SCHEMA_VERSION_MINOR 0)
+
 # Shared object internal version (used in SONAME)
 set(CTA_SOVERSION 0)
 

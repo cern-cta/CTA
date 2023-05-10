@@ -17,14 +17,18 @@
 
 #pragma once
 
-#include "PostgresSchedDB.hpp"
+#include "scheduler/PostgresSchedDB/PostgresSchedDB.hpp"
+#include "scheduler/PostgresSchedDB/RetrieveRequest.hpp"
 #include "common/log/LogContext.hpp"
 
 #include <string>
 
 namespace cta {
+namespace postgresscheddb {
 
-class PostgresSchedDB::RetrieveJob : public SchedulerDatabase::RetrieveJob {
+class RetrieveJob : public SchedulerDatabase::RetrieveJob {
+ friend class cta::PostgresSchedDB;
+
  public:
 
    RetrieveJob();
@@ -38,6 +42,10 @@ class PostgresSchedDB::RetrieveJob : public SchedulerDatabase::RetrieveJob {
    void abort(const std::string &abortReason, log::LogContext &lc) override;
 
    void fail() override;
+
+   uint64_t m_mountId = 0;
+   postgresscheddb::RetrieveRequest::RetrieveReqRepackInfo  m_repackInfo;
 };
 
+} //namespace postgresscheddb
 } //namespace cta

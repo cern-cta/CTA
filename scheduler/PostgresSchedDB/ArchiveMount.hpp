@@ -17,10 +17,12 @@
 
 #pragma once
 
-#include "PostgresSchedDB.hpp"
+#include "scheduler/PostgresSchedDB/PostgresSchedDB.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/dataStructures/DriveState.hpp"
 #include "common/dataStructures/MountType.hpp"
+#include "scheduler/PostgresSchedDB/sql/Transaction.hpp"
+#include "scheduler/PostgresSchedDB/sql/Enums.hpp"
 
 #include <list>
 #include <memory>
@@ -29,11 +31,15 @@
 #include <time.h>
 
 namespace cta {
+namespace postgresscheddb {
 
-class PostgresSchedDB::ArchiveMount : public SchedulerDatabase::ArchiveMount {
+class ArchiveMount : public SchedulerDatabase::ArchiveMount {
+ friend class cta::PostgresSchedDB;
+
  public:
 
-   ArchiveMount();
+   ArchiveMount(const std::string& ownerId, Transaction& txn, common::dataStructures::JobQueueType queueType) :
+      m_ownerId(ownerId), m_txn(txn), m_queueType(queueType) { }
 
    const MountInfo & getMountInfo() override;
 
@@ -48,6 +54,12 @@ class PostgresSchedDB::ArchiveMount : public SchedulerDatabase::ArchiveMount {
    void setJobBatchTransferred(
       std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> & jobsBatch, log::LogContext & lc) override;
 
+private:
+
+   const std::string& m_ownerId;
+   Transaction& m_txn;
+   common::dataStructures::JobQueueType m_queueType;
 };
 
+} //namespace postgresscheddb
 } //namespace cta

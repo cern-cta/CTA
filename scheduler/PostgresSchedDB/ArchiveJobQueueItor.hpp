@@ -17,14 +17,17 @@
 
 #pragma once
 
-#include "PostgresSchedDB.hpp"
+#include "scheduler/PostgresSchedDB/PostgresSchedDB.hpp"
 #include "common/dataStructures/ArchiveJob.hpp"
 
 #include <string>
 
 namespace cta {
+namespace postgresscheddb {
 
-class PostgresSchedDB::ArchiveJobQueueItor : public SchedulerDatabase::IArchiveJobQueueItor {
+class ArchiveJobQueueItor : public SchedulerDatabase::IArchiveJobQueueItor {
+ friend class cta::PostgresSchedDB;
+
  public:
 
    ArchiveJobQueueItor();
@@ -38,4 +41,5 @@ class PostgresSchedDB::ArchiveJobQueueItor : public SchedulerDatabase::IArchiveJ
    const common::dataStructures::ArchiveJob &operator*() const override;
 };
 
+} //namespace postgresscheddb
 } //namespace cta

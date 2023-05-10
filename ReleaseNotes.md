@@ -6,6 +6,7 @@
 - cta/CTA#356 - Add support for changing to different storage classes during one execution for cta-change-storage-class-in-catalogue
 
 ### Bug Fixes
+- cta/CTA#147 - Development of the postgres SchedulerDatabase
 - cta/CTA#259 - cta-rmcd should not exit if /dev/sg0 is missing
 - cta/CTA#345 - Remove some objectstore dependencies outside scheduler
 

@@ -15,34 +15,36 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "ArchiveJobQueueItor.hpp"
+#include "scheduler/PostgresSchedDB/ArchiveJobQueueItor.hpp"
 #include "common/exception/Exception.hpp"
 
 namespace cta {
+namespace postgresscheddb {
 
-PostgresSchedDB::ArchiveJobQueueItor::ArchiveJobQueueItor()
+ArchiveJobQueueItor::ArchiveJobQueueItor()
 {
    throw cta::exception::Exception("Not implemented");
 }
 
-const std::string &PostgresSchedDB::ArchiveJobQueueItor::qid() const
+const std::string &ArchiveJobQueueItor::qid() const
 {
    throw cta::exception::Exception("Not implemented");
 }
 
-bool PostgresSchedDB::ArchiveJobQueueItor::end() const
+bool ArchiveJobQueueItor::end() const
 {
    throw cta::exception::Exception("Not implemented");
 }
 
-void PostgresSchedDB::ArchiveJobQueueItor::operator++()
+void ArchiveJobQueueItor::operator++()
 {
    throw cta::exception::Exception("Not implemented");
 }
 
-const common::dataStructures::ArchiveJob &PostgresSchedDB::ArchiveJobQueueItor::operator*() const
+const common::dataStructures::ArchiveJob &ArchiveJobQueueItor::operator*() const
 {
    throw cta::exception::Exception("Not implemented");
 }
 
+} //namespace postgresscheddb
 } //namespace cta

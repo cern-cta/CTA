@@ -26,6 +26,7 @@
 #include "scheduler/PostgresSchedDB/PostgresSchedDB.hpp"
 #include "scheduler/RetrieveRequestDump.hpp"
 #include "scheduler/SchedulerDatabaseFactory.hpp"
+#include "rdbms/Login.hpp"
 
 namespace cta {
 
@@ -35,16 +36,25 @@ class Catalogue;
 
 class PostgresSchedDBWrapper: public SchedulerDatabaseDecorator {
 public:
-  PostgresSchedDBWrapper(const std::string &context, std::unique_ptr<cta::catalogue::Catalogue>& catalogue, const std::string &URL = "") :
-    SchedulerDatabaseDecorator(m_PostgresSchedDB), m_logger(new cta::log::DummyLogger("", "")), m_catalogue(catalogue),
-    m_PostgresSchedDB(nullptr, *m_catalogue, *m_logger) {}
+  PostgresSchedDBWrapper(const std::string &ownerId,
+                         std::unique_ptr<cta::log::Logger> logger,
+                         catalogue::Catalogue &catalogue,
+                         const rdbms::Login &login,
+                         const uint64_t nbConns) :
+      SchedulerDatabaseDecorator(m_PostgresSchedDB),
+      m_logger(std::move(logger)), m_catalogue(catalogue),
+      m_PostgresSchedDB( ownerId, *logger, catalogue, login, nbConns)
+   {
+     // empty
+   }
+
 
   ~PostgresSchedDBWrapper() throw() {}
 
 private:
   std::unique_ptr <cta::log::Logger> m_logger;
-  std::unique_ptr <cta::catalogue::Catalogue> & m_catalogue;
-  cta::PostgresSchedDB m_PostgresSchedDB;
+  cta::catalogue::Catalogue& m_catalogue;
+  PostgresSchedDB m_PostgresSchedDB;
 };
 
 /**
@@ -68,12 +78,18 @@ public:
    *
    * @return A newly created scheduler database object.
    */
-  std::unique_ptr<SchedulerDatabase> create(std::unique_ptr<cta::catalogue::Catalogue>& catalogue) const {
-    return std::unique_ptr<SchedulerDatabase>(new PostgresSchedDBWrapper("UnitTest", catalogue, m_URL));
+  std::unique_ptr<SchedulerDatabase> create(std::unique_ptr<cta::catalogue::Catalogue> &catalogue) const {
+    auto dummylogger = std::make_unique<cta::log::DummyLogger>("","");
+    auto logger = std::unique_ptr<cta::log::Logger>(std::move(dummylogger));
+
+    cta::rdbms::Login login(cta::rdbms::Login::DBTYPE_POSTGRESQL, "user", "password", "dbname", "host", 0);
+
+    auto pgwrapper = std::make_unique<PostgresSchedDBWrapper>("UnitTest", std::move(logger), *catalogue, login, 2);
+    return std::unique_ptr<SchedulerDatabase>(std::move(pgwrapper));
   }
 
   private:
     std::string m_URL;
 };  // class PostgresSchedDBFactory
 
-}  // namespace cta
+} // namespace cta

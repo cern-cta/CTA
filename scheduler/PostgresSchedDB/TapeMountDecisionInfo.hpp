@@ -17,9 +17,11 @@
 
 #pragma once
 
-#include "PostgresSchedDB.hpp"
+#include "scheduler/PostgresSchedDB/PostgresSchedDB.hpp"
 #include "common/dataStructures/LabelFormat.hpp"
 #include "common/dataStructures/MountType.hpp"
+#include "scheduler/PostgresSchedDB/sql/Transaction.hpp"
+#include "catalogue/TapeDrivesCatalogueState.hpp"
 
 #include <memory>
 #include <optional>
@@ -29,10 +31,13 @@
 
 namespace cta {
 
-class PostgresSchedDB::TapeMountDecisionInfo : public SchedulerDatabase::TapeMountDecisionInfo {
- public:
+namespace postgresscheddb {
 
-   TapeMountDecisionInfo();
+class TapeMountDecisionInfo : public SchedulerDatabase::TapeMountDecisionInfo {
+ friend class cta::PostgresSchedDB;
+
+ public:
+   explicit TapeMountDecisionInfo(PostgresSchedDB &pdb, rdbms::ConnPool &cp, const std::string &ownerId, TapeDrivesCatalogueState *drivesState, log::Logger &logger);
 
    std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(
       common::dataStructures::MountType mountType,
@@ -52,6 +57,20 @@ class PostgresSchedDB::TapeMountDecisionInfo : public SchedulerDatabase::TapeMou
       const uint64_t capacityInBytes,
       const std::optional<std::string> &activity,
       cta::common::dataStructures::Label::Format labelFormat) override;
+
+  private:
+    /** Acquire scheduler global lock */
+    void lock();
+    /** Commit decision and release scheduler global lock */
+    void commit();
+
+    PostgresSchedDB& m_PostgresSchedDB;
+    Transaction m_txn;
+    std::string m_ownerId;
+    bool m_lockTaken = false;
+    log::Logger&           m_logger;
+    TapeDrivesCatalogueState *m_tapeDrivesState = nullptr;
 };
 
+} //namespace postgresscheddb
 } //namespace cta

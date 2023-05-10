@@ -19,25 +19,26 @@
 #include "common/exception/Exception.hpp"
 
 namespace cta {
+namespace postgresscheddb {
 
-PostgresSchedDB::ArchiveJob::ArchiveJob()
+ArchiveJob::ArchiveJob()
+{
+}
+
+void ArchiveJob::failTransfer(const std::string & failureReason, log::LogContext & lc)
 {
    throw cta::exception::Exception("Not implemented");
 }
 
-void PostgresSchedDB::ArchiveJob::failTransfer(const std::string & failureReason, log::LogContext & lc)
+void ArchiveJob::failReport(const std::string & failureReason, log::LogContext & lc)
 {
    throw cta::exception::Exception("Not implemented");
 }
 
-void PostgresSchedDB::ArchiveJob::failReport(const std::string & failureReason, log::LogContext & lc)
+void ArchiveJob::bumpUpTapeFileCount(uint64_t newFileCount)
 {
    throw cta::exception::Exception("Not implemented");
 }
 
-void PostgresSchedDB::ArchiveJob::bumpUpTapeFileCount(uint64_t newFileCount)
-{
-   throw cta::exception::Exception("Not implemented");
-}
-
+} //namespace postgresscheddb
 } //namespace cta

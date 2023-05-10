@@ -17,11 +17,12 @@
 
 #pragma once
 
-#include "PostgresSchedDB.hpp"
+#include "scheduler/PostgresSchedDB/PostgresSchedDB.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/dataStructures/DriveState.hpp"
 #include "common/dataStructures/MountType.hpp"
 #include "common/dataStructures/DiskSpaceReservationRequest.hpp"
+#include "scheduler/PostgresSchedDB/sql/Transaction.hpp"
 
 #include <list>
 #include <memory>
@@ -31,11 +32,15 @@
 #include <time.h>
 
 namespace cta {
+namespace postgresscheddb {
 
-class PostgresSchedDB::RetrieveMount : public SchedulerDatabase::RetrieveMount {
+class RetrieveMount : public SchedulerDatabase::RetrieveMount {
+ friend class cta::PostgresSchedDB;
+
  public:
 
-   RetrieveMount();
+   RetrieveMount(const std::string& ownerId, Transaction& txn, const std::string &vid) :
+      m_ownerId(ownerId), m_txn(txn), m_vid(vid) { }
 
    const MountInfo & getMountInfo() override;
 
@@ -61,6 +66,11 @@ class PostgresSchedDB::RetrieveMount : public SchedulerDatabase::RetrieveMount {
    void addDiskSystemToSkip(const DiskSystemToSkip &diskSystemToSkip) override;
 
    void putQueueToSleep(const std::string &diskSystemName, const uint64_t sleepTime, log::LogContext &logContext) override;
+
+   const std::string& m_ownerId;
+   Transaction& m_txn;
+   const std::string m_vid;
 };
 
+} //namespace postgresscheddb
 } //namespace cta

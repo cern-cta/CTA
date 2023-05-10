@@ -21,13 +21,13 @@
 #include <string>
 #include <utility>
 
-#include "catalogue/InMemoryCatalogue.hpp"
+#include "catalogue/dummy/DummyCatalogue.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/StringLogger.hpp"
-#include "PostgresSchedDB.hpp"
-#include "PostgresSchedDBFactory.hpp"
-#include "PostgresSchedDBTest.hpp"
+#include "scheduler/PostgresSchedDB/PostgresSchedDB.hpp"
+#include "scheduler/PostgresSchedDB/PostgresSchedDBFactory.hpp"
+#include "scheduler/PostgresSchedDB/PostgresSchedDBTest.hpp"
 
 namespace unitTests {
 

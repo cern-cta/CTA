@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 
-#include "catalogue/PostgresSchedDB.hpp"
+#include "scheduler/PostgresSchedDB/PostgresSchedDB.hpp"
 #include "common/log/Logger.hpp"
 
 namespace cta {
@@ -29,7 +29,16 @@ namespace catalogue {
 class Catalogue;
 }
 
+class PostgresSchedDBQCR {
+// QueueCleanupRunner
+public:
+
+  PostgresSchedDBQCR(catalogue::Catalogue &catalogue, PostgresSchedDB &pgs) { }
+  void runOnePass(log::LogContext & lc) { }
+};
+
 class PostgresSchedDBGC {
+// GarbageCollector
 public:
 
   PostgresSchedDBGC(void *pgstuff, catalogue::Catalogue& catalogue) { }
@@ -42,17 +51,31 @@ public:
   PostgresSchedDBInit(const std::string& client_process, const std::string& db_conn_str, log::Logger& log,
     bool leaveNonEmptyAgentsBehind = false)
   {
+    connStr = db_conn_str;
+    clientProc = client_process;
+    login = rdbms::Login::parseString(connStr);
+    if (login.dbType != rdbms::Login::DBTYPE_POSTGRESQL) {
+      std::runtime_error("scheduler dbconnect string must specify postgres.");
+    }
   }
 
   std::unique_ptr<PostgresSchedDB> getSchedDB(catalogue::Catalogue& catalogue, log::Logger& log) {
-    return std::make_unique<PostgresSchedDB>(nullptr, catalogue, log);
+    const uint64_t nbConns = 2;
+    return std::make_unique<PostgresSchedDB>( clientProc, log, catalogue, login, nbConns);
   }
 
   PostgresSchedDBGC getGarbageCollector(catalogue::Catalogue& catalogue) {
     return PostgresSchedDBGC(nullptr, catalogue);
   }
 
+  PostgresSchedDBQCR getQueueCleanupRunner(catalogue::Catalogue& catalogue, PostgresSchedDB &pgs) {
+    return PostgresSchedDBQCR(catalogue, pgs);
+  }
+
 private:
+  std::string connStr;
+  std::string clientProc;
+  rdbms::Login login;
 };
 
 typedef PostgresSchedDBInit      SchedulerDBInit_t;

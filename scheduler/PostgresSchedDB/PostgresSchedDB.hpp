@@ -38,8 +38,12 @@
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/Logger.hpp"
+#include "rdbms/ConnPool.hpp"
+#include "rdbms/Login.hpp"
 #include "scheduler/RetrieveJob.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
+#include "common/utils/utils.hpp"
+#include "catalogue/TapeDrivesCatalogueState.hpp"
 
 namespace cta {
 
@@ -49,19 +53,13 @@ class Catalogue;
 
 class PostgresSchedDB: public SchedulerDatabase {
  public:
-  PostgresSchedDB(void *pgstuff, catalogue::Catalogue & catalogue, log::Logger &logger);
-  virtual ~PostgresSchedDB() throw();
+  PostgresSchedDB( const std::string &ownerId,
+                   log::Logger &logger,
+                   catalogue::Catalogue &catalogue,
+                   const rdbms::Login &login,
+                   const uint64_t nbConns);
 
-  class ArchiveMount;
-  class ArchiveJob;
-  class ArchiveJobQueueItor;
-  class RetrieveMount;
-  class RetrieveJob;
-  class RetrieveJobQueueItor;
-  class RepackRequestPromotionStatistics;
-  class RepackRequest;
-  class RepackReportBatch;
-  class TapeMountDecisionInfo;
+  virtual ~PostgresSchedDB() throw();
 
   void waitSubthreadsComplete() override;
 
@@ -93,8 +91,9 @@ class PostgresSchedDB: public SchedulerDatabase {
   void setArchiveJobBatchReported(std::list<SchedulerDatabase::ArchiveJob*> & jobsBatch,
     log::TimingList & timingList, utils::Timer & t, log::LogContext & lc) override;
 
-  void setArchiveJobBatchReported(std::list<SchedulerDatabase::ArchiveJob*> & jobsBatch,
-    log::TimingList & timingList, utils::Timer & t, log::LogContext & lc) override;
+  std::list<SchedulerDatabase::RetrieveQueueCleanupInfo> getRetrieveQueuesCleanupInfo(log::LogContext& logContext) override;
+
+  void setRetrieveQueueCleanupFlag(const std::string&vid, bool val, log::LogContext& logContext) override;
 
   std::list<RetrieveQueueStatistics> getRetrieveQueueStatistics(
     const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria, const std::set<std::string>& vidsToConsider) override;
@@ -179,6 +178,15 @@ class PostgresSchedDB: public SchedulerDatabase {
   void setThreadNumber(uint64_t threadNumber, const std::optional<size_t> &stackSize = std::nullopt);
   void setBottomHalfQueueSize(uint64_t tasksNumber);
 
+private:
+
+   void fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, SchedulerDatabase::PurposeGetMountInfo purpose, log::LogContext& lc);
+
+   std::string m_ownerId;
+   rdbms::ConnPool m_connPool;
+   catalogue::Catalogue&  m_catalogue;
+   log::Logger&           m_logger;
+   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
 };
 
 }  // namespace cta

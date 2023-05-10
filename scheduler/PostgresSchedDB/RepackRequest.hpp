@@ -17,7 +17,9 @@
 
 #pragma once
 
-#include "PostgresSchedDB.hpp"
+#include "scheduler/PostgresSchedDB/PostgresSchedDB.hpp"
+#include "scheduler/PostgresSchedDB/sql/Transaction.hpp"
+#include "scheduler/PostgresSchedDB/sql/RepackJobQueue.hpp"
 #include "common/dataStructures/ArchiveRoute.hpp"
 #include "common/log/LogContext.hpp"
 #include "disk/DiskSystem.hpp"
@@ -26,29 +28,77 @@
 #include <cstdint>
 
 namespace cta {
+namespace postgresscheddb {
 
-class PostgresSchedDB::RepackRequest : public SchedulerDatabase::RepackRequest {
+class RepackRequest : public SchedulerDatabase::RepackRequest {
+ friend class cta::PostgresSchedDB;
+
  public:
 
-   RepackRequest();
+  RepackRequest(rdbms::ConnPool &pool, catalogue::Catalogue &catalogue, log::LogContext &lc) : m_connPool(pool), m_catalogue(catalogue), m_lc(lc) { }
 
-   void setLastExpandedFSeq(uint64_t fseq) override;
+  RepackRequest(rdbms::ConnPool &pool, catalogue::Catalogue &catalogue, log::LogContext& lc, const postgresscheddb::sql::RepackJobQueueRow &row) : m_connPool(pool), m_catalogue(catalogue), m_lc(lc) {
+    *this = row;
+  }
 
-   uint64_t addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests,
+  RepackRequest& operator=(const postgresscheddb::sql::RepackJobQueueRow &row);
+
+  uint64_t getLastExpandedFSeq() override;
+  void setLastExpandedFSeq(uint64_t fseq) override;
+
+  uint64_t addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests,
       cta::common::dataStructures::ArchiveRoute::FullMap & archiveRoutesMap, uint64_t maxFSeqLowBound,
       const uint64_t maxAddedFSeq, const TotalStatsFiles &totalStatsFiles, disk::DiskSystemList diskSystemList,
       log::LogContext & lc) override;
 
-   void expandDone() override;
+  void expandDone() override;
+  void fail() override;
+  void requeueInToExpandQueue(log::LogContext &lc) override;
+  void setExpandStartedAndChangeStatus() override;
+  void fillLastExpandedFSeqAndTotalStatsFile(uint64_t &fSeq, TotalStatsFiles &totalStatsFiles) override;
 
-   void fail() override;
 
-   void requeueInToExpandQueue(log::LogContext &lc) override;
+  void setVid(const std::string & vid);
+  void setType(common::dataStructures::RepackInfo::Type repackType);
+  void setBufferURL(const std::string & bufferURL);
+  void setMountPolicy(const common::dataStructures::MountPolicy &mp);
+  void setNoRecall(const bool noRecall);
+  void setCreationLog(const common::dataStructures::EntryLog & creationLog);
+  std::string getIdStr() { return "??"; }
+  void setTotalStats(const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles& totalStatsFiles);
+  void reportRetrieveCreationFailures(std::list<Subrequest> &notCreatedSubrequests);
 
-   void setExpandStartedAndChangeStatus() override;
+  void commit();
+  void insert();
+  void update();
 
-   void fillLastExpandedFSeqAndTotalStatsFile(uint64_t &fSeq, TotalStatsFiles &totalStatsFiles) override;
+  common::dataStructures::MountPolicy m_mountPolicy;
+  bool m_noRecall = false;
+  common::dataStructures::EntryLog m_creationLog;
+  bool m_addCopies = true;
+  bool m_isMove = true;
 
+  struct StatsValues {
+    uint64_t files = 0;
+    uint64_t bytes = 0;
+  };
+
+  struct SubrequestPointer {
+    std::string address;
+    uint64_t fSeq = 0;
+    bool isRetrieveAccounted = false;
+    std::set<uint32_t> archiveCopyNbAccounted;
+    bool isSubreqDeleted = false;
+  };
+    
+  std::list<SubrequestPointer> m_subreqp;
+  std::unique_ptr<postgresscheddb::Transaction> m_txn;
+
+  // References to external objects
+  rdbms::ConnPool      &m_connPool;
+  catalogue::Catalogue &m_catalogue;
+  log::LogContext      &m_lc;
 };
 
+} //namespace postgresscheddb
 } //namespace cta

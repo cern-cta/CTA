@@ -1,0 +1,95 @@
+// @project	 The CERN Tape Archive (CTA)
+// @copyright    Copyright © 2023 CERN
+// @license	 This program is free software, distributed under the terms of the GNU General Public
+//               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
+//               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
+//               option) any later version.
+//
+//               This program is distributed in the hope that it will be useful, but WITHOUT ANY
+//               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+//               PARTICULAR PURPOSE. See the GNU General Public License for more details.
+//
+//               In applying this licence, CERN does not waive the privileges and immunities
+//               granted to it by virtue of its status as an Intergovernmental Organization or
+//               submit itself to any jurisdiction.
+
+syntax = "proto3";
+package cta.postgresscheddb.blobser;
+
+enum RetrieveJobStatus {
+  RJS_ToTransfer = 0;
+  RJS_ToReportToUserForFailure = 1;
+  RJS_Failed = 2;
+  RJS_ToReportToRepackForSuccess = 3;
+  RJS_ToReportToRepackForFailure = 4;
+}
+
+message TapeFile {
+  string vid = 1;
+  uint64 fseq = 2;
+  uint64 blockid = 3;
+  uint64 filesize = 4;
+  uint32 copynb = 5;
+  uint64 creationtime = 6;
+  bytes checksumblob = 7;
+}
+
+message RetrieveJob {
+  uint32 copynb = 1;
+  uint32 maxtotalretries = 2;
+  uint32 maxretrieswithinmount = 3;
+  uint32 retrieswithinmount = 4;
+  uint32 totalretries = 5;
+  RetrieveJobStatus status = 6;
+  uint64 lastmountwithfailure = 7;
+  repeated string failurelogs = 8;
+  uint32 maxreportretries = 9;
+  uint32 totalreportretries = 10;
+  TapeFile tapefile = 11;
+  repeated string reportfailurelogs = 12;
+  bool isfailed = 13;
+}
+
+message RetrieveJobs {
+  repeated RetrieveJob jobs = 1;
+}
+
+message RetrieveRequestArchiveRoute {
+  uint32 copynb = 1;
+  string tapepool = 2;
+}
+
+message RetrieveRequestRepackInfo {
+  repeated RetrieveRequestArchiveRoute archive_routes = 1;
+  repeated uint32 copy_nbs_to_rearchive = 2;
+  string file_buffer_url = 3;
+  uint64 fseq = 4;
+  bool has_user_provided_file = 5;
+}
+
+message ArchiveJobFailLogs {
+  repeated string failurelogs = 1;
+  repeated string reportfailurelogs = 2;
+}
+
+message RepackSubRequestPointer {
+  string address = 1;
+  uint64 fseq = 2;
+  bool retrieve_accounted = 3;
+  repeated uint32 archive_copynb_accounted = 4;
+  bool subrequest_deleted = 5;
+}
+
+message RepackDestinationInfo {
+  string vid = 1;
+  uint64 files = 2;
+  uint64 bytes = 3;
+}
+
+message RepackSubRequestPointers {
+  repeated RepackSubRequestPointer reqs = 1;
+}
+
+message RepackDestinationInfos {
+  repeated RepackDestinationInfo infos = 1;
+}

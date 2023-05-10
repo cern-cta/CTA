@@ -17,14 +17,17 @@
 
 #pragma once
 
-#include "PostgresSchedDB.hpp"
+#include "scheduler/PostgresSchedDB/PostgresSchedDB.hpp"
 #include "common/log/LogContext.hpp"
 
 #include <cstddef>
 
 namespace cta {
+namespace postgresscheddb {
 
-class PostgresSchedDB::RepackRequestPromotionStatistics : public SchedulerDatabase::RepackRequestStatistics {
+class RepackRequestPromotionStatistics : public SchedulerDatabase::RepackRequestStatistics {
+ friend class cta::PostgresSchedDB;
+
  public:
 
    RepackRequestPromotionStatistics();
@@ -33,4 +36,5 @@ class PostgresSchedDB::RepackRequestPromotionStatistics : public SchedulerDataba
       log::LogContext &lc) override;
 };
 
+} //namespace postgresscheddb
 } //namespace cta

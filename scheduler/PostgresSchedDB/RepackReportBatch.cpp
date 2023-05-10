@@ -19,15 +19,17 @@
 #include "common/exception/Exception.hpp"
 
 namespace cta {
+namespace postgresscheddb {
 
-PostgresSchedDB::RepackReportBatch::RepackReportBatch()
+RepackReportBatch::RepackReportBatch()
 {
    throw cta::exception::Exception("Not implemented");
 }
 
-void PostgresSchedDB::RepackReportBatch::report(log::LogContext & lc)
+void RepackReportBatch::report(log::LogContext & lc)
 {
    throw cta::exception::Exception("Not implemented");
 }
 
+} //namespace postgresscheddb
 } //namespace cta

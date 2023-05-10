@@ -19,16 +19,18 @@
 #include "common/exception/Exception.hpp"
 
 namespace cta {
+namespace postgresscheddb {
 
-PostgresSchedDB::RepackRequestPromotionStatistics::RepackRequestPromotionStatistics()
+RepackRequestPromotionStatistics::RepackRequestPromotionStatistics()
 {
    throw cta::exception::Exception("Not implemented");
 }
 
-SchedulerDatabase::RepackRequestStatistics::PromotionToToExpandResult PostgresSchedDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpansion(size_t requestCount,
+SchedulerDatabase::RepackRequestStatistics::PromotionToToExpandResult RepackRequestPromotionStatistics::promotePendingRequestsForExpansion(size_t requestCount,
       log::LogContext &lc)
 {
    throw cta::exception::Exception("Not implemented");
 }
 
+} //namespace postgresscheddb
 } //namespace cta

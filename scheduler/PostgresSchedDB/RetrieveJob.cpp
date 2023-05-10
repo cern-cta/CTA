@@ -19,35 +19,37 @@
 #include "common/exception/Exception.hpp"
 
 namespace cta {
+namespace postgresscheddb {
 
-PostgresSchedDB::RetrieveJob::RetrieveJob()
+RetrieveJob::RetrieveJob()
 {
    throw cta::exception::Exception("Not implemented");
 }
 
-void PostgresSchedDB::RetrieveJob::asyncSetSuccessful()
+void RetrieveJob::asyncSetSuccessful()
 {
    throw cta::exception::Exception("Not implemented");
 }
 
-void PostgresSchedDB::RetrieveJob::failTransfer(const std::string &failureReason, log::LogContext &lc)
+void RetrieveJob::failTransfer(const std::string &failureReason, log::LogContext &lc)
 {
    throw cta::exception::Exception("Not implemented");
 }
 
-void PostgresSchedDB::RetrieveJob::failReport(const std::string &failureReason, log::LogContext &lc)
+void RetrieveJob::failReport(const std::string &failureReason, log::LogContext &lc)
 {
    throw cta::exception::Exception("Not implemented");
 }
 
-void PostgresSchedDB::RetrieveJob::abort(const std::string &abortReason, log::LogContext &lc)
+void RetrieveJob::abort(const std::string &abortReason, log::LogContext &lc)
 {
    throw cta::exception::Exception("Not implemented");
 }
 
-void PostgresSchedDB::RetrieveJob::fail()
+void RetrieveJob::fail()
 {
    throw cta::exception::Exception("Not implemented");
 }
 
+} //namespace postgresscheddb
 } //namespace cta

@@ -15,69 +15,106 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "RetrieveMount.hpp"
+#include "scheduler/PostgresSchedDB/RetrieveMount.hpp"
+#include "scheduler/PostgresSchedDB/RetrieveJob.hpp"
+#include "scheduler/PostgresSchedDB/RetrieveRequest.hpp"
 #include "common/exception/Exception.hpp"
 
 namespace cta {
+namespace postgresscheddb {
 
-PostgresSchedDB::RetrieveMount::RetrieveMount()
+const SchedulerDatabase::RetrieveMount::MountInfo &RetrieveMount::getMountInfo()
 {
    throw cta::exception::Exception("Not implemented");
 }
 
-const SchedulerDatabase::RetrieveMount::MountInfo & PostgresSchedDB::RetrieveMount::getMountInfo()
-{
-   throw cta::exception::Exception("Not implemented");
-}
-
-std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> PostgresSchedDB::RetrieveMount::getNextJobBatch(uint64_t filesRequested,
+std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> RetrieveMount::getNextJobBatch(uint64_t filesRequested,
      uint64_t bytesRequested, log::LogContext& logContext)
 {
-   throw cta::exception::Exception("Not implemented");
+
+  rdbms::Rset resultSet;
+
+  // retrieve batch up to file limit
+  resultSet = cta::postgresscheddb::sql::RetrieveJobQueueRow::select(
+    m_txn, RetrieveJobStatus::RJS_ToTransfer, mountInfo.vid, filesRequested);
+
+  std::list<sql::RetrieveJobQueueRow> jobs;
+  // filter retrieved batch up to size limit
+  uint64_t totalBytes = 0;
+  while(resultSet.next()) {
+    jobs.emplace_back(sql::RetrieveJobQueueRow(resultSet));
+    totalBytes += jobs.back().archiveFile.fileSize;
+    if(totalBytes >= bytesRequested) break;
+  }
+
+  // mark the jobs in the batch as owned
+  sql::RetrieveJobQueueRow::updateMountId(m_txn, jobs, mountInfo.mountId);
+  m_txn.commit();
+
+  // Construct the return value
+  std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
+  for (auto &j : jobs) {
+    // each row represents an entire retreieverequest (including all jobs)
+    // and also the indication of which is the current active one
+    postgresscheddb::RetrieveRequest rr(logContext, j);
+
+    std::unique_ptr<postgresscheddb::RetrieveJob> rj(new postgresscheddb::RetrieveJob(/* j.jobId */));
+    rj->archiveFile = rr.m_archiveFile;
+    rj->diskSystemName = rr.m_diskSystemName;
+    rj->retrieveRequest = rr.m_schedRetrieveReq;
+    rj->selectedCopyNb = rr.m_actCopyNb;
+    rj->isRepack = rr.m_repackInfo.isRepack;
+    rj->m_repackInfo = rr.m_repackInfo;
+ //   rj->m_jobOwned = true;
+    rj->m_mountId = mountInfo.mountId;
+    ret.emplace_back(std::move(rj));
+  }
+  return ret;
 }
 
-bool PostgresSchedDB::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest &request,
+bool RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest &request,
       const std::string &externalFreeDiskSpaceScript, log::LogContext& logContext)
 {
    throw cta::exception::Exception("Not implemented");
 }
 
-bool PostgresSchedDB::RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationRequest &request,
+bool RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationRequest &request,
       const std::string &externalFreeDiskSpaceScript, log::LogContext& logContext)
 {
    throw cta::exception::Exception("Not implemented");
 }
 
-void PostgresSchedDB::RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobBatch,
+void RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobBatch,
       log::LogContext& logContext)
 {
    throw cta::exception::Exception("Not implemented");
 }
 
-void PostgresSchedDB::RetrieveMount::setDriveStatus(common::dataStructures::DriveStatus status, common::dataStructures::MountType mountType,
+void RetrieveMount::setDriveStatus(common::dataStructures::DriveStatus status, common::dataStructures::MountType mountType,
                                 time_t completionTime, const std::optional<std::string> & reason)
 {
    throw cta::exception::Exception("Not implemented");
 }
 
-void PostgresSchedDB::RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats)
+void RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats)
 {
    throw cta::exception::Exception("Not implemented");
 }
 
-void PostgresSchedDB::RetrieveMount::flushAsyncSuccessReports(std::list<SchedulerDatabase::RetrieveJob *> & jobsBatch, log::LogContext & lc)
+void RetrieveMount::flushAsyncSuccessReports(std::list<SchedulerDatabase::RetrieveJob *> & jobsBatch, log::LogContext & lc)
 {
    throw cta::exception::Exception("Not implemented");
 }
 
-void PostgresSchedDB::RetrieveMount::addDiskSystemToSkip(const DiskSystemToSkip &diskSystemToSkip)
+void RetrieveMount::addDiskSystemToSkip(const DiskSystemToSkip &diskSystemToSkip)
 {
    throw cta::exception::Exception("Not implemented");
 }
 
-void PostgresSchedDB::RetrieveMount::putQueueToSleep(const std::string &diskSystemName, const uint64_t sleepTime, log::LogContext &logContext)
+void RetrieveMount::putQueueToSleep(const std::string &diskSystemName, const uint64_t sleepTime, log::LogContext &logContext)
 {
    throw cta::exception::Exception("Not implemented");
 }
 
+} //namespace postgresscheddb
 } //namespace cta

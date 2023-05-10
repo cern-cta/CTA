@@ -19,30 +19,32 @@
 #include "common/exception/Exception.hpp"
 
 namespace cta {
+namespace postgresscheddb {
 
-PostgresSchedDB::RetrieveJobQueueItor::RetrieveJobQueueItor()
+RetrieveJobQueueItor::RetrieveJobQueueItor()
 {
    throw cta::exception::Exception("Not implemented");
 }
 
-const std::string &PostgresSchedDB::RetrieveJobQueueItor::qid() const
+const std::string &RetrieveJobQueueItor::qid() const
 {
    throw cta::exception::Exception("Not implemented");
 }
 
-bool PostgresSchedDB::RetrieveJobQueueItor::end() const
+bool RetrieveJobQueueItor::end() const
 {
    throw cta::exception::Exception("Not implemented");
 }
 
-void PostgresSchedDB::RetrieveJobQueueItor::operator++()
+void RetrieveJobQueueItor::operator++()
 {
    throw cta::exception::Exception("Not implemented");
 }
 
-const common::dataStructures::RetrieveJob &PostgresSchedDB::RetrieveJobQueueItor::operator*() const
+const common::dataStructures::RetrieveJob &RetrieveJobQueueItor::operator*() const
 {
    throw cta::exception::Exception("Not implemented");
 }
 
+} //namespace postgresscheddb
 } //namespace cta
