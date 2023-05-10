@@ -88,6 +88,9 @@ xrd::Response AdminCmdStream::process() {
       case cmd_pair(admin::AdminCmd::CMD_LOGICALLIBRARY, admin::AdminCmd::SUBCMD_LS):
         processLogicalLibrary_Ls(response);
         break;
+      case cmd_pair(admin::AdminCmd::CMD_PHYSICALLIBRARY, admin::AdminCmd::SUBCMD_LS):
+        processPhysicalLibrary_Ls(response);
+        break;
       case cmd_pair(admin::AdminCmd::CMD_MEDIATYPE, admin::AdminCmd::SUBCMD_LS):
         processMediaType_Ls(response);
         break;
@@ -217,6 +220,13 @@ void AdminCmdStream::processLogicalLibrary_Ls(xrd::Response& response) {
   m_stream = new xrd::LogicalLibraryLsStream(*this, m_catalogue, m_scheduler, disabled);
 
   response.set_show_header(admin::HeaderType::LOGICALLIBRARY_LS);
+  response.set_type(xrd::Response::RSP_SUCCESS);
+}
+
+void AdminCmdStream::processPhysicalLibrary_Ls(xrd::Response& response) {
+  m_stream = new xrd::PhysicalLibraryLsStream(*this, m_catalogue, m_scheduler);
+
+  response.set_show_header(admin::HeaderType::PHYSICALLIBRARY_LS);
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 

@@ -37,8 +37,7 @@ public:
    * @param[in]    scheduler     CTA Scheduler
    * @param[in]    disabled      Physical Library disable status
    */
-  PhysicalLibraryLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue,
-    cta::Scheduler &scheduler, const std::optional<bool>& disabled);
+  PhysicalLibraryLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
 
 private:
   /*!
@@ -61,11 +60,9 @@ private:
 };
 
 
-PhysicalLibraryLsStream::PhysicalLibraryLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue,
-  cta::Scheduler &scheduler, const std::optional<bool>& disabled) :
+PhysicalLibraryLsStream::PhysicalLibraryLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
-  m_physicalLibraryList(catalogue.PhysicalLibrary()->getPhysicalLibraries()),
-  m_disabled(disabled) {
+  m_physicalLibraryList(catalogue.PhysicalLibrary()->getPhysicalLibraries()) {
   using namespace cta::admin;
 
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "PhysicalLibraryLsStream() constructor");
