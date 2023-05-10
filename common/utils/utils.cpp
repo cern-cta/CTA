@@ -25,6 +25,7 @@
 #include <zlib.h>
 
 #include <climits>
+#include <limits>
 #include <iomanip>
 #include <iostream>
 #include <memory>
