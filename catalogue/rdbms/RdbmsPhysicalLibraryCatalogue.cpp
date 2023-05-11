@@ -46,14 +46,6 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
         " because a physical library with the same name already exists");
     }
 
-    const std::optional<std::string> type      = pl.type      && !pl.type->empty()      ? pl.type      : std::nullopt;
-    const std::optional<std::string> guiUrl    = pl.guiUrl    && !pl.guiUrl->empty()    ? pl.guiUrl    : std::nullopt;
-    const std::optional<std::string> webcamUrl = pl.webcamUrl && !pl.webcamUrl->empty() ? pl.webcamUrl : std::nullopt;
-    const std::optional<std::string> location  = pl.location  && !pl.location->empty()  ? pl.location  : std::nullopt;
-    const std::optional<std::string> comment   = pl.comment   && !pl.comment->empty()   ? pl.comment   : std::nullopt;
-
-    const std::optional<uint64_t> nbAvailableCartridgeSlots = pl.nbAvailableCartridgeSlots ? pl.nbAvailableCartridgeSlots : std::nullopt;
-
     const uint64_t physicalLibraryId = getNextPhysicalLibraryId(conn);
     const time_t now = time(nullptr);
     const char *const sql =
@@ -105,17 +97,33 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
         ":USER_COMMENT)";
     auto stmt = conn.createStmt(sql);
 
+    auto setOptionalString = [&stmt](const std::string& sqlField, const std::optional<std::string>& optionalField) {
+      if (optionalField && !optionalField.value().empty()) {
+        stmt.bindString(sqlField, optionalField.value());
+      } else {
+        stmt.bindString(sqlField, std::nullopt);
+      }
+    };
+
+    auto setOptionalUint = [&stmt](const std::string &sqlField, const std::optional<uint64_t>& optionalField) {
+      if (optionalField) {
+        stmt.bindUint64(sqlField, optionalField.value());
+      } else {
+        stmt.bindUint64(sqlField, std::nullopt);
+      }
+    };
+
     stmt.bindUint64(":PHYSICAL_LIBRARY_ID"          , physicalLibraryId);
     stmt.bindString(":PHYSICAL_LIBRARY_NAME"        , pl.name);
     stmt.bindString(":PHYSICAL_LIBRARY_MANUFACTURER", pl.manufacturer);
     stmt.bindString(":PHYSICAL_LIBRARY_MODEL"       , pl.model);
-    stmt.bindString(":PHYSICAL_LIBRARY_TYPE"        , type);
-    stmt.bindString(":GUI_URL"                      , guiUrl);
-    stmt.bindString(":WEBCAM_URL"                   , webcamUrl);
-    stmt.bindString(":PHYSICAL_LOCATION"            , location);
+    setOptionalString(":PHYSICAL_LIBRARY_TYPE"      , pl.type);
+    setOptionalString(":GUI_URL"                    , pl.guiUrl);
+    setOptionalString(":WEBCAM_URL"                 , pl.webcamUrl);
+    setOptionalString(":PHYSICAL_LOCATION"          , pl.location);
 
     stmt.bindUint64(":NB_PHYSICAL_CARTRIDGE_SLOTS" , pl.nbPhysicalCartridgeSlots);
-    stmt.bindUint64(":NB_AVAILABLE_CARTRIDGE_SLOTS", nbAvailableCartridgeSlots);
+    setOptionalUint(":NB_AVAILABLE_CARTRIDGE_SLOTS", pl.nbAvailableCartridgeSlots);
     stmt.bindUint64(":NB_PHYSICAL_DRIVE_SLOTS"     , pl.nbPhysicalDriveSlots);
 
     stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
@@ -126,7 +134,7 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME"     , now);
 
-    stmt.bindString(":USER_COMMENT", comment);
+    setOptionalString(":USER_COMMENT", pl.comment);
 
     stmt.executeNonQuery();
   } catch(exception::UserError &) {
