@@ -158,6 +158,10 @@ void CatalogueTestUtils::wipeDatabase(cta::catalogue::Catalogue *catalogue, cta:
     for(const auto &logicalLibrary: logicalLibraries) {
       catalogue->LogicalLibrary()->deleteLogicalLibrary(logicalLibrary.name);
     }
+    const auto physicalLibraries = catalogue->PhysicalLibrary()->getPhysicalLibraries();
+    for(const auto &physicalLibrary: physicalLibraries) {
+      catalogue->PhysicalLibrary()->deletePhysicalLibrary(physicalLibrary.name);
+    }
   }
   {
     const auto mountPolicies = catalogue->MountPolicy()->getMountPolicies();
@@ -219,6 +223,10 @@ void CatalogueTestUtils::checkWipedDatabase(cta::catalogue::Catalogue *catalogue
 
   if(!catalogue->LogicalLibrary()->getLogicalLibraries().empty()) {
     throw cta::exception::Exception("Found one of more logical libraries after emptying the database");
+  }
+
+  if(!catalogue->PhysicalLibrary()->getPhysicalLibraries().empty()) {
+    throw cta::exception::Exception("Found one of more physical libraries after emptying the database");
   }
 
   if(!catalogue->MediaType()->getMediaTypes().empty()) {
@@ -346,12 +354,7 @@ cta::common::dataStructures::PhysicalLibrary CatalogueTestUtils::getPhysicalLibr
   pl.model                     = "model_1";
   pl.nbPhysicalCartridgeSlots  = 10;
   pl.nbPhysicalDriveSlots      = 10;
-  pl.type                      = "type_1";
-  pl.guiUrl                    = "url_1";
-  pl.webcamUrl                 = "webcam_1";
-  pl.location                  = "location_1";
   pl.nbAvailableCartridgeSlots = 5;
-  pl.comment                   = "comment_1";
   return pl;
 }
 
