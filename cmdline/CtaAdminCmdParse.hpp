@@ -355,7 +355,7 @@ const std::map<std::string, OptionString::Key> strOptions = {
    { "--type",                  OptionString::TYPE },
    { "--guiurl",                OptionString::GUI_URL },
    { "--webcamurl",             OptionString::WEBCAM_URL },
-   { "--location ",             OptionString::LOCATION }
+   { "--location",             OptionString::LOCATION }
 };
 
 

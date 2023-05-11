@@ -69,8 +69,6 @@ TEST_P(cta_catalogue_PhysicalLibraryTest, createPhysicalLibraryMandatoryFields) 
 
   const cta::common::dataStructures::EntryLog lastModificationLog = lib.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
-
-  m_catalogue->PhysicalLibrary()->deletePhysicalLibrary(m_physicalLibrary1.name);
 }
 
 TEST_P(cta_catalogue_PhysicalLibraryTest, createPhysicalLibraryAllFields) {
@@ -98,8 +96,6 @@ TEST_P(cta_catalogue_PhysicalLibraryTest, createPhysicalLibraryAllFields) {
 
   const cta::common::dataStructures::EntryLog lastModificationLog = lib.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
-
-  m_catalogue->PhysicalLibrary()->deletePhysicalLibrary(m_physicalLibrary2.name);
 }
 
 }  // namespace unitTests
