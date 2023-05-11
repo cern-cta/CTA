@@ -27,6 +27,20 @@ ENV ORCHESTRATIONDIR="continuousintegration/orchestration/pods" \
 # Update versionlock if needed
 ADD ${BASEDIR}/etc/yum/pluginconf.d /etc/yum/pluginconf.d
 
+COPY ${BASEDIR}/etc/yum.repos.d /etc/yum.repos.d
+
+ADD ${BASEDIR}/opt /opt
+
+RUN /opt/run/bin/cta-versionlock --file /etc/yum/pluginconf.d/versionlock.list config eos5; \
+    yum-config-manager --disable cta-ci-eos; \
+    yum-config-manager --enable cta-ci-eos-5; \
+    yum-config-manager --enable eos-diopside-dep; \
+    yum-config-manager --enable eos-diopside;
+
+RUN /opt/run/bin/cta-versionlock --file /etc/yum/pluginconf.d/versionlock.list config xrootd5; \
+    yum-config-manager --disable cta-ci-xroot; \
+    yum-config-manager --enable cta-ci-xrootd5;
+
 # Install eos packages.
 RUN yum install -y\
       eos-client \

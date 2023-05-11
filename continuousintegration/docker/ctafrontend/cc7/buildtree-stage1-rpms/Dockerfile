@@ -25,7 +25,7 @@ ENV ORCHESTRATIONDIR="continuousintegration/orchestration/pods" \
     CTAREPODIR="/tmp/repo"
 
 # Manage repos before running yum
-ADD ${BASEDIR}/etc /etc
+# ADD ${BASEDIR}/etc /etc
 
 # yum update could be added at some point.
 RUN yum install -y \
