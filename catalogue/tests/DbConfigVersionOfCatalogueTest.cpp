@@ -25,6 +25,7 @@
 #include "catalogue/tests/modules/DriveStateCatalogueTest.hpp"
 #include "catalogue/tests/modules/FileRecycleLogCatalogueTest.hpp"
 #include "catalogue/tests/modules/LogicalLibraryCatalogueTest.hpp"
+#include "catalogue/tests/modules/PhysicalLibraryCatalogueTest.hpp"
 #include "catalogue/tests/modules/MediaTypeCatalogueTest.hpp"
 #include "catalogue/tests/modules/MountPolicyCatalogueTest.hpp"
 #include "catalogue/tests/modules/RequesterActivityMountRuleTest.hpp"
@@ -56,6 +57,7 @@ INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_RequesterActivityMountRuleTe
 INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_RequesterMountRuleTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
 INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_RequesterGroupMountRuleTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
 INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_LogicalLibraryTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
+INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_PhysicalLibraryTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
 INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_TapeFileTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
 INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_FileRecycleLogTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
 INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_DriveConfigTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
