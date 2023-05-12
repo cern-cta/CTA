@@ -10,6 +10,7 @@
 - cta/CTA#259 - cta-rmcd should not exit if /dev/sg0 is missing
 - cta/CTA#345 - Remove some objectstore dependencies outside scheduler
 - cta/CTA#340 - Fix catalogue recompiling
+- cta/CTA#357 - Fix failing OsmFileReader due to uint underflow
 
 ### Continuous Integration
 - cta/CTA#262 - Manage CI repositories with `cta-release` code
