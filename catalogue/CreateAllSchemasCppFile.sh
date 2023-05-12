@@ -45,9 +45,11 @@ die() {
 databaseTypes=('oracle' 'sqlite' 'postgres')
 schemaPostfix='_catalogue_schema.sql'
 cd $1/cta-catalogue-schema
-tempFilePath="./temp"
+buffFile="./temp"
+tempFilePath="../TMPAllCatalogueSchema.hpp"
+finalFilePath="../AllCatalogueSchema.hpp"
 
-trap "rm -f $tempFilePath" EXIT
+trap "rm -f $buffFile" EXIT
 
 schemaVersionsDirectories=`find . -type d -regex '^./[0-9]+\.[0-9]+$' | sort`
 
@@ -75,8 +77,15 @@ do
 "
 done
 mapSchemaCode+="};"
-echo "$mapSchemaCode" > $tempFilePath
-sed "/ALL_SCHEMA_MAP/r $tempFilePath" ../AllCatalogueSchema.hpp.in > ../AllCatalogueSchema.hpp || die "Unable to create the map containing all catalogue schemas"
+echo "$mapSchemaCode" > $buffFile
+sed "/ALL_SCHEMA_MAP/r $buffFile" ../AllCatalogueSchema.hpp.in > $tempFilePath || die "Unable to create the map containing all catalogue schemas"
 #awk -v r="$mapSchemaCode" '{gsub(/ALL_SCHEMA_MAP/,r)}1' ./AllCatalogueSchema.hpp.in > ./AllCatalogueSchema.hpp || die "Unable to create the map containing all catalogue schemas"
+
+# Compare the temporary output file with the existing output file to avoid regenerating it if it hasn't changed
+if ! cmp -s $tempFilePath $finalFilePath; then
+  mv $tempFilePath $finalFilePath
+else
+  rm $tempFilePath
+fi
 
 exit 0
