@@ -1491,11 +1491,11 @@ void AdminCmd::processPhysicalLibrary_Ch(xrd::Response& response) {
   const auto& name = getRequired(OptionString::PHYSICAL_LIBRARY);
 
   const auto manufacturer              = getOptional(OptionString::MANUFACTURER);
-  const auto model                     = getOptional(OptionString::MODEL);
-  const auto type                      = getOptional(OptionString::TYPE);
+  const auto model                     = getOptional(OptionString::LIBRARY_MODEL);
+  const auto type                      = getOptional(OptionString::LIBRARY_TYPE);
   const auto guiUrl                    = getOptional(OptionString::GUI_URL);
   const auto webcamUrl                 = getOptional(OptionString::WEBCAM_URL);
-  const auto location                  = getOptional(OptionString::LOCATION);
+  const auto location                  = getOptional(OptionString::LIBRARY_LOCATION);
   const auto nbPhysicalCartridgeSlots  = getOptional(OptionUInt64::NB_PHYSICAL_CARTRIDGE_SLOTS);
   const auto nbAvailableCartridgeSlots = getOptional(OptionUInt64::NB_AVAILABLE_CARTRIDGE_SLOTS);
   const auto nbPhysicalDriveSlots      = getOptional(OptionUInt64::NB_PHYSICAL_DRIVE_SLOTS);
