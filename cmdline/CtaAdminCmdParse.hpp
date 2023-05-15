@@ -351,11 +351,11 @@ const std::map<std::string, OptionString::Key> strOptions = {
    { "--purchaseorder",         OptionString::MEDIA_PURCHASE_ORDER_NUMBER }
    { "--physicallibrary",       OptionString::PHYSICAL_LIBRARY },
    { "--manufacturer",          OptionString::MANUFACTURER },
-   { "--model",                 OptionString::MODEL },
-   { "--type",                  OptionString::TYPE },
+   { "--model",                 OptionString::LIBRARY_MODEL },
+   { "--type",                  OptionString::LIBRARY_TYPE },
    { "--guiurl",                OptionString::GUI_URL },
    { "--webcamurl",             OptionString::WEBCAM_URL },
-   { "--location",             OptionString::LOCATION }
+   { "--location",              OptionString::LIBRARY_LOCATION }
 };
 
 

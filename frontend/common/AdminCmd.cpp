@@ -1469,14 +1469,14 @@ void AdminCmd::processPhysicalLibrary_Add(xrd::Response& response) {
   common::dataStructures::PhysicalLibrary pl;
   pl.name                     = getRequired(OptionString::PHYSICAL_LIBRARY);
   pl.manufacturer             = getRequired(OptionString::MANUFACTURER);
-  pl.model                    = getRequired(OptionString::MODEL);
+  pl.model                    = getRequired(OptionString::LIBRARY_MODEL);
   pl.nbPhysicalCartridgeSlots = getRequired(OptionUInt64::NB_PHYSICAL_CARTRIDGE_SLOTS);
   pl.nbPhysicalDriveSlots     = getRequired(OptionUInt64::NB_PHYSICAL_DRIVE_SLOTS);
 
-  pl.type                      = getOptional(OptionString::TYPE);
+  pl.type                      = getOptional(OptionString::LIBRARY_TYPE);
   pl.guiUrl                    = getOptional(OptionString::GUI_URL);
   pl.webcamUrl                 = getOptional(OptionString::WEBCAM_URL);
-  pl.location                  = getOptional(OptionString::LOCATION);
+  pl.location                  = getOptional(OptionString::LIBRARY_LOCATION);
   pl.nbAvailableCartridgeSlots = getOptional(OptionUInt64::NB_AVAILABLE_CARTRIDGE_SLOTS);
   pl.comment                   = getOptional(OptionString::COMMENT);
 
