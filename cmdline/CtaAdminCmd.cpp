@@ -146,7 +146,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
          case Data::kVersionItem:   formattedText.print(record.version_item()); break;
          case Data::kMtlsItem:      formattedText.print(record.mtls_item());    break;
          case Data::kRtflsItem:     formattedText.print(record.rtfls_item());   break;
-         case Data::kPllsItem:      formattedText.print(record.rtfls_item());   break;
+         case Data::kPllsItem:      formattedText.print(record.plls_item());    break;
          default:
             throw std::runtime_error("Received invalid stream data from CTA Frontend.");
    }
