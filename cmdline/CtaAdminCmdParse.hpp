@@ -343,8 +343,7 @@ const std::map<std::string, OptionString::Key> strOptions = {
    { "--diskinstance",          OptionString::DISK_INSTANCE },
    { "--diskinstancespace",     OptionString::DISK_INSTANCE_SPACE },
    { "--verificationstatus",    OptionString::VERIFICATION_STATUS },
-   { "--disabledreason",        OptionString::DISABLED_REASON }, 
-   { "--storage.class.name",    OptionString::STORAGE_CLASS_NAME }
+   { "--disabledreason",        OptionString::DISABLED_REASON }
 };
 
 
@@ -553,7 +552,6 @@ const Option opt_diskinstancespace_alias { Option::OPT_STR,  "--name",          
 const Option opt_verificationstatus   { Option::OPT_STR,  "--verificationstatus",     "--vs",   " <verification_status>" };
 const Option opt_disabledreason       { Option::OPT_STR,  "--disabledreason",       "--dr",   " <disabled_reason>" };
 
-const Option opt_storage_class_name   { Option::OPT_STR,  "--storage.class.name",    "-n",   " <storage_class_name>" };
 const Option opt_archive_file_ids     { Option::OPT_STR_LIST,  "--id",               "-I",   " <archive_file_id>" };
 
 /*!
@@ -736,7 +734,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    /*----------------------------------------------------------------------------------------------------*/
    // The command below is used for cta-change-storageclass and cta-eos-namespace-inject
    {{ AdminCmd::CMD_ARCHIVEFILE,   AdminCmd::SUBCMD_CH   },
-      { opt_storage_class_name.optional(), opt_archive_file_ids, opt_fid.optional(), opt_diskinstance.optional() }},
+      { opt_storageclass.optional(), opt_archive_file_ids, opt_fid.optional(), opt_diskinstance.optional() }},
 };
 
 

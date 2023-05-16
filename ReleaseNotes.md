@@ -4,6 +4,7 @@
 - cta/CTA#78 - Remove gRPC and ability to change the storage class in EOS from the cta-change-storage-class C++ script
 - cta/CTA#342 - Compile CTA using devtoolset-11
 - cta/CTA#356 - Add support for changing to different storage classes during one execution for cta-change-storage-class-in-catalogue
+- cta/CTA#366 - Remove the use of the protobuf field `STORAGE_CLASS_NAME` and replace it with the existing `STORAGE_CLASS`
 
 ### Bug Fixes
 - cta/CTA#147 - Development of the postgres SchedulerDatabase

@@ -1511,7 +1511,7 @@ void AdminCmd::processModifyArchiveFile(xrd::Response& response) {
   using namespace cta::admin;
 
   try {
-    std::optional<std::string> newStorageClassName = getOptional(OptionString::STORAGE_CLASS_NAME);
+    std::optional<std::string> newStorageClassName = getOptional(OptionString::STORAGE_CLASS);
     std::optional<std::string> fxId = getOptional(OptionString::FXID);
     std::optional<std::string> diskInstance = getOptional(OptionString::DISK_INSTANCE);
 

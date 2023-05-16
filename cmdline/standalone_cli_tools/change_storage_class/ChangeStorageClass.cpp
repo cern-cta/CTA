@@ -130,8 +130,8 @@ void ChangeStorageClass::handleArguments(const CmdLineArgs &cmdLineArgs) {
 
 void ChangeStorageClass::storageClassesExist() const {
   std::unordered_set<std::string> storageClasses;
-  for(const auto& archiveFileIdAndStorageClass : m_archiveFileIdsAndStorageClasses) {
-    storageClasses.insert(archiveFileIdAndStorageClass.second);
+  for(const auto& [archiveFileId, storageClass] : m_archiveFileIdsAndStorageClasses) {
+    storageClasses.insert(storageClass);
   }
   for(const auto& storageClass : storageClasses) {
     storageClassExists(storageClass);
@@ -204,7 +204,7 @@ void ChangeStorageClass::updateStorageClassInCatalogue(const std::string& archiv
   admincmd->set_subcmd(cta::admin::AdminCmd::SUBCMD_CH);
 
   {
-    const auto key = cta::admin::OptionString::STORAGE_CLASS_NAME;
+    const auto key = cta::admin::OptionString::STORAGE_CLASS;
     const auto new_opt = admincmd->add_option_str();
     new_opt->set_key(key);
     new_opt->set_value(storageClass);
