@@ -84,7 +84,7 @@ int PhysicalLibraryLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf
     if (pl.guiUrl)                    { pl_item->set_gui_url(pl.guiUrl.value()); }
     if (pl.webcamUrl)                 { pl_item->set_webcam_url(pl.webcamUrl.value()); }
     if (pl.location)                  { pl_item->set_location(pl.location.value()); }
-    if (pl.nbAvailableCartridgeSlots) { pl_item->set_nb_physical_cartridge_slots(pl.nbAvailableCartridgeSlots.value()); }
+    if (pl.nbAvailableCartridgeSlots) { pl_item->set_nb_available_cartridge_slots(pl.nbAvailableCartridgeSlots.value()); }
     if (pl.comment)                   { pl_item->set_comment(pl.comment.value()); }
 
     pl_item->set_nb_physical_cartridge_slots(pl.nbPhysicalCartridgeSlots);
