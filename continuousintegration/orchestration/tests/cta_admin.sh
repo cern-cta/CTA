@@ -191,6 +191,13 @@ test_start "tape" "ta" "--all"
 ########################################
 test_header 'user'
 
+# Physical Library (ll)
+test_start "physical library" "pl"
+test_and_check_cmd "Adding physical library 'cta_adm_systest'" "${command}" "add" "--physicallibrary 'cta_adm_systest' --manufacturer 'manA' --model 'modA'\\
+   --type 'type1' --guiurl 'url1' --webcamurl 'url2' --nbphysicalcartridgeslots 4 --nbavailablecartridgeslots 3 --nbphysicaldriveslots 2 --comment 'comment1'"\
+  'select(.name=="cta_adm_systest" and .manufacturer=="manA" and .model=="modA" and .type=="type1" and .guiUrl=="url1" and .webcamUrl=="url2" and .nbPhysicalCartridgeSlots=="4" and .nbAvailableCartridgeSlots=="3" and .nbPhysicalDriveSlots=="2" and .comment=="comment1") | .name'\
+  "1" "adding physical library 'cta_adm_systest'"|| exit 1
+test_assert || exit 1
 
 # Admin (ad)
 test_start "admin" "ad"
@@ -360,7 +367,6 @@ test_and_check_cmd "Changing logical library 'cta_adm_systest' to disabled" "${c
   "1" "changing logical library 'cta_adm_systest'"|| exit 1
 test_command "Removing logical library 'cta_adm_systest'" "${command}" "rm" "-n cta_adm_systest" || exit 1
 test_assert || exit 1
-
 
 # Media Type (mt)
 test_start "media type" "mt"
