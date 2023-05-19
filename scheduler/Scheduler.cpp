@@ -1053,6 +1053,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
         m.vo              = tp.vo;
         m.capacityInBytes = tp.capacityInBytes;
         m.labelFormat     = tp.labelFormat;
+        m.encryptionKeyName = tp.encryptionKeyName;
       }
     }
   }
@@ -1542,16 +1543,8 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
           // Get the db side of the session
           try {
             decisionTime += timer.secs(utils::Timer::resetCounter);
-            internalRet->m_dbMount.reset(mountInfo->createArchiveMount(m->type, t,
-                driveName,
-                logicalLibraryName,
-                utils::getShortHostname(),
-                t.vo,
-                t.mediaType,
-                t.vendor,
-                t.capacityInBytes,
-                std::nullopt,
-                t.labelFormat).release());
+            internalRet->m_dbMount =
+              mountInfo->createArchiveMount(m->type, t, driveName, logicalLibraryName, utils::getShortHostname());
             mountCreationTime += timer.secs(utils::Timer::resetCounter);
             internalRet->m_sessionRunning = true;
             driveStatusSetTime += timer.secs(utils::Timer::resetCounter);
@@ -1611,17 +1604,8 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
         // create the mount, and populate its DB side.
         decisionTime += timer.secs(utils::Timer::resetCounter);
         std::unique_ptr<RetrieveMount> internalRet(new RetrieveMount(m_catalogue));
-        internalRet->m_dbMount.reset(mountInfo->createRetrieveMount(m->vid,
-            m->tapePool,
-            driveName,
-            logicalLibraryName,
-            utils::getShortHostname(),
-            m->vo,
-            m->mediaType,
-            m->vendor,
-            m->capacityInBytes,
-            m->activity,
-            m->labelFormat.value()).release());
+        internalRet->m_dbMount =
+          mountInfo->createRetrieveMount(*m, driveName, logicalLibraryName, utils::getShortHostname());
         mountCreationTime += timer.secs(utils::Timer::resetCounter);
         internalRet->m_sessionRunning = true;
         internalRet->m_diskRunning = true;
