@@ -63,7 +63,7 @@ class TapeMountDummy: public TapeMount {
     throw exception::Exception("In DummyTapeMount::getCapacityInBytes() : not implemented");
   }
 
-  std::string getEncryptionKeyName() const override{
+  std::optional<std::string> getEncryptionKeyName() const override{
     throw exception::Exception("In DummyTapeMount::getEncryptionKeyName() : not implemented");
   }
 

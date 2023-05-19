@@ -58,7 +58,7 @@ auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface &
   }
 
   std::list<std::string> args(
-    {m_path, "--encryption-key-id", volInfo.encryptionKeyName, "--pool-name", volInfo.tapePool});
+    {m_path, "--encryption-key-id", volInfo.encryptionKeyName.value_or(""), "--pool-name", volInfo.tapePool});
 
   cta::threading::SubProcess sp(m_path, args);
   sp.wait();

@@ -153,7 +153,7 @@ uint64_t cta::RetrieveMount::getCapacityInBytes() const {
 //------------------------------------------------------------------------------
 // getEncryptionKeyName()
 //------------------------------------------------------------------------------
-std::string cta::RetrieveMount::getEncryptionKeyName() const {
+std::optional<std::string> cta::RetrieveMount::getEncryptionKeyName() const {
   if(!m_dbMount)
     throw exception::Exception("In cta::RetrieveMount::getEncryptionKeyName(): got nullptr dbMount");
   return m_dbMount->mountInfo.encryptionKeyName;
