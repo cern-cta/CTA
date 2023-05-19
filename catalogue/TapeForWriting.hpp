@@ -98,7 +98,7 @@ struct TapeForWriting {
   /**
    * Encryption key name to pass to external encryption script
    */
-   std::string encryptionKeyName;
+  std::optional<std::string> encryptionKeyName;
 
 }; // struct TapeForWriting
 

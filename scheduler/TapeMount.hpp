@@ -87,7 +87,7 @@ namespace cta {
     */
     virtual uint64_t getCapacityInBytes() const = 0;
 
-    virtual std::string getEncryptionKeyName() const = 0;
+    virtual std::optional<std::string> getEncryptionKeyName() const = 0;
 
     /**
      * Indicates that the mount was completed.

@@ -201,7 +201,7 @@ public:
     * Returns the encryption key ID of the tape
     * @return the encryption key ID of the tape
     */
-  std::string getEncryptionKeyName() const override;
+  std::optional<std::string> getEncryptionKeyName() const override;
 
   /**
     * Creates a disk reporter for the ArchiveJob (this is a wrapper).

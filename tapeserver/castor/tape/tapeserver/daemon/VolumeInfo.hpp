@@ -35,7 +35,7 @@ struct VolumeInfo {
   uint32_t nbFiles;                                          //!< Number of files currently on tape
   std::string mountId;                                       //!< Mount ID
   cta::common::dataStructures::Label::Format labelFormat;    //!< Label/Tape format
-  std::string encryptionKeyName;                             //!< Encryption key ID
+  std::optional<std::string> encryptionKeyName;              //!< Encryption key ID
   std::string tapePool;                                      //!< Name of the tape pool that contains the tape
 };
 

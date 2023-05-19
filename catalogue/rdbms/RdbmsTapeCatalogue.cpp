@@ -1099,8 +1099,7 @@ std::list<TapeForWriting> RdbmsTapeCatalogue::getTapesForWriting(const std::stri
       tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
       tape.labelFormat = common::dataStructures::Label::validateFormat(rset.columnOptionalUint8("LABEL_FORMAT"),
         "[RdbmsCatalogue::getTapesForWriting()]");
-      tape.encryptionKeyName =
-        (rset.columnIsNull("ENCRYPTION_KEY_NAME") ? "-" : rset.columnString("ENCRYPTION_KEY_NAME"));
+      tape.encryptionKeyName = rset.columnOptionalString("ENCRYPTION_KEY_NAME");
 
       tapes.push_back(tape);
     }
