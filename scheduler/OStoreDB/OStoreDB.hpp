@@ -110,24 +110,15 @@ class OStoreDB: public SchedulerDatabase {
     CTA_GENERATE_EXCEPTION_CLASS(TapeNotWritable);
     CTA_GENERATE_EXCEPTION_CLASS(TapeIsBusy);
     std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(
-      common::dataStructures::MountType mountType,
-      const catalogue::TapeForWriting & tape,
+      const common::dataStructures::MountType& mountType,
+      const catalogue::TapeForWriting& tape,
       const std::string& driveName, const std::string& logicalLibrary,
-      const std::string& hostName,
-      const std::string& vo, const std::string& mediaType,
-      const std::string& vendor, uint64_t capacityInBytes,
-      const std::optional<std::string> &activity,
-      cta::common::dataStructures::Label::Format labelFormat) override;
+      const std::string& hostName) override;
     std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(
-      const std::string& vid, const std::string& tapePool,
+      const cta::SchedulerDatabase::PotentialMount& mount,
       const std::string& driveName,
-      const std::string& logicalLibrary, const std::string& hostName,
-      const std::string& vo, const std::string& mediaType,
-      const std::string& vendor,
-      const uint64_t capacityInBytes,
-      const std::optional<std::string> &activity,
-      cta::common::dataStructures::Label::Format labelFormat) override;
-    virtual ~TapeMountDecisionInfo();
+      const std::string& logicalLibrary, const std::string& hostName) override;
+    ~TapeMountDecisionInfo() override;
 
    private:
     explicit TapeMountDecisionInfo(OStoreDB & oStoreDB);
@@ -140,24 +131,14 @@ class OStoreDB: public SchedulerDatabase {
 
   class TapeMountDecisionInfoNoLock: public SchedulerDatabase::TapeMountDecisionInfo {
    public:
-    std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(
-      common::dataStructures::MountType mountType,
-      const catalogue::TapeForWriting & tape,
-      const std::string& driveName, const std::string& logicalLibrary,
-      const std::string& hostName, const std::string& vo, const std::string& mediaType,
-      const std::string& vendor, uint64_t capacityInBytes,
-      const std::optional<std::string> &activity,
-      cta::common::dataStructures::Label::Format labelFormat) override;
-    std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(
-      const std::string& vid, const std::string & tapePool,
-      const std::string& driveName,
-      const std::string& logicalLibrary, const std::string& hostName,
-      const std::string& vo, const std::string& mediaType,
-      const std::string& vendor,
-      const uint64_t capacityInBytes,
-      const std::optional<std::string> &activity,
-      cta::common::dataStructures::Label::Format labelFormat) override;
-    virtual ~TapeMountDecisionInfoNoLock();
+    std::unique_ptr<SchedulerDatabase::ArchiveMount>
+    createArchiveMount(const common::dataStructures::MountType &type, const catalogue::TapeForWriting &tape,
+                       const std::string &driveName, const std::string &logicalLibrary,
+                       const std::string &hostName) override;
+    std::unique_ptr<SchedulerDatabase::RetrieveMount>
+      createRetrieveMount(const cta::SchedulerDatabase::PotentialMount& mount, const std::string& driveName,
+                          const std::string& logicalLibrary, const std::string& hostName) override;
+    ~TapeMountDecisionInfoNoLock() override;
   };
 
  private:
