@@ -4,7 +4,7 @@
 - cta/CTA#93  - Refactor Frontend code to allow code sharing between SSI and gRPC implementations
 - cta/CTA#213 - Improve error messages for `cta-eos-namespace-inject`
 - cta/CTA#213 - Skip valid paths that exists with valid metadata
-- cta/CTA#213 - Skip files with paths that have valid metadata
+- cta/CTA#2- cta/CTA#357 - Fix failing OsmFileReader due to uint underflow13 - Skip files with paths that have valid metadata
 - cta/CTA#245 - Implements cta-admin functions in cta-frontend-grpc
 - cta/CTA#294 - Improve error messages for 'Exec' in the gRPC client
 - cta/CTA#302 - Make RMC maxRqstAttempts variable configurable
@@ -22,6 +22,7 @@
 - cta/CTA#328 - Make root user able to read encrypted files with cta-readtp
 - cta/CTA#329 - Correctly set previous session state to enable cleaner session
 - cta/CTA#330 - Fix no tape block movement regression
+- cta/CTA#357 - Fix failing OsmFileReader due to uint underflow
 
 # v4.8.6-1
 
