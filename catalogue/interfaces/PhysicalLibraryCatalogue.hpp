@@ -55,28 +55,28 @@ public:
   virtual void modifyPhysicalLibraryModel(const common::dataStructures::SecurityIdentity &admin,
    const std::string &name, const std::string &model) = 0;
 
-  virtual void modifyPhysicalLibraryType     (const common::dataStructures::SecurityIdentity &admin,
+  virtual void modifyPhysicalLibraryType(const common::dataStructures::SecurityIdentity &admin,
    const std::string &name, const std::string &type) = 0;
 
-  virtual void modifyPhysicalLibraryGuiUrl   (const common::dataStructures::SecurityIdentity &admin,
+  virtual void modifyPhysicalLibraryGuiUrl(const common::dataStructures::SecurityIdentity &admin,
    const std::string &name, const std::string &guiUrl) = 0;
 
   virtual void modifyPhysicalLibraryWebcamUrl(const common::dataStructures::SecurityIdentity &admin,
    const std::string &name, const std::string &webcamUrl) = 0;
 
-  virtual void modifyPhysicalLibraryLocation (const common::dataStructures::SecurityIdentity &admin,
+  virtual void modifyPhysicalLibraryLocation(const common::dataStructures::SecurityIdentity &admin,
    const std::string &name, const std::string &location) = 0;
 
-  virtual void modifyPhysicalLibraryNbPhysicalCartridgeSlots  (const common::dataStructures::SecurityIdentity &admin,
+  virtual void modifyPhysicalLibraryNbPhysicalCartridgeSlots(const common::dataStructures::SecurityIdentity &admin,
    const std::string &name, const uint64_t &nbPhysicalCartridgeSlots) = 0;
 
-  virtual void modifyPhysicalLibraryNbAvailableCartridgeSlots (const common::dataStructures::SecurityIdentity &admin,
+  virtual void modifyPhysicalLibraryNbAvailableCartridgeSlots(const common::dataStructures::SecurityIdentity &admin,
    const std::string &name, const uint64_t &nbAvailableCartridgeSlots) = 0;
 
-  virtual void modifyPhysicalLibraryNbPhysicalDriveSlots (const common::dataStructures::SecurityIdentity &admin,
+  virtual void modifyPhysicalLibraryNbPhysicalDriveSlots(const common::dataStructures::SecurityIdentity &admin,
    const std::string &name, const uint64_t &nbPhysicalDriveSlots) = 0;
 
-  virtual void modifyPhysicalLibraryComment (const common::dataStructures::SecurityIdentity &admin,
+  virtual void modifyPhysicalLibraryComment(const common::dataStructures::SecurityIdentity &admin,
    const std::string &name, const std::string &comment) = 0;
 };
 
