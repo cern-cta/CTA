@@ -1464,8 +1464,6 @@ void AdminCmd::processVirtualOrganization_Rm(xrd::Response& response) {
 void AdminCmd::processPhysicalLibrary_Add(xrd::Response& response) {
   using namespace cta::admin;
 
-  m_lc.log(cta::log::INFO, "processPhysicalLibrary_Add");
-
   common::dataStructures::PhysicalLibrary pl;
   pl.name                     = getRequired(OptionString::PHYSICAL_LIBRARY);
   pl.manufacturer             = getRequired(OptionString::MANUFACTURER);
