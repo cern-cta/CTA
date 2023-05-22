@@ -41,7 +41,6 @@
 #include "catalogue/retrywrappers/TapeFileCatalogueRetryWrapper.hpp"
 #include "catalogue/retrywrappers/TapePoolCatalogueRetryWrapper.hpp"
 #include "catalogue/retrywrappers/VirtualOrganizationCatalogueRetryWrapper.hpp"
-#include "CatalogueRetryWrapper.hpp"
 
 namespace cta {
 
