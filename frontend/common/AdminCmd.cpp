@@ -1508,7 +1508,7 @@ void AdminCmd::processPhysicalLibrary_Ch(xrd::Response& response) {
     m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryModel(m_cliIdentity, name, model.value());
   }
   if (type) {
-    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryManufacturer(m_cliIdentity, name, type.value());
+    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryType(m_cliIdentity, name, type.value());
   }
   if (guiUrl) {
     m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryGuiUrl(m_cliIdentity, name, guiUrl.value());
