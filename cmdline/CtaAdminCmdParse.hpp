@@ -479,20 +479,7 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
                           "\n  Tape files in the recycle log can be listed by VID, EOS disk file ID, EOS disk instance,\n"
                             "  ArchiveFileId or copy number. Disk file IDs should be provided in hexadecimal format (fxid).\n\n"
                              }},
-   { AdminCmd::CMD_PHYSICALLIBRARY,      { "physicallibrary",        "pl",  { "add", "ch", "rm", "ls" },
-                          "\n  Add a physical library with the \"add\" subcommand:\n"
-                            "   * Specify the name (--physicallibrary). It must be unique.\n"
-                            "   * Specify the manufacturer (--manufacturer)\n"
-                            "   * Specify the library model (--model)\n"
-                            "   * Specify the library type (--type)\n"
-                            "   * Specify the gui url (--guiurl)\n"
-                            "   * Specify the webcam url (--webcamurl)\n"
-                            "   * Specify the location (--location)\n"
-                            "   * Specify the number of physical cartridge slots(--nbphysicalcartridgeslots)\n"
-                            "   * Specify the number of available cartridge slots(--nbavailablecartridgeslots)\n"
-                            "   * Specify the number of physical drive slots(--nbphysicaldriveslots)\n"
-                            "   * Specify a comment (--comment)\n"
-                             }},
+   { AdminCmd::CMD_PHYSICALLIBRARY,      { "physicallibrary",        "pl",  { "add", "ch", "rm", "ls" } }},
 };
 
 /*
