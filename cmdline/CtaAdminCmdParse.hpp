@@ -778,7 +778,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
       { opt_physical_library, opt_manufacturer, opt_model, opt_type.optional(), opt_gui_url.optional(), opt_webcam_url.optional(), opt_location.optional(), opt_nb_physical_cartridge_slots,
         opt_nb_available_cartridge_slots.optional(), opt_nb_physical_drive_slots ,opt_comment.optional() }},
    {{ AdminCmd::CMD_PHYSICALLIBRARY,   AdminCmd::SUBCMD_CH    },
-      { opt_physical_library, opt_manufacturer.optional(), opt_model.optional(), opt_type.optional(), opt_gui_url.optional(), opt_webcam_url.optional(), opt_location.optional(), opt_nb_physical_cartridge_slots.optional(),
+      { opt_physical_library, opt_gui_url.optional(), opt_webcam_url.optional(), opt_location.optional(), opt_nb_physical_cartridge_slots.optional(),
         opt_nb_available_cartridge_slots.optional(), opt_nb_physical_drive_slots.optional() ,opt_comment.optional() }},
    {{ AdminCmd::CMD_PHYSICALLIBRARY,   AdminCmd::SUBCMD_RM    }, { opt_physical_library }},
    {{ AdminCmd::CMD_PHYSICALLIBRARY,   AdminCmd::SUBCMD_LS    }, { }},

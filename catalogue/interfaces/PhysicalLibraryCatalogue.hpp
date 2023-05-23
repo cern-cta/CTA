@@ -49,15 +49,6 @@ public:
   virtual void modifyPhysicalLibraryName(const common::dataStructures::SecurityIdentity &admin,
    const std::string &currentName, const std::string &newName) = 0;
 
-  virtual void modifyPhysicalLibraryManufacturer(const common::dataStructures::SecurityIdentity &admin,
-   const std::string& name, const std::string &manufacturer) = 0;
-
-  virtual void modifyPhysicalLibraryModel(const common::dataStructures::SecurityIdentity &admin,
-   const std::string &name, const std::string &model) = 0;
-
-  virtual void modifyPhysicalLibraryType(const common::dataStructures::SecurityIdentity &admin,
-   const std::string &name, const std::string &type) = 0;
-
   virtual void modifyPhysicalLibraryGuiUrl(const common::dataStructures::SecurityIdentity &admin,
    const std::string &name, const std::string &guiUrl) = 0;
 

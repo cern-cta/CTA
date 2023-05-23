@@ -53,24 +53,6 @@ void PhysicalLibraryCatalogueRetryWrapper::modifyPhysicalLibraryName(
     currentName, newName);}, m_maxTriesToConnect);
 }
 
-void PhysicalLibraryCatalogueRetryWrapper::modifyPhysicalLibraryManufacturer(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &manufacturer) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->PhysicalLibrary()->modifyPhysicalLibraryManufacturer(admin,
-    name, manufacturer);}, m_maxTriesToConnect);
-}
-
-void PhysicalLibraryCatalogueRetryWrapper::modifyPhysicalLibraryModel(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &model) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->PhysicalLibrary()->modifyPhysicalLibraryModel(admin,
-    name, model);}, m_maxTriesToConnect);
-}
-
-void PhysicalLibraryCatalogueRetryWrapper::modifyPhysicalLibraryType(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &type) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->PhysicalLibrary()->modifyPhysicalLibraryType(admin,
-    name, type);}, m_maxTriesToConnect);
-}
-
 void PhysicalLibraryCatalogueRetryWrapper::modifyPhysicalLibraryGuiUrl(
   const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &guiUrl) {
   return retryOnLostConnection(m_log, [&]{return m_catalogue->PhysicalLibrary()->modifyPhysicalLibraryGuiUrl(admin,
