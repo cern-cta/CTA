@@ -102,7 +102,10 @@ echo "mgmofs.protowfresource /ctafrontend"  >> /etc/xrd.cf.mgm
 echo "mgmofs.tapeenabled true"  >> /etc/xrd.cf.mgm
 
 # Add configmap based configuration (initially Namespace)
+# for MGM
 test -f /etc/config/eos/xrd.cf.mgm && cat /etc/config/eos/xrd.cf.mgm >> /etc/xrd.cf.mgm
+# For FST
+test -f /etc/config/eos/xrd.cf.fst && cat /etc/config/eos/xrd.cf.fst >> /etc/xrd.cf.fst
 
 # prepare eos startup
   # skip systemd for eos initscripts
@@ -301,6 +304,13 @@ fi
   # 3. Create top-level directory and set permissions to writeable by all
   eos mkdir ${GRPC_TEST_DIR}
   eos chmod 777 ${GRPC_TEST_DIR}
+
+  # HTTP configuration if needed
+  grep -q EosMgmHttp /etc/xrd.cf.mgm && (eos vid enable https; eos space config default taperestapi.status=on; eos space config default taperestapi.stage=on)
+
+  # Enable eostoken for CI
+  eos space config default space.token.generation=1
+
 
 if [ "-${CI_CONTEXT}-" == '-systemd-' ]; then
   CTA_PROC_DIR_CID=`eos fileinfo ${CTA_PROC_DIR} | sed 's/Fid: /Fid:/' | sed 's/ /\n/g' | grep Fid: | sed 's/Fid://'`

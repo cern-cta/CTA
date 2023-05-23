@@ -24,8 +24,8 @@ config_objectstore="./objectstore-file.yaml"
 config_database="./database-sqlite.yaml"
 # default library model
 model="mhvtl"
-# defaults MGM namespace to inMemory
-config_eos="./eos-config-inmemory.yaml"
+# defaults MGM namespace to quarkdb with http
+config_eos="./eos-config-quarkdb-http.yaml"
 # shared configmap for eoscta instance
 config_eoscta="./eoscta-config.yaml"
 
