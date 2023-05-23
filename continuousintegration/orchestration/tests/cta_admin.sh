@@ -366,9 +366,9 @@ test_and_check_cmd "Adding physical library 'cta_adm_systest'" "${command}" "add
    --type 'typeA' --guiurl 'urlA' --webcamurl 'urlA' --nbphysicalcartridgeslots 4 --nbavailablecartridgeslots 3 --nbphysicaldriveslots 2 --comment 'commentA'"\
   'select(.name=="cta_adm_systest" and .manufacturer=="manA" and .model=="modA" and .type=="typeA" and .guiUrl=="urlA" and .webcamUrl=="urlA" and .location=="locA" and .nbPhysicalCartridgeSlots=="4" and .nbAvailableCartridgeSlots=="3" and .nbPhysicalDriveSlots=="2" and .comment=="commentA") | .name'\
   "1" "adding physical library 'cta_adm_systest'"|| exit 1
-test_and_check_cmd "Modifying physical library 'cta_adm_systest'" "${command}" "ch" "--physicallibrary 'cta_adm_systest' --manufacturer 'manB' --model 'modB' --location 'locB'\\
-   --type 'typeB' --guiurl 'urlB' --webcamurl 'urlB' --nbphysicalcartridgeslots 4 --nbavailablecartridgeslots 3 --nbphysicaldriveslots 2 --comment 'commentB'"\
-  'select(.name=="cta_adm_systest" and .manufacturer=="manB" and .model=="modB" and .type=="typeB" and .guiUrl=="urlB" and .webcamUrl=="urlB" and .location=="locB" and .nbPhysicalCartridgeSlots=="4" and .nbAvailableCartridgeSlots=="3" and .nbPhysicalDriveSlots=="2" and .comment=="commentB") | .name'\
+test_and_check_cmd "Modifying physical library 'cta_adm_systest'" "${command}" "ch" "--location 'locB'\\
+   ---guiurl 'urlB' --webcamurl 'urlB' --nbphysicalcartridgeslots 4 --nbavailablecartridgeslots 3 --nbphysicaldriveslots 2 --comment 'commentB'"\
+  'select(.name=="cta_adm_systest" and .guiUrl=="urlB" and .webcamUrl=="urlB" and .location=="locB" and .nbPhysicalCartridgeSlots=="4" and .nbAvailableCartridgeSlots=="3" and .nbPhysicalDriveSlots=="2" and .comment=="commentB") | .name'\
   "1" "adding physical library 'cta_adm_systest'"|| exit 1
 test_command "Removing physical library 'cta_adm_systest'" "${command}" "rm" "--pl 'cta_adm_systest'"
 test_assert || exit 1
