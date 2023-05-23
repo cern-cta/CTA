@@ -33,12 +33,12 @@
 namespace cta {
 namespace catalogue {
 
-RdbmsPhysicalLibraryCatalogue::RdbmsPhysicalLibraryCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
+RdbmsPhysicalLibraryCatalogue::RdbmsPhysicalLibraryCatalogue(log::Logger& log, std::shared_ptr<rdbms::ConnPool> connPool,
   RdbmsCatalogue *rdbmsCatalogue)
   : m_log(log), m_connPool(connPool), m_rdbmsCatalogue(rdbmsCatalogue) {}
 
 
-void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStructures::SecurityIdentity &admin, const common::dataStructures::PhysicalLibrary& pl) {
+void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStructures::SecurityIdentity& admin, const common::dataStructures::PhysicalLibrary& pl) {
   try {
     auto conn = m_connPool->getConn();
     if(RdbmsCatalogueUtils::physicalLibraryExists(conn, pl.name)) {
@@ -105,7 +105,7 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
       }
     };
 
-    auto setOptionalUint = [&stmt](const std::string &sqlField, const std::optional<uint64_t>& optionalField) {
+    auto setOptionalUint = [&stmt](const std::string& sqlField, const std::optional<uint64_t>& optionalField) {
       if (optionalField) {
         stmt.bindUint64(sqlField, optionalField.value());
       } else {
@@ -137,15 +137,15 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
     setOptionalString(":USER_COMMENT", pl.comment);
 
     stmt.executeNonQuery();
-  } catch(exception::UserError &) {
+  } catch(exception::UserError& ) {
     throw;
-  } catch(exception::Exception &ex) {
+  } catch(exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
 }
 
-void RdbmsPhysicalLibraryCatalogue::deletePhysicalLibrary(const std::string &name) {
+void RdbmsPhysicalLibraryCatalogue::deletePhysicalLibrary(const std::string& name) {
   try {
     const char *const sql =
       "DELETE FROM PHYSICAL_LIBRARY "
@@ -174,9 +174,9 @@ void RdbmsPhysicalLibraryCatalogue::deletePhysicalLibrary(const std::string &nam
           " because it does not exist");
       }
     }
-  } catch(exception::UserError &) {
+  } catch(exception::UserError& ) {
     throw;
-  } catch(exception::Exception &ex) {
+  } catch(exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
@@ -244,16 +244,16 @@ std::list<common::dataStructures::PhysicalLibrary> RdbmsPhysicalLibraryCatalogue
     }
 
     return libs;
-  } catch(exception::UserError &) {
+  } catch(exception::UserError& ) {
     throw;
-  } catch(exception::Exception &ex) {
+  } catch(exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
 }
 
-void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryName(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &currentName, const std::string &newName) {
+void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryName(const common::dataStructures::SecurityIdentity& admin,
+  const std::string& currentName, const std::string& newName) {
   try {
     if(currentName.empty()) {
       throw UserSpecifiedAnEmptyStringPhysicalLibraryName(
@@ -287,16 +287,16 @@ void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryName(const common::data
       throw exception::UserError(std::string("Cannot modify physical library ") + currentName
         + " because it does not exist");
     }
-  } catch(exception::UserError &) {
+  } catch(exception::UserError& ) {
     throw;
-  } catch(exception::Exception &ex) {
+  } catch(exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
 }
 
-void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryGuiUrl(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &guiUrl) {
+void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryGuiUrl(const common::dataStructures::SecurityIdentity& admin,
+  const std::string& name, const std::string& guiUrl) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =
@@ -319,16 +319,16 @@ void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryGuiUrl(const common::da
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify physical library ") + name + " because it does not exist");
     }
-  } catch(exception::UserError &) {
+  } catch(exception::UserError& ) {
     throw;
-  } catch(exception::Exception &ex) {
+  } catch(exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
 }
 
-void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryWebcamUrl(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &webcamUrl) {
+void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryWebcamUrl(const common::dataStructures::SecurityIdentity& admin,
+  const std::string& name, const std::string& webcamUrl) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =
@@ -351,16 +351,16 @@ void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryWebcamUrl(const common:
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify physical library ") + name + " because it does not exist");
     }
-  } catch(exception::UserError &) {
+  } catch(exception::UserError& ) {
     throw;
-  } catch(exception::Exception &ex) {
+  } catch(exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
 }
 
-void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryLocation(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &location) {
+void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryLocation(const common::dataStructures::SecurityIdentity& admin,
+  const std::string& name, const std::string& location) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =
@@ -383,16 +383,16 @@ void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryLocation(const common::
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify physical library ") + name + " because it does not exist");
     }
-  } catch(exception::UserError &) {
+  } catch(exception::UserError& ) {
     throw;
-  } catch(exception::Exception &ex) {
+  } catch(exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
 }
 
-void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryNbPhysicalCartridgeSlots(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const uint64_t &nbPhysicalCartridgeSlots) {
+void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryNbPhysicalCartridgeSlots(const common::dataStructures::SecurityIdentity& admin,
+  const std::string& name, const uint64_t& nbPhysicalCartridgeSlots) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =
@@ -415,16 +415,16 @@ void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryNbPhysicalCartridgeSlot
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify physical library ") + name + " because it does not exist");
     }
-  } catch(exception::UserError &) {
+  } catch(exception::UserError& ) {
     throw;
-  } catch(exception::Exception &ex) {
+  } catch(exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
 }
 
-void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryNbAvailableCartridgeSlots(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const uint64_t &nbAvailableCartridgeSlots) {
+void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryNbAvailableCartridgeSlots(const common::dataStructures::SecurityIdentity& admin,
+  const std::string& name, const uint64_t& nbAvailableCartridgeSlots) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =
@@ -447,16 +447,16 @@ void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryNbAvailableCartridgeSlo
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify physical library ") + name + " because it does not exist");
     }
-  } catch(exception::UserError &) {
+  } catch(exception::UserError& ) {
     throw;
-  } catch(exception::Exception &ex) {
+  } catch(exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
 }
 
-void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryNbPhysicalDriveSlots(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const uint64_t &nbPhysicalDriveSlots) {
+void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryNbPhysicalDriveSlots(const common::dataStructures::SecurityIdentity& admin,
+  const std::string& name, const uint64_t& nbPhysicalDriveSlots) {
   try {
     const time_t now = time(nullptr);
     const char *const sql =
@@ -479,18 +479,18 @@ void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryNbPhysicalDriveSlots(co
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify physical library ") + name + " because it does not exist");
     }
-  } catch(exception::UserError &) {
+  } catch(exception::UserError& ) {
     throw;
-  } catch(exception::Exception &ex) {
+  } catch(exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
 }
 
-void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryComment(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &comment) {
+void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryComment(const common::dataStructures::SecurityIdentity& admin,
+  const std::string& name, const std::string& comment) {
   try {
-    const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
+    const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment,& m_log);
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE PHYSICAL_LIBRARY SET "
@@ -512,9 +512,9 @@ void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryComment(const common::d
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify physical library ") + name + " because it does not exist");
     }
-  } catch(exception::UserError &) {
+  } catch(exception::UserError& ) {
     throw;
-  } catch(exception::Exception &ex) {
+  } catch(exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }

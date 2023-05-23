@@ -43,38 +43,38 @@ class RdbmsPhysicalLibraryCatalogue: public PhysicalLibraryCatalogue {
 public:
   ~RdbmsPhysicalLibraryCatalogue() override = default;
 
-  void createPhysicalLibrary(const common::dataStructures::SecurityIdentity &admin, const common::dataStructures::PhysicalLibrary& pl) override;
+  void createPhysicalLibrary(const common::dataStructures::SecurityIdentity& admin, const common::dataStructures::PhysicalLibrary& pl) override;
 
-  void deletePhysicalLibrary(const std::string &name) override;
+  void deletePhysicalLibrary(const std::string& name) override;
 
   std::list<common::dataStructures::PhysicalLibrary> getPhysicalLibraries() const override;
 
-  void modifyPhysicalLibraryName(const common::dataStructures::SecurityIdentity &admin,
-   const std::string &currentName, const std::string &newName) override;
+  void modifyPhysicalLibraryName(const common::dataStructures::SecurityIdentity& admin,
+   const std::string& currentName, const std::string& newName) override;
 
-  void modifyPhysicalLibraryGuiUrl   (const common::dataStructures::SecurityIdentity &admin,
-   const std::string &name, const std::string &guiUrl) override;
+  void modifyPhysicalLibraryGuiUrl   (const common::dataStructures::SecurityIdentity& admin,
+   const std::string& name, const std::string& guiUrl) override;
 
-  void modifyPhysicalLibraryWebcamUrl(const common::dataStructures::SecurityIdentity &admin,
-   const std::string &name, const std::string &webcamUrl) override;
+  void modifyPhysicalLibraryWebcamUrl(const common::dataStructures::SecurityIdentity& admin,
+   const std::string& name, const std::string& webcamUrl) override;
 
-  void modifyPhysicalLibraryLocation (const common::dataStructures::SecurityIdentity &admin,
-   const std::string &name, const std::string &location) override;
+  void modifyPhysicalLibraryLocation (const common::dataStructures::SecurityIdentity& admin,
+   const std::string& name, const std::string& location) override;
 
-  void modifyPhysicalLibraryNbPhysicalCartridgeSlots  (const common::dataStructures::SecurityIdentity &admin,
-   const std::string &name, const uint64_t &nbPhysicalCartridgeSlots) override;
+  void modifyPhysicalLibraryNbPhysicalCartridgeSlots  (const common::dataStructures::SecurityIdentity& admin,
+   const std::string& name, const uint64_t& nbPhysicalCartridgeSlots) override;
 
-  void modifyPhysicalLibraryNbAvailableCartridgeSlots (const common::dataStructures::SecurityIdentity &admin,
-   const std::string &name, const uint64_t &nbAvailableCartridgeSlots) override;
+  void modifyPhysicalLibraryNbAvailableCartridgeSlots (const common::dataStructures::SecurityIdentity& admin,
+   const std::string& name, const uint64_t& nbAvailableCartridgeSlots) override;
 
-  void modifyPhysicalLibraryNbPhysicalDriveSlots (const common::dataStructures::SecurityIdentity &admin,
-   const std::string &name, const uint64_t &nbPhysicalDriveSlots) override;
+  void modifyPhysicalLibraryNbPhysicalDriveSlots (const common::dataStructures::SecurityIdentity& admin,
+   const std::string& name, const uint64_t& nbPhysicalDriveSlots) override;
 
-  void modifyPhysicalLibraryComment (const common::dataStructures::SecurityIdentity &admin,
-   const std::string &name, const std::string &comment) override;
+  void modifyPhysicalLibraryComment (const common::dataStructures::SecurityIdentity& admin,
+   const std::string& name, const std::string& comment) override;
 
 protected:
-  RdbmsPhysicalLibraryCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
+  RdbmsPhysicalLibraryCatalogue(log::Logger& log, std::shared_ptr<rdbms::ConnPool> connPool,
     RdbmsCatalogue *rdbmsCatalogue);
 
   /**
@@ -89,15 +89,15 @@ protected:
    * @return a unique logical library ID that can be used by a new physical
    * library within the catalogue.
    */
-  virtual uint64_t getNextPhysicalLibraryId(rdbms::Conn &conn) const = 0;
+  virtual uint64_t getNextPhysicalLibraryId(rdbms::Conn& conn) const = 0;
 
 private:
-  log::Logger &m_log;
+  log::Logger& m_log;
   std::shared_ptr<rdbms::ConnPool> m_connPool;
   RdbmsCatalogue *m_rdbmsCatalogue;
 
   friend class RdbmsTapeCatalogue;
-  std::optional<uint64_t> getPhysicalLibraryId(rdbms::Conn &conn, const std::string &name) const;
+  std::optional<uint64_t> getPhysicalLibraryId(rdbms::Conn& conn, const std::string& name) const;
 };
 
 } // namespace catalogue
