@@ -109,6 +109,26 @@ bool RdbmsCatalogueUtils::virtualOrganizationExists(rdbms::Conn &conn, const std
   }
 }
 
+bool RdbmsCatalogueUtils::defaultVirtualOrganizationForRepackExists(rdbms::Conn &conn) {
+  try {
+    const char *const sql =
+            "SELECT "
+            "VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME "
+            "FROM "
+            "VIRTUAL_ORGANIZATION "
+            "WHERE "
+            "IS_REPACK_VO = '1'";
+    auto stmt = conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+    return rset.next();
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
 bool RdbmsCatalogueUtils::mediaTypeExists(rdbms::Conn &conn, const std::string &name) {
   try {
     const char *const sql =

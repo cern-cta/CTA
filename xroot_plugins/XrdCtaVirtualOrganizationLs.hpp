@@ -84,6 +84,7 @@ int VirtualOrganizationLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *strea
     vo_item->mutable_last_modification_log()->set_time(vo.lastModificationLog.time);
     vo_item->set_comment(vo.comment);
     vo_item->set_diskinstance(vo.diskInstanceName);
+    vo_item->set_is_repack_vo(vo.isRepackVo);
     
     is_buffer_full = streambuf->Push(record);
   }

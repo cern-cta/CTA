@@ -281,7 +281,8 @@ const std::map<std::string, OptionBoolean::Key> boolOptions = {
    { "--lookupnamespace",       OptionBoolean::LOOKUP_NAMESPACE },
    { "--summary",               OptionBoolean::SUMMARY },
    { "--no-recall",             OptionBoolean::NO_RECALL },
-   { "--dirtybit",             OptionBoolean::DIRTY_BIT }
+   { "--dirtybit",              OptionBoolean::DIRTY_BIT },
+   { "--isrepackvo",            OptionBoolean::IS_REPACK_VO }
 };
 
 
@@ -574,6 +575,7 @@ const Option opt_location                     { Option::OPT_STR,      "--locatio
 const Option opt_nb_physical_cartridge_slots  { Option::OPT_UINT,     "--nbphysicalcartridgeslots",  "--npcs", " <nb_physical_cartridge_slots>" };
 const Option opt_nb_available_cartridge_slots { Option::OPT_UINT,     "--nbavailablecartridgeslots", "--nacs", " <nb_available_cartridge_slots>" };
 const Option opt_nb_physical_drive_slots      { Option::OPT_UINT,     "--nbphysicaldriveslots",      "--npds", " <nb_physical_drive_slots >" };
+const Option opt_isrepackvo                   { Option::OPT_BOOL,     "--isrepackvo",                "--irvo", " <\"true\" or \"false\">" };
 
 /*!
  * Subset of commands that return streaming output
@@ -734,9 +736,9 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    /*----------------------------------------------------------------------------------------------------*/
 
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_ADD   },
-      { opt_vo, opt_read_max_drives, opt_write_max_drives, opt_comment, opt_diskinstance, opt_maxfilesize.optional() }},
+      { opt_vo, opt_read_max_drives, opt_write_max_drives, opt_comment, opt_diskinstance, opt_maxfilesize.optional(), opt_isrepackvo.optional() }},
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_CH   },
-      { opt_vo, opt_comment.optional(), opt_read_max_drives.optional(), opt_write_max_drives.optional(), opt_maxfilesize.optional(), opt_diskinstance.optional() }},
+      { opt_vo, opt_comment.optional(), opt_read_max_drives.optional(), opt_write_max_drives.optional(), opt_maxfilesize.optional(), opt_diskinstance.optional(), opt_isrepackvo.optional() }},
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_RM   },
       { opt_vo }},
    {{ AdminCmd::CMD_VIRTUALORGANIZATION,           AdminCmd::SUBCMD_LS   },

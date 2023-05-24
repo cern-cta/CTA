@@ -1412,6 +1412,7 @@ void AdminCmd::processVirtualOrganization_Add(xrd::Response& response) {
   const auto& comment = getRequired(OptionString::COMMENT);
   const auto& maxFileSizeOpt = getOptional(OptionUInt64::MAX_FILE_SIZE);
   const auto& diskInstanceName = getRequired(OptionString::DISK_INSTANCE);
+  const auto& isRepackVo = getOptional(OptionBoolean::IS_REPACK_VO);
 
   common::dataStructures::VirtualOrganization vo;
   vo.name = name;
@@ -1424,6 +1425,12 @@ void AdminCmd::processVirtualOrganization_Add(xrd::Response& response) {
     vo.maxFileSize = maxFileSizeOpt.value();
   } else {
     vo.maxFileSize = m_archiveFileMaxSize;
+  }
+
+  if(isRepackVo) {
+    vo.isRepackVo = isRepackVo.value();
+  } else {
+    vo.isRepackVo = false;
   }
 
   m_catalogue.VO()->createVirtualOrganization(m_cliIdentity,vo);
@@ -1440,6 +1447,7 @@ void AdminCmd::processVirtualOrganization_Ch(xrd::Response& response) {
   const auto comment = getOptional(OptionString::COMMENT);
   const auto maxFileSize = getOptional(OptionUInt64::MAX_FILE_SIZE);
   const auto diskInstanceName = getOptional(OptionString::DISK_INSTANCE);
+  const auto isRepackVo = getOptional(OptionBoolean::IS_REPACK_VO);
 
   if(comment)
     m_catalogue.VO()->modifyVirtualOrganizationComment(m_cliIdentity,name,comment.value());
@@ -1455,6 +1463,10 @@ void AdminCmd::processVirtualOrganization_Ch(xrd::Response& response) {
 
   if(diskInstanceName)
     m_catalogue.VO()->modifyVirtualOrganizationDiskInstanceName(m_cliIdentity, name, diskInstanceName.value());
+
+  if(isRepackVo) {
+    m_catalogue.VO()->modifyVirtualOrganizationIsRepackVo(m_cliIdentity, name, isRepackVo.value());
+  }
 
   response.set_type(xrd::Response::RSP_SUCCESS);
 }

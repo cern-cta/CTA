@@ -56,6 +56,10 @@ void RdbmsVirtualOrganizationCatalogue::createVirtualOrganization(const common::
       throw exception::UserError(std::string("Cannot create vo : ") +
         vo.name + " because it already exists");
     }
+    if(RdbmsCatalogueUtils::defaultVirtualOrganizationForRepackExists(conn)) {
+      throw exception::UserError("There already exists a default VO for repacking");
+    }
+
     const uint64_t virtualOrganizationId = getNextVirtualOrganizationId(conn);
     const time_t now = time(nullptr);
     const char *const sql =
@@ -68,6 +72,7 @@ void RdbmsVirtualOrganizationCatalogue::createVirtualOrganization(const common::
         "MAX_FILE_SIZE,"
 
         "DISK_INSTANCE_NAME,"
+        "IS_REPACK_VO,"
 
         "USER_COMMENT,"
 
@@ -86,6 +91,7 @@ void RdbmsVirtualOrganizationCatalogue::createVirtualOrganization(const common::
         ":MAX_FILE_SIZE,"
 
         ":DISK_INSTANCE_NAME,"
+        ":IS_REPACK_VO,"
 
         ":USER_COMMENT,"
 
@@ -106,6 +112,7 @@ void RdbmsVirtualOrganizationCatalogue::createVirtualOrganization(const common::
     stmt.bindUint64(":MAX_FILE_SIZE", vo.maxFileSize);
 
     stmt.bindString(":DISK_INSTANCE_NAME", vo.diskInstanceName);
+    stmt.bindBool(":IS_REPACK_VO", vo.isRepackVo ? std::optional<bool>(true) : std::nullopt); // Pass NULL instead of 0 for IS_REPACK_VO
 
     stmt.bindString(":USER_COMMENT", trimmedComment);
 
@@ -177,13 +184,14 @@ std::list<common::dataStructures::VirtualOrganization> RdbmsVirtualOrganizationC
         "WRITE_MAX_DRIVES AS WRITE_MAX_DRIVES,"
         "MAX_FILE_SIZE AS MAX_FILE_SIZE,"
 
+        "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
+        "IS_REPACK_VO AS IS_REPACK_VO,"
+
         "USER_COMMENT AS USER_COMMENT,"
 
         "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
         "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
         "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
-
-        "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
 
         "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
         "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
@@ -211,6 +219,7 @@ std::list<common::dataStructures::VirtualOrganization> RdbmsVirtualOrganizationC
       virtualOrganization.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
       virtualOrganization.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
       virtualOrganization.diskInstanceName = rset.columnString("DISK_INSTANCE_NAME");
+      virtualOrganization.isRepackVo = rset.columnOptionalBool("IS_REPACK_VO").value_or(false);
 
       virtualOrganizations.push_back(virtualOrganization);
     }
@@ -248,13 +257,14 @@ common::dataStructures::VirtualOrganization RdbmsVirtualOrganizationCatalogue::g
         "VIRTUAL_ORGANIZATION.WRITE_MAX_DRIVES AS WRITE_MAX_DRIVES,"
         "VIRTUAL_ORGANIZATION.MAX_FILE_SIZE AS MAX_FILE_SIZE,"
 
+        "VIRTUAL_ORGANIZATION.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
+        "VIRTUAL_ORGANIZATION.IS_REPACK_VO AS IS_REPACK_VO,"
+
         "VIRTUAL_ORGANIZATION.USER_COMMENT AS USER_COMMENT,"
 
         "VIRTUAL_ORGANIZATION.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
         "VIRTUAL_ORGANIZATION.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
         "VIRTUAL_ORGANIZATION.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
-
-        "VIRTUAL_ORGANIZATION.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
 
         "VIRTUAL_ORGANIZATION.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
         "VIRTUAL_ORGANIZATION.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
@@ -287,6 +297,7 @@ common::dataStructures::VirtualOrganization RdbmsVirtualOrganizationCatalogue::g
     virtualOrganization.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
     virtualOrganization.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
     virtualOrganization.diskInstanceName = rset.columnString("DISK_INSTANCE_NAME");
+    virtualOrganization.isRepackVo = rset.columnOptionalBool("IS_REPACK_VO").value_or(false);
     return virtualOrganization;
   } catch(exception::UserError &) {
     throw;
@@ -304,6 +315,67 @@ common::dataStructures::VirtualOrganization RdbmsVirtualOrganizationCatalogue::g
       return getVirtualOrganizationOfTapepool(conn,tapepoolName);
     };
     return m_rdbmsCatalogue->m_tapepoolVirtualOrganizationCache.getCachedValue(tapepoolName,getNonCachedValue).value;
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+std::optional<common::dataStructures::VirtualOrganization> RdbmsVirtualOrganizationCatalogue::getDefaultVirtualOrganizationForRepack() const {
+  try {
+    auto conn = m_connPool->getConn();
+    const char *const sql =
+            "SELECT "
+            "VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME,"
+
+            "READ_MAX_DRIVES AS READ_MAX_DRIVES,"
+            "WRITE_MAX_DRIVES AS WRITE_MAX_DRIVES,"
+            "MAX_FILE_SIZE AS MAX_FILE_SIZE,"
+
+            "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
+            "IS_REPACK_VO AS IS_REPACK_VO,"
+
+            "USER_COMMENT AS USER_COMMENT,"
+
+            "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+            "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+            "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+
+            "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+            "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+            "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+            "FROM "
+            "VIRTUAL_ORGANIZATION "
+            "WHERE "
+            "IS_REPACK_VO = '1'";
+    auto stmt = conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+    if(!rset.next()){
+      return std::nullopt;
+    }
+    common::dataStructures::VirtualOrganization virtualOrganization;
+
+    virtualOrganization.name = rset.columnString("VIRTUAL_ORGANIZATION_NAME");
+    virtualOrganization.readMaxDrives = rset.columnUint64("READ_MAX_DRIVES");
+    virtualOrganization.writeMaxDrives = rset.columnUint64("WRITE_MAX_DRIVES");
+    virtualOrganization.maxFileSize = rset.columnUint64("MAX_FILE_SIZE");
+    virtualOrganization.comment = rset.columnString("USER_COMMENT");
+    virtualOrganization.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+    virtualOrganization.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+    virtualOrganization.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+    virtualOrganization.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+    virtualOrganization.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+    virtualOrganization.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
+    virtualOrganization.diskInstanceName = rset.columnString("DISK_INSTANCE_NAME");
+    virtualOrganization.isRepackVo = rset.columnOptionalBool("IS_REPACK_VO").value_or(false);
+
+    if(rset.next()){
+      throw exception::UserError("In RdbmsCatalogue::getDefaultVirtualOrganizationForRepack() found more that one default Virtual Organization for repack.");
+    }
+
+    return virtualOrganization;
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {
@@ -525,6 +597,44 @@ void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationDiskInstanceNam
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify virtual organization : ") + voName +
         " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationIsRepackVo(
+  const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const bool isRepackVo) {
+  try {
+
+    const time_t now = time(nullptr);
+    const char *const sql =
+            "UPDATE VIRTUAL_ORGANIZATION SET "
+            "IS_REPACK_VO = :IS_REPACK_VO,"
+            "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+            "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+            "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+            "WHERE "
+            "VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME";
+    auto conn = m_connPool->getConn();
+    if(RdbmsCatalogueUtils::defaultVirtualOrganizationForRepackExists(conn)) {
+      throw exception::UserError("There already exists a default VO for repacking");
+    }
+
+    auto stmt = conn.createStmt(sql);
+    stmt.bindBool(":IS_REPACK_VO", isRepackVo ? std::optional<bool>(true) : std::nullopt); // Pass NULL instead of 0 for IS_REPACK_VO
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":VIRTUAL_ORGANIZATION_NAME", voName);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify virtual organization : ") + voName +
+                                 " because it does not exist");
     }
   } catch(exception::UserError &) {
     throw;
