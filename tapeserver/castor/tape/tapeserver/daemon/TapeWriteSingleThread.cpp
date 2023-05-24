@@ -351,7 +351,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
           auto encryptionStatus = m_encryptionControl.enable(m_drive, m_volInfo, m_catalogue, true);
           if (encryptionStatus.on) {
             encryptionLogParams.add("encryption", "on")
-                               .add("encryptionKey", encryptionStatus.keyName)
+                               .add("encryptionKeyName", encryptionStatus.keyName)
                                .add("stdout", encryptionStatus.stdout);
             m_logContext.log(cta::log::INFO, "Drive encryption enabled for this mount");
           }

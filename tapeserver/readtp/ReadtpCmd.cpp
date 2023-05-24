@@ -617,7 +617,7 @@ void ReadtpCmd::configureEncryption(castor::tape::tapeserver::daemon::VolumeInfo
       auto encryptionStatus = m_encryptionControl->enable(drive, volInfo, *m_catalogue, false);
       if (encryptionStatus.on) {
         params.push_back(cta::log::Param("encryption", "on"));
-        params.push_back(cta::log::Param("encryptionKey", encryptionStatus.keyName));
+        params.push_back(cta::log::Param("encryptionKeyName", encryptionStatus.keyName));
         params.push_back(cta::log::Param("stdout", encryptionStatus.stdout));
         m_log(cta::log::INFO, "Drive encryption enabled for this mount", params);
       } else {

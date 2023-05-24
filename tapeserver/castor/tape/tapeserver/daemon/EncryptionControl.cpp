@@ -20,8 +20,8 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/threading/SubProcess.hpp"
-#include "common/utils/Regex.hpp"
 #include "EncryptionControl.hpp"
+#include "catalogue/TapePool.hpp"
 
 namespace castor {
 namespace tape {
@@ -33,9 +33,9 @@ namespace daemon {
 EncryptionControl::EncryptionControl(bool useEncryption, const std::string& scriptPath) :
   m_useEncryption(useEncryption),
   m_path(scriptPath) {
-  if (m_path.size() && m_path[0] != '/') {
-    cta::exception::Exception ex("In EncryptionControl::EncryptionControl: the script path is not absolute: ");
-    ex.getMessage() << m_path;
+  if (!m_path.empty() && m_path[0] != '/') {
+    throw cta::exception::Exception("In EncryptionControl::EncryptionControl: the script path is not absolute: "
+                                    + m_path);
   }
 }
 
@@ -54,18 +54,37 @@ auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface &
                                       "but tapeserver is configured to use encryption");
     }
     encStatus = {false, "", "", ""};
+    disable(m_drive);
     return encStatus;
   }
 
+  // Read session with no encryption key name
+  // Tape is guaranteed to be unencrypted, no need to run external script
+  if (!isWriteSession && !volInfo.encryptionKeyName.has_value()) {
+    encStatus = {false, "", "", ""};
+    disable(m_drive);
+    return encStatus;
+  }
+
+  const auto pool = catalogue.TapePool()->getTapePool(volInfo.tapePool);
+
+  // Write session with no encryption key name and encryption is disabled for the tape pool
+  // Tape is guaranteed to be unencrypted, no need to run external script
+  if (isWriteSession && !pool->encryption && !volInfo.encryptionKeyName.has_value()) {
+    encStatus = {false, "", "", ""};
+    disable(m_drive);
+    return encStatus;
+  }
+
+  // In other cases we call external script to get the key value from the JSON data store
   std::list<std::string> args(
-    {m_path, "--encryption-key-id", volInfo.encryptionKeyName.value_or(""), "--pool-name", volInfo.tapePool});
+    {m_path, "--encryption-key-name", volInfo.encryptionKeyName.value_or(""), "--pool-name", volInfo.tapePool});
 
   cta::threading::SubProcess sp(m_path, args);
   sp.wait();
   if (sp.wasKilled() || sp.exitValue() != EXIT_SUCCESS) {
     std::ostringstream ex;
-    ex << "In EncryptionControl::enableEncryption: "
-                       "failed to enable encryption: ";
+    ex << "In EncryptionControl::enableEncryption: failed to enable encryption: ";
     if (sp.wasKilled()) {
       ex << "script was killed with signal: " << sp.killSignal();
     }
@@ -79,13 +98,12 @@ auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface &
   }
   encStatus = parse_json_script_output(sp.stdout());
 
-  // In write session check if we need to set the key name (key ID) for the new tape
-  // If key ID is empty, it means we are writing to the new tape
-  // TODO: use encryptionKeyName from TAPEPOOL table instead of encStatus.key returned by the external script
-  if (isWriteSession && encStatus.key == "-") {
-    cta::common::dataStructures::SecurityIdentity m_cliIdentity("ctaops", cta::utils::getShortHostname());
-
-    catalogue.Tape()->modifyTapeEncryptionKeyName(m_cliIdentity, volInfo.vid, encStatus.key);
+  // In write session check if we need to set the key name for the new tape
+  // If tape pool encryption is enabled and key name is empty, it means we are writing to the new tape
+  if (isWriteSession && pool->encryption && !volInfo.encryptionKeyName.has_value()) {
+    catalogue.Tape()->modifyTapeEncryptionKeyName({"ctaops", cta::utils::getShortHostname()}, volInfo.vid,
+                                                  encStatus.keyName);
+    encStatus.on = true;
   }
 
   if (encStatus.on) {
@@ -138,24 +156,22 @@ EncryptionControl::EncryptionStatus EncryptionControl::parse_json_script_output(
 
   if (jerr != json_tokener_success) {
     // Handle errors
-    cta::exception::Exception ex("In EncryptionControl::parse_json_script_output: failed to parse "
-                                 "encryption script's output.");
-    throw ex;
+    throw cta::exception::Exception("In EncryptionControl::parse_json_script_output: failed to parse "
+                                    "encryption script's output.");
   }
 
   std::map<std::string, std::string> stdout_map = flatten_json_object_to_map("", jobj.get());
 
   if (
-    stdout_map.find("key_id") == stdout_map.end() ||
+    stdout_map.find("key_name") == stdout_map.end() ||
     stdout_map.find("encryption_key") == stdout_map.end() ||
     stdout_map.find("message") == stdout_map.end()
     ) {
-    cta::exception::Exception ex("In EncryptionControl::parse_json_script_output: invalid json interface.");
-    throw ex;
+    throw cta::exception::Exception("In EncryptionControl::parse_json_script_output: invalid json interface.");
   }
 
-  encryption_status.on = (!stdout_map["key_id"].empty() && !stdout_map["encryption_key"].empty());
-  encryption_status.keyName = stdout_map["key_id"];
+  encryption_status.on = (!stdout_map["key_name"].empty() && !stdout_map["encryption_key"].empty());
+  encryption_status.keyName = stdout_map["key_name"];
   encryption_status.key = stdout_map["encryption_key"];
   encryption_status.stdout = stdout_map["message"];
   return encryption_status;
