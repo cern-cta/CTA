@@ -19,6 +19,7 @@
 
 #include <google/protobuf/service.h>
 
+#include "catalogue/Catalogue.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/utils/utils.hpp"
@@ -112,7 +113,7 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
   pm.addHandler(std::move(sh));
   // Create the drive handlers
   for (auto & d: m_globalConfiguration.driveConfigs) {
-    std::unique_ptr<DriveHandler> dh(new DriveHandler(m_globalConfiguration, d.second.value(), pm));
+    auto dh = std::make_unique<DriveHandler>(m_globalConfiguration, d.second.value(), pm);
     pm.addHandler(std::move(dh));
   }
   // Create the garbage collector

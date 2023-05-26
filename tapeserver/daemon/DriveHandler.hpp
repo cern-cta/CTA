@@ -45,7 +45,7 @@ class DriveHandler : public SubprocessHandler {
 public:
   DriveHandler(const TapedConfiguration& tapedConfig, const TpconfigLine& driveConfig, ProcessManager& pm);
 
-  ~DriveHandler() override;
+  ~DriveHandler() override = default;
 
   SubprocessHandler::ProcessingStatus getInitialStatus() override;
 

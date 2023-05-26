@@ -1270,14 +1270,6 @@ std::unique_ptr<cta::catalogue::Catalogue> DriveHandler::createCatalogue(const s
   return catalogueFactory->create();
 }
 
-//------------------------------------------------------------------------------
-// DriveHandler::~DriveHandler
-//------------------------------------------------------------------------------
-DriveHandler::~DriveHandler() {
-  // TODO: complete
-}
-
-
 }
 }
 }  // namespace cta::tape::daemon
