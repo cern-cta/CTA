@@ -850,12 +850,12 @@ int DriveHandler::runChild() {
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
   }
   lc.log(log::DEBUG, "In DriveHandler::runChild(): will create scheduler.");
-  cta::Scheduler scheduler(*m_catalogue, *sched_db, m_tapedConfig.mountCriteria.value().maxFiles,
-                           m_tapedConfig.mountCriteria.value().maxBytes);
+  const auto scheduler = std::make_unique<Scheduler>(*m_catalogue, *sched_db,
+    m_tapedConfig.mountCriteria.value().maxFiles, m_tapedConfig.mountCriteria.value().maxBytes);
   // Before launching the transfer session, we validate that the scheduler is reachable.
   lc.log(log::DEBUG, "In DriveHandler::runChild(): will ping scheduler.");
   try {
-    scheduler.ping(lc);
+    scheduler->ping(lc);
   } catch (const cta::catalogue::WrongSchemaVersionException& ex) {
     log::ScopedParamContainer param(lc);
     param.add("errorMessage", ex.getMessageValue());
@@ -879,13 +879,17 @@ int DriveHandler::runChild() {
     lc.log(log::ERR, errorMsg);
     // Get hold of the scheduler.
     try {
-      scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
+      cta::common::dataStructures::DriveInfo driveInfo;
+      driveInfo.driveName = m_driveConfig.unitName;
+      driveInfo.logicalLibrary = m_driveConfig.logicalLibrary;
+      driveInfo.host = hostname;
+      scheduler->reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
       cta::common::dataStructures::SecurityIdentity securityIdentity;
       cta::common::dataStructures::DesiredDriveState driveState;
       driveState.up = false;
       driveState.forceDown = false;
       driveState.setReasonFromLogMsg(logLevel, errorMsg);
-      scheduler.setDesiredDriveState(securityIdentity, m_driveConfig.unitName, driveState, lc);
+      scheduler->setDesiredDriveState(securityIdentity, m_driveConfig.unitName, driveState, lc);
       return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
     } catch (cta::exception::Exception& ex) {
       log::ScopedParamContainer param(lc);
@@ -909,13 +913,17 @@ int DriveHandler::runChild() {
       std::string errorMsg = "In DriveHandler::runChild(): Should run cleaner but VID is missing. Putting the drive down.";
       lc.log(log::ERR, errorMsg);
       try {
-        scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
+        cta::common::dataStructures::DriveInfo driveInfo;
+        driveInfo.driveName = m_driveConfig.unitName;
+        driveInfo.logicalLibrary = m_driveConfig.logicalLibrary;
+        driveInfo.host = hostname;
+        scheduler->reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
         cta::common::dataStructures::SecurityIdentity securityIdentity;
         cta::common::dataStructures::DesiredDriveState driveState;
         driveState.up = false;
         driveState.forceDown = false;
         driveState.setReasonFromLogMsg(logLevel, errorMsg);
-        scheduler.setDesiredDriveState(securityIdentity, m_driveConfig.unitName, driveState, lc);
+        scheduler->setDesiredDriveState(securityIdentity, m_driveConfig.unitName, driveState, lc);
         return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
       } catch (cta::exception::Exception& ex) {
         log::ScopedParamContainer param(lc);
@@ -937,18 +945,6 @@ int DriveHandler::runChild() {
             .add("PreviousType", session::toString(m_sessionType));
       lc.log(log::INFO, "In DriveHandler::runChild(): starting cleaner after crash with tape potentially loaded.");
     }
-    // Capabilities management.
-    cta::server::ProcessCap capUtils;
-
-    // Mounting management.
-    cta::mediachanger::RmcProxy rmcProxy(
-      m_tapedConfig.rmcPort.value(),
-      m_tapedConfig.rmcNetTimeout.value(),
-      m_tapedConfig.rmcRequestAttempts.value());
-    cta::mediachanger::MediaChangerFacade mediaChangerFacade(rmcProxy, lc.logger());
-
-    castor::tape::System::realWrapper sWrapper;
-
     // TODO: the cleaner session does not yet report to the scheduler.
 //    // Before launching the transfer session, we validate that the scheduler is reachable.
 //    if (!scheduler.ping()) {
@@ -958,7 +954,7 @@ int DriveHandler::runChild() {
 //      return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
 //    }
     try {
-      scheduler.ping(lc);
+      scheduler->ping(lc);
     } catch (const cta::catalogue::WrongSchemaVersionException& ex) {
       log::ScopedParamContainer param(lc);
       param.add("errorMessage", ex.getMessageValue());
@@ -973,33 +969,12 @@ int DriveHandler::runChild() {
       return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
     }
 
-    castor::tape::tapeserver::daemon::CleanerSession cleanerSession(
-      capUtils,
-      mediaChangerFacade,
-      lc.logger(), m_driveConfig,
-      sWrapper,
-      m_previousVid,
-      true,
-      m_tapedConfig.tapeLoadTimeout.value(),
-      "",
-      *m_catalogue,
-      scheduler);
-    return cleanerSession.execute();
+    const auto cleanerSession = createCleanerSession(scheduler, &lc);
+    return cleanerSession->execute();
   }
   else {
     // The next session will be a normal session (no crash with a mounted tape before).
-    // Capabilities management.
-    cta::server::ProcessCap capUtils;
-
-    // Mounting management.
-    cta::mediachanger::RmcProxy rmcProxy(
-      m_tapedConfig.rmcPort.value(),
-      m_tapedConfig.rmcNetTimeout.value(),
-      m_tapedConfig.rmcRequestAttempts.value());
-    cta::mediachanger::MediaChangerFacade mediaChangerFacade(rmcProxy, lc.logger());
-
-    castor::tape::System::realWrapper sWrapper;
-
+    
     // Passing values from taped config to data transfer session config
     // When adding new config variables, be careful not to forget to pass them here
     castor::tape::tapeserver::daemon::DataTransferConfig dataTransferConfig;
@@ -1051,14 +1026,14 @@ int DriveHandler::runChild() {
         // Before setting the desired state as down, we have to make sure the drive exists in the registry.
         // this is done by reporting the drive as down first.
         // Checking the drive does not already exist in the database
-        if (!scheduler.checkDriveCanBeCreated(driveInfo, lc)) {
+        if (!scheduler->checkDriveCanBeCreated(driveInfo, lc)) {
           driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
           return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
         }
 
         cta::common::dataStructures::DesiredDriveState  currentDesiredDriveState;
         try {
-          currentDesiredDriveState = scheduler.getDesiredDriveState(m_driveConfig.unitName, lc);
+          currentDesiredDriveState = scheduler->getDesiredDriveState(m_driveConfig.unitName, lc);
         } catch (Scheduler::NoSuchDrive& ex) {
           lc.log(log::INFO, "In DriveHandler::runChild(): the desired drive state doesn't exist in the Catalogue DB");
         }
@@ -1067,7 +1042,7 @@ int DriveHandler::runChild() {
         cta::common::dataStructures::DesiredDriveState driveState;
         driveState.up = false;
         driveState.forceDown = false;
-        scheduler.createTapeDriveStatus(driveInfo, driveState, common::dataStructures::MountType::NoMount,
+        scheduler->createTapeDriveStatus(driveInfo, driveState, common::dataStructures::MountType::NoMount,
                                         common::dataStructures::DriveStatus::Down, m_driveConfig, securityIdentity, lc);
 
         // Get the drive state to see if there is a reason or not, we don't want to change the reason
@@ -1081,8 +1056,8 @@ int DriveHandler::runChild() {
           driveState.reason = currentDesiredDriveState.reason.value();
         }
 
-        scheduler.setDesiredDriveState(securityIdentity, m_driveConfig.unitName, driveState, lc);
-        scheduler.reportDriveConfig(m_driveConfig, m_tapedConfig, lc);
+        scheduler->setDesiredDriveState(securityIdentity, m_driveConfig.unitName, driveState, lc);
+        scheduler->reportDriveConfig(m_driveConfig, m_tapedConfig, lc);
       } catch (cta::exception::Exception& ex) {
         params.add("Message", ex.getMessageValue())
               .add("Backtrace", ex.backtrace());
@@ -1093,6 +1068,15 @@ int DriveHandler::runChild() {
       }
     }
 
+    // Capabilities management.
+    cta::server::ProcessCap capUtils;
+    // Mounting management.
+    cta::mediachanger::RmcProxy rmcProxy(
+      m_tapedConfig.rmcPort.value(),
+      m_tapedConfig.rmcNetTimeout.value(),
+      m_tapedConfig.rmcRequestAttempts.value());
+    cta::mediachanger::MediaChangerFacade mediaChangerFacade(rmcProxy, lc.logger());
+    castor::tape::System::realWrapper sWrapper;
     castor::tape::tapeserver::daemon::DataTransferSession dataTransferSession(
       cta::utils::getShortHostname(),
       lc.logger(),
@@ -1102,7 +1086,7 @@ int DriveHandler::runChild() {
       driveHandlerProxy,
       capUtils,
       dataTransferConfig,
-      scheduler);
+      *scheduler);
 
     auto ret = dataTransferSession.execute();
     return ret;
@@ -1148,19 +1132,12 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
     param.add("errorMessage", ex.getMessageValue());
     lc.log(log::CRIT, "In DriveHandler::shutdown(): failed to connect to objectstore or failed to instantiate agent entry. Reporting fatal error.");
     // Putting the drive down
-    try {
-      setDriveDownForShutdown("Failed to connect to objectstore or failed to instantiate agent entry", &lc);
-    } catch(const cta::exception::Exception &ex) {
-      params.add("tapeVid", m_sessionVid)
-            .add("tapeDrive", m_driveConfig.unitName)
-            .add("message", ex.getMessageValue());
-      lc.log(cta::log::ERR, "In DriveHandler::shutdown(). Failed to put the drive down.");
-    }
+    setDriveDownForShutdown("Failed to connect to objectstore or failed to instantiate agent entry", &lc);
     return exitShutdown();
   }
   std::unique_ptr<SchedulerDB_t> sched_db = sched_db_init->getSchedDB(*m_catalogue, lc.logger());
   lc.log(log::DEBUG, "In DriveHandler::shutdown(): will create scheduler.");
-  auto scheduler = std::make_unique<Scheduler>(*m_catalogue, *sched_db, 0, 0);
+  const auto scheduler = std::make_unique<Scheduler>(*m_catalogue, *sched_db, 0, 0);
 
   std::set<SessionState> statesRequiringCleaner = { SessionState::Mounting,
     SessionState::Running, SessionState::Unmounting };
@@ -1183,80 +1160,86 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
             .add("sessionState", session::toString(m_sessionState))
             .add("sessionType", session::toString(m_sessionType));
       lc.log(log::INFO, "In DriveHandler::shutdown(): starting cleaner.");
-      // Capabilities management.
-      cta::server::ProcessCap capUtils;
 
-      cta::mediachanger::RmcProxy rmcProxy(
-        m_tapedConfig.rmcPort.value(),
-        m_tapedConfig.rmcNetTimeout.value(),
-        m_tapedConfig.rmcRequestAttempts.value());
-      cta::mediachanger::MediaChangerFacade mediaChangerFacade(rmcProxy, m_processManager.logContext().logger());
-      castor::tape::System::realWrapper sWrapper;
-      castor::tape::tapeserver::daemon::CleanerSession cleanerSession(
-        capUtils,
-        mediaChangerFacade,
-        m_processManager.logContext().logger(),
-        m_driveConfig,
-        sWrapper,
-        m_sessionVid,
-        true,
-        m_tapedConfig.tapeLoadTimeout.value(),
-        "",
-        *m_catalogue,
-        *scheduler);
-      if (cleanerSession.execute() == castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN) {
+      const auto cleanerSession = createCleanerSession(scheduler, &m_processManager.logContext());
+      if (cleanerSession->execute() == castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN) {
         return exitShutdown();
       }
     }
   }
   // Putting the drive down
-  try {
-    setDriveDownForShutdown("Shutdown", &lc);
-  } catch(const cta::exception::Exception &ex) {
-    params.add("tapeVid", m_sessionVid)
-          .add("tapeDrive", m_driveConfig.unitName)
-          .add("message", ex.getMessageValue());
-    lc.log(cta::log::ERR, "In DriveHandler::shutdown(). Failed to put the drive down.");
-  }
+  setDriveDownForShutdown("Shutdown", &lc);
+  
   return exitShutdown();
 }
 
-int DriveHandler::setDriveDownForShutdown(const std::string& reason, cta::log::LogContext* lc) {
-  cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName = m_driveConfig.unitName;
-  driveInfo.logicalLibrary = m_driveConfig.logicalLibrary;
-  driveInfo.host = cta::utils::getShortHostname();
-
-  auto driveState = m_catalogue->DriveState()->getTapeDrive(driveInfo.driveName);
-  if (!driveState) {
-    lc->log(cta::log::WARNING, "In DriveHandler::setDriveDownForShutdown(). TapeDrive to set down doesn't exist.");
-    return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
-  }
-
-  cta::common::dataStructures::DesiredDriveState desiredDriveState;
-  desiredDriveState.up = false;
-  desiredDriveState.forceDown = false;
-
-  // Get the drive state to see if there is a reason or not, we don't want to change the reason
-  // why a drive is down at the shutdown of the tapeserver. If it's setted up a previous Reason From Log
-  // it will be change for this new one.
-  if (!driveState.value().reasonUpDown) {
-    desiredDriveState.setReasonFromLogMsg(cta::log::INFO, reason);
-  } else if (driveState.value().reasonUpDown.value().substr(0, 11) == "[cta-taped]") {
-    desiredDriveState.setReasonFromLogMsg(cta::log::INFO, reason);
-  } else {
-    desiredDriveState.reason = driveState.value().reasonUpDown.value();
-  }
-
-  TapeDrivesCatalogueState driveCatalogue(*m_catalogue);
-  driveCatalogue.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
-    cta::common::dataStructures::DriveStatus::Down, time(nullptr), *lc);
-  driveCatalogue.setDesiredDriveState(m_driveConfig.unitName, desiredDriveState, *lc);
-
-  return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
+std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> DriveHandler::createCleanerSession(
+  const std::unique_ptr<Scheduler>& scheduler, cta::log::LogContext* lc) const {
+  // Capabilities management.
+  cta::server::ProcessCap capUtils;
+  // Mounting management.
+  cta::mediachanger::RmcProxy rmcProxy(
+    m_tapedConfig.rmcPort.value(),
+    m_tapedConfig.rmcNetTimeout.value(),
+    m_tapedConfig.rmcRequestAttempts.value());
+  cta::mediachanger::MediaChangerFacade mediaChangerFacade(rmcProxy, m_processManager.logContext().logger());
+  castor::tape::System::realWrapper sWrapper;
+  return std::make_unique<castor::tape::tapeserver::daemon::CleanerSession>(
+    capUtils,
+    mediaChangerFacade,
+    lc->logger(),
+    m_driveConfig,
+    sWrapper,
+    m_sessionVid,
+    true,
+    m_tapedConfig.tapeLoadTimeout.value(),
+    "",
+    *m_catalogue,
+    *scheduler);
 }
 
-std::unique_ptr<cta::catalogue::Catalogue> DriveHandler::createCatalogue(const std::string& methodCaller) {
+void DriveHandler::setDriveDownForShutdown(const std::string& reason, cta::log::LogContext* lc) {
+  try {
+    cta::common::dataStructures::DriveInfo driveInfo;
+    driveInfo.driveName = m_driveConfig.unitName;
+    driveInfo.logicalLibrary = m_driveConfig.logicalLibrary;
+    driveInfo.host = cta::utils::getShortHostname();
+
+    auto driveState = m_catalogue->DriveState()->getTapeDrive(driveInfo.driveName);
+    if (!driveState) {
+      lc->log(cta::log::WARNING, "In DriveHandler::setDriveDownForShutdown(). TapeDrive to set down doesn't exist.");
+      return;
+    }
+
+    cta::common::dataStructures::DesiredDriveState desiredDriveState;
+    desiredDriveState.up = false;
+    desiredDriveState.forceDown = false;
+
+    // Get the drive state to see if there is a reason or not, we don't want to change the reason
+    // why a drive is down at the shutdown of the tapeserver. If it's setted up a previous Reason From Log
+    // it will be change for this new one.
+    if (!driveState.value().reasonUpDown) {
+      desiredDriveState.setReasonFromLogMsg(cta::log::INFO, reason);
+    } else if (driveState.value().reasonUpDown.value().substr(0, 11) == "[cta-taped]") {
+      desiredDriveState.setReasonFromLogMsg(cta::log::INFO, reason);
+    } else {
+      desiredDriveState.reason = driveState.value().reasonUpDown.value();
+    }
+
+    TapeDrivesCatalogueState driveCatalogue(*m_catalogue);
+    driveCatalogue.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
+      cta::common::dataStructures::DriveStatus::Down, time(nullptr), *lc);
+    driveCatalogue.setDesiredDriveState(m_driveConfig.unitName, desiredDriveState, *lc);
+  } catch(const cta::exception::Exception &ex) {
+    log::ScopedParamContainer params(*lc);
+    params.add("tapeVid", m_sessionVid)
+          .add("tapeDrive", m_driveConfig.unitName)
+          .add("message", ex.getMessageValue());
+    lc->log(cta::log::ERR, "In DriveHandler::shutdown(). Failed to put the drive down.");
+  }
+}
+
+std::unique_ptr<cta::catalogue::Catalogue> DriveHandler::createCatalogue(const std::string& methodCaller) const {
   log::ScopedParamContainer params(m_processManager.logContext());
   params.add("fileCatalogConfigFile", m_tapedConfig.fileCatalogConfigFile.value());
   params.add("caller", methodCaller);

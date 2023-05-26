@@ -28,6 +28,16 @@
 #include "tapeserver/session/SessionState.hpp"
 #include "tapeserver/session/SessionType.hpp"
 
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace daemon {
+class CleanerSession;
+}
+}
+}
+}
+
 namespace cta {
 
 namespace catalogue {
@@ -90,7 +100,7 @@ private:
   /** Representation of the status of the current process. */
   session::SessionState m_sessionState = session::SessionState::PendingFork;
 
-  int setDriveDownForShutdown(const std::string& reason, cta::log::LogContext* lc);
+  void setDriveDownForShutdown(const std::string& reason, cta::log::LogContext* lc);
 
   /**
    * Utility function resetting all parameters to pre-fork state
@@ -170,7 +180,10 @@ private:
   /** Helper function accumulating bytes transferred */
   void processBytes(serializers::WatchdogMessage& message);
 
-  std::unique_ptr<cta::catalogue::Catalogue> createCatalogue(const std::string& methodCaller);
+  std::unique_ptr<cta::catalogue::Catalogue> createCatalogue(const std::string& methodCaller) const;
+
+  std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> createCleanerSession(
+    const std::unique_ptr<Scheduler>& scheduler, cta::log::LogContext* lc) const;
 
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
 };
