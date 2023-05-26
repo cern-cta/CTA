@@ -34,7 +34,7 @@ public:
    * @param sopcketPair Reference to the socket pair.
    */
   DriveHandlerProxy(server::SocketPair & sopcketPair);
-  virtual ~DriveHandlerProxy();
+  ~DriveHandlerProxy() override = default;
   void reportState(const cta::tape::session::SessionState state, const cta::tape::session::SessionType type, const std::string& vid) override;
   void reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved) override;
   void addLogParams(const std::string& unitName, const std::list<cta::log::Param>&   params) override;
