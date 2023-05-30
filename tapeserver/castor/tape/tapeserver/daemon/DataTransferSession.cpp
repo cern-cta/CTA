@@ -213,6 +213,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
   m_volInfo.nbFiles = tapeMount->getNbFiles();
   m_volInfo.mountId = tapeMount->getMountTransactionId();
   m_volInfo.labelFormat = tapeMount->getLabelFormat();
+  m_volInfo.encryptionKeyName = tapeMount->getEncryptionKeyName();
+  m_volInfo.tapePool = tapeMount->getPoolName();
   tapeServerReporter.setVolInfo(m_volInfo);
   // Report drive status and mount info through tapeMount interface
   tapeMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
@@ -277,7 +279,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
                                           reportPacker,
                                           m_dataTransferConfig.useLbp, m_dataTransferConfig.useRAO, m_dataTransferConfig.useEncryption,
                                           m_dataTransferConfig.externalEncryptionKeyScript, *retrieveMount,
-                                          m_dataTransferConfig.tapeLoadTimeout);
+                                          m_dataTransferConfig.tapeLoadTimeout,
+                                          m_scheduler.getCatalogue());
 
     DiskWriteThreadPool threadPool(m_dataTransferConfig.nbDiskThreads,
                                    reportPacker,
@@ -426,7 +429,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
                                             m_dataTransferConfig.useEncryption,
                                             m_dataTransferConfig.externalEncryptionKeyScript,
                                             *archiveMount,
-                                            m_dataTransferConfig.tapeLoadTimeout);
+                                            m_dataTransferConfig.tapeLoadTimeout,
+                                            m_scheduler.getCatalogue());
 
 
     DiskReadThreadPool threadPool(m_dataTransferConfig.nbDiskThreads,

@@ -188,6 +188,7 @@ class SchedulerDatabase {
       std::string vendor;
       std::string drive;
       std::string host;
+      std::optional<std::string> encryptionKeyName;
       uint64_t mountId;
       uint64_t capacityInBytes;
       cta::common::dataStructures::Label::Format labelFormat;
@@ -451,6 +452,7 @@ class SchedulerDatabase {
       std::string vendor;
       std::string drive;
       std::string host;
+      std::optional<std::string> encryptionKeyName;
       uint64_t capacityInBytes;
       uint64_t mountId;
       std::optional<std::string> activity;
@@ -712,6 +714,8 @@ class SchedulerDatabase {
     
     std::optional<std::list<std::string>> mountPolicyNames; /**< Names of mount policies for the mount*/
 
+    std::optional<std::string> encryptionKeyName; // The optional name of the encryption key.
+
     bool operator < (const PotentialMount &other) const {
       if (priority < other.priority)
         return true;
@@ -792,29 +796,21 @@ class SchedulerDatabase {
      * Create a new archive mount. This implicitly releases the global scheduling
      * lock.
      */
-    virtual std::unique_ptr<ArchiveMount> createArchiveMount(
-      common::dataStructures::MountType mountType,
-      const catalogue::TapeForWriting & tape, const std::string& driveName,
-      const std::string & logicalLibrary, const std::string & hostName,
-      const std::string& vo, const std::string& mediaType,
-      const std::string& vendor,
-      const uint64_t capacityInBytes,
-      const std::optional<std::string> &activity,
-      cta::common::dataStructures::Label::Format labelFormat) = 0;
+    virtual std::unique_ptr<ArchiveMount> createArchiveMount(const common::dataStructures::MountType& mountType,
+                                                             const catalogue::TapeForWriting& tape,
+                                                             const std::string& driveName,
+                                                             const std::string& logicalLibrary,
+                                                             const std::string& hostName) = 0;
     /**
      * Create a new retrieve mount. This implicitly releases the global scheduling
      * lock.
      */
-    virtual std::unique_ptr<RetrieveMount> createRetrieveMount(const std::string & vid,
-      const std::string & tapePool, const std::string& driveName,
-      const std::string& logicalLibrary, const std::string& hostName,
-      const std::string& vo, const std::string& mediaType,
-      const std::string& vendor,
-      const uint64_t capacityInBytes,
-      const std::optional<std::string> &activity,
-      cta::common::dataStructures::Label::Format labelFormat) = 0;
+    virtual std::unique_ptr<RetrieveMount> createRetrieveMount(const cta::SchedulerDatabase::PotentialMount& mount,
+                                                               const std::string& driveName,
+                                                               const std::string& logicalLibrary,
+                                                               const std::string& hostName) = 0;
     /** Destructor: releases the global lock if not already done */
-    virtual ~TapeMountDecisionInfo() {};
+    virtual ~TapeMountDecisionInfo() = default;
   };
 
   // Enum to change the behaviour of the getMountInfoNoLock method

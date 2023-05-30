@@ -23,6 +23,9 @@
 
 #include <json-c/json.h>
 
+#include "VolumeInfo.hpp"
+#include "catalogue/Catalogue.hpp"
+#include "scheduler/Scheduler.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
 
 namespace castor {
@@ -44,22 +47,20 @@ class EncryptionControl {
     std::string stdout;
   };
 
-  enum SetTag {
-    NO_SET_TAG,
-    SET_TAG
-  };
-
   /** @param scriptPath The path to the operator provided script for acquiring the key */
   explicit EncryptionControl(const bool useEncryption, const std::string & scriptPath);
   /**
    * Will call the encryption script provided by the operators to acquire the encryption key and then enable the
    * encryption if necessary.
    * @param m_drive The drive object on which the encryption is to be enabled.
-   * @param vid VID for the tape cartridge we are about to mount.
-   * @param st in order for the encryption script to set the VMGR tag or not.
+   * @param volInfo The volume info used by encryption script: VID, tape pool name, encryption ID
+   * @param catalogue Catalogue instance to modify tape encryption key
+   * @param isWriteSession if true, set encryption key when writing to the new tape.
    * @return {true, keyName, key, stdout} if the encryption has been set, {false, "", "", stdout} otherwise.
    */
-  EncryptionStatus enable(castor::tape::tapeserver::drive::DriveInterface &m_drive, const std::string & vid, SetTag st);
+  EncryptionStatus enable(castor::tape::tapeserver::drive::DriveInterface &m_drive,
+                          castor::tape::tapeserver::daemon::VolumeInfo &volInfo, cta::catalogue::Catalogue &catalogue,
+                          bool isWriteSession = false);
 
   /**
    * Wrapper function to clear the encryption parameters from the drive - essentially meaning disabling the encryption.

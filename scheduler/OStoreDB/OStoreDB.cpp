@@ -831,36 +831,21 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
 // OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount()
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount(
-  common::dataStructures::MountType type,
-  const catalogue::TapeForWriting& tape,
-  const std::string& driveName,
-  const std::string& logicalLibrary,
-  const std::string& hostName,
-  const std::string& vo,
-  const std::string& mediaType,
-  const std::string& vendor,
-  const uint64_t capacityInBytes,
-  const std::optional<std::string>& activity,
-  cta::common::dataStructures::Label::Format labelFormat) {
-  throw cta::exception::Exception("In OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount(): This function should not be called");
+  const common::dataStructures::MountType& type, const catalogue::TapeForWriting& tape,
+  const std::string& driveName, const std::string& logicalLibrary,
+  const std::string& hostName) {
+  throw cta::exception::Exception(
+    "In OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount(): This function should not be called");
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount()
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount(
-  const std::string& vid,
-  const std::string& tapePool,
-  const std::string& driveName,
-  const std::string& logicalLibrary,
-  const std::string& hostName,
-  const std::string& vo,
-  const std::string& mediaType,
-  const std::string& vendor,
-  const uint64_t capacityInBytes,
-  const std::optional<std::string> &activity,
-  cta::common::dataStructures::Label::Format labelFormat) {
-  throw cta::exception::Exception("In OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount(): This function should not be called");
+  const cta::SchedulerDatabase::PotentialMount& mount, const std::string& driveName, const std::string& logicalLibrary,
+  const std::string& hostName) {
+  throw cta::exception::Exception(
+    "In OStoreDB::TapeMountDecisionInfoNoLock::createRetrieveMount(): This function should not be called");
 }
 
 //------------------------------------------------------------------------------
@@ -3413,10 +3398,8 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::getNextRetr
 // OStoreDB::TapeMountDecisionInfo::createArchiveMount()
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfo::createArchiveMount(
-  common::dataStructures::MountType type,
-  const catalogue::TapeForWriting & tape, const std::string& driveName,
-  const std::string& logicalLibrary, const std::string& hostName, const std::string& vo, const std::string& mediaType,
-  const std::string& vendor, uint64_t capacityInBytes, const std::optional<std::string>& activity, cta::common::dataStructures::Label::Format labelFormat) {
+  const common::dataStructures::MountType& type, const catalogue::TapeForWriting& tape,
+  const std::string& driveName, const std::string& logicalLibrary, const std::string& hostName) {
   // In order to create the mount, we have to:
   // Check we actually hold the scheduling lock
   // Set the drive status to up, and indicate which tape we use.
@@ -3431,8 +3414,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfo
   default:
     throw cta::exception::Exception("In OStoreDB::TapeMountDecisionInfo::createArchiveMount(): unexpected mount type.");
   }
-  std::unique_ptr<OStoreDB::ArchiveMount> privateRet(
-    new OStoreDB::ArchiveMount(m_oStoreDB, queueType));
+  std::unique_ptr<OStoreDB::ArchiveMount> privateRet(new OStoreDB::ArchiveMount(m_oStoreDB, queueType));
   auto &am = *privateRet;
   // Check we hold the scheduling lock
   if (!m_lockTaken)
@@ -3446,16 +3428,17 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfo
   am.mountInfo.vid = tape.vid;
   am.mountInfo.drive = driveName;
   am.mountInfo.host = hostName;
-  am.mountInfo.vo = vo;
+  am.mountInfo.vo = tape.vo;
   am.mountInfo.mountId = m_schedulerGlobalLock->getIncreaseCommitMountId();
   m_schedulerGlobalLock->commit();
   am.mountInfo.tapePool = tape.tapePool;
   am.mountInfo.logicalLibrary = logicalLibrary;
-  am.mountInfo.mediaType = mediaType;
-  am.mountInfo.labelFormat = labelFormat;
-  am.mountInfo.vendor = vendor;
-  am.mountInfo.capacityInBytes = capacityInBytes;
+  am.mountInfo.mediaType = tape.mediaType;
+  am.mountInfo.labelFormat = tape.labelFormat;
+  am.mountInfo.vendor = tape.vendor;
+  am.mountInfo.capacityInBytes = tape.capacityInBytes;
   am.mountInfo.mountType = type;
+  am.mountInfo.encryptionKeyName = tape.encryptionKeyName;
 
   // We committed the scheduling decision. We can now release the scheduling lock.
   m_lockOnSchedulerGlobalLock.release();
@@ -3473,11 +3456,10 @@ OStoreDB::TapeMountDecisionInfo::TapeMountDecisionInfo(OStoreDB & oStoreDb): m_l
 //------------------------------------------------------------------------------
 // OStoreDB::TapeMountDecisionInfo::createRetrieveMount()
 //------------------------------------------------------------------------------
-std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInfo::createRetrieveMount(
-  const std::string& vid, const std::string& tapePool, const std::string& driveName,
-  const std::string& logicalLibrary, const std::string& hostName, const std::string& vo, const std::string& mediaType,
-  const std::string& vendor, const uint64_t capacityInBytes,
-  const std::optional<std::string>& activity, cta::common::dataStructures::Label::Format labelFormat) {
+std::unique_ptr<SchedulerDatabase::RetrieveMount>
+  OStoreDB::TapeMountDecisionInfo::createRetrieveMount(const cta::SchedulerDatabase::PotentialMount& mount,
+                                                       const std::string& driveName, const std::string& logicalLibrary,
+                                                       const std::string& hostName) {
   // In order to create the mount, we have to:
   // Check we actually hold the scheduling lock
   // Check the tape exists, add it to ownership and set its activity status to
@@ -3486,8 +3468,7 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInf
   // the drive register does not need garbage collection as it should reflect the
   // latest known state of the drive (and its absence of updating if needed)
   // Prepare the return value
-  std::unique_ptr<OStoreDB::RetrieveMount> privateRet(
-    new OStoreDB::RetrieveMount(m_oStoreDB));
+  std::unique_ptr<OStoreDB::RetrieveMount> privateRet(new OStoreDB::RetrieveMount(m_oStoreDB));
   auto &rm = *privateRet;
   // Check we hold the scheduling lock
   if (!m_lockTaken)
@@ -3498,19 +3479,22 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount> OStoreDB::TapeMountDecisionInf
   re.fetchNoLock();
   auto driveRegisterAddress = re.getDriveRegisterAddress();
   // Fill up the mount info
-  rm.mountInfo.vid = vid;
+  rm.mountInfo.vid = mount.vid;
   rm.mountInfo.drive = driveName;
   rm.mountInfo.host = hostName;
-  rm.mountInfo.vo = vo;
+  rm.mountInfo.vo = mount.vo;
   rm.mountInfo.mountId = m_schedulerGlobalLock->getIncreaseCommitMountId();
   m_schedulerGlobalLock->commit();
-  rm.mountInfo.tapePool = tapePool;
+  rm.mountInfo.tapePool = mount.tapePool;
   rm.mountInfo.logicalLibrary = logicalLibrary;
-  rm.mountInfo.mediaType = mediaType;
-  rm.mountInfo.labelFormat = labelFormat;
-  rm.mountInfo.vendor = vendor;
-  rm.mountInfo.capacityInBytes = capacityInBytes;
-  rm.mountInfo.activity = activity;
+  rm.mountInfo.mediaType = mount.mediaType;
+  // Setting a default value to Format::CTA is only to satisfy unit tests
+  // In normal workflow labelFormat value is taken from the tape catalogue after calling getNextMount()
+  rm.mountInfo.labelFormat = mount.labelFormat.value_or(cta::common::dataStructures::Label::Format::CTA);
+  rm.mountInfo.vendor = mount.vendor;
+  rm.mountInfo.capacityInBytes = mount.capacityInBytes;
+  rm.mountInfo.activity = mount.activity;
+  rm.mountInfo.encryptionKeyName = mount.encryptionKeyName;
 
   // We committed the scheduling decision. We can now release the scheduling lock.
   m_lockOnSchedulerGlobalLock.release();
