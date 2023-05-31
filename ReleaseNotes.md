@@ -1,3 +1,8 @@
+# v4.8.8-2
+
+### Bug Fixes
+- cta/CTA#379 - Fix tagging release CI script for xrootd5
+
 # v4.8.8-1
 
 ### Features

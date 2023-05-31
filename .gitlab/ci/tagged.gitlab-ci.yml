@@ -7,7 +7,6 @@ cta_tagged_rpm:
   script:
     - if [ -z "${CI_COMMIT_TAG}" ]; then echo "This is not a tagged commit, exiting"; exit 0; fi
     - echo "Building package for tag ${CI_COMMIT_TAG}. CTA_VERSION=${TAG_VERSION} - CTA_RELEASE=${TAG_RELEASE}"
-    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
     - yum install -y devtoolset-11 cmake3 make rpm-build
     - yum -y install yum-plugin-priorities yum-plugin-versionlock
     - yum install -y git
