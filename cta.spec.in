@@ -582,6 +582,12 @@ echo $(jq --argjson CTA_MAJOR_VERSION $cta_major_version '. += {"cta_major_versi
 
 
 %changelog
+* Wed May 31 2023 Joao Afonso <joao.afonso@cern.ch> - 4.8.8-1
+- Enabled HTTP and EOSTOKEN support on CTA CI
+- Change in tape server encryption logic
+- Various fixes and improvements to CTA
+- See ReleaseNotes.md for details
+
 * Wed Mar 29 2023 Joao Afonso <joao.afonso@cern.ch> - 4.8.7-1
 - Various fixes and improvements to CTA
 - See ReleaseNotes.md for details
