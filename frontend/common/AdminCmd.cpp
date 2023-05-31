@@ -839,6 +839,11 @@ void AdminCmd::processRepack_Add(xrd::Response& response) {
     throw exception::UserError("Must specify at least one vid, using --vid or --vidfile options");
   }
 
+  // Check if there is a default repack VO
+  if (!m_catalogue.VO()->getDefaultVirtualOrganizationForRepack().has_value()) {
+    throw exception::UserError("There is no default virtual organization for repack.");
+  }
+
   auto mountPolicyProvidedByUser = getRequired(OptionString::MOUNT_POLICY);
 
   //Get the mountpolicy from the catalogue

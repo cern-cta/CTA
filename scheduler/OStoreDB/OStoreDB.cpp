@@ -3021,25 +3021,6 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequ
             }
           }
         }
-        // The repack vid was not appropriate, let's try all candidates.
-        if (bestVid.empty()) {
-          std::set<std::string> candidateVids;
-          for (auto & tc: rsr.archiveFile.tapeFiles) candidateVids.insert(tc.vid);
-          try {
-            bestVid = Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore, true);
-          } catch (Helpers::NoTapeAvailableForRetrieve &) {
-            // Count the failure for this subrequest.
-            notCreatedSubrequests.emplace_back(rsr);
-            failedCreationStats.files++;
-            failedCreationStats.bytes += rsr.archiveFile.fileSize;
-            log::ScopedParamContainer params(lc);
-            params.add("fileId", rsr.archiveFile.archiveFileID)
-                  .add("repackVid", repackInfo.vid);
-            lc.log(log::ERR,
-                "In OStoreDB::RepackRequest::addSubrequests(): could not queue a retrieve subrequest. Subrequest failed. Maybe the tape to repack is disabled ?");
-            goto nextSubrequest;
-          }
-        }
         for (auto &tc: rsr.archiveFile.tapeFiles)
           if (tc.vid == bestVid) {
             activeCopyNumber = tc.copyNb;

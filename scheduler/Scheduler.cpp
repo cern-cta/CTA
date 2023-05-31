@@ -1008,6 +1008,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       return pm.type == common::dataStructures::MountType::Retrieve;
     });
   }
+  std::set<std::string> repackingTapeVids;
   if (anyRetr) {
     // Neither the library information nor the tape status is known for tapes involved in retrieves.
     // Build the eligible set of tapes in the library and with required status so
@@ -1025,6 +1026,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       eligibleTapesList = m_catalogue.Tape()->getTapes(searchCriteria);
       for(auto& t : eligibleTapesList) {
         eligibleTapeMap[t.vid] = t;
+        repackingTapeVids.insert(t.vid);
       }
     }
 
@@ -1067,10 +1069,13 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
     tapepoolsPotentialOrExistingMounts.insert(em.tapePool);
   }
   //Get the potential and existing mounts tapepool virtual organization information
-  std::map<std::string,common::dataStructures::VirtualOrganization> tapepoolVoMap;
+  std::map<std::string,std::string> tapepoolVoNameMap;
+  std::map<std::string,common::dataStructures::VirtualOrganization> voNameVoMap;
   for (auto & tapepool: tapepoolsPotentialOrExistingMounts) {
     try {
-      tapepoolVoMap[tapepool] = m_catalogue.VO()->getCachedVirtualOrganizationOfTapepool(tapepool);
+      auto vo = m_catalogue.VO()->getCachedVirtualOrganizationOfTapepool(tapepool);
+      tapepoolVoNameMap[tapepool] = vo.name;
+      voNameVoMap[vo.name] = vo;
     } catch (cta::exception::Exception & ex){
       //The VO of this tapepool does not exist, abort the scheduling as we need it to know the number of allocated drives
       //the VO is allowed to use
@@ -1078,14 +1083,32 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       throw ex;
     }
   }
-
+  std::optional<common::dataStructures::VirtualOrganization> defaultRepackVo = m_catalogue.VO()->getDefaultVirtualOrganizationForRepack();
+  if (defaultRepackVo.has_value()) {
+    voNameVoMap[defaultRepackVo->name] = defaultRepackVo.value();
+  }
   // With the existing mount list, we can now populate the potential mount list
   // with the per tape pool existing mount statistics.
   for (auto & em: mountInfo->existingOrNextMounts) {
     // If a mount is still listed for our own drive, it is a leftover that we disregard.
     if (em.driveName!=driveName) {
+      bool isRepackingMount = false;
+      if (em.type == common::dataStructures::MountType::ArchiveForRepack) {
+        isRepackingMount = true;
+      } else if (em.type == common::dataStructures::MountType::Retrieve) {
+        isRepackingMount = (repackingTapeVids.find(em.vid) != repackingTapeVids.end());
+      }
+      if (isRepackingMount && !defaultRepackVo.has_value()) {
+        log::ScopedParamContainer params(lc);
+        params.add("tapeVid", em.vid)
+              .add("mountType", common::dataStructures::toString(em.type))
+              .add("drive", em.driveName);
+        lc.log(log::ERR,"In Scheduler::sortAndGetTapesForMountInfo(): existingOrNextMounts found a repack mount while there is no default repack VO defined.");
+        continue;
+      }
+      auto voName = isRepackingMount ?  defaultRepackVo->name : tapepoolVoNameMap.at(em.tapePool);
       existingMountsDistinctTypeSummaryPerTapepool[TapePoolMountPair(em.tapePool, em.type)].totalMounts++;
-      existingMountsBasicTypeSummaryPerVo[VirtualOrganizationMountPair(tapepoolVoMap.at(em.tapePool).name,common::dataStructures::getMountBasicType(em.type))].totalMounts++;
+      existingMountsBasicTypeSummaryPerVo[VirtualOrganizationMountPair(voName,common::dataStructures::getMountBasicType(em.type))].totalMounts++;
       if (em.activity)
         existingMountsDistinctTypeSummaryPerTapepool[TapePoolMountPair(em.tapePool, em.type)]
           .activityMounts[em.activity.value()].value++;
@@ -1100,6 +1123,53 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
     }
   }
 
+  // Filter all the potential repack mounts when there is no default repack VO
+  // OR
+  // Fix the VO of repacking mounts
+  if (!defaultRepackVo.has_value()) {
+    std::set<std::vector<SchedulerDatabase::PotentialMount>::iterator> toFilterSet;
+    for (auto m = mountInfo->potentialMounts.begin(); m != mountInfo->potentialMounts.end(); ++m) {
+      log::ScopedParamContainer params(lc);
+      params.add("tapePool", m->tapePool);
+      if (m->type == common::dataStructures::MountType::Retrieve) {
+        params.add("tapeVid", m->vid);
+      }
+      params.add("mountType", common::dataStructures::toString(m->type))
+            .add("bytesQueued", m->bytesQueued)
+            .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
+            .add("filesQueued", m->filesQueued)
+            .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
+            .add("oldestJobAge", time(nullptr) - m->oldestJobStartTime)
+            .add("youngestJobAge", time(nullptr) - m->youngestJobStartTime)
+            .add("minRequestAge", m->minRequestAge);
+      lc.log(log::ERR,
+             "In Scheduler::sortAndGetTapesForMountInfo(): potential repack mount not considered due to lack of default repack VO");
+      toFilterSet.insert(m);
+    }
+    // keep those not filtered out
+    if (toFilterSet.size() > 0) {
+      auto &v = mountInfo->potentialMounts;
+      std::vector<SchedulerDatabase::PotentialMount> tmpPm;
+      tmpPm.swap(v);
+      v.reserve(tmpPm.size());
+      for(auto it = tmpPm.begin(); it != tmpPm.end(); ++it) {
+        if (toFilterSet.count(it) == 0) {
+          v.push_back(std::move(*it));
+        }
+      }
+    }
+  } else {
+    for (auto m = mountInfo->potentialMounts.begin(); m!= mountInfo->potentialMounts.end(); ++m) {
+      bool isRepackingMount = false;
+      if (m->type == common::dataStructures::MountType::ArchiveForRepack) {
+        isRepackingMount = true;
+      } else if (m->type == common::dataStructures::MountType::Retrieve) {
+        isRepackingMount = (repackingTapeVids.find(m->vid) != repackingTapeVids.end());
+      }
+      m->vo = isRepackingMount ? defaultRepackVo->name : tapepoolVoNameMap.at(m->tapePool);
+    }
+  }
+
   // We can now filter out the potential mounts for which their mount criteria
   // is not yet met, filter out the potential mounts for which the maximum mount
   // quota is already reached, filter out the retrieve requests put to sleep for lack of disk space,
@@ -1110,7 +1180,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
     uint32_t existingMountsDistinctTypesForThisTapepool = 0;
     uint32_t existingMountsBasicTypeForThisVo = 0;
     common::dataStructures::MountType basicTypeOfThisPotentialMount = common::dataStructures::getMountBasicType(m->type);
-    common::dataStructures::VirtualOrganization voOfThisPotentialMount = tapepoolVoMap.at(m->tapePool);
+    common::dataStructures::VirtualOrganization voOfThisPotentialMount = voNameVoMap.at(m->vo);
     bool sleepingMount = false;
     try {
       existingMountsDistinctTypesForThisTapepool = existingMountsDistinctTypeSummaryPerTapepool
@@ -1154,6 +1224,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       params.add("vo",voOfThisPotentialMount.name);
       if ( m->type == common::dataStructures::MountType::Retrieve) {
         params.add("tapeVid", m->vid);
+        params.add("tapeRepacking", repackingTapeVids.find(m->vid) != repackingTapeVids.end());
       }
       params.add("mountType", common::dataStructures::toString(m->type))
             .add("existingMountsDistinctTypesForThisTapepool", existingMountsDistinctTypesForThisTapepool)
