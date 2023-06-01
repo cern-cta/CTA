@@ -142,6 +142,8 @@ cat /etc/config/eos/xrd.cf.mgm | grep mgmofs.nslib | grep -qi eosnsquarkdb && /o
   mkdir -p /fst
   chown daemon:daemon /fst/
 
+## Configuring host certificate
+/opt/run/bin/ctaeos_https.sh
 
 # Waiting for /CANSTART file before starting eos
 echo -n "Waiting for /CANSTART before going further"
