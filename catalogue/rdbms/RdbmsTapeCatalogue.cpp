@@ -62,7 +62,7 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
     std::string logicalLibraryName = tape.logicalLibraryName;
     std::string tapePoolName = tape.tapePoolName;
     bool full = tape.full;
-    const std::string purchaseOrder = tape.purchaseOrder ? tape.purchaseOrder.value() : "";
+    const std::optional<std::string> purchaseOrder = tape.purchaseOrder ? tape.purchaseOrder : std::nullopt;
     // Translate an empty comment string to a NULL database value
     const std::optional<std::string> tapeComment = tape.comment && tape.comment->empty() ? std::nullopt : tape.comment;
     const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(tapeComment, &m_log);
@@ -231,7 +231,7 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
        .add("isFull", full ? 1 : 0)
        .add("isFromCastor", isFromCastor ? 1 : 0)
        .add("userComment", tape.comment ? tape.comment.value() : "")
-       .add("purchaseOrder", purchaseOrder)
+       .add("purchaseOrder", tape.purchaseOrder ? tape.purchaseOrder.value() : "")
        .add("tapeState",cta::common::dataStructures::Tape::stateToString(tape.state))
        .add("stateReason",stateReason ? stateReason.value() : "")
        .add("stateUpdateTime",now)

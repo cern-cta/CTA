@@ -1050,7 +1050,7 @@ void AdminCmd::processTape_Add(xrd::Response& response) {
   tape.logicalLibraryName = logicallibrary;
   tape.tapePoolName = tapepool;
   tape.full = full;
-  tape.purchaseOrder = purchaseOrder ? purchaseOrder.value() : "";
+  tape.purchaseOrder = purchaseOrder;
   tape.comment = comment ? comment.value() : "";
   if(!state) {
     // By default, the state of the tape will be ACTIVE
