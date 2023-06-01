@@ -1038,7 +1038,7 @@ void AdminCmd::processTape_Add(xrd::Response& response) {
   auto& logicallibrary = getRequired(OptionString::LOGICAL_LIBRARY);
   auto& tapepool       = getRequired(OptionString::TAPE_POOL);
   auto& full           = getRequired(OptionBoolean::FULL);
-  auto purchaseOrder   = getOptional(OptionString::PURCHASE_ORDER);
+  auto purchaseOrder   = getOptional(OptionString::MEDIA_PURCHASE_ORDER_NUMBER);
   auto state           = getOptional(OptionString::STATE);
   auto stateReason     = getOptional(OptionString::REASON);
   auto comment         = getOptional(OptionString::COMMENT);
@@ -1075,7 +1075,7 @@ void AdminCmd::processTape_Ch(xrd::Response& response) {
   auto  tapepool           = getOptional(OptionString::TAPE_POOL);
   auto  comment            = getOptional(OptionString::COMMENT);
   auto  encryptionkeyName  = getOptional(OptionString::ENCRYPTION_KEY_NAME);
-  auto  purchaseOrder      = getOptional(OptionString::PURCHASE_ORDER);
+  auto  purchaseOrder      = getOptional(OptionString::MEDIA_PURCHASE_ORDER_NUMBER);
   auto  full               = getOptional(OptionBoolean::FULL);
   auto  state              = getOptional(OptionString::STATE);
   auto  stateReason        = getOptional(OptionString::REASON);

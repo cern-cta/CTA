@@ -344,8 +344,7 @@ const std::map<std::string, OptionString::Key> strOptions = {
    { "--diskinstancespace",     OptionString::DISK_INSTANCE_SPACE },
    { "--verificationstatus",    OptionString::VERIFICATION_STATUS },
    { "--disabledreason",        OptionString::DISABLED_REASON },
-   { "--storage.class.name",    OptionString::STORAGE_CLASS_NAME },
-   { "--purchaseorder",         OptionString::PURCHASE_ORDER }
+   { "--purchaseorder",         OptionString::MEDIA_PURCHASE_ORDER_NUMBER }
 };
 
 

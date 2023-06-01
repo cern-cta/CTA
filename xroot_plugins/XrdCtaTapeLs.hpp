@@ -67,18 +67,18 @@ TapeLsStream::TapeLsStream(const frontend::AdminCmdStream& requestMsg, cta::cata
 
   // Get the search criteria from the optional options
 
-  searchCriteria.full            = requestMsg.getOptional(OptionBoolean::FULL,           &has_any);
-  searchCriteria.fromCastor      = requestMsg.getOptional(OptionBoolean::FROM_CASTOR,    &has_any);
-  searchCriteria.capacityInBytes = requestMsg.getOptional(OptionUInt64::CAPACITY,        &has_any);
-  searchCriteria.logicalLibrary  = requestMsg.getOptional(OptionString::LOGICAL_LIBRARY, &has_any);
-  searchCriteria.tapePool        = requestMsg.getOptional(OptionString::TAPE_POOL,       &has_any);
-  searchCriteria.vo              = requestMsg.getOptional(OptionString::VO,              &has_any);
-  searchCriteria.vid             = requestMsg.getOptional(OptionString::VID,             &has_any);
-  searchCriteria.mediaType       = requestMsg.getOptional(OptionString::MEDIA_TYPE,      &has_any);
-  searchCriteria.vendor          = requestMsg.getOptional(OptionString::VENDOR,          &has_any);
-  searchCriteria.purchaseOrder   = requestMsg.getOptional(OptionString::PURCHASE_ORDER,  &has_any);
-  searchCriteria.diskFileIds     = requestMsg.getOptional(OptionStrList::FILE_ID,        &has_any);
-  auto stateOpt                  = requestMsg.getOptional(OptionString::STATE,           &has_any);
+  searchCriteria.full            = requestMsg.getOptional(OptionBoolean::FULL,                       &has_any);
+  searchCriteria.fromCastor      = requestMsg.getOptional(OptionBoolean::FROM_CASTOR,                &has_any);
+  searchCriteria.capacityInBytes = requestMsg.getOptional(OptionUInt64::CAPACITY,                    &has_any);
+  searchCriteria.logicalLibrary  = requestMsg.getOptional(OptionString::LOGICAL_LIBRARY,             &has_any);
+  searchCriteria.tapePool        = requestMsg.getOptional(OptionString::TAPE_POOL,                   &has_any);
+  searchCriteria.vo              = requestMsg.getOptional(OptionString::VO,                          &has_any);
+  searchCriteria.vid             = requestMsg.getOptional(OptionString::VID,                         &has_any);
+  searchCriteria.mediaType       = requestMsg.getOptional(OptionString::MEDIA_TYPE,                  &has_any);
+  searchCriteria.vendor          = requestMsg.getOptional(OptionString::VENDOR,                      &has_any);
+  searchCriteria.purchaseOrder   = requestMsg.getOptional(OptionString::MEDIA_PURCHASE_ORDER_NUMBER, &has_any);
+  searchCriteria.diskFileIds     = requestMsg.getOptional(OptionStrList::FILE_ID,                    &has_any);
+  auto stateOpt                  = requestMsg.getOptional(OptionString::STATE,                       &has_any);
   if(stateOpt){
     searchCriteria.state = common::dataStructures::Tape::stringToState(stateOpt.value(), true);
   }
