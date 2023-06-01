@@ -277,10 +277,10 @@ test_and_check_cmd "Adding tape 'V01008'" "${command}" "add" "-v V01008 --mt T10
 test_and_check_cmd "Reclaiming tape 'V01008'" "${command}" "reclaim" "-v V01008"\
   "select(.vid==\"V01008\" and .mediaType==\"T10K500G\" and .logicalLibrary==\"${lls[1]}\" and .full==false) | .vid"\
   "1" "reclaiming tape 'V01008'" || exit 1
-test_and_check_cmd "Changing tape V01008 state to REPACKING" "${command}" "ch" "-v V01008 -s 'REPACKING' --purchaseorder order2 -r 'Test admin-cta ta ch'"\
-  "select(.vid==\"V01008\" and .mediaType==\"T10K500G\" and .logicalLibrary==\"${lls[1]}\" and .state==\"REPACKING\" and .purchaseOrder==\"order2\") | .vid"\
+test_and_check_cmd "Changing tape V01008 state to REPACKING" "${command}" "ch" "-v V01008 -s 'REPACKING' -r 'Test admin-cta ta ch'"\
+  "select(.vid==\"V01008\" and .mediaType==\"T10K500G\" and .logicalLibrary==\"${lls[1]}\" and .state==\"REPACKING\") | .vid"\
   "1" "changing tape V01008 state" || exit 1
-test_and_check_cmd "Changing tape V01008 order to order2" "${command}" "ch" "-v V01008 -s 'order2' -r 'Test admin-cta ta ch'"\
+test_and_check_cmd "Changing tape V01008 order to order2" "${command}" "ch" "-v V01008 --purchaseorder 'order2' -r 'Test admin-cta ta ch'"\
   "select(.vid==\"V01008\" and .purchaseOrder==\"order2\") | .vid"\
   "1" "changing tape V01008 order" || exit 1
 test_command "Removing tape V01008" "${command}" "rm" "-v V01008" || exit 1
