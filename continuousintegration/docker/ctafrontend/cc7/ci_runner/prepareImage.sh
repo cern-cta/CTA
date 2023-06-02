@@ -22,8 +22,15 @@ rpm_dir="build_rpm/RPM/RPMS/x86_64"
 
 image_tag=$2
 
+image_tag=$2
+
 if [ -z "${rpm_source}" ]; then
   echo "You should specify the path to the RPMs to be installed. Ex: ~/CTA-build/RPM/RPMS/x86_64";
+  exit 1;
+fi
+
+if [ -z "${image_tag}" ]; then
+  echo "You should specify the docker image tag. Ex: dev";
   exit 1;
 fi
 
