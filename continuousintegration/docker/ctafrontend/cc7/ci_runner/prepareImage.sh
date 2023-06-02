@@ -17,6 +17,7 @@
 
 cd ~/CTA
 
+<<<<<<< HEAD
 rpm_source=$1
 rpm_dir="build_rpm/RPM/RPMS/x86_64"
 
@@ -38,3 +39,14 @@ mkdir -p $rpm_dir
 cp -r $rpm_source $rpm_dir
 
 sudo docker build . -f continuousintegration/docker/ctafrontend/cc7/ci_runner/Dockerfile -t ctageneric:dev
+=======
+RPM_DIR="build_rpm/RPM"
+
+trap "rm -rf $RPM_DIR" EXIT
+
+mkdir -p $RPM_DIR
+
+cp -r ~/CTA-build/RPM/* $RPM_DIR
+
+sudo docker build --no-cache . -f continuousintegration/docker/ctafrontend/cc7/ci_runner/Dockerfile -t ctageneric:dev
+>>>>>>> a50e6838d0 (Create CI environment from rpms)
