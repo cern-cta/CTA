@@ -1,3 +1,8 @@
+# v4.NEXT
+
+### Building and Packaging
+- cta/CTA#385 - Remove OpenSSL dependency
+
 # v4.8.8-2
 
 ### Bug Fixes

@@ -15,7 +15,6 @@
 cmake_minimum_required (VERSION 3.17)
 
 add_subdirectory(castorrmc)
-find_package(openssl REQUIRED)
 find_package(Protobuf3 REQUIRED)
 
 set (MEDIACHANGER_LIB_SRC_FILES
@@ -47,7 +46,7 @@ set_property(TARGET ctamediachanger PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries (ctamediachanger
   ctacommon
-  ssl)
+)
 
 install (TARGETS ctamediachanger DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
