@@ -1126,9 +1126,16 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
   // Filter all the potential repack mounts when there is no default repack VO
   // OR
   // Fix the VO of repacking mounts
-  if (!defaultRepackVo.has_value()) {
-    std::set<std::vector<SchedulerDatabase::PotentialMount>::iterator> toFilterSet;
-    for (auto m = mountInfo->potentialMounts.begin(); m != mountInfo->potentialMounts.end(); ++m) {
+  std::set<std::vector<SchedulerDatabase::PotentialMount>::iterator> toFilterRepSet;
+  for (auto m = mountInfo->potentialMounts.begin(); m != mountInfo->potentialMounts.end(); ++m) {
+    bool isRepackingMount = false;
+    if (m->type == common::dataStructures::MountType::ArchiveForRepack) {
+      isRepackingMount = true;
+    } else if (m->type == common::dataStructures::MountType::Retrieve) {
+      isRepackingMount = (repackingTapeVids.find(m->vid) != repackingTapeVids.end());
+    }
+    if (isRepackingMount && !defaultRepackVo.has_value()) {
+      // Repacking mount, but no default repack VO exits
       log::ScopedParamContainer params(lc);
       params.add("tapePool", m->tapePool);
       if (m->type == common::dataStructures::MountType::Retrieve) {
@@ -1144,29 +1151,26 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
             .add("minRequestAge", m->minRequestAge);
       lc.log(log::ERR,
              "In Scheduler::sortAndGetTapesForMountInfo(): potential repack mount not considered due to lack of default repack VO");
-      toFilterSet.insert(m);
+      toFilterRepSet.insert(m);
+    } else if (isRepackingMount) {
+      // Repacking mount, and default repack VO exists
+      m->vo = defaultRepackVo->name;
+    } else {
+      // Non-repacking mount
+      m->vo = tapepoolVoNameMap.at(m->tapePool);
     }
-    // keep those not filtered out
-    if (toFilterSet.size() > 0) {
-      auto &v = mountInfo->potentialMounts;
-      std::vector<SchedulerDatabase::PotentialMount> tmpPm;
-      tmpPm.swap(v);
-      v.reserve(tmpPm.size());
-      for(auto it = tmpPm.begin(); it != tmpPm.end(); ++it) {
-        if (toFilterSet.count(it) == 0) {
-          v.push_back(std::move(*it));
-        }
+  }
+
+  // keep those not filtered out
+  if (toFilterRepSet.size() > 0) {
+    auto &v = mountInfo->potentialMounts;
+    std::vector<SchedulerDatabase::PotentialMount> tmpPm;
+    tmpPm.swap(v);
+    v.reserve(tmpPm.size());
+    for (auto it = tmpPm.begin(); it != tmpPm.end(); ++it) {
+      if (toFilterRepSet.count(it) == 0) {
+        v.push_back(std::move(*it));
       }
-    }
-  } else {
-    for (auto m = mountInfo->potentialMounts.begin(); m!= mountInfo->potentialMounts.end(); ++m) {
-      bool isRepackingMount = false;
-      if (m->type == common::dataStructures::MountType::ArchiveForRepack) {
-        isRepackingMount = true;
-      } else if (m->type == common::dataStructures::MountType::Retrieve) {
-        isRepackingMount = (repackingTapeVids.find(m->vid) != repackingTapeVids.end());
-      }
-      m->vo = isRepackingMount ? defaultRepackVo->name : tapepoolVoNameMap.at(m->tapePool);
     }
   }
 
@@ -1199,7 +1203,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
     bool mountPassesACriteria = false;
     uint64_t minBytesToWarrantAMount = m_minBytesToWarrantAMount;
     uint64_t minFilesToWarrantAMount = m_minFilesToWarrantAMount;
-    if(m->type == common::dataStructures::MountType::ArchiveForRepack){
+    if (m->type == common::dataStructures::MountType::ArchiveForRepack) {
       minBytesToWarrantAMount *= 2;
       minFilesToWarrantAMount *= 2;
     }

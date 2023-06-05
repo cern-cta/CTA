@@ -158,6 +158,7 @@ TEST_P(cta_catalogue_VirtualOrganizationTest, getVirtualOrganizations) {
   ASSERT_EQ(vo.writeMaxDrives,voRetrieved.writeMaxDrives);
   ASSERT_EQ(vo.diskInstanceName,voRetrieved.diskInstanceName);
   ASSERT_EQ(vo.comment,voRetrieved.comment);
+  ASSERT_EQ(vo.isRepackVo,voRetrieved.isRepackVo);
   
   ASSERT_EQ(m_admin.host,voRetrieved.creationLog.host);
   ASSERT_EQ(m_admin.username,voRetrieved.creationLog.username);
@@ -322,7 +323,7 @@ TEST_P(cta_catalogue_VirtualOrganizationTest, getVirtualOrganizationOfTapepool) 
 
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin,vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply,
+  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, vo.name, nbPartialTapes, isEncrypted, supply,
     "Create tape pool");
 
   cta::common::dataStructures::VirtualOrganization voFromTapepool =
@@ -330,6 +331,33 @@ TEST_P(cta_catalogue_VirtualOrganizationTest, getVirtualOrganizationOfTapepool) 
   ASSERT_EQ(vo,voFromTapepool);
 
   ASSERT_THROW(m_catalogue->VO()->getVirtualOrganizationOfTapepool("DOES_NOT_EXIST"),cta::exception::Exception);
+}
+
+TEST_P(cta_catalogue_VirtualOrganizationTest, getDefaultVirtualOrganizationForRepacking) {
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const std::optional<std::string> supply("value for the supply pool mechanism");
+
+  cta::common::dataStructures::VirtualOrganization repackVo = CatalogueTestUtils::getDefaultRepackVo();
+  cta::common::dataStructures::VirtualOrganization userVo1 = CatalogueTestUtils::getVo();
+  cta::common::dataStructures::VirtualOrganization userVo2 = CatalogueTestUtils::getAnotherVo();
+  std::string anotherTapePool = "AnotherTapePool";
+
+  m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  m_catalogue->VO()->createVirtualOrganization(m_admin,userVo1);
+  m_catalogue->VO()->createVirtualOrganization(m_admin,repackVo);
+  m_catalogue->VO()->createVirtualOrganization(m_admin,userVo2);
+  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, userVo1.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin, anotherTapePool, userVo2.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+
+  std::optional<cta::common::dataStructures::VirtualOrganization> defaultVoForRepacking =
+          m_catalogue->VO()->getDefaultVirtualOrganizationForRepack();
+  ASSERT_TRUE(defaultVoForRepacking.has_value());
+  ASSERT_EQ(repackVo, defaultVoForRepacking.value());
+
+  // Confirm that the user VO is still returned
+  ASSERT_EQ(userVo1, m_catalogue->VO()->getVirtualOrganizationOfTapepool(m_tape1.tapePoolName));
+  ASSERT_EQ(userVo2, m_catalogue->VO()->getVirtualOrganizationOfTapepool(anotherTapePool));
 }
 
 }  // namespace unitTests

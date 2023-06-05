@@ -56,7 +56,7 @@ void RdbmsVirtualOrganizationCatalogue::createVirtualOrganization(const common::
       throw exception::UserError(std::string("Cannot create vo : ") +
         vo.name + " because it already exists");
     }
-    if(RdbmsCatalogueUtils::defaultVirtualOrganizationForRepackExists(conn)) {
+    if(vo.isRepackVo && RdbmsCatalogueUtils::defaultVirtualOrganizationForRepackExists(conn)) {
       throw exception::UserError("There already exists a default VO for repacking");
     }
 
