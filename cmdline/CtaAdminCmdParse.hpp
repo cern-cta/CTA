@@ -501,7 +501,6 @@ const Option opt_log                  { Option::OPT_FLAG, "--log",              
 const Option opt_logicallibrary       { Option::OPT_STR,  "--logicallibrary",        "-l",   " <logical_library_name>" };
 const Option opt_logicallibrary_alias { Option::OPT_STR,  "--name",                  "-n",   " <logical_library_name>", "--logicallibrary" };
 const Option opt_logicallibrary_disabled { Option::OPT_BOOL,  "--disabled",          "-d",   " <\"true\" or \"false\">" };
-const Option opt_lookupns             { Option::OPT_FLAG, "--lookupnamespace",       "-l",   "" };
 const Option opt_maxfilesize          { Option::OPT_UINT, "--maxfilesize",           "--mfs", " <maximum_file_size>" };
 const Option opt_maxlpos              { Option::OPT_UINT, "--maxlpos",               "--maxl", " <maximum_longitudinal_position>" };
 const Option opt_mediatype            { Option::OPT_STR,  "--mediatype",             "--mt", " <media_type_name>" };
@@ -678,7 +677,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_TAPEFILE,             AdminCmd::SUBCMD_LS    },
       { opt_vid.optional(), opt_instance.optional(), opt_fid.optional(), opt_fidfile.optional(),
-        opt_lookupns.optional(), opt_archivefileid.optional() }},
+        opt_archivefileid.optional() }},
    {{ AdminCmd::CMD_TAPEFILE,             AdminCmd::SUBCMD_RM    },
      { opt_vid, opt_instance.optional(), opt_fid.optional(), opt_archivefileid.optional(), opt_reason }},
    /*----------------------------------------------------------------------------------------------------*/

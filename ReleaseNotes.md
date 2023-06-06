@@ -5,6 +5,9 @@
 ### Building and Packaging
 - cta/CTA#385 - Remove OpenSSL dependency
 
+### Features
+- cta/CTA#314 - Remove the option of using `cta-admin tapefile ls` with the `-l` option
+
 # v4.8.8-2
 
 ### Bug Fixes

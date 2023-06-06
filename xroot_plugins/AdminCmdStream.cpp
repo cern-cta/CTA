@@ -280,15 +280,7 @@ void AdminCmdStream::processTape_Ls(xrd::Response& response) {
 }
 
 void AdminCmdStream::processTapeFile_Ls(xrd::Response& response) {
-  auto isLookupNamespace = getOptional(admin::OptionBoolean::LOOKUP_NAMESPACE);
-
-  if(isLookupNamespace && isLookupNamespace.value()) {
-    // Get a response stream including filename lookup in the namespace
-    m_stream = new xrd::TapeFileLsStream(*this, m_catalogue, m_scheduler, m_namespaceMap);
-  } else {
-    // Get a response stream without namespace lookup
-    m_stream = new xrd::TapeFileLsStream(*this, m_catalogue, m_scheduler);
-  }
+  m_stream = new xrd::TapeFileLsStream(*this, m_catalogue, m_scheduler);
 
   response.set_show_header(admin::HeaderType::TAPEFILE_LS);
   response.set_type(xrd::Response::RSP_SUCCESS);
