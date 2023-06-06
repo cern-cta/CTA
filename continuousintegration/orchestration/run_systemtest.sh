@@ -50,12 +50,9 @@ test -z ${ORACLE_SUPPORT+x} && ORACLE_SUPPORT="ON"
 die() { echo "$@" 1>&2 ; exit 1; }
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -n <namespace> -s <systemtest_script> [-p <gitlab pipeline ID> | -b <build tree base> -B <build tree subdir> ] [-t <systemtest timeout in seconds>] [-e <eos_configmap>] [-a <additional_k8_resources>] [-k] [-O] [-D | -d <database_configmap>] [-S] [-U]
+Usage: $0 -n <namespace> -s <systemtest_script> [-p <gitlab pipeline ID> ] [-t <systemtest timeout in seconds>] [-e <eos_configmap>] [-a <additional_k8_resources>] [-k] [-O] [-D | -d <database_configmap>] [-S] [-U]
 
 Options:
-  -b    The directory containing both the source and the build tree for CTA. It will be mounted RO in the
-        containers.
-  -B    The subdirectory within the -b directory where the build tree is.
   -k    keep namespace after systemtest_script run if successful
   -O    use Ceph account associated to this node (wipe content before tests), by default use local VFS
   -D    use Oracle account associated to this node (wipe content before tests), by default use local sqlite DB
@@ -92,18 +89,12 @@ while getopts "n:d:s:p:b:e:a:B:t:ukDOSUCT" o; do
         p)
             CREATE_OPTS="${CREATE_OPTS} -p ${OPTARG}"
             ;;
-        b)
-            CREATE_OPTS="${CREATE_OPTS} -b ${OPTARG}"
-            ;;
         e)
             config_eos=${OPTARG}
             test -f ${config_eos} || error="${error}EOS configmap file ${config_eos} does not exist\n"
             ;;
         a)
             CREATE_OPTS="${CREATE_OPTS} -a ${OPTARG}"
-            ;;
-        B)
-            CREATE_OPTS="${CREATE_OPTS} -B ${OPTARG}"
             ;;
         t)
             SYSTEMTEST_TIMEOUT=${OPTARG}

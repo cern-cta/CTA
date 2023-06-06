@@ -52,15 +52,11 @@ runexternaltapetests=0
 usage() { cat <<EOF 1>&2
 Usage: $0 -n <namespace> [-o <objectstore_configmap>] [-d <database_configmap>] \
       [-e <eos_configmap>] [-a <additional_k8_resources>]\
-      [-p <gitlab pipeline ID> | -b <build tree base> -B <CTA build tree subdir> [-E <EOS build tree subdir>]] \
+      [-p <gitlab pipeline ID>] \
       [-S] [-D] [-O] [-m [mhvtl|ibm]] [-U]
 
 Options:
   -S    Use systemd to manage services inside containers
-  -b    The directory containing both the source and the build tree for CTA (and possibly EOS). It will be mounted RO in the
-        containers.
-  -B    The subdirectory within the -b directory where the CTA build tree is.
-  -E    The subdirectory within the -b directory where the EOS build tree is.
   -D	wipe database content during initialization phase (database content is kept by default)
   -O	wipe objectstore content during initialization phase (objectstore content is kept by default)
   -a    additional kubernetes resources added to the kubernetes namespace
@@ -101,20 +97,11 @@ while getopts "n:o:d:e:a:p:b:i:B:E:SDOUumT" o; do
 	      p)
             pipelineid=${OPTARG}
             ;;
-        b)
-            buildtree=${OPTARG}
-            ;;
         i)
             dockerimage=${OPTARG}
             ;;
         S)
             usesystemd=1
-            ;;
-        B)
-            ctabuildtreesubdir=${OPTARG}
-            ;;
-        E)
-            eosbuildtreesubdir=${OPTARG}
             ;;
         O)
             keepobjectstore=0
@@ -142,7 +129,7 @@ if [ -z "${instance}" ]; then
     usage
 fi
 
-if [ ! -z "${pipelineid}" -a ! -z "${buildtree}" -a ! -z "${registrydocker}" ]; then
+if [ ! -z "${pipelineid}" -a ! -z "${dockerimage}" -a ]; then
     usage
 fi
 
@@ -162,65 +149,37 @@ if [ "$updatedatabasetest" == "1" ] ; then
     SCHEMA_VERSION=$PREVIOUS_SCHEMA_VERSION
 fi
 
-if [ ! -z "${buildtree}" ]; then
-    # We need to know the subdir as well
-    if [ -z "${ctabuildtreesubdir}" ]; then
-      usage
-    fi
-    # We are going to run with generic images against a build tree.
-    echo "Creating instance for build tree in ${buildtree}"
-
-    # tag image as otherwise kubernetes will always pull latest and won't find it...
-    docker rmi buildtree-runner:v0 &>/dev/null
-    docker tag buildtree-runner buildtree-runner:v0
-    cp pod-* ${poddir}
-    if [ -z "${eosbuildtreesubdir}" ]; then
-      sed -i ${poddir}/pod-* -e "s/\(^\s\+image\):.*/\1: buildtree-runner:latest\n\1PullPolicy: Never/"
-    else
-      sed -i ${poddir}/pod-* -e "s/\(^\s\+image\):.*/\1: doublebuildtree-runner:latest\n\1PullPolicy: Never/"
-    fi
-
-    # Add the build tree mount point the pods (volume mount then volume).
-    sed -i ${poddir}/pod-* -e "s|\(^\s\+\)\(volumeMounts:\)|\1\2\n\1- mountPath: ${buildtree}\n\1  name: buildtree\n\1  readOnly: true|"
-    sed -i ${poddir}/pod-* -e "s|\(^\s\+\)\(volumes:\)|\1\2\n\1- name: buildtree\n\1  hostPath:\n\1    path: ${buildtree}|"
-
-    if [ ! -z "${error}" ]; then
-        echo -e "ERROR:\n${error}"
-        exit 1
-    fi
+# We are going to run with repository based images (they have rpms embedded)
+COMMITID=$(git log -n1 | grep ^commit | cut -d\  -f2 | sed -e 's/\(........\).*/\1/')
+if [ ! -z "${pipelineid}" ]; then
+  echo "Creating instance for image built on commit ${COMMITID} with gitlab pipeline ID ${pipelineid}"
+  imagetag=$(../ci_helpers/list_images.sh 2>/dev/null | grep ${COMMITID} | grep ^${pipelineid}git | sort -n | tail -n1)
+  # just a shortcut to avoid time lost checking against the docker registry...
+  #imagetag=${pipelineid}git${COMMITID}
+elif [ ! -z "${dockerimage}" ]; then
+  echo "Creating instance for image ${dockerimage}"
+  imagetag=${dockerimage}
 else
-    # We are going to run with repository based images (they have rpms embedded)
-    COMMITID=$(git log -n1 | grep ^commit | cut -d\  -f2 | sed -e 's/\(........\).*/\1/')
-    if [ ! -z "${pipelineid}" ]; then
-      echo "Creating instance for image built on commit ${COMMITID} with gitlab pipeline ID ${pipelineid}"
-      imagetag=$(../ci_helpers/list_images.sh 2>/dev/null | grep ${COMMITID} | grep ^${pipelineid}git | sort -n | tail -n1)
-      # just a shortcut to avoid time lost checking against the docker registry...
-      #imagetag=${pipelineid}git${COMMITID}
-    elif [ ! -z "${dockerimage}" ]; then
-      echo "Creating instance for image ${dockerimage}"
-      imagetag=${dockerimage}
-    else
-      echo "Creating instance for latest image built for ${COMMITID} (highest PIPELINEID)"
-      imagetag=$(../ci_helpers/list_images.sh 2>/dev/null | grep ${COMMITID} | sort -n | tail -n1)
-    fi
-    if [ "${imagetag}" == "" ]; then
-      echo "commit:${COMMITID} has no docker image available in gitlab registry, please check pipeline status and registry images available."
-      exit 1
-    fi
-    echo "Creating instance using docker image with tag: ${imagetag}"
+  echo "Creating instance for latest image built for ${COMMITID} (highest PIPELINEID)"
+  imagetag=$(../ci_helpers/list_images.sh 2>/dev/null | grep ${COMMITID} | sort -n | tail -n1)
+fi
+if [ "${imagetag}" == "" ]; then
+  echo "commit:${COMMITID} has no docker image available in gitlab registry, please check pipeline status and registry images available."
+  exit 1
+fi
+echo "Creating instance using docker image with tag: ${imagetag}"
 
-    cp pod-* ${poddir}
-    if [ ! -z "${dockerimage}" ]; then
-      echo "set image to ctageneric:${imagetag}"
-      sed -i ${poddir}/pod-* -e "s/\(^\s\+image\):.*/\1: ctageneric:${imagetag}\n\1PullPolicy: Never/"
-    else
-      sed -i ${poddir}/pod-* -e "s/\(^\s\+image:[^:]\+:\).*/\1${imagetag}/"
-    fi
+cp pod-* ${poddir}
+if [ ! -z "${dockerimage}" ]; then
+  echo "set image to ctageneric:${imagetag}"
+  sed -i ${poddir}/pod-* -e "s/\(^\s\+image\):.*/\1: ctageneric:${imagetag}\n\1PullPolicy: Never/"
+else
+  sed -i ${poddir}/pod-* -e "s/\(^\s\+image:[^:]\+:\).*/\1${imagetag}/"
+fi
 
-    if [ ! -z "${error}" ]; then
-        echo -e "ERROR:\n${error}"
-        exit 1
-    fi
+if [ ! -z "${error}" ]; then
+    echo -e "ERROR:\n${error}"
+    exit 1
 fi
 
 if [ $usesystemd == 1 ] ; then

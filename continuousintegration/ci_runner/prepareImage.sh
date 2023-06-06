@@ -15,4 +15,34 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-(cd ~/CTA; sudo docker build . -f continuousintegration/docker/ctafrontend/cc7/buildtree-stage1-rpms-public/Dockerfile -t buildtree-runner-stage1)
+cd ~/CTA
+
+rpm_source=$1
+rpm_dir="build_rpm/RPM/RPMS/x86_64"
+
+image_tag=$2
+
+image_tag=$2
+
+if [ -z "${rpm_source}" ]; then
+  echo "You should specify the path to the RPMs to be installed. Ex: ~/CTA-build/RPM/RPMS/x86_64";
+  exit 1;
+fi
+
+if [ -z "${image_tag}" ]; then
+  echo "You should specify the docker image tag. Ex: dev";
+  exit 1;
+fi
+
+if [ -z "${image_tag}" ]; then
+  echo "You should specify the docker image tag. Ex: dev";
+  exit 1;
+fi
+
+trap "rm -rf $rpm_dir" EXIT
+
+mkdir -p $rpm_dir
+cp -r $rpm_source $rpm_dir
+
+echo "sudo docker build . -f continuousintegration/ci_runner/Dockerfile -t ctageneric:${image_tag}"
+sudo docker build . -f continuousintegration/ci_runner/Dockerfile -t ctageneric:${image_tag}
