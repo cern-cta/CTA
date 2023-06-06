@@ -256,7 +256,7 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsTapeFileCatalogue::prepar
           << brokenState.first;
         throw ex;
       }
-      if (mountPolicyName) {
+      if (mountPolicyName.has_value() && !mountPolicyName.value().empty()) {
           const auto mountPolicyCatalogue = static_cast<RdbmsMountPolicyCatalogue*>(m_rdbmsCatalogue->MountPolicy().get());
           std::optional<common::dataStructures::MountPolicy> mountPolicy = mountPolicyCatalogue->getMountPolicy(conn, mountPolicyName.value());
           if (mountPolicy) {
