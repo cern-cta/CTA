@@ -220,9 +220,6 @@ fi
 
 kubectl --namespace ${instance} create configmap init --from-literal=keepdatabase=${keepdatabase} --from-literal=keepobjectstore=${keepobjectstore}
 
-kubectl --namespace ${instance} create configmap buildtree --from-literal=base=${buildtree} --from-literal=cta_subdir=${ctabuildtreesubdir} \
-  --from-literal=eos_subdir=${eosbuildtreesubdir}
-
 if [ ! -z "${additional_resources}" ]; then
   kubectl --namespace ${instance} create -f ${additional_resources} || die "Could not create additional resources described in ${additional_resources}"
   kubectl --namespace ${instance} get pod ${KUBECTL_DEPRECATED_SHOWALL}
