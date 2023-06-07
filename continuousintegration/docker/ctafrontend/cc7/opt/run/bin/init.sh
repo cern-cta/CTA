@@ -26,15 +26,13 @@ die() {
   exit 1
 }
 
-if [ ! -e /etc/buildtreeRunner ]; then
-  # enable cta repository from previously built artifacts
-  yum-config-manager --enable cta-artifacts
-  yum-config-manager --enable ceph
+# enable cta repository from previously built artifacts
+yum-config-manager --enable cta-artifacts
+yum-config-manager --enable ceph
 
-  # install needed packages
-  yum -y install cta-objectstore-tools mt-st mtx lsscsi sg3_utils cta-catalogueutils ceph-common oracle-instantclient19.3-sqlplus oracle-instantclient-tnsnames.ora
-  yum clean packages
-fi
+# install needed packages
+yum -y install cta-objectstore-tools mt-st mtx lsscsi sg3_utils cta-catalogueutils ceph-common oracle-instantclient19.3-sqlplus oracle-instantclient-tnsnames.ora
+yum clean packages
 
 echo "Using this configuration for library:"
 /opt/run/bin/init_library.sh
