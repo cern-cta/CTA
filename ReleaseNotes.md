@@ -1,3 +1,8 @@
+# v4.8.9-1
+
+### Catalogue Schema
+- cta/CTA#387 - Update CTA catalogue schema to version 13.0
+
 # v4.8.8-2
 
 ### Bug Fixes
