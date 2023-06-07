@@ -44,5 +44,5 @@ trap "rm -rf $rpm_dir" EXIT
 mkdir -p $rpm_dir
 cp -r $rpm_source $rpm_dir
 
-echo "sudo docker build . -f continuousintegration/ci_runner/Dockerfile -t ctageneric:${image_tag}"
-sudo docker build . -f continuousintegration/ci_runner/Dockerfile -t ctageneric:${image_tag}
+echo "sudo docker build . -f continuousintegration/docker/ctafrontend/cc7/Dockerfile -t ctageneric:${image_tag}"
+sudo docker build . -f continuousintegration/docker/ctafrontend/cc7/Dockerfile -t ctageneric:${image_tag}
