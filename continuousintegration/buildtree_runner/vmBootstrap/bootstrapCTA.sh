@@ -18,10 +18,18 @@
 set -x
 
 PUBLIC=true
+CTA_VERSION=4
 if [[ $1 == "cern" ]]; then
   PUBLIC=false
   echo Going to install from internal CERN repositories
 fi
+
+if [[ $2 == "5" ]]; then
+  CTA_VERSION=5
+  echo "Going to install CTA version 5"
+fi
+
+export CTA_VERSION
 
 echo Enabling devtoolset-11
 source /opt/rh/devtoolset-11/enable
@@ -38,6 +46,9 @@ EOFGitHook
 
 chmod +x ~/CTA/.git/hooks/post-checkout
 cp ~/CTA/.git/hooks/post-checkout ~/CTA/.git/hooks/post-merge
+
+# Clean the current xrootd installation to avoid conflicts if we are installing a different version
+sudo yum remove $(yum list installed | grep xrootd | grep -v fuse3-libs | cut -d " " -f 1) -y || true
 
 echo Creating source rpm
 rm -rf ~/CTA-build-srpm
@@ -60,14 +71,20 @@ fi
 
 sudo yum install -y yum-plugin-priorities
 echo Adding versionlock for xrootd:
+if [[ ${CTA_VERSION} -eq 5 ]];
+then echo "Using XRootD version 5";
+  sudo ~/CTA/continuousintegration/docker/ctafrontend/cc7/opt/run/bin/cta-versionlock --file ~/CTA/continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list config xrootd5;
+  sudo yum-config-manager --enable cta-ci-xrootd5;
+else echo "Using XRootD version 4";
+fi
 sudo cp ~/CTA/continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/versionlock.list
 
 echo Installing build dependencies
-sudo yum-builddep -y ~/CTA-build-srpm/RPM/SRPMS/cta-0-1.src.rpm
+sudo yum-builddep -y ~/CTA-build-srpm/RPM/SRPMS/cta-*.src.rpm
 
-echo Building CTA
+echo Building CTA Rpms
 rm -rf ~/CTA-build
 mkdir -p ~/CTA-build
-(cd ~/CTA-build && cmake3 ../CTA; make -j 4)
+(cd ~/CTA-build && cmake3 ../CTA -DSKIP_UNIT_TESTS=1; make cta_rpm -j6)
 
 echo CTA setup finished successfully

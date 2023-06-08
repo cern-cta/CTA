@@ -25,10 +25,10 @@ ENV ORCHESTRATIONDIR="continuousintegration/orchestration/pods" \
     CTAREPODIR="/opt/repo"
 
 # Manage repos before running yum
-ADD ${BASEDIR}/etc /etc
+COPY ${BASEDIR}/etc /etc
 
 # Add orchestration run scripts locally
-ADD ${BASEDIR}/opt /opt
+COPY ${BASEDIR}/opt /opt
 
 RUN yum install -y \
       yum-plugin-downloadonly \
@@ -51,7 +51,7 @@ RUN yum install -y \
     chmod 0644 /etc/logrotate.d/*
 
 # Add previously built rpms
-ADD build_rpm/RPM ${CTAREPODIR}
+COPY build_rpm/RPM ${CTAREPODIR}
 
 # Populate local repository and enable it
 RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
@@ -76,21 +76,21 @@ RUN if find ${CTAREPODIR}/RPMS/x86_64 | grep cta-taped-5; then \
 fi
 
 # Add pod specific configuration
-ADD ${BASEDIR}/config ${LOCALORCHESTRATIONDIR}
+COPY ${BASEDIR}/config ${LOCALORCHESTRATIONDIR}
 
 # Docker image run setup
-ADD ${BASEDIR}/run.sh /
+COPY ${BASEDIR}/run.sh /
 
 # Add custom rc.local to massage kubernetes resources for
 # the taget docker container
-ADD ${BASEDIR}/rc.local /etc/rc.d
+COPY ${BASEDIR}/rc.local /etc/rc.d
 
 # Make sure it can be executed by root
 RUN chmod 744 /etc/rc.local
 
 # disable selinux so that systemd works if the container is booted
 # with an image that already contains selinux
-ADD ${BASEDIR}/etc_selinux_config /etc/selinux/config
+COPY ${BASEDIR}/etc_selinux_config /etc/selinux/config
 
 # One more thing so that we can use systemd
 VOLUME [ "/sys/fs/cgroup" ]

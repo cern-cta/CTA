@@ -45,6 +45,8 @@ spec:
       name: shared
     - mountPath: /mnt/logs
       name: logstorage
+    - mountPath: /etc/config/eos
+      name: eosconfig
     securityContext:
       privileged: true
 
@@ -52,6 +54,9 @@ spec:
   - name: shared
     hostPath:
       path: /opt/cta
+  - name: eosconfig
+    configMap:
+      name: eos-config
   - name: logstorage
     persistentVolumeClaim:
       claimName: claimlogs

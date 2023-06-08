@@ -78,7 +78,7 @@ BuildRequires: systemd
 The CTA project is the CERN Tape Archive system.
 
 %prep
-%setup -q -n %{name}-%{ctaVersion}-%{ctaRelease}
+%setup -D -q -n %{name}-%{ctaVersion}-%{ctaRelease}
 
 %build
 

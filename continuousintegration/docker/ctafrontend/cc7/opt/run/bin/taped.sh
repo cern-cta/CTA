@@ -22,6 +22,20 @@ if [ ! -e /etc/buildtreeRunner ]; then
   yum-config-manager --enable ceph
   yum-config-manager --enable castor
 
+  # Taped requires eos-client to be installed
+  if test -f "/etc/config/eos/eos5"; then
+    # Switch to EOS-5 versionlock
+    /opt/run/bin/cta-versionlock --file /etc/yum/pluginconf.d/versionlock.list config eos5
+
+    yum-config-manager --disable eos-citrine-commit
+    yum-config-manager --disable eos-citrine-depend
+    yum-config-manager --disable eos-citrine
+    yum-config-manager --enable eos-diopside-commit
+    yum-config-manager --enable eos-diopside-depend
+    yum-config-manager --enable eos-diopside
+    yum-config-manager --enable cta-ci-eos-5
+  fi
+
   # Install missing RPMs
   yum -y install mt-st lsscsi sg3_utils cta-taped cta-tape-label cta-debuginfo ceph-common oracle-instantclient-tnsnames.ora
 fi

@@ -16,7 +16,6 @@
 #               submit itself to any jurisdiction.
 
 set -x
-. /opt/run/bin/versionlock_tools.sh
 . /opt/run/bin/init_pod.sh
 
 if [ ! -e /etc/buildtreeRunner ]; then
