@@ -20,6 +20,7 @@
     - git submodule update --init --recursive
     - mkdir build_srpm
     - cd build_srpm
+    - echo ${CMAKE_OPTIONS}
     - cmake3 -DPackageOnly:Bool=true -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
     - make cta_srpm
   variables:
