@@ -17,7 +17,7 @@ name=CTA CI repo eos cache
 baseurl=https://cta-ci-repo.web.cern.ch/cta-ci-repo/eos5/
 priority=4
 gpgcheck=0
-enabled=0
+enabled=1
 
 [cta-ci-others]
 name=CTA CI repo any additional needed RPM cache
@@ -38,7 +38,7 @@ name=CTA CI repo xrootd5 cache
 baseurl=https://cta-ci-repo.web.cern.ch/cta-ci-repo/xrootd5/
 priority=4
 gpgcheck=0
-enabled=0
+enabled=1
 
 [cta-ci-dependencies]
 name=CTA CI repo dependencies
