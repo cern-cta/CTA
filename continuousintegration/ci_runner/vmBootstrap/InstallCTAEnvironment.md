@@ -37,7 +37,7 @@ git submodule init
 git submodule update
 ```
 
-3. Go to CTA/continuousintegration/buildtree_runner/vmBootstrap and type the following commands :
+3. Go to CTA/continuousintegration/ci_runner/vmBootstrap and type the following commands :
 ```bash
 cp gitScripts/.git-* ~
 cat gitScripts/bash_profile.hook >> ~/.bash_profile
@@ -70,7 +70,7 @@ make cta_srpm
 
 6. Install repositories necessary for CTA's compilation works
 ```bash
-cd ~/path_to_CTA_folder/continuousintegration/buildtree_runner/vmBootstrap
+cd ~/path_to_CTA_folder/continuousintegration/ci_runner/vmBootstrap
 sudo yum-config-manager --add-repo=../../docker/ctafrontend/cc7/etc/yum.repos.d/eos-citrine-depend.repo
 sudo yum-config-manager --add-repo=../../docker/ctafrontend/cc7/etc/yum.repos.d/cta-ci.repo
 sudo yum-config-manager --add-repo=../../docker/ctafrontend/cc7/etc/yum.repos.d/castor.repo
