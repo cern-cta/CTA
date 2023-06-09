@@ -1,6 +1,7 @@
 stages:
   - build:srpm
   - build:rpm
+  - sonarcloud
   - analysis:check
   - analysis:report
   - build:dockerimage
@@ -16,7 +17,15 @@ variables:
   ORACLE_SUPPORT: "ON"
   CTA_VERSION: "${XROOTD_VERSION}"
   CMAKE_OPTIONS: ""
+  RUN_SONARCLOUD: "false"
 
+.prepare-sonarcloud: &prepare-sonarcloud
+  - case $CI_SERVER_HOST in
+    (*.gitlab.com) RUN_SONARCLOUD="true";;
+    (*.cern.ch)    RUN_SONARCLOUD="false";;
+    (*)            RUN_SONARCLOUD="false";;
+    echo "$CI_SERVER_HOST"
+esac
 .prepare-xrootd5: &prepare-xrootd5
   - if [[ ${XROOTD_VERSION} -eq 5 ]];
     then echo "Using XRootD version 5";
@@ -53,6 +62,7 @@ default:
         echo "Setting to compile with XRootD version 5";
         XROOTD_VERSION=5;
       fi
+    - *prepare-sonarcloud
     - *prepare-xrootd5
     - *prepare-scheduler-type
     - *prepare-no-oracle

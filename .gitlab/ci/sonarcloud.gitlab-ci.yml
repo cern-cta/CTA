@@ -1,0 +1,9 @@
+run-sonarcloud:
+  except:
+    - tags
+  stage: sonarcloud
+  script: 
+    - echo "Only when RUN_SONARCLOUD is true"
+  only:
+    variables:
+      - $RUN_SONARCLOUD
