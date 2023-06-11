@@ -24,8 +24,9 @@ variables:
     (*.gitlab.com) RUN_SONARCLOUD="true";;
     (*.cern.ch)    RUN_SONARCLOUD="false";;
     (*)            RUN_SONARCLOUD="false";;
-    echo "$CI_SERVER_HOST"
-esac
+    esac
+    echo "$CI_SERVER_HOST";
+
 .prepare-xrootd5: &prepare-xrootd5
   - if [[ ${XROOTD_VERSION} -eq 5 ]];
     then echo "Using XRootD version 5";
