@@ -1,3 +1,8 @@
+# v4.8.10-1
+
+### Bug Fixes
+- cta/CTA#114 - Do not fail CTA taped when using older catalogue schema versions
+
 # v4.8.9-1
 
 ### Catalogue Schema
