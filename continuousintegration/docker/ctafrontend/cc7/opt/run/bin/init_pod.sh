@@ -65,7 +65,7 @@ fi
 SQUID_PROXY=squid.kube-system.svc.cluster.local
 ping -W 1 -c1 ${SQUID_PROXY} &>/dev/null && yum() { echo "Using SQUID proxy ${SQUID_PROXY}"; http_proxy=${SQUID_PROXY}:3128 /usr/bin/yum $@; }
 
-if [ ! test -f "/etc/config/eos/eos5" ]; then
+if [ test -f "/etc/config/eos/eos4" ]; then
   # Switch to EOS-5 versionlock
   /opt/run/bin/cta-versionlock --file /etc/yum/pluginconf.d/versionlock.list config eos4
 
