@@ -21,11 +21,10 @@ variables:
 
 .prepare-sonarcloud: &prepare-sonarcloud
   - case $CI_SERVER_HOST in
-    (*.gitlab.com) RUN_SONARCLOUD="true";;
-    (*.cern.ch)    RUN_SONARCLOUD="false";;
-    (*)            RUN_SONARCLOUD="false";;
-    esac
-    echo "$CI_SERVER_HOST";
+    gitlab.com | *.gitlab.com) RUN_SONARCLOUD="true";;
+    *)                         RUN_SONARCLOUD="false";;
+    esac;
+    echo "Running on runner: $CI_SERVER_HOST";
 
 .prepare-xrootd5: &prepare-xrootd5
   - if [[ ${XROOTD_VERSION} -eq 5 ]];
