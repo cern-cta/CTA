@@ -25,7 +25,7 @@ config_database="./database-sqlite.yaml"
 # default library model
 model="mhvtl"
 # defaults MGM namespace to quarkdb with http
-config_eos="./eos-config-quarkdb-http.yaml"
+config_eos="./eos5-config-quarkdb-https.yaml"
 # shared configmap for eoscta instance
 config_eoscta="./eoscta-config.yaml"
 
