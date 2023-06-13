@@ -30,3 +30,18 @@ cppcheck_report:
   artifacts:
     reports:
       codequality: cppcheck.json
+
+clang_format:
+  allow_failure: true
+  except:
+    - tags
+  stage: analysis:format
+  image:
+    name: gitlab-registry.cern.ch/linuxsupport/alma9-base
+    entrypoint: [""]
+  script:
+    - yum install -y git-clang-format
+    - find . -type f \( -name "*.cpp" -o -name "*.hpp" \) -exec clang-format --dry-run -Werror --style=file {} + > clang-format.output
+  artifacts:
+    reports:
+      clangformat: clang-format.output

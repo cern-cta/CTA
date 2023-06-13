@@ -3,6 +3,7 @@ stages:
   - build:rpm
   - analysis:check
   - analysis:report
+  - analysis:format
   - build:dockerimage
   - test
   - regressions
