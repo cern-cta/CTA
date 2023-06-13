@@ -18,14 +18,14 @@
 set -x
 
 PUBLIC=true
-CTA_VERSION=4
+CTA_VERSION=5
 if [[ $1 == "cern" ]]; then
   PUBLIC=false
   echo Going to install from internal CERN repositories
 fi
 
-if [[ $2 == "5" ]]; then
-  CTA_VERSION=5
+if [[ $2 == "4" ]]; then
+  CTA_VERSION=4
   echo "Going to install CTA version 5"
 fi
 
@@ -50,13 +50,8 @@ cp ~/CTA/.git/hooks/post-checkout ~/CTA/.git/hooks/post-merge
 # Clean the current xrootd installation to avoid conflicts if we are installing a different version
 sudo yum remove $(yum list installed | grep xrootd | grep -v fuse3-libs | cut -d " " -f 1) -y || true
 
-echo Creating source rpm
-rm -rf ~/CTA-build-srpm
-mkdir -p ~/CTA-build-srpm
-(cd ~/CTA-build-srpm && cmake3 -DPackageOnly:Bool=true ../CTA; make cta_srpm)
-
+# Admin yum repositiories
 echo Installing repos
-
 if [[ "$PUBLIC" == false ]] ; then
   for i in ~/CTA/continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo; do
     sudo yum-config-manager --add-repo=$i
@@ -69,15 +64,22 @@ else
   done
 fi
 
+# Set versionlock for xrootd and eos
 sudo yum install -y yum-plugin-priorities
 echo Adding versionlock for xrootd:
-if [[ ${CTA_VERSION} -eq 5 ]];
-then echo "Using XRootD version 5";
-  sudo ~/CTA/continuousintegration/docker/ctafrontend/cc7/opt/run/bin/cta-versionlock --file ~/CTA/continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list config xrootd5;
-  sudo yum-config-manager --enable cta-ci-xrootd5;
-else echo "Using XRootD version 4";
+if [[ ${CTA_VERSION} -eq 4 ]];
+then echo "Using XRootD version 4";
+  sudo ~/CTA/continuousintegration/docker/ctafrontend/cc7/opt/run/bin/cta-versionlock --file ~/CTA/continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list config xrootd4;
+  sudo yum-config-manager --disable cta-ci-xrootd5;
+  sudo yum-config-manager --enable cta-ci-xroot;
+else echo "Using XRootD version 5";
 fi
 sudo cp ~/CTA/continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/versionlock.list
+
+echo Creating source rpm
+rm -rf ~/CTA-build-srpm
+mkdir -p ~/CTA-build-srpm
+(cd ~/CTA-build-srpm && cmake3 -DPackageOnly:Bool=true ../CTA; make cta_srpm)
 
 echo Installing build dependencies
 sudo yum-builddep -y ~/CTA-build-srpm/RPM/SRPMS/cta-*.src.rpm

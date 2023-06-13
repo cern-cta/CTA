@@ -30,7 +30,7 @@ cd ~/CTA/continuousintegration/ci_runner/vmBootstrap/
 ./bootstrapCTA.sh cern 5
 ```
 
-This will check out CTA from git, in install the necessary build RPMs and compile. The last argument is the xrootd version to use (4 is the default).
+This will check out CTA from git, in install the necessary build RPMs and compile. The last argument is the xrootd version to use (5 is the default).
 
 ### Kubernetes setup
 
