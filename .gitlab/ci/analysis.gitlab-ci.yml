@@ -43,5 +43,5 @@ clang_format:
     - yum install -y git-clang-format
     - find . -type f \( -name "*.cpp" -o -name "*.hpp" \) -exec clang-format --dry-run -Werror --style=file {} + > clang-format.output
   artifacts:
-    reports:
-      clangformat: clang-format.output
+    paths:
+    - clang-format.output
