@@ -48,7 +48,7 @@ client:
     - tags
   variables:
     TEST_SCRIPT: "tests/test_client.sh"
-    EXTENDED_OPTIONS: "-O -D -t 2400 -C"
+    EXTENDED_OPTIONS: "-O -D -t 2400 -C -e eos-config-quarkdb-https.yaml"
 
 client-eos5:
   stage: test

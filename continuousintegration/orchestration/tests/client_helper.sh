@@ -35,6 +35,7 @@ EOSPOWER_USER="poweruser1"
 CTAADMIN_USER="ctaadmin2"
 EOSADMIN_USER="eosadmin1"
 USER="user1"
+TOKEN_TIMEOUT=604800
 
 die() {
   echo "$@" 1>&2

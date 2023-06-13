@@ -14,6 +14,9 @@
 ### Bug Fixes
 - cta/CTA#379 - Fix tagging release CI script for xrootd5
 
+### Continuous Integration
+- cta/CTA#378 - Add http tape REST API compliance tests
+
 # v4.8.8-1
 
 ### Features
