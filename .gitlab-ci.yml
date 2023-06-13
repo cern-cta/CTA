@@ -15,11 +15,12 @@ variables:
   CTA_VERSION: "${XROOTD_VERSION}"
   CMAKE_OPTIONS: ""
 
-.prepare-xrootd5: &prepare-xrootd5
+.prepare-xrootd4: &prepare-xrootd4
   - if [[ ${XROOTD_VERSION} -eq 4 ]];
     then echo "Using XRootD version 4";
       ./continuousintegration/docker/ctafrontend/cc7/opt/run/bin/cta-versionlock --file ./continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list config xrootd4;
-      yum-config-manager --enable cta-ci-xrootd;
+      yum-config-manager --enable cta-ci-xroot;
+      yum-config-manager --disable cta-ci-xrootd5;
     else echo "Using XRootD version 5";
     fi
 
@@ -51,7 +52,7 @@ default:
         echo "Setting to compile with XRootD version 4";
         XROOTD_VERSION=4;
       fi
-    - *prepare-xrootd5
+    - *prepare-xrootd4
     - *prepare-scheduler-type
     - *prepare-no-oracle
 
