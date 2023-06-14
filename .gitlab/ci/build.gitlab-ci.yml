@@ -115,3 +115,16 @@ cta_rpm_no_oracle:
     - if: $CI_COMMIT_TAG
       when: never
     - if: $XROOTD_VERSION == "4" && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "OFF"
+
+sonarcloud-check:
+ image:
+   name: sonarsource/sonar-scanner-cli:latest
+   entrypoint: [""]
+ cache:
+   key: "${CI_JOB_NAME}"
+   paths:
+     - .sonar/cache
+ script:
+   - sonar-scanner
+ rules:
+   - if: ($CI_COMMIT_REF_NAME == 'main' || $CI_PIPELINE_SOURCE == 'merge_request_event') && $RUN_SONARCLOUD == "true"

@@ -1,7 +1,7 @@
 stages:
   - build:srpm
   - build:rpm
-  - sonarcloud
+  - run-sonarcloud
   - analysis:check
   - analysis:report
   - build:dockerimage
@@ -18,6 +18,8 @@ variables:
   CTA_VERSION: "${XROOTD_VERSION}"
   CMAKE_OPTIONS: ""
   RUN_SONARCLOUD: "false"
+  SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
+  GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the sonar analysis task
 
 .prepare-sonarcloud: &prepare-sonarcloud
   - case $CI_SERVER_HOST in
