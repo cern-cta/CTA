@@ -1,7 +1,7 @@
 stages:
   - build:srpm
   - build:rpm
-  - sonarcloud
+  - analysis:static
   - analysis:check
   - analysis:report
   - build:dockerimage
