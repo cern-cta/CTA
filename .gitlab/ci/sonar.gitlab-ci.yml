@@ -1,15 +1,14 @@
 sonarcloud-check:
- stage: analysis:static
- image:
-   name: sonarsource/sonar-scanner-cli:latest
-   entrypoint: [""]
- cache:
-   key: "${CI_JOB_NAME}"
-   paths:
-     - .sonar/cache
- script:
-   - sonar-scanner
- rules:
-   - if: $CI_COMMIT_TAG
-     when: never
-   - if: $RUN_SONARCLOUD == "yes"
+  except:
+    - tags
+  stage: analysis:static
+  image:
+    name: sonarsource/sonar-scanner-cli:latest
+    entrypoint: [""]
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - .sonar/cache
+  script:
+    - sonar-scanner
+ 
