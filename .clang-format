@@ -73,7 +73,7 @@ InsertBraces: true
 InsertTrailingCommas: None
 KeepEmptyLinesAtTheStartOfBlocks: false
 Language: Cpp
-LineEnding: LF
+#LineEnding: LF  # clang-format 16
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: None
 PackConstructorInitializers: BinPack
@@ -83,7 +83,7 @@ ReferenceAlignment: Left
 ReflowComments: false
 SeparateDefinitionBlocks: Always
 SortIncludes: Never
-SortUsingDeclarations: Lexicographic
+#SortUsingDeclarations: Lexicographic  # clang-format 16
 SpaceAfterCStyleCast: true
 SpaceAfterLogicalNot: false
 SpaceAfterTemplateKeyword: false
@@ -109,4 +109,5 @@ SpacesInParentheses: false
 SpacesInSquareBrackets: false
 Standard: c++20
 TabWidth: 2
+UseCRLF: false
 UseTab: Never
