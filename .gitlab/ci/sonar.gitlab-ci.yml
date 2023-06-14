@@ -1,4 +1,6 @@
 sonarcloud-check:
+ except:
+   - tags
  stage: sonarcloud
  image:
    name: sonarsource/sonar-scanner-cli:latest
@@ -10,4 +12,4 @@ sonarcloud-check:
  script:
    - sonar-scanner
  rules:
-   - if: ($CI_COMMIT_REF_NAME == 'main' || $CI_PIPELINE_SOURCE == 'merge_request_event') && $RUN_SONARCLOUD == 'true'
+   - if: $RUN_SONARCLOUD == 'true'
