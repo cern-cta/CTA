@@ -26,7 +26,7 @@ variables:
     gitlab.com | *.gitlab.com) RUN_SONARCLOUD="true";;
     *)                         RUN_SONARCLOUD="false";;
     esac;
-    echo "Running on runner $CI_SERVER_HOST";
+    echo "Running on runner $CI_SERVER_HOST (run sonarcloud=$RUN_SONARCLOUD)";
 
 .prepare-xrootd5: &prepare-xrootd5
   - if [[ ${XROOTD_VERSION} -eq 5 ]];

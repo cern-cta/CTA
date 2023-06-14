@@ -1,6 +1,4 @@
 sonarcloud-check:
- except:
-   - tags
  stage: sonarcloud
  image:
    name: sonarsource/sonar-scanner-cli:latest
@@ -12,4 +10,6 @@ sonarcloud-check:
  script:
    - sonar-scanner
  rules:
-   - if: $RUN_SONARCLOUD == 'true'
+   - if: $CI_COMMIT_TAG
+     when: never
+   - if: $RUN_SONARCLOUD == "yes"
