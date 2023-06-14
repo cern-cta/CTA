@@ -46,7 +46,7 @@
     BUILD_PATH: "build_rpm/RPM/RPMS"
 
 cta_srpm_xrootd4:
-  stage: build:srpm
+  stage: build
   extends:
     - .cta_srpm
   rules:
@@ -54,7 +54,8 @@ cta_srpm_xrootd4:
     - if: ($CI_COMMIT_TAG =~ /^v?4\./ || ($CI_COMMIT_TAG == null && $XROOTD_VERSION == "4")) && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
 
 cta_rpm_xrootd4:
-  stage: build:rpm
+  stage: build
+  needs: [ cta_srpm_xrootd4 ]
   extends:
     - .cta_rpm
   rules:
@@ -64,7 +65,7 @@ cta_rpm_xrootd4:
     - if: $XROOTD_VERSION == "4" && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
 
 cta_srpm_xrootd4_pgsched:
-  stage: build:srpm
+  stage: build
   extends:
     - .cta_srpm
   rules:
@@ -72,7 +73,8 @@ cta_srpm_xrootd4_pgsched:
     - if: ($CI_COMMIT_TAG =~ /^v?4\./ || ($CI_COMMIT_TAG == null && $XROOTD_VERSION == "4")) && $SCHED_TYPE == "pgsched" && $ORACLE_SUPPORT == "OFF"
 
 cta_rpm_xrootd4_pgsched:
-  stage: build:rpm
+  stage: build
+  needs: [ cta_srpm_xrootd4_pgsched ]
   extends:
     - .cta_rpm
   rules:
@@ -82,7 +84,7 @@ cta_rpm_xrootd4_pgsched:
     - if: $XROOTD_VERSION == "4" && $SCHED_TYPE == "pgsched" && $ORACLE_SUPPORT == "OFF"
 
 cta_srpm_xrootd5:
-  stage: build:srpm
+  stage: build
   extends:
     - .cta_srpm
   rules:
@@ -90,7 +92,8 @@ cta_srpm_xrootd5:
     - if: ($CI_COMMIT_TAG =~ /^v?5\./ || ($CI_COMMIT_TAG == null && $XROOTD_VERSION == "5")) && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
 
 cta_rpm_xrootd5:
-  stage: build:rpm
+  stage: build
+  needs: [ cta_srpm_xrootd5 ]
   extends:
     - .cta_rpm
   rules:
@@ -100,7 +103,7 @@ cta_rpm_xrootd5:
     - if: $XROOTD_VERSION == "5" && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "ON"
 
 cta_srpm_no_oracle:
-  stage: build:srpm
+  stage: build
   extends:
     - .cta_srpm
   rules:
@@ -108,7 +111,8 @@ cta_srpm_no_oracle:
     - if: ($CI_COMMIT_TAG =~ /^v?4\./ || ($CI_COMMIT_TAG == null && $XROOTD_VERSION == "4")) && $SCHED_TYPE == "objectstore" && $ORACLE_SUPPORT == "OFF"
 
 cta_rpm_no_oracle:
-  stage: build:rpm
+  stage: build
+  needs: [ cta_srpm_no_oracle ]
   extends:
     - .cta_rpm
   rules:
