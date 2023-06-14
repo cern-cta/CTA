@@ -41,6 +41,11 @@ clang_format:
     name: gitlab-registry.cern.ch/linuxsupport/alma9-base
     entrypoint: [""]
   script:
+    # Remove CC7-specific repos copied by defalt:before_script in .gitlab-ci.yml 
+    - rm -rf /etc/yum.repos.d/centos-cernonly.repo
+    - rm -rf /etc/yum.repos.d/cta-ci.repo
+    - rm -rf /etc/yum.repos.d/eos-quarkdb.repo
+    - yum clean all
     - yum install -y git-clang-format
     - find . -type f \( -name "*.cpp" -o -name "*.hpp" \) -exec clang-format --dry-run -Werror --style=file {} + > clang-format.output
   artifacts:
