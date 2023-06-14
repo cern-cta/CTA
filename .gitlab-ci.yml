@@ -1,7 +1,6 @@
 stages:
   - analysis
-  - build:srpm
-  - build:rpm
+  - build
   - build:dockerimage
   - test
   - regressions
