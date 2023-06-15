@@ -20,7 +20,8 @@
 #include "rdbms/Login.hpp"
 #include "CatalogueSchema.hpp"
 
-namespace cta{ namespace catalogue {
+namespace cta {
+namespace catalogue {
 
 class SchemaSqlStatementsReader {
 public:
@@ -29,6 +30,7 @@ public:
   SchemaSqlStatementsReader(const SchemaSqlStatementsReader& orig);
   virtual ~SchemaSqlStatementsReader();
   virtual std::list<std::string> getStatements();
+
 protected:
   cta::rdbms::Login::DbType m_dbType;
   /**
@@ -36,7 +38,7 @@ protected:
   * @param schema the sql statements put all together
   * @return a list containing separated statements from the schema passed in parameter
   */
-  std::list<std::string> getAllStatementsFromSchema(const std::string &schema);
+  std::list<std::string> getAllStatementsFromSchema(const std::string& schema);
   /**
   * Returns the string corresponding to the database type
   * @return the string corresponding to the database type
@@ -56,12 +58,15 @@ protected:
 * |-- 1.1
 * |  |-- ...
 * */
-class DirectoryVersionsSqlStatementsReader: public SchemaSqlStatementsReader{
-  public:
-    DirectoryVersionsSqlStatementsReader(const cta::rdbms::Login::DbType dbType, const std::string &catalogueVersion, const std::string &allSchemasVersionPath);
-    DirectoryVersionsSqlStatementsReader(const DirectoryVersionsSqlStatementsReader& orig);
-    virtual ~DirectoryVersionsSqlStatementsReader();
-    virtual std::list<std::string> getStatements();
+class DirectoryVersionsSqlStatementsReader : public SchemaSqlStatementsReader {
+public:
+  DirectoryVersionsSqlStatementsReader(const cta::rdbms::Login::DbType dbType,
+                                       const std::string& catalogueVersion,
+                                       const std::string& allSchemasVersionPath);
+  DirectoryVersionsSqlStatementsReader(const DirectoryVersionsSqlStatementsReader& orig);
+  virtual ~DirectoryVersionsSqlStatementsReader();
+  virtual std::list<std::string> getStatements();
+
 private:
   std::string m_catalogueVersion;
   std::string m_allSchemasVersionPath;
@@ -74,22 +79,25 @@ private:
   std::string getSchemaFilePath();
 };
 
-class MapSqlStatementsReader: public SchemaSqlStatementsReader{
-  public:
-    MapSqlStatementsReader(const cta::rdbms::Login::DbType dbType, const std::string &catalogueVersion);
-    MapSqlStatementsReader(const MapSqlStatementsReader& orig);
-    virtual ~MapSqlStatementsReader();
-    virtual std::list<std::string> getStatements();
+class MapSqlStatementsReader : public SchemaSqlStatementsReader {
+public:
+  MapSqlStatementsReader(const cta::rdbms::Login::DbType dbType, const std::string& catalogueVersion);
+  MapSqlStatementsReader(const MapSqlStatementsReader& orig);
+  virtual ~MapSqlStatementsReader();
+  virtual std::list<std::string> getStatements();
+
 private:
   std::string m_catalogueVersion;
 };
 
-class CppSchemaStatementsReader: public SchemaSqlStatementsReader{
+class CppSchemaStatementsReader : public SchemaSqlStatementsReader {
 public:
   CppSchemaStatementsReader(const cta::catalogue::CatalogueSchema& schema);
   std::list<std::string> getStatements();
+
 private:
   const cta::catalogue::CatalogueSchema m_schema;
 };
 
-}}
+}  // namespace catalogue
+}  // namespace cta

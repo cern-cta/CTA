@@ -31,12 +31,11 @@ namespace dataStructures {
  * This struct holds location information of a specific tape file 
  */
 struct TapeFile {
-
   TapeFile();
 
-  bool operator==(const TapeFile &rhs) const;
+  bool operator==(const TapeFile& rhs) const;
 
-  bool operator!=(const TapeFile &rhs) const;
+  bool operator!=(const TapeFile& rhs) const;
 
   /**
    * The volume identifier of the tape on which the file has been written. 
@@ -68,21 +67,21 @@ struct TapeFile {
    * The time the file recorded in the catalogue. 
    */
   time_t creationTime;
-  
+
   /**
    * Set of checksum (type, value) pairs
    */
   checksum::ChecksumBlob checksumBlob;
-  
+
   /**
    * Returns true if this tape file matches the copy number passed in parameter.
    */
   bool matchesCopyNb(uint8_t copyNb) const;
 
-}; // struct TapeFile
+};  // struct TapeFile
 
-std::ostream &operator<<(std::ostream &os, const TapeFile &obj);
+std::ostream& operator<<(std::ostream& os, const TapeFile& obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

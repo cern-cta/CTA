@@ -20,12 +20,13 @@
 #include "xroot_plugins/XrdCtaStream.hpp"
 #include "common/dataStructures/RequesterActivityMountRule.hpp"
 
-namespace cta { namespace xrd {
+namespace cta {
+namespace xrd {
 
 /*!
  * Stream object which implements "activitymountrule ls" command
  */
-class ActivityMountRuleLsStream: public XrdCtaStream{
+class ActivityMountRuleLsStream : public XrdCtaStream {
 public:
   /*!
    * Constructor
@@ -34,42 +35,44 @@ public:
    * @param[in]    catalogue     CTA Catalogue
    * @param[in]    scheduler     CTA Scheduler
    */
-  ActivityMountRuleLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
+  ActivityMountRuleLsStream(const frontend::AdminCmdStream& requestMsg,
+                            cta::catalogue::Catalogue& catalogue,
+                            cta::Scheduler& scheduler);
 
 private:
   /*!
    * Can we close the stream?
    */
-  virtual bool isDone() const {
-    return m_activityMountRuleList.empty();
-  }
+  virtual bool isDone() const { return m_activityMountRuleList.empty(); }
 
   /*!
    * Fill the buffer
    */
-  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
+  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf);
 
-  std::list<cta::common::dataStructures::RequesterActivityMountRule> m_activityMountRuleList;    //!< List of group mount rules from the catalogue
+  std::list<cta::common::dataStructures::RequesterActivityMountRule>
+    m_activityMountRuleList;  //!< List of group mount rules from the catalogue
 
-  static constexpr const char* const LOG_SUFFIX  = "ActivityMountRuleLsStream";               //!< Identifier for log messages
+  static constexpr const char* const LOG_SUFFIX = "ActivityMountRuleLsStream";  //!< Identifier for log messages
 };
 
-
-ActivityMountRuleLsStream::ActivityMountRuleLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
-  XrdCtaStream(catalogue, scheduler),
-  m_activityMountRuleList(catalogue.RequesterActivityMountRule()->getRequesterActivityMountRules())
-{
+ActivityMountRuleLsStream::ActivityMountRuleLsStream(const frontend::AdminCmdStream& requestMsg,
+                                                     cta::catalogue::Catalogue& catalogue,
+                                                     cta::Scheduler& scheduler) :
+XrdCtaStream(catalogue, scheduler),
+m_activityMountRuleList(catalogue.RequesterActivityMountRule()->getRequesterActivityMountRules()) {
   using namespace cta::admin;
 
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "ActivityMountRuleLsStream() constructor");
 }
 
-int ActivityMountRuleLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
-  for(bool is_buffer_full = false; !m_activityMountRuleList.empty() && !is_buffer_full; m_activityMountRuleList.pop_front()) {
+int ActivityMountRuleLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
+  for (bool is_buffer_full = false; !m_activityMountRuleList.empty() && !is_buffer_full;
+       m_activityMountRuleList.pop_front()) {
     Data record;
 
-    auto &amr      = m_activityMountRuleList.front();
-    auto amr_item  = record.mutable_amrls_item();
+    auto& amr = m_activityMountRuleList.front();
+    auto amr_item = record.mutable_amrls_item();
 
     amr_item->set_disk_instance(amr.diskInstance);
     amr_item->set_activity_mount_rule(amr.name);
@@ -88,4 +91,5 @@ int ActivityMountRuleLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streamb
   return streambuf->Size();
 }
 
-}} // namespace cta::xrd
+}  // namespace xrd
+}  // namespace cta

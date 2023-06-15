@@ -21,24 +21,19 @@
 namespace cta {
 namespace postgresscheddb {
 
-ArchiveJob::ArchiveJob()
-{
+ArchiveJob::ArchiveJob() {}
+
+void ArchiveJob::failTransfer(const std::string& failureReason, log::LogContext& lc) {
+  throw cta::exception::Exception("Not implemented");
 }
 
-void ArchiveJob::failTransfer(const std::string & failureReason, log::LogContext & lc)
-{
-   throw cta::exception::Exception("Not implemented");
+void ArchiveJob::failReport(const std::string& failureReason, log::LogContext& lc) {
+  throw cta::exception::Exception("Not implemented");
 }
 
-void ArchiveJob::failReport(const std::string & failureReason, log::LogContext & lc)
-{
-   throw cta::exception::Exception("Not implemented");
+void ArchiveJob::bumpUpTapeFileCount(uint64_t newFileCount) {
+  throw cta::exception::Exception("Not implemented");
 }
 
-void ArchiveJob::bumpUpTapeFileCount(uint64_t newFileCount)
-{
-   throw cta::exception::Exception("Not implemented");
-}
-
-} //namespace postgresscheddb
-} //namespace cta
+}  //namespace postgresscheddb
+}  //namespace cta

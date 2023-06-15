@@ -27,8 +27,8 @@ namespace common {
 namespace dataStructures {
 struct MountPolicy;
 struct SecurityIdentity;
-} // namespace dataStructures
-} // namespace common
+}  // namespace dataStructures
+}  // namespace common
 
 namespace catalogue {
 
@@ -38,8 +38,8 @@ class MountPolicyCatalogue {
 public:
   virtual ~MountPolicyCatalogue() = default;
 
-  virtual void createMountPolicy(const common::dataStructures::SecurityIdentity &admin,
-    const CreateMountPolicyAttributes & mountPolicy) = 0;
+  virtual void createMountPolicy(const common::dataStructures::SecurityIdentity& admin,
+                                 const CreateMountPolicyAttributes& mountPolicy) = 0;
 
   /**
    * Returns the list of all existing mount policies.
@@ -53,9 +53,8 @@ public:
    *
    * @return the specified mount policy
    */
-  virtual std::optional<common::dataStructures::MountPolicy> getMountPolicy(
-    const std::string &mountPolicyName) const = 0;
-
+  virtual std::optional<common::dataStructures::MountPolicy>
+    getMountPolicy(const std::string& mountPolicyName) const = 0;
 
   /**
    * Returns the cached list of all existing mount policies.
@@ -69,24 +68,28 @@ public:
    *
    * @param name The name of the mount policy.
    */
-  virtual void deleteMountPolicy(const std::string &name) = 0;
+  virtual void deleteMountPolicy(const std::string& name) = 0;
 
-  virtual void modifyMountPolicyArchivePriority(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const uint64_t archivePriority) = 0;
+  virtual void modifyMountPolicyArchivePriority(const common::dataStructures::SecurityIdentity& admin,
+                                                const std::string& name,
+                                                const uint64_t archivePriority) = 0;
 
-  virtual void modifyMountPolicyArchiveMinRequestAge(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const uint64_t minArchiveRequestAge) = 0;
+  virtual void modifyMountPolicyArchiveMinRequestAge(const common::dataStructures::SecurityIdentity& admin,
+                                                     const std::string& name,
+                                                     const uint64_t minArchiveRequestAge) = 0;
 
-  virtual void modifyMountPolicyRetrievePriority(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const uint64_t retrievePriority) = 0;
+  virtual void modifyMountPolicyRetrievePriority(const common::dataStructures::SecurityIdentity& admin,
+                                                 const std::string& name,
+                                                 const uint64_t retrievePriority) = 0;
 
-  virtual void modifyMountPolicyRetrieveMinRequestAge(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const uint64_t minRetrieveRequestAge) = 0;
+  virtual void modifyMountPolicyRetrieveMinRequestAge(const common::dataStructures::SecurityIdentity& admin,
+                                                      const std::string& name,
+                                                      const uint64_t minRetrieveRequestAge) = 0;
 
-  virtual void modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const std::string &comment) = 0;
-
+  virtual void modifyMountPolicyComment(const common::dataStructures::SecurityIdentity& admin,
+                                        const std::string& name,
+                                        const std::string& comment) = 0;
 };
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

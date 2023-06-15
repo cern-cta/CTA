@@ -19,19 +19,17 @@
 
 namespace cta {
 namespace log {
-  
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-DummyLogger::DummyLogger(const std::string &hostName, const std::string &programName):
-  Logger(hostName, programName, DEBUG) {
-}
+DummyLogger::DummyLogger(const std::string& hostName, const std::string& programName) :
+Logger(hostName, programName, DEBUG) {}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-DummyLogger::~DummyLogger() {
-}
+DummyLogger::~DummyLogger() {}
 
 //------------------------------------------------------------------------------
 // prepareForFork
@@ -41,9 +39,9 @@ void DummyLogger::prepareForFork() {}
 //------------------------------------------------------------------------------
 // writeMsgToUnderlyingLoggingSystem
 //------------------------------------------------------------------------------
-void DummyLogger::writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) {
+void DummyLogger::writeMsgToUnderlyingLoggingSystem(const std::string& header, const std::string& body) {
   // Do nothing
 }
 
-} // namespace log
-} // namespace cta
+}  // namespace log
+}  // namespace cta

@@ -19,21 +19,20 @@
 
 #include "Exception.hpp"
 
-namespace cta { namespace exception {
+namespace cta {
+namespace exception {
 
-    /**
+/**
      * Failed to query volume.
      */
-    class QueryVolumeFailed : public cta::exception::Exception {
-      
-    public:
-      
-      /**
+class QueryVolumeFailed : public cta::exception::Exception {
+public:
+  /**
        * Constructor
        */
-      QueryVolumeFailed();
+  QueryVolumeFailed();
 
-    }; // class QueryVolumeFailed
+};  // class QueryVolumeFailed
 
-} } // namespace cta exception
-
+}  // namespace exception
+}  // namespace cta

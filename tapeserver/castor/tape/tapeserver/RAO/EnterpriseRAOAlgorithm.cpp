@@ -21,32 +21,35 @@
 #include "castor/tape/tapeserver/SCSI/Structures.hpp"
 #include "common/Timer.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace rao {
 
-EnterpriseRAOAlgorithm::EnterpriseRAOAlgorithm(castor::tape::tapeserver::drive::DriveInterface * drive, const uint64_t maxFilesSupported):m_drive(drive), m_maxFilesSupported(maxFilesSupported) {
-}
+EnterpriseRAOAlgorithm::EnterpriseRAOAlgorithm(castor::tape::tapeserver::drive::DriveInterface* drive,
+                                               const uint64_t maxFilesSupported) :
+m_drive(drive),
+m_maxFilesSupported(maxFilesSupported) {}
 
-EnterpriseRAOAlgorithm::~EnterpriseRAOAlgorithm() {
-}
+EnterpriseRAOAlgorithm::~EnterpriseRAOAlgorithm() {}
 
-std::vector<uint64_t> EnterpriseRAOAlgorithm::performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob> >& jobs) {
+std::vector<uint64_t> EnterpriseRAOAlgorithm::performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs) {
   cta::utils::Timer totalTimer;
   std::vector<uint64_t> raoOrder;
   uint64_t njobs = jobs.size();
   uint32_t block_size = c_blockSize;
   std::list<castor::tape::SCSI::Structures::RAO::blockLims> files;
   for (uint32_t i = 0; i < njobs; i++) {
-    cta::RetrieveJob *job = jobs.at(i).get();
+    cta::RetrieveJob* job = jobs.at(i).get();
     castor::tape::SCSI::Structures::RAO::blockLims lims;
-    strncpy((char*)lims.fseq, std::to_string(i).c_str(), sizeof(i));
+    strncpy((char*) lims.fseq, std::to_string(i).c_str(), sizeof(i));
     lims.begin = job->selectedTapeFile().blockId;
     lims.end = job->selectedTapeFile().blockId + 8 +
                /* ceiling the number of blocks */
                ((job->archiveFile.fileSize + block_size - 1) / block_size);
 
     files.push_back(lims);
-    if ((files.size() == m_maxFilesSupported) ||
-            ((i == njobs - 1) && (files.size() > 1))) {
+    if ((files.size() == m_maxFilesSupported) || ((i == njobs - 1) && (files.size() > 1))) {
       /* We do a RAO query if:
        *  1. the maximum number of files supported by the drive
        *     for RAO query has been reached
@@ -57,18 +60,18 @@ std::vector<uint64_t> EnterpriseRAOAlgorithm::performRAO(const std::vector<std::
 
       /* Add the RAO sorted files to the new list*/
       for (auto fit = files.begin(); fit != files.end(); fit++) {
-        uint64_t id = atoi((char*)fit->fseq);
+        uint64_t id = atoi((char*) fit->fseq);
         raoOrder.push_back(id);
       }
       files.clear();
     }
   }
   for (auto fit = files.begin(); fit != files.end(); fit++) {
-    uint64_t id = atoi((char*)fit->fseq);
+    uint64_t id = atoi((char*) fit->fseq);
     raoOrder.push_back(id);
   }
   files.clear();
-  m_raoTimings.insertAndReset("RAOAlgorithmTime",totalTimer);
+  m_raoTimings.insertAndReset("RAOAlgorithmTime", totalTimer);
   return raoOrder;
 }
 
@@ -76,4 +79,7 @@ std::string EnterpriseRAOAlgorithm::getName() const {
   return "enterprise";
 }
 
-}}}}
+}  // namespace rao
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

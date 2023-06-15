@@ -41,9 +41,11 @@ extern std::list<std::string> g_listedVids;
  * @param[in]    cmdLineArgs     Command line arguments
  * @param[in]    archiveFileId   Archive file id to verify
  */
-void fillNotification(cta::eos::Notification &notification, const CmdLineArgs &cmdLineArgs, const std::string &archiveFileId) {
+void fillNotification(cta::eos::Notification& notification,
+                      const CmdLineArgs& cmdLineArgs,
+                      const std::string& archiveFileId) {
   XrdSsiPb::Config config(g_config_file, "eos");
-  for (const auto &conf_option : std::vector<std::string>({ "instance", "requester.user", "requester.group" })) {
+  for (const auto& conf_option : std::vector<std::string>({"instance", "requester.user", "requester.group"})) {
     if (!config.getOptionValueStr(conf_option).first) {
       throw std::runtime_error(conf_option + " must be specified in " + g_config_file);
     }
@@ -68,7 +70,6 @@ void fillNotification(cta::eos::Notification &notification, const CmdLineArgs &c
   notification.mutable_wf()->set_verify_only(true);
   notification.mutable_wf()->set_vid(cmdLineArgs.m_vid.value());
 
-
   // Transport
   notification.mutable_transport()->set_dst_url("file://dummy");
 
@@ -76,13 +77,13 @@ void fillNotification(cta::eos::Notification &notification, const CmdLineArgs &c
   notification.mutable_file()->set_lpath("dummy");
 
   // Attribute map type
-  using AttrMap= std::map<std::string, std::string>;
+  using AttrMap = std::map<std::string, std::string>;
   AttrMap xattrs;
   xattrs["sys.archive.file_id"] = archiveFileId;
 
-  for(auto &xattr : xattrs) {
-      google::protobuf::MapPair<std::string,std::string> mp(xattr.first, xattr.second);
-      notification.mutable_file()->mutable_xattr()->insert(mp);
+  for (auto& xattr : xattrs) {
+    google::protobuf::MapPair<std::string, std::string> mp(xattr.first, xattr.second);
+    notification.mutable_file()->mutable_xattr()->insert(mp);
   }
 }
 
@@ -104,14 +105,16 @@ XrdSsiPb::Config getConfig() {
   return config;
 }
 
-void sendVerifyRequest(const CmdLineArgs &cmdLineArgs, const std::string &archiveFileId, const XrdSsiPb::Config &config) {
+void sendVerifyRequest(const CmdLineArgs& cmdLineArgs,
+                       const std::string& archiveFileId,
+                       const XrdSsiPb::Config& config) {
   std::string vid;
 
   // Verify that the Google Protocol Buffer header and linked library versions are compatible
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   cta::xrd::Request request;
-  cta::eos::Notification &notification = *(request.mutable_notification());
+  cta::eos::Notification& notification = *(request.mutable_notification());
 
   // Parse the command line arguments: fill the Notification fields
   fillNotification(notification, cmdLineArgs, archiveFileId);
@@ -124,15 +127,20 @@ void sendVerifyRequest(const CmdLineArgs &cmdLineArgs, const std::string &archiv
   cta_service.Send(request, response);
 
   // Handle responses
-  switch(response.type())
-  {
+  switch (response.type()) {
     using namespace cta::xrd;
 
-    case Response::RSP_SUCCESS:         std::cout << response.xattr().at("sys.cta.objectstore.id") << std::endl; break;
-    case Response::RSP_ERR_PROTOBUF:    throw XrdSsiPb::PbException(response.message_txt());
-    case Response::RSP_ERR_CTA:         throw std::runtime_error(response.message_txt());
-    case Response::RSP_ERR_USER:        throw std::runtime_error(response.message_txt());
-    default:                            throw XrdSsiPb::PbException("Invalid response type.");
+    case Response::RSP_SUCCESS:
+      std::cout << response.xattr().at("sys.cta.objectstore.id") << std::endl;
+      break;
+    case Response::RSP_ERR_PROTOBUF:
+      throw XrdSsiPb::PbException(response.message_txt());
+    case Response::RSP_ERR_CTA:
+      throw std::runtime_error(response.message_txt());
+    case Response::RSP_ERR_USER:
+      throw std::runtime_error(response.message_txt());
+    default:
+      throw XrdSsiPb::PbException("Invalid response type.");
   }
 
   // Delete all global objects allocated by libprotobuf
@@ -142,11 +150,11 @@ void sendVerifyRequest(const CmdLineArgs &cmdLineArgs, const std::string &archiv
 /*
  * Checks if the provided vid exists
  */
-void vidExists(const std::string &vid, const XrdSsiPb::Config &config) {
+void vidExists(const std::string& vid, const XrdSsiPb::Config& config) {
   auto serviceProviderPtr = std::make_unique<XrdSsiPbServiceType>(config);
   bool vidExists = CatalogueFetch::vidExists(vid, serviceProviderPtr);
 
-  if(!vidExists) {
+  if (!vidExists) {
     throw std::runtime_error("The provided --vid does not exist in the Catalogue.");
   }
 }
@@ -154,37 +162,39 @@ void vidExists(const std::string &vid, const XrdSsiPb::Config &config) {
 /*
  * Sends a Notification to the CTA XRootD SSI server
  */
-int exceptionThrowingMain(int argc, char *const *const argv)
-{
+int exceptionThrowingMain(int argc, char* const* const argv) {
   using namespace cta::cliTool;
 
   cta::cliTool::CmdLineArgs cmdLineArgs(argc, argv, StandaloneCliTool::CTA_VERIFY_FILE);
 
-  if(cmdLineArgs.m_help) { cmdLineArgs.printUsage(std::cout); exit(0); }
+  if (cmdLineArgs.m_help) {
+    cmdLineArgs.printUsage(std::cout);
+    exit(0);
+  }
 
   std::vector<std::string> archiveFileIds;
 
-  if((!cmdLineArgs.m_archiveFileId && !cmdLineArgs.m_archiveFileIds)) {
+  if ((!cmdLineArgs.m_archiveFileId && !cmdLineArgs.m_archiveFileIds)) {
     cmdLineArgs.printUsage(std::cout);
     std::cout << "Missing command-line option: --id or --filename must be provided" << std::endl;
     throw std::runtime_error("");
   }
 
-  if(!cmdLineArgs.m_vid) {
+  if (!cmdLineArgs.m_vid) {
     cmdLineArgs.printUsage(std::cout);
     std::cout << "Missing command-line option: --vid must be provided" << std::endl;
     throw std::runtime_error("");
   }
 
-  if(cmdLineArgs.m_archiveFileId) {
+  if (cmdLineArgs.m_archiveFileId) {
     const std::vector<std::string> ids = cta::utils::commaSeparatedStringToVector(cmdLineArgs.m_archiveFileId.value());
-    for (const auto &id : ids) {
+    for (const auto& id : ids) {
       archiveFileIds.push_back(id);
     }
   }
 
-  if(cmdLineArgs.m_archiveFileIds) {
-    for (const auto &id : cmdLineArgs.m_archiveFileIds.value()) {
+  if (cmdLineArgs.m_archiveFileIds) {
+    for (const auto& id : cmdLineArgs.m_archiveFileIds.value()) {
       archiveFileIds.push_back(id);
     }
   }
@@ -193,7 +203,7 @@ int exceptionThrowingMain(int argc, char *const *const argv)
 
   vidExists(cmdLineArgs.m_vid.value(), config);
 
-  for(const auto &archiveFileId : archiveFileIds) {
+  for (const auto& archiveFileId : archiveFileIds) {
     sendVerifyRequest(cmdLineArgs, archiveFileId, config);
   }
 
@@ -203,16 +213,20 @@ int exceptionThrowingMain(int argc, char *const *const argv)
 /*
  * Start here
  */
-int main(int argc, char *const *const argv) {
+int main(int argc, char* const* const argv) {
   try {
     return exceptionThrowingMain(argc, argv);
-  } catch (XrdSsiPb::PbException &ex) {
+  }
+  catch (XrdSsiPb::PbException& ex) {
     std::cerr << "Error in Google Protocol Buffers: " << ex.what() << std::endl;
-  } catch (XrdSsiPb::XrdSsiException &ex) {
+  }
+  catch (XrdSsiPb::XrdSsiException& ex) {
     std::cerr << "Error from XRootD SSI Framework: " << ex.what() << std::endl;
-  } catch (std::exception &ex) {
+  }
+  catch (std::exception& ex) {
     std::cerr << ex.what() << std::endl;
-  } catch (...) {
+  }
+  catch (...) {
     std::cerr << "Caught an unknown exception" << std::endl;
   }
 

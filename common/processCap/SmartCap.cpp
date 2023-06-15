@@ -21,27 +21,22 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::server::SmartCap::SmartCap() throw():
-  m_cap(nullptr) {
-}
+cta::server::SmartCap::SmartCap() throw() : m_cap(nullptr) {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::server::SmartCap::SmartCap(cap_t cap) throw():
-  m_cap(cap) {
-}
+cta::server::SmartCap::SmartCap(cap_t cap) throw() : m_cap(cap) {}
 
 //------------------------------------------------------------------------------
 // reset
 //------------------------------------------------------------------------------
 void cta::server::SmartCap::reset(cap_t cap) throw() {
   // If the new capability state is not the one already owned
-  if(cap != m_cap) {
-
+  if (cap != m_cap) {
     // If this smart pointer still owns a capability state then free it using
     // cap_free()
-    if(nullptr != m_cap) {
+    if (nullptr != m_cap) {
       cap_free(m_cap);
     }
 
@@ -53,7 +48,7 @@ void cta::server::SmartCap::reset(cap_t cap) throw() {
 //------------------------------------------------------------------------------
 // operator=
 //------------------------------------------------------------------------------
-cta::server::SmartCap &cta::server::SmartCap::operator=(SmartCap& obj) {
+cta::server::SmartCap& cta::server::SmartCap::operator=(SmartCap& obj) {
   reset(obj.release());
   return *this;
 }
@@ -77,7 +72,7 @@ cap_t cta::server::SmartCap::get() const throw() {
 //------------------------------------------------------------------------------
 cap_t cta::server::SmartCap::release() {
   // If this smart pointer does not own a capbility state
-  if(nullptr == m_cap) {
+  if (nullptr == m_cap) {
     cta::exception::Exception ex;
     ex.getMessage() << "Smart pointer does not own a capbility state";
     throw(ex);

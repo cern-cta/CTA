@@ -34,7 +34,6 @@ namespace wrapper {
  */
 class ConnWrapper {
 public:
-
   /**
    * Destructor.
    */
@@ -66,7 +65,7 @@ public:
    *
    * @param sql The SQL statement.
    */
-  virtual void executeNonQuery(const std::string &sql) = 0;
+  virtual void executeNonQuery(const std::string& sql) = 0;
 
   /**
    * Creates a prepared statement.
@@ -74,7 +73,7 @@ public:
    * @param sql The SQL statement.
    * @return The prepared statement.
    */
-  virtual std::unique_ptr<StmtWrapper> createStmt(const std::string &sql) = 0;
+  virtual std::unique_ptr<StmtWrapper> createStmt(const std::string& sql) = 0;
 
   /**
    * Commits the current transaction.
@@ -93,8 +92,8 @@ public:
    * @param tableName The table name to get the columns.
    * @return The map of types by name of all the columns for the given table in the database schema.
    */
-  virtual std::map<std::string, std::string> getColumns(const std::string &tableName) = 0;
-  
+  virtual std::map<std::string, std::string> getColumns(const std::string& tableName) = 0;
+
   /**
    * Returns the names of all the tables in the database schema in alphabetical
    * order.
@@ -103,8 +102,7 @@ public:
    * order.
    */
   virtual std::list<std::string> getTableNames() = 0;
-  
-  
+
   /**
    * Returns the names of all the indices in the database schema in alphabetical
    * order.
@@ -129,8 +127,8 @@ public:
    * @return The names of all the sequences in the database schema in
    * alphabetical order.
    */
-  virtual std::list<std::string> getSequenceNames()  = 0;
-  
+  virtual std::list<std::string> getSequenceNames() = 0;
+
   /**
    * Returns the names of all the triggers in the database schema in
    * alphabetical order.
@@ -141,8 +139,8 @@ public:
    * @return The names of all the triggers in the database schema in
    * alphabetical order.
    */
-  virtual std::list<std::string> getTriggerNames()  = 0;
-  
+  virtual std::list<std::string> getTriggerNames() = 0;
+
   /**
    * Returns the names of all the tables that have been set as PARALLEL
    * in alphabetical order.
@@ -154,7 +152,7 @@ public:
    * in alphabetical order. 
    */
   virtual std::list<std::string> getParallelTableNames() = 0;
-  
+
   /**
    * Returns the Constraint names of a given table in the database schema
    * 
@@ -164,8 +162,8 @@ public:
    * @param tableName the table name to get the constraint names from
    * @return the list of the names of the constraints that the given table has.
    */
-  virtual std::list<std::string> getConstraintNames(const std::string &tableName) = 0;
-  
+  virtual std::list<std::string> getConstraintNames(const std::string& tableName) = 0;
+
   /**
    *
    * Returns the stored procedure names of the database
@@ -176,7 +174,7 @@ public:
    * @return the list of the names of the stored procedures in the database
    */
   virtual std::list<std::string> getStoredProcedureNames() = 0;
-  
+
   /**
    * Returns the synonym names of the database
    * 
@@ -196,9 +194,9 @@ public:
    * @return the list of the names of the types in the database
    */
   virtual std::list<std::string> getTypeNames() = 0;
-  
-}; // class ConnWrapper
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+};  // class ConnWrapper
+
+}  // namespace wrapper
+}  // namespace rdbms
+}  // namespace cta

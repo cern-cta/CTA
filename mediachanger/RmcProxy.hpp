@@ -35,9 +35,8 @@ namespace mediachanger {
 /**
  * A SCSI media changer proxy.
  */
-class RmcProxy: public MediaChangerProxy {
+class RmcProxy : public MediaChangerProxy {
 public:
-
   /**
    * Constructor.
    *
@@ -47,10 +46,9 @@ public:
    * @parm maxRqstAttempts The maximum number of attempts a retriable RMC
    * request should be issued.
    */
-  RmcProxy(
-    const uint16_t rmcPort = RMC_PORT,
-    const uint32_t netTimeout = RMC_NET_TIMEOUT,
-    const uint32_t maxRqstAttempts = RMC_MAX_RQST_ATTEMPTS);
+  RmcProxy(const uint16_t rmcPort = RMC_PORT,
+           const uint32_t netTimeout = RMC_NET_TIMEOUT,
+           const uint32_t maxRqstAttempts = RMC_MAX_RQST_ATTEMPTS);
 
   /**
    * Destructor.
@@ -67,7 +65,7 @@ public:
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  void mountTapeReadOnly(const std::string &vid, const LibrarySlot &librarySlot) override;
+  void mountTapeReadOnly(const std::string& vid, const LibrarySlot& librarySlot) override;
 
   /**
    * Requests the media changer to mount of the specified tape for read/write
@@ -76,7 +74,7 @@ public:
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  void mountTapeReadWrite(const std::string &vid, const LibrarySlot &librarySlot) override;
+  void mountTapeReadWrite(const std::string& vid, const LibrarySlot& librarySlot) override;
 
   /** 
    * Requests the media changer to dismount of the specified tape from the
@@ -85,10 +83,9 @@ public:
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  void dismountTape(const std::string &vid, const LibrarySlot &librarySlot) override;
+  void dismountTape(const std::string& vid, const LibrarySlot& librarySlot) override;
 
 protected:
-
   /**
    * The size of buffer used to marshal or unmarshal RMC messages.
    */
@@ -117,7 +114,7 @@ protected:
    *
    * @return The socket-descriptor of the connection with the rmcd daemon.
    */
-  int connectToRmc() const ;
+  int connectToRmc() const;
 
   /**
    * Reads the header of an RMC_MAGIC message from the specified connection.
@@ -125,7 +122,7 @@ protected:
    * @param fd The file descriptor of the connection.
    * @return The message header.
    */
-  MessageHeader readRmcMsgHeader(const int fd) ;
+  MessageHeader readRmcMsgHeader(const int fd);
 
   /**
    * Sends the specified request to the rmcd daemon and receives the reply
@@ -135,34 +132,31 @@ protected:
    * @param maxAttempts The maximum number of retriable attempts.
    * @param rqstBody The request to be sent.
    */
-  template<typename T> void rmcSendRecvNbAttempts(const int maxAttempts,
-    const T &rqstBody) {
-    for(int attemptNb = 1; attemptNb <= maxAttempts; attemptNb++) {
+  template<typename T>
+  void rmcSendRecvNbAttempts(const int maxAttempts, const T& rqstBody) {
+    for (int attemptNb = 1; attemptNb <= maxAttempts; attemptNb++) {
       std::ostringstream rmcErrorStream;
       const int rmcRc = rmcSendRecv(rqstBody, rmcErrorStream);
-      switch(rmcRc) {
-      case 0: // Success
-        return;
-      case ERMCFASTR: // Fast retry
-        // If this was the last attempt
-        if(maxAttempts == attemptNb) {
-          cta::exception::Exception ex;
-          ex.getMessage() <<
-            "Received error from rmcd after several fast retries" <<
-            ": nbAttempts=" << attemptNb << " rmcErrorStream=" <<
-            rmcErrorStream.str();
-          throw ex;
-        }
+      switch (rmcRc) {
+        case 0:  // Success
+          return;
+        case ERMCFASTR:  // Fast retry
+          // If this was the last attempt
+          if (maxAttempts == attemptNb) {
+            cta::exception::Exception ex;
+            ex.getMessage() << "Received error from rmcd after several fast retries"
+                            << ": nbAttempts=" << attemptNb << " rmcErrorStream=" << rmcErrorStream.str();
+            throw ex;
+          }
 
-        // Pause a moment between attempts
-        sleep(1);
+          // Pause a moment between attempts
+          sleep(1);
 
-        continue;
-      default:
-        {
+          continue;
+        default: {
           cta::exception::Exception ex;
           ex.getMessage() << "Received error from rmcd: rmcRc=" << rmcRc;
-          if(!rmcErrorStream.str().empty()) {
+          if (!rmcErrorStream.str().empty()) {
             ex.getMessage() << " rmcErrorStream=" << rmcErrorStream.str();
           }
           throw ex;
@@ -179,8 +173,8 @@ protected:
    * within the reply from the rmcd daemon.
    * @param The RMC return code.
    */
-  template<typename T> int rmcSendRecv(const T &rqstBody,
-    std::ostringstream &rmcErrorStream) {
+  template<typename T>
+  int rmcSendRecv(const T& rqstBody, std::ostringstream& rmcErrorStream) {
     // Connect to rmcd and send request
     cta::SmartFd fd(connectToRmc());
     {
@@ -193,40 +187,37 @@ protected:
     // followed by a terminating RMC_RC reply
     const int maxERR_MSG = 10;
     int nbERR_MSG = 0;
-    while(true) {
+    while (true) {
       const MessageHeader header = readRmcMsgHeader(fd.get());
-      switch(header.reqType) { 
-      case RMC_RC:
-        return header.lenOrStatus;
-      case MSG_ERR:
-        nbERR_MSG++;
+      switch (header.reqType) {
+        case RMC_RC:
+          return header.lenOrStatus;
+        case MSG_ERR:
+          nbERR_MSG++;
 
-        if(maxERR_MSG < nbERR_MSG) {
+          if (maxERR_MSG < nbERR_MSG) {
+            cta::exception::Exception ex;
+            ex.getMessage() << "Reply from rmcd contains too many ERR_MSG messages"
+                               ": maxERR_MSG="
+                            << maxERR_MSG << " rmcErrorStream=" << rmcErrorStream.str();
+            throw ex;
+          }
+
+          if (nbERR_MSG > 1) {
+            rmcErrorStream << " ";
+          }
+
+          rmcErrorStream << handleMSG_ERR(header, fd.get());
+          break;
+        default: {
           cta::exception::Exception ex;
-          ex.getMessage() <<
-            "Reply from rmcd contains too many ERR_MSG messages"
-            ": maxERR_MSG=" << maxERR_MSG << " rmcErrorStream=" <<
-            rmcErrorStream.str();
+          ex.getMessage() << "First part of reply from rmcd has unexpected type"
+                             ": expected=RMC_RC or MSG_ERR actual="
+                          << rmcReplyTypeToStr(header.reqType);
           throw ex;
         }
-
-        if(nbERR_MSG > 1) {
-          rmcErrorStream << " ";
-        }
-
-        rmcErrorStream << handleMSG_ERR(header, fd.get());
-        break;
-      default:
-        {
-          cta::exception::Exception ex;
-          ex.getMessage() <<
-            "First part of reply from rmcd has unexpected type"
-            ": expected=RMC_RC or MSG_ERR actual=" <<
-            rmcReplyTypeToStr(header.reqType);
-          throw ex;
-        }
-      } // switch(header.reqType)
-    } // while(true)
+      }  // switch(header.reqType)
+    }    // while(true)
   }
 
   /**
@@ -244,9 +235,9 @@ protected:
    * @param fd The file descriptor of the connection with rmcd daemon.
    * @return The message contained within the MSG_ERR reply.
    */
-  std::string handleMSG_ERR(const MessageHeader &header, const int fd);
+  std::string handleMSG_ERR(const MessageHeader& header, const int fd);
 
-}; // class RmcProxy
+};  // class RmcProxy
 
-} // namespace mediachanger
-} // namespace cta
+}  // namespace mediachanger
+}  // namespace cta

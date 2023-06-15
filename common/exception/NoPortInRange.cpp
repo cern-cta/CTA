@@ -17,20 +17,15 @@
 
 #include "common/exception/NoPortInRange.hpp"
 
-
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-cta::exception::NoPortInRange::NoPortInRange(
-  const unsigned short lowPort,
-  const unsigned short highPort) :
-  cta::exception::Exception(),
-  m_lowPort(lowPort),
-  m_highPort(highPort)  {
-
+cta::exception::NoPortInRange::NoPortInRange(const unsigned short lowPort, const unsigned short highPort) :
+cta::exception::Exception(),
+m_lowPort(lowPort),
+m_highPort(highPort) {
   // Do nothing
 }
-
 
 //------------------------------------------------------------------------------
 // getLowPort()
@@ -38,7 +33,6 @@ cta::exception::NoPortInRange::NoPortInRange(
 unsigned short cta::exception::NoPortInRange::getLowPort() {
   return m_lowPort;
 }
-
 
 //------------------------------------------------------------------------------
 // getHighPort()

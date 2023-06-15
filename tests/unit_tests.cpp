@@ -22,9 +22,9 @@
 
 int main(int argc, char** argv) {
   // The unit tests use SQLite it must be initialized before they are run
-  if(SQLITE_OK != sqlite3_initialize()) {
+  if (SQLITE_OK != sqlite3_initialize()) {
     std::cerr << "Failed to initialize SQLite" << std::endl;
-    return 1; // Error
+    return 1;  // Error
   }
 
   // The following line must be executed to initialize Google Mock
@@ -42,11 +42,11 @@ int main(int argc, char** argv) {
 
   // The unit tests used SQLite and so it should shutodwn in order to release
   // its resources
-  if(SQLITE_OK != sqlite3_shutdown()) {
+  if (SQLITE_OK != sqlite3_shutdown()) {
     std::cerr << "Failed to shutdown SQLite" << std::endl;
-    return 1; // Error
+    return 1;  // Error
   }
-  
+
   ::google::protobuf::ShutdownProtobufLibrary();
 
   return ret;

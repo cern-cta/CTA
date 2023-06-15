@@ -30,8 +30,7 @@
 //------------------------------------------------------------------------------
 // getHostName
 //------------------------------------------------------------------------------
-std::string cta::System::getHostName()
-{
+std::string cta::System::getHostName() {
   // All this to get the hostname, thanks to C !
   int len = 64;
   char* hostname;
@@ -44,8 +43,7 @@ std::string cta::System::getHostName()
   if (gethostname(hostname, len) < 0) {
     // Test whether error is due to a name too long
     // The errno depends on the glibc version
-    if (EINVAL != errno &&
-        ENAMETOOLONG != errno) {
+    if (EINVAL != errno && ENAMETOOLONG != errno) {
       free(hostname);
       cta::exception::Errnum e(errno);
       e.getMessage() << "gethostname error";
@@ -54,31 +52,28 @@ std::string cta::System::getHostName()
     // So the name was too long
     while (hostname[len - 1] != 0) {
       len *= 2;
-      char *hostnameLonger = (char*) realloc(hostname, len);
+      char* hostnameLonger = (char*) realloc(hostname, len);
       if (0 == hostnameLonger) {
         free(hostname);
         cta::exception::Errnum e(ENOMEM);
         e.getMessage() << "Could not allocate memory for hostname";
         throw e;
-
       }
       hostname = hostnameLonger;
       memset(hostname, 0, len);
       if (gethostname(hostname, len) < 0) {
         // Test whether error is due to a name too long
         // The errno depends on the glibc version
-        if (EINVAL != errno &&
-            ENAMETOOLONG != errno) {
+        if (EINVAL != errno && ENAMETOOLONG != errno) {
           free(hostname);
           cta::exception::Errnum e(errno);
-          e.getMessage() << "Could not get hostname"
-                         <<  strerror(errno);
+          e.getMessage() << "Could not get hostname" << strerror(errno);
           throw e;
         }
       }
     }
   }
-  std::string res(hostname);   // copy the string
+  std::string res(hostname);  // copy the string
   free(hostname);
   return res;
 }
@@ -86,8 +81,7 @@ std::string cta::System::getHostName()
 //------------------------------------------------------------------------------
 // porttoi
 //------------------------------------------------------------------------------
-int cta::System::porttoi(char* str)
-   {
+int cta::System::porttoi(char* str) {
   char* dp = str;
   errno = 0;
   int iport = strtoul(str, &dp, 0);
@@ -98,9 +92,7 @@ int cta::System::porttoi(char* str)
   }
   if ((iport > 65535) || (iport < 0)) {
     cta::exception::Errnum e(errno);
-    e.getMessage()
-      << "Invalid port value : " << iport
-      << ". Must be < 65535 and > 0." << std::endl;
+    e.getMessage() << "Invalid port value : " << iport << ". Must be < 65535 and > 0." << std::endl;
     throw e;
   }
   return iport;
@@ -109,11 +101,11 @@ int cta::System::porttoi(char* str)
 //------------------------------------------------------------------------------
 // setUserAndGroup
 //------------------------------------------------------------------------------
-void cta::System::setUserAndGroup(const std::string &userName, const std::string &groupName) {
-  const std::string task = std::string("set user name of process to ") + userName + " and group name of process to " +
-    groupName;
-  struct passwd *pwd = nullptr; // password structure pointer
-  struct group  *grp = nullptr; // group structure pointer
+void cta::System::setUserAndGroup(const std::string& userName, const std::string& groupName) {
+  const std::string task =
+    std::string("set user name of process to ") + userName + " and group name of process to " + groupName;
+  struct passwd* pwd = nullptr;  // password structure pointer
+  struct group* grp = nullptr;   // group structure pointer
 
   // Save original values
   const uid_t ruid = getuid();
@@ -142,18 +134,18 @@ void cta::System::setUserAndGroup(const std::string &userName, const std::string
   // Verify consistency
   if (grp->gr_gid != pwd->pw_gid) {
     cta::exception::Exception e;
-    e.getMessage() << "Failed to " << task << ": Inconsistent password file. The group ID of user " << userName <<
-      " should be " << grp->gr_gid << "(" << groupName << "), but is " << pwd->pw_gid;
+    e.getMessage() << "Failed to " << task << ": Inconsistent password file. The group ID of user " << userName
+                   << " should be " << grp->gr_gid << "(" << groupName << "), but is " << pwd->pw_gid;
     throw e;
   }
   // Undo group privilege
-  if (setregid (egid, rgid) < 0) {
+  if (setregid(egid, rgid) < 0) {
     cta::exception::Exception e;
     e.getMessage() << "Failed to " << task << ": Unable to undo group privilege";
     throw e;
   }
   // Undo user privilege
-  if (setreuid (euid, ruid) < 0) {
+  if (setreuid(euid, ruid) < 0) {
     cta::exception::Exception e;
     e.getMessage() << "Failed to " << task << ": Unable to undo user privilege";
     throw e;
@@ -161,8 +153,9 @@ void cta::System::setUserAndGroup(const std::string &userName, const std::string
   // set the effective privileges
   if (setegid(pwd->pw_gid) < 0) {
     cta::exception::Exception e;
-    e.getMessage() << "Failed to " << task << ": Unable to set effective group ID to " << pwd->pw_gid << ". "
-      "You may want to check that the suid bit is set properly";
+    e.getMessage() << "Failed to " << task << ": Unable to set effective group ID to " << pwd->pw_gid
+                   << ". "
+                      "You may want to check that the suid bit is set properly";
     throw e;
   }
   if (seteuid(pwd->pw_uid) < 0) {

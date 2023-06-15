@@ -27,25 +27,24 @@ namespace cta {
 namespace postgresscheddb {
 
 class RetrieveJob : public SchedulerDatabase::RetrieveJob {
- friend class cta::PostgresSchedDB;
+  friend class cta::PostgresSchedDB;
 
- public:
+public:
+  RetrieveJob();
 
-   RetrieveJob();
+  void asyncSetSuccessful() override;
 
-   void asyncSetSuccessful() override;
+  void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
 
-   void failTransfer(const std::string &failureReason, log::LogContext &lc) override;
+  void failReport(const std::string& failureReason, log::LogContext& lc) override;
 
-   void failReport(const std::string &failureReason, log::LogContext &lc) override;
+  void abort(const std::string& abortReason, log::LogContext& lc) override;
 
-   void abort(const std::string &abortReason, log::LogContext &lc) override;
+  void fail() override;
 
-   void fail() override;
-
-   uint64_t m_mountId = 0;
-   postgresscheddb::RetrieveRequest::RetrieveReqRepackInfo  m_repackInfo;
+  uint64_t m_mountId = 0;
+  postgresscheddb::RetrieveRequest::RetrieveReqRepackInfo m_repackInfo;
 };
 
-} //namespace postgresscheddb
-} //namespace cta
+}  //namespace postgresscheddb
+}  //namespace cta

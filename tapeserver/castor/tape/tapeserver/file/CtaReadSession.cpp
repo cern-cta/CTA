@@ -27,27 +27,28 @@ namespace castor {
 namespace tape {
 namespace tapeFile {
 
-CtaReadSession::CtaReadSession(tapeserver::drive::DriveInterface &drive,
-  const tapeserver::daemon::VolumeInfo &volInfo, const bool useLbp)
-  : ReadSession(drive, volInfo, useLbp) {
+CtaReadSession::CtaReadSession(tapeserver::drive::DriveInterface& drive,
+                               const tapeserver::daemon::VolumeInfo& volInfo,
+                               const bool useLbp) :
+ReadSession(drive, volInfo, useLbp) {
   m_drive.rewind();
   m_drive.disableLogicalBlockProtection();
   {
     VOL1 vol1;
-    m_drive.readExactBlock(reinterpret_cast<void *>(&vol1), sizeof(vol1),
-      "[ReadSession::ReadSession()] - Reading VOL1");
+    m_drive.readExactBlock(reinterpret_cast<void*>(&vol1), sizeof(vol1), "[ReadSession::ReadSession()] - Reading VOL1");
     switch (vol1.getLBPMethod()) {
       case SCSI::logicBlockProtectionMethod::CRC32C:
         m_detectedLbp = true;
         if (m_useLbp) {
           m_drive.enableCRC32CLogicalBlockProtectionReadOnly();
-        } else {
+        }
+        else {
           m_drive.disableLogicalBlockProtection();
         }
         break;
       case SCSI::logicBlockProtectionMethod::ReedSolomon:
         throw cta::exception::Exception("In ReadSession::ReadSession(): "
-            "ReedSolomon LBP method not supported");
+                                        "ReedSolomon LBP method not supported");
       case SCSI::logicBlockProtectionMethod::DoNotUse:
         m_drive.disableLogicalBlockProtection();
         m_detectedLbp = false;
@@ -61,11 +62,11 @@ CtaReadSession::CtaReadSession(tapeserver::drive::DriveInterface &drive,
   m_drive.rewind();
   {
     VOL1 vol1;
-    m_drive.readExactBlock(reinterpret_cast<void *>(&vol1), sizeof(vol1),
-      "[ReadSession::ReadSession()] - Reading VOL1");
+    m_drive.readExactBlock(reinterpret_cast<void*>(&vol1), sizeof(vol1), "[ReadSession::ReadSession()] - Reading VOL1");
     try {
       vol1.verify();
-    } catch (std::exception &e) {
+    }
+    catch (std::exception& e) {
       throw TapeFormatError(e.what());
     }
     HeaderChecker::checkVOL1(vol1, volInfo.vid);

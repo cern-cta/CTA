@@ -30,7 +30,6 @@ namespace mediachanger {
  */
 class LibrarySlotParser {
 public:
-
   /**
    * Parses the specified string representation of a tape library slot and
    * creates the corresponding object.
@@ -42,10 +41,9 @@ public:
    *
    * @param str The string representation of the library slot.
    */
-  static LibrarySlot *parse(const std::string &str);
+  static LibrarySlot* parse(const std::string& str);
 
 private:
-
   /**
    * Gets the type of the specified string representation of a tape library
    * slot.
@@ -60,8 +58,7 @@ private:
    * @param str The string representation of the tape library slot.
    * @return The type of the library slot.
    */
-  static cta::mediachanger::TapeLibraryType getLibrarySlotType(
-    const std::string &str);
+  static cta::mediachanger::TapeLibraryType getLibrarySlotType(const std::string& str);
 
   /**
    * Returns true if the type of the specified tape library slot is SCSI.
@@ -69,7 +66,7 @@ private:
    * @param str The string representation of the tape library slot.
    * @return True if the type of the library slot is dummy.
    */
-  static bool isDummy(const std::string &str);
+  static bool isDummy(const std::string& str);
 
   /**
    * Returns true if the type of the specified tape library slot is SCSI.
@@ -77,7 +74,7 @@ private:
    * @param str The string representation of the tape library slot.
    * @return True if the type of the library slot is SCSI.
    */
-  static bool isScsi(const std::string &str); 
+  static bool isScsi(const std::string& str);
 
   /**
    * Parses the specified string representation of a library slot taking into
@@ -87,27 +84,24 @@ private:
    * @param str The string representation of the tape library slot.
    * @return The newly created library slot.
    */
-  static cta::mediachanger::LibrarySlot *parse(
-    const cta::mediachanger::TapeLibraryType libraryType,
-    const std::string &str);
+  static cta::mediachanger::LibrarySlot* parse(const cta::mediachanger::TapeLibraryType libraryType,
+                                               const std::string& str);
 
   /**
    * Parses the specified string representation of a dummy library slot.
    *
    * @param str The string representation of the tape library slot.
    */
-  static cta::mediachanger::DummyLibrarySlot * parseDummyLibrarySlot(
-    const std::string &str);
+  static cta::mediachanger::DummyLibrarySlot* parseDummyLibrarySlot(const std::string& str);
 
   /**
    * Parses the specified string representation of a SCSI library slot.
    *
    * @param str The string representation of the tape library slot.
    */
-  static cta::mediachanger::ScsiLibrarySlot *parseScsiLibrarySlot(
-    const std::string &str);
+  static cta::mediachanger::ScsiLibrarySlot* parseScsiLibrarySlot(const std::string& str);
 
-}; // class LibrarySlot
+};  // class LibrarySlot
 
-} // namespace mediachanger
-} // namespace cta
+}  // namespace mediachanger
+}  // namespace cta

@@ -28,18 +28,20 @@ namespace cta {
 
 namespace catalogue {
 
-class DummyDiskInstanceCatalogue: public DiskInstanceCatalogue {
+class DummyDiskInstanceCatalogue : public DiskInstanceCatalogue {
 public:
   DummyDiskInstanceCatalogue() = default;
   ~DummyDiskInstanceCatalogue() override = default;
 
-  void createDiskInstance(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const std::string &comment) override;
+  void createDiskInstance(const common::dataStructures::SecurityIdentity& admin,
+                          const std::string& name,
+                          const std::string& comment) override;
 
-  void deleteDiskInstance(const std::string &name) override;
+  void deleteDiskInstance(const std::string& name) override;
 
-  void modifyDiskInstanceComment(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const std::string &comment) override;
+  void modifyDiskInstanceComment(const common::dataStructures::SecurityIdentity& admin,
+                                 const std::string& name,
+                                 const std::string& comment) override;
 
   std::list<common::dataStructures::DiskInstance> getAllDiskInstances() const override;
 

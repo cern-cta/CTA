@@ -43,23 +43,49 @@ namespace unitTests {
 INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_SchemaTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
 INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_AdminUserTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
 INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_DiskSystemTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
-INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_DiskInstanceTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
-INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_DiskInstanceSpaceTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
-INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_VirtualOrganizationTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
-INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_ArchiveRouteTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
+INSTANTIATE_TEST_CASE_P(DbConfigFile,
+                        cta_catalogue_DiskInstanceTest,
+                        ::testing::Values(&g_catalogueFactoryForUnitTests));
+INSTANTIATE_TEST_CASE_P(DbConfigFile,
+                        cta_catalogue_DiskInstanceSpaceTest,
+                        ::testing::Values(&g_catalogueFactoryForUnitTests));
+INSTANTIATE_TEST_CASE_P(DbConfigFile,
+                        cta_catalogue_VirtualOrganizationTest,
+                        ::testing::Values(&g_catalogueFactoryForUnitTests));
+INSTANTIATE_TEST_CASE_P(DbConfigFile,
+                        cta_catalogue_ArchiveRouteTest,
+                        ::testing::Values(&g_catalogueFactoryForUnitTests));
 INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_MediaTypeTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
-INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_StorageClassTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
+INSTANTIATE_TEST_CASE_P(DbConfigFile,
+                        cta_catalogue_StorageClassTest,
+                        ::testing::Values(&g_catalogueFactoryForUnitTests));
 INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_TapePoolTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
 INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_TapeTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
-INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_MountPolicyTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
-INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_RequesterActivityMountRuleTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
-INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_RequesterMountRuleTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
-INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_RequesterGroupMountRuleTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
-INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_LogicalLibraryTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
+INSTANTIATE_TEST_CASE_P(DbConfigFile,
+                        cta_catalogue_MountPolicyTest,
+                        ::testing::Values(&g_catalogueFactoryForUnitTests));
+INSTANTIATE_TEST_CASE_P(DbConfigFile,
+                        cta_catalogue_RequesterActivityMountRuleTest,
+                        ::testing::Values(&g_catalogueFactoryForUnitTests));
+INSTANTIATE_TEST_CASE_P(DbConfigFile,
+                        cta_catalogue_RequesterMountRuleTest,
+                        ::testing::Values(&g_catalogueFactoryForUnitTests));
+INSTANTIATE_TEST_CASE_P(DbConfigFile,
+                        cta_catalogue_RequesterGroupMountRuleTest,
+                        ::testing::Values(&g_catalogueFactoryForUnitTests));
+INSTANTIATE_TEST_CASE_P(DbConfigFile,
+                        cta_catalogue_LogicalLibraryTest,
+                        ::testing::Values(&g_catalogueFactoryForUnitTests));
 INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_TapeFileTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
-INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_FileRecycleLogTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
-INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_DriveConfigTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
+INSTANTIATE_TEST_CASE_P(DbConfigFile,
+                        cta_catalogue_FileRecycleLogTest,
+                        ::testing::Values(&g_catalogueFactoryForUnitTests));
+INSTANTIATE_TEST_CASE_P(DbConfigFile,
+                        cta_catalogue_DriveConfigTest,
+                        ::testing::Values(&g_catalogueFactoryForUnitTests));
 INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_DriveStateTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
-INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_ArchiveFileTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
+INSTANTIATE_TEST_CASE_P(DbConfigFile,
+                        cta_catalogue_ArchiveFileTest,
+                        ::testing::Values(&g_catalogueFactoryForUnitTests));
 
 }  // namespace unitTests

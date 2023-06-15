@@ -74,10 +74,10 @@ private:
   const TpconfigLine& m_driveConfig;
   /** Possible outcomes of the previous session/child process.  */
   enum class PreviousSession {
-    Initiating, ///< The process is the first to run after daemon startup. A cleanup will be run beforehand.
-    Up,         ///< The previous process unmounted the tape properly and hardware is ready for another session.
-    Down,       ///< The previous session tried and failed to unmount the tape, and reported such instance.
-    Crashed     ///< The previous process was killed or crashed. The next session will be a cleanup.
+    Initiating,  ///< The process is the first to run after daemon startup. A cleanup will be run beforehand.
+    Up,          ///< The previous process unmounted the tape properly and hardware is ready for another session.
+    Down,        ///< The previous session tried and failed to unmount the tape, and reported such instance.
+    Crashed      ///< The previous process was killed or crashed. The next session will be a cleanup.
   };
   /** Representation of the outcome of the previous session/child process. */
   PreviousSession m_previousSession = PreviousSession::Initiating;
@@ -177,6 +177,6 @@ private:
 
 // TODO: remove/merge ChildProcess.
 
-}
-}
-} // namespace cta::tape::daemon
+}  // namespace daemon
+}  // namespace tape
+}  // namespace cta

@@ -31,7 +31,6 @@ namespace daemon {
  * The contents of the cta.conf file to be used by a DataTransferSession.
  */
 struct DataTransferConfig {
-
   /**
    * The size in bytes of a data-transfer buffer.
    */
@@ -111,12 +110,12 @@ struct DataTransferConfig {
    * Access Order
    */
   bool useRAO;
-  
+
   /**
    * The name of the RAO LTO algorithm to use
    */
   std::string raoLtoAlgorithm;
-  
+
   /**
    * The options that can be used by the raoAlgorithm
    */
@@ -130,8 +129,8 @@ struct DataTransferConfig {
   /**
    * The path to the operator provided encyption control script (or empty string)
    */
-  std::string externalEncryptionKeyScript;  
-    
+  std::string externalEncryptionKeyScript;
+
   /**
    * The path to the operator provided EOS free space fetch script (or empty string)
    */
@@ -163,9 +162,9 @@ struct DataTransferConfig {
    */
   DataTransferConfig() noexcept;
 
-}; // DataTransferConfig
+};  // DataTransferConfig
 
-} // namespace daemon
-} // namespace tapeserver
-} // namespace tape
-} // namespace castor
+}  // namespace daemon
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

@@ -28,7 +28,7 @@ namespace exception {
  * No Such Object exception
  */
 class NoSuchObject : public cta::exception::Exception {
- public:
+public:
   /**
    * default constructor
    */

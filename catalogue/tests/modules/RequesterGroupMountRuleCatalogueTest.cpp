@@ -29,11 +29,10 @@
 
 namespace unitTests {
 
-cta_catalogue_RequesterGroupMountRuleTest::cta_catalogue_RequesterGroupMountRuleTest()
-  : m_dummyLog("dummy", "dummy"),
-    m_admin(CatalogueTestUtils::getAdmin()),
-    m_diskInstance(CatalogueTestUtils::getDiskInstance()) {
-}
+cta_catalogue_RequesterGroupMountRuleTest::cta_catalogue_RequesterGroupMountRuleTest() :
+m_dummyLog("dummy", "dummy"),
+m_admin(CatalogueTestUtils::getAdmin()),
+m_diskInstance(CatalogueTestUtils::getDiskInstance()) {}
 
 void cta_catalogue_RequesterGroupMountRuleTest::SetUp() {
   cta::log::LogContext dummyLc(m_dummyLog);
@@ -48,7 +47,7 @@ TEST_P(cta_catalogue_RequesterGroupMountRuleTest, modifyRequesterGroupMountRuleP
   ASSERT_TRUE(m_catalogue->RequesterGroupMountRule()->getRequesterGroupMountRules().empty());
 
   auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   std::string mountPolicyName = mountPolicyToAdd.name;
@@ -57,13 +56,13 @@ TEST_P(cta_catalogue_RequesterGroupMountRuleTest, modifyRequesterGroupMountRuleP
 
   auto anotherMountPolicy = CatalogueTestUtils::getMountPolicy1();
   anotherMountPolicy.name = anotherMountPolicyName;
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,anotherMountPolicy);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, anotherMountPolicy);
 
   const std::string comment = "Create mount rule for requester";
   const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterGroupName = "requester_group_name";
   m_catalogue->RequesterGroupMountRule()->createRequesterGroupMountRule(m_admin, mountPolicyName, diskInstanceName,
-    requesterGroupName, comment);
+                                                                        requesterGroupName, comment);
 
   {
     const auto rules = m_catalogue->RequesterGroupMountRule()->getRequesterGroupMountRules();
@@ -80,8 +79,8 @@ TEST_P(cta_catalogue_RequesterGroupMountRuleTest, modifyRequesterGroupMountRuleP
     ASSERT_EQ(diskInstanceName, rule.diskInstance);
   }
 
-  m_catalogue->RequesterGroupMountRule()->modifyRequesterGroupMountRulePolicy(m_admin, diskInstanceName,
-    requesterGroupName, anotherMountPolicyName);
+  m_catalogue->RequesterGroupMountRule()->modifyRequesterGroupMountRulePolicy(
+    m_admin, diskInstanceName, requesterGroupName, anotherMountPolicyName);
 
   {
     const auto rules = m_catalogue->RequesterGroupMountRule()->getRequesterGroupMountRules();
@@ -103,14 +102,15 @@ TEST_P(cta_catalogue_RequesterGroupMountRuleTest, modifyRequesterGroupMountRuleP
 
   auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterGroupName = "requester_group_name";
 
-  ASSERT_THROW(m_catalogue->RequesterGroupMountRule()->modifyRequesterGroupMountRulePolicy(m_admin, diskInstanceName,
-    requesterGroupName, mountPolicyName), cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->RequesterGroupMountRule()->modifyRequesterGroupMountRulePolicy(
+                 m_admin, diskInstanceName, requesterGroupName, mountPolicyName),
+               cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_RequesterGroupMountRuleTest, modifyRequesterGroupMountRuleComment) {
@@ -118,14 +118,14 @@ TEST_P(cta_catalogue_RequesterGroupMountRuleTest, modifyRequesterGroupMountRuleC
 
   auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string comment = "Create mount rule for requester";
   const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterGroupName = "requester_group_name";
   m_catalogue->RequesterGroupMountRule()->createRequesterGroupMountRule(m_admin, mountPolicyName, diskInstanceName,
-    requesterGroupName, comment);
+                                                                        requesterGroupName, comment);
 
   {
     const auto rules = m_catalogue->RequesterGroupMountRule()->getRequesterGroupMountRules();
@@ -144,7 +144,7 @@ TEST_P(cta_catalogue_RequesterGroupMountRuleTest, modifyRequesterGroupMountRuleC
 
   const std::string modifiedComment = "ModifiedComment";
   m_catalogue->RequesterGroupMountRule()->modifyRequesterGroupMountRuleComment(m_admin, diskInstanceName,
-    requesterGroupName, modifiedComment);
+                                                                               requesterGroupName, modifiedComment);
 
   {
     const auto rules = m_catalogue->RequesterGroupMountRule()->getRequesterGroupMountRules();
@@ -166,10 +166,11 @@ TEST_P(cta_catalogue_RequesterGroupMountRuleTest, modifyRequesterGroupMountRuleC
 
   const std::string diskInstanceName = "disk_instance";
   const std::string requesterGroupName = "requester_group_name";
-  const std::string comment  = "Comment";
+  const std::string comment = "Comment";
 
-  ASSERT_THROW(m_catalogue->RequesterGroupMountRule()->modifyRequesterGroupMountRuleComment(m_admin, diskInstanceName,
-    requesterGroupName, comment), cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->RequesterGroupMountRule()->modifyRequesterGroupMountRuleComment(
+                 m_admin, diskInstanceName, requesterGroupName, comment),
+               cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_RequesterGroupMountRuleTest, createRequesterGroupMountRule) {
@@ -177,17 +178,16 @@ TEST_P(cta_catalogue_RequesterGroupMountRuleTest, createRequesterGroupMountRule)
 
   auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string comment = "Create mount rule for requester group";
   const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterGroupName = "requester_group";
   m_catalogue->RequesterGroupMountRule()->createRequesterGroupMountRule(m_admin, mountPolicyName, diskInstanceName,
-    requesterGroupName, comment);
+                                                                        requesterGroupName, comment);
 
-  const auto rules =
-    m_catalogue->RequesterGroupMountRule()->getRequesterGroupMountRules();
+  const auto rules = m_catalogue->RequesterGroupMountRule()->getRequesterGroupMountRules();
   ASSERT_EQ(1, rules.size());
 
   const cta::common::dataStructures::RequesterGroupMountRule rule = rules.front();
@@ -206,17 +206,17 @@ TEST_P(cta_catalogue_RequesterGroupMountRuleTest, createRequesterGroupMountRule_
 
   auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
-
 
   const std::string comment = "Create mount rule for requester group";
   const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterGroupName = "requester_group";
   m_catalogue->RequesterGroupMountRule()->createRequesterGroupMountRule(m_admin, mountPolicyName, diskInstanceName,
-    requesterGroupName, comment);
-  ASSERT_THROW(m_catalogue->RequesterGroupMountRule()->createRequesterGroupMountRule(m_admin, mountPolicyName,
-    diskInstanceName, requesterGroupName, comment), cta::exception::UserError);
+                                                                        requesterGroupName, comment);
+  ASSERT_THROW(m_catalogue->RequesterGroupMountRule()->createRequesterGroupMountRule(
+                 m_admin, mountPolicyName, diskInstanceName, requesterGroupName, comment),
+               cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_RequesterGroupMountRuleTest, createRequesterGroupMountRule_non_existent_mount_policy) {
@@ -228,23 +228,25 @@ TEST_P(cta_catalogue_RequesterGroupMountRuleTest, createRequesterGroupMountRule_
   const std::string mountPolicyName = "non_existent_mount_policy";
   const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterGroupName = "requester_group";
-  ASSERT_THROW(m_catalogue->RequesterGroupMountRule()->createRequesterGroupMountRule(m_admin, mountPolicyName,
-    diskInstanceName, requesterGroupName, comment), cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->RequesterGroupMountRule()->createRequesterGroupMountRule(
+                 m_admin, mountPolicyName, diskInstanceName, requesterGroupName, comment),
+               cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_RequesterGroupMountRuleTest, createRequesterGroupMountRule_non_existent_disk_instance) {
   ASSERT_TRUE(m_catalogue->RequesterGroupMountRule()->getRequesterGroupMountRules().empty());
-  
+
   auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
 
   const std::string comment = "Create mount rule for requester group";
   const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterGroupName = "requester_group";
 
-  ASSERT_THROW(m_catalogue->RequesterGroupMountRule()->createRequesterGroupMountRule(m_admin, mountPolicyName,
-    diskInstanceName, requesterGroupName, comment), cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->RequesterGroupMountRule()->createRequesterGroupMountRule(
+                 m_admin, mountPolicyName, diskInstanceName, requesterGroupName, comment),
+               cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_RequesterGroupMountRuleTest, deleteRequesterGroupMountRule) {
@@ -252,14 +254,14 @@ TEST_P(cta_catalogue_RequesterGroupMountRuleTest, deleteRequesterGroupMountRule)
 
   auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string comment = "Create mount rule for requester group";
   const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterGroupName = "requester_group";
   m_catalogue->RequesterGroupMountRule()->createRequesterGroupMountRule(m_admin, mountPolicyName, diskInstanceName,
-    requesterGroupName, comment);
+                                                                        requesterGroupName, comment);
 
   const auto rules = m_catalogue->RequesterGroupMountRule()->getRequesterGroupMountRules();
   ASSERT_EQ(1, rules.size());
@@ -282,7 +284,8 @@ TEST_P(cta_catalogue_RequesterGroupMountRuleTest, deleteRequesterGroupMountRule)
 TEST_P(cta_catalogue_RequesterGroupMountRuleTest, deleteRequesterGroupMountRule_non_existent) {
   ASSERT_TRUE(m_catalogue->RequesterGroupMountRule()->getRequesterGroupMountRules().empty());
   ASSERT_THROW(m_catalogue->RequesterGroupMountRule()->deleteRequesterGroupMountRule("non_existent_disk_isntance",
-    "non_existent_requester_group"), cta::exception::UserError);
+                                                                                     "non_existent_requester_group"),
+               cta::exception::UserError);
 }
 
 }  // namespace unitTests

@@ -30,7 +30,6 @@ namespace mediachanger {
  */
 class LibrarySlot {
 protected:
-
   /**
    * Constructor.
    *
@@ -39,7 +38,6 @@ protected:
   LibrarySlot(const TapeLibraryType libraryType);
 
 public:
-
   /**
    * Destructor.
    */
@@ -50,14 +48,14 @@ public:
    *
    * @return The clone.
    */
-  virtual LibrarySlot *clone() = 0;
+  virtual LibrarySlot* clone() = 0;
 
   /**
    * Gets the string representation of this tape library slot.
    *
    * @return The string representation of this tape library slot.
    */
-  const std::string &str() const;
+  const std::string& str() const;
 
   /**
    * Returns the type of the tape library to which this library slot refers.
@@ -65,14 +63,12 @@ public:
   TapeLibraryType getLibraryType() const;
 
 protected:
-
   /**
    * The string representation of this tape library slot.
    */
   std::string m_str;
 
 private:
-
   /**
    * The library type of the slot.
    */
@@ -88,9 +84,9 @@ private:
    * @param slot The tape-library slot.
    * @return The type of the tape library.
    */
-  static TapeLibraryType getLibraryTypeOfSlot(const std::string &slot);
+  static TapeLibraryType getLibraryTypeOfSlot(const std::string& slot);
 
-}; // class LibrarySlot
+};  // class LibrarySlot
 
-} // namespace mediachanger
-} // namespace cta
+}  // namespace mediachanger
+}  // namespace cta

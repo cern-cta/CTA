@@ -23,15 +23,17 @@
 
 #include "common/exception/Exception.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta {
+namespace objectstore {
 
 /**
  * Interface to the backend stores that we can use.
  */
 
 class Backend {
- public:
+public:
   virtual ~Backend() {}
+
   /**
    * Create an object (and possibly the necessary locking structures)
    * @param name name of the object
@@ -76,7 +78,7 @@ class Backend {
    * RAII class holding locks
    */
   class ScopedLock {
-   public:
+  public:
     /**
      * Explicitely releases the lock
      */
@@ -93,14 +95,14 @@ class Backend {
    * @param name name of the object
    * @return pointer to a newly created scoped lock object (for RAII)
    */
-  virtual ScopedLock * lockShared(const std::string& name, uint64_t timeout_us = 0) = 0;
+  virtual ScopedLock* lockShared(const std::string& name, uint64_t timeout_us = 0) = 0;
 
   /**
    * Locks the object exclusively
    * @param name name of the object
    * @return pointer to a newly created scoped lock object (for RAII)
    */
-  virtual ScopedLock * lockExclusive(const std::string& name, uint64_t timeout_us = 0) = 0;
+  virtual ScopedLock* lockExclusive(const std::string& name, uint64_t timeout_us = 0) = 0;
 
   /// A collection of exceptions allowing the user to find out which step failed.
   CTA_GENERATE_EXCEPTION_CLASS(WrongPreviousOwner);
@@ -117,7 +119,7 @@ class Backend {
    * A base class handling asynchronous creation of objects.
    */
   class AsyncCreator {
-   public:
+  public:
     /**
      * Waits for completion (success) of throws exception (failure).
      */
@@ -134,7 +136,7 @@ class Backend {
    *
    * @return pointer to a newly created AsyncUpdater (for RAII)
    */
-  virtual AsyncCreator * asyncCreate(const std::string & name, const std::string & value) = 0;
+  virtual AsyncCreator* asyncCreate(const std::string& name, const std::string& value) = 0;
 
   /**
    * A base class handling asynchronous sequence of lock exclusive, fetch, call user
@@ -142,7 +144,7 @@ class Backend {
    * (success or exception) will be returned via the wait() function call.
    */
   class AsyncUpdater {
-   public:
+  public:
     /**
      * Waits for completion (success) of throws exception (failure).
      */
@@ -161,8 +163,8 @@ class Backend {
    * parameter and return the updated value for commit.
    * @return pointer to a newly created AsyncUpdater (for RAII)
    */
-  virtual AsyncUpdater * asyncUpdate(const std::string & name, std::function <std::string(const std::string &)> & update) = 0;
-
+  virtual AsyncUpdater* asyncUpdate(const std::string& name,
+                                    std::function<std::string(const std::string&)>& update) = 0;
 
   /**
    * A base class handling asynchronous sequence of lock exclusive, delete.
@@ -170,7 +172,7 @@ class Backend {
    * (success or exception) will be returned via the wait() function call.
    */
   class AsyncDeleter {
-   public:
+  public:
     /**
      * Waits for completion (success) of throws exception (failure).
      */
@@ -189,7 +191,7 @@ class Backend {
    * @param name The name of the object to be deleted.
    * @return pointer to a newly created AsyncDeleter
    */
-  virtual AsyncDeleter * asyncDelete(const std::string & name) = 0;
+  virtual AsyncDeleter* asyncDelete(const std::string& name) = 0;
 
   /**
    * A base class handling asynchronous fetch (lockfree).
@@ -197,7 +199,7 @@ class Backend {
    * (success or exception) will be returned via the wait() function call.
    */
   class AsyncLockfreeFetcher {
-   public:
+  public:
     /**
      * Waits for completion (success) of throws exception (failure).
      * The return value is the content of the object.
@@ -217,13 +219,13 @@ class Backend {
    * @param name The name of the object to be deleted.
    * @return pointer to a newly created AsyncDeleter
    */
-  virtual AsyncLockfreeFetcher * asyncLockfreeFetch(const std::string & name) = 0;
+  virtual AsyncLockfreeFetcher* asyncLockfreeFetch(const std::string& name) = 0;
 
   /**
    * Base class for the representation of the parameters of the BackendStore.
    */
   class Parameters {
-   public:
+  public:
     /**
      * Turns parameter class into string representation
      * @return the string representation
@@ -246,7 +248,7 @@ class Backend {
    * Returns a type specific representation of the parameters
    * @return pointer to the newly created representation.
    */
-  virtual Parameters * getParams() = 0;
+  virtual Parameters* getParams() = 0;
 
   /**
    * Return the name of the class. Mostly usefull in tests

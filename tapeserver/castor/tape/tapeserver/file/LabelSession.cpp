@@ -24,12 +24,13 @@ namespace castor {
 namespace tape {
 namespace tapeFile {
 
-void LabelSession::label(tapeserver::drive::DriveInterface *drive, const std::string &vid, const bool lbp)  {
+void LabelSession::label(tapeserver::drive::DriveInterface* drive, const std::string& vid, const bool lbp) {
   VOL1 vol1;
   if (lbp) {
     // we only support crc32c LBP method
     vol1.fill(vid, SCSI::logicBlockProtectionMethod::CRC32C);
-  } else {
+  }
+  else {
     vol1.fill(vid, SCSI::logicBlockProtectionMethod::DoNotUse);
   }
   drive->writeBlock(&vol1, sizeof(vol1));

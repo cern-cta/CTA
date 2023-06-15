@@ -14,7 +14,7 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
- 
+
 #include "utils.hpp"
 #include "common/exception/Exception.hpp"
 
@@ -34,39 +34,38 @@ void read(const std::string& strPath, std::string& strValu) {
   if (strPath.empty()) {
     throw cta::exception::Exception("Path is an empty string");
   }
-  
+
   std::ifstream ifs(strPath);
-  
+
   if (!ifs.is_open()) {
     std::ostringstream osExMsg;
     osExMsg << "Could not open the file: " << strPath;
     throw cta::exception::Exception(osExMsg.str());
   }
-  
+
   strValu.assign(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>());
 }
+
 /**
  * https://cryptopp.com/wiki/Base64Decoder
  */
 void decode(const std::string& strEncoded, std::string& strDecoded) {
- CryptoPP::StringSource ss(strEncoded, true,
-   new CryptoPP::Base64Decoder(
-       new CryptoPP::StringSink(strDecoded)
-     ) // Base64Decoder
- ); // StringSourc
+  CryptoPP::StringSource ss(strEncoded, true,
+                            new CryptoPP::Base64Decoder(new CryptoPP::StringSink(strDecoded))  // Base64Decoder
+  );                                                                                           // StringSourc
 }
+
 /**
  * https://cryptopp.com/wiki/Base64Encoder
  */
 void encode(const std::string& strDecoded, std::string& strEncoded) {
   CryptoPP::StringSource ss(strDecoded, true,
-      new CryptoPP::Base64Encoder(
-          new CryptoPP::StringSink(strEncoded), false // no new line
-      ) // Base64Encoder
-  ); // StringSource
+                            new CryptoPP::Base64Encoder(new CryptoPP::StringSink(strEncoded), false  // no new line
+                                                        )                                            // Base64Encoder
+  );                                                                                                 // StringSource
 }
 
-} // namespace utils
-} // namespace grpc
-} // namespace frontend
-} // namespace cta
+}  // namespace utils
+}  // namespace grpc
+}  // namespace frontend
+}  // namespace cta

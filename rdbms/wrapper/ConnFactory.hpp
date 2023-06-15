@@ -30,7 +30,6 @@ namespace wrapper {
  */
 class ConnFactory {
 public:
-
   /**
    * Destructor.
    */
@@ -43,8 +42,8 @@ public:
    */
   virtual std::unique_ptr<ConnWrapper> create() = 0;
 
-}; // class ConnFactory
+};  // class ConnFactory
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+}  // namespace wrapper
+}  // namespace rdbms
+}  // namespace cta

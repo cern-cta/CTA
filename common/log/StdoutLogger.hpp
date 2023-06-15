@@ -25,9 +25,8 @@ namespace log {
 /**
  * Class implementaing the API of the CASTOR logging system.
  */
-class StdoutLogger: public Logger {
+class StdoutLogger : public Logger {
 public:
-
   /**
    * Constructor
    *
@@ -36,7 +35,7 @@ public:
    * message.
    * @param simple If true, then logging header is not included.
    */
-  StdoutLogger(const std::string &hostName, const std::string &programName, bool simple = false);
+  StdoutLogger(const std::string& hostName, const std::string& programName, bool simple = false);
 
   /**
    * Destructor.
@@ -49,10 +48,9 @@ public:
    * No further calls to operator() should be made after calling this
    * method until the call to fork() has completed.
    */
-  void prepareForFork() ;
+  void prepareForFork();
 
 protected:
-
   /**
    * Writes the specified msg to the underlying logging system.
    *
@@ -68,12 +66,12 @@ protected:
    * esponsibility of the concrete sub-class
    * @param body The body of the message to be logged.
    */
-  void writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) override;
+  void writeMsgToUnderlyingLoggingSystem(const std::string& header, const std::string& body) override;
 
 private:
-    bool m_simple;
+  bool m_simple;
 
-}; // class StringLogger
+};  // class StringLogger
 
-} // namespace log
-} // namespace cta
+}  // namespace log
+}  // namespace cta

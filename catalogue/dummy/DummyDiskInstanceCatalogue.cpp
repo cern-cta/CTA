@@ -26,22 +26,24 @@
 namespace cta {
 namespace catalogue {
 
-void DummyDiskInstanceCatalogue::createDiskInstance(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &comment) {
+void DummyDiskInstanceCatalogue::createDiskInstance(const common::dataStructures::SecurityIdentity& admin,
+                                                    const std::string& name,
+                                                    const std::string& comment) {
   m_diskInstances[name] = {name, comment, common::dataStructures::EntryLog(), common::dataStructures::EntryLog()};
 }
 
-void DummyDiskInstanceCatalogue::deleteDiskInstance(const std::string &name) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+void DummyDiskInstanceCatalogue::deleteDiskInstance(const std::string& name) {
+  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
-void DummyDiskInstanceCatalogue::modifyDiskInstanceComment(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &comment) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+void DummyDiskInstanceCatalogue::modifyDiskInstanceComment(const common::dataStructures::SecurityIdentity& admin,
+                                                           const std::string& name,
+                                                           const std::string& comment) {
+  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
 std::list<common::dataStructures::DiskInstance> DummyDiskInstanceCatalogue::getAllDiskInstances() const {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
 }  // namespace catalogue

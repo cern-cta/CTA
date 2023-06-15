@@ -25,28 +25,24 @@ namespace wrapper {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-StmtWrapper::StmtWrapper(const std::string &sql):
-  m_sql(sql),
-  m_paramNameToIdx(sql) {
-}
+StmtWrapper::StmtWrapper(const std::string& sql) : m_sql(sql), m_paramNameToIdx(sql) {}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-StmtWrapper::~StmtWrapper() {
-}
+StmtWrapper::~StmtWrapper() {}
 
 //------------------------------------------------------------------------------
 // getSql
 //------------------------------------------------------------------------------
-const std::string &StmtWrapper::getSql() const {
+const std::string& StmtWrapper::getSql() const {
   return m_sql;
 }
 
 //------------------------------------------------------------------------------
 // getParamIdx
 //------------------------------------------------------------------------------
-uint32_t StmtWrapper::getParamIdx(const std::string &paramName) const {
+uint32_t StmtWrapper::getParamIdx(const std::string& paramName) const {
   return m_paramNameToIdx.getIdx(paramName);
 }
 
@@ -60,14 +56,15 @@ std::string StmtWrapper::getSqlForException(const std::string::size_type maxSqlL
 //------------------------------------------------------------------------------
 // bindBool
 //------------------------------------------------------------------------------
-void StmtWrapper::bindBool(const std::string &paramName, const std::optional<bool> &paramValue) {
-  if(paramValue) {
+void StmtWrapper::bindBool(const std::string& paramName, const std::optional<bool>& paramValue) {
+  if (paramValue) {
     bindString(paramName, paramValue.value() ? std::string("1") : std::string("0"));
-  } else {
+  }
+  else {
     bindString(paramName, std::nullopt);
   }
 }
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+}  // namespace wrapper
+}  // namespace rdbms
+}  // namespace cta

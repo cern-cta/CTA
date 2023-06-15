@@ -20,7 +20,10 @@
 #include "JSONObject.hpp"
 #include <json-c/json.h>
 
-namespace cta { namespace utils { namespace json { namespace object { 
+namespace cta {
+namespace utils {
+namespace json {
+namespace object {
 
 /**
  * This class allows to build the inherited object or to generate the
@@ -40,7 +43,7 @@ public:
    * @param json the json to build the object from
    * @throws JSONObjectException if the json provided does not allow to build this object
    */
-  virtual void buildFromJSON(const std::string & json);
+  virtual void buildFromJSON(const std::string& json);
   /**
    * Return the inherited object expected JSON structure allowing to set its attributes
    * via the buildFromJSON() method
@@ -53,9 +56,10 @@ public:
    */
   virtual std::string getJSON();
   virtual ~JSONCObject();
+
 protected:
-  json_object * m_jsonObject = nullptr;
-  
+  json_object* m_jsonObject = nullptr;
+
   /**
    * Initialize the JSON representation of this object
    * 
@@ -69,15 +73,15 @@ protected:
    * Destroy then initialize the JSON-C representation
    */
   void reinitializeJSONCObject();
-  
+
   /**
    * This method allows to get the value from the JSON-C representation of the object
    * @params key the key to get the object from it
    * T is the type of the value associated to the key
    */
   template<typename T>
-  T jsonGetValue(const std::string & key);
-  
+  T jsonGetValue(const std::string& key);
+
   /**
    * This method allows to create or set an object on this JSON-C object representation
    * @param key the key to create
@@ -85,15 +89,17 @@ protected:
    * T is the type of the value associated to the key
    */
   template<typename T>
-  void jsonSetValue(const std::string & key, const T & value);
-  
+  void jsonSetValue(const std::string& key, const T& value);
+
   /**
    * Returns a pointer to the JSON-C representation of the object associated to the key passed in parameter
    * @param key the key to return the JSON-C representation of the object associated to it
    * @return the JSON-C representation of the object associated to the key passed in parameter
    */
-  json_object * getJSONObject(const std::string & key);
-  
+  json_object* getJSONObject(const std::string& key);
 };
 
-}}}}
+}  // namespace object
+}  // namespace json
+}  // namespace utils
+}  // namespace cta

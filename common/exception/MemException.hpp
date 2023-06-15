@@ -24,9 +24,11 @@ namespace exception {
 /**
  * A generic exception thrown when there is something wrong with the memory
  */
-class MemException: public cta::exception::Exception {
-  public:
-    MemException(const std::string & what): Exception(what) {}
-    virtual ~MemException() {}
+class MemException : public cta::exception::Exception {
+public:
+  MemException(const std::string& what) : Exception(what) {}
+
+  virtual ~MemException() {}
 };
-}}
+}  // namespace exception
+}  // namespace cta

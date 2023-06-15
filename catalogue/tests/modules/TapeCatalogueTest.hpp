@@ -35,7 +35,7 @@
 
 namespace unitTests {
 
-class cta_catalogue_TapeTest : public ::testing::TestWithParam<cta::catalogue::CatalogueFactory **> {
+class cta_catalogue_TapeTest : public ::testing::TestWithParam<cta::catalogue::CatalogueFactory**> {
 public:
   cta_catalogue_TapeTest();
 
@@ -55,8 +55,8 @@ protected:
   const cta::catalogue::CreateTapeAttributes m_tape2;
   const cta::catalogue::CreateTapeAttributes m_tape3;
 
-  std::map<std::string, cta::common::dataStructures::Tape> tapeListToMap(
-    const std::list<cta::common::dataStructures::Tape> &listOfTapes);
+  std::map<std::string, cta::common::dataStructures::Tape>
+    tapeListToMap(const std::list<cta::common::dataStructures::Tape>& listOfTapes);
 };
 
 }  // namespace unitTests

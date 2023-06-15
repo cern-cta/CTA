@@ -28,8 +28,8 @@ namespace common {
 namespace dataStructures {
 struct DiskInstance;
 struct SecurityIdentity;
-} // namespace dataStructures
-} // namespace common
+}  // namespace dataStructures
+}  // namespace common
 
 namespace catalogue {
 
@@ -41,16 +41,18 @@ class DiskInstanceCatalogue {
 public:
   virtual ~DiskInstanceCatalogue() = default;
 
-  virtual void createDiskInstance(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const std::string &comment) = 0;
+  virtual void createDiskInstance(const common::dataStructures::SecurityIdentity& admin,
+                                  const std::string& name,
+                                  const std::string& comment) = 0;
 
-  virtual void deleteDiskInstance(const std::string &name) = 0;
+  virtual void deleteDiskInstance(const std::string& name) = 0;
 
-  virtual void modifyDiskInstanceComment(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const std::string &comment) = 0;
+  virtual void modifyDiskInstanceComment(const common::dataStructures::SecurityIdentity& admin,
+                                         const std::string& name,
+                                         const std::string& comment) = 0;
 
   virtual std::list<common::dataStructures::DiskInstance> getAllDiskInstances() const = 0;
 };
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

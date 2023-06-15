@@ -19,12 +19,13 @@
 
 #include <xroot_plugins/XrdCtaStream.hpp>
 
-namespace cta { namespace xrd {
+namespace cta {
+namespace xrd {
 
 /*!
  * Stream object which implements "tapepool ls" command
  */
-class ArchiveRouteLsStream: public XrdCtaStream{
+class ArchiveRouteLsStream : public XrdCtaStream {
 public:
   /*!
    * Constructor
@@ -33,42 +34,43 @@ public:
    * @param[in]    catalogue     CTA Catalogue
    * @param[in]    scheduler     CTA Scheduler
    */
-  ArchiveRouteLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
+  ArchiveRouteLsStream(const frontend::AdminCmdStream& requestMsg,
+                       cta::catalogue::Catalogue& catalogue,
+                       cta::Scheduler& scheduler);
 
 private:
   /*!
    * Can we close the stream?
    */
-  virtual bool isDone() const {
-    return m_archiveRouteList.empty();
-  }
+  virtual bool isDone() const { return m_archiveRouteList.empty(); }
 
   /*!
    * Fill the buffer
    */
-  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
+  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf);
 
-  std::list<cta::common::dataStructures::ArchiveRoute> m_archiveRouteList;    //!< List of archive routes from the catalogue
+  std::list<cta::common::dataStructures::ArchiveRoute>
+    m_archiveRouteList;  //!< List of archive routes from the catalogue
 
-  static constexpr const char* const LOG_SUFFIX  = "ArchiveRouteLsStream";    //!< Identifier for log messages
+  static constexpr const char* const LOG_SUFFIX = "ArchiveRouteLsStream";  //!< Identifier for log messages
 };
 
-
-ArchiveRouteLsStream::ArchiveRouteLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
-  XrdCtaStream(catalogue, scheduler),
-  m_archiveRouteList(catalogue.ArchiveRoute()->getArchiveRoutes())
-{
+ArchiveRouteLsStream::ArchiveRouteLsStream(const frontend::AdminCmdStream& requestMsg,
+                                           cta::catalogue::Catalogue& catalogue,
+                                           cta::Scheduler& scheduler) :
+XrdCtaStream(catalogue, scheduler),
+m_archiveRouteList(catalogue.ArchiveRoute()->getArchiveRoutes()) {
   using namespace cta::admin;
 
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "ArchiveRouteLsStream() constructor");
 }
 
-int ArchiveRouteLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
-  for(bool is_buffer_full = false; !m_archiveRouteList.empty() && !is_buffer_full; m_archiveRouteList.pop_front()) {
+int ArchiveRouteLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
+  for (bool is_buffer_full = false; !m_archiveRouteList.empty() && !is_buffer_full; m_archiveRouteList.pop_front()) {
     Data record;
 
-    auto &ar      = m_archiveRouteList.front();
-    auto  ar_item = record.mutable_arls_item();
+    auto& ar = m_archiveRouteList.front();
+    auto ar_item = record.mutable_arls_item();
 
     ar_item->set_storage_class(ar.storageClassName);
     ar_item->set_copy_number(ar.copyNb);
@@ -86,4 +88,5 @@ int ArchiveRouteLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
   return streambuf->Size();
 }
 
-}} // namespace cta::xrd
+}  // namespace xrd
+}  // namespace cta

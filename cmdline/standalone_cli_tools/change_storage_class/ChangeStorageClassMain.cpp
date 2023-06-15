@@ -15,10 +15,8 @@
  *               submit itself to any jurisdiction.
  */
 
-
 #include <sstream>
 #include <iostream>
-
 
 #include "cmdline/standalone_cli_tools/change_storage_class/ChangeStorageClass.hpp"
 #include "common/utils/utils.hpp"
@@ -27,9 +25,9 @@
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int main(const int argc, char *const *const argv) {
+int main(const int argc, char* const* const argv) {
   std::string hostName = std::getenv("HOSTNAME");
-  if(hostName.empty()) {
+  if (hostName.empty()) {
     hostName = "UNKNOWN";
   }
 

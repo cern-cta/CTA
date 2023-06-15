@@ -27,12 +27,13 @@ class RdbmsCatalogue;
 
 class OracleVirtualOrganizationCatalogue : public RdbmsVirtualOrganizationCatalogue {
 public:
-  OracleVirtualOrganizationCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
-    RdbmsCatalogue* rdbmsCatalogue);
+  OracleVirtualOrganizationCatalogue(log::Logger& log,
+                                     std::shared_ptr<rdbms::ConnPool> connPool,
+                                     RdbmsCatalogue* rdbmsCatalogue);
   ~OracleVirtualOrganizationCatalogue() override = default;
 
 private:
-  uint64_t getNextVirtualOrganizationId(rdbms::Conn &conn) override;
+  uint64_t getNextVirtualOrganizationId(rdbms::Conn& conn) override;
 };  // class OracleFileRecycleLogCatalogue
 
 }  // namespace catalogue

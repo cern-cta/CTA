@@ -15,7 +15,6 @@
  *               submit itself to any jurisdiction.
  */
 
-
 #include <sstream>
 #include <iostream>
 
@@ -29,12 +28,13 @@
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int main(const int argc, char *const *const argv) {
+int main(const int argc, char* const* const argv) {
   char buf[256];
   std::string hostName;
-  if(gethostname(buf, sizeof(buf))) {
+  if (gethostname(buf, sizeof(buf))) {
     hostName = "UNKNOWN";
-  } else {
+  }
+  else {
     buf[sizeof(buf) - 1] = '\0';
     hostName = buf;
   }

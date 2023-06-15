@@ -36,7 +36,6 @@ class ConnPool;
  */
 class Conn {
 public:
-
   /**
    * Constructor.
    */
@@ -50,19 +49,19 @@ public:
    * @param pool The database connection pool to which the connection
    * should be returned.
    */
-  Conn(std::unique_ptr<ConnAndStmts> connAndStmts, ConnPool *const pool);
+  Conn(std::unique_ptr<ConnAndStmts> connAndStmts, ConnPool* const pool);
 
   /**
    * Deletion of the copy constructor.
    */
-  Conn(Conn &) = delete;
+  Conn(Conn&) = delete;
 
   /**
    * Move constructor.
    *
    * @param other The other object.
    */
-  Conn(Conn &&other);
+  Conn(Conn&& other);
 
   /**
    * Destructor.
@@ -81,7 +80,7 @@ public:
   /**
    * Deletion of the copy assignment operator.
    */
-  Conn &operator=(const Conn &) = delete;
+  Conn& operator=(const Conn&) = delete;
 
   /**
    * Move assignment operator.
@@ -89,14 +88,14 @@ public:
    * @param rhs The object on the right-hand side of the operator.
    * @return This object.
    */
-  Conn &operator=(Conn &&rhs);
+  Conn& operator=(Conn&& rhs);
 
   /**
    * Thrown when a requested autocommit mode is not supported.
    */
-  struct AutocommitModeNotSupported: public exception::Exception {
-    AutocommitModeNotSupported(const std::string &context = "", const bool embedBacktrace = true):
-      Exception(context, embedBacktrace) {}
+  struct AutocommitModeNotSupported : public exception::Exception {
+    AutocommitModeNotSupported(const std::string& context = "", const bool embedBacktrace = true) :
+    Exception(context, embedBacktrace) {}
   };
 
   /**
@@ -121,14 +120,14 @@ public:
    * @param sql The SQL statement.
    * @return The prepared statement.
    */
-  Stmt createStmt(const std::string &sql);
+  Stmt createStmt(const std::string& sql);
 
   /**
    * Executes the statement.
    *
    * @param sql The SQL statement.
    */
-  void executeNonQuery(const std::string &sql);
+  void executeNonQuery(const std::string& sql);
 
   /**
    * Commits the current transaction.
@@ -139,7 +138,7 @@ public:
    * Rolls back the current transaction.
    */
   void rollback();
-  
+
   /**
    * Returns the names of all the column and their type as a map for the given 
    * table in the database schema.
@@ -147,7 +146,7 @@ public:
    * @param tableName The table name to get the columns.
    * @return The map of types by name of all the columns for the given table in the database schema.
    */
-  std::map<std::string, std::string> getColumns(const std::string &tableName) const;
+  std::map<std::string, std::string> getColumns(const std::string& tableName) const;
 
   /**
    * Returns the names of all the tables in the database schema in alphabetical
@@ -157,7 +156,7 @@ public:
    * order.
    */
   std::list<std::string> getTableNames() const;
-  
+
   /**
    * Returns the names of all the indices  in the database schema in alphabetical
    * order.
@@ -191,8 +190,8 @@ public:
    * alphabetical order.
    */
   std::list<std::string> getSequenceNames();
-  
-    /**
+
+  /**
    * Returns the names of all the triggers in the database schema in
    * alphabetical order.
    *
@@ -213,9 +212,9 @@ public:
    * 
    * @return the names of all the tables that have been set as PARALLEL
    * in alphabetical order. 
-   */  
+   */
   std::list<std::string> getParallelTableNames();
-  
+
   /**
    * Returns the Constraint names of a given table in the database schema
    * 
@@ -225,7 +224,7 @@ public:
    * @param tableName the table name to get the constraint names from
    * @return the list of the names of the constraints that the given table has.
    */
-  std::list<std::string> getConstraintNames(const std::string &tableName);
+  std::list<std::string> getConstraintNames(const std::string& tableName);
 
   /**
    * Returns the stored procedure names of the database
@@ -236,7 +235,7 @@ public:
    * @return the list of the names of the stored procedures in the database
    */
   std::list<std::string> getStoredProcedureNames();
-  
+
   /**
    * Returns the synonym names of the database
    * 
@@ -246,7 +245,7 @@ public:
    * @return the list of the names of the synonyms in the database
    */
   std::list<std::string> getSynonymNames();
-  
+
   /**
    * Returns the type names of the database
    * 
@@ -256,18 +255,15 @@ public:
    * @return the list of the names of the types in the database
    */
   std::list<std::string> getTypeNames();
-  
+
   /**
    * Get a pointer to the connection wrapper implementation
    *
    * Required for Postgres PQescapeByteaConn()
    */
-  wrapper::ConnWrapper *getConnWrapperPtr() {
-    return m_connAndStmts->conn.get();
-  }
+  wrapper::ConnWrapper* getConnWrapperPtr() { return m_connAndStmts->conn.get(); }
 
 private:
-
   /**
    * The database connection and its pool of prepared statements.
    */
@@ -276,9 +272,9 @@ private:
   /**
    * The database connection pool to which the m_conn should be returned.
    */
-  ConnPool *m_pool;
+  ConnPool* m_pool;
 
-}; // class Conn
+};  // class Conn
 
-} // namespace rdbms
-} // namespace cta
+}  // namespace rdbms
+}  // namespace cta

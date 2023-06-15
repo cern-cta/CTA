@@ -37,6 +37,6 @@ public:
 private:
   pthread_rwlock_t m_lock;
 };
-  
-} // namespace threading
-} // namespace cta
+
+}  // namespace threading
+}  // namespace cta

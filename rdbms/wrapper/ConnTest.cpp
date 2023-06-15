@@ -25,12 +25,9 @@ namespace unitTests {
 
 class cta_rdbms_wrapper_ConnTest : public ::testing::Test {
 protected:
+  virtual void SetUp() {}
 
-  virtual void SetUp() {
-  }
-
-  virtual void TearDown() {
-  }
+  virtual void TearDown() {}
 };
 
 TEST_F(cta_rdbms_wrapper_ConnTest, createSameTableInTwoSeparateInMemoryDatabases) {
@@ -68,4 +65,4 @@ TEST_F(cta_rdbms_wrapper_ConnTest, createSameTableInTwoSeparateInMemoryDatabases
   }
 }
 
-} // namespace unitTests
+}  // namespace unitTests

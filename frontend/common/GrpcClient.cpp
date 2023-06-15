@@ -20,20 +20,14 @@
 namespace eos {
 namespace client {
 
-
-std::unique_ptr<GrpcClient>
-GrpcClient::Create(std::string endpoint, std::string token)
-{
+std::unique_ptr<GrpcClient> GrpcClient::Create(std::string endpoint, std::string token) {
   std::unique_ptr<eos::client::GrpcClient> p(
-    new eos::client::GrpcClient(grpc::CreateChannel(endpoint, grpc::InsecureChannelCredentials()))
-  );
+    new eos::client::GrpcClient(grpc::CreateChannel(endpoint, grpc::InsecureChannelCredentials())));
   p->set_token(token);
   return p;
 }
 
-
-eos::rpc::MDResponse GrpcClient::GetMD(eos::rpc::TYPE type, uint64_t id, const std::string &path)
-{
+eos::rpc::MDResponse GrpcClient::GetMD(eos::rpc::TYPE type, uint64_t id, const std::string& path) {
   eos::rpc::MDRequest request;
 
   request.set_type(type);
@@ -45,18 +39,20 @@ eos::rpc::MDResponse GrpcClient::GetMD(eos::rpc::TYPE type, uint64_t id, const s
   grpc::CompletionQueue cq;
 
   auto tag = nextTag();
-  std::unique_ptr<grpc::ClientAsyncReader<eos::rpc::MDResponse>> rpc(
-    stub_->AsyncMD(&context, request, &cq, tag));
+  std::unique_ptr<grpc::ClientAsyncReader<eos::rpc::MDResponse>> rpc(stub_->AsyncMD(&context, request, &cq, tag));
 
   eos::rpc::MDResponse response;
-  while(true) {
-    void *got_tag;
+  while (true) {
+    void* got_tag;
     bool ok = false;
     bool ret = cq.Next(&got_tag, &ok);
-    if(!ret || !ok || got_tag != tag) break;
+    if (!ret || !ok || got_tag != tag) {
+      break;
+    }
     rpc->Read(&response, tag);
   }
   return response;
 }
 
-}} // namespace eos::client
+}  // namespace client
+}  // namespace eos

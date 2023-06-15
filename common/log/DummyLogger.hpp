@@ -31,9 +31,8 @@ namespace log {
  * during unit testing means that no logs will actually be written to a log
  * file.
  */
-class DummyLogger: public Logger {
+class DummyLogger : public Logger {
 public:
-
   /**
    * Constructor
    *
@@ -41,7 +40,7 @@ public:
    * @param programName The name of the program to be prepended to every log
    * message.
    */
-  DummyLogger(const std::string &hostName, const std::string &programName);
+  DummyLogger(const std::string& hostName, const std::string& programName);
 
   /**
    * Destructor.
@@ -54,10 +53,9 @@ public:
    * No further calls to operator() should be made after calling this
    * method until the call to fork() has completed.
    */
-  void prepareForFork() ;
-  
-protected:
+  void prepareForFork();
 
+protected:
   /**
    * Writes the specified msg to the underlying logging system.
    *
@@ -73,10 +71,9 @@ protected:
    * esponsibility of the concrete sub-class
    * @param body The body of the message to be logged.
    */
-  void writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) override;
+  void writeMsgToUnderlyingLoggingSystem(const std::string& header, const std::string& body) override;
 
-}; // class DummyLogger
+};  // class DummyLogger
 
-} // namespace log
-} // namespace cta
-
+}  // namespace log
+}  // namespace cta

@@ -21,17 +21,20 @@
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "EnterpriseRAOAlgorithmFactory.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace rao {
 
 class EnterpriseRAOAlgorithmFactory;
-  
+
 /**
  * This class represents an EnterpriseRAOAlgorithm. 
  */
-class EnterpriseRAOAlgorithm : public RAOAlgorithm{
+class EnterpriseRAOAlgorithm : public RAOAlgorithm {
 public:
   friend EnterpriseRAOAlgorithmFactory;
-  
+
   virtual ~EnterpriseRAOAlgorithm();
 
   /**
@@ -40,24 +43,27 @@ public:
    * @param jobs the jobs representing the files we want to perform the RAO on
    * @return the vector of the indexes of the jobs passed in parameters rearranged by the RAO query
    */
-  std::vector<uint64_t> performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob>> & jobs) override;
-  
+  std::vector<uint64_t> performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs) override;
+
   std::string getName() const override;
-  
+
 private:
   /**
    * Constructs an EnterpriseRAOAlgorithm
    * @param drive the drive in order to call its RAO via its DriveInterface
    * @param maxFilesSupported the maximum number of files supported by the drive to perform the RAO
    */
-  EnterpriseRAOAlgorithm(castor::tape::tapeserver::drive::DriveInterface * drive, const uint64_t maxFilesSupported);
-  
+  EnterpriseRAOAlgorithm(castor::tape::tapeserver::drive::DriveInterface* drive, const uint64_t maxFilesSupported);
+
   //Interface to the drive
-  castor::tape::tapeserver::drive::DriveInterface * m_drive;
+  castor::tape::tapeserver::drive::DriveInterface* m_drive;
   //Maximum number of files supported by the drive to perform the RAO
   uint64_t m_maxFilesSupported;
-  
+
   const uint32_t c_blockSize = 262144;
 };
 
-}}}}
+}  // namespace rao
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

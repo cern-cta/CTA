@@ -32,7 +32,7 @@ namespace tapeFile {
 
 class ReadSession;
 
-class FileReader{
+class FileReader {
 public:
   /**
     * Destructor of the FileReader. It will release the lock on the read session.
@@ -54,7 +54,7 @@ public:
     * @param size: size of the buffer
     * @return The amount of data actually copied. Zero at end of file.
     */
-  virtual size_t readNextDataBlock(void *data, const size_t size) = 0;
+  virtual size_t readNextDataBlock(void* data, const size_t size) = 0;
 
   /**
     * Returns the LBP access mode.
@@ -72,17 +72,17 @@ protected:
     * @param fileInfo: information about the file we would like to read
     * @param positioningMode: method used when positioning (see the PositioningMode enum)
     */
-  FileReader(const std::unique_ptr<ReadSession> &rs, const cta::RetrieveJob &fileToRecall);
+  FileReader(const std::unique_ptr<ReadSession>& rs, const cta::RetrieveJob& fileToRecall);
 
   /**
     * Move throught the headers to the block to read using Fseq Delta increments.
     */
-  virtual void positionByFseq(const cta::RetrieveJob &fileToRecall) = 0;
+  virtual void positionByFseq(const cta::RetrieveJob& fileToRecall) = 0;
 
   /**
     * Move throught the headers to the blocks to read using the ID of the block.
     */
-  virtual void positionByBlockID(const cta::RetrieveJob &fileToRecall) = 0;
+  virtual void positionByBlockID(const cta::RetrieveJob& fileToRecall) = 0;
 
   /**
     * Block size in Bytes of the current file
@@ -92,7 +92,7 @@ protected:
   /**
     * Session to which we are attached to
     */
-  const std::unique_ptr<ReadSession> &m_session;
+  const std::unique_ptr<ReadSession>& m_session;
 
   /**
     * What kind of command we use to position ourself on the tape (fseq or blockid)
@@ -112,7 +112,7 @@ private:
     * As usual, exception is thrown if anything goes wrong.
     * @param fileInfo: all relevant information passed by the stager about the file.
     */
-  void position(const cta::RetrieveJob &fileToRecall);
+  void position(const cta::RetrieveJob& fileToRecall);
 };
 
 }  // namespace tapeFile

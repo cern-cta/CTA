@@ -31,37 +31,29 @@ RequesterActivityMountRule::RequesterActivityMountRule() {}
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool RequesterActivityMountRule::operator==(const RequesterActivityMountRule &rhs) const {
-  return diskInstance==rhs.diskInstance
-    && name==rhs.name
-    && activityRegex==rhs.activityRegex
-    && mountPolicy==rhs.mountPolicy
-    && creationLog==rhs.creationLog
-    && lastModificationLog==rhs.lastModificationLog
-    && comment==rhs.comment;
+bool RequesterActivityMountRule::operator==(const RequesterActivityMountRule& rhs) const {
+  return diskInstance == rhs.diskInstance && name == rhs.name && activityRegex == rhs.activityRegex &&
+         mountPolicy == rhs.mountPolicy && creationLog == rhs.creationLog &&
+         lastModificationLog == rhs.lastModificationLog && comment == rhs.comment;
 }
 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool RequesterActivityMountRule::operator!=(const RequesterActivityMountRule &rhs) const {
+bool RequesterActivityMountRule::operator!=(const RequesterActivityMountRule& rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const RequesterActivityMountRule &obj) {
-  os << "(diskInstance=" << obj.diskInstance
-     << " name=" << obj.name
-     << " activityRegex=" << obj.activityRegex
-     << " mountPolicy=" << obj.mountPolicy
-     << " creationLog=" << obj.creationLog
-     << " lastModificationLog=" << obj.lastModificationLog
-     << " comment=" << obj.comment << ")";
+std::ostream& operator<<(std::ostream& os, const RequesterActivityMountRule& obj) {
+  os << "(diskInstance=" << obj.diskInstance << " name=" << obj.name << " activityRegex=" << obj.activityRegex
+     << " mountPolicy=" << obj.mountPolicy << " creationLog=" << obj.creationLog
+     << " lastModificationLog=" << obj.lastModificationLog << " comment=" << obj.comment << ")";
   return os;
 }
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

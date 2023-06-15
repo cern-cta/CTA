@@ -33,17 +33,16 @@ namespace dataStructures {
  * the request in the system 
  */
 struct RetrieveJob {
-
   RetrieveJob();
 
-  bool operator==(const RetrieveJob &rhs) const;
+  bool operator==(const RetrieveJob& rhs) const;
 
-  bool operator!=(const RetrieveJob &rhs) const;
+  bool operator!=(const RetrieveJob& rhs) const;
 
   RetrieveRequest request;
   uint64_t fileSize;
-  std::map<std::string,std::pair<uint32_t,TapeFile>> tapeCopies;
-  std::string objectId; //!< Objectstore address, provided when reporting a failed job
+  std::map<std::string, std::pair<uint32_t, TapeFile>> tapeCopies;
+  std::string objectId;  //!< Objectstore address, provided when reporting a failed job
   std::list<std::string> failurelogs;
   std::list<std::string> reportfailurelogs;
   //Elements not needed for queueing
@@ -53,10 +52,10 @@ struct RetrieveJob {
   uint64_t totalRetries;
   uint64_t totalReportRetries;
 
-}; // struct RetrieveJob
+};  // struct RetrieveJob
 
-std::ostream &operator<<(std::ostream &os, const RetrieveJob &obj);
+std::ostream& operator<<(std::ostream& os, const RetrieveJob& obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

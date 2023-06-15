@@ -26,7 +26,6 @@ namespace cta {
  */
 class MountCriteria {
 public:
-
   /**
    * Constructor.
    */
@@ -42,8 +41,7 @@ public:
    * @param ageInSecs The minimum age in seconds of queued data required to
    * justify a mount.
    */
-  MountCriteria(const uint64_t nbBytes, const uint64_t nbFiles,
-    const uint64_t ageInSecs);
+  MountCriteria(const uint64_t nbBytes, const uint64_t nbFiles, const uint64_t ageInSecs);
 
   /**
    * Returns the minimum number of queued bytes required to justify a mount.
@@ -69,7 +67,6 @@ public:
   uint64_t getAgeInSecs() const throw();
 
 private:
-
   /**
    * The minimum number of queued bytes required to justify a mount.
    */
@@ -85,6 +82,6 @@ private:
    */
   uint64_t m_ageInSecs;
 
-}; // class MountCriteria
+};  // class MountCriteria
 
-} // namespace cta
+}  // namespace cta

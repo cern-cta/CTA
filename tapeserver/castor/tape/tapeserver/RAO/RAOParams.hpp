@@ -24,12 +24,15 @@
 
 #include "tapeserver/castor/tape/tapeserver/RAO/RAOOptions.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace rao {
 
 /**
   * This class contains the configuration of the CTA RAO Algorithm
   */
-class RAOParams{
+class RAOParams {
 public:
   /**
     * This enum represent the RAO algorithm type implemented
@@ -54,17 +57,20 @@ public:
     * @param raoAlgorithmOptions the options that could be passed to the RAO algorithm
     * @param vid the vid of the tape that is currently mounted for retrieval
     */
-  RAOParams(const bool useRAO, const std::string & raoAlgorithmName, const std::string & raoAlgorithmOptions, const std::string & vid);
+  RAOParams(const bool useRAO,
+            const std::string& raoAlgorithmName,
+            const std::string& raoAlgorithmOptions,
+            const std::string& vid);
 
   /**
     * Copy constructor
     */
-  RAOParams(const RAOParams & other);
+  RAOParams(const RAOParams& other);
 
   /**
     * Operator =
     */
-  RAOParams & operator=(const RAOParams & other);
+  RAOParams& operator=(const RAOParams& other);
 
   /**
     * Returns true if RAO has to be used, false otherwise
@@ -115,4 +121,7 @@ private:
   static const std::map<std::string, RAOAlgorithmType> c_raoAlgoStringTypeMap;
 };
 
-}}}}
+}  // namespace rao
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

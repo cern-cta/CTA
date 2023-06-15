@@ -29,4 +29,4 @@ TEST(cta_Daemon, SourcedParameter) {
   ASSERT_EQ(34, mountCriteria.value().maxFiles);
 }
 
-} // namespace unitTests
+}  // namespace unitTests

@@ -19,10 +19,10 @@
 
 #include <ctime>
 
-namespace cta{
-namespace common{
-namespace dataStructures{
-    
+namespace cta {
+namespace common {
+namespace dataStructures {
+
 /**
  * This class stores the informations about a request's lifecycle timings
  */
@@ -47,4 +47,6 @@ public:
   time_t completed_time;
 };
 
-}}}
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

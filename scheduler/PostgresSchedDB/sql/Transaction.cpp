@@ -20,23 +20,20 @@
 namespace cta {
 namespace postgresscheddb {
 
-Transaction::Transaction(rdbms::ConnPool &connPool) :
-  m_conn(std::move(connPool.getConn())), m_begin(false)
-{
+Transaction::Transaction(rdbms::ConnPool& connPool) : m_conn(std::move(connPool.getConn())), m_begin(false) {
   m_conn.executeNonQuery("BEGIN");
   m_begin = true;
 }
 
-Transaction::Transaction(Transaction &&other):
-  m_conn(std::move(other.m_conn)), m_begin(other.m_begin) { }
+Transaction::Transaction(Transaction&& other) : m_conn(std::move(other.m_conn)), m_begin(other.m_begin) {}
 
-Transaction::~Transaction() { 
+Transaction::~Transaction() {
   if (m_begin) {
     m_conn.rollback();
   }
 }
 
-Transaction &Transaction::operator=(Transaction &&rhs) {
+Transaction& Transaction::operator=(Transaction&& rhs) {
   m_conn = std::move(rhs.m_conn);
   m_begin = rhs.m_begin;
   return *this;
@@ -58,12 +55,12 @@ void Transaction::abort() {
   m_begin = false;
 }
 
-rdbms::Conn &Transaction::conn() {
+rdbms::Conn& Transaction::conn() {
   if (!m_begin) {
     throw SQLError(std::string("No transaction"));
   }
   return m_conn;
 }
 
-}
-}
+}  // namespace postgresscheddb
+}  // namespace cta

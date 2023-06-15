@@ -26,9 +26,8 @@ namespace log {
 /**
  * Class implementaing the API of the CASTOR logging system.
  */
-class StringLogger: public Logger {
+class StringLogger : public Logger {
 public:
-
   /**
    * Constructor
    *
@@ -37,7 +36,7 @@ public:
    * message.
    * @param logMask The log mask.
    */
-  StringLogger(const std::string &hostName, const std::string &programName, const int logMask);
+  StringLogger(const std::string& hostName, const std::string& programName, const int logMask);
 
   /**
    * Destructor.
@@ -50,7 +49,7 @@ public:
    * No further calls to operator() should be made after calling this
    * method until the call to fork() has completed.
    */
-  void prepareForFork() ;
+  void prepareForFork();
 
   /**
    * Extractor for the resulting logs.
@@ -58,7 +57,6 @@ public:
   std::string getLog() { return m_log.str(); }
 
 protected:
-
   /**
    * Mutex used to protect the critical section of the StringLogger
    * object.
@@ -85,8 +83,8 @@ protected:
    * esponsibility of the concrete sub-class
    * @param body The body of the message to be logged.
    */
-  void writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) override;
-}; // class StringLogger
+  void writeMsgToUnderlyingLoggingSystem(const std::string& header, const std::string& body) override;
+};  // class StringLogger
 
-} // namespace log
-} // namespace cta
+}  // namespace log
+}  // namespace cta

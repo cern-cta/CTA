@@ -23,10 +23,10 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-PostgresCatalogueSchema::PostgresCatalogueSchema(): CatalogueSchema(
+PostgresCatalogueSchema::PostgresCatalogueSchema() :
+CatalogueSchema(
   // CTA_SQL_SCHEMA - The contents of postgres_catalogue_schema.cpp go here
-  ) {
-}
+) {}
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

@@ -34,23 +34,22 @@ namespace catalogue {
  * Please note that no wild cards, for example '*' or '%', are supported.
  */
 struct TapePoolSearchCriteria {
-
-   /**
+  /**
    * The name of the tapepool.
    */
-    std::optional<std::string> name;
+  std::optional<std::string> name;
 
-    /**
+  /**
     * The virtual organization of the tapepool.
     */
-    std::optional<std::string> vo;
+  std::optional<std::string> vo;
 
-    /**
+  /**
     * Set to true if searching for encrypted tape pools.
     */
-    std::optional<bool> encrypted;
+  std::optional<bool> encrypted;
 
-}; // struct TapePoolSearchCriteria
+};  // struct TapePoolSearchCriteria
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

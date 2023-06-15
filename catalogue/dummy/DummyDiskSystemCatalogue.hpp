@@ -26,38 +26,49 @@ namespace cta {
 
 namespace catalogue {
 
-class DummyDiskSystemCatalogue: public DiskSystemCatalogue {
+class DummyDiskSystemCatalogue : public DiskSystemCatalogue {
 public:
   DummyDiskSystemCatalogue() = default;
   ~DummyDiskSystemCatalogue() override = default;
 
-  void createDiskSystem(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const std::string &diskInstanceName, const std::string &diskInstanceSpaceName, const std::string &fileRegexp,
-    const uint64_t targetedFreeSpace, const time_t sleepTime, const std::string &comment) override;
+  void createDiskSystem(const common::dataStructures::SecurityIdentity& admin,
+                        const std::string& name,
+                        const std::string& diskInstanceName,
+                        const std::string& diskInstanceSpaceName,
+                        const std::string& fileRegexp,
+                        const uint64_t targetedFreeSpace,
+                        const time_t sleepTime,
+                        const std::string& comment) override;
 
-  void deleteDiskSystem(const std::string &name) override;
+  void deleteDiskSystem(const std::string& name) override;
 
   disk::DiskSystemList getAllDiskSystems() const override;
 
-  void modifyDiskSystemFileRegexp(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const std::string &fileRegexp) override;
+  void modifyDiskSystemFileRegexp(const common::dataStructures::SecurityIdentity& admin,
+                                  const std::string& name,
+                                  const std::string& fileRegexp) override;
 
-  void modifyDiskSystemTargetedFreeSpace(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const uint64_t targetedFreeSpace) override;
+  void modifyDiskSystemTargetedFreeSpace(const common::dataStructures::SecurityIdentity& admin,
+                                         const std::string& name,
+                                         const uint64_t targetedFreeSpace) override;
 
-  void modifyDiskSystemComment(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const std::string &comment) override;
+  void modifyDiskSystemComment(const common::dataStructures::SecurityIdentity& admin,
+                               const std::string& name,
+                               const std::string& comment) override;
 
   void modifyDiskSystemSleepTime(const common::dataStructures::SecurityIdentity& admin,
-    const std::string& name, const uint64_t sleepTime) override;
+                                 const std::string& name,
+                                 const uint64_t sleepTime) override;
 
-  void modifyDiskSystemDiskInstanceName(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const std::string &diskInstanceName) override;
+  void modifyDiskSystemDiskInstanceName(const common::dataStructures::SecurityIdentity& admin,
+                                        const std::string& name,
+                                        const std::string& diskInstanceName) override;
 
-  void modifyDiskSystemDiskInstanceSpaceName(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const std::string &diskInstanceSpaceName) override;
+  void modifyDiskSystemDiskInstanceSpaceName(const common::dataStructures::SecurityIdentity& admin,
+                                             const std::string& name,
+                                             const std::string& diskInstanceSpaceName) override;
 
-  bool diskSystemExists(const std::string &name) const override;
+  bool diskSystemExists(const std::string& name) const override;
 
 private:
   disk::DiskSystemList m_diskSystemList;

@@ -25,16 +25,18 @@
 #include <stdint.h>
 #include <limits>
 
-namespace cta { namespace objectstore {
+namespace cta {
+namespace objectstore {
 /**
  * A decorator class of scheduler's creation log adding serialization.
  */
-class TapeFileSerDeser: public cta::common::dataStructures::TapeFile {
+class TapeFileSerDeser : public cta::common::dataStructures::TapeFile {
 public:
-  TapeFileSerDeser (): cta::common::dataStructures::TapeFile() {}
-  TapeFileSerDeser (const cta::common::dataStructures::TapeFile & tf): cta::common::dataStructures::TapeFile(tf) {}
+  TapeFileSerDeser() : cta::common::dataStructures::TapeFile() {}
 
-  void serialize (cta::objectstore::serializers::TapeFile & ostf) const {
+  TapeFileSerDeser(const cta::common::dataStructures::TapeFile& tf) : cta::common::dataStructures::TapeFile(tf) {}
+
+  void serialize(cta::objectstore::serializers::TapeFile& ostf) const {
     ostf.set_vid(vid);
     ostf.set_fseq(fSeq);
     ostf.set_blockid(blockId);
@@ -43,16 +45,17 @@ public:
     ostf.set_creationtime(creationTime);
     ostf.set_checksumblob(checksumBlob.serialize());
   }
-  
-  void deserialize (const cta::objectstore::serializers::TapeFile & ostf) {
-    vid=ostf.vid();
-    fSeq=ostf.fseq();
-    blockId=ostf.blockid();
-    fileSize=ostf.filesize();
-    copyNb=ostf.copynb();
-    creationTime=ostf.creationtime();
+
+  void deserialize(const cta::objectstore::serializers::TapeFile& ostf) {
+    vid = ostf.vid();
+    fSeq = ostf.fseq();
+    blockId = ostf.blockid();
+    fileSize = ostf.filesize();
+    copyNb = ostf.copynb();
+    creationTime = ostf.creationtime();
     checksumBlob.deserialize(ostf.checksumblob());
   }
 };
-  
-}}
+
+}  // namespace objectstore
+}  // namespace cta

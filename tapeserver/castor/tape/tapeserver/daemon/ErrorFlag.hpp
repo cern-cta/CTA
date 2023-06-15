@@ -23,14 +23,18 @@ namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
- 
-  /**
+
+/**
    * Used to signal an error has happened during the migration process 
    */
-  class ErrorFlag : public cta::exception::Exception {
-  public:
-    ErrorFlag(): cta::exception::Exception("Internal exception, should not be seen") {}
-    virtual ~ErrorFlag() throw() {}
-  };
+class ErrorFlag : public cta::exception::Exception {
+public:
+  ErrorFlag() : cta::exception::Exception("Internal exception, should not be seen") {}
 
-}}}}
+  virtual ~ErrorFlag() throw() {}
+};
+
+}  // namespace daemon
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

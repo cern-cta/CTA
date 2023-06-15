@@ -27,11 +27,11 @@ SchemaVersion DummySchemaCatalogue::getSchemaVersion() const {
 }
 
 void DummySchemaCatalogue::verifySchemaVersion() {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
 void DummySchemaCatalogue::ping() {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
 }  // namespace catalogue

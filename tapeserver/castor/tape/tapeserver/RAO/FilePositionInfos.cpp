@@ -17,13 +17,15 @@
 
 #include "FilePositionInfos.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace rao {
 
-FilePositionInfos::FilePositionInfos() {
-}
+FilePositionInfos::FilePositionInfos() {}
 
-FilePositionInfos::FilePositionInfos(const FilePositionInfos& other){
-  if(this != &other){
+FilePositionInfos::FilePositionInfos(const FilePositionInfos& other) {
+  if (this != &other) {
     m_beginningPosition = other.m_beginningPosition;
     m_endPosition = other.m_endPosition;
     m_beginningBand = other.m_beginningBand;
@@ -33,8 +35,8 @@ FilePositionInfos::FilePositionInfos(const FilePositionInfos& other){
   }
 }
 
-FilePositionInfos & FilePositionInfos::operator =(const FilePositionInfos& other){
-  if(this != &other){
+FilePositionInfos& FilePositionInfos::operator=(const FilePositionInfos& other) {
+  if (this != &other) {
     m_beginningPosition = other.m_beginningPosition;
     m_endPosition = other.m_endPosition;
     m_beginningBand = other.m_beginningBand;
@@ -45,10 +47,9 @@ FilePositionInfos & FilePositionInfos::operator =(const FilePositionInfos& other
   return *this;
 }
 
-FilePositionInfos::~FilePositionInfos() {
-}
+FilePositionInfos::~FilePositionInfos() {}
 
-void FilePositionInfos::setBeginningPosition(const Position & beginningPosition) {
+void FilePositionInfos::setBeginningPosition(const Position& beginningPosition) {
   m_beginningPosition = beginningPosition;
 }
 
@@ -64,19 +65,19 @@ Position FilePositionInfos::getEndPosition() const {
   return m_endPosition;
 }
 
-void FilePositionInfos::setBeginningBand(const uint8_t beginningBand){
+void FilePositionInfos::setBeginningBand(const uint8_t beginningBand) {
   m_beginningBand = beginningBand;
 }
 
-void FilePositionInfos::setEndBand(const uint8_t endBand){
+void FilePositionInfos::setEndBand(const uint8_t endBand) {
   m_endBand = endBand;
 }
 
-void FilePositionInfos::setBeginningLandingZone(const uint8_t beginningLandingZone){
+void FilePositionInfos::setBeginningLandingZone(const uint8_t beginningLandingZone) {
   m_beginningLandingZone = beginningLandingZone;
 }
 
-void FilePositionInfos::setEndLandingZone(const uint8_t endLandingZone){
+void FilePositionInfos::setEndLandingZone(const uint8_t endLandingZone) {
   m_endLandingZone = endLandingZone;
 }
 
@@ -96,6 +97,7 @@ uint8_t FilePositionInfos::getEndLandingZone() const {
   return m_endLandingZone;
 }
 
-
-
-}}}}
+}  // namespace rao
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

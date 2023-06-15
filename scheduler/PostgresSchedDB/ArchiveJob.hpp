@@ -31,23 +31,22 @@ namespace cta {
 namespace postgresscheddb {
 
 class ArchiveJob : public SchedulerDatabase::ArchiveJob {
- friend class cta::PostgresSchedDB;
+  friend class cta::PostgresSchedDB;
 
- public:
+public:
+  ArchiveJob();
 
-   ArchiveJob();
+  void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
 
-   void failTransfer(const std::string & failureReason, log::LogContext & lc) override;
+  void failReport(const std::string& failureReason, log::LogContext& lc) override;
 
-   void failReport(const std::string & failureReason, log::LogContext & lc) override;
+  void bumpUpTapeFileCount(uint64_t newFileCount) override;
 
-   void bumpUpTapeFileCount(uint64_t newFileCount) override;
-
-   bool m_jobOwned = false;
-   uint64_t m_mountId = 0;
-   std::string m_tapePool;
-   std::string reportType;
+  bool m_jobOwned = false;
+  uint64_t m_mountId = 0;
+  std::string m_tapePool;
+  std::string reportType;
 };
 
-} //namespace postgresscheddb
-} //namespace cta
+}  //namespace postgresscheddb
+}  //namespace cta

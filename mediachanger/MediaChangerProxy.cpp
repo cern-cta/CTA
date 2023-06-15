@@ -20,5 +20,4 @@
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-cta::mediachanger::MediaChangerProxy::~MediaChangerProxy() {
-}
+cta::mediachanger::MediaChangerProxy::~MediaChangerProxy() {}

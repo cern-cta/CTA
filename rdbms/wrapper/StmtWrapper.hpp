@@ -36,13 +36,12 @@ namespace wrapper {
  */
 class StmtWrapper {
 public:
-
   /**
    * Constructor.
    *
    * @param sql The SQL statement.
    */
-  StmtWrapper(const std::string &sql);
+  StmtWrapper(const std::string& sql);
 
   /**
    * Destructor.
@@ -52,22 +51,22 @@ public:
   /**
    * Deletion of the copy constructor.
    */
-  StmtWrapper(StmtWrapper &) = delete;
+  StmtWrapper(StmtWrapper&) = delete;
 
   /**
    * Deletion of the move constructor.
    */
-  StmtWrapper(StmtWrapper &&) = delete;
+  StmtWrapper(StmtWrapper&&) = delete;
 
   /**
    * Deletion of the copy assignment operator.
    */
-  StmtWrapper &operator=(const StmtWrapper &) = delete;
+  StmtWrapper& operator=(const StmtWrapper&) = delete;
 
   /**
    * Deletion of the move assignment operator.
    */
-  StmtWrapper &operator=(StmtWrapper &&) = delete;
+  StmtWrapper& operator=(StmtWrapper&&) = delete;
 
   /**
    * Clears the prepared statement so that it is ready to be reused.
@@ -84,7 +83,7 @@ public:
    *
    * @return The SQL statement.
    */
-  const std::string &getSql() const;
+  const std::string& getSql() const;
 
   /**
    * Returns the index of the specified SQL parameter.
@@ -92,7 +91,7 @@ public:
    * @param paramName The name of the SQL parameter.
    * @return The index of the SQL parameter.
    */
-  uint32_t getParamIdx(const std::string &paramName) const;
+  uint32_t getParamIdx(const std::string& paramName) const;
 
   /**
    * Binds an SQL parameter.
@@ -100,7 +99,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  virtual void bindUint8(const std::string &paramName, const std::optional<uint8_t> &paramValue) = 0;
+  virtual void bindUint8(const std::string& paramName, const std::optional<uint8_t>& paramValue) = 0;
 
   /**
    * Binds an SQL parameter.
@@ -108,7 +107,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  virtual void bindUint16(const std::string &paramName, const std::optional<uint16_t> &paramValue) = 0;
+  virtual void bindUint16(const std::string& paramName, const std::optional<uint16_t>& paramValue) = 0;
 
   /**
    * Binds an SQL parameter.
@@ -116,7 +115,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  virtual void bindUint32(const std::string &paramName, const std::optional<uint32_t> &paramValue) = 0;
+  virtual void bindUint32(const std::string& paramName, const std::optional<uint32_t>& paramValue) = 0;
 
   /**
    * Binds an SQL parameter.
@@ -124,7 +123,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  virtual void bindUint64(const std::string &paramName, const std::optional<uint64_t> &paramValue) = 0;
+  virtual void bindUint64(const std::string& paramName, const std::optional<uint64_t>& paramValue) = 0;
 
   /**
    * Binds an SQL parameter.
@@ -132,7 +131,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  virtual void bindDouble(const std::string &paramName, const std::optional<double> &paramValue) = 0;
+  virtual void bindDouble(const std::string& paramName, const std::optional<double>& paramValue) = 0;
 
   /**
    * Binds an SQL parameter.
@@ -140,7 +139,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindBool(const std::string &paramName, const std::optional<bool> &paramValue);
+  void bindBool(const std::string& paramName, const std::optional<bool>& paramValue);
 
   /**
    * Binds an SQL parameter of type binary string (byte array).
@@ -148,7 +147,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  virtual void bindBlob(const std::string &paramName, const std::string &paramValue) = 0;
+  virtual void bindBlob(const std::string& paramName, const std::string& paramValue) = 0;
 
   /**
    * Binds an SQL parameter of type optional-string.
@@ -160,7 +159,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindString(const std::string &paramName, const std::string &paramValue) {
+  void bindString(const std::string& paramName, const std::string& paramValue) {
     const std::optional<std::string> optionalParamValue(paramValue);
     bindString(paramName, optionalParamValue);
   }
@@ -175,7 +174,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  virtual void bindString(const std::string &paramName, const std::optional<std::string> &paramValue) = 0;
+  virtual void bindString(const std::string& paramName, const std::optional<std::string>& paramValue) = 0;
 
   /**
    *  Executes the statement and returns the result set.
@@ -212,7 +211,6 @@ public:
   std::string getSqlForException(const std::string::size_type maxSqlLenInExceptions = MAX_SQL_LEN_IN_EXCEPTIONS) const;
 
 private:
-
   /**
    * The SQL statement.
    */
@@ -223,8 +221,8 @@ private:
    */
   ParamNameToIdx m_paramNameToIdx;
 
-}; // class StmtWrapper
+};  // class StmtWrapper
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+}  // namespace wrapper
+}  // namespace rdbms
+}  // namespace cta

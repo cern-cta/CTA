@@ -20,16 +20,15 @@
 
 #include "XrootCl.hpp"
 
-namespace cta { namespace exception {
+namespace cta {
+namespace exception {
 
-XrootCl::XrootCl(const XrdCl::XRootDStatus& status, const std::string & what) {
+XrootCl::XrootCl(const XrdCl::XRootDStatus& status, const std::string& what) {
   if (!what.empty()) {
     getMessage() << what << " ";
   }
   getMessage() << status.ToStr().c_str();
-  getMessage() << " code:"   << status.code
-               << " errNo:"  << status.errNo
-               << " status:" << status.status;
+  getMessage() << " code:" << status.code << " errNo:" << status.errNo << " status:" << status.status;
 }
 
 void XrootCl::throwOnError(const XrdCl::XRootDStatus& status, const std::string& context) {

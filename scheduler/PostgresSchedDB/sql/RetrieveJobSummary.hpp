@@ -24,31 +24,27 @@ namespace postgresscheddb {
 namespace sql {
 
 struct RetrieveJobSummaryRow {
-
   uint64_t jobsCount;
   uint64_t jobsTotalSize;
   std::string vid;
   uint16_t priority;
   postgresscheddb::RetrieveJobStatus status;
 
-  RetrieveJobSummaryRow()  { }
+  RetrieveJobSummaryRow() {}
 
   /**
    * Constructor from row
    *
    * @param row  A single row from the result of a query
    */
-  RetrieveJobSummaryRow(const rdbms::Rset &rset) {
-    *this = rset;
-  }
+  RetrieveJobSummaryRow(const rdbms::Rset& rset) { *this = rset; }
 
-  RetrieveJobSummaryRow& operator=(const rdbms::Rset &rset) {
-    vid                  = rset.columnString("VID");
-    status               = from_string<postgresscheddb::RetrieveJobStatus>(
-                           rset.columnString("STATUS") );
-    jobsCount            = rset.columnUint64("JOBS_COUNT");
-    jobsTotalSize        = rset.columnUint64("JOBS_TOTAL_SIZE");
-    priority             = rset.columnUint16("PRIORITY");
+  RetrieveJobSummaryRow& operator=(const rdbms::Rset& rset) {
+    vid = rset.columnString("VID");
+    status = from_string<postgresscheddb::RetrieveJobStatus>(rset.columnString("STATUS"));
+    jobsCount = rset.columnUint64("JOBS_COUNT");
+    jobsTotalSize = rset.columnUint64("JOBS_TOTAL_SIZE");
+    priority = rset.columnUint16("PRIORITY");
     return *this;
   }
 
@@ -64,21 +60,19 @@ struct RetrieveJobSummaryRow {
    *
    * @return result set containing all rows in the table
    */
-  static rdbms::Rset selectVid(const std::string &vid,
-                               common::dataStructures::JobQueueType type,
-                               Transaction &txn) {
-    const char *const sql = "SELECT "
-      "VID,"
-      "STATUS,"
-      "JOBS_COUNT,"
-      "JOBS_TOTAL_SIZE,"
-      "PRIORITY "
-    "FROM RETRIEVE_JOB_SUMMARY WHERE "
-      "VID = :VID AND "
-      "STATUS = :STATUS";
+  static rdbms::Rset selectVid(const std::string& vid, common::dataStructures::JobQueueType type, Transaction& txn) {
+    const char* const sql = "SELECT "
+                            "VID,"
+                            "STATUS,"
+                            "JOBS_COUNT,"
+                            "JOBS_TOTAL_SIZE,"
+                            "PRIORITY "
+                            "FROM RETRIEVE_JOB_SUMMARY WHERE "
+                            "VID = :VID AND "
+                            "STATUS = :STATUS";
 
     std::string statusStr;
-    switch(type) {
+    switch (type) {
       case common::dataStructures::JobQueueType::JobsToTransferForUser:
         statusStr = to_string(postgresscheddb::RetrieveJobStatus::RJS_ToTransfer);
         break;
@@ -94,8 +88,7 @@ struct RetrieveJobSummaryRow {
       case common::dataStructures::JobQueueType::JobsToTransferForRepack:
         // not used for Retrieve
         throw cta::exception::Exception(
-          "Did not expect queue type JobsToTransferForRepack in RetrieveJobSummaryRow::selectVid"
-        );
+          "Did not expect queue type JobsToTransferForRepack in RetrieveJobSummaryRow::selectVid");
         break;
       case common::dataStructures::JobQueueType::FailedJobs:
         statusStr = to_string(postgresscheddb::RetrieveJobStatus::RJS_Failed);
@@ -109,6 +102,6 @@ struct RetrieveJobSummaryRow {
   }
 };
 
-} // namespace sql
-} // namespace postgresscheddb
-} // namespace cta
+}  // namespace sql
+}  // namespace postgresscheddb
+}  // namespace cta

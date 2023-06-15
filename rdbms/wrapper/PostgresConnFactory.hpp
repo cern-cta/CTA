@@ -28,9 +28,8 @@ namespace wrapper {
 /**
  * A concrete factory of Conn objects.
  */
-class PostgresConnFactory: public ConnFactory {
+class PostgresConnFactory : public ConnFactory {
 public:
-
   /**
    * Constructor.
    *
@@ -52,14 +51,13 @@ public:
   std::unique_ptr<ConnWrapper> create() override;
 
 private:
-
   /**
    * The conninfo string
    */
   std::string m_conninfo;
 
-}; // class PostgresConnFactory
+};  // class PostgresConnFactory
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+}  // namespace wrapper
+}  // namespace rdbms
+}  // namespace cta

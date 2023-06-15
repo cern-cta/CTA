@@ -125,24 +125,24 @@ struct CmdLineArgs {
    * @param argv The vector of command-line arguments.
    * @param standaloneCliTool The tool calling the constructor
    */
-  CmdLineArgs(const int &argc, char *const *const &argv, const StandaloneCliTool &standaloneCliTool);
+  CmdLineArgs(const int& argc, char* const* const& argv, const StandaloneCliTool& standaloneCliTool);
 
-   /**
+  /**
    * Read a list of eos file ids from a file and write the options to a list
    *
    * @param filename The name of the file to read
    * @param fidList The list of file IDs
    */
-   void readIdListFromFile(const std::string &filename);
+  void readIdListFromFile(const std::string& filename);
 
   /**
    * Prints the usage message of the command-line tool.
    *
    * @param os The output stream to which the usage message is to be printed.
    */
-  void printUsage(std::ostream &os) const;
+  void printUsage(std::ostream& os) const;
 
-}; // class RestoreFilesCmdLineArgs
+};  // class RestoreFilesCmdLineArgs
 
-} // namespace admin
-} // namespace cta
+}  // namespace cliTool
+}  // namespace cta

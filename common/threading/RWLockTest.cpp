@@ -27,18 +27,13 @@ namespace unitTests {
 
 class cta_threading_RWLockTest : public ::testing::Test {
 protected:
+  virtual void SetUp() {}
 
-  virtual void SetUp() {
-  }
+  virtual void TearDown() {}
 
-  virtual void TearDown() {
-  }
-
-  class RdLockerThread: public ::cta::threading::Thread {
+  class RdLockerThread : public ::cta::threading::Thread {
   public:
-
-    RdLockerThread(cta::threading::RWLock &lock, uint32_t &counter): m_lock(lock), m_counter(counter) {
-    }
+    RdLockerThread(cta::threading::RWLock& lock, uint32_t& counter) : m_lock(lock), m_counter(counter) {}
 
     void run() {
       cta::threading::RWLockRdLocker rdLocker(m_lock);
@@ -49,17 +44,14 @@ protected:
     }
 
   private:
+    cta::threading::RWLock& m_lock;
 
-    cta::threading::RWLock &m_lock;
-
-    uint32_t &m_counter;
+    uint32_t& m_counter;
   };
 
-  class WrLockerThread: public ::cta::threading::Thread {
+  class WrLockerThread : public ::cta::threading::Thread {
   public:
-
-    WrLockerThread(cta::threading::RWLock &lock, uint32_t &counter): m_lock(lock), m_counter(counter) {
-    }
+    WrLockerThread(cta::threading::RWLock& lock, uint32_t& counter) : m_lock(lock), m_counter(counter) {}
 
     void run() {
       cta::threading::RWLockWrLocker wrLocker(m_lock);
@@ -67,10 +59,9 @@ protected:
     }
 
   private:
+    cta::threading::RWLock& m_lock;
 
-    cta::threading::RWLock &m_lock;
-
-    uint32_t &m_counter;
+    uint32_t& m_counter;
   };
 };
 
@@ -114,14 +105,24 @@ TEST_F(cta_threading_RWLockTest, multiple_threads) {
   RWLock lock;
   uint32_t counter = 0;
 
-  RdLockerThread rdLockerThreads[4] = {{lock, counter}, {lock, counter}, {lock, counter}, {lock, counter}};
-  WrLockerThread wrLockerThreads[4] = {{lock, counter}, {lock, counter}, {lock, counter}, {lock, counter}};
+  RdLockerThread rdLockerThreads[4] = {
+    {lock, counter},
+    {lock, counter},
+    {lock, counter},
+    {lock, counter}
+  };
+  WrLockerThread wrLockerThreads[4] = {
+    {lock, counter},
+    {lock, counter},
+    {lock, counter},
+    {lock, counter}
+  };
 
-  for(uint32_t i = 0; i <4; i++) {
+  for (uint32_t i = 0; i < 4; i++) {
     rdLockerThreads[i].start();
     wrLockerThreads[i].start();
   }
-  for(uint32_t i = 0; i <4; i++) {
+  for (uint32_t i = 0; i < 4; i++) {
     rdLockerThreads[i].wait();
     wrLockerThreads[i].wait();
   }
@@ -129,4 +130,4 @@ TEST_F(cta_threading_RWLockTest, multiple_threads) {
   ASSERT_EQ(4, counter);
 }
 
-} // namespace unitTests
+}  // namespace unitTests

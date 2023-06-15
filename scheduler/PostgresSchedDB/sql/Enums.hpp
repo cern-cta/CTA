@@ -42,34 +42,32 @@ enum class ArchiveJobStatus : uint8_t {
   AJS_ToReportToRepackForFailure
 };
 
-constexpr const char* const StringsArchiveJobStatus[] = {
-  "AJS_ToTransferForUser",
-  "AJS_ToReportToUserForTransfer",
-  "AJS_Complete",
-  "AJS_ToReportToUserForFailure",
-  "AJS_Failed",
-  "AJS_Abandoned",
-  "AJS_ToTransferForRepack",
-  "AJS_ToReportToRepackForFailure"
-};
+constexpr const char* const StringsArchiveJobStatus[] = {"AJS_ToTransferForUser",
+                                                         "AJS_ToReportToUserForTransfer",
+                                                         "AJS_Complete",
+                                                         "AJS_ToReportToUserForFailure",
+                                                         "AJS_Failed",
+                                                         "AJS_Abandoned",
+                                                         "AJS_ToTransferForRepack",
+                                                         "AJS_ToReportToRepackForFailure"};
 
 // ================================ Job Queue Type =============================
 
 //enum class JobQueueType : uint8_t {
-//  JobsToTransferForUser, 
-//  FailedJobs, 
-//  JobsToReportToUser, 
-//  JobsToReportToRepackForSuccess, 
-//  JobsToReportToRepackForFailure, 
-//  JobsToTransferForRepack 
+//  JobsToTransferForUser,
+//  FailedJobs,
+//  JobsToReportToUser,
+//  JobsToReportToRepackForSuccess,
+//  JobsToReportToRepackForFailure,
+//  JobsToTransferForRepack
 //};
 
 //constexpr const char* const StringsJobQueueType[] = {
-//  "JobsToTransfer", 
-//  "FailedJobs", 
-//  "JobsToReportToUser", 
-//  "JobsToReportToRepackForSuccess", 
-//  "JobsToReportToRepackForFailure", 
+//  "JobsToTransfer",
+//  "FailedJobs",
+//  "JobsToReportToUser",
+//  "JobsToReportToRepackForSuccess",
+//  "JobsToReportToRepackForFailure",
 //  "JobsToTransferForRepack"
 //};
 
@@ -83,36 +81,19 @@ enum class RetrieveJobStatus : uint8_t {
   RJS_ToReportToRepackForFailure
 };
 
-constexpr const char* const StringsRetrieveJobStatus[] = {
-  "RJS_ToTransfer"
-  "RJS_ToReportToUserForFailure",
-  "RJS_Failed",
-  "RJS_ToReportToRepackForSuccess",
-  "RJS_ToReportToRepackForFailure"
-};
+constexpr const char* const StringsRetrieveJobStatus[] = {"RJS_ToTransfer"
+                                                          "RJS_ToReportToUserForFailure",
+                                                          "RJS_Failed", "RJS_ToReportToRepackForSuccess",
+                                                          "RJS_ToReportToRepackForFailure"};
 
 // ============================== Repack Job Status ===========================
 
-enum class RepackJobStatus : uint8_t {
-  RRS_Pending,
-  RRS_ToExpand,
-  RRS_Starting,
-  RRS_Running,
-  RRS_Complete,
-  RRS_Failed
-};
+enum class RepackJobStatus : uint8_t { RRS_Pending, RRS_ToExpand, RRS_Starting, RRS_Running, RRS_Complete, RRS_Failed };
 
-constexpr const char* const StringsRepackJobStatus[] = {
-  "RRS_Pending",
-  "RRS_ToExpand",
-  "RRS_Starting",
-  "RRS_Running",
-  "RRS_Complete",
-  "RRS_Failed"
-};
+constexpr const char* const StringsRepackJobStatus[] = {"RRS_Pending", "RRS_ToExpand", "RRS_Starting",
+                                                        "RRS_Running", "RRS_Complete", "RRS_Failed"};
 
-
-} // namespace postgresscheddb
+}  // namespace postgresscheddb
 
 // Define to_string and from_string in cta namespace
 
@@ -121,4 +102,4 @@ TO_STRING(ArchiveJobStatus)
 TO_STRING(RetrieveJobStatus)
 TO_STRING(RepackJobStatus)
 
-} // namespace cta
+}  // namespace cta

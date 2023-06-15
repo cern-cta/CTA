@@ -27,7 +27,6 @@ namespace rdbms {
  */
 class InvalidResultSet : public cta::exception::Exception {
 public:
-      
   /**
    * Constructor
    *
@@ -36,14 +35,14 @@ public:
    * @param embedBacktrace whether to embed a backtrace of where the
    * exception was throw in the message
    */
-  InvalidResultSet(const std::string &context = "", const bool embedBacktrace = true):
-    Exception(context, embedBacktrace) {}
+  InvalidResultSet(const std::string& context = "", const bool embedBacktrace = true) :
+  Exception(context, embedBacktrace) {}
 
   /**
    * Destructor.
    */
   virtual ~InvalidResultSet() {}
-}; // class InvalidResultSet
-      
-} // namespace rdbms
-} // namespace cta
+};  // class InvalidResultSet
+
+}  // namespace rdbms
+}  // namespace cta

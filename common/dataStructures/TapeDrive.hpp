@@ -40,10 +40,10 @@ struct TapeDrive {
 
   TapeDrive();
 
-  bool operator==(const TapeDrive &rhs) const;
-  bool operator!=(const TapeDrive &rhs) const;
+  bool operator==(const TapeDrive& rhs) const;
+  bool operator!=(const TapeDrive& rhs) const;
 
-  void setState(const std::string & state);
+  void setState(const std::string& state);
 
   std::string getStateStr() const;
 
@@ -53,7 +53,7 @@ struct TapeDrive {
    * @return the string representation of the state passed in parameter
    * @throws cta::exception::Exception if the state passed in parameter does not exist
    */
-  static std::string stateToString(const DriveStatus &state);
+  static std::string stateToString(const DriveStatus& state);
 
   /**
    * Return the state value according to the state passed in parameter (not case sensitive)
@@ -61,7 +61,7 @@ struct TapeDrive {
    * @return the state corresponding to the State enum value
    * @throws cta::exception::Exception if the state passed in parameter does not match any existing State enum value
    */
-  static DriveStatus stringToState(const std::string & state);
+  static DriveStatus stringToState(const std::string& state);
 
   std::string driveName;
   std::string host;
@@ -96,7 +96,8 @@ struct TapeDrive {
   std::optional<uint64_t> currentPriority;
   std::optional<std::string> currentActivity;
   std::optional<std::string> currentTapePool;
-  MountType nextMountType; // defaults to NO_MOUNT. This can't be optional, as we have a NOT nullptr constraint in the DB.
+  MountType
+    nextMountType;  // defaults to NO_MOUNT. This can't be optional, as we have a NOT nullptr constraint in the DB.
   std::optional<std::string> nextVid;
   std::optional<std::string> nextTapePool;
   std::optional<uint64_t> nextPriority;
@@ -117,7 +118,7 @@ struct TapeDrive {
   std::optional<EntryLog> lastModificationLog;
 };  // struct TapeDrive
 
-std::ostream &operator<<(std::ostream &os, const TapeDrive &obj);
+std::ostream& operator<<(std::ostream& os, const TapeDrive& obj);
 
 }  // namespace dataStructures
 }  // namespace common

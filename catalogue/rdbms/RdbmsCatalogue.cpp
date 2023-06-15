@@ -1,4 +1,4 @@
- /*
+/*
  * @project      The CERN Tape Archive (CTA)
  * @copyright    Copyright © 2021-2022 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
@@ -50,31 +50,29 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RdbmsCatalogue::RdbmsCatalogue(
-  log::Logger &log,
-  const rdbms::Login &login,
-  const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns):
-  m_log(log),
-  m_connPool(std::make_shared<rdbms::ConnPool>(login, nbConns)),
-  m_archiveFileListingConnPool(std::make_shared<rdbms::ConnPool>(login, nbArchiveFileListingConns)),
-  m_groupMountPolicyCache(10),
-  m_userMountPolicyCache(10),
-  m_allMountPoliciesCache(60),
-  m_tapepoolVirtualOrganizationCache(60),
-  m_schema(std::make_unique<RdbmsSchemaCatalogue>(m_log, m_connPool)),
-  m_adminUser(std::make_unique<RdbmsAdminUserCatalogue>(m_log, m_connPool)),
-  m_diskSystem(std::make_unique<RdbmsDiskSystemCatalogue>(m_log, m_connPool)),
-  m_diskInstance(std::make_unique<RdbmsDiskInstanceCatalogue>(m_log, m_connPool)),
-  m_diskInstanceSpace(std::make_unique<RdbmsDiskInstanceSpaceCatalogue>(m_log, m_connPool)),
-  m_archiveRoute(std::make_unique<RdbmsArchiveRouteCatalogue>(m_log, m_connPool)),
-  m_mountPolicy(std::make_unique<RdbmsMountPolicyCatalogue>(m_log, m_connPool, this)),
-  m_requesterActivityMountRule(std::make_unique<RdbmsRequesterActivityMountRuleCatalogue>(m_log, m_connPool, this)),
-  m_requesterMountRule(std::make_unique<RdbmsRequesterMountRuleCatalogue>(m_log, m_connPool, this)),
-  m_requesterGroupMountRule(std::make_unique<RdbmsRequesterGroupMountRuleCatalogue>(m_log, m_connPool, this)),
-  m_driveConfig(std::make_unique<RdbmsDriveConfigCatalogue>(m_log, m_connPool)),
-  m_driveState(std::make_unique<RdbmsDriveStateCatalogue>(m_log, m_connPool)) {
-}
+RdbmsCatalogue::RdbmsCatalogue(log::Logger& log,
+                               const rdbms::Login& login,
+                               const uint64_t nbConns,
+                               const uint64_t nbArchiveFileListingConns) :
+m_log(log),
+m_connPool(std::make_shared<rdbms::ConnPool>(login, nbConns)),
+m_archiveFileListingConnPool(std::make_shared<rdbms::ConnPool>(login, nbArchiveFileListingConns)),
+m_groupMountPolicyCache(10),
+m_userMountPolicyCache(10),
+m_allMountPoliciesCache(60),
+m_tapepoolVirtualOrganizationCache(60),
+m_schema(std::make_unique<RdbmsSchemaCatalogue>(m_log, m_connPool)),
+m_adminUser(std::make_unique<RdbmsAdminUserCatalogue>(m_log, m_connPool)),
+m_diskSystem(std::make_unique<RdbmsDiskSystemCatalogue>(m_log, m_connPool)),
+m_diskInstance(std::make_unique<RdbmsDiskInstanceCatalogue>(m_log, m_connPool)),
+m_diskInstanceSpace(std::make_unique<RdbmsDiskInstanceSpaceCatalogue>(m_log, m_connPool)),
+m_archiveRoute(std::make_unique<RdbmsArchiveRouteCatalogue>(m_log, m_connPool)),
+m_mountPolicy(std::make_unique<RdbmsMountPolicyCatalogue>(m_log, m_connPool, this)),
+m_requesterActivityMountRule(std::make_unique<RdbmsRequesterActivityMountRuleCatalogue>(m_log, m_connPool, this)),
+m_requesterMountRule(std::make_unique<RdbmsRequesterMountRuleCatalogue>(m_log, m_connPool, this)),
+m_requesterGroupMountRule(std::make_unique<RdbmsRequesterGroupMountRuleCatalogue>(m_log, m_connPool, this)),
+m_driveConfig(std::make_unique<RdbmsDriveConfigCatalogue>(m_log, m_connPool)),
+m_driveState(std::make_unique<RdbmsDriveStateCatalogue>(m_log, m_connPool)) {}
 
 const std::unique_ptr<SchemaCatalogue>& RdbmsCatalogue::Schema() {
   return m_schema;

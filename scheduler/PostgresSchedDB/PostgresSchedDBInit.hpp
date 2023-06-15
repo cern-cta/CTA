@@ -30,27 +30,27 @@ class Catalogue;
 }
 
 class PostgresSchedDBQCR {
-// QueueCleanupRunner
+  // QueueCleanupRunner
 public:
+  PostgresSchedDBQCR(catalogue::Catalogue& catalogue, PostgresSchedDB& pgs) {}
 
-  PostgresSchedDBQCR(catalogue::Catalogue &catalogue, PostgresSchedDB &pgs) { }
-  void runOnePass(log::LogContext & lc) { }
+  void runOnePass(log::LogContext& lc) {}
 };
 
 class PostgresSchedDBGC {
-// GarbageCollector
+  // GarbageCollector
 public:
+  PostgresSchedDBGC(void* pgstuff, catalogue::Catalogue& catalogue) {}
 
-  PostgresSchedDBGC(void *pgstuff, catalogue::Catalogue& catalogue) { }
-  void runOnePass(log::LogContext & lc) { }
+  void runOnePass(log::LogContext& lc) {}
 };
 
-class PostgresSchedDBInit
-{
+class PostgresSchedDBInit {
 public:
-  PostgresSchedDBInit(const std::string& client_process, const std::string& db_conn_str, log::Logger& log,
-    bool leaveNonEmptyAgentsBehind = false)
-  {
+  PostgresSchedDBInit(const std::string& client_process,
+                      const std::string& db_conn_str,
+                      log::Logger& log,
+                      bool leaveNonEmptyAgentsBehind = false) {
     connStr = db_conn_str;
     clientProc = client_process;
     login = rdbms::Login::parseString(connStr);
@@ -61,14 +61,14 @@ public:
 
   std::unique_ptr<PostgresSchedDB> getSchedDB(catalogue::Catalogue& catalogue, log::Logger& log) {
     const uint64_t nbConns = 2;
-    return std::make_unique<PostgresSchedDB>( clientProc, log, catalogue, login, nbConns);
+    return std::make_unique<PostgresSchedDB>(clientProc, log, catalogue, login, nbConns);
   }
 
   PostgresSchedDBGC getGarbageCollector(catalogue::Catalogue& catalogue) {
     return PostgresSchedDBGC(nullptr, catalogue);
   }
 
-  PostgresSchedDBQCR getQueueCleanupRunner(catalogue::Catalogue& catalogue, PostgresSchedDB &pgs) {
+  PostgresSchedDBQCR getQueueCleanupRunner(catalogue::Catalogue& catalogue, PostgresSchedDB& pgs) {
     return PostgresSchedDBQCR(catalogue, pgs);
   }
 
@@ -78,7 +78,7 @@ private:
   rdbms::Login login;
 };
 
-typedef PostgresSchedDBInit      SchedulerDBInit_t;
-typedef PostgresSchedDB          SchedulerDB_t;
+typedef PostgresSchedDBInit SchedulerDBInit_t;
+typedef PostgresSchedDB SchedulerDB_t;
 
-} // namespace cta
+}  // namespace cta

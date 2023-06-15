@@ -36,127 +36,222 @@
 namespace cta {
 namespace catalogue {
 
-RdbmsDriveStateCatalogue::RdbmsDriveStateCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool)
-  : m_log(log), m_connPool(connPool) {
-}
+RdbmsDriveStateCatalogue::RdbmsDriveStateCatalogue(log::Logger& log, std::shared_ptr<rdbms::ConnPool> connPool) :
+m_log(log),
+m_connPool(connPool) {}
 
-void RdbmsDriveStateCatalogue::createTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) {
+void RdbmsDriveStateCatalogue::createTapeDrive(const common::dataStructures::TapeDrive& tapeDrive) {
   try {
     auto conn = m_connPool->getConn();
-    const char *const sql =
-    "INSERT INTO DRIVE_STATE("        "\n"
-      "DRIVE_NAME,"                   "\n"
-      "HOST,"                         "\n"
-      "LOGICAL_LIBRARY,"              "\n"
-      "SESSION_ID,"                   "\n"
+    const char* const sql = "INSERT INTO DRIVE_STATE("
+                            "\n"
+                            "DRIVE_NAME,"
+                            "\n"
+                            "HOST,"
+                            "\n"
+                            "LOGICAL_LIBRARY,"
+                            "\n"
+                            "SESSION_ID,"
+                            "\n"
 
-      "BYTES_TRANSFERED_IN_SESSION,"  "\n"
-      "FILES_TRANSFERED_IN_SESSION,"  "\n"
+                            "BYTES_TRANSFERED_IN_SESSION,"
+                            "\n"
+                            "FILES_TRANSFERED_IN_SESSION,"
+                            "\n"
 
-      "SESSION_START_TIME,"           "\n"
-      "SESSION_ELAPSED_TIME,"         "\n"
-      "MOUNT_START_TIME,"             "\n"
-      "TRANSFER_START_TIME,"          "\n"
-      "UNLOAD_START_TIME,"            "\n"
-      "UNMOUNT_START_TIME,"           "\n"
-      "DRAINING_START_TIME,"          "\n"
-      "DOWN_OR_UP_START_TIME,"        "\n"
-      "PROBE_START_TIME,"             "\n"
-      "CLEANUP_START_TIME,"           "\n"
-      "START_START_TIME,"             "\n"
-      "SHUTDOWN_TIME,"                "\n"
+                            "SESSION_START_TIME,"
+                            "\n"
+                            "SESSION_ELAPSED_TIME,"
+                            "\n"
+                            "MOUNT_START_TIME,"
+                            "\n"
+                            "TRANSFER_START_TIME,"
+                            "\n"
+                            "UNLOAD_START_TIME,"
+                            "\n"
+                            "UNMOUNT_START_TIME,"
+                            "\n"
+                            "DRAINING_START_TIME,"
+                            "\n"
+                            "DOWN_OR_UP_START_TIME,"
+                            "\n"
+                            "PROBE_START_TIME,"
+                            "\n"
+                            "CLEANUP_START_TIME,"
+                            "\n"
+                            "START_START_TIME,"
+                            "\n"
+                            "SHUTDOWN_TIME,"
+                            "\n"
 
-      "MOUNT_TYPE,"                   "\n"
-      "DRIVE_STATUS,"                 "\n"
-      "DESIRED_UP,"                   "\n"
-      "DESIRED_FORCE_DOWN,"           "\n"
-      "REASON_UP_DOWN,"               "\n"
+                            "MOUNT_TYPE,"
+                            "\n"
+                            "DRIVE_STATUS,"
+                            "\n"
+                            "DESIRED_UP,"
+                            "\n"
+                            "DESIRED_FORCE_DOWN,"
+                            "\n"
+                            "REASON_UP_DOWN,"
+                            "\n"
 
-      "CURRENT_VID,"                  "\n"
-      "CTA_VERSION,"                  "\n"
-      "CURRENT_PRIORITY,"             "\n"
-      "CURRENT_ACTIVITY,"             "\n"
-      "CURRENT_TAPE_POOL,"            "\n"
-      "NEXT_MOUNT_TYPE,"              "\n"
-      "NEXT_VID,"                     "\n"
-      "NEXT_TAPE_POOL,"               "\n"
-      "NEXT_PRIORITY,"                "\n"
-      "NEXT_ACTIVITY,"                "\n"
+                            "CURRENT_VID,"
+                            "\n"
+                            "CTA_VERSION,"
+                            "\n"
+                            "CURRENT_PRIORITY,"
+                            "\n"
+                            "CURRENT_ACTIVITY,"
+                            "\n"
+                            "CURRENT_TAPE_POOL,"
+                            "\n"
+                            "NEXT_MOUNT_TYPE,"
+                            "\n"
+                            "NEXT_VID,"
+                            "\n"
+                            "NEXT_TAPE_POOL,"
+                            "\n"
+                            "NEXT_PRIORITY,"
+                            "\n"
+                            "NEXT_ACTIVITY,"
+                            "\n"
 
-      "DEV_FILE_NAME,"                "\n"
-      "RAW_LIBRARY_SLOT,"             "\n"
+                            "DEV_FILE_NAME,"
+                            "\n"
+                            "RAW_LIBRARY_SLOT,"
+                            "\n"
 
-      "CURRENT_VO,"                   "\n"
-      "NEXT_VO,"                      "\n"
-      "USER_COMMENT,"                 "\n"
+                            "CURRENT_VO,"
+                            "\n"
+                            "NEXT_VO,"
+                            "\n"
+                            "USER_COMMENT,"
+                            "\n"
 
-      "CREATION_LOG_USER_NAME,"       "\n"
-      "CREATION_LOG_HOST_NAME,"       "\n"
-      "CREATION_LOG_TIME,"            "\n"
-      "LAST_UPDATE_USER_NAME,"        "\n"
-      "LAST_UPDATE_HOST_NAME,"        "\n"
-      "LAST_UPDATE_TIME,"             "\n"
+                            "CREATION_LOG_USER_NAME,"
+                            "\n"
+                            "CREATION_LOG_HOST_NAME,"
+                            "\n"
+                            "CREATION_LOG_TIME,"
+                            "\n"
+                            "LAST_UPDATE_USER_NAME,"
+                            "\n"
+                            "LAST_UPDATE_HOST_NAME,"
+                            "\n"
+                            "LAST_UPDATE_TIME,"
+                            "\n"
 
-      "DISK_SYSTEM_NAME,"             "\n"
-      "RESERVED_BYTES,"               "\n"
-      "RESERVATION_SESSION_ID)"       "\n"
-    "VALUES("                         "\n"
-      ":DRIVE_NAME,"                  "\n"
-      ":HOST,"                        "\n"
-      ":LOGICAL_LIBRARY,"             "\n"
-      ":SESSION_ID,"                  "\n"
+                            "DISK_SYSTEM_NAME,"
+                            "\n"
+                            "RESERVED_BYTES,"
+                            "\n"
+                            "RESERVATION_SESSION_ID)"
+                            "\n"
+                            "VALUES("
+                            "\n"
+                            ":DRIVE_NAME,"
+                            "\n"
+                            ":HOST,"
+                            "\n"
+                            ":LOGICAL_LIBRARY,"
+                            "\n"
+                            ":SESSION_ID,"
+                            "\n"
 
-      ":BYTES_TRANSFERED_IN_SESSION," "\n"
-      ":FILES_TRANSFERED_IN_SESSION," "\n"
+                            ":BYTES_TRANSFERED_IN_SESSION,"
+                            "\n"
+                            ":FILES_TRANSFERED_IN_SESSION,"
+                            "\n"
 
-      ":SESSION_START_TIME,"          "\n"
-      ":SESSION_ELAPSED_TIME,"        "\n"
-      ":MOUNT_START_TIME,"            "\n"
-      ":TRANSFER_START_TIME,"         "\n"
-      ":UNLOAD_START_TIME,"           "\n"
-      ":UNMOUNT_START_TIME,"          "\n"
-      ":DRAINING_START_TIME,"         "\n"
-      ":DOWN_OR_UP_START_TIME,"       "\n"
-      ":PROBE_START_TIME,"            "\n"
-      ":CLEANUP_START_TIME,"          "\n"
-      ":START_START_TIME,"            "\n"
-      ":SHUTDOWN_TIME,"               "\n"
+                            ":SESSION_START_TIME,"
+                            "\n"
+                            ":SESSION_ELAPSED_TIME,"
+                            "\n"
+                            ":MOUNT_START_TIME,"
+                            "\n"
+                            ":TRANSFER_START_TIME,"
+                            "\n"
+                            ":UNLOAD_START_TIME,"
+                            "\n"
+                            ":UNMOUNT_START_TIME,"
+                            "\n"
+                            ":DRAINING_START_TIME,"
+                            "\n"
+                            ":DOWN_OR_UP_START_TIME,"
+                            "\n"
+                            ":PROBE_START_TIME,"
+                            "\n"
+                            ":CLEANUP_START_TIME,"
+                            "\n"
+                            ":START_START_TIME,"
+                            "\n"
+                            ":SHUTDOWN_TIME,"
+                            "\n"
 
-      ":MOUNT_TYPE,"                  "\n"
-      ":DRIVE_STATUS,"                "\n"
-      ":DESIRED_UP,"                  "\n"
-      ":DESIRED_FORCE_DOWN,"          "\n"
-      ":REASON_UP_DOWN,"              "\n"
+                            ":MOUNT_TYPE,"
+                            "\n"
+                            ":DRIVE_STATUS,"
+                            "\n"
+                            ":DESIRED_UP,"
+                            "\n"
+                            ":DESIRED_FORCE_DOWN,"
+                            "\n"
+                            ":REASON_UP_DOWN,"
+                            "\n"
 
-      ":CURRENT_VID,"                 "\n"
-      ":CTA_VERSION,"                 "\n"
-      ":CURRENT_PRIORITY,"            "\n"
-      ":CURRENT_ACTIVITY,"            "\n"
-      ":CURRENT_TAPE_POOL,"           "\n"
-      ":NEXT_MOUNT_TYPE,"             "\n"
-      ":NEXT_VID,"                    "\n"
-      ":NEXT_TAPE_POOL,"              "\n"
-      ":NEXT_PRIORITY,"               "\n"
-      ":NEXT_ACTIVITY,"               "\n"
+                            ":CURRENT_VID,"
+                            "\n"
+                            ":CTA_VERSION,"
+                            "\n"
+                            ":CURRENT_PRIORITY,"
+                            "\n"
+                            ":CURRENT_ACTIVITY,"
+                            "\n"
+                            ":CURRENT_TAPE_POOL,"
+                            "\n"
+                            ":NEXT_MOUNT_TYPE,"
+                            "\n"
+                            ":NEXT_VID,"
+                            "\n"
+                            ":NEXT_TAPE_POOL,"
+                            "\n"
+                            ":NEXT_PRIORITY,"
+                            "\n"
+                            ":NEXT_ACTIVITY,"
+                            "\n"
 
-      ":DEV_FILE_NAME,"               "\n"
-      ":RAW_LIBRARY_SLOT,"            "\n"
+                            ":DEV_FILE_NAME,"
+                            "\n"
+                            ":RAW_LIBRARY_SLOT,"
+                            "\n"
 
-      ":CURRENT_VO,"                  "\n"
-      ":NEXT_VO,"                     "\n"
-      ":USER_COMMENT,"                "\n"
+                            ":CURRENT_VO,"
+                            "\n"
+                            ":NEXT_VO,"
+                            "\n"
+                            ":USER_COMMENT,"
+                            "\n"
 
-      ":CREATION_LOG_USER_NAME,"      "\n"
-      ":CREATION_LOG_HOST_NAME,"      "\n"
-      ":CREATION_LOG_TIME,"           "\n"
-      ":LAST_UPDATE_USER_NAME,"       "\n"
-      ":LAST_UPDATE_HOST_NAME,"       "\n"
-      ":LAST_UPDATE_TIME,"            "\n"
+                            ":CREATION_LOG_USER_NAME,"
+                            "\n"
+                            ":CREATION_LOG_HOST_NAME,"
+                            "\n"
+                            ":CREATION_LOG_TIME,"
+                            "\n"
+                            ":LAST_UPDATE_USER_NAME,"
+                            "\n"
+                            ":LAST_UPDATE_HOST_NAME,"
+                            "\n"
+                            ":LAST_UPDATE_TIME,"
+                            "\n"
 
-      ":DISK_SYSTEM_NAME,"            "\n"
-      ":RESERVED_BYTES,"              "\n"
-      ":RESERVATION_SESSION_ID"       "\n"
-    ")";
+                            ":DISK_SYSTEM_NAME,"
+                            "\n"
+                            ":RESERVED_BYTES,"
+                            "\n"
+                            ":RESERVATION_SESSION_ID"
+                            "\n"
+                            ")";
 
     auto stmt = conn.createStmt(sql);
 
@@ -171,22 +266,19 @@ void RdbmsDriveStateCatalogue::createTapeDrive(const common::dataStructures::Tap
       .add("logicalLibrary", tapeDrive.logicalLibrary)
       .add("sessionId", tapeDrive.sessionId ? tapeDrive.sessionId.value() : 0)
 
-      .add("bytesTransferedInSession", tapeDrive.bytesTransferedInSession
-        ? tapeDrive.bytesTransferedInSession.value() : 0)
-      .add("filesTransferedInSession", tapeDrive.filesTransferedInSession
-        ? tapeDrive.filesTransferedInSession.value() : 0)
+      .add("bytesTransferedInSession",
+           tapeDrive.bytesTransferedInSession ? tapeDrive.bytesTransferedInSession.value() : 0)
+      .add("filesTransferedInSession",
+           tapeDrive.filesTransferedInSession ? tapeDrive.filesTransferedInSession.value() : 0)
 
       .add("sessionStartTime", tapeDrive.sessionStartTime ? tapeDrive.sessionStartTime.value() : 0)
       .add("sessionElapsedTime", tapeDrive.sessionElapsedTime ? tapeDrive.sessionElapsedTime.value() : 0)
       .add("mountStartTime", tapeDrive.mountStartTime ? tapeDrive.mountStartTime.value() : 0)
-      .add("transferStartTime", tapeDrive.transferStartTime
-        ? tapeDrive.transferStartTime.value() : 0)
+      .add("transferStartTime", tapeDrive.transferStartTime ? tapeDrive.transferStartTime.value() : 0)
       .add("unloadStartTime", tapeDrive.unloadStartTime ? tapeDrive.unloadStartTime.value() : 0)
       .add("unmountStartTime", tapeDrive.unmountStartTime ? tapeDrive.unmountStartTime.value() : 0)
-      .add("drainingStartTime", tapeDrive.drainingStartTime
-        ? tapeDrive.drainingStartTime.value() : 0)
-      .add("downOrUpStartTime", tapeDrive.downOrUpStartTime
-        ? tapeDrive.downOrUpStartTime.value() : 0)
+      .add("drainingStartTime", tapeDrive.drainingStartTime ? tapeDrive.drainingStartTime.value() : 0)
+      .add("downOrUpStartTime", tapeDrive.downOrUpStartTime ? tapeDrive.downOrUpStartTime.value() : 0)
       .add("probeStartTime", tapeDrive.probeStartTime ? tapeDrive.probeStartTime.value() : 0)
       .add("cleanupStartTime", tapeDrive.cleanupStartTime ? tapeDrive.cleanupStartTime.value() : 0)
       .add("startStartTime", tapeDrive.startStartTime ? tapeDrive.startStartTime.value() : 0)
@@ -203,41 +295,43 @@ void RdbmsDriveStateCatalogue::createTapeDrive(const common::dataStructures::Tap
       .add("nextVo", tapeDrive.nextVo ? tapeDrive.nextVo.value() : "")
       .add("userComment", tapeDrive.userComment ? tapeDrive.userComment.value() : "")
 
-      .add("creationLog_username", tapeDrive.creationLog
-        ? tapeDrive.creationLog.value().username : "")
+      .add("creationLog_username", tapeDrive.creationLog ? tapeDrive.creationLog.value().username : "")
       .add("creationLog_host", tapeDrive.creationLog ? tapeDrive.creationLog.value().host : "")
       .add("creationLog_time", tapeDrive.creationLog ? tapeDrive.creationLog.value().time : 0)
-      .add("lastModificationLog_username", tapeDrive.lastModificationLog
-        ? tapeDrive.lastModificationLog.value().username : "")
-      .add("lastModificationLog_username", tapeDrive.lastModificationLog
-        ? tapeDrive.lastModificationLog.value().host : "")
-      .add("lastModificationLog_username", tapeDrive.lastModificationLog
-        ? tapeDrive.lastModificationLog.value().time : 0)
+      .add("lastModificationLog_username",
+           tapeDrive.lastModificationLog ? tapeDrive.lastModificationLog.value().username : "")
+      .add("lastModificationLog_username",
+           tapeDrive.lastModificationLog ? tapeDrive.lastModificationLog.value().host : "")
+      .add("lastModificationLog_username",
+           tapeDrive.lastModificationLog ? tapeDrive.lastModificationLog.value().time : 0)
 
       .add("diskSystemName", tapeDrive.diskSystemName ? tapeDrive.diskSystemName.value() : "")
       .add("reservedBytes", tapeDrive.reservedBytes ? tapeDrive.reservedBytes.value() : 0)
       .add("reservationSessionId", tapeDrive.reservationSessionId ? tapeDrive.reservationSessionId.value() : 0);
 
     lc.log(log::INFO, "Catalogue - created tape drive");
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
 }
 
-void RdbmsDriveStateCatalogue::settingSqlTapeDriveValues(cta::rdbms::Stmt *stmt,
-  const common::dataStructures::TapeDrive &tapeDrive) const {
+void RdbmsDriveStateCatalogue::settingSqlTapeDriveValues(cta::rdbms::Stmt* stmt,
+                                                         const common::dataStructures::TapeDrive& tapeDrive) const {
   auto setOptionalString = [&stmt](const std::string& sqlField, const std::optional<std::string>& optionalField) {
     if (optionalField && !optionalField.value().empty()) {
       stmt->bindString(sqlField, optionalField.value());
-    } else {
+    }
+    else {
       stmt->bindString(sqlField, std::nullopt);
     }
   };
-  auto setOptionalTime = [&stmt](const std::string &sqlField, const std::optional<time_t>& optionalField) {
+  auto setOptionalTime = [&stmt](const std::string& sqlField, const std::optional<time_t>& optionalField) {
     if (optionalField) {
       stmt->bindUint64(sqlField, optionalField.value());
-    } else {
+    }
+    else {
       stmt->bindUint64(sqlField, std::nullopt);
     }
   };
@@ -288,24 +382,27 @@ void RdbmsDriveStateCatalogue::settingSqlTapeDriveValues(cta::rdbms::Stmt *stmt,
   setOptionalString(":NEXT_VO", tapeDrive.nextVo);
   setOptionalString(":USER_COMMENT", tapeDrive.userComment);
 
-  auto setEntryLog = [stmt, setOptionalString, setOptionalTime](const std::string &field,
-    const std::optional<std::string> &username, const std::optional<std::string> &host, const std::optional<time_t> &time) {
-      setOptionalString(field + "_USER_NAME", username);
-      setOptionalString(field + "_HOST_NAME", host);
-      setOptionalTime(field + "_TIME", time);
+  auto setEntryLog = [stmt, setOptionalString,
+                      setOptionalTime](const std::string& field, const std::optional<std::string>& username,
+                                       const std::optional<std::string>& host, const std::optional<time_t>& time) {
+    setOptionalString(field + "_USER_NAME", username);
+    setOptionalString(field + "_HOST_NAME", host);
+    setOptionalTime(field + "_TIME", time);
   };
 
   if (tapeDrive.creationLog) {
-    setEntryLog(":CREATION_LOG", tapeDrive.creationLog.value().username,
-      tapeDrive.creationLog.value().host, tapeDrive.creationLog.value().time);
-  } else {
+    setEntryLog(":CREATION_LOG", tapeDrive.creationLog.value().username, tapeDrive.creationLog.value().host,
+                tapeDrive.creationLog.value().time);
+  }
+  else {
     setEntryLog(":CREATION_LOG", std::nullopt, std::nullopt, std::nullopt);
   }
 
   if (tapeDrive.lastModificationLog) {
     setEntryLog(":LAST_UPDATE", tapeDrive.lastModificationLog.value().username,
-      tapeDrive.lastModificationLog.value().host, tapeDrive.lastModificationLog.value().time);
-  } else {
+                tapeDrive.lastModificationLog.value().host, tapeDrive.lastModificationLog.value().time);
+  }
+  else {
     setEntryLog(":LAST_UPDATE", std::nullopt, std::nullopt, std::nullopt);
   }
 
@@ -314,18 +411,18 @@ void RdbmsDriveStateCatalogue::settingSqlTapeDriveValues(cta::rdbms::Stmt *stmt,
   stmt->bindUint64(":RESERVATION_SESSION_ID", tapeDrive.reservationSessionId);
 }
 
-void RdbmsDriveStateCatalogue::deleteTapeDrive(const std::string &tapeDriveName) {
+void RdbmsDriveStateCatalogue::deleteTapeDrive(const std::string& tapeDriveName) {
   try {
-    const char *const delete_sql =
-      "DELETE FROM "
-        "DRIVE_STATE "
-      "WHERE "
-        "DRIVE_NAME = :DELETE_DRIVE_NAME";
+    const char* const delete_sql = "DELETE FROM "
+                                   "DRIVE_STATE "
+                                   "WHERE "
+                                   "DRIVE_NAME = :DELETE_DRIVE_NAME";
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(delete_sql);
     stmt.bindString(":DELETE_DRIVE_NAME", tapeDriveName);
     stmt.executeNonQuery();
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
@@ -334,11 +431,10 @@ void RdbmsDriveStateCatalogue::deleteTapeDrive(const std::string &tapeDriveName)
 std::list<std::string> RdbmsDriveStateCatalogue::getTapeDriveNames() const {
   try {
     std::list<std::string> tapeDriveNames;
-    const char *const sql =
-      "SELECT "
-        "DRIVE_NAME AS DRIVE_NAME "
-      "FROM "
-        "DRIVE_STATE ";
+    const char* const sql = "SELECT "
+                            "DRIVE_NAME AS DRIVE_NAME "
+                            "FROM "
+                            "DRIVE_STATE ";
 
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(sql);
@@ -349,7 +445,8 @@ std::list<std::string> RdbmsDriveStateCatalogue::getTapeDriveNames() const {
       tapeDriveNames.push_back(driveName);
     }
     return tapeDriveNames;
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
@@ -357,15 +454,18 @@ std::list<std::string> RdbmsDriveStateCatalogue::getTapeDriveNames() const {
 
 common::dataStructures::TapeDrive RdbmsDriveStateCatalogue::gettingSqlTapeDriveValues(cta::rdbms::Rset* rset) const {
   common::dataStructures::TapeDrive tapeDrive;
-  auto getOptionalTime = [](const std::optional<uint64_t> &time) -> std::optional<time_t> {
-    if (!time) return std::nullopt;
+  auto getOptionalTime = [](const std::optional<uint64_t>& time) -> std::optional<time_t> {
+    if (!time) {
+      return std::nullopt;
+    }
     return time.value();
   };
   tapeDrive.driveName = rset->columnString("DRIVE_NAME");
   tapeDrive.host = rset->columnString("HOST");
   tapeDrive.logicalLibrary = rset->columnString("LOGICAL_LIBRARY");
   tapeDrive.sessionId = rset->columnOptionalUint64("SESSION_ID");
-  tapeDrive.logicalLibraryDisabled = rset->columnOptionalBool("IS_DISABLED") ? rset->columnOptionalBool("IS_DISABLED").value() : false;
+  tapeDrive.logicalLibraryDisabled =
+    rset->columnOptionalBool("IS_DISABLED") ? rset->columnOptionalBool("IS_DISABLED").value() : false;
 
   tapeDrive.bytesTransferedInSession = rset->columnOptionalUint64("BYTES_TRANSFERED_IN_SESSION");
   tapeDrive.filesTransferedInSession = rset->columnOptionalUint64("FILES_TRANSFERED_IN_SESSION");
@@ -411,29 +511,28 @@ common::dataStructures::TapeDrive RdbmsDriveStateCatalogue::gettingSqlTapeDriveV
   tapeDrive.reservationSessionId = rset->columnOptionalUint64("RESERVATION_SESSION_ID");
 
   tapeDrive.userComment = rset->columnOptionalString("USER_COMMENT");
-  auto setOptionEntryLog = [&rset](const std::string &username, const std::string &host,
-    const std::string &time) -> std::optional<common::dataStructures::EntryLog> {
+  auto setOptionEntryLog = [&rset](const std::string& username, const std::string& host,
+                                   const std::string& time) -> std::optional<common::dataStructures::EntryLog> {
     if (!rset->columnOptionalString(username)) {
       return std::nullopt;
-    } else {
-      return common::dataStructures::EntryLog(
-        rset->columnString(username),
-        rset->columnString(host),
-        rset->columnUint64(time));
+    }
+    else {
+      return common::dataStructures::EntryLog(rset->columnString(username), rset->columnString(host),
+                                              rset->columnUint64(time));
     }
   };
-  tapeDrive.creationLog = setOptionEntryLog("CREATION_LOG_USER_NAME", "CREATION_LOG_HOST_NAME",
-    "CREATION_LOG_TIME");
-  tapeDrive.lastModificationLog = setOptionEntryLog("LAST_UPDATE_USER_NAME", "LAST_UPDATE_HOST_NAME",
-    "LAST_UPDATE_TIME");
+  tapeDrive.creationLog = setOptionEntryLog("CREATION_LOG_USER_NAME", "CREATION_LOG_HOST_NAME", "CREATION_LOG_TIME");
+  tapeDrive.lastModificationLog =
+    setOptionEntryLog("LAST_UPDATE_USER_NAME", "LAST_UPDATE_HOST_NAME", "LAST_UPDATE_TIME");
 
   // Log warning for operators that tape drive logical library does not exist (cta/CTA#1163)
   if (!rset->columnOptionalBool("IS_DISABLED")) {
     log::LogContext lc(m_log);
     log::ScopedParamContainer spc(lc);
-    spc.add("driveName", tapeDrive.driveName)
-       .add("logicalLibrary", tapeDrive.logicalLibrary);
-    lc.log(log::WARNING, "RdbmsCatalogue::gettingSqlTapeDriveValues(): Logical library for tape drive does not exist in the catalogue");
+    spc.add("driveName", tapeDrive.driveName).add("logicalLibrary", tapeDrive.logicalLibrary);
+    lc.log(
+      log::WARNING,
+      "RdbmsCatalogue::gettingSqlTapeDriveValues(): Logical library for tape drive does not exist in the catalogue");
   }
   return tapeDrive;
 }
@@ -441,72 +540,71 @@ common::dataStructures::TapeDrive RdbmsDriveStateCatalogue::gettingSqlTapeDriveV
 std::list<common::dataStructures::TapeDrive> RdbmsDriveStateCatalogue::getTapeDrives() const {
   try {
     std::list<common::dataStructures::TapeDrive> tapeDrives;
-    const char *const sql =
-      "SELECT "
-        "DRIVE_STATE.DRIVE_NAME AS DRIVE_NAME,"
-        "DRIVE_STATE.HOST AS HOST,"
-        "DRIVE_STATE.LOGICAL_LIBRARY AS LOGICAL_LIBRARY,"
-        "DRIVE_STATE.SESSION_ID AS SESSION_ID,"
+    const char* const sql = "SELECT "
+                            "DRIVE_STATE.DRIVE_NAME AS DRIVE_NAME,"
+                            "DRIVE_STATE.HOST AS HOST,"
+                            "DRIVE_STATE.LOGICAL_LIBRARY AS LOGICAL_LIBRARY,"
+                            "DRIVE_STATE.SESSION_ID AS SESSION_ID,"
 
-        "DRIVE_STATE.BYTES_TRANSFERED_IN_SESSION AS BYTES_TRANSFERED_IN_SESSION,"
-        "DRIVE_STATE.FILES_TRANSFERED_IN_SESSION AS FILES_TRANSFERED_IN_SESSION,"
+                            "DRIVE_STATE.BYTES_TRANSFERED_IN_SESSION AS BYTES_TRANSFERED_IN_SESSION,"
+                            "DRIVE_STATE.FILES_TRANSFERED_IN_SESSION AS FILES_TRANSFERED_IN_SESSION,"
 
-        "DRIVE_STATE.SESSION_START_TIME AS SESSION_START_TIME,"
-        "DRIVE_STATE.SESSION_ELAPSED_TIME AS SESSION_ELAPSED_TIME,"
-        "DRIVE_STATE.MOUNT_START_TIME AS MOUNT_START_TIME,"
-        "DRIVE_STATE.TRANSFER_START_TIME AS TRANSFER_START_TIME,"
-        "DRIVE_STATE.UNLOAD_START_TIME AS UNLOAD_START_TIME,"
-        "DRIVE_STATE.UNMOUNT_START_TIME AS UNMOUNT_START_TIME,"
-        "DRIVE_STATE.DRAINING_START_TIME AS DRAINING_START_TIME,"
-        "DRIVE_STATE.DOWN_OR_UP_START_TIME AS DOWN_OR_UP_START_TIME,"
-        "DRIVE_STATE.PROBE_START_TIME AS PROBE_START_TIME,"
-        "DRIVE_STATE.CLEANUP_START_TIME AS CLEANUP_START_TIME,"
-        "DRIVE_STATE.START_START_TIME AS START_START_TIME,"
-        "DRIVE_STATE.SHUTDOWN_TIME AS SHUTDOWN_TIME,"
+                            "DRIVE_STATE.SESSION_START_TIME AS SESSION_START_TIME,"
+                            "DRIVE_STATE.SESSION_ELAPSED_TIME AS SESSION_ELAPSED_TIME,"
+                            "DRIVE_STATE.MOUNT_START_TIME AS MOUNT_START_TIME,"
+                            "DRIVE_STATE.TRANSFER_START_TIME AS TRANSFER_START_TIME,"
+                            "DRIVE_STATE.UNLOAD_START_TIME AS UNLOAD_START_TIME,"
+                            "DRIVE_STATE.UNMOUNT_START_TIME AS UNMOUNT_START_TIME,"
+                            "DRIVE_STATE.DRAINING_START_TIME AS DRAINING_START_TIME,"
+                            "DRIVE_STATE.DOWN_OR_UP_START_TIME AS DOWN_OR_UP_START_TIME,"
+                            "DRIVE_STATE.PROBE_START_TIME AS PROBE_START_TIME,"
+                            "DRIVE_STATE.CLEANUP_START_TIME AS CLEANUP_START_TIME,"
+                            "DRIVE_STATE.START_START_TIME AS START_START_TIME,"
+                            "DRIVE_STATE.SHUTDOWN_TIME AS SHUTDOWN_TIME,"
 
-        "DRIVE_STATE.MOUNT_TYPE AS MOUNT_TYPE,"
-        "DRIVE_STATE.DRIVE_STATUS AS DRIVE_STATUS,"
-        "DRIVE_STATE.DESIRED_UP AS DESIRED_UP,"
-        "DRIVE_STATE.DESIRED_FORCE_DOWN AS DESIRED_FORCE_DOWN,"
-        "DRIVE_STATE.REASON_UP_DOWN AS REASON_UP_DOWN,"
+                            "DRIVE_STATE.MOUNT_TYPE AS MOUNT_TYPE,"
+                            "DRIVE_STATE.DRIVE_STATUS AS DRIVE_STATUS,"
+                            "DRIVE_STATE.DESIRED_UP AS DESIRED_UP,"
+                            "DRIVE_STATE.DESIRED_FORCE_DOWN AS DESIRED_FORCE_DOWN,"
+                            "DRIVE_STATE.REASON_UP_DOWN AS REASON_UP_DOWN,"
 
-        "DRIVE_STATE.CURRENT_VID AS CURRENT_VID,"
-        "DRIVE_STATE.CTA_VERSION AS CTA_VERSION,"
-        "DRIVE_STATE.CURRENT_PRIORITY AS CURRENT_PRIORITY,"
-        "DRIVE_STATE.CURRENT_ACTIVITY AS CURRENT_ACTIVITY,"
-        "DRIVE_STATE.CURRENT_TAPE_POOL AS CURRENT_TAPE_POOL,"
-        "DRIVE_STATE.NEXT_MOUNT_TYPE AS NEXT_MOUNT_TYPE,"
-        "DRIVE_STATE.NEXT_VID AS NEXT_VID,"
-        "DRIVE_STATE.NEXT_TAPE_POOL AS NEXT_TAPE_POOL,"
-        "DRIVE_STATE.NEXT_PRIORITY AS NEXT_PRIORITY,"
-        "DRIVE_STATE.NEXT_ACTIVITY AS NEXT_ACTIVITY,"
+                            "DRIVE_STATE.CURRENT_VID AS CURRENT_VID,"
+                            "DRIVE_STATE.CTA_VERSION AS CTA_VERSION,"
+                            "DRIVE_STATE.CURRENT_PRIORITY AS CURRENT_PRIORITY,"
+                            "DRIVE_STATE.CURRENT_ACTIVITY AS CURRENT_ACTIVITY,"
+                            "DRIVE_STATE.CURRENT_TAPE_POOL AS CURRENT_TAPE_POOL,"
+                            "DRIVE_STATE.NEXT_MOUNT_TYPE AS NEXT_MOUNT_TYPE,"
+                            "DRIVE_STATE.NEXT_VID AS NEXT_VID,"
+                            "DRIVE_STATE.NEXT_TAPE_POOL AS NEXT_TAPE_POOL,"
+                            "DRIVE_STATE.NEXT_PRIORITY AS NEXT_PRIORITY,"
+                            "DRIVE_STATE.NEXT_ACTIVITY AS NEXT_ACTIVITY,"
 
-        "DRIVE_STATE.DEV_FILE_NAME AS DEV_FILE_NAME,"
-        "DRIVE_STATE.RAW_LIBRARY_SLOT AS RAW_LIBRARY_SLOT,"
+                            "DRIVE_STATE.DEV_FILE_NAME AS DEV_FILE_NAME,"
+                            "DRIVE_STATE.RAW_LIBRARY_SLOT AS RAW_LIBRARY_SLOT,"
 
-        "DRIVE_STATE.CURRENT_VO AS CURRENT_VO,"
-        "DRIVE_STATE.NEXT_VO AS NEXT_VO,"
-        "DRIVE_STATE.USER_COMMENT AS USER_COMMENT,"
+                            "DRIVE_STATE.CURRENT_VO AS CURRENT_VO,"
+                            "DRIVE_STATE.NEXT_VO AS NEXT_VO,"
+                            "DRIVE_STATE.USER_COMMENT AS USER_COMMENT,"
 
-        "DRIVE_STATE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "DRIVE_STATE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-        "DRIVE_STATE.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
-        "DRIVE_STATE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "DRIVE_STATE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-        "DRIVE_STATE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME,"
+                            "DRIVE_STATE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+                            "DRIVE_STATE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+                            "DRIVE_STATE.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+                            "DRIVE_STATE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+                            "DRIVE_STATE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+                            "DRIVE_STATE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME,"
 
-        "DRIVE_STATE.DISK_SYSTEM_NAME AS DISK_SYSTEM_NAME,"
-        "DRIVE_STATE.RESERVED_BYTES AS RESERVED_BYTES,"
-        "DRIVE_STATE.RESERVATION_SESSION_ID AS RESERVATION_SESSION_ID,"
-        "LOGICAL_LIBRARY.IS_DISABLED AS IS_DISABLED "
-      "FROM "
-        "DRIVE_STATE "
-      "LEFT JOIN "
-        "LOGICAL_LIBRARY "
-      "ON "
-        "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME = DRIVE_STATE.LOGICAL_LIBRARY "
-      "ORDER BY "
-        "DRIVE_NAME";
+                            "DRIVE_STATE.DISK_SYSTEM_NAME AS DISK_SYSTEM_NAME,"
+                            "DRIVE_STATE.RESERVED_BYTES AS RESERVED_BYTES,"
+                            "DRIVE_STATE.RESERVATION_SESSION_ID AS RESERVATION_SESSION_ID,"
+                            "LOGICAL_LIBRARY.IS_DISABLED AS IS_DISABLED "
+                            "FROM "
+                            "DRIVE_STATE "
+                            "LEFT JOIN "
+                            "LOGICAL_LIBRARY "
+                            "ON "
+                            "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME = DRIVE_STATE.LOGICAL_LIBRARY "
+                            "ORDER BY "
+                            "DRIVE_NAME";
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(sql);
     auto rset = stmt.executeQuery();
@@ -516,81 +614,81 @@ std::list<common::dataStructures::TapeDrive> RdbmsDriveStateCatalogue::getTapeDr
       tapeDrives.push_back(tapeDrive);
     }
     return tapeDrives;
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
 }
 
-std::optional<common::dataStructures::TapeDrive> RdbmsDriveStateCatalogue::getTapeDrive(
-  const std::string &tapeDriveName) const {
+std::optional<common::dataStructures::TapeDrive>
+  RdbmsDriveStateCatalogue::getTapeDrive(const std::string& tapeDriveName) const {
   try {
-    const char *const sql =
-      "SELECT "
-        "DRIVE_STATE.DRIVE_NAME AS DRIVE_NAME,"
-        "DRIVE_STATE.HOST AS HOST,"
-        "DRIVE_STATE.LOGICAL_LIBRARY AS LOGICAL_LIBRARY,"
-        "DRIVE_STATE.SESSION_ID AS SESSION_ID,"
+    const char* const sql = "SELECT "
+                            "DRIVE_STATE.DRIVE_NAME AS DRIVE_NAME,"
+                            "DRIVE_STATE.HOST AS HOST,"
+                            "DRIVE_STATE.LOGICAL_LIBRARY AS LOGICAL_LIBRARY,"
+                            "DRIVE_STATE.SESSION_ID AS SESSION_ID,"
 
-        "DRIVE_STATE.BYTES_TRANSFERED_IN_SESSION AS BYTES_TRANSFERED_IN_SESSION,"
-        "DRIVE_STATE.FILES_TRANSFERED_IN_SESSION AS FILES_TRANSFERED_IN_SESSION,"
+                            "DRIVE_STATE.BYTES_TRANSFERED_IN_SESSION AS BYTES_TRANSFERED_IN_SESSION,"
+                            "DRIVE_STATE.FILES_TRANSFERED_IN_SESSION AS FILES_TRANSFERED_IN_SESSION,"
 
-        "DRIVE_STATE.SESSION_START_TIME AS SESSION_START_TIME,"
-        "DRIVE_STATE.SESSION_ELAPSED_TIME AS SESSION_ELAPSED_TIME,"
-        "DRIVE_STATE.MOUNT_START_TIME AS MOUNT_START_TIME,"
-        "DRIVE_STATE.TRANSFER_START_TIME AS TRANSFER_START_TIME,"
-        "DRIVE_STATE.UNLOAD_START_TIME AS UNLOAD_START_TIME,"
-        "DRIVE_STATE.UNMOUNT_START_TIME AS UNMOUNT_START_TIME,"
-        "DRIVE_STATE.DRAINING_START_TIME AS DRAINING_START_TIME,"
-        "DRIVE_STATE.DOWN_OR_UP_START_TIME AS DOWN_OR_UP_START_TIME,"
-        "DRIVE_STATE.PROBE_START_TIME AS PROBE_START_TIME,"
-        "DRIVE_STATE.CLEANUP_START_TIME AS CLEANUP_START_TIME,"
-        "DRIVE_STATE.START_START_TIME AS START_START_TIME,"
-        "DRIVE_STATE.SHUTDOWN_TIME AS SHUTDOWN_TIME,"
+                            "DRIVE_STATE.SESSION_START_TIME AS SESSION_START_TIME,"
+                            "DRIVE_STATE.SESSION_ELAPSED_TIME AS SESSION_ELAPSED_TIME,"
+                            "DRIVE_STATE.MOUNT_START_TIME AS MOUNT_START_TIME,"
+                            "DRIVE_STATE.TRANSFER_START_TIME AS TRANSFER_START_TIME,"
+                            "DRIVE_STATE.UNLOAD_START_TIME AS UNLOAD_START_TIME,"
+                            "DRIVE_STATE.UNMOUNT_START_TIME AS UNMOUNT_START_TIME,"
+                            "DRIVE_STATE.DRAINING_START_TIME AS DRAINING_START_TIME,"
+                            "DRIVE_STATE.DOWN_OR_UP_START_TIME AS DOWN_OR_UP_START_TIME,"
+                            "DRIVE_STATE.PROBE_START_TIME AS PROBE_START_TIME,"
+                            "DRIVE_STATE.CLEANUP_START_TIME AS CLEANUP_START_TIME,"
+                            "DRIVE_STATE.START_START_TIME AS START_START_TIME,"
+                            "DRIVE_STATE.SHUTDOWN_TIME AS SHUTDOWN_TIME,"
 
-        "DRIVE_STATE.MOUNT_TYPE AS MOUNT_TYPE,"
-        "DRIVE_STATE.DRIVE_STATUS AS DRIVE_STATUS,"
-        "DRIVE_STATE.DESIRED_UP AS DESIRED_UP,"
-        "DRIVE_STATE.DESIRED_FORCE_DOWN AS DESIRED_FORCE_DOWN,"
-        "DRIVE_STATE.REASON_UP_DOWN AS REASON_UP_DOWN,"
+                            "DRIVE_STATE.MOUNT_TYPE AS MOUNT_TYPE,"
+                            "DRIVE_STATE.DRIVE_STATUS AS DRIVE_STATUS,"
+                            "DRIVE_STATE.DESIRED_UP AS DESIRED_UP,"
+                            "DRIVE_STATE.DESIRED_FORCE_DOWN AS DESIRED_FORCE_DOWN,"
+                            "DRIVE_STATE.REASON_UP_DOWN AS REASON_UP_DOWN,"
 
-        "DRIVE_STATE.CURRENT_VID AS CURRENT_VID,"
-        "DRIVE_STATE.CTA_VERSION AS CTA_VERSION,"
-        "DRIVE_STATE.CURRENT_PRIORITY AS CURRENT_PRIORITY,"
-        "DRIVE_STATE.CURRENT_ACTIVITY AS CURRENT_ACTIVITY,"
-        "DRIVE_STATE.CURRENT_TAPE_POOL AS CURRENT_TAPE_POOL,"
-        "DRIVE_STATE.NEXT_MOUNT_TYPE AS NEXT_MOUNT_TYPE,"
-        "DRIVE_STATE.NEXT_VID AS NEXT_VID,"
-        "DRIVE_STATE.NEXT_TAPE_POOL AS NEXT_TAPE_POOL,"
-        "DRIVE_STATE.NEXT_PRIORITY AS NEXT_PRIORITY,"
-        "DRIVE_STATE.NEXT_ACTIVITY AS NEXT_ACTIVITY,"
+                            "DRIVE_STATE.CURRENT_VID AS CURRENT_VID,"
+                            "DRIVE_STATE.CTA_VERSION AS CTA_VERSION,"
+                            "DRIVE_STATE.CURRENT_PRIORITY AS CURRENT_PRIORITY,"
+                            "DRIVE_STATE.CURRENT_ACTIVITY AS CURRENT_ACTIVITY,"
+                            "DRIVE_STATE.CURRENT_TAPE_POOL AS CURRENT_TAPE_POOL,"
+                            "DRIVE_STATE.NEXT_MOUNT_TYPE AS NEXT_MOUNT_TYPE,"
+                            "DRIVE_STATE.NEXT_VID AS NEXT_VID,"
+                            "DRIVE_STATE.NEXT_TAPE_POOL AS NEXT_TAPE_POOL,"
+                            "DRIVE_STATE.NEXT_PRIORITY AS NEXT_PRIORITY,"
+                            "DRIVE_STATE.NEXT_ACTIVITY AS NEXT_ACTIVITY,"
 
-        "DRIVE_STATE.DEV_FILE_NAME AS DEV_FILE_NAME,"
-        "DRIVE_STATE.RAW_LIBRARY_SLOT AS RAW_LIBRARY_SLOT,"
+                            "DRIVE_STATE.DEV_FILE_NAME AS DEV_FILE_NAME,"
+                            "DRIVE_STATE.RAW_LIBRARY_SLOT AS RAW_LIBRARY_SLOT,"
 
-        "DRIVE_STATE.CURRENT_VO AS CURRENT_VO,"
-        "DRIVE_STATE.NEXT_VO AS NEXT_VO,"
-        "DRIVE_STATE.USER_COMMENT AS USER_COMMENT,"
+                            "DRIVE_STATE.CURRENT_VO AS CURRENT_VO,"
+                            "DRIVE_STATE.NEXT_VO AS NEXT_VO,"
+                            "DRIVE_STATE.USER_COMMENT AS USER_COMMENT,"
 
-        "DRIVE_STATE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "DRIVE_STATE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-        "DRIVE_STATE.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
-        "DRIVE_STATE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "DRIVE_STATE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-        "DRIVE_STATE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME,"
+                            "DRIVE_STATE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+                            "DRIVE_STATE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+                            "DRIVE_STATE.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+                            "DRIVE_STATE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+                            "DRIVE_STATE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+                            "DRIVE_STATE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME,"
 
-        "DRIVE_STATE.DISK_SYSTEM_NAME AS DISK_SYSTEM_NAME,"
-        "DRIVE_STATE.RESERVED_BYTES AS RESERVED_BYTES,"
-        "DRIVE_STATE.RESERVATION_SESSION_ID AS RESERVATION_SESSION_ID,"
-        "LOGICAL_LIBRARY.IS_DISABLED AS IS_DISABLED "
-      "FROM "
-        "DRIVE_STATE "
-      "LEFT JOIN "
-        "LOGICAL_LIBRARY "
-      "ON "
-        "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME = DRIVE_STATE.LOGICAL_LIBRARY "
-      "WHERE "
-        "DRIVE_NAME = :DRIVE_NAME";
+                            "DRIVE_STATE.DISK_SYSTEM_NAME AS DISK_SYSTEM_NAME,"
+                            "DRIVE_STATE.RESERVED_BYTES AS RESERVED_BYTES,"
+                            "DRIVE_STATE.RESERVATION_SESSION_ID AS RESERVATION_SESSION_ID,"
+                            "LOGICAL_LIBRARY.IS_DISABLED AS IS_DISABLED "
+                            "FROM "
+                            "DRIVE_STATE "
+                            "LEFT JOIN "
+                            "LOGICAL_LIBRARY "
+                            "ON "
+                            "LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME = DRIVE_STATE.LOGICAL_LIBRARY "
+                            "WHERE "
+                            "DRIVE_NAME = :DRIVE_NAME";
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":DRIVE_NAME", tapeDriveName);
@@ -600,20 +698,20 @@ std::optional<common::dataStructures::TapeDrive> RdbmsDriveStateCatalogue::getTa
       return gettingSqlTapeDriveValues(&rset);
     }
     return std::nullopt;
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
 }
 
 void RdbmsDriveStateCatalogue::setDesiredTapeDriveState(const std::string& tapeDriveName,
-  const common::dataStructures::DesiredDriveState &desiredState) {
+                                                        const common::dataStructures::DesiredDriveState& desiredState) {
   try {
     const auto trimmedReason = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(desiredState.reason, &m_log);
-    std::string sql =
-      "UPDATE DRIVE_STATE SET "
-        "DESIRED_UP = :DESIRED_UP,"
-        "DESIRED_FORCE_DOWN = :DESIRED_FORCE_DOWN,";
+    std::string sql = "UPDATE DRIVE_STATE SET "
+                      "DESIRED_UP = :DESIRED_UP,"
+                      "DESIRED_FORCE_DOWN = :DESIRED_FORCE_DOWN,";
     if (desiredState.reason) {
       sql += "REASON_UP_DOWN = ";
       sql += desiredState.reason.value().empty() ? "''," : ":REASON_UP_DOWN,";
@@ -622,7 +720,7 @@ void RdbmsDriveStateCatalogue::setDesiredTapeDriveState(const std::string& tapeD
     // Remove last ',' character
     sql.erase(sql.find_last_of(','), 1);
     sql += " WHERE "
-      "DRIVE_NAME = :DRIVE_NAME";
+           "DRIVE_NAME = :DRIVE_NAME";
 
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(sql.c_str());
@@ -630,40 +728,41 @@ void RdbmsDriveStateCatalogue::setDesiredTapeDriveState(const std::string& tapeD
     stmt.bindString(":DRIVE_NAME", tapeDriveName);
     stmt.bindBool(":DESIRED_UP", desiredState.up);
     stmt.bindBool(":DESIRED_FORCE_DOWN", desiredState.forceDown);
-    if (trimmedReason&& !trimmedReason.value().empty()) {
+    if (trimmedReason && !trimmedReason.value().empty()) {
       stmt.bindString(":REASON_UP_DOWN", trimmedReason.value());
     }
     stmt.executeNonQuery();
 
     if (0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify Tape Drive: ") + tapeDriveName +
-        " because it doesn't exist");
+                                 " because it doesn't exist");
     }
-  } catch (exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
 }
 
 void RdbmsDriveStateCatalogue::setDesiredTapeDriveStateComment(const std::string& tapeDriveName,
-  const std::string &comment) {
+                                                               const std::string& comment) {
   try {
-    const char* const sql =
-      "UPDATE DRIVE_STATE "
-      "SET "
-        "USER_COMMENT = :USER_COMMENT "
-      "WHERE "
-        "DRIVE_NAME = :DRIVE_NAME";
+    const char* const sql = "UPDATE DRIVE_STATE "
+                            "SET "
+                            "USER_COMMENT = :USER_COMMENT "
+                            "WHERE "
+                            "DRIVE_NAME = :DRIVE_NAME";
 
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(sql);
 
     auto bindOptionalStringIfSet = [&stmt](const std::string& sqlField,
-      const std::optional<std::string>& optionalString) {
+                                           const std::optional<std::string>& optionalString) {
       if (optionalString) {
         if (optionalString.value().empty()) {
           stmt.bindString(sqlField, std::nullopt);
-        } else {
+        }
+        else {
           stmt.bindString(sqlField, optionalString.value());
         }
       }
@@ -676,31 +775,33 @@ void RdbmsDriveStateCatalogue::setDesiredTapeDriveStateComment(const std::string
 
     if (0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify Tape Drive: ") + tapeDriveName +
-        " because it doesn't exist");
+                                 " because it doesn't exist");
     }
-  } catch (exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
 }
 
-void RdbmsDriveStateCatalogue::updateTapeDriveStatistics(const std::string& tapeDriveName,
-  const std::string& host, const std::string& logicalLibrary,
+void RdbmsDriveStateCatalogue::updateTapeDriveStatistics(
+  const std::string& tapeDriveName,
+  const std::string& host,
+  const std::string& logicalLibrary,
   const common::dataStructures::TapeDriveStatistics& statistics) {
   try {
-    const char *const sql =
-      "UPDATE DRIVE_STATE "
-      "SET "
-        "HOST = :HOST,"
-        "LOGICAL_LIBRARY = :LOGICAL_LIBRARY,"
-        "BYTES_TRANSFERED_IN_SESSION = :BYTES_TRANSFERED_IN_SESSION,"
-        "FILES_TRANSFERED_IN_SESSION = :FILES_TRANSFERED_IN_SESSION,"
-        "SESSION_ELAPSED_TIME = :REPORT_TIME-SESSION_START_TIME,"
-        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-      "WHERE "
-        "DRIVE_NAME = :DRIVE_NAME AND DRIVE_STATUS = 'TRANSFERING'";
+    const char* const sql = "UPDATE DRIVE_STATE "
+                            "SET "
+                            "HOST = :HOST,"
+                            "LOGICAL_LIBRARY = :LOGICAL_LIBRARY,"
+                            "BYTES_TRANSFERED_IN_SESSION = :BYTES_TRANSFERED_IN_SESSION,"
+                            "FILES_TRANSFERED_IN_SESSION = :FILES_TRANSFERED_IN_SESSION,"
+                            "SESSION_ELAPSED_TIME = :REPORT_TIME-SESSION_START_TIME,"
+                            "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+                            "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+                            "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+                            "WHERE "
+                            "DRIVE_NAME = :DRIVE_NAME AND DRIVE_STATUS = 'TRANSFERING'";
 
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(sql);
@@ -721,34 +822,33 @@ void RdbmsDriveStateCatalogue::updateTapeDriveStatistics(const std::string& tape
       log::LogContext lc(m_log);
       lc.log(log::DEBUG, "RdbmsCatalogue::updateTapeDriveStatistics(): It didn't update statistics");
     }
-  } catch (exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
 }
 
-void RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructures::TapeDrive &tapeDrive) {
+void RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructures::TapeDrive& tapeDrive) {
   try {
     const std::string driveStatusStr = common::dataStructures::TapeDrive::stateToString(tapeDrive.driveStatus);
 
     // Case 1 : Drive status stays the same
-    std::string sql =
-      "UPDATE DRIVE_STATE SET "
-        "HOST = :HOST,"
-        "LOGICAL_LIBRARY = :LOGICAL_LIBRARY,";
+    std::string sql = "UPDATE DRIVE_STATE SET "
+                      "HOST = :HOST,"
+                      "LOGICAL_LIBRARY = :LOGICAL_LIBRARY,";
 
     if (tapeDrive.driveStatus == common::dataStructures::DriveStatus::Transferring) {
-      sql +=
-        "BYTES_TRANSFERED_IN_SESSION = :BYTES_TRANSFERED_IN_SESSION,"
-        "FILES_TRANSFERED_IN_SESSION = :FILES_TRANSFERED_IN_SESSION,"
-        "SESSION_ELAPSED_TIME = CASE WHEN SESSION_START_TIME IS NULL THEN 0 ELSE :REPORT_TIME - SESSION_START_TIME END,";
+      sql += "BYTES_TRANSFERED_IN_SESSION = :BYTES_TRANSFERED_IN_SESSION,"
+             "FILES_TRANSFERED_IN_SESSION = :FILES_TRANSFERED_IN_SESSION,"
+             "SESSION_ELAPSED_TIME = CASE WHEN SESSION_START_TIME IS NULL THEN 0 ELSE :REPORT_TIME - "
+             "SESSION_START_TIME END,";
     }
-    sql +=
-        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-      "WHERE "
-        "DRIVE_NAME = :DRIVE_NAME AND DRIVE_STATUS = :DRIVE_STATUS";
+    sql += "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+           "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+           "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+           "WHERE "
+           "DRIVE_NAME = :DRIVE_NAME AND DRIVE_STATUS = :DRIVE_STATUS";
 
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(sql.c_str());
@@ -769,29 +869,30 @@ void RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
     stmt.executeNonQuery();
 
     // If the update succeeded, we are done. Otherwise proceed to Case 2.
-    if (stmt.getNbAffectedRows() > 0) return;
+    if (stmt.getNbAffectedRows() > 0) {
+      return;
+    }
 
     // Case 2 : Drive status is changing
-    sql =
-      "UPDATE DRIVE_STATE SET "
-        "HOST = :HOST,"
-        "LOGICAL_LIBRARY = :LOGICAL_LIBRARY,"
-        "SESSION_ID = :SESSION_ID,"
-        "BYTES_TRANSFERED_IN_SESSION = :BYTES_TRANSFERED_IN_SESSION,"
-        "FILES_TRANSFERED_IN_SESSION = :FILES_TRANSFERED_IN_SESSION,"
-        "TRANSFER_START_TIME = :TRANSFER_START_TIME,"
-        "SESSION_ELAPSED_TIME = :SESSION_ELAPSED_TIME,"
-        "UNLOAD_START_TIME = :UNLOAD_START_TIME,"
-        "UNMOUNT_START_TIME = :UNMOUNT_START_TIME,"
-        "DRAINING_START_TIME = :DRAINING_START_TIME,"
-        "DOWN_OR_UP_START_TIME = :DOWN_OR_UP_START_TIME,"
-        "PROBE_START_TIME = :PROBE_START_TIME,"
-        "CLEANUP_START_TIME = :CLEANUP_START_TIME,"
-        "SHUTDOWN_TIME = :SHUTDOWN_TIME,"
-        "MOUNT_TYPE = :MOUNT_TYPE,"
-        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME,";
+    sql = "UPDATE DRIVE_STATE SET "
+          "HOST = :HOST,"
+          "LOGICAL_LIBRARY = :LOGICAL_LIBRARY,"
+          "SESSION_ID = :SESSION_ID,"
+          "BYTES_TRANSFERED_IN_SESSION = :BYTES_TRANSFERED_IN_SESSION,"
+          "FILES_TRANSFERED_IN_SESSION = :FILES_TRANSFERED_IN_SESSION,"
+          "TRANSFER_START_TIME = :TRANSFER_START_TIME,"
+          "SESSION_ELAPSED_TIME = :SESSION_ELAPSED_TIME,"
+          "UNLOAD_START_TIME = :UNLOAD_START_TIME,"
+          "UNMOUNT_START_TIME = :UNMOUNT_START_TIME,"
+          "DRAINING_START_TIME = :DRAINING_START_TIME,"
+          "DOWN_OR_UP_START_TIME = :DOWN_OR_UP_START_TIME,"
+          "PROBE_START_TIME = :PROBE_START_TIME,"
+          "CLEANUP_START_TIME = :CLEANUP_START_TIME,"
+          "SHUTDOWN_TIME = :SHUTDOWN_TIME,"
+          "MOUNT_TYPE = :MOUNT_TYPE,"
+          "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+          "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+          "LAST_UPDATE_TIME = :LAST_UPDATE_TIME,";
 
     if (tapeDrive.driveStatus != common::dataStructures::DriveStatus::Transferring) {
       if (tapeDrive.driveStatus != common::dataStructures::DriveStatus::Mounting) {
@@ -812,7 +913,8 @@ void RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
       sql += "RESERVED_BYTES = NULL,";
       sql += "RESERVATION_SESSION_ID = NULL,";
       sql += "DRIVE_STATUS = CASE WHEN DESIRED_UP = '0' THEN 'DOWN' ELSE 'UP' END,";
-    } else {
+    }
+    else {
       sql += "DRIVE_STATUS = '" + driveStatusStr + "',";
     }
     if (tapeDrive.reasonUpDown) {
@@ -835,9 +937,8 @@ void RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
     }
     // Remove last ',' character
     sql.erase(sql.find_last_of(','), 1);
-    sql +=
-     " WHERE "
-        "DRIVE_NAME = :DRIVE_NAME";
+    sql += " WHERE "
+           "DRIVE_NAME = :DRIVE_NAME";
 
     stmt.reset();
     stmt = conn.createStmt(sql.c_str());
@@ -845,15 +946,18 @@ void RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
     auto setOptionalTime = [&stmt](const std::string& sqlField, const std::optional<time_t>& optionalField) {
       if (optionalField) {
         stmt.bindUint64(sqlField, optionalField.value());
-      } else {
+      }
+      else {
         stmt.bindUint64(sqlField, std::nullopt);
       }
     };
-    auto bindOptionalStringIfSet = [&stmt](const std::string& sqlField, const std::optional<std::string>& optionalString) {
+    auto bindOptionalStringIfSet = [&stmt](const std::string& sqlField,
+                                           const std::optional<std::string>& optionalString) {
       if (optionalString) {
         if (optionalString.value().empty()) {
           stmt.bindString(sqlField, std::nullopt);
-        } else {
+        }
+        else {
           stmt.bindString(sqlField, optionalString.value());
         }
       }
@@ -902,9 +1006,11 @@ void RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
     stmt.executeNonQuery();
 
     if (0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot update status for drive ") + tapeDrive.driveName + ". Drive not found.");
+      throw exception::UserError(std::string("Cannot update status for drive ") + tapeDrive.driveName +
+                                 ". Drive not found.");
     }
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
@@ -929,17 +1035,21 @@ std::map<std::string, uint64_t> RdbmsDriveStateCatalogue::getDiskSpaceReservatio
 //------------------------------------------------------------------------------
 // reserveDiskSpace
 //------------------------------------------------------------------------------
-void RdbmsDriveStateCatalogue::reserveDiskSpace(const std::string& driveName, const uint64_t mountId,
-  const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) {
-  if (diskSpaceReservation.empty()) return;
+void RdbmsDriveStateCatalogue::reserveDiskSpace(const std::string& driveName,
+                                                const uint64_t mountId,
+                                                const DiskSpaceReservationRequest& diskSpaceReservation,
+                                                log::LogContext& lc) {
+  if (diskSpaceReservation.empty()) {
+    return;
+  }
 
   try {
     {
       log::ScopedParamContainer params(lc);
       params.add("driveName", driveName)
-            .add("diskSystem", diskSpaceReservation.begin()->first)
-            .add("reservationBytes", diskSpaceReservation.begin()->second)
-            .add("mountId", mountId);
+        .add("diskSystem", diskSpaceReservation.begin()->first)
+        .add("reservationBytes", diskSpaceReservation.begin()->second)
+        .add("mountId", mountId);
       lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): reservation request.");
     }
 
@@ -948,13 +1058,12 @@ void RdbmsDriveStateCatalogue::reserveDiskSpace(const std::string& driveName, co
     //
     // The disk system name is allowed to be updated when RESERVED_BYTES is zero (initial disk reservation, or previous
     // disk reservations have been released). Otherwise, to update RESERVED_BYTES, the disk system name has to match.
-    const char* const sql =
-      "UPDATE DRIVE_STATE SET "
-        "RESERVED_BYTES = RESERVED_BYTES + :BYTES_TO_ADD "
-      "WHERE "
-        "DRIVE_NAME = :DRIVE_NAME "
-        "AND DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME "
-        "AND RESERVATION_SESSION_ID = :RESERVATION_SESSION_ID ";
+    const char* const sql = "UPDATE DRIVE_STATE SET "
+                            "RESERVED_BYTES = RESERVED_BYTES + :BYTES_TO_ADD "
+                            "WHERE "
+                            "DRIVE_NAME = :DRIVE_NAME "
+                            "AND DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME "
+                            "AND RESERVATION_SESSION_ID = :RESERVATION_SESSION_ID ";
 
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(sql);
@@ -970,18 +1079,17 @@ void RdbmsDriveStateCatalogue::reserveDiskSpace(const std::string& driveName, co
       {
         log::ScopedParamContainer params(lc);
         params.add("driveName", driveName)
-              .add("diskSystem", diskSpaceReservation.begin()->first)
-              .add("reservationBytes", diskSpaceReservation.begin()->second)
-              .add("mountId", mountId);
+          .add("diskSystem", diskSpaceReservation.begin()->first)
+          .add("reservationBytes", diskSpaceReservation.begin()->second)
+          .add("mountId", mountId);
         lc.log(log::INFO, "In RetrieveMount::releaseDiskSpace(): creating reservation for new mount");
       }
-      const char* const sql_reset =
-        "UPDATE DRIVE_STATE SET "
-          "DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME,"
-          "RESERVED_BYTES = :BYTES_TO_ADD,"
-          "RESERVATION_SESSION_ID = :RESERVATION_SESSION_ID "
-        "WHERE "
-          "DRIVE_NAME = :DRIVE_NAME";
+      const char* const sql_reset = "UPDATE DRIVE_STATE SET "
+                                    "DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME,"
+                                    "RESERVED_BYTES = :BYTES_TO_ADD,"
+                                    "RESERVATION_SESSION_ID = :RESERVATION_SESSION_ID "
+                                    "WHERE "
+                                    "DRIVE_NAME = :DRIVE_NAME";
       stmt.reset();
       stmt = conn.createStmt(sql_reset);
       stmt.bindString(":DRIVE_NAME", driveName);
@@ -992,13 +1100,14 @@ void RdbmsDriveStateCatalogue::reserveDiskSpace(const std::string& driveName, co
       if (stmt.getNbAffectedRows() != 1) {
         log::ScopedParamContainer params(lc);
         params.add("driveName", driveName)
-              .add("diskSystem", diskSpaceReservation.begin()->first)
-              .add("reservationBytes", diskSpaceReservation.begin()->second)
-              .add("mountId", mountId);
+          .add("diskSystem", diskSpaceReservation.begin()->first)
+          .add("reservationBytes", diskSpaceReservation.begin()->second)
+          .add("mountId", mountId);
         lc.log(log::ERR, "In RetrieveMount::releaseDiskSpace(): failed to create disk reservation for new mount.");
       }
     }
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
@@ -1007,28 +1116,32 @@ void RdbmsDriveStateCatalogue::reserveDiskSpace(const std::string& driveName, co
 //------------------------------------------------------------------------------
 // releaseDiskSpace
 //------------------------------------------------------------------------------
-void RdbmsDriveStateCatalogue::releaseDiskSpace(const std::string& driveName, const uint64_t mountId,
-  const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) {
-  if (diskSpaceReservation.empty()) return;
+void RdbmsDriveStateCatalogue::releaseDiskSpace(const std::string& driveName,
+                                                const uint64_t mountId,
+                                                const DiskSpaceReservationRequest& diskSpaceReservation,
+                                                log::LogContext& lc) {
+  if (diskSpaceReservation.empty()) {
+    return;
+  }
 
   try {
     {
       log::ScopedParamContainer params(lc);
       params.add("driveName", driveName)
-            .add("diskSystem", diskSpaceReservation.begin()->first)
-            .add("reservationBytes", diskSpaceReservation.begin()->second)
-            .add("mountId", mountId);
+        .add("diskSystem", diskSpaceReservation.begin()->first)
+        .add("reservationBytes", diskSpaceReservation.begin()->second)
+        .add("mountId", mountId);
       lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): reservation release request.");
     }
 
     // If the amount being released exceeds the amount of the reservation, set the reservation to zero
-    const char* const sql =
-      "UPDATE DRIVE_STATE SET "
-        "RESERVED_BYTES = CASE WHEN RESERVED_BYTES > :BYTES_TO_SUBTRACT1 THEN RESERVED_BYTES-:BYTES_TO_SUBTRACT2 ELSE 0 END "
-      "WHERE "
-        "DRIVE_NAME = :DRIVE_NAME "
-        "AND DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME "
-        "AND RESERVATION_SESSION_ID = :RESERVATION_SESSION_ID";
+    const char* const sql = "UPDATE DRIVE_STATE SET "
+                            "RESERVED_BYTES = CASE WHEN RESERVED_BYTES > :BYTES_TO_SUBTRACT1 THEN "
+                            "RESERVED_BYTES-:BYTES_TO_SUBTRACT2 ELSE 0 END "
+                            "WHERE "
+                            "DRIVE_NAME = :DRIVE_NAME "
+                            "AND DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME "
+                            "AND RESERVATION_SESSION_ID = :RESERVATION_SESSION_ID";
 
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(sql);
@@ -1042,12 +1155,14 @@ void RdbmsDriveStateCatalogue::releaseDiskSpace(const std::string& driveName, co
       // If the reservation does not match the <driveName, diskSystem> pair in the DRIVE_STATE table, log an error and carry on
       log::ScopedParamContainer params(lc);
       params.add("driveName", driveName)
-            .add("diskSystem", diskSpaceReservation.begin()->first)
-            .add("reservationBytes", diskSpaceReservation.begin()->second)
-            .add("mountId", mountId);
-      lc.log(log::ERR, "In RetrieveMount::releaseDiskSpace(): reservation release request failed, driveName, diskSystem and mountId do not match.");
+        .add("diskSystem", diskSpaceReservation.begin()->first)
+        .add("reservationBytes", diskSpaceReservation.begin()->second)
+        .add("mountId", mountId);
+      lc.log(log::ERR, "In RetrieveMount::releaseDiskSpace(): reservation release request failed, driveName, "
+                       "diskSystem and mountId do not match.");
     }
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }

@@ -23,46 +23,49 @@ namespace cta {
 namespace postgresscheddb {
 namespace sql {
 
-void ArchiveJobQueueRow::updateMountId(Transaction &txn, const std::list<ArchiveJobQueueRow>& rowList, uint64_t mountId) {
-  if(rowList.empty()) return;
+void ArchiveJobQueueRow::updateMountId(Transaction& txn,
+                                       const std::list<ArchiveJobQueueRow>& rowList,
+                                       uint64_t mountId) {
+  if (rowList.empty()) {
+    return;
+  }
 
   try {
-    const char *const sqltt = "CREATE TEMPORARY TABLE TEMP_JOB_IDS (JOB_ID BIGINT) ON COMMIT DROP";
+    const char* const sqltt = "CREATE TEMPORARY TABLE TEMP_JOB_IDS (JOB_ID BIGINT) ON COMMIT DROP";
     txn.conn().executeNonQuery(sqltt);
-  } catch(exception::Exception &ex) {
-    const char *const sqltrunc = "TRUNCATE TABLE TEMP_JOB_IDS";
+  }
+  catch (exception::Exception& ex) {
+    const char* const sqltrunc = "TRUNCATE TABLE TEMP_JOB_IDS";
     txn.conn().executeNonQuery(sqltrunc);
   }
 
-  const char *const sqlcopy =
-    "COPY TEMP_JOB_IDS(JOB_ID) FROM STDIN --"
-      ":JOB_ID";
+  const char* const sqlcopy = "COPY TEMP_JOB_IDS(JOB_ID) FROM STDIN --"
+                              ":JOB_ID";
 
   auto stmt = txn.conn().createStmt(sqlcopy);
-  rdbms::wrapper::PostgresStmt &postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt &>(stmt.getStmt());
+  rdbms::wrapper::PostgresStmt& postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt&>(stmt.getStmt());
 
   const size_t nbrows = rowList.size();
   cta::rdbms::wrapper::PostgresColumn c1("JOB_ID", nbrows);
   std::list<ArchiveJobQueueRow>::const_iterator itr;
   size_t i;
-  for(i=0,itr=rowList.begin();i<nbrows;++i,++itr) {
+  for (i = 0, itr = rowList.begin(); i < nbrows; ++i, ++itr) {
     c1.setFieldValue(i, std::to_string(itr->jobId));
   }
 
   postgresStmt.setColumn(c1);
   postgresStmt.executeCopyInsert(nbrows);
 
-  const char *const sql =
-    "UPDATE ARCHIVE_JOB_QUEUE SET "
-      "MOUNT_ID = :MOUNT_ID "
-    "WHERE "
-      " JOB_ID IN (SELECT JOB_ID FROM TEMP_JOB_IDS)";
+  const char* const sql = "UPDATE ARCHIVE_JOB_QUEUE SET "
+                          "MOUNT_ID = :MOUNT_ID "
+                          "WHERE "
+                          " JOB_ID IN (SELECT JOB_ID FROM TEMP_JOB_IDS)";
 
   stmt = txn.conn().createStmt(sql);
   stmt.bindUint64(":MOUNT_ID", mountId);
   stmt.executeQuery();
 }
 
-} // namespace sql
-} // namespace postgresscheddb
-} // namespace cta
+}  // namespace sql
+}  // namespace postgresscheddb
+}  // namespace cta

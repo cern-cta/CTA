@@ -23,10 +23,10 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SqliteCatalogueSchema::SqliteCatalogueSchema(): CatalogueSchema(
+SqliteCatalogueSchema::SqliteCatalogueSchema() :
+CatalogueSchema(
   // CTA_SQL_SCHEMA - The contents of sqlite_catalogue_schema.cpp go here
-  ) {
-}
+) {}
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

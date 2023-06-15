@@ -28,8 +28,8 @@ namespace common {
 namespace dataStructures {
 struct SecurityIdentity;
 struct VirtualOrganization;
-} // namespace dataStructures
-} // namespace common
+}  // namespace dataStructures
+}  // namespace common
 
 namespace catalogue {
 
@@ -44,14 +44,14 @@ public:
    * @param admin The administrator.
    * @param vo the Virtual Organization
    */
-  virtual void createVirtualOrganization(const common::dataStructures::SecurityIdentity &admin,
-    const common::dataStructures::VirtualOrganization &vo) = 0;
+  virtual void createVirtualOrganization(const common::dataStructures::SecurityIdentity& admin,
+                                         const common::dataStructures::VirtualOrganization& vo) = 0;
 
   /**
    * Deletes the specified Virtual Organization
    * @param voName the name of the VirtualOrganization to delete
    */
-  virtual void deleteVirtualOrganization(const std::string &voName) = 0;
+  virtual void deleteVirtualOrganization(const std::string& voName) = 0;
 
   /**
    * Get all the Virtual Organizations from the Catalogue
@@ -64,16 +64,16 @@ public:
    * @param tapepoolName the name of the tapepool which we want the virtual organization
    * @return the VirtualOrganization associated to the tapepool passed in parameter
    */
-  virtual common::dataStructures::VirtualOrganization getVirtualOrganizationOfTapepool(
-    const std::string & tapepoolName) const = 0;
+  virtual common::dataStructures::VirtualOrganization
+    getVirtualOrganizationOfTapepool(const std::string& tapepoolName) const = 0;
 
   /**
    * Get, from the cache, the virtual organization corresponding to the tapepool passed in parameter
    * @param tapepoolName the name of the tapepool which we want the virtual organization
    * @return the VirtualOrganization associated to the tapepool passed in parameter
    */
-  virtual common::dataStructures::VirtualOrganization getCachedVirtualOrganizationOfTapepool(
-    const std::string & tapepoolName) const = 0;
+  virtual common::dataStructures::VirtualOrganization
+    getCachedVirtualOrganizationOfTapepool(const std::string& tapepoolName) const = 0;
 
   /**
    * Modifies the name of the specified Virtual Organization.
@@ -81,9 +81,9 @@ public:
    * @param currentVoName The current name of the Virtual Organization.
    * @param newVoName The new name of the Virtual Organization.
    */
-  virtual void modifyVirtualOrganizationName(
-    const common::dataStructures::SecurityIdentity &admin, const std::string &currentVoName,
-    const std::string &newVoName) = 0;
+  virtual void modifyVirtualOrganizationName(const common::dataStructures::SecurityIdentity& admin,
+                                             const std::string& currentVoName,
+                                             const std::string& newVoName) = 0;
 
   /**
    * Modifies the max number of allocated drives for read for the specified Virtual Organization
@@ -91,8 +91,9 @@ public:
    * @param voName the VO name
    * @param readMaxDrives the new max number of allocated drives for read for the specified Virtual Organization
    */
-  virtual void modifyVirtualOrganizationReadMaxDrives(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &voName, const uint64_t readMaxDrives) = 0;
+  virtual void modifyVirtualOrganizationReadMaxDrives(const common::dataStructures::SecurityIdentity& admin,
+                                                      const std::string& voName,
+                                                      const uint64_t readMaxDrives) = 0;
 
   /**
    * Modifies the max number of allocated drives for write for the specified Virtual Organization
@@ -100,8 +101,9 @@ public:
    * @param voName the VO name
    * @param writeMaxDrives the new max number of allocated drives for write for the specified Virtual Organization
    */
-  virtual void modifyVirtualOrganizationWriteMaxDrives(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &voName, const uint64_t writeMaxDrives) = 0;
+  virtual void modifyVirtualOrganizationWriteMaxDrives(const common::dataStructures::SecurityIdentity& admin,
+                                                       const std::string& voName,
+                                                       const uint64_t writeMaxDrives) = 0;
 
   /**
    * Modifies the max size of files  for the specified Virtual Organization
@@ -109,8 +111,9 @@ public:
    * @param voName the VO name
    * @param maxFileSize the new max file size for the specified Virtual Organization
    */
-  virtual void modifyVirtualOrganizationMaxFileSize(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &voName, const uint64_t maxFileSize) = 0;
+  virtual void modifyVirtualOrganizationMaxFileSize(const common::dataStructures::SecurityIdentity& admin,
+                                                    const std::string& voName,
+                                                    const uint64_t maxFileSize) = 0;
 
   /**
    * Modifies the comment of the specified Virtual Organization
@@ -118,8 +121,9 @@ public:
    * @param voName The name of the Virtual Organization.
    * @param comment The new comment of the Virtual Organization.
    */
-  virtual void modifyVirtualOrganizationComment(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &voName, const std::string &comment) = 0;
+  virtual void modifyVirtualOrganizationComment(const common::dataStructures::SecurityIdentity& admin,
+                                                const std::string& voName,
+                                                const std::string& comment) = 0;
 
   /**
    * Modifies the comment of the specified Virtual Organization
@@ -127,9 +131,10 @@ public:
    * @param voName The name of the Virtual Organization.
    * @param diskInstance The new disk instance of the Virtual Organization.
    */
-  virtual void modifyVirtualOrganizationDiskInstanceName(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &voName, const std::string &diskInstance) = 0;
+  virtual void modifyVirtualOrganizationDiskInstanceName(const common::dataStructures::SecurityIdentity& admin,
+                                                         const std::string& voName,
+                                                         const std::string& diskInstance) = 0;
 };
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

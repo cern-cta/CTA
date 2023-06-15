@@ -17,10 +17,8 @@
 
 #include "common/exception/EncryptionException.hpp"
 
-
 // -----------------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------------
-cta::exception::EncryptionException::EncryptionException(const std::string &context, const bool embedBacktrace):
-  cta::exception::Exception(context, embedBacktrace) {
-}
+cta::exception::EncryptionException::EncryptionException(const std::string& context, const bool embedBacktrace) :
+cta::exception::Exception(context, embedBacktrace) {}

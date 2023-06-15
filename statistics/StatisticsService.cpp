@@ -20,11 +20,9 @@
 namespace cta {
 namespace statistics {
 
-StatisticsService::StatisticsService() {
-}
+StatisticsService::StatisticsService() {}
 
-StatisticsService::~StatisticsService() {
-}
+StatisticsService::~StatisticsService() {}
 
 uint64_t StatisticsService::getNbUpdatedTapes() {
   return m_nbUpdatedTapes;

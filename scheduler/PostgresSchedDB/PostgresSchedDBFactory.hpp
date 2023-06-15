@@ -34,25 +34,24 @@ namespace catalogue {
 class Catalogue;
 }
 
-class PostgresSchedDBWrapper: public SchedulerDatabaseDecorator {
+class PostgresSchedDBWrapper : public SchedulerDatabaseDecorator {
 public:
-  PostgresSchedDBWrapper(const std::string &ownerId,
+  PostgresSchedDBWrapper(const std::string& ownerId,
                          std::unique_ptr<cta::log::Logger> logger,
-                         catalogue::Catalogue &catalogue,
-                         const rdbms::Login &login,
+                         catalogue::Catalogue& catalogue,
+                         const rdbms::Login& login,
                          const uint64_t nbConns) :
-      SchedulerDatabaseDecorator(m_PostgresSchedDB),
-      m_logger(std::move(logger)), m_catalogue(catalogue),
-      m_PostgresSchedDB( ownerId, *logger, catalogue, login, nbConns)
-   {
-     // empty
-   }
-
+  SchedulerDatabaseDecorator(m_PostgresSchedDB),
+  m_logger(std::move(logger)),
+  m_catalogue(catalogue),
+  m_PostgresSchedDB(ownerId, *logger, catalogue, login, nbConns) {
+    // empty
+  }
 
   ~PostgresSchedDBWrapper() throw() {}
 
 private:
-  std::unique_ptr <cta::log::Logger> m_logger;
+  std::unique_ptr<cta::log::Logger> m_logger;
   cta::catalogue::Catalogue& m_catalogue;
   PostgresSchedDB m_PostgresSchedDB;
 };
@@ -61,12 +60,12 @@ private:
  * A concrete implementation of a scheduler database factory that creates mock
  * scheduler database objects.
  */
-class PostgresSchedDBFactory: public SchedulerDatabaseFactory {
+class PostgresSchedDBFactory : public SchedulerDatabaseFactory {
 public:
   /**
    * Constructor
    */
-  explicit PostgresSchedDBFactory(const std::string & URL = ""): m_URL(URL) {}
+  explicit PostgresSchedDBFactory(const std::string& URL = "") : m_URL(URL) {}
 
   /**
    * Destructor.
@@ -78,8 +77,8 @@ public:
    *
    * @return A newly created scheduler database object.
    */
-  std::unique_ptr<SchedulerDatabase> create(std::unique_ptr<cta::catalogue::Catalogue> &catalogue) const {
-    auto dummylogger = std::make_unique<cta::log::DummyLogger>("","");
+  std::unique_ptr<SchedulerDatabase> create(std::unique_ptr<cta::catalogue::Catalogue>& catalogue) const {
+    auto dummylogger = std::make_unique<cta::log::DummyLogger>("", "");
     auto logger = std::unique_ptr<cta::log::Logger>(std::move(dummylogger));
 
     cta::rdbms::Login login(cta::rdbms::Login::DBTYPE_POSTGRESQL, "user", "password", "dbname", "host", 0);
@@ -88,8 +87,8 @@ public:
     return std::unique_ptr<SchedulerDatabase>(std::move(pgwrapper));
   }
 
-  private:
-    std::string m_URL;
+private:
+  std::string m_URL;
 };  // class PostgresSchedDBFactory
 
-} // namespace cta
+}  // namespace cta

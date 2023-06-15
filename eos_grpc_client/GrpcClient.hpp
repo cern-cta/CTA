@@ -24,60 +24,50 @@
 namespace eos {
 namespace client {
 
-class GrpcClient
-{
+class GrpcClient {
 public:
   explicit GrpcClient(std::shared_ptr<grpc::Channel> channel) :
-    stub_(eos::rpc::Eos::NewStub(channel)),
-    m_SSL(false),
-    m_tag(0),
-    m_eos_cid(0),
-    m_eos_fid(0) { }
+  stub_(eos::rpc::Eos::NewStub(channel)),
+  m_SSL(false),
+  m_tag(0),
+  m_eos_cid(0),
+  m_eos_fid(0) {}
 
   // factory function
   static std::unique_ptr<GrpcClient> Create(std::string endpoint, std::string token);
 
   std::string ping(const std::string& payload);
 
-  int FileInsert(const std::vector<eos::rpc::FileMdProto> &paths, eos::rpc::InsertReply &replies);
+  int FileInsert(const std::vector<eos::rpc::FileMdProto>& paths, eos::rpc::InsertReply& replies);
 
-  int ContainerInsert(const std::vector<eos::rpc::ContainerMdProto> &dirs, eos::rpc::InsertReply &replies);
+  int ContainerInsert(const std::vector<eos::rpc::ContainerMdProto>& dirs, eos::rpc::InsertReply& replies);
 
   // Obtain current container ID and current file ID
-  void GetCurrentIds(uint64_t &cid, uint64_t &fid);
+  void GetCurrentIds(uint64_t& cid, uint64_t& fid);
 
   // Obtain container or file metadata
-  eos::rpc::MDResponse GetMD(eos::rpc::TYPE type, uint64_t id, const std::string &path, bool showJson = false);
+  eos::rpc::MDResponse GetMD(eos::rpc::TYPE type, uint64_t id, const std::string& path, bool showJson = false);
 
   grpc::Status Exec(eos::rpc::NSRequest& request);
 
-  void set_ssl(bool onoff) {
-    m_SSL = onoff;
-  }
+  void set_ssl(bool onoff) { m_SSL = onoff; }
 
-  bool ssl() const {
-    return m_SSL;
-  }
+  bool ssl() const { return m_SSL; }
 
-  void set_token(const std::string &token) {
-    m_token = token;
-  }
+  void set_token(const std::string& token) { m_token = token; }
 
-  std::string token() const {
-    return m_token;
-  }
+  std::string token() const { return m_token; }
 
-  void *nextTag() {
-    return reinterpret_cast<void*>(++m_tag);
-  }
+  void* nextTag() { return reinterpret_cast<void*>(++m_tag); }
 
 private:
   std::unique_ptr<eos::rpc::Eos::Stub> stub_;
   bool m_SSL;
   std::string m_token;
   uint64_t m_tag;
-  uint64_t m_eos_cid;   //!< EOS current container ID
-  uint64_t m_eos_fid;   //!< EOS current file ID
+  uint64_t m_eos_cid;  //!< EOS current container ID
+  uint64_t m_eos_fid;  //!< EOS current file ID
 };
 
-}} // namespace eos::client
+}  // namespace client
+}  // namespace eos

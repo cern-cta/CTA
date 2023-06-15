@@ -43,13 +43,15 @@ class RetrieveRequest {
   friend class cta::PostgresSchedDB;
 
 public:
-  RetrieveRequest(rdbms::ConnPool &pool, log::LogContext& lc) : m_connPool(&pool), m_lc(lc) { }
+  RetrieveRequest(rdbms::ConnPool& pool, log::LogContext& lc) : m_connPool(&pool), m_lc(lc) {}
 
-  RetrieveRequest(log::LogContext& lc, const postgresscheddb::sql::RetrieveJobQueueRow &row) : m_connPool(nullptr), m_lc(lc) {
+  RetrieveRequest(log::LogContext& lc, const postgresscheddb::sql::RetrieveJobQueueRow& row) :
+  m_connPool(nullptr),
+  m_lc(lc) {
     *this = row;
   }
 
-  RetrieveRequest& operator=(const postgresscheddb::sql::RetrieveJobQueueRow &row);
+  RetrieveRequest& operator=(const postgresscheddb::sql::RetrieveJobQueueRow& row);
 
   void insert();
   void commit();
@@ -58,51 +60,51 @@ public:
   // ============================== Job management =============================
 
   struct RetrieveReqRepackInfo {
-    bool isRepack{false};
+    bool isRepack {false};
     std::map<uint32_t, std::string> archiveRouteMap;
     std::set<uint32_t> copyNbsToRearchive;
-    uint64_t repackRequestId{0};
-    uint64_t fSeq{0};
+    uint64_t repackRequestId {0};
+    uint64_t fSeq {0};
     std::string fileBufferURL;
-    bool hasUserProvidedFile{false};
+    bool hasUserProvidedFile {false};
   };
 
   struct RetrieveReqJobDump {
-    uint32_t copyNb{0};
-    cta::postgresscheddb::RetrieveJobStatus status{RetrieveJobStatus::RJS_ToTransfer};
+    uint32_t copyNb {0};
+    cta::postgresscheddb::RetrieveJobStatus status {RetrieveJobStatus::RJS_ToTransfer};
   };
 
   struct RetrieveRequestJob {
-    uint32_t copyNb{0};
-    uint32_t maxtotalretries{0};
-    uint32_t maxretrieswithinmount{0};
-    uint32_t retrieswithinmount{0};
-    uint32_t totalretries{0};
-    postgresscheddb::RetrieveJobStatus status{RetrieveJobStatus::RJS_ToTransfer};
-    uint64_t lastmountwithfailure{0};
+    uint32_t copyNb {0};
+    uint32_t maxtotalretries {0};
+    uint32_t maxretrieswithinmount {0};
+    uint32_t retrieswithinmount {0};
+    uint32_t totalretries {0};
+    postgresscheddb::RetrieveJobStatus status {RetrieveJobStatus::RJS_ToTransfer};
+    uint64_t lastmountwithfailure {0};
     std::vector<std::string> failurelogs;
-    uint32_t maxreportretries{0};
-    uint32_t totalreportretries{0};
+    uint32_t maxreportretries {0};
+    uint32_t totalreportretries {0};
     std::vector<std::string> reportfailurelogs;
-    bool isfailed{false};
+    bool isfailed {false};
   };
 
-  void setFailureReason(const std::string & reason);
+  void setFailureReason(const std::string& reason);
 
-  bool addJobFailure(uint32_t copyNumber, uint64_t mountId, const std::string & failureReason, log::LogContext & lc);
+  bool addJobFailure(uint32_t copyNumber, uint64_t mountId, const std::string& failureReason, log::LogContext& lc);
 
-  void setRepackInfo(const cta::postgresscheddb::RetrieveRequest::RetrieveReqRepackInfo & repackInfo);
+  void setRepackInfo(const cta::postgresscheddb::RetrieveRequest::RetrieveReqRepackInfo& repackInfo);
 
-  void setJobStatus(uint32_t copyNumber, const cta::postgresscheddb::RetrieveJobStatus &status);
+  void setJobStatus(uint32_t copyNumber, const cta::postgresscheddb::RetrieveJobStatus& status);
 
-  void setSchedulerRequest(const cta::common::dataStructures::RetrieveRequest & retrieveRequest);
+  void setSchedulerRequest(const cta::common::dataStructures::RetrieveRequest& retrieveRequest);
 
   void setRetrieveFileQueueCriteria(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria);
 
-  void setActivityIfNeeded(const cta::common::dataStructures::RetrieveRequest & retrieveRequest,
-    const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria);
+  void setActivityIfNeeded(const cta::common::dataStructures::RetrieveRequest& retrieveRequest,
+                           const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria);
 
-  void setDiskSystemName(const std::string & diskSystemName);
+  void setDiskSystemName(const std::string& diskSystemName);
 
   void setCreationTime(const uint64_t creationTime);
 
@@ -114,40 +116,40 @@ public:
   void setIsVerifyOnly(bool isVerifyOnly);
 
   void setFailed();
-  
+
   std::list<RetrieveReqJobDump> dumpJobs();
 
   std::string getIdStr() { return "?"; }
 
-  uint64_t                                     m_requestId = 0;
-  uint64_t                                     m_mountId = 0;
-  postgresscheddb::RetrieveJobStatus           m_status;
-  std::string                                  m_vid;
-  uint16_t                                     m_priority = 0;
-  time_t                                       m_retrieveMinReqAge = 0;
-  time_t                                       m_startTime = 0;
-  std::string                                  m_failureReportUrl;
-  std::string                                  m_failureReportLog;
-  bool                                         m_isFailed = false;
-  
+  uint64_t m_requestId = 0;
+  uint64_t m_mountId = 0;
+  postgresscheddb::RetrieveJobStatus m_status;
+  std::string m_vid;
+  uint16_t m_priority = 0;
+  time_t m_retrieveMinReqAge = 0;
+  time_t m_startTime = 0;
+  std::string m_failureReportUrl;
+  std::string m_failureReportLog;
+  bool m_isFailed = false;
+
   // the archiveFile element in scheduler retrieve request is not used
   cta::common::dataStructures::RetrieveRequest m_schedRetrieveReq;
-  cta::common::dataStructures::ArchiveFile     m_archiveFile;
-  std::string                                  m_mountPolicyName;
-  std::optional<std::string>                   m_activity;
-  std::optional<std::string>                   m_diskSystemName;
-  uint32_t                                     m_actCopyNb = 0;
+  cta::common::dataStructures::ArchiveFile m_archiveFile;
+  std::string m_mountPolicyName;
+  std::optional<std::string> m_activity;
+  std::optional<std::string> m_diskSystemName;
+  uint32_t m_actCopyNb = 0;
 
-  RetrieveReqRepackInfo  m_repackInfo;
-  
+  RetrieveReqRepackInfo m_repackInfo;
+
   std::list<RetrieveRequestJob> m_jobs;
 
   std::unique_ptr<postgresscheddb::Transaction> m_txn;
 
   // References to external objects
-  rdbms::ConnPool *m_connPool;
-  log::LogContext &m_lc;
+  rdbms::ConnPool* m_connPool;
+  log::LogContext& m_lc;
 };
 
-} // namespace postgresscheddb
-} // namespace cta
+}  // namespace postgresscheddb
+}  // namespace cta

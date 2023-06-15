@@ -32,4 +32,5 @@ struct CreateMountPolicyAttributes {
   std::string comment;
 };
 
-}}
+}  // namespace catalogue
+}  // namespace cta

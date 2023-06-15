@@ -32,16 +32,15 @@ namespace cta {
 namespace rdbms {
 
 namespace wrapper {
-  class ConnWrapper;
-  class StmtWrapper;
-}
+class ConnWrapper;
+class StmtWrapper;
+}  // namespace wrapper
 
 /**
  * A pool of prepared database statements.
  */
 class StmtPool {
 public:
-
   /**
    * Takes a database statement from the pool if one is present else a new
    * statement will be prepared.
@@ -50,7 +49,7 @@ public:
    * @param sql The SQL statement.
    * @return The prepared statement.
    */
-  Stmt getStmt(wrapper::ConnWrapper &conn, const std::string &sql);
+  Stmt getStmt(wrapper::ConnWrapper& conn, const std::string& sql);
 
   /**
    * Returns the number of cached statements currently in the pool.
@@ -66,7 +65,6 @@ public:
   void clear();
 
 private:
-
   friend Stmt;
 
   /**
@@ -87,9 +85,9 @@ private:
    * Please note that for a single key there maybe more than one cached
    * statement, hence the map to list of statements.
    */
-  std::map<std::string, std::list< std::unique_ptr<wrapper::StmtWrapper> > > m_stmts;
+  std::map<std::string, std::list<std::unique_ptr<wrapper::StmtWrapper>>> m_stmts;
 
-}; // class StmtPool
+};  // class StmtPool
 
-} // namespace rdbms
-} // namespace cta
+}  // namespace rdbms
+}  // namespace cta

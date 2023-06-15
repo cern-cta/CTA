@@ -45,8 +45,7 @@ struct Group {
    * @param g The name of the group which is only guaranteed to be unique
    * within its disk instance.
    */
-  Group(const std::string &d, const std::string &g): diskInstanceName(d), groupName(g) {
-  }
+  Group(const std::string& d, const std::string& g) : diskInstanceName(d), groupName(g) {}
 
   /**
    * Less than operator.
@@ -55,10 +54,10 @@ struct Group {
    * @return True if this object is less than the argument on the right hand
    * side of the operator.
    */
-  bool operator<(const Group &rhs) const {
+  bool operator<(const Group& rhs) const {
     return diskInstanceName < rhs.diskInstanceName || groupName < rhs.groupName;
   }
-}; // struct Group
+};  // struct Group
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

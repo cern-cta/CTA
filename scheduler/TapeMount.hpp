@@ -28,93 +28,93 @@
 #include <string>
 
 namespace cta {
-  /**
+/**
    * A placeholder class from which will derive ArchiveSession and RetrieveSession.
    * It's just here to allow RTTI.
    */
-  class TapeMount {
-  public:
-
-    /**
+class TapeMount {
+public:
+  /**
      * Returns The type of this tape mount.
      *
      * @return The type of this tape mount.
      */
-    virtual cta::common::dataStructures::MountType getMountType() const = 0;
+  virtual cta::common::dataStructures::MountType getMountType() const = 0;
 
-    /**
+  /**
      * Returns the volume identifier of the tape to be mounted.
      *
      * @return The volume identifier of the tape to be mounted.
      */
-    virtual std::string getVid() const = 0;
+  virtual std::string getVid() const = 0;
 
-    /**
+  /**
      * Returns the mount transaction id.
      *
      * @return The mount transaction id.
      */
-    virtual std::string getMountTransactionId() const = 0;
+  virtual std::string getMountTransactionId() const = 0;
 
-    /**
+  /**
      * Return the activity this mount is running for.
      *
      * @return optional, populated with the activity name if appropriate.
      */
 
-    virtual std::optional<std::string> getActivity() const = 0;
+  virtual std::optional<std::string> getActivity() const = 0;
 
-    /**
+  /**
      * Returns the mount transaction id.
      *
      * @return The mount transaction id.
      */
-    virtual uint32_t getNbFiles() const = 0;
+  virtual uint32_t getNbFiles() const = 0;
 
-    virtual std::string getVo() const = 0;
+  virtual std::string getVo() const = 0;
 
-    virtual std::string getMediaType() const = 0;
+  virtual std::string getMediaType() const = 0;
 
-    virtual std::string getVendor() const = 0;
+  virtual std::string getVendor() const = 0;
 
-    virtual cta::common::dataStructures::Label::Format getLabelFormat() const = 0;
+  virtual cta::common::dataStructures::Label::Format getLabelFormat() const = 0;
 
-    virtual std::string getPoolName() const = 0;
+  virtual std::string getPoolName() const = 0;
 
-    /**
+  /**
     * Returns the capacity in bytes of the tape
     * @return the capacity in bytes of the tape
     */
-    virtual uint64_t getCapacityInBytes() const = 0;
+  virtual uint64_t getCapacityInBytes() const = 0;
 
-    virtual std::optional<std::string> getEncryptionKeyName() const = 0;
+  virtual std::optional<std::string> getEncryptionKeyName() const = 0;
 
-    /**
+  /**
      * Indicates that the mount was completed.
      */
-    virtual void complete() = 0;
+  virtual void complete() = 0;
 
-    /**
+  /**
      * Report a drive status change
      */
-    virtual void setDriveStatus(cta::common::dataStructures::DriveStatus status, const std::optional<std::string> & reason = std::nullopt) = 0;
+  virtual void setDriveStatus(cta::common::dataStructures::DriveStatus status,
+                              const std::optional<std::string>& reason = std::nullopt) = 0;
 
-    /**
+  /**
      * Report a tape session statistics
      */
-    virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) = 0;
+  virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) = 0;
 
-    /**
+  /**
      * Report a tape mounted event
      * @param LogContext
      */
-    virtual void setTapeMounted(cta::log::LogContext &logContext) const = 0;
+  virtual void setTapeMounted(cta::log::LogContext& logContext) const = 0;
 
-    /**
+  /**
      * Destructor.
      */
-    virtual ~TapeMount() noexcept;
+  virtual ~TapeMount() noexcept;
 
-  }; // class TapeMount
+};  // class TapeMount
 
-}
+}  // namespace cta

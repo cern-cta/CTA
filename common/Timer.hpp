@@ -30,13 +30,8 @@ namespace utils {
  * The reset method allows to reset the reference time to the current time
  */
 class Timer {
-
 public:
-        
-  enum reset_t {
-    keepRunning,
-    resetCounter
-  };
+  enum reset_t { keepRunning, resetCounter };
 
   /**
    * Constructor.
@@ -66,14 +61,12 @@ public:
   void reset();
 
 private:
-
   /**
    * Reference time for this timeri
    */
   timeval m_reference;
 
-}; // class Timer
+};  // class Timer
 
-} // namespace utils
-} // namespace cta
-
+}  // namespace utils
+}  // namespace cta

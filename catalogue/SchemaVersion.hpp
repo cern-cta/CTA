@@ -22,18 +22,16 @@
 #include <optional>
 #include <string>
 
-namespace cta { namespace catalogue {
+namespace cta {
+namespace catalogue {
 
 class SchemaVersion {
 public:
   class Builder;
 
-  typedef std::pair<uint64_t,uint64_t> MajorMinor;
+  typedef std::pair<uint64_t, uint64_t> MajorMinor;
 
-  enum Status{
-    UPGRADING,
-    PRODUCTION
-  };
+  enum Status { UPGRADING, PRODUCTION };
 
   SchemaVersion(const SchemaVersion& orig);
   virtual ~SchemaVersion();
@@ -45,7 +43,8 @@ public:
   template<typename T>
   T getStatus() const;
 
-  SchemaVersion & operator=(const SchemaVersion &other);
+  SchemaVersion& operator=(const SchemaVersion& other);
+
 private:
   uint64_t m_schemaVersionMajor;
   uint64_t m_schemaVersionMinor;
@@ -55,18 +54,19 @@ private:
   SchemaVersion();
 };
 
-class SchemaVersion::Builder{
+class SchemaVersion::Builder {
 public:
   Builder();
-  Builder(const Builder& );
-  Builder & operator=(const Builder& builder);
-  Builder & schemaVersionMajor(const uint64_t schemaVersionMajor);
-  Builder & schemaVersionMinor(const uint64_t schemaVersionMinor);
-  Builder & nextSchemaVersionMajor(const uint64_t pNextSchemaVersionMajor);
-  Builder & nextSchemaVersionMinor(const uint64_t pNextSchemaVersionMinor);
-  Builder & status(const std::string& status);
-  Builder & status(const SchemaVersion::Status & pstatus);
+  Builder(const Builder&);
+  Builder& operator=(const Builder& builder);
+  Builder& schemaVersionMajor(const uint64_t schemaVersionMajor);
+  Builder& schemaVersionMinor(const uint64_t schemaVersionMinor);
+  Builder& nextSchemaVersionMajor(const uint64_t pNextSchemaVersionMajor);
+  Builder& nextSchemaVersionMinor(const uint64_t pNextSchemaVersionMinor);
+  Builder& status(const std::string& status);
+  Builder& status(const SchemaVersion::Status& pstatus);
   SchemaVersion build() const;
+
 private:
   void validate() const;
   SchemaVersion m_schemaVersion;
@@ -76,4 +76,5 @@ private:
   static std::map<std::string, SchemaVersion::Status> s_mapStringStatus;
 };
 
-}}
+}  // namespace catalogue
+}  // namespace cta

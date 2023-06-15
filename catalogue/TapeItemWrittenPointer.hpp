@@ -25,13 +25,14 @@ namespace catalogue {
 /**
  * A utility struct allowing sorting unique_ptr according to content instead of pointer value
  */
-struct TapeItemWrittenPointer: public std::unique_ptr<TapeItemWritten> {
-  template<typename ... Ts> TapeItemWrittenPointer(Ts...args): std::unique_ptr<TapeItemWritten>::unique_ptr<TapeItemWritten>(args...) {}
+struct TapeItemWrittenPointer : public std::unique_ptr<TapeItemWritten> {
+  template<typename... Ts>
+  TapeItemWrittenPointer(Ts... args) : std::unique_ptr<TapeItemWritten>::unique_ptr<TapeItemWritten>(args...) {}
 };
 
 // This operator (and not the member one) should be defined to be picked up by std::less,
 // which will define the ordering of std::set<TapeItemWritenPointer>.
-bool operator<(const TapeItemWrittenPointer& a, const TapeItemWrittenPointer& b);// { return *a < *b; }
+bool operator<(const TapeItemWrittenPointer& a, const TapeItemWrittenPointer& b);  // { return *a < *b; }
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

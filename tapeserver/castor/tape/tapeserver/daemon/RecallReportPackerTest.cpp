@@ -27,42 +27,36 @@
 
 using ::testing::_;
 using ::testing::Invoke;
-namespace unitTests{
 
-class castor_tape_tapeserver_daemon_RecallReportPackerTest: public ::testing::Test {
+namespace unitTests {
+
+class castor_tape_tapeserver_daemon_RecallReportPackerTest : public ::testing::Test {
 protected:
+  void SetUp() {}
 
-  void SetUp() {
-  }
+  void TearDown() {}
 
-  void TearDown() {
-  }
+};  // class castor_tape_tapeserver_daemon_RecallReportPackerTest
 
-}; // class castor_tape_tapeserver_daemon_RecallReportPackerTest
+class MockRetrieveJobExternalStats : public cta::MockRetrieveJob {
+public:
+  MockRetrieveJobExternalStats(cta::RetrieveMount& rm, int& completes, int& failures) :
+  MockRetrieveJob(rm),
+  completesRef(completes),
+  failuresRef(failures) {}
 
-  class MockRetrieveJobExternalStats: public cta::MockRetrieveJob {
-  public:
-    MockRetrieveJobExternalStats(cta::RetrieveMount & rm, int & completes, int &failures):
-    MockRetrieveJob(rm), completesRef(completes), failuresRef(failures) {}
+  void asyncSetSuccessful() override { completesRef++; }
 
-    void asyncSetSuccessful() override {
-      completesRef++;
-    }
+  void transferFailed(const std::string& failureReason, cta::log::LogContext&) override { failuresRef++; }
 
-    void transferFailed(const std::string &failureReason, cta::log::LogContext&) override {
-      failuresRef++;
-    }
-
-  private:
-    int & completesRef;
-    int & failuresRef;
-  };
+private:
+  int& completesRef;
+  int& failuresRef;
+};
 
 TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerNominal) {
   auto catalogue = cta::catalogue::DummyCatalogue();
   cta::MockRetrieveMount retrieveMount(catalogue);
-
-
 
   ::testing::InSequence dummy;
   std::unique_ptr<cta::RetrieveJob> job1;
@@ -80,9 +74,9 @@ TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerN
     job2.reset(mockJob.release());
   }
 
-  cta::log::StringLogger log("dummy","castor_tape_tapeserver_RecallReportPackerNominal",cta::log::DEBUG);
+  cta::log::StringLogger log("dummy", "castor_tape_tapeserver_RecallReportPackerNominal", cta::log::DEBUG);
   cta::log::LogContext lc(log);
-  castor::tape::tapeserver::daemon::RecallReportPacker rrp(&retrieveMount,lc);
+  castor::tape::tapeserver::daemon::RecallReportPacker rrp(&retrieveMount, lc);
   rrp.startThreads();
 
   rrp.reportCompletedJob(std::move(job1), lc);
@@ -97,9 +91,9 @@ TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerN
 
   std::string temp = log.getLog();
   ASSERT_NE(std::string::npos, temp.find("Nominal RecallReportPacker::EndofSession has been reported"));
-  ASSERT_EQ(1,job1completes);
-  ASSERT_EQ(1,job2completes);
-  ASSERT_EQ(1,retrieveMount.completes);
+  ASSERT_EQ(1, job1completes);
+  ASSERT_EQ(1, job2completes);
+  ASSERT_EQ(1, retrieveMount.completes);
 }
 
 TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerBadBadEnd) {
@@ -129,10 +123,10 @@ TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerB
     job3.reset(mockJob.release());
   }
 
-  cta::log::StringLogger log("dummy","castor_tape_tapeserver_RecallReportPackerBadBadEnd",cta::log::DEBUG);
+  cta::log::StringLogger log("dummy", "castor_tape_tapeserver_RecallReportPackerBadBadEnd", cta::log::DEBUG);
   cta::log::LogContext lc(log);
 
-  castor::tape::tapeserver::daemon::RecallReportPacker rrp(&retrieveMount,lc);
+  castor::tape::tapeserver::daemon::RecallReportPacker rrp(&retrieveMount, lc);
   rrp.startThreads();
 
   rrp.reportCompletedJob(std::move(job1), lc);
@@ -141,7 +135,7 @@ TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerB
   const std::string error_msg = "ERROR_TEST_MSG";
   const cta::exception::Exception ex(error_msg);
   rrp.reportFailedJob(std::move(job3), ex, lc);
-  
+
   rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
 
   rrp.setTapeDone();
@@ -157,4 +151,4 @@ TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerB
   ASSERT_EQ(1, retrieveMount.completes);
 }
 
-}
+}  // namespace unitTests

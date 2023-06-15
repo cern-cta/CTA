@@ -26,7 +26,7 @@ namespace catalogue {
 /**
  * This class allows to compare a catalogue schema against a InMemory SQLite catalogue schema
  */
-class SQLiteSchemaComparer: public SchemaComparer {
+class SQLiteSchemaComparer : public SchemaComparer {
 public:
   /**
    * Constructs a SQLiteSchemaComparer
@@ -34,7 +34,7 @@ public:
    * @param catalogueMetadataGetter the catalogue metadata getter to compare the catalogue schema content with the SQLite
    * database one
    */
-  SQLiteSchemaComparer(const std::string& databaseToCheckName, DatabaseMetadataGetter &catalogueMetadataGetter);
+  SQLiteSchemaComparer(const std::string& databaseToCheckName, DatabaseMetadataGetter& catalogueMetadataGetter);
   /**
    * Compare the catalogue schema against the InMemory SQLite catalogue schema
    * @return a SchemaComparerResult object that will contain the differences if there are some
@@ -48,17 +48,25 @@ public:
 
 private:
   void insertSchemaInSQLite();
-  enum Level {Warn, Error};
+
+  enum Level { Warn, Error };
+
   using Items = std::list<std::string>;
   using LoggedItems = std::tuple<Items, Level>;
-  SchemaCheckerResult compareItems(const std::string &itemType, const LoggedItems& fromDatabase, const LoggedItems& fromSQLite);
-  SchemaCheckerResult compareTables(const std::list<std::string> &databaseTables, const std::list<std::string> &schemaTables);
+  SchemaCheckerResult
+    compareItems(const std::string& itemType, const LoggedItems& fromDatabase, const LoggedItems& fromSQLite);
+  SchemaCheckerResult compareTables(const std::list<std::string>& databaseTables,
+                                    const std::list<std::string>& schemaTables);
   typedef std::map<std::string, std::map<std::string, std::string>> TableColumns;
-  SchemaCheckerResult compareTableColumns(const TableColumns & schema1TableColumns, const std::string &schema1Type,const TableColumns & schema2TableColumns, const std::string &schema2Type);
+  SchemaCheckerResult compareTableColumns(const TableColumns& schema1TableColumns,
+                                          const std::string& schema1Type,
+                                          const TableColumns& schema2TableColumns,
+                                          const std::string& schema2Type);
   rdbms::Conn m_sqliteConn;
   std::unique_ptr<rdbms::ConnPool> m_sqliteConnPool;
   std::unique_ptr<SchemaMetadataGetter> m_schemaMetadataGetter;
   bool m_isSchemaInserted = false;
 };
 
-}}
+}  // namespace catalogue
+}  // namespace cta

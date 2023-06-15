@@ -17,14 +17,16 @@
 
 #include "common/exception/Exception.hpp"
 
-namespace cta { namespace exception {
-  
+namespace cta {
+namespace exception {
+
 /**
  * This exception should be used by JSONObject inherited classes
  * to inform about a problem linked to the creation or json serialization of an object
  */
 class JSONObjectException : public Exception {
-  using Exception::Exception; 
+  using Exception::Exception;
 };
 
-}}
+}  // namespace exception
+}  // namespace cta

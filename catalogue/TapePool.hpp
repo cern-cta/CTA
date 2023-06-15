@@ -33,7 +33,6 @@ namespace catalogue {
  * of data, and multiple copies of data
  */
 struct TapePool {
-
   /**
    * Constructor that sets all integer member-variables to 0 and booleans to
    * false.
@@ -45,14 +44,14 @@ struct TapePool {
    *
    * @return True if the names of both tape pools are equal.
    */
-  bool operator==(const TapePool &rhs) const;
+  bool operator==(const TapePool& rhs) const;
 
   /**
    * Comparison operator.
    *
    * @return True if the names of both tape pools are not equal.
    */
-  bool operator!=(const TapePool &rhs) const;
+  bool operator!=(const TapePool& rhs) const;
 
   /**
    * The name of the tape pool.
@@ -145,7 +144,7 @@ struct TapePool {
    */
   std::string comment;
 
-}; // struct TapePool
+};  // struct TapePool
 
 /**
  * Output stream operator for a TapePool object.
@@ -156,7 +155,7 @@ struct TapePool {
  * @param os The output stream.
  * @param obj The object.
  */
-std::ostream &operator<<(std::ostream &os, const TapePool &obj);
+std::ostream& operator<<(std::ostream& os, const TapePool& obj);
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

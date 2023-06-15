@@ -17,11 +17,15 @@
 
 #include "tapeserver/daemon/TapedProxy.hpp"
 
-namespace cta { namespace tape { namespace daemon {
+namespace cta {
+namespace tape {
+namespace daemon {
 
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
 TapedProxy::~TapedProxy() {}
 
-}}} // namespace cta::tape::daemon
+}  // namespace daemon
+}  // namespace tape
+}  // namespace cta

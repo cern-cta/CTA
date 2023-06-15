@@ -33,7 +33,7 @@
 namespace cta {
 namespace log {
 
-  /**
+/**
    * Initialises the logging system with the specified logger which should be
    * allocated on the heap and will be owned by the logging system;
    *
@@ -41,29 +41,29 @@ namespace log {
    *
    * @logger The logger to be used by the logging system.
    */
-  void init(cta::log::Logger *logger);
+void init(cta::log::Logger* logger);
 
-  /**
+/**
    * Deallocates the logger.
    *
    * This method is not thread safe.
    */
-  void shutdown();
+void shutdown();
 
-  /**
+/**
    * Returns a reference to the logger if it exists else throws an exception.
    */
-  Logger &instance();
+Logger& instance();
 
-  /**
+/**
    * Prepares the logger object for a call to fork().
    *
    * No further calls to operator() should be made after calling this
    * method until the call to fork() has completed.
    */
-  void prepareForFork();
+void prepareForFork();
 
-  /**
+/**
    * Writes a message into the CASTOR logging system. Note that no exception
    * will ever be thrown in case of failure. Failures will actually be
    * silently ignored in order to not impact the processing.
@@ -75,13 +75,11 @@ namespace log {
    * @param msg the message.
    * @param params optionally the parameters of the message.
    */
-  void write(
-    const int priority,
-    const std::string &msg,
-    const std::list<cta::log::Param> &params =
-      std::list<cta::log::Param>());
+void write(const int priority,
+           const std::string& msg,
+           const std::list<cta::log::Param>& params = std::list<cta::log::Param>());
 
-  /**
+/**
    * Writes a message into the CASTOR logging system. Note that no exception
    * will ever be thrown in case of failure. Failures will actually be
    * silently ignored in order to not impact the processing.
@@ -98,23 +96,22 @@ namespace log {
    * @param progName the program name of the log message.
    * @param pid the pid of the log message.
    */
-  void write(
-    const int priority,
-    const std::string &msg,
-    const std::string &rawParams,
-    const struct timeval &timeStamp,
-    const std::string &progName,
-    const int pid);
+void write(const int priority,
+           const std::string& msg,
+           const std::string& rawParams,
+           const struct timeval& timeStamp,
+           const std::string& progName,
+           const int pid);
 
-  /**
+/**
    * Returns the program name if known or the empty string if not.
    *
    * @return the program name if known or the empty string if not.
    */
-  std::string getProgramName();
+std::string getProgramName();
 
-} // namespace log
-} // namespace cta
+}  // namespace log
+}  // namespace cta
 
 /**
  * non-member operator to stream a Cuuid_t

@@ -26,14 +26,12 @@ namespace postgresscheddb {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SchedulerSchema::SchedulerSchema(): sql("") {
-}
+SchedulerSchema::SchedulerSchema() : sql("") {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SchedulerSchema::SchedulerSchema(const std::string &sqlSchema): sql(sqlSchema) {
-}
+SchedulerSchema::SchedulerSchema(const std::string& sqlSchema) : sql(sqlSchema) {}
 
 //------------------------------------------------------------------------------
 // getSchemaVersion
@@ -41,28 +39,28 @@ SchedulerSchema::SchedulerSchema(const std::string &sqlSchema): sql(sqlSchema) {
 std::map<std::string, uint64_t> SchedulerSchema::getSchemaVersion() const {
   try {
     std::map<std::string, uint64_t> schemaVersion;
-    cta::utils::Regex schemaVersionRegex(
-      "INSERT INTO CTA_SCHEDULER\\("
-      "  SCHEMA_VERSION_MAJOR,"
-      "  SCHEMA_VERSION_MINOR\\)"
-      "VALUES\\("
-      "  ([[:digit:]]+),"
-      "  ([[:digit:]]+)\\);"
-    );
+    cta::utils::Regex schemaVersionRegex("INSERT INTO CTA_SCHEDULER\\("
+                                         "  SCHEMA_VERSION_MAJOR,"
+                                         "  SCHEMA_VERSION_MINOR\\)"
+                                         "VALUES\\("
+                                         "  ([[:digit:]]+),"
+                                         "  ([[:digit:]]+)\\);");
     auto version = schemaVersionRegex.exec(sql);
     if (3 == version.size()) {
       schemaVersion.insert(std::make_pair("SCHEMA_VERSION_MAJOR", cta::utils::toUint64(version[1].c_str())));
       schemaVersion.insert(std::make_pair("SCHEMA_VERSION_MINOR", cta::utils::toUint64(version[2].c_str())));
-    } else {
+    }
+    else {
       exception::Exception ex;
       ex.getMessage() << "Could not find SCHEMA_VERSION";
-      throw ex; 
+      throw ex;
     }
     return schemaVersion;
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
-} // namespace postgresscheddb
-} // namespace cta
+}  // namespace postgresscheddb
+}  // namespace cta

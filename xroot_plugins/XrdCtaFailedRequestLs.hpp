@@ -22,13 +22,14 @@
 #include "xroot_plugins/XrdCtaStream.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 
-namespace cta { namespace xrd {
+namespace cta {
+namespace xrd {
 
 /*!
  * Stream object which implements "failedrequest ls" command.
  */
 class FailedRequestLsStream : public XrdCtaStream {
- public:
+public:
   /*!
    * Constructor
    *
@@ -38,30 +39,26 @@ class FailedRequestLsStream : public XrdCtaStream {
    * @param[in]    schedDb       CTA ObjectStore
    * @param[in]    lc            CTA Log Context
    */
-  FailedRequestLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue,
-    cta::Scheduler &scheduler, SchedulerDatabase &schedDb, log::LogContext &lc);
+  FailedRequestLsStream(const frontend::AdminCmdStream& requestMsg,
+                        cta::catalogue::Catalogue& catalogue,
+                        cta::Scheduler& scheduler,
+                        SchedulerDatabase& schedDb,
+                        log::LogContext& lc);
 
- private:
+private:
   /*!
    * Can we close the stream?
    */
-  virtual bool isDone() const {
-    return m_isSummary ? m_isSummaryDone
-                       : !isArchiveJobs() && !isRetrieveJobs();
-  }
+  virtual bool isDone() const { return m_isSummary ? m_isSummaryDone : !isArchiveJobs() && !isRetrieveJobs(); }
 
-  bool isArchiveJobs() const {
-    return m_archiveQueueItorPtr && !m_archiveQueueItorPtr->end();
-  }
+  bool isArchiveJobs() const { return m_archiveQueueItorPtr && !m_archiveQueueItorPtr->end(); }
 
-  bool isRetrieveJobs() const {
-    return m_retrieveQueueItorPtr && !m_retrieveQueueItorPtr->end();
-  }
+  bool isRetrieveJobs() const { return m_retrieveQueueItorPtr && !m_retrieveQueueItorPtr->end(); }
 
   /*!
    * Fill the buffer
    */
-  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
+  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf);
 
   /*!
    * Add a record to the stream
@@ -73,44 +70,44 @@ class FailedRequestLsStream : public XrdCtaStream {
    * @retval    false    Stream buffer is not full
    */
   template<typename QueueType>
-  bool pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const QueueType &item);
+  bool pushRecord(XrdSsiPb::OStreamBuffer<Data>* streambuf, const QueueType& item);
 
   /*!
    * Populate the failed queue summary
    *
    * @param[in]    streambuf         XRootD SSI stream object to push records to
    */
-  void GetBuffSummary(XrdSsiPb::OStreamBuffer<Data> *streambuf);
+  void GetBuffSummary(XrdSsiPb::OStreamBuffer<Data>* streambuf);
 
+  std::unique_ptr<SchedulerDatabase::IArchiveJobQueueItor> m_archiveQueueItorPtr;    //!< Archive Queue Iterator
+  std::unique_ptr<SchedulerDatabase::IRetrieveJobQueueItor> m_retrieveQueueItorPtr;  //!< Retrieve Queue Iterator
+  bool m_isSummary;       //!< Show only summary of items in the failed queues
+  bool m_isSummaryDone;   //!< Summary has been sent
+  bool m_isLogEntries;    //!< Show failure log messages (verbose)
+  log::LogContext& m_lc;  //!< Reference to CTA Log Context
 
-  std::unique_ptr<SchedulerDatabase::IArchiveJobQueueItor>  m_archiveQueueItorPtr;     //!< Archive Queue Iterator
-  std::unique_ptr<SchedulerDatabase::IRetrieveJobQueueItor> m_retrieveQueueItorPtr;    //!< Retrieve Queue Iterator
-  bool m_isSummary;                                                         //!< Show only summary of items in the failed queues
-  bool m_isSummaryDone;                                                     //!< Summary has been sent
-  bool m_isLogEntries;                                                      //!< Show failure log messages (verbose)
-  log::LogContext &m_lc;                                                    //!< Reference to CTA Log Context
-
-  static constexpr const char* const LOG_SUFFIX  = "FailedRequestLsStream";  //!< Identifier for SSI log messages
+  static constexpr const char* const LOG_SUFFIX = "FailedRequestLsStream";  //!< Identifier for SSI log messages
 };
 
-
 FailedRequestLsStream::FailedRequestLsStream(const frontend::AdminCmdStream& requestMsg,
-  cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, SchedulerDatabase &schedDb,
-  log::LogContext &lc) :
-    XrdCtaStream(catalogue, scheduler),
-    m_isSummary(requestMsg.has_flag(admin::OptionBoolean::SUMMARY)),
-    m_isSummaryDone(false),
-    m_isLogEntries(requestMsg.has_flag(admin::OptionBoolean::SHOW_LOG_ENTRIES)),
-    m_lc(lc) {
+                                             cta::catalogue::Catalogue& catalogue,
+                                             cta::Scheduler& scheduler,
+                                             SchedulerDatabase& schedDb,
+                                             log::LogContext& lc) :
+XrdCtaStream(catalogue, scheduler),
+m_isSummary(requestMsg.has_flag(admin::OptionBoolean::SUMMARY)),
+m_isSummaryDone(false),
+m_isLogEntries(requestMsg.has_flag(admin::OptionBoolean::SHOW_LOG_ENTRIES)),
+m_lc(lc) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "FailedRequestLsStream() constructor");
 
   if (m_isLogEntries && m_isSummary) {
     throw cta::exception::UserError("--log and --summary are mutually exclusive");
   }
 
-  auto tapepool     = requestMsg.getOptional(cta::admin::OptionString::TAPE_POOL);
-  auto vid          = requestMsg.getOptional(cta::admin::OptionString::VID);
-  bool justarchive  = requestMsg.has_flag(cta::admin::OptionBoolean::JUSTARCHIVE)  || tapepool;
+  auto tapepool = requestMsg.getOptional(cta::admin::OptionString::TAPE_POOL);
+  auto vid = requestMsg.getOptional(cta::admin::OptionString::VID);
+  bool justarchive = requestMsg.has_flag(cta::admin::OptionBoolean::JUSTARCHIVE) || tapepool;
   bool justretrieve = requestMsg.has_flag(cta::admin::OptionBoolean::JUSTRETRIEVE) || vid;
 
   if (justarchive && justretrieve) {
@@ -118,19 +115,21 @@ FailedRequestLsStream::FailedRequestLsStream(const frontend::AdminCmdStream& req
   }
 
   using common::dataStructures::JobQueueType;
-  if (!justretrieve)
+  if (!justretrieve) {
     m_archiveQueueItorPtr = schedDb.getArchiveJobQueueItor(tapepool ? *tapepool : "", JobQueueType::FailedJobs);
-  if (!justarchive)
+  }
+  if (!justarchive) {
     m_retrieveQueueItorPtr = schedDb.getRetrieveJobQueueItor(vid ? *vid : "", JobQueueType::FailedJobs);
+  }
 }
 
 /*!
  * pushRecord ArchiveJob specialisation
  */
-template<> bool FailedRequestLsStream::
-pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const common::dataStructures::ArchiveJob &item)
-{
-  auto &tapepool = m_archiveQueueItorPtr->qid();
+template<>
+bool FailedRequestLsStream::pushRecord(XrdSsiPb::OStreamBuffer<Data>* streambuf,
+                                       const common::dataStructures::ArchiveJob& item) {
+  auto& tapepool = m_archiveQueueItorPtr->qid();
   Data record;
 
   record.mutable_frls_item()->set_object_id(item.objectId);
@@ -149,20 +148,20 @@ pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const common::dataStructure
   record.mutable_frls_item()->set_totalretries(item.totalRetries);
   record.mutable_frls_item()->set_totalreportretries(item.totalReportRetries);
   if (m_isLogEntries) {
-    *record.mutable_frls_item()->mutable_failurelogs() = { item.failurelogs.begin(), item.failurelogs.end() };
-    *record.mutable_frls_item()->mutable_reportfailurelogs() = { item.reportfailurelogs.begin(), item.reportfailurelogs.end() };
+    *record.mutable_frls_item()->mutable_failurelogs() = {item.failurelogs.begin(), item.failurelogs.end()};
+    *record.mutable_frls_item()->mutable_reportfailurelogs() = {item.reportfailurelogs.begin(),
+                                                                item.reportfailurelogs.end()};
   }
   return streambuf->Push(record);
 }
 
-
 /*!
  * pushRecord RetrieveJob specialisation
  */
-template<> bool FailedRequestLsStream::
-pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const common::dataStructures::RetrieveJob &item)
-{
-  auto &vid = m_retrieveQueueItorPtr->qid();
+template<>
+bool FailedRequestLsStream::pushRecord(XrdSsiPb::OStreamBuffer<Data>* streambuf,
+                                       const common::dataStructures::RetrieveJob& item) {
+  auto& vid = m_retrieveQueueItorPtr->qid();
 
   Data record;
 
@@ -180,8 +179,8 @@ pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const common::dataStructure
   record.mutable_frls_item()->set_totalreportretries(item.totalReportRetries);
 
   // Find the correct tape copy
-  for (auto &tapecopy : item.tapeCopies) {
-    auto &tf = tapecopy.second.second;
+  for (auto& tapecopy : item.tapeCopies) {
+    auto& tf = tapecopy.second.second;
     if (tf.vid == vid) {
       record.mutable_frls_item()->mutable_tf()->set_f_seq(tf.fSeq);
       record.mutable_frls_item()->mutable_tf()->set_block_id(tf.blockId);
@@ -190,18 +189,19 @@ pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const common::dataStructure
   }
 
   if (m_isLogEntries) {
-    *record.mutable_frls_item()->mutable_failurelogs() = { item.failurelogs.begin(), item.failurelogs.end() };
-    *record.mutable_frls_item()->mutable_reportfailurelogs() = {item.reportfailurelogs.begin(), item.reportfailurelogs.end()};
+    *record.mutable_frls_item()->mutable_failurelogs() = {item.failurelogs.begin(), item.failurelogs.end()};
+    *record.mutable_frls_item()->mutable_reportfailurelogs() = {item.reportfailurelogs.begin(),
+                                                                item.reportfailurelogs.end()};
   }
   return streambuf->Push(record);
 }
 
-
-int FailedRequestLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
+int FailedRequestLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
   if (m_isSummary) {
     // Special handling for -S (Summary) option
     GetBuffSummary(streambuf);
-  } else {
+  }
+  else {
     // List failed archive requests
     if (isArchiveJobs()) {
       for (bool is_buffer_full = false; !m_archiveQueueItorPtr->end() && !is_buffer_full; ++*m_archiveQueueItorPtr) {
@@ -218,9 +218,7 @@ int FailedRequestLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) 
   return streambuf->Size();
 }
 
-
-
-void FailedRequestLsStream::GetBuffSummary(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
+void FailedRequestLsStream::GetBuffSummary(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
   SchedulerDatabase::JobsFailedSummary archive_summary;
   SchedulerDatabase::JobsFailedSummary retrieve_summary;
 

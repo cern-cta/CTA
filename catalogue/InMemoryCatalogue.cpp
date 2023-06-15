@@ -23,18 +23,15 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-InMemoryCatalogue::InMemoryCatalogue(
-  log::Logger &log,
-  const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns):
-  SchemaCreatingSqliteCatalogue(log, "file::memory:?cache=shared", nbConns, nbArchiveFileListingConns) {
-}
+InMemoryCatalogue::InMemoryCatalogue(log::Logger& log,
+                                     const uint64_t nbConns,
+                                     const uint64_t nbArchiveFileListingConns) :
+SchemaCreatingSqliteCatalogue(log, "file::memory:?cache=shared", nbConns, nbArchiveFileListingConns) {}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-InMemoryCatalogue::~InMemoryCatalogue() {
-}
+InMemoryCatalogue::~InMemoryCatalogue() {}
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

@@ -17,9 +17,14 @@
 
 #include "CostHeuristic.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace rao {
 
-CostHeuristic::~CostHeuristic() {
-}
+CostHeuristic::~CostHeuristic() {}
 
-}}}}
+}  // namespace rao
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

@@ -32,13 +32,14 @@ using optionlist_t = std::vector<std::string>;
 Config::Config(const std::string& filename) {
   // Open the config file for reading
   std::ifstream file(filename);
-  if(!file) {
+  if (!file) {
     throw exception::UserError("Failed to open " + filename);
   }
   // Parse the config file
   try {
     parse(file);
-  } catch(std::exception &ex) {
+  }
+  catch (std::exception& ex) {
     throw exception::UserError("Failed to parse configuration file " + filename + ": " + ex.what());
   }
 }
@@ -48,25 +49,25 @@ const optionlist_t& Config::getOptionList(const std::string& key) const {
   return it == m_configuration.end() ? m_nulloptionlist : it->second;
 }
 
-std::optional<std::string> Config::getOptionValueStr(const std::string &key) const {
+std::optional<std::string> Config::getOptionValueStr(const std::string& key) const {
   auto optionlist = getOptionList(key);
 
   return optionlist.empty() ? std::nullopt : std::optional<std::string>(optionlist.at(0));
 }
 
-std::optional<int> Config::getOptionValueInt(const std::string &key) const {
+std::optional<int> Config::getOptionValueInt(const std::string& key) const {
   auto optionlist = getOptionList(key);
 
   return optionlist.empty() ? std::nullopt : std::optional<int>(std::stoi(optionlist.at(0)));
 }
 
-void Config::parse(std::ifstream &file) {
+void Config::parse(std::ifstream& file) {
   std::string line;
 
-  while(std::getline(file, line)) {
+  while (std::getline(file, line)) {
     // Strip out comments
     auto pos = line.find('#');
-    if(pos != std::string::npos) {
+    if (pos != std::string::npos) {
       line.resize(pos);
     }
 
@@ -76,26 +77,29 @@ void Config::parse(std::ifstream &file) {
     ss >> key;
 
     // Extract and store the config options
-    if(!key.empty()) {
+    if (!key.empty()) {
       optionlist_t values = tokenize(ss);
 
-      if(!values.empty()) {
+      if (!values.empty()) {
         m_configuration[key] = values;
       }
     }
   }
 }
 
-optionlist_t Config::tokenize(std::istringstream &input) {
+optionlist_t Config::tokenize(std::istringstream& input) {
   optionlist_t values;
 
-  while(!input.eof()) {
+  while (!input.eof()) {
     std::string value;
     input >> value;
-    if(!value.empty()) values.push_back(value);
+    if (!value.empty()) {
+      values.push_back(value);
+    }
   }
 
   return values;
 }
 
-}} // namespace cta::frontend
+}  // namespace frontend
+}  // namespace cta

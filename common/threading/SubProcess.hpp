@@ -20,14 +20,15 @@
 #include <list>
 #include <string>
 
-namespace cta { namespace threading {
+namespace cta {
+namespace threading {
 /**
  * A class spawning a new executable with a program path and arguments.
  * StdOut and StdErr can be recovered after execution (and calling wait()).
  */
 class SubProcess {
 public:
-  SubProcess(const std::string & program, const std::list<std::string> &argv, const std::string & str = "");
+  SubProcess(const std::string& program, const std::list<std::string>& argv, const std::string& str = "");
   ~SubProcess();
   void wait(void);
   std::string stdout();
@@ -36,6 +37,7 @@ public:
   int exitValue();
   bool wasKilled();
   int killSignal();
+
 private:
   int m_stdoutFd;
   int m_stderrFd;
@@ -45,4 +47,5 @@ private:
   std::string m_stdout;
   std::string m_stderr;
 };
-}}
+}  // namespace threading
+}  // namespace cta

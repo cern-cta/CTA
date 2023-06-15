@@ -16,7 +16,7 @@
  */
 #pragma once
 
-namespace cta { 
+namespace cta {
 namespace threading {
 
 class RWLock;
@@ -26,7 +26,6 @@ class RWLock;
  */
 class RWLockRdLocker {
 public:
-
   /**
    * Constructor.
    *
@@ -34,8 +33,8 @@ public:
    *
    * @param lock The read-write lock on which to take a read-lock.
    */
-  RWLockRdLocker(RWLock &lock);
-  
+  RWLockRdLocker(RWLock& lock);
+
   /**
    * Destructor.
    *
@@ -44,13 +43,12 @@ public:
   ~RWLockRdLocker();
 
 private:
-
   /**
    * The read-write lock.
    */
-  RWLock &m_lock;
+  RWLock& m_lock;
 
-}; // class RWLockRdLocker
-  
-} // namespace threading
-} // namespace cta
+};  // class RWLockRdLocker
+
+}  // namespace threading
+}  // namespace cta

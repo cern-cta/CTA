@@ -43,15 +43,16 @@ namespace unitTests {
  * @param agentRef the current agent that queues
  * @param startFseq allows to set the FSeq of the first file to be queued (in case this method is called multiple times)
  */
-void fillRetrieveRequests(
-  typename cta::objectstore::ContainerAlgorithms<cta::objectstore::RetrieveQueue,cta::objectstore::RetrieveQueueToTransfer>::InsertedElement::list &requests,
-  std::list<std::unique_ptr<cta::objectstore::RetrieveRequest> >& requestPtrs, //List to avoid memory leak on ArchiveQueueAlgorithms test
-  cta::objectstore::BackendVFS &be,
-  cta::objectstore::AgentReference &agentRef, uint64_t startFseq = 0)
-{
+void fillRetrieveRequests(typename cta::objectstore::ContainerAlgorithms<
+                            cta::objectstore::RetrieveQueue,
+                            cta::objectstore::RetrieveQueueToTransfer>::InsertedElement::list& requests,
+                          std::list<std::unique_ptr<cta::objectstore::RetrieveRequest>>&
+                            requestPtrs,  //List to avoid memory leak on ArchiveQueueAlgorithms test
+                          cta::objectstore::BackendVFS& be,
+                          cta::objectstore::AgentReference& agentRef,
+                          uint64_t startFseq = 0) {
   using namespace cta::objectstore;
-  for(size_t i = 0; i < 10; ++i)
-  {
+  for (size_t i = 0; i < 10; ++i) {
     std::string rrAddr = agentRef.nextId("RetrieveRequest");
     agentRef.addToOwnership(rrAddr, be);
     cta::common::dataStructures::MountPolicy mp;
@@ -82,10 +83,9 @@ void fillRetrieveRequests(
     rqc.mountPolicy.retrieveMinRequestAge = 1;
     rqc.mountPolicy.retrievePriority = 1;
     requestPtrs.emplace_back(new cta::objectstore::RetrieveRequest(rrAddr, be));
-    requests.emplace_back(ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer>::InsertedElement{
-      requestPtrs.back().get(), 1, startFseq++, 667, mp, std::nullopt, std::nullopt
-    });
-    auto &rr = *requests.back().retrieveRequest;
+    requests.emplace_back(ContainerAlgorithms<RetrieveQueue, RetrieveQueueToTransfer>::InsertedElement {
+      requestPtrs.back().get(), 1, startFseq++, 667, mp, std::nullopt, std::nullopt});
+    auto& rr = *requests.back().retrieveRequest;
     rr.initialize();
     rr.setRetrieveFileQueueCriteria(rqc);
     cta::common::dataStructures::RetrieveRequest sReq;
@@ -106,12 +106,15 @@ void fillRetrieveRequests(
  * @param be objectstore backend
  * @param agentRef the current agent that queues
  */
-void fillArchiveRequests(typename cta::objectstore::ContainerAlgorithms<cta::objectstore::ArchiveQueue,cta::objectstore::ArchiveQueueToTransferForUser>::InsertedElement::list &requests,
-  std::list<std::unique_ptr<cta::objectstore::ArchiveRequest> >& requestPtrs, //List to avoid memory leak on ArchiveQueueAlgorithms test
-  cta::objectstore::BackendVFS &be,
-  cta::objectstore::AgentReference &agentRef){
+void fillArchiveRequests(typename cta::objectstore::ContainerAlgorithms<
+                           cta::objectstore::ArchiveQueue,
+                           cta::objectstore::ArchiveQueueToTransferForUser>::InsertedElement::list& requests,
+                         std::list<std::unique_ptr<cta::objectstore::ArchiveRequest>>&
+                           requestPtrs,  //List to avoid memory leak on ArchiveQueueAlgorithms test
+                         cta::objectstore::BackendVFS& be,
+                         cta::objectstore::AgentReference& agentRef) {
   using namespace cta::objectstore;
-  for (size_t i=0; i<10; i++) {
+  for (size_t i = 0; i < 10; i++) {
     std::string arAddr = agentRef.nextId("ArchiveRequest");
     agentRef.addToOwnership(arAddr, be);
     cta::common::dataStructures::MountPolicy mp;
@@ -127,9 +130,9 @@ void fillArchiveRequests(typename cta::objectstore::ContainerAlgorithms<cta::obj
     aFile.fileSize = 667;
     aFile.storageClass = "sc";
     requestPtrs.emplace_back(new cta::objectstore::ArchiveRequest(arAddr, be));
-    requests.emplace_back(ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser>::InsertedElement{requestPtrs.back().get(), 1, aFile, mp,
-        std::nullopt});
-    auto & ar=*requests.back().archiveRequest;
+    requests.emplace_back(ContainerAlgorithms<ArchiveQueue, ArchiveQueueToTransferForUser>::InsertedElement {
+      requestPtrs.back().get(), 1, aFile, mp, std::nullopt});
+    auto& ar = *requests.back().archiveRequest;
     auto copyNb = requests.back().copyNb;
     ar.initialize();
     ar.setArchiveFile(aFile);
@@ -165,16 +168,15 @@ TEST_F(ObjectStore, ArchiveQueueAlgorithms) {
   re.initialize();
   re.insert();
   // Create the agent register
-  EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
+  EntryLogSerDeser el("user0", "unittesthost", time(nullptr));
   ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   rel.release();
   agent.initialize();
   agent.insertAndRegisterSelf(lc);
-  ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser>::InsertedElement::list requests;
+  ContainerAlgorithms<ArchiveQueue, ArchiveQueueToTransferForUser>::InsertedElement::list requests;
   std::list<std::unique_ptr<cta::objectstore::ArchiveRequest>> archiveRequests;
-  for (size_t i=0; i<10; i++) {
+  for (size_t i = 0; i < 10; i++) {
     std::string arAddr = agentRef.nextId("ArchiveRequest");
     agentRef.addToOwnership(arAddr, be);
     cta::common::dataStructures::MountPolicy mp;
@@ -190,9 +192,9 @@ TEST_F(ObjectStore, ArchiveQueueAlgorithms) {
     aFile.fileSize = 667;
     aFile.storageClass = "sc";
     archiveRequests.emplace_back(new cta::objectstore::ArchiveRequest(arAddr, be));
-    requests.emplace_back(ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser>::InsertedElement{archiveRequests.back().get(), 1, aFile, mp,
-        std::nullopt});
-    auto & ar=*requests.back().archiveRequest;
+    requests.emplace_back(ContainerAlgorithms<ArchiveQueue, ArchiveQueueToTransferForUser>::InsertedElement {
+      archiveRequests.back().get(), 1, aFile, mp, std::nullopt});
+    auto& ar = *requests.back().archiveRequest;
     auto copyNb = requests.back().copyNb;
     ar.initialize();
     ar.setArchiveFile(aFile);
@@ -205,24 +207,25 @@ TEST_F(ObjectStore, ArchiveQueueAlgorithms) {
     ar.setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
     ar.insert();
   }
-  ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser> archiveAlgos(be, agentRef);
+  ContainerAlgorithms<ArchiveQueue, ArchiveQueueToTransferForUser> archiveAlgos(be, agentRef);
   archiveAlgos.referenceAndSwitchOwnership("Tapepool", requests, lc);
 
-  for(auto & ar: archiveRequests){
+  for (auto& ar : archiveRequests) {
     cta::objectstore::ScopedExclusiveLock sel(*ar);
     ar->fetch();
-    ASSERT_TRUE(ar->getJobOwner(1).find("ArchiveQueueToTransferForUser-Tapepool-unitTestGarbageCollector") != std::string::npos);
+    ASSERT_TRUE(ar->getJobOwner(1).find("ArchiveQueueToTransferForUser-Tapepool-unitTestGarbageCollector") !=
+                std::string::npos);
   }
   // Now get the requests back
-  ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::PopCriteria popCriteria;
+  ContainerTraits<ArchiveQueue, ArchiveQueueToTransferForUser>::PopCriteria popCriteria;
   popCriteria.bytes = std::numeric_limits<decltype(popCriteria.bytes)>::max();
   popCriteria.files = 100;
   auto poppedJobs = archiveAlgos.popNextBatch("Tapepool", popCriteria, lc);
   ASSERT_EQ(poppedJobs.summary.files, 10);
-  for(auto & ar: archiveRequests){
+  for (auto& ar : archiveRequests) {
     cta::objectstore::ScopedExclusiveLock sel(*ar);
     ar->fetch();
-    ASSERT_EQ(agentRef.getAgentAddress(),ar->getJobOwner(1));
+    ASSERT_EQ(agentRef.getAgentAddress(), ar->getJobOwner(1));
   }
 }
 
@@ -247,16 +250,15 @@ TEST_F(ObjectStore, ArchiveQueueAlgorithmsWithDeletedJobsInQueue) {
   re.initialize();
   re.insert();
   // Create the agent register
-  EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
+  EntryLogSerDeser el("user0", "unittesthost", time(nullptr));
   ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   rel.release();
   agent.initialize();
   agent.insertAndRegisterSelf(lc);
-  ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser>::InsertedElement::list requests;
+  ContainerAlgorithms<ArchiveQueue, ArchiveQueueToTransferForUser>::InsertedElement::list requests;
   std::list<std::unique_ptr<cta::objectstore::ArchiveRequest>> archiveRequests;
-  for (size_t i=0; i<10; i++) {
+  for (size_t i = 0; i < 10; i++) {
     std::string arAddr = agentRef.nextId("ArchiveRequest");
     agentRef.addToOwnership(arAddr, be);
     cta::common::dataStructures::MountPolicy mp;
@@ -265,16 +267,16 @@ TEST_F(ObjectStore, ArchiveQueueAlgorithmsWithDeletedJobsInQueue) {
     aFile.archiveFileID = 123456789L;
     aFile.diskFileId = "eos://diskFile";
     aFile.checksumBlob.insert(cta::checksum::NONE, "");
-    aFile.creationTime = i; //so we can check the requests popped were correct
+    aFile.creationTime = i;  //so we can check the requests popped were correct
     aFile.reconciliationTime = 0;
     aFile.diskFileInfo = cta::common::dataStructures::DiskFileInfo();
     aFile.diskInstance = "eoseos";
     aFile.fileSize = 667;
     aFile.storageClass = "sc";
     archiveRequests.emplace_back(new cta::objectstore::ArchiveRequest(arAddr, be));
-    requests.emplace_back(ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser>::InsertedElement{archiveRequests.back().get(), 1, aFile, mp,
-        std::nullopt});
-    auto & ar=*requests.back().archiveRequest;
+    requests.emplace_back(ContainerAlgorithms<ArchiveQueue, ArchiveQueueToTransferForUser>::InsertedElement {
+      archiveRequests.back().get(), 1, aFile, mp, std::nullopt});
+    auto& ar = *requests.back().archiveRequest;
     auto copyNb = requests.back().copyNb;
     ar.initialize();
     ar.setArchiveFile(aFile);
@@ -287,13 +289,13 @@ TEST_F(ObjectStore, ArchiveQueueAlgorithmsWithDeletedJobsInQueue) {
     ar.setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
     ar.insert();
   }
-  ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser> archiveAlgos(be, agentRef);
+  ContainerAlgorithms<ArchiveQueue, ArchiveQueueToTransferForUser> archiveAlgos(be, agentRef);
   archiveAlgos.referenceAndSwitchOwnership("Tapepool", requests, lc);
 
   {
     //Delete one in tree requests from the queue
     int i = 0;
-    for(auto & ar: archiveRequests){
+    for (auto& ar : archiveRequests) {
       cta::objectstore::ScopedExclusiveLock sel(*ar);
       ar->fetch();
       if ((i % 3) == 1) {
@@ -305,16 +307,16 @@ TEST_F(ObjectStore, ArchiveQueueAlgorithmsWithDeletedJobsInQueue) {
 
   {
     // Get first batch of four requests
-    ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::PopCriteria popCriteria;
+    ContainerTraits<ArchiveQueue, ArchiveQueueToTransferForUser>::PopCriteria popCriteria;
     popCriteria.bytes = 667 * 4;
-    popCriteria.files = 100; // never reached
+    popCriteria.files = 100;  // never reached
     auto poppedJobs = archiveAlgos.popNextBatch("Tapepool", popCriteria, lc);
     ASSERT_EQ(poppedJobs.elements.size(), 4);
     ASSERT_EQ(poppedJobs.summary.files, 4);
     ASSERT_EQ(poppedJobs.summary.bytes, 667 * 4);
     int expected_times[] = {0, 2, 3, 5};
     int i = 0;
-    for (auto &job: poppedJobs.elements) {
+    for (auto& job : poppedJobs.elements) {
       ASSERT_EQ(job.archiveFile.creationTime, expected_times[i]);
       ASSERT_EQ(job.bytes, 667);
       i++;
@@ -323,16 +325,16 @@ TEST_F(ObjectStore, ArchiveQueueAlgorithmsWithDeletedJobsInQueue) {
 
   {
     // Get a second batch of remaining tree requests
-    ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::PopCriteria popCriteria;
+    ContainerTraits<ArchiveQueue, ArchiveQueueToTransferForUser>::PopCriteria popCriteria;
     popCriteria.bytes = 667 * 3;
-    popCriteria.files = 100; // never reached
+    popCriteria.files = 100;  // never reached
     auto poppedJobs = archiveAlgos.popNextBatch("Tapepool", popCriteria, lc);
     ASSERT_EQ(poppedJobs.elements.size(), 3);
     ASSERT_EQ(poppedJobs.summary.files, 3);
     ASSERT_EQ(poppedJobs.summary.bytes, 667 * 3);
     int expected_times[] = {6, 8, 9};
     int i = 0;
-    for (auto &job: poppedJobs.elements) {
+    for (auto& job : poppedJobs.elements) {
       ASSERT_EQ(job.archiveFile.creationTime, expected_times[i]);
       ASSERT_EQ(job.bytes, 667);
       i++;
@@ -374,56 +376,57 @@ TEST_F(ObjectStore, RetrieveQueueAlgorithms) {
   agent.insertAndRegisterSelf(lc);
   agent2.initialize();
   agent2.insertAndRegisterSelf(lc);
-  std::list<std::unique_ptr<RetrieveRequest> > requestsPtrs;
-  ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer>::InsertedElement::list requests;
-  fillRetrieveRequests(requests, requestsPtrs, be, agentRef); //memory leak here
+  std::list<std::unique_ptr<RetrieveRequest>> requestsPtrs;
+  ContainerAlgorithms<RetrieveQueue, RetrieveQueueToTransfer>::InsertedElement::list requests;
+  fillRetrieveRequests(requests, requestsPtrs, be, agentRef);  //memory leak here
   auto a1 = agentRef.getAgentAddress();
   auto a2 = agentRef2.getAgentAddress();
 
   {
-    ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer>::InsertedElement::list requests2;
+    ContainerAlgorithms<RetrieveQueue, RetrieveQueueToTransfer>::InsertedElement::list requests2;
 
-    ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> queueRetrieveAlgo(be, agentRef2);
-    queueRetrieveAlgo.referenceAndSwitchOwnership("VID",
-      a1, requests, lc);
+    ContainerAlgorithms<RetrieveQueue, RetrieveQueueToTransfer> queueRetrieveAlgo(be, agentRef2);
+    queueRetrieveAlgo.referenceAndSwitchOwnership("VID", a1, requests, lc);
     //Test that the owner of these requests is the queue with VID and Agent2
-    for(auto &request: requestsPtrs){
-      cta::objectstore::RetrieveRequest rr(request->getAddressIfSet(),be);
+    for (auto& request : requestsPtrs) {
+      cta::objectstore::RetrieveRequest rr(request->getAddressIfSet(), be);
       cta::objectstore::ScopedExclusiveLock sel(rr);
       rr.fetch();
       ASSERT_TRUE(rr.getOwner().find("RetrieveQueueToTransferForUser-VID-Agent2") != std::string::npos);
     }
   }
 
-  ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> popRetrieveAlgos(be, agentRef);
+  ContainerAlgorithms<RetrieveQueue, RetrieveQueueToTransfer> popRetrieveAlgos(be, agentRef);
   try {
     ASSERT_EQ(requests.size(), 10);
 
     // Now get the requests back
-    ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PopCriteria popCriteria;
+    ContainerTraits<RetrieveQueue, RetrieveQueueToTransfer>::PopCriteria popCriteria;
     popCriteria.bytes = std::numeric_limits<decltype(popCriteria.bytes)>::max();
     popCriteria.files = 100;
     auto poppedJobs = popRetrieveAlgos.popNextBatch("VID", popCriteria, lc);
     ASSERT_EQ(poppedJobs.summary.files, 10);
 
     // Validate that the summary has the same information as the popped elements
-    ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PoppedElementsSummary s;
-    for(auto &e: poppedJobs.elements) {
-      s += ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::getElementSummary(e);
+    ContainerTraits<RetrieveQueue, RetrieveQueueToTransfer>::PoppedElementsSummary s;
+    for (auto& e : poppedJobs.elements) {
+      s += ContainerTraits<RetrieveQueue, RetrieveQueueToTransfer>::getElementSummary(e);
     }
     //Check that the popped jobs owner is now the agent1 and not the queue
-    for(auto & elt: poppedJobs.elements){
-      cta::objectstore::RetrieveRequest rr(elt.retrieveRequest->getAddressIfSet(),be);
+    for (auto& elt : poppedJobs.elements) {
+      cta::objectstore::RetrieveRequest rr(elt.retrieveRequest->getAddressIfSet(), be);
       cta::objectstore::ScopedExclusiveLock sel(rr);
       rr.fetch();
       ASSERT_EQ(a1, rr.getOwner());
     }
     ASSERT_EQ(s, poppedJobs.summary);
-  } catch (ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::OwnershipSwitchFailure & ex) {
-    for (auto & e: ex.failedElements) {
+  }
+  catch (ContainerTraits<RetrieveQueue, RetrieveQueueToTransfer>::OwnershipSwitchFailure& ex) {
+    for (auto& e : ex.failedElements) {
       try {
         throw e.failure;
-      } catch(std::exception &e) {
+      }
+      catch (std::exception& e) {
         std::cout << e.what() << std::endl;
       }
     }
@@ -432,10 +435,10 @@ TEST_F(ObjectStore, RetrieveQueueAlgorithms) {
 
 TEST_F(ObjectStore, RetrieveQueueAlgorithmsUpdatesOldestJobQueueTime) {
   using cta::common::dataStructures::JobQueueType;
+  using cta::objectstore::ContainerAlgorithms;
   using cta::objectstore::RetrieveQueue;
   using cta::objectstore::RetrieveQueueToTransfer;
   using cta::objectstore::RetrieveRequest;
-  using cta::objectstore::ContainerAlgorithms;
   // We will need a log object
 #ifdef STDOUT_LOGGING
   cta::log::StdoutLogger dl("dummy", "unitTest");
@@ -468,15 +471,14 @@ TEST_F(ObjectStore, RetrieveQueueAlgorithmsUpdatesOldestJobQueueTime) {
   std::unique_ptr<cta::objectstore::RetrieveQueue> rq;
   time_t firstBatchOldestJobStartTime;
   {
-    std::list<std::unique_ptr<RetrieveRequest> > requestsPtrs;
+    std::list<std::unique_ptr<RetrieveRequest>> requestsPtrs;
     ContainerAlgorithms<RetrieveQueue, RetrieveQueueToTransfer>::InsertedElement::list requests;
     fillRetrieveRequests(requests, requestsPtrs, be, agentRef, 0);
 
     // Insert a first batch of 10 requests
     ASSERT_EQ(requests.size(), 10);
 
-    retrieveAlgos.referenceAndSwitchOwnership(vid,
-      agentRef.getAgentAddress(), requests, lc);
+    retrieveAlgos.referenceAndSwitchOwnership(vid, agentRef.getAgentAddress(), requests, lc);
 
     re.fetchNoLock();
 
@@ -488,15 +490,14 @@ TEST_F(ObjectStore, RetrieveQueueAlgorithmsUpdatesOldestJobQueueTime) {
   }
   // Create another batch of 10 requests
   {
-    std::list<std::unique_ptr<RetrieveRequest> > requestsPtrs;
+    std::list<std::unique_ptr<RetrieveRequest>> requestsPtrs;
     ContainerAlgorithms<RetrieveQueue, RetrieveQueueToTransfer>::InsertedElement::list requests;
     fillRetrieveRequests(requests, requestsPtrs, be, agentRef, 10);
     ASSERT_EQ(requests.size(), 10);
     // Sleep 1 second before requeueing
     ::sleep(1);
     // Requeue
-    retrieveAlgos.referenceAndSwitchOwnership(vid,
-      agentRef.getAgentAddress(), requests, lc);
+    retrieveAlgos.referenceAndSwitchOwnership(vid, agentRef.getAgentAddress(), requests, lc);
     rq->fetchNoLock();
     uint64_t secondBatchOldestJobStartTime;
     secondBatchOldestJobStartTime = rq->getJobsSummary().oldestJobStartTime;
@@ -557,15 +558,14 @@ TEST_F(ObjectStore, ArchiveQueueAlgorithmsUpdatesOldestJobQueueTime) {
   std::unique_ptr<cta::objectstore::ArchiveQueue> aq;
   time_t firstBatchOldestJobStartTime;
   {
-    std::list<std::unique_ptr<ArchiveRequest> > requestsPtrs;
+    std::list<std::unique_ptr<ArchiveRequest>> requestsPtrs;
     ContainerAlgorithms<ArchiveQueue, ArchiveQueueToTransferForUser>::InsertedElement::list requests;
     fillArchiveRequests(requests, requestsPtrs, be, agentRef);
 
     // Insert a first batch of 10 requests
     ASSERT_EQ(requests.size(), 10);
 
-    archiveAlgos.referenceAndSwitchOwnership(tapepool,
-      agentRef.getAgentAddress(), requests, lc);
+    archiveAlgos.referenceAndSwitchOwnership(tapepool, agentRef.getAgentAddress(), requests, lc);
 
     re.fetchNoLock();
 
@@ -577,15 +577,14 @@ TEST_F(ObjectStore, ArchiveQueueAlgorithmsUpdatesOldestJobQueueTime) {
   }
   // Create another batch of 10 requests
   {
-    std::list<std::unique_ptr<ArchiveRequest> > requestsPtrs;
+    std::list<std::unique_ptr<ArchiveRequest>> requestsPtrs;
     ContainerAlgorithms<ArchiveQueue, ArchiveQueueToTransferForUser>::InsertedElement::list requests;
     fillArchiveRequests(requests, requestsPtrs, be, agentRef);
     ASSERT_EQ(requests.size(), 10);
     // Sleep 1 second before requeueing
     ::sleep(1);
     // Requeue
-    archiveAlgos.referenceAndSwitchOwnership(tapepool,
-      agentRef.getAgentAddress(), requests, lc);
+    archiveAlgos.referenceAndSwitchOwnership(tapepool, agentRef.getAgentAddress(), requests, lc);
     aq->fetchNoLock();
     uint64_t secondBatchOldestJobStartTime;
     secondBatchOldestJobStartTime = aq->getJobsSummary().oldestJobStartTime;
@@ -608,4 +607,4 @@ TEST_F(ObjectStore, ArchiveQueueAlgorithmsUpdatesOldestJobQueueTime) {
   ASSERT_TRUE(oldestJobStartTime > firstBatchOldestJobStartTime);
 }
 
-}
+}  // namespace unitTests

@@ -34,9 +34,8 @@ namespace wrapper {
 /**
  * The result set of an sql query.
  */
-class PostgresRset: public RsetWrapper {
+class PostgresRset : public RsetWrapper {
 public:
-
   /**
    * Constructor.
    *
@@ -44,7 +43,7 @@ public:
    * @param stmt The prepared statement.
    * @param res The result set.
    */
-  PostgresRset(PostgresConn &conn, PostgresStmt &stmt, std::unique_ptr<Postgres::ResultItr> resitr);
+  PostgresRset(PostgresConn& conn, PostgresStmt& stmt, std::unique_ptr<Postgres::ResultItr> resitr);
 
   /**
    * Destructor.
@@ -57,7 +56,7 @@ public:
    * @param colName The name of the column.
    * @return True if the specified column contains a null value.
    */
-  bool columnIsNull(const std::string &colName) const override;
+  bool columnIsNull(const std::string& colName) const override;
 
   /**
    * Returns the value of the specified column as a binary string (byte array).
@@ -65,7 +64,7 @@ public:
    * @param colName The name of the column.
    * @return The string value of the specified column.
    */
-  std::string columnBlob(const std::string &colName) const override;
+  std::string columnBlob(const std::string& colName) const override;
 
   /**
    * Returns the value of the specified column as a string.
@@ -75,7 +74,7 @@ public:
    * @param colName The name of the column.
    * @return The string value of the specified column.
    */
-  std::optional<std::string> columnOptionalString(const std::string &colName) const override;
+  std::optional<std::string> columnOptionalString(const std::string& colName) const override;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -85,7 +84,7 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  std::optional<uint8_t> columnOptionalUint8(const std::string &colName) const override;
+  std::optional<uint8_t> columnOptionalUint8(const std::string& colName) const override;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -95,7 +94,7 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  std::optional<uint16_t> columnOptionalUint16(const std::string &colName) const override;
+  std::optional<uint16_t> columnOptionalUint16(const std::string& colName) const override;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -105,7 +104,7 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  std::optional<uint32_t> columnOptionalUint32(const std::string &colName) const override;
+  std::optional<uint32_t> columnOptionalUint32(const std::string& colName) const override;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -115,7 +114,7 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  std::optional<uint64_t> columnOptionalUint64(const std::string &colName) const override;
+  std::optional<uint64_t> columnOptionalUint64(const std::string& colName) const override;
 
   /**
    * Returns the value of the specified column as a double.
@@ -125,14 +124,14 @@ public:
    * @param colName The name of the column.
    * @return The value of the specified column.
    */
-  std::optional<double> columnOptionalDouble(const std::string &colName) const override;
+  std::optional<double> columnOptionalDouble(const std::string& colName) const override;
 
   /**
    * Returns the SQL statement.
    *
    * @return The SQL statement.
    */
-  const std::string &getSql() const override;
+  const std::string& getSql() const override;
 
   /**
    * Attempts to get the next row of the result set.
@@ -143,7 +142,6 @@ public:
   bool next() override;
 
 private:
-
   /**
    * Clears the async command in process indicator on our conneciton,
    * if we haven't done so already.
@@ -153,12 +151,12 @@ private:
   /**
    * The SQL connection.
    */
-  PostgresConn &m_conn;
+  PostgresConn& m_conn;
 
   /**
    * The prepared statement.
    */
-  PostgresStmt &m_stmt;
+  PostgresStmt& m_stmt;
 
   /**
    * The result set iterator
@@ -176,8 +174,8 @@ private:
    */
   uint64_t m_nfetched;
 
-}; // class PostgresRset
+};  // class PostgresRset
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+}  // namespace wrapper
+}  // namespace rdbms
+}  // namespace cta

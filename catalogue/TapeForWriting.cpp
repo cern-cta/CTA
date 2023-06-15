@@ -23,33 +23,27 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-TapeForWriting::TapeForWriting():
-  lastFSeq(0),
-  capacityInBytes(0),
-  dataOnTapeInBytes(0) {
-}
+TapeForWriting::TapeForWriting() : lastFSeq(0), capacityInBytes(0), dataOnTapeInBytes(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool TapeForWriting::operator==(const TapeForWriting &rhs) const {
+bool TapeForWriting::operator==(const TapeForWriting& rhs) const {
   return vid == rhs.vid;
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const TapeForWriting &obj) {
-  os <<
-    "{"                  <<
-    "vid="               << obj.vid << "," <<
-    "lastFseq="          << obj.lastFSeq << "," <<
-    "capacityInBytes="   << obj.capacityInBytes << "," <<
-    "dataOnTapeInBytes=" << obj.dataOnTapeInBytes <<
-    "}";
+std::ostream& operator<<(std::ostream& os, const TapeForWriting& obj) {
+  os << "{"
+     << "vid=" << obj.vid << ","
+     << "lastFseq=" << obj.lastFSeq << ","
+     << "capacityInBytes=" << obj.capacityInBytes << ","
+     << "dataOnTapeInBytes=" << obj.dataOnTapeInBytes << "}";
 
   return os;
 }
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

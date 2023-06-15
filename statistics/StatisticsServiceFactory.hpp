@@ -15,7 +15,6 @@
  *               submit itself to any jurisdiction.
  */
 
-
 #pragma once
 
 #include <memory>
@@ -30,7 +29,7 @@ namespace statistics {
  * Factory to instanciate a StatisticsService
  */
 class StatisticsServiceFactory {
- public:
+public:
   /**
    * Creates a StatisticsService to perform Statistics operations
    * @param connection the database connection
@@ -43,7 +42,7 @@ class StatisticsServiceFactory {
    * Creates a StatisticsService to perform Statistics operations
    * @return a unique_ptr containing the StatisticsService
    */
-  static std::unique_ptr<StatisticsService> create(std::ostream & ostream);
+  static std::unique_ptr<StatisticsService> create(std::ostream& ostream);
 };
 
 }  // namespace statistics

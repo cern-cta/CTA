@@ -17,10 +17,7 @@
 
 #include "RequestFailed.hpp"
 
-
 // -----------------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------------
-cta::exception::RequestFailed::RequestFailed():
-  cta::exception::Exception() {
-}
+cta::exception::RequestFailed::RequestFailed() : cta::exception::Exception() {}

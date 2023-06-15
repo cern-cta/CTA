@@ -32,34 +32,37 @@ namespace drive {
  * Fake drive class used for unit testing
  */
 class FakeDrive : public DriveInterface {
- private:
+private:
   struct tapeBlock {
     std::string data;
     uint64_t remainingSpaceAfter;
   };
+
   std::vector<tapeBlock> m_tape;
   uint32_t m_currentPosition;
   uint64_t m_tapeCapacity;
   int m_beginOfCompressStats;
   uint64_t getRemaingSpace(uint32_t currentPosition);
 
- public:
-  enum FailureMoment {OnWrite, OnFlush};
+public:
+  enum FailureMoment { OnWrite, OnFlush };
 
- private:
+private:
   const enum FailureMoment m_failureMoment;
   bool m_tapeOverflow;
   bool m_failToMount;
   lbpToUse m_lbpToUse;
 
- public:
+public:
   std::string contentToString() throw();
 
   FakeDrive(uint64_t capacity = std::numeric_limits<uint64_t>::max(),
-    enum FailureMoment failureMoment = OnWrite,
-    bool failOnMount = false) throw();
+            enum FailureMoment failureMoment = OnWrite,
+            bool failOnMount = false) throw();
   explicit FakeDrive(bool failOnMount) throw();
+
   virtual ~FakeDrive() throw() {}
+
   virtual compressionStats getCompression();
   virtual void clearCompressionStats();
   virtual std::map<std::string, uint64_t> getTapeWriteErrors();
@@ -79,17 +82,17 @@ class FakeDrive : public DriveInterface {
   virtual std::vector<uint16_t> getTapeAlertCodes();
   virtual std::vector<std::string> getTapeAlerts(const std::vector<uint16_t>&);
   virtual std::vector<std::string> getTapeAlertsCompact(const std::vector<uint16_t>&);
-  virtual bool tapeAlertsCriticalForWrite(const std::vector<uint16_t> & codes);
-  virtual void setDensityAndCompression(bool compression = true,
-  unsigned char densityCode = 0);
+  virtual bool tapeAlertsCriticalForWrite(const std::vector<uint16_t>& codes);
+  virtual void setDensityAndCompression(bool compression = true, unsigned char densityCode = 0);
   virtual void enableCRC32CLogicalBlockProtectionReadOnly();
   virtual void enableCRC32CLogicalBlockProtectionReadWrite();
   virtual void disableLogicalBlockProtection();
   virtual drive::LBPInfo getLBPInfo();
   virtual void setLogicalBlockProtection(const unsigned char method,
-    unsigned char methodLength, const bool enableLPBforRead,
-    const bool enableLBBforWrite);
-  virtual void setEncryptionKey(const std::string &encryption_key);
+                                         unsigned char methodLength,
+                                         const bool enableLPBforRead,
+                                         const bool enableLBBforWrite);
+  virtual void setEncryptionKey(const std::string& encryption_key);
   virtual bool clearEncryptionKey();
   virtual bool isEncryptionCapEnabled();
   virtual driveStatus getDriveStatus();
@@ -103,9 +106,9 @@ class FakeDrive : public DriveInterface {
   virtual void flush(void);
   virtual void writeSyncFileMarks(size_t count);
   virtual void writeImmediateFileMarks(size_t count);
-  virtual void writeBlock(const void * data, size_t count);
-  virtual ssize_t readBlock(void * data, size_t count);
-  virtual void readExactBlock(void * data, size_t count, const std::string& context);
+  virtual void writeBlock(const void* data, size_t count);
+  virtual ssize_t readBlock(void* data, size_t count);
+  virtual void readExactBlock(void* data, size_t count, const std::string& context);
   virtual void readFileMark(const std::string& context);
   virtual void waitUntilReady(const uint32_t timeoutSecond);
   virtual bool isWriteProtected();
@@ -115,11 +118,11 @@ class FakeDrive : public DriveInterface {
   virtual lbpToUse getLbpToUse();
   virtual bool hasTapeInPlace();
   virtual castor::tape::SCSI::Structures::RAO::udsLimits getLimitUDS();
-  virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported);
+  virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims>& files, int maxSupported);
 };
 
-class FakeNonRAODrive : public FakeDrive{
- public:
+class FakeNonRAODrive : public FakeDrive {
+public:
   FakeNonRAODrive();
   virtual castor::tape::SCSI::Structures::RAO::udsLimits getLimitUDS();
 };

@@ -29,26 +29,23 @@ namespace unitTests {
 
 class cta_SmartArrayPtrTest : public ::testing::Test {
 protected:
+  virtual void SetUp() {}
 
-  virtual void SetUp() {
-  }
-
-  virtual void TearDown() {
-  }
+  virtual void TearDown() {}
 };
 
 TEST_F(cta_SmartArrayPtrTest, constructor) {
-  char *ptr = new char[10];
+  char* ptr = new char[10];
   cta::SmartArrayPtr<char> smartPtr(ptr);
 
   ASSERT_EQ(ptr, smartPtr.get());
 }
 
 TEST_F(cta_SmartArrayPtrTest, reset) {
-  char *ptr = new char[10];
+  char* ptr = new char[10];
   cta::SmartArrayPtr<char> smartPtr;
 
-  ASSERT_EQ((char *)0, smartPtr.get());
+  ASSERT_EQ((char*) 0, smartPtr.get());
   smartPtr.reset(ptr);
   ASSERT_EQ(ptr, smartPtr.get());
 }
@@ -57,15 +54,15 @@ TEST_F(cta_SmartArrayPtrTest, assignment) {
   cta::SmartArrayPtr<char> smartPtr1;
   cta::SmartArrayPtr<char> smartPtr2;
 
-  ASSERT_EQ((char *)0, smartPtr1.get());
-  ASSERT_EQ((char *)0, smartPtr2.get());
+  ASSERT_EQ((char*) 0, smartPtr1.get());
+  ASSERT_EQ((char*) 0, smartPtr2.get());
 
-  char *ptr = new char[10];
+  char* ptr = new char[10];
   smartPtr1.reset(ptr);
   ASSERT_EQ(ptr, smartPtr1.get());
 
   smartPtr2 = smartPtr1;
-  ASSERT_EQ((char *)0, smartPtr1.get());
+  ASSERT_EQ((char*) 0, smartPtr1.get());
   ASSERT_EQ(ptr, smartPtr2.get());
 }
 
@@ -75,7 +72,7 @@ TEST_F(cta_SmartArrayPtrTest, releaseNull) {
 }
 
 TEST_F(cta_SmartArrayPtrTest, subscriptRead) {
-  char *ptr = new char[4];
+  char* ptr = new char[4];
   ptr[0] = 'T';
   ptr[1] = 'e';
   ptr[2] = 's';
@@ -91,7 +88,7 @@ TEST_F(cta_SmartArrayPtrTest, subscriptRead) {
 }
 
 TEST_F(cta_SmartArrayPtrTest, subscriptAssigment) {
-  char *ptr = new char[4];
+  char* ptr = new char[4];
   ptr[0] = 'T';
   ptr[1] = 'e';
   ptr[2] = 's';
@@ -121,4 +118,4 @@ TEST_F(cta_SmartArrayPtrTest, subscriptAssigment) {
   ASSERT_EQ('3', smartPtr[3]);
 }
 
-} // namespace unitTests
+}  // namespace unitTests

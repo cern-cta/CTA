@@ -29,8 +29,8 @@ namespace castor {
 namespace tape {
 namespace tapeFile {
 
-std::unique_ptr<FileReader> FileReaderFactory::create(const std::unique_ptr<ReadSession> &readSession,
-                                                      const cta::RetrieveJob &fileToRecall) {
+std::unique_ptr<FileReader> FileReaderFactory::create(const std::unique_ptr<ReadSession>& readSession,
+                                                      const cta::RetrieveJob& fileToRecall) {
   using LabelFormat = cta::common::dataStructures::Label::Format;
   const LabelFormat labelFormat = readSession->getVolumeInfo().labelFormat;
   std::unique_ptr<FileReader> reader;

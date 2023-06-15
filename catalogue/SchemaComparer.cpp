@@ -23,17 +23,18 @@
 
 namespace cta {
 namespace catalogue {
-SchemaComparer::SchemaComparer(const std::string& databaseToCheckName, DatabaseMetadataGetter &catalogueMetadataGetter)
-  : m_databaseToCheckName(databaseToCheckName),
-    m_databaseMetadataGetter(catalogueMetadataGetter),
-    m_compareTableConstraints(true) {}
+SchemaComparer::SchemaComparer(const std::string& databaseToCheckName,
+                               DatabaseMetadataGetter& catalogueMetadataGetter) :
+m_databaseToCheckName(databaseToCheckName),
+m_databaseMetadataGetter(catalogueMetadataGetter),
+m_compareTableConstraints(true) {}
 
-void SchemaComparer::setSchemaSqlStatementsReader(std::unique_ptr<SchemaSqlStatementsReader> schemaSqlStatementsReader) {
+void SchemaComparer::setSchemaSqlStatementsReader(
+  std::unique_ptr<SchemaSqlStatementsReader> schemaSqlStatementsReader) {
   m_schemaSqlStatementsReader = std::move(schemaSqlStatementsReader);
 }
 
-SchemaComparer::~SchemaComparer() {
-}
+SchemaComparer::~SchemaComparer() {}
 
 }  // namespace catalogue
 }  // namespace cta

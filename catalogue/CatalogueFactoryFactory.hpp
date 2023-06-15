@@ -61,12 +61,11 @@ public:
    * try to connect to the database in the event of LostDatabaseConnection
    * exceptions being thrown.
    */
-  static std::unique_ptr<CatalogueFactory> create(
-    log::Logger &log,
-    const rdbms::Login &login,
-    const uint64_t nbConns,
-    const uint64_t nbArchiveFileListingConns,
-    const uint32_t maxTriesToConnect = 3);
+  static std::unique_ptr<CatalogueFactory> create(log::Logger& log,
+                                                  const rdbms::Login& login,
+                                                  const uint64_t nbConns,
+                                                  const uint64_t nbArchiveFileListingConns,
+                                                  const uint32_t maxTriesToConnect = 3);
 };  // class CatalogueFactoryFactory
 
 }  // namespace catalogue

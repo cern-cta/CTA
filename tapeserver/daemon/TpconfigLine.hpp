@@ -21,7 +21,9 @@
 #include "mediachanger/LibrarySlot.hpp"
 #include <memory>
 
-namespace cta { namespace tape { namespace daemon {
+namespace cta {
+namespace tape {
+namespace daemon {
 
 /**
  * The data stored in a data-line (as opposed to a comment-line) from a
@@ -48,25 +50,25 @@ public:
    * The slot in the tape library that contains the tape drive (string encoded).
    */
   std::string rawLibrarySlot;
-  
+
   /**
    * Accessor method to the library slot strcuture.
    * @return reference to the library slot.
    */
-  const cta::mediachanger::LibrarySlot & librarySlot() const;
-  
+  const cta::mediachanger::LibrarySlot& librarySlot() const;
+
 private:
   /**
    * The library slot structure.
    */
-  std::unique_ptr <cta::mediachanger::LibrarySlot> m_librarySlot;
+  std::unique_ptr<cta::mediachanger::LibrarySlot> m_librarySlot;
 
 public:
   /**
    * Trivial constructor (used in unit tests).
    */
   TpconfigLine();
-  
+
   /**
    * Constructor.
    *
@@ -76,18 +78,17 @@ public:
    * @param librarySlot The slot in the tape library that contains the tape
    * drive.
    */
-  TpconfigLine(
-    const std::string &unitName,
-    const std::string &logicalLibrary,
-    const std::string &devFilename,
-    const std::string &librarySlot);
+  TpconfigLine(const std::string& unitName,
+               const std::string& logicalLibrary,
+               const std::string& devFilename,
+               const std::string& librarySlot);
 
   /**
    * Copy constructor
    * @param o the other TpConfigLine to be copied.
    */
   TpconfigLine(const TpconfigLine& o);
-  
+
   /**
    * Copy operator
    * @param o the other TpConfigLine to copy.
@@ -95,6 +96,8 @@ public:
    */
   TpconfigLine& operator=(const TpconfigLine& o);
   static const size_t maxNameLen = 100;
-}; // struct TpconfigLine
+};  // struct TpconfigLine
 
-}}} // namespace cta::tape::daemon
+}  // namespace daemon
+}  // namespace tape
+}  // namespace cta

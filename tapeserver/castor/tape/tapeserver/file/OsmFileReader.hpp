@@ -17,7 +17,6 @@
 
 #pragma once
 
-
 #include "castor/tape/tapeserver/file/CpioFileHeaderStructure.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/OsmFileStructure.hpp"
 #include "castor/tape/tapeserver/file/FileReader.hpp"
@@ -27,7 +26,7 @@
 namespace castor {
 namespace tape {
 namespace tapeFile {
-  
+
 class OsmFileReader : public FileReader {
 public:
   /**
@@ -37,22 +36,19 @@ public:
     * @param fileInfo: information about the file we would like to read
     * @param positioningMode: method used when positioning (see the PositioningMode enum)
     */
-  OsmFileReader(const std::unique_ptr<ReadSession> &rs, const cta::RetrieveJob &fileToRecall);
+  OsmFileReader(const std::unique_ptr<ReadSession>& rs, const cta::RetrieveJob& fileToRecall);
 
   /**
     * Destructor of the FileReader. It will release the lock on the read session.
     */
   ~OsmFileReader() override = default;
 
-  size_t readNextDataBlock(void *data, const size_t size) override;
-  
+  size_t readNextDataBlock(void* data, const size_t size) override;
+
   /**
    *
    */
-  inline const CPIO& getCPIOHeader() const {
-    return m_cpioHeader;
-  }
-
+  inline const CPIO& getCPIOHeader() const { return m_cpioHeader; }
 
 private:
   const size_t PAYLOAD_BOLCK_SIZE = 262144;
@@ -62,13 +58,12 @@ private:
   CPIO m_cpioHeader;
   uint64_t m_ui64CPIODataSize = 0;
 
-  
-  void positionByFseq(const cta::RetrieveJob &fileToRecall) override;
-  void positionByBlockID(const cta::RetrieveJob &fileToRecall) override;
-  
+  void positionByFseq(const cta::RetrieveJob& fileToRecall) override;
+  void positionByBlockID(const cta::RetrieveJob& fileToRecall) override;
+
   void moveToFirstFile();
   void moveReaderByFSeqDelta(const int64_t fSeq_delta);
-  void useBlockID(const cta::RetrieveJob &fileToRecall);
+  void useBlockID(const cta::RetrieveJob& fileToRecall);
   void setBlockSize(size_t uiBlockSize);
 };
 

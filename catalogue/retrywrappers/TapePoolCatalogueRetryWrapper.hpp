@@ -29,45 +29,56 @@ namespace catalogue {
 
 class Catalogue;
 
-class TapePoolCatalogueRetryWrapper: public TapePoolCatalogue {
+class TapePoolCatalogueRetryWrapper : public TapePoolCatalogue {
 public:
-  TapePoolCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue, log::Logger &m_log,
-    const uint32_t maxTriesToConnect);
+  TapePoolCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
+                                log::Logger& m_log,
+                                const uint32_t maxTriesToConnect);
   ~TapePoolCatalogueRetryWrapper() override = default;
 
-  void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue,
-    const std::optional<std::string> &supply, const std::string &comment) override;
+  void createTapePool(const common::dataStructures::SecurityIdentity& admin,
+                      const std::string& name,
+                      const std::string& vo,
+                      const uint64_t nbPartialTapes,
+                      const bool encryptionValue,
+                      const std::optional<std::string>& supply,
+                      const std::string& comment) override;
 
-  void deleteTapePool(const std::string &name) override;
+  void deleteTapePool(const std::string& name) override;
 
-  std::list<TapePool> getTapePools(const TapePoolSearchCriteria &searchCriteria) const override;
+  std::list<TapePool> getTapePools(const TapePoolSearchCriteria& searchCriteria) const override;
 
-  std::optional<TapePool> getTapePool(const std::string &tapePoolName) const override;
+  std::optional<TapePool> getTapePool(const std::string& tapePoolName) const override;
 
-  void modifyTapePoolVo(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const std::string &vo) override;
+  void modifyTapePoolVo(const common::dataStructures::SecurityIdentity& admin,
+                        const std::string& name,
+                        const std::string& vo) override;
 
-  void modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const uint64_t nbPartialTapes) override;
+  void modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity& admin,
+                                    const std::string& name,
+                                    const uint64_t nbPartialTapes) override;
 
-  void modifyTapePoolComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const std::string &comment) override;
+  void modifyTapePoolComment(const common::dataStructures::SecurityIdentity& admin,
+                             const std::string& name,
+                             const std::string& comment) override;
 
-  void setTapePoolEncryption(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const bool encryptionValue) override;
+  void setTapePoolEncryption(const common::dataStructures::SecurityIdentity& admin,
+                             const std::string& name,
+                             const bool encryptionValue) override;
 
-  void modifyTapePoolSupply(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const std::string &supply) override;
+  void modifyTapePoolSupply(const common::dataStructures::SecurityIdentity& admin,
+                            const std::string& name,
+                            const std::string& supply) override;
 
-  void modifyTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentName,
-    const std::string &newName) override;
+  void modifyTapePoolName(const common::dataStructures::SecurityIdentity& admin,
+                          const std::string& currentName,
+                          const std::string& newName) override;
 
-  bool tapePoolExists(const std::string &tapePoolName) const override;
+  bool tapePoolExists(const std::string& tapePoolName) const override;
 
 private:
   const std::unique_ptr<Catalogue>& m_catalogue;
-  log::Logger &m_log;
+  log::Logger& m_log;
   uint32_t m_maxTriesToConnect;
 };  // class SchemaCatalogueRetryWrapper
 

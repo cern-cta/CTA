@@ -27,10 +27,9 @@
 
 namespace unitTests {
 
-cta_catalogue_MountPolicyTest::cta_catalogue_MountPolicyTest()
-  : m_dummyLog("dummy", "dummy"),
-    m_admin("admin", "host") {
-}
+cta_catalogue_MountPolicyTest::cta_catalogue_MountPolicyTest() :
+m_dummyLog("dummy", "dummy"),
+m_admin("admin", "host") {}
 
 void cta_catalogue_MountPolicyTest::SetUp() {
   cta::log::LogContext dummyLc(m_dummyLog);
@@ -69,27 +68,26 @@ TEST_P(cta_catalogue_MountPolicyTest, createMountPolicy) {
   ASSERT_EQ(m_admin.username, creationLog.username);
   ASSERT_EQ(m_admin.host, creationLog.host);
 
-  const cta::common::dataStructures::EntryLog lastModificationLog =
-    mountPolicy.lastModificationLog;
+  const cta::common::dataStructures::EntryLog lastModificationLog = mountPolicy.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 }
 
 TEST_P(cta_catalogue_MountPolicyTest, createMountPolicy_same_twice) {
   ASSERT_TRUE(m_catalogue->MountPolicy()->getMountPolicies().empty());
 
-  auto mountPolicy =CatalogueTestUtils::getMountPolicy1();
+  auto mountPolicy = CatalogueTestUtils::getMountPolicy1();
 
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicy);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicy);
 
-  ASSERT_THROW(m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicy),cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicy), cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_MountPolicyTest, deleteMountPolicy) {
   ASSERT_TRUE(m_catalogue->MountPolicy()->getMountPolicies().empty());
 
-  auto mountPolicyToAdd =CatalogueTestUtils::getMountPolicy1();
+  auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
 
   const auto mountPolicies = m_catalogue->MountPolicy()->getMountPolicies();
 
@@ -108,7 +106,7 @@ TEST_P(cta_catalogue_MountPolicyTest, deleteMountPolicy_non_existent) {
 TEST_P(cta_catalogue_MountPolicyTest, getMountPolicyByName) {
   ASSERT_TRUE(m_catalogue->MountPolicy()->getMountPolicies().empty());
 
-  cta::catalogue::CreateMountPolicyAttributes mountPolicyToAdd =CatalogueTestUtils::getMountPolicy1();
+  cta::catalogue::CreateMountPolicyAttributes mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
   {
@@ -133,8 +131,7 @@ TEST_P(cta_catalogue_MountPolicyTest, getMountPolicyByName) {
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
 
-    const cta::common::dataStructures::EntryLog lastModificationLog =
-      mountPolicy.lastModificationLog;
+    const cta::common::dataStructures::EntryLog lastModificationLog = mountPolicy.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
@@ -146,12 +143,11 @@ TEST_P(cta_catalogue_MountPolicyTest, getMountPolicyByName) {
   }
 }
 
-
 TEST_P(cta_catalogue_MountPolicyTest, modifyMountPolicyArchivePriority) {
   ASSERT_TRUE(m_catalogue->MountPolicy()->getMountPolicies().empty());
 
-  auto mountPolicyToAdd =CatalogueTestUtils::getMountPolicy1();
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
 
   const uint64_t modifiedArchivePriority = mountPolicyToAdd.archivePriority + 10;
   m_catalogue->MountPolicy()->modifyMountPolicyArchivePriority(m_admin, mountPolicyToAdd.name, modifiedArchivePriority);
@@ -177,19 +173,19 @@ TEST_P(cta_catalogue_MountPolicyTest, modifyMountPolicyArchivePriority_nonExiste
   const uint64_t archivePriority = 1;
 
   ASSERT_THROW(m_catalogue->MountPolicy()->modifyMountPolicyArchivePriority(m_admin, name, archivePriority),
-    cta::exception::UserError);
+               cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_MountPolicyTest, modifyMountPolicyArchiveMinRequestAge) {
   ASSERT_TRUE(m_catalogue->MountPolicy()->getMountPolicies().empty());
 
-  auto mountPolicyToAdd =CatalogueTestUtils::getMountPolicy1();
+  auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
 
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
 
   const uint64_t modifiedMinArchiveRequestAge = mountPolicyToAdd.minArchiveRequestAge + 10;
   m_catalogue->MountPolicy()->modifyMountPolicyArchiveMinRequestAge(m_admin, mountPolicyToAdd.name,
-    modifiedMinArchiveRequestAge);
+                                                                    modifiedMinArchiveRequestAge);
 
   {
     const auto mountPolicies = m_catalogue->MountPolicy()->getMountPolicies();
@@ -212,18 +208,18 @@ TEST_P(cta_catalogue_MountPolicyTest, modifyMountPolicyArchiveMinRequestAge_nonE
   const uint64_t minArchiveRequestAge = 2;
 
   ASSERT_THROW(m_catalogue->MountPolicy()->modifyMountPolicyArchiveMinRequestAge(m_admin, name, minArchiveRequestAge),
-    cta::exception::UserError);
+               cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_MountPolicyTest, modifyMountPolicyRetrievePriority) {
   ASSERT_TRUE(m_catalogue->MountPolicy()->getMountPolicies().empty());
 
-  auto mountPolicyToAdd =CatalogueTestUtils::getMountPolicy1();
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
 
   const uint64_t modifiedRetrievePriority = mountPolicyToAdd.retrievePriority + 10;
   m_catalogue->MountPolicy()->modifyMountPolicyRetrievePriority(m_admin, mountPolicyToAdd.name,
-    modifiedRetrievePriority);
+                                                                modifiedRetrievePriority);
 
   {
     const auto mountPolicies = m_catalogue->MountPolicy()->getMountPolicies();
@@ -246,18 +242,18 @@ TEST_P(cta_catalogue_MountPolicyTest, modifyMountPolicyRetrievePriority_nonExist
   const uint64_t retrievePriority = 1;
 
   ASSERT_THROW(m_catalogue->MountPolicy()->modifyMountPolicyRetrievePriority(m_admin, name, retrievePriority),
-    cta::exception::UserError);
+               cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_MountPolicyTest, modifyMountPolicyRetrieveMinRequestAge) {
   ASSERT_TRUE(m_catalogue->MountPolicy()->getMountPolicies().empty());
 
-  auto mountPolicyToAdd =CatalogueTestUtils::getMountPolicy1();
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
 
   const uint64_t modifiedMinRetrieveRequestAge = mountPolicyToAdd.minRetrieveRequestAge + 10;
   m_catalogue->MountPolicy()->modifyMountPolicyRetrieveMinRequestAge(m_admin, mountPolicyToAdd.name,
-    modifiedMinRetrieveRequestAge);
+                                                                     modifiedMinRetrieveRequestAge);
 
   {
     const auto mountPolicies = m_catalogue->MountPolicy()->getMountPolicies();
@@ -280,14 +276,14 @@ TEST_P(cta_catalogue_MountPolicyTest, modifyMountPolicyRetrieveMinRequestAge_non
   const uint64_t minRetrieveRequestAge = 2;
 
   ASSERT_THROW(m_catalogue->MountPolicy()->modifyMountPolicyRetrieveMinRequestAge(m_admin, name, minRetrieveRequestAge),
-    cta::exception::UserError);
+               cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_MountPolicyTest, modifyMountPolicyComment) {
   ASSERT_TRUE(m_catalogue->MountPolicy()->getMountPolicies().empty());
 
-  auto mountPolicyToAdd =CatalogueTestUtils::getMountPolicy1();
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
 
   const std::string modifiedComment = "Modified comment";
   m_catalogue->MountPolicy()->modifyMountPolicyComment(m_admin, mountPolicyToAdd.name, modifiedComment);
@@ -315,4 +311,4 @@ TEST_P(cta_catalogue_MountPolicyTest, modifyMountPolicyComment_nonExistentMountP
   ASSERT_THROW(m_catalogue->MountPolicy()->modifyMountPolicyComment(m_admin, name, comment), cta::exception::UserError);
 }
 
-} // namespace unitTests
+}  // namespace unitTests

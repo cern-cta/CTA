@@ -29,7 +29,6 @@ namespace wrapper {
  */
 class Sqlite {
 public:
-
   /**
    * Returns the string representation of the specified SQLite return code.
    *
@@ -38,8 +37,8 @@ public:
    */
   static std::string rcToStr(const int rc);
 
-}; // class SqlLiteStmt
+};  // class SqlLiteStmt
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+}  // namespace wrapper
+}  // namespace rdbms
+}  // namespace cta

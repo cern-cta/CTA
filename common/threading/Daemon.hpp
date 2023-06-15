@@ -22,7 +22,8 @@
 
 #include <ostream>
 
-namespace cta { namespace server {
+namespace cta {
+namespace server {
 
 /**
  * This class contains the code common to all daemon classes.
@@ -30,9 +31,7 @@ namespace cta { namespace server {
  * The code common to all daemon classes includes daemonization and logging.
  */
 class Daemon {
-
 public:
-  
   CTA_GENERATE_EXCEPTION_CLASS(CommandLineNotParsed);
 
   /**
@@ -42,8 +41,7 @@ public:
    * @param stdErr Stream representing standard error.
    * @param log Object representing the API of the CASTOR logging system.
    */
-  Daemon(cta::log::Logger &log)
-    throw();
+  Daemon(cta::log::Logger& log) throw();
 
   /**
    * Destructor.
@@ -53,15 +51,14 @@ public:
   /**
    * Returns this server's name as used by the CASTOR logging system.
    */
-  const std::string &getServerName() const throw();
+  const std::string& getServerName() const throw();
 
   /**
    * Returns true if the daemon is configured to run in the foreground.
    */
-  bool getForeground() const ;
+  bool getForeground() const;
 
 protected:
-
   /**
    * Tells the daemon object that the command-line has been parsed.  This
    * method allows subclasses to implement their own command-line parsing logic,
@@ -88,15 +85,14 @@ protected:
    * @param userName The name of the user.
    * @param groupName The name of the group.
    */
-  void daemonizeIfNotRunInForegroundAndSetUserAndGroup(const std::string &userName, const std::string &groupName);
+  void daemonizeIfNotRunInForegroundAndSetUserAndGroup(const std::string& userName, const std::string& groupName);
 
   /**
    * Object representing the API of the CASTOR logging system.
    */
- cta::log::Logger &m_log;
+  cta::log::Logger& m_log;
 
 private:
-
   /**
    * Flag indicating whether the server should run in foreground or background
    * mode.
@@ -108,8 +104,7 @@ private:
    */
   bool m_commandLineHasBeenParsed;
 
-}; // class Daemon
+};  // class Daemon
 
-} // namespace server
-} // namespace cta
-
+}  // namespace server
+}  // namespace cta

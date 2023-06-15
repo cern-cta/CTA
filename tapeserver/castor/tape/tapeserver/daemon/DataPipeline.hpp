@@ -44,23 +44,24 @@ namespace daemon {
  */
 class DataPipeline {
 public:
- /**
+  /**
   * Constructor
   * @param bn :how many memory block we want in the fifo (its size)
   */
   explicit DataPipeline(uint64_t bn) :
-  m_blocksNeeded(bn), m_freeBlocksProvided(0), m_dataBlocksPushed(0), m_dataBlocksPopped(0){};
+  m_blocksNeeded(bn),
+  m_freeBlocksProvided(0),
+  m_dataBlocksPushed(0),
+  m_dataBlocksPopped(0) {};
 
-  ~DataPipeline() noexcept {
-    cta::threading::MutexLocker ml(m_freeBlockProviderProtection); 
-  }
+  ~DataPipeline() noexcept { cta::threading::MutexLocker ml(m_freeBlockProviderProtection); }
 
   /* 
    * Return a memory block to the object
    * @param mb : the memory block to be returned 
    * @return true   true if not all the needed blocks has not yet been provided 
    */
-  bool provideBlock(MemBlock *mb)  {
+  bool provideBlock(MemBlock* mb) {
     bool ret;
     cta::threading::MutexLocker ml(m_freeBlockProviderProtection);
     {
@@ -74,19 +75,18 @@ public:
     m_freeBlocks.push(mb);
     return ret;
   }
-  
+
   /* 
    * Get a free block 
    * @return a free block
    */
-  MemBlock * getFreeBlock() {
+  MemBlock* getFreeBlock() {
     MemBlock* ret = m_freeBlocks.pop();
     // When delivering a fresh block to the user, it should be empty.
     if (ret->m_payload.size()) {
       m_freeBlocks.push(ret);
-      throw cta::exception::Exception(
-        "Internal error: DataPipeline::getFreeBlock "
-        "popped a non-empty memory block");
+      throw cta::exception::Exception("Internal error: DataPipeline::getFreeBlock "
+                                      "popped a non-empty memory block");
     }
     return ret;
   }
@@ -96,16 +96,17 @@ public:
    * tape/disk reading
    * @param mb the block we want to push back 
    */
-  void pushDataBlock(MemBlock *mb)  {
+  void pushDataBlock(MemBlock* mb) {
     {
       cta::threading::MutexLocker ml(m_countersMutex);
-      if (m_dataBlocksPushed >= m_blocksNeeded)
+      if (m_dataBlocksPushed >= m_blocksNeeded) {
         throw cta::exception::MemException("DataFifo overflow on data blocks");
+      }
     }
     m_dataBlocks.push(mb);
     {
-        cta::threading::MutexLocker ml(m_countersMutex);
-        m_dataBlocksPushed++;
+      cta::threading::MutexLocker ml(m_countersMutex);
+      m_dataBlocksPushed++;
     }
   }
 
@@ -114,8 +115,8 @@ public:
    * tape/disk reading
    * @param mb the block we want to push back 
    */
-  MemBlock * popDataBlock() {
-    MemBlock *ret = m_dataBlocks.pop();
+  MemBlock* popDataBlock() {
+    MemBlock* ret = m_dataBlocks.pop();
     {
       cta::threading::MutexLocker ml(m_countersMutex);
       m_dataBlocksPopped++;
@@ -133,31 +134,31 @@ public:
     cta::threading::MutexLocker ml(m_countersMutex);
     return m_dataBlocksPopped >= m_blocksNeeded;
   }
-  
+
 private:
   cta::threading::Mutex m_countersMutex;
   cta::threading::Mutex m_freeBlockProviderProtection;
-  
+
   ///the number of memory blocks we want to be provided to the object (its size).
   const uint64_t m_blocksNeeded;
-  
-  ///how many blocks have been currently provided 
+
+  ///how many blocks have been currently provided
   volatile uint64_t m_freeBlocksProvided;
-  
+
   ///how many data blocks have been currently pushed
   volatile uint64_t m_dataBlocksPushed;
 
   ///how many data blocks have been currently taken
   volatile uint64_t m_dataBlocksPopped;
-  
-    ///thread sage storage of all free blocks
-  cta::threading::BlockingQueue<MemBlock *> m_freeBlocks;
-  
+
+  ///thread sage storage of all free blocks
+  cta::threading::BlockingQueue<MemBlock*> m_freeBlocks;
+
   ///thread sage storage of all blocks filled with data
-  cta::threading::BlockingQueue<MemBlock *> m_dataBlocks;
+  cta::threading::BlockingQueue<MemBlock*> m_dataBlocks;
 };
 
-}
-}
-}
-}
+}  // namespace daemon
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

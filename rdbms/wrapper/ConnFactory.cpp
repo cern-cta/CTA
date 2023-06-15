@@ -24,9 +24,8 @@ namespace wrapper {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-ConnFactory::~ConnFactory() {
-}
+ConnFactory::~ConnFactory() {}
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+}  // namespace wrapper
+}  // namespace rdbms
+}  // namespace cta

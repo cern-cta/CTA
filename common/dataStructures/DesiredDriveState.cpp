@@ -22,10 +22,10 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-DesiredDriveState::DesiredDriveState():up(false),forceDown(false){}  
-  
+DesiredDriveState::DesiredDriveState() : up(false), forceDown(false) {}
+
 DesiredDriveState::DesiredDriveState(const DesiredDriveState& ds) {
-  if(this != &ds){
+  if (this != &ds) {
     up = ds.up;
     forceDown = ds.forceDown;
     reason = ds.reason;
@@ -34,7 +34,7 @@ DesiredDriveState::DesiredDriveState(const DesiredDriveState& ds) {
 }
 
 DesiredDriveState& DesiredDriveState::operator=(const DesiredDriveState& ds) {
-  if(this != &ds){
+  if (this != &ds) {
     up = ds.up;
     forceDown = ds.forceDown;
     reason = ds.reason;
@@ -45,21 +45,21 @@ DesiredDriveState& DesiredDriveState::operator=(const DesiredDriveState& ds) {
 
 std::string DesiredDriveState::c_tpsrvPrefixComment = "[cta-taped]";
 
-void DesiredDriveState::setReasonFromLogMsg(const int logLevel, const std::string & msg){
-  reason = DesiredDriveState::generateReasonFromLogMsg(logLevel,msg);
+void DesiredDriveState::setReasonFromLogMsg(const int logLevel, const std::string& msg) {
+  reason = DesiredDriveState::generateReasonFromLogMsg(logLevel, msg);
 }
 
-std::string DesiredDriveState::generateReasonFromLogMsg(const int logLevel, const std::string & msg){
+std::string DesiredDriveState::generateReasonFromLogMsg(const int logLevel, const std::string& msg) {
   std::string localReason = c_tpsrvPrefixComment;
-  localReason += " " + cta::log::PriorityMaps::getPriorityText(logLevel) + " "+msg;
+  localReason += " " + cta::log::PriorityMaps::getPriorityText(logLevel) + " " + msg;
   return localReason;
 }
 
-}}}
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta
 
-
-std::ostream &cta::common::dataStructures::operator<<(std::ostream& os, const DesiredDriveState& obj) {
-  std::string upStr(obj.up?"true":"false"),
-          forceStr(obj.forceDown?"true":"false");
-  return os << "(up="  << upStr  << " forceDown="  << forceStr << ")";
+std::ostream& cta::common::dataStructures::operator<<(std::ostream& os, const DesiredDriveState& obj) {
+  std::string upStr(obj.up ? "true" : "false"), forceStr(obj.forceDown ? "true" : "false");
+  return os << "(up=" << upStr << " forceDown=" << forceStr << ")";
 }

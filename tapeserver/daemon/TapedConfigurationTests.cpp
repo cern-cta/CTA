@@ -26,46 +26,40 @@ namespace unitTests {
 
 TEST(cta_Daemon, TapedConfiguration) {
   TempFile incompleteConfFile, completeConfFile;
-  incompleteConfFile.stringFill(
-  "# My incomplete taped configuration file\n"
-  );
-  completeConfFile.stringFill(
-  "# A good enough configuration file for taped\n"
-  "ObjectStore BackendPath vfsObjectStore:///tmp/dir\n"
-  "taped TpConfigPath ");
+  incompleteConfFile.stringFill("# My incomplete taped configuration file\n");
+  completeConfFile.stringFill("# A good enough configuration file for taped\n"
+                              "ObjectStore BackendPath vfsObjectStore:///tmp/dir\n"
+                              "taped TpConfigPath ");
   TempFile emptyTpConfig;
   completeConfFile.stringAppend(emptyTpConfig.path());
   ASSERT_THROW(cta::tape::daemon::TapedConfiguration::createFromCtaConf(incompleteConfFile.path()),
-    cta::SourcedParameter<std::string>::MandatoryParameterNotDefined);
-  auto completeConfig = 
-    cta::tape::daemon::TapedConfiguration::createFromCtaConf(completeConfFile.path());
-  ASSERT_EQ(completeConfFile.path()+":2", completeConfig.backendPath.source());
+               cta::SourcedParameter<std::string>::MandatoryParameterNotDefined);
+  auto completeConfig = cta::tape::daemon::TapedConfiguration::createFromCtaConf(completeConfFile.path());
+  ASSERT_EQ(completeConfFile.path() + ":2", completeConfig.backendPath.source());
   ASSERT_EQ("vfsObjectStore:///tmp/dir", completeConfig.backendPath.value());
 }
 
 TEST(cta_Daemon, TapedConfigurationFull) {
-  cta::log::StdoutLogger log("dummy","unitTests");
+  cta::log::StdoutLogger log("dummy", "unitTests");
   TempFile completeConfFile;
-  completeConfFile.stringFill(
-  "#A good enough configuration file for taped\n"
-  "ObjectStore BackendPath vfsObjectStore:///tmp/dir\n"
-  "taped CatalogueConfigFile /etc/cta/catalog.conf\n"
-  "taped ArchiveFetchBytesFiles 1,2\n"
-  "taped ArchiveFlushBytesFiles              3 , 4 \n"
-  "taped RetrieveFetchBytesFiles  5,   6\n"
-  "taped BufferCount 1  \n"
-  "taped TpConfigPath ");
+  completeConfFile.stringFill("#A good enough configuration file for taped\n"
+                              "ObjectStore BackendPath vfsObjectStore:///tmp/dir\n"
+                              "taped CatalogueConfigFile /etc/cta/catalog.conf\n"
+                              "taped ArchiveFetchBytesFiles 1,2\n"
+                              "taped ArchiveFlushBytesFiles              3 , 4 \n"
+                              "taped RetrieveFetchBytesFiles  5,   6\n"
+                              "taped BufferCount 1  \n"
+                              "taped TpConfigPath ");
   TempFile TpConfig;
   TpConfig.stringFill("drive0 lib0 /dev/tape0 smc0\n"
-      "drive1 lib0 /dev/tape1 smc1\n"
-      "drive2 lib0 /dev/tape2 smc2");
+                      "drive1 lib0 /dev/tape1 smc1\n"
+                      "drive2 lib0 /dev/tape2 smc2");
   completeConfFile.stringAppend(TpConfig.path());
   // The log parameter can be uncommented to inspect the result on the output.
-  auto completeConfig = 
-    cta::tape::daemon::TapedConfiguration::createFromCtaConf(completeConfFile.path()/*, log*/);
-  ASSERT_EQ(completeConfFile.path()+":2", completeConfig.backendPath.source());
+  auto completeConfig = cta::tape::daemon::TapedConfiguration::createFromCtaConf(completeConfFile.path() /*, log*/);
+  ASSERT_EQ(completeConfFile.path() + ":2", completeConfig.backendPath.source());
   ASSERT_EQ("vfsObjectStore:///tmp/dir", completeConfig.backendPath.value());
-  ASSERT_EQ(completeConfFile.path()+":3", completeConfig.fileCatalogConfigFile.source());
+  ASSERT_EQ(completeConfFile.path() + ":3", completeConfig.fileCatalogConfigFile.source());
   ASSERT_EQ("/etc/cta/catalog.conf", completeConfig.fileCatalogConfigFile.value());
   ASSERT_EQ(1, completeConfig.archiveFetchBytesFiles.value().maxBytes);
   ASSERT_EQ(2, completeConfig.archiveFetchBytesFiles.value().maxFiles);
@@ -77,4 +71,4 @@ TEST(cta_Daemon, TapedConfigurationFull) {
   ASSERT_EQ("/dev/tape1", completeConfig.driveConfigs.at("drive1").value().devFilename);
 }
 
-} // namespace unitTests
+}  // namespace unitTests

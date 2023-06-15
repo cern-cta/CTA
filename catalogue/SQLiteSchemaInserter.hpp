@@ -21,34 +21,33 @@
 
 namespace cta {
 namespace catalogue {
-  /**
+/**
    * This class is used to create a InMemory SQLiteSchema from sql statements
    * 
    * @param sqliteConn the connection of the InMemory SQLite schema
    */
-  class SQLiteSchemaInserter {
-  public:
-    /**
+class SQLiteSchemaInserter {
+public:
+  /**
      * Constructor
      * @param sqliteConn the connection of the InMemory SQLite schema
      */
-    SQLiteSchemaInserter(rdbms::Conn &sqliteConn);
-    /**
+  SQLiteSchemaInserter(rdbms::Conn& sqliteConn);
+  /**
      * Transform and insert the schema statements passed in parameter into the
      * InMemory SQLite database
      */
-    void insert(const std::list<std::string> &schemaStatements);    
-    virtual ~SQLiteSchemaInserter();
-    
-  private:
-    cta::rdbms::Conn & m_sqliteCatalogueConn;
-    /**
+  void insert(const std::list<std::string>& schemaStatements);
+  virtual ~SQLiteSchemaInserter();
+
+private:
+  cta::rdbms::Conn& m_sqliteCatalogueConn;
+  /**
      * Execute all the statements passed in parameter against the InMemory SQLite database 
      * @param statements the statements to execute in the InMemory SQLite database
      */
-    void executeStatements(const std::list<std::string> &statements);
-  };
-  
-}}
+  void executeStatements(const std::list<std::string>& statements);
+};
 
-
+}  // namespace catalogue
+}  // namespace cta

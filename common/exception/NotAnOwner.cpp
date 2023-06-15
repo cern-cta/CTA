@@ -17,10 +17,7 @@
 
 #include "common/exception/NotAnOwner.hpp"
 
-
 // -----------------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------------
-cta::exception::NotAnOwner::NotAnOwner():
-  cta::exception::Exception() {
-}
+cta::exception::NotAnOwner::NotAnOwner() : cta::exception::Exception() {}

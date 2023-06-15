@@ -23,7 +23,7 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-enum class MountType: uint32_t {
+enum class MountType : uint32_t {
   ArchiveForUser = 1,
   ArchiveForRepack = 2,
   Retrieve = 3,
@@ -53,8 +53,8 @@ std::string toCamelCaseString(cta::common::dataStructures::MountType type);
  */
 MountType strToMountType(const std::string& mountTypeStr);
 
-std::ostream &operator <<(std::ostream& os, const MountType &obj);
+std::ostream& operator<<(std::ostream& os, const MountType& obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

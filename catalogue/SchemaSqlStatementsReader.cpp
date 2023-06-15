@@ -39,17 +39,13 @@ namespace catalogue {
 //////////////////////////////////////////////////////////////////
 // SchemaSqlStatementsReader
 //////////////////////////////////////////////////////////////////
-SchemaSqlStatementsReader::SchemaSqlStatementsReader() {
-}
+SchemaSqlStatementsReader::SchemaSqlStatementsReader() {}
 
-SchemaSqlStatementsReader::SchemaSqlStatementsReader(const cta::rdbms::Login::DbType dbType) : m_dbType(dbType) {
-}
+SchemaSqlStatementsReader::SchemaSqlStatementsReader(const cta::rdbms::Login::DbType dbType) : m_dbType(dbType) {}
 
-SchemaSqlStatementsReader::SchemaSqlStatementsReader(const SchemaSqlStatementsReader& orig) : m_dbType(orig.m_dbType) {
-}
+SchemaSqlStatementsReader::SchemaSqlStatementsReader(const SchemaSqlStatementsReader& orig) : m_dbType(orig.m_dbType) {}
 
-SchemaSqlStatementsReader::~SchemaSqlStatementsReader() {
-}
+SchemaSqlStatementsReader::~SchemaSqlStatementsReader() {}
 
 std::list<std::string> SchemaSqlStatementsReader::getStatements() {
   std::unique_ptr<CatalogueSchema> schema;
@@ -70,8 +66,8 @@ std::list<std::string> SchemaSqlStatementsReader::getStatements() {
       break;
     case rdbms::Login::DBTYPE_NONE:
       throw exception::Exception("Cannot get statements without a database type");
-    }
-    return getAllStatementsFromSchema(schema->sql);
+  }
+  return getAllStatementsFromSchema(schema->sql);
 }
 
 std::list<std::string> SchemaSqlStatementsReader::getAllStatementsFromSchema(const std::string& schema) {
@@ -86,10 +82,11 @@ std::list<std::string> SchemaSqlStatementsReader::getAllStatementsFromSchema(con
       searchPos = findResult + 1;
 
       if (0 < sqlStmt.size()) {  // Ignore empty statements
-        statements.push_back(sqlStmt+";");
+        statements.push_back(sqlStmt + ";");
       }
     }
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
   return statements;
@@ -108,8 +105,7 @@ std::string SchemaSqlStatementsReader::getDatabaseType() {
 #endif
     case rdbms::Login::DBTYPE_NONE:
       throw exception::Exception("The database type should not be DBTYPE_NONE");
-    default:
-    {
+    default: {
       exception::Exception ex;
       ex.getMessage() << "Unknown database type: value=" << m_dbType;
       throw ex;
@@ -121,64 +117,68 @@ std::string SchemaSqlStatementsReader::getDatabaseType() {
 // DirectoryVersionsSqlStatementsReader
 //////////////////////////////////////////////////////////////////
 DirectoryVersionsSqlStatementsReader::DirectoryVersionsSqlStatementsReader(const cta::rdbms::Login::DbType dbType,
-  const std::string &catalogueVersion, const std::string &allSchemasVersionPath)
-  : SchemaSqlStatementsReader(dbType), m_catalogueVersion(catalogueVersion), m_allSchemasVersionPath(allSchemasVersionPath) {
-}
+                                                                           const std::string& catalogueVersion,
+                                                                           const std::string& allSchemasVersionPath) :
+SchemaSqlStatementsReader(dbType),
+m_catalogueVersion(catalogueVersion),
+m_allSchemasVersionPath(allSchemasVersionPath) {}
 
-DirectoryVersionsSqlStatementsReader::DirectoryVersionsSqlStatementsReader(const DirectoryVersionsSqlStatementsReader& orig)
-  : SchemaSqlStatementsReader(orig), m_catalogueVersion(orig.m_catalogueVersion),
-  m_allSchemasVersionPath(orig.m_allSchemasVersionPath) {
-}
+DirectoryVersionsSqlStatementsReader::DirectoryVersionsSqlStatementsReader(
+  const DirectoryVersionsSqlStatementsReader& orig) :
+SchemaSqlStatementsReader(orig),
+m_catalogueVersion(orig.m_catalogueVersion),
+m_allSchemasVersionPath(orig.m_allSchemasVersionPath) {}
 
-DirectoryVersionsSqlStatementsReader::~DirectoryVersionsSqlStatementsReader() {
-}
+DirectoryVersionsSqlStatementsReader::~DirectoryVersionsSqlStatementsReader() {}
 
 std::list<std::string> DirectoryVersionsSqlStatementsReader::getStatements() {
   return getAllStatementsFromSchema(readSchemaFromFile());
 }
 
-
 std::string DirectoryVersionsSqlStatementsReader::readSchemaFromFile() {
   std::string schemaFilePath = getSchemaFilePath();
   std::ifstream schemaFile(schemaFilePath);
   if (schemaFile.fail()) {
-    throw cta::exception::Exception("In DirectoryVersionsSqlStatementsReader::readSchemaFromFile(), unable to open the file located in "
-      + schemaFilePath);
+    throw cta::exception::Exception(
+      "In DirectoryVersionsSqlStatementsReader::readSchemaFromFile(), unable to open the file located in " +
+      schemaFilePath);
   }
   std::string content((std::istreambuf_iterator<char>(schemaFile)), (std::istreambuf_iterator<char>()));
   return content;
 }
 
 std::string DirectoryVersionsSqlStatementsReader::getSchemaFilePath() {
-  return m_allSchemasVersionPath+m_catalogueVersion+"/"+getDatabaseType()+c_catalogueFileNameTrailer;
+  return m_allSchemasVersionPath + m_catalogueVersion + "/" + getDatabaseType() + c_catalogueFileNameTrailer;
 }
-
 
 //////////////////////////////////////////////////////////////////
 // MapSqlStatementsReader
 //////////////////////////////////////////////////////////////////
-MapSqlStatementsReader::MapSqlStatementsReader(const cta::rdbms::Login::DbType dbType, const std::string &catalogueVersion)
-  : SchemaSqlStatementsReader(dbType), m_catalogueVersion(catalogueVersion){}
+MapSqlStatementsReader::MapSqlStatementsReader(const cta::rdbms::Login::DbType dbType,
+                                               const std::string& catalogueVersion) :
+SchemaSqlStatementsReader(dbType),
+m_catalogueVersion(catalogueVersion) {}
 
-MapSqlStatementsReader::MapSqlStatementsReader(const MapSqlStatementsReader& orig)
-  : SchemaSqlStatementsReader(orig), m_catalogueVersion(orig.m_catalogueVersion) {
-}
+MapSqlStatementsReader::MapSqlStatementsReader(const MapSqlStatementsReader& orig) :
+SchemaSqlStatementsReader(orig),
+m_catalogueVersion(orig.m_catalogueVersion) {}
 
-MapSqlStatementsReader::~MapSqlStatementsReader() {
-}
+MapSqlStatementsReader::~MapSqlStatementsReader() {}
 
 std::list<std::string> MapSqlStatementsReader::getStatements() {
   std::map<std::string, std::string> mapVersionSchemas;
   try {
     mapVersionSchemas = AllCatalogueSchema::mapSchema.at(m_catalogueVersion);
-  } catch (const std::out_of_range &ex) {
-    throw cta::exception::Exception("No schema has been found for version number "+m_catalogueVersion);
+  }
+  catch (const std::out_of_range& ex) {
+    throw cta::exception::Exception("No schema has been found for version number " + m_catalogueVersion);
   }
   try {
     std::string schema = mapVersionSchemas.at(getDatabaseType());
     return getAllStatementsFromSchema(schema);
-  } catch (const std::out_of_range &ex) {
-    throw cta::exception::Exception("No schema has been found for database type "+getDatabaseType());
+  }
+  catch (const std::out_of_range& ex) {
+    throw cta::exception::Exception("No schema has been found for database type " + getDatabaseType());
   }
 }
 
@@ -186,7 +186,8 @@ std::list<std::string> MapSqlStatementsReader::getStatements() {
 // CppSchemaStatementsReader
 //////////////////////////////////////////////////////////////////
 
-CppSchemaStatementsReader::CppSchemaStatementsReader(const cta::catalogue::CatalogueSchema& schema):m_schema(schema) {}
+CppSchemaStatementsReader::CppSchemaStatementsReader(const cta::catalogue::CatalogueSchema& schema) :
+m_schema(schema) {}
 
 std::list<std::string> CppSchemaStatementsReader::getStatements() {
   return getAllStatementsFromSchema(m_schema.sql);

@@ -24,13 +24,14 @@
 #include "tapeserver/castor/tape/tapeserver/RAO/RandomRAOAlgorithm.hpp"
 #include "tapeserver/castor/tape/tapeserver/SCSI/Structures.hpp"
 
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace rao {
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+RandomRAOAlgorithm::RandomRAOAlgorithm() {}
 
-RandomRAOAlgorithm::RandomRAOAlgorithm() {
-}
-
-std::vector<uint64_t> RandomRAOAlgorithm::performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob> >& jobs) {
+std::vector<uint64_t> RandomRAOAlgorithm::performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs) {
   std::vector<uint64_t> raoIndices(jobs.size());
   cta::utils::Timer totalTimer;
   std::iota(raoIndices.begin(), raoIndices.end(), 0);
@@ -39,11 +40,13 @@ std::vector<uint64_t> RandomRAOAlgorithm::performRAO(const std::vector<std::uniq
   return raoIndices;
 }
 
-RandomRAOAlgorithm::~RandomRAOAlgorithm() {
-}
+RandomRAOAlgorithm::~RandomRAOAlgorithm() {}
 
 std::string RandomRAOAlgorithm::getName() const {
   return "random";
 }
 
-}}}}
+}  // namespace rao
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

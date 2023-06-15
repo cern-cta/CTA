@@ -30,7 +30,8 @@ namespace log {
  * parameter value per parameter name.
  */
 class LogContext {
-  friend std::ostream & operator << (std::ostream & os , const LogContext & lc);
+  friend std::ostream& operator<<(std::ostream& os, const LogContext& lc);
+
 public:
   /**
    * Constructor
@@ -38,47 +39,46 @@ public:
    * @param programName The name of the program to be prepended to every log
    * message.
    */
-  LogContext(Logger&logger)
-    throw();
+  LogContext(Logger& logger) throw();
 
   /**
    * Destructor.
    */
   virtual ~LogContext() throw() {};
-  
+
   /**
    * Access to the logger object.
    * @return  reference to this context's logger
    */
-  Logger & logger() const throw() { return m_log; }
+  Logger& logger() const throw() { return m_log; }
 
   /**
    * Add a parameter to the container. Replaces any parameter going by the same
    * name. Does not throw exceptions (fails silently).
    * @param param
    */
-  void pushOrReplace(const Param & param) throw();
-  
+  void pushOrReplace(const Param& param) throw();
+
   /**
    * Move a parameter with a given name to the end of the container it it 
    * present.
    * 
    * @param paramName  The name of the parameter to check and move.
    */
-  void moveToTheEndIfPresent(const std::string &paramName) throw();
+  void moveToTheEndIfPresent(const std::string& paramName) throw();
 
   /**
    * Removes a parameter from the list.
    * @param paramName value of param.getName();
    */
-  void erase(const std::string & paramName) throw();
+  void erase(const std::string& paramName) throw();
 
   /**
    * Clears the context content.
    */
-  
+
   void clear();
-  
+
   /**
    * Writes a message into the CASTOR logging system. Note that no exception
    * will ever be thrown in case of failure. Failures will actually be
@@ -92,20 +92,16 @@ public:
    * @param priority the priority of the message as defined by the syslog API.
    * @param msg the message.
    */
-  virtual void log(
-    const int priority,
-    const std::string &msg) throw();
-  
+  virtual void log(const int priority, const std::string& msg) throw();
+
   /**
    * Logs a multiline backtrace as multiple entries in the logs, without
    * the context
    * @param priority the logging priority
    * @param backtrace the multi-line (\n separated) stack trace
    */
-  virtual void logBacktrace(
-    const int priority,
-    const std::string &backtrace) throw();
-  
+  virtual void logBacktrace(const int priority, const std::string& backtrace) throw();
+
   /**
    * Small introspection function to help in tests
    * @return size
@@ -117,50 +113,56 @@ public:
    */
   class ParamNameMatcher {
   public:
-    ParamNameMatcher(const std::string & name) throw(): m_name(name) {}
-    bool operator() (const Param & p) throw() { return m_name == p.getName(); }
+    ParamNameMatcher(const std::string& name) throw() : m_name(name) {}
+
+    bool operator()(const Param& p) throw() { return m_name == p.getName(); }
+
   private:
     std::string m_name;
   };
-  
+
   /**
    * Scoped parameter addition to the context. Constructor adds the parameter,
    * destructor erases it.
    */
   class ScopedParam {
   public:
-    ScopedParam(LogContext & context, const Param &param) throw();
+    ScopedParam(LogContext& context, const Param& param) throw();
     ~ScopedParam() throw();
+
   private:
-    LogContext & m_context;
+    LogContext& m_context;
     std::string m_name;
   };
+
 private:
-  Logger & m_log;
+  Logger& m_log;
   std::list<Param> m_params;
-}; // class LogContext
+};  // class LogContext
 
-class ScopedParamContainer{
-  public:
-    ScopedParamContainer(LogContext & context):m_context(context) {}
-    ~ScopedParamContainer() {
-      for(auto it = m_names.cbegin(); it != m_names.cend(); ++it) {
-        m_context.erase(*it);
-      }
-    }
+class ScopedParamContainer {
+public:
+  ScopedParamContainer(LogContext& context) : m_context(context) {}
 
-    template <class T> ScopedParamContainer& add(const std::string& s,const T& t){
-      m_context.pushOrReplace(Param(s,t));
-      m_names.push_back(s);
-      return *this;
+  ~ScopedParamContainer() {
+    for (auto it = m_names.cbegin(); it != m_names.cend(); ++it) {
+      m_context.erase(*it);
     }
-  private:
-        
-    LogContext & m_context;
-    std::list<std::string> m_names;
+  }
+
+  template<class T>
+  ScopedParamContainer& add(const std::string& s, const T& t) {
+    m_context.pushOrReplace(Param(s, t));
+    m_names.push_back(s);
+    return *this;
+  }
+
+private:
+  LogContext& m_context;
+  std::list<std::string> m_names;
 };
 
-std::ostream & operator << (std::ostream & os , const LogContext & lc);
+std::ostream& operator<<(std::ostream& os, const LogContext& lc);
 
-} // namespace log
-} // namespace cta
+}  // namespace log
+}  // namespace cta

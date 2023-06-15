@@ -20,5 +20,4 @@
 // -----------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------
-cta::exception::TimeOut::TimeOut() :
-  cta::exception::Exception() {}
+cta::exception::TimeOut::TimeOut() : cta::exception::Exception() {}

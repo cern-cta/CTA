@@ -17,16 +17,13 @@
 
 #include "common/exception/LostDatabaseConnection.hpp"
 
-
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::exception::LostDatabaseConnection::LostDatabaseConnection(const std::string &context, const bool embedBacktrace):
-  Exception(context, embedBacktrace) {
-}
+cta::exception::LostDatabaseConnection::LostDatabaseConnection(const std::string& context, const bool embedBacktrace) :
+Exception(context, embedBacktrace) {}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::exception::LostDatabaseConnection::~LostDatabaseConnection() noexcept {
-}
+cta::exception::LostDatabaseConnection::~LostDatabaseConnection() noexcept {}

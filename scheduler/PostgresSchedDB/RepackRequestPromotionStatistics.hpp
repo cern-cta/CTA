@@ -26,15 +26,13 @@ namespace cta {
 namespace postgresscheddb {
 
 class RepackRequestPromotionStatistics : public SchedulerDatabase::RepackRequestStatistics {
- friend class cta::PostgresSchedDB;
+  friend class cta::PostgresSchedDB;
 
- public:
+public:
+  RepackRequestPromotionStatistics();
 
-   RepackRequestPromotionStatistics();
-
-   PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount,
-      log::LogContext &lc) override;
+  PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount, log::LogContext& lc) override;
 };
 
-} //namespace postgresscheddb
-} //namespace cta
+}  //namespace postgresscheddb
+}  //namespace cta

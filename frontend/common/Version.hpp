@@ -19,20 +19,21 @@
 
 namespace cta {
 namespace frontend {
-  
-  /**
+
+/**
    * Structure to hold CTA versions 
    */
-  struct Version {
-    /**
+struct Version {
+  /**
      * CTA version major.minor
      */
-    std::string ctaVersion;
-    
-    /**
+  std::string ctaVersion;
+
+  /**
      * xrootd-ssi-protobuf-interface version/tag
      */
-    std::string protobufTag;
-  };
-  
-}} // namespace cta::frontend
+  std::string protobufTag;
+};
+
+}  // namespace frontend
+}  // namespace cta

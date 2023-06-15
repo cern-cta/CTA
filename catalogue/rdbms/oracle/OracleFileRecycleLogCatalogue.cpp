@@ -34,15 +34,18 @@
 namespace cta {
 namespace catalogue {
 
-OracleFileRecycleLogCatalogue::OracleFileRecycleLogCatalogue(log::Logger &log,
-  std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue)
-  : RdbmsFileRecycleLogCatalogue(log, connPool, rdbmsCatalogue) {}
+OracleFileRecycleLogCatalogue::OracleFileRecycleLogCatalogue(log::Logger& log,
+                                                             std::shared_ptr<rdbms::ConnPool> connPool,
+                                                             RdbmsCatalogue* rdbmsCatalogue) :
+RdbmsFileRecycleLogCatalogue(log, connPool, rdbmsCatalogue) {}
 
 //------------------------------------------------------------------------------
 // restoreEntryInRecycleLog
 //------------------------------------------------------------------------------
-void OracleFileRecycleLogCatalogue::restoreEntryInRecycleLog(rdbms::Conn & conn,
-  FileRecycleLogItor &fileRecycleLogItor, const std::string &newFid, log::LogContext & lc) {
+void OracleFileRecycleLogCatalogue::restoreEntryInRecycleLog(rdbms::Conn& conn,
+                                                             FileRecycleLogItor& fileRecycleLogItor,
+                                                             const std::string& newFid,
+                                                             log::LogContext& lc) {
   try {
     utils::Timer timer;
     log::TimingList timingList;
@@ -59,16 +62,17 @@ void OracleFileRecycleLogCatalogue::restoreEntryInRecycleLog(rdbms::Conn & conn,
 
     const auto archiveFileCatalogue = static_cast<RdbmsArchiveFileCatalogue*>(m_rdbmsCatalogue->ArchiveFile().get());
     if (auto archiveFilePtr = archiveFileCatalogue->getArchiveFileById(conn, fileRecycleLog.archiveFileId);
-      !archiveFilePtr) {
+        !archiveFilePtr) {
       RdbmsFileRecycleLogCatalogue::restoreArchiveFileInRecycleLog(conn, fileRecycleLog, newFid, lc);
-    } else {
+    }
+    else {
       if (archiveFilePtr->tapeFiles.find(fileRecycleLog.copyNb) != archiveFilePtr->tapeFiles.end()) {
         // copy with same copy_nb exists, cannot restore
         UserSpecifiedExistingDeletedFileCopy ex;
         ex.getMessage() << "Cannot restore file copy with archiveFileId "
-          << std::to_string(fileRecycleLog.archiveFileId)
-          << " and copy_nb " << std::to_string(fileRecycleLog.copyNb)
-          << " because a tapefile with same archiveFileId and copy_nb already exists";
+                        << std::to_string(fileRecycleLog.archiveFileId) << " and copy_nb "
+                        << std::to_string(fileRecycleLog.copyNb)
+                        << " because a tapefile with same archiveFileId and copy_nb already exists";
         throw ex;
       }
     }
@@ -82,22 +86,23 @@ void OracleFileRecycleLogCatalogue::restoreEntryInRecycleLog(rdbms::Conn & conn,
     timingList.insertAndReset("commitTime", timer);
     timingList.addToLog(spc);
     lc.log(log::INFO, "In OracleFileRecycleLogCatalogue::restoreEntryInRecycleLog: "
-      "all file copies successfully restored.");
-  } catch(exception::UserError &) {
+                      "all file copies successfully restored.");
+  }
+  catch (exception::UserError&) {
     throw;
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
 }
 
-uint64_t OracleFileRecycleLogCatalogue::getNextFileRecyleLogId(rdbms::Conn &conn) const {
+uint64_t OracleFileRecycleLogCatalogue::getNextFileRecyleLogId(rdbms::Conn& conn) const {
   try {
-    const char *const sql =
-      "SELECT "
-        "FILE_RECYCLE_LOG_ID_SEQ.NEXTVAL AS FILE_RECYCLE_LOG_ID "
-      "FROM "
-        "DUAL";
+    const char* const sql = "SELECT "
+                            "FILE_RECYCLE_LOG_ID_SEQ.NEXTVAL AS FILE_RECYCLE_LOG_ID "
+                            "FROM "
+                            "DUAL";
     auto stmt = conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     if (!rset.next()) {
@@ -105,9 +110,11 @@ uint64_t OracleFileRecycleLogCatalogue::getNextFileRecyleLogId(rdbms::Conn &conn
     }
 
     return rset.columnUint64("FILE_RECYCLE_LOG_ID");
-  } catch(exception::UserError &) {
+  }
+  catch (exception::UserError&) {
     throw;
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }

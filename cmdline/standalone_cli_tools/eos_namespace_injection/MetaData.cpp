@@ -24,19 +24,19 @@
 
 namespace cta::cliTool {
 
-MetaData::MetaData(const std::filesystem::path &jsonPath) {
+MetaData::MetaData(const std::filesystem::path& jsonPath) {
   readJson(jsonPath);
 }
 
-void MetaData::readJson(const std::filesystem::path &jsonPath) {
+void MetaData::readJson(const std::filesystem::path& jsonPath) {
   std::ifstream infile(jsonPath);
-  if(infile.fail()) {
+  if (infile.fail()) {
     throw exception::UserError("Could not open " + jsonPath.generic_string());
   }
 
   std::string line;
   while (std::getline(infile, line)) {
-    if(!line.empty()) {
+    if (!line.empty()) {
       cta::utils::json::object::JSONCObject jsonObject;
       buildFromJSON(line);
 
@@ -54,4 +54,4 @@ void MetaData::readJson(const std::filesystem::path &jsonPath) {
   infile.close();
 }
 
-} // namespace cta::cliTool
+}  // namespace cta::cliTool

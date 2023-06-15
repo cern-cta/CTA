@@ -36,22 +36,23 @@ namespace catalogue {
 class Catalogue;
 class TapeItemWritten;
 class TapeItemWrittenPointer;
-}
+}  // namespace catalogue
 
 /**
   * The class driving an archive mount.
   * The class only has private constructors as it is instantiated by
   * the Scheduler class.
   */
-class ArchiveMount: public TapeMount {
+class ArchiveMount : public TapeMount {
   friend class Scheduler;
+
 protected:
   /**
     * Constructor.
     *
     * @param catalogue The file catalogue interface.
     */
-  explicit ArchiveMount(catalogue::Catalogue & catalogue);
+  explicit ArchiveMount(catalogue::Catalogue& catalogue);
 
   /**
     * Constructor.
@@ -59,7 +60,7 @@ protected:
     * @param catalogue The file catalogue interface.
     * @param dbMount The database representation of this mount.
     */
-  ArchiveMount(catalogue::Catalogue & catalogue, std::unique_ptr<cta::SchedulerDatabase::ArchiveMount> dbMount);
+  ArchiveMount(catalogue::Catalogue& catalogue, std::unique_ptr<cta::SchedulerDatabase::ArchiveMount> dbMount);
 
 public:
   CTA_GENERATE_EXCEPTION_CLASS(WrongMountType);
@@ -101,7 +102,6 @@ public:
     */
   std::optional<std::string> getActivity() const override { return std::nullopt; }
 
-
   /**
     * Indicates that the mount was completed.
     * This function is overridden in MockArchiveMount for unit tests.
@@ -111,18 +111,19 @@ public:
   /**
     * Report a drive status change
     */
-  void setDriveStatus(cta::common::dataStructures::DriveStatus status, const std::optional<std::string> & reason = std::nullopt) override;
+  void setDriveStatus(cta::common::dataStructures::DriveStatus status,
+                      const std::optional<std::string>& reason = std::nullopt) override;
 
   /**
     * Report a tape session statistics
     */
-  void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
+  void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) override;
 
   /**
     * Report a tape mounted event
     * @param logContext
     */
-  void setTapeMounted(log::LogContext &logContext) const override;
+  void setTapeMounted(log::LogContext& logContext) const override;
 
   /**
     * Report that the tape is full.
@@ -140,8 +141,8 @@ public:
     * when no more jobs can be found. Will return jobs (if available) until one
     * of the 2 criteria is fulfilled.
     */
-  std::list<std::unique_ptr<ArchiveJob>> getNextJobBatch(uint64_t filesRequested,
-    uint64_t bytesRequested, log::LogContext &logContext);
+  std::list<std::unique_ptr<ArchiveJob>>
+    getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext);
 
   /**
     * Report a batch of jobs successes. The reporting will be asynchronous behind
@@ -150,8 +151,11 @@ public:
     * @param successfulArchiveJobs the jobs to report
     * @param logContext
     */
-  virtual void reportJobsBatchTransferred(std::queue<std::unique_ptr<cta::ArchiveJob> > & successfulArchiveJobs,
-      std::queue<cta::catalogue::TapeItemWritten> & skippedFiles, std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& failedToReportArchiveJobs, cta::log::LogContext &logContext);
+  virtual void reportJobsBatchTransferred(
+    std::queue<std::unique_ptr<cta::ArchiveJob>>& successfulArchiveJobs,
+    std::queue<cta::catalogue::TapeItemWritten>& skippedFiles,
+    std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& failedToReportArchiveJobs,
+    cta::log::LogContext& logContext);
 
   /**
     * Returns the tape pool of the tape to be mounted.
@@ -209,14 +213,14 @@ public:
     * @param reporterState void promise to be set when the report is done asynchronously.
     * @return pointer to the reporter created.
     */
-  disk::DiskReporter * createDiskReporter(std::string & URL);
+  disk::DiskReporter* createDiskReporter(std::string& URL);
 
   /**
     * Update the catalog with a set of TapeFileWritten events.
     *
     * @param tapeFilesWritten The set of report events for the catalog update.
     */
-  void updateCatalogueWithTapeFilesWritten(const std::set<cta::catalogue::TapeItemWrittenPointer> &tapeFilesWritten);
+  void updateCatalogueWithTapeFilesWritten(const std::set<cta::catalogue::TapeItemWrittenPointer>& tapeFilesWritten);
 
   /**
     * Destructor.
@@ -232,7 +236,7 @@ protected:
   /**
     * A reference to the file catalogue.
     */
-  catalogue::Catalogue & m_catalogue;
+  catalogue::Catalogue& m_catalogue;
 
   /**
     * Internal tracking of the session completion

@@ -22,9 +22,9 @@
 
 // The header file for atomic was is actually called cstdatomic in gcc 4.4
 #if __GNUC__ == 4 && (__GNUC_MINOR__ == 4)
-    #include <cstdatomic>
+#include <cstdatomic>
 #else
-  #include <atomic>
+#include <atomic>
 #endif
 
 #include <list>
@@ -84,7 +84,6 @@ namespace log {
  */
 class Logger {
 public:
-
   /**
    * Constructor
    *
@@ -93,7 +92,7 @@ public:
    * @param logMask The log mask.
    * message.
    */
-  Logger(const std::string &hostName, const std::string &programName, const int logMask);
+  Logger(const std::string& hostName, const std::string& programName, const int logMask);
 
   /**
    * Destructor.
@@ -111,7 +110,7 @@ public:
   /**
    * Returns the name of the program.
    */
-  const std::string &getProgramName() const;
+  const std::string& getProgramName() const;
 
   /**
    * Writes a message into the CTA logging system. Note that no exception
@@ -125,10 +124,8 @@ public:
    * @param msg the message.
    * @param params optional parameters of the message.
    */
-  virtual void operator() (
-    const int priority,
-    const std::string &msg,
-    const std::list<Param> &params = std::list<Param>());
+  virtual void
+    operator()(const int priority, const std::string& msg, const std::list<Param>& params = std::list<Param>());
 
   /**
    * Sets the log mask.
@@ -152,11 +149,9 @@ public:
    * underscores.
    * @return A cleaned version of the string.
    */
-  static std::string cleanString(const std::string &s,
-    const bool replaceUnderscores);
+  static std::string cleanString(const std::string& s, const bool replaceUnderscores);
 
 protected:
-
   /**
    * The name of the host to be prepended to every log message.
    */
@@ -166,7 +161,7 @@ protected:
    * The name of the program to be prepended to every log message.
    */
   const std::string m_programName;
-  
+
   /**
    * Writes the specified msg to the underlying logging system.
    *
@@ -182,7 +177,7 @@ protected:
    * esponsibility of the concrete sub-class 
    * @param body The body of the message to be logged.
    */
-  virtual void writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) = 0;
+  virtual void writeMsgToUnderlyingLoggingSystem(const std::string& header, const std::string& body) = 0;
 
   /**
    * The log mask.
@@ -199,7 +194,7 @@ protected:
    * their equivalent syslog priorities.
    */
   const std::map<std::string, int> m_configTextToPriority;
-  
+
   /**
    * Generates and returns the mapping between syslog priorities and their
    * textual representations.
@@ -213,7 +208,6 @@ protected:
   static std::map<std::string, int> generateConfigTextToPriorityMap();
 
 private:
-
   /**
    * Creates and returns the header of a log message.
    *
@@ -228,11 +222,10 @@ private:
    * @param pid The process ID of the process logging the message.
    * @return The message header.
    */
-  static std::string createMsgHeader(
-    const struct timeval &timeStamp,
-    const std::string &hostName,
-    const std::string &programName,
-    const int pid);
+  static std::string createMsgHeader(const struct timeval& timeStamp,
+                                     const std::string& hostName,
+                                     const std::string& programName,
+                                     const int pid);
 
   /**
    * Creates and returns the body of a log message.
@@ -245,17 +238,15 @@ private:
    * @param pid the pid of the log message.
    * @return The message body;
    */
-  static std::string createMsgBody(
-    const int priority,
-    const std::string &priorityText,
-    const std::string &msg,
-    const std::list<Param> &params,
-    const std::string &rawParams,
-    const std::string &programName,
-    const int pid);
+  static std::string createMsgBody(const int priority,
+                                   const std::string& priorityText,
+                                   const std::string& msg,
+                                   const std::list<Param>& params,
+                                   const std::string& rawParams,
+                                   const std::string& programName,
+                                   const int pid);
 
-}; // class Logger
+};  // class Logger
 
-} // namespace log
-} // namespace cta
-
+}  // namespace log
+}  // namespace cta

@@ -23,7 +23,7 @@ namespace common {
 namespace dataStructures {
 
 std::string toString(RepackInfo::Type type) {
-  switch(type) {
+  switch (type) {
     case RepackInfo::Type::MoveAndAddCopies:
       return "move and add copies";
     case RepackInfo::Type::AddCopiesOnly:
@@ -36,12 +36,12 @@ std::string toString(RepackInfo::Type type) {
 }
 
 std::string toString(RepackInfo::Status status) {
-  switch(status) {
+  switch (status) {
     case RepackInfo::Status::Complete:
       return "Complete";
     case RepackInfo::Status::Failed:
       return "Failed";
-     case RepackInfo::Status::Pending:
+    case RepackInfo::Status::Pending:
       return "Pending";
     case RepackInfo::Status::Running:
       return "Running";
@@ -49,27 +49,29 @@ std::string toString(RepackInfo::Status status) {
       return "Starting";
     case RepackInfo::Status::ToExpand:
       return "ToExpand";
-  default:
+    default:
       return "UNKNOWN";
   }
 }
 
-RepackQueueType RepackInfo::getQueueType(){
-  switch(status){
+RepackQueueType RepackInfo::getQueueType() {
+  switch (status) {
     case RepackInfo::Status::Pending:
       return RepackQueueType::Pending;
     case RepackInfo::Status::ToExpand:
       return RepackQueueType::ToExpand;
     case RepackInfo::Status::Running:
     case RepackInfo::Status::Starting:
-      if(!isExpandFinished) return RepackQueueType::ToExpand;
+      if (!isExpandFinished) {
+        return RepackQueueType::ToExpand;
+      }
       goto explicit_default;
     default:
-    explicit_default:
-      throw cta::exception::Exception("The status "+toString(status)+" has no corresponding queue type.");
+explicit_default:
+      throw cta::exception::Exception("The status " + toString(status) + " has no corresponding queue type.");
   }
 }
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

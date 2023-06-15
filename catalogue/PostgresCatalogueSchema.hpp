@@ -39,12 +39,12 @@ namespace catalogue {
  * The purpose of this class is to help IDEs by isolating the "non-compilable"
  * issues into a small cpp file.
  */
-struct PostgresCatalogueSchema: public CatalogueSchema {
+struct PostgresCatalogueSchema : public CatalogueSchema {
   /**
    * Constructor.
    */
   PostgresCatalogueSchema();
 };
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

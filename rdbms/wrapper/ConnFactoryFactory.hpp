@@ -31,7 +31,6 @@ namespace wrapper {
  */
 class ConnFactoryFactory {
 public:
-
   /**
    * Returns a newly created ConnFactory object.
    *
@@ -39,10 +38,10 @@ public:
    * connections.
    * @return A newly created ConnFactory object.
    */
-  static std::unique_ptr<ConnFactory> create(const Login &login);
+  static std::unique_ptr<ConnFactory> create(const Login& login);
 
-}; // class ConnFactoryFactory
+};  // class ConnFactoryFactory
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+}  // namespace wrapper
+}  // namespace rdbms
+}  // namespace cta

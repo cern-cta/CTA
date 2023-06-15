@@ -27,11 +27,15 @@ namespace daemon {
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-MigrationMemoryManager::MigrationMemoryManager(const uint32_t numberOfBlocks, const uint32_t blockSize,
+MigrationMemoryManager::MigrationMemoryManager(const uint32_t numberOfBlocks,
+                                               const uint32_t blockSize,
                                                const cta::log::LogContext& lc) :
 m_blockCapacity(blockSize),
-m_totalNumberOfBlocks(0), m_totalMemoryAllocated(0), m_blocksProvided(0), m_blocksReturned(0), m_lc(lc) {
-
+m_totalNumberOfBlocks(0),
+m_totalMemoryAllocated(0),
+m_blocksProvided(0),
+m_blocksReturned(0),
+m_lc(lc) {
   for (uint32_t i = 0; i < numberOfBlocks; i++) {
     m_freeBlocks.push(new MemBlock(i, blockSize));
     m_totalNumberOfBlocks++;
@@ -61,7 +65,7 @@ MigrationMemoryManager::~MigrationMemoryManager() noexcept {
 //------------------------------------------------------------------------------
 // MigrationMemoryManager::startThreads
 //------------------------------------------------------------------------------
-void MigrationMemoryManager::startThreads()  {
+void MigrationMemoryManager::startThreads() {
   cta::threading::Thread::start();
   m_lc.log(cta::log::INFO, "MigrationMemoryManager starting thread");
 }
@@ -69,22 +73,21 @@ void MigrationMemoryManager::startThreads()  {
 //------------------------------------------------------------------------------
 // MigrationMemoryManager::waitThreads
 //------------------------------------------------------------------------------
-void MigrationMemoryManager::waitThreads()  {
+void MigrationMemoryManager::waitThreads() {
   cta::threading::Thread::wait();
 }
 
 //------------------------------------------------------------------------------
 // MigrationMemoryManager::addClient
 //------------------------------------------------------------------------------
-void MigrationMemoryManager::addClient(DataPipeline* c)
- {
+void MigrationMemoryManager::addClient(DataPipeline* c) {
   m_clientQueue.push(c);
 }
 
 //------------------------------------------------------------------------------
 // MigrationMemoryManager::areBlocksAllBack
 //------------------------------------------------------------------------------
-bool MigrationMemoryManager::areBlocksAllBack() noexcept{
+bool MigrationMemoryManager::areBlocksAllBack() noexcept {
   return m_totalNumberOfBlocks == m_freeBlocks.size();
 }
 
@@ -98,16 +101,14 @@ size_t MigrationMemoryManager::blockCapacity() {
 //------------------------------------------------------------------------------
 // MigrationMemoryManager::finish
 //------------------------------------------------------------------------------
-void MigrationMemoryManager::finish()
- {
+void MigrationMemoryManager::finish() {
   addClient(nullptr);
 }
 
 //------------------------------------------------------------------------------
 // MigrationMemoryManager::releaseBlock
 //------------------------------------------------------------------------------
-void MigrationMemoryManager::releaseBlock(MemBlock* mb)
- {
+void MigrationMemoryManager::releaseBlock(MemBlock* mb) {
   mb->reset();
   m_freeBlocks.push(mb);
   {
@@ -119,11 +120,13 @@ void MigrationMemoryManager::releaseBlock(MemBlock* mb)
 //------------------------------------------------------------------------------
 // MigrationMemoryManager::run
 //------------------------------------------------------------------------------
-void MigrationMemoryManager::run()  {
+void MigrationMemoryManager::run() {
   while (true) {
     DataPipeline* c = m_clientQueue.pop();
     // If the c is a nullptr pointer, that means end of clients
-    if (!c) return;
+    if (!c) {
+      return;
+    }
     // Spin on the the client. We rely on the fact that he will want
     // at least one block (which is the case currently)
     while (c->provideBlock(m_freeBlocks.pop())) {
@@ -133,7 +136,7 @@ void MigrationMemoryManager::run()  {
   }
 }
 
-}
-}
-}
-}
+}  // namespace daemon
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

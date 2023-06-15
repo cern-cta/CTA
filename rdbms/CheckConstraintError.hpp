@@ -21,7 +21,7 @@
 
 #include <string>
 
-namespace cta    {
+namespace cta {
 namespace rdbms {
 
 /**
@@ -29,7 +29,6 @@ namespace rdbms {
  */
 class CheckConstraintError : public ConstraintError {
 public:
-
   /**
    * Constructor.
    *
@@ -38,15 +37,15 @@ public:
    * @param embedBacktrace whether to embed a backtrace of where the
    * exception was throw in the message
    */
-  CheckConstraintError(const std::string &context = "", const bool embedBacktrace = true);
+  CheckConstraintError(const std::string& context = "", const bool embedBacktrace = true);
 
   /**
    * Empty Destructor, explicitely non-throwing (needed for std::exception
    * inheritance)
    */
   ~CheckConstraintError() noexcept override;
-  
-}; // class CheckConstraintError
 
-} // namespace rdbms
-} // namespace cta
+};  // class CheckConstraintError
+
+}  // namespace rdbms
+}  // namespace cta

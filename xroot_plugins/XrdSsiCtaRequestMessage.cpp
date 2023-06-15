@@ -24,17 +24,18 @@
 namespace cta {
 namespace xrd {
 
-void RequestMessage::process(const cta::xrd::Request& request, cta::xrd::Response& response, XrdSsiStream*& stream)
-{
+void RequestMessage::process(const cta::xrd::Request& request, cta::xrd::Response& response, XrdSsiStream*& stream) {
   // Branch on the Request payload type
-  switch(request.request_case()) {
+  switch (request.request_case()) {
     using namespace cta::xrd;
 
     case Request::kAdmincmd:
-      if(frontend::AdminCmdStream::isStreamCmd(request.admincmd())) {
-        frontend::AdminCmdStream adminCmdStream(m_service.getFrontendService(), m_cliIdentity, request.admincmd(), stream);
+      if (frontend::AdminCmdStream::isStreamCmd(request.admincmd())) {
+        frontend::AdminCmdStream adminCmdStream(m_service.getFrontendService(), m_cliIdentity, request.admincmd(),
+                                                stream);
         response = adminCmdStream.process();
-      } else {
+      }
+      else {
         frontend::AdminCmd adminCmd(m_service.getFrontendService(), m_cliIdentity, request.admincmd());
         response = adminCmd.process();
       }
@@ -44,15 +45,16 @@ void RequestMessage::process(const cta::xrd::Request& request, cta::xrd::Respons
       frontend::WorkflowEvent wfe(m_service.getFrontendService(), m_cliIdentity, request.notification());
       response = wfe.process();
       break;
-    } // end case Request::kNotification
+    }  // end case Request::kNotification
 
     case Request::REQUEST_NOT_SET:
       throw exception::PbException("Request message has not been set.");
 
     default:
       throw exception::PbException("Unrecognized Request message. "
-        "Possible Protocol Buffer version mismatch between client and server.");
+                                   "Possible Protocol Buffer version mismatch between client and server.");
   }
 }
 
-}} // namespace cta::xrd
+}  // namespace xrd
+}  // namespace cta

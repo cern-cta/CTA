@@ -55,15 +55,15 @@ struct CreateAdminUserCmdLineArgs {
    * executable.
    * @param argv The vector of command-line arguments.
    */
-  CreateAdminUserCmdLineArgs(const int argc, char *const *const argv);
+  CreateAdminUserCmdLineArgs(const int argc, char* const* const argv);
 
   /**
    * Prints the usage message of the command-line tool.
    *
    * @param os The output stream to which the usage message is to be printed.
    */
-  static void printUsage(std::ostream &os);
+  static void printUsage(std::ostream& os);
 };
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

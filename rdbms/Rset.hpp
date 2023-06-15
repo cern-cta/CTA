@@ -28,7 +28,7 @@ namespace cta {
 namespace rdbms {
 
 namespace wrapper {
-  class RsetWrapper;
+class RsetWrapper;
 }
 
 /**
@@ -67,31 +67,31 @@ public:
   /**
    * Deletion of copy constructor.
    */
-  Rset(const Rset &) = delete;
+  Rset(const Rset&) = delete;
 
   /**
    * Move constructor.
    *
    * @param other The other object to be moved.
    */
-  Rset(Rset &&other);
+  Rset(Rset&& other);
 
   /**
    * Deletion of copy assignment.
    */
-  Rset &operator=(const Rset &) = delete;
+  Rset& operator=(const Rset&) = delete;
 
   /**
    * Move assignment.
    */
-  Rset &operator=(Rset &&rhs);
+  Rset& operator=(Rset&& rhs);
 
   /**
    * Returns the SQL statement.
    *
    * @return The SQL statement.
    */
-  const std::string &getSql() const;
+  const std::string& getSql() const;
 
   /**
    * Attempts to get the next row of the result set.
@@ -115,7 +115,7 @@ public:
    * @return True if the specified column contains a null value.
    * @throw InvalidResultSet if the result is invalid.
    */
-  bool columnIsNull(const std::string &colName) const;
+  bool columnIsNull(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as a binary string (byte array).
@@ -127,7 +127,7 @@ public:
    * @return The string value of the specified column.
    * @throw InvalidResultSet if the result is invalid.
    */
-  std::string columnBlob(const std::string &colName) const;
+  std::string columnBlob(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as a string.
@@ -139,7 +139,7 @@ public:
    * @return The string value of the specified column.
    * @throw InvalidResultSet if the result is invalid.
    */
-  std::string columnString(const std::string &colName) const;
+  std::string columnString(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as a string.
@@ -150,7 +150,7 @@ public:
    * @return The string value of the specified column.
    * @throw InvalidResultSet if the result is invalid.
    */
-  std::optional<std::string> columnOptionalString(const std::string &colName) const;
+  std::optional<std::string> columnOptionalString(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -162,7 +162,7 @@ public:
    * @return The value of the specified column.
    * @throw InvalidResultSet if the result is invalid.
    */
-  uint8_t columnUint8(const std::string &colName) const;
+  uint8_t columnUint8(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -174,7 +174,7 @@ public:
    * @return The value of the specified column.
    * @throw InvalidResultSet if the result is invalid.
    */
-  uint16_t columnUint16(const std::string &colName) const;
+  uint16_t columnUint16(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -186,7 +186,7 @@ public:
    * @return The value of the specified column.
    * @throw InvalidResultSet if the result is invalid.
    */
-  uint32_t columnUint32(const std::string &colName) const;
+  uint32_t columnUint32(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -198,7 +198,7 @@ public:
    * @return The value of the specified column.
    * @throw InvalidResultSet if the result is invalid.
    */
-  uint64_t columnUint64(const std::string &colName) const;
+  uint64_t columnUint64(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as a boolean.
@@ -213,7 +213,7 @@ public:
    * @return The value of the specified column.
    * @throw InvalidResultSet if the result is invalid.
    */
-  bool columnBool(const std::string &colName) const;
+  bool columnBool(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -224,7 +224,7 @@ public:
    * @return The value of the specified column.
    * @throw InvalidResultSet if the result is invalid.
    */
-  std::optional<uint8_t> columnOptionalUint8(const std::string &colName) const;
+  std::optional<uint8_t> columnOptionalUint8(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -235,7 +235,7 @@ public:
    * @return The value of the specified column.
    * @throw InvalidResultSet if the result is invalid.
    */
-  std::optional<uint16_t> columnOptionalUint16(const std::string &colName) const;
+  std::optional<uint16_t> columnOptionalUint16(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -246,7 +246,7 @@ public:
    * @return The value of the specified column.
    * @throw InvalidResultSet if the result is invalid.
    */
-  std::optional<uint32_t> columnOptionalUint32(const std::string &colName) const;
+  std::optional<uint32_t> columnOptionalUint32(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -257,7 +257,7 @@ public:
    * @return The value of the specified column.
    * @throw InvalidResultSet if the result is invalid.
    */
-  std::optional<uint64_t> columnOptionalUint64(const std::string &colName) const;
+  std::optional<uint64_t> columnOptionalUint64(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as a boolean.
@@ -271,7 +271,7 @@ public:
    * @return The value of the specified column.
    * @throw InvalidResultSet if the result is invalid.
    */
-  std::optional<bool> columnOptionalBool(const std::string &colName) const;
+  std::optional<bool> columnOptionalBool(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as a double.
@@ -283,7 +283,7 @@ public:
    * @return The value of the specified column.
    * @throw InvalidResultSet if the result is invalid.
    */
-  double columnDouble(const std::string &colName) const;
+  double columnDouble(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as a double.
@@ -294,16 +294,15 @@ public:
    * @return The value of the specified column.
    * @throw InvalidResultSet if the result is invalid.
    */
-  std::optional<double> columnOptionalDouble(const std::string &colName) const;
+  std::optional<double> columnOptionalDouble(const std::string& colName) const;
 
 private:
-
   /**
    * The object actually implementing this result set.
    */
   std::unique_ptr<wrapper::RsetWrapper> m_impl;
 
-}; // class Rset
+};  // class Rset
 
-} // namespace rdbms
-} // namespace cta
+}  // namespace rdbms
+}  // namespace cta

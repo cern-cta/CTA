@@ -30,7 +30,7 @@ namespace cta {
 namespace rdbms {
 class Conn;
 class ConnPool;
-}
+}  // namespace rdbms
 
 namespace catalogue {
 
@@ -40,41 +40,51 @@ class RdbmsTapePoolCatalogue : public TapePoolCatalogue {
 public:
   ~RdbmsTapePoolCatalogue() override = default;
 
-  void createTapePool(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const std::string &vo, const uint64_t nbPartialTapes, const bool encryptionValue,
-    const std::optional<std::string> &supply, const std::string &comment) override;
+  void createTapePool(const common::dataStructures::SecurityIdentity& admin,
+                      const std::string& name,
+                      const std::string& vo,
+                      const uint64_t nbPartialTapes,
+                      const bool encryptionValue,
+                      const std::optional<std::string>& supply,
+                      const std::string& comment) override;
 
-  void deleteTapePool(const std::string &name) override;
+  void deleteTapePool(const std::string& name) override;
 
-  std::list<TapePool> getTapePools(const TapePoolSearchCriteria &searchCriteria) const override;
+  std::list<TapePool> getTapePools(const TapePoolSearchCriteria& searchCriteria) const override;
 
-  std::optional<TapePool> getTapePool(const std::string &tapePoolName) const override;
+  std::optional<TapePool> getTapePool(const std::string& tapePoolName) const override;
 
-  void modifyTapePoolVo(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const std::string &vo) override;
+  void modifyTapePoolVo(const common::dataStructures::SecurityIdentity& admin,
+                        const std::string& name,
+                        const std::string& vo) override;
 
-  void modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const uint64_t nbPartialTapes) override;
+  void modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity& admin,
+                                    const std::string& name,
+                                    const uint64_t nbPartialTapes) override;
 
-  void modifyTapePoolComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const std::string &comment) override;
+  void modifyTapePoolComment(const common::dataStructures::SecurityIdentity& admin,
+                             const std::string& name,
+                             const std::string& comment) override;
 
-  void setTapePoolEncryption(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const bool encryptionValue) override;
+  void setTapePoolEncryption(const common::dataStructures::SecurityIdentity& admin,
+                             const std::string& name,
+                             const bool encryptionValue) override;
 
-  void modifyTapePoolSupply(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const std::string &supply) override;
+  void modifyTapePoolSupply(const common::dataStructures::SecurityIdentity& admin,
+                            const std::string& name,
+                            const std::string& supply) override;
 
-  void modifyTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentName,
-    const std::string &newName) override;
+  void modifyTapePoolName(const common::dataStructures::SecurityIdentity& admin,
+                          const std::string& currentName,
+                          const std::string& newName) override;
 
-  bool tapePoolExists(const std::string &tapePoolName) const override;
+  bool tapePoolExists(const std::string& tapePoolName) const override;
 
 protected:
-  RdbmsTapePoolCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue *rdbmsCatalogue);
+  RdbmsTapePoolCatalogue(log::Logger& log, std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue);
 
 private:
-  log::Logger &m_log;
+  log::Logger& m_log;
   std::shared_ptr<rdbms::ConnPool> m_connPool;
   RdbmsCatalogue* m_rdbmsCatalogue;
 
@@ -90,9 +100,9 @@ private:
    * @return a unique tape pool ID that can be used by a new tape pool within
    * the catalogue.
    */
-  virtual uint64_t getNextTapePoolId(rdbms::Conn &conn) const = 0;
+  virtual uint64_t getNextTapePoolId(rdbms::Conn& conn) const = 0;
 
-  std::list<TapePool> getTapePools(rdbms::Conn &conn, const TapePoolSearchCriteria &searchCriteria) const;
+  std::list<TapePool> getTapePools(rdbms::Conn& conn, const TapePoolSearchCriteria& searchCriteria) const;
 
   /**
    * Returns true if the specified tape pool is used in an archive route.
@@ -101,7 +111,7 @@ private:
    * @param tapePoolName The name of the tape pool.
    * @return True if the tape pool is used in an archive route.
    */
-  bool tapePoolUsedInAnArchiveRoute(rdbms::Conn &conn, const std::string &tapePoolName) const;
+  bool tapePoolUsedInAnArchiveRoute(rdbms::Conn& conn, const std::string& tapePoolName) const;
 
   /**
    * Returns the number of tapes in the specified tape pool.
@@ -112,11 +122,11 @@ private:
    * @param name The name of the tape pool.
    * @return The number of tapes in the specified tape pool.
    */
-  uint64_t getNbTapesInPool(rdbms::Conn &conn, const std::string &name) const;
+  uint64_t getNbTapesInPool(rdbms::Conn& conn, const std::string& name) const;
 
   friend class RdbmsTapeCatalogue;
-  std::optional<uint64_t> getTapePoolId(rdbms::Conn &conn, const std::string &name) const;
+  std::optional<uint64_t> getTapePoolId(rdbms::Conn& conn, const std::string& name) const;
 };
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

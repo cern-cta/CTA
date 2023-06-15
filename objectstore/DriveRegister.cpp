@@ -25,19 +25,20 @@
 #include <google/protobuf/util/json_util.h>
 #include <iostream>
 
-namespace cta { namespace objectstore {
+namespace cta {
+namespace objectstore {
 
 //------------------------------------------------------------------------------
 // DriveRegister::DriveRegister())
 //------------------------------------------------------------------------------
-DriveRegister::DriveRegister(const std::string & address, Backend & os):
-  ObjectOps<serializers::DriveRegister, serializers::DriveRegister_t>(os, address) { }
+DriveRegister::DriveRegister(const std::string& address, Backend& os) :
+ObjectOps<serializers::DriveRegister, serializers::DriveRegister_t>(os, address) {}
 
 //------------------------------------------------------------------------------
 // DriveRegister::DriveRegister())
 //------------------------------------------------------------------------------
-DriveRegister::DriveRegister(GenericObject& go):
-  ObjectOps<serializers::DriveRegister, serializers::DriveRegister_t>(go.objectStore()) {
+DriveRegister::DriveRegister(GenericObject& go) :
+ObjectOps<serializers::DriveRegister, serializers::DriveRegister_t>(go.objectStore()) {
   // Here we transplant the generic object into the new object
   go.transplantHeader(*this);
   // And interpret the header.
@@ -69,20 +70,23 @@ void DriveRegister::initialize() {
 //------------------------------------------------------------------------------
 // DriveRegister::garbageCollect())
 //------------------------------------------------------------------------------
-void DriveRegister::garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
-    cta::catalogue::Catalogue & catalogue) {
+void DriveRegister::garbageCollect(const std::string& presumedOwner,
+                                   AgentReference& agentReference,
+                                   log::LogContext& lc,
+                                   cta::catalogue::Catalogue& catalogue) {
   checkPayloadWritable();
   // If the agent is not anymore the owner of the object, then only the very
   // last operation of the drive register creation failed. We have nothing to do.
-  if (presumedOwner != m_header.owner())
+  if (presumedOwner != m_header.owner()) {
     return;
+  }
   // If the owner is still the agent, we have 2 possibilities:
   // 1) The register is referenced by the root entry. We just need to officialise
-  // the ownership on the register (if not, we will either get the NotAllocated 
+  // the ownership on the register (if not, we will either get the NotAllocated
   // exception) or the address will be different.
   {
     RootEntry re(m_objectStore);
-    ScopedSharedLock rel (re);
+    ScopedSharedLock rel(re);
     re.fetch();
     try {
       if (re.getAgentRegisterAddress() == getAddressIfSet()) {
@@ -90,11 +94,13 @@ void DriveRegister::garbageCollect(const std::string &presumedOwner, AgentRefere
         commit();
         return;
       }
-    } catch (RootEntry::NotAllocated &) {}
+    }
+    catch (RootEntry::NotAllocated&) {
+    }
   }
   // 2) The tape pool is not referenced in the root entry. We can just clean it up.
   if (!isEmpty()) {
-    throw (NotEmpty("Trying to garbage collect a non-empty AgentRegister: internal error"));
+    throw(NotEmpty("Trying to garbage collect a non-empty AgentRegister: internal error"));
   }
   remove();
   log::ScopedParamContainer params(lc);
@@ -108,10 +114,10 @@ void DriveRegister::garbageCollect(const std::string &presumedOwner, AgentRefere
 std::list<DriveRegister::DriveAddress> DriveRegister::getDriveAddresses() {
   checkPayloadReadable();
   std::list<DriveAddress> ret;
-  for (auto & d: m_payload.drives()) {
+  for (auto& d : m_payload.drives()) {
     ret.push_back(DriveAddress());
-    ret.back().driveName=d.drivename();
-    ret.back().driveStateAddress=d.drivestateaddress();
+    ret.back().driveName = d.drivename();
+    ret.back().driveStateAddress = d.drivestateaddress();
   }
   return ret;
 }
@@ -121,9 +127,11 @@ std::list<DriveRegister::DriveAddress> DriveRegister::getDriveAddresses() {
 //------------------------------------------------------------------------------
 std::string DriveRegister::getDriveAddress(const std::string& driveName) {
   checkPayloadReadable();
-  for (auto & d:m_payload.drives())
-    if (d.drivename() == driveName)
+  for (auto& d : m_payload.drives()) {
+    if (d.drivename() == driveName) {
       return d.drivestateaddress();
+    }
+  }
   throw NoSuchDrive("In DriveRegister::getDriveAddresse(): no such drive.");
 }
 
@@ -132,14 +140,14 @@ std::string DriveRegister::getDriveAddress(const std::string& driveName) {
 //------------------------------------------------------------------------------
 void DriveRegister::setDriveAddress(const std::string& driveName, const std::string& driveAddress) {
   checkPayloadWritable();
-  for (int i=0; i< m_payload.mutable_drives()->size(); i++) {
-    auto d=m_payload.mutable_drives(i);
+  for (int i = 0; i < m_payload.mutable_drives()->size(); i++) {
+    auto d = m_payload.mutable_drives(i);
     if (d->drivename() == driveName) {
       d->set_drivestateaddress(driveAddress);
       return;
     }
   }
-  auto d=m_payload.mutable_drives()->Add();
+  auto d = m_payload.mutable_drives()->Add();
   d->set_drivename(driveName);
   d->set_drivestateaddress(driveAddress);
   return;
@@ -148,11 +156,11 @@ void DriveRegister::setDriveAddress(const std::string& driveName, const std::str
 //------------------------------------------------------------------------------
 // DriveRegister::removeDrive())
 //------------------------------------------------------------------------------
-void DriveRegister::removeDrive(const std::string  & driveName) {
+void DriveRegister::removeDrive(const std::string& driveName) {
   checkPayloadWritable();
   auto driveToRemove = m_payload.mutable_drives()->begin();
   while (driveToRemove != m_payload.mutable_drives()->end()) {
-    if ( driveToRemove->drivename() == driveName) {
+    if (driveToRemove->drivename() == driveName) {
       m_payload.mutable_drives()->erase(driveToRemove);
       return;
     }
@@ -160,7 +168,7 @@ void DriveRegister::removeDrive(const std::string  & driveName) {
   }
   std::stringstream err;
   err << "In DriveRegister::removeDrive(): drive not found: " << driveName;
-  throw cta::exception::Exception(err.str()); 
+  throw cta::exception::Exception(err.str());
 }
 
 //------------------------------------------------------------------------------
@@ -168,9 +176,11 @@ void DriveRegister::removeDrive(const std::string  & driveName) {
 //------------------------------------------------------------------------------
 bool DriveRegister::isEmpty() {
   checkPayloadReadable();
-  if (m_payload.drives_size())
+  if (m_payload.drives_size()) {
     return false;
+  }
   return true;
 }
 
-}} // namespace cta::objectstore
+}  // namespace objectstore
+}  // namespace cta

@@ -25,7 +25,7 @@ namespace exception {
 /**
  * Exception representing an unexpected mismatch between checksum types.
  */
-class ChecksumTypeMismatch: public exception::Exception {
+class ChecksumTypeMismatch : public exception::Exception {
 public:
   /**
    * Constructor.
@@ -35,13 +35,14 @@ public:
    * @param embedBacktrace whether to embed a backtrace of where the
    * exception was throw in the message
    */
-  ChecksumTypeMismatch(const std::string &context = "", const bool embedBacktrace = true) :
-    Exception(context, embedBacktrace) {}
+  ChecksumTypeMismatch(const std::string& context = "", const bool embedBacktrace = true) :
+  Exception(context, embedBacktrace) {}
 
   /**
    * Destructor.
    */
   ~ChecksumTypeMismatch() override {}
-}; // class ChecksumTypeMismatch
+};  // class ChecksumTypeMismatch
 
-}} // namespace cta::exception
+}  // namespace exception
+}  // namespace cta

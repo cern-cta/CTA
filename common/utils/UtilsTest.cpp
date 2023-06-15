@@ -22,14 +22,11 @@
 
 namespace unitTests {
 
-class cta_UtilsTest: public ::testing::Test {
+class cta_UtilsTest : public ::testing::Test {
 protected:
+  virtual void SetUp() {}
 
-  virtual void SetUp() {
-  }
-
-  virtual void TearDown() {
-  }
+  virtual void TearDown() {}
 };
 
 TEST_F(cta_UtilsTest, trimSlashes_emptyString) {
@@ -80,8 +77,7 @@ TEST_F(cta_UtilsTest, trimSlashes_twoRightSlashes) {
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
-TEST_F(cta_UtilsTest,
-  trimSlashes_oneLeftAndOneRightSlash) {
+TEST_F(cta_UtilsTest, trimSlashes_oneLeftAndOneRightSlash) {
   using namespace cta;
 
   const std::string s("/VALUE/");
@@ -89,8 +85,7 @@ TEST_F(cta_UtilsTest,
   ASSERT_EQ(std::string("VALUE"), trimmedString);
 }
 
-TEST_F(cta_UtilsTest,
-  trimSlashes_twoLeftAndTwoRightSlashes) {
+TEST_F(cta_UtilsTest, trimSlashes_twoLeftAndTwoRightSlashes) {
   using namespace cta;
 
   const std::string s("//VALUE//");
@@ -112,8 +107,7 @@ TEST_F(cta_UtilsTest, getEnclosingPath_root) {
   const std::string dirPath = "/";
 
   std::string enclosingPath;
-  ASSERT_THROW(enclosingPath = utils::getEnclosingPath(dirPath),
-    std::exception);
+  ASSERT_THROW(enclosingPath = utils::getEnclosingPath(dirPath), std::exception);
 }
 
 TEST_F(cta_UtilsTest, getEnclosingPath_grandparent) {
@@ -126,8 +120,7 @@ TEST_F(cta_UtilsTest, getEnclosingPath_grandparent) {
   ASSERT_EQ(std::string("/"), enclosingPath);
 }
 
-TEST_F(cta_UtilsTest,
-  getEnclosingPath_grandparent_parent) {
+TEST_F(cta_UtilsTest, getEnclosingPath_grandparent_parent) {
   using namespace cta;
 
   const std::string dirPath = "/grandparent/parent";
@@ -137,8 +130,7 @@ TEST_F(cta_UtilsTest,
   ASSERT_EQ(std::string("/grandparent/"), enclosingPath);
 }
 
-TEST_F(cta_UtilsTest,
-  getEnclosingPath_grandparent_parent_child) {
+TEST_F(cta_UtilsTest, getEnclosingPath_grandparent_parent_child) {
   using namespace cta;
 
   const std::string dirPath = "/grandparent/parent/child";
@@ -185,8 +177,7 @@ TEST_F(cta_UtilsTest, getEnclosedNames) {
   ASSERT_NO_THROW(results = utils::getEnclosedNames(absoluteFilePaths));
   ASSERT_EQ(4, results.size());
   std::set<std::string> resultSet;
-  for(std::list<std::string>::const_iterator itor = results.begin();
-    itor != results.end(); itor++) {
+  for (std::list<std::string>::const_iterator itor = results.begin(); itor != results.end(); itor++) {
     resultSet.insert(*itor);
   }
   ASSERT_EQ(4, resultSet.size());
@@ -202,7 +193,7 @@ TEST_F(cta_UtilsTest, splitString_goodDay) {
   std::vector<std::string> columns;
 
   ASSERT_NO_THROW(utils::splitString(line, ' ', columns));
-  ASSERT_EQ((std::vector<std::string>::size_type)8, columns.size());
+  ASSERT_EQ((std::vector<std::string>::size_type) 8, columns.size());
   ASSERT_EQ(std::string("col0"), columns[0]);
   ASSERT_EQ(std::string("col1"), columns[1]);
   ASSERT_EQ(std::string("col2"), columns[2]);
@@ -218,20 +209,17 @@ TEST_F(cta_UtilsTest, splitString_emptyString) {
   const std::string emptyString;
   std::vector<std::string> columns;
 
-
   ASSERT_NO_THROW(utils::splitString(emptyString, ' ', columns));
-  ASSERT_EQ((std::vector<std::string>::size_type)0, columns.size());
+  ASSERT_EQ((std::vector<std::string>::size_type) 0, columns.size());
 }
 
 TEST_F(cta_UtilsTest, splitString_noSeparatorInString) {
   using namespace cta;
-  const std::string stringContainingNoSeparator =
-    "stringContainingNoSeparator";
+  const std::string stringContainingNoSeparator = "stringContainingNoSeparator";
   std::vector<std::string> columns;
 
-  ASSERT_NO_THROW(utils::splitString(stringContainingNoSeparator, ' ',
-    columns));
-  ASSERT_EQ((std::vector<std::string>::size_type)1, columns.size());
+  ASSERT_NO_THROW(utils::splitString(stringContainingNoSeparator, ' ', columns));
+  ASSERT_EQ((std::vector<std::string>::size_type) 1, columns.size());
   ASSERT_EQ(stringContainingNoSeparator, columns[0]);
 }
 
@@ -281,7 +269,7 @@ TEST_F(cta_UtilsTest, toUint8_123) {
   uint8_t i = 0;
 
   ASSERT_NO_THROW(i = utils::toUint8("123"));
-  ASSERT_EQ((uint8_t)123, i);
+  ASSERT_EQ((uint8_t) 123, i);
 }
 
 TEST_F(cta_UtilsTest, toUint8_zero) {
@@ -290,7 +278,7 @@ TEST_F(cta_UtilsTest, toUint8_zero) {
   uint8_t i = 0;
 
   ASSERT_NO_THROW(i = utils::toUint8("0"));
-  ASSERT_EQ((uint8_t)0, i);
+  ASSERT_EQ((uint8_t) 0, i);
 }
 
 TEST_F(cta_UtilsTest, toUint8_255) {
@@ -299,7 +287,7 @@ TEST_F(cta_UtilsTest, toUint8_255) {
   uint8_t i = 0;
 
   ASSERT_NO_THROW(i = utils::toUint8("255"));
-  ASSERT_EQ((uint8_t)255, i);
+  ASSERT_EQ((uint8_t) 255, i);
 }
 
 TEST_F(cta_UtilsTest, toUint8_empty_string) {
@@ -326,7 +314,7 @@ TEST_F(cta_UtilsTest, toUint16_12345) {
   uint16_t i = 0;
 
   ASSERT_NO_THROW(i = utils::toUint16("12345"));
-  ASSERT_EQ((uint16_t)12345, i);
+  ASSERT_EQ((uint16_t) 12345, i);
 }
 
 TEST_F(cta_UtilsTest, toUint16_zero) {
@@ -335,7 +323,7 @@ TEST_F(cta_UtilsTest, toUint16_zero) {
   uint16_t i = 0;
 
   ASSERT_NO_THROW(i = utils::toUint16("0"));
-  ASSERT_EQ((uint16_t)0, i);
+  ASSERT_EQ((uint16_t) 0, i);
 }
 
 TEST_F(cta_UtilsTest, toUint16_65535) {
@@ -344,7 +332,7 @@ TEST_F(cta_UtilsTest, toUint16_65535) {
   uint16_t i = 0;
 
   ASSERT_NO_THROW(i = utils::toUint16("65535"));
-  ASSERT_EQ((uint16_t)65535, i);
+  ASSERT_EQ((uint16_t) 65535, i);
 }
 
 TEST_F(cta_UtilsTest, toUint16_empty_string) {
@@ -371,7 +359,7 @@ TEST_F(cta_UtilsTest, toUint32_12345) {
   uint32_t i = 0;
 
   ASSERT_NO_THROW(i = utils::toUint32("12345"));
-  ASSERT_EQ((uint32_t)12345, i);
+  ASSERT_EQ((uint32_t) 12345, i);
 }
 
 TEST_F(cta_UtilsTest, toUint32_zero) {
@@ -380,7 +368,7 @@ TEST_F(cta_UtilsTest, toUint32_zero) {
   uint32_t i = 0;
 
   ASSERT_NO_THROW(i = utils::toUint32("0"));
-  ASSERT_EQ((uint32_t)0, i);
+  ASSERT_EQ((uint32_t) 0, i);
 }
 
 TEST_F(cta_UtilsTest, toUint32_4294967295) {
@@ -389,7 +377,7 @@ TEST_F(cta_UtilsTest, toUint32_4294967295) {
   uint32_t i = 0;
 
   ASSERT_NO_THROW(i = utils::toUint32("4294967295"));
-  ASSERT_EQ((uint32_t)4294967295, i);
+  ASSERT_EQ((uint32_t) 4294967295, i);
 }
 
 TEST_F(cta_UtilsTest, toUint32_empty_string) {
@@ -416,7 +404,7 @@ TEST_F(cta_UtilsTest, toUid_12345) {
   uid_t i = 0;
 
   ASSERT_NO_THROW(i = utils::toUid("12345"));
-  ASSERT_EQ((uid_t)12345, i);
+  ASSERT_EQ((uid_t) 12345, i);
 }
 
 TEST_F(cta_UtilsTest, toUid_zero) {
@@ -425,7 +413,7 @@ TEST_F(cta_UtilsTest, toUid_zero) {
   uid_t i = 0;
 
   ASSERT_NO_THROW(i = utils::toUid("0"));
-  ASSERT_EQ((uid_t)0, i);
+  ASSERT_EQ((uid_t) 0, i);
 }
 
 TEST_F(cta_UtilsTest, toUid_max) {
@@ -455,8 +443,7 @@ TEST_F(cta_UtilsTest, toUid_negative) {
 TEST_F(cta_UtilsTest, toUid_too_big) {
   using namespace cta;
 
-  const uint64_t tooBig = (uint64_t)(std::numeric_limits<uid_t>::max()) +
-    (uint64_t)1;
+  const uint64_t tooBig = (uint64_t) (std::numeric_limits<uid_t>::max()) + (uint64_t) 1;
 
   std::ostringstream oss;
   oss << tooBig;
@@ -470,7 +457,7 @@ TEST_F(cta_UtilsTest, toGid_12345) {
   gid_t i = 0;
 
   ASSERT_NO_THROW(i = utils::toGid("12345"));
-  ASSERT_EQ((gid_t)12345, i);
+  ASSERT_EQ((gid_t) 12345, i);
 }
 
 TEST_F(cta_UtilsTest, toGid_zero) {
@@ -479,7 +466,7 @@ TEST_F(cta_UtilsTest, toGid_zero) {
   gid_t i = 0;
 
   ASSERT_NO_THROW(i = utils::toGid("0"));
-  ASSERT_EQ((gid_t)0, i);
+  ASSERT_EQ((gid_t) 0, i);
 }
 
 TEST_F(cta_UtilsTest, toGid_max) {
@@ -509,8 +496,7 @@ TEST_F(cta_UtilsTest, toGid_negative) {
 TEST_F(cta_UtilsTest, toGid_too_big) {
   using namespace cta;
 
-  const uint64_t tooBig = (uint64_t)(std::numeric_limits<gid_t>::max()) +
-    (uint64_t)1;
+  const uint64_t tooBig = (uint64_t) (std::numeric_limits<gid_t>::max()) + (uint64_t) 1;
 
   std::ostringstream oss;
   oss << tooBig;
@@ -545,8 +531,8 @@ TEST_F(cta_UtilsTest, isValidUInt_not_a_number) {
 TEST_F(cta_UtilsTest, toUint64) {
   using namespace cta;
 
-  ASSERT_EQ((uint64_t)12345, utils::toUint64("12345"));
-  ASSERT_EQ((uint64_t)18446744073709551615ULL, utils::toUint64("18446744073709551615"));
+  ASSERT_EQ((uint64_t) 12345, utils::toUint64("12345"));
+  ASSERT_EQ((uint64_t) 18446744073709551615ULL, utils::toUint64("18446744073709551615"));
 }
 
 TEST_F(cta_UtilsTest, toUint64_too_big) {
@@ -564,7 +550,7 @@ TEST_F(cta_UtilsTest, toUint64_empty_string) {
 TEST_F(cta_UtilsTest, toUint64_minus_one) {
   using namespace cta;
 
-  ASSERT_EQ((uint64_t)18446744073709551615UL, utils::toUint64("18446744073709551615"));
+  ASSERT_EQ((uint64_t) 18446744073709551615UL, utils::toUint64("18446744073709551615"));
 }
 
 TEST_F(cta_UtilsTest, toUint64_not_a_number) {
@@ -606,13 +592,13 @@ TEST_F(cta_UtilsTest, isValidDecimal_two_decimal_points) {
 TEST_F(cta_UtilsTest, toDouble_double) {
   using namespace cta;
 
-  ASSERT_EQ((double)1.234, utils::toDouble("1.234"));
+  ASSERT_EQ((double) 1.234, utils::toDouble("1.234"));
 }
 
 TEST_F(cta_UtilsTest, toDouble_negative_double) {
   using namespace cta;
 
-  ASSERT_EQ((double)-1.234, utils::toDouble("-1.234"));
+  ASSERT_EQ((double) -1.234, utils::toDouble("-1.234"));
 }
 
 TEST_F(cta_UtilsTest, toDouble_too_big) {
@@ -638,14 +624,14 @@ TEST_F(cta_UtilsTest, adler32_empty_buf) {
   using namespace cta;
 
   // The adler32 of an empty buffer is 1
-  ASSERT_EQ((uint32_t)1, utils::getAdler32(nullptr, 0));
+  ASSERT_EQ((uint32_t) 1, utils::getAdler32(nullptr, 0));
 }
 
 TEST_F(cta_UtilsTest, adler32_buf_of_character_1) {
   using namespace cta;
 
   const uint8_t buf = '1';
-  ASSERT_EQ((uint32_t)0x320032, utils::getAdler32(&buf, 1));
+  ASSERT_EQ((uint32_t) 0x320032, utils::getAdler32(&buf, 1));
 }
 
 TEST_F(cta_UtilsTest, toUpper) {
@@ -676,7 +662,7 @@ TEST_F(cta_UtilsTest, testGoodDaySplitString) {
   std::vector<std::string> columns;
 
   ASSERT_NO_THROW(utils::splitString(line, ' ', columns));
-  ASSERT_EQ((std::vector<std::string>::size_type)8, columns.size());
+  ASSERT_EQ((std::vector<std::string>::size_type) 8, columns.size());
   ASSERT_EQ(std::string("col0"), columns[0]);
   ASSERT_EQ(std::string("col1"), columns[1]);
   ASSERT_EQ(std::string("col2"), columns[2]);
@@ -696,8 +682,8 @@ TEST_F(cta_UtilsTest, testSplitStringOnlySeparators) {
   std::vector<std::string> columns;
 
   ASSERT_NO_THROW(utils::splitString(line, ':', columns));
-  ASSERT_EQ((std::vector<std::string>::size_type)6, columns.size());
-  for(uint32_t i = 0 ; i < 6; i++) {
+  ASSERT_EQ((std::vector<std::string>::size_type) 6, columns.size());
+  for (uint32_t i = 0; i < 6; i++) {
     ASSERT_TRUE(columns[i].empty());
   }
 }
@@ -711,7 +697,7 @@ TEST_F(cta_UtilsTest, testSplitStringWithEmptyString) {
   std::vector<std::string> columns;
 
   ASSERT_NO_THROW(utils::splitString(emptyString, ' ', columns));
-  ASSERT_EQ((std::vector<std::string>::size_type)0, columns.size());
+  ASSERT_EQ((std::vector<std::string>::size_type) 0, columns.size());
 }
 
 /**
@@ -720,12 +706,11 @@ TEST_F(cta_UtilsTest, testSplitStringWithEmptyString) {
  */
 TEST_F(cta_UtilsTest, testSplitStringWithNoSeparatorInString) {
   using namespace cta;
-  const std::string stringContainingNoSeparator =
-    "stringContainingNoSeparator";
+  const std::string stringContainingNoSeparator = "stringContainingNoSeparator";
   std::vector<std::string> columns;
 
   ASSERT_NO_THROW(utils::splitString(stringContainingNoSeparator, ' ', columns));
-  ASSERT_EQ((std::vector<std::string>::size_type)1, columns.size());
+  ASSERT_EQ((std::vector<std::string>::size_type) 1, columns.size());
   ASSERT_EQ(stringContainingNoSeparator, columns[0]);
 }
 
@@ -824,7 +809,7 @@ TEST_F(cta_UtilsTest, testTrimStringOneCharacter) {
   using namespace cta;
   const std::string s(" a ");
   const std::string trimmedString = utils::trimString(s);
-  ASSERT_EQ(1,trimmedString.size());
+  ASSERT_EQ(1, trimmedString.size());
   ASSERT_EQ(std::string("a"), trimmedString);
 }
 
@@ -832,13 +817,12 @@ TEST_F(cta_UtilsTest, testCopyStringNullDst) {
   using namespace cta;
   char dummy[6] = "Dummy";
 
-  ASSERT_THROW(utils::copyString(nullptr, 0, dummy),
-    cta::exception::Exception);
+  ASSERT_THROW(utils::copyString(nullptr, 0, dummy), cta::exception::Exception);
 }
 
 TEST_F(cta_UtilsTest, testCopyString) {
   using namespace cta;
-  char src[12]  = "Hello World";
+  char src[12] = "Hello World";
   char dst[12];
 
   utils::copyString(dst, src);
@@ -877,27 +861,33 @@ TEST_F(cta_UtilsTest, searchAndReplace) {
   ASSERT_EQ("one replacement three four one replacement three four", str);
 }
 
-TEST_F(cta_UtilsTest, appendParameterXRootFileURL){
-  std::string fileURLTest = "root://ctaeos.cta.svc.cluster.local//eos/ctaeos/preprod/79fe26de-6b8b-437c-b507-06dbfe8d0a79/0/test00000171?eos.lfn=fxid:b2&eos.ruid=0&eos.rgid=0&eos.injection=1&eos.workflow=retrieve_written&eos.space=default&oss.asize=15360";
+TEST_F(cta_UtilsTest, appendParameterXRootFileURL) {
+  std::string fileURLTest =
+    "root://ctaeos.cta.svc.cluster.local//eos/ctaeos/preprod/79fe26de-6b8b-437c-b507-06dbfe8d0a79/0/"
+    "test00000171?eos.lfn=fxid:b2&eos.ruid=0&eos.rgid=0&eos.injection=1&eos.workflow=retrieve_written&eos.space="
+    "default&oss.asize=15360";
   std::string fileURL = fileURLTest;
-  cta::utils::appendParameterXRootFileURL(fileURL,"oss.asize","145");
+  cta::utils::appendParameterXRootFileURL(fileURL, "oss.asize", "145");
   //nothing should have changed
-  ASSERT_EQ(fileURLTest,fileURL);
+  ASSERT_EQ(fileURLTest, fileURL);
 
-  fileURLTest = "root://ctaeos.cta.svc.cluster.local//eos/ctaeos/preprod/79fe26de-6b8b-437c-b507-06dbfe8d0a79/0/test00000171";
+  fileURLTest =
+    "root://ctaeos.cta.svc.cluster.local//eos/ctaeos/preprod/79fe26de-6b8b-437c-b507-06dbfe8d0a79/0/test00000171";
   fileURL = fileURLTest;
-  cta::utils::appendParameterXRootFileURL(fileURL,"oss.asize","15360");
-  ASSERT_EQ(fileURLTest+"?oss.asize=15360",fileURL);
+  cta::utils::appendParameterXRootFileURL(fileURL, "oss.asize", "15360");
+  ASSERT_EQ(fileURLTest + "?oss.asize=15360", fileURL);
 
   fileURLTest = "file://path_to_folder/path_to_file";
   fileURL = fileURLTest;
-  cta::utils::appendParameterXRootFileURL(fileURL,"oss.asize","15360");
-  ASSERT_EQ(fileURLTest,fileURL);
+  cta::utils::appendParameterXRootFileURL(fileURL, "oss.asize", "15360");
+  ASSERT_EQ(fileURLTest, fileURL);
 
-  fileURLTest = "root://ctaeos.cta.svc.cluster.local//eos/ctaeos/preprod/79fe26de-6b8b-437c-b507-06dbfe8d0a79/0/test00000171?eos.lfn=fxid:b2&eos.ruid=0&eos.rgid=0&eos.injection=1&eos.workflow=retrieve_written&eos.space=default";
+  fileURLTest = "root://ctaeos.cta.svc.cluster.local//eos/ctaeos/preprod/79fe26de-6b8b-437c-b507-06dbfe8d0a79/0/"
+                "test00000171?eos.lfn=fxid:b2&eos.ruid=0&eos.rgid=0&eos.injection=1&eos.workflow=retrieve_written&eos."
+                "space=default";
   fileURL = fileURLTest;
-  cta::utils::appendParameterXRootFileURL(fileURL,"oss.asize","15360");
-  ASSERT_EQ(fileURLTest+"&oss.asize=15360",fileURL);
+  cta::utils::appendParameterXRootFileURL(fileURL, "oss.asize", "15360");
+  ASSERT_EQ(fileURLTest + "&oss.asize=15360", fileURL);
 }
 
-} // namespace unitTests
+}  // namespace unitTests

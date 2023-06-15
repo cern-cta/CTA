@@ -20,9 +20,9 @@
 #include <gmock/gmock-cardinalities.h>
 #include "Regex.hpp"
 
+using ::testing::_;
 using ::testing::AtLeast;
 using ::testing::Return;
-using ::testing::_;
 
 namespace unitTests {
 
@@ -54,7 +54,6 @@ TEST(Regex, OperationalTest) {
   ASSERT_EQ(ret3.size(), 0U);
 }
 
- 
 TEST(Regex, SubstringMatch) {
   cta::utils::Regex re("^radosstriper:///([^:]+@[^:]+):(.*)$");
   std::vector<std::string> ret1;
@@ -73,7 +72,7 @@ TEST(Regex, NestedMatch) {
   ASSERT_EQ("user", ret1[1]);
   ASSERT_EQ("pool", ret1[2]);
   ASSERT_EQ("namespace", ret1[4]);
-  
+
   // The nested match does not show up in the result set if its branch is not met.
   ret1 = re.exec("rados://user1@pool2");
   ASSERT_EQ(4U, ret1.size());
@@ -81,5 +80,4 @@ TEST(Regex, NestedMatch) {
   ASSERT_EQ("pool2", ret1[2]);
   ASSERT_EQ("", ret1[3]);
 }
-}
-
+}  // namespace unitTests

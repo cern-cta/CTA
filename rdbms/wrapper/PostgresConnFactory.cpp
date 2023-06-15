@@ -28,15 +28,12 @@ namespace wrapper {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-PostgresConnFactory::PostgresConnFactory(const std::string& conninfo)
-    : m_conninfo(conninfo) {
-}
+PostgresConnFactory::PostgresConnFactory(const std::string& conninfo) : m_conninfo(conninfo) {}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-PostgresConnFactory::~PostgresConnFactory() {
-}
+PostgresConnFactory::~PostgresConnFactory() {}
 
 //------------------------------------------------------------------------------
 // create
@@ -44,11 +41,12 @@ PostgresConnFactory::~PostgresConnFactory() {
 std::unique_ptr<ConnWrapper> PostgresConnFactory::create() {
   try {
     return std::make_unique<PostgresConn>(m_conninfo);
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+}  // namespace wrapper
+}  // namespace rdbms
+}  // namespace cta

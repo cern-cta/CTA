@@ -42,36 +42,35 @@
 #include "scheduler/RetrieveJob.hpp"
 
 char gen_random() {
-    static const char alphanum[] =
-        "123456789"
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        "abcdefghijklmnopqrstuvwxyz";
+  static const char alphanum[] = "123456789"
+                                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                 "abcdefghijklmnopqrstuvwxyz";
 
-    return alphanum[rand() % (sizeof(alphanum) - 1)];
+  return alphanum[rand() % (sizeof(alphanum) - 1)];
 }
 
-enum {
-    BLOCK_TEST,
-    FILE_TEST,
-    RAO_TEST
-};
+enum { BLOCK_TEST, FILE_TEST, RAO_TEST };
 
 int test = RAO_TEST;
 
-class BasicRetrieveJob: public cta::RetrieveJob {
+class BasicRetrieveJob : public cta::RetrieveJob {
 public:
-  BasicRetrieveJob() : cta::RetrieveJob(nullptr,
-  cta::common::dataStructures::RetrieveRequest(),
-  cta::common::dataStructures::ArchiveFile(), 1,
-  cta::PositioningMethod::ByBlock) {}
+  BasicRetrieveJob() :
+  cta::RetrieveJob(nullptr,
+                   cta::common::dataStructures::RetrieveRequest(),
+                   cta::common::dataStructures::ArchiveFile(),
+                   1,
+                   cta::PositioningMethod::ByBlock) {}
 };
 
-class BasicArchiveJob: public cta::ArchiveJob {
+class BasicArchiveJob : public cta::ArchiveJob {
 public:
-  BasicArchiveJob(): cta::ArchiveJob(nullptr,
-    *(static_cast<cta::catalogue::Catalogue *>(nullptr)), cta::common::dataStructures::ArchiveFile(),
-    "", cta::common::dataStructures::TapeFile()) {
-  }
+  BasicArchiveJob() :
+  cta::ArchiveJob(nullptr,
+                  *(static_cast<cta::catalogue::Catalogue*>(nullptr)),
+                  cta::common::dataStructures::ArchiveFile(),
+                  "",
+                  cta::common::dataStructures::TapeFile()) {}
 };
 
 std::vector<std::string> split(std::string& to_split, const std::string& delimiter) {
@@ -86,14 +85,13 @@ std::vector<std::string> split(std::string& to_split, const std::string& delimit
   return toBeReturned;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   int fail = 0;
   castor::tape::System::realWrapper sWrapper;
   castor::tape::SCSI::DeviceVector dl(sWrapper);
   for (castor::tape::SCSI::DeviceVector::iterator i = dl.begin(); i != dl.end(); ++i) {
-    castor::tape::SCSI::DeviceInfo & dev = (*i);
-    std::cout << std::endl << "-- SCSI device: "
-              << dev.sg_dev << " (" << dev.nst_dev << ")" << std::endl;
+    castor::tape::SCSI::DeviceInfo& dev = (*i);
+    std::cout << std::endl << "-- SCSI device: " << dev.sg_dev << " (" << dev.nst_dev << ")" << std::endl;
     if (dev.type == castor::tape::SCSI::Types::tape) {
       try {
         // Create drive object and open tape device
@@ -113,17 +111,17 @@ int main(int argc, char *argv[]) {
           castor::tape::tapeserver::drive::deviceInfo devInfo;
           devInfo = drive->getDeviceInfo();
           std::cout << "-- INFO --------------------------------------" << std::endl
-                    << "  devInfo.vendor               : '"  << devInfo.vendor << "'" << std::endl
+                    << "  devInfo.vendor               : '" << devInfo.vendor << "'" << std::endl
                     << "  devInfo.product              : '" << devInfo.product << "'" << std::endl
                     << "  devInfo.productRevisionLevel : '" << devInfo.productRevisionLevel << "'" << std::endl
                     << "  devInfo.serialNumber         : '" << devInfo.serialNumber << "'" << std::endl
                     << "----------------------------------------------" << std::endl;
-        } catch (std::exception & e) {
+        }
+        catch (std::exception& e) {
           fail = 1;
           std::string temp = e.what();
           std::cout << "----------------------------------------------" << std::endl
-                    << temp
-                    << "-- INFO --------------------------------------" << std::endl;
+                    << temp << "-- INFO --------------------------------------" << std::endl;
           continue;
         }
 
@@ -132,11 +130,12 @@ int main(int argc, char *argv[]) {
            * Checks if the drive ready to use the tape installed loaded into it.
            */
           drive->waitUntilReady(5);
-        } catch(cta::exception::Exception &ne) {
+        }
+        catch (cta::exception::Exception& ne) {
           std::string temp = ne.getMessage().str();
           fail = 1;
           std::cout << "----------------------------------------------" << std::endl
-                    << temp  << std::endl
+                    << temp << std::endl
                     << "----------------------------------------------" << std::endl;
           continue;
         }
@@ -152,9 +151,9 @@ int main(int argc, char *argv[]) {
             std::cout << "Rewinding..." << std::endl;
             drive->rewind();  // go back to the beginning of tape after Victor's positioning
 
-            memset(data, 'a', count-1);
+            memset(data, 'a', count - 1);
             std::cout << "Writing 1st block (9 a's)..." << std::endl;
-            drive->writeBlock(static_cast<void *>(data), count);  // write 9 a's + string term
+            drive->writeBlock(static_cast<void*>(data), count);  // write 9 a's + string term
 
             std::cout << "Writing EOD (2 filemarks)..." << std::endl;
             drive->writeSyncFileMarks(2);  // EOD and flush
@@ -164,11 +163,12 @@ int main(int argc, char *argv[]) {
 
             std::cout << "Reading back 1st block 9 a's)..." << std::endl;
             memset(data, 0, count);
-            drive->readBlock(static_cast<void *>(data), count);  // read 9 a's + string term
+            drive->readBlock(static_cast<void*>(data), count);  // read 9 a's + string term
 
             std::cout << "Rewinding..." << std::endl;
             drive->rewind();  // go back to the beginning of tape
-          } else if (test == FILE_TEST) {
+          }
+          else if (test == FILE_TEST) {
             drive->rewind();
 
             std::string label = "TW8510";
@@ -179,8 +179,8 @@ int main(int argc, char *argv[]) {
             m_volInfo.nbFiles = 0;
             m_volInfo.mountType = cta::common::dataStructures::MountType::ArchiveForUser;
 
-            auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(*drive, m_volInfo, 0, true,
-              true);
+            auto writeSession =
+              std::make_unique<castor::tape::tapeFile::WriteSession>(*drive, m_volInfo, 0, true, true);
 
             uint32_t block_size = 262144;
             uint32_t no_blocks = 100;
@@ -192,12 +192,13 @@ int main(int argc, char *argv[]) {
               fileToMigrate.archiveFile.fileSize = block_size * 100;
               fileToMigrate.archiveFile.archiveFileID = j;
               fileToMigrate.tapeFile.fSeq = j;
-              auto writer = std::make_unique<castor::tape::tapeFile::FileWriter>(writeSession, fileToMigrate,
-                block_size);
+              auto writer =
+                std::make_unique<castor::tape::tapeFile::FileWriter>(writeSession, fileToMigrate, block_size);
 
               std::string testString = "";
-              for (uint32_t i = 0; i < block_size - 5; i++)
+              for (uint32_t i = 0; i < block_size - 5; i++) {
                 testString += gen_random();
+              }
               for (uint32_t k = 0; k < no_blocks; k++) {
                 writer->write(testString.c_str(), testString.size());
               }
@@ -220,18 +221,21 @@ int main(int argc, char *argv[]) {
 
             auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, fileToRecall);
             size_t bs = reader->getBlockSize();
-            char *data = new char[bs+1];
+            char* data = new char[bs + 1];
             j = 0;
             while (j < 100) {
-                reader->readNextDataBlock(data, bs);
-                j++;
-                std::cout << data << std::endl;
+              reader->readNextDataBlock(data, bs);
+              j++;
+              std::cout << data << std::endl;
             }
-          } else if (test == RAO_TEST) {
+          }
+          else if (test == RAO_TEST) {
             if (argc != 2) {
-                std::cout << "For RAO testing the first parameter should be "
-                        "the file containing the sequential order" << std::endl;
-            } else {
+              std::cout << "For RAO testing the first parameter should be "
+                           "the file containing the sequential order"
+                        << std::endl;
+            }
+            else {
               drive->rewind();
 
               std::list<castor::tape::SCSI::Structures::RAO::blockLims> files;
@@ -248,24 +252,27 @@ int main(int argc, char *argv[]) {
                   lims.end = std::stoi(tokens[2]);
                   files.push_back(lims);
                 }
-              } else {
+              }
+              else {
                 throw -1;
               }
               castor::tape::SCSI::Structures::RAO::udsLimits limits = drive->getLimitUDS();
               drive->queryRAO(files, limits.maxSupported);
             }
           }
-        } catch (std::exception & e) {
+        }
+        catch (std::exception& e) {
           fail = 1;
           std::cout << "-- EXCEPTION ---------------------------------" << std::endl
                     << e.what() << std::endl
                     << "----------------------------------------------" << std::endl;
         }
-      } catch(cta::exception::Exception &ne) {
+      }
+      catch (cta::exception::Exception& ne) {
         std::string temp = ne.getMessage().str();
         fail = 1;
         std::cout << "----------------------------------------------" << std::endl
-                  << temp  << std::endl
+                  << temp << std::endl
                   << "-- object ------------------------------------" << std::endl;
         break;
       }

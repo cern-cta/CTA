@@ -34,7 +34,7 @@ struct LogContext;
 
 namespace catalogue {
 
-template <typename Item>
+template<typename Item>
 class CatalogueItor;
 
 using FileRecycleLogItor = CatalogueItor<common::dataStructures::FileRecycleLog>;
@@ -52,7 +52,7 @@ public:
    * @return The deleted archive files ordered by archive file ID.
    */
   virtual FileRecycleLogItor getFileRecycleLogItor(
-    const RecycleTapeFileSearchCriteria & searchCriteria = RecycleTapeFileSearchCriteria()) const = 0;
+    const RecycleTapeFileSearchCriteria& searchCriteria = RecycleTapeFileSearchCriteria()) const = 0;
 
   /**
    * Restores the deleted file in the Recycle log that match the criteria passed
@@ -60,8 +60,8 @@ public:
    * @param searchCriteria The search criteria
    * @param newFid the new Fid of the archive file (if the archive file must be restored)
    */
-  virtual void restoreFileInRecycleLog(const RecycleTapeFileSearchCriteria & searchCriteria,
-    const std::string &newFid) = 0;
+  virtual void restoreFileInRecycleLog(const RecycleTapeFileSearchCriteria& searchCriteria,
+                                       const std::string& newFid) = 0;
 
   /**
    * Deletes all the log entries corresponding to the vid passed in parameter.

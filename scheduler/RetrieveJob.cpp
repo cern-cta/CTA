@@ -25,24 +25,22 @@
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::RetrieveJob::~RetrieveJob() throw() {
-}
+cta::RetrieveJob::~RetrieveJob() throw() {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RetrieveJob::RetrieveJob(RetrieveMount *mount,
-  const common::dataStructures::RetrieveRequest &retrieveRequest,
-  const common::dataStructures::ArchiveFile & archiveFile,
-  const uint64_t selectedCopyNb,
-  const PositioningMethod positioningMethod):
-  m_mount(mount),
-  retrieveRequest(retrieveRequest),
-  archiveFile(archiveFile),
-  selectedCopyNb(selectedCopyNb),
-  positioningMethod(positioningMethod),
-  transferredSize(std::numeric_limits<decltype(transferredSize)>::max()) {}
-
+cta::RetrieveJob::RetrieveJob(RetrieveMount* mount,
+                              const common::dataStructures::RetrieveRequest& retrieveRequest,
+                              const common::dataStructures::ArchiveFile& archiveFile,
+                              const uint64_t selectedCopyNb,
+                              const PositioningMethod positioningMethod) :
+m_mount(mount),
+retrieveRequest(retrieveRequest),
+archiveFile(archiveFile),
+selectedCopyNb(selectedCopyNb),
+positioningMethod(positioningMethod),
+transferredSize(std::numeric_limits<decltype(transferredSize)>::max()) {}
 
 //------------------------------------------------------------------------------
 // diskSystemName
@@ -62,7 +60,7 @@ void cta::RetrieveJob::asyncSetSuccessful() {
 // reportType
 //------------------------------------------------------------------------------
 std::string cta::RetrieveJob::reportType() {
-  switch(m_dbJob->reportType) {
+  switch (m_dbJob->reportType) {
     case SchedulerDatabase::RetrieveJob::ReportType::FailureReport:
       return "FailureReport";
     default:
@@ -73,16 +71,15 @@ std::string cta::RetrieveJob::reportType() {
 //------------------------------------------------------------------------------
 // reportFailed
 //------------------------------------------------------------------------------
-void cta::RetrieveJob::reportFailed(const std::string &failureReason, log::LogContext &lc) {
+void cta::RetrieveJob::reportFailed(const std::string& failureReason, log::LogContext& lc) {
   // This is fully delegated to the DB, which will handle the queueing for next steps (if any)
   m_dbJob->failReport(failureReason, lc);
 }
 
-
 //------------------------------------------------------------------------------
 // transferFailed
 //------------------------------------------------------------------------------
-void cta::RetrieveJob::transferFailed(const std::string &failureReason, log::LogContext &lc) {
+void cta::RetrieveJob::transferFailed(const std::string& failureReason, log::LogContext& lc) {
   // This is fully delegated to the DB, which will handle the queueing for next steps (if any)
   m_dbJob->failTransfer(failureReason, lc);
 }

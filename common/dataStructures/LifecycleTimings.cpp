@@ -16,17 +16,17 @@
  */
 
 #include "LifecycleTimings.hpp"
-namespace cta{
-namespace common{
-namespace dataStructures{
+
+namespace cta {
+namespace common {
+namespace dataStructures {
 
 LifecycleTimings::LifecycleTimings() : creation_time(0), first_selected_time(0), completed_time(0) {}
 
-LifecycleTimings::LifecycleTimings(const LifecycleTimings& orig)
-  : creation_time(orig.creation_time),
-    first_selected_time(orig.first_selected_time),
-    completed_time(orig.completed_time) {
-}
+LifecycleTimings::LifecycleTimings(const LifecycleTimings& orig) :
+creation_time(orig.creation_time),
+first_selected_time(orig.first_selected_time),
+completed_time(orig.completed_time) {}
 
 // Assignment operator
 LifecycleTimings LifecycleTimings::operator=(const LifecycleTimings& orig) {
@@ -36,18 +36,20 @@ LifecycleTimings LifecycleTimings::operator=(const LifecycleTimings& orig) {
   return *this;
 }
 
-time_t LifecycleTimings::getTimeForSelection(){
-  if(first_selected_time != 0 && creation_time != 0){
+time_t LifecycleTimings::getTimeForSelection() {
+  if (first_selected_time != 0 && creation_time != 0) {
     return first_selected_time - creation_time;
   }
   return 0;
 }
 
-time_t LifecycleTimings::getTimeForCompletion(){
-  if(completed_time != 0 && creation_time != 0){
+time_t LifecycleTimings::getTimeForCompletion() {
+  if (completed_time != 0 && creation_time != 0) {
     return completed_time - creation_time;
   }
   return 0;
 }
 
-}}}
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

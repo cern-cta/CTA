@@ -63,8 +63,8 @@ TEST_F(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
   std::mt19937 gen((std::random_device())());
   // Create 1000 jobs references.
   std::list<cta::objectstore::RetrieveQueue::JobToAdd> jobsToAdd;
-  const size_t totalJobs = 1000, shardSize=25, batchSize=10;
-  for (size_t i=0; i<totalJobs; i++) {
+  const size_t totalJobs = 1000, shardSize = 25, batchSize = 10;
+  for (size_t i = 0; i < totalJobs; i++) {
     cta::objectstore::RetrieveQueue::JobToAdd jta;
     jta.copyNb = 1;
     jta.fSeq = i;
@@ -78,7 +78,7 @@ TEST_F(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
     jobsToAdd.push_back(jta);
   }
   // By construction, first job has lowest start time.
-  auto minStartTime=jobsToAdd.front().startTime;
+  auto minStartTime = jobsToAdd.front().startTime;
   std::string retrieveQueueAddress = agentRef.nextId("RetrieveQueue");
   {
     // Try to create the retrieve queue
@@ -94,7 +94,7 @@ TEST_F(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
     auto jobsToAddNow = jobsToAdd;
     while (jobsToAddNow.size()) {
       std::list<cta::objectstore::RetrieveQueue::JobToAdd> jobsBatch;
-      for (size_t i=0; i<batchSize; i++) {
+      for (size_t i = 0; i < batchSize; i++) {
         if (jobsToAddNow.size()) {
           std::uniform_int_distribution<size_t> distrib(0, jobsToAddNow.size() - 1);
           auto j = std::next(jobsToAddNow.begin(), distrib(gen));
@@ -123,13 +123,13 @@ TEST_F(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
     // Pop jobs while we can. They should come out in fseq order as there is
     // no interleaved push and pop.
     ASSERT_EQ(minStartTime, rq.getJobsSummary().oldestJobStartTime);
-    uint64_t nextExpectedFseq=0;
+    uint64_t nextExpectedFseq = 0;
     while (rq.getJobsSummary().jobs) {
-      auto candidateJobs = rq.getCandidateList(std::numeric_limits<uint64_t>::max(), 50, std::set<std::string>(),
-          std::set<std::string>());
+      auto candidateJobs =
+        rq.getCandidateList(std::numeric_limits<uint64_t>::max(), 50, std::set<std::string>(), std::set<std::string>());
       std::set<std::string> jobsToSkip;
       std::list<std::string> jobsToDelete;
-      for (auto &j: candidateJobs.candidates) {
+      for (auto& j : candidateJobs.candidates) {
         std::stringstream address;
         address << "someRequest-" << nextExpectedFseq;
         ASSERT_EQ(address.str(), j.address);
@@ -137,7 +137,8 @@ TEST_F(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
         jobsToDelete.emplace_back(j.address);
         nextExpectedFseq++;
       }
-      auto candidateJobs2 = rq.getCandidateList(std::numeric_limits<uint64_t>::max(), 1, jobsToSkip, std::set<std::string>());
+      auto candidateJobs2 =
+        rq.getCandidateList(std::numeric_limits<uint64_t>::max(), 1, jobsToSkip, std::set<std::string>());
       if (candidateJobs2.candidateFiles) {
         std::stringstream address;
         address << "someRequest-" << nextExpectedFseq;
@@ -164,8 +165,8 @@ TEST_F(ObjectStore, RetrieveQueueActivityCounts) {
   std::mt19937 gen((std::random_device())());
   // Create 1000 jobs references.
   std::list<cta::objectstore::RetrieveQueue::JobToAdd> jobsToAdd;
-  const size_t totalJobs = 100, shardSize=25, batchSize=10;
-  for (size_t i=0; i<totalJobs; i++) {
+  const size_t totalJobs = 100, shardSize = 25, batchSize = 10;
+  for (size_t i = 0; i < totalJobs; i++) {
     cta::objectstore::RetrieveQueue::JobToAdd jta;
     jta.copyNb = 1;
     jta.fSeq = i;
@@ -181,7 +182,8 @@ TEST_F(ObjectStore, RetrieveQueueActivityCounts) {
       std::string activity;
       if (!(i % 2)) {
         activity = "A";
-      } else {
+      }
+      else {
         activity = "B";
       }
       jta.activity = activity;
@@ -189,7 +191,7 @@ TEST_F(ObjectStore, RetrieveQueueActivityCounts) {
     jobsToAdd.push_back(jta);
   }
   // By construction, first job has lowest start time.
-  auto minStartTime=jobsToAdd.front().startTime;
+  auto minStartTime = jobsToAdd.front().startTime;
   std::string retrieveQueueAddress = agentRef.nextId("RetrieveQueue");
   {
     // Try to create the retrieve queue
@@ -205,9 +207,9 @@ TEST_F(ObjectStore, RetrieveQueueActivityCounts) {
     auto jobsToAddNow = jobsToAdd;
     while (jobsToAddNow.size()) {
       std::list<cta::objectstore::RetrieveQueue::JobToAdd> jobsBatch;
-      for (size_t i=0; i<batchSize; i++) {
+      for (size_t i = 0; i < batchSize; i++) {
         if (jobsToAddNow.size()) {
-          std::uniform_int_distribution<size_t> distrib(0, jobsToAddNow.size() -1);
+          std::uniform_int_distribution<size_t> distrib(0, jobsToAddNow.size() - 1);
           auto j = std::next(jobsToAddNow.begin(), distrib(gen));
           jobsBatch.emplace_back(*j);
           jobsToAddNow.erase(j);
@@ -232,19 +234,21 @@ TEST_F(ObjectStore, RetrieveQueueActivityCounts) {
     // File fSeqs are in [0, 99], 34 multiples of 3 (0 included) odds are activity A, evens are B, 17 each.
     ASSERT_EQ(2, jobsSummary.activityCounts.size());
     typedef decltype(jobsSummary.activityCounts.front()) acCount;
-    auto jsA = std::find_if(jobsSummary.activityCounts.begin(), jobsSummary.activityCounts.end(), [](const acCount &ac){return ac.activity == "A"; });
+    auto jsA = std::find_if(jobsSummary.activityCounts.begin(), jobsSummary.activityCounts.end(),
+                            [](const acCount& ac) { return ac.activity == "A"; });
     ASSERT_NE(jobsSummary.activityCounts.end(), jsA);
     ASSERT_EQ(17, jsA->count);
-    auto jsB = std::find_if(jobsSummary.activityCounts.begin(), jobsSummary.activityCounts.end(), [](const acCount &ac){return ac.activity == "B"; });
+    auto jsB = std::find_if(jobsSummary.activityCounts.begin(), jobsSummary.activityCounts.end(),
+                            [](const acCount& ac) { return ac.activity == "B"; });
     ASSERT_NE(jobsSummary.activityCounts.end(), jsB);
     ASSERT_EQ(17, jsB->count);
-    uint64_t nextExpectedFseq=0;
+    uint64_t nextExpectedFseq = 0;
     while (rq.getJobsSummary().jobs) {
-      auto candidateJobs = rq.getCandidateList(std::numeric_limits<uint64_t>::max(), 50, std::set<std::string>(),
-          std::set<std::string>());
+      auto candidateJobs =
+        rq.getCandidateList(std::numeric_limits<uint64_t>::max(), 50, std::set<std::string>(), std::set<std::string>());
       std::set<std::string> jobsToSkip;
       std::list<std::string> jobsToDelete;
-      for (auto &j: candidateJobs.candidates) {
+      for (auto& j : candidateJobs.candidates) {
         std::stringstream address;
         address << "someRequest-" << nextExpectedFseq;
         ASSERT_EQ(address.str(), j.address);
@@ -252,7 +256,8 @@ TEST_F(ObjectStore, RetrieveQueueActivityCounts) {
         jobsToDelete.emplace_back(j.address);
         nextExpectedFseq++;
       }
-      auto candidateJobs2 = rq.getCandidateList(std::numeric_limits<uint64_t>::max(), 1, jobsToSkip, std::set<std::string>());
+      auto candidateJobs2 =
+        rq.getCandidateList(std::numeric_limits<uint64_t>::max(), 1, jobsToSkip, std::set<std::string>());
       if (candidateJobs2.candidateFiles) {
         std::stringstream address;
         address << "someRequest-" << nextExpectedFseq;
@@ -262,13 +267,16 @@ TEST_F(ObjectStore, RetrieveQueueActivityCounts) {
       // We should empty the queue in 2 rounds. After the first one, we get the jobs 0-49 out.
       auto jobsSummary2 = rq.getJobsSummary();
       if (jobsSummary2.jobs) {
-        auto jsA2 = std::find_if(jobsSummary2.activityCounts.begin(), jobsSummary2.activityCounts.end(), [](const acCount &ac){return ac.activity == "A"; });
+        auto jsA2 = std::find_if(jobsSummary2.activityCounts.begin(), jobsSummary2.activityCounts.end(),
+                                 [](const acCount& ac) { return ac.activity == "A"; });
         ASSERT_NE(jobsSummary2.activityCounts.end(), jsA2);
         ASSERT_EQ(8, jsA2->count);
-        auto jsB2 = std::find_if(jobsSummary2.activityCounts.begin(), jobsSummary2.activityCounts.end(), [](const acCount &ac){return ac.activity == "B"; });
+        auto jsB2 = std::find_if(jobsSummary2.activityCounts.begin(), jobsSummary2.activityCounts.end(),
+                                 [](const acCount& ac) { return ac.activity == "B"; });
         ASSERT_NE(jobsSummary2.activityCounts.end(), jsB2);
         ASSERT_EQ(9, jsB2->count);
-      } else {
+      }
+      else {
         // Of course, we should have no activity.
         ASSERT_EQ(0, jobsSummary2.activityCounts.size());
       }
@@ -284,4 +292,4 @@ TEST_F(ObjectStore, RetrieveQueueActivityCounts) {
   ASSERT_FALSE(rq.exists());
 }
 
-}
+}  // namespace unitTests

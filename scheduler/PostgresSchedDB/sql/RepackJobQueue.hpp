@@ -59,131 +59,145 @@ struct RepackJobQueueRow {
   common::dataStructures::EntryLog createLog;
   time_t repackFinishedTime;
 
-  RepackJobQueueRow() : repackReqId(0), status(RepackJobStatus::RRS_Pending),
-   isAddCopies(true), isMove(true), totalFilesToRetrieve(0), totalBytesToRetrieve(0),
-   totalFilesToArchive(0), totalBytesToArchive(0), userProvidedFiles(0),
-   userProvidedBytes(0), retrievedFiles(0), retrievedBytes(0), archivedFiles(0),
-   archivedBytes(0), failedToRetrieveFiles(0), failedToRetrieveBytes(0),
-   failedToCreateArchiveReq(0), failedToArchiveFiles(0), failedToArchiveBytes(0),
-   lastExpandedFseq(0), isExpandFinished(false), isExpandStarted(false),
-   isComplete(false), isNoRecall(0), repackFinishedTime(0) { }
+  RepackJobQueueRow() :
+  repackReqId(0),
+  status(RepackJobStatus::RRS_Pending),
+  isAddCopies(true),
+  isMove(true),
+  totalFilesToRetrieve(0),
+  totalBytesToRetrieve(0),
+  totalFilesToArchive(0),
+  totalBytesToArchive(0),
+  userProvidedFiles(0),
+  userProvidedBytes(0),
+  retrievedFiles(0),
+  retrievedBytes(0),
+  archivedFiles(0),
+  archivedBytes(0),
+  failedToRetrieveFiles(0),
+  failedToRetrieveBytes(0),
+  failedToCreateArchiveReq(0),
+  failedToArchiveFiles(0),
+  failedToArchiveBytes(0),
+  lastExpandedFseq(0),
+  isExpandFinished(false),
+  isExpandStarted(false),
+  isComplete(false),
+  isNoRecall(0),
+  repackFinishedTime(0) {}
 
   /**
    * Constructor from row
    *
    * @param row  A single row from the current row of the rset
    */
-  RepackJobQueueRow(const rdbms::Rset &rset) {
-    *this = rset;
-  }
+  RepackJobQueueRow(const rdbms::Rset& rset) { *this = rset; }
 
-  RepackJobQueueRow& operator=(const rdbms::Rset &rset) {
-    repackReqId               = rset.columnUint64("REPACK_REQID");
-    vid                       = rset.columnString("VID");
-    bufferUrl                 = rset.columnString("BUFFER_URL");
-    status                    = from_string<RepackJobStatus>(
-                                rset.columnString("STATUS") );
-    isAddCopies               = rset.columnBool("IS_ADD_COPIES");
-    isMove                    = rset.columnBool("IS_MOVE");
-    totalFilesToRetrieve      = rset.columnUint64("TOTAL_FILES_TO_RETRIEVE");
-    totalBytesToRetrieve      = rset.columnUint64("TOTAL_BYTES_TO_RETRIEVE");
-    totalFilesToArchive       = rset.columnUint64("TOTAL_FILES_TO_ARCHIVE");
-    totalBytesToArchive       = rset.columnUint64("TOTAL_BYTES_TO_ARCHIVE");
-    userProvidedFiles         = rset.columnUint64("USER_PROVIDED_FILES");
-    userProvidedBytes         = rset.columnUint64("USER_PROVIDED_BYTES");
-    retrievedFiles            = rset.columnUint64("RETRIEVED_FILES");
-    retrievedBytes            = rset.columnUint64("RETRIEVED_BYTES");
-    archivedFiles             = rset.columnUint64("ARCHIVED_FILES");
-    archivedBytes             = rset.columnUint64("ARCHIVED_BYTES");
-    failedToRetrieveFiles     = rset.columnUint64("FAILED_TO_RETRIEVE_FILES");
-    failedToRetrieveBytes     = rset.columnUint64("FAILED_TO_RETRIEVE_BYTES");
-    failedToCreateArchiveReq  = rset.columnUint64("FAILED_TO_CREATE_ARCHIVE_REQ");
-    failedToArchiveFiles      = rset.columnUint64("FAILED_TO_ARCHIVE_FILES");
-    failedToArchiveBytes      = rset.columnUint64("FAILED_TO_ARCHIVE_BYTES");
-    lastExpandedFseq          = rset.columnUint64("LAST_EXPANDED_FSEQ");
-    isExpandFinished          = rset.columnBool("IS_EXPAND_FINISHED");
-    isExpandStarted           = rset.columnBool("IS_EXPAND_STARTED");
-    mountPolicyName           = rset.columnString("MOUNT_POLICY");
-    isComplete                = rset.columnBool("IS_COMPLETE");
-    isNoRecall                = rset.columnBool("IS_NO_RECALL");
-    subReqProtoBuf            = rset.columnBlob("SUBREQ_PB");
-    destInfoProtoBuf          = rset.columnBlob("DESTINFO_PB");
-    createLog.username        = rset.columnString("CREATE_USERNAME");
-    createLog.host            = rset.columnString("CREATE_HOST");
-    createLog.time            = rset.columnUint64("CREATE_TIME");
-    repackFinishedTime        = rset.columnUint64("REPACK_FINIHSED_TIME");
+  RepackJobQueueRow& operator=(const rdbms::Rset& rset) {
+    repackReqId = rset.columnUint64("REPACK_REQID");
+    vid = rset.columnString("VID");
+    bufferUrl = rset.columnString("BUFFER_URL");
+    status = from_string<RepackJobStatus>(rset.columnString("STATUS"));
+    isAddCopies = rset.columnBool("IS_ADD_COPIES");
+    isMove = rset.columnBool("IS_MOVE");
+    totalFilesToRetrieve = rset.columnUint64("TOTAL_FILES_TO_RETRIEVE");
+    totalBytesToRetrieve = rset.columnUint64("TOTAL_BYTES_TO_RETRIEVE");
+    totalFilesToArchive = rset.columnUint64("TOTAL_FILES_TO_ARCHIVE");
+    totalBytesToArchive = rset.columnUint64("TOTAL_BYTES_TO_ARCHIVE");
+    userProvidedFiles = rset.columnUint64("USER_PROVIDED_FILES");
+    userProvidedBytes = rset.columnUint64("USER_PROVIDED_BYTES");
+    retrievedFiles = rset.columnUint64("RETRIEVED_FILES");
+    retrievedBytes = rset.columnUint64("RETRIEVED_BYTES");
+    archivedFiles = rset.columnUint64("ARCHIVED_FILES");
+    archivedBytes = rset.columnUint64("ARCHIVED_BYTES");
+    failedToRetrieveFiles = rset.columnUint64("FAILED_TO_RETRIEVE_FILES");
+    failedToRetrieveBytes = rset.columnUint64("FAILED_TO_RETRIEVE_BYTES");
+    failedToCreateArchiveReq = rset.columnUint64("FAILED_TO_CREATE_ARCHIVE_REQ");
+    failedToArchiveFiles = rset.columnUint64("FAILED_TO_ARCHIVE_FILES");
+    failedToArchiveBytes = rset.columnUint64("FAILED_TO_ARCHIVE_BYTES");
+    lastExpandedFseq = rset.columnUint64("LAST_EXPANDED_FSEQ");
+    isExpandFinished = rset.columnBool("IS_EXPAND_FINISHED");
+    isExpandStarted = rset.columnBool("IS_EXPAND_STARTED");
+    mountPolicyName = rset.columnString("MOUNT_POLICY");
+    isComplete = rset.columnBool("IS_COMPLETE");
+    isNoRecall = rset.columnBool("IS_NO_RECALL");
+    subReqProtoBuf = rset.columnBlob("SUBREQ_PB");
+    destInfoProtoBuf = rset.columnBlob("DESTINFO_PB");
+    createLog.username = rset.columnString("CREATE_USERNAME");
+    createLog.host = rset.columnString("CREATE_HOST");
+    createLog.time = rset.columnUint64("CREATE_TIME");
+    repackFinishedTime = rset.columnUint64("REPACK_FINIHSED_TIME");
 
     return *this;
   }
 
-  void insert(Transaction &txn) const {
+  void insert(Transaction& txn) const {
     // setting repackReqId; todo
-    const char *const sql =
-      "INSERT INTO REPACK_JOB_QUEUE("
-        "VID,"
-        "BUFFER_URL,"
-        "STATUS,"
-        "IS_ADD_COPIES,"
-        "IS_MOVE,"
-        "TOTAL_FILES_TO_RETRIEVE,"
-        "TOTAL_BYTES_TO_RETRIEVE,"
-        "TOTAL_FILES_TO_ARCHIVE,"
-        "TOTAL_BYTES_TO_ARCHIVE,"
-        "USER_PROVIDED_FILES,"
-        "USER_PROVIDED_BYTES,"
-        "RETRIEVED_FILES,"
-        "RETRIEVED_BYTES,"
-        "ARCHIVED_FILES,"
-        "ARCHIVED_BYTES,"
-        "FAILED_TO_RETRIEVE_FILES,"
-        "FAILED_TO_RETRIEVE_BYTES,"
-        "FAILED_TO_CREATE_ARCHIVE_REQ,"
-        "FAILED_TO_ARCHIVE_FILES,"
-        "FAILED_TO_ARCHIVE_BYTES,"
-        "LAST_EXPANDED_FSEQ,"
-        "IS_EXPAND_FINISHED,"
-        "IS_EXPAND_STARTED,"
-        "MOUNT_POLICY,"
-        "IS_COMPLETE,"
-        "IS_NO_RECALL,"
-        "SUBREQ_PB,"
-        "DESTINFO_PB,"
-        "CREATE_USERNAME,"
-        "CREATE_HOST,"
-        "CREATE_TIME,"
-        "REPACK_FINISHED_TIME) VALUES ("
-        ":VID,"
-        ":BUFFER_URL,"
-        ":STATUS,"
-        ":IS_ADD_COPIES,"
-        ":IS_MOVE,"
-        ":TOTAL_FILES_TO_RETRIEVE,"
-        ":TOTAL_BYTES_TO_RETRIEVE,"
-        ":TOTAL_FILES_TO_ARCHIVE,"
-        ":TOTAL_BYTES_ARCHIVE,"
-        ":USER_PROVIDED_FILES,"
-        ":USER_PROVIDED_BYTES,"
-        ":RETRIEVED_FILES,"
-        ":RETRIEVED_BYTES,"
-        ":ARCHIVED_FILES,"
-        ":ARCHIVED_BYTES,"
-        ":FAILED_TO_RETRIEVE_FILES,"
-        ":FAILED_TO_RETRIEVE_BYTES,"
-        ":FAILED_TO_CREATE_ARCHIVE_REQ,"
-        ":FAILED_TO_ARCHIVE_FILES,"
-        ":FAILED_TO_ARCHIVE_BYTES,"
-        ":LAST_EXPANDED_FSEQ,"
-        ":IS_EXPAND_FINISHED,"
-        ":IS_EXPAND_STARTED,"
-        ":MOUNT_POLICY,"
-        ":IS_COMPLETE,"
-        ":IS_NO_RECALL,"
-        ":SUBREQ_PB,"
-        ":DESTINFO_PB,"
-        ":CREATE_USERNAME,"
-        ":CREATE_HOST,"
-        ":CREATE_TIME,"
-        ":REPACK_FINISHED_TIME)";
+    const char* const sql = "INSERT INTO REPACK_JOB_QUEUE("
+                            "VID,"
+                            "BUFFER_URL,"
+                            "STATUS,"
+                            "IS_ADD_COPIES,"
+                            "IS_MOVE,"
+                            "TOTAL_FILES_TO_RETRIEVE,"
+                            "TOTAL_BYTES_TO_RETRIEVE,"
+                            "TOTAL_FILES_TO_ARCHIVE,"
+                            "TOTAL_BYTES_TO_ARCHIVE,"
+                            "USER_PROVIDED_FILES,"
+                            "USER_PROVIDED_BYTES,"
+                            "RETRIEVED_FILES,"
+                            "RETRIEVED_BYTES,"
+                            "ARCHIVED_FILES,"
+                            "ARCHIVED_BYTES,"
+                            "FAILED_TO_RETRIEVE_FILES,"
+                            "FAILED_TO_RETRIEVE_BYTES,"
+                            "FAILED_TO_CREATE_ARCHIVE_REQ,"
+                            "FAILED_TO_ARCHIVE_FILES,"
+                            "FAILED_TO_ARCHIVE_BYTES,"
+                            "LAST_EXPANDED_FSEQ,"
+                            "IS_EXPAND_FINISHED,"
+                            "IS_EXPAND_STARTED,"
+                            "MOUNT_POLICY,"
+                            "IS_COMPLETE,"
+                            "IS_NO_RECALL,"
+                            "SUBREQ_PB,"
+                            "DESTINFO_PB,"
+                            "CREATE_USERNAME,"
+                            "CREATE_HOST,"
+                            "CREATE_TIME,"
+                            "REPACK_FINISHED_TIME) VALUES ("
+                            ":VID,"
+                            ":BUFFER_URL,"
+                            ":STATUS,"
+                            ":IS_ADD_COPIES,"
+                            ":IS_MOVE,"
+                            ":TOTAL_FILES_TO_RETRIEVE,"
+                            ":TOTAL_BYTES_TO_RETRIEVE,"
+                            ":TOTAL_FILES_TO_ARCHIVE,"
+                            ":TOTAL_BYTES_ARCHIVE,"
+                            ":USER_PROVIDED_FILES,"
+                            ":USER_PROVIDED_BYTES,"
+                            ":RETRIEVED_FILES,"
+                            ":RETRIEVED_BYTES,"
+                            ":ARCHIVED_FILES,"
+                            ":ARCHIVED_BYTES,"
+                            ":FAILED_TO_RETRIEVE_FILES,"
+                            ":FAILED_TO_RETRIEVE_BYTES,"
+                            ":FAILED_TO_CREATE_ARCHIVE_REQ,"
+                            ":FAILED_TO_ARCHIVE_FILES,"
+                            ":FAILED_TO_ARCHIVE_BYTES,"
+                            ":LAST_EXPANDED_FSEQ,"
+                            ":IS_EXPAND_FINISHED,"
+                            ":IS_EXPAND_STARTED,"
+                            ":MOUNT_POLICY,"
+                            ":IS_COMPLETE,"
+                            ":IS_NO_RECALL,"
+                            ":SUBREQ_PB,"
+                            ":DESTINFO_PB,"
+                            ":CREATE_USERNAME,"
+                            ":CREATE_HOST,"
+                            ":CREATE_TIME,"
+                            ":REPACK_FINISHED_TIME)";
 
     auto stmt = txn.conn().createStmt(sql);
     stmt.bindString(":VID", vid);
@@ -250,8 +264,8 @@ struct RepackJobQueueRow {
     params.add("mountPolicyName", mountPolicyName);
     params.add("isComplete", isComplete);
     params.add("isNoRecall", isNoRecall);
-//    params.add("subReqProtoBuf", subReqProtoBuf);
-//    params.add("destInfoProtoBuf", destInfoProtoBuf);
+    //    params.add("subReqProtoBuf", subReqProtoBuf);
+    //    params.add("destInfoProtoBuf", destInfoProtoBuf);
     params.add("createUsername", createLog.username);
     params.add("createHost", createLog.host);
     params.add("createTime", createLog.time);
@@ -268,47 +282,45 @@ struct RepackJobQueueRow {
    *
    * @return  result set
    */
-  static rdbms::Rset select(Transaction &txn, RepackJobStatus status, uint32_t limit) {
-
-    const char *const sql =
-    "SELECT "
-      "REPACK_REQID AS REPACK_REQID,"
-      "VID AS VID,"
-      "BUFFER_URL AS BUFFER_URL,"
-      "STATUS AS STATUS,"
-      "IS_ADD_COPIES AS IS_ADD_COPIES,"
-      "IS_MOVE AS IS_MOVE,"
-      "TOTAL_FILES_TO_RETRIEVE AS TOTAL_FILES_TO_RETRIEVE,"
-      "TOTAL_BYTES_TO_RETRIEVE AS TOTAL_BYTES_TO_RETRIEVE,"
-      "TOTAL_FILES_TO_ARCHIVE AS TOTAL_FILES_TO_ARCHIVE,"
-      "TOTAL_BYTES_TO_ARCHIVE AS TOTAL_BYTES_TO_ARCHIVE,"
-      "USER_PROVIDED_FILES AS USER_PROVIDED_FILES,"
-      "USER_PROVIDED_BYTES AS USER_PROVIDED_BYTES,"
-      "RETRIEVED_FILES AS RETRIEVED_FILES,"
-      "RETRIEVED_BYTES AS RETRIEVED_BYTES,"
-      "ARCHIVED_FILES AS ARCHIVED_FILES,"
-      "ARCHIVED_BYTES AS ARCHIVED_BYTES,"
-      "FAILED_TO_RETRIEVE_FILES AS FAILED_TO_RETRIEVE_FILES,"
-      "FAILED_TO_RETRIEVE_BYTES AS FAILED_TO_RETRIEVE_BYTES,"
-      "FAILED_TO_CREATE_ARCHIVE_REQ AS FAILED_TO_CREATE_ARCHIVE_REQ,"
-      "FAILED_TO_ARCHIVE_FILES AS FAILED_TO_ARCHIVE_FILES,"
-      "FAILED_TO_ARCHIVE_BYTES AS FAILED_TO_ARCHIVE_BYTES,"
-      "LAST_EXPANDED_FSEQ AS LAST_EXPANDED_FSEQ,"
-      "IS_EXPAND_FINISHED AS IS_EXPAND_FINISHED,"
-      "IS_EXPAND_STARTED AS IS_EXPAND_STARTED,"
-      "MOUNT_POLICY AS MOUNT_POLICY,"
-      "IS_COMPLETE AS IS_COMPLETE,"
-      "IS_NO_RECALL AS IS_NO_RECALL,"
-      "SUBREQ_PB AS SUBREQ_PB,"
-      "CREATE_USERNAME AS CREATE_USERNAME,"
-      "CREATE_HOST AS CREATE_HOST,"
-      "CREATE_TIME AS CREATE_TIME,"
-      "REPACK_FINISHED_TIME AS REPACK_FINISHED_TIME "
-    "FROM REPACK_JOB_QUEUE "
-    "WHERE "
-      "STATUS = :STATUS "
-    "ORDER BY REPACK_REQID "
-      "LIMIT :LIMIT";
+  static rdbms::Rset select(Transaction& txn, RepackJobStatus status, uint32_t limit) {
+    const char* const sql = "SELECT "
+                            "REPACK_REQID AS REPACK_REQID,"
+                            "VID AS VID,"
+                            "BUFFER_URL AS BUFFER_URL,"
+                            "STATUS AS STATUS,"
+                            "IS_ADD_COPIES AS IS_ADD_COPIES,"
+                            "IS_MOVE AS IS_MOVE,"
+                            "TOTAL_FILES_TO_RETRIEVE AS TOTAL_FILES_TO_RETRIEVE,"
+                            "TOTAL_BYTES_TO_RETRIEVE AS TOTAL_BYTES_TO_RETRIEVE,"
+                            "TOTAL_FILES_TO_ARCHIVE AS TOTAL_FILES_TO_ARCHIVE,"
+                            "TOTAL_BYTES_TO_ARCHIVE AS TOTAL_BYTES_TO_ARCHIVE,"
+                            "USER_PROVIDED_FILES AS USER_PROVIDED_FILES,"
+                            "USER_PROVIDED_BYTES AS USER_PROVIDED_BYTES,"
+                            "RETRIEVED_FILES AS RETRIEVED_FILES,"
+                            "RETRIEVED_BYTES AS RETRIEVED_BYTES,"
+                            "ARCHIVED_FILES AS ARCHIVED_FILES,"
+                            "ARCHIVED_BYTES AS ARCHIVED_BYTES,"
+                            "FAILED_TO_RETRIEVE_FILES AS FAILED_TO_RETRIEVE_FILES,"
+                            "FAILED_TO_RETRIEVE_BYTES AS FAILED_TO_RETRIEVE_BYTES,"
+                            "FAILED_TO_CREATE_ARCHIVE_REQ AS FAILED_TO_CREATE_ARCHIVE_REQ,"
+                            "FAILED_TO_ARCHIVE_FILES AS FAILED_TO_ARCHIVE_FILES,"
+                            "FAILED_TO_ARCHIVE_BYTES AS FAILED_TO_ARCHIVE_BYTES,"
+                            "LAST_EXPANDED_FSEQ AS LAST_EXPANDED_FSEQ,"
+                            "IS_EXPAND_FINISHED AS IS_EXPAND_FINISHED,"
+                            "IS_EXPAND_STARTED AS IS_EXPAND_STARTED,"
+                            "MOUNT_POLICY AS MOUNT_POLICY,"
+                            "IS_COMPLETE AS IS_COMPLETE,"
+                            "IS_NO_RECALL AS IS_NO_RECALL,"
+                            "SUBREQ_PB AS SUBREQ_PB,"
+                            "CREATE_USERNAME AS CREATE_USERNAME,"
+                            "CREATE_HOST AS CREATE_HOST,"
+                            "CREATE_TIME AS CREATE_TIME,"
+                            "REPACK_FINISHED_TIME AS REPACK_FINISHED_TIME "
+                            "FROM REPACK_JOB_QUEUE "
+                            "WHERE "
+                            "STATUS = :STATUS "
+                            "ORDER BY REPACK_REQID "
+                            "LIMIT :LIMIT";
 
     auto stmt = txn.conn().createStmt(sql);
     stmt.bindString(":STATUS", to_string(status));
@@ -316,9 +328,8 @@ struct RepackJobQueueRow {
 
     return stmt.executeQuery();
   }
-
 };
 
-} // namespace sql
-} // namespace postgresscheddb
-} // namespace cta
+}  // namespace sql
+}  // namespace postgresscheddb
+}  // namespace cta

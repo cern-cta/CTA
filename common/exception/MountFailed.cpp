@@ -17,10 +17,7 @@
 
 #include "MountFailed.hpp"
 
-
 // -----------------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------------
-cta::exception::MountFailed::MountFailed():
-  cta::exception::Exception() {
-}
+cta::exception::MountFailed::MountFailed() : cta::exception::Exception() {}

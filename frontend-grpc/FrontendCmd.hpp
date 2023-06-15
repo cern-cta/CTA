@@ -39,7 +39,7 @@ public:
    * executable.
    * @param argv The vector of command-line arguments.
    */
-  FrontendCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream) noexcept;
+  FrontendCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream) noexcept;
   ~FrontendCmd() noexcept = default;
   /**
    * The object's implementation of main() that should be called from the main()
@@ -52,18 +52,17 @@ public:
   int main(const int argc, char** argv);
 
 private:
-  std::istream &m_in; // Standard input stream
-  std::ostream &m_out; // Standard output stream
-  std::ostream &m_err; // Standard error stream
-  
-  std::string m_strExecName; // Executable name of this program
-  
-  // Print usage help
-  void printUsage(std::ostream &osHelp) const;
+  std::istream& m_in;   // Standard input stream
+  std::ostream& m_out;  // Standard output stream
+  std::ostream& m_err;  // Standard error stream
 
+  std::string m_strExecName;  // Executable name of this program
+
+  // Print usage help
+  void printUsage(std::ostream& osHelp) const;
 };
 
-} // namespace server
-} // namespace grpc
-} // namespace frontend
-} // namespace cta
+}  // namespace server
+}  // namespace grpc
+}  // namespace frontend
+}  // namespace cta

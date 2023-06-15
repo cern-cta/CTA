@@ -21,15 +21,13 @@
 
 namespace cta::exception {
 
-    class GrpcError : public cta::exception::Exception {
-
-    public:
-
-      /**
+class GrpcError : public cta::exception::Exception {
+public:
+  /**
        * Constructor
        */
-      GrpcError(const std::string &context, const bool embedBacktrace = true);
+  GrpcError(const std::string& context, const bool embedBacktrace = true);
 
-    }; // class GrpcError
+};  // class GrpcError
 
-} // namespace cta exception
+}  // namespace cta::exception

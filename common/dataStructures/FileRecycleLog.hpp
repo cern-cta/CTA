@@ -22,11 +22,11 @@
 
 #include "common/checksum/ChecksumBlob.hpp"
 
-namespace cta{
-namespace common{
-namespace dataStructures{
+namespace cta {
+namespace common {
+namespace dataStructures {
 
-struct  FileRecycleLog {
+struct FileRecycleLog {
   std::string vid;
   uint64_t fSeq;
   uint64_t blockId;
@@ -55,4 +55,6 @@ struct  FileRecycleLog {
   time_t recycleLogTime;
 };
 
-}}}
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

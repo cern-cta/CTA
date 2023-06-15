@@ -19,17 +19,20 @@
 #include "OStoreDB.hpp"
 #include "objectstore/Helpers.hpp"
 
-namespace cta { namespace ostoredb {
+namespace cta {
+namespace ostoredb {
 
 template<>
 void MemQueue<objectstore::ArchiveRequest, objectstore::ArchiveQueue>::specializedAddJobsToQueueAndCommit(
-  std::list<MemQueue<objectstore::ArchiveRequest, objectstore::ArchiveQueue>::JobAndRequest> & jobsToAdd,
-  objectstore::ArchiveQueue& queue, objectstore::AgentReference & agentReference, log::LogContext & logContext) {
+  std::list<MemQueue<objectstore::ArchiveRequest, objectstore::ArchiveQueue>::JobAndRequest>& jobsToAdd,
+  objectstore::ArchiveQueue& queue,
+  objectstore::AgentReference& agentReference,
+  log::LogContext& logContext) {
   std::list<objectstore::ArchiveQueue::JobToAdd> jtal;
   auto queueAddress = queue.getAddressIfSet();
-  for (auto & j: jobsToAdd) {
-    jtal.push_back({j.job, j.request.getAddressIfSet(), j.request.getArchiveFile().archiveFileID, j.request.getArchiveFile().fileSize,
-      j.request.getMountPolicy(), j.request.getEntryLog().time});
+  for (auto& j : jobsToAdd) {
+    jtal.push_back({j.job, j.request.getAddressIfSet(), j.request.getArchiveFile().archiveFileID,
+                    j.request.getArchiveFile().fileSize, j.request.getMountPolicy(), j.request.getEntryLog().time});
     // We pre-mark (in memory) request as being owned by the queue.
     // The actual commit of the request will happen after the queue's,
     // so the back reference will be valid.
@@ -41,36 +44,43 @@ void MemQueue<objectstore::ArchiveRequest, objectstore::ArchiveQueue>::specializ
 
 template<>
 void MemQueue<objectstore::RetrieveRequest, objectstore::RetrieveQueue>::specializedAddJobsToQueueAndCommit(
-  std::list<MemQueue<objectstore::RetrieveRequest, objectstore::RetrieveQueue>::JobAndRequest> & jobsToAdd,
-  objectstore::RetrieveQueue &queue, objectstore::AgentReference & agentReference, log::LogContext & logContext) {
+  std::list<MemQueue<objectstore::RetrieveRequest, objectstore::RetrieveQueue>::JobAndRequest>& jobsToAdd,
+  objectstore::RetrieveQueue& queue,
+  objectstore::AgentReference& agentReference,
+  log::LogContext& logContext) {
   std::list<objectstore::RetrieveQueue::JobToAdd> jtal;
   auto queueAddress = queue.getAddressIfSet();
-  for (auto & jta: jobsToAdd) {
+  for (auto& jta : jobsToAdd) {
     // We need to find the job corresponding to the copyNb
-    auto & job = jta.job;
-    auto & request = jta.request;
-    for (auto & j: request.getArchiveFile().tapeFiles) {
+    auto& job = jta.job;
+    auto& request = jta.request;
+    for (auto& j : request.getArchiveFile().tapeFiles) {
       if (j.copyNb == job.copyNb) {
         auto criteria = request.getRetrieveFileQueueCriteria();
         jtal.push_back({j.copyNb, j.fSeq, request.getAddressIfSet(), criteria.archiveFile.fileSize,
-            criteria.mountPolicy, request.getEntryLog().time, request.getActivity(), request.getDiskSystemName()});
+                        criteria.mountPolicy, request.getEntryLog().time, request.getActivity(),
+                        request.getDiskSystemName()});
         request.setActiveCopyNumber(j.copyNb);
         request.setOwner(queueAddress);
         goto jobAdded;
       }
     }
-  jobAdded:;
+jobAdded:;
   }
   queue.addJobsAndCommit(jtal, agentReference, logContext);
 }
 
 template<>
-void MemQueue<objectstore::ArchiveRequest,objectstore::ArchiveQueue>::specializedUpdateCachedQueueStats(objectstore::ArchiveQueue &queue) {}
+void MemQueue<objectstore::ArchiveRequest, objectstore::ArchiveQueue>::specializedUpdateCachedQueueStats(
+  objectstore::ArchiveQueue& queue) {}
 
 template<>
-void MemQueue<objectstore::RetrieveRequest,objectstore::RetrieveQueue>::specializedUpdateCachedQueueStats(objectstore::RetrieveQueue &queue) {
+void MemQueue<objectstore::RetrieveRequest, objectstore::RetrieveQueue>::specializedUpdateCachedQueueStats(
+  objectstore::RetrieveQueue& queue) {
   auto summary = queue.getJobsSummary();
-  objectstore::Helpers::updateRetrieveQueueStatisticsCache(queue.getVid(), summary.jobs, summary.bytes, summary.priority);
+  objectstore::Helpers::updateRetrieveQueueStatisticsCache(queue.getVid(), summary.jobs, summary.bytes,
+                                                           summary.priority);
 }
 
-}} // namespac ecta::ostoredb
+}  // namespace ostoredb
+}  // namespace cta

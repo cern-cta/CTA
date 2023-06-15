@@ -20,16 +20,12 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveFileQueueCriteria::
-  ArchiveFileQueueCriteria() {
-}
+cta::common::dataStructures::ArchiveFileQueueCriteria::ArchiveFileQueueCriteria() {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveFileQueueCriteria::ArchiveFileQueueCriteria(
-  const TapeCopyToPoolMap &copyToPoolMap,
-  const MountPolicy &mountPolicy):
-  copyToPoolMap(copyToPoolMap),
-  mountPolicy(mountPolicy) {
-}
+cta::common::dataStructures::ArchiveFileQueueCriteria::ArchiveFileQueueCriteria(const TapeCopyToPoolMap& copyToPoolMap,
+                                                                                const MountPolicy& mountPolicy) :
+copyToPoolMap(copyToPoolMap),
+mountPolicy(mountPolicy) {}

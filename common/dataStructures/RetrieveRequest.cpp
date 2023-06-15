@@ -27,48 +27,42 @@ namespace dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RetrieveRequest::RetrieveRequest(): archiveFileID(0), isVerifyOnly(false) {}
+RetrieveRequest::RetrieveRequest() : archiveFileID(0), isVerifyOnly(false) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool RetrieveRequest::operator==(const RetrieveRequest &rhs) const {
-  return requester==rhs.requester
-      && archiveFileID==rhs.archiveFileID
-      && dstURL==rhs.dstURL
-      && diskFileInfo==rhs.diskFileInfo
-      && creationLog==rhs.creationLog
-      && isVerifyOnly==rhs.isVerifyOnly
-      && vid==rhs.vid;
+bool RetrieveRequest::operator==(const RetrieveRequest& rhs) const {
+  return requester == rhs.requester && archiveFileID == rhs.archiveFileID && dstURL == rhs.dstURL &&
+         diskFileInfo == rhs.diskFileInfo && creationLog == rhs.creationLog && isVerifyOnly == rhs.isVerifyOnly &&
+         vid == rhs.vid;
 }
 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool RetrieveRequest::operator!=(const RetrieveRequest &rhs) const {
+bool RetrieveRequest::operator!=(const RetrieveRequest& rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const RetrieveRequest &obj) {
-  os << "(requester=" << obj.requester
-     << " archiveFileID=" << obj.archiveFileID
-     << " dstURL=" << obj.dstURL
-     << " diskFileInfo=" << obj.diskFileInfo
-     << " creationLog=" << obj.creationLog
+std::ostream& operator<<(std::ostream& os, const RetrieveRequest& obj) {
+  os << "(requester=" << obj.requester << " archiveFileID=" << obj.archiveFileID << " dstURL=" << obj.dstURL
+     << " diskFileInfo=" << obj.diskFileInfo << " creationLog=" << obj.creationLog
      << " isVerifyOnly=" << obj.isVerifyOnly;
-  if(obj.vid) os << " vid=" << *(obj.vid);
+  if (obj.vid) {
+    os << " vid=" << *(obj.vid);
+  }
   os << ")";
   return os;
 }
 
-
 void RetrieveRequest::appendFileSizeToDstURL(const uint64_t fileSize) {
-  cta::utils::appendParameterXRootFileURL(dstURL,"oss.asize",std::to_string(fileSize));
+  cta::utils::appendParameterXRootFileURL(dstURL, "oss.asize", std::to_string(fileSize));
 }
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

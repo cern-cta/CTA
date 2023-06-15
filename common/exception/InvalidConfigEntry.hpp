@@ -21,66 +21,61 @@
 
 #include <string>
 
+namespace cta {
+namespace exception {
 
-namespace cta { namespace exception {
-
-    /**
+/**
      * Invalid configuration entry exception.
      */
-    class InvalidConfigEntry : public cta::exception::Exception {
-      
-    public:
-      
-      /**
+class InvalidConfigEntry : public cta::exception::Exception {
+public:
+  /**
        * Constructor
        *
        * @param catagory   The category of the configuration entry.
        * @param entryName  The name of the configuration entry.
        * @param entryValue The (invalid) value of the configuration entry.
        */
-      InvalidConfigEntry(const char *const category,
-        const char *const entryName, const char *const entryValue);
+  InvalidConfigEntry(const char* const category, const char* const entryName, const char* const entryValue);
 
-      /**
+  /**
        * Trivial, but explicitely non-throwing destructor (required through
        * inheritence from std::exception) 
        */
-      virtual ~InvalidConfigEntry() {};
-      
-      /**
+  virtual ~InvalidConfigEntry() {};
+
+  /**
        * Returns the category of the configuration entry.
        */
-      const std::string &getEntryCategory();
+  const std::string& getEntryCategory();
 
-      /**
+  /**
        * Returns the name of the configuration entry.
        */
-      const std::string &getEntryName();
+  const std::string& getEntryName();
 
-      /**
+  /**
        * Returns the (invalid) value of the configuration entry.
        */
-      const std::string &getEntryValue();
+  const std::string& getEntryValue();
 
-
-    private:
-
-      /**
+private:
+  /**
        * The category of the configuration entry.
        */
-      const std::string m_entryCategory;
+  const std::string m_entryCategory;
 
-      /**
+  /**
        * The name of the configuration entry.
        */
-      const std::string m_entryName;
+  const std::string m_entryName;
 
-      /**
+  /**
        * The (invalid) value of the configuration entry.
        */
-      const std::string m_entryValue;
+  const std::string m_entryValue;
 
-    }; // class InvalidConfigEntry
+};  // class InvalidConfigEntry
 
-} } // namespace cta exception
-
+}  // namespace exception
+}  // namespace cta

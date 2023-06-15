@@ -19,8 +19,10 @@
 
 #include "Position.hpp"
 
-
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace rao {
 
 /**
  * This class holds the position informations about a file : its physical position (start and end) and
@@ -32,18 +34,18 @@ public:
    * Default constructor
    */
   FilePositionInfos();
-  FilePositionInfos(const FilePositionInfos & other);
-  FilePositionInfos & operator=(const FilePositionInfos & other);
+  FilePositionInfos(const FilePositionInfos& other);
+  FilePositionInfos& operator=(const FilePositionInfos& other);
   /**
    * Set the beginning of the file position
    * @param beginningPosition the beginning of the file position
    */
-  void setBeginningPosition(const Position & beginningPosition);
+  void setBeginningPosition(const Position& beginningPosition);
   /**
    * Set the end of the file position
    * @param endPosition the end of the file position
    */
-  void setEndPosition(const Position & endPosition);
+  void setEndPosition(const Position& endPosition);
   /**
    * Set the beginning of the file band
    * @param beginningBand the beginning of the file band
@@ -89,6 +91,7 @@ public:
    */
   uint8_t getEndLandingZone() const;
   virtual ~FilePositionInfos();
+
 private:
   Position m_beginningPosition;
   Position m_endPosition;
@@ -98,4 +101,7 @@ private:
   uint8_t m_endLandingZone = 0;
 };
 
-}}}}
+}  // namespace rao
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

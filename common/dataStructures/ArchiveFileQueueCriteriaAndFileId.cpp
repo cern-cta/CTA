@@ -20,18 +20,15 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId::
-  ArchiveFileQueueCriteriaAndFileId(): fileId(0) {
-}
+cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId::ArchiveFileQueueCriteriaAndFileId() : fileId(0) {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId::ArchiveFileQueueCriteriaAndFileId(
   const uint64_t fileId,
-  const TapeCopyToPoolMap &copyToPoolMap,
-  const MountPolicy &mountPolicy):
-  fileId(fileId),
-  copyToPoolMap(copyToPoolMap),
-  mountPolicy(mountPolicy) {
-}
+  const TapeCopyToPoolMap& copyToPoolMap,
+  const MountPolicy& mountPolicy) :
+fileId(fileId),
+copyToPoolMap(copyToPoolMap),
+mountPolicy(mountPolicy) {}

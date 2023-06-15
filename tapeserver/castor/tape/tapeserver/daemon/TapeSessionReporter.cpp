@@ -30,17 +30,17 @@ namespace daemon {
 //-----------------------------------------------------------------------------
 //constructor
 //------------------------------------------------------------------------------
-TapeSessionReporter::TapeSessionReporter(cta::tape::daemon::TapedProxy &tapeserverProxy,
-                                       const cta::tape::daemon::TpconfigLine &driveConfig, const std::string &hostname,
-                                       cta::log::LogContext lc)
-:
-  m_threadRunning(false),
-  m_tapeserverProxy(tapeserverProxy),
-  m_lc(lc),
-  m_server(hostname),
-  m_unitName(driveConfig.unitName),
-  m_logicalLibrary(driveConfig.logicalLibrary),
-  m_sessionPid(getpid()) {
+TapeSessionReporter::TapeSessionReporter(cta::tape::daemon::TapedProxy& tapeserverProxy,
+                                         const cta::tape::daemon::TpconfigLine& driveConfig,
+                                         const std::string& hostname,
+                                         cta::log::LogContext lc) :
+m_threadRunning(false),
+m_tapeserverProxy(tapeserverProxy),
+m_lc(lc),
+m_server(hostname),
+m_unitName(driveConfig.unitName),
+m_logicalLibrary(driveConfig.logicalLibrary),
+m_sessionPid(getpid()) {
   //change the thread's name in the log
   m_lc.pushOrReplace(cta::log::Param("thread", "TapeSessionReporter"));
 }
@@ -54,7 +54,7 @@ void TapeSessionReporter::finish() {
 
 //------------------------------------------------------------------------------
 //startThreads
-//------------------------------------------------------------------------------   
+//------------------------------------------------------------------------------
 void TapeSessionReporter::startThreads() {
   start();
   m_threadRunning = true;
@@ -62,31 +62,32 @@ void TapeSessionReporter::startThreads() {
 
 //------------------------------------------------------------------------------
 //waitThreads
-//------------------------------------------------------------------------------     
+//------------------------------------------------------------------------------
 void TapeSessionReporter::waitThreads() {
   try {
     wait();
     m_threadRunning = false;
-  } catch (const std::exception& e) {
+  }
+  catch (const std::exception& e) {
     cta::log::ScopedParamContainer sp(m_lc);
     sp.add("what", e.what());
     m_lc.log(cta::log::ERR, "error caught while waiting");
-  } catch (...) {
+  }
+  catch (...) {
     m_lc.log(cta::log::ERR, "unknown error while waiting");
   }
 }
 
 //------------------------------------------------------------------------------
 //reportState
-//------------------------------------------------------------------------------  
-void TapeSessionReporter::reportState(cta::tape::session::SessionState state,
-                                     cta::tape::session::SessionType type) {
+//------------------------------------------------------------------------------
+void TapeSessionReporter::reportState(cta::tape::session::SessionState state, cta::tape::session::SessionType type) {
   m_fifo.push(new ReportStateChange(state, type));
 }
 
 //------------------------------------------------------------------------------
 //run
-//------------------------------------------------------------------------------  
+//------------------------------------------------------------------------------
 void TapeSessionReporter::run() {
   while (true) {
     std::unique_ptr<Report> currentReport(m_fifo.pop());
@@ -95,7 +96,8 @@ void TapeSessionReporter::run() {
     }
     try {
       currentReport->execute(*this);
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
       cta::log::ScopedParamContainer sp(m_lc);
       sp.add("what", e.what());
       m_lc.log(cta::log::ERR, "TapeSessionReporter error caught");
@@ -117,17 +119,18 @@ void TapeSessionReporter::bailout() {
 // ReportStateChange::ReportStateChange())
 //------------------------------------------------------------------------------
 TapeSessionReporter::ReportStateChange::ReportStateChange(cta::tape::session::SessionState state,
-                                                         cta::tape::session::SessionType type) : m_state(state), m_type(type) {}
+                                                          cta::tape::session::SessionType type) :
+m_state(state),
+m_type(type) {}
 
 //------------------------------------------------------------------------------
 // ReportStateChange::execute())
-//------------------------------------------------------------------------------  
-void TapeSessionReporter::ReportStateChange::execute(TapeSessionReporter & parent) {
+//------------------------------------------------------------------------------
+void TapeSessionReporter::ReportStateChange::execute(TapeSessionReporter& parent) {
   parent.m_tapeserverProxy.reportState(m_state, m_type, parent.m_volume.vid);
 }
 
-}
-}
-}
-} // namespace castor::tape::tapeserver::daemon
-
+}  // namespace daemon
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

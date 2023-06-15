@@ -24,11 +24,11 @@ namespace cta {
 namespace log {
 
 class PriorityMaps {
-  
 public:
-  static const std::map<int,std::string> c_priorityToTextMap;
+  static const std::map<int, std::string> c_priorityToTextMap;
   static const std::map<std::string, int> c_configTextToPriorityMap;
   static std::string getPriorityText(const int priority);
 };
 
-}}
+}  // namespace log
+}  // namespace cta

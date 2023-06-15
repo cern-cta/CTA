@@ -27,23 +27,25 @@
 
 namespace cta {
 
-class OStoreDBInit
-{
+class OStoreDBInit {
 public:
-  OStoreDBInit(const std::string& client_process, const std::string& db_conn_str, log::Logger& log,
-    bool leaveNonEmptyAgentsBehind = false)
-  {
+  OStoreDBInit(const std::string& client_process,
+               const std::string& db_conn_str,
+               log::Logger& log,
+               bool leaveNonEmptyAgentsBehind = false) {
     // Initialise the ObjectStore Backend
     m_backend = std::move(objectstore::BackendFactory::createBackend(db_conn_str, log));
-    m_backendPopulator = std::make_unique<objectstore::BackendPopulator>(*m_backend, client_process, log::LogContext(log));
-    if(leaveNonEmptyAgentsBehind) {
+    m_backendPopulator =
+      std::make_unique<objectstore::BackendPopulator>(*m_backend, client_process, log::LogContext(log));
+    if (leaveNonEmptyAgentsBehind) {
       m_backendPopulator->leaveNonEmptyAgentsBehind();
     }
 
     try {
       // If the backend is a VFS, don't delete it on exit
-      dynamic_cast<objectstore::BackendVFS &>(*m_backend).noDeleteOnExit();
-    } catch (std::bad_cast &) {
+      dynamic_cast<objectstore::BackendVFS&>(*m_backend).noDeleteOnExit();
+    }
+    catch (std::bad_cast&) {
       // If not, never mind
     }
 
@@ -73,20 +75,19 @@ private:
    * before the AgentHeartbeatThread has been started.
    */
   struct AgentHeartbeatThreadDeleter {
-    void operator()(objectstore::AgentHeartbeatThread *aht) {
-      aht->stopAndWaitThread();
-    }
+    void operator()(objectstore::AgentHeartbeatThread* aht) { aht->stopAndWaitThread(); }
   };
+
   typedef std::unique_ptr<objectstore::AgentHeartbeatThread, AgentHeartbeatThreadDeleter> UniquePtrAgentHeartbeatThread;
 
   // Member variables
 
-  std::unique_ptr<objectstore::Backend>          m_backend;             //!< VFS backend for the objectstore DB
-  std::unique_ptr<objectstore::BackendPopulator> m_backendPopulator;    //!< Object used to populate the backend
-  UniquePtrAgentHeartbeatThread                  m_agentHeartbeat;      //!< Agent heartbeat thread
+  std::unique_ptr<objectstore::Backend> m_backend;                    //!< VFS backend for the objectstore DB
+  std::unique_ptr<objectstore::BackendPopulator> m_backendPopulator;  //!< Object used to populate the backend
+  UniquePtrAgentHeartbeatThread m_agentHeartbeat;                     //!< Agent heartbeat thread
 };
 
-typedef OStoreDBInit      SchedulerDBInit_t;
+typedef OStoreDBInit SchedulerDBInit_t;
 typedef OStoreDBWithAgent SchedulerDB_t;
 
-} // namespace cta
+}  // namespace cta

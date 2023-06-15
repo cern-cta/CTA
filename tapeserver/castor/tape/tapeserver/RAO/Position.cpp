@@ -17,28 +17,29 @@
 
 #include "Position.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace rao {
 
-Position::Position():m_wrap(0),m_lpos(0) {
-}
+Position::Position() : m_wrap(0), m_lpos(0) {}
 
-Position::Position(const Position& other){
-  if(this != &other){
+Position::Position(const Position& other) {
+  if (this != &other) {
     m_wrap = other.m_wrap;
     m_lpos = other.m_lpos;
   }
 }
 
-Position & Position::operator=(const Position& other){
-  if(this != &other){
+Position& Position::operator=(const Position& other) {
+  if (this != &other) {
     m_wrap = other.m_wrap;
     m_lpos = other.m_lpos;
   }
   return *this;
 }
 
-Position::~Position() {
-}
+Position::~Position() {}
 
 uint64_t Position::getLPos() const {
   return m_lpos;
@@ -56,5 +57,7 @@ void Position::setWrap(const uint32_t wrap) {
   m_wrap = wrap;
 }
 
-
-}}}}
+}  // namespace rao
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

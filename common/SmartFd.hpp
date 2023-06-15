@@ -28,7 +28,6 @@ namespace cta {
  */
 class SmartFd {
 public:
-
   /**
    * A pointer to a callback function that will called by the Smart
    * immediately after the SmartFd has closed the file-descriptor it owns.
@@ -95,7 +94,7 @@ public:
    *      the previous owner (obj).
    * </ul>
    */
-  SmartFd &operator=(SmartFd& obj) ;
+  SmartFd& operator=(SmartFd& obj);
 
   /**
    * Destructor.
@@ -117,10 +116,9 @@ public:
    *
    * @return The released file descriptor.
    */
-  int release() ;
+  int release();
 
 private:
-
   /**
    * The owned file descriptor.  A negative value means this SmartFd does not
    * own a file descriptor..
@@ -138,8 +136,8 @@ private:
    * copy of an object of this class.
    * Not implemented so that it cannot be called
    */
-  SmartFd(const SmartFd &obj) throw();
+  SmartFd(const SmartFd& obj) throw();
 
-}; // class SmartFd
+};  // class SmartFd
 
-} // namespace cta
+}  // namespace cta

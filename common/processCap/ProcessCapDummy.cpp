@@ -20,9 +20,7 @@
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::server::ProcessCapDummy::~ProcessCapDummy()
-  throw() {
-}
+cta::server::ProcessCapDummy::~ProcessCapDummy() throw() {}
 
 //------------------------------------------------------------------------------
 // getProcText
@@ -34,6 +32,6 @@ std::string cta::server::ProcessCapDummy::getProcText() {
 //------------------------------------------------------------------------------
 // setProcText
 //------------------------------------------------------------------------------
-void cta::server::ProcessCapDummy::setProcText(const std::string &text) {
+void cta::server::ProcessCapDummy::setProcText(const std::string& text) {
   m_text = text;
 }

@@ -21,8 +21,11 @@
 namespace cta {
 namespace catalogue {
 
-void DummyDriveConfigCatalogue::createTapeDriveConfig(const std::string &tapeDriveName, const std::string &category,
-  const std::string &keyName, const std::string &value, const std::string &source) {
+void DummyDriveConfigCatalogue::createTapeDriveConfig(const std::string& tapeDriveName,
+                                                      const std::string& category,
+                                                      const std::string& keyName,
+                                                      const std::string& value,
+                                                      const std::string& source) {
   throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
@@ -34,16 +37,20 @@ std::list<std::pair<std::string, std::string>> DummyDriveConfigCatalogue::getTap
   throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
-void DummyDriveConfigCatalogue::modifyTapeDriveConfig(const std::string &tapeDriveName, const std::string &category,
-  const std::string &keyName, const std::string &value, const std::string &source) {
-  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
-}
-std::optional<std::tuple<std::string, std::string, std::string>> DummyDriveConfigCatalogue::getTapeDriveConfig(
-  const std::string &tapeDriveName, const std::string &keyName) const {
+void DummyDriveConfigCatalogue::modifyTapeDriveConfig(const std::string& tapeDriveName,
+                                                      const std::string& category,
+                                                      const std::string& keyName,
+                                                      const std::string& value,
+                                                      const std::string& source) {
   throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
-void DummyDriveConfigCatalogue::deleteTapeDriveConfig(const std::string &tapeDriveName, const std::string &keyName) {
+std::optional<std::tuple<std::string, std::string, std::string>>
+  DummyDriveConfigCatalogue::getTapeDriveConfig(const std::string& tapeDriveName, const std::string& keyName) const {
+  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
+}
+
+void DummyDriveConfigCatalogue::deleteTapeDriveConfig(const std::string& tapeDriveName, const std::string& keyName) {
   throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 

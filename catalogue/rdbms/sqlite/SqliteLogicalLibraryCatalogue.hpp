@@ -29,12 +29,13 @@ class RdbmsCatalogue;
 
 class SqliteLogicalLibraryCatalogue : public RdbmsLogicalLibraryCatalogue {
 public:
-  SqliteLogicalLibraryCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
-    RdbmsCatalogue* rdbmsCatalogue);
+  SqliteLogicalLibraryCatalogue(log::Logger& log,
+                                std::shared_ptr<rdbms::ConnPool> connPool,
+                                RdbmsCatalogue* rdbmsCatalogue);
   ~SqliteLogicalLibraryCatalogue() override = default;
 
 private:
-  uint64_t getNextLogicalLibraryId(rdbms::Conn &conn) const override;
+  uint64_t getNextLogicalLibraryId(rdbms::Conn& conn) const override;
 };  // class SqliteFileRecycleLogCatalogue
 
 }  // namespace catalogue

@@ -39,18 +39,20 @@ class RdbmsCatalogue;
 
 class OracleTapeFileCatalogue : public RdbmsTapeFileCatalogue {
 public:
-  OracleTapeFileCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
-    RdbmsCatalogue *rdbmsCatalogue);
+  OracleTapeFileCatalogue(log::Logger& log, std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue);
   ~OracleTapeFileCatalogue() override = default;
 
-  void filesWrittenToTape(const std::set<TapeItemWrittenPointer> &event) override;
+  void filesWrittenToTape(const std::set<TapeItemWrittenPointer>& event) override;
 
 private:
-  void  copyTapeFileToFileRecyleLogAndDeleteTransaction(rdbms::Conn & conn,
-    const cta::common::dataStructures::ArchiveFile &file, const std::string &reason, utils::Timer *timer,
-    log::TimingList *timingList, log::LogContext & lc) const override;
+  void copyTapeFileToFileRecyleLogAndDeleteTransaction(rdbms::Conn& conn,
+                                                       const cta::common::dataStructures::ArchiveFile& file,
+                                                       const std::string& reason,
+                                                       utils::Timer* timer,
+                                                       log::TimingList* timingList,
+                                                       log::LogContext& lc) const override;
 
-  uint64_t selectTapeForUpdateAndGetLastFSeq(rdbms::Conn &conn, const std::string &vid);
+  uint64_t selectTapeForUpdateAndGetLastFSeq(rdbms::Conn& conn, const std::string& vid);
 
   /**
    * Batch inserts rows into the ARCHIVE_FILE table that correspond to the
@@ -68,7 +70,7 @@ private:
    * @param conn The database connection.
    * @param events The tape file written events.
    */
-  void idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const std::set<TapeFileWritten> &events);
+  void idempotentBatchInsertArchiveFiles(rdbms::Conn& conn, const std::set<TapeFileWritten>& events);
 
   /**
    * In the case we insert a TAPE_FILE that already has a copy on the catalogue (same copyNb),
@@ -80,7 +82,7 @@ private:
    * @param conn The database connection.
    * @returns the list of inserted fileRecycleLog
    */
-  std::list<cta::catalogue::InsertFileRecycleLog> insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Conn & conn);
+  std::list<cta::catalogue::InsertFileRecycleLog> insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Conn& conn);
 
 };  // class OracleTapeFileCatalogue
 

@@ -36,8 +36,10 @@ namespace disk {
 // DiskSystemList::at()
 //------------------------------------------------------------------------------
 const DiskSystem& DiskSystemList::at(const std::string& name) const {
-  auto dsi = std::find_if(begin(), end(), [&](const DiskSystem& ds){ return ds.name == name;});
-  if (dsi != end()) return *dsi;
+  auto dsi = std::find_if(begin(), end(), [&](const DiskSystem& ds) { return ds.name == name; });
+  if (dsi != end()) {
+    return *dsi;
+  }
   throw std::out_of_range("In DiskSystemList::at(): name not found.");
 }
 
@@ -47,17 +49,18 @@ const DiskSystem& DiskSystemList::at(const std::string& name) const {
 std::string DiskSystemList::getDSName(const std::string& fileURL) const {
   // First if the regexes have not been created yet, do so.
   if (m_pointersAndRegexes.empty() && size()) {
-    for (const auto &ds : *this) {
+    for (const auto& ds : *this) {
       m_pointersAndRegexes.emplace_back(ds, ds.fileRegexp);
     }
   }
   // Try and find the fileURL
   auto pri = std::find_if(m_pointersAndRegexes.begin(), m_pointersAndRegexes.end(),
-      [&](const PointerAndRegex & pr){ return !pr.regex.exec(fileURL).empty(); });
+                          [&](const PointerAndRegex& pr) { return !pr.regex.exec(fileURL).empty(); });
   if (pri != m_pointersAndRegexes.end()) {
     // We found a match. Let's move the pointer and regex to the front so next file will be faster (most likely).
-    if (pri != m_pointersAndRegexes.begin())
+    if (pri != m_pointersAndRegexes.begin()) {
       m_pointersAndRegexes.splice(m_pointersAndRegexes.begin(), m_pointersAndRegexes, pri);
+    }
     return pri->ds.name;
   }
   throw std::out_of_range("In DiskSystemList::getDSNAme(): not match for fileURL");
@@ -73,14 +76,16 @@ void DiskSystemList::setExternalFreeDiskSpaceScript(const std::string& path) {
 //------------------------------------------------------------------------------
 // DiskSystemList::getExternalFreeDiskSpaceScript()
 //------------------------------------------------------------------------------
-std::string DiskSystemList::getExternalFreeDiskSpaceScript() const{
+std::string DiskSystemList::getExternalFreeDiskSpaceScript() const {
   return m_externalFreeDiskSpaceScript;
 }
 
 //------------------------------------------------------------------------------
 // DiskSystemFreeSpaceList::fetchFileSystemFreeSpace()
 //------------------------------------------------------------------------------
-void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::string>& diskSystems, cta::catalogue::Catalogue &catalogue, log::LogContext & lc) {
+void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::string>& diskSystems,
+                                                       cta::catalogue::Catalogue& catalogue,
+                                                       log::LogContext& lc) {
   auto getDiskSystemFreeSpaceQueryURL = [](DiskSystem ds) {
     auto dsURL = ds.diskInstanceSpace.freeSpaceQueryURL;
     // Replace URLS starting in eosSpace with eos:{diskInstanceName}
@@ -95,11 +100,11 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
   cta::utils::Regex constantFreeSpaceDiskSystem("^constantFreeSpace:(.*)");
   // Key = diskSystemName, Value = failureReason
   std::map<std::string, cta::exception::Exception> failedToFetchDiskSystems;
-  for (auto const & ds : diskSystems) {
+  for (const auto& ds : diskSystems) {
     uint64_t freeSpace = 0;
     bool updateCatalogue = false;
-    auto &diskSystem = m_systemList.at(ds);
-    auto &diskInstanceSpace = diskSystem.diskInstanceSpace;
+    auto& diskSystem = m_systemList.at(ds);
+    auto& diskInstanceSpace = diskSystem.diskInstanceSpace;
     try {
       std::vector<std::string> regexResult;
       const auto currentTime = static_cast<uint64_t>(time(nullptr));
@@ -109,7 +114,7 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
         goto found;
       }
       updateCatalogue = true;
-      const auto &freeSpaceQueryUrl = getDiskSystemFreeSpaceQueryURL(diskSystem);
+      const auto& freeSpaceQueryUrl = getDiskSystemFreeSpaceQueryURL(diskSystem);
       regexResult = eosDiskSystem.exec(freeSpaceQueryUrl);
       if (regexResult.size()) {
         // Script, then EOS free space query
@@ -117,13 +122,17 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
           // Script is provided
           try {
             cta::disk::JSONDiskSystem jsoncDiskSystem(diskSystem);
-            freeSpace = fetchFreeDiskSpaceWithScript(m_systemList.getExternalFreeDiskSpaceScript(), jsoncDiskSystem.getJSON(), lc);
+            freeSpace = fetchFreeDiskSpaceWithScript(m_systemList.getExternalFreeDiskSpaceScript(),
+                                                     jsoncDiskSystem.getJSON(), lc);
             goto found;
-          } catch (const cta::disk::FreeDiskSpaceScriptException &ex) {
+          }
+          catch (const cta::disk::FreeDiskSpaceScriptException& ex) {
             cta::log::ScopedParamContainer spc(lc);
             spc.add("exceptionMsg", ex.getMessageValue());
-            std::string errorMsg = "In DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(), unable to get the EOS free space with the script "
-                    + m_systemList.getExternalFreeDiskSpaceScript() + ". Will run eos space ls -m to fetch the free space for backpressure";
+            std::string errorMsg = "In DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(), unable to get the EOS free "
+                                   "space with the script " +
+                                   m_systemList.getExternalFreeDiskSpaceScript() +
+                                   ". Will run eos space ls -m to fetch the free space for backpressure";
             lc.log(cta::log::INFO, errorMsg);
           }
         }
@@ -135,22 +144,24 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
         freeSpace = fetchConstantFreeSpace(regexResult.at(1), lc);
         goto found;
       }
-      throw cta::disk::FreeDiskSpaceException("In DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(): could not interpret free space query URL.");
-    } catch (const cta::disk::FreeDiskSpaceException &ex) {
+      throw cta::disk::FreeDiskSpaceException(
+        "In DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(): could not interpret free space query URL.");
+    }
+    catch (const cta::disk::FreeDiskSpaceException& ex) {
       failedToFetchDiskSystems[ds] = ex;
     }
-  found:
-    DiskSystemFreeSpace & entry = operator[](ds);
+found:
+    DiskSystemFreeSpace& entry = operator[](ds);
     entry.freeSpace = freeSpace;
     entry.fetchTime = ::time(nullptr);
     entry.targetedFreeSpace = m_systemList.at(ds).targetedFreeSpace;
 
     if (updateCatalogue) {
       catalogue.DiskInstanceSpace()->modifyDiskInstanceSpaceFreeSpace(diskInstanceSpace.name,
-        diskInstanceSpace.diskInstance, freeSpace);
+                                                                      diskInstanceSpace.diskInstance, freeSpace);
     }
   }
-  if(failedToFetchDiskSystems.size()){
+  if (failedToFetchDiskSystems.size()) {
     cta::disk::DiskSystemFreeSpaceListException ex;
     ex.m_failedDiskSystems = failedToFetchDiskSystems;
     throw ex;
@@ -160,14 +171,18 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
 //------------------------------------------------------------------------------
 // DiskSystemFreeSpaceList::fetchFileSystemFreeSpace()
 //------------------------------------------------------------------------------
-uint64_t DiskSystemFreeSpaceList::fetchFreeDiskSpace(const std::string& instanceAddress, const std::string &spaceName, log::LogContext & lc) {
-  threading::SubProcess sp("/usr/bin/eos", {"/usr/bin/eos", std::string("root://")+instanceAddress, "space", "ls", "-m"});
+uint64_t DiskSystemFreeSpaceList::fetchFreeDiskSpace(const std::string& instanceAddress,
+                                                     const std::string& spaceName,
+                                                     log::LogContext& lc) {
+  threading::SubProcess sp("/usr/bin/eos",
+                           {"/usr/bin/eos", std::string("root://") + instanceAddress, "space", "ls", "-m"});
   sp.wait();
   try {
-    exception::Errnum::throwOnNonZero(sp.exitValue(),
-        std::string("In DiskSystemFreeSpaceList::fetchFreeDiskSpace(), failed to call \"eos root://") + 
-        instanceAddress + " space ls -m\"");
-  } catch (exception::Exception & ex) {
+    exception::Errnum::throwOnNonZero(
+      sp.exitValue(), std::string("In DiskSystemFreeSpaceList::fetchFreeDiskSpace(), failed to call \"eos root://") +
+                        instanceAddress + " space ls -m\"");
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage() << " instanceAddress: " << instanceAddress << " stderr: " << sp.stderr();
     throw cta::disk::FreeDiskSpaceException(ex.getMessage().str());
   }
@@ -179,7 +194,7 @@ uint64_t DiskSystemFreeSpaceList::fetchFreeDiskSpace(const std::string& instance
   // Look for the result line for default space.
   std::istringstream spStdoutIss(sp.stdout());
   std::string defaultSpaceLine;
-  utils::Regex defaultSpaceRe("^.*name="+spaceName+" .*$");
+  utils::Regex defaultSpaceRe("^.*name=" + spaceName + " .*$");
   do {
     std::string spStdoutLine;
     std::getline(spStdoutIss, spStdoutLine);
@@ -189,40 +204,46 @@ uint64_t DiskSystemFreeSpaceList::fetchFreeDiskSpace(const std::string& instance
       goto spaceNameFound;
     }
   } while (!spStdoutIss.eof());
-  throw cta::disk::FreeDiskSpaceException("In DiskSystemFreeSpaceList::fetchFreeDiskSpace(): could not find the \""+spaceName+"\" in the eos space ls -m result.");
-  
+  throw cta::disk::FreeDiskSpaceException("In DiskSystemFreeSpaceList::fetchFreeDiskSpace(): could not find the \"" +
+                                          spaceName + "\" in the eos space ls -m result.");
+
 spaceNameFound:
   // Look for the parameters in the result line.
   utils::Regex rwSpaceRegex("sum.stat.statfs.freebytes\\?configstatus@rw=([0-9]+) ");
   auto rwSpaceRes = rwSpaceRegex.exec(defaultSpaceLine);
-  if (rwSpaceRes.empty())
-    throw cta::disk::FreeDiskSpaceException(
-        "In DiskSystemFreeSpaceList::fetchFreeDiskSpace(): failed to parse parameter sum.stat.statfs.capacity?configstatus@rw.");
+  if (rwSpaceRes.empty()) {
+    throw cta::disk::FreeDiskSpaceException("In DiskSystemFreeSpaceList::fetchFreeDiskSpace(): failed to parse "
+                                            "parameter sum.stat.statfs.capacity?configstatus@rw.");
+  }
   return utils::toUint64(rwSpaceRes.at(1));
 }
 
 //------------------------------------------------------------------------------
 // DiskSystemFreeSpaceList::fetchFileSystemFreeSpace()
 //------------------------------------------------------------------------------
-uint64_t DiskSystemFreeSpaceList::fetchConstantFreeSpace(const std::string& instanceAddress, log::LogContext & lc) {
+uint64_t DiskSystemFreeSpaceList::fetchConstantFreeSpace(const std::string& instanceAddress, log::LogContext& lc) {
   return utils::toUint64(instanceAddress);
 }
 
 //------------------------------------------------------------------------------
 // DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript()
 //------------------------------------------------------------------------------
-uint64_t DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript(const std::string& scriptPath, const std::string& jsonInput, log::LogContext& lc){
-  cta::threading::SubProcess sp(scriptPath,{scriptPath},jsonInput);
+uint64_t DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript(const std::string& scriptPath,
+                                                               const std::string& jsonInput,
+                                                               log::LogContext& lc) {
+  cta::threading::SubProcess sp(scriptPath, {scriptPath}, jsonInput);
   sp.wait();
   try {
     std::string errMsg = "In DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript(), failed to call \"" + scriptPath;
-    exception::Errnum::throwOnNonZero(sp.exitValue(),errMsg);
-  } catch (exception::Exception & ex) {
+    exception::Errnum::throwOnNonZero(sp.exitValue(), errMsg);
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage() << " scriptPath: " << scriptPath << " stderr: " << sp.stderr();
     throw cta::disk::FreeDiskSpaceScriptException(ex.getMessage().str());
   }
   if (sp.wasKilled()) {
-    std::string errMsg = "In DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript(): " + scriptPath + " killed by signal: ";
+    std::string errMsg =
+      "In DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript(): " + scriptPath + " killed by signal: ";
     exception::Exception ex(errMsg);
     ex.getMessage() << utils::toString(sp.killSignal());
     throw cta::disk::FreeDiskSpaceScriptException(ex.getMessage().str());
@@ -233,15 +254,22 @@ uint64_t DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript(const std::string
   std::string stdoutScript = spStdoutIss.str();
   try {
     jsonFreeSpace.buildFromJSON(stdoutScript);
-    std::string logMessage = "In DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript(), freeSpace returned from the script is: " + std::to_string(jsonFreeSpace.m_freeSpace); 
-    lc.log(log::DEBUG,logMessage);
+    std::string logMessage =
+      "In DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript(), freeSpace returned from the script is: " +
+      std::to_string(jsonFreeSpace.m_freeSpace);
+    lc.log(log::DEBUG, logMessage);
     return jsonFreeSpace.m_freeSpace;
-  } catch(const cta::exception::JSONObjectException &ex){
-    std::string errMsg = "In DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript(): the json received from the script "+ scriptPath + 
-            " json=" + stdoutScript + " could not be used to get the FreeSpace, the json to receive from the script should have the following format: " +
-            jsonFreeSpace.getExpectedJSONToBuildObject() + ".";
+  }
+  catch (const cta::exception::JSONObjectException& ex) {
+    std::string errMsg =
+      "In DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript(): the json received from the script " + scriptPath +
+      " json=" + stdoutScript +
+      " could not be used to get the FreeSpace, the json to receive from the script should have the following "
+      "format: " +
+      jsonFreeSpace.getExpectedJSONToBuildObject() + ".";
     throw cta::disk::FreeDiskSpaceScriptException(errMsg);
   }
 }
 
-}} // namespace cta::disk
+}  // namespace disk
+}  // namespace cta

@@ -21,9 +21,6 @@
 
 namespace cta {
 namespace postgresscheddb {
-namespace sql {
-
-
-} // namespace sql
-} // namespace postgresscheddb
-} // namespace cta
+namespace sql {}  // namespace sql
+}  // namespace postgresscheddb
+}  // namespace cta

@@ -29,11 +29,10 @@
 
 namespace unitTests {
 
-cta_catalogue_RequesterMountRuleTest::cta_catalogue_RequesterMountRuleTest()
-  : m_dummyLog("dummy", "dummy"),
-    m_admin(CatalogueTestUtils::getAdmin()),
-    m_diskInstance(CatalogueTestUtils::getDiskInstance()) {
-}
+cta_catalogue_RequesterMountRuleTest::cta_catalogue_RequesterMountRuleTest() :
+m_dummyLog("dummy", "dummy"),
+m_admin(CatalogueTestUtils::getAdmin()),
+m_diskInstance(CatalogueTestUtils::getDiskInstance()) {}
 
 void cta_catalogue_RequesterMountRuleTest::SetUp() {
   cta::log::LogContext dummyLc(m_dummyLog);
@@ -47,15 +46,15 @@ void cta_catalogue_RequesterMountRuleTest::TearDown() {
 TEST_P(cta_catalogue_RequesterMountRuleTest, createRequesterMountRule) {
   ASSERT_TRUE(m_catalogue->RequesterMountRule()->getRequesterMountRules().empty());
 
-  auto mountPolicyToAdd =CatalogueTestUtils::getMountPolicy1();
+  auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string comment = "Create mount rule for requester";
   const std::string requesterName = "requester_name";
   m_catalogue->RequesterMountRule()->createRequesterMountRule(m_admin, mountPolicyName, m_diskInstance.name,
-    requesterName, comment);
+                                                              requesterName, comment);
 
   const auto rules = m_catalogue->RequesterMountRule()->getRequesterMountRules();
   ASSERT_EQ(1, rules.size());
@@ -74,17 +73,18 @@ TEST_P(cta_catalogue_RequesterMountRuleTest, createRequesterMountRule) {
 TEST_P(cta_catalogue_RequesterMountRuleTest, createRequesterMountRule_same_twice) {
   ASSERT_TRUE(m_catalogue->RequesterMountRule()->getRequesterMountRules().empty());
 
-  auto mountPolicyToAdd =CatalogueTestUtils::getMountPolicy1();
+  auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string comment = "Create mount rule for requester";
   const std::string requesterName = "requester_name";
   m_catalogue->RequesterMountRule()->createRequesterMountRule(m_admin, mountPolicyName, m_diskInstance.name,
-    requesterName, comment);
+                                                              requesterName, comment);
   ASSERT_THROW(m_catalogue->RequesterMountRule()->createRequesterMountRule(m_admin, mountPolicyToAdd.name,
-    m_diskInstance.name, requesterName, comment), cta::exception::UserError);
+                                                                           m_diskInstance.name, requesterName, comment),
+               cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_RequesterMountRuleTest, createRequesterMountRule_non_existent_mount_policy) {
@@ -96,34 +96,36 @@ TEST_P(cta_catalogue_RequesterMountRuleTest, createRequesterMountRule_non_existe
   const std::string mountPolicyName = "non_existent_mount_policy";
   const std::string requesterName = "requester_name";
   ASSERT_THROW(m_catalogue->RequesterMountRule()->createRequesterMountRule(m_admin, mountPolicyName,
-    m_diskInstance.name, requesterName, comment), cta::exception::UserError);
+                                                                           m_diskInstance.name, requesterName, comment),
+               cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_RequesterMountRuleTest, createRequesterMountRule_non_existent_disk_instance) {
   ASSERT_TRUE(m_catalogue->RequesterMountRule()->getRequesterMountRules().empty());
 
-  auto mountPolicyToAdd =CatalogueTestUtils::getMountPolicy1();
+  auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
 
   const std::string comment = "Create mount rule for requester";
   const std::string requesterName = "requester_name";
   ASSERT_THROW(m_catalogue->RequesterMountRule()->createRequesterMountRule(m_admin, mountPolicyName,
-    m_diskInstance.name, requesterName, comment), cta::exception::UserError);
+                                                                           m_diskInstance.name, requesterName, comment),
+               cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_RequesterMountRuleTest, deleteRequesterMountRule) {
   ASSERT_TRUE(m_catalogue->RequesterMountRule()->getRequesterMountRules().empty());
 
-  auto mountPolicyToAdd =CatalogueTestUtils::getMountPolicy1();
+  auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string comment = "Create mount rule for requester";
   const std::string requesterName = "requester_name";
-  m_catalogue->RequesterMountRule()->createRequesterMountRule(m_admin, mountPolicyName,  m_diskInstance.name,
-    requesterName, comment);
+  m_catalogue->RequesterMountRule()->createRequesterMountRule(m_admin, mountPolicyName, m_diskInstance.name,
+                                                              requesterName, comment);
 
   const auto rules = m_catalogue->RequesterMountRule()->getRequesterMountRules();
   ASSERT_EQ(1, rules.size());
@@ -134,29 +136,29 @@ TEST_P(cta_catalogue_RequesterMountRuleTest, deleteRequesterMountRule) {
 
 TEST_P(cta_catalogue_RequesterMountRuleTest, deleteRequesterMountRule_non_existent) {
   ASSERT_TRUE(m_catalogue->RequesterMountRule()->getRequesterMountRules().empty());
-  ASSERT_THROW(m_catalogue->RequesterMountRule()->deleteRequesterMountRule("non_existent_disk_instance",
-    "non_existent_requester"), cta::exception::UserError);
+  ASSERT_THROW(
+    m_catalogue->RequesterMountRule()->deleteRequesterMountRule("non_existent_disk_instance", "non_existent_requester"),
+    cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_RequesterMountRuleTest, modifyRequesterMountRulePolicy) {
   ASSERT_TRUE(m_catalogue->RequesterMountRule()->getRequesterMountRules().empty());
 
-  auto mountPolicyToAdd =CatalogueTestUtils::getMountPolicy1();
+  auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string anotherMountPolicyName = "another_mount_policy";
 
-  auto anotherMountPolicy =CatalogueTestUtils::getMountPolicy1();
+  auto anotherMountPolicy = CatalogueTestUtils::getMountPolicy1();
   anotherMountPolicy.name = anotherMountPolicyName;
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,anotherMountPolicy);
-
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, anotherMountPolicy);
 
   const std::string comment = "Create mount rule for requester";
   const std::string requesterName = "requester_name";
   m_catalogue->RequesterMountRule()->createRequesterMountRule(m_admin, mountPolicyName, m_diskInstance.name,
-    requesterName, comment);
+                                                              requesterName, comment);
 
   {
     const auto rules = m_catalogue->RequesterMountRule()->getRequesterMountRules();
@@ -174,7 +176,7 @@ TEST_P(cta_catalogue_RequesterMountRuleTest, modifyRequesterMountRulePolicy) {
   }
 
   m_catalogue->RequesterMountRule()->modifyRequesterMountRulePolicy(m_admin, m_diskInstance.name, requesterName,
-    anotherMountPolicyName);
+                                                                    anotherMountPolicyName);
 
   {
     const auto rules = m_catalogue->RequesterMountRule()->getRequesterMountRules();
@@ -194,29 +196,30 @@ TEST_P(cta_catalogue_RequesterMountRuleTest, modifyRequesterMountRulePolicy) {
 TEST_P(cta_catalogue_RequesterMountRuleTest, modifyRequesterMountRulePolicy_nonExistentRequester) {
   ASSERT_TRUE(m_catalogue->RequesterMountRule()->getRequesterMountRules().empty());
 
-  auto mountPolicyToAdd =CatalogueTestUtils::getMountPolicy1();
+  auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string requesterName = "requester_name";
 
   ASSERT_THROW(m_catalogue->RequesterMountRule()->modifyRequesterMountRulePolicy(m_admin, m_diskInstance.name,
-    requesterName, mountPolicyName), cta::exception::UserError);
+                                                                                 requesterName, mountPolicyName),
+               cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_RequesterMountRuleTest, modifyRequesteMountRuleComment) {
   ASSERT_TRUE(m_catalogue->RequesterMountRule()->getRequesterMountRules().empty());
 
-  auto mountPolicyToAdd =CatalogueTestUtils::getMountPolicy1();
+  auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string comment = "Create mount rule for requester";
   const std::string requesterName = "requester_name";
   m_catalogue->RequesterMountRule()->createRequesterMountRule(m_admin, mountPolicyName, m_diskInstance.name,
-    requesterName, comment);
+                                                              requesterName, comment);
 
   {
     const auto rules = m_catalogue->RequesterMountRule()->getRequesterMountRules();
@@ -235,7 +238,7 @@ TEST_P(cta_catalogue_RequesterMountRuleTest, modifyRequesteMountRuleComment) {
 
   const std::string modifiedComment = "Modified comment";
   m_catalogue->RequesterMountRule()->modifyRequesteMountRuleComment(m_admin, m_diskInstance.name, requesterName,
-    modifiedComment);
+                                                                    modifiedComment);
 
   {
     const auto rules = m_catalogue->RequesterMountRule()->getRequesterMountRules();
@@ -260,8 +263,9 @@ TEST_P(cta_catalogue_RequesterMountRuleTest, modifyRequesteMountRuleComment_nonE
   const std::string requesterName = "requester_name";
   const std::string comment = "Comment";
 
-  ASSERT_THROW(m_catalogue->RequesterMountRule()->modifyRequesteMountRuleComment(m_admin,  m_diskInstance.name,
-    requesterName, comment), cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->RequesterMountRule()->modifyRequesteMountRuleComment(m_admin, m_diskInstance.name,
+                                                                                 requesterName, comment),
+               cta::exception::UserError);
 }
 
-} // namespace unitTests
+}  // namespace unitTests

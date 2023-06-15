@@ -42,21 +42,22 @@ class Catalogue;
   * The class only has private constructors as it is instanciated by
   * the Scheduler class.
   */
-class RetrieveMount: public TapeMount {
+class RetrieveMount : public TapeMount {
   friend class Scheduler;
+
 protected:
   /**
     * Constructor.
     * @param catalogue The file catalogue interface.
     */
-  explicit RetrieveMount(cta::catalogue::Catalogue &catalogue);
+  explicit RetrieveMount(cta::catalogue::Catalogue& catalogue);
 
   /**
     * Constructor.
     * @param catalogue The file catalogue interface.
     * @param dbMount The database representation of this mount.
     */
-  RetrieveMount(cta::catalogue::Catalogue &catalogue, std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbMount);
+  RetrieveMount(cta::catalogue::Catalogue& catalogue, std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbMount);
 
 public:
   CTA_GENERATE_EXCEPTION_CLASS(WrongMountType);
@@ -83,7 +84,6 @@ public:
     */
   std::optional<std::string> getActivity() const override;
 
-
   /**
     * Returns the mount transaction id.
     *
@@ -98,7 +98,7 @@ public:
     */
   uint32_t getNbFiles() const override;
 
-    /**
+  /**
     * Returns the tape pool of the tape to be mounted
     * @return The tape pool of the tape to be mounted
     */
@@ -151,18 +151,18 @@ public:
     * Report a drive status change
     */
   void setDriveStatus(cta::common::dataStructures::DriveStatus status,
-                      const std::optional<std::string> &reason = std::nullopt) override;
+                      const std::optional<std::string>& reason = std::nullopt) override;
 
   /**
     * Report a tape session statistics
     */
-  void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
+  void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) override;
 
   /**
     * Report a tape mounted event
     * @param logContext
     */
-  void setTapeMounted(log::LogContext &logContext) const override;
+  void setTapeMounted(log::LogContext& logContext) const override;
 
   /**
     * Indicates that the disk thread of the mount was completed. This
@@ -201,36 +201,35 @@ public:
     * when no more jobs can be found. Will return jobs (if available) until one
     * of the 2 criteria is fulfilled.
     */
-  virtual std::list<std::unique_ptr<RetrieveJob>> getNextJobBatch(uint64_t filesRequested,
-    uint64_t bytesRequested, log::LogContext &logContext);
+  virtual std::list<std::unique_ptr<RetrieveJob>>
+    getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext);
 
   /**
     * Requeues a batch of jobs in their respective queues
     * @param jobs The job batch
     * @param logContext
     */
-  virtual void requeueJobBatch(std::vector<std::unique_ptr<cta::RetrieveJob>> &jobs, log::LogContext &logContext);
+  virtual void requeueJobBatch(std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs, log::LogContext& logContext);
 
   /**
     * Puts the queue associated to this retrieve mount to sleep
     */
-  virtual void putQueueToSleep(const std::string &diskSystemName, const uint64_t sleepTime, log::LogContext &logContext);
-
+  virtual void
+    putQueueToSleep(const std::string& diskSystemName, const uint64_t sleepTime, log::LogContext& logContext);
 
   /**
     * Reserves space in the disk space buffer to the drive of this mount
     * @param request the disk space reservation request
     * @param logContext
     */
-  virtual bool reserveDiskSpace(const cta::DiskSpaceReservationRequest &request, log::LogContext& logContext);
+  virtual bool reserveDiskSpace(const cta::DiskSpaceReservationRequest& request, log::LogContext& logContext);
 
   /**
     * Performs the disk space reservation logic for the request and mount, but does not reserve space in the catalogue
     * @param request the disk space reservation request
     * @param logContext
     */
-  virtual bool testReserveDiskSpace(const cta::DiskSpaceReservationRequest &request, log::LogContext& logContext);
-
+  virtual bool testReserveDiskSpace(const cta::DiskSpaceReservationRequest& request, log::LogContext& logContext);
 
   /**
     * Wait and complete reporting of a batch of jobs successes. The per jobs handling has
@@ -241,15 +240,15 @@ public:
     * @param successfulRetrieveJobs the jobs to report
     * @param logContext
     */
-  virtual void flushAsyncSuccessReports(std::queue<std::unique_ptr<cta::RetrieveJob> > & successfulRetrieveJobs, cta::log::LogContext &logContext);
-
+  virtual void flushAsyncSuccessReports(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
+                                        cta::log::LogContext& logContext);
 
   /**
     * Creates a disk reporter for the retrieve job (this is a wrapper).
     * @param URL: report address
     * @return pointer to the reporter created.
     */
-  disk::DiskReporter * createDiskReporter(std::string & URL);
+  disk::DiskReporter* createDiskReporter(std::string& URL);
 
   void setExternalFreeDiskSpaceScript(const std::string& name);
 
@@ -257,7 +256,7 @@ public:
     * Adds a disk system to the list of disk systems to skip for this mount
     * @param diskSystem The disk system
     */
-  virtual void addDiskSystemToSkip(const cta::SchedulerDatabase::RetrieveMount::DiskSystemToSkip &diskSystem);
+  virtual void addDiskSystemToSkip(const cta::SchedulerDatabase::RetrieveMount::DiskSystemToSkip& diskSystem);
 
   /**
     * Destructor.
@@ -296,7 +295,7 @@ private:
   /**
     * A pointer to the file catalogue.
     */
-  cta::catalogue::Catalogue &m_catalogue;
+  cta::catalogue::Catalogue& m_catalogue;
 
   /**
     * The name of the script that will be executed

@@ -17,10 +17,7 @@
 
 #include "common/exception/MissingOperand.hpp"
 
-
 // -----------------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------------
-cta::exception::MissingOperand::MissingOperand():
-  cta::exception::Exception() {
-}
+cta::exception::MissingOperand::MissingOperand() : cta::exception::Exception() {}

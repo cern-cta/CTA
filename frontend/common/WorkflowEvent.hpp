@@ -26,8 +26,8 @@ namespace frontend {
 class WorkflowEvent {
 public:
   WorkflowEvent(const frontend::FrontendService& frontendService,
-    const common::dataStructures::SecurityIdentity& clientIdentity,
-    const eos::Notification& event);
+                const common::dataStructures::SecurityIdentity& clientIdentity,
+                const eos::Notification& event);
 
   ~WorkflowEvent() = default;
 
@@ -47,29 +47,30 @@ private:
    * @param[in]     event      Workflow event and metadata received from client
    * @param[out]    response   Response protobuf to return to client
    */
-  void processOPENW         (xrd::Response& response);    //!< Open for write event
-  void processCREATE        (xrd::Response& response);    //!< New archive file ID event
-  void processCLOSEW        (xrd::Response& response);    //!< Archive file event
-  void processPREPARE       (xrd::Response& response);    //!< Retrieve file event
-  void processABORT_PREPARE (xrd::Response& response);    //!< Abort retrieve file event
-  void processDELETE        (xrd::Response& response);    //!< Delete file event
-  void processUPDATE_FID    (xrd::Response& response);    //!< Update disk file ID event
+  void processOPENW(xrd::Response& response);          //!< Open for write event
+  void processCREATE(xrd::Response& response);         //!< New archive file ID event
+  void processCLOSEW(xrd::Response& response);         //!< Archive file event
+  void processPREPARE(xrd::Response& response);        //!< Retrieve file event
+  void processABORT_PREPARE(xrd::Response& response);  //!< Abort retrieve file event
+  void processDELETE(xrd::Response& response);         //!< Delete file event
+  void processUPDATE_FID(xrd::Response& response);     //!< Update disk file ID event
 
   /*!
    * Throw an exception for empty protocol buffer strings
    */
   void checkIsNotEmptyString(const std::string& value, const std::string& name) const {
-    if(value.empty()) {
+    if (value.empty()) {
       throw exception::PbException("Protocol buffer field " + name + " is an empty string.");
     }
   }
 
-  const eos::Notification                     m_event;                      //!< Workflow Event protocol buffer
-  common::dataStructures::SecurityIdentity    m_cliIdentity;                //!< Client identity: username, host, authentication
-  catalogue::Catalogue                       &m_catalogue;                  //!< Reference to CTA Catalogue
-  cta::Scheduler                             &m_scheduler;                  //!< Reference to CTA Scheduler
-  log::LogContext                             m_lc;                         //!< CTA Log Context
-  std::string                                 m_verificationMountPolicy;    //!< Verification mount policy
+  const eos::Notification m_event;                         //!< Workflow Event protocol buffer
+  common::dataStructures::SecurityIdentity m_cliIdentity;  //!< Client identity: username, host, authentication
+  catalogue::Catalogue& m_catalogue;                       //!< Reference to CTA Catalogue
+  cta::Scheduler& m_scheduler;                             //!< Reference to CTA Scheduler
+  log::LogContext m_lc;                                    //!< CTA Log Context
+  std::string m_verificationMountPolicy;                   //!< Verification mount policy
 };
 
-}} // namespace cta::frontend
+}  // namespace frontend
+}  // namespace cta

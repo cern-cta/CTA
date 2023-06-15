@@ -25,14 +25,10 @@ namespace mediachanger {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RmcUnmountMsgBody::RmcUnmountMsgBody():
-  uid(0),
-  gid(0),
-  drvOrd(0),
-  force(0) {
+RmcUnmountMsgBody::RmcUnmountMsgBody() : uid(0), gid(0), drvOrd(0), force(0) {
   memset(unusedLoader, '\0', sizeof(unusedLoader));
   memset(vid, '\0', sizeof(vid));
 }
 
-} // namespace mediachnager
-} // namespace cta
+}  // namespace mediachanger
+}  // namespace cta

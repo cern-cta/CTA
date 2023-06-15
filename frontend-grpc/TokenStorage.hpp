@@ -14,7 +14,7 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
- 
+
 #pragma once
 
 #include <unordered_map>
@@ -27,7 +27,6 @@ namespace grpc {
 namespace server {
 
 class TokenStorage {
-
 public:
   TokenStorage() = default;
   ~TokenStorage() = default;
@@ -39,16 +38,15 @@ public:
    * Token validation & decoding
    */
   bool validate(const std::string& strToken) const;
-  
+
   // TODO: removing a token
-  
+
 private:
   std::unordered_map<std::string, std::string> m_umapTokens;
   mutable std::mutex m_mtxLockStorage;
-  
 };
 
-} // namespace server
-} // namespace grpc
-} // namespace frontend
-} // namespace cta
+}  // namespace server
+}  // namespace grpc
+}  // namespace frontend
+}  // namespace cta

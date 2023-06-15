@@ -26,9 +26,8 @@ namespace rdbms {
  * An exception class representing an unexpected encounter with a nullptr database
  * value (not to be confused with a nullptr C/C++ pointer).
  */
-class NullDbValue: public exception::Exception {
+class NullDbValue : public exception::Exception {
 public:
-
   /**
    * Constructor.
    *
@@ -37,9 +36,9 @@ public:
    * @param embedBacktrace whether to embed a backtrace of where the
    * exception was throw in the message
    */
-  NullDbValue(const std::string &context = "", const bool embedBacktrace = true);
+  NullDbValue(const std::string& context = "", const bool embedBacktrace = true);
 
-}; // class NullDbValue
+};  // class NullDbValue
 
-} // namespace rdbms
-} // namespace cta
+}  // namespace rdbms
+}  // namespace cta

@@ -31,27 +31,22 @@ namespace rdbms {
  * database connection.
  */
 struct ConnAndStmts {
-
   /**
    * Constructor.
    */
-  ConnAndStmts() {
-  }
+  ConnAndStmts() {}
 
   /**
    * Deletion of the copy constructor.
    */
-  ConnAndStmts(ConnAndStmts &) = delete;
+  ConnAndStmts(ConnAndStmts&) = delete;
 
   /**
    * Move constructor.
    *
    * @param other The other object.
    */
-  ConnAndStmts(ConnAndStmts &&other):
-    conn(std::move(other.conn)),
-    stmtPool(std::move(other.stmtPool)) {
-  }
+  ConnAndStmts(ConnAndStmts&& other) : conn(std::move(other.conn)), stmtPool(std::move(other.stmtPool)) {}
 
   /**
    * Equality operator.
@@ -59,9 +54,7 @@ struct ConnAndStmts {
    * @param rhs The object on the right hand side of the operator.
    * @return True if equal.
    */
-  bool operator==(const ConnAndStmts &rhs) {
-    return conn.get() == rhs.conn.get();
-  }
+  bool operator==(const ConnAndStmts& rhs) { return conn.get() == rhs.conn.get(); }
 
   /**
    * Inequality operator.
@@ -69,9 +62,7 @@ struct ConnAndStmts {
    * @param rhs The object on the right hand side of the operator.
    * @return True if not equal.
    */
-  bool operator!=(const ConnAndStmts &rhs) {
-    return !operator==(rhs);
-  }
+  bool operator!=(const ConnAndStmts& rhs) { return !operator==(rhs); }
 
   /**
    * The database connection.
@@ -91,7 +82,7 @@ struct ConnAndStmts {
    */
   std::unique_ptr<StmtPool> stmtPool;
 
-}; // class ConnAndStmts
+};  // class ConnAndStmts
 
-} // namespace rdbms
-} // namespace cta
+}  // namespace rdbms
+}  // namespace cta

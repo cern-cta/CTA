@@ -31,16 +31,16 @@ namespace castor {
 namespace tape {
 namespace tapeFile {
 
-EnstoreFileReader::EnstoreFileReader(const std::unique_ptr<ReadSession> &rs, const cta::RetrieveJob &fileToRecall)
-  : FileReader(rs, fileToRecall) {
+EnstoreFileReader::EnstoreFileReader(const std::unique_ptr<ReadSession>& rs, const cta::RetrieveJob& fileToRecall) :
+FileReader(rs, fileToRecall) {
   setPositioningMethod(cta::PositioningMethod::ByFSeq);  // Enstore did not store block IDs
 }
 
-void EnstoreFileReader::setPositioningMethod(const cta::PositioningMethod &newMethod) {
+void EnstoreFileReader::setPositioningMethod(const cta::PositioningMethod& newMethod) {
   m_positionCommandCode = newMethod;
 }
 
-void EnstoreFileReader::positionByFseq(const cta::RetrieveJob &fileToRecall) {
+void EnstoreFileReader::positionByFseq(const cta::RetrieveJob& fileToRecall) {
   /* This is a bit tricky since CTA is starts with fSeq=1 before reading the label
      and Enstore store fSeq=1 as the first file AFTER the label
   */
@@ -58,19 +58,23 @@ void EnstoreFileReader::positionByFseq(const cta::RetrieveJob &fileToRecall) {
   if (fSeq == 1) {
     m_session->m_drive.rewind();
     m_session->m_drive.spaceFileMarksForward(1);
-  } else if (fSeq_delta == -1) {
-      // do nothing we are in the correct place
-  } else if (fSeq_delta >= 0) {
-    m_session->m_drive.spaceFileMarksForward(static_cast<uint32_t>(fSeq_delta+1));
-  } else { //fSeq_delta < 0
+  }
+  else if (fSeq_delta == -1) {
+    // do nothing we are in the correct place
+  }
+  else if (fSeq_delta >= 0) {
+    m_session->m_drive.spaceFileMarksForward(static_cast<uint32_t>(fSeq_delta + 1));
+  }
+  else {  //fSeq_delta < 0
     m_session->m_drive.spaceFileMarksBackwards(static_cast<uint32_t>(abs(fSeq_delta)));
-    m_session->m_drive.readFileMark("[EnstoreFileReader::position] Reading file mark right before the header of the file we want to read");
+    m_session->m_drive.readFileMark(
+      "[EnstoreFileReader::position] Reading file mark right before the header of the file we want to read");
   }
   m_session->setCurrentFseq(fSeq);
-  setBlockSize(1024*1024);  // Enstore used 1M size blocks for T10K, M8, and LTO-8 tapes
+  setBlockSize(1024 * 1024);  // Enstore used 1M size blocks for T10K, M8, and LTO-8 tapes
 }
 
-void EnstoreFileReader::positionByBlockID(const cta::RetrieveJob &fileToRecall) {
+void EnstoreFileReader::positionByBlockID(const cta::RetrieveJob& fileToRecall) {
   throw NotImplemented("EnstoreFileReader::positionByBlockID() Cannot be implemented. Enstore did not store block IDs");
 }
 
@@ -83,7 +87,7 @@ void EnstoreFileReader::setBlockSize(size_t uiBlockSize) {
   }
 }
 
-size_t EnstoreFileReader::readNextDataBlock(void *data, const size_t size) {
+size_t EnstoreFileReader::readNextDataBlock(void* data, const size_t size) {
   if (size != m_currentBlockSize) {
     throw WrongBlockSize();
   }
@@ -94,7 +98,8 @@ size_t EnstoreFileReader::readNextDataBlock(void *data, const size_t size) {
    */
   if (size < CPIO::MAXHEADERSIZE) {
     std::ostringstream ex_str;
-    ex_str << "Invalid block size: " << size << " - " << "the block size is smaller then max size of a CPIO header: " << CPIO::MAXHEADERSIZE;
+    ex_str << "Invalid block size: " << size << " - "
+           << "the block size is smaller then max size of a CPIO header: " << CPIO::MAXHEADERSIZE;
     throw TapeFormatError(ex_str.str());
   }
   if (!m_cpioHeader.valid()) {
@@ -112,30 +117,33 @@ size_t EnstoreFileReader::readNextDataBlock(void *data, const size_t size) {
       bytes_read = m_cpioHeader.m_ui64FileSize;
       m_ui64CPIODataSize = bytes_read;
       memcpy(data, pucTmpData + uiHeaderSize, bytes_read);
-    } else {
+    }
+    else {
       memcpy(data, pucTmpData + uiHeaderSize, uiResiduesSize);
       bytes_read = uiResiduesSize;
       m_ui64CPIODataSize = bytes_read >= m_cpioHeader.m_ui64FileSize ? m_cpioHeader.m_ui64FileSize : bytes_read;
     }
     delete[] pucTmpData;
-
-  } else {
+  }
+  else {
     bytes_read = m_session->m_drive.readBlock(data, size);
     m_ui64CPIODataSize += bytes_read;
 
     if (m_ui64CPIODataSize > m_cpioHeader.m_ui64FileSize && bytes_read > 0) {
       // File is ready
-      if(bytes_read < (m_ui64CPIODataSize - m_cpioHeader.m_ui64FileSize)) {
-	    bytes_read = 0;
-      } else {
-    	bytes_read = bytes_read - (m_ui64CPIODataSize - m_cpioHeader.m_ui64FileSize);
+      if (bytes_read < (m_ui64CPIODataSize - m_cpioHeader.m_ui64FileSize)) {
+        bytes_read = 0;
+      }
+      else {
+        bytes_read = bytes_read - (m_ui64CPIODataSize - m_cpioHeader.m_ui64FileSize);
       }
     }
   }
 
   // end of file reached!
   if (!bytes_read) {
-    m_session->setCurrentFseq(m_session->getCurrentFseq() + 2); // +1 for after the current file, +1 for label being file #1
+    m_session->setCurrentFseq(m_session->getCurrentFseq() +
+                              2);  // +1 for after the current file, +1 for label being file #1
     m_session->setCurrentFilePart(PartOfFile::Header);
     // the following is a normal day exception: end of files exceptions are thrown at the end of each file being read
     throw EndOfFile();

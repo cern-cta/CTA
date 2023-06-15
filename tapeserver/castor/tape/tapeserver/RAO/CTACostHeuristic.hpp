@@ -19,13 +19,16 @@
 
 #include "CostHeuristic.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace rao {
 
 /**
  * This class implements the CTA CostHeuristic that is documented here:
  * https://codimd.web.cern.ch/3adcp34cTqiv7tZJHpdxgA#
  */
-class CTACostHeuristic : public CostHeuristic{
+class CTACostHeuristic : public CostHeuristic {
 public:
   CTACostHeuristic();
   /**
@@ -33,9 +36,11 @@ public:
    * The coefficients used by this method are 
    * documented here : https://codimd.web.cern.ch/3adcp34cTqiv7tZJHpdxgA#Cost-Coefficients-calculated-by-Germ%C3%A1n-for-LTO-7M-media
    */
-  double getCost(const FilePositionInfos & file1, const FilePositionInfos & file2) const override;
+  double getCost(const FilePositionInfos& file1, const FilePositionInfos& file2) const override;
   virtual ~CTACostHeuristic();
-
 };
 
-}}}}
+}  // namespace rao
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

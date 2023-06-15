@@ -32,20 +32,22 @@ namespace dataStructures {
 class DesiredDriveState {
 public:
   DesiredDriveState();
-  DesiredDriveState(const DesiredDriveState & ds);
-  DesiredDriveState & operator=(const DesiredDriveState & ds);
-  bool up;        ///< Should the drive be up?
-  bool forceDown; ///< Should going down preempt an existig mount?
-  std::optional<std::string> reason; ///< The reason why operators put the drive down or up
-  std::optional<std::string> comment; ///< General informations about the drive given by the operators
-  bool operator==(const DesiredDriveState &rhs) const {
-    return up == rhs.up && forceDown == rhs.forceDown;
-  }
+  DesiredDriveState(const DesiredDriveState& ds);
+  DesiredDriveState& operator=(const DesiredDriveState& ds);
+  bool up;                             ///< Should the drive be up?
+  bool forceDown;                      ///< Should going down preempt an existig mount?
+  std::optional<std::string> reason;   ///< The reason why operators put the drive down or up
+  std::optional<std::string> comment;  ///< General informations about the drive given by the operators
+
+  bool operator==(const DesiredDriveState& rhs) const { return up == rhs.up && forceDown == rhs.forceDown; }
+
   static std::string c_tpsrvPrefixComment;
-  void setReasonFromLogMsg(const int logLevel, const std::string & msg);
-  static std::string generateReasonFromLogMsg(const int logLevel, const std::string & msg);
+  void setReasonFromLogMsg(const int logLevel, const std::string& msg);
+  static std::string generateReasonFromLogMsg(const int logLevel, const std::string& msg);
 };
 
-std::ostream &operator<<(std::ostream& os, const DesiredDriveState& obj);
+std::ostream& operator<<(std::ostream& os, const DesiredDriveState& obj);
 
-}}} // namespace cta::common::dataStructures
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

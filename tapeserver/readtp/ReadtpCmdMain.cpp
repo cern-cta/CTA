@@ -25,26 +25,24 @@
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int main(const int argc, char *const *const argv) {
-
+int main(const int argc, char* const* const argv) {
   const std::string tapeConfigFile = "/etc/cta/cta-taped.conf";
 
   char buf[256];
   std::string hostName;
   if (gethostname(buf, sizeof(buf))) {
     hostName = "UNKNOWN";
-  } else {
+  }
+  else {
     buf[sizeof(buf) - 1] = '\0';
     hostName = buf;
   }
   cta::log::StdoutLogger log(hostName, "cta-readtp");
   cta::log::DummyLogger dummyLog("dummy", "dummy");
-  const cta::tape::daemon::TapedConfiguration tapeConfig
-    = cta::tape::daemon::TapedConfiguration::createFromCtaConf(tapeConfigFile);
-  cta::mediachanger::RmcProxy rmcProxy(
-    tapeConfig.rmcPort.value(),
-    tapeConfig.rmcNetTimeout.value(),
-    tapeConfig.rmcRequestAttempts.value());
+  const cta::tape::daemon::TapedConfiguration tapeConfig =
+    cta::tape::daemon::TapedConfiguration::createFromCtaConf(tapeConfigFile);
+  cta::mediachanger::RmcProxy rmcProxy(tapeConfig.rmcPort.value(), tapeConfig.rmcNetTimeout.value(),
+                                       tapeConfig.rmcRequestAttempts.value());
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, log);
 
   cta::tapeserver::readtp::ReadtpCmd cmd(std::cin, std::cout, std::cerr, log, dummyLog, mc);

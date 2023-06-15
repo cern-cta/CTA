@@ -23,8 +23,7 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-CatalogueFactory:: ~CatalogueFactory() {
-}
+CatalogueFactory::~CatalogueFactory() {}
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

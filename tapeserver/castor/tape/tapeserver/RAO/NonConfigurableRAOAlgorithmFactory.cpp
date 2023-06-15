@@ -19,32 +19,35 @@
 #include "LinearRAOAlgorithm.hpp"
 #include "RandomRAOAlgorithm.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace rao {
 
-NonConfigurableRAOAlgorithmFactory::NonConfigurableRAOAlgorithmFactory(const RAOParams::RAOAlgorithmType & type) : m_type(type) {
-}
+NonConfigurableRAOAlgorithmFactory::NonConfigurableRAOAlgorithmFactory(const RAOParams::RAOAlgorithmType& type) :
+m_type(type) {}
 
-NonConfigurableRAOAlgorithmFactory::~NonConfigurableRAOAlgorithmFactory() {
-}
+NonConfigurableRAOAlgorithmFactory::~NonConfigurableRAOAlgorithmFactory() {}
 
 std::unique_ptr<RAOAlgorithm> NonConfigurableRAOAlgorithmFactory::createRAOAlgorithm() {
   std::unique_ptr<RAOAlgorithm> ret;
-  switch(m_type){
-    case RAOParams::linear:{
+  switch (m_type) {
+    case RAOParams::linear: {
       ret.reset(new LinearRAOAlgorithm());
       break;
     }
-    case RAOParams::random:{
+    case RAOParams::random: {
       ret.reset(new RandomRAOAlgorithm());
       break;
     }
-    default:
-    {
+    default: {
       throw cta::exception::Exception("In NoParamRAOAlgorithmFactory::createRAOAlgorithm(): unknown type of algorithm");
     }
   }
   return ret;
 }
 
-
-}}}}
+}  // namespace rao
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

@@ -27,9 +27,8 @@ class CatalogueFactory;
 /**
  * CTA catalogue class to be used for unit testing.
  */
-class SchemaCreatingSqliteCatalogue: public SqliteCatalogue {
+class SchemaCreatingSqliteCatalogue : public SqliteCatalogue {
 public:
-
   /**
    * Constructor.
    *
@@ -42,11 +41,10 @@ public:
    * connections to the underlying relational database for the sole purpose of
    * listing archive files.
    */
-  SchemaCreatingSqliteCatalogue(
-    log::Logger &log,
-    const std::string &filename,
-    const uint64_t nbConns,
-    const uint64_t nbArchiveFileListingConns);
+  SchemaCreatingSqliteCatalogue(log::Logger& log,
+                                const std::string& filename,
+                                const uint64_t nbConns,
+                                const uint64_t nbArchiveFileListingConns);
 
   /**
    * Destructor.
@@ -54,7 +52,6 @@ public:
   virtual ~SchemaCreatingSqliteCatalogue() override;
 
 private:
-
   /**
    * Creates the database schema.
    */
@@ -71,9 +68,9 @@ private:
    * @param sqlStmts Multiple SQL statements separated by semicolons.
    * Statements that themselves contain one more semicolons are not supported.
    */
-  void executeNonQueries(rdbms::Conn &conn, const std::string &sqlStmts);
+  void executeNonQueries(rdbms::Conn& conn, const std::string& sqlStmts);
 
-}; // class SchemaCreatingSqliteCatalogue
+};  // class SchemaCreatingSqliteCatalogue
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

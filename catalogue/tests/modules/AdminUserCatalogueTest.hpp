@@ -28,7 +28,7 @@
 
 namespace unitTests {
 
-class cta_catalogue_AdminUserTest : public ::testing::TestWithParam<cta::catalogue::CatalogueFactory **> {
+class cta_catalogue_AdminUserTest : public ::testing::TestWithParam<cta::catalogue::CatalogueFactory**> {
 public:
   cta_catalogue_AdminUserTest();
 

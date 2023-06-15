@@ -26,7 +26,7 @@ class Transaction {
 public:
   CTA_GENERATE_EXCEPTION_CLASS(SQLError);
 
-  Transaction(rdbms::ConnPool &connPool);
+  Transaction(rdbms::ConnPool& connPool);
 
   /**
    * Prohibit copy construction
@@ -50,7 +50,7 @@ public:
   /**
    * Prohibit copy assignment
    */
-  Transaction &operator=(const Transaction &) = delete;
+  Transaction& operator=(const Transaction&) = delete;
 
   /**
    * Move assignment operator
@@ -58,9 +58,9 @@ public:
    * @param rhs The object on the right-hand side of the operator
    * @return This object
    */
-  Transaction &operator=(Transaction &&rhs);
+  Transaction& operator=(Transaction&& rhs);
 
-  rdbms::Conn &conn();
+  rdbms::Conn& conn();
 
   /**
    * Take out a global advisory transaction lock
@@ -82,10 +82,9 @@ public:
   void abort();
 
 private:
-  
   rdbms::Conn m_conn;
   bool m_begin;
 };
 
-} // namespace postgresscheddb
-} // namespace cta
+}  // namespace postgresscheddb
+}  // namespace cta

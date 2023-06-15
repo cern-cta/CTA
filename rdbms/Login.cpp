@@ -33,11 +33,11 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // s_fileFormat
 //------------------------------------------------------------------------------
-const char *Login::s_fileFormat = "one of "
-  "in_memory, "
-  "oracle:username/password@database, "
-  "sqlite:filename, "
-  "postgresql:[connectinfo | URI]";
+const char* Login::s_fileFormat = "one of "
+                                  "in_memory, "
+                                  "oracle:username/password@database, "
+                                  "sqlite:filename, "
+                                  "postgresql:[connectinfo | URI]";
 
 const std::string Login::s_hiddenPassword = "******";
 
@@ -49,33 +49,28 @@ const std::string Login::DbTypeAndConnectionDetails::postgresql = "postgresql";
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-Login::Login():
-  dbType(DBTYPE_NONE),
-  port(0) {
-}
+Login::Login() : dbType(DBTYPE_NONE), port(0) {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-Login::Login(
-  const DbType type,
-  const std::string &user,
-  const std::string &passwd,
-  const std::string &db,
-  const std::string &host,
-  const uint16_t p):
-  dbType(type),
-  username(user),
-  password(passwd),
-  database(db),
-  hostname(host),
-  port(p) {
-}
+Login::Login(const DbType type,
+             const std::string& user,
+             const std::string& passwd,
+             const std::string& db,
+             const std::string& host,
+             const uint16_t p) :
+dbType(type),
+username(user),
+password(passwd),
+database(db),
+hostname(host),
+port(p) {}
 
 //------------------------------------------------------------------------------
 // parseFile
 //------------------------------------------------------------------------------
-Login Login::parseFile(const std::string &filename) {
+Login Login::parseFile(const std::string& filename) {
   try {
     std::ifstream file(filename);
     if (!file) {
@@ -83,16 +78,17 @@ Login Login::parseFile(const std::string &filename) {
     }
 
     return parseStream(file);
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string("Failed to parse database login file " + filename + ": " +
-      ex.getMessage().str()));
+  }
+  catch (exception::Exception& ex) {
+    throw exception::Exception(
+      std::string("Failed to parse database login file " + filename + ": " + ex.getMessage().str()));
   }
 }
 
 //------------------------------------------------------------------------------
 // parseStream
 //------------------------------------------------------------------------------
-Login Login::parseStream(std::istream &inputStream) {
+Login Login::parseStream(std::istream& inputStream) {
   const std::list<std::string> lines = readNonEmptyLines(inputStream);
 
   if (1 != lines.size()) {
@@ -104,11 +100,10 @@ Login Login::parseStream(std::istream &inputStream) {
   return parseString(connectionString);
 }
 
-
 //------------------------------------------------------------------------------
 // parseStream
 //------------------------------------------------------------------------------
-Login Login::parseString(const std::string &connectionString) {
+Login Login::parseString(const std::string& connectionString) {
   if (connectionString.empty()) {
     throw exception::Exception("Invalid connection string: Empty string");
   }
@@ -117,22 +112,25 @@ Login Login::parseString(const std::string &connectionString) {
 
   if (typeAndDetails.dbTypeStr == DbTypeAndConnectionDetails::in_memory) {
     return parseInMemory(typeAndDetails.connectionDetails);
-  } else if (typeAndDetails.dbTypeStr == DbTypeAndConnectionDetails::oracle) {
+  }
+  else if (typeAndDetails.dbTypeStr == DbTypeAndConnectionDetails::oracle) {
     return parseOracle(typeAndDetails.connectionDetails);
-  } else if (typeAndDetails.dbTypeStr == DbTypeAndConnectionDetails::sqlite) {
+  }
+  else if (typeAndDetails.dbTypeStr == DbTypeAndConnectionDetails::sqlite) {
     return parseSqlite(typeAndDetails.connectionDetails);
-  } else if (typeAndDetails.dbTypeStr == DbTypeAndConnectionDetails::postgresql) {
+  }
+  else if (typeAndDetails.dbTypeStr == DbTypeAndConnectionDetails::postgresql) {
     return parsePostgresql(typeAndDetails.connectionDetails);
   }
 
   throw exception::Exception(std::string("Invalid connection string: Unknown database type ") +
-    typeAndDetails.dbTypeStr);
+                             typeAndDetails.dbTypeStr);
 }
 
 //------------------------------------------------------------------------------
 // parseDbTypeAndConnectionDetails
 //------------------------------------------------------------------------------
-Login::DbTypeAndConnectionDetails Login::parseDbTypeAndConnectionDetails(const std::string &connectionString) {
+Login::DbTypeAndConnectionDetails Login::parseDbTypeAndConnectionDetails(const std::string& connectionString) {
   DbTypeAndConnectionDetails dbTypeAndConnectionDetails;
 
   // Parsing "databaseType:connectionDetails"
@@ -148,8 +146,7 @@ Login::DbTypeAndConnectionDetails Login::parseDbTypeAndConnectionDetails(const s
 //------------------------------------------------------------------------------
 // readNonEmptyLines
 //------------------------------------------------------------------------------
-std::list<std::string> Login::readNonEmptyLines(std::istream &inputStream) {
-
+std::list<std::string> Login::readNonEmptyLines(std::istream& inputStream) {
   std::list<std::string> lines;
   std::string line;
 
@@ -182,7 +179,7 @@ std::list<std::string> Login::readNonEmptyLines(std::istream &inputStream) {
 //------------------------------------------------------------------------------
 // parseInMemory
 //------------------------------------------------------------------------------
-Login Login::parseInMemory(const std::string &connectionDetails) {
+Login Login::parseInMemory(const std::string& connectionDetails) {
   if (!connectionDetails.empty()) {
     throw exception::Exception(std::string("Invalid connection string: Correct format is ") + s_fileFormat);
   }
@@ -198,37 +195,37 @@ void Login::setInMemoryConnectionString() {
 //------------------------------------------------------------------------------
 // parseOracle
 //------------------------------------------------------------------------------
-Login Login::parseOracle(const std::string &connectionDetails) {
+Login Login::parseOracle(const std::string& connectionDetails) {
   std::vector<std::string> userPassAndDbTokens;
   utils::splitString(connectionDetails, '@', userPassAndDbTokens);
   if (2 != userPassAndDbTokens.size()) {
     throw exception::Exception(std::string("Invalid connection string: Correct format is ") + s_fileFormat);
   }
-  const std::string &userAndPass = userPassAndDbTokens[0];
-  const std::string &db = userPassAndDbTokens[1];
+  const std::string& userAndPass = userPassAndDbTokens[0];
+  const std::string& db = userPassAndDbTokens[1];
 
   std::vector<std::string> userAndPassTokens;
   utils::splitString(userAndPass, '/', userAndPassTokens);
   if (2 != userAndPassTokens.size()) {
     throw exception::Exception(std::string("Invalid connection string: Correct format is ") + s_fileFormat);
   }
-  const std::string &user = userAndPassTokens[0];
-  const std::string &pass = userAndPassTokens[1];
+  const std::string& user = userAndPassTokens[0];
+  const std::string& pass = userAndPassTokens[1];
 
   Login login(DBTYPE_ORACLE, user, pass, db, "", 0);
   login.setOracleConnectionString(user, db);
   return login;
 }
 
-void Login::setOracleConnectionString(const std::string & user, const std::string & db) {
-  connectionString = Login::DbTypeAndConnectionDetails::oracle+":"+user+"/"+s_hiddenPassword+"@"+db;
+void Login::setOracleConnectionString(const std::string& user, const std::string& db) {
+  connectionString = Login::DbTypeAndConnectionDetails::oracle + ":" + user + "/" + s_hiddenPassword + "@" + db;
 }
 
 //------------------------------------------------------------------------------
 // parseSqlite
 //------------------------------------------------------------------------------
-Login Login::parseSqlite(const std::string &connectionDetails) {
-  const std::string &filename = connectionDetails;
+Login Login::parseSqlite(const std::string& connectionDetails) {
+  const std::string& filename = connectionDetails;
 
   if (filename.empty()) {
     throw exception::Exception(std::string("Invalid connection string: Correct format is ") + s_fileFormat);
@@ -239,25 +236,26 @@ Login Login::parseSqlite(const std::string &connectionDetails) {
   return login;
 }
 
-void Login::setSqliteConnectionString(const std::string & filename) {
-  connectionString = Login::DbTypeAndConnectionDetails::sqlite+":"+filename;
+void Login::setSqliteConnectionString(const std::string& filename) {
+  connectionString = Login::DbTypeAndConnectionDetails::sqlite + ":" + filename;
 }
 
 //------------------------------------------------------------------------------
 // parsePostgresql
 //------------------------------------------------------------------------------
-Login Login::parsePostgresql(const std::string &connectionDetails) {
+Login Login::parsePostgresql(const std::string& connectionDetails) {
   Login login(DBTYPE_POSTGRESQL, "", "", connectionDetails, "", 0);
   login.setPostgresqlConnectionString(connectionDetails);
   return login;
 }
 
 void Login::setPostgresqlConnectionString(const std::string& connectionDetails) {
-  connectionString = Login::DbTypeAndConnectionDetails::postgresql+":";
+  connectionString = Login::DbTypeAndConnectionDetails::postgresql + ":";
   if (!postgresqlHasPassword(connectionDetails)) {
     // No password displayed so no need to hide it
     connectionString += connectionDetails;
-  } else {
+  }
+  else {
     cta::utils::Regex regex2("(postgresql://.*:)(.*)(@.*)");
     std::vector<std::string> result2 = regex2.exec(connectionDetails);
     connectionString += result2[1] + s_hiddenPassword + result2[3];

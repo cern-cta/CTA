@@ -34,7 +34,7 @@ struct ReadtpCmdLineArgs {
    * True if the usage message should be printed.
    */
   bool help;
-  
+
   /**
    * The tape VID to read.
    */
@@ -44,10 +44,10 @@ struct ReadtpCmdLineArgs {
    * Sequence of file fSeqs to read.
    */
   TapeFseqRangeList m_fSeqRangeList;
-    
+
   /**
    * The destination file list url.
-   */  
+   */
   std::string m_destinationFileListURL;
 
   /**
@@ -62,16 +62,16 @@ struct ReadtpCmdLineArgs {
    * executable.
    * @param argv The vector of command-line arguments.
    */
-  ReadtpCmdLineArgs(const int argc, char *const *const argv);
+  ReadtpCmdLineArgs(const int argc, char* const* const argv);
 
   /**
    * Prints the usage message of the command-line tool.
    *
    * @param os The output stream to which the usage message is to be printed.
    */
-  static void printUsage(std::ostream &os);
-}; // class ReadtpCmdLineArgs
+  static void printUsage(std::ostream& os);
+};  // class ReadtpCmdLineArgs
 
-} // namespace readtp
-} // namespace tapeserver
-} // namespace cta
+}  // namespace readtp
+}  // namespace tapeserver
+}  // namespace cta

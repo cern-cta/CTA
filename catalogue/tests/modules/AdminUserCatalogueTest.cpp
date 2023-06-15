@@ -27,11 +27,10 @@
 
 namespace unitTests {
 
-cta_catalogue_AdminUserTest::cta_catalogue_AdminUserTest()
-  : m_dummyLog("dummy", "dummy"),
-    m_localAdmin(CatalogueTestUtils::getLocalAdmin()),
-    m_admin(CatalogueTestUtils::getAdmin()) {
-}
+cta_catalogue_AdminUserTest::cta_catalogue_AdminUserTest() :
+m_dummyLog("dummy", "dummy"),
+m_localAdmin(CatalogueTestUtils::getLocalAdmin()),
+m_admin(CatalogueTestUtils::getAdmin()) {}
 
 void cta_catalogue_AdminUserTest::SetUp() {
   cta::log::LogContext dummyLc(m_dummyLog);
@@ -66,7 +65,7 @@ TEST_P(cta_catalogue_AdminUserTest, createAdminUser_same_twice) {
   m_catalogue->AdminUser()->createAdminUser(m_localAdmin, m_admin.username, "comment 1");
 
   ASSERT_THROW(m_catalogue->AdminUser()->createAdminUser(m_localAdmin, m_admin.username, "comment 2"),
-    cta::exception::UserError);
+               cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_AdminUserTest, deleteAdminUser) {
@@ -97,13 +96,13 @@ TEST_P(cta_catalogue_AdminUserTest, createAdminUser_emptyStringUsername) {
   const std::string adminUsername = "";
   const std::string createAdminUserComment = "Create admin user";
   ASSERT_THROW(m_catalogue->AdminUser()->createAdminUser(m_localAdmin, adminUsername, createAdminUserComment),
-    cta::catalogue::UserSpecifiedAnEmptyStringUsername);
+               cta::catalogue::UserSpecifiedAnEmptyStringUsername);
 }
 
 TEST_P(cta_catalogue_AdminUserTest, createAdminUser_emptyStringComment) {
   const std::string createAdminUserComment = "";
   ASSERT_THROW(m_catalogue->AdminUser()->createAdminUser(m_localAdmin, m_admin.username, createAdminUserComment),
-    cta::catalogue::UserSpecifiedAnEmptyStringComment);
+               cta::catalogue::UserSpecifiedAnEmptyStringComment);
 }
 
 TEST_P(cta_catalogue_AdminUserTest, deleteAdminUser_non_existent) {
@@ -152,7 +151,7 @@ TEST_P(cta_catalogue_AdminUserTest, modifyAdminUserComment_emptyStringUsername) 
   const std::string adminUsername = "";
   const std::string modifiedComment = "Modified comment";
   ASSERT_THROW(m_catalogue->AdminUser()->modifyAdminUserComment(m_localAdmin, adminUsername, modifiedComment),
-    cta::catalogue::UserSpecifiedAnEmptyStringUsername);
+               cta::catalogue::UserSpecifiedAnEmptyStringUsername);
 }
 
 TEST_P(cta_catalogue_AdminUserTest, modifyAdminUserComment_emptyStringComment) {
@@ -176,13 +175,13 @@ TEST_P(cta_catalogue_AdminUserTest, modifyAdminUserComment_emptyStringComment) {
 
   const std::string modifiedComment = "";
   ASSERT_THROW(m_catalogue->AdminUser()->modifyAdminUserComment(m_localAdmin, m_admin.username, modifiedComment),
-    cta::catalogue::UserSpecifiedAnEmptyStringComment);
+               cta::catalogue::UserSpecifiedAnEmptyStringComment);
 }
 
 TEST_P(cta_catalogue_AdminUserTest, modifyAdminUserComment_nonExtistentAdminUser) {
   const std::string modifiedComment = "Modified comment";
   ASSERT_THROW(m_catalogue->AdminUser()->modifyAdminUserComment(m_localAdmin, m_admin.username, modifiedComment),
-    cta::exception::UserError);
+               cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_AdminUserTest, isAdmin_false) {

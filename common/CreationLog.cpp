@@ -22,13 +22,17 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::CreationLog::CreationLog(): 
-  time(std::numeric_limits<decltype(time)>::max()) {}
+cta::CreationLog::CreationLog() : time(std::numeric_limits<decltype(time)>::max()) {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 
-cta::CreationLog::CreationLog(const cta::common::dataStructures::OwnerIdentity& user, 
-    const std::string& host, const time_t time, const std::string& comment):
-  user(user), host(host), time(time), comment(comment) {}
+cta::CreationLog::CreationLog(const cta::common::dataStructures::OwnerIdentity& user,
+                              const std::string& host,
+                              const time_t time,
+                              const std::string& comment) :
+user(user),
+host(host),
+time(time),
+comment(comment) {}

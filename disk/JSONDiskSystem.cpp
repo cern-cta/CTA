@@ -17,16 +17,17 @@
 
 #include "JSONDiskSystem.hpp"
 
-namespace cta { namespace disk {
-  
+namespace cta {
+namespace disk {
+
 JSONDiskSystem::JSONDiskSystem() : JSONCObject() {
   diskInstanceSpace.refreshInterval = 0;
   targetedFreeSpace = 0;
   sleepTime = 0;
 }
 
-JSONDiskSystem::JSONDiskSystem(const DiskSystem& diskSystem):JSONCObject(){
-  if(this != &diskSystem){
+JSONDiskSystem::JSONDiskSystem(const DiskSystem& diskSystem) : JSONCObject() {
+  if (this != &diskSystem) {
     name = diskSystem.name;
     fileRegexp = diskSystem.fileRegexp;
     diskInstanceSpace.freeSpaceQueryURL = diskSystem.diskInstanceSpace.freeSpaceQueryURL;
@@ -48,16 +49,16 @@ void JSONDiskSystem::buildFromJSON(const std::string& json) {
 
 std::string JSONDiskSystem::getJSON() {
   reinitializeJSONCObject();
-  jsonSetValue("name",name);
-  jsonSetValue("fileRegexp",fileRegexp);
-  jsonSetValue("freeSpaceQueryURL",diskInstanceSpace.freeSpaceQueryURL);
+  jsonSetValue("name", name);
+  jsonSetValue("fileRegexp", fileRegexp);
+  jsonSetValue("freeSpaceQueryURL", diskInstanceSpace.freeSpaceQueryURL);
   jsonSetValue("refreshInterval", diskInstanceSpace.refreshInterval);
-  jsonSetValue("targetedFreeSpace",targetedFreeSpace);
-  jsonSetValue("sleepTime",sleepTime);
+  jsonSetValue("targetedFreeSpace", targetedFreeSpace);
+  jsonSetValue("sleepTime", sleepTime);
   return JSONCObject::getJSON();
 }
 
-JSONDiskSystem::~JSONDiskSystem() {
-}
+JSONDiskSystem::~JSONDiskSystem() {}
 
-}}
+}  // namespace disk
+}  // namespace cta

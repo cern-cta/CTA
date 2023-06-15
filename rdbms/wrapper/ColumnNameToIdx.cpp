@@ -25,8 +25,8 @@ namespace wrapper {
 //------------------------------------------------------------------------------
 // add
 //------------------------------------------------------------------------------
-void ColumnNameToIdx::add(const std::string &name, const int idx) {
-  if(m_nameToIdx.end() != m_nameToIdx.find(name)) {
+void ColumnNameToIdx::add(const std::string& name, const int idx) {
+  if (m_nameToIdx.end() != m_nameToIdx.find(name)) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + name + " is a duplicate");
   }
   m_nameToIdx[name] = idx;
@@ -35,9 +35,9 @@ void ColumnNameToIdx::add(const std::string &name, const int idx) {
 //------------------------------------------------------------------------------
 // getIdx
 //------------------------------------------------------------------------------
-int ColumnNameToIdx::getIdx(const std::string &name) const {
+int ColumnNameToIdx::getIdx(const std::string& name) const {
   auto it = m_nameToIdx.find(name);
-  if(m_nameToIdx.end() == it) {
+  if (m_nameToIdx.end() == it) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: Unknown column name " + name);
   }
   return it->second;
@@ -50,6 +50,6 @@ bool ColumnNameToIdx::empty() const {
   return m_nameToIdx.empty();
 }
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+}  // namespace wrapper
+}  // namespace rdbms
+}  // namespace cta

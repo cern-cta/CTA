@@ -26,20 +26,19 @@ namespace cta {
 namespace postgresscheddb {
 
 class ArchiveJobQueueItor : public SchedulerDatabase::IArchiveJobQueueItor {
- friend class cta::PostgresSchedDB;
+  friend class cta::PostgresSchedDB;
 
- public:
+public:
+  ArchiveJobQueueItor();
 
-   ArchiveJobQueueItor();
+  const std::string& qid() const override;
 
-   const std::string &qid() const override;
+  bool end() const override;
 
-   bool end() const override;
+  void operator++() override;
 
-   void operator++() override;
-
-   const common::dataStructures::ArchiveJob &operator*() const override;
+  const common::dataStructures::ArchiveJob& operator*() const override;
 };
 
-} //namespace postgresscheddb
-} //namespace cta
+}  //namespace postgresscheddb
+}  //namespace cta

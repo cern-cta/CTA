@@ -22,7 +22,6 @@
 #include "tapeserver/castor/tape/tapeserver/SCSI/Structures.hpp"
 #include "common/Constants.hpp"
 
-
 namespace castor {
 namespace tape {
 /**
@@ -45,14 +44,16 @@ public:
   static const size_t MAXMRECSIZE = 32768;  // half of label block
   static const size_t MMAXCHK = 2048;
 
-// prevent the generation of default public constructor and destructor
+  // prevent the generation of default public constructor and destructor
 protected:
   LIMITS() = default;
   ~LIMITS() = default;
+
 private:
   LIMITS(LIMITS const&) = default;
   LIMITS& operator=(LIMITS const&) = default;
 };
+
 /**
  *
  */
@@ -61,37 +62,34 @@ public:
   LABEL();
   ~LABEL() = default;
 
-  inline char* rawLabel() {
-    return m_tcRawLabel;
-  }
+  inline char* rawLabel() { return m_tcRawLabel; }
 
   void decode();  // can throw
 
-  void encode(uint64_t ulCreateTime, uint64_t ulExpireTime, uint64_t ulRecSize, uint64_t ulVolId,
-              const std::string& strVolName, const std::string& strOwner, const std::string& strVersion); // can throw
+  void encode(uint64_t ulCreateTime,
+              uint64_t ulExpireTime,
+              uint64_t ulRecSize,
+              uint64_t ulVolId,
+              const std::string& strVolName,
+              const std::string& strOwner,
+              const std::string& strVersion);  // can throw
 
-  inline std::string owner() {
-    return std::string(m_tcOwner);
-  }
-  inline std::string version() {
-    return std::string(m_tcVersion);
-  }
+  inline std::string owner() { return std::string(m_tcOwner); }
+
+  inline std::string version() { return std::string(m_tcVersion); }
+
   inline std::string name() const {
     // Returns truncated name of the label
     return std::string(m_tcName, cta::CA_MAXVIDLEN);
   }
-  inline uint64_t createTime() {
-    return m_ulCreateTime;
-  }
-  inline uint64_t expireTime() {
-    return m_ulExpireTime;
-  }
-  inline uint64_t recSize() {
-    return m_ulRecSize;
-  }
-  inline uint64_t volId() {
-    return m_ulVolId;
-  }
+
+  inline uint64_t createTime() { return m_ulCreateTime; }
+
+  inline uint64_t expireTime() { return m_ulExpireTime; }
+
+  inline uint64_t recSize() { return m_ulRecSize; }
+
+  inline uint64_t volId() { return m_ulVolId; }
 
   /**
    * @return the logic block protection method
@@ -117,4 +115,4 @@ protected:
 } /* namespace osm */
 } /* namespace tapeFile */
 } /* namespace tape */
-}/* namespace castor */
+} /* namespace castor */

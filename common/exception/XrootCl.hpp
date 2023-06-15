@@ -30,12 +30,16 @@ namespace exception {
  * into castor exceptions.
  */
 class XrootCl : public cta::exception::Exception {
- public:
-  XrootCl(const XrdCl::XRootDStatus & status, const std::string & context);
+public:
+  XrootCl(const XrdCl::XRootDStatus& status, const std::string& context);
+
   virtual ~XrootCl() {}
-  const XrdCl::XRootDStatus & xRootDStatus() const { return m_status; }
-  static void throwOnError(const XrdCl::XRootDStatus & status, const std::string& context = "");
- protected:
+
+  const XrdCl::XRootDStatus& xRootDStatus() const { return m_status; }
+
+  static void throwOnError(const XrdCl::XRootDStatus& status, const std::string& context = "");
+
+protected:
   XrdCl::XRootDStatus m_status;
 };
 }  // namespace exception

@@ -16,9 +16,11 @@
  */
 #include "RetrieveQueueAlgorithms.hpp"
 
-namespace cta { namespace objectstore {
-  template<>
-  const std::string ContainerTraits<RetrieveQueue,RetrieveQueueToReportToRepackForSuccess>::c_containerTypeName = "RetrieveQueueToReportToRepackForSuccess";
-  
+namespace cta {
+namespace objectstore {
+template<>
+const std::string ContainerTraits<RetrieveQueue, RetrieveQueueToReportToRepackForSuccess>::c_containerTypeName =
+  "RetrieveQueueToReportToRepackForSuccess";
+
 }
-}
+}  // namespace cta

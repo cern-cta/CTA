@@ -33,7 +33,6 @@ class MutexLocker;
  */
 class CondVar {
 public:
-
   /**
    * Constructor.
    */
@@ -47,27 +46,27 @@ public:
   /**
    * Delete the copy constructor.
    */
-  CondVar(const CondVar &) = delete;
+  CondVar(const CondVar&) = delete;
 
   /**
    * Delete the move constructor.
    */
-  CondVar(const CondVar &&) = delete;
+  CondVar(const CondVar&&) = delete;
 
   /**
    * Delete the copy assignment operator.
    */
-  CondVar& operator=(const CondVar &) = delete;
+  CondVar& operator=(const CondVar&) = delete;
 
   /**
    * Delete the move assignment operator.
    */
-  CondVar& operator=(const CondVar &&) = delete;
+  CondVar& operator=(const CondVar&&) = delete;
 
   /**
    * Waits on the specified MutexLocker and its corresponding Mutex.
    */
-  void wait(MutexLocker &);
+  void wait(MutexLocker&);
 
   /**
    * Unblocks at least one waiting thread.
@@ -80,12 +79,11 @@ public:
   void broadcast();
 
 private:
-
   /**
    * The underlying POSIX thread condition variable.
    */
   pthread_cond_t m_cond;
-}; // class CondVar
+};  // class CondVar
 
-} // namespace threading
-} // namespace cta
+}  // namespace threading
+}  // namespace cta

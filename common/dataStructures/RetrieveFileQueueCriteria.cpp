@@ -16,22 +16,25 @@
  */
 
 #include "RetrieveFileQueueCriteria.hpp"
+
 namespace cta {
 namespace common {
 namespace dataStructures {
-    
-RetrieveFileQueueCriteria& RetrieveFileQueueCriteria::operator=(const RetrieveFileQueueCriteria& other){
-    if(this != &other){
-        this->archiveFile = other.archiveFile;
-        this->mountPolicy = other.mountPolicy;
-    }
-    return *this;
+
+RetrieveFileQueueCriteria& RetrieveFileQueueCriteria::operator=(const RetrieveFileQueueCriteria& other) {
+  if (this != &other) {
+    this->archiveFile = other.archiveFile;
+    this->mountPolicy = other.mountPolicy;
+  }
+  return *this;
 }
 
 // Copy constructor
-RetrieveFileQueueCriteria::RetrieveFileQueueCriteria(const RetrieveFileQueueCriteria& other){
-    this->archiveFile = other.archiveFile;
-    this->mountPolicy = other.mountPolicy;
+RetrieveFileQueueCriteria::RetrieveFileQueueCriteria(const RetrieveFileQueueCriteria& other) {
+  this->archiveFile = other.archiveFile;
+  this->mountPolicy = other.mountPolicy;
 }
 
-}}}
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

@@ -28,21 +28,20 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-PostgresqlCatalogueFactory::PostgresqlCatalogueFactory(
-  log::Logger &log,
-  const rdbms::Login &login,
-  const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns,
-  const uint32_t maxTriesToConnect):
-  m_log(log),
-  m_login(login),
-  m_nbConns(nbConns),
-  m_nbArchiveFileListingConns(nbArchiveFileListingConns),
-  m_maxTriesToConnect(maxTriesToConnect) {
-  if(rdbms::Login::DBTYPE_POSTGRESQL != login.dbType) {
+PostgresqlCatalogueFactory::PostgresqlCatalogueFactory(log::Logger& log,
+                                                       const rdbms::Login& login,
+                                                       const uint64_t nbConns,
+                                                       const uint64_t nbArchiveFileListingConns,
+                                                       const uint32_t maxTriesToConnect) :
+m_log(log),
+m_login(login),
+m_nbConns(nbConns),
+m_nbArchiveFileListingConns(nbArchiveFileListingConns),
+m_maxTriesToConnect(maxTriesToConnect) {
+  if (rdbms::Login::DBTYPE_POSTGRESQL != login.dbType) {
     exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << "failed: Incorrect database type: expected=DBTYPE_POSTGRESQL actual=" <<
-      rdbms::Login::dbTypeToString(login.dbType);
+    ex.getMessage() << __FUNCTION__ << "failed: Incorrect database type: expected=DBTYPE_POSTGRESQL actual="
+                    << rdbms::Login::dbTypeToString(login.dbType);
     throw ex;
   }
 }
@@ -54,10 +53,11 @@ std::unique_ptr<Catalogue> PostgresqlCatalogueFactory::create() {
   try {
     auto c = std::make_unique<PostgresCatalogue>(m_log, m_login, m_nbConns, m_nbArchiveFileListingConns);
     return std::make_unique<CatalogueRetryWrapper>(m_log, std::move(c), m_maxTriesToConnect);
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

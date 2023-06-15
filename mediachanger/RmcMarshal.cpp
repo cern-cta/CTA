@@ -27,52 +27,44 @@ namespace mediachanger {
 //-----------------------------------------------------------------------------
 // marshal
 //-----------------------------------------------------------------------------
-size_t marshal(char *const dst, const size_t dstLen, const RmcMountMsgBody &src)  {
-  const char *task = "marshal RmcMountMsgBody";
+size_t marshal(char* const dst, const size_t dstLen, const RmcMountMsgBody& src) {
+  const char* task = "marshal RmcMountMsgBody";
 
-  if(dst == nullptr) {
+  if (dst == nullptr) {
     cta::exception::Exception ex;
-    ex.getMessage() << "Failed to " << task <<
-      ": Pointer to destination buffer is nullptr";
+    ex.getMessage() << "Failed to " << task << ": Pointer to destination buffer is nullptr";
     throw ex;
   }
 
   // Calculate the length of the message body
-  const uint32_t bodyLen =
-    sizeof(src.uid) +
-    sizeof(src.gid) +
-    strlen(src.unusedLoader) + 1 +
-    strlen(src.vid) + 1 +
-    sizeof(src.side) +
-    sizeof(src.drvOrd);
+  const uint32_t bodyLen = sizeof(src.uid) + sizeof(src.gid) + strlen(src.unusedLoader) + 1 + strlen(src.vid) + 1 +
+                           sizeof(src.side) + sizeof(src.drvOrd);
 
   // Calculate the total length of the message (header + body)
-  const uint32_t totalLen =
-    sizeof(uint32_t) + // magic
-    sizeof(uint32_t) + // reqType
-    sizeof(uint32_t) + // len
-    bodyLen;
+  const uint32_t totalLen = sizeof(uint32_t) +  // magic
+                            sizeof(uint32_t) +  // reqType
+                            sizeof(uint32_t) +  // len
+                            bodyLen;
 
   // Check that the message buffer is big enough
-  if(totalLen > dstLen) {
+  if (totalLen > dstLen) {
     cta::exception::Exception ex;
-    ex.getMessage() << "Failed to " << task <<
-      ": Buffer too small: required=" << totalLen << " actual=" << dstLen;
+    ex.getMessage() << "Failed to " << task << ": Buffer too small: required=" << totalLen << " actual=" << dstLen;
     throw ex;
   }
 
   // Marshal message header
-  char *p = dst;
+  char* p = dst;
   try {
     const uint32_t magic = RMC_MAGIC;
     const uint32_t reqType = RMC_MOUNT;
-    marshalUint32(magic , p);
+    marshalUint32(magic, p);
     marshalUint32(reqType, p);
     marshalUint32(totalLen, p);
-  } catch(cta::exception::Exception &ne) {
+  }
+  catch (cta::exception::Exception& ne) {
     cta::exception::Exception ex;
-    ex.getMessage() << "Failed to " << task << ": Failed to marshal header: "
-      << ne.getMessage().str();
+    ex.getMessage() << "Failed to " << task << ": Failed to marshal header: " << ne.getMessage().str();
     throw ex;
   }
 
@@ -84,10 +76,10 @@ size_t marshal(char *const dst, const size_t dstLen, const RmcMountMsgBody &src)
     marshalString(src.vid, p);
     marshalUint16(src.side, p);
     marshalUint16(src.drvOrd, p);
-  } catch(cta::exception::Exception &ne) {
+  }
+  catch (cta::exception::Exception& ne) {
     cta::exception::Exception ex;
-    ex.getMessage() << "Failed to " << task << ": Failed to marshal body: "
-      << ne.getMessage().str();
+    ex.getMessage() << "Failed to " << task << ": Failed to marshal body: " << ne.getMessage().str();
     throw ex;
   }
 
@@ -95,11 +87,12 @@ size_t marshal(char *const dst, const size_t dstLen, const RmcMountMsgBody &src)
   const size_t nbBytesMarshalled = p - dst;
 
   // Check that the number of bytes marshalled was what was expected
-  if(totalLen != nbBytesMarshalled) {
+  if (totalLen != nbBytesMarshalled) {
     cta::exception::Exception ex;
-    ex.getMessage() << "Failed to " << task <<
-      ": Mismatch between expected total length and actual"
-      ": expected=" << totalLen << " actual=" << nbBytesMarshalled;
+    ex.getMessage() << "Failed to " << task
+                    << ": Mismatch between expected total length and actual"
+                       ": expected="
+                    << totalLen << " actual=" << nbBytesMarshalled;
     throw ex;
   }
 
@@ -109,7 +102,7 @@ size_t marshal(char *const dst, const size_t dstLen, const RmcMountMsgBody &src)
 //-----------------------------------------------------------------------------
 // unmarshal
 //-----------------------------------------------------------------------------
-void unmarshal(const char * &src, size_t &srcLen, RmcMountMsgBody &dst)  {
+void unmarshal(const char*& src, size_t& srcLen, RmcMountMsgBody& dst) {
   try {
     unmarshalUint32(src, srcLen, dst.uid);
     unmarshalUint32(src, srcLen, dst.gid);
@@ -117,10 +110,10 @@ void unmarshal(const char * &src, size_t &srcLen, RmcMountMsgBody &dst)  {
     unmarshalString(src, srcLen, dst.vid);
     unmarshalUint16(src, srcLen, dst.side);
     unmarshalUint16(src, srcLen, dst.drvOrd);
-  } catch(cta::exception::Exception &ne) {
+  }
+  catch (cta::exception::Exception& ne) {
     cta::exception::Exception ex;
-    ex.getMessage() << "Failed to unmarshal RmcMountMsgBody: " <<
-      ne.getMessage().str();
+    ex.getMessage() << "Failed to unmarshal RmcMountMsgBody: " << ne.getMessage().str();
     throw ex;
   }
 }
@@ -128,52 +121,44 @@ void unmarshal(const char * &src, size_t &srcLen, RmcMountMsgBody &dst)  {
 //-----------------------------------------------------------------------------
 // marshal
 //-----------------------------------------------------------------------------
-size_t marshal(char *const dst, const size_t dstLen, const RmcUnmountMsgBody &src)  {
-  const char *const task = "marshal RmcUnmountMsgBody";
+size_t marshal(char* const dst, const size_t dstLen, const RmcUnmountMsgBody& src) {
+  const char* const task = "marshal RmcUnmountMsgBody";
 
-  if(dst == nullptr) {
+  if (dst == nullptr) {
     cta::exception::Exception ex;
-    ex.getMessage() << "Failed to " << task <<
-      ": Pointer to destination buffer is nullptr";
+    ex.getMessage() << "Failed to " << task << ": Pointer to destination buffer is nullptr";
     throw ex;
   }
 
   // Calculate the length of the message body
-  const uint32_t bodyLen =
-    sizeof(src.uid) +
-    sizeof(src.gid) +
-    strlen(src.unusedLoader) + 1 +
-    strlen(src.vid) + 1 +
-    sizeof(src.drvOrd) +
-    sizeof(src.force);
+  const uint32_t bodyLen = sizeof(src.uid) + sizeof(src.gid) + strlen(src.unusedLoader) + 1 + strlen(src.vid) + 1 +
+                           sizeof(src.drvOrd) + sizeof(src.force);
 
   // Calculate the total length of the message (header + body)
-  const uint32_t totalLen =
-    sizeof(uint32_t) + // magic
-    sizeof(uint32_t) + // reqType
-    sizeof(uint32_t) + // len
-    bodyLen;
+  const uint32_t totalLen = sizeof(uint32_t) +  // magic
+                            sizeof(uint32_t) +  // reqType
+                            sizeof(uint32_t) +  // len
+                            bodyLen;
 
   // Check that the message buffer is big enough
-  if(totalLen > dstLen) {
+  if (totalLen > dstLen) {
     cta::exception::Exception ex;
-    ex.getMessage() << "Failed to " << task <<
-      ": Buffer too small: required=" << totalLen << " actual=" << dstLen;
+    ex.getMessage() << "Failed to " << task << ": Buffer too small: required=" << totalLen << " actual=" << dstLen;
     throw ex;
   }
 
   // Marshal message header
-  char *p = dst;
+  char* p = dst;
   try {
     const uint32_t magic = RMC_MAGIC;
     const uint32_t reqType = RMC_UNMOUNT;
-    marshalUint32(magic , p);
+    marshalUint32(magic, p);
     marshalUint32(reqType, p);
     marshalUint32(totalLen, p);
-  } catch(cta::exception::Exception &ne) {
+  }
+  catch (cta::exception::Exception& ne) {
     cta::exception::Exception ex;
-    ex.getMessage() << "Failed to " << task << ": Failed to marshal header: "
-      << ne.getMessage().str();
+    ex.getMessage() << "Failed to " << task << ": Failed to marshal header: " << ne.getMessage().str();
     throw ex;
   }
 
@@ -185,10 +170,10 @@ size_t marshal(char *const dst, const size_t dstLen, const RmcUnmountMsgBody &sr
     marshalString(src.vid, p);
     marshalUint16(src.drvOrd, p);
     marshalUint16(src.force, p);
-  } catch(cta::exception::Exception &ne) {
+  }
+  catch (cta::exception::Exception& ne) {
     cta::exception::Exception ex;
-    ex.getMessage() << "Failed to " << task << ": Failed to marshal body: "
-      << ne.getMessage().str();
+    ex.getMessage() << "Failed to " << task << ": Failed to marshal body: " << ne.getMessage().str();
     throw ex;
   }
 
@@ -196,11 +181,12 @@ size_t marshal(char *const dst, const size_t dstLen, const RmcUnmountMsgBody &sr
   const size_t nbBytesMarshalled = p - dst;
 
   // Check that the number of bytes marshalled was what was expected
-  if(totalLen != nbBytesMarshalled) {
+  if (totalLen != nbBytesMarshalled) {
     cta::exception::Exception ex;
-    ex.getMessage() << "Failed to " << task <<
-      ": Mismatch between expected total length and actual"
-      ": expected=" << totalLen << " actual=" << nbBytesMarshalled;
+    ex.getMessage() << "Failed to " << task
+                    << ": Mismatch between expected total length and actual"
+                       ": expected="
+                    << totalLen << " actual=" << nbBytesMarshalled;
     throw ex;
   }
 
@@ -210,7 +196,7 @@ size_t marshal(char *const dst, const size_t dstLen, const RmcUnmountMsgBody &sr
 //-----------------------------------------------------------------------------
 // unmarshal
 //-----------------------------------------------------------------------------
-void unmarshal(const char * &src, size_t &srcLen, RmcUnmountMsgBody &dst)  {
+void unmarshal(const char*& src, size_t& srcLen, RmcUnmountMsgBody& dst) {
   try {
     unmarshalUint32(src, srcLen, dst.uid);
     unmarshalUint32(src, srcLen, dst.gid);
@@ -218,13 +204,13 @@ void unmarshal(const char * &src, size_t &srcLen, RmcUnmountMsgBody &dst)  {
     unmarshalString(src, srcLen, dst.vid);
     unmarshalUint16(src, srcLen, dst.drvOrd);
     unmarshalUint16(src, srcLen, dst.force);
-  } catch(cta::exception::Exception &ne) {
+  }
+  catch (cta::exception::Exception& ne) {
     cta::exception::Exception ex;
-    ex.getMessage() << "Failed to unmarshal RmcUnmountMsgBody: " <<
-      ne.getMessage().str();
+    ex.getMessage() << "Failed to unmarshal RmcUnmountMsgBody: " << ne.getMessage().str();
     throw ex;
   }
 }
 
-} // namespace mediachanger
-} // namespace cta
+}  // namespace mediachanger
+}  // namespace cta

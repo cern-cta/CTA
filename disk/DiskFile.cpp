@@ -32,21 +32,22 @@
 namespace cta {
 namespace disk {
 
-DiskFileFactory::DiskFileFactory(const std::string & xrootPrivateKeyFile, uint16_t xrootTimeout,
-  cta::disk::RadosStriperPool & striperPool):
-  m_NoURLLocalFile("^(localhost:|)(/.*)$"),
-  m_NoURLRemoteFile("^([^:]*:)(.*)$"),
-  m_NoURLRadosStriperFile("^localhost:([^/]+)/(.*)$"),
-  m_URLLocalFile("^file://(.*)$"),
-  m_URLXrootFile("^(root://.*)$"),
-  m_URLCephFile("^radosstriper:///([^:]+@[^:]+):(.*)$"),
-  m_xrootPrivateKeyFile(xrootPrivateKeyFile),
-  m_xrootPrivateKeyLoaded(false),
-  m_xrootTimeout(xrootTimeout),
-  m_striperPool(striperPool) {}
+DiskFileFactory::DiskFileFactory(const std::string& xrootPrivateKeyFile,
+                                 uint16_t xrootTimeout,
+                                 cta::disk::RadosStriperPool& striperPool) :
+m_NoURLLocalFile("^(localhost:|)(/.*)$"),
+m_NoURLRemoteFile("^([^:]*:)(.*)$"),
+m_NoURLRadosStriperFile("^localhost:([^/]+)/(.*)$"),
+m_URLLocalFile("^file://(.*)$"),
+m_URLXrootFile("^(root://.*)$"),
+m_URLCephFile("^radosstriper:///([^:]+@[^:]+):(.*)$"),
+m_xrootPrivateKeyFile(xrootPrivateKeyFile),
+m_xrootPrivateKeyLoaded(false),
+m_xrootTimeout(xrootTimeout),
+m_striperPool(striperPool) {}
 
-const CryptoPP::RSA::PrivateKey & DiskFileFactory::xrootPrivateKey() {
-  if(!m_xrootPrivateKeyLoaded) {
+const CryptoPP::RSA::PrivateKey& DiskFileFactory::xrootPrivateKey() {
+  if (!m_xrootPrivateKeyLoaded) {
     // There is one DiskFactory per disk thread, so this function is called
     // in a single thread. Nevertheless, we experience errors from double
     // deletes in the CryptoPP functions called from here.
@@ -61,27 +62,26 @@ const CryptoPP::RSA::PrivateKey & DiskFileFactory::xrootPrivateKey() {
     std::ifstream keyFile(m_xrootPrivateKeyFile.c_str());
     if (!keyFile) {
       // We should get the detailed error from errno.
-      throw cta::exception::Errnum(
-        std::string("Failed to open xroot key file: ")+m_xrootPrivateKeyFile);
+      throw cta::exception::Errnum(std::string("Failed to open xroot key file: ") + m_xrootPrivateKeyFile);
     }
     char buff[200];
-    while(!keyFile.eof()) {
+    while (!keyFile.eof()) {
       keyFile.read(buff, sizeof(buff));
-      key.append(buff,keyFile.gcount());
+      key.append(buff, keyFile.gcount());
     }
     const std::string HEADER = "-----BEGIN RSA PRIVATE KEY-----";
     const std::string FOOTER = "-----END RSA PRIVATE KEY-----";
 
     size_t pos1, pos2;
     pos1 = key.find(HEADER);
-    if(pos1 == std::string::npos)
-        throw cta::exception::Exception(
-          "In DiskFileFactory::xrootCryptoPPPrivateKey, PEM header not found");
+    if (pos1 == std::string::npos) {
+      throw cta::exception::Exception("In DiskFileFactory::xrootCryptoPPPrivateKey, PEM header not found");
+    }
 
-    pos2 = key.find(FOOTER, pos1+1);
-    if(pos2 == std::string::npos)
-        throw cta::exception::Exception(
-          "In DiskFileFactory::xrootCryptoPPPrivateKey, PEM footer not found");
+    pos2 = key.find(FOOTER, pos1 + 1);
+    if (pos2 == std::string::npos) {
+      throw cta::exception::Exception("In DiskFileFactory::xrootCryptoPPPrivateKey, PEM footer not found");
+    }
 
     // Start position and length
     pos1 = pos1 + HEADER.length();
@@ -93,29 +93,29 @@ const CryptoPP::RSA::PrivateKey & DiskFileFactory::xrootPrivateKey() {
     CryptoPP::Base64Decoder decoder;
 
     decoder.Attach(new CryptoPP::Redirector(queue));
-    decoder.Put((const byte*)keystr.data(), keystr.length());
+    decoder.Put((const byte*) keystr.data(), keystr.length());
     decoder.MessageEnd();
 
     m_xrootPrivateKey.BERDecodePrivateKey(queue, false /*paramsPresent*/, queue.MaxRetrievable());
 
     // BERDecodePrivateKey is a void function. Here's the only check
     // we have regarding the DER bytes consumed.
-    if(!queue.IsEmpty())
-      throw cta::exception::Exception(
-        "In DiskFileFactory::xrootCryptoPPPrivateKey, garbage at end of key");
+    if (!queue.IsEmpty()) {
+      throw cta::exception::Exception("In DiskFileFactory::xrootCryptoPPPrivateKey, garbage at end of key");
+    }
 
     CryptoPP::AutoSeededRandomPool prng;
     bool valid = m_xrootPrivateKey.Validate(prng, 3);
-    if(!valid)
-      throw cta::exception::Exception(
-        "In DiskFileFactory::xrootCryptoPPPrivateKey, RSA private key is not valid");
+    if (!valid) {
+      throw cta::exception::Exception("In DiskFileFactory::xrootCryptoPPPrivateKey, RSA private key is not valid");
+    }
 
     m_xrootPrivateKeyLoaded = true;
   }
   return m_xrootPrivateKey;
 }
 
-ReadFile * DiskFileFactory::createReadFile(const std::string& path) {
+ReadFile* DiskFileFactory::createReadFile(const std::string& path) {
   std::vector<std::string> regexResult;
   // URL path parsing
   // local file URL?
@@ -131,9 +131,7 @@ ReadFile * DiskFileFactory::createReadFile(const std::string& path) {
   // radosStriper URL?
   regexResult = m_URLCephFile.exec(path);
   if (regexResult.size()) {
-    return new RadosStriperReadFile(regexResult[0],
-      m_striperPool.throwingGetStriper(regexResult[1]),
-      regexResult[2]);
+    return new RadosStriperReadFile(regexResult[0], m_striperPool.throwingGetStriper(regexResult[1]), regexResult[2]);
   }
   // No URL path parsing
   // Do we have a local file?
@@ -145,22 +143,19 @@ ReadFile * DiskFileFactory::createReadFile(const std::string& path) {
   regexResult = m_NoURLRemoteFile.exec(path);
   if (regexResult.size()) {
     // In the current CASTOR implementation, the xrootd port is hard coded to 1095
-    return new XrootC2FSReadFile(
-      std::string("root://") + regexResult[1] + "1095/" + regexResult[2],
-      xrootPrivateKey(), m_xrootTimeout);
+    return new XrootC2FSReadFile(std::string("root://") + regexResult[1] + "1095/" + regexResult[2], xrootPrivateKey(),
+                                 m_xrootTimeout);
   }
   // Do we have a radosStriper file?
   regexResult = m_NoURLRadosStriperFile.exec(path);
   if (regexResult.size()) {
-    return new XrootC2FSReadFile(
-      std::string("root://localhost:1095/")+regexResult[1]+"/"+regexResult[2],
-      xrootPrivateKey(), m_xrootTimeout, regexResult[1]);
+    return new XrootC2FSReadFile(std::string("root://localhost:1095/") + regexResult[1] + "/" + regexResult[2],
+                                 xrootPrivateKey(), m_xrootTimeout, regexResult[1]);
   }
-  throw cta::exception::Exception(
-      std::string("In DiskFileFactory::createReadFile failed to parse URL: ")+path);
+  throw cta::exception::Exception(std::string("In DiskFileFactory::createReadFile failed to parse URL: ") + path);
 }
 
-WriteFile * DiskFileFactory::createWriteFile(const std::string& path) {
+WriteFile* DiskFileFactory::createWriteFile(const std::string& path) {
   std::vector<std::string> regexResult;
   // URL path parsing
   // local file URL?
@@ -176,9 +171,7 @@ WriteFile * DiskFileFactory::createWriteFile(const std::string& path) {
   // radosStriper URL?
   regexResult = m_URLCephFile.exec(path);
   if (regexResult.size()) {
-    return new RadosStriperWriteFile(regexResult[0],
-      m_striperPool.throwingGetStriper(regexResult[1]),
-      regexResult[2]);
+    return new RadosStriperWriteFile(regexResult[0], m_striperPool.throwingGetStriper(regexResult[1]), regexResult[2]);
   }
   // No URL path parsing
   // Do we have a local file?
@@ -190,43 +183,39 @@ WriteFile * DiskFileFactory::createWriteFile(const std::string& path) {
   regexResult = m_NoURLRemoteFile.exec(path);
   if (regexResult.size()) {
     // In the current CASTOR implementation, the xrootd port is hard coded to 1095
-    return new XrootC2FSWriteFile(
-      std::string("root://") + regexResult[1] + "1095/" + regexResult[2],
-      xrootPrivateKey(), m_xrootTimeout);
+    return new XrootC2FSWriteFile(std::string("root://") + regexResult[1] + "1095/" + regexResult[2], xrootPrivateKey(),
+                                  m_xrootTimeout);
   }
   // Do we have a radosStriper file?
   regexResult = m_NoURLRadosStriperFile.exec(path);
   if (regexResult.size()) {
-    return new XrootC2FSWriteFile(
-      std::string("root://localhost:1095/")+regexResult[1]+"/"+regexResult[2],
-      xrootPrivateKey(), m_xrootTimeout, regexResult[1]);
+    return new XrootC2FSWriteFile(std::string("root://localhost:1095/") + regexResult[1] + "/" + regexResult[2],
+                                  xrootPrivateKey(), m_xrootTimeout, regexResult[1]);
   }
-  throw cta::exception::Exception(
-      std::string("In DiskFileFactory::createWriteFile failed to parse URL: ")+path);
+  throw cta::exception::Exception(std::string("In DiskFileFactory::createWriteFile failed to parse URL: ") + path);
 }
 
 //==============================================================================
 // LOCAL READ FILE
 //==============================================================================
-LocalReadFile::LocalReadFile(const std::string &path)  {
-  m_fd = ::open64((char *)path.c_str(), O_RDONLY);
+LocalReadFile::LocalReadFile(const std::string& path) {
+  m_fd = ::open64((char*) path.c_str(), O_RDONLY);
   m_URL = "file://";
   m_URL += path;
-  cta::exception::Errnum::throwOnMinusOne(m_fd,
-    std::string("In diskFile::LocalReadFile::LocalReadFile failed open64() on ")+m_URL);
-
+  cta::exception::Errnum::throwOnMinusOne(
+    m_fd, std::string("In diskFile::LocalReadFile::LocalReadFile failed open64() on ") + m_URL);
 }
 
-size_t LocalReadFile::read(void *data, const size_t size) const {
+size_t LocalReadFile::read(void* data, const size_t size) const {
   return ::read(m_fd, data, size);
 }
 
 size_t LocalReadFile::size() const {
   //struct is mandatory here, because there is a function stat64
   struct stat64 statbuf;
-  int ret = ::fstat64(m_fd,&statbuf);
-  cta::exception::Errnum::throwOnMinusOne(ret,
-    std::string("In diskFile::LocalReadFile::LocalReadFile failed stat64() on ")+m_URL);
+  int ret = ::fstat64(m_fd, &statbuf);
+  cta::exception::Errnum::throwOnMinusOne(
+    ret, std::string("In diskFile::LocalReadFile::LocalReadFile failed stat64() on ") + m_URL);
 
   return statbuf.st_size;
 }
@@ -238,35 +227,35 @@ LocalReadFile::~LocalReadFile() throw() {
 //==============================================================================
 // LOCAL WRITE FILE
 //==============================================================================
-LocalWriteFile::LocalWriteFile(const std::string &path): m_closeTried(false){
+LocalWriteFile::LocalWriteFile(const std::string& path) : m_closeTried(false) {
   // For local files, we truncate the file like for RFIO
-  m_fd = ::open64((char *)path.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0666);
+  m_fd = ::open64((char*) path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
   m_URL = "file://";
   m_URL += path;
-  cta::exception::Errnum::throwOnMinusOne(m_fd,
-      std::string("In LocalWriteFile::LocalWriteFile() failed to open64() on ")
-      +m_URL);
-
+  cta::exception::Errnum::throwOnMinusOne(
+    m_fd, std::string("In LocalWriteFile::LocalWriteFile() failed to open64() on ") + m_URL);
 }
 
-void LocalWriteFile::write(const void *data, const size_t size)  {
-  ::write(m_fd, (void *)data, size);
+void LocalWriteFile::write(const void* data, const size_t size) {
+  ::write(m_fd, (void*) data, size);
 }
 
 void LocalWriteFile::setChecksum(uint32_t checksum) {
   // Noop: this is only implemented for rados striper
 }
 
-void LocalWriteFile::close()  {
+void LocalWriteFile::close() {
   // Multiple close protection
-  if (m_closeTried) return;
-  m_closeTried=true;
+  if (m_closeTried) {
+    return;
+  }
+  m_closeTried = true;
   cta::exception::Errnum::throwOnMinusOne(::close(m_fd),
-      std::string("In LocalWriteFile::close failed close() on ")+m_URL);
+                                          std::string("In LocalWriteFile::close failed close() on ") + m_URL);
 }
 
 LocalWriteFile::~LocalWriteFile() throw() {
-  if(!m_closeTried){
+  if (!m_closeTried) {
     ::close(m_fd);
   }
 }
@@ -276,8 +265,7 @@ LocalWriteFile::~LocalWriteFile() throw() {
 //==============================================================================
 cta::threading::Mutex CryptoPPSigner::s_mutex;
 
-std::string CryptoPPSigner::sign(const std::string msg,
-  const CryptoPP::RSA::PrivateKey& privateKey) {
+std::string CryptoPPSigner::sign(const std::string msg, const CryptoPP::RSA::PrivateKey& privateKey) {
   // Global lock as Crypto++ seems not to be thread safe (helgrind complains)
   cta::threading::MutexLocker ml(s_mutex);
   // Create a signer object
@@ -288,10 +276,10 @@ std::string CryptoPPSigner::sign(const std::string msg,
   CryptoPP::AutoSeededRandomPool rng;
   // Construct a pipe: msg -> sign -> Base64 encode -> result goes into ret.
   const bool noNewLineInBase64Output = false;
-  CryptoPP::StringSource ss1(msg, true,
-      new CryptoPP::SignerFilter(rng, signer,
-        new CryptoPP::Base64Encoder(
-          new CryptoPP::StringSink(ret), noNewLineInBase64Output)));
+  CryptoPP::StringSource ss1(
+    msg, true,
+    new CryptoPP::SignerFilter(rng, signer,
+                               new CryptoPP::Base64Encoder(new CryptoPP::StringSink(ret), noNewLineInBase64Output)));
   // That's all job's already done.
   return ret;
 }
@@ -299,9 +287,11 @@ std::string CryptoPPSigner::sign(const std::string msg,
 //==============================================================================
 // XROOT READ FILE
 //==============================================================================
-XrootC2FSReadFile::XrootC2FSReadFile(const std::string &url,
-  const CryptoPP::RSA::PrivateKey & xrootPrivateKey, uint16_t timeout,
-  const std::string & pool): XrootBaseReadFile(timeout) {
+XrootC2FSReadFile::XrootC2FSReadFile(const std::string& url,
+                                     const CryptoPP::RSA::PrivateKey& xrootPrivateKey,
+                                     uint16_t timeout,
+                                     const std::string& pool) :
+XrootBaseReadFile(timeout) {
   // Setup parent's members
   m_readPosition = 0;
   m_URL = url;
@@ -319,18 +309,18 @@ XrootC2FSReadFile::XrootC2FSReadFile(const std::string &url,
   // after the inital [x]root://
   const std::string scheme = "root://";
   size_t schemePos = url.find(scheme);
-  if (std::string::npos == schemePos)
+  if (std::string::npos == schemePos) {
     throw cta::exception::Exception(
-      std::string("In XrootC2FSReadFile::XrootC2FSReadFile could not find the scheme[x]root:// in URL "+
-        url));
+      std::string("In XrootC2FSReadFile::XrootC2FSReadFile could not find the scheme[x]root:// in URL " + url));
+  }
   size_t pathPos = url.find("/", schemePos + scheme.size());
-  if (std::string::npos == pathPos)
+  if (std::string::npos == pathPos) {
     throw cta::exception::Exception(
-      std::string("In XrootC2FSReadFile::XrootC2FSReadFile could not path in URL "+
-        url));
+      std::string("In XrootC2FSReadFile::XrootC2FSReadFile could not path in URL " + url));
+  }
   // Build signature block
   std::string path = url.substr(pathPos + 1);
-  time_t expTime = time(nullptr)+3600;
+  time_t expTime = time(nullptr) + 3600;
   uuid_t uuid;
   char suuid[100];
   uuid_generate(uuid);
@@ -343,8 +333,9 @@ XrootC2FSReadFile::XrootC2FSReadFile(const std::string &url,
   std::stringstream opaqueBloc;
   opaqueBloc << "?castor.pfn1=" << path;
   opaqueBloc << "&castor.pfn2=0:" << suuid;
-  if (pool.size())
+  if (pool.size()) {
     opaqueBloc << "&castor.pool=" << pool;
+  }
   opaqueBloc << "&castor.exptime=" << expTime;
   opaqueBloc << "&castor.txtype=tape";
   opaqueBloc << "&castor.signature=" << signature;
@@ -352,61 +343,63 @@ XrootC2FSReadFile::XrootC2FSReadFile(const std::string &url,
 
   // ... and finally open the file
   XrootClEx::throwOnError(m_xrootFile.Open(m_signedURL, OpenFlags::Read, XrdCl::Access::None, m_timeout),
-    std::string("In XrootC2FSReadFile::XrootC2FSReadFile failed XrdCl::File::Open() on ")
-    +m_URL+" opaqueBlock="+opaqueBloc.str());
+                          std::string("In XrootC2FSReadFile::XrootC2FSReadFile failed XrdCl::File::Open() on ") +
+                            m_URL + " opaqueBlock=" + opaqueBloc.str());
 }
 
-XrootReadFile::XrootReadFile(const std::string &xrootUrl, uint16_t timeout):
-  XrootBaseReadFile(timeout) {
+XrootReadFile::XrootReadFile(const std::string& xrootUrl, uint16_t timeout) : XrootBaseReadFile(timeout) {
   // Setup parent's variables
   m_readPosition = 0;
-  
+
   // and simply open
   using XrdCl::OpenFlags;
   XrootClEx::throwOnError(m_xrootFile.Open(xrootUrl, OpenFlags::Read, XrdCl::Access::None, m_timeout),
-    std::string("In XrootReadFile::XrootReadFile failed XrdCl::File::Open() on ")+xrootUrl);
+                          std::string("In XrootReadFile::XrootReadFile failed XrdCl::File::Open() on ") + xrootUrl);
   m_xrootFile.GetProperty("LastURL", m_URL);
 }
 
-size_t XrootBaseReadFile::read(void *data, const size_t size) const {
+size_t XrootBaseReadFile::read(void* data, const size_t size) const {
   uint32_t ret;
   XrootClEx::throwOnError(m_xrootFile.Read(m_readPosition, size, data, ret, m_timeout),
-    std::string("In XrootReadFile::read failed XrdCl::File::Read() on ")+m_URL);
+                          std::string("In XrootReadFile::read failed XrdCl::File::Read() on ") + m_URL);
   m_readPosition += ret;
   return ret;
 }
 
 size_t XrootBaseReadFile::size() const {
-  const bool forceStat=false;
-  XrdCl::StatInfo *statInfo(nullptr);
+  const bool forceStat = false;
+  XrdCl::StatInfo* statInfo(nullptr);
   size_t ret;
   XrootClEx::throwOnError(m_xrootFile.Stat(forceStat, statInfo, m_timeout),
-    std::string("In XrootReadFile::size failed XrdCl::File::Stat() on ")+m_URL);
-  ret= statInfo->GetSize();
+                          std::string("In XrootReadFile::size failed XrdCl::File::Stat() on ") + m_URL);
+  ret = statInfo->GetSize();
   delete statInfo;
   return ret;
 }
 
 XrootBaseReadFile::~XrootBaseReadFile() throw() {
-  try{
+  try {
     // Use the result of Close() to avoid gcc >= 7 generating an unused-result
     // warning (casting the result to void is not good enough for gcc >= 7)
-    if(!m_xrootFile.Close(m_timeout).IsOK()) {
+    if (!m_xrootFile.Close(m_timeout).IsOK()) {
       // Ignore the error
     }
-  } catch (...) {}
+  }
+  catch (...) {
+  }
 }
 
 //==============================================================================
 // XROOT WRITE FILE
 //==============================================================================
-XrootC2FSWriteFile::XrootC2FSWriteFile(const std::string &url,
-  const CryptoPP::RSA::PrivateKey & xrootPrivateKey, uint16_t timeout,
-  const std::string & pool):
-  XrootBaseWriteFile(timeout) {
+XrootC2FSWriteFile::XrootC2FSWriteFile(const std::string& url,
+                                       const CryptoPP::RSA::PrivateKey& xrootPrivateKey,
+                                       uint16_t timeout,
+                                       const std::string& pool) :
+XrootBaseWriteFile(timeout) {
   // Start opening
   using XrdCl::OpenFlags;
-  m_URL=url;
+  m_URL = url;
   m_signedURL = m_URL;
   // Turn the bare URL into a Castor URL, by adding opaque tags:
   // ?castor.pfn1=/srv/castor/...  (duplication of the path in practice)
@@ -419,18 +412,18 @@ XrootC2FSWriteFile::XrootC2FSWriteFile(const std::string &url,
   // after the inital [x]root://
   const std::string scheme = "root://";
   size_t schemePos = url.find(scheme);
-  if (std::string::npos == schemePos)
+  if (std::string::npos == schemePos) {
     throw cta::exception::Exception(
-      std::string("In XrootC2FSWriteFile::XrootC2FSWriteFile could not find the scheme[x]root:// in URL "+
-        url));
+      std::string("In XrootC2FSWriteFile::XrootC2FSWriteFile could not find the scheme[x]root:// in URL " + url));
+  }
   size_t pathPos = url.find("/", schemePos + scheme.size());
-  if (std::string::npos == pathPos)
+  if (std::string::npos == pathPos) {
     throw cta::exception::Exception(
-      std::string("In XrootC2FSWriteFile::XrootC2FSWriteFile could not path in URL "+
-        url));
+      std::string("In XrootC2FSWriteFile::XrootC2FSWriteFile could not path in URL " + url));
+  }
   // Build signature block
   std::string path = url.substr(pathPos + 1);
-  time_t expTime = time(nullptr)+3600;
+  time_t expTime = time(nullptr) + 3600;
   uuid_t uuid;
   char suuid[100];
   uuid_generate(uuid);
@@ -443,33 +436,31 @@ XrootC2FSWriteFile::XrootC2FSWriteFile(const std::string &url,
   std::stringstream opaqueBloc;
   opaqueBloc << "?castor.pfn1=" << path;
   opaqueBloc << "&castor.pfn2=0:" << suuid;
-  if (pool.size())
+  if (pool.size()) {
     opaqueBloc << "&castor.pool=" << pool;
+  }
   opaqueBloc << "&castor.exptime=" << expTime;
   opaqueBloc << "&castor.txtype=tape";
   opaqueBloc << "&castor.signature=" << signature;
   m_signedURL = m_URL + opaqueBloc.str();
 
   // ... and finally open the file for write (deleting any existing one in case)
-  XrootClEx::throwOnError(m_xrootFile.Open(m_signedURL, OpenFlags::Delete | OpenFlags::Write,
-    XrdCl::Access::None, m_timeout),
-    std::string("In XrootC2FSWriteFile::XrootC2FSWriteFile failed XrdCl::File::Open() on ")
-    +m_URL);
+  XrootClEx::throwOnError(
+    m_xrootFile.Open(m_signedURL, OpenFlags::Delete | OpenFlags::Write, XrdCl::Access::None, m_timeout),
+    std::string("In XrootC2FSWriteFile::XrootC2FSWriteFile failed XrdCl::File::Open() on ") + m_URL);
 }
 
-XrootWriteFile::XrootWriteFile(const std::string& xrootUrl, uint16_t timeout):
-  XrootBaseWriteFile(timeout) {
+XrootWriteFile::XrootWriteFile(const std::string& xrootUrl, uint16_t timeout) : XrootBaseWriteFile(timeout) {
   using XrdCl::OpenFlags;
-  XrootClEx::throwOnError(m_xrootFile.Open(xrootUrl, OpenFlags::Delete | OpenFlags::Write,
-    XrdCl::Access::None, m_timeout),
-    std::string("In XrootWriteFile::XrootWriteFile failed XrdCl::File::Open() on ")+xrootUrl);
+  XrootClEx::throwOnError(
+    m_xrootFile.Open(xrootUrl, OpenFlags::Delete | OpenFlags::Write, XrdCl::Access::None, m_timeout),
+    std::string("In XrootWriteFile::XrootWriteFile failed XrdCl::File::Open() on ") + xrootUrl);
   m_xrootFile.GetProperty("LastURL", m_URL);
 }
 
-void XrootBaseWriteFile::write(const void *data, const size_t size)  {
+void XrootBaseWriteFile::write(const void* data, const size_t size) {
   XrootClEx::throwOnError(m_xrootFile.Write(m_writePosition, size, data, m_timeout),
-    std::string("In XrootWriteFile::write failed XrdCl::File::Write() on ")
-    +m_URL);
+                          std::string("In XrootWriteFile::write failed XrdCl::File::Write() on ") + m_URL);
   m_writePosition += size;
 }
 
@@ -477,19 +468,21 @@ void XrootBaseWriteFile::setChecksum(uint32_t checksum) {
   // Noop: this is only implemented for rados striper
 }
 
-void XrootBaseWriteFile::close()  {
+void XrootBaseWriteFile::close() {
   // Multiple close protection
-  if (m_closeTried) return;
-  m_closeTried=true;
+  if (m_closeTried) {
+    return;
+  }
+  m_closeTried = true;
   XrootClEx::throwOnError(m_xrootFile.Close(m_timeout),
-    std::string("In XrootWriteFile::close failed XrdCl::File::Close() on ")+m_URL);
+                          std::string("In XrootWriteFile::close failed XrdCl::File::Close() on ") + m_URL);
 }
 
 XrootBaseWriteFile::~XrootBaseWriteFile() throw() {
-  if(!m_closeTried){
+  if (!m_closeTried) {
     // Use the result of Close() to avoid gcc >= 7 generating an unused-result
     // warning (casting the result to void is not good enough for gcc >= 7)
-    if(!m_xrootFile.Close(m_timeout).IsOK()) {
+    if (!m_xrootFile.Close(m_timeout).IsOK()) {
       // Ignore the error
     }
   }
@@ -498,21 +491,22 @@ XrootBaseWriteFile::~XrootBaseWriteFile() throw() {
 //==============================================================================
 // RADOS STRIPER READ FILE
 //==============================================================================
-RadosStriperReadFile::RadosStriperReadFile(const std::string &fullURL,
-  libradosstriper::RadosStriper * striper,
-  const std::string &osd): m_striper(striper),
-  m_osd(osd), m_readPosition(0) {
-    m_URL=fullURL;
+RadosStriperReadFile::RadosStriperReadFile(const std::string& fullURL,
+                                           libradosstriper::RadosStriper* striper,
+                                           const std::string& osd) :
+m_striper(striper),
+m_osd(osd),
+m_readPosition(0) {
+  m_URL = fullURL;
 }
 
-size_t RadosStriperReadFile::read(void *data, const size_t size) const {
+size_t RadosStriperReadFile::read(void* data, const size_t size) const {
   ::ceph::bufferlist bl;
   int rc = m_striper->read(m_osd, &bl, size, m_readPosition);
   if (rc < 0) {
-    throw cta::exception::Errnum(-rc,
-        "In RadosStriperReadFile::read(): failed to striper->read: ");
+    throw cta::exception::Errnum(-rc, "In RadosStriperReadFile::read(): failed to striper->read: ");
   }
-  bl.begin().copy(rc, (char *)data);
+  bl.begin().copy(rc, (char*) data);
   m_readPosition += rc;
   return rc;
 }
@@ -520,9 +514,8 @@ size_t RadosStriperReadFile::read(void *data, const size_t size) const {
 size_t RadosStriperReadFile::size() const {
   uint64_t size;
   time_t time;
-  cta::exception::Errnum::throwOnReturnedErrno(
-      -m_striper->stat(m_osd, &size, &time),
-      "In RadosStriperReadFile::size(): failed to striper->stat(): ");
+  cta::exception::Errnum::throwOnReturnedErrno(-m_striper->stat(m_osd, &size, &time),
+                                               "In RadosStriperReadFile::size(): failed to striper->stat(): ");
   return size;
 }
 
@@ -531,26 +524,28 @@ RadosStriperReadFile::~RadosStriperReadFile() throw() {}
 //==============================================================================
 // RADOS STRIPER WRITE FILE
 //==============================================================================
-RadosStriperWriteFile::RadosStriperWriteFile(const std::string &fullURL,
-  libradosstriper::RadosStriper * striper,
-  const std::string &osd): m_striper(striper),
-  m_osd(osd), m_writePosition(0) {
-  m_URL=fullURL;
+RadosStriperWriteFile::RadosStriperWriteFile(const std::string& fullURL,
+                                             libradosstriper::RadosStriper* striper,
+                                             const std::string& osd) :
+m_striper(striper),
+m_osd(osd),
+m_writePosition(0) {
+  m_URL = fullURL;
   // Truncate the possibly existing file. If the file does not exist, it's fine.
-  int rc=m_striper->trunc(m_osd, 0);
+  int rc = m_striper->trunc(m_osd, 0);
   if (rc < 0 && rc != -ENOENT) {
     throw cta::exception::Errnum(-rc, "In RadosStriperWriteFile::RadosStriperWriteFile(): "
-        "failed to striper->trunc(): ");
+                                      "failed to striper->trunc(): ");
   }
 }
 
-void RadosStriperWriteFile::write(const void *data, const size_t size)  {
+void RadosStriperWriteFile::write(const void* data, const size_t size) {
   ::ceph::bufferlist bl;
-  bl.append((char *)data, size);
+  bl.append((char*) data, size);
   int rc = m_striper->write(m_osd, bl, size, m_writePosition);
   if (rc) {
     throw cta::exception::Errnum(-rc, "In RadosStriperWriteFile::write(): "
-        "failed to striper->write(): ");
+                                      "failed to striper->write(): ");
   }
   m_writePosition += size;
 }
@@ -564,7 +559,7 @@ void RadosStriperWriteFile::setChecksum(uint32_t checksum) {
   rc = m_striper->setxattr(m_osd, "user.castor.checksum.type", blType);
   if (rc) {
     throw cta::exception::Errnum(-rc, "In RadosStriperWriteFile::setChecksum(): "
-        "failed to striper->setxattr(user.castor.checksum.type): ");
+                                      "failed to striper->setxattr(user.castor.checksum.type): ");
   }
   // Turn the numeric checksum into a string and set it as checksum value
   std::stringstream checksumStr;
@@ -574,11 +569,11 @@ void RadosStriperWriteFile::setChecksum(uint32_t checksum) {
   rc = m_striper->setxattr(m_osd, "user.castor.checksum.value", blChecksum);
   if (rc) {
     throw cta::exception::Errnum(-rc, "In RadosStriperWriteFile::setChecksum(): "
-        "failed to striper->setxattr(user.castor.checksum.value): ");
+                                      "failed to striper->setxattr(user.castor.checksum.value): ");
   }
 }
 
-void RadosStriperWriteFile::close()  {
+void RadosStriperWriteFile::close() {
   // Nothing to do as writes are synchronous
 }
 
@@ -587,55 +582,57 @@ RadosStriperWriteFile::~RadosStriperWriteFile() throw() {}
 //==============================================================================
 // AsyncDiskFileRemover FACTORY
 //==============================================================================
-AsyncDiskFileRemoverFactory::AsyncDiskFileRemoverFactory():
-    m_URLLocalFile("^file://(.*)$"),
-    m_URLXrootdFile("^(root://.*)$"){}
+AsyncDiskFileRemoverFactory::AsyncDiskFileRemoverFactory() :
+m_URLLocalFile("^file://(.*)$"),
+m_URLXrootdFile("^(root://.*)$") {}
 
-AsyncDiskFileRemover * AsyncDiskFileRemoverFactory::createAsyncDiskFileRemover(const std::string &path){
+AsyncDiskFileRemover* AsyncDiskFileRemoverFactory::createAsyncDiskFileRemover(const std::string& path) {
   // URL path parsing
   std::vector<std::string> regexResult;
   //local file URL?
   regexResult = m_URLLocalFile.exec(path);
-  if(regexResult.size()){
+  if (regexResult.size()) {
     return new AsyncLocalDiskFileRemover(regexResult[1]);
   }
   regexResult = m_URLXrootdFile.exec(path);
-  if(regexResult.size()){
+  if (regexResult.size()) {
     return new AsyncXRootdDiskFileRemover(path);
   }
   throw cta::exception::Exception("In DiskFileRemoverFactory::createDiskFileRemover: unknown type of URL");
 }
 
-
 //==============================================================================
 // LocalDiskFileRemover
 //==============================================================================
-LocalDiskFileRemover::LocalDiskFileRemover(const std::string &path){
+LocalDiskFileRemover::LocalDiskFileRemover(const std::string& path) {
   m_URL = path;
 }
 
-void LocalDiskFileRemover::remove(){
-  cta::exception::Errnum::throwOnNonZero(::remove(m_URL.c_str()),"In LocalDiskFileRemover::remove(), failed to delete the file at "+m_URL);
+void LocalDiskFileRemover::remove() {
+  cta::exception::Errnum::throwOnNonZero(::remove(m_URL.c_str()),
+                                         "In LocalDiskFileRemover::remove(), failed to delete the file at " + m_URL);
 }
 
 //==============================================================================
 // XRootdDiskFileRemover
 //==============================================================================
-XRootdDiskFileRemover::XRootdDiskFileRemover(const std::string& path):m_xrootFileSystem(path){
+XRootdDiskFileRemover::XRootdDiskFileRemover(const std::string& path) : m_xrootFileSystem(path) {
   m_URL = path;
   m_truncatedFileURL = cta::utils::extractPathFromXrootdPath(path);
 }
 
-void XRootdDiskFileRemover::remove(){
-  XrdCl::XRootDStatus statusRm = m_xrootFileSystem.Rm(m_truncatedFileURL,c_xrootTimeout);
-  cta::exception::XrootCl::throwOnError(statusRm,"In XRootdDiskFileRemover::remove(), fail to remove file.");;
+void XRootdDiskFileRemover::remove() {
+  XrdCl::XRootDStatus statusRm = m_xrootFileSystem.Rm(m_truncatedFileURL, c_xrootTimeout);
+  cta::exception::XrootCl::throwOnError(statusRm, "In XRootdDiskFileRemover::remove(), fail to remove file.");
+  ;
 }
 
-void XRootdDiskFileRemover::removeAsync(AsyncXRootdDiskFileRemover::XRootdFileRemoverResponseHandler &responseHandler){
-  XrdCl::XRootDStatus statusRm = m_xrootFileSystem.Rm(m_truncatedFileURL,&responseHandler,c_xrootTimeout);
-  try{
-    cta::exception::XrootCl::throwOnError(statusRm,"In XRootdDiskFileRemover::remove(), fail to remove file.");
-  } catch(const cta::exception::Exception &e){
+void XRootdDiskFileRemover::removeAsync(AsyncXRootdDiskFileRemover::XRootdFileRemoverResponseHandler& responseHandler) {
+  XrdCl::XRootDStatus statusRm = m_xrootFileSystem.Rm(m_truncatedFileURL, &responseHandler, c_xrootTimeout);
+  try {
+    cta::exception::XrootCl::throwOnError(statusRm, "In XRootdDiskFileRemover::remove(), fail to remove file.");
+  }
+  catch (const cta::exception::Exception& e) {
     responseHandler.m_deletionPromise.set_exception(std::current_exception());
   }
 }
@@ -643,23 +640,25 @@ void XRootdDiskFileRemover::removeAsync(AsyncXRootdDiskFileRemover::XRootdFileRe
 //==============================================================================
 // AsyncXrootdDiskFileRemover
 //==============================================================================
-AsyncXRootdDiskFileRemover::AsyncXRootdDiskFileRemover(const std::string &path){
+AsyncXRootdDiskFileRemover::AsyncXRootdDiskFileRemover(const std::string& path) {
   m_diskFileRemover.reset(new XRootdDiskFileRemover(path));
 }
 
-void AsyncXRootdDiskFileRemover::asyncDelete(){
+void AsyncXRootdDiskFileRemover::asyncDelete() {
   m_diskFileRemover->removeAsync(m_responseHandler);
 }
 
-void AsyncXRootdDiskFileRemover::wait(){
+void AsyncXRootdDiskFileRemover::wait() {
   m_responseHandler.m_deletionPromise.get_future().get();
 }
 
-void AsyncXRootdDiskFileRemover::XRootdFileRemoverResponseHandler::HandleResponse(XrdCl::XRootDStatus* status, XrdCl::AnyObject* response){
-  try{
-    cta::exception::XrootCl::throwOnError(*status,"In XRootdDiskFileRemover::remove(), fail to remove file.");
+void AsyncXRootdDiskFileRemover::XRootdFileRemoverResponseHandler::HandleResponse(XrdCl::XRootDStatus* status,
+                                                                                  XrdCl::AnyObject* response) {
+  try {
+    cta::exception::XrootCl::throwOnError(*status, "In XRootdDiskFileRemover::remove(), fail to remove file.");
     m_deletionPromise.set_value();
-  } catch(const cta::exception::Exception &e){
+  }
+  catch (const cta::exception::Exception& e) {
     m_deletionPromise.set_exception(std::current_exception());
   }
 }
@@ -667,27 +666,24 @@ void AsyncXRootdDiskFileRemover::XRootdFileRemoverResponseHandler::HandleRespons
 //==============================================================================
 // AsyncLocalDiskFileRemover
 //==============================================================================
-AsyncLocalDiskFileRemover::AsyncLocalDiskFileRemover(const std::string& path){
+AsyncLocalDiskFileRemover::AsyncLocalDiskFileRemover(const std::string& path) {
   m_diskFileRemover.reset(new LocalDiskFileRemover(path));
 }
 
-void AsyncLocalDiskFileRemover::asyncDelete(){
-  m_futureDeletion = std::async(std::launch::async,[this](){m_diskFileRemover->remove();});
+void AsyncLocalDiskFileRemover::asyncDelete() {
+  m_futureDeletion = std::async(std::launch::async, [this]() { m_diskFileRemover->remove(); });
 }
 
-void AsyncLocalDiskFileRemover::wait(){
+void AsyncLocalDiskFileRemover::wait() {
   m_futureDeletion.get();
 }
 
 //==============================================================================
 // DIRECTORY FACTORY
 //==============================================================================
-DirectoryFactory::DirectoryFactory():
-    m_URLLocalDirectory("^file://(.*)$"),
-    m_URLXrootDirectory("^(root://.*)$"){}
+DirectoryFactory::DirectoryFactory() : m_URLLocalDirectory("^file://(.*)$"), m_URLXrootDirectory("^(root://.*)$") {}
 
-
-Directory * DirectoryFactory::createDirectory(const std::string& path){
+Directory* DirectoryFactory::createDirectory(const std::string& path) {
   // URL path parsing
   std::vector<std::string> regexResult;
   // local file URL?
@@ -706,82 +702,93 @@ Directory * DirectoryFactory::createDirectory(const std::string& path){
 //==============================================================================
 // LOCAL DIRECTORY
 //==============================================================================
-LocalDirectory::LocalDirectory(const std::string& path){
+LocalDirectory::LocalDirectory(const std::string& path) {
   m_URL = path;
 }
 
-void LocalDirectory::mkdir(){
-  const int retCode = ::mkdir(m_URL.c_str(),S_IRWXU);
-  cta::exception::Errnum::throwOnMinusOne(retCode,"In LocalDirectory::mkdir(): failed to create directory at "+m_URL);
+void LocalDirectory::mkdir() {
+  const int retCode = ::mkdir(m_URL.c_str(), S_IRWXU);
+  cta::exception::Errnum::throwOnMinusOne(retCode,
+                                          "In LocalDirectory::mkdir(): failed to create directory at " + m_URL);
 }
 
-void LocalDirectory::rmdir(){
+void LocalDirectory::rmdir() {
   const int retcode = ::rmdir(m_URL.c_str());
-  cta::exception::Errnum::throwOnMinusOne(retcode,"In LocalDirectory::rmdir(): failed to remove the directory at "+m_URL);
+  cta::exception::Errnum::throwOnMinusOne(retcode,
+                                          "In LocalDirectory::rmdir(): failed to remove the directory at " + m_URL);
 }
 
-bool LocalDirectory::exist(){
+bool LocalDirectory::exist() {
   struct stat buffer;
   return (stat(m_URL.c_str(), &buffer) == 0);
 }
 
-std::set<std::string> LocalDirectory::getFilesName(){
+std::set<std::string> LocalDirectory::getFilesName() {
   std::set<std::string> names;
-  DIR *dir;
-  struct dirent *file;
+  DIR* dir;
+  struct dirent* file;
   dir = opendir(m_URL.c_str());
-  cta::exception::Errnum::throwOnNull(dir,"In LocalDirectory::getFilesName, failed to open directory at "+m_URL);
-  while((file = readdir(dir)) != nullptr){
-    char *fileName = file->d_name;
-    if(strcmp(fileName,".")  && strcmp(fileName,"..")){
+  cta::exception::Errnum::throwOnNull(dir, "In LocalDirectory::getFilesName, failed to open directory at " + m_URL);
+  while ((file = readdir(dir)) != nullptr) {
+    char* fileName = file->d_name;
+    if (strcmp(fileName, ".") && strcmp(fileName, "..")) {
       names.insert(std::string(file->d_name));
     }
   }
-  cta::exception::Errnum::throwOnMinusOne(::closedir(dir),"In LocalDirectory::getFilesName(), fail to close directory at "+m_URL);
+  cta::exception::Errnum::throwOnMinusOne(::closedir(dir),
+                                          "In LocalDirectory::getFilesName(), fail to close directory at " + m_URL);
   return names;
 }
 
 //==============================================================================
 // XROOT DIRECTORY
 //==============================================================================
-XRootdDirectory::XRootdDirectory(const std::string& path):m_xrootFileSystem(path){
+XRootdDirectory::XRootdDirectory(const std::string& path) : m_xrootFileSystem(path) {
   m_URL = path;
   m_truncatedDirectoryURL = cta::utils::extractPathFromXrootdPath(path);
 }
 
 void XRootdDirectory::mkdir() {
-  XrdCl::XRootDStatus mkdirStatus = m_xrootFileSystem.MkDir(m_truncatedDirectoryURL,XrdCl::MkDirFlags::None,XrdCl::Access::Mode::UR | XrdCl::Access::Mode::UW | XrdCl::Access::Mode::UX,c_xrootTimeout);
-  cta::exception::XrootCl::throwOnError(mkdirStatus,"In XRootdDirectory::mkdir() : failed to create directory at "+m_URL);
+  XrdCl::XRootDStatus mkdirStatus = m_xrootFileSystem.MkDir(
+    m_truncatedDirectoryURL, XrdCl::MkDirFlags::None,
+    XrdCl::Access::Mode::UR | XrdCl::Access::Mode::UW | XrdCl::Access::Mode::UX, c_xrootTimeout);
+  cta::exception::XrootCl::throwOnError(mkdirStatus,
+                                        "In XRootdDirectory::mkdir() : failed to create directory at " + m_URL);
 }
 
 void XRootdDirectory::rmdir() {
   XrdCl::XRootDStatus rmdirStatus = m_xrootFileSystem.RmDir(m_truncatedDirectoryURL, c_xrootTimeout);
-  cta::exception::XrootCl::throwOnError(rmdirStatus,"In XRootdDirectory::rmdir() : failed to remove directory at "+m_URL);
+  cta::exception::XrootCl::throwOnError(rmdirStatus,
+                                        "In XRootdDirectory::rmdir() : failed to remove directory at " + m_URL);
 }
 
 bool XRootdDirectory::exist() {
-  XrdCl::StatInfo *statInfo;
-  XrdCl::XRootDStatus statStatus = m_xrootFileSystem.Stat(m_truncatedDirectoryURL,statInfo,c_xrootTimeout);
-  if(statStatus.errNo == XErrorCode::kXR_NotFound){
+  XrdCl::StatInfo* statInfo;
+  XrdCl::XRootDStatus statStatus = m_xrootFileSystem.Stat(m_truncatedDirectoryURL, statInfo, c_xrootTimeout);
+  if (statStatus.errNo == XErrorCode::kXR_NotFound) {
     return false;
   }
   //If the EOS instance does not exist, we don't want to return false, we want to throw an exception.
-  cta::exception::XrootCl::throwOnError(statStatus,"In XRootdDirectory::exist() : failed to stat the directory at "+m_URL);
+  cta::exception::XrootCl::throwOnError(statStatus,
+                                        "In XRootdDirectory::exist() : failed to stat the directory at " + m_URL);
   //No exception, return true
   return true;
 }
 
-std::set<std::string> XRootdDirectory::getFilesName(){
+std::set<std::string> XRootdDirectory::getFilesName() {
   std::set<std::string> ret;
-  XrdCl::DirectoryList *directoryContent;
-  XrdCl::XRootDStatus dirListStatus = m_xrootFileSystem.DirList(m_truncatedDirectoryURL,XrdCl::DirListFlags::Flags::Stat,directoryContent,c_xrootTimeout);
-  cta::exception::XrootCl::throwOnError(dirListStatus,"In XrootdDirectory::getFilesName(): unable to list the files contained in the directory.");
+  XrdCl::DirectoryList* directoryContent;
+  XrdCl::XRootDStatus dirListStatus = m_xrootFileSystem.DirList(
+    m_truncatedDirectoryURL, XrdCl::DirListFlags::Flags::Stat, directoryContent, c_xrootTimeout);
+  cta::exception::XrootCl::throwOnError(
+    dirListStatus, "In XrootdDirectory::getFilesName(): unable to list the files contained in the directory.");
   XrdCl::DirectoryList::ConstIterator iter = directoryContent->Begin();
-  while(iter != directoryContent->End()){
+  while (iter != directoryContent->End()) {
     ret.insert((*iter)->GetName());
     iter++;
   }
   return ret;
 }
 
-}} //end of namespace cta::disk
+}  // namespace disk
+}  // namespace cta

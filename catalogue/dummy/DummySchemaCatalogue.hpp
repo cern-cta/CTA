@@ -22,7 +22,7 @@
 namespace cta {
 namespace catalogue {
 
-class DummySchemaCatalogue: public SchemaCatalogue {
+class DummySchemaCatalogue : public SchemaCatalogue {
 public:
   DummySchemaCatalogue() = default;
   ~DummySchemaCatalogue() override = default;

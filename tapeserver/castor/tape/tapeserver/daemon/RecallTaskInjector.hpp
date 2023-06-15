@@ -30,31 +30,34 @@
 
 #include <future>
 
-namespace castor{
-namespace tape{
-  //forward declarations
-  namespace tapegateway {
-    class FileToRecallStruct;
-  }
-namespace tapeserver{
-  namespace client {
-    class ClientInterface;
-  }
+namespace castor {
+namespace tape {
+//forward declarations
+namespace tapegateway {
+class FileToRecallStruct;
+}
+
+namespace tapeserver {
+namespace client {
+class ClientInterface;
+}
+
 namespace daemon {
 
-  //forward declaration
-  class RecallMemoryManager;
-  class DiskWriteThreadPool;
-  class TapeReadTask;
-  //forward declaration of template class
-  template <class T> class TapeSingleThreadInterface;
+//forward declaration
+class RecallMemoryManager;
+class DiskWriteThreadPool;
+class TapeReadTask;
+//forward declaration of template class
+template<class T>
+class TapeSingleThreadInterface;
 
 /**
  * This classis responsible for creating the tasks in case of a recall job
  */
 class RecallTaskInjector {
 public:
- /**
+  /**
   * Constructor
   * @param mm the memory manager from whom the TRT will be pulling blocks
   * @param tapeReader the one object that will hold the thread which will be executing
@@ -67,10 +70,13 @@ public:
   * we may request to the client. at once
   * @param lc  copied because of the threading mechanism
   */
-  RecallTaskInjector(RecallMemoryManager & mm,
-        TapeSingleThreadInterface<TapeReadTask> & tapeReader,
-        DiskWriteThreadPool & diskWriter,cta::RetrieveMount &retrieveMount,
-        uint64_t filesPerRequest, uint64_t bytesPerRequest,cta::log::LogContext lc);
+  RecallTaskInjector(RecallMemoryManager& mm,
+                     TapeSingleThreadInterface<TapeReadTask>& tapeReader,
+                     DiskWriteThreadPool& diskWriter,
+                     cta::RetrieveMount& retrieveMount,
+                     uint64_t filesPerRequest,
+                     uint64_t bytesPerRequest,
+                     cta::log::LogContext lc);
 
   virtual ~RecallTaskInjector();
 
@@ -91,7 +97,7 @@ public:
    */
   void finish();
 
-    /**
+  /**
      * Pop jobs from the queue to reach a threshold of files held by the injector
      * This threshold is either m_maxBatchBytes/m_maxBatchFiles or the values supported by the
      * RAO implementation
@@ -99,7 +105,7 @@ public:
      * @param noFilesToRecall will be true if no files were popped from the queue during the call
      * @return true if there are jobs left to be done on the injector, false otherwise
      */
-  bool synchronousFetch(bool & noFilesToRecall);
+  bool synchronousFetch(bool& noFilesToRecall);
 
   /**
    * Wait for the inner thread to finish
@@ -115,18 +121,18 @@ public:
    * Reserve disk space in the eos instance buffer for the next job batch to be injected
    */
 
-  bool reserveSpaceForNextJobBatch(std::list<std::unique_ptr<cta::RetrieveJob>> &nextJobBatch);
+  bool reserveSpaceForNextJobBatch(std::list<std::unique_ptr<cta::RetrieveJob>>& nextJobBatch);
 
   /**
    * Set the drive interface in use
    * @param di - Drive interface
    */
-  void setDriveInterface(castor::tape::tapeserver::drive::DriveInterface *di);
+  void setDriveInterface(castor::tape::tapeserver::drive::DriveInterface* di);
 
   /**
    * Initialize Recommended Access Order parameters
    */
-  void initRAO(const castor::tape::tapeserver::rao::RAOParams & dataConfig, cta::catalogue::Catalogue * catalogue);
+  void initRAO(const castor::tape::tapeserver::rao::RAOParams& dataConfig, cta::catalogue::Catalogue* catalogue);
 
   void waitForPromise();
 
@@ -185,11 +191,10 @@ private:
    */
   class Request {
   public:
-    Request(uint64_t mf, uint64_t mb, bool lc):
-    filesRequested(mf), bytesRequested(mb), lastCall(lc),end(false) {}
+    Request(uint64_t mf, uint64_t mb, bool lc) : filesRequested(mf), bytesRequested(mb), lastCall(lc), end(false) {}
 
-    Request():
-    filesRequested(0), bytesRequested(0), lastCall(true),end(true) {}
+    Request() : filesRequested(0), bytesRequested(0), lastCall(true), end(true) {}
+
     const uint64_t filesRequested;
     const uint64_t bytesRequested;
 
@@ -206,29 +211,32 @@ private:
     const bool end;
   };
 
-  class WorkerThread: public cta::threading::Thread {
+  class WorkerThread : public cta::threading::Thread {
   public:
-    WorkerThread(RecallTaskInjector & rji): m_parent(rji) {}
+    WorkerThread(RecallTaskInjector& rji) : m_parent(rji) {}
+
     virtual void run();
+
   private:
-    RecallTaskInjector & m_parent;
+    RecallTaskInjector& m_parent;
   } m_thread;
+
   ///The memory manager for accessing memory blocks.
-  RecallMemoryManager & m_memManager;
+  RecallMemoryManager& m_memManager;
 
   ///the one object that will hold the thread which will be executing
   ///tape-reading tasks
-  TapeSingleThreadInterface<TapeReadTask> & m_tapeReader;
+  TapeSingleThreadInterface<TapeReadTask>& m_tapeReader;
 
   ///the one object that will hold all the threads which will be executing
   ///disk-writing tasks
-  DiskWriteThreadPool & m_diskWriter;
+  DiskWriteThreadPool& m_diskWriter;
 
   /// the client who is sending us jobs
-  cta::RetrieveMount &m_retrieveMount;
+  cta::RetrieveMount& m_retrieveMount;
 
   /// Drive interface needed for performing Recommended Access Order query
-  castor::tape::tapeserver::drive::DriveInterface * m_drive;
+  castor::tape::tapeserver::drive::DriveInterface* m_drive;
 
   std::vector<std::unique_ptr<cta::RetrieveJob>> m_jobs;
 
@@ -239,7 +247,6 @@ private:
 
   cta::threading::Mutex m_producerProtection;
   cta::threading::BlockingQueue<Request> m_queue;
-
 
   //maximal number of files provided by the recall threads at once
   const uint64_t m_maxBatchFiles;
@@ -252,7 +259,6 @@ private:
 
   //number of bytes currently held by the recall injector
   uint64_t m_bytes;
-
 
   /**
    * The RAO manager to perofrm RAO operations
@@ -281,10 +287,9 @@ private:
   * Set as true if a previous disk space reservation failed for this mount
   */
   bool m_diskSpaceReservationFailed = false;
-
 };
 
-} //end namespace daemon
-} //end namespace tapeserver
-} //end namespace tape
-} //end namespace castor
+}  //end namespace daemon
+}  //end namespace tapeserver
+}  //end namespace tape
+}  //end namespace castor

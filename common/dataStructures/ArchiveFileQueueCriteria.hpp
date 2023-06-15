@@ -33,7 +33,6 @@ namespace dataStructures {
  * should be used.
  */
 struct ArchiveFileQueueCriteria {
-
   /**
    * Constructor.
    */
@@ -45,9 +44,7 @@ struct ArchiveFileQueueCriteria {
    * @param copyToPoolMap The map from tape copy number to tape pool name.
    * @param mountPolicy The mount policy.
    */
-  ArchiveFileQueueCriteria(
-    const TapeCopyToPoolMap &copyToPoolMap,
-    const MountPolicy &mountPolicy);
+  ArchiveFileQueueCriteria(const TapeCopyToPoolMap& copyToPoolMap, const MountPolicy& mountPolicy);
 
   /**
    * The map from tape copy number to tape pool name.
@@ -59,8 +56,8 @@ struct ArchiveFileQueueCriteria {
    */
   MountPolicy mountPolicy;
 
-}; // struct ArchiveFileQueueCriteria
+};  // struct ArchiveFileQueueCriteria
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

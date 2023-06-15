@@ -22,15 +22,12 @@
 
 namespace unitTests {
 
-class cta_log_ParamTest: public ::testing::Test {
+class cta_log_ParamTest : public ::testing::Test {
 protected:
+  void SetUp() {}
 
-  void SetUp() {
-  }
-
-  void TearDown() {
-  }
-}; // cta_log_ParamTest
+  void TearDown() {}
+};  // cta_log_ParamTest
 
 TEST_F(cta_log_ParamTest, testConstructorWithAString) {
   using namespace cta::log;
@@ -50,4 +47,4 @@ TEST_F(cta_log_ParamTest, testConstructorWithAnInt) {
   ASSERT_EQ(std::string("1234"), param->getValue());
 }
 
-} // namespace unitTests
+}  // namespace unitTests

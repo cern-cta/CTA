@@ -34,32 +34,34 @@ namespace cta {
 namespace postgresscheddb {
 
 class ArchiveMount : public SchedulerDatabase::ArchiveMount {
- friend class cta::PostgresSchedDB;
+  friend class cta::PostgresSchedDB;
 
- public:
+public:
+  ArchiveMount(const std::string& ownerId, Transaction& txn, common::dataStructures::JobQueueType queueType) :
+  m_ownerId(ownerId),
+  m_txn(txn),
+  m_queueType(queueType) {}
 
-   ArchiveMount(const std::string& ownerId, Transaction& txn, common::dataStructures::JobQueueType queueType) :
-      m_ownerId(ownerId), m_txn(txn), m_queueType(queueType) { }
+  const MountInfo& getMountInfo() override;
 
-   const MountInfo & getMountInfo() override;
+  std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>
+    getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext) override;
 
-   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> getNextJobBatch(uint64_t filesRequested,
-      uint64_t bytesRequested, log::LogContext& logContext) override;
+  void setDriveStatus(common::dataStructures::DriveStatus status,
+                      common::dataStructures::MountType mountType,
+                      time_t completionTime,
+                      const std::optional<std::string>& reason = std::nullopt) override;
 
-   void setDriveStatus(common::dataStructures::DriveStatus status, common::dataStructures::MountType mountType,
-                                time_t completionTime, const std::optional<std::string>& reason = std::nullopt) override;
+  void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) override;
 
-   void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
-
-   void setJobBatchTransferred(
-      std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> & jobsBatch, log::LogContext & lc) override;
+  void setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
+                              log::LogContext& lc) override;
 
 private:
-
-   const std::string& m_ownerId;
-   Transaction& m_txn;
-   common::dataStructures::JobQueueType m_queueType;
+  const std::string& m_ownerId;
+  Transaction& m_txn;
+  common::dataStructures::JobQueueType m_queueType;
 };
 
-} //namespace postgresscheddb
-} //namespace cta
+}  //namespace postgresscheddb
+}  //namespace cta

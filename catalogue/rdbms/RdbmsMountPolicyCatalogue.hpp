@@ -31,7 +31,7 @@ namespace cta {
 namespace rdbms {
 class Conn;
 class ConnPool;
-}
+}  // namespace rdbms
 
 namespace catalogue {
 
@@ -39,39 +39,44 @@ class RdbmsCatalogue;
 
 class RdbmsMountPolicyCatalogue : public MountPolicyCatalogue {
 public:
-  RdbmsMountPolicyCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
-    RdbmsCatalogue *rdbmsCatalogue);
+  RdbmsMountPolicyCatalogue(log::Logger& log,
+                            std::shared_ptr<rdbms::ConnPool> connPool,
+                            RdbmsCatalogue* rdbmsCatalogue);
   ~RdbmsMountPolicyCatalogue() override = default;
 
-  void createMountPolicy(const common::dataStructures::SecurityIdentity &admin,
-    const CreateMountPolicyAttributes & mountPolicy) override;
+  void createMountPolicy(const common::dataStructures::SecurityIdentity& admin,
+                         const CreateMountPolicyAttributes& mountPolicy) override;
 
   std::list<common::dataStructures::MountPolicy> getMountPolicies() const override;
 
-  std::optional<common::dataStructures::MountPolicy> getMountPolicy(
-    const std::string &mountPolicyName) const override;
+  std::optional<common::dataStructures::MountPolicy> getMountPolicy(const std::string& mountPolicyName) const override;
 
   std::list<common::dataStructures::MountPolicy> getCachedMountPolicies() const override;
 
-  void deleteMountPolicy(const std::string &name) override;
+  void deleteMountPolicy(const std::string& name) override;
 
-  void modifyMountPolicyArchivePriority(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const uint64_t archivePriority) override;
+  void modifyMountPolicyArchivePriority(const common::dataStructures::SecurityIdentity& admin,
+                                        const std::string& name,
+                                        const uint64_t archivePriority) override;
 
-  void modifyMountPolicyArchiveMinRequestAge(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const uint64_t minArchiveRequestAge) override;
+  void modifyMountPolicyArchiveMinRequestAge(const common::dataStructures::SecurityIdentity& admin,
+                                             const std::string& name,
+                                             const uint64_t minArchiveRequestAge) override;
 
-  void modifyMountPolicyRetrievePriority(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const uint64_t retrievePriority) override;
+  void modifyMountPolicyRetrievePriority(const common::dataStructures::SecurityIdentity& admin,
+                                         const std::string& name,
+                                         const uint64_t retrievePriority) override;
 
-  void modifyMountPolicyRetrieveMinRequestAge(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const uint64_t minRetrieveRequestAge) override;
+  void modifyMountPolicyRetrieveMinRequestAge(const common::dataStructures::SecurityIdentity& admin,
+                                              const std::string& name,
+                                              const uint64_t minRetrieveRequestAge) override;
 
-  void modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const std::string &comment) override;
+  void modifyMountPolicyComment(const common::dataStructures::SecurityIdentity& admin,
+                                const std::string& name,
+                                const std::string& comment) override;
 
 private:
-  log::Logger &m_log;
+  log::Logger& m_log;
   std::shared_ptr<rdbms::ConnPool> m_connPool;
   RdbmsCatalogue* m_rdbmsCatalogue;
 
@@ -79,10 +84,10 @@ private:
   friend class RdbmsRequesterMountRuleCatalogue;
   friend class RdbmsRequesterGroupMountRuleCatalogue;
 
-  std::optional<common::dataStructures::MountPolicy> getMountPolicy(rdbms::Conn &conn,
-    const std::string &mountPolicyName) const;
+  std::optional<common::dataStructures::MountPolicy> getMountPolicy(rdbms::Conn& conn,
+                                                                    const std::string& mountPolicyName) const;
 
-  std::list<common::dataStructures::MountPolicy> getMountPolicies(rdbms::Conn & conn) const;
+  std::list<common::dataStructures::MountPolicy> getMountPolicies(rdbms::Conn& conn) const;
 
   /**
    * Returns the specified requester mount-policy or std::nullopt if one does not
@@ -93,7 +98,7 @@ private:
    * instance and the name of the group.
    * @return The mount policy or std::nullopt if one does not exists.
    */
-  std::optional<common::dataStructures::MountPolicy> getRequesterMountPolicy(rdbms::Conn &conn, const User &user) const;
+  std::optional<common::dataStructures::MountPolicy> getRequesterMountPolicy(rdbms::Conn& conn, const User& user) const;
 
   /**
    * Returns the specified requester-group mount-policy or nullptr if one does
@@ -104,8 +109,8 @@ private:
    * instance and the name of the group.
    * @return The mount policy or std::nullopt if one does not exists.
    */
-  std::optional<common::dataStructures::MountPolicy> getRequesterGroupMountPolicy(rdbms::Conn &conn,
-    const Group &group) const;
+  std::optional<common::dataStructures::MountPolicy> getRequesterGroupMountPolicy(rdbms::Conn& conn,
+                                                                                  const Group& group) const;
 
   friend class RdbmsTapeFileCatalogue;
   /**
@@ -120,12 +125,10 @@ private:
    * guaranteed to be unique within its disk instance.
    * @return The mount policies.
    */
-  RequesterAndGroupMountPolicies getMountPolicies(
-    rdbms::Conn &conn,
-    const std::string &diskInstanceName,
-    const std::string &requesterName,
-    const std::string &requesterGroupName) const;
-
+  RequesterAndGroupMountPolicies getMountPolicies(rdbms::Conn& conn,
+                                                  const std::string& diskInstanceName,
+                                                  const std::string& requesterName,
+                                                  const std::string& requesterGroupName) const;
 
   /**
    * Returns the mount policies for the specified requester, requester group and requester activity.
@@ -141,13 +144,12 @@ private:
    * mount rules against
    * @return The mount policies.
    */
-  RequesterAndGroupMountPolicies getMountPolicies(
-    rdbms::Conn &conn,
-    const std::string &diskInstanceName,
-    const std::string &requesterName,
-    const std::string &requesterGroupName,
-    const std::string &activity) const;
+  RequesterAndGroupMountPolicies getMountPolicies(rdbms::Conn& conn,
+                                                  const std::string& diskInstanceName,
+                                                  const std::string& requesterName,
+                                                  const std::string& requesterGroupName,
+                                                  const std::string& activity) const;
 };
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

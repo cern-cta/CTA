@@ -23,10 +23,10 @@ namespace postgresscheddb {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-PostgresSchedulerSchema::PostgresSchedulerSchema(): SchedulerSchema(
+PostgresSchedulerSchema::PostgresSchedulerSchema() :
+SchedulerSchema(
   // CTA_SQL_SCHEMA - The contents of postgres_scheduler_schema.cpp go here
-  ) {
-}
+) {}
 
-} // namespace postgresscheddb
-} // namespace cta
+}  // namespace postgresscheddb
+}  // namespace cta

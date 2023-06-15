@@ -25,41 +25,41 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-TapeItemWritten::TapeItemWritten() :
-  fSeq(0) {
-}
+TapeItemWritten::TapeItemWritten() : fSeq(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool TapeItemWritten::operator==(const TapeItemWritten &rhs) const {
-  return 
-      fSeq == rhs.fSeq && 
-      vid == rhs.vid; 
+bool TapeItemWritten::operator==(const TapeItemWritten& rhs) const {
+  return fSeq == rhs.fSeq && vid == rhs.vid;
 }
 
 //------------------------------------------------------------------------------
 // operator<
 //------------------------------------------------------------------------------
-bool TapeItemWritten::operator<(const TapeItemWritten &rhs) const {
+bool TapeItemWritten::operator<(const TapeItemWritten& rhs) const {
   return fSeq < rhs.fSeq;
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const TapeItemWritten &obj) {
-  os <<
-  "{"
-  "vid=" << obj.vid << ","
-  "fSeq=" << obj.fSeq << ","
-  "tapeDrive=" << obj.tapeDrive <<
-  "}";
+std::ostream& operator<<(std::ostream& os, const TapeItemWritten& obj) {
+  os << "{"
+        "vid="
+     << obj.vid
+     << ","
+        "fSeq="
+     << obj.fSeq
+     << ","
+        "tapeDrive="
+     << obj.tapeDrive << "}";
   return os;
 }
 
-bool operator<(const TapeItemWrittenPointer& a, const TapeItemWrittenPointer& b) { return *a < *b; }
+bool operator<(const TapeItemWrittenPointer& a, const TapeItemWrittenPointer& b) {
+  return *a < *b;
+}
 
-
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

@@ -17,10 +17,7 @@
 
 #include "common/exception/DismountFailed.hpp"
 
-
 // -----------------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------------
-cta::exception::DismountFailed::DismountFailed():
-  cta::exception::Exception() {
-}
+cta::exception::DismountFailed::DismountFailed() : cta::exception::Exception() {}

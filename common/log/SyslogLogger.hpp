@@ -33,9 +33,8 @@ namespace log {
 /**
  * Class implementaing the API of the CASTOR logging system.
  */
-class SyslogLogger: public Logger {
+class SyslogLogger : public Logger {
 public:
-
   /**
    * Constructor
    *
@@ -44,7 +43,7 @@ public:
    * message.
    * @param logMask The log mask.
    */
-  SyslogLogger(const std::string &hostName, const std::string &programName, const int logMask);
+  SyslogLogger(const std::string& hostName, const std::string& programName, const int logMask);
 
   /**
    * Destructor.
@@ -60,7 +59,6 @@ public:
   void prepareForFork() override;
 
 protected:
-
   /**
    * Writes the specified msg to the underlying logging system.
    *
@@ -76,10 +74,9 @@ protected:
    * esponsibility of the concrete sub-class
    * @param body The body of the message to be logged.
    */
-  void writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) override;
+  void writeMsgToUnderlyingLoggingSystem(const std::string& header, const std::string& body) override;
 
-}; // class SyslogLogger
+};  // class SyslogLogger
 
-} // namespace log
-} // namespace cta
-
+}  // namespace log
+}  // namespace cta

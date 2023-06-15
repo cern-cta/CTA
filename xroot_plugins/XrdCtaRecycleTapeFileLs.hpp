@@ -22,12 +22,13 @@
 #include "common/checksum/ChecksumBlobSerDeser.hpp"
 #include "common/dataStructures/FileRecycleLog.hpp"
 
-namespace cta { namespace xrd {
+namespace cta {
+namespace xrd {
 
 /*!
  * Stream object which implements "recycletf ls" command
  */
-class RecycleTapeFileLsStream: public XrdCtaStream{
+class RecycleTapeFileLsStream : public XrdCtaStream {
 public:
   /*!
    * Constructor
@@ -36,49 +37,51 @@ public:
    * @param[in]    catalogue     CTA Catalogue
    * @param[in]    scheduler     CTA Scheduler
    */
-  RecycleTapeFileLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
+  RecycleTapeFileLsStream(const frontend::AdminCmdStream& requestMsg,
+                          cta::catalogue::Catalogue& catalogue,
+                          cta::Scheduler& scheduler);
 
 private:
   /*!
    * Can we close the stream?
    */
-  virtual bool isDone() const {
-    return !m_fileRecycleLogItor.hasMore();
-  }
+  virtual bool isDone() const { return !m_fileRecycleLogItor.hasMore(); }
 
   /*!
    * Fill the buffer
    */
-  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
+  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf);
 
-  cta::catalogue::FileRecycleLogItor m_fileRecycleLogItor;     //!< List of recycle tape files from the catalogue
+  cta::catalogue::FileRecycleLogItor m_fileRecycleLogItor;  //!< List of recycle tape files from the catalogue
 
-  static constexpr const char* const LOG_SUFFIX  = "RecycleTapeFileLsStream";    //!< Identifier for log messages
+  static constexpr const char* const LOG_SUFFIX = "RecycleTapeFileLsStream";  //!< Identifier for log messages
 };
 
-
-RecycleTapeFileLsStream::RecycleTapeFileLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
-  XrdCtaStream(catalogue, scheduler)
-{
+RecycleTapeFileLsStream::RecycleTapeFileLsStream(const frontend::AdminCmdStream& requestMsg,
+                                                 cta::catalogue::Catalogue& catalogue,
+                                                 cta::Scheduler& scheduler) :
+XrdCtaStream(catalogue, scheduler) {
   using namespace cta::admin;
 
   bool has_any = false;
-  
+
   cta::catalogue::RecycleTapeFileSearchCriteria searchCriteria;
-  
+
   searchCriteria.vid = requestMsg.getOptional(OptionString::VID, &has_any);
-  
+
   auto diskFileId = requestMsg.getOptional(OptionString::FXID, &has_any);
 
   searchCriteria.diskFileIds = requestMsg.getOptional(OptionStrList::FILE_ID, &has_any);
-  
-  if(diskFileId){
+
+  if (diskFileId) {
     // single option on the command line we need to do the conversion ourselves.
-    if(!searchCriteria.diskFileIds) searchCriteria.diskFileIds = std::vector<std::string>();
+    if (!searchCriteria.diskFileIds) {
+      searchCriteria.diskFileIds = std::vector<std::string>();
+    }
 
     auto fid = strtol(diskFileId->c_str(), nullptr, 16);
-    if(fid < 1 || fid == LONG_MAX) {
-       throw cta::exception::UserError(*diskFileId + " is not a valid file ID");
+    if (fid < 1 || fid == LONG_MAX) {
+      throw cta::exception::UserError(*diskFileId + " is not a valid file ID");
     }
 
     searchCriteria.diskFileIds->push_back(std::to_string(fid));
@@ -91,21 +94,22 @@ RecycleTapeFileLsStream::RecycleTapeFileLsStream(const frontend::AdminCmdStream&
   // Copy number on its own does not give a valid set of search criteria (no &has_any)
   searchCriteria.copynb = requestMsg.getOptional(OptionUInt64::COPY_NUMBER);
 
-  if(!has_any){
-    throw cta::exception::UserError("Must specify at least one of the following search options: vid, fxid, fxidfile or archiveFileId");
+  if (!has_any) {
+    throw cta::exception::UserError(
+      "Must specify at least one of the following search options: vid, fxid, fxidfile or archiveFileId");
   }
-  
+
   m_fileRecycleLogItor = catalogue.FileRecycleLog()->getFileRecycleLogItor(searchCriteria);
-          
+
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "RecycleTapeFileLsStream() constructor");
 }
 
-int RecycleTapeFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
-  for(bool is_buffer_full = false; m_fileRecycleLogItor.hasMore() && !is_buffer_full; ) {
+int RecycleTapeFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
+  for (bool is_buffer_full = false; m_fileRecycleLogItor.hasMore() && !is_buffer_full;) {
     const common::dataStructures::FileRecycleLog fileRecycleLog = m_fileRecycleLogItor.next();
-    
+
     Data record;
-    
+
     auto recycleLogToReturn = record.mutable_rtfls_item();
     recycleLogToReturn->set_vid(fileRecycleLog.vid);
     recycleLogToReturn->set_fseq(fileRecycleLog.fSeq);
@@ -119,11 +123,11 @@ int RecycleTapeFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf
     recycleLogToReturn->set_disk_file_uid(fileRecycleLog.diskFileUid);
     recycleLogToReturn->set_disk_file_gid(fileRecycleLog.diskFileGid);
     recycleLogToReturn->set_size_in_bytes(fileRecycleLog.sizeInBytes);
-    
+
     // Checksum
     common::ChecksumBlob csb;
     checksum::ChecksumBlobToProtobuf(fileRecycleLog.checksumBlob, csb);
-    for(auto csb_it = csb.cs().begin(); csb_it != csb.cs().end(); ++csb_it) {
+    for (auto csb_it = csb.cs().begin(); csb_it != csb.cs().end(); ++csb_it) {
       auto cs_ptr = recycleLogToReturn->add_checksum();
       cs_ptr->set_type(csb_it->type());
       cs_ptr->set_value(checksum::ChecksumBlob::ByteArrayToHex(csb_it->value()));
@@ -131,10 +135,10 @@ int RecycleTapeFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf
     recycleLogToReturn->set_storage_class(fileRecycleLog.storageClassName);
     recycleLogToReturn->set_archive_file_creation_time(fileRecycleLog.archiveFileCreationTime);
     recycleLogToReturn->set_reconciliation_time(fileRecycleLog.reconciliationTime);
-    if(fileRecycleLog.collocationHint){
+    if (fileRecycleLog.collocationHint) {
       recycleLogToReturn->set_collocation_hint(fileRecycleLog.collocationHint.value());
     }
-    if(fileRecycleLog.diskFilePath){
+    if (fileRecycleLog.diskFilePath) {
       recycleLogToReturn->set_disk_file_path(fileRecycleLog.diskFilePath.value());
     }
     recycleLogToReturn->set_reason_log(fileRecycleLog.reasonLog);
@@ -149,4 +153,5 @@ int RecycleTapeFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf
   return streambuf->Size();
 }
 
-}} // namespace cta::xrd
+}  // namespace xrd
+}  // namespace cta

@@ -21,27 +21,27 @@
 
 namespace cta {
 namespace log {
-  
+
 //------------------------------------------------------------------------------
 // getName
 //------------------------------------------------------------------------------
-const std::string &Param::getName() const throw() {
+const std::string& Param::getName() const throw() {
   return m_name;
 }
 
 //------------------------------------------------------------------------------
 // getValue
 //------------------------------------------------------------------------------
-const std::string &Param::getValue() const throw() {
+const std::string& Param::getValue() const throw() {
   return m_value;
 }
 
 template<>
-void Param::setValue<uint8_t>(const uint8_t& value) throw(){
+void Param::setValue<uint8_t>(const uint8_t& value) throw() {
   std::stringstream oss;
-    oss << static_cast<int>(value);
-    m_value = oss.str();
+  oss << static_cast<int>(value);
+  m_value = oss.str();
 }
 
-} // namespace log
-} // namespace cta
+}  // namespace log
+}  // namespace cta

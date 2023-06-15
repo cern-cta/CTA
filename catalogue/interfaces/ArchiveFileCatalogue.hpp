@@ -33,8 +33,8 @@ struct ArchiveFileQueueCriteria;
 struct ArchiveFileSummary;
 struct DeleteArchiveRequest;
 struct RequesterIdentity;
-} // namespace dataStructures
-} // namespace common
+}  // namespace dataStructures
+}  // namespace common
 
 namespace log {
 struct LogContext;
@@ -42,7 +42,7 @@ struct LogContext;
 
 namespace catalogue {
 
-template <typename Item>
+template<typename Item>
 class CatalogueItor;
 
 using ArchiveFileItor = CatalogueItor<common::dataStructures::ArchiveFile>;
@@ -68,10 +68,9 @@ public:
    * @return The new archive file identifier.
    * @throw UserErrorWithCacheInfo if there was a user error.
    */
-  virtual uint64_t checkAndGetNextArchiveFileId(
-    const std::string &diskInstanceName,
-    const std::string &storageClassName,
-    const common::dataStructures::RequesterIdentity &user) = 0;
+  virtual uint64_t checkAndGetNextArchiveFileId(const std::string& diskInstanceName,
+                                                const std::string& storageClassName,
+                                                const common::dataStructures::RequesterIdentity& user) = 0;
 
   /**
    * Returns the information required to queue an archive request.
@@ -87,10 +86,10 @@ public:
    * archiving the file.
    * @return The information required to queue an archive request.
    */
-  virtual common::dataStructures::ArchiveFileQueueCriteria getArchiveFileQueueCriteria(
-    const std::string &diskInstanceName,
-    const std::string &storageClassName,
-    const common::dataStructures::RequesterIdentity &user) = 0;
+  virtual common::dataStructures::ArchiveFileQueueCriteria
+    getArchiveFileQueueCriteria(const std::string& diskInstanceName,
+                                const std::string& storageClassName,
+                                const common::dataStructures::RequesterIdentity& user) = 0;
 
   /**
    * Returns the specified archive files.  Please note that the list of files
@@ -99,8 +98,8 @@ public:
    * @param searchCriteria The search criteria.
    * @return The archive files.
    */
-  virtual ArchiveFileItor getArchiveFilesItor(
-    const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const = 0;
+  virtual ArchiveFileItor
+    getArchiveFilesItor(const TapeFileSearchCriteria& searchCriteria = TapeFileSearchCriteria()) const = 0;
 
   /**
    * Returns the specified archive file. If the search criteria result in more than one tape file being returned
@@ -108,8 +107,8 @@ public:
    * @param searchCriteria The search criteria.
    * @return The archive file.
    */
-  virtual common::dataStructures::ArchiveFile getArchiveFileForDeletion(
-    const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const = 0;
+  virtual common::dataStructures::ArchiveFile
+    getArchiveFileForDeletion(const TapeFileSearchCriteria& searchCriteria = TapeFileSearchCriteria()) const = 0;
 
   /**
    * Returns the specified files in tape file sequence order.
@@ -120,10 +119,8 @@ public:
    * @param maxNbFiles The maximum number of files to be returned.
    * @return The specified files in tape file sequence order.
    */
-  virtual std::list<common::dataStructures::ArchiveFile> getFilesForRepack(
-    const std::string &vid,
-    const uint64_t startFSeq,
-    const uint64_t maxNbFiles) const = 0;
+  virtual std::list<common::dataStructures::ArchiveFile>
+    getFilesForRepack(const std::string& vid, const uint64_t startFSeq, const uint64_t maxNbFiles) const = 0;
 
   /**
    * Returns all the tape copies (no matter their VIDs) of the archive files
@@ -135,9 +132,7 @@ public:
    * that there might not be a file with this exact file sequence number.
    * @return The specified files in FSEQ order.
    */
-  virtual ArchiveFileItor getArchiveFilesForRepackItor(
-    const std::string &vid,
-    const uint64_t startFSeq) const = 0;
+  virtual ArchiveFileItor getArchiveFilesForRepackItor(const std::string& vid, const uint64_t startFSeq) const = 0;
 
   /**
    * Returns a summary of the tape files that meet the specified search
@@ -146,8 +141,8 @@ public:
    * @param searchCriteria The search criteria.
    * @return The summary.
    */
-  virtual common::dataStructures::ArchiveFileSummary getTapeFileSummary(
-    const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const = 0;
+  virtual common::dataStructures::ArchiveFileSummary
+    getTapeFileSummary(const TapeFileSearchCriteria& searchCriteria = TapeFileSearchCriteria()) const = 0;
 
   /**
    * Returns the archive file with the specified unique identifier.
@@ -169,16 +164,17 @@ public:
   * @param newStorageClassName The name of the storage class
   */
   virtual void modifyArchiveFileStorageClassId(const uint64_t archiveFileId,
-    const std::string& newStorageClassName) const = 0;
+                                               const std::string& newStorageClassName) const = 0;
 
-   /**
+  /**
   * Changes the fxid in for a archive file
   * @param archiveId The archive file id
   * @param fxId The eos fxid related to the archive file
   * @param diskInstance Disk instace
   */
-  virtual void modifyArchiveFileFxIdAndDiskInstance(const uint64_t archiveId, const std::string& fxId,
-    const std::string &diskInstance) const = 0;
+  virtual void modifyArchiveFileFxIdAndDiskInstance(const uint64_t archiveId,
+                                                    const std::string& fxId,
+                                                    const std::string& diskInstance) const = 0;
 
   /**
    * Insert the ArchiveFile and all its tape files in the FILE_RECYCLE_LOG table.
@@ -187,8 +183,8 @@ public:
    * @param request the DeleteRequest object that holds information about the file to delete.
    * @param lc the logContext
    */
-  virtual void moveArchiveFileToRecycleLog(const common::dataStructures::DeleteArchiveRequest &request,
-    log::LogContext & lc) = 0;
+  virtual void moveArchiveFileToRecycleLog(const common::dataStructures::DeleteArchiveRequest& request,
+                                           log::LogContext& lc) = 0;
 
   /**
    * Updates the disk file ID of the specified archive file.
@@ -200,8 +196,8 @@ public:
    * have the same identifier.  The combination of diskInstance and diskFileId
    * must be globally unique, in other words unique within the CTA catalogue.
    */
-  virtual void updateDiskFileId(uint64_t archiveFileId, const std::string &diskInstance,
-    const std::string &diskFileId) = 0;
+  virtual void
+    updateDiskFileId(uint64_t archiveFileId, const std::string& diskInstance, const std::string& diskFileId) = 0;
 
   /**
    * !!!!!!!!!!!!!!!!!!! THIS METHOD SHOULD NOT BE USED !!!!!!!!!!!!!!!!!!!!!!!
@@ -222,9 +218,10 @@ public:
    * @return The metadata of the deleted archive file including the metadata of
    * the associated and also deleted tape copies.
    */
-  virtual void DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string &instanceName, const uint64_t archiveFileId,
-    log::LogContext &lc) = 0;
+  virtual void DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string& instanceName,
+                                                       const uint64_t archiveFileId,
+                                                       log::LogContext& lc) = 0;
 };
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

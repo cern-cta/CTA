@@ -29,9 +29,7 @@ namespace readtp {
  * boundary and an inclusive upper boundary.
  */
 class TapeFseqRange {
-
 public:
-
   /**
    * Constructor.
    *
@@ -51,8 +49,7 @@ public:
    * @param lower The inclusive lower bound of the range.
    * @param upper The inclusive upper bound of the range.
    */
-  TapeFseqRange(const uint32_t lower, const uint32_t upper)
-    ;
+  TapeFseqRange(const uint32_t lower, const uint32_t upper);
 
   /**
    * Resets the range to be an empty range.
@@ -69,8 +66,7 @@ public:
    * @param lower The inclusive lower bound of the range.
    * @param upper The inclusive upper bound of the range.
    */
-  void reset(const uint32_t lower, const uint32_t upper)
-    ;
+  void reset(const uint32_t lower, const uint32_t upper);
 
   /**
    * Returns true if the range is empty.
@@ -98,9 +94,7 @@ public:
    */
   uint32_t size() const throw();
 
-
 private:
-
   /**
    * True if this range is empty, else false.
    */
@@ -117,13 +111,11 @@ private:
   uint32_t m_upper;
 };
 
-} // namespace readtp
-} // namespace tapeserver
-} // namespace cta
+}  // namespace readtp
+}  // namespace tapeserver
+}  // namespace cta
 
 /**
  * ostream << operator for cta::tapeserver::readtp::TapeFseqRange
  */
-std::ostream &operator<<(std::ostream &os,
-  const cta::tapeserver::readtp::TapeFseqRange &value);
-
+std::ostream& operator<<(std::ostream& os, const cta::tapeserver::readtp::TapeFseqRange& value);

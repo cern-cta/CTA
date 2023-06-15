@@ -33,7 +33,6 @@ namespace dataStructures {
  * should be used.
  */
 struct ArchiveFileQueueCriteriaAndFileId {
-
   /**
    * Constructor.
    */
@@ -46,10 +45,9 @@ struct ArchiveFileQueueCriteriaAndFileId {
    * @param copyToPoolMap The map from tape copy number to tape pool name.
    * @param mountPolicy The mount policy.
    */
-  ArchiveFileQueueCriteriaAndFileId(
-    const uint64_t fileId,
-    const TapeCopyToPoolMap &copyToPoolMap,
-    const MountPolicy &mountPolicy);
+  ArchiveFileQueueCriteriaAndFileId(const uint64_t fileId,
+                                    const TapeCopyToPoolMap& copyToPoolMap,
+                                    const MountPolicy& mountPolicy);
 
   // TODO: rename to archiveFileId?
   /**
@@ -67,8 +65,8 @@ struct ArchiveFileQueueCriteriaAndFileId {
    */
   MountPolicy mountPolicy;
 
-}; // struct ArchiveFileQueueCriteriaAndFileId
+};  // struct ArchiveFileQueueCriteriaAndFileId
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

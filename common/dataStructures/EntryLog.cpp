@@ -26,24 +26,26 @@ namespace dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-EntryLog::EntryLog():
-  time(0) { }
+EntryLog::EntryLog() : time(0) {}
 
-EntryLog::EntryLog(const EntryLog & other){
+EntryLog::EntryLog(const EntryLog& other) {
   username = other.username;
   host = other.host;
   time = other.time;
 }
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-EntryLog::EntryLog(const std::string & username, const std::string& host, const time_t time):
-  username(username), host(host), time(time) {}
+EntryLog::EntryLog(const std::string& username, const std::string& host, const time_t time) :
+username(username),
+host(host),
+time(time) {}
 
 //------------------------------------------------------------------------------
 // operator=
 //------------------------------------------------------------------------------
-EntryLog & EntryLog::operator=(const EntryLog& other){
+EntryLog& EntryLog::operator=(const EntryLog& other) {
   username = other.username;
   host = other.host;
   time = other.time;
@@ -53,29 +55,25 @@ EntryLog & EntryLog::operator=(const EntryLog& other){
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool EntryLog::operator==(const EntryLog &rhs) const {
-  return username==rhs.username
-      && host==rhs.host
-      && time==rhs.time;
+bool EntryLog::operator==(const EntryLog& rhs) const {
+  return username == rhs.username && host == rhs.host && time == rhs.time;
 }
 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool EntryLog::operator!=(const EntryLog &rhs) const {
+bool EntryLog::operator!=(const EntryLog& rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const EntryLog &obj) {
-  os << "(username=" << obj.username
-     << " host=" << obj.host
-     << " time=" << obj.time << ")";
+std::ostream& operator<<(std::ostream& os, const EntryLog& obj) {
+  os << "(username=" << obj.username << " host=" << obj.host << " time=" << obj.time << ")";
   return os;
 }
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

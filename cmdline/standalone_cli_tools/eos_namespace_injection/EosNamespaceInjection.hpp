@@ -31,17 +31,22 @@ using gid = uint64_t;
 
 using ArchiveId = uint64_t;
 using Checksum = std::string;
+}  // namespace
+
+namespace eos::client {
+class EndpointMap;
 }
 
-namespace eos::client { class EndpointMap;  }
-namespace cta::log    { class StdoutLogger; }
+namespace cta::log {
+class StdoutLogger;
+}
 
 namespace cta::cliTool {
 class CmdLineArgs;
 
-class EosNamespaceInjection final: public CmdLineTool {
-  public:
-    /**
+class EosNamespaceInjection final : public CmdLineTool {
+public:
+  /**
     * Constructor.
     *
     * @param inStream Standard input stream.
@@ -49,164 +54,175 @@ class EosNamespaceInjection final: public CmdLineTool {
     * @param errStream Standard error stream.
     * @param log The object representing the API of the CTA logging system.
     */
-    EosNamespaceInjection(std::istream &inStream, std::ostream &outStream,
-      std::ostream &errStream, cta::log::StdoutLogger &log);
+  EosNamespaceInjection(std::istream& inStream,
+                        std::ostream& outStream,
+                        std::ostream& errStream,
+                        cta::log::StdoutLogger& log);
 
-    /**
+  /**
     * Destructor
     */
-    ~EosNamespaceInjection() override;
+  ~EosNamespaceInjection() override;
 
-    /**
+  /**
     * An exception throwing version of main().
     *
     * @param argc The number of command-line arguments including the program name.
     * @param argv The command-line arguments.
     * @return The exit value of the program.
     */
-    int exceptionThrowingMain(const int argc, char *const *const argv) override;
+  int exceptionThrowingMain(const int argc, char* const* const argv) override;
 
-  private:
-    /**
+private:
+  /**
     * Returns the meta data from the catalogue
     * @param archiveId the archive file id to check
     */
-    bool getMetaDataFromCatalogue(const uint64_t &archiveId) const;
+  bool getMetaDataFromCatalogue(const uint64_t& archiveId) const;
 
-    /**
+  /**
     * Updates the fxid and the disk instance in the catalogue.
     * @param archiveId the archive file id to check
     * @param fxId The new fxId
     * @param diskInstnace The new disk instance
     */
-    void updateFxidAndDiskInstanceInCatalogue(const std::string &archiveId, const std::string &fxId, const std::string &diskInstance) const;
+  void updateFxidAndDiskInstanceInCatalogue(const std::string& archiveId,
+                                            const std::string& fxId,
+                                            const std::string& diskInstance) const;
 
-    /**
+  /**
     * Compares the meta data from the provided json and from the Catalogue
     * @param metaDataJson Meta data from the provided json file
     * @param metaDataCatalogue Meta data from the catalogue
     */
-    void compareJsonAndCtaMetaData(const MetaDataObject &metaDataJson, const MetaDataObject &metaDataCatalogue) const;
+  void compareJsonAndCtaMetaData(const MetaDataObject& metaDataJson, const MetaDataObject& metaDataCatalogue) const;
 
-    /**
+  /**
     * Returns cid, uid and gid
     * @param diskInstance the disk instance to check
     * @param path the path to check
     */
-    std::tuple<cid, uid, gid> getContainerIdsEos(const std::string &diskInstance, const std::string &path) const;
+  std::tuple<cid, uid, gid> getContainerIdsEos(const std::string& diskInstance, const std::string& path) const;
 
-    /**
+  /**
     * Creates a new file in eos
     * @param metaDataObject metaData for the eos file
     * @param parentId the id of the parent container
     * @return the new fid
     */
-    uint64_t createFileInEos(const MetaDataObject &metaDataObject, const uint64_t &parentId, const uint64_t uid, const uint64_t gid) const;
+  uint64_t createFileInEos(const MetaDataObject& metaDataObject,
+                           const uint64_t& parentId,
+                           const uint64_t uid,
+                           const uint64_t gid) const;
 
-    /**
+  /**
     * Returns the id of a given file in eos or zero if the files does not exist
     * @param diskInstance eos disk instance
     * @param path the path to check
     */
-    uint64_t getFileIdEos(const std::string &diskInstance, const std::string &path) const;
+  uint64_t getFileIdEos(const std::string& diskInstance, const std::string& path) const;
 
-    /**
+  /**
     * Gets the archive file id and checksum from eos
     * @param diskInstance The eos disk instance
     * @param fxId The eos file id
     */
-    std::pair<ArchiveId, Checksum> getArchiveFileIdAndChecksumFromEOS(const std::string& diskInstance, const std::string& fxId);
+  std::pair<ArchiveId, Checksum> getArchiveFileIdAndChecksumFromEOS(const std::string& diskInstance,
+                                                                    const std::string& fxId);
 
-    /**
+  /**
     * Validates the command line arguments
     * @param argc The number of command-line arguments including the program name.
     * @param argv The command-line arguments.
     */
-    void setCmdLineArguments(const int argc, char *const *const argv);
+  void setCmdLineArguments(const int argc, char* const* const argv);
 
-    /**
+  /**
     * Checks if path exists in EOS
     * @param fid EOS file id
     */
-    bool pathExists(const uint64_t fid) const;
+  bool pathExists(const uint64_t fid) const;
 
-    /**
+  /**
     * Checks consistency between EOS and CTA
     * @param archiveId CTA archive file id
     * @param fxId The eos file id
     * @param metaDataFromUser metaData for the eos file
     */
-    bool checkEosCtaConsistency(const uint64_t& archiveId, const std::string& newFxIdEos, const MetaDataObject &metaDataFromUser);
+  bool checkEosCtaConsistency(const uint64_t& archiveId,
+                              const std::string& newFxIdEos,
+                              const MetaDataObject& metaDataFromUser);
 
-    /**
+  /**
     * Checks if file was created in EOS
     * @param newFid EOS file id
     */
-    void checkFileCreated(const uint64_t newFid);
+  void checkFileCreated(const uint64_t newFid);
 
-    /**
+  /**
     * Checks if parent container exists in EOS
     * @param parentId The id of the parent container in EOS
     * @param enclosingPath The full EOS path of the parent container
     */
-    void checkParentContainerExists(const uint64_t parentId, const std::string& enclosingPath) const;
+  void checkParentContainerExists(const uint64_t parentId, const std::string& enclosingPath) const;
 
-    /**
+  /**
     * Checks if archive id exists
     * @param CTA archive file id
     */
-    void checkArchiveIdExistsInCatalogue(const uint64_t &archiveId) const;
+  void checkArchiveIdExistsInCatalogue(const uint64_t& archiveId) const;
 
-    /**
+  /**
     * Throws error if existing path has invalid metadata
     * @param archiveId CTA archive file id
     * @param fid The eos file id
     * @param metaDataFromUser metaData for the eos file
     */
-    void checkExistingPathHasInvalidMetadata(const uint64_t &archiveId, const uint64_t& fid, const MetaDataObject& metaDataFromUser);
+  void checkExistingPathHasInvalidMetadata(const uint64_t& archiveId,
+                                           const uint64_t& fid,
+                                           const MetaDataObject& metaDataFromUser);
 
-    /**
+  /**
     * Writes the skipped metadata for file to txt file
     */
-    void createTxtFileWithSkippedMetadata() const;
+  void createTxtFileWithSkippedMetadata() const;
 
-    /**
+  /**
     * Meta data from CTA catalogue
     */
-    MetaDataObject m_metaDataObjectCatalogue;
+  MetaDataObject m_metaDataObjectCatalogue;
 
-    /**
+  /**
     *Default file layout for restored files in EOS
     */
-    int m_defaultFileLayout;
+  int m_defaultFileLayout;
 
-    /**
+  /**
     * Path to the json file with eos meta data
     */
-    std::filesystem::path m_jsonPath;
+  std::filesystem::path m_jsonPath;
 
-    /**
+  /**
     * Disk instance of the destination path
     */
-    std::string m_diskInstance;
+  std::string m_diskInstance;
 
-    /**
+  /**
     * The object representing the API of the CTA logging system.
     */
-    cta::log::StdoutLogger &m_log;
+  cta::log::StdoutLogger& m_log;
 
-    /**
+  /**
     * When a file is skipped due to inconsistent meta data between EOS and CTA, 
     * they are added to this vector
     */
-    std::vector<MetaDataObject> m_inconsistentMetadata;
+  std::vector<MetaDataObject> m_inconsistentMetadata;
 
-    /**
+  /**
     * CTA Frontend service provider
     */
-    std::unique_ptr<XrdSsiPbServiceType> m_serviceProviderPtr;
+  std::unique_ptr<XrdSsiPbServiceType> m_serviceProviderPtr;
 
-    std::unique_ptr<::eos::client::EndpointMap> m_endpointMapPtr;
-
+  std::unique_ptr<::eos::client::EndpointMap> m_endpointMapPtr;
 };
-} // namespace cta::cliTool
+}  // namespace cta::cliTool

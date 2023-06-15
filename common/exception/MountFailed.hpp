@@ -19,21 +19,20 @@
 
 #include "common/exception/Exception.hpp"
 
-namespace cta { namespace exception {
+namespace cta {
+namespace exception {
 
-    /**
+/**
      * Failed to mount volume.
      */
-    class MountFailed : public cta::exception::Exception {
-      
-    public:
-      
-      /**
+class MountFailed : public cta::exception::Exception {
+public:
+  /**
        * Constructor
        */
-      MountFailed();
+  MountFailed();
 
-    }; // class MountFailed
+};  // class MountFailed
 
-} } // namespace castor exception
-
+}  // namespace exception
+}  // namespace cta

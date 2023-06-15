@@ -39,7 +39,7 @@ class Catalogue;
 }
 
 namespace objectstore {
-  class Backend;
+class Backend;
 
 /**
  * As slight variation of the SchedulerDatabase interface allowing
@@ -48,19 +48,19 @@ namespace objectstore {
  * and test recovery.
  */
 
-class OStoreDBWrapperInterface: public SchedulerDatabaseDecorator {
+class OStoreDBWrapperInterface : public SchedulerDatabaseDecorator {
 public:
-  OStoreDBWrapperInterface(SchedulerDatabase &db) : SchedulerDatabaseDecorator(db) {}
+  OStoreDBWrapperInterface(SchedulerDatabase& db) : SchedulerDatabaseDecorator(db) {}
 
-  virtual objectstore::Backend & getBackend() = 0;
-  virtual objectstore::AgentReference & getAgentReference() = 0;
-  virtual cta::OStoreDB & getOstoreDB() = 0;
+  virtual objectstore::Backend& getBackend() = 0;
+  virtual objectstore::AgentReference& getAgentReference() = 0;
+  virtual cta::OStoreDB& getOstoreDB() = 0;
 
   //! Create a new agent to allow tests to continue after garbage collection
-  virtual void replaceAgent(objectstore::AgentReference * agentReferencePtr) = 0;
+  virtual void replaceAgent(objectstore::AgentReference* agentReferencePtr) = 0;
 };
 
-}
+}  // namespace objectstore
 
 namespace {
 
@@ -70,18 +70,20 @@ namespace {
  * of the unit tests, as they require a fresh object store for each unit test.
  * It can be instantiated with both types of backends
  */
-template <class BackendType>
-class OStoreDBWrapper: public cta::objectstore::OStoreDBWrapperInterface {
+template<class BackendType>
+class OStoreDBWrapper : public cta::objectstore::OStoreDBWrapperInterface {
 public:
-  OStoreDBWrapper(const std::string &context, std::unique_ptr<cta::catalogue::Catalogue>& catalogue, const std::string &URL = "");
+  OStoreDBWrapper(const std::string& context,
+                  std::unique_ptr<cta::catalogue::Catalogue>& catalogue,
+                  const std::string& URL = "");
 
-  ~OStoreDBWrapper() throw () {}
+  ~OStoreDBWrapper() throw() {}
 
   objectstore::Backend& getBackend() override { return *m_backend; }
 
   objectstore::AgentReference& getAgentReference() override { return *m_agentReferencePtr; }
 
-  void replaceAgent(objectstore::AgentReference *agentReferencePtr) override {
+  void replaceAgent(objectstore::AgentReference* agentReferencePtr) override {
     m_agentReferencePtr.reset(agentReferencePtr);
     objectstore::RootEntry re(*m_backend);
     objectstore::ScopedExclusiveLock rel(re);
@@ -104,22 +106,23 @@ public:
   cta::OStoreDB& getOstoreDB() override { return m_OStoreDB; }
 
 private:
-  std::unique_ptr <cta::log::Logger> m_logger;
-  std::unique_ptr <cta::objectstore::Backend> m_backend;
-  std::unique_ptr <cta::catalogue::Catalogue> & m_catalogue;
+  std::unique_ptr<cta::log::Logger> m_logger;
+  std::unique_ptr<cta::objectstore::Backend> m_backend;
+  std::unique_ptr<cta::catalogue::Catalogue>& m_catalogue;
   cta::OStoreDB m_OStoreDB;
   std::unique_ptr<objectstore::AgentReference> m_agentReferencePtr;
 };
 
-template <>
-OStoreDBWrapper<cta::objectstore::BackendVFS>::OStoreDBWrapper(
-        const std::string &context, std::unique_ptr<cta::catalogue::Catalogue> & catalogue, const std::string &URL) :
+template<>
+OStoreDBWrapper<cta::objectstore::BackendVFS>::OStoreDBWrapper(const std::string& context,
+                                                               std::unique_ptr<cta::catalogue::Catalogue>& catalogue,
+                                                               const std::string& URL) :
 OStoreDBWrapperInterface(m_OStoreDB),
-m_logger(new cta::log::DummyLogger("", "")), m_backend(URL.empty() ? new cta::objectstore::BackendVFS() : new cta::objectstore::BackendVFS(URL)),
+m_logger(new cta::log::DummyLogger("", "")),
+m_backend(URL.empty() ? new cta::objectstore::BackendVFS() : new cta::objectstore::BackendVFS(URL)),
 m_catalogue(catalogue),
 m_OStoreDB(*m_backend, *m_catalogue, *m_logger),
-  m_agentReferencePtr(new objectstore::AgentReference("OStoreDBFactory", *m_logger))
-{
+m_agentReferencePtr(new objectstore::AgentReference("OStoreDBFactory", *m_logger)) {
   // We need to populate the root entry before using.
   objectstore::RootEntry re(*m_backend);
   re.initialize();
@@ -141,19 +144,19 @@ m_OStoreDB(*m_backend, *m_catalogue, *m_logger),
   m_OStoreDB.setAgentReference(m_agentReferencePtr.get());
 }
 
-}
+}  // namespace
 
 /**
  * A concrete implementation of a scheduler database factory that creates mock
  * scheduler database objects.
  */
-template <class BackendType>
-class OStoreDBFactory: public SchedulerDatabaseFactory {
+template<class BackendType>
+class OStoreDBFactory : public SchedulerDatabaseFactory {
 public:
   /**
    * Constructor
    */
-  OStoreDBFactory(const std::string & URL = ""): m_URL(URL) {}
+  OStoreDBFactory(const std::string& URL = "") : m_URL(URL) {}
 
   /**
    * Destructor.
@@ -169,8 +172,8 @@ public:
     return std::unique_ptr<SchedulerDatabase>(new OStoreDBWrapper<BackendType>("UnitTest", catalogue, m_URL));
   }
 
-  private:
-    std::string m_URL;
-}; // class OStoreDBFactory
+private:
+  std::string m_URL;
+};  // class OStoreDBFactory
 
-} // namespace cta
+}  // namespace cta

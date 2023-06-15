@@ -34,15 +34,15 @@ namespace objectstore {
  * not be moved (as opposed to the content itself, which needs to be moved to
  * be atomically created)
  */
-class BackendVFS: public Backend {
- public:
+class BackendVFS : public Backend {
+public:
   /**
    * Default constructor, generating automatically a directory in /tmp
    * Following the use of this constructor, the object store WILL be
    * destroyed by default on destruction. This can be overridden with
    * noDeleteOnExit()
    */
-  explicit BackendVFS(int line = 0, const char *file = "");
+  explicit BackendVFS(int line = 0, const char* file = "");
 
   /**
    * Passive constructor, using an existing store. It will NOT destroy the
@@ -77,85 +77,98 @@ class BackendVFS: public Backend {
 
   std::list<std::string> list() override;
 
-  class ScopedLock: public Backend::ScopedLock {
+  class ScopedLock : public Backend::ScopedLock {
     friend class BackendVFS;
+
   public:
     void release() override;
+
     ~ScopedLock() override { ScopedLock::release(); }
+
   private:
-    ScopedLock(): m_fdSet(false), m_fd(0) {}
-    void set(int fd, const std::string& path) { m_fd = fd; m_fdSet = true; m_path = path; }
+    ScopedLock() : m_fdSet(false), m_fd(0) {}
+
+    void set(int fd, const std::string& path) {
+      m_fd = fd;
+      m_fdSet = true;
+      m_path = path;
+    }
+
     bool m_fdSet;
     std::string m_path;
     int m_fd;
   };
 
-  ScopedLock * lockExclusive(const std::string& name, uint64_t timeout_us = 0) override;
+  ScopedLock* lockExclusive(const std::string& name, uint64_t timeout_us = 0) override;
 
-  ScopedLock * lockShared(const std::string& name, uint64_t timeout_us = 0) override;
+  ScopedLock* lockShared(const std::string& name, uint64_t timeout_us = 0) override;
 
   /**
    * A class mimicking AIO using C++ async tasks
    */
-  class AsyncCreator: public Backend::AsyncCreator {
-   public:
-    AsyncCreator(BackendVFS & be, const std::string & name, const std::string & value);
+  class AsyncCreator : public Backend::AsyncCreator {
+  public:
+    AsyncCreator(BackendVFS& be, const std::string& name, const std::string& value);
     void wait() override;
-   private:
+
+  private:
     /** A reference to the backend */
-    BackendVFS &m_backend;
+    BackendVFS& m_backend;
     /** The object name */
     const std::string m_name;
     /** The object value */
     std::string m_value;
-     /** The future that will both do the job and allow synchronization with the caller. */
+    /** The future that will both do the job and allow synchronization with the caller. */
     std::future<void> m_job;
   };
 
   /**
    * A class mimicking AIO using C++ async tasks
    */
-  class AsyncUpdater: public Backend::AsyncUpdater {
-   public:
-    AsyncUpdater(BackendVFS & be, const std::string & name, std::function <std::string(const std::string &)> & update);
+  class AsyncUpdater : public Backend::AsyncUpdater {
+  public:
+    AsyncUpdater(BackendVFS& be, const std::string& name, std::function<std::string(const std::string&)>& update);
     void wait() override;
-   private:
+
+  private:
     /** A reference to the backend */
-    BackendVFS &m_backend;
+    BackendVFS& m_backend;
     /** The object name */
     const std::string m_name;
     /** The operation on the object */
-    std::function <std::string(const std::string &)> & m_update;
-     /** The future that will both do the job and allow synchronization with the caller. */
+    std::function<std::string(const std::string&)>& m_update;
+    /** The future that will both do the job and allow synchronization with the caller. */
     std::future<void> m_job;
   };
 
   /**
    * A class mimicking AIO using C++ async tasks
    */
-  class AsyncDeleter: public Backend::AsyncDeleter {
-   public:
-    AsyncDeleter(BackendVFS & be, const std::string & name);
+  class AsyncDeleter : public Backend::AsyncDeleter {
+  public:
+    AsyncDeleter(BackendVFS& be, const std::string& name);
     void wait() override;
-   private:
+
+  private:
     /** A reference to the backend */
-    BackendVFS &m_backend;
+    BackendVFS& m_backend;
     /** The object name */
     const std::string m_name;
-     /** The future that will both do the job and allow synchronization with the caller. */
+    /** The future that will both do the job and allow synchronization with the caller. */
     std::future<void> m_job;
   };
 
   /**
    * A class mimicking AIO using C++ async tasks
    */
-  class AsyncLockfreeFetcher: public Backend::AsyncLockfreeFetcher, public cta::threading::Thread  {
-   public:
-    AsyncLockfreeFetcher(BackendVFS & be, const std::string & name);
+  class AsyncLockfreeFetcher : public Backend::AsyncLockfreeFetcher, public cta::threading::Thread {
+  public:
+    AsyncLockfreeFetcher(BackendVFS& be, const std::string& name);
     std::string wait() override;
-   private:
+
+  private:
     /** A reference to the backend */
-    BackendVFS &m_backend;
+    BackendVFS& m_backend;
     /** The object name */
     const std::string m_name;
     /** The fetched value */
@@ -170,15 +183,17 @@ class BackendVFS: public Backend {
 
   Backend::AsyncCreator* asyncCreate(const std::string& name, const std::string& value) override;
 
-  Backend::AsyncUpdater* asyncUpdate(const std::string & name, std::function <std::string(const std::string &)> & update) override;
+  Backend::AsyncUpdater* asyncUpdate(const std::string& name,
+                                     std::function<std::string(const std::string&)>& update) override;
 
-  Backend::AsyncDeleter* asyncDelete(const std::string & name) override;
+  Backend::AsyncDeleter* asyncDelete(const std::string& name) override;
 
   Backend::AsyncLockfreeFetcher* asyncLockfreeFetch(const std::string& name) override;
 
-  class Parameters: public Backend::Parameters {
+  class Parameters : public Backend::Parameters {
     friend class BackendVFS;
-   public:
+
+  public:
     /**
      * The standard-issue params to string for logging
      * @return a string representation of the parameters for logging
@@ -196,24 +211,20 @@ class BackendVFS: public Backend {
      * @return the path to the VFS storage.
      */
     std::string getPath() { return m_path; }
-   private:
+
+  private:
     std::string m_path;
   };
 
-  Parameters * getParams() override;
+  Parameters* getParams() override;
 
+  std::string typeName() override { return "cta::objectstore::BackendVFS"; }
 
-  std::string typeName() override {
-    return "cta::objectstore::BackendVFS";
-  }
-
-
- private:
+private:
   std::string m_root;
   bool m_deleteOnExit;
-  ScopedLock * lockHelper(const std::string& name, int type, uint64_t timeout_us);
+  ScopedLock* lockHelper(const std::string& name, int type, uint64_t timeout_us);
 };
-
 
 }  // namespace objectstore
 }  // namespace cta

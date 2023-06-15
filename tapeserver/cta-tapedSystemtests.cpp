@@ -38,7 +38,8 @@ TEST(cta_taped, InvocationTests) {
 
   {
     // Do we get proper complaint when the configuration file is not there?
-    cta::threading::SubProcess spNoConfigFile("cta-taped", std::list<std::string>({"cta-taped", "-f", "-s", "-c", "/no/such/file"}));
+    cta::threading::SubProcess spNoConfigFile("cta-taped",
+                                              std::list<std::string>({"cta-taped", "-f", "-s", "-c", "/no/such/file"}));
     spNoConfigFile.wait();
     ASSERT_NE(std::string::npos, spNoConfigFile.stdout().find("Failed to open configuration file"));
     ASSERT_TRUE(spNoConfigFile.stderr().empty());
@@ -50,18 +51,18 @@ TEST(cta_taped, InvocationTests) {
     // We provide le daemon with an existing (but almost empty) configuration
     // file. The mandatory fields are present.
     unitTests::TempFile ctaConf, tpConfig;
-    ctaConf.stringAppend(
-      "#A good enough configuration file for taped\n"
-      "ObjectStore BackendPath vfsObjectStore:///tmp/dir\n"
-      "taped BufferCount 1\n"
-      "taped TpConfigPath ");
+    ctaConf.stringAppend("#A good enough configuration file for taped\n"
+                         "ObjectStore BackendPath vfsObjectStore:///tmp/dir\n"
+                         "taped BufferCount 1\n"
+                         "taped TpConfigPath ");
     ctaConf.stringAppend(tpConfig.path());
-    cta::threading::SubProcess spNoDrive("cta-taped", std::list<std::string>({"cta-taped", "-f", "-s", "-c", ctaConf.path()}));
+    cta::threading::SubProcess spNoDrive("cta-taped",
+                                         std::list<std::string>({"cta-taped", "-f", "-s", "-c", ctaConf.path()}));
     spNoDrive.wait();
     ASSERT_NE(std::string::npos, spNoDrive.stdout().find("MSG=\"Aborting cta-taped. Not starting because: "
-      "No drive found in configuration\""));
+                                                         "No drive found in configuration\""));
     ASSERT_TRUE(spNoDrive.stderr().empty());
     ASSERT_EQ(EXIT_FAILURE, spNoDrive.exitValue());
   }
 }
-}
+}  // namespace systemTests

@@ -14,7 +14,7 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
- 
+
 #pragma once
 
 #include <grpcpp/security/credentials.h>
@@ -25,11 +25,8 @@ namespace grpc {
 namespace client {
 
 class KerberosAuthenticator : public ::grpc::MetadataCredentialsPlugin {
-  
 public:
-  KerberosAuthenticator(const ::grpc::string& grpcstrToken) : m_grpcstrToken(grpcstrToken) {
-    
-  }
+  KerberosAuthenticator(const ::grpc::string& grpcstrToken) : m_grpcstrToken(grpcstrToken) {}
 
   ::grpc::Status GetMetadata(::grpc::string_ref serviceUrl,
                              ::grpc::string_ref methodName,
@@ -41,10 +38,9 @@ public:
 
 private:
   ::grpc::string m_grpcstrToken;
-  
 };
-  
-} // namespace client
-} // namespace grpc
-} // namespace frontend
-} // namespace cta
+
+}  // namespace client
+}  // namespace grpc
+}  // namespace frontend
+}  // namespace cta

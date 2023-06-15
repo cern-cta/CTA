@@ -33,12 +33,11 @@ namespace dataStructures {
  * requester.
  */
 struct RequesterActivityMountRule {
-
   RequesterActivityMountRule();
 
-  bool operator==(const RequesterActivityMountRule &rhs) const;
+  bool operator==(const RequesterActivityMountRule& rhs) const;
 
-  bool operator!=(const RequesterActivityMountRule &rhs) const;
+  bool operator!=(const RequesterActivityMountRule& rhs) const;
 
   /**
    * The name of the disk instance to which the requester belongs.
@@ -61,10 +60,10 @@ struct RequesterActivityMountRule {
   EntryLog lastModificationLog;
   std::string comment;
 
-}; // struct RequesterMountRule
+};  // struct RequesterMountRule
 
-std::ostream &operator<<(std::ostream &os, const RequesterActivityMountRule &obj);
+std::ostream& operator<<(std::ostream& os, const RequesterActivityMountRule& obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

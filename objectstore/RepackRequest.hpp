@@ -24,36 +24,38 @@
 #include "common/Timer.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta {
+namespace objectstore {
 
 class Agent;
 class GenericObject;
 
-class RepackRequest: public ObjectOps<serializers::RepackRequest, serializers::RepackRequest_t> {
+class RepackRequest : public ObjectOps<serializers::RepackRequest, serializers::RepackRequest_t> {
 public:
-  RepackRequest(const std::string & address, Backend & os);
-  RepackRequest(Backend & os);
-  RepackRequest(GenericObject & go);
+  RepackRequest(const std::string& address, Backend& os);
+  RepackRequest(Backend& os);
+  RepackRequest(GenericObject& go);
   void initialize();
 
   // Parameters interface
-  void setVid(const std::string & vid);
+  void setVid(const std::string& vid);
   void setType(common::dataStructures::RepackInfo::Type repackType);
   void setStatus(common::dataStructures::RepackInfo::Status repackStatus);
   common::dataStructures::RepackInfo getInfo();
-  void setBufferURL(const std::string & bufferURL);
+  void setBufferURL(const std::string& bufferURL);
   void setExpandFinished(const bool expandFinished);
   bool isExpandFinished();
   void setExpandStarted(const bool expandStarted);
   void setTotalStats(const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles& totalStatsFiles);
   cta::SchedulerDatabase::RepackRequest::TotalStatsFiles getTotalStatsFile();
-  void setMountPolicy(const common::dataStructures::MountPolicy &mp);
+  void setMountPolicy(const common::dataStructures::MountPolicy& mp);
   common::dataStructures::MountPolicy getMountPolicy();
   void deleteAllSubrequests();
   void setIsComplete(const bool complete);
-  void updateRepackDestinationInfos(const common::dataStructures::ArchiveFile & archiveFile, const std::string & destinationVid);
+  void updateRepackDestinationInfos(const common::dataStructures::ArchiveFile& archiveFile,
+                                    const std::string& destinationVid);
   std::list<common::dataStructures::RepackInfo::RepackDestinationInfo> getRepackDestinationInfos();
-  void setCreationLog(const common::dataStructures::EntryLog & creationLog);
+  void setCreationLog(const common::dataStructures::EntryLog& creationLog);
   common::dataStructures::EntryLog getCreationLog();
 
   /**
@@ -70,14 +72,18 @@ public:
    * regarding multiple parameters
    */
   void setStatus();
+
   // Sub request management
   struct SubrequestInfo {
     std::string address;
     uint64_t fSeq;
-    bool subrequestDeleted;  ///< A boolean set to true before deleting a request. Covers the race between request creation recording and request
+    bool
+      subrequestDeleted;  ///< A boolean set to true before deleting a request. Covers the race between request creation recording and request
     typedef std::set<SubrequestInfo> set;
-    bool operator< (const SubrequestInfo & o) const { return fSeq < o.fSeq; }
+
+    bool operator<(const SubrequestInfo& o) const { return fSeq < o.fSeq; }
   };
+
   /**
    * Provide a list of addresses for a set or fSeqs. For expansion of repack requests.
    * The addresses could be provided from the repack request if previously recorded, or
@@ -87,7 +93,7 @@ public:
    * yet not update the object to reflect the last fSeq created.
    * This function implicitly records the information it generates (commit up t the caller);
    */
-  SubrequestInfo::set getOrPrepareSubrequestInfo (std::set<uint64_t> fSeqs, AgentReference & agentRef);
+  SubrequestInfo::set getOrPrepareSubrequestInfo(std::set<uint64_t> fSeqs, AgentReference& agentRef);
 
   /**
    * Remove this request from its owner ownership
@@ -102,8 +108,8 @@ private:
     std::set<uint32_t> archiveCopyNbsAccounted;
     bool subrequestDeleted;
     typedef std::map<uint64_t, RepackSubRequestPointer> Map;
-    void serialize (serializers::RepackSubRequestPointer & rsrp);
-    void deserialize (const serializers::RepackSubRequestPointer & rsrp);
+    void serialize(serializers::RepackSubRequestPointer& rsrp);
+    void deserialize(const serializers::RepackSubRequestPointer& rsrp);
   };
 
 public:
@@ -127,14 +133,16 @@ public:
     bool hasUserProvidedFile = false;
     std::string destinationVid;
     typedef std::list<SubrequestStatistics> List;
-    bool operator< (const SubrequestStatistics & o) const { return fSeq < o.fSeq; }
+
+    bool operator<(const SubrequestStatistics& o) const { return fSeq < o.fSeq; }
   };
-  void reportRetriveSuccesses (SubrequestStatistics::List & retrieveSuccesses);
-  void reportRetriveFailures (SubrequestStatistics::List & retrieveFailures);
-  serializers::RepackRequestStatus reportArchiveSuccesses (SubrequestStatistics::List & archiveSuccesses);
-  serializers::RepackRequestStatus reportArchiveFailures (SubrequestStatistics::List & archiveFailures);
-  void reportSubRequestsForDeletion (std::list<uint64_t>& fSeqs);
-  enum class StatsType: uint8_t {
+
+  void reportRetriveSuccesses(SubrequestStatistics::List& retrieveSuccesses);
+  void reportRetriveFailures(SubrequestStatistics::List& retrieveFailures);
+  serializers::RepackRequestStatus reportArchiveSuccesses(SubrequestStatistics::List& archiveSuccesses);
+  serializers::RepackRequestStatus reportArchiveFailures(SubrequestStatistics::List& archiveFailures);
+  void reportSubRequestsForDeletion(std::list<uint64_t>& fSeqs);
+  enum class StatsType : uint8_t {
     UserProvided,
     RetrieveSuccess,
     RetrieveFailure,
@@ -143,37 +151,47 @@ public:
     ArchiveFailure,
     ArchiveTotal,
   };
+
   struct StatsValues {
     uint64_t files = 0;
     uint64_t bytes = 0;
   };
+
   std::map<StatsType, StatsValues> getStats();
 
-  void reportRetrieveCreationFailures(const std::list<cta::SchedulerDatabase::RepackRequest::Subrequest>& notCreatedSubrequests);
+  void reportRetrieveCreationFailures(
+    const std::list<cta::SchedulerDatabase::RepackRequest::Subrequest>& notCreatedSubrequests);
 
   void reportArchiveCreationFailures(uint64_t nbFailedToCreateArchiveRequests);
 
-  void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
-    cta::catalogue::Catalogue & catalogue) override;
+  void garbageCollect(const std::string& presumedOwner,
+                      AgentReference& agentReference,
+                      log::LogContext& lc,
+                      cta::catalogue::Catalogue& catalogue) override;
 
   std::string dump();
 
   // An asynchronous request ownership updating class.
   class AsyncOwnerAndStatusUpdater {
     friend class RepackRequest;
+
   public:
     void wait();
     common::dataStructures::RepackInfo getInfo();
+
   private:
-    std::function<std::string(const std::string &)> m_updaterCallback;
+    std::function<std::string(const std::string&)> m_updaterCallback;
     std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
     log::TimingList m_timingReport;
     utils::Timer m_timer;
     common::dataStructures::RepackInfo m_repackInfo;
   };
-  // An owner updater factory. The owner MUST be previousOwner for the update to be executed.
-  AsyncOwnerAndStatusUpdater *asyncUpdateOwnerAndStatus(const std::string &owner, const std::string &previousOwner,
-      std::optional<serializers::RepackRequestStatus> newStatus);
-  };
 
-}} // namespace cta::objectstore
+  // An owner updater factory. The owner MUST be previousOwner for the update to be executed.
+  AsyncOwnerAndStatusUpdater* asyncUpdateOwnerAndStatus(const std::string& owner,
+                                                        const std::string& previousOwner,
+                                                        std::optional<serializers::RepackRequestStatus> newStatus);
+};
+
+}  // namespace objectstore
+}  // namespace cta

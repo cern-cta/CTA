@@ -31,7 +31,7 @@ void DiskReportRunner::runOnePass(log::LogContext& lc) {
 
   utils::Timer t;
   size_t roundCount = 0;
-  for(bool is_done = false; !is_done && t.secs() < TIME_UNTIL_DONE; ) {
+  for (bool is_done = false; !is_done && t.secs() < TIME_UNTIL_DONE;) {
     log::TimingList timings;
     utils::Timer t2, roundTime;
 
@@ -39,38 +39,38 @@ void DiskReportRunner::runOnePass(log::LogContext& lc) {
     if (archiveJobsToReport.size()) {
       log::ScopedParamContainer params(lc);
       params.add("jobsToReport", archiveJobsToReport.size());
-      lc.log(cta::log::DEBUG,"In DiskReportRunner::runOnePass(): ready to process archive reports.");
+      lc.log(cta::log::DEBUG, "In DiskReportRunner::runOnePass(): ready to process archive reports.");
     }
     is_done = archiveJobsToReport.empty();
-    if(!archiveJobsToReport.empty()) {
+    if (!archiveJobsToReport.empty()) {
       timings.insertAndReset("getArchiveJobsToReportTime", t2);
       m_scheduler.reportArchiveJobsBatch(archiveJobsToReport, m_reporterFactory, timings, t2, lc);
       log::ScopedParamContainer params(lc);
       params.add("roundTime", roundTime.secs());
-      lc.log(cta::log::INFO,"In DiskReportRunner::runOnePass(): did one round of archive reports.");
+      lc.log(cta::log::INFO, "In DiskReportRunner::runOnePass(): did one round of archive reports.");
     }
 
     auto retrieveJobsToReport = m_scheduler.getNextRetrieveJobsToReportBatch(BATCH_SIZE, lc);
     if (retrieveJobsToReport.size()) {
       log::ScopedParamContainer params(lc);
       params.add("jobsToReport", retrieveJobsToReport.size());
-      lc.log(cta::log::DEBUG,"In DiskReportRunner::runOnePass(): ready to process retrieve reports.");
+      lc.log(cta::log::DEBUG, "In DiskReportRunner::runOnePass(): ready to process retrieve reports.");
     }
     is_done = is_done && retrieveJobsToReport.empty();
-    if(!retrieveJobsToReport.empty()) {
+    if (!retrieveJobsToReport.empty()) {
       timings.insertAndReset("getRetrieveJobsToReportTime", t2);
       m_scheduler.reportRetrieveJobsBatch(retrieveJobsToReport, m_reporterFactory, timings, t2, lc);
       log::ScopedParamContainer params(lc);
       params.add("roundTime", roundTime.secs());
-      lc.log(cta::log::INFO,"In DiskReportRunner::runOnePass(): did one round of retrieve reports.");
+      lc.log(cta::log::INFO, "In DiskReportRunner::runOnePass(): did one round of retrieve reports.");
     }
   }
-  log::ScopedParamContainer params(lc);  
+  log::ScopedParamContainer params(lc);
   auto passTime = t.secs();
-  params.add("roundCount", roundCount)
-        .add("passTime", passTime);
-  if (passTime > 1)
+  params.add("roundCount", roundCount).add("passTime", passTime);
+  if (passTime > 1) {
     lc.log(log::INFO, "In DiskReportRunner::runOnePass(): finished one pass.");
+  }
 }
 
-} // namespace cta
+}  // namespace cta

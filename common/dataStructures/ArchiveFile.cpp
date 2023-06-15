@@ -28,31 +28,21 @@ namespace dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-ArchiveFile::ArchiveFile():
-  archiveFileID(0),
-  fileSize(0),
-  creationTime(0),
-  reconciliationTime(0) {
-}
+ArchiveFile::ArchiveFile() : archiveFileID(0), fileSize(0), creationTime(0), reconciliationTime(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool ArchiveFile::operator==(const ArchiveFile &rhs) const {
-  return archiveFileID == rhs.archiveFileID
-      && diskFileId    == rhs.diskFileId
-      && diskInstance  == rhs.diskInstance
-      && fileSize      == rhs.fileSize
-      && checksumBlob  == rhs.checksumBlob
-      && storageClass  == rhs.storageClass
-      && diskFileInfo  == rhs.diskFileInfo
-      && tapeFiles    == rhs.tapeFiles;
+bool ArchiveFile::operator==(const ArchiveFile& rhs) const {
+  return archiveFileID == rhs.archiveFileID && diskFileId == rhs.diskFileId && diskInstance == rhs.diskInstance &&
+         fileSize == rhs.fileSize && checksumBlob == rhs.checksumBlob && storageClass == rhs.storageClass &&
+         diskFileInfo == rhs.diskFileInfo && tapeFiles == rhs.tapeFiles;
 }
 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool ArchiveFile::operator!=(const ArchiveFile &rhs) const {
+bool ArchiveFile::operator!=(const ArchiveFile& rhs) const {
   return !operator==(rhs);
 }
 
@@ -60,8 +50,10 @@ bool ArchiveFile::operator!=(const ArchiveFile &rhs) const {
 // ArchiveFile::TapeFilesList::at()
 //------------------------------------------------------------------------------
 TapeFile& ArchiveFile::TapeFilesList::at(uint8_t copyNb) {
-  auto ret = std::find_if(begin(), end(), [=](TapeFile& tf){ return tf.matchesCopyNb(copyNb);});
-  if (ret == end()) throw cta::exception::Exception("In ArchiveFile::TapeFilesList::at(): not found.");
+  auto ret = std::find_if(begin(), end(), [=](TapeFile& tf) { return tf.matchesCopyNb(copyNb); });
+  if (ret == end()) {
+    throw cta::exception::Exception("In ArchiveFile::TapeFilesList::at(): not found.");
+  }
   return *ret;
 }
 
@@ -69,54 +61,71 @@ TapeFile& ArchiveFile::TapeFilesList::at(uint8_t copyNb) {
 // ArchiveFile::TapeFilesList::at() const
 //------------------------------------------------------------------------------
 const TapeFile& ArchiveFile::TapeFilesList::at(uint8_t copyNb) const {
-  auto ret = std::find_if(cbegin(), cend(), [=](const TapeFile& tf){ return tf.matchesCopyNb(copyNb);});
-  if (ret == end()) throw cta::exception::Exception("In ArchiveFile::TapeFilesList::at(): not found.");
+  auto ret = std::find_if(cbegin(), cend(), [=](const TapeFile& tf) { return tf.matchesCopyNb(copyNb); });
+  if (ret == end()) {
+    throw cta::exception::Exception("In ArchiveFile::TapeFilesList::at(): not found.");
+  }
   return *ret;
 }
 
 //------------------------------------------------------------------------------
-// ArchiveFile::TapeFilesList::find() 
+// ArchiveFile::TapeFilesList::find()
 //------------------------------------------------------------------------------
 ArchiveFile::TapeFilesList::iterator ArchiveFile::TapeFilesList::find(uint8_t copyNb) {
-  return std::find_if(begin(), end(), [=](TapeFile& tf){ return tf.matchesCopyNb(copyNb);});
+  return std::find_if(begin(), end(), [=](TapeFile& tf) { return tf.matchesCopyNb(copyNb); });
 }
 
 //------------------------------------------------------------------------------
 // ArchiveFile::TapeFilesList::find() const
 //------------------------------------------------------------------------------
 ArchiveFile::TapeFilesList::const_iterator ArchiveFile::TapeFilesList::find(uint8_t copyNb) const {
-  return std::find_if(cbegin(), cend(), [=](const TapeFile& tf){ return tf.matchesCopyNb(copyNb);});
+  return std::find_if(cbegin(), cend(), [=](const TapeFile& tf) { return tf.matchesCopyNb(copyNb); });
 }
 
 //------------------------------------------------------------------------------
 // ArchiveFile::TapeFilesList::removeAllVidsExcept()
 //------------------------------------------------------------------------------
-void ArchiveFile::TapeFilesList::removeAllVidsExcept(const std::string &vid) {
-  remove_if([=](TapeFile& tf){ return tf.vid != vid; });
+void ArchiveFile::TapeFilesList::removeAllVidsExcept(const std::string& vid) {
+  remove_if([=](TapeFile& tf) { return tf.vid != vid; });
 }
-
-
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const ArchiveFile &obj) {
-  os <<
-    "{"
-    "archiveFileID="      << obj.archiveFileID      << ","
-    "diskFileID="         << obj.diskFileId         << ","
-    "diskInstance="       << obj.diskInstance       << ","
-    "fileSize="           << obj.fileSize           << ","
-    "checksumBlob="       << obj.checksumBlob       << ","
-    "storageClass="       << obj.storageClass       << ","
-    "diskFileInfo="       << obj.diskFileInfo       << ","
-    "tapeFiles="          << obj.tapeFiles          << ","
-    "creationTime="       << obj.creationTime       << ","
-    "reconciliationTime=" << obj.reconciliationTime <<
-    "}";
+std::ostream& operator<<(std::ostream& os, const ArchiveFile& obj) {
+  os << "{"
+        "archiveFileID="
+     << obj.archiveFileID
+     << ","
+        "diskFileID="
+     << obj.diskFileId
+     << ","
+        "diskInstance="
+     << obj.diskInstance
+     << ","
+        "fileSize="
+     << obj.fileSize
+     << ","
+        "checksumBlob="
+     << obj.checksumBlob
+     << ","
+        "storageClass="
+     << obj.storageClass
+     << ","
+        "diskFileInfo="
+     << obj.diskFileInfo
+     << ","
+        "tapeFiles="
+     << obj.tapeFiles
+     << ","
+        "creationTime="
+     << obj.creationTime
+     << ","
+        "reconciliationTime="
+     << obj.reconciliationTime << "}";
   return os;
 }
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

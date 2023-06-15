@@ -46,6 +46,7 @@ CTA_GENERATE_EXCEPTION_CLASS(RecoverableMigrationErrorException);
 class MigrationReportPacker;
 class Memblock;
 class TapeSessionStats;
+
 /**
  * The TapeWriteFileTask is responsible to write a single file onto tape as part of a migration
  * session. Being a consumer of memory blocks, it inherits from the DataConsumer class. It also
@@ -60,7 +61,9 @@ public:
    * @param blockCount: number of memory blocks (TODO:?)
    * @param mm: reference to the memory manager in use
    */
-  TapeWriteTask(uint64_t blockCount, cta::ArchiveJob* archiveJob, MigrationMemoryManager& mm,
+  TapeWriteTask(uint64_t blockCount,
+                cta::ArchiveJob* archiveJob,
+                MigrationMemoryManager& mm,
                 cta::threading::AtomicFlag& errorFlag);
 
   /**
@@ -76,7 +79,9 @@ public:
    * @param timer
    */
   virtual void execute(const std::unique_ptr<castor::tape::tapeFile::WriteSession>& session,
-                       MigrationReportPacker& reportPacker, MigrationWatchDog& watchdog, cta::log::LogContext& lc,
+                       MigrationReportPacker& reportPacker,
+                       MigrationWatchDog& watchdog,
+                       cta::log::LogContext& lc,
                        cta::utils::Timer& timer);
 
 private:

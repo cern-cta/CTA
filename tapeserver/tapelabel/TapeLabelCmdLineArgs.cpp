@@ -32,119 +32,121 @@ namespace tapelabel {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-TapeLabelCmdLineArgs::TapeLabelCmdLineArgs(const int argc, char *const *const argv):
-  help(false), m_debug(false), m_force(false) {
-
+TapeLabelCmdLineArgs::TapeLabelCmdLineArgs(const int argc, char* const* const argv) :
+help(false),
+m_debug(false),
+m_force(false) {
   static struct option longopts[] = {
-    {"vid", required_argument, nullptr, 'v'},
-    {"oldlabel", required_argument, nullptr, 'o'},
-    {"debug", no_argument, nullptr, 'd'},
-    {"drive", required_argument, nullptr, 'u'},
+    {"vid",         required_argument, nullptr, 'v'},
+    {"oldlabel",    required_argument, nullptr, 'o'},
+    {"debug",       no_argument,       nullptr, 'd'},
+    {"drive",       required_argument, nullptr, 'u'},
     {"loadtimeout", required_argument, nullptr, 't'},
-    {"force", no_argument, nullptr, 'f'},
-    {"help", no_argument, nullptr, 'h'},
-    {nullptr,          0, nullptr,   0}
+    {"force",       no_argument,       nullptr, 'f'},
+    {"help",        no_argument,       nullptr, 'h'},
+    {nullptr,       0,                 nullptr, 0  }
   };
- 
+
   // Prevent getopt() from printing an error message if it does not recognize
   // an option character
   opterr = 0;
 
   int opt = 0;
 
-  while((opt = getopt_long(argc, argv, ":v:o:t:u:hdf", longopts, nullptr)) != -1) {
-    switch(opt) {
-    case 'v':
-      if (strlen(optarg) > CA_MAXVIDLEN) {
-        exception::CommandLineNotParsed ex;
-        ex.getMessage() << "The -" << static_cast<char>(opt) << " option too big";
-        throw ex;
-      }
-      m_vid = std::string(optarg);
-      if (!utils::isUpper(m_vid)) {
-        exception::CommandLineNotParsed ex;
-        ex.getMessage() << "The -" << static_cast<char>(opt) << " option must only contain uppercase alphanumeric characters";
-        throw ex;
-      }
-      break;
-    case 'o':
-      if (strlen(optarg) > CA_MAXVIDLEN) {
-        exception::CommandLineNotParsed ex;
-        ex.getMessage() << "The -" << static_cast<char>(opt) << " option too big";
-        throw ex;
-      }
-      m_oldLabel = std::string(optarg);
-      if (!utils::isUpper(m_vid)) {
-        exception::CommandLineNotParsed ex;
-        ex.getMessage() << "The -" << static_cast<char>(opt) << " option must only contain uppercase alphanumeric characters";
-        throw ex;
-      }
-      break;
-    case 't':
-      try {
-        m_tapeLoadTimeout = std::stoul(optarg, nullptr, 0);
-      } catch (std::invalid_argument &) {
-        exception::CommandLineNotParsed ex;
-        ex.getMessage() << "Invalid value for the tape load timeout: " << optarg;
-        throw ex;
-      } catch (std::out_of_range &) {
-        exception::CommandLineNotParsed ex;
-        ex.getMessage() << "Too large value for the tape load timeout: " << optarg;
-        throw ex;
-      }
-      if (!m_tapeLoadTimeout) {
-        exception::CommandLineNotParsed ex;
-        ex.getMessage() << "The tape load timeout cannot be 0";
-        throw ex;
-      }
-      break;
-    case 'u':
-      m_unitName = std::string(optarg);
-      break;
-    case 'h':
-      help = true;
-      break;
-    case 'd':
-      m_debug = true;
-      break;
-    case 'f':
-      m_force = true;
-      break;
-    case ':': // Missing parameter
+  while ((opt = getopt_long(argc, argv, ":v:o:t:u:hdf", longopts, nullptr)) != -1) {
+    switch (opt) {
+      case 'v':
+        if (strlen(optarg) > CA_MAXVIDLEN) {
+          exception::CommandLineNotParsed ex;
+          ex.getMessage() << "The -" << static_cast<char>(opt) << " option too big";
+          throw ex;
+        }
+        m_vid = std::string(optarg);
+        if (!utils::isUpper(m_vid)) {
+          exception::CommandLineNotParsed ex;
+          ex.getMessage() << "The -" << static_cast<char>(opt)
+                          << " option must only contain uppercase alphanumeric characters";
+          throw ex;
+        }
+        break;
+      case 'o':
+        if (strlen(optarg) > CA_MAXVIDLEN) {
+          exception::CommandLineNotParsed ex;
+          ex.getMessage() << "The -" << static_cast<char>(opt) << " option too big";
+          throw ex;
+        }
+        m_oldLabel = std::string(optarg);
+        if (!utils::isUpper(m_vid)) {
+          exception::CommandLineNotParsed ex;
+          ex.getMessage() << "The -" << static_cast<char>(opt)
+                          << " option must only contain uppercase alphanumeric characters";
+          throw ex;
+        }
+        break;
+      case 't':
+        try {
+          m_tapeLoadTimeout = std::stoul(optarg, nullptr, 0);
+        }
+        catch (std::invalid_argument&) {
+          exception::CommandLineNotParsed ex;
+          ex.getMessage() << "Invalid value for the tape load timeout: " << optarg;
+          throw ex;
+        }
+        catch (std::out_of_range&) {
+          exception::CommandLineNotParsed ex;
+          ex.getMessage() << "Too large value for the tape load timeout: " << optarg;
+          throw ex;
+        }
+        if (!m_tapeLoadTimeout) {
+          exception::CommandLineNotParsed ex;
+          ex.getMessage() << "The tape load timeout cannot be 0";
+          throw ex;
+        }
+        break;
+      case 'u':
+        m_unitName = std::string(optarg);
+        break;
+      case 'h':
+        help = true;
+        break;
+      case 'd':
+        m_debug = true;
+        break;
+      case 'f':
+        m_force = true;
+        break;
+      case ':':  // Missing parameter
       {
         exception::CommandLineNotParsed ex;
         ex.getMessage() << "The -" << static_cast<char>(optopt) << " option requires a parameter";
         throw ex;
       }
-    case '?': // Unknown option
+      case '?':  // Unknown option
       {
         exception::CommandLineNotParsed ex;
-        if(0 == optopt) {
+        if (0 == optopt) {
           ex.getMessage() << "Unknown command-line option";
-        } else {
+        }
+        else {
           ex.getMessage() << "Unknown command-line option: -" << static_cast<char>(optopt);
         }
         throw ex;
       }
-    default:
-      {
+      default: {
         exception::CommandLineNotParsed ex;
-        ex.getMessage() <<
-          "getopt_long returned the following unknown value: 0x" <<
-          std::hex << static_cast<int>(opt);
+        ex.getMessage() << "getopt_long returned the following unknown value: 0x" << std::hex << static_cast<int>(opt);
         throw ex;
       }
-    } // switch(opt)
-  } // while getopt_long()
+    }  // switch(opt)
+  }    // while getopt_long()
 
   if (m_vid.empty() && !help) {
     exception::CommandLineNotParsed ex;
-        ex.getMessage() <<
-          "--vid/-v VID must be specified";
-        throw ex;
+    ex.getMessage() << "--vid/-v VID must be specified";
+    throw ex;
   }
   // There is no need to continue parsing when the help option is set
-  if(help) {
+  if (help) {
     return;
   }
 }
@@ -152,21 +154,24 @@ TapeLabelCmdLineArgs::TapeLabelCmdLineArgs(const int argc, char *const *const ar
 //------------------------------------------------------------------------------
 // printUsage
 //------------------------------------------------------------------------------
-void TapeLabelCmdLineArgs::printUsage(std::ostream &os) {
-  os <<
-    "Usage:" << std::endl <<
-    "  cta-tape-label [options] --vid/-v VID" << std::endl <<
-    "Where:" << std::endl <<
-    "  -v, --vid           The VID of the tape to be labeled" << std::endl <<
-    "Options:" <<std::endl <<
-    "  -o, --oldlabel      The vid of the current tape label on the tape if it is not the same as VID" << std::endl <<
-    "  -t, --loadtimeout   The timeout to load the tape in the drive slot in seconds (default: 2 hours)" << std::endl <<
-    "  -u, --drive         The unit name of the drive used (if absent, the first line of TPCONFIG is used)" << std::endl <<
-    "  -h, --help          Print this help message and exit" << std::endl <<
-    "  -d, --debug         Print more logs for label operations" << std::endl <<
-    "  -f, --force         Force labeling for not-blank tapes for testing purpose and without label checks. Must only be used manually." << std::endl;  
+void TapeLabelCmdLineArgs::printUsage(std::ostream& os) {
+  os << "Usage:" << std::endl
+     << "  cta-tape-label [options] --vid/-v VID" << std::endl
+     << "Where:" << std::endl
+     << "  -v, --vid           The VID of the tape to be labeled" << std::endl
+     << "Options:" << std::endl
+     << "  -o, --oldlabel      The vid of the current tape label on the tape if it is not the same as VID" << std::endl
+     << "  -t, --loadtimeout   The timeout to load the tape in the drive slot in seconds (default: 2 hours)"
+     << std::endl
+     << "  -u, --drive         The unit name of the drive used (if absent, the first line of TPCONFIG is used)"
+     << std::endl
+     << "  -h, --help          Print this help message and exit" << std::endl
+     << "  -d, --debug         Print more logs for label operations" << std::endl
+     << "  -f, --force         Force labeling for not-blank tapes for testing purpose and without label checks. Must "
+        "only be used manually."
+     << std::endl;
 }
 
-} // namespace tapelabel
-} // namespace catalogue
-} // namespace cta
+}  // namespace tapelabel
+}  // namespace tapeserver
+}  // namespace cta

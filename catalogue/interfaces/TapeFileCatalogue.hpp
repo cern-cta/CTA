@@ -30,8 +30,8 @@ namespace dataStructures {
 struct ArchiveFile;
 struct RequesterIdentity;
 struct RetrieveFileQueueCriteria;
-}
-}
+}  // namespace dataStructures
+}  // namespace common
 
 namespace log {
 struct LogContext;
@@ -57,7 +57,7 @@ public:
    * @throw TapeFseqMismatch If an unexpected tape file sequence number is encountered.
    * @throw FileSizeMismatch If an unexpected tape file size is encountered.
    */
-  virtual void filesWrittenToTape(const std::set<TapeItemWrittenPointer> &event) = 0;
+  virtual void filesWrittenToTape(const std::set<TapeItemWrittenPointer>& event) = 0;
 
   /**
   * Deletes a tape file copy
@@ -65,7 +65,7 @@ public:
   * @param file The tape file to delete
   * @param reason The reason for deleting the tape file copy
   */
-  virtual void deleteTapeFileCopy(common::dataStructures::ArchiveFile &file, const std::string &reason) = 0;
+  virtual void deleteTapeFileCopy(common::dataStructures::ArchiveFile& file, const std::string& reason) = 0;
 
   /**
    * Prepares for a file retrieval by returning the information required to
@@ -84,13 +84,13 @@ public:
    *
    * @return The information required to queue the associated retrieve request(s).
    */
-  virtual common::dataStructures::RetrieveFileQueueCriteria prepareToRetrieveFile(
-    const std::string &diskInstanceName,
-    const uint64_t archiveFileId,
-    const common::dataStructures::RequesterIdentity &user,
-    const std::optional<std::string> & activity,
-    log::LogContext &lc,
-    const std::optional<std::string> &mountPolicyName =  std::nullopt) = 0;
+  virtual common::dataStructures::RetrieveFileQueueCriteria
+    prepareToRetrieveFile(const std::string& diskInstanceName,
+                          const uint64_t archiveFileId,
+                          const common::dataStructures::RequesterIdentity& user,
+                          const std::optional<std::string>& activity,
+                          log::LogContext& lc,
+                          const std::optional<std::string>& mountPolicyName = std::nullopt) = 0;
 };  // class FileRecyleLogCatalogue
 
 }  // namespace catalogue

@@ -31,20 +31,21 @@ namespace daemon {
 // Constructor
 //------------------------------------------------------------------------------
 EncryptionControl::EncryptionControl(bool useEncryption, const std::string& scriptPath) :
-  m_useEncryption(useEncryption),
-  m_path(scriptPath) {
+m_useEncryption(useEncryption),
+m_path(scriptPath) {
   if (!m_path.empty() && m_path[0] != '/') {
-    throw cta::exception::Exception("In EncryptionControl::EncryptionControl: the script path is not absolute: "
-                                    + m_path);
+    throw cta::exception::Exception("In EncryptionControl::EncryptionControl: the script path is not absolute: " +
+                                    m_path);
   }
 }
 
 //------------------------------------------------------------------------------
 // enable
 //------------------------------------------------------------------------------
-auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface &m_drive,
-                               castor::tape::tapeserver::daemon::VolumeInfo &volInfo,
-                               cta::catalogue::Catalogue &catalogue, bool isWriteSession) -> EncryptionStatus {
+auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface& m_drive,
+                               castor::tape::tapeserver::daemon::VolumeInfo& volInfo,
+                               cta::catalogue::Catalogue& catalogue,
+                               bool isWriteSession) -> EncryptionStatus {
   EncryptionStatus encStatus;
   if (m_path.empty()) {
     if (m_useEncryption) {
@@ -91,9 +92,9 @@ auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface &
     else {
       ex << "script returned: " << sp.exitValue();
     }
-    ex << " called=" << "\'" << argsToString(args, " ") << "\'"
-                    << " stdout=" << sp.stdout()
-                    << " stderr=" << sp.stderr();
+    ex << " called="
+       << "\'" << argsToString(args, " ") << "\'"
+       << " stdout=" << sp.stdout() << " stderr=" << sp.stderr();
     throw cta::exception::Exception(ex.str());
   }
   encStatus = parse_json_script_output(sp.stdout());
@@ -128,15 +129,15 @@ bool EncryptionControl::disable(castor::tape::tapeserver::drive::DriveInterface&
 
 namespace {
 struct JsonObjectDeleter {
-  void operator()(json_object *jo) { json_object_put(jo); }
+  void operator()(json_object* jo) { json_object_put(jo); }
 };
-}
+}  // namespace
 
 namespace {
 struct JsonTokenerDeleter {
-  void operator()(json_tokener *jt) { json_tokener_free(jt); }
+  void operator()(json_tokener* jt) { json_tokener_free(jt); }
 };
-}
+}  // namespace
 
 //------------------------------------------------------------------------------
 // JSON Parsing
@@ -162,11 +163,8 @@ EncryptionControl::EncryptionStatus EncryptionControl::parse_json_script_output(
 
   std::map<std::string, std::string> stdout_map = flatten_json_object_to_map("", jobj.get());
 
-  if (
-    stdout_map.find("key_name") == stdout_map.end() ||
-    stdout_map.find("encryption_key") == stdout_map.end() ||
-    stdout_map.find("message") == stdout_map.end()
-    ) {
+  if (stdout_map.find("key_name") == stdout_map.end() || stdout_map.find("encryption_key") == stdout_map.end() ||
+      stdout_map.find("message") == stdout_map.end()) {
     throw cta::exception::Exception("In EncryptionControl::parse_json_script_output: invalid json interface.");
   }
 
@@ -178,7 +176,7 @@ EncryptionControl::EncryptionStatus EncryptionControl::parse_json_script_output(
 }
 
 std::map<std::string, std::string> EncryptionControl::flatten_json_object_to_map(const std::string& prefix,
-                                                                                 json_object *jobj) {
+                                                                                 json_object* jobj) {
   std::map<std::string, std::string> ret;
 
   json_object_object_foreach(jobj, key, val) {
@@ -200,8 +198,7 @@ std::string EncryptionControl::argsToString(std::list<std::string> args, const s
     return "";
   }
   std::ostringstream toBeReturned;
-  std::copy(args.begin(), --args.end(),
-            std::ostream_iterator<std::string>(toBeReturned, delimiter.c_str()));
+  std::copy(args.begin(), --args.end(), std::ostream_iterator<std::string>(toBeReturned, delimiter.c_str()));
   toBeReturned << *args.rbegin();
 
   return toBeReturned.str();

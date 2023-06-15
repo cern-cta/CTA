@@ -26,11 +26,11 @@
 namespace cta {
 namespace catalogue {
 
-void DummyDriveStateCatalogue::createTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) {
+void DummyDriveStateCatalogue::createTapeDrive(const common::dataStructures::TapeDrive& tapeDrive) {
   throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
-void DummyDriveStateCatalogue::deleteTapeDrive(const std::string &tapeDriveName) {
+void DummyDriveStateCatalogue::deleteTapeDrive(const std::string& tapeDriveName) {
   throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
@@ -38,9 +38,11 @@ std::list<std::string> DummyDriveStateCatalogue::getTapeDriveNames() const {
   return {m_tapeDriveStatus.driveName};
 }
 
-std::optional<common::dataStructures::TapeDrive> DummyDriveStateCatalogue::getTapeDrive(
-  const std::string &tapeDriveName) const {
-  if (m_tapeDriveStatus.driveName != "") return m_tapeDriveStatus;
+std::optional<common::dataStructures::TapeDrive>
+  DummyDriveStateCatalogue::getTapeDrive(const std::string& tapeDriveName) const {
+  if (m_tapeDriveStatus.driveName != "") {
+    return m_tapeDriveStatus;
+  }
   common::dataStructures::TapeDrive tapeDriveStatus;
   const time_t reportTime = time(nullptr);
 
@@ -59,31 +61,34 @@ std::optional<common::dataStructures::TapeDrive> DummyDriveStateCatalogue::getTa
   tapeDriveStatus.reservedBytes = 0;
   tapeDriveStatus.reservationSessionId = 0;
 
-
   return tapeDriveStatus;
 }
 
 std::list<common::dataStructures::TapeDrive> DummyDriveStateCatalogue::getTapeDrives() const {
   std::list<common::dataStructures::TapeDrive> tapeDrives;
   const auto tapeDrive = getTapeDrive(m_tapeDriveStatus.driveName);
-  if (tapeDrive.has_value()) tapeDrives.push_back(tapeDrive.value());
+  if (tapeDrive.has_value()) {
+    tapeDrives.push_back(tapeDrive.value());
+  }
   return tapeDrives;
 }
 
 void DummyDriveStateCatalogue::setDesiredTapeDriveState(const std::string&,
-    const common::dataStructures::DesiredDriveState &desiredState) {
+                                                        const common::dataStructures::DesiredDriveState& desiredState) {
   m_tapeDriveStatus.desiredUp = desiredState.up;
   m_tapeDriveStatus.desiredForceDown = desiredState.forceDown;
   m_tapeDriveStatus.reasonUpDown = desiredState.reason;
 }
 
 void DummyDriveStateCatalogue::setDesiredTapeDriveStateComment(const std::string& tapeDriveName,
-  const std::string &comment) {
+                                                               const std::string& comment) {
   m_tapeDriveStatus.userComment = comment;
 }
 
-void DummyDriveStateCatalogue::updateTapeDriveStatistics(const std::string& tapeDriveName,
-  const std::string& host, const std::string& logicalLibrary,
+void DummyDriveStateCatalogue::updateTapeDriveStatistics(
+  const std::string& tapeDriveName,
+  const std::string& host,
+  const std::string& logicalLibrary,
   const common::dataStructures::TapeDriveStatistics& statistics) {
   m_tapeDriveStatus.driveName = tapeDriveName;
   m_tapeDriveStatus.host = host;
@@ -93,7 +98,7 @@ void DummyDriveStateCatalogue::updateTapeDriveStatistics(const std::string& tape
   m_tapeDriveStatus.lastModificationLog = statistics.lastModificationLog;
 }
 
-void DummyDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructures::TapeDrive &tapeDrive) {
+void DummyDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructures::TapeDrive& tapeDrive) {
   m_tapeDriveStatus = tapeDrive;
 }
 
@@ -110,19 +115,25 @@ std::map<std::string, uint64_t> DummyDriveStateCatalogue::getDiskSpaceReservatio
   return ret;
 }
 
-void DummyDriveStateCatalogue::reserveDiskSpace(const std::string& driveName, const uint64_t mountId,
-  const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) {
-  if (diskSpaceReservation.empty()) return;
+void DummyDriveStateCatalogue::reserveDiskSpace(const std::string& driveName,
+                                                const uint64_t mountId,
+                                                const DiskSpaceReservationRequest& diskSpaceReservation,
+                                                log::LogContext& lc) {
+  if (diskSpaceReservation.empty()) {
+    return;
+  }
 
   log::ScopedParamContainer params(lc);
   params.add("driveName", driveName)
-        .add("diskSystem", diskSpaceReservation.begin()->first)
-        .add("reservationBytes", diskSpaceReservation.begin()->second)
-        .add("mountId", mountId);
+    .add("diskSystem", diskSpaceReservation.begin()->first)
+    .add("reservationBytes", diskSpaceReservation.begin()->second)
+    .add("mountId", mountId);
   lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): reservation request.");
 
   auto tdStatus = getTapeDrive(driveName);
-  if (!tdStatus) return;
+  if (!tdStatus) {
+    return;
+  }
 
   if (!tdStatus.value().reservationSessionId) {
     tdStatus.value().reservationSessionId = mountId;
@@ -139,20 +150,26 @@ void DummyDriveStateCatalogue::reserveDiskSpace(const std::string& driveName, co
   updateTapeDriveStatus(tdStatus.value());
 }
 
-void DummyDriveStateCatalogue::releaseDiskSpace(const std::string& driveName, const uint64_t mountId,
-  const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) {
-  if (diskSpaceReservation.empty()) return;
+void DummyDriveStateCatalogue::releaseDiskSpace(const std::string& driveName,
+                                                const uint64_t mountId,
+                                                const DiskSpaceReservationRequest& diskSpaceReservation,
+                                                log::LogContext& lc) {
+  if (diskSpaceReservation.empty()) {
+    return;
+  }
 
   log::ScopedParamContainer params(lc);
   params.add("driveName", driveName)
-        .add("diskSystem", diskSpaceReservation.begin()->first)
-        .add("reservationBytes", diskSpaceReservation.begin()->second)
-        .add("mountId", mountId);
+    .add("diskSystem", diskSpaceReservation.begin()->first)
+    .add("reservationBytes", diskSpaceReservation.begin()->second)
+    .add("mountId", mountId);
   lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): reservation release request.");
 
   auto tdStatus = getTapeDrive(driveName);
 
-  if (!tdStatus) return;
+  if (!tdStatus) {
+    return;
+  }
   if (!tdStatus.value().reservationSessionId) {
     return;
   }
@@ -160,8 +177,10 @@ void DummyDriveStateCatalogue::releaseDiskSpace(const std::string& driveName, co
     return;
   }
   auto& bytes = diskSpaceReservation.begin()->second;
-  if (bytes > tdStatus.value().reservedBytes) throw exception::NegativeDiskSpaceReservationReached(
-    "In DriveState::subtractDiskSpaceReservation(): we would reach a negative reservation size.");
+  if (bytes > tdStatus.value().reservedBytes) {
+    throw exception::NegativeDiskSpaceReservationReached(
+      "In DriveState::subtractDiskSpaceReservation(): we would reach a negative reservation size.");
+  }
   tdStatus.value().diskSystemName = diskSpaceReservation.begin()->first;
   tdStatus.value().reservedBytes.value() -= bytes;
   updateTapeDriveStatus(tdStatus.value());

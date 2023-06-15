@@ -29,12 +29,13 @@ class RdbmsCatalogue;
 
 class PostgresTapePoolCatalogue : public RdbmsTapePoolCatalogue {
 public:
-  PostgresTapePoolCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
-    RdbmsCatalogue* rdbmsCatalogue);
+  PostgresTapePoolCatalogue(log::Logger& log,
+                            std::shared_ptr<rdbms::ConnPool> connPool,
+                            RdbmsCatalogue* rdbmsCatalogue);
   ~PostgresTapePoolCatalogue() override = default;
 
 private:
-  uint64_t getNextTapePoolId(rdbms::Conn &conn) const override;
+  uint64_t getNextTapePoolId(rdbms::Conn& conn) const override;
 };  // class PostgresTapePoolCatalogue
 
 }  // namespace catalogue

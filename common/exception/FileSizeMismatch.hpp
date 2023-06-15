@@ -25,7 +25,7 @@ namespace catalogue {
 /**
  * Exception representing an unexpected mismatch between file sizes.
  */
-class FileSizeMismatch: public exception::Exception {
+class FileSizeMismatch : public exception::Exception {
 public:
   /**
    * Constructor.
@@ -35,15 +35,14 @@ public:
    * @param embedBacktrace whether to embed a backtrace of where the
    * exception was throw in the message
    */
-  FileSizeMismatch(const std::string &context = "", const bool embedBacktrace = true):
-    cta::exception::Exception(context, embedBacktrace) {
-  }
+  FileSizeMismatch(const std::string& context = "", const bool embedBacktrace = true) :
+  cta::exception::Exception(context, embedBacktrace) {}
 
   /**
    * Destructor.
    */
   ~FileSizeMismatch() override {}
-}; // class FileSizeMismatch
+};  // class FileSizeMismatch
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

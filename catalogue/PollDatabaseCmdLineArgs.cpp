@@ -29,13 +29,12 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-PollDatabaseCmdLineArgs::PollDatabaseCmdLineArgs(const int argc, char *const *const argv):
-  help(false),
-  numberOfSecondsToKeepPolling(0) {
-
+PollDatabaseCmdLineArgs::PollDatabaseCmdLineArgs(const int argc, char* const* const argv) :
+help(false),
+numberOfSecondsToKeepPolling(0) {
   static struct option longopts[] = {
     {"help", no_argument, NULL, 'h'},
-    {NULL  ,           0, NULL,   0}
+    {NULL,   0,           NULL, 0  }
   };
 
   // Prevent getopt() from printing an error message if it does not recognize
@@ -43,40 +42,38 @@ PollDatabaseCmdLineArgs::PollDatabaseCmdLineArgs(const int argc, char *const *co
   opterr = 0;
 
   int opt = 0;
-  while((opt = getopt_long(argc, argv, ":h", longopts, NULL)) != -1) {
-    switch(opt) {
-    case 'h':
-      help = true;
-      break;
-    case ':': // Missing parameter
+  while ((opt = getopt_long(argc, argv, ":h", longopts, NULL)) != -1) {
+    switch (opt) {
+      case 'h':
+        help = true;
+        break;
+      case ':':  // Missing parameter
       {
         exception::CommandLineNotParsed ex;
-        ex.getMessage() << "The -" << (char)opt << " option requires a parameter";
+        ex.getMessage() << "The -" << (char) opt << " option requires a parameter";
         throw ex;
       }
-    case '?': // Unknown option
+      case '?':  // Unknown option
       {
         exception::CommandLineNotParsed ex;
-        if(0 == optopt) {
+        if (0 == optopt) {
           ex.getMessage() << "Unknown command-line option";
-        } else {
-          ex.getMessage() << "Unknown command-line option: -" << (char)optopt;
+        }
+        else {
+          ex.getMessage() << "Unknown command-line option: -" << (char) optopt;
         }
         throw ex;
       }
-    default:
-      {
+      default: {
         exception::CommandLineNotParsed ex;
-        ex.getMessage() <<
-          "getopt_long returned the following unknown value: 0x" <<
-          std::hex << (int)opt;
+        ex.getMessage() << "getopt_long returned the following unknown value: 0x" << std::hex << (int) opt;
         throw ex;
       }
-    } // switch(opt)
-  } // while getopt_long()
+    }  // switch(opt)
+  }    // while getopt_long()
 
   // There is no need to continue parsing when the help option is set
-  if(help) {
+  if (help) {
     return;
   }
 
@@ -84,7 +81,7 @@ PollDatabaseCmdLineArgs::PollDatabaseCmdLineArgs(const int argc, char *const *co
   const int nbArgs = argc - optind;
 
   // Check the number of arguments
-  if(nbArgs != 2) {
+  if (nbArgs != 2) {
     exception::CommandLineNotParsed ex;
     ex.getMessage() << "Wrong number of command-line arguments: expected=2 actual=" << nbArgs;
     throw ex;
@@ -101,21 +98,20 @@ PollDatabaseCmdLineArgs::PollDatabaseCmdLineArgs(const int argc, char *const *co
 //------------------------------------------------------------------------------
 // printUsage
 //------------------------------------------------------------------------------
-void PollDatabaseCmdLineArgs::printUsage(std::ostream &os) {
-  os <<
-    "Usage:" << std::endl <<
-    "    cta-database-poll databaseConnectionFile numberOfSecondsToKeepPolling [options]" << std::endl <<
-    "Where:" << std::endl <<
-    "    databaseConnectionFile" << std::endl <<
-    "        The path to the file containing the connection details of the CTA" << std::endl <<
-    "        catalogue database." << std::endl <<
-    "    numberOfSecondsToKeepPolling" << std::endl <<
-    "        The total number of seconds cta-database-poll should run before" <<  std::endl <<
-    "        exiting." << std::endl <<
-    "Options:" << std::endl <<
-    "    -h,--help" << std::endl <<
-    "        Prints this usage message" << std::endl;
+void PollDatabaseCmdLineArgs::printUsage(std::ostream& os) {
+  os << "Usage:" << std::endl
+     << "    cta-database-poll databaseConnectionFile numberOfSecondsToKeepPolling [options]" << std::endl
+     << "Where:" << std::endl
+     << "    databaseConnectionFile" << std::endl
+     << "        The path to the file containing the connection details of the CTA" << std::endl
+     << "        catalogue database." << std::endl
+     << "    numberOfSecondsToKeepPolling" << std::endl
+     << "        The total number of seconds cta-database-poll should run before" << std::endl
+     << "        exiting." << std::endl
+     << "Options:" << std::endl
+     << "    -h,--help" << std::endl
+     << "        Prints this usage message" << std::endl;
 }
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

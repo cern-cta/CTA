@@ -26,15 +26,12 @@ namespace wrapper {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SqliteConnFactory::SqliteConnFactory(const std::string &filename):
-  m_filename(filename) {
-}
+SqliteConnFactory::SqliteConnFactory(const std::string& filename) : m_filename(filename) {}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-SqliteConnFactory::~SqliteConnFactory() {
-}
+SqliteConnFactory::~SqliteConnFactory() {}
 
 //------------------------------------------------------------------------------
 // create
@@ -42,11 +39,12 @@ SqliteConnFactory::~SqliteConnFactory() {
 std::unique_ptr<ConnWrapper> SqliteConnFactory::create() {
   try {
     return std::make_unique<SqliteConn>(m_filename);
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+}  // namespace wrapper
+}  // namespace rdbms
+}  // namespace cta

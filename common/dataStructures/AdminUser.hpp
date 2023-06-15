@@ -32,22 +32,21 @@ namespace dataStructures {
  * This is the administrative user which contains the username of the admin 
  */
 struct AdminUser {
-
   AdminUser();
 
-  bool operator==(const AdminUser &rhs) const;
+  bool operator==(const AdminUser& rhs) const;
 
-  bool operator!=(const AdminUser &rhs) const;
+  bool operator!=(const AdminUser& rhs) const;
 
   std::string name;
   EntryLog creationLog;
   EntryLog lastModificationLog;
   std::string comment;
 
-}; // struct AdminUser
+};  // struct AdminUser
 
-std::ostream &operator<<(std::ostream &os, const AdminUser &obj);
+std::ostream& operator<<(std::ostream& os, const AdminUser& obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

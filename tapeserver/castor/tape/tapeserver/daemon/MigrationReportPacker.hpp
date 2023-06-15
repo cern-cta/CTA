@@ -39,7 +39,7 @@ public:
    * @param tg The client who is asking for a migration of his files 
    * and to whom we have to report to the status of the operations.
    */
-  MigrationReportPacker(cta::ArchiveMount *archiveMount, cta::log::LogContext& lc);
+  MigrationReportPacker(cta::ArchiveMount* archiveMount, cta::log::LogContext& lc);
 
   ~MigrationReportPacker();
 
@@ -58,7 +58,9 @@ public:
    * @param ex the reason for the failure
    * @param lc log context provided by the calling thread.
    */
-  virtual void reportSkippedJob(std::unique_ptr<cta::ArchiveJob> skippedArchiveJob, const std::string& failure, cta::log::LogContext& lc);
+  virtual void reportSkippedJob(std::unique_ptr<cta::ArchiveJob> skippedArchiveJob,
+                                const std::string& failure,
+                                cta::log::LogContext& lc);
 
   /**
    * Create into the MigrationReportPacker a report for the failed migration
@@ -67,7 +69,9 @@ public:
    * @param ex the reason for the failure
    * @param lc log context provided by the calling thread.
    */
-  virtual void reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, const cta::exception::Exception& ex, cta::log::LogContext& lc);
+  virtual void reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob,
+                               const cta::exception::Exception& ex,
+                               cta::log::LogContext& lc);
 
   /**
    * Create into the MigrationReportPacker a report for the signaling a flushing on tape
@@ -90,7 +94,9 @@ public:
    * @param reason the comment to a change.
    * @param lc log context provided by the calling thread.
    */
-  virtual void reportDriveStatus(cta::common::dataStructures::DriveStatus status, const std::optional<std::string>& reason, cta::log::LogContext& lc);
+  virtual void reportDriveStatus(cta::common::dataStructures::DriveStatus status,
+                                 const std::optional<std::string>& reason,
+                                 cta::log::LogContext& lc);
 
   /**
    * Create into the MigrationReportPacker a report for the nominal end of session
@@ -129,9 +135,10 @@ private:
      * The successful archive job to be pushed in the report packer queue and reported later
      */
     std::unique_ptr<cta::ArchiveJob> m_successfulArchiveJob;
+
   public:
     explicit ReportSuccessful(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob) :
-      m_successfulArchiveJob(std::move(successfulArchiveJob)) {}
+    m_successfulArchiveJob(std::move(successfulArchiveJob)) {}
 
     void execute(MigrationReportPacker& reportPacker) override;
   };
@@ -142,9 +149,11 @@ private:
      * The failed archive job we skipped
      */
     std::unique_ptr<cta::ArchiveJob> m_skippedArchiveJob;
+
   public:
     ReportSkipped(std::unique_ptr<cta::ArchiveJob> skippedArchiveJob, std::string& failureLog) :
-      m_failureLog(failureLog), m_skippedArchiveJob(std::move(skippedArchiveJob)) {}
+    m_failureLog(failureLog),
+    m_skippedArchiveJob(std::move(skippedArchiveJob)) {}
 
     void execute(MigrationReportPacker& reportPacker) override;
   };
@@ -155,7 +164,8 @@ private:
 
     void execute(MigrationReportPacker& reportPacker) override {
       reportPacker.m_continue = false;
-      reportPacker.m_lc.log(cta::log::DEBUG, "In MigrationReportPacker::ReportTestGoingToEnd::execute(): Reporting session complete.");
+      reportPacker.m_lc.log(cta::log::DEBUG,
+                            "In MigrationReportPacker::ReportTestGoingToEnd::execute(): Reporting session complete.");
       reportPacker.m_archiveMount->complete();
     }
   };
@@ -163,9 +173,11 @@ private:
   class ReportDriveStatus : public Report {
     cta::common::dataStructures::DriveStatus m_status;
     std::optional<std::string> m_reason;
+
   public:
-    ReportDriveStatus(cta::common::dataStructures::DriveStatus status, std::optional<std::string> reason) : m_status(status),
-                                                                                                            m_reason(std::move(reason)) {}
+    ReportDriveStatus(cta::common::dataStructures::DriveStatus status, std::optional<std::string> reason) :
+    m_status(status),
+    m_reason(std::move(reason)) {}
 
     void execute(MigrationReportPacker& reportPacker) override;
   };
@@ -198,9 +210,11 @@ private:
      * The failed archive job to be reported immediately
      */
     std::unique_ptr<cta::ArchiveJob> m_failedArchiveJob;
+
   public:
     ReportError(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, std::string& failureLog) :
-      m_failureLog(failureLog), m_failedArchiveJob(std::move(failedArchiveJob)) {}
+    m_failureLog(failureLog),
+    m_failedArchiveJob(std::move(failedArchiveJob)) {}
 
     void execute(MigrationReportPacker& reportPacker) override;
   };
@@ -213,15 +227,18 @@ private:
   class ReportEndofSessionWithErrors : public Report {
     std::string m_message;
     bool m_isTapeFull;
+
   public:
     ReportEndofSessionWithErrors(std::string msg, bool isTapeFull) :
-      m_message(std::move(msg)), m_isTapeFull(isTapeFull) {}
+    m_message(std::move(msg)),
+    m_isTapeFull(isTapeFull) {}
 
     void execute(MigrationReportPacker& reportPacker) override;
   };
 
   class WorkerThread : public cta::threading::Thread {
     MigrationReportPacker& m_parent;
+
   public:
     explicit WorkerThread(MigrationReportPacker& parent);
 
@@ -249,12 +266,12 @@ private:
   /**
    * The mount object used to send reports
    */
-  cta::ArchiveMount *m_archiveMount;
+  cta::ArchiveMount* m_archiveMount;
 
   /**
    * The successful archive jobs to be reported when flushing
    */
-  std::queue<std::unique_ptr<cta::ArchiveJob> > m_successfulArchiveJobs;
+  std::queue<std::unique_ptr<cta::ArchiveJob>> m_successfulArchiveJobs;
 
   /**
    * The skipped files (or placeholders list)
@@ -262,7 +279,7 @@ private:
   std::queue<cta::catalogue::TapeItemWritten> m_skippedFiles;
 };
 
-}
-}
-}
-}
+}  // namespace daemon
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

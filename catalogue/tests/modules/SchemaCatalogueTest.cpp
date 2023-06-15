@@ -27,9 +27,7 @@
 
 namespace unitTests {
 
-cta_catalogue_SchemaTest::cta_catalogue_SchemaTest()
-  : m_dummyLog("dummy", "dummy") {
-}
+cta_catalogue_SchemaTest::cta_catalogue_SchemaTest() : m_dummyLog("dummy", "dummy") {}
 
 void cta_catalogue_SchemaTest::SetUp() {
   cta::log::LogContext dummyLc(m_dummyLog);
@@ -43,9 +41,9 @@ void cta_catalogue_SchemaTest::TearDown() {
 TEST_P(cta_catalogue_SchemaTest, getSchemaVersion) {
   const auto schemaDbVersion = m_catalogue->Schema()->getSchemaVersion();
   ASSERT_EQ(static_cast<uint64_t>(CTA_CATALOGUE_SCHEMA_VERSION_MAJOR),
-    schemaDbVersion.getSchemaVersion<cta::catalogue::SchemaVersion::MajorMinor>().first);
+            schemaDbVersion.getSchemaVersion<cta::catalogue::SchemaVersion::MajorMinor>().first);
   ASSERT_EQ(static_cast<uint64_t>(CTA_CATALOGUE_SCHEMA_VERSION_MINOR),
-    schemaDbVersion.getSchemaVersion<cta::catalogue::SchemaVersion::MajorMinor>().second);
+            schemaDbVersion.getSchemaVersion<cta::catalogue::SchemaVersion::MajorMinor>().second);
 }
 
 TEST_P(cta_catalogue_SchemaTest, ping) {

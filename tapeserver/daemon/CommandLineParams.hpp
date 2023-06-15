@@ -21,21 +21,23 @@
 #include <list>
 #include "common/log/Param.hpp"
 
-namespace cta { namespace daemon {
+namespace cta {
+namespace daemon {
 /// A class parsing the command line and turning it into a struct.
-struct CommandLineParams{
+struct CommandLineParams {
   /**
    * Translates the command line parameters into a struct
    * @param argc
    * @param argv
    */
-  CommandLineParams(int argc, char **argv);
-  bool foreground;                  ///< Prevents daemonisation
-  bool logToStdout;                 ///< Log to stdout instead of syslog. Foreground is required.
-  bool logToFile;                   ///< Log to file intead of syslog.
+  CommandLineParams(int argc, char** argv);
+  bool foreground;   ///< Prevents daemonisation
+  bool logToStdout;  ///< Log to stdout instead of syslog. Foreground is required.
+  bool logToFile;    ///< Log to file intead of syslog.
   std::string logFilePath;
-  std::string configFileLocation;   ///< Location of the configuration file. Defaults to /etc/cta/cta-taped.conf
-  bool helpRequested;               ///< Help requested: will print out help and exit.
-  std::list<cta::log::Param> toLogParams() const; ///< Convert the command line into set of parameters for logging.
+  std::string configFileLocation;  ///< Location of the configuration file. Defaults to /etc/cta/cta-taped.conf
+  bool helpRequested;              ///< Help requested: will print out help and exit.
+  std::list<cta::log::Param> toLogParams() const;  ///< Convert the command line into set of parameters for logging.
 };
-}}
+}  // namespace daemon
+}  // namespace cta

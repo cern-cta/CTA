@@ -35,41 +35,36 @@ namespace cta {
 namespace postgresscheddb {
 
 class Helpers {
- public:
+public:
   CTA_GENERATE_EXCEPTION_CLASS(NoTapeAvailableForRetrieve);
 
-  static std::string selectBestVid4Retrieve(
-                const std::set<std::string>  &candidateVids,
-                cta::catalogue::Catalogue    &catalogue,
-                postgresscheddb::Transaction &txn,
-                bool                          isRepack);
+  static std::string selectBestVid4Retrieve(const std::set<std::string>& candidateVids,
+                                            cta::catalogue::Catalogue& catalogue,
+                                            postgresscheddb::Transaction& txn,
+                                            bool isRepack);
 
-  static std::list<SchedulerDatabase::RetrieveQueueStatistics> getRetrieveQueueStatistics(
-                const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria,
-                const std::set<std::string>                                  &vidsToConsider,
-                postgresscheddb::Transaction                                 &txn);
+  static std::list<SchedulerDatabase::RetrieveQueueStatistics>
+    getRetrieveQueueStatistics(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
+                               const std::set<std::string>& vidsToConsider,
+                               postgresscheddb::Transaction& txn);
 
   /*
    * Opportunistic updating of the queue stats cache as we access it. This implies the
    * tape is not disabled (full status not fetched).
    */
-  static void updateRetrieveQueueStatisticsCache(
-                const std::string & vid,
-                uint64_t files,
-                uint64_t bytes,
-                uint64_t priority);
+  static void
+    updateRetrieveQueueStatisticsCache(const std::string& vid, uint64_t files, uint64_t bytes, uint64_t priority);
 
-  static void flushRetrieveQueueStatisticsCacheForVid(const std::string & vid);
+  static void flushRetrieveQueueStatisticsCacheForVid(const std::string& vid);
 
- private:
-
+private:
   /** A struct holding together tape statistics and an update time */
   struct TapeStatusWithTime {
     common::dataStructures::Tape tapeStatus;
     time_t updateTime;
   };
 
-   /** Cache for tape statistics */
+  /** Cache for tape statistics */
   static std::map<std::string, TapeStatusWithTime> g_tapeStatuses;
 
   /** Lock for the retrieve queues stats */
@@ -93,11 +88,10 @@ class Helpers {
   static const time_t c_tapeCacheMaxAge = 600;
   static const time_t c_retrieveQueueCacheMaxAge = 10;
 
-  static void logUpdateCacheIfNeeded(
-                const bool                             entryCreation,
-                const RetrieveQueueStatisticsWithTime &tapeStatistic,
-                const std::string                     &message = "");
+  static void logUpdateCacheIfNeeded(const bool entryCreation,
+                                     const RetrieveQueueStatisticsWithTime& tapeStatistic,
+                                     const std::string& message = "");
 };
 
-} // namespace postgresscheddb
-} // namespace cta
+}  // namespace postgresscheddb
+}  // namespace cta

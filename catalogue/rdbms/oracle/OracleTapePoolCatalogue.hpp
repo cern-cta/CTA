@@ -29,12 +29,11 @@ class RdbmsCatalogue;
 
 class OracleTapePoolCatalogue : public RdbmsTapePoolCatalogue {
 public:
-  OracleTapePoolCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
-    RdbmsCatalogue* rdbmsCatalogue);
+  OracleTapePoolCatalogue(log::Logger& log, std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue);
   ~OracleTapePoolCatalogue() override = default;
 
 private:
-  uint64_t getNextTapePoolId(rdbms::Conn &conn) const override;
+  uint64_t getNextTapePoolId(rdbms::Conn& conn) const override;
 };  // class PostgresMediaTypeCatalogue
 
 }  // namespace catalogue

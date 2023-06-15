@@ -52,18 +52,17 @@ namespace cliTool {
 class ChangeStorageClassError : public std::runtime_error {
 public:
   using runtime_error::runtime_error;
-}; // class ChangeStorageClassError
+};  // class ChangeStorageClassError
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-ChangeStorageClass::ChangeStorageClass(
-  std::istream &inStream,
-  std::ostream &outStream,
-  std::ostream &errStream,
-  cta::log::StdoutLogger &log):
-  CmdLineTool(inStream, outStream, errStream),
-  m_log(log) {}
+ChangeStorageClass::ChangeStorageClass(std::istream& inStream,
+                                       std::ostream& outStream,
+                                       std::ostream& errStream,
+                                       cta::log::StdoutLogger& log) :
+CmdLineTool(inStream, outStream, errStream),
+m_log(log) {}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -73,7 +72,7 @@ ChangeStorageClass::~ChangeStorageClass() = default;
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-int ChangeStorageClass::exceptionThrowingMain(const int argc, char *const *const argv) {
+int ChangeStorageClass::exceptionThrowingMain(const int argc, char* const* const argv) {
   CmdLineArgs cmdLineArgs(argc, argv, StandaloneCliTool::CTA_CHANGE_STORAGE_CLASS);
 
   auto serviceProvider = setXrootdConfiguration(cmdLineArgs.m_debug);
@@ -83,19 +82,20 @@ int ChangeStorageClass::exceptionThrowingMain(const int argc, char *const *const
 
   storageClassesExist();
 
-  for(const auto& [archiveFileId, storageClass]: m_archiveFileIdsAndStorageClasses) {
+  for (const auto& [archiveFileId, storageClass] : m_archiveFileIdsAndStorageClasses) {
     updateStorageClassInCatalogue(archiveFileId, storageClass);
   }
   return 0;
 }
 
 std::unique_ptr<XrdSsiPbServiceType> ChangeStorageClass::setXrootdConfiguration(bool debug) const {
-  const std::string StreamBufferSize      = "1024";                  //!< Buffer size for Data/Stream Responses
-  const std::string DefaultRequestTimeout = "10";                    //!< Default Request Timeout. Can be overridden by
-                                                                      //!< XRD_REQUESTTIMEOUT environment variable.
+  const std::string StreamBufferSize = "1024";     //!< Buffer size for Data/Stream Responses
+  const std::string DefaultRequestTimeout = "10";  //!< Default Request Timeout. Can be overridden by
+                                                   //!< XRD_REQUESTTIMEOUT environment variable.
   if (debug) {
     m_log.setLogMask("DEBUG");
-  } else {
+  }
+  else {
     m_log.setLogMask("INFO");
   }
 
@@ -103,14 +103,14 @@ std::unique_ptr<XrdSsiPbServiceType> ChangeStorageClass::setXrootdConfiguration(
   const std::string cli_config_file = "/etc/cta/cta-cli.conf";
   XrdSsiPb::Config cliConfig(cli_config_file, "cta");
   cliConfig.set("resource", "/ctafrontend");
-  cliConfig.set("response_bufsize", StreamBufferSize);         // default value = 1024 bytes
-  cliConfig.set("request_timeout", DefaultRequestTimeout);     // default value = 10s
+  cliConfig.set("response_bufsize", StreamBufferSize);      // default value = 1024 bytes
+  cliConfig.set("request_timeout", DefaultRequestTimeout);  // default value = 10s
 
   // Allow environment variables to override config file
   cliConfig.getEnv("request_timeout", "XRD_REQUESTTIMEOUT");
 
   // If XRDDEBUG=1, switch on all logging
-  if(getenv("XRDDEBUG")) {
+  if (getenv("XRDDEBUG")) {
     cliConfig.set("log", "all");
   }
   // If fine-grained control over log level is required, use XrdSsiPbLogLevel
@@ -118,31 +118,36 @@ std::unique_ptr<XrdSsiPbServiceType> ChangeStorageClass::setXrootdConfiguration(
 
   // If the server is down, we want an immediate failure. Set client retry to a single attempt.
   XrdSsiProviderClient->SetTimeout(XrdSsiProvider::connect_N, 1);
-  
+
   return std::make_unique<XrdSsiPbServiceType>(cliConfig);
 }
 
 //------------------------------------------------------------------------------
 // handleArguments
 //------------------------------------------------------------------------------
-void ChangeStorageClass::handleArguments(const CmdLineArgs &cmdLineArgs) {
+void ChangeStorageClass::handleArguments(const CmdLineArgs& cmdLineArgs) {
   if (cmdLineArgs.m_help) {
     cmdLineArgs.printUsage(std::cout);
     throw exception::UserError("");
   }
 
-  if(cmdLineArgs.m_json) {
+  if (cmdLineArgs.m_json) {
     JsonFileData jsonFilaData(cmdLineArgs.m_json.value());
-    for(const auto &jsonFileDataObject : jsonFilaData.m_jsonArgumentsCollection) {
-      if(!validateUserInputFileMetadata(jsonFileDataObject.archiveFileId, jsonFileDataObject.fid, jsonFileDataObject.instance)) {
-        throw exception::UserError("Archive id does not match with disk file id or disk instance, are you sure the correct file metadata was provided?");
+    for (const auto& jsonFileDataObject : jsonFilaData.m_jsonArgumentsCollection) {
+      if (!validateUserInputFileMetadata(jsonFileDataObject.archiveFileId, jsonFileDataObject.fid,
+                                         jsonFileDataObject.instance)) {
+        throw exception::UserError("Archive id does not match with disk file id or disk instance, are you sure the "
+                                   "correct file metadata was provided?");
       }
-      m_archiveFileIdsAndStorageClasses.push_back(std::make_pair(jsonFileDataObject.archiveFileId, jsonFileDataObject.storageClass));
+      m_archiveFileIdsAndStorageClasses.push_back(
+        std::make_pair(jsonFileDataObject.archiveFileId, jsonFileDataObject.storageClass));
     }
-  } else {
+  }
+  else {
     if (!cmdLineArgs.m_storageClassName) {
       cmdLineArgs.printUsage(std::cout);
-      throw exception::UserError("Missing required option when not providing a path to an input file: storage.class.name");
+      throw exception::UserError(
+        "Missing required option when not providing a path to an input file: storage.class.name");
     }
 
     if ((!cmdLineArgs.m_archiveFileId || !cmdLineArgs.m_fids || !cmdLineArgs.m_diskInstance)) {
@@ -152,20 +157,22 @@ void ChangeStorageClass::handleArguments(const CmdLineArgs &cmdLineArgs) {
 
     m_storageClassName = cmdLineArgs.m_storageClassName.value();
 
-    m_archiveFileIdsAndStorageClasses.push_back(std::make_pair(cmdLineArgs.m_archiveFileId.value(), cmdLineArgs.m_storageClassName.value()));
-    if(!validateUserInputFileMetadata(cmdLineArgs.m_archiveFileId.value(), cmdLineArgs.m_fids.value().front(), cmdLineArgs.m_diskInstance.value())) {
-      throw exception::UserError("Archive id does not match with disk file id or disk instance, are you sure the correct file metadata was provided?");
+    m_archiveFileIdsAndStorageClasses.push_back(
+      std::make_pair(cmdLineArgs.m_archiveFileId.value(), cmdLineArgs.m_storageClassName.value()));
+    if (!validateUserInputFileMetadata(cmdLineArgs.m_archiveFileId.value(), cmdLineArgs.m_fids.value().front(),
+                                       cmdLineArgs.m_diskInstance.value())) {
+      throw exception::UserError("Archive id does not match with disk file id or disk instance, are you sure the "
+                                 "correct file metadata was provided?");
     }
   }
-
 }
 
 void ChangeStorageClass::storageClassesExist() const {
   std::unordered_set<std::string> storageClasses;
-  for(const auto& [archiveFileId, storageClass] : m_archiveFileIdsAndStorageClasses) {
+  for (const auto& [archiveFileId, storageClass] : m_archiveFileIdsAndStorageClasses) {
     storageClasses.insert(storageClass);
   }
-  for(const auto& storageClass : storageClasses) {
+  for (const auto& storageClass : storageClasses) {
     storageClassExists(storageClass);
   }
 }
@@ -193,7 +200,7 @@ void ChangeStorageClass::storageClassExists(const std::string& storageClass) con
   auto stream_future = m_serviceProviderPtr->SendAsync(request, response);
 
   // Handle responses
-  switch(response.type()) {
+  switch (response.type()) {
     using namespace cta::xrd;
     using namespace cta::admin;
     case Response::RSP_SUCCESS:
@@ -202,22 +209,26 @@ void ChangeStorageClass::storageClassExists(const std::string& storageClass) con
       // Allow stream processing to commence
       isHeaderSent = true;
       break;
-    case Response::RSP_ERR_PROTOBUF:                     throw XrdSsiPb::PbException(response.message_txt());
-    case Response::RSP_ERR_USER:                         throw exception::UserError(response.message_txt());
-    case Response::RSP_ERR_CTA:                          throw std::runtime_error(response.message_txt());
-    default:                                             throw XrdSsiPb::PbException("Invalid response type.");
+    case Response::RSP_ERR_PROTOBUF:
+      throw XrdSsiPb::PbException(response.message_txt());
+    case Response::RSP_ERR_USER:
+      throw exception::UserError(response.message_txt());
+    case Response::RSP_ERR_CTA:
+      throw std::runtime_error(response.message_txt());
+    default:
+      throw XrdSsiPb::PbException("Invalid response type.");
   }
 
   // wait until the data stream has been processed before exiting
   stream_future.wait();
 
-  for(const auto &storageClass : g_storageClasses) {
+  for (const auto& storageClass : g_storageClasses) {
     std::list<cta::log::Param> params;
     params.push_back(cta::log::Param("storageClass", storageClass));
     m_log(cta::log::INFO, "Storage class found", params);
   }
 
-  if (g_storageClasses.empty()){
+  if (g_storageClasses.empty()) {
     throw(exception::UserError("The storage class " + storageClass + " has not been defined."));
   }
 }
@@ -225,7 +236,8 @@ void ChangeStorageClass::storageClassExists(const std::string& storageClass) con
 //------------------------------------------------------------------------------
 // updateCatalogue
 //------------------------------------------------------------------------------
-void ChangeStorageClass::updateStorageClassInCatalogue(const std::string& archiveFileId, const std::string& storageClass) const {
+void ChangeStorageClass::updateStorageClassInCatalogue(const std::string& archiveFileId,
+                                                       const std::string& storageClass) const {
   cta::xrd::Request request;
 
   const auto admincmd = request.mutable_admincmd();
@@ -252,7 +264,8 @@ void ChangeStorageClass::updateStorageClassInCatalogue(const std::string& archiv
   // Validate the Protocol Buffer
   try {
     cta::admin::validateCmd(*admincmd);
-  } catch(std::runtime_error &ex) {
+  }
+  catch (std::runtime_error& ex) {
     throw std::runtime_error("Error: Protocol Buffer validation");
   }
 
@@ -261,24 +274,31 @@ void ChangeStorageClass::updateStorageClassInCatalogue(const std::string& archiv
   m_serviceProviderPtr->Send(request, response);
 
   // Handle responses
-  switch(response.type()) {
+  switch (response.type()) {
     using namespace cta::xrd;
     using namespace cta::admin;
     case Response::RSP_SUCCESS:
       // Print message text
       std::cout << response.message_txt();
       break;
-    case Response::RSP_ERR_PROTOBUF:                     throw XrdSsiPb::PbException(response.message_txt());
-    case Response::RSP_ERR_USER:                         throw exception::UserError(response.message_txt());
-    case Response::RSP_ERR_CTA:                          throw std::runtime_error(response.message_txt());
-    default:                                             throw XrdSsiPb::PbException("Invalid response type.");
+    case Response::RSP_ERR_PROTOBUF:
+      throw XrdSsiPb::PbException(response.message_txt());
+    case Response::RSP_ERR_USER:
+      throw exception::UserError(response.message_txt());
+    case Response::RSP_ERR_CTA:
+      throw std::runtime_error(response.message_txt());
+    default:
+      throw XrdSsiPb::PbException("Invalid response type.");
   }
 }
 
-bool ChangeStorageClass::validateUserInputFileMetadata(const std::string& archiveFileId, const std::string& operatorProvidedFid, const std::string& operatorProvidedInstance) {
-  const auto [diskDiskInstance, diskFileId] = CatalogueFetch::getInstanceAndFid(archiveFileId, m_serviceProviderPtr, m_log);
+bool ChangeStorageClass::validateUserInputFileMetadata(const std::string& archiveFileId,
+                                                       const std::string& operatorProvidedFid,
+                                                       const std::string& operatorProvidedInstance) {
+  const auto [diskDiskInstance, diskFileId] =
+    CatalogueFetch::getInstanceAndFid(archiveFileId, m_serviceProviderPtr, m_log);
   return ((operatorProvidedInstance == diskDiskInstance) && (operatorProvidedFid == diskFileId));
 }
 
-} // namespace admin
-} // namespace cta
+}  // namespace cliTool
+}  // namespace cta

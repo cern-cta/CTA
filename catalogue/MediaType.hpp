@@ -28,16 +28,13 @@ namespace catalogue {
  * Structure describing a tape media type.
  */
 struct MediaType {
-
   /**
    * Constructor.
    *
    * Sets the value of all integer member-variables to zero. Optional integer
    * member-variables are left as null.
    */
-  MediaType():
-    capacityInBytes(0) {
-  }
+  MediaType() : capacityInBytes(0) {}
 
   /**
    * The name of the media type.
@@ -84,7 +81,7 @@ struct MediaType {
    */
   std::string comment;
 
-}; // struct MediaType
+};  // struct MediaType
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

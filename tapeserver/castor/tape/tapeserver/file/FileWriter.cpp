@@ -30,16 +30,21 @@ namespace castor {
 namespace tape {
 namespace tapeFile {
 
-FileWriter::FileWriter(const std::unique_ptr<WriteSession>&  ws, const cta::ArchiveJob &fileToMigrate,
-  const size_t blockSize)
-  : m_currentBlockSize(blockSize), m_session(ws), m_fileToMigrate(fileToMigrate),
-    m_open(false), m_nonzeroFileWritten(false), m_numberOfBlocks(0) {
+FileWriter::FileWriter(const std::unique_ptr<WriteSession>& ws,
+                       const cta::ArchiveJob& fileToMigrate,
+                       const size_t blockSize) :
+m_currentBlockSize(blockSize),
+m_session(ws),
+m_fileToMigrate(fileToMigrate),
+m_open(false),
+m_nonzeroFileWritten(false),
+m_numberOfBlocks(0) {
   // Check the sanity of the parameters. fSeq should be >= 1
   if (0 == m_fileToMigrate.archiveFile.archiveFileID || m_fileToMigrate.tapeFile.fSeq < 1) {
     std::ostringstream err;
     err << "Unexpected fileId in FileWriter::FileWriter (expected != 0, got: "
-        << m_fileToMigrate.archiveFile.archiveFileID << ") or fSeq (expected >=1, got: "
-        << m_fileToMigrate.tapeFile.fSeq << ")";
+        << m_fileToMigrate.archiveFile.archiveFileID
+        << ") or fSeq (expected >=1, got: " << m_fileToMigrate.tapeFile.fSeq << ")";
     throw cta::exception::InvalidArgument(err.str());
   }
   if (m_session->isCorrupted()) {
@@ -56,12 +61,13 @@ FileWriter::FileWriter(const std::unique_ptr<WriteSession>&  ws, const cta::Arch
   std::transform(fileId.begin(), fileId.end(), fileId.begin(), ::toupper);
   hdr1.fill(fileId, m_session->m_vid, m_fileToMigrate.tapeFile.fSeq);
   hdr2.fill(m_currentBlockSize, m_session->m_compressionEnabled);
-  uhl1.fill(m_fileToMigrate.tapeFile.fSeq, m_currentBlockSize, m_session->getSiteName(),
-      m_session->getHostName(), m_session->m_drive.getDeviceInfo());
+  uhl1.fill(m_fileToMigrate.tapeFile.fSeq, m_currentBlockSize, m_session->getSiteName(), m_session->getHostName(),
+            m_session->m_drive.getDeviceInfo());
   /* Before writing anything, we record the blockId of the file */
   if (1 == m_fileToMigrate.tapeFile.fSeq) {
     m_blockId = 0;
-  } else {
+  }
+  else {
     m_blockId = getPosition();
   }
   m_session->m_drive.writeBlock(&hdr1, sizeof(hdr1));
@@ -72,11 +78,11 @@ FileWriter::FileWriter(const std::unique_ptr<WriteSession>&  ws, const cta::Arch
   m_LBPMode = m_session->getLBPMode();
 }
 
-uint32_t FileWriter::getPosition()  {
+uint32_t FileWriter::getPosition() {
   return m_session->m_drive.getPositionInfo().currentPosition;
 }
 
-uint32_t FileWriter::getBlockId()  {
+uint32_t FileWriter::getBlockId() {
   return m_blockId;
 }
 
@@ -84,8 +90,7 @@ size_t FileWriter::getBlockSize() {
   return m_currentBlockSize;
 }
 
-
-void FileWriter::write(const void *data, const size_t size)  {
+void FileWriter::write(const void* data, const size_t size) {
   m_session->m_drive.writeBlock(data, size);
   if (size > 0) {
     m_nonzeroFileWritten = true;
@@ -93,7 +98,7 @@ void FileWriter::write(const void *data, const size_t size)  {
   }
 }
 
-void FileWriter::close()  {
+void FileWriter::close() {
   if (!m_open) {
     m_session->setCorrupted();
     throw FileClosedTwice();
@@ -113,8 +118,8 @@ void FileWriter::close()  {
   std::transform(fileId.begin(), fileId.end(), fileId.begin(), ::toupper);
   eof1.fill(fileId, m_session->m_vid, m_fileToMigrate.tapeFile.fSeq, m_numberOfBlocks);
   eof2.fill(m_currentBlockSize, m_session->m_compressionEnabled);
-  utl1.fill(m_fileToMigrate.tapeFile.fSeq, m_currentBlockSize, m_session->getSiteName(),
-      m_session->getHostName(), m_session->m_drive.getDeviceInfo());
+  utl1.fill(m_fileToMigrate.tapeFile.fSeq, m_currentBlockSize, m_session->getSiteName(), m_session->getHostName(),
+            m_session->m_drive.getDeviceInfo());
   m_session->m_drive.writeBlock(&eof1, sizeof(eof1));
   m_session->m_drive.writeBlock(&eof2, sizeof(eof2));
   m_session->m_drive.writeBlock(&utl1, sizeof(utl1));

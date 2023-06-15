@@ -17,9 +17,14 @@
 
 #include "JSONObject.hpp"
 
-namespace cta { namespace utils { namespace json { namespace object { 
+namespace cta {
+namespace utils {
+namespace json {
+namespace object {
 
-JSONObject::~JSONObject() {
-}
+JSONObject::~JSONObject() {}
 
-}}}}
+}  // namespace object
+}  // namespace json
+}  // namespace utils
+}  // namespace cta

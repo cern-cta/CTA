@@ -27,14 +27,13 @@ namespace catalogue {
  * Structure describing the event of having written a file to tape.
  */
 struct TapeItemWritten {
-
   /**
    * Constructor.
    *
    * Sets the value of all integer member-variables to zero.
    */
   TapeItemWritten();
-  
+
   /**
    * Virtual trivial destructor to make the object polymorphic.
    */
@@ -45,7 +44,7 @@ struct TapeItemWritten {
    *
    * @param rhs The right hand side of the operator.
    */
-  bool operator==(const TapeItemWritten &rhs) const;
+  bool operator==(const TapeItemWritten& rhs) const;
 
   /**
    * Less than operator.
@@ -60,24 +59,24 @@ struct TapeItemWritten {
    *
    * @param rhs The right hand side of the operator.
    */
-  bool operator<(const TapeItemWritten &rhs) const;
+  bool operator<(const TapeItemWritten& rhs) const;
 
   /**
    * The volume identifier of the tape on which the file has been written.
    */
   std::string vid;
-  
+
   /**
    * The position of the item on tape in the form of its file sequence number.
    */
   uint64_t fSeq;
-  
+
   /**
    * The name of the tape drive that wrote the item.
    */
   std::string tapeDrive;
-  
-}; // struct TapeFileWritten
+
+};  // struct TapeFileWritten
 
 /**
  * Output stream operator for an TapeItemWritten object.
@@ -88,7 +87,7 @@ struct TapeItemWritten {
  * @param os The output stream.
  * @param obj The object.
  */
-std::ostream &operator<<(std::ostream &os, const TapeItemWritten &obj);
+std::ostream& operator<<(std::ostream& os, const TapeItemWritten& obj);
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

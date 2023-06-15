@@ -43,8 +43,9 @@ public:
     * @param volInfo: volume name of the tape we would like to read from
     * @param useLbp: castor.conf option to use or not to use LBP in tapeserverd
     */
-  EnstoreReadSession(tapeserver::drive::DriveInterface &drive, const tapeserver::daemon::VolumeInfo &volInfo,
-    const bool useLbp);
+  EnstoreReadSession(tapeserver::drive::DriveInterface& drive,
+                     const tapeserver::daemon::VolumeInfo& volInfo,
+                     const bool useLbp);
 
   ~EnstoreReadSession() override = default;
 };

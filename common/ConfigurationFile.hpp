@@ -23,11 +23,13 @@
 namespace cta {
 struct ConfigurationFile {
 public:
-  ConfigurationFile(const std::string & path);
+  ConfigurationFile(const std::string& path);
+
   struct value_t {
     std::string value;
     uint32_t line;
   };
-  std::map<std::string, std::map<std::string, value_t> > entries;
+
+  std::map<std::string, std::map<std::string, value_t>> entries;
 };
-} // namespace cta
+}  // namespace cta

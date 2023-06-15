@@ -43,8 +43,9 @@ public:
     * @param vid: volume name of the tape we would like to read from
     * @param useLbp: castor.conf option to use or not to use LBP in tapeserverd
     */
-  CtaReadSession(tapeserver::drive::DriveInterface &drive, const tapeserver::daemon::VolumeInfo &volInfo,
-    const bool useLbp);
+  CtaReadSession(tapeserver::drive::DriveInterface& drive,
+                 const tapeserver::daemon::VolumeInfo& volInfo,
+                 const bool useLbp);
 
   ~CtaReadSession() override = default;
 };

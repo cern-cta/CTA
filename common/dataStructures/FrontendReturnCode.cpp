@@ -22,7 +22,7 @@ namespace common {
 namespace dataStructures {
 
 std::string toString(FrontendReturnCode rc) {
-  switch(rc) {
+  switch (rc) {
     case FrontendReturnCode::ok:
       return "ok";
     case FrontendReturnCode::userErrorNoRetry:
@@ -38,6 +38,6 @@ std::string toString(FrontendReturnCode rc) {
   }
 }
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

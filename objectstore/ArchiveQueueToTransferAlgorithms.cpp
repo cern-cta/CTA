@@ -18,35 +18,47 @@
 #include "common/Timer.hpp"
 #include "objectstore/ArchiveQueueAlgorithms.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta {
+namespace objectstore {
 
 // ArchiveQueue full specialisations for ContainerTraits.
 
 template<>
-const std::string ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::c_containerTypeName = "ArchiveQueueToTransferForUser";
+const std::string ContainerTraits<ArchiveQueue, ArchiveQueueToTransferForUser>::c_containerTypeName =
+  "ArchiveQueueToTransferForUser";
 
 template<>
-const std::string ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::c_identifierType = "tapepool";
+const std::string ContainerTraits<ArchiveQueue, ArchiveQueueToTransferForUser>::c_identifierType = "tapepool";
 
 template<>
-auto ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::
-getContainerSummary(Container& cont) -> ContainerSummary {
+auto ContainerTraits<ArchiveQueue, ArchiveQueueToTransferForUser>::getContainerSummary(Container& cont)
+  -> ContainerSummary {
   ContainerSummary ret;
   ret.JobsSummary::operator=(cont.getJobsSummary());
   return ret;
 }
 
 template<>
-auto ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::
-getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, ElementsToSkipSet &elemtsToSkip,
-  log::LogContext& lc) -> PoppedElementsBatch
-{
+auto ContainerTraits<ArchiveQueue, ArchiveQueueToTransferForUser>::getPoppingElementsCandidates(
+  Container& cont,
+  PopCriteria& unfulfilledCriteria,
+  ElementsToSkipSet& elemtsToSkip,
+  log::LogContext& lc) -> PoppedElementsBatch {
   PoppedElementsBatch ret;
-  auto candidateJobsFromQueue=cont.getCandidateList(unfulfilledCriteria.bytes, unfulfilledCriteria.files, elemtsToSkip);
-  for (auto &cjfq: candidateJobsFromQueue.candidates) {
-    ret.elements.emplace_back(PoppedElement{std::make_unique<ArchiveRequest>(cjfq.address, cont.m_objectStore), cjfq.copyNb, cjfq.size,
-    common::dataStructures::ArchiveFile(), "", "", "", "", SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired,
-    ArchiveRequest::RepackInfo(), {}});
+  auto candidateJobsFromQueue =
+    cont.getCandidateList(unfulfilledCriteria.bytes, unfulfilledCriteria.files, elemtsToSkip);
+  for (auto& cjfq : candidateJobsFromQueue.candidates) {
+    ret.elements.emplace_back(PoppedElement {std::make_unique<ArchiveRequest>(cjfq.address, cont.m_objectStore),
+                                             cjfq.copyNb,
+                                             cjfq.size,
+                                             common::dataStructures::ArchiveFile(),
+                                             "",
+                                             "",
+                                             "",
+                                             "",
+                                             SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired,
+                                             ArchiveRequest::RepackInfo(),
+                                             {}});
     ret.summary.bytes += cjfq.size;
     ret.summary.files++;
   }
@@ -54,8 +66,8 @@ getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, 
 }
 
 template<>
-auto ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::
-getElementSummary(const PoppedElement& poppedElement) -> PoppedElementsSummary {
+auto ContainerTraits<ArchiveQueue, ArchiveQueueToTransferForUser>::getElementSummary(const PoppedElement& poppedElement)
+  -> PoppedElementsSummary {
   PoppedElementsSummary ret;
   ret.bytes = poppedElement.bytes;
   ret.files = 1;
@@ -63,18 +75,18 @@ getElementSummary(const PoppedElement& poppedElement) -> PoppedElementsSummary {
 }
 
 template<>
-void ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::PoppedElementsBatch::
-addToLog(log::ScopedParamContainer &params) {
-  params.add("bytes", summary.bytes)
-        .add("files", summary.files);
+void ContainerTraits<ArchiveQueue, ArchiveQueueToTransferForUser>::PoppedElementsBatch::addToLog(
+  log::ScopedParamContainer& params) {
+  params.add("bytes", summary.bytes).add("files", summary.files);
 }
 
 template<>
-auto ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForRepack>::
-getContainerSummary(Container& cont) -> ContainerSummary {
+auto ContainerTraits<ArchiveQueue, ArchiveQueueToTransferForRepack>::getContainerSummary(Container& cont)
+  -> ContainerSummary {
   ContainerSummary ret;
   ret.JobsSummary::operator=(cont.getJobsSummary());
   return ret;
 }
 
-}} // namespace cta::objectstore
+}  // namespace objectstore
+}  // namespace cta

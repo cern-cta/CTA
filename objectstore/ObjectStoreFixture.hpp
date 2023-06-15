@@ -22,9 +22,9 @@
 
 namespace unitTests {
 
-  class ObjectStore : public ::testing::Test {
-  protected:
-    virtual void SetUp() override;
-  };
+class ObjectStore : public ::testing::Test {
+protected:
+  virtual void SetUp() override;
+};
 
-}
+}  // namespace unitTests

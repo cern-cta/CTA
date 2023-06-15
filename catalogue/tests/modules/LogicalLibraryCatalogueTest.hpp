@@ -32,7 +32,7 @@
 
 namespace unitTests {
 
-class cta_catalogue_LogicalLibraryTest : public ::testing::TestWithParam<cta::catalogue::CatalogueFactory **> {
+class cta_catalogue_LogicalLibraryTest : public ::testing::TestWithParam<cta::catalogue::CatalogueFactory**> {
 public:
   cta_catalogue_LogicalLibraryTest();
 
@@ -49,8 +49,8 @@ protected:
   const cta::catalogue::MediaType m_mediaType;
   const cta::catalogue::CreateTapeAttributes m_tape1;
 
-  std::map<std::string, cta::common::dataStructures::LogicalLibrary> logicalLibraryListToMap(
-    const std::list<cta::common::dataStructures::LogicalLibrary> &listOfLibs) const;
+  std::map<std::string, cta::common::dataStructures::LogicalLibrary>
+    logicalLibraryListToMap(const std::list<cta::common::dataStructures::LogicalLibrary>& listOfLibs) const;
 };
 
 }  // namespace unitTests

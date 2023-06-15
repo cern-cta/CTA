@@ -39,12 +39,12 @@ namespace postgresscheddb {
  * The purpose of this class is to help IDEs by isolating the "non-compilable"
  * issues into a small cpp file.
  */
-struct PostgresSchedulerSchema: public SchedulerSchema {
+struct PostgresSchedulerSchema : public SchedulerSchema {
   /**
    * Constructor.
    */
   PostgresSchedulerSchema();
 };
 
-} // namespace postgresscheddb
-} // namespace cta
+}  // namespace postgresscheddb
+}  // namespace cta

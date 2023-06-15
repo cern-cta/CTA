@@ -35,24 +35,29 @@
 #include <iostream>
 #include <stdexcept>
 
-int main(int argc, char ** argv) {
+int main(int argc, char** argv) {
   try {
     cta::log::StdoutLogger logger(cta::utils::getShortHostname(), "cta-objectstore-create-missing-repack-index");
     cta::log::LogContext lc(logger);
     std::unique_ptr<cta::objectstore::Backend> be;
     if (2 == argc) {
       be.reset(cta::objectstore::BackendFactory::createBackend(argv[1], logger).release());
-    } else if (1 == argc) {
+    }
+    else if (1 == argc) {
       cta::common::Configuration m_ctaConf("/etc/cta/cta-objectstore-tools.conf");
-      be = std::move(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr), logger));
-    } else {
+      be = std::move(cta::objectstore::BackendFactory::createBackend(
+        m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr), logger));
+    }
+    else {
       throw std::runtime_error("Wrong number of arguments: expected 0 or 1: [objectstoreURL]");
     }
     // If the backend is a VFS, make sure we don't delete it on exit.
     // If not, nevermind.
     try {
-      dynamic_cast<cta::objectstore::BackendVFS &>(*be).noDeleteOnExit();
-    } catch (std::bad_cast &){}
+      dynamic_cast<cta::objectstore::BackendVFS&>(*be).noDeleteOnExit();
+    }
+    catch (std::bad_cast&) {
+    }
     std::cout << "Object store path: " << be->getParams()->toURL() << std::endl;
     // Open the root entry RW
     std::cout << "Creating AgentReference for the creation of the repack index" << std::endl;
@@ -73,18 +78,19 @@ int main(int argc, char ** argv) {
         std::cout << "Trying to insert repack index" << std::endl;
         std::string repackIndexAddress = re.addOrGetRepackIndexAndCommit(agr);
         std::cout << "Repack index created. Address = " << repackIndexAddress << std::endl;
-        
-      } catch (const cta::objectstore::RootEntry::DriveRegisterNotEmpty &ex ) {
+      }
+      catch (const cta::objectstore::RootEntry::DriveRegisterNotEmpty& ex) {
         std::cout << "Could not remove the already existing repack index, errorMsg = " << ex.getMessageValue();
         return 1;
-      } catch(const cta::exception::Exception &e){
+      }
+      catch (const cta::exception::Exception& e) {
         std::cout << "Unable to create repack index: " << e.getMessageValue() << std::endl;
         return 1;
       }
     }
-  } catch (std::exception & e) {
-    std::cerr << "Failed to create repack index: "
-        << std::endl << e.what() << std::endl;
+  }
+  catch (std::exception& e) {
+    std::cerr << "Failed to create repack index: " << std::endl << e.what() << std::endl;
     return 1;
   }
 }

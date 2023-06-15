@@ -32,19 +32,26 @@ namespace daemon {
 //------------------------------------------------------------------------------
 //Constructor
 //------------------------------------------------------------------------------
-MigrationTaskInjector::MigrationTaskInjector(MigrationMemoryManager& mm, DiskReadThreadPool& diskReader,
+MigrationTaskInjector::MigrationTaskInjector(MigrationMemoryManager& mm,
+                                             DiskReadThreadPool& diskReader,
                                              TapeSingleThreadInterface<TapeWriteTask>& tapeWriter,
-                                             cta::ArchiveMount& archiveMount, uint64_t maxFiles,
-                                             uint64_t byteSizeThreshold, const cta::log::LogContext& lc) :
+                                             cta::ArchiveMount& archiveMount,
+                                             uint64_t maxFiles,
+                                             uint64_t byteSizeThreshold,
+                                             const cta::log::LogContext& lc) :
 m_thread(*this),
-m_memManager(mm), m_tapeWriter(tapeWriter), m_diskReader(diskReader), m_archiveMount(archiveMount), m_lc(lc),
-m_maxFiles(maxFiles), m_maxBytes(byteSizeThreshold) {}
+m_memManager(mm),
+m_tapeWriter(tapeWriter),
+m_diskReader(diskReader),
+m_archiveMount(archiveMount),
+m_lc(lc),
+m_maxFiles(maxFiles),
+m_maxBytes(byteSizeThreshold) {}
 
 //------------------------------------------------------------------------------
 //injectBulkMigrations
 //------------------------------------------------------------------------------
 void MigrationTaskInjector::injectBulkMigrations(std::list<std::unique_ptr<cta::ArchiveJob>>& jobs) {
-
   const size_t blockCapacity = m_memManager.blockCapacity();
   for (auto& job : jobs) {
     const uint64_t fileSize = job->archiveFile.fileSize;
@@ -112,7 +119,8 @@ bool MigrationTaskInjector::synchronousInjection(bool& noFilesToMigrate) {
     //First popping of files, we multiply the number of popped files / bytes by 2 to avoid multiple mounts on Repack
     //(it is applied to ArchiveForUser and ArchiveForRepack batches)
     jobs = m_archiveMount.getNextJobBatch(2 * m_maxFiles, 2 * m_maxBytes, m_lc);
-  } catch (cta::exception::Exception& ex) {
+  }
+  catch (cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer scoped(m_lc);
     scoped.add("transactionId", m_archiveMount.getMountTransactionId())
       .add("byteSizeThreshold", m_maxBytes)
@@ -168,7 +176,9 @@ void MigrationTaskInjector::WorkerThread::run() {
       auto jobs = m_parent.m_archiveMount.getNextJobBatch(req.filesRequested, req.bytesRequested, m_parent.m_lc);
       uint64_t files = jobs.size();
       uint64_t bytes = 0;
-      for (auto& j : jobs) bytes += j->archiveFile.fileSize;
+      for (auto& j : jobs) {
+        bytes += j->archiveFile.fileSize;
+      }
       if (jobs.empty()) {
         if (req.lastCall) {
           m_parent.m_lc.log(cta::log::INFO, "No more file to migrate: triggering the end of session.");
@@ -181,7 +191,6 @@ void MigrationTaskInjector::WorkerThread::run() {
         }
       }
       else {
-
         // Inject the tasks
         m_parent.injectBulkMigrations(jobs);
         // Decide on continuation
@@ -200,13 +209,15 @@ void MigrationTaskInjector::WorkerThread::run() {
         }
       }
     }  //end of while(1)
-  } catch (const castor::tape::tapeserver::daemon::ErrorFlag&) {
+  }
+  catch (const castor::tape::tapeserver::daemon::ErrorFlag&) {
     //we end up there because a task screw up somewhere
     m_parent.m_lc.log(cta::log::INFO, "In MigrationTaskInjector::WorkerThread::run(): a task failed, "
                                       "indicating finish of run");
 
     m_parent.signalEndDataMovement();
-  } catch (const cta::exception::Exception& ex) {
+  }
+  catch (const cta::exception::Exception& ex) {
     //we end up there because we could not talk to the client
 
     cta::log::ScopedParamContainer container(m_parent.m_lc);
@@ -227,7 +238,9 @@ void MigrationTaskInjector::WorkerThread::run() {
   bool stillReading = true;
   while (stillReading) {
     Request req = m_parent.m_queue.pop();
-    if (req.end) stillReading = false;
+    if (req.end) {
+      stillReading = false;
+    }
     LogContext::ScopedParam sp(m_parent.m_lc, Param("lastCall", req.lastCall));
     m_parent.m_lc.log(cta::log::INFO, "In MigrationTaskInjector::WorkerThread::run(): popping extra request");
   }

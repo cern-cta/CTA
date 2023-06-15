@@ -26,59 +26,65 @@
 namespace cta {
 namespace catalogue {
 
-StorageClassCatalogueRetryWrapper::StorageClassCatalogueRetryWrapper(
-  const std::unique_ptr<Catalogue>& catalogue, log::Logger &log, const uint32_t maxTriesToConnect)
-  : m_catalogue(catalogue), m_log(log), m_maxTriesToConnect(maxTriesToConnect) {
+StorageClassCatalogueRetryWrapper::StorageClassCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
+                                                                     log::Logger& log,
+                                                                     const uint32_t maxTriesToConnect) :
+m_catalogue(catalogue),
+m_log(log),
+m_maxTriesToConnect(maxTriesToConnect) {}
+
+void StorageClassCatalogueRetryWrapper::createStorageClass(const common::dataStructures::SecurityIdentity& admin,
+                                                           const common::dataStructures::StorageClass& storageClass) {
+  return retryOnLostConnection(
+    m_log, [&] { return m_catalogue->StorageClass()->createStorageClass(admin, storageClass); }, m_maxTriesToConnect);
 }
 
-void StorageClassCatalogueRetryWrapper::createStorageClass(
-  const common::dataStructures::SecurityIdentity &admin,
-  const common::dataStructures::StorageClass &storageClass) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->StorageClass()->createStorageClass(admin, storageClass);},
-    m_maxTriesToConnect);
-}
-
-void StorageClassCatalogueRetryWrapper::deleteStorageClass(const std::string &storageClassName) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->StorageClass()->deleteStorageClass(storageClassName);},
-    m_maxTriesToConnect);
+void StorageClassCatalogueRetryWrapper::deleteStorageClass(const std::string& storageClassName) {
+  return retryOnLostConnection(
+    m_log, [&] { return m_catalogue->StorageClass()->deleteStorageClass(storageClassName); }, m_maxTriesToConnect);
 }
 
 std::list<common::dataStructures::StorageClass> StorageClassCatalogueRetryWrapper::getStorageClasses() const {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->StorageClass()->getStorageClasses();},
-    m_maxTriesToConnect);
+  return retryOnLostConnection(
+    m_log, [&] { return m_catalogue->StorageClass()->getStorageClasses(); }, m_maxTriesToConnect);
 }
 
-common::dataStructures::StorageClass StorageClassCatalogueRetryWrapper::getStorageClass(const std::string &name) const {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->StorageClass()->getStorageClass(name);},
-    m_maxTriesToConnect);
+common::dataStructures::StorageClass StorageClassCatalogueRetryWrapper::getStorageClass(const std::string& name) const {
+  return retryOnLostConnection(
+    m_log, [&] { return m_catalogue->StorageClass()->getStorageClass(name); }, m_maxTriesToConnect);
 }
 
 void StorageClassCatalogueRetryWrapper::modifyStorageClassNbCopies(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t nbCopies) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->StorageClass()->modifyStorageClassNbCopies(admin, name,
-    nbCopies);},
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& name,
+  const uint64_t nbCopies) {
+  return retryOnLostConnection(
+    m_log, [&] { return m_catalogue->StorageClass()->modifyStorageClassNbCopies(admin, name, nbCopies); },
     m_maxTriesToConnect);
 }
 
-void StorageClassCatalogueRetryWrapper::modifyStorageClassComment(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &comment) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->StorageClass()->modifyStorageClassComment(admin, name,
-    comment);},
+void StorageClassCatalogueRetryWrapper::modifyStorageClassComment(const common::dataStructures::SecurityIdentity& admin,
+                                                                  const std::string& name,
+                                                                  const std::string& comment) {
+  return retryOnLostConnection(
+    m_log, [&] { return m_catalogue->StorageClass()->modifyStorageClassComment(admin, name, comment); },
     m_maxTriesToConnect);
 }
 
-void StorageClassCatalogueRetryWrapper::modifyStorageClassVo(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &vo) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->StorageClass()->modifyStorageClassVo(admin, name, vo);},
+void StorageClassCatalogueRetryWrapper::modifyStorageClassVo(const common::dataStructures::SecurityIdentity& admin,
+                                                             const std::string& name,
+                                                             const std::string& vo) {
+  return retryOnLostConnection(
+    m_log, [&] { return m_catalogue->StorageClass()->modifyStorageClassVo(admin, name, vo); }, m_maxTriesToConnect);
+}
+
+void StorageClassCatalogueRetryWrapper::modifyStorageClassName(const common::dataStructures::SecurityIdentity& admin,
+                                                               const std::string& currentName,
+                                                               const std::string& newName) {
+  return retryOnLostConnection(
+    m_log, [&] { return m_catalogue->StorageClass()->modifyStorageClassName(admin, currentName, newName); },
     m_maxTriesToConnect);
 }
 
-void StorageClassCatalogueRetryWrapper::modifyStorageClassName(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &currentName, const std::string &newName) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->StorageClass()->modifyStorageClassName(admin, currentName,
-    newName);},
-    m_maxTriesToConnect);
-}
-
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

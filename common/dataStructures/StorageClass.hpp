@@ -35,7 +35,6 @@ namespace dataStructures {
  * file contains 
  */
 struct StorageClass {
-
   /**
    * Constructor that sets all integer member-variables to zero and all string
    * member-variables to the empty string.
@@ -59,7 +58,7 @@ struct StorageClass {
    * @return True if the specified StorageClass object is considered equal to
    * this one.
    */
-  bool operator==(const StorageClass &rhs) const;
+  bool operator==(const StorageClass& rhs) const;
 
   /**
    * Returns the logical negation of operator==().
@@ -68,7 +67,7 @@ struct StorageClass {
    * inequality operator.
    * @return The logical negation of operator==().
    */
-  bool operator!=(const StorageClass &rhs) const;
+  bool operator!=(const StorageClass& rhs) const;
 
   /**
    * The name of the storage class.
@@ -82,7 +81,7 @@ struct StorageClass {
    * The number of copies on tape.
    */
   uint64_t nbCopies;
-  
+
   /**
    * The virtual organization to which this storage class belongs
    */
@@ -103,10 +102,10 @@ struct StorageClass {
    */
   std::string comment;
 
-}; // struct StorageClass
+};  // struct StorageClass
 
-std::ostream &operator<<(std::ostream &os, const StorageClass &obj);
+std::ostream& operator<<(std::ostream& os, const StorageClass& obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

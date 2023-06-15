@@ -50,12 +50,14 @@ public:
    *
    * @param log Object representing the API of the CASTOR logging system.
    */
-  DataTransferSession(const std::string& hostname, cta::log::Logger& log,
+  DataTransferSession(const std::string& hostname,
+                      cta::log::Logger& log,
                       System::virtualWrapper& sysWrapper,
                       const cta::tape::daemon::TpconfigLine& driveConfig,
                       cta::mediachanger::MediaChangerFacade& mc,
                       cta::tape::daemon::TapedProxy& initialProcess,
-                      cta::server::ProcessCap& capUtils, const DataTransferConfig& dataTransferConfig,
+                      cta::server::ProcessCap& capUtils,
+                      const DataTransferConfig& dataTransferConfig,
                       cta::Scheduler& scheduler);
 
   /**
@@ -96,7 +98,6 @@ public:
   ~DataTransferSession() noexcept override;
 
 private:
-
   /**
    * Object representing the API of the CASTOR logging system.
    */
@@ -117,25 +118,25 @@ private:
   /** utility to find the drive on the system. This function logs
    * all errors and hence does not throw exceptions. It returns nullptr
    * in case of failure. */
-  castor::tape::tapeserver::drive::DriveInterface *findDrive(cta::log::LogContext& logContext, cta::TapeMount *mount);
+  castor::tape::tapeserver::drive::DriveInterface* findDrive(cta::log::LogContext& logContext, cta::TapeMount* mount);
 
   /**
    * Put drive down with reason with [cta-taped] prefix, update the desired state (which is also down).
    * If mount is passed, it will be marked as complete.
    * Log the error with drive and mount details
    */
-  void putDriveDown(const std::string &headerErrMsg, cta::TapeMount *mount, cta::log::LogContext &logContext);
+  void putDriveDown(const std::string& headerErrMsg, cta::TapeMount* mount, cta::log::LogContext& logContext);
 
   /** sub-part of execute for the read sessions */
-  EndOfSessionAction executeRead(cta::log::LogContext& logContext, cta::RetrieveMount *retrieveMount,
-                                 TapeSessionReporter& reporter);
+  EndOfSessionAction
+    executeRead(cta::log::LogContext& logContext, cta::RetrieveMount* retrieveMount, TapeSessionReporter& reporter);
 
   /** sub-part of execute for a write session */
-  EndOfSessionAction executeWrite(cta::log::LogContext& logContext, cta::ArchiveMount *archiveMount,
-                                  TapeSessionReporter& reporter);
+  EndOfSessionAction
+    executeWrite(cta::log::LogContext& logContext, cta::ArchiveMount* archiveMount, TapeSessionReporter& reporter);
 
   /** sub-part of execute for a label session */
-  EndOfSessionAction executeLabel(cta::log::LogContext& logContext, cta::LabelMount *labelMount);
+  EndOfSessionAction executeLabel(cta::log::LogContext& logContext, cta::LabelMount* labelMount);
 
   /** Reference to the MediaChangerFacade, allowing the mounting of the tape
    * by the library. It will be used exclusively by the tape thread. */
@@ -151,7 +152,7 @@ private:
    */
   cta::Scheduler& m_scheduler;
 };
-}
-}
-}
-}
+}  // namespace daemon
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

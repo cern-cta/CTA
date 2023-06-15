@@ -24,12 +24,9 @@ namespace unitTests {
 
 class cta_server_SmartCapTest : public ::testing::Test {
 protected:
+  virtual void SetUp() {}
 
-  virtual void SetUp() {
-  }
-
-  virtual void TearDown() {
-  }
+  virtual void TearDown() {}
 };
 
 TEST_F(cta_server_SmartCapTest, default_constructor) {
@@ -79,4 +76,4 @@ TEST_F(cta_server_SmartCapTest, releaseNull) {
   ASSERT_THROW(smartPtr.release(), cta::exception::Exception);
 }
 
-} // namespace unitTests
+}  // namespace unitTests

@@ -37,16 +37,20 @@ class RdbmsCatalogue;
 
 class PostgresTapeFileCatalogue : public RdbmsTapeFileCatalogue {
 public:
-  PostgresTapeFileCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
-    RdbmsCatalogue *rdbmsCatalogue);
+  PostgresTapeFileCatalogue(log::Logger& log,
+                            std::shared_ptr<rdbms::ConnPool> connPool,
+                            RdbmsCatalogue* rdbmsCatalogue);
   ~PostgresTapeFileCatalogue() override = default;
 
-  void filesWrittenToTape(const std::set<TapeItemWrittenPointer> &event) override;
+  void filesWrittenToTape(const std::set<TapeItemWrittenPointer>& event) override;
 
 private:
-  void  copyTapeFileToFileRecyleLogAndDeleteTransaction(rdbms::Conn & conn,
-    const cta::common::dataStructures::ArchiveFile &file, const std::string &reason, utils::Timer *timer,
-    log::TimingList *timingList, log::LogContext & lc) const override;
+  void copyTapeFileToFileRecyleLogAndDeleteTransaction(rdbms::Conn& conn,
+                                                       const cta::common::dataStructures::ArchiveFile& file,
+                                                       const std::string& reason,
+                                                       utils::Timer* timer,
+                                                       log::TimingList* timingList,
+                                                       log::LogContext& lc) const override;
 
   std::list<cta::catalogue::InsertFileRecycleLog> insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Conn& conn);
 
@@ -57,7 +61,7 @@ private:
    * @param vid The volume identifier of the tape.
    * @param The last FSeq of the tape.
    */
-  uint64_t selectTapeForUpdateAndGetLastFSeq(rdbms::Conn &conn, const std::string &vid) const;
+  uint64_t selectTapeForUpdateAndGetLastFSeq(rdbms::Conn& conn, const std::string& vid) const;
 
   /**
    * Start a database transaction and then create the temporary
@@ -67,7 +71,7 @@ private:
    *
    * @parm conn The database connection.
    */
-  void beginCreateTemporarySetDeferred(rdbms::Conn &conn) const;
+  void beginCreateTemporarySetDeferred(rdbms::Conn& conn) const;
 
   /**
    * Batch inserts rows into the ARCHIVE_FILE table that correspond to the
@@ -85,7 +89,7 @@ private:
    * @param conn The database connection.
    * @param events The tape file written events.
    */
-  void idempotentBatchInsertArchiveFiles(rdbms::Conn &conn, const std::set<TapeFileWritten> &events) const;
+  void idempotentBatchInsertArchiveFiles(rdbms::Conn& conn, const std::set<TapeFileWritten>& events) const;
 
   /**
    * Batch inserts rows into the TAPE_FILE_BATCH temporary table that correspond
@@ -94,7 +98,7 @@ private:
    * @param conn The database connection.
    * @param events The tape file written events.
    */
-  void insertTapeFileBatchIntoTempTable(rdbms::Conn &conn, const std::set<TapeFileWritten> &events) const;
+  void insertTapeFileBatchIntoTempTable(rdbms::Conn& conn, const std::set<TapeFileWritten>& events) const;
 };  // class PostgresTapeFileCatalogue
 
 }  // namespace catalogue

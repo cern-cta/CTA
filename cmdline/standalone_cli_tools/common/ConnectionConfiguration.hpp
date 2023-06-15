@@ -35,7 +35,6 @@ class CmdLineArgs;
 
 class ConnConfiguration {
 public:
-
   /**
    * Sets internal configuration parameters to be used for reading.
    * It reads cta frontend parameters from /etc/cta/cta-cli.conf
@@ -47,14 +46,12 @@ public:
    */
   using XrdSsiPbServiceTypePtr = std::unique_ptr<XrdSsiPbServiceType>;
   using EndpointMapPtr = std::unique_ptr<::eos::client::EndpointMap>;
-  static std::tuple<XrdSsiPbServiceTypePtr, EndpointMapPtr> readAndSetConfiguration(
-    cta::log::StdoutLogger &log,
-    const std::string &userName,
-    const CmdLineArgs &cmdLineArgs);
+  static std::tuple<XrdSsiPbServiceTypePtr, EndpointMapPtr>
+    readAndSetConfiguration(cta::log::StdoutLogger& log, const std::string& userName, const CmdLineArgs& cmdLineArgs);
 
 private:
-  static EndpointMapPtr setNamespaceMap(const std::string &keytab_file);
+  static EndpointMapPtr setNamespaceMap(const std::string& keytab_file);
 };
 
-} // namespace cliTool
-} // namespace cta
+}  // namespace cliTool
+}  // namespace cta

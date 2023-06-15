@@ -23,8 +23,7 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-LoginFactory::~LoginFactory() {
-}
+LoginFactory::~LoginFactory() {}
 
-} // namespace rdbms
-} // namespace cta
+}  // namespace rdbms
+}  // namespace cta

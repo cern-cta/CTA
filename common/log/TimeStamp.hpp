@@ -23,36 +23,31 @@
 
 namespace cta {
 
-  namespace log {
+namespace log {
 
-    /**
+/**
      * A simple object around a time stamp
      */
-    class TimeStamp {
-
-    public:
-
-      /**
+class TimeStamp {
+public:
+  /**
        * Constructor
        */
-      TimeStamp(time_t time) : m_time(time) {};
+  TimeStamp(time_t time) : m_time(time) {};
 
-      /**
+  /**
        * Accessor
        */
-      int time() const { return m_time; }
+  int time() const { return m_time; }
 
-    private:
+private:
+  /// the IP address, as an int
+  int m_time;
+};
 
-      /// the IP address, as an int
-      int m_time;
+}  // end of namespace log
 
-    };
-
-  } // end of namespace log
-
-} // end of namespace cta
-
+}  // end of namespace cta
 
 /**
  * non-member operator to stream an IpAdress

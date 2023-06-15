@@ -37,21 +37,22 @@ struct MetaDataObject {
   std::string storageClass;
 };
 
-class MetaData : public cta::utils::json::object::JSONCObject{
-  public:
-    /**
+class MetaData : public cta::utils::json::object::JSONCObject {
+public:
+  /**
     * Constructor
     */
-    MetaData(const std::filesystem::path &jsonPath);
+  MetaData(const std::filesystem::path& jsonPath);
 
-    /**
+  /**
     * Reads the provided json file
     */
-    std::list<MetaDataObject> m_mdCollection;
-  private:
-    /**
+  std::list<MetaDataObject> m_mdCollection;
+
+private:
+  /**
     * Reads the provided json file
     */
-    void readJson(const std::filesystem::path &path);
- };
- } // namespace cta::cliTool
+  void readJson(const std::filesystem::path& path);
+};
+}  // namespace cta::cliTool

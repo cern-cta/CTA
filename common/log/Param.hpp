@@ -29,9 +29,7 @@ namespace log {
  * A name/value parameter for the CASTOR logging system.
  */
 class Param {
-
 public:
-
   /**
    * Constructor.
    *
@@ -39,15 +37,14 @@ public:
    * @param value The value of the parameter that will be converted to a string
    * using std::ostringstream.
    */
-  template <typename T> Param(const std::string &name, const T &value) throw():
-    m_name(name) {
+  template<typename T>
+  Param(const std::string& name, const T& value) throw() : m_name(name) {
     std::ostringstream oss;
     oss << value;
     m_value = oss.str();
   }
 
-  Param(const std::string & name, const uint8_t & value) throw():
-  m_name(name) {
+  Param(const std::string& name, const uint8_t& value) throw() : m_name(name) {
     std::ostringstream oss;
     oss << static_cast<int>(value);
     m_value = oss.str();
@@ -60,26 +57,22 @@ public:
    * @param value The value of the parameter that will be converted to a string
    * using snprintf for doubles
    */
-  Param (const std::string &name, const double value) throw():
-  m_name(name) {
+  Param(const std::string& name, const double value) throw() : m_name(name) {
     char buf[1024];
     std::snprintf(buf, sizeof(buf), "%f", value);
     // Just in case we overflow
-    buf[sizeof(buf)-1]='\0';
+    buf[sizeof(buf) - 1] = '\0';
     m_value = buf;
   }
 
-  Param(const std::string &name, const std::nullopt_t &value) throw():
-    m_name(name) {
-    m_value = "";
-  }
+  Param(const std::string& name, const std::nullopt_t& value) throw() : m_name(name) { m_value = ""; }
 
   /**
    * Value changer. Useful for log contexts.
    * @param value
    */
-  template <typename T>
-  void setValue (const T &value) throw() {
+  template<typename T>
+  void setValue(const T& value) throw() {
     std::stringstream oss;
     oss << value;
     m_value = oss.str();
@@ -88,15 +81,14 @@ public:
   /**
    * Returns a const reference to the name of the parameter.
    */
-  const std::string &getName() const throw();
+  const std::string& getName() const throw();
 
   /**
    * Returns a const reference to the value of the parameter.
    */
-  const std::string &getValue() const throw();
+  const std::string& getValue() const throw();
 
 protected:
-
   /**
    * Name of the parameter
    */
@@ -107,16 +99,16 @@ protected:
    */
   std::string m_value;
 
-}; // class Param
+};  // class Param
 
 /**
  * An helper class allowing the construction of a Param class with sprintf
  * formatting for a double.
  */
-class ParamDoubleSnprintf: public Param {
+class ParamDoubleSnprintf : public Param {
 public:
-  ParamDoubleSnprintf(const std::string &name, const double value);
-}; // class ParamDoubleSnprintf
+  ParamDoubleSnprintf(const std::string& name, const double value);
+};  // class ParamDoubleSnprintf
 
-} // namespace log
-} // namespace cta
+}  // namespace log
+}  // namespace cta

@@ -21,7 +21,6 @@
 
 #include <stdio.h>
 
-
 namespace cta {
 
 /**
@@ -29,9 +28,7 @@ namespace cta {
  * of scope, it will fclose the FILE pointer it owns.
  */
 class SmartFILEPtr {
-
 public:
-
   /**
    * Constructor.
    */
@@ -42,7 +39,7 @@ public:
    *
    * @param file The FILE pointer to be owned by the smart pointer.
    */
-  SmartFILEPtr(FILE *const file) throw();
+  SmartFILEPtr(FILE* const file) throw();
 
   /**
    * Take ownership of the specified FILE pointer, closing the previously
@@ -53,7 +50,7 @@ public:
    *             specified, where nullptr means this smart pointer will not own a
    *             pointer after the reset() method returns.
    */
-  void reset(FILE *const file = nullptr) throw();
+  void reset(FILE* const file = nullptr) throw();
 
   /**
    * SmartFILEPtr assignment operator.
@@ -66,7 +63,7 @@ public:
    *      previous owner (obj).
    * </ul>
    */
-  SmartFILEPtr &operator=(SmartFILEPtr& obj);
+  SmartFILEPtr& operator=(SmartFILEPtr& obj);
 
   /**
    * Destructor.
@@ -80,30 +77,29 @@ public:
    *
    * @return The owned FILE pointer.
    */
-  FILE *get() const throw();
+  FILE* get() const throw();
 
   /**
    * Releases the owned FILE pointer.
    *
    * @return The released FILE pointer.
    */
-  FILE *release() ;
+  FILE* release();
 
 private:
-
   /**
    * The owned pointer.  A value of nullptr means this smart pointer does not own
    * a pointer.
    */
-  FILE *m_file;
+  FILE* m_file;
 
   /**
    * Private copy-constructor to prevent users from trying to create a new
    * copy of an object of this class.
    * Not implemented so that it cannot be called
    */
-  SmartFILEPtr(const SmartFILEPtr &obj) throw();
+  SmartFILEPtr(const SmartFILEPtr& obj) throw();
 
-}; // class SmartFILEPtr
+};  // class SmartFILEPtr
 
-} // namespace cta
+}  // namespace cta

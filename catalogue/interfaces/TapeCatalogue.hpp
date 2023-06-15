@@ -33,8 +33,8 @@ namespace common {
 namespace dataStructures {
 struct SecurityIdentity;
 struct Tape;
-}
-}
+}  // namespace dataStructures
+}  // namespace common
 
 namespace log {
 class LogContext;
@@ -62,9 +62,9 @@ public:
    * @param admin The administrator.
    * @param tape The attributes of the tape to be created.
    */
-  virtual void createTape(const common::dataStructures::SecurityIdentity &admin, const CreateTapeAttributes &tape) = 0;
+  virtual void createTape(const common::dataStructures::SecurityIdentity& admin, const CreateTapeAttributes& tape) = 0;
 
-  virtual void deleteTape(const std::string &vid) = 0;
+  virtual void deleteTape(const std::string& vid) = 0;
 
   /**
    * Returns the list of tapes that meet the specified search criteria.
@@ -74,8 +74,8 @@ public:
    * @throw UserSpecifiedANonExistentTapePool if the user specified a
    * non-existent tape pool.
    */
-  virtual std::list<common::dataStructures::Tape> getTapes(
-    const TapeSearchCriteria &searchCriteria = TapeSearchCriteria()) const = 0;
+  virtual std::list<common::dataStructures::Tape>
+    getTapes(const TapeSearchCriteria& searchCriteria = TapeSearchCriteria()) const = 0;
 
   /**
    * Returns the tape with the specified volume identifier.
@@ -96,7 +96,7 @@ public:
    * @param vids The tape volume identifiers (VIDs).
    * @return Map from tape volume identifier to tape.
    */
-  virtual common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string> &vids) const = 0;
+  virtual common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string>& vids) const = 0;
 
   /**
    * Returns the tapes with the specified volume identifiers.
@@ -108,7 +108,8 @@ public:
    * @param ignoreMissingVids Allow non-existing VIDs to be ignored.
    * @return Map from tape volume identifier to tape.
    */
-  virtual common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string> &vids, bool ignoreMissingVids) const = 0;
+  virtual common::dataStructures::VidToTapeMap getTapesByVid(const std::set<std::string>& vids,
+                                                             bool ignoreMissingVids) const = 0;
 
   /**
    * Returns map from VID to logical library name for specified set of VIDs.
@@ -116,7 +117,7 @@ public:
    * @param vids The tape volume identifiers (VIDs).
    * @return map from VID to logical library name.
    */
-  virtual std::map<std::string, std::string> getVidToLogicalLibrary(const std::set<std::string> &vids) const = 0;
+  virtual std::map<std::string, std::string> getVidToLogicalLibrary(const std::set<std::string>& vids) const = 0;
 
   /**
    * Reclaims the specified tape.
@@ -132,8 +133,9 @@ public:
    * @param vid The volume identifier of the tape to be reclaimed.
    * @param lc the logContext
    */
-  virtual void reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
-    cta::log::LogContext & lc) = 0;
+  virtual void reclaimTape(const common::dataStructures::SecurityIdentity& admin,
+                           const std::string& vid,
+                           cta::log::LogContext& lc) = 0;
 
   /**
    * Checks the specified tape for the tape label command.
@@ -143,7 +145,7 @@ public:
    *
    * @param vid The volume identifier of the tape to be checked.
    */
-  virtual void checkTapeForLabel(const std::string &vid) = 0;
+  virtual void checkTapeForLabel(const std::string& vid) = 0;
 
   /**
    * Notifies the catalogue that the specified tape was labelled.
@@ -151,32 +153,38 @@ public:
    * @param vid The volume identifier of the tape.
    * @param drive The name of tape drive that was used to label the tape.
    */
-  virtual void tapeLabelled(const std::string &vid, const std::string &drive) = 0;
+  virtual void tapeLabelled(const std::string& vid, const std::string& drive) = 0;
 
   /**
    * Returns the number of any files contained in the tape identified by its vid
    * @param vid the vid in which we will the number of files
    * @return the number of files on the tape
    */
-  virtual uint64_t getNbFilesOnTape(const std::string &vid) const = 0;
+  virtual uint64_t getNbFilesOnTape(const std::string& vid) const = 0;
 
-  virtual void modifyTapeMediaType(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
-    const std::string &mediaType) = 0;
+  virtual void modifyTapeMediaType(const common::dataStructures::SecurityIdentity& admin,
+                                   const std::string& vid,
+                                   const std::string& mediaType) = 0;
 
-  virtual void modifyTapeVendor(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
-    const std::string &vendor) = 0;
+  virtual void modifyTapeVendor(const common::dataStructures::SecurityIdentity& admin,
+                                const std::string& vid,
+                                const std::string& vendor) = 0;
 
-  virtual void modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &vid, const std::string &logicalLibraryName) = 0;
+  virtual void modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity& admin,
+                                            const std::string& vid,
+                                            const std::string& logicalLibraryName) = 0;
 
-  virtual void modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
-    const std::string &tapePoolName) = 0;
+  virtual void modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity& admin,
+                                      const std::string& vid,
+                                      const std::string& tapePoolName) = 0;
 
-  virtual void modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &vid, const std::string &encryptionKeyName) = 0;
+  virtual void modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity& admin,
+                                           const std::string& vid,
+                                           const std::string& encryptionKeyName) = 0;
 
-  virtual void modifyTapeVerificationStatus(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &vid, const std::string &verificationStatus) = 0;
+  virtual void modifyTapeVerificationStatus(const common::dataStructures::SecurityIdentity& admin,
+                                            const std::string& vid,
+                                            const std::string& verificationStatus) = 0;
 
   /**
    * Returns true if the specified tape exists.
@@ -184,7 +192,7 @@ public:
    * @param vid The volume identifier of the tape.
    * @return True if the tape exists.
    */
-  virtual bool tapeExists(const std::string &vid) const = 0;
+  virtual bool tapeExists(const std::string& vid) const = 0;
 
   /**
    * Modify the state of the specified tape
@@ -193,10 +201,11 @@ public:
    * @param state the new state
    * @param stateReason the reason why the state changes, if the state is ACTIVE and the stateReason is std::nullopt, the state will be reset to null
    */
-  virtual void modifyTapeState(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
-    const common::dataStructures::Tape::State & state,
-    const std::optional<common::dataStructures::Tape::State> & prev_state,
-    const std::optional<std::string> & stateReason) = 0;
+  virtual void modifyTapeState(const common::dataStructures::SecurityIdentity& admin,
+                               const std::string& vid,
+                               const common::dataStructures::Tape::State& state,
+                               const std::optional<common::dataStructures::Tape::State>& prev_state,
+                               const std::optional<std::string>& stateReason) = 0;
   /**
    * Sets the full status of the specified tape.
    *
@@ -207,8 +216,9 @@ public:
    * @param vid The volume identifier of the tape to be marked as full.
    * @param fullValue Set to true if the tape is full.
    */
-  virtual void setTapeFull(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
-    const bool fullValue) = 0;
+  virtual void setTapeFull(const common::dataStructures::SecurityIdentity& admin,
+                           const std::string& vid,
+                           const bool fullValue) = 0;
 
   /**
    * Sets the dirty status of the specified tape.
@@ -220,8 +230,8 @@ public:
    * @param vid The volume identifier of the tape to be marked as full.
    * @param dirty Set to true if the tape is dirty.
    */
-  virtual void setTapeDirty(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
-    const bool dirty) = 0;
+  virtual void
+    setTapeDirty(const common::dataStructures::SecurityIdentity& admin, const std::string& vid, const bool dirty) = 0;
 
   /**
    * This method notifies the CTA catalogue to set the specified tape is from CASTOR.
@@ -229,9 +239,9 @@ public:
    *
    * @param vid The volume identifier of the tape.
    */
-  virtual void setTapeIsFromCastorInUnitTests(const std::string &vid) = 0;
+  virtual void setTapeIsFromCastorInUnitTests(const std::string& vid) = 0;
 
-  virtual void setTapeDirty(const std::string & vid) = 0;
+  virtual void setTapeDirty(const std::string& vid) = 0;
 
   /**
    * Modifies the tape comment
@@ -240,8 +250,9 @@ public:
    * @param vid the vid of the tape to remove the comment
    * @param comment the new comment. If comment == std::nullopt, the comment will be deleted.
    */
-  virtual void modifyTapeComment(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
-    const std::optional<std::string> &comment) = 0;
+  virtual void modifyTapeComment(const common::dataStructures::SecurityIdentity& admin,
+                                 const std::string& vid,
+                                 const std::optional<std::string>& comment) = 0;
 
   /**
    * Notifies the CTA catalogue that the specified tape has been mounted in
@@ -253,7 +264,8 @@ public:
    * @param vid The volume identifier of the tape.
    * @param drive The name of the drive where the tape was mounted.
    */
-  virtual void tapeMountedForArchive(const std::string &vid, const std::string &drive) = 0;  // internal function (noCLI)
+  virtual void tapeMountedForArchive(const std::string& vid,
+                                     const std::string& drive) = 0;  // internal function (noCLI)
 
   /**
    * Notifies the CTA catalogue that the specified tape has been mounted in
@@ -265,7 +277,7 @@ public:
    * @param vid The volume identifier of the tape.
    * @param drive The name of the drive where the tape was mounted.
    */
-  virtual void tapeMountedForRetrieve(const std::string &vid, const std::string &drive) = 0;
+  virtual void tapeMountedForRetrieve(const std::string& vid, const std::string& drive) = 0;
 
   /**
    * This method notifies the CTA catalogue that there is no more free space on
@@ -273,7 +285,7 @@ public:
    *
    * @param vid The volume identifier of the tape.
    */
-  virtual void noSpaceLeftOnTape(const std::string &vid) = 0;
+  virtual void noSpaceLeftOnTape(const std::string& vid) = 0;
 
   /**
    * Returns the list of tapes that can be written to by a tape drive in the
@@ -283,10 +295,10 @@ public:
    * @param logicalLibraryName The name of the logical library.
    * @return The list of tapes for writing.
    */
-  virtual std::list<TapeForWriting> getTapesForWriting(const std::string &logicalLibraryName) const = 0;
+  virtual std::list<TapeForWriting> getTapesForWriting(const std::string& logicalLibraryName) const = 0;
 
   virtual common::dataStructures::Label::Format getTapeLabelFormat(const std::string& vid) const = 0;
 };
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

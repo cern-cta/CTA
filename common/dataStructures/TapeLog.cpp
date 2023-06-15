@@ -26,46 +26,43 @@ namespace dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-TapeLog::TapeLog():
-  time(0) {}
+TapeLog::TapeLog() : time(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool TapeLog::operator==(const TapeLog &rhs) const {
-  return drive==rhs.drive
-      && time==rhs.time;
+bool TapeLog::operator==(const TapeLog& rhs) const {
+  return drive == rhs.drive && time == rhs.time;
 }
 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool TapeLog::operator!=(const TapeLog &rhs) const {
+bool TapeLog::operator!=(const TapeLog& rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const TapeLog &obj) {
-  os << "(drive=" << obj.drive
-     << " time=" << obj.time << ")";
+std::ostream& operator<<(std::ostream& os, const TapeLog& obj) {
+  os << "(drive=" << obj.drive << " time=" << obj.time << ")";
   return os;
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const std::optional<TapeLog> &obj) {
-  if(obj) {
-    os << "(drive=" << obj.value().drive
-       << " time=" << obj.value().time << ")";
-  } else {
+std::ostream& operator<<(std::ostream& os, const std::optional<TapeLog>& obj) {
+  if (obj) {
+    os << "(drive=" << obj.value().drive << " time=" << obj.value().time << ")";
+  }
+  else {
     os << "(N/A)";
   }
   return os;
 }
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

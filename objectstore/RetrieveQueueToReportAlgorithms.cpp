@@ -17,10 +17,12 @@
 
 #include "RetrieveQueueAlgorithms.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta {
+namespace objectstore {
 
 template<>
-const std::string ContainerTraits<RetrieveQueue,RetrieveQueueToReportForUser>::c_containerTypeName = "RetrieveQueueToReportForUser";
+const std::string ContainerTraits<RetrieveQueue, RetrieveQueueToReportForUser>::c_containerTypeName =
+  "RetrieveQueueToReportForUser";
 
 #if 0
 template<>
@@ -58,4 +60,5 @@ trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const Cont
 }
 #endif
 
-}} // namespace cta::objectstore
+}  // namespace objectstore
+}  // namespace cta

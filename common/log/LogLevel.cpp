@@ -24,22 +24,40 @@ namespace log {
 //------------------------------------------------------------------------------
 // toLogLevel
 //------------------------------------------------------------------------------
-int toLogLevel(const std::string &s) {
-  if(s == "EMERG")   return EMERG;
-  if(s == "ALERT")   return ALERT;
-  if(s == "CRIT")    return CRIT;
-  if(s == "ERR")     return ERR;
-  if(s == "WARNING") return WARNING;
-  if(s == "NOTICE")  return NOTICE;
-  if(s == "INFO")    return INFO;
-  if(s == "DEBUG")   return DEBUG;
+int toLogLevel(const std::string& s) {
+  if (s == "EMERG") {
+    return EMERG;
+  }
+  if (s == "ALERT") {
+    return ALERT;
+  }
+  if (s == "CRIT") {
+    return CRIT;
+  }
+  if (s == "ERR") {
+    return ERR;
+  }
+  if (s == "WARNING") {
+    return WARNING;
+  }
+  if (s == "NOTICE") {
+    return NOTICE;
+  }
+  if (s == "INFO") {
+    return INFO;
+  }
+  if (s == "DEBUG") {
+    return DEBUG;
+  }
 
   // It is a convention of CTA to use syslog level of LOG_NOTICE to label
   // user errors.
-  if(s == "USERERR") return NOTICE;
+  if (s == "USERERR") {
+    return NOTICE;
+  }
 
   throw exception::Exception(s + " is not a valid log level");
 }
 
-} // namespace log
-} // namespace cta
+}  // namespace log
+}  // namespace cta

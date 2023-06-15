@@ -28,7 +28,6 @@ namespace mediachanger {
  */
 class CmdLine {
 protected:
-
   /**
    * Handles the specified parameter that is missing a parameter.
    *
@@ -43,7 +42,7 @@ protected:
    */
   void handleUnknownOption(const int opt);
 
-}; // class CmdLine
+};  // class CmdLine
 
-} // namespace mediachanger
-} // namespace cta
+}  // namespace mediachanger
+}  // namespace cta

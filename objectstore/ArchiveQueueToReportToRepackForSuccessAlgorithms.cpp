@@ -16,43 +16,48 @@
  */
 #include "ArchiveQueueAlgorithms.hpp"
 
-namespace cta { namespace objectstore {
-  template<>
-  const std::string ContainerTraits<ArchiveQueue,ArchiveQueueToReportToRepackForSuccess>::c_containerTypeName = "ArchiveQueueToReportToRepackForSuccess";
-  
-  template<>
-  const std::string ContainerTraits<ArchiveQueue,ArchiveQueueToReportToRepackForSuccess>::c_identifierType = "tapepool";
-  
-  template<>
-  auto ContainerTraits<ArchiveQueue,ArchiveQueueToReportToRepackForSuccess>::
-  getContainerSummary(Container& cont) -> ContainerSummary {
-    ContainerSummary ret;
-    ret.JobsSummary::operator=(cont.getJobsSummary());
-    return ret;
-  }
-  
-    template<>
-  auto ContainerTraits<ArchiveQueue,ArchiveQueueToReportToRepackForSuccess>::
-  getPoppingElementsCandidates(Container& cont, PopCriteria& unfulfilledCriteria, ElementsToSkipSet& elemtsToSkip,
-    log::LogContext& lc) -> PoppedElementsBatch
-  {
-    PoppedElementsBatch ret;
-    auto candidateJobsFromQueue=cont.getCandidateList(std::numeric_limits<uint64_t>::max(), unfulfilledCriteria.files, elemtsToSkip);
-    for (auto &cjfq: candidateJobsFromQueue.candidates) {
-      ret.elements.emplace_back(PoppedElement());
-      PoppedElement & elem = ret.elements.back();
-      elem.archiveRequest = std::make_unique<ArchiveRequest>(cjfq.address, cont.m_objectStore);
-      elem.copyNb = cjfq.copyNb;
-      elem.bytes = cjfq.size;
-      elem.archiveFile = common::dataStructures::ArchiveFile();
-      elem.srcURL = "";
-      elem.archiveReportURL = "";
-      elem.errorReportURL = "";
-      elem.latestError = "";
-      elem.reportType = SchedulerDatabase::ArchiveJob::ReportType::Report;
-      ret.summary.files++;
-    }
-    return ret;
-  }
+namespace cta {
+namespace objectstore {
+template<>
+const std::string ContainerTraits<ArchiveQueue, ArchiveQueueToReportToRepackForSuccess>::c_containerTypeName =
+  "ArchiveQueueToReportToRepackForSuccess";
 
-}}
+template<>
+const std::string ContainerTraits<ArchiveQueue, ArchiveQueueToReportToRepackForSuccess>::c_identifierType = "tapepool";
+
+template<>
+auto ContainerTraits<ArchiveQueue, ArchiveQueueToReportToRepackForSuccess>::getContainerSummary(Container& cont)
+  -> ContainerSummary {
+  ContainerSummary ret;
+  ret.JobsSummary::operator=(cont.getJobsSummary());
+  return ret;
+}
+
+template<>
+auto ContainerTraits<ArchiveQueue, ArchiveQueueToReportToRepackForSuccess>::getPoppingElementsCandidates(
+  Container& cont,
+  PopCriteria& unfulfilledCriteria,
+  ElementsToSkipSet& elemtsToSkip,
+  log::LogContext& lc) -> PoppedElementsBatch {
+  PoppedElementsBatch ret;
+  auto candidateJobsFromQueue =
+    cont.getCandidateList(std::numeric_limits<uint64_t>::max(), unfulfilledCriteria.files, elemtsToSkip);
+  for (auto& cjfq : candidateJobsFromQueue.candidates) {
+    ret.elements.emplace_back(PoppedElement());
+    PoppedElement& elem = ret.elements.back();
+    elem.archiveRequest = std::make_unique<ArchiveRequest>(cjfq.address, cont.m_objectStore);
+    elem.copyNb = cjfq.copyNb;
+    elem.bytes = cjfq.size;
+    elem.archiveFile = common::dataStructures::ArchiveFile();
+    elem.srcURL = "";
+    elem.archiveReportURL = "";
+    elem.errorReportURL = "";
+    elem.latestError = "";
+    elem.reportType = SchedulerDatabase::ArchiveJob::ReportType::Report;
+    ret.summary.files++;
+  }
+  return ret;
+}
+
+}  // namespace objectstore
+}  // namespace cta

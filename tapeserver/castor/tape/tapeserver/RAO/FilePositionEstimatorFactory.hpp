@@ -29,17 +29,29 @@ namespace cta {
 namespace catalogue {
 class Catalogue;
 }
-}
+}  // namespace cta
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace rao {
 
 /**
  * This class gathen static factory method to instanciate FilePositionEstimator
  */
 class FilePositionEstimatorFactory {
 public:
-  static std::unique_ptr<FilePositionEstimator> createInterpolationFilePositionEstimator(const std::string & vid, cta::catalogue::Catalogue *catalogue, drive::DriveInterface *drive, cta::log::TimingList &tl);
-  static std::unique_ptr<FilePositionEstimator> createInterpolationFilePositionEstimator(const std::vector<drive::endOfWrapPosition> & eowp, cta::catalogue::MediaType & mediaType);
+  static std::unique_ptr<FilePositionEstimator>
+    createInterpolationFilePositionEstimator(const std::string& vid,
+                                             cta::catalogue::Catalogue* catalogue,
+                                             drive::DriveInterface* drive,
+                                             cta::log::TimingList& tl);
+  static std::unique_ptr<FilePositionEstimator>
+    createInterpolationFilePositionEstimator(const std::vector<drive::endOfWrapPosition>& eowp,
+                                             cta::catalogue::MediaType& mediaType);
 };
 
-}}}}
+}  // namespace rao
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

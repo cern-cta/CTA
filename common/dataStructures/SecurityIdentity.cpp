@@ -26,21 +26,28 @@ namespace dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SecurityIdentity::SecurityIdentity() :
-  authProtocol(Protocol::NONE) {}
+SecurityIdentity::SecurityIdentity() : authProtocol(Protocol::NONE) {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 SecurityIdentity::SecurityIdentity(const std::string& username, const std::string& host) :
-  username(username), host(host), authProtocol(Protocol::NONE) {}
+username(username),
+host(host),
+authProtocol(Protocol::NONE) {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SecurityIdentity::SecurityIdentity(const std::string& username, const std::string& host, const std::string& clientHost, const std::string& auth) :
-  username(username), host(host), clientHost(clientHost), authProtocol(Protocol::NONE) {
-  if(!auth.empty()) {
+SecurityIdentity::SecurityIdentity(const std::string& username,
+                                   const std::string& host,
+                                   const std::string& clientHost,
+                                   const std::string& auth) :
+username(username),
+host(host),
+clientHost(clientHost),
+authProtocol(Protocol::NONE) {
+  if (!auth.empty()) {
     // Map the client protocol string to enum value
     auto proto_it = m_authProtoMap.find(auth);
     authProtocol = proto_it != m_authProtoMap.end() ? proto_it->second : Protocol::OTHER;
@@ -50,30 +57,30 @@ SecurityIdentity::SecurityIdentity(const std::string& username, const std::strin
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool SecurityIdentity::operator==(const SecurityIdentity &rhs) const {
-  return username==rhs.username
-      && host==rhs.host
-      && clientHost==rhs.clientHost;
+bool SecurityIdentity::operator==(const SecurityIdentity& rhs) const {
+  return username == rhs.username && host == rhs.host && clientHost == rhs.clientHost;
 }
 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool SecurityIdentity::operator!=(const SecurityIdentity &rhs) const {
+bool SecurityIdentity::operator!=(const SecurityIdentity& rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<
 //------------------------------------------------------------------------------
-bool SecurityIdentity::operator<(const SecurityIdentity &rhs) const {
-  if(username == rhs.username) {
+bool SecurityIdentity::operator<(const SecurityIdentity& rhs) const {
+  if (username == rhs.username) {
     if (host == rhs.host) {
       return clientHost < rhs.clientHost;
-    } else {
+    }
+    else {
       return host < rhs.host;
     }
-  } else {
+  }
+  else {
     return username < rhs.username;
   }
 }
@@ -81,13 +88,11 @@ bool SecurityIdentity::operator<(const SecurityIdentity &rhs) const {
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const SecurityIdentity &obj) {
-  os << "(username=" << obj.username
-     << " host=" << obj.host 
-     << " clientHost=" << obj.clientHost << ")";
+std::ostream& operator<<(std::ostream& os, const SecurityIdentity& obj) {
+  os << "(username=" << obj.username << " host=" << obj.host << " clientHost=" << obj.clientHost << ")";
   return os;
 }
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

@@ -21,16 +21,17 @@
 
 #include "Statistics.hpp"
 
-namespace cta { namespace statistics {
+namespace cta {
+namespace statistics {
 
 /**
  * This service class allows to access CTA statistics and do operations with it
  */
 class StatisticsService {
- public:
+public:
   StatisticsService();
   StatisticsService(const StatisticsService& orig) = delete;
-  StatisticsService & operator=(const StatisticsService &) = delete;
+  StatisticsService& operator=(const StatisticsService&) = delete;
   virtual ~StatisticsService();
 
   /**
@@ -41,7 +42,7 @@ class StatisticsService {
    * Save the statistics
    * @param statistics the statistics to save
    */
-  virtual void saveStatistics(const cta::statistics::Statistics &statistics) = 0;
+  virtual void saveStatistics(const cta::statistics::Statistics& statistics) = 0;
   /**
    * Get the statistics
    * @return the statistics
@@ -54,7 +55,7 @@ class StatisticsService {
    */
   uint64_t getNbUpdatedTapes();
 
- protected:
+protected:
   uint64_t m_nbUpdatedTapes = 0;
 };
 

@@ -27,15 +27,15 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SchemaCreatingSqliteCatalogue::SchemaCreatingSqliteCatalogue(
-  log::Logger &log,
-  const std::string &filename,
-  const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns):
-  SqliteCatalogue(log, filename, nbConns, nbArchiveFileListingConns) {
+SchemaCreatingSqliteCatalogue::SchemaCreatingSqliteCatalogue(log::Logger& log,
+                                                             const std::string& filename,
+                                                             const uint64_t nbConns,
+                                                             const uint64_t nbArchiveFileListingConns) :
+SqliteCatalogue(log, filename, nbConns, nbArchiveFileListingConns) {
   try {
     createCatalogueSchema();
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -48,7 +48,8 @@ void SchemaCreatingSqliteCatalogue::createCatalogueSchema() {
     const SqliteCatalogueSchema schema;
     auto conn = m_connPool->getConn();
     executeNonQueries(conn, schema.sql);
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -56,23 +57,23 @@ void SchemaCreatingSqliteCatalogue::createCatalogueSchema() {
 //------------------------------------------------------------------------------
 // executeNonQueries
 //------------------------------------------------------------------------------
-void SchemaCreatingSqliteCatalogue::executeNonQueries(rdbms::Conn &conn, const std::string &sqlStmts) {
+void SchemaCreatingSqliteCatalogue::executeNonQueries(rdbms::Conn& conn, const std::string& sqlStmts) {
   try {
     std::string::size_type searchPos = 0;
     std::string::size_type findResult = std::string::npos;
 
-    while(std::string::npos != (findResult = sqlStmts.find(';', searchPos))) {
+    while (std::string::npos != (findResult = sqlStmts.find(';', searchPos))) {
       // Calculate the length of the current statement without the trailing ';'
       const std::string::size_type stmtLen = findResult - searchPos;
       const std::string sqlStmt = utils::trimString(sqlStmts.substr(searchPos, stmtLen));
       searchPos = findResult + 1;
 
-      if(0 < sqlStmt.size()) { // Ignore empty statements
+      if (0 < sqlStmt.size()) {  // Ignore empty statements
         conn.executeNonQuery(sqlStmt);
       }
     }
-
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -80,8 +81,7 @@ void SchemaCreatingSqliteCatalogue::executeNonQueries(rdbms::Conn &conn, const s
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-SchemaCreatingSqliteCatalogue::~SchemaCreatingSqliteCatalogue() {
-}
+SchemaCreatingSqliteCatalogue::~SchemaCreatingSqliteCatalogue() {}
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

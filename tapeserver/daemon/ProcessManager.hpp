@@ -31,12 +31,12 @@ namespace daemon {
  */
 class ProcessManager {
 public:
-  ProcessManager(log::LogContext & log);
+  ProcessManager(log::LogContext& log);
   ~ProcessManager();
   /** Function passing ownership of a subprocess handler to the manager. */
-  void addHandler(std::unique_ptr<SubprocessHandler> && handler);
+  void addHandler(std::unique_ptr<SubprocessHandler>&& handler);
   /** Function allowing a SubprocessHandler to register a file descriptor to epoll */
-  void addFile(int fd, SubprocessHandler * sh);
+  void addFile(int fd, SubprocessHandler* sh);
   /** Function allowing a SubprocessHandler to unregister a file descriptor from epoll */
   void removeFile(int fd);
   /** Infinite loop of the process. This function returns and exit value for 
@@ -44,24 +44,29 @@ public:
    * SubprocessHandler class. */
   int run();
   /** Get reference to a given handler */
-  SubprocessHandler & at(const std::string & name);
+  SubprocessHandler& at(const std::string& name);
   /** Get reference to the log context */
-  log::LogContext & logContext();
+  log::LogContext& logContext();
+
 private:
-  int m_epollFd;   ///< The file descriptor for the epoll interface
-  log::LogContext & m_logContext; ///< The log context
+  int m_epollFd;                  ///< The file descriptor for the epoll interface
+  log::LogContext& m_logContext;  ///< The log context
+
   /// Structure allowing the follow up of subprocesses
   struct SubprocessAndStatus {
     SubprocessHandler::ProcessingStatus status;
     std::unique_ptr<SubprocessHandler> handler;
   };
+
   /// The list of process handlers we own and their statuses.
   std::list<SubprocessAndStatus> m_subprocessHandlers;
+
   /// Status report structs for run parts
   struct RunPartStatus {
-    bool doExit=false;
-    int exitCode=0;
+    bool doExit = false;
+    int exitCode = 0;
   };
+
   /// sub part for run(): handle shutdown
   RunPartStatus runShutdownManagement();
   /// subpart for run(): handle kill
@@ -74,4 +79,6 @@ private:
   void runEventLoop();
 };
 
-}}} // namespace cta::tape::daemon
+}  // namespace daemon
+}  // namespace tape
+}  // namespace cta

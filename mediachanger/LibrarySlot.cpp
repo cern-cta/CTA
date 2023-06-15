@@ -21,43 +21,41 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::mediachanger::LibrarySlot::LibrarySlot(
-  const TapeLibraryType libraryType):
-  m_libraryType(libraryType) {
-}
+cta::mediachanger::LibrarySlot::LibrarySlot(const TapeLibraryType libraryType) : m_libraryType(libraryType) {}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::mediachanger::LibrarySlot::~LibrarySlot() {
-}
+cta::mediachanger::LibrarySlot::~LibrarySlot() {}
 
 //------------------------------------------------------------------------------
 // getLibrarySlotType
 //------------------------------------------------------------------------------
-cta::mediachanger::TapeLibraryType cta::mediachanger::LibrarySlot::
-  getLibraryTypeOfSlot(const std::string &slot) {
-  if(0 == slot.find("dummy")) return TAPE_LIBRARY_TYPE_DUMMY;
-  if(0 == slot.find("smc"))   return TAPE_LIBRARY_TYPE_SCSI;
+cta::mediachanger::TapeLibraryType cta::mediachanger::LibrarySlot::getLibraryTypeOfSlot(const std::string& slot) {
+  if (0 == slot.find("dummy")) {
+    return TAPE_LIBRARY_TYPE_DUMMY;
+  }
+  if (0 == slot.find("smc")) {
+    return TAPE_LIBRARY_TYPE_SCSI;
+  }
 
   cta::exception::Exception ex;
   ex.getMessage() << "Cannot determine tape-library type of library slot"
-    ": slot=" << slot;
+                     ": slot="
+                  << slot;
   throw ex;
 }
 
 //------------------------------------------------------------------------------
 // str
 //------------------------------------------------------------------------------
-const std::string &cta::mediachanger::LibrarySlot::str() const
-  {
+const std::string& cta::mediachanger::LibrarySlot::str() const {
   return m_str;
 }
 
 //------------------------------------------------------------------------------
 // getLibraryType
 //------------------------------------------------------------------------------
-cta::mediachanger::TapeLibraryType
-  cta::mediachanger::LibrarySlot::getLibraryType() const {
+cta::mediachanger::TapeLibraryType cta::mediachanger::LibrarySlot::getLibraryType() const {
   return m_libraryType;
 }

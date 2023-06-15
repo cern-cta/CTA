@@ -39,7 +39,7 @@ public:
    * @param tg the client to whom we report the success/failures
    * @param lc log context, copied du to threads
    */
-  RecallReportPacker(cta::RetrieveMount *retrieveMount, cta::log::LogContext& lc);
+  RecallReportPacker(cta::RetrieveMount* retrieveMount, cta::log::LogContext& lc);
 
   ~RecallReportPacker() override;
 
@@ -58,7 +58,9 @@ public:
    * @param ex the reason for the failure
    * @param lc log context provided by the calling thread.
    */
-  virtual void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const cta::exception::Exception& ex, cta::log::LogContext& lc);
+  virtual void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob,
+                               const cta::exception::Exception& ex,
+                               cta::log::LogContext& lc);
 
   /**
    * Create into the RecallReportPacker a report for the nominal end of session
@@ -81,7 +83,8 @@ public:
    * @param reason the comment to a change.
    * @param lc log context provided by the calling thread.
    */
-  virtual void reportDriveStatus(cta::common::dataStructures::DriveStatus status, const std::optional<std::string>& reason,
+  virtual void reportDriveStatus(cta::common::dataStructures::DriveStatus status,
+                                 const std::optional<std::string>& reason,
                                  cta::log::LogContext& lc);
 
   /**
@@ -122,7 +125,7 @@ public:
   bool errorHappened();
 
 private:
-  //inner classes use to store content while receiving a report 
+  //inner classes use to store content while receiving a report
   class Report {
   public:
     virtual ~Report() = default;
@@ -137,9 +140,10 @@ private:
      * The successful retrieve job to be reported immediately
      */
     std::unique_ptr<cta::RetrieveJob> m_successfulRetrieveJob;
+
   public:
     explicit ReportSuccessful(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob) :
-      m_successfulRetrieveJob(std::move(successfulRetrieveJob)) {}
+    m_successfulRetrieveJob(std::move(successfulRetrieveJob)) {}
 
     void execute(RecallReportPacker& reportPacker) override;
   };
@@ -150,9 +154,11 @@ private:
      * The failed retrieve job to be reported immediately
      */
     std::unique_ptr<cta::RetrieveJob> m_failedRetrieveJob;
+
   public:
     ReportError(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, std::string failureLog) :
-      m_failureLog(std::move(failureLog)), m_failedRetrieveJob(std::move(failedRetrieveJob)) {}
+    m_failureLog(std::move(failureLog)),
+    m_failedRetrieveJob(std::move(failedRetrieveJob)) {}
 
     void execute(RecallReportPacker& reportPacker) override;
   };
@@ -162,8 +168,9 @@ private:
     std::optional<std::string> m_reason;
 
   public:
-    ReportDriveStatus(cta::common::dataStructures::DriveStatus status, std::optional<std::string> reason) : m_status(status),
-                                                                                                            m_reason(std::move(reason)) {}
+    ReportDriveStatus(cta::common::dataStructures::DriveStatus status, std::optional<std::string> reason) :
+    m_status(status),
+    m_reason(std::move(reason)) {}
 
     void execute(RecallReportPacker& reportPacker) override;
 
@@ -177,14 +184,13 @@ private:
     void execute(RecallReportPacker& reportPacker) override;
 
     bool goingToEnd() override;
-
   };
 
   class ReportEndofSessionWithErrors : public Report {
     std::string m_message;
+
   public:
-    ReportEndofSessionWithErrors(std::string msg) :
-      m_message(std::move(msg)) {}
+    ReportEndofSessionWithErrors(std::string msg) : m_message(std::move(msg)) {}
 
     void execute(RecallReportPacker& reportPacker) override;
 
@@ -193,6 +199,7 @@ private:
 
   class WorkerThread : public cta::threading::Thread {
     RecallReportPacker& m_parent;
+
   public:
     explicit WorkerThread(RecallReportPacker& parent);
 
@@ -204,7 +211,7 @@ private:
   /** 
    * m_fifo is holding all the report waiting to be processed
    */
-  cta::threading::BlockingQueue<Report *> m_fifo;
+  cta::threading::BlockingQueue<Report*> m_fifo;
 
   /**
    * Is set as true as soon as we process a reportFailedJob
@@ -216,13 +223,13 @@ private:
   /**
    * The mount object used to send reports
    */
-  cta::RetrieveMount *m_retrieveMount;
+  cta::RetrieveMount* m_retrieveMount;
 
   /**
    * The successful reports that were pre-reported asynchronously.
    * They are collected and completed regularly.
    */
-  std::queue<std::unique_ptr<cta::RetrieveJob> > m_successfulRetrieveJobs;
+  std::queue<std::unique_ptr<cta::RetrieveJob>> m_successfulRetrieveJobs;
 
   /**
    * Tracking of the tape thread end
@@ -252,9 +259,7 @@ private:
   const double RECALL_REPORT_PACKER_FLUSH_TIME = 180;
 };
 
-}
-}
-}
-}
-
-
+}  // namespace daemon
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

@@ -30,7 +30,7 @@ namespace mediachanger {
 struct RmcUnmountMsgBody {
   uint32_t uid;
   uint32_t gid;
-  char unusedLoader[1]; // Should always be set to the emtpy string
+  char unusedLoader[1];  // Should always be set to the emtpy string
   char vid[CA_MAXVIDLEN + 1];
   uint16_t drvOrd;
   uint16_t force;
@@ -42,8 +42,7 @@ struct RmcUnmountMsgBody {
    * the empty string.
    */
   RmcUnmountMsgBody();
-}; // struct RmcUnmountMsgBody
+};  // struct RmcUnmountMsgBody
 
-} // namespace mediachanger
-} // namespace cta
-
+}  // namespace mediachanger
+}  // namespace cta

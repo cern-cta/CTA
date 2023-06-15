@@ -14,7 +14,7 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
- 
+
 #pragma once
 
 #include "IHandler.hpp"
@@ -32,28 +32,21 @@ namespace server {
 class AsyncServer;
 
 class TapeLsRequestHandler : public request::IHandler {
-
 public:
   TapeLsRequestHandler() = delete;
-  TapeLsRequestHandler(cta::log::Logger& log, AsyncServer& asyncServer,
-                   cta::frontend::rpc::CtaRpcStream::AsyncService& ctaRpcStreamSvc
-                  );
+  TapeLsRequestHandler(cta::log::Logger& log,
+                       AsyncServer& asyncServer,
+                       cta::frontend::rpc::CtaRpcStream::AsyncService& ctaRpcStreamSvc);
   ~TapeLsRequestHandler() override;
-  
-  void init() override {}; //  Nothnig todo
-  bool next(const bool bOk) override; // can thorw
+
+  void init() override {};             //  Nothnig todo
+  bool next(const bool bOk) override;  // can thorw
 
 private:
   const unsigned int CHUNK_SIZE = 4 * 1024;
-  
-  enum class StreamState : unsigned int {
-    NEW = 1,
-    PROCESSING,
-    WRITE,
-    ERROR,
-    FINISH
-  };
-  
+
+  enum class StreamState : unsigned int { NEW = 1, PROCESSING, WRITE, ERROR, FINISH };
+
   cta::log::Logger& m_log;
   cta::frontend::grpc::request::Tag m_tag;
   AsyncServer& m_asyncServer;
@@ -65,7 +58,7 @@ private:
    * client.
    */
   ::grpc::ServerContext m_ctx;
-  
+
   // Request from the client
   cta::frontend::rpc::AdminRequest m_request;
   // Response send back to the client
@@ -74,10 +67,9 @@ private:
   ::grpc::ServerAsyncWriter<cta::frontend::rpc::StreamResponse> m_writer;
   cta::catalogue::TapeSearchCriteria m_searchCriteria;
   std::list<common::dataStructures::Tape> m_tapeList;
-    
 };
 
-} // namespace server
-} // namespace grpc
-} // namespace frontend
-} // namespace cta
+}  // namespace server
+}  // namespace grpc
+}  // namespace frontend
+}  // namespace cta

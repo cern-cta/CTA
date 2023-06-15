@@ -21,8 +21,7 @@
 
 #include <string>
 
-
-namespace cta    {
+namespace cta {
 namespace exception {
 
 /**
@@ -30,7 +29,6 @@ namespace exception {
  */
 class LostDatabaseConnection : public cta::exception::Exception {
 public:
-
   /**
    * Constructor.
    *
@@ -39,16 +37,15 @@ public:
    * @param embedBacktrace whether to embed a backtrace of where the
    * exception was throw in the message
    */
-  LostDatabaseConnection(const std::string &context = "", const bool embedBacktrace = true);
+  LostDatabaseConnection(const std::string& context = "", const bool embedBacktrace = true);
 
   /**
    * Empty Destructor, explicitely non-throwing (needed for std::exception
    * inheritance)
    */
   ~LostDatabaseConnection() noexcept override;
-  
-}; // class LostDatabaseConnection
 
-} // namespace exception
-} // namespace cta
+};  // class LostDatabaseConnection
 
+}  // namespace exception
+}  // namespace cta

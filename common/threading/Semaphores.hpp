@@ -23,57 +23,60 @@
 #include "common/threading/Mutex.hpp"
 
 namespace cta {
-namespace threading {   
+namespace threading {
 
 /**
    * An exception throwing wrapper to posix semaphores.
    */
-  class PosixSemaphore {
-  public:
-    class Timeout{};
-    PosixSemaphore(int initial = 0) ;
-    ~PosixSemaphore();
-    void acquire() ;
-    void acquireWithTimeout(uint64_t timeout_us); /**< Throws an exception (Timeout) in case of timeout */
-    bool tryAcquire() ;
-    void release(int n=1) ;
-  private:
-    sem_t m_sem;
-    /* this mutex protects against destruction unser the feet of the last
-     *  the poster (race condition in glibc) */
-    Mutex m_mutexPosterProtection;
-  };
+class PosixSemaphore {
+public:
+  class Timeout {};
 
-  /**
+  PosixSemaphore(int initial = 0);
+  ~PosixSemaphore();
+  void acquire();
+  void acquireWithTimeout(uint64_t timeout_us); /**< Throws an exception (Timeout) in case of timeout */
+  bool tryAcquire();
+  void release(int n = 1);
+
+private:
+  sem_t m_sem;
+  /* this mutex protects against destruction unser the feet of the last
+     *  the poster (race condition in glibc) */
+  Mutex m_mutexPosterProtection;
+};
+
+/**
    * An exception throwing alternative implementation of semaphores, for systems
    * where posix semaphores are not availble (MacOSX at the time of writing)
    */
-  class CondVarSemaphore {
-  public:
-    CondVarSemaphore(int initial = 0) ;
-    ~CondVarSemaphore();
-    void acquire() ;
-    bool tryAcquire() ;
-    void release(int n=1) ;
-  private:
-    pthread_cond_t m_cond;
-    pthread_mutex_t m_mutex;
-    int m_value;
-  };
+class CondVarSemaphore {
+public:
+  CondVarSemaphore(int initial = 0);
+  ~CondVarSemaphore();
+  void acquire();
+  bool tryAcquire();
+  void release(int n = 1);
+
+private:
+  pthread_cond_t m_cond;
+  pthread_mutex_t m_mutex;
+  int m_value;
+};
 
 #ifndef __APPLE__
-  class Semaphore: public PosixSemaphore {
-  public:
-    Semaphore(int initial=0): PosixSemaphore(initial) {}
-  };
+class Semaphore : public PosixSemaphore {
+public:
+  Semaphore(int initial = 0) : PosixSemaphore(initial) {}
+};
 #else
-  /* Apple does not like posix semaphores :((
+/* Apple does not like posix semaphores :((
      We have to roll our own. */
-  class Semaphore: public CondVarSemaphore {
-  public:
-    Semaphore(int initial=0): CondVarSemaphore(initial) {}
-  };
-#endif // ndef __APPLE__
-  
-} // namespace threading
-} // namespace cta
+class Semaphore : public CondVarSemaphore {
+public:
+  Semaphore(int initial = 0) : CondVarSemaphore(initial) {}
+};
+#endif  // ndef __APPLE__
+
+}  // namespace threading
+}  // namespace cta

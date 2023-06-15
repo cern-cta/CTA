@@ -30,16 +30,11 @@ namespace tapeserver {
 namespace drive {
 class DriveInterface;
 }
-}
+}  // namespace tapeserver
 
 namespace tapeFile {
 
-enum class PartOfFile {
-  Header,
-  HeaderProcessing,
-  Payload,
-  Trailer
-};
+enum class PartOfFile { Header, HeaderProcessing, Payload, Trailer };
 
 /**
   * Class keeping track of a whole tape read session over an AUL formatted
@@ -55,7 +50,7 @@ public:
   /**
     * DriveGeneric object referencing the drive used during this read session
     */
-  tapeserver::drive::DriveInterface &m_drive;
+  tapeserver::drive::DriveInterface& m_drive;
 
   /**
     * Volume Serial Number
@@ -68,19 +63,13 @@ public:
   */
   const bool m_useLbp;
 
-  inline void setCorrupted() throw() {
-    m_corrupted = true;
-  }
+  inline void setCorrupted() throw() { m_corrupted = true; }
 
-  inline bool isCorrupted() throw() {
-    return m_corrupted;
-  }
+  inline bool isCorrupted() throw() { return m_corrupted; }
 
-  inline bool isTapeWithLbp() throw() {
-    return m_detectedLbp;
-  }
+  inline bool isTapeWithLbp() throw() { return m_detectedLbp; }
 
-  inline void lock()  {
+  inline void lock() {
     if (m_locked) {
       throw SessionAlreadyInUse();
     }
@@ -97,33 +86,26 @@ public:
     m_locked = false;
   }
 
-  inline void setCurrentFseq(uint32_t fseq) {
-    m_fseq = fseq;
-  }
+  inline void setCurrentFseq(uint32_t fseq) { m_fseq = fseq; }
 
-  inline uint32_t getCurrentFseq() {
-    return m_fseq;
-  }
+  inline uint32_t getCurrentFseq() { return m_fseq; }
 
-  inline const tapeserver::daemon::VolumeInfo& getVolumeInfo() {
-    return m_volInfo;
-  }
+  inline const tapeserver::daemon::VolumeInfo& getVolumeInfo() { return m_volInfo; }
 
-  inline void setCurrentFilePart(const PartOfFile& currentFilePart) {
-    m_currentFilePart = currentFilePart;
-  }
+  inline void setCurrentFilePart(const PartOfFile& currentFilePart) { m_currentFilePart = currentFilePart; }
 
-  inline PartOfFile getCurrentFilePart() {
-    return m_currentFilePart;
-  }
+  inline PartOfFile getCurrentFilePart() { return m_currentFilePart; }
 
   inline std::string getLBPMode() {
-    if (m_useLbp && m_detectedLbp)
+    if (m_useLbp && m_detectedLbp) {
       return "LBP_On";
-    else if (!m_useLbp && m_detectedLbp)
+    }
+    else if (!m_useLbp && m_detectedLbp) {
       return "LBP_Off_but_present";
-    else if (!m_detectedLbp)
+    }
+    else if (!m_detectedLbp) {
       return "LBP_Off";
+    }
     throw cta::exception::Exception("In ReadSession::getLBPMode(): unexpected state");
   }
 
@@ -135,9 +117,9 @@ protected:
     * @param vid: volume name of the tape we would like to read from
     * @param useLbp: castor.conf option to use or not to use LBP in tapeserverd
     */
-  ReadSession(tapeserver::drive::DriveInterface &drive,
-          const tapeserver::daemon::VolumeInfo &volInfo,
-          const bool useLbp);
+  ReadSession(tapeserver::drive::DriveInterface& drive,
+              const tapeserver::daemon::VolumeInfo& volInfo,
+              const bool useLbp);
 
   /**
     * set to true in case the destructor of ReadFile finds a missing lock on its session

@@ -29,9 +29,8 @@ namespace disk {
  * Utility singleton managing the rados stripers connections by name.
  * The destructor will implicitly release the pool connections.
  */
-class RadosStriperPool{
+class RadosStriperPool {
 public:
-
   /** constructor */
   RadosStriperPool() : m_maxStriperIdx(0), m_striperIdx(0) {};
 
@@ -39,13 +38,13 @@ public:
    * Get pointer to a connection to the rados user (or one from the cache).
    * This function throws exceptions in case of problem.
    */
-  libradosstriper::RadosStriper * throwingGetStriper(const std::string & userAtPool);
+  libradosstriper::RadosStriper* throwingGetStriper(const std::string& userAtPool);
 
   /**
    * Get pointer to a connection to the rados user (or one from the cache).
    * This function returns nullptr in case of problem.
    */
-  libradosstriper::RadosStriper * getStriper(const std::string & userAtPool);
+  libradosstriper::RadosStriper* getStriper(const std::string& userAtPool);
 
   /**
    * Clear the map of all connections
@@ -57,15 +56,13 @@ public:
   virtual ~RadosStriperPool();
 
 private:
-
   /// Accessor to next striper pool index
   unsigned int getStriperIdxAndIncrease();
 
 private:
-
   // We use a map of pointers instead of maps of unique_ptr who do not work in
   // gcc 4.4 (in SLC 6)
-  typedef std::map<std::string, libradosstriper::RadosStriper *> StriperDict;
+  typedef std::map<std::string, libradosstriper::RadosStriper*> StriperDict;
   /// striper pool
   std::vector<StriperDict> m_stripers;
   /// mutex protecting the striper pool
@@ -76,5 +73,5 @@ private:
   unsigned int m_striperIdx;
 };
 
-} // namespace disk
-} // namespace cta
+}  // namespace disk
+}  // namespace cta

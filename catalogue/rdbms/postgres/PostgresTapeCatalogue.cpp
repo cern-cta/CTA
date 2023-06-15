@@ -25,30 +25,33 @@
 namespace cta {
 namespace catalogue {
 
-PostgresTapeCatalogue::PostgresTapeCatalogue(log::Logger &log,
-  std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue)
-  : RdbmsTapeCatalogue(log, connPool, rdbmsCatalogue) {}
+PostgresTapeCatalogue::PostgresTapeCatalogue(log::Logger& log,
+                                             std::shared_ptr<rdbms::ConnPool> connPool,
+                                             RdbmsCatalogue* rdbmsCatalogue) :
+RdbmsTapeCatalogue(log, connPool, rdbmsCatalogue) {}
 
-uint64_t PostgresTapeCatalogue::getTapeLastFSeq(rdbms::Conn &conn, const std::string &vid) const {
+uint64_t PostgresTapeCatalogue::getTapeLastFSeq(rdbms::Conn& conn, const std::string& vid) const {
   try {
-    const char *const sql =
-      "SELECT "
-        "LAST_FSEQ AS LAST_FSEQ "
-      "FROM "
-        "TAPE "
-      "WHERE "
-        "VID = :VID";
+    const char* const sql = "SELECT "
+                            "LAST_FSEQ AS LAST_FSEQ "
+                            "FROM "
+                            "TAPE "
+                            "WHERE "
+                            "VID = :VID";
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":VID", vid);
     auto rset = stmt.executeQuery();
-    if(rset.next()) {
+    if (rset.next()) {
       return rset.columnUint64("LAST_FSEQ");
-    } else {
+    }
+    else {
       throw exception::Exception(std::string("No such tape with vid=") + vid);
     }
-  } catch(exception::UserError &) {
+  }
+  catch (exception::UserError&) {
     throw;
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }

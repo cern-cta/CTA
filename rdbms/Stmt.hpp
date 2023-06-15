@@ -29,7 +29,7 @@ namespace cta {
 namespace rdbms {
 
 namespace wrapper {
-  class StmtWrapper;
+class StmtWrapper;
 }
 
 class StmtPool;
@@ -41,7 +41,6 @@ class StmtPool;
  */
 class Stmt {
 public:
-
   /**
    * Constructor.
    */
@@ -53,19 +52,19 @@ public:
    * @param stmt The database statement.
    * @param stmtPool The database statement pool to which the m_stmt should be returned.
    */
-  Stmt(std::unique_ptr<wrapper::StmtWrapper> stmt, StmtPool &stmtPool);
+  Stmt(std::unique_ptr<wrapper::StmtWrapper> stmt, StmtPool& stmtPool);
 
   /**
    * Deletion of the copy constructor.
    */
-  Stmt(Stmt &) = delete;
+  Stmt(Stmt&) = delete;
 
   /**
    * Move constructor.
    *
    * @param other The other object.
    */
-  Stmt(Stmt &&other);
+  Stmt(Stmt&& other);
 
   /**
    * Destructor.
@@ -85,7 +84,7 @@ public:
   /**
    * Deletion of the copy assignment operator.
    */
-  Stmt &operator=(const Stmt &) = delete;
+  Stmt& operator=(const Stmt&) = delete;
 
   /**
    * Move assignment operator.
@@ -93,14 +92,14 @@ public:
    * @param rhs The object on the right-hand side of the operator.
    * @return This object.
    */
-  Stmt &operator=(Stmt &&rhs);
+  Stmt& operator=(Stmt&& rhs);
 
   /**
    * Returns the SQL statement.
    *
    * @return The SQL statement.
    */
-  const std::string &getSql() const;
+  const std::string& getSql() const;
 
   /**
    * Returns the index of the specified SQL parameter.
@@ -108,7 +107,7 @@ public:
    * @param paramName The name of the SQL parameter.
    * @return The index of the SQL parameter.
    */
-  uint32_t getParamIdx(const std::string &paramName) const;
+  uint32_t getParamIdx(const std::string& paramName) const;
 
   /**
    * Binds an SQL parameter.
@@ -116,7 +115,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint8(const std::string &paramName, const std::optional<uint8_t> &paramValue);
+  void bindUint8(const std::string& paramName, const std::optional<uint8_t>& paramValue);
 
   /**
    * Binds an SQL parameter.
@@ -124,7 +123,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint16(const std::string &paramName, const std::optional<uint16_t> &paramValue);
+  void bindUint16(const std::string& paramName, const std::optional<uint16_t>& paramValue);
 
   /**
    * Binds an SQL parameter.
@@ -132,7 +131,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint32(const std::string &paramName, const std::optional<uint32_t> &paramValue);
+  void bindUint32(const std::string& paramName, const std::optional<uint32_t>& paramValue);
 
   /**
    * Binds an SQL parameter.
@@ -140,7 +139,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint64(const std::string &paramName, const std::optional<uint64_t> &paramValue);
+  void bindUint64(const std::string& paramName, const std::optional<uint64_t>& paramValue);
 
   /**
    * Binds an SQL parameter.
@@ -148,7 +147,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindDouble(const std::string &paramName, const std::optional<double> &paramValue);
+  void bindDouble(const std::string& paramName, const std::optional<double>& paramValue);
 
   /**
    * Binds an SQL parameter.
@@ -156,7 +155,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindBool(const std::string &paramName, const std::optional<bool> &paramValue);
+  void bindBool(const std::string& paramName, const std::optional<bool>& paramValue);
 
   /**
    * Binds an SQL parameter of type binary blob.
@@ -164,7 +163,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindBlob(const std::string &paramName, const std::string &paramValue);
+  void bindBlob(const std::string& paramName, const std::string& paramValue);
 
   /**
    * Binds an SQL parameter of type optional-string.
@@ -176,7 +175,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindString(const std::string &paramName, const std::optional<std::string> &paramValue);
+  void bindString(const std::string& paramName, const std::optional<std::string>& paramValue);
 
   /**
    *  Executes the statement and returns the result set.
@@ -202,10 +201,9 @@ public:
    * Returns a reference to the underlying statement object that is not pool
    * aware.
    */
-  wrapper::StmtWrapper &getStmt();
+  wrapper::StmtWrapper& getStmt();
 
 private:
-
   /**
    * The database statement.
    */
@@ -214,9 +212,9 @@ private:
   /**
    * The database statement pool to which the m_stmt should be returned.
    */
-  StmtPool *m_stmtPool;
+  StmtPool* m_stmtPool;
 
-}; // class Stmt
+};  // class Stmt
 
-} // namespace rdbms
-} // namespace cta
+}  // namespace rdbms
+}  // namespace cta

@@ -22,23 +22,19 @@
 
 namespace cta {
 
-  namespace exception {
+namespace exception {
 
-    /**
+/**
      * Invalid argument exception
      */
-    class NoEntry : public cta::exception::Exception {
-      
-    public:
-      
-      /**
+class NoEntry : public cta::exception::Exception {
+public:
+  /**
        * default constructor
        */
-      NoEntry();
+  NoEntry();
+};
 
-    };
-      
-  } // end of namespace exception
+}  // end of namespace exception
 
-} // end of namespace cta
-
+}  // end of namespace cta

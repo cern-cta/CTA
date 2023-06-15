@@ -34,7 +34,7 @@
 
 namespace unitTests {
 
-class cta_catalogue_MediaTypeTest : public ::testing::TestWithParam<cta::catalogue::CatalogueFactory **> {
+class cta_catalogue_MediaTypeTest : public ::testing::TestWithParam<cta::catalogue::CatalogueFactory**> {
 public:
   cta_catalogue_MediaTypeTest();
 
@@ -58,8 +58,8 @@ protected:
    * @param listOfMediaTypes The list of tape media types.
    * @return Map from tape media type name to tape media type.
    */
-  std::map<std::string, cta::catalogue::MediaTypeWithLogs> mediaTypeWithLogsListToMap(
-    const std::list<cta::catalogue::MediaTypeWithLogs> &listOfMediaTypes);
+  std::map<std::string, cta::catalogue::MediaTypeWithLogs>
+    mediaTypeWithLogsListToMap(const std::list<cta::catalogue::MediaTypeWithLogs>& listOfMediaTypes);
 };
 
 }  // namespace unitTests

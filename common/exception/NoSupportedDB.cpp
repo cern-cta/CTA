@@ -23,9 +23,7 @@ namespace exception {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-NoSupportedDB::NoSupportedDB(const std::string &what):
-  Exception(what) {
-}
+NoSupportedDB::NoSupportedDB(const std::string& what) : Exception(what) {}
 
 }  // namespace exception
 }  // namespace cta

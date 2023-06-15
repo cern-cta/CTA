@@ -23,7 +23,8 @@
 
 #include "Backtrace.hpp"
 
-namespace cta { namespace exception {
+namespace cta {
+namespace exception {
 /**
  * class Exception
  * A simple exception used for error handling in cts
@@ -38,7 +39,7 @@ public:
    * @param embedBacktrace whether to embed a backtrace of where the
    * exception was throw in the message
    */
-  Exception(const std::string &context = "", const bool embedBacktrace = true);
+  Exception(const std::string& context = "", const bool embedBacktrace = true);
 
   /**
    * Copy Constructor
@@ -48,21 +49,20 @@ public:
   /**
    * Assignment operator
    */
-  Exception& operator=(const Exception &rhs);
+  Exception& operator=(const Exception& rhs);
 
   /**
    * Empty Destructor, explicitely non-throwing (needed for std::exception
    * inheritance)
    */
   virtual ~Exception();
+
   /**
    * Get the value of m_message
    * A message explaining why this exception was raised
    * @return the value of m_message
    */
-  std::ostringstream& getMessage() {
-    return m_message;
-  }
+  std::ostringstream& getMessage() { return m_message; }
 
   /**
    * Get the value of m_message
@@ -70,31 +70,27 @@ public:
    * @return the value of m_message
    */
 
-  const std::ostringstream& getMessage() const {
-    return m_message;
-  }
+  const std::ostringstream& getMessage() const { return m_message; }
+
   /**
    * Get the value of m_message as a sting, for const-c orrectness
    * @return the value as a string.
    */
 
-  std::string getMessageValue() const {
-    return m_message.str();
-  }
+  std::string getMessageValue() const { return m_message.str(); }
+
   /**
    * Get the backtrace's contents
    * @return backtrace in a standard string.
    */
-  std::string const backtrace() const {
-    return (std::string)m_backtrace;
-  }
+  std::string const backtrace() const { return (std::string) m_backtrace; }
 
   /**
    * Updates the m_what member with a concatenation of the message and
    * the stack trace.
    * @return pointer to m_what's contents
    */
-  virtual const char * what() const noexcept;
+  virtual const char* what() const noexcept;
 
 private:
   /// A message explaining why this exception was raised
@@ -107,15 +103,14 @@ private:
   mutable std::string m_what;
 
 protected:
-  void setWhat(const std::string &w);
+  void setWhat(const std::string& w);
 
   /**
    * Backtrace object. Its constructor does the heavy lifting of
    * generating the backtrace.
    */
   Backtrace m_backtrace;
-
-} ;
+};
 
 /**
  * class TimeoutException
@@ -125,6 +120,10 @@ class TimeoutException : public Exception {
   using Exception::Exception;
 };
 
-}} // namespace cta::exception
+}  // namespace exception
+}  // namespace cta
 
-#define CTA_GENERATE_EXCEPTION_CLASS(A) class A: public cta::exception::Exception { using Exception::Exception; }
+#define CTA_GENERATE_EXCEPTION_CLASS(A)        \
+  class A : public cta::exception::Exception { \
+    using Exception::Exception;                \
+  }

@@ -33,9 +33,9 @@ std::string Sqlite::rcToStr(const int rc) {
       return "Primary key error";
     case SQLITE_CONSTRAINT_UNIQUE:
       return "Unique constraint error";
-    default: 
+    default:
       // By default, just use the basic error code.
-      switch(rc & 0xFF) {
+      switch (rc & 0xFF) {
         case SQLITE_ABORT:
           return "Abort requested";
         case SQLITE_AUTH:
@@ -90,16 +90,15 @@ std::string Sqlite::rcToStr(const int rc) {
           return "TEXT or BLOCK too big";
         case SQLITE_ERROR:
           return "Generic error";
-      default: {
+        default: {
           std::ostringstream oss;
           oss << "Unknown SQLite return code " << rc;
           return oss.str();
         }
       }
-
   }
 }
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+}  // namespace wrapper
+}  // namespace rdbms
+}  // namespace cta

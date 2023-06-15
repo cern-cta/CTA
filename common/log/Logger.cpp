@@ -29,52 +29,48 @@ namespace log {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-Logger::Logger(const std::string &hostName, const std::string &programName, const int logMask):
-  m_hostName(hostName), m_programName(programName), m_logMask(logMask),
-  m_priorityToText(generatePriorityToTextMap()) {}
+Logger::Logger(const std::string& hostName, const std::string& programName, const int logMask) :
+m_hostName(hostName),
+m_programName(programName),
+m_logMask(logMask),
+m_priorityToText(generatePriorityToTextMap()) {}
 
 //------------------------------------------------------------------------------
 // getProgramName
 //------------------------------------------------------------------------------
-const std::string &Logger::getProgramName() const {
+const std::string& Logger::getProgramName() const {
   return m_programName;
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-Logger::~Logger() {
-}
+Logger::~Logger() {}
 
 //-----------------------------------------------------------------------------
 // operator()
 //-----------------------------------------------------------------------------
-void Logger::operator() (
-  const int priority,
-  const std::string &msg,
-  const std::list<Param> &params) {
-
+void Logger::operator()(const int priority, const std::string& msg, const std::list<Param>& params) {
   const std::string rawParams;
   struct timeval timeStamp;
   gettimeofday(&timeStamp, nullptr);
   const int pid = getpid();
 
   // Ignore messages whose priority is not of interest
-  if(priority > m_logMask) {
+  if (priority > m_logMask) {
     return;
   }
 
   // Try to find the textual representation of the syslog priority
-  std::map<int, std::string>::const_iterator priorityTextPair =
-    m_priorityToText.find(priority);
+  std::map<int, std::string>::const_iterator priorityTextPair = m_priorityToText.find(priority);
 
   // Do nothing if the log priority is not valid
-  if(m_priorityToText.end() == priorityTextPair) {
+  if (m_priorityToText.end() == priorityTextPair) {
     return;
   }
 
   // Safe to get a reference to the textual representation of the priority
-  const std::string &priorityText = priorityTextPair->second;
+  const std::string& priorityText = priorityTextPair->second;
 
   const std::string header = createMsgHeader(timeStamp, m_hostName, m_programName, pid);
   const std::string body = createMsgBody(priority, priorityText, msg, params, rawParams, m_programName, pid);
@@ -85,13 +81,11 @@ void Logger::operator() (
 //-----------------------------------------------------------------------------
 // cleanString
 //-----------------------------------------------------------------------------
-std::string Logger::cleanString(const std::string &s,
-  const bool replaceUnderscores) {
+std::string Logger::cleanString(const std::string& s, const bool replaceUnderscores) {
   // Trim both left and right white-space
   std::string result = utils::trimString(s);
 
   for (std::string::iterator it = result.begin(); it != result.end(); ++it) {
-
     // Replace double quote with single quote
     if ('"' == *it) {
       *it = '\'';
@@ -103,7 +97,7 @@ std::string Logger::cleanString(const std::string &s,
     }
 
     // If requested, replace spaces with underscores
-    if(replaceUnderscores && ' ' == *it) {
+    if (replaceUnderscores && ' ' == *it) {
       *it = '_';
     }
   }
@@ -114,16 +108,14 @@ std::string Logger::cleanString(const std::string &s,
 //------------------------------------------------------------------------------
 // generatePriorityToTextMap
 //------------------------------------------------------------------------------
-std::map<int, std::string>
-  Logger::generatePriorityToTextMap() {
+std::map<int, std::string> Logger::generatePriorityToTextMap() {
   return PriorityMaps::c_priorityToTextMap;
 }
 
 //------------------------------------------------------------------------------
 // generateConfigTextToPriorityMap
 //------------------------------------------------------------------------------
-std::map<std::string, int>
-  Logger::generateConfigTextToPriorityMap() {
+std::map<std::string, int> Logger::generateConfigTextToPriorityMap() {
   return PriorityMaps::c_configTextToPriorityMap;
 }
 
@@ -133,7 +125,8 @@ std::map<std::string, int>
 void Logger::setLogMask(const std::string logMask) {
   try {
     setLogMask(toLogLevel(logMask));
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     throw exception::Exception(std::string("Failed to set log mask: ") + ex.getMessage().str());
   }
 }
@@ -148,11 +141,10 @@ void Logger::setLogMask(const int logMask) {
 //-----------------------------------------------------------------------------
 // createMsgHeader
 //-----------------------------------------------------------------------------
-std::string Logger::createMsgHeader(
-  const struct timeval &timeStamp,
-  const std::string &hostName,
-  const std::string &programName,
-  const int pid) {
+std::string Logger::createMsgHeader(const struct timeval& timeStamp,
+                                    const std::string& hostName,
+                                    const std::string& programName,
+                                    const int pid) {
   std::ostringstream os;
   char buf[80];
   int bufLen = sizeof(buf);
@@ -170,30 +162,27 @@ std::string Logger::createMsgHeader(
 //-----------------------------------------------------------------------------
 // createMsgBody
 //-----------------------------------------------------------------------------
-std::string Logger::createMsgBody(
-  const int priority,
-  const std::string &priorityText,
-  const std::string &msg,
-  const std::list<Param> &params,
-  const std::string &rawParams,
-  const std::string &programName,
-  const int pid) {
+std::string Logger::createMsgBody(const int priority,
+                                  const std::string& priorityText,
+                                  const std::string& msg,
+                                  const std::list<Param>& params,
+                                  const std::string& rawParams,
+                                  const std::string& programName,
+                                  const int pid) {
   std::ostringstream os;
 
   const int tid = syscall(__NR_gettid);
 
   // Append the log level, the thread id and the message text
-  os << "LVL=\"" << priorityText << "\" PID=\"" << pid << "\" TID=\"" << tid << "\" MSG=\"" <<
-    msg << "\" ";
+  os << "LVL=\"" << priorityText << "\" PID=\"" << pid << "\" TID=\"" << tid << "\" MSG=\"" << msg << "\" ";
 
   // Process parameters
-  for(auto itor = params.cbegin(); itor != params.cend(); itor++) {
-    const Param &param = *itor;
+  for (auto itor = params.cbegin(); itor != params.cend(); itor++) {
+    const Param& param = *itor;
 
     // Check the parameter name, if it's an empty string set the value to
     // "Undefined".
-    const std::string name = param.getName() == "" ? "Undefined" :
-      cleanString(param.getName(), true);
+    const std::string name = param.getName() == "" ? "Undefined" : cleanString(param.getName(), true);
 
     // Process the parameter value
     const std::string value = cleanString(param.getValue(), false);
@@ -208,5 +197,5 @@ std::string Logger::createMsgBody(
   return os.str();
 }
 
-} // namespace log
-} // namespace cta
+}  // namespace log
+}  // namespace cta

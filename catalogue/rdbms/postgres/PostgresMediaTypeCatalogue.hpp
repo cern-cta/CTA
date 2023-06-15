@@ -29,12 +29,13 @@ class RdbmsCatalogue;
 
 class PostgresMediaTypeCatalogue : public RdbmsMediaTypeCatalogue {
 public:
-  PostgresMediaTypeCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
-    RdbmsCatalogue* rdbmsCatalogue);
+  PostgresMediaTypeCatalogue(log::Logger& log,
+                             std::shared_ptr<rdbms::ConnPool> connPool,
+                             RdbmsCatalogue* rdbmsCatalogue);
   ~PostgresMediaTypeCatalogue() override = default;
 
 private:
-  uint64_t getNextMediaTypeId(rdbms::Conn &conn) const override;
+  uint64_t getNextMediaTypeId(rdbms::Conn& conn) const override;
 };  // class PostgresMediaTypeCatalogue
 
 }  // namespace catalogue

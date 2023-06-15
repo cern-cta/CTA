@@ -24,23 +24,25 @@
 namespace cta {
 namespace catalogue {
 
-PostgresLogicalLibraryCatalogue::PostgresLogicalLibraryCatalogue(log::Logger &log,
-  std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue)
-  : RdbmsLogicalLibraryCatalogue(log, connPool, rdbmsCatalogue) {}
+PostgresLogicalLibraryCatalogue::PostgresLogicalLibraryCatalogue(log::Logger& log,
+                                                                 std::shared_ptr<rdbms::ConnPool> connPool,
+                                                                 RdbmsCatalogue* rdbmsCatalogue) :
+RdbmsLogicalLibraryCatalogue(log, connPool, rdbmsCatalogue) {}
 
-uint64_t PostgresLogicalLibraryCatalogue::getNextLogicalLibraryId(rdbms::Conn &conn) const {
+uint64_t PostgresLogicalLibraryCatalogue::getNextLogicalLibraryId(rdbms::Conn& conn) const {
   try {
-    const char *const sql =
-      "select NEXTVAL('LOGICAL_LIBRARY_ID_SEQ') AS LOGICAL_LIBRARY_ID";
+    const char* const sql = "select NEXTVAL('LOGICAL_LIBRARY_ID_SEQ') AS LOGICAL_LIBRARY_ID";
     auto stmt = conn.createStmt(sql);
     auto rset = stmt.executeQuery();
-    if(!rset.next()) {
+    if (!rset.next()) {
       throw exception::Exception("Result set is unexpectedly empty");
     }
     return rset.columnUint64("LOGICAL_LIBRARY_ID");
-  } catch(exception::UserError &) {
+  }
+  catch (exception::UserError&) {
     throw;
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }

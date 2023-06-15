@@ -19,19 +19,18 @@
 
 namespace cta {
 namespace log {
-  
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-StdoutLogger::StdoutLogger(const std::string &hostName, const std::string &programName, bool simple):
-  Logger(hostName, programName, DEBUG), m_simple(simple) {
-}
+StdoutLogger::StdoutLogger(const std::string& hostName, const std::string& programName, bool simple) :
+Logger(hostName, programName, DEBUG),
+m_simple(simple) {}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-StdoutLogger::~StdoutLogger() {
-}
+StdoutLogger::~StdoutLogger() {}
 
 //------------------------------------------------------------------------------
 // prepareForFork
@@ -41,15 +40,15 @@ void StdoutLogger::prepareForFork() {}
 //------------------------------------------------------------------------------
 // writeMsgToUnderlyingLoggingSystem
 //------------------------------------------------------------------------------
-void StdoutLogger::writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) {
-
+void StdoutLogger::writeMsgToUnderlyingLoggingSystem(const std::string& header, const std::string& body) {
   if (m_simple) {
-      printf("%s\n", body.c_str());
-  }  else {
-      const std::string headerPlusBody = header + body;
-      printf("%s\n", headerPlusBody.c_str());
+    printf("%s\n", body.c_str());
+  }
+  else {
+    const std::string headerPlusBody = header + body;
+    printf("%s\n", headerPlusBody.c_str());
   }
 }
 
-} // namespace log
-} // namespace cta
+}  // namespace log
+}  // namespace cta

@@ -31,42 +31,54 @@ namespace cta {
 namespace postgresscheddb {
 
 class RepackRequest : public SchedulerDatabase::RepackRequest {
- friend class cta::PostgresSchedDB;
+  friend class cta::PostgresSchedDB;
 
- public:
+public:
+  RepackRequest(rdbms::ConnPool& pool, catalogue::Catalogue& catalogue, log::LogContext& lc) :
+  m_connPool(pool),
+  m_catalogue(catalogue),
+  m_lc(lc) {}
 
-  RepackRequest(rdbms::ConnPool &pool, catalogue::Catalogue &catalogue, log::LogContext &lc) : m_connPool(pool), m_catalogue(catalogue), m_lc(lc) { }
-
-  RepackRequest(rdbms::ConnPool &pool, catalogue::Catalogue &catalogue, log::LogContext& lc, const postgresscheddb::sql::RepackJobQueueRow &row) : m_connPool(pool), m_catalogue(catalogue), m_lc(lc) {
+  RepackRequest(rdbms::ConnPool& pool,
+                catalogue::Catalogue& catalogue,
+                log::LogContext& lc,
+                const postgresscheddb::sql::RepackJobQueueRow& row) :
+  m_connPool(pool),
+  m_catalogue(catalogue),
+  m_lc(lc) {
     *this = row;
   }
 
-  RepackRequest& operator=(const postgresscheddb::sql::RepackJobQueueRow &row);
+  RepackRequest& operator=(const postgresscheddb::sql::RepackJobQueueRow& row);
 
   uint64_t getLastExpandedFSeq() override;
   void setLastExpandedFSeq(uint64_t fseq) override;
 
   uint64_t addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests,
-      cta::common::dataStructures::ArchiveRoute::FullMap & archiveRoutesMap, uint64_t maxFSeqLowBound,
-      const uint64_t maxAddedFSeq, const TotalStatsFiles &totalStatsFiles, disk::DiskSystemList diskSystemList,
-      log::LogContext & lc) override;
+                                        cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap,
+                                        uint64_t maxFSeqLowBound,
+                                        const uint64_t maxAddedFSeq,
+                                        const TotalStatsFiles& totalStatsFiles,
+                                        disk::DiskSystemList diskSystemList,
+                                        log::LogContext& lc) override;
 
   void expandDone() override;
   void fail() override;
-  void requeueInToExpandQueue(log::LogContext &lc) override;
+  void requeueInToExpandQueue(log::LogContext& lc) override;
   void setExpandStartedAndChangeStatus() override;
-  void fillLastExpandedFSeqAndTotalStatsFile(uint64_t &fSeq, TotalStatsFiles &totalStatsFiles) override;
+  void fillLastExpandedFSeqAndTotalStatsFile(uint64_t& fSeq, TotalStatsFiles& totalStatsFiles) override;
 
-
-  void setVid(const std::string & vid);
+  void setVid(const std::string& vid);
   void setType(common::dataStructures::RepackInfo::Type repackType);
-  void setBufferURL(const std::string & bufferURL);
-  void setMountPolicy(const common::dataStructures::MountPolicy &mp);
+  void setBufferURL(const std::string& bufferURL);
+  void setMountPolicy(const common::dataStructures::MountPolicy& mp);
   void setNoRecall(const bool noRecall);
-  void setCreationLog(const common::dataStructures::EntryLog & creationLog);
+  void setCreationLog(const common::dataStructures::EntryLog& creationLog);
+
   std::string getIdStr() { return "??"; }
+
   void setTotalStats(const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles& totalStatsFiles);
-  void reportRetrieveCreationFailures(std::list<Subrequest> &notCreatedSubrequests);
+  void reportRetrieveCreationFailures(std::list<Subrequest>& notCreatedSubrequests);
 
   void commit();
   void insert();
@@ -90,15 +102,15 @@ class RepackRequest : public SchedulerDatabase::RepackRequest {
     std::set<uint32_t> archiveCopyNbAccounted;
     bool isSubreqDeleted = false;
   };
-    
+
   std::list<SubrequestPointer> m_subreqp;
   std::unique_ptr<postgresscheddb::Transaction> m_txn;
 
   // References to external objects
-  rdbms::ConnPool      &m_connPool;
-  catalogue::Catalogue &m_catalogue;
-  log::LogContext      &m_lc;
+  rdbms::ConnPool& m_connPool;
+  catalogue::Catalogue& m_catalogue;
+  log::LogContext& m_lc;
 };
 
-} //namespace postgresscheddb
-} //namespace cta
+}  //namespace postgresscheddb
+}  //namespace cta

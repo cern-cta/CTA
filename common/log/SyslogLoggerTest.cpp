@@ -25,37 +25,30 @@
 using namespace cta::log;
 
 namespace unitTests {
-  
-class cta_log_SyslogLoggerTest: public ::testing::Test {
+
+class cta_log_SyslogLoggerTest : public ::testing::Test {
 public:
-  cta_log_SyslogLoggerTest(): m_log("dummy", "unitttests") {
-  }
+  cta_log_SyslogLoggerTest() : m_log("dummy", "unitttests") {}
+
 protected:
+  virtual void SetUp() {}
 
-  virtual void SetUp() {
-  }
+  virtual void TearDown() {}
 
-  virtual void TearDown() {
-  }
   TestingSyslogLogger m_log;
-  
-}; // class SyslogLoggerTest
+
+};  // class SyslogLoggerTest
 
 TEST_F(cta_log_SyslogLoggerTest, logMsgAndParamsList) {
   std::list<Param> params;
   params.push_back(Param("testParam", "value of test param"));
 
-  ASSERT_NO_THROW(
-    m_log(
-      INFO,
-      "cta_log_SyslogLoggerTest logMsgAndParamsList",
-      params));
+  ASSERT_NO_THROW(m_log(INFO, "cta_log_SyslogLoggerTest logMsgAndParamsList", params));
 }
 
 TEST_F(cta_log_SyslogLoggerTest, logMsg) {
-  ASSERT_NO_THROW(
-    m_log(INFO, "Calling logger without parameters"));
-}   
+  ASSERT_NO_THROW(m_log(INFO, "Calling logger without parameters"));
+}
 
 TEST_F(cta_log_SyslogLoggerTest, cleanStringWithoutReplacingUnderscores) {
   const std::string s("  \t\t\n\n\"Hello there\tWorld\"  \t\t\n\n");
@@ -69,4 +62,4 @@ TEST_F(cta_log_SyslogLoggerTest, cleanStringReplacingUnderscores) {
   ASSERT_EQ(std::string("'Hello_there_World'"), cleaned);
 }
 
-} // namespace unitTests
+}  // namespace unitTests

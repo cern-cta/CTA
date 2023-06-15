@@ -27,7 +27,7 @@
 #include "common/exception/UserError.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/utils/utils.hpp"
-#include "cta_frontend.pb.h"                               //!< Auto-generated message types from .proto file
+#include "cta_frontend.pb.h"  //!< Auto-generated message types from .proto file
 
 #include "version.h"
 
@@ -37,7 +37,7 @@
 std::atomic<bool> isHeaderSent = false;
 
 std::list<cta::admin::RecycleTapeFileLsItem> deletedTapeFiles;
-std::list<std::pair<std::string,std::string>> listedTapeFiles;
+std::list<std::pair<std::string, std::string>> listedTapeFiles;
 std::list<std::string> g_storageClasses;
 std::list<std::string> g_listedVids;
 
@@ -49,8 +49,7 @@ namespace XrdSsiPb {
  * Defines how Alert messages should be logged
  */
 template<>
-void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
-{
+void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert& alert) {
   Log::DumpProtobuf(Log::PROTOBUF, &alert);
 }
 
@@ -60,51 +59,48 @@ void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
  * Defines how incoming records from the stream should be handled
  */
 template<>
-void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
-{
+void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const {
   using namespace cta::xrd;
   using namespace cta::admin;
 
   // Wait for primary response to be handled before allowing stream response
-  while(!isHeaderSent) { std::this_thread::yield(); }
+  while (!isHeaderSent) {
+    std::this_thread::yield();
+  }
 
-  switch(record.data_case()) {
-    case Data::kRtflsItem:
-      {
-        auto item = record.rtfls_item();
-        deletedTapeFiles.push_back(item);
-      }
-      break;
-    case Data::kTflsItem:
-      {
-        auto item = record.tfls_item();
-        auto instanceAndFid = std::make_pair(item.df().disk_instance(), item.df().disk_id());
-        listedTapeFiles.push_back(instanceAndFid);
-      }
-      break;
-    case Data::kSclsItem:
-      {
-        const auto item = record.scls_item();
-        g_storageClasses.push_back(item.name());
-      }
-      break;
-    case Data::kTalsItem:
-      {
-        const auto item = record.tals_item();
-        g_listedVids.push_back(item.vid());
-      }
-      break;
+  switch (record.data_case()) {
+    case Data::kRtflsItem: {
+      auto item = record.rtfls_item();
+      deletedTapeFiles.push_back(item);
+    } break;
+    case Data::kTflsItem: {
+      auto item = record.tfls_item();
+      auto instanceAndFid = std::make_pair(item.df().disk_instance(), item.df().disk_id());
+      listedTapeFiles.push_back(instanceAndFid);
+    } break;
+    case Data::kSclsItem: {
+      const auto item = record.scls_item();
+      g_storageClasses.push_back(item.name());
+    } break;
+    case Data::kTalsItem: {
+      const auto item = record.tals_item();
+      g_listedVids.push_back(item.vid());
+    } break;
     default:
-      throw std::runtime_error("Received invalid stream data from CTA Frontend for the cta-restore-deleted-files command.");
-   }
+      throw std::runtime_error(
+        "Received invalid stream data from CTA Frontend for the cta-restore-deleted-files command.");
+  }
 }
 
-} // namespace XrdSsiPb
+}  // namespace XrdSsiPb
 
 namespace cta {
 namespace cliTool {
 
-std::tuple<std::string,std::string> CatalogueFetch::getInstanceAndFid(const std::string& archiveFileId, std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr, cta::log::StdoutLogger &log) {
+std::tuple<std::string, std::string>
+  CatalogueFetch::getInstanceAndFid(const std::string& archiveFileId,
+                                    std::unique_ptr<XrdSsiPbServiceType>& serviceProviderPtr,
+                                    cta::log::StdoutLogger& log) {
   {
     std::list<cta::log::Param> params;
     params.push_back(cta::log::Param("archiveFileId", archiveFileId));
@@ -124,8 +120,9 @@ std::tuple<std::string,std::string> CatalogueFetch::getInstanceAndFid(const std:
 
   handleResponse(request, serviceProviderPtr);
 
-  if(listedTapeFiles.size() != 1) {
-    throw std::runtime_error("Unexpected result set: listedTapeFiles size expected=1 received=" + std::to_string(listedTapeFiles.size()));
+  if (listedTapeFiles.size() != 1) {
+    throw std::runtime_error("Unexpected result set: listedTapeFiles size expected=1 received=" +
+                             std::to_string(listedTapeFiles.size()));
   }
   auto listedTapeFile = listedTapeFiles.back();
   listedTapeFiles.clear();
@@ -138,7 +135,7 @@ std::tuple<std::string,std::string> CatalogueFetch::getInstanceAndFid(const std:
   return listedTapeFile;
 }
 
-bool CatalogueFetch::vidExists(const std::string &vid, std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr) {
+bool CatalogueFetch::vidExists(const std::string& vid, std::unique_ptr<XrdSsiPbServiceType>& serviceProviderPtr) {
   cta::xrd::Request request;
   auto admincmd = request.mutable_admincmd();
 
@@ -153,19 +150,20 @@ bool CatalogueFetch::vidExists(const std::string &vid, std::unique_ptr<XrdSsiPbS
 
   handleResponse(request, serviceProviderPtr);
 
-  if(g_listedVids.empty()) {
+  if (g_listedVids.empty()) {
     return false;
   }
   return true;
 }
 
-void CatalogueFetch::handleResponse(const cta::xrd::Request &request, std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr) {
+void CatalogueFetch::handleResponse(const cta::xrd::Request& request,
+                                    std::unique_ptr<XrdSsiPbServiceType>& serviceProviderPtr) {
   // Send the Request to the Service and get a Response
   cta::xrd::Response response;
   auto stream_future = serviceProviderPtr->SendAsync(request, response);
 
   // Handle responses
-  switch(response.type()) {
+  switch (response.type()) {
     using namespace cta::xrd;
     using namespace cta::admin;
     case Response::RSP_SUCCESS:
@@ -174,15 +172,19 @@ void CatalogueFetch::handleResponse(const cta::xrd::Request &request, std::uniqu
       // Allow stream processing to commence
       isHeaderSent = true;
       break;
-    case Response::RSP_ERR_PROTOBUF:                     throw XrdSsiPb::PbException(response.message_txt());
-    case Response::RSP_ERR_USER:                         throw exception::UserError(response.message_txt());
-    case Response::RSP_ERR_CTA:                          throw std::runtime_error(response.message_txt());
-    default:                                             throw XrdSsiPb::PbException("Invalid response type.");
+    case Response::RSP_ERR_PROTOBUF:
+      throw XrdSsiPb::PbException(response.message_txt());
+    case Response::RSP_ERR_USER:
+      throw exception::UserError(response.message_txt());
+    case Response::RSP_ERR_CTA:
+      throw std::runtime_error(response.message_txt());
+    default:
+      throw XrdSsiPb::PbException("Invalid response type.");
   }
 
   // wait until the data stream has been processed before exiting
   stream_future.wait();
 }
 
-} // cliTool
-} // cta
+}  // namespace cliTool
+}  // namespace cta

@@ -26,15 +26,14 @@ namespace wrapper {
 /**
  * A concrete factory of Conn objects.
  */
-class SqliteConnFactory: public ConnFactory {
+class SqliteConnFactory : public ConnFactory {
 public:
-
   /**
    * Constructor.
    *
    * @param filename The filename to be passed to the sqlite3_open() function.
    */
-  SqliteConnFactory(const std::string &filename);
+  SqliteConnFactory(const std::string& filename);
 
   /**
    * Destructor.
@@ -49,14 +48,13 @@ public:
   std::unique_ptr<ConnWrapper> create() override;
 
 private:
-
   /**
    * The filename to be passed to the sqlite3_open() function.
    */
   std::string m_filename;
 
-}; // class SqliteConnFactory
+};  // class SqliteConnFactory
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+}  // namespace wrapper
+}  // namespace rdbms
+}  // namespace cta

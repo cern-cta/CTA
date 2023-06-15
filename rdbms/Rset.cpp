@@ -26,16 +26,13 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-Rset::Rset():
-  m_impl(nullptr) {
-}
+Rset::Rset() : m_impl(nullptr) {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-Rset::Rset(std::unique_ptr<wrapper::RsetWrapper> impl):
-  m_impl(std::move(impl)) {
-  if(nullptr == m_impl.get()) {
+Rset::Rset(std::unique_ptr<wrapper::RsetWrapper> impl) : m_impl(std::move(impl)) {
+  if (nullptr == m_impl.get()) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: Pointer to implementation object is null");
   }
 }
@@ -43,9 +40,7 @@ Rset::Rset(std::unique_ptr<wrapper::RsetWrapper> impl):
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-Rset::Rset(Rset &&other):
-  m_impl(std::move(other.m_impl)) {
-}
+Rset::Rset(Rset&& other) : m_impl(std::move(other.m_impl)) {}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -64,8 +59,8 @@ void Rset::reset() noexcept {
 //------------------------------------------------------------------------------
 // operator=
 //------------------------------------------------------------------------------
-Rset &Rset::operator=(Rset &&rhs) {
-  if(m_impl != rhs.m_impl) {
+Rset& Rset::operator=(Rset&& rhs) {
+  if (m_impl != rhs.m_impl) {
     m_impl = std::move(rhs.m_impl);
   }
   return *this;
@@ -74,13 +69,14 @@ Rset &Rset::operator=(Rset &&rhs) {
 //------------------------------------------------------------------------------
 // columnString
 //------------------------------------------------------------------------------
-std::string Rset::columnBlob(const std::string &colName) const {
+std::string Rset::columnBlob(const std::string& colName) const {
   try {
-    if(nullptr == m_impl) {
+    if (nullptr == m_impl) {
       throw InvalidResultSet("This result set is invalid");
     }
     return m_impl->columnBlob(colName);
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
   }
@@ -89,19 +85,21 @@ std::string Rset::columnBlob(const std::string &colName) const {
 //------------------------------------------------------------------------------
 // columnString
 //------------------------------------------------------------------------------
-std::string Rset::columnString(const std::string &colName) const {
+std::string Rset::columnString(const std::string& colName) const {
   try {
-    if(nullptr == m_impl) {
+    if (nullptr == m_impl) {
       throw InvalidResultSet("This result set is invalid");
     }
 
     const std::optional<std::string> col = columnOptionalString(colName);
-    if(col) {
+    if (col) {
       return col.value();
-    } else {
+    }
+    else {
       throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
     }
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
   }
@@ -110,19 +108,21 @@ std::string Rset::columnString(const std::string &colName) const {
 //------------------------------------------------------------------------------
 // columnUint8
 //------------------------------------------------------------------------------
-uint8_t Rset::columnUint8(const std::string &colName) const {
+uint8_t Rset::columnUint8(const std::string& colName) const {
   try {
-    if(nullptr == m_impl) {
+    if (nullptr == m_impl) {
       throw InvalidResultSet("This result set is invalid");
     }
 
     const std::optional<uint8_t> col = columnOptionalUint8(colName);
-    if(col) {
+    if (col) {
       return col.value();
-    } else {
+    }
+    else {
       throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
     }
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
   }
@@ -131,19 +131,21 @@ uint8_t Rset::columnUint8(const std::string &colName) const {
 //------------------------------------------------------------------------------
 // columnUint16
 //------------------------------------------------------------------------------
-uint16_t Rset::columnUint16(const std::string &colName) const {
+uint16_t Rset::columnUint16(const std::string& colName) const {
   try {
-    if(nullptr == m_impl) {
+    if (nullptr == m_impl) {
       throw InvalidResultSet("This result set is invalid");
     }
 
     const std::optional<uint16_t> col = columnOptionalUint16(colName);
-    if(col) {
+    if (col) {
       return col.value();
-    } else {
+    }
+    else {
       throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
     }
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
   }
@@ -152,19 +154,21 @@ uint16_t Rset::columnUint16(const std::string &colName) const {
 //------------------------------------------------------------------------------
 // columnUint32
 //------------------------------------------------------------------------------
-uint32_t Rset::columnUint32(const std::string &colName) const {
+uint32_t Rset::columnUint32(const std::string& colName) const {
   try {
-    if(nullptr == m_impl) {
+    if (nullptr == m_impl) {
       throw InvalidResultSet("This result set is invalid");
     }
 
     const std::optional<uint32_t> col = columnOptionalUint32(colName);
-    if(col) {
+    if (col) {
       return col.value();
-    } else {
+    }
+    else {
       throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
     }
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
   }
@@ -173,19 +177,21 @@ uint32_t Rset::columnUint32(const std::string &colName) const {
 //------------------------------------------------------------------------------
 // columnUint64
 //------------------------------------------------------------------------------
-uint64_t Rset::columnUint64(const std::string &colName) const {
+uint64_t Rset::columnUint64(const std::string& colName) const {
   try {
-    if(nullptr == m_impl) {
+    if (nullptr == m_impl) {
       throw InvalidResultSet("This result set is invalid");
     }
 
     const std::optional<uint64_t> col = columnOptionalUint64(colName);
-    if(col) {
+    if (col) {
       return col.value();
-    } else {
+    }
+    else {
       throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
     }
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
   }
@@ -194,19 +200,21 @@ uint64_t Rset::columnUint64(const std::string &colName) const {
 //------------------------------------------------------------------------------
 // columnBool
 //------------------------------------------------------------------------------
-bool Rset::columnBool(const std::string &colName) const {
+bool Rset::columnBool(const std::string& colName) const {
   try {
-    if(nullptr == m_impl) {
+    if (nullptr == m_impl) {
       throw InvalidResultSet("This result set is invalid");
     }
 
     const std::optional<bool> col = columnOptionalBool(colName);
-    if(col) {
+    if (col) {
       return col.value();
-    } else {
+    }
+    else {
       throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
     }
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
   }
@@ -215,19 +223,21 @@ bool Rset::columnBool(const std::string &colName) const {
 //------------------------------------------------------------------------------
 // columnOptionalBool
 //------------------------------------------------------------------------------
-std::optional<bool> Rset::columnOptionalBool(const std::string &colName) const {
+std::optional<bool> Rset::columnOptionalBool(const std::string& colName) const {
   try {
-    if(nullptr == m_impl) {
+    if (nullptr == m_impl) {
       throw InvalidResultSet("This result set is invalid");
     }
 
     const auto column = columnOptionalUint64(colName);
-    if(column) {
+    if (column) {
       return std::optional<bool>(column.value() != 0 ? true : false);
-    } else {
+    }
+    else {
       return std::nullopt;
     }
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
   }
@@ -236,13 +246,14 @@ std::optional<bool> Rset::columnOptionalBool(const std::string &colName) const {
 //------------------------------------------------------------------------------
 // getSql
 //------------------------------------------------------------------------------
-const std::string &Rset::getSql() const {
+const std::string& Rset::getSql() const {
   try {
-    if(nullptr == m_impl) {
+    if (nullptr == m_impl) {
       throw InvalidResultSet("This result set is invalid");
     }
     return m_impl->getSql();
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
   }
@@ -253,19 +264,20 @@ const std::string &Rset::getSql() const {
 //------------------------------------------------------------------------------
 bool Rset::next() {
   try {
-    if(nullptr == m_impl) {
+    if (nullptr == m_impl) {
       throw InvalidResultSet("This result set is invalid");
     }
 
     const bool aRowHasBeenRetrieved = m_impl->next();
 
     // Release resources of result set when its end has been reached
-    if(!aRowHasBeenRetrieved) {
+    if (!aRowHasBeenRetrieved) {
       m_impl.reset(nullptr);
     }
 
     return aRowHasBeenRetrieved;
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
   }
@@ -274,21 +286,21 @@ bool Rset::next() {
 //------------------------------------------------------------------------------
 // isEmpty
 //------------------------------------------------------------------------------
-bool Rset::isEmpty() const
-{
+bool Rset::isEmpty() const {
   return nullptr == m_impl;
 }
 
 //------------------------------------------------------------------------------
 // columnIsNull
 //------------------------------------------------------------------------------
-bool Rset::columnIsNull(const std::string &colName) const {
+bool Rset::columnIsNull(const std::string& colName) const {
   try {
-    if(nullptr == m_impl) {
+    if (nullptr == m_impl) {
       throw InvalidResultSet("This result set is invalid");
     }
     return m_impl->columnIsNull(colName);
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
   }
@@ -297,13 +309,14 @@ bool Rset::columnIsNull(const std::string &colName) const {
 //------------------------------------------------------------------------------
 // columnOptionalString
 //------------------------------------------------------------------------------
-std::optional<std::string> Rset::columnOptionalString(const std::string &colName) const {
+std::optional<std::string> Rset::columnOptionalString(const std::string& colName) const {
   try {
-    if(nullptr == m_impl) {
+    if (nullptr == m_impl) {
       throw InvalidResultSet("This result set is invalid");
     }
     return m_impl->columnOptionalString(colName);
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
   }
@@ -312,13 +325,14 @@ std::optional<std::string> Rset::columnOptionalString(const std::string &colName
 //------------------------------------------------------------------------------
 // columnOptionalUint8
 //------------------------------------------------------------------------------
-std::optional<uint8_t> Rset::columnOptionalUint8(const std::string &colName) const {
+std::optional<uint8_t> Rset::columnOptionalUint8(const std::string& colName) const {
   try {
-    if(nullptr == m_impl) {
+    if (nullptr == m_impl) {
       throw InvalidResultSet("This result set is invalid");
     }
     return m_impl->columnOptionalUint8(colName);
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
   }
@@ -327,13 +341,14 @@ std::optional<uint8_t> Rset::columnOptionalUint8(const std::string &colName) con
 //------------------------------------------------------------------------------
 // columnOptionalUint16
 //------------------------------------------------------------------------------
-std::optional<uint16_t> Rset::columnOptionalUint16(const std::string &colName) const {
+std::optional<uint16_t> Rset::columnOptionalUint16(const std::string& colName) const {
   try {
-    if(nullptr == m_impl) {
+    if (nullptr == m_impl) {
       throw InvalidResultSet("This result set is invalid");
     }
     return m_impl->columnOptionalUint16(colName);
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
   }
@@ -342,13 +357,14 @@ std::optional<uint16_t> Rset::columnOptionalUint16(const std::string &colName) c
 //------------------------------------------------------------------------------
 // columnOptionalUint32
 //------------------------------------------------------------------------------
-std::optional<uint32_t> Rset::columnOptionalUint32(const std::string &colName) const {
+std::optional<uint32_t> Rset::columnOptionalUint32(const std::string& colName) const {
   try {
-    if(nullptr == m_impl) {
+    if (nullptr == m_impl) {
       throw InvalidResultSet("This result set is invalid");
     }
     return m_impl->columnOptionalUint32(colName);
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
   }
@@ -357,13 +373,14 @@ std::optional<uint32_t> Rset::columnOptionalUint32(const std::string &colName) c
 //------------------------------------------------------------------------------
 // columnOptionalUint64
 //------------------------------------------------------------------------------
-std::optional<uint64_t> Rset::columnOptionalUint64(const std::string &colName) const {
+std::optional<uint64_t> Rset::columnOptionalUint64(const std::string& colName) const {
   try {
-    if(nullptr == m_impl) {
+    if (nullptr == m_impl) {
       throw InvalidResultSet("This result set is invalid");
     }
     return m_impl->columnOptionalUint64(colName);
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
   }
@@ -372,19 +389,21 @@ std::optional<uint64_t> Rset::columnOptionalUint64(const std::string &colName) c
 //------------------------------------------------------------------------------
 // columnDouble
 //------------------------------------------------------------------------------
-double Rset::columnDouble(const std::string &colName) const {
+double Rset::columnDouble(const std::string& colName) const {
   try {
-    if(nullptr == m_impl) {
+    if (nullptr == m_impl) {
       throw InvalidResultSet("This result set is invalid");
     }
 
     const std::optional<double> col = columnOptionalDouble(colName);
-    if(col) {
+    if (col) {
       return col.value();
-    } else {
+    }
+    else {
       throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
     }
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
   }
@@ -393,17 +412,18 @@ double Rset::columnDouble(const std::string &colName) const {
 //------------------------------------------------------------------------------
 // columnOptionalDouble
 //------------------------------------------------------------------------------
-std::optional<double> Rset::columnOptionalDouble(const std::string &colName) const {
+std::optional<double> Rset::columnOptionalDouble(const std::string& colName) const {
   try {
-    if(nullptr == m_impl) {
+    if (nullptr == m_impl) {
       throw InvalidResultSet("This result set is invalid");
     }
     return m_impl->columnOptionalDouble(colName);
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
   }
 }
 
-} // namespace rdbms
-} // namespace cta
+}  // namespace rdbms
+}  // namespace cta

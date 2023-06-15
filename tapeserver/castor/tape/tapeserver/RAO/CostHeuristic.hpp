@@ -19,7 +19,10 @@
 
 #include "FilePositionInfos.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace rao {
 
 class CostHeuristic {
 public:
@@ -29,10 +32,13 @@ public:
    * @param file2 the file to which we will arrive (beginning position)
    * @return the value it costs for going from the end of file1 to the beginning of file2
    */
-  virtual double getCost(const FilePositionInfos & file1, const FilePositionInfos & file2) const = 0;
+  virtual double getCost(const FilePositionInfos& file1, const FilePositionInfos& file2) const = 0;
   virtual ~CostHeuristic();
-private:
 
+private:
 };
 
-}}}}
+}  // namespace rao
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

@@ -30,127 +30,134 @@
 namespace cta {
 namespace catalogue {
 
-RdbmsDiskInstanceCatalogue::RdbmsDiskInstanceCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool)
-  : m_log(log), m_connPool(connPool) {}
+RdbmsDiskInstanceCatalogue::RdbmsDiskInstanceCatalogue(log::Logger& log, std::shared_ptr<rdbms::ConnPool> connPool) :
+m_log(log),
+m_connPool(connPool) {}
 
-void RdbmsDiskInstanceCatalogue::createDiskInstance(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &comment) {
+void RdbmsDiskInstanceCatalogue::createDiskInstance(const common::dataStructures::SecurityIdentity& admin,
+                                                    const std::string& name,
+                                                    const std::string& comment) {
   try {
-    if(name.empty()) {
+    if (name.empty()) {
       throw UserSpecifiedAnEmptyStringDiskInstanceName("Cannot create disk system because the name is an empty string");
     }
-    if(comment.empty()) {
+    if (comment.empty()) {
       throw UserSpecifiedAnEmptyStringComment("Cannot create disk system because the comment is an empty string");
     }
     const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
 
     auto conn = m_connPool->getConn();
-    if(RdbmsCatalogueUtils::diskInstanceExists(conn, name)) {
+    if (RdbmsCatalogueUtils::diskInstanceExists(conn, name)) {
       throw exception::UserError(std::string("Cannot create disk instance ") + name +
-        " because a disk instance with the same name identifier already exists");
+                                 " because a disk instance with the same name identifier already exists");
     }
 
     const time_t now = time(nullptr);
-    const char *const sql =
-      "INSERT INTO DISK_INSTANCE("
-        "DISK_INSTANCE_NAME,"
+    const char* const sql = "INSERT INTO DISK_INSTANCE("
+                            "DISK_INSTANCE_NAME,"
 
-        "USER_COMMENT,"
+                            "USER_COMMENT,"
 
-        "CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME,"
+                            "CREATION_LOG_USER_NAME,"
+                            "CREATION_LOG_HOST_NAME,"
+                            "CREATION_LOG_TIME,"
 
-        "LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME)"
-      "VALUES("
-        ":DISK_INSTANCE_NAME,"
+                            "LAST_UPDATE_USER_NAME,"
+                            "LAST_UPDATE_HOST_NAME,"
+                            "LAST_UPDATE_TIME)"
+                            "VALUES("
+                            ":DISK_INSTANCE_NAME,"
 
-        ":USER_COMMENT,"
+                            ":USER_COMMENT,"
 
-        ":CREATION_LOG_USER_NAME,"
-        ":CREATION_LOG_HOST_NAME,"
-        ":CREATION_LOG_TIME,"
+                            ":CREATION_LOG_USER_NAME,"
+                            ":CREATION_LOG_HOST_NAME,"
+                            ":CREATION_LOG_TIME,"
 
-        ":LAST_UPDATE_USER_NAME,"
-        ":LAST_UPDATE_HOST_NAME,"
-        ":LAST_UPDATE_TIME)";
+                            ":LAST_UPDATE_USER_NAME,"
+                            ":LAST_UPDATE_HOST_NAME,"
+                            ":LAST_UPDATE_TIME)";
     auto stmt = conn.createStmt(sql);
 
-   stmt.bindString(":DISK_INSTANCE_NAME", name);
+    stmt.bindString(":DISK_INSTANCE_NAME", name);
 
-   stmt.bindString(":USER_COMMENT", trimmedComment);
+    stmt.bindString(":USER_COMMENT", trimmedComment);
 
-   stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
-   stmt.bindString(":CREATION_LOG_HOST_NAME", admin.host);
-   stmt.bindUint64(":CREATION_LOG_TIME", now);
+    stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
+    stmt.bindString(":CREATION_LOG_HOST_NAME", admin.host);
+    stmt.bindUint64(":CREATION_LOG_TIME", now);
 
-   stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
-   stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
-   stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt.executeNonQuery();
-  } catch(exception::UserError &) {
+  }
+  catch (exception::UserError&) {
     throw;
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
 }
 
-void RdbmsDiskInstanceCatalogue::deleteDiskInstance(const std::string &name) {
+void RdbmsDiskInstanceCatalogue::deleteDiskInstance(const std::string& name) {
   try {
-    const char *const delete_sql =
-      "DELETE "
-      "FROM "
-        "DISK_INSTANCE "
-      "WHERE "
-        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME";
+    const char* const delete_sql = "DELETE "
+                                   "FROM "
+                                   "DISK_INSTANCE "
+                                   "WHERE "
+                                   "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME";
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(delete_sql);
-      stmt.bindString(":DISK_INSTANCE_NAME", name);
+    stmt.bindString(":DISK_INSTANCE_NAME", name);
     stmt.executeNonQuery();
 
     // The delete statement will effect no rows and will not raise an error if
     // either the tape does not exist or if it still has tape files
-    if(0 == stmt.getNbAffectedRows()) {
-      if(RdbmsCatalogueUtils::diskInstanceExists(conn, name)) {
-        throw UserSpecifiedANonEmptyDiskInstanceAfterDelete(std::string("Cannot delete disk instance ") + name + " for unknown reason");
-      } else {
-        throw UserSpecifiedANonExistentDiskInstance(std::string("Cannot delete disk instance ") + name + " because it does not exist");
+    if (0 == stmt.getNbAffectedRows()) {
+      if (RdbmsCatalogueUtils::diskInstanceExists(conn, name)) {
+        throw UserSpecifiedANonEmptyDiskInstanceAfterDelete(std::string("Cannot delete disk instance ") + name +
+                                                            " for unknown reason");
+      }
+      else {
+        throw UserSpecifiedANonExistentDiskInstance(std::string("Cannot delete disk instance ") + name +
+                                                    " because it does not exist");
       }
     }
-  } catch(exception::UserError &) {
+  }
+  catch (exception::UserError&) {
     throw;
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
 }
 
-void RdbmsDiskInstanceCatalogue::modifyDiskInstanceComment(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &comment) {
+void RdbmsDiskInstanceCatalogue::modifyDiskInstanceComment(const common::dataStructures::SecurityIdentity& admin,
+                                                           const std::string& name,
+                                                           const std::string& comment) {
   try {
-    if(name.empty()) {
+    if (name.empty()) {
       throw UserSpecifiedAnEmptyStringDiskInstanceName("Cannot modify disk instance"
-        " because the disk instance name is an empty string");
+                                                       " because the disk instance name is an empty string");
     }
-    if(comment.empty()) {
+    if (comment.empty()) {
       throw UserSpecifiedAnEmptyStringComment("Cannot modify disk instance "
-        "because the new comment is an empty string");
+                                              "because the new comment is an empty string");
     }
     const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
 
     const time_t now = time(nullptr);
-    const char *const sql =
-      "UPDATE DISK_INSTANCE SET "
-        "USER_COMMENT = :USER_COMMENT,"
-        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-      "WHERE "
-        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME";
+    const char* const sql = "UPDATE DISK_INSTANCE SET "
+                            "USER_COMMENT = :USER_COMMENT,"
+                            "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+                            "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+                            "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+                            "WHERE "
+                            "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME";
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":USER_COMMENT", trimmedComment);
@@ -160,12 +167,15 @@ void RdbmsDiskInstanceCatalogue::modifyDiskInstanceComment(const common::dataStr
     stmt.bindString(":DISK_INSTANCE_NAME", name);
     stmt.executeNonQuery();
 
-    if(0 == stmt.getNbAffectedRows()) {
-      throw UserSpecifiedANonExistentDiskInstance(std::string("Cannot modify disk instance ") + name + " because it does not exist");
+    if (0 == stmt.getNbAffectedRows()) {
+      throw UserSpecifiedANonExistentDiskInstance(std::string("Cannot modify disk instance ") + name +
+                                                  " because it does not exist");
     }
-  } catch(exception::UserError &) {
+  }
+  catch (exception::UserError&) {
     throw;
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
@@ -174,21 +184,20 @@ void RdbmsDiskInstanceCatalogue::modifyDiskInstanceComment(const common::dataStr
 std::list<common::dataStructures::DiskInstance> RdbmsDiskInstanceCatalogue::getAllDiskInstances() const {
   try {
     std::list<common::dataStructures::DiskInstance> diskInstanceList;
-    std::string sql =
-      "SELECT "
-        "DISK_INSTANCE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
+    std::string sql = "SELECT "
+                      "DISK_INSTANCE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
 
-        "DISK_INSTANCE.USER_COMMENT AS USER_COMMENT,"
+                      "DISK_INSTANCE.USER_COMMENT AS USER_COMMENT,"
 
-        "DISK_INSTANCE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "DISK_INSTANCE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-        "DISK_INSTANCE.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+                      "DISK_INSTANCE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+                      "DISK_INSTANCE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+                      "DISK_INSTANCE.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
-        "DISK_INSTANCE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "DISK_INSTANCE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-        "DISK_INSTANCE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
-      "FROM "
-        "DISK_INSTANCE";
+                      "DISK_INSTANCE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+                      "DISK_INSTANCE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+                      "DISK_INSTANCE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+                      "FROM "
+                      "DISK_INSTANCE";
 
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(sql);
@@ -207,13 +216,15 @@ std::list<common::dataStructures::DiskInstance> RdbmsDiskInstanceCatalogue::getA
       diskInstanceList.push_back(diskInstance);
     }
     return diskInstanceList;
-  } catch(exception::UserError &) {
+  }
+  catch (exception::UserError&) {
     throw;
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
 }
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

@@ -27,30 +27,32 @@
 
 namespace unitTests {
 
-class TestingRetrieveJob: public cta::RetrieveJob {
+class TestingRetrieveJob : public cta::RetrieveJob {
 public:
-  TestingRetrieveJob() : cta::RetrieveJob(nullptr,
-  cta::common::dataStructures::RetrieveRequest(),
-  cta::common::dataStructures::ArchiveFile(), 1,
-  cta::PositioningMethod::ByBlock) {}
+  TestingRetrieveJob() :
+  cta::RetrieveJob(nullptr,
+                   cta::common::dataStructures::RetrieveRequest(),
+                   cta::common::dataStructures::ArchiveFile(),
+                   1,
+                   cta::PositioningMethod::ByBlock) {}
 };
 
-class TestingArchiveJob: public cta::ArchiveJob {
+class TestingArchiveJob : public cta::ArchiveJob {
 public:
-  TestingArchiveJob(): cta::ArchiveJob(nullptr,
-   *(static_cast<cta::catalogue::Catalogue *>(nullptr)), cta::common::dataStructures::ArchiveFile(),
-   "", cta::common::dataStructures::TapeFile()) {
-  }
+  TestingArchiveJob() :
+  cta::ArchiveJob(nullptr,
+                  *(static_cast<cta::catalogue::Catalogue*>(nullptr)),
+                  cta::common::dataStructures::ArchiveFile(),
+                  "",
+                  cta::common::dataStructures::TapeFile()) {}
 };
 
 class OSMTapeFileTest : public ::testing::TestWithParam<cta::common::dataStructures::Label::Format> {
 protected:
   virtual void SetUp() {
-
     // Gets information about the currently running test.
     // Do NOT delete the returned object - it's managed by the UnitTest class.
-    const testing::TestInfo *const pTestInfo =
-            testing::UnitTest::GetInstance()->current_test_info();
+    const testing::TestInfo* const pTestInfo = testing::UnitTest::GetInstance()->current_test_info();
     /*
      * pTestInfo->name() - test name
      * pTestInfo->test_case_name() - suite name
@@ -75,18 +77,14 @@ protected:
     // Write OSM label
     castor::tape::tapeFile::osm::LABEL osmLabel;
     osmLabel.encode(0, 1, castor::tape::tapeFile::osm::LIMITS::MAXMRECSIZE, 1, m_label, "DESY", "1.1");
-    m_drive.writeBlock(reinterpret_cast<void *>(osmLabel.rawLabel()),
+    m_drive.writeBlock(reinterpret_cast<void*>(osmLabel.rawLabel()), castor::tape::tapeFile::osm::LIMITS::MAXMRECSIZE);
+    m_drive.writeBlock(reinterpret_cast<void*>(osmLabel.rawLabel() + castor::tape::tapeFile::osm::LIMITS::MAXMRECSIZE),
                        castor::tape::tapeFile::osm::LIMITS::MAXMRECSIZE);
-    m_drive.writeBlock(reinterpret_cast<void *>(osmLabel.rawLabel() + castor::tape::tapeFile::osm::LIMITS::MAXMRECSIZE),
-            castor::tape::tapeFile::osm::LIMITS::MAXMRECSIZE);
 
     m_drive.writeSyncFileMarks(1);
     // Write OSM file
-    if (m_strTestName == "throwsWhenUsingSessionTwice" ||
-        m_strTestName == "throwsWhenWrongBlockSizeOrEOF" ||
-        m_strTestName == "canProperlyVerifyLabelWriteAndReadTape"
-        ) {
-
+    if (m_strTestName == "throwsWhenUsingSessionTwice" || m_strTestName == "throwsWhenWrongBlockSizeOrEOF" ||
+        m_strTestName == "canProperlyVerifyLabelWriteAndReadTape") {
       const std::string strTestString = {"Hello World!"};
       std::stringstream file;
       const std::string strMagic = "070707";
@@ -104,50 +102,27 @@ protected:
       const size_t PAYLOAD_BLOCK_SIZE = 262144;
 
       // Preparing CPIO-ASCII-header
-      file << strMagic
-           << std::setfill('0')
-           << std::oct
-           << std::setw(6) << uiDev
-           << std::setw(6) << uiIno
-           << std::setw(6) << uiMode
-           << std::setw(6) << uiUid
-           << std::setw(6) << uiGid
-           << std::setw(6) << uiNlink
-           << std::setw(6) << uiRdev
-           << std::setw(11) << ulMtime
-           << std::setw(6) << uiNameSize
-           << "H"
-           << std::hex
-           << std::setw(10) << ui64FileSize
-           << strFid;
+      file << strMagic << std::setfill('0') << std::oct << std::setw(6) << uiDev << std::setw(6) << uiIno
+           << std::setw(6) << uiMode << std::setw(6) << uiUid << std::setw(6) << uiGid << std::setw(6) << uiNlink
+           << std::setw(6) << uiRdev << std::setw(11) << ulMtime << std::setw(6) << uiNameSize << "H" << std::hex
+           << std::setw(10) << ui64FileSize << strFid;
       // Write data
       file << strTestString;
       //Preparing trailer
-      file << strMagic
-           << std::setfill('0')
-           << std::oct
-           << std::setw(6) << uiDev
-           << std::setw(6) << uiIno
-           << std::setw(6) << uiMode
-           << std::setw(6) << uiUid
-           << std::setw(6) << uiGid
-           << std::setw(6) << uiNlink
-           << std::setw(6) << uiRdev
-           << std::setw(11) << ulMtime
-           << std::setw(6) << 10
-           << "H"
-           << std::hex
-           << std::setw(10) << 0
+      file << strMagic << std::setfill('0') << std::oct << std::setw(6) << uiDev << std::setw(6) << uiIno
+           << std::setw(6) << uiMode << std::setw(6) << uiUid << std::setw(6) << uiGid << std::setw(6) << uiNlink
+           << std::setw(6) << uiRdev << std::setw(11) << ulMtime << std::setw(6) << 10 << "H" << std::hex
+           << std::setw(10)
+           << 0
            //   << std::setw(1024)
-           << strFid
-           << "TRAILER!!" << 0;
+           << strFid << "TRAILER!!" << 0;
 
       char acBuffer[PAYLOAD_BLOCK_SIZE] = {'\0'};
 
       while (file.rdbuf()->sgetn(acBuffer, PAYLOAD_BLOCK_SIZE)) {
-        m_drive.writeBlock(reinterpret_cast<void *>(acBuffer), PAYLOAD_BLOCK_SIZE);
+        m_drive.writeBlock(reinterpret_cast<void*>(acBuffer), PAYLOAD_BLOCK_SIZE);
         // Nullify
-        std::fill(acBuffer, acBuffer + PAYLOAD_BLOCK_SIZE, NULL);// where NULL = 0
+        std::fill(acBuffer, acBuffer + PAYLOAD_BLOCK_SIZE, NULL);  // where NULL = 0
       }
 
       m_drive.writeSyncFileMarks(1);
@@ -205,14 +180,12 @@ TEST_F(OSMTapeFileTest, throwsWhenWrongBlockSizeOrEOF) {
     m_fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
     const auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, m_fileToRecall);
     size_t blockSize = reader->getBlockSize();
-    char *data = new char[blockSize+1];
+    char* data = new char[blockSize + 1];
     // block size needs to be the same provided by the headers
     ASSERT_THROW(reader->readNextDataBlock(data, 1), castor::tape::tapeFile::WrongBlockSize);
     // it is normal to reach end of file after a loop of reads
-    ASSERT_THROW(while(true) {
-      reader->readNextDataBlock(data, blockSize);
-    },
-                 castor::tape::tapeFile::EndOfFile);
+    ASSERT_THROW(
+      while (true) { reader->readNextDataBlock(data, blockSize); }, castor::tape::tapeFile::EndOfFile);
     delete[] data;
   }
 }
@@ -242,7 +215,7 @@ TEST_F(OSMTapeFileTest, canProperlyVerifyLabelWriteAndReadTape) {
     const auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, m_fileToRecall);
     size_t blockSize = reader->getBlockSize();
     ASSERT_EQ(blockSize, m_block_size);
-    char *data = new char[blockSize+1];
+    char* data = new char[blockSize + 1];
     size_t bytes_read = reader->readNextDataBlock(data, blockSize);
     data[bytes_read] = '\0';
     ASSERT_EQ(bytes_read, static_cast<size_t>(testString.size()));

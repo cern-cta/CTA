@@ -18,30 +18,25 @@
 #pragma once
 
 namespace cta {
-  /**
+/**
    * Enumeration class of the possible types of tape mount.
    */
-  struct MountTypeToDecommission {
-  public:
-
-    /**
+struct MountTypeToDecommission {
+public:
+  /**
      * Enumeration of the possible types of tape mount.
      */
-    enum Enum {
-      NONE,
-      ARCHIVE,
-      RETRIEVE,
-      LABEL};
+  enum Enum { NONE, ARCHIVE, RETRIEVE, LABEL };
 
-    /**
+  /**
      * Thread safe method that returns the string representation of the
      * specified enumeration value.
      *
      * @param enumValue The enumeration value.
      * @return The string representation.
      */
-    static const char *toString(const MountTypeToDecommission::Enum enumValue) throw();
+  static const char* toString(const MountTypeToDecommission::Enum enumValue) throw();
 
-  }; // struct MountType
-  
-}
+};  // struct MountType
+
+}  // namespace cta

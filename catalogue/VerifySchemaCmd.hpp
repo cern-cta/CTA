@@ -28,9 +28,8 @@ namespace catalogue {
 /**
  * Command-line tool for verifying the catalogue schema.
  */
-class VerifySchemaCmd: public CmdLineTool {
+class VerifySchemaCmd : public CmdLineTool {
 public:
-
   /**
    * Constructor.
    *
@@ -38,17 +37,16 @@ public:
    * @param outStream Standard output stream.
    * @param errStream Standard error stream.
    */
-  VerifySchemaCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream);
+  VerifySchemaCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream);
 
   /**
    * Destructor.
    */
   ~VerifySchemaCmd() noexcept;
-  
+
   enum class VerifyStatus { OK, INFO, ERROR, UNKNOWN };
 
 private:
-
   /**
    * An exception throwing version of main().
    *
@@ -56,14 +54,14 @@ private:
    * @param argv The command-line arguments.
    * @return The exit value of the program.
    */
-  int exceptionThrowingMain(const int argc, char *const *const argv) override;
+  int exceptionThrowingMain(const int argc, char* const* const argv) override;
 
   /**
    * Prints the usage message of the command-line tool.
    *
    * @param os The output stream to which the usage message is to be printed.
    */
-  void printUsage(std::ostream &os) override;
+  void printUsage(std::ostream& os) override;
 
   /**
    * Returns true if the table with the specified name exists in the database
@@ -73,7 +71,7 @@ private:
    * @param conn The database connection.
    * @return True if the table exists.
    */
-  bool tableExists(const std::string tableName, rdbms::Conn &conn) const;
+  bool tableExists(const std::string tableName, rdbms::Conn& conn) const;
 
   /*
    * Returns true if the catalogue is upgrading
@@ -81,8 +79,8 @@ private:
    * @param conn The database connection
    * @return True if the catalogue is upgrading
    */
-  bool isUpgrading(rdbms::Conn *conn);
-  
+  bool isUpgrading(rdbms::Conn* conn);
+
 #if 0
   /**
    * Verifies schema version values in the database against the catalogue schema
@@ -146,8 +144,8 @@ private:
   VerifyStatus verifySequenceNames(const std::list<std::string> &schemaSequenceNames, 
     const std::list<std::string> &dbSequenceNames) const;
 #endif
-  
-}; // class VerifySchemaCmd
 
-} // namespace catalogue
-} // namespace cta
+};  // class VerifySchemaCmd
+
+}  // namespace catalogue
+}  // namespace cta

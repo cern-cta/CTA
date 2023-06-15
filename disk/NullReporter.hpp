@@ -19,12 +19,15 @@
 
 #include "DiskReporter.hpp"
 
-namespace cta { namespace disk {
+namespace cta {
+namespace disk {
 
-class NullReporter: public DiskReporter {
+class NullReporter : public DiskReporter {
 public:
   NullReporter() { m_promise.set_value(); };
+
   void asyncReport() override {};
 };
 
-}} // namespace cta::disk
+}  // namespace disk
+}  // namespace cta

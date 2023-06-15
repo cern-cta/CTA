@@ -24,29 +24,37 @@ namespace cta {
 namespace common {
 namespace dataStructures {
 
-QueueAndMountSummary &QueueAndMountSummary::getOrCreateEntry(std::list<QueueAndMountSummary> &summaryList,
-    MountType mountType, const std::string &tapePool, const std::string &vid,
-    const std::map<std::string, std::string> &vid_to_logical_library)
-{
-  for (auto & summary: summaryList) {
-    if((summary.tapePool == tapePool && summary.mountType == mountType && (getMountBasicType(mountType) == MountType::ArchiveAllTypes)) || (summary.vid == vid && mountType == MountType::Retrieve)) {
+QueueAndMountSummary&
+  QueueAndMountSummary::getOrCreateEntry(std::list<QueueAndMountSummary>& summaryList,
+                                         MountType mountType,
+                                         const std::string& tapePool,
+                                         const std::string& vid,
+                                         const std::map<std::string, std::string>& vid_to_logical_library) {
+  for (auto& summary : summaryList) {
+    if ((summary.tapePool == tapePool && summary.mountType == mountType &&
+         (getMountBasicType(mountType) == MountType::ArchiveAllTypes)) ||
+        (summary.vid == vid && mountType == MountType::Retrieve)) {
       return summary;
     }
   }
-  if (std::set<MountType>({MountType::ArchiveForUser, MountType::Retrieve, MountType::ArchiveForRepack}).count(mountType)) {
+  if (std::set<MountType>({MountType::ArchiveForUser, MountType::Retrieve, MountType::ArchiveForRepack})
+        .count(mountType)) {
     summaryList.push_back(QueueAndMountSummary());
-    summaryList.back().mountType=mountType;
-    summaryList.back().tapePool=tapePool;
-    if (MountType::ArchiveForUser==mountType || MountType::ArchiveForRepack == mountType) {
-      summaryList.back().vid="-";
-      summaryList.back().logicalLibrary="-";
-    } else {
-      summaryList.back().vid=vid;
-      summaryList.back().logicalLibrary=vid_to_logical_library.at(vid);
+    summaryList.back().mountType = mountType;
+    summaryList.back().tapePool = tapePool;
+    if (MountType::ArchiveForUser == mountType || MountType::ArchiveForRepack == mountType) {
+      summaryList.back().vid = "-";
+      summaryList.back().logicalLibrary = "-";
+    }
+    else {
+      summaryList.back().vid = vid;
+      summaryList.back().logicalLibrary = vid_to_logical_library.at(vid);
     }
     return summaryList.back();
   }
-  throw cta::exception::Exception ("In QueueAndMountSummary::getOrCreateEntry(): Unexpected mount type.");
+  throw cta::exception::Exception("In QueueAndMountSummary::getOrCreateEntry(): Unexpected mount type.");
 }
 
-}}} //namespace cta::common::dataStructures
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

@@ -19,21 +19,20 @@
 
 #include "Exception.hpp"
 
-namespace cta { namespace exception {
+namespace cta {
+namespace exception {
 
-    /**
+/**
      * request failed.
      */
-    class RequestFailed : public cta::exception::Exception {
-      
-    public:
-      
-      /**
+class RequestFailed : public cta::exception::Exception {
+public:
+  /**
        * Constructor
        */
-      RequestFailed();
+  RequestFailed();
 
-    }; // class RequestFailed
+};  // class RequestFailed
 
-} } // namespace cta exception
-
+}  // namespace exception
+}  // namespace cta

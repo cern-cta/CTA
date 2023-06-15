@@ -24,19 +24,19 @@
 namespace cta {
 namespace catalogue {
 
-struct OracleVersionedCatalogueSchema: public CatalogueSchema {
+struct OracleVersionedCatalogueSchema : public CatalogueSchema {
   /**
    * Constructor.
    */
   OracleVersionedCatalogueSchema(std::string catalogueVersion);
 };
 
-struct PostgresVersionedCatalogueSchema: public CatalogueSchema {
+struct PostgresVersionedCatalogueSchema : public CatalogueSchema {
   /**
    * Constructor.
    */
   PostgresVersionedCatalogueSchema(std::string catalogueVersion);
 };
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

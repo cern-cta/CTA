@@ -14,7 +14,7 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
- 
+
 #pragma once
 
 #include <memory>
@@ -25,20 +25,19 @@ namespace grpc {
 namespace request {
 
 class IHandler {
-
 public:
   virtual ~IHandler() = default;
   /*
    * Provides way for an optional initialisation
    * and avoids throwing exceptions in the constructor
    */
-  virtual void init() = 0; // can throw
-  virtual bool next(const bool bOk) = 0; // can throw
+  virtual void init() = 0;                // can throw
+  virtual bool next(const bool bOk) = 0;  // can throw
 };
 
 using Tag = IHandler*;
 
-} // namespace server
-} // namespace grpc
-} // namespace frontend
-} // namespace cta
+}  // namespace request
+}  // namespace grpc
+}  // namespace frontend
+}  // namespace cta

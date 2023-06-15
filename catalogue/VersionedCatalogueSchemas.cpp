@@ -26,24 +26,25 @@ namespace catalogue {
 // constructor
 //------------------------------------------------------------------------------
 OracleVersionedCatalogueSchema::OracleVersionedCatalogueSchema(std::string schemaVersion) {
-    try {
-      sql = AllCatalogueSchema::mapSchema.at(schemaVersion).at("oracle");
-    } catch(std::out_of_range &) {
-        throw exception::Exception(std::string("No such catalogue version ") + schemaVersion);
-    }
+  try {
+    sql = AllCatalogueSchema::mapSchema.at(schemaVersion).at("oracle");
+  }
+  catch (std::out_of_range&) {
+    throw exception::Exception(std::string("No such catalogue version ") + schemaVersion);
+  }
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 PostgresVersionedCatalogueSchema::PostgresVersionedCatalogueSchema(std::string schemaVersion) {
-    try {
-      sql = AllCatalogueSchema::mapSchema.at(schemaVersion).at("postgres");
-    } catch(std::out_of_range &) {
-        throw exception::Exception(std::string("No such catalogue version ") + schemaVersion);
-    }
+  try {
+    sql = AllCatalogueSchema::mapSchema.at(schemaVersion).at("postgres");
+  }
+  catch (std::out_of_range&) {
+    throw exception::Exception(std::string("No such catalogue version ") + schemaVersion);
+  }
 }
 
-
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

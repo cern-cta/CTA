@@ -26,15 +26,14 @@ namespace mediachanger {
 /**
  * Manual media changer proxy that simply logs mount and dismount requests.
  */
-class DmcProxy: public MediaChangerProxy {
+class DmcProxy : public MediaChangerProxy {
 public:
-
   /**
    * Constructor.
    *
    * @param log Object representing the API to the CTA logging system.
    */
-  DmcProxy(log::Logger &log);
+  DmcProxy(log::Logger& log);
 
   /**
    * Requests the media changer to mount the specified tape for read-only
@@ -46,7 +45,7 @@ public:
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  void mountTapeReadOnly(const std::string &vid, const LibrarySlot &librarySlot) override;
+  void mountTapeReadOnly(const std::string& vid, const LibrarySlot& librarySlot) override;
 
   /**
    * Requests the media changer to mount the specified tape for read/write
@@ -55,7 +54,7 @@ public:
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  void mountTapeReadWrite(const std::string &vid, const LibrarySlot &librarySlot) override;
+  void mountTapeReadWrite(const std::string& vid, const LibrarySlot& librarySlot) override;
 
   /** 
    * Requests the media changer to dismount the specified tape from the
@@ -64,16 +63,15 @@ public:
    * @param vid The volume identifier of the tape.
    * @param librarySlot The library slot containing the tape drive.
    */
-  void dismountTape(const std::string &vid, const LibrarySlot &librarySlot) override;
+  void dismountTape(const std::string& vid, const LibrarySlot& librarySlot) override;
 
 private:
-
   /**
    * Object representing the API to the CTA logging system.
    */
-  log::Logger &m_log;
+  log::Logger& m_log;
 
-}; // class DmcProxy
+};  // class DmcProxy
 
-} // namespace mediachanger
-} // namespace cta
+}  // namespace mediachanger
+}  // namespace cta

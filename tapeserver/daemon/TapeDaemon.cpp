@@ -29,15 +29,19 @@
 #include "tapeserver/daemon/SignalHandler.hpp"
 #include "tapeserver/daemon/TapeDaemon.hpp"
 
-namespace cta { namespace tape { namespace daemon {
+namespace cta {
+namespace tape {
+namespace daemon {
 
-TapeDaemon::TapeDaemon(const cta::daemon::CommandLineParams & commandLine,
-    log::Logger& log,
-    const TapedConfiguration& globalConfig,
-    cta::server::ProcessCap& capUtils):
-    cta::server::Daemon(log),
-    m_globalConfiguration(globalConfig), m_capUtils(capUtils),
-    m_programName("cta-taped"), m_hostName(getHostName()) {
+TapeDaemon::TapeDaemon(const cta::daemon::CommandLineParams& commandLine,
+                       log::Logger& log,
+                       const TapedConfiguration& globalConfig,
+                       cta::server::ProcessCap& capUtils) :
+cta::server::Daemon(log),
+m_globalConfiguration(globalConfig),
+m_capUtils(capUtils),
+m_programName("cta-taped"),
+m_hostName(getHostName()) {
   setCommandLineHasBeenParsed(commandLine.foreground);
 }
 
@@ -51,12 +55,17 @@ TapeDaemon::~TapeDaemon() {
 int TapeDaemon::main() {
   try {
     exceptionThrowingMain();
-  } catch (cta::exception::NoSuchObject &ex) {
+  }
+  catch (cta::exception::NoSuchObject& ex) {
     m_log(log::ERR, "Aborting cta-taped. Not starting because: " + ex.getMessage().str());
     return EXIT_FAILURE;
-  } catch (cta::exception::Exception &ex) {
+  }
+  catch (cta::exception::Exception& ex) {
     // Log the error
-    m_log(log::ERR, "Aborting cta-taped on uncaught exception. Stack trace follows.", {{"Message", ex.getMessage().str()}});
+    m_log(log::ERR, "Aborting cta-taped on uncaught exception. Stack trace follows.",
+          {
+            {"Message", ex.getMessage().str()}
+    });
     log::LogContext lc(m_log);
     lc.logBacktrace(log::INFO, ex.backtrace());
     return EXIT_FAILURE;
@@ -69,17 +78,19 @@ int TapeDaemon::main() {
 //------------------------------------------------------------------------------
 std::string cta::tape::daemon::TapeDaemon::getHostName() const {
   char nameBuf[HOST_NAME_MAX + 1];
-  if(gethostname(nameBuf, sizeof(nameBuf)))
+  if (gethostname(nameBuf, sizeof(nameBuf))) {
     throw cta::exception::Errnum("Failed to get host name");
+  }
   return nameBuf;
 }
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-void  cta::tape::daemon::TapeDaemon::exceptionThrowingMain()  {
-  if (m_globalConfiguration.driveConfigs.empty())
+void cta::tape::daemon::TapeDaemon::exceptionThrowingMain() {
+  if (m_globalConfiguration.driveConfigs.empty()) {
     throw cta::exception::NoSuchObject("No drive found in configuration");
+  }
 
   // Process must be able to change user now and should be permitted to perform
   // raw IO in the future
@@ -111,19 +122,22 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
   std::unique_ptr<SignalHandler> sh(new SignalHandler(pm));
   pm.addHandler(std::move(sh));
   // Create the drive handlers
-  for (auto & d: m_globalConfiguration.driveConfigs) {
+  for (auto& d : m_globalConfiguration.driveConfigs) {
     std::unique_ptr<DriveHandler> dh(new DriveHandler(m_globalConfiguration, d.second.value(), pm));
     pm.addHandler(std::move(dh));
   }
   // Create the garbage collector
-  if(!isMaintenanceProcessDisabled()){
+  if (!isMaintenanceProcessDisabled()) {
     std::unique_ptr<MaintenanceHandler> gc(new MaintenanceHandler(m_globalConfiguration, pm));
     pm.addHandler(std::move(gc));
-  } else {
-    lc.log(log::INFO,"In TapeDaemon::mainEventLoop, the Maintenance process is disabled from the configuration. Will not run it.");
+  }
+  else {
+    lc.log(
+      log::INFO,
+      "In TapeDaemon::mainEventLoop, the Maintenance process is disabled from the configuration. Will not run it.");
   }
   // And run the process manager
-  int ret=pm.run();
+  int ret = pm.run();
   {
     log::ScopedParamContainer param(lc);
     param.add("returnValue", ret);
@@ -138,10 +152,9 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
 void cta::tape::daemon::TapeDaemon::setDumpable() {
   cta::utils::setDumpableProcessAttribute(true);
   const bool dumpable = cta::utils::getDumpableProcessAttribute();
-  std::list<cta::log::Param> params = {
-    cta::log::Param("dumpable", dumpable ? "true" : "false")};
+  std::list<cta::log::Param> params = {cta::log::Param("dumpable", dumpable ? "true" : "false")};
   m_log(log::INFO, "Got dumpable attribute of process", params);
-  if(!dumpable) {
+  if (!dumpable) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to set dumpable attribute of process to true";
     throw ex;
@@ -151,22 +164,25 @@ void cta::tape::daemon::TapeDaemon::setDumpable() {
 //------------------------------------------------------------------------------
 // setProcessCapabilities
 //------------------------------------------------------------------------------
-void cta::tape::daemon::TapeDaemon::setProcessCapabilities(
-  const std::string &text) {
+void cta::tape::daemon::TapeDaemon::setProcessCapabilities(const std::string& text) {
   try {
     m_capUtils.setProcText(text);
     m_log(log::INFO, "Set process capabilities",
-      {{"capabilities", m_capUtils.getProcText()}});
-  } catch(cta::exception::Exception &ne) {
+          {
+            {"capabilities", m_capUtils.getProcText()}
+    });
+  }
+  catch (cta::exception::Exception& ne) {
     cta::exception::Exception ex;
-    ex.getMessage() << "Failed to set process capabilities to '" << text <<
-      "': " << ne.getMessage().str();
+    ex.getMessage() << "Failed to set process capabilities to '" << text << "': " << ne.getMessage().str();
     throw ex;
   }
 }
 
-bool cta::tape::daemon::TapeDaemon::isMaintenanceProcessDisabled() const{
+bool cta::tape::daemon::TapeDaemon::isMaintenanceProcessDisabled() const {
   return m_globalConfiguration.useMaintenanceProcess.value() == "no";
 }
 
-}}} // namespace cta::tape::daemon
+}  // namespace daemon
+}  // namespace tape
+}  // namespace cta

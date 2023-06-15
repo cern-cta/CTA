@@ -32,10 +32,11 @@ namespace cta {
 namespace catalogue {
 class Catalogue;
 struct TapeItemWrittenPointer;
-}
+}  // namespace catalogue
 
 // Forward declaration
 class ArchiveMount;
+
 namespace eos {
 class DiskReporterFactory;
 }
@@ -50,6 +51,7 @@ class ArchiveJob {
    */
   friend class ArchiveMount;
   friend class Scheduler;
+
 protected:
   /**
    * Constructor.
@@ -59,12 +61,11 @@ protected:
    * @param remotePathAndStatus location and properties of the remote file
    * @param tapeFileLocation the location within the tape
    */
-  ArchiveJob(
-  ArchiveMount *mount,
-  catalogue::Catalogue & catalogue,
-  const common::dataStructures::ArchiveFile &archiveFile,
-  const std::string &srcURL,
-  const common::dataStructures::TapeFile &tapeFile);
+  ArchiveJob(ArchiveMount* mount,
+             catalogue::Catalogue& catalogue,
+             const common::dataStructures::ArchiveFile& archiveFile,
+             const std::string& srcURL,
+             const common::dataStructures::TapeFile& tapeFile);
 
 public:
   /**
@@ -78,7 +79,7 @@ public:
   /**
    * Start an asynchronous update for a batch of jobs and then make sure they complete.
    */
-  static void asyncSetJobsBatchSucceed(std::list<std::unique_ptr<cta::ArchiveJob>> & jobs);
+  static void asyncSetJobsBatchSucceed(std::list<std::unique_ptr<cta::ArchiveJob>>& jobs);
 
   /**
    * Get the report time (in seconds).
@@ -103,7 +104,7 @@ public:
    * Triggers a scheduler update following the failure of the job. Retry policy will
    * be applied by the scheduler.
    */
-  virtual void transferFailed(const std::string &failureReason, log::LogContext & lc);
+  virtual void transferFailed(const std::string& failureReason, log::LogContext& lc);
 
   /**
    * Get the URL used for reporting
@@ -128,8 +129,7 @@ public:
    * Triggers a scheduler update following the failure of the report. Retry policy will
    * be applied by the scheduler. Failure to report success will also be a failure reason.
    */
-  virtual void reportFailed(const std::string &failureReason, log::LogContext & lc);
-
+  virtual void reportFailed(const std::string& failureReason, log::LogContext& lc);
 
 private:
   std::unique_ptr<cta::SchedulerDatabase::ArchiveJob> m_dbJob;
@@ -147,17 +147,17 @@ private:
   /**
    * The mount that generated this job
    */
-  ArchiveMount *m_mount = nullptr;
+  ArchiveMount* m_mount = nullptr;
 
   /**
    * Get access to the mount or throw exception if we do not have one
    */
-  ArchiveMount &getMount();
+  ArchiveMount& getMount();
 
   /**
    * Reference to the name server
    */
-  catalogue::Catalogue &m_catalogue;
+  catalogue::Catalogue& m_catalogue;
 
   /**
    * State for the asynchronous report to the client.

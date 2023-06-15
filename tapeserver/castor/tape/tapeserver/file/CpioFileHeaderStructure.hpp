@@ -22,14 +22,14 @@
 #include "common/Constants.hpp"
 
 #include <string>
- 
+
 namespace castor {
 namespace tape {
 /**
  * Namespace managing the reading and writing of files to and from tape.
  */
 namespace tapeFile {
-  
+
 /**
  * Cpio header
  */
@@ -37,7 +37,7 @@ class CPIO {
 public:
   // Limits
   static const size_t PATHLEN = 1024;
-  static const size_t HEADER = 76;     // CPIO ASCII header string length
+  static const size_t HEADER = 76;  // CPIO ASCII header string length
   static const size_t MAXHEADERSIZE = HEADER + PATHLEN;
 
   const std::string ASCIIMAGIC = "070707";
@@ -71,14 +71,12 @@ public:
    * @return true if the header is valid
    */
   bool valid();
- 
-private:
 
+private:
   CPIO(CPIO const&) = default;
   CPIO& operator=(CPIO const&) = default;
-   
 };
-     
+
 } /* namespace tapeFile */
 } /* namespace tape */
-}/* namespace castor */
+} /* namespace castor */

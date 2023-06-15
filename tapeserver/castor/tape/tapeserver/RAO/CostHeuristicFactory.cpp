@@ -19,27 +19,33 @@
 #include "CTACostHeuristic.hpp"
 #include "common/exception/Exception.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace rao {
 
-CostHeuristicFactory::CostHeuristicFactory() {
-}
+CostHeuristicFactory::CostHeuristicFactory() {}
 
-std::unique_ptr<CostHeuristic> CostHeuristicFactory::createCostHeuristic(const RAOOptions::CostHeuristicType & costHeuristicType) {
+std::unique_ptr<CostHeuristic>
+  CostHeuristicFactory::createCostHeuristic(const RAOOptions::CostHeuristicType& costHeuristicType) {
   std::unique_ptr<CostHeuristic> ret;
-  switch(costHeuristicType){
+  switch (costHeuristicType) {
     case RAOOptions::CostHeuristicType::cta: {
       ret.reset(new CTACostHeuristic());
       break;
     }
     default:
       std::string errorMsg = "In CostHeuristicFactory::createCostHeuristic() unable to instanciate a cost heuristic"
-        " because the cost heuristic type given in parameter (" + std::to_string(costHeuristicType) + ") is unknown.";
+                             " because the cost heuristic type given in parameter (" +
+                             std::to_string(costHeuristicType) + ") is unknown.";
       throw cta::exception::Exception(errorMsg);
   }
   return ret;
 }
 
-CostHeuristicFactory::~CostHeuristicFactory() {
-}
+CostHeuristicFactory::~CostHeuristicFactory() {}
 
-}}}}
+}  // namespace rao
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

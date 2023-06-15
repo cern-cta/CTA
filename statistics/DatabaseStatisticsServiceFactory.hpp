@@ -20,13 +20,14 @@
 #include <memory>
 
 #include "DatabaseStatisticsService.hpp"
+
 namespace cta {
 namespace statistics {
 
 class DatabaseStatisticsServiceFactory {
- public:
+public:
   static std::unique_ptr<DatabaseStatisticsService> create(cta::rdbms::Conn* databaseConnection,
-    cta::rdbms::Login::DbType dbType);
+                                                           cta::rdbms::Login::DbType dbType);
 };
 
 }  // namespace statistics

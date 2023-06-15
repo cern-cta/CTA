@@ -23,49 +23,64 @@
 
 using namespace cta::exception;
 
-Errnum::Errnum(std::string what):Exception("") {
+Errnum::Errnum(std::string what) : Exception("") {
   m_errnum = errno;
   ErrnumConstructorBottomHalf(what);
 }
 
-Errnum::Errnum(int err, std::string what):Exception("") {
+Errnum::Errnum(int err, std::string what) : Exception("") {
   m_errnum = err;
   ErrnumConstructorBottomHalf(what);
 }
 
-void Errnum::ErrnumConstructorBottomHalf(const std::string & what) {
+void Errnum::ErrnumConstructorBottomHalf(const std::string& what) {
   m_strerror = utils::errnoToString(m_errnum);
   std::stringstream w2;
-  if (what.size())
+  if (what.size()) {
     w2 << what << " ";
+  }
   w2 << "Errno=" << m_errnum << ": " << m_strerror;
   getMessage() << w2.str();
 }
 
-void Errnum::throwOnReturnedErrno (const int err, const std::string &context) {
-  if (err) throw Errnum(err, context);
+void Errnum::throwOnReturnedErrno(const int err, const std::string& context) {
+  if (err) {
+    throw Errnum(err, context);
+  }
 }
 
-void Errnum::throwOnNonZero(const int status, const std::string &context) {
-  if (status) throw Errnum(context);
+void Errnum::throwOnNonZero(const int status, const std::string& context) {
+  if (status) {
+    throw Errnum(context);
+  }
 }
 
-void Errnum::throwOnZero(const int status, const std::string &context) {
-  if (!status) throw Errnum(context);
+void Errnum::throwOnZero(const int status, const std::string& context) {
+  if (!status) {
+    throw Errnum(context);
+  }
 }
 
-void Errnum::throwOnNull(const void *const f, const std::string &context) {
-  if (nullptr == f) throw Errnum(context);
+void Errnum::throwOnNull(const void* const f, const std::string& context) {
+  if (nullptr == f) {
+    throw Errnum(context);
+  }
 }
 
-void Errnum::throwOnNegative(const int ret, const std::string &context) {
-  if (ret < 0) throw Errnum(context);
+void Errnum::throwOnNegative(const int ret, const std::string& context) {
+  if (ret < 0) {
+    throw Errnum(context);
+  }
 }
 
-void Errnum::throwOnMinusOne(const int ret, const std::string &context) {
-  if (-1 == ret) throw Errnum(context);
+void Errnum::throwOnMinusOne(const int ret, const std::string& context) {
+  if (-1 == ret) {
+    throw Errnum(context);
+  }
 }
 
 void Errnum::throwOnNegativeErrnoIfNegative(const int ret, const std::string& context) {
-  if (ret < 0) throw Errnum(-ret, context);
+  if (ret < 0) {
+    throw Errnum(-ret, context);
+  }
 }

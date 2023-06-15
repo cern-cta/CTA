@@ -36,12 +36,14 @@ public:
   /*!
    * Default constructor
    */
-  QueueItor(objectstore::Backend &objectStore, common::dataStructures::JobQueueType queueType, const std::string &queue_id = "");
+  QueueItor(objectstore::Backend& objectStore,
+            common::dataStructures::JobQueueType queueType,
+            const std::string& queue_id = "");
 
   /*!
    * No assignment constructor
    */
-  QueueItor operator=(QueueItor &rhs) = delete;
+  QueueItor operator=(QueueItor& rhs) = delete;
 
   // Default copy constructor is deleted in favour of move constructor
 
@@ -53,16 +55,15 @@ public:
    * where the queue is empty), it will be invalidated by the move. In this case we need to set it
    * explicitly.
    */
-  QueueItor(QueueItor &&rhs) :
-    m_objectStore(std::move(rhs).m_objectStore),
-    m_onlyThisQueueId(std::move(rhs).m_onlyThisQueueId),
-    m_isEndQueue(std::move(rhs).m_isEndQueue),
-    m_jobQueuesQueue(std::move(rhs).m_jobQueuesQueue),
-    m_jobQueuesQueueIt(std::move(rhs).m_jobQueuesQueueIt),
-    m_jobQueue(std::move(std::move(rhs).m_jobQueue)),
-    m_jobCache(std::move(rhs).m_jobCache)
-  {
-    if(m_jobQueuesQueueIt == rhs.m_jobQueuesQueue.end()) {
+  QueueItor(QueueItor&& rhs) :
+  m_objectStore(std::move(rhs).m_objectStore),
+  m_onlyThisQueueId(std::move(rhs).m_onlyThisQueueId),
+  m_isEndQueue(std::move(rhs).m_isEndQueue),
+  m_jobQueuesQueue(std::move(rhs).m_jobQueuesQueue),
+  m_jobQueuesQueueIt(std::move(rhs).m_jobQueuesQueueIt),
+  m_jobQueue(std::move(std::move(rhs).m_jobQueue)),
+  m_jobCache(std::move(rhs).m_jobCache) {
+    if (m_jobQueuesQueueIt == rhs.m_jobQueuesQueue.end()) {
       m_jobQueuesQueueIt = m_jobQueuesQueue.end();
     }
   }
@@ -76,15 +77,17 @@ public:
   void operator++() {
     m_jobCache.pop_front();
 
-    if(m_jobCache.empty()) {
+    if (m_jobCache.empty()) {
       updateJobCache();
-      if(m_jobCache.empty()) {
+      if (m_jobCache.empty()) {
         // We have reached the end of the current queue,
         m_isEndQueue = true;
         // advance to next queue which contains jobs
-        for(nextJobQueue(); m_jobQueuesQueueIt != m_jobQueuesQueue.end(); nextJobQueue()) {
+        for (nextJobQueue(); m_jobQueuesQueueIt != m_jobQueuesQueue.end(); nextJobQueue()) {
           getJobQueue();
-          if(!m_jobCache.empty()) break;
+          if (!m_jobCache.empty()) {
+            break;
+          }
         }
       }
     }
@@ -96,48 +99,40 @@ public:
    * If we need to detect when we have reached the end of the current queue (for example when calculating
    * summary statistics), call this method at the beginning of each queue to reset the end queue flag.
    */
-  void beginq() {
-    m_isEndQueue = m_jobCache.empty();
-  }
+  void beginq() { m_isEndQueue = m_jobCache.empty(); }
 
   /*!
    * True if the last call to operator++() took us past the end of a queue (or the queue was empty to begin with)
    */
-  bool endq() const {
-    return m_isEndQueue;
-  }
+  bool endq() const { return m_isEndQueue; }
 
   /*!
    * True if there are no more queues to process
    */
-  bool end() const {
-    return m_jobQueuesQueueIt == m_jobQueuesQueue.end();
-  }
+  bool end() const { return m_jobQueuesQueueIt == m_jobQueuesQueue.end(); }
 
   /*!
    * Queue ID
    *
    * Returns tapepool for archive queues and vid for retrieve queues.
    */
-  const std::string &qid() const;
+  const std::string& qid() const;
 
   /*!
    * Dereference the QueueItor
    */
-  const typename JobQueue::job_t &operator*() const {
-    return m_jobCache.front();
-  }
+  const typename JobQueue::job_t& operator*() const { return m_jobCache.front(); }
 
 private:
   /*!
    * Advance to the next job queue
    */
-  void nextJobQueue()
-  {
-    if(m_onlyThisQueueId) {
+  void nextJobQueue() {
+    if (m_onlyThisQueueId) {
       // If we are filtering by tapepool or vid, skip the other queues
       m_jobQueuesQueueIt = m_jobQueuesQueue.end();
-    } else {
+    }
+    else {
       ++m_jobQueuesQueueIt;
     }
   }
@@ -145,14 +140,14 @@ private:
   /*!
    * Get the list of jobs in the job queue
    */
-  void getJobQueue()
-  {
+  void getJobQueue() {
     try {
       JobQueue osq(m_jobQueuesQueueIt->address, m_objectStore);
       objectstore::ScopedSharedLock ostpl(osq);
       osq.fetch();
       m_jobQueue = osq.dumpJobs();
-    } catch(...) {
+    }
+    catch (...) {
       // Behaviour is racy: it's possible that the queue can disappear before we read it.
       // In this case, we ignore the error and move on.
       m_jobQueue.resize(0);
@@ -166,9 +161,8 @@ private:
   /*!
    * Update the cache of queue jobs
    */
-  void updateJobCache()
-  {
-    while(!m_jobQueue.empty() && m_jobCache.empty()) {
+  void updateJobCache() {
+    while (!m_jobQueue.empty() && m_jobCache.empty()) {
       auto chunksize = m_jobQueue.size() < JOB_CACHE_SIZE ? m_jobQueue.size() : JOB_CACHE_SIZE;
       auto jobQueueChunkEnd = m_jobQueue.begin();
       std::advance(jobQueueChunkEnd, chunksize);
@@ -182,19 +176,19 @@ private:
   /*!
    * Populate the cache with a chunk of queue jobs from the objectstore
    */
-  void getQueueJobs(const jobQueue_t &jobQueueChunk);
+  void getQueueJobs(const jobQueue_t& jobQueueChunk);
 
   //! Maximum number of jobs to asynchronously fetch from the objectstore at once
   const size_t JOB_CACHE_SIZE = 300;
 
-  objectstore::Backend                               &m_objectStore;         //!< Reference to ObjectStore Backend
-  bool                                                m_onlyThisQueueId;     //!< true if a queue_id parameter was passed to the constructor
-  bool                                                m_isEndQueue;          //!< true if the last increment++ took us past the end of a queue
+  objectstore::Backend& m_objectStore;  //!< Reference to ObjectStore Backend
+  bool m_onlyThisQueueId;               //!< true if a queue_id parameter was passed to the constructor
+  bool m_isEndQueue;                    //!< true if the last increment++ took us past the end of a queue
 
-  typename std::list<JobQueuesQueue>                  m_jobQueuesQueue;      //!< list of Archive or Retrieve Job Queues
-  typename std::list<JobQueuesQueue>::const_iterator  m_jobQueuesQueueIt;    //!< iterator across m_jobQueuesQueue
-  jobQueue_t                                          m_jobQueue;            //!< list of Archive or Retrieve Jobs
-  typename std::list<typename JobQueue::job_t>        m_jobCache;            //!< local cache of queue jobs
+  typename std::list<JobQueuesQueue> m_jobQueuesQueue;                    //!< list of Archive or Retrieve Job Queues
+  typename std::list<JobQueuesQueue>::const_iterator m_jobQueuesQueueIt;  //!< iterator across m_jobQueuesQueue
+  jobQueue_t m_jobQueue;                                                  //!< list of Archive or Retrieve Jobs
+  typename std::list<typename JobQueue::job_t> m_jobCache;                //!< local cache of queue jobs
 };
 
-} // namespace cta
+}  // namespace cta

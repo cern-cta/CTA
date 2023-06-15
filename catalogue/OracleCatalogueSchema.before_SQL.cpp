@@ -23,10 +23,10 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-OracleCatalogueSchema::OracleCatalogueSchema(): CatalogueSchema(
+OracleCatalogueSchema::OracleCatalogueSchema() :
+CatalogueSchema(
   // CTA_SQL_SCHEMA - The contents of oracle_catalogue_schema.cpp go here
-  ) {
-}
+) {}
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

@@ -20,12 +20,13 @@
 #include "xroot_plugins/XrdCtaStream.hpp"
 #include "disk/DiskSystem.hpp"
 
-namespace cta { namespace xrd {
+namespace cta {
+namespace xrd {
 
 /*!
  * Stream object which implements "disksystem ls" command
  */
-class DiskSystemLsStream: public XrdCtaStream{
+class DiskSystemLsStream : public XrdCtaStream {
 public:
   /*!
    * Constructor
@@ -34,52 +35,52 @@ public:
    * @param[in]    catalogue     CTA Catalogue
    * @param[in]    scheduler     CTA Scheduler
    */
-  DiskSystemLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
+  DiskSystemLsStream(const frontend::AdminCmdStream& requestMsg,
+                     cta::catalogue::Catalogue& catalogue,
+                     cta::Scheduler& scheduler);
 
 private:
   /*!
    * Can we close the stream?
    */
-  virtual bool isDone() const {
-    return m_diskSystemList.empty();
-  }
+  virtual bool isDone() const { return m_diskSystemList.empty(); }
 
   /*!
    * Fill the buffer
    */
-  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
+  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf);
 
-  cta::disk::DiskSystemList m_diskSystemList;             //!< List of disk systems from the catalogue
+  cta::disk::DiskSystemList m_diskSystemList;  //!< List of disk systems from the catalogue
 
-  static constexpr const char* const LOG_SUFFIX  = "DiskSystemLsStream";    //!< Identifier for log messages
+  static constexpr const char* const LOG_SUFFIX = "DiskSystemLsStream";  //!< Identifier for log messages
 };
 
-
-DiskSystemLsStream::DiskSystemLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
-  XrdCtaStream(catalogue, scheduler),
-  m_diskSystemList(catalogue.DiskSystem()->getAllDiskSystems())
-{
+DiskSystemLsStream::DiskSystemLsStream(const frontend::AdminCmdStream& requestMsg,
+                                       cta::catalogue::Catalogue& catalogue,
+                                       cta::Scheduler& scheduler) :
+XrdCtaStream(catalogue, scheduler),
+m_diskSystemList(catalogue.DiskSystem()->getAllDiskSystems()) {
   using namespace cta::admin;
 
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "DiskSystemLsStream() constructor");
 }
 
-  std::string name;
-  std::string fileRegexp;
-  std::string freeSpaceQueryURL;
-  uint64_t refreshInterval;
-  uint64_t targetedFreeSpace;
-  
-  cta::common::dataStructures::EntryLog creationLog;
-  cta::common::dataStructures::EntryLog lastModificationLog;
-  std::string comment;
+std::string name;
+std::string fileRegexp;
+std::string freeSpaceQueryURL;
+uint64_t refreshInterval;
+uint64_t targetedFreeSpace;
 
-int DiskSystemLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
-  for(bool is_buffer_full = false; !m_diskSystemList.empty() && !is_buffer_full; m_diskSystemList.pop_front()) {
+cta::common::dataStructures::EntryLog creationLog;
+cta::common::dataStructures::EntryLog lastModificationLog;
+std::string comment;
+
+int DiskSystemLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
+  for (bool is_buffer_full = false; !m_diskSystemList.empty() && !is_buffer_full; m_diskSystemList.pop_front()) {
     Data record;
 
-    auto &ds      = m_diskSystemList.front();
-    auto  ds_item = record.mutable_dsls_item();
+    auto& ds = m_diskSystemList.front();
+    auto ds_item = record.mutable_dsls_item();
 
     ds_item->set_name(ds.name);
     ds_item->set_file_regexp(ds.fileRegexp);
@@ -99,4 +100,5 @@ int DiskSystemLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
   return streambuf->Size();
 }
 
-}} // namespace cta::xrd
+}  // namespace xrd
+}  // namespace cta

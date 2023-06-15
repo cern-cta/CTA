@@ -21,35 +21,29 @@
 namespace cta {
 namespace postgresscheddb {
 
-RetrieveJob::RetrieveJob()
-{
-   throw cta::exception::Exception("Not implemented");
+RetrieveJob::RetrieveJob() {
+  throw cta::exception::Exception("Not implemented");
 }
 
-void RetrieveJob::asyncSetSuccessful()
-{
-   throw cta::exception::Exception("Not implemented");
+void RetrieveJob::asyncSetSuccessful() {
+  throw cta::exception::Exception("Not implemented");
 }
 
-void RetrieveJob::failTransfer(const std::string &failureReason, log::LogContext &lc)
-{
-   throw cta::exception::Exception("Not implemented");
+void RetrieveJob::failTransfer(const std::string& failureReason, log::LogContext& lc) {
+  throw cta::exception::Exception("Not implemented");
 }
 
-void RetrieveJob::failReport(const std::string &failureReason, log::LogContext &lc)
-{
-   throw cta::exception::Exception("Not implemented");
+void RetrieveJob::failReport(const std::string& failureReason, log::LogContext& lc) {
+  throw cta::exception::Exception("Not implemented");
 }
 
-void RetrieveJob::abort(const std::string &abortReason, log::LogContext &lc)
-{
-   throw cta::exception::Exception("Not implemented");
+void RetrieveJob::abort(const std::string& abortReason, log::LogContext& lc) {
+  throw cta::exception::Exception("Not implemented");
 }
 
-void RetrieveJob::fail()
-{
-   throw cta::exception::Exception("Not implemented");
+void RetrieveJob::fail() {
+  throw cta::exception::Exception("Not implemented");
 }
 
-} //namespace postgresscheddb
-} //namespace cta
+}  //namespace postgresscheddb
+}  //namespace cta

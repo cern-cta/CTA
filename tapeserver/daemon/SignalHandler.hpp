@@ -27,9 +27,9 @@ class ProcessManager;
 
 /// A virtual process handler managing the signals via signalfd.
 
-class SignalHandler: public SubprocessHandler {
+class SignalHandler : public SubprocessHandler {
 public:
-  SignalHandler(ProcessManager & pm);
+  SignalHandler(ProcessManager& pm);
   ~SignalHandler() override;
   SubprocessHandler::ProcessingStatus fork() override;
   SubprocessHandler::ProcessingStatus getInitialStatus() override;
@@ -40,19 +40,22 @@ public:
   SubprocessHandler::ProcessingStatus processTimeout() override;
   int runChild() override;
   SubprocessHandler::ProcessingStatus shutdown() override;
-  template <class C>
+
+  template<class C>
   void setTimeout(C timeout) {
-    m_timeoutDuration=std::chrono::duration_cast<decltype(m_timeoutDuration)>(timeout);
+    m_timeoutDuration = std::chrono::duration_cast<decltype(m_timeoutDuration)>(timeout);
   }
+
 private:
-  cta::tape::daemon::ProcessManager & m_processManager;
-  int m_sigFd=-1;
-  bool m_shutdownRequested=false;
-  bool m_shutdownAcknowlegded=false;
-  bool m_sigChildPending=false;
-  std::chrono::time_point<std::chrono::steady_clock> m_shutdownStartTime=
-          decltype(m_shutdownStartTime)::max();
-  std::chrono::milliseconds m_timeoutDuration=
-          std::chrono::duration_cast<decltype(m_timeoutDuration)>(std::chrono::minutes(9));
+  cta::tape::daemon::ProcessManager& m_processManager;
+  int m_sigFd = -1;
+  bool m_shutdownRequested = false;
+  bool m_shutdownAcknowlegded = false;
+  bool m_sigChildPending = false;
+  std::chrono::time_point<std::chrono::steady_clock> m_shutdownStartTime = decltype(m_shutdownStartTime)::max();
+  std::chrono::milliseconds m_timeoutDuration =
+    std::chrono::duration_cast<decltype(m_timeoutDuration)>(std::chrono::minutes(9));
 };
-}}} // namespace cta::tape::daemon
+}  // namespace daemon
+}  // namespace tape
+}  // namespace cta

@@ -31,7 +31,6 @@ namespace readtp {
  */
 class TapeFileSequenceParser {
 public:
-
   /**
    * Parse the specified tape file sequence parameter string and store the
    * resulting ranges into m_parsedCommandLine.tapeFseqRanges.
@@ -48,11 +47,10 @@ public:
    * option.
    * @return The resulting list of tape file sequence ranges.
    */
-  static TapeFseqRangeList parse(char *const str)
-    ;
+  static TapeFseqRangeList parse(char* const str);
 
-}; // class TapeFileSequenceParser
+};  // class TapeFileSequenceParser
 
-} // namespace readtp
-} // namespace tapeserver
-} // namespace cta
+}  // namespace readtp
+}  // namespace tapeserver
+}  // namespace cta

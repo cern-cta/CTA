@@ -32,7 +32,6 @@ namespace dataStructures {
  * This is the repack information for a given tape
  */
 struct RepackInfo {
-
   struct RepackDestinationInfo {
     std::string vid;
     uint64_t files = 0;
@@ -42,12 +41,7 @@ struct RepackInfo {
 
   std::string vid;
   std::string repackBufferBaseURL;
-  enum class Type {
-    MoveAndAddCopies,
-    AddCopiesOnly,
-    MoveOnly,
-    Undefined
-  } type;
+  enum class Type { MoveAndAddCopies, AddCopiesOnly, MoveOnly, Undefined } type;
   enum class Status {
     // Those values are matching the cta.proto values
     Pending = 1,
@@ -77,23 +71,23 @@ struct RepackInfo {
   common::dataStructures::EntryLog creationLog;
   time_t repackFinishedTime = 0;
   RepackDestinationInfo::List destinationInfos;
-//  std::string tag;
-//  uint64_t totalFiles;
-//  uint64_t totalSize;
-//  uint64_t filesToRetrieve;
-//  uint64_t filesToArchive;
-//  uint64_t filesFailed;
-//  uint64_t filesArchived;
-//  RepackType repackType;
-//  std::string repackStatus;
-//  std::map<uint64_t,std::string> errors;
-//  EntryLog creationLog;
-RepackQueueType getQueueType();
-}; // struct RepackInfo
+  //  std::string tag;
+  //  uint64_t totalFiles;
+  //  uint64_t totalSize;
+  //  uint64_t filesToRetrieve;
+  //  uint64_t filesToArchive;
+  //  uint64_t filesFailed;
+  //  uint64_t filesArchived;
+  //  RepackType repackType;
+  //  std::string repackStatus;
+  //  std::map<uint64_t,std::string> errors;
+  //  EntryLog creationLog;
+  RepackQueueType getQueueType();
+};  // struct RepackInfo
 
 std::string toString(RepackInfo::Type type);
 std::string toString(RepackInfo::Status status);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

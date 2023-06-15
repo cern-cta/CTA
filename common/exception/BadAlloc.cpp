@@ -17,10 +17,7 @@
 
 #include "common/exception/BadAlloc.hpp"
 
-
 // -----------------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------------
-cta::exception::BadAlloc::BadAlloc():
-  cta::exception::Exception() {
-}
+cta::exception::BadAlloc::BadAlloc() : cta::exception::Exception() {}

@@ -20,21 +20,20 @@
 
 #include "Exception.hpp"
 
-namespace cta { namespace exception {
+namespace cta {
+namespace exception {
 
-    /**
+/**
      * Failed to query volume.
      */
-    class AcsQueryVolumeCmd : public cta::exception::Exception {
-      
-    public:
-      
-      /**
+class AcsQueryVolumeCmd : public cta::exception::Exception {
+public:
+  /**
        * Constructor
        */
-      AcsQueryVolumeCmd();
+  AcsQueryVolumeCmd();
 
-    }; // class AcsQueryVolumeCmd
+};  // class AcsQueryVolumeCmd
 
-} } // namespace castor exception
-
+}  // namespace exception
+}  // namespace cta

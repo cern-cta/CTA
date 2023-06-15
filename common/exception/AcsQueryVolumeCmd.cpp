@@ -18,10 +18,7 @@
 
 #include "AcsQueryVolumeCmd.hpp"
 
-
 // -----------------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------------
-cta::exception::AcsQueryVolumeCmd::AcsQueryVolumeCmd():
-  cta::exception::Exception() {
-}
+cta::exception::AcsQueryVolumeCmd::AcsQueryVolumeCmd() : cta::exception::Exception() {}

@@ -29,12 +29,11 @@ class RdbmsCatalogue;
 
 class OracleTapeCatalogue : public RdbmsTapeCatalogue {
 public:
-  OracleTapeCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
-    RdbmsCatalogue* rdbmsCatalogue);
+  OracleTapeCatalogue(log::Logger& log, std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue);
   ~OracleTapeCatalogue() override = default;
 
 private:
-  uint64_t getTapeLastFSeq(rdbms::Conn &conn, const std::string &vid) const override;
+  uint64_t getTapeLastFSeq(rdbms::Conn& conn, const std::string& vid) const override;
 };  // class OracleTapeCatalogue
 
 }  // namespace catalogue

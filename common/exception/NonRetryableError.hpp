@@ -25,9 +25,8 @@ namespace exception {
 /**
  * An exception class representing an application error that should not be retried.
  */
-class NonRetryableError: public exception::Exception {
+class NonRetryableError : public exception::Exception {
 public:
-
   /**
    * Constructor.
    *
@@ -36,9 +35,9 @@ public:
    * @param embedBacktrace whether to embed a backtrace of where the
    * exception was throw in the message
    */
-  NonRetryableError(const std::string &context = "", const bool embedBacktrace = true);
+  NonRetryableError(const std::string& context = "", const bool embedBacktrace = true);
 
-}; // class UserError
+};  // class UserError
 
-} // namespace exception
-} // namespace cta
+}  // namespace exception
+}  // namespace cta

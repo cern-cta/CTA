@@ -26,20 +26,17 @@ namespace wrapper {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-OcciConnFactory::OcciConnFactory(
-  const std::string &username,
-  const std::string &password,
-  const std::string &database):
-  m_username(username),
-  m_password(password),
-  m_database(database) {
-}
+OcciConnFactory::OcciConnFactory(const std::string& username,
+                                 const std::string& password,
+                                 const std::string& database) :
+m_username(username),
+m_password(password),
+m_database(database) {}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-OcciConnFactory::~OcciConnFactory() {
-}
+OcciConnFactory::~OcciConnFactory() {}
 
 //------------------------------------------------------------------------------
 // create
@@ -47,11 +44,12 @@ OcciConnFactory::~OcciConnFactory() {
 std::unique_ptr<ConnWrapper> OcciConnFactory::create() {
   try {
     return OcciEnvSingleton::instance().createConn(m_username, m_password, m_database);
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+}  // namespace wrapper
+}  // namespace rdbms
+}  // namespace cta

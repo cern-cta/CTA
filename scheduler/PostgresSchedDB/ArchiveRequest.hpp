@@ -31,48 +31,51 @@ namespace cta {
 namespace postgresscheddb {
 
 CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestHasNoCopies);
-  
+
 class ArchiveRequest {
 public:
-  ArchiveRequest(rdbms::ConnPool &pool, log::LogContext& lc) : m_connPool(pool), m_lc(lc) { }
+  ArchiveRequest(rdbms::ConnPool& pool, log::LogContext& lc) : m_connPool(pool), m_lc(lc) {}
 
   void insert();
   void update();
   void commit();
 
   // ============================== Job management =============================
-  void addJob(uint32_t copyNumber, const std::string& tapepool, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries,
-    uint16_t maxReportRetries);
+  void addJob(uint32_t copyNumber,
+              const std::string& tapepool,
+              uint16_t maxRetriesWithinMount,
+              uint16_t maxTotalRetries,
+              uint16_t maxReportRetries);
 
   void setArchiveFile(const common::dataStructures::ArchiveFile& archiveFile);
   common::dataStructures::ArchiveFile getArchiveFile();
-  
-  void setArchiveReportURL(const std::string &URL);
+
+  void setArchiveReportURL(const std::string& URL);
   std::string getArchiveReportURL();
-  
-  void setArchiveErrorReportURL(const std::string &URL);
+
+  void setArchiveErrorReportURL(const std::string& URL);
   std::string getArchiveErrorReportURL();
 
-  void setRequester(const common::dataStructures::RequesterIdentity &requester);
+  void setRequester(const common::dataStructures::RequesterIdentity& requester);
   common::dataStructures::RequesterIdentity getRequester();
 
-  void setSrcURL(const std::string &srcURL);
+  void setSrcURL(const std::string& srcURL);
   std::string getSrcURL();
 
-  void setEntryLog(const common::dataStructures::EntryLog &creationLog);
+  void setEntryLog(const common::dataStructures::EntryLog& creationLog);
   common::dataStructures::EntryLog getEntryLog();
-  
-  void setMountPolicy(const common::dataStructures::MountPolicy &mountPolicy);
+
+  void setMountPolicy(const common::dataStructures::MountPolicy& mountPolicy);
   common::dataStructures::MountPolicy getMountPolicy();
 
   std::string getIdStr() { return "?"; }
-  
+
   struct JobDump {
     uint32_t copyNb;
     std::string tapePool;
     ArchiveJobStatus status;
   };
-  
+
   std::list<JobDump> dumpJobs();
 
 private:
@@ -95,23 +98,23 @@ private:
   std::unique_ptr<postgresscheddb::Transaction> m_txn;
 
   // References to external objects
-  rdbms::ConnPool &m_connPool;
-  log::LogContext&  m_lc;
+  rdbms::ConnPool& m_connPool;
+  log::LogContext& m_lc;
 
   // ArchiveRequest state
   bool m_isReportDecided = false;
   bool m_isRepack = false;
 
   // ArchiveRequest metadata
-  common::dataStructures::ArchiveFile        m_archiveFile;
-  std::string                                m_archiveReportURL;
-  std::string                                m_archiveErrorReportURL;
-  common::dataStructures::RequesterIdentity  m_requesterIdentity;
-  std::string                                m_srcURL;
-  common::dataStructures::EntryLog           m_entryLog;
-  common::dataStructures::MountPolicy        m_mountPolicy;
-  std::list<Job>                             m_jobs;
+  common::dataStructures::ArchiveFile m_archiveFile;
+  std::string m_archiveReportURL;
+  std::string m_archiveErrorReportURL;
+  common::dataStructures::RequesterIdentity m_requesterIdentity;
+  std::string m_srcURL;
+  common::dataStructures::EntryLog m_entryLog;
+  common::dataStructures::MountPolicy m_mountPolicy;
+  std::list<Job> m_jobs;
 };
 
-} // namespace postgresscheddb
-} // namespace cta
+}  // namespace postgresscheddb
+}  // namespace cta

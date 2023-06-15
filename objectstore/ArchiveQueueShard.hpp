@@ -19,29 +19,33 @@
 
 #include "ArchiveQueue.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta {
+namespace objectstore {
 
-class ArchiveQueueShard: public ObjectOps<serializers::ArchiveQueueShard, serializers::ArchiveQueueShard_t>  {
+class ArchiveQueueShard : public ObjectOps<serializers::ArchiveQueueShard, serializers::ArchiveQueueShard_t> {
 public:
   // Constructor with undefined address
-  ArchiveQueueShard(Backend & os);
+  ArchiveQueueShard(Backend& os);
 
   // Constructor
-  ArchiveQueueShard(const std::string & address, Backend & os);
+  ArchiveQueueShard(const std::string& address, Backend& os);
 
   // Upgrader form generic object
-  ArchiveQueueShard(GenericObject & go);
+  ArchiveQueueShard(GenericObject& go);
 
   // Forbid/hide base initializer
   void initialize() = delete;
 
   // Initializer
-  void initialize(const std::string & owner);
+  void initialize(const std::string& owner);
 
   // dumper
   std::string dump();
 
-  void garbageCollect(const std::string& presumedOwner, AgentReference& agentReference, log::LogContext& lc, cta::catalogue::Catalogue& catalogue) override;
+  void garbageCollect(const std::string& presumedOwner,
+                      AgentReference& agentReference,
+                      log::LogContext& lc,
+                      cta::catalogue::Catalogue& catalogue) override;
 
   struct JobInfo {
     uint64_t size;
@@ -52,19 +56,20 @@ public:
     time_t startTime;
     std::string mountPolicyName;
   };
+
   std::list<JobInfo> dumpJobs();
 
   struct JobsSummary {
     uint64_t jobs = 0;
     uint64_t bytes = 0;
   };
+
   JobsSummary getJobsSummary();
 
   /**
    * adds job, returns new size
    */
-  uint64_t addJob(ArchiveQueue::JobToAdd & jobToAdd);
-
+  uint64_t addJob(ArchiveQueue::JobToAdd& jobToAdd);
 
   struct RemovalResult {
     uint64_t jobsRemoved = 0;
@@ -73,16 +78,18 @@ public:
     uint64_t bytesAfter = 0;
     std::list<JobInfo> removedJobs;
   };
+
   /**
    * Removes jobs from shard (and from the to remove list). Returns list of removed jobs.
    */
-  RemovalResult removeJobs(const std::list<std::string> & jobsToRemove);
+  RemovalResult removeJobs(const std::list<std::string>& jobsToRemove);
 
-  ArchiveQueue::CandidateJobList getCandidateJobList(uint64_t maxBytes, uint64_t maxFiles, const std::set<std::string>& archiveRequestsToSkip);
+  ArchiveQueue::CandidateJobList
+    getCandidateJobList(uint64_t maxBytes, uint64_t maxFiles, const std::set<std::string>& archiveRequestsToSkip);
 
   /** Re compute summaries in case they do not match the array content. */
   void rebuild();
-
 };
 
-}} // namespace cta::objectstore
+}  // namespace objectstore
+}  // namespace cta

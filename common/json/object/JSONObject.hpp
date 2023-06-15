@@ -19,7 +19,10 @@
 
 #include <string>
 
-namespace cta { namespace utils { namespace json { namespace object { 
+namespace cta {
+namespace utils {
+namespace json {
+namespace object {
 
 /**
  * Interface that allows the objects that inherits from the implementations of this interface
@@ -36,7 +39,7 @@ public:
    * @param json the json string used to set the inherited object attributes
    * @throws JSONObjectException if the json does not contain the correct key-value attributes
    */
-  virtual void buildFromJSON(const std::string & json) = 0;
+  virtual void buildFromJSON(const std::string& json) = 0;
   /**
    * Return the inherited object expected JSON structure allowing to set its attributes
    * via the buildFromJSON() method
@@ -44,8 +47,11 @@ public:
    */
   virtual std::string getExpectedJSONToBuildObject() const = 0;
   virtual ~JSONObject();
-private:
 
+private:
 };
 
-}}}}
+}  // namespace object
+}  // namespace json
+}  // namespace utils
+}  // namespace cta

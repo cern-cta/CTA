@@ -33,24 +33,24 @@ namespace catalogue {
 
 class Catalogue;
 
-class FileRecycleLogCatalogueRetryWrapper: public FileRecycleLogCatalogue {
+class FileRecycleLogCatalogueRetryWrapper : public FileRecycleLogCatalogue {
 public:
-  FileRecycleLogCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue, log::Logger &m_log,
-    const uint32_t maxTriesToConnect);
+  FileRecycleLogCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
+                                      log::Logger& m_log,
+                                      const uint32_t maxTriesToConnect);
 
   ~FileRecycleLogCatalogueRetryWrapper() override = default;
 
   FileRecycleLogItor getFileRecycleLogItor(
-    const RecycleTapeFileSearchCriteria & searchCriteria = RecycleTapeFileSearchCriteria()) const override;
+    const RecycleTapeFileSearchCriteria& searchCriteria = RecycleTapeFileSearchCriteria()) const override;
 
-  void restoreFileInRecycleLog(const RecycleTapeFileSearchCriteria & searchCriteria,
-    const std::string &newFid) override;
+  void restoreFileInRecycleLog(const RecycleTapeFileSearchCriteria& searchCriteria, const std::string& newFid) override;
 
   void deleteFilesFromRecycleLog(const std::string& vid, log::LogContext& lc) override;
 
 private:
   const std::unique_ptr<Catalogue>& m_catalogue;
-  log::Logger &m_log;
+  log::Logger& m_log;
   uint32_t m_maxTriesToConnect;
 };
 

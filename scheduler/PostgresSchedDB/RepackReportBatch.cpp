@@ -21,15 +21,13 @@
 namespace cta {
 namespace postgresscheddb {
 
-RepackReportBatch::RepackReportBatch()
-{
-   throw cta::exception::Exception("Not implemented");
+RepackReportBatch::RepackReportBatch() {
+  throw cta::exception::Exception("Not implemented");
 }
 
-void RepackReportBatch::report(log::LogContext & lc)
-{
-   throw cta::exception::Exception("Not implemented");
+void RepackReportBatch::report(log::LogContext& lc) {
+  throw cta::exception::Exception("Not implemented");
 }
 
-} //namespace postgresscheddb
-} //namespace cta
+}  //namespace postgresscheddb
+}  //namespace cta

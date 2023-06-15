@@ -25,56 +25,54 @@
 #include "common/log/Logger.hpp"
 #include "common/utils/utils.hpp"
 
-namespace cta { namespace common {
+namespace cta {
+namespace common {
 
-    /**
+/**
      * represents a category from the CTA configuration file
      */
-    typedef std::map<std::string, std::string> ConfCategory;
+typedef std::map<std::string, std::string> ConfCategory;
 
-    /**
+/**
      * a class representing the configuration of castor.
      * This configurations is obtained from the local file given in the
      * constructor and will be updated regularly. The time between two
      * updates is taken from the Config/ExpirationDelay entry of the
      * configuration itself and defaults to 5mn if no such entry is found
      */
-    class Configuration {
-
-    public:
-
-      /**
+class Configuration {
+public:
+  /**
        * Private exceptions for this
        */
-      CTA_GENERATE_EXCEPTION_CLASS(InvalidConfigEntry);
-      CTA_GENERATE_EXCEPTION_CLASS(NoEntry);
+  CTA_GENERATE_EXCEPTION_CLASS(InvalidConfigEntry);
+  CTA_GENERATE_EXCEPTION_CLASS(NoEntry);
 
-    public:
-
-      /**
+public:
+  /**
        * constructor
        * @param fileName the file that should be used to build the configuration
        */
-      explicit Configuration(const std::string& fileName);
+  explicit Configuration(const std::string& fileName);
 
-      /**
+  /**
        * copy constructor
        * @param other instance of CastorConfiguration class
        */
-      Configuration(const Configuration & other);
+  Configuration(const Configuration& other);
 
-      /**
+  /**
        * destructor
        */
-      virtual ~Configuration();
+  virtual ~Configuration();
 
-      /**
+  /**
        * assignment operator
        * @param other instance of CastorConfiguration class
        */
-      Configuration & operator=(const Configuration & other);
+  Configuration& operator=(const Configuration& other);
 
-      /**
+  /**
        * Retrieves a configuration entry.
        *
        * If this method is passed a logger object then it will log the value
@@ -88,11 +86,12 @@ namespace cta { namespace common {
        * is not in the configuration file
        * @param log pointer to nullptr or an optional logger object
        */
-      const std::string& getConfEntString(const std::string &category,
-        const std::string &key, const std::string &defaultValue,
-        cta::log::Logger *const log = nullptr);
+  const std::string& getConfEntString(const std::string& category,
+                                      const std::string& key,
+                                      const std::string& defaultValue,
+                                      cta::log::Logger* const log = nullptr);
 
-      /**
+  /**
        * Retrieves a configuration entry.
        *
        * Besides other possible exceptions, this method throws a
@@ -106,10 +105,10 @@ namespace cta { namespace common {
        * @param key the key of the entry
        * @param log pointer to nullptr or an optional logger object
        */
-      const std::string& getConfEntString(const std::string &category,
-        const std::string &key, cta::log::Logger *const log = nullptr);
+  const std::string&
+    getConfEntString(const std::string& category, const std::string& key, cta::log::Logger* const log = nullptr);
 
-      /**
+  /**
        * Retrieves a configuration entry as an integer.
        *
        * If this method is passed a logger object then it will log the value
@@ -124,50 +123,47 @@ namespace cta { namespace common {
        * @param log pointer to nullptr or an optional logger object
        * @return the integer value
        */
-      template<typename T> T getConfEntInt(const std::string &category,
-        const std::string &key, const T defaultValue,
-        cta::log::Logger *const log = nullptr)  {
-        std::string strValue;
-        try {
-          strValue = getConfEntString(category, key);
-        } catch(cta::exception::Exception &ex) {
-          if(nullptr != log) {
-            std::list<cta::log::Param> params = {
-              cta::log::Param("category", category),
-              cta::log::Param("key", key),
-              cta::log::Param("value", defaultValue),
-              cta::log::Param("source", "DEFAULT")};
-            (*log)(log::INFO, "Configuration entry", params);
-          }
-          return defaultValue;
-        }
-
-        if (!utils::isValidUInt(strValue.c_str())) {
-          InvalidConfigEntry ex;
-          ex.getMessage() << "Failed to get configuration entry " << category <<
-            ":" << key << ": Value is not a valid unsigned integer: value=" <<
-            strValue;
-          throw ex;
-        }
-
-        T value;
-        std::stringstream ss;
-        ss << strValue;
-        ss >> value;
-
-        if(nullptr != log) {
-          std::list<cta::log::Param> params = {
-            cta::log::Param("category", category),
-            cta::log::Param("key", key),
-            cta::log::Param("value", value),
-            cta::log::Param("source", m_fileName)};
-          (*log)(log::INFO, "Configuration entry", params);
-        }
-
-        return value;
+  template<typename T>
+  T getConfEntInt(const std::string& category,
+                  const std::string& key,
+                  const T defaultValue,
+                  cta::log::Logger* const log = nullptr) {
+    std::string strValue;
+    try {
+      strValue = getConfEntString(category, key);
+    }
+    catch (cta::exception::Exception& ex) {
+      if (nullptr != log) {
+        std::list<cta::log::Param> params = {cta::log::Param("category", category), cta::log::Param("key", key),
+                                             cta::log::Param("value", defaultValue),
+                                             cta::log::Param("source", "DEFAULT")};
+        (*log)(log::INFO, "Configuration entry", params);
       }
+      return defaultValue;
+    }
 
-      /**
+    if (!utils::isValidUInt(strValue.c_str())) {
+      InvalidConfigEntry ex;
+      ex.getMessage() << "Failed to get configuration entry " << category << ":" << key
+                      << ": Value is not a valid unsigned integer: value=" << strValue;
+      throw ex;
+    }
+
+    T value;
+    std::stringstream ss;
+    ss << strValue;
+    ss >> value;
+
+    if (nullptr != log) {
+      std::list<cta::log::Param> params = {cta::log::Param("category", category), cta::log::Param("key", key),
+                                           cta::log::Param("value", value), cta::log::Param("source", m_fileName)};
+      (*log)(log::INFO, "Configuration entry", params);
+    }
+
+    return value;
+  }
+
+  /**
        * Retrieves a configuration entry as an integer.
        *
        * Besides other possible exceptions, this method throws a
@@ -179,89 +175,82 @@ namespace cta { namespace common {
        * @param log pointer to nullptr or an optional logger object
        * @return the integer value
        */
-      template<typename T> T getConfEntInt(const std::string &category,
-        const std::string &key, cta::log::Logger *const log = nullptr)  {
-        const std::string strValue = getConfEntString(category, key);
+  template<typename T>
+  T getConfEntInt(const std::string& category, const std::string& key, cta::log::Logger* const log = nullptr) {
+    const std::string strValue = getConfEntString(category, key);
 
-        if (!utils::isValidUInt(strValue.c_str())) {
-          InvalidConfigEntry ex;
-          ex.getMessage() << "Failed to get configuration entry " << category <<
-            ":" << key << ": Value is not a valid unsigned integer: value=" <<
-            strValue;
-          throw ex;
-        }
+    if (!utils::isValidUInt(strValue.c_str())) {
+      InvalidConfigEntry ex;
+      ex.getMessage() << "Failed to get configuration entry " << category << ":" << key
+                      << ": Value is not a valid unsigned integer: value=" << strValue;
+      throw ex;
+    }
 
-        T value;
-        std::stringstream ss;
-        ss << strValue;
-        ss >> value;
+    T value;
+    std::stringstream ss;
+    ss << strValue;
+    ss >> value;
 
-        if(nullptr != log) {
-          std::list<cta::log::Param> params = {
-            cta::log::Param("category", category),
-            cta::log::Param("key", key),
-            cta::log::Param("value", value),
-            cta::log::Param("source", m_fileName)};
-          (*log)(log::INFO, "Configuration entry", params);
-        }
+    if (nullptr != log) {
+      std::list<cta::log::Param> params = {cta::log::Param("category", category), cta::log::Param("key", key),
+                                           cta::log::Param("value", value), cta::log::Param("source", m_fileName)};
+      (*log)(log::INFO, "Configuration entry", params);
+    }
 
-        return value;
-      }
+    return value;
+  }
 
-    private:
-
-      /**
+private:
+  /**
        * check whether the configuration should be renewed
        */
-      bool isStale() ;
+  bool isStale();
 
-      /**
+  /**
        * tries to renew the configuration.
        * That is : take the write lock to do it, check whether it's needed
        * and do it only if needed before releasing the lock
        */
-      void tryToRenewConfig() ;
+  void tryToRenewConfig();
 
-      /**
+  /**
        * gets current timeout value (in seconds)
        * this function does not take any lock while reading the
        * configuration. So it should never be called without holding
        * a read or a write lock
        */
-      int getTimeoutNolock() ;
+  int getTimeoutNolock();
 
-      /**
+  /**
        * renews the configuration
        * this function does not take any lock while renewing the
        * configuration. So it should never be called without holding
        * the write lock
        */
-      void renewConfigNolock() ;
+  void renewConfigNolock();
 
-    private:
-
-      /**
+private:
+  /**
        * fileName to be used when updating the configuration
        */
-      std::string m_fileName;
+  std::string m_fileName;
 
-      /**
+  /**
        * last time we've updated the configuration
        */
-      time_t m_lastUpdateTime;
+  time_t m_lastUpdateTime;
 
-      /**
+  /**
        * the dictionnary of configuration items
        * actually a dictionnary of ConfCategories, which are dictionnaries of entries
        */
-      std::map<std::string, ConfCategory> m_config;
+  std::map<std::string, ConfCategory> m_config;
 
-      /**
+  /**
        * lock to garantee safe access to the configuration, lastUpdateTime and timeout
        */
-      pthread_rwlock_t m_lock;
+  pthread_rwlock_t m_lock;
+};
 
-    };
-
-  } // namespace common
-} // namespace castor
+}  // namespace common
+}  // namespace cta

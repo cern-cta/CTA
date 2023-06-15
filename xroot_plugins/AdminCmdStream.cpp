@@ -51,13 +51,13 @@ namespace cta {
 namespace frontend {
 
 AdminCmdStream::AdminCmdStream(const frontend::FrontendService& frontendService,
-  const common::dataStructures::SecurityIdentity& clientIdentity,
-  const admin::AdminCmd& adminCmd,
-  XrdSsiStream*& stream) :
-  AdminCmd(frontendService, clientIdentity, adminCmd),
-  m_stream(stream),
-  m_schedDb(frontendService.getSchedDb()),
-  m_catalogueConnString(frontendService.getCatalogueConnString()) { }
+                               const common::dataStructures::SecurityIdentity& clientIdentity,
+                               const admin::AdminCmd& adminCmd,
+                               XrdSsiStream*& stream) :
+AdminCmd(frontendService, clientIdentity, adminCmd),
+m_stream(stream),
+m_schedDb(frontendService.getSchedDb()),
+m_catalogueConnString(frontendService.getCatalogueConnString()) {}
 
 xrd::Response AdminCmdStream::process() {
   xrd::Response response;
@@ -66,7 +66,7 @@ xrd::Response AdminCmdStream::process() {
 
   try {
     // Map the <Cmd, SubCmd> to a method
-    switch(cmd_pair(m_adminCmd.cmd(), m_adminCmd.subcmd())) {
+    switch (cmd_pair(m_adminCmd.cmd(), m_adminCmd.subcmd())) {
       using namespace cta::admin;
 
       case cmd_pair(admin::AdminCmd::CMD_ADMIN, admin::AdminCmd::SUBCMD_LS):
@@ -136,23 +136,26 @@ xrd::Response AdminCmdStream::process() {
         processRecycleTapeFile_Ls(response);
         break;
       default:
-        throw exception::PbException("Admin command pair <" +
-              AdminCmd_Cmd_Name(m_adminCmd.cmd()) + ", " +
-              AdminCmd_SubCmd_Name(m_adminCmd.subcmd()) + "> is not a stream command.");
+        throw exception::PbException("Admin command pair <" + AdminCmd_Cmd_Name(m_adminCmd.cmd()) + ", " +
+                                     AdminCmd_SubCmd_Name(m_adminCmd.subcmd()) + "> is not a stream command.");
     }
-     
+
     // Log the admin command
     logAdminCmd(__FUNCTION__, "success", "", t);
-  } catch(exception::PbException& ex) {
+  }
+  catch (exception::PbException& ex) {
     logAdminCmd(__FUNCTION__, "failure", ex.what(), t);
     throw ex;
-  } catch(exception::UserError& ex) {
+  }
+  catch (exception::UserError& ex) {
     logAdminCmd(__FUNCTION__, "failure", ex.getMessageValue(), t);
     throw ex;
-  } catch(exception::Exception& ex) {
+  }
+  catch (exception::Exception& ex) {
     logAdminCmd(__FUNCTION__, "failure", ex.what(), t);
     throw ex;
-  } catch(std::runtime_error& ex) {
+  }
+  catch (std::runtime_error& ex) {
     logAdminCmd(__FUNCTION__, "failure", ex.what(), t);
     throw ex;
   }
@@ -162,7 +165,7 @@ xrd::Response AdminCmdStream::process() {
 frontend::Version AdminCmdStream::getClientVersion() const {
   frontend::Version clientVersion;
 
-  clientVersion.ctaVersion  = m_adminCmd.client_version();
+  clientVersion.ctaVersion = m_adminCmd.client_version();
   clientVersion.protobufTag = m_adminCmd.protobuf_tag();
 
   return clientVersion;
@@ -197,9 +200,8 @@ void AdminCmdStream::processFailedRequest_Ls(xrd::Response& response) {
   m_stream = new xrd::FailedRequestLsStream(*this, m_catalogue, m_scheduler, m_schedDb, m_lc);
 
   // Display the correct column headers
-  response.set_show_header(has_flag(admin::OptionBoolean::SUMMARY) ?
-                           admin::HeaderType::FAILEDREQUEST_LS_SUMMARY :
-                           admin::HeaderType::FAILEDREQUEST_LS);
+  response.set_show_header(has_flag(admin::OptionBoolean::SUMMARY) ? admin::HeaderType::FAILEDREQUEST_LS_SUMMARY :
+                                                                     admin::HeaderType::FAILEDREQUEST_LS);
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
@@ -322,17 +324,18 @@ void AdminCmdStream::processVersion(xrd::Response& response) {
 }
 
 void AdminCmdStream::processRecycleTapeFile_Ls(xrd::Response& response) {
-  m_stream = new xrd::RecycleTapeFileLsStream(*this,m_catalogue,m_scheduler);
+  m_stream = new xrd::RecycleTapeFileLsStream(*this, m_catalogue, m_scheduler);
 
   response.set_show_header(admin::HeaderType::RECYLETAPEFILE_LS);
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmdStream::processVirtualOrganization_Ls(xrd::Response& response){
+void AdminCmdStream::processVirtualOrganization_Ls(xrd::Response& response) {
   m_stream = new xrd::VirtualOrganizationLsStream(*this, m_catalogue, m_scheduler);
 
   response.set_show_header(admin::HeaderType::VIRTUALORGANIZATION_LS);
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-}} // namespace cta::frontend
+}  // namespace frontend
+}  // namespace cta

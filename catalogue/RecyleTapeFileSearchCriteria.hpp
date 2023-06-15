@@ -59,7 +59,7 @@ struct RecycleTapeFileSearchCriteria {
    */
   std::optional<uint64_t> copynb;
 
-}; // struct TapeFileSearchCriteria
+};  // struct TapeFileSearchCriteria
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

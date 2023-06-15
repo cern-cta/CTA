@@ -26,22 +26,22 @@ namespace unitTests {
 
 class cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest : public ::testing::Test {
 protected:
-
   struct Argcv {
     int argc;
-    char **argv;
-    Argcv(): argc(0), argv(nullptr) {
-    }
+    char** argv;
+
+    Argcv() : argc(0), argv(nullptr) {}
   };
+
   typedef std::list<Argcv*> ArgcvList;
   ArgcvList m_argsList;
 
   /**
    * Creates a duplicate string using the new operator.
    */
-  char *dupString(const std::string &str) {
+  char* dupString(const std::string& str) {
     const int len = str.size();
-    char *copy = new char[len + 1];
+    char* copy = new char[len + 1];
     std::copy(str.begin(), str.end(), copy);
     copy[len] = '\0';
     return copy;
@@ -56,9 +56,8 @@ protected:
     // Allow getopt_long to be called again
     optind = 0;
 
-    for(ArgcvList::const_iterator itor = m_argsList.begin();
-      itor != m_argsList.end(); itor++) {
-      for(int i=0; i < (*itor)->argc; i++) {
+    for (ArgcvList::const_iterator itor = m_argsList.begin(); itor != m_argsList.end(); itor++) {
+      for (int i = 0; i < (*itor)->argc; i++) {
         delete[] (*itor)->argv[i];
       }
       delete[] (*itor)->argv;
@@ -70,10 +69,10 @@ protected:
 TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, help_short) {
   using namespace cta::tapeserver::tapelabel;
 
-  Argcv *args = new Argcv();
+  Argcv* args = new Argcv();
   m_argsList.push_back(args);
   args->argc = 2;
-  args->argv = new char *[3];
+  args->argv = new char*[3];
   args->argv[0] = dupString("cta-tape-label");
   args->argv[1] = dupString("-h");
   args->argv[2] = nullptr;
@@ -88,10 +87,10 @@ TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, help_short) {
 TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, help_long) {
   using namespace cta::tapeserver::tapelabel;
 
-  Argcv *args = new Argcv();
+  Argcv* args = new Argcv();
   m_argsList.push_back(args);
   args->argc = 2;
-  args->argv = new char *[3];
+  args->argv = new char*[3];
   args->argv[0] = dupString("cta-tape-label");
   args->argv[1] = dupString("--help");
   args->argv[2] = nullptr;
@@ -106,10 +105,10 @@ TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, help_long) {
 TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, debug_short) {
   using namespace cta::tapeserver::tapelabel;
 
-  Argcv *args = new Argcv();
+  Argcv* args = new Argcv();
   m_argsList.push_back(args);
   args->argc = 4;
-  args->argv = new char *[5];
+  args->argv = new char*[5];
   args->argv[0] = dupString("cta-tape-label");
   args->argv[1] = dupString("-v");
   args->argv[2] = dupString("VID001");
@@ -126,10 +125,10 @@ TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, debug_short) {
 TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, debug_long) {
   using namespace cta::tapeserver::tapelabel;
 
-  Argcv *args = new Argcv();
+  Argcv* args = new Argcv();
   m_argsList.push_back(args);
   args->argc = 4;
-  args->argv = new char *[5];
+  args->argv = new char*[5];
   args->argv[0] = dupString("cta-tape-label");
   args->argv[1] = dupString("-v");
   args->argv[2] = dupString("VID001");
@@ -146,10 +145,10 @@ TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, debug_long) {
 TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, force_short) {
   using namespace cta::tapeserver::tapelabel;
 
-  Argcv *args = new Argcv();
+  Argcv* args = new Argcv();
   m_argsList.push_back(args);
   args->argc = 4;
-  args->argv = new char *[5];
+  args->argv = new char*[5];
   args->argv[0] = dupString("cta-tape-label");
   args->argv[1] = dupString("-v");
   args->argv[2] = dupString("VID001");
@@ -166,10 +165,10 @@ TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, force_short) {
 TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, force_long) {
   using namespace cta::tapeserver::tapelabel;
 
-  Argcv *args = new Argcv();
+  Argcv* args = new Argcv();
   m_argsList.push_back(args);
   args->argc = 4;
-  args->argv = new char *[5];
+  args->argv = new char*[5];
   args->argv[0] = dupString("cta-tape-label");
   args->argv[1] = dupString("-v");
   args->argv[2] = dupString("VID001");
@@ -186,10 +185,10 @@ TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, force_long) {
 TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, vid_short) {
   using namespace cta::tapeserver::tapelabel;
 
-  Argcv *args = new Argcv();
+  Argcv* args = new Argcv();
   m_argsList.push_back(args);
   args->argc = 3;
-  args->argv = new char *[4];
+  args->argv = new char*[4];
   args->argv[0] = dupString("cta-tape-label");
   args->argv[1] = dupString("-v");
   args->argv[2] = dupString("VID001");
@@ -204,10 +203,10 @@ TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, vid_short) {
 TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, vid_long) {
   using namespace cta::tapeserver::tapelabel;
 
-  Argcv *args = new Argcv();
+  Argcv* args = new Argcv();
   m_argsList.push_back(args);
   args->argc = 3;
-  args->argv = new char *[4];
+  args->argv = new char*[4];
   args->argv[0] = dupString("cta-tape-label");
   args->argv[1] = dupString("--vid");
   args->argv[2] = dupString("VID001");
@@ -222,25 +221,24 @@ TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, vid_long) {
 TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, vid_missed) {
   using namespace cta::tapeserver::tapelabel;
 
-  Argcv *args = new Argcv();
+  Argcv* args = new Argcv();
   m_argsList.push_back(args);
   args->argc = 2;
-  args->argv = new char *[3];
+  args->argv = new char*[3];
   args->argv[0] = dupString("cta-tape-label");
   args->argv[1] = dupString("--vid");
   args->argv[2] = nullptr;
 
-  ASSERT_THROW(TapeLabelCmdLineArgs cmdLine(args->argc, args->argv),
-    cta::exception::CommandLineNotParsed);
+  ASSERT_THROW(TapeLabelCmdLineArgs cmdLine(args->argc, args->argv), cta::exception::CommandLineNotParsed);
 }
 
 TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, oldVid_short) {
   using namespace cta::tapeserver::tapelabel;
 
-  Argcv *args = new Argcv();
+  Argcv* args = new Argcv();
   m_argsList.push_back(args);
   args->argc = 5;
-  args->argv = new char *[6];
+  args->argv = new char*[6];
   args->argv[0] = dupString("cta-tape-label");
   args->argv[1] = dupString("-v");
   args->argv[2] = dupString("VID001");
@@ -255,14 +253,13 @@ TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, oldVid_short) {
   ASSERT_EQ(std::string("VID002"), cmdLine.m_oldLabel);
 }
 
-
 TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, oldVid_long) {
   using namespace cta::tapeserver::tapelabel;
 
-  Argcv *args = new Argcv();
+  Argcv* args = new Argcv();
   m_argsList.push_back(args);
   args->argc = 5;
-  args->argv = new char *[6];
+  args->argv = new char*[6];
   args->argv[0] = dupString("cta-tape-label");
   args->argv[1] = dupString("-v");
   args->argv[2] = dupString("VID001");
@@ -277,22 +274,20 @@ TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, oldVid_long) {
   ASSERT_EQ(std::string("VID002"), cmdLine.m_oldLabel);
 }
 
-
 TEST_F(cta_tapeserver_tapelabel_TapeLabelCmdLineArgsTest, oldVid_missed) {
   using namespace cta::tapeserver::tapelabel;
 
-  Argcv *args = new Argcv();
+  Argcv* args = new Argcv();
   m_argsList.push_back(args);
   args->argc = 4;
-  args->argv = new char *[5];
+  args->argv = new char*[5];
   args->argv[0] = dupString("cta-tape-label");
   args->argv[1] = dupString("-v");
   args->argv[2] = dupString("VID001");
   args->argv[3] = dupString("-o");
   args->argv[4] = nullptr;
 
-  ASSERT_THROW(TapeLabelCmdLineArgs cmdLine(args->argc, args->argv),
-    cta::exception::CommandLineNotParsed);
+  ASSERT_THROW(TapeLabelCmdLineArgs cmdLine(args->argc, args->argv), cta::exception::CommandLineNotParsed);
 }
 
-} // namespace unitTests
+}  // namespace unitTests

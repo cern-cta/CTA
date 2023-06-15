@@ -32,9 +32,9 @@ namespace cta {
  * single remote file.
  */
 struct RetrieveRequestDump {
-  cta::common::dataStructures::RetrieveRequest retrieveRequest; /**< The full path of the source archive file. */
+  cta::common::dataStructures::RetrieveRequest retrieveRequest;    /**< The full path of the source archive file. */
   cta::common::dataStructures::RetrieveFileQueueCriteria criteria; /**< The list of tape files and mount criteria */
   uint64_t activeCopyNb; /**< The tape copy number currenty considered for retrieve. */
-}; // struct RetrieveFromTapeCopyRequest
+};                       // struct RetrieveFromTapeCopyRequest
 
-} // namespace cta
+}  // namespace cta

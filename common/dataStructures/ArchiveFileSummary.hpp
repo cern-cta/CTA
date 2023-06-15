@@ -22,7 +22,6 @@
 #include <stdint.h>
 #include <string>
 
-
 namespace cta {
 namespace common {
 namespace dataStructures {
@@ -31,20 +30,19 @@ namespace dataStructures {
  * This struct is used to hold stats of a list of files (when listing them) 
  */
 struct ArchiveFileSummary {
-
   ArchiveFileSummary();
 
-  bool operator==(const ArchiveFileSummary &rhs) const;
+  bool operator==(const ArchiveFileSummary& rhs) const;
 
-  bool operator!=(const ArchiveFileSummary &rhs) const;
+  bool operator!=(const ArchiveFileSummary& rhs) const;
 
   uint64_t totalBytes;
   uint64_t totalFiles;
 
-}; // struct ArchiveFileSummary
+};  // struct ArchiveFileSummary
 
-std::ostream &operator<<(std::ostream &os, const ArchiveFileSummary &obj);
+std::ostream& operator<<(std::ostream& os, const ArchiveFileSummary& obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

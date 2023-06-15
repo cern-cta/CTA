@@ -29,12 +29,13 @@ class RdbmsCatalogue;
 
 class SqliteVirtualOrganizationCatalogue : public RdbmsVirtualOrganizationCatalogue {
 public:
-  SqliteVirtualOrganizationCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
-    RdbmsCatalogue* rdbmsCatalogue);
+  SqliteVirtualOrganizationCatalogue(log::Logger& log,
+                                     std::shared_ptr<rdbms::ConnPool> connPool,
+                                     RdbmsCatalogue* rdbmsCatalogue);
   ~SqliteVirtualOrganizationCatalogue() override = default;
 
 private:
-  uint64_t getNextVirtualOrganizationId(rdbms::Conn &conn) override;
+  uint64_t getNextVirtualOrganizationId(rdbms::Conn& conn) override;
 };  // class SqliteFileRecycleLogCatalogue
 
 }  // namespace catalogue

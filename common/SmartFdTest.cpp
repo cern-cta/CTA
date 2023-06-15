@@ -35,8 +35,7 @@ protected:
     s_closedCallbackWasCalled = false;
   }
 
-  virtual void TearDown() {
-  }
+  virtual void TearDown() {}
 
   static void closedCallback(int closedfd) {
     s_fd = closedfd;
@@ -64,4 +63,4 @@ TEST_F(cta_SmartFdTest, testClosedCallback) {
   ASSERT_EQ(true, s_closedCallbackWasCalled);
 }
 
-} // namespace unitTests
+}  // namespace unitTests

@@ -27,19 +27,25 @@ public:
   DummyRequesterMountRuleCatalogue() = default;
   ~DummyRequesterMountRuleCatalogue() override = default;
 
-  void modifyRequesterMountRulePolicy(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &instanceName, const std::string &requesterName, const std::string &mountPolicy) override;
+  void modifyRequesterMountRulePolicy(const common::dataStructures::SecurityIdentity& admin,
+                                      const std::string& instanceName,
+                                      const std::string& requesterName,
+                                      const std::string& mountPolicy) override;
 
-  void modifyRequesteMountRuleComment(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &instanceName, const std::string &requesterName, const std::string &comment) override;
+  void modifyRequesteMountRuleComment(const common::dataStructures::SecurityIdentity& admin,
+                                      const std::string& instanceName,
+                                      const std::string& requesterName,
+                                      const std::string& comment) override;
 
-  void createRequesterMountRule(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &mountPolicyName, const std::string &diskInstance, const std::string &requesterName,
-    const std::string &comment) override;
+  void createRequesterMountRule(const common::dataStructures::SecurityIdentity& admin,
+                                const std::string& mountPolicyName,
+                                const std::string& diskInstance,
+                                const std::string& requesterName,
+                                const std::string& comment) override;
 
   std::list<common::dataStructures::RequesterMountRule> getRequesterMountRules() const override;
 
-  void deleteRequesterMountRule(const std::string &diskInstanceName, const std::string &requesterName) override;
+  void deleteRequesterMountRule(const std::string& diskInstanceName, const std::string& requesterName) override;
 };
 
 }  // namespace catalogue

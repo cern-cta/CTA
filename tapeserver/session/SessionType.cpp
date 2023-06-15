@@ -18,20 +18,21 @@
 #include "SessionType.hpp"
 #include <sstream>
 
-namespace cta { namespace tape { namespace session {
+namespace cta {
+namespace tape {
+namespace session {
 
 std::string toString(SessionType type) {
-  switch(type) {
-  case SessionType::Archive:
-    return "Archive";
-  case SessionType::Retrieve:
-    return "Retrieve";
-  case SessionType::Label:
-    return "Label";
-  case SessionType::Undetermined:
-    return "Undetermined";
-  default:
-    {
+  switch (type) {
+    case SessionType::Archive:
+      return "Archive";
+    case SessionType::Retrieve:
+      return "Retrieve";
+    case SessionType::Label:
+      return "Label";
+    case SessionType::Undetermined:
+      return "Undetermined";
+    default: {
       std::stringstream st;
       st << "UnknownType (" << ((uint32_t) type) << ")";
       return st.str();
@@ -39,5 +40,6 @@ std::string toString(SessionType type) {
   }
 }
 
-}}} // namespace cta::tape::session
-
+}  // namespace session
+}  // namespace tape
+}  // namespace cta

@@ -31,27 +31,27 @@ namespace cta {
  * specialised type (below).
  */
 template<typename T>
-T from_string(const std::string &val) {
-  throw std::runtime_error("In from_string(): This function should not be instantiated."); \
+T from_string(const std::string& val) {
+  throw std::runtime_error("In from_string(): This function should not be instantiated.");
 }
 
 /**
  * TO_STRING macro: defines to_string(T) and from_string<T>(string) for an enum class : uint8_t
  */
-#define TO_STRING(T) \
-constexpr const char* to_string(postgresscheddb::T e) { \
-  using namespace postgresscheddb; \
-  return Strings##T[static_cast<uint8_t>(e)]; \
-} \
-template<> \
-inline postgresscheddb::T from_string<postgresscheddb::T>(const std::string &val) { \
-  using namespace postgresscheddb; \
-  uint8_t i = 0; \
-  for(auto &v : Strings##T) { \
-    if(v == val) return static_cast<T>(i); \
-    ++i; \
-  } \
-  throw std::runtime_error("In from_string(): Unexpected enum value " + val); \
-}
+#define TO_STRING(T)                                                                  \
+  constexpr const char* to_string(postgresscheddb::T e) {                             \
+    using namespace postgresscheddb;                                                  \
+    return Strings##T[static_cast<uint8_t>(e)];                                       \
+  }                                                                                   \
+  template<>                                                                          \
+  inline postgresscheddb::T from_string<postgresscheddb::T>(const std::string& val) { \
+    using namespace postgresscheddb;                                                  \
+    uint8_t i = 0;                                                                    \
+    for (auto& v : Strings##T) {                                                      \
+      if (v == val) return static_cast<T>(i);                                         \
+      ++i;                                                                            \
+    }                                                                                 \
+    throw std::runtime_error("In from_string(): Unexpected enum value " + val);       \
+  }
 
-} // namespace cta
+}  // namespace cta

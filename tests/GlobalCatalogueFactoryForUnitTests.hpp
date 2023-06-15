@@ -23,4 +23,4 @@
  * Declaration of the global variable used to point to a factory of CTA
  * catalogue objects.
  */
-extern cta::catalogue::CatalogueFactory *g_catalogueFactoryForUnitTests;
+extern cta::catalogue::CatalogueFactory* g_catalogueFactoryForUnitTests;

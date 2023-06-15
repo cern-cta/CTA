@@ -37,14 +37,13 @@ namespace wrapper {
  */
 class Postgres {
 public:
-
   /**
    * A method to throw a DB related error with an informative string obtained from the connection and/or
    * request status. The exception will be a LostDatabaseConnection() if the postgres connection structure
    * indicates that the connection is no longer valid.
    */
-  [[noreturn]] static void ThrowInfo(const PGconn *conn, const PGresult *res, const std::string &prefix) {
-    const char *const pgcstr = PQerrorMessage(conn);
+  [[noreturn]] static void ThrowInfo(const PGconn* conn, const PGresult* res, const std::string& prefix) {
+    const char* const pgcstr = PQerrorMessage(conn);
     std::string pgstr;
     if (nullptr != pgcstr) {
       pgstr = pgcstr;
@@ -55,7 +54,7 @@ public:
     bool checkViolation = false;
     if (nullptr != res) {
       resstr = "DB Result Status:" + std::to_string(PQresultStatus(res));
-      const char *const e = PQresultErrorField(res, PG_DIAG_SQLSTATE);
+      const char* const e = PQresultErrorField(res, PG_DIAG_SQLSTATE);
       if (nullptr != e && '\0' != *e) {
         uniqueViolation = 0 == std::strcmp("23505", e);
         checkViolation = 0 == std::strcmp("23514", e);
@@ -66,9 +65,10 @@ public:
     if (!pgstr.empty()) {
       dbmsg = pgstr;
       if (!resstr.empty()) {
-        dbmsg += " ("+resstr+")";
+        dbmsg += " (" + resstr + ")";
       }
-    } else {
+    }
+    else {
       dbmsg = resstr;
     }
 
@@ -78,7 +78,8 @@ public:
     if (!prefix.empty()) {
       if (!dbmsg.empty()) {
         dbmsg = prefix + ": " + dbmsg;
-      } else {
+      }
+      else {
         dbmsg = prefix;
       }
     }
@@ -107,9 +108,8 @@ public:
    */
   class Result {
   public:
-
-    Result( const Result& ) = delete; // non construction-copyable
-    Result& operator=( const Result& ) = delete; // non copyable
+    Result(const Result&) = delete;             // non construction-copyable
+    Result& operator=(const Result&) = delete;  // non copyable
 
     /**
      * Constructor.
@@ -118,15 +118,12 @@ public:
      *
      * @param res A libpq result.
      */
-    Result(PGresult *res) : m_res(res), m_rcode(PQresultStatus(res)) {
-    }
+    Result(PGresult* res) : m_res(res), m_rcode(PQresultStatus(res)) {}
 
-   /**
+    /**
     * Destructor.
     */
-    ~Result() {
-      clear();
-    }
+    ~Result() { clear(); }
 
     /**
      * Relases the single result or ensures the conneciton has no pending results.
@@ -141,31 +138,27 @@ public:
      *
      * @return The libpq result.
      */
-    PGresult *get() const {
-      return m_res;
-    }
+    PGresult* get() const { return m_res; }
 
     /**
      * Gets the current result code.
      *
      * @return The libpq result rcode.
      */
-    ExecStatusType rcode() const {
-      return m_rcode;
-    }
+    ExecStatusType rcode() const { return m_rcode; }
 
   private:
     /**
      * The result as a libpq result.
      */
-    PGresult *m_res;
+    PGresult* m_res;
 
     /**
      * rcode of current result.
      */
     ExecStatusType m_rcode;
 
-  }; // class Result
+  };  // class Result
 
   /**
    * A class to help managing a sequence of results from a postgres connection.
@@ -173,9 +166,8 @@ public:
    */
   class ResultItr {
   public:
-
-    ResultItr( const ResultItr& ) = delete; // non construction-copyable
-    ResultItr& operator=( const ResultItr& ) = delete; // non copyable
+    ResultItr(const ResultItr&) = delete;             // non construction-copyable
+    ResultItr& operator=(const ResultItr&) = delete;  // non copyable
 
     /**
      * Constructor.
@@ -184,22 +176,20 @@ public:
      *
      * @param conn A libpq connection.
      */
-    ResultItr(PGconn *conn) :
-      m_conn(conn), m_res(nullptr), m_finished(false), m_rcode(PGRES_FATAL_ERROR) {
-    }
+    ResultItr(PGconn* conn) : m_conn(conn), m_res(nullptr), m_finished(false), m_rcode(PGRES_FATAL_ERROR) {}
 
-   /**
+    /**
     * Destructor.
     */
-    ~ResultItr() {
-      clear();
-    }
+    ~ResultItr() { clear(); }
 
     /**
      * Relases the single result or ensures the conneciton has no pending results.
      */
     void clear() {
-      while(nullptr != next());
+      while (nullptr != next()) {
+        ;
+      }
     }
 
     /**
@@ -207,16 +197,14 @@ public:
      *
      * @return The libpq result.
      */
-    PGresult *get() const {
-      return m_res;
-    }
+    PGresult* get() const { return m_res; }
 
     /**
      * Moves to the next result available.
      *
      * @return  The libpq result of the next result or nullptr if none is available.
      */
-    PGresult *next() {
+    PGresult* next() {
       if (m_finished) {
         return nullptr;
       }
@@ -234,20 +222,18 @@ public:
      *
      * @return The libpq result rcode.
      */
-    ExecStatusType rcode() const {
-      return m_rcode;
-    }
+    ExecStatusType rcode() const { return m_rcode; }
 
   private:
     /**
      * The libpq postgres connection from which to fetch results
      */
-    PGconn *m_conn;
+    PGconn* m_conn;
 
     /**
      * The current result as a libpq result.
      */
-    PGresult *m_res;
+    PGresult* m_res;
 
     /**
      * Indicates that the end of result series has been detected on the connection.
@@ -259,10 +245,10 @@ public:
      */
     ExecStatusType m_rcode;
 
-  }; // class ResultItr
+  };  // class ResultItr
 
-}; // class Postgres
+};  // class Postgres
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+}  // namespace wrapper
+}  // namespace rdbms
+}  // namespace cta

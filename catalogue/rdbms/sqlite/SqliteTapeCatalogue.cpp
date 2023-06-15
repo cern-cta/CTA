@@ -25,19 +25,19 @@
 namespace cta {
 namespace catalogue {
 
-SqliteTapeCatalogue::SqliteTapeCatalogue(log::Logger &log,
-  std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue)
-  : RdbmsTapeCatalogue(log, connPool, rdbmsCatalogue) {}
+SqliteTapeCatalogue::SqliteTapeCatalogue(log::Logger& log,
+                                         std::shared_ptr<rdbms::ConnPool> connPool,
+                                         RdbmsCatalogue* rdbmsCatalogue) :
+RdbmsTapeCatalogue(log, connPool, rdbmsCatalogue) {}
 
-uint64_t SqliteTapeCatalogue::getTapeLastFSeq(rdbms::Conn &conn, const std::string &vid) const {
+uint64_t SqliteTapeCatalogue::getTapeLastFSeq(rdbms::Conn& conn, const std::string& vid) const {
   try {
-    const char *const sql =
-      "SELECT "
-        "LAST_FSEQ AS LAST_FSEQ "
-      "FROM "
-        "TAPE "
-      "WHERE "
-        "VID = :VID;";
+    const char* const sql = "SELECT "
+                            "LAST_FSEQ AS LAST_FSEQ "
+                            "FROM "
+                            "TAPE "
+                            "WHERE "
+                            "VID = :VID;";
 
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":VID", vid);
@@ -47,7 +47,8 @@ uint64_t SqliteTapeCatalogue::getTapeLastFSeq(rdbms::Conn &conn, const std::stri
     }
 
     return rset.columnUint64("LAST_FSEQ");
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }

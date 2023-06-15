@@ -39,23 +39,21 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-VerifySchemaCmd::VerifySchemaCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream):
-CmdLineTool(inStream, outStream, errStream) {
-}
+VerifySchemaCmd::VerifySchemaCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream) :
+CmdLineTool(inStream, outStream, errStream) {}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-VerifySchemaCmd::~VerifySchemaCmd() noexcept {
-}
+VerifySchemaCmd::~VerifySchemaCmd() noexcept {}
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
+int VerifySchemaCmd::exceptionThrowingMain(const int argc, char* const* const argv) {
   const VerifySchemaCmdLineArgs cmdLineArgs(argc, argv);
 
-  if(cmdLineArgs.help) {
+  if (cmdLineArgs.help) {
     printUsage(m_out);
     return 0;
   }
@@ -67,18 +65,16 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
 
   const bool ctaCatalogueTableExists = tableExists("CTA_CATALOGUE", conn);
 
-  if(!ctaCatalogueTableExists) {
+  if (!ctaCatalogueTableExists) {
     std::cerr << "Cannot verify the database schema because the CTA_CATALOGUE table does not exist" << std::endl;
     return 1;
   }
 
-  SchemaChecker::Builder schemaCheckerBuilder("catalogue",login.dbType,conn);
-  std::unique_ptr<SchemaChecker> schemaChecker(schemaCheckerBuilder
-                        .useMapStatementsReader()
-                        .useSQLiteSchemaComparer()
-                        .build());
+  SchemaChecker::Builder schemaCheckerBuilder("catalogue", login.dbType, conn);
+  std::unique_ptr<SchemaChecker> schemaChecker(
+    schemaCheckerBuilder.useMapStatementsReader().useSQLiteSchemaComparer().build());
 
-  SchemaCheckerResult result = schemaChecker->displayingCompareSchema(std::cout,std::cerr);
+  SchemaCheckerResult result = schemaChecker->displayingCompareSchema(std::cout, std::cerr);
   result += schemaChecker->warnParallelTables();
   result += schemaChecker->warnSchemaUpgrading();
   result += schemaChecker->warnProcedures();
@@ -87,11 +83,10 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   result += schemaChecker->warnErrorLoggingTables();
   result += schemaChecker->warnMissingIndexes();
   result.displayWarnings(std::cout);
-  if(result.getStatus() == SchemaCheckerResult::Status::FAILED
-    && isUpgrading(&conn)) {
+  if (result.getStatus() == SchemaCheckerResult::Status::FAILED && isUpgrading(&conn)) {
     return 2;
   }
-  if(result.getStatus() == SchemaCheckerResult::Status::FAILED){
+  if (result.getStatus() == SchemaCheckerResult::Status::FAILED) {
     return 1;
   }
   return 0;
@@ -100,10 +95,10 @@ int VerifySchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
 //------------------------------------------------------------------------------
 // tableExists
 //------------------------------------------------------------------------------
-bool VerifySchemaCmd::tableExists(const std::string tableName, rdbms::Conn &conn) const {
+bool VerifySchemaCmd::tableExists(const std::string tableName, rdbms::Conn& conn) const {
   const auto names = conn.getTableNames();
-  for(const auto &name : names) {
-    if(tableName == name) {
+  for (const auto& name : names) {
+    if (tableName == name) {
       return true;
     }
   }
@@ -113,25 +108,24 @@ bool VerifySchemaCmd::tableExists(const std::string tableName, rdbms::Conn &conn
 //------------------------------------------------------------------------------
 // printUsage
 //------------------------------------------------------------------------------
-void VerifySchemaCmd::printUsage(std::ostream &os) {
+void VerifySchemaCmd::printUsage(std::ostream& os) {
   VerifySchemaCmdLineArgs::printUsage(os);
 }
 
-bool VerifySchemaCmd::isUpgrading(rdbms::Conn *conn) {
-  const char *const sql =
-    "SELECT "
-      "CTA_CATALOGUE.STATUS AS STATUS "
-    "FROM "
-      "CTA_CATALOGUE";
+bool VerifySchemaCmd::isUpgrading(rdbms::Conn* conn) {
+  const char* const sql = "SELECT "
+                          "CTA_CATALOGUE.STATUS AS STATUS "
+                          "FROM "
+                          "CTA_CATALOGUE";
 
   auto stmt = conn->createStmt(sql);
   auto rset = stmt.executeQuery();
 
-  if(!rset.next()) {
+  if (!rset.next()) {
     throw exception::Exception("CTA_CATALOGUE does not contain any STATUS");
   }
   return rset.columnString("STATUS") == "UPGRADING";
 }
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

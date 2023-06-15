@@ -19,13 +19,10 @@
 
 #include <map>
 
-namespace cta { 
+namespace cta {
 
-struct Namespace
-{
-  Namespace(const std::string &ep, const std::string &tk) :
-    endpoint(ep), token(tk) {
-  }
+struct Namespace {
+  Namespace(const std::string& ep, const std::string& tk) : endpoint(ep), token(tk) {}
 
   std::string endpoint;
   std::string token;
@@ -33,4 +30,4 @@ struct Namespace
 
 using NamespaceMap_t = std::map<std::string, Namespace>;
 
-} // namespace cta
+}  // namespace cta

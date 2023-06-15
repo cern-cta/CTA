@@ -28,21 +28,22 @@ namespace threading {
  * variable.
  */
 class CondVar;
-    
+
 /**
 * A simple exception throwing wrapper for pthread mutexes.
 * Inspired from the interface of Qt.
 */
 class Mutex {
 public:
-  Mutex() ;
+  Mutex();
   ~Mutex();
-  void lock() ;
+  void lock();
   void unlock();
+
 private:
   friend CondVar;
   pthread_mutex_t m_mutex;
 };
-  
-} // namespace threading
-} // namespace cta
+
+}  // namespace threading
+}  // namespace cta

@@ -32,13 +32,12 @@
 
 namespace unitTests {
 
-cta_catalogue_StorageClassTest::cta_catalogue_StorageClassTest()
-  : m_dummyLog("dummy", "dummy"),
-    m_admin(CatalogueTestUtils::getAdmin()),
-    m_vo(CatalogueTestUtils::getVo()),
-    m_storageClassSingleCopy(CatalogueTestUtils::getStorageClass()),
-    m_diskInstance(CatalogueTestUtils::getDiskInstance()) {
-}
+cta_catalogue_StorageClassTest::cta_catalogue_StorageClassTest() :
+m_dummyLog("dummy", "dummy"),
+m_admin(CatalogueTestUtils::getAdmin()),
+m_vo(CatalogueTestUtils::getVo()),
+m_storageClassSingleCopy(CatalogueTestUtils::getStorageClass()),
+m_diskInstance(CatalogueTestUtils::getDiskInstance()) {}
 
 void cta_catalogue_StorageClassTest::SetUp() {
   cta::log::LogContext dummyLc(m_dummyLog);
@@ -76,7 +75,7 @@ TEST_P(cta_catalogue_StorageClassTest, createStorageClass_same_twice) {
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassSingleCopy);
   ASSERT_THROW(m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassSingleCopy),
-    cta::exception::UserError);
+               cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_StorageClassTest, createStorageClass_emptyStringStorageClassName) {
@@ -85,7 +84,7 @@ TEST_P(cta_catalogue_StorageClassTest, createStorageClass_emptyStringStorageClas
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
   ASSERT_THROW(m_catalogue->StorageClass()->createStorageClass(m_admin, storageClass),
-    cta::catalogue::UserSpecifiedAnEmptyStringStorageClassName);
+               cta::catalogue::UserSpecifiedAnEmptyStringStorageClassName);
 }
 
 TEST_P(cta_catalogue_StorageClassTest, createStorageClass_emptyStringComment) {
@@ -94,14 +93,14 @@ TEST_P(cta_catalogue_StorageClassTest, createStorageClass_emptyStringComment) {
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
   ASSERT_THROW(m_catalogue->StorageClass()->createStorageClass(m_admin, storageClass),
-    cta::catalogue::UserSpecifiedAnEmptyStringComment);
+               cta::catalogue::UserSpecifiedAnEmptyStringComment);
 }
 
 TEST_P(cta_catalogue_StorageClassTest, createStorageClass_emptyStringVo) {
   auto storageClass = m_storageClassSingleCopy;
   storageClass.vo.name = "";
   ASSERT_THROW(m_catalogue->StorageClass()->createStorageClass(m_admin, storageClass),
-    cta::catalogue::UserSpecifiedAnEmptyStringVo);
+               cta::catalogue::UserSpecifiedAnEmptyStringVo);
 }
 
 TEST_P(cta_catalogue_StorageClassTest, createStorageClass_nonExistingVo) {
@@ -136,7 +135,7 @@ TEST_P(cta_catalogue_StorageClassTest, deleteStorageClass) {
 
 TEST_P(cta_catalogue_StorageClassTest, deleteStorageClass_non_existent) {
   ASSERT_THROW(m_catalogue->StorageClass()->deleteStorageClass("non_existent_storage_class"),
-    cta::exception::UserError);
+               cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_StorageClassTest, modifyStorageClassNbCopies) {
@@ -148,7 +147,6 @@ TEST_P(cta_catalogue_StorageClassTest, modifyStorageClassNbCopies) {
     const auto storageClasses = m_catalogue->StorageClass()->getStorageClasses();
 
     ASSERT_EQ(1, storageClasses.size());
-
 
     ASSERT_EQ(m_storageClassSingleCopy.name, storageClasses.front().name);
     ASSERT_EQ(m_storageClassSingleCopy.nbCopies, storageClasses.front().nbCopies);
@@ -170,7 +168,6 @@ TEST_P(cta_catalogue_StorageClassTest, modifyStorageClassNbCopies) {
 
     ASSERT_EQ(1, storageClasses.size());
 
-
     ASSERT_EQ(m_storageClassSingleCopy.name, storageClasses.front().name);
     ASSERT_EQ(modifiedNbCopies, storageClasses.front().nbCopies);
     ASSERT_EQ(m_storageClassSingleCopy.comment, storageClasses.front().comment);
@@ -185,7 +182,7 @@ TEST_P(cta_catalogue_StorageClassTest, modifyStorageClassNbCopies_nonExistentSto
   const std::string storageClassName = "storage_class";
   const uint64_t nbCopies = 5;
   ASSERT_THROW(m_catalogue->StorageClass()->modifyStorageClassNbCopies(m_admin, storageClassName, nbCopies),
-    cta::exception::UserError);
+               cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_StorageClassTest, modifyStorageClassComment) {
@@ -197,7 +194,6 @@ TEST_P(cta_catalogue_StorageClassTest, modifyStorageClassComment) {
     const auto storageClasses = m_catalogue->StorageClass()->getStorageClasses();
 
     ASSERT_EQ(1, storageClasses.size());
-
 
     ASSERT_EQ(m_storageClassSingleCopy.name, storageClasses.front().name);
     ASSERT_EQ(m_storageClassSingleCopy.nbCopies, storageClasses.front().nbCopies);
@@ -219,7 +215,6 @@ TEST_P(cta_catalogue_StorageClassTest, modifyStorageClassComment) {
 
     ASSERT_EQ(1, storageClasses.size());
 
-
     ASSERT_EQ(m_storageClassSingleCopy.name, storageClasses.front().name);
     ASSERT_EQ(m_storageClassSingleCopy.nbCopies, storageClasses.front().nbCopies);
     ASSERT_EQ(modifiedComment, storageClasses.front().comment);
@@ -234,7 +229,7 @@ TEST_P(cta_catalogue_StorageClassTest, modifyStorageClassComment_nonExistentStor
   const std::string storageClassName = "storage_class";
   const std::string comment = "Comment";
   ASSERT_THROW(m_catalogue->StorageClass()->modifyStorageClassComment(m_admin, storageClassName, comment),
-    cta::exception::UserError);
+               cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_StorageClassTest, modifyStorageClassName) {
@@ -246,7 +241,6 @@ TEST_P(cta_catalogue_StorageClassTest, modifyStorageClassName) {
     const auto storageClasses = m_catalogue->StorageClass()->getStorageClasses();
 
     ASSERT_EQ(1, storageClasses.size());
-
 
     ASSERT_EQ(m_storageClassSingleCopy.name, storageClasses.front().name);
     ASSERT_EQ(m_storageClassSingleCopy.nbCopies, storageClasses.front().nbCopies);
@@ -268,7 +262,6 @@ TEST_P(cta_catalogue_StorageClassTest, modifyStorageClassName) {
 
     ASSERT_EQ(1, storageClasses.size());
 
-
     ASSERT_EQ(newStorageClassName, storageClasses.front().name);
     ASSERT_EQ(m_storageClassSingleCopy.nbCopies, storageClasses.front().nbCopies);
     ASSERT_EQ(m_storageClassSingleCopy.comment, storageClasses.front().comment);
@@ -282,8 +275,9 @@ TEST_P(cta_catalogue_StorageClassTest, modifyStorageClassName) {
 TEST_P(cta_catalogue_StorageClassTest, modifyStorageClassName_nonExistentStorageClass) {
   const std::string currentStorageClassName = "storage_class";
   const std::string newStorageClassName = "new_storage_class";
-  ASSERT_THROW(m_catalogue->StorageClass()->modifyStorageClassName(
-    m_admin, currentStorageClassName, newStorageClassName), cta::exception::UserError);
+  ASSERT_THROW(
+    m_catalogue->StorageClass()->modifyStorageClassName(m_admin, currentStorageClassName, newStorageClassName),
+    cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_StorageClassTest, modifyStorageClassName_newNameAlreadyExists) {
@@ -297,8 +291,9 @@ TEST_P(cta_catalogue_StorageClassTest, modifyStorageClassName_newNameAlreadyExis
   m_catalogue->StorageClass()->createStorageClass(m_admin, storageClass2);
 
   //Try to rename the first storage class with the name of the second one
-  ASSERT_THROW(m_catalogue->StorageClass()->modifyStorageClassName(
-    m_admin, m_storageClassSingleCopy.name, storageClass2.name), cta::exception::UserError);
+  ASSERT_THROW(
+    m_catalogue->StorageClass()->modifyStorageClassName(m_admin, m_storageClassSingleCopy.name, storageClass2.name),
+    cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_StorageClassTest, modifyStorageClassVo) {
@@ -322,7 +317,7 @@ TEST_P(cta_catalogue_StorageClassTest, modifyStorageClassEmptyStringVo) {
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   ASSERT_THROW(m_catalogue->StorageClass()->modifyStorageClassVo(m_admin, m_storageClassSingleCopy.name, ""),
-    cta::catalogue::UserSpecifiedAnEmptyStringVo);
+               cta::catalogue::UserSpecifiedAnEmptyStringVo);
 }
 
 TEST_P(cta_catalogue_StorageClassTest, modifyStorageClassVoDoesNotExist) {
@@ -330,8 +325,9 @@ TEST_P(cta_catalogue_StorageClassTest, modifyStorageClassVoDoesNotExist) {
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassSingleCopy);
 
-  ASSERT_THROW(m_catalogue->StorageClass()->modifyStorageClassVo(
-    m_admin, m_storageClassSingleCopy.name, "DOES_NOT_EXISTS"), cta::exception::UserError);
+  ASSERT_THROW(
+    m_catalogue->StorageClass()->modifyStorageClassVo(m_admin, m_storageClassSingleCopy.name, "DOES_NOT_EXISTS"),
+    cta::exception::UserError);
 }
 
 }  // namespace unitTests

@@ -21,45 +21,46 @@
 #include "frontend/common/GrpcClient.hpp"
 #include "Namespace.hpp"
 
-namespace cta { namespace grpc { 
+namespace cta {
+namespace grpc {
 
-class Endpoint
-{
+class Endpoint {
 public:
-  Endpoint(const Namespace &endpoint) :
-    m_grpcClient(::eos::client::GrpcClient::Create(endpoint.endpoint, endpoint.token)) { }
+  Endpoint(const Namespace& endpoint) :
+  m_grpcClient(::eos::client::GrpcClient::Create(endpoint.endpoint, endpoint.token)) {}
 
-  std::string getPath(const std::string &diskFileId) const;
-  std::string getPathExceptionThrowing(const std::string &diskFileId) const;
+  std::string getPath(const std::string& diskFileId) const;
+  std::string getPathExceptionThrowing(const std::string& diskFileId) const;
 
 private:
   std::unique_ptr<::eos::client::GrpcClient> m_grpcClient;
 };
 
-
-class EndpointMap
-{
+class EndpointMap {
 public:
   EndpointMap(NamespaceMap_t nsMap) {
-    for(auto &ns : nsMap) {
+    for (auto& ns : nsMap) {
       m_endpointMap.insert(std::make_pair(ns.first, Endpoint(ns.second)));
     }
   }
 
-  std::string getPath(const std::string &diskInstance, const std::string &diskFileId) const {
+  std::string getPath(const std::string& diskInstance, const std::string& diskFileId) const {
     auto ep_it = m_endpointMap.find(diskInstance);
-    if(ep_it == m_endpointMap.end()) {
+    if (ep_it == m_endpointMap.end()) {
       return "Namespace for disk instance \"" + diskInstance + "\" is not configured in the CTA Frontend";
-    } else {
+    }
+    else {
       return ep_it->second.getPath(diskFileId);
     }
   }
 
-  std::string getPathExceptionThrowing(const std::string &diskInstance, const std::string &diskFileId) const {
+  std::string getPathExceptionThrowing(const std::string& diskInstance, const std::string& diskFileId) const {
     auto ep_it = m_endpointMap.find(diskInstance);
-    if(ep_it == m_endpointMap.end()) {
-      throw cta::exception::UserError("Namespace for disk instance \"" + diskInstance + "\" is not configured in the CTA Frontend");
-    } else {
+    if (ep_it == m_endpointMap.end()) {
+      throw cta::exception::UserError("Namespace for disk instance \"" + diskInstance +
+                                      "\" is not configured in the CTA Frontend");
+    }
+    else {
       return ep_it->second.getPathExceptionThrowing(diskFileId);
     }
   }
@@ -68,4 +69,5 @@ private:
   std::map<std::string, Endpoint> m_endpointMap;
 };
 
-}} // namespace cta::grpc
+}  // namespace grpc
+}  // namespace cta

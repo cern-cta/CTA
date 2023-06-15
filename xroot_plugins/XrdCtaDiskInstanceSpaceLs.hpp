@@ -20,12 +20,13 @@
 #include "xroot_plugins/XrdCtaStream.hpp"
 #include "common/dataStructures/DiskInstanceSpace.hpp"
 
-namespace cta { namespace xrd {
+namespace cta {
+namespace xrd {
 
 /*!
  * Stream object which implements "diskinstancespace ls" command
  */
-class DiskInstanceSpaceLsStream: public XrdCtaStream{
+class DiskInstanceSpaceLsStream : public XrdCtaStream {
 public:
   /*!
    * Constructor
@@ -34,42 +35,44 @@ public:
    * @param[in]    catalogue     CTA Catalogue
    * @param[in]    scheduler     CTA Scheduler
    */
-  DiskInstanceSpaceLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
+  DiskInstanceSpaceLsStream(const frontend::AdminCmdStream& requestMsg,
+                            cta::catalogue::Catalogue& catalogue,
+                            cta::Scheduler& scheduler);
 
 private:
   /*!
    * Can we close the stream?
    */
-  virtual bool isDone() const {
-    return m_diskInstanceSpaceList.empty();
-  }
+  virtual bool isDone() const { return m_diskInstanceSpaceList.empty(); }
 
   /*!
    * Fill the buffer
    */
-  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
+  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf);
 
-  std::list<common::dataStructures::DiskInstanceSpace> m_diskInstanceSpaceList;             //!< List of disk instance spaces from the catalogue
+  std::list<common::dataStructures::DiskInstanceSpace>
+    m_diskInstanceSpaceList;  //!< List of disk instance spaces from the catalogue
 
-  static constexpr const char* const LOG_SUFFIX  = "DiskInstanceSpaceLsStream";    //!< Identifier for log messages
+  static constexpr const char* const LOG_SUFFIX = "DiskInstanceSpaceLsStream";  //!< Identifier for log messages
 };
 
-
-DiskInstanceSpaceLsStream::DiskInstanceSpaceLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
-  XrdCtaStream(catalogue, scheduler),
-  m_diskInstanceSpaceList(catalogue.DiskInstanceSpace()->getAllDiskInstanceSpaces())
-{
+DiskInstanceSpaceLsStream::DiskInstanceSpaceLsStream(const frontend::AdminCmdStream& requestMsg,
+                                                     cta::catalogue::Catalogue& catalogue,
+                                                     cta::Scheduler& scheduler) :
+XrdCtaStream(catalogue, scheduler),
+m_diskInstanceSpaceList(catalogue.DiskInstanceSpace()->getAllDiskInstanceSpaces()) {
   using namespace cta::admin;
 
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "DiskInstanceSpaceLsStream() constructor");
 }
 
-int DiskInstanceSpaceLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
-  for(bool is_buffer_full = false; !m_diskInstanceSpaceList.empty() && !is_buffer_full; m_diskInstanceSpaceList.pop_front()) {
+int DiskInstanceSpaceLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
+  for (bool is_buffer_full = false; !m_diskInstanceSpaceList.empty() && !is_buffer_full;
+       m_diskInstanceSpaceList.pop_front()) {
     Data record;
 
-    auto &dis      = m_diskInstanceSpaceList.front();
-    auto  dis_item = record.mutable_disls_item();
+    auto& dis = m_diskInstanceSpaceList.front();
+    auto dis_item = record.mutable_disls_item();
 
     dis_item->set_name(dis.name);
     dis_item->set_disk_instance(dis.diskInstance);
@@ -89,4 +92,5 @@ int DiskInstanceSpaceLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streamb
   return streambuf->Size();
 }
 
-}} // namespace cta::xrd
+}  // namespace xrd
+}  // namespace cta

@@ -20,33 +20,29 @@
 //------------------------------------------------------------------------------
 // reportState
 //------------------------------------------------------------------------------
-void castor::messages::TapeserverProxyDummy::reportState(const cta::tape::session::SessionState state, 
-  const cta::tape::session::SessionType type, const std::string& vid) {}
+void castor::messages::TapeserverProxyDummy::reportState(const cta::tape::session::SessionState state,
+                                                         const cta::tape::session::SessionType type,
+                                                         const std::string& vid) {}
 
 //------------------------------------------------------------------------------
 // reportHeartbeat
 //------------------------------------------------------------------------------
-void castor::messages::TapeserverProxyDummy::reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved) {}
+void castor::messages::TapeserverProxyDummy::reportHeartbeat(uint64_t totalTapeBytesMoved,
+                                                             uint64_t totalDiskBytesMoved) {}
 
 //------------------------------------------------------------------------------
 // addLogParams
 //------------------------------------------------------------------------------
-void castor::messages::TapeserverProxyDummy::
-addLogParams(const std::string &unitName,
-  const std::list<cta::log::Param> & params) {
-}
+void castor::messages::TapeserverProxyDummy::addLogParams(const std::string& unitName,
+                                                          const std::list<cta::log::Param>& params) {}
 
 //------------------------------------------------------------------------------
 // deleteLogParans
 //------------------------------------------------------------------------------
-void castor::messages::TapeserverProxyDummy::
-deleteLogParams(const std::string &unitName,
-  const std::list<std::string> & paramNames) {
-}
+void castor::messages::TapeserverProxyDummy::deleteLogParams(const std::string& unitName,
+                                                             const std::list<std::string>& paramNames) {}
 
 //------------------------------------------------------------------------------
 // labelError
 //------------------------------------------------------------------------------
-void castor::messages::TapeserverProxyDummy::labelError(
-  const std::string &unitName, const std::string &message) {
-}
+void castor::messages::TapeserverProxyDummy::labelError(const std::string& unitName, const std::string& message) {}

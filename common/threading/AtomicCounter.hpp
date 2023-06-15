@@ -15,7 +15,6 @@
  *               submit itself to any jurisdiction.
  */
 
-
 #pragma once
 
 #include "common/threading/MutexLocker.hpp"
@@ -27,35 +26,40 @@ namespace threading {
 * A helper class managing a thread safe message counter
  * When C++11 will be used, just delete it to use std::atomic
 */
-template <class T> struct AtomicCounter{
-  AtomicCounter(T init = 0): m_val(init) {};
-      T operator ++ () {
-        MutexLocker ml(m_mutex);
-        return ++m_val;
-      }
-      T operator ++ (int) {
-        MutexLocker ml(m_mutex);
-        return m_val++;
-      }
-      T operator -- () {
-        MutexLocker ml(m_mutex);
-        return --m_val;
-      }
-      operator T() const {
-        MutexLocker ml(m_mutex);
-        return m_val;
-      }
-      
-     T getAndReset(){
-       MutexLocker ml(m_mutex);
-        T old =m_val;
-        m_val=0;
-        return old;
-     }
-    private:
-      T m_val;
-      mutable Mutex m_mutex;
-};
-} // namespace threading
-} // namespace cta
+template<class T>
+struct AtomicCounter {
+  AtomicCounter(T init = 0) : m_val(init) {};
 
+  T operator++() {
+    MutexLocker ml(m_mutex);
+    return ++m_val;
+  }
+
+  T operator++(int) {
+    MutexLocker ml(m_mutex);
+    return m_val++;
+  }
+
+  T operator--() {
+    MutexLocker ml(m_mutex);
+    return --m_val;
+  }
+
+  operator T() const {
+    MutexLocker ml(m_mutex);
+    return m_val;
+  }
+
+  T getAndReset() {
+    MutexLocker ml(m_mutex);
+    T old = m_val;
+    m_val = 0;
+    return old;
+  }
+
+private:
+  T m_val;
+  mutable Mutex m_mutex;
+};
+}  // namespace threading
+}  // namespace cta

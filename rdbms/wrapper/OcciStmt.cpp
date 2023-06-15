@@ -39,22 +39,19 @@ namespace wrapper {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-OcciStmt::OcciStmt(
-  const std::string &sql,
-  OcciConn &conn,
-  oracle::occi::Statement *const stmt) :
-  StmtWrapper(sql),
-  m_conn(conn),
-  m_stmt(stmt) {
-}
+OcciStmt::OcciStmt(const std::string& sql, OcciConn& conn, oracle::occi::Statement* const stmt) :
+StmtWrapper(sql),
+m_conn(conn),
+m_stmt(stmt) {}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 OcciStmt::~OcciStmt() {
   try {
-    close(); // Idempotent close() method
-  } catch (...) {
+    close();  // Idempotent close() method
+  }
+  catch (...) {
     // Destructor does not throw
   }
 }
@@ -62,8 +59,7 @@ OcciStmt::~OcciStmt() {
 //------------------------------------------------------------------------------
 // clear
 //------------------------------------------------------------------------------
-void OcciStmt::clear() {
-}
+void OcciStmt::clear() {}
 
 //------------------------------------------------------------------------------
 // close
@@ -76,22 +72,25 @@ void OcciStmt::close() {
       m_conn.closeStmt(m_stmt);
       m_stmt = nullptr;
     }
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSqlForException() + ": " + ex.getMessage().str());
-  } catch(std::exception &se) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSqlForException() + ": " + se.what());
+  }
+  catch (exception::Exception& ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() + ": " +
+                               ex.getMessage().str());
+  }
+  catch (std::exception& se) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() + ": " +
+                               se.what());
   }
 }
 
 //------------------------------------------------------------------------------
 // bindUint8
 //------------------------------------------------------------------------------
-void OcciStmt::bindUint8(const std::string &paramName, const std::optional<uint8_t> &paramValue) {
+void OcciStmt::bindUint8(const std::string& paramName, const std::optional<uint8_t>& paramValue) {
   try {
     return bindInteger<uint8_t>(paramName, paramValue);
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
   }
@@ -100,10 +99,11 @@ void OcciStmt::bindUint8(const std::string &paramName, const std::optional<uint8
 //------------------------------------------------------------------------------
 // bindUint16
 //------------------------------------------------------------------------------
-void OcciStmt::bindUint16(const std::string &paramName, const std::optional<uint16_t> &paramValue) {
+void OcciStmt::bindUint16(const std::string& paramName, const std::optional<uint16_t>& paramValue) {
   try {
     return bindInteger<uint16_t>(paramName, paramValue);
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
   }
@@ -112,10 +112,11 @@ void OcciStmt::bindUint16(const std::string &paramName, const std::optional<uint
 //------------------------------------------------------------------------------
 // bindUint32
 //------------------------------------------------------------------------------
-void OcciStmt::bindUint32(const std::string &paramName, const std::optional<uint32_t> &paramValue) {
+void OcciStmt::bindUint32(const std::string& paramName, const std::optional<uint32_t>& paramValue) {
   try {
     return bindInteger<uint32_t>(paramName, paramValue);
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
   }
@@ -124,10 +125,11 @@ void OcciStmt::bindUint32(const std::string &paramName, const std::optional<uint
 //------------------------------------------------------------------------------
 // bindUint64
 //------------------------------------------------------------------------------
-void OcciStmt::bindUint64(const std::string &paramName, const std::optional<uint64_t> &paramValue) {
+void OcciStmt::bindUint64(const std::string& paramName, const std::optional<uint64_t>& paramValue) {
   try {
     return bindInteger<uint64_t>(paramName, paramValue);
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
   }
@@ -136,14 +138,15 @@ void OcciStmt::bindUint64(const std::string &paramName, const std::optional<uint
 //------------------------------------------------------------------------------
 // bindBlob
 //------------------------------------------------------------------------------
-void OcciStmt::bindBlob(const std::string &paramName, const std::string &paramValue) {
+void OcciStmt::bindBlob(const std::string& paramName, const std::string& paramValue) {
   try {
     const unsigned paramIdx = getParamIdx(paramName);
     std::unique_ptr<unsigned char> buffer = std::unique_ptr<unsigned char>(new unsigned char[paramValue.size()]);
     memcpy(buffer.get(), paramValue.c_str(), paramValue.length());
     oracle::occi::Bytes paramBytes(buffer.get(), paramValue.length(), 0);
     m_stmt->setBytes(paramIdx, paramBytes);
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -151,46 +154,54 @@ void OcciStmt::bindBlob(const std::string &paramName, const std::string &paramVa
 //------------------------------------------------------------------------------
 // bindDouble
 //------------------------------------------------------------------------------
-void OcciStmt::bindDouble(const std::string &paramName, const std::optional<double> &paramValue) {
+void OcciStmt::bindDouble(const std::string& paramName, const std::optional<double>& paramValue) {
   try {
     const unsigned paramIdx = getParamIdx(paramName);
-    if(paramValue) {
+    if (paramValue) {
       // Bind integer as a string in order to support 64-bit integers
       m_stmt->setDouble(paramIdx, paramValue.value());
-    } else {
+    }
+    else {
       m_stmt->setNull(paramIdx, oracle::occi::OCCIDOUBLE);
     }
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSqlForException() + ": " + ex.getMessage().str());
-  } catch(std::exception &se) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSqlForException() + ": " + se.what());
+  }
+  catch (exception::Exception& ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() + ": " +
+                               ex.getMessage().str());
+  }
+  catch (std::exception& se) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() + ": " +
+                               se.what());
   }
 }
 
 //------------------------------------------------------------------------------
 // bindString
 //------------------------------------------------------------------------------
-void OcciStmt::bindString(const std::string &paramName, const std::optional<std::string> &paramValue) {
+void OcciStmt::bindString(const std::string& paramName, const std::optional<std::string>& paramValue) {
   try {
-    if(paramValue && paramValue.value().empty()) {
-      throw exception::Exception(std::string("Optional string parameter ") + paramName + " is an empty string. "
+    if (paramValue && paramValue.value().empty()) {
+      throw exception::Exception(
+        std::string("Optional string parameter ") + paramName +
+        " is an empty string. "
         " An optional string parameter should either have a non-empty string value or no value at all.");
     }
 
     const unsigned paramIdx = getParamIdx(paramName);
-    if(paramValue) {
+    if (paramValue) {
       m_stmt->setString(paramIdx, paramValue.value());
-    } else {
+    }
+    else {
       m_stmt->setNull(paramIdx, oracle::occi::OCCISTRING);
     }
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSqlForException() + ": " + ex.getMessage().str());
-  } catch(std::exception &se) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSqlForException() + ": " + se.what());
+  }
+  catch (exception::Exception& ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() + ": " +
+                               ex.getMessage().str());
+  }
+  catch (std::exception& se) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() + ": " +
+                               se.what());
   }
 }
 
@@ -203,32 +214,35 @@ std::unique_ptr<RsetWrapper> OcciStmt::executeQuery() {
   const auto autocommitMode = m_conn.getAutocommitMode();
 
   try {
-    switch(autocommitMode) {
-    case AutocommitMode::AUTOCOMMIT_ON:
-      m_stmt->setAutoCommit(true);
-      break;
-    case AutocommitMode::AUTOCOMMIT_OFF:
-      m_stmt->setAutoCommit(false);
-      break;
-    default:
-     throw exception::Exception("Unknown autocommit mode");
+    switch (autocommitMode) {
+      case AutocommitMode::AUTOCOMMIT_ON:
+        m_stmt->setAutoCommit(true);
+        break;
+      case AutocommitMode::AUTOCOMMIT_OFF:
+        m_stmt->setAutoCommit(false);
+        break;
+      default:
+        throw exception::Exception("Unknown autocommit mode");
     }
 
     return std::make_unique<OcciRset>(*this, m_stmt->executeQuery());
-  } catch(occi::SQLException &ex) {
+  }
+  catch (occi::SQLException& ex) {
     std::ostringstream msg;
     msg << std::string(__FUNCTION__) << " failed for SQL statement " << getSqlForException() << ": " << ex.what();
 
-    if(connShouldBeClosed(ex)) {
+    if (connShouldBeClosed(ex)) {
       // Close the statement first and then the connection
       try {
         close();
-      } catch(...) {
+      }
+      catch (...) {
       }
 
       try {
         m_conn.close();
-      } catch(...) {
+      }
+      catch (...) {
       }
       throw exception::LostDatabaseConnection(msg.str());
     }
@@ -245,43 +259,46 @@ void OcciStmt::executeNonQuery() {
   const auto autocommitMode = m_conn.getAutocommitMode();
 
   try {
-    switch(autocommitMode) {
-    case AutocommitMode::AUTOCOMMIT_ON:
-      m_stmt->setAutoCommit(true);
-      break;
-    case AutocommitMode::AUTOCOMMIT_OFF:
-      m_stmt->setAutoCommit(false);
-      break;
-    default:
-     throw exception::Exception("Unknown autocommit mode");
+    switch (autocommitMode) {
+      case AutocommitMode::AUTOCOMMIT_ON:
+        m_stmt->setAutoCommit(true);
+        break;
+      case AutocommitMode::AUTOCOMMIT_OFF:
+        m_stmt->setAutoCommit(false);
+        break;
+      default:
+        throw exception::Exception("Unknown autocommit mode");
     }
 
     m_stmt->executeUpdate();
-  } catch(occi::SQLException &ex) {
+  }
+  catch (occi::SQLException& ex) {
     std::ostringstream msg;
     msg << std::string(__FUNCTION__) << " failed for SQL statement " << getSqlForException() << ": " << ex.what();
 
-    if(connShouldBeClosed(ex)) {
+    if (connShouldBeClosed(ex)) {
       // Close the statement first and then the connection
       try {
         close();
-      } catch(...) {
+      }
+      catch (...) {
       }
 
       try {
         m_conn.close();
-      } catch(...) {
+      }
+      catch (...) {
       }
       throw exception::LostDatabaseConnection(msg.str());
     }
 
-    switch(ex.getErrorCode()) {
-    case 1:
-      throw UniqueError(msg.str());
-    case 2290:
-      throw CheckConstraintError(msg.str());
-    default:
-      throw exception::Exception(msg.str());
+    switch (ex.getErrorCode()) {
+      case 1:
+        throw UniqueError(msg.str());
+      case 2290:
+        throw CheckConstraintError(msg.str());
+      default:
+        throw exception::Exception(msg.str());
     }
   }
 }
@@ -296,64 +313,63 @@ uint64_t OcciStmt::getNbAffectedRows() const {
 //------------------------------------------------------------------------------
 // get
 //------------------------------------------------------------------------------
-oracle::occi::Statement *OcciStmt::get() const {
+oracle::occi::Statement* OcciStmt::get() const {
   return m_stmt;
 }
 
 //------------------------------------------------------------------------------
 // operator->
 //------------------------------------------------------------------------------
-oracle::occi::Statement *OcciStmt::operator->() const {
+oracle::occi::Statement* OcciStmt::operator->() const {
   return get();
 }
 
 //------------------------------------------------------------------------------
 // setColumn
 //------------------------------------------------------------------------------
-void OcciStmt::setColumn(OcciColumn &col, oracle::occi::Type type) {
+void OcciStmt::setColumn(OcciColumn& col, oracle::occi::Type type) {
   const std::string paramName = std::string(":") + col.getColName();
   const auto paramIdx = getParamIdx(paramName);
-  m_stmt->setDataBuffer(paramIdx, col.getBuffer(), type, col.getMaxFieldLength(),
-    col.getFieldLengths());
+  m_stmt->setDataBuffer(paramIdx, col.getBuffer(), type, col.getMaxFieldLength(), col.getFieldLengths());
 }
 
 //------------------------------------------------------------------------------
 // connShouldBeClosed
 //------------------------------------------------------------------------------
-bool OcciStmt::connShouldBeClosed(const oracle::occi::SQLException &ex) {
+bool OcciStmt::connShouldBeClosed(const oracle::occi::SQLException& ex) {
   using namespace oracle;
 
-  switch(ex.getErrorCode()) {
-  case    28:
-  case   492:
-  case  1003:
-  case  1008:
-  case  1012:
-  case  1033:
-  case  1089:
-  case  2051:
-  case  2392:
-  case  2396:
-  case  2399:
-  case  3113:
-  case  3114:
-  case  3135:
-  case 12170:
-  case 12514:
-  case 12528:
-  case 12537:
-  case 12541:
-  case 12571:
-  case 24338:
-  case 25401:
-  case 25409:
-  case 32102:
-    return true;
-  default:
-    return false;
+  switch (ex.getErrorCode()) {
+    case 28:
+    case 492:
+    case 1003:
+    case 1008:
+    case 1012:
+    case 1033:
+    case 1089:
+    case 2051:
+    case 2392:
+    case 2396:
+    case 2399:
+    case 3113:
+    case 3114:
+    case 3135:
+    case 12170:
+    case 12514:
+    case 12528:
+    case 12537:
+    case 12541:
+    case 12571:
+    case 24338:
+    case 25401:
+    case 25409:
+    case 32102:
+      return true;
+    default:
+      return false;
   };
 }
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+}  // namespace wrapper
+}  // namespace rdbms
+}  // namespace cta

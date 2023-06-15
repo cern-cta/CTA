@@ -34,23 +34,29 @@ class Catalogue;
  * Static class to set TapedConfiguration in Database
  */
 class DriveConfig {
- public:
-  static void setTapedConfiguration(const cta::tape::daemon::TapedConfiguration &tapedConfiguration,
-    catalogue::Catalogue* catalogue, const std::string& tapeDriveName);
+public:
+  static void setTapedConfiguration(const cta::tape::daemon::TapedConfiguration& tapedConfiguration,
+                                    catalogue::Catalogue* catalogue,
+                                    const std::string& tapeDriveName);
 
- private:
-  static void checkConfigInDB(catalogue::Catalogue* catalogue, const std::string& tapeDriveName,
-    const std::string& key);
+private:
+  static void
+    checkConfigInDB(catalogue::Catalogue* catalogue, const std::string& tapeDriveName, const std::string& key);
   static void setConfigToDB(cta::SourcedParameter<std::string>* sourcedParameter,
-    catalogue::Catalogue* catalogue, const std::string& tapeDriveName);
+                            catalogue::Catalogue* catalogue,
+                            const std::string& tapeDriveName);
   static void setConfigToDB(cta::SourcedParameter<cta::tape::daemon::FetchReportOrFlushLimits>* sourcedParameter,
-    catalogue::Catalogue* catalogue, const std::string& tapeDriveName);
+                            catalogue::Catalogue* catalogue,
+                            const std::string& tapeDriveName);
   static void setConfigToDB(cta::SourcedParameter<std::uint32_t>* sourcedParameter,
-    catalogue::Catalogue* catalogue, const std::string& tapeDriveName);
+                            catalogue::Catalogue* catalogue,
+                            const std::string& tapeDriveName);
   static void setConfigToDB(cta::SourcedParameter<std::uint64_t>* sourcedParameter,
-    catalogue::Catalogue* catalogue, const std::string& tapeDriveName);
+                            catalogue::Catalogue* catalogue,
+                            const std::string& tapeDriveName);
   static void setConfigToDB(cta::SourcedParameter<std::time_t>* sourcedParameter,
-    catalogue::Catalogue* catalogue, const std::string& tapeDriveName);
+                            catalogue::Catalogue* catalogue,
+                            const std::string& tapeDriveName);
 };  // class DriveConfig
 
 }  // namespace cta

@@ -16,13 +16,12 @@
  */
 
 #include "ForceDismountFailed.hpp"
-//#include "serrno.h"
 
+//#include "serrno.h"
 
 // -----------------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------------
-cta::exception::ForceDismountFailed::ForceDismountFailed():
-  cta::exception::Exception() {
+cta::exception::ForceDismountFailed::ForceDismountFailed() : cta::exception::Exception() {
   //cta::exception::Exception(ETFDISMOUNTFAILED) {
 }

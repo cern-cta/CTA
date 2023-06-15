@@ -29,25 +29,31 @@
 namespace cta {
 namespace catalogue {
 
-RdbmsRequesterActivityMountRuleCatalogue::RdbmsRequesterActivityMountRuleCatalogue(log::Logger &log,
-  std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue *rdbmsCatalogue):
-  m_log(log), m_connPool(connPool), m_rdbmsCatalogue(rdbmsCatalogue) {}
+RdbmsRequesterActivityMountRuleCatalogue::RdbmsRequesterActivityMountRuleCatalogue(
+  log::Logger& log,
+  std::shared_ptr<rdbms::ConnPool> connPool,
+  RdbmsCatalogue* rdbmsCatalogue) :
+m_log(log),
+m_connPool(connPool),
+m_rdbmsCatalogue(rdbmsCatalogue) {}
 
 void RdbmsRequesterActivityMountRuleCatalogue::modifyRequesterActivityMountRulePolicy(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName,
-  const std::string &requesterName, const std::string &activityRegex, const std::string &mountPolicy) {
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& instanceName,
+  const std::string& requesterName,
+  const std::string& activityRegex,
+  const std::string& mountPolicy) {
   try {
     const time_t now = time(nullptr);
-    const char *const sql =
-      "UPDATE REQUESTER_ACTIVITY_MOUNT_RULE SET "
-        "MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME,"
-        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-      "WHERE "
-        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
-        "REQUESTER_NAME = :REQUESTER_NAME AND "
-        "ACTIVITY_REGEX = :ACTIVITY_REGEX";
+    const char* const sql = "UPDATE REQUESTER_ACTIVITY_MOUNT_RULE SET "
+                            "MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME,"
+                            "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+                            "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+                            "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+                            "WHERE "
+                            "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
+                            "REQUESTER_NAME = :REQUESTER_NAME AND "
+                            "ACTIVITY_REGEX = :ACTIVITY_REGEX";
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":MOUNT_POLICY_NAME", mountPolicy);
@@ -59,34 +65,39 @@ void RdbmsRequesterActivityMountRuleCatalogue::modifyRequesterActivityMountRuleP
     stmt.bindString(":ACTIVITY_REGEX", activityRegex);
     stmt.executeNonQuery();
 
-    if(0 == stmt.getNbAffectedRows()) {
+    if (0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify requester  activity mount rule ") + instanceName + ":" +
-        requesterName + "for activities matching " + activityRegex + " because it does not exist");
+                                 requesterName + "for activities matching " + activityRegex +
+                                 " because it does not exist");
     }
-  } catch(exception::UserError &) {
+  }
+  catch (exception::UserError&) {
     throw;
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
 }
 
 void RdbmsRequesterActivityMountRuleCatalogue::modifyRequesterActivityMountRuleComment(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName,
-  const std::string &requesterName, const std::string &activityRegex, const std::string &comment) {
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& instanceName,
+  const std::string& requesterName,
+  const std::string& activityRegex,
+  const std::string& comment) {
   try {
     const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
     const time_t now = time(nullptr);
-    const char *const sql =
-      "UPDATE REQUESTER_ACTIVITY_MOUNT_RULE SET "
-        "USER_COMMENT = :USER_COMMENT,"
-        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-      "WHERE "
-        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
-        "REQUESTER_NAME = :REQUESTER_NAME AND "
-        "ACTIVITY_REGEX = :ACTIVITY_REGEX";
+    const char* const sql = "UPDATE REQUESTER_ACTIVITY_MOUNT_RULE SET "
+                            "USER_COMMENT = :USER_COMMENT,"
+                            "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+                            "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+                            "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+                            "WHERE "
+                            "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
+                            "REQUESTER_NAME = :REQUESTER_NAME AND "
+                            "ACTIVITY_REGEX = :ACTIVITY_REGEX";
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":USER_COMMENT", trimmedComment);
@@ -98,73 +109,81 @@ void RdbmsRequesterActivityMountRuleCatalogue::modifyRequesterActivityMountRuleC
     stmt.bindString(":ACTIVITY_REGEX", activityRegex);
     stmt.executeNonQuery();
 
-    if(0 == stmt.getNbAffectedRows()) {
+    if (0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot modify requester  activity mount rule ") + instanceName + ":" +
-        requesterName + "for activities matching " + activityRegex + " because it does not exist");
+                                 requesterName + "for activities matching " + activityRegex +
+                                 " because it does not exist");
     }
-  } catch(exception::UserError &) {
+  }
+  catch (exception::UserError&) {
     throw;
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
 }
 
 void RdbmsRequesterActivityMountRuleCatalogue::createRequesterActivityMountRule(
-  const common::dataStructures::SecurityIdentity &admin,
-  const std::string &mountPolicyName, const std::string &diskInstanceName, const std::string &requesterName,
-  const std::string &activityRegex, const std::string &comment) {
-   try {
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& mountPolicyName,
+  const std::string& diskInstanceName,
+  const std::string& requesterName,
+  const std::string& activityRegex,
+  const std::string& comment) {
+  try {
     const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
     auto conn = m_connPool->getConn();
-    if(RdbmsCatalogueUtils::requesterActivityMountRuleExists(conn, diskInstanceName, requesterName, activityRegex)) {
+    if (RdbmsCatalogueUtils::requesterActivityMountRuleExists(conn, diskInstanceName, requesterName, activityRegex)) {
       throw exception::UserError(std::string("Cannot create rule to assign mount-policy ") + mountPolicyName +
-        " to requester " + diskInstanceName + ":" + requesterName + " for activities matching " + activityRegex +
-        " because that requester-activity mount rule already exists");
+                                 " to requester " + diskInstanceName + ":" + requesterName +
+                                 " for activities matching " + activityRegex +
+                                 " because that requester-activity mount rule already exists");
     }
-    if(!RdbmsCatalogueUtils::mountPolicyExists(conn, mountPolicyName)) {
+    if (!RdbmsCatalogueUtils::mountPolicyExists(conn, mountPolicyName)) {
       throw exception::UserError(std::string("Cannot create a rule to assign mount-policy ") + mountPolicyName +
-        " to requester " + diskInstanceName + ":" + requesterName + " for activities matching " + activityRegex +
-        " because mount-policy " + mountPolicyName + " does not exist");
+                                 " to requester " + diskInstanceName + ":" + requesterName +
+                                 " for activities matching " + activityRegex + " because mount-policy " +
+                                 mountPolicyName + " does not exist");
     }
-    if(!RdbmsCatalogueUtils::diskInstanceExists(conn, diskInstanceName)) {
+    if (!RdbmsCatalogueUtils::diskInstanceExists(conn, diskInstanceName)) {
       throw exception::UserError(std::string("Cannot create a rule to assign mount-policy ") + mountPolicyName +
-        " to requester " + diskInstanceName + ":" + requesterName + " for activities matching " + activityRegex +
-        " because disk-instance " + diskInstanceName + " does not exist");
+                                 " to requester " + diskInstanceName + ":" + requesterName +
+                                 " for activities matching " + activityRegex + " because disk-instance " +
+                                 diskInstanceName + " does not exist");
     }
 
     const uint64_t now = time(nullptr);
-    const char *const sql =
-      "INSERT INTO REQUESTER_ACTIVITY_MOUNT_RULE("
-        "DISK_INSTANCE_NAME,"
-        "REQUESTER_NAME,"
-        "MOUNT_POLICY_NAME,"
-        "ACTIVITY_REGEX,"
+    const char* const sql = "INSERT INTO REQUESTER_ACTIVITY_MOUNT_RULE("
+                            "DISK_INSTANCE_NAME,"
+                            "REQUESTER_NAME,"
+                            "MOUNT_POLICY_NAME,"
+                            "ACTIVITY_REGEX,"
 
-        "USER_COMMENT,"
+                            "USER_COMMENT,"
 
-        "CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME,"
+                            "CREATION_LOG_USER_NAME,"
+                            "CREATION_LOG_HOST_NAME,"
+                            "CREATION_LOG_TIME,"
 
-        "LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME)"
-      "VALUES("
-        ":DISK_INSTANCE_NAME,"
-        ":REQUESTER_NAME,"
-        ":MOUNT_POLICY_NAME,"
-        ":ACTIVITY_REGEX,"
+                            "LAST_UPDATE_USER_NAME,"
+                            "LAST_UPDATE_HOST_NAME,"
+                            "LAST_UPDATE_TIME)"
+                            "VALUES("
+                            ":DISK_INSTANCE_NAME,"
+                            ":REQUESTER_NAME,"
+                            ":MOUNT_POLICY_NAME,"
+                            ":ACTIVITY_REGEX,"
 
-        ":USER_COMMENT,"
+                            ":USER_COMMENT,"
 
-        ":CREATION_LOG_USER_NAME,"
-        ":CREATION_LOG_HOST_NAME,"
-        ":CREATION_LOG_TIME,"
+                            ":CREATION_LOG_USER_NAME,"
+                            ":CREATION_LOG_HOST_NAME,"
+                            ":CREATION_LOG_TIME,"
 
-        ":LAST_UPDATE_USER_NAME,"
-        ":LAST_UPDATE_HOST_NAME,"
-        ":LAST_UPDATE_TIME)";
+                            ":LAST_UPDATE_USER_NAME,"
+                            ":LAST_UPDATE_HOST_NAME,"
+                            ":LAST_UPDATE_TIME)";
     auto stmt = conn.createStmt(sql);
 
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
@@ -183,9 +202,11 @@ void RdbmsRequesterActivityMountRuleCatalogue::createRequesterActivityMountRule(
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
 
     stmt.executeNonQuery();
-  } catch(exception::UserError &) {
+  }
+  catch (exception::UserError&) {
     throw;
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
@@ -197,30 +218,29 @@ std::list<common::dataStructures::RequesterActivityMountRule>
   RdbmsRequesterActivityMountRuleCatalogue::getRequesterActivityMountRules() const {
   try {
     std::list<common::dataStructures::RequesterActivityMountRule> rules;
-    const char *const sql =
-      "SELECT "
-        "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
-        "REQUESTER_NAME AS REQUESTER_NAME,"
-        "MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,"
-        "ACTIVITY_REGEX AS ACTIVITY_REGEX,"
+    const char* const sql = "SELECT "
+                            "DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,"
+                            "REQUESTER_NAME AS REQUESTER_NAME,"
+                            "MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,"
+                            "ACTIVITY_REGEX AS ACTIVITY_REGEX,"
 
-        "USER_COMMENT AS USER_COMMENT,"
+                            "USER_COMMENT AS USER_COMMENT,"
 
-        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+                            "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+                            "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+                            "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
-        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
-      "FROM "
-        "REQUESTER_ACTIVITY_MOUNT_RULE "
-      "ORDER BY "
-        "DISK_INSTANCE_NAME, REQUESTER_NAME, ACTIVITY_REGEX, MOUNT_POLICY_NAME";
+                            "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+                            "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+                            "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+                            "FROM "
+                            "REQUESTER_ACTIVITY_MOUNT_RULE "
+                            "ORDER BY "
+                            "DISK_INSTANCE_NAME, REQUESTER_NAME, ACTIVITY_REGEX, MOUNT_POLICY_NAME";
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(sql);
     auto rset = stmt.executeQuery();
-    while(rset.next()) {
+    while (rset.next()) {
       common::dataStructures::RequesterActivityMountRule rule;
 
       rule.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
@@ -239,24 +259,26 @@ std::list<common::dataStructures::RequesterActivityMountRule>
     }
 
     return rules;
-  } catch(exception::UserError &) {
+  }
+  catch (exception::UserError&) {
     throw;
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
 }
 
-void RdbmsRequesterActivityMountRuleCatalogue::deleteRequesterActivityMountRule(const std::string &diskInstanceName,
-  const std::string &requesterName, const std::string &activityRegex) {
+void RdbmsRequesterActivityMountRuleCatalogue::deleteRequesterActivityMountRule(const std::string& diskInstanceName,
+                                                                                const std::string& requesterName,
+                                                                                const std::string& activityRegex) {
   try {
-    const char *const sql =
-      "DELETE FROM "
-        "REQUESTER_ACTIVITY_MOUNT_RULE "
-      "WHERE "
-        "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
-        "REQUESTER_NAME = :REQUESTER_NAME AND "
-        "ACTIVITY_REGEX = :ACTIVITY_REGEX";
+    const char* const sql = "DELETE FROM "
+                            "REQUESTER_ACTIVITY_MOUNT_RULE "
+                            "WHERE "
+                            "DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND "
+                            "REQUESTER_NAME = :REQUESTER_NAME AND "
+                            "ACTIVITY_REGEX = :ACTIVITY_REGEX";
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":DISK_INSTANCE_NAME", diskInstanceName);
@@ -264,13 +286,16 @@ void RdbmsRequesterActivityMountRuleCatalogue::deleteRequesterActivityMountRule(
     stmt.bindString(":ACTIVITY_REGEX", activityRegex);
     stmt.executeNonQuery();
 
-    if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot delete mount rule for requester ") + diskInstanceName + ":"
-        + requesterName + " and activity regex " + activityRegex + " because the rule does not exist");
+    if (0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot delete mount rule for requester ") + diskInstanceName + ":" +
+                                 requesterName + " and activity regex " + activityRegex +
+                                 " because the rule does not exist");
     }
-  } catch(exception::UserError &) {
+  }
+  catch (exception::UserError&) {
     throw;
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
@@ -278,5 +303,5 @@ void RdbmsRequesterActivityMountRuleCatalogue::deleteRequesterActivityMountRule(
   m_rdbmsCatalogue->m_userMountPolicyCache.invalidate();
 }
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

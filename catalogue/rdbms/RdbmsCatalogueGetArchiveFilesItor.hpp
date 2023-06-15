@@ -32,9 +32,8 @@ namespace catalogue {
 /**
  * RdbmsCatalogue::getArchiveFiles() implementation of ArchiveFileItorImpl.
  */
-class RdbmsCatalogueGetArchiveFilesItor: public catalogue::ArchiveFileItor::Impl {
+class RdbmsCatalogueGetArchiveFilesItor : public catalogue::ArchiveFileItor::Impl {
 public:
-
   /**
    * Constructor.
    *
@@ -43,11 +42,10 @@ public:
    * @param searchCriteria The search criteria to be used when listing archive
    * files.
    */
-  RdbmsCatalogueGetArchiveFilesItor(
-    log::Logger &log,
-    rdbms::Conn &&conn,
-    const TapeFileSearchCriteria &searchCriteria,
-    const std::string &tempDiskFxidsTableName);
+  RdbmsCatalogueGetArchiveFilesItor(log::Logger& log,
+                                    rdbms::Conn&& conn,
+                                    const TapeFileSearchCriteria& searchCriteria,
+                                    const std::string& tempDiskFxidsTableName);
 
   /**
    * Destructor.
@@ -65,11 +63,10 @@ public:
   common::dataStructures::ArchiveFile next() override;
 
 private:
-
   /**
    * Object representing the API to the CTA logging system.
    */
-  log::Logger &m_log;
+  log::Logger& m_log;
 
   /**
    * The search criteria to be used when listing archive files.
@@ -117,7 +114,7 @@ private:
    * ID and then copy number.
    */
   ArchiveFileBuilder<cta::common::dataStructures::ArchiveFile> m_archiveFileBuilder;
-}; // class RdbmsCatalogueGetArchiveFilesItor
+};  // class RdbmsCatalogueGetArchiveFilesItor
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

@@ -64,10 +64,13 @@ struct VirtualOrganization {
    */
   std::string diskInstanceName;
 
-  bool operator==(const VirtualOrganization & other) const{
+  bool operator==(const VirtualOrganization& other) const {
     return (name == other.name && comment == other.comment && readMaxDrives == other.readMaxDrives &&
-      writeMaxDrives == other.writeMaxDrives && maxFileSize == other.maxFileSize && diskInstanceName == other.diskInstanceName);
+            writeMaxDrives == other.writeMaxDrives && maxFileSize == other.maxFileSize &&
+            diskInstanceName == other.diskInstanceName);
   }
 };
 
-}}}
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

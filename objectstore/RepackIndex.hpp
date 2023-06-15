@@ -20,24 +20,27 @@
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
 
-namespace cta { namespace objectstore {
-  
+namespace cta {
+namespace objectstore {
+
 class Backend;
 class Agent;
 class GenericObject;
 class EntryLogSerDeser;
 
-class RepackIndex: public ObjectOps<serializers::RepackIndex, serializers::RepackIndex_t> {
+class RepackIndex : public ObjectOps<serializers::RepackIndex, serializers::RepackIndex_t> {
 public:
-  RepackIndex(Backend & os);
-  RepackIndex(const std::string & address, Backend & os);
-  RepackIndex(GenericObject & go);
+  RepackIndex(Backend& os);
+  RepackIndex(const std::string& address, Backend& os);
+  RepackIndex(GenericObject& go);
   void initialize();
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
-  void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
-    cta::catalogue::Catalogue & catalogue) override;
+  void garbageCollect(const std::string& presumedOwner,
+                      AgentReference& agentReference,
+                      log::LogContext& lc,
+                      cta::catalogue::Catalogue& catalogue) override;
   bool isEmpty();
-  
+
   /**
    * A repack tape register entry (vid + object address)
    */
@@ -45,35 +48,35 @@ public:
     std::string vid;
     std::string repackRequestAddress;
   };
-  
+
   // Repack tapes management =========================================================
   /**
    * Returns all the repack tape states addresses stored in the drive registry.
    * @return a list of all the drive states
    */
   std::list<RepackRequestAddress> getRepackRequestsAddresses();
-  
+
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchVID);
   /**
    * Returns the repack tape address for the given vid.
    * @return the object address
    */
-  std::string getRepackRequestAddress(const std::string & vid);
-  
+  std::string getRepackRequestAddress(const std::string& vid);
+
   /**
    * Adds a drive status reference to the register. Throws an exception if a request is already recorded for this VID.
    * @param driveName
    * @param driveAddress
    */
-  void addRepackRequestAddress(const std::string & vid, const std::string &repackRequestAddress);
-  
+  void addRepackRequestAddress(const std::string& vid, const std::string& repackRequestAddress);
+
   CTA_GENERATE_EXCEPTION_CLASS(VidAlreadyRegistered);
-  
+
   /**
    * Removes entry from drive addresses.
    * @param driveName
    */
-  void removeRepackRequest(const std::string & vid);
+  void removeRepackRequest(const std::string& vid);
 
   /**
    * JSON dump of the index 
@@ -82,4 +85,5 @@ public:
   std::string dump();
 };
 
-}}
+}  // namespace objectstore
+}  // namespace cta

@@ -27,13 +27,14 @@
 #include "common/dataStructures/MountTypeSerDeser.hpp"
 #include "xroot_plugins/XrdCtaStream.hpp"
 
-namespace cta { namespace xrd {
+namespace cta {
+namespace xrd {
 
 /*!
  * Stream object which implements "tapepool ls" command
  */
-class DriveLsStream: public XrdCtaStream{
- public:
+class DriveLsStream : public XrdCtaStream {
+public:
   /*!
    * Constructor
    *
@@ -41,37 +42,38 @@ class DriveLsStream: public XrdCtaStream{
    * @param[in]    catalogue     CTA Catalogue
    * @param[in]    scheduler     CTA Scheduler
    */
-  DriveLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue& catalogue,
-    cta::Scheduler& scheduler, log::LogContext& lc);
+  DriveLsStream(const frontend::AdminCmdStream& requestMsg,
+                cta::catalogue::Catalogue& catalogue,
+                cta::Scheduler& scheduler,
+                log::LogContext& lc);
 
- private:
+private:
   /*!
    * Can we close the stream?
    */
-  bool isDone() const override {
-    return m_tapeDrives.empty();
-  }
+  bool isDone() const override { return m_tapeDrives.empty(); }
 
   /*!
    * Fill the buffer
    */
-  int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) override;
+  int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) override;
 
   cta::log::LogContext m_lc;
 
-  static constexpr const char* const LOG_SUFFIX  = "DriveLsStream";    //!< Identifier for log messages
+  static constexpr const char* const LOG_SUFFIX = "DriveLsStream";  //!< Identifier for log messages
 
   std::list<common::dataStructures::TapeDrive> m_tapeDrives;
   std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig> m_tapeDrivesConfigs;
 };
 
-
-DriveLsStream::DriveLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue& catalogue,
-  cta::Scheduler& scheduler, log::LogContext& lc) :
-  XrdCtaStream(catalogue, scheduler),
-  m_lc(lc),
-  m_tapeDrives(m_catalogue.DriveState()->getTapeDrives()),
-  m_tapeDrivesConfigs(m_catalogue.DriveConfig()->getTapeDriveConfigs()) {
+DriveLsStream::DriveLsStream(const frontend::AdminCmdStream& requestMsg,
+                             cta::catalogue::Catalogue& catalogue,
+                             cta::Scheduler& scheduler,
+                             log::LogContext& lc) :
+XrdCtaStream(catalogue, scheduler),
+m_lc(lc),
+m_tapeDrives(m_catalogue.DriveState()->getTapeDrives()),
+m_tapeDrivesConfigs(m_catalogue.DriveConfig()->getTapeDriveConfigs()) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "DriveLsStream() constructor");
 
   auto driveRegexOpt = requestMsg.getOptional(cta::admin::OptionString::DRIVE);
@@ -82,10 +84,11 @@ DriveLsStream::DriveLsStream(const frontend::AdminCmdStream& requestMsg, cta::ca
     utils::Regex driveRegex(driveRegexStr.c_str());
 
     // Remove non-matching drives from the list
-    for (auto dr_it = m_tapeDrives.begin(); dr_it != m_tapeDrives.end(); ) {
+    for (auto dr_it = m_tapeDrives.begin(); dr_it != m_tapeDrives.end();) {
       if (driveRegex.has_match(dr_it->driveName)) {
         ++dr_it;
-      } else {
+      }
+      else {
         auto erase_it = dr_it;
         ++dr_it;
         m_tapeDrives.erase(erase_it);
@@ -98,12 +101,12 @@ DriveLsStream::DriveLsStream(const frontend::AdminCmdStream& requestMsg, cta::ca
   }
 }
 
-int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
+int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
   for (bool is_buffer_full = false; !m_tapeDrives.empty() && !is_buffer_full; m_tapeDrives.pop_front()) {
     Data record;
 
     const auto dr = m_tapeDrives.front();
-    auto  dr_item = record.mutable_drls_item();
+    auto dr_item = record.mutable_drls_item();
 
     dr_item->set_cta_version(dr.ctaVersion ? dr.ctaVersion.value() : "");
     dr_item->set_logical_library(dr.logicalLibrary);
@@ -135,7 +138,9 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     auto driveConfig = dr_item->mutable_drive_config();
 
     for (const auto& storedDriveConfig : m_tapeDrivesConfigs) {
-      if (storedDriveConfig.tapeDriveName != dr.driveName) continue;
+      if (storedDriveConfig.tapeDriveName != dr.driveName) {
+        continue;
+      }
       auto driveConfigItemProto = driveConfig->Add();
       driveConfigItemProto->set_category(storedDriveConfig.category);
       driveConfigItemProto->set_key(storedDriveConfig.keyName);
@@ -148,18 +153,41 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     switch (dr.driveStatus) {
       using cta::common::dataStructures::DriveStatus;
 
-      case DriveStatus::Probing:           drive_time -= dr.probeStartTime.value();    break;
-      case DriveStatus::Up:                drive_time -= dr.downOrUpStartTime.value(); break;
-      case DriveStatus::Down:              drive_time -= dr.downOrUpStartTime.value(); break;
-      case DriveStatus::Starting:          drive_time -= dr.startStartTime.value();    break;
-      case DriveStatus::Mounting:          drive_time -= dr.mountStartTime.value();    break;
-      case DriveStatus::Transferring:      drive_time -= dr.transferStartTime.value(); break;
-      case DriveStatus::CleaningUp:        drive_time -= dr.cleanupStartTime.value();  break;
-      case DriveStatus::Unloading:         drive_time -= dr.unloadStartTime.value();   break;
-      case DriveStatus::Unmounting:        drive_time -= dr.unmountStartTime.value();  break;
-      case DriveStatus::DrainingToDisk:    drive_time -= dr.drainingStartTime.value(); break;
-      case DriveStatus::Shutdown:          drive_time -= dr.shutdownTime.value();      break;
-      case DriveStatus::Unknown:                                                       break;
+      case DriveStatus::Probing:
+        drive_time -= dr.probeStartTime.value();
+        break;
+      case DriveStatus::Up:
+        drive_time -= dr.downOrUpStartTime.value();
+        break;
+      case DriveStatus::Down:
+        drive_time -= dr.downOrUpStartTime.value();
+        break;
+      case DriveStatus::Starting:
+        drive_time -= dr.startStartTime.value();
+        break;
+      case DriveStatus::Mounting:
+        drive_time -= dr.mountStartTime.value();
+        break;
+      case DriveStatus::Transferring:
+        drive_time -= dr.transferStartTime.value();
+        break;
+      case DriveStatus::CleaningUp:
+        drive_time -= dr.cleanupStartTime.value();
+        break;
+      case DriveStatus::Unloading:
+        drive_time -= dr.unloadStartTime.value();
+        break;
+      case DriveStatus::Unmounting:
+        drive_time -= dr.unmountStartTime.value();
+        break;
+      case DriveStatus::DrainingToDisk:
+        drive_time -= dr.drainingStartTime.value();
+        break;
+      case DriveStatus::Shutdown:
+        drive_time -= dr.shutdownTime.value();
+        break;
+      case DriveStatus::Unknown:
+        break;
     }
     dr_item->set_drive_status_since(drive_time);
 
@@ -168,4 +196,5 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
   return streambuf->Size();
 }
 
-}} // namespace cta::xrd
+}  // namespace xrd
+}  // namespace cta

@@ -34,14 +34,13 @@
 
 namespace unitTests {
 
-cta_catalogue_MediaTypeTest::cta_catalogue_MediaTypeTest()
-  : m_dummyLog("dummy", "dummy"),
-    m_admin(CatalogueTestUtils::getAdmin()),
-    m_vo(CatalogueTestUtils::getVo()),
-    m_diskInstance(CatalogueTestUtils::getDiskInstance()),
-    m_mediaType(CatalogueTestUtils::getMediaType()),
-    m_tape1(CatalogueTestUtils::getTape1()) {
-}
+cta_catalogue_MediaTypeTest::cta_catalogue_MediaTypeTest() :
+m_dummyLog("dummy", "dummy"),
+m_admin(CatalogueTestUtils::getAdmin()),
+m_vo(CatalogueTestUtils::getVo()),
+m_diskInstance(CatalogueTestUtils::getDiskInstance()),
+m_mediaType(CatalogueTestUtils::getMediaType()),
+m_tape1(CatalogueTestUtils::getTape1()) {}
 
 void cta_catalogue_MediaTypeTest::SetUp() {
   cta::log::LogContext dummyLc(m_dummyLog);
@@ -53,12 +52,12 @@ void cta_catalogue_MediaTypeTest::TearDown() {
 }
 
 std::map<std::string, cta::catalogue::MediaTypeWithLogs> cta_catalogue_MediaTypeTest::mediaTypeWithLogsListToMap(
-  const std::list<cta::catalogue::MediaTypeWithLogs> &listOfMediaTypes) {
+  const std::list<cta::catalogue::MediaTypeWithLogs>& listOfMediaTypes) {
   try {
     std::map<std::string, cta::catalogue::MediaTypeWithLogs> m;
 
-    for(auto &mediaType: listOfMediaTypes) {
-      if(m.end() != m.find(mediaType.name)) {
+    for (auto& mediaType : listOfMediaTypes) {
+      if (m.end() != m.find(mediaType.name)) {
         cta::exception::Exception ex;
         ex.getMessage() << "Media type " << mediaType.name << " is a duplicate";
         throw ex;
@@ -66,7 +65,8 @@ std::map<std::string, cta::catalogue::MediaTypeWithLogs> cta_catalogue_MediaType
       m[mediaType.name] = mediaType;
     }
     return m;
-  } catch(cta::exception::Exception &ex) {
+  }
+  catch (cta::exception::Exception& ex) {
     throw cta::exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -105,28 +105,28 @@ TEST_P(cta_catalogue_MediaTypeTest, createMediaType_emptyStringMediaTypeName) {
   auto mediaType = m_mediaType;
   mediaType.name = "";
   ASSERT_THROW(m_catalogue->MediaType()->createMediaType(m_admin, mediaType),
-    cta::catalogue::UserSpecifiedAnEmptyStringMediaTypeName);
+               cta::catalogue::UserSpecifiedAnEmptyStringMediaTypeName);
 }
 
 TEST_P(cta_catalogue_MediaTypeTest, createMediaType_emptyStringComment) {
   auto mediaType = m_mediaType;
   mediaType.comment = "";
   ASSERT_THROW(m_catalogue->MediaType()->createMediaType(m_admin, mediaType),
-    cta::catalogue::UserSpecifiedAnEmptyStringComment);
+               cta::catalogue::UserSpecifiedAnEmptyStringComment);
 }
 
 TEST_P(cta_catalogue_MediaTypeTest, createMediaType_emptyStringCartridge) {
   auto mediaType = m_mediaType;
   mediaType.cartridge = "";
   ASSERT_THROW(m_catalogue->MediaType()->createMediaType(m_admin, mediaType),
-    cta::catalogue::UserSpecifiedAnEmptyStringCartridge);
+               cta::catalogue::UserSpecifiedAnEmptyStringCartridge);
 }
 
 TEST_P(cta_catalogue_MediaTypeTest, createMediaType_zeroCapacity) {
   auto mediaType = m_mediaType;
   mediaType.capacityInBytes = 0;
   ASSERT_THROW(m_catalogue->MediaType()->createMediaType(m_admin, mediaType),
-    cta::catalogue::UserSpecifiedAZeroCapacity);
+               cta::catalogue::UserSpecifiedAZeroCapacity);
 }
 
 TEST_P(cta_catalogue_MediaTypeTest, deleteMediaType) {
@@ -171,11 +171,11 @@ TEST_P(cta_catalogue_MediaTypeTest, deleteMediaType_usedByTapes) {
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled,
-    "Create logical library");
+                                                      "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply,
-    "Create tape pool");
+                                          "Create tape pool");
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
   //Media type is used by at least one tape, deleting it should throw an exception
@@ -298,7 +298,7 @@ TEST_P(cta_catalogue_MediaTypeTest, modifyMediaTypeName_newNameAlreadyExists) {
 
   // Try to rename the first media type with the name of the second one
   ASSERT_THROW(m_catalogue->MediaType()->modifyMediaTypeName(m_admin, m_mediaType.name, mediaType2.name),
-    cta::exception::UserError);
+               cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_MediaTypeTest, modifyMediaTypeCartridge) {
@@ -411,7 +411,7 @@ TEST_P(cta_catalogue_MediaTypeTest, modifyMediaTypeCapacityInBytes_nonExistentMe
   const std::string name = "media_type";
   const uint64_t capacityInBytes = 1;
   ASSERT_THROW(m_catalogue->MediaType()->modifyMediaTypeCapacityInBytes(m_admin, name, capacityInBytes),
-    cta::exception::UserError);
+               cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_MediaTypeTest, modifyMediaTypePrimaryDensityCode) {
@@ -468,7 +468,7 @@ TEST_P(cta_catalogue_MediaTypeTest, modifyMediaTypePrimaryDensityCode_nonExisten
   const std::string name = "media_type";
   const uint8_t primaryDensityCode = 1;
   ASSERT_THROW(m_catalogue->MediaType()->modifyMediaTypePrimaryDensityCode(m_admin, name, primaryDensityCode),
-    cta::exception::UserError);
+               cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_MediaTypeTest, modifyMediaTypeSecondaryDensityCode) {
@@ -498,7 +498,8 @@ TEST_P(cta_catalogue_MediaTypeTest, modifyMediaTypeSecondaryDensityCode) {
   }
 
   const uint8_t modifiedSecondaryDensityCode = 7;
-  m_catalogue->MediaType()->modifyMediaTypeSecondaryDensityCode(m_admin, m_mediaType.name, modifiedSecondaryDensityCode);
+  m_catalogue->MediaType()->modifyMediaTypeSecondaryDensityCode(m_admin, m_mediaType.name,
+                                                                modifiedSecondaryDensityCode);
 
   {
     const auto mediaTypes = m_catalogue->MediaType()->getMediaTypes();
@@ -525,7 +526,7 @@ TEST_P(cta_catalogue_MediaTypeTest, modifyMediaTypeSecondaryDensityCode_nonExist
   const std::string name = "media_type";
   const uint8_t secondaryDensityCode = 1;
   ASSERT_THROW(m_catalogue->MediaType()->modifyMediaTypeSecondaryDensityCode(m_admin, name, secondaryDensityCode),
-    cta::exception::UserError);
+               cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_MediaTypeTest, modifyMediaTypeNbWraps) {
@@ -757,7 +758,7 @@ TEST_P(cta_catalogue_MediaTypeTest, getMediaTypeByVid_nonExistentTape) {
 }
 
 TEST_P(cta_catalogue_MediaTypeTest, getMediaTypeByVid) {
-  const bool logicalLibraryIsDisabled= false;
+  const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const std::optional<std::string> supply("value for the supply pool mechanism");
@@ -765,11 +766,11 @@ TEST_P(cta_catalogue_MediaTypeTest, getMediaTypeByVid) {
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
 
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled,
-    "Create logical library");
+                                                      "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply,
-    "Create tape pool");
+                                          "Create tape pool");
 
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 

@@ -20,50 +20,60 @@
 #include "common/threading/Thread.hpp"
 
 namespace cta {
-  
-class RepackReportThread: public cta::threading::Thread {
+
+class RepackReportThread : public cta::threading::Thread {
 public:
-  RepackReportThread(Scheduler& scheduler, log::LogContext &lc):m_scheduler(scheduler),m_lc(lc){}
+  RepackReportThread(Scheduler& scheduler, log::LogContext& lc) : m_scheduler(scheduler), m_lc(lc) {}
+
   virtual ~RepackReportThread();
   void run();
+
 protected:
-  virtual cta::Scheduler::RepackReportBatch getNextRepackReportBatch(log::LogContext &lc) = 0;
+  virtual cta::Scheduler::RepackReportBatch getNextRepackReportBatch(log::LogContext& lc) = 0;
   virtual std::string getReportingType() = 0;
   Scheduler& m_scheduler;
   log::LogContext& m_lc;
   const double c_maxTimeToReport = 30.0;
 };
 
-class RetrieveSuccessesRepackReportThread: public RepackReportThread{
+class RetrieveSuccessesRepackReportThread : public RepackReportThread {
 public:
-  RetrieveSuccessesRepackReportThread(Scheduler& scheduler,log::LogContext& lc):RepackReportThread(scheduler,lc) {}
+  RetrieveSuccessesRepackReportThread(Scheduler& scheduler, log::LogContext& lc) : RepackReportThread(scheduler, lc) {}
+
 private:
-  virtual cta::Scheduler::RepackReportBatch getNextRepackReportBatch(log::LogContext &lc);
-  virtual std::string getReportingType(){ return "RetrieveSuccesses"; }
+  virtual cta::Scheduler::RepackReportBatch getNextRepackReportBatch(log::LogContext& lc);
+
+  virtual std::string getReportingType() { return "RetrieveSuccesses"; }
 };
 
-class ArchiveSuccessesRepackReportThread: public RepackReportThread{
+class ArchiveSuccessesRepackReportThread : public RepackReportThread {
 public:
-  ArchiveSuccessesRepackReportThread(Scheduler& scheduler,log::LogContext& lc):RepackReportThread(scheduler,lc) {}
+  ArchiveSuccessesRepackReportThread(Scheduler& scheduler, log::LogContext& lc) : RepackReportThread(scheduler, lc) {}
+
 private:
-  virtual cta::Scheduler::RepackReportBatch getNextRepackReportBatch(log::LogContext &lc);
-  virtual std::string getReportingType(){ return "ArchiveSuccesses"; }
+  virtual cta::Scheduler::RepackReportBatch getNextRepackReportBatch(log::LogContext& lc);
+
+  virtual std::string getReportingType() { return "ArchiveSuccesses"; }
 };
 
-class RetrieveFailedRepackReportThread: public RepackReportThread{
+class RetrieveFailedRepackReportThread : public RepackReportThread {
 public:
-  RetrieveFailedRepackReportThread(Scheduler& scheduler,log::LogContext& lc):RepackReportThread(scheduler,lc) {}
+  RetrieveFailedRepackReportThread(Scheduler& scheduler, log::LogContext& lc) : RepackReportThread(scheduler, lc) {}
+
 private:
-  virtual cta::Scheduler::RepackReportBatch getNextRepackReportBatch(log::LogContext &lc);
-  virtual std::string getReportingType(){ return "RetrieveFailed"; }
+  virtual cta::Scheduler::RepackReportBatch getNextRepackReportBatch(log::LogContext& lc);
+
+  virtual std::string getReportingType() { return "RetrieveFailed"; }
 };
 
-class ArchiveFailedRepackReportThread: public RepackReportThread{
+class ArchiveFailedRepackReportThread : public RepackReportThread {
 public:
-  ArchiveFailedRepackReportThread(Scheduler& scheduler,log::LogContext& lc):RepackReportThread(scheduler,lc) {}
+  ArchiveFailedRepackReportThread(Scheduler& scheduler, log::LogContext& lc) : RepackReportThread(scheduler, lc) {}
+
 private:
-  virtual cta::Scheduler::RepackReportBatch getNextRepackReportBatch(log::LogContext &lc);
-  virtual std::string getReportingType(){ return "ArchiveFailed"; }
+  virtual cta::Scheduler::RepackReportBatch getNextRepackReportBatch(log::LogContext& lc);
+
+  virtual std::string getReportingType() { return "ArchiveFailed"; }
 };
 
-}
+}  // namespace cta

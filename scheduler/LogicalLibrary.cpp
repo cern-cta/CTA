@@ -20,20 +20,16 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::LogicalLibrary::LogicalLibrary() {
-}
+cta::LogicalLibrary::LogicalLibrary() {}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::LogicalLibrary::~LogicalLibrary() throw() {
-}
+cta::LogicalLibrary::~LogicalLibrary() throw() {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::LogicalLibrary::LogicalLibrary(
-  const std::string &name,
-  const CreationLog &creationLog):
-  name(name), creationLog(creationLog) {
-}
+cta::LogicalLibrary::LogicalLibrary(const std::string& name, const CreationLog& creationLog) :
+name(name),
+creationLog(creationLog) {}

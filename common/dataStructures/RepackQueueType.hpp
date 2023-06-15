@@ -19,7 +19,11 @@
 
 #include <string>
 
-namespace cta { namespace common { namespace dataStructures {
+namespace cta {
+namespace common {
+namespace dataStructures {
 enum class RepackQueueType { Pending, ToExpand };
 std::string toString(RepackQueueType queueType);
-}}} // namespace cta::common::dataStructures
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

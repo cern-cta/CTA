@@ -28,20 +28,19 @@ namespace objectstore {
 //------------------------------------------------------------------------------
 // RepackQueue::RepackQueue()
 //------------------------------------------------------------------------------
-RepackQueue::RepackQueue(const std::string& address, Backend& os):
-  ObjectOps<serializers::RepackQueue, serializers::RepackQueue_t>(os, address) {}
+RepackQueue::RepackQueue(const std::string& address, Backend& os) :
+ObjectOps<serializers::RepackQueue, serializers::RepackQueue_t>(os, address) {}
 
 //------------------------------------------------------------------------------
 // RepackQueue::RepackQueue()
 //------------------------------------------------------------------------------
-RepackQueue::RepackQueue(Backend& os):
-  ObjectOps<serializers::RepackQueue, serializers::RepackQueue_t>(os) { }
+RepackQueue::RepackQueue(Backend& os) : ObjectOps<serializers::RepackQueue, serializers::RepackQueue_t>(os) {}
 
 //------------------------------------------------------------------------------
 // RepackQueue::RepackQueue()
 //------------------------------------------------------------------------------
-RepackQueue::RepackQueue(GenericObject& go):
-  ObjectOps<serializers::RepackQueue, serializers::RepackQueue_t>(go.objectStore()) {
+RepackQueue::RepackQueue(GenericObject& go) :
+ObjectOps<serializers::RepackQueue, serializers::RepackQueue_t>(go.objectStore()) {
   // Here we transplant the generic object into the new object
   go.transplantHeader(*this);
   // And interpret the header.
@@ -64,7 +63,9 @@ void RepackQueue::initialize() {
 void RepackQueue::addRequestsAndCommit(const std::list<std::string>& requestAddresses, log::LogContext& lc) {
   checkPayloadWritable();
   // This queue does not need to be sharded
-  for (auto &address: requestAddresses) m_payload.add_repackrequestpointers()->set_address(address);
+  for (auto& address : requestAddresses) {
+    m_payload.add_repackrequestpointers()->set_address(address);
+  }
   commit();
 }
 
@@ -74,21 +75,28 @@ void RepackQueue::addRequestsAndCommit(const std::list<std::string>& requestAddr
 void RepackQueue::addRequestsIfNecessaryAndCommit(const std::list<std::string>& requestAddresses, log::LogContext& lc) {
   checkPayloadWritable();
   std::set<std::string> existingAddresses;
-  for (auto &a: m_payload.repackrequestpointers()) existingAddresses.insert(a.address());
+  for (auto& a : m_payload.repackrequestpointers()) {
+    existingAddresses.insert(a.address());
+  }
   bool didAdd = false;
-  for (auto &a: requestAddresses)
+  for (auto& a : requestAddresses) {
     if (!existingAddresses.count(a)) {
       m_payload.add_repackrequestpointers()->set_address(a);
       didAdd = true;
     }
-  if (didAdd) commit();
+  }
+  if (didAdd) {
+    commit();
+  }
 }
 
 //------------------------------------------------------------------------------
 // RepackQueue::garbageCollect()
 //------------------------------------------------------------------------------
-void RepackQueue::garbageCollect(const std::string& presumedOwner, AgentReference& agentReference, log::LogContext& lc,
-    cta::catalogue::Catalogue& catalogue) {
+void RepackQueue::garbageCollect(const std::string& presumedOwner,
+                                 AgentReference& agentReference,
+                                 log::LogContext& lc,
+                                 cta::catalogue::Catalogue& catalogue) {
   throw exception::Exception("In RepackQueue::garbageCollect(): not implemented.");
 }
 
@@ -97,19 +105,22 @@ void RepackQueue::garbageCollect(const std::string& presumedOwner, AgentReferenc
 //------------------------------------------------------------------------------
 void RepackQueue::removeRequestsAndCommit(const std::list<std::string>& requestsAddresses) {
   checkPayloadWritable();
-  std::set<std::string> requestsToRemove (requestsAddresses.begin(), requestsAddresses.end());
-  bool didRemove=false;
+  std::set<std::string> requestsToRemove(requestsAddresses.begin(), requestsAddresses.end());
+  bool didRemove = false;
   std::list<std::string> newQueue;
-  for (auto &a: m_payload.repackrequestpointers()) {
+  for (auto& a : m_payload.repackrequestpointers()) {
     if (requestsToRemove.count(a.address())) {
-      didRemove=true;
-    } else {
+      didRemove = true;
+    }
+    else {
       newQueue.emplace_back(a.address());
     }
   }
   if (didRemove) {
     m_payload.mutable_repackrequestpointers()->Clear();
-    for (auto &a: newQueue) m_payload.add_repackrequestpointers()->set_address(a);
+    for (auto& a : newQueue) {
+      m_payload.add_repackrequestpointers()->set_address(a);
+    }
     commit();
   }
 }
@@ -124,7 +135,6 @@ auto RepackQueue::getRequestsSummary() -> RequestsSummary {
   return ret;
 }
 
-
 //------------------------------------------------------------------------------
 // RepackQueue::getCandidateList()
 //------------------------------------------------------------------------------
@@ -133,11 +143,13 @@ auto RepackQueue::getCandidateList(uint64_t maxRequests, const std::set<std::str
   checkPayloadReadable();
   CandidateJobList ret;
   uint64_t count = 0;
-  for (auto & repreq : m_payload.repackrequestpointers()) {
+  for (auto& repreq : m_payload.repackrequestpointers()) {
     RequestDump rd;
     rd.address = repreq.address();
     ret.candidates.push_back(rd);
-    if (++count >= maxRequests) break;
+    if (++count >= maxRequests) {
+      break;
+    }
   }
   ret.candidateRequests = ret.candidates.size();
   ret.remainingRequestsAfterCandidates = m_payload.repackrequestpointers_size() - ret.candidateRequests;

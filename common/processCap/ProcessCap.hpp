@@ -20,7 +20,8 @@
 #include <string>
 #include <sys/capability.h>
 
-namespace cta { namespace server  {
+namespace cta {
+namespace server {
 
 /**
  * Class providing support for UNIX capabilities.
@@ -34,7 +35,6 @@ namespace cta { namespace server  {
  */
 class ProcessCap {
 public:
-
   /**
    * Destructor.
    */
@@ -54,10 +54,9 @@ public:
    * @text The string representation the capabilities that the current
    * process should have.
    */
-  virtual void setProcText(const std::string &text);
+  virtual void setProcText(const std::string& text);
 
 private:
-
   /**
    * C++ wrapper around the C function cap_get_proc().
    *
@@ -77,7 +76,7 @@ private:
    *
    * @return The capability state.
    */
-  cap_t fromText(const std::string &text);
+  cap_t fromText(const std::string& text);
 
   /**
    * C++ wrapper around the C function cap_set_proc().
@@ -86,7 +85,7 @@ private:
    */
   void setProc(const cap_t cap);
 
-}; // class ProcessCap
+};  // class ProcessCap
 
-} // namespace server
-} // namespace cta
+}  // namespace server
+}  // namespace cta

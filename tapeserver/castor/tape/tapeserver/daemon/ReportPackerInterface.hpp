@@ -29,18 +29,14 @@ namespace daemon {
 
 namespace detail {
 //nameholder
-struct Recall {
-};
-struct Migration {
-};
+struct Recall {};
+
+struct Migration {};
 
 // Enum describing the type of client. Some clients need batched reports,
 // some prefer reports file by file
-enum ReportBatching {
-  ReportInBulk,
-  ReportByFile
-};
-}
+enum ReportBatching { ReportInBulk, ReportByFile };
+}  // namespace detail
 
 // Forward declaration to avoid circular inclusions.
 class TaskWatchDog;
@@ -51,19 +47,17 @@ class TaskWatchDog;
  */
 template<class PlaceHolder>
 class ReportPackerInterface {
-public :
-
+public:
   // Pass a reference to the watchdog for initial process reporting.
-  void setWatchdog(TaskWatchDog& wd) {
-    m_watchdog = &wd;
-  }
+  void setWatchdog(TaskWatchDog& wd) { m_watchdog = &wd; }
 
 protected:
   virtual ~ReportPackerInterface() = default;
 
   explicit ReportPackerInterface(const cta::log::LogContext& lc) :
-    m_lc(lc),
-    m_reportBatching(detail::ReportInBulk), m_watchdog(nullptr) {}
+  m_lc(lc),
+  m_reportBatching(detail::ReportInBulk),
+  m_watchdog(nullptr) {}
 
   /**
    * Log a set of files independently of the success/failure 
@@ -113,8 +107,8 @@ protected:
    * Define how we should report to the client (by file/in bulk).
    */
   enum detail::ReportBatching m_reportBatching;
-public:
 
+public:
   /**
    * Turn off the packing of the reports by the report packer.
    * This is used for recalls driven by read_tp.
@@ -125,13 +119,10 @@ public:
    * Pointer to the watchdog, so we can communicate communication errors
    * and end of session results to the initial process
    */
-  TaskWatchDog *m_watchdog;
-
+  TaskWatchDog* m_watchdog;
 };
 
-}
-}
-}
-}
-
-
+}  // namespace daemon
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

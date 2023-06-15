@@ -21,7 +21,8 @@
 
 #include <list>
 
-namespace cta { namespace objectstore {
+namespace cta {
+namespace objectstore {
 
 struct RetrieveActivityDescription {
   std::string activity;
@@ -35,16 +36,19 @@ struct RetrieveActivityDescription {
  * expected to be a frequent occurrence. */
 class RetrieveActivityCountMap {
 public:
-  RetrieveActivityCountMap (google::protobuf::RepeatedPtrField<serializers::RetrieveActivityCountPair>* retrieveActivityCountMap);
-  void incCount(const std::string &activity);
-  void decCount(const std::string &activity);
+  RetrieveActivityCountMap(
+    google::protobuf::RepeatedPtrField<serializers::RetrieveActivityCountPair>* retrieveActivityCountMap);
+  void incCount(const std::string& activity);
+  void decCount(const std::string& activity);
   void clear();
   std::list<RetrieveActivityDescription> getActivities();
+
 private:
   google::protobuf::RepeatedPtrField<serializers::RetrieveActivityCountPair>& m_activityCountMap;
 };
 
-std::string toString(const RetrieveActivityDescription &);
-bool operator==(const serializers::RetrieveActivityCountPair &, const std::string &);
+std::string toString(const RetrieveActivityDescription&);
+bool operator==(const serializers::RetrieveActivityCountPair&, const std::string&);
 
-}} // namespace cta::objectstore
+}  // namespace objectstore
+}  // namespace cta

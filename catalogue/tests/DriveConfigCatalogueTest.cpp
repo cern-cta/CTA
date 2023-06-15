@@ -28,14 +28,12 @@
 
 namespace unitTests {
 
-cta_catalogue_DriveConfigTest::cta_catalogue_DriveConfigTest()
-  : m_dummyLog("dummy", "dummy") {
-}
+cta_catalogue_DriveConfigTest::cta_catalogue_DriveConfigTest() : m_dummyLog("dummy", "dummy") {}
 
 void cta_catalogue_DriveConfigTest::SetUp() {
   cta::log::LogContext dummyLc(m_dummyLog);
   try {
-    cta::catalogue::CatalogueFactory *const *const catalogueFactoryPtrPtr = GetParam();
+    cta::catalogue::CatalogueFactory* const* const catalogueFactoryPtrPtr = GetParam();
 
     if (nullptr == catalogueFactoryPtrPtr) {
       throw cta::exception::Exception("Global pointer to the catalogue factory pointer for unit-tests in null");
@@ -53,7 +51,8 @@ void cta_catalogue_DriveConfigTest::SetUp() {
         m_catalogue->DriveConfig()->deleteTapeDriveConfig(nameAndKey.first, nameAndKey.second);
       }
     }
-  } catch(cta::exception::Exception &ex) {
+  }
+  catch (cta::exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
   }
@@ -66,11 +65,10 @@ void cta_catalogue_DriveConfigTest::TearDown() {
 TEST_P(cta_catalogue_DriveConfigTest, getTapeDriveConfig) {
   const std::string tapeDriveName = "VDSTK11";
 
-  cta::SourcedParameter<std::string> daemonUserName {
-    "taped", "DaemonUserName", "cta", "Compile time default"};
+  cta::SourcedParameter<std::string> daemonUserName {"taped", "DaemonUserName", "cta", "Compile time default"};
 
   m_catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, daemonUserName.category(), daemonUserName.key(),
-    daemonUserName.value(), daemonUserName.source());
+                                                    daemonUserName.value(), daemonUserName.source());
   auto driveConfig = m_catalogue->DriveConfig()->getTapeDriveConfig(tapeDriveName, daemonUserName.key());
   ASSERT_TRUE(static_cast<bool>(driveConfig));
   std::string category, value, source;
@@ -88,18 +86,17 @@ TEST_P(cta_catalogue_DriveConfigTest, getAllDrivesConfigs) {
     std::stringstream ss;
     ss << "VDSTK" << std::setw(5) << std::setfill('0') << i;
 
-    cta::SourcedParameter<std::string> daemonUserName {
-      "taped", "DaemonUserName", "cta", "Compile time default"};
+    cta::SourcedParameter<std::string> daemonUserName {"taped", "DaemonUserName", "cta", "Compile time default"};
     m_catalogue->DriveConfig()->createTapeDriveConfig(ss.str(), daemonUserName.category(), daemonUserName.key(),
-      daemonUserName.value(), daemonUserName.source());
-    tapeDriveConfigs.push_back({ss.str(), daemonUserName.category(), daemonUserName.key(), daemonUserName.value(),
-      daemonUserName.source()});
-    cta::SourcedParameter<std::string> defaultConfig {
-      "taped", "defaultConfig", "cta", "Random Default Config for Testing"};
+                                                      daemonUserName.value(), daemonUserName.source());
+    tapeDriveConfigs.push_back(
+      {ss.str(), daemonUserName.category(), daemonUserName.key(), daemonUserName.value(), daemonUserName.source()});
+    cta::SourcedParameter<std::string> defaultConfig {"taped", "defaultConfig", "cta",
+                                                      "Random Default Config for Testing"};
     m_catalogue->DriveConfig()->createTapeDriveConfig(ss.str(), defaultConfig.category(), defaultConfig.key(),
-      defaultConfig.value(), defaultConfig.source());
-    tapeDriveConfigs.push_back({ss.str(), defaultConfig.category(), defaultConfig.key(), defaultConfig.value(),
-      defaultConfig.source()});
+                                                      defaultConfig.value(), defaultConfig.source());
+    tapeDriveConfigs.push_back(
+      {ss.str(), defaultConfig.category(), defaultConfig.key(), defaultConfig.value(), defaultConfig.source()});
   }
   const auto drivesConfigs = m_catalogue->DriveConfig()->getTapeDriveConfigs();
   ASSERT_EQ(tapeDriveConfigs.size(), drivesConfigs.size());
@@ -111,12 +108,10 @@ TEST_P(cta_catalogue_DriveConfigTest, getAllDrivesConfigs) {
 TEST_P(cta_catalogue_DriveConfigTest, setSourcedParameterWithEmptyValue) {
   const std::string tapeDriveName = "VDSTK11";
 
-  cta::SourcedParameter<std::string> raoLtoOptions {
-    "taped", "RAOLTOAlgorithmOptions", "", "Compile time default"
-  };
+  cta::SourcedParameter<std::string> raoLtoOptions {"taped", "RAOLTOAlgorithmOptions", "", "Compile time default"};
 
   m_catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, raoLtoOptions.category(), raoLtoOptions.key(),
-    raoLtoOptions.value(), raoLtoOptions.source());
+                                                    raoLtoOptions.value(), raoLtoOptions.source());
   auto driveConfig = m_catalogue->DriveConfig()->getTapeDriveConfig(tapeDriveName, raoLtoOptions.key());
   ASSERT_TRUE(static_cast<bool>(driveConfig));
   std::string category, value, source;
@@ -126,11 +121,10 @@ TEST_P(cta_catalogue_DriveConfigTest, setSourcedParameterWithEmptyValue) {
   ASSERT_EQ(raoLtoOptions.source(), source);
   m_catalogue->DriveConfig()->deleteTapeDriveConfig(tapeDriveName, raoLtoOptions.key());
 
-  cta::SourcedParameter<std::string> backendPath{
-    "ObjectStore", "BackendPath"};
+  cta::SourcedParameter<std::string> backendPath {"ObjectStore", "BackendPath"};
 
   m_catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, backendPath.category(), backendPath.key(),
-    backendPath.value(), backendPath.source());
+                                                    backendPath.value(), backendPath.source());
   driveConfig = m_catalogue->DriveConfig()->getTapeDriveConfig(tapeDriveName, backendPath.key());
   ASSERT_TRUE(static_cast<bool>(driveConfig));
   std::tie(category, value, source) = driveConfig.value();
@@ -144,11 +138,10 @@ TEST_P(cta_catalogue_DriveConfigTest, failTogetTapeDriveConfig) {
   const std::string tapeDriveName = "VDSTK11";
   const std::string wrongName = "VDSTK56";
   const std::string wrongKey = "wrongKey";
-  cta::SourcedParameter<std::string> daemonUserName {
-    "taped", "DaemonUserName", "cta", "Compile time default"};
+  cta::SourcedParameter<std::string> daemonUserName {"taped", "DaemonUserName", "cta", "Compile time default"};
 
   m_catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, daemonUserName.category(), daemonUserName.key(),
-    daemonUserName.value(), daemonUserName.source());
+                                                    daemonUserName.value(), daemonUserName.source());
   auto driveConfig = m_catalogue->DriveConfig()->getTapeDriveConfig(wrongName, daemonUserName.key());
   ASSERT_FALSE(driveConfig);
   driveConfig = m_catalogue->DriveConfig()->getTapeDriveConfig(tapeDriveName, wrongKey);
@@ -162,10 +155,9 @@ TEST_P(cta_catalogue_DriveConfigTest, failTodeleteTapeDriveConfig) {
   const std::string tapeDriveName = "VDSTK11";
   const std::string wrongName = "VDSTK56";
   const std::string wrongKey = "wrongKey";
-  cta::SourcedParameter<std::string> daemonUserName {
-    "taped", "DaemonUserName", "cta", "Compile time default"};
+  cta::SourcedParameter<std::string> daemonUserName {"taped", "DaemonUserName", "cta", "Compile time default"};
   m_catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, daemonUserName.category(), daemonUserName.key(),
-    daemonUserName.value(), daemonUserName.source());
+                                                    daemonUserName.value(), daemonUserName.source());
   m_catalogue->DriveConfig()->deleteTapeDriveConfig(wrongName, daemonUserName.key());
   auto driveConfig = m_catalogue->DriveConfig()->getTapeDriveConfig(tapeDriveName, daemonUserName.key());
   ASSERT_TRUE(static_cast<bool>(driveConfig));
@@ -185,20 +177,18 @@ TEST_P(cta_catalogue_DriveConfigTest, multipleDriveConfig) {
   const std::string tapeDriveName1 = "VDSTK11";
   const std::string tapeDriveName2 = "VDSTK12";
 
-  cta::SourcedParameter<std::string> daemonUserName {
-    "taped", "DaemonUserName", "cta", "Compile time default"};
-  cta::SourcedParameter<std::string> daemonGroupName {
-    "taped", "DaemonGroupName", "tape", "Compile time default"};
+  cta::SourcedParameter<std::string> daemonUserName {"taped", "DaemonUserName", "cta", "Compile time default"};
+  cta::SourcedParameter<std::string> daemonGroupName {"taped", "DaemonGroupName", "tape", "Compile time default"};
 
   // Combinations of tapeDriveName1/2 and daemonUserName and daemonGroupName
   m_catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName1, daemonUserName.category(), daemonUserName.key(),
-    daemonUserName.value(), daemonUserName.source());
+                                                    daemonUserName.value(), daemonUserName.source());
   m_catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName1, daemonGroupName.category(), daemonGroupName.key(),
-    daemonGroupName.value(), daemonGroupName.source());
+                                                    daemonGroupName.value(), daemonGroupName.source());
   m_catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName2, daemonUserName.category(), daemonUserName.key(),
-    daemonUserName.value(), daemonUserName.source());
+                                                    daemonUserName.value(), daemonUserName.source());
   m_catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName2, daemonGroupName.category(), daemonGroupName.key(),
-    daemonGroupName.value(), daemonGroupName.source());
+                                                    daemonGroupName.value(), daemonGroupName.source());
   auto driveConfig1UserName = m_catalogue->DriveConfig()->getTapeDriveConfig(tapeDriveName1, daemonUserName.key());
   auto driveConfig2UserName = m_catalogue->DriveConfig()->getTapeDriveConfig(tapeDriveName2, daemonUserName.key());
   auto driveConfig1GroupName = m_catalogue->DriveConfig()->getTapeDriveConfig(tapeDriveName1, daemonGroupName.key());
@@ -234,20 +224,18 @@ TEST_P(cta_catalogue_DriveConfigTest, getNamesAndKeysOfMultipleDriveConfig) {
   const std::string tapeDriveName1 = "VDSTK11";
   const std::string tapeDriveName2 = "VDSTK12";
 
-  cta::SourcedParameter<std::string> daemonUserName {
-    "taped", "DaemonUserName", "cta", "Compile time default"};
-  cta::SourcedParameter<std::string> daemonGroupName {
-    "taped", "DaemonGroupName", "tape", "Compile time default"};
+  cta::SourcedParameter<std::string> daemonUserName {"taped", "DaemonUserName", "cta", "Compile time default"};
+  cta::SourcedParameter<std::string> daemonGroupName {"taped", "DaemonGroupName", "tape", "Compile time default"};
 
   // Combinations of tapeDriveName1/2 and daemonUserName and daemonGroupName
   m_catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName1, daemonUserName.category(), daemonUserName.key(),
-    daemonUserName.value(), daemonUserName.source());
+                                                    daemonUserName.value(), daemonUserName.source());
   m_catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName1, daemonGroupName.category(), daemonGroupName.key(),
-    daemonGroupName.value(), daemonGroupName.source());
+                                                    daemonGroupName.value(), daemonGroupName.source());
   m_catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName2, daemonUserName.category(), daemonUserName.key(),
-    daemonUserName.value(), daemonUserName.source());
+                                                    daemonUserName.value(), daemonUserName.source());
   m_catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName2, daemonGroupName.category(), daemonGroupName.key(),
-    daemonGroupName.value(), daemonGroupName.source());
+                                                    daemonGroupName.value(), daemonGroupName.source());
 
   const auto configurationTapeNamesAndKeys = m_catalogue->DriveConfig()->getTapeDriveConfigNamesAndKeys();
 
@@ -259,13 +247,11 @@ TEST_P(cta_catalogue_DriveConfigTest, getNamesAndKeysOfMultipleDriveConfig) {
 TEST_P(cta_catalogue_DriveConfigTest, modifyTapeDriveConfig) {
   const std::string tapeDriveName = "VDSTK11";
   // Both share same key
-  cta::SourcedParameter<std::string> daemonUserName1 {
-    "taped1", "DaemonUserName", "cta1", "Compile time1 default"};
-  cta::SourcedParameter<std::string> daemonUserName2 {
-    "taped2", "DaemonUserName", "cta2", "Compile time2 default"};
+  cta::SourcedParameter<std::string> daemonUserName1 {"taped1", "DaemonUserName", "cta1", "Compile time1 default"};
+  cta::SourcedParameter<std::string> daemonUserName2 {"taped2", "DaemonUserName", "cta2", "Compile time2 default"};
 
   m_catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, daemonUserName1.category(), daemonUserName1.key(),
-    daemonUserName1.value(), daemonUserName1.source());
+                                                    daemonUserName1.value(), daemonUserName1.source());
   const auto driveConfig1 = m_catalogue->DriveConfig()->getTapeDriveConfig(tapeDriveName, daemonUserName1.key());
   ASSERT_TRUE(static_cast<bool>(driveConfig1));
   std::string category, value, source;
@@ -274,7 +260,7 @@ TEST_P(cta_catalogue_DriveConfigTest, modifyTapeDriveConfig) {
   ASSERT_NE(daemonUserName2.value(), value);
   ASSERT_NE(daemonUserName2.source(), source);
   m_catalogue->DriveConfig()->modifyTapeDriveConfig(tapeDriveName, daemonUserName2.category(), daemonUserName2.key(),
-    daemonUserName2.value(), daemonUserName2.source());
+                                                    daemonUserName2.value(), daemonUserName2.source());
   const auto driveConfig2 = m_catalogue->DriveConfig()->getTapeDriveConfig(tapeDriveName, daemonUserName1.key());
   ASSERT_TRUE(static_cast<bool>(driveConfig2));
   std::tie(category, value, source) = driveConfig2.value();

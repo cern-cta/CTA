@@ -21,12 +21,13 @@
 
 #include "xroot_plugins/XrdCtaStream.hpp"
 
-namespace cta { namespace xrd {
+namespace cta {
+namespace xrd {
 
 /*!
  * Stream object which implements "tapepool ls" command
  */
-class LogicalLibraryLsStream: public XrdCtaStream{
+class LogicalLibraryLsStream : public XrdCtaStream {
 public:
   /*!
    * Constructor
@@ -36,47 +37,48 @@ public:
    * @param[in]    scheduler     CTA Scheduler
    * @param[in]    disabled      Logical Library disable status
    */
-  LogicalLibraryLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue,
-    cta::Scheduler &scheduler, const std::optional<bool>& disabled);
+  LogicalLibraryLsStream(const frontend::AdminCmdStream& requestMsg,
+                         cta::catalogue::Catalogue& catalogue,
+                         cta::Scheduler& scheduler,
+                         const std::optional<bool>& disabled);
 
 private:
   /*!
    * Can we close the stream?
    */
-  bool isDone() const override {
-    return m_logicalLibraryList.empty();
-  }
+  bool isDone() const override { return m_logicalLibraryList.empty(); }
 
   /*!
    * Fill the buffer
    */
-  int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) override;
+  int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) override;
 
   // List of logical libraries from the catalogue
   std::list<cta::common::dataStructures::LogicalLibrary> m_logicalLibraryList;
   const std::optional<bool> m_disabled;
 
-  static constexpr const char* const LOG_SUFFIX  = "LogicalLibraryLsStream";      //!< Identifier for log messages
+  static constexpr const char* const LOG_SUFFIX = "LogicalLibraryLsStream";  //!< Identifier for log messages
 };
 
-
-LogicalLibraryLsStream::LogicalLibraryLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue,
-  cta::Scheduler &scheduler, const std::optional<bool>& disabled) :
-  XrdCtaStream(catalogue, scheduler),
-  m_logicalLibraryList(catalogue.LogicalLibrary()->getLogicalLibraries()),
-  m_disabled(disabled) {
+LogicalLibraryLsStream::LogicalLibraryLsStream(const frontend::AdminCmdStream& requestMsg,
+                                               cta::catalogue::Catalogue& catalogue,
+                                               cta::Scheduler& scheduler,
+                                               const std::optional<bool>& disabled) :
+XrdCtaStream(catalogue, scheduler),
+m_logicalLibraryList(catalogue.LogicalLibrary()->getLogicalLibraries()),
+m_disabled(disabled) {
   using namespace cta::admin;
 
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "LogicalLibraryLsStream() constructor");
 }
 
-int LogicalLibraryLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
-  for (bool is_buffer_full = false; !m_logicalLibraryList.empty()
-    && !is_buffer_full; m_logicalLibraryList.pop_front()) {
+int LogicalLibraryLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
+  for (bool is_buffer_full = false; !m_logicalLibraryList.empty() && !is_buffer_full;
+       m_logicalLibraryList.pop_front()) {
     Data record;
 
-    auto &ll      = m_logicalLibraryList.front();
-    auto  ll_item = record.mutable_llls_item();
+    auto& ll = m_logicalLibraryList.front();
+    auto ll_item = record.mutable_llls_item();
 
     if (m_disabled && m_disabled.value() != ll.isDisabled) {
       continue;

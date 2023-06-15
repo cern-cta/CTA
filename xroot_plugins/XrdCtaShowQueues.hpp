@@ -19,12 +19,13 @@
 
 #include "xroot_plugins/XrdCtaStream.hpp"
 
-namespace cta { namespace xrd {
+namespace cta {
+namespace xrd {
 
 /*!
  * Stream object which implements "tapepool ls" command
  */
-class ShowQueuesStream: public XrdCtaStream{
+class ShowQueuesStream : public XrdCtaStream {
 public:
   /*!
    * Constructor
@@ -33,47 +34,50 @@ public:
    * @param[in]    catalogue     CTA Catalogue
    * @param[in]    scheduler     CTA Scheduler
    */
-  ShowQueuesStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue& catalogue,
-    cta::Scheduler& scheduler, log::LogContext& lc);
+  ShowQueuesStream(const frontend::AdminCmdStream& requestMsg,
+                   cta::catalogue::Catalogue& catalogue,
+                   cta::Scheduler& scheduler,
+                   log::LogContext& lc);
 
 private:
   /*!
    * Can we close the stream?
    */
-  virtual bool isDone() const {
-    return m_queuesAndMountsList.empty();
-  }
+  virtual bool isDone() const { return m_queuesAndMountsList.empty(); }
 
   /*!
    * Fill the buffer
    */
-  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
+  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf);
 
-  std::list<cta::common::dataStructures::QueueAndMountSummary> m_queuesAndMountsList;    //!< List of queues and mounts from the scheduler
+  std::list<cta::common::dataStructures::QueueAndMountSummary>
+    m_queuesAndMountsList;  //!< List of queues and mounts from the scheduler
 
-  static constexpr const char* const LOG_SUFFIX  = "ShowQueuesStream";                   //!< Identifier for log messages
+  static constexpr const char* const LOG_SUFFIX = "ShowQueuesStream";  //!< Identifier for log messages
 };
 
-ShowQueuesStream::ShowQueuesStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue& catalogue,
-  cta::Scheduler& scheduler, log::LogContext& lc) :
-  XrdCtaStream(catalogue, scheduler),
-  m_queuesAndMountsList(scheduler.getQueuesAndMountSummaries(lc))
-{
+ShowQueuesStream::ShowQueuesStream(const frontend::AdminCmdStream& requestMsg,
+                                   cta::catalogue::Catalogue& catalogue,
+                                   cta::Scheduler& scheduler,
+                                   log::LogContext& lc) :
+XrdCtaStream(catalogue, scheduler),
+m_queuesAndMountsList(scheduler.getQueuesAndMountSummaries(lc)) {
   using namespace cta::admin;
 
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "ShowQueuesStream() constructor");
 }
 
-int ShowQueuesStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
+int ShowQueuesStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
   using namespace cta::admin;
 
-  for(bool is_buffer_full = false; !m_queuesAndMountsList.empty() && !is_buffer_full; m_queuesAndMountsList.pop_front()) {
+  for (bool is_buffer_full = false; !m_queuesAndMountsList.empty() && !is_buffer_full;
+       m_queuesAndMountsList.pop_front()) {
     Data record;
 
-    auto &sq      = m_queuesAndMountsList.front();
-    auto  sq_item = record.mutable_sq_item();
+    auto& sq = m_queuesAndMountsList.front();
+    auto sq_item = record.mutable_sq_item();
 
-    switch(sq.mountType) {
+    switch (sq.mountType) {
       case common::dataStructures::MountType::ArchiveForRepack:
       case common::dataStructures::MountType::ArchiveForUser:
         sq_item->set_priority(sq.mountPolicy.archivePriority);
@@ -110,10 +114,11 @@ int ShowQueuesStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
       sq_item->set_sleeping_for_space(true);
       sq_item->set_sleep_start_time(sq.sleepForSpaceInfo.value().startTime);
       sq_item->set_disk_system_slept_for(sq.sleepForSpaceInfo.value().diskSystemName);
-    } else {
+    }
+    else {
       sq_item->set_sleeping_for_space(false);
     }
-    for (auto &policyName: sq.mountPolicies) {
+    for (auto& policyName : sq.mountPolicies) {
       sq_item->add_mount_policies(policyName);
     }
     sq_item->set_highest_priority_mount_policy(sq.highestPriorityMountPolicy);
@@ -124,4 +129,5 @@ int ShowQueuesStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
   return streambuf->Size();
 }
 
-}} // namespace cta::xrd
+}  // namespace xrd
+}  // namespace cta

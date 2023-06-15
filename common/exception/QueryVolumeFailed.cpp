@@ -17,10 +17,7 @@
 
 #include "QueryVolumeFailed.hpp"
 
-
 // -----------------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------------
-cta::exception::QueryVolumeFailed::QueryVolumeFailed():
-  cta::exception::Exception() {
-}
+cta::exception::QueryVolumeFailed::QueryVolumeFailed() : cta::exception::Exception() {}

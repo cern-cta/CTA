@@ -25,12 +25,11 @@ class Scheduler;
 
 class RepackRequestManager {
 public:
-  RepackRequestManager(Scheduler & scheduler): m_scheduler(scheduler){
-  }
-  
-  void runOnePass(log::LogContext & lc);
-  
+  RepackRequestManager(Scheduler& scheduler) : m_scheduler(scheduler) {}
+
+  void runOnePass(log::LogContext& lc);
+
 private:
-  Scheduler & m_scheduler;
+  Scheduler& m_scheduler;
 };
-} // namespace cta
+}  // namespace cta

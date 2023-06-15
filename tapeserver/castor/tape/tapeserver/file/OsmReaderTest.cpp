@@ -39,37 +39,34 @@
 namespace {
 std::string g_device_name;
 std::string g_device_path;
-}
+}  // namespace
 
-class OSMTapeCatalogue: public cta::catalogue::DummyTapeCatalogue {
+class OSMTapeCatalogue : public cta::catalogue::DummyTapeCatalogue {
 public:
   using LabelFormat = cta::common::dataStructures::Label::Format;
   OSMTapeCatalogue() = default;
 
-  LabelFormat getTapeLabelFormat(const std::string& vid) const override {
-    return LabelFormat::OSM;
-  }
+  LabelFormat getTapeLabelFormat(const std::string& vid) const override { return LabelFormat::OSM; }
 };
 
-class OSMCatalogue: public cta::catalogue::DummyCatalogue {
+class OSMCatalogue : public cta::catalogue::DummyCatalogue {
 public:
-  OSMCatalogue() : DummyCatalogue() {
-    DummyCatalogue::m_tape = std::make_unique<OSMTapeCatalogue>();
-  }
+  OSMCatalogue() : DummyCatalogue() { DummyCatalogue::m_tape = std::make_unique<OSMTapeCatalogue>(); }
 };
 
-class BasicRetrieveJob: public cta::RetrieveJob {
+class BasicRetrieveJob : public cta::RetrieveJob {
 public:
-  BasicRetrieveJob() : cta::RetrieveJob(nullptr,
-  cta::common::dataStructures::RetrieveRequest(),
-  cta::common::dataStructures::ArchiveFile(), 1,
-  cta::PositioningMethod::ByBlock) {}
+  BasicRetrieveJob() :
+  cta::RetrieveJob(nullptr,
+                   cta::common::dataStructures::RetrieveRequest(),
+                   cta::common::dataStructures::ArchiveFile(),
+                   1,
+                   cta::PositioningMethod::ByBlock) {}
 };
 
 class OsmReaderTest : public ::testing::Test {
 protected:
-  OsmReaderTest() : m_sWrapper(), m_dev(), m_catalogue(std::make_unique<OSMCatalogue>()) {
-  }
+  OsmReaderTest() : m_sWrapper(), m_dev(), m_catalogue(std::make_unique<OSMCatalogue>()) {}
 
   void SetUp() override {
     m_vid = "L08033";
@@ -94,15 +91,16 @@ protected:
         */
       castor::tape::tapeserver::drive::deviceInfo devInfo;
       devInfo = m_drive->getDeviceInfo();
-      auto removeWhiteSpaces = [](std::string *str) -> std::string {
-        str->erase(std::remove_if(str->begin(), str->end(), [](uint8_t x){return std::isspace(x);}), str->end());
+      auto removeWhiteSpaces = [](std::string* str) -> std::string {
+        str->erase(std::remove_if(str->begin(), str->end(), [](uint8_t x) { return std::isspace(x); }), str->end());
         return *str;
       };
       ASSERT_EQ("STK", removeWhiteSpaces(&devInfo.vendor));
       ASSERT_EQ("MHVTL", removeWhiteSpaces(&devInfo.product));
       ASSERT_EQ("0105", devInfo.productRevisionLevel);
       ASSERT_EQ(m_devName, removeWhiteSpaces(&devInfo.serialNumber));
-    } catch (cta::exception::Exception & ex) {
+    }
+    catch (cta::exception::Exception& ex) {
       FAIL() << "The drive couldn't be created. " << ex.getMessageValue();
     }
 
@@ -111,7 +109,8 @@ protected:
         * Checks if the drive ready to use the tape installed loaded into it.
         */
       m_drive->waitUntilReady(5);
-    } catch(cta::exception::Exception &ex) {
+    }
+    catch (cta::exception::Exception& ex) {
       FAIL() << "The drive is not ready to use. " << ex.getMessageValue();
     }
 
@@ -134,7 +133,8 @@ TEST_F(OsmReaderTest, ReadOsmTape) {
     castor::tape::tapeserver::daemon::VolumeInfo m_volInfo;
     m_volInfo.vid = m_vid;
     m_volInfo.nbFiles = 1;
-    m_volInfo.labelFormat = static_cast<OSMTapeCatalogue*>(m_catalogue->Tape().get())->getTapeLabelFormat(m_volInfo.vid);
+    m_volInfo.labelFormat =
+      static_cast<OSMTapeCatalogue*>(m_catalogue->Tape().get())->getTapeLabelFormat(m_volInfo.vid);
     m_volInfo.mountType = cta::common::dataStructures::MountType::Retrieve;
 
     // Now read a random file
@@ -151,13 +151,14 @@ TEST_F(OsmReaderTest, ReadOsmTape) {
     // Create Read File OSM
     auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, fileToRecall);
     size_t bs = reader->getBlockSize();
-    char *data = new char[bs+1];
+    char* data = new char[bs + 1];
     size_t j = 0;
     while (j < 100) {
-        reader->readNextDataBlock(data, bs);
-        j++;
+      reader->readNextDataBlock(data, bs);
+      j++;
     }
-  } catch(cta::exception::Exception &ex) {
+  }
+  catch (cta::exception::Exception& ex) {
     FAIL() << "Problem to read the OSM Tape. " << ex.getMessageValue();
   }
 }
@@ -173,20 +174,10 @@ TEST_F(OsmReaderTest, CleanDrive) {
 
   auto scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_db, 5, 2 * 1000 * 1000);
 
-  castor::tape::tapeserver::daemon::CleanerSession cleanerSession(
-    capUtils,
-    mc,
-    strlogger,
-    driveConfig,
-    m_sWrapper,
-    m_vid,
-    false,
-    0,
-    "",
-    *m_catalogue,
-    *scheduler);
+  castor::tape::tapeserver::daemon::CleanerSession cleanerSession(capUtils, mc, strlogger, driveConfig, m_sWrapper,
+                                                                  m_vid, false, 0, "", *m_catalogue, *scheduler);
 
-    cleanerSession.execute();
+  cleanerSession.execute();
 
   const auto logToCheck = strlogger.getLog();
   ASSERT_NE(std::string::npos, logToCheck.find("Cleaner successfully detected tape contains data"));
@@ -195,7 +186,7 @@ TEST_F(OsmReaderTest, CleanDrive) {
   ASSERT_NE(std::string::npos, logToCheck.find("Cleaner dismounted tape"));
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   g_device_name = argv[1];
   g_device_path = argv[2];
   ::testing::InitGoogleTest(&argc, argv);

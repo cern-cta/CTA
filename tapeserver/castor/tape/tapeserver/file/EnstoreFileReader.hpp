@@ -36,24 +36,23 @@ public:
     * @param rs: session to be bound to
     * @param fileToRecall: the file which will be recalled
     */
-  EnstoreFileReader(const std::unique_ptr<ReadSession> &rs, const cta::RetrieveJob &fileToRecall);
+  EnstoreFileReader(const std::unique_ptr<ReadSession>& rs, const cta::RetrieveJob& fileToRecall);
 
   /**
     * Destructor of the FileReader. It will release the lock on the read session.
     */
   ~EnstoreFileReader() override = default;
 
-  size_t readNextDataBlock(void *data, const size_t size) override;
+  size_t readNextDataBlock(void* data, const size_t size) override;
 
 private:
-
   // Stuff for CPIO file
   CPIO m_cpioHeader;
   uint64_t m_ui64CPIODataSize = 0;
 
-  void setPositioningMethod(const cta::PositioningMethod &newMethod);
-  void positionByFseq(const cta::RetrieveJob &fileToRecall) override;
-  void positionByBlockID(const cta::RetrieveJob &fileToRecall) override;
+  void setPositioningMethod(const cta::PositioningMethod& newMethod);
+  void positionByFseq(const cta::RetrieveJob& fileToRecall) override;
+  void positionByBlockID(const cta::RetrieveJob& fileToRecall) override;
   void setBlockSize(const size_t uiBlockSize);
 };
 

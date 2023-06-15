@@ -29,14 +29,10 @@ namespace cliTool {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-CmdLineTool::CmdLineTool(
-  std::istream &inStream,
-  std::ostream &outStream,
-  std::ostream &errStream) noexcept:
-  m_in(inStream),
-  m_out(outStream),
-  m_err(errStream) {
-}
+CmdLineTool::CmdLineTool(std::istream& inStream, std::ostream& outStream, std::ostream& errStream) noexcept :
+m_in(inStream),
+m_out(outStream),
+m_err(errStream) {}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -49,9 +45,10 @@ CmdLineTool::~CmdLineTool() noexcept = default;
 std::string CmdLineTool::getUsername() {
   char buf[256];
 
-  if(getlogin_r(buf, sizeof(buf))) {
+  if (getlogin_r(buf, sizeof(buf))) {
     return "UNKNOWN";
-  } else {
+  }
+  else {
     return buf;
   }
 }
@@ -62,9 +59,10 @@ std::string CmdLineTool::getUsername() {
 std::string CmdLineTool::getHostname() {
   char buf[256];
 
-  if(gethostname(buf, sizeof(buf))) {
+  if (gethostname(buf, sizeof(buf))) {
     return "UNKNOWN";
-  } else {
+  }
+  else {
     buf[sizeof(buf) - 1] = '\0';
     return buf;
   }
@@ -73,22 +71,28 @@ std::string CmdLineTool::getHostname() {
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int CmdLineTool::main(const int argc, char *const *const argv) {
+int CmdLineTool::main(const int argc, char* const* const argv) {
   std::string errorMessage;
 
   try {
     return exceptionThrowingMain(argc, argv);
-  } catch(exception::CommandLineNotParsed &ue) {
+  }
+  catch (exception::CommandLineNotParsed& ue) {
     errorMessage = ue.getMessage().str();
-  } catch(exception::UserError &ue) {
+  }
+  catch (exception::UserError& ue) {
     errorMessage = ue.getMessage().str();
-  } catch(std::runtime_error &ex) {
+  }
+  catch (std::runtime_error& ex) {
     errorMessage = ex.what();
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     errorMessage = ex.getMessage().str();
-  } catch(std::exception &se) {
+  }
+  catch (std::exception& se) {
     errorMessage = se.what();
-  } catch(...) {
+  }
+  catch (...) {
     errorMessage = "An unknown exception was thrown";
   }
 
@@ -96,5 +100,5 @@ int CmdLineTool::main(const int argc, char *const *const argv) {
   return 1;
 }
 
-} // namespace admin
-} // namespace cta
+}  // namespace cliTool
+}  // namespace cta

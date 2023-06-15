@@ -17,10 +17,11 @@
 
 #include "RetrieveQueueAlgorithms.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta {
+namespace objectstore {
 
 template<>
-const std::string ContainerTraits<RetrieveQueue,RetrieveQueueFailed>::c_containerTypeName = "RetrieveQueueFailed";
+const std::string ContainerTraits<RetrieveQueue, RetrieveQueueFailed>::c_containerTypeName = "RetrieveQueueFailed";
 
 #if 0
 template<>
@@ -58,4 +59,5 @@ trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock, const Cont
 }
 #endif
 
-}} // namespace cta::objectstore
+}  // namespace objectstore
+}  // namespace cta

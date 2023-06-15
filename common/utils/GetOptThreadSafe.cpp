@@ -21,47 +21,52 @@
 
 #include <memory>
 
-namespace cta { namespace utils {
+namespace cta {
+namespace utils {
 
 GetOpThreadSafe::Reply GetOpThreadSafe::getOpt(const Request& request) {
   threading::MutexLocker locker(gMutex);
   // Prepare the classic styled argv.
-  std::unique_ptr<char * []>argv(new char *[request.argv.size()]);
-  char ** p=argv.get();
-  for (auto & a: request.argv) {
+  std::unique_ptr<char*[]> argv(new char*[request.argv.size()]);
+  char** p = argv.get();
+  for (auto& a : request.argv) {
     // This is ugly, but getopt's interface takes NON-const char ** for argv.
-    *(p++) = const_cast<char *>(a.c_str());
+    *(p++) = const_cast<char*>(a.c_str());
   }
   // Prepare the global variables
-  ::optind=0; // optind = 0 allows using GNU extentions on the option string.
-  ::opterr=0; // Prevent getopt from printing to stderr.
+  ::optind = 0;  // optind = 0 allows using GNU extentions on the option string.
+  ::opterr = 0;  // Prevent getopt from printing to stderr.
   // Prepare the return value
   Reply ret;
   // Find the present options
   int longIndex, c;
-  while (-1 != (c = ::getopt_long(request.argv.size(), argv.get(), 
-                                  request.optstring.c_str(),
-                                  request.longopts, &longIndex))) {
+  while (-1 != (c = ::getopt_long(request.argv.size(), argv.get(), request.optstring.c_str(), request.longopts,
+                                  &longIndex))) {
     if (!c) {
       // We received a long option.
       ret.options.push_back(FoundOption());
       ret.options.back().option = request.longopts[longIndex].name;
-      if (::optarg)
+      if (::optarg) {
         ret.options.back().parameter = ::optarg;
-    } else if (1 == c ) {
-      // We received a non option in 
-    } else if ('?' == c || ':' == c) {
+      }
+    }
+    else if (1 == c) {
+      // We received a non option in
+    }
+    else if ('?' == c || ':' == c) {
       // getopt is unhappy
       cta::exception::Exception e("Unexpected option: ");
       e.getMessage() << argv[::optind];
       throw e;
-    } else {
+    }
+    else {
       // We received a character option.
       ret.options.push_back(FoundOption());
       ret.options.back().option = " ";
       ret.options.back().option[0] = c;
-      if (::optarg)
+      if (::optarg) {
         ret.options.back().parameter = ::optarg;
+      }
     }
   }
   size_t pos = ::optind;
@@ -73,4 +78,5 @@ GetOpThreadSafe::Reply GetOpThreadSafe::getOpt(const Request& request) {
 
 threading::Mutex GetOpThreadSafe::gMutex;
 
-}} // namespace cta::utils
+}  // namespace utils
+}  // namespace cta

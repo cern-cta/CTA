@@ -26,11 +26,18 @@ namespace castor {
 namespace tape {
 namespace tapeFile {
 
-ReadSession::ReadSession(tapeserver::drive::DriveInterface &drive,
-  const tapeserver::daemon::VolumeInfo &volInfo, const bool useLbp)
-  : m_drive(drive), m_vid(volInfo.vid), m_useLbp(useLbp), m_corrupted(false),
-    m_locked(false), m_fseq(1), m_currentFilePart(PartOfFile::Header), m_volInfo(volInfo),
-    m_detectedLbp(false) {
+ReadSession::ReadSession(tapeserver::drive::DriveInterface& drive,
+                         const tapeserver::daemon::VolumeInfo& volInfo,
+                         const bool useLbp) :
+m_drive(drive),
+m_vid(volInfo.vid),
+m_useLbp(useLbp),
+m_corrupted(false),
+m_locked(false),
+m_fseq(1),
+m_currentFilePart(PartOfFile::Header),
+m_volInfo(volInfo),
+m_detectedLbp(false) {
   if (!m_vid.compare("")) {
     throw cta::exception::InvalidArgument();
   }

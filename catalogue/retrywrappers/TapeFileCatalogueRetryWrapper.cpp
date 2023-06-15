@@ -28,28 +28,38 @@ namespace cta {
 namespace catalogue {
 
 TapeFileCatalogueRetryWrapper::TapeFileCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
-  log::Logger &log, const uint32_t maxTriesToConnect)
-  : m_catalogue(catalogue), m_log(log), m_maxTriesToConnect(maxTriesToConnect) {
+                                                             log::Logger& log,
+                                                             const uint32_t maxTriesToConnect) :
+m_catalogue(catalogue),
+m_log(log),
+m_maxTriesToConnect(maxTriesToConnect) {}
+
+void TapeFileCatalogueRetryWrapper::filesWrittenToTape(const std::set<TapeItemWrittenPointer>& event) {
+  return retryOnLostConnection(
+    m_log, [&] { return m_catalogue->TapeFile()->filesWrittenToTape(event); }, m_maxTriesToConnect);
 }
 
-void TapeFileCatalogueRetryWrapper::filesWrittenToTape(const std::set<TapeItemWrittenPointer> &event) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->TapeFile()->filesWrittenToTape(event);},
+void TapeFileCatalogueRetryWrapper::deleteTapeFileCopy(common::dataStructures::ArchiveFile& file,
+                                                       const std::string& reason) {
+  return retryOnLostConnection(
+    m_log, [&] { return m_catalogue->TapeFile()->deleteTapeFileCopy(file, reason); }, m_maxTriesToConnect);
+}
+
+common::dataStructures::RetrieveFileQueueCriteria
+  TapeFileCatalogueRetryWrapper::prepareToRetrieveFile(const std::string& diskInstanceName,
+                                                       const uint64_t archiveFileId,
+                                                       const common::dataStructures::RequesterIdentity& user,
+                                                       const std::optional<std::string>& activity,
+                                                       log::LogContext& lc,
+                                                       const std::optional<std::string>& mountPolicyName) {
+  return retryOnLostConnection(
+    m_log,
+    [&] {
+      return m_catalogue->TapeFile()->prepareToRetrieveFile(diskInstanceName, archiveFileId, user, activity, lc,
+                                                            mountPolicyName);
+    },
     m_maxTriesToConnect);
 }
 
-void TapeFileCatalogueRetryWrapper::deleteTapeFileCopy(common::dataStructures::ArchiveFile &file,
-  const std::string &reason) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->TapeFile()->deleteTapeFileCopy(file, reason);},
-    m_maxTriesToConnect);
-}
-
-common::dataStructures::RetrieveFileQueueCriteria TapeFileCatalogueRetryWrapper::prepareToRetrieveFile(
-  const std::string &diskInstanceName, const uint64_t archiveFileId,
-  const common::dataStructures::RequesterIdentity &user, const std::optional<std::string> & activity,
-  log::LogContext &lc, const std::optional<std::string> &mountPolicyName) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->TapeFile()->prepareToRetrieveFile(diskInstanceName,
-    archiveFileId, user, activity, lc, mountPolicyName);}, m_maxTriesToConnect);
-}
-
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

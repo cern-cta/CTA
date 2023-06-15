@@ -23,9 +23,7 @@ namespace exception {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-UserError::UserError(const std::string &context, const bool embedBacktrace):
-  Exception(context, embedBacktrace) {
-}
+UserError::UserError(const std::string& context, const bool embedBacktrace) : Exception(context, embedBacktrace) {}
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace exception
+}  // namespace cta

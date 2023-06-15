@@ -32,19 +32,18 @@ namespace dataStructures {
  * This request tells CTA to list all storage classes 
  */
 struct ListStorageClassRequest {
-
   ListStorageClassRequest();
 
-  bool operator==(const ListStorageClassRequest &rhs) const;
+  bool operator==(const ListStorageClassRequest& rhs) const;
 
-  bool operator!=(const ListStorageClassRequest &rhs) const;
+  bool operator!=(const ListStorageClassRequest& rhs) const;
 
   RequesterIdentity requester;
 
-}; // struct ListStorageClassRequest
+};  // struct ListStorageClassRequest
 
-std::ostream &operator<<(std::ostream &os, const ListStorageClassRequest &obj);
+std::ostream& operator<<(std::ostream& os, const ListStorageClassRequest& obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

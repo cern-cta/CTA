@@ -32,18 +32,16 @@
 namespace cta {
 namespace catalogue {
 
-OracleCatalogue::OracleCatalogue(
-  log::Logger &log,
-  const std::string &username,
-  const std::string &password,
-  const std::string &database,
-  const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns):
-  RdbmsCatalogue(
-    log,
-    rdbms::Login(rdbms::Login::DBTYPE_ORACLE, username, password, database, "", 0),
-    nbConns,
-    nbArchiveFileListingConns) {
+OracleCatalogue::OracleCatalogue(log::Logger& log,
+                                 const std::string& username,
+                                 const std::string& password,
+                                 const std::string& database,
+                                 const uint64_t nbConns,
+                                 const uint64_t nbArchiveFileListingConns) :
+RdbmsCatalogue(log,
+               rdbms::Login(rdbms::Login::DBTYPE_ORACLE, username, password, database, "", 0),
+               nbConns,
+               nbArchiveFileListingConns) {
   RdbmsCatalogue::m_fileRecycleLog = std::make_unique<OracleFileRecycleLogCatalogue>(m_log, m_connPool, this);
   RdbmsCatalogue::m_storageClass = std::make_unique<OracleStorageClassCatalogue>(m_log, m_connPool, this);
   RdbmsCatalogue::m_vo = std::make_unique<OracleVirtualOrganizationCatalogue>(m_log, m_connPool, this);
@@ -55,31 +53,32 @@ OracleCatalogue::OracleCatalogue(
   RdbmsCatalogue::m_tapeFile = std::make_unique<OracleTapeFileCatalogue>(m_log, m_connPool, this);
 }
 
-std::string OracleCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn,
-  const std::optional<std::vector<std::string>> &diskFileIds) const {
+std::string
+  OracleCatalogue::createAndPopulateTempTableFxid(rdbms::Conn& conn,
+                                                  const std::optional<std::vector<std::string>>& diskFileIds) const {
   const std::string tempTableName = "ORA$PTT_DISK_FXIDS";
 
   try {
-    if(diskFileIds) {
+    if (diskFileIds) {
       conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
-      std::string sql = "CREATE PRIVATE TEMPORARY TABLE " + tempTableName +
-        "(DISK_FILE_ID VARCHAR2(100))";
+      std::string sql = "CREATE PRIVATE TEMPORARY TABLE " + tempTableName + "(DISK_FILE_ID VARCHAR2(100))";
       conn.executeNonQuery(sql);
 
       sql = "INSERT INTO " + tempTableName + " VALUES(:DISK_FILE_ID)";
       auto stmt = conn.createStmt(sql);
-      for(auto &diskFileId : diskFileIds.value()) {
+      for (auto& diskFileId : diskFileIds.value()) {
         stmt.bindString(":DISK_FILE_ID", diskFileId);
         stmt.executeNonQuery();
       }
     }
 
     return tempTableName;
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
 }
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

@@ -20,9 +20,9 @@
 #include "castor/tape/tapeserver/file/Exceptions.hpp"
 #include "common/exception/Exception.hpp"
 
-#include <rpc/xdr.h> // xdrmem_create for decode_legato
-#include <cstring> // memeset
-#include <string> // std::string to_string
+#include <rpc/xdr.h>  // xdrmem_create for decode_legato
+#include <cstring>    // memeset
+#include <string>     // std::string to_string
 
 castor::tape::tapeFile::osm::LABEL::LABEL() {
   // Fill the structre with space & 0
@@ -31,35 +31,36 @@ castor::tape::tapeFile::osm::LABEL::LABEL() {
   memset(m_tcName, 0x20, sizeof(m_tcName));
   memset(m_tcOwner, 0x20, sizeof(m_tcOwner));
   m_ulCreateTime = 0;
-  m_ulExpireTime = 0; 
+  m_ulExpireTime = 0;
   m_ulRecSize = 0;
   m_ulVolId = 0;
 }
+
 /**
  *
  */
 void castor::tape::tapeFile::osm::LABEL::decode() {
   xdr::Record record;
   xdr::VolLabel volLabel, *pVolLabel;
-  XDR xdr;// xdr handle;
-  
+  XDR xdr;  // xdr handle;
+
   xdrmem_create(&xdr, rawLabel(), LIMITS::MAXMRECSIZE, XDR_DECODE);
-  if(!record.decode(&xdr)) {
+  if (!record.decode(&xdr)) {
     throw cta::exception::Exception(std::string("XDR error getting record"));
   }
-  if(record.m_RChunk.m_pChunk == nullptr) {
+  if (record.m_RChunk.m_pChunk == nullptr) {
     throw cta::exception::Exception(std::string("Invalid label format - no record chunk"));
   }
-  
+
   pVolLabel = reinterpret_cast<xdr::VolLabel*>(record.m_RChunk.m_pChunk->m_data.m_pcDataVal);
   xdr_destroy(&xdr);
-  
-  if(pVolLabel == nullptr) {
+
+  if (pVolLabel == nullptr) {
     throw cta::exception::Exception(std::string("Invalid label format - no label chunk"));
   }
   xdrmem_create(&xdr, reinterpret_cast<char*>(pVolLabel), LIMITS::MMAXCHK, XDR_DECODE);
-  volLabel.m_pcVolName = nullptr;    // let XDR fool with this
-  if(!volLabel.decode(&xdr)) {
+  volLabel.m_pcVolName = nullptr;  // let XDR fool with this
+  if (!volLabel.decode(&xdr)) {
     throw cta::exception::Exception(std::string("XDR error getting vollabel"));
   }
 
@@ -67,37 +68,40 @@ void castor::tape::tapeFile::osm::LABEL::decode() {
   // we're done with this now
 
   if (volLabel.m_ulMagic != LIMITS::MVOLMAGIC) {
-     throw cta::exception::Exception(std::string("magic number " + std::to_string(volLabel.m_ulMagic) + " not valid"));
+    throw cta::exception::Exception(std::string("magic number " + std::to_string(volLabel.m_ulMagic) + " not valid"));
   }
 
   if (volLabel.m_pcVolName == nullptr) {
-     throw cta::exception::Exception(std::string("Invalid label format - no volume name"));
+    throw cta::exception::Exception(std::string("Invalid label format - no volume name"));
   }
   if (strlen(volLabel.m_pcVolName) >= LIMITS::VOLNAMELEN) {
-     throw cta::exception::Exception(std::string("label " + std::string(volLabel.m_pcVolName) + " is too long"));
+    throw cta::exception::Exception(std::string("label " + std::string(volLabel.m_pcVolName) + " is too long"));
   }
-  
+
   strcpy(m_tcName, volLabel.m_pcVolName);
   m_ulCreateTime = volLabel.m_ulCreateTime;
   m_ulExpireTime = volLabel.m_ulExpireTime;
   m_ulRecSize = volLabel.m_ulRecSize;
   m_ulVolId = volLabel.m_ulVolId;
-  
+
   memcpy(m_tcOwner, rawLabel() + LIMITS::MAXMRECSIZE, LIMITS::CIDLEN);
   memcpy(m_tcVersion, rawLabel() + LIMITS::MAXMRECSIZE + LIMITS::CIDLEN, LIMITS::LABELVERSIONLEN);
-
 }
 
-void castor::tape::tapeFile::osm::LABEL::encode(uint64_t ulCreateTime, uint64_t ulExpireTime, uint64_t ulRecSize, uint64_t ulVolId,
-                                                const std::string& strVolName, const std::string& strOwner, const std::string& strVersion) {
-
-  if(strVolName.size() > LIMITS::VOLNAMELEN) {
+void castor::tape::tapeFile::osm::LABEL::encode(uint64_t ulCreateTime,
+                                                uint64_t ulExpireTime,
+                                                uint64_t ulRecSize,
+                                                uint64_t ulVolId,
+                                                const std::string& strVolName,
+                                                const std::string& strOwner,
+                                                const std::string& strVersion) {
+  if (strVolName.size() > LIMITS::VOLNAMELEN) {
     throw cta::exception::Exception(std::string("The size of the VolName is greater than LIMITS::VOLNAMELEN"));
   }
-  if(strOwner.size() > LIMITS::CIDLEN) {
+  if (strOwner.size() > LIMITS::CIDLEN) {
     throw cta::exception::Exception(std::string("The size of the Owner is greater than LIMITS::CIDLEN"));
   }
-  if(strVersion.size() > LIMITS::LABELVERSIONLEN) {
+  if (strVersion.size() > LIMITS::LABELVERSIONLEN) {
     throw cta::exception::Exception(std::string("The size of the Version is greater than LIMITS::LABELVERSIONLEN"));
   }
 
@@ -106,20 +110,20 @@ void castor::tape::tapeFile::osm::LABEL::encode(uint64_t ulCreateTime, uint64_t 
   xdr::Record record;
   xdr::VolLabel volLabel;
   char* pcVolLabel = new char[LIMITS::MMAXCHK];
-  XDR xdr;// xdr handler
+  XDR xdr;  // xdr handler
 
   xdrmem_create(&xdr, pcVolLabel, LIMITS::MMAXCHK, XDR_ENCODE);
 
   volLabel.m_ulMagic = LIMITS::MVOLMAGIC;
   volLabel.m_ulCreateTime = ulCreateTime;
   volLabel.m_ulExpireTime = ulExpireTime;
-  volLabel.m_ulRecSize = ulRecSize;// LIMITS::MAXMRECSIZE;
+  volLabel.m_ulRecSize = ulRecSize;  // LIMITS::MAXMRECSIZE;
   volLabel.m_ulVolId = ulVolId;
   // NSR_LENGTH = 64
   volLabel.m_pcVolName = new char[64];
   strcpy(volLabel.m_pcVolName, strVolName.c_str());
 
-  if(!volLabel.decode(&xdr)) {
+  if (!volLabel.decode(&xdr)) {
     throw cta::exception::Exception(std::string("XDR error encoding vollabel"));
   }
 
@@ -131,24 +135,24 @@ void castor::tape::tapeFile::osm::LABEL::encode(uint64_t ulCreateTime, uint64_t 
   record.m_RChunk.m_pChunk->m_ulSsid = 0;
   record.m_RChunk.m_pChunk->mc_ulLow = 0;
   record.m_RChunk.m_pChunk->m_data.m_uiDataLen = uiDataLen;
-  record.m_RChunk.m_pChunk->m_data.m_pcDataVal = pcVolLabel;//new char[LIMITS::MMAXCHK];
+  record.m_RChunk.m_pChunk->m_data.m_pcDataVal = pcVolLabel;  //new char[LIMITS::MMAXCHK];
 
   memset(record.m_tcHandler, 0x20, sizeof(record.m_tcHandler));
   record.m_ulVolid = volLabel.m_ulVolId;
   record.m_ulFn = 0;
   record.m_ulRn = 0;
-  record.m_ulLen = 0; // set this to 0 now, it will be corrected later
+  record.m_ulLen = 0;  // set this to 0 now, it will be corrected later
   record.m_RChunk.m_ulChunkLen = 1;
 
   xdrmem_create(&xdr, rawLabel(), LIMITS::MAXMRECSIZE, XDR_ENCODE);
-  if(!record.decode(&xdr)) {
+  if (!record.decode(&xdr)) {
     throw cta::exception::Exception(std::string("XDR error encoding record"));
   }
 
-  record.m_ulLen  = xdr_getpos(&xdr); // Now re-do this with the correct length
+  record.m_ulLen = xdr_getpos(&xdr);  // Now re-do this with the correct length
 
   xdr_setpos(&xdr, 0);
-  if(!record.decode(&xdr)) {
+  if (!record.decode(&xdr)) {
     throw cta::exception::Exception(std::string("XDR error encoding record after set pos"));
   }
 
@@ -156,5 +160,4 @@ void castor::tape::tapeFile::osm::LABEL::encode(uint64_t ulCreateTime, uint64_t 
 
   strcpy(rawLabel() + LIMITS::MAXMRECSIZE, strOwner.c_str());
   strcpy(rawLabel() + LIMITS::MAXMRECSIZE + LIMITS::CIDLEN, strVersion.c_str());
-
 }

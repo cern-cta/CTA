@@ -20,7 +20,10 @@
 namespace castor {
 namespace tape {
 namespace utils {
-  
-template <class T> void suppresUnusedVariable(const T&){}
 
-}}}
+template<class T>
+void suppresUnusedVariable(const T&) {}
+
+}  // namespace utils
+}  // namespace tape
+}  // namespace castor

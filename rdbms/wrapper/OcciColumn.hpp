@@ -38,14 +38,14 @@ public:
    * @param colName The name of the column.
    * @param nbRows The number of rows in the column.
    */
-  OcciColumn(const std::string &colName, const size_t nbRows);
+  OcciColumn(const std::string& colName, const size_t nbRows);
 
   /**
    * Returns the name of the column.
    *
    * @return The name of the column.
    */
-  const std::string &getColName() const;
+  const std::string& getColName() const;
 
   /**
    * Returns the number of rows in the column.
@@ -66,7 +66,8 @@ public:
    * @param index The index of the field.
    * @param value The value whose length is to be recorded.
    */
-  template<typename T> void setFieldLenToValueLen(const size_t index, const T &value) {
+  template<typename T>
+  void setFieldLenToValueLen(const size_t index, const T& value) {
     // Tag dispatch using std::is_integral
     setFieldLenToValueLen(index, value, std::is_integral<T>());
   }
@@ -76,14 +77,14 @@ public:
    *
    * @return The array of field lengths.
    */
-  ub2 *getFieldLengths();
+  ub2* getFieldLengths();
 
   /**
    * Returns the buffer of column field values.
    *
    * @return The buffer of column field values.
    */
-  char *getBuffer();
+  char* getBuffer();
 
   /**
    * Returns the maximum of the field lengths.
@@ -100,7 +101,8 @@ public:
    * @param index The index of the field.
    * @param value The value of the field.
    */
-  template<typename T> void setFieldValue(const size_t index, const T &value) {
+  template<typename T>
+  void setFieldValue(const size_t index, const T& value) {
     setFieldValue(index, value, std::is_integral<T>());
   }
 
@@ -112,7 +114,7 @@ public:
    * @param index The index of the field.
    * @param value The value of the field.
    */
-  void setFieldValueToRaw(size_t index, const std::string &blob);
+  void setFieldValueToRaw(size_t index, const std::string& blob);
 
   /**
    * Sets the length of the field at the specified index.
@@ -123,7 +125,6 @@ public:
   void setFieldLen(const size_t index, const ub2 length);
 
 private:
-
   /**
    * Sets the length of the field at the specified index to the length of the
    * specified value.
@@ -137,7 +138,8 @@ private:
    * @param index The index of the field.
    * @param value The value whose length is to be recorded.
    */
-  template<typename T> void setFieldLenToValueLen(const size_t index, const T &value, std::false_type) {
+  template<typename T>
+  void setFieldLenToValueLen(const size_t index, const T& value, std::false_type) {
     setFieldLen(index, value.length() + 1);
   }
 
@@ -154,7 +156,8 @@ private:
    * @param index The index of the field.
    * @param value The value whose length is to be recorded.
    */
-  template<typename T> void setFieldLenToValueLen(const size_t index, const T &value, std::true_type) {
+  template<typename T>
+  void setFieldLenToValueLen(const size_t index, const T& value, std::true_type) {
     setFieldLen(index, std::to_string(value).length() + 1);
   }
 
@@ -167,7 +170,8 @@ private:
    * @param index The index of the field.
    * @param value The value of the field.
    */
-  template<typename T> void setFieldValue(const size_t index, const T &value, std::true_type) {
+  template<typename T>
+  void setFieldValue(const size_t index, const T& value, std::true_type) {
     copyStrIntoField(index, std::to_string(value));
   }
 
@@ -180,7 +184,8 @@ private:
    * @param index The index of the field.
    * @param value The value of the field.
    */
-  template<typename T> void setFieldValue(const size_t index, const T &value, std::false_type) {
+  template<typename T>
+  void setFieldValue(const size_t index, const T& value, std::false_type) {
     copyStrIntoField(index, value);
   }
 
@@ -190,7 +195,7 @@ private:
    * @param index The index of the field.
    * @param str The string value.
    */
-  void copyStrIntoField(const size_t index, const std::string &str);
+  void copyStrIntoField(const size_t index, const std::string& str);
 
   /**
    * The name of the column.
@@ -217,8 +222,8 @@ private:
    */
   ub2 m_maxFieldLength;
 
-}; // OcciColumn
+};  // OcciColumn
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+}  // namespace wrapper
+}  // namespace rdbms
+}  // namespace cta

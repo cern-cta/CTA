@@ -38,31 +38,29 @@
 #include "catalogue/dummy/DummyTapePoolCatalogue.hpp"
 #include "catalogue/dummy/DummyVirtualOrganizationCatalogue.hpp"
 
-
 namespace cta {
 namespace catalogue {
 
-DummyCatalogue::DummyCatalogue()
-  : m_schema(std::make_unique<DummySchemaCatalogue>()),
-    m_adminUser(std::make_unique<DummyAdminUserCatalogue>()),
-    m_diskSystem(std::make_unique<DummyDiskSystemCatalogue>()),
-    m_diskInstance(std::make_unique<DummyDiskInstanceCatalogue>()),
-    m_diskInstanceSpace(std::make_unique<DummyDiskInstanceSpaceCatalogue>()),
-    m_vo(std::make_unique<DummyVirtualOrganizationCatalogue>()),
-    m_archiveRoute(std::make_unique<DummyArchiveRouteCatalogue>()),
-    m_storageClass(std::make_unique<DummyStorageClassCatalogue>()),
-    m_tapePool(std::make_unique<DummyTapePoolCatalogue>()),
-    m_tape(std::make_unique<DummyTapeCatalogue>()),
-    m_mountPolicy(std::make_unique<DummyMountPolicyCatalogue>()),
-    m_requesterActivityMountRule(std::make_unique<DummyRequesterActivityMountRuleCatalogue>()),
-    m_requesterMountRule(std::make_unique<DummyRequesterMountRuleCatalogue>()),
-    m_requesterGroupMountRule(std::make_unique<DummyRequesterGroupMountRuleCatalogue>()),
-    m_tapeFile(std::make_unique<DummyTapeFileCatalogue>()),
-    m_fileRecycleLog(std::make_unique<DummyFileRecycleLogCatalogue>()),
-    m_driveConfig(std::make_unique<DummyDriveConfigCatalogue>()),
-    m_archiveFile(std::make_unique<DummyArchiveFileCatalogue>()),
-    m_driveState(std::make_unique<DummyDriveStateCatalogue>()) {
-}
+DummyCatalogue::DummyCatalogue() :
+m_schema(std::make_unique<DummySchemaCatalogue>()),
+m_adminUser(std::make_unique<DummyAdminUserCatalogue>()),
+m_diskSystem(std::make_unique<DummyDiskSystemCatalogue>()),
+m_diskInstance(std::make_unique<DummyDiskInstanceCatalogue>()),
+m_diskInstanceSpace(std::make_unique<DummyDiskInstanceSpaceCatalogue>()),
+m_vo(std::make_unique<DummyVirtualOrganizationCatalogue>()),
+m_archiveRoute(std::make_unique<DummyArchiveRouteCatalogue>()),
+m_storageClass(std::make_unique<DummyStorageClassCatalogue>()),
+m_tapePool(std::make_unique<DummyTapePoolCatalogue>()),
+m_tape(std::make_unique<DummyTapeCatalogue>()),
+m_mountPolicy(std::make_unique<DummyMountPolicyCatalogue>()),
+m_requesterActivityMountRule(std::make_unique<DummyRequesterActivityMountRuleCatalogue>()),
+m_requesterMountRule(std::make_unique<DummyRequesterMountRuleCatalogue>()),
+m_requesterGroupMountRule(std::make_unique<DummyRequesterGroupMountRuleCatalogue>()),
+m_tapeFile(std::make_unique<DummyTapeFileCatalogue>()),
+m_fileRecycleLog(std::make_unique<DummyFileRecycleLogCatalogue>()),
+m_driveConfig(std::make_unique<DummyDriveConfigCatalogue>()),
+m_archiveFile(std::make_unique<DummyArchiveFileCatalogue>()),
+m_driveState(std::make_unique<DummyDriveStateCatalogue>()) {}
 
 const std::unique_ptr<SchemaCatalogue>& DummyCatalogue::Schema() {
   return m_schema;

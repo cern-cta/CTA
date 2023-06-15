@@ -19,21 +19,20 @@
 
 #include "common/exception/Exception.hpp"
 
-namespace cta { namespace exception {
+namespace cta {
+namespace exception {
 
-    /**
+/**
      * Mismatch.
      */
-    class Mismatch : public cta::exception::Exception {
-      
-    public:
-      
-      /**
+class Mismatch : public cta::exception::Exception {
+public:
+  /**
        * Constructor
        */
-      Mismatch();
+  Mismatch();
 
-    }; // class Mismatch
+};  // class Mismatch
 
-} } // namespace cta exception
-
+}  // namespace exception
+}  // namespace cta

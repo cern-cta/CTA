@@ -25,22 +25,22 @@ namespace unitTests {
 
 class cta_catalogue_DropSchemaCmdLineArgsTest : public ::testing::Test {
 protected:
-
   struct Argcv {
     int argc;
-    char **argv;
-    Argcv(): argc(0), argv(nullptr) {
-    }
+    char** argv;
+
+    Argcv() : argc(0), argv(nullptr) {}
   };
+
   typedef std::list<Argcv*> ArgcvList;
   ArgcvList m_argsList;
 
   /**
    * Creates a duplicate string using the new operator.
    */
-  char *dupString(const std::string &str) {
+  char* dupString(const std::string& str) {
     const int len = str.size();
-    char *copy = new char[len + 1];
+    char* copy = new char[len + 1];
     std::copy(str.begin(), str.end(), copy);
     copy[len] = '\0';
     return copy;
@@ -55,9 +55,8 @@ protected:
     // Allow getopt_long to be called again
     optind = 0;
 
-    for(ArgcvList::const_iterator itor = m_argsList.begin();
-      itor != m_argsList.end(); itor++) {
-      for(int i=0; i < (*itor)->argc; i++) {
+    for (ArgcvList::const_iterator itor = m_argsList.begin(); itor != m_argsList.end(); itor++) {
+      for (int i = 0; i < (*itor)->argc; i++) {
         delete[] (*itor)->argv[i];
       }
       delete[] (*itor)->argv;
@@ -69,10 +68,10 @@ protected:
 TEST_F(cta_catalogue_DropSchemaCmdLineArgsTest, help_short) {
   using namespace cta::catalogue;
 
-  Argcv *args = new Argcv();
+  Argcv* args = new Argcv();
   m_argsList.push_back(args);
   args->argc = 2;
-  args->argv = new char *[3];
+  args->argv = new char*[3];
   args->argv[0] = dupString("cta-catalogue-schema-drop");
   args->argv[1] = dupString("-h");
   args->argv[2] = nullptr;
@@ -86,10 +85,10 @@ TEST_F(cta_catalogue_DropSchemaCmdLineArgsTest, help_short) {
 TEST_F(cta_catalogue_DropSchemaCmdLineArgsTest, help_long) {
   using namespace cta::catalogue;
 
-  Argcv *args = new Argcv();
+  Argcv* args = new Argcv();
   m_argsList.push_back(args);
   args->argc = 2;
-  args->argv = new char *[3];
+  args->argv = new char*[3];
   args->argv[0] = dupString("cta-catalogue-schema-drop");
   args->argv[1] = dupString("--help");
   args->argv[2] = nullptr;
@@ -103,10 +102,10 @@ TEST_F(cta_catalogue_DropSchemaCmdLineArgsTest, help_long) {
 TEST_F(cta_catalogue_DropSchemaCmdLineArgsTest, dbConfigPath) {
   using namespace cta::catalogue;
 
-  Argcv *args = new Argcv();
+  Argcv* args = new Argcv();
   m_argsList.push_back(args);
   args->argc = 2;
-  args->argv = new char *[3];
+  args->argv = new char*[3];
   args->argv[0] = dupString("cta-catalogue-schema-drop");
   args->argv[1] = dupString("dbConfigPath");
   args->argv[2] = nullptr;
@@ -117,4 +116,4 @@ TEST_F(cta_catalogue_DropSchemaCmdLineArgsTest, dbConfigPath) {
   ASSERT_EQ(std::string("dbConfigPath"), cmdLine.dbConfigPath);
 }
 
-} // namespace unitTests
+}  // namespace unitTests

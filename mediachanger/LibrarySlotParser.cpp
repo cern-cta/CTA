@@ -27,8 +27,7 @@
 //------------------------------------------------------------------------------
 // parse
 //------------------------------------------------------------------------------
-cta::mediachanger::LibrarySlot *cta::mediachanger::LibrarySlotParser::
-  parse(const std::string &str) {
+cta::mediachanger::LibrarySlot* cta::mediachanger::LibrarySlotParser::parse(const std::string& str) {
   try {
     // Parse the string representation in two steps, first parsing the beginning
     // to get the library type and then the rst to get the details.  This two
@@ -36,10 +35,12 @@ cta::mediachanger::LibrarySlot *cta::mediachanger::LibrarySlotParser::
     // necessary
     const TapeLibraryType libraryType = getLibrarySlotType(str);
     return parse(libraryType, str);
-  } catch(cta::exception::Exception &ne) {
+  }
+  catch (cta::exception::Exception& ne) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to parse library slot from string"
-      " representation: " << ne.getMessage().str();
+                       " representation: "
+                    << ne.getMessage().str();
     throw ex;
   }
 }
@@ -47,10 +48,13 @@ cta::mediachanger::LibrarySlot *cta::mediachanger::LibrarySlotParser::
 //------------------------------------------------------------------------------
 // getLibrarySlotType
 //------------------------------------------------------------------------------
-cta::mediachanger::TapeLibraryType cta::mediachanger::LibrarySlotParser::
-  getLibrarySlotType(const std::string &str) {
-  if(isDummy(str)) return TAPE_LIBRARY_TYPE_DUMMY;
-  if(isScsi(str))  return TAPE_LIBRARY_TYPE_SCSI;
+cta::mediachanger::TapeLibraryType cta::mediachanger::LibrarySlotParser::getLibrarySlotType(const std::string& str) {
+  if (isDummy(str)) {
+    return TAPE_LIBRARY_TYPE_DUMMY;
+  }
+  if (isScsi(str)) {
+    return TAPE_LIBRARY_TYPE_SCSI;
+  }
 
   cta::exception::Exception ex;
   ex.getMessage() << "Cannot determine library slot type: str=" << str;
@@ -60,34 +64,31 @@ cta::mediachanger::TapeLibraryType cta::mediachanger::LibrarySlotParser::
 //------------------------------------------------------------------------------
 // isDummy
 //------------------------------------------------------------------------------
-bool cta::mediachanger::LibrarySlotParser::isDummy(const std::string &str)
-{
+bool cta::mediachanger::LibrarySlotParser::isDummy(const std::string& str) {
   return 0 == str.find("dummy");
 }
 
 //------------------------------------------------------------------------------
 // isScsi
 //------------------------------------------------------------------------------
-bool cta::mediachanger::LibrarySlotParser::isScsi(const std::string &str)
-  {
+bool cta::mediachanger::LibrarySlotParser::isScsi(const std::string& str) {
   return 0 == str.find("smc");
 }
 
 //------------------------------------------------------------------------------
 // parse
 //------------------------------------------------------------------------------
-cta::mediachanger::LibrarySlot *cta::mediachanger::LibrarySlotParser::
-  parse(const TapeLibraryType libraryType, const std::string &str) {
-
-  switch(libraryType) {
-  case TAPE_LIBRARY_TYPE_DUMMY:  return parseDummyLibrarySlot(str);
-  case TAPE_LIBRARY_TYPE_SCSI:   return parseScsiLibrarySlot(str);
-  default:
-    {
+cta::mediachanger::LibrarySlot* cta::mediachanger::LibrarySlotParser::parse(const TapeLibraryType libraryType,
+                                                                            const std::string& str) {
+  switch (libraryType) {
+    case TAPE_LIBRARY_TYPE_DUMMY:
+      return parseDummyLibrarySlot(str);
+    case TAPE_LIBRARY_TYPE_SCSI:
+      return parseScsiLibrarySlot(str);
+    default: {
       // Should never get here
       cta::exception::Exception ex;
-      ex.getMessage() << "Unknown tape library type: libraryType=" <<
-        libraryType;
+      ex.getMessage() << "Unknown tape library type: libraryType=" << libraryType;
       throw ex;
     }
   }
@@ -96,37 +97,37 @@ cta::mediachanger::LibrarySlot *cta::mediachanger::LibrarySlotParser::
 //------------------------------------------------------------------------------
 // parseDummyLibrarySlot
 //------------------------------------------------------------------------------
-cta::mediachanger::DummyLibrarySlot *cta::mediachanger::
-  LibrarySlotParser::parseDummyLibrarySlot(const std::string &str) {
+cta::mediachanger::DummyLibrarySlot*
+  cta::mediachanger::LibrarySlotParser::parseDummyLibrarySlot(const std::string& str) {
   return new DummyLibrarySlot(str);
 }
-
 
 //------------------------------------------------------------------------------
 // parseScsiLibrarySlot
 //------------------------------------------------------------------------------
-cta::mediachanger::ScsiLibrarySlot *cta::mediachanger::
-  LibrarySlotParser::parseScsiLibrarySlot(const std::string &str) {
-  if(str.find("smc")) {
+cta::mediachanger::ScsiLibrarySlot* cta::mediachanger::LibrarySlotParser::parseScsiLibrarySlot(const std::string& str) {
+  if (str.find("smc")) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to construct ScsiLibrarySlot"
-      ": Library slot must start with smc: slot=" << str;
+                       ": Library slot must start with smc: slot="
+                    << str;
     throw ex;
   }
 
-  const size_t drvOrdStrLen = str.length() - 3; // length of "smc" is 3
+  const size_t drvOrdStrLen = str.length() - 3;  // length of "smc" is 3
   const std::string drvOrdStr = str.substr(3, drvOrdStrLen);
-  if(drvOrdStr.empty()) {
+  if (drvOrdStr.empty()) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to construct ScsiLibrarySlot"
-      ": Missing drive ordinal: slot=" << str;
+                       ": Missing drive ordinal: slot="
+                    << str;
     throw ex;
   }
 
-  if(!utils::isValidUInt(drvOrdStr)) {
+  if (!utils::isValidUInt(drvOrdStr)) {
     cta::exception::Exception ex;
-    ex.getMessage() << "Failed to construct ScsiLibrarySlot: Drive ordinal " <<
-      drvOrdStr << " is not a valid unsigned integer: slot=" << str;
+    ex.getMessage() << "Failed to construct ScsiLibrarySlot: Drive ordinal " << drvOrdStr
+                    << " is not a valid unsigned integer: slot=" << str;
     throw ex;
   }
 

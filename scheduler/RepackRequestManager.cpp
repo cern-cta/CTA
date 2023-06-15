@@ -35,41 +35,44 @@ void RepackRequestManager::runOnePass(log::LogContext& lc) {
   {
     //Retrieve the first repack request from the RepackQueueToExpand queue
     std::unique_ptr<cta::RepackRequest> repackRequest = m_scheduler.getNextRepackRequestToExpand();
-    if(repackRequest != nullptr){
+    if (repackRequest != nullptr) {
       //We have a RepackRequest that has the status ToExpand, expand it
-      try{
-        try{
-          m_scheduler.expandRepackRequest(repackRequest,timingList,t,lc);
-        } catch (const ExpandRepackRequestException& ex){
+      try {
+        try {
+          m_scheduler.expandRepackRequest(repackRequest, timingList, t, lc);
+        }
+        catch (const ExpandRepackRequestException& ex) {
           log::ScopedParamContainer spc(lc);
-          spc.add("vid",repackRequest->getRepackInfo().vid);
-          lc.log(log::ERR,ex.getMessageValue());
+          spc.add("vid", repackRequest->getRepackInfo().vid);
+          lc.log(log::ERR, ex.getMessageValue());
           repackRequest->fail();
-        } catch (const cta::exception::Exception &e){
+        }
+        catch (const cta::exception::Exception& e) {
           log::ScopedParamContainer spc(lc);
-          spc.add("vid",repackRequest->getRepackInfo().vid);
-          lc.log(log::ERR,e.getMessageValue());
+          spc.add("vid", repackRequest->getRepackInfo().vid);
+          lc.log(log::ERR, e.getMessageValue());
           repackRequest->fail();
           throw(e);
         }
-      } catch (const cta::exception::NoSuchObject &ex){
+      }
+      catch (const cta::exception::NoSuchObject& ex) {
         //In case the repack request is deleted during expansion, avoid a segmentation fault of the tapeserver
-        lc.log(log::WARNING,"In RepackRequestManager::runOnePass(), RepackRequest object does not exist in the objectstore");
+        lc.log(log::WARNING,
+               "In RepackRequestManager::runOnePass(), RepackRequest object does not exist in the objectstore");
       }
     }
   }
 
   {
-    RetrieveSuccessesRepackReportThread rsrrt(m_scheduler,lc);
+    RetrieveSuccessesRepackReportThread rsrrt(m_scheduler, lc);
     rsrrt.run();
-    ArchiveSuccessesRepackReportThread asrrt(m_scheduler,lc);
+    ArchiveSuccessesRepackReportThread asrrt(m_scheduler, lc);
     asrrt.run();
-    RetrieveFailedRepackReportThread rfrrt(m_scheduler,lc);
+    RetrieveFailedRepackReportThread rfrrt(m_scheduler, lc);
     rfrrt.run();
-    ArchiveFailedRepackReportThread afrrt(m_scheduler,lc);
+    ArchiveFailedRepackReportThread afrrt(m_scheduler, lc);
     afrrt.run();
   }
-
 }
 
-} // namespace cta
+}  // namespace cta

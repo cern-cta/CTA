@@ -19,10 +19,11 @@
 #include "LogContext.hpp"
 #include "common/Timer.hpp"
 
-namespace cta { namespace log {
+namespace cta {
+namespace log {
 
 void TimingList::addToLog(ScopedParamContainer& spc) {
-  for (auto & t: *this) {
+  for (auto& t : *this) {
     std::string name;
     double value;
     std::tie(name, value) = t;
@@ -31,17 +32,19 @@ void TimingList::addToLog(ScopedParamContainer& spc) {
 }
 
 double& TimingList::at(const std::string& name) {
-  for (auto &e: *this) {
-    if (std::get<0>(e) == name) return std::get<1>(e);
+  for (auto& e : *this) {
+    if (std::get<0>(e) == name) {
+      return std::get<1>(e);
+    }
   }
   throw std::out_of_range("In TimingList::at(): no such element.");
 }
 
-
 void TimingList::insertOrIncrement(const std::string& name, double value) {
   try {
-    at(name)+=value;
-  } catch (std::out_of_range&) {
+    at(name) += value;
+  }
+  catch (std::out_of_range&) {
     push_back(std::make_tuple(name, value));
   }
 }
@@ -54,26 +57,26 @@ void TimingList::insertAndReset(const std::string& name, utils::Timer& t) {
   push_back(std::make_tuple(name, t.secs(utils::Timer::resetCounter)));
 }
 
-
 TimingList& TimingList::operator+=(const TimingList& other) {
-  for (auto & ot: other) {
+  for (auto& ot : other) {
     std::string oName;
     double oVal;
     std::tie(oName, oVal) = ot;
-    for (auto & t: *this) {
+    for (auto& t : *this) {
       std::string name;
       double val;
       std::tie(name, val) = t;
       if (name == oName) {
-        std::get<1>(t) = val+oVal;
+        std::get<1>(t) = val + oVal;
         goto done;
       }
     }
     // We did not add this one to an existing entry: just insert a new one.
     push_back(ot);
-    done:;
+done:;
   }
   return *this;
 }
 
-}} // namespace cta::log
+}  // namespace log
+}  // namespace cta

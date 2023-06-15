@@ -14,70 +14,57 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
- 
+
 #include "ClientTapeLsRequestHandler.hpp"
 #include "common/log/LogContext.hpp"
 
-
 cta::frontend::grpc::client::TapeLsRequestHandler::TapeLsRequestHandler(cta::log::Logger& log,
-                                                                cta::frontend::rpc::CtaRpcStream::Stub& stub,
-                                                                ::grpc::CompletionQueue& completionQueue,
-                                                                cta::admin::TextFormatter& textFormatter,
-                                                                cta::frontend::rpc::AdminRequest& request
-                                                              ) :
-                                                                m_log(log),
-                                                                m_stub(stub),
-                                                                m_completionQueue(completionQueue),
-                                                                m_textFormatter(textFormatter),
-                                                                m_request(request),
-                                                                m_tag(this),
-                                                                m_streamState(StreamState::NEW)
-                                                                {
+                                                                        cta::frontend::rpc::CtaRpcStream::Stub& stub,
+                                                                        ::grpc::CompletionQueue& completionQueue,
+                                                                        cta::admin::TextFormatter& textFormatter,
+                                                                        cta::frontend::rpc::AdminRequest& request) :
+m_log(log),
+m_stub(stub),
+m_completionQueue(completionQueue),
+m_textFormatter(textFormatter),
+m_request(request),
+m_tag(this),
+m_streamState(StreamState::NEW) {}
 
-}
-
-cta::frontend::grpc::client::TapeLsRequestHandler::~TapeLsRequestHandler() {
-
-}
+cta::frontend::grpc::client::TapeLsRequestHandler::~TapeLsRequestHandler() {}
 
 bool cta::frontend::grpc::client::TapeLsRequestHandler::next(const bool bOk) {
   bool bNext = false;
   log::LogContext lc(m_log);
   std::string strErrorMsg;
-  
+
   // Check the state and report an error
-  if(!bOk) {
+  if (!bOk) {
     switch (m_streamState) {
       case StreamState::REQUEST:
-      case StreamState::HEADER:
-        {
-          log::ScopedParamContainer params(lc);
-          params.add("tag", m_tag);
-          lc.log(cta::log::ERR, "In grpc::client::TapeLsRequestHandler::next(): Server has been shut down before receiving a matching request.");
-        }
-        break;
-      case StreamState::READ:
-        {
-          log::ScopedParamContainer params(lc);
-          params.add("tag", m_tag);
-          lc.log(cta::log::INFO, "In grpc::client::TapeLsRequestHandler::next(): End of stream.");
-        }
-        break;
-      case StreamState::FINISH:
-        {
-          log::ScopedParamContainer params(lc);
-          params.add("tag", m_tag);
-          lc.log(cta::log::INFO, "In grpc::client::TapeLsRequestHandler::next(): Request processing finished.");
-        }
-        break;
-      default:
-        {
-          log::ScopedParamContainer params(lc);
-          params.add("tag", m_tag);
-          lc.log(cta::log::INFO, "In grpc::client::TapeLsRequestHandler::next(): Request processing aborted, call is cancelled or connection is dropped.");
+      case StreamState::HEADER: {
+        log::ScopedParamContainer params(lc);
+        params.add("tag", m_tag);
+        lc.log(cta::log::ERR, "In grpc::client::TapeLsRequestHandler::next(): Server has been shut down before "
+                              "receiving a matching request.");
+      } break;
+      case StreamState::READ: {
+        log::ScopedParamContainer params(lc);
+        params.add("tag", m_tag);
+        lc.log(cta::log::INFO, "In grpc::client::TapeLsRequestHandler::next(): End of stream.");
+      } break;
+      case StreamState::FINISH: {
+        log::ScopedParamContainer params(lc);
+        params.add("tag", m_tag);
+        lc.log(cta::log::INFO, "In grpc::client::TapeLsRequestHandler::next(): Request processing finished.");
+      } break;
+      default: {
+        log::ScopedParamContainer params(lc);
+        params.add("tag", m_tag);
+        lc.log(cta::log::INFO, "In grpc::client::TapeLsRequestHandler::next(): Request processing aborted, call is "
+                               "cancelled or connection is dropped.");
 
-        }
-        break;
+      } break;
     }
     m_streamState = StreamState::FINISH;
     m_upReader->Finish(&m_grpcStatus, m_tag);
@@ -86,7 +73,7 @@ bool cta::frontend::grpc::client::TapeLsRequestHandler::next(const bool bOk) {
   }
   // else everything is OK
   bNext = true;
-  
+
   switch (m_streamState) {
     case StreamState::NEW:
       // CMD: prepare TapeLS stream
@@ -101,9 +88,8 @@ bool cta::frontend::grpc::client::TapeLsRequestHandler::next(const bool bOk) {
     case StreamState::HEADER:
       if (m_response.has_header()) {
         // Handle responses
-        switch(m_response.header().type())
-        {
-          case  cta::xrd::Response::RSP_SUCCESS:
+        switch (m_response.header().type()) {
+          case cta::xrd::Response::RSP_SUCCESS:
             m_textFormatter.printTapeLsHeader();
             m_streamState = StreamState::READ;
             m_response.Clear();
@@ -117,7 +103,7 @@ bool cta::frontend::grpc::client::TapeLsRequestHandler::next(const bool bOk) {
           case cta::xrd::Response::RSP_ERR_CTA:
           default:
             strErrorMsg = m_response.header().message_txt();
-            if(strErrorMsg.empty()) {
+            if (strErrorMsg.empty()) {
               strErrorMsg = "Invalid response type";
             }
             {
@@ -130,20 +116,23 @@ bool cta::frontend::grpc::client::TapeLsRequestHandler::next(const bool bOk) {
             m_streamState = StreamState::FINISH;
             m_upReader->Finish(&m_grpcStatus, m_tag);
         }
-      } else {
+      }
+      else {
         log::ScopedParamContainer params(lc);
         params.add("tag", m_tag);
-        lc.log(cta::log::ERR, "In grpc::client::TapeLsRequestHandler::next(): Request processing failed, header expected.");
+        lc.log(cta::log::ERR,
+               "In grpc::client::TapeLsRequestHandler::next(): Request processing failed, header expected.");
         m_streamState = StreamState::FINISH;
         m_upReader->Finish(&m_grpcStatus, m_tag);
       }
       break;
     case StreamState::READ:
       if (m_response.has_data()) {
-        if(m_response.data().data_case() != cta::xrd::Data::kTalsItem) {
+        if (m_response.data().data_case() != cta::xrd::Data::kTalsItem) {
           log::ScopedParamContainer params(lc);
           params.add("tag", m_tag);
-          lc.log(cta::log::ERR, "In grpc::client::TapeLsRequestHandler::next(): Request processing failed, TapeLsItem expected.");
+          lc.log(cta::log::ERR,
+                 "In grpc::client::TapeLsRequestHandler::next(): Request processing failed, TapeLsItem expected.");
           m_streamState = StreamState::FINISH;
           m_upReader->Finish(&m_grpcStatus, m_tag);
           break;
@@ -153,45 +142,40 @@ bool cta::frontend::grpc::client::TapeLsRequestHandler::next(const bool bOk) {
         m_streamState = StreamState::READ;
         m_response.Clear();
         m_upReader->Read(&m_response, m_tag);
-      } else {
+      }
+      else {
         log::ScopedParamContainer params(lc);
         params.add("tag", m_tag);
-        lc.log(cta::log::ERR, "In grpc::client::TapeLsRequestHandler::next(): Request processing failed, data chunk expected.");
+        lc.log(cta::log::ERR,
+               "In grpc::client::TapeLsRequestHandler::next(): Request processing failed, data chunk expected.");
         m_streamState = StreamState::FINISH;
         m_upReader->Finish(&m_grpcStatus, m_tag);
       }
       break;
     case StreamState::FINISH:
       bNext = false;
-      switch(m_grpcStatus.error_code()) {
-        case ::grpc::OK:
-            {
-              log::ScopedParamContainer params(lc);
-              params.add("tag", m_tag);
-              lc.log(cta::log::INFO, "In grpc::client::TapeLsRequestHandler::next(): Request processing finished.");
-            }
-            break;
-        case ::grpc::CANCELLED:
-            {
-              log::ScopedParamContainer params(lc);
-              params.add("tag", m_tag);
-              lc.log(cta::log::ERR, "In grpc::client::TapeLsRequestHandler::next(): Request processing canceled.");
-            }
-            break;
-        default:
-            {
-              log::ScopedParamContainer params(lc);
-              params.add("tag", m_tag);
-              params.add("message", m_grpcStatus.error_message());
-              lc.log(cta::log::ERR, "In grpc::client::TapeLsRequestHandler::next(): gRPC Error");
-            }
-            break;
+      switch (m_grpcStatus.error_code()) {
+        case ::grpc::OK: {
+          log::ScopedParamContainer params(lc);
+          params.add("tag", m_tag);
+          lc.log(cta::log::INFO, "In grpc::client::TapeLsRequestHandler::next(): Request processing finished.");
+        } break;
+        case ::grpc::CANCELLED: {
+          log::ScopedParamContainer params(lc);
+          params.add("tag", m_tag);
+          lc.log(cta::log::ERR, "In grpc::client::TapeLsRequestHandler::next(): Request processing canceled.");
+        } break;
+        default: {
+          log::ScopedParamContainer params(lc);
+          params.add("tag", m_tag);
+          params.add("message", m_grpcStatus.error_message());
+          lc.log(cta::log::ERR, "In grpc::client::TapeLsRequestHandler::next(): gRPC Error");
+        } break;
       }
     default:
       // no default
       break;
   }
-  
+
   return bNext;
 }
-

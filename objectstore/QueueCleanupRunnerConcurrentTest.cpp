@@ -66,9 +66,9 @@ struct ConcurrentTapeQueueSetup {
  */
 struct ConcurrentTapeQueueTransition {
   std::string vid;
-  Tape::State initialState; // Initial tape state
-  Tape::State desiredState; // New desired state (`modifyTapeState`)
-  Tape::State expectedState; // Expected state at the end of test
+  Tape::State initialState;   // Initial tape state
+  Tape::State desiredState;   // New desired state (`modifyTapeState`)
+  Tape::State expectedState;  // Expected state at the end of test
   ConcurrentTapeQueueSetup initialSetup;
   ConcurrentTapeQueueSetup finalSetup;
 };
@@ -87,66 +87,55 @@ struct RetrieveRequestSetup {
  * This structure is used to parameterize OStore database tests.
  */
 struct QueueCleanupRunnerConcurrentTestParams {
-  cta::SchedulerDatabaseFactory &dbFactory;
-  std::list<RetrieveRequestSetup> &retrieveRequestSetupList;
-  std::list<ConcurrentTapeQueueTransition> &tapeQueueTransitionList;
+  cta::SchedulerDatabaseFactory& dbFactory;
+  std::list<RetrieveRequestSetup>& retrieveRequestSetupList;
+  std::list<ConcurrentTapeQueueTransition>& tapeQueueTransitionList;
   double cleanupTimeout;
 
-  QueueCleanupRunnerConcurrentTestParams(
-          cta::SchedulerDatabaseFactory &dbFactory,
-          std::list<RetrieveRequestSetup> &retrieveRequestSetupList,
-          std::list<ConcurrentTapeQueueTransition> &tapeQueueTransitionList,
-          double cleanupTimeout) :
-          dbFactory(dbFactory),
-          retrieveRequestSetupList(retrieveRequestSetupList),
-          tapeQueueTransitionList(tapeQueueTransitionList),
-          cleanupTimeout(cleanupTimeout) {
-  }
+  QueueCleanupRunnerConcurrentTestParams(cta::SchedulerDatabaseFactory& dbFactory,
+                                         std::list<RetrieveRequestSetup>& retrieveRequestSetupList,
+                                         std::list<ConcurrentTapeQueueTransition>& tapeQueueTransitionList,
+                                         double cleanupTimeout) :
+  dbFactory(dbFactory),
+  retrieveRequestSetupList(retrieveRequestSetupList),
+  tapeQueueTransitionList(tapeQueueTransitionList),
+  cleanupTimeout(cleanupTimeout) {}
 };
 
 /**
  * The OStore database test is a parameterized test.  It takes an
  * OStore database factory as a parameter.
  */
-class QueueCleanupRunnerConcurrentTest: public
-                              ::testing::TestWithParam<QueueCleanupRunnerConcurrentTestParams> {
+class QueueCleanupRunnerConcurrentTest : public ::testing::TestWithParam<QueueCleanupRunnerConcurrentTestParams> {
 public:
+  QueueCleanupRunnerConcurrentTest() noexcept {}
 
-  QueueCleanupRunnerConcurrentTest() noexcept {
-  }
-
-  class FailedToGetDatabase: public std::exception {
+  class FailedToGetDatabase : public std::exception {
   public:
-    const char *what() const noexcept override {
-      return "Failed to get scheduler database";
-    }
+    const char* what() const noexcept override { return "Failed to get scheduler database"; }
   };
 
-  class FailedToGetCatalogue: public std::exception {
+  class FailedToGetCatalogue : public std::exception {
   public:
-    const char *what() const noexcept override {
-      return "Failed to get catalogue";
-    }
+    const char* what() const noexcept override { return "Failed to get catalogue"; }
   };
 
-  class FailedToGetScheduler: public std::exception {
+  class FailedToGetScheduler : public std::exception {
   public:
-    const char *what() const noexcept override {
-      return "Failed to get scheduler";
-    }
+    const char* what() const noexcept override { return "Failed to get scheduler"; }
   };
 
   virtual void SetUp() {
     // We do a deep reference to the member as the C++ compiler requires the function to be
     // already defined if called implicitly.
-    const auto &factory = GetParam().dbFactory;
+    const auto& factory = GetParam().dbFactory;
     m_catalogue = std::make_unique<cta::catalogue::DummyCatalogue>();
     // Get the OStore DB from the factory.
     auto osDb = factory.create(m_catalogue);
     // Make sure the type of the SchedulerDatabase is correct (it should be an OStoreDBWrapperInterface).
-    dynamic_cast<cta::objectstore::OStoreDBWrapperInterface *> (osDb.get());
+    dynamic_cast<cta::objectstore::OStoreDBWrapperInterface*>(osDb.get());
     // We know the cast will not fail, so we can safely do it (otherwise we could leak memory).
-    m_db.reset(dynamic_cast<cta::objectstore::OStoreDBWrapperInterface *> (osDb.release()));
+    m_db.reset(dynamic_cast<cta::objectstore::OStoreDBWrapperInterface*>(osDb.release()));
     // Setup scheduler
     m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_db, 5, 2 * 1000 * 1000);
   }
@@ -158,25 +147,24 @@ public:
     m_catalogue.reset();
   }
 
-  cta::objectstore::OStoreDBWrapperInterface &getDb() {
-    cta::objectstore::OStoreDBWrapperInterface *const ptr = m_db.get();
+  cta::objectstore::OStoreDBWrapperInterface& getDb() {
+    cta::objectstore::OStoreDBWrapperInterface* const ptr = m_db.get();
     if (nullptr == ptr) {
       throw FailedToGetDatabase();
     }
     return *ptr;
   }
 
-  cta::catalogue::DummyCatalogue &getCatalogue() {
-    cta::catalogue::DummyCatalogue *const ptr = dynamic_cast<cta::catalogue::DummyCatalogue*>(m_catalogue.get());
+  cta::catalogue::DummyCatalogue& getCatalogue() {
+    cta::catalogue::DummyCatalogue* const ptr = dynamic_cast<cta::catalogue::DummyCatalogue*>(m_catalogue.get());
     if (nullptr == ptr) {
       throw FailedToGetCatalogue();
     }
     return *ptr;
   }
 
-  cta::Scheduler &getScheduler() {
-
-    cta::Scheduler *const ptr = m_scheduler.get();
+  cta::Scheduler& getScheduler() {
+    cta::Scheduler* const ptr = m_scheduler.get();
     if (nullptr == ptr) {
       throw FailedToGetScheduler();
     }
@@ -185,32 +173,31 @@ public:
 
 private:
   // Prevent copying
-  QueueCleanupRunnerConcurrentTest(const QueueCleanupRunnerConcurrentTest &) = delete;
+  QueueCleanupRunnerConcurrentTest(const QueueCleanupRunnerConcurrentTest&) = delete;
 
   // Prevent assignment
-  QueueCleanupRunnerConcurrentTest & operator= (const QueueCleanupRunnerConcurrentTest &) = delete;
+  QueueCleanupRunnerConcurrentTest& operator=(const QueueCleanupRunnerConcurrentTest&) = delete;
   std::unique_ptr<cta::objectstore::OStoreDBWrapperInterface> m_db;
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::unique_ptr<cta::Scheduler> m_scheduler;
 };
 
 class OStoreDBWithAgentBroken : public cta::OStoreDBWithAgent {
-
 public:
-  class TriggeredException: public std::exception {
+  class TriggeredException : public std::exception {
   public:
-    const char *what() const noexcept override {
-      return "Triggered exception";
-    }
+    const char* what() const noexcept override { return "Triggered exception"; }
   };
 
   using OStoreDBWithAgent::OStoreDBWithAgent;
-  std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsToTransferBatch(
-          const std::string & vid, uint64_t filesRequested, cta::log::LogContext &logContext) override {
+
+  std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>
+    getNextRetrieveJobsToTransferBatch(const std::string& vid,
+                                       uint64_t filesRequested,
+                                       cta::log::LogContext& logContext) override {
     throw TriggeredException();
   }
 };
-
 
 TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
   using cta::common::dataStructures::JobQueueType;
@@ -222,15 +209,15 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
 #endif
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue
-  cta::catalogue::DummyCatalogue & catalogue = getCatalogue();
+  cta::catalogue::DummyCatalogue& catalogue = getCatalogue();
   // Object store
-  cta::objectstore::OStoreDBWrapperInterface & oKOStore = getDb();
+  cta::objectstore::OStoreDBWrapperInterface& oKOStore = getDb();
   // Backend
-  auto & be = dynamic_cast<cta::objectstore::BackendVFS&>(oKOStore.getBackend());
+  auto& be = dynamic_cast<cta::objectstore::BackendVFS&>(oKOStore.getBackend());
   // Remove this comment to avoid cleaning the object store files on destruction, useful for debugging
   // be.noDeleteOnExit();
   // Scheduler
-  cta::Scheduler & scheduler = getScheduler();
+  cta::Scheduler& scheduler = getScheduler();
   // Dummy admin
   const cta::common::dataStructures::SecurityIdentity dummyAdmin;
 
@@ -267,8 +254,7 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
 
   // Create retrieve requests and add them to the queues
   // Create queues when they do not exist
-  for (auto & retrieveRequestSetupList : GetParam().retrieveRequestSetupList) {
-
+  for (auto& retrieveRequestSetupList : GetParam().retrieveRequestSetupList) {
     // Identify list of vids where copies exist, including active copy
     std::set<std::string> allVids;
     allVids.insert(retrieveRequestSetupList.replicaCopyVids.begin(), retrieveRequestSetupList.replicaCopyVids.end());
@@ -276,9 +262,12 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
     std::string activeVid = retrieveRequestSetupList.activeCopyVid;
 
     // Generate requests
-    std::list<std::unique_ptr<cta::objectstore::RetrieveRequest> > requestsPtrs;
-    cta::objectstore::ContainerAlgorithms<cta::objectstore::RetrieveQueue, cta::objectstore::RetrieveQueueToTransfer>::InsertedElement::list requests;
-    unitTests::fillRetrieveRequestsForCleanupRunner(requests, retrieveRequestSetupList.numberOfRequests, requestsPtrs, allVids, activeVid, be, agentForSetupRef); //memory leak avoided here with 'requestsPtrs'
+    std::list<std::unique_ptr<cta::objectstore::RetrieveRequest>> requestsPtrs;
+    cta::objectstore::ContainerAlgorithms<cta::objectstore::RetrieveQueue,
+                                          cta::objectstore::RetrieveQueueToTransfer>::InsertedElement::list requests;
+    unitTests::fillRetrieveRequestsForCleanupRunner(requests, retrieveRequestSetupList.numberOfRequests, requestsPtrs,
+                                                    allVids, activeVid, be,
+                                                    agentForSetupRef);  //memory leak avoided here with 'requestsPtrs'
 
     // Create queue for requests to active copy
     std::string agentForSetupAddr = agentForSetupRef.getAgentAddress();
@@ -289,15 +278,15 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
     }
 
     // Insert requests into active vid queue
-    using RetrieveQueueAlgorithm = cta::objectstore::ContainerAlgorithms<cta::objectstore::RetrieveQueue, cta::objectstore::RetrieveQueueToTransfer>;
+    using RetrieveQueueAlgorithm =
+      cta::objectstore::ContainerAlgorithms<cta::objectstore::RetrieveQueue, cta::objectstore::RetrieveQueueToTransfer>;
     RetrieveQueueAlgorithm retrieveQueueAlgo(be, agentForSetupRef);
     retrieveQueueAlgo.referenceAndSwitchOwnership(activeVid, agentForSetupAddr, requests, lc);
   }
 
   // Setup initial tape states and validate number of requests
   //for (TapeQueueTransition tapeQueueStateTrans : GetParam().tapeQueueTransitionList) {
-  for (auto & tapeQueueStateTrans : GetParam().tapeQueueTransitionList) {
-
+  for (auto& tapeQueueStateTrans : GetParam().tapeQueueTransitionList) {
     std::string vid = tapeQueueStateTrans.vid;
     auto initialState = tapeQueueStateTrans.initialState;
     auto initialRetrieveQueueToTransferJobs = tapeQueueStateTrans.initialSetup.retrieveQueueToTransferJobs;
@@ -314,29 +303,32 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
         cta::objectstore::RetrieveQueue rQueue(qAddr, be);
         rQueue.fetchNoLock();
         ASSERT_EQ(initialRetrieveQueueToTransferJobs, rQueue.getJobsSummary().jobs);
-      } else {
-        ASSERT_THROW(re.getRetrieveQueueAddress(vid, JobQueueType::JobsToTransferForUser), cta::objectstore::RootEntry::NoSuchRetrieveQueue);
+      }
+      else {
+        ASSERT_THROW(re.getRetrieveQueueAddress(vid, JobQueueType::JobsToTransferForUser),
+                     cta::objectstore::RootEntry::NoSuchRetrieveQueue);
       }
       if (initialRetrieveQueueToReportJobs > 0) {
         auto qAddr = re.getRetrieveQueueAddress(vid, JobQueueType::JobsToReportToUser);
         cta::objectstore::RetrieveQueue rQueue(qAddr, be);
         rQueue.fetchNoLock();
         ASSERT_EQ(initialRetrieveQueueToReportJobs, rQueue.getJobsSummary().jobs);
-      } else {
-        ASSERT_THROW(re.getRetrieveQueueAddress(vid, JobQueueType::JobsToReportToUser), cta::objectstore::RootEntry::NoSuchRetrieveQueue);
+      }
+      else {
+        ASSERT_THROW(re.getRetrieveQueueAddress(vid, JobQueueType::JobsToReportToUser),
+                     cta::objectstore::RootEntry::NoSuchRetrieveQueue);
       }
     }
   }
 
   // Trigger tape state change
-  for (auto & tapeQueueStateTrans : GetParam().tapeQueueTransitionList) {
-
+  for (auto& tapeQueueStateTrans : GetParam().tapeQueueTransitionList) {
     std::string vid = tapeQueueStateTrans.vid;
     auto initialState = tapeQueueStateTrans.initialState;
     auto desiredState = tapeQueueStateTrans.desiredState;
 
     if (initialState == desiredState) {
-      continue; // No desired tape state change, ignore
+      continue;  // No desired tape state change, ignore
     }
 
     scheduler.triggerTapeStateChange(dummyAdmin, vid, desiredState, "", lc);
@@ -344,22 +336,24 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
 
   // Execute cleanup runner
   {
-    cta::objectstore::QueueCleanupRunner qCleanupRunnerBroken(agentForCleanupRef, brokenOStore, catalogue, GetParam().cleanupTimeout);
-    cta::objectstore::QueueCleanupRunner qCleanupRunnerOk(agentForCleanupRef, oKOStore, catalogue, GetParam().cleanupTimeout);
+    cta::objectstore::QueueCleanupRunner qCleanupRunnerBroken(agentForCleanupRef, brokenOStore, catalogue,
+                                                              GetParam().cleanupTimeout);
+    cta::objectstore::QueueCleanupRunner qCleanupRunnerOk(agentForCleanupRef, oKOStore, catalogue,
+                                                          GetParam().cleanupTimeout);
 
     ASSERT_THROW(qCleanupRunnerBroken.runOnePass(lc), OStoreDBWithAgentBroken::TriggeredException);
-    for (auto & tapeQueueStateTrans : GetParam().tapeQueueTransitionList) {
+    for (auto& tapeQueueStateTrans : GetParam().tapeQueueTransitionList) {
       // Tick the queue cleanup heartbeat a few times
       brokenOStore.tickRetrieveQueueCleanupHeartbeat(tapeQueueStateTrans.vid);
       brokenOStore.tickRetrieveQueueCleanupHeartbeat(tapeQueueStateTrans.vid);
     }
-    ASSERT_NO_THROW(qCleanupRunnerOk.runOnePass(lc)); // Two passes are needed for the other cleanup runner to be able to track the heartbeats
+    ASSERT_NO_THROW(qCleanupRunnerOk.runOnePass(
+      lc));  // Two passes are needed for the other cleanup runner to be able to track the heartbeats
     ASSERT_NO_THROW(qCleanupRunnerOk.runOnePass(lc));
   }
 
   // Validate final setup of tapes and corresponding queues, after the cleanup runner has been executed
-  for (auto & tapeQueueStateTrans : GetParam().tapeQueueTransitionList) {
-
+  for (auto& tapeQueueStateTrans : GetParam().tapeQueueTransitionList) {
     std::string vid = tapeQueueStateTrans.vid;
     auto expectedState = tapeQueueStateTrans.expectedState;
     auto expectedRetrieveQueueToTransferJobs = tapeQueueStateTrans.finalSetup.retrieveQueueToTransferJobs;
@@ -377,16 +371,20 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
         cta::objectstore::RetrieveQueue rQueue(qAddr, be);
         rQueue.fetchNoLock();
         ASSERT_EQ(expectedRetrieveQueueToTransferJobs, rQueue.getJobsSummary().jobs);
-      } else {
-        ASSERT_THROW(re.getRetrieveQueueAddress(vid, JobQueueType::JobsToTransferForUser), cta::objectstore::RootEntry::NoSuchRetrieveQueue);
+      }
+      else {
+        ASSERT_THROW(re.getRetrieveQueueAddress(vid, JobQueueType::JobsToTransferForUser),
+                     cta::objectstore::RootEntry::NoSuchRetrieveQueue);
       }
       if (expectedRetrieveQueueToReportJobs > 0) {
         auto qAddr = re.getRetrieveQueueAddress(vid, JobQueueType::JobsToReportToUser);
         cta::objectstore::RetrieveQueue rQueue(qAddr, be);
         rQueue.fetchNoLock();
         ASSERT_EQ(expectedRetrieveQueueToReportJobs, rQueue.getJobsSummary().jobs);
-      } else {
-        ASSERT_THROW(re.getRetrieveQueueAddress(vid, JobQueueType::JobsToReportToUser), cta::objectstore::RootEntry::NoSuchRetrieveQueue);
+      }
+      else {
+        ASSERT_THROW(re.getRetrieveQueueAddress(vid, JobQueueType::JobsToReportToUser),
+                     cta::objectstore::RootEntry::NoSuchRetrieveQueue);
       }
     }
   }
@@ -395,37 +393,27 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
 static cta::OStoreDBFactory<cta::objectstore::BackendVFS> OStoreDBFactoryVFS;
 
 static std::list<RetrieveRequestSetup> Test_retrieveRequestSetupList = {
-        { 10, "Tape0", { } },
+  {10, "Tape0", {}},
 };
 static std::list<ConcurrentTapeQueueTransition> Test_tapeQueueTransitionList_Completed = {
-        {
-                "Tape0",
-                Tape::ACTIVE, Tape::REPACKING, Tape::REPACKING,
-                {10, 0}, { 0, 10 }
-        },
+  {"Tape0", Tape::ACTIVE, Tape::REPACKING, Tape::REPACKING, {10, 0}, {0, 10}},
 };
 static std::list<ConcurrentTapeQueueTransition> Test_tapeQueueTransitionList_Failed = {
-        {
-                "Tape0",
-                Tape::ACTIVE, Tape::REPACKING, Tape::REPACKING_PENDING,
-                { 10, 0 }, { 10, 0 }
-        },
+  {"Tape0", Tape::ACTIVE, Tape::REPACKING, Tape::REPACKING_PENDING, {10, 0}, {10, 0}},
 };
 
-INSTANTIATE_TEST_CASE_P(OStoreTestVFS, QueueCleanupRunnerConcurrentTest,
-                        ::testing::Values(
-                                // With a timeout of 0.0s the 2nd cleanup runner will be able to complete the task after the 1st has failed
-                                QueueCleanupRunnerConcurrentTestParams(
-                                        OStoreDBFactoryVFS,
-                                        Test_retrieveRequestSetupList,
-                                        Test_tapeQueueTransitionList_Completed,
-                                        0.0),
-                                // With a timeout of 120.0s the 2nd cleanup runner will NOT immediately complete the task after the 1st has failed
-                                QueueCleanupRunnerConcurrentTestParams(
-                                        OStoreDBFactoryVFS,
-                                        Test_retrieveRequestSetupList,
-                                        Test_tapeQueueTransitionList_Failed,
-                                        120.0)
-                        )
-);
-}
+INSTANTIATE_TEST_CASE_P(
+  OStoreTestVFS,
+  QueueCleanupRunnerConcurrentTest,
+  ::testing::Values(
+    // With a timeout of 0.0s the 2nd cleanup runner will be able to complete the task after the 1st has failed
+    QueueCleanupRunnerConcurrentTestParams(OStoreDBFactoryVFS,
+                                           Test_retrieveRequestSetupList,
+                                           Test_tapeQueueTransitionList_Completed,
+                                           0.0),
+    // With a timeout of 120.0s the 2nd cleanup runner will NOT immediately complete the task after the 1st has failed
+    QueueCleanupRunnerConcurrentTestParams(OStoreDBFactoryVFS,
+                                           Test_retrieveRequestSetupList,
+                                           Test_tapeQueueTransitionList_Failed,
+                                           120.0)));
+}  // namespace unitTests

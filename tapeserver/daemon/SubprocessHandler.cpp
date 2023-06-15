@@ -21,9 +21,10 @@ namespace cta {
 namespace tape {
 namespace daemon {
 
-SubprocessHandler::SubprocessHandler(const std::string& idx): index(idx) { }
+SubprocessHandler::SubprocessHandler(const std::string& idx) : index(idx) {}
 
 SubprocessHandler::~SubprocessHandler() {}
 
-
-}}}
+}  // namespace daemon
+}  // namespace tape
+}  // namespace cta

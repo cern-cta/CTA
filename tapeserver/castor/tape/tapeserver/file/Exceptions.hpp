@@ -25,54 +25,54 @@ namespace castor {
 namespace tape {
 namespace tapeFile {
 
-class TapeFormatError: public cta::exception::Exception {
+class TapeFormatError : public cta::exception::Exception {
 public:
-  explicit TapeFormatError(const std::string & what): Exception(what) {}
+  explicit TapeFormatError(const std::string& what) : Exception(what) {}
 };
 
-class TapeMediaError: public cta::exception::Exception {
+class TapeMediaError : public cta::exception::Exception {
 public:
-  explicit TapeMediaError(const std::string & what): Exception(what) {}
+  explicit TapeMediaError(const std::string& what) : Exception(what) {}
 };
 
-class EndOfFile: public cta::exception::Exception {
+class EndOfFile : public cta::exception::Exception {
 public:
-  EndOfFile(): Exception("End Of File reached") {}
+  EndOfFile() : Exception("End Of File reached") {}
 };
 
-class SessionAlreadyInUse: public cta::exception::Exception {
+class SessionAlreadyInUse : public cta::exception::Exception {
 public:
-  SessionAlreadyInUse(): Exception("Session already in use") {}
+  SessionAlreadyInUse() : Exception("Session already in use") {}
 };
 
-class SessionCorrupted: public cta::exception::Exception {
+class SessionCorrupted : public cta::exception::Exception {
 public:
-  SessionCorrupted(): Exception("Session corrupted") {}
+  SessionCorrupted() : Exception("Session corrupted") {}
 };
 
-class FileClosedTwice: public cta::exception::Exception {
+class FileClosedTwice : public cta::exception::Exception {
 public:
-  FileClosedTwice(): Exception("Trying to close a file twice") {}
+  FileClosedTwice() : Exception("Trying to close a file twice") {}
 };
 
-class ZeroFileWritten: public cta::exception::Exception {
+class ZeroFileWritten : public cta::exception::Exception {
 public:
-  ZeroFileWritten(): Exception("Trying to write a file with size 0") {}
+  ZeroFileWritten() : Exception("Trying to write a file with size 0") {}
 };
 
-class TapeNotEmpty: public cta::exception::Exception {
+class TapeNotEmpty : public cta::exception::Exception {
 public:
-  TapeNotEmpty(): Exception("Trying to label a non-empty tape without the \"force\" setting") {}
+  TapeNotEmpty() : Exception("Trying to label a non-empty tape without the \"force\" setting") {}
 };
 
-class UnsupportedPositioningMode: public cta::exception::Exception {
+class UnsupportedPositioningMode : public cta::exception::Exception {
 public:
-  UnsupportedPositioningMode(): Exception("Trying to use an unsupported positioning mode") {}
+  UnsupportedPositioningMode() : Exception("Trying to use an unsupported positioning mode") {}
 };
 
-class WrongBlockSize: public cta::exception::Exception {
+class WrongBlockSize : public cta::exception::Exception {
 public:
-  WrongBlockSize(): Exception("Trying to use a wrong block size") {}
+  WrongBlockSize() : Exception("Trying to use a wrong block size") {}
 };
 
 }  // namespace tapeFile

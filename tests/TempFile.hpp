@@ -31,10 +31,11 @@ public:
   std::string path();
   void randomFill(size_t size);
   uint32_t adler32();
-  void stringFill(const std::string &string);
-  void stringAppend(const std::string &string);
+  void stringFill(const std::string& string);
+  void stringAppend(const std::string& string);
   ~TempFile();
+
 private:
   std::string m_path;
 };
-}
+}  // namespace unitTests

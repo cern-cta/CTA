@@ -27,23 +27,19 @@ struct MountsRow {
   time_t creationTime;
   std::string owner;
 
-  MountsRow() :
-    mountId(0),
-    creationTime(0) { }
+  MountsRow() : mountId(0), creationTime(0) {}
 
   /**
    * Constructor from row
    *
    * @param row  A single row from the result of a query
    */
-  MountsRow(const rdbms::Rset &rset) {
-    *this = rset;
-  }
+  MountsRow(const rdbms::Rset& rset) { *this = rset; }
 
-  MountsRow& operator=(const rdbms::Rset &rset) {
-    mountId      = rset.columnUint64("MOUNT_ID");
+  MountsRow& operator=(const rdbms::Rset& rset) {
+    mountId = rset.columnUint64("MOUNT_ID");
     creationTime = rset.columnUint64("CREATION_TIMESTAMP");
-    owner        = rset.columnString("OWNER");
+    owner = rset.columnString("OWNER");
     return *this;
   }
 
@@ -58,14 +54,14 @@ struct MountsRow {
    *
    * @return result set containing the one row in the table
    */
-  static rdbms::Rset insertMountAndSelect(Transaction &txn, const std::string& owner) {
-    const char *const sql = "INSERT INTO TAPE_MOUNTS ("
-      "OWNER) VALUES ("
-      ":OWNER"
-      ") RETURNING "
-      "MOUNT_ID,"
-      "EXTRACT(EPOCH FROM CREATION_TIME AT TIME ZONE 'UTC')::BIGINT AS CREATION_TIMESTAMP,"
-      "OWNER";
+  static rdbms::Rset insertMountAndSelect(Transaction& txn, const std::string& owner) {
+    const char* const sql = "INSERT INTO TAPE_MOUNTS ("
+                            "OWNER) VALUES ("
+                            ":OWNER"
+                            ") RETURNING "
+                            "MOUNT_ID,"
+                            "EXTRACT(EPOCH FROM CREATION_TIME AT TIME ZONE 'UTC')::BIGINT AS CREATION_TIMESTAMP,"
+                            "OWNER";
 
     auto stmt = txn.conn().createStmt(sql);
     stmt.bindString(":OWNER", owner);
@@ -74,6 +70,6 @@ struct MountsRow {
   }
 };
 
-} // namespace sql
-} // namespace postgresscheddb
-} // namespace cta
+}  // namespace sql
+}  // namespace postgresscheddb
+}  // namespace cta

@@ -23,17 +23,13 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-CheckConstraintError::CheckConstraintError(
-  const std::string &context,
-  const bool embedBacktrace):
-  ConstraintError(context, embedBacktrace) {
-}
+CheckConstraintError::CheckConstraintError(const std::string& context, const bool embedBacktrace) :
+ConstraintError(context, embedBacktrace) {}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-CheckConstraintError::~CheckConstraintError() noexcept {
-}
+CheckConstraintError::~CheckConstraintError() noexcept {}
 
-} // namespace rdbms
-} // namespace cta
+}  // namespace rdbms
+}  // namespace cta

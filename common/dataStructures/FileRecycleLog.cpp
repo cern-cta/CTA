@@ -17,9 +17,8 @@
 
 #include "FileRecycleLog.hpp"
 
-namespace cta{
-namespace common{
-namespace dataStructures{
-
-
-}}}
+namespace cta {
+namespace common {
+namespace dataStructures {}
+}  // namespace common
+}  // namespace cta

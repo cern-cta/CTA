@@ -24,39 +24,31 @@ namespace mediachanger {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-DmcProxy::DmcProxy(log::Logger &log):
-  m_log(log) {
-}
+DmcProxy::DmcProxy(log::Logger& log) : m_log(log) {}
 
 //------------------------------------------------------------------------------
 // mountTapeReadOnly
 //------------------------------------------------------------------------------
-void DmcProxy::mountTapeReadOnly(const std::string &vid, const LibrarySlot &librarySlot) {
-  std::list<log::Param> params = {
-    log::Param("tapeVid", vid),
-    log::Param("librarySlot", librarySlot.str())};
+void DmcProxy::mountTapeReadOnly(const std::string& vid, const LibrarySlot& librarySlot) {
+  std::list<log::Param> params = {log::Param("tapeVid", vid), log::Param("librarySlot", librarySlot.str())};
   m_log(log::WARNING, "Dummy mount for read-only access", params);
 }
 
 //------------------------------------------------------------------------------
 // mountTapeReadWrite
 //------------------------------------------------------------------------------
-void DmcProxy::mountTapeReadWrite(const std::string &vid, const LibrarySlot &librarySlot) {
-  std::list<log::Param> params = {
-    log::Param("tapeVid", vid),
-    log::Param("librarySlot", librarySlot.str())};
+void DmcProxy::mountTapeReadWrite(const std::string& vid, const LibrarySlot& librarySlot) {
+  std::list<log::Param> params = {log::Param("tapeVid", vid), log::Param("librarySlot", librarySlot.str())};
   m_log(log::WARNING, "Dummy mount for read/write access", params);
 }
 
 //------------------------------------------------------------------------------
 // dismountTape
 //------------------------------------------------------------------------------
-void DmcProxy::dismountTape(const std::string &vid, const LibrarySlot &librarySlot) {
-  std::list<log::Param> params = {
-    log::Param("tapeVid", vid),
-    log::Param("librarySlot", librarySlot.str())};
+void DmcProxy::dismountTape(const std::string& vid, const LibrarySlot& librarySlot) {
+  std::list<log::Param> params = {log::Param("tapeVid", vid), log::Param("librarySlot", librarySlot.str())};
   m_log(log::WARNING, "Dummy dismount", params);
 }
 
-} // namespace medichanger
-} // namespace cta
+}  // namespace mediachanger
+}  // namespace cta

@@ -34,33 +34,42 @@ class RdbmsCatalogue;
 
 class RdbmsRequesterActivityMountRuleCatalogue : public RequesterActivityMountRuleCatalogue {
 public:
-  RdbmsRequesterActivityMountRuleCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
-    RdbmsCatalogue *rdbmsCatalogue);
+  RdbmsRequesterActivityMountRuleCatalogue(log::Logger& log,
+                                           std::shared_ptr<rdbms::ConnPool> connPool,
+                                           RdbmsCatalogue* rdbmsCatalogue);
 
   ~RdbmsRequesterActivityMountRuleCatalogue() override = default;
 
-  void modifyRequesterActivityMountRulePolicy(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &instanceName, const std::string &requesterName, const std::string &activityRegex,
-    const std::string &mountPolicy) override;
+  void modifyRequesterActivityMountRulePolicy(const common::dataStructures::SecurityIdentity& admin,
+                                              const std::string& instanceName,
+                                              const std::string& requesterName,
+                                              const std::string& activityRegex,
+                                              const std::string& mountPolicy) override;
 
-  void modifyRequesterActivityMountRuleComment(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &instanceName, const std::string &requesterName, const std::string &activityRegex,
-    const std::string &comment) override;
+  void modifyRequesterActivityMountRuleComment(const common::dataStructures::SecurityIdentity& admin,
+                                               const std::string& instanceName,
+                                               const std::string& requesterName,
+                                               const std::string& activityRegex,
+                                               const std::string& comment) override;
 
-  void createRequesterActivityMountRule(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &mountPolicyName, const std::string &diskInstance, const std::string &requesterName,
-    const std::string &activityRegex, const std::string &comment) override;
+  void createRequesterActivityMountRule(const common::dataStructures::SecurityIdentity& admin,
+                                        const std::string& mountPolicyName,
+                                        const std::string& diskInstance,
+                                        const std::string& requesterName,
+                                        const std::string& activityRegex,
+                                        const std::string& comment) override;
 
   std::list<common::dataStructures::RequesterActivityMountRule> getRequesterActivityMountRules() const override;
 
-  void deleteRequesterActivityMountRule(const std::string &diskInstanceName, const std::string &requesterName,
-    const std::string &activityRegex) override;
+  void deleteRequesterActivityMountRule(const std::string& diskInstanceName,
+                                        const std::string& requesterName,
+                                        const std::string& activityRegex) override;
 
 private:
-  log::Logger &m_log;
+  log::Logger& m_log;
   std::shared_ptr<rdbms::ConnPool> m_connPool;
   RdbmsCatalogue* m_rdbmsCatalogue;
 };
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

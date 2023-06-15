@@ -24,7 +24,6 @@
 #include "common/log/Logger.hpp"
 #include <limits>
 
-
 namespace cta {
 /**
  * A templated class allowing the tracking of parameter with their source.
@@ -40,38 +39,50 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(BadlyFormattedSizeFileLimit);
 
   /// Constructor for mandatory options (they do not have default values)
-  SourcedParameter(const std::string & categoryName, const std::string & keyName):
-  m_category(categoryName), m_key(keyName) {
+  SourcedParameter(const std::string& categoryName, const std::string& keyName) :
+  m_category(categoryName),
+  m_key(keyName) {
     if (std::is_arithmetic<C>::value) {
-      m_value=std::numeric_limits<C>::max();
+      m_value = std::numeric_limits<C>::max();
     }
   }
 
   /// Constructor for optional options (they have default values)
-  SourcedParameter(const std::string & categoryName, const std::string & keyName,
-    const C & valueStoraged, const std::string & sourceName):
-    m_category(categoryName), m_key(keyName), m_value(valueStoraged), m_source(sourceName),
-    m_set(true) {}
+  SourcedParameter(const std::string& categoryName,
+                   const std::string& keyName,
+                   const C& valueStoraged,
+                   const std::string& sourceName) :
+  m_category(categoryName),
+  m_key(keyName),
+  m_value(valueStoraged),
+  m_source(sourceName),
+  m_set(true) {}
 
-  C operator() () {
-    if (m_set) return m_value;
+  C operator()() {
+    if (m_set) {
+      return m_value;
+    }
     throw MandatoryParameterNotDefined(std::string("In SourcedParameter::operator(): "
-      "value not defined for parameter \'" + m_category + "\' :"));
+                                                   "value not defined for parameter \'" +
+                                                   m_category + "\' :"));
   }
 
   /// Function setting the parameter from a string (with integer interpretation)
-  void set(const std::string & value, const std::string & source);
+  void set(const std::string& value, const std::string& source);
 
   /// Try and find the entry from the configuration file. Throw an exception for missing mandatory options.
-  void setFromConfigurationFile(ConfigurationFile & configFile, const std::string & configFilePath) {
+  void setFromConfigurationFile(ConfigurationFile& configFile, const std::string& configFilePath) {
     try {
-      auto & entry = configFile.entries.at(m_category).at(m_key);
+      auto& entry = configFile.entries.at(m_category).at(m_key);
       std::stringstream sourceName;
       sourceName << configFilePath << ":" << entry.line;
       set(entry.value, sourceName.str());
-    } catch (std::out_of_range &) {
+    }
+    catch (std::out_of_range&) {
       // If the config entry has a default, it's fine. If not, throw an exception.
-      if (m_set) return;
+      if (m_set) {
+        return;
+      }
       std::stringstream err;
       err << "In SourcedParameter::setFromConfigurationFile: mandatory parameter not found: "
           << "category=" << m_category << " key=" << m_key << " configFilePath=" << configFilePath;
@@ -79,12 +90,15 @@ public:
     }
   }
 
-  const C & value() const { return m_value; }
-  const std::string & category() { return m_category; }
-  const std::string & key() { return m_key; }
-  const std::string & source() { return m_source; }
+  const C& value() const { return m_value; }
 
-  void log(log::Logger & logger) {
+  const std::string& category() { return m_category; }
+
+  const std::string& key() { return m_key; }
+
+  const std::string& source() { return m_source; }
+
+  void log(log::Logger& logger) {
     // We log each parameter from a fresh context
     log::LogContext lc(logger);
     addLogParams(lc);
@@ -92,26 +106,26 @@ public:
   }
 
 private:
-  std::string m_category;      ///< The category of the parameter
-  std::string m_key;           ///< The key of the parameter
-  C m_value;                   ///< The value of the parameter
-  std::string m_source;        ///< The source from which the parameter was gotten.
-  bool m_set = false;          ///< Flag checking if the parameter was ever set.
+  std::string m_category;  ///< The category of the parameter
+  std::string m_key;       ///< The key of the parameter
+  C m_value;               ///< The value of the parameter
+  std::string m_source;    ///< The source from which the parameter was gotten.
+  bool m_set = false;      ///< Flag checking if the parameter was ever set.
 
   /// The specific part for each value type.
-  void addLogParamForValue(log::LogContext & lc);
+  void addLogParamForValue(log::LogContext& lc);
 
   /// A log param list representation of the sourced parameter.
-  void addLogParams(log::LogContext & lc) {
-    if (m_category.size())
+  void addLogParams(log::LogContext& lc) {
+    if (m_category.size()) {
       lc.pushOrReplace({"category", m_category});
-    if (m_key.size())
+    }
+    if (m_key.size()) {
       lc.pushOrReplace({"key", m_key});
+    }
     addLogParamForValue(lc);
     lc.pushOrReplace({"source", m_source});
   }
 };
 
-
-
-} // namespace cta
+}  // namespace cta

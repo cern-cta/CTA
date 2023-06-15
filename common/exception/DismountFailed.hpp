@@ -19,21 +19,20 @@
 
 #include "common/exception/Exception.hpp"
 
-namespace cta { namespace exception {
+namespace cta {
+namespace exception {
 
-    /**
+/**
      * Failed to dismount volume.
      */
-    class DismountFailed : public cta::exception::Exception {
-      
-    public:
-      
-      /**
+class DismountFailed : public cta::exception::Exception {
+public:
+  /**
        * Constructor
        */
-      DismountFailed();
+  DismountFailed();
 
-    }; // class DismountFailed
+};  // class DismountFailed
 
-} } // namespace cta exception
-
+}  // namespace exception
+}  // namespace cta

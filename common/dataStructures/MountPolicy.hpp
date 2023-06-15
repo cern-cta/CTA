@@ -37,9 +37,9 @@ struct MountPolicy {
 
   MountPolicy(const MountPolicy& other);
 
-  bool operator==(const MountPolicy &rhs) const;
+  bool operator==(const MountPolicy& rhs) const;
 
-  bool operator!=(const MountPolicy &rhs) const;
+  bool operator!=(const MountPolicy& rhs) const;
 
   MountPolicy operator=(const MountPolicy& other);
 
@@ -56,12 +56,15 @@ struct MountPolicy {
   // to do a Retrieve mount or Archive mount
   static struct MountPolicy s_defaultMountPolicyForRepack;
 
- private:
-  MountPolicy(const std::string& name, const uint64_t archivePriority, const uint64_t archiveMinRequestAge,
-    const uint64_t retrievePriority, const uint64_t retrieveMinRequestAge);
+private:
+  MountPolicy(const std::string& name,
+              const uint64_t archivePriority,
+              const uint64_t archiveMinRequestAge,
+              const uint64_t retrievePriority,
+              const uint64_t retrieveMinRequestAge);
 };  // struct MountPolicy
 
-std::ostream &operator<<(std::ostream &os, const MountPolicy &obj);
+std::ostream& operator<<(std::ostream& os, const MountPolicy& obj);
 
 }  // namespace dataStructures
 }  // namespace common

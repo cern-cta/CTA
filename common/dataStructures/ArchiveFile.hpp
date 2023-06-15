@@ -33,9 +33,8 @@ namespace dataStructures {
  * This struct holds all the CTA file metadata 
  */
 struct ArchiveFile {
-
   ArchiveFile();
-  
+
   /**
    * Equality operator that does NOT compare the creationTime and
    * reconciliationTime member-variables.
@@ -44,9 +43,9 @@ struct ArchiveFile {
    * @return True if the compared objects are equal (ignoring the creationTime
    * and reconciliationTime member-variables).
    */
-  bool operator==(const ArchiveFile &rhs) const;
+  bool operator==(const ArchiveFile& rhs) const;
 
-  bool operator!=(const ArchiveFile &rhs) const;
+  bool operator!=(const ArchiveFile& rhs) const;
 
   uint64_t archiveFileID;
   std::string diskFileId;
@@ -55,28 +54,30 @@ struct ArchiveFile {
   checksum::ChecksumBlob checksumBlob;
   std::string storageClass;
   DiskFileInfo diskFileInfo;
+
   /**
    * This list represents the non-necessarily-exhaustive set of tape copies 
    * to be listed by the operator. For example, if the listing requested is 
    * for a single tape, the map will contain only one element. 
    */
-  class TapeFilesList: public std::list<TapeFile> {
+  class TapeFilesList : public std::list<TapeFile> {
   public:
     using std::list<TapeFile>::list;
-    TapeFile & at(uint8_t copyNb);
-    const TapeFile & at(uint8_t copyNb) const;
+    TapeFile& at(uint8_t copyNb);
+    const TapeFile& at(uint8_t copyNb) const;
     TapeFilesList::iterator find(uint8_t copyNb);
     TapeFilesList::const_iterator find(uint8_t copyNb) const;
-    void removeAllVidsExcept(const std::string &vid);
+    void removeAllVidsExcept(const std::string& vid);
   };
+
   TapeFilesList tapeFiles;
   time_t creationTime;
   time_t reconciliationTime;
 
-}; // struct ArchiveFile
+};  // struct ArchiveFile
 
-std::ostream &operator<<(std::ostream &os, const ArchiveFile &obj);
+std::ostream& operator<<(std::ostream& os, const ArchiveFile& obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

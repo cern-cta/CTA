@@ -26,9 +26,8 @@ namespace log {
  * Class used to facilitate unit testing by making public one or more of the
  * protected members of its super class.
  */
-class TestingSyslogLogger: public SyslogLogger {
+class TestingSyslogLogger : public SyslogLogger {
 public:
-
   /**
    * Constructor
    *
@@ -36,14 +35,12 @@ public:
    * @param programName The name of the program to be prepended to every log
    * message.
    */
-  TestingSyslogLogger(const std::string &hostName, const std::string &programName):
-    SyslogLogger(hostName, programName, DEBUG)  {
-  }
+  TestingSyslogLogger(const std::string& hostName, const std::string& programName) :
+  SyslogLogger(hostName, programName, DEBUG) {}
 
   using SyslogLogger::cleanString;
 
-}; // class TestingSyslogLogger
+};  // class TestingSyslogLogger
 
-} // namespace log
-} // namespace cta
-
+}  // namespace log
+}  // namespace cta

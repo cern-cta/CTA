@@ -29,12 +29,13 @@ class RdbmsCatalogue;
 
 class PostgresStorageClassCatalogue : public RdbmsStorageClassCatalogue {
 public:
-  PostgresStorageClassCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
-    RdbmsCatalogue* rdbmsCatalogue);
+  PostgresStorageClassCatalogue(log::Logger& log,
+                                std::shared_ptr<rdbms::ConnPool> connPool,
+                                RdbmsCatalogue* rdbmsCatalogue);
   ~PostgresStorageClassCatalogue() override = default;
 
 private:
-  uint64_t getNextStorageClassId(rdbms::Conn &conn) override;
+  uint64_t getNextStorageClassId(rdbms::Conn& conn) override;
 };  // class PostgresStorageClassCatalogue
 
 }  // namespace catalogue

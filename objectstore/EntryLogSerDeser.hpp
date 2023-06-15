@@ -24,31 +24,36 @@
 #include <stdint.h>
 #include <limits>
 
-namespace cta { namespace objectstore {
+namespace cta {
+namespace objectstore {
 /**
  * A decorator class of scheduler's creation log adding serialization.
  */
 // TODO: generalize the mechanism to other structures.
-class EntryLogSerDeser: public cta::common::dataStructures::EntryLog {
+class EntryLogSerDeser : public cta::common::dataStructures::EntryLog {
 public:
-  EntryLogSerDeser (): cta::common::dataStructures::EntryLog() {}
-  EntryLogSerDeser (const cta::common::dataStructures::EntryLog & el): cta::common::dataStructures::EntryLog(el) {}
-  EntryLogSerDeser (const std::string & un, const std::string & hn, uint64_t t): cta::common::dataStructures::EntryLog() {
-    username=un;
-    host=hn;
-    time=t;
+  EntryLogSerDeser() : cta::common::dataStructures::EntryLog() {}
+
+  EntryLogSerDeser(const cta::common::dataStructures::EntryLog& el) : cta::common::dataStructures::EntryLog(el) {}
+
+  EntryLogSerDeser(const std::string& un, const std::string& hn, uint64_t t) : cta::common::dataStructures::EntryLog() {
+    username = un;
+    host = hn;
+    time = t;
   }
 
-  void serialize (cta::objectstore::serializers::EntryLog & log) const {
+  void serialize(cta::objectstore::serializers::EntryLog& log) const {
     log.set_username(username);
     log.set_host(host);
     log.set_time(time);
   }
-  void deserialize (const cta::objectstore::serializers::EntryLog & log) {
-    username=log.username();
+
+  void deserialize(const cta::objectstore::serializers::EntryLog& log) {
+    username = log.username();
     host = log.host();
-    time  = log.time();
+    time = log.time();
   }
 };
-  
-}}
+
+}  // namespace objectstore
+}  // namespace cta

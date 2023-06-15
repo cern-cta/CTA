@@ -15,13 +15,16 @@
  *               submit itself to any jurisdiction.
  */
 
-#pragma once 
+#pragma once
 
 #include "RAOParams.hpp"
 #include "RAOAlgorithmFactory.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
-  
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace rao {
+
 /**
  * This factory allows to instanciate RAO algorithm that do not need any
  * parameter to work. E.G the linear algorithm just does a sort of the fseqs,
@@ -34,7 +37,7 @@ public:
    * @param type the type given will be used by the createRAOAlgorithm() method
    * to instanciate the correct algorithm regarding its type
    */
-  NonConfigurableRAOAlgorithmFactory(const RAOParams::RAOAlgorithmType & type);
+  NonConfigurableRAOAlgorithmFactory(const RAOParams::RAOAlgorithmType& type);
   /**
    * Returns the correct instance of RAO algorithm regarding the type
    * given while constructing this factory.
@@ -42,8 +45,12 @@ public:
    */
   std::unique_ptr<RAOAlgorithm> createRAOAlgorithm() override;
   virtual ~NonConfigurableRAOAlgorithmFactory();
+
 private:
   RAOParams::RAOAlgorithmType m_type;
 };
 
-}}}}
+}  // namespace rao
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

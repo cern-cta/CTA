@@ -26,37 +26,32 @@ namespace dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-CancelRetrieveRequest::CancelRetrieveRequest():
-  archiveFileID(0) {}
+CancelRetrieveRequest::CancelRetrieveRequest() : archiveFileID(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool CancelRetrieveRequest::operator==(const CancelRetrieveRequest &rhs) const {
-  return requester==rhs.requester
-      && archiveFileID==rhs.archiveFileID
-      && dstURL==rhs.dstURL
-      && diskFileInfo==rhs.diskFileInfo;
+bool CancelRetrieveRequest::operator==(const CancelRetrieveRequest& rhs) const {
+  return requester == rhs.requester && archiveFileID == rhs.archiveFileID && dstURL == rhs.dstURL &&
+         diskFileInfo == rhs.diskFileInfo;
 }
 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool CancelRetrieveRequest::operator!=(const CancelRetrieveRequest &rhs) const {
+bool CancelRetrieveRequest::operator!=(const CancelRetrieveRequest& rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const CancelRetrieveRequest &obj) {
-  os << "(requester=" << obj.requester
-     << " archiveFileID=" << obj.archiveFileID
-     << " dstURL=" << obj.dstURL
+std::ostream& operator<<(std::ostream& os, const CancelRetrieveRequest& obj) {
+  os << "(requester=" << obj.requester << " archiveFileID=" << obj.archiveFileID << " dstURL=" << obj.dstURL
      << " diskFileInfo=" << obj.diskFileInfo << ")";
   return os;
 }
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

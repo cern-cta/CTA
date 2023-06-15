@@ -29,13 +29,12 @@ class RdbmsCatalogue;
 
 class SqliteTapeCatalogue : public RdbmsTapeCatalogue {
 public:
-  SqliteTapeCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
-    RdbmsCatalogue* rdbmsCatalogue);
+  SqliteTapeCatalogue(log::Logger& log, std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue);
   ~SqliteTapeCatalogue() override = default;
 
 private:
   friend class SqliteTapeFileCatalogue;
-  uint64_t getTapeLastFSeq(rdbms::Conn &conn, const std::string &vid) const override;
+  uint64_t getTapeLastFSeq(rdbms::Conn& conn, const std::string& vid) const override;
 };  // class SqliteTapeCatalogue
 
 }  // namespace catalogue

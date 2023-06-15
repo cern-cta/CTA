@@ -26,8 +26,8 @@
 namespace cta {
 namespace objectstore {
 class BackendFactory {
- public:
-  static std::unique_ptr<Backend> createBackend(const std::string & URL, log::Logger & logger);
+public:
+  static std::unique_ptr<Backend> createBackend(const std::string& URL, log::Logger& logger);
 };
 }  // namespace objectstore
 }  // namespace cta

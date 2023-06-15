@@ -22,21 +22,19 @@
 #include <errno.h>
 #include <stdio.h>
 
-
 namespace cta {
 
 /**
  * A smart pointer that owns a pointer to an array and unlike std::unique_ptr
  * will call delete[] instead of calling delete.
  */
-template <typename T> class SmartArrayPtr {
+template<typename T>
+class SmartArrayPtr {
 public:
-
   /**
    * Constructor.
    */
-  SmartArrayPtr() throw(): m_arrayPtr(nullptr) {
-  }
+  SmartArrayPtr() throw() : m_arrayPtr(nullptr) {}
 
   /**
    * Constructor.
@@ -44,8 +42,7 @@ public:
    * @param arrayPtr The pointer to an array that is to be owned by the smart
    * pointer.
    */
-  SmartArrayPtr(T *const arrayPtr) throw(): m_arrayPtr(arrayPtr) {
-  }
+  SmartArrayPtr(T* const arrayPtr) throw() : m_arrayPtr(arrayPtr) {}
 
   /**
    * Takes ownership of the specified pointer to an array.  If this smart
@@ -56,12 +53,11 @@ public:
    * the default value of nullptr is used.  In this default case the smart pointer
    * will not own a pointer after the reset() method returns.
    */
-  void reset(T *const arrayPtr = nullptr) throw() {
+  void reset(T* const arrayPtr = nullptr) throw() {
     // If the new pointer is not the one already owned
-    if(arrayPtr != m_arrayPtr) {
-
+    if (arrayPtr != m_arrayPtr) {
       // If this smart pointer still owns a pointer then call delete[] on it
-      if(m_arrayPtr != nullptr) {
+      if (m_arrayPtr != nullptr) {
         delete[] m_arrayPtr;
       }
 
@@ -80,8 +76,7 @@ public:
    * owner (obj).
    * </ul>
    */
-  SmartArrayPtr &operator=(SmartArrayPtr& obj)
-     {
+  SmartArrayPtr& operator=(SmartArrayPtr& obj) {
     reset(obj.release());
     return *this;
   }
@@ -91,27 +86,23 @@ public:
    *
    * Resets this smart pointer with the default value of nullptr.
    */
-  ~SmartArrayPtr() throw() {
-    reset();
-  }
+  ~SmartArrayPtr() throw() { reset(); }
 
   /**
    * Returns the owned pointer or nullptr if this smart pointer does not own one.
    *
    * @return The owned pointer or nullptr if this smart pointer does not own one.
    */
-  T *get() const throw() {
-    return m_arrayPtr;
-  }
+  T* get() const throw() { return m_arrayPtr; }
 
   /**
    * Releases the owned pointer.
    *
    * @return The released pointer.
    */
-  T *release()  {
+  T* release() {
     // If this smart pointer does not own a pointer
-    if(nullptr == m_arrayPtr) {
+    if (nullptr == m_arrayPtr) {
       cta::exception::NotAnOwner ex;
       ex.getMessage() << "Smart pointer does not own a pointer";
       throw(ex);
@@ -119,7 +110,7 @@ public:
 
     // Assigning nullptr to m_arrayPtr indicates this smart pointer does not own a
     // pointer
-    T *const tmpArrayPtr = m_arrayPtr;
+    T* const tmpArrayPtr = m_arrayPtr;
     m_arrayPtr = nullptr;
     return tmpArrayPtr;
   }
@@ -127,17 +118,14 @@ public:
   /**
    * Subscript operator.
    */
-  T &operator[](const int i) const throw() {
-    return m_arrayPtr[i];
-  }
+  T& operator[](const int i) const throw() { return m_arrayPtr[i]; }
 
 private:
-
   /**
    * The owned pointer.  A value of nullptr means this smart pointer does not own
    * a pointer.
    */
-  T *m_arrayPtr;
+  T* m_arrayPtr;
 
   /**
    * Private copy-constructor to prevent users from trying to create a new
@@ -145,8 +133,8 @@ private:
    *
    * Not implemented so that it cannot be called
    */
-  SmartArrayPtr(const SmartArrayPtr &obj) throw();
+  SmartArrayPtr(const SmartArrayPtr& obj) throw();
 
-}; // class SmartArrayPtr
+};  // class SmartArrayPtr
 
-} // namespace cta
+}  // namespace cta

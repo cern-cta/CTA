@@ -41,9 +41,7 @@ public:
    * @param errStream Standard error stream.
    * @param mc Interface to the media changer.
    */
-  CmdLineTool(std::istream &inStream, std::ostream &outStream,
-    std::ostream &errStream, MediaChangerFacade &mc)
-   ;
+  CmdLineTool(std::istream& inStream, std::ostream& outStream, std::ostream& errStream, MediaChangerFacade& mc);
 
   /**
    * Pure-virtual destructor to guarantee this class is abstract.
@@ -51,26 +49,25 @@ public:
   virtual ~CmdLineTool() = 0;
 
 protected:
-
   /**
    * Standard input stream.
    */
-  std::istream &m_in;
+  std::istream& m_in;
 
   /**
    * Standard output stream.
    */
-  std::ostream &m_out;
+  std::ostream& m_out;
 
   /**
    * Standard error stream.
    */
-  std::ostream &m_err;
+  std::ostream& m_err;
 
   /**
    * Interface to the media changer.
    */
-  MediaChangerFacade &m_mc;
+  MediaChangerFacade& m_mc;
 
   /**
    * Debug stream buffer that inserts a standard debug preamble before each
@@ -93,7 +90,7 @@ protected:
    */
   std::string bool2Str(const bool value) const;
 
-}; // class CmdLineTool
+};  // class CmdLineTool
 
-} // namespace mediachanger
-} // namespace cta
+}  // namespace mediachanger
+}  // namespace cta

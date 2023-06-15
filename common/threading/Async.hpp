@@ -37,8 +37,8 @@
 #include "Thread.hpp"
 
 namespace cta {
-  
-  /**
+
+/**
    * This class holds the necessary to reimplement the std::async function.
    * Indeed, helgrind does not like the way how std::async execute the std::function passed in parameter
    * (usage of a shared_ptr : https://stackoverflow.com/questions/8393777/current-state-of-drd-and-helgrind-support-for-stdthread/8458482#8458482)
@@ -48,28 +48,29 @@ namespace cta {
    *   //DO SOME ACTIONS TO EXECUTE ASYNCHRONOUSLY
    * });
    */
-  class Async{
-    public:
-      /**
+class Async {
+public:
+  /**
        * This method allows to execute asynchronously the callable passed in parameter
        * @param callable the callable to execute asynchronously
        * @return the future associated to the execution of the callable. If an exception is thrown during the execution
        * of the callable, the future.get() will throw this exception
        */
-      static std::future<void> async(std::function<void()> callable);
-    private:
-       class ThreadWrapper: public threading::Thread{
-	 friend Async;
-	public:
-	  ThreadWrapper(std::function<void()> callable);
-	  void run();
-	private:
-	  std::function<void()> m_callable;
-	  std::promise<void> m_promise;
-      };
-    
+  static std::future<void> async(std::function<void()> callable);
+
+private:
+  class ThreadWrapper : public threading::Thread {
+    friend Async;
+
+  public:
+    ThreadWrapper(std::function<void()> callable);
+    void run();
+
+  private:
+    std::function<void()> m_callable;
+    std::promise<void> m_promise;
   };
-}
+};
+}  // namespace cta
 
 #endif /* ASYNC_HPP */
-

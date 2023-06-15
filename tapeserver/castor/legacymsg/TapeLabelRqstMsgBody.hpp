@@ -28,8 +28,8 @@ namespace legacymsg {
  * The body of a TPLABEL message.
  */
 struct TapeLabelRqstMsgBody {
-  uint16_t lbp;   // set to 1 if lbp==true, 0 otherwise
-  uint16_t force; // set to 1 if force==true, 0 otherwise
+  uint16_t lbp;    // set to 1 if lbp==true, 0 otherwise
+  uint16_t force;  // set to 1 if force==true, 0 otherwise
   uint32_t uid;
   uint32_t gid;
   char vid[cta::CA_MAXVIDLEN + 1];
@@ -43,8 +43,7 @@ struct TapeLabelRqstMsgBody {
    * the empty string.
    */
   TapeLabelRqstMsgBody() throw();
-}; // struct TapeLabelRqstMsgBody
+};  // struct TapeLabelRqstMsgBody
 
-} // namespace legacymsg
-} // namespace castor
-
+}  // namespace legacymsg
+}  // namespace castor

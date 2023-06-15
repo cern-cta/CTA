@@ -22,7 +22,10 @@
 #include "catalogue/MediaType.hpp"
 #include <vector>
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace rao {
 
 /**
  * This class implements an interpolation file position estimator.
@@ -31,23 +34,25 @@ namespace castor { namespace tape { namespace tapeserver { namespace rao {
  * @param endOfWrapPositions the end of wrap positions of the mounted tape
  * @param mediaType the media type of the mounted tape
  */
-class InterpolationFilePositionEstimator : public FilePositionEstimator{
+class InterpolationFilePositionEstimator : public FilePositionEstimator {
 public:
-  InterpolationFilePositionEstimator(const std::vector<drive::endOfWrapPosition> & endOfWrapPositions, const cta::catalogue::MediaType & mediaType);
+  InterpolationFilePositionEstimator(const std::vector<drive::endOfWrapPosition>& endOfWrapPositions,
+                                     const cta::catalogue::MediaType& mediaType);
   FilePositionInfos getFilePosition(const cta::RetrieveJob& job) const override;
   virtual ~InterpolationFilePositionEstimator();
-  
+
   static const uint64_t c_blockSize = 256 * 1024;
+
 private:
   std::vector<drive::endOfWrapPosition> m_endOfWrapPositions;
   cta::catalogue::MediaType m_mediaType;
-  
+
   /**
    * In order for this position estimator to work, we need to check that the mediatype given in the constructor contains
    * the information we need.
    */
   void checkMediaTypeConsistency();
-  
+
   /**
    * Determine the physical position of the blockId passed in parameter
    * @param blockId the blockId to determine its physical position
@@ -71,7 +76,10 @@ private:
    * @param file the file to determine its end blockId
    * @return the blockId of the end of the file passed in parameter
    */
-  uint64_t determineEndBlockId(const cta::common::dataStructures::TapeFile & file) const;
+  uint64_t determineEndBlockId(const cta::common::dataStructures::TapeFile& file) const;
 };
 
-}}}}
+}  // namespace rao
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

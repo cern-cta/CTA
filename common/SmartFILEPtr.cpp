@@ -25,26 +25,21 @@ namespace cta {
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-SmartFILEPtr::SmartFILEPtr() throw() :
-  m_file(nullptr) {
-}
+SmartFILEPtr::SmartFILEPtr() throw() : m_file(nullptr) {}
 
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-SmartFILEPtr::SmartFILEPtr(FILE *const file) throw() :
-  m_file(file) {
-}
+SmartFILEPtr::SmartFILEPtr(FILE* const file) throw() : m_file(file) {}
 
 //-----------------------------------------------------------------------------
 // reset
 //-----------------------------------------------------------------------------
-void SmartFILEPtr::reset(FILE *const file) throw() {
+void SmartFILEPtr::reset(FILE* const file) throw() {
   // If the new pointer is not the one already owned
-  if(file != m_file) {
-
+  if (file != m_file) {
     // If this smart pointer still owns a pointer, then fclose it
-    if(m_file != nullptr) {
+    if (m_file != nullptr) {
       fclose(m_file);
     }
 
@@ -56,8 +51,7 @@ void SmartFILEPtr::reset(FILE *const file) throw() {
 //-----------------------------------------------------------------------------
 // SmartFILEPtr assignment operator
 //-----------------------------------------------------------------------------
-SmartFILEPtr &SmartFILEPtr::operator=(
-  SmartFILEPtr& obj) {
+SmartFILEPtr& SmartFILEPtr::operator=(SmartFILEPtr& obj) {
   reset(obj.release());
   return *this;
 }
@@ -72,22 +66,22 @@ SmartFILEPtr::~SmartFILEPtr() throw() {
 //-----------------------------------------------------------------------------
 // get
 //-----------------------------------------------------------------------------
-FILE *SmartFILEPtr::get() const throw() {
+FILE* SmartFILEPtr::get() const throw() {
   return m_file;
 }
 
 //-----------------------------------------------------------------------------
 // release
 //-----------------------------------------------------------------------------
-FILE *SmartFILEPtr::release() {
+FILE* SmartFILEPtr::release() {
   // If this smart pointer does not own a pointer
-  if(nullptr == m_file) {
+  if (nullptr == m_file) {
     cta::exception::NotAnOwner ex;
     ex.getMessage() << "Smart pointer does not own a FILE pointer";
     throw ex;
   }
 
-  FILE *const tmp = m_file;
+  FILE* const tmp = m_file;
 
   // A nullptr value indicates this smart pointer does not own a pointer
   m_file = nullptr;
@@ -95,4 +89,4 @@ FILE *SmartFILEPtr::release() {
   return tmp;
 }
 
-} // namespace cta
+}  // namespace cta

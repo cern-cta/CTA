@@ -23,11 +23,9 @@ namespace mediachanger {
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-IpAndPort::IpAndPort(const unsigned long i, const unsigned short p) noexcept:
-  ip(i),
-  port(p) {
+IpAndPort::IpAndPort(const unsigned long i, const unsigned short p) noexcept : ip(i), port(p) {
   // Do nothing
 }
 
-} // namespace mediachanger
-} // namespace cta
+}  // namespace mediachanger
+}  // namespace cta

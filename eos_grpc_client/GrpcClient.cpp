@@ -23,21 +23,15 @@
 namespace eos {
 namespace client {
 
-
-std::unique_ptr<GrpcClient>
-GrpcClient::Create(std::string endpoint, std::string token)
-{
+std::unique_ptr<GrpcClient> GrpcClient::Create(std::string endpoint, std::string token) {
   std::unique_ptr<eos::client::GrpcClient> p(
-    new eos::client::GrpcClient(grpc::CreateChannel(endpoint, grpc::InsecureChannelCredentials()))
-  );
+    new eos::client::GrpcClient(grpc::CreateChannel(endpoint, grpc::InsecureChannelCredentials())));
   p->set_ssl(false);
   p->set_token(token);
   return p;
 }
 
-
-std::string GrpcClient::ping(const std::string& payload)
-{
+std::string GrpcClient::ping(const std::string& payload) {
   eos::rpc::PingRequest request;
   request.set_message(payload);
   request.set_authkey(token());
@@ -50,8 +44,7 @@ std::string GrpcClient::ping(const std::string& payload)
   // stub_->AsyncPing() performs the RPC call, returning an instance we
   // store in "rpc". Because we are using the asynchronous API, we need to
   // hold on to the "rpc" instance in order to get updates on the ongoing RPC.
-  std::unique_ptr<grpc::ClientAsyncResponseReader<eos::rpc::PingReply>> rpc(
-    stub_->AsyncPing(&context, request, &cq));
+  std::unique_ptr<grpc::ClientAsyncResponseReader<eos::rpc::PingReply>> rpc(stub_->AsyncPing(&context, request, &cq));
   // Request that, upon completion of the RPC, "reply" be updated with the
   // server's response; "status" with the indication of whether the operation
   // was successful. Tag the request.
@@ -71,18 +64,17 @@ std::string GrpcClient::ping(const std::string& payload)
   GPR_ASSERT(ok);
 
   // Act upon the status of the actual RPC.
-  if(status.ok()) {
+  if (status.ok()) {
     return reply.message();
-  } else {
+  }
+  else {
     throw cta::exception::GrpcError("Ping failed with error: " + status.error_message());
   }
 }
 
-
-int GrpcClient::FileInsert(const std::vector<eos::rpc::FileMdProto> &files, eos::rpc::InsertReply &replies)
-{
+int GrpcClient::FileInsert(const std::vector<eos::rpc::FileMdProto>& files, eos::rpc::InsertReply& replies) {
   eos::rpc::FileInsertRequest request;
-  for(auto &file : files) {
+  for (auto& file : files) {
     *(request.add_files()) = file;
   }
 
@@ -113,27 +105,28 @@ int GrpcClient::FileInsert(const std::vector<eos::rpc::FileMdProto> &files, eos:
   GPR_ASSERT(ok);
 
   // Act upon the status of the actual RPC.
-  if(status.ok()) {
+  if (status.ok()) {
     int num_errors = 0;
-    for(auto &retc : replies.retc()) {
-      if(retc != 0) ++num_errors;
+    for (auto& retc : replies.retc()) {
+      if (retc != 0) {
+        ++num_errors;
+      }
     }
     return num_errors;
-  } else {
+  }
+  else {
     throw cta::exception::GrpcError("FileInsert failed with error: " + status.error_message());
   }
 }
 
-
-int GrpcClient::ContainerInsert(const std::vector<eos::rpc::ContainerMdProto> &dirs, eos::rpc::InsertReply &replies)
-{
+int GrpcClient::ContainerInsert(const std::vector<eos::rpc::ContainerMdProto>& dirs, eos::rpc::InsertReply& replies) {
   eos::rpc::ContainerInsertRequest request;
 
   // Tell EOS gRPC to behave like "eos mkdir": inherit xattrs from parent dir
   request.set_inherit_md(true);
 
-  for(auto &dir : dirs) {
-    if(dir.id() >= m_eos_cid) {
+  for (auto& dir : dirs) {
+    if (dir.id() >= m_eos_cid) {
       std::stringstream err;
       err << "FATAL ERROR: attempt to inject container with id=" << dir.id()
           << ", which exceeds EOS current container id=" << m_eos_cid;
@@ -169,20 +162,21 @@ int GrpcClient::ContainerInsert(const std::vector<eos::rpc::ContainerMdProto> &d
   GPR_ASSERT(ok);
 
   // Return the status of the RPC
-  if(status.ok()) {
+  if (status.ok()) {
     int num_errors = 0;
-    for(auto &retc : replies.retc()) {
-      if(retc != 0) ++num_errors;
+    for (auto& retc : replies.retc()) {
+      if (retc != 0) {
+        ++num_errors;
+      }
     }
     return num_errors;
-  } else {
+  }
+  else {
     throw cta::exception::GrpcError("ContainerInsert failed with error: " + status.error_message());
   }
 }
 
-
-void GrpcClient::GetCurrentIds(uint64_t &cid, uint64_t &fid)
-{
+void GrpcClient::GetCurrentIds(uint64_t& cid, uint64_t& fid) {
   eos::rpc::NsStatRequest request;
   request.set_authkey(token());
 
@@ -204,17 +198,16 @@ void GrpcClient::GetCurrentIds(uint64_t &cid, uint64_t &fid)
   GPR_ASSERT(ok);
 
   // Act upon the status of the actual RPC
-  if(status.ok()) {
+  if (status.ok()) {
     cid = m_eos_cid = response.current_cid();
     fid = m_eos_fid = response.current_fid();
-  } else {
+  }
+  else {
     throw cta::exception::GrpcError("GetCurrentIds namespace query failed with error: " + status.error_message());
   }
 }
 
-
-eos::rpc::MDResponse GrpcClient::GetMD(eos::rpc::TYPE type, uint64_t id, const std::string &path, bool showJson)
-{
+eos::rpc::MDResponse GrpcClient::GetMD(eos::rpc::TYPE type, uint64_t id, const std::string& path, bool showJson) {
   eos::rpc::MDRequest request;
 
   request.set_type(type);
@@ -222,7 +215,7 @@ eos::rpc::MDResponse GrpcClient::GetMD(eos::rpc::TYPE type, uint64_t id, const s
   request.mutable_id()->set_path(path);
   request.set_authkey(token());
 
-  if(showJson) {
+  if (showJson) {
     google::protobuf::util::JsonPrintOptions options;
     options.add_whitespace = true;
     options.always_print_primitive_fields = true;
@@ -235,18 +228,19 @@ eos::rpc::MDResponse GrpcClient::GetMD(eos::rpc::TYPE type, uint64_t id, const s
   grpc::CompletionQueue cq;
 
   auto tag = nextTag();
-  std::unique_ptr<grpc::ClientAsyncReader<eos::rpc::MDResponse>> rpc(
-    stub_->AsyncMD(&context, request, &cq, tag));
+  std::unique_ptr<grpc::ClientAsyncReader<eos::rpc::MDResponse>> rpc(stub_->AsyncMD(&context, request, &cq, tag));
 
   eos::rpc::MDResponse response;
-  while(true) {
-    void *got_tag;
+  while (true) {
+    void* got_tag;
     bool ok = false;
     bool ret = cq.Next(&got_tag, &ok);
-    if(!ret || !ok || got_tag != tag) break;
+    if (!ret || !ok || got_tag != tag) {
+      break;
+    }
     rpc->Read(&response, tag);
   }
-  if(showJson) {
+  if (showJson) {
     google::protobuf::util::JsonPrintOptions options;
     options.add_whitespace = true;
     options.always_print_primitive_fields = true;
@@ -259,7 +253,6 @@ eos::rpc::MDResponse GrpcClient::GetMD(eos::rpc::TYPE type, uint64_t id, const s
 }
 
 grpc::Status GrpcClient::Exec(eos::rpc::NSRequest& request) {
-
   request.set_authkey(token());
 
   auto tag = nextTag();
@@ -268,8 +261,7 @@ grpc::Status GrpcClient::Exec(eos::rpc::NSRequest& request) {
   grpc::ClientContext context;
   grpc::CompletionQueue cq;
   grpc::Status status;
-  std::unique_ptr<grpc::ClientAsyncResponseReader<eos::rpc::NSResponse> > rpc(
-    stub_->AsyncExec(&context, request, &cq));
+  std::unique_ptr<grpc::ClientAsyncResponseReader<eos::rpc::NSResponse>> rpc(stub_->AsyncExec(&context, request, &cq));
   rpc->Finish(&response, &status, tag);
 
   void* got_tag;
@@ -281,4 +273,5 @@ grpc::Status GrpcClient::Exec(eos::rpc::NSRequest& request) {
   return status;
 }
 
-}} // namespace eos::client
+}  // namespace client
+}  // namespace eos

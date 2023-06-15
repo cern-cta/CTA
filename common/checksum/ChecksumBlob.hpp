@@ -33,24 +33,24 @@ namespace checksum {
  * We allow all checksum types supported by EOS
  */
 enum ChecksumType {
-  NONE,       //!< No checksum specified
-  ADLER32,    //!< Adler-32 checksum
-  CRC32,      //!< CRC-32 checksum
-  CRC32C,     //!< CRC-32C checksum
-  MD5,        //!< MD5 128-bit hash
-  SHA1        //!< SHA-1 160-bit hash
+  NONE,     //!< No checksum specified
+  ADLER32,  //!< Adler-32 checksum
+  CRC32,    //!< CRC-32 checksum
+  CRC32C,   //!< CRC-32C checksum
+  MD5,      //!< MD5 128-bit hash
+  SHA1      //!< SHA-1 160-bit hash
 };
 
 /*!
  * String representations of the checksum types
  */
 const std::map<ChecksumType, std::string> ChecksumTypeName = {
-  { NONE,    "NONE" },
-  { ADLER32, "ADLER32" },
-  { CRC32,   "CRC32" }, 
-  { CRC32C,  "CRC32C" }, 
-  { MD5,     "MD5" }, 
-  { SHA1,    "SHA1" }
+  {NONE,    "NONE"   },
+  {ADLER32, "ADLER32"},
+  {CRC32,   "CRC32"  },
+  {CRC32C,  "CRC32C" },
+  {MD5,     "MD5"    },
+  {SHA1,    "SHA1"   }
 };
 
 /*!
@@ -66,16 +66,12 @@ public:
   /*!
    * Construct and insert one checksum
    */
-  ChecksumBlob(ChecksumType type, const std::string &value) {
-    insert(type, value);
-  }
+  ChecksumBlob(ChecksumType type, const std::string& value) { insert(type, value); }
 
   /*!
    * Construct and insert one 32-bit checksum
    */
-  ChecksumBlob(ChecksumType type, uint32_t value) {
-    insert(type, value);
-  }
+  ChecksumBlob(ChecksumType type, uint32_t value) { insert(type, value); }
 
   /*!
    * Clear all of the checksums in this blob
@@ -87,7 +83,7 @@ public:
    *
    * @param[in] value    Little-endian byte array containing the checksum
    */
-  void insert(ChecksumType type, const std::string &value);
+  void insert(ChecksumType type, const std::string& value);
 
   /*!
    * Insert a new 32-bit checksum into the blob
@@ -102,12 +98,12 @@ public:
   /*!
    * Deserialize from a byte array
    */
-  void deserialize(const std::string &bytearray);
+  void deserialize(const std::string& bytearray);
 
   /*!
    * Deserialize from a byte array. In case of an invalid byte array, use the supplied Adler32 value instead.
    */
-  void deserializeOrSetAdler32(const std::string &bytearray, uint32_t adler32);
+  void deserializeOrSetAdler32(const std::string& bytearray, uint32_t adler32);
 
   /*!
    * Serialise to a byte array
@@ -132,9 +128,7 @@ public:
   /*!
    * Get a const reference to the implementation (for conversion to protobuf)
    */
-  const std::map<ChecksumType,std::string> &getMap() const {
-    return m_cs;
-  }
+  const std::map<ChecksumType, std::string>& getMap() const { return m_cs; }
 
   /*!
    * Return the checksum for the specified key
@@ -142,10 +136,10 @@ public:
   std::string at(ChecksumType type) const {
     try {
       return m_cs.at(type);
-    } catch(std::out_of_range &) {
+    }
+    catch (std::out_of_range&) {
       std::stringstream ss;
-      ss << ChecksumTypeName.at(type) << " checksum not found. Checksum blob contents: "
-         << *this;
+      ss << ChecksumTypeName.at(type) << " checksum not found. Checksum blob contents: " << *this;
       throw exception::ChecksumTypeMismatch(ss.str());
     }
   }
@@ -153,22 +147,24 @@ public:
   /*!
    * Check that a single checksum is in the blob and that it has the value expected, throw an exception if not
    */
-  void validate(ChecksumType type, const std::string &value) const;
+  void validate(ChecksumType type, const std::string& value) const;
 
   /*!
    * Check all the checksums in the blob match, throw an exception if they don't
    */
-  void validate(const ChecksumBlob &blob) const;
+  void validate(const ChecksumBlob& blob) const;
 
   /*!
    * Returns true if the checksum is in the blob and that it has the value expected
    */
-  bool contains(ChecksumType type, const std::string &value) const {
+  bool contains(ChecksumType type, const std::string& value) const {
     try {
       validate(type, value);
-    } catch(exception::ChecksumTypeMismatch &ex) {
+    }
+    catch (exception::ChecksumTypeMismatch& ex) {
       return false;
-    } catch(exception::ChecksumValueMismatch &ex) {
+    }
+    catch (exception::ChecksumValueMismatch& ex) {
       return false;
     }
     return true;
@@ -177,30 +173,33 @@ public:
   /*!
    * Returns true if all the checksums in the blob match
    */
-  bool operator==(const ChecksumBlob &blob) const {
+  bool operator==(const ChecksumBlob& blob) const {
     try {
       validate(blob);
-    } catch(exception::ChecksumBlobSizeMismatch &ex) {
+    }
+    catch (exception::ChecksumBlobSizeMismatch& ex) {
       return false;
-    } catch(exception::ChecksumTypeMismatch &ex) {
+    }
+    catch (exception::ChecksumTypeMismatch& ex) {
       return false;
-    } catch(exception::ChecksumValueMismatch &ex) {
+    }
+    catch (exception::ChecksumValueMismatch& ex) {
       return false;
     }
     return true;
   }
-  
+
   /**
    * Adds the first checksum of the list of checksums
    * in the log params container given in parameter
    * @param spc the log param container to put the first checksum in
    */
-  void addFirstChecksumToLog(cta::log::ScopedParamContainer &spc) const;
+  void addFirstChecksumToLog(cta::log::ScopedParamContainer& spc) const;
 
   /*!
    * Returns false if all the checksums in the blob match
    */
-  bool operator!=(const ChecksumBlob &blob) const { return !(*this == blob); }
+  bool operator!=(const ChecksumBlob& blob) const { return !(*this == blob); }
 
   /*!
    * Convert hexadecimal string to little-endian byte array
@@ -210,12 +209,13 @@ public:
   /*!
    * Convert little-endian byte array to hexadecimal string
    */
-  static std::string ByteArrayToHex(const std::string &bytearray);
+  static std::string ByteArrayToHex(const std::string& bytearray);
 
 private:
-  friend std::ostream &operator<<(std::ostream &os, const ChecksumBlob &csb);
+  friend std::ostream& operator<<(std::ostream& os, const ChecksumBlob& csb);
 
-  std::map<ChecksumType,std::string> m_cs;
+  std::map<ChecksumType, std::string> m_cs;
 };
 
-}} // namespace cta::checksum
+}  // namespace checksum
+}  // namespace cta

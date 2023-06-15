@@ -28,7 +28,7 @@
 /*******************************************************************************
  * strerror_r_wrapper
  ******************************************************************************/
-int strerror_r_wrapper(int errnum, char *buf, size_t buflen) {
+int strerror_r_wrapper(int errnum, char* buf, size_t buflen) {
   /* This function should be compiled using a C++ compiler and not a C compiler.
    */
   return strerror_r(errnum, buf, buflen);

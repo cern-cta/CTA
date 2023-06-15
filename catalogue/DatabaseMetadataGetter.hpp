@@ -37,12 +37,14 @@ namespace catalogue {
 /**
  * Interface class to get database metadata
  */
-class MetadataGetter{
+class MetadataGetter {
 protected:
-  void removeObjectNameContaining(std::list<std::string>& objects, const std::list<std::string> &wordsToTriggerRemoval);
-  void removeObjectNameNotContaining(std::list<std::string>& objects, const std::list<std::string> &wordsNotToTriggerRemoval);
-  void removeObjectNameNotMatches(std::list<std::string> &objects, const cta::utils::Regex &regex);
-  void removeObjectNameMatches(std::list<std::string> &objects, const cta::utils::Regex &regex);
+  void removeObjectNameContaining(std::list<std::string>& objects, const std::list<std::string>& wordsToTriggerRemoval);
+  void removeObjectNameNotContaining(std::list<std::string>& objects,
+                                     const std::list<std::string>& wordsNotToTriggerRemoval);
+  void removeObjectNameNotMatches(std::list<std::string>& objects, const cta::utils::Regex& regex);
+  void removeObjectNameMatches(std::list<std::string>& objects, const cta::utils::Regex& regex);
+
 public:
   virtual std::list<std::string> getIndexNames() = 0;
   virtual std::list<std::string> getTableNames() = 0;
@@ -55,11 +57,12 @@ public:
  * This class is used to get the Metadata (table names, columns, indexes) of the database accessed via the connection given in parameters
  * It will simply call the methods from the connection (Conn) instance and adapt or not the metadata returned.
  */
-class DatabaseMetadataGetter: public MetadataGetter {
+class DatabaseMetadataGetter : public MetadataGetter {
 protected:
   rdbms::Conn& m_conn;
+
 public:
-  explicit DatabaseMetadataGetter(cta::rdbms::Conn & conn);
+  explicit DatabaseMetadataGetter(cta::rdbms::Conn& conn);
   virtual ~DatabaseMetadataGetter();
   SchemaVersion getCatalogueVersion();
   virtual std::list<std::string> getIndexNames();
@@ -86,7 +89,7 @@ public:
 /**
  * Specific SQLite database metadata getter
  */
-class SQLiteDatabaseMetadataGetter: public DatabaseMetadataGetter{
+class SQLiteDatabaseMetadataGetter : public DatabaseMetadataGetter {
 public:
   explicit SQLiteDatabaseMetadataGetter(cta::rdbms::Conn& conn);
   virtual ~SQLiteDatabaseMetadataGetter();
@@ -99,7 +102,7 @@ public:
 /**
  * Specific Oracle database metadata getter
  */
-class OracleDatabaseMetadataGetter: public DatabaseMetadataGetter{
+class OracleDatabaseMetadataGetter : public DatabaseMetadataGetter {
 public:
   explicit OracleDatabaseMetadataGetter(cta::rdbms::Conn& conn);
   virtual ~OracleDatabaseMetadataGetter();
@@ -111,7 +114,7 @@ public:
 /**
  * Specific Postgres database metadata getter
  */
-class PostgresDatabaseMetadataGetter: public DatabaseMetadataGetter{
+class PostgresDatabaseMetadataGetter : public DatabaseMetadataGetter {
 public:
   explicit PostgresDatabaseMetadataGetter(cta::rdbms::Conn& conn);
   virtual ~PostgresDatabaseMetadataGetter();
@@ -127,19 +130,21 @@ public:
  */
 class DatabaseMetadataGetterFactory {
 public:
-  static DatabaseMetadataGetter* create(const rdbms::Login::DbType dbType, cta::rdbms::Conn & conn);
+  static DatabaseMetadataGetter* create(const rdbms::Login::DbType dbType, cta::rdbms::Conn& conn);
 };
 
 /**
  * This class is used to filter the Metadata that comes from the SQLite schema regarding the dbType we are currently checking
  */
-class SchemaMetadataGetter: public MetadataGetter{
+class SchemaMetadataGetter : public MetadataGetter {
 protected:
   std::unique_ptr<SQLiteDatabaseMetadataGetter> m_sqliteDatabaseMetadataGetter;
   // The database type we would like to compare the SQLite schema against (used for filtering the results)
   cta::rdbms::Login::DbType m_dbType;
+
 public:
-  SchemaMetadataGetter(std::unique_ptr<SQLiteDatabaseMetadataGetter> sqliteCatalogueMetadataGetter, const cta::rdbms::Login::DbType dbType);
+  SchemaMetadataGetter(std::unique_ptr<SQLiteDatabaseMetadataGetter> sqliteCatalogueMetadataGetter,
+                       const cta::rdbms::Login::DbType dbType);
   std::list<std::string> getIndexNames() override;
   std::list<std::string> getTableNames() override;
   std::map<std::string, std::string> getColumns(const std::string& tableName) override;

@@ -28,8 +28,7 @@ namespace catalogue {
 /**
  * Structure describing the event of having written a file to tape.
  */
-struct TapeFileWritten: public TapeItemWritten {
-
+struct TapeFileWritten : public TapeItemWritten {
   /**
    * Constructor.
    *
@@ -42,7 +41,7 @@ struct TapeFileWritten: public TapeItemWritten {
    *
    * @param rhs The right hand side of the operator.
    */
-  bool operator==(const TapeFileWritten &rhs) const;
+  bool operator==(const TapeFileWritten& rhs) const;
 
   /**
    * The unique identifier of the file being archived.
@@ -53,7 +52,7 @@ struct TapeFileWritten: public TapeItemWritten {
    * The instance name of the source disk system.
    */
   std::string diskInstance;
-  
+
   /**
    * The identifier of the source disk file which is unique within it's host
    * disk system.  Two files from different disk systems may have the same
@@ -61,7 +60,7 @@ struct TapeFileWritten: public TapeItemWritten {
    * globally unique, in other words unique within the CTA catalogue.
    */
   std::string diskFileId;
-  
+
   /**
    * The path of the source disk file within its host disk system.
    */
@@ -103,7 +102,7 @@ struct TapeFileWritten: public TapeItemWritten {
    */
   uint8_t copyNb;
 
-}; // struct TapeFileWritten
+};  // struct TapeFileWritten
 
 /**
  * Output stream operator for an TapeFileWritten object.
@@ -114,7 +113,7 @@ struct TapeFileWritten: public TapeItemWritten {
  * @param os The output stream.
  * @param obj The object.
  */
-std::ostream &operator<<(std::ostream &os, const TapeFileWritten &obj);
+std::ostream& operator<<(std::ostream& os, const TapeFileWritten& obj);
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

@@ -24,14 +24,13 @@ namespace cta {
 namespace postgresscheddb {
 
 class RepackReportBatch : public SchedulerDatabase::RepackReportBatch {
- friend class cta::PostgresSchedDB;
+  friend class cta::PostgresSchedDB;
 
- public:
+public:
+  RepackReportBatch();
 
-   RepackReportBatch();
-
-   void report(log::LogContext & lc) override;
+  void report(log::LogContext& lc) override;
 };
 
-} //namespace postgresscheddb
-} //namespace cta
+}  //namespace postgresscheddb
+}  //namespace cta

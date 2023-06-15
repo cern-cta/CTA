@@ -42,7 +42,7 @@ cta::common::dataStructures::SecurityIdentity getAdmin() {
   return admin;
 }
 
-cta::common::dataStructures::TapeDrive getTapeDriveWithMandatoryElements(const std::string &driveName) {
+cta::common::dataStructures::TapeDrive getTapeDriveWithMandatoryElements(const std::string& driveName) {
   cta::common::dataStructures::TapeDrive tapeDrive;
   tapeDrive.driveName = driveName;
   tapeDrive.host = "admin_host";
@@ -54,7 +54,7 @@ cta::common::dataStructures::TapeDrive getTapeDriveWithMandatoryElements(const s
   return tapeDrive;
 }
 
-cta::common::dataStructures::TapeDrive getTapeDriveWithAllElements(const std::string &driveName) {
+cta::common::dataStructures::TapeDrive getTapeDriveWithAllElements(const std::string& driveName) {
   cta::common::dataStructures::TapeDrive tapeDrive;
   tapeDrive.driveName = driveName;
   tapeDrive.host = "admin_host";
@@ -106,10 +106,7 @@ cta::common::dataStructures::TapeDrive getTapeDriveWithAllElements(const std::st
 }
 }  // namespace
 
-cta_catalogue_DriveStateTest::cta_catalogue_DriveStateTest()
-  : m_dummyLog("dummy", "dummy"),
-    m_admin(getAdmin()) {
-}
+cta_catalogue_DriveStateTest::cta_catalogue_DriveStateTest() : m_dummyLog("dummy", "dummy"), m_admin(getAdmin()) {}
 
 void cta_catalogue_DriveStateTest::SetUp() {
   cta::log::LogContext dummyLc(m_dummyLog);
@@ -180,7 +177,6 @@ TEST_P(cta_catalogue_DriveStateTest, getTapeDriveWithEmptyEntryLog) {
   m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
 }
 
-
 TEST_P(cta_catalogue_DriveStateTest, getTapeDriveWithNonExistingLogicalLibrary) {
   const std::string tapeDriveName = "VDSTK11";
   auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
@@ -201,7 +197,6 @@ TEST_P(cta_catalogue_DriveStateTest, getTapeDriveWithDisabledLogicalLibrary) {
   m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
   m_catalogue->LogicalLibrary()->deleteLogicalLibrary(tapeDrive.logicalLibrary);
 }
-
 
 TEST_P(cta_catalogue_DriveStateTest, failToGetTapeDrive) {
   const std::string tapeDriveName = "VDSTK11";
@@ -282,7 +277,8 @@ TEST_P(cta_catalogue_DriveStateTest, setDesiredStateWithEmptyReason) {
   // SqlLite (InMemory) returns an empty string and Oracle returns a std::nullopt
   if (storedTapeDrive.value().reasonUpDown) {
     ASSERT_TRUE(storedTapeDrive.value().reasonUpDown.value().empty());
-  } else {
+  }
+  else {
     ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().reasonUpDown));
   }
   m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
@@ -302,9 +298,9 @@ TEST_P(cta_catalogue_DriveStateTest, setDesiredState) {
     tapeDrivesState->setDesiredDriveState(tapeDriveName, desiredState, dummyLc);
   }
   const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
-  ASSERT_EQ(storedTapeDrive.value().desiredUp , desiredState.up);
-  ASSERT_EQ(storedTapeDrive.value().desiredForceDown , desiredState.forceDown);
-  ASSERT_EQ(storedTapeDrive.value().reasonUpDown.value() , desiredState.reason);
+  ASSERT_EQ(storedTapeDrive.value().desiredUp, desiredState.up);
+  ASSERT_EQ(storedTapeDrive.value().desiredForceDown, desiredState.forceDown);
+  ASSERT_EQ(storedTapeDrive.value().reasonUpDown.value(), desiredState.reason);
   m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
 }
 
@@ -329,10 +325,10 @@ TEST_P(cta_catalogue_DriveStateTest, setDesiredStateComment) {
     tapeDrivesState->setDesiredDriveState(tapeDriveName, desiredState, dummyLc);
   }
   const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
-  ASSERT_EQ(storedTapeDrive.value().desiredUp , tapeDrive.desiredUp);
-  ASSERT_EQ(storedTapeDrive.value().desiredForceDown , tapeDrive.desiredForceDown);
-  ASSERT_EQ(storedTapeDrive.value().reasonUpDown.value() , tapeDrive.reasonUpDown);
-  ASSERT_EQ(storedTapeDrive.value().userComment.value() , comment);
+  ASSERT_EQ(storedTapeDrive.value().desiredUp, tapeDrive.desiredUp);
+  ASSERT_EQ(storedTapeDrive.value().desiredForceDown, tapeDrive.desiredForceDown);
+  ASSERT_EQ(storedTapeDrive.value().reasonUpDown.value(), tapeDrive.reasonUpDown);
+  ASSERT_EQ(storedTapeDrive.value().userComment.value(), comment);
   m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
 }
 
@@ -357,13 +353,14 @@ TEST_P(cta_catalogue_DriveStateTest, setDesiredStateEmptyComment) {
     tapeDrivesState->setDesiredDriveState(tapeDriveName, desiredState, dummyLc);
   }
   const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
-  ASSERT_EQ(storedTapeDrive.value().desiredUp , tapeDrive.desiredUp);
-  ASSERT_EQ(storedTapeDrive.value().desiredForceDown , tapeDrive.desiredForceDown);
-  ASSERT_EQ(storedTapeDrive.value().reasonUpDown.value() , tapeDrive.reasonUpDown);
+  ASSERT_EQ(storedTapeDrive.value().desiredUp, tapeDrive.desiredUp);
+  ASSERT_EQ(storedTapeDrive.value().desiredForceDown, tapeDrive.desiredForceDown);
+  ASSERT_EQ(storedTapeDrive.value().reasonUpDown.value(), tapeDrive.reasonUpDown);
   // SqlLite (InMemory) returns an empty string and Oracle returns a std::nullopt
   if (storedTapeDrive.value().userComment) {
     ASSERT_TRUE(storedTapeDrive.value().userComment.value().empty());
-  } else {
+  }
+  else {
     ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().userComment));
   }
   m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
@@ -391,9 +388,8 @@ TEST_P(cta_catalogue_DriveStateTest, setTapeDriveStatistics) {
   const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
   ASSERT_EQ(storedTapeDrive.value().bytesTransferedInSession.value(), inputs.bytesTransferred);
   ASSERT_EQ(storedTapeDrive.value().filesTransferedInSession.value(), inputs.filesTransferred);
-  const auto lastModificationLog = cta::common::dataStructures::EntryLog("NO_USER", driveInfo.host,
-    inputs.reportTime);
-  ASSERT_EQ(storedTapeDrive.value().lastModificationLog.value() , lastModificationLog);
+  const auto lastModificationLog = cta::common::dataStructures::EntryLog("NO_USER", driveInfo.host, inputs.reportTime);
+  ASSERT_EQ(storedTapeDrive.value().lastModificationLog.value(), lastModificationLog);
   m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
 }
 
@@ -1240,7 +1236,6 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusShutdown) {
   m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
 }
 
-
 TEST_P(cta_catalogue_DriveStateTest, addDiskSpaceReservationWhenItsNull) {
   const std::string tapeDriveName = "VDSTK11";
   auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
@@ -1427,7 +1422,7 @@ TEST_P(cta_catalogue_DriveStateTest, failToIncrementAnOldDiskSystem) {
   oldRequest.addRequest(tapeDrive.diskSystemName.value(), tapeDrive.reservedBytes.value());
 
   m_catalogue->DriveState()->releaseDiskSpace(tapeDriveName, tapeDrive.reservationSessionId.value(), oldRequest,
-    dummyLc);
+                                              dummyLc);
 
   // Check it keeps the new disk space system values
   const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
@@ -1494,7 +1489,8 @@ TEST_P(cta_catalogue_DriveStateTest, failToDecrementAnOldMountIDAndDecrementNewA
   cta::DiskSpaceReservationRequest oldRequest;
   oldRequest.addRequest(diskSystemName, tapeDrive.reservedBytes.value());
 
-  m_catalogue->DriveState()->releaseDiskSpace(tapeDriveName, tapeDrive.reservationSessionId.value(), oldRequest, dummyLc);
+  m_catalogue->DriveState()->releaseDiskSpace(tapeDriveName, tapeDrive.reservationSessionId.value(), oldRequest,
+                                              dummyLc);
 
   // Check it keeps the new disk space system values
   auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);

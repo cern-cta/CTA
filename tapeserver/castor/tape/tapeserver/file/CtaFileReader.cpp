@@ -31,11 +31,10 @@ namespace castor {
 namespace tape {
 namespace tapeFile {
 
-CtaFileReader::CtaFileReader(const std::unique_ptr<ReadSession> &rs, const cta::RetrieveJob &fileToRecall)
-  : FileReader(rs, fileToRecall) {
-}
+CtaFileReader::CtaFileReader(const std::unique_ptr<ReadSession>& rs, const cta::RetrieveJob& fileToRecall) :
+FileReader(rs, fileToRecall) {}
 
-void CtaFileReader::positionByFseq(const cta::RetrieveJob &fileToRecall) {
+void CtaFileReader::positionByFseq(const cta::RetrieveJob& fileToRecall) {
   if (m_session->getCurrentFilePart() != PartOfFile::Header) {
     m_session->setCorrupted();
     throw SessionCorrupted();
@@ -51,23 +50,24 @@ void CtaFileReader::positionByFseq(const cta::RetrieveJob &fileToRecall) {
     throw cta::exception::InvalidArgument(err.str());
   }
 
-  const int64_t fSeq_delta = static_cast<int64_t>(fileToRecall.selectedTapeFile().fSeq)
-                           - static_cast<int64_t>(m_session->getCurrentFseq());
+  const int64_t fSeq_delta =
+    static_cast<int64_t>(fileToRecall.selectedTapeFile().fSeq) - static_cast<int64_t>(m_session->getCurrentFseq());
   if (fileToRecall.selectedTapeFile().fSeq == 1) {
     moveToFirstHeaderBlock();
-  } else {
+  }
+  else {
     moveReaderByFSeqDelta(fSeq_delta);
   }
   checkHeaders(fileToRecall);
 }
 
-void CtaFileReader::positionByBlockID(const cta::RetrieveJob &fileToRecall) {
+void CtaFileReader::positionByBlockID(const cta::RetrieveJob& fileToRecall) {
   // Make sure the session state is advanced to cover our failures
   // and allow next call to position to discover we failed half way
   m_session->setCurrentFilePart(PartOfFile::HeaderProcessing);
 
-  if (fileToRecall.selectedTapeFile().blockId
-    > std::numeric_limits<decltype(fileToRecall.selectedTapeFile().blockId)>::max()) {
+  if (fileToRecall.selectedTapeFile().blockId >
+      std::numeric_limits<decltype(fileToRecall.selectedTapeFile().blockId)>::max()) {
     std::ostringstream ex_str;
     ex_str << "[FileReader::positionByBlockID] - Block id larger than the supported uint32_t limit: "
            << fileToRecall.selectedTapeFile().blockId;
@@ -83,11 +83,12 @@ void CtaFileReader::moveToFirstHeaderBlock() {
   // which we rewind the tape anyway and then space forward)
   m_session->m_drive.rewind();
   VOL1 vol1;
-  m_session->m_drive.readExactBlock(reinterpret_cast<void *>(&vol1), sizeof(vol1),
-    "[FileReader::position] - Reading VOL1");
+  m_session->m_drive.readExactBlock(reinterpret_cast<void*>(&vol1), sizeof(vol1),
+                                    "[FileReader::position] - Reading VOL1");
   try {
     vol1.verify();
-  } catch (std::exception & e) {
+  }
+  catch (std::exception& e) {
     throw TapeFormatError(e.what());
   }
 }
@@ -99,12 +100,9 @@ void CtaFileReader::checkTrailers() {
   EOF1 eof1;
   EOF2 eof2;
   UTL1 utl1;
-  m_session->m_drive.readExactBlock(reinterpret_cast<void *>(&eof1), sizeof(eof1),
-    "[FileReader::read] - Reading HDR1");
-  m_session->m_drive.readExactBlock(reinterpret_cast<void *>(&eof2), sizeof(eof2),
-    "[FileReader::read] - Reading HDR2");
-  m_session->m_drive.readExactBlock(reinterpret_cast<void *>(&utl1), sizeof(utl1),
-    "[FileReader::read] - Reading UTL1");
+  m_session->m_drive.readExactBlock(reinterpret_cast<void*>(&eof1), sizeof(eof1), "[FileReader::read] - Reading HDR1");
+  m_session->m_drive.readExactBlock(reinterpret_cast<void*>(&eof2), sizeof(eof2), "[FileReader::read] - Reading HDR2");
+  m_session->m_drive.readExactBlock(reinterpret_cast<void*>(&utl1), sizeof(utl1), "[FileReader::read] - Reading UTL1");
   m_session->m_drive.readFileMark("[FileReader::read] - Reading file mark at the end of file trailer");
 
   m_session->setCurrentFseq(m_session->getCurrentFseq() + 1);  // moving on to the header of the next file
@@ -116,12 +114,12 @@ void CtaFileReader::checkTrailers() {
     eof2.verify();
     utl1.verify();
   }
-  catch (std::exception & e) {
+  catch (std::exception& e) {
     throw TapeFormatError(e.what());
   }
 }
 
-size_t CtaFileReader::readNextDataBlock(void *data, const size_t size) {
+size_t CtaFileReader::readNextDataBlock(void* data, const size_t size) {
   if (size != m_currentBlockSize) {
     throw WrongBlockSize();
   }
@@ -138,10 +136,12 @@ size_t CtaFileReader::readNextDataBlock(void *data, const size_t size) {
 void CtaFileReader::moveReaderByFSeqDelta(const int64_t fSeq_delta) {
   if (fSeq_delta == 0) {
     // do nothing we are in the correct place
-  } else if (fSeq_delta > 0) {
+  }
+  else if (fSeq_delta > 0) {
     // we need to skip three file marks per file (header, payload, trailer)
     m_session->m_drive.spaceFileMarksForward(static_cast<uint32_t>(fSeq_delta) * 3);
-  } else {  // fSeq_delta < 0
+  }
+  else {  // fSeq_delta < 0
     // we need to skip three file marks per file
     // (trailer, payload, header) + 1 to go on the BOT (beginning of tape) side
     // of the file mark before the header of the file we want to read
@@ -151,10 +151,10 @@ void CtaFileReader::moveReaderByFSeqDelta(const int64_t fSeq_delta) {
   }
 }
 
-void CtaFileReader::useBlockID(const cta::RetrieveJob &fileToRecall) {
+void CtaFileReader::useBlockID(const cta::RetrieveJob& fileToRecall) {
   // if we want the first file on tape (fileInfo.blockId==0) we need to skip the VOL1 header
-  const uint32_t destination_block = fileToRecall.selectedTapeFile().blockId ?
-    fileToRecall.selectedTapeFile().blockId : 1;
+  const uint32_t destination_block =
+    fileToRecall.selectedTapeFile().blockId ? fileToRecall.selectedTapeFile().blockId : 1;
   /*
   we position using the sg locate because it is supposed to do the
   right thing possibly in a more optimized way (better than st's
@@ -166,7 +166,7 @@ void CtaFileReader::useBlockID(const cta::RetrieveJob &fileToRecall) {
   m_session->m_drive.positionToLogicalObject(destination_block);
 }
 
-void CtaFileReader::setBlockSize(const UHL1 &uhl1)  {
+void CtaFileReader::setBlockSize(const UHL1& uhl1) {
   m_currentBlockSize = static_cast<size_t>(atol(uhl1.getBlockSize().c_str()));
   if (m_currentBlockSize < 1) {
     std::ostringstream ex_str;
@@ -175,19 +175,19 @@ void CtaFileReader::setBlockSize(const UHL1 &uhl1)  {
   }
 }
 
-void CtaFileReader::checkHeaders(const cta::RetrieveJob &fileToRecall) {
+void CtaFileReader::checkHeaders(const cta::RetrieveJob& fileToRecall) {
   // save the current fSeq into the read session
   m_session->setCurrentFseq(fileToRecall.selectedTapeFile().fSeq);
 
   HDR1 hdr1;
   HDR2 hdr2;
   UHL1 uhl1;
-  m_session->m_drive.readExactBlock(reinterpret_cast<void *>(&hdr1), sizeof(hdr1),
-    "[FileReader::position] - Reading HDR1");
-  m_session->m_drive.readExactBlock(reinterpret_cast<void *>(&hdr2), sizeof(hdr2),
-    "[FileReader::position] - Reading HDR2");
-  m_session->m_drive.readExactBlock(reinterpret_cast<void *>(&uhl1), sizeof(uhl1),
-    "[FileReader::position] - Reading UHL1");
+  m_session->m_drive.readExactBlock(reinterpret_cast<void*>(&hdr1), sizeof(hdr1),
+                                    "[FileReader::position] - Reading HDR1");
+  m_session->m_drive.readExactBlock(reinterpret_cast<void*>(&hdr2), sizeof(hdr2),
+                                    "[FileReader::position] - Reading HDR2");
+  m_session->m_drive.readExactBlock(reinterpret_cast<void*>(&uhl1), sizeof(uhl1),
+                                    "[FileReader::position] - Reading UHL1");
   m_session->m_drive.readFileMark("[FileReader::position] - Reading file mark at the end of file header");
   // after this we should be where we want, i.e. at the beginning of the file
   m_session->setCurrentFilePart(PartOfFile::Payload);
@@ -198,7 +198,7 @@ void CtaFileReader::checkHeaders(const cta::RetrieveJob &fileToRecall) {
     hdr2.verify();
     uhl1.verify();
   }
-  catch (std::exception & e) {
+  catch (std::exception& e) {
     throw TapeFormatError(e.what());
   }
 

@@ -15,14 +15,13 @@
  *               submit itself to any jurisdiction.
  */
 
-
 #include "DatabaseStatisticsServiceFactory.hpp"
 
 namespace cta {
 namespace statistics {
 
-std::unique_ptr<DatabaseStatisticsService> DatabaseStatisticsServiceFactory::create(cta::rdbms::Conn* databaseConnection,
-  cta::rdbms::Login::DbType dbType) {
+std::unique_ptr<DatabaseStatisticsService>
+  DatabaseStatisticsServiceFactory::create(cta::rdbms::Conn* databaseConnection, cta::rdbms::Login::DbType dbType) {
   typedef cta::rdbms::Login::DbType DbType;
   std::unique_ptr<DatabaseStatisticsService> ret;
   switch (dbType) {

@@ -24,17 +24,17 @@
 namespace cta {
 namespace catalogue {
 
-OracleMediaTypeCatalogue::OracleMediaTypeCatalogue(log::Logger &log,
-  std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue)
-  : RdbmsMediaTypeCatalogue(log, connPool, rdbmsCatalogue) {}
+OracleMediaTypeCatalogue::OracleMediaTypeCatalogue(log::Logger& log,
+                                                   std::shared_ptr<rdbms::ConnPool> connPool,
+                                                   RdbmsCatalogue* rdbmsCatalogue) :
+RdbmsMediaTypeCatalogue(log, connPool, rdbmsCatalogue) {}
 
-uint64_t OracleMediaTypeCatalogue::getNextMediaTypeId(rdbms::Conn &conn) const {
+uint64_t OracleMediaTypeCatalogue::getNextMediaTypeId(rdbms::Conn& conn) const {
   try {
-    const char *const sql =
-      "SELECT "
-        "MEDIA_TYPE_ID_SEQ.NEXTVAL AS MEDIA_TYPE_ID "
-      "FROM "
-        "DUAL";
+    const char* const sql = "SELECT "
+                            "MEDIA_TYPE_ID_SEQ.NEXTVAL AS MEDIA_TYPE_ID "
+                            "FROM "
+                            "DUAL";
     auto stmt = conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     if (!rset.next()) {
@@ -42,9 +42,11 @@ uint64_t OracleMediaTypeCatalogue::getNextMediaTypeId(rdbms::Conn &conn) const {
     }
 
     return rset.columnUint64("MEDIA_TYPE_ID");
-  } catch(exception::UserError &) {
+  }
+  catch (exception::UserError&) {
     throw;
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }

@@ -14,7 +14,7 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
- 
+
 #pragma once
 
 #include <string>
@@ -36,7 +36,7 @@ void decode(const std::string& strEncoded, std::string& strDecoded);
  */
 void encode(const std::string& strDecoded, std::string& strEncoded);
 
-} // namespace utils
-} // namespace grpc
-} // namespace frontend
-} // namespace cta
+}  // namespace utils
+}  // namespace grpc
+}  // namespace frontend
+}  // namespace cta

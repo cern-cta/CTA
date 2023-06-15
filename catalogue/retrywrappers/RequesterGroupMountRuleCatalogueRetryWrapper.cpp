@@ -29,45 +29,72 @@ namespace cta {
 namespace catalogue {
 
 RequesterGroupMountRuleCatalogueRetryWrapper::RequesterGroupMountRuleCatalogueRetryWrapper(
-  const std::unique_ptr<Catalogue>& catalogue, log::Logger &log, const uint32_t maxTriesToConnect)
-  : m_catalogue(catalogue), m_log(log), m_maxTriesToConnect(maxTriesToConnect) {}
+  const std::unique_ptr<Catalogue>& catalogue,
+  log::Logger& log,
+  const uint32_t maxTriesToConnect) :
+m_catalogue(catalogue),
+m_log(log),
+m_maxTriesToConnect(maxTriesToConnect) {}
 
 void RequesterGroupMountRuleCatalogueRetryWrapper::modifyRequesterGroupMountRulePolicy(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName,
-  const std::string &requesterGroupName, const std::string &mountPolicy) {
-  return retryOnLostConnection(m_log, [&] {
-    return m_catalogue->RequesterGroupMountRule()->modifyRequesterGroupMountRulePolicy(admin, instanceName,
-    requesterGroupName, mountPolicy);}, m_maxTriesToConnect);
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& instanceName,
+  const std::string& requesterGroupName,
+  const std::string& mountPolicy) {
+  return retryOnLostConnection(
+    m_log,
+    [&] {
+      return m_catalogue->RequesterGroupMountRule()->modifyRequesterGroupMountRulePolicy(
+        admin, instanceName, requesterGroupName, mountPolicy);
+    },
+    m_maxTriesToConnect);
 }
 
 void RequesterGroupMountRuleCatalogueRetryWrapper::modifyRequesterGroupMountRuleComment(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName,
-  const std::string &requesterGroupName, const std::string &comment) {
-  return retryOnLostConnection(m_log, [&] {
-    return m_catalogue->RequesterGroupMountRule()->modifyRequesterGroupMountRuleComment(admin, instanceName,
-    requesterGroupName, comment);}, m_maxTriesToConnect);
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& instanceName,
+  const std::string& requesterGroupName,
+  const std::string& comment) {
+  return retryOnLostConnection(
+    m_log,
+    [&] {
+      return m_catalogue->RequesterGroupMountRule()->modifyRequesterGroupMountRuleComment(admin, instanceName,
+                                                                                          requesterGroupName, comment);
+    },
+    m_maxTriesToConnect);
 }
 
 void RequesterGroupMountRuleCatalogueRetryWrapper::createRequesterGroupMountRule(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &mountPolicyName,
-  const std::string &diskInstanceName, const std::string &requesterGroupName, const std::string &comment) {
-  return retryOnLostConnection(m_log, [&] {
-    return m_catalogue->RequesterGroupMountRule()->createRequesterGroupMountRule(admin, mountPolicyName,
-    diskInstanceName, requesterGroupName, comment);}, m_maxTriesToConnect);
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& mountPolicyName,
+  const std::string& diskInstanceName,
+  const std::string& requesterGroupName,
+  const std::string& comment) {
+  return retryOnLostConnection(
+    m_log,
+    [&] {
+      return m_catalogue->RequesterGroupMountRule()->createRequesterGroupMountRule(
+        admin, mountPolicyName, diskInstanceName, requesterGroupName, comment);
+    },
+    m_maxTriesToConnect);
 }
 
 std::list<common::dataStructures::RequesterGroupMountRule>
   RequesterGroupMountRuleCatalogueRetryWrapper::getRequesterGroupMountRules() const {
-  return retryOnLostConnection(m_log, [&] {
-    return m_catalogue->RequesterGroupMountRule()->getRequesterGroupMountRules();}, m_maxTriesToConnect);
+  return retryOnLostConnection(
+    m_log, [&] { return m_catalogue->RequesterGroupMountRule()->getRequesterGroupMountRules(); }, m_maxTriesToConnect);
 }
 
-
-void RequesterGroupMountRuleCatalogueRetryWrapper::deleteRequesterGroupMountRule(const std::string &diskInstanceName,
-  const std::string &requesterGroupName) {
-  return retryOnLostConnection(m_log, [&] {
-    return m_catalogue->RequesterGroupMountRule()->deleteRequesterGroupMountRule(diskInstanceName,
-    requesterGroupName);}, m_maxTriesToConnect);
+void RequesterGroupMountRuleCatalogueRetryWrapper::deleteRequesterGroupMountRule(
+  const std::string& diskInstanceName,
+  const std::string& requesterGroupName) {
+  return retryOnLostConnection(
+    m_log,
+    [&] {
+      return m_catalogue->RequesterGroupMountRule()->deleteRequesterGroupMountRule(diskInstanceName,
+                                                                                   requesterGroupName);
+    },
+    m_maxTriesToConnect);
 }
 
 }  // namespace catalogue

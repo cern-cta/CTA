@@ -45,15 +45,15 @@ struct DropSchemaCmdLineArgs {
    * executable.
    * @param argv The vector of command-line arguments.
    */
-  DropSchemaCmdLineArgs(const int argc, char *const *const argv);
+  DropSchemaCmdLineArgs(const int argc, char* const* const argv);
 
   /**
    * Prints the usage message of the command-line tool.
    *
    * @param os The output stream to which the usage message is to be printed.
    */
-  static void printUsage(std::ostream &os);
+  static void printUsage(std::ostream& os);
 };
 
-} // namespace postgresscheddb
-} // namespace cta
+}  // namespace postgresscheddb
+}  // namespace cta

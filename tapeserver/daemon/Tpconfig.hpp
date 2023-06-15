@@ -23,14 +23,15 @@
 
 #include <map>
 
-namespace cta { namespace tape { namespace daemon {
+namespace cta {
+namespace tape {
+namespace daemon {
 
 /**
  * A map of lines parsed from a TPCONFIG file (key is the drive name)
  */
-class Tpconfig: public std::map<std::string, cta::SourcedParameter<TpconfigLine>> {
+class Tpconfig : public std::map<std::string, cta::SourcedParameter<TpconfigLine>> {
 public:
-
   CTA_GENERATE_EXCEPTION_CLASS(InvalidArgument);
   CTA_GENERATE_EXCEPTION_CLASS(DuplicateEntry);
   /**
@@ -39,7 +40,9 @@ public:
    * @param filename The filename of the TPCONFIG file.
    * @return The result of parsing the TPCONFIG file.
    */
-  static Tpconfig parseFile(const std::string &filename);
-}; // class TpconfigLines
+  static Tpconfig parseFile(const std::string& filename);
+};  // class TpconfigLines
 
-}}} // namespace cta::tape::daemon
+}  // namespace daemon
+}  // namespace tape
+}  // namespace cta

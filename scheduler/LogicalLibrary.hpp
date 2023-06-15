@@ -27,8 +27,7 @@ namespace cta {
 /**
  * Class representing a logical library.
  */
-struct LogicalLibrary  {
-
+struct LogicalLibrary {
   /**
    * Constructor.
    */
@@ -46,25 +45,23 @@ struct LogicalLibrary  {
    * @param creationLog The who, where, when an why of this modification.
    * time is used.
    */
-  LogicalLibrary(
-    const std::string &name,
-    const CreationLog &creationLog);
+  LogicalLibrary(const std::string& name, const CreationLog& creationLog);
 
   /**
    * The name of the logical library.
    */
   std::string name;
-  
+
   /**
    * The state of the library online/offline
-   */  
+   */
   bool online;
-  
+
   /**
    * The record of the entry's creation
    */
   CreationLog creationLog;
 
-}; // class LogicalLibrary
+};  // class LogicalLibrary
 
-} // namespace cta
+}  // namespace cta

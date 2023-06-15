@@ -27,13 +27,12 @@
 
 #include "common/log/StdoutLogger.hpp"
 #include "xrootd-ssi-protobuf-interface/eos_cta/include/CtaFrontendApi.hpp"
-#include "cta_frontend.pb.h"                               //!< Auto-generated message types from .proto file
+#include "cta_frontend.pb.h"  //!< Auto-generated message types from .proto file
 
 #include "version.h"
 
 namespace cta {
 namespace cliTool {
-
 
 class CatalogueFetch {
 public:
@@ -44,7 +43,10 @@ public:
   * @param serviceProviderPtr Service provider for communication with the catalogue.
   * @return a pair with the instance and the fid.
   */
-  static std::tuple<std::string,std::string> getInstanceAndFid(const std::string& archiveFileId, std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr, cta::log::StdoutLogger &log);
+  static std::tuple<std::string, std::string>
+    getInstanceAndFid(const std::string& archiveFileId,
+                      std::unique_ptr<XrdSsiPbServiceType>& serviceProviderPtr,
+                      cta::log::StdoutLogger& log);
 
   /**
   * Fetches the vids form the CTA catalogue
@@ -52,11 +54,12 @@ public:
   * @param serviceProviderPtr Service provider for communication with the catalogue.
   * @return True if vid exists, false if it does not exist
   */
-  static bool vidExists(const std::string &vid, std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr);
+  static bool vidExists(const std::string& vid, std::unique_ptr<XrdSsiPbServiceType>& serviceProviderPtr);
 
 private:
-  static void handleResponse(const cta::xrd::Request &request, std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr);
+  static void handleResponse(const cta::xrd::Request& request,
+                             std::unique_ptr<XrdSsiPbServiceType>& serviceProviderPtr);
 };
 
-} // cliTool
-} // cta
+}  // namespace cliTool
+}  // namespace cta

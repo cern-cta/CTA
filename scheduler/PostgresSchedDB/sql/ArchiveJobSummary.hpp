@@ -35,33 +35,30 @@ struct ArchiveJobSummaryRow {
   uint32_t archiveMinRequestAge;
 
   ArchiveJobSummaryRow() :
-    mountId(0),
-    status(ArchiveJobStatus::AJS_ToTransferForUser),
-    jobsCount(0),
-    jobsTotalSize(0),
-    oldestJobStartTime(std::numeric_limits<time_t>::max()),
-    archivePriority(0),
-    archiveMinRequestAge(0) { }
+  mountId(0),
+  status(ArchiveJobStatus::AJS_ToTransferForUser),
+  jobsCount(0),
+  jobsTotalSize(0),
+  oldestJobStartTime(std::numeric_limits<time_t>::max()),
+  archivePriority(0),
+  archiveMinRequestAge(0) {}
 
   /**
    * Constructor from row
    *
    * @param row  A single row from the result of a query
    */
-  ArchiveJobSummaryRow(const rdbms::Rset &rset) {
-    *this = rset;
-  }
+  ArchiveJobSummaryRow(const rdbms::Rset& rset) { *this = rset; }
 
-  ArchiveJobSummaryRow& operator=(const rdbms::Rset &rset) {
-    mountId              = rset.columnUint64("MOUNT_ID");
-    status               = from_string<ArchiveJobStatus>(
-                           rset.columnString("STATUS") );
-    tapePool             = rset.columnString("TAPE_POOL");
-    mountPolicy          = rset.columnString("MOUNT_POLICY");
-    jobsCount            = rset.columnUint64("JOBS_COUNT");
-    jobsTotalSize        = rset.columnUint64("JOBS_TOTAL_SIZE");
-    oldestJobStartTime   = rset.columnUint64("OLDEST_JOB_START_TIME");
-    archivePriority      = rset.columnUint16("ARCHIVE_PRIORITY");
+  ArchiveJobSummaryRow& operator=(const rdbms::Rset& rset) {
+    mountId = rset.columnUint64("MOUNT_ID");
+    status = from_string<ArchiveJobStatus>(rset.columnString("STATUS"));
+    tapePool = rset.columnString("TAPE_POOL");
+    mountPolicy = rset.columnString("MOUNT_POLICY");
+    jobsCount = rset.columnUint64("JOBS_COUNT");
+    jobsTotalSize = rset.columnUint64("JOBS_TOTAL_SIZE");
+    oldestJobStartTime = rset.columnUint64("OLDEST_JOB_START_TIME");
+    archivePriority = rset.columnUint16("ARCHIVE_PRIORITY");
     archiveMinRequestAge = rset.columnUint32("ARCHIVE_MIN_REQUEST_AGE");
     return *this;
   }
@@ -83,25 +80,25 @@ struct ArchiveJobSummaryRow {
    *
    * @return result set containing all rows in the table
    */
-  static rdbms::Rset selectNotOwned(Transaction &txn) {
-    const char *const sql = "SELECT "
-      "MOUNT_ID,"
-      "STATUS,"
-      "TAPE_POOL,"
-      "MOUNT_POLICY,"
-      "JOBS_COUNT,"
-      "JOBS_TOTAL_SIZE,"
-      "OLDEST_JOB_START_TIME,"
-      "ARCHIVE_PRIORITY,"
-      "ARCHIVE_MIN_REQUEST_AGE "
-    "FROM ARCHIVE_JOB_SUMMARY WHERE "
-    "MOUNT_ID IS NULL";
+  static rdbms::Rset selectNotOwned(Transaction& txn) {
+    const char* const sql = "SELECT "
+                            "MOUNT_ID,"
+                            "STATUS,"
+                            "TAPE_POOL,"
+                            "MOUNT_POLICY,"
+                            "JOBS_COUNT,"
+                            "JOBS_TOTAL_SIZE,"
+                            "OLDEST_JOB_START_TIME,"
+                            "ARCHIVE_PRIORITY,"
+                            "ARCHIVE_MIN_REQUEST_AGE "
+                            "FROM ARCHIVE_JOB_SUMMARY WHERE "
+                            "MOUNT_ID IS NULL";
 
     auto stmt = txn.conn().createStmt(sql);
     return stmt.executeQuery();
   }
 };
 
-} // namespace sql
-} // namespace postgresscheddb
-} // namespace cta
+}  // namespace sql
+}  // namespace postgresscheddb
+}  // namespace cta

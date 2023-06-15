@@ -24,9 +24,8 @@ namespace wrapper {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-RsetWrapper::~RsetWrapper() {
-}
+RsetWrapper::~RsetWrapper() {}
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+}  // namespace wrapper
+}  // namespace rdbms
+}  // namespace cta

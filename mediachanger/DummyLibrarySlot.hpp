@@ -25,9 +25,8 @@ namespace mediachanger {
 /**
  * Class representing a dummy slot for the tests.
  */
-class DummyLibrarySlot: public LibrarySlot {
+class DummyLibrarySlot : public LibrarySlot {
 public:
-
   /**
    * Constructor.
    *
@@ -43,7 +42,7 @@ public:
    *
    * @param str The string representation of the library slot.
    */
-  DummyLibrarySlot(const std::string &str);
+  DummyLibrarySlot(const std::string& str);
 
   /**
    * Destructor.
@@ -55,9 +54,9 @@ public:
    *
    * @return The clone.
    */
-  LibrarySlot *clone();
+  LibrarySlot* clone();
 
-}; // class DummyLibrarySlot
+};  // class DummyLibrarySlot
 
-} // namespace mediachanger
-} // namespace cta
+}  // namespace mediachanger
+}  // namespace cta

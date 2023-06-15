@@ -28,7 +28,7 @@ namespace tapeserver {
 namespace drive {
 class DriveInterface;
 }
-}
+}  // namespace tapeserver
 
 namespace tapeFile {
 
@@ -39,7 +39,7 @@ namespace tapeFile {
   * the drive before the WriteSession is started (i.e. constructed).
   * Likewise, tape unmount is the business of the user.
   */
-class WriteSession{
+class WriteSession {
 public:
   /**
     * Constructor of the WriteSession. It will rewind the tape, and check the
@@ -52,15 +52,16 @@ public:
     * @param compression: set this to true in case the drive has compression enabled (x000GC)
     * @param useLbp: castor.conf option to use or not to use LBP in tapeserverd
     */
-  WriteSession(tapeserver::drive::DriveInterface &drive,
-    const tapeserver::daemon::VolumeInfo &volInfo,
-    const uint32_t last_fseq, const bool compression,
-    const bool useLbp);
+  WriteSession(tapeserver::drive::DriveInterface& drive,
+               const tapeserver::daemon::VolumeInfo& volInfo,
+               const uint32_t last_fseq,
+               const bool compression,
+               const bool useLbp);
 
   /**
     * DriveGeneric object referencing the drive used during this write session
     */
-  tapeserver::drive::DriveInterface & m_drive;
+  tapeserver::drive::DriveInterface& m_drive;
 
   /**
     * Volume Serial Number
@@ -78,27 +79,17 @@ public:
   */
   const bool m_useLbp;
 
-  inline std::string getSiteName() noexcept {
-    return m_siteName;
-  }
+  inline std::string getSiteName() noexcept { return m_siteName; }
 
-  inline std::string getHostName() noexcept {
-    return m_hostName;
-  }
+  inline std::string getHostName() noexcept { return m_hostName; }
 
-  inline void setCorrupted() noexcept {
-    m_corrupted = true;
-  }
+  inline void setCorrupted() noexcept { m_corrupted = true; }
 
-  inline bool isCorrupted() noexcept {
-    return m_corrupted;
-  }
+  inline bool isCorrupted() noexcept { return m_corrupted; }
 
-  inline bool isTapeWithLbp() noexcept {
-    return m_detectedLbp;
-  }
+  inline bool isTapeWithLbp() noexcept { return m_detectedLbp; }
 
-  inline void lock()  {
+  inline void lock() {
     if (m_locked) {
       throw SessionAlreadyInUse();
     }
@@ -116,9 +107,7 @@ public:
     m_locked = false;
   }
 
-  inline const tapeserver::daemon::VolumeInfo& getVolumeInfo()  const {
-    return m_volInfo;
-  }
+  inline const tapeserver::daemon::VolumeInfo& getVolumeInfo() const { return m_volInfo; }
 
   /**
     * Checks that a fSeq we are intending to write the the proper one,
@@ -128,8 +117,8 @@ public:
     */
   inline void validateNextFSeq(uint64_t nextFSeq) const {
     if (nextFSeq != m_lastWrittenFSeq + 1) {
-      throw cta::exception::Exception("In WriteSession::validateNextFSeq: wrong fSeq sequence: lastWrittenFSeq="
-                                      + std::to_string(m_lastWrittenFSeq) + " nextFSeq=" + std::to_string(nextFSeq));
+      throw cta::exception::Exception("In WriteSession::validateNextFSeq: wrong fSeq sequence: lastWrittenFSeq=" +
+                                      std::to_string(m_lastWrittenFSeq) + " nextFSeq=" + std::to_string(nextFSeq));
     }
   }
 
@@ -141,9 +130,9 @@ public:
     */
   inline void reportWrittenFSeq(uint64_t writtenFSeq) {
     if (writtenFSeq != m_lastWrittenFSeq + 1) {
-      throw cta::exception::Exception("In WriteSession::reportWrittenFSeq: wrong fSeq reported: lastWrittenFSeq="
-                                      + std::to_string(m_lastWrittenFSeq)
-                                      + " writtenFSeq=" + std::to_string(writtenFSeq));
+      throw cta::exception::Exception("In WriteSession::reportWrittenFSeq: wrong fSeq reported: lastWrittenFSeq=" +
+                                      std::to_string(m_lastWrittenFSeq) +
+                                      " writtenFSeq=" + std::to_string(writtenFSeq));
     }
     m_lastWrittenFSeq = writtenFSeq;
   }

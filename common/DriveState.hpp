@@ -21,50 +21,52 @@
 #include <string>
 #include <stdint.h>
 
-namespace cta { namespace common {
+namespace cta {
+namespace common {
 
-  enum DriveStatusToDecommission {
-    Down,
-    Up,
-    Starting, // This status allows drive register to represent drives committed
-    // to mounting a tape before the mounting is confirmed. It is necessary to
-    // allow race-free scheduling
-    Mounting,
-    Transferring,
-    Unloading,
-    Unmounting,
-    DrainingToDisk,
-    CleaningUp
-  };
-  
-  struct DesiredDriveStateToDecommission { 
-    bool up;        ///< Should the drive be up?
-    bool forceDown; ///< Should going down preempt an existig mount?
-  };
+enum DriveStatusToDecommission {
+  Down,
+  Up,
+  Starting,  // This status allows drive register to represent drives committed
+  // to mounting a tape before the mounting is confirmed. It is necessary to
+  // allow race-free scheduling
+  Mounting,
+  Transferring,
+  Unloading,
+  Unmounting,
+  DrainingToDisk,
+  CleaningUp
+};
 
-  struct DriveStateToDecommission {
-    std::string name;
-    std::string logicalLibrary;
-    uint64_t sessionId;
-    uint64_t bytesTransferedInSession;
-    uint64_t filesTransferedInSession;
-    time_t sessionStartTime;
-    time_t mountStartTime;
-    time_t transferStartTime;
-    time_t unloadStartTime;
-    time_t unmountStartTime;
-    time_t drainingStartTime;
-    time_t downOrUpStartTime;
-    time_t cleanupStartTime;
-    time_t lastUpdateTime;
-    time_t startStartTime;
-    cta::MountTypeToDecommission::Enum mountType;
-    dataStructures::DriveStatus status;
-    std::string currentVid;
-    std::string currentTapePool;
-    dataStructures::DesiredDriveState desiredDriveState;
-  };
-  
-}} //namespace cta::common
+struct DesiredDriveStateToDecommission {
+  bool up;         ///< Should the drive be up?
+  bool forceDown;  ///< Should going down preempt an existig mount?
+};
+
+struct DriveStateToDecommission {
+  std::string name;
+  std::string logicalLibrary;
+  uint64_t sessionId;
+  uint64_t bytesTransferedInSession;
+  uint64_t filesTransferedInSession;
+  time_t sessionStartTime;
+  time_t mountStartTime;
+  time_t transferStartTime;
+  time_t unloadStartTime;
+  time_t unmountStartTime;
+  time_t drainingStartTime;
+  time_t downOrUpStartTime;
+  time_t cleanupStartTime;
+  time_t lastUpdateTime;
+  time_t startStartTime;
+  cta::MountTypeToDecommission::Enum mountType;
+  dataStructures::DriveStatus status;
+  std::string currentVid;
+  std::string currentTapePool;
+  dataStructures::DesiredDriveState desiredDriveState;
+};
+
+}  // namespace common
+}  // namespace cta
 
 #error This should have been decomissioned

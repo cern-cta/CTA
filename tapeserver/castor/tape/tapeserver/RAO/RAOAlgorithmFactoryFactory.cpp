@@ -15,50 +15,55 @@
  *               submit itself to any jurisdiction.
  */
 
-
 #include "RAOAlgorithmFactoryFactory.hpp"
 #include "common/log/LogContext.hpp"
 #include "EnterpriseRAOAlgorithmFactory.hpp"
 #include "NonConfigurableRAOAlgorithmFactory.hpp"
 #include "ConfigurableRAOAlgorithmFactory.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace rao {
 
-RAOAlgorithmFactoryFactory::RAOAlgorithmFactoryFactory(RAOManager & raoManager, cta::log::LogContext & lc):m_raoManager(raoManager), m_lc(lc) {
-}
+RAOAlgorithmFactoryFactory::RAOAlgorithmFactoryFactory(RAOManager& raoManager, cta::log::LogContext& lc) :
+m_raoManager(raoManager),
+m_lc(lc) {}
 
 std::unique_ptr<RAOAlgorithmFactory> RAOAlgorithmFactoryFactory::createAlgorithmFactory() {
   std::unique_ptr<RAOAlgorithmFactory> ret;
   auto maxFilesSupported = m_raoManager.getMaxFilesSupported();
-  if(m_raoManager.isDriveEnterpriseEnabled()) {
-    if(m_raoManager.hasUDS() && maxFilesSupported){
+  if (m_raoManager.isDriveEnterpriseEnabled()) {
+    if (m_raoManager.hasUDS() && maxFilesSupported) {
       //We successfully queried the max limits UDS of the drive, we then return an Enterprise RAO factory
-      ret.reset(new EnterpriseRAOAlgorithmFactory(m_raoManager.getDrive(),maxFilesSupported.value()));
-    } 
-  } else {
+      ret.reset(new EnterpriseRAOAlgorithmFactory(m_raoManager.getDrive(), maxFilesSupported.value()));
+    }
+  }
+  else {
     RAOParams raoParams = m_raoManager.getRAOParams();
     //We will instanciate a CTA RAO algorithm
     RAOParams::RAOAlgorithmType raoAlgoType;
     try {
       raoAlgoType = raoParams.getAlgorithmType();
-    } catch (const cta::exception::Exception & ex) {
+    }
+    catch (const cta::exception::Exception& ex) {
       //We failed to determine the RAOAlgorithmType, we use the linear algorithm by default
       //log a warning
-      std::string msg = "In RAOAlgorithmFactoryFactory::createAlgorithmFactory(), unable to determine the RAO algorithm to use, the algorithm name provided"
-        " in the tapeserver configuration is " + raoParams.getRAOAlgorithmName() + " the available algorithm names are " + raoParams.getCTARAOAlgorithmNameAvailable()
-        + ". We will apply a linear algorithm instead.";
+      std::string msg = "In RAOAlgorithmFactoryFactory::createAlgorithmFactory(), unable to determine the RAO "
+                        "algorithm to use, the algorithm name provided"
+                        " in the tapeserver configuration is " +
+                        raoParams.getRAOAlgorithmName() + " the available algorithm names are " +
+                        raoParams.getCTARAOAlgorithmNameAvailable() + ". We will apply a linear algorithm instead.";
       m_lc.log(cta::log::WARNING, msg);
       raoAlgoType = RAOParams::RAOAlgorithmType::linear;
     }
-    switch(raoAlgoType){
+    switch (raoAlgoType) {
       case RAOParams::RAOAlgorithmType::linear:
-      case RAOParams::RAOAlgorithmType::random:
-      {
+      case RAOParams::RAOAlgorithmType::random: {
         ret.reset(new NonConfigurableRAOAlgorithmFactory(raoAlgoType));
         break;
       }
-      case RAOParams::RAOAlgorithmType::sltf:
-      { 
+      case RAOParams::RAOAlgorithmType::sltf: {
         ConfigurableRAOAlgorithmFactory::Builder builder(raoParams);
         builder.setDriveInterface(m_raoManager.getDrive());
         builder.setCatalogue(m_raoManager.getCatalogue());
@@ -72,8 +77,9 @@ std::unique_ptr<RAOAlgorithmFactory> RAOAlgorithmFactoryFactory::createAlgorithm
   return ret;
 }
 
+RAOAlgorithmFactoryFactory::~RAOAlgorithmFactoryFactory() {}
 
-RAOAlgorithmFactoryFactory::~RAOAlgorithmFactoryFactory() {
-}
-
-}}}}
+}  // namespace rao
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

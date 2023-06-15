@@ -25,27 +25,27 @@
 namespace cta {
 namespace statistics {
 
-  /**
+/**
    * This class is a JSON statistics service
    * allowing to perform statistics operation
    * to and from a JSON file
    */
-class JsonStatisticsService: public StatisticsService {
- public:
+class JsonStatisticsService : public StatisticsService {
+public:
   typedef std::ostream OutputStream;
   typedef std::istream InputStream;
 
   /**
    * Constructor of the service with a OutputStream object
    */
-  explicit JsonStatisticsService(OutputStream * output);
+  explicit JsonStatisticsService(OutputStream* output);
 
   /**
    * Constructor of the service with the OutputStream and InputStream objects
    * @param output the OutputStream object
    * @param input the InputStream object
    */
-  JsonStatisticsService(OutputStream * output, InputStream * input);
+  JsonStatisticsService(OutputStream* output, InputStream* input);
 
   JsonStatisticsService(const JsonStatisticsService& orig) = delete;
 
@@ -55,9 +55,9 @@ class JsonStatisticsService: public StatisticsService {
 
   virtual ~JsonStatisticsService();
 
- private:
-  OutputStream * m_output;
-  InputStream * m_input;
+private:
+  OutputStream* m_output;
+  InputStream* m_input;
 };
 
 }  // namespace statistics

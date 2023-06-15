@@ -31,7 +31,6 @@ namespace dataStructures {
  * The queueing criteria returned by the catalogue for a file retrieve request.
  */
 struct RetrieveFileQueueCriteria {
-
   /**
    * The archived file.
    */
@@ -43,13 +42,13 @@ struct RetrieveFileQueueCriteria {
   MountPolicy mountPolicy;
 
   RetrieveFileQueueCriteria() = default;
-   
+
   RetrieveFileQueueCriteria(const RetrieveFileQueueCriteria& other);
-  
-  RetrieveFileQueueCriteria &operator=(const RetrieveFileQueueCriteria& other);
 
-}; // struct RetrieveFileQueueCriteria
+  RetrieveFileQueueCriteria& operator=(const RetrieveFileQueueCriteria& other);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+};  // struct RetrieveFileQueueCriteria
+
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

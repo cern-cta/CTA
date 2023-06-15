@@ -47,18 +47,16 @@
 #include <memory>
 #include <type_traits>
 
-cta::frontend::grpc::server::FrontendCmd::FrontendCmd(std::istream &inStream,
-                                                      std::ostream &outStream,
-                                                      std::ostream &errStream) noexcept:
-                                                      m_in(inStream),
-                                                      m_out(outStream),
-                                                      m_err(errStream) {
-}
+cta::frontend::grpc::server::FrontendCmd::FrontendCmd(std::istream& inStream,
+                                                      std::ostream& outStream,
+                                                      std::ostream& errStream) noexcept :
+m_in(inStream),
+m_out(outStream),
+m_err(errStream) {}
 
 int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) {
-
   m_strExecName = argv[0];
-  
+
   const int ARGNO = 1;
   const std::string HOST_NAME = cta::utils::getShortHostname();
   const std::string FRONTEND_NAME = "cta-frontend-async-grpc";
@@ -82,19 +80,19 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
     printUsage(m_out);
     return EXIT_FAILURE;
   }
-  
+
   static struct option longOpt[] = {
     {"config",        required_argument, 0, 'c'},
     {"keytab",        required_argument, 0, 'k'},
     {"no-log-header", no_argument,       0, 'n'},
-    {"port",	        required_argument, 0, 'p'},
+    {"port",          required_argument, 0, 'p'},
     {"threads",       required_argument, 0, 't'},
     {"version",       no_argument,       0, 'v'},
     {"help",          no_argument,       0, 'h'},
-    {0,               0,                 0, 0}
+    {0,               0,                 0, 0  }
   };
 
-  opterr = 0; // prevent the default error message printed by getopt_long
+  opterr = 0;  // prevent the default error message printed by getopt_long
   /*
    * POSIX:
    * The getopt() function shall return the next option character specified on the command line.
@@ -103,7 +101,7 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
    * Otherwise, getopt() shall return -1 when all command line options are parsed.
    */
   while ((c = getopt_long(argc, argv, ":c:k:np:t:vh", longOpt, &iOptIdx)) != -1) {
-    switch(c) {
+    switch (c) {
       case 'c':
         strConFile = std::string(optarg);
         break;
@@ -116,23 +114,25 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
       case 'p':
         try {
           int iVal = std::stoi(optarg);
-          if(iVal < 0) {
+          if (iVal < 0) {
             throw std::invalid_argument("Invalid argument");
           }
           uiPort = static_cast<unsigned int>(iVal);
-        } catch (const std::invalid_argument& ia) {
-      	  m_err << m_strExecName << ": command line error: invalid argument for option -p" << std::endl;
+        }
+        catch (const std::invalid_argument& ia) {
+          m_err << m_strExecName << ": command line error: invalid argument for option -p" << std::endl;
           return EXIT_FAILURE;
         }
         break;
       case 't':
         try {
           int iVal = std::stoi(optarg);
-          if(iVal < 0) {
+          if (iVal < 0) {
             throw std::invalid_argument("Invalid argument");
           }
           uiThreads = static_cast<unsigned int>(iVal);
-        } catch (const std::invalid_argument& ia) {
+        }
+        catch (const std::invalid_argument& ia) {
           m_err << m_strExecName << ": command line error: invalid argument for option -t" << std::endl;
           return EXIT_FAILURE;
         }
@@ -144,18 +144,19 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
         m_out << FRONTEND_NAME << " version: " << CTA_VERSION << std::endl;
         return EXIT_SUCCESS;
         // break;
-      case ':': // Missing parameter
-        m_err << m_strExecName << ": command line error: option: '-" << (char)optopt << "' requires an argument"<< std::endl
-                  << "Try '" << m_strExecName << " -h' for more information." << std::endl;
+      case ':':  // Missing parameter
+        m_err << m_strExecName << ": command line error: option: '-" << (char) optopt << "' requires an argument"
+              << std::endl
+              << "Try '" << m_strExecName << " -h' for more information." << std::endl;
         return EXIT_FAILURE;
         // break;
       default /* '?' */:
-        m_err << m_strExecName << ": command line error: unrecognised option '-" << (char)optopt << "'"<< std::endl
-                  << "Try '" << m_strExecName << " -h' for more information." << std::endl;
+        m_err << m_strExecName << ": command line error: unrecognised option '-" << (char) optopt << "'" << std::endl
+              << "Try '" << m_strExecName << " -h' for more information." << std::endl;
         return EXIT_FAILURE;
     }
   }
-  
+
   switch (argc - optind) {
     case ARGNO:
       // while (optind < argc) {
@@ -176,12 +177,13 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
             << "Try '" << m_strExecName << " -h' for more information." << std::endl;
       return EXIT_FAILURE;
   }
-  
+
   // Now only StdoutLogger
-  std::unique_ptr<cta::log::Logger> upLog = std::make_unique<cta::log::StdoutLogger>(HOST_NAME, FRONTEND_NAME, bShortHeader);
+  std::unique_ptr<cta::log::Logger> upLog =
+    std::make_unique<cta::log::StdoutLogger>(HOST_NAME, FRONTEND_NAME, bShortHeader);
   cta::log::LogContext lc(*upLog);
   //
-  lc.log(log::INFO, "Starting " +  FRONTEND_NAME + " " + std::string(CTA_VERSION));
+  lc.log(log::INFO, "Starting " + FRONTEND_NAME + " " + std::string(CTA_VERSION));
   // Reading configuration file
   cta::common::Configuration config(strConFile);
   try {
@@ -191,21 +193,22 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
     cta::frontend::grpc::utils::read(config.getConfEntString("gRPC", "SslRoot", upLog.get()), strSslRoot);
     cta::frontend::grpc::utils::read(config.getConfEntString("gRPC", "SslKey", upLog.get()), strSslKey);
     cta::frontend::grpc::utils::read(config.getConfEntString("gRPC", "SslCert", upLog.get()), strSslCert);
-  } catch(const cta::exception::Exception &ex) {
+  }
+  catch (const cta::exception::Exception& ex) {
     m_err << m_strExecName << ": problem while reading a configuration file - " << ex.getMessage().str() << std::endl;
     return EXIT_FAILURE;
   }
-  
-  if(strKeytab.empty()) {
+
+  if (strKeytab.empty()) {
     strKeytab = config.getConfEntString("gRPC", "Keytab", "");
     // and check again
-    if(strKeytab.empty()) {
+    if (strKeytab.empty()) {
       m_err << m_strExecName << ": the keytab file is unspecified" << std::endl
             << "Try '" << m_strExecName << " -h' for more information." << std::endl;
       return EXIT_FAILURE;
     }
   }
-  
+
   /*
    * Configuration reading is done.
    * Next -> init & startup.
@@ -214,19 +217,17 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
   const std::string strCatalogueConfigFile = "/etc/cta/cta-catalogue.conf";
   const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(strCatalogueConfigFile);
   const uint64_t uiArchiveFileListingConns = 2;
-  std::unique_ptr<cta::catalogue::CatalogueFactory> upCatalogueFactory
-          = cta::catalogue::CatalogueFactoryFactory::create(*upLog,
-                                                            catalogueLogin,
-                                                            10,
-                                                            uiArchiveFileListingConns);
-  
+  std::unique_ptr<cta::catalogue::CatalogueFactory> upCatalogueFactory =
+    cta::catalogue::CatalogueFactoryFactory::create(*upLog, catalogueLogin, 10, uiArchiveFileListingConns);
+
   std::unique_ptr<cta::catalogue::Catalogue> upCatalogue = upCatalogueFactory->create();
   try {
     upCatalogue->Schema()->ping();
     log::ScopedParamContainer params(lc);
     params.add("SchemaVersion", upCatalogue->Schema()->getSchemaVersion().getSchemaVersion<std::string>());
     lc.log(cta::log::INFO, "In cta::frontend::grpc::server::FrontendCmd::main(): Connected to catalog.");
-  } catch (cta::exception::Exception &ex) {
+  }
+  catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer params(lc);
     params.add("message", ex.getMessageValue());
     lc.log(cta::log::CRIT, "In cta::frontend::grpc::server::FrontendCmd::main(): Got an exception.");
@@ -241,8 +242,10 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
     // SERVICE: Negotiation
     server.registerService<cta::frontend::rpc::Negotiation::AsyncService>();
     try {
-      server.registerHandler<cta::frontend::grpc::server::NegotiationRequestHandler,  cta::frontend::rpc::Negotiation::AsyncService>(strKeytab, strService);
-    } catch(const cta::exception::Exception &ex) {
+      server.registerHandler<cta::frontend::grpc::server::NegotiationRequestHandler,
+                             cta::frontend::rpc::Negotiation::AsyncService>(strKeytab, strService);
+    }
+    catch (const cta::exception::Exception& ex) {
       log::ScopedParamContainer params(lc);
       params.add("handler", "NegotiationRequestHandler");
       lc.log(cta::log::ERR, "In cta::frontend::grpc::server::FrontendCmd::main(): Error while registering handler.");
@@ -250,52 +253,55 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
     }
     // SERVICE: CtaRpcStream
     server.registerService<cta::frontend::rpc::CtaRpcStream::AsyncService>();
-    server.registerHandler<cta::frontend::grpc::server::TapeLsRequestHandler,  cta::frontend::rpc::CtaRpcStream::AsyncService>();
+    server.registerHandler<cta::frontend::grpc::server::TapeLsRequestHandler,
+                           cta::frontend::rpc::CtaRpcStream::AsyncService>();
     // Setup SSL
     sslOpt.pem_root_certs = strSslRoot;
     sslOpt.pem_key_cert_pairs.push_back({strSslKey, strSslCert});
     spServerCredentials = ::grpc::SslServerCredentials(sslOpt);
     // std::shared_ptr<::grpc::ServerCredentials> spServerCredentials = ::grpc::InsecureServerCredentials();
     // std::shared_ptr<::grpc::ServerCredentials> spServerCredentials = ::grpc::experimental::LocalServerCredentials(grpc_local_connect_type::LOCAL_TCP);
-    
+
     std::shared_ptr<ServiceAuthProcessor> spAuthProcessor = std::make_shared<ServiceAuthProcessor>(tokenStorage);
-    
+
     server.run(spServerCredentials, spAuthProcessor);
-  } catch(const cta::exception::Exception& e) {
+  }
+  catch (const cta::exception::Exception& e) {
     log::ScopedParamContainer params(lc);
     params.add("message", e.getMessageValue());
     lc.log(cta::log::CRIT, "In cta::frontend::grpc::server::FrontendCmd::main(): Got an exception.");
     return EXIT_FAILURE;
-  } catch(const std::exception& e) {
+  }
+  catch (const std::exception& e) {
     log::ScopedParamContainer params(lc);
     params.add("message", e.what());
     lc.log(cta::log::CRIT, "In cta::frontend::grpc::server::FrontendCmd::main(): Got an exception.");
     return EXIT_FAILURE;
   }
-  
+
   return EXIT_SUCCESS;
 }
 
-void cta::frontend::grpc::server::FrontendCmd::printUsage(std::ostream &osHelp) const {
-   osHelp << "CTA Frontend gRPC" << std::endl << std::endl
-           << "Usage: " << m_strExecName << " [<OPTION>...] <SERVICE_NAME>" << std::endl
-           << "Options:" << std::endl
-           << "  -c, --config<FILE>      config file location (default: /etc/cta/cta.conf)" << std::endl
-           << "  -k, --keytab<FILE>      keytab file location" << std::endl
-           // << "  -s<name>, --service<name>             ???" << std::endl
-           << "  -n, --no-log-header     don't add hostname and timestamp to log outputs" << std::endl
-           << "  -p, --port<NUMBER>      TCP port number to use (default: 17017)"  << std::endl
-           << "  -t, --threads<NUMBER>   number of threads (default: 2)" << std::endl
-           // << "  -s, --tls                 enable Transport Layer Security (TLS)" << std::endl
-           << "  -v, --version           print version and exit" << std::endl
-           << "  -h, --help              print this help and exit" << std::endl;
+void cta::frontend::grpc::server::FrontendCmd::printUsage(std::ostream& osHelp) const {
+  osHelp << "CTA Frontend gRPC" << std::endl
+         << std::endl
+         << "Usage: " << m_strExecName << " [<OPTION>...] <SERVICE_NAME>" << std::endl
+         << "Options:" << std::endl
+         << "  -c, --config<FILE>      config file location (default: /etc/cta/cta.conf)" << std::endl
+         << "  -k, --keytab<FILE>      keytab file location"
+         << std::endl
+         // << "  -s<name>, --service<name>             ???" << std::endl
+         << "  -n, --no-log-header     don't add hostname and timestamp to log outputs" << std::endl
+         << "  -p, --port<NUMBER>      TCP port number to use (default: 17017)" << std::endl
+         << "  -t, --threads<NUMBER>   number of threads (default: 2)"
+         << std::endl
+         // << "  -s, --tls                 enable Transport Layer Security (TLS)" << std::endl
+         << "  -v, --version           print version and exit" << std::endl
+         << "  -h, --help              print this help and exit" << std::endl;
 }
 
-int main(const int argc, char **argv) {
-
+int main(const int argc, char** argv) {
   cta::frontend::grpc::server::FrontendCmd cmd(std::cin, std::cout, std::cerr);
-  
-  return cmd.main(argc, argv);
-  
-}
 
+  return cmd.main(argc, argv);
+}

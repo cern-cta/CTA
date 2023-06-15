@@ -39,9 +39,8 @@ class PostgresRset;
 /**
  * A convenience wrapper around a postgres prepared statement.
  */
-class PostgresStmt: public StmtWrapper {
+class PostgresStmt : public StmtWrapper {
 public:
-
   /**
    * The PostgresRset class needs to use the lock in this class and a private method.
    */
@@ -56,7 +55,7 @@ public:
    * @param conn The database connection.
    * @param sql The SQL statement.
    */
-  PostgresStmt(PostgresConn &conn, const std::string &sql);
+  PostgresStmt(PostgresConn& conn, const std::string& sql);
 
   /**
    * Destructor.
@@ -73,7 +72,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindString(const std::string &paramName, const std::optional<std::string> &paramValue) override;
+  void bindString(const std::string& paramName, const std::optional<std::string>& paramValue) override;
 
   /**
    * Binds an SQL parameter.
@@ -81,7 +80,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint8(const std::string &paramName, const std::optional<uint8_t> &paramValue) override;
+  void bindUint8(const std::string& paramName, const std::optional<uint8_t>& paramValue) override;
 
   /**
    * Binds an SQL parameter.
@@ -89,7 +88,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint16(const std::string &paramName, const std::optional<uint16_t> &paramValue) override;
+  void bindUint16(const std::string& paramName, const std::optional<uint16_t>& paramValue) override;
 
   /**
    * Binds an SQL parameter.
@@ -97,7 +96,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint32(const std::string &paramName, const std::optional<uint32_t> &paramValue) override;
+  void bindUint32(const std::string& paramName, const std::optional<uint32_t>& paramValue) override;
 
   /**
    * Binds an SQL parameter.
@@ -105,7 +104,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint64(const std::string &paramName, const std::optional<uint64_t> &paramValue) override;
+  void bindUint64(const std::string& paramName, const std::optional<uint64_t>& paramValue) override;
 
   /**
    * Binds an SQL parameter of type binary string (byte array).
@@ -113,7 +112,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindBlob(const std::string &paramName, const std::string &paramValue) override;
+  void bindBlob(const std::string& paramName, const std::string& paramValue) override;
 
   /**
    * Binds an SQL parameter.
@@ -121,7 +120,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindDouble(const std::string &paramName, const std::optional<double> &paramValue) override;
+  void bindDouble(const std::string& paramName, const std::optional<double>& paramValue) override;
 
   /**
    * Clears the prepared statement so that it is ready to be reused.
@@ -168,10 +167,9 @@ public:
    *
    * @param col The column data.
    */
-  void setColumn(PostgresColumn &col);
+  void setColumn(PostgresColumn& col);
 
 private:
-
   /**
    * Similar to the public clear() method, but without locking.
    */
@@ -195,7 +193,7 @@ private:
    * @param pg_sql The transformed SQL, i.e. with $1, $2 format.
    * @param nParams Output the counted number of bind variables.
    */
-  void CountAndReformatSqlBinds(const std::string &common_sql, std::string &pg_sql, int &nParams) const;
+  void CountAndReformatSqlBinds(const std::string& common_sql, std::string& pg_sql, int& nParams) const;
 
   /**
    * Throws a LostDatabaseConnection exception if it can determine the
@@ -241,7 +239,7 @@ private:
    * @param res The PGresult
    * @param prefix A prefix to place in the message thrown
    */
-  [[noreturn]] void throwDB(const PGresult *res, const std::string &prefix);
+  [[noreturn]] void throwDB(const PGresult* res, const std::string& prefix);
 
   /**
    * Conditionally throws a DB related exception if the result status is not the expected one
@@ -250,7 +248,7 @@ private:
    * @parm requiredStatus The required status
    * @param prefix A prefix to place in the message if it is thrown
    */
-  void throwDBIfNotStatus(const PGresult *res, const ExecStatusType requiredStatus, const std::string &prefix);
+  void throwDBIfNotStatus(const PGresult* res, const ExecStatusType requiredStatus, const std::string& prefix);
 
   /**
    * Lock used to serialize access to the prepared statement and properies.
@@ -260,7 +258,7 @@ private:
   /**
    * The SQL connection.
    */
-  PostgresConn &m_conn;
+  PostgresConn& m_conn;
 
   /**
    * The SQL of the statement with the bind variable format transformed.
@@ -281,7 +279,7 @@ private:
    * Used as an array of characeter pointers to C-string needed by libpq
    * to supply paramters on execution of a prepared statement.
    */
-  std::vector<const char *> m_paramValuesPtrs;
+  std::vector<const char*> m_paramValuesPtrs;
 
   /**
    * Vector of strings. Used as the store of string data to which pointers will be
@@ -297,7 +295,7 @@ private:
   /**
    * Associates column index to PostgresColumn objects
    */
-  std::vector<PostgresColumn *> m_columnPtrs;
+  std::vector<PostgresColumn*> m_columnPtrs;
 
   /**
    * The number of rows affected by the last execution of this statement.
@@ -310,14 +308,14 @@ private:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  template <typename IntegerType> void bindInteger(const std::string &paramName,
-    const std::optional<IntegerType> &paramValue) {
+  template<typename IntegerType>
+  void bindInteger(const std::string& paramName, const std::optional<IntegerType>& paramValue) {
     threading::RWLockWrLocker locker(m_lock);
 
     try {
-      const unsigned int paramIdx = getParamIdx(paramName); // starts from 1.
+      const unsigned int paramIdx = getParamIdx(paramName);  // starts from 1.
 
-      if (paramIdx==0 || paramIdx>m_paramValues.size()) {
+      if (paramIdx == 0 || paramIdx > m_paramValues.size()) {
         throw exception::Exception(std::string("Bad index for paramName ") + paramName);
       }
 
@@ -326,18 +324,20 @@ private:
         // we must not cause the vector m_paramValues to resize, otherwise the c-pointers can be invalidated
         m_paramValues[idx] = std::to_string(paramValue.value());
         m_paramValuesPtrs[idx] = m_paramValues[idx].c_str();
-      } else {
+      }
+      else {
         m_paramValues[idx].clear();
         m_paramValuesPtrs[idx] = nullptr;
       }
-    } catch(exception::Exception &ex) {
-      throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-                                 getSqlForException() + ": " + ex.getMessage().str());
+    }
+    catch (exception::Exception& ex) {
+      throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() +
+                                 ": " + ex.getMessage().str());
     }
   }
 
-}; // class PostgresStmt
+};  // class PostgresStmt
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+}  // namespace wrapper
+}  // namespace rdbms
+}  // namespace cta

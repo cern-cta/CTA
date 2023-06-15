@@ -15,7 +15,6 @@
  *               submit itself to any jurisdiction.
  */
 
-
 #pragma once
 
 #include <stdint.h>
@@ -25,7 +24,7 @@ namespace statistics {
 
 struct FileStatistics {
   FileStatistics();
-  FileStatistics(const FileStatistics &other);
+  FileStatistics(const FileStatistics& other);
   uint64_t nbMasterFiles = 0;
   uint64_t masterDataInBytes = 0;
   uint64_t nbCopyNb1 = 0;
@@ -33,9 +32,9 @@ struct FileStatistics {
   uint64_t nbCopyNbGt1 = 0;
   uint64_t copyNbGt1InBytes = 0;
 
-  FileStatistics &operator=(const FileStatistics &other);
+  FileStatistics& operator=(const FileStatistics& other);
 
-  FileStatistics operator +=(const FileStatistics &other);
+  FileStatistics operator+=(const FileStatistics& other);
 };
 
 }  // namespace statistics

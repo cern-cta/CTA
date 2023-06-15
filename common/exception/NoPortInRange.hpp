@@ -21,32 +21,28 @@
 
 #include <string>
 
-
-namespace cta    {
+namespace cta {
 namespace exception {
 
 /**
  * No port in range exception.
  */
 class NoPortInRange : public cta::exception::Exception {
-  
 public:
-  
   /**
    * Constructor
    *
    * @param lowPort  The inclusive low port of the port number range.
    * @param highPort The inclusive high port of the port number range.
    */
-  NoPortInRange(const unsigned short lowPort, const unsigned short highPort)
-   ;
-  
+  NoPortInRange(const unsigned short lowPort, const unsigned short highPort);
+
   /**
    * Empty Destructor, explicitely non-throwing (needed for std::exception
    * inheritance)
    */
   virtual ~NoPortInRange() {}
-  
+
   /**
    * Returns the inclusive low port of the port number range.
    */
@@ -57,9 +53,7 @@ public:
    */
   unsigned short getHighPort();
 
-
 private:
-
   /**
    * The inclusive low port of the port number range.
    */
@@ -70,8 +64,7 @@ private:
    */
   const unsigned short m_highPort;
 
-}; // class NoPortInRange
+};  // class NoPortInRange
 
-} // namespace exception
-} // namespace cta
-
+}  // namespace exception
+}  // namespace cta

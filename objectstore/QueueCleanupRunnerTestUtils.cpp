@@ -42,13 +42,17 @@ namespace unitTests {
  * @param startFseq allows to set the FSeq of the first file to be queued (in case this method is called multiple times)
  */
 void fillRetrieveRequestsForCleanupRunner(
-        typename cta::objectstore::ContainerAlgorithms<cta::objectstore::RetrieveQueue, cta::objectstore::RetrieveQueueToTransfer>::InsertedElement::list &requests,
-        uint32_t requestNr,
-        std::list<std::unique_ptr<cta::objectstore::RetrieveRequest> > &requestPtrs, //List to avoid memory leak on ArchiveQueueAlgorithms test
-        std::set<std::string> & tapeNames, // List of tapes that will contain a replica
-        std::string & activeCopyTape,
-        cta::objectstore::BackendVFS &be,
-        cta::objectstore::AgentReference &agentRef, uint64_t startFseq) {
+  typename cta::objectstore::ContainerAlgorithms<cta::objectstore::RetrieveQueue,
+                                                 cta::objectstore::RetrieveQueueToTransfer>::InsertedElement::list&
+    requests,
+  uint32_t requestNr,
+  std::list<std::unique_ptr<cta::objectstore::RetrieveRequest>>&
+    requestPtrs,                     //List to avoid memory leak on ArchiveQueueAlgorithms test
+  std::set<std::string>& tapeNames,  // List of tapes that will contain a replica
+  std::string& activeCopyTape,
+  cta::objectstore::BackendVFS& be,
+  cta::objectstore::AgentReference& agentRef,
+  uint64_t startFseq) {
   using namespace cta::objectstore;
   for (size_t i = 0; i < requestNr; i++) {
     std::string rrAddr = agentRef.nextId("RetrieveRequest");
@@ -66,7 +70,7 @@ void fillRetrieveRequestsForCleanupRunner(
     rqc.archiveFile.storageClass = "sc";
     uint32_t currentCopyNb = 0;
     uint32_t activeCopyNr = 0;
-    for (auto & tapeName: tapeNames) {
+    for (auto& tapeName : tapeNames) {
       cta::common::dataStructures::TapeFile tf;
       tf.blockId = 0;
       tf.fileSize = 1;
@@ -88,10 +92,9 @@ void fillRetrieveRequestsForCleanupRunner(
     rqc.mountPolicy.retrieveMinRequestAge = 1;
     rqc.mountPolicy.retrievePriority = 1;
     requestPtrs.emplace_back(new cta::objectstore::RetrieveRequest(rrAddr, be));
-    requests.emplace_back(ContainerAlgorithms<RetrieveQueue, RetrieveQueueToTransfer>::InsertedElement{
-            requestPtrs.back().get(), activeCopyNr, startFseq++, 667, mp, std::nullopt, std::nullopt
-    });
-    auto &rr = *requests.back().retrieveRequest;
+    requests.emplace_back(ContainerAlgorithms<RetrieveQueue, RetrieveQueueToTransfer>::InsertedElement {
+      requestPtrs.back().get(), activeCopyNr, startFseq++, 667, mp, std::nullopt, std::nullopt});
+    auto& rr = *requests.back().retrieveRequest;
     rr.initialize();
     rr.setRetrieveFileQueueCriteria(rqc);
     cta::common::dataStructures::RetrieveRequest sReq;
@@ -105,4 +108,4 @@ void fillRetrieveRequestsForCleanupRunner(
   }
 }
 
-}
+}  // namespace unitTests

@@ -21,32 +21,40 @@
 namespace cta {
 namespace catalogue {
 
-void DummyArchiveRouteCatalogue::createArchiveRoute(const common::dataStructures::SecurityIdentity &admin, const std::string &storageClassName,
-  const uint32_t copyNb, const std::string &tapePoolName, const std::string &comment) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented"); 
+void DummyArchiveRouteCatalogue::createArchiveRoute(const common::dataStructures::SecurityIdentity& admin,
+                                                    const std::string& storageClassName,
+                                                    const uint32_t copyNb,
+                                                    const std::string& tapePoolName,
+                                                    const std::string& comment) {
+  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
-void DummyArchiveRouteCatalogue::deleteArchiveRoute(const std::string &storageClassName, const uint32_t copyNb) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+void DummyArchiveRouteCatalogue::deleteArchiveRoute(const std::string& storageClassName, const uint32_t copyNb) {
+  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
 std::list<common::dataStructures::ArchiveRoute> DummyArchiveRouteCatalogue::getArchiveRoutes() const {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
-std::list<common::dataStructures::ArchiveRoute> DummyArchiveRouteCatalogue::getArchiveRoutes(
-  const std::string &storageClassName, const std::string &tapePoolName) const {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+std::list<common::dataStructures::ArchiveRoute>
+  DummyArchiveRouteCatalogue::getArchiveRoutes(const std::string& storageClassName,
+                                               const std::string& tapePoolName) const {
+  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
-void DummyArchiveRouteCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &storageClassName, const uint32_t copyNb, const std::string &tapePoolName) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+void DummyArchiveRouteCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity& admin,
+                                                                const std::string& storageClassName,
+                                                                const uint32_t copyNb,
+                                                                const std::string& tapePoolName) {
+  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
-void DummyArchiveRouteCatalogue::modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &storageClassName, const uint32_t copyNb, const std::string &comment) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+void DummyArchiveRouteCatalogue::modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity& admin,
+                                                           const std::string& storageClassName,
+                                                           const uint32_t copyNb,
+                                                           const std::string& comment) {
+  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
 }  // namespace catalogue

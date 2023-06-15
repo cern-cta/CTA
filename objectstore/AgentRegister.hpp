@@ -20,29 +20,33 @@
 #include "ObjectOps.hpp"
 #include <list>
 
-namespace cta { namespace objectstore {
-  
+namespace cta {
+namespace objectstore {
+
 class Backend;
 class Agent;
 class GenericObject;
 
-class AgentRegister: public ObjectOps<serializers::AgentRegister, serializers::AgentRegister_t> {
+class AgentRegister : public ObjectOps<serializers::AgentRegister, serializers::AgentRegister_t> {
 public:
-  AgentRegister(Backend & os);
-  AgentRegister(GenericObject & go);
-  AgentRegister(const std::string & name, Backend & os);
+  AgentRegister(Backend& os);
+  AgentRegister(GenericObject& go);
+  AgentRegister(const std::string& name, Backend& os);
   void initialize();
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
-  void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
-    cta::catalogue::Catalogue & catalogue) override;
+  void garbageCollect(const std::string& presumedOwner,
+                      AgentReference& agentReference,
+                      log::LogContext& lc,
+                      cta::catalogue::Catalogue& catalogue) override;
   bool isEmpty();
-  void addAgent (std::string name);
-  void removeAgent (const std::string  & name);
-  void trackAgent (std::string name);
+  void addAgent(std::string name);
+  void removeAgent(const std::string& name);
+  void trackAgent(std::string name);
   void untrackAgent(std::string name);
   std::list<std::string> getAgents();
   std::list<std::string> getUntrackedAgents();
   std::string dump();
 };
 
-}}
+}  // namespace objectstore
+}  // namespace cta

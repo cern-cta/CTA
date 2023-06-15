@@ -35,41 +35,35 @@ namespace unitTests {
  * This structure is used to parameterize PostgresSchedDB database tests.
  */
 struct PostgresSchedDBTestParams {
-  cta::SchedulerDatabaseFactory &dbFactory;
+  cta::SchedulerDatabaseFactory& dbFactory;
 
-  explicit PostgresSchedDBTestParams(cta::SchedulerDatabaseFactory *dbFactory) :
-    dbFactory(*dbFactory) {}
+  explicit PostgresSchedDBTestParams(cta::SchedulerDatabaseFactory* dbFactory) : dbFactory(*dbFactory) {}
 };  // struct PostgresSchedDBTestParams
-
 
 /**
  * The PostgresSchedDB database test is a parameterized test.  It takes an
  * PostgresSchedDB database factory as a parameter.
  */
-class PostgresSchedDBTest: public
-  ::testing::TestWithParam<PostgresSchedDBTestParams> {
- public:
-  PostgresSchedDBTest() throw() {
-  }
+class PostgresSchedDBTest : public ::testing::TestWithParam<PostgresSchedDBTestParams> {
+public:
+  PostgresSchedDBTest() throw() {}
 
-  class FailedToGetDatabase: public std::exception {
-   public:
-    const char *what() const throw() {
-      return "Failed to get scheduler database";
-    }
+  class FailedToGetDatabase : public std::exception {
+  public:
+    const char* what() const throw() { return "Failed to get scheduler database"; }
   };
 
   virtual void SetUp() {
     // We do a deep reference to the member as the C++ compiler requires the function to be
     // already defined if called implicitly.
-    const auto &factory = GetParam().dbFactory;
+    const auto& factory = GetParam().dbFactory;
     m_catalogue = std::make_unique<cta::catalogue::DummyCatalogue>();
     // Get the PostgresSched DB from the factory.
     auto psdb = std::move(factory.create(m_catalogue));
     // Make sure the type of the SchedulerDatabase is correct (it should be an PostgresSchedDBWrapper).
-    dynamic_cast<cta::PostgresSchedDBWrapper *> (psdb.get());
+    dynamic_cast<cta::PostgresSchedDBWrapper*>(psdb.get());
     // We know the cast will not fail, so we can safely do it (otherwise we could leak memory).
-    m_db.reset(dynamic_cast<cta::PostgresSchedDBWrapper *> (psdb.release()));
+    m_db.reset(dynamic_cast<cta::PostgresSchedDBWrapper*>(psdb.release()));
   }
 
   virtual void TearDown() {
@@ -77,8 +71,8 @@ class PostgresSchedDBTest: public
     m_catalogue.reset();
   }
 
-  cta::PostgresSchedDBWrapper &getDb() {
-    cta::PostgresSchedDBWrapper *const ptr = m_db.get();
+  cta::PostgresSchedDBWrapper& getDb() {
+    cta::PostgresSchedDBWrapper* const ptr = m_db.get();
     if (nullptr == ptr) {
       throw FailedToGetDatabase();
     }
@@ -101,12 +95,12 @@ class PostgresSchedDBTest: public
   static const cta::common::dataStructures::SecurityIdentity s_userOnAdminHost;
   static const cta::common::dataStructures::SecurityIdentity s_userOnUserHost;
 
- private:
+private:
   // Prevent copying
-  PostgresSchedDBTest(const PostgresSchedDBTest &) = delete;
+  PostgresSchedDBTest(const PostgresSchedDBTest&) = delete;
 
   // Prevent assignment
-  PostgresSchedDBTest & operator= (const PostgresSchedDBTest &) = delete;
+  PostgresSchedDBTest& operator=(const PostgresSchedDBTest&) = delete;
 
   std::unique_ptr<cta::PostgresSchedDBWrapper> m_db;
 
@@ -114,11 +108,12 @@ class PostgresSchedDBTest: public
 };  // class PostgresSchedDBTest
 
 TEST_P(PostgresSchedDBTest, getBatchArchiveJob) {
-  ASSERT_EQ(0,1);
+  ASSERT_EQ(0, 1);
 }
 
 static cta::PostgresSchedDBFactory PostgresSchedDBFactoryStatic;
-INSTANTIATE_TEST_CASE_P(PostgresSchedDBTest, PostgresSchedDBTest,
-    ::testing::Values(PostgresSchedDBTestParams(&PostgresSchedDBFactoryStatic)));
+INSTANTIATE_TEST_CASE_P(PostgresSchedDBTest,
+                        PostgresSchedDBTest,
+                        ::testing::Values(PostgresSchedDBTestParams(&PostgresSchedDBFactoryStatic)));
 
 }  // namespace unitTests

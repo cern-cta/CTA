@@ -27,7 +27,7 @@ namespace common {
 namespace dataStructures {
 struct SecurityIdentity;
 }
-}
+}  // namespace common
 
 namespace disk {
 class DiskSystemList;
@@ -62,45 +62,50 @@ public:
    * interval), and the expected external bandwidth from sources external to CTA.
    * @param comment Comment.
    */
-  virtual void createDiskSystem(
-    const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name,
-    const std::string &diskInstanceName,
-    const std::string &diskInstanceSpaceName,
-    const std::string &fileRegexp,
-    const uint64_t targetedFreeSpace,
-    const time_t sleepTime,
-    const std::string &comment) = 0;
+  virtual void createDiskSystem(const common::dataStructures::SecurityIdentity& admin,
+                                const std::string& name,
+                                const std::string& diskInstanceName,
+                                const std::string& diskInstanceSpaceName,
+                                const std::string& fileRegexp,
+                                const uint64_t targetedFreeSpace,
+                                const time_t sleepTime,
+                                const std::string& comment) = 0;
 
   /**
    * Deletes a disk system.
    *
    * @param name The name of the disk system.
    */
-  virtual void deleteDiskSystem(const std::string &name) = 0;
+  virtual void deleteDiskSystem(const std::string& name) = 0;
 
   virtual disk::DiskSystemList getAllDiskSystems() const = 0;
 
-  virtual void modifyDiskSystemFileRegexp(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const std::string &fileRegexp) = 0;
+  virtual void modifyDiskSystemFileRegexp(const common::dataStructures::SecurityIdentity& admin,
+                                          const std::string& name,
+                                          const std::string& fileRegexp) = 0;
 
-  virtual void modifyDiskSystemTargetedFreeSpace(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const uint64_t targetedFreeSpace) = 0;
+  virtual void modifyDiskSystemTargetedFreeSpace(const common::dataStructures::SecurityIdentity& admin,
+                                                 const std::string& name,
+                                                 const uint64_t targetedFreeSpace) = 0;
 
-  virtual void modifyDiskSystemSleepTime(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const uint64_t sleepTime) = 0;
+  virtual void modifyDiskSystemSleepTime(const common::dataStructures::SecurityIdentity& admin,
+                                         const std::string& name,
+                                         const uint64_t sleepTime) = 0;
 
-  virtual void modifyDiskSystemComment(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const std::string &comment) = 0;
+  virtual void modifyDiskSystemComment(const common::dataStructures::SecurityIdentity& admin,
+                                       const std::string& name,
+                                       const std::string& comment) = 0;
 
-  virtual void modifyDiskSystemDiskInstanceName(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const std::string &diskInstanceName) = 0;
+  virtual void modifyDiskSystemDiskInstanceName(const common::dataStructures::SecurityIdentity& admin,
+                                                const std::string& name,
+                                                const std::string& diskInstanceName) = 0;
 
-  virtual void modifyDiskSystemDiskInstanceSpaceName(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const std::string &diskInstanceSpaceName) = 0;
+  virtual void modifyDiskSystemDiskInstanceSpaceName(const common::dataStructures::SecurityIdentity& admin,
+                                                     const std::string& name,
+                                                     const std::string& diskInstanceSpaceName) = 0;
 
-  virtual bool diskSystemExists(const std::string &name) const = 0;
+  virtual bool diskSystemExists(const std::string& name) const = 0;
 };
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

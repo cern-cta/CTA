@@ -31,6 +31,6 @@ namespace dataStructures {
  */
 typedef std::map<std::string, Tape> VidToTapeMap;
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

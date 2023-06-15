@@ -18,17 +18,21 @@
 #pragma once
 #include <string>
 
-namespace cta { namespace tape { namespace session {
+namespace cta {
+namespace tape {
+namespace session {
 
 /** Possible type for the tape session. */
-enum class SessionType: uint32_t {
-    Undetermined, ///< The initial direction for the session is undetermined.
-    Archive,      ///< Direction is disk to tape.
-    Retrieve,     ///< Direction is tape to disk.
-    Label,        ///< (Re)label the tape.
-    Cleanup       ///< Check the drive for the presence of a tape and eject it if necessary.
-  };
+enum class SessionType : uint32_t {
+  Undetermined,  ///< The initial direction for the session is undetermined.
+  Archive,       ///< Direction is disk to tape.
+  Retrieve,      ///< Direction is tape to disk.
+  Label,         ///< (Re)label the tape.
+  Cleanup        ///< Check the drive for the presence of a tape and eject it if necessary.
+};
 /** Session state to string */
 std::string toString(SessionType type);
 
-}}} // namespace cta::tape::s
+}  // namespace session
+}  // namespace tape
+}  // namespace cta

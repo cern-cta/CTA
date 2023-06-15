@@ -19,21 +19,20 @@
 
 #include "common/exception/Exception.hpp"
 
-namespace cta { namespace exception {
+namespace cta {
+namespace exception {
 
-    /**
+/**
      * Not an owner.
      */
-    class NotAnOwner : public cta::exception::Exception {
-      
-    public:
-      
-      /**
+class NotAnOwner : public cta::exception::Exception {
+public:
+  /**
        * Constructor
        */
-      NotAnOwner();
+  NotAnOwner();
 
-    }; // class NotAnOwner
+};  // class NotAnOwner
 
-} } // namespace cta exception
-
+}  // namespace exception
+}  // namespace cta

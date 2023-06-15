@@ -24,48 +24,47 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-
 namespace unitTests {
-  using namespace castor::tape;
-  using ::testing::_;
-  
+using namespace castor::tape;
+using ::testing::_;
+
 TEST(castor_tape_tapeserver_daemon, WatchdogTestStuckWithNothing) {
-  const double periodToReport = 10; // We wont report in practice
+  const double periodToReport = 10;  // We wont report in practice
   const double stuckPeriod = 0.01;
   const double pollPeriod = 0.01;
-  
-  cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_WatchdogTestStuck",cta::log::DEBUG);
+
+  cta::log::StringLogger log("dummy", "castor_tape_tapeserver_daemon_WatchdogTestStuck", cta::log::DEBUG);
   cta::log::LogContext lc(log);
-  
+
   castor::messages::TapeserverProxyDummy dummyInitialProcess;
   cta::TapeMountDummy dummyTapeMount;
 
-  tapeserver::daemon::RecallWatchDog watchdog(periodToReport,
-    stuckPeriod,dummyInitialProcess,dummyTapeMount,"testTapeDrive",lc,pollPeriod);
-  
+  tapeserver::daemon::RecallWatchDog watchdog(periodToReport, stuckPeriod, dummyInitialProcess, dummyTapeMount,
+                                              "testTapeDrive", lc, pollPeriod);
+
   watchdog.startThread();
   usleep(100000);
   watchdog.stopAndWaitThread();
-  //we dont tell the watchdog we are working on file, 
+  //we dont tell the watchdog we are working on file,
   //it should not report as being stuck
   ASSERT_EQ(std::string::npos, log.getLog().find("No tape block movement for too long"));
 }
 
 TEST(castor_tape_tapeserver_daemon, MigrationWatchdogTestStuck) {
-  const double reportPeriod = 10; // We wont report in practice
+  const double reportPeriod = 10;  // We wont report in practice
   const double stuckPeriod = 0.01;
   const double pollPeriod = 0.01;
-  
-  cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_WatchdogTestStuck",cta::log::DEBUG);
+
+  cta::log::StringLogger log("dummy", "castor_tape_tapeserver_daemon_WatchdogTestStuck", cta::log::DEBUG);
   cta::log::LogContext lc(log);
-  
+
   castor::messages::TapeserverProxyDummy dummyInitialProcess;
   cta::TapeMountDummy dummyTapeMount;
-  
-  // We will poll for a 
-  tapeserver::daemon::MigrationWatchDog watchdog(reportPeriod,stuckPeriod,
-    dummyInitialProcess, dummyTapeMount, "testTapeDrive",  lc, pollPeriod);
-  
+
+  // We will poll for a
+  tapeserver::daemon::MigrationWatchDog watchdog(reportPeriod, stuckPeriod, dummyInitialProcess, dummyTapeMount,
+                                                 "testTapeDrive", lc, pollPeriod);
+
   watchdog.startThread();
   watchdog.notifyBeginNewJob(64, 64);
   usleep(100000);
@@ -74,4 +73,4 @@ TEST(castor_tape_tapeserver_daemon, MigrationWatchdogTestStuck) {
   ASSERT_NE(std::string::npos, log.getLog().find("No tape block movement for too long"));
 }
 
-}
+}  // namespace unitTests

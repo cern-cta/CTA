@@ -15,7 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#pragma once 
+#pragma once
 #include <memory>
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 
@@ -34,30 +34,31 @@ namespace daemon {
  *   AutoReleaseBlock releaser(block,mm);
  * }
  */
- template <class MemManagerT> class AutoReleaseBlock {
-   /**
+template<class MemManagerT>
+class AutoReleaseBlock {
+  /**
     * The block to release
     */
-   MemBlock* const m_block;
-   
-   /**
+  MemBlock* const m_block;
+
+  /**
     * To whom it should be given back
     */
-   MemManagerT& memManager;
-  public:
-    /**
+  MemManagerT& memManager;
+
+public:
+  /**
      * 
      * @param mb he block to release
      * @param mm To whom it should be given back
      */
-    AutoReleaseBlock(MemBlock* const mb,MemManagerT& mm):
-    m_block(mb),memManager(mm){}
-        
-    //let the magic begin 
-    ~AutoReleaseBlock(){
-      memManager.releaseBlock(m_block);
-    } 
-  };
-  
-}}}}
+  AutoReleaseBlock(MemBlock* const mb, MemManagerT& mm) : m_block(mb), memManager(mm) {}
 
+  //let the magic begin
+  ~AutoReleaseBlock() { memManager.releaseBlock(m_block); }
+};
+
+}  // namespace daemon
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

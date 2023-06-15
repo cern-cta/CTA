@@ -21,7 +21,6 @@
 
 #include <string>
 
-
 namespace cta {
 namespace rdbms {
 
@@ -30,7 +29,6 @@ namespace rdbms {
  */
 class UniqueError : public ConstraintError {
 public:
-
   /**
    * Constructor.
    *
@@ -39,15 +37,15 @@ public:
    * @param embedBacktrace whether to embed a backtrace of where the
    * exception was throw in the message
    */
-  UniqueError(const std::string &context = "", const bool embedBacktrace = true);
+  UniqueError(const std::string& context = "", const bool embedBacktrace = true);
 
   /**
    * Empty Destructor, explicitely non-throwing (needed for std::exception
    * inheritance)
    */
   ~UniqueError() noexcept override;
-  
-}; // class UniqueError
 
-} // namespace rdbms
-} // namespace cta
+};  // class UniqueError
+
+}  // namespace rdbms
+}  // namespace cta

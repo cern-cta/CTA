@@ -26,12 +26,9 @@ namespace unitTests {
 
 class cta_rdbms_StmtPoolTest : public ::testing::Test {
 protected:
+  virtual void SetUp() {}
 
-  virtual void SetUp() {
-  }
-
-  virtual void TearDown() {
-  }
+  virtual void TearDown() {}
 };
 
 TEST_F(cta_rdbms_StmtPoolTest, getStmt) {
@@ -89,15 +86,14 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases) {
   using namespace cta::rdbms;
 
   const std::string createTableSql = "CREATE TABLE POOLED_STMT_TEST(ID INTEGER)";
-  const std::string selectTableNamesSql =
-       "SELECT "
-        "NAME AS NAME "
-      "FROM "
-        "SQLITE_MASTER "
-      "WHERE "
-        "TYPE = 'table' "
-      "ORDER BY "
-        "NAME;";
+  const std::string selectTableNamesSql = "SELECT "
+                                          "NAME AS NAME "
+                                          "FROM "
+                                          "SQLITE_MASTER "
+                                          "WHERE "
+                                          "TYPE = 'table' "
+                                          "ORDER BY "
+                                          "NAME;";
 
   // First in-memory database
   {
@@ -111,7 +107,7 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases) {
       Stmt stmt = pool.getStmt(*conn, selectTableNamesSql);
       auto rset = stmt.executeQuery();
       std::list<std::string> names;
-      while(rset.next()) {
+      while (rset.next()) {
         names.push_back(rset.columnString("NAME"));
       }
       ASSERT_EQ(0, names.size());
@@ -126,7 +122,7 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases) {
       Stmt stmt = pool.getStmt(*conn, selectTableNamesSql);
       auto rset = stmt.executeQuery();
       std::list<std::string> names;
-      while(rset.next()) {
+      while (rset.next()) {
         names.push_back(rset.columnString("NAME"));
       }
       ASSERT_EQ(1, names.size());
@@ -145,7 +141,7 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases) {
       Stmt stmt = pool.getStmt(*conn, selectTableNamesSql);
       auto rset = stmt.executeQuery();
       std::list<std::string> names;
-      while(rset.next()) {
+      while (rset.next()) {
         names.push_back(rset.columnString("NAME"));
       }
       ASSERT_EQ(0, names.size());
@@ -160,7 +156,7 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases) {
       Stmt stmt = pool.getStmt(*conn, selectTableNamesSql);
       auto rset = stmt.executeQuery();
       std::list<std::string> names;
-      while(rset.next()) {
+      while (rset.next()) {
         names.push_back(rset.columnString("NAME"));
       }
       ASSERT_EQ(1, names.size());
@@ -228,6 +224,4 @@ TEST_F(cta_rdbms_StmtPoolTest, sameSqlTwoCachedStmts) {
   ASSERT_EQ(2, pool.getNbStmts());
 }
 
-
-
-} // namespace unitTests
+}  // namespace unitTests

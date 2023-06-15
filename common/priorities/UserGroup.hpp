@@ -32,7 +32,6 @@ namespace cta {
  */
 class UserGroup {
 public:
-
   /**
    * Constructor.
    */
@@ -62,20 +61,19 @@ public:
    * configuration item was created.  If no value is given then the current
    * time is used.
    */
-  UserGroup(
-    const std::string &name,
-    const DriveQuota &archiveDriveQuota,
-    const DriveQuota &retrieveDriveQuota,
-    const MountCriteria &archiveMountCriteria,
-    const MountCriteria &retrieveMountCriteria,
-    const CreationLog & creationLog);
+  UserGroup(const std::string& name,
+            const DriveQuota& archiveDriveQuota,
+            const DriveQuota& retrieveDriveQuota,
+            const MountCriteria& archiveMountCriteria,
+            const MountCriteria& retrieveMountCriteria,
+            const CreationLog& creationLog);
 
   /**
    * Returns the name of the user group.
    *
    * @return The name of the user group.
    */
-  const std::string &getName() const throw();
+  const std::string& getName() const throw();
 
   /**
    * Returns the tape drive quota for the user group when mounting tapes for
@@ -84,7 +82,7 @@ public:
    * @return The tape drive quota for the user group when mounting tapes for
    * file archive.
    */
-  const DriveQuota &getArchiveDriveQuota() const throw();
+  const DriveQuota& getArchiveDriveQuota() const throw();
 
   /**
    * Returns the tape drive quota for the user group when mounting tapes for
@@ -93,22 +91,21 @@ public:
    * @return The tape drive quota for the user group when mounting tapes for
    * file retrieve.
    */
-  const DriveQuota &getRetrieveDriveQuota() const throw();
+  const DriveQuota& getRetrieveDriveQuota() const throw();
 
   /**
    * Returns the criteria of the user group to be met in order to justify
    * mounting a tape for file archive.
    */
-  const MountCriteria &getArchiveMountCriteria() const throw();
+  const MountCriteria& getArchiveMountCriteria() const throw();
 
   /**
    * Returns the criteria of the user group to be met in order to justify
    * mounting a tape for file retrieve.
    */
-  const MountCriteria &getRetrieveMountCriteria() const throw();
+  const MountCriteria& getRetrieveMountCriteria() const throw();
 
 private:
-
   /**
    * The name of the user group.
    */
@@ -137,12 +134,12 @@ private:
    * tape for file retrieve.
    */
   MountCriteria m_retrieveMountCriteria;
-  
+
   /**
    * The when, who, why of the group's creation
    */
   CreationLog m_creationLog;
-  
-}; // class UserGroup
 
-} // namespace cta
+};  // class UserGroup
+
+}  // namespace cta

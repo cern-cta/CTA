@@ -26,41 +26,33 @@ namespace dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-ArchiveRoute::ArchiveRoute():
-  copyNb(0) {}
+ArchiveRoute::ArchiveRoute() : copyNb(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool ArchiveRoute::operator==(const ArchiveRoute &rhs) const {
-  return storageClassName==rhs.storageClassName
-      && copyNb==rhs.copyNb
-      && tapePoolName==rhs.tapePoolName
-      && creationLog==rhs.creationLog
-      && lastModificationLog==rhs.lastModificationLog
-      && comment==rhs.comment;
+bool ArchiveRoute::operator==(const ArchiveRoute& rhs) const {
+  return storageClassName == rhs.storageClassName && copyNb == rhs.copyNb && tapePoolName == rhs.tapePoolName &&
+         creationLog == rhs.creationLog && lastModificationLog == rhs.lastModificationLog && comment == rhs.comment;
 }
 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool ArchiveRoute::operator!=(const ArchiveRoute &rhs) const {
+bool ArchiveRoute::operator!=(const ArchiveRoute& rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const ArchiveRoute &obj) {
-  os << "(storageClassName=" << obj.storageClassName
-     << " copyNb=" << obj.copyNb
-     << " tapePoolName=" << obj.tapePoolName
-     << " creationLog=" << obj.creationLog
-     << " lastModificationLog=" << obj.lastModificationLog
+std::ostream& operator<<(std::ostream& os, const ArchiveRoute& obj) {
+  os << "(storageClassName=" << obj.storageClassName << " copyNb=" << obj.copyNb << " tapePoolName=" << obj.tapePoolName
+     << " creationLog=" << obj.creationLog << " lastModificationLog=" << obj.lastModificationLog
      << " comment=" << obj.comment << ")";
   return os;
 }
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

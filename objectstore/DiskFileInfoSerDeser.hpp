@@ -24,26 +24,30 @@
 #include <stdint.h>
 #include <limits>
 
-namespace cta { namespace objectstore {
+namespace cta {
+namespace objectstore {
 
 /**
  * A decorator class of scheduler's creation log adding serialization.
  */
-struct DiskFileInfoSerDeser: public cta::common::dataStructures::DiskFileInfo {
+struct DiskFileInfoSerDeser : public cta::common::dataStructures::DiskFileInfo {
   DiskFileInfoSerDeser() : cta::common::dataStructures::DiskFileInfo() {}
-  DiskFileInfoSerDeser(const cta::common::dataStructures::DiskFileInfo &dfi) : cta::common::dataStructures::DiskFileInfo(dfi) {}
 
-  void serialize (cta::objectstore::serializers::DiskFileInfo & osdfi) const {
+  DiskFileInfoSerDeser(const cta::common::dataStructures::DiskFileInfo& dfi) :
+  cta::common::dataStructures::DiskFileInfo(dfi) {}
+
+  void serialize(cta::objectstore::serializers::DiskFileInfo& osdfi) const {
     osdfi.set_path(path);
     osdfi.set_owner_uid(owner_uid);
     osdfi.set_gid(gid);
   }
 
-  void deserialize (const cta::objectstore::serializers::DiskFileInfo & osdfi) {
-    path      = osdfi.path();
+  void deserialize(const cta::objectstore::serializers::DiskFileInfo& osdfi) {
+    path = osdfi.path();
     owner_uid = osdfi.owner_uid();
-    gid       = osdfi.gid();
+    gid = osdfi.gid();
   }
 };
 
-}}
+}  // namespace objectstore
+}  // namespace cta

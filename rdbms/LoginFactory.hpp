@@ -27,7 +27,6 @@ namespace rdbms {
  */
 class LoginFactory {
 public:
-
   /**
    * Destructor.
    */
@@ -40,7 +39,7 @@ public:
    */
   virtual Login create() = 0;
 
-}; // class Login
+};  // class Login
 
-} // namespace rdbms
-} // namespace cta
+}  // namespace rdbms
+}  // namespace cta

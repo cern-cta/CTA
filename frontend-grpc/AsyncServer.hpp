@@ -14,7 +14,7 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
- 
+
 #pragma once
 
 #include "cta_grpc_frontend.grpc.pb.h"
@@ -39,24 +39,28 @@ namespace grpc {
 namespace server {
 
 class AsyncServer {
-
 public:
-  
   AsyncServer() = delete;
-  AsyncServer(cta::log::Logger& log, cta::catalogue::Catalogue& catalogue, TokenStorage& tokenStorage, const unsigned int uiPort, const unsigned int uiNoThreads = 1) ;
+  AsyncServer(cta::log::Logger& log,
+              cta::catalogue::Catalogue& catalogue,
+              TokenStorage& tokenStorage,
+              const unsigned int uiPort,
+              const unsigned int uiNoThreads = 1);
   ~AsyncServer();
   // Delete default construcotrs
-  AsyncServer(const AsyncServer&)            = delete;
+  AsyncServer(const AsyncServer&) = delete;
   AsyncServer& operator=(const AsyncServer&) = delete;
-  AsyncServer(AsyncServer&&)                 = delete;
-  AsyncServer& operator=(AsyncServer&&)      = delete;
+  AsyncServer(AsyncServer&&) = delete;
+  AsyncServer& operator=(AsyncServer&&) = delete;
+
   /**
    * Register service
    */
-  template<class SERVICE, class... ARGS> void registerService(ARGS... args) {
+  template<class SERVICE, class... ARGS>
+  void registerService(ARGS... args) {
     std::lock_guard<std::mutex> lck(m_mtxLockService);
-   
-    std::unique_ptr<::grpc::Service> upService; // Empty
+
+    std::unique_ptr<::grpc::Service> upService;  // Empty
     upService = std::make_unique<SERVICE>(std::forward<ARGS>(args)...);
     /*
      * Register a service.
@@ -67,29 +71,34 @@ public:
     // Move ownership
     m_vServices.push_back(std::move(upService));
   }
+
   /**
    * Get servcie
    */
-  template<class SERVICE> SERVICE& service() {
+  template<class SERVICE>
+  SERVICE& service() {
     SERVICE* pService = nullptr;
     std::unique_lock<std::mutex> lck(m_mtxLockService);
-    for(std::unique_ptr<::grpc::Service>& upService : m_vServices) {
+    for (std::unique_ptr<::grpc::Service>& upService : m_vServices) {
       pService = dynamic_cast<SERVICE*>(upService.get());
-      if(pService != nullptr) {
+      if (pService != nullptr) {
         return *pService;
       }
     }
     throw cta::exception::Exception("In grpc::AsyncServer::service(): Service is not registered.");
   }
+
   /**
    * Register handler
    * can throw
    */
-  template<class HANDLER, class... ARGS> cta::frontend::grpc::request::IHandler& registerHandler(ARGS&... args) {
+  template<class HANDLER, class... ARGS>
+  cta::frontend::grpc::request::IHandler& registerHandler(ARGS&... args) {
     std::lock_guard<std::mutex> lck(m_mtxLockHandler);
-    std::unique_ptr<cta::frontend::grpc::request::IHandler> upHandler = std::make_unique<HANDLER>(m_log, *this, args...);
+    std::unique_ptr<cta::frontend::grpc::request::IHandler> upHandler =
+      std::make_unique<HANDLER>(m_log, *this, args...);
     // Handler initialisation
-    upHandler->init();// can throw
+    upHandler->init();  // can throw
     // Store address
     uintptr_t tag = reinterpret_cast<std::uintptr_t>(upHandler.get());
     // Move ownership & store under the Tag
@@ -97,45 +106,44 @@ public:
     // Retrun IHandler
     return *m_umapHandlers[reinterpret_cast<cta::frontend::grpc::request::Tag>(tag)];
   }
+
   /**
    * Register handler
    * can throw
    */
-  template<class HANDLER, class SERVICE, class... ARGS> void registerHandler(ARGS&... args) {
+  template<class HANDLER, class SERVICE, class... ARGS>
+  void registerHandler(ARGS&... args) {
     std::lock_guard<std::mutex> lck(m_mtxLockHandler);
-    std::unique_ptr<cta::frontend::grpc::request::IHandler> upHandler = std::make_unique<HANDLER>(m_log, *this, service<SERVICE>(), args...);
+    std::unique_ptr<cta::frontend::grpc::request::IHandler> upHandler =
+      std::make_unique<HANDLER>(m_log, *this, service<SERVICE>(), args...);
     // Handler initialisation
-    upHandler->init();// can throw
+    upHandler->init();  // can throw
     // Move ownership & store under the Tag
     m_umapHandlers[upHandler.get()] = std::move(upHandler);
   }
 
-  ::grpc::ServerCompletionQueue& completionQueue() {
-    return *m_upCompletionQueue;
-  }
+  ::grpc::ServerCompletionQueue& completionQueue() { return *m_upCompletionQueue; }
 
-  cta::catalogue::Catalogue& catalogue() {
-    return m_catalogue;
-  }
+  cta::catalogue::Catalogue& catalogue() { return m_catalogue; }
 
-  TokenStorage& tokenStorage() {
-    return m_tokenStorage;
-  }
-  
+  TokenStorage& tokenStorage() { return m_tokenStorage; }
+
   cta::frontend::grpc::request::IHandler& getHandler(const cta::frontend::grpc::request::Tag tag);
   void releaseHandler(const cta::frontend::grpc::request::Tag tag);
-  void run(const std::shared_ptr<::grpc::ServerCredentials>& spServerCredentials, const std::shared_ptr<::grpc::AuthMetadataProcessor>& spAuthProcessor);
+  void run(const std::shared_ptr<::grpc::ServerCredentials>& spServerCredentials,
+           const std::shared_ptr<::grpc::AuthMetadataProcessor>& spAuthProcessor);
 
 private:
   cta::log::Logger& m_log;
   cta::catalogue::Catalogue& m_catalogue;
   TokenStorage& m_tokenStorage;
   std::unique_ptr<::grpc::ServerCompletionQueue> m_upCompletionQueue;
-  std::unique_ptr<::grpc::Server>                m_upServer;
-  unsigned int                                   m_uiPort;
-  const unsigned int                             m_uiNoThreads = 1; 
-  std::unordered_map<cta::frontend::grpc::request::Tag, std::unique_ptr<cta::frontend::grpc::request::IHandler>> m_umapHandlers;
-  std::vector<std::unique_ptr<::grpc::Service>>  m_vServices;
+  std::unique_ptr<::grpc::Server> m_upServer;
+  unsigned int m_uiPort;
+  const unsigned int m_uiNoThreads = 1;
+  std::unordered_map<cta::frontend::grpc::request::Tag, std::unique_ptr<cta::frontend::grpc::request::IHandler>>
+    m_umapHandlers;
+  std::vector<std::unique_ptr<::grpc::Service>> m_vServices;
   std::mutex m_mtxLockHandler;
   std::mutex m_mtxLockService;
   std::unique_ptr<::grpc::ServerBuilder> m_upServerBuilder;
@@ -145,7 +153,7 @@ private:
   void process(unsigned int uiId);
 };
 
-} // namespace server
-} // namespace grpc
-} // namespace frontend
-} // namespace cta
+}  // namespace server
+}  // namespace grpc
+}  // namespace frontend
+}  // namespace cta

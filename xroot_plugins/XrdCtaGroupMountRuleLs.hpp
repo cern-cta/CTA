@@ -20,12 +20,13 @@
 #include "common/dataStructures/RequesterGroupMountRule.hpp"
 #include "xroot_plugins/XrdCtaStream.hpp"
 
-namespace cta { namespace xrd {
+namespace cta {
+namespace xrd {
 
 /*!
  * Stream object which implements "tapepool ls" command
  */
-class GroupMountRuleLsStream: public XrdCtaStream{
+class GroupMountRuleLsStream : public XrdCtaStream {
 public:
   /*!
    * Constructor
@@ -34,42 +35,44 @@ public:
    * @param[in]    catalogue     CTA Catalogue
    * @param[in]    scheduler     CTA Scheduler
    */
-  GroupMountRuleLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
+  GroupMountRuleLsStream(const frontend::AdminCmdStream& requestMsg,
+                         cta::catalogue::Catalogue& catalogue,
+                         cta::Scheduler& scheduler);
 
 private:
   /*!
    * Can we close the stream?
    */
-  virtual bool isDone() const {
-    return m_groupMountRuleList.empty();
-  }
+  virtual bool isDone() const { return m_groupMountRuleList.empty(); }
 
   /*!
    * Fill the buffer
    */
-  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
+  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf);
 
-  std::list<cta::common::dataStructures::RequesterGroupMountRule> m_groupMountRuleList;    //!< List of group mount rules from the catalogue
+  std::list<cta::common::dataStructures::RequesterGroupMountRule>
+    m_groupMountRuleList;  //!< List of group mount rules from the catalogue
 
-  static constexpr const char* const LOG_SUFFIX  = "GroupMountRuleLsStream";               //!< Identifier for log messages
+  static constexpr const char* const LOG_SUFFIX = "GroupMountRuleLsStream";  //!< Identifier for log messages
 };
 
-
-GroupMountRuleLsStream::GroupMountRuleLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
-  XrdCtaStream(catalogue, scheduler),
-  m_groupMountRuleList(catalogue.RequesterGroupMountRule()->getRequesterGroupMountRules())
-{
+GroupMountRuleLsStream::GroupMountRuleLsStream(const frontend::AdminCmdStream& requestMsg,
+                                               cta::catalogue::Catalogue& catalogue,
+                                               cta::Scheduler& scheduler) :
+XrdCtaStream(catalogue, scheduler),
+m_groupMountRuleList(catalogue.RequesterGroupMountRule()->getRequesterGroupMountRules()) {
   using namespace cta::admin;
 
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "GroupMountRuleLsStream() constructor");
 }
 
-int GroupMountRuleLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
-  for(bool is_buffer_full = false; !m_groupMountRuleList.empty() && !is_buffer_full; m_groupMountRuleList.pop_front()) {
+int GroupMountRuleLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
+  for (bool is_buffer_full = false; !m_groupMountRuleList.empty() && !is_buffer_full;
+       m_groupMountRuleList.pop_front()) {
     Data record;
 
-    auto &gmr      = m_groupMountRuleList.front();
-    auto  gmr_item = record.mutable_gmrls_item();
+    auto& gmr = m_groupMountRuleList.front();
+    auto gmr_item = record.mutable_gmrls_item();
 
     gmr_item->set_disk_instance(gmr.diskInstance);
     gmr_item->set_group_mount_rule(gmr.name);
@@ -87,4 +90,5 @@ int GroupMountRuleLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf)
   return streambuf->Size();
 }
 
-}} // namespace cta::xrd
+}  // namespace xrd
+}  // namespace cta

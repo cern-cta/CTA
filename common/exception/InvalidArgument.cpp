@@ -22,5 +22,4 @@
 // -----------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------
-cta::exception::InvalidArgument::InvalidArgument(const std::string& what) :
-  cta::exception::Exception(what) {}
+cta::exception::InvalidArgument::InvalidArgument(const std::string& what) : cta::exception::Exception(what) {}

@@ -35,9 +35,8 @@ class SqliteStmt;
 /**
  * A convenience wrapper around a connection to an SQLite database.
  */
-class SqliteConn: public ConnWrapper {
+class SqliteConn : public ConnWrapper {
 public:
-
   /**
    * The SqliteStmt class can lock the m_mutex member of the SqliteConn class
    * and it can read the pointer to the SQLite connection.
@@ -49,7 +48,7 @@ public:
    *
    * @param filename The filename to be passed to the sqlite3_open() function.
    */
-  SqliteConn(const std::string &filename);
+  SqliteConn(const std::string& filename);
 
   /**
    * Destructor.
@@ -82,7 +81,7 @@ public:
    *
    * @param sql The SQL statement.
    */
-  void executeNonQuery(const std::string &sql) override;
+  void executeNonQuery(const std::string& sql) override;
 
   /**
    * Creates a prepared statement.
@@ -90,7 +89,7 @@ public:
    * @param sql The SQL statement.
    * @return The prepared statement.
    */
-  std::unique_ptr<StmtWrapper> createStmt(const std::string &sql) override;
+  std::unique_ptr<StmtWrapper> createStmt(const std::string& sql) override;
 
   /**
    * Commits the current transaction.
@@ -109,8 +108,8 @@ public:
    * @param tableName The table name to get the columns.
    * @return The map of types by name of all the columns for the given table in the database schema.
    */
-  std::map<std::string, std::string> getColumns(const std::string &tableName) override;
-  
+  std::map<std::string, std::string> getColumns(const std::string& tableName) override;
+
   /**
    * Returns the names of all the tables in the database schema in alphabetical
    * order.
@@ -119,8 +118,7 @@ public:
    * order.
    */
   std::list<std::string> getTableNames() override;
-  
-  
+
   /**
    * Returns the names of all the indices in the database schema in alphabetical
    * order.
@@ -158,7 +156,7 @@ public:
    * alphabetical order.
    */
   std::list<std::string> getTriggerNames() override;
-  
+
   /**
    * Returns the names of all the tables that have been set as PARALLEL
    * in alphabetical order.
@@ -170,14 +168,14 @@ public:
    * in alphabetical order. 
    */
   std::list<std::string> getParallelTableNames() override;
-  
+
   /**
    * Returns the Constraint names of a given table in the database schema
    * @param tableName the table name to get the constraint names from
    * @return the list of the names of the constraints that the given table has.
    */
-  std::list<std::string> getConstraintNames(const std::string &tableName) override;
-  
+  std::list<std::string> getConstraintNames(const std::string& tableName) override;
+
   /**
    * 
    * Returns the stored procedure names of the database
@@ -198,7 +196,7 @@ public:
    * @return the list of the names of the synonyms in the database
    */
   std::list<std::string> getSynonymNames() override;
-  
+
   /**
    * Returns the type names of the database
    * 
@@ -208,7 +206,7 @@ public:
    * @return the list of the names of the types in the database
    */
   std::list<std::string> getTypeNames() override;
-  
+
   /**
    * This is an SqliteConn specific method that prints the database schema to
    * the specified output stream.
@@ -218,10 +216,9 @@ public:
    *
    * @param os The output stream.
    */
-  void printSchema(std::ostream &os);
+  void printSchema(std::ostream& os);
 
 private:
-
   /**
    * Mutex used to serialize access to the database connection.
    */
@@ -230,10 +227,10 @@ private:
   /**
    * The database connection.
    */
-  sqlite3 *m_sqliteConn;
+  sqlite3* m_sqliteConn;
 
-}; // class SqliteConn
+};  // class SqliteConn
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+}  // namespace wrapper
+}  // namespace rdbms
+}  // namespace cta

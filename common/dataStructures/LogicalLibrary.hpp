@@ -34,7 +34,6 @@ namespace dataStructures {
  * which tapes can be mounted in which drives
  */
 struct LogicalLibrary {
-
   /**
    * Constructor.
    *
@@ -42,9 +41,9 @@ struct LogicalLibrary {
    */
   LogicalLibrary();
 
-  bool operator==(const LogicalLibrary &rhs) const;
+  bool operator==(const LogicalLibrary& rhs) const;
 
-  bool operator!=(const LogicalLibrary &rhs) const;
+  bool operator!=(const LogicalLibrary& rhs) const;
 
   std::string name;
   bool isDisabled;
@@ -53,10 +52,10 @@ struct LogicalLibrary {
   std::string comment;
   std::optional<std::string> disabledReason;
 
-}; // struct LogicalLibrary
+};  // struct LogicalLibrary
 
-std::ostream &operator<<(std::ostream &os, const LogicalLibrary &obj);
+std::ostream& operator<<(std::ostream& os, const LogicalLibrary& obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

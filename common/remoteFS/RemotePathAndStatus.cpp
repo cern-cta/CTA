@@ -20,15 +20,11 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RemotePathAndStatus::RemotePathAndStatus() {
-}
+cta::RemotePathAndStatus::RemotePathAndStatus() {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RemotePathAndStatus::RemotePathAndStatus(
-  const RemotePath &path,
-  const RemoteFileStatus &status):
-  path(path),
-  status(status) {
-}
+cta::RemotePathAndStatus::RemotePathAndStatus(const RemotePath& path, const RemoteFileStatus& status) :
+path(path),
+status(status) {}

@@ -21,12 +21,12 @@
 
 #include <algorithm>
 
-namespace cta { 
+namespace cta {
 //------------------------------------------------------------------------------
 // addLogParamForValue
 //------------------------------------------------------------------------------
 template<>
-void SourcedParameter<tape::daemon::TpconfigLine>::addLogParamForValue(log::LogContext & lc) {
+void SourcedParameter<tape::daemon::TpconfigLine>::addLogParamForValue(log::LogContext& lc) {
   lc.pushOrReplace({"category", "TPCONFIG Entry"});
   lc.pushOrReplace({"tapeDrive", m_value.unitName});
   lc.pushOrReplace({"logicalLibrary", m_value.logicalLibrary});
@@ -38,7 +38,7 @@ void SourcedParameter<tape::daemon::TpconfigLine>::addLogParamForValue(log::LogC
 // addLogParamForValue
 //------------------------------------------------------------------------------
 template<>
-void SourcedParameter<tape::daemon::FetchReportOrFlushLimits>::addLogParamForValue(log::LogContext & lc) {
+void SourcedParameter<tape::daemon::FetchReportOrFlushLimits>::addLogParamForValue(log::LogContext& lc) {
   lc.pushOrReplace({"maxBytes", m_value.maxBytes});
   lc.pushOrReplace({"maxFiles", m_value.maxFiles});
 }
@@ -47,29 +47,28 @@ void SourcedParameter<tape::daemon::FetchReportOrFlushLimits>::addLogParamForVal
 // set
 //------------------------------------------------------------------------------
 template<>
-void SourcedParameter<tape::daemon::FetchReportOrFlushLimits>::set(const std::string & value,
-  const std::string & source) {
+void SourcedParameter<tape::daemon::FetchReportOrFlushLimits>::set(const std::string& value,
+                                                                   const std::string& source) {
   // We expect an entry in the form "<size limit>, <file limit>"
   // There should be one and only one comma in the parameter.
   if (1 != std::count(value.begin(), value.end(), ',')) {
     BadlyFormattedSizeFileLimit ex;
-    ex.getMessage() << "In SourcedParameter<FetchReportOrFlushLimits>::set() : badly formatted entry: one (and only one) comma expected"
-      << " for category=" << m_category << " key=" << m_key
-      << " value=\'" << value << "' at:" << source;
+    ex.getMessage() << "In SourcedParameter<FetchReportOrFlushLimits>::set() : badly formatted entry: one (and only "
+                       "one) comma expected"
+                    << " for category=" << m_category << " key=" << m_key << " value=\'" << value << "' at:" << source;
     throw ex;
   }
   // We can now split the entry
   std::string bytes, files;
-  size_t commaPos=value.find(',');
-  bytes=value.substr(0, commaPos);
-  files=value.substr(commaPos+1);
-  bytes=utils::trimString(bytes);
-  files=utils::trimString(files);
-  if (!(utils::isValidUInt(bytes)&&utils::isValidUInt(files))) {
+  size_t commaPos = value.find(',');
+  bytes = value.substr(0, commaPos);
+  files = value.substr(commaPos + 1);
+  bytes = utils::trimString(bytes);
+  files = utils::trimString(files);
+  if (!(utils::isValidUInt(bytes) && utils::isValidUInt(files))) {
     BadlyFormattedInteger ex;
     ex.getMessage() << "In SourcedParameter<FetchReportOrFlushLimits>::set() : badly formatted integer"
-      << " for category=" << m_category << " key=" << m_key
-      << " value=\'" << value << "' at:" << source;
+                    << " for category=" << m_category << " key=" << m_key << " value=\'" << value << "' at:" << source;
     throw ex;
   }
   std::istringstream(bytes) >> m_value.maxBytes;
@@ -77,15 +76,16 @@ void SourcedParameter<tape::daemon::FetchReportOrFlushLimits>::set(const std::st
   m_source = source;
   m_set = true;
 }
-}
+}  // namespace cta
 
-namespace cta { namespace tape { namespace daemon {
+namespace cta {
+namespace tape {
+namespace daemon {
 
 //------------------------------------------------------------------------------
 // GlobalConfiguration::createFromCtaConf w path
 //------------------------------------------------------------------------------
-TapedConfiguration TapedConfiguration::createFromCtaConf(
-  const std::string& generalConfigPath, cta::log::Logger& log) {
+TapedConfiguration TapedConfiguration::createFromCtaConf(const std::string& generalConfigPath, cta::log::Logger& log) {
   TapedConfiguration ret;
   // Parse config file
   ConfigurationFile cf(generalConfigPath);
@@ -110,8 +110,8 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.nbDiskThreads.setFromConfigurationFile(cf, generalConfigPath);
   //RAO
   ret.useRAO.setFromConfigurationFile(cf, generalConfigPath);
-  ret.raoLtoAlgorithm.setFromConfigurationFile(cf,generalConfigPath);
-  ret.raoLtoOptions.setFromConfigurationFile(cf,generalConfigPath);
+  ret.raoLtoAlgorithm.setFromConfigurationFile(cf, generalConfigPath);
+  ret.raoLtoOptions.setFromConfigurationFile(cf, generalConfigPath);
   // Watchdog: parameters for timeouts in various situations.
   ret.wdIdleSessionTimer.setFromConfigurationFile(cf, generalConfigPath);
   ret.wdMountMaxSecs.setFromConfigurationFile(cf, generalConfigPath);
@@ -122,23 +122,23 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.backendPath.setFromConfigurationFile(cf, generalConfigPath);
   ret.fileCatalogConfigFile.setFromConfigurationFile(cf, generalConfigPath);
   // Repack management configuration
-  ret.useRepackManagement.setFromConfigurationFile(cf,generalConfigPath);
+  ret.useRepackManagement.setFromConfigurationFile(cf, generalConfigPath);
   // Maintenance process configuration
-  ret.useMaintenanceProcess.setFromConfigurationFile(cf,generalConfigPath);
+  ret.useMaintenanceProcess.setFromConfigurationFile(cf, generalConfigPath);
   // External free disk space script configuration
-  ret.externalFreeDiskSpaceScript.setFromConfigurationFile(cf,generalConfigPath);
+  ret.externalFreeDiskSpaceScript.setFromConfigurationFile(cf, generalConfigPath);
   // Timeout for tape load action
-  ret.tapeLoadTimeout.setFromConfigurationFile(cf,generalConfigPath);
+  ret.tapeLoadTimeout.setFromConfigurationFile(cf, generalConfigPath);
   // Extract drive list from tpconfig + parsed config file
   ret.driveConfigs = Tpconfig::parseFile(ret.tpConfigPath.value());
-  
-  ret.authenticationProtocol.set(cta::utils::getEnv("XrdSecPROTOCOL"),"Environment variable");
-  ret.authenticationSSSKeytab.set(cta::utils::getEnv("XrdSecSSSKT"),"Environment variable");
+
+  ret.authenticationProtocol.set(cta::utils::getEnv("XrdSecPROTOCOL"), "Environment variable");
+  ret.authenticationSSSKeytab.set(cta::utils::getEnv("XrdSecSSSKT"), "Environment variable");
   // rmcd connection options
   ret.rmcPort.setFromConfigurationFile(cf, generalConfigPath);
   ret.rmcNetTimeout.setFromConfigurationFile(cf, generalConfigPath);
   ret.rmcRequestAttempts.setFromConfigurationFile(cf, generalConfigPath);
-  
+
   // If we get here, the configuration file is good enough to be logged.
   ret.daemonUserName.log(log);
   ret.daemonGroupName.log(log);
@@ -146,16 +146,16 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.tpConfigPath.log(log);
   ret.externalEncryptionKeyScript.log(log);
   ret.useEncryption.log(log);
-  
+
   ret.bufferSizeBytes.log(log);
   ret.bufferCount.log(log);
-  
+
   ret.archiveFetchBytesFiles.log(log);
   ret.archiveFlushBytesFiles.log(log);
   ret.retrieveFetchBytesFiles.log(log);
-  
+
   ret.mountCriteria.log(log);
-  
+
   ret.nbDiskThreads.log(log);
   ret.useRAO.log(log);
 
@@ -164,21 +164,21 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.wdNoBlockMoveMaxSecs.log(log);
   ret.wdScheduleMaxSecs.log(log);
   ret.wdGlobalLockAcqMaxSecs.log(log);
-  
+
   ret.backendPath.log(log);
   ret.fileCatalogConfigFile.log(log);
-  
+
   ret.useRepackManagement.log(log);
   ret.useMaintenanceProcess.log(log);
   ret.externalFreeDiskSpaceScript.log(log);
-  
+
   ret.tapeLoadTimeout.log(log);
 
   ret.rmcPort.log(log);
   ret.rmcNetTimeout.log(log);
   ret.rmcRequestAttempts.log(log);
 
-  for (auto & i:ret.driveConfigs) {
+  for (auto& i : ret.driveConfigs) {
     i.second.log(log);
   }
   return ret;
@@ -189,4 +189,6 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
 //------------------------------------------------------------------------------
 cta::log::DummyLogger TapedConfiguration::gDummyLogger("", "");
 
-}}} // namespace cta::tape::daemon
+}  // namespace daemon
+}  // namespace tape
+}  // namespace cta

@@ -27,7 +27,7 @@ namespace cta {
 namespace rdbms {
 class Conn;
 class ConnPool;
-}
+}  // namespace rdbms
 
 namespace catalogue {
 
@@ -36,7 +36,6 @@ namespace catalogue {
   * instance and the name of the storage class.
   */
 struct StorageClass {
-
   /**
     * The name of the storage class which is only guaranteed to be unique
     */
@@ -48,7 +47,7 @@ struct StorageClass {
     * @param sN The name of the storage class which is only guaranteed to be
     * unique within its disk instance.
     */
-  explicit StorageClass(const std::string &s): storageClassName(s) {}
+  explicit StorageClass(const std::string& s) : storageClassName(s) {}
 
   /**
     * Less than operator.
@@ -57,10 +56,8 @@ struct StorageClass {
     * @return True if this object is less than the argument on the right hand
     * side of the operator.
     */
-  bool operator<(const StorageClass &rhs) const {
-    return storageClassName < rhs.storageClassName;
-  }
-}; // struct StorageClass
+  bool operator<(const StorageClass& rhs) const { return storageClassName < rhs.storageClassName; }
+};  // struct StorageClass
 
 class RdbmsCatalogue;
 
@@ -68,34 +65,38 @@ class RdbmsStorageClassCatalogue : public StorageClassCatalogue {
 public:
   ~RdbmsStorageClassCatalogue() override = default;
 
-  void createStorageClass(
-    const common::dataStructures::SecurityIdentity &admin,
-    const common::dataStructures::StorageClass &storageClass) override;
+  void createStorageClass(const common::dataStructures::SecurityIdentity& admin,
+                          const common::dataStructures::StorageClass& storageClass) override;
 
-  void deleteStorageClass(const std::string &storageClassName) override;
+  void deleteStorageClass(const std::string& storageClassName) override;
 
   std::list<common::dataStructures::StorageClass> getStorageClasses() const override;
 
-  common::dataStructures::StorageClass getStorageClass(const std::string &name) const override;
+  common::dataStructures::StorageClass getStorageClass(const std::string& name) const override;
 
-  void modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const uint64_t nbCopies) override;
+  void modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity& admin,
+                                  const std::string& name,
+                                  const uint64_t nbCopies) override;
 
-  void modifyStorageClassComment(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const std::string &comment) override;
+  void modifyStorageClassComment(const common::dataStructures::SecurityIdentity& admin,
+                                 const std::string& name,
+                                 const std::string& comment) override;
 
-  void modifyStorageClassVo(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const std::string &vo) override;
+  void modifyStorageClassVo(const common::dataStructures::SecurityIdentity& admin,
+                            const std::string& name,
+                            const std::string& vo) override;
 
-  void modifyStorageClassName(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &currentName, const std::string &newName) override;
+  void modifyStorageClassName(const common::dataStructures::SecurityIdentity& admin,
+                              const std::string& currentName,
+                              const std::string& newName) override;
 
 protected:
-  RdbmsStorageClassCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
-    RdbmsCatalogue *rdbmsCatalogue);
+  RdbmsStorageClassCatalogue(log::Logger& log,
+                             std::shared_ptr<rdbms::ConnPool> connPool,
+                             RdbmsCatalogue* rdbmsCatalogue);
 
 private:
-  log::Logger &m_log;
+  log::Logger& m_log;
   std::shared_ptr<rdbms::ConnPool> m_connPool;
   RdbmsCatalogue* m_rdbmsCatalogue;
 
@@ -106,7 +107,7 @@ private:
    * @param conn The database connection.
    * @param storageClassName The name of the storage class.
    */
-  bool storageClassIsUsedByArchiveRoutes(rdbms::Conn &conn, const std::string &storageClassName) const;
+  bool storageClassIsUsedByArchiveRoutes(rdbms::Conn& conn, const std::string& storageClassName) const;
 
   /**
    * Returns true if the specified storage class is currently being used by one
@@ -115,7 +116,7 @@ private:
    * @param conn The database connection.
    * @param storageClassName The name of the storage class.
    */
-  bool storageClassIsUsedByArchiveFiles(rdbms::Conn &conn, const std::string &storageClassName) const;
+  bool storageClassIsUsedByArchiveFiles(rdbms::Conn& conn, const std::string& storageClassName) const;
 
   /**
    * Returns true if the specified storage class is currently being used by one
@@ -124,7 +125,7 @@ private:
    * @param conn The database connection.
    * @param storageClassName The name of the storage class.
    */
-  bool storageClassIsUsedByFileRecyleLogs(rdbms::Conn & conn, const std::string & storageClassName) const;
+  bool storageClassIsUsedByFileRecyleLogs(rdbms::Conn& conn, const std::string& storageClassName) const;
 
   /**
    * Returns a unique storage class ID that can be used by a new storage class
@@ -138,8 +139,8 @@ private:
    * @return a unique storage class ID that can be used by a new storage class
    * within the catalogue.
    */
-  virtual uint64_t getNextStorageClassId(rdbms::Conn &conn) = 0;
+  virtual uint64_t getNextStorageClassId(rdbms::Conn& conn) = 0;
 };
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

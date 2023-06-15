@@ -25,26 +25,23 @@ namespace log {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-StringLogger::StringLogger(const std::string &hostName, const std::string &programName,
-  const int logMask):
-  Logger(hostName, programName, logMask) {}
+StringLogger::StringLogger(const std::string& hostName, const std::string& programName, const int logMask) :
+Logger(hostName, programName, logMask) {}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-StringLogger::~StringLogger() {
-}
+StringLogger::~StringLogger() {}
 
 //------------------------------------------------------------------------------
 // prepareForFork
 //------------------------------------------------------------------------------
-void StringLogger::prepareForFork() {
-}
+void StringLogger::prepareForFork() {}
 
 //-----------------------------------------------------------------------------
 // writeMsgToUnderlyingLoggingSystem
 //-----------------------------------------------------------------------------
-void StringLogger::writeMsgToUnderlyingLoggingSystem(const std::string &header, const std::string &body) {
+void StringLogger::writeMsgToUnderlyingLoggingSystem(const std::string& header, const std::string& body) {
   // enter critical section
   threading::MutexLocker lock(m_mutex);
 
@@ -57,5 +54,5 @@ void StringLogger::writeMsgToUnderlyingLoggingSystem(const std::string &header, 
   // printf ("%s\n", headerPlusBody.c_str());
 }
 
-} // namespace log
-} // namespace cta
+}  // namespace log
+}  // namespace cta

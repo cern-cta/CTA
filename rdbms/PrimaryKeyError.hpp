@@ -21,7 +21,6 @@
 
 #include <string>
 
-
 namespace cta {
 namespace rdbms {
 
@@ -30,7 +29,6 @@ namespace rdbms {
  */
 class PrimaryKeyError : public ConstraintError {
 public:
-
   /**
    * Constructor.
    *
@@ -39,15 +37,15 @@ public:
    * @param embedBacktrace whether to embed a backtrace of where the
    * exception was throw in the message
    */
-  PrimaryKeyError(const std::string &context = "", const bool embedBacktrace = true);
+  PrimaryKeyError(const std::string& context = "", const bool embedBacktrace = true);
 
   /**
    * Empty Destructor, explicitely non-throwing (needed for std::exception
    * inheritance)
    */
   ~PrimaryKeyError() noexcept override;
-  
-}; // class PrimaryKeyError
 
-} // namespace rdbms
-} // namespace cta
+};  // class PrimaryKeyError
+
+}  // namespace rdbms
+}  // namespace cta

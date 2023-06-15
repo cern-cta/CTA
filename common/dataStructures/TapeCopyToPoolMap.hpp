@@ -30,6 +30,6 @@ namespace dataStructures {
  */
 typedef std::map<uint64_t, std::string> TapeCopyToPoolMap;
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

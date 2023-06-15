@@ -45,9 +45,9 @@ namespace drive {
  * Compressions statistics container, returned by Drive::getCompression()
  */
 class compressionStats {
- public:
-  compressionStats()
-    : fromHost(0), toTape(0), fromTape(0), toHost(0) {}
+public:
+  compressionStats() : fromHost(0), toTape(0), fromTape(0), toHost(0) {}
+
   // migration stats
 
   // amount of bytes the host sent
@@ -68,7 +68,7 @@ class compressionStats {
  * Device information, returned by getDeviceInfo()
  */
 class deviceInfo {
- public:
+public:
   std::string vendor;
   std::string product;
   std::string productRevisionLevel;
@@ -82,7 +82,7 @@ class deviceInfo {
  * Returned by getPositionInfo()
  */
 class positionInfo {
- public:
+public:
   uint32_t currentPosition;
   uint32_t oldestDirtyObject;
   uint32_t dirtyObjectsCount;
@@ -101,18 +101,18 @@ class positionInfo {
  * Returned by getPhysicalPositionInfo()
  */
 class physicalPositionInfo {
- public:
-  uint8_t  wrap;
+public:
+  uint8_t wrap;
   uint32_t lpos;
+
   /**
    * FORWARD means the current direction is away from the
    * physical beginning of tape. BACKWARD means the current
    * direction is towards the physical beginning of tape.
    */
   enum Direction_t { FORWARD, BACKWARD };
-  Direction_t direction() {
-    return wrap & 1 ? BACKWARD : FORWARD;
-  }
+
+  Direction_t direction() { return wrap & 1 ? BACKWARD : FORWARD; }
 };
 
 /**
@@ -120,8 +120,8 @@ class physicalPositionInfo {
  *
  * It is used by the getEndOfWrapPositions() method
  */
-class endOfWrapPosition{
- public:
+class endOfWrapPosition {
+public:
   uint16_t wrapNumber;
   uint64_t blockId;
   uint16_t partition;
@@ -131,7 +131,7 @@ class endOfWrapPosition{
  * Logical block protection nformation, returned by getLBPInfo()
  */
 class LBPInfo {
- public:
+public:
   unsigned char method;
   unsigned char methodLength;
   bool enableLBPforRead;
@@ -141,11 +141,7 @@ class LBPInfo {
 /**
  * enum class to be used for specifying LBP method to use on the drive.
  */
-enum class lbpToUse {
-  disabled,
-  crc32cReadWrite,
-  crc32cReadOnly
-};
+enum class lbpToUse { disabled, crc32cReadWrite, crc32cReadOnly };
 
 /**
  *
@@ -168,8 +164,8 @@ class tapeError {
  * Exception reported by drive functions when trying to read beyond
  * end of data
  */
-class EndOfData: public cta::exception::Exception {
- public:
+class EndOfData : public cta::exception::Exception {
+public:
   explicit EndOfData(const std::string& w = "") : Exception(w) {}
 };
 
@@ -177,24 +173,24 @@ class EndOfData: public cta::exception::Exception {
  * Exception reported by drive functions when trying to write beyond
  * end of medium
  */
-class EndOfMedium: public cta::exception::Exception {
- public:
+class EndOfMedium : public cta::exception::Exception {
+public:
   explicit EndOfMedium(const std::string& w = "") : Exception(w) {}
 };
 
 /**
  * Exception reported by ReadExactBlock when the size is not right
  */
-class UnexpectedSize: public cta::exception::Exception {
- public:
+class UnexpectedSize : public cta::exception::Exception {
+public:
   explicit UnexpectedSize(const std::string& w = "") : Exception(w) {}
 };
 
 /**
  * Exception reported by ReadFileMark when finding a data block
  */
-class NotAFileMark: public cta::exception::Exception {
- public:
+class NotAFileMark : public cta::exception::Exception {
+public:
   explicit NotAFileMark(const std::string& w = "") : Exception(w) {}
 };
 
@@ -202,11 +198,11 @@ class NotAFileMark: public cta::exception::Exception {
  * Abstract class used by DriveGeneric(real stuff) and the FakeDrive(used for unit testing)
  */
 class DriveInterface {
- public:
+public:
   virtual ~DriveInterface() {}
 
-  virtual compressionStats getCompression()  = 0;
-  virtual void clearCompressionStats()  = 0;
+  virtual compressionStats getCompression() = 0;
+  virtual void clearCompressionStats() = 0;
   virtual std::map<std::string, uint64_t> getTapeWriteErrors() = 0;
   virtual std::map<std::string, uint64_t> getTapeReadErrors() = 0;
   virtual std::map<std::string, uint32_t> getTapeNonMediumErrors() = 0;
@@ -214,61 +210,61 @@ class DriveInterface {
   virtual std::map<std::string, uint32_t> getDriveStats() = 0;
   virtual std::map<std::string, uint32_t> getVolumeStats() = 0;
   virtual std::string getDriveFirmwareVersion() = 0;
-  virtual deviceInfo getDeviceInfo()  = 0;
+  virtual deviceInfo getDeviceInfo() = 0;
   virtual std::string getGenericSCSIPath() = 0;
-  virtual std::string getSerialNumber()  = 0;
-  virtual void positionToLogicalObject(uint32_t blockId)  = 0;
-  virtual positionInfo getPositionInfo()  = 0;
+  virtual std::string getSerialNumber() = 0;
+  virtual void positionToLogicalObject(uint32_t blockId) = 0;
+  virtual positionInfo getPositionInfo() = 0;
   virtual physicalPositionInfo getPhysicalPositionInfo() = 0;
   virtual std::vector<endOfWrapPosition> getEndOfWrapPositions() = 0;
   virtual std::vector<uint16_t> getTapeAlertCodes() = 0;
   virtual std::vector<std::string> getTapeAlerts(const std::vector<uint16_t>&) = 0;
   virtual std::vector<std::string> getTapeAlertsCompact(const std::vector<uint16_t>&) = 0;
-  virtual bool tapeAlertsCriticalForWrite(const std::vector<uint16_t> & codes) = 0;
-  virtual void setDensityAndCompression(bool compression = true,
-  unsigned char densityCode = 0)  = 0;
+  virtual bool tapeAlertsCriticalForWrite(const std::vector<uint16_t>& codes) = 0;
+  virtual void setDensityAndCompression(bool compression = true, unsigned char densityCode = 0) = 0;
   virtual void enableCRC32CLogicalBlockProtectionReadOnly() = 0;
   virtual void enableCRC32CLogicalBlockProtectionReadWrite() = 0;
   virtual void disableLogicalBlockProtection() = 0;
   virtual drive::LBPInfo getLBPInfo() = 0;
   virtual void setLogicalBlockProtection(const unsigned char method,
-    unsigned char methodLength, const bool enableLPBforRead,
-    const bool enableLBBforWrite) = 0;
-  virtual void setEncryptionKey(const std::string &encryption_key) = 0;
+                                         unsigned char methodLength,
+                                         const bool enableLPBforRead,
+                                         const bool enableLBBforWrite) = 0;
+  virtual void setEncryptionKey(const std::string& encryption_key) = 0;
   virtual bool clearEncryptionKey() = 0;
   virtual bool isEncryptionCapEnabled() = 0;
-  virtual driveStatus getDriveStatus()  = 0;
-  virtual void setSTBufferWrite(bool bufWrite)  = 0;
+  virtual driveStatus getDriveStatus() = 0;
+  virtual void setSTBufferWrite(bool bufWrite) = 0;
 
-  virtual void fastSpaceToEOM(void)  = 0;
-  virtual void rewind(void)  = 0;
-  virtual void spaceToEOM(void)  = 0;
-  virtual void spaceFileMarksBackwards(size_t count)  = 0;
-  virtual void spaceFileMarksForward(size_t count)  = 0;
+  virtual void fastSpaceToEOM(void) = 0;
+  virtual void rewind(void) = 0;
+  virtual void spaceToEOM(void) = 0;
+  virtual void spaceFileMarksBackwards(size_t count) = 0;
+  virtual void spaceFileMarksForward(size_t count) = 0;
 
-  virtual void unloadTape(void)  = 0;
+  virtual void unloadTape(void) = 0;
 
-  virtual void flush(void)  = 0;
+  virtual void flush(void) = 0;
 
-  virtual void writeSyncFileMarks(size_t count)  = 0;
-  virtual void writeImmediateFileMarks(size_t count)  = 0;
-  virtual void writeBlock(const void * data, size_t count)  = 0;
+  virtual void writeSyncFileMarks(size_t count) = 0;
+  virtual void writeImmediateFileMarks(size_t count) = 0;
+  virtual void writeBlock(const void* data, size_t count) = 0;
 
-  virtual ssize_t readBlock(void * data, size_t count)  = 0;
-  virtual void readExactBlock(void * data, size_t count, const std::string& context)  = 0;
-  virtual void readFileMark(const std::string& context)  = 0;
+  virtual ssize_t readBlock(void* data, size_t count) = 0;
+  virtual void readExactBlock(void* data, size_t count, const std::string& context) = 0;
+  virtual void readFileMark(const std::string& context) = 0;
 
-  virtual void waitUntilReady(const uint32_t timeoutSecond)  = 0;
+  virtual void waitUntilReady(const uint32_t timeoutSecond) = 0;
 
-  virtual bool isWriteProtected()  = 0;
-  virtual bool isAtBOT()  = 0;
-  virtual bool isAtEOD()  = 0;
+  virtual bool isWriteProtected() = 0;
+  virtual bool isAtBOT() = 0;
+  virtual bool isAtEOD() = 0;
   virtual bool isTapeBlank() = 0;
   virtual lbpToUse getLbpToUse() = 0;
   virtual bool hasTapeInPlace() = 0;
 
   virtual SCSI::Structures::RAO::udsLimits getLimitUDS() = 0;
-  virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims> &files, int maxSupported) = 0;
+  virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims>& files, int maxSupported) = 0;
   /**
    * The configuration of the tape drive as parsed from the TPCONFIG file.
    */
@@ -282,7 +278,7 @@ class DriveInterface {
  * @return pointer to the newly allocated drive object
  */
 
-DriveInterface * createDrive(SCSI::DeviceInfo di, System::virtualWrapper & sw);
+DriveInterface* createDrive(SCSI::DeviceInfo di, System::virtualWrapper& sw);
 }  // namespace drive
 }  // namespace tapeserver
 }  // namespace tape

@@ -19,15 +19,20 @@
 
 #include <future>
 
-namespace cta { namespace disk {
+namespace cta {
+namespace disk {
 
 class DiskReporter {
 public:
   virtual void asyncReport() = 0;
+
   virtual void waitReport() { m_promise.get_future().get(); }
+
   virtual ~DiskReporter() {};
+
 protected:
   std::promise<void> m_promise;
 };
 
-}} // name space cta::disk
+}  // namespace disk
+}  // namespace cta

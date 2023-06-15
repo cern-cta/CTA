@@ -33,29 +33,35 @@ class Catalogue;
 
 class RequesterGroupMountRuleCatalogueRetryWrapper : public RequesterGroupMountRuleCatalogue {
 public:
-  RequesterGroupMountRuleCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue, log::Logger &m_log,
-    const uint32_t maxTriesToConnect);
+  RequesterGroupMountRuleCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
+                                               log::Logger& m_log,
+                                               const uint32_t maxTriesToConnect);
   ~RequesterGroupMountRuleCatalogueRetryWrapper() override = default;
 
-  void modifyRequesterGroupMountRulePolicy(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &instanceName, const std::string &requesterGroupName, const std::string &mountPolicy) override;
+  void modifyRequesterGroupMountRulePolicy(const common::dataStructures::SecurityIdentity& admin,
+                                           const std::string& instanceName,
+                                           const std::string& requesterGroupName,
+                                           const std::string& mountPolicy) override;
 
-  void modifyRequesterGroupMountRuleComment(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &instanceName, const std::string &requesterGroupName, const std::string &comment) override;
+  void modifyRequesterGroupMountRuleComment(const common::dataStructures::SecurityIdentity& admin,
+                                            const std::string& instanceName,
+                                            const std::string& requesterGroupName,
+                                            const std::string& comment) override;
 
-  void createRequesterGroupMountRule(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &mountPolicyName, const std::string &diskInstanceName, const std::string &requesterGroupName,
-    const std::string &comment) override;
+  void createRequesterGroupMountRule(const common::dataStructures::SecurityIdentity& admin,
+                                     const std::string& mountPolicyName,
+                                     const std::string& diskInstanceName,
+                                     const std::string& requesterGroupName,
+                                     const std::string& comment) override;
 
   std::list<common::dataStructures::RequesterGroupMountRule> getRequesterGroupMountRules() const override;
 
-
-  void deleteRequesterGroupMountRule(const std::string &diskInstanceName,
-    const std::string &requesterGroupName) override;
+  void deleteRequesterGroupMountRule(const std::string& diskInstanceName,
+                                     const std::string& requesterGroupName) override;
 
 private:
   const std::unique_ptr<Catalogue>& m_catalogue;
-  log::Logger &m_log;
+  log::Logger& m_log;
   uint32_t m_maxTriesToConnect;
 };  // class SchemaCatalogueRetryWrapper
 

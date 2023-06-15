@@ -29,26 +29,25 @@ namespace postgresscheddb {
  * database.
  */
 struct SchedulerSchema {
-  
   /**
    * Constructor.
    *
    */
   SchedulerSchema();
-  
+
   /**
    * Constructor.
    *
    * @param sqlSchema The sql for the scheduler schema provided at compilation
    *                  time.
    */
-  SchedulerSchema(const std::string &sqlSchema);
-  
+  SchedulerSchema(const std::string& sqlSchema);
+
   /**
    * The schema.
    */
   std::string sql;
-  
+
   /**
    * Returns the map of strings to uint64 for the scheduler SCHEMA_VERSION_MAJOR
    * and SCHEMA_VERSION_MINOR values.
@@ -58,5 +57,5 @@ struct SchedulerSchema {
   std::map<std::string, uint64_t> getSchemaVersion() const;
 };
 
-} // namespace postgresscheddb
-} // namespace cta
+}  // namespace postgresscheddb
+}  // namespace cta

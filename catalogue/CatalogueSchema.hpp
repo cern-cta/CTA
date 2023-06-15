@@ -29,33 +29,32 @@ namespace catalogue {
  * database.
  */
 struct CatalogueSchema {
-  
   /**
    * Constructor.
    *
    */
   CatalogueSchema();
-  
+
   /**
    * Constructor.
    *
    * @param sqlSchema The sql for the catalogue schema provided at compilation
    *                  time.
    */
-  CatalogueSchema(const std::string &sqlSchema);
-  
+  CatalogueSchema(const std::string& sqlSchema);
+
   /**
    * The schema.
    */
   std::string sql;
-  
+
   /**
    * Returns the names of all the tables in the catalogue schema.
    *
    * @return The names of all the tables in the catalogue schema.
    */
   std::list<std::string> getSchemaTableNames() const;
-  
+
   /**
    * Returns the names of all the column and their type as a map for the given 
    * table in the catalogue schema.
@@ -63,15 +62,15 @@ struct CatalogueSchema {
    * @param tableName The table name to get the columns.
    * @return The map of types by name of all the columns for the given table in the catalogue schema.
    */
-  std::map<std::string, std::string> getSchemaColumns(const std::string &tableName) const;
-  
+  std::map<std::string, std::string> getSchemaColumns(const std::string& tableName) const;
+
   /**
    * Returns the names of all the indexes in the catalogue schema.
    *
    * @return The names of all the indexes in the catalogue schema.
    */
   std::list<std::string> getSchemaIndexNames() const;
-  
+
   /**
    * Returns the names of all the sequences in the catalogue schema.
    * 
@@ -81,7 +80,7 @@ struct CatalogueSchema {
    * @return The names of all the sequences in the catalogue schema.
    */
   std::list<std::string> getSchemaSequenceNames() const;
-  
+
   /**
    * Returns the map of strings to uint64 for the catalogue SCHEMA_VERSION_MAJOR
    * and SCHEMA_VERSION_MINOR values.
@@ -91,5 +90,5 @@ struct CatalogueSchema {
   std::map<std::string, uint64_t> getSchemaVersion() const;
 };
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

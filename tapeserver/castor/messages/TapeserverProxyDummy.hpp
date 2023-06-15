@@ -25,26 +25,21 @@ namespace messages {
 /**
  * A dummy taped-proxy.
  */
-class TapeserverProxyDummy: public cta::tape::daemon::TapedProxy {
+class TapeserverProxyDummy : public cta::tape::daemon::TapedProxy {
 public:
-  
   void reportState(const cta::tape::session::SessionState state,
-    const cta::tape::session::SessionType type, 
-    const std::string & vid) override;
+                   const cta::tape::session::SessionType type,
+                   const std::string& vid) override;
 
   void reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved) override;
-  
-  void addLogParams(const std::string &unitName,
-    const std::list<cta::log::Param> & params) override;
-  
-  void deleteLogParams(const std::string &unitName,
-    const std::list<std::string> & paramNames) override;
-  
-  void labelError(const std::string &unitName,
-    const std::string &message) override;
 
-}; // class TapeserverProxyDummy
+  void addLogParams(const std::string& unitName, const std::list<cta::log::Param>& params) override;
 
-} // namespace messages
-} // namespace castor
+  void deleteLogParams(const std::string& unitName, const std::list<std::string>& paramNames) override;
 
+  void labelError(const std::string& unitName, const std::string& message) override;
+
+};  // class TapeserverProxyDummy
+
+}  // namespace messages
+}  // namespace castor

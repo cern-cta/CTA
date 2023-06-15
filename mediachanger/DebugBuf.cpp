@@ -20,15 +20,12 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::mediachanger::DebugBuf::DebugBuf(std::ostream &os):
-  m_debug(false), m_os(os), m_writePreamble(true) {
-}
+cta::mediachanger::DebugBuf::DebugBuf(std::ostream& os) : m_debug(false), m_os(os), m_writePreamble(true) {}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::mediachanger::DebugBuf::~DebugBuf() {
-}
+cta::mediachanger::DebugBuf::~DebugBuf() {}
 
 //------------------------------------------------------------------------------
 // setDebug
@@ -40,20 +37,19 @@ void cta::mediachanger::DebugBuf::setDebug(const bool value) {
 //------------------------------------------------------------------------------
 // overflow
 //------------------------------------------------------------------------------
-std::streambuf::int_type cta::mediachanger::DebugBuf::overflow(
-  const int_type c) {
+std::streambuf::int_type cta::mediachanger::DebugBuf::overflow(const int_type c) {
   // Only write something if debug mode is on
-  if(m_debug) {
-    if(m_writePreamble) {
+  if (m_debug) {
+    if (m_writePreamble) {
       writePreamble();
       m_writePreamble = false;
     }
-    m_os << (char)c;
+    m_os << (char) c;
   }
 
   // If an end of line was encountered then the next write should be preceeded
   // with a preamble
-  if('\n' == (char)c) {
+  if ('\n' == (char) c) {
     m_writePreamble = true;
   }
 

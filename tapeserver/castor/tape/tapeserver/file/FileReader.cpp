@@ -30,9 +30,11 @@ namespace castor {
 namespace tape {
 namespace tapeFile {
 
-FileReader::FileReader(const std::unique_ptr<ReadSession> &rs, const cta::RetrieveJob &fileToRecall)
-  : m_currentBlockSize(0), m_session(rs), m_positionCommandCode(fileToRecall.positioningMethod),
-    m_LBPMode(rs->getLBPMode()) {
+FileReader::FileReader(const std::unique_ptr<ReadSession>& rs, const cta::RetrieveJob& fileToRecall) :
+m_currentBlockSize(0),
+m_session(rs),
+m_positionCommandCode(fileToRecall.positioningMethod),
+m_LBPMode(rs->getLBPMode()) {
   if (m_session->isCorrupted()) {
     throw SessionCorrupted();
   }
@@ -40,14 +42,14 @@ FileReader::FileReader(const std::unique_ptr<ReadSession> &rs, const cta::Retrie
 }
 
 FileReader::~FileReader() throw() {
-  if (cta::PositioningMethod::ByFSeq == m_positionCommandCode
-    && m_session->getCurrentFilePart() != PartOfFile::Header) {
+  if (cta::PositioningMethod::ByFSeq == m_positionCommandCode &&
+      m_session->getCurrentFilePart() != PartOfFile::Header) {
     m_session->setCorrupted();
   }
   m_session->release();
 }
 
-size_t FileReader::getBlockSize()  {
+size_t FileReader::getBlockSize() {
   if (m_currentBlockSize < 1) {
     std::ostringstream ex_str;
     ex_str << "[FileReader::getBlockSize] - Invalid block size: " << m_currentBlockSize;
@@ -60,12 +62,14 @@ std::string FileReader::getLBPMode() {
   return m_LBPMode;
 }
 
-void FileReader::position(const cta::RetrieveJob &fileToRecall) {
+void FileReader::position(const cta::RetrieveJob& fileToRecall) {
   if (cta::PositioningMethod::ByBlock == m_positionCommandCode) {
     positionByBlockID(fileToRecall);
-  } else if (cta::PositioningMethod::ByFSeq == m_positionCommandCode) {
+  }
+  else if (cta::PositioningMethod::ByFSeq == m_positionCommandCode) {
     positionByFseq(fileToRecall);
-  } else {
+  }
+  else {
     throw UnsupportedPositioningMode();
   }
 }

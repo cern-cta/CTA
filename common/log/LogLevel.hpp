@@ -27,7 +27,7 @@ namespace log {
 /**
  * Returns the numeric value of the specified log level.
  */
-int toLogLevel(const std::string &s);
+int toLogLevel(const std::string& s);
 
-} // namespace log
-} // namespace cta
+}  // namespace log
+}  // namespace cta

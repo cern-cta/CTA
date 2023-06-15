@@ -17,10 +17,14 @@
 
 #include "ObjectOps.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta {
+namespace objectstore {
 
-ObjectOpsBase::~ObjectOpsBase()  {
-  if (m_lockForSubObject) m_lockForSubObject->dereferenceSubObject(*this);
+ObjectOpsBase::~ObjectOpsBase() {
+  if (m_lockForSubObject) {
+    m_lockForSubObject->dereferenceSubObject(*this);
+  }
 }
 
-}} 
+}  // namespace objectstore
+}  // namespace cta

@@ -19,7 +19,10 @@
 
 #include <cstdint>
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace rao {
 
 /**
  * Represents the physical position of a block on tape
@@ -28,8 +31,8 @@ namespace castor { namespace tape { namespace tapeserver { namespace rao {
 class Position {
 public:
   Position();
-  Position(const Position & other);
-  Position &operator=(const Position &other);
+  Position(const Position& other);
+  Position& operator=(const Position& other);
   virtual ~Position();
   /**
    * Get the wrap number of this physical position
@@ -51,9 +54,13 @@ public:
    * @param lpos this longitudinal position
    */
   void setLPos(const uint64_t lpos);
+
 private:
   uint32_t m_wrap = 0;
   uint64_t m_lpos = 0;
 };
 
-}}}}
+}  // namespace rao
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

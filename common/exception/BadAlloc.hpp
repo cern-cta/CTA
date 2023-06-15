@@ -19,21 +19,20 @@
 
 #include "common/exception/Exception.hpp"
 
-namespace cta { namespace exception {
+namespace cta {
+namespace exception {
 
-    /**
+/**
      * BadAlloc.
      */
-    class BadAlloc : public cta::exception::Exception {
-      
-    public:
-      
-      /**
+class BadAlloc : public cta::exception::Exception {
+public:
+  /**
        * Constructor
        */
-      BadAlloc();
+  BadAlloc();
 
-    }; // class BadAlloc
+};  // class BadAlloc
 
-} } // namespace cta exception
-
+}  // namespace exception
+}  // namespace cta

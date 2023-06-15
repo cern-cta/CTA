@@ -28,21 +28,21 @@
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::ArchiveJob::~ArchiveJob() throw() {
-}
+cta::ArchiveJob::~ArchiveJob() throw() {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveJob::ArchiveJob(ArchiveMount *mount,
+cta::ArchiveJob::ArchiveJob(ArchiveMount* mount,
                             catalogue::Catalogue& catalogue,
                             const common::dataStructures::ArchiveFile& archiveFile,
                             const std::string& srcURL,
                             const common::dataStructures::TapeFile& tapeFile) :
-  m_mount(mount), m_catalogue(catalogue),
-  archiveFile(archiveFile),
-  srcURL(srcURL),
-  tapeFile(tapeFile) {}
+m_mount(mount),
+m_catalogue(catalogue),
+archiveFile(archiveFile),
+srcURL(srcURL),
+tapeFile(tapeFile) {}
 
 //------------------------------------------------------------------------------
 // getReportTiming()
@@ -79,11 +79,13 @@ cta::catalogue::TapeItemWrittenPointer cta::ArchiveJob::validateAndGetTapeFileWr
 //------------------------------------------------------------------------------
 void cta::ArchiveJob::validate() {
   // First check that the block Id for the file has been set.
-  if (tapeFile.blockId == std::numeric_limits<decltype(tapeFile.blockId)>::max())
+  if (tapeFile.blockId == std::numeric_limits<decltype(tapeFile.blockId)>::max()) {
     throw BlockIdNotSet("In cta::ArchiveJob::validate(): Block ID not set");
+  }
   // Also check the checksum has been set
-  if (archiveFile.checksumBlob.empty() || tapeFile.checksumBlob.empty())
+  if (archiveFile.checksumBlob.empty() || tapeFile.checksumBlob.empty()) {
     throw ChecksumNotSet("In cta::ArchiveJob::validate(): checksums not set");
+  }
   // And matches
   archiveFile.checksumBlob.validate(tapeFile.checksumBlob);
 }
@@ -102,15 +104,17 @@ std::string cta::ArchiveJob::exceptionThrowingReportURL() {
       std::string base64ErrorReport;
       // Construct a pipe: msg -> sign -> Base64 encode -> result goes into ret.
       const bool noNewLineInBase64Output = false;
-      CryptoPP::StringSource ss1(m_dbJob->latestError, true,
-                                 new CryptoPP::Base64Encoder(
-                                   new CryptoPP::StringSink(base64ErrorReport), noNewLineInBase64Output));
+      CryptoPP::StringSource ss1(
+        m_dbJob->latestError, true,
+        new CryptoPP::Base64Encoder(new CryptoPP::StringSink(base64ErrorReport), noNewLineInBase64Output));
       return m_dbJob->errorReportURL + base64ErrorReport;
     }
     case SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired:
-      throw exception::Exception("In ArchiveJob::exceptionThrowingReportURL(): job status NoReportRequired does not require reporting.");
+      throw exception::Exception(
+        "In ArchiveJob::exceptionThrowingReportURL(): job status NoReportRequired does not require reporting.");
     case SchedulerDatabase::ArchiveJob::ReportType::Report:
-      throw exception::Exception("In ArchiveJob::exceptionThrowingReportURL(): job status Report does not require reporting.");
+      throw exception::Exception(
+        "In ArchiveJob::exceptionThrowingReportURL(): job status Report does not require reporting.");
   }
   throw exception::Exception("In ArchiveJob::exceptionThrowingReportURL(): invalid report type reportType=" +
                              std::to_string(static_cast<uint8_t>(m_dbJob->reportType)));
@@ -122,9 +126,11 @@ std::string cta::ArchiveJob::exceptionThrowingReportURL() {
 std::string cta::ArchiveJob::reportURL() noexcept {
   try {
     return exceptionThrowingReportURL();
-  } catch (exception::Exception& ex) {
+  }
+  catch (exception::Exception& ex) {
     return ex.getMessageValue();
-  } catch (...) {
+  }
+  catch (...) {
     return "In ArchiveJob::reportURL(): unknown exception";
   }
 }
@@ -157,7 +163,6 @@ void cta::ArchiveJob::reportFailed(const std::string& failureReason, log::LogCon
   m_dbJob->failReport(failureReason, lc);
 }
 
-
 //------------------------------------------------------------------------------
 // ArchiveJob::transferFailed
 //------------------------------------------------------------------------------
@@ -177,6 +182,8 @@ void cta::ArchiveJob::waitForReporting() {
 // cta::ArchiveJob::getMount()
 //------------------------------------------------------------------------------
 cta::ArchiveMount& cta::ArchiveJob::getMount() {
-  if (m_mount) return *m_mount;
+  if (m_mount) {
+    return *m_mount;
+  }
   throw exception::Exception("In ArchiveJob::getMount(): no mount set.");
 }

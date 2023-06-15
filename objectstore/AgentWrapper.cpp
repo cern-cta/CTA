@@ -17,13 +17,12 @@
 
 #include "AgentWrapper.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta {
+namespace objectstore {
 
-AgentWrapper::AgentWrapper(Agent& agent):m_agent(agent) {
-}
+AgentWrapper::AgentWrapper(Agent& agent) : m_agent(agent) {}
 
-AgentWrapper::~AgentWrapper() {
-}
+AgentWrapper::~AgentWrapper() {}
 
 /**
 * Adds an object address to the current agent. The additions and removals
@@ -32,7 +31,7 @@ AgentWrapper::~AgentWrapper() {
 * @param objectAddress
 * @param backend reference to the backend to use.
 */
-void AgentWrapper::addToOwnership(const std::string &objectAddress, objectstore::Backend& backend){
+void AgentWrapper::addToOwnership(const std::string& objectAddress, objectstore::Backend& backend) {
   ScopedExclusiveLock sel(m_agent);
   m_agent.fetch();
   m_agent.addToOwnership(objectAddress);
@@ -45,10 +44,10 @@ void AgentWrapper::addToOwnership(const std::string &objectAddress, objectstore:
 * @param objectAdresses
 * @param backend reference to the backend to use.
 */
-void AgentWrapper::addBatchToOwnership(const std::list<std::string> &objectAdresses, objectstore::Backend& backend){
+void AgentWrapper::addBatchToOwnership(const std::list<std::string>& objectAdresses, objectstore::Backend& backend) {
   ScopedExclusiveLock sel(m_agent);
   m_agent.fetch();
-  for(auto& address: objectAdresses){
+  for (auto& address : objectAdresses) {
     m_agent.addToOwnership(address);
   }
   m_agent.commit();
@@ -61,7 +60,7 @@ void AgentWrapper::addBatchToOwnership(const std::list<std::string> &objectAdres
 * The execution order is guaranteed.
 * @param objectAddress
 */
-void AgentWrapper::removeFromOwnership(const std::string &objectAddress, objectstore::Backend& backend){
+void AgentWrapper::removeFromOwnership(const std::string& objectAddress, objectstore::Backend& backend) {
   ScopedExclusiveLock sel(m_agent);
   m_agent.fetch();
   m_agent.removeFromOwnership(objectAddress);
@@ -74,18 +73,20 @@ void AgentWrapper::removeFromOwnership(const std::string &objectAddress, objects
 * @param objectAdresses
 * @param backend reference to the backend to use.
 */
-void AgentWrapper::removeBatchFromOwnership(const std::list<std::string> &objectAdresses, objectstore::Backend& backend){
+void AgentWrapper::removeBatchFromOwnership(const std::list<std::string>& objectAdresses,
+                                            objectstore::Backend& backend) {
   ScopedExclusiveLock sel(m_agent);
   m_agent.fetch();
-  for(auto& address: objectAdresses){
+  for (auto& address : objectAdresses) {
     m_agent.removeFromOwnership(address);
   }
   m_agent.commit();
   sel.release();
 }
 
-std::string AgentWrapper::getAgentAddress(){
+std::string AgentWrapper::getAgentAddress() {
   return m_agent.getAddressIfSet();
 }
 
-}}
+}  // namespace objectstore
+}  // namespace cta

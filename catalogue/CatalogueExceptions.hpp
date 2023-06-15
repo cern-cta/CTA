@@ -23,5 +23,5 @@ namespace cta {
 namespace exception {
 CTA_GENERATE_EXCEPTION_CLASS(NegativeDiskSpaceReservationReached);
 CTA_GENERATE_EXCEPTION_CLASS(CommentOrReasonWithMoreSizeThanMaximunAllowed);
-}
-}
+}  // namespace exception
+}  // namespace cta

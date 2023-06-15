@@ -20,28 +20,36 @@
 #include "RAOAlgorithmFactory.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace rao {
 
 /**
  * Factory of EnterpriseRAOAlgorithm. 
  */
-class EnterpriseRAOAlgorithmFactory : public RAOAlgorithmFactory{
+class EnterpriseRAOAlgorithmFactory : public RAOAlgorithmFactory {
 public:
   /**
    * Constructor of this factory
    * @param drive the DriveInterface to perform a RAO query 
    * @param maxFilesSupported the maximum number of files the drive supports to perform a RAO query
    */
-  EnterpriseRAOAlgorithmFactory(castor::tape::tapeserver::drive::DriveInterface * drive, const uint64_t maxFilesSupported);
-  
+  EnterpriseRAOAlgorithmFactory(castor::tape::tapeserver::drive::DriveInterface* drive,
+                                const uint64_t maxFilesSupported);
+
   /**
    * Returns an Enteprise RAO Algorithm
    */
   std::unique_ptr<RAOAlgorithm> createRAOAlgorithm() override;
   virtual ~EnterpriseRAOAlgorithmFactory();
+
 private:
-  drive::DriveInterface * m_drive;
+  drive::DriveInterface* m_drive;
   uint64_t m_maxFilesSupported;
 };
 
-}}}}
+}  // namespace rao
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

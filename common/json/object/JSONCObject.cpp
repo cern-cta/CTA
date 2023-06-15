@@ -19,15 +19,18 @@
 
 #include "JSONObjectException.hpp"
 
-namespace cta { namespace utils { namespace json { namespace object { 
-  
-JSONCObject::JSONCObject():JSONObject() {
+namespace cta {
+namespace utils {
+namespace json {
+namespace object {
+
+JSONCObject::JSONCObject() : JSONObject() {
   initializeJSONCObject();
 }
 
-void JSONCObject::buildFromJSON(const std::string& json){
+void JSONCObject::buildFromJSON(const std::string& json) {
   //DO JSON_C deinitialization
-  if(m_jsonObject != nullptr){
+  if (m_jsonObject != nullptr) {
     destroyJSONCObject();
   }
   m_jsonObject = json_tokener_parse(json.c_str());
@@ -55,65 +58,68 @@ void JSONCObject::reinitializeJSONCObject() {
   initializeJSONCObject();
 }
 
-json_object * JSONCObject::getJSONObject(const std::string& key){
-  json_object * objectRet;
-  if(json_object_object_get_ex(m_jsonObject,key.c_str(),&objectRet)){
+json_object* JSONCObject::getJSONObject(const std::string& key) {
+  json_object* objectRet;
+  if (json_object_object_get_ex(m_jsonObject, key.c_str(), &objectRet)) {
     return objectRet;
   }
-  std::string errMsg = "In JSONCParser::getJSONObject(), the provided json does not contain any key named \""+key+"\".";
+  std::string errMsg =
+    "In JSONCParser::getJSONObject(), the provided json does not contain any key named \"" + key + "\".";
   throw cta::exception::JSONObjectException(errMsg);
 }
 
 template<>
-std::string JSONCObject::jsonGetValue(const std::string& key){
-  json_object * jsonObj = getJSONObject(key);
+std::string JSONCObject::jsonGetValue(const std::string& key) {
+  json_object* jsonObj = getJSONObject(key);
   return std::string(json_object_get_string(jsonObj));
 }
 
 template<>
-uint64_t JSONCObject::jsonGetValue(const std::string & key){
-  json_object * jsonObj = getJSONObject(key);
+uint64_t JSONCObject::jsonGetValue(const std::string& key) {
+  json_object* jsonObj = getJSONObject(key);
   return json_object_get_int64(jsonObj);
 }
 
 template<>
-time_t JSONCObject::jsonGetValue(const std::string & key){
-  json_object * jsonObj = getJSONObject(key);
+time_t JSONCObject::jsonGetValue(const std::string& key) {
+  json_object* jsonObj = getJSONObject(key);
   return json_object_get_int64(jsonObj);
 }
 
 template<>
-double JSONCObject::jsonGetValue(const std::string & key){
-  json_object * jsonObj = getJSONObject(key);
+double JSONCObject::jsonGetValue(const std::string& key) {
+  json_object* jsonObj = getJSONObject(key);
   return json_object_get_double(jsonObj);
 }
 
 template<>
-void JSONCObject::jsonSetValue(const std::string& key, const std::string & value){
-  json_object_object_add(m_jsonObject,key.c_str(),json_object_new_string(value.c_str()));
+void JSONCObject::jsonSetValue(const std::string& key, const std::string& value) {
+  json_object_object_add(m_jsonObject, key.c_str(), json_object_new_string(value.c_str()));
 }
 
 template<>
-void JSONCObject::jsonSetValue(const std::string& key, const double & value){
-  json_object_object_add(m_jsonObject,key.c_str(),json_object_new_double(value));
+void JSONCObject::jsonSetValue(const std::string& key, const double& value) {
+  json_object_object_add(m_jsonObject, key.c_str(), json_object_new_double(value));
 }
 
 template<>
-void JSONCObject::jsonSetValue(const std::string& key, const uint64_t & value){
-  json_object_object_add(m_jsonObject,key.c_str(),json_object_new_int64(value));
+void JSONCObject::jsonSetValue(const std::string& key, const uint64_t& value) {
+  json_object_object_add(m_jsonObject, key.c_str(), json_object_new_int64(value));
 }
 
 template<>
-void JSONCObject::jsonSetValue(const std::string& key, const time_t & value){
-  json_object_object_add(m_jsonObject,key.c_str(),json_object_new_int64(value));
+void JSONCObject::jsonSetValue(const std::string& key, const time_t& value) {
+  json_object_object_add(m_jsonObject, key.c_str(), json_object_new_int64(value));
 }
-
 
 JSONCObject::~JSONCObject() {
   //Free the JSON object if initialized
-  if(m_jsonObject != nullptr){
+  if (m_jsonObject != nullptr) {
     destroyJSONCObject();
   }
 }
 
-}}}}
+}  // namespace object
+}  // namespace json
+}  // namespace utils
+}  // namespace cta

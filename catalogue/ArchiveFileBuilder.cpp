@@ -21,9 +21,5 @@
 #include <fstream>
 
 namespace cta {
-namespace catalogue {
-
-
-
-} // namespace catalogue
-} // namespace cta
+namespace catalogue {}  // namespace catalogue
+}  // namespace cta

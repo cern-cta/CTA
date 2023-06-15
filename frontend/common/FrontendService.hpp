@@ -32,7 +32,7 @@ class FrontendService {
 public:
   explicit FrontendService(const std::string& configFilename);
 
-  FrontendService(const FrontendService &) = delete;
+  FrontendService(const FrontendService&) = delete;
 
   ~FrontendService() = default;
 
@@ -44,7 +44,7 @@ public:
   /*!
    * Get the Catalogue connection string
    */
-  std::string getCatalogueConnString() const {return m_catalogue_conn_string; }
+  std::string getCatalogueConnString() const { return m_catalogue_conn_string; }
 
   /*!
    * Get a reference to the Catalogue
@@ -85,7 +85,9 @@ private:
   /*!
    * Set the verification mount policy
    */
-  void setVerificationMountPolicy(const std::string& verificationMountPolicy) { m_verificationMountPolicy = verificationMountPolicy; }
+  void setVerificationMountPolicy(const std::string& verificationMountPolicy) {
+    m_verificationMountPolicy = verificationMountPolicy;
+  }
 
   /*!
    * Populate the namespace endpoint configuration from a keytab file
@@ -93,17 +95,18 @@ private:
   void setNamespaceMap(const std::string& keytab_file);
 
   // Member variables
-  std::unique_ptr<cta::log::Logger>             m_log;                     //!< The logger
-  std::unique_ptr<cta::catalogue::Catalogue>    m_catalogue;               //!< Catalogue of tapes and tape files
-  std::unique_ptr<SchedulerDBInit_t>            m_scheddbInit;             //!< Persistent initialiser object for Scheduler DB
-  std::unique_ptr<cta::SchedulerDB_t>           m_scheddb;                 //!< Scheduler DB for persistent objects (queues and requests)
-  std::unique_ptr<cta::Scheduler>               m_scheduler;               //!< The scheduler
+  std::unique_ptr<cta::log::Logger> m_log;                 //!< The logger
+  std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;  //!< Catalogue of tapes and tape files
+  std::unique_ptr<SchedulerDBInit_t> m_scheddbInit;        //!< Persistent initialiser object for Scheduler DB
+  std::unique_ptr<cta::SchedulerDB_t> m_scheddb;  //!< Scheduler DB for persistent objects (queues and requests)
+  std::unique_ptr<cta::Scheduler> m_scheduler;    //!< The scheduler
 
-  std::string                                   m_catalogue_conn_string;   //!< The catalogue connection string (without the password)
-  uint64_t                                      m_archiveFileMaxSize;      //!< Maximum allowed file size for archive requests
-  std::optional<std::string>                    m_repackBufferURL;         //!< The repack buffer URL
-  std::string                                   m_verificationMountPolicy; //!< The mount policy for verification requests
-  cta::NamespaceMap_t                           m_namespaceMap;            //!< Endpoints for namespace queries
+  std::string m_catalogue_conn_string;           //!< The catalogue connection string (without the password)
+  uint64_t m_archiveFileMaxSize;                 //!< Maximum allowed file size for archive requests
+  std::optional<std::string> m_repackBufferURL;  //!< The repack buffer URL
+  std::string m_verificationMountPolicy;         //!< The mount policy for verification requests
+  cta::NamespaceMap_t m_namespaceMap;            //!< Endpoints for namespace queries
 };
 
-}} // namespace cta::frontend
+}  // namespace frontend
+}  // namespace cta

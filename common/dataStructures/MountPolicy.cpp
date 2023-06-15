@@ -27,16 +27,22 @@ namespace dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-MountPolicy::MountPolicy():
-  archivePriority(0),
-  archiveMinRequestAge(0),
-  retrievePriority(0),
-  retrieveMinRequestAge(0) {}
+MountPolicy::MountPolicy() :
+archivePriority(0),
+archiveMinRequestAge(0),
+retrievePriority(0),
+retrieveMinRequestAge(0) {}
 
-MountPolicy::MountPolicy(const std::string& name, const uint64_t archivePriority, const uint64_t archiveMinRequestAge,
-  const uint64_t retrievePriority, const uint64_t retrieveMinRequestAge)
-  : name(name), archivePriority(archivePriority), archiveMinRequestAge(archiveMinRequestAge),
-    retrievePriority(retrievePriority), retrieveMinRequestAge(retrieveMinRequestAge) {}
+MountPolicy::MountPolicy(const std::string& name,
+                         const uint64_t archivePriority,
+                         const uint64_t archiveMinRequestAge,
+                         const uint64_t retrievePriority,
+                         const uint64_t retrieveMinRequestAge) :
+name(name),
+archivePriority(archivePriority),
+archiveMinRequestAge(archiveMinRequestAge),
+retrievePriority(retrievePriority),
+retrieveMinRequestAge(retrieveMinRequestAge) {}
 
 MountPolicy::MountPolicy(const MountPolicy& other) {
   this->archiveMinRequestAge = other.archiveMinRequestAge;
@@ -52,21 +58,17 @@ MountPolicy::MountPolicy(const MountPolicy& other) {
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool MountPolicy::operator==(const MountPolicy &rhs) const {
-  return name == rhs.name
-      && archivePriority == rhs.archivePriority
-      && archiveMinRequestAge == rhs.archiveMinRequestAge
-      && retrievePriority == rhs.retrievePriority
-      && retrieveMinRequestAge == rhs.retrieveMinRequestAge
-      && creationLog == rhs.creationLog
-      && lastModificationLog == rhs.lastModificationLog
-      && comment == rhs.comment;
+bool MountPolicy::operator==(const MountPolicy& rhs) const {
+  return name == rhs.name && archivePriority == rhs.archivePriority &&
+         archiveMinRequestAge == rhs.archiveMinRequestAge && retrievePriority == rhs.retrievePriority &&
+         retrieveMinRequestAge == rhs.retrieveMinRequestAge && creationLog == rhs.creationLog &&
+         lastModificationLog == rhs.lastModificationLog && comment == rhs.comment;
 }
 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool MountPolicy::operator!=(const MountPolicy &rhs) const {
+bool MountPolicy::operator!=(const MountPolicy& rhs) const {
   return !operator==(rhs);
 }
 
@@ -83,18 +85,15 @@ MountPolicy MountPolicy::operator=(const MountPolicy& other) {
   }
   return *this;
 }
+
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const MountPolicy &obj) {
-  os << "(name=" << obj.name
-     << " archive_priority=" << obj.archivePriority
-     << " archive_minRequestAge=" << obj.archiveMinRequestAge
-     << " retrieve_priority=" << obj.retrievePriority
-     << " retrieve_minRequestAge=" << obj.retrieveMinRequestAge
-     << " creationLog=" << obj.creationLog
-     << " lastModificationLog=" << obj.lastModificationLog
-     << " comment=" << obj.comment << ")";
+std::ostream& operator<<(std::ostream& os, const MountPolicy& obj) {
+  os << "(name=" << obj.name << " archive_priority=" << obj.archivePriority
+     << " archive_minRequestAge=" << obj.archiveMinRequestAge << " retrieve_priority=" << obj.retrievePriority
+     << " retrieve_minRequestAge=" << obj.retrieveMinRequestAge << " creationLog=" << obj.creationLog
+     << " lastModificationLog=" << obj.lastModificationLog << " comment=" << obj.comment << ")";
   return os;
 }
 

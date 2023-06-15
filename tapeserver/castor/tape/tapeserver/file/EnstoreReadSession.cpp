@@ -27,23 +27,24 @@ namespace castor {
 namespace tape {
 namespace tapeFile {
 
-EnstoreReadSession::EnstoreReadSession(tapeserver::drive::DriveInterface &drive,
-  const tapeserver::daemon::VolumeInfo &volInfo, const bool useLbp)
-  : ReadSession(drive, volInfo, useLbp) {
+EnstoreReadSession::EnstoreReadSession(tapeserver::drive::DriveInterface& drive,
+                                       const tapeserver::daemon::VolumeInfo& volInfo,
+                                       const bool useLbp) :
+ReadSession(drive, volInfo, useLbp) {
   m_drive.rewind();
   m_drive.disableLogicalBlockProtection();
   m_detectedLbp = false;
 
   VOL1 vol1;
-  m_drive.readExactBlock(reinterpret_cast<void *>(&vol1), sizeof(vol1), "[ReadSession::ReadSession()] - Reading VOL1");
+  m_drive.readExactBlock(reinterpret_cast<void*>(&vol1), sizeof(vol1), "[ReadSession::ReadSession()] - Reading VOL1");
   try {
     vol1.verify("0");
-  } catch (std::exception &e) {
+  }
+  catch (std::exception& e) {
     throw TapeFormatError(e.what());
   }
   HeaderChecker::checkVOL1(vol1, volInfo.vid);
   // after which we are at the end of VOL1 header (e.g. beginning of first file)
-
 }
 
 }  // namespace tapeFile

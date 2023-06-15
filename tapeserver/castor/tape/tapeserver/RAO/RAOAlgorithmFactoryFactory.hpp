@@ -20,7 +20,10 @@
 #include "common/log/LogContext.hpp"
 #include "RAOManager.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace rao {
 
 /**
  * Factory of RAOAlgorithmFactory
@@ -37,16 +40,20 @@ namespace castor { namespace tape { namespace tapeserver { namespace rao {
  */
 class RAOAlgorithmFactoryFactory {
 public:
-  RAOAlgorithmFactoryFactory(RAOManager & raoManager, cta::log::LogContext & lc);
+  RAOAlgorithmFactoryFactory(RAOManager& raoManager, cta::log::LogContext& lc);
   /**
    * Returns the correct RAOAlgorithmFactory according to the informations
    * stored in the RAO manager
    */
   std::unique_ptr<RAOAlgorithmFactory> createAlgorithmFactory();
   virtual ~RAOAlgorithmFactoryFactory();
+
 private:
-  RAOManager & m_raoManager;
-  cta::log::LogContext & m_lc;
+  RAOManager& m_raoManager;
+  cta::log::LogContext& m_lc;
 };
 
-}}}}
+}  // namespace rao
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

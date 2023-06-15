@@ -22,8 +22,9 @@
 
 using namespace cta::utils::json::object;
 
-namespace cta { namespace disk {
-  
+namespace cta {
+namespace disk {
+
 /**
  * This class allows to transform a DiskSystem object into a JSON string
  * and to build a DiskSystem object from a JSON string
@@ -31,20 +32,20 @@ namespace cta { namespace disk {
 class JSONDiskSystem : public DiskSystem, public JSONCObject {
 public:
   JSONDiskSystem();
-  JSONDiskSystem(const DiskSystem & diskSystem);
+  JSONDiskSystem(const DiskSystem& diskSystem);
   /**
    * Builds the DiskSystem object with the json passed in parameter
    * @param json
    */
-  void buildFromJSON(const std::string & json) override;
+  void buildFromJSON(const std::string& json) override;
   /**
    * Get the json string representation of the inherited DiskSystem object
    * @return 
    */
   std::string getJSON() override;
   virtual ~JSONDiskSystem();
+
 private:
-
 };
-}}
-
+}  // namespace disk
+}  // namespace cta

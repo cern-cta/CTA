@@ -31,56 +31,59 @@ TEST(cta_Daemon, Tpconfig_base) {
   ASSERT_EQ(0, tpc.size());
   // Test with file full of comments (but no valid line)
   tf.stringFill("# some comment\n"
-      "\t   \t # Some non-empty line (spaces)\n"
-      "\t\t\t                   \n");
+                "\t   \t # Some non-empty line (spaces)\n"
+                "\t\t\t                   \n");
   tpc = cta::tape::daemon::Tpconfig::parseFile(tf.path());
   ASSERT_EQ(0, tpc.size());
-  
+
   // Test with non-existing file
   ASSERT_THROW(cta::tape::daemon::Tpconfig::parseFile("/no/such/file"), cta::exception::Errnum);
   // Check we get the expected Errno.
   try {
     cta::tape::daemon::Tpconfig::parseFile("/no/such/file");
-    ASSERT_TRUE(false); // We should never get here.
-  } catch (cta::exception::Errnum & ex) {
+    ASSERT_TRUE(false);  // We should never get here.
+  }
+  catch (cta::exception::Errnum& ex) {
     ASSERT_NE(std::string::npos, ex.getMessageValue().find("Errno=2:"));
   }
-  
+
   // Test with a line too short
   tf.stringFill("TapeDrive");
   ASSERT_THROW(cta::tape::daemon::Tpconfig::parseFile(tf.path()), cta::exception::Exception);
   try {
     cta::tape::daemon::Tpconfig::parseFile(tf.path());
-    ASSERT_TRUE(false); // We should never get here.
-  } catch (cta::exception::Exception & ex) {
+    ASSERT_TRUE(false);  // We should never get here.
+  }
+  catch (cta::exception::Exception& ex) {
     ASSERT_NE(std::string::npos, ex.getMessageValue().find("missing"));
   }
-  
+
   // Test with line too long
   tf.stringFill("TapeDrive lib /dev/tape libSlot ExtraArgument");
   ASSERT_THROW(cta::tape::daemon::Tpconfig::parseFile(tf.path()), cta::exception::Exception);
   try {
     cta::tape::daemon::Tpconfig::parseFile(tf.path());
-    ASSERT_TRUE(false); // We should never get here.
-  } catch (cta::exception::Exception & ex) {
+    ASSERT_TRUE(false);  // We should never get here.
+  }
+  catch (cta::exception::Exception& ex) {
     ASSERT_NE(std::string::npos, ex.getMessageValue().find("extra parameter"));
   }
-  
+
   // Test with several entries (valid file with various extra blanks)
   tf.stringFill("         drive0 lib0 \t\t\t /dev/tape0       smc0\n"
-      "drive1 lib0 /dev/tape1 smc1         \n"
-  "drive2 lib0 /dev/tape2 smc2");
+                "drive1 lib0 /dev/tape1 smc1         \n"
+                "drive2 lib0 /dev/tape2 smc2");
   tpc = cta::tape::daemon::Tpconfig::parseFile(tf.path());
   ASSERT_EQ(3, tpc.size());
-  int i=0;
-  for(auto & t: tpc) {
-    ASSERT_EQ("drive", t.second.value().unitName.substr(0,5));
+  int i = 0;
+  for (auto& t : tpc) {
+    ASSERT_EQ("drive", t.second.value().unitName.substr(0, 5));
     ASSERT_EQ("lib0", t.second.value().logicalLibrary);
-    ASSERT_EQ("/dev/tape", t.second.value().devFilename.substr(0,9));
-    ASSERT_EQ("smc", t.second.value().rawLibrarySlot.substr(0,3));
-    ASSERT_EQ('0'+i, t.second.value().unitName.back());
-    ASSERT_EQ('0'+i, t.second.value().devFilename.back());
-    ASSERT_EQ('0'+i, t.second.value().rawLibrarySlot.back());
+    ASSERT_EQ("/dev/tape", t.second.value().devFilename.substr(0, 9));
+    ASSERT_EQ("smc", t.second.value().rawLibrarySlot.substr(0, 3));
+    ASSERT_EQ('0' + i, t.second.value().unitName.back());
+    ASSERT_EQ('0' + i, t.second.value().devFilename.back());
+    ASSERT_EQ('0' + i, t.second.value().rawLibrarySlot.back());
     i++;
   }
 }
@@ -89,24 +92,24 @@ TEST(cta_Daemon, Tpconfig_duplicates) {
   TempFile tf;
   // Test duplicate unit name
   tf.stringFill("drive0 lib0 /dev/tape0 smc0\n"
-      "drive1 lib0 /dev/tape1 smc1\n"
-      "drive0 lib0 /dev/tape2 smc2");
+                "drive1 lib0 /dev/tape1 smc1\n"
+                "drive0 lib0 /dev/tape2 smc2");
   ASSERT_THROW(cta::tape::daemon::Tpconfig::parseFile(tf.path()), cta::exception::Exception);
   // Test duplicate path
   tf.stringFill("drive0 lib0 /dev/tape0 smc0\n"
-      "drive1 lib0 /dev/tape1 smc1\n"
-      "drive2 lib0 /dev/tape0 smc2");
+                "drive1 lib0 /dev/tape1 smc1\n"
+                "drive2 lib0 /dev/tape0 smc2");
   ASSERT_THROW(cta::tape::daemon::Tpconfig::parseFile(tf.path()), cta::exception::Exception);
   // Test duplicate slot
   tf.stringFill("drive0 lib0 /dev/tape0 smc0\n"
-      "drive1 lib0 /dev/tape1 smc1\n"
-      "drive2 lib0 /dev/tape2 smc0");
+                "drive1 lib0 /dev/tape1 smc1\n"
+                "drive2 lib0 /dev/tape2 smc0");
   ASSERT_THROW(cta::tape::daemon::Tpconfig::parseFile(tf.path()), cta::exception::Exception);
   // No duplication.
   tf.stringFill("drive0 lib0 /dev/tape0 smc0\n"
-      "drive1 lib0 /dev/tape1 smc1\n"
-      "drive2 lib0 /dev/tape2 smc2");
+                "drive1 lib0 /dev/tape1 smc1\n"
+                "drive2 lib0 /dev/tape2 smc2");
   cta::tape::daemon::Tpconfig::parseFile(tf.path());
 }
 
-} // namespace unitTests
+}  // namespace unitTests

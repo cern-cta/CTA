@@ -19,21 +19,20 @@
 
 #include "common/exception/Exception.hpp"
 
-namespace cta { namespace exception {
+namespace cta {
+namespace exception {
 
-    /**
+/**
      * Missing operand.
      */
-    class MissingOperand : public cta::exception::Exception {
-      
-    public:
-      
-      /**
+class MissingOperand : public cta::exception::Exception {
+public:
+  /**
        * Constructor
        */
-      MissingOperand();
+  MissingOperand();
 
-    }; // class MissingOperand
+};  // class MissingOperand
 
-} } // namespace cta exception
-
+}  // namespace exception
+}  // namespace cta

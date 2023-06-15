@@ -23,22 +23,17 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-cta::SmartFd::SmartFd() throw():
-  m_fd(-1), m_closedCallback(nullptr) {
-}
+cta::SmartFd::SmartFd() throw() : m_fd(-1), m_closedCallback(nullptr) {}
 
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-cta::SmartFd::SmartFd(const int fd) throw():
-  m_fd(fd), m_closedCallback(nullptr) {
-}
+cta::SmartFd::SmartFd(const int fd) throw() : m_fd(fd), m_closedCallback(nullptr) {}
 
 //-----------------------------------------------------------------------------
 // setClosedCallback
 //-----------------------------------------------------------------------------
-void cta::SmartFd::setClosedCallback(ClosedCallback closedCallback)
-  throw() {
+void cta::SmartFd::setClosedCallback(ClosedCallback closedCallback) throw() {
   m_closedCallback = closedCallback;
 }
 
@@ -47,18 +42,18 @@ void cta::SmartFd::setClosedCallback(ClosedCallback closedCallback)
 //-----------------------------------------------------------------------------
 void cta::SmartFd::reset(const int fd = -1) throw() {
   // If the new file descriptor is not the one already owned
-  if(fd != m_fd) {
-
+  if (fd != m_fd) {
     // If this SmartFd still owns a file descriptor, then close it
-    if(m_fd >= 0) {
+    if (m_fd >= 0) {
       close(m_fd);
-      if(m_closedCallback) {
+      if (m_closedCallback) {
         try {
-           (*m_closedCallback)(m_fd);
-        } catch(...) {
-           // Ignore any exception thrown my the m_closedCallback function
-           // because this reset function maybe called by the destructor of
-           // SmartFd
+          (*m_closedCallback)(m_fd);
+        }
+        catch (...) {
+          // Ignore any exception thrown my the m_closedCallback function
+          // because this reset function maybe called by the destructor of
+          // SmartFd
         }
       }
     }
@@ -71,7 +66,7 @@ void cta::SmartFd::reset(const int fd = -1) throw() {
 //-----------------------------------------------------------------------------
 // SmartFd assignment operator
 //-----------------------------------------------------------------------------
-cta::SmartFd &cta::SmartFd::operator=(SmartFd& obj) {
+cta::SmartFd& cta::SmartFd::operator=(SmartFd& obj) {
   reset(obj.release());
   return *this;
 }
@@ -93,9 +88,9 @@ int cta::SmartFd::get() const throw() {
 //-----------------------------------------------------------------------------
 // release
 //-----------------------------------------------------------------------------
-int cta::SmartFd::release()  {
+int cta::SmartFd::release() {
   // If this SmartFd does not own a file descriptor
-  if(m_fd < 0) {
+  if (m_fd < 0) {
     cta::exception::NotAnOwner ex;
     ex.getMessage() << "Smart file-descriptor does not own a file-descriptor";
     throw ex;

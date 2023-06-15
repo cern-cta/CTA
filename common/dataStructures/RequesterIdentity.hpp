@@ -22,7 +22,6 @@
 #include <stdint.h>
 #include <string>
 
-
 namespace cta {
 namespace common {
 namespace dataStructures {
@@ -31,22 +30,21 @@ namespace dataStructures {
  * This struct holds the username and group name of a given user 
  */
 struct RequesterIdentity {
-
   RequesterIdentity();
-  
-  RequesterIdentity(const std::string &name, const std::string &group);
 
-  bool operator==(const RequesterIdentity &rhs) const;
+  RequesterIdentity(const std::string& name, const std::string& group);
 
-  bool operator!=(const RequesterIdentity &rhs) const;
+  bool operator==(const RequesterIdentity& rhs) const;
+
+  bool operator!=(const RequesterIdentity& rhs) const;
 
   std::string name;
   std::string group;
 
-}; // struct RequesterIdentity
+};  // struct RequesterIdentity
 
-std::ostream &operator<<(std::ostream &os, const RequesterIdentity &obj);
+std::ostream& operator<<(std::ostream& os, const RequesterIdentity& obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

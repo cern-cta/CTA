@@ -27,7 +27,6 @@ namespace catalogue {
 template<typename Item>
 class CatalogueItorImpl {
 public:
-
   /**
    * Destructor.
    */
@@ -43,7 +42,7 @@ public:
    */
   virtual Item next() = 0;
 
-}; // class CatalogueItorImpl
+};  // class CatalogueItorImpl
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

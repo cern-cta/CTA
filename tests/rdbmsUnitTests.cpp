@@ -34,10 +34,8 @@
 /**
  * Prints the usage message of this unit-test program to the specified output stream.
  */
-static void printUsage(std::ostream &os) {
-  os <<
-    "Usage:" << std::endl <<
-    '\t' << "cta-rdbmsUnitTests [Google test options] databaseConnectionFile" << std::endl;
+static void printUsage(std::ostream& os) {
+  os << "Usage:" << std::endl << '\t' << "cta-rdbmsUnitTests [Google test options] databaseConnectionFile" << std::endl;
 }
 
 /**
@@ -45,13 +43,13 @@ static void printUsage(std::ostream &os) {
  * Google test has consumed all of its command-line options from the
  * command-line.
  */
-static RdbmsUnitTestsCmdLineArgs parseCmdLine(const int argc, char ** argv) {
+static RdbmsUnitTestsCmdLineArgs parseCmdLine(const int argc, char** argv) {
   const int expectedNbArgs = 1;
   const int actualNbArgs = argc - 1;
 
-  if(expectedNbArgs != actualNbArgs) {
+  if (expectedNbArgs != actualNbArgs) {
     std::cerr << "Invalid number of command-line arguments: expected=" << expectedNbArgs << " actual=" << actualNbArgs
-      << std::endl;
+              << std::endl;
     std::cerr << std::endl;
     printUsage(std::cerr);
     exit(1);
@@ -72,11 +70,11 @@ int main(int argc, char** argv) {
     // Google test will consume its options from the command-line and leave everything else
     g_cmdLineArgs = parseCmdLine(argc, argv);
 
-    #ifdef STDOUT_LOGGING
+#ifdef STDOUT_LOGGING
     cta::log::StdoutLogger dummyLogger("stdout", "stdout");
-    #else
+#else
     cta::log::DummyLogger dummyLogger("dummy", "dummy");
-    #endif
+#endif
     const auto login = cta::rdbms::Login::parseFile(g_cmdLineArgs.dbConfigPath);
     const uint64_t nbConns = 1;
     const uint64_t nbArchiveFileListingConns = 1;
@@ -86,8 +84,8 @@ int main(int argc, char** argv) {
     if (cta::catalogue::DropSchemaCmd::isProductionSet(conn)) {
       throw cta::exception::Exception("Cannot use a production database for testing.");
     }
-    auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(dummyLogger, login, nbConns,
-      nbArchiveFileListingConns, maxTriesToConnect);
+    auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(
+      dummyLogger, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
     g_catalogueFactoryForUnitTests = catalogueFactory.get();
 
     const int ret = RUN_ALL_TESTS();
@@ -101,13 +99,16 @@ int main(int argc, char** argv) {
     close(2);
 
     return ret;
-  } catch(cta::exception::Exception &ex) {
+  }
+  catch (cta::exception::Exception& ex) {
     std::cerr << "Aborting: Caught a cta::exception::Exception: " << ex.getMessage().str() << std::endl;
     return 1;
-  } catch(std::exception &se) {
+  }
+  catch (std::exception& se) {
     std::cerr << "Aborting: Caught an std::exception: " << se.what() << std::endl;
     return 1;
-  } catch(...) {
+  }
+  catch (...) {
     std::cerr << "Aborting: Caught an unknown exception " << std::endl;
     return 1;
   }

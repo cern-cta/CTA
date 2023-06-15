@@ -16,28 +16,32 @@
  */
 
 #pragma once
-namespace cta{
-namespace objectstore{
-  class LifecycleTimingsSerDeser: public cta::common::dataStructures::LifecycleTimings{
-    public:
-      LifecycleTimingsSerDeser() : cta::common::dataStructures::LifecycleTimings() {}
-      LifecycleTimingsSerDeser(const cta::common::dataStructures::LifecycleTimings& lifecycleTimings) : cta::common::dataStructures::LifecycleTimings(lifecycleTimings) {}
 
-      // Assignment operator
-      LifecycleTimingsSerDeser operator=(const cta::common::dataStructures::LifecycleTimings& lifecycleTimings) {
-            return cta::common::dataStructures::LifecycleTimings(*this);
-      }
+namespace cta {
+namespace objectstore {
+class LifecycleTimingsSerDeser : public cta::common::dataStructures::LifecycleTimings {
+public:
+  LifecycleTimingsSerDeser() : cta::common::dataStructures::LifecycleTimings() {}
 
-      void deserialize(const cta::objectstore::serializers::LifecycleTimings& ostoreLifecycleTimings){
-	completed_time = ostoreLifecycleTimings.completed_time();
-	creation_time = ostoreLifecycleTimings.creation_time();
-	first_selected_time = ostoreLifecycleTimings.first_selected_time();
-      }
-      
-      void serialize(cta::objectstore::serializers::LifecycleTimings &lifecycleTimings){
-	lifecycleTimings.set_completed_time(completed_time);
-	lifecycleTimings.set_creation_time(creation_time);
-	lifecycleTimings.set_first_selected_time(first_selected_time);
-      }
-  };
-}}
+  LifecycleTimingsSerDeser(const cta::common::dataStructures::LifecycleTimings& lifecycleTimings) :
+  cta::common::dataStructures::LifecycleTimings(lifecycleTimings) {}
+
+  // Assignment operator
+  LifecycleTimingsSerDeser operator=(const cta::common::dataStructures::LifecycleTimings& lifecycleTimings) {
+    return cta::common::dataStructures::LifecycleTimings(*this);
+  }
+
+  void deserialize(const cta::objectstore::serializers::LifecycleTimings& ostoreLifecycleTimings) {
+    completed_time = ostoreLifecycleTimings.completed_time();
+    creation_time = ostoreLifecycleTimings.creation_time();
+    first_selected_time = ostoreLifecycleTimings.first_selected_time();
+  }
+
+  void serialize(cta::objectstore::serializers::LifecycleTimings& lifecycleTimings) {
+    lifecycleTimings.set_completed_time(completed_time);
+    lifecycleTimings.set_creation_time(creation_time);
+    lifecycleTimings.set_first_selected_time(first_selected_time);
+  }
+};
+}  // namespace objectstore
+}  // namespace cta

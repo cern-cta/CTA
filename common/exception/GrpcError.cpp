@@ -17,10 +17,8 @@
 
 #include "common/exception/GrpcError.hpp"
 
-
 // -----------------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------------
-cta::exception::GrpcError::GrpcError(const std::string &context, const bool embedBacktrace):
-  cta::exception::Exception(context, embedBacktrace) {
-}
+cta::exception::GrpcError::GrpcError(const std::string& context, const bool embedBacktrace) :
+cta::exception::Exception(context, embedBacktrace) {}

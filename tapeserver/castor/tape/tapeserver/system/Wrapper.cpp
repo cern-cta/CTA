@@ -36,29 +36,30 @@ DIR* System::fakeWrapper::opendir(const char* name) {
     return nullptr;
   }
   /* Dirty pointer gymnastics. Good enough for a test harness */
-  ourDIR * dir = new ourDIR;
+  ourDIR* dir = new ourDIR;
   dir->nextIdx = 0;
   dir->path = name;
   return (DIR*) dir;
 }
 
 int System::fakeWrapper::closedir(DIR* dirp) {
-  delete ((ourDIR *) dirp);
+  delete ((ourDIR*) dirp);
   return 0;
 }
 
-struct dirent * System::fakeWrapper::readdir(DIR* dirp) {
+struct dirent* System::fakeWrapper::readdir(DIR* dirp) {
   /* Dirty pointer gymnastics. Good enough for a test harness */
-  ourDIR & dir = *((ourDIR *) dirp);
+  ourDIR& dir = *((ourDIR*) dirp);
   /* Check we did not reach end of directory. This will create a new
    * entry in the map if it does not exist, but we should be protected by
    * opendir.
    */
-  if (dir.nextIdx + 1 > m_directories[dir.path].size())
+  if (dir.nextIdx + 1 > m_directories[dir.path].size()) {
     return nullptr;
+  }
   dir.dent_name = m_directories[dir.path][dir.nextIdx++];
   strncpy(dir.dent.d_name, dir.dent_name.c_str(), NAME_MAX);
-  return & (dir.dent);
+  return &(dir.dent);
 }
 
 int System::fakeWrapper::readlink(const char* path, char* buf, size_t len) {
@@ -69,16 +70,18 @@ int System::fakeWrapper::readlink(const char* path, char* buf, size_t len) {
     errno = ENOENT;
     return -1;
   }
-  const std::string & link = m_links[std::string(path)];
+  const std::string& link = m_links[std::string(path)];
   /* Copy the link without the training \0 as it is the behavior 
    of the real readlink */
   size_t lenToCopy = link.size();
-  if (lenToCopy > len) lenToCopy = len;
+  if (lenToCopy > len) {
+    lenToCopy = len;
+  }
   link.copy(buf, lenToCopy);
   return len > link.size() ? link.size() : len;
 }
 
-char * System::fakeWrapper::realpath(const char* name, char* resolved) {
+char* System::fakeWrapper::realpath(const char* name, char* resolved) {
   /*
    * Mimic realpath. see man 3 realpath.
    */
@@ -120,7 +123,7 @@ ssize_t System::fakeWrapper::read(int fd, void* buf, size_t nbytes) {
   return m_openFiles[fd]->read(buf, nbytes);
 }
 
-ssize_t System::fakeWrapper::write(int fd, const void *buf, size_t nbytes) {
+ssize_t System::fakeWrapper::write(int fd, const void* buf, size_t nbytes) {
   if (m_openFiles.end() == m_openFiles.find(fd)) {
     errno = EBADF;
     return -1;
@@ -128,7 +131,7 @@ ssize_t System::fakeWrapper::write(int fd, const void *buf, size_t nbytes) {
   return m_openFiles[fd]->write(buf, nbytes);
 }
 
-int System::fakeWrapper::ioctl(int fd, unsigned long int request, mtop * mt_cmd) {
+int System::fakeWrapper::ioctl(int fd, unsigned long int request, mtop* mt_cmd) {
   /*
    * Mimic ioctl. Actually delegate the job to a vfsFile
    */
@@ -150,7 +153,7 @@ int System::fakeWrapper::ioctl(int fd, unsigned long int request, mtget* mt_stat
   return m_openFiles[fd]->ioctl(request, mt_status);
 }
 
-int System::fakeWrapper::ioctl(int fd, unsigned long int request, sg_io_hdr_t * sgh) {
+int System::fakeWrapper::ioctl(int fd, unsigned long int request, sg_io_hdr_t* sgh) {
   /*
    * Mimic ioctl. Actually delegate the job to a vfsFile
    */
@@ -185,15 +188,14 @@ int System::fakeWrapper::stat(const char* path, struct stat* buf) {
   return 0;
 }
 
-castor::tape::tapeserver::drive::DriveInterface * 
-  System::fakeWrapper::getDriveByPath(const std::string & path) {
-  std::map<std::string, castor::tape::tapeserver::drive::DriveInterface *>::iterator drive =
-    m_pathToDrive.find(path);
+castor::tape::tapeserver::drive::DriveInterface* System::fakeWrapper::getDriveByPath(const std::string& path) {
+  std::map<std::string, castor::tape::tapeserver::drive::DriveInterface*>::iterator drive = m_pathToDrive.find(path);
   if (m_pathToDrive.end() == drive) {
     return nullptr;
-  } else {
+  }
+  else {
     /* The drive will be deleted by the user, so we remove references to it */
-    castor::tape::tapeserver::drive::DriveInterface * ret = drive->second;
+    castor::tape::tapeserver::drive::DriveInterface* ret = drive->second;
     m_pathToDrive.erase(drive);
     return ret;
   }
@@ -204,30 +206,31 @@ castor::tape::tapeserver::drive::DriveInterface *
  * based map. This allows usage of polymorphic 
  */
 void System::fakeWrapper::referenceFiles() {
-  for (std::map<std::string, regularFile>::iterator i = m_regularFiles.begin();
-          i != m_regularFiles.end(); ++i)
+  for (std::map<std::string, regularFile>::iterator i = m_regularFiles.begin(); i != m_regularFiles.end(); ++i) {
     m_files[i->first] = &m_regularFiles[i->first];
-  for (std::map<std::string, stDeviceFile *>::iterator i = m_stFiles.begin();
-          i != m_stFiles.end(); ++i)
-    m_files[i->first] = m_stFiles[i->first]; 
+  }
+  for (std::map<std::string, stDeviceFile*>::iterator i = m_stFiles.begin(); i != m_stFiles.end(); ++i) {
+    m_files[i->first] = m_stFiles[i->first];
+  }
 }
+
 /**
  * Destructor: delete leftover drive and device objects
  */
 System::fakeWrapper::~fakeWrapper() {
-  for (auto & d : m_pathToDrive) {
+  for (auto& d : m_pathToDrive) {
     delete d.second;
     d.second = nullptr;
   }
 
-  for (const auto & m_stFile : m_stFiles)
+  for (const auto& m_stFile : m_stFiles) {
     delete m_stFiles[m_stFile.first];
+  }
 }
 
 System::mockWrapper::mockWrapper() {
-  m_DIR = reinterpret_cast<DIR*> (& m_DIRfake);
-  ON_CALL(*this, opendir(::testing::_))
-      .WillByDefault(::testing::Return(m_DIR));
+  m_DIR = reinterpret_cast<DIR*>(&m_DIRfake);
+  ON_CALL(*this, opendir(::testing::_)).WillByDefault(::testing::Return(m_DIR));
 }
 
 void System::mockWrapper::delegateToFake() {
@@ -241,12 +244,15 @@ void System::mockWrapper::delegateToFake() {
   ON_CALL(*this, write(_, _, _)).WillByDefault(Invoke(&fake, &fakeWrapper::write));
   /* We have an overloaded function. Have to use a static_cast trick to indicate
    the pointer to which function we want.*/
-  ON_CALL(*this, ioctl(_, _, A<struct mtop *>())).WillByDefault(Invoke(&fake, 
-        static_cast<int(fakeWrapper::*)(int , unsigned long int , mtop*)>(&fakeWrapper::ioctl)));
-  ON_CALL(*this, ioctl(_, _, A<struct mtget *>())).WillByDefault(Invoke(&fake, 
-        static_cast<int(fakeWrapper::*)(int , unsigned long int , mtget*)>(&fakeWrapper::ioctl)));
-  ON_CALL(*this, ioctl(_, _, A<struct sg_io_hdr *>())).WillByDefault(Invoke(&fake, 
-        static_cast<int(fakeWrapper::*)(int , unsigned long int , sg_io_hdr_t*)>(&fakeWrapper::ioctl)));
+  ON_CALL(*this, ioctl(_, _, A<struct mtop*>()))
+    .WillByDefault(
+      Invoke(&fake, static_cast<int (fakeWrapper::*)(int, unsigned long int, mtop*)>(&fakeWrapper::ioctl)));
+  ON_CALL(*this, ioctl(_, _, A<struct mtget*>()))
+    .WillByDefault(
+      Invoke(&fake, static_cast<int (fakeWrapper::*)(int, unsigned long int, mtget*)>(&fakeWrapper::ioctl)));
+  ON_CALL(*this, ioctl(_, _, A<struct sg_io_hdr*>()))
+    .WillByDefault(
+      Invoke(&fake, static_cast<int (fakeWrapper::*)(int, unsigned long int, sg_io_hdr_t*)>(&fakeWrapper::ioctl)));
   ON_CALL(*this, close(_)).WillByDefault(Invoke(&fake, &fakeWrapper::close));
   ON_CALL(*this, stat(_, _)).WillByDefault(Invoke(&fake, &fakeWrapper::stat));
   ON_CALL(*this, getDriveByPath(_)).WillByDefault(Invoke(&fake, &fakeWrapper::getDriveByPath));
@@ -263,10 +269,10 @@ void System::mockWrapper::disableGMockCallsCounting() {
   EXPECT_CALL(*this, write(_, _, _)).Times(AnyNumber());
   EXPECT_CALL(*this, close(_)).Times(AnyNumber());
   EXPECT_CALL(*this, readlink(_, _, _)).Times(AnyNumber());
-  EXPECT_CALL(*this, stat(_,_)).Times(AnyNumber());
-  EXPECT_CALL(*this, ioctl(_, _, A<struct mtop *>())).Times(AnyNumber());
-  EXPECT_CALL(*this, ioctl(_, _, A<struct mtget *>())).Times(AnyNumber());
-  EXPECT_CALL(*this, ioctl(_, _, A<struct sg_io_hdr *>())).Times(AnyNumber());
+  EXPECT_CALL(*this, stat(_, _)).Times(AnyNumber());
+  EXPECT_CALL(*this, ioctl(_, _, A<struct mtop*>())).Times(AnyNumber());
+  EXPECT_CALL(*this, ioctl(_, _, A<struct mtget*>())).Times(AnyNumber());
+  EXPECT_CALL(*this, ioctl(_, _, A<struct sg_io_hdr*>())).Times(AnyNumber());
   EXPECT_CALL(*this, getDriveByPath(_)).Times(AnyNumber());
 }
 
@@ -300,15 +306,12 @@ void System::fakeWrapper::setupSLC5() {
   m_directories["/sys/bus/scsi/devices"].push_back(".");
   m_directories["/sys/bus/scsi/devices"].push_back("..");
   // Oracle
-  m_directories["/sys/bus/scsi/devices"].push_back("3:0:0:0"); // mediumx
-  m_directories["/sys/bus/scsi/devices"].push_back("3:0:1:0"); // tape0
-  m_directories["/sys/bus/scsi/devices"].push_back("3:0:2:0"); // tape1
-  m_realpathes["/sys/bus/scsi/devices/3:0:0:0"]
-          = "/sys/devices/pseudo_0/adapter0/host3/target3:0:0/3:0:0:0";
-  m_realpathes["/sys/bus/scsi/devices/3:0:1:0"]
-          = "/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0";
-  m_realpathes["/sys/bus/scsi/devices/3:0:2:0"]
-          = "/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0";
+  m_directories["/sys/bus/scsi/devices"].push_back("3:0:0:0");  // mediumx
+  m_directories["/sys/bus/scsi/devices"].push_back("3:0:1:0");  // tape0
+  m_directories["/sys/bus/scsi/devices"].push_back("3:0:2:0");  // tape1
+  m_realpathes["/sys/bus/scsi/devices/3:0:0:0"] = "/sys/devices/pseudo_0/adapter0/host3/target3:0:0/3:0:0:0";
+  m_realpathes["/sys/bus/scsi/devices/3:0:1:0"] = "/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0";
+  m_realpathes["/sys/bus/scsi/devices/3:0:2:0"] = "/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0";
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:0/3:0:0:0/type"] = "8\n";
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0/type"] = "1\n";
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0/type"] = "1\n";
@@ -321,12 +324,12 @@ void System::fakeWrapper::setupSLC5() {
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:0/3:0:0:0/rev"] = "0104\n";
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0/rev"] = "0104\n";
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0/rev"] = "0104\n";
-  m_links["/sys/devices/pseudo_0/adapter0/host3/target3:0:0/3:0:0:0/generic"]
-          = "../../../../../../class/scsi_generic/sg2";
-  m_links["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0/generic"]
-          = "../../../../../../class/scsi_generic/sg0";
-  m_links["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0/generic"]
-          = "../../../../../../class/scsi_generic/sg1";
+  m_links["/sys/devices/pseudo_0/adapter0/host3/target3:0:0/3:0:0:0/generic"] =
+    "../../../../../../class/scsi_generic/sg2";
+  m_links["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0/generic"] =
+    "../../../../../../class/scsi_generic/sg0";
+  m_links["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0/generic"] =
+    "../../../../../../class/scsi_generic/sg1";
   m_stats["/dev/sg0"].st_rdev = makedev(21, 0);
   m_stats["/dev/sg0"].st_mode = S_IFCHR;
   m_stats["/dev/sg1"].st_rdev = makedev(21, 1);
@@ -371,10 +374,8 @@ void System::fakeWrapper::setupSLC5() {
   m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0"].push_back("type");
   m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0"].push_back("uevent");
   m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0"].push_back("vendor");
-  m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0/scsi_tape:st0/dev"] =
-          "9:0\n";
-  m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0/scsi_tape:nst0/dev"] =
-          "9:128\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0/scsi_tape:st0/dev"] = "9:0\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0/scsi_tape:nst0/dev"] = "9:128\n";
   m_stats["/dev/st0"].st_rdev = makedev(9, 0);
   m_stats["/dev/st0"].st_mode = S_IFCHR;
   m_stats["/dev/nst0"].st_rdev = makedev(9, 128);
@@ -414,10 +415,8 @@ void System::fakeWrapper::setupSLC5() {
   m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0"].push_back("type");
   m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0"].push_back("uevent");
   m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0"].push_back("vendor");
-  m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0/scsi_tape:st1/dev"] =
-          "9:1\n";
-  m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0/scsi_tape:nst1/dev"] =
-          "9:129\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0/scsi_tape:st1/dev"] = "9:1\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0/scsi_tape:nst1/dev"] = "9:129\n";
   m_stats["/dev/st1"].st_rdev = makedev(9, 1);
   m_stats["/dev/st1"].st_mode = S_IFCHR;
   m_stats["/dev/nst1"].st_rdev = makedev(9, 129);
@@ -426,15 +425,12 @@ void System::fakeWrapper::setupSLC5() {
   m_stFiles["/dev/nst1"] = new stOracleT10000Device();
 
   // IBM
-  m_directories["/sys/bus/scsi/devices"].push_back("2:0:0:0"); // mediumx
-  m_directories["/sys/bus/scsi/devices"].push_back("2:0:1:0"); // tape0
-  m_directories["/sys/bus/scsi/devices"].push_back("2:0:2:0"); // tape1
-  m_realpathes["/sys/bus/scsi/devices/2:0:0:0"]
-    = "/sys/devices/pseudo_0/adapter0/host2/target2:0:0/2:0:0:0";
-  m_realpathes["/sys/bus/scsi/devices/2:0:1:0"]
-    = "/sys/devices/pseudo_0/adapter0/host2/target2:0:1/2:0:1:0";
-  m_realpathes["/sys/bus/scsi/devices/2:0:2:0"]
-    = "/sys/devices/pseudo_0/adapter0/host2/target2:0:2/2:0:2:0";
+  m_directories["/sys/bus/scsi/devices"].push_back("2:0:0:0");  // mediumx
+  m_directories["/sys/bus/scsi/devices"].push_back("2:0:1:0");  // tape0
+  m_directories["/sys/bus/scsi/devices"].push_back("2:0:2:0");  // tape1
+  m_realpathes["/sys/bus/scsi/devices/2:0:0:0"] = "/sys/devices/pseudo_0/adapter0/host2/target2:0:0/2:0:0:0";
+  m_realpathes["/sys/bus/scsi/devices/2:0:1:0"] = "/sys/devices/pseudo_0/adapter0/host2/target2:0:1/2:0:1:0";
+  m_realpathes["/sys/bus/scsi/devices/2:0:2:0"] = "/sys/devices/pseudo_0/adapter0/host2/target2:0:2/2:0:2:0";
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host2/target2:0:0/2:0:0:0/type"] = "8\n";
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host2/target2:0:1/2:0:1:0/type"] = "1\n";
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host2/target2:0:2/2:0:2:0/type"] = "1\n";
@@ -447,12 +443,12 @@ void System::fakeWrapper::setupSLC5() {
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host2/target2:0:0/2:0:0:0/rev"] = "F030\n";
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host2/target2:0:1/2:0:1:0/rev"] = "460E\n";
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host2/target2:0:2/2:0:2:0/rev"] = "460E\n";
-  m_links["/sys/devices/pseudo_0/adapter0/host2/target2:0:0/2:0:0:0/generic"]
-    = "../../../../../../class/scsi_generic/sg5";
-  m_links["/sys/devices/pseudo_0/adapter0/host2/target2:0:1/2:0:1:0/generic"]
-    = "../../../../../../class/scsi_generic/sg3";
-  m_links["/sys/devices/pseudo_0/adapter0/host2/target2:0:2/2:0:2:0/generic"]
-    = "../../../../../../class/scsi_generic/sg4";
+  m_links["/sys/devices/pseudo_0/adapter0/host2/target2:0:0/2:0:0:0/generic"] =
+    "../../../../../../class/scsi_generic/sg5";
+  m_links["/sys/devices/pseudo_0/adapter0/host2/target2:0:1/2:0:1:0/generic"] =
+    "../../../../../../class/scsi_generic/sg3";
+  m_links["/sys/devices/pseudo_0/adapter0/host2/target2:0:2/2:0:2:0/generic"] =
+    "../../../../../../class/scsi_generic/sg4";
   m_stats["/dev/sg3"].st_rdev = makedev(21, 3);
   m_stats["/dev/sg3"].st_mode = S_IFCHR;
   m_stats["/dev/sg4"].st_rdev = makedev(21, 4);
@@ -497,10 +493,8 @@ void System::fakeWrapper::setupSLC5() {
   m_directories["/sys/devices/pseudo_0/adapter0/host2/target2:0:1/2:0:1:0"].push_back("type");
   m_directories["/sys/devices/pseudo_0/adapter0/host2/target2:0:1/2:0:1:0"].push_back("uevent");
   m_directories["/sys/devices/pseudo_0/adapter0/host2/target2:0:1/2:0:1:0"].push_back("vendor");
-  m_regularFiles["/sys/devices/pseudo_0/adapter0/host2/target2:0:1/2:0:1:0/scsi_tape:st2/dev"] =
-    "9:2\n";
-  m_regularFiles["/sys/devices/pseudo_0/adapter0/host2/target2:0:1/2:0:1:0/scsi_tape:nst2/dev"] =
-    "9:130\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host2/target2:0:1/2:0:1:0/scsi_tape:st2/dev"] = "9:2\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host2/target2:0:1/2:0:1:0/scsi_tape:nst2/dev"] = "9:130\n";
   m_stats["/dev/st2"].st_rdev = makedev(9, 2);
   m_stats["/dev/st2"].st_mode = S_IFCHR;
   m_stats["/dev/nst2"].st_rdev = makedev(9, 130);
@@ -540,10 +534,8 @@ void System::fakeWrapper::setupSLC5() {
   m_directories["/sys/devices/pseudo_0/adapter0/host2/target2:0:2/2:0:2:0"].push_back("type");
   m_directories["/sys/devices/pseudo_0/adapter0/host2/target2:0:2/2:0:2:0"].push_back("uevent");
   m_directories["/sys/devices/pseudo_0/adapter0/host2/target2:0:2/2:0:2:0"].push_back("vendor");
-  m_regularFiles["/sys/devices/pseudo_0/adapter0/host2/target2:0:2/2:0:2:0/scsi_tape:st3/dev"] =
-    "9:3\n";
-  m_regularFiles["/sys/devices/pseudo_0/adapter0/host2/target2:0:2/2:0:2:0/scsi_tape:nst3/dev"] =
-    "9:131\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host2/target2:0:2/2:0:2:0/scsi_tape:st3/dev"] = "9:3\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host2/target2:0:2/2:0:2:0/scsi_tape:nst3/dev"] = "9:131\n";
   m_stats["/dev/st3"].st_rdev = makedev(9, 3);
   m_stats["/dev/st3"].st_mode = S_IFCHR;
   m_stats["/dev/nst3"].st_rdev = makedev(9, 131);
@@ -587,7 +579,7 @@ void System::fakeWrapper::setupSLC6() {
   m_directories["/sys/bus/scsi/devices"].push_back("6:0:0:0"); /* mediumx */
   m_directories["/sys/bus/scsi/devices"].push_back("6:0:1:0"); /* tape */
   m_directories["/sys/bus/scsi/devices"].push_back("6:0:2:0"); /* tape */
-  
+
   m_directories["/sys/bus/scsi/devices"].push_back("host0");
   m_directories["/sys/bus/scsi/devices"].push_back("host1");
   m_directories["/sys/bus/scsi/devices"].push_back("host2");
@@ -599,37 +591,22 @@ void System::fakeWrapper::setupSLC6() {
   m_directories["/sys/bus/scsi/devices"].push_back("target6:0:0");
   m_directories["/sys/bus/scsi/devices"].push_back("target6:0:1");
   m_directories["/sys/bus/scsi/devices"].push_back("target6:0:2");
-  
-  m_realpathes["/sys/bus/scsi/devices/0:0:0:0"]
-          = "/sys/devices/pci0000:00/0000:00:1f.2/host0/target0:0:0/0:0:0:0";
-  m_realpathes["/sys/bus/scsi/devices/6:0:0:0"]
-          = "/sys/devices/pseudo_0/adapter0/host6/target6:0:0/6:0:0:0";
-  m_realpathes["/sys/bus/scsi/devices/6:0:1:0"]
-          = "/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0";
-  m_realpathes["/sys/bus/scsi/devices/6:0:2:0"]
-          = "/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0";
-  m_realpathes["/sys/bus/scsi/devices/host0"]
-          = "/sys/devices/pci0000:00/0000:00:1f.2/host0";
-  m_realpathes["/sys/bus/scsi/devices/host1"]
-          = "/sys/devices/pci0000:00/0000:00:1f.2/host1";
-  m_realpathes["/sys/bus/scsi/devices/host2"]
-          = "/sys/devices/pci0000:00/0000:00:1f.2/host2";
-  m_realpathes["/sys/bus/scsi/devices/host3"]
-          = "/sys/devices/pci0000:00/0000:00:1f.2/host3";
-  m_realpathes["/sys/bus/scsi/devices/host4"]
-          = "/sys/devices/pci0000:00/0000:00:1f.2/host4";
-  m_realpathes["/sys/bus/scsi/devices/host5"]
-          = "/sys/devices/pseudo_0/adapter0/host5";
-  m_realpathes["/sys/bus/scsi/devices/host6"]
-          = "/sys/devices/pseudo_0/adapter0/host6";
-  m_realpathes["/sys/bus/scsi/devices/target0:0:0"]
-          = "/sys/devices/pci0000:00/0000:00:1f.2/host0/target0:0:0";
-  m_realpathes["/sys/bus/scsi/devices/target6:0:0"]
-          = "/sys/devices/pseudo_0/adapter0/host6/target6:0:0";
-  m_realpathes["/sys/bus/scsi/devices/target6:0:1"]
-          = "/sys/devices/pseudo_0/adapter0/host6/target6:0:1";
-  m_realpathes["/sys/bus/scsi/devices/target6:0:2"]
-          = "/sys/devices/pseudo_0/adapter0/host6/target6:0:2";
+
+  m_realpathes["/sys/bus/scsi/devices/0:0:0:0"] = "/sys/devices/pci0000:00/0000:00:1f.2/host0/target0:0:0/0:0:0:0";
+  m_realpathes["/sys/bus/scsi/devices/6:0:0:0"] = "/sys/devices/pseudo_0/adapter0/host6/target6:0:0/6:0:0:0";
+  m_realpathes["/sys/bus/scsi/devices/6:0:1:0"] = "/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0";
+  m_realpathes["/sys/bus/scsi/devices/6:0:2:0"] = "/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0";
+  m_realpathes["/sys/bus/scsi/devices/host0"] = "/sys/devices/pci0000:00/0000:00:1f.2/host0";
+  m_realpathes["/sys/bus/scsi/devices/host1"] = "/sys/devices/pci0000:00/0000:00:1f.2/host1";
+  m_realpathes["/sys/bus/scsi/devices/host2"] = "/sys/devices/pci0000:00/0000:00:1f.2/host2";
+  m_realpathes["/sys/bus/scsi/devices/host3"] = "/sys/devices/pci0000:00/0000:00:1f.2/host3";
+  m_realpathes["/sys/bus/scsi/devices/host4"] = "/sys/devices/pci0000:00/0000:00:1f.2/host4";
+  m_realpathes["/sys/bus/scsi/devices/host5"] = "/sys/devices/pseudo_0/adapter0/host5";
+  m_realpathes["/sys/bus/scsi/devices/host6"] = "/sys/devices/pseudo_0/adapter0/host6";
+  m_realpathes["/sys/bus/scsi/devices/target0:0:0"] = "/sys/devices/pci0000:00/0000:00:1f.2/host0/target0:0:0";
+  m_realpathes["/sys/bus/scsi/devices/target6:0:0"] = "/sys/devices/pseudo_0/adapter0/host6/target6:0:0";
+  m_realpathes["/sys/bus/scsi/devices/target6:0:1"] = "/sys/devices/pseudo_0/adapter0/host6/target6:0:1";
+  m_realpathes["/sys/bus/scsi/devices/target6:0:2"] = "/sys/devices/pseudo_0/adapter0/host6/target6:0:2";
   m_regularFiles["/sys/devices/pci0000:00/0000:00:1f.2/host0/target0:0:0/0:0:0:0/type"] = "0\n";
   m_regularFiles["/sys/devices/pci0000:00/0000:00:1f.2/host0/target0:0:0/0:0:0:0/vendor"] = "ATA     \n";
   m_regularFiles["/sys/devices/pci0000:00/0000:00:1f.2/host0/target0:0:0/0:0:0:0/model"] = "TOSHIBA THNSNF12\n";
@@ -646,17 +623,12 @@ void System::fakeWrapper::setupSLC6() {
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:0/6:0:0:0/rev"] = "0104\n";
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/rev"] = "0104\n";
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/rev"] = "0104\n";
-  
-  
-  m_links["/sys/devices/pci0000:00/0000:00:1f.2/host0/target0:0:0/0:0:0:0/generic"]
-          = "scsi_generic/sg0";
-  m_links["/sys/devices/pseudo_0/adapter0/host6/target6:0:0/6:0:0:0/generic"]
-          = "scsi_generic/sg3";
-  m_links["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/generic"]
-          = "scsi_generic/sg1";
-    m_links["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/generic"]
-          = "scsi_generic/sg2";
-    
+
+  m_links["/sys/devices/pci0000:00/0000:00:1f.2/host0/target0:0:0/0:0:0:0/generic"] = "scsi_generic/sg0";
+  m_links["/sys/devices/pseudo_0/adapter0/host6/target6:0:0/6:0:0:0/generic"] = "scsi_generic/sg3";
+  m_links["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/generic"] = "scsi_generic/sg1";
+  m_links["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/generic"] = "scsi_generic/sg2";
+
   m_stats["/dev/sg0"].st_rdev = makedev(21, 0);
   m_stats["/dev/sg0"].st_mode = S_IFCHR;
   m_stats["/dev/sg1"].st_rdev = makedev(21, 1);
@@ -666,8 +638,8 @@ void System::fakeWrapper::setupSLC6() {
   m_stats["/dev/sg3"].st_rdev = makedev(21, 3);
   m_stats["/dev/sg3"].st_mode = S_IFCHR;
 
-  m_regularFiles["/sys/devices/pci0000:00/0000:00:1f.2/host0/target0:0:0/0:0:0:0/generic/dev"]  = "21:0\n";
-  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:0/6:0:0:0/generic/dev"]  = "21:3\n";
+  m_regularFiles["/sys/devices/pci0000:00/0000:00:1f.2/host0/target0:0:0/0:0:0:0/generic/dev"] = "21:0\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:0/6:0:0:0/generic/dev"] = "21:3\n";
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/generic/dev"] = "21:1\n";
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/generic/dev"] = "21:2\n";
 
@@ -715,15 +687,13 @@ void System::fakeWrapper::setupSLC6() {
   m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/scsi_tape"].push_back("st0l");
   m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/scsi_tape"].push_back("st0m");
 
-  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/scsi_tape/st0/dev"] =
-          "9:0\n";
-  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/scsi_tape/nst0/dev"] =
-          "9:128\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/scsi_tape/st0/dev"] = "9:0\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/scsi_tape/nst0/dev"] = "9:128\n";
   m_stats["/dev/st0"].st_rdev = makedev(9, 0);
   m_stats["/dev/st0"].st_mode = S_IFCHR;
   m_stats["/dev/nst0"].st_rdev = makedev(9, 128);
   m_stats["/dev/nst0"].st_mode = S_IFCHR;
-  
+
   m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back(".");
   m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("..");
   m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("bsg");
@@ -768,17 +738,15 @@ void System::fakeWrapper::setupSLC6() {
   m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/scsi_tape"].push_back("st1l");
   m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/scsi_tape"].push_back("st1m");
 
-  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/scsi_tape/st1/dev"] =
-          "9:1\n";
-  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/scsi_tape/nst1/dev"] =
-          "9:129\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/scsi_tape/st1/dev"] = "9:1\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/scsi_tape/nst1/dev"] = "9:129\n";
   m_stats["/dev/st1"].st_rdev = makedev(9, 1);
   m_stats["/dev/st1"].st_mode = S_IFCHR;
   m_stats["/dev/nst1"].st_rdev = makedev(9, 129);
   m_stats["/dev/nst1"].st_mode = S_IFCHR;
 
   m_stFiles["/dev/nst0"] = new stOracleT10000Device();
-  m_stFiles["/dev/nst1"]= new stOracleT10000Device();
+  m_stFiles["/dev/nst1"] = new stOracleT10000Device();
 
   // IBM - host 5
   m_directories["/sys/bus/scsi/devices"].push_back("5:0:0:0"); /* mediumx */
@@ -789,19 +757,13 @@ void System::fakeWrapper::setupSLC6() {
   m_directories["/sys/bus/scsi/devices"].push_back("target5:0:1");
   m_directories["/sys/bus/scsi/devices"].push_back("target5:0:2");
 
-  m_realpathes["/sys/bus/scsi/devices/5:0:0:0"]
-    = "/sys/devices/pseudo_0/adapter0/host5/target5:0:0/5:0:0:0";
-  m_realpathes["/sys/bus/scsi/devices/5:0:1:0"]
-    = "/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0";
-  m_realpathes["/sys/bus/scsi/devices/5:0:2:0"]
-    = "/sys/devices/pseudo_0/adapter0/host5/target5:0:2/5:0:2:0";
+  m_realpathes["/sys/bus/scsi/devices/5:0:0:0"] = "/sys/devices/pseudo_0/adapter0/host5/target5:0:0/5:0:0:0";
+  m_realpathes["/sys/bus/scsi/devices/5:0:1:0"] = "/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0";
+  m_realpathes["/sys/bus/scsi/devices/5:0:2:0"] = "/sys/devices/pseudo_0/adapter0/host5/target5:0:2/5:0:2:0";
 
-  m_realpathes["/sys/bus/scsi/devices/target5:0:0"]
-    = "/sys/devices/pseudo_0/adapter0/host5/target5:0:0";
-  m_realpathes["/sys/bus/scsi/devices/target5:0:1"]
-    = "/sys/devices/pseudo_0/adapter0/host5/target5:0:1";
-  m_realpathes["/sys/bus/scsi/devices/target5:0:2"]
-    = "/sys/devices/pseudo_0/adapter0/host5/target5:0:2";
+  m_realpathes["/sys/bus/scsi/devices/target5:0:0"] = "/sys/devices/pseudo_0/adapter0/host5/target5:0:0";
+  m_realpathes["/sys/bus/scsi/devices/target5:0:1"] = "/sys/devices/pseudo_0/adapter0/host5/target5:0:1";
+  m_realpathes["/sys/bus/scsi/devices/target5:0:2"] = "/sys/devices/pseudo_0/adapter0/host5/target5:0:2";
 
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host5/target5:0:0/5:0:0:0/type"] = "8\n";
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0/type"] = "1\n";
@@ -816,12 +778,9 @@ void System::fakeWrapper::setupSLC6() {
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0/rev"] = "460E\n";
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host5/target5:0:2/5:0:2:0/rev"] = "460E\n";
 
-  m_links["/sys/devices/pseudo_0/adapter0/host5/target5:0:0/5:0:0:0/generic"]
-    = "scsi_generic/sg6";
-  m_links["/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0/generic"]
-    = "scsi_generic/sg4";
-  m_links["/sys/devices/pseudo_0/adapter0/host5/target5:0:2/5:0:2:0/generic"]
-    = "scsi_generic/sg5";
+  m_links["/sys/devices/pseudo_0/adapter0/host5/target5:0:0/5:0:0:0/generic"] = "scsi_generic/sg6";
+  m_links["/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0/generic"] = "scsi_generic/sg4";
+  m_links["/sys/devices/pseudo_0/adapter0/host5/target5:0:2/5:0:2:0/generic"] = "scsi_generic/sg5";
 
   m_stats["/dev/sg4"].st_rdev = makedev(21, 4);
   m_stats["/dev/sg4"].st_mode = S_IFCHR;
@@ -830,7 +789,7 @@ void System::fakeWrapper::setupSLC6() {
   m_stats["/dev/sg6"].st_rdev = makedev(21, 6);
   m_stats["/dev/sg6"].st_mode = S_IFCHR;
 
-  m_regularFiles["/sys/devices/pseudo_0/adapter0/host5/target5:0:0/5:0:0:0/generic/dev"]  = "21:6\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host5/target5:0:0/5:0:0:0/generic/dev"] = "21:6\n";
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0/generic/dev"] = "21:4\n";
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host5/target5:0:2/5:0:2:0/generic/dev"] = "21:5\n";
 
@@ -868,19 +827,25 @@ void System::fakeWrapper::setupSLC6() {
   m_directories["/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0"].push_back("vendor");
   m_directories["/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0/scsi_tape"].push_back(".");
   m_directories["/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0/scsi_tape"].push_back("..");
-  m_directories["/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0/scsi_tape"].push_back("nst2"); // not really sure
-  m_directories["/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0/scsi_tape"].push_back("nst2a"); // not really sure
-  m_directories["/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0/scsi_tape"].push_back("nst2l"); // not really sure
-  m_directories["/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0/scsi_tape"].push_back("nst2m"); // not really sure
-  m_directories["/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0/scsi_tape"].push_back("st2"); // not really sure
-  m_directories["/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0/scsi_tape"].push_back("st2a"); // not really sure
-  m_directories["/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0/scsi_tape"].push_back("st2l"); // not really sure
-  m_directories["/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0/scsi_tape"].push_back("st2m"); // not really sure
+  m_directories["/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0/scsi_tape"].push_back(
+    "nst2");  // not really sure
+  m_directories["/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0/scsi_tape"].push_back(
+    "nst2a");  // not really sure
+  m_directories["/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0/scsi_tape"].push_back(
+    "nst2l");  // not really sure
+  m_directories["/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0/scsi_tape"].push_back(
+    "nst2m");  // not really sure
+  m_directories["/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0/scsi_tape"].push_back(
+    "st2");  // not really sure
+  m_directories["/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0/scsi_tape"].push_back(
+    "st2a");  // not really sure
+  m_directories["/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0/scsi_tape"].push_back(
+    "st2l");  // not really sure
+  m_directories["/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0/scsi_tape"].push_back(
+    "st2m");  // not really sure
 
-  m_regularFiles["/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0/scsi_tape/st2/dev"] =
-    "9:2\n";
-  m_regularFiles["/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0/scsi_tape/nst2/dev"] =
-    "9:130\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0/scsi_tape/st2/dev"] = "9:2\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host5/target5:0:1/5:0:1:0/scsi_tape/nst2/dev"] = "9:130\n";
   m_stats["/dev/st2"].st_rdev = makedev(9, 2);
   m_stats["/dev/st2"].st_mode = S_IFCHR;
   m_stats["/dev/nst2"].st_rdev = makedev(9, 130);
@@ -929,10 +894,8 @@ void System::fakeWrapper::setupSLC6() {
   m_directories["/sys/devices/pseudo_0/adapter0/host5/target5:0:2/5:0:2:0/scsi_tape"].push_back("st3l");
   m_directories["/sys/devices/pseudo_0/adapter0/host5/target5:0:2/5:0:2:0/scsi_tape"].push_back("st3m");
 
-  m_regularFiles["/sys/devices/pseudo_0/adapter0/host5/target5:0:2/5:0:2:0/scsi_tape/st3/dev"] =
-    "9:3\n";
-  m_regularFiles["/sys/devices/pseudo_0/adapter0/host5/target5:0:2/5:0:2:0/scsi_tape/nst3/dev"] =
-    "9:131\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host5/target5:0:2/5:0:2:0/scsi_tape/st3/dev"] = "9:3\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host5/target5:0:2/5:0:2:0/scsi_tape/nst3/dev"] = "9:131\n";
   m_stats["/dev/st3"].st_rdev = makedev(9, 3);
   m_stats["/dev/st3"].st_mode = S_IFCHR;
   m_stats["/dev/nst3"].st_rdev = makedev(9, 131);
@@ -950,8 +913,6 @@ void castor::tape::System::fakeWrapper::setupForVirtualDriveSLC6() {
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/model"] = "VIRTUAL         \n";
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/model"] = "VIRTUAL         \n";
   // This simulates the result of stat with a symlink to /dev/nst0
-  m_stats["/dev/tape_T10D6116"].st_rdev = makedev(9,128);
-  m_stats["/dev/noSuchTape"].st_rdev = makedev(9,5);
+  m_stats["/dev/tape_T10D6116"].st_rdev = makedev(9, 128);
+  m_stats["/dev/noSuchTape"].st_rdev = makedev(9, 5);
 }
-
-

@@ -35,12 +35,11 @@ namespace dataStructures {
  * archival.
  */
 struct DeleteArchiveRequest {
-
   DeleteArchiveRequest();
 
-  bool operator==(const DeleteArchiveRequest &rhs) const;
+  bool operator==(const DeleteArchiveRequest& rhs) const;
 
-  bool operator!=(const DeleteArchiveRequest &rhs) const;
+  bool operator!=(const DeleteArchiveRequest& rhs) const;
 
   RequesterIdentity requester;
   uint64_t archiveFileID;
@@ -52,10 +51,10 @@ struct DeleteArchiveRequest {
   //In the case the ArchiveFile does not exist yet, it will not be set
   std::optional<ArchiveFile> archiveFile;
 
-}; // struct DeleteArchiveRequest
+};  // struct DeleteArchiveRequest
 
-std::ostream &operator<<(std::ostream &os, const DeleteArchiveRequest &obj);
+std::ostream& operator<<(std::ostream& os, const DeleteArchiveRequest& obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

@@ -26,16 +26,13 @@ namespace exception {
  * Failed to dismount volume.
  */
 class ForceDismountFailed : public cta::exception::Exception {
-  
 public:
-  
   /**
    * Constructor
    */
   ForceDismountFailed();
 
-}; // class ForceDismountFailed
+};  // class ForceDismountFailed
 
-} // namespace exception
-} // namespace cta
-
+}  // namespace exception
+}  // namespace cta

@@ -30,27 +30,23 @@ namespace catalogue {
  * This wrapper permits the user of the Catalogue API to use different
  * iterator implementations whilst only using a single iterator type.
  */
-template <typename Item>
+template<typename Item>
 class CatalogueItor {
 public:
-
   typedef CatalogueItorImpl<Item> Impl;
 
   /**
    * Constructor.
    */
-  CatalogueItor():
-    m_impl(nullptr) {
-  }
+  CatalogueItor() : m_impl(nullptr) {}
 
   /**
    * Constructor.
    *
    * @param impl The object actually implementing this iterator.
    */
-  CatalogueItor(Impl *const impl):
-    m_impl(impl) {
-    if(nullptr == impl) {
+  CatalogueItor(Impl* const impl) : m_impl(impl) {
+    if (nullptr == impl) {
       throw exception::Exception(std::string(__FUNCTION__) + " failed: Pointer to implementation object is null");
     }
   }
@@ -58,36 +54,31 @@ public:
   /**
    * Deletion of copy constructor.
    */
-  CatalogueItor(const CatalogueItor &) = delete;
+  CatalogueItor(const CatalogueItor&) = delete;
 
   /**
    * Move constructor.
    *
    * @param other The other object to be moved.
    */
-  CatalogueItor(CatalogueItor &&other):
-    m_impl(other.m_impl) {
-    other.m_impl = nullptr;
-  }
+  CatalogueItor(CatalogueItor&& other) : m_impl(other.m_impl) { other.m_impl = nullptr; }
 
   /**
    * Destructor.
    */
-  ~CatalogueItor() {
-    delete m_impl;
-  }
+  ~CatalogueItor() { delete m_impl; }
 
   /**
    * Deletion of copy assignment.
    */
-  CatalogueItor &operator=(const CatalogueItor &) = delete;
+  CatalogueItor& operator=(const CatalogueItor&) = delete;
 
   /**
    * Move assignment.
    */
-  CatalogueItor &operator=(CatalogueItor &&rhs) {
+  CatalogueItor& operator=(CatalogueItor&& rhs) {
     // Protect against self assignment
-    if(this != &rhs) {
+    if (this != &rhs) {
       // Avoid memory leak
       delete m_impl;
 
@@ -101,7 +92,7 @@ public:
    * Returns true if a call to next would return another item.
    */
   bool hasMore() const {
-    if(nullptr == m_impl) {
+    if (nullptr == m_impl) {
       throw exception::Exception(std::string(__FUNCTION__) + " failed: This iterator is invalid");
     }
     return m_impl->hasMore();
@@ -111,20 +102,19 @@ public:
    * Returns the next item or throws an exception if there isn't one.
    */
   Item next() {
-    if(nullptr == m_impl) {
+    if (nullptr == m_impl) {
       throw exception::Exception(std::string(__FUNCTION__) + " failed: This iterator is invalid");
     }
     return m_impl->next();
   }
 
 private:
-
   /**
    * The object actually implementing this iterator.
    */
-  Impl *m_impl;
+  Impl* m_impl;
 
-}; // class CatalogueItor
+};  // class CatalogueItor
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

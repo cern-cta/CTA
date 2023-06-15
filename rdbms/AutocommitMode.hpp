@@ -23,10 +23,7 @@ namespace rdbms {
 /**
  * A database statement can either have auto commiting mode turned on or off.
  */
-enum class AutocommitMode {
-  AUTOCOMMIT_ON,
-  AUTOCOMMIT_OFF
-};
+enum class AutocommitMode { AUTOCOMMIT_ON, AUTOCOMMIT_OFF };
 
-} // namespace rdbms
-} // namespace cta
+}  // namespace rdbms
+}  // namespace cta

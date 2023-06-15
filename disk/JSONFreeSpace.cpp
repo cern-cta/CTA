@@ -17,19 +17,19 @@
 
 #include "JSONFreeSpace.hpp"
 
-namespace cta { namespace disk {
+namespace cta {
+namespace disk {
 
-JSONFreeSpace::JSONFreeSpace(): JSONCObject() {
-}
+JSONFreeSpace::JSONFreeSpace() : JSONCObject() {}
 
 void JSONFreeSpace::buildFromJSON(const std::string& json) {
   JSONCObject::buildFromJSON(json);
   m_freeSpace = jsonGetValue<uint64_t>("freeSpace");
 }
 
-std::string JSONFreeSpace::getJSON(){
+std::string JSONFreeSpace::getJSON() {
   reinitializeJSONCObject();
-  jsonSetValue("freeSpace",m_freeSpace);
+  jsonSetValue("freeSpace", m_freeSpace);
   return JSONCObject::getJSON();
 }
 
@@ -37,7 +37,7 @@ std::string JSONFreeSpace::getExpectedJSONToBuildObject() const {
   return "{\"freeSpace\":42}";
 }
 
-JSONFreeSpace::~JSONFreeSpace() {
-}
+JSONFreeSpace::~JSONFreeSpace() {}
 
-}}
+}  // namespace disk
+}  // namespace cta

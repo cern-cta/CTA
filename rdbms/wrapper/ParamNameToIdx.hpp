@@ -36,7 +36,7 @@ public:
    *
    * @param sql The SQL statement to be parsed for SQL parameter names.
    */
-  ParamNameToIdx(const std::string &sql);
+  ParamNameToIdx(const std::string& sql);
 
   /**
    * Returns the index of teh specified SQL parameter.
@@ -44,7 +44,7 @@ public:
    * @param paramNAme The name of the SQL parameter.
    * @return The index of the SQL parameter.
    */
-  uint32_t getIdx(const std::string &paramName) const;
+  uint32_t getIdx(const std::string& paramName) const;
 
   /**
    * Returns true if the specified character is a valid parameter name
@@ -57,14 +57,13 @@ public:
   static bool isValidParamNameChar(const char c);
 
 private:
-
   /**
    * Map from SQL parameter name to parameter index.
    */
   std::map<std::string, uint32_t> m_nameToIdx;
 
-}; // class ParamNameToIdx
+};  // class ParamNameToIdx
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+}  // namespace wrapper
+}  // namespace rdbms
+}  // namespace cta

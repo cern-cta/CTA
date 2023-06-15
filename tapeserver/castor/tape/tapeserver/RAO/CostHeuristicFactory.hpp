@@ -21,7 +21,10 @@
 #include "CostHeuristic.hpp"
 #include "RAOOptions.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace rao {
 
 /**
  * Factory of concrete CostHeuristic objects
@@ -34,10 +37,13 @@ public:
    * @param costHeuristicType the type of CostHeuristic to instanciate
    * @return the unique_ptr to the instance of the CostHeuristic instance according to the type given in parameter
    */
-  std::unique_ptr<CostHeuristic> createCostHeuristic(const RAOOptions::CostHeuristicType & costHeuristicType);
+  std::unique_ptr<CostHeuristic> createCostHeuristic(const RAOOptions::CostHeuristicType& costHeuristicType);
   virtual ~CostHeuristicFactory();
-private:
 
+private:
 };
 
-}}}}
+}  // namespace rao
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

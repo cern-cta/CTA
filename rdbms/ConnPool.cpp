@@ -28,11 +28,10 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-ConnPool::ConnPool(const Login &login, const uint64_t maxNbConns):
-  m_connFactory(wrapper::ConnFactoryFactory::create(login)),
-  m_maxNbConns(maxNbConns),
-  m_nbConnsOnLoan(0){
-}
+ConnPool::ConnPool(const Login& login, const uint64_t maxNbConns) :
+m_connFactory(wrapper::ConnFactoryFactory::create(login)),
+m_maxNbConns(maxNbConns),
+m_nbConnsOnLoan(0) {}
 
 //------------------------------------------------------------------------------
 // getConn
@@ -40,16 +39,16 @@ ConnPool::ConnPool(const Login &login, const uint64_t maxNbConns):
 Conn ConnPool::getConn() {
   threading::MutexLocker locker(m_connsAndStmtsMutex);
 
-  if(0 == m_maxNbConns) {
+  if (0 == m_maxNbConns) {
     throw ConnPoolConfiguredWithZeroConns(std::string(__FUNCTION__) +
-      " failed: ConnPool is configured with zero connections");
+                                          " failed: ConnPool is configured with zero connections");
   }
 
-  while(m_connsAndStmts.size() == 0 && m_nbConnsOnLoan == m_maxNbConns) {
+  while (m_connsAndStmts.size() == 0 && m_nbConnsOnLoan == m_maxNbConns) {
     m_connsAndStmtsCv.wait(locker);
   }
 
-  if(m_connsAndStmts.size() == 0) {
+  if (m_connsAndStmts.size() == 0) {
     auto connAndStmts = std::make_unique<ConnAndStmts>();
     connAndStmts->conn = m_connFactory->create();
     connAndStmts->stmtPool = std::make_unique<StmtPool>();
@@ -59,9 +58,10 @@ Conn ConnPool::getConn() {
   std::unique_ptr<ConnAndStmts> connAndStmts = std::move(m_connsAndStmts.front());
   m_connsAndStmts.pop_front();
   m_nbConnsOnLoan++;
-  if(connAndStmts->conn->isOpen()) {
+  if (connAndStmts->conn->isOpen()) {
     return Conn(std::move(connAndStmts), this);
-  } else {
+  }
+  else {
     auto newConnAndStmts = std::make_unique<ConnAndStmts>();
     newConnAndStmts->conn = m_connFactory->create();
     newConnAndStmts->stmtPool = std::make_unique<StmtPool>();
@@ -75,18 +75,19 @@ Conn ConnPool::getConn() {
 void ConnPool::returnConn(std::unique_ptr<ConnAndStmts> connAndStmts) {
   try {
     // If the connection is open
-    if(connAndStmts->conn->isOpen()) {
-
+    if (connAndStmts->conn->isOpen()) {
       // Try to commit the connection and put it back in the pool
       try {
         connAndStmts->conn->commit();
-      } catch(...) {
+      }
+      catch (...) {
         // If the commit failed then destroy any prepare statements and then
         // close the connection
         try {
           connAndStmts->stmtPool->clear();
           connAndStmts->conn->close();
-        } catch(...) {
+        }
+        catch (...) {
           // Ignore any exceptions
         }
 
@@ -95,10 +96,10 @@ void ConnPool::returnConn(std::unique_ptr<ConnAndStmts> connAndStmts) {
         // currently in the pool because their underlying TCP/IP connections may
         // also have been lost.
         threading::MutexLocker locker(m_connsAndStmtsMutex);
-        while(!m_connsAndStmts.empty()) {
+        while (!m_connsAndStmts.empty()) {
           m_connsAndStmts.pop_front();
         }
-        if(0 == m_nbConnsOnLoan) {
+        if (0 == m_nbConnsOnLoan) {
           throw exception::Exception("Would have reached -1 connections on loan");
         }
         m_nbConnsOnLoan--;
@@ -111,34 +112,35 @@ void ConnPool::returnConn(std::unique_ptr<ConnAndStmts> connAndStmts) {
       connAndStmts->conn->setAutocommitMode(AutocommitMode::AUTOCOMMIT_ON);
 
       threading::MutexLocker locker(m_connsAndStmtsMutex);
-      if(0 == m_nbConnsOnLoan) {
+      if (0 == m_nbConnsOnLoan) {
         throw exception::Exception("Would have reached -1 connections on loan");
       }
       m_nbConnsOnLoan--;
       m_connsAndStmts.push_back(std::move(connAndStmts));
       m_connsAndStmtsCv.signal();
 
-    // Else the connection is closed
-    } else {
-
+      // Else the connection is closed
+    }
+    else {
       // A closed connection is rare and usually means the underlying TCP/IP
       // connection, if there is one, has been lost.  Delete all the connections
       // currently in the pool because their underlying TCP/IP connections may
       // also have been lost.
       threading::MutexLocker locker(m_connsAndStmtsMutex);
-      while(!m_connsAndStmts.empty()) {
+      while (!m_connsAndStmts.empty()) {
         m_connsAndStmts.pop_front();
       }
-      if(0 == m_nbConnsOnLoan) {
+      if (0 == m_nbConnsOnLoan) {
         throw exception::Exception("Would have reached -1 connections on loan");
       }
       m_nbConnsOnLoan--;
       m_connsAndStmtsCv.signal();
     }
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
-} // namespace rdbms
-} // namespace cta
+}  // namespace rdbms
+}  // namespace cta

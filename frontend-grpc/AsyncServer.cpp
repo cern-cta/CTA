@@ -14,8 +14,7 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
- 
- 
+
 #include "AsyncServer.hpp"
 
 #include "common/log/LogContext.hpp"
@@ -23,21 +22,19 @@
 
 #include <grpcpp/security/server_credentials.h>
 
-#include <stdexcept>      // std::out_of_range
+#include <stdexcept>  // std::out_of_range
 
 cta::frontend::grpc::server::AsyncServer::AsyncServer(cta::log::Logger& log,
-                                                                  cta::catalogue::Catalogue& catalogue,
-                                                                  TokenStorage& tokenStorage,
-                                                                  unsigned int uiPort,
-                                                                  const unsigned int uiNoThreads) :
-                                                                  m_log(log),
-                                                                  m_catalogue(catalogue),
-                                                                  m_tokenStorage(tokenStorage),
-                                                                  m_uiPort(uiPort),
-                                                                  m_uiNoThreads(uiNoThreads),
-                                                                  m_upServerBuilder(std::make_unique<::grpc::ServerBuilder>()) {
-                                                                  
-}
+                                                      cta::catalogue::Catalogue& catalogue,
+                                                      TokenStorage& tokenStorage,
+                                                      unsigned int uiPort,
+                                                      const unsigned int uiNoThreads) :
+m_log(log),
+m_catalogue(catalogue),
+m_tokenStorage(tokenStorage),
+m_uiPort(uiPort),
+m_uiNoThreads(uiNoThreads),
+m_upServerBuilder(std::make_unique<::grpc::ServerBuilder>()) {}
 
 cta::frontend::grpc::server::AsyncServer::~AsyncServer() {
   if (m_upServer) {
@@ -49,18 +46,20 @@ cta::frontend::grpc::server::AsyncServer::~AsyncServer() {
     // Flush the completion queue
     void* pTag;
     bool bOk = false;
-    while (m_upCompletionQueue->Next(&pTag, &bOk)) {
-    }
+    while (m_upCompletionQueue->Next(&pTag, &bOk)) {}
   }
 }
 
-cta::frontend::grpc::request::IHandler& cta::frontend::grpc::server::AsyncServer::getHandler(const cta::frontend::grpc::request::Tag tag) {
+cta::frontend::grpc::request::IHandler&
+  cta::frontend::grpc::server::AsyncServer::getHandler(const cta::frontend::grpc::request::Tag tag) {
   std::lock_guard<std::mutex> lck(m_mtxLockHandler);
   /*
    * Check if the handler is registered;
    */
-  std::unordered_map<cta::frontend::grpc::request::Tag, std::unique_ptr<cta::frontend::grpc::request::IHandler>>::const_iterator itorFind = m_umapHandlers.find(tag);
-  if(itorFind == m_umapHandlers.end()) {
+  std::unordered_map<cta::frontend::grpc::request::Tag,
+                     std::unique_ptr<cta::frontend::grpc::request::IHandler>>::const_iterator itorFind =
+    m_umapHandlers.find(tag);
+  if (itorFind == m_umapHandlers.end()) {
     std::ostringstream osExMsg;
     osExMsg << "In grpc::AsyncServer::getHandler(): Handler " << tag << " is not registered.";
     throw cta::exception::Exception(osExMsg.str());
@@ -71,7 +70,7 @@ cta::frontend::grpc::request::IHandler& cta::frontend::grpc::server::AsyncServer
 
 void cta::frontend::grpc::server::AsyncServer::releaseHandler(const cta::frontend::grpc::request::Tag tag) {
   std::lock_guard<std::mutex> lck(m_mtxLockHandler);
-  
+
   {
     log::LogContext lc(m_log);
     log::ScopedParamContainer params(lc);
@@ -81,8 +80,9 @@ void cta::frontend::grpc::server::AsyncServer::releaseHandler(const cta::fronten
   /*
    * Check if the handler is registered;
    */
-  std::unordered_map<cta::frontend::grpc::request::Tag, std::unique_ptr<request::IHandler>>::const_iterator itorFind = m_umapHandlers.find(tag);
-  if(itorFind == m_umapHandlers.end()) {
+  std::unordered_map<cta::frontend::grpc::request::Tag, std::unique_ptr<request::IHandler>>::const_iterator itorFind =
+    m_umapHandlers.find(tag);
+  if (itorFind == m_umapHandlers.end()) {
     std::ostringstream osExMsg;
     osExMsg << "In grpc::AsyncServer::releaseHandler(): Handler " << tag << " is not registered.";
     throw cta::exception::Exception(osExMsg.str());
@@ -90,14 +90,16 @@ void cta::frontend::grpc::server::AsyncServer::releaseHandler(const cta::fronten
   m_umapHandlers.erase(itorFind);
 }
 
-void cta::frontend::grpc::server::AsyncServer::run(const std::shared_ptr<::grpc::ServerCredentials>& spServerCredentials, const std::shared_ptr<::grpc::AuthMetadataProcessor>& spAuthProcessor) {
+void cta::frontend::grpc::server::AsyncServer::run(
+  const std::shared_ptr<::grpc::ServerCredentials>& spServerCredentials,
+  const std::shared_ptr<::grpc::AuthMetadataProcessor>& spAuthProcessor) {
   log::LogContext lc(m_log);
   m_upCompletionQueue = m_upServerBuilder->AddCompletionQueue();
-  // 
-  if(!spServerCredentials) {
+  //
+  if (!spServerCredentials) {
     throw cta::exception::Exception("In grpc::AsyncServer::run(): Incorrect server credentials.");
   }
-  if(!spAuthProcessor) {
+  if (!spAuthProcessor) {
     std::ostringstream osExMsg;
     throw cta::exception::Exception("In grpc::AsyncServer::run(): Incorrect authorization processor.");
   }
@@ -121,11 +123,11 @@ void cta::frontend::grpc::server::AsyncServer::run(const std::shared_ptr<::grpc:
   m_upServerBuilder->AddListeningPort(strAddress, spServerCredentials);
   m_upServer = m_upServerBuilder->BuildAndStart();
   // Initialise all registered handlers
-  for(const auto &item : m_umapHandlers) {
+  for (const auto& item : m_umapHandlers) {
     const std::unique_ptr<cta::frontend::grpc::request::IHandler>& upIHandler = item.second;
     upIHandler.get()->next(true);
     //TODO: Log names of initialised handlers;
-  } 
+  }
   // Proceed to the server's main loop.
   m_vThreads.resize(m_uiNoThreads);
   unsigned int uiThreadId = 0;
@@ -143,7 +145,6 @@ void cta::frontend::grpc::server::AsyncServer::run(const std::shared_ptr<::grpc:
   for (std::thread& worker : m_vThreads) {
     worker.join();
   }
-  
 }
 
 void cta::frontend::grpc::server::AsyncServer::process(unsigned int uiId) {
@@ -157,19 +158,19 @@ void cta::frontend::grpc::server::AsyncServer::process(unsigned int uiId) {
    */
   void* pTag = nullptr;
   bool bOk = false;
-  while(true) {
+  while (true) {
     /*
      * Block waiting to read the next event from the completion queue.
      * The return value of Next should always be checked.
      * It tells whether there is any kind of event or m_upCompletionQueue is shutting down.
      */
-    if(!m_upCompletionQueue->Next(&pTag, &bOk)) {
+    if (!m_upCompletionQueue->Next(&pTag, &bOk)) {
       log::ScopedParamContainer params(lc);
       params.add("thread", uiId);
       lc.log(cta::log::ERR, "In grpc::AsyncServer::process(): The completion queue has been shutdown.");
       break;
     }
-    if(!pTag) {
+    if (!pTag) {
       log::ScopedParamContainer params(lc);
       params.add("thread", uiId);
       lc.log(cta::log::ERR, "In grpc::AsyncServer::process(): Invalid tag delivered by notification queue.");
@@ -178,16 +179,17 @@ void cta::frontend::grpc::server::AsyncServer::process(unsigned int uiId) {
 
     try {
       // Everything is ok the request can be processed
-      cta::frontend::grpc::request::IHandler& handler = getHandler(static_cast<cta::frontend::grpc::request::Tag>(pTag));
-      if(!handler.next(bOk)) {
+      cta::frontend::grpc::request::IHandler& handler =
+        getHandler(static_cast<cta::frontend::grpc::request::Tag>(pTag));
+      if (!handler.next(bOk)) {
         releaseHandler(static_cast<cta::frontend::grpc::request::Tag>(pTag));
       }
-    } catch(const cta::exception::Exception& ex) {
+    }
+    catch (const cta::exception::Exception& ex) {
       log::ScopedParamContainer params(lc);
       params.add("thread", uiId);
       params.add("message", ex.getMessageValue());
       lc.log(log::ERR, "grpc::AsyncServer::process(): Got an exception.");
     }
   }
-
 }

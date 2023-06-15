@@ -24,14 +24,12 @@ namespace {
 /**
  * Creates Login objects for in-memory catalogue databases.
  */
-class RdbmsInMemoryLoginFactory: public cta::rdbms::LoginFactory {
+class RdbmsInMemoryLoginFactory : public cta::rdbms::LoginFactory {
 public:
-
   /**
    * Destructor.
    */
-  virtual ~RdbmsInMemoryLoginFactory() {
-  }
+  virtual ~RdbmsInMemoryLoginFactory() {}
 
   /**
    * Returns a newly created Login object.
@@ -41,13 +39,14 @@ public:
   virtual cta::rdbms::Login create() {
     return cta::rdbms::Login(cta::rdbms::Login::DBTYPE_IN_MEMORY, "", "", "", "", 0);
   }
-}; // class RdbmsInMemoryLoginFactory
+};  // class RdbmsInMemoryLoginFactory
 
 RdbmsInMemoryLoginFactory g_inMemoryLoginFactory;
 
-} // anonymous namespace
+}  // anonymous namespace
 
-INSTANTIATE_TEST_CASE_P(InMemory, cta_rdbms_StmtTest,
-  ::testing::Values(dynamic_cast<cta::rdbms::LoginFactory*>(&g_inMemoryLoginFactory)));
+INSTANTIATE_TEST_CASE_P(InMemory,
+                        cta_rdbms_StmtTest,
+                        ::testing::Values(dynamic_cast<cta::rdbms::LoginFactory*>(&g_inMemoryLoginFactory)));
 
-} // namespace unitTests
+}  // namespace unitTests

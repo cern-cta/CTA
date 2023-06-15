@@ -25,7 +25,7 @@ namespace catalogue {
 /**
  * Command-line tool that creates an admin user.
  */
-class CreateAdminUserCmd: public CmdLineTool {
+class CreateAdminUserCmd : public CmdLineTool {
 public:
   /**
    * Constructor.
@@ -34,7 +34,7 @@ public:
    * @param outStream Standard output stream.
    * @param errStream Standard error stream.
    */
-  CreateAdminUserCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream);
+  CreateAdminUserCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream);
 
   /**
    * Destructor.
@@ -49,14 +49,14 @@ private:
    * @param argv The command-line arguments.
    * @return The exit value of the program.
    */
-  int exceptionThrowingMain(const int argc, char *const *const argv) override;
+  int exceptionThrowingMain(const int argc, char* const* const argv) override;
 
   /**
    * Prints the usage message of the command-line tool.
    *
    * @param os The output stream to which the usage message is to be printed.
    */
-  void printUsage(std::ostream &os) override;
+  void printUsage(std::ostream& os) override;
 };  // class CreateAdminUserCmd
 
 }  // namespace catalogue

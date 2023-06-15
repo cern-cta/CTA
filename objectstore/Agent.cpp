@@ -27,28 +27,29 @@
 #include <cxxabi.h>
 #include <google/protobuf/util/json_util.h>
 
-cta::objectstore::Agent::Agent(GenericObject& go):
-  ObjectOps<serializers::Agent, serializers::Agent_t>(go.objectStore()) {
+cta::objectstore::Agent::Agent(GenericObject& go) :
+ObjectOps<serializers::Agent, serializers::Agent_t>(go.objectStore()) {
   // Here we transplant the generic object into the new object
   go.transplantHeader(*this);
   // And interpret the header.
   getPayloadFromHeader();
 }
 
-cta::objectstore::Agent::Agent(const std::string & name, Backend & os):
-  ObjectOps<serializers::Agent, serializers::Agent_t>(os, name), m_nextId(0) {}
+cta::objectstore::Agent::Agent(const std::string& name, Backend& os) :
+ObjectOps<serializers::Agent, serializers::Agent_t>(os, name),
+m_nextId(0) {}
 
 void cta::objectstore::Agent::initialize() {
   ObjectOps<serializers::Agent, serializers::Agent_t>::initialize();
   m_payload.set_heartbeat(0);
-  m_payload.set_timeout_us(120*1000*1000);
+  m_payload.set_timeout_us(120 * 1000 * 1000);
   m_payload.set_description("");
   m_payload.set_being_garbage_collected(false);
   m_payload.set_gc_needed(false);
   m_payloadInterpreted = true;
 }
 
-void cta::objectstore::Agent::insertAndRegisterSelf(log::LogContext & lc) {
+void cta::objectstore::Agent::insertAndRegisterSelf(log::LogContext& lc) {
   // We suppose initialize was already called, and that the agent name
   // is set.
   // We need to get hold of the agent register, which we suppose is available
@@ -71,7 +72,7 @@ void cta::objectstore::Agent::insertAndRegisterSelf(log::LogContext & lc) {
   arLock.release();
 }
 
-void cta::objectstore::Agent::removeAndUnregisterSelf(log::LogContext & lc) {
+void cta::objectstore::Agent::removeAndUnregisterSelf(log::LogContext& lc) {
   // Check that we own the proper lock
   checkPayloadWritable();
   // Check that we are not empty
@@ -80,21 +81,23 @@ void cta::objectstore::Agent::removeAndUnregisterSelf(log::LogContext & lc) {
     std::list<std::string> ownershipList = getOwnershipList();
     {
       auto ownedObj = ownershipList.begin();
-      size_t currentCount=0;
-      size_t startIndex=0;
-      size_t endIndex=0;
+      size_t currentCount = 0;
+      size_t startIndex = 0;
+      size_t endIndex = 0;
       std::string currentObjs;
       while (ownedObj != ownershipList.end()) {
-        if (currentObjs.size()) currentObjs+= " ";
+        if (currentObjs.size()) {
+          currentObjs += " ";
+        }
         currentObjs += *(ownedObj++);
         endIndex++;
         if (++currentCount >= 25 || ownedObj == ownershipList.end()) {
           log::ScopedParamContainer params(lc);
-          params.add("agentObject",getAddressIfSet())
-                .add("objects", currentObjs)
-                .add("startIndex", startIndex)
-                .add("endIndex", endIndex - 1)
-                .add("totalObjects", ownershipList.size());
+          params.add("agentObject", getAddressIfSet())
+            .add("objects", currentObjs)
+            .add("startIndex", startIndex)
+            .add("endIndex", endIndex - 1)
+            .add("totalObjects", ownershipList.size());
           lc.log(log::ERR, "In Agent::deleteAndUnregisterSelf: agent still owns objects. Here is a part of the list.");
           startIndex = endIndex;
           currentCount = 0;
@@ -104,9 +107,10 @@ void cta::objectstore::Agent::removeAndUnregisterSelf(log::LogContext & lc) {
     }
     // Prepare exception to be thrown.
     std::stringstream exSs;
-    exSs << "In Agent::removeAndUnregisterSelf: agent (agentObject=" << getAddressIfSet() << ") still owns objects. Here's the first few:";
-    size_t count=0;
-    for(auto i=ownershipList.begin(); i!=ownershipList.end(); i++) {
+    exSs << "In Agent::removeAndUnregisterSelf: agent (agentObject=" << getAddressIfSet()
+         << ") still owns objects. Here's the first few:";
+    size_t count = 0;
+    for (auto i = ownershipList.begin(); i != ownershipList.end(); i++) {
       exSs << " " << *i;
       if (++count > 3) {
         exSs << " [... trimmed at 3 of " << ownershipList.size() << "]";
@@ -135,8 +139,9 @@ void cta::objectstore::Agent::removeAndUnregisterSelf(log::LogContext & lc) {
 
 bool cta::objectstore::Agent::isEmpty() {
   checkPayloadReadable();
-  if (m_payload.ownedobjects_size())
+  if (m_payload.ownedobjects_size()) {
     return false;
+  }
   return true;
 }
 
@@ -157,12 +162,16 @@ void cta::objectstore::Agent::setNeedsGarbageCollection() {
 
 bool cta::objectstore::Agent::needsGarbageCollection() {
   checkPayloadReadable();
-  if (!m_payload.has_gc_needed()) return false;
+  if (!m_payload.has_gc_needed()) {
+    return false;
+  }
   return m_payload.gc_needed();
 }
 
-void cta::objectstore::Agent::garbageCollect(const std::string& presumedOwner, AgentReference & agentReference, log::LogContext & lc,
-    cta::catalogue::Catalogue & catalogue) {
+void cta::objectstore::Agent::garbageCollect(const std::string& presumedOwner,
+                                             AgentReference& agentReference,
+                                             log::LogContext& lc,
+                                             cta::catalogue::Catalogue& catalogue) {
   checkPayloadWritable();
   // We are here limited to checking the presumed owner and mark the agent as
   // untracked in the agent register in case of match, else we do nothing
@@ -185,8 +194,6 @@ void cta::objectstore::Agent::garbageCollect(const std::string& presumedOwner, A
   }
 }
 
-
-
 /*void cta::objectstore::Agent::create() {
   if (!m_setupDone)
     throw SetupNotDone("In Agent::create(): setup() not yet done");
@@ -202,7 +209,7 @@ void cta::objectstore::Agent::garbageCollect(const std::string& presumedOwner, A
 
 void cta::objectstore::Agent::addToOwnership(const std::string& name) {
   checkPayloadWritable();
-  std::string * owned = m_payload.mutable_ownedobjects()->Add();
+  std::string* owned = m_payload.mutable_ownedobjects()->Add();
   *owned = name;
 }
 
@@ -211,11 +218,10 @@ void cta::objectstore::Agent::removeFromOwnership(std::string name) {
   serializers::removeString(m_payload.mutable_ownedobjects(), name);
 }
 
-std::list<std::string>
-  cta::objectstore::Agent::getOwnershipList() {
+std::list<std::string> cta::objectstore::Agent::getOwnershipList() {
   checkPayloadReadable();
   std::list<std::string> ret;
-  for (int i=0; i<m_payload.ownedobjects_size(); i++) {
+  for (int i = 0; i < m_payload.ownedobjects_size(); i++) {
     ret.push_back(m_payload.ownedobjects(i));
   }
   return ret;
@@ -224,16 +230,18 @@ std::list<std::string>
 std::set<std::string> cta::objectstore::Agent::getOwnershipSet() {
   checkPayloadReadable();
   std::set<std::string> ret;
-  for (const auto &oo: m_payload.ownedobjects())
+  for (const auto& oo : m_payload.ownedobjects()) {
     ret.insert(oo);
+  }
   return ret;
 }
 
 void cta::objectstore::Agent::resetOwnership(const std::set<std::string>& ownershipSet) {
   checkPayloadWritable();
   m_payload.mutable_ownedobjects()->Clear();
-  for (const auto &oo: ownershipSet)
+  for (const auto& oo : ownershipSet) {
     *m_payload.mutable_ownedobjects()->Add() = oo;
+  }
 }
 
 size_t cta::objectstore::Agent::getOwnershipListSize() {
@@ -241,10 +249,9 @@ size_t cta::objectstore::Agent::getOwnershipListSize() {
   return m_payload.ownedobjects_size();
 }
 
-
 void cta::objectstore::Agent::bumpHeartbeat() {
   checkPayloadWritable();
-  auto heartbeat=m_payload.heartbeat()+1;
+  auto heartbeat = m_payload.heartbeat() + 1;
   m_payload.set_heartbeat(heartbeat);
 }
 

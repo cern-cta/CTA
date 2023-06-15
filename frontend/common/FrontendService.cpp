@@ -45,7 +45,9 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   try {
     // Set the logger URL
     auto loggerURL = config.getOptionValueStr("cta.log.url");
-    if(!loggerURL.has_value()) loggerURL = "syslog:";
+    if (!loggerURL.has_value()) {
+      loggerURL = "syslog:";
+    }
     const auto shortHostname = utils::getShortHostname();
 
     // Set the logger level
@@ -53,20 +55,24 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     auto loggerLevel = loggerLevelStr.has_value() ? log::toLogLevel(loggerLevelStr.value()) : log::INFO;
 
     // Set the log context
-    if(loggerURL.value() == "syslog:") {
+    if (loggerURL.value() == "syslog:") {
       m_log = std::make_unique<log::SyslogLogger>(shortHostname, "cta-frontend", loggerLevel);
       logToSyslog = 1;
-    } else if(loggerURL.value() == "stdout:") {
+    }
+    else if (loggerURL.value() == "stdout:") {
       m_log = std::make_unique<log::StdoutLogger>(shortHostname, "cta-frontend");
       logToStdout = 1;
-    } else if(loggerURL.value().substr(0, 5) == "file:") {
+    }
+    else if (loggerURL.value().substr(0, 5) == "file:") {
       logtoFile = 1;
       logFilePath = loggerURL.value().substr(5);
       m_log = std::make_unique<log::FileLogger>(shortHostname, "cta-frontend", logFilePath, loggerLevel);
-    } else {
+    }
+    else {
       throw exception::UserError(std::string("Unknown log URL: ") + loggerURL.value());
     }
-  } catch(exception::Exception& ex) {
+  }
+  catch (exception::Exception& ex) {
     std::string ex_str("Failed to instantiate object representing CTA logging system: ");
     throw exception::Exception(ex_str + ex.getMessage().str());
   }
@@ -88,7 +94,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   std::string catalogueConfigFile = "/etc/cta/cta-catalogue.conf";
   const rdbms::Login catalogueLogin = rdbms::Login::parseFile(catalogueConfigFile);
   auto catalogue_numberofconnections = config.getOptionValueInt("cta.catalogue.numberofconnections");
-  if(!catalogue_numberofconnections.has_value()) {
+  if (!catalogue_numberofconnections.has_value()) {
     throw exception::UserError("cta.catalogue.numberofconnections is not set in configuration file " + configFilename);
   }
   const uint64_t nbArchiveFileListingConns = 2;
@@ -113,12 +119,13 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   }
 
   {
-    auto catalogueFactory = catalogue::CatalogueFactoryFactory::create(*m_log, catalogueLogin,
-      catalogue_numberofconnections.value(), nbArchiveFileListingConns);
+    auto catalogueFactory = catalogue::CatalogueFactoryFactory::create(
+      *m_log, catalogueLogin, catalogue_numberofconnections.value(), nbArchiveFileListingConns);
     m_catalogue = catalogueFactory->create();
     try {
       m_catalogue->Schema()->ping();
-    } catch(cta::exception::Exception& ex) {
+    }
+    catch (cta::exception::Exception& ex) {
       auto lc = getLogContext();
       lc.log(cta::log::CRIT, ex.getMessageValue());
       throw ex;
@@ -130,7 +137,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   // Initialise the Scheduler DB
   const std::string DB_CONN_PARAM = "cta.objectstore.backendpath";
   auto db_conn = config.getOptionValueStr(DB_CONN_PARAM);
-  if(!db_conn.has_value()) {
+  if (!db_conn.has_value()) {
     throw exception::UserError(DB_CONN_PARAM + " is not set in configuration file " + configFilename);
   }
 
@@ -145,20 +152,21 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   }
 
   m_scheddbInit = std::make_unique<SchedulerDBInit_t>("Frontend", db_conn.value(), *m_log);
-  m_scheddb     = m_scheddbInit->getSchedDB(*m_catalogue, *m_log);
+  m_scheddb = m_scheddbInit->getSchedDB(*m_catalogue, *m_log);
 
   const auto schedulerThreadStackSize = config.getOptionValueInt("ca.schedulerdb.threadstacksize_mb");
-  std::optional<size_t> schedulerThreadStackOpt = schedulerThreadStackSize.has_value() ?
-    std::optional<size_t>(schedulerThreadStackSize.value() * 1024 * 1024) : std::nullopt;
+  std::optional<size_t> schedulerThreadStackOpt =
+    schedulerThreadStackSize.has_value() ? std::optional<size_t>(schedulerThreadStackSize.value() * 1024 * 1024) :
+                                           std::nullopt;
 
   auto threadPoolSize = config.getOptionValueInt("cta.schedulerdb.numberofthreads");
-  if(threadPoolSize.has_value()) {
+  if (threadPoolSize.has_value()) {
     m_scheddb->setThreadNumber(threadPoolSize.value(), schedulerThreadStackOpt);
   }
   m_scheddb->setBottomHalfQueueSize(25000);
 
   // Log cta.schedulerdb.numberofthreads
-  if(threadPoolSize.has_value()) {
+  if (threadPoolSize.has_value()) {
     std::list<log::Param> params;
     params.push_back(log::Param("source", configFilename));
     params.push_back(log::Param("category", "cta.schedulerdb"));
@@ -168,12 +176,12 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   }
 
   // Initialise the Scheduler
-  m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_scheddb, 5, 2*1000*1000);
+  m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_scheddb, 5, 2 * 1000 * 1000);
 
   // Initialise the Frontend
   auto archiveFileMaxSize = config.getOptionValueInt("cta.archivefile.max_size_gb");
   // Convert archiveFileMaxSize from GB to bytes
-  m_archiveFileMaxSize = archiveFileMaxSize.has_value() ?  archiveFileMaxSize.value()*1024*1024*1024 : 0;
+  m_archiveFileMaxSize = archiveFileMaxSize.has_value() ? archiveFileMaxSize.value() * 1024 * 1024 * 1024 : 0;
 
   {
     // Log cta.archivefile.max_size_gb
@@ -181,25 +189,26 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     params.push_back(log::Param("source", archiveFileMaxSize.has_value() ? configFilename : "Compile time default"));
     params.push_back(log::Param("category", "cta.archivefile"));
     params.push_back(log::Param("key", "max_size_gb"));
-    params.push_back(log::Param("value", std::to_string(archiveFileMaxSize.has_value() ? archiveFileMaxSize.value() : 0)));
+    params.push_back(
+      log::Param("value", std::to_string(archiveFileMaxSize.has_value() ? archiveFileMaxSize.value() : 0)));
     log(log::INFO, "Configuration entry", params);
   }
 
   // Get the repack buffer URL
   auto repackBufferURLConf = config.getOptionValueStr("cta.repack.repack_buffer_url");
-  if(repackBufferURLConf.has_value()) {
+  if (repackBufferURLConf.has_value()) {
     m_repackBufferURL = repackBufferURLConf.value();
   }
 
   // Get the verification mount policy
   const auto verificationMountPolicy = config.getOptionValueStr("cta.verification.mount_policy");
-  if(verificationMountPolicy.has_value()) {
+  if (verificationMountPolicy.has_value()) {
     m_verificationMountPolicy = verificationMountPolicy.value();
   }
 
   {
     // Log cta.repack.repack_buffer_url
-    if(repackBufferURLConf.has_value()) {
+    if (repackBufferURLConf.has_value()) {
       std::list<log::Param> params;
       params.push_back(log::Param("source", configFilename));
       params.push_back(log::Param("category", "cta.repack"));
@@ -211,15 +220,16 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
 
   // Get the endpoint for namespace queries
   auto nsConf = config.getOptionValueStr("cta.ns.config");
-  if(nsConf.has_value()) {
+  if (nsConf.has_value()) {
     setNamespaceMap(nsConf.value());
-  } else {
+  }
+  else {
     log(log::WARNING, "'cta.ns.config' not specified; namespace queries are disabled");
   }
 
   {
     // Log cta.ns.config
-    if(nsConf.has_value()) {
+    if (nsConf.has_value()) {
       std::list<log::Param> params;
       params.push_back(log::Param("source", configFilename));
       params.push_back(log::Param("category", "cta.ns"));
@@ -238,16 +248,16 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
 void FrontendService::setNamespaceMap(const std::string& keytab_file) {
   // Open the keytab file for reading
   std::ifstream file(keytab_file);
-  if(!file) {
+  if (!file) {
     throw cta::exception::UserError("Failed to open namespace keytab configuration file " + keytab_file);
   }
 
   // Parse the keytab line by line
   std::string line;
-  for(int lineno = 0; std::getline(file, line); ++lineno) {
+  for (int lineno = 0; std::getline(file, line); ++lineno) {
     // Strip out comments
     auto pos = line.find('#');
-    if(pos != std::string::npos) {
+    if (pos != std::string::npos) {
       line.resize(pos);
     }
 
@@ -260,12 +270,16 @@ void FrontendService::setNamespaceMap(const std::string& keytab_file) {
     ss >> diskInstance >> endpoint >> token >> eol;
 
     // Ignore blank lines, all other lines must have exactly 3 elements
-    if(token.empty() || !eol.empty()) {
-      if(diskInstance.empty() && endpoint.empty() && token.empty()) continue;
-      throw cta::exception::UserError("Could not parse namespace keytab configuration file line " + std::to_string(lineno) + ": " + line);
+    if (token.empty() || !eol.empty()) {
+      if (diskInstance.empty() && endpoint.empty() && token.empty()) {
+        continue;
+      }
+      throw cta::exception::UserError("Could not parse namespace keytab configuration file line " +
+                                      std::to_string(lineno) + ": " + line);
     }
     m_namespaceMap.insert(std::make_pair(diskInstance, cta::Namespace(endpoint, token)));
   }
 }
 
-}} // namespace cta::frontend
+}  // namespace frontend
+}  // namespace cta

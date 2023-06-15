@@ -26,8 +26,11 @@ class MockArchiveMount : public cta::ArchiveMount {
 public:
   int getJobs;
   int completes;
-  explicit MockArchiveMount(cta::catalogue::Catalogue &catalogue)
-  : cta::ArchiveMount(catalogue), getJobs(0), completes(0) {}
+
+  explicit MockArchiveMount(cta::catalogue::Catalogue& catalogue) :
+  cta::ArchiveMount(catalogue),
+  getJobs(0),
+  completes(0) {}
 
   ~MockArchiveMount() noexcept override = default;
 
@@ -35,18 +38,19 @@ public:
     getJobs++;
     if (m_jobs.empty()) {
       return {};
-    } else {
+    }
+    else {
       std::unique_ptr<cta::ArchiveJob> job = std::move(m_jobs.front());
       m_jobs.pop_front();
       return job;
     }
   }
 
-  void
-  reportJobsBatchTransferred(std::queue<std::unique_ptr<cta::ArchiveJob>> &successfulArchiveJobs,
-                             std::queue<cta::catalogue::TapeItemWritten> &skippedFiles,
-                             std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> &failedToReportArchiveJobs,
-                             cta::log::LogContext &logContext) override {
+  void reportJobsBatchTransferred(
+    std::queue<std::unique_ptr<cta::ArchiveJob>>& successfulArchiveJobs,
+    std::queue<cta::catalogue::TapeItemWritten>& skippedFiles,
+    std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& failedToReportArchiveJobs,
+    cta::log::LogContext& logContext) override {
     bool catalogue_updated = false;
     try {
       std::set<cta::catalogue::TapeItemWrittenPointer> tapeItemsWritten;
@@ -55,8 +59,9 @@ public:
         // Get the next job to report and make sure we will not attempt to process it twice.
         std::unique_ptr<cta::ArchiveJob> job = std::move(successfulArchiveJobs.front());
         successfulArchiveJobs.pop();
-        if (!job)
+        if (!job) {
           continue;
+        }
         tapeItemsWritten.emplace(job->validateAndGetTapeFileWritten());
         validatedSuccessfulArchiveJobs.emplace_back(std::move(job));
         job.reset(nullptr);
@@ -69,22 +74,25 @@ public:
       }
       m_catalogue.TapeFile()->filesWrittenToTape(tapeItemsWritten);
       catalogue_updated = true;
-      for (auto &job : validatedSuccessfulArchiveJobs) {
-        auto *maj = dynamic_cast<MockArchiveJob *>(job.get());
-        if (!maj)
+      for (auto& job : validatedSuccessfulArchiveJobs) {
+        auto* maj = dynamic_cast<MockArchiveJob*>(job.get());
+        if (!maj) {
           throw cta::exception::Exception("Wrong job type.");
+        }
         maj->reportJobSucceeded();
         logContext.log(log::INFO, "Reported to the client a full file archival.");
       }
       logContext.log(log::INFO, "Reported to the client that a batch of files was written on tape");
-    } catch (const cta::exception::Exception &e) {
+    }
+    catch (const cta::exception::Exception& e) {
       cta::log::ScopedParamContainer params(logContext);
       params.add("exceptionMessageValue", e.getMessageValue());
       const std::string msg_error = "In ArchiveMount::reportJobsBatchWritten(): got an exception";
       logContext.log(cta::log::ERR, msg_error);
       if (catalogue_updated) {
         throw cta::ArchiveMount::FailedReportMoveToQueue(msg_error);
-      } else {
+      }
+      else {
         throw cta::ArchiveMount::FailedReportCatalogueUpdate(msg_error);
       }
     }

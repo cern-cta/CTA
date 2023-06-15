@@ -36,17 +36,19 @@ std::unique_ptr<OcciEnvSingleton> OcciEnvSingleton::s_instance;
 //------------------------------------------------------------------------------
 // instance
 //------------------------------------------------------------------------------
-OcciEnvSingleton &OcciEnvSingleton::instance() {
+OcciEnvSingleton& OcciEnvSingleton::instance() {
   try {
     threading::MutexLocker locker(s_mutex);
 
-    if(nullptr == s_instance.get()) {
+    if (nullptr == s_instance.get()) {
       s_instance.reset(new OcciEnvSingleton());
     }
     return *s_instance;
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  } catch(std::exception &se) {
+  }
+  catch (std::exception& se) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + se.what());
   }
 }
@@ -54,9 +56,8 @@ OcciEnvSingleton &OcciEnvSingleton::instance() {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-OcciEnvSingleton::OcciEnvSingleton() {
-}
+OcciEnvSingleton::OcciEnvSingleton() {}
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+}  // namespace wrapper
+}  // namespace rdbms
+}  // namespace cta

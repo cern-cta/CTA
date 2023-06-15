@@ -36,20 +36,21 @@ class Catalogue;
   * The class only has private constructors as it is instanciated by
   * the Scheduler class.
   */
-class LabelMount: public TapeMount {
+class LabelMount : public TapeMount {
   friend class Scheduler;
+
 protected:
   /**
     * Constructor.
     */
-  explicit LabelMount(catalogue::Catalogue & catalogue);
+  explicit LabelMount(catalogue::Catalogue& catalogue);
 
   /**
     * Constructor.
     *
     * @param dbMount The database representation of this mount.
     */
-  LabelMount(catalogue::Catalogue & catalogue, std::unique_ptr<cta::SchedulerDatabase::LabelMount> dbMount);
+  LabelMount(catalogue::Catalogue& catalogue, std::unique_ptr<cta::SchedulerDatabase::LabelMount> dbMount);
 
 public:
   CTA_GENERATE_EXCEPTION_CLASS(WrongMountType);
@@ -83,7 +84,6 @@ public:
     */
   std::optional<std::string> getActivity() const override { return std::nullopt; }
 
-
   /**
     * Indicates that the mount was completed.
     */
@@ -92,18 +92,19 @@ public:
   /**
     * Report a drive status change
     */
-  void setDriveStatus(cta::common::dataStructures::DriveStatus status, const std::optional<std::string> & reason = std::nullopt) override;
+  void setDriveStatus(cta::common::dataStructures::DriveStatus status,
+                      const std::optional<std::string>& reason = std::nullopt) override;
 
   /**
     * Report a tape session statistics
     */
-  void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override;
+  void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) override;
 
   /**
     * Report a tape mounted event
     * @param logContext
     */
-  void setTapeMounted(log::LogContext &logContext) const override;
+  void setTapeMounted(log::LogContext& logContext) const override;
 
   CTA_GENERATE_EXCEPTION_CLASS(SessionNotRunning);
 
@@ -135,7 +136,7 @@ protected:
   /**
     * A reference to the file catalogue.
     */
-  catalogue::Catalogue & m_catalogue;
+  catalogue::Catalogue& m_catalogue;
 
   /**
     * Internal tracking of the session completion

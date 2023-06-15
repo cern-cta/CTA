@@ -54,5 +54,5 @@ public:
   virtual void ping() = 0;
 };
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

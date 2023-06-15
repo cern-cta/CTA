@@ -44,14 +44,14 @@ struct ImmutableFileTestCmdLineArgs {
    * executable.
    * @param argv The vector of command-line arguments.
    */
-  ImmutableFileTestCmdLineArgs(const int argc, char *const *const argv);
+  ImmutableFileTestCmdLineArgs(const int argc, char* const* const argv);
 
   /**
    * Prints the usage message of the command-line tool.
    *
    * @param os The output stream to which the usage message is to be printed.
    */
-  static void printUsage(std::ostream &os);
+  static void printUsage(std::ostream& os);
 };
 
-} // namespace cta
+}  // namespace cta

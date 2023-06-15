@@ -24,32 +24,35 @@
 namespace cta {
 namespace catalogue {
 
-SqliteStorageClassCatalogue::SqliteStorageClassCatalogue(log::Logger &log,
-  std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue)
-  : RdbmsStorageClassCatalogue(log, connPool, rdbmsCatalogue) {}
+SqliteStorageClassCatalogue::SqliteStorageClassCatalogue(log::Logger& log,
+                                                         std::shared_ptr<rdbms::ConnPool> connPool,
+                                                         RdbmsCatalogue* rdbmsCatalogue) :
+RdbmsStorageClassCatalogue(log, connPool, rdbmsCatalogue) {}
 
-uint64_t SqliteStorageClassCatalogue::getNextStorageClassId(rdbms::Conn &conn) {
+uint64_t SqliteStorageClassCatalogue::getNextStorageClassId(rdbms::Conn& conn) {
   try {
     conn.executeNonQuery("INSERT INTO STORAGE_CLASS_ID VALUES(NULL)");
     uint64_t storageClassId = 0;
     {
-      const char *const sql = "SELECT LAST_INSERT_ROWID() AS ID";
+      const char* const sql = "SELECT LAST_INSERT_ROWID() AS ID";
       auto stmt = conn.createStmt(sql);
       auto rset = stmt.executeQuery();
-      if(!rset.next()) {
+      if (!rset.next()) {
         throw exception::Exception(std::string("Unexpected empty result set for '") + sql + "\'");
       }
       storageClassId = rset.columnUint64("ID");
-      if(rset.next()) {
+      if (rset.next()) {
         throw exception::Exception(std::string("Unexpectedly found more than one row in the result of '") + sql + "\'");
       }
     }
     conn.executeNonQuery("DELETE FROM STORAGE_CLASS_ID");
 
     return storageClassId;
-  } catch(exception::UserError &) {
+  }
+  catch (exception::UserError&) {
     throw;
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }

@@ -31,44 +31,57 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeWriteSingleThread(
   cta::log::LogContext& logContext,
   MigrationReportPacker& reportPacker,
   cta::server::ProcessCap& capUtils,
-  uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush,
-  const bool useLbp, const bool useEncryption,
+  uint64_t filesBeforeFlush,
+  uint64_t bytesBeforeFlush,
+  const bool useLbp,
+  const bool useEncryption,
   const std::string& externalEncryptionKeyScript,
   const cta::ArchiveMount& archiveMount,
   const uint64_t tapeLoadTimeout,
   cta::catalogue::Catalogue& catalogue) :
-  TapeSingleThreadInterface<TapeWriteTask>(drive, mediaChanger, reporter, volInfo,
-                                           capUtils, logContext, useEncryption, externalEncryptionKeyScript, tapeLoadTimeout),
-  m_filesBeforeFlush(filesBeforeFlush),
-  m_bytesBeforeFlush(bytesBeforeFlush),
-  m_drive(drive),
-  m_reportPacker(reportPacker),
-  m_lastFseq(0),
-  m_compress(true),
-  m_useLbp(useLbp),
-  m_watchdog(watchdog),
-  m_archiveMount(archiveMount),
-  m_catalogue(catalogue) {}
+TapeSingleThreadInterface<TapeWriteTask>(drive,
+                                         mediaChanger,
+                                         reporter,
+                                         volInfo,
+                                         capUtils,
+                                         logContext,
+                                         useEncryption,
+                                         externalEncryptionKeyScript,
+                                         tapeLoadTimeout),
+m_filesBeforeFlush(filesBeforeFlush),
+m_bytesBeforeFlush(bytesBeforeFlush),
+m_drive(drive),
+m_reportPacker(reportPacker),
+m_lastFseq(0),
+m_compress(true),
+m_useLbp(useLbp),
+m_watchdog(watchdog),
+m_archiveMount(archiveMount),
+m_catalogue(catalogue) {}
 
 //------------------------------------------------------------------------------
 //TapeCleaning::~TapeCleaning()
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeCleaning::~TapeCleaning() {
-  m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::CleaningUp, std::nullopt, m_this.m_logContext);
+  m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::CleaningUp, std::nullopt,
+                                          m_this.m_logContext);
 
   // Tell everyone to wrap up the session
   // We now acknowledge to the task injector that read reached the end. There
   // will hence be no more requests for more.
   m_this.m_taskInjector->finish();
   //then we log/notify
-  m_this.m_logContext.log(cta::log::DEBUG, "Starting write session cleanup. Signalled end of session to task injector.");
+  m_this.m_logContext.log(cta::log::DEBUG,
+                          "Starting write session cleanup. Signalled end of session to task injector.");
   m_this.m_stats.waitReportingTime += m_timer.secs(cta::utils::Timer::resetCounter);
 
   // Disable encryption (or at least try)
   try {
-    if (m_this.m_encryptionControl.disable(m_this.m_drive))
+    if (m_this.m_encryptionControl.disable(m_this.m_drive)) {
       m_this.m_logContext.log(cta::log::INFO, "Turned encryption off before unmounting");
-  } catch (cta::exception::Exception& ex) {
+    }
+  }
+  catch (cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer scoped(m_this.m_logContext);
     scoped.add("exceptionError", ex.getMessageValue());
     m_this.m_logContext.log(cta::log::ERR, "Failed to turn off encryption before unmounting");
@@ -76,9 +89,17 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeCleaning::~TapeClea
   m_this.m_stats.encryptionControlTime += m_timer.secs(cta::utils::Timer::resetCounter);
 
   // Log (safely, exception-wise) the tape alerts (if any) at the end of the session
-  try { m_this.logTapeAlerts(); } catch (...) {}
+  try {
+    m_this.logTapeAlerts();
+  }
+  catch (...) {
+  }
   // Log (safely, exception-wise) the tape SCSI metrics at the end of the session
-  try { m_this.logSCSIMetrics(); } catch (...) {}
+  try {
+    m_this.logSCSIMetrics();
+  }
+  catch (...) {
+  }
 
   // Log safely errors at the end of the session
   // This out-of-try-catch variables allows us to record the stage of the
@@ -99,7 +120,9 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeCleaning::~TapeClea
     const uint32_t waitMediaInDriveTimeout = m_this.m_tapeLoadTimeout;
     try {
       m_this.m_drive.waitUntilReady(waitMediaInDriveTimeout);
-    } catch (cta::exception::TimeOut&) {}
+    }
+    catch (cta::exception::TimeOut&) {
+    }
     if (!m_this.m_drive.hasTapeInPlace()) {
       m_this.m_logContext.log(cta::log::INFO, "TapeWriteSingleThread: No tape to unload");
       m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Up, std::nullopt,
@@ -112,33 +135,38 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeCleaning::~TapeClea
       return;
     }
 
-    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unloading, std::nullopt, m_this.m_logContext);
+    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unloading, std::nullopt,
+                                            m_this.m_logContext);
     m_this.m_drive.unloadTape();
     m_this.m_logContext.log(cta::log::INFO, "TapeWriteSingleThread: Tape unloaded");
     m_this.m_stats.unloadTime += m_timer.secs(cta::utils::Timer::resetCounter);
 
     // And return the tape to the library
     currentErrorToCount = "Error_tapeDismount";
-    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, m_this.m_logContext);
-    m_this.m_reporter.reportState(cta::tape::session::SessionState::Unmounting, cta::tape::session::SessionType::Archive);
+    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt,
+                                            m_this.m_logContext);
+    m_this.m_reporter.reportState(cta::tape::session::SessionState::Unmounting,
+                                  cta::tape::session::SessionType::Archive);
     m_this.m_mediaChanger.dismountTape(m_this.m_volInfo.vid, m_this.m_drive.config.librarySlot());
     m_this.m_drive.disableLogicalBlockProtection();
     m_this.m_stats.unmountTime += m_timer.secs(cta::utils::Timer::resetCounter);
     m_this.m_logContext.log(cta::log::INFO, "TapeWriteSingleThread : tape unmounted");
 
     // We know we are the last thread, just report the drive Up
-    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Up, std::nullopt, m_this.m_logContext);
+    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Up, std::nullopt,
+                                            m_this.m_logContext);
     m_this.m_reporter.reportState(cta::tape::session::SessionState::ShuttingDown,
                                   cta::tape::session::SessionType::Archive);
     m_this.m_stats.waitReportingTime += m_timer.secs(cta::utils::Timer::resetCounter);
   }
   catch (const cta::exception::Exception& ex) {
-    // Notify something failed during the cleaning 
+    // Notify something failed during the cleaning
     m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
     const int logLevel = cta::log::ERR;
-    const std::string errorMsg = "Exception in TapeWriteSingleThread-TapeCleaning when unmounting/unloading the tape. Putting the drive down.";
-    std::optional<std::string> reason = cta::common::dataStructures::DesiredDriveState::generateReasonFromLogMsg(
-      logLevel, errorMsg);
+    const std::string errorMsg =
+      "Exception in TapeWriteSingleThread-TapeCleaning when unmounting/unloading the tape. Putting the drive down.";
+    std::optional<std::string> reason =
+      cta::common::dataStructures::DesiredDriveState::generateReasonFromLogMsg(logLevel, errorMsg);
     m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down, reason,
                                             m_this.m_logContext);
     m_this.m_reporter.reportState(cta::tape::session::SessionState::Fatal, cta::tape::session::SessionType::Archive);
@@ -152,14 +180,18 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeCleaning::~TapeClea
       if (!currentErrorToCount.empty()) {
         m_this.m_watchdog.addToErrorCount(currentErrorToCount);
       }
-    } catch (...) {}
-  } catch (...) {
+    }
+    catch (...) {
+    }
+  }
+  catch (...) {
     // Notify something failed during the cleaning
     m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
     const int logLevel = cta::log::ERR;
-    const std::string errorMsg = "Non-CTA exception in TapeWriteSingleThread-TapeCleaning when unmounting the tape. Putting the drive down.";
-    std::optional<std::string> reason = cta::common::dataStructures::DesiredDriveState::generateReasonFromLogMsg(
-      logLevel, errorMsg);
+    const std::string errorMsg =
+      "Non-CTA exception in TapeWriteSingleThread-TapeCleaning when unmounting the tape. Putting the drive down.";
+    std::optional<std::string> reason =
+      cta::common::dataStructures::DesiredDriveState::generateReasonFromLogMsg(logLevel, errorMsg);
     m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down, reason,
                                             m_this.m_logContext);
     m_this.m_reporter.reportState(cta::tape::session::SessionState::Fatal, cta::tape::session::SessionType::Archive);
@@ -168,7 +200,9 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeCleaning::~TapeClea
       if (!currentErrorToCount.empty()) {
         m_this.m_watchdog.addToErrorCount(currentErrorToCount);
       }
-    } catch (...) {}
+    }
+    catch (...) {
+    }
   }
 
   //then we terminate the global status m_reporter
@@ -178,8 +212,7 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeCleaning::~TapeClea
 //------------------------------------------------------------------------------
 //setlastFseq
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeWriteSingleThread::
-setlastFseq(uint64_t lastFseq) {
+void castor::tape::tapeserver::daemon::TapeWriteSingleThread::setlastFseq(uint64_t lastFseq) {
   m_lastFseq = lastFseq;
 }
 
@@ -189,16 +222,15 @@ setlastFseq(uint64_t lastFseq) {
 std::unique_ptr<castor::tape::tapeFile::WriteSession>
   castor::tape::tapeserver::daemon::TapeWriteSingleThread::openWriteSession() {
   cta::log::ScopedParamContainer params(m_logContext);
-  params.add("lastFseq", m_lastFseq)
-        .add("compression", m_compress)
-        .add("useLbp", m_useLbp);
+  params.add("lastFseq", m_lastFseq).add("compression", m_compress).add("useLbp", m_useLbp);
 
   try {
-    auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(m_drive, m_volInfo, m_lastFseq,
-      m_compress, m_useLbp);
+    auto writeSession =
+      std::make_unique<castor::tape::tapeFile::WriteSession>(m_drive, m_volInfo, m_lastFseq, m_compress, m_useLbp);
 
     return writeSession;
-  } catch (cta::exception::Exception& e) {
+  }
+  catch (cta::exception::Exception& e) {
     // TODO: log and unroll the session
     // TODO: add an unroll mode to the tape read task. (Similar to exec, but pushing blocks marked in error)
     cta::log::ScopedParamContainer scoped(m_logContext);
@@ -211,15 +243,14 @@ std::unique_ptr<castor::tape::tapeFile::WriteSession>
 //------------------------------------------------------------------------------
 //tapeFlush
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeWriteSingleThread::
-tapeFlush(const std::string& message, uint64_t bytes, uint64_t files,
-          cta::utils::Timer& timer) {
+void castor::tape::tapeserver::daemon::TapeWriteSingleThread::tapeFlush(const std::string& message,
+                                                                        uint64_t bytes,
+                                                                        uint64_t files,
+                                                                        cta::utils::Timer& timer) {
   m_drive.flush();
   double flushTime = timer.secs(cta::utils::Timer::resetCounter);
   cta::log::ScopedParamContainer params(m_logContext);
-  params.add("files", files)
-        .add("bytes", bytes)
-        .add("flushTime", flushTime);
+  params.add("files", files).add("bytes", bytes).add("flushTime", flushTime);
   m_logContext.log(cta::log::INFO, message);
   m_stats.flushTime += flushTime;
 
@@ -238,16 +269,14 @@ bool castor::tape::tapeserver::daemon::TapeWriteSingleThread::logAndCheckTapeAle
   size_t alertNumber = 0;
   // Log tape alerts in the logs.
   std::vector<std::string> tapeAlerts = m_drive.getTapeAlerts(tapeAlertCodes);
-  for (const auto& ta: tapeAlerts) {
+  for (const auto& ta : tapeAlerts) {
     cta::log::ScopedParamContainer params(m_logContext);
-    params.add("tapeAlert", ta)
-          .add("tapeAlertNumber", alertNumber++)
-          .add("tapeAlertCount", tapeAlerts.size());
+    params.add("tapeAlert", ta).add("tapeAlertNumber", alertNumber++).add("tapeAlertCount", tapeAlerts.size());
     m_logContext.log(cta::log::WARNING, "Tape alert detected");
   }
   // Add tape alerts in the tape log parameters
   std::vector<std::string> tapeAlertsCompact = m_drive.getTapeAlertsCompact(tapeAlertCodes);
-  for (const auto& tac: tapeAlertsCompact) {
+  for (const auto& tac : tapeAlertsCompact) {
     countTapeLogError(std::string("Error_") + tac);
   }
   return (m_drive.tapeAlertsCriticalForWrite(tapeAlertCodes));
@@ -256,13 +285,11 @@ bool castor::tape::tapeserver::daemon::TapeWriteSingleThread::logAndCheckTapeAle
 //------------------------------------------------------------------------------
 //   isTapeWritable
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeWriteSingleThread::
-isTapeWritable() const {
-// check that drive is not write protected
+void castor::tape::tapeserver::daemon::TapeWriteSingleThread::isTapeWritable() const {
+  // check that drive is not write protected
   if (m_drive.isWriteProtected()) {
     cta::exception::Exception ex;
-    ex.getMessage() <<
-                    "End session with error. Drive is write protected. Aborting labelling...";
+    ex.getMessage() << "End session with error. Drive is write protected. Aborting labelling...";
     throw ex;
   }
 }
@@ -351,8 +378,8 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
           auto encryptionStatus = m_encryptionControl.enable(m_drive, m_volInfo, m_catalogue, true);
           if (encryptionStatus.on) {
             encryptionLogParams.add("encryption", "on")
-                               .add("encryptionKeyName", encryptionStatus.keyName)
-                               .add("stdout", encryptionStatus.stdout);
+              .add("encryptionKeyName", encryptionStatus.keyName)
+              .add("stdout", encryptionStatus.stdout);
             m_logContext.log(cta::log::INFO, "Drive encryption enabled for this mount");
           }
           else {
@@ -406,7 +433,8 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       // Tasks handle their error logging themselves.
       currentErrorToCount = "";
       std::unique_ptr<TapeWriteTask> task;
-      m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Transferring, std::nullopt, m_logContext);
+      m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Transferring, std::nullopt,
+                                       m_logContext);
       m_reporter.reportState(cta::tape::session::SessionState::Running, cta::tape::session::SessionType::Archive);
       while (true) {
         //get a task
@@ -438,7 +466,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
           bytes = 0;
           currentErrorToCount = "";
         }
-      } //end of while(true))
+      }  //end of while(true))
     }
 
     // The session completed successfully, and the cleaner (unmount) executed
@@ -452,7 +480,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     m_watchdog.updateStats(m_stats);
     //end of session + log
     m_reportPacker.reportEndOfSession(m_logContext);
-  } //end of try
+  }  //end of try
   catch (const cta::exception::Exception& e) {
     //we end there because write session could not be opened
     //or because a task failed or because flush failed
@@ -480,7 +508,8 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       // This is indeed the end of the tape. Not an error.
       m_watchdog.setErrorCount("Info_tapeFilledUp", 1);
       m_reportPacker.reportTapeFull(m_logContext);
-    } catch (...) {
+    }
+    catch (...) {
       // The error is not an ENOSPC, so it is, indeed, an error.
       // If we got here with a new error, currentErrorToCount will be non-empty,
       // and we will pass the error name to the watchdog.
@@ -503,17 +532,18 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     bool isTapeFull = false;
     // Override if we got en ENOSPC error (end of tape)
     try {
-      const auto& errnum = dynamic_cast<const cta::exception::Errnum&> (e);
+      const auto& errnum = dynamic_cast<const cta::exception::Errnum&>(e);
       if (ENOSPC == errnum.errorNumber()) {
         isTapeFull = true;
         errorMessage = "End of migration due to tape full";
         logLevel = cta::log::INFO;
       }
-    } catch (...) {}
+    }
+    catch (...) {
+    }
     // then log the end of write thread
     cta::log::ScopedParamContainer params(m_logContext);
-    params.add("status", "error")
-          .add("ErrorMessage", errorMessage);
+    params.add("status", "error").add("ErrorMessage", errorMessage);
     m_stats.totalTime = totalTimer.secs();
     logWithStats(logLevel, "Tape thread complete for writing", params);
     m_reportPacker.reportEndOfSessionWithErrors(errorMessage, isTapeFull, m_logContext);
@@ -523,30 +553,31 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
 //------------------------------------------------------------------------------
 //logWithStats
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeWriteSingleThread::logWithStats(
-  int level, const std::string& msg, cta::log::ScopedParamContainer& params) {
+void castor::tape::tapeserver::daemon::TapeWriteSingleThread::logWithStats(int level,
+                                                                           const std::string& msg,
+                                                                           cta::log::ScopedParamContainer& params) {
   params.add("type", "write")
-        .add("tapeVid", m_volInfo.vid)
-        .add("mountTime", m_stats.mountTime)
-        .add("positionTime", m_stats.positionTime)
-        .add("waitInstructionsTime", m_stats.waitInstructionsTime)
-        .add("checksumingTime", m_stats.checksumingTime)
-        .add("readWriteTime", m_stats.readWriteTime)
-        .add("waitDataTime", m_stats.waitDataTime)
-        .add("waitReportingTime", m_stats.waitReportingTime)
-        .add("flushTime", m_stats.flushTime)
-        .add("unloadTime", m_stats.unloadTime)
-        .add("unmountTime", m_stats.unmountTime)
-        .add("encryptionControlTime", m_stats.encryptionControlTime)
-        .add("transferTime", m_stats.transferTime())
-        .add("totalTime", m_stats.totalTime)
-        .add("dataVolume", m_stats.dataVolume)
-        .add("headerVolume", m_stats.headerVolume)
-        .add("files", m_stats.filesCount)
-        .add("payloadTransferSpeedMBps", m_stats.totalTime ? 1.0 * m_stats.dataVolume
-                                                             / 1000 / 1000 / m_stats.totalTime : 0.0)
-        .add("driveTransferSpeedMBps", m_stats.totalTime ? 1.0 * (m_stats.dataVolume + m_stats.headerVolume)
-                                                           / 1000 / 1000 / m_stats.totalTime : 0.0);
+    .add("tapeVid", m_volInfo.vid)
+    .add("mountTime", m_stats.mountTime)
+    .add("positionTime", m_stats.positionTime)
+    .add("waitInstructionsTime", m_stats.waitInstructionsTime)
+    .add("checksumingTime", m_stats.checksumingTime)
+    .add("readWriteTime", m_stats.readWriteTime)
+    .add("waitDataTime", m_stats.waitDataTime)
+    .add("waitReportingTime", m_stats.waitReportingTime)
+    .add("flushTime", m_stats.flushTime)
+    .add("unloadTime", m_stats.unloadTime)
+    .add("unmountTime", m_stats.unmountTime)
+    .add("encryptionControlTime", m_stats.encryptionControlTime)
+    .add("transferTime", m_stats.transferTime())
+    .add("totalTime", m_stats.totalTime)
+    .add("dataVolume", m_stats.dataVolume)
+    .add("headerVolume", m_stats.headerVolume)
+    .add("files", m_stats.filesCount)
+    .add("payloadTransferSpeedMBps",
+         m_stats.totalTime ? 1.0 * m_stats.dataVolume / 1000 / 1000 / m_stats.totalTime : 0.0)
+    .add("driveTransferSpeedMBps",
+         m_stats.totalTime ? 1.0 * (m_stats.dataVolume + m_stats.headerVolume) / 1000 / 1000 / m_stats.totalTime : 0.0);
   m_logContext.moveToTheEndIfPresent("status");
   m_logContext.log(level, msg);
 }
@@ -582,8 +613,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::logSCSIMetrics() {
     appendMetricsToScopedParams(scopedContainer, scsi_quality_metrics_hash);
     std::map<std::string, uint32_t> scsi_drive_metrics_hash = m_drive.getDriveStats();
     appendMetricsToScopedParams(scopedContainer, scsi_drive_metrics_hash);
-    logSCSIStats("Logging drive statistics",
-                 scsi_quality_metrics_hash.size() + scsi_drive_metrics_hash.size());
+    logSCSIStats("Logging drive statistics", scsi_quality_metrics_hash.size() + scsi_drive_metrics_hash.size());
   }
   catch (const cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer scoped(m_logContext);

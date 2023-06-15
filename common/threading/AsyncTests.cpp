@@ -16,28 +16,26 @@
  */
 #include <gtest/gtest.h>
 #include "Async.cpp"
+
 namespace unitTests {
-  using namespace cta;
+using namespace cta;
+
 TEST(cta_async, AsyncCallableTakesTime) {
-  auto future = cta::Async::async([]{
-    ::sleep(2);
-  });
+  auto future = cta::Async::async([] { ::sleep(2); });
   ASSERT_NO_THROW(future.get());
 }
 
 TEST(cta_async, AsyncCallableDoNothing) {
-  auto future = cta::Async::async([]{
-    
+  auto future = cta::Async::async([] {
+
   });
   ASSERT_NO_THROW(future.get());
 }
 
-
-TEST(cta_async,AsyncCallableThrowException){
-  auto future = cta::Async::async([]{
-    throw cta::exception::Exception("Chuck Norris writes code that optimizes itself.");
-  });
-  ASSERT_THROW(future.get(),cta::exception::Exception);
+TEST(cta_async, AsyncCallableThrowException) {
+  auto future =
+    cta::Async::async([] { throw cta::exception::Exception("Chuck Norris writes code that optimizes itself."); });
+  ASSERT_THROW(future.get(), cta::exception::Exception);
 }
 
-}
+}  // namespace unitTests

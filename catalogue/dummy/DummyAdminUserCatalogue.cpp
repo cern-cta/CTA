@@ -22,25 +22,27 @@ namespace cta {
 namespace catalogue {
 
 void DummyAdminUserCatalogue::createAdminUser(const common::dataStructures::SecurityIdentity& admin,
-  const std::string& username, const std::string& comment) {
-    throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+                                              const std::string& username,
+                                              const std::string& comment) {
+  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
 void DummyAdminUserCatalogue::deleteAdminUser(const std::string& username) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
 std::list<common::dataStructures::AdminUser> DummyAdminUserCatalogue::getAdminUsers() const {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
 void DummyAdminUserCatalogue::modifyAdminUserComment(const common::dataStructures::SecurityIdentity& admin,
-  const std::string& username, const std::string& comment) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+                                                     const std::string& username,
+                                                     const std::string& comment) {
+  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
 bool DummyAdminUserCatalogue::isAdmin(const common::dataStructures::SecurityIdentity& admin) const {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
 }  // namespace catalogue

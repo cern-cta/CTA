@@ -28,9 +28,8 @@ namespace catalogue {
 /**
  * An Oracle based implementation of the CTA catalogue.
  */
-class OracleCatalogue: public RdbmsCatalogue {
+class OracleCatalogue : public RdbmsCatalogue {
 public:
-
   /**
    * Constructor.
    *
@@ -45,13 +44,12 @@ public:
    * connections to the underlying relational database for the sole purpose of
    * listing archive files.
    */
-  OracleCatalogue(
-    log::Logger       &log,
-    const std::string &username,
-    const std::string &password,
-    const std::string &database,
-    const uint64_t nbConns,
-    const uint64_t nbArchiveFileListingConns);
+  OracleCatalogue(log::Logger& log,
+                  const std::string& username,
+                  const std::string& password,
+                  const std::string& database,
+                  const uint64_t nbConns,
+                  const uint64_t nbArchiveFileListingConns);
 
   /**
    * Destructor.
@@ -65,9 +63,9 @@ public:
    * @param diskFileIds List of disk file IDs (fxid).
    * @return Name of the temporary table
    */
-  std::string createAndPopulateTempTableFxid(rdbms::Conn &conn,
-    const std::optional<std::vector<std::string>> &diskFileIds) const override;
-}; // class OracleCatalogue
+  std::string createAndPopulateTempTableFxid(rdbms::Conn& conn,
+                                             const std::optional<std::vector<std::string>>& diskFileIds) const override;
+};  // class OracleCatalogue
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

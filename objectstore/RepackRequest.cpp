@@ -27,26 +27,25 @@
 #include "RepackQueueAlgorithms.hpp"
 #include "RepackRequest.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta {
+namespace objectstore {
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-RepackRequest::RepackRequest(const std::string& address, Backend& os):
-  ObjectOps<serializers::RepackRequest, serializers::RepackRequest_t> (os, address) { }
+RepackRequest::RepackRequest(const std::string& address, Backend& os) :
+ObjectOps<serializers::RepackRequest, serializers::RepackRequest_t>(os, address) {}
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-RepackRequest::RepackRequest(Backend& os):
-  ObjectOps<serializers::RepackRequest, serializers::RepackRequest_t> (os) { }
-
+RepackRequest::RepackRequest(Backend& os) : ObjectOps<serializers::RepackRequest, serializers::RepackRequest_t>(os) {}
 
 //------------------------------------------------------------------------------
 // RepackRequest::RepackRequest()
 //------------------------------------------------------------------------------
-RepackRequest::RepackRequest(GenericObject& go):
-  ObjectOps<serializers::RepackRequest, serializers::RepackRequest_t>(go.objectStore()) {
+RepackRequest::RepackRequest(GenericObject& go) :
+ObjectOps<serializers::RepackRequest, serializers::RepackRequest_t>(go.objectStore()) {
   // Here we transplant the generic object into the new object
   go.transplantHeader(*this);
   // And interpret the header.
@@ -80,7 +79,7 @@ void RepackRequest::initialize() {
   m_payload.set_lastexpandedfseq(0);
   m_payload.set_is_expand_finished(false);
   m_payload.set_is_expand_started(false);
-  m_payload.set_force_disabled_tape(false); // TODO: To remove after REPACKING state is fully deployed
+  m_payload.set_force_disabled_tape(false);  // TODO: To remove after REPACKING state is fully deployed
   m_payload.set_no_recall(false);
   m_payload.set_is_complete(false);
   m_payload.set_repack_finished_time(0);
@@ -93,7 +92,9 @@ void RepackRequest::initialize() {
 //------------------------------------------------------------------------------
 void RepackRequest::setVid(const std::string& vid) {
   checkPayloadWritable();
-  if (vid.empty()) throw exception::Exception("In RepackRequest::setVid(): empty vid");
+  if (vid.empty()) {
+    throw exception::Exception("In RepackRequest::setVid(): empty vid");
+  }
   m_payload.set_vid(vid);
 }
 
@@ -104,17 +105,17 @@ void RepackRequest::setType(common::dataStructures::RepackInfo::Type repackType)
   checkPayloadWritable();
   typedef common::dataStructures::RepackInfo::Type RepackType;
   switch (repackType) {
-  case RepackType::MoveAndAddCopies:
-    // Nothing to do, this is the default case.
-    break;
-  case RepackType::AddCopiesOnly:
-    m_payload.set_move_mode(false);
-    break;
-  case RepackType::MoveOnly:
-    m_payload.set_add_copies_mode(false);
-    break;
-  default:
-    throw exception::Exception("In RepackRequest::setRepackType(): unexpected type.");
+    case RepackType::MoveAndAddCopies:
+      // Nothing to do, this is the default case.
+      break;
+    case RepackType::AddCopiesOnly:
+      m_payload.set_move_mode(false);
+      break;
+    case RepackType::MoveOnly:
+      m_payload.set_add_copies_mode(false);
+      break;
+    default:
+      throw exception::Exception("In RepackRequest::setRepackType(): unexpected type.");
   }
 }
 
@@ -125,10 +126,11 @@ void RepackRequest::setStatus(common::dataStructures::RepackInfo::Status repackS
   checkPayloadWritable();
   // common::dataStructures::RepackInfo::Status and serializers::RepackRequestStatus are defined using the same values,
   // hence the cast.
-  if(repackStatus == common::dataStructures::RepackInfo::Status::Complete || repackStatus == common::dataStructures::RepackInfo::Status::Failed){
-      m_payload.set_repack_finished_time(time(nullptr));
+  if (repackStatus == common::dataStructures::RepackInfo::Status::Complete ||
+      repackStatus == common::dataStructures::RepackInfo::Status::Failed) {
+    m_payload.set_repack_finished_time(time(nullptr));
   }
-  m_payload.set_status((serializers::RepackRequestStatus)repackStatus);
+  m_payload.set_status((serializers::RepackRequestStatus) repackStatus);
 }
 
 //------------------------------------------------------------------------------
@@ -161,7 +163,7 @@ common::dataStructures::RepackInfo RepackRequest::getInfo() {
   creationLog.deserialize(m_payload.creation_log());
   ret.creationLog = creationLog;
   ret.repackFinishedTime = m_payload.repack_finished_time();
-  for(auto & rdi: m_payload.destination_infos()){
+  for (auto& rdi : m_payload.destination_infos()) {
     RepackInfo::RepackDestinationInfo rdiToInsert;
     rdiToInsert.vid = rdi.vid();
     rdiToInsert.files = rdi.files();
@@ -171,12 +173,15 @@ common::dataStructures::RepackInfo RepackRequest::getInfo() {
   if (m_payload.move_mode()) {
     if (m_payload.add_copies_mode()) {
       ret.type = RepackInfo::Type::MoveAndAddCopies;
-    } else {
+    }
+    else {
       ret.type = RepackInfo::Type::MoveOnly;
     }
-  } else if (m_payload.add_copies_mode()) {
+  }
+  else if (m_payload.add_copies_mode()) {
     ret.type = RepackInfo::Type::AddCopiesOnly;
-  } else {
+  }
+  else {
     throw exception::Exception("In RepackRequest::getInfo(): unexpected mode: neither expand nor repack.");
   }
   return ret;
@@ -185,17 +190,17 @@ common::dataStructures::RepackInfo RepackRequest::getInfo() {
 //------------------------------------------------------------------------------
 // RepackRequest::setExpandFinished()
 //------------------------------------------------------------------------------
-void RepackRequest::setExpandFinished(const bool expandFinished){
+void RepackRequest::setExpandFinished(const bool expandFinished) {
   checkPayloadWritable();
   m_payload.set_is_expand_finished(expandFinished);
 }
 
-void RepackRequest::setExpandStarted(const bool expandStarted){
+void RepackRequest::setExpandStarted(const bool expandStarted) {
   checkPayloadWritable();
   m_payload.set_is_expand_started(expandStarted);
 }
 
-void RepackRequest::setTotalStats(const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles& totalStatsFiles){
+void RepackRequest::setTotalStats(const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles& totalStatsFiles) {
   setTotalFileToRetrieve(totalStatsFiles.totalFilesToRetrieve);
   setTotalFileToArchive(totalStatsFiles.totalFilesToArchive);
   setTotalBytesToArchive(totalStatsFiles.totalBytesToArchive);
@@ -203,14 +208,14 @@ void RepackRequest::setTotalStats(const cta::SchedulerDatabase::RepackRequest::T
   setUserProvidedFiles(totalStatsFiles.userProvidedFiles);
 }
 
-void RepackRequest::setMountPolicy(const common::dataStructures::MountPolicy& mp){
+void RepackRequest::setMountPolicy(const common::dataStructures::MountPolicy& mp) {
   checkPayloadWritable();
   MountPolicySerDeser mpSerDeser(mp);
   mpSerDeser.serialize(*m_payload.mutable_mount_policy());
   m_payload.set_mountpolicyname(mp.name);
 }
 
-common::dataStructures::MountPolicy RepackRequest::getMountPolicy(){
+common::dataStructures::MountPolicy RepackRequest::getMountPolicy() {
   checkPayloadReadable();
   MountPolicySerDeser mpSerDeser;
   mpSerDeser.deserialize(m_payload.mount_policy());
@@ -219,48 +224,52 @@ common::dataStructures::MountPolicy RepackRequest::getMountPolicy(){
 
 void RepackRequest::deleteAllSubrequests() {
   checkPayloadWritable();
-  if(!m_payload.is_complete()){
+  if (!m_payload.is_complete()) {
     m_payload.mutable_destination_infos()->Clear();
     auto subrequests = m_payload.mutable_subrequests();
     //we will do the deletion by batch of 500
     auto itor = subrequests->begin();
-    while(itor != subrequests->end()){
+    while (itor != subrequests->end()) {
       try {
         std::list<std::unique_ptr<Backend::AsyncDeleter>> deleters;
         int nbSubReqProcessessed = 0;
-        while(itor != subrequests->end() && nbSubReqProcessessed < 500){
-          auto & subrequest = *itor;
+        while (itor != subrequests->end() && nbSubReqProcessessed < 500) {
+          auto& subrequest = *itor;
           subrequest.set_subrequest_deleted(true);
           deleters.emplace_back(m_objectStore.asyncDelete(subrequest.address()));
           nbSubReqProcessessed++;
           itor++;
         }
-        for(auto & deleter: deleters){
+        for (auto& deleter : deleters) {
           deleter->wait();
         }
-      } catch(cta::exception::NoSuchObject & ){ /* If object already deleted, do nothing */ }
+      }
+      catch (cta::exception::NoSuchObject&) { /* If object already deleted, do nothing */
+      }
     }
   }
 }
 
-void RepackRequest::setIsComplete(const bool isComplete){
+void RepackRequest::setIsComplete(const bool isComplete) {
   checkPayloadWritable();
   m_payload.set_is_complete(isComplete);
 }
 
-void RepackRequest::updateRepackDestinationInfos(const cta::common::dataStructures::ArchiveFile & archiveFile, const std::string & destinationVid){
+void RepackRequest::updateRepackDestinationInfos(const cta::common::dataStructures::ArchiveFile& archiveFile,
+                                                 const std::string& destinationVid) {
   checkPayloadWritable();
 
   bool rdiFound = false;
-  cta::objectstore::serializers::RepackDestinationInfo * info = nullptr;
-  for (auto rdiIter = m_payload.mutable_destination_infos()->begin(); !rdiFound && rdiIter != m_payload.mutable_destination_infos()->end(); ++rdiIter) {
+  cta::objectstore::serializers::RepackDestinationInfo* info = nullptr;
+  for (auto rdiIter = m_payload.mutable_destination_infos()->begin();
+       !rdiFound && rdiIter != m_payload.mutable_destination_infos()->end(); ++rdiIter) {
     //find the infos for the vid of the archived file
-    if(rdiIter->vid() == destinationVid){
+    if (rdiIter->vid() == destinationVid) {
       info = &(*rdiIter);
       rdiFound = true;
     }
   }
-  if(!rdiFound){
+  if (!rdiFound) {
     //info has to be created, create it and set its vid
     //by default the files and the bytes = 0 (see cta.proto)
     info = m_payload.mutable_destination_infos()->Add();
@@ -270,11 +279,11 @@ void RepackRequest::updateRepackDestinationInfos(const cta::common::dataStructur
   info->set_bytes(info->bytes() + archiveFile.fileSize);
 }
 
-std::list<common::dataStructures::RepackInfo::RepackDestinationInfo> RepackRequest::getRepackDestinationInfos(){
+std::list<common::dataStructures::RepackInfo::RepackDestinationInfo> RepackRequest::getRepackDestinationInfos() {
   checkPayloadReadable();
 
   std::list<common::dataStructures::RepackInfo::RepackDestinationInfo> ret;
-  for(auto rdiIter: m_payload.destination_infos()){
+  for (auto rdiIter : m_payload.destination_infos()) {
     common::dataStructures::RepackInfo::RepackDestinationInfo rdi;
     rdi.vid = rdiIter.vid();
     rdi.files = rdiIter.files();
@@ -284,7 +293,7 @@ std::list<common::dataStructures::RepackInfo::RepackDestinationInfo> RepackReque
   return ret;
 }
 
-void RepackRequest::setCreationLog(const common::dataStructures::EntryLog & creationLog){
+void RepackRequest::setCreationLog(const common::dataStructures::EntryLog& creationLog) {
   checkPayloadWritable();
   cta::objectstore::EntryLogSerDeser creationLogToSet(creationLog);
   creationLogToSet.serialize(*m_payload.mutable_creation_log());
@@ -302,24 +311,27 @@ void RepackRequest::setNoRecall(const bool noRecall) {
   m_payload.set_no_recall(noRecall);
 }
 
-bool RepackRequest::getNoRecall(){
+bool RepackRequest::getNoRecall() {
   checkPayloadReadable();
   return m_payload.no_recall();
 }
 
-void RepackRequest::setStatus(){
+void RepackRequest::setStatus() {
   checkPayloadWritable();
   checkPayloadReadable();
-  if(m_payload.is_expand_started()){
+  if (m_payload.is_expand_started()) {
     //The expansion of the Repack Request have started
-    if(m_payload.is_expand_finished()){
-      if( (m_payload.retrievedfiles() + m_payload.failedtoretrievefiles() >= m_payload.totalfilestoretrieve()) && (m_payload.archivedfiles() + m_payload.failedtoarchivefiles() + m_payload.failedtocreatearchivereq() >= m_payload.totalfilestoarchive()) ){
+    if (m_payload.is_expand_finished()) {
+      if ((m_payload.retrievedfiles() + m_payload.failedtoretrievefiles() >= m_payload.totalfilestoretrieve()) &&
+          (m_payload.archivedfiles() + m_payload.failedtoarchivefiles() + m_payload.failedtocreatearchivereq() >=
+           m_payload.totalfilestoarchive())) {
         //We reached the end
         if (m_payload.failedtoretrievefiles() || m_payload.failedtoarchivefiles()) {
           //At least one retrieve or archive has failed
           m_payload.set_repack_finished_time(time(nullptr));
           setStatus(common::dataStructures::RepackInfo::Status::Failed);
-        } else {
+        }
+        else {
           //No Failure, we are status Complete
           m_payload.set_repack_finished_time(time(nullptr));
           setStatus(common::dataStructures::RepackInfo::Status::Complete);
@@ -331,9 +343,11 @@ void RepackRequest::setStatus(){
     //Expand is finished or not, if we have retrieved files or not (first reporting) or if we have archived files (repack tape repair workflow with all files
     //provided by the user), we are in Running,
     //else we are in starting
-    if(m_payload.retrievedfiles() || m_payload.failedtoretrievefiles() || m_payload.archivedfiles() || m_payload.failedtoarchivefiles()){
+    if (m_payload.retrievedfiles() || m_payload.failedtoretrievefiles() || m_payload.archivedfiles() ||
+        m_payload.failedtoarchivefiles()) {
       setStatus(common::dataStructures::RepackInfo::Status::Running);
-    } else {
+    }
+    else {
       setStatus(common::dataStructures::RepackInfo::Status::Starting);
     }
   }
@@ -342,7 +356,7 @@ void RepackRequest::setStatus(){
 //------------------------------------------------------------------------------
 // RepackRequest::getExpandFinished()
 //------------------------------------------------------------------------------
-bool RepackRequest::isExpandFinished(){
+bool RepackRequest::isExpandFinished() {
   checkPayloadReadable();
   return m_payload.is_expand_finished();
 }
@@ -363,7 +377,9 @@ void RepackRequest::RepackSubRequestPointer::serialize(serializers::RepackSubReq
   rsrp.set_fseq(fSeq);
   rsrp.set_retrieve_accounted(retrieveAccounted);
   rsrp.mutable_archive_copynb_accounted()->Clear();
-  for (auto cna: archiveCopyNbsAccounted) { rsrp.mutable_archive_copynb_accounted()->Add(cna); }
+  for (auto cna : archiveCopyNbsAccounted) {
+    rsrp.mutable_archive_copynb_accounted()->Add(cna);
+  }
   rsrp.set_subrequest_deleted(subrequestDeleted);
 }
 
@@ -375,7 +391,9 @@ void RepackRequest::RepackSubRequestPointer::deserialize(const serializers::Repa
   fSeq = rsrp.fseq();
   retrieveAccounted = rsrp.retrieve_accounted();
   archiveCopyNbsAccounted.clear();
-  for (auto acna: rsrp.archive_copynb_accounted()) { archiveCopyNbsAccounted.insert(acna); }
+  for (auto acna : rsrp.archive_copynb_accounted()) {
+    archiveCopyNbsAccounted.insert(acna);
+  }
   subrequestDeleted = rsrp.subrequest_deleted();
 }
 
@@ -383,26 +401,29 @@ void RepackRequest::RepackSubRequestPointer::deserialize(const serializers::Repa
 // RepackRequest::getOrPrepareSubrequestInfo()
 //------------------------------------------------------------------------------
 auto RepackRequest::getOrPrepareSubrequestInfo(std::set<uint64_t> fSeqs, AgentReference& agentRef)
--> SubrequestInfo::set {
+  -> SubrequestInfo::set {
   checkPayloadWritable();
   RepackSubRequestPointer::Map pointerMap;
   // Read the map
-  for (auto &rsrp: m_payload.subrequests()) pointerMap[rsrp.fseq()].deserialize(rsrp);
+  for (auto& rsrp : m_payload.subrequests()) {
+    pointerMap[rsrp.fseq()].deserialize(rsrp);
+  }
   SubrequestInfo::set ret;
   bool newElementCreated = false;
   // Prepare to return existing or created address.
-  for (auto &fs: fSeqs) {
+  for (auto& fs : fSeqs) {
     SubrequestInfo retInfo;
     try {
-      auto & srp = pointerMap.at(fs);
+      auto& srp = pointerMap.at(fs);
       retInfo.address = srp.address;
       retInfo.fSeq = srp.fSeq;
       retInfo.subrequestDeleted = srp.subrequestDeleted;
-    } catch (std::out_of_range &) {
+    }
+    catch (std::out_of_range&) {
       retInfo.address = agentRef.nextId("RepackSubRequest");
       retInfo.fSeq = fs;
       retInfo.subrequestDeleted = false;
-      auto & p = pointerMap[fs];
+      auto& p = pointerMap[fs];
       p.address = retInfo.address;
       p.fSeq = fs;
       p.retrieveAccounted = p.subrequestDeleted = false;
@@ -414,17 +435,19 @@ auto RepackRequest::getOrPrepareSubrequestInfo(std::set<uint64_t> fSeqs, AgentRe
   // Record changes, if any.
   if (newElementCreated) {
     m_payload.mutable_subrequests()->Clear();
-    for (auto & p: pointerMap) p.second.serialize(*m_payload.mutable_subrequests()->Add());
+    for (auto& p : pointerMap) {
+      p.second.serialize(*m_payload.mutable_subrequests()->Add());
+    }
   }
   return ret;
 }
 
-void RepackRequest::removeFromOwnerAgentOwnership(){
+void RepackRequest::removeFromOwnerAgentOwnership() {
   checkPayloadReadable();
   checkPayloadWritable();
-  cta::objectstore::Agent ag(getOwner(),m_objectStore);
+  cta::objectstore::Agent ag(getOwner(), m_objectStore);
   cta::objectstore::AgentWrapper agWrapper(ag);
-  agWrapper.removeFromOwnership(getAddressIfSet(),m_objectStore);
+  agWrapper.removeFromOwnership(getAddressIfSet(), m_objectStore);
 }
 
 //------------------------------------------------------------------------------
@@ -446,7 +469,7 @@ uint64_t RepackRequest::getLastExpandedFSeq() {
 //------------------------------------------------------------------------------
 // RepackRequest::setTotalFileToRetrieve()
 //------------------------------------------------------------------------------
-void RepackRequest::setTotalFileToRetrieve(const uint64_t nbFilesToRetrieve){
+void RepackRequest::setTotalFileToRetrieve(const uint64_t nbFilesToRetrieve) {
   checkPayloadWritable();
   m_payload.set_totalfilestoretrieve(nbFilesToRetrieve);
 }
@@ -454,7 +477,7 @@ void RepackRequest::setTotalFileToRetrieve(const uint64_t nbFilesToRetrieve){
 //------------------------------------------------------------------------------
 // RepackRequest::setTotalBytesToRetrieve()
 //------------------------------------------------------------------------------
-void RepackRequest::setTotalBytesToRetrieve(const uint64_t nbBytesToRetrieve){
+void RepackRequest::setTotalBytesToRetrieve(const uint64_t nbBytesToRetrieve) {
   checkPayloadWritable();
   m_payload.set_totalbytestoretrieve(nbBytesToRetrieve);
 }
@@ -462,7 +485,7 @@ void RepackRequest::setTotalBytesToRetrieve(const uint64_t nbBytesToRetrieve){
 //------------------------------------------------------------------------------
 // RepackRequest::setTotalFileToArchive()
 //------------------------------------------------------------------------------
-void RepackRequest::setTotalFileToArchive(const uint64_t nbFilesToArchive){
+void RepackRequest::setTotalFileToArchive(const uint64_t nbFilesToArchive) {
   checkPayloadWritable();
   m_payload.set_totalfilestoarchive(nbFilesToArchive);
 }
@@ -475,7 +498,7 @@ void RepackRequest::setTotalBytesToArchive(const uint64_t nbBytesToArchive) {
   m_payload.set_totalbytestoarchive(nbBytesToArchive);
 }
 
-void RepackRequest::setUserProvidedFiles(const uint64_t userProvidedFiles){
+void RepackRequest::setUserProvidedFiles(const uint64_t userProvidedFiles) {
   checkPayloadWritable();
   m_payload.set_userprovidedfiles(userProvidedFiles);
 }
@@ -501,27 +524,32 @@ void RepackRequest::reportRetriveSuccesses(SubrequestStatistics::List& retrieveS
   checkPayloadWritable();
   RepackSubRequestPointer::Map pointerMap;
   // Read the map
-  for (auto &rsrp: m_payload.subrequests()) pointerMap[rsrp.fseq()].deserialize(rsrp);
+  for (auto& rsrp : m_payload.subrequests()) {
+    pointerMap[rsrp.fseq()].deserialize(rsrp);
+  }
   bool didUpdate = false;
-  for (auto & rs: retrieveSuccesses) {
+  for (auto& rs : retrieveSuccesses) {
     try {
-      auto & p = pointerMap.at(rs.fSeq);
+      auto& p = pointerMap.at(rs.fSeq);
       if (!p.retrieveAccounted) {
         p.retrieveAccounted = true;
-        if(!rs.hasUserProvidedFile){
+        if (!rs.hasUserProvidedFile) {
           m_payload.set_retrievedbytes(m_payload.retrievedbytes() + rs.bytes);
           m_payload.set_retrievedfiles(m_payload.retrievedfiles() + rs.files);
         }
         didUpdate = true;
       }
-    } catch (std::out_of_range &) {
+    }
+    catch (std::out_of_range&) {
       throw exception::Exception("In RepackRequest::reportRetriveSuccesses(): got a report for unknown fSeq");
     }
   }
   if (didUpdate) {
     setStatus();
     m_payload.mutable_subrequests()->Clear();
-    for (auto & p: pointerMap) p.second.serialize(*m_payload.mutable_subrequests()->Add());
+    for (auto& p : pointerMap) {
+      p.second.serialize(*m_payload.mutable_subrequests()->Add());
+    }
   }
 }
 
@@ -532,25 +560,30 @@ void RepackRequest::reportRetriveFailures(SubrequestStatistics::List& retrieveFa
   checkPayloadWritable();
   RepackSubRequestPointer::Map pointerMap;
   // Read the map
-  for (auto &rsrp: m_payload.subrequests()) pointerMap[rsrp.fseq()].deserialize(rsrp);
+  for (auto& rsrp : m_payload.subrequests()) {
+    pointerMap[rsrp.fseq()].deserialize(rsrp);
+  }
   bool didUpdate = false;
-  for (auto & rf: retrieveFailures) {
+  for (auto& rf : retrieveFailures) {
     try {
-      auto & p = pointerMap.at(rf.fSeq);
+      auto& p = pointerMap.at(rf.fSeq);
       if (!p.retrieveAccounted) {
         p.retrieveAccounted = true;
         m_payload.set_failedtoretrievebytes(m_payload.failedtoretrievebytes() + rf.bytes);
         m_payload.set_failedtoretrievefiles(m_payload.failedtoretrievefiles() + rf.files);
         didUpdate = true;
       }
-    } catch (std::out_of_range &) {
+    }
+    catch (std::out_of_range&) {
       throw exception::Exception("In RepackRequest::reportRetriveFailures(): got a report for unknown fSeq");
     }
   }
   if (didUpdate) {
     setStatus();
     m_payload.mutable_subrequests()->Clear();
-    for (auto & p: pointerMap) p.second.serialize(*m_payload.mutable_subrequests()->Add());
+    for (auto& p : pointerMap) {
+      p.second.serialize(*m_payload.mutable_subrequests()->Add());
+    }
   }
 }
 
@@ -562,29 +595,34 @@ serializers::RepackRequestStatus RepackRequest::reportArchiveSuccesses(Subreques
   checkPayloadWritable();
   RepackSubRequestPointer::Map pointerMap;
   // Read the map
-  for (auto &rsrp: m_payload.subrequests()) pointerMap[rsrp.fseq()].deserialize(rsrp);
+  for (auto& rsrp : m_payload.subrequests()) {
+    pointerMap[rsrp.fseq()].deserialize(rsrp);
+  }
   bool didUpdate = false;
-  for (auto & as: archiveSuccesses) {
+  for (auto& as : archiveSuccesses) {
     try {
-      auto & p = pointerMap.at(as.fSeq);
+      auto& p = pointerMap.at(as.fSeq);
       if (!p.archiveCopyNbsAccounted.count(as.copyNb)) {
         p.archiveCopyNbsAccounted.insert(as.copyNb);
-        cta::objectstore::ArchiveRequest ar(p.address,m_objectStore);
+        cta::objectstore::ArchiveRequest ar(p.address, m_objectStore);
         ar.fetchNoLock();
-        updateRepackDestinationInfos(ar.getArchiveFile(),as.destinationVid);
+        updateRepackDestinationInfos(ar.getArchiveFile(), as.destinationVid);
         m_payload.set_archivedbytes(m_payload.archivedbytes() + as.bytes);
         m_payload.set_archivedfiles(m_payload.archivedfiles() + as.files);
         p.subrequestDeleted = as.subrequestDeleted;
         didUpdate = true;
       }
-    } catch (std::out_of_range &) {
+    }
+    catch (std::out_of_range&) {
       throw exception::Exception("In RepackRequest::reportArchiveSuccesses(): got a report for unknown fSeq");
     }
   }
   if (didUpdate) {
     setStatus();
     m_payload.mutable_subrequests()->Clear();
-    for (auto & p: pointerMap) p.second.serialize(*m_payload.mutable_subrequests()->Add());
+    for (auto& p : pointerMap) {
+      p.second.serialize(*m_payload.mutable_subrequests()->Add());
+    }
   }
   return m_payload.status();
 }
@@ -596,11 +634,13 @@ serializers::RepackRequestStatus RepackRequest::reportArchiveFailures(Subrequest
   checkPayloadWritable();
   RepackSubRequestPointer::Map pointerMap;
   // Read the map
-  for (auto &rsrp: m_payload.subrequests()) pointerMap[rsrp.fseq()].deserialize(rsrp);
+  for (auto& rsrp : m_payload.subrequests()) {
+    pointerMap[rsrp.fseq()].deserialize(rsrp);
+  }
   bool didUpdate = false;
-  for (auto & af: archiveFailures) {
+  for (auto& af : archiveFailures) {
     try {
-      auto & p = pointerMap.at(af.fSeq);
+      auto& p = pointerMap.at(af.fSeq);
       if (!p.archiveCopyNbsAccounted.count(af.copyNb)) {
         p.archiveCopyNbsAccounted.insert(af.copyNb);
         p.subrequestDeleted = true;
@@ -608,7 +648,8 @@ serializers::RepackRequestStatus RepackRequest::reportArchiveFailures(Subrequest
         m_payload.set_failedtoarchivefiles(m_payload.failedtoarchivefiles() + af.files);
         didUpdate = true;
       }
-    } catch (std::out_of_range &) {
+    }
+    catch (std::out_of_range&) {
       throw exception::Exception("In RepackRequest::reportArchiveFailures(): got a report for unknown fSeq");
     }
   }
@@ -616,7 +657,9 @@ serializers::RepackRequestStatus RepackRequest::reportArchiveFailures(Subrequest
     // Check whether we reached the end.
     setStatus();
     m_payload.mutable_subrequests()->Clear();
-    for (auto & p: pointerMap) p.second.serialize(*m_payload.mutable_subrequests()->Add());
+    for (auto& p : pointerMap) {
+      p.second.serialize(*m_payload.mutable_subrequests()->Add());
+    }
   }
   return m_payload.status();
 }
@@ -628,22 +671,27 @@ void RepackRequest::reportSubRequestsForDeletion(std::list<uint64_t>& fSeqs) {
   checkPayloadWritable();
   RepackSubRequestPointer::Map pointerMap;
   // Read the map
-  for (auto &rsrp: m_payload.subrequests()) pointerMap[rsrp.fseq()].deserialize(rsrp);
+  for (auto& rsrp : m_payload.subrequests()) {
+    pointerMap[rsrp.fseq()].deserialize(rsrp);
+  }
   bool didUpdate = false;
-  for (auto & fs: fSeqs) {
+  for (auto& fs : fSeqs) {
     try {
-      auto & p = pointerMap.at(fs);
+      auto& p = pointerMap.at(fs);
       if (!p.subrequestDeleted) {
         p.subrequestDeleted = true;
         didUpdate = true;
       }
-    } catch (std::out_of_range &) {
+    }
+    catch (std::out_of_range&) {
       throw exception::Exception("In RepackRequest::reportSubRequestsForDeletion(): got a report for unknown fSeq");
     }
   }
   if (didUpdate) {
     m_payload.mutable_subrequests()->Clear();
-    for (auto & p: pointerMap) p.second.serialize(*m_payload.mutable_subrequests()->Add());
+    for (auto& p : pointerMap) {
+      p.second.serialize(*m_payload.mutable_subrequests()->Add());
+    }
   }
 }
 
@@ -673,14 +721,15 @@ auto RepackRequest::getStats() -> std::map<StatsType, StatsValues> {
 //------------------------------------------------------------------------------
 // RepackRequest::reportRetrieveCreationFailures()
 //------------------------------------------------------------------------------
-void RepackRequest::reportRetrieveCreationFailures(const std::list<cta::SchedulerDatabase::RepackRequest::Subrequest>& notCreatedSubrequests){
+void RepackRequest::reportRetrieveCreationFailures(
+  const std::list<cta::SchedulerDatabase::RepackRequest::Subrequest>& notCreatedSubrequests) {
   checkPayloadWritable();
   checkPayloadReadable();
   uint64_t failedToRetrieveFiles = 0, failedToRetrieveBytes = 0, failedToCreateArchiveReq = 0;
-  for(auto & subreq: notCreatedSubrequests){
+  for (auto& subreq : notCreatedSubrequests) {
     failedToRetrieveFiles++;
-    failedToRetrieveBytes+=subreq.archiveFile.fileSize;
-    for(auto & copyNb: subreq.copyNbsToRearchive){
+    failedToRetrieveBytes += subreq.archiveFile.fileSize;
+    for (auto& copyNb : subreq.copyNbsToRearchive) {
       (void) copyNb;
       failedToCreateArchiveReq++;
     }
@@ -691,7 +740,7 @@ void RepackRequest::reportRetrieveCreationFailures(const std::list<cta::Schedule
   setStatus();
 }
 
-void RepackRequest::reportArchiveCreationFailures(uint64_t nbFailedToCreateArchiveRequests){
+void RepackRequest::reportArchiveCreationFailures(uint64_t nbFailedToCreateArchiveRequests) {
   checkPayloadWritable();
   m_payload.set_failedtocreatearchivereq(m_payload.failedtocreatearchivereq() + nbFailedToCreateArchiveRequests);
 }
@@ -699,8 +748,10 @@ void RepackRequest::reportArchiveCreationFailures(uint64_t nbFailedToCreateArchi
 //------------------------------------------------------------------------------
 // RepackRequest::garbageCollect()
 //------------------------------------------------------------------------------
-void RepackRequest::garbageCollect(const std::string& presumedOwner, AgentReference& agentReference,
-    log::LogContext& lc, cta::catalogue::Catalogue& catalogue) {
+void RepackRequest::garbageCollect(const std::string& presumedOwner,
+                                   AgentReference& agentReference,
+                                   log::LogContext& lc,
+                                   cta::catalogue::Catalogue& catalogue) {
   //Let's requeue the RepackRequest if its status is ToExpand or Pending
   agentReference.addToOwnership(this->getAddressIfSet(), m_objectStore);
   //The owner of this RepackRequest is the agentReference
@@ -708,10 +759,13 @@ void RepackRequest::garbageCollect(const std::string& presumedOwner, AgentRefere
   cta::utils::Timer t;
   RepackQueue rq(m_objectStore);
   ScopedExclusiveLock rql;
-  try{
+  try {
     Helpers::getLockedAndFetchedRepackQueue(rq, rql, agentReference, this->getInfo().getQueueType(), lc);
-  } catch(const cta::exception::Exception &e){
-    lc.log(log::INFO,"In RepackRequest::garbageCollect(): failed to requeue the RepackRequest (leaving it as it is) : "+e.getMessage().str());
+  }
+  catch (const cta::exception::Exception& e) {
+    lc.log(log::INFO,
+           "In RepackRequest::garbageCollect(): failed to requeue the RepackRequest (leaving it as it is) : " +
+             e.getMessage().str());
     commit();
     return;
   }
@@ -720,18 +774,19 @@ void RepackRequest::garbageCollect(const std::string& presumedOwner, AgentRefere
   uint64_t requestsBefore = jobsSummary.requests;
   std::list<std::string> requestsToAdd;
   requestsToAdd.push_back(this->getAddressIfSet());
-  try{
-    rq.addRequestsAndCommit(requestsToAdd,lc);
+  try {
+    rq.addRequestsAndCommit(requestsToAdd, lc);
     jobsSummary = rq.getRequestsSummary();
     uint64_t requestsAfter = jobsSummary.requests;
     log::ScopedParamContainer params(lc);
-    params.add("queueLockFetchTime",queueLockFetchTime)
-          .add("queueAddress",rq.getAddressIfSet())
-          .add("requestsBefore",requestsBefore)
-          .add("requestsAfter",requestsAfter);
-    lc.log(log::INFO,"In RepackRequest::garbageCollect() succesfully requeued the RepackRequest.");
-  } catch(const cta::exception::Exception &e){
-    lc.log(log::INFO,"In RepackRequest::garbageCollect() failed to requeue the RepackRequest. Leaving it as it is.");
+    params.add("queueLockFetchTime", queueLockFetchTime)
+      .add("queueAddress", rq.getAddressIfSet())
+      .add("requestsBefore", requestsBefore)
+      .add("requestsAfter", requestsAfter);
+    lc.log(log::INFO, "In RepackRequest::garbageCollect() succesfully requeued the RepackRequest.");
+  }
+  catch (const cta::exception::Exception& e) {
+    lc.log(log::INFO, "In RepackRequest::garbageCollect() failed to requeue the RepackRequest. Leaving it as it is.");
   }
   commit();
 }
@@ -739,61 +794,70 @@ void RepackRequest::garbageCollect(const std::string& presumedOwner, AgentRefere
 //------------------------------------------------------------------------------
 // RepackRequest::asyncUpdateOwner()
 //------------------------------------------------------------------------------
-RepackRequest::AsyncOwnerAndStatusUpdater* RepackRequest::asyncUpdateOwnerAndStatus(const std::string& owner, const std::string& previousOwner,
-    std::optional<serializers::RepackRequestStatus> newStatus) {
+RepackRequest::AsyncOwnerAndStatusUpdater*
+  RepackRequest::asyncUpdateOwnerAndStatus(const std::string& owner,
+                                           const std::string& previousOwner,
+                                           std::optional<serializers::RepackRequestStatus> newStatus) {
   std::unique_ptr<AsyncOwnerAndStatusUpdater> ret(new AsyncOwnerAndStatusUpdater);
-  auto & retRef = *ret;
-  ret->m_updaterCallback=
-    [this, owner, previousOwner, &retRef, newStatus](const std::string &in)->std::string {
-      // We have a locked and fetched object, so we just need to work on its representation.
-      retRef.m_timingReport.insertAndReset("lockFetchTime", retRef.m_timer);
-      serializers::ObjectHeader oh;
-      if (!oh.ParseFromString(in)) {
-        // Use a the tolerant parser to assess the situation.
-        oh.ParsePartialFromString(in);
-        throw cta::exception::Exception(std::string("In RepackRequest::asyncUpdateOwner(): could not parse header: ")+
-          oh.InitializationErrorString());
+  auto& retRef = *ret;
+  ret->m_updaterCallback = [this, owner, previousOwner, &retRef, newStatus](const std::string& in) -> std::string {
+    // We have a locked and fetched object, so we just need to work on its representation.
+    retRef.m_timingReport.insertAndReset("lockFetchTime", retRef.m_timer);
+    serializers::ObjectHeader oh;
+    if (!oh.ParseFromString(in)) {
+      // Use a the tolerant parser to assess the situation.
+      oh.ParsePartialFromString(in);
+      throw cta::exception::Exception(std::string("In RepackRequest::asyncUpdateOwner(): could not parse header: ") +
+                                      oh.InitializationErrorString());
+    }
+    if (oh.type() != serializers::ObjectType::RepackRequest_t) {
+      std::stringstream err;
+      err << "In RepackRequest::asyncUpdateOwner()::lambda(): wrong object type: " << oh.type();
+      throw cta::exception::Exception(err.str());
+    }
+    // Change the owner if conditions are met.
+    if (oh.owner() != previousOwner) {
+      throw Backend::WrongPreviousOwner("In RepackRequest::asyncUpdateOwner()::lambda(): Request not owned.");
+    }
+    oh.set_owner(owner);
+    // Pick up info to return
+    serializers::RepackRequest payload;
+    if (!payload.ParseFromString(oh.payload())) {
+      // Use a the tolerant parser to assess the situation.
+      payload.ParsePartialFromString(oh.payload());
+      throw cta::exception::Exception(std::string("In RepackRequest::asyncUpdateOwner(): could not parse payload: ") +
+                                      payload.InitializationErrorString());
+    }
+    // We only need to modify the pay load if there is a status change.
+    if (newStatus) {
+      payload.set_status(newStatus.value());
+    }
+    typedef common::dataStructures::RepackInfo RepackInfo;
+    retRef.m_repackInfo.status = (RepackInfo::Status) payload.status();
+    retRef.m_repackInfo.vid = payload.vid();
+    retRef.m_repackInfo.repackBufferBaseURL = payload.buffer_url();
+    retRef.m_repackInfo.noRecall = payload.no_recall();
+    if (payload.move_mode()) {
+      if (payload.add_copies_mode()) {
+        retRef.m_repackInfo.type = RepackInfo::Type::MoveAndAddCopies;
       }
-      if (oh.type() != serializers::ObjectType::RepackRequest_t) {
-        std::stringstream err;
-        err << "In RepackRequest::asyncUpdateOwner()::lambda(): wrong object type: " << oh.type();
-        throw cta::exception::Exception(err.str());
+      else {
+        retRef.m_repackInfo.type = RepackInfo::Type::MoveOnly;
       }
-      // Change the owner if conditions are met.
-      if (oh.owner() != previousOwner) {
-        throw Backend::WrongPreviousOwner("In RepackRequest::asyncUpdateOwner()::lambda(): Request not owned.");
-      }
-      oh.set_owner(owner);
-      // Pick up info to return
-      serializers::RepackRequest payload;
-      if (!payload.ParseFromString(oh.payload())) {
-        // Use a the tolerant parser to assess the situation.
-        payload.ParsePartialFromString(oh.payload());
-        throw cta::exception::Exception(std::string("In RepackRequest::asyncUpdateOwner(): could not parse payload: ")+
-          payload.InitializationErrorString());
-      }
-      // We only need to modify the pay load if there is a status change.
-      if (newStatus) payload.set_status(newStatus.value());
-      typedef common::dataStructures::RepackInfo RepackInfo;
-      retRef.m_repackInfo.status = (RepackInfo::Status) payload.status();
-      retRef.m_repackInfo.vid = payload.vid();
-      retRef.m_repackInfo.repackBufferBaseURL = payload.buffer_url();
-      retRef.m_repackInfo.noRecall = payload.no_recall();
-      if (payload.move_mode()) {
-        if (payload.add_copies_mode()) {
-          retRef.m_repackInfo.type = RepackInfo::Type::MoveAndAddCopies;
-        } else {
-          retRef.m_repackInfo.type = RepackInfo::Type::MoveOnly;
-        }
-      } else if (payload.add_copies_mode()) {
-        retRef.m_repackInfo.type = RepackInfo::Type::AddCopiesOnly;
-      } else {
-        throw exception::Exception("In RepackRequest::asyncUpdateOwner()::lambda(): unexpcted mode: neither expand nor repack.");
-      }
-      // We only need to modify the pay load if there is a status change.
-      if (newStatus) oh.set_payload(payload.SerializeAsString());
-      return oh.SerializeAsString();
-    };
+    }
+    else if (payload.add_copies_mode()) {
+      retRef.m_repackInfo.type = RepackInfo::Type::AddCopiesOnly;
+    }
+    else {
+      throw exception::Exception(
+        "In RepackRequest::asyncUpdateOwner()::lambda(): unexpcted mode: neither expand nor repack.");
+    }
+    // We only need to modify the pay load if there is a status change.
+    if (newStatus) {
+      oh.set_payload(payload.SerializeAsString());
+    }
+    return oh.SerializeAsString();
+  };
   ret->m_backendUpdater.reset(m_objectStore.asyncUpdate(getAddressIfSet(), ret->m_updaterCallback));
   return ret.release();
 }
@@ -813,7 +877,6 @@ common::dataStructures::RepackInfo RepackRequest::AsyncOwnerAndStatusUpdater::ge
   return m_repackInfo;
 }
 
-
 //------------------------------------------------------------------------------
 // RepackRequest::dump()
 //------------------------------------------------------------------------------
@@ -827,4 +890,5 @@ std::string RepackRequest::dump() {
   return headerDump;
 }
 
-}} // namespace cta::objectstore
+}  // namespace objectstore
+}  // namespace cta

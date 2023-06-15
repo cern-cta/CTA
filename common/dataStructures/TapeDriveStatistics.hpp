@@ -29,11 +29,13 @@ namespace dataStructures {
 struct TapeDriveStatistics {
 public:
   TapeDriveStatistics() = default;
-  TapeDriveStatistics(const TapeDriveStatistics & statistics) = default;
+  TapeDriveStatistics(const TapeDriveStatistics& statistics) = default;
   uint64_t bytesTransferedInSession;
   uint64_t filesTransferedInSession;
   uint64_t reportTime;
   EntryLog lastModificationLog;
 };
 
-}}} // namespace cta::common::dataStructures
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

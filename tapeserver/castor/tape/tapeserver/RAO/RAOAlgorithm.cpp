@@ -17,14 +17,18 @@
 
 #include "RAOAlgorithm.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace rao {
 
-
-cta::log::TimingList RAOAlgorithm::getRAOTimings(){
+cta::log::TimingList RAOAlgorithm::getRAOTimings() {
   return m_raoTimings;
 }
 
-RAOAlgorithm::~RAOAlgorithm() {
-}
+RAOAlgorithm::~RAOAlgorithm() {}
 
-}}}}
+}  // namespace rao
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

@@ -25,9 +25,8 @@
 #include "common/log/Logger.hpp"
 
 #ifdef SUPPORT_OCCI
-  #include "catalogue/OracleCatalogueFactory.hpp"
+#include "catalogue/OracleCatalogueFactory.hpp"
 #endif
-
 
 namespace cta {
 namespace catalogue {
@@ -35,37 +34,37 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
-std::unique_ptr<CatalogueFactory> CatalogueFactoryFactory::create(
-  log::Logger &log,
-  const rdbms::Login &login,
-  const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns,
-  const uint32_t maxTriesToConnect) {
+std::unique_ptr<CatalogueFactory> CatalogueFactoryFactory::create(log::Logger& log,
+                                                                  const rdbms::Login& login,
+                                                                  const uint64_t nbConns,
+                                                                  const uint64_t nbArchiveFileListingConns,
+                                                                  const uint32_t maxTriesToConnect) {
   try {
     switch (login.dbType) {
-    case rdbms::Login::DBTYPE_IN_MEMORY:
-      return std::make_unique<InMemoryCatalogueFactory>(log, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
-    case rdbms::Login::DBTYPE_ORACLE:
+      case rdbms::Login::DBTYPE_IN_MEMORY:
+        return std::make_unique<InMemoryCatalogueFactory>(log, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
+      case rdbms::Login::DBTYPE_ORACLE:
 #ifdef SUPPORT_OCCI
-      return std::make_unique<OracleCatalogueFactory>(log, login, nbConns, nbArchiveFileListingConns,
-        maxTriesToConnect);
+        return std::make_unique<OracleCatalogueFactory>(log, login, nbConns, nbArchiveFileListingConns,
+                                                        maxTriesToConnect);
 #else
-      throw exception::NoSupportedDB("Oracle Catalogue Schema is not supported. Compile CTA with Oracle support.");
+        throw exception::NoSupportedDB("Oracle Catalogue Schema is not supported. Compile CTA with Oracle support.");
 #endif
-    case rdbms::Login::DBTYPE_POSTGRESQL:
-      return std::make_unique<PostgresqlCatalogueFactory>(log, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
-    case rdbms::Login::DBTYPE_SQLITE:
-      throw exception::Exception("Sqlite file based databases are not supported");
-    case rdbms::Login::DBTYPE_NONE:
-      throw exception::Exception("Cannot create a catalogue without a database type");
-    default:
-      {
+      case rdbms::Login::DBTYPE_POSTGRESQL:
+        return std::make_unique<PostgresqlCatalogueFactory>(log, login, nbConns, nbArchiveFileListingConns,
+                                                            maxTriesToConnect);
+      case rdbms::Login::DBTYPE_SQLITE:
+        throw exception::Exception("Sqlite file based databases are not supported");
+      case rdbms::Login::DBTYPE_NONE:
+        throw exception::Exception("Cannot create a catalogue without a database type");
+      default: {
         exception::NoSupportedDB ex;
         ex.getMessage() << "Unknown database type: value=" << login.dbType;
         throw ex;
       }
     }
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }

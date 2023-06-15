@@ -21,16 +21,14 @@
 namespace cta {
 namespace postgresscheddb {
 
-RepackRequestPromotionStatistics::RepackRequestPromotionStatistics()
-{
-   throw cta::exception::Exception("Not implemented");
+RepackRequestPromotionStatistics::RepackRequestPromotionStatistics() {
+  throw cta::exception::Exception("Not implemented");
 }
 
-SchedulerDatabase::RepackRequestStatistics::PromotionToToExpandResult RepackRequestPromotionStatistics::promotePendingRequestsForExpansion(size_t requestCount,
-      log::LogContext &lc)
-{
-   throw cta::exception::Exception("Not implemented");
+SchedulerDatabase::RepackRequestStatistics::PromotionToToExpandResult
+  RepackRequestPromotionStatistics::promotePendingRequestsForExpansion(size_t requestCount, log::LogContext& lc) {
+  throw cta::exception::Exception("Not implemented");
 }
 
-} //namespace postgresscheddb
-} //namespace cta
+}  //namespace postgresscheddb
+}  //namespace cta

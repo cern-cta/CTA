@@ -19,7 +19,10 @@
 
 #include "RAOAlgorithm.hpp"
 
-namespace castor { namespace tape { namespace tapeserver { namespace rao {
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace rao {
 
 /**
  * Abstract class that will be extended by subclasses in order
@@ -33,12 +36,15 @@ public:
    * @return the RAO algorithm instance
    */
   virtual std::unique_ptr<RAOAlgorithm> createRAOAlgorithm() = 0;
-  
-  std::unique_ptr<RAOAlgorithm> createDefaultLinearAlgorithm();
-  
-  virtual ~RAOAlgorithmFactory();
-private:
 
+  std::unique_ptr<RAOAlgorithm> createDefaultLinearAlgorithm();
+
+  virtual ~RAOAlgorithmFactory();
+
+private:
 };
 
-}}}}
+}  // namespace rao
+}  // namespace tapeserver
+}  // namespace tape
+}  // namespace castor

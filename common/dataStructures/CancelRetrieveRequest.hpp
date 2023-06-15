@@ -33,12 +33,11 @@ namespace dataStructures {
  * This is the request to cancel and ongoing retrieval 
  */
 struct CancelRetrieveRequest {
-
   CancelRetrieveRequest();
 
-  bool operator==(const CancelRetrieveRequest &rhs) const;
+  bool operator==(const CancelRetrieveRequest& rhs) const;
 
-  bool operator!=(const CancelRetrieveRequest &rhs) const;
+  bool operator!=(const CancelRetrieveRequest& rhs) const;
 
   RequesterIdentity requester;
   uint64_t archiveFileID;
@@ -46,10 +45,10 @@ struct CancelRetrieveRequest {
   DiskFileInfo diskFileInfo;
   std::string retrieveRequestId;
 
-}; // struct CancelRetrieveRequest
+};  // struct CancelRetrieveRequest
 
-std::ostream &operator<<(std::ostream &os, const CancelRetrieveRequest &obj);
+std::ostream& operator<<(std::ostream& os, const CancelRetrieveRequest& obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

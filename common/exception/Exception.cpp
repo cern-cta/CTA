@@ -20,28 +20,23 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::exception::Exception::Exception(const std::string &context,
-  const bool embedBacktrace) : 
-  m_backtrace(!embedBacktrace) {
+cta::exception::Exception::Exception(const std::string& context, const bool embedBacktrace) :
+m_backtrace(!embedBacktrace) {
   m_message << context;
 }
 
 //------------------------------------------------------------------------------
 // copy constructor
 //------------------------------------------------------------------------------
-cta::exception::Exception::Exception(
-  const cta::exception::Exception& rhs):
-  std::exception() {
+cta::exception::Exception::Exception(const cta::exception::Exception& rhs) : std::exception() {
   m_message << rhs.m_message.str();
   m_backtrace = rhs.m_backtrace;
 }
 
-
 //------------------------------------------------------------------------------
 // assignment operator
 //------------------------------------------------------------------------------
-cta::exception::Exception& cta::exception::Exception::operator=(
-  const cta::exception::Exception &rhs) {
+cta::exception::Exception& cta::exception::Exception::operator=(const cta::exception::Exception& rhs) {
   m_message << rhs.m_message.str();
   return *this;
 }
@@ -49,7 +44,7 @@ cta::exception::Exception& cta::exception::Exception::operator=(
 //------------------------------------------------------------------------------
 // what operator
 //------------------------------------------------------------------------------
-const char * cta::exception::Exception::what() const noexcept {
+const char* cta::exception::Exception::what() const noexcept {
   m_what = getMessageValue();
   m_what += "\n";
   m_what += (std::string) m_backtrace;
@@ -59,8 +54,7 @@ const char * cta::exception::Exception::what() const noexcept {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::exception::Exception::~Exception() {
-}
+cta::exception::Exception::~Exception() {}
 
 //------------------------------------------------------------------------------
 // setWhat

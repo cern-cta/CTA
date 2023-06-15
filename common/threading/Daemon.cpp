@@ -28,35 +28,31 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::server::Daemon::Daemon(cta::log::Logger &log) throw():
-  m_log(log),
-  m_foreground(false),
-  m_commandLineHasBeenParsed(false) {
-}
+cta::server::Daemon::Daemon(cta::log::Logger& log) throw() :
+m_log(log),
+m_foreground(false),
+m_commandLineHasBeenParsed(false) {}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::server::Daemon::~Daemon() {
-}
+cta::server::Daemon::~Daemon() {}
 
 //------------------------------------------------------------------------------
 // getServerName
 //------------------------------------------------------------------------------
-const std::string &cta::server::Daemon::getServerName() const throw() {
+const std::string& cta::server::Daemon::getServerName() const throw() {
   return m_log.getProgramName();
 }
 
 //------------------------------------------------------------------------------
 // getForeground
 //------------------------------------------------------------------------------
-bool cta::server::Daemon::getForeground() const
-   {
-  if(!m_commandLineHasBeenParsed) {
+bool cta::server::Daemon::getForeground() const {
+  if (!m_commandLineHasBeenParsed) {
     CommandLineNotParsed ex;
-    ex.getMessage() <<
-      "Failed to determine whether or not the daemon should run in the"
-      " foreground because the command-line has not yet been parsed";
+    ex.getMessage() << "Failed to determine whether or not the daemon should run in the"
+                       " foreground because the command-line has not yet been parsed";
     throw ex;
   }
 
@@ -66,8 +62,7 @@ bool cta::server::Daemon::getForeground() const
 //-----------------------------------------------------------------------------
 // setCommandLineParsed
 //-----------------------------------------------------------------------------
-void cta::server::Daemon::setCommandLineHasBeenParsed(const bool foreground)
-  throw() {
+void cta::server::Daemon::setCommandLineHasBeenParsed(const bool foreground) throw() {
   m_foreground = foreground;
   m_commandLineHasBeenParsed = true;
 }
@@ -75,16 +70,15 @@ void cta::server::Daemon::setCommandLineHasBeenParsed(const bool foreground)
 //------------------------------------------------------------------------------
 // daemonizeIfNotRunInForegroundAndSetUserAndGroup
 //------------------------------------------------------------------------------
-void cta::server::Daemon::daemonizeIfNotRunInForegroundAndSetUserAndGroup(const std::string &userName,
-  const std::string &groupName) {
+void cta::server::Daemon::daemonizeIfNotRunInForegroundAndSetUserAndGroup(const std::string& userName,
+                                                                          const std::string& groupName) {
   // If the daemon is to be run in the background
   if (!m_foreground) {
     m_log.prepareForFork();
 
     {
       pid_t pid = 0;
-      cta::exception::Errnum::throwOnNegative(pid = fork(),
-        "Failed to daemonize: Failed to fork");
+      cta::exception::Errnum::throwOnNegative(pid = fork(), "Failed to daemonize: Failed to fork");
       // If we got a good PID, then we can exit the parent process
       if (0 < pid) {
         exit(EXIT_SUCCESS);
@@ -99,25 +93,19 @@ void cta::server::Daemon::daemonizeIfNotRunInForegroundAndSetUserAndGroup(const 
     umask(0);
 
     // Run the daemon in a new session
-    cta::exception::Errnum::throwOnNegative(setsid(),
-      "Failed to daemonize: Failed to run daemon is a new session");
+    cta::exception::Errnum::throwOnNegative(setsid(), "Failed to daemonize: Failed to run daemon is a new session");
 
     // Redirect standard files to /dev/null
-    cta::exception::Errnum::throwOnNull(
-      freopen("/dev/null", "r", stdin),
-      "Failed to daemonize: Falied to freopen stdin");
-    cta::exception::Errnum::throwOnNull(
-      freopen("/dev/null", "w", stdout),
-      "Failed to daemonize: Failed to freopen stdout");
-    cta::exception::Errnum::throwOnNull(
-      freopen("/dev/null", "w", stderr),
-      "Failed to daemonize: Failed to freopen stderr");
-  } // if (!m_foreground)
+    cta::exception::Errnum::throwOnNull(freopen("/dev/null", "r", stdin),
+                                        "Failed to daemonize: Falied to freopen stdin");
+    cta::exception::Errnum::throwOnNull(freopen("/dev/null", "w", stdout),
+                                        "Failed to daemonize: Failed to freopen stdout");
+    cta::exception::Errnum::throwOnNull(freopen("/dev/null", "w", stderr),
+                                        "Failed to daemonize: Failed to freopen stderr");
+  }  // if (!m_foreground)
 
   // Change the user and group of the daemon process
-  std::list<log::Param> params = {
-    log::Param("userName", userName),
-    log::Param("groupName", groupName)};
+  std::list<log::Param> params = {log::Param("userName", userName), log::Param("groupName", groupName)};
   m_log(log::INFO, "Setting user name and group name of current process", params);
   cta::System::setUserAndGroup(userName, groupName);
 
@@ -126,4 +114,3 @@ void cta::server::Daemon::daemonizeIfNotRunInForegroundAndSetUserAndGroup(const 
   signal(SIGPIPE, SIG_IGN);
   signal(SIGXFSZ, SIG_IGN);
 }
-

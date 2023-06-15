@@ -20,66 +20,60 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::UserGroup::UserGroup() {
-}
+cta::UserGroup::UserGroup() {}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::UserGroup::~UserGroup() throw() {
-}
+cta::UserGroup::~UserGroup() throw() {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::UserGroup::UserGroup(
-  const std::string &name,
-  const DriveQuota &archiveDriveQuota,
-  const DriveQuota &retrieveDriveQuota,
-  const MountCriteria &archiveMountCriteria,
-  const MountCriteria &retrieveMountCriteria,
-  const CreationLog &creationLog):
-  m_name(name),
-  m_archiveDriveQuota(archiveDriveQuota),
-  m_retrieveDriveQuota(retrieveDriveQuota),
-  m_archiveMountCriteria(archiveMountCriteria),
-  m_retrieveMountCriteria(retrieveMountCriteria),
-  m_creationLog(creationLog){
-}
+cta::UserGroup::UserGroup(const std::string& name,
+                          const DriveQuota& archiveDriveQuota,
+                          const DriveQuota& retrieveDriveQuota,
+                          const MountCriteria& archiveMountCriteria,
+                          const MountCriteria& retrieveMountCriteria,
+                          const CreationLog& creationLog) :
+m_name(name),
+m_archiveDriveQuota(archiveDriveQuota),
+m_retrieveDriveQuota(retrieveDriveQuota),
+m_archiveMountCriteria(archiveMountCriteria),
+m_retrieveMountCriteria(retrieveMountCriteria),
+m_creationLog(creationLog) {}
 
 //------------------------------------------------------------------------------
 // getName
 //------------------------------------------------------------------------------
-const std::string &cta::UserGroup::getName() const throw() {
+const std::string& cta::UserGroup::getName() const throw() {
   return m_name;
 }
 
 //------------------------------------------------------------------------------
 // getArchiveQuota
 //------------------------------------------------------------------------------
-const cta::DriveQuota &cta::UserGroup::getArchiveDriveQuota() const throw() {
+const cta::DriveQuota& cta::UserGroup::getArchiveDriveQuota() const throw() {
   return m_archiveDriveQuota;
 }
 
 //------------------------------------------------------------------------------
 // getRetrieveQuota
 //------------------------------------------------------------------------------
-const cta::DriveQuota &cta::UserGroup::getRetrieveDriveQuota() const throw() {
+const cta::DriveQuota& cta::UserGroup::getRetrieveDriveQuota() const throw() {
   return m_retrieveDriveQuota;
 }
 
 //------------------------------------------------------------------------------
 // getArchiveMountCriteria
 //------------------------------------------------------------------------------
-const cta::MountCriteria &cta::UserGroup::getArchiveMountCriteria() const
-  throw() {
+const cta::MountCriteria& cta::UserGroup::getArchiveMountCriteria() const throw() {
   return m_archiveMountCriteria;
 }
 
 //------------------------------------------------------------------------------
 // getRetrieveMountCriteria
 //------------------------------------------------------------------------------
-const cta::MountCriteria &cta::UserGroup::getRetrieveMountCriteria() const
-  throw() {
+const cta::MountCriteria& cta::UserGroup::getRetrieveMountCriteria() const throw() {
   return m_retrieveMountCriteria;
 }

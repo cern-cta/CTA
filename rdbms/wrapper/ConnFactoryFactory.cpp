@@ -24,7 +24,7 @@
 #include "rdbms/wrapper/SqliteConnFactory.hpp"
 
 #ifdef SUPPORT_OCCI
-  #include "rdbms/wrapper/OcciConnFactory.hpp"
+#include "rdbms/wrapper/OcciConnFactory.hpp"
 #endif
 
 namespace cta {
@@ -34,31 +34,31 @@ namespace wrapper {
 //------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
-std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
+std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login& login) {
   try {
     switch (login.dbType) {
-    case Login::DBTYPE_IN_MEMORY:
-      return std::make_unique<SqliteConnFactory>("file::memory:?cache=shared");
-    case Login::DBTYPE_ORACLE:
+      case Login::DBTYPE_IN_MEMORY:
+        return std::make_unique<SqliteConnFactory>("file::memory:?cache=shared");
+      case Login::DBTYPE_ORACLE:
 #ifdef SUPPORT_OCCI
-      return std::make_unique<OcciConnFactory>(login.username, login.password, login.database);
+        return std::make_unique<OcciConnFactory>(login.username, login.password, login.database);
 #else
-      throw exception::NoSupportedDB("Oracle Catalogue Schema is not supported. Compile CTA with Oracle support.");
+        throw exception::NoSupportedDB("Oracle Catalogue Schema is not supported. Compile CTA with Oracle support.");
 #endif
-    case Login::DBTYPE_SQLITE:
-      return std::make_unique<SqliteConnFactory>(login.database);
-    case Login::DBTYPE_POSTGRESQL:
-      return std::make_unique<PostgresConnFactory>(login.database);
-    case Login::DBTYPE_NONE:
-      throw exception::Exception("Cannot create a catalogue without a database type");
-    default:
-      {
+      case Login::DBTYPE_SQLITE:
+        return std::make_unique<SqliteConnFactory>(login.database);
+      case Login::DBTYPE_POSTGRESQL:
+        return std::make_unique<PostgresConnFactory>(login.database);
+      case Login::DBTYPE_NONE:
+        throw exception::Exception("Cannot create a catalogue without a database type");
+      default: {
         exception::Exception ex;
         ex.getMessage() << "Unknown database type: value=" << login.dbType;
         throw ex;
       }
     }
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }

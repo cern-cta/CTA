@@ -23,16 +23,15 @@
 #include <sys/capability.h>
 
 namespace cta {
-namespace server  {
+namespace server {
 
 /**
  * A dummy class that pretends to provide support for UNIX capabilities.
  *
  * This primary goal of this class is to facilitate unit testing.
  */
-class ProcessCapDummy: public ProcessCap {
+class ProcessCapDummy : public ProcessCap {
 public:
-
   /**
    * Destructor.
    */
@@ -52,16 +51,15 @@ public:
    * @text The string representation the capabilities that the current
    * process should have.
    */
-  void setProcText(const std::string &text);
+  void setProcText(const std::string& text);
 
 private:
-
   /**
    * The string representation of the current capability state.
    */
   std::string m_text;
 
-}; // class ProcessCapDummy
+};  // class ProcessCapDummy
 
-} // namespace server
-} // namespace cta
+}  // namespace server
+}  // namespace cta

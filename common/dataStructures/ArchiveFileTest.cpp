@@ -23,16 +23,13 @@
 namespace unitTests {
 
 const uint32_t RECOVERY_OWNER_UID = 9751;
-const uint32_t RECOVERY_GID       = 9752;
+const uint32_t RECOVERY_GID = 9752;
 
 class cta_common_dataStructures_ArchiveFileTest : public ::testing::Test {
 protected:
+  virtual void SetUp() {}
 
-  virtual void SetUp() {
-  }
-
-  virtual void TearDown() {
-  }
+  virtual void TearDown() {}
 };
 
 TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
@@ -90,7 +87,7 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
 
   {
     auto copyNbToTapeFileItor = std::find_if(archiveFile2.tapeFiles.begin(), archiveFile2.tapeFiles.end(),
-        [](TapeFile &tf){ return tf.copyNb == 1; });
+                                             [](TapeFile& tf) { return tf.copyNb == 1; });
     ASSERT_TRUE(copyNbToTapeFileItor != archiveFile2.tapeFiles.end());
     ASSERT_EQ(tapeFile1.vid, copyNbToTapeFileItor->vid);
     ASSERT_EQ(tapeFile1.fSeq, copyNbToTapeFileItor->fSeq);
@@ -101,7 +98,7 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
 
   {
     auto copyNbToTapeFileItor = std::find_if(archiveFile2.tapeFiles.begin(), archiveFile2.tapeFiles.end(),
-        [](TapeFile &tf){ return tf.copyNb == 2; });
+                                             [](TapeFile& tf) { return tf.copyNb == 2; });
     ASSERT_TRUE(copyNbToTapeFileItor != archiveFile2.tapeFiles.end());
     ASSERT_EQ(tapeFile2.vid, copyNbToTapeFileItor->vid);
     ASSERT_EQ(tapeFile2.fSeq, copyNbToTapeFileItor->fSeq);
@@ -111,4 +108,4 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
   }
 }
 
-} // namespace unitTests
+}  // namespace unitTests

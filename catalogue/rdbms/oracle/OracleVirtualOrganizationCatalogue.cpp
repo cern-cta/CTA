@@ -26,17 +26,17 @@
 namespace cta {
 namespace catalogue {
 
-OracleVirtualOrganizationCatalogue::OracleVirtualOrganizationCatalogue(log::Logger &log,
-  std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue)
-  : RdbmsVirtualOrganizationCatalogue(log, connPool, rdbmsCatalogue) {}
+OracleVirtualOrganizationCatalogue::OracleVirtualOrganizationCatalogue(log::Logger& log,
+                                                                       std::shared_ptr<rdbms::ConnPool> connPool,
+                                                                       RdbmsCatalogue* rdbmsCatalogue) :
+RdbmsVirtualOrganizationCatalogue(log, connPool, rdbmsCatalogue) {}
 
-uint64_t OracleVirtualOrganizationCatalogue::getNextVirtualOrganizationId(rdbms::Conn &conn) {
+uint64_t OracleVirtualOrganizationCatalogue::getNextVirtualOrganizationId(rdbms::Conn& conn) {
   try {
-    const char *const sql =
-      "SELECT "
-        "VIRTUAL_ORGANIZATION_ID_SEQ.NEXTVAL AS VIRTUAL_ORGANIZATION_ID "
-      "FROM "
-        "DUAL";
+    const char* const sql = "SELECT "
+                            "VIRTUAL_ORGANIZATION_ID_SEQ.NEXTVAL AS VIRTUAL_ORGANIZATION_ID "
+                            "FROM "
+                            "DUAL";
     auto stmt = conn.createStmt(sql);
     auto rset = stmt.executeQuery();
     if (!rset.next()) {
@@ -44,9 +44,11 @@ uint64_t OracleVirtualOrganizationCatalogue::getNextVirtualOrganizationId(rdbms:
     }
 
     return rset.columnUint64("VIRTUAL_ORGANIZATION_ID");
-  } catch(exception::UserError &) {
+  }
+  catch (exception::UserError&) {
     throw;
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }

@@ -39,12 +39,12 @@ namespace catalogue {
  * The purpose of this class is to help IDEs by isolating the "non-compilable"
  * issues into a small cpp file.
  */
-struct OracleCatalogueSchema: public CatalogueSchema {
+struct OracleCatalogueSchema : public CatalogueSchema {
   /**
    * Constructor.
    */
   OracleCatalogueSchema();
 };
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

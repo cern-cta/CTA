@@ -18,22 +18,23 @@
 #include "ArchiveQueueAlgorithms.hpp"
 #include "common/Timer.hpp"
 
-namespace cta { namespace objectstore {
+namespace cta {
+namespace objectstore {
 
 // ArchiveQueueFailed full specialisations for ContainerTraits.
 
 template<>
-const std::string ContainerTraits<ArchiveQueue,ArchiveQueueFailed>::c_containerTypeName = "ArchiveQueueFailed";
+const std::string ContainerTraits<ArchiveQueue, ArchiveQueueFailed>::c_containerTypeName = "ArchiveQueueFailed";
 
 template<>
-const std::string ContainerTraits<ArchiveQueue,ArchiveQueueFailed>::c_identifierType = "tapepool";
+const std::string ContainerTraits<ArchiveQueue, ArchiveQueueFailed>::c_identifierType = "tapepool";
 
-  template<>
-  auto ContainerTraits<ArchiveQueue,ArchiveQueueFailed>::
-  getContainerSummary(Container& cont) -> ContainerSummary {
-    ContainerSummary ret;
-    ret.JobsSummary::operator=(cont.getJobsSummary());
-    return ret;
-  }
+template<>
+auto ContainerTraits<ArchiveQueue, ArchiveQueueFailed>::getContainerSummary(Container& cont) -> ContainerSummary {
+  ContainerSummary ret;
+  ret.JobsSummary::operator=(cont.getJobsSummary());
+  return ret;
+}
 
-}} // namespace cta::objectstore
+}  // namespace objectstore
+}  // namespace cta

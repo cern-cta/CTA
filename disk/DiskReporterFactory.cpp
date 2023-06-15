@@ -21,7 +21,8 @@
 #include "EOSReporter.hpp"
 #include "NullReporter.hpp"
 
-namespace cta { namespace disk {
+namespace cta {
+namespace disk {
 
 DiskReporter* DiskReporterFactory::createDiskReporter(const std::string& URL) {
   threading::MutexLocker ml(m_mutex);
@@ -33,8 +34,8 @@ DiskReporter* DiskReporterFactory::createDiskReporter(const std::string& URL) {
   if (regexResult.size()) {
     return new NullReporter();
   }
-  throw cta::exception::Exception(
-      std::string("In DiskReporterFactory::createDiskReporter failed to parse URL: ")+URL);
+  throw cta::exception::Exception(std::string("In DiskReporterFactory::createDiskReporter failed to parse URL: ") +
+                                  URL);
 }
 
 }  // namespace disk

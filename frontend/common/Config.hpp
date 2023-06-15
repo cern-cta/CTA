@@ -27,8 +27,7 @@ namespace frontend {
 /*!
  * Interface to the CTA Frontend configuration file
  */
-class Config
-{
+class Config {
 public:
   /*!
    * Construct from a configuration file
@@ -38,7 +37,7 @@ public:
   /*!
    * Get a single option string value from config
    */
-  std::optional<std::string> getOptionValueStr(const std::string &key) const;
+  std::optional<std::string> getOptionValueStr(const std::string& key) const;
 
   /*!
    * Get a single option integer value from config
@@ -46,7 +45,7 @@ public:
    * Throws std::invalid_argument or std::out_of_range if the key exists but the value cannot be
    * converted to an integer
    */
-  std::optional<int> getOptionValueInt(const std::string &key) const;
+  std::optional<int> getOptionValueInt(const std::string& key) const;
 
 private:
   //! Configuration option list type
@@ -68,8 +67,9 @@ private:
   optionlist_t tokenize(std::istringstream& input);
 
   // Member variables
-  const optionlist_t                  m_nulloptionlist;    //!< Empty option list returned when key not found
-  std::map<std::string, optionlist_t> m_configuration;     //!< Parsed configuration options
+  const optionlist_t m_nulloptionlist;                  //!< Empty option list returned when key not found
+  std::map<std::string, optionlist_t> m_configuration;  //!< Parsed configuration options
 };
 
-}} // namespace cta::frontend
+}  // namespace frontend
+}  // namespace cta

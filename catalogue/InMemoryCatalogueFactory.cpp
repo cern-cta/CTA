@@ -30,16 +30,14 @@ namespace catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-InMemoryCatalogueFactory::InMemoryCatalogueFactory(
-  log::Logger &log,
-  const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns,
-  const uint32_t maxTriesToConnect):
-  m_log(log),
-  m_nbConns(nbConns),
-  m_nbArchiveFileListingConns(nbArchiveFileListingConns),
-  m_maxTriesToConnect(maxTriesToConnect) {
-}
+InMemoryCatalogueFactory::InMemoryCatalogueFactory(log::Logger& log,
+                                                   const uint64_t nbConns,
+                                                   const uint64_t nbArchiveFileListingConns,
+                                                   const uint32_t maxTriesToConnect) :
+m_log(log),
+m_nbConns(nbConns),
+m_nbArchiveFileListingConns(nbArchiveFileListingConns),
+m_maxTriesToConnect(maxTriesToConnect) {}
 
 //------------------------------------------------------------------------------
 // create
@@ -48,10 +46,11 @@ std::unique_ptr<Catalogue> InMemoryCatalogueFactory::create() {
   try {
     auto c = std::make_unique<InMemoryCatalogue>(m_log, m_nbConns, m_nbArchiveFileListingConns);
     return std::make_unique<CatalogueRetryWrapper>(m_log, std::move(c), m_maxTriesToConnect);
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

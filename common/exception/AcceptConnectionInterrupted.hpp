@@ -21,16 +21,14 @@
 
 #include <sys/types.h>
 
-namespace cta    {
+namespace cta {
 namespace exception {
 
 /**
  * castor::io::acceptConnection() was interrupted.
  */
 class AcceptConnectionInterrupted : public cta::exception::Exception {
-      
 public:
-      
   /**
    * Constructor.
    *
@@ -46,15 +44,13 @@ public:
   time_t remainingTime() const;
 
 private:
-
   /**
    * The number of remaining seconds when
    * castor::io::acceptConnection() was interrupted.
    */
   const time_t m_remainingTime;
 
-}; // class AcceptConnectionInterrupted
-      
-} // end of namespace exception
-} // end of namespace cta
+};  // class AcceptConnectionInterrupted
 
+}  // end of namespace exception
+}  // end of namespace cta

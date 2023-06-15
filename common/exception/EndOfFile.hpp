@@ -15,18 +15,20 @@
  *               submit itself to any jurisdiction.
  */
 
-#pragma once 
+#pragma once
 
 #include "common/exception/Exception.hpp"
 #include <string>
 
-namespace cta { 
+namespace cta {
 namespace exception {
-  
-  class EndOfFile: public cta::exception::Exception {
-  public:
-    EndOfFile(const std::string & w): cta::exception::Exception(w) {}
-    virtual ~EndOfFile() {}
-  };
-    
-}}
+
+class EndOfFile : public cta::exception::Exception {
+public:
+  EndOfFile(const std::string& w) : cta::exception::Exception(w) {}
+
+  virtual ~EndOfFile() {}
+};
+
+}  // namespace exception
+}  // namespace cta

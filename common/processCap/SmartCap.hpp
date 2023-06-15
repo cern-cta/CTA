@@ -20,7 +20,8 @@
 #include <stddef.h>
 #include <sys/capability.h>
 
-namespace cta { namespace server {
+namespace cta {
+namespace server {
 
 /**
  * A smart pointer that owns a capability state.
@@ -32,7 +33,6 @@ namespace cta { namespace server {
  */
 class SmartCap {
 public:
-
   /**
    * Constructor.
    */
@@ -67,7 +67,7 @@ public:
    * owner (obj).
    * </ul>
    */
-  SmartCap &operator=(SmartCap& obj);
+  SmartCap& operator=(SmartCap& obj);
 
   /**
    * Destructor.
@@ -93,7 +93,6 @@ public:
   cap_t release();
 
 private:
-
   /**
    * The owned capbility state or nullptr if this smart pointer does not own one.
    */
@@ -105,8 +104,9 @@ private:
    *
    * Not implemented so that it cannot be called.
    */
-  SmartCap(const SmartCap &obj) throw();
+  SmartCap(const SmartCap& obj) throw();
 
-}; // class SmartCap
+};  // class SmartCap
 
-}} // namespace cta::server
+}  // namespace server
+}  // namespace cta

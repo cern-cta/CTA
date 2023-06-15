@@ -42,10 +42,7 @@ struct RemoteFileStatus {
    * @param mode The mode bits of the file or directory.
    * @param size The size of the file in bytes.
    */
-  RemoteFileStatus(
-    const common::dataStructures::OwnerIdentity &owner,
-    const mode_t mode,
-    const uint64_t size);
+  RemoteFileStatus(const common::dataStructures::OwnerIdentity& owner, const mode_t mode, const uint64_t size);
 
   /**
    * The identity of the owner.
@@ -62,6 +59,6 @@ struct RemoteFileStatus {
    */
   uint64_t size;
 
-}; // class RemoteFileStatus
+};  // class RemoteFileStatus
 
-} // namespace cta
+}  // namespace cta

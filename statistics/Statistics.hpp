@@ -33,12 +33,12 @@ namespace statistics {
  * statistics in the Statistics database
  */
 class Statistics {
- public:
+public:
   typedef std::map<std::string, FileStatistics> StatisticsPerVo;
 
   Statistics();
-  Statistics(const Statistics &other);
-  Statistics &operator=(const Statistics &other);
+  Statistics(const Statistics& other);
+  Statistics& operator=(const Statistics& other);
 
   /**
    * Insert statistics per-VO
@@ -46,13 +46,13 @@ class Statistics {
    * @param vo the VO to which correspond the statistics we insert
    * @param fileStatistics the statistics of the files that belong to the VO
    */
-  void insertPerVOStatistics(const std::string &vo, const FileStatistics &fileStatistics);
+  void insertPerVOStatistics(const std::string& vo, const FileStatistics& fileStatistics);
 
   /**
    * Get the statistics of all VOs
    * @return the StatisticsPerVo map
    */
-  const StatisticsPerVo &getAllVOStatistics() const;
+  const StatisticsPerVo& getAllVOStatistics() const;
 
   /**
    * Get the total number of MASTER files stored on the tapes
@@ -100,7 +100,7 @@ class Statistics {
    * This builder class allows to build the statistics
    */
   class Builder {
-   public:
+  public:
     Builder();
     /**
      * Build the statistics with the Rset returned by the Catalogue database query
@@ -109,14 +109,14 @@ class Statistics {
      */
     std::unique_ptr<Statistics> build(cta::rdbms::Rset* rset);
 
-   private:
+  private:
     /**
      * Holds the statististics that will be returned by the build() methods
      */
     std::unique_ptr<Statistics> m_statistics;
   };
 
- private:
+private:
   /**
    * Currently, it's a map[VO][FileStatistics]
    * used to hold the statistics per-VO
@@ -166,7 +166,7 @@ class Statistics {
  * @param stats the Statistics object that will be represented in JSON
  * @return the stream containing the Statistics object in JSON
  */
-std::ostream &operator <<(std::ostream &stream, const Statistics& stats);
+std::ostream& operator<<(std::ostream& stream, const Statistics& stats);
 
 }  // namespace statistics
 }  // namespace cta

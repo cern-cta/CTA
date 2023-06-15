@@ -19,29 +19,34 @@
 #include "common/exception/Exception.hpp"
 #include "mediachanger/LibrarySlotParser.hpp"
 
-namespace cta { namespace tape { namespace daemon {
+namespace cta {
+namespace tape {
+namespace daemon {
 
 //------------------------------------------------------------------------------
 // Constructor.
 //------------------------------------------------------------------------------
-cta::tape::daemon::TpconfigLine::TpconfigLine(
-  const std::string &unitName,
-  const std::string &logicalLibrary,
-  const std::string &devFilename,
-  const std::string &librarySlot):
-  unitName(unitName),
-  logicalLibrary(logicalLibrary),
-  devFilename(devFilename),
-  rawLibrarySlot(librarySlot),
-  m_librarySlot(mediachanger::LibrarySlotParser::parse(rawLibrarySlot)){
-  if (unitName.size() > maxNameLen)
+cta::tape::daemon::TpconfigLine::TpconfigLine(const std::string& unitName,
+                                              const std::string& logicalLibrary,
+                                              const std::string& devFilename,
+                                              const std::string& librarySlot) :
+unitName(unitName),
+logicalLibrary(logicalLibrary),
+devFilename(devFilename),
+rawLibrarySlot(librarySlot),
+m_librarySlot(mediachanger::LibrarySlotParser::parse(rawLibrarySlot)) {
+  if (unitName.size() > maxNameLen) {
     throw cta::exception::Exception("In TpconfigLine::TpconfigLine: unitName too long");
-  if (logicalLibrary.size() > maxNameLen)
+  }
+  if (logicalLibrary.size() > maxNameLen) {
     throw cta::exception::Exception("In TpconfigLine::TpconfigLine: logicalLibrary too long");
-  if (devFilename.size() > maxNameLen)
+  }
+  if (devFilename.size() > maxNameLen) {
     throw cta::exception::Exception("In TpconfigLine::TpconfigLine: devFilename too long");
-  if (librarySlot.size() > maxNameLen)
+  }
+  if (librarySlot.size() > maxNameLen) {
     throw cta::exception::Exception("In TpconfigLine::TpconfigLine: librarySlot too long");
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -52,8 +57,8 @@ TpconfigLine::TpconfigLine() {}
 //------------------------------------------------------------------------------
 // Copy constructor.
 //------------------------------------------------------------------------------
-TpconfigLine::TpconfigLine(const TpconfigLine& o): TpconfigLine(o.unitName, o.logicalLibrary,
-    o.devFilename, o.rawLibrarySlot) {}
+TpconfigLine::TpconfigLine(const TpconfigLine& o) :
+TpconfigLine(o.unitName, o.logicalLibrary, o.devFilename, o.rawLibrarySlot) {}
 
 //------------------------------------------------------------------------------
 // TpconfigLine::librarySlot
@@ -74,4 +79,6 @@ TpconfigLine& TpconfigLine::operator=(const TpconfigLine& o) {
   return *this;
 }
 
-}}} // namespace cta::tape::daemon
+}  // namespace daemon
+}  // namespace tape
+}  // namespace cta

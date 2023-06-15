@@ -29,7 +29,8 @@
 #include <list>
 #include <set>
 
-namespace cta { namespace objectstore {
+namespace cta {
+namespace objectstore {
 
 class Agent;
 
@@ -40,13 +41,13 @@ class Agent;
  * Agent object in the object store).
  * A process
  */
-class AgentReference: public AgentReferenceInterface{
+class AgentReference : public AgentReferenceInterface {
 public:
   /**
    * Constructor will implicitly generate the address of the Agent object.
    * @param clientType is an indicative string used to generate the agent object's name.
    */
-  AgentReference(const std::string &clientType, log::Logger &logger);
+  AgentReference(const std::string& clientType, log::Logger& logger);
 
   /**
    * Generates a unique address for a newly created child object. This function is thread
@@ -54,7 +55,7 @@ public:
    * @param childType the name of the child object type.
    * @return a unique address for the child object, derived from the agent's address.
    */
-  std::string nextId(const std::string & childType);
+  std::string nextId(const std::string& childType);
 
   /**
    * Adds an object address to the referenced agent. The additions and removals
@@ -63,14 +64,14 @@ public:
    * @param objectAddress
    * @param backend reference to the backend to use.
    */
-  void addToOwnership(const std::string &objectAddress, objectstore::Backend& backend) override;
+  void addToOwnership(const std::string& objectAddress, objectstore::Backend& backend) override;
 
   /**
    * Adds a list of object addresses to the referenced agent. The addition is immediate.
    * @param objectAdresses
    * @param backend reference to the backend to use.
    */
-  void addBatchToOwnership(const std::list<std::string> &objectAdresses, objectstore::Backend& backend) override;
+  void addBatchToOwnership(const std::list<std::string>& objectAdresses, objectstore::Backend& backend) override;
 
   /**
    * Removes an object address from the referenced agent. The additions and removals
@@ -78,14 +79,14 @@ public:
    * The execution order is guaranteed.
    * @param objectAddress
    */
-  void removeFromOwnership(const std::string &objectAddress, objectstore::Backend& backend) override;
+  void removeFromOwnership(const std::string& objectAddress, objectstore::Backend& backend) override;
 
   /**
    * Removes a list of object addresses to the referenced agent. The removal is immediate.
    * @param objectAdresses
    * @param backend reference to the backend to use.
    */
-  void removeBatchFromOwnership(const std::list<std::string> &objectAdresses, objectstore::Backend& backend) override;
+  void removeBatchFromOwnership(const std::list<std::string>& objectAdresses, objectstore::Backend& backend) override;
 
   /**
    * Bumps up the heart beat of the agent. This action is queued in memory like the
@@ -98,6 +99,7 @@ public:
    * @return the agent object address.
    */
   std::string getAgentAddress() override;
+
 private:
   static std::atomic<uint64_t> g_nextAgentId;
   std::atomic<uint64_t> m_nextId;
@@ -106,35 +108,33 @@ private:
   /**
    * An enumeration describing all the queueable operations
    */
-  enum class AgentOperation: char {
-    Add,
-    Remove,
-    AddBatch,
-    RemoveBatch,
-    Heartbeat
-  };
+  enum class AgentOperation : char { Add, Remove, AddBatch, RemoveBatch, Heartbeat };
 
   /**
    * A set used to test for ownership modifying actions.
    */
-  std::set<AgentOperation> m_ownerShipModifyingOperations = { AgentOperation::Add, AgentOperation::Remove,
-    AgentOperation::AddBatch, AgentOperation::RemoveBatch };
+  std::set<AgentOperation> m_ownerShipModifyingOperations = {AgentOperation::Add, AgentOperation::Remove,
+                                                             AgentOperation::AddBatch, AgentOperation::RemoveBatch};
 
   /**
    * An operation with its parameter and promise
    */
   struct Action {
-    Action(AgentOperation op, const std::string & objectAddress, const std::list<std::string> & objectAddressSet):
-      op(op), objectAddress(objectAddress), objectAddressSet(objectAddressSet) {}
+    Action(AgentOperation op, const std::string& objectAddress, const std::list<std::string>& objectAddressSet) :
+    op(op),
+    objectAddress(objectAddress),
+    objectAddressSet(objectAddressSet) {}
+
     AgentOperation op;
-    const std::string & objectAddress;
-    const std::list<std::string> & objectAddressSet;
+    const std::string& objectAddress;
+    const std::list<std::string>& objectAddressSet;
     std::promise<void> promise;
     /***
      * A mutex ensuring the object will not be released before the promise's result
      * is fully pushed.
      */
     threading::Mutex mutex;
+
     ~Action() {
       // The setting of promise result will be protected by this mutex, so destruction
       // will only happen after promise setting is complete.
@@ -156,8 +156,7 @@ private:
    * @param action
    * @param agent
    */
-  void appyAction(Action& action, objectstore::Agent& agent,
-    std::set<std::string> & ownershipSet, log::LogContext &lc);
+  void appyAction(Action& action, objectstore::Agent& agent, std::set<std::string>& ownershipSet, log::LogContext& lc);
 
   /**
    * The global function actually doing the job: creates a queue if needed, add
@@ -187,7 +186,8 @@ private:
   /**
    * The logger allows printing debug information
    */
-  log::Logger &m_logger;
+  log::Logger& m_logger;
 };
 
-}}
+}  // namespace objectstore
+}  // namespace cta

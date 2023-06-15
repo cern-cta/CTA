@@ -35,71 +35,58 @@ TapeFseqRangeSequence::TapeFseqRangeSequence() throw() {
   reset();
 }
 
-
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-TapeFseqRangeSequence::TapeFseqRangeSequence(
-  const TapeFseqRange &range) throw() {
+TapeFseqRangeSequence::TapeFseqRangeSequence(const TapeFseqRange& range) throw() {
   reset(range);
 }
-
 
 //------------------------------------------------------------------------------
 // reset
 //------------------------------------------------------------------------------
 void TapeFseqRangeSequence::reset() throw() {
-
   // Reset the range to be empty
   m_range.reset();
 
-  m_next = 0; // Ignored
+  m_next = 0;  // Ignored
 }
-
 
 //------------------------------------------------------------------------------
 // reset
 //------------------------------------------------------------------------------
-void TapeFseqRangeSequence::reset(
-  const TapeFseqRange &range) throw() {
+void TapeFseqRangeSequence::reset(const TapeFseqRange& range) throw() {
   m_range = range;
 
-  if(range.isEmpty()) {
-    m_next = 0; // Ignored
-  } else {
+  if (range.isEmpty()) {
+    m_next = 0;  // Ignored
+  }
+  else {
     m_next = m_range.lower();
   }
 }
-
 
 //------------------------------------------------------------------------------
 // hasMore
 //------------------------------------------------------------------------------
 bool TapeFseqRangeSequence::hasMore() const throw() {
-
-  if(m_range.isEmpty()) {
-
+  if (m_range.isEmpty()) {
     return false;
-
-  } else {
-
+  }
+  else {
     // Infinity is represented by range.upper() == 0
     return m_range.upper() == 0 || m_next <= m_range.upper();
   }
 }
 
-
 //------------------------------------------------------------------------------
 // next
 //------------------------------------------------------------------------------
-uint32_t TapeFseqRangeSequence::next()
-   {
-
-  if(!hasMore()) {
+uint32_t TapeFseqRangeSequence::next() {
+  if (!hasMore()) {
     exception::Exception ex;
 
-    ex.getMessage()
-      << "Sequence::next() called after end of sequence";
+    ex.getMessage() << "Sequence::next() called after end of sequence";
 
     throw ex;
   }
@@ -107,16 +94,13 @@ uint32_t TapeFseqRangeSequence::next()
   return m_next++;
 }
 
-
 //------------------------------------------------------------------------------
 // range
 //------------------------------------------------------------------------------
-const TapeFseqRange
-  &TapeFseqRangeSequence::range() const throw() {
+const TapeFseqRange& TapeFseqRangeSequence::range() const throw() {
   return m_range;
 }
 
-
-} // namespace readtp
-} // namespace tapeserver
-} // namespace cta
+}  // namespace readtp
+}  // namespace tapeserver
+}  // namespace cta

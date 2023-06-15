@@ -26,7 +26,6 @@ namespace cta {
  */
 class DriveQuota {
 public:
-
   /**
    * Constructor.
    */
@@ -55,7 +54,6 @@ public:
   uint32_t getMaxDrives() const throw();
 
 private:
-
   /**
    * The minimum number of drives that should be provided.
    */
@@ -66,6 +64,6 @@ private:
    */
   uint32_t m_maxDrives;
 
-}; // class DriveQuota
+};  // class DriveQuota
 
-} // namespace cta
+}  // namespace cta

@@ -23,8 +23,8 @@
 
 namespace cta {
 namespace catalogue {
-  
-class SetProductionCmd: public CmdLineTool {
+
+class SetProductionCmd : public CmdLineTool {
 public:
   /**
    * Constructor.
@@ -33,10 +33,10 @@ public:
    * @param outStream Standard output stream.
    * @param errStream Standard error stream.
    */
-  SetProductionCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream);
+  SetProductionCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream);
   ~SetProductionCmd() noexcept;
+
 private:
-  
   /**
    * An exception throwing version of main().
    *
@@ -44,28 +44,29 @@ private:
    * @param argv The command-line arguments.
    * @return The exit value of the program.
    */
-  int exceptionThrowingMain(const int argc, char *const *const argv) override;
+  int exceptionThrowingMain(const int argc, char* const* const argv) override;
 
   /**
    * Prints the usage message of the command-line tool.
    *
    * @param os The output stream to which the usage message is to be printed.
    */
-  void printUsage(std::ostream &os) override;
-  
+  void printUsage(std::ostream& os) override;
+
   /**
    * Returns true if the IS_PRODUCTION flag is settable, false otherwise
    * @param login the database login informations
    * @param conn the connection to the database
    * @return true if the IS_PRODUCTION flag is settable, false otherwise
    */
-  bool isProductionSettable(const cta::rdbms::Login & login, cta::rdbms::Conn & conn);
-  
+  bool isProductionSettable(const cta::rdbms::Login& login, cta::rdbms::Conn& conn);
+
   /**
    * Set the IS_PRODUCTION flag to true on the CTA Catalogue
    * @param conn the connection to the CTA Catalogue database
    */
-  void setProductionFlag(cta::rdbms::Conn & conn);
+  void setProductionFlag(cta::rdbms::Conn& conn);
 };
 
-}}
+}  // namespace catalogue
+}  // namespace cta

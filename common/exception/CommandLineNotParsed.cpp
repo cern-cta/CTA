@@ -23,9 +23,8 @@ namespace exception {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-CommandLineNotParsed::CommandLineNotParsed(const std::string &context, const bool embedBacktrace):
-  Exception(context, embedBacktrace) {
-}
+CommandLineNotParsed::CommandLineNotParsed(const std::string& context, const bool embedBacktrace) :
+Exception(context, embedBacktrace) {}
 
-} // namespace exception
-} // namespace cta
+}  // namespace exception
+}  // namespace cta

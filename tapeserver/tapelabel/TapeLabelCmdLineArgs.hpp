@@ -33,17 +33,17 @@ struct TapeLabelCmdLineArgs {
    * True if the usage message should be printed.
    */
   bool help;
-  
+
   /**
    * The tape VID to be pre-label.
    */
   std::string m_vid;
-  
+
   /**
    * The old label on tape to be checked when pre-labeling.
    */
   std::string m_oldLabel;
-  
+
   /**
    * The unit name of the drive used to mount the tape.
    */
@@ -52,18 +52,18 @@ struct TapeLabelCmdLineArgs {
   /**
    * The boolean variable to enable verbose output in the command line.
    * By default it prints only ERR and WARNING messages. 
-   */ 
+   */
   bool m_debug;
-  
+
   /**
    * The boolean variable to skip label checks on not-blank tapes. 
-   */ 
+   */
   bool m_force;
 
   /**
    * The timeout to load the tape in the drive slot in seconds
    */
-  uint64_t m_tapeLoadTimeout = 2 * 60 * 60; // 2 hours
+  uint64_t m_tapeLoadTimeout = 2 * 60 * 60;  // 2 hours
 
   /**
    * Constructor that parses the specified command-line arguments.
@@ -72,16 +72,16 @@ struct TapeLabelCmdLineArgs {
    * executable.
    * @param argv The vector of command-line arguments.
    */
-  TapeLabelCmdLineArgs(const int argc, char *const *const argv);
+  TapeLabelCmdLineArgs(const int argc, char* const* const argv);
 
   /**
    * Prints the usage message of the command-line tool.
    *
    * @param os The output stream to which the usage message is to be printed.
    */
-  static void printUsage(std::ostream &os);
+  static void printUsage(std::ostream& os);
 };
 
-} // namespace tapelabel
-} // namespace catalogue
-} // namespace cta
+}  // namespace tapelabel
+}  // namespace tapeserver
+}  // namespace cta

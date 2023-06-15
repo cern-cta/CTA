@@ -20,21 +20,15 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::MountCriteria::MountCriteria():
-  m_nbBytes(0),
-  m_nbFiles(0),
-  m_ageInSecs(0) {
-}
+cta::MountCriteria::MountCriteria() : m_nbBytes(0), m_nbFiles(0), m_ageInSecs(0) {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::MountCriteria::MountCriteria(const uint64_t nbBytes, const uint64_t nbFiles,
-  const uint64_t ageInSecs):
-  m_nbBytes(nbBytes),
-  m_nbFiles(nbFiles),
-  m_ageInSecs(ageInSecs) {
-}
+cta::MountCriteria::MountCriteria(const uint64_t nbBytes, const uint64_t nbFiles, const uint64_t ageInSecs) :
+m_nbBytes(nbBytes),
+m_nbFiles(nbFiles),
+m_ageInSecs(ageInSecs) {}
 
 //------------------------------------------------------------------------------
 // getNbBytes

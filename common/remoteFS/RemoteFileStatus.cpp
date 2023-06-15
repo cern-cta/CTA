@@ -20,19 +20,14 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RemoteFileStatus::RemoteFileStatus():
-  mode(0),
-  size(0) {
-}
+cta::RemoteFileStatus::RemoteFileStatus() : mode(0), size(0) {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RemoteFileStatus::RemoteFileStatus(
-  const common::dataStructures::OwnerIdentity &owner,
-  const mode_t mode,
-  const uint64_t size):
-  owner(owner),
-  mode(mode),
-  size(size) {
-}
+cta::RemoteFileStatus::RemoteFileStatus(const common::dataStructures::OwnerIdentity& owner,
+                                        const mode_t mode,
+                                        const uint64_t size) :
+owner(owner),
+mode(mode),
+size(size) {}

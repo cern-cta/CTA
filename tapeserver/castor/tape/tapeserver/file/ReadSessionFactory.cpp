@@ -28,8 +28,9 @@ namespace castor {
 namespace tape {
 namespace tapeFile {
 
-std::unique_ptr<ReadSession> ReadSessionFactory::create(tapeserver::drive::DriveInterface &drive,
-  const tapeserver::daemon::VolumeInfo &volInfo, const bool useLbp) {
+std::unique_ptr<ReadSession> ReadSessionFactory::create(tapeserver::drive::DriveInterface& drive,
+                                                        const tapeserver::daemon::VolumeInfo& volInfo,
+                                                        const bool useLbp) {
   using LabelFormat = cta::common::dataStructures::Label::Format;
   const LabelFormat labelFormat = volInfo.labelFormat;
   switch (labelFormat) {

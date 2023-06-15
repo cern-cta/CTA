@@ -23,34 +23,33 @@
 namespace cta {
 namespace postgresscheddb {
 
-const SchedulerDatabase::ArchiveMount::MountInfo &ArchiveMount::getMountInfo()
-{
-   throw cta::exception::Exception("Not implemented");
+const SchedulerDatabase::ArchiveMount::MountInfo& ArchiveMount::getMountInfo() {
+  throw cta::exception::Exception("Not implemented");
 }
 
-std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJobBatch(uint64_t filesRequested,
-      uint64_t bytesRequested, log::LogContext& logContext)
-{
-
+std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>
+  ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext) {
   rdbms::Rset resultSet;
 
   // retrieve batch up to file limit
-  if(m_queueType == common::dataStructures::JobQueueType::JobsToTransferForUser) {
-    resultSet = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
-      m_txn, ArchiveJobStatus::AJS_ToTransferForUser, mountInfo.tapePool, filesRequested);
-
-  } else {
-    resultSet = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(
-      m_txn, ArchiveJobStatus::AJS_ToTransferForRepack, mountInfo.tapePool, filesRequested);
+  if (m_queueType == common::dataStructures::JobQueueType::JobsToTransferForUser) {
+    resultSet = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(m_txn, ArchiveJobStatus::AJS_ToTransferForUser,
+                                                                      mountInfo.tapePool, filesRequested);
+  }
+  else {
+    resultSet = cta::postgresscheddb::sql::ArchiveJobQueueRow::select(m_txn, ArchiveJobStatus::AJS_ToTransferForRepack,
+                                                                      mountInfo.tapePool, filesRequested);
   }
 
   std::list<sql::ArchiveJobQueueRow> jobs;
   // filter retrieved batch up to size limit
   uint64_t totalBytes = 0;
-  while(resultSet.next()) {
+  while (resultSet.next()) {
     jobs.emplace_back(sql::ArchiveJobQueueRow(resultSet));
     totalBytes += jobs.back().archiveFile.fileSize;
-    if(totalBytes >= bytesRequested) break;
+    if (totalBytes >= bytesRequested) {
+      break;
+    }
   }
 
   // mark the jobs in the batch as owned
@@ -59,7 +58,7 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
 
   // Construct the return value
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
-  for (auto &j : jobs) {
+  for (auto& j : jobs) {
     std::unique_ptr<postgresscheddb::ArchiveJob> aj(new postgresscheddb::ArchiveJob(/* j.jobId */));
     aj->tapeFile.copyNb = j.copyNb;
     aj->archiveFile = j.archiveFile;
@@ -69,31 +68,30 @@ std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ArchiveMount::getNextJ
     aj->tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
     aj->tapeFile.vid = mountInfo.vid;
     aj->tapeFile.blockId = std::numeric_limits<decltype(aj->tapeFile.blockId)>::max();
-// m_jobOwned ?
+    // m_jobOwned ?
     aj->m_mountId = mountInfo.mountId;
     aj->m_tapePool = mountInfo.tapePool;
-// reportType ?
+    // reportType ?
     ret.emplace_back(std::move(aj));
   }
   return ret;
 }
 
-void ArchiveMount::setDriveStatus(common::dataStructures::DriveStatus status, common::dataStructures::MountType mountType,
-                                time_t completionTime, const std::optional<std::string>& reason)
-{
-   throw cta::exception::Exception("Not implemented");
+void ArchiveMount::setDriveStatus(common::dataStructures::DriveStatus status,
+                                  common::dataStructures::MountType mountType,
+                                  time_t completionTime,
+                                  const std::optional<std::string>& reason) {
+  throw cta::exception::Exception("Not implemented");
 }
 
-void ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats)
-{
-   throw cta::exception::Exception("Not implemented");
+void ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) {
+  throw cta::exception::Exception("Not implemented");
 }
 
-void ArchiveMount::setJobBatchTransferred(
-      std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> & jobsBatch, log::LogContext & lc)
-{
-   throw cta::exception::Exception("Not implemented");
+void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
+                                          log::LogContext& lc) {
+  throw cta::exception::Exception("Not implemented");
 }
 
-} //namespace postgresscheddb
-} //namespace cta
+}  //namespace postgresscheddb
+}  //namespace cta

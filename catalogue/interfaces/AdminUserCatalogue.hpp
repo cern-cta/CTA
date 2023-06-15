@@ -28,8 +28,8 @@ namespace common {
 namespace dataStructures {
 struct AdminUser;
 struct SecurityIdentity;
-} // namespace dataStructures
-} // namespace common
+}  // namespace dataStructures
+}  // namespace common
 
 namespace catalogue {
 
@@ -39,15 +39,17 @@ class AdminUserCatalogue {
 public:
   virtual ~AdminUserCatalogue() = default;
 
-  virtual void createAdminUser(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &username, const std::string &comment) = 0;
+  virtual void createAdminUser(const common::dataStructures::SecurityIdentity& admin,
+                               const std::string& username,
+                               const std::string& comment) = 0;
 
-  virtual void deleteAdminUser(const std::string &username) = 0;
+  virtual void deleteAdminUser(const std::string& username) = 0;
 
   virtual std::list<common::dataStructures::AdminUser> getAdminUsers() const = 0;
 
-  virtual void modifyAdminUserComment(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &username, const std::string &comment) = 0;
+  virtual void modifyAdminUserComment(const common::dataStructures::SecurityIdentity& admin,
+                                      const std::string& username,
+                                      const std::string& comment) = 0;
 
   /**
    * Returns true if the specified user running the CTA command-line tool on
@@ -57,8 +59,8 @@ public:
    * @return True if the specified user running the CTA command-line tool on
    * the specified host has administrator privileges.
    */
-  virtual bool isAdmin(const common::dataStructures::SecurityIdentity &admin) const = 0;
+  virtual bool isAdmin(const common::dataStructures::SecurityIdentity& admin) const = 0;
 };
 
-} // namespace catalogue
-} // namespace cta
+}  // namespace catalogue
+}  // namespace cta

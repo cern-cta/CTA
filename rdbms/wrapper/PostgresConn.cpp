@@ -33,13 +33,10 @@ namespace cta {
 namespace rdbms {
 namespace wrapper {
 
-
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-PostgresConn::PostgresConn(const std::string &conninfo)
-  : m_pgsqlConn(nullptr), m_asyncInProgress(false), m_nStmts(0) {
-
+PostgresConn::PostgresConn(const std::string& conninfo) : m_pgsqlConn(nullptr), m_asyncInProgress(false), m_nStmts(0) {
   // establish the connection and create the PGconn data structure
 
   m_pgsqlConn = PQconnectdb(conninfo.c_str());
@@ -55,13 +52,13 @@ PostgresConn::PostgresConn(const std::string &conninfo)
   if (sVer < 90500) {
     PQfinish(m_pgsqlConn);
     m_pgsqlConn = nullptr;
-    const int maj = (sVer/10000) % 100;
-    const int min = (sVer/100) % 100;
+    const int maj = (sVer / 10000) % 100;
+    const int min = (sVer / 100) % 100;
     const int rel = sVer % 100;
     std::ostringstream msg;
     msg << maj << "." << min << "." << rel;
     throw exception::Exception(std::string(__FUNCTION__) +
-      " requires postgres server version be at least 9.5: the server is " + msg.str());
+                               " requires postgres server version be at least 9.5: the server is " + msg.str());
   }
 
   PQsetNoticeProcessor(m_pgsqlConn, PostgresConn::noticeProcessor, nullptr);
@@ -73,7 +70,8 @@ PostgresConn::PostgresConn(const std::string &conninfo)
 PostgresConn::~PostgresConn() {
   try {
     close();
-  } catch (...) {
+  }
+  catch (...) {
     // Destructor should not throw any exceptions
   }
 }
@@ -90,8 +88,7 @@ void PostgresConn::close() {
 //------------------------------------------------------------------------------
 // commit
 //------------------------------------------------------------------------------
-void PostgresConn::commit()
-{
+void PostgresConn::commit() {
   threading::RWLockWrLocker locker(m_lock);
 
   if (!isOpenAssumeLocked()) {
@@ -120,16 +117,15 @@ void PostgresConn::commit()
 //------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
-std::unique_ptr<StmtWrapper> PostgresConn::createStmt(const std::string &sql) {
-
+std::unique_ptr<StmtWrapper> PostgresConn::createStmt(const std::string& sql) {
   threading::RWLockRdLocker locker(m_lock);
 
   try {
-    if(!isOpenAssumeLocked()) {
+    if (!isOpenAssumeLocked()) {
       throw exception::Exception("Connection is closed");
     }
-
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 
@@ -140,10 +136,10 @@ std::unique_ptr<StmtWrapper> PostgresConn::createStmt(const std::string &sql) {
 //------------------------------------------------------------------------------
 // executeNonQuery
 //------------------------------------------------------------------------------
-void PostgresConn::executeNonQuery(const std::string &sql) {
+void PostgresConn::executeNonQuery(const std::string& sql) {
   threading::RWLockWrLocker locker(m_lock);
 
-  if(!isOpenAssumeLocked()) {
+  if (!isOpenAssumeLocked()) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: Connection is closed");
   }
 
@@ -156,7 +152,7 @@ void PostgresConn::executeNonQuery(const std::string &sql) {
 //------------------------------------------------------------------------------
 // getAutocommitMode
 //------------------------------------------------------------------------------
-AutocommitMode PostgresConn::getAutocommitMode() const noexcept{
+AutocommitMode PostgresConn::getAutocommitMode() const noexcept {
   return AutocommitMode::AUTOCOMMIT_ON;
 }
 
@@ -177,10 +173,8 @@ std::list<std::string> PostgresConn::getSequenceNames() {
       throw exception::Exception("can not execute sql, another query is in progress");
     }
 
-    Postgres::Result res(PQexec(m_pgsqlConn,
-       "SELECT c.relname AS SEQUENCE_NAME FROM pg_class c "
-         "WHERE c.relkind = 'S' ORDER BY SEQUENCE_NAME"
-       ));
+    Postgres::Result res(PQexec(m_pgsqlConn, "SELECT c.relname AS SEQUENCE_NAME FROM pg_class c "
+                                             "WHERE c.relkind = 'S' ORDER BY SEQUENCE_NAME"));
 
     throwDBIfNotStatus(res.get(), PGRES_TUPLES_OK, "Listing Sequences in the DB");
 
@@ -189,14 +183,17 @@ std::list<std::string> PostgresConn::getSequenceNames() {
       throw exception::Exception("number fields wrong during list sequences: Got " + std::to_string(num_fields));
     }
 
-    for(int i=0;i<PQntuples(res.get());++i) {
+    for (int i = 0; i < PQntuples(res.get()); ++i) {
       std::string name = PQgetvalue(res.get(), i, 0);
       utils::toUpper(name);
       names.push_back(name);
     }
-  } catch(exception::LostDatabaseConnection &ex) {
-    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " detected lost connection: " + ex.getMessage().str());
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::LostDatabaseConnection& ex) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) +
+                                            " detected lost connection: " + ex.getMessage().str());
+  }
+  catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 
@@ -206,19 +203,18 @@ std::list<std::string> PostgresConn::getSequenceNames() {
 //------------------------------------------------------------------------------
 // getColumns
 //------------------------------------------------------------------------------
-std::map<std::string, std::string> PostgresConn::getColumns(const std::string &tableName) {
+std::map<std::string, std::string> PostgresConn::getColumns(const std::string& tableName) {
   try {
     std::map<std::string, std::string> columnNamesAndTypes;
     auto lowercaseTableName = tableName;
-    utils::toLower(lowercaseTableName); // postgres work with lowercase
-    const char *const sql =
-      "SELECT "
-        "COLUMN_NAME, "
-        "DATA_TYPE "
-      "FROM "
-        "INFORMATION_SCHEMA.COLUMNS "
-      "WHERE "
-        "TABLE_NAME = :TABLE_NAME";
+    utils::toLower(lowercaseTableName);  // postgres work with lowercase
+    const char* const sql = "SELECT "
+                            "COLUMN_NAME, "
+                            "DATA_TYPE "
+                            "FROM "
+                            "INFORMATION_SCHEMA.COLUMNS "
+                            "WHERE "
+                            "TABLE_NAME = :TABLE_NAME";
 
     auto stmt = createStmt(sql);
     stmt->bindString(":TABLE_NAME", lowercaseTableName);
@@ -226,12 +222,13 @@ std::map<std::string, std::string> PostgresConn::getColumns(const std::string &t
     while (rset->next()) {
       auto name = rset->columnOptionalString("COLUMN_NAME");
       auto type = rset->columnOptionalString("DATA_TYPE");
-      if(name && type) {
+      if (name && type) {
         utils::toUpper(name.value());
         utils::toUpper(type.value());
         if ("CHARACTER VARYING" == type.value()) {
-          type = "VARCHAR" ;
-        } else if ("CHARACTER" == type.value()) {
+          type = "VARCHAR";
+        }
+        else if ("CHARACTER" == type.value()) {
           type = "CHAR";
         }
         columnNamesAndTypes.insert(std::make_pair(name.value(), type.value()));
@@ -239,7 +236,8 @@ std::map<std::string, std::string> PostgresConn::getColumns(const std::string &t
     }
 
     return columnNamesAndTypes;
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -261,15 +259,13 @@ std::list<std::string> PostgresConn::getTableNames() {
       throw exception::Exception("can not execute sql, another query is in progress");
     }
 
-    Postgres::Result res(PQexec(m_pgsqlConn,
-      "SELECT "
-        "tablename "
-      "FROM "
-        "pg_catalog.pg_tables "
-      "WHERE "
-        "pg_catalog.pg_tables.schemaname = current_schema() "
-      "ORDER BY tablename"
-    ));
+    Postgres::Result res(PQexec(m_pgsqlConn, "SELECT "
+                                             "tablename "
+                                             "FROM "
+                                             "pg_catalog.pg_tables "
+                                             "WHERE "
+                                             "pg_catalog.pg_tables.schemaname = current_schema() "
+                                             "ORDER BY tablename"));
 
     throwDBIfNotStatus(res.get(), PGRES_TUPLES_OK, "Listing table names in the DB");
 
@@ -278,14 +274,17 @@ std::list<std::string> PostgresConn::getTableNames() {
       throw exception::Exception("number fields wrong during list tables: Got " + std::to_string(num_fields));
     }
 
-    for(int i=0;i<PQntuples(res.get());++i) {
+    for (int i = 0; i < PQntuples(res.get()); ++i) {
       std::string name = PQgetvalue(res.get(), i, 0);
       utils::toUpper(name);
       names.push_back(name);
     }
-  } catch(exception::LostDatabaseConnection &ex) {
-    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " detected lost connection: " + ex.getMessage().str());
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::LostDatabaseConnection& ex) {
+    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) +
+                                            " detected lost connection: " + ex.getMessage().str());
+  }
+  catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 
@@ -298,27 +297,27 @@ std::list<std::string> PostgresConn::getTableNames() {
 std::list<std::string> PostgresConn::getIndexNames() {
   try {
     std::list<std::string> names;
-    const char *const sql =
-      "SELECT "
-        "INDEXNAME "
-      "FROM "
-        "PG_INDEXES "
-      "WHERE "
-        "SCHEMANAME = 'public' "
-      "ORDER BY "
-        "INDEXNAME";
+    const char* const sql = "SELECT "
+                            "INDEXNAME "
+                            "FROM "
+                            "PG_INDEXES "
+                            "WHERE "
+                            "SCHEMANAME = 'public' "
+                            "ORDER BY "
+                            "INDEXNAME";
     auto stmt = createStmt(sql);
     auto rset = stmt->executeQuery();
     while (rset->next()) {
       auto name = rset->columnOptionalString("INDEXNAME");
-      if(name) {
+      if (name) {
         utils::toUpper(name.value());
         names.push_back(name.value());
       }
     }
 
     return names;
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -333,41 +332,42 @@ std::list<std::string> PostgresConn::getTriggerNames() {
 //------------------------------------------------------------------------------
 // getParallelTableNames
 //------------------------------------------------------------------------------
-std::list<std::string> PostgresConn::getParallelTableNames(){
+std::list<std::string> PostgresConn::getParallelTableNames() {
   return std::list<std::string>();
 }
+
 //------------------------------------------------------------------------------
 // getConstraintNames
 //------------------------------------------------------------------------------
-std::list<std::string> PostgresConn::getConstraintNames(const std::string& tableName){
+std::list<std::string> PostgresConn::getConstraintNames(const std::string& tableName) {
   try {
     std::list<std::string> names;
-    const char *const sql =
-      "SELECT "
-        "CON.CONNAME AS CONSTRAINT_NAME "
-      "FROM "
-        "PG_CATALOG.PG_CONSTRAINT CON "
-      "INNER JOIN PG_CATALOG.PG_CLASS REL "
-        "ON REL.OID=CON.CONRELID "
-      "INNER JOIN PG_CATALOG.PG_NAMESPACE NSP "
-        "ON NSP.OID = CONNAMESPACE "
-      "WHERE "
-        "REL.RELNAME=:TABLE_NAME";
+    const char* const sql = "SELECT "
+                            "CON.CONNAME AS CONSTRAINT_NAME "
+                            "FROM "
+                            "PG_CATALOG.PG_CONSTRAINT CON "
+                            "INNER JOIN PG_CATALOG.PG_CLASS REL "
+                            "ON REL.OID=CON.CONRELID "
+                            "INNER JOIN PG_CATALOG.PG_NAMESPACE NSP "
+                            "ON NSP.OID = CONNAMESPACE "
+                            "WHERE "
+                            "REL.RELNAME=:TABLE_NAME";
     auto stmt = createStmt(sql);
     std::string localTableName = tableName;
     utils::toLower(localTableName);
-    stmt->bindString(":TABLE_NAME",localTableName);
+    stmt->bindString(":TABLE_NAME", localTableName);
     auto rset = stmt->executeQuery();
     while (rset->next()) {
       auto name = rset->columnOptionalString("CONSTRAINT_NAME");
-      if(name) {
+      if (name) {
         utils::toUpper(name.value());
         names.push_back(name.value());
       }
     }
 
     return names;
-  } catch(exception::Exception &ex) {
+  }
+  catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
@@ -378,7 +378,6 @@ std::list<std::string> PostgresConn::getConstraintNames(const std::string& table
 std::list<std::string> PostgresConn::getStoredProcedureNames() {
   return std::list<std::string>();
 }
-
 
 //------------------------------------------------------------------------------
 // getSynonymNames
@@ -417,16 +416,17 @@ void PostgresConn::rollback() {
   }
 
   Postgres::Result res(PQexec(m_pgsqlConn, "ROLLBACK"));
-  throwDBIfNotStatus(res.get(), PGRES_COMMAND_OK, std::string(__FUNCTION__) + " problem rolling back the DB transaction");
+  throwDBIfNotStatus(res.get(), PGRES_COMMAND_OK,
+                     std::string(__FUNCTION__) + " problem rolling back the DB transaction");
 }
 
 //------------------------------------------------------------------------------
 // setAutocommitMode
 //------------------------------------------------------------------------------
 void PostgresConn::setAutocommitMode(const AutocommitMode autocommitMode) {
-  if(AutocommitMode::AUTOCOMMIT_OFF == autocommitMode) {
+  if (AutocommitMode::AUTOCOMMIT_OFF == autocommitMode) {
     throw rdbms::Conn::AutocommitModeNotSupported("Failed to set autocommit mode to AUTOCOMMIT_OFF: PostgresConn only"
-      " supports AUTOCOMMIT_ON");
+                                                  " supports AUTOCOMMIT_ON");
   }
 }
 
@@ -445,14 +445,15 @@ void PostgresConn::closeAssumeLocked() {
 //------------------------------------------------------------------------------
 // decallocateStmt
 //------------------------------------------------------------------------------
-void PostgresConn::deallocateStmt(const std::string &stmt) {
+void PostgresConn::deallocateStmt(const std::string& stmt) {
   // assumes connection lock is held
 
   std::ostringstream s;
   s << "DEALLOCATE " << stmt;
 
   Postgres::Result res(PQexec(m_pgsqlConn, s.str().c_str()));
-  throwDBIfNotStatus(res.get(), PGRES_COMMAND_OK, std::string(__FUNCTION__) + " failed to DEALLOCATE statement " + stmt);
+  throwDBIfNotStatus(res.get(), PGRES_COMMAND_OK,
+                     std::string(__FUNCTION__) + " failed to DEALLOCATE statement " + stmt);
 }
 
 //------------------------------------------------------------------------------
@@ -476,29 +477,32 @@ std::string PostgresConn::nextStmtName() {
 //------------------------------------------------------------------------------
 // noticeProcessor
 //------------------------------------------------------------------------------
-void PostgresConn::noticeProcessor(void *arg, const char *message) {
+void PostgresConn::noticeProcessor(void* arg, const char* message) {
   //fprintf(stderr, "%s", message);
 }
 
 //------------------------------------------------------------------------------
 // throwDBIfNotStatus
 //------------------------------------------------------------------------------
-void PostgresConn::throwDBIfNotStatus(const PGresult *res,
-            const ExecStatusType requiredStatus, const std::string &prefix) {
+void PostgresConn::throwDBIfNotStatus(const PGresult* res,
+                                      const ExecStatusType requiredStatus,
+                                      const std::string& prefix) {
   // assumes connection wr lock held
   if (PQresultStatus(res) != requiredStatus) {
     try {
-      Postgres::ThrowInfo(m_pgsqlConn,res,prefix);
-    } catch(exception::LostDatabaseConnection &) {
+      Postgres::ThrowInfo(m_pgsqlConn, res, prefix);
+    }
+    catch (exception::LostDatabaseConnection&) {
       try {
         closeAssumeLocked();
-      } catch(std::exception &) {
+      }
+      catch (std::exception&) {
       }
       throw;
     }
   }
 }
 
-} // namespace wrapper
-} // namespace rdbms
-} // namespace cta
+}  // namespace wrapper
+}  // namespace rdbms
+}  // namespace cta

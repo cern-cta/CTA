@@ -33,12 +33,11 @@ namespace dataStructures {
  * a specific copy of a storage class 
  */
 struct ArchiveRoute {
-
   ArchiveRoute();
 
-  bool operator==(const ArchiveRoute &rhs) const;
+  bool operator==(const ArchiveRoute& rhs) const;
 
-  bool operator!=(const ArchiveRoute &rhs) const;
+  bool operator!=(const ArchiveRoute& rhs) const;
 
   /**
    * The name of the storage class which is only guranateed to be unique within
@@ -55,14 +54,14 @@ struct ArchiveRoute {
   EntryLog creationLog;
   EntryLog lastModificationLog;
   std::string comment;
-  
+
   typedef std::map<uint32_t, ArchiveRoute> StorageClassMap;
   typedef std::map<std::string /*storage class*/, StorageClassMap> FullMap;
 
-}; // struct ArchiveRoute
+};  // struct ArchiveRoute
 
-std::ostream &operator<<(std::ostream &os, const ArchiveRoute &obj);
+std::ostream& operator<<(std::ostream& os, const ArchiveRoute& obj);
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+}  // namespace dataStructures
+}  // namespace common
+}  // namespace cta

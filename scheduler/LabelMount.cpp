@@ -19,7 +19,7 @@
 
 namespace cta {
 
-LabelMount::LabelMount(catalogue::Catalogue& catalogue): m_catalogue(catalogue) {
+LabelMount::LabelMount(catalogue::Catalogue& catalogue) : m_catalogue(catalogue) {
   throw 0;
   // TODO
 }
@@ -54,33 +54,30 @@ std::string LabelMount::getVid() const {
   // TODO
 }
 
-void LabelMount::setDriveStatus(cta::common::dataStructures::DriveStatus status, const std::optional<std::string> & reason) {
+void LabelMount::setDriveStatus(cta::common::dataStructures::DriveStatus status,
+                                const std::optional<std::string>& reason) {
   throw 0;
   // TODO
 }
 
-void LabelMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) {
+void LabelMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) {
   throw 0;
   // TODO
 }
 
-void LabelMount::setTapeMounted(log::LogContext &logContext) const {
+void LabelMount::setTapeMounted(log::LogContext& logContext) const {
   throw 0;
   // TODO
 }
 
-LabelMount::LabelMount(catalogue::Catalogue& catalogue, std::unique_ptr<cta::SchedulerDatabase::LabelMount> dbMount):
-  m_catalogue(catalogue) {
+LabelMount::LabelMount(catalogue::Catalogue& catalogue, std::unique_ptr<cta::SchedulerDatabase::LabelMount> dbMount) :
+m_catalogue(catalogue) {
   throw 0;
   // TODO;
 }
-
-
 
 LabelMount::~LabelMount() {
   //TODO
 }
 
-
-
-} // namespace cta.
+}  // namespace cta.

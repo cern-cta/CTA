@@ -40,11 +40,10 @@ public:
    * @param embedBacktrace whether to embed a backtrace of where the
    * exception was throw in the message
    */
-  UserErrorWithCacheInfo(const std::string &cInfo, const std::string &context = "", const bool embedBacktrace = true):
-    UserError(context, embedBacktrace),
-    cacheInfo(cInfo) {
-  }
-}; // class UserErrorWithTimeBasedCacheInfo
+  UserErrorWithCacheInfo(const std::string& cInfo, const std::string& context = "", const bool embedBacktrace = true) :
+  UserError(context, embedBacktrace),
+  cacheInfo(cInfo) {}
+};  // class UserErrorWithTimeBasedCacheInfo
 
-} // namespace exception
-} // namespace cta
+}  // namespace exception
+}  // namespace cta

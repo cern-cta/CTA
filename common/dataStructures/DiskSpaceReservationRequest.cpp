@@ -23,9 +23,10 @@ namespace cta {
 void DiskSpaceReservationRequest::addRequest(const std::string& diskSystemName, uint64_t size) {
   try {
     at(diskSystemName) += size;
-  } catch (std::out_of_range &) {
+  }
+  catch (std::out_of_range&) {
     operator[](diskSystemName) = size;
   }
 }
 
-}
+}  // namespace cta

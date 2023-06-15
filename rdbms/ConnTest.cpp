@@ -34,8 +34,7 @@ void cta_rdbms_ConnTest::SetUp() {
 //------------------------------------------------------------------------------
 // TearDown
 //------------------------------------------------------------------------------
-void cta_rdbms_ConnTest::TearDown() {
-}
+void cta_rdbms_ConnTest::TearDown() {}
 
 TEST_P(cta_rdbms_ConnTest, getAutocommitMode_default_AUTOCOMMIT_ON) {
   using namespace cta::rdbms;
@@ -68,21 +67,21 @@ TEST_P(cta_rdbms_ConnTest, setAutocommitMode_AUTOCOMMIT_OFF) {
   auto conn = connPool.getConn();
   ASSERT_EQ(AutocommitMode::AUTOCOMMIT_ON, conn.getAutocommitMode());
 
-  switch(m_login.dbType) {
-  case Login::DBTYPE_ORACLE:
-    conn.setAutocommitMode(AutocommitMode::AUTOCOMMIT_OFF);
-    ASSERT_EQ(AutocommitMode::AUTOCOMMIT_OFF, conn.getAutocommitMode());
-    break;
-  case Login::DBTYPE_IN_MEMORY:
-  case Login::DBTYPE_SQLITE:
-  case Login::DBTYPE_POSTGRESQL:
-    ASSERT_THROW(conn.setAutocommitMode(AutocommitMode::AUTOCOMMIT_OFF), Conn::AutocommitModeNotSupported);
-    break;
-  case Login::DBTYPE_NONE:
-    FAIL() << "Unexpected database login type: value=DBTYPE_NONE";
-    break;
-  default:
-    FAIL() << "Unknown database login type: intValue=" << m_login.dbType;
+  switch (m_login.dbType) {
+    case Login::DBTYPE_ORACLE:
+      conn.setAutocommitMode(AutocommitMode::AUTOCOMMIT_OFF);
+      ASSERT_EQ(AutocommitMode::AUTOCOMMIT_OFF, conn.getAutocommitMode());
+      break;
+    case Login::DBTYPE_IN_MEMORY:
+    case Login::DBTYPE_SQLITE:
+    case Login::DBTYPE_POSTGRESQL:
+      ASSERT_THROW(conn.setAutocommitMode(AutocommitMode::AUTOCOMMIT_OFF), Conn::AutocommitModeNotSupported);
+      break;
+    case Login::DBTYPE_NONE:
+      FAIL() << "Unexpected database login type: value=DBTYPE_NONE";
+      break;
+    default:
+      FAIL() << "Unknown database login type: intValue=" << m_login.dbType;
   }
 }
 
@@ -92,37 +91,35 @@ TEST_P(cta_rdbms_ConnTest, loan_return_loan_conn_setAutocommitMode_AUTOCOMMIT_OF
   const uint64_t maxNbConn = 1;
   ConnPool connPool(m_login, maxNbConn);
 
-  switch(m_login.dbType) {
-  case Login::DBTYPE_ORACLE:
-    {
+  switch (m_login.dbType) {
+    case Login::DBTYPE_ORACLE: {
       auto conn = connPool.getConn();
       ASSERT_EQ(AutocommitMode::AUTOCOMMIT_ON, conn.getAutocommitMode());
       conn.setAutocommitMode(AutocommitMode::AUTOCOMMIT_OFF);
       ASSERT_EQ(AutocommitMode::AUTOCOMMIT_OFF, conn.getAutocommitMode());
     }
-    {
-      auto conn = connPool.getConn();
-      ASSERT_EQ(AutocommitMode::AUTOCOMMIT_ON, conn.getAutocommitMode());
-    }
-    break;
-  case Login::DBTYPE_IN_MEMORY:
-  case Login::DBTYPE_SQLITE:
-  case Login::DBTYPE_POSTGRESQL:
-    {
+      {
+        auto conn = connPool.getConn();
+        ASSERT_EQ(AutocommitMode::AUTOCOMMIT_ON, conn.getAutocommitMode());
+      }
+      break;
+    case Login::DBTYPE_IN_MEMORY:
+    case Login::DBTYPE_SQLITE:
+    case Login::DBTYPE_POSTGRESQL: {
       auto conn = connPool.getConn();
       ASSERT_EQ(AutocommitMode::AUTOCOMMIT_ON, conn.getAutocommitMode());
       ASSERT_THROW(conn.setAutocommitMode(AutocommitMode::AUTOCOMMIT_OFF), Conn::AutocommitModeNotSupported);
     }
-    {
-      auto conn = connPool.getConn();
-      ASSERT_EQ(AutocommitMode::AUTOCOMMIT_ON, conn.getAutocommitMode());
-    }
-    break;
-  case Login::DBTYPE_NONE:
-    FAIL() << "Unexpected database login type: value=DBTYPE_NONE";
-    break;
-  default:
-    FAIL() << "Unknown database login type: intValue=" << m_login.dbType;
+      {
+        auto conn = connPool.getConn();
+        ASSERT_EQ(AutocommitMode::AUTOCOMMIT_ON, conn.getAutocommitMode());
+      }
+      break;
+    case Login::DBTYPE_NONE:
+      FAIL() << "Unexpected database login type: value=DBTYPE_NONE";
+      break;
+    default:
+      FAIL() << "Unknown database login type: intValue=" << m_login.dbType;
   }
 }
 
@@ -179,4 +176,4 @@ TEST_P(cta_rdbms_ConnTest, createSameTableInTwoSeparateInMemoryDatabases_execute
   }
 }
 
-} // namespace unitTests
+}  // namespace unitTests
