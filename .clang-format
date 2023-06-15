@@ -23,7 +23,7 @@ AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: false
 AlwaysBreakTemplateDeclarations: Yes
 BinPackArguments: true
-BinPackParameters: true
+BinPackParameters: false
 BitFieldColonSpacing: Both
 BreakBeforeBraces: Custom
 BraceWrapping:
@@ -46,8 +46,6 @@ BraceWrapping:
   SplitEmptyNamespace: false
 BreakBeforeBinaryOperators: None
 BreakBeforeTernaryOperators: false
-# Configure each individual brace in BraceWrapping
-BreakBeforeBraces: Custom
 BreakConstructorInitializers: AfterColon
 BreakInheritanceList: AfterColon
 BreakStringLiterals: true
@@ -76,7 +74,7 @@ Language: Cpp
 #LineEnding: LF  # clang-format 16
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: None
-PackConstructorInitializers: BinPack
+PackConstructorInitializers: CurrentLine
 PointerAlignment: Left
 QualifierAlignment: Left
 ReferenceAlignment: Left
