@@ -32,6 +32,3 @@ sonarcloud-check:
   only:
     - merge_requests
     - main
-  rules:
-    - if: $RUN_SONARCLOUD == "yes"
-
