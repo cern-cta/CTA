@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Get the project root directory
+PROJECT_ROOT=$(git rev-parse --show-toplevel)
+
+# Define the Podman image name
+IMAGE_NAME="cta-clang-format"
+
+# Check if the Podman image exists
+if ! podman image exists $IMAGE_NAME; then
+  echo "Error: Podman image '$IMAGE_NAME' does not exist.\n"
+  echo "Do 'podman login gitlab-registry.cern.ch' and 'podman pull gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-clang-format'"
+  exit 1
+fi
+
+# Run the Podman container with clang-format check
+if ! podman run --rm -v $PROJECT_ROOT:/root/CTA cta-clang-format check; then
+  echo "Error: clang-format check failed."
+  echo "Please fix the formatting issues and try again."
+  echo
+  echo "Run 'podman run --rm -v $PROJECT_ROOT:/root/CTA cta-clang-format format'"
+  echo "or skip checking with 'git commit --no-verify' (not recommended)"
+  exit 1
+fi
+
+# Continue with the commit if the container execution is successful
+exit 0

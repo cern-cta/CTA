@@ -38,14 +38,7 @@ echo Preparing CTA sources...
 cd ~/CTA
 git submodule update --init --recursive
 
-cat > ~/CTA/.git/hooks/post-checkout << EOFGitHook
-#!/bin/sh
-cd `git rev-parse --show-toplevel`
-git submodule update --init --recursive
-EOFGitHook
-
-chmod +x ~/CTA/.git/hooks/post-checkout
-cp ~/CTA/.git/hooks/post-checkout ~/CTA/.git/hooks/post-merge
+cp -r ~/CTA/git-hooks/* ~/CTA/.git/hooks/
 
 # Clean the current xrootd installation to avoid conflicts if we are installing a different version
 sudo yum remove $(yum list installed | grep xrootd | grep -v fuse3-libs | cut -d " " -f 1) -y || true

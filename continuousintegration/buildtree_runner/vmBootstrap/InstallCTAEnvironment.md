@@ -46,17 +46,9 @@ cp tigConf/tigrc ~/.tigrc
 yum install -y centos-release-scl-rh
 yum install -y git cmake rpm-build devtoolset-11 vim gdb cgdb strace ltrace screen tig lsscsi mt-st mtx sg3_utils jq psmisc yum-plugin-versionlock
 ```
-4. Bootstrap CTA :
+4. Install CTA git hooks:
 ```bash
-cat > ~/path_to_CTA_folder/.git/hooks/post-checkout << EOFGitHook
-#!/bin/sh
-cd `git rev-parse --show-toplevel`
-git submodule update --init --recursive
-EOFGitHook
-
-chmod +x ~/path_to_CTA_folder/.git/hooks/post-checkout
-
-cp ~/path_to_CTA_folder/.git/hooks/post-checkout ~/path_to_CTA_folder/.git/hooks/post-merge
+cp -r ~/CTA/git-hooks/* ~/CTA/.git/hooks/
 ```
 5. Build CTA's srpm
 Go to the CTA parent's folder and type
