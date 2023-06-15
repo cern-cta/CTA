@@ -69,30 +69,30 @@ xrdcp /etc/group root://${EOS_INSTANCE}/${TEMP_FILE}
 # 2.2. Get FSID from disk replica
 DISK_FSID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_INSTANCE} info ${TEMP_FILE} | jq -r '.locations[] | select(.schedgroup | startswith("default")) | .fsid')
 
-# 3.1. Check that stagerrm fails when there is no tape replica
-echo "Testing 'eos root://${EOS_INSTANCE} stagerrm ${TEMP_FILE}'..."
-KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_INSTANCE} stagerrm ${TEMP_FILE}
+# 3.1. Check that evict fails when there is no tape replica
+echo "Testing 'eos root://${EOS_INSTANCE} evict ${TEMP_FILE}'..."
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_INSTANCE} evict ${TEMP_FILE}
 if [ $? -eq 0 ]; then
-  error "'eos stagerrm' command succeeded where it should have failed"
+  error "'eos evict' command succeeded where it should have failed"
 else
-  echo "'eos stagerrm' command failed as expected"
+  echo "'eos evict' command failed as expected"
 fi
 
-# 3.2. Check that stagerrm --fsid <fsid> fails when there is no tape replica
-echo "Testing 'eos root://${EOS_INSTANCE} stagerrm ${TEMP_FILE}'..."
-KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_INSTANCE} stagerrm --fsid ${DISK_FSID} ${TEMP_FILE}
+# 3.2. Check that evict --fsid <fsid> fails when there is no tape replica
+echo "Testing 'eos root://${EOS_INSTANCE} evict ${TEMP_FILE}'..."
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_INSTANCE} evict --fsid ${DISK_FSID} ${TEMP_FILE}
 if [ $? -eq 0 ]; then
-  error "'eos stagerrm' command succeeded where it should have failed"
+  error "'eos evict' command succeeded where it should have failed"
 else
-  echo "'eos stagerrm' command failed as expected"
+  echo "'eos evict' command failed as expected"
 fi
 
 # 4. Check that disk replica still exists
 echo "Checking that ${TEMP_FILE} replica still exists on disk..."
 if test 0 == "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_INSTANCE} info ${TEMP_FILE}  | jq -r '.locations[] | select(.schedgroup | startswith("default")) | .schedgroup' | wc -l)"; then
-  error "'eos stagerrm' removed disk replica, when it should have failed"
+  error "'eos evict' removed disk replica, when it should have failed"
 else
-  echo "'eos stagerrm' did not remove disk replica, as expected"
+  echo "'eos evict' did not remove disk replica, as expected"
 fi
 
 # 5. Put the destination tape drives up and wait for archival
@@ -143,11 +143,11 @@ fi
 
 # 9. Test removing tape replica, should fail
 echo "Trying to remove tape replica with fsid ${FSID_TAPE}..."
-KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_INSTANCE} stagerrm --fsid ${FSID_TAPE} ${TEMP_FILE}
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_INSTANCE} evict --fsid ${FSID_TAPE} ${TEMP_FILE}
 if [ $? -eq 0 ]; then
-  error "'eos stagerrm --fsid ${FSID_TAPE}' command succeeded where it should have failed"
+  error "'eos evict --fsid ${FSID_TAPE}' command succeeded where it should have failed"
 else
-  echo "'eos stagerrm --fsid ${FSID_TAPE}' command failed as expected"
+  echo "'eos evict --fsid ${FSID_TAPE}' command failed as expected"
 fi
 if test 4 != "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_INSTANCE} info ${TEMP_FILE} | jq -r '.locations[] | .schedgroup' | wc -l)"; then
   error "The number of replicas is not the expected one"
@@ -157,11 +157,11 @@ fi
 
 # 10. Test removing non-existing replica, should fail
 echo "Trying to remove tape replica with non existing fsid ${FSID_NOT_SET_VALUE}..."
-KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_INSTANCE} stagerrm --fsid ${FSID_NOT_SET_VALUE} ${TEMP_FILE}
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_INSTANCE} evict --fsid ${FSID_NOT_SET_VALUE} ${TEMP_FILE}
 if [ $? -eq 0 ]; then
-  error "'eos stagerrm --fsid ${FSID_NOT_SET_VALUE}' command succeeded where it should have failed"
+  error "'eos evict --fsid ${FSID_NOT_SET_VALUE}' command succeeded where it should have failed"
 else
-  echo "'eos stagerrm --fsid ${FSID_NOT_SET_VALUE}' command failed as expected"
+  echo "'eos evict --fsid ${FSID_NOT_SET_VALUE}' command failed as expected"
 fi
 if test 4 != "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_INSTANCE} info ${TEMP_FILE} | jq -r '.locations[] | .schedgroup' | wc -l)"; then
   error "The number of replicas is not the expected one"
@@ -171,11 +171,11 @@ fi
 
 # 11. Test removing one existing replica, should succeed and keep remaining replicas intact
 echo "Trying to remove a replica with existing fsid ${FSID_DUMMY_1_VALUE}..."
-KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_INSTANCE} stagerrm --fsid ${FSID_DUMMY_1_VALUE} ${TEMP_FILE}
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_INSTANCE} evict --fsid ${FSID_DUMMY_1_VALUE} ${TEMP_FILE}
 if [ $? -ne 0 ]; then
-  error "'eos stagerrm --fsid ${FSID_DUMMY_1_VALUE}' command failed where it should have succeeded"
+  error "'eos evict --fsid ${FSID_DUMMY_1_VALUE}' command failed where it should have succeeded"
 else
-  echo "'eos stagerrm --fsid ${FSID_DUMMY_1_VALUE}' command succeeded as expected"
+  echo "'eos evict --fsid ${FSID_DUMMY_1_VALUE}' command succeeded as expected"
 fi
 if test 3 != "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_INSTANCE} info ${TEMP_FILE} | jq -r '.locations[] | .schedgroup' | wc -l)"; then
   error "The number of replicas is not the expected one"
@@ -185,11 +185,11 @@ fi
 
 # 12. Test removing all remaining replicas
 echo "Trying to remove all disk replica\..."
-KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_INSTANCE} stagerrm ${TEMP_FILE}
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_INSTANCE} evict ${TEMP_FILE}
 if [ $? -ne 0 ]; then
-  error "'eos stagerrm' command failed where it should have succeeded"
+  error "'eos evict' command failed where it should have succeeded"
 else
-  echo "'eos stagerrm' command succeeded as expected"
+  echo "'eos evict' command succeeded as expected"
 fi
 if test 1 != "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_INSTANCE} info ${TEMP_FILE} | jq -r '.locations[] | .schedgroup' | wc -l)"; then
   error "The number of replicas is not the expected one"
