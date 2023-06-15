@@ -1,14 +1,37 @@
-sonarcloud-check:
-  except:
-    - tags
-  stage: analysis:static
-  image:
-    name: sonarsource/sonar-scanner-cli:latest
-    entrypoint: [""]
-  cache:
-    key: "${CI_JOB_NAME}"
-    paths:
-      - .sonar/cache
+get-sonar-binaries:
+  # this job download and unpacks the build-wrapper and the sonar-scanner
+  # in this example it is done for every build.
+  # This can be optimized by caching the files or better, by including them, in the build docker image.
+  stage: .pre
   script:
-    - sonar-scanner
- 
+    # Download sonar-scanner
+    - curl -sSLo sonar-scanner.zip "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip"
+    - unzip -o sonar-scanner.zip 
+    - mv sonar-scanner-${SONAR_SCANNER_VERSION}-linux sonar-scanner
+    # Download build-wrapper
+    - curl -sSLo build-wrapper.zip "${SONAR_SERVER_URL}/static/cpp/build-wrapper-linux-x86.zip" 
+    - unzip -o build-wrapper.zip
+    - mv build-wrapper-linux-x86 build-wrapper
+  cache:
+    policy: push
+    key: "${CI_COMMIT_SHORT_SHA}"
+    paths:
+      - build-wrapper/ # to share the build-wrapper between jobs
+      - sonar-scanner/ # to share the sonar-scanner between jobs
+
+sonarcloud-check:
+  stage: sonarcloud
+  cache:
+    policy: pull
+    key: "${CI_COMMIT_SHORT_SHA}"
+    paths:
+      - sonar-scanner/
+      - "${BUILD_WRAPPER_OUT_DIR}"
+  script:
+    - sonar-scanner/bin/sonar-scanner --define sonar.host.url="${SONAR_SERVER_URL}" --define sonar.cfamily.build-wrapper-output="${BUILD_WRAPPER_OUT_DIR}"
+  only:
+    - merge_requests
+    - main
+  rules:
+    - if: $RUN_SONARCLOUD == "yes"
+

@@ -38,11 +38,20 @@
     - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
     - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
     - mkdir build_rpm
-    - cd build_rpm
-    - cmake3 -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
-    - make cta_rpm
+    - cmake3 -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} -S . -B build_rpm
+    - build-wrapper/build-wrapper-linux-x86-64 --out-dir "${BUILD_WRAPPER_OUT_DIR}" cmake3 --build build_rpm/ --parallel
   variables:
     BUILD_PATH: "build_rpm/RPM/RPMS"
+  artifacts:
+      paths:
+        - build/sonar_scanner_example
+  cache:
+    policy: pull-push
+    key: "${CI_COMMIT_SHORT_SHA}"
+    paths:
+      - build-wrapper/
+      - sonar-scanner/
+      - "${BUILD_WRAPPER_OUT_DIR}"
 
 cta_srpm_xrootd4:
   stage: build:srpm

@@ -1,7 +1,7 @@
 stages:
   - build:srpm
   - build:rpm
-  - analysis:static
+  - sonarcloud
   - analysis:check
   - analysis:report
   - build:dockerimage
@@ -18,15 +18,20 @@ variables:
   CTA_VERSION: "${XROOTD_VERSION}"
   CMAKE_OPTIONS: ""
   RUN_SONARCLOUD: "false"
+  SONAR_SERVER_URL: "https://sonarcloud.io"
+  SONAR_SCANNER_VERSION: 4.8.0.2856 # Find the latest version in the "Linux" link on this page:
+                                    # https://docs.sonarqube.org/latest/analysis/scan/sonarscanner/
+  BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
   SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
   GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the sonar analysis task
+  # note that SONAR_TOKEN is transmitted to the environment through Gitlab CI
 
 .prepare-sonarcloud: &prepare-sonarcloud
   - case $CI_SERVER_HOST in
     gitlab.com | *.gitlab.com) RUN_SONARCLOUD="true";;
     *)                         RUN_SONARCLOUD="false";;
     esac;
-    echo "Running on runner $CI_SERVER_HOST (run sonarcloud=$RUN_SONARCLOUD)";
+    echo "Running on runner $CI_SERVER_HOST (run sonarcloud=$RUN_SONARCLOUD, SONAR_TOKEN=$SONAR_TOKEN)";
 
 .prepare-xrootd5: &prepare-xrootd5
   - if [[ ${XROOTD_VERSION} -eq 5 ]];
