@@ -8,6 +8,7 @@
 ### Features
 - cta/CTA#314 - Remove the option of using `cta-admin tapefile ls` with the `-l` option
 - cta/CTA#392 - Remove gRPC configuration for tool and test in cta-change-storage-class-in-catalogue
+- cta/CTA#349 - Add option to change the state reason even if the state is not changing
 
 # v4.8.8-2
 
