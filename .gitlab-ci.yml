@@ -1,7 +1,6 @@
 stages:
   - build:srpm
   - build:rpm
-  - sonarcloud
   - analysis:check
   - analysis:report
   - build:dockerimage
@@ -17,21 +16,6 @@ variables:
   ORACLE_SUPPORT: "ON"
   CTA_VERSION: "${XROOTD_VERSION}"
   CMAKE_OPTIONS: ""
-  RUN_SONARCLOUD: "false"
-  SONAR_SERVER_URL: "https://sonarcloud.io"
-  SONAR_SCANNER_VERSION: 4.8.0.2856 # Find the latest version in the "Linux" link on this page:
-                                    # https://docs.sonarqube.org/latest/analysis/scan/sonarscanner/
-  BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
-  SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
-  GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the sonar analysis task
-  # note that SONAR_TOKEN is transmitted to the environment through Gitlab CI
-
-.prepare-sonarcloud: &prepare-sonarcloud
-  - case $CI_SERVER_HOST in
-    gitlab.com | *.gitlab.com) RUN_SONARCLOUD="true";;
-    *)                         RUN_SONARCLOUD="false";;
-    esac;
-    echo "Running on runner $CI_SERVER_HOST (run sonarcloud=$RUN_SONARCLOUD, SONAR_TOKEN=$SONAR_TOKEN)";
 
 .prepare-xrootd5: &prepare-xrootd5
   - if [[ ${XROOTD_VERSION} -eq 5 ]];
@@ -47,13 +31,13 @@ variables:
       sched_opt="-DCTA_USE_$(echo ${SCHED_TYPE} | tr '[:lower:]' '[:upper:]'):Bool=true";
       sched_version=$(echo ${SCHED_TYPE} | cut -c 1-3);
       CTA_VERSION="${CTA_VERSION}${sched_version}";
-      CMAKE_OPTIONS="-DSKIP_UNIT_TESTS:STRING=1 ${sched_opt}";
+      CMAKE_OPTIONS+="-DSKIP_UNIT_TESTS:STRING=1 ${sched_opt} ";
     fi
 
 .prepare-no-oracle: &prepare-no-oracle
   - if [[ ${ORACLE_SUPPORT} != "ON" ]]; then
       echo "Disabling Oracle Support";
-      CMAKE_OPTIONS="-DDISABLE_ORACLE_SUPPORT:BOOL=ON";
+      CMAKE_OPTIONS+="-DDISABLE_ORACLE_SUPPORT:BOOL=ON";
     fi
 
 default:
@@ -61,7 +45,7 @@ default:
   before_script:
     - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
     - echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
-    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
+    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
     - test -n "${CI_COMMIT_TAG}" && export TAG_VERSION=$(echo ${CI_COMMIT_TAG} | sed -e 's/^v//;s/-.*$//')
     - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | sed -e 's/^[^-]*-//')
     - major_version=$(echo ${TAG_VERSION} | cut -d. -f1)
@@ -69,7 +53,6 @@ default:
         echo "Setting to compile with XRootD version 5";
         XROOTD_VERSION=5;
       fi
-    - *prepare-sonarcloud
     - *prepare-xrootd5
     - *prepare-scheduler-type
     - *prepare-no-oracle
