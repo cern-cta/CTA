@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - 336-add-sonarcloud-static-analysis-to-the-gitlab-ci-like-is-done-for-cppcheck
   pull_request:
     types: [opened, synchronize, reopened]
 
@@ -14,12 +15,15 @@ jobs:
       image: centos:7
     
     env:
-      SONAR_SCANNER_VERSION: 4.6.1.2450 # Find the latest version in the "Linux" link on this page:
-                                        # https://sonarcloud.io/documentation/analysis/scan/sonarscanner/
-      SONAR_SERVER_URL: "https://sonarcloud.io"
+      XROOTD_VERSION: 4
+      SCHED_TYPE: "objectstore"
+      ORACLE_SUPPORT: "ON"
+      CTA_VERSION: "${XROOTD_VERSION}"
+      CMAKE_OPTIONS: ""
       BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
+
     steps:
-      - name: Download BioDynaMo
+      - name: Download CTA
         uses: actions/checkout@v3
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
@@ -33,47 +37,67 @@ jobs:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
-      - name: Download and set up sonar-scanner
-        env:
-          SONAR_SCANNER_DOWNLOAD_URL: https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${{ env.SONAR_SCANNER_VERSION }}-linux.zip
-        run: |
-          mkdir -p $HOME/.sonar
-          curl -sSLo $HOME/.sonar/sonar-scanner.zip ${{ env.SONAR_SCANNER_DOWNLOAD_URL }} 
-          unzip -o $HOME/.sonar/sonar-scanner.zip -d $HOME/.sonar/
-          echo "$HOME/.sonar/sonar-scanner-${{ env.SONAR_SCANNER_VERSION }}-linux/bin" >> $GITHUB_PATH
-      - name: Download and set up build-wrapper
-        env:
-          BUILD_WRAPPER_DOWNLOAD_URL: ${{ env.SONAR_SERVER_URL }}/static/cpp/build-wrapper-linux-x86.zip
-        run: |
-          curl -sSLo $HOME/.sonar/build-wrapper-linux-x86.zip ${{ env.BUILD_WRAPPER_DOWNLOAD_URL }}
-          unzip -o $HOME/.sonar/build-wrapper-linux-x86.zip -d $HOME/.sonar/
-          echo "$HOME/.sonar/build-wrapper-linux-x86" >> $GITHUB_PATH
+      - name: Install sonar-scanner and build-wrapper
+        uses: SonarSource/sonarcloud-github-c-cpp@v1
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libopenmpi-dev libomp5 libomp-dev libnuma-dev freeglut3-dev \
-            libreadline-dev libsqlite3-dev tk-dev python3-openssl ninja-build libblas-dev \
-            liblapack-dev kcov libgit2-dev
-          curl -L -O https://github.com/Kitware/CMake/releases/download/v3.19.3/cmake-3.19.3-Linux-x86_64.sh
-          chmod +x cmake-3.19.3-Linux-x86_64.sh
-          sudo ./cmake-3.19.3-Linux-x86_64.sh --skip-license --prefix=/usr/local
+          export CTA_BUILD_ID=${GITHUB_RUN_ID}git${GITHUB_SHA:0:8}
+          echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
+          cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
+          test [[ "${GITHUB_REF_TYPE}" == "tag" ]; then
+            export TAG_VERSION=$(echo ${GITHUB_REF_NAME} | sed -e 's/^v//;s/-.*$//')
+            export TAG_RELEASE=$(echo ${GITHUB_REF_NAME} | sed -e 's/^[^-]*-//')
+          fi
+          major_version=$(echo ${TAG_VERSION} | cut -d. -f1)
+          if [[ ${major_version} == 5 ]]; then
+            echo "Setting to compile with XRootD version 5"
+            XROOTD_VERSION=5
+          fi
+          if [[ ${XROOTD_VERSION} -eq 5 ]]; then
+            echo "Using XRootD version 5"
+            ./continuousintegration/docker/ctafrontend/cc7/opt/run/bin/cta-versionlock --file ./continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list config xrootd5
+            yum-config-manager --enable cta-ci-xrootd5
+          else
+            echo "Using XRootD version 4"
+          fi
+          if [[ ${SCHED_TYPE} != "objectstore" ]]; then
+            echo "Using specified scheduler database type $SCHED_TYPE"
+            sched_opt="-DCTA_USE_$(echo ${SCHED_TYPE} | tr '[:lower:]' '[:upper:]'):Bool=true"
+            sched_version=$(echo ${SCHED_TYPE} | cut -c 1-3)
+            CTA_VERSION="${CTA_VERSION}${sched_version}"
+            CMAKE_OPTIONS+="-DSKIP_UNIT_TESTS:STRING=1 ${sched_opt} "
+          fi
+          if [[ ${ORACLE_SUPPORT} != "ON" ]]; then
+            echo "Disabling Oracle Support"
+            CMAKE_OPTIONS+="-DDISABLE_ORACLE_SUPPORT:BOOL=ON"
+          fi          
+          yum install -y devtoolset-11 cmake3 make rpm-build git
+          source /opt/rh/devtoolset-11/enable
+          git submodule update --init --recursive
+          mkdir build_srpm
+          cd build_srpm
+          echo ${CMAKE_OPTIONS}
+          cmake3 -DPackageOnly:Bool=true -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
+          make cta_srpm
       - name: Run build-wrapper
         run: |
-          export PATH="$HOME/.pyenv/bin:$PATH"
-          eval "$(pyenv init --path)"
-          eval "$(pyenv init -)"
-          pyenv shell 3.9.1
-          mkdir build
-          cmake -G Ninja \
-          -Dparaview=ON \
-          -Dcoverage=ON \
-          -Dlibgit2=ON \
-          -B build
-          build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake --build build/ --parallel
+          yum install -y devtoolset-11 cmake3 make rpm-build
+          yum -y install yum-plugin-priorities yum-plugin-versionlock
+          yum install -y git
+          source /opt/rh/devtoolset-11/enable
+          git submodule update --init --recursive
+          cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
+          cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
+          yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
+          mkdir build_rpm
+          cd build_rpm
+          echo ${CMAKE_OPTIONS}
+          cmake3 -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
+          make cta_rpm
+          build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} make cta_rpm
       - name: Run sonar-scanner
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          source $(find /home -path "*/bin/*" -name "*thisbdm.sh")
-          sonar-scanner --define sonar.host.url="${{ env.SONAR_SERVER_URL }}" --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR }}"
+          sonar-scanner --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR }}"
