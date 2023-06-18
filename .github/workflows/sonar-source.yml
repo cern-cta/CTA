@@ -58,7 +58,7 @@ jobs:
           export CTA_BUILD_ID=${GITHUB_RUN_ID}git${GITHUB_SHA:0:8}
           echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
           cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
-          test [[ "${GITHUB_REF_TYPE}" == "tag" ]; then
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]; then
             export TAG_VERSION=$(echo ${GITHUB_REF_NAME} | sed -e 's/^v//;s/-.*$//')
             export TAG_RELEASE=$(echo ${GITHUB_REF_NAME} | sed -e 's/^[^-]*-//')
           fi
