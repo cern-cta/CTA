@@ -589,6 +589,9 @@ public:
   void clearCompressionStats() override;
   std::vector<castor::tape::tapeserver::drive::endOfWrapPosition> getEndOfWrapPositions() override;
   bool isEncryptionCapEnabled() override;
+  std::map<std::string,uint32_t> getVolumeStats() override;
+  std::map<std::string,float> getQualityStats() override;
+  std::map<std::string,uint32_t> getDriveStats() override;
 };
 
 class DriveIBM3592 : public DriveGeneric {
