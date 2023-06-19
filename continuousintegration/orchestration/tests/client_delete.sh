@@ -16,36 +16,11 @@
 #               submit itself to any jurisdiction.
 
 
-
-# Provide an EOS directory and return the list of tapes containing files under that directory
-nsls_tapes()
-{
-  # EOS_DIR=${1:-${EOS_BASEDIR}}
-  #  |-> Commented to get only the VID of the files the test setup is working with.
-  # 1. Query EOS namespace to get a list of file IDs
-  # 2. Pipe to "tape ls" to get the list of tapes where those files are archived
-  eos root://${EOSINSTANCE} find --fid ${EOS_DIR} |\
-    admin_cta --json tape ls --fxidfile /dev/stdin |\
-    jq '.[] | .vid' | sed 's/"//g'
-}
-
-
-# Provide a list of tapes and list the filenames of the files stored on those tapes
-tapefile_ls()
-{
-  for vid in $*
-  do
-    admin_cta --json tapefile ls --lookupnamespace --vid ${vid} |\
-    jq '.[] | .df.path'
-  done
-}
-
 # Get list of files currently on tape.
-tmp_file=$(mktemp)
-initial_files_on_tape=$(mktemp)
+INITIALFILESONTAPE=0
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-    eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[0-9][0-9]*::t1' | awk '{print $10}' > tmp_file
-    cat $tmp_file | xargs -iFILE_NAME echo ${subdir}/FILE_NAME >> $initial_files_on_tape
+    dir_size=$(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[0-9]+::t1' | wc -l)
+    INITIALFILESONTAPE=$((${INITIALFILESONTAPE} + ${dir_size}))
 done
 
 
@@ -60,15 +35,13 @@ else
   admin_cta admin ls
   die "Could not launch cta-admin command."
 fi
-# recount the files on tape as the workflows may have gone further...
-VIDLIST=$(nsls_tapes ${EOS_DIR})
-INITIALFILESONTAPE=$(tapefile_ls ${VIDLIST} | wc -l)
+
 echo "Before starting deletion there are ${INITIALFILESONTAPE} files on tape."
 #XrdSecPROTOCOL=sss eos -r 0 0 root://${EOSINSTANCE} rm -Fr ${EOS_DIR} &
 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOSINSTANCE} rm -Fr ${EOS_DIR} &
 EOSRMPID=$!
 # wait a bit in case eos prematurely fails...
-sleep 0.1i
+sleep 1
 if test ! -d /proc/${EOSRMPID}; then
   # eos rm process died, get its status
   wait ${EOSRMPID}
@@ -92,14 +65,12 @@ while test 0 != ${FILESONTAPE}; do
     break
   fi
 
-  FILESONTAPE=$(tapefile_ls ${VIDLIST} > >(wc -l) 2> >(cat > /tmp/ctaerr))
+  FILESONTAPE=0
+  for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
+      FILESONTAPE=$((${FILESONTAPE} + $(eos root://${EOSINSTANCE} ls -y ${EOS_DIR}/${subdir} | egrep '^d[0-9]+::t1' | wc -l)))
+  done
 
-  if [[ $(cat /tmp/ctaerr | wc -l) -gt 0 ]]; then
-    echo "cta-admin COMMAND FAILED!!"
-    echo "ERROR CTA ERROR MESSAGE:"
-    cat /tmp/ctaerr
-    break
-  fi
+  # TODO: Check error for eos command?
 
   DELETED=$((${INITIALFILESONTAPE} - ${FILESONTAPE}))
 
@@ -114,17 +85,12 @@ kill ${EOSRMPID} &> /dev/null
 # therefore we need to take the smallest of the 2 values to decide if the system test was
 # successful or not
 LASTCOUNT=0
-if [[ ${RETRIEVED} -gt ${DELETED} ]]; then
+if [[ ${INITIALFILESONTAPE} -gt ${DELETED} ]]; then
   LASTCOUNT=${DELETED}
   echo "Some files have not been deleted:"
-  tapefile_ls ${VIDLIST}
-  # For some reason the tapefile_ls command return "Bad response from nameserver"
-  # So, we cant compare against the list of files for the current test. An
-  # alternative would be to check directly with EOS.
-  # TODO: Update db delete column with the actual deleted files.
 else
   echo "All files have been deleted"
-  LASTCOUNT=${RETRIEVED}
+  LASTCOUNT=${INITIALFILESONTAPE}
   db_begin_transaction
   db_update_col "deleted" "+" "1"
   db_commit_transaction
