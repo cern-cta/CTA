@@ -74,7 +74,8 @@ jobs:
           if [[ ${ORACLE_SUPPORT} != "ON" ]]; then
             echo "Disabling Oracle Support"
             CMAKE_OPTIONS+="-DDISABLE_ORACLE_SUPPORT:BOOL=ON"
-          fi          
+          fi
+          git config --global --add safe.directory /__w/CTA/CTA
           git submodule update --init --recursive
           mkdir build_srpm
           cd build_srpm
