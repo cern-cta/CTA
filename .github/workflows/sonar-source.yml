@@ -33,24 +33,14 @@ jobs:
           yum -y remove git*
           yum -y install https://packages.endpointdev.com/rhel/7/os/x86_64/endpoint-repo-1.10-1.x86_64.rpm
           yum -y install git
-          curl -L -O https://github.com/Kitware/CMake/releases/download/v3.19.3/cmake-3.19.3-Linux-x86_64.sh
-          chmod +x cmake-3.19.3-Linux-x86_64.sh
-          ./cmake-3.19.3-Linux-x86_64.sh --skip-license --prefix=/usr/local
+          curl -L -O https://github.com/Kitware/CMake/releases/download/v3.19.3/cmake-3.26.4-Linux-x86_64.sh
+          chmod +x cmake-3.26.4-Linux-x86_64.sh
+          ./cmake-3.26.4-Linux-x86_64.sh --skip-license --prefix=/usr/local
       
       - name: Download CTA
         uses: actions/checkout@v3
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
-      - name: Set up JDK 11
-        uses: actions/setup-java@v1
-        with:
-          java-version: 11
-      - name: Cache SonarCloud packages
-        uses: actions/cache@v1
-        with:
-          path: ~/.sonar/cache
-          key: ${{ runner.os }}-sonar
-          restore-keys: ${{ runner.os }}-sonar
       - name: Install sonar-scanner and build-wrapper
         uses: SonarSource/sonarcloud-github-c-cpp@v1
       - name: Install CTA dependencies
@@ -58,7 +48,7 @@ jobs:
           export CTA_BUILD_ID=${GITHUB_RUN_ID}git${GITHUB_SHA:0:8}
           echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
           cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
-          if [[ "${GITHUB_REF_TYPE}" == "tag" ]; then
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             export TAG_VERSION=$(echo ${GITHUB_REF_NAME} | sed -e 's/^v//;s/-.*$//')
             export TAG_RELEASE=$(echo ${GITHUB_REF_NAME} | sed -e 's/^[^-]*-//')
           fi
