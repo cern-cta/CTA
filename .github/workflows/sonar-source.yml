@@ -33,9 +33,9 @@ jobs:
           yum -y remove git*
           yum -y install https://packages.endpointdev.com/rhel/7/os/x86_64/endpoint-repo-1.10-1.x86_64.rpm
           yum -y install git
-          curl -L -O https://github.com/Kitware/CMake/releases/download/v3.19.3/cmake-3.26.4-Linux-x86_64.sh
-          chmod +x cmake-3.26.4-Linux-x86_64.sh
-          ./cmake-3.26.4-Linux-x86_64.sh --skip-license --prefix=/usr/local
+          curl -L -O https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4-linux-x86_64.sh
+          chmod +x cmake-3.26.4-linux-x86_64.sh
+          ./cmake-3.26.4-linux-x86_64.sh --skip-license --prefix=/usr/local
       
       - name: Download CTA
         uses: actions/checkout@v3
