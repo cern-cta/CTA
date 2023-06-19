@@ -28,8 +28,6 @@ jobs:
           yum -y update
           yum -y install centos-release-scl epel-release yum-plugin-priorities yum-plugin-versionlock
           yum -y install devtoolset-11 cmake3 make rpm-build git unzip ninja-build which
-          source /opt/rh/devtoolset-11/enable
-          
           yum -y remove git*
           yum -y install https://packages.endpointdev.com/rhel/7/os/x86_64/endpoint-repo-1.10-1.x86_64.rpm
           yum -y install git
@@ -79,7 +77,8 @@ jobs:
           git submodule update --init --recursive
           mkdir build_srpm
           cd build_srpm
-          echo ${CMAKE_OPTIONS}
+          echo CMAKE_OPTIONS=${CMAKE_OPTIONS}
+          source /opt/rh/devtoolset-11/enable
           cmake -DPackageOnly:Bool=true -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
           make cta_srpm
       - name: Run build-wrapper
@@ -89,7 +88,8 @@ jobs:
           yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
           mkdir build_rpm
           cd build_rpm
-          echo ${CMAKE_OPTIONS}
+          echo CMAKE_OPTIONS=${CMAKE_OPTIONS}
+          source /opt/rh/devtoolset-11/enable
           cmake -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
           build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} make cta_rpm
       - name: Run sonar-scanner
