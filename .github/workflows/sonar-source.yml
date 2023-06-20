@@ -18,7 +18,6 @@ jobs:
       XROOTD_VERSION: 4
       SCHED_TYPE: objectstore
       ORACLE_SUPPORT: ON
-      CTA_VERSION: ${XROOTD_VERSION}
       CMAKE_OPTIONS:
       BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
 
@@ -62,6 +61,7 @@ jobs:
           else
             echo "Using XRootD version 4"
           fi
+          export CTA_VERSION=$XROOTD_VERSION
           if [[ ${SCHED_TYPE} != "objectstore" ]]; then
             echo "Using specified scheduler database type $SCHED_TYPE"
             sched_opt="-DCTA_USE_$(echo ${SCHED_TYPE} | tr '[:lower:]' '[:upper:]'):Bool=true"
