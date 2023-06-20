@@ -18,8 +18,6 @@ jobs:
       XROOTD_VERSION: 4
       SCHED_TYPE: objectstore
       ORACLE_SUPPORT: ON
-      CTA_BUILD_ID:
-      CTA_VERSION:
       CMAKE_OPTIONS:
       BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
 
@@ -77,6 +75,7 @@ jobs:
             echo "Disabling Oracle Support"
             CMAKE_OPTIONS+="-DDISABLE_ORACLE_SUPPORT:BOOL=ON"
           fi
+          echo "Local directory=$(pwd)"
           git config --global --add safe.directory /__w/CTA/CTA
           git submodule update --init --recursive
           mkdir build_srpm
@@ -89,6 +88,10 @@ jobs:
           make cta_srpm
       - name: Run build-wrapper
         run: |
+          export CMAKE_OPTIONS
+          export CTA_VERSION=$XROOTD_VERSION
+          export CTA_BUILD_ID=${GITHUB_RUN_ID}git${GITHUB_SHA:0:8}
+          echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
           cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
           cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
           yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
