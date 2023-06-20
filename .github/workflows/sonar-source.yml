@@ -44,7 +44,9 @@ jobs:
         uses: SonarSource/sonarcloud-github-c-cpp@v1
       - name: Install CTA dependencies
         run: |
-          CTA_BUILD_ID=${GITHUB_RUN_ID}git${GITHUB_SHA:0:8}
+          export CMAKE_OPTIONS
+          export CTA_VERSION
+          export CTA_BUILD_ID=${GITHUB_RUN_ID}git${GITHUB_SHA:0:8}
           echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
           cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
