@@ -1,7 +1,7 @@
 cta_tagged_rpm:
   only:
     - tags
-  stage: build:rpm
+  stage: build
   retry: 1
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
   script:

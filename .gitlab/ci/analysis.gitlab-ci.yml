@@ -1,7 +1,7 @@
 cppcheck:
   except:
     - tags
-  stage: analysis:check
+  stage: analysis
   image:
     name: neszt/cppcheck-docker
     entrypoint: ["/usr/bin/env"]
@@ -19,7 +19,8 @@ cppcheck:
 cppcheck_report:
   except:
     - tags
-  stage: analysis:report
+  stage: analysis
+  needs: [ cppcheck ]
   image: centos:7
   before_script:
     - yum -y install python3-pip
@@ -30,3 +31,23 @@ cppcheck_report:
   artifacts:
     reports:
       codequality: cppcheck.json
+
+clang_format:
+  allow_failure: true
+  except:
+    - tags
+  stage: analysis
+  image:
+    name: gitlab-registry.cern.ch/linuxsupport/alma9-base
+    entrypoint: [""]
+  script:
+    # Remove CC7-specific repos copied by defalt:before_script in .gitlab-ci.yml 
+    - rm -rf /etc/yum.repos.d/centos-cernonly.repo
+    - rm -rf /etc/yum.repos.d/cta-ci.repo
+    - rm -rf /etc/yum.repos.d/eos-quarkdb.repo
+    - yum clean all
+    - yum install -y git-clang-format
+    - find . -type f \( -name "*.cpp" -o -name "*.hpp" \) -exec clang-format --dry-run -Werror --style=file {} + > clang-format.output
+  artifacts:
+    paths:
+    - clang-format.output
