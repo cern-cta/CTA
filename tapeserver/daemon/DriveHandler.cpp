@@ -807,7 +807,10 @@ int DriveHandler::runChild() {
   // Create the channel to talk back to the parent process.
   cta::tape::daemon::DriveHandlerProxy driveHandlerProxy(*m_socketPair);
 
-  std::string hostname = cta::utils::getShortHostname();
+  cta::common::dataStructures::DriveInfo driveInfo;
+  driveInfo.driveName = m_driveConfig.unitName;
+  driveInfo.logicalLibrary = m_driveConfig.logicalLibrary;
+  driveInfo.host = cta::utils::getShortHostname();
 
   auto& lc = m_processManager.logContext();
   {
@@ -876,10 +879,6 @@ int DriveHandler::runChild() {
     lc.log(log::ERR, errorMsg);
     // Get hold of the scheduler.
     try {
-      cta::common::dataStructures::DriveInfo driveInfo;
-      driveInfo.driveName = m_driveConfig.unitName;
-      driveInfo.logicalLibrary = m_driveConfig.logicalLibrary;
-      driveInfo.host = hostname;
       scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
       cta::common::dataStructures::SecurityIdentity securityIdentity;
       cta::common::dataStructures::DesiredDriveState driveState;
@@ -908,10 +907,6 @@ int DriveHandler::runChild() {
       std::string errorMsg = "In DriveHandler::runChild(): Should run cleaner but VID is missing. Putting the drive down.";
       lc.log(log::ERR, errorMsg);
       try {
-        cta::common::dataStructures::DriveInfo driveInfo;
-        driveInfo.driveName = m_driveConfig.unitName;
-        driveInfo.logicalLibrary = m_driveConfig.logicalLibrary;
-        driveInfo.host = hostname;
         scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
         cta::common::dataStructures::SecurityIdentity securityIdentity;
         cta::common::dataStructures::DesiredDriveState driveState;
@@ -931,6 +926,8 @@ int DriveHandler::runChild() {
     }
     // Log the decision
     {
+      scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
+                                  cta::common::dataStructures::DriveStatus::CleaningUp, lc);
       log::ScopedParamContainer params(lc);
       params.add("tapeVid", m_previousVid)
             .add("tapeDrive", m_driveConfig.unitName)
@@ -1052,11 +1049,6 @@ int DriveHandler::runChild() {
       try {
         // Before setting the desired state as down, we have to make sure the drive exists in the registry.
         // this is done by reporting the drive as down first.
-        cta::common::dataStructures::DriveInfo driveInfo;
-        driveInfo.driveName = m_driveConfig.unitName;
-        driveInfo.logicalLibrary = m_driveConfig.logicalLibrary;
-        driveInfo.host = hostname;
-
         // Checking the drive does not already exist in the database
         if (!scheduler.checkDriveCanBeCreated(driveInfo, lc)) {
           driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
@@ -1176,6 +1168,12 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
       lc.log(log::ERR, "In DriveHandler::shutdown(): Should run cleaner but VID is missing. Do nothing.");
     }
     else {
+      cta::common::dataStructures::DriveInfo driveInfo;
+      driveInfo.driveName = m_driveConfig.unitName;
+      driveInfo.logicalLibrary = m_driveConfig.logicalLibrary;
+      driveInfo.host = cta::utils::getShortHostname();
+      scheduler->reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
+                                   cta::common::dataStructures::DriveStatus::CleaningUp, lc);
       log::ScopedParamContainer scoped(m_processManager.logContext());
       scoped.add("tapeVid", m_sessionVid)
             .add("tapeDrive", m_driveConfig.unitName)
