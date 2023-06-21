@@ -1,7 +1,7 @@
 cppcheck:
   except:
     - tags
-  stage: analysis:check
+  stage: analysis
   image:
     name: neszt/cppcheck-docker
     entrypoint: ["/usr/bin/env"]
@@ -19,7 +19,8 @@ cppcheck:
 cppcheck_report:
   except:
     - tags
-  stage: analysis:report
+  stage: analysis
+  needs: [ cppcheck ]
   image: centos:7
   before_script:
     - yum -y install python3-pip

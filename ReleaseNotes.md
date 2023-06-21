@@ -1,5 +1,8 @@
 # v4.10.0-1
 
+### Features
+- cta/CTA#395 - Create gitlab job for code format check
+
 ### Catalogue Schema
 - cta/CTA#397 - Rework catalogue release procedure and deployment path
 - cta/CTA#442 - Update CTA catalogue schema to version 14.0
