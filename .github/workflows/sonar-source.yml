@@ -18,7 +18,6 @@ jobs:
       XROOTD_VERSION: 4
       SCHED_TYPE: objectstore
       ORACLE_SUPPORT: ON
-      CMAKE_OPTIONS:
       BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
 
     steps:
@@ -45,7 +44,6 @@ jobs:
           export CMAKE_OPTIONS
           export CTA_VERSION
           export CTA_BUILD_ID=${GITHUB_RUN_ID}git${GITHUB_SHA:0:8}
-          echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
           cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             export TAG_VERSION=$(echo ${GITHUB_REF_NAME} | sed -e 's/^v//;s/-.*$//')
@@ -79,18 +77,14 @@ jobs:
           git submodule update --init --recursive
           mkdir build_srpm
           cd build_srpm
-          echo CTA_BUILD_ID=$CTA_BUILD_ID
-          echo CTA_VERSION=$CTA_VERSION
-          echo CMAKE_OPTIONS=${CMAKE_OPTIONS}
+          echo "CMAKE_OPTIONS=${CMAKE_OPTIONS}" >> "$GITHUB_ENV"
+          echo "CTA_VERSION=${CTA_VERSION}" >> "$GITHUB_ENV"
+          echo "CTA_BUILD_ID=${CTA_BUILD_ID}" >> "$GITHUB_ENV"
           source /opt/rh/devtoolset-11/enable
           cmake -DPackageOnly:Bool=true -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
           make cta_srpm
       - name: Run build-wrapper
         run: |
-          export CMAKE_OPTIONS
-          export CTA_VERSION=$XROOTD_VERSION
-          export CTA_BUILD_ID=${GITHUB_RUN_ID}git${GITHUB_SHA:0:8}
-          echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
           cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
           cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
           yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
