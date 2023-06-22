@@ -69,10 +69,11 @@ RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
 # Check that CTA packages are in container (from previous artifacts)
 RUN find ${CTAREPODIR}/RPMS/x86_64 | grep cta-taped && echo "cta-taped rpm is present: artifacts seems OK" || (echo "cta-taped rpm was not added from previously built artifact: this is a gitlab issue that must be investigated" 1>&2; exit 1)
 
-# Check if we need to enable cta-ci-xrootd5 repository
-RUN if find ${CTAREPODIR}/RPMS/x86_64 | grep cta-taped-5; then \
-  /opt/run/bin/cta-versionlock --file /etc/yum/pluginconf.d/versionlock.list config xrootd5; \
-  yum-config-manager --enable cta-ci-xrootd5; \
+# Check if we need to enable cta-ci-xrootd4 repository
+RUN if find ${CTAREPODIR}/RPMS/x86_64 | grep cta-taped-4; then \
+  /opt/run/bin/cta-versionlock --file /etc/yum/pluginconf.d/versionlock.list config xrootd4; \
+  yum-config-manager --enable cta-ci-xroot; \
+  yum-config-manager --disable cta-ci-xrootd5; \
 fi
 
 # Add pod specific configuration

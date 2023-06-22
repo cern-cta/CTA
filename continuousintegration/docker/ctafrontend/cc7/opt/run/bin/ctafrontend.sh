@@ -27,9 +27,6 @@ cat /etc/yum.repos.d/cta-ci.repo
 # cta-catalogueutils is needed to delete the db at the end of instance
 yum -y install cta-frontend cta-debuginfo cta-catalogueutils ceph-common oracle-instantclient-tnsnames.ora
 
-yum info xrootd* | grep Name -A 3
-yum info eos* | grep Name -A 3
-
 # /etc/cta/cta-frontend-xrootd.conf is now provided by ctafrontend rpm. It comes with CI-ready content,
 # except the objectstore backend path, which we add here:
 

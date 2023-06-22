@@ -21,7 +21,7 @@ set -x
 yum-config-manager --enable cta-artifacts
 
 if test -f "/etc/config/eos/eos4"; then
-  # Switch to EOS-5 versionlock
+  # Switch to EOS-4 versionlock
   /opt/run/bin/cta-versionlock --file /etc/yum/pluginconf.d/versionlock.list config eos4
 
   yum-config-manager --disable cta-ci-eos-5
@@ -30,9 +30,6 @@ fi
 
 # Install missing RPMs
 yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-debuginfo sudo logrotate cta-fst-gcd
-
-yum info xrootd* | grep Name -A 3
-yum info eos* | grep Name -A 3
 
 ## Keep this temporary fix that may be needed if going to protobuf3-3.5.1 for CTA
 # Install eos-protobuf3 separately as eos is OK with protobuf3 but cannot use it..
