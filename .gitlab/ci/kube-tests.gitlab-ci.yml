@@ -38,7 +38,7 @@
   rules:
     - !reference [.manual_rules, rules]
   variables:
-    EXTENDED_OPTIONS: "-O -D -t 2400 -C -e eos-config-quarkdb-http.yaml"
+    EXTENDED_OPTIONS: "-O -D -t 2400 -C -e eos-config-quarkdb-https.yaml"
 
 client:
   stage: test
