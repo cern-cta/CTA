@@ -31,16 +31,20 @@ jobs:
           yum -y install git
           curl -sL https://rpm.nodesource.com/setup_16.x | bash -
           yum -y install nodejs
+          echo "repo_gpgcheck=0" >> /etc/yum.conf
           node -v
           curl -L -O https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4-linux-x86_64.sh
           chmod +x cmake-3.26.4-linux-x86_64.sh
           ./cmake-3.26.4-linux-x86_64.sh --skip-license --prefix=/usr/local
+
       - name: Download CTA
         uses: actions/checkout@v3
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
+
       - name: Install sonar-scanner and build-wrapper
         uses: SonarSource/sonarcloud-github-c-cpp@v1
+
       - name: Install CTA dependencies
         run: |
           export CMAKE_OPTIONS
@@ -85,6 +89,7 @@ jobs:
           source /opt/rh/devtoolset-11/enable
           cmake -DPackageOnly:Bool=true -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
           make cta_srpm
+
       - name: Run build-wrapper
         run: |
           cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
@@ -98,6 +103,7 @@ jobs:
           source /opt/rh/devtoolset-11/enable
           cmake -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
           build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} make
+
       - name: Run sonar-scanner
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
