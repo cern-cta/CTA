@@ -20,9 +20,6 @@
 yum-config-manager --enable cta-artifacts
 yum-config-manager --enable ceph
 
-cat /etc/yum/pluginconf.d/versionlock.list
-cat /etc/yum.repos.d/cta-ci.repo
-
 # Install missing RPMs
 # cta-catalogueutils is needed to delete the db at the end of instance
 yum -y install cta-frontend cta-debuginfo cta-catalogueutils ceph-common oracle-instantclient-tnsnames.ora
