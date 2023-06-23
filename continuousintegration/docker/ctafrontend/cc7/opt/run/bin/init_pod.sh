@@ -85,3 +85,18 @@ else
   SQUID_PROXY=squid.kube-system.svc.cluster.local
   ping -W 1 -c1 ${SQUID_PROXY} &>/dev/null && yum() { echo "Using SQUID proxy ${SQUID_PROXY}"; http_proxy=${SQUID_PROXY}:3128 /usr/bin/yum $@; }
 fi
+
+if [ ! -e /etc/buildtreeRunner ]; then
+  if test -f "/etc/config/eos/eos5"; then
+    # Switch to EOS-5 versionlock
+    /opt/run/bin/cta-versionlock --file /etc/yum/pluginconf.d/versionlock.list config eos5
+
+    yum-config-manager --disable eos-citrine-commit
+    yum-config-manager --disable eos-citrine-depend
+    yum-config-manager --disable eos-citrine
+    yum-config-manager --enable eos-diopside-commit
+    yum-config-manager --enable eos-diopside-depend
+    yum-config-manager --enable eos-diopside
+    yum-config-manager --enable cta-ci-eos-5
+  fi
+fi

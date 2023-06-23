@@ -22,19 +22,6 @@ if [ ! -e /etc/buildtreeRunner ]; then
 
   yum-config-manager --enable cta-artifacts
 
-  if test -f "/etc/config/eos/eos5"; then
-    # Switch to EOS-5 versionlock
-    /opt/run/bin/cta-versionlock --file /etc/yum/pluginconf.d/versionlock.list config eos5
-
-    yum-config-manager --disable eos-citrine-commit
-    yum-config-manager --disable eos-citrine-depend
-    yum-config-manager --disable eos-citrine
-    yum-config-manager --enable eos-diopside-commit
-    yum-config-manager --enable eos-diopside-depend
-    yum-config-manager --enable eos-diopside
-    yum-config-manager --enable cta-ci-eos-5
-  fi
-
   # Install missing RPMs
   yum -y install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server cta-cli cta-debuginfo sudo logrotate cta-fst-gcd
 
