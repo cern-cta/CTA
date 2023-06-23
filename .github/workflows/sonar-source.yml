@@ -31,8 +31,9 @@ jobs:
           yum -y install git
           curl -sL https://rpm.nodesource.com/setup_16.x | bash -
           yum -y install nodejs
-          echo "repo_gpgcheck=0" >> /etc/yum.conf
           node -v
+          ls /etc/yum.repos.d
+          rm -f /etc/yum.repos.d/*nodesource*
           curl -L -O https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4-linux-x86_64.sh
           chmod +x cmake-3.26.4-linux-x86_64.sh
           ./cmake-3.26.4-linux-x86_64.sh --skip-license --prefix=/usr/local
