@@ -149,7 +149,7 @@ void GarbageCollector::checkHeartbeats(log::LogContext & lc) {
   }
 }
 
-void GarbageCollector::cleanupDeadAgent(const std::string & address, std::list<log::Param> agentDetails, log::LogContext & lc) {
+void GarbageCollector::cleanupDeadAgent(const std::string & address, const std::list<log::Param>& agentDetails, log::LogContext & lc) {
   // We detected a dead agent. Try and take ownership of it. It could already be owned
   // by another garbage collector.
   // To minimize locking, take a lock on the agent and check its ownership first.
