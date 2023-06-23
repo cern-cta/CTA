@@ -50,7 +50,7 @@ public:
 
   void checkHeartbeats(log::LogContext & lc);
 
-  void cleanupDeadAgent(const std::string & name, std::list<log::Param> agentDetails, log::LogContext & lc);
+  void cleanupDeadAgent(const std::string & name, const std::list<log::Param>& agentDetails, log::LogContext & lc);
 
   /** Structure allowing the sorting of owned objects, so they can be requeued in batches,
     * one batch per queue. */
