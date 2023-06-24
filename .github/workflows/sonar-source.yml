@@ -103,12 +103,11 @@ jobs:
           echo CMAKE_OPTIONS=${CMAKE_OPTIONS}
           source /opt/rh/devtoolset-11/enable
           cmake -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
-          build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} make
+          build-wrapper-linux-x86-64 --out-dir ../${{ env.BUILD_WRAPPER_OUT_DIR }} make
 
       - name: Run sonar-scanner
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          cd build_rpm
           sonar-scanner -X --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR }}"
