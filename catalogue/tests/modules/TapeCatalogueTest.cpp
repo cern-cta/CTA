@@ -896,7 +896,7 @@ TEST_P(cta_catalogue_TapeTest, modifyToEmptyPurchaseOrder) {
     const cta::common::dataStructures::Tape tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
-    ASSERT_EQ(emptyPurchaseOrder, tape.purchaseOrder);
+    ASSERT_EQ(std::nullopt, tape.purchaseOrder);
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
