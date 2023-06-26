@@ -827,13 +827,13 @@ TEST_P(cta_catalogue_TapeTest, getTapesSearchCriteriaByPurchaseOrder) {
 
   std::string vidTape1 = m_tape1.vid;
 
-  auto shouldDie = [this]() -> void {
+  auto shouldThrow = [this]() -> void {
     cta::catalogue::TapeSearchCriteria criteria;
     criteria.purchaseOrder = "";
     auto tapes = m_catalogue->Tape()->getTapes(criteria);
   };
 
-  ASSERT_DEATH(shouldDie(), "");
+  ASSERT_THROW(shouldDie(), "");
 
   m_catalogue->Tape()->deleteTape(vidTape1);
   ASSERT_TRUE(m_catalogue->Tape()->getTapes().empty());
