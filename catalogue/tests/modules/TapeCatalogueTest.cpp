@@ -804,7 +804,7 @@ TEST_P(cta_catalogue_TapeTest, modifyPurchaseOrder) {
     ASSERT_EQ(m_admin.host, creationLog.host);
   }
 
-  m_catalogue->Tape()->deleteTape(m_tape1);
+  m_catalogue->Tape()->deleteTape(m_tape1.vid);
   ASSERT_TRUE(m_catalogue->Tape()->getTapes().empty());
 }
 
@@ -844,7 +844,7 @@ TEST_P(cta_catalogue_TapeTest, getTapesSearchCriteriaByPurchaseOrder) {
   ASSERT_NO_THROW(m_catalogue->Tape()->modifyTapeState(m_admin, vidTape1,
     cta::common::dataStructures::Tape::State::BROKEN, std::nullopt, reason));
 
-  m_catalogue->Tape()->deleteTape(m_tape1);
+  m_catalogue->Tape()->deleteTape(vidTape1);
   ASSERT_TRUE(m_catalogue->Tape()->getTapes().empty());
 }
 
@@ -924,7 +924,7 @@ TEST_P(cta_catalogue_TapeTest, modifyToEmptyPurchaseOrder) {
     ASSERT_EQ(m_admin.host, creationLog.host);
   }
 
-  m_catalogue->Tape()->deleteTape(m_tape1);
+  m_catalogue->Tape()->deleteTape(m_tape1.vid);
   ASSERT_TRUE(m_catalogue->Tape()->getTapes().empty());
 }
 
