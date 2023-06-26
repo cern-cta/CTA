@@ -73,7 +73,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction
     cta::log::Param("tapeVid", m_vid),
     cta::log::Param("tapeDrive", m_driveConfig.unitName),
     cta::log::Param("message", errorMessage)};
-  m_log(cta::log::ERR, "Cleaner failed. Putting the drive down.", params);
+  m_log(cta::log::ERR, "Cleaner failed, the drive is going down.", params);
 
   // Putting the drive down
   try {

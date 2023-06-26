@@ -3,6 +3,8 @@
 ### Bug Fixes
 - cta/CTA#373 - cta-verify-file may fail if cta.verification.mount_policy is not set
 - cta/CTA#400 - Fix missing 'sleep' in system tests
+- cta/CTA#367 - Don't use "Putting the drive down" message in cleaner
+
 ### Building and Packaging
 - cta/CTA#385 - Remove OpenSSL dependency
 
