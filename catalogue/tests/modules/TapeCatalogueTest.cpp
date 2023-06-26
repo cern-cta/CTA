@@ -833,7 +833,7 @@ TEST_P(cta_catalogue_TapeTest, getTapesSearchCriteriaByPurchaseOrder) {
     auto tapes = m_catalogue->Tape()->getTapes(criteria);
   };
 
-  ASSERT_THROW(shouldDie(), "");
+  ASSERT_THROW(shouldThrow(), cta::exception::UserError);
 
   m_catalogue->Tape()->deleteTape(vidTape1);
   ASSERT_TRUE(m_catalogue->Tape()->getTapes().empty());
