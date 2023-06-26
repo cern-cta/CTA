@@ -1389,8 +1389,6 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
     throw exception::UserError("Tape pool cannot be an empty string");
   if(RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.vo))
     throw exception::UserError("Virtual organisation cannot be an empty string");
-  if(RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.purchaseOrder))
-    throw exception::UserError("Purchase order cannot be an empty string");
   if(RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.diskFileIds))
     throw exception::UserError("Disk file ID list cannot be empty");
 
