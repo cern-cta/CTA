@@ -803,6 +803,9 @@ TEST_P(cta_catalogue_TapeTest, modifyPurchaseOrder) {
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
   }
+
+  m_catalogue->Tape()->deleteTape(m_tape1);
+  ASSERT_TRUE(m_catalogue->Tape()->getTapes().empty());
 }
 
 TEST_P(cta_catalogue_TapeTest, modifyToEmptyPurchaseOrder) {
@@ -880,6 +883,9 @@ TEST_P(cta_catalogue_TapeTest, modifyToEmptyPurchaseOrder) {
     ASSERT_EQ(m_admin.username, creationLog.username);
     ASSERT_EQ(m_admin.host, creationLog.host);
   }
+
+  m_catalogue->Tape()->deleteTape(m_tape1);
+  ASSERT_TRUE(m_catalogue->Tape()->getTapes().empty());
 }
 
 TEST_P(cta_catalogue_TapeTest, modifyTapeLogicalLibraryName) {
