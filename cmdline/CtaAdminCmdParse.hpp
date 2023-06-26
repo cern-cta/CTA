@@ -679,7 +679,7 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_TAPEFILE,             AdminCmd::SUBCMD_LS    },
       { opt_vid.optional(), opt_instance.optional(), opt_fid.optional(), opt_fidfile.optional(),
-        opt_archivefileid.optional() }},
+        opt_archivefileid.optional(), opt_purchase_order.optional() }},
    {{ AdminCmd::CMD_TAPEFILE,             AdminCmd::SUBCMD_RM    },
      { opt_vid, opt_instance.optional(), opt_fid.optional(), opt_archivefileid.optional(), opt_reason }},
    /*----------------------------------------------------------------------------------------------------*/
