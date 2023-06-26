@@ -52,7 +52,7 @@ runexternaltapetests=0
 usage() { cat <<EOF 1>&2
 Usage: $0 -n <namespace> [-o <objectstore_configmap>] [-d <database_configmap>] \
       [-e <eos_configmap>] [-a <additional_k8_resources>]\
-      [-p <gitlab pipeline ID>] \
+      [-p <gitlab pipeline ID>] [-i <docker image tag>] \
       [-S] [-D] [-O] [-m [mhvtl|ibm]] [-U]
 
 Options:
@@ -129,7 +129,7 @@ if [ -z "${instance}" ]; then
     usage
 fi
 
-if [ ! -z "${pipelineid}" -a ! -z "${dockerimage}" -a ]; then
+if [ ! -z "${pipelineid}" -a ! -z "${dockerimage}" ]; then
     usage
 fi
 

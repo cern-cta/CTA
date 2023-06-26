@@ -50,7 +50,10 @@ test -z ${ORACLE_SUPPORT+x} && ORACLE_SUPPORT="ON"
 die() { echo "$@" 1>&2 ; exit 1; }
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -n <namespace> -s <systemtest_script> [-p <gitlab pipeline ID> ] [-t <systemtest timeout in seconds>] [-e <eos_configmap>] [-a <additional_k8_resources>] [-k] [-O] [-D | -d <database_configmap>] [-S] [-U]
+Usage: $0 -n <namespace> -s <systemtest_script> [-p <gitlab pipeline ID> | -i <docker image tag>] \
+      [-t <systemtest timeout in seconds>] [-e <eos_configmap>] \
+      [-a <additional_k8_resources>] [-k] [-O] \
+      [-D | -d <database_configmap>] [-S] [-U]
 
 Options:
   -k    keep namespace after systemtest_script run if successful
