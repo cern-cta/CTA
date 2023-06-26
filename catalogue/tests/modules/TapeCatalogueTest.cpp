@@ -729,6 +729,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeVendor) {
 
 TEST_P(cta_catalogue_TapeTest, modifyPurchaseOrder) {
   const std::string anotherPurchaseOrder = "another_purchase_order";
+  const std::string emptyPurchaseOrder = "";
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
@@ -785,6 +786,35 @@ TEST_P(cta_catalogue_TapeTest, modifyPurchaseOrder) {
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(anotherPurchaseOrder, tape.purchaseOrder);
+    ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
+    ASSERT_EQ(m_vo.name, tape.vo);
+    ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
+    ASSERT_EQ(m_tape1.full, tape.full);
+    ASSERT_EQ(m_tape1.vendor, tape.vendor);
+
+    ASSERT_FALSE(tape.isFromCastor);
+    ASSERT_EQ(m_tape1.comment, tape.comment);
+    ASSERT_FALSE(tape.labelLog);
+    ASSERT_FALSE(tape.lastReadLog);
+    ASSERT_FALSE(tape.lastWriteLog);
+
+    const cta::common::dataStructures::EntryLog creationLog = tape.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+  }
+
+  m_catalogue->Tape()->modifyPurchaseOrder(m_admin, m_tape1.vid, emptyPurchaseOrder);
+
+  {
+    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+
+    ASSERT_EQ(1, tapes.size());
+
+    const cta::common::dataStructures::Tape tape = tapes.front();
+    ASSERT_EQ(m_tape1.vid, tape.vid);
+    ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+    ASSERT_EQ(emptyPurchaseOrder, tape.purchaseOrder);
     ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
