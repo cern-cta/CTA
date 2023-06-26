@@ -834,15 +834,8 @@ TEST_P(cta_catalogue_TapeTest, getTapesSearchCriteriaByPurchaseOrder) {
     ASSERT_EQ(1,tapes.size());
     auto tape = tapes.front();
     ASSERT_EQ(vidTape1,tape.vid);
-    ASSERT_EQ(cta::common::dataStructures::Tape::ACTIVE,tape.state);
-    ASSERT_FALSE(tape.stateReason);
-    ASSERT_EQ(m_admin.username + "@" + m_admin.host,tape.stateModifiedBy);
-    ASSERT_NE(0,tape.stateUpdateTime);
+    ASSERT_EQ(criteria.purchaseOrder, tape.purchaseOrder);
   }
-
-  std::string reason = "Broken tape";
-  ASSERT_NO_THROW(m_catalogue->Tape()->modifyTapeState(m_admin, vidTape1,
-    cta::common::dataStructures::Tape::State::BROKEN, std::nullopt, reason));
 
   m_catalogue->Tape()->deleteTape(vidTape1);
   ASSERT_TRUE(m_catalogue->Tape()->getTapes().empty());
