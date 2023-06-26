@@ -13,6 +13,7 @@
 - cta/CTA#392 - Remove gRPC configuration for tool and test in cta-change-storage-class-in-catalogue
 - cta/CTA#349 - Add option to change the state reason even if the state is not changing
 - cta/CTA#395 - Create gitlab job for code format check
+- cta/CTA#386 - Remove buildtree for kubernetes CI
 
 # v4.8.10-1
 

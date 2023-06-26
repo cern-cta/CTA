@@ -18,9 +18,7 @@
 . /opt/run/bin/init_pod.sh
 
 # Install missing RPMs (kdc)
-if [ ! -e /etc/buildtreeRunner ]; then
-  yum -y install heimdal-server heimdal-workstation
-fi
+yum -y install heimdal-server heimdal-workstation
 
 # Init the kdc store
 echo -n "Initing kdc... "

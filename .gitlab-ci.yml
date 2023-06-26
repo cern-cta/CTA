@@ -9,18 +9,19 @@ stages:
   - release_rpm
 
 variables:
-  XROOTD_VERSION: 4
+  XROOTD_VERSION: 5
   SCHED_TYPE: "objectstore"
   ORACLE_SUPPORT: "ON"
   CTA_VERSION: "${XROOTD_VERSION}"
   CMAKE_OPTIONS: ""
 
-.prepare-xrootd5: &prepare-xrootd5
-  - if [[ ${XROOTD_VERSION} -eq 5 ]];
-    then echo "Using XRootD version 5";
-      ./continuousintegration/docker/ctafrontend/cc7/opt/run/bin/cta-versionlock --file ./continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list config xrootd5;
-      yum-config-manager --enable cta-ci-xrootd5;
-    else echo "Using XRootD version 4";
+.prepare-xrootd4: &prepare-xrootd4
+  - if [[ ${XROOTD_VERSION} -eq 4 ]];
+    then echo "Using XRootD version 4";
+      ./continuousintegration/docker/ctafrontend/cc7/opt/run/bin/cta-versionlock --file ./continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list config xrootd4;
+      yum-config-manager --enable cta-ci-xroot;
+      yum-config-manager --disable cta-ci-xrootd5;
+    else echo "Using XRootD version 5";
     fi
 
 .prepare-scheduler-type: &prepare-scheduler-type
@@ -43,17 +44,18 @@ default:
   before_script:
     - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
     - echo "Exporting CTA_BUILD_ID=${CTA_BUILD_ID}"
-    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
     - test -n "${CI_COMMIT_TAG}" && export TAG_VERSION=$(echo ${CI_COMMIT_TAG} | sed -e 's/^v//;s/-.*$//')
     - test -n "${CI_COMMIT_TAG}" && export TAG_RELEASE=$(echo ${CI_COMMIT_TAG} | sed -e 's/^[^-]*-//')
     - major_version=$(echo ${TAG_VERSION} | cut -d. -f1)
-    - if [[ ${major_version} == 5 ]]; then
-        echo "Setting to compile with XRootD version 5";
-        XROOTD_VERSION=5;
+    - if [[ ${major_version} == 4 ]]; then
+        echo "Setting to compile with XRootD version 4";
+        XROOTD_VERSION=4;
       fi
-    - *prepare-xrootd5
+    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
+    - *prepare-xrootd4
     - *prepare-scheduler-type
     - *prepare-no-oracle
+    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
 
 include:
   - local: .gitlab/ci/*.gitlab-ci.yml
