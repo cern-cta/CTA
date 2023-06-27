@@ -9,12 +9,13 @@
 - cta/CTA#385 - Remove OpenSSL dependency
 
 ### Features
+- cta/CTA#267 - Add new purchase order field to the tape table
+- cta/CTA#276 - Add physical library table and a new `cta-admin` cmd for interacting with the table
 - cta/CTA#314 - Remove the option of using `cta-admin tapefile ls` with the `-l` option
 - cta/CTA#392 - Remove gRPC configuration for tool and test in cta-change-storage-class-in-catalogue
 - cta/CTA#349 - Add option to change the state reason even if the state is not changing
-- cta/CTA#395 - Create gitlab job for code format check
 - cta/CTA#386 - Remove buildtree for kubernetes CI
-- cta/CTA#267 - Add new purchase order field to the tape table
+- cta/CTA#395 - Create gitlab job for code format check
 
 # v4.8.10-1
 
