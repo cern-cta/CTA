@@ -73,7 +73,7 @@ cta_srpm_xrootd5_pgsched:
 
 cta_rpm_xrootd5_pgsched:
   stage: build
-  needs: [ cta_srpm_xrootd4_pgsched ]
+  needs: [ cta_srpm_xrootd5_pgsched ]
   extends:
     - .cta_rpm
   rules:
