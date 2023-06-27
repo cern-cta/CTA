@@ -125,7 +125,11 @@ size_t EnstoreFileReader::readNextDataBlock(void *data, const size_t size) {
 
     if (m_ui64CPIODataSize > m_cpioHeader.m_ui64FileSize && bytes_read > 0) {
       // File is ready
-      bytes_read = bytes_read - (m_ui64CPIODataSize - m_cpioHeader.m_ui64FileSize);
+      if(bytes_read < (m_ui64CPIODataSize - m_cpioHeader.m_ui64FileSize)) {
+	    bytes_read = 0;
+      } else {
+    	bytes_read = bytes_read - (m_ui64CPIODataSize - m_cpioHeader.m_ui64FileSize);
+      }
     }
   }
 

@@ -19,6 +19,7 @@
 - cta/CTA#340 - Fix catalogue recompiling
 - cta/CTA#345 - Remove some objectstore dependencies outside scheduler
 - cta/CTA#357 - Fix failing OsmFileReader due to uint underflow
+- cta/CTA#371 - Protect EnstoreFileReader from uint underflow
 
 ### Continuous Integration
 - cta/CTA#216 - Enable HTTP support for EOS4 on CTA CI
