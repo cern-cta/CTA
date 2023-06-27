@@ -1,10 +1,12 @@
 name: Sonar Source Analysis
 
 on:
+  schedule:
+    # Every day at 3 am
+    - cron: '0 3 * * *'
   push:
     branches:
       - main
-      - 336-add-sonarcloud-static-analysis-to-the-gitlab-ci-like-is-done-for-cppcheck
   pull_request:
     types: [opened, synchronize, reopened]
 
