@@ -761,7 +761,7 @@ TEST_P(cta_catalogue_TapeTest, modifyPurchaseOrder) {
   ASSERT_TRUE(m_catalogue->Tape()->getTapes().empty());
 }
 
-TEST_P(cta_catalogue_TapeTest, getTapesSearchCriteriaByPurchaseOrder) {
+TEST_P(cta_catalogue_TapeTest, getTapesSearchCriteriaByEmptyPurchaseOrder) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
@@ -787,6 +787,38 @@ TEST_P(cta_catalogue_TapeTest, getTapesSearchCriteriaByPurchaseOrder) {
   };
 
   ASSERT_THROW(shouldThrow(), cta::exception::UserError);
+
+  m_catalogue->Tape()->deleteTape(vidTape1);
+  ASSERT_TRUE(m_catalogue->Tape()->getTapes().empty());
+}
+
+TEST_P(cta_catalogue_TapeTest, getTapesSearchCriteriaByPurchaseOrder) {
+  const std::string purchaseOrder = "order";
+  const bool logicalLibraryIsDisabled= false;
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const std::optional<std::string> supply("value for the supply pool mechanism");
+
+  m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled,
+    "Create logical library");
+
+  m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply,
+    "Create tape pool");
+
+  m_catalogue->Tape()->createTape(m_admin, m_tape1);
+
+  m_catalogue->Tape()->modifyPurchaseOrder(m_admin, m_tape1.vid, purchaseOrder);
+
+  std::string vidTape1 = m_tape1.vid;
+
+  cta::catalogue::TapeSearchCriteria criteria;
+  criteria.purchaseOrder = purchaseOrder;
+  auto tapes = m_catalogue->Tape()->getTapes(criteria);
+
+  ASSERT_EQ(1, tapes.size());
 
   m_catalogue->Tape()->deleteTape(vidTape1);
   ASSERT_TRUE(m_catalogue->Tape()->getTapes().empty());
