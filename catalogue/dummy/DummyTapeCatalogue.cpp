@@ -114,6 +114,11 @@ void DummyTapeCatalogue::modifyTapeEncryptionKeyName(const common::dataStructure
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 
+void DummyTapeCatalogue::modifyPurchaseOrder(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &vid, const std::string &purchaseOrder) {
+  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  }
+
 void DummyTapeCatalogue::modifyTapeVerificationStatus(const common::dataStructures::SecurityIdentity &admin,
   const std::string &vid, const std::string &verificationStatus) {
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");

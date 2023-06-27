@@ -111,6 +111,12 @@ void TapeCatalogueRetryWrapper::modifyTapeEncryptionKeyName(const common::dataSt
     encryptionKeyName);}, m_maxTriesToConnect);
 }
 
+void TapeCatalogueRetryWrapper::modifyPurchaseOrder(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &vid, const std::string &purchaseOrder) {
+  return retryOnLostConnection(m_log, [&]{return m_catalogue->Tape()->modifyPurchaseOrder(admin, vid,
+    purchaseOrder);}, m_maxTriesToConnect);
+}
+
 void TapeCatalogueRetryWrapper::modifyTapeVerificationStatus(const common::dataStructures::SecurityIdentity &admin,
   const std::string &vid, const std::string &verificationStatus) {
   return retryOnLostConnection(m_log, [&]{return m_catalogue->Tape()->modifyTapeVerificationStatus(admin, vid,

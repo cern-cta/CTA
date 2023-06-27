@@ -76,6 +76,11 @@ struct CreateTapeAttributes {
   std::optional<std::string> stateReason;
 
   /**
+   * The purchase order related to the tape
+   */
+  std::optional<std::string> purchaseOrder;
+
+  /**
    * Constructor.
    *
    * Sets the value of all boolean member-variables to false.

@@ -71,6 +71,9 @@ public:
   void modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
     const std::string &encryptionKeyName) override;
 
+  void modifyPurchaseOrder(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &vid, const std::string &purchaseOrder) override;
+
   void modifyTapeVerificationStatus(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
     const std::string &verificationStatus) override;
 

@@ -343,7 +343,8 @@ const std::map<std::string, OptionString::Key> strOptions = {
    { "--diskinstance",          OptionString::DISK_INSTANCE },
    { "--diskinstancespace",     OptionString::DISK_INSTANCE_SPACE },
    { "--verificationstatus",    OptionString::VERIFICATION_STATUS },
-   { "--disabledreason",        OptionString::DISABLED_REASON }
+   { "--disabledreason",        OptionString::DISABLED_REASON },
+   { "--purchaseorder",         OptionString::MEDIA_PURCHASE_ORDER_NUMBER }
 };
 
 
@@ -527,6 +528,7 @@ const Option opt_username_alias       { Option::OPT_STR,  "--name",             
 const Option opt_groupname_alias      { Option::OPT_STR,  "--name",                  "-n",   " <group_name>", "--username" };
 const Option opt_vendor               { Option::OPT_STR,  "--vendor",                "--ve", " <vendor>" };
 const Option opt_vid                  { Option::OPT_STR,  "--vid",                   "-v",   " <vid>" };
+const Option opt_purchase_order       { Option::OPT_STR,  "--purchaseorder",         "-p",   " <purchase_order>" };
 const Option opt_vo                   { Option::OPT_STR,  "--virtualorganisation",   "--vo", " <virtual_organisation>" };
 const Option opt_vidfile              { Option::OPT_STR_LIST, "--vidfile",           "-f",   " <filename>" };
 const Option opt_full                 { Option::OPT_BOOL, "--full",                  "-f",   " <\"true\" or \"false\">" };
@@ -662,18 +664,18 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_STORAGECLASS,         AdminCmd::SUBCMD_LS    }, { opt_storageclass_alias.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_ADD   },
-      { opt_vid, opt_mediatype, opt_vendor, opt_logicallibrary, opt_tapepool, opt_full, 
-        opt_state.optional(), opt_reason.optional(), opt_comment.optional() }},
+      { opt_vid, opt_mediatype, opt_vendor, opt_logicallibrary, opt_tapepool, opt_full,
+        opt_state.optional(), opt_purchase_order.optional(), opt_reason.optional(), opt_comment.optional() }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_CH    },
       { opt_vid, opt_mediatype.optional(), opt_vendor.optional(), opt_logicallibrary.optional(),
         opt_tapepool.optional(), opt_encryptionkeyname.optional(), opt_full.optional(), opt_verificationstatus.optional(),
-        opt_state.optional(), opt_reason.optional(), opt_comment.optional(), opt_dirtybit.optional() }},
+        opt_state.optional(), opt_purchase_order.optional(), opt_reason.optional(), opt_comment.optional(), opt_dirtybit.optional() }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_RM    }, { opt_vid }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_RECLAIM }, { opt_vid }},
    {{ AdminCmd::CMD_TAPE,                 AdminCmd::SUBCMD_LS    },
       { opt_vid.optional(), opt_mediatype.optional(), opt_vendor.optional(),
         opt_logicallibrary.optional(), opt_tapepool.optional(), opt_vo.optional(), opt_capacity.optional(),
-        opt_full.optional(), opt_fidfile.optional(), opt_all.optional(), opt_state.optional(), opt_fromcastor.optional() }},
+        opt_full.optional(), opt_fidfile.optional(), opt_all.optional(), opt_state.optional(), opt_fromcastor.optional(), opt_purchase_order.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_TAPEFILE,             AdminCmd::SUBCMD_LS    },
       { opt_vid.optional(), opt_instance.optional(), opt_fid.optional(), opt_fidfile.optional(),

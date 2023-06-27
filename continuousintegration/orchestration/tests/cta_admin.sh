@@ -182,6 +182,9 @@ test_header 'miscelaneous'
 echo -e "\tTesting cta-admin v"
 admin_cta --json v >> ${log_file} 2>&1 || exit 1
 
+# Tape (ta)
+test_start "tape" "ta" "--all"
+
 
 ########################################
 # Users - ad, vo #######################
@@ -268,8 +271,8 @@ test_header 'tape'
 test_start "tape" "ta" "--all"
 
 # Set added tape to full so we can test reclaim.
-test_and_check_cmd "Adding tape 'V01008'" "${command}" "add" "-v V01008 --mt T10K500G --ve vendor -l ${lls[1]} -t ctasystest -f true"\
-  "select(.vid==\"V01008\" and .mediaType==\"T10K500G\" and .logicalLibrary==\"${lls[1]}\" and .full==true) | .vid"\
+test_and_check_cmd "Adding tape 'V01008'" "${command}" "add" "-v V01008 --mt T10K500G --ve vendor -l ${lls[1]} -t ctasystest -f true --purchaseorder order1"\
+  "select(.vid==\"V01008\" and .mediaType==\"T10K500G\" and .logicalLibrary==\"${lls[1]}\" and .full==true and .purchaseOrder==\"order1\") | .vid"\
   "1" "adding tape 'V01008'" || exit 1
 test_and_check_cmd "Reclaiming tape 'V01008'" "${command}" "reclaim" "-v V01008"\
   "select(.vid==\"V01008\" and .mediaType==\"T10K500G\" and .logicalLibrary==\"${lls[1]}\" and .full==false) | .vid"\
@@ -277,6 +280,9 @@ test_and_check_cmd "Reclaiming tape 'V01008'" "${command}" "reclaim" "-v V01008"
 test_and_check_cmd "Changing tape V01008 state to REPACKING" "${command}" "ch" "-v V01008 -s 'REPACKING' -r 'Test admin-cta ta ch'"\
   "select(.vid==\"V01008\" and .mediaType==\"T10K500G\" and .logicalLibrary==\"${lls[1]}\" and .state==\"REPACKING\") | .vid"\
   "1" "changing tape V01008 state" || exit 1
+test_and_check_cmd "Changing tape V01008 order to order2" "${command}" "ch" "-v V01008 --purchaseorder 'order2' -r 'Test admin-cta ta ch'"\
+  "select(.vid==\"V01008\" and .purchaseOrder==\"order2\") | .vid"\
+  "1" "changing tape V01008 order" || exit 1
 test_command "Removing tape V01008" "${command}" "rm" "-v V01008" || exit 1
 test_assert || exit 1
 

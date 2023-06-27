@@ -89,21 +89,22 @@ bool cta::frontend::grpc::server::TapeLsRequestHandler::next(const bool bOk) {
 
             // Get the search criteria from the optional options
 
-            m_searchCriteria.full            = requestMsg.getOptional(cta::admin::OptionBoolean::FULL,           &bHasAny);
-            m_searchCriteria.fromCastor      = requestMsg.getOptional(cta::admin::OptionBoolean::FROM_CASTOR,    &bHasAny);
-            m_searchCriteria.capacityInBytes = requestMsg.getOptional(cta::admin::OptionUInt64::CAPACITY,        &bHasAny);
-            m_searchCriteria.logicalLibrary  = requestMsg.getOptional(cta::admin::OptionString::LOGICAL_LIBRARY, &bHasAny);
-            m_searchCriteria.tapePool        = requestMsg.getOptional(cta::admin::OptionString::TAPE_POOL,       &bHasAny);
-            m_searchCriteria.vo              = requestMsg.getOptional(cta::admin::OptionString::VO,              &bHasAny);
-            m_searchCriteria.vid             = requestMsg.getOptional(cta::admin::OptionString::VID,             &bHasAny);
-            m_searchCriteria.mediaType       = requestMsg.getOptional(cta::admin::OptionString::MEDIA_TYPE,      &bHasAny);
-            m_searchCriteria.vendor          = requestMsg.getOptional(cta::admin::OptionString::VENDOR,          &bHasAny);
-            m_searchCriteria.diskFileIds     = requestMsg.getOptional(cta::admin::OptionStrList::FILE_ID,        &bHasAny);
-            auto stateOpt                    = requestMsg.getOptional(cta::admin::OptionString::STATE,           &bHasAny);
+            m_searchCriteria.full            = requestMsg.getOptional(cta::admin::OptionBoolean::FULL,                       &bHasAny);
+            m_searchCriteria.fromCastor      = requestMsg.getOptional(cta::admin::OptionBoolean::FROM_CASTOR,                &bHasAny);
+            m_searchCriteria.capacityInBytes = requestMsg.getOptional(cta::admin::OptionUInt64::CAPACITY,                    &bHasAny);
+            m_searchCriteria.logicalLibrary  = requestMsg.getOptional(cta::admin::OptionString::LOGICAL_LIBRARY,             &bHasAny);
+            m_searchCriteria.tapePool        = requestMsg.getOptional(cta::admin::OptionString::TAPE_POOL,                   &bHasAny);
+            m_searchCriteria.vo              = requestMsg.getOptional(cta::admin::OptionString::VO,                          &bHasAny);
+            m_searchCriteria.vid             = requestMsg.getOptional(cta::admin::OptionString::VID,                         &bHasAny);
+            m_searchCriteria.mediaType       = requestMsg.getOptional(cta::admin::OptionString::MEDIA_TYPE,                  &bHasAny);
+            m_searchCriteria.vendor          = requestMsg.getOptional(cta::admin::OptionString::VENDOR,                      &bHasAny);
+            m_searchCriteria.purchaseOrder   = requestMsg.getOptional(cta::admin::OptionString::MEDIA_PURCHASE_ORDER_NUMBER, &bHasAny);
+            m_searchCriteria.diskFileIds     = requestMsg.getOptional(cta::admin::OptionStrList::FILE_ID,                    &bHasAny);
+            auto stateOpt                    = requestMsg.getOptional(cta::admin::OptionString::STATE,                       &bHasAny);
             if(stateOpt){
               m_searchCriteria.state = common::dataStructures::Tape::stringToState(stateOpt.value());
             }
-            
+
             if(!(requestMsg.hasFlag(cta::admin::OptionBoolean::ALL) || bHasAny)) {
               lc.log(cta::log::ERR, "In grpc::server::TapeLsRequestHandler::next(): Must specify at least one search option, or --all.");
               m_response.mutable_header()->set_type(cta::xrd::Response::RSP_ERR_USER);
@@ -150,9 +151,9 @@ bool cta::frontend::grpc::server::TapeLsRequestHandler::next(const bool bOk) {
           m_streamState = StreamState::ERROR;
           break;
         }
-        
+
         common::dataStructures::Tape &tape = m_tapeList.front();
-        
+
         pTapeLsItem->set_vid(tape.vid);
         pTapeLsItem->set_media_type(tape.mediaType);
         pTapeLsItem->set_vendor(tape.vendor);
@@ -170,7 +171,8 @@ bool cta::frontend::grpc::server::TapeLsRequestHandler::next(const bool bOk) {
         pTapeLsItem->set_write_mount_count(tape.writeMountCount);
         pTapeLsItem->set_nb_master_files(tape.nbMasterFiles);
         pTapeLsItem->set_master_data_in_bytes(tape.masterDataInBytes);
-        
+        pTapeLsItem->set_purchase_order((bool)tape.purchaseOrder ? tape.purchaseOrder.value() : "-");
+
         if(tape.labelLog) {
           ::cta::common::TapeLog* pLabelLog = pTapeLsItem->mutable_label_log();
           pLabelLog->set_drive(tape.labelLog.value().drive);

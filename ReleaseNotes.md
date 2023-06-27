@@ -14,6 +14,7 @@
 - cta/CTA#349 - Add option to change the state reason even if the state is not changing
 - cta/CTA#395 - Create gitlab job for code format check
 - cta/CTA#386 - Remove buildtree for kubernetes CI
+- cta/CTA#267 - Add new purchase order field to the tape table
 
 # v4.8.10-1
 

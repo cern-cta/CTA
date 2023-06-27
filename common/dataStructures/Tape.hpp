@@ -116,6 +116,7 @@ struct Tape {
   std::optional<TapeLog> labelLog;
   std::optional<TapeLog> lastWriteLog;
   std::optional<TapeLog> lastReadLog;
+  std::optional<std::string> purchaseOrder;
 
   State state;
   std::optional<std::string> stateReason;
