@@ -136,4 +136,15 @@ TEST_P(cta_catalogue_PhysicalLibraryTest, modifyPhysicalLibrary) {
   }
 }
 
+TEST_P(cta_catalogue_PhysicalLibraryTest, deletePhysicalLibrary) {
+  m_catalogue->PhysicalLibrary()->createPhysicalLibrary(m_admin, m_physicalLibrary2);
+
+  const auto libs = m_catalogue->PhysicalLibrary()->getPhysicalLibraries();
+
+  ASSERT_EQ(1, libs.size());
+
+  m_catalogue->PhysicalLibrary()->deletePhysicalLibrary(m_physicalLibrary2.name);
+  ASSERT_TRUE(m_catalogue->Tape()->getTapes().empty());
+}
+
 }  // namespace unitTests
