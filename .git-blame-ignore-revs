@@ -1,0 +1,38 @@
+# This file contains revisions to be ignored by git blame.
+# These revisions are expected to be formatting-only changes.
+#
+# Calling `git blame --ignore-revs-file .git-blame-ignore-revs` will
+# tell git blame to ignore changes made by these revisions when assigning
+# assigning blame, as if the change never happened.
+#
+# You can enable this as a default for your local repository by running
+# `git config blame.ignoreRevsFile .git-blame-ignore-revs`
+# This will probably be automatically picked by your IDE
+# (VSCode+GitLens and JetBrains products are confirmed to this)
+#
+# Important: if you are switching to the branch without this file,
+# `git blame` will fail with an error
+#
+# Guidelines:
+# - Only large automated refactorings are expected to be included in this file.
+#   Do not add new revision just because it feels unimportant
+# - When adding sinle revision use inline comment to link relevant issue/MR
+#   Example:
+##   d4a8b7307acc2dc8a8833ccfa65426ad28b3ffc9 # https://gitlab.com/gitlab-org/frontend/rfcs/-/issues/60
+# - When adding multiple revisions precede each addition (this could be multiple revisions) with a link to
+#   line with word START and link to relevant issue/MR/epic and conclude with line END and link to the
+#   same issue/MR/epic
+#   Example:
+#   # START https://gitlab.com/gitlab-org/issues/12345
+#   6f0bd2d8a1e6cd2e794cd39976e9756e0c85ac66
+#   d53974df11dbc22cbea9dc7dcbc9896c25979a27
+#   ... <rest of the list>
+#   # END https://gitlab.com/gitlab-org/issues/12345
+# - Please append new lines to the end of the file, no matter of real chronological
+#   order of revisions
+# - Since this is using hashes for reformatting it might be a good idea to update
+#   this file in separate MR when relevant changes already landed in master. By
+#   utilizing this manner you will be safe from random rebase/squash issues
+# - Only put full 40-character hashes on this list
+
+fb0962d1e60d185b8b402d2b6c7861c148798282 # https://gitlab.cern.ch/cta/CTA/-/issues/98
