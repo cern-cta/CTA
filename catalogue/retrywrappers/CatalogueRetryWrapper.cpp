@@ -141,11 +141,11 @@ const std::unique_ptr<LogicalLibraryCatalogue>& CatalogueRetryWrapper::LogicalLi
   return m_logicalLibrary;
 }
 
-const std::unique_ptr<PhysicalLibraryCatalogue> &CatalogueRetryWrapper::PhysicalLibrary() {
+const std::unique_ptr<PhysicalLibraryCatalogue>& CatalogueRetryWrapper::PhysicalLibrary() {
   return m_physicalLibrary;
 }
 
-const std::unique_ptr<TapeFileCatalogue> &CatalogueRetryWrapper::TapeFile() {
+const std::unique_ptr<TapeFileCatalogue>& CatalogueRetryWrapper::TapeFile() {
   return m_tapeFile;
 }
 
