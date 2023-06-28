@@ -42,9 +42,8 @@ echo "Printing poweruser token dump"
 eos "${EOSINSTANCE}" token --token "${TOKEN_EOSPOWER}" | jq .
 echo
 
-# Discover endpoint, /.well-known/wlcg-tape-rest-api in instance http(s)://ctaeos:8444
-HTTPS_URI=$(curl --insecure https://ctaeos:8444/.well-known/wlcg-tape-rest-api | jq -r .endpoints[0].uri)
-
+# Discover endpoint of v1, /.well-known/wlcg-tape-rest-api in instance http(s)://ctaeos:8444
+HTTPS_URI=$(curl --insecure https://ctaeos:8444/.well-known/wlcg-tape-rest-api | jq -r '.endpoints[] | select(.version == "v1") | .uri')
 
 echo "$(date +%s): Testing compliance of .well-known/wlcg-tape-rest-api endpoint"
 WELL_KNOWN=$(curl --insecure https://ctaeos:8444/.well-known/wlcg-tape-rest-api)

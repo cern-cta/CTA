@@ -4,6 +4,7 @@
 - cta/CTA#373 - cta-verify-file may fail if cta.verification.mount_policy is not set
 - cta/CTA#400 - Fix missing 'sleep' in system tests
 - cta/CTA#367 - Don't use "Putting the drive down" message in cleaner
+- cta/CTA#389 - Minor fix in Tape REST API system tests
 
 ### Building and Packaging
 - cta/CTA#385 - Remove OpenSSL dependency
