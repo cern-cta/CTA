@@ -1,4 +1,4 @@
-:148/*
+/*
  * @project      The CERN Tape Archive (CTA)
  * @copyright    Copyright © 2022 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
