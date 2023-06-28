@@ -374,6 +374,22 @@ cta::common::dataStructures::PhysicalLibrary CatalogueTestUtils::getPhysicalLibr
   return pl;
 }
 
+cta::common::dataStructures::PhysicalLibrary CatalogueTestUtils::getPhysicalLibrary3() {
+  cta::common::dataStructures::PhysicalLibrary pl;
+  pl.name                      = "pl_name_3";
+  pl.manufacturer              = "manufacturer_3";
+  pl.model                     = "model_3";
+  pl.nbPhysicalCartridgeSlots  = 15;
+  pl.nbPhysicalDriveSlots      = 15;
+  pl.type                      = "type_3";
+  pl.guiUrl                    = "url_3";
+  pl.webcamUrl                 = "webcam_3";
+  pl.location                  = "location_3";
+  pl.nbAvailableCartridgeSlots = 10;
+  pl.comment                   = "comment_3";
+  return pl;
+}
+
 cta::catalogue::MediaType CatalogueTestUtils::getMediaType() {
   cta::catalogue::MediaType mediaType;
   mediaType.name = "media_type";
