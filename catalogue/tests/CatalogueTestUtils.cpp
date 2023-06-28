@@ -214,55 +214,55 @@ void CatalogueTestUtils::checkWipedDatabase(cta::catalogue::Catalogue *catalogue
   }
 
   if(!catalogue->DiskSystem()->getAllDiskSystems().empty()) {
-    throw cta::exception::Exception("Found one of more disk systems after emptying the database");
+    throw cta::exception::Exception("Found one or more disk systems after emptying the database");
   }
 
   if (!catalogue->DiskInstance()->getAllDiskInstances().empty()) {
-    throw cta::exception::Exception("Found one of more disk instances after emptying the database");
+    throw cta::exception::Exception("Found one or more disk instances after emptying the database");
   }
 
   if(!catalogue->LogicalLibrary()->getLogicalLibraries().empty()) {
-    throw cta::exception::Exception("Found one of more logical libraries after emptying the database");
+    throw cta::exception::Exception("Found one or more logical libraries after emptying the database");
   }
 
   if(!catalogue->PhysicalLibrary()->getPhysicalLibraries().empty()) {
-    throw cta::exception::Exception("Found one of more physical libraries after emptying the database");
+    throw cta::exception::Exception("Found one or more physical libraries after emptying the database");
   }
 
   if(!catalogue->MediaType()->getMediaTypes().empty()) {
-    throw cta::exception::Exception("Found one of more media types after emptying the database");
+    throw cta::exception::Exception("Found one or more media types after emptying the database");
   }
 
   if(!catalogue->MountPolicy()->getMountPolicies().empty()) {
-    throw cta::exception::Exception("Found one of more mount policies after emptying the database");
+    throw cta::exception::Exception("Found one or more mount policies after emptying the database");
   }
 
   if(!catalogue->RequesterGroupMountRule()->getRequesterGroupMountRules().empty()) {
-    throw cta::exception::Exception("Found one of more requester group mount rules after emptying the database");
+    throw cta::exception::Exception("Found one or more requester group mount rules after emptying the database");
   }
 
   if(!catalogue->RequesterMountRule()->getRequesterMountRules().empty()) {
-    throw cta::exception::Exception("Found one of more requester mount rules after emptying the database");
+    throw cta::exception::Exception("Found one or more requester mount rules after emptying the database");
   }
 
   if(!catalogue->RequesterActivityMountRule()->getRequesterActivityMountRules().empty()) {
-    throw cta::exception::Exception("Found one of more requester activity mount rules after emptying the database");
+    throw cta::exception::Exception("Found one or more requester activity mount rules after emptying the database");
   }
 
   if(!catalogue->StorageClass()->getStorageClasses().empty()) {
-    throw cta::exception::Exception("Found one of more storage classes after emptying the database");
+    throw cta::exception::Exception("Found one or more storage classes after emptying the database");
   }
 
   if(!catalogue->Tape()->getTapes().empty()) {
-    throw cta::exception::Exception("Found one of more tapes after emptying the database");
+    throw cta::exception::Exception("Found one or more tapes after emptying the database");
   }
 
   if(!catalogue->TapePool()->getTapePools().empty()) {
-    throw cta::exception::Exception("Found one of more tape pools after emptying the database");
+    throw cta::exception::Exception("Found one or more tape pools after emptying the database");
   }
 
   if(!catalogue->VO()->getVirtualOrganizations().empty()) {
-    throw cta::exception::Exception("Found one of more virtual organizations after emptying the database");
+    throw cta::exception::Exception("Found one or more virtual organizations after emptying the database");
   }
 }
 
