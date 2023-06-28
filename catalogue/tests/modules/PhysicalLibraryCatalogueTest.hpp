@@ -43,6 +43,7 @@ protected:
   const cta::common::dataStructures::SecurityIdentity m_admin;
   const cta::common::dataStructures::PhysicalLibrary m_physicalLibrary1;
   const cta::common::dataStructures::PhysicalLibrary m_physicalLibrary2;
+  const cta::common::dataStructures::PhysicalLibrary m_physicalLibrary3;
 
   std::map<std::string, cta::common::dataStructures::PhysicalLibrary> physicalLibraryListToMap(
     const std::list<cta::common::dataStructures::PhysicalLibrary> &listOfLibs) const;

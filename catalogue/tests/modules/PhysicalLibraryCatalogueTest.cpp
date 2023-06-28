@@ -35,7 +35,8 @@ cta_catalogue_PhysicalLibraryTest::cta_catalogue_PhysicalLibraryTest()
   : m_dummyLog("dummy", "dummy"),
     m_admin("admin", "admin", "admin", ""),
     m_physicalLibrary1(CatalogueTestUtils::getPhysicalLibrary1()),
-    m_physicalLibrary2(CatalogueTestUtils::getPhysicalLibrary2()) {
+    m_physicalLibrary2(CatalogueTestUtils::getPhysicalLibrary2()),
+    m_physicalLibrary3(CatalogueTestUtils::getPhysicalLibrary3()) {
 }
 
 void cta_catalogue_PhysicalLibraryTest::SetUp() {
@@ -89,6 +90,7 @@ TEST_P(cta_catalogue_PhysicalLibraryTest, createPhysicalLibraryAllFields) {
   ASSERT_EQ(m_physicalLibrary2.nbPhysicalCartridgeSlots, lib.nbPhysicalCartridgeSlots);
   ASSERT_EQ(m_physicalLibrary2.nbAvailableCartridgeSlots.value(), lib.nbAvailableCartridgeSlots.value());
   ASSERT_EQ(m_physicalLibrary2.nbPhysicalDriveSlots, lib.nbPhysicalDriveSlots);
+  ASSERT_EQ(m_physicalLibrary2.comment.value(), lib.comment.value());
 
   const cta::common::dataStructures::EntryLog creationLog = lib.creationLog;
   ASSERT_EQ(m_admin.username, creationLog.username);
@@ -96,6 +98,42 @@ TEST_P(cta_catalogue_PhysicalLibraryTest, createPhysicalLibraryAllFields) {
 
   const cta::common::dataStructures::EntryLog lastModificationLog = lib.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
+}
+
+TEST_P(cta_catalogue_PhysicalLibraryTest, modifyPhysicalLibrary) {
+  m_catalogue->PhysicalLibrary()->createPhysicalLibrary(m_admin, m_physicalLibrary2);
+
+  {
+    const auto libs = m_catalogue->PhysicalLibrary()->getPhysicalLibraries();
+
+    ASSERT_EQ(1, libs.size());
+    const cta::common::dataStructures::PhysicalLibrary lib = libs.front();
+
+    m_catalogue->PhysicalLibrary()->modifyPhysicalLibraryName(m_admin, lib.name, m_physicalLibrary3.name);
+    m_catalogue->PhysicalLibrary()->modifyPhysicalLibraryGuiUrl(m_admin, m_physicalLibrary3.name, m_physicalLibrary3.guiUrl.value());
+    m_catalogue->PhysicalLibrary()->modifyPhysicalLibraryWebcamUrl(m_admin, m_physicalLibrary3.name, m_physicalLibrary3.webcamUrl.value());
+    m_catalogue->PhysicalLibrary()->modifyPhysicalLibraryLocation(m_admin, m_physicalLibrary3.name, m_physicalLibrary3.location.value());
+    m_catalogue->PhysicalLibrary()->modifyPhysicalLibraryNbPhysicalCartridgeSlots(m_admin, m_physicalLibrary3.name, m_physicalLibrary3.nbPhysicalCartridgeSlots);
+    m_catalogue->PhysicalLibrary()->modifyPhysicalLibraryNbAvailableCartridgeSlots(m_admin, m_physicalLibrary3.name, m_physicalLibrary3.nbAvailableCartridgeSlots.value());
+    m_catalogue->PhysicalLibrary()->modifyPhysicalLibraryNbPhysicalDriveSlots(m_admin, m_physicalLibrary3.name, m_physicalLibrary3.nbPhysicalDriveSlots);
+    m_catalogue->PhysicalLibrary()->modifyPhysicalLibraryComment(m_admin, m_physicalLibrary3.name, m_physicalLibrary3.comment.value());
+  }
+
+  {
+    const auto libs = m_catalogue->PhysicalLibrary()->getPhysicalLibraries();
+
+    ASSERT_EQ(1, libs.size());
+
+    const cta::common::dataStructures::PhysicalLibrary lib = libs.front();
+    ASSERT_EQ(m_physicalLibrary3.name, lib.name);
+    ASSERT_EQ(m_physicalLibrary3.guiUrl.value(), lib.guiUrl.value());
+    ASSERT_EQ(m_physicalLibrary3.webcamUrl.value(), lib.webcamUrl.value());
+    ASSERT_EQ(m_physicalLibrary3.location.value(), lib.location.value());
+    ASSERT_EQ(m_physicalLibrary3.nbPhysicalCartridgeSlots, lib.nbPhysicalCartridgeSlots);
+    ASSERT_EQ(m_physicalLibrary3.nbAvailableCartridgeSlots.value(), lib.nbAvailableCartridgeSlots.value());
+    ASSERT_EQ(m_physicalLibrary3.nbPhysicalDriveSlots, lib.nbPhysicalDriveSlots);
+    ASSERT_EQ(m_physicalLibrary3.comment.value(), lib.comment.value());
+  }
 }
 
 }  // namespace unitTests
