@@ -248,16 +248,6 @@ std::list<common::dataStructures::PhysicalLibrary> RdbmsPhysicalLibraryCatalogue
 void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryName(const common::dataStructures::SecurityIdentity& admin,
   const std::string& currentName, const std::string& newName) {
   try {
-    if(currentName.empty()) {
-      throw UserSpecifiedAnEmptyStringPhysicalLibraryName(
-        "Cannot modify physical library because the physical library name is an empty string");
-    }
-
-    if(newName.empty()) {
-      throw UserSpecifiedAnEmptyStringPhysicalLibraryName(
-        "Cannot modify physical library because the new name is an empty string");
-    }
-
     const time_t now = time(nullptr);
     const char *const sql =
       "UPDATE PHYSICAL_LIBRARY SET "
