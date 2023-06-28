@@ -1,4 +1,4 @@
-/*
+:148/*
  * @project      The CERN Tape Archive (CTA)
  * @copyright    Copyright © 2022 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
@@ -150,14 +150,7 @@ void RdbmsPhysicalLibraryCatalogue::deletePhysicalLibrary(const std::string& nam
     const char *const sql =
       "DELETE FROM PHYSICAL_LIBRARY "
       "WHERE "
-        "PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME AND "
-        "NOT EXISTS ("
-          "SELECT "
-            "LOGICAL_LIBRARY.PHYSICAL_LIBRARY_ID "
-          "FROM "
-            "LOGICAL_LIBRARY "
-          "WHERE "
-            "LOGICAL_LIBRARY.PHYSICAL_LIBRARY_ID = PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_ID)";
+        "PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":PHYSICAL_LIBRARY_NAME", name);
