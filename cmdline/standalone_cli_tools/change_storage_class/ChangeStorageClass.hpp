@@ -90,6 +90,12 @@ private:
   void storageClassExists(const std::string& storageClass) const;
 
   /**
+  * Sets up the xrootd configuration
+  * @param storageClass The new storage class
+  */
+  std::unique_ptr<XrdSsiPbServiceType> setXrootdConfiguration(bool debug = false) const;
+
+  /**
   * Updates the storage class name in the catalogue
   * @param archiveFileId the archive file id to check
   * @param storageClass The new storage class

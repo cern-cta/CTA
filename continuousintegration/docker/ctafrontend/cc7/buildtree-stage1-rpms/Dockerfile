@@ -46,7 +46,6 @@ RUN yum install -y \
 # therefore set epel priority to 4...
 # Create local repo for cta artifacts and to cache RPMs locally
 
-
 # Populate local repository and enable it, then install any rpm that is needed for
 # any container. Finally add needed directories.
 RUN yum-config-manager --enable epel --setopt="epel.priority=4" \

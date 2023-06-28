@@ -29,15 +29,7 @@ namespace cta { namespace xrd {
  */
 class TapeFileLsStream : public XrdCtaStream {
 public:
-  // Constructor when we need gRPC namespace lookups
-  TapeFileLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler,
-                   const NamespaceMap_t &nsMap);
-
-  // Constructor when we do not require namespace lookups
-  TapeFileLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
-    TapeFileLsStream(requestMsg, catalogue, scheduler, NamespaceMap_t()) {
-    m_LookupNamespace = false;
-  }
+  TapeFileLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
 
 private:
   /*!
@@ -53,24 +45,18 @@ private:
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
 
   catalogue::ArchiveFileItor m_tapeFileItor;       //!< Iterator across files which have been archived
-  grpc::EndpointMap          m_endpoints;          //!< List of gRPC endpoints
-  bool                       m_LookupNamespace;    //!< True if namespace lookup is required
 
   static constexpr const char* const LOG_SUFFIX  = "TapeFileLsStream";    //!< Identifier for log messages
 };
 
 
 TapeFileLsStream::TapeFileLsStream(const frontend::AdminCmdStream& requestMsg,
-  cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler,
-  const NamespaceMap_t &nsMap) :
-    XrdCtaStream(catalogue, scheduler),
-    m_endpoints(nsMap)
+  cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
+    XrdCtaStream(catalogue, scheduler)
 {
   using namespace cta::admin;
 
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "TapeFileLsStream() constructor");
-
-  m_LookupNamespace = true;
 
   bool has_any = false; // set to true if at least one optional option is set
 
@@ -84,7 +70,7 @@ TapeFileLsStream::TapeFileLsStream(const frontend::AdminCmdStream& requestMsg,
   if(diskFileId) {
     if(!searchCriteria.diskFileIds) searchCriteria.diskFileIds = std::vector<std::string>();
 
-    // cta-admin converts the list from EOS fxid (hex) to fid (dec). In the case of the 
+    // cta-admin converts the list from EOS fxid (hex) to fid (dec). In the case of the
     // single option on the command line we need to do the conversion ourselves.
     auto fid = strtol(diskFileId->c_str(), nullptr, 16);
     if(fid < 1 || fid == LONG_MAX) {
@@ -134,9 +120,6 @@ int TapeFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
       df->set_disk_instance(archiveFile.diskInstance);
       df->mutable_owner_id()->set_uid(archiveFile.diskFileInfo.owner_uid);
       df->mutable_owner_id()->set_gid(archiveFile.diskFileInfo.gid);
-      if(m_LookupNamespace) {
-        df->set_path(m_endpoints.getPath(archiveFile.diskInstance, archiveFile.diskFileId));
-      }
 
       // Tape file
       auto tf = record.mutable_tfls_item()->mutable_tf();

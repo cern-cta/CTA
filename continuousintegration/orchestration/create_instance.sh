@@ -73,7 +73,7 @@ exit 1
 
 die() { echo "$@" 1>&2 ; exit 1; }
 
-while getopts "n:o:d:e:a:p:b:B:E:SDOUumT" o; do
+while getopts "n:o:d:e:a:p:b:i:B:E:SDOUumT" o; do
     case "${o}" in
         o)
             config_objectstore=${OPTARG}
@@ -103,6 +103,9 @@ while getopts "n:o:d:e:a:p:b:B:E:SDOUumT" o; do
             ;;
         b)
             buildtree=${OPTARG}
+            ;;
+        i)
+            dockerimage=${OPTARG}
             ;;
         S)
             usesystemd=1
@@ -139,7 +142,7 @@ if [ -z "${instance}" ]; then
     usage
 fi
 
-if [ ! -z "${pipelineid}" -a ! -z "${buildtree}" ]; then
+if [ ! -z "${pipelineid}" -a ! -z "${buildtree}" -a ! -z "${registrydocker}" ]; then
     usage
 fi
 
@@ -188,14 +191,17 @@ if [ ! -z "${buildtree}" ]; then
 else
     # We are going to run with repository based images (they have rpms embedded)
     COMMITID=$(git log -n1 | grep ^commit | cut -d\  -f2 | sed -e 's/\(........\).*/\1/')
-    if [ -z "${pipelineid}" ]; then
-      echo "Creating instance for latest image built for ${COMMITID} (highest PIPELINEID)"
-      imagetag=$(../ci_helpers/list_images.sh 2>/dev/null | grep ${COMMITID} | sort -n | tail -n1)
-    else
+    if [ ! -z "${pipelineid}" ]; then
       echo "Creating instance for image built on commit ${COMMITID} with gitlab pipeline ID ${pipelineid}"
       imagetag=$(../ci_helpers/list_images.sh 2>/dev/null | grep ${COMMITID} | grep ^${pipelineid}git | sort -n | tail -n1)
       # just a shortcut to avoid time lost checking against the docker registry...
       #imagetag=${pipelineid}git${COMMITID}
+    elif [ ! -z "${dockerimage}" ]; then
+      echo "Creating instance for image ${dockerimage}"
+      imagetag=${dockerimage}
+    else
+      echo "Creating instance for latest image built for ${COMMITID} (highest PIPELINEID)"
+      imagetag=$(../ci_helpers/list_images.sh 2>/dev/null | grep ${COMMITID} | sort -n | tail -n1)
     fi
     if [ "${imagetag}" == "" ]; then
       echo "commit:${COMMITID} has no docker image available in gitlab registry, please check pipeline status and registry images available."
@@ -204,7 +210,12 @@ else
     echo "Creating instance using docker image with tag: ${imagetag}"
 
     cp pod-* ${poddir}
-    sed -i ${poddir}/pod-* -e "s/\(^\s\+image:[^:]\+:\).*/\1${imagetag}/"
+    if [ ! -z "${dockerimage}" ]; then
+      echo "set image to ctageneric:${imagetag}"
+      sed -i ${poddir}/pod-* -e "s/\(^\s\+image\):.*/\1: ctageneric:${imagetag}\n\1PullPolicy: Never/"
+    else
+      sed -i ${poddir}/pod-* -e "s/\(^\s\+image:[^:]\+:\).*/\1${imagetag}/"
+    fi
 
     if [ ! -z "${error}" ]; then
         echo -e "ERROR:\n${error}"

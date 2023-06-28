@@ -33,7 +33,6 @@
 #include "cmdline/standalone_cli_tools/change_storage_class/JsonFileData.hpp"
 #include "cmdline/standalone_cli_tools/common/CatalogueFetch.hpp"
 #include "cmdline/standalone_cli_tools/common/CmdLineArgs.hpp"
-#include "cmdline/standalone_cli_tools/common/ConnectionConfiguration.hpp"
 #include "common/checksum/ChecksumBlob.hpp"
 #include "common/exception/CommandLineNotParsed.hpp"
 #include "common/exception/UserError.hpp"
@@ -77,7 +76,7 @@ ChangeStorageClass::~ChangeStorageClass() = default;
 int ChangeStorageClass::exceptionThrowingMain(const int argc, char *const *const argv) {
   CmdLineArgs cmdLineArgs(argc, argv, StandaloneCliTool::CTA_CHANGE_STORAGE_CLASS);
 
-  auto [serviceProvider, endpointmap] = ConnConfiguration::readAndSetConfiguration(m_log, getUsername(), cmdLineArgs);
+  auto serviceProvider = setXrootdConfiguration(cmdLineArgs.m_debug);
   m_serviceProviderPtr = std::move(serviceProvider);
 
   handleArguments(cmdLineArgs);
@@ -88,6 +87,39 @@ int ChangeStorageClass::exceptionThrowingMain(const int argc, char *const *const
     updateStorageClassInCatalogue(archiveFileId, storageClass);
   }
   return 0;
+}
+
+std::unique_ptr<XrdSsiPbServiceType> ChangeStorageClass::setXrootdConfiguration(bool debug) const {
+  const std::string StreamBufferSize      = "1024";                  //!< Buffer size for Data/Stream Responses
+  const std::string DefaultRequestTimeout = "10";                    //!< Default Request Timeout. Can be overridden by
+                                                                      //!< XRD_REQUESTTIMEOUT environment variable.
+  if (debug) {
+    m_log.setLogMask("DEBUG");
+  } else {
+    m_log.setLogMask("INFO");
+  }
+
+  // Set CTA frontend configuration options
+  const std::string cli_config_file = "/etc/cta/cta-cli.conf";
+  XrdSsiPb::Config cliConfig(cli_config_file, "cta");
+  cliConfig.set("resource", "/ctafrontend");
+  cliConfig.set("response_bufsize", StreamBufferSize);         // default value = 1024 bytes
+  cliConfig.set("request_timeout", DefaultRequestTimeout);     // default value = 10s
+
+  // Allow environment variables to override config file
+  cliConfig.getEnv("request_timeout", "XRD_REQUESTTIMEOUT");
+
+  // If XRDDEBUG=1, switch on all logging
+  if(getenv("XRDDEBUG")) {
+    cliConfig.set("log", "all");
+  }
+  // If fine-grained control over log level is required, use XrdSsiPbLogLevel
+  cliConfig.getEnv("log", "XrdSsiPbLogLevel");
+
+  // If the server is down, we want an immediate failure. Set client retry to a single attempt.
+  XrdSsiProviderClient->SetTimeout(XrdSsiProvider::connect_N, 1);
+  
+  return std::make_unique<XrdSsiPbServiceType>(cliConfig);
 }
 
 //------------------------------------------------------------------------------

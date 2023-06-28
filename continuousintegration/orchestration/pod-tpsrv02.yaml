@@ -92,6 +92,8 @@ spec:
       name: mydatabase
     - mountPath: /etc/config/library
       name: mylibrary
+    - mountPath: /etc/config/eos
+      name: eosconfig
     - mountPath: /mnt/logs
       name: logstorage
     securityContext:
@@ -110,6 +112,9 @@ spec:
   - name: mylibrary
     configMap:
       name: library-config
+  - name: eosconfig
+    configMap:
+      name: eos-config
   - name: logstorage
     persistentVolumeClaim:
       claimName: claimlogs

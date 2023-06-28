@@ -1853,9 +1853,25 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
   }
 
   // Validate tape state change based on previous state
-  auto prev_state = m_catalogue.Tape()->getTapesByVid(vid)[vid].state;
+  auto tape_meta_data = m_catalogue.Tape()->getTapesByVid(vid)[vid];
+  auto prev_state     = tape_meta_data.state;
+  auto prev_reason    = tape_meta_data.stateReason;
 
-  // If previous and desired states are the same, do nothing
+  // User is not allowed to select explicitly a temporary state
+  if (
+          new_state == Tape::BROKEN_PENDING
+          || new_state == Tape::EXPORTED_PENDING
+          || new_state == Tape::REPACKING_PENDING
+          ) {
+    throw cta::exception::UserError("Internal states cannot be set directly by the user");
+  }
+
+  // If previous and desired states are the same, do nothing but changing the reason if provided
+  if (prev_state == new_state && stateReason && stateReason.value() != prev_reason) {
+    m_catalogue.Tape()->modifyTapeState(admin, vid, new_state, prev_state, stateReason);
+    return;
+  }
+
   if (prev_state == new_state) return;
 
   // If previous state is PENDING (not of the same type), user should wait for it to complete
@@ -1865,15 +1881,6 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
           || (prev_state == Tape::REPACKING_PENDING && new_state != Tape::REPACKING)
           ) {
     throw cta::exception::UserError("Cannot modify tape " + vid + " state while it is in a temporary internal state");
-  }
-
-  // User is not allowed to select explicitly a temporary state
-  if (
-          new_state == Tape::BROKEN_PENDING
-          || new_state == Tape::EXPORTED_PENDING
-          || new_state == Tape::REPACKING_PENDING
-          ) {
-    throw cta::exception::UserError("Internal states cannot be set directly by the user");
   }
 
   // Moving out of REPACKING/REPACKING_DISABLED is only allowed if there is no repacking ongoing

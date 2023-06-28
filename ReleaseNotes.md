@@ -1,7 +1,22 @@
+# v4.NEXT
+
+### Bug Fixes
+- cta/CTA#373 - cta-verify-file may fail if cta.verification.mount_policy is not set
+### Building and Packaging
+- cta/CTA#385 - Remove OpenSSL dependency
+
+### Features
+- cta/CTA#314 - Remove the option of using `cta-admin tapefile ls` with the `-l` option
+- cta/CTA#392 - Remove gRPC configuration for tool and test in cta-change-storage-class-in-catalogue
+- cta/CTA#349 - Add option to change the state reason even if the state is not changing
+
 # v4.8.8-2
 
 ### Bug Fixes
 - cta/CTA#379 - Fix tagging release CI script for xrootd5
+
+### Continuous Integration
+- cta/CTA#378 - Add http tape REST API compliance tests
 
 # v4.8.8-1
 

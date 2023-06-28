@@ -84,6 +84,20 @@ if [[ $VERBOSE == 1 ]]; then
   TEST_POSTRUN=" && kill \${TAILPID} &> /dev/null"
 fi
 
+
+echo "Setting up client pod for HTTPs REST API test"
+echo " Copying CA certificates to client pod from ctaeos pod."
+kubectl -n ${NAMESPACE} cp ctaeos:etc/grid-security/certificates/ /tmp/certificates/
+kubectl -n ${NAMESPACE} cp /tmp/certificates client:/etc/grid-security/
+rm -rf /tmp/certificates
+
+# We don'y care about the tapesrv logs so we don't need the TEST_[PRERUN|POSTRUN].
+# We just test the .well-known/wlcg-tape-rest-api endpoint and REST API compliance
+# with the specification.
+echo " Launching client_rest_api.sh on client pod"
+kubectl -n ${NAMESPACE} exec client -- bash /root/client_rest_api.sh || exit 1
+
+
 echo
 echo "Launching immutable file test on client pod"
 kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && echo yes | cta-immutable-file-test root://\${EOSINSTANCE}/\${EOS_DIR}/immutable_file ${TEST_POSTRUN} || die 'The cta-immutable-file-test failed.'" || exit 1

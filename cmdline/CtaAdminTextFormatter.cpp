@@ -900,8 +900,7 @@ void TextFormatter::printTapeFileLsHeader() {
     "storage class",
     "owner",
     "group",
-    "creation time",
-    "path"
+    "creation time"
   );
 }
 
@@ -934,8 +933,7 @@ void TextFormatter::print(const TapeFileLsItem &tfls_item) {
     tfls_item.af().storage_class(),
     tfls_item.df().owner_id().uid(),
     tfls_item.df().owner_id().gid(),
-    timeToStr(tfls_item.af().creation_time()),
-    tfls_item.df().path()
+    timeToStr(tfls_item.af().creation_time())
   );
 }
 
