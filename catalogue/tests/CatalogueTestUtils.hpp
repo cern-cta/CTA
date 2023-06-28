@@ -75,6 +75,7 @@ public:
   static cta::common::dataStructures::StorageClass getStorageClassTripleCopy();
   static cta::common::dataStructures::PhysicalLibrary getPhysicalLibrary1();
   static cta::common::dataStructures::PhysicalLibrary getPhysicalLibrary2();
+  static cta::common::dataStructures::PhysicalLibrary getPhysicalLibrary3();
   static cta::catalogue::MediaType getMediaType();
   static cta::catalogue::CreateTapeAttributes getTape1();
   static cta::catalogue::CreateTapeAttributes getTape2();
