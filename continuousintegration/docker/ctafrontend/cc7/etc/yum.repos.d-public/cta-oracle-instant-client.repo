@@ -3,5 +3,5 @@ name=Oracle instant client
 baseurl=https://yum.oracle.com/repo/OracleLinux/OL$releasever/oracle/instantclient/$basearch
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
 gpgcheck=1
-enabled=0
+enabled=1
 priority=1
