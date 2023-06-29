@@ -31,16 +31,6 @@ spec:
         configMapKeyRef:
           name: init
           key: keepobjectstore
-    - name: BUILDTREE_BASE
-      valueFrom:
-        configMapKeyRef:
-          name: buildtree
-          key: base
-    - name: CTA_BUILDTREE_SUBDIR
-      valueFrom:
-        configMapKeyRef:
-          name: buildtree
-          key: cta_subdir
     - name: SCHEMA_VERSION
       value: "SCHEMA_VERSION_VALUE"
     command: ['/opt/run/bin/init.sh']

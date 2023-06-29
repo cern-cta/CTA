@@ -17,31 +17,16 @@
 
 . /opt/run/bin/init_pod.sh
 
-if [ ! -e /etc/buildtreeRunner ]; then
-  yum-config-manager --enable cta-artifacts
-  yum-config-manager --enable ceph
+yum-config-manager --enable cta-artifacts
+yum-config-manager --enable ceph
 
-  if test -f "/etc/config/eos/eos5"; then
-    # Switch to EOS-5 versionlock
-    /opt/run/bin/cta-versionlock --file /etc/yum/pluginconf.d/versionlock.list config eos5
+# Install missing RPMs
+yum -y install cta-cli cta-immutable-file-test cta-debuginfo xrootd-client eos-client jq python36
 
-    yum-config-manager --disable eos-citrine-commit
-    yum-config-manager --disable eos-citrine-depend
-    yum-config-manager --disable eos-citrine
-    yum-config-manager --enable eos-diopside-commit
-    yum-config-manager --enable eos-diopside-depend
-    yum-config-manager --enable eos-diopside
-    yum-config-manager --enable cta-ci-eos-5
-  fi
-
-  # Install missing RPMs
-  yum -y install cta-cli cta-immutable-file-test cta-debuginfo xrootd-client eos-client jq python36
-
-  ## Keep this temporary fix that may be needed if going to protobuf3-3.5.1 for CTA
-  # Install eos-protobuf3 separately as eos is OK with protobuf3 but cannot use it..
-  # Andreas is fixing eos-(client|server) rpms to depend on eos-protobuf3 instead
-  # yum -y install eos-protobuf3
-fi
+## Keep this temporary fix that may be needed if going to protobuf3-3.5.1 for CTA
+# Install eos-protobuf3 separately as eos is OK with protobuf3 but cannot use it..
+# Andreas is fixing eos-(client|server) rpms to depend on eos-protobuf3 instead
+# yum -y install eos-protobuf3
 
 cat <<EOF > /etc/cta/cta-cli.conf
 # The CTA frontend address in the form <FQDN>:<TCPPort>

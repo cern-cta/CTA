@@ -73,13 +73,21 @@ SchemaVersion RdbmsSchemaCatalogue::getSchemaVersion() const {
 void RdbmsSchemaCatalogue::verifySchemaVersion() {
   try {
     SchemaVersion schemaVersion = getSchemaVersion();
-    if(auto [major, minor] = schemaVersion.getSchemaVersion<SchemaVersion::MajorMinor>();
-      major != static_cast<uint64_t>(CTA_CATALOGUE_SCHEMA_VERSION_MAJOR)){
+    /*if(auto [major, minor] = schemaVersion.getSchemaVersion<SchemaVersion::MajorMinor>();
+            major != static_cast<uint64_t>(CTA_CATALOGUE_SCHEMA_VERSION_MAJOR)){
       std::ostringstream exceptionMsg;
       exceptionMsg << "Catalogue schema MAJOR version differ : Database schema version is "
-        << major << "." << minor
-        << ", CTA schema version is " << CTA_CATALOGUE_SCHEMA_VERSION_MAJOR << "."
-        << CTA_CATALOGUE_SCHEMA_VERSION_MINOR;
+                   << major << "." << minor
+                   << ", CTA schema version is " << CTA_CATALOGUE_SCHEMA_VERSION_MAJOR << "."
+                   << CTA_CATALOGUE_SCHEMA_VERSION_MINOR;
+      throw WrongSchemaVersionException(exceptionMsg.str());
+    }*/
+    if(auto [major, minor] = schemaVersion.getSchemaVersion<SchemaVersion::MajorMinor>();
+      major > static_cast<uint64_t>(CTA_CATALOGUE_SCHEMA_VERSION_MAJOR)){
+      std::ostringstream exceptionMsg;
+      exceptionMsg << "Catalogue schema MAJOR version differ : Database schema version "
+                   << major << "." << minor << " is above CTA schema version "
+                   << CTA_CATALOGUE_SCHEMA_VERSION_MAJOR << "." << CTA_CATALOGUE_SCHEMA_VERSION_MINOR;
       throw WrongSchemaVersionException(exceptionMsg.str());
     }
     if(schemaVersion.getStatus<SchemaVersion::Status>() == SchemaVersion::Status::UPGRADING){

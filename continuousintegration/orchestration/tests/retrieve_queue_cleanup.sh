@@ -144,9 +144,10 @@ wait_for_request_cancel_report() {
       echo "Timed out after ${WAIT_TIMEOUT} seconds"
       break
     fi 
-    
-    let SECONDS_PASSED=SECONDS_PASSED+1
+
     echo "Waiting for request to be reported as canceled: Seconds passed = ${SECONDS_PASSED}"
+    sleep 1
+    let SECONDS_PASSED=SECONDS_PASSED+1
   
   done
 }

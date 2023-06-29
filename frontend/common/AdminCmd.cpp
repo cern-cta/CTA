@@ -1038,6 +1038,7 @@ void AdminCmd::processTape_Add(xrd::Response& response) {
   auto& logicallibrary = getRequired(OptionString::LOGICAL_LIBRARY);
   auto& tapepool       = getRequired(OptionString::TAPE_POOL);
   auto& full           = getRequired(OptionBoolean::FULL);
+  auto purchaseOrder   = getOptional(OptionString::MEDIA_PURCHASE_ORDER_NUMBER);
   auto state           = getOptional(OptionString::STATE);
   auto stateReason     = getOptional(OptionString::REASON);
   auto comment         = getOptional(OptionString::COMMENT);
@@ -1049,6 +1050,7 @@ void AdminCmd::processTape_Add(xrd::Response& response) {
   tape.logicalLibraryName = logicallibrary;
   tape.tapePoolName = tapepool;
   tape.full = full;
+  tape.purchaseOrder = purchaseOrder;
   tape.comment = comment ? comment.value() : "";
   if(!state) {
     // By default, the state of the tape will be ACTIVE
@@ -1073,6 +1075,7 @@ void AdminCmd::processTape_Ch(xrd::Response& response) {
   auto  tapepool           = getOptional(OptionString::TAPE_POOL);
   auto  comment            = getOptional(OptionString::COMMENT);
   auto  encryptionkeyName  = getOptional(OptionString::ENCRYPTION_KEY_NAME);
+  auto  purchaseOrder      = getOptional(OptionString::MEDIA_PURCHASE_ORDER_NUMBER);
   auto  full               = getOptional(OptionBoolean::FULL);
   auto  state              = getOptional(OptionString::STATE);
   auto  stateReason        = getOptional(OptionString::REASON);
@@ -1104,6 +1107,9 @@ void AdminCmd::processTape_Ch(xrd::Response& response) {
   }
   if(encryptionkeyName) {
     m_catalogue.Tape()->modifyTapeEncryptionKeyName(m_cliIdentity, vid, encryptionkeyName.value());
+  }
+  if(purchaseOrder) {
+    m_catalogue.Tape()->modifyPurchaseOrder(m_cliIdentity, vid, purchaseOrder.value());
   }
   if(full) {
     m_catalogue.Tape()->setTapeFull(m_cliIdentity, vid, full.value());

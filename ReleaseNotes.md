@@ -2,6 +2,10 @@
 
 ### Bug Fixes
 - cta/CTA#373 - cta-verify-file may fail if cta.verification.mount_policy is not set
+- cta/CTA#400 - Fix missing 'sleep' in system tests
+- cta/CTA#367 - Don't use "Putting the drive down" message in cleaner
+- cta/CTA#389 - Minor fix in Tape REST API system tests
+
 ### Building and Packaging
 - cta/CTA#385 - Remove OpenSSL dependency
 
@@ -9,6 +13,19 @@
 - cta/CTA#314 - Remove the option of using `cta-admin tapefile ls` with the `-l` option
 - cta/CTA#392 - Remove gRPC configuration for tool and test in cta-change-storage-class-in-catalogue
 - cta/CTA#349 - Add option to change the state reason even if the state is not changing
+- cta/CTA#395 - Create gitlab job for code format check
+- cta/CTA#386 - Remove buildtree for kubernetes CI
+- cta/CTA#267 - Add new purchase order field to the tape table
+
+# v4.8.10-1
+
+### Bug Fixes
+- cta/CTA#114 - Do not fail CTA taped when using older catalogue schema versions
+
+# v4.8.9-1
+
+### Catalogue Schema
+- cta/CTA#387 - Update CTA catalogue schema to version 13.0
 
 # v4.8.8-2
 

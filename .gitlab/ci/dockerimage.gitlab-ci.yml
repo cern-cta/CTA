@@ -12,4 +12,4 @@ ctageneric_docker:
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"${DOCKER_LOGIN_USERNAME}\",\"password\":\"${DOCKER_LOGIN_PASSWORD}\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $DOCKERFILE --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}
   variables:
-    DOCKERFILE: continuousintegration/docker/ctafrontend/cc7/ci_runner/Dockerfile
+    DOCKERFILE: continuousintegration/docker/ctafrontend/cc7/Dockerfile
