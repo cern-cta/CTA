@@ -41,10 +41,6 @@ RdbmsPhysicalLibraryCatalogue::RdbmsPhysicalLibraryCatalogue(log::Logger& log, s
 void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStructures::SecurityIdentity& admin, const common::dataStructures::PhysicalLibrary& pl) {
   try {
     auto conn = m_connPool->getConn();
-    if(RdbmsCatalogueUtils::physicalLibraryExists(conn, pl.name)) {
-      throw exception::UserError(std::string("Cannot create physical library ") + pl.name +
-        " because a physical library with the same name already exists");
-    }
 
     const uint64_t physicalLibraryId = getNextPhysicalLibraryId(conn);
     const time_t now = time(nullptr);
@@ -155,18 +151,7 @@ void RdbmsPhysicalLibraryCatalogue::deletePhysicalLibrary(const std::string& nam
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":PHYSICAL_LIBRARY_NAME", name);
     stmt.executeNonQuery();
-
-    // The delete statement will effect no rows and will not raise an error if
-    // either the physical library does not exist or if it still contains tapes
-    if(0 == stmt.getNbAffectedRows()) {
-      if(RdbmsCatalogueUtils::physicalLibraryExists(conn, name)) {
-        throw UserSpecifiedANonEmptyLogicalLibrary(std::string("Cannot delete physical library ") + name +
-          " because it contains one or more tapes");
-      } else {
-        throw UserSpecifiedANonExistentLogicalLibrary(std::string("Cannot delete physical library ") + name +
-          " because it does not exist");
-      }
-    }
+  }
   } catch(exception::UserError& ) {
     throw;
   } catch(exception::Exception& ex) {
