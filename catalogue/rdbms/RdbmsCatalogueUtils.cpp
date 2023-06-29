@@ -193,27 +193,6 @@ bool RdbmsCatalogueUtils::logicalLibraryExists(rdbms::Conn &conn, const std::str
   }
 }
 
-bool RdbmsCatalogueUtils::physicalLibraryExists(rdbms::Conn &conn, const std::string &physicalLibraryName) {
-  try {
-    const char *const sql =
-      "SELECT "
-        "PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME "
-      "FROM "
-        "PHYSICAL_LIBRARY "
-      "WHERE "
-        "PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
-    auto stmt = conn.createStmt(sql);
-    stmt.bindString(":PHYSICAL_LIBRARY_NAME", physicalLibraryName);
-    auto rset = stmt.executeQuery();
-    return rset.next();
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
-}
-
 bool RdbmsCatalogueUtils::tapeExists(rdbms::Conn &conn, const std::string &vid) {
   try {
     const char *const sql =
