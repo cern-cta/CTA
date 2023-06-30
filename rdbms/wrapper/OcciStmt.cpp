@@ -277,9 +277,9 @@ void OcciStmt::executeNonQuery() {
 
     switch(ex.getErrorCode()) {
     case 1:
-      throw UniqueError(msg.str());
+      throw UniqueError(msg.str(), ex.what());
     case 2290:
-      throw CheckConstraintError(msg.str());
+      throw CheckConstraintError(msg.str(), ex.what());
     default:
       throw exception::Exception(msg.str());
     }

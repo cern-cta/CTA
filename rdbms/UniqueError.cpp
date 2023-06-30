@@ -23,8 +23,8 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-UniqueError::UniqueError(const std::string &context, const bool embedBacktrace):
-  ConstraintError(context, embedBacktrace) {
+UniqueError::UniqueError(const std::string &context, const std::string &dbErrorMessage, const bool embedBacktrace):
+  ConstraintError(context, dbErrorMessage, embedBacktrace) {
 }
 
 //------------------------------------------------------------------------------

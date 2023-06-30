@@ -39,7 +39,7 @@ public:
    * @param embedBacktrace whether to embed a backtrace of where the
    * exception was throw in the message
    */
-  UniqueError(const std::string &context = "", const bool embedBacktrace = true);
+  UniqueError(const std::string &context = "", const std::string &dbErrorMessage = "", const bool embedBacktrace = true);
 
   /**
    * Empty Destructor, explicitely non-throwing (needed for std::exception
