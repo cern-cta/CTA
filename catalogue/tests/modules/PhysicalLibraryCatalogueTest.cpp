@@ -109,7 +109,6 @@ TEST_P(cta_catalogue_PhysicalLibraryTest, modifyPhysicalLibrary) {
     ASSERT_EQ(1, libs.size());
     const cta::common::dataStructures::PhysicalLibrary lib = libs.front();
 
-    m_catalogue->PhysicalLibrary()->modifyPhysicalLibraryName(m_admin, lib.name, m_physicalLibrary3.name);
     m_catalogue->PhysicalLibrary()->modifyPhysicalLibraryGuiUrl(m_admin, m_physicalLibrary3.name, m_physicalLibrary3.guiUrl.value());
     m_catalogue->PhysicalLibrary()->modifyPhysicalLibraryWebcamUrl(m_admin, m_physicalLibrary3.name, m_physicalLibrary3.webcamUrl.value());
     m_catalogue->PhysicalLibrary()->modifyPhysicalLibraryLocation(m_admin, m_physicalLibrary3.name, m_physicalLibrary3.location.value());

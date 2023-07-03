@@ -46,9 +46,6 @@ public:
 
   virtual std::list<common::dataStructures::PhysicalLibrary> getPhysicalLibraries() const = 0;
 
-  virtual void modifyPhysicalLibraryName(const common::dataStructures::SecurityIdentity& admin,
-   const std::string& currentName, const std::string& newName) = 0;
-
   virtual void modifyPhysicalLibraryGuiUrl(const common::dataStructures::SecurityIdentity& admin,
    const std::string& name, const std::string& guiUrl) = 0;
 

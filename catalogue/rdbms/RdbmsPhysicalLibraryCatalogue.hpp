@@ -49,9 +49,6 @@ public:
 
   std::list<common::dataStructures::PhysicalLibrary> getPhysicalLibraries() const override;
 
-  void modifyPhysicalLibraryName(const common::dataStructures::SecurityIdentity& admin,
-   const std::string& currentName, const std::string& newName) override;
-
   void modifyPhysicalLibraryGuiUrl   (const common::dataStructures::SecurityIdentity& admin,
    const std::string& name, const std::string& guiUrl) override;
 
