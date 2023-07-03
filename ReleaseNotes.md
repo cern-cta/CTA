@@ -5,6 +5,7 @@
 - cta/CTA#400 - Fix missing 'sleep' in system tests
 - cta/CTA#367 - Don't use "Putting the drive down" message in cleaner
 - cta/CTA#389 - Minor fix in Tape REST API system tests
+- cta/CTA#402 - Schema verify fails for postgres in catalogue v13
 
 ### Building and Packaging
 - cta/CTA#385 - Remove OpenSSL dependency
