@@ -29,6 +29,8 @@
 #include "common/log/Logger.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
+#include "rdbms/ConstraintError.hpp"
+#include "rdbms/UniqueError.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -135,6 +137,10 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
     stmt.executeNonQuery();
   } catch(exception::UserError& ) {
     throw;
+  } catch(cta::rdbms::UniqueError& ex) {
+    throw ex;
+  } catch(cta::rdbms::ConstraintError& ex) {
+    throw ex;
   } catch(exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
@@ -152,6 +158,8 @@ void RdbmsPhysicalLibraryCatalogue::deletePhysicalLibrary(const std::string& nam
     stmt.bindString(":PHYSICAL_LIBRARY_NAME", name);
     stmt.executeNonQuery();
   } catch(exception::UserError& ) {
+    throw;
+  } catch(cta::rdbms::ConstraintError &ex) {
     throw;
   } catch(exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
@@ -255,6 +263,10 @@ void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryName(const common::data
         + " because it does not exist");
     }
   } catch(exception::UserError& ) {
+    throw;
+  } catch(cta::rdbms::UniqueError &ex) {
+    throw;
+  } catch(cta::rdbms::ConstraintError &ex) {
     throw;
   } catch(exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
