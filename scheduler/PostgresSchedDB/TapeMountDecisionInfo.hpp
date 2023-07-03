@@ -39,24 +39,16 @@ class TapeMountDecisionInfo : public SchedulerDatabase::TapeMountDecisionInfo {
  public:
    explicit TapeMountDecisionInfo(PostgresSchedDB &pdb, rdbms::ConnPool &cp, const std::string &ownerId, TapeDrivesCatalogueState *drivesState, log::Logger &logger);
 
-   std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(
-      common::dataStructures::MountType mountType,
-      const catalogue::TapeForWriting & tape, const std::string& driveName,
-      const std::string & logicalLibrary, const std::string & hostName,
-      const std::string& vo, const std::string& mediaType,
-      const std::string& vendor,
-      const uint64_t capacityInBytes,
-      const std::optional<std::string> &activity,
-      cta::common::dataStructures::Label::Format labelFormat) override;
+   std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(const common::dataStructures::MountType& mountType,
+                                                                       const catalogue::TapeForWriting& tape,
+                                                                       const std::string& driveName,
+                                                                       const std::string& logicalLibrary,
+                                                                       const std::string& hostName) override;
 
-   std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(const std::string & vid,
-      const std::string & tapePool, const std::string& driveName,
-      const std::string& logicalLibrary, const std::string& hostName,
-      const std::string& vo, const std::string& mediaType,
-      const std::string& vendor,
-      const uint64_t capacityInBytes,
-      const std::optional<std::string> &activity,
-      cta::common::dataStructures::Label::Format labelFormat) override;
+   std::unique_ptr<SchedulerDatabase::RetrieveMount> createRetrieveMount(const cta::SchedulerDatabase::PotentialMount& mount,
+                                                                         const std::string& driveName,
+                                                                         const std::string& logicalLibrary,
+                                                                         const std::string& hostName) override;
 
   private:
     /** Acquire scheduler global lock */
