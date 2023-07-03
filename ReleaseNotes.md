@@ -5,7 +5,6 @@
 - cta/CTA#400 - Fix missing 'sleep' in system tests
 - cta/CTA#367 - Don't use "Putting the drive down" message in cleaner
 - cta/CTA#389 - Minor fix in Tape REST API system tests
-- cta/CTA#402 - Schema verify fails for postgres in catalogue v13
 
 ### Building and Packaging
 - cta/CTA#385 - Remove OpenSSL dependency
@@ -17,6 +16,11 @@
 - cta/CTA#395 - Create gitlab job for code format check
 - cta/CTA#386 - Remove buildtree for kubernetes CI
 - cta/CTA#267 - Add new purchase order field to the tape table
+
+# v4.8.10-2
+
+### Bug Fixes
+- cta/CTA#402 - Schema verify fails for postgres in catalogue v13
 
 # v4.8.10-1
 
