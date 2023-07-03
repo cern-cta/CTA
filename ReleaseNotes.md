@@ -1,3 +1,8 @@
+# v4.8.10-2
+
+### Bug Fixes
+- cta/CTA#402 - Schema verify fails for postgres in catalogue v13
+
 # v4.8.10-1
 
 ### Bug Fixes
