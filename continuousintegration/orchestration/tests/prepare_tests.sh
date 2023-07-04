@@ -138,6 +138,14 @@ kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin --json version | jq
     --writemaxdrives 1                                                               \
     --diskinstance ${EOSINSTANCE}                                                    \
     --comment "vo"
+
+  kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin virtualorganization add  \
+    --vo vo                                                                          \
+    --readmaxdrives 1                                                                \
+    --writemaxdrives 1                                                               \
+    --diskinstance ${EOSINSTANCE}                                                    \
+    --comment "vo_repack"                                                            \
+    --isrepackvo "true"
   
   # add the media types of the tapes in production
   kubectl --namespace ${NAMESPACE} exec ctacli -- cta-admin mediatype add \
