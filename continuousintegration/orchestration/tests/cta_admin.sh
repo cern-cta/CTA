@@ -594,7 +594,7 @@ test_command "Adding repack request" "${command}" "add" "-v ${vids[0]} -m -u rep
   "select(.vid==\"${vids[0]}\" and .repackBufferUrl=\"root://ctaeos//eos/ctaeos/cta\") | .vid"\
   "1" "adding repack request" || exit 1
 test_command "Deleting repack request" "${command}" "rm" "-v ${vids[0]}" || exit 1
-admin-cta vo rm --vo 'vo_repack' || exit 1
+admin_cta vo rm --vo 'vo_repack' || exit 1
 
 test_assert || exit 1
 
