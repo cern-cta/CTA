@@ -1876,6 +1876,31 @@ std::string OStoreDB::queueRepack(const SchedulerDatabase::QueueRepackRequest & 
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::repackExists()
+//------------------------------------------------------------------------------
+bool OStoreDB::repackExists() {
+  RootEntry re(m_objectStore);
+  re.fetchNoLock();
+  RepackIndex ri(m_objectStore);
+  // First, try to get the address of of the repack index lockfree.
+  try {
+    ri.setAddress(re.getRepackIndexAddress());
+  } catch (cta::exception::Exception &) {
+    return false;
+  }
+  ri.fetchNoLock();
+  auto rrAddresses = ri.getRepackRequestsAddresses();
+  for (auto & rra: rrAddresses) {
+    try {
+      objectstore::RepackRequest rr(rra.repackRequestAddress, m_objectStore);
+      rr.fetchNoLock();
+      return true;
+    } catch (cta::exception::Exception &) {}
+  }
+  return false;
+}
+
+//------------------------------------------------------------------------------
 // OStoreDB::getRepackInfo()
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::RepackInfo> OStoreDB::getRepackInfo() {

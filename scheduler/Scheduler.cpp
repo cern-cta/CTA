@@ -392,6 +392,13 @@ void Scheduler::cancelRepack(const common::dataStructures::SecurityIdentity &cli
 }
 
 //------------------------------------------------------------------------------
+// repackExists
+//------------------------------------------------------------------------------
+bool Scheduler::repackExists() {
+  return m_db.repackExists();
+}
+
+//------------------------------------------------------------------------------
 // getRepacks
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::RepackInfo> Scheduler::getRepacks() {

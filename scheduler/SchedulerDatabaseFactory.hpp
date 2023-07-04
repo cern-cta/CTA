@@ -241,6 +241,10 @@ public:
     return m_SchedDB->queueRepack(repackRequest, lc);
   }
 
+  bool repackExists() override {
+    return m_SchedDB->repackExists();
+  }
+
   std::list<common::dataStructures::RepackInfo> getRepackInfo() override {
     return m_SchedDB->getRepackInfo();
   }

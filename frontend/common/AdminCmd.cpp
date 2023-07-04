@@ -1470,6 +1470,9 @@ void AdminCmd::processVirtualOrganization_Ch(xrd::Response& response) {
     m_catalogue.VO()->modifyVirtualOrganizationDiskInstanceName(m_cliIdentity, name, diskInstanceName.value());
 
   if(isRepackVo) {
+    if (m_scheduler.repackExists()) {
+      throw exception::UserError("Cannot modify default virtual organization for repack while repacks are ongoing.");
+    }
     m_catalogue.VO()->modifyVirtualOrganizationIsRepackVo(m_cliIdentity, name, isRepackVo.value());
   }
 
@@ -1480,6 +1483,11 @@ void AdminCmd::processVirtualOrganization_Rm(xrd::Response& response) {
   using namespace cta::admin;
 
   const auto& name = getRequired(OptionString::VO);
+
+  auto defaultRepackVo = m_catalogue.VO()->getDefaultVirtualOrganizationForRepack();
+  if (defaultRepackVo && (defaultRepackVo->name == name) && m_scheduler.repackExists()) {
+    throw exception::UserError("Cannot remove default virtual organization for repack while repacks are ongoing.");
+  }
 
   m_catalogue.VO()->deleteVirtualOrganization(name);
 
