@@ -25,6 +25,7 @@
 #include "catalogue/rdbms/sqlite/SqliteTapeFileCatalogue.hpp"
 #include "catalogue/rdbms/sqlite/SqliteTapePoolCatalogue.hpp"
 #include "catalogue/rdbms/sqlite/SqliteVirtualOrganizationCatalogue.hpp"
+#include "catalogue/rdbms/sqlite/SqlitePhysicalLibraryCatalogue.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
@@ -51,6 +52,7 @@ SqliteCatalogue::SqliteCatalogue(
   RdbmsCatalogue::m_vo = std::make_unique<SqliteVirtualOrganizationCatalogue>(m_log, m_connPool, this);
   RdbmsCatalogue::m_mediaType = std::make_unique<SqliteMediaTypeCatalogue>(m_log, m_connPool, this);
   RdbmsCatalogue::m_logicalLibrary = std::make_unique<SqliteLogicalLibraryCatalogue>(m_log, m_connPool, this);
+  RdbmsCatalogue::m_physicalLibrary = std::make_unique<SqlitePhysicalLibraryCatalogue>(m_log, m_connPool, this);
   RdbmsCatalogue::m_tape = std::make_unique<SqliteTapeCatalogue>(m_log, m_connPool, this);
   RdbmsCatalogue::m_archiveFile = std::make_unique<SqliteArchiveFileCatalogue>(m_log, m_connPool, this);
   RdbmsCatalogue::m_tapeFile = std::make_unique<SqliteTapeFileCatalogue>(m_log, m_connPool, this);

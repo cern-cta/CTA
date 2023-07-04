@@ -94,10 +94,10 @@ public:
       throw exception::LostDatabaseConnection(dbmsg);
     }
     if (uniqueViolation) {
-      throw UniqueError(dbmsg);
+      throw UniqueError(dbmsg, pgstr);
     }
     if (checkViolation) {
-      throw CheckConstraintError(dbmsg);
+      throw CheckConstraintError(dbmsg, pgstr);
     }
     throw exception::Exception(dbmsg);
   }

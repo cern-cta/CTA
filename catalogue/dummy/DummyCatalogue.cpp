@@ -128,6 +128,10 @@ const std::unique_ptr<LogicalLibraryCatalogue>& DummyCatalogue::LogicalLibrary()
   return m_logicalLibrary;
 }
 
+const std::unique_ptr<PhysicalLibraryCatalogue>& DummyCatalogue::PhysicalLibrary() {
+  return m_physicalLibrary;
+}
+
 const std::unique_ptr<TapeFileCatalogue>& DummyCatalogue::TapeFile() {
   return m_tapeFile;
 }

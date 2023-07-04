@@ -65,6 +65,7 @@ public:
   const std::unique_ptr<RequesterMountRuleCatalogue>& RequesterMountRule() override;
   const std::unique_ptr<RequesterGroupMountRuleCatalogue>& RequesterGroupMountRule() override;
   const std::unique_ptr<LogicalLibraryCatalogue>& LogicalLibrary() override;
+  const std::unique_ptr<PhysicalLibraryCatalogue>& PhysicalLibrary() override;
   const std::unique_ptr<DriveConfigCatalogue>& DriveConfig() override;
   const std::unique_ptr<DriveStateCatalogue>& DriveState() override;
   const std::unique_ptr<TapeFileCatalogue>& TapeFile() override;
@@ -105,6 +106,7 @@ private:
   std::unique_ptr<RequesterMountRuleCatalogue> m_requesterMountRule;
   std::unique_ptr<RequesterGroupMountRuleCatalogue> m_requesterGroupMountRule;
   std::unique_ptr<LogicalLibraryCatalogue> m_logicalLibrary;
+  std::unique_ptr<PhysicalLibraryCatalogue> m_physicalLibrary;
   std::unique_ptr<TapeFileCatalogue> m_tapeFile;
   std::unique_ptr<FileRecycleLogCatalogue> m_fileRecycleLog;
   std::unique_ptr<DriveConfigCatalogue> m_driveConfig;

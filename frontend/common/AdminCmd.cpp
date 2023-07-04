@@ -20,9 +20,12 @@
 #include "catalogue/CreateTapeAttributes.hpp"
 #include "catalogue/MediaType.hpp"
 #include "cmdline/CtaAdminCmdParse.hpp"
-#include "PbException.hpp"
+#include "common/dataStructures/PhysicalLibrary.hpp"
 #include "AdminCmd.hpp"
 #include "GrpcEndpoint.hpp"
+#include "PbException.hpp"
+#include "rdbms/ConstraintError.hpp"
+#include "rdbms/UniqueError.hpp"
 
 namespace cta {
 namespace frontend {
@@ -221,6 +224,15 @@ xrd::Response AdminCmd::process() {
       case cmd_pair(admin::AdminCmd::CMD_VIRTUALORGANIZATION, admin::AdminCmd::SUBCMD_RM):
         processVirtualOrganization_Rm(response);
         break;
+      case cmd_pair(admin::AdminCmd::CMD_PHYSICALLIBRARY, admin::AdminCmd::SUBCMD_ADD):
+        processPhysicalLibrary_Add(response);
+        break;
+      case cmd_pair(admin::AdminCmd::CMD_PHYSICALLIBRARY, admin::AdminCmd::SUBCMD_CH):
+        processPhysicalLibrary_Ch(response);
+        break;
+      case cmd_pair(admin::AdminCmd::CMD_PHYSICALLIBRARY, admin::AdminCmd::SUBCMD_RM):
+        processPhysicalLibrary_Rm(response);
+        break;
       case cmd_pair(admin::AdminCmd::CMD_RECYCLETAPEFILE, admin::AdminCmd::SUBCMD_RESTORE):
         processRecycleTapeFile_Restore(response);
         break;
@@ -232,10 +244,16 @@ xrd::Response AdminCmd::process() {
               AdminCmd_Cmd_Name(m_adminCmd.cmd()) + ", " +
               AdminCmd_SubCmd_Name(m_adminCmd.subcmd()) + "> is not implemented.");
     }
-     
+
     // Log the admin command
     logAdminCmd(__FUNCTION__, "success", "", t);
   } catch(exception::PbException& ex) {
+    logAdminCmd(__FUNCTION__, "failure", ex.what(), t);
+    throw ex;
+  } catch(cta::rdbms::UniqueError &ex) {
+    logAdminCmd(__FUNCTION__, "failure", ex.what(), t);
+    throw ex;
+  } catch(cta::rdbms::ConstraintError &ex) {
     logAdminCmd(__FUNCTION__, "failure", ex.what(), t);
     throw ex;
   } catch(exception::UserError& ex) {
@@ -1447,6 +1465,76 @@ void AdminCmd::processVirtualOrganization_Rm(xrd::Response& response) {
   const auto& name = getRequired(OptionString::VO);
 
   m_catalogue.VO()->deleteVirtualOrganization(name);
+
+  response.set_type(xrd::Response::RSP_SUCCESS);
+}
+
+void AdminCmd::processPhysicalLibrary_Add(xrd::Response& response) {
+  using namespace cta::admin;
+
+  common::dataStructures::PhysicalLibrary pl;
+  pl.name                     = getRequired(OptionString::PHYSICAL_LIBRARY);
+  pl.manufacturer             = getRequired(OptionString::MANUFACTURER);
+  pl.model                    = getRequired(OptionString::LIBRARY_MODEL);
+  pl.nbPhysicalCartridgeSlots = getRequired(OptionUInt64::NB_PHYSICAL_CARTRIDGE_SLOTS);
+  pl.nbPhysicalDriveSlots     = getRequired(OptionUInt64::NB_PHYSICAL_DRIVE_SLOTS);
+
+  pl.type                      = getOptional(OptionString::LIBRARY_TYPE);
+  pl.guiUrl                    = getOptional(OptionString::GUI_URL);
+  pl.webcamUrl                 = getOptional(OptionString::WEBCAM_URL);
+  pl.location                  = getOptional(OptionString::LIBRARY_LOCATION);
+  pl.nbAvailableCartridgeSlots = getOptional(OptionUInt64::NB_AVAILABLE_CARTRIDGE_SLOTS);
+  pl.comment                   = getOptional(OptionString::COMMENT);
+
+  m_catalogue.PhysicalLibrary()->createPhysicalLibrary(m_cliIdentity, pl);
+
+  response.set_type(xrd::Response::RSP_SUCCESS);
+}
+
+void AdminCmd::processPhysicalLibrary_Ch(xrd::Response& response) {
+  using namespace cta::admin;
+
+  const auto& name = getRequired(OptionString::PHYSICAL_LIBRARY);
+
+  const auto guiUrl                    = getOptional(OptionString::GUI_URL);
+  const auto webcamUrl                 = getOptional(OptionString::WEBCAM_URL);
+  const auto location                  = getOptional(OptionString::LIBRARY_LOCATION);
+  const auto nbPhysicalCartridgeSlots  = getOptional(OptionUInt64::NB_PHYSICAL_CARTRIDGE_SLOTS);
+  const auto nbAvailableCartridgeSlots = getOptional(OptionUInt64::NB_AVAILABLE_CARTRIDGE_SLOTS);
+  const auto nbPhysicalDriveSlots      = getOptional(OptionUInt64::NB_PHYSICAL_DRIVE_SLOTS);
+  const auto comment                   = getOptional(OptionString::COMMENT);
+
+  if (guiUrl) {
+    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryGuiUrl(m_cliIdentity, name, guiUrl.value());
+  }
+  if (webcamUrl) {
+    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryWebcamUrl(m_cliIdentity, name, webcamUrl.value());
+  }
+  if (location)  {
+    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryLocation(m_cliIdentity, name, location.value());
+  }
+  if (nbPhysicalCartridgeSlots) {
+    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryNbPhysicalCartridgeSlots(m_cliIdentity, name, nbPhysicalCartridgeSlots.value());
+  }
+  if (nbAvailableCartridgeSlots) {
+    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryNbAvailableCartridgeSlots(m_cliIdentity, name, nbAvailableCartridgeSlots.value());
+  }
+  if (nbPhysicalDriveSlots) {
+    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryNbPhysicalDriveSlots(m_cliIdentity, name, nbPhysicalDriveSlots.value());
+  }
+  if (comment) {
+    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryComment(m_cliIdentity, name, comment.value());
+  }
+
+  response.set_type(xrd::Response::RSP_SUCCESS);
+}
+
+void AdminCmd::processPhysicalLibrary_Rm(xrd::Response& response) {
+  using namespace cta::admin;
+
+  const auto& name = getRequired(OptionString::PHYSICAL_LIBRARY);
+
+  m_catalogue.PhysicalLibrary()->deletePhysicalLibrary(name);
 
   response.set_type(xrd::Response::RSP_SUCCESS);
 }

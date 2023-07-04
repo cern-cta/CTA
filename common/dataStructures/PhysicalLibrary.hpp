@@ -15,23 +15,41 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "rdbms/UniqueError.hpp"
+#pragma once
+
+#include <list>
+#include <map>
+#include <optional>
+#include <stdint.h>
+#include <string>
+
+#include "common/dataStructures/EntryLog.hpp"
 
 namespace cta {
-namespace rdbms {
+namespace common {
+namespace dataStructures {
 
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-UniqueError::UniqueError(const std::string &context, const std::string &dbErrorMessage, const bool embedBacktrace):
-  ConstraintError(context, dbErrorMessage, embedBacktrace) {
-}
+/**
+ * The attributes of a physical library
+ */
+struct PhysicalLibrary {
+  std::string name;
+  std::string manufacturer;
+  std::string model;
+  std::optional<std::string> type;
+  std::optional<std::string> guiUrl;
+  std::optional<std::string> webcamUrl;
+  std::optional<std::string> location;
+  uint64_t nbPhysicalCartridgeSlots;
+  std::optional<uint64_t> nbAvailableCartridgeSlots;
+  uint64_t nbPhysicalDriveSlots;
+  EntryLog creationLog;
+  EntryLog lastModificationLog;
+  std::optional<std::string> comment;
 
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-UniqueError::~UniqueError() noexcept {
-}
+  PhysicalLibrary() = default;
+}; // struct PhysicalLibrary
 
-} // namespace rdbms
+} // namespace dataStructures
+} // namespace common
 } // namespace cta

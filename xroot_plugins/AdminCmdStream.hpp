@@ -67,6 +67,7 @@ private:
   void processGroupMountRule_Ls      (cta::xrd::Response& response);
   void processActivityMountRule_Ls   (cta::xrd::Response& response);
   void processLogicalLibrary_Ls      (cta::xrd::Response& response);
+  void processPhysicalLibrary_Ls     (cta::xrd::Response& response);
   void processMediaType_Ls           (cta::xrd::Response& response);
   void processMountPolicy_Ls         (cta::xrd::Response& response);
   void processRequesterMountRule_Ls  (cta::xrd::Response& response);

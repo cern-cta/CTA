@@ -25,8 +25,9 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 CheckConstraintError::CheckConstraintError(
   const std::string &context,
+  const std::string &dbErrorMessage,
   const bool embedBacktrace):
-  ConstraintError(context, embedBacktrace) {
+  ConstraintError(context, dbErrorMessage, embedBacktrace) {
 }
 
 //------------------------------------------------------------------------------

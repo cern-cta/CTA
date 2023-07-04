@@ -1,4 +1,4 @@
-/*
+  /*
  * @project      The CERN Tape Archive (CTA)
  * @copyright    Copyright © 2021-2022 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
@@ -15,23 +15,33 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "rdbms/UniqueError.hpp"
+#include "common/dataStructures/PhysicalLibrary.hpp"
 
 namespace cta {
-namespace rdbms {
+namespace common {
+namespace dataStructures {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-UniqueError::UniqueError(const std::string &context, const std::string &dbErrorMessage, const bool embedBacktrace):
-  ConstraintError(context, dbErrorMessage, embedBacktrace) {
-}
+PhysicalLibrary::PhysicalLibrary() = default;
 
 //------------------------------------------------------------------------------
-// destructor
+// operator==
 //------------------------------------------------------------------------------
-UniqueError::~UniqueError() noexcept {
+bool PhysicalLibrary::operator==(const PhysicalLibrary &rhs) const {
+  return name==rhs.name
+      && manufacturer==rhs.manufacturer
+      && model==rhs.model
+      && type==rhs.type
+      && guiUrl==rhs.guiUrl
+      && webcamUrl==rhs.webcamUrl
+      && location==rhs.location
+      && nbPhysicalCartridgeSlots==rhs.nbPhysicalCartridgeSlots
+      && nbAvailableCartridgeSlots==rhs.nbAvailableCartridgeSlots
+      && nbPhysicalDriveSlots==rhs.nbPhysicalDriveSlots;
 }
 
-} // namespace rdbms
+} // namespace dataStructures
+} // namespace common
 } // namespace cta

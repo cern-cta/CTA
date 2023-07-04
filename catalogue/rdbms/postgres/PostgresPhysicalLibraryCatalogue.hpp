@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
+ * @copyright    Copyright © 2022 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -15,23 +15,27 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "rdbms/UniqueError.hpp"
+#pragma once
+
+#include <string>
+
+#include "catalogue/rdbms/RdbmsPhysicalLibraryCatalogue.hpp"
 
 namespace cta {
-namespace rdbms {
 
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-UniqueError::UniqueError(const std::string &context, const std::string &dbErrorMessage, const bool embedBacktrace):
-  ConstraintError(context, dbErrorMessage, embedBacktrace) {
-}
+namespace catalogue {
 
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-UniqueError::~UniqueError() noexcept {
-}
+class RdbmsCatalogue;
 
-} // namespace rdbms
-} // namespace cta
+class PostgresPhysicalLibraryCatalogue : public RdbmsPhysicalLibraryCatalogue {
+public:
+  PostgresPhysicalLibraryCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
+    RdbmsCatalogue* rdbmsCatalogue);
+  ~PostgresPhysicalLibraryCatalogue() override = default;
+
+private:
+  uint64_t getNextPhysicalLibraryId(rdbms::Conn &conn) const override;
+};  // class SqliteFileRecycleLogCatalogue
+
+}  // namespace catalogue
+}  // namespace cta

@@ -39,14 +39,21 @@ public:
    * @param embedBacktrace whether to embed a backtrace of where the
    * exception was throw in the message
    */
-  ConstraintError(const std::string &context = "", const bool embedBacktrace = true);
+  ConstraintError(const std::string &context = "", const std::string &dbErrorMessage="", const bool embedBacktrace = true);
 
   /**
    * Empty Destructor, explicitely non-throwing (needed for std::exception
    * inheritance)
    */
   ~ConstraintError() noexcept override;
-  
+
+  /**
+   * Returns the raw error message generated bu the DB
+   */
+  std::string getDbErrorMessage() const;
+
+private:
+  std::string rawDbErrorMessage;
 }; // class ConstraintError
 
 } // namespace rdbms

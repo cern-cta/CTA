@@ -140,6 +140,10 @@ const std::unique_ptr<LogicalLibraryCatalogue>& RdbmsCatalogue::LogicalLibrary()
   return m_logicalLibrary;
 }
 
+const std::unique_ptr<PhysicalLibraryCatalogue>& RdbmsCatalogue::PhysicalLibrary() {
+  return m_physicalLibrary;
+}
+
 const std::unique_ptr<TapeFileCatalogue>& RdbmsCatalogue::TapeFile() {
   return m_tapeFile;
 }

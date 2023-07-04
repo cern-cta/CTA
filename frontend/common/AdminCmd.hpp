@@ -219,6 +219,9 @@ private:
   void processVirtualOrganization_Add (xrd::Response& response);
   void processVirtualOrganization_Ch  (xrd::Response& response);
   void processVirtualOrganization_Rm  (xrd::Response& response);
+  void processPhysicalLibrary_Add     (xrd::Response& response);
+  void processPhysicalLibrary_Ch      (xrd::Response& response);
+  void processPhysicalLibrary_Rm      (xrd::Response& response);
   void processRecycleTapeFile_Restore (xrd::Response& response);
   void processModifyArchiveFile       (xrd::Response& response);
 
