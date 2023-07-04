@@ -1134,27 +1134,29 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
     } else if (m->type == common::dataStructures::MountType::Retrieve) {
       isRepackingMount = (repackingTapeVids.find(m->vid) != repackingTapeVids.end());
     }
-    if (isRepackingMount && !defaultRepackVo.has_value()) {
-      // Repacking mount, but no default repack VO exits
-      log::ScopedParamContainer params(lc);
-      params.add("tapePool", m->tapePool);
-      if (m->type == common::dataStructures::MountType::Retrieve) {
-        params.add("tapeVid", m->vid);
+    if (isRepackingMount) {
+      if (defaultRepackVo.has_value()) {
+        // Repacking mount, default repack VO exists
+        m->vo = defaultRepackVo->name;
+      } else {
+        // Repacking mount, no default repack VO exits
+        log::ScopedParamContainer params(lc);
+        params.add("tapePool", m->tapePool);
+        if (m->type == common::dataStructures::MountType::Retrieve) {
+          params.add("tapeVid", m->vid);
+        }
+        params.add("mountType", common::dataStructures::toString(m->type))
+                .add("bytesQueued", m->bytesQueued)
+                .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
+                .add("filesQueued", m->filesQueued)
+                .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
+                .add("oldestJobAge", time(nullptr) - m->oldestJobStartTime)
+                .add("youngestJobAge", time(nullptr) - m->youngestJobStartTime)
+                .add("minRequestAge", m->minRequestAge);
+        lc.log(log::ERR,
+               "In Scheduler::sortAndGetTapesForMountInfo(): potential repack mount not considered due to lack of default repack VO");
+        toFilterRepSet.insert(m);
       }
-      params.add("mountType", common::dataStructures::toString(m->type))
-            .add("bytesQueued", m->bytesQueued)
-            .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
-            .add("filesQueued", m->filesQueued)
-            .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
-            .add("oldestJobAge", time(nullptr) - m->oldestJobStartTime)
-            .add("youngestJobAge", time(nullptr) - m->youngestJobStartTime)
-            .add("minRequestAge", m->minRequestAge);
-      lc.log(log::ERR,
-             "In Scheduler::sortAndGetTapesForMountInfo(): potential repack mount not considered due to lack of default repack VO");
-      toFilterRepSet.insert(m);
-    } else if (isRepackingMount) {
-      // Repacking mount, and default repack VO exists
-      m->vo = defaultRepackVo->name;
     } else {
       // Non-repacking mount
       m->vo = tapepoolVoNameMap.at(m->tapePool);

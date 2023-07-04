@@ -28,7 +28,6 @@ InMemoryCatalogue::InMemoryCatalogue(
   const uint64_t nbConns,
   const uint64_t nbArchiveFileListingConns):
   SchemaCreatingSqliteCatalogue(log, "file::memory:?cache=shared", nbConns, nbArchiveFileListingConns) {
-  //SchemaCreatingSqliteCatalogue(log, "/tmp/test.db", nbConns, nbArchiveFileListingConns) {
 }
 
 //------------------------------------------------------------------------------
