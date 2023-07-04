@@ -109,7 +109,7 @@ bool RdbmsCatalogueUtils::virtualOrganizationExists(rdbms::Conn &conn, const std
   }
 }
 
-bool RdbmsCatalogueUtils::defaultVirtualOrganizationForRepackExists(rdbms::Conn &conn) {
+std::optional<std::string> RdbmsCatalogueUtils::defaultVirtualOrganizationForRepackExists(rdbms::Conn &conn) {
   try {
     const char *const sql =
             "SELECT "
@@ -120,7 +120,11 @@ bool RdbmsCatalogueUtils::defaultVirtualOrganizationForRepackExists(rdbms::Conn 
             "IS_REPACK_VO = '1'";
     auto stmt = conn.createStmt(sql);
     auto rset = stmt.executeQuery();
-    return rset.next();
+    if (rset.next()) {
+      return rset.columnString("VIRTUAL_ORGANIZATION_NAME");
+    } else {
+      return std::nullopt;
+    }
   } catch(exception::UserError &) {
     throw;
   } catch(exception::Exception &ex) {

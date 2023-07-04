@@ -360,4 +360,76 @@ TEST_P(cta_catalogue_VirtualOrganizationTest, getDefaultVirtualOrganizationForRe
   ASSERT_EQ(userVo2, m_catalogue->VO()->getVirtualOrganizationOfTapepool(anotherTapePool));
 }
 
+TEST_P(cta_catalogue_VirtualOrganizationTest, getDefaultVirtualOrganizationForRepackingNoValue) {
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const std::optional<std::string> supply("value for the supply pool mechanism");
+
+  cta::common::dataStructures::VirtualOrganization userVo1 = CatalogueTestUtils::getVo();
+  cta::common::dataStructures::VirtualOrganization userVo2 = CatalogueTestUtils::getAnotherVo();
+  std::string anotherTapePool = "AnotherTapePool";
+
+  m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  m_catalogue->VO()->createVirtualOrganization(m_admin,userVo1);
+  m_catalogue->VO()->createVirtualOrganization(m_admin,userVo2);
+  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, userVo1.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin, anotherTapePool, userVo2.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+
+  auto defaultVoForRepacking = m_catalogue->VO()->getDefaultVirtualOrganizationForRepack();
+  ASSERT_FALSE(defaultVoForRepacking.has_value());
+
+  // Confirm that the user VO is still returned
+  ASSERT_EQ(userVo1, m_catalogue->VO()->getVirtualOrganizationOfTapepool(m_tape1.tapePoolName));
+  ASSERT_EQ(userVo2, m_catalogue->VO()->getVirtualOrganizationOfTapepool(anotherTapePool));
+}
+
+TEST_P(cta_catalogue_VirtualOrganizationTest, modifyVirtualOrganizationIsRepackVo) {
+  cta::common::dataStructures::VirtualOrganization vo = CatalogueTestUtils::getVo();
+  m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+
+  // Add a new simple VO
+  ASSERT_NO_THROW(m_catalogue->VO()->createVirtualOrganization(m_admin,vo));
+  auto defaultVoForRepacking1 = m_catalogue->VO()->getDefaultVirtualOrganizationForRepack();
+  ASSERT_FALSE(defaultVoForRepacking1.has_value());
+
+  // Enable VO for repacking
+  ASSERT_NO_THROW(m_catalogue->VO()->modifyVirtualOrganizationIsRepackVo(m_admin, vo.name, true));
+  auto defaultVoForRepacking2 = m_catalogue->VO()->getDefaultVirtualOrganizationForRepack();
+  ASSERT_TRUE(defaultVoForRepacking2.has_value());
+
+  // Disable VO for repacking
+  ASSERT_NO_THROW(m_catalogue->VO()->modifyVirtualOrganizationIsRepackVo(m_admin, vo.name, false));
+  auto defaultVoForRepacking3 = m_catalogue->VO()->getDefaultVirtualOrganizationForRepack();
+  ASSERT_FALSE(defaultVoForRepacking3.has_value());
+}
+
+TEST_P(cta_catalogue_VirtualOrganizationTest, modifyVirtualOrganizationIsRepackVoDoesNotExist) {
+  ASSERT_THROW(m_catalogue->VO()->modifyVirtualOrganizationIsRepackVo(m_admin,"DOES_NOT_EXIST",true),
+               cta::exception::UserError);
+}
+
+TEST_P(cta_catalogue_VirtualOrganizationTest, modifyVirtualOrganizationIsRepackVoAlreadyExists) {
+
+  cta::common::dataStructures::VirtualOrganization vo1 = CatalogueTestUtils::getVo();
+  cta::common::dataStructures::VirtualOrganization vo2 = CatalogueTestUtils::getVo();
+
+  std::string vo1Name = "vo1";
+  std::string vo2Name = "vo2";
+
+  vo1.name = vo1Name;
+  vo2.name = vo2Name;
+
+  m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+
+  // Add two new simple VO
+  ASSERT_NO_THROW(m_catalogue->VO()->createVirtualOrganization(m_admin,vo1));
+  ASSERT_NO_THROW(m_catalogue->VO()->createVirtualOrganization(m_admin,vo2));
+
+  // Enable VO 1 for repacking - should work
+  ASSERT_NO_THROW(m_catalogue->VO()->modifyVirtualOrganizationIsRepackVo(m_admin, vo1.name, true));
+
+  // Enable VO 2 for repacking - should fail, there is already 1 repack VO
+  ASSERT_THROW(m_catalogue->VO()->modifyVirtualOrganizationIsRepackVo(m_admin, vo2.name, true), cta::exception::UserError);
+}
+
 }  // namespace unitTests

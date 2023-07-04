@@ -620,7 +620,16 @@ void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationIsRepackVo(
             "WHERE "
             "VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME";
     auto conn = m_connPool->getConn();
-    if(RdbmsCatalogueUtils::defaultVirtualOrganizationForRepackExists(conn)) {
+    auto repackVoNameOpt = RdbmsCatalogueUtils::defaultVirtualOrganizationForRepackExists(conn);
+    if (!isRepackVo && (!repackVoNameOpt.has_value() || repackVoNameOpt.value() != voName)) {
+      // Nothing to change here
+      return;
+    }
+    if (isRepackVo && repackVoNameOpt.has_value() && repackVoNameOpt.value() == voName) {
+      // Nothing to change here
+      return;
+    }
+    if(isRepackVo && repackVoNameOpt.has_value() && repackVoNameOpt.value() != voName) {
       throw exception::UserError("There already exists a default VO for repacking");
     }
 
