@@ -567,7 +567,7 @@ log_message "Setting tape to full"
 admin_cta ta ch -v "${vids[0]}" -f true
 sleep 3
 log_message "Adding a VO for repacking"
-admin-cta vo add --vo 'vo_repack' --rmd 1 --wmd 1 --di 'ctaeos' -m 'Add vo_repack' --isrepackvo 'true' || exit 1
+admin_cta vo add --vo 'vo_repack' --rmd 1 --wmd 1 --di 'ctaeos' -m 'Add vo_repack' --isrepackvo 'true' || exit 1
 log_message "Setting tape to REPACKING"
 admin_cta ta ch -v "${vids[0]}" -s REPACKING -r 'Test repack' || exit 1
 sleep 2
