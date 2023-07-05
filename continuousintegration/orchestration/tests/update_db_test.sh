@@ -85,10 +85,16 @@ fi
 
 kubectl create -f ${tempdir}/pod-dbupdatetest.yaml --namespace=${NAMESPACE}
 
+sleep infinity
+
 echo -n "Waiting for dbupdatetest"
 for ((i=0; i<400; i++)); do
   echo -n "."
-  kubectl get pod dbupdatetest -a --namespace=${NAMESPACE} | egrep -q 'Completed|Error' && break
+  status=$(kubectl get pods -n stress -o json | jq '.items[] | select(.metadata.name == "dbupdatetest")' | jq -c '.status.phase')
+  echo $status
+  if [ "$status" == "" ] || [ "$status" == "Succeeded" ]; then
+    break
+  fi
   sleep 1
 done
 echo "\n"
