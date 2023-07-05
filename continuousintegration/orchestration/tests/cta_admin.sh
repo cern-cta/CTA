@@ -206,8 +206,8 @@ test_start "virtual organization" "vo"
 test_and_check_cmd "Adding vo 'vo_cta'" "${command}" "add" "--vo 'vo_cta' --rmd 1 --wmd 1 --di 'ctaeos' -m 'Add vo_cta'"\
   'select(.name=="vo_cta" and .writeMaxDrives=="1" and .readMaxDrives=="1" and .diskinstance=="ctaeos" and .comment=="Add vo_cta" and .isRepackVo==false) | .name'\
   "1" "adding vo 'vo_cta'" || exit 1
-test_and_check_cmd "Changing 'vo_cta' rmd and mfs" "${command}" "ch" "--vo 'vo_cta' --wmd 2 --mfs 100 --isrepackvo true"\
-  'select(.name=="vo_cta" and .writeMaxDrives=="2" and .maxFileSize=="100" and .isRepackVo==true) | .name'\
+test_and_check_cmd "Changing 'vo_cta' rmd and mfs" "${command}" "ch" "--vo 'vo_cta' --wmd 2 --mfs 100 --isrepackvo false"\
+  'select(.name=="vo_cta" and .writeMaxDrives=="2" and .maxFileSize=="100" and .isRepackVo==false) | .name'\
   "1" "changing 'vo_cta'" || exit 1
 test_command "Removing vo 'vo_cta'" "${command}" "rm" "--vo 'vo_cta'" || exit 1
 test_assert || exit 1
@@ -567,7 +567,6 @@ log_message "Setting tape to full"
 admin_cta ta ch -v "${vids[0]}" -f true
 sleep 3
 log_message "Adding a VO for repacking"
-admin_cta vo add --vo 'vo_repack' --rmd 1 --wmd 1 --di 'ctaeos' -m 'Add vo_repack' --isrepackvo 'true' || exit 1
 log_message "Setting tape to REPACKING"
 admin_cta ta ch -v "${vids[0]}" -s REPACKING -r 'Test repack' || exit 1
 sleep 2
@@ -594,7 +593,6 @@ test_command "Adding repack request" "${command}" "add" "-v ${vids[0]} -m -u rep
   "select(.vid==\"${vids[0]}\" and .repackBufferUrl=\"root://ctaeos//eos/ctaeos/cta\") | .vid"\
   "1" "adding repack request" || exit 1
 test_command "Deleting repack request" "${command}" "rm" "-v ${vids[0]}" || exit 1
-admin_cta vo rm --vo 'vo_repack' || exit 1
 
 test_assert || exit 1
 
