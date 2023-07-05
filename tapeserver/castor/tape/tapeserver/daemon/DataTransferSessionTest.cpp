@@ -302,6 +302,7 @@ public:
     vo.maxFileSize = 0;
     vo.comment = "comment";
     vo.diskInstanceName = getDefaultDiskInstance().name;
+    vo.isRepackVo = false;
     return vo;
   }
 

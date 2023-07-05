@@ -11,6 +11,7 @@
 - cta/CTA#385 - Remove OpenSSL dependency
 
 ### Features
+- cta/CTA#31 - Allow VO override for repack
 - cta/CTA#267 - Add new purchase order field to the tape table
 - cta/CTA#276 - Add physical library table and a new `cta-admin` cmd for interacting with the table
 - cta/CTA#314 - Remove the option of using `cta-admin tapefile ls` with the `-l` option

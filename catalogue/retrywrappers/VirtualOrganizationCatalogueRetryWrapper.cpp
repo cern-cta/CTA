@@ -57,6 +57,11 @@ common::dataStructures::VirtualOrganization VirtualOrganizationCatalogueRetryWra
     m_maxTriesToConnect);
 }
 
+std::optional<common::dataStructures::VirtualOrganization> VirtualOrganizationCatalogueRetryWrapper::getDefaultVirtualOrganizationForRepack() const {
+  return retryOnLostConnection(m_log, [&]{return m_catalogue->VO()->getDefaultVirtualOrganizationForRepack();},
+                               m_maxTriesToConnect);
+}
+
 void VirtualOrganizationCatalogueRetryWrapper::modifyVirtualOrganizationName(
   const common::dataStructures::SecurityIdentity &admin, const std::string &currentVoName,
   const std::string &newVoName) {
@@ -92,6 +97,12 @@ void VirtualOrganizationCatalogueRetryWrapper::modifyVirtualOrganizationDiskInst
   const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const std::string &diskInstance) {
   return retryOnLostConnection(m_log, [&]{return m_catalogue->VO()->modifyVirtualOrganizationDiskInstanceName(admin,
     voName, diskInstance);}, m_maxTriesToConnect);
+}
+
+void VirtualOrganizationCatalogueRetryWrapper::modifyVirtualOrganizationIsRepackVo(
+  const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const bool isRepackVo) {
+  return retryOnLostConnection(m_log, [&]{return m_catalogue->VO()->modifyVirtualOrganizationIsRepackVo(admin, voName,
+    isRepackVo);}, m_maxTriesToConnect);
 }
 
 } // namespace catalogue

@@ -297,6 +297,7 @@ cta::common::dataStructures::VirtualOrganization CatalogueTestUtils::getVo() {
   vo.writeMaxDrives = 1;
   vo.maxFileSize = 0;
   vo.diskInstanceName = getDiskInstance().name;
+  vo.isRepackVo = false;
   return vo;
 }
 
@@ -308,6 +309,19 @@ cta::common::dataStructures::VirtualOrganization CatalogueTestUtils::getAnotherV
   vo.writeMaxDrives = 1;
   vo.maxFileSize = 0;
   vo.diskInstanceName = getDiskInstance().name;
+  vo.isRepackVo = false;
+  return vo;
+}
+
+cta::common::dataStructures::VirtualOrganization CatalogueTestUtils::getDefaultRepackVo() {
+  cta::common::dataStructures::VirtualOrganization vo;
+  vo.name = "repack_vo";
+  vo.comment = "Creation of virtual organization vo for repacking";
+  vo.readMaxDrives = 1;
+  vo.writeMaxDrives = 1;
+  vo.maxFileSize = 0;
+  vo.diskInstanceName = getDiskInstance().name;
+  vo.isRepackVo = true;
   return vo;
 }
 

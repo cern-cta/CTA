@@ -69,6 +69,7 @@ public:
   static cta::common::dataStructures::DiskInstance getDiskInstance();
   static cta::common::dataStructures::VirtualOrganization getVo();
   static cta::common::dataStructures::VirtualOrganization getAnotherVo();
+  static cta::common::dataStructures::VirtualOrganization getDefaultRepackVo();
   static cta::common::dataStructures::StorageClass getStorageClass();
   static cta::common::dataStructures::StorageClass getAnotherStorageClass();
   static cta::common::dataStructures::StorageClass getStorageClassDualCopy();

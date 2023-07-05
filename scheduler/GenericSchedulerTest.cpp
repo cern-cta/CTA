@@ -249,6 +249,7 @@ public:
     vo.readMaxDrives = 1;
     vo.maxFileSize = 0;
     vo.diskInstanceName = s_diskInstance;
+    vo.isRepackVo = false;
     m_catalogue->VO()->createVirtualOrganization(s_adminOnAdminHost,vo);
 
     common::dataStructures::StorageClass storageClass;
@@ -911,6 +912,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     vo.readMaxDrives = 1;
     vo.maxFileSize = 0;
     vo.diskInstanceName = s_diskInstance;
+    vo.isRepackVo = false;
     catalogue.VO()->createVirtualOrganization(s_adminOnAdminHost,vo);
 
     common::dataStructures::StorageClass storageClass;

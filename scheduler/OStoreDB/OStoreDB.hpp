@@ -475,6 +475,7 @@ class OStoreDB: public SchedulerDatabase {
   /* === Repack requests handling =========================================== */
   std::string queueRepack(const SchedulerDatabase::QueueRepackRequest & repackRequest, log::LogContext &logContext) override;
 
+  bool repackExists() override;
   std::list<common::dataStructures::RepackInfo> getRepackInfo() override;
   common::dataStructures::RepackInfo getRepackInfo(const std::string& vid) override;
   void cancelRepack(const std::string& vid, log::LogContext & lc) override;

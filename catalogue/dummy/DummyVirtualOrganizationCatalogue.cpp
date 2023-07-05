@@ -49,6 +49,10 @@ common::dataStructures::VirtualOrganization DummyVirtualOrganizationCatalogue::g
   throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
+std::optional<common::dataStructures::VirtualOrganization> DummyVirtualOrganizationCatalogue::getDefaultVirtualOrganizationForRepack() const {
+  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
+}
+
 void DummyVirtualOrganizationCatalogue::modifyVirtualOrganizationName(
   const common::dataStructures::SecurityIdentity &admin, const std::string &currentVoName,
   const std::string &newVoName) {
@@ -77,6 +81,11 @@ void DummyVirtualOrganizationCatalogue::modifyVirtualOrganizationComment(
 
 void DummyVirtualOrganizationCatalogue::modifyVirtualOrganizationDiskInstanceName(
   const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const std::string &diskInstance) {
+  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
+}
+
+void DummyVirtualOrganizationCatalogue::modifyVirtualOrganizationIsRepackVo(
+  const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const bool isRepackVo) {
   throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 

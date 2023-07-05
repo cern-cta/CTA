@@ -51,6 +51,7 @@ public:
     log::Logger* log);
   static bool storageClassExists(rdbms::Conn &conn, const std::string &storageClassName);
   static bool virtualOrganizationExists(rdbms::Conn &conn, const std::string &voName);
+  static std::optional<std::string> defaultVirtualOrganizationForRepackExists(rdbms::Conn &conn);
   static bool mediaTypeExists(rdbms::Conn &conn, const std::string &name);
   static bool diskInstanceExists(rdbms::Conn &conn, const std::string &name);
   static bool tapePoolExists(rdbms::Conn &conn, const std::string &tapePoolName);
