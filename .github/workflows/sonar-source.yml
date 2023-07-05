@@ -3,10 +3,11 @@ name: Sonar Source Analysis
 on:
   schedule:
     # Every day at 3 am
-    - cron: '0 3 * * *'
+    #- cron: '0 3 * * *'
   push:
     branches:
-      - main
+      #- main
+      - 412-add-sonarcloud-exceptions
   pull_request:
     types: [opened, synchronize, reopened]
 
