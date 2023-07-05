@@ -1,7 +1,7 @@
 name: Sonar Source Analysis
 
 on:
-  schedule:
+  #schedule:
     # Every day at 3 am
     #- cron: '0 3 * * *'
   push:
