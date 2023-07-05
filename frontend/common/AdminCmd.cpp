@@ -839,6 +839,11 @@ void AdminCmd::processRepack_Add(xrd::Response& response) {
     throw exception::UserError("Must specify at least one vid, using --vid or --vidfile options");
   }
 
+  // Check if there is a default repack VO
+  if (!m_catalogue.VO()->getDefaultVirtualOrganizationForRepack().has_value()) {
+    throw exception::UserError("There is no default virtual organization for repack.");
+  }
+
   auto mountPolicyProvidedByUser = getRequired(OptionString::MOUNT_POLICY);
 
   //Get the mountpolicy from the catalogue
@@ -1412,6 +1417,7 @@ void AdminCmd::processVirtualOrganization_Add(xrd::Response& response) {
   const auto& comment = getRequired(OptionString::COMMENT);
   const auto& maxFileSizeOpt = getOptional(OptionUInt64::MAX_FILE_SIZE);
   const auto& diskInstanceName = getRequired(OptionString::DISK_INSTANCE);
+  const auto& isRepackVo = getOptional(OptionBoolean::IS_REPACK_VO);
 
   common::dataStructures::VirtualOrganization vo;
   vo.name = name;
@@ -1424,6 +1430,12 @@ void AdminCmd::processVirtualOrganization_Add(xrd::Response& response) {
     vo.maxFileSize = maxFileSizeOpt.value();
   } else {
     vo.maxFileSize = m_archiveFileMaxSize;
+  }
+
+  if(isRepackVo) {
+    vo.isRepackVo = isRepackVo.value();
+  } else {
+    vo.isRepackVo = false;
   }
 
   m_catalogue.VO()->createVirtualOrganization(m_cliIdentity,vo);
@@ -1440,6 +1452,7 @@ void AdminCmd::processVirtualOrganization_Ch(xrd::Response& response) {
   const auto comment = getOptional(OptionString::COMMENT);
   const auto maxFileSize = getOptional(OptionUInt64::MAX_FILE_SIZE);
   const auto diskInstanceName = getOptional(OptionString::DISK_INSTANCE);
+  const auto isRepackVo = getOptional(OptionBoolean::IS_REPACK_VO);
 
   if(comment)
     m_catalogue.VO()->modifyVirtualOrganizationComment(m_cliIdentity,name,comment.value());
@@ -1456,6 +1469,13 @@ void AdminCmd::processVirtualOrganization_Ch(xrd::Response& response) {
   if(diskInstanceName)
     m_catalogue.VO()->modifyVirtualOrganizationDiskInstanceName(m_cliIdentity, name, diskInstanceName.value());
 
+  if(isRepackVo) {
+    if (m_scheduler.repackExists()) {
+      throw exception::UserError("Cannot modify default virtual organization for repack while repacks are ongoing.");
+    }
+    m_catalogue.VO()->modifyVirtualOrganizationIsRepackVo(m_cliIdentity, name, isRepackVo.value());
+  }
+
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
@@ -1463,6 +1483,11 @@ void AdminCmd::processVirtualOrganization_Rm(xrd::Response& response) {
   using namespace cta::admin;
 
   const auto& name = getRequired(OptionString::VO);
+
+  auto defaultRepackVo = m_catalogue.VO()->getDefaultVirtualOrganizationForRepack();
+  if (defaultRepackVo && (defaultRepackVo->name == name) && m_scheduler.repackExists()) {
+    throw exception::UserError("Cannot remove default virtual organization for repack while repacks are ongoing.");
+  }
 
   m_catalogue.VO()->deleteVirtualOrganization(name);
 

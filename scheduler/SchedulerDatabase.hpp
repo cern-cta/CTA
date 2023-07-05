@@ -527,6 +527,7 @@ class SchedulerDatabase {
   /*============ Repack management: user side ================================*/
   virtual std::string queueRepack(const cta::SchedulerDatabase::QueueRepackRequest & repackRequest,
     log::LogContext & lc) = 0;
+  virtual bool repackExists() = 0;
   virtual std::list<common::dataStructures::RepackInfo> getRepackInfo() = 0;
   virtual common::dataStructures::RepackInfo getRepackInfo(const std::string & vid) = 0;
   virtual void cancelRepack(const std::string & vid, log::LogContext & lc) = 0;

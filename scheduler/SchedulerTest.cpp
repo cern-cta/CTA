@@ -247,6 +247,7 @@ public:
     ASSERT_EQ(s_adminOnAdminHost.host, rule.creationLog.host);
     ASSERT_EQ(rule.creationLog, rule.lastModificationLog);
 
+    // VO for user requests
     cta::common::dataStructures::VirtualOrganization vo;
     vo.name = s_vo;
     vo.comment = "comment";
@@ -254,7 +255,19 @@ public:
     vo.readMaxDrives = 1;
     vo.maxFileSize = 0;
     vo.diskInstanceName = s_diskInstance;
+    vo.isRepackVo = false;
     m_catalogue->VO()->createVirtualOrganization(s_adminOnAdminHost,vo);
+
+    // VO for repacking
+    cta::common::dataStructures::VirtualOrganization repackVo;
+    repackVo.name = s_repack_vo;
+    repackVo.comment = "comment";
+    repackVo.writeMaxDrives = 1;
+    repackVo.readMaxDrives = 1;
+    repackVo.maxFileSize = 0;
+    repackVo.diskInstanceName = s_diskInstance;
+    repackVo.isRepackVo = true;
+    m_catalogue->VO()->createVirtualOrganization(s_adminOnAdminHost,repackVo);
 
     common::dataStructures::StorageClass storageClass;
     storageClass.name = s_storageClassName;
@@ -356,6 +369,7 @@ protected:
   const uint64_t s_minRetrieveRequestAge = 4;
   const uint64_t s_mediaTypeCapacityInBytes = 10;
   const std::string s_vo = "vo";
+  const std::string s_repack_vo = "repack_vo";
   //TempFile m_tempSqliteFile;
 
 }; // class SchedulerTest
@@ -983,6 +997,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     vo.readMaxDrives = 1;
     vo.maxFileSize = 0;
     vo.diskInstanceName = s_diskInstance;
+    vo.isRepackVo = false;
     catalogue.VO()->createVirtualOrganization(s_adminOnAdminHost,vo);
 
     common::dataStructures::StorageClass storageClass;
@@ -5737,7 +5752,10 @@ TEST_P(SchedulerTest, expandRepackRequestShouldNotThrowIfTapeDisabledButNoRecall
   ASSERT_NO_THROW(scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc));
 }
 
-TEST_P(SchedulerTest, archiveMaxDrivesVoInFlightChangeScheduleMount){
+TEST_P(SchedulerTest, archiveUserQueueMaxDrivesVoInFlightChangeScheduleMount){
+  // This test will try to schedule one ArchiveForUser.
+  // The VOs (including default repack VO) writeMaxDrives will be changed to ensure that it works well.
+  // This test emulates 1 tapeserver
   using namespace cta;
 
   setupDefaultCatalogue();
@@ -5792,6 +5810,7 @@ TEST_P(SchedulerTest, archiveMaxDrivesVoInFlightChangeScheduleMount){
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,0);
+  catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_repack_vo,0);
 
   {
     // Emulate a tape server
@@ -5803,6 +5822,9 @@ TEST_P(SchedulerTest, archiveMaxDrivesVoInFlightChangeScheduleMount){
     bool nextMount = scheduler.getNextMountDryRun(s_libraryName, driveName, lc);
     //nextMount should be false as the VO write max drives is 0
     ASSERT_FALSE(nextMount);
+    catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_repack_vo,1);
+    //nextMount should be false as the VO write max drives is still 0 (only the default repack VO max drives was changed)
+    ASSERT_FALSE(nextMount);
     catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,1);
     //Reset the VO write max drives to a positive number should give a new mount
     nextMount = scheduler.getNextMountDryRun(s_libraryName,driveName,lc);
@@ -5810,8 +5832,11 @@ TEST_P(SchedulerTest, archiveMaxDrivesVoInFlightChangeScheduleMount){
   }
 }
 
-TEST_P(SchedulerTest, retrieveMaxDrivesVoInFlightChangeScheduleMount)
+TEST_P(SchedulerTest, retrieveUserQueueMaxDrivesVoInFlightChangeScheduleMount)
 {
+  // This test will try to schedule one retrieve (forUser).
+  // The VOs (including default repack VO) readMaxDrives will be changed to ensure that it works well.
+  // This test emulates 1 tapeserver
   using namespace cta;
   using namespace cta::objectstore;
   unitTests::TempDirectory tempDirectory;
@@ -5901,12 +5926,200 @@ TEST_P(SchedulerTest, retrieveMaxDrivesVoInFlightChangeScheduleMount)
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,"drive",lc));
 
   catalogue.VO()->modifyVirtualOrganizationReadMaxDrives(s_adminOnAdminHost,s_vo,0);
+  catalogue.VO()->modifyVirtualOrganizationReadMaxDrives(s_adminOnAdminHost,s_repack_vo,0);
+  ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,"drive",lc));
 
+  catalogue.VO()->modifyVirtualOrganizationReadMaxDrives(s_adminOnAdminHost,s_repack_vo,1);
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,"drive",lc));
 
   catalogue.VO()->modifyVirtualOrganizationReadMaxDrives(s_adminOnAdminHost,s_vo,1);
-
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,"drive",lc));
+}
+
+TEST_P(SchedulerTest, retrieveArchiveRepackQueueMaxDrivesVoInFlightChangeScheduleMount)
+{
+  // This test will try to schedule one retrieve (for repack) followed by one archive
+  // (after converting the repack retrieve requests into repack archive requests)
+  // The VOs (including default repack VO) readMaxDrives and writeMaxDrives will be changed to ensure that it works well.
+  // This test emulates 1 tapeserver
+  using namespace cta;
+  using namespace cta::objectstore;
+  unitTests::TempDirectory tempDirectory;
+  auto &catalogue = getCatalogue();
+  auto &scheduler = getScheduler();
+  auto &schedulerDB = getSchedulerDB();
+
+  cta::objectstore::Backend& backend = schedulerDB.getBackend();
+  setupDefaultCatalogue();
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+
+  //Create an agent to represent this test process
+  cta::objectstore::AgentReference agentReference("expandRepackRequestTest", dl);
+  cta::objectstore::Agent agent(agentReference.getAgentAddress(), backend);
+  agent.initialize();
+  agent.setTimeout_us(0);
+  agent.insertAndRegisterSelf(lc);
+
+  std::string drive = "drive";
+  {
+    const auto tapeDrive = getDefaultTapeDrive(drive);
+    catalogue.DriveState()->createTapeDrive(tapeDrive);
+  }
+
+  //Create a logical library in the catalogue
+  const bool logicalLibraryIsDisabled = false;
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+
+  //This tape will contain files for triggering a repack retrieve
+  auto tape1 = getDefaultTape();
+  tape1.state = common::dataStructures::Tape::REPACKING;
+  tape1.stateReason = "Test";
+  tape1.full = true;
+  catalogue.Tape()->createTape(s_adminOnAdminHost, tape1);
+
+  //Create a repack destination tape
+  auto tape2 = getDefaultTape();
+  tape2.vid = "REPACK_DESTINATION_VID";
+  catalogue.Tape()->createTape(s_adminOnAdminHost, tape2);
+
+  const std::string tapeDrive = "tape_drive";
+  const uint64_t nbArchiveFilesPerTape = 10;
+  const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
+
+  //Simulate the writing of 10 files in the first tape in the catalogue
+  std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
+  {
+    std::string currentVid = s_vid;
+    for(uint64_t j = 1; j <= nbArchiveFilesPerTape; ++j) {
+      std::ostringstream diskFileId;
+      diskFileId << (12345677 + j);
+      std::ostringstream diskFilePath;
+      diskFilePath << "/public_dir/public_file_"<<1<<"_"<< j;
+      auto fileWrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
+      auto & fileWritten = *fileWrittenUP;
+      fileWritten.archiveFileId = j;
+      fileWritten.diskInstance = s_diskInstance;
+      fileWritten.diskFileId = diskFileId.str();
+
+      fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
+      fileWritten.diskFileGid = PUBLIC_GID;
+      fileWritten.size = archiveFileSize;
+      fileWritten.checksumBlob.insert(cta::checksum::ADLER32,"1234");
+      fileWritten.storageClassName = s_storageClassName;
+      fileWritten.vid = currentVid;
+      fileWritten.fSeq = j;
+      fileWritten.blockId = j * 100;
+      fileWritten.size = archiveFileSize;
+      fileWritten.copyNb = 1;
+      fileWritten.tapeDrive = tapeDrive;
+      tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
+    }
+    //update the DB tape
+    catalogue.TapeFile()->filesWrittenToTape(tapeFilesWrittenCopy1);
+    tapeFilesWrittenCopy1.clear();
+  }
+  scheduler.waitSchedulerDbSubthreadsComplete();
+
+  // Schedule a repack request and expand it into retrieve sub-requests
+  {
+    cta::common::dataStructures::MountPolicy mp;
+    mp.name = s_mountPolicyName;
+
+    cta::SchedulerDatabase::QueueRepackRequest qrr(tape1.vid,"file://"+tempDirectory.path(),common::dataStructures::RepackInfo::Type::MoveOnly,
+                                                   mp,s_defaultRepackNoRecall);
+    scheduler.queueRepack(s_adminOnAdminHost,qrr,lc);
+    scheduler.waitSchedulerDbSubthreadsComplete();
+
+    scheduler.promoteRepackRequestsToToExpand(lc);
+    scheduler.waitSchedulerDbSubthreadsComplete();
+
+    log::TimingList tl;
+    utils::Timer t;
+    auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
+    scheduler.expandRepackRequest(repackRequestToExpand,tl,t,lc);
+    scheduler.waitSchedulerDbSubthreadsComplete();
+  }
+
+  catalogue.MountPolicy()->modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,0);
+  catalogue.MountPolicy()->modifyMountPolicyRetrieveMinRequestAge(s_adminOnAdminHost,s_mountPolicyName,0);
+
+  // ReadMaxDrives pre-defined value is 1
+  ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,"drive",lc));
+
+  // Setting ReadMaxDrives to 0 means that no mount should be scheduled
+  catalogue.VO()->modifyVirtualOrganizationReadMaxDrives(s_adminOnAdminHost,s_vo,0);
+  catalogue.VO()->modifyVirtualOrganizationReadMaxDrives(s_adminOnAdminHost,s_repack_vo,0);
+  ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,"drive",lc));
+
+  // Setting User VO ReadMaxDrives to 1
+  // Repack VO still has ReadMaxDrives as 0, so no repack mount should be scheduled
+  catalogue.VO()->modifyVirtualOrganizationReadMaxDrives(s_adminOnAdminHost,s_vo,1);
+  ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,"drive",lc));
+
+  // Setting Repack VO ReadMaxDrives to 1
+  // One repack mount can be scheduled
+  catalogue.VO()->modifyVirtualOrganizationReadMaxDrives(s_adminOnAdminHost,s_repack_vo,1);
+  ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,"drive",lc));
+
+  // Simulate a mount
+  {
+    std::unique_ptr<cta::TapeMount> mount;
+    mount.reset(scheduler.getNextMount(s_libraryName, tapeDrive, lc).release());
+    std::unique_ptr<cta::RetrieveMount> retrieveMount;
+    retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release()));
+
+    // For each tape we will see if the retrieve jobs are not null
+    // Then we will report them as complete
+    castor::tape::tapeserver::daemon::RecallReportPacker rrp(retrieveMount.get(),lc);
+    rrp.startThreads();
+    for(uint64_t j = 1; j<=nbArchiveFilesPerTape; ++j)
+    {
+      auto jobBatch = retrieveMount->getNextJobBatch(1,archiveFileSize,lc);
+      auto retrieveJob = std::unique_ptr<cta::RetrieveJob>(jobBatch.front().release());
+      ASSERT_NE(nullptr, retrieveJob.get());
+      rrp.reportCompletedJob(std::move(retrieveJob), lc);
+    }
+
+    rrp.setDiskDone();
+    rrp.setTapeDone();
+    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
+    rrp.reportEndOfSession(lc);
+    rrp.waitThread();
+  }
+  //Do the reporting of RetrieveJobs, will transform the Retrieve request in Archive requests
+  {
+    while (true) {
+      auto rep = schedulerDB.getNextRepackReportBatch(lc);
+      if (nullptr == rep) break;
+      rep->report(lc);
+    }
+  }
+
+  scheduler.waitSchedulerDbSubthreadsComplete();
+
+  // WriteMaxDrives pre-defined value is 1
+  ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,"drive",lc));
+
+  // Setting WriteMaxDrives to 0 means that no mount should be scheduled
+  catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,0);
+  catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_repack_vo,0);
+  ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,"drive",lc));
+
+  // Setting User VO WriteMaxDrives to 1
+  // Repack VO still has WriteMaxDrives as 0, so no repack mount should be scheduled
+  catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,1);
+  ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,"drive",lc));
+
+  // Setting Repack VO WriteMaxDrives to 1
+  // One repack mount can be scheduled
+  catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_repack_vo,1);
+  ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,"drive",lc));
+
 }
 
 TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMount)
@@ -6080,9 +6293,11 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
 
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,drive1,lc));
 
-  //No read nor write allowed
+  //No read nor write allowed on any VO
   catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,0);
   catalogue.VO()->modifyVirtualOrganizationReadMaxDrives(s_adminOnAdminHost,s_vo,0);
+  catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_repack_vo,0);
+  catalogue.VO()->modifyVirtualOrganizationReadMaxDrives(s_adminOnAdminHost,s_repack_vo,0);
 
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,drive1,lc));
 
@@ -6090,6 +6305,7 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
   catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,1);
 
   //Set the tape 1 to disabled state to prevent the mount in it (should be the Retrieve)
+  //ArchiveForUser should have priority over ArchiveForRepack
   catalogue.Tape()->modifyTapeState(s_adminOnAdminHost,tape1.vid,cta::common::dataStructures::Tape::State::DISABLED,std::nullopt,"test");
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,drive1,lc));
   {
@@ -6113,7 +6329,7 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,drive2,lc));
 
   //Now allocate one more drive for Archival
-  catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,2);
+  catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_repack_vo,1);
 
   //A new Archive mount should be triggered
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,drive2,lc));
@@ -6352,6 +6568,7 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
     libraryIsDisabled, libraryComment);
 
   catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,1);
+  catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_repack_vo,1);
 
   std::string drive0 = "drive0";
   std::string drive1 = "drive1";
@@ -6480,15 +6697,6 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
 
   //Sleeping one seconds to trigger a mount
   ::sleep(1);
-
-  catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,1);
-
-  //Test the per VO writeMaxDrives: no mount should be triggered as only one drive for write
-  //has been configured for this VO
-  ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,drive1,lc));
-
-  //Adding a second drive for write for this VO
-  catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,2);
 
   //The next mount should be an ArchiveForUser mount as there is already a mount ongoing with an ArchiveForRepack
   ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName,drive1,lc));

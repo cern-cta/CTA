@@ -1876,6 +1876,31 @@ std::string OStoreDB::queueRepack(const SchedulerDatabase::QueueRepackRequest & 
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::repackExists()
+//------------------------------------------------------------------------------
+bool OStoreDB::repackExists() {
+  RootEntry re(m_objectStore);
+  re.fetchNoLock();
+  RepackIndex ri(m_objectStore);
+  // First, try to get the address of of the repack index lockfree.
+  try {
+    ri.setAddress(re.getRepackIndexAddress());
+  } catch (cta::exception::Exception &) {
+    return false;
+  }
+  ri.fetchNoLock();
+  auto rrAddresses = ri.getRepackRequestsAddresses();
+  for (auto & rra: rrAddresses) {
+    try {
+      objectstore::RepackRequest rr(rra.repackRequestAddress, m_objectStore);
+      rr.fetchNoLock();
+      return true;
+    } catch (cta::exception::Exception &) {}
+  }
+  return false;
+}
+
+//------------------------------------------------------------------------------
 // OStoreDB::getRepackInfo()
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::RepackInfo> OStoreDB::getRepackInfo() {
@@ -3019,25 +3044,6 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequ
               } catch (Helpers::NoTapeAvailableForRetrieve &) {}
               break;
             }
-          }
-        }
-        // The repack vid was not appropriate, let's try all candidates.
-        if (bestVid.empty()) {
-          std::set<std::string> candidateVids;
-          for (auto & tc: rsr.archiveFile.tapeFiles) candidateVids.insert(tc.vid);
-          try {
-            bestVid = Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore, true);
-          } catch (Helpers::NoTapeAvailableForRetrieve &) {
-            // Count the failure for this subrequest.
-            notCreatedSubrequests.emplace_back(rsr);
-            failedCreationStats.files++;
-            failedCreationStats.bytes += rsr.archiveFile.fileSize;
-            log::ScopedParamContainer params(lc);
-            params.add("fileId", rsr.archiveFile.archiveFileID)
-                  .add("repackVid", repackInfo.vid);
-            lc.log(log::ERR,
-                "In OStoreDB::RepackRequest::addSubrequests(): could not queue a retrieve subrequest. Subrequest failed. Maybe the tape to repack is disabled ?");
-            goto nextSubrequest;
           }
         }
         for (auto &tc: rsr.archiveFile.tapeFiles)

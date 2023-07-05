@@ -90,6 +90,7 @@ const uint32_t TEST_GROUP_2 = 9754;
       vo.maxFileSize = 0;
       vo.comment = "comment";
       vo.diskInstanceName = getDefaultDiskInstance().name;
+      vo.isRepackVo = false;
       return vo;
     }
 
