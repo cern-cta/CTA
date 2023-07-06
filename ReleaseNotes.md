@@ -7,6 +7,7 @@
 - cta/CTA#389 - Minor fix in Tape REST API system tests
 - cta/CTA#404 - REPACKING_DISABLED queues not always selected for queueing
 - cta/CTA#114 - Return catalogue schema compatibility to single version only
+- cta/CTA#408 - CTA build fails after fresh cloning of repository
 
 ### Building and Packaging
 - cta/CTA#385 - Remove OpenSSL dependency
