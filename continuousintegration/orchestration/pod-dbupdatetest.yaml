@@ -9,7 +9,6 @@ spec:
   containers:
   - name: dbupdatetest
     image: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-catalogue-updater:testing
-    imagePullPolicy: IfNotPresent
     stdin: true
     env:
     - name: MY_NAME
