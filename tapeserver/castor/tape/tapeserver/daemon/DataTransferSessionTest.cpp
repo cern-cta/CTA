@@ -502,8 +502,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   // 5) Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-                                 libraryIsDisabled, libraryComment);
+                                 libraryIsDisabled, physicalLibraryName, libraryComment);
   {
     auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -683,8 +684,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   // 5) Create the environment for the migration to happen (library + tape)
     const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+    libraryIsDisabled, physicalLibraryName, libraryComment);
   {
     auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -884,8 +886,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   // 5) Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-                                 libraryIsDisabled, libraryComment);
+                                 libraryIsDisabled, physicalLibraryName, libraryComment);
   {
     auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -1079,8 +1082,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   // 5) Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-                                 libraryIsDisabled, libraryComment);
+                                 libraryIsDisabled, physicalLibraryName, libraryComment);
   {
     auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -1270,8 +1274,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   // 5) Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-                                 libraryIsDisabled, libraryComment);
+                                 libraryIsDisabled, physicalLibraryName, libraryComment);
   {
     auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -1458,8 +1463,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   // 5) Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-                                 libraryIsDisabled, libraryComment);
+                                 libraryIsDisabled, physicalLibraryName, libraryComment);
   {
     auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -1650,8 +1656,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   // 5) Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-                                 libraryIsDisabled, libraryComment);
+                                 libraryIsDisabled, physicalLibraryName, libraryComment);
   {
     auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -1843,8 +1850,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   // 5) Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-                                 libraryIsDisabled, libraryComment);
+                                 libraryIsDisabled, physicalLibraryName, libraryComment);
   {
     auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -1994,8 +2002,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   // 5) Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-                                 libraryIsDisabled, libraryComment);
+                                 libraryIsDisabled, physicalLibraryName, libraryComment);
   {
     auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -2155,8 +2164,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   // 5) Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-                                 libraryIsDisabled, libraryComment);
+                                 libraryIsDisabled, physicalLibraryName, libraryComment);
   {
     auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -2307,8 +2317,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   // 5) Create the environment for the migration to happen (library + tape)
     const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+    libraryIsDisabled, physicalLibraryName, libraryComment);
   {
     auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -2466,8 +2477,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   // 5) Create the environment for the migration to happen (library + tape)
     const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+    libraryIsDisabled, physicalLibraryName, libraryComment);
   {
     auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -2626,8 +2638,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   // 5) Create the environment for the migration to happen (library + tape)
     const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+    libraryIsDisabled, physicalLibraryName, libraryComment);
   {
     auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -2787,8 +2800,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   // 5) Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-                                 libraryIsDisabled, libraryComment);
+                                 libraryIsDisabled, physicalLibraryName, libraryComment);
   {
     auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -2954,8 +2968,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   // 5) Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-                                 libraryIsDisabled, libraryComment);
+                                 libraryIsDisabled, physicalLibraryName, libraryComment);
   {
     auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -3125,8 +3140,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   // 5) Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-                                 libraryIsDisabled, libraryComment);
+                                 libraryIsDisabled, physicalLibraryName, libraryComment);
   {
     auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -3292,8 +3308,9 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
   // 5) Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-                                 libraryIsDisabled, libraryComment);
+                                 libraryIsDisabled, physicalLibraryName, libraryComment);
   {
     auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());

@@ -74,7 +74,8 @@ TEST_P(cta_catalogue_LogicalLibraryTest, createLogicalLibrary) {
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "Create logical library";
   const bool logicalLibraryIsDisabled= false;
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled,
+  std::optional<std::string> physicalLibraryName;
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName,
     comment);
 
   const auto libs = m_catalogue->LogicalLibrary()->getLogicalLibraries();
@@ -100,7 +101,8 @@ TEST_P(cta_catalogue_LogicalLibraryTest, createLogicalLibrary_disabled_true) {
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "Create logical library";
   const bool logicalLibraryIsDisabled(true);
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled,
+  std::optional<std::string> physicalLibraryName;
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName,
     comment);
 
   const auto libs = m_catalogue->LogicalLibrary()->getLogicalLibraries();
@@ -126,7 +128,8 @@ TEST_P(cta_catalogue_LogicalLibraryTest, createLogicalLibrary_disabled_false) {
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "Create logical library";
   const bool logicalLibraryIsDisabled(false);
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled,
+  std::optional<std::string> physicalLibraryName;
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName,
     comment);
 
   const auto libs = m_catalogue->LogicalLibrary()->getLogicalLibraries();
@@ -151,10 +154,11 @@ TEST_P(cta_catalogue_LogicalLibraryTest, createLogicalLibrary_same_twice) {
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "Create logical library";
   const bool logicalLibraryIsDisabled= false;
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled,
+  std::optional<std::string> physicalLibraryName;
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName,
     comment);
   ASSERT_THROW(m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName,
-    logicalLibraryIsDisabled, comment), cta::exception::UserError);
+    logicalLibraryIsDisabled, physicalLibraryName, comment), cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_LogicalLibraryTest, setLogicalLibraryDisabled_true) {
@@ -163,7 +167,8 @@ TEST_P(cta_catalogue_LogicalLibraryTest, setLogicalLibraryDisabled_true) {
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "Create logical library";
   const bool logicalLibraryIsDisabled= false;
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled,
+  std::optional<std::string> physicalLibraryName;
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName,
     comment);
 
   {
@@ -213,7 +218,8 @@ TEST_P(cta_catalogue_LogicalLibraryTest, setLogicalLibraryDisabled_false) {
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "Create logical library";
   const bool logicalLibraryIsDisabled= false;
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled,
+  std::optional<std::string> physicalLibraryName;
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName,
     comment);
 
   {
@@ -263,9 +269,10 @@ TEST_P(cta_catalogue_LogicalLibraryTest, deleteLogicalLibrary) {
   const bool isEncrypted = true;
   const std::optional<std::string> supply("value for the supply pool mechanism");
   const std::string libNotToDeleteComment = "Create logical library to NOT be deleted";
+  std::optional<std::string> physicalLibraryName;
 
   // Create a tape and a logical library that are not the ones to be deleted
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, libNotToDeleteIsDisabled,
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, libNotToDeleteIsDisabled, physicalLibraryName,
     libNotToDeleteComment);
   {
     const auto libs = m_catalogue->LogicalLibrary()->getLogicalLibraries();
@@ -332,7 +339,7 @@ TEST_P(cta_catalogue_LogicalLibraryTest, deleteLogicalLibrary) {
   const std::string libToDeleteName = "lib_to_delete";
   const bool libToDeleteIsDisabled = false;
   const std::string libToDeleteComment = "Create logical library to be deleted";
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, libToDeleteName, libToDeleteIsDisabled,
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, libToDeleteName, libToDeleteIsDisabled, physicalLibraryName,
     libToDeleteComment);
   {
     const auto libs = m_catalogue->LogicalLibrary()->getLogicalLibraries();
@@ -393,13 +400,14 @@ TEST_P(cta_catalogue_LogicalLibraryTest, deleteLogicalLibrary_non_existent) {
 
 TEST_P(cta_catalogue_LogicalLibraryTest, deleteLogicalLibrary_non_empty) {
   const bool logicalLibraryIsDisabled= false;
+  std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
 
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled,
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName,
     "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -447,7 +455,8 @@ TEST_P(cta_catalogue_LogicalLibraryTest, modifyLogicalLibraryName) {
   const std::string libraryName = "logical_library";
   const std::string comment = "Create logical library";
   const bool libraryIsDisabled= false;
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, libraryName, libraryIsDisabled, comment);
+  std::optional<std::string> physicalLibraryName;
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, libraryName, libraryIsDisabled, physicalLibraryName, comment);
 
   {
     const auto libraries = m_catalogue->LogicalLibrary()->getLogicalLibraries();
@@ -492,7 +501,8 @@ TEST_P(cta_catalogue_LogicalLibraryTest, modifyLogicalLibraryName_emptyStringCur
   const std::string libraryName = "logical_library";
   const bool libraryIsDisabled = false;
   const std::string comment = "Create logical library";
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, libraryName, libraryIsDisabled, comment);
+  std::optional<std::string> physicalLibraryName;
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, libraryName, libraryIsDisabled, physicalLibraryName, comment);
 
   const std::string newLibraryName = "new_logical_library";
   ASSERT_THROW(m_catalogue->LogicalLibrary()->modifyLogicalLibraryName(m_admin, "", newLibraryName),
@@ -507,7 +517,8 @@ TEST_P(cta_catalogue_LogicalLibraryTest, modifyLogicalLibraryName_emptyStringNew
   const std::string libraryName = "logical_library";
   const bool libraryIsDisabled = false;
   const std::string comment = "Create logical library";
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, libraryName, libraryIsDisabled, comment);
+  std::optional<std::string> physicalLibraryName;
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, libraryName, libraryIsDisabled, physicalLibraryName, comment);
 
   {
     const auto libraries = m_catalogue->LogicalLibrary()->getLogicalLibraries();
@@ -538,7 +549,8 @@ TEST_P(cta_catalogue_LogicalLibraryTest, modifyLogicalLibraryComment) {
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "Create logical library";
   const bool logicalLibraryIsDisabled= false;
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled,
+  std::optional<std::string> physicalLibraryName;
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName,
     comment);
   {
     const auto libs = m_catalogue->LogicalLibrary()->getLogicalLibraries();
@@ -596,7 +608,8 @@ TEST_P(cta_catalogue_LogicalLibraryTest, modifyLogicalLibraryDisabledReason) {
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "Create logical library";
   const bool logicalLibraryIsDisabled= false;
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled,
+  std::optional<std::string> physicalLibraryName;
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName,
     comment);
   {
     const auto libs = m_catalogue->LogicalLibrary()->getLogicalLibraries();
@@ -674,13 +687,14 @@ TEST_P(cta_catalogue_LogicalLibraryTest, tapeExists_emptyString) {
 
 TEST_P(cta_catalogue_LogicalLibraryTest, createTape) {
   const bool logicalLibraryIsDisabled= false;
+  std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const std::optional<std::string> supply("value for the supply pool mechanism");
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
 
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled,
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName,
     "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
