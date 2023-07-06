@@ -93,7 +93,8 @@ kubectl create -f ${tempdir}/pod-dbupdatetest.yaml --namespace=${NAMESPACE}
 echo -n "Waiting for dbupdatetest"
 for ((i=0; i<400; i++)); do
   echo -n "."
-  kubectl get pod dbupdatetest ${KUBECTL_DEPRECATED_SHOWALL} --namespace=${NAMESPACE} | egrep -q 'Completed|Error' && break
+  kubectl -n ${NAMESPACE} get pod dbupdatetest ${KUBECTL_DEPRECATED_SHOWALL}
+  kubectl -n ${NAMESPACE} get pod dbupdatetest ${KUBECTL_DEPRECATED_SHOWALL} | egrep -q 'Completed|Succeeded|Error' && break
   sleep 1
 done
 echo "\n"
