@@ -50,6 +50,11 @@ if [ ! -z "${error}" ]; then
   exit 1
 fi
 
+# Does kubernetes version supports `get pod --show-all=true`?
+# use it for older versions and this is not needed for new versions of kubernetes
+KUBECTL_DEPRECATED_SHOWALL=$(kubectl get pod --show-all=true >/dev/null 2>&1 && echo "--show-all=true")
+test -z ${KUBECTL_DEPRECATED_SHOWALL} || echo "WARNING: you are running a old version of kubernetes and should think about updating it."
+
 # Get Catalogue Schema version
 MAJOR=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MAJOR ../../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
 MINOR=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MINOR ../../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
@@ -85,16 +90,10 @@ fi
 
 kubectl create -f ${tempdir}/pod-dbupdatetest.yaml --namespace=${NAMESPACE}
 
-sleep infinity
-
 echo -n "Waiting for dbupdatetest"
 for ((i=0; i<400; i++)); do
   echo -n "."
-  status=$(kubectl get pods -n stress -o json | jq '.items[] | select(.metadata.name == "dbupdatetest")' | jq -c '.status.phase')
-  echo $status
-  if [ "$status" == "" ] || [ "$status" == "Succeeded" ]; then
-    break
-  fi
+  kubectl get pod dbupdatetest ${KUBECTL_DEPRECATED_SHOWALL} --namespace=${NAMESPACE} | egrep -q 'Completed|Error' && break
   sleep 1
 done
 echo "\n"
