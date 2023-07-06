@@ -460,7 +460,32 @@ void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryComment(const common::d
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
+}
+
+std::optional<uint64_t> RdbmsPhysicalLibraryCatalogue::getPhysicalLibraryId(rdbms::Conn &conn,
+  const std::string &name) const {
+  try {
+    const char *const sql =
+      "SELECT "
+        "PHYSICAL_LIBRARY_ID AS PHYSICAL_LIBRARY_ID "
+      "FROM "
+        "PHYSICAL_LIBRARY "
+      "WHERE "
+        "PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
+    auto stmt = conn.createStmt(sql);
+    stmt.bindString(":PHYSICAL_LIBRARY_NAME", name);
+    auto rset = stmt.executeQuery();
+    if(!rset.next()) {
+      return std::nullopt;
+    }
+    return rset.columnUint64("PHYSICAL_LIBRARY_ID");
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
   }
+}
 
 } // namespace catalogue
 } // namespace cta
