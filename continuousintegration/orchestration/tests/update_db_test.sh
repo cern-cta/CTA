@@ -62,8 +62,8 @@ NEW_SCHEMA_VERSION="$MAJOR.$MINOR"
 MIGRATION_FILE=$(find ../../../catalogue/ -name "*to${NEW_SCHEMA_VERSION}.sql")
 PREVIOUS_SCHEMA_VERSION=$(echo $MIGRATION_FILE | grep -o -E '[0-9]+\.[0-9]' | head -1)
 
-YUM_REPOS="$(pwd)/$(find ../../ -name "yum.repos.d")"
-SCRIPTS_DIR="$(pwd)/$(find ../../ -name "dbupdatetest.sh" | xargs dirname)"
+YUM_REPOS="$(realpath "$(find "$(dirname "$0")"/../../ -name "yum.repos.d")")"
+SCRIPTS_DIR="$(realpath "$(find "$(dirname "$0")"/../../ -name "dbupdatetest.sh" | xargs dirname)")"
 
 # Modify fields of pod yaml with the current data
 tempdir=$(mktemp -d)
