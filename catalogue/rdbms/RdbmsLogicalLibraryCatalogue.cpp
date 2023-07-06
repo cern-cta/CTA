@@ -47,7 +47,7 @@ void RdbmsLogicalLibraryCatalogue::createLogicalLibrary(const common::dataStruct
       throw exception::UserError(std::string("Cannot create logical library ") + name +
         " because a logical library with the same name already exists");
     }
-    std::optional<uint64_t> physicalLibraryId = std::nullopt;
+    std::optional<uint64_t> physicalLibraryId;
     if(physicalLibraryName) {
       const auto physicalLibCatalogue = static_cast<RdbmsPhysicalLibraryCatalogue*>(m_rdbmsCatalogue->PhysicalLibrary().get());
       physicalLibraryId = physicalLibCatalogue->getPhysicalLibraryId(conn, physicalLibraryName.value());
@@ -91,10 +91,18 @@ void RdbmsLogicalLibraryCatalogue::createLogicalLibrary(const common::dataStruct
         ":LAST_UPDATE_TIME)";
     auto stmt = conn.createStmt(sql);
 
+    auto setOptionalUint = [&stmt](const std::string& sqlField, const std::optional<uint64_t>& optionalField) {
+      if (optionalField) {
+        stmt.bindUint64(sqlField, optionalField.value());
+      } else {
+        stmt.bindUint64(sqlField, std::nullopt);
+      }
+    };
+
     stmt.bindUint64(":LOGICAL_LIBRARY_ID", logicalLibraryId);
     stmt.bindString(":LOGICAL_LIBRARY_NAME", name);
     stmt.bindBool(":IS_DISABLED", isDisabled);
-    stmt.bindUint64(":PHYSICAL_LIBRARY_ID", physicalLibraryId.value());
+    setOptionalUint(":PHYSICAL_LIBRARY_ID", physicalLibraryId);
 
     stmt.bindString(":USER_COMMENT", trimmedComment);
 
@@ -160,20 +168,20 @@ std::list<common::dataStructures::LogicalLibrary> RdbmsLogicalLibraryCatalogue::
         "LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
         "IS_DISABLED AS IS_DISABLED,"
 
-        "USER_COMMENT AS USER_COMMENT,"
+        "LOGICAL_LIBRARY.USER_COMMENT AS USER_COMMENT,"
         "DISABLED_REASON AS DISABLED_REASON,"
         "PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME,"
 
-        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+        "LOGICAL_LIBRARY.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "LOGICAL_LIBRARY.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "LOGICAL_LIBRARY.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
-        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+        "LOGICAL_LIBRARY.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "LOGICAL_LIBRARY.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "LOGICAL_LIBRARY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
         "LOGICAL_LIBRARY "
-      "INNER JOIN PHYSICAL_LIBRARY ON "
+      "LEFT JOIN PHYSICAL_LIBRARY ON "
         "LOGICAL_LIBRARY.PHYSICAL_LIBRARY_ID = PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_ID "
       "ORDER BY "
         "LOGICAL_LIBRARY_NAME";
