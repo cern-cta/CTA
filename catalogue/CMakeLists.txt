@@ -97,11 +97,6 @@ add_custom_command(
     ${CMAKE_CURRENT_SOURCE_DIR}/AllCatalogueSchema.hpp.in
 )
 
-add_custom_target(create_all_catalogue_schema_hpp ALL
-  DEPENDS
-    AllCatalogueSchema.hpp
-)
-
 add_custom_command(
   OUTPUT sqlite_catalogue_schema.cpp postgres_catalogue_schema.cpp
   COMMAND ${CMAKE_COMMAND} -E env "LC_ALL=C" sed 's/^/\ \ \"/' cta-catalogue-schema/sqlite_catalogue_schema.sql | sed 's/$$/\"/' > sqlite_catalogue_schema.cpp
@@ -221,6 +216,7 @@ endif()
 add_executable(cta-catalogue-schema-create ${SCHEMA_CREATE_SRC_FILES})
 
 set (SCHEMA_CHECKER_LIB_SRC_FILES
+  AllCatalogueSchema.hpp
   SQLiteSchemaInserter.cpp
   SchemaSqlStatementsReader.cpp
   SchemaComparer.cpp
