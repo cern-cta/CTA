@@ -45,6 +45,11 @@ void DummyLogicalLibraryCatalogue::modifyLogicalLibraryComment(
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 
+void DummyLogicalLibraryCatalogue::modifyLogicalLibraryPhysicalLibrary(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name, const std::string &physicalLibraryName) {
+  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+}
+
 void DummyLogicalLibraryCatalogue::modifyLogicalLibraryDisabledReason(
   const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &disabledReason) {
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");

@@ -59,6 +59,9 @@ public:
   void modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name, const std::string &comment) override;
 
+  void modifyLogicalLibraryPhysicalLibrary(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const std::string &physicalLibraryName) override;
+
   void modifyLogicalLibraryDisabledReason(const common::dataStructures::SecurityIdentity &admin,
     const std::string &name, const std::string &disabledReason) override;
 

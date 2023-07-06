@@ -291,6 +291,44 @@ void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryComment(const common::dat
   }
 }
 
+void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryPhysicalLibrary(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name, const std::string &physicalLibraryName) {
+  try {
+    auto conn = m_connPool->getConn();
+    const auto physicalLibCatalogue = static_cast<RdbmsPhysicalLibraryCatalogue*>(m_rdbmsCatalogue->PhysicalLibrary().get());
+    const auto physicalLibraryId = physicalLibCatalogue->getPhysicalLibraryId(conn, physicalLibraryName);
+    if(!physicalLibraryId) {
+      throw exception::UserError(std::string("Cannot update logical library ") + name + " because logical library " +
+        physicalLibraryName + " does not exist");
+    }
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE LOGICAL_LIBRARY SET "
+        "PHYSICAL_LIBRARY_ID = :PHYSICAL_LIBRARY_ID,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
+    auto stmt = conn.createStmt(sql);
+    stmt.bindUint64(":PHYSICAL_LIBRARY_ID", physicalLibraryId);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":LOGICAL_LIBRARY_NAME", name);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify logical library ") + name + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
 void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryDisabledReason(
   const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &disabledReason) {
   try {

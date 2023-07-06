@@ -626,6 +626,7 @@ void AdminCmd::processLogicalLibrary_Ch(xrd::Response& response) {
   auto  disabled         = getOptional(OptionBoolean::DISABLED);
   auto  comment          = getOptional(OptionString::COMMENT);
   auto  disabledReason   = getOptional(OptionString::DISABLED_REASON);
+  auto  physicalLibrary  = getOptional(OptionString::PHYSICAL_LIBRARY);
 
   if(disabled) {
     m_catalogue.LogicalLibrary()->setLogicalLibraryDisabled(m_cliIdentity, name, disabled.value());
@@ -639,6 +640,9 @@ void AdminCmd::processLogicalLibrary_Ch(xrd::Response& response) {
   }
   if(disabledReason) {
     m_catalogue.LogicalLibrary()->modifyLogicalLibraryDisabledReason(m_cliIdentity, name, disabledReason.value());
+  }
+  if(physicalLibrary) {
+    m_catalogue.LogicalLibrary()->modifyLogicalLibraryPhysicalLibrary(m_cliIdentity, name, physicalLibrary.value());
   }
 
   response.set_type(xrd::Response::RSP_SUCCESS);

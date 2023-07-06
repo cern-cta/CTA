@@ -59,6 +59,12 @@ void LogicalLibraryCatalogueRetryWrapper::modifyLogicalLibraryComment(
     name, comment);}, m_maxTriesToConnect);
 }
 
+void LogicalLibraryCatalogueRetryWrapper::modifyLogicalLibraryPhysicalLibrary(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const std::string &physicalLibraryName) {
+  return retryOnLostConnection(m_log, [&]{return m_catalogue->LogicalLibrary()->modifyLogicalLibraryPhysicalLibrary(admin,
+    name, physicalLibraryName);}, m_maxTriesToConnect);
+}
+
 void LogicalLibraryCatalogueRetryWrapper::modifyLogicalLibraryDisabledReason(
   const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &disabledReason) {
   return retryOnLostConnection(m_log, [&]{return m_catalogue->LogicalLibrary()->modifyLogicalLibraryDisabledReason(

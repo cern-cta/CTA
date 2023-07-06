@@ -68,6 +68,9 @@ public:
 
   virtual void setLogicalLibraryDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
     const bool disabledValue) = 0;
+
+  virtual void modifyLogicalLibraryPhysicalLibrary(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const std::string &physicalLibraryName) = 0;
 };
 
 } // namespace catalogue
