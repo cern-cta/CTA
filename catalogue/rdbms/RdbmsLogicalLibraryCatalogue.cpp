@@ -22,6 +22,7 @@
 #include "catalogue/rdbms/RdbmsCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
 #include "catalogue/rdbms/RdbmsLogicalLibraryCatalogue.hpp"
+#include "catalogue/rdbms/RdbmsPhysicalLibraryCatalogue.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/exception/UserError.hpp"
@@ -38,13 +39,22 @@ RdbmsLogicalLibraryCatalogue::RdbmsLogicalLibraryCatalogue(log::Logger &log, std
   : m_log(log), m_connPool(connPool), m_rdbmsCatalogue(rdbmsCatalogue) {}
 
 void RdbmsLogicalLibraryCatalogue::createLogicalLibrary(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const bool isDisabled, const std::string &comment) {
+  const std::string &name, const bool isDisabled, const std::optional<std::string>& physicalLibraryName, const std::string &comment) {
   try {
     const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
     auto conn = m_connPool->getConn();
     if(RdbmsCatalogueUtils::logicalLibraryExists(conn, name)) {
       throw exception::UserError(std::string("Cannot create logical library ") + name +
         " because a logical library with the same name already exists");
+    }
+    std::optional<uint64_t> physicalLibraryId = std::nullopt;
+    if(physicalLibraryName) {
+      const auto physicalLibCatalogue = static_cast<RdbmsPhysicalLibraryCatalogue*>(m_rdbmsCatalogue->PhysicalLibrary().get());
+      physicalLibraryId = physicalLibCatalogue->getPhysicalLibraryId(conn, physicalLibraryName.value());
+      if(!physicalLibraryId) {
+        throw exception::UserError(std::string("Cannot create logical library ") + name + " because logical library " +
+          physicalLibraryName.value() + " does not exist");
+      }
     }
     const uint64_t logicalLibraryId = getNextLogicalLibraryId(conn);
     const time_t now = time(nullptr);
@@ -53,6 +63,7 @@ void RdbmsLogicalLibraryCatalogue::createLogicalLibrary(const common::dataStruct
         "LOGICAL_LIBRARY_ID,"
         "LOGICAL_LIBRARY_NAME,"
         "IS_DISABLED,"
+        "PHYSICAL_LIBRARY_ID,"
 
         "USER_COMMENT,"
 
@@ -67,6 +78,7 @@ void RdbmsLogicalLibraryCatalogue::createLogicalLibrary(const common::dataStruct
         ":LOGICAL_LIBRARY_ID,"
         ":LOGICAL_LIBRARY_NAME,"
         ":IS_DISABLED,"
+        ":PHYSICAL_LIBRARY_ID,"
 
         ":USER_COMMENT,"
 
@@ -82,6 +94,7 @@ void RdbmsLogicalLibraryCatalogue::createLogicalLibrary(const common::dataStruct
     stmt.bindUint64(":LOGICAL_LIBRARY_ID", logicalLibraryId);
     stmt.bindString(":LOGICAL_LIBRARY_NAME", name);
     stmt.bindBool(":IS_DISABLED", isDisabled);
+    stmt.bindUint64(":PHYSICAL_LIBRARY_ID", physicalLibraryId.value());
 
     stmt.bindString(":USER_COMMENT", trimmedComment);
 
@@ -149,6 +162,7 @@ std::list<common::dataStructures::LogicalLibrary> RdbmsLogicalLibraryCatalogue::
 
         "USER_COMMENT AS USER_COMMENT,"
         "DISABLED_REASON AS DISABLED_REASON,"
+        "PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME,"
 
         "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
         "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
@@ -159,6 +173,8 @@ std::list<common::dataStructures::LogicalLibrary> RdbmsLogicalLibraryCatalogue::
         "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
         "LOGICAL_LIBRARY "
+      "INNER JOIN PHYSICAL_LIBRARY ON "
+        "LOGICAL_LIBRARY.PHYSICAL_LIBRARY_ID = PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_ID "
       "ORDER BY "
         "LOGICAL_LIBRARY_NAME";
     auto conn = m_connPool->getConn();
@@ -171,6 +187,7 @@ std::list<common::dataStructures::LogicalLibrary> RdbmsLogicalLibraryCatalogue::
       lib.isDisabled = rset.columnBool("IS_DISABLED");
       lib.comment = rset.columnString("USER_COMMENT");
       lib.disabledReason = rset.columnOptionalString("DISABLED_REASON");
+      lib.physicalLibraryName = rset.columnOptionalString("PHYSICAL_LIBRARY_NAME");
       lib.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
       lib.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
       lib.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");

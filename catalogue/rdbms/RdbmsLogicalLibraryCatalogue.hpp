@@ -44,7 +44,7 @@ public:
   ~RdbmsLogicalLibraryCatalogue() override = default;
 
   void createLogicalLibrary(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const bool isDisabled, const std::string &comment) override;
+    const bool isDisabled, const std::optional<std::string>& physicalLibraryName, const std::string &comment) override;
 
   void deleteLogicalLibrary(const std::string &name) override;
 

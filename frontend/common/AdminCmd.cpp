@@ -609,11 +609,12 @@ void AdminCmd::processGroupMountRule_Rm(xrd::Response& response) {
 void AdminCmd::processLogicalLibrary_Add(xrd::Response& response) {
   using namespace cta::admin;
 
-  auto& name      = getRequired(OptionString::LOGICAL_LIBRARY);
-  auto isDisabled = getOptional(OptionBoolean::DISABLED);
-  auto& comment   = getRequired(OptionString::COMMENT);
+  auto& name               = getRequired(OptionString::LOGICAL_LIBRARY);
+  auto isDisabled          = getOptional(OptionBoolean::DISABLED);
+  auto physicalLibraryName = getOptional(OptionString::PHYSICAL_LIBRARY);
+  auto& comment            = getRequired(OptionString::COMMENT);
 
-  m_catalogue.LogicalLibrary()->createLogicalLibrary(m_cliIdentity, name, isDisabled ? isDisabled.value() : false, comment);
+  m_catalogue.LogicalLibrary()->createLogicalLibrary(m_cliIdentity, name, isDisabled ? isDisabled.value() : false, physicalLibraryName, comment);
 
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
