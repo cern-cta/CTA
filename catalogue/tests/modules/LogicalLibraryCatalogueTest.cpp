@@ -663,6 +663,42 @@ TEST_P(cta_catalogue_LogicalLibraryTest, modifyLogicalLibraryEmptyPhysicalLibrar
   }
 }
 
+TEST_P(cta_catalogue_LogicalLibraryTest, modifyLogicalLibraryNonExistentPhysicalLibrary) {
+  ASSERT_TRUE(m_catalogue->LogicalLibrary()->getLogicalLibraries().empty());
+
+  const std::string logicalLibraryName = "logical_library";
+  const std::string comment = "Create logical library";
+  const bool logicalLibraryIsDisabled= false;
+
+  auto shouldThrow = [this, logicalLibraryName, comment, logicalLibraryIsDisabled]() -> void {
+    m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, "doesNotExist", comment);
+  };
+
+  ASSERT_THROW(shouldThrow(), cta::exception::UserError);
+}
+
+TEST_P(cta_catalogue_LogicalLibraryTest, modifyLogicalLibraryModifyNonExistentPhysicalLibrary) {
+  ASSERT_TRUE(m_catalogue->LogicalLibrary()->getLogicalLibraries().empty());
+
+  const std::string logicalLibraryName = "logical_library";
+  const std::string comment = "Create logical library";
+  const bool logicalLibraryIsDisabled= false;
+
+  const auto physicalLibrary1 = CatalogueTestUtils::getPhysicalLibrary1();
+  m_catalogue->PhysicalLibrary()->createPhysicalLibrary(m_admin, physicalLibrary1);
+  const auto physLibs = m_catalogue->PhysicalLibrary()->getPhysicalLibraries();
+  ASSERT_EQ(1, physLibs.size());
+
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibrary1.name,
+    comment);
+
+  auto shouldThrow = [this]() -> void {
+    m_catalogue->LogicalLibrary()->modifyLogicalLibraryPhysicalLibrary(m_admin, m_tape1.logicalLibraryName, "doeNotExist");
+  };
+
+  ASSERT_THROW(shouldThrow(), cta::exception::UserError);
+}
+
 TEST_P(cta_catalogue_LogicalLibraryTest, modifyLogicalLibraryComment_nonExisentLogicalLibrary) {
   using namespace cta;
 
