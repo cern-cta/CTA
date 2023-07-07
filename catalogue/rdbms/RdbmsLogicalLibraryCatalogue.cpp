@@ -295,11 +295,16 @@ void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryPhysicalLibrary(const com
   const std::string &name, const std::string &physicalLibraryName) {
   try {
     auto conn = m_connPool->getConn();
-    const auto physicalLibCatalogue = static_cast<RdbmsPhysicalLibraryCatalogue*>(m_rdbmsCatalogue->PhysicalLibrary().get());
-    const auto physicalLibraryId = physicalLibCatalogue->getPhysicalLibraryId(conn, physicalLibraryName);
-    if(!physicalLibraryId) {
-      throw exception::UserError(std::string("Cannot update logical library ") + name + " because logical library " +
-        physicalLibraryName + " does not exist");
+    std::optional<std::uint64_t> physicalLibraryId;
+    if(physicalLibraryName != "") {
+      const auto physicalLibCatalogue = static_cast<RdbmsPhysicalLibraryCatalogue*>(m_rdbmsCatalogue->PhysicalLibrary().get());
+      physicalLibraryId = physicalLibCatalogue->getPhysicalLibraryId(conn, physicalLibraryName);
+      if(!physicalLibraryId) {
+        throw exception::UserError(std::string("Cannot update logical library ") + name + " because physical library " +
+          physicalLibraryName + " does not exist");
+      }
+    } else {
+      physicalLibraryId = std::nullopt;
     }
     const time_t now = time(nullptr);
     const char *const sql =
