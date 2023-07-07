@@ -9,6 +9,7 @@
 - cta/CTA#114 - Return catalogue schema compatibility to single version only
 - cta/CTA#408 - CTA build fails after fresh cloning of repository
 - cta/CTA#427 - Update getInstanceAndFid to allow multiple files to be returned from the Catalogue query
+- cta/CTA#409 - Liquibade-update test not compatible with new runners
 
 ### Building and Packaging
 - cta/CTA#385 - Remove OpenSSL dependency
