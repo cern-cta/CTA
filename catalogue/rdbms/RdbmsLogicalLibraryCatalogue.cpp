@@ -52,7 +52,7 @@ void RdbmsLogicalLibraryCatalogue::createLogicalLibrary(const common::dataStruct
       const auto physicalLibCatalogue = static_cast<RdbmsPhysicalLibraryCatalogue*>(m_rdbmsCatalogue->PhysicalLibrary().get());
       physicalLibraryId = physicalLibCatalogue->getPhysicalLibraryId(conn, physicalLibraryName.value());
       if(!physicalLibraryId) {
-        throw exception::UserError(std::string("Cannot create logical library ") + name + " because logical library " +
+        throw exception::UserError(std::string("Cannot create logical library ") + name + " because physical library " +
           physicalLibraryName.value() + " does not exist");
       }
     }
