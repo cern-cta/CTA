@@ -222,7 +222,9 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
   // Make the DGN and TPVID parameter permanent.
   cta::log::ScopedParamContainer params(lc);
   params.add("tapeVid", m_volInfo.vid)
-        .add("mountId", m_volInfo.mountId);
+        .add("mountId", m_volInfo.mountId)
+        .add("vo", tapeMount->getVo())
+        .add("tapePool", tapeMount->getPoolName());
   {
     cta::log::ScopedParamContainer localParams(lc);
     localParams.add("tapebridgeTransId", m_volInfo.mountId)
