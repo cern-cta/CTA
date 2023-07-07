@@ -296,9 +296,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       ossLabelFormat << std::showbase << std::internal << std::setfill('0') << std::hex << std::setw(4) << static_cast<unsigned int>(m_volInfo.labelFormat);
 
       cta::log::ScopedParamContainer params(m_logContext);
-      params.add("vo", m_retrieveMount.getVo());
       params.add("mediaType", m_retrieveMount.getMediaType());
-      params.add("tapePool", m_retrieveMount.getPoolName());
       params.add("logicalLibrary", m_drive.config.logicalLibrary);
       params.add("mountType", toCamelCaseString(m_volInfo.mountType));
       params.add("labelFormat", ossLabelFormat.str());
