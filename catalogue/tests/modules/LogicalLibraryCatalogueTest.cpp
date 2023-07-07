@@ -25,6 +25,7 @@
 #include "common/dataStructures/DiskInstance.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
+#include "common/dataStructures/PhysicalLibrary.hpp"
 #include "common/dataStructures/Tape.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
@@ -74,8 +75,13 @@ TEST_P(cta_catalogue_LogicalLibraryTest, createLogicalLibrary) {
   const std::string logicalLibraryName = "logical_library";
   const std::string comment = "Create logical library";
   const bool logicalLibraryIsDisabled= false;
-  std::optional<std::string> physicalLibraryName;
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName,
+
+  const auto physicalLibrary = CatalogueTestUtils::getPhysicalLibrary1();
+  m_catalogue->PhysicalLibrary()->createPhysicalLibrary(m_admin, physicalLibrary);
+  const auto physLibs = m_catalogue->PhysicalLibrary()->getPhysicalLibraries();
+  ASSERT_EQ(1, physLibs.size());
+
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibrary.name,
     comment);
 
   const auto libs = m_catalogue->LogicalLibrary()->getLogicalLibraries();
@@ -580,6 +586,41 @@ TEST_P(cta_catalogue_LogicalLibraryTest, modifyLogicalLibraryComment) {
     const cta::common::dataStructures::LogicalLibrary lib = libs.front();
     ASSERT_EQ(logicalLibraryName, lib.name);
     ASSERT_EQ(modifiedComment, lib.comment);
+
+    const cta::common::dataStructures::EntryLog creationLog = lib.creationLog;
+    ASSERT_EQ(m_admin.username, creationLog.username);
+    ASSERT_EQ(m_admin.host, creationLog.host);
+
+    const cta::common::dataStructures::EntryLog lastModificationLog = lib.lastModificationLog;
+  }
+}
+
+TEST_P(cta_catalogue_LogicalLibraryTest, modifyLogicalLibraryPhysicalLibrary) {
+  ASSERT_TRUE(m_catalogue->LogicalLibrary()->getLogicalLibraries().empty());
+
+  const std::string logicalLibraryName = "logical_library";
+  const std::string comment = "Create logical library";
+  const bool logicalLibraryIsDisabled= false;
+
+  const auto physicalLibrary1 = CatalogueTestUtils::getPhysicalLibrary1();
+  const auto physicalLibrary2 = CatalogueTestUtils::getPhysicalLibrary2();
+  m_catalogue->PhysicalLibrary()->createPhysicalLibrary(m_admin, physicalLibrary1);
+  m_catalogue->PhysicalLibrary()->createPhysicalLibrary(m_admin, physicalLibrary2);
+  const auto physLibs = m_catalogue->PhysicalLibrary()->getPhysicalLibraries();
+  ASSERT_EQ(2, physLibs.size());
+
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibrary1.name,
+    comment);
+
+  m_catalogue->LogicalLibrary()->modifyLogicalLibraryPhysicalLibrary(m_admin, logicalLibraryName, physicalLibrary2.name);
+
+  {
+    const auto libs = m_catalogue->LogicalLibrary()->getLogicalLibraries();
+
+    ASSERT_EQ(1, libs.size());
+
+    const cta::common::dataStructures::LogicalLibrary lib = libs.front();
+    ASSERT_EQ(physicalLibrary2.name, lib.physicalLibraryName);
 
     const cta::common::dataStructures::EntryLog creationLog = lib.creationLog;
     ASSERT_EQ(m_admin.username, creationLog.username);
