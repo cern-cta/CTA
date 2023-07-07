@@ -347,16 +347,6 @@ test_assert_false || exit 1
 log_message "Notify drive has been deleted."
 echo "${dr_names_down[0]}" > /root/deleted.txt
 
-# Logical Library (ll)
-test_start "logical library" "ll"
-test_and_check_cmd "Adding logical library 'cta_adm_systest'" "${command}" "add" "-n 'cta_adm_systest' -d false -m 'cta-admin systest add'"\
-  'select(.name=="cta_adm_systest" and .isDisabled==false and .comment=="cta-admin systest add") | .name'\
-  "1" "adding logical library 'cta_adm_systest'"|| exit 1
-test_and_check_cmd "Changing logical library 'cta_adm_systest' to disabled" "${command}" "ch" "-n 'cta_adm_systest' -d true --dr 'cta-admin systest ch'"\
-  'select(.name=="cta_adm_systest" and .isDisabled==true and .disabledReason=="cta-admin systest ch") | .name'\
-  "1" "changing logical library 'cta_adm_systest'"|| exit 1
-test_command "Removing logical library 'cta_adm_systest'" "${command}" "rm" "-n cta_adm_systest" || exit 1
-test_assert || exit 1
 
 # Physical Library (ll)
 test_start "physical library" "pl"
@@ -370,6 +360,21 @@ test_and_check_cmd "Modifying physical library 'cta_adm_systest'" "${command}" "
   'select(.name=="cta_adm_systest" and .guiUrl=="urlB" and .webcamUrl=="urlB" and .location=="locB" and .nbPhysicalCartridgeSlots=="4" and .nbAvailableCartridgeSlots=="3" and .nbPhysicalDriveSlots=="2" and .comment=="commentB") | .name'\
   "1" "adding physical library 'cta_adm_systest'"|| exit 1
 test_command "Removing physical library 'cta_adm_systest'" "${command}" "rm" "--pl 'cta_adm_systest'"
+test_assert || exit 1
+
+# Logical Library (ll)
+test_start "logical library" "ll"
+cta-admin cta-admin pl add --pl phys1 --ma man --mo mod --npcs 3 --npds 4
+cta-admin cta-admin pl add --pl phys2 --ma man --mo mod --npcs 3 --npds 4
+test_and_check_cmd "Adding logical library 'cta_adm_systest'" "${command}" "add" "-n 'cta_adm_systest' -d false --pl phys1 -m 'cta-admin systest add'"\
+  'select(.name=="cta_adm_systest" and .isDisabled==false and .physicalLibrary=="phys1" and .comment=="cta-admin systest add") | .name'\
+  "1" "adding logical library 'cta_adm_systest'"|| exit 1
+test_and_check_cmd "Changing logical library 'cta_adm_systest' to disabled" "${command}" "ch" "-n 'cta_adm_systest' -d true --pl phys2 --dr 'cta-admin systest ch'"\
+  'select(.name=="cta_adm_systest" and .isDisabled==true and .physicalLibrary=="phys2" and .disabledReason=="cta-admin systest ch") | .name'\
+  "1" "changing logical library 'cta_adm_systest'"|| exit 1
+test_command "Removing logical library 'cta_adm_systest'" "${command}" "rm" "-n cta_adm_systest" || exit 1
+cta-admin cta-admin pl rm phys1
+cta-admin cta-admin pl rm phys2
 test_assert || exit 1
 
 # Media Type (mt)
