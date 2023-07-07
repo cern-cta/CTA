@@ -641,11 +641,11 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
    {{ AdminCmd::CMD_GROUPMOUNTRULE,       AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_ADD   },
-      { opt_logicallibrary_alias, opt_disabled.optional(), opt_physical_library.optional() opt_comment }},
+      { opt_logicallibrary_alias, opt_disabled.optional(), opt_physical_library.optional(), opt_comment }},
    {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_CH    },
       { opt_logicallibrary_alias, opt_disabled.optional(), opt_physical_library.optional(), opt_comment.optional(), opt_disabledreason.optional() }},
    {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_RM    }, { opt_logicallibrary_alias }},
-   {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_LS    }, { opt_logicallibrary_disabled.optional()}},
+   {{ AdminCmd::CMD_LOGICALLIBRARY,       AdminCmd::SUBCMD_LS    }, { opt_logicallibrary_disabled.optional() }},
    /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_MEDIATYPE,            AdminCmd::SUBCMD_ADD   },
       { opt_mediatype_alias, opt_cartridge, opt_capacity, opt_primarydensitycode.optional(), opt_secondarydensitycode.optional(), opt_number_of_wraps.optional(), opt_minlpos.optional(), opt_maxlpos.optional(), opt_comment }},
