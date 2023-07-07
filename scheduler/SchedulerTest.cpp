@@ -6004,7 +6004,8 @@ TEST_P(SchedulerTest, retrieveArchiveRepackQueueMaxDrivesVoInFlightChangeSchedul
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
-  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
 
   //This tape will contain files for triggering a repack retrieve
   auto tape1 = getDefaultTape();
