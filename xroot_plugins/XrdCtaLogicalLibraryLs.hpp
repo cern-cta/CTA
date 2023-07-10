@@ -84,6 +84,9 @@ int LogicalLibraryLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf)
 
     ll_item->set_name(ll.name);
     ll_item->set_is_disabled(ll.isDisabled);
+    if(ll.physicalLibraryName) {
+      ll_item->set_physical_library(ll.physicalLibraryName.value());
+    }
     if (ll.disabledReason) {
       ll_item->set_disabled_reason(ll.disabledReason.value());
     }

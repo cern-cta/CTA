@@ -19,6 +19,7 @@
 
 #include <list>
 #include <string>
+#include <optional>
 
 #include "common/exception/UserError.hpp"
 
@@ -43,7 +44,7 @@ public:
   virtual ~LogicalLibraryCatalogue() = default;
 
   virtual void createLogicalLibrary(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const bool isDisabled, const std::string &comment) = 0;
+    const bool isDisabled, const std::optional<std::string>& physicalLibraryName, const std::string &comment) = 0;
 
   virtual void deleteLogicalLibrary(const std::string &name) = 0;
 
@@ -67,6 +68,9 @@ public:
 
   virtual void setLogicalLibraryDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
     const bool disabledValue) = 0;
+
+  virtual void modifyLogicalLibraryPhysicalLibrary(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const std::string &physicalLibraryName) = 0;
 };
 
 } // namespace catalogue

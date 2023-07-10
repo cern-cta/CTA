@@ -193,7 +193,9 @@ TEST_P(cta_catalogue_DriveStateTest, getTapeDriveWithNonExistingLogicalLibrary) 
 TEST_P(cta_catalogue_DriveStateTest, getTapeDriveWithDisabledLogicalLibrary) {
   const std::string tapeDriveName = "VDSTK11";
   auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, tapeDrive.logicalLibrary, true, "comment");
+  std::optional<std::string> physicalLibraryName;
+
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, tapeDrive.logicalLibrary, true, physicalLibraryName, "comment");
   m_catalogue->DriveState()->createTapeDrive(tapeDrive);
   const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
   ASSERT_TRUE(storedTapeDrive.value().logicalLibraryDisabled);

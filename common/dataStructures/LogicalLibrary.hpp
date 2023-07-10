@@ -52,6 +52,7 @@ struct LogicalLibrary {
   EntryLog lastModificationLog;
   std::string comment;
   std::optional<std::string> disabledReason;
+  std::optional<std::string> physicalLibraryName;
 
 }; // struct LogicalLibrary
 

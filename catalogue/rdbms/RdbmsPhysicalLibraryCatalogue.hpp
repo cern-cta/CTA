@@ -93,7 +93,7 @@ private:
   std::shared_ptr<rdbms::ConnPool> m_connPool;
   RdbmsCatalogue *m_rdbmsCatalogue;
 
-  friend class RdbmsTapeCatalogue;
+  friend class RdbmsLogicalLibraryCatalogue;
   std::optional<uint64_t> getPhysicalLibraryId(rdbms::Conn& conn, const std::string& name) const;
 };
 

@@ -609,11 +609,12 @@ void AdminCmd::processGroupMountRule_Rm(xrd::Response& response) {
 void AdminCmd::processLogicalLibrary_Add(xrd::Response& response) {
   using namespace cta::admin;
 
-  auto& name      = getRequired(OptionString::LOGICAL_LIBRARY);
-  auto isDisabled = getOptional(OptionBoolean::DISABLED);
-  auto& comment   = getRequired(OptionString::COMMENT);
+  auto& name               = getRequired(OptionString::LOGICAL_LIBRARY);
+  auto isDisabled          = getOptional(OptionBoolean::DISABLED);
+  auto physicalLibraryName = getOptional(OptionString::PHYSICAL_LIBRARY);
+  auto& comment            = getRequired(OptionString::COMMENT);
 
-  m_catalogue.LogicalLibrary()->createLogicalLibrary(m_cliIdentity, name, isDisabled ? isDisabled.value() : false, comment);
+  m_catalogue.LogicalLibrary()->createLogicalLibrary(m_cliIdentity, name, isDisabled ? isDisabled.value() : false, physicalLibraryName, comment);
 
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
@@ -625,6 +626,7 @@ void AdminCmd::processLogicalLibrary_Ch(xrd::Response& response) {
   auto  disabled         = getOptional(OptionBoolean::DISABLED);
   auto  comment          = getOptional(OptionString::COMMENT);
   auto  disabledReason   = getOptional(OptionString::DISABLED_REASON);
+  auto  physicalLibrary  = getOptional(OptionString::PHYSICAL_LIBRARY);
 
   if(disabled) {
     m_catalogue.LogicalLibrary()->setLogicalLibraryDisabled(m_cliIdentity, name, disabled.value());
@@ -638,6 +640,9 @@ void AdminCmd::processLogicalLibrary_Ch(xrd::Response& response) {
   }
   if(disabledReason) {
     m_catalogue.LogicalLibrary()->modifyLogicalLibraryDisabledReason(m_cliIdentity, name, disabledReason.value());
+  }
+  if(physicalLibrary) {
+    m_catalogue.LogicalLibrary()->modifyLogicalLibraryPhysicalLibrary(m_cliIdentity, name, physicalLibrary.value());
   }
 
   response.set_type(xrd::Response::RSP_SUCCESS);

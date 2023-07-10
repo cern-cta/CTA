@@ -22,6 +22,7 @@
 #include "catalogue/rdbms/RdbmsCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
 #include "catalogue/rdbms/RdbmsLogicalLibraryCatalogue.hpp"
+#include "catalogue/rdbms/RdbmsPhysicalLibraryCatalogue.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/exception/UserError.hpp"
@@ -38,13 +39,22 @@ RdbmsLogicalLibraryCatalogue::RdbmsLogicalLibraryCatalogue(log::Logger &log, std
   : m_log(log), m_connPool(connPool), m_rdbmsCatalogue(rdbmsCatalogue) {}
 
 void RdbmsLogicalLibraryCatalogue::createLogicalLibrary(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const bool isDisabled, const std::string &comment) {
+  const std::string &name, const bool isDisabled, const std::optional<std::string>& physicalLibraryName, const std::string &comment) {
   try {
     const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
     auto conn = m_connPool->getConn();
     if(RdbmsCatalogueUtils::logicalLibraryExists(conn, name)) {
       throw exception::UserError(std::string("Cannot create logical library ") + name +
         " because a logical library with the same name already exists");
+    }
+    std::optional<uint64_t> physicalLibraryId;
+    if(physicalLibraryName) {
+      const auto physicalLibCatalogue = static_cast<RdbmsPhysicalLibraryCatalogue*>(m_rdbmsCatalogue->PhysicalLibrary().get());
+      physicalLibraryId = physicalLibCatalogue->getPhysicalLibraryId(conn, physicalLibraryName.value());
+      if(!physicalLibraryId) {
+        throw exception::UserError(std::string("Cannot create logical library ") + name + " because physical library " +
+          physicalLibraryName.value() + " does not exist");
+      }
     }
     const uint64_t logicalLibraryId = getNextLogicalLibraryId(conn);
     const time_t now = time(nullptr);
@@ -53,6 +63,7 @@ void RdbmsLogicalLibraryCatalogue::createLogicalLibrary(const common::dataStruct
         "LOGICAL_LIBRARY_ID,"
         "LOGICAL_LIBRARY_NAME,"
         "IS_DISABLED,"
+        "PHYSICAL_LIBRARY_ID,"
 
         "USER_COMMENT,"
 
@@ -67,6 +78,7 @@ void RdbmsLogicalLibraryCatalogue::createLogicalLibrary(const common::dataStruct
         ":LOGICAL_LIBRARY_ID,"
         ":LOGICAL_LIBRARY_NAME,"
         ":IS_DISABLED,"
+        ":PHYSICAL_LIBRARY_ID,"
 
         ":USER_COMMENT,"
 
@@ -79,9 +91,18 @@ void RdbmsLogicalLibraryCatalogue::createLogicalLibrary(const common::dataStruct
         ":LAST_UPDATE_TIME)";
     auto stmt = conn.createStmt(sql);
 
+    auto setOptionalUint = [&stmt](const std::string& sqlField, const std::optional<uint64_t>& optionalField) {
+      if (optionalField) {
+        stmt.bindUint64(sqlField, optionalField.value());
+      } else {
+        stmt.bindUint64(sqlField, std::nullopt);
+      }
+    };
+
     stmt.bindUint64(":LOGICAL_LIBRARY_ID", logicalLibraryId);
     stmt.bindString(":LOGICAL_LIBRARY_NAME", name);
     stmt.bindBool(":IS_DISABLED", isDisabled);
+    setOptionalUint(":PHYSICAL_LIBRARY_ID", physicalLibraryId);
 
     stmt.bindString(":USER_COMMENT", trimmedComment);
 
@@ -147,18 +168,21 @@ std::list<common::dataStructures::LogicalLibrary> RdbmsLogicalLibraryCatalogue::
         "LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,"
         "IS_DISABLED AS IS_DISABLED,"
 
-        "USER_COMMENT AS USER_COMMENT,"
+        "LOGICAL_LIBRARY.USER_COMMENT AS USER_COMMENT,"
         "DISABLED_REASON AS DISABLED_REASON,"
+        "PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME,"
 
-        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+        "LOGICAL_LIBRARY.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+        "LOGICAL_LIBRARY.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+        "LOGICAL_LIBRARY.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
-        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+        "LOGICAL_LIBRARY.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+        "LOGICAL_LIBRARY.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+        "LOGICAL_LIBRARY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
       "FROM "
         "LOGICAL_LIBRARY "
+      "LEFT JOIN PHYSICAL_LIBRARY ON "
+        "LOGICAL_LIBRARY.PHYSICAL_LIBRARY_ID = PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_ID "
       "ORDER BY "
         "LOGICAL_LIBRARY_NAME";
     auto conn = m_connPool->getConn();
@@ -171,6 +195,7 @@ std::list<common::dataStructures::LogicalLibrary> RdbmsLogicalLibraryCatalogue::
       lib.isDisabled = rset.columnBool("IS_DISABLED");
       lib.comment = rset.columnString("USER_COMMENT");
       lib.disabledReason = rset.columnOptionalString("DISABLED_REASON");
+      lib.physicalLibraryName = rset.columnOptionalString("PHYSICAL_LIBRARY_NAME");
       lib.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
       lib.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
       lib.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
@@ -249,6 +274,49 @@ void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryComment(const common::dat
     auto conn = m_connPool->getConn();
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":USER_COMMENT", trimmedComment);
+    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+    stmt.bindUint64(":LAST_UPDATE_TIME", now);
+    stmt.bindString(":LOGICAL_LIBRARY_NAME", name);
+    stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot modify logical library ") + name + " because it does not exist");
+    }
+  } catch(exception::UserError &) {
+    throw;
+  } catch(exception::Exception &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryPhysicalLibrary(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name, const std::string &physicalLibraryName) {
+  try {
+    auto conn = m_connPool->getConn();
+    std::optional<std::uint64_t> physicalLibraryId;
+    if(physicalLibraryName != "") {
+      const auto physicalLibCatalogue = static_cast<RdbmsPhysicalLibraryCatalogue*>(m_rdbmsCatalogue->PhysicalLibrary().get());
+      physicalLibraryId = physicalLibCatalogue->getPhysicalLibraryId(conn, physicalLibraryName);
+      if(!physicalLibraryId) {
+        throw exception::UserError(std::string("Cannot update logical library ") + name + " because physical library " +
+          physicalLibraryName + " does not exist");
+      }
+    } else {
+      physicalLibraryId = std::nullopt;
+    }
+    const time_t now = time(nullptr);
+    const char *const sql =
+      "UPDATE LOGICAL_LIBRARY SET "
+        "PHYSICAL_LIBRARY_ID = :PHYSICAL_LIBRARY_ID,"
+        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
+      "WHERE "
+        "LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME";
+    auto stmt = conn.createStmt(sql);
+    stmt.bindUint64(":PHYSICAL_LIBRARY_ID", physicalLibraryId);
     stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME", now);
