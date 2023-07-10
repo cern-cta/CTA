@@ -110,6 +110,11 @@ while test "${FINAL_COUNT}" -eq 0; do
   let SECONDS_PASSED=SECONDS_PASSED+1
   sleep 1
 done
+
+# Check that file is on disk
+ON_DISK_FILE=$(curl -L --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER}" "${HTTPS_URI}/stage/${REQ_ID}" | jq -r '.files[] | select(.onDisk == true) | .path')
+test "${ON_DISK_FILE}" == "/eos/ctaeos/preprod/test_http-rest-api" || { echo "$(date +%s): File did not get staged.";  exit 1; }
+
 echo "$(date +%s): File staged successfully."
 eos "${EOSINSTANCE}" ls -y /eos/ctaeos/preprod
 
@@ -119,6 +124,10 @@ eos "${EOSINSTANCE}" ls -y /eos/ctaeos/preprod
 # will make the request valid. But dCache and StoRM use them. More info:
 #      https://gitlab.cern.ch/cta/CTA/-/issues/384
 curl -L --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER}" "${HTTPS_URI}/release/${REQ_ID}" -d '{"paths":["/eos/ctaeos/preprod/test_http-rest-api"]}'
+
+# Check that there is an error for unstaged file
+ERROR_COUNT=$(curl -L --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER}" "${HTTPS_URI}/stage/${REQ_ID}" | jq -r '.files[] | .error' | wc -l)
+test "${ERROR_COUNT}" == 1 || { echo "$(date +%s): File request metadata should have shown an error.";  exit 1; }
 
 EVICT_COUNT=$(eos "${EOSINSTANCE}" ls -y /eos/ctaeos/preprod | grep 'test_http-rest-api' | grep 'd0::t1' | wc -l)
 test "${EVICT_COUNT}" -eq 1 || { echo "$(date +%s): File did not get evicted.";  exit 1; }
