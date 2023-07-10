@@ -636,7 +636,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   std::string logToCheck = logger.getLog();
   logToCheck += "";
   ASSERT_NE(std::string::npos, logToCheck.find("MSG=\"Tape session started for read\" thread=\"TapeRead\" tapeDrive=\"T10D6116\" tapeVid=\"TSTVID\" "
-                                               "mountId=\"1\" vo=\"vo\" mediaType=\"LTO7M\" tapePool=\"TestTapePool\" "
+                                               "mountId=\"1\" vo=\"vo\" tapePool=\"TestTapePool\" mediaType=\"LTO7M\" "
                                                "logicalLibrary=\"TestLogicalLibrary\" mountType=\"Retrieve\" labelFormat=\"0000\" vendor=\"TestVendor\" "
                                                "capacityInBytes=\"12345678\""));
   ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
@@ -833,7 +833,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   std::string logToCheck = logger.getLog();
   logToCheck += "";
   ASSERT_NE(std::string::npos,logToCheck.find("MSG=\"Tape session started for read\" thread=\"TapeRead\" tapeDrive=\"T10D6116\" tapeVid=\"TSTVID\" "
-                                              "mountId=\"1\" vo=\"vo\" mediaType=\"LTO7M\" tapePool=\"TestTapePool\" "
+                                              "mountId=\"1\" vo=\"vo\" tapePool=\"TestTapePool\" mediaType=\"LTO7M\" "
                                               "logicalLibrary=\"TestLogicalLibrary\" mountType=\"Retrieve\" labelFormat=\"0000\" vendor=\"TestVendor\" "
                                               "capacityInBytes=\"12345678\""));
   ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
@@ -3083,7 +3083,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   logToCheck += "";
   ASSERT_NE(std::string::npos,
             logToCheck.find("MSG=\"Tape session started for write\" thread=\"TapeWrite\" tapeDrive=\"T10D6116\" tapeVid=\"TSTVID\" "
-                            "mountId=\"1\" vo=\"vo\" mediaType=\"LTO7M\" tapePool=\"TestTapePool\" logicalLibrary=\"TestLogicalLibrary\" "
+                            "mountId=\"1\" vo=\"vo\" tapePool=\"TestTapePool\" mediaType=\"LTO7M\" logicalLibrary=\"TestLogicalLibrary\" "
                             "mountType=\"ArchiveForUser\" vendor=\"TestVendor\" capacityInBytes=\"12345678\""));
   ASSERT_NE(std::string::npos, logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
                                                "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" "

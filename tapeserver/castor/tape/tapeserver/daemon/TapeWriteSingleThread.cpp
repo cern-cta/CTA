@@ -311,9 +311,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Mounting, std::nullopt, m_logContext);
       m_reporter.reportState(cta::tape::session::SessionState::Mounting, cta::tape::session::SessionType::Archive);
       cta::log::ScopedParamContainer params(m_logContext);
-      params.add("vo", m_archiveMount.getVo());
       params.add("mediaType", m_archiveMount.getMediaType());
-      params.add("tapePool", m_archiveMount.getPoolName());
       params.add("logicalLibrary", m_drive.config.logicalLibrary);
       params.add("mountType", toCamelCaseString(m_volInfo.mountType));
       params.add("vendor", m_archiveMount.getVendor());
