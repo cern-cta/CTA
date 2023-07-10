@@ -202,8 +202,8 @@ test_assert || exit 1
 
 # Logical Library (ll)
 test_start "logical library" "ll"
-admin_cta cta-admin pl add --pl phys1 --ma man --mo mod --npcs 3 --npds 4
-admin_cta cta-admin pl add --pl phys2 --ma man --mo mod --npcs 3 --npds 4
+admin_cta pl add --pl phys1 --ma man --mo mod --npcs 3 --npds 4
+admin_cta pl add --pl phys2 --ma man --mo mod --npcs 3 --npds 4
 test_and_check_cmd "Adding logical library 'cta_adm_systest'" "${command}" "add" "-n 'cta_adm_systest' -d false --pl phys1 -m 'cta-admin systest add'"\
   'select(.name=="cta_adm_systest" and .isDisabled==false and .physicalLibrary=="phys1" and .comment=="cta-admin systest add") | .name'\
   "1" "adding logical library 'cta_adm_systest'"|| exit 1
@@ -211,8 +211,8 @@ test_and_check_cmd "Changing logical library 'cta_adm_systest' to disabled" "${c
   'select(.name=="cta_adm_systest" and .isDisabled==true and .physicalLibrary=="phys2" and .disabledReason=="cta-admin systest ch") | .name'\
   "1" "changing logical library 'cta_adm_systest'"|| exit 1
 test_command "Removing logical library 'cta_adm_systest'" "${command}" "rm" "-n cta_adm_systest" || exit 1
-admin_cta cta-admin pl rm phys1
-admin_cta cta-admin pl rm phys2
+admin_cta pl rm --pl phys1
+admin_cta pl rm --pl phys2
 test_assert || exit 1
 
 
@@ -379,8 +379,8 @@ test_assert || exit 1
 
 # Logical Library (ll)
 test_start "logical library" "ll"
-admin_cta cta-admin pl add --pl phys1 --ma man --mo mod --npcs 3 --npds 4
-admin_cta cta-admin pl add --pl phys2 --ma man --mo mod --npcs 3 --npds 4
+admin_cta pl add --pl phys1 --ma man --mo mod --npcs 3 --npds 4
+admin_cta pl add --pl phys2 --ma man --mo mod --npcs 3 --npds 4
 test_and_check_cmd "Adding logical library 'cta_adm_systest'" "${command}" "add" "-n 'cta_adm_systest' -d false --pl phys1 -m 'cta-admin systest add'"\
   'select(.name=="cta_adm_systest" and .isDisabled==false and .physicalLibrary=="phys1" and .comment=="cta-admin systest add") | .name'\
   "1" "adding logical library 'cta_adm_systest'"|| exit 1
@@ -388,8 +388,8 @@ test_and_check_cmd "Changing logical library 'cta_adm_systest' to disabled" "${c
   'select(.name=="cta_adm_systest" and .isDisabled==true and .physicalLibrary=="phys2" and .disabledReason=="cta-admin systest ch") | .name'\
   "1" "changing logical library 'cta_adm_systest'"|| exit 1
 test_command "Removing logical library 'cta_adm_systest'" "${command}" "rm" "-n cta_adm_systest" || exit 1
-admin_cta cta-admin pl rm phys1
-admin_cta cta-admin pl rm phys2
+admin_cta pl rm phys1
+admin_cta pl rm phys2
 test_assert || exit 1
 
 # Media Type (mt)
