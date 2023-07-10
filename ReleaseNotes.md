@@ -27,6 +27,9 @@
 - cta/CTA#403 - Add option `physicallibrary` to `cta-admin logicallibrary`
 - cta/CTA#418 - Add the physical library to the json output for tape ls and drive ls
 
+### Continuous Integration
+- cta/CTA#422 - Skip gitlab jobs when some files are modified
+
 # v4.8.10-2
 
 ### Bug Fixes
