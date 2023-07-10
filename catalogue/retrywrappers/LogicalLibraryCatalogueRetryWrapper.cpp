@@ -32,9 +32,9 @@ LogicalLibraryCatalogueRetryWrapper::LogicalLibraryCatalogueRetryWrapper(const s
 }
 
 void LogicalLibraryCatalogueRetryWrapper::createLogicalLibrary(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const bool isDisabled, const std::string &comment) {
+  const std::string &name, const bool isDisabled, const std::optional<std::string>& physicalLibraryName, const std::string &comment) {
   return retryOnLostConnection(m_log, [&]{return m_catalogue->LogicalLibrary()->createLogicalLibrary(admin, name,
-    isDisabled, comment);}, m_maxTriesToConnect);
+    isDisabled, physicalLibraryName, comment);}, m_maxTriesToConnect);
 }
 
 void LogicalLibraryCatalogueRetryWrapper::deleteLogicalLibrary(const std::string &name) {
@@ -57,6 +57,12 @@ void LogicalLibraryCatalogueRetryWrapper::modifyLogicalLibraryComment(
   const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) {
   return retryOnLostConnection(m_log, [&]{return m_catalogue->LogicalLibrary()->modifyLogicalLibraryComment(admin,
     name, comment);}, m_maxTriesToConnect);
+}
+
+void LogicalLibraryCatalogueRetryWrapper::modifyLogicalLibraryPhysicalLibrary(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const std::string &physicalLibraryName) {
+  return retryOnLostConnection(m_log, [&]{return m_catalogue->LogicalLibrary()->modifyLogicalLibraryPhysicalLibrary(admin,
+    name, physicalLibraryName);}, m_maxTriesToConnect);
 }
 
 void LogicalLibraryCatalogueRetryWrapper::modifyLogicalLibraryDisabledReason(

@@ -549,6 +549,7 @@ void TextFormatter::printLogicalLibraryLsHeader() {
   push_back(
     "library",
     "disabled",
+    "phys.lib",
     "reason",
     "c.user",
     "c.host",
@@ -564,6 +565,7 @@ void TextFormatter::print(const LogicalLibraryLsItem &llls_item) {
   push_back(
     llls_item.name(),
     llls_item.is_disabled(),
+    llls_item.physical_library(),
     llls_item.disabled_reason(),
     llls_item.creation_log().username(),
     llls_item.creation_log().host(),

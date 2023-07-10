@@ -560,8 +560,9 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
   // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = true;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+    libraryIsDisabled, physicalLibraryName, libraryComment);
   {
     auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -764,8 +765,9 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
   // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = true;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+    libraryIsDisabled, physicalLibraryName, libraryComment);
   {
     auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -1093,8 +1095,9 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
   // tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = true;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+    libraryIsDisabled, physicalLibraryName, libraryComment);
   {
     auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -1416,8 +1419,9 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
   // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+    libraryIsDisabled, physicalLibraryName, libraryComment);
   {
     auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -1666,8 +1670,9 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
   // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+    libraryIsDisabled, physicalLibraryName, libraryComment);
   {
     auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -1910,8 +1915,9 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
   // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+    libraryIsDisabled, physicalLibraryName, libraryComment);
   {
     auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -2042,8 +2048,9 @@ TEST_P(SchedulerTest, repack) {
    // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+    libraryIsDisabled, physicalLibraryName, libraryComment);
 
   common::dataStructures::SecurityIdentity cliId;
   cliId.host = "host";
@@ -2121,8 +2128,9 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
   // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+    libraryIsDisabled, physicalLibraryName, libraryComment);
 
   common::dataStructures::SecurityIdentity cliId;
   cliId.host = "host";
@@ -2219,7 +2227,8 @@ TEST_P(SchedulerTest, expandRepackRequest) {
 
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
-  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, physicalLibraryName, "Create logical library");
 
   uint64_t nbTapesToRepack = 10;
   uint64_t nbTapesForTest = 2; //corresponds to the targetAvailableRequests variable in the Scheduler::promoteRepackRequestsToToExpand() method
@@ -2550,7 +2559,8 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
 
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
-  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, physicalLibraryName, "Create logical library");
 
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
@@ -2756,7 +2766,8 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
 
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
-  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, physicalLibraryName, "Create logical library");
 
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
@@ -3015,7 +3026,8 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
 
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
-  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, physicalLibraryName, "Create logical library");
 
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
@@ -3279,7 +3291,8 @@ TEST_P(SchedulerTest, expandRepackRequestRepackingTape) {
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
-  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
 
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
@@ -3386,7 +3399,8 @@ TEST_P(SchedulerTest, expandRepackRequestRepackingDisabledTape) {
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
-  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled,
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, physicalLibraryName,
     "Create logical library");
 
   std::ostringstream ossVid;
@@ -3494,7 +3508,8 @@ TEST_P(SchedulerTest, expandRepackRequestBrokenTape) {
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
-  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
 
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
@@ -3556,7 +3571,8 @@ TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
-  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
 
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
@@ -3618,7 +3634,8 @@ TEST_P(SchedulerTest, expandRepackRequestActiveTape) {
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
-  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
 
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
@@ -3681,7 +3698,8 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
-  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
 
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
@@ -3853,7 +3871,8 @@ TEST_P(SchedulerTest, emptyMountIsTriggeredWhenCancelledRetrieveRequest) {
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
-  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
 
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
@@ -4023,8 +4042,9 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
   // Create the environment for the migrations to happen (library + tapes)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+    libraryIsDisabled, physicalLibraryName, libraryComment);
   {
     auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -4209,7 +4229,8 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
-  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
 
   //Create the source tape
   std::string vid = "VIDSOURCE";
@@ -4461,7 +4482,8 @@ TEST_P(SchedulerTest, expandRepackRequestShouldFailIfArchiveRouteMissing) {
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
-  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
 
   //Create the source tape
   std::string vidCopyNb1 = "VIDSOURCE";
@@ -4643,7 +4665,8 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
-  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
 
   //Create the source tape
   std::string vid = "VIDSOURCE";
@@ -4923,7 +4946,8 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
 
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
-  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, physicalLibraryName, "Create logical library");
 
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
@@ -5162,8 +5186,9 @@ TEST_P(SchedulerTest, getNextMountEmptyArchiveForRepackIfNbFilesQueuedIsLessThan
   //Create environment for the test
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+    libraryIsDisabled, physicalLibraryName, libraryComment);
 
   {
     auto tape = getDefaultTape();
@@ -5266,8 +5291,9 @@ TEST_P(SchedulerTest, getNextMountTapeStatesThatShouldNotReturnAMount) {
   // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+    libraryIsDisabled, physicalLibraryName, libraryComment);
 
   auto tape = getDefaultTape();
   {
@@ -5432,7 +5458,8 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
 
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
-  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, physicalLibraryName, "Create logical library");
 
   {
     auto tape = getDefaultTape();
@@ -5581,7 +5608,8 @@ TEST_P(SchedulerTest, expandRepackRequestShouldThrowIfUseBufferNotRecallButNoDir
 
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
-  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, physicalLibraryName, "Create logical library");
 
   {
     auto tape = getDefaultTape();
@@ -5680,7 +5708,8 @@ TEST_P(SchedulerTest, expandRepackRequestShouldNotThrowIfTapeDisabledButNoRecall
 
   //Create a logical library in the catalogue
   const bool libraryIsDisabled = false;
-  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, "Create logical library");
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, libraryIsDisabled, physicalLibraryName, "Create logical library");
 
   {
     auto tape = getDefaultTape();
@@ -5785,8 +5814,9 @@ TEST_P(SchedulerTest, archiveUserQueueMaxDrivesVoInFlightChangeScheduleMount){
   // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+    libraryIsDisabled, physicalLibraryName, libraryComment);
   {
     auto libraries = catalogue.LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(1, libraries.size());
@@ -5862,7 +5892,8 @@ TEST_P(SchedulerTest, retrieveUserQueueMaxDrivesVoInFlightChangeScheduleMount)
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
-  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
 
   auto tape = getDefaultTape();
   catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
@@ -5973,7 +6004,8 @@ TEST_P(SchedulerTest, retrieveArchiveRepackQueueMaxDrivesVoInFlightChangeSchedul
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
-  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
 
   //This tape will contain files for triggering a repack retrieve
   auto tape1 = getDefaultTape();
@@ -6168,7 +6200,8 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
-  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
 
   //This tape will contain files for triggering a Retrieve
   auto tape1 = getDefaultTape();
@@ -6408,7 +6441,8 @@ TEST_P(SchedulerTest, getQueuesAndMountSummariesTest)
 
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
-  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName, logicalLibraryIsDisabled, "Create logical library");
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
 
   //Create two tapes
   auto tape = getDefaultTape();
@@ -6564,8 +6598,9 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
   //Create environment for the test
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-    libraryIsDisabled, libraryComment);
+    libraryIsDisabled, physicalLibraryName, libraryComment);
 
   catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_vo,1);
   catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost,s_repack_vo,1);
@@ -6753,8 +6788,9 @@ TEST_P(SchedulerTestTriggerTapeStateChangeBehaviour, triggerTapeStateChangeValid
   // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
-                                 libraryIsDisabled, libraryComment);
+                                 libraryIsDisabled, physicalLibraryName, libraryComment);
 
   auto tape = getDefaultTape();
   {
