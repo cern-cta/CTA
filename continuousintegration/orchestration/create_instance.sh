@@ -176,8 +176,6 @@ if [ ! -z "${dockerimage}" ]; then
 else
   sed -i ${poddir}/pod-* -e "s/\(^\s\+image:[^:]\+:\).*/\1${imagetag}/"
 fi
-# it has to keep pod-dbupdatetest.yaml without any change
-cp pod-dbupdatetest.yaml ${poddir}
 
 if [ ! -z "${error}" ]; then
     echo -e "ERROR:\n${error}"

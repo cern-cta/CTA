@@ -88,6 +88,7 @@ else
   exit 1
 fi
 
+cat ${tmpdir}/pod-dbupdatetest.yaml
 kubectl create -f ${tempdir}/pod-dbupdatetest.yaml --namespace=${NAMESPACE}
 
 echo -n "Waiting for dbupdatetest"
