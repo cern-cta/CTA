@@ -4,9 +4,6 @@ ctageneric_docker:
     name: gitlab-registry.cern.ch/ci-tools/docker-image-builder
     entrypoint: [""]
   retry: 1
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
   before_script:
     - export CTA_BUILD_ID=${CI_PIPELINE_ID}git${CI_COMMIT_SHA:0:8}
   script:

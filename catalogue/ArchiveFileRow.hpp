@@ -17,8 +17,6 @@
 
 #pragma once
 
-// test
-
 #include "common/checksum/ChecksumBlob.hpp"
 
 #include <stdint.h>
