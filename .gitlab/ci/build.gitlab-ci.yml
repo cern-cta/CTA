@@ -2,12 +2,7 @@
   retry: 1
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
-    - changes:
-      - "**/*.md"
-      - README
-      when: never
+    - !reference [.skip_files_rules, rules]
   artifacts:
     expire_in: 30 days
     paths:

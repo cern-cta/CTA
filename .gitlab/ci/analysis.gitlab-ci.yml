@@ -12,7 +12,8 @@ cppcheck:
     paths:
     - cppcheck_out.xml
   rules:
-    !reference [.skip_rules, rules]
+    - !reference [.skip_files_rules, rules]
+    - when: always
 
 
 # based on https://gitlab.com/ahogen/cppcheck-codequality
@@ -30,7 +31,8 @@ cppcheck_report:
     reports:
       codequality: cppcheck.json
   rules:
-    !reference [.skip_rules, rules]
+    - !reference [.skip_files_rules, rules]
+    - when: always
 
 clang_format:
   allow_failure: true
@@ -50,4 +52,5 @@ clang_format:
     paths:
     - clang-format.output
   rules:
-    !reference [.skip_rules, rules]
+    - !reference [.skip_files_rules, rules]
+    - when: always
