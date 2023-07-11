@@ -330,13 +330,16 @@ common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(const std
       "TAPE.CREATION_LOG_TIME AS CREATION_LOG_TIME,"
       "TAPE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
       "TAPE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-      "TAPE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME "
+      "TAPE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME,"
+      "PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME "
     "FROM "
       "TAPE "
     "INNER JOIN TAPE_POOL ON "
       "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
     "INNER JOIN LOGICAL_LIBRARY ON "
       "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID "
+    "LEFT JOIN PHYSICAL_LIBRARY ON "
+      "LOGICAL_LIBRARY.PHYSICAL_LIBRARY_ID = PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_ID "
     "INNER JOIN MEDIA_TYPE ON "
       "TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID "
     "INNER JOIN VIRTUAL_ORGANIZATION ON "
@@ -1393,6 +1396,8 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
     throw exception::UserError("Purchase order cannot be an empty string");
   if(RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.diskFileIds))
     throw exception::UserError("Disk file ID list cannot be empty");
+  if(RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.physicalLibraryName))
+    throw exception::UserError("Physical library name cannot be empty");
 
   try {
     if(searchCriteria.tapePool && !RdbmsCatalogueUtils::tapePoolExists(conn, searchCriteria.tapePool.value())) {
@@ -1419,6 +1424,7 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
         "TAPE.IS_FULL AS IS_FULL,"
         "TAPE.DIRTY AS DIRTY,"
         "TAPE.PURCHASE_ORDER AS PURCHASE_ORDER,"
+        "PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME,"
 
         "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"
 
@@ -1458,6 +1464,8 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
         "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
       "INNER JOIN LOGICAL_LIBRARY ON "
         "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID "
+      "LEFT JOIN PHYSICAL_LIBRARY ON "
+        "LOGICAL_LIBRARY.PHYSICAL_LIBRARY_ID = PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_ID "
       "INNER JOIN MEDIA_TYPE ON "
         "TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID "
       "INNER JOIN VIRTUAL_ORGANIZATION ON "
@@ -1474,7 +1482,8 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
        searchCriteria.diskFileIds ||
        searchCriteria.state ||
        searchCriteria.fromCastor ||
-       searchCriteria.purchaseOrder) {
+       searchCriteria.purchaseOrder ||
+       searchCriteria.physicalLibraryName) {
       sql += " WHERE";
     }
 
@@ -1548,6 +1557,11 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
       sql += " TAPE.PURCHASE_ORDER = :PURCHASE_ORDER";
       addedAWhereConstraint = true;
     }
+    if(searchCriteria.physicalLibraryName) {
+      if(addedAWhereConstraint) sql += " AND ";
+      sql += " PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
+      addedAWhereConstraint = true;
+    }
 
     sql += " ORDER BY TAPE.VID";
 
@@ -1559,10 +1573,11 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
     if(searchCriteria.logicalLibrary) stmt.bindString(":LOGICAL_LIBRARY_NAME", searchCriteria.logicalLibrary.value());
     if(searchCriteria.tapePool) stmt.bindString(":TAPE_POOL_NAME", searchCriteria.tapePool.value());
     if(searchCriteria.vo) stmt.bindString(":VO", searchCriteria.vo.value());
-    if(searchCriteria.purchaseOrder) stmt.bindString(":PURCHASE_ORDER", searchCriteria.purchaseOrder.value());
     if(searchCriteria.capacityInBytes) stmt.bindUint64(":CAPACITY_IN_BYTES", searchCriteria.capacityInBytes.value());
     if(searchCriteria.full) stmt.bindBool(":IS_FULL", searchCriteria.full.value());
     if(searchCriteria.fromCastor) stmt.bindBool(":FROM_CASTOR", searchCriteria.fromCastor.value());
+    if(searchCriteria.purchaseOrder) stmt.bindString(":PURCHASE_ORDER", searchCriteria.purchaseOrder.value());
+    if(searchCriteria.physicalLibraryName) stmt.bindString(":PHYSICAL_LIBRARY_NAME", searchCriteria.physicalLibraryName.value());
     try{
       if(searchCriteria.state)
         stmt.bindString(":TAPE_STATE", cta::common::dataStructures::Tape::stateToString(searchCriteria.state.value()));
@@ -1598,6 +1613,7 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
         tape.vo = rset.columnString("VO");
         tape.encryptionKeyName = rset.columnOptionalString("ENCRYPTION_KEY_NAME");
         tape.purchaseOrder = rset.columnOptionalString("PURCHASE_ORDER");
+        tape.physicalLibraryName = rset.columnOptionalString("PHYSICAL_LIBRARY_NAME");
         tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
         tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
         tape.nbMasterFiles = rset.columnUint64("NB_MASTER_FILES");
@@ -1798,6 +1814,7 @@ std::string RdbmsTapeCatalogue::getSelectTapesBy100VidsSql() const {
       "TAPE.IS_FULL AS IS_FULL,"
       "TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,"
       "TAPE.PURCHASE_ORDER AS PURCHASE_ORDER,"
+      "PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME,"
 
       "TAPE.LABEL_FORMAT AS LABEL_FORMAT,"
 
@@ -1833,6 +1850,8 @@ std::string RdbmsTapeCatalogue::getSelectTapesBy100VidsSql() const {
       "TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID "
     "INNER JOIN LOGICAL_LIBRARY ON "
       "TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID "
+    "LEFT JOIN PHYSICAL_LIBRARY ON "
+      "LOGICAL_LIBRARY.PHYSICAL_LIBRARY_ID = PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_ID "
     "INNER JOIN MEDIA_TYPE ON "
       "TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID "
     "INNER JOIN VIRTUAL_ORGANIZATION ON "
@@ -1863,6 +1882,7 @@ void RdbmsTapeCatalogue::executeGetTapesByVidStmtAndCollectResults(rdbms::Stmt &
     tape.vo = rset.columnString("VO");
     tape.encryptionKeyName = rset.columnOptionalString("ENCRYPTION_KEY_NAME");
     tape.purchaseOrder = rset.columnOptionalString("PURCHASE_ORDER");
+    tape.physicalLibraryName = rset.columnOptionalString("PHYSICAL_LIBRARY_NAME");
     tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
     tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
     tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
