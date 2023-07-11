@@ -40,6 +40,18 @@
   variables:
     EXTENDED_OPTIONS: "-O -D -t 2400 -C -e eos-config-quarkdb-https.yaml"
 
+.eos5:
+  extends:
+    - .kubernetes_test
+  rules:
+    - if: $CI_COMMIT_TAG && $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - changes:
+      - "**/*.md"
+      - README
+      when: never
+    - when: always
+
 client:
   stage: test
   extends:
@@ -50,7 +62,7 @@ client:
 client-eos5:
   stage: test
   extends:
-    - .kubernetes_test
+    - .eos5
   except:
     - tags
   variables:
@@ -68,7 +80,7 @@ client-gfal2:
 client-gfal2-eos5:
   stage: test
   extends:
-    - .kubernetes_test
+    - .eos5
   except:
     - tags
   variables:
@@ -85,7 +97,7 @@ repack:
 repack-eos5:
   stage: test
   extends:
-    - .kubernetes_test
+    - .eos5
   except:
     - tags
   variables:
@@ -95,7 +107,7 @@ repack-eos5:
 dbunittests-oracle:
   stage: test
   extends:
-    - .kubernetes_test
+    - .eos5
   except:
     - tags
   variables:
@@ -105,7 +117,7 @@ dbunittests-oracle:
 liquibase-update:
   stage: test
   extends:
-    - .kubernetes_test
+    - .eos5
   rules:
     - !reference [.manual_rules, rules]
   variables:
@@ -115,7 +127,7 @@ liquibase-update:
 external-tape-formats:
   stage: test
   extends:
-    - .kubernetes_test
+    - .eos5
   rules:
     - !reference [.manual_rules, rules]
   variables:
@@ -126,7 +138,7 @@ external-tape-formats:
 nightly1:
   stage: test
   extends:
-    - .kubernetes_test
+    - .eos5
   only:
     - triggers
   variables:
@@ -140,7 +152,7 @@ nightly1:
 cta-admin:
   stage: test
   extends:
-    - .kubernetes_test
+    - .eos5
   except:
     - tags
   variables:
@@ -150,7 +162,7 @@ cta-admin:
 regressioneos:
   stage: regressions
   extends:
-    - .kubernetes_test
+    - .eos5
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: on_success
