@@ -65,7 +65,7 @@ PREVIOUS_SCHEMA_VERSION=$(echo $MIGRATION_FILE | grep -o -E '[0-9]+\.[0-9]' | he
 YUM_REPOS="$(realpath "$(find "$(dirname "$0")"/../../ -name "yum.repos.d")")"
 kubectl -n ${NAMESPACE} create configmap yum.repos.d-config --from-file=${YUM_REPOS}
 SCRIPT_FILE="$(realpath "$(find "$(dirname "$0")"/../../ -name "dbupdatetest.sh")")"
-kubectl -n ${NAMESPACE} create configmap yum.repos.d-config --from-file=${SCRIPT_FILE}
+kubectl -n ${NAMESPACE} create configmap dbupdatetestscript-config --from-file=${SCRIPT_FILE}
 
 # Modify fields of pod yaml with the current data
 tempdir=$(mktemp -d)
