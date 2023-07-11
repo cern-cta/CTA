@@ -24,6 +24,9 @@ variables:
     - changes:
       - "**/*.md"
       - README
+      - sonar-project.properties
+      - .github/**
+      - .gitlab/issue_templates/*.md
       when: never
 
 .manual_rules:
