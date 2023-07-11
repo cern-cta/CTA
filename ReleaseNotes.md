@@ -29,7 +29,6 @@
 
 ### Continuous Integration
 - cta/CTA#422 - Skip gitlab jobs when some files are modified
-test
 
 # v4.8.10-2
 
