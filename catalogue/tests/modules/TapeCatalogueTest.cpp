@@ -35,6 +35,7 @@
 #include "catalogue/tests/modules/TapeCatalogueTest.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/DeleteArchiveRequest.hpp"
+#include "common/dataStructures/PhysicalLibrary.hpp"
 #include "common/dataStructures/RequesterIdentity.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/log/LogContext.hpp"
@@ -4372,8 +4373,158 @@ TEST_P(cta_catalogue_TapeTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   ASSERT_THROW(m_catalogue->Tape()->reclaimTape(m_admin, m_tape1.vid, dummyLc), cta::exception::UserError);
 }
 
+TEST_P(cta_catalogue_TapeTest, get_tape_with_related_physical_library) {
+  const bool logicalLibraryIsDisabled= false;
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const auto physicalLibrary1 = CatalogueTestUtils::getPhysicalLibrary1();
 
+  m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
+  m_catalogue->PhysicalLibrary()->createPhysicalLibrary(m_admin, physicalLibrary1);
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibrary1.name,
+    "Create logical library");
+  m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply,
+    "Create tape pool");
 
+  m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
+  const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+
+  ASSERT_EQ(1, tapes.size());
+
+  const cta::common::dataStructures::Tape tape = tapes.front();
+  ASSERT_EQ(m_tape1.vid, tape.vid);
+  ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+  ASSERT_EQ(m_tape1.vendor, tape.vendor);
+  ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+  ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
+  ASSERT_EQ(m_vo.name, tape.vo);
+  ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
+  ASSERT_EQ(m_tape1.full, tape.full);
+  ASSERT_EQ(physicalLibrary1.name, tape.physicalLibraryName.value());
+
+  ASSERT_FALSE(tape.isFromCastor);
+  ASSERT_EQ(m_tape1.comment, tape.comment);
+  ASSERT_FALSE(tape.labelLog);
+  ASSERT_FALSE(tape.lastReadLog);
+  ASSERT_FALSE(tape.lastWriteLog);
+
+  const cta::common::dataStructures::EntryLog creationLog = tape.creationLog;
+  ASSERT_EQ(m_admin.username, creationLog.username);
+  ASSERT_EQ(m_admin.host, creationLog.host);
+
+  const cta::common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+
+  m_catalogue->Tape()->deleteTape(tape.vid);
+  ASSERT_TRUE(m_catalogue->Tape()->getTapes().empty());
+}
+
+TEST_P(cta_catalogue_TapeTest, get_tape_with_physical_library_search_criteria) {
+  const bool logicalLibraryIsDisabled= false;
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const auto physicalLibrary1 = CatalogueTestUtils::getPhysicalLibrary1();
+
+  m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
+  m_catalogue->PhysicalLibrary()->createPhysicalLibrary(m_admin, physicalLibrary1);
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibrary1.name,
+    "Create logical library");
+  m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply,
+    "Create tape pool");
+
+  m_catalogue->Tape()->createTape(m_admin, m_tape1);
+
+  cta::catalogue::TapeSearchCriteria searchCriteria;
+  searchCriteria.physicalLibraryName = physicalLibrary1.name;
+  const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+
+  ASSERT_EQ(1, tapes.size());
+
+  const cta::common::dataStructures::Tape tape = tapes.front();
+  ASSERT_EQ(m_tape1.vid, tape.vid);
+  ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+  ASSERT_EQ(m_tape1.vendor, tape.vendor);
+  ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+  ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
+  ASSERT_EQ(m_vo.name, tape.vo);
+  ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
+  ASSERT_EQ(m_tape1.full, tape.full);
+  ASSERT_EQ(physicalLibrary1.name, tape.physicalLibraryName.value());
+
+  ASSERT_FALSE(tape.isFromCastor);
+  ASSERT_EQ(m_tape1.comment, tape.comment);
+  ASSERT_FALSE(tape.labelLog);
+  ASSERT_FALSE(tape.lastReadLog);
+  ASSERT_FALSE(tape.lastWriteLog);
+
+  const cta::common::dataStructures::EntryLog creationLog = tape.creationLog;
+  ASSERT_EQ(m_admin.username, creationLog.username);
+  ASSERT_EQ(m_admin.host, creationLog.host);
+
+  const cta::common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+
+  m_catalogue->Tape()->deleteTape(tape.vid);
+  ASSERT_TRUE(m_catalogue->Tape()->getTapes().empty());
+}
+
+TEST_P(cta_catalogue_TapeTest, get_no_tape_with_non_existent_physical_library_search_criteria) {
+  const bool logicalLibraryIsDisabled= false;
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const std::optional<std::string> supply("value for the supply pool mechanism");
+  const auto physicalLibrary1 = CatalogueTestUtils::getPhysicalLibrary1();
+
+  m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
+  m_catalogue->PhysicalLibrary()->createPhysicalLibrary(m_admin, physicalLibrary1);
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibrary1.name,
+    "Create logical library");
+  m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply,
+    "Create tape pool");
+
+  m_catalogue->Tape()->createTape(m_admin, m_tape1);
+
+  cta::catalogue::TapeSearchCriteria searchCriteria;
+  searchCriteria.physicalLibraryName = "DoesNotExist";
+  const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+
+  ASSERT_EQ(0, tapes.size());
+
+  const cta::common::dataStructures::Tape tape = tapes.front();
+  ASSERT_EQ(m_tape1.vid, tape.vid);
+  ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+  ASSERT_EQ(m_tape1.vendor, tape.vendor);
+  ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+  ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
+  ASSERT_EQ(m_vo.name, tape.vo);
+  ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
+  ASSERT_EQ(m_tape1.full, tape.full);
+  ASSERT_EQ(physicalLibrary1.name, tape.physicalLibraryName.value());
+
+  ASSERT_FALSE(tape.isFromCastor);
+  ASSERT_EQ(m_tape1.comment, tape.comment);
+  ASSERT_FALSE(tape.labelLog);
+  ASSERT_FALSE(tape.lastReadLog);
+  ASSERT_FALSE(tape.lastWriteLog);
+
+  const cta::common::dataStructures::EntryLog creationLog = tape.creationLog;
+  ASSERT_EQ(m_admin.username, creationLog.username);
+  ASSERT_EQ(m_admin.host, creationLog.host);
+
+  const cta::common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
+  ASSERT_EQ(creationLog, lastModificationLog);
+
+  m_catalogue->Tape()->deleteTape(tape.vid);
+  ASSERT_TRUE(m_catalogue->Tape()->getTapes().empty());
+}
 
 }  // namespace unitTests
