@@ -63,8 +63,6 @@ client-eos5:
   stage: test
   extends:
     - .eos5
-  except:
-    - tags
   variables:
     TEST_SCRIPT: "tests/test_client.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
@@ -81,8 +79,6 @@ client-gfal2-eos5:
   stage: test
   extends:
     - .eos5
-  except:
-    - tags
   variables:
     TEST_SCRIPT: "tests/test_client-gfal2.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
@@ -98,8 +94,6 @@ repack-eos5:
   stage: test
   extends:
     - .eos5
-  except:
-    - tags
   variables:
     TEST_SCRIPT: "tests/repack_systemtest_wrapper.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
@@ -108,8 +102,6 @@ dbunittests-oracle:
   stage: test
   extends:
     - .eos5
-  except:
-    - tags
   variables:
     TEST_SCRIPT: "/usr/bin/true"
     EXTENDED_OPTIONS: "-O -D -U -t 600 -C"
@@ -120,6 +112,7 @@ liquibase-update:
     - .eos5
   rules:
     - !reference [.manual_rules, rules]
+    - !reference [.eos5, rules]
   variables:
     TEST_SCRIPT: "tests/update_db_test.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C -u"
@@ -130,6 +123,7 @@ external-tape-formats:
     - .eos5
   rules:
     - !reference [.manual_rules, rules]
+    - !reference [.eos5, rules]
   variables:
     TEST_SCRIPT: "/usr/bin/true"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C -T"
@@ -138,7 +132,7 @@ external-tape-formats:
 nightly1:
   stage: test
   extends:
-    - .eos5
+    - .kubernetes_test
   only:
     - triggers
   variables:
@@ -153,8 +147,6 @@ cta-admin:
   stage: test
   extends:
     - .eos5
-  except:
-    - tags
   variables:
     TEST_SCRIPT: "tests/test_cta-admin.sh"
     EXTENDED_OPTIONS: "-O -D -t 2400 -C"
@@ -162,7 +154,7 @@ cta-admin:
 regressioneos:
   stage: regressions
   extends:
-    - .eos5
+    - .kubernetes_test
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: on_success
