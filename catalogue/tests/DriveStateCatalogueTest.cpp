@@ -25,6 +25,7 @@
 #include "catalogue/tests/DriveStateCatalogueTest.hpp"
 #include "common/dataStructures/DesiredDriveState.hpp"
 #include "common/dataStructures/DriveInfo.hpp"
+#include "common/dataStructures/PhysicalLibrary.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/dataStructures/TapeDrive.hpp"
 #include "common/exception/Exception.hpp"
@@ -223,7 +224,6 @@ TEST_P(cta_catalogue_DriveStateTest, getTapeDriveWithDisabledLogicalLibrary) {
   m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
   m_catalogue->deleteLogicalLibrary(tapeDrive.logicalLibrary);
 }
-
 
 TEST_P(cta_catalogue_DriveStateTest, failToGetTapeDrive) {
   const std::string tapeDriveName = "VDSTK11";

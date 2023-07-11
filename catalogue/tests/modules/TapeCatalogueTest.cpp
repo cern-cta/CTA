@@ -4480,11 +4480,10 @@ TEST_P(cta_catalogue_TapeTest, get_no_tape_with_non_existent_physical_library_se
   const uint64_t nbPartialTapes = 2;
   const bool isEncrypted = true;
   const std::optional<std::string> supply("value for the supply pool mechanism");
-  const auto physicalLibrary1 = CatalogueTestUtils::getPhysicalLibrary1();
+  std::optional<std::string> physicalLibraryName;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
-  m_catalogue->PhysicalLibrary()->createPhysicalLibrary(m_admin, physicalLibrary1);
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibrary1.name,
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName,
     "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -4499,31 +4498,7 @@ TEST_P(cta_catalogue_TapeTest, get_no_tape_with_non_existent_physical_library_se
 
   ASSERT_EQ(0, tapes.size());
 
-  const cta::common::dataStructures::Tape tape = tapes.front();
-  ASSERT_EQ(m_tape1.vid, tape.vid);
-  ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
-  ASSERT_EQ(m_tape1.vendor, tape.vendor);
-  ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
-  ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
-  ASSERT_EQ(m_vo.name, tape.vo);
-  ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-  ASSERT_EQ(m_tape1.full, tape.full);
-  ASSERT_EQ(physicalLibrary1.name, tape.physicalLibraryName.value());
-
-  ASSERT_FALSE(tape.isFromCastor);
-  ASSERT_EQ(m_tape1.comment, tape.comment);
-  ASSERT_FALSE(tape.labelLog);
-  ASSERT_FALSE(tape.lastReadLog);
-  ASSERT_FALSE(tape.lastWriteLog);
-
-  const cta::common::dataStructures::EntryLog creationLog = tape.creationLog;
-  ASSERT_EQ(m_admin.username, creationLog.username);
-  ASSERT_EQ(m_admin.host, creationLog.host);
-
-  const cta::common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
-  ASSERT_EQ(creationLog, lastModificationLog);
-
-  m_catalogue->Tape()->deleteTape(tape.vid);
+  m_catalogue->Tape()->deleteTape(m_tape1.vid);
   ASSERT_TRUE(m_catalogue->Tape()->getTapes().empty());
 }
 

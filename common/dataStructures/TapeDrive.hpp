@@ -112,6 +112,8 @@ struct TapeDrive {
   std::optional<uint64_t> reservedBytes;
   std::optional<uint64_t> reservationSessionId;
 
+  std::optional<std::string> physicalLibraryName;
+
   std::optional<std::string> userComment;
   std::optional<EntryLog> creationLog;
   std::optional<EntryLog> lastModificationLog;
