@@ -12,10 +12,5 @@ ctageneric_docker:
   variables:
     DOCKERFILE: continuousintegration/docker/ctafrontend/cc7/Dockerfile
   rules:
-    - if: $CI_COMMIT_TAG && $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
-    - changes:
-      - "**/*.md"
-      - README
-      when: never
+    - !reference [.skip_files_rules, rules]
     - when: always
