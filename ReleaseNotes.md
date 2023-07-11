@@ -21,7 +21,8 @@
 - cta/CTA#349 - Add option to change the state reason even if the state is not changing
 - cta/CTA#386 - Remove buildtree for kubernetes CI
 - cta/CTA#395 - Create gitlab job for code format check
-- cta/CTA#403 - Add option `physicallibrary` to `cta-admin logicallibrary` 
+- cta/CTA#403 - Add option `physicallibrary` to `cta-admin logicallibrary`
+- cta/CTA#418 - Add the physical library to the json output for tape ls and drive ls
 
 # v4.8.10-2
 

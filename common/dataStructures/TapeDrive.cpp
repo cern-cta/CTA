@@ -117,6 +117,7 @@ bool TapeDrive::operator==(const TapeDrive &rhs) const {
       && nextPriority == rhs.nextPriority
       && checkOptionalString(nextActivity) == checkOptionalString(rhs.nextActivity)
       && checkOptionalString(diskSystemName) == checkOptionalString(rhs.diskSystemName)
+      && checkOptionalString(physicalLibraryName) == checkOptionalString(rhs.physicalLibraryName)
       && reservedBytes == rhs.reservedBytes
       && reservationSessionId == rhs.reservationSessionId
 
