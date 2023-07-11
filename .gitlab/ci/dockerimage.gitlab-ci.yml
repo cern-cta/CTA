@@ -11,3 +11,6 @@ ctageneric_docker:
     - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $DOCKERFILE --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}
   variables:
     DOCKERFILE: continuousintegration/docker/ctafrontend/cc7/Dockerfile
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
