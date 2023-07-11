@@ -31,12 +31,12 @@ spec:
       value: "COMMIT_ID_VALUE"
     - name: TERM
       value: "xterm"
-    command: ["/shared/scripts/dbupdatetest.sh"]
-    args: ["none"]
+    command: ["/usr/bin/bash"]
+    args: ["/shared/scripts/dbupdatetest.sh"]
     volumeMounts:
     - mountPath: /etc/config/database
       name: mydatabase
-    - mountPath: /shared/etc_yum.repos.d/
+    - mountPath: /etc/yum.repos.d
       name: repos
     - mountPath: /shared/scripts
       name: scripts
@@ -47,11 +47,11 @@ spec:
 
   volumes:
   - name: repos
-    hostPath:
-      path: REPOS_PATH
+    configMap:
+      name: yum.repos.d-config
   - name: scripts
-    hostPath:
-      path: SCRIPTS_PATH
+    configMap:
+      name: dbupdatetestscript-config
   - name: mydatabase
     configMap:
       name: database-config

@@ -63,13 +63,13 @@ MIGRATION_FILE=$(find ../../../catalogue/ -name "*to${NEW_SCHEMA_VERSION}.sql")
 PREVIOUS_SCHEMA_VERSION=$(echo $MIGRATION_FILE | grep -o -E '[0-9]+\.[0-9]' | head -1)
 
 YUM_REPOS="$(realpath "$(find "$(dirname "$0")"/../../ -name "yum.repos.d")")"
-SCRIPTS_DIR="$(realpath "$(find "$(dirname "$0")"/../../ -name "dbupdatetest.sh" | xargs dirname)")"
+kubectl -n ${NAMESPACE} create configmap yum.repos.d-config --from-file=${YUM_REPOS}
+SCRIPT_FILE="$(realpath "$(find "$(dirname "$0")"/../../ -name "dbupdatetest.sh")")"
+kubectl -n ${NAMESPACE} create configmap yum.repos.d-config --from-file=${SCRIPT_FILE}
 
 # Modify fields of pod yaml with the current data
 tempdir=$(mktemp -d)
 cp ../pod-dbupdatetest.yaml ${tempdir}
-sed -i "s#REPOS_PATH#${YUM_REPOS}#g" ${tempdir}/pod-dbupdatetest.yaml
-sed -i "s#SCRIPTS_PATH#${SCRIPTS_DIR}#g" ${tempdir}/pod-dbupdatetest.yaml
 sed -i "s/CATALOGUE_SOURCE_VERSION_VALUE/${PREVIOUS_SCHEMA_VERSION}/g" ${tempdir}/pod-dbupdatetest.yaml
 sed -i "s/CATALOGUE_DESTINATION_VERSION_VALUE/${NEW_SCHEMA_VERSION}/g" ${tempdir}/pod-dbupdatetest.yaml
 
