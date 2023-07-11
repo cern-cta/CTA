@@ -1,15 +1,3 @@
-.manual_rules:
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "web"
-      when: manual
-      allow_failure: true
-    - if: $CI_PIPELINE_SOURCE == "push"
-      when: manual
-      allow_failure: true
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: on_success
-      allow_failure: false
-
 .kubernetes_test:
   before_script:
     - echo "Invalidating default common before_script for kubernetes_test"
@@ -44,12 +32,7 @@
   extends:
     - .kubernetes_test
   rules:
-    - if: $CI_COMMIT_TAG && $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
-    - changes:
-      - "**/*.md"
-      - README
-      when: never
+    - !reference [.skip_files_rules, rules]
     - when: always
 
 client:

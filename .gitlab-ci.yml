@@ -26,6 +26,20 @@ variables:
       - README
       when: never
 
+.manual_rules:
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+      allow_failure: true
+    - if: $CI_PIPELINE_SOURCE == "push"
+      when: manual
+      allow_failure: true
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: on_success
+      allow_failure: false
+
 .prepare-xrootd4: &prepare-xrootd4
   - if [[ ${XROOTD_VERSION} -eq 4 ]];
     then echo "Using XRootD version 4";
