@@ -1,6 +1,4 @@
 cppcheck:
-  except:
-    - tags
   stage: analysis
   image:
     name: neszt/cppcheck-docker
@@ -13,12 +11,12 @@ cppcheck:
     expire_in: 2 days
     paths:
     - cppcheck_out.xml
+  rules:
+    !reference [.skip_rules, rules]
 
 
 # based on https://gitlab.com/ahogen/cppcheck-codequality
 cppcheck_report:
-  except:
-    - tags
   stage: analysis
   needs: [ cppcheck ]
   image: centos:7
@@ -31,11 +29,11 @@ cppcheck_report:
   artifacts:
     reports:
       codequality: cppcheck.json
+  rules:
+    !reference [.skip_rules, rules]
 
 clang_format:
   allow_failure: true
-  except:
-    - tags
   stage: analysis
   image:
     name: gitlab-registry.cern.ch/linuxsupport/alma9-base
@@ -51,3 +49,5 @@ clang_format:
   artifacts:
     paths:
     - clang-format.output
+  rules:
+    !reference [.skip_rules, rules]

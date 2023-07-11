@@ -9,6 +9,16 @@ stages:
   - publish_rpm
   - release_rpm
 
+.skip_rules:
+  rules:
+    - if: $CI_COMMIT_TAG && $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - changes:
+      - "**/*.md"
+      - README
+      when: never
+    - when: always
+
 variables:
   XROOTD_VERSION: 5
   SCHED_TYPE: "objectstore"
