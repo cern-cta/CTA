@@ -2,6 +2,7 @@ stages:
   - analysis
   - build
   - build:dockerimage
+  - build:tagged_rpm
   - test
   - regressions
   - shouldfail
