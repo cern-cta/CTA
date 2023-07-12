@@ -36,8 +36,8 @@
 // global synchronisation flag
 std::atomic<bool> isHeaderSent = false;
 
-std::list<cta::admin::RecycleTapeFileLsItem> deletedTapeFiles;
-std::list<std::pair<std::string,std::string>> listedTapeFiles;
+std::list<cta::admin::RecycleTapeFileLsItem> g_deletedTapeFiles;
+std::list<std::pair<std::string,std::string>> g_listedTapeFiles;
 std::list<std::string> g_storageClasses;
 std::list<std::string> g_listedVids;
 
@@ -72,14 +72,14 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
     case Data::kRtflsItem:
       {
         auto item = record.rtfls_item();
-        deletedTapeFiles.push_back(item);
+        g_deletedTapeFiles.push_back(item);
       }
       break;
     case Data::kTflsItem:
       {
         auto item = record.tfls_item();
         auto instanceAndFid = std::make_pair(item.df().disk_instance(), item.df().disk_id());
-        listedTapeFiles.push_back(instanceAndFid);
+        g_listedTapeFiles.push_back(instanceAndFid);
       }
       break;
     case Data::kSclsItem:
@@ -124,11 +124,11 @@ std::tuple<std::string,std::string> CatalogueFetch::getInstanceAndFid(const std:
 
   handleResponse(request, serviceProviderPtr);
 
-  if(listedTapeFiles.size() != 1 && listedTapeFiles.size() != 2) {
-    throw std::runtime_error("Unexpected result set: listedTapeFiles size expected=(1 | 2) received=" + std::to_string(listedTapeFiles.size()));
+  if(g_listedTapeFiles.size() == 0) {
+    throw std::runtime_error("Unexpected result set: g_listedTapeFiles size expected to be larger than 0, received=" + std::to_string(g_listedTapeFiles.size()));
   }
-  auto listedTapeFile = listedTapeFiles.back();
-  listedTapeFiles.clear();
+  auto listedTapeFile = g_listedTapeFiles.back();
+  g_listedTapeFiles.clear();
   {
     std::list<cta::log::Param> params;
     params.push_back(cta::log::Param("diskInstance", listedTapeFile.first));
