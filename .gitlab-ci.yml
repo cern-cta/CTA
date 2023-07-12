@@ -58,7 +58,6 @@ default:
         XROOTD_VERSION=4;
         CTA_VERSION=4;
       fi
-    - echo ${CTA_VERSION}
     - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum.repos.d/*.repo /etc/yum.repos.d/
     - *prepare-xrootd4
     - *prepare-scheduler-type
