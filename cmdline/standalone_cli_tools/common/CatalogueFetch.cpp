@@ -124,8 +124,8 @@ std::tuple<std::string,std::string> CatalogueFetch::getInstanceAndFid(const std:
 
   handleResponse(request, serviceProviderPtr);
 
-  if(listedTapeFiles.size() != 1) {
-    throw std::runtime_error("Unexpected result set: listedTapeFiles size expected=1 received=" + std::to_string(listedTapeFiles.size()));
+  if(listedTapeFiles.size() != 1 && listedTapeFiles.size() != 2) {
+    throw std::runtime_error("Unexpected result set: listedTapeFiles size expected=(1 | 2) received=" + std::to_string(listedTapeFiles.size()));
   }
   auto listedTapeFile = listedTapeFiles.back();
   listedTapeFiles.clear();
