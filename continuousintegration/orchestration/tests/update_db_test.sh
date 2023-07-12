@@ -50,6 +50,9 @@ if [ ! -z "${error}" ]; then
   exit 1
 fi
 
+# create tmp dir for all temporary files
+tempdir=$(mktemp -d)
+
 # Does kubernetes version supports `get pod --show-all=true`?
 # use it for older versions and this is not needed for new versions of kubernetes
 KUBECTL_DEPRECATED_SHOWALL=$(kubectl get pod --show-all=true >/dev/null 2>&1 && echo "--show-all=true")
@@ -62,13 +65,17 @@ NEW_SCHEMA_VERSION="$MAJOR.$MINOR"
 MIGRATION_FILE=$(find ../../../catalogue/ -name "*to${NEW_SCHEMA_VERSION}.sql")
 PREVIOUS_SCHEMA_VERSION=$(echo $MIGRATION_FILE | grep -o -E '[0-9]+\.[0-9]' | head -1)
 
+# Get yum repositories from current commit (will go to standard /shared/yum.repos.d directory in cta-catalogue-updater container)
 YUM_REPOS="$(realpath "$(find "$(dirname "$0")"/../../ -name "yum.repos.d")")"
 kubectl -n ${NAMESPACE} create configmap yum.repos.d-config --from-file=${YUM_REPOS}
+# Add our intermediate script (do we really need it?)
 SCRIPT_FILE="$(realpath "$(find "$(dirname "$0")"/../../ -name "dbupdatetest.sh")")"
 kubectl -n ${NAMESPACE} create configmap dbupdatetestscript-config --from-file=${SCRIPT_FILE}
+# Add configmap taken from ctafrontend pod (will go to standard /shared/etc_cta/cta-catalogue.conf file in cta-catalogue-updater container)
+kubectl cp -n ${NAMESPACE} ctafrontend:/etc/cta/cta-catalogue.conf ${tempdir}/cta-catalogue.conf
+kubectl -n ${NAMESPACE} create configmap cta-catalogue-config --from-file=${tempdir}/cta-catalogue.conf
 
 # Modify fields of pod yaml with the current data
-tempdir=$(mktemp -d)
 cp ../pod-dbupdatetest.yaml ${tempdir}
 sed -i "s/CATALOGUE_SOURCE_VERSION_VALUE/${PREVIOUS_SCHEMA_VERSION}/g" ${tempdir}/pod-dbupdatetest.yaml
 sed -i "s/CATALOGUE_DESTINATION_VERSION_VALUE/${NEW_SCHEMA_VERSION}/g" ${tempdir}/pod-dbupdatetest.yaml

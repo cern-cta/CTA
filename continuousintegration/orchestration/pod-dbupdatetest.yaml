@@ -34,12 +34,12 @@ spec:
     command: ["/usr/bin/bash"]
     args: ["/shared/scripts/dbupdatetest.sh"]
     volumeMounts:
-    - mountPath: /etc/config/database
-      name: mydatabase
-    - mountPath: /etc/yum.repos.d
+    - mountPath: /shared/etc_yum.repos.d
       name: repos
     - mountPath: /shared/scripts
       name: scripts
+    - mountPath: /shared/etc_cta
+      name: etccta
     - mountPath: /mnt/logs
       name: logstorage
     securityContext:
@@ -49,12 +49,12 @@ spec:
   - name: repos
     configMap:
       name: yum.repos.d-config
+  - name: etccta
+    configMap:
+      name: cta-catalogue-config
   - name: scripts
     configMap:
       name: dbupdatetestscript-config
-  - name: mydatabase
-    configMap:
-      name: database-config
   - name: logstorage
     persistentVolumeClaim:
       claimName: claimlogs
