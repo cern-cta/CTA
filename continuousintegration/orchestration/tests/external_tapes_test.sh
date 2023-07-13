@@ -45,6 +45,11 @@ if [ -z "${NAMESPACE}" ]; then
   usage
 fi
 
+# Does kubernetes version supports `get pod --show-all=true`?
+# use it for older versions and this is not needed for new versions of kubernetes
+KUBECTL_DEPRECATED_SHOWALL=$(kubectl get pod --show-all=true >/dev/null 2>&1 && echo "--show-all=true")
+test -z ${KUBECTL_DEPRECATED_SHOWALL} || echo "WARNING: you are running a old version of kubernetes and should think about updating it."
+
 echo "
 device=\"DEVICE\"
 echo \"Device is \$device\"
@@ -96,7 +101,7 @@ kubectl create -f "${poddir}/pod-externaltapetests.yaml" --namespace=${NAMESPACE
 echo -n "Waiting for externaltapetests"
 for ((i=0; i<400; i++)); do
   echo -n "."
-  kubectl get pod externaltapetests -a --namespace=${NAMESPACE} | egrep -q 'Completed|Error' && break
+  kubectl -n ${NAMESPACE} get pod externaltapetests ${KUBECTL_DEPRECATED_SHOWALL} | egrep -q 'Completed|Error' && break
   sleep 1
 done
 echo "\n"
