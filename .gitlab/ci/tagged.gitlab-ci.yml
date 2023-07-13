@@ -1,7 +1,7 @@
 cta_tagged_rpm:
   only:
     - tags
-  stage: build
+  stage: build:tagged_rpm
   retry: 1
   image: gitlab-registry.cern.ch/linuxsupport/cc7-base
   script:
@@ -13,7 +13,6 @@ cta_tagged_rpm:
     - source /opt/rh/devtoolset-11/enable
     - git submodule update --init --recursive
     - cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
-    - cp -f continuousintegration/docker/ctafrontend/cc7/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
     - yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
     - mkdir build_tagged_rpm
     - cd build_tagged_rpm
