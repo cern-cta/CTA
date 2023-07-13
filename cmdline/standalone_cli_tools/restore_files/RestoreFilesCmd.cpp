@@ -714,8 +714,8 @@ std::pair<std::string,std::string> RestoreFilesCmd::getInstanceAndFidFromCTA(con
 
   // wait until the data stream has been processed before exiting
   stream_future.wait();
-  if(listedTapeFiles.size() != 1) {
-    throw std::runtime_error("Unexpected result set: listedTapeFiles size expected=1 received=" + std::to_string(listedTapeFiles.size()));
+  if(listedTapeFiles.size() == 0) {
+    throw std::runtime_error("Unexpected result set: listedTapeFiles size expected to be larger than 0, received=" + std::to_string(listedTapeFiles.size()));
   }
   auto listedTapeFile = listedTapeFiles.back();
   listedTapeFiles.clear();
