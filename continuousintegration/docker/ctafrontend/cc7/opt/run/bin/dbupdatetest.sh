@@ -15,35 +15,10 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-LOGMOUNT=/mnt/logs
-
-PV_PATH=""
-
-PV_PATH="${LOGMOUNT}/${MY_NAME}"
-mkdir -p ${PV_PATH}
-
-echo "Copying initial /var/log content to ${PV_PATH}"
-cd /var/log
-tar -c . | tar -C ${PV_PATH} -xv
-
-echo "Mounting logs volume ${PV_PATH} in /var/log"
-mount --bind ${PV_PATH} /var/log
-
-# all core dumps will go there as all the pods AND kubelet are sharing the same kernel.core_pattern
-mkdir -p /var/log/tmp
-chmod 1777 /var/log/tmp
-echo '/var/log/tmp/%h-%t-%e-%p-%s.core' > /proc/sys/kernel/core_pattern
-
 # This libraries are needed to install oracle-instant-client
+# (TO BE FIXED: with the current population of repositories in CI the standard CC7 repos are not available in the container: this should be fixed in the container adding repos for these 2)
 yum install --assumeyes wget libaio;
 
-# Creation of cta-catalogue.con
-/shared/scripts/init_database.sh;
-. /tmp/database-rc.sh;
-mkdir -p /shared/etc_cta;
-echo ${DATABASEURL} &> /shared/etc_cta/cta-catalogue.conf;
-
-cd /root
 if [[ $CTA_VERSION ]]
 then
   echo "CTA_VERSION"
