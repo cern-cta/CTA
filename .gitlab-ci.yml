@@ -2,6 +2,7 @@ stages:
   - analysis
   - build
   - build:dockerimage
+  - build:tagged_rpm
   - test
   - regressions
   - shouldfail
@@ -50,6 +51,7 @@ default:
     - if [[ ${major_version} == 5 ]]; then
         echo "Setting to compile with XRootD version 5";
         XROOTD_VERSION=5;
+        CTA_VERSION=5;
       fi
     - *prepare-xrootd5
     - *prepare-scheduler-type
