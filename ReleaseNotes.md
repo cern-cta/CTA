@@ -14,6 +14,7 @@
 
 ### Building and Packaging
 - cta/CTA#385 - Remove OpenSSL dependency
+- cta/CTA#428 - Compile EOS using Docker
 
 ### Features
 - cta/CTA#31 - Allow VO override for repack
