@@ -199,6 +199,7 @@ install (FILES cta-catalogue.conf.example
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
 set (SCHEMA_CREATE_SRC_FILES
+  AllCatalogueSchema.hpp
   CreateSchemaCmd.cpp
   CreateSchemaCmdLineArgs.cpp
   CreateSchemaCmdMain.cpp
