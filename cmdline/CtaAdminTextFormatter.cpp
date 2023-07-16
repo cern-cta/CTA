@@ -1233,19 +1233,19 @@ void TextFormatter::printPhysicalLibraryLsHeader() {
     "manufacturer",
     "model",
     "type",
-    "gui",
-    "webcam",
+    "gui url",
+    "webcam url",
     "location",
-    "npcs",
-    "nacs",
-    "nads",
-    "comment",
+    "physical cartridge slots",
+    "available cartridge slots",
+    "physical drive slots",
     "c.user",
     "c.host",
     "c.time",
     "m.user",
     "m.host",
-    "m.time"
+    "m.time",
+    "comment"
   );
 }
 
@@ -1261,13 +1261,13 @@ void TextFormatter::print(const PhysicalLibraryLsItem & plls_item){
     plls_item.nb_physical_cartridge_slots(),
     plls_item.nb_available_cartridge_slots(),
     plls_item.nb_physical_drive_slots(),
-    plls_item.comment(),
     plls_item.creation_log().username(),
     plls_item.creation_log().host(),
     timeToStr(plls_item.creation_log().time()),
     plls_item.last_modification_log().username(),
     plls_item.last_modification_log().host(),
-    timeToStr(plls_item.last_modification_log().time())
+    timeToStr(plls_item.last_modification_log().time()),
+    plls_item.comment()
   );
 }
 
