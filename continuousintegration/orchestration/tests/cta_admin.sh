@@ -356,12 +356,12 @@ echo "${dr_names_down[0]}" > /root/deleted.txt
 
 # Physical Library (ll)
 test_start "physical library" "pl"
-test_and_check_cmd "Adding physical library 'cta_adm_systest'" "${command}" "add" "--physicallibrary 'cta_adm_systest' --manufacturer 'manA' --model 'modA' --location 'locA'\\
+test_and_check_cmd "Adding physical library 'cta_adm_systest'" "${command}" "add" "--name 'cta_adm_systest' --manufacturer 'manA' --model 'modA' --location 'locA'\\
    --type 'typeA' --guiurl 'urlA' --webcamurl 'urlA' --nbphysicalcartridgeslots 4 --nbavailablecartridgeslots 3 --nbphysicaldriveslots 2 --comment 'commentA'"\
   'select(.name=="cta_adm_systest" and .manufacturer=="manA" and .model=="modA" and .type=="typeA" and .guiUrl=="urlA" and .webcamUrl=="urlA" and .location=="locA" and .nbPhysicalCartridgeSlots=="4" and .nbAvailableCartridgeSlots=="3" and .nbPhysicalDriveSlots=="2" and .comment=="commentA") | .name'\
   "1" "adding physical library 'cta_adm_systest'"|| exit 1
 echo ${command}
-test_and_check_cmd "Modifying physical library 'cta_adm_systest'" "${command}" "ch" "--physicallibrary 'cta_adm_systest' --location 'locB'\\
+test_and_check_cmd "Modifying physical library 'cta_adm_systest'" "${command}" "ch" "--name 'cta_adm_systest' --location 'locB'\\
    --guiurl 'urlB' --webcamurl 'urlB' --nbphysicalcartridgeslots 4 --nbavailablecartridgeslots 3 --nbphysicaldriveslots 2 --comment 'commentB'"\
   'select(.name=="cta_adm_systest" and .guiUrl=="urlB" and .webcamUrl=="urlB" and .location=="locB" and .nbPhysicalCartridgeSlots=="4" and .nbAvailableCartridgeSlots=="3" and .nbPhysicalDriveSlots=="2" and .comment=="commentB") | .name'\
   "1" "adding physical library 'cta_adm_systest'"|| exit 1
@@ -370,8 +370,8 @@ test_assert || exit 1
 
 # Logical Library (ll)
 test_start "logical library" "ll"
-admin_cta pl add --pl phys1 --ma man --mo mod --npcs 3 --npds 4
-admin_cta pl add --pl phys2 --ma man --mo mod --npcs 3 --npds 4
+admin_cta pl add --name phys1 --ma man --mo mod --npcs 3 --npds 4
+admin_cta pl add --name phys2 --ma man --mo mod --npcs 3 --npds 4
 test_and_check_cmd "Adding logical library 'cta_adm_systest'" "${command}" "add" "-n 'cta_adm_systest' -d false --pl phys1 -m 'cta-admin systest add'"\
   'select(.name=="cta_adm_systest" and .isDisabled==false and .physicalLibrary=="phys1" and .comment=="cta-admin systest add") | .name'\
   "1" "adding logical library 'cta_adm_systest'"|| exit 1
@@ -379,8 +379,8 @@ test_and_check_cmd "Changing logical library 'cta_adm_systest' to disabled" "${c
   'select(.name=="cta_adm_systest" and .isDisabled==true and .physicalLibrary=="phys2" and .disabledReason=="cta-admin systest ch") | .name'\
   "1" "changing logical library 'cta_adm_systest'"|| exit 1
 test_command "Removing logical library 'cta_adm_systest'" "${command}" "rm" "-n cta_adm_systest" || exit 1
-admin_cta pl rm --pl phys1
-admin_cta pl rm --pl phys2
+admin_cta pl rm --name phys1
+admin_cta pl rm --name phys2
 test_assert || exit 1
 
 # Media Type (mt)
