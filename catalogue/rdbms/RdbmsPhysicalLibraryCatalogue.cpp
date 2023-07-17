@@ -157,6 +157,10 @@ void RdbmsPhysicalLibraryCatalogue::deletePhysicalLibrary(const std::string& nam
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":PHYSICAL_LIBRARY_NAME", name);
     stmt.executeNonQuery();
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot delete physical library ") + name + " because it does not exist");
+    }
   } catch(exception::UserError& ex) {
     throw ex;
   } catch(cta::rdbms::ConstraintError& ex) {
