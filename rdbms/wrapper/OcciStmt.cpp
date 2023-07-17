@@ -21,6 +21,7 @@
 #include "rdbms/CheckConstraintError.hpp"
 #include "rdbms/PrimaryKeyError.hpp"
 #include "rdbms/UniqueError.hpp"
+#include "rdbms/IntegrityConstraintError.hpp"
 #include "rdbms/wrapper/OcciColumn.hpp"
 #include "rdbms/wrapper/OcciConn.hpp"
 #include "rdbms/wrapper/OcciRset.hpp"
@@ -280,6 +281,10 @@ void OcciStmt::executeNonQuery() {
       throw UniqueError(msg.str(), ex.what());
     case 2290:
       throw CheckConstraintError(msg.str(), ex.what());
+    case 2291:
+      throw IntegrityConstraintError(msg.str(), ex.what());
+    case 2292:
+      throw IntegrityConstraintError(msg.str(), ex.what());
     default:
       throw exception::Exception(msg.str());
     }
