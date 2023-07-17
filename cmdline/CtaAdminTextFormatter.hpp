@@ -42,9 +42,7 @@ public:
     m_lastColumnFlushLeft = false;
   }
 
-  ~TextFormatter() {
-    flush();
-  }
+  ~TextFormatter();
 
   // Output headers
   void printActivityMountRuleLsHeader();

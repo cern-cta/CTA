@@ -62,12 +62,14 @@ template <class Queue, class Request>
 SharedQueueLock<Queue, Request>::~SharedQueueLock() {
   double waitTime = m_timer.secs(utils::Timer::resetCounter);
   bool skipQueuesTrim=false;
-  if (m_lock.get() && m_lock->isLocked()) {
+  try {
+    if(!m_lock.get()) throw objectstore::ObjectOpsBase::NotLocked("Lock not present.");
     m_lock->release();
-  } else {
+  } catch(objectstore::ObjectOpsBase::NotLocked&) {
     m_logContext.log(log::ERR, "In SharedQueueLock::~SharedQueueLock(): the lock was not present or not locked. Skipping unlock.");
     skipQueuesTrim=true;
   }
+
   double queueUnlockTime = m_timer.secs(utils::Timer::resetCounter);
   // The next update of the queue can now proceed
   if (m_promiseForSuccessor.get()) {

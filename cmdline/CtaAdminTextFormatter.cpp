@@ -27,6 +27,14 @@
 namespace cta {
 namespace admin {
 
+TextFormatter::~TextFormatter() {
+  try {
+    flush();
+  } catch(std::runtime_error& ex) {
+    std::cerr << ex.what() << std::endl;
+  }
+}
+
 /**
  ** Generic utility methods
  **/
