@@ -20,6 +20,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "rdbms/CheckConstraintError.hpp"
+#include "rdbms/IntegrityConstraintError.hpp"
 #include "rdbms/UniqueError.hpp"
 
 #include <algorithm>
@@ -53,12 +54,16 @@ public:
     std::string resstr;
     bool uniqueViolation = false;
     bool checkViolation = false;
+    bool integrityViolation = false;
+    bool foreignKeyViolation = false;
     if (nullptr != res) {
       resstr = "DB Result Status:" + std::to_string(PQresultStatus(res));
       const char *const e = PQresultErrorField(res, PG_DIAG_SQLSTATE);
       if (nullptr != e && '\0' != *e) {
         uniqueViolation = 0 == std::strcmp("23505", e);
         checkViolation = 0 == std::strcmp("23514", e);
+        integrityViolation = 0 == std::strcmp("23000", e);
+        foreignKeyViolation = 0 == std::strcmp("23503", e);
         resstr += " SQLState:" + std::string(e);
       }
     }
@@ -98,6 +103,12 @@ public:
     }
     if (checkViolation) {
       throw CheckConstraintError(dbmsg, pgstr);
+    }
+    if (integrityViolation) {
+      throw IntegrityConstraintError(dbmsg, pgstr);
+    }
+    if (foreignKeyViolation) {
+      throw IntegrityConstraintError(dbmsg, pgstr);
     }
     throw exception::Exception(dbmsg);
   }
