@@ -3517,7 +3517,7 @@ OStoreDB::TapeMountDecisionInfo::~TapeMountDecisionInfo() {
   // The lock should be released before the objectstore object m_schedulerGlobalLock gets destroyed.
   // We explicitly release the lock, and then destroy the object.
   try {
-    m_lockOnSchedulerGlobalLock.release();
+    if(m_lockTaken) m_lockOnSchedulerGlobalLock.release();
   } catch(objectstore::ObjectOpsBase::NotLocked&) { }
   m_schedulerGlobalLock.reset(nullptr);
 }
