@@ -38,7 +38,6 @@ std::unique_ptr<RAOAlgorithm> ConfigurableRAOAlgorithmFactory::createRAOAlgorith
     }
     default:
       throw cta::exception::Exception("Unknown type of ConfigurableRAOAlgorithm. Existing types are : sltf");
-      break;
   }
   return ret;
 }

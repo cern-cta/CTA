@@ -1245,7 +1245,6 @@ ssize_t drive::DriveGeneric::readBlock(void * data, size_t count)  {
           throw cta::exception::Exception(
               "In DriveGeneric::readBlock: Failed checksum verification");
         }
-        break;
       }
     case lbpToUse::disabled:
       {

@@ -60,7 +60,8 @@ bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, con
   }
 
   // XRootD has a bug where if we return false here, it triggers a SIGABRT. Until this is fixed, exit(1) as a workaround.
-  exit(1);
+  // Fixed in https://github.com/xrootd/xrootd/issues/751
+  // exit(1);
 
   return false;
 }
