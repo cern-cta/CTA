@@ -266,7 +266,7 @@ test_header 'tape'
 
 # Tape (ta)
 test_start "tape" "ta" "--all"
-admin_cta pl add --pl phys1 --ma man --mo mod --npcs 3 --npds 4
+admin_cta pl add --name phys1 --ma man --mo mod --npcs 3 --npds 4
 admin_cta ll ch --name ${lls[1]} --pl phys1
 # Set added tape to full so we can test reclaim.
 test_and_check_cmd "Adding tape 'V01008'" "${command}" "add" "-v V01008 --mt T10K500G --ve vendor -l ${lls[1]} -t ctasystest -f true --purchaseorder order1"\
@@ -283,7 +283,7 @@ test_and_check_cmd "Changing tape V01008 order to order2" "${command}" "ch" "-v 
   "1" "changing tape V01008 order" || exit 1
 test_command "Removing tape V01008" "${command}" "rm" "-v V01008" || exit 1
 admin_cta ll ch --name ${lls[1]} --pl ""
-admin_cta pl rm --pl phys1
+admin_cta pl rm --name phys1
 test_assert || exit 1
 
 # Tape File (tf)
@@ -331,7 +331,7 @@ test_assert|| exit 1
 
 # Drive (dr)
 test_start "drive" "dr"
-admin_cta pl add --pl phys1 --ma man --mo mod --npcs 3 --npds 4
+admin_cta pl add --name phys1 --ma man --mo mod --npcs 3 --npds 4
 admin_cta ll ch --name ${lls[1]} --pl phys1
 test_and_check_cmd "Setting drive '${dr_names_down[0]}' to UP" "${command}" "up" "${dr_names_down[0]} -r 'cta-admin systest up'"\
   "select(.logicalLibrary==\"${dr_names_down[0]}\" and .physicalLibrary==\"phys1\" and .driveName==\"${dr_names_down[0]}\" and .driveStatus==\"UP\" and .reason==\"cta-admin systest up\") | .driveName"\
@@ -344,7 +344,7 @@ test_and_check_cmd "Changing drive \'${dr_names_down[0]}\' message" "${command}"
   "1" "changing drive \'${dr_names_down[0]}\' comment" || exit 1
 test_command "Removing drive \'${dr_names_down[0]}\'" "${command}" "rm" "${dr_names_down[0]}" || exit 1
 admin_cta ll ch --name ${lls[1]} --pl ""
-admin_cta pl rm --pl phys1
+admin_cta pl rm --name phys1
 test_assert_false || exit 1
 
 
@@ -365,7 +365,7 @@ test_and_check_cmd "Modifying physical library 'cta_adm_systest'" "${command}" "
    --guiurl 'urlB' --webcamurl 'urlB' --nbphysicalcartridgeslots 4 --nbavailablecartridgeslots 3 --nbphysicaldriveslots 2 --comment 'commentB'"\
   'select(.name=="cta_adm_systest" and .guiUrl=="urlB" and .webcamUrl=="urlB" and .location=="locB" and .nbPhysicalCartridgeSlots=="4" and .nbAvailableCartridgeSlots=="3" and .nbPhysicalDriveSlots=="2" and .comment=="commentB") | .name'\
   "1" "adding physical library 'cta_adm_systest'"|| exit 1
-test_command "Removing physical library 'cta_adm_systest'" "${command}" "rm" "--pl 'cta_adm_systest'"
+test_command "Removing physical library 'cta_adm_systest'" "${command}" "rm" "--name 'cta_adm_systest'"
 test_assert || exit 1
 
 # Logical Library (ll)
