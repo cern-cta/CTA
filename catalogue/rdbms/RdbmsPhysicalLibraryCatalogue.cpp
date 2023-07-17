@@ -157,10 +157,10 @@ void RdbmsPhysicalLibraryCatalogue::deletePhysicalLibrary(const std::string& nam
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":PHYSICAL_LIBRARY_NAME", name);
     stmt.executeNonQuery();
-  } catch(exception::UserError& ) {
-    throw;
-  } catch(cta::rdbms::ConstraintError &ex) {
-    throw;
+  } catch(exception::UserError& ex) {
+    throw ex;
+  } catch(cta::rdbms::ConstraintError& ex) {
+    throw ex;
   } catch(exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
