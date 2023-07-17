@@ -63,8 +63,11 @@ SharedQueueLock<Queue, Request>::~SharedQueueLock() {
   double waitTime = m_timer.secs(utils::Timer::resetCounter);
   bool skipQueuesTrim=false;
   try {
-    if(!m_lock.get()) throw objectstore::ObjectOpsBase::NotLocked("Lock not present.");
-    m_lock->release();
+    if(m_lock.get() && m_lock->isLocked()) {
+      m_lock->release();
+    } else {
+      throw objectstore::ObjectOpsBase::NotLocked("Lock not present or not locked");
+    }
   } catch(objectstore::ObjectOpsBase::NotLocked&) {
     m_logContext.log(log::ERR, "In SharedQueueLock::~SharedQueueLock(): the lock was not present or not locked. Skipping unlock.");
     skipQueuesTrim=true;
