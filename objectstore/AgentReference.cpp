@@ -151,7 +151,6 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
       params.add("agentObject", m_agentAddress);
       utils::Timer t;
       objectstore::ScopedExclusiveLock agl(ag);
-      double agentLockTime = t.secs(utils::Timer::resetCounter);
       ag.fetch();
       if (ag.isBeingGarbageCollected()) {
         log::ScopedParamContainer params(lc);
@@ -160,9 +159,6 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
         cta::utils::segfault();
         ::exit(EXIT_FAILURE);
       }
-      double agentFetchTime = t.secs(utils::Timer::resetCounter);
-      size_t agentOwnershipSizeBefore = ag.getOwnershipListSize();
-      size_t operationsCount = q->queue.size() + 1;
       bool ownershipModification = false;
       // First, determine if any action is an ownership modification
       if (m_ownerShipModifyingOperations.count(action->op))
@@ -186,25 +182,9 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
         threading::MutexLocker ml(a->mutex);
         appyAction(*a, ag, ownershipSet, lc);
       }
-      // Record the new ownership if needed.
+      // Record the new ownership if needed, and commit
       if (ownershipModification) ag.resetOwnership(ownershipSet);
-      size_t agentOwnershipSizeAfter = ag.getOwnershipListSize();
-      double agentUpdateTime = t.secs(utils::Timer::resetCounter);
-      // and commit
       ag.commit();
-      double agentCommitTime = t.secs(utils::Timer::resetCounter);
-      if (ownershipModification && false) { // Log disabled to not log too much.
-        log::ScopedParamContainer params(lc);
-        params.add("agentOwnershipSizeBefore", agentOwnershipSizeBefore)
-              .add("agentOwnershipSizeAfter", agentOwnershipSizeAfter)
-              .add("operationsCount", operationsCount)
-              .add("agentLockTime", agentLockTime)
-              .add("agentFetchTime", agentFetchTime)
-              .add("agentUpdateTime", agentUpdateTime)
-              .add("agentCommitTime", agentCommitTime);
-        lc.log(log::INFO, "In AgentReference::queueAndExecuteAction(): executed a batch of actions.");
-      }
-      // We avoid global log (with a count) as we would get one for each heartbeat.
     } catch (...) {
       // Something wend wrong: , we release the next batch of changes
       promiseForNextQueue->set_value();

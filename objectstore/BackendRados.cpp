@@ -267,7 +267,6 @@ std::string BackendRados::read(const std::string& name) {
     // If the object is not present, throw a more detailed exception.
     if (e.errorNumber() == ENOENT) {
       throw cta::exception::NoSuchObject(e.getMessageValue());
-      throw;
     }
   }
   rtl.logIfNeeded("In BackendRados::read(): m_radosCtx.read()", name);
