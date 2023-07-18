@@ -47,6 +47,11 @@ std::list<common::dataStructures::PhysicalLibrary> PhysicalLibraryCatalogueRetry
     m_maxTriesToConnect);
 }
 
+void PhysicalLibraryCatalogueRetryWrapper::modifyPhysicalLibrary(
+  const common::dataStructures::SecurityIdentity &admin,  const common::dataStructures::UpdatePhysicalLibrary& pl) {
+  return retryOnLostConnection(m_log, [&]{return m_catalogue->PhysicalLibrary()->modifyPhysicalLibrary(admin, pl);}, m_maxTriesToConnect);
+}
+
 void PhysicalLibraryCatalogueRetryWrapper::modifyPhysicalLibraryGuiUrl(
   const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &guiUrl) {
   return retryOnLostConnection(m_log, [&]{return m_catalogue->PhysicalLibrary()->modifyPhysicalLibraryGuiUrl(admin,
