@@ -123,6 +123,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,cta::log::LogContext&  
         writeFile->close();
         m_stats.closingTime +=localTime.secs(cta::utils::Timer::resetCounter);
         m_stats.filesCount++;
+        break;
       }
     } //end of while(1)
     m_retrieveJob->transferredSize = m_stats.dataVolume;
