@@ -260,7 +260,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
         }
         failedToReportArchiveJobs.pop();
       }
-      throw ex;
+      throw;
     } catch(const cta::ArchiveMount::FailedReportMoveToQueue &ex){
       while(!failedToReportArchiveJobs.empty()){
         auto archiveJob = std::move(failedToReportArchiveJobs.front());
@@ -285,7 +285,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
         }
         failedToReportArchiveJobs.pop();
       }
-      throw ex;
+      throw;
     }
   }
   else {

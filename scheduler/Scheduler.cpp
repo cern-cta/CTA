@@ -346,10 +346,9 @@ void Scheduler::checkTapeCanBeRepacked(const std::string & vid, const SchedulerD
               + vid
               + ". The current state is unknown.");
     }
-
-  } catch(const exception::UserError& userEx){
-    throw userEx;
-  } catch(const cta::exception::Exception & ex){
+  } catch(const exception::UserError&) {
+    throw;
+  } catch(const exception::Exception&) {
     throw exception::UserError("The VID provided for repacking does not exist");
   }
 }
@@ -695,9 +694,9 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
     // We pass this information to the db for recording in the repack request. This will allow restarting from the right
     // value in case of crash.
     nbRetrieveSubrequestsQueued = repackRequest->m_dbReq->addSubrequestsAndUpdateStats(retrieveSubrequests, archiveRoutesMap, fSeq, maxAddedFSeq, totalStatsFile, diskSystemList, lc);
-  } catch(const cta::ExpandRepackRequestException& e){
+  } catch(const cta::ExpandRepackRequestException&) {
     deleteRepackBuffer(std::move(dir),lc);
-    throw e;
+    throw;
   }
   timingList.insertAndReset("addSubrequestsAndUpdateStatsTime",t);
 

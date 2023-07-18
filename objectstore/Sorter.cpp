@@ -285,12 +285,12 @@ void Sorter::insertRetrieveRequest(RetrieveRequestInfosAccessorInterface& access
                  .add("fSeq", fSeq);
           lc.log(log::INFO, "Selected vid to be queued for retrieve request.");
           return;
-        } catch (const cta::exception::Exception &ex){
+        } catch(const cta::exception::Exception& ex) {
           log::ScopedParamContainer params(lc);
           params.add("fileId", accessor.getArchiveFile().archiveFileID)
-                 .add("exceptionMessage", ex.getMessageValue());
+                .add("exceptionMessage", ex.getMessageValue());
           lc.log(log::ERR, "In Sorter::insertRetrieveRequest() Failed to determine destination queue for retrieve request.");
-          throw ex;
+          throw;
         }
     } else {
       throw cta::exception::Exception("In Sorter::insertRetrieveRequest(), there is no ToTransfer jobs in the RetrieveRequest. Please provide the copyNb of the job you want to queue.");
@@ -312,12 +312,12 @@ void Sorter::insertRetrieveRequest(RetrieveRequestInfosAccessorInterface& access
                .add("tapeVid", jobTapeFile.vid)
                .add("fSeq", jobTapeFile.fSeq);
       lc.log(log::INFO, "Selected the vid of the job to be queued for retrieve request.");
-    } catch (const cta::exception::Exception &ex){
+    } catch(const cta::exception::Exception& ex) {
       log::ScopedParamContainer params(lc);
       params.add("fileId", accessor.getArchiveFile().archiveFileID)
-             .add("exceptionMessage", ex.getMessageValue());
+            .add("exceptionMessage", ex.getMessageValue());
       lc.log(log::ERR, "In Sorter::insertRetrieveRequest() Failed to determine destination queue for retrieve request.");
-      throw ex;
+      throw;
     }
   }
 }
