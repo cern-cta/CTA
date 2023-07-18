@@ -55,27 +55,6 @@ public:
   void modifyPhysicalLibrary(const common::dataStructures::SecurityIdentity& admin,
     const common::dataStructures::UpdatePhysicalLibrary& pl) override;
 
-  void modifyPhysicalLibraryGuiUrl   (const common::dataStructures::SecurityIdentity &admin,
-   const std::string &name, const std::string &guiUrl) override;
-
-  void modifyPhysicalLibraryWebcamUrl(const common::dataStructures::SecurityIdentity &admin,
-   const std::string &name, const std::string &webcamUrl) override;
-
-  void modifyPhysicalLibraryLocation (const common::dataStructures::SecurityIdentity &admin,
-   const std::string &name, const std::string &location) override;
-
-  void modifyPhysicalLibraryNbPhysicalCartridgeSlots  (const common::dataStructures::SecurityIdentity &admin,
-   const std::string &name, const uint64_t &nbPhysicalCartridgeSlots) override;
-
-  void modifyPhysicalLibraryNbAvailableCartridgeSlots (const common::dataStructures::SecurityIdentity &admin,
-   const std::string &name, const uint64_t &nbAvailableCartridgeSlots) override;
-
-  void modifyPhysicalLibraryNbPhysicalDriveSlots (const common::dataStructures::SecurityIdentity &admin,
-   const std::string &name, const uint64_t &nbPhysicalDriveSlots) override;
-
-  void modifyPhysicalLibraryComment (const common::dataStructures::SecurityIdentity &admin,
-   const std::string &name, const std::string &comment) override;
-
 private:
   const std::unique_ptr<Catalogue>& m_catalogue;
   log::Logger &m_log;
