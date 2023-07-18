@@ -41,204 +41,177 @@ RdbmsPhysicalLibraryCatalogue::RdbmsPhysicalLibraryCatalogue(log::Logger& log, s
 
 
 void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStructures::SecurityIdentity& admin, const common::dataStructures::PhysicalLibrary& pl) {
-  try {
-    auto conn = m_connPool->getConn();
+  auto conn = m_connPool->getConn();
 
-    const uint64_t physicalLibraryId = getNextPhysicalLibraryId(conn);
-    const time_t now = time(nullptr);
-    const char *const sql =
-      "INSERT INTO PHYSICAL_LIBRARY("
-        "PHYSICAL_LIBRARY_ID,"
-        "PHYSICAL_LIBRARY_NAME,"
-        "PHYSICAL_LIBRARY_MANUFACTURER,"
-        "PHYSICAL_LIBRARY_MODEL,"
-        "PHYSICAL_LIBRARY_TYPE,"
-        "GUI_URL,"
-        "WEBCAM_URL,"
-        "PHYSICAL_LOCATION,"
+  const uint64_t physicalLibraryId = getNextPhysicalLibraryId(conn);
+  const time_t now = time(nullptr);
+  const char *const sql =
+    "INSERT INTO PHYSICAL_LIBRARY("
+      "PHYSICAL_LIBRARY_ID,"
+      "PHYSICAL_LIBRARY_NAME,"
+      "PHYSICAL_LIBRARY_MANUFACTURER,"
+      "PHYSICAL_LIBRARY_MODEL,"
+      "PHYSICAL_LIBRARY_TYPE,"
+      "GUI_URL,"
+      "WEBCAM_URL,"
+      "PHYSICAL_LOCATION,"
 
-        "NB_PHYSICAL_CARTRIDGE_SLOTS,"
-        "NB_AVAILABLE_CARTRIDGE_SLOTS,"
-        "NB_PHYSICAL_DRIVE_SLOTS,"
+      "NB_PHYSICAL_CARTRIDGE_SLOTS,"
+      "NB_AVAILABLE_CARTRIDGE_SLOTS,"
+      "NB_PHYSICAL_DRIVE_SLOTS,"
 
-        "CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME,"
+      "CREATION_LOG_USER_NAME,"
+      "CREATION_LOG_HOST_NAME,"
+      "CREATION_LOG_TIME,"
 
-        "LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME, "
+      "LAST_UPDATE_USER_NAME,"
+      "LAST_UPDATE_HOST_NAME,"
+      "LAST_UPDATE_TIME, "
 
-        "USER_COMMENT) "
-      "VALUES("
-        ":PHYSICAL_LIBRARY_ID,"
-        ":PHYSICAL_LIBRARY_NAME,"
-        ":PHYSICAL_LIBRARY_MANUFACTURER,"
-        ":PHYSICAL_LIBRARY_MODEL,"
-        ":PHYSICAL_LIBRARY_TYPE,"
-        ":GUI_URL,"
-        ":WEBCAM_URL,"
-        ":PHYSICAL_LOCATION,"
+      "USER_COMMENT) "
+    "VALUES("
+      ":PHYSICAL_LIBRARY_ID,"
+      ":PHYSICAL_LIBRARY_NAME,"
+      ":PHYSICAL_LIBRARY_MANUFACTURER,"
+      ":PHYSICAL_LIBRARY_MODEL,"
+      ":PHYSICAL_LIBRARY_TYPE,"
+      ":GUI_URL,"
+      ":WEBCAM_URL,"
+      ":PHYSICAL_LOCATION,"
 
-        ":NB_PHYSICAL_CARTRIDGE_SLOTS,"
-        ":NB_AVAILABLE_CARTRIDGE_SLOTS,"
-        ":NB_PHYSICAL_DRIVE_SLOTS,"
+      ":NB_PHYSICAL_CARTRIDGE_SLOTS,"
+      ":NB_AVAILABLE_CARTRIDGE_SLOTS,"
+      ":NB_PHYSICAL_DRIVE_SLOTS,"
 
-        ":CREATION_LOG_USER_NAME,"
-        ":CREATION_LOG_HOST_NAME,"
-        ":CREATION_LOG_TIME,"
+      ":CREATION_LOG_USER_NAME,"
+      ":CREATION_LOG_HOST_NAME,"
+      ":CREATION_LOG_TIME,"
 
-        ":LAST_UPDATE_USER_NAME,"
-        ":LAST_UPDATE_HOST_NAME,"
-        ":LAST_UPDATE_TIME,"
+      ":LAST_UPDATE_USER_NAME,"
+      ":LAST_UPDATE_HOST_NAME,"
+      ":LAST_UPDATE_TIME,"
 
-        ":USER_COMMENT)";
-    auto stmt = conn.createStmt(sql);
+      ":USER_COMMENT)";
+  auto stmt = conn.createStmt(sql);
 
-    auto setOptionalString = [&stmt](const std::string& sqlField, const std::optional<std::string>& optionalField) {
-      if (optionalField && !optionalField.value().empty()) {
-        stmt.bindString(sqlField, optionalField.value());
-      } else {
-        stmt.bindString(sqlField, std::nullopt);
-      }
-    };
+  auto setOptionalString = [&stmt](const std::string& sqlField, const std::optional<std::string>& optionalField) {
+    if (optionalField && !optionalField.value().empty()) {
+      stmt.bindString(sqlField, optionalField.value());
+    } else {
+      stmt.bindString(sqlField, std::nullopt);
+    }
+  };
 
-    auto setOptionalUint = [&stmt](const std::string& sqlField, const std::optional<uint64_t>& optionalField) {
-      if (optionalField) {
-        stmt.bindUint64(sqlField, optionalField.value());
-      } else {
-        stmt.bindUint64(sqlField, std::nullopt);
-      }
-    };
+  auto setOptionalUint = [&stmt](const std::string& sqlField, const std::optional<uint64_t>& optionalField) {
+    if (optionalField) {
+      stmt.bindUint64(sqlField, optionalField.value());
+    } else {
+      stmt.bindUint64(sqlField, std::nullopt);
+    }
+  };
 
-    stmt.bindUint64(":PHYSICAL_LIBRARY_ID"          , physicalLibraryId);
-    stmt.bindString(":PHYSICAL_LIBRARY_NAME"        , pl.name);
-    stmt.bindString(":PHYSICAL_LIBRARY_MANUFACTURER", pl.manufacturer);
-    stmt.bindString(":PHYSICAL_LIBRARY_MODEL"       , pl.model);
-    setOptionalString(":PHYSICAL_LIBRARY_TYPE"      , pl.type);
-    setOptionalString(":GUI_URL"                    , pl.guiUrl);
-    setOptionalString(":WEBCAM_URL"                 , pl.webcamUrl);
-    setOptionalString(":PHYSICAL_LOCATION"          , pl.location);
+  stmt.bindUint64(":PHYSICAL_LIBRARY_ID"          , physicalLibraryId);
+  stmt.bindString(":PHYSICAL_LIBRARY_NAME"        , pl.name);
+  stmt.bindString(":PHYSICAL_LIBRARY_MANUFACTURER", pl.manufacturer);
+  stmt.bindString(":PHYSICAL_LIBRARY_MODEL"       , pl.model);
+  setOptionalString(":PHYSICAL_LIBRARY_TYPE"      , pl.type);
+  setOptionalString(":GUI_URL"                    , pl.guiUrl);
+  setOptionalString(":WEBCAM_URL"                 , pl.webcamUrl);
+  setOptionalString(":PHYSICAL_LOCATION"          , pl.location);
 
-    stmt.bindUint64(":NB_PHYSICAL_CARTRIDGE_SLOTS" , pl.nbPhysicalCartridgeSlots);
-    setOptionalUint(":NB_AVAILABLE_CARTRIDGE_SLOTS", pl.nbAvailableCartridgeSlots);
-    stmt.bindUint64(":NB_PHYSICAL_DRIVE_SLOTS"     , pl.nbPhysicalDriveSlots);
+  stmt.bindUint64(":NB_PHYSICAL_CARTRIDGE_SLOTS" , pl.nbPhysicalCartridgeSlots);
+  setOptionalUint(":NB_AVAILABLE_CARTRIDGE_SLOTS", pl.nbAvailableCartridgeSlots);
+  stmt.bindUint64(":NB_PHYSICAL_DRIVE_SLOTS"     , pl.nbPhysicalDriveSlots);
 
-    stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
-    stmt.bindString(":CREATION_LOG_HOST_NAME", admin.host);
-    stmt.bindUint64(":CREATION_LOG_TIME"     , now);
+  stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
+  stmt.bindString(":CREATION_LOG_HOST_NAME", admin.host);
+  stmt.bindUint64(":CREATION_LOG_TIME"     , now);
 
-    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
-    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
-    stmt.bindUint64(":LAST_UPDATE_TIME"     , now);
+  stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+  stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+  stmt.bindUint64(":LAST_UPDATE_TIME"     , now);
 
-    setOptionalString(":USER_COMMENT", pl.comment);
+  setOptionalString(":USER_COMMENT", pl.comment);
 
-    stmt.executeNonQuery();
-  } catch(exception::UserError& ) {
-    throw;
-  } catch(cta::rdbms::UniqueError& ex) {
-    throw ex;
-  } catch(cta::rdbms::ConstraintError& ex) {
-    throw ex;
-  } catch(exception::Exception& ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
+  stmt.executeNonQuery();
 }
 
 void RdbmsPhysicalLibraryCatalogue::deletePhysicalLibrary(const std::string& name) {
-  try {
-    const char *const sql =
-      "DELETE FROM PHYSICAL_LIBRARY "
-      "WHERE "
-        "PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
-    auto conn = m_connPool->getConn();
-    auto stmt = conn.createStmt(sql);
-    stmt.bindString(":PHYSICAL_LIBRARY_NAME", name);
-    stmt.executeNonQuery();
+  const char *const sql =
+    "DELETE FROM PHYSICAL_LIBRARY "
+    "WHERE "
+      "PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
+  auto conn = m_connPool->getConn();
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":PHYSICAL_LIBRARY_NAME", name);
+  stmt.executeNonQuery();
 
-    if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot delete physical library ") + name + " because it does not exist");
-    }
-  } catch(exception::UserError& ex) {
-    throw ex;
-  } catch(cta::rdbms::ConstraintError& ex) {
-    throw ex;
-  } catch(exception::Exception& ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
+  if(0 == stmt.getNbAffectedRows()) {
+    throw exception::UserError(std::string("Cannot delete physical library ") + name + " because it does not exist");
   }
 }
 
 std::list<common::dataStructures::PhysicalLibrary> RdbmsPhysicalLibraryCatalogue::getPhysicalLibraries() const {
-  try {
-    std::list<common::dataStructures::PhysicalLibrary> libs;
-    const char *const sql =
-      "SELECT "
-        "PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME,"
-        "PHYSICAL_LIBRARY_MANUFACTURER AS PHYSICAL_LIBRARY_MANUFACTURER,"
-        "PHYSICAL_LIBRARY_MODEL AS PHYSICAL_LIBRARY_MODEL,"
-        "PHYSICAL_LIBRARY_TYPE AS PHYSICAL_LIBRARY_TYPE,"
-        "GUI_URL AS GUI_URL,"
-        "WEBCAM_URL AS WEBCAM_URL,"
-        "PHYSICAL_LOCATION AS PHYSICAL_LOCATION,"
+  std::list<common::dataStructures::PhysicalLibrary> libs;
+  const char *const sql =
+    "SELECT "
+      "PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME,"
+      "PHYSICAL_LIBRARY_MANUFACTURER AS PHYSICAL_LIBRARY_MANUFACTURER,"
+      "PHYSICAL_LIBRARY_MODEL AS PHYSICAL_LIBRARY_MODEL,"
+      "PHYSICAL_LIBRARY_TYPE AS PHYSICAL_LIBRARY_TYPE,"
+      "GUI_URL AS GUI_URL,"
+      "WEBCAM_URL AS WEBCAM_URL,"
+      "PHYSICAL_LOCATION AS PHYSICAL_LOCATION,"
 
-        "NB_PHYSICAL_CARTRIDGE_SLOTS AS NB_PHYSICAL_CARTRIDGE_SLOTS,"
-        "NB_AVAILABLE_CARTRIDGE_SLOTS AS NB_AVAILABLE_CARTRIDGE_SLOTS,"
-        "NB_PHYSICAL_DRIVE_SLOTS AS NB_PHYSICAL_DRIVE_SLOTS,"
+      "NB_PHYSICAL_CARTRIDGE_SLOTS AS NB_PHYSICAL_CARTRIDGE_SLOTS,"
+      "NB_AVAILABLE_CARTRIDGE_SLOTS AS NB_AVAILABLE_CARTRIDGE_SLOTS,"
+      "NB_PHYSICAL_DRIVE_SLOTS AS NB_PHYSICAL_DRIVE_SLOTS,"
 
-        "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
-        "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
-        "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
+      "CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,"
+      "CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,"
+      "CREATION_LOG_TIME AS CREATION_LOG_TIME,"
 
-        "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME AS LAST_UPDATE_TIME, "
+      "LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,"
+      "LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,"
+      "LAST_UPDATE_TIME AS LAST_UPDATE_TIME, "
 
-        "USER_COMMENT AS USER_COMMENT "
-      "FROM "
-        "PHYSICAL_LIBRARY "
-      "ORDER BY "
-        "PHYSICAL_LIBRARY_NAME";
-    auto conn = m_connPool->getConn();
-    auto stmt = conn.createStmt(sql);
-    auto rset = stmt.executeQuery();
-    while (rset.next()) {
-      common::dataStructures::PhysicalLibrary pl;
+      "USER_COMMENT AS USER_COMMENT "
+    "FROM "
+      "PHYSICAL_LIBRARY "
+    "ORDER BY "
+      "PHYSICAL_LIBRARY_NAME";
+  auto conn = m_connPool->getConn();
+  auto stmt = conn.createStmt(sql);
+  auto rset = stmt.executeQuery();
+  while (rset.next()) {
+    common::dataStructures::PhysicalLibrary pl;
 
-      pl.name         = rset.columnString("PHYSICAL_LIBRARY_NAME");
-      pl.manufacturer = rset.columnString("PHYSICAL_LIBRARY_MANUFACTURER");
-      pl.model        = rset.columnString("PHYSICAL_LIBRARY_MODEL");
-      pl.type         = rset.columnOptionalString("PHYSICAL_LIBRARY_TYPE");
-      pl.guiUrl       = rset.columnOptionalString("GUI_URL");
-      pl.webcamUrl    = rset.columnOptionalString("WEBCAM_URL");
-      pl.location     = rset.columnOptionalString("PHYSICAL_LOCATION");
+    pl.name         = rset.columnString("PHYSICAL_LIBRARY_NAME");
+    pl.manufacturer = rset.columnString("PHYSICAL_LIBRARY_MANUFACTURER");
+    pl.model        = rset.columnString("PHYSICAL_LIBRARY_MODEL");
+    pl.type         = rset.columnOptionalString("PHYSICAL_LIBRARY_TYPE");
+    pl.guiUrl       = rset.columnOptionalString("GUI_URL");
+    pl.webcamUrl    = rset.columnOptionalString("WEBCAM_URL");
+    pl.location     = rset.columnOptionalString("PHYSICAL_LOCATION");
 
-      pl.nbPhysicalCartridgeSlots  = rset.columnUint64("NB_PHYSICAL_CARTRIDGE_SLOTS");
-      pl.nbAvailableCartridgeSlots = rset.columnOptionalUint16("NB_AVAILABLE_CARTRIDGE_SLOTS");
-      pl.nbPhysicalDriveSlots      = rset.columnUint64("NB_PHYSICAL_DRIVE_SLOTS");
+    pl.nbPhysicalCartridgeSlots  = rset.columnUint64("NB_PHYSICAL_CARTRIDGE_SLOTS");
+    pl.nbAvailableCartridgeSlots = rset.columnOptionalUint16("NB_AVAILABLE_CARTRIDGE_SLOTS");
+    pl.nbPhysicalDriveSlots      = rset.columnUint64("NB_PHYSICAL_DRIVE_SLOTS");
 
-      pl.comment                   = rset.columnOptionalString("USER_COMMENT");
+    pl.comment                   = rset.columnOptionalString("USER_COMMENT");
 
-      pl.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
-      pl.creationLog.host     = rset.columnString("CREATION_LOG_HOST_NAME");
-      pl.creationLog.time     = rset.columnUint64("CREATION_LOG_TIME");
+    pl.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+    pl.creationLog.host     = rset.columnString("CREATION_LOG_HOST_NAME");
+    pl.creationLog.time     = rset.columnUint64("CREATION_LOG_TIME");
 
-      pl.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
-      pl.lastModificationLog.host     = rset.columnString("LAST_UPDATE_HOST_NAME");
-      pl.lastModificationLog.time     = rset.columnUint64("LAST_UPDATE_TIME");
+    pl.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+    pl.lastModificationLog.host     = rset.columnString("LAST_UPDATE_HOST_NAME");
+    pl.lastModificationLog.time     = rset.columnUint64("LAST_UPDATE_TIME");
 
-      libs.push_back(pl);
-    }
-
-    return libs;
-  } catch(exception::UserError& ) {
-    throw;
-  } catch(exception::Exception& ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
+    libs.push_back(pl);
   }
+
+  return libs;
 }
 
 void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibrary(const common::dataStructures::SecurityIdentity& admin, const common::dataStructures::UpdatePhysicalLibrary& pl) {
@@ -276,205 +249,22 @@ void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibrary(const common::dataStru
     }
 }
 
-void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryGuiUrl(const common::dataStructures::SecurityIdentity& admin,
-  const std::string& name, const std::string& guiUrl) {
-  const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE PHYSICAL_LIBRARY SET "
-      "GUI_URL = :GUI_URL,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
-  auto conn = m_connPool->getConn();
-  auto stmt = conn.createStmt(sql);
-  stmt.bindString(":GUI_URL", guiUrl);
-  stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
-  stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
-  stmt.bindUint64(":LAST_UPDATE_TIME", now);
-  stmt.bindString(":PHYSICAL_LIBRARY_NAME", name);
-  stmt.executeNonQuery();
-
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify physical library ") + name + " because it does not exist");
-  }
-}
-
-void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryWebcamUrl(const common::dataStructures::SecurityIdentity& admin,
-  const std::string& name, const std::string& webcamUrl) {
-  const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE PHYSICAL_LIBRARY SET "
-      "WEBCAM_URL = :WEBCAM_URL,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
-  auto conn = m_connPool->getConn();
-  auto stmt = conn.createStmt(sql);
-  stmt.bindString(":WEBCAM_URL", webcamUrl);
-  stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
-  stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
-  stmt.bindUint64(":LAST_UPDATE_TIME", now);
-  stmt.bindString(":PHYSICAL_LIBRARY_NAME", name);
-  stmt.executeNonQuery();
-
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify physical library ") + name + " because it does not exist");
-  }
-}
-
-void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryLocation(const common::dataStructures::SecurityIdentity& admin,
-  const std::string& name, const std::string& location) {
-  const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE PHYSICAL_LIBRARY SET "
-      "PHYSICAL_LOCATION = :PHYSICAL_LOCATION,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
-  auto conn = m_connPool->getConn();
-  auto stmt = conn.createStmt(sql);
-  stmt.bindString(":PHYSICAL_LOCATION", location);
-  stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
-  stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
-  stmt.bindUint64(":LAST_UPDATE_TIME", now);
-  stmt.bindString(":PHYSICAL_LIBRARY_NAME", name);
-  stmt.executeNonQuery();
-
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify physical library ") + name + " because it does not exist");
-  }
-}
-
-void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryNbPhysicalCartridgeSlots(const common::dataStructures::SecurityIdentity& admin,
-  const std::string& name, const uint64_t& nbPhysicalCartridgeSlots) {
-  const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE PHYSICAL_LIBRARY SET "
-      "NB_PHYSICAL_CARTRIDGE_SLOTS = :NB_PHYSICAL_CARTRIDGE_SLOTS,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
-  auto conn = m_connPool->getConn();
-  auto stmt = conn.createStmt(sql);
-  stmt.bindUint64(":NB_PHYSICAL_CARTRIDGE_SLOTS", nbPhysicalCartridgeSlots);
-  stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
-  stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
-  stmt.bindUint64(":LAST_UPDATE_TIME", now);
-  stmt.bindString(":PHYSICAL_LIBRARY_NAME", name);
-  stmt.executeNonQuery();
-
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify physical library ") + name + " because it does not exist");
-  }
-}
-
-void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryNbAvailableCartridgeSlots(const common::dataStructures::SecurityIdentity& admin,
-  const std::string& name, const uint64_t& nbAvailableCartridgeSlots) {
-  const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE PHYSICAL_LIBRARY SET "
-      "NB_AVAILABLE_CARTRIDGE_SLOTS = :NB_AVAILABLE_CARTRIDGE_SLOTS,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
-  auto conn = m_connPool->getConn();
-  auto stmt = conn.createStmt(sql);
-  stmt.bindUint64(":NB_AVAILABLE_CARTRIDGE_SLOTS", nbAvailableCartridgeSlots);
-  stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
-  stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
-  stmt.bindUint64(":LAST_UPDATE_TIME", now);
-  stmt.bindString(":PHYSICAL_LIBRARY_NAME", name);
-  stmt.executeNonQuery();
-
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify physical library ") + name + " because it does not exist");
-  }
-}
-
-void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryNbPhysicalDriveSlots(const common::dataStructures::SecurityIdentity& admin,
-  const std::string& name, const uint64_t& nbPhysicalDriveSlots) {
-  const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE PHYSICAL_LIBRARY SET "
-      "NB_PHYSICAL_DRIVE_SLOTS = :NB_PHYSICAL_DRIVE_SLOTS,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
-  auto conn = m_connPool->getConn();
-  auto stmt = conn.createStmt(sql);
-  stmt.bindUint64(":NB_PHYSICAL_DRIVE_SLOTS", nbPhysicalDriveSlots);
-  stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
-  stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
-  stmt.bindUint64(":LAST_UPDATE_TIME", now);
-  stmt.bindString(":PHYSICAL_LIBRARY_NAME", name);
-  stmt.executeNonQuery();
-
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify physical library ") + name + " because it does not exist");
-  }
-}
-
-void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryComment(const common::dataStructures::SecurityIdentity& admin,
-  const std::string& name, const std::string& comment) {
-  const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment,& m_log);
-  const time_t now = time(nullptr);
-  const char *const sql =
-    "UPDATE PHYSICAL_LIBRARY SET "
-      "USER_COMMENT = :USER_COMMENT,"
-      "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-      "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-      "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-    "WHERE "
-      "PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
-  auto conn = m_connPool->getConn();
-  auto stmt = conn.createStmt(sql);
-  stmt.bindString(":USER_COMMENT", trimmedComment);
-  stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
-  stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
-  stmt.bindUint64(":LAST_UPDATE_TIME", now);
-  stmt.bindString(":PHYSICAL_LIBRARY_NAME", name);
-  stmt.executeNonQuery();
-
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify physical library ") + name + " because it does not exist");
-  }
-}
-
 std::optional<uint64_t> RdbmsPhysicalLibraryCatalogue::getPhysicalLibraryId(rdbms::Conn &conn,
   const std::string &name) const {
-  try {
-    const char *const sql =
-      "SELECT "
-        "PHYSICAL_LIBRARY_ID AS PHYSICAL_LIBRARY_ID "
-      "FROM "
-        "PHYSICAL_LIBRARY "
-      "WHERE "
-        "PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
-    auto stmt = conn.createStmt(sql);
-    stmt.bindString(":PHYSICAL_LIBRARY_NAME", name);
-    auto rset = stmt.executeQuery();
-    if(!rset.next()) {
-      return std::nullopt;
-    }
-    return rset.columnUint64("PHYSICAL_LIBRARY_ID");
-  } catch(exception::UserError &) {
-    throw;
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
+  const char *const sql =
+    "SELECT "
+      "PHYSICAL_LIBRARY_ID AS PHYSICAL_LIBRARY_ID "
+    "FROM "
+      "PHYSICAL_LIBRARY "
+    "WHERE "
+      "PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":PHYSICAL_LIBRARY_NAME", name);
+  auto rset = stmt.executeQuery();
+  if(!rset.next()) {
+    return std::nullopt;
   }
+  return rset.columnUint64("PHYSICAL_LIBRARY_ID");
 }
 
 } // namespace catalogue
