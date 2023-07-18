@@ -3514,11 +3514,11 @@ std::unique_ptr<SchedulerDatabase::RetrieveMount>
 // OStoreDB::TapeMountDecisionInfo::~TapeMountDecisionInfo()
 //------------------------------------------------------------------------------
 OStoreDB::TapeMountDecisionInfo::~TapeMountDecisionInfo() {
-  // The lock should be released before the objectstore object
-  // m_schedulerGlobalLock gets destroyed. We explicitely release the lock,
-  // and then destroy the object
-  if (m_lockTaken)
-    m_lockOnSchedulerGlobalLock.release();
+  // The lock should be released before the objectstore object m_schedulerGlobalLock gets destroyed.
+  // We explicitly release the lock, and then destroy the object.
+  try {
+    if(m_lockTaken) m_lockOnSchedulerGlobalLock.release();
+  } catch(objectstore::ObjectOpsBase::NotLocked&) { }
   m_schedulerGlobalLock.reset(nullptr);
 }
 

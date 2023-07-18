@@ -11,6 +11,7 @@
 - cta/CTA#427 - Update getInstanceAndFid to allow multiple files to be returned from the Catalogue query
 - cta/CTA#423 - Remove duplicated RDBMS test files
 - cta/CTA#409 - Liquibade-update test not compatible with new runners
+- cta/CTA#432 - Do not throw uncaught exceptions in a destructor
 - cta/CTA#433 - Removes code which will never be executed
 
 ### Building and Packaging
