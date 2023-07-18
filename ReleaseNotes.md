@@ -13,6 +13,7 @@
 - cta/CTA#409 - Liquibade-update test not compatible with new runners
 - cta/CTA#432 - Do not throw uncaught exceptions in a destructor
 - cta/CTA#433 - Removes code which will never be executed
+- cta/CTA#434 - CTA frontend accepts files larger than a specified size
 
 ### Building and Packaging
 - cta/CTA#385 - Remove OpenSSL dependency
