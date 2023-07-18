@@ -1534,26 +1534,37 @@ void AdminCmd::processPhysicalLibrary_Ch(xrd::Response& response) {
   const auto nbPhysicalDriveSlots      = getOptional(OptionUInt64::NB_PHYSICAL_DRIVE_SLOTS);
   const auto comment                   = getOptional(OptionString::COMMENT);
 
-  if (guiUrl) {
-    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryGuiUrl(m_cliIdentity, name, guiUrl.value());
-  }
-  if (webcamUrl) {
-    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryWebcamUrl(m_cliIdentity, name, webcamUrl.value());
-  }
-  if (location)  {
-    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryLocation(m_cliIdentity, name, location.value());
-  }
-  if (nbPhysicalCartridgeSlots) {
-    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryNbPhysicalCartridgeSlots(m_cliIdentity, name, nbPhysicalCartridgeSlots.value());
-  }
-  if (nbAvailableCartridgeSlots) {
-    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryNbAvailableCartridgeSlots(m_cliIdentity, name, nbAvailableCartridgeSlots.value());
-  }
-  if (nbPhysicalDriveSlots) {
-    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryNbPhysicalDriveSlots(m_cliIdentity, name, nbPhysicalDriveSlots.value());
-  }
-  if (comment) {
-    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryComment(m_cliIdentity, name, comment.value());
+  try {
+    if (guiUrl) {
+      m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryGuiUrl(m_cliIdentity, name, guiUrl.value());
+    }
+    if (webcamUrl) {
+      m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryWebcamUrl(m_cliIdentity, name, webcamUrl.value());
+    }
+    if (location)  {
+      m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryLocation(m_cliIdentity, name, location.value());
+    }
+    if (nbPhysicalCartridgeSlots) {
+      m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryNbPhysicalCartridgeSlots(m_cliIdentity, name, nbPhysicalCartridgeSlots.value());
+    }
+    if (nbAvailableCartridgeSlots) {
+      m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryNbAvailableCartridgeSlots(m_cliIdentity, name, nbAvailableCartridgeSlots.value());
+    }
+    if (nbPhysicalDriveSlots) {
+      m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryNbPhysicalDriveSlots(m_cliIdentity, name, nbPhysicalDriveSlots.value());
+    }
+    if (comment) {
+      m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryComment(m_cliIdentity, name, comment.value());
+    }
+  } catch(exception::UserError& ) {
+    throw;
+  } catch(cta::rdbms::UniqueError& ex) {
+    throw ex;
+  } catch(cta::rdbms::ConstraintError& ex) {
+    throw ex;
+  } catch(exception::Exception& ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
   }
 
   response.set_type(xrd::Response::RSP_SUCCESS);
