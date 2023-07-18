@@ -26,6 +26,7 @@ namespace cta {
 
 namespace common::dataStructures {
 struct PhysicalLibrary;
+struct UpdatePhysicalLibrary;
 struct SecurityIdentity;
 } // namespace common::dataStructures
 
@@ -45,6 +46,9 @@ public:
   virtual void deletePhysicalLibrary(const std::string& name) = 0;
 
   virtual std::list<common::dataStructures::PhysicalLibrary> getPhysicalLibraries() const = 0;
+
+  virtual void modifyPhysicalLibrary(const common::dataStructures::SecurityIdentity& admin,
+   const common::dataStructures::UpdatePhysicalLibrary& pl) = 0;
 
   virtual void modifyPhysicalLibraryGuiUrl(const common::dataStructures::SecurityIdentity& admin,
    const std::string& name, const std::string& guiUrl) = 0;

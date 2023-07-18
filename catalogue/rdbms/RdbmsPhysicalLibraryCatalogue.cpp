@@ -241,6 +241,41 @@ std::list<common::dataStructures::PhysicalLibrary> RdbmsPhysicalLibraryCatalogue
   }
 }
 
+void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibrary(const common::dataStructures::SecurityIdentity& admin, const common::dataStructures::UpdatePhysicalLibrary& pl) {
+    const time_t now = time(nullptr);
+    std::string sql = "UPDATE PHYSICAL_LIBRARY SET ";
+    std::string setClause;
+
+    if(pl.guiUrl)                    setClause += "GUI_URL = '"                      + pl.guiUrl.value()                                    + "', ";
+    if(pl.webcamUrl)                 setClause += "WEBCAM_URL = '"                   + pl.webcamUrl.value()                                 + "', ";
+    if(pl.location)                  setClause += "PHYSICAL_LOCATION = '"            + pl.location.value()                                  + "', ";
+    if(pl.nbPhysicalCartridgeSlots)  setClause += "NB_PHYSICAL_CARTRIDGE_SLOTS = '"  + std::to_string(pl.nbPhysicalCartridgeSlots.value())  + "', ";
+    if(pl.nbAvailableCartridgeSlots) setClause += "NB_AVAILABLE_CARTRIDGE_SLOTS = '" + std::to_string(pl.nbAvailableCartridgeSlots.value()) + "', ";
+    if(pl.nbPhysicalDriveSlots)      setClause += "NB_PHYSICAL_DRIVE_SLOTS = '"      + std::to_string(pl.nbPhysicalDriveSlots.value())      + "', ";
+    if(pl.comment)                   setClause += "USER_COMMENT = '"                 + pl.comment.value()                                   + "', ";
+    if(!setClause.empty()) {
+        setClause += "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+                     "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+                     "LAST_UPDATE_TIME = :LAST_UPDATE_TIME ";
+
+        sql += setClause;
+        sql += "WHERE PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
+
+        auto conn = m_connPool->getConn();
+        auto stmt = conn.createStmt(sql);
+
+        stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+        stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+        stmt.bindUint64(":LAST_UPDATE_TIME", now);
+        stmt.bindString(":PHYSICAL_LIBRARY_NAME", pl.name);
+        stmt.executeNonQuery();
+
+        if (0 == stmt.getNbAffectedRows()) {
+            throw exception::UserError(std::string("Cannot modify physical library ") + pl.name + " because it does not exist");
+        }
+    }
+}
+
 void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryGuiUrl(const common::dataStructures::SecurityIdentity& admin,
   const std::string& name, const std::string& guiUrl) {
   const time_t now = time(nullptr);
