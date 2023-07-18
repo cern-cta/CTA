@@ -186,16 +186,13 @@ ProcessManager::RunPartStatus ProcessManager::runForkManagement() {
         // We are in the child side: run the subprocess and exit.
         m_logContext.log(log::INFO, "In child process. Running child.");
         ::exit(sp.handler->runChild());
-        break;
       case SubprocessHandler::ForkState::parent:
         // We are parent side. Record the new state for this handler
         newStatus.forkState = SubprocessHandler::ForkState::notForking;
         sp.status = newStatus;
         break;
       case SubprocessHandler::ForkState::notForking:
-        throw cta::exception::Exception("In ProcessManager::runForkManagement(): "
-            "unexpected for state (notForking)");
-        break;
+        throw cta::exception::Exception("In ProcessManager::runForkManagement(): unexpected for state (notForking)");
       }
     }
   }

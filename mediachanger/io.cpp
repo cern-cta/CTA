@@ -310,7 +310,6 @@ int acceptConnection(const int listenSocketFd,
         << " seconds whilst trying to accept a connection";
       throw ex;
     }
-    break;
   case -1: // poll() encountered an error
     // If poll() was interrupted
     if(pollErrno == EINTR) {
@@ -325,7 +324,6 @@ int acceptConnection(const int listenSocketFd,
         cta::utils::errnoToString(pollErrno);
       throw ex;
     }
-    break;
   default: // poll() found a file descriptor awaiting attention
     if(pollFd.revents & POLLERR) {
       cta::exception::Exception ex;

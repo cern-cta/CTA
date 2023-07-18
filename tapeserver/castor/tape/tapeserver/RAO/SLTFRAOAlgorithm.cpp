@@ -83,7 +83,6 @@ void SLTFRAOAlgorithm::Builder::initializeFilePositionEstimator() {
       std::string errorMsg = "In SLTFRAOAlgorithm::Builder::initializeFilePositionEstimator() unable to instanciate an estimator to estimate the position of the files on tape "
         "because the type given in parameter is unknown ("+std::to_string(filePositionType)+").";
       throw cta::exception::Exception(errorMsg);
-      break;
   }
 }
 
