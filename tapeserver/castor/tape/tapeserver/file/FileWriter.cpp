@@ -123,10 +123,14 @@ void FileWriter::close()  {
 }
 
 FileWriter::~FileWriter() throw() {
-  if (m_open) {
+  if(m_open) {
     m_session->setCorrupted();
   }
-  m_session->release();
+  try {
+    m_session->release();
+  } catch(SessionCorrupted&) {
+    m_session->setCorrupted();
+  }
 }
 
 std::string FileWriter::getLBPMode() {
