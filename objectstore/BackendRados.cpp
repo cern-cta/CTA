@@ -405,7 +405,10 @@ void BackendRados::ScopedLock::set(const std::string& oid, const std::string& cl
 }
 
 BackendRados::ScopedLock::~ScopedLock() {
-  ScopedLock::release();
+  try {
+    ScopedLock::release();
+  } catch(const exception::Errnum&) {
+  } catch(const exception::Exception&) { }
 }
 
 BackendRados::LockWatcher::LockWatcher(librados::IoCtx& context, const std::string& name):
