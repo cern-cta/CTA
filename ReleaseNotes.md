@@ -14,6 +14,7 @@
 - cta/CTA#432 - Do not throw uncaught exceptions in a destructor
 - cta/CTA#433 - Removes code which will never be executed
 - cta/CTA#434 - CTA frontend accepts files larger than a specified size
+- cta/CTA#435 - Fixes exception handling issues reported by SonarCloud
 
 ### Building and Packaging
 - cta/CTA#385 - Remove OpenSSL dependency

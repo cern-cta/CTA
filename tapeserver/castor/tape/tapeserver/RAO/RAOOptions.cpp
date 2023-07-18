@@ -88,12 +88,12 @@ std::string RAOOptions::getStringValue(const std::string& name) const {
 }
 
 RAOOptions::CostHeuristicType RAOOptions::getCostHeuristicType() {
-  try{
+  try {
     std::string costHeuristicName = getStringValue("cost_heuristic_name");
     return c_mapStringCostHeuristicType.at(costHeuristicName);
-  } catch(const cta::exception::Exception & ex){
-    throw ex;
-  } catch (const std::out_of_range & ex2) {
+  } catch(const cta::exception::Exception&) {
+    throw;
+  } catch(const std::out_of_range&) {
     throw cta::exception::Exception("In RAOOptions::getCostHeuristic(), unable to find the cost heuristic to use from the RAOAlgorithmOptions configuration line (" + m_options + ")");
   }
 }
