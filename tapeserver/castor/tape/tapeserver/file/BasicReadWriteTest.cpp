@@ -185,9 +185,8 @@ int main(int argc, char *argv[]) {
             uint32_t block_size = 262144;
             uint32_t no_blocks = 100;
 
-            // Write test files ( ! add stop condition)
-            int j = 1;
-            while (true) {
+            // Write 1000 test files
+            for(int j = 1; j <= 1000; ++j) {
               BasicArchiveJob fileToMigrate;
               fileToMigrate.archiveFile.fileSize = block_size * 100;
               fileToMigrate.archiveFile.archiveFileID = j;
@@ -203,7 +202,6 @@ int main(int argc, char *argv[]) {
               }
 
               writer->close();
-              j++;
             }
 
             drive->rewind();
@@ -221,10 +219,8 @@ int main(int argc, char *argv[]) {
             auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, fileToRecall);
             size_t bs = reader->getBlockSize();
             char *data = new char[bs+1];
-            j = 0;
-            while (j < 100) {
+            for(int j = 0; j < 100; ++j) {
                 reader->readNextDataBlock(data, bs);
-                j++;
                 std::cout << data << std::endl;
             }
           } else if (test == RAO_TEST) {

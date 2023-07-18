@@ -106,7 +106,6 @@ void RetrieveRequest::garbageCollectRetrieveRequest(const std::string& presumedO
           err << (logHead + "could not find tapefile for copynb ") << j.copynb();
           throw exception::Exception(err.str());
         }
-        break;
       case RetrieveJobStatus::RJS_ToReportToRepackForSuccess:
       case RetrieveJobStatus::RJS_ToReportToRepackForFailure:
         //We don't have any vid to find, we just need to
@@ -732,17 +731,16 @@ common::dataStructures::JobQueueType RetrieveRequest::getQueueType() {
     switch(j.status()) {
     case serializers::RetrieveJobStatus::RJS_ToTransfer:
       return common::dataStructures::JobQueueType::JobsToTransferForUser;
-      break;
     case serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess:
       return common::dataStructures::JobQueueType::JobsToReportToRepackForSuccess;
-      break;
     case serializers::RetrieveJobStatus::RJS_ToReportToUserForFailure:
       // Else any job to report => to report.
       hasToReport=true;
       break;
     case serializers::RetrieveJobStatus::RJS_ToReportToRepackForFailure:
       return common::dataStructures::JobQueueType::JobsToReportToRepackForFailure;
-    default: break;
+    default:
+      break;
     }
   }
   if (hasToReport) return common::dataStructures::JobQueueType::JobsToReportToUser;

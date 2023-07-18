@@ -217,7 +217,6 @@ void Sorter::dispatchRetrieveAlgorithm(const std::string& vid, const common::dat
       break;
     default:
       throw cta::exception::Exception("In Sorter::dispatchRetrieveAlgorithm(), unknown JobQueueType");
-    break;
   }
 }
 
