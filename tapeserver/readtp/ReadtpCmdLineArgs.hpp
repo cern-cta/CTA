@@ -51,11 +51,6 @@ struct ReadtpCmdLineArgs {
   std::string m_destinationFileListURL;
 
   /**
-   * Path to the xroot private key file.
-   */
-  std::string m_xrootPrivateKeyPath;
-
-  /**
    * Constructor that parses the specified command-line arguments.
    *
    * @param argc The number of command-line arguments including the name of the

@@ -45,21 +45,19 @@ namespace daemon {
 class DiskWriteThreadPool {
 public:
   /**
-   * Constructor: we create the thread structures here, but they do not get
-   * started yet.
-   * @param nbThread Fixed number of threads in the pool
-   * @param reportPacker Reference to a previously created recall
-   * report packer, to which the tasks will report their results.
-   * @param lc reference to a log context object that will be copied at
-   * construction time (and then copied further for each thread). There will
-   * be no side effect on the caller's logs.
-   * @param xrootPrivateKeyPath the path to the xroot private key file.
+   * We create the thread structures here, but they do not get started yet.
+   *
+   * @param nbThread     Fixed number of threads in the pool
+   * @param reportPacker Reference to a previously-created recall report packer,
+   *                     to which the tasks will report their results
+   * @param lc           Reference to a log context object that will be copied at construction time
+   *                     (and then copied further for each thread). There will be no side-effect on
+   *                     the caller's logs.
    */
   DiskWriteThreadPool(int nbThread,
                       RecallReportPacker& reportPacker,
                       RecallWatchDog& recallWatchDog,
                       const cta::log::LogContext& lc,
-                      std::string xrootPrivateKeyPath,
                       uint16_t xrootTimeout);
 
   /**
@@ -177,11 +175,6 @@ private:
 protected:
   /** The (thread safe) queue of tasks */
   cta::threading::BlockingQueue<DiskWriteTask *> m_tasks;
-
-  /**
-   * Parameter: path to xroot private key
-   */
-  std::string m_xrootPrivateKeyPath;
 
   /**
    * Parameter: xroot timeout

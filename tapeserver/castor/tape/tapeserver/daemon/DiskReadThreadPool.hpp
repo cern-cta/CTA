@@ -36,18 +36,17 @@ namespace daemon {
 class DiskReadThreadPool {
 public:
   /**
-   * Constructor. The constructor creates the threads for the pool, but does not
-   * start them.
-   * @param nbThread Number of thread for reading files 
-   * @param maxFilesReq maximal number of files we might require 
-   * within a single request to the task injector
-   * @param maxBytesReq maximal number of bytes we might require
-   *  within a single request a single request to the task injector
-   * @param lc log context for logging purpose
+   * The constructor creates the threads for the pool, but does not start them.
+   *
+   * @param nbThread    Number of thread for reading files 
+   * @param maxFilesReq Maximum number of files we might require within a single request to the task injector
+   * @param maxBytesReq Maximum number of bytes we might require within a single request a single request
+   *                    to the task injector
+   * @param lc          Log context for logging purpose
    */
-  DiskReadThreadPool(int nbThread, uint64_t maxFilesReq,uint64_t maxBytesReq, 
-          castor::tape::tapeserver::daemon::MigrationWatchDog & migrationWatchDog,
-          cta::log::LogContext lc, const std::string & xrootPrivateKeyPath, 
+  DiskReadThreadPool(int nbThread, uint64_t maxFilesReq, uint64_t maxBytesReq, 
+          castor::tape::tapeserver::daemon::MigrationWatchDog& migrationWatchDog,
+          cta::log::LogContext lc,
           uint16_t xrootTimeout);
   
   /**
@@ -182,11 +181,6 @@ private:
   /** The queue of pointer to tasks to be executed. We own the tasks (they are 
    * deleted by the threads after execution) */
   cta::threading::BlockingQueue<DiskReadTask *> m_tasks;
-  
-  /**
-   * Parameter: path to xroot private key
-   */
-  std::string m_xrootPrivateKeyPath;
   
   /**
    * Parameter: xroot timeout
