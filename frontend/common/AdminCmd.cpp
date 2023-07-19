@@ -24,8 +24,6 @@
 #include "AdminCmd.hpp"
 #include "GrpcEndpoint.hpp"
 #include "PbException.hpp"
-#include "rdbms/ConstraintError.hpp"
-#include "rdbms/UniqueError.hpp"
 
 namespace cta {
 namespace frontend {
@@ -248,12 +246,6 @@ xrd::Response AdminCmd::process() {
     // Log the admin command
     logAdminCmd(__FUNCTION__, "success", "", t);
   } catch(exception::PbException& ex) {
-    logAdminCmd(__FUNCTION__, "failure", ex.what(), t);
-    throw ex;
-  } catch(cta::rdbms::UniqueError &ex) {
-    logAdminCmd(__FUNCTION__, "failure", ex.what(), t);
-    throw ex;
-  } catch(cta::rdbms::ConstraintError &ex) {
     logAdminCmd(__FUNCTION__, "failure", ex.what(), t);
     throw ex;
   } catch(exception::UserError& ex) {
