@@ -879,11 +879,8 @@ int DriveHandler::runChild() {
     lc.log(log::ERR, errorMsg);
     // Get hold of the scheduler.
     try {
-      cta::common::dataStructures::DriveInfo driveInfo;
-      driveInfo.driveName = m_driveConfig.unitName;
-      driveInfo.logicalLibrary = m_driveConfig.logicalLibrary;
-      driveInfo.host = hostname;
-      scheduler->reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
+      scheduler->reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
+        cta::common::dataStructures::DriveStatus::Down, lc);
       cta::common::dataStructures::SecurityIdentity securityIdentity;
       cta::common::dataStructures::DesiredDriveState driveState;
       driveState.up = false;
@@ -913,11 +910,8 @@ int DriveHandler::runChild() {
       std::string errorMsg = "In DriveHandler::runChild(): Should run cleaner but VID is missing. Putting the drive down.";
       lc.log(log::ERR, errorMsg);
       try {
-        cta::common::dataStructures::DriveInfo driveInfo;
-        driveInfo.driveName = m_driveConfig.unitName;
-        driveInfo.logicalLibrary = m_driveConfig.logicalLibrary;
-        driveInfo.host = hostname;
-        scheduler->reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, cta::common::dataStructures::DriveStatus::Down, lc);
+        scheduler->reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
+          cta::common::dataStructures::DriveStatus::Down, lc);
         cta::common::dataStructures::SecurityIdentity securityIdentity;
         cta::common::dataStructures::DesiredDriveState driveState;
         driveState.up = false;
@@ -936,7 +930,7 @@ int DriveHandler::runChild() {
     }
     // Log the decision
     {
-      scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
+      scheduler->reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
                                   cta::common::dataStructures::DriveStatus::CleaningUp, lc);
       log::ScopedParamContainer params(lc);
       params.add("tapeVid", m_previousVid)
