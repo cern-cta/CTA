@@ -148,4 +148,67 @@ TEST_P(cta_catalogue_PhysicalLibraryTest, deletePhysicalLibrary) {
   ASSERT_TRUE(m_catalogue->Tape()->getTapes().empty());
 }
 
+TEST_P(cta_catalogue_PhysicalLibraryTest, addingSameNamePhysicalLibrary) {
+  ASSERT_TRUE(m_catalogue->PhysicalLibrary()->getPhysicalLibraries().empty());
+
+  m_catalogue->PhysicalLibrary()->createPhysicalLibrary(m_admin, m_physicalLibrary1);
+
+  auto shouldThrow = [this]() -> void {
+    m_catalogue->PhysicalLibrary()->createPhysicalLibrary(m_admin, m_physicalLibrary1);
+  };
+
+  ASSERT_THROW(shouldThrow(), cta::exception::UserError);
+}
+
+TEST_P(cta_catalogue_PhysicalLibraryTest, addingSameNameDifferingByCasePhysicalLibrary) {
+  ASSERT_TRUE(m_catalogue->PhysicalLibrary()->getPhysicalLibraries().empty());
+
+  cta::common::dataStructures::PhysicalLibrary pl = m_physicalLibrary2;
+  pl.name   = "LIBNAME";
+
+  m_catalogue->PhysicalLibrary()->createPhysicalLibrary(m_admin, pl);
+
+  pl.name = "LIBNAMe";
+  auto shouldThrow = [this, pl]() -> void {
+    m_catalogue->PhysicalLibrary()->createPhysicalLibrary(m_admin, pl);
+  };
+
+  ASSERT_THROW(shouldThrow(), cta::exception::UserError);
+}
+
+TEST_P(cta_catalogue_PhysicalLibraryTest, modifyNonExistentPhysicalLibrary) {
+  auto shouldThrow = [this]() -> void {
+    cta::common::dataStructures::UpdatePhysicalLibrary pl;
+    pl.name                      = "doesNotExist";
+    pl.guiUrl                    = m_physicalLibrary3.guiUrl.value();
+    pl.webcamUrl                 = m_physicalLibrary3.webcamUrl.value();
+    pl.location                  = m_physicalLibrary3.location.value();
+    pl.nbPhysicalCartridgeSlots  = m_physicalLibrary3.nbPhysicalCartridgeSlots;
+    pl.nbAvailableCartridgeSlots = m_physicalLibrary3.nbAvailableCartridgeSlots.value();
+    pl.nbPhysicalDriveSlots      = m_physicalLibrary3.nbPhysicalDriveSlots;
+    pl.comment                   = m_physicalLibrary3.comment.value();
+
+    m_catalogue->PhysicalLibrary()->modifyPhysicalLibrary(m_admin, pl);
+  };
+
+  ASSERT_THROW(shouldThrow(), cta::exception::UserError);
+}
+
+TEST_P(cta_catalogue_PhysicalLibraryTest, noParameterSetForModifyPhysicalLibrary) {
+  m_catalogue->PhysicalLibrary()->createPhysicalLibrary(m_admin, m_physicalLibrary2);
+
+  auto shouldThrow = [this]() -> void {
+    const auto libs = m_catalogue->PhysicalLibrary()->getPhysicalLibraries();
+
+    ASSERT_EQ(1, libs.size());
+    const cta::common::dataStructures::PhysicalLibrary lib = libs.front();
+    cta::common::dataStructures::UpdatePhysicalLibrary pl;
+    pl.name = "name";
+
+    m_catalogue->PhysicalLibrary()->modifyPhysicalLibrary(m_admin, pl);
+  };
+
+  ASSERT_THROW(shouldThrow(), cta::exception::UserError);
+}
+
 }  // namespace unitTests
