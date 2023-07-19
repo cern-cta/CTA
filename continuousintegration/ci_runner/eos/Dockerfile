@@ -15,24 +15,29 @@
 
 FROM gitlab-registry.cern.ch/linuxsupport/cc7-base
 
+ARG EOS_VERSION=master
+
 RUN yum install -y git which;
 
 WORKDIR /eos
 
 RUN set -ex; \
     git clone https://gitlab.cern.ch/dss/eos.git /eos; \
+    git checkout ${EOS_VERSION}; \
     git submodule sync --recursive && git submodule update --init --recursive;
 
 RUN set -ex; \
     cd /eos; \
     sed -e 's/sudo\ //g' ./utils/centos7-dev-environment.sh > /tmp/centos7-dev-environment.sh; \
+    # Remove reboot and quarkdb installation
     sed '/reboot -h now/d' -i /tmp/centos7-dev-environment.sh; \
+    sed '/install -y quarkdb/d' -i /tmp/centos7-dev-environment.sh; \
     chmod +x /tmp/centos7-dev-environment.sh; \
-    /tmp/centos7-dev-environment.sh; \
-    ./utils/el7-packages.sh;
+    /tmp/centos7-dev-environment.sh;
 
 RUN set -ex; \
-    rm -rf /eos
+    rm -rf /eos; \
+    yum clean all;
 
 COPY ./entrypoint.sh /entrypoint.sh
 COPY ./entrypoint_rpm.sh /entrypoint_rpm.sh

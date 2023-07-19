@@ -15,4 +15,16 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-docker build -f Dockerfile -t eosbuilder:dev .
+version=1.0.0
+
+# If $1 is null then error message
+if [ -z "$1" ]; then
+    echo "Error: No argument supplied"
+    echo "Usage: ./prepare_eos_builder.sh <eos_version>"
+    exit 1
+fi
+
+version=$1
+
+# Pass to docker the version of eos to build
+docker build -f Dockerfile -t eosbuilder:dev --build-arg EOS_VERSION=$version .
