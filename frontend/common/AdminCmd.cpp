@@ -1500,36 +1500,25 @@ void AdminCmd::processVirtualOrganization_Rm(xrd::Response& response) {
 }
 
 void AdminCmd::processPhysicalLibrary_Add(xrd::Response& response) {
-  try {
-    using namespace cta::admin;
+  using namespace cta::admin;
 
-    common::dataStructures::PhysicalLibrary pl;
-    pl.name                     = getRequired(OptionString::PHYSICAL_LIBRARY);
-    pl.manufacturer             = getRequired(OptionString::MANUFACTURER);
-    pl.model                    = getRequired(OptionString::LIBRARY_MODEL);
-    pl.nbPhysicalCartridgeSlots = getRequired(OptionUInt64::NB_PHYSICAL_CARTRIDGE_SLOTS);
-    pl.nbPhysicalDriveSlots     = getRequired(OptionUInt64::NB_PHYSICAL_DRIVE_SLOTS);
+  common::dataStructures::PhysicalLibrary pl;
+  pl.name                     = getRequired(OptionString::PHYSICAL_LIBRARY);
+  pl.manufacturer             = getRequired(OptionString::MANUFACTURER);
+  pl.model                    = getRequired(OptionString::LIBRARY_MODEL);
+  pl.nbPhysicalCartridgeSlots = getRequired(OptionUInt64::NB_PHYSICAL_CARTRIDGE_SLOTS);
+  pl.nbPhysicalDriveSlots     = getRequired(OptionUInt64::NB_PHYSICAL_DRIVE_SLOTS);
 
-    pl.type                      = getOptional(OptionString::LIBRARY_TYPE);
-    pl.guiUrl                    = getOptional(OptionString::GUI_URL);
-    pl.webcamUrl                 = getOptional(OptionString::WEBCAM_URL);
-    pl.location                  = getOptional(OptionString::LIBRARY_LOCATION);
-    pl.nbAvailableCartridgeSlots = getOptional(OptionUInt64::NB_AVAILABLE_CARTRIDGE_SLOTS);
-    pl.comment                   = getOptional(OptionString::COMMENT);
+  pl.type                      = getOptional(OptionString::LIBRARY_TYPE);
+  pl.guiUrl                    = getOptional(OptionString::GUI_URL);
+  pl.webcamUrl                 = getOptional(OptionString::WEBCAM_URL);
+  pl.location                  = getOptional(OptionString::LIBRARY_LOCATION);
+  pl.nbAvailableCartridgeSlots = getOptional(OptionUInt64::NB_AVAILABLE_CARTRIDGE_SLOTS);
+  pl.comment                   = getOptional(OptionString::COMMENT);
 
-    m_catalogue.PhysicalLibrary()->createPhysicalLibrary(m_cliIdentity, pl);
+  m_catalogue.PhysicalLibrary()->createPhysicalLibrary(m_cliIdentity, pl);
 
-    response.set_type(xrd::Response::RSP_SUCCESS);
-  } catch(exception::UserError& ) {
-    throw;
-  } catch(cta::rdbms::UniqueError& ex) {
-    throw ex;
-  } catch(cta::rdbms::ConstraintError& ex) {
-    throw ex;
-  } catch(exception::Exception& ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
+  response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
 void AdminCmd::processPhysicalLibrary_Ch(xrd::Response& response) {
@@ -1547,39 +1536,19 @@ void AdminCmd::processPhysicalLibrary_Ch(xrd::Response& response) {
   pl.nbPhysicalDriveSlots      = getOptional(OptionUInt64::NB_PHYSICAL_DRIVE_SLOTS);
   pl.comment                   = getOptional(OptionString::COMMENT);
 
-  try {
-    m_catalogue.PhysicalLibrary()->modifyPhysicalLibrary(m_cliIdentity, pl);
-  } catch(exception::UserError& ) {
-    throw;
-  } catch(cta::rdbms::UniqueError& ex) {
-    throw ex;
-  } catch(cta::rdbms::ConstraintError& ex) {
-    throw ex;
-  } catch(exception::Exception& ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
+  m_catalogue.PhysicalLibrary()->modifyPhysicalLibrary(m_cliIdentity, pl);
 
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
 void AdminCmd::processPhysicalLibrary_Rm(xrd::Response& response) {
-  try {
-    using namespace cta::admin;
+  using namespace cta::admin;
 
-    const auto& name = getRequired(OptionString::PHYSICAL_LIBRARY);
+  const auto& name = getRequired(OptionString::PHYSICAL_LIBRARY);
 
-    m_catalogue.PhysicalLibrary()->deletePhysicalLibrary(name);
+  m_catalogue.PhysicalLibrary()->deletePhysicalLibrary(name);
 
-    response.set_type(xrd::Response::RSP_SUCCESS);
-  } catch(exception::UserError& ex) {
-    throw ex;
-  } catch(cta::rdbms::ConstraintError& ex) {
-    throw ex;
-  } catch(exception::Exception& ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
+  response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
 std::string AdminCmd::setDriveState(const std::string& regex, const common::dataStructures::DesiredDriveState& desiredDriveState) {
