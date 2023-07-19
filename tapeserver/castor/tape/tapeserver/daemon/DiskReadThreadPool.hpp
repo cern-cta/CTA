@@ -140,10 +140,9 @@ private:
   public:
     DiskReadWorkerThread(DiskReadThreadPool & parent):
     m_parent(parent),m_threadID(parent.m_nbActiveThread++),m_lc(parent.m_lc),
-    m_diskFileFactory(parent.m_xrootPrivateKeyPath,
-      parent.m_xrootTimeout, parent.m_striperPool){
-       cta::log::LogContext::ScopedParam param(m_lc, cta::log::Param("threadID", m_threadID));
-       m_lc.log(cta::log::INFO,"DisReadThread created");
+    m_diskFileFactory(parent.m_xrootTimeout, parent.m_striperPool) {
+      cta::log::LogContext::ScopedParam param(m_lc, cta::log::Param("threadID", m_threadID));
+      m_lc.log(cta::log::INFO, "DiskReadThread created");
     }
     void start() { cta::threading::Thread::start(); }
     void wait() { cta::threading::Thread::wait(); }

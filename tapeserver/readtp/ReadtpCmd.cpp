@@ -355,7 +355,7 @@ std::string ReadtpCmd::getNextDestinationUrl() {
 void ReadtpCmd::readTapeFiles(
   castor::tape::tapeserver::drive::DriveInterface &drive) {
     cta::disk::RadosStriperPool striperPool;
-    cta::disk::DiskFileFactory fileFactory(m_xrootPrivateKeyPath, 0, striperPool);
+    cta::disk::DiskFileFactory fileFactory(0, striperPool);
 
     catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = m_vid;
