@@ -270,6 +270,8 @@ void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibrary(const common::dataStru
       if (0 == stmt.getNbAffectedRows()) {
           throw exception::UserError(std::string("Cannot modify physical library ") + pl.name + " because it does not exist");
       }
+    } else {
+      throw exception::UserError("At least one value must be updated");
     }
   } catch(exception::UserError& ) {
     throw;
