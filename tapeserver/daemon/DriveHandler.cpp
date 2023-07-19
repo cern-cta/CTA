@@ -1016,7 +1016,6 @@ int DriveHandler::runChild() {
     dataTransferConfig.raoLtoAlgorithmOptions = m_tapedConfig.raoLtoOptions.value();
     dataTransferConfig.externalFreeDiskSpaceScript = m_tapedConfig.externalFreeDiskSpaceScript.value();
     dataTransferConfig.tapeLoadTimeout = m_tapedConfig.tapeLoadTimeout.value();
-    dataTransferConfig.xrootPrivateKey = "";
     dataTransferConfig.xrootTimeout = 0;
     dataTransferConfig.useEncryption = (m_tapedConfig.useEncryption.value() == "yes");
     dataTransferConfig.externalEncryptionKeyScript = m_tapedConfig.externalEncryptionKeyScript.value();

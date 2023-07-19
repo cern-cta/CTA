@@ -656,7 +656,7 @@ void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackReques
     bool createArchiveSubrequest = false;
     if(filesInDirectory.count(fileName.str())){
       cta::disk::RadosStriperPool radosStriperPool;
-      cta::disk::DiskFileFactory fileFactory("",0,radosStriperPool);
+      cta::disk::DiskFileFactory fileFactory(0,radosStriperPool);
       cta::disk::ReadFile *fileReader = fileFactory.createReadFile(dirBufferURL.str() + fileName.str());
       if(fileReader->size() == archiveFile.fileSize){
         createArchiveSubrequest = true;

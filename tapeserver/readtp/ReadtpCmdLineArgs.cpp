@@ -34,8 +34,8 @@ namespace readtp {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char *const *const argv):
-  help(false), m_vid(""), m_destinationFileListURL(""), m_xrootPrivateKeyPath("") {
+ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char *const *const argv) :
+  help(false), m_vid(""), m_destinationFileListURL("") {
   if (argc < 3) {
     help = true;
     return;
@@ -52,7 +52,6 @@ ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char *const *const argv):
   
   static struct option longopts[] = {
     {"destination_files",      required_argument, nullptr, 'f'},
-    {"xroot_private_key", required_argument, nullptr, 'p'},
     {"help",                   no_argument,       nullptr, 'h'},
     {nullptr,                  0,                 nullptr,   0}
   };
@@ -65,9 +64,6 @@ ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char *const *const argv):
     switch(opt) {
     case 'f':
       m_destinationFileListURL = std::string(optarg);
-      break;
-    case 'p':
-      m_xrootPrivateKeyPath = std::string(optarg);
       break;
     case 'h':
       help = true;
@@ -120,8 +116,6 @@ void ReadtpCmdLineArgs::printUsage(std::ostream &os) {
     "      f1-f2,f4,f6-     A series of non-consecutive ranges of files" << std::endl <<
     "Options:" <<std::endl <<
     "  -h, --help                              Print this help message and exit." << std::endl <<
-    "  -p, --xroot_private_key <KEY PATH>      Path to the xroot private key file. Necessary if" << std::endl << 
-    "                                          read files are to be written using xroot." << std::endl <<
     "  -f, --destination_files <FILE URL>      URL to file containing a list of destination files."  << std::endl <<
     "                                          If not set, all data read is written to file:///dev/null" << std::endl <<
     "                                          If there are less destination files than read files, the remaining" << std::endl <<

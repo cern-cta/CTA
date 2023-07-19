@@ -45,21 +45,19 @@ namespace daemon {
 class DiskWriteThreadPool {
 public:
   /**
-   * Constructor: we create the thread structures here, but they do not get
-   * started yet.
-   * @param nbThread Fixed number of threads in the pool
-   * @param reportPacker Reference to a previously created recall
-   * report packer, to which the tasks will report their results.
-   * @param lc reference to a log context object that will be copied at
-   * construction time (and then copied further for each thread). There will
-   * be no side effect on the caller's logs.
-   * @param xrootPrivateKeyPath the path to the xroot private key file.
+   * We create the thread structures here, but they do not get started yet.
+   *
+   * @param nbThread     Fixed number of threads in the pool
+   * @param reportPacker Reference to a previously-created recall report packer,
+   *                     to which the tasks will report their results
+   * @param lc           Reference to a log context object that will be copied at construction time
+   *                     (and then copied further for each thread). There will be no side-effect on
+   *                     the caller's logs.
    */
   DiskWriteThreadPool(int nbThread,
                       RecallReportPacker& reportPacker,
                       RecallWatchDog& recallWatchDog,
                       const cta::log::LogContext& lc,
-                      std::string xrootPrivateKeyPath,
                       uint16_t xrootTimeout);
 
   /**
@@ -104,18 +102,16 @@ private:
   class DiskWriteWorkerThread : private cta::threading::Thread {
   public:
     explicit DiskWriteWorkerThread(DiskWriteThreadPool& manager) :
-      m_threadID(manager.m_nbActiveThread++), m_parentThreadPool(manager),
+      m_threadID(manager.m_nbActiveThread++),
+      m_parentThreadPool(manager),
       m_lc(m_parentThreadPool.m_lc),
-      m_diskFileFactory(manager.m_xrootPrivateKeyPath,
-                        manager.m_xrootTimeout, manager.m_striperPool) {
-      // This thread Id will remain for the rest of the thread's lifetime (and 
-      // also context's lifetime) so no need for a scope.
+      m_diskFileFactory(manager.m_xrootTimeout, manager.m_striperPool) {
+      // This thread id will remain for the rest of the thread's lifetime
+      // (and also context's lifetime), so no need for a scope
       m_lc.pushOrReplace(cta::log::Param("threadID", m_threadID));
       m_lc.log(cta::log::INFO, "DiskWrite Thread created");
     }
-
     void start() { cta::threading::Thread::start(); }
-
     void wait() { cta::threading::Thread::wait(); }
 
   private:
@@ -179,11 +175,6 @@ private:
 protected:
   /** The (thread safe) queue of tasks */
   cta::threading::BlockingQueue<DiskWriteTask *> m_tasks;
-
-  /**
-   * Parameter: path to xroot private key
-   */
-  std::string m_xrootPrivateKeyPath;
 
   /**
    * Parameter: xroot timeout

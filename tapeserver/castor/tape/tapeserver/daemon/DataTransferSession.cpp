@@ -288,7 +288,6 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
                                    reportPacker,
                                    watchDog,
                                    logContext,
-                                   m_dataTransferConfig.xrootPrivateKey,
                                    m_dataTransferConfig.xrootTimeout);
     RecallTaskInjector taskInjector(memoryManager, readSingleThread, threadPool, *retrieveMount,
                                     m_dataTransferConfig.bulkRequestRecallMaxFiles,
@@ -440,7 +439,6 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
                                   m_dataTransferConfig.bulkRequestMigrationMaxBytes,
                                   watchDog,
                                   logContext,
-                                  m_dataTransferConfig.xrootPrivateKey,
                                   m_dataTransferConfig.xrootTimeout);
     MigrationTaskInjector taskInjector(memoryManager, threadPool, writeSingleThread, *archiveMount,
                                        m_dataTransferConfig.bulkRequestMigrationMaxFiles,

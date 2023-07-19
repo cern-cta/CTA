@@ -123,14 +123,13 @@ int ReadtpCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
 //------------------------------------------------------------------------------
 // readAndSetConfiguration
 //------------------------------------------------------------------------------
-void ReadtpCmd::readAndSetConfiguration(const std::string &userName, const ReadtpCmdLineArgs &cmdLineArgs) {
+void ReadtpCmd::readAndSetConfiguration(const std::string& userName, const ReadtpCmdLineArgs& cmdLineArgs) {
   m_vid = cmdLineArgs.m_vid;
   m_fSeqRangeList = cmdLineArgs.m_fSeqRangeList;
-  m_xrootPrivateKeyPath = cmdLineArgs.m_xrootPrivateKeyPath;
   m_userName = userName;
   m_destinationFiles = readListFromFile(cmdLineArgs.m_destinationFileListURL);
   cta::tape::daemon::Tpconfig tpConfig;
-  tpConfig  = cta::tape::daemon::Tpconfig::parseFile(castor::tape::TPCONFIGPATH);
+  tpConfig = cta::tape::daemon::Tpconfig::parseFile(castor::tape::TPCONFIGPATH);
 
   if (tpConfig.empty()) {
     cta::exception::Exception ex;
@@ -355,7 +354,7 @@ std::string ReadtpCmd::getNextDestinationUrl() {
 void ReadtpCmd::readTapeFiles(
   castor::tape::tapeserver::drive::DriveInterface &drive) {
     cta::disk::RadosStriperPool striperPool;
-    cta::disk::DiskFileFactory fileFactory(m_xrootPrivateKeyPath, 0, striperPool);
+    cta::disk::DiskFileFactory fileFactory(0, striperPool);
 
     catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = m_vid;
