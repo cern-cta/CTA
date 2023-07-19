@@ -15,8 +15,6 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-version=1.0.0
-
 # If $1 is null then error message
 if [ -z "$1" ]; then
     echo "Error: No argument supplied"
