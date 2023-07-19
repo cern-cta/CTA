@@ -293,11 +293,6 @@ private:
   std::string m_vid;
   
   /**
-   * Path to the xroot private key file.
-   */
-  std::string m_xrootPrivateKeyPath;
-
-  /**
    * The iterator of destination urls the data read is sent to
    */
   std::list<std::string> m_destinationFiles;

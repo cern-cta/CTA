@@ -90,12 +90,6 @@ struct DataTransferConfig {
   uint32_t nbDiskThreads;
 
   /**
-   * The location of the file containing the private RSA key to be used when
-   * using XROOT as the remote transfer protocol.
-   */
-  std::string xrootPrivateKey;
-
-  /**
    * The timeout for all the xroot functions. The default is 0 (no timeout)
    */
   uint16_t xrootTimeout;

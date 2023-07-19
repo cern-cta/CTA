@@ -132,7 +132,7 @@ namespace unitTests{
     cta::TapeMountDummy tmd;
     RecallWatchDog rwd(1,1,tspd,tmd,"", lc);
 
-    DiskWriteThreadPool dwtp(2,report,rwd,lc,"/dev/null", 0);
+    DiskWriteThreadPool dwtp(2, report, rwd, lc, 0);
     dwtp.startThreads();
     report.setTapeDone();
        

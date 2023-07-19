@@ -52,26 +52,16 @@ namespace cta {
       class DiskFileFactory {
         typedef cta::utils::Regex Regex;
       public:
-        DiskFileFactory(const std::string & xrootPrivateKey, uint16_t xrootTimeout, 
-          cta::disk::RadosStriperPool & striperPool);
+        DiskFileFactory(uint16_t xrootTimeout, cta::disk::RadosStriperPool& striperPool);
         ReadFile * createReadFile(const std::string & path);
         WriteFile * createWriteFile(const std::string & path);
       private:
         Regex m_NoURLLocalFile;
-        Regex m_NoURLRemoteFile;
-        Regex m_NoURLRadosStriperFile;
         Regex m_URLLocalFile;
         Regex m_URLXrootFile;
         Regex m_URLCephFile;
-        std::string m_xrootPrivateKeyFile;
-        CryptoPP::RSA::PrivateKey m_xrootPrivateKey;
-        bool m_xrootPrivateKeyLoaded;
         const uint16_t m_xrootTimeout;
         cta::disk::RadosStriperPool & m_striperPool;
-        
-      public:
-        /** Return the private key. Read it from the file if necessary. */ 
-        const CryptoPP::RSA::PrivateKey & xrootPrivateKey();
       };
       
       class ReadFile {

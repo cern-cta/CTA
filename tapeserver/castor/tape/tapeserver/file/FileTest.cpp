@@ -288,7 +288,7 @@ TEST(castorTapeDiskFile, canWriteAndReadDisk) {
   char *data1 = new char[block_size];
   char *data2 = new char[block_size];
   cta::disk::RadosStriperPool striperPool;
-  cta::disk::DiskFileFactory fileFactory("", 0, striperPool);
+  cta::disk::DiskFileFactory fileFactory(0, striperPool);
   TempFile sourceFile;
   sourceFile.randomFill(1000);
   TempFile destinationFile(sourceFile.path()+"_dst");

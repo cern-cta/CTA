@@ -35,11 +35,11 @@ DiskWriteThreadPool::DiskWriteThreadPool(int nbThread,
                                          RecallReportPacker& report,
                                          RecallWatchDog& recallWatchDog,
                                          const cta::log::LogContext& lc,
-                                         std::string xrootPrivateKeyPath,
                                          uint16_t xrootTimeout) :
-  m_xrootPrivateKeyPath(std::move(xrootPrivateKeyPath)),
   m_xrootTimeout(xrootTimeout),
-  m_reporter(report), m_watchdog(recallWatchDog), m_lc(lc) {
+  m_reporter(report),
+  m_watchdog(recallWatchDog),
+  m_lc(lc) {
   m_lc.pushOrReplace(cta::log::Param("threadCount", nbThread));
   for (int i = 0; i < nbThread; i++) {
     auto *thr = new DiskWriteWorkerThread(*this);
