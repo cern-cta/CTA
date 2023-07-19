@@ -18,7 +18,7 @@
 cta-readtp \- Low-level utility to read files from a tape
 
 .SH SYNOPSIS
-\fBcta-readtp\fP \fIvid\fR \fIsequence\fR [--xroot_private_key \fIkey_path\fR] [--destination_files \fIfile_url\fR] [--help]
+\fBcta-readtp\fP \fIvid\fR \fIsequence\fR [--destination_files \fIfile_url\fR] [--help]
 
 .SH DESCRIPTION
 \fBcta-readtp\fP is a command-line tool for reading files from tape and validating their checksums.
@@ -34,9 +34,6 @@ f1-f2,f4,f6-   A series of non-consecutive ranges of files.
 .RE
 
 .SH OPTIONS
-.TP
--p, --xroot_private_key \fIkey_path\fR
-Path to the XRootD private key file. Necessary if any destination file is to be written using XRootD.
 .TP
 -f, --destination_files \fIfile_url\fR
 Path to a file containing a list of destination URLs that the files will be written to (one URL per
