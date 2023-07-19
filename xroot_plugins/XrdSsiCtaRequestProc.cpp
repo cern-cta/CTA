@@ -20,8 +20,6 @@
 
 #include "common/dataStructures/ArchiveRequest.hpp"
 #include "frontend/common/PbException.hpp"
-#include "rdbms/ConstraintError.hpp"
-#include "rdbms/UniqueError.hpp"
 #include "XrdSsiCtaServiceProvider.hpp"
 #include "XrdSsiCtaRequestMessage.hpp"
 
@@ -83,14 +81,6 @@ void RequestProc<cta::xrd::Request, cta::xrd::Response, cta::xrd::Alert>::Execut
       m_metadata.set_type(cta::xrd::Response::RSP_ERR_USER);
       m_metadata.set_message_txt(ex.getMessageValue());
       lc.log(cta::log::ERR, ErrorFunction + "RSP_ERR_USER: " + ex.getMessageValue());
-   } catch(cta::rdbms::UniqueError &ex) {
-      m_metadata.set_type(cta::xrd::Response::RSP_ERR_CTA);
-      m_metadata.set_message_txt("A unique constraint was violated in the Catalogue. Here is the message from the database: \n" + ex.getDbErrorMessage());
-      lc.log(cta::log::ERR, ErrorFunction + "RSP_ERR_CTA: " + ex.getMessageValue());
-   } catch(cta::rdbms::ConstraintError &ex) {
-      m_metadata.set_type(cta::xrd::Response::RSP_ERR_CTA);
-      m_metadata.set_message_txt("A constraint was violated in the Catalogue. Here is the message from the database: \n" + ex.getDbErrorMessage());
-      lc.log(cta::log::ERR, ErrorFunction + "RSP_ERR_CTA: " + ex.getMessageValue());
    } catch(cta::exception::Exception &ex) {
       m_metadata.set_type(cta::xrd::Response::RSP_ERR_CTA);
       m_metadata.set_message_txt(ex.getMessageValue());
