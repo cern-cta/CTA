@@ -31,6 +31,7 @@
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/ConstraintError.hpp"
 #include "rdbms/UniqueError.hpp"
+#include "rdbms/IntegrityConstraintError.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -138,7 +139,7 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
   } catch(exception::UserError& ) {
     throw;
   } catch(cta::rdbms::UniqueError& ex) {
-    throw;
+    throw exception::UserError("Could not create physical library. A library with the same name already exists");
   } catch(cta::rdbms::ConstraintError& ex) {
     throw;
   } catch(exception::Exception& ex) {
@@ -163,6 +164,8 @@ void RdbmsPhysicalLibraryCatalogue::deletePhysicalLibrary(const std::string& nam
     }
   } catch(exception::UserError& ex) {
     throw;
+  } catch(cta::rdbms::IntegrityConstraintError& ex) {
+    throw cta::rdbms::IntegrityConstraintError("Cannot delete physical library because it being referenced by a logical library");
   } catch(cta::rdbms::ConstraintError& ex) {
     throw;
   } catch(exception::Exception& ex) {
@@ -276,9 +279,9 @@ void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibrary(const common::dataStru
   } catch(exception::UserError& ) {
     throw;
   } catch(cta::rdbms::UniqueError& ex) {
-    throw;
+    throw exception::UserError("Could not modify physical library");
   } catch(cta::rdbms::ConstraintError& ex) {
-    throw;
+    throw exception::UserError("Could not modify physical library");
   } catch(exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
