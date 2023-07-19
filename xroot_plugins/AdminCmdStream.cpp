@@ -224,17 +224,10 @@ void AdminCmdStream::processLogicalLibrary_Ls(xrd::Response& response) {
 }
 
 void AdminCmdStream::processPhysicalLibrary_Ls(xrd::Response& response) {
-  try {
-    m_stream = new xrd::PhysicalLibraryLsStream(*this, m_catalogue, m_scheduler);
+  m_stream = new xrd::PhysicalLibraryLsStream(*this, m_catalogue, m_scheduler);
 
-    response.set_show_header(admin::HeaderType::PHYSICALLIBRARY_LS);
-    response.set_type(xrd::Response::RSP_SUCCESS);
-  } catch(exception::UserError& ) {
-    throw;
-  } catch(exception::Exception& ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
+  response.set_show_header(admin::HeaderType::PHYSICALLIBRARY_LS);
+  response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
 void AdminCmdStream::processMediaType_Ls(xrd::Response& response) {
