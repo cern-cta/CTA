@@ -145,7 +145,7 @@ fi
 
 # Validate that there are migration scripts between all versions
 CURR_VERSION=${CTA_MAIN_REPO__CATALOGUE_MAJOR_VERSION_CURR}
-echo "- Migration scripts exist: "
+echo "- If schema migration scripts exist: "
 for PREV_VERSION in $(echo $CTA_MAIN_REPO__CATALOGUE_MAJOR_VERSION_PREV_L); do
   migration_script_name_1="${PREV_VERSION}to${CURR_VERSION}.sql"
   migration_script_name_2="${PREV_VERSION}.0to${CURR_VERSION}.0.sql"
