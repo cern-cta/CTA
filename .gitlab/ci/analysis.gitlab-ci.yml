@@ -90,4 +90,4 @@ catalogue_schema_version_check:
   script:
     - yum install -y git
     - git submodule update --init --recursive
-    - ./continuousintegration/ci_helpers/catalogue_schema_version_check.sh ${SCHEMA_CHECK_PARAMS} .
+    - ./continuousintegration/ci_helpers/catalogue_schema_version_check.sh ${CATALOGUE_SCHEMA_CHECK_PARAMS} .
