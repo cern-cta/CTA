@@ -87,7 +87,8 @@ catalogue_schema_version_check:
         CATALOGUE_SCHEMA_CHECK_PARAMS: ""
   stage: analysis
   image: centos:7
-  script:
+  before_script:
     - yum install -y git
     - git submodule update --init --recursive
+  script:
     - ./continuousintegration/ci_helpers/catalogue_schema_version_check.sh ${CATALOGUE_SCHEMA_CHECK_PARAMS} .
