@@ -22,8 +22,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::mediachanger::DummyLibrarySlot::DummyLibrarySlot()
- :
+cta::mediachanger::DummyLibrarySlot::DummyLibrarySlot() :
   LibrarySlot(TAPE_LIBRARY_TYPE_DUMMY) {
   m_str = "dummy";
 }
@@ -32,14 +31,13 @@ cta::mediachanger::DummyLibrarySlot::DummyLibrarySlot()
 // constructor
 //------------------------------------------------------------------------------
 cta::mediachanger::DummyLibrarySlot::DummyLibrarySlot(
-  const std::string &str):
+  const std::string &str) :
   LibrarySlot(TAPE_LIBRARY_TYPE_DUMMY) {
   m_str = str;
 
   if(str.find("dummy") != std::string::npos) {
     cta::exception::Exception ex;
-    ex.getMessage() << "Failed to construct DummyLibrarySlot"
-      ": Library slot must start with dummy: str=" << str;
+    ex.getMessage() << "Failed to construct DummyLibrarySlot: Library slot must start with dummy: str=" << str;
     throw ex;
   }
 }
@@ -53,7 +51,6 @@ cta::mediachanger::DummyLibrarySlot::~DummyLibrarySlot() {
 //------------------------------------------------------------------------------
 // clone
 //------------------------------------------------------------------------------
-cta::mediachanger::LibrarySlot *cta::mediachanger::DummyLibrarySlot::
-  clone() {
+cta::mediachanger::LibrarySlot *cta::mediachanger::DummyLibrarySlot::clone() {
   return new DummyLibrarySlot(*this);
 }
