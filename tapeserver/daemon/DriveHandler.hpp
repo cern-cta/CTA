@@ -108,30 +108,6 @@ private:
    */
   void resetToDefault(PreviousSession previousSessionState);
 
-  /** Helper function to handle Scheduling state report */
-  SubprocessHandler::ProcessingStatus processScheduling(serializers::WatchdogMessage& message);
-
-  /** Helper function to handle Checking state report */
-  SubprocessHandler::ProcessingStatus processChecking(serializers::WatchdogMessage& message);
-
-  /** Helper function to handle Mounting state report */
-  SubprocessHandler::ProcessingStatus processMounting(serializers::WatchdogMessage& message);
-
-  /** Helper function to handle Running state report */
-  SubprocessHandler::ProcessingStatus processRunning(serializers::WatchdogMessage& message);
-
-  /** Helper function to handle Unmounting state report */
-  SubprocessHandler::ProcessingStatus processUnmounting(serializers::WatchdogMessage& message);
-
-  /** Helper function to handle DrainingToDisk state report */
-  SubprocessHandler::ProcessingStatus processDrainingToDisk(serializers::WatchdogMessage& message);
-
-  /** Helper function to handle ShuttingDown state report */
-  SubprocessHandler::ProcessingStatus processShuttingDown(serializers::WatchdogMessage& message);
-
-  /** Helper function to handle Fatal state report */
-  SubprocessHandler::ProcessingStatus processFatal(serializers::WatchdogMessage& message);
-
   /** Current session's type */
   session::SessionType m_sessionType = session::SessionType::Undetermined;
   /** Current session's VID */

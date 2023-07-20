@@ -34,6 +34,7 @@
 #include "tapeserver/castor/tape/tapeserver/daemon/Session.hpp"
 #include "tapeserver/daemon/DriveHandler.hpp"
 #include "tapeserver/daemon/DriveHandlerProxy.hpp"
+#include "tapeserver/daemon/DriveHandlerStateReporter.hpp"
 #include "tapeserver/daemon/WatchdogMessage.pb.h"
 #ifdef CTA_PGSCHED
 #include "scheduler/PostgresSchedDB/PostgresSchedDBInit.hpp"
@@ -302,55 +303,10 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
     }
     // If we report a state change, process it (last as this can change the return value)
     if (message.reportingstate()) {
-      // Log a session state change
-      if (m_sessionState != static_cast<SessionState>(message.sessionstate())) {
-        m_previousState = m_sessionState;
-        m_previousType = m_sessionType;
-        scoped.add("PreviousState", session::toString(m_previousState))
-              .add("PreviousType", session::toString(m_previousType))
-              .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
-              .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
-        m_processManager.logContext().log(log::INFO, "In DriveHandler::processEvent(): changing session state");
-      }
-
-      switch (static_cast<SessionState>(message.sessionstate())) {
-        case SessionState::Checking:
-          m_processingStatus = processChecking(message);
-          break;
-        case SessionState::Scheduling:
-          m_processingStatus = processScheduling(message);
-          break;
-        case SessionState::Mounting:
-          m_processingStatus = processMounting(message);
-          break;
-        case SessionState::Running:
-          m_processingStatus = processRunning(message);
-          break;
-        case SessionState::Unmounting:
-          m_processingStatus = processUnmounting(message);
-          break;
-        case SessionState::DrainingToDisk:
-          m_processingStatus = processDrainingToDisk(message);
-          break;
-        case SessionState::ShuttingDown:
-          m_processingStatus = processShuttingDown(message);
-          break;
-        case SessionState::Fatal:
-          m_processingStatus = processFatal(message);
-          break;
-        default: {
-          exception::Exception ex;
-          ex.getMessage() << "In DriveHandler::processEvent(): unexpected session state:"
-                          << session::toString(static_cast<SessionState>(message.sessionstate()));
-          throw ex;
-        }
-      }
-
-      // Update state
-      m_sessionState = static_cast<SessionState>(message.sessionstate());
-      m_sessionType = static_cast<SessionType>(message.sessiontype());
-
-      m_lastStateChangeTime = std::chrono::steady_clock::now();
+      DriveHandlerStateReporter stateReporter(m_driveConfig.unitName, &m_processingStatus, &m_sessionVid,
+        &m_lastDataMovementTime, &m_processManager.logContext());
+      m_lastStateChangeTime = stateReporter.processState(message, &m_sessionState, &m_previousState,
+                                                                  &m_sessionType, &m_previousType);
     }
 
     // Compute timeout before returning the processing status
@@ -405,195 +361,6 @@ void DriveHandler::resetToDefault(PreviousSession previousSessionState) {
 }
 
 //------------------------------------------------------------------------------
-// DriveHandler::processScheduling
-//------------------------------------------------------------------------------
-SubprocessHandler::ProcessingStatus DriveHandler::processScheduling(serializers::WatchdogMessage& message) {
-  // We are either going to schedule
-  // Check the transition is expected. This is non-fatal as the drive session has the last word anyway.
-  log::ScopedParamContainer params(m_processManager.logContext());
-  params.add("tapeDrive", m_driveConfig.unitName);
-  std::set<SessionState> expectedStates = {SessionState::StartingUp, SessionState::Scheduling};
-  if (!expectedStates.count(m_sessionState) ||
-      m_sessionType != SessionType::Undetermined ||
-      static_cast<SessionType>(message.sessiontype()) != SessionType::Undetermined) {
-    params.add("PreviousState", session::toString(m_sessionState))
-          .add("PreviousType", session::toString(m_sessionType))
-          .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
-          .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
-    m_processManager.logContext().log(log::DEBUG,
-                                      "WARNING: In DriveHandler::processScheduling(): unexpected previous state/type.");
-  }
-
-  m_sessionVid = "";
-  return m_processingStatus;
-}
-
-//------------------------------------------------------------------------------
-// DriveHandler::processChecking
-//------------------------------------------------------------------------------
-SubprocessHandler::ProcessingStatus DriveHandler::processChecking(serializers::WatchdogMessage& message) {
-  // We expect to come from startup/undefined and to get into checking/cleanup
-  // As usual, subprocess has the last word.
-  log::ScopedParamContainer params(m_processManager.logContext());
-  params.add("tapeDrive", m_driveConfig.unitName);
-  if (m_sessionState != SessionState::StartingUp || m_sessionType != SessionType::Undetermined ||
-      static_cast<SessionType>(message.sessiontype()) != SessionType::Cleanup) {
-    params.add("PreviousState", session::toString(m_sessionState))
-          .add("PreviousType", session::toString(m_sessionType))
-          .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
-          .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
-    m_processManager.logContext().log(log::DEBUG,
-                                      "WARNING: In DriveHandler::processChecking(): unexpected previous state/type.");
-  }
-
-  m_sessionVid = "";
-  return m_processingStatus;
-}
-
-//------------------------------------------------------------------------------
-// DriveHandler::processMounting
-//------------------------------------------------------------------------------
-SubprocessHandler::ProcessingStatus DriveHandler::processMounting(serializers::WatchdogMessage& message) {
-  // The only transition expected is from scheduling. Several sessions types are possible
-  // As usual, subprocess has the last word.
-  log::ScopedParamContainer params(m_processManager.logContext());
-  params.add("tapeDrive", m_driveConfig.unitName);
-  std::set<SessionType> expectedNewTypes = {SessionType::Archive, SessionType::Retrieve, SessionType::Label};
-  if (m_sessionState != SessionState::Scheduling ||
-      m_sessionType != SessionType::Undetermined ||
-      !expectedNewTypes.count(static_cast<SessionType>(message.sessiontype()))) {
-    params.add("PreviousState", session::toString(m_sessionState))
-          .add("PreviousType", session::toString(m_sessionType))
-          .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
-          .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
-    m_processManager.logContext().log(log::DEBUG,
-                                      "WARNING: In DriveHandler::processMounting(): unexpected previous state/type.");
-  }
-
-  m_sessionVid = message.vid();
-  return m_processingStatus;
-}
-
-//------------------------------------------------------------------------------
-// DriveHandler::processRunning
-//------------------------------------------------------------------------------
-SubprocessHandler::ProcessingStatus DriveHandler::processRunning(serializers::WatchdogMessage& message) {
-  // This status can be reported repeatedly (or we can transition from the previous one: Mounting).
-  // We expect the type not to change (and to be in the right range)
-  // As usual, subprocess has the last word.
-  log::ScopedParamContainer params(m_processManager.logContext());
-  params.add("tapeDrive", m_driveConfig.unitName);
-  std::set<SessionState> expectedStates = {SessionState::Mounting, SessionState::Running};
-  std::set<SessionType> expectedTypes = {SessionType::Archive, SessionType::Retrieve, SessionType::Label};
-  if (!expectedStates.count(m_sessionState) ||
-      !expectedTypes.count(m_sessionType) ||
-      (m_sessionType != static_cast<SessionType>(message.sessiontype()))) {
-    params.add("PreviousState", session::toString(m_sessionState))
-          .add("PreviousType", session::toString(m_sessionType))
-          .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
-          .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
-    m_processManager.logContext().log(log::DEBUG,
-                                      "WARNING: In DriveHandler::processMounting(): unexpected previous state/type.");
-  }
-
-  // On state change reset the data movement counter
-  if (m_sessionState != static_cast<SessionState>(message.sessionstate())) {
-    m_lastDataMovementTime=std::chrono::steady_clock::now();
-  }
-
-  m_sessionVid = message.vid();
-  return m_processingStatus;
-}
-
-//------------------------------------------------------------------------------
-// DriveHandler::processUnmounting
-//------------------------------------------------------------------------------
-SubprocessHandler::ProcessingStatus DriveHandler::processUnmounting(serializers::WatchdogMessage& message) {
-  // This status can come from either running (any running compatible session type)
-  // of checking in the case of the cleanup session.
-  // As usual, subprocess has the last word.
-  log::ScopedParamContainer params(m_processManager.logContext());
-  params.add("tapeDrive", m_driveConfig.unitName);
-  std::set<std::tuple<SessionState, SessionType>> expectedStateTypes =
-    {
-      std::make_tuple(SessionState::Running, SessionType::Archive),
-      std::make_tuple(SessionState::Running, SessionType::Retrieve),
-      std::make_tuple(SessionState::Running, SessionType::Label),
-      std::make_tuple(SessionState::Checking, SessionType::Cleanup)
-    };
-  // (all types of sessions can unmount).
-  if (!expectedStateTypes.count(std::make_tuple(m_sessionState, m_sessionType))) {
-    params.add("PreviousState", session::toString(m_sessionState))
-          .add("PreviousType", session::toString(m_sessionType))
-          .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
-          .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
-    m_processManager.logContext().log(log::DEBUG,
-                                      "WARNING: In DriveHandler::processUnmounting(): unexpected previous state/type.");
-  }
-
-  m_sessionVid = message.vid();
-  return m_processingStatus;
-}
-
-//------------------------------------------------------------------------------
-// DriveHandler::processDrainingToDisk
-//------------------------------------------------------------------------------
-SubprocessHandler::ProcessingStatus DriveHandler::processDrainingToDisk(serializers::WatchdogMessage& message) {
-  // This status transition is expected from unmounting, and only for retrieve sessions.
-  // As usual, subprocess has the last word.
-  log::ScopedParamContainer params(m_processManager.logContext());
-  params.add("tapeDrive", m_driveConfig.unitName);
-  if (SessionState::Unmounting != m_sessionState ||
-      SessionType::Retrieve != m_sessionType) {
-    params.add("PreviousState", session::toString(m_sessionState))
-          .add("PreviousType", session::toString(m_sessionType))
-          .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
-          .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
-    m_processManager.logContext().log(log::DEBUG,
-                                      "WARNING: In DriveHandler::processDrainingToDisk(): unexpected previous state/type.");
-  }
-
-  m_sessionVid = "";
-  return m_processingStatus;
-}
-
-//------------------------------------------------------------------------------
-// DriveHandler::processShuttingDown
-//------------------------------------------------------------------------------
-SubprocessHandler::ProcessingStatus DriveHandler::processShuttingDown(serializers::WatchdogMessage& message) {
-  // This status transition is expected from unmounting, and only for retrieve sessions.
-  // As usual, subprocess has the last word.
-  log::ScopedParamContainer params(m_processManager.logContext());
-  params.add("tapeDrive", m_driveConfig.unitName);
-  std::set<SessionState> expectedStates = {SessionState::Unmounting, SessionState::DrainingToDisk};
-  if (!expectedStates.count(m_sessionState)) {
-    params.add("PreviousState", session::toString(m_sessionState))
-          .add("PreviousType", session::toString(m_sessionType))
-          .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
-          .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
-    m_processManager.logContext().log(log::DEBUG,
-                                      "WARNING: In DriveHandler::processShuttingDown(): unexpected previous state/type.");
-  }
-
-  m_sessionVid = "";
-  return m_processingStatus;
-}
-
-//------------------------------------------------------------------------------
-// DriveHandler::processFatal
-//------------------------------------------------------------------------------
-SubprocessHandler::ProcessingStatus DriveHandler::processFatal(serializers::WatchdogMessage& message) {
-  // This status indicates that the session cannot be run and the server should
-  // shut down (central storage unavailable).
-  log::ScopedParamContainer params(m_processManager.logContext());
-  params.add("tapeDrive", m_driveConfig.unitName);
-  m_processingStatus.shutdownRequested = true;
-  m_processManager.logContext().log(log::CRIT,
-                                    "In DriveHandler::processFatal(): shutting down after fatal failure.");
-  return m_processingStatus;
-}
-
-//------------------------------------------------------------------------------
 // DriveHandler::processLogs
 //------------------------------------------------------------------------------
 void DriveHandler::processLogs(serializers::WatchdogMessage& message) {
@@ -623,7 +390,7 @@ void DriveHandler::processBytes(serializers::WatchdogMessage& message) {
             .add("PreviousDiskBytesMoved", m_totalDiskBytesMoved)
             .add("NewTapeBytesMoved", message.totaltapebytesmoved())
             .add("NewDiskBytesMoved", message.totaldiskbytesmoved());
-      m_processManager.logContext().log(log::DEBUG, "WARNING: In DriveHandler::processRunning(): total bytes moved going backwards");
+      m_processManager.logContext().log(log::DEBUG, "WARNING: In DriveHandler::processBytes(): total bytes moved going backwards");
     }
     m_totalTapeBytesMoved = message.totaltapebytesmoved();
     m_totalDiskBytesMoved = message.totaldiskbytesmoved();

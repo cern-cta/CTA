@@ -29,15 +29,16 @@ add_library(ctatapedaemon
   CommandLineParams.cpp
   DriveHandler.cpp
   DriveHandlerProxy.cpp
+  DriveHandlerStateReporter.cpp
   MaintenanceHandler.cpp
-  SignalHandler.cpp
-  SubprocessHandler.cpp
   ProcessManager.cpp
-  TapedConfiguration.cpp
+  SignalHandler.cpp
   TapeDaemon.cpp
+  TapedConfiguration.cpp
   TapedProxy.cpp
+  Tpconfig.cpp
   TpconfigLine.cpp
-  Tpconfig.cpp)
+)
 
 target_link_libraries(ctatapedaemon
   ctatapesession
