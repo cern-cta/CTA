@@ -36,7 +36,7 @@ cta::mediachanger::DummyLibrarySlot::DummyLibrarySlot(
   LibrarySlot(TAPE_LIBRARY_TYPE_DUMMY) {
   m_str = str;
 
-  if(str.find("dummy")) {
+  if(str.find("dummy") != std::string::npos) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to construct DummyLibrarySlot"
       ": Library slot must start with dummy: str=" << str;

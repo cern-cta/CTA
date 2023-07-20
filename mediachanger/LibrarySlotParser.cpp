@@ -107,10 +107,9 @@ cta::mediachanger::DummyLibrarySlot *cta::mediachanger::
 //------------------------------------------------------------------------------
 cta::mediachanger::ScsiLibrarySlot *cta::mediachanger::
   LibrarySlotParser::parseScsiLibrarySlot(const std::string &str) {
-  if(str.find("smc")) {
+  if(str.find("smc") != std::string::npos) {
     cta::exception::Exception ex;
-    ex.getMessage() << "Failed to construct ScsiLibrarySlot"
-      ": Library slot must start with smc: slot=" << str;
+    ex.getMessage() << "Failed to construct ScsiLibrarySlot: Library slot must start with smc: slot=" << str;
     throw ex;
   }
 
@@ -118,8 +117,7 @@ cta::mediachanger::ScsiLibrarySlot *cta::mediachanger::
   const std::string drvOrdStr = str.substr(3, drvOrdStrLen);
   if(drvOrdStr.empty()) {
     cta::exception::Exception ex;
-    ex.getMessage() << "Failed to construct ScsiLibrarySlot"
-      ": Missing drive ordinal: slot=" << str;
+    ex.getMessage() << "Failed to construct ScsiLibrarySlot: Missing drive ordinal: slot=" << str;
     throw ex;
   }
 
