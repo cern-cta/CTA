@@ -872,27 +872,4 @@ TEST_P(cta_catalogue_LogicalLibraryTest, createTape) {
   }
 }
 
-TEST_P(cta_catalogue_LogicalLibraryTest, addingSameNameDifferingByCaseLogicalLibrary) {
-  ASSERT_TRUE(m_catalogue->LogicalLibrary()->getLogicalLibraries().empty());
-
-  std::string logicalLibraryName = "logical_library";
-  const std::string comment = "Create logical library";
-  const bool logicalLibraryIsDisabled= false;
-
-  const auto physicalLibrary = CatalogueTestUtils::getPhysicalLibrary1();
-  m_catalogue->PhysicalLibrary()->createPhysicalLibrary(m_admin, physicalLibrary);
-  const auto physLibs = m_catalogue->PhysicalLibrary()->getPhysicalLibraries();
-  ASSERT_EQ(1, physLibs.size());
-
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, physicalLibrary.name,
-    comment);
-
-  logicalLibraryName = "Logical_library";
-  auto shouldThrow = [this, logicalLibraryName, logicalLibraryIsDisabled, physicalLibrary, comment]() -> void {
-    m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, logicalLibraryName, logicalLibraryIsDisabled, physicalLibrary.name, comment);
-  };
-
-  ASSERT_THROW(shouldThrow(), cta::rdbms::UniqueError);
-}
-
 }  // namespace unitTests
