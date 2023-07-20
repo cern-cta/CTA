@@ -83,8 +83,6 @@ catalogue_schema_version_check:
     - allow_failure: true
     - variables:
         CATALOGUE_SCHEMA_CHECK_PARAMS: ""
-  except:
-    - tags
   stage: analysis
   image: centos:7
   script:
