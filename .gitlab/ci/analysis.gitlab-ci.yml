@@ -81,8 +81,8 @@ catalogue_schema_version_check:
     #  variables:
     #    CATALOGUE_SCHEMA_CHECK_PARAMS: "-t"
     # For all other scenarios, manual run only
-    - when: manual
-    - allow_failure: true
+    - when: on_success
+    - allow_failure: false
     - variables:
         CATALOGUE_SCHEMA_CHECK_PARAMS: ""
   stage: analysis
