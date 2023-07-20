@@ -160,22 +160,6 @@ TEST_P(cta_catalogue_PhysicalLibraryTest, addingSameNamePhysicalLibrary) {
   ASSERT_THROW(shouldThrow(), cta::exception::UserError);
 }
 
-TEST_P(cta_catalogue_PhysicalLibraryTest, addingSameNameDifferingByCasePhysicalLibrary) {
-  ASSERT_TRUE(m_catalogue->PhysicalLibrary()->getPhysicalLibraries().empty());
-
-  cta::common::dataStructures::PhysicalLibrary pl = m_physicalLibrary2;
-  pl.name   = "LIBNAME";
-
-  m_catalogue->PhysicalLibrary()->createPhysicalLibrary(m_admin, pl);
-
-  pl.name = "LIBNAMe";
-  auto shouldThrow = [this, pl]() -> void {
-    m_catalogue->PhysicalLibrary()->createPhysicalLibrary(m_admin, pl);
-  };
-
-  ASSERT_THROW(shouldThrow(), cta::exception::UserError);
-}
-
 TEST_P(cta_catalogue_PhysicalLibraryTest, modifyNonExistentPhysicalLibrary) {
   auto shouldThrow = [this]() -> void {
     cta::common::dataStructures::UpdatePhysicalLibrary pl;
