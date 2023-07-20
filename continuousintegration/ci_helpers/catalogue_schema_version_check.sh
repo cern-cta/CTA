@@ -89,7 +89,7 @@ CTA_MAIN_REPO__CATALOGUE_MAJOR_VERSION_PREV_L=$(extract_cmake_set_val ${cta_repo
 # Get CTA catalogue version, as defined in the submodule 'cta-catalogue-schema'
 CTA_SUB_REPO__CATALOGUE_MAJOR_VERSION=$(extract_cmake_set_val ${cta_repo_dir}/catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake CTA_CATALOGUE_SCHEMA_VERSION_MAJOR)
 # Get all tags from current commit of submodule 'cta-catalogue-schema', separated by whitespaces, and extract MAJOR version
-CTA_SUB_REPO__TAGS_L=$(git -C ${cta_repo_dir}/catalogue/cta-catalogue-schema tag | sed 's/v//g;s/\(\.[0-9]*\)//g' | xargs)
+CTA_SUB_REPO__TAGS_L=$(cd ${cta_repo_dir}/catalogue/cta-catalogue-schema; git tag | sed 's/v//g;s/\(\.[0-9]*\)//g' | xargs)
 
 #### Start checks ####
 
