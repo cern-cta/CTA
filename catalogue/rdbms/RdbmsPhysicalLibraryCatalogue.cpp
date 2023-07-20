@@ -139,7 +139,8 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
   } catch(exception::UserError& ) {
     throw;
   } catch(cta::rdbms::UniqueError& ex) {
-    throw exception::UserError("Could not create physical library. A library with the same name already exists");
+    throw exception::UserError(std::string("Cannot create physical library ") + pl.name +
+        " because a physical library with the same name already exists");
   } catch(cta::rdbms::ConstraintError& ex) {
     throw;
   } catch(exception::Exception& ex) {
@@ -165,7 +166,7 @@ void RdbmsPhysicalLibraryCatalogue::deletePhysicalLibrary(const std::string& nam
   } catch(exception::UserError& ex) {
     throw;
   } catch(cta::rdbms::IntegrityConstraintError& ex) {
-    throw cta::rdbms::IntegrityConstraintError("Cannot delete physical library because it being referenced by a logical library");
+    throw exception::UserError("Cannot delete physical library" + name + " because it is being referenced by a logical library.");
   } catch(cta::rdbms::ConstraintError& ex) {
     throw;
   } catch(exception::Exception& ex) {
