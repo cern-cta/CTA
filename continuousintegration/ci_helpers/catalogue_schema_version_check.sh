@@ -69,11 +69,6 @@ if [ "$check_pivot_release" -eq "1" ] && [ "$check_non_pivot_release" -eq "1" ];
   exit 1
 fi
 
-#echo "Directory:               " $cta_repo_dir
-#echo "Check pivot release:     " $([[ $check_pivot_release = 0 ]]            && echo "False" || echo "True")
-#echo "Check non-pivot release: " $([[ $check_non_pivot_release = 0 ]]        && echo "False" || echo "True")
-#echo "Check tag:               " $([[ $check_catalogue_submodule_tags = 0 ]] && echo "False" || echo "True")
-
 # Extract variable directly set on a cmake file
 extract_cmake_set_val() {
   file_path=$1
