@@ -122,7 +122,9 @@ if [ "$check_non_pivot_release" -eq "1" ]; then
   if [ "${CTA_MAIN_REPO__CATALOGUE_MAJOR_VERSION_CURR}" -ne "${CTA_MAIN_REPO__CATALOGUE_MAJOR_VERSION_PREV_L}" ]; then
     supported_versions=$(echo "${CTA_MAIN_REPO__CATALOGUE_MAJOR_VERSION_CURR} ${CTA_MAIN_REPO__CATALOGUE_MAJOR_VERSION_PREV_L}" | xargs -n1 | sort -u | xargs | sed 's/ /, /g')
     error="${error}Non-pivot CTA release should only support 1 catalogue schema version. It currently supports multiple versions {${supported_versions}}.\n"
-    echo
+    echo "FAIL"
+  else
+    echo "OK"
   fi
 fi
 
