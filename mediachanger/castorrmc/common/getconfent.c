@@ -149,7 +149,7 @@ int getconfent_parser(char **conf_val,
   *result = (char**)calloc((*count+1), sizeof(char*));
 
   int i;
-  for(i = 0, q = strtok(p," \t"); i < *count; q = strtok(NULL," \t"), ++i) {
+  for(i = 0, q = strtok(p," \t"); q != NULL; q = strtok(NULL," \t"), ++i) {
     (*result)[i] = strdup(q);
   }
   free(p);
