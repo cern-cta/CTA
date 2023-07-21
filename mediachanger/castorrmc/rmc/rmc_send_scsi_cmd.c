@@ -238,6 +238,12 @@ int rmc_send_scsi_cmd (
 			return (-1);
 		}
 	}
+	if(sg_buffer == NULL) {
+		serrno = EFAULT;
+		sprintf (rmc_err_msgbuf, "sg_buffer points to NULL");
+		*msgaddr = rmc_err_msgbuf;
+		return -1;
+	}
 
         /* set the sg timeout (in jiffies) */
         timeout_in_jiffies = timeout * HZ / 1000;
