@@ -51,3 +51,44 @@ clang_format:
   artifacts:
     paths:
     - clang-format.output
+
+catalogue_schema_version_check:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    # For pivot CTA releases: vX.Y.0
+    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^v?[0-9]+\.[0-9]+\.0-.*$/
+      when: on_success
+      allow_failure: false
+      variables:
+        CATALOGUE_SCHEMA_CHECK_PARAMS: "-p -t"
+    # For non-pivot CTA releases
+    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG !~ /^v?[0-9]+\.[0-9]+\.0-.*$/
+      when: on_success
+      allow_failure: false
+      variables:
+        CATALOGUE_SCHEMA_CHECK_PARAMS: "-n -t"
+    # Any run on main
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: on_success
+      allow_failure: false
+      variables:
+        CATALOGUE_SCHEMA_CHECK_PARAMS: "-t"
+    # Any merge requests into main
+    #- if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH
+    #  when: on_success
+    #  allow_failure: false
+    #  variables:
+    #    CATALOGUE_SCHEMA_CHECK_PARAMS: "-t"
+    # For all other scenarios, manual run only
+    - when: on_success
+    - allow_failure: false
+    - variables:
+        CATALOGUE_SCHEMA_CHECK_PARAMS: ""
+  stage: analysis
+  image: gitlab-registry.cern.ch/linuxsupport/cc7-base
+  before_script:
+    - yum install -y git
+    - git submodule update --init --recursive
+  script:
+    - ./continuousintegration/ci_helpers/catalogue_schema_version_check.sh ${CATALOGUE_SCHEMA_CHECK_PARAMS} .
