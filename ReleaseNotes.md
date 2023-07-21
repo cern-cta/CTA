@@ -16,6 +16,7 @@
 - cta/CTA#434 - CTA frontend accepts files larger than a specified size
 - cta/CTA#435 - Fixes exception handling issues reported by SonarCloud
 - cta/CTA#436 - Removes XrootC2FSReadFile
+- cta/CTA#438 - Fixes code quality issues with CTA mediachanger
 
 ### Building and Packaging
 - cta/CTA#385 - Remove OpenSSL dependency
