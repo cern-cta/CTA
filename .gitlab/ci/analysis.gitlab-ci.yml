@@ -30,3 +30,64 @@ cppcheck_report:
   artifacts:
     reports:
       codequality: cppcheck.json
+
+clang_format:
+  allow_failure: true
+  except:
+    - tags
+  stage: analysis
+  image:
+    name: gitlab-registry.cern.ch/linuxsupport/alma9-base
+    entrypoint: [""]
+  script:
+    # Remove CC7-specific repos copied by defalt:before_script in .gitlab-ci.yml 
+    - rm -rf /etc/yum.repos.d/centos-cernonly.repo
+    - rm -rf /etc/yum.repos.d/cta-ci.repo
+    - rm -rf /etc/yum.repos.d/eos-quarkdb.repo
+    - yum clean all
+    - yum install -y git-clang-format
+    - find . -type f \( -name "*.cpp" -o -name "*.hpp" \) -exec clang-format --dry-run -Werror --style=file {} + > clang-format.output
+  artifacts:
+    paths:
+    - clang-format.output
+
+catalogue_schema_version_check:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    # For pivot CTA releases: vX.Y.0
+    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^v?[0-9]+\.[0-9]+\.0-.*$/
+      when: on_success
+      allow_failure: false
+      variables:
+        CATALOGUE_SCHEMA_CHECK_PARAMS: "-p -t"
+    # For non-pivot CTA releases
+    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG !~ /^v?[0-9]+\.[0-9]+\.0-.*$/
+      when: on_success
+      allow_failure: false
+      variables:
+        CATALOGUE_SCHEMA_CHECK_PARAMS: "-n -t"
+    # Any run on main
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: on_success
+      allow_failure: false
+      variables:
+        CATALOGUE_SCHEMA_CHECK_PARAMS: "-t"
+    # Any merge requests into main
+    #- if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH
+    #  when: on_success
+    #  allow_failure: false
+    #  variables:
+    #    CATALOGUE_SCHEMA_CHECK_PARAMS: "-t"
+    # For all other scenarios, manual run only
+    - when: on_success
+    - allow_failure: false
+    - variables:
+        CATALOGUE_SCHEMA_CHECK_PARAMS: ""
+  stage: analysis
+  image: gitlab-registry.cern.ch/linuxsupport/cc7-base
+  before_script:
+    - yum install -y git
+    - git submodule update --init --recursive
+  script:
+    - ./continuousintegration/ci_helpers/catalogue_schema_version_check.sh ${CATALOGUE_SCHEMA_CHECK_PARAMS} .
