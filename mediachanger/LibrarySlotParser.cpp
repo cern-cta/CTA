@@ -107,7 +107,7 @@ cta::mediachanger::DummyLibrarySlot *cta::mediachanger::
 //------------------------------------------------------------------------------
 cta::mediachanger::ScsiLibrarySlot *cta::mediachanger::
   LibrarySlotParser::parseScsiLibrarySlot(const std::string &str) {
-  if(str.find("smc") != std::string::npos) {
+  if(str.find("smc") == std::string::npos) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to construct ScsiLibrarySlot: Library slot must start with smc: slot=" << str;
     throw ex;
