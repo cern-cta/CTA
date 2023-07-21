@@ -35,8 +35,16 @@
 - cta/CTA#403 - Add option `physicallibrary` to `cta-admin logicallibrary`
 - cta/CTA#418 - Add the physical library to the json output for tape ls and drive ls
 
+# v4.10.0-1
+
 ### Catalogue Schema
 - cta/CTA#397 - Rework catalogue release procedure and deployment path
+- cta/CTA#442 - Update CTA catalogue schema to version 14.0
+
+# v4.9.0-1
+
+## Summary
+This release is the same as `v4.8.10-2`, for catalogue v13 release.
 
 # v4.8.10-2
 
