@@ -122,7 +122,7 @@ static int smc_qdrive (
         int c;
         struct smc_element_info *element_info;
 	int nbelem;
-        char useSpectraLib;
+        char useSpectraLib = 0;
 
 	if (drvord < 0) {
 		drvord = 0;

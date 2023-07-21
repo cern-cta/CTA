@@ -138,23 +138,20 @@ int getconfent_parser(char **conf_val,
                       int *count)
 {
   char *p,*q,*last;
-  int i=0;
 
   /* Counting the number of strings for the array */
-  if ((p = strdup(*conf_val)) == NULL) { return -1; }
-  for (q = strtok(p," \t"); q != NULL; q = strtok(NULL," \t")) i++;
+  if((p = strdup(*conf_val)) == NULL) return -1;
+  for(*count = 0, q = strtok(p," \t"); q != NULL; q = strtok(NULL, " \t")) (*count)++;
   free(p);
 
-  /* Saving the index information to pass on later */
-  *count = i;
-
   /* Allocating the necessary space and parsing the string */
-  if ((p = strdup(*conf_val)) == NULL) { return -1; }
-  if (result == NULL) { return -1; }
-  (*result) = (char **)calloc((i+1), sizeof(char *));
+  if(result == NULL || (p = strdup(*conf_val)) == NULL) return -1;
+  *result = (char**)calloc((*count+1), sizeof(char*));
 
-  i = 0 ;
-  for (q = strtok(p," \t");q != NULL; q = strtok(NULL," \t")) { (*result)[i++] = strdup(q); }
+  int i;
+  for(i = 0, q = strtok(p," \t"); q != NULL; q = strtok(NULL," \t")) {
+    (*result)[i++] = strdup(q);
+  }
   free(p);
 
   return 0;
