@@ -30,8 +30,7 @@ cta::mediachanger::DummyLibrarySlot::DummyLibrarySlot() :
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::mediachanger::DummyLibrarySlot::DummyLibrarySlot(
-  const std::string &str) :
+cta::mediachanger::DummyLibrarySlot::DummyLibrarySlot(const std::string& str) :
   LibrarySlot(TAPE_LIBRARY_TYPE_DUMMY) {
   m_str = str;
 
