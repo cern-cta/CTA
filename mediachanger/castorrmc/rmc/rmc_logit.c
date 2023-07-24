@@ -40,7 +40,7 @@ int rmc_logit(const char *const func, const char *const msg, ...)
 	va_start (args, msg);
 	time (&current_time);		/* Get current time */
 	tm = localtime (&current_time);
-	sprintf (prtbuf, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1,
+	snprintf (prtbuf, RMC_PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1,
 		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, jid, func);
 	vsprintf (prtbuf+strlen(prtbuf), msg, args);
 	va_end (args);
