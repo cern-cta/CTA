@@ -19,6 +19,7 @@
 #include <sstream>
 #include <vector>
 #include <map>
+#include <limits>
 
 #include "common/exception/UserError.hpp"
 #include "Config.hpp"
@@ -60,6 +61,14 @@ std::optional<int> Config::getOptionValueInt(const std::string &key) const {
   return optionlist.empty() ? std::nullopt : std::optional<int>(std::stoi(optionlist.at(0)));
 }
 
+std::optional<unsigned int> Config::getOptionValueUInt(const std::string &key) const {
+
+  auto optionlist = getOptionList(key);
+
+  return optionlist.empty() ? std::nullopt : std::optional<unsigned int>(stou<unsigned int>(optionlist.at(0)));
+
+}
+
 void Config::parse(std::ifstream &file) {
   std::string line;
 
@@ -96,6 +105,37 @@ optionlist_t Config::tokenize(std::istringstream &input) {
   }
 
   return values;
+}
+
+template<class T>
+T Config::stou(const std::string &strVal) const {
+    
+try {
+  int64_t liVal = stoll(strVal);
+  if (liVal < 0) {
+    throw std::out_of_range("");
+  }
+  if(static_cast<uint64_t>(liVal) > std::numeric_limits<T>::max()) {
+    throw std::out_of_range("");
+  }
+} catch (std::invalid_argument const& ex) {
+    std::ostringstream strErrMsg;
+    strErrMsg << "stou(" << strVal << ")";
+    throw std::invalid_argument(strErrMsg.str());
+}
+catch (std::out_of_range const& ex) {
+  std::ostringstream strErrMsg;
+  if(std::numeric_limits<int64_t>::max() < std::numeric_limits<T>::max()) {
+    strErrMsg << "stou(" << strVal << "): " << "expected correct value is in the range [0, " << std::numeric_limits<int64_t>::max() << "]";
+  } else {
+    strErrMsg << "stou(" << strVal << "): " << "expected correct value is in the range [0, " << std::numeric_limits<T>::max() << "]";
+  }
+  throw std::out_of_range(strErrMsg.str());
+}
+
+  uint64_t uliVal = std::stoul(strVal);
+
+  return static_cast<T>(uliVal);
 }
 
 }} // namespace cta::frontend
