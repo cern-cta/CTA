@@ -609,8 +609,7 @@ int sstrerror_r(const int n, char *const buf, const size_t buflen) {
     /*
      * Unknown error message
      */
-    sprintf(buf, "%*s: %10d", (int)buflen-14,
-      sys_serrlist[SEMAXERR+1-SEBASEOFF], n);
+    snprintf(buf, buflen, "%*s: %10d", (int)buflen-14, sys_serrlist[SEMAXERR+1-SEBASEOFF], n);
   }
   return 0;
 }

@@ -100,7 +100,7 @@ int rmc_main(const char *const robot)
 	if (*robot == '/')
 		strcpy (extended_robot_info.smc_ldr, robot);
 	else
-		sprintf (extended_robot_info.smc_ldr, "/dev/%s", robot);
+		snprintf(extended_robot_info.smc_ldr, CA_MAXRBTNAMELEN+1, "/dev/%s", robot);
 
 	extended_robot_info.smc_fd = -1;
 
