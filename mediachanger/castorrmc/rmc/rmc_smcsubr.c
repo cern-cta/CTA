@@ -37,6 +37,8 @@
 #include "spectra_like_libs.h"
 
 #define	RBT_XTRA_PROC 10
+#define ERR_MSG_BUFSZ 132
+
 static struct smc_status smc_status;
 static const char *smc_msgaddr;
 
@@ -370,7 +372,7 @@ int smc_find_cartridgeWithoutSendVolumeTag (
 	const int nbelem,
 	struct smc_element_info element_info[])
 {
-	static char err_msgbuf[132];
+	static char err_msgbuf[ERR_MSG_BUFSZ];
 	int nbFound = 0;
 	char func[16];
 	int i;
@@ -396,7 +398,7 @@ int smc_find_cartridgeWithoutSendVolumeTag (
 
 	if ((inventory_info = (struct smc_element_info *)malloc (tot_nbelem * sizeof(struct smc_element_info))) == NULL) {
 		serrno = errno;
-		sprintf (err_msgbuf, "malloc error: %s", strerror(errno));
+		snprintf(err_msgbuf, ERR_MSG_BUFSZ, "malloc error: %s", strerror(errno));
 		msgaddr = err_msgbuf;
 		save_error (-1, 0, NULL, msgaddr);
 		return (-1);

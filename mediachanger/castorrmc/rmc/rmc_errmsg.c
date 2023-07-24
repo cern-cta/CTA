@@ -47,7 +47,7 @@ int rmc_errmsg(char *func, char *msg, ...)
 	save_errno = errno;
 	va_start (args, msg);
 	if (func)
-		sprintf (prtbuf, "%s: ", func);
+		snprintf (prtbuf, RMC_PRTBUFSZ, "%s: ", func);
 	else
 		*prtbuf = '\0';
 	vsprintf (prtbuf + strlen(prtbuf), msg, args);
