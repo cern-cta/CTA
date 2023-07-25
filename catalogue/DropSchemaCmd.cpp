@@ -143,7 +143,7 @@ void DropSchemaCmd::dropDatabaseTables(rdbms::Conn &conn) {
 
     // Drop CTA_CATALOGUE table
     auto tables = conn.getTableNames();
-    if (tables.size() != 1) {
+    if (tables.size() > 1) {
       throw exception::Exception("Failed to delete all tables, except CTA_CATALOGUE.");
     }
     try {
@@ -183,6 +183,12 @@ void DropSchemaCmd::dropDatabaseSequences(rdbms::Conn &conn) {
 // isProductionSet
 //------------------------------------------------------------------------------
 bool DropSchemaCmd::isProductionSet(cta::rdbms::Conn & conn){
+  // Check if the CTA_CATALOGUE table exists
+  if (const auto tables = conn.getTableNames();
+    std::find(tables.begin(), tables.end(), "CTA_CATALOGUE") == tables.end()) {
+    return false;
+  }
+
   const char * const sql = "SELECT CTA_CATALOGUE.IS_PRODUCTION AS IS_PRODUCTION FROM CTA_CATALOGUE";
   try {
     auto stmt = conn.createStmt(sql);
