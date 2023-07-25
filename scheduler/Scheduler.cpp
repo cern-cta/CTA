@@ -1771,6 +1771,7 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
 // getQueuesAndMountSummaries
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndMountSummaries(log::LogContext& lc) {
+  using Tape = common::dataStructures::Tape;
   std::list<common::dataStructures::QueueAndMountSummary> ret;
 
   // Extract relevant information from the object store.
@@ -1869,6 +1870,31 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
   double catalogueGetTapePoolTotalTime = 0.0;
   double catalogueGetTapesTotalTime = 0.0;
   double catalogueGetVoTotalTime = 0.0;
+
+  // Get tape info all at once
+  std::set<std::string> retrieveMountVids;
+  for (auto & mountOrQueue: ret) {
+    if (common::dataStructures::MountType::Retrieve==mountOrQueue.mountType) {
+      retrieveMountVids.insert(mountOrQueue.vid);
+    }
+  }
+  utils::Timer catalogueGetTapesTimer;
+  auto tapes = m_catalogue.Tape()->getTapesByVid(retrieveMountVids);
+  if (tapes.size() != retrieveMountVids.size()) {
+    throw cta::exception::Exception("In Scheduler::getQueuesAndMountSummaries(): got unexpected number of tapes from catalogue for a retrieve.");
+  }
+  catalogueGetTapesTotalTime += catalogueGetTapesTimer.secs();
+
+  // Obtain the default VO for repacking
+  utils::Timer catalogueDefaultRepackVoTimer;
+  auto defaultRepackVo = m_catalogue.VO()->getDefaultVirtualOrganizationForRepack();
+  common::dataStructures::VirtualOrganization repackVo;
+  if (defaultRepackVo.has_value()) {
+    repackVo = defaultRepackVo.value();
+  }
+  const auto catalogueDefaultRepackVoTime = catalogueDefaultRepackVoTimer.secs();
+  int repackingTapesCount = 0;
+
   // Add the tape and VO information where useful (archive queues).
   for (auto & mountOrQueue: ret) {
     if (common::dataStructures::MountType::ArchiveForUser==mountOrQueue.mountType || common::dataStructures::MountType::ArchiveForRepack==mountOrQueue.mountType) {
@@ -1877,7 +1903,8 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       catalogueGetTapePoolTotalTime += catalogueGetTapePoolTimer.secs();
       if (tapePool) {
         utils::Timer catalogueGetVoTimer;
-        const auto vo = m_catalogue.VO()->getCachedVirtualOrganizationOfTapepool(tapePool->name);
+        bool isRepacking = (common::dataStructures::MountType::ArchiveForRepack == mountOrQueue.mountType);
+        const auto vo = isRepacking ? repackVo : m_catalogue.VO()->getCachedVirtualOrganizationOfTapepool(tapePool->name);
         catalogueGetVoTotalTime += catalogueGetVoTimer.secs();
         mountOrQueue.vo = vo.name;
         mountOrQueue.readMaxDrives = vo.readMaxDrives;
@@ -1890,17 +1917,11 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       }
     } else if (common::dataStructures::MountType::Retrieve==mountOrQueue.mountType) {
       // Get info for this tape.
-      cta::catalogue::TapeSearchCriteria tsc;
-      tsc.vid = mountOrQueue.vid;
-      utils::Timer catalogueGetTapesTimer;
-      auto tapes=m_catalogue.Tape()->getTapes(tsc);
-      catalogueGetTapesTotalTime += catalogueGetTapesTimer.secs();
-      if (tapes.size() != 1) {
-        throw cta::exception::Exception("In Scheduler::getQueuesAndMountSummaries(): got unexpected number of tapes from catalogue for a retrieve.");
-      }
-      auto &t=tapes.front();
+      auto &t=tapes.at(mountOrQueue.vid);
       utils::Timer catalogueGetVoTimer;
-      const auto vo = m_catalogue.VO()->getCachedVirtualOrganizationOfTapepool(t.tapePoolName);
+      bool isRepacking = (t.state == Tape::REPACKING || t.state == Tape::REPACKING_DISABLED || t.state == Tape::REPACKING_PENDING);
+      repackingTapesCount += (isRepacking ? 1 : 0);
+      const auto vo = isRepacking ? repackVo : m_catalogue.VO()->getCachedVirtualOrganizationOfTapepool(t.tapePoolName);
       catalogueGetVoTotalTime += catalogueGetVoTimer.secs();
       mountOrQueue.vo = vo.name;
       mountOrQueue.readMaxDrives = vo.readMaxDrives;
@@ -1918,8 +1939,13 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
      .add("schedulerDbTime", schedulerDbTime)
      .add("catalogueGetTapePoolTotalTime", catalogueGetTapePoolTotalTime)
      .add("catalogueGetVoTotalTime",catalogueGetVoTotalTime)
-     .add("catalogueGetTapesTotalTime", catalogueGetTapesTotalTime);
-  lc.log(log::INFO, "In Scheduler::getQueuesAndMountSummaries(): success.");
+     .add("catalogueGetTapesTotalTime", catalogueGetTapesTotalTime)
+     .add("catalogueDefaultRepackVoTime", catalogueDefaultRepackVoTime);
+  if (!defaultRepackVo.has_value() && repackingTapesCount > 0) {
+    lc.log(log::ERR, "In Scheduler::getQueuesAndMountSummaries(): missing default VO for repacking.");
+  } else {
+    lc.log(log::INFO, "In Scheduler::getQueuesAndMountSummaries(): success.");
+  }
   return ret;
 }
 
