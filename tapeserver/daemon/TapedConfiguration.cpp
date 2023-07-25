@@ -171,6 +171,7 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   
   ret.useRepackManagement.log(log);
   ret.useMaintenanceProcess.log(log);
+  ret.repackMaxToToExpand.log(log);
   ret.externalFreeDiskSpaceScript.log(log);
   
   ret.tapeLoadTimeout.log(log);
