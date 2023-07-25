@@ -452,6 +452,7 @@ private:
 
   const uint64_t m_minFilesToWarrantAMount;
   const uint64_t m_minBytesToWarrantAMount;
+  const uint64_t m_repackMaxToToExpand;
 
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
 };  // class Scheduler
