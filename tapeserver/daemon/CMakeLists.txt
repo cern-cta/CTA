@@ -28,6 +28,7 @@ add_library(ctatapedaemon
   ${WDMsgSources}
   CommandLineParams.cpp
   DriveHandler.cpp
+  DriveHandlerBuilder.cpp
   DriveHandlerProxy.cpp
   DriveHandlerStateReporter.cpp
   MaintenanceHandler.cpp

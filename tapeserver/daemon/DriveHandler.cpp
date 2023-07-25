@@ -604,9 +604,6 @@ int DriveHandler::runChild() {
   }
   std::unique_ptr<SchedulerDB_t> sched_db;
   try {
-    if (!m_catalogue) {
-      m_catalogue = createCatalogue("DriveHandler::runChild()");
-    }
     sched_db = sched_db_init->getSchedDB(*m_catalogue, lc.logger());
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer param(lc);
@@ -874,10 +871,6 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
   lc.log(log::INFO, "In DriveHandler::shutdown(): simply killing the process.");
   kill();
 
-  // Mounting management.
-  if (!m_catalogue)
-    m_catalogue = createCatalogue("DriveHandler::shutdown()");
-
   // Create the scheduler
   std::unique_ptr<SchedulerDBInit_t> sched_db_init;
 
@@ -1000,18 +993,8 @@ void DriveHandler::setDriveDownForShutdown(const std::string& reason, cta::log::
   }
 }
 
-std::unique_ptr<cta::catalogue::Catalogue> DriveHandler::createCatalogue(const std::string& methodCaller) const {
-  log::ScopedParamContainer params(m_processManager.logContext());
-  params.add("fileCatalogConfigFile", m_tapedConfig.fileCatalogConfigFile.value());
-  params.add("caller", methodCaller);
-  m_processManager.logContext().log(log::DEBUG, "In DriveHandler::createCatalogue(): will get catalogue login information.");
-  const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(m_tapedConfig.fileCatalogConfigFile.value());
-  const uint64_t nbConns = 1;
-  const uint64_t nbArchiveFileListingConns = 0;
-  m_processManager.logContext().log(log::DEBUG, "In DriveHandler::createCatalogue(): will connect to catalogue.");
-  auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(m_sessionEndContext.logger(),
-  catalogueLogin, nbConns, nbArchiveFileListingConns);
-  return catalogueFactory->create();
+void DriveHandler::setCatalogue(std::unique_ptr<catalogue::Catalogue> catalogue) {
+  m_catalogue = std::move(catalogue);
 }
 
 }

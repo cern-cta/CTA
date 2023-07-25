@@ -75,6 +75,8 @@ public:
 
   SubprocessHandler::ProcessingStatus processTimeout() override;
 
+  void setCatalogue(std::unique_ptr<catalogue::Catalogue> catalogue);
+
 private:
   /** Reference to the process manager*/
   cta::tape::daemon::ProcessManager& m_processManager;

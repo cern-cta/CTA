@@ -25,6 +25,7 @@
 #include "common/utils/utils.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
 #include "tapeserver/daemon/DriveHandler.hpp"
+#include "tapeserver/daemon/DriveHandlerBuilder.hpp"
 #include "tapeserver/daemon/MaintenanceHandler.hpp"
 #include "tapeserver/daemon/ProcessManager.hpp"
 #include "tapeserver/daemon/SignalHandler.hpp"
@@ -113,7 +114,10 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
   pm.addHandler(std::move(sh));
   // Create the drive handlers
   for (auto & d: m_globalConfiguration.driveConfigs) {
-    auto dh = std::make_unique<DriveHandler>(m_globalConfiguration, d.second.value(), pm);
+    DriveHandlerBuilder builder(&m_globalConfiguration, &d.second.value(), &pm);
+    // auto dh = std::make_unique<DriveHandler>(m_globalConfiguration, d.second.value(), pm);
+
+    auto dh = builder.build();
     pm.addHandler(std::move(dh));
   }
   // Create the garbage collector
