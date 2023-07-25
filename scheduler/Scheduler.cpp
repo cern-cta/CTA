@@ -58,7 +58,7 @@ namespace cta {
 Scheduler::Scheduler(catalogue::Catalogue &catalogue, SchedulerDatabase &db,
                      const uint64_t minFilesToWarrantAMount,
                      const uint64_t minBytesToWarrantAMount,
-                     const uint64_t repackMaxToToExpand = 2)
+                     const uint64_t repackMaxToToExpand)
     : m_catalogue(catalogue), m_db(db),
       m_minFilesToWarrantAMount(minFilesToWarrantAMount),
       m_minBytesToWarrantAMount(minBytesToWarrantAMount),
