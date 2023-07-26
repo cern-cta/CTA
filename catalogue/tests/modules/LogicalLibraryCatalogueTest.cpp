@@ -28,7 +28,7 @@
 #include "common/dataStructures/PhysicalLibrary.hpp"
 #include "common/dataStructures/Tape.hpp"
 #include "common/exception/Exception.hpp"
-#include "rdbms/UniqueError.hpp"
+#include "rdbms/UniqueConstraintError.hpp"
 #include "common/log/LogContext.hpp"
 
 namespace unitTests {

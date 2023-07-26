@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "common/exception/Exception.hpp"
+#include "rdbms/DBException.hpp"
 
 #include <string>
 
@@ -28,7 +28,7 @@ namespace rdbms {
 /**
  * A database constraint error.
  */
-class ConstraintError : public cta::exception::Exception {
+class ConstraintError : public DBException {
 public:
 
   /**
@@ -39,7 +39,7 @@ public:
    * @param embedBacktrace whether to embed a backtrace of where the
    * exception was throw in the message
    */
-  ConstraintError(const std::string &context = "", const std::string &dbErrorMessage="", const bool embedBacktrace = true);
+  ConstraintError(const std::string &context, const std::string &dbErrorMessage, const std::string &violatedConstraintName, const bool embedBacktrace = true);
 
   /**
    * Empty Destructor, explicitely non-throwing (needed for std::exception
@@ -48,12 +48,12 @@ public:
   ~ConstraintError() noexcept override;
 
   /**
-   * Returns the raw error message generated bu the DB
+   * Returns the violated constraint name, as returned by the DB
    */
-  std::string getDbErrorMessage() const;
+  std::string getViolatedConstraintName() const;
 
 private:
-  std::string rawDbErrorMessage;
+  std::string m_violatedConstraintName;
 }; // class ConstraintError
 
 } // namespace rdbms

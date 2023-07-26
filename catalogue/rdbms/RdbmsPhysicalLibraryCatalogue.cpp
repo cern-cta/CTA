@@ -30,7 +30,7 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/ConstraintError.hpp"
-#include "rdbms/UniqueError.hpp"
+#include "rdbms/UniqueConstraintError.hpp"
 #include "rdbms/IntegrityConstraintError.hpp"
 
 namespace cta {
@@ -138,9 +138,11 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
     stmt.executeNonQuery();
   } catch(exception::UserError& ) {
     throw;
-  } catch(cta::rdbms::UniqueError& ex) {
-    throw exception::UserError(std::string("Cannot create physical library ") + pl.name +
-        " because a physical library with the same name already exists");
+  } catch(cta::rdbms::UniqueConstraintError& ex) {
+    throw;
+    // TODO: Add this back after testing
+    //throw exception::UserError(std::string("Cannot create physical library ") + pl.name +
+    //    " because a physical library with the same name already exists");
   } catch(cta::rdbms::ConstraintError& ex) {
     throw;
   } catch(exception::Exception& ex) {
@@ -166,7 +168,9 @@ void RdbmsPhysicalLibraryCatalogue::deletePhysicalLibrary(const std::string& nam
   } catch(exception::UserError& ex) {
     throw;
   } catch(cta::rdbms::IntegrityConstraintError& ex) {
-    throw exception::UserError("Cannot delete physical library" + name + " because it is being referenced by a logical library.");
+    throw;
+    // TODO: Add this back after testing
+    //throw exception::UserError("Cannot delete physical library" + name + " because it is being referenced by a logical library.");
   } catch(cta::rdbms::ConstraintError& ex) {
     throw;
   } catch(exception::Exception& ex) {
@@ -279,10 +283,14 @@ void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibrary(const common::dataStru
     }
   } catch(exception::UserError& ) {
     throw;
-  } catch(cta::rdbms::UniqueError& ex) {
-    throw exception::UserError("Could not modify physical library");
+  } catch(cta::rdbms::UniqueConstraintError& ex) {
+    throw;
+    // TODO: Add this back after testing
+    //throw exception::UserError("Could not modify physical library");
   } catch(cta::rdbms::ConstraintError& ex) {
-    throw exception::UserError("Could not modify physical library");
+    throw;
+    // TODO: Add this back after testing
+    //throw exception::UserError("Could not modify physical library");
   } catch(exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;

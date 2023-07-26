@@ -15,39 +15,30 @@
  *               submit itself to any jurisdiction.
  */
 
-#pragma once
-
-#include "rdbms/ConstraintError.hpp"
-
-#include <string>
-
+#include "rdbms/DBException.hpp"
 
 namespace cta {
 namespace rdbms {
 
-/**
- * A database constraint has been violated.
- */
-class PrimaryKeyError : public ConstraintError {
-public:
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+DBException::DBException(const std::string &context, const std::string &dbErrorMessage, const bool embedBacktrace):
+  Exception(context, embedBacktrace), rawDbErrorMessage{dbErrorMessage} {
+}
 
-  /**
-   * Constructor.
-   *
-   * @param context optional context string added to the message
-   * at initialisation time.
-   * @param embedBacktrace whether to embed a backtrace of where the
-   * exception was throw in the message
-   */
-  PrimaryKeyError(const std::string &context, const std::string &dbErrorMessage, const std::string &violatedConstraintName, const bool embedBacktrace = true);
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+DBException::~DBException() noexcept {
+}
 
-  /**
-   * Empty Destructor, explicitely non-throwing (needed for std::exception
-   * inheritance)
-   */
-  ~PrimaryKeyError() noexcept override;
-  
-}; // class PrimaryKeyError
+//------------------------------------------------------------------------------
+// getDbErrorMessage
+//------------------------------------------------------------------------------
+std::string DBException::getDbErrorMessage() const {
+  return rawDbErrorMessage;
+}
 
 } // namespace rdbms
 } // namespace cta

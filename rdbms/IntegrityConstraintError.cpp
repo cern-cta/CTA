@@ -23,8 +23,12 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-IntegrityConstraintError::IntegrityConstraintError(const std::string &context, const std::string &dbErrorMessage, const bool embedBacktrace):
-  ConstraintError(context, dbErrorMessage, embedBacktrace) {
+IntegrityConstraintError::IntegrityConstraintError(
+        const std::string &context,
+        const std::string &dbErrorMessage,
+        const std::string &violatedConstraintName,
+        const bool embedBacktrace):
+  ConstraintError(context, dbErrorMessage, violatedConstraintName, embedBacktrace) {
 }
 
 //------------------------------------------------------------------------------

@@ -28,7 +28,7 @@ namespace rdbms {
 /**
  * A database constraint has been violated.
  */
-class PrimaryKeyError : public ConstraintError {
+class UniqueConstraintError : public ConstraintError {
 public:
 
   /**
@@ -39,15 +39,15 @@ public:
    * @param embedBacktrace whether to embed a backtrace of where the
    * exception was throw in the message
    */
-  PrimaryKeyError(const std::string &context, const std::string &dbErrorMessage, const std::string &violatedConstraintName, const bool embedBacktrace = true);
+  UniqueConstraintError(const std::string &context, const std::string &dbErrorMessage, const std::string &violatedConstraintName, const bool embedBacktrace = true);
 
   /**
    * Empty Destructor, explicitely non-throwing (needed for std::exception
    * inheritance)
    */
-  ~PrimaryKeyError() noexcept override;
+  ~UniqueConstraintError() noexcept override;
   
-}; // class PrimaryKeyError
+}; // class UniqueConstraintError
 
 } // namespace rdbms
 } // namespace cta

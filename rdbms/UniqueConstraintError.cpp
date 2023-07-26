@@ -15,39 +15,27 @@
  *               submit itself to any jurisdiction.
  */
 
-#pragma once
-
-#include "rdbms/ConstraintError.hpp"
-
-#include <string>
-
+#include "rdbms/UniqueConstraintError.hpp"
 
 namespace cta {
 namespace rdbms {
 
-/**
- * A database constraint has been violated.
- */
-class UniqueError : public ConstraintError {
-public:
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+UniqueConstraintError::UniqueConstraintError(
+        const std::string &context,
+        const std::string &dbErrorMessage,
+        const std::string &violatedConstraintName,
+        const bool embedBacktrace):
+  ConstraintError(context, dbErrorMessage, violatedConstraintName, embedBacktrace) {
+}
 
-  /**
-   * Constructor.
-   *
-   * @param context optional context string added to the message
-   * at initialisation time.
-   * @param embedBacktrace whether to embed a backtrace of where the
-   * exception was throw in the message
-   */
-  UniqueError(const std::string &context = "", const std::string &dbErrorMessage = "", const bool embedBacktrace = true);
-
-  /**
-   * Empty Destructor, explicitely non-throwing (needed for std::exception
-   * inheritance)
-   */
-  ~UniqueError() noexcept override;
-  
-}; // class UniqueError
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+UniqueConstraintError::~UniqueConstraintError() noexcept {
+}
 
 } // namespace rdbms
 } // namespace cta

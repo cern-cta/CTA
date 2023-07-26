@@ -21,7 +21,7 @@
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "rdbms/CheckConstraintError.hpp"
 #include "rdbms/IntegrityConstraintError.hpp"
-#include "rdbms/UniqueError.hpp"
+#include "rdbms/UniqueConstraintError.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -99,16 +99,16 @@ public:
       throw exception::LostDatabaseConnection(dbmsg);
     }
     if (uniqueViolation) {
-      throw UniqueError(dbmsg, pgstr);
+      throw UniqueConstraintError(dbmsg, pgstr, "");
     }
     if (checkViolation) {
-      throw CheckConstraintError(dbmsg, pgstr);
+      throw CheckConstraintError(dbmsg, pgstr, "");
     }
     if (integrityViolation) {
-      throw IntegrityConstraintError(dbmsg, pgstr);
+      throw IntegrityConstraintError(dbmsg, pgstr, "");
     }
     if (foreignKeyViolation) {
-      throw IntegrityConstraintError(dbmsg, pgstr);
+      throw IntegrityConstraintError(dbmsg, pgstr, "");
     }
     throw exception::Exception(dbmsg);
   }
