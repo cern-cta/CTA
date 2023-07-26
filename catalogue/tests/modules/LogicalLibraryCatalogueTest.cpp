@@ -168,6 +168,28 @@ TEST_P(cta_catalogue_LogicalLibraryTest, createLogicalLibrary_same_twice) {
     logicalLibraryIsDisabled, physicalLibraryName, comment), cta::exception::UserError);
 }
 
+TEST_P(cta_catalogue_LogicalLibraryTest, removePhysicalLibraryAssociatedWithLogicalLibrary) {
+  const std::string logicalLibraryName = "logical_library";
+  const std::string comment = "Create logical library";
+  const bool logicalLibraryIsDisabled= false;
+  const auto physicalLibrary = CatalogueTestUtils::getPhysicalLibrary1();
+  m_catalogue->PhysicalLibrary()->createPhysicalLibrary(m_admin, physicalLibrary);
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibrary.name,
+                                                      comment);
+
+  auto shouldThrow = [this, physicalLibrary]() -> void {
+    m_catalogue->PhysicalLibrary()->deletePhysicalLibrary(physicalLibrary.name);
+  };
+
+  try {
+    shouldThrow();
+  } catch (cta::rdbms::ConstraintError& ex) {
+    std::cerr << "Msg:  " << ex.getMessageValue() << std::endl;
+    std::cerr << "What: " << ex.what() << std::endl;
+    std::cerr << "Cons: " << ex.getViolatedConstraintName() << std::endl;
+  }
+}
+
 TEST_P(cta_catalogue_LogicalLibraryTest, setLogicalLibraryDisabled_true) {
   ASSERT_TRUE(m_catalogue->LogicalLibrary()->getLogicalLibraries().empty());
 
