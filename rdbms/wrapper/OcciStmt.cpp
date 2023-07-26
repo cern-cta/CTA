@@ -18,6 +18,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/threading/MutexLocker.hpp"
+#include "common/utils/utils.hpp"
 #include "rdbms/CheckConstraintError.hpp"
 #include "rdbms/PrimaryKeyError.hpp"
 #include "rdbms/UniqueConstraintError.hpp"
@@ -281,6 +282,7 @@ void OcciStmt::executeNonQuery() {
     std::smatch match;
     std::string whatStr = ex.what();
     std::string violatedConstraint = std::regex_search(whatStr, match, rgx) ? std::string(match[1]) : "";
+    cta::utils::toUpper(violatedConstraint);
 
     switch(ex.getErrorCode()) {
     case 1:
