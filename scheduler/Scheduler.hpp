@@ -91,7 +91,7 @@ public:
   Scheduler(cta::catalogue::Catalogue &catalogue, SchedulerDatabase &db,
             const uint64_t minFilesToWarrantAMount,
             const uint64_t minBytesToWarrantAMount,
-            const uint64_t repackMaxToExpand);
+            const uint64_t repackMaxToExpand = 2);
   // TODO: we have out the mount policy parameters here temporarily we will
   // remove them once we know where to put them
 
