@@ -23,6 +23,10 @@ namespace cta {
 
 class Scheduler;
 
+namespace catalogue {
+class Catalogue;
+}
+
 namespace tape {
 namespace daemon {
 
@@ -47,7 +51,7 @@ private:
 
   std::unique_ptr<cta::catalogue::Catalogue> createCatalogue();
 
-  // std::unique_ptr<Scheduler> createScheduler();
+  std::unique_ptr<Scheduler> createScheduler(cta::catalogue::Catalogue* catalogue);
 
   // std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> createCleanerSession(
   //   const std::unique_ptr<Scheduler>& scheduler, cta::log::LogContext* lc);

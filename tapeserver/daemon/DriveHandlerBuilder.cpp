@@ -20,8 +20,10 @@
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/log/LogContext.hpp"
 #include "rdbms/Login.hpp"
-#include "tapeserver/daemon/DriveHandlerBuilder.hpp"
+#include "scheduler/OStoreDB/OStoreDBInit.hpp"
+#include "scheduler/Scheduler.hpp"
 #include "tapeserver/daemon/DriveHandler.hpp"
+#include "tapeserver/daemon/DriveHandlerBuilder.hpp"
 #include "tapeserver/daemon/ProcessManager.hpp"
 #include "tapeserver/daemon/TapedConfiguration.hpp"
 #include "tapeserver/daemon/TpconfigLine.hpp"
@@ -38,7 +40,9 @@ DriveHandlerBuilder::DriveHandlerBuilder(const TapedConfiguration* tapedConfig, 
 
 std::unique_ptr<DriveHandler> DriveHandlerBuilder::build() {
   auto dh = std::make_unique<DriveHandler>(*m_tapedConfig, *m_driveConfig, *m_processManager);
-  dh->setCatalogue(createCatalogue());
+  auto catalogue = createCatalogue();
+  dh->setScheduler(createScheduler(catalogue.get()));
+  dh->setCatalogue(std::move(catalogue));
   return dh;
 }
 
@@ -50,15 +54,45 @@ std::unique_ptr<cta::catalogue::Catalogue> DriveHandlerBuilder::createCatalogue(
   const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(m_tapedConfig->fileCatalogConfigFile.value());
   const uint64_t nbConns = 1;
   const uint64_t nbArchiveFileListingConns = 0;
-  m_processManager->logContext().log(log::DEBUG, "In DriveHandler::createCatalogue(): will connect to catalogue.");
+  m_processManager->logContext().log(log::DEBUG, "In DriveHandlerBuilder::createCatalogue(): will connect to catalogue.");
   auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(m_processManager->logContext().logger(),
   catalogueLogin, nbConns, nbArchiveFileListingConns);
   return catalogueFactory->create();
 }
 
-// std::unique_ptr<Scheduler> DriveHandlerBuilder::createScheduler() {
-
-// }
+std::unique_ptr<Scheduler> DriveHandlerBuilder::createScheduler(cta::catalogue::Catalogue* catalogue) {
+  auto& lc = m_processManager->logContext();
+  std::unique_ptr<SchedulerDBInit_t> sched_db_init;
+  try {
+    std::string processName = "DriveProcess-";
+    processName += m_driveConfig->unitName;
+    log::ScopedParamContainer params(lc);
+    params.add("processName", processName);
+    lc.log(log::DEBUG, "In DriveHandlerBuilder::createScheduler(): will create agent entry. Enabling leaving non-empty agent behind.");
+    sched_db_init.reset(new SchedulerDBInit_t(processName, m_tapedConfig->backendPath.value(), lc.logger(), true));
+  } catch (cta::exception::Exception& ex) {
+    log::ScopedParamContainer param(lc);
+    param.add("errorMessage", ex.getMessageValue());
+    lc.log(log::CRIT, "In DriveHandlerBuilder::createScheduler(): failed to connect to objectstore or failed to instantiate agent entry. Reporting fatal error.");
+    // driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+    // sleep(1);
+    throw;
+  }
+  std::unique_ptr<SchedulerDB_t> sched_db;
+  try {
+    sched_db = sched_db_init->getSchedDB(*catalogue, lc.logger());
+  } catch (cta::exception::Exception& ex) {
+    log::ScopedParamContainer param(lc);
+    param.add("errorMessage", ex.getMessageValue());
+    lc.log(log::CRIT, "In DriveHandlerBuilder::createScheduler(): failed to instantiate catalogue. Reporting fatal error.");
+    // driveHandlerProxy.reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
+    // sleep(1);
+    throw;
+  }
+  lc.log(log::DEBUG, "In DriveHandlerBuilder::createScheduler(): will create scheduler.");
+  return std::make_unique<Scheduler>(*catalogue, *sched_db, m_tapedConfig->mountCriteria.value().maxFiles,
+    m_tapedConfig->mountCriteria.value().maxBytes);
+}
 
 
 } // namespace daemon

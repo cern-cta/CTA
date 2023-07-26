@@ -115,8 +115,6 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
   // Create the drive handlers
   for (auto & d: m_globalConfiguration.driveConfigs) {
     DriveHandlerBuilder builder(&m_globalConfiguration, &d.second.value(), &pm);
-    // auto dh = std::make_unique<DriveHandler>(m_globalConfiguration, d.second.value(), pm);
-
     auto dh = builder.build();
     pm.addHandler(std::move(dh));
   }

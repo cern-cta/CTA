@@ -76,6 +76,8 @@ public:
   SubprocessHandler::ProcessingStatus processTimeout() override;
 
   void setCatalogue(std::unique_ptr<catalogue::Catalogue> catalogue);
+  
+  void setScheduler(std::unique_ptr<Scheduler> scheduler);
 
 private:
   /** Reference to the process manager*/
@@ -164,6 +166,7 @@ private:
     const std::unique_ptr<Scheduler>& scheduler, cta::log::LogContext* lc) const;
 
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
+  std::unique_ptr<cta::Scheduler> m_scheduler;
 };
 
 // TODO: remove/merge ChildProcess.
