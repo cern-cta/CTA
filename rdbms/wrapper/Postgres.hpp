@@ -63,7 +63,7 @@ public:
       resstr = "DB Result Status:" + std::to_string(PQresultStatus(res));
       const char *const e = PQresultErrorField(res, PG_DIAG_SQLSTATE);
       const char *const m = PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY);
-      std::regex rgx("constraint\\s*\"(.*)\"");
+      std::regex rgx("constraint\\s*\"([^\\s]*)\"");
       std::smatch match;
       std::string whatStr = (nullptr != m ? m : "");
       violatedConstraint = std::regex_search(whatStr, match, rgx) ? std::string(match[1]) : "";
