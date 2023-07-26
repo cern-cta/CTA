@@ -108,16 +108,16 @@ public:
       throw exception::LostDatabaseConnection(dbmsg);
     }
     if (uniqueViolation) {
-      throw UniqueConstraintError(dbmsg, pgstr, PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY));
+      throw UniqueConstraintError(dbmsg, pgstr, violatedConstraint);
     }
     if (checkViolation) {
-      throw CheckConstraintError(dbmsg, pgstr, PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY));
+      throw CheckConstraintError(dbmsg, pgstr, violatedConstraint);
     }
     if (integrityViolation) {
-      throw IntegrityConstraintError(dbmsg, pgstr, PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY));
+      throw IntegrityConstraintError(dbmsg, pgstr, violatedConstraint);
     }
     if (foreignKeyViolation) {
-      throw IntegrityConstraintError(dbmsg, pgstr, PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY));
+      throw IntegrityConstraintError(dbmsg, pgstr, violatedConstraint);
     }
     throw exception::Exception(dbmsg);
   }
