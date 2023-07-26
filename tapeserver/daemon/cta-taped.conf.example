@@ -149,6 +149,9 @@ taped externalFreeDiskSpaceScript /usr/local/bin/cta-get-free-disk-space.sh
 # 
 # Enable MaintenanceProcess for repack-related operations, garbage collection and disk reporting.
 # taped UseMaintenanceProcess yes
+#
+# Set the maximum number of simultaneous repacks to be promoted to ToExpand
+# taped repackMaxToToExpand 2
 
 #
 # TIMEOUT OPTIONS
