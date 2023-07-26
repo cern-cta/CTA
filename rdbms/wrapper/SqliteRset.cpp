@@ -157,9 +157,9 @@ bool SqliteRset::next() {
 
     switch(stepRc) {
     case SQLITE_CONSTRAINT_PRIMARYKEY:
-      throw PrimaryKeyError(msg.str());
+      throw PrimaryKeyError(msg.str(), "", "");
     case SQLITE_CONSTRAINT:
-      throw ConstraintError(msg.str());
+      throw ConstraintError(msg.str(), "", "");
     default:
       throw exception::Exception(msg.str());
     }

@@ -23,8 +23,8 @@ namespace rdbms {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-ConstraintError::ConstraintError(const std::string &context, const std::string &dbErrorMessage, const bool embedBacktrace):
-  Exception(context, embedBacktrace), rawDbErrorMessage{dbErrorMessage} {
+ConstraintError::ConstraintError(const std::string &context, const std::string &dbErrorMessage, const std::string &violatedConstraintName, const bool embedBacktrace):
+  DBException{context, dbErrorMessage, embedBacktrace}, m_violatedConstraintName{violatedConstraintName} {
 }
 
 //------------------------------------------------------------------------------
@@ -36,8 +36,8 @@ ConstraintError::~ConstraintError() noexcept {
 //------------------------------------------------------------------------------
 // getDbErrorMessage
 //------------------------------------------------------------------------------
-std::string ConstraintError::getDbErrorMessage() const {
-  return rawDbErrorMessage;
+std::string ConstraintError::getViolatedConstraintName() const {
+  return m_violatedConstraintName;
 }
 
 } // namespace rdbms
