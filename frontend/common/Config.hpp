@@ -53,7 +53,7 @@ public:
    * Throws std::invalid_argument or std::out_of_range if the key exists but the value cannot be
    * converted to an unsigned integer
    */
-  std::optional<unsigned int> getOptionValueUInt(const std::string &key) const;
+  std::optional<uint32_t> getOptionValueUInt(const std::string &key) const;
 
 
 private:

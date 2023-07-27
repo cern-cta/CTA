@@ -61,11 +61,11 @@ std::optional<int> Config::getOptionValueInt(const std::string &key) const {
   return optionlist.empty() ? std::nullopt : std::optional<int>(std::stoi(optionlist.at(0)));
 }
 
-std::optional<unsigned int> Config::getOptionValueUInt(const std::string &key) const {
+std::optional<uint32_t> Config::getOptionValueUInt(const std::string &key) const {
 
   auto optionlist = getOptionList(key);
 
-  return optionlist.empty() ? std::nullopt : std::optional<unsigned int>(stou<unsigned int>(optionlist.at(0)));
+  return optionlist.empty() ? std::nullopt : std::optional<uint32_t>(stou<uint32_t>(optionlist.at(0)));
 
 }
 
@@ -110,32 +110,37 @@ optionlist_t Config::tokenize(std::istringstream &input) {
 template<class T>
 T Config::stou(const std::string &strVal) const {
     
-try {
-  int64_t liVal = stoll(strVal);
-  if (liVal < 0) {
-    throw std::out_of_range("");
-  }
-  if(static_cast<uint64_t>(liVal) > std::numeric_limits<T>::max()) {
-    throw std::out_of_range("");
-  }
-} catch (std::invalid_argument const& ex) {
+  try {
+    std::size_t uiPos = 0;
+    auto lVal = stoll(strVal, &uiPos);
+    // Do not accept value like: 123abc
+    if (uiPos != strVal.size()) {
+      throw std::invalid_argument("Invalid argument");
+    }
+    if (lVal < 0) {
+      throw std::out_of_range("Negative value");
+    }
+    if(static_cast<uint64_t>(lVal) > std::numeric_limits<T>::max()) {
+      throw std::out_of_range("Above maximum value");
+    }
+  } catch (std::invalid_argument const& ex) {
     std::ostringstream strErrMsg;
-    strErrMsg << "stou(" << strVal << ")";
+    strErrMsg << "stou(" << strVal << "): Invalid argument";
     throw std::invalid_argument(strErrMsg.str());
-}
-catch (std::out_of_range const& ex) {
-  std::ostringstream strErrMsg;
-  if(std::numeric_limits<int64_t>::max() < std::numeric_limits<T>::max()) {
-    strErrMsg << "stou(" << strVal << "): " << "expected correct value is in the range [0, " << std::numeric_limits<int64_t>::max() << "]";
-  } else {
-    strErrMsg << "stou(" << strVal << "): " << "expected correct value is in the range [0, " << std::numeric_limits<T>::max() << "]";
+  } catch (std::out_of_range const& ex) {
+    std::ostringstream strErrMsg;
+    strErrMsg << "stou(" << strVal << "): " << ex.what();
+    if(std::numeric_limits<int64_t>::max() < std::numeric_limits<T>::max()) {
+      strErrMsg << ", expected correct value is in the range [0, " << std::numeric_limits<int64_t>::max() << "]";
+    } else {
+      strErrMsg << ", expected correct value is in the range [0, " << std::numeric_limits<T>::max() << "]";
+    }
+    throw std::out_of_range(strErrMsg.str());
   }
-  throw std::out_of_range(strErrMsg.str());
-}
 
-  uint64_t uliVal = std::stoul(strVal);
+  auto ulVal = std::stoul(strVal);
 
-  return static_cast<T>(uliVal);
+  return static_cast<T>(ulVal);
 }
 
 }} // namespace cta::frontend
