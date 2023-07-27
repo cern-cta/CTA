@@ -325,7 +325,7 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
       gc.runOnePass(m_processManager.logContext());
       diskReportRunner.runOnePass(m_processManager.logContext());
       if(runRepackRequestManager()){
-        repackRequestManager.runOnePass(m_processManager.logContext());
+        repackRequestManager.runOnePass(m_processManager.logContext(), m_tapedConfig.repackMaxRequestsToExpand.value());
       }
       try {
         server::SocketPair::poll(pollList, s_pollInterval - t.secs(), server::SocketPair::Side::parent);

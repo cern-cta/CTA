@@ -88,10 +88,11 @@ public:
   /**
    * Constructor.
    */
-  Scheduler(
-    cta::catalogue::Catalogue &catalogue,
-    SchedulerDatabase &db, const uint64_t minFilesToWarrantAMount, const uint64_t minBytesToWarrantAMount);
-    // TODO: we have out the mount policy parameters here temporarily we will remove them once we know where to put them
+  Scheduler(cta::catalogue::Catalogue &catalogue, SchedulerDatabase &db,
+            const uint64_t minFilesToWarrantAMount,
+            const uint64_t minBytesToWarrantAMount);
+  // TODO: we have out the mount policy parameters here temporarily we will
+  // remove them once we know where to put them
 
   /**
    * Destructor.
@@ -371,7 +372,8 @@ public:
 
   /*============== Repack support ===========================================*/
   // Promotion of requests
-  void promoteRepackRequestsToToExpand(log::LogContext & lc);
+  void promoteRepackRequestsToToExpand(log::LogContext &lc,
+                                       size_t repackMaxRequestsToExpand);
   // Expansion support
   std::unique_ptr<RepackRequest> getNextRepackRequestToExpand();
   void expandRepackRequest(std::unique_ptr<RepackRequest> & repqckRequest, log::TimingList& , utils::Timer &, log::LogContext &);
