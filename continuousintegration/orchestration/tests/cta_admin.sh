@@ -96,6 +96,22 @@ test_command () {
     log_command "$2"
 }
 
+# Wrapper to test a command - sub command combination that should fail
+# $1 - Initial message to display and log
+# $2 - command
+# $3 - subcommand
+# $4 - subcommand options
+test_command_fails () {
+    # Echo initial Message
+    log_message "$1" "${log_file}"
+
+    # Execute command
+    bash -c "admin_cta $2 $3 $4" >> "${log_file}" 2>&1 && exit 1
+
+    # Log results
+    log_command "$2"
+}
+
 LS_TIMEOUT=15
 
 # Run the test command function and check the result
@@ -365,6 +381,11 @@ test_and_check_cmd "Modifying physical library 'cta_adm_systest'" "${command}" "
    --guiurl 'urlB' --webcamurl 'urlB' --nbphysicalcartridgeslots 4 --nbavailablecartridgeslots 3 --nbphysicaldriveslots 2 --comment 'commentB'"\
   'select(.name=="cta_adm_systest" and .guiUrl=="urlB" and .webcamUrl=="urlB" and .location=="locB" and .nbPhysicalCartridgeSlots=="4" and .nbAvailableCartridgeSlots=="3" and .nbPhysicalDriveSlots=="2" and .comment=="commentB") | .name'\
   "1" "adding physical library 'cta_adm_systest'"|| exit 1
+test_command_fails "Adding a duplicate physical library 'CTA_ADM_SYSTEST' should fail"\
+                   "${command}"\
+                   "add"\
+                   "--name 'cta_adm_systest' --manufacturer 'manA' --model 'modA' --location 'locA' --type 'typeA' --guiurl 'urlA' --webcamurl 'urlA' --nbphysicalcartridgeslots 4 --nbavailablecartridgeslots 3 --nbphysicaldriveslots 2 --comment 'commentA'"\
+                   || exit 1
 test_command "Removing physical library 'cta_adm_systest'" "${command}" "rm" "--name 'cta_adm_systest'"
 test_assert || exit 1
 
