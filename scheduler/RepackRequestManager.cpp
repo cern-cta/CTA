@@ -22,7 +22,8 @@
 
 namespace cta {
 
-void RepackRequestManager::runOnePass(log::LogContext& lc) {
+void RepackRequestManager::runOnePass(log::LogContext &lc,
+                                      const size_t repackMaxRequestsToExpand) {
   // We give ourselves a budget of 30s for those operations...
   utils::Timer t;
   log::TimingList timingList;
@@ -30,7 +31,7 @@ void RepackRequestManager::runOnePass(log::LogContext& lc) {
   // Next promote requests to ToExpand if needed
 
   //Putting pending repack request into the RepackQueueToExpand queue
-  m_scheduler.promoteRepackRequestsToToExpand(lc);
+  m_scheduler.promoteRepackRequestsToToExpand(lc, repackMaxRequestsToExpand);
 
   {
     //Retrieve the first repack request from the RepackQueueToExpand queue

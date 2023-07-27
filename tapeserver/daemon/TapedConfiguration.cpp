@@ -125,6 +125,7 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.useRepackManagement.setFromConfigurationFile(cf,generalConfigPath);
   // Maintenance process configuration
   ret.useMaintenanceProcess.setFromConfigurationFile(cf,generalConfigPath);
+  ret.repackMaxRequestsToExpand.setFromConfigurationFile(cf, generalConfigPath);
   // External free disk space script configuration
   ret.externalFreeDiskSpaceScript.setFromConfigurationFile(cf,generalConfigPath);
   // Timeout for tape load action
@@ -170,6 +171,7 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   
   ret.useRepackManagement.log(log);
   ret.useMaintenanceProcess.log(log);
+  ret.repackMaxRequestsToExpand.log(log);
   ret.externalFreeDiskSpaceScript.log(log);
   
   ret.tapeLoadTimeout.log(log);

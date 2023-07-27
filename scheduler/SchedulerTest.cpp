@@ -2105,7 +2105,7 @@ TEST_P(SchedulerTest, repack) {
     auto repack = scheduler.getRepack(repacks.front().vid);
     ASSERT_EQ(tape2, repack.vid);
   }
-  scheduler.promoteRepackRequestsToToExpand(lc);
+  scheduler.promoteRepackRequestsToToExpand(lc,2);
   {
     auto repacks = scheduler.getRepacks();
     ASSERT_EQ(1, std::count_if(repacks.begin(), repacks.end(), [](RepackInfo &r){ return r.status == Status::ToExpand; }));
@@ -2171,7 +2171,7 @@ TEST_P(SchedulerTest, getNextRepackRequestToExpand) {
   ASSERT_EQ(scheduler.getRepack(tape2).status,common::dataStructures::RepackInfo::Status::Pending);
 
   //Change the repack request status to ToExpand
-  scheduler.promoteRepackRequestsToToExpand(lc);
+  scheduler.promoteRepackRequestsToToExpand(lc,2);
 
   //Test the getNextRepackRequestToExpand method that is supposed to retrieve the previously first inserted request
   auto repackRequestToExpand1 = scheduler.getNextRepackRequestToExpand();
@@ -2311,7 +2311,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
       utils::Timer t;
       if(i % nbTapesForTest == 0){
         //The promoteRepackRequestsToToExpand will only promote 2 RepackRequests to ToExpand status at a time.
-        scheduler.promoteRepackRequestsToToExpand(lc);
+        scheduler.promoteRepackRequestsToToExpand(lc,2);
         scheduler.waitSchedulerDbSubthreadsComplete();
       }
       auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
@@ -2631,7 +2631,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
     utils::Timer t;
 
     //The promoteRepackRequestsToToExpand will only promote 2 RepackRequests to ToExpand status at a time.
-    scheduler.promoteRepackRequestsToToExpand(lc);
+    scheduler.promoteRepackRequestsToToExpand(lc,2);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
     auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
@@ -2848,7 +2848,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
     utils::Timer t;
 
     //The promoteRepackRequestsToToExpand will only promote 2 RepackRequests to ToExpand status at a time.
-    scheduler.promoteRepackRequestsToToExpand(lc);
+    scheduler.promoteRepackRequestsToToExpand(lc,2);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
     auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
@@ -3105,7 +3105,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
     log::TimingList tl;
     utils::Timer t;
 
-    scheduler.promoteRepackRequestsToToExpand(lc);
+    scheduler.promoteRepackRequestsToToExpand(lc,2);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
     auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
@@ -3361,7 +3361,7 @@ TEST_P(SchedulerTest, expandRepackRequestRepackingTape) {
     log::TimingList tl;
     utils::Timer t;
 
-    scheduler.promoteRepackRequestsToToExpand(lc);
+    scheduler.promoteRepackRequestsToToExpand(lc,2);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
     auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
@@ -3470,7 +3470,7 @@ TEST_P(SchedulerTest, expandRepackRequestRepackingDisabledTape) {
     log::TimingList tl;
     utils::Timer t;
 
-    scheduler.promoteRepackRequestsToToExpand(lc);
+    scheduler.promoteRepackRequestsToToExpand(lc,2);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
     auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
@@ -3533,7 +3533,7 @@ TEST_P(SchedulerTest, expandRepackRequestBrokenTape) {
     log::TimingList tl;
     utils::Timer t;
 
-    scheduler.promoteRepackRequestsToToExpand(lc);
+    scheduler.promoteRepackRequestsToToExpand(lc,2);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
     auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
@@ -3596,7 +3596,7 @@ TEST_P(SchedulerTest, expandRepackRequestDisabledTape) {
     log::TimingList tl;
     utils::Timer t;
 
-    scheduler.promoteRepackRequestsToToExpand(lc);
+    scheduler.promoteRepackRequestsToToExpand(lc,2);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
     auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
@@ -3659,7 +3659,7 @@ TEST_P(SchedulerTest, expandRepackRequestActiveTape) {
     log::TimingList tl;
     utils::Timer t;
 
-    scheduler.promoteRepackRequestsToToExpand(lc);
+    scheduler.promoteRepackRequestsToToExpand(lc,2);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
     auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
@@ -3820,7 +3820,7 @@ TEST_P(SchedulerTest, noMountIsTriggeredWhenTapeIsDisabled) {
   log::TimingList tl;
   utils::Timer t;
 
-  scheduler.promoteRepackRequestsToToExpand(lc);
+  scheduler.promoteRepackRequestsToToExpand(lc,2);
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
@@ -4339,7 +4339,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
     log::TimingList tl;
     utils::Timer t;
 
-    scheduler.promoteRepackRequestsToToExpand(lc);
+    scheduler.promoteRepackRequestsToToExpand(lc,2);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
     auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
@@ -4623,7 +4623,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldFailIfArchiveRouteMissing) {
     log::TimingList tl;
     utils::Timer t;
 
-    scheduler.promoteRepackRequestsToToExpand(lc);
+    scheduler.promoteRepackRequestsToToExpand(lc,2);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
     auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
@@ -4783,7 +4783,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies){
     log::TimingList tl;
     utils::Timer t;
 
-    scheduler.promoteRepackRequestsToToExpand(lc);
+    scheduler.promoteRepackRequestsToToExpand(lc,2);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
     auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
@@ -5035,7 +5035,7 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
     log::TimingList tl;
     utils::Timer t;
 
-    scheduler.promoteRepackRequestsToToExpand(lc);
+    scheduler.promoteRepackRequestsToToExpand(lc,2);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
     auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
@@ -5087,7 +5087,7 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
     log::TimingList tl;
     utils::Timer t;
 
-    scheduler.promoteRepackRequestsToToExpand(lc);
+    scheduler.promoteRepackRequestsToToExpand(lc,2);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
     auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
@@ -5519,7 +5519,7 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
   scheduler.queueRepack(admin,qrr, lc);
   scheduler.waitSchedulerDbSubthreadsComplete();
 
-  scheduler.promoteRepackRequestsToToExpand(lc);
+  scheduler.promoteRepackRequestsToToExpand(lc,2);
   scheduler.waitSchedulerDbSubthreadsComplete();
   auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
   log::TimingList tl;
@@ -5671,7 +5671,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldThrowIfUseBufferNotRecallButNoDir
   scheduler.queueRepack(admin,qrr, lc);
   scheduler.waitSchedulerDbSubthreadsComplete();
 
-  scheduler.promoteRepackRequestsToToExpand(lc);
+  scheduler.promoteRepackRequestsToToExpand(lc,2);
   scheduler.waitSchedulerDbSubthreadsComplete();
   auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
   log::TimingList tl;
@@ -5773,7 +5773,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldNotThrowIfTapeDisabledButNoRecall
   scheduler.queueRepack(admin,qrr, lc);
   scheduler.waitSchedulerDbSubthreadsComplete();
 
-  scheduler.promoteRepackRequestsToToExpand(lc);
+  scheduler.promoteRepackRequestsToToExpand(lc,2);
   scheduler.waitSchedulerDbSubthreadsComplete();
   auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
   log::TimingList tl;
@@ -6067,7 +6067,7 @@ TEST_P(SchedulerTest, retrieveArchiveRepackQueueMaxDrivesVoInFlightChangeSchedul
     scheduler.queueRepack(s_adminOnAdminHost,qrr,lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
-    scheduler.promoteRepackRequestsToToExpand(lc);
+    scheduler.promoteRepackRequestsToToExpand(lc,2);
     scheduler.waitSchedulerDbSubthreadsComplete();
 
     log::TimingList tl;
