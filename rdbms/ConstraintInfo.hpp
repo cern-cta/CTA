@@ -21,53 +21,48 @@
 #include<map>
 
 namespace cta {
-namespace catalogue {
+namespace rdbms {
+
+// Add an explanation for all constraints which might be violated directly due to user input
+// These explanations can then be returned back inside user-friendly error messages
+
+using ConstraintViolationMsgMap = std::map<std::string, std::string>;
+
+const ConstraintViolationMsgMap ConstraintViolationMessage_onCreate = {
+        // Unique constraint violations
+        // Foreign key violations (if referenced by name)
+        {"PHYSICAL_LIBRARY_PLN_CI_UN_IDX", "Physical library name already exists"},
+};
+
+const ConstraintViolationMsgMap ConstraintViolationMessage_onDelete = {
+        // Foreign key violations
+        {"LOGICAL_LIBRARY_PLI_FK", "Resource is being referenced by a logical library"},
+};
+
+const ConstraintViolationMsgMap ConstraintViolationMessage_onUpdate = {
+        // Unique constraint violations
+        // Foreign key violations (if referenced by name)
+        {"PHYSICAL_LIBRARY_PLN_CI_UN_IDX", "Physical library name already exists"},
+};
 
 class ConstraintInfo {
 
-  // Add an explanation for all constraints which might be violated directly due to user input
-  // These explanations can then be returned back inside user-friendly error messages
 public:
-  static std::string constraintViolationMessage_onCreate(const std::string& constraint) {
-    static const std::map<std::string, std::string> ConstraintViolationMessage = {
-            // Unique constraint violations
-            // Foreign key violations (if referenced by name)
-            {"PHYSICAL_LIBRARY_PLN_CI_UN_IDX", "Physical library name already exists"},
-    };
-    auto it = ConstraintViolationMessage.find(constraint);
-    if (it != ConstraintViolationMessage.end()) {
-      return it->second;
-    } else {
-      return constraint;
-    }
-  }
 
-  static std::string constraintViolationMessage_onDelete(const std::string& constraint) {
-    static const std::map<std::string, std::string> ConstraintViolationMessage = {
-            // Foreign key violations
-            {"LOGICAL_LIBRARY_PLI_FK", "Resource is being referenced by a logical library"},
-    };
-    auto it = ConstraintViolationMessage.find(constraint);
-    if (it != ConstraintViolationMessage.end()) {
-      return it->second;
-    } else {
-      return constraint;
-    }
-  }
+  enum SqlStatementType {
+    CREATE,
+    UPDATE,
+    DELETE,
+  };
 
-  static std::string constraintViolationMessage_onModify(const std::string& constraint) {
-    static const std::map<std::string, std::string> ConstraintViolationMessage = {
-            // Unique constraint violations
-            // Foreign key violations (if referenced by name)
-            {"PHYSICAL_LIBRARY_PLN_CI_UN_IDX", "Physical library name already exists"},
-    };
-    auto it = ConstraintViolationMessage.find(constraint);
-    if (it != ConstraintViolationMessage.end()) {
-      return it->second;
-    } else {
-      return constraint;
-    }
-  }
+  static std::string constraintViolationMessage(SqlStatementType statementType, const std::string& constraint);
+
+private:
+
+  static std::string constraintViolationMessage_onCreate(const std::string& constraint);
+  static std::string constraintViolationMessage_onDelete(const std::string& constraint);
+  static std::string constraintViolationMessage_onUpdate(const std::string& constraint);
+
   ConstraintInfo() = delete;
 };
 
