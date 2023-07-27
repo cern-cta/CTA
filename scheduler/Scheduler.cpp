@@ -429,9 +429,10 @@ bool Scheduler::isBeingRepacked(const std::string &vid) {
 //------------------------------------------------------------------------------
 // promoteRepackRequestsToToExpand
 //------------------------------------------------------------------------------
-void Scheduler::promoteRepackRequestsToToExpand(log::LogContext & lc) {
+void Scheduler::promoteRepackRequestsToToExpand(
+    log::LogContext &lc, size_t repackMaxRequestsToExpand) {
   // We target 2 fresh requests available for processing (ToExpand or Starting).
-  const size_t targetAvailableRequests = m_repackMaxToToExpand;
+  const size_t targetAvailableRequests = repackMaxRequestsToExpand;
   // Dry-run test to check if promotion is needed.
   auto repackStatsNL = m_db.getRepackStatisticsNoLock();
   // Statistics are supposed to be initialized for each status value. We only try to

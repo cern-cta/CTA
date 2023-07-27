@@ -172,8 +172,8 @@ struct TapedConfiguration {
   
 
   /// Max number of repacks to promote to ToExpand state.
-  cta::SourcedParameter<std::uint64_t> repackMaxToToExpand{
-      "taped", "repackMaxToToExpand", 2, "Compile time default"};
+  cta::SourcedParameter<std::uint64_t> repackMaxRequestsToExpand{
+      "taped", "RepackMaxRequestsToExpand", 2, "Compile time default"};
 
   //----------------------------------------------------------------------------
   // Tape load actions

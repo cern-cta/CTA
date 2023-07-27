@@ -90,8 +90,7 @@ public:
    */
   Scheduler(cta::catalogue::Catalogue &catalogue, SchedulerDatabase &db,
             const uint64_t minFilesToWarrantAMount,
-            const uint64_t minBytesToWarrantAMount,
-            const uint64_t repackMaxToExpand = 2);
+            const uint64_t minBytesToWarrantAMount);
   // TODO: we have out the mount policy parameters here temporarily we will
   // remove them once we know where to put them
 
@@ -373,7 +372,8 @@ public:
 
   /*============== Repack support ===========================================*/
   // Promotion of requests
-  void promoteRepackRequestsToToExpand(log::LogContext & lc);
+  void promoteRepackRequestsToToExpand(log::LogContext &lc,
+                                       size_t repackMaxRequestsToExpand);
   // Expansion support
   std::unique_ptr<RepackRequest> getNextRepackRequestToExpand();
   void expandRepackRequest(std::unique_ptr<RepackRequest> & repqckRequest, log::TimingList& , utils::Timer &, log::LogContext &);
@@ -452,7 +452,6 @@ private:
 
   const uint64_t m_minFilesToWarrantAMount;
   const uint64_t m_minBytesToWarrantAMount;
-  const uint64_t m_repackMaxToToExpand;
 
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
 };  // class Scheduler
