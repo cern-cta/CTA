@@ -36,6 +36,7 @@ public:
    * @param context optional context string added to the message
    * at initialisation time.
    * @param embedBacktrace whether to embed a backtrace of where the
+   * @param violatedConstraintName name of the db constraint that has been violated
    * exception was throw in the message
    */
   CheckConstraintError(const std::string &context,   const std::string &dbErrorMessage, const std::string &violatedConstraintName, const bool embedBacktrace = true);
