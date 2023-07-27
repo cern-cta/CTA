@@ -24,6 +24,7 @@ set (CTA_UNIT_TEST_LIBS
   ctacataloguecmdlineunittests
   ctacommon
   ctacommonunittests
+  ctafrontendcommonconfigunittests
   ctadaemonunittests
   ctaexceptionunittests
   ctamediachangerunittests
