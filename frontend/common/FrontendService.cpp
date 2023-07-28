@@ -171,7 +171,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_scheddb, 5, 2*1000*1000);
 
   // Initialise the Frontend
-  auto archiveFileMaxSize = config.getOptionValueInt("cta.archivefile.max_size_gb");
+  auto archiveFileMaxSize = config.getOptionValueUInt("cta.archivefile.max_size_gb");
   // Convert archiveFileMaxSize from GB to bytes
   m_archiveFileMaxSize = archiveFileMaxSize.has_value() ?  static_cast<uint64_t>(archiveFileMaxSize.value()) * 1024 * 1024 * 1024 : 0;
 

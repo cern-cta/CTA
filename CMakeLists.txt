@@ -148,6 +148,7 @@ ELSE(DEFINED PackageOnly)
   add_subdirectory(cmdline)
   add_subdirectory(xroot_plugins)
   add_subdirectory(frontend-grpc)
+  add_subdirectory(frontend/common)
 
   add_subdirectory(catalogue)
   add_subdirectory(common)
