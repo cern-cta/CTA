@@ -92,16 +92,21 @@ int rmc_main(const char *const robot)
 		strcat (localhost, domainname);
 	}
 
-	if (*robot == '\0' ||
-	    (strlen (robot) + (*robot == '/') ? 0 : 5) > CA_MAXRBTNAMELEN) {
-		rmc_logit (func, RMC06, "robot");
-		exit (USERR);
+	if(*robot == '\0') {
+		rmc_logit(func, RMC06, "robot");
+		exit(USERR);
 	}
-	if (*robot == '/')
-		strcpy (extended_robot_info.smc_ldr, robot);
-	else
-		snprintf(extended_robot_info.smc_ldr, CA_MAXRBTNAMELEN+1, "/dev/%s", robot);
 
+	extended_robot_info.smc_ldr[CA_MAXRBTNAMELEN] = '\0';
+	if(*robot == '/') {
+		strncpy(extended_robot_info.smc_ldr, robot, CA_MAXRBTNAMELEN+1);
+        } else {
+		snprintf(extended_robot_info.smc_ldr, CA_MAXRBTNAMELEN+1, "/dev/%s", robot);
+	}
+	if(extended_robot_info.smc_ldr[CA_MAXRBTNAMELEN] != '\0') {
+		rmc_logit(func, RMC06, "robot");
+		exit(USERR);
+	}
 	extended_robot_info.smc_fd = -1;
 
 	/* get robot geometry */

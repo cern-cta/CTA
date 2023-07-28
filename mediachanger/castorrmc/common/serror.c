@@ -603,8 +603,9 @@ int sstrerror_r(const int n, char *const buf, const size_t buflen) {
 
   }
 
-  if ( tmpstr != NULL ) {
-    strncpy(buf,tmpstr,buflen-1);
+  if(tmpstr != NULL) {
+    strncpy(buf,tmpstr,buflen);
+    buf[buflen-1] = '\0';
   } else {
     /*
      * Unknown error message

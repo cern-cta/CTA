@@ -22,7 +22,6 @@
 #include "tapeserver/castor/tape/tapeserver/SCSI/Structures.hpp"
 #include "common/Constants.hpp"
 
-
 namespace castor {
 namespace tape {
 /**
@@ -33,29 +32,24 @@ namespace tapeFile {
  * OSM tape
  */
 namespace osm {
-/**
- *
- */
+
 struct LIMITS {
 public:
   static const uint64_t MVOLMAGIC = 0x070460;
-  static const size_t LABELVERSIONLEN = 9;  // label version string
-  static const size_t VOLNAMELEN = 16;      // volume name
-  static const size_t CIDLEN = 33;          // client id length
-  static const size_t MAXMRECSIZE = 32768;  // half of label block
+  static const size_t LABELVERSIONLEN = 9;       //!< label version string
+  static const size_t VOLNAMELEN = 15;           //!< volume name
+  static const size_t CIDLEN = 33;               //!< client id length
+  static const size_t MAXMRECSIZE = 32768;       //!< half of label block
   static const size_t MMAXCHK = 2048;
 
 // prevent the generation of default public constructor and destructor
-protected:
+private:
   LIMITS() = default;
   ~LIMITS() = default;
-private:
   LIMITS(LIMITS const&) = default;
   LIMITS& operator=(LIMITS const&) = default;
 };
-/**
- *
- */
+
 class LABEL {
 public:
   LABEL();
@@ -65,7 +59,7 @@ public:
     return m_tcRawLabel;
   }
 
-  void decode();  // can throw
+  void decode(); // can throw
 
   void encode(uint64_t ulCreateTime, uint64_t ulExpireTime, uint64_t ulRecSize, uint64_t ulVolId,
               const std::string& strVolName, const std::string& strOwner, const std::string& strVersion); // can throw
@@ -106,7 +100,7 @@ public:
 protected:
   char m_tcOwner[LIMITS::CIDLEN];
   char m_tcVersion[LIMITS::LABELVERSIONLEN];
-  char m_tcName[LIMITS::VOLNAMELEN];
+  char m_tcName[LIMITS::VOLNAMELEN+1];
   char m_tcRawLabel[2 * LIMITS::MAXMRECSIZE];
   uint64_t m_ulCreateTime;
   uint64_t m_ulExpireTime;
@@ -114,7 +108,7 @@ protected:
   uint64_t m_ulVolId;
 };
 
-} /* namespace osm */
-} /* namespace tapeFile */
-} /* namespace tape */
-}/* namespace castor */
+} // namespace osm
+} // namespace tapeFile
+} // namespace tape
+} // namespace castor

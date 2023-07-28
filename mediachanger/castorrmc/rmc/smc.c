@@ -435,7 +435,6 @@ int main(const int argc,
 	int errflg = 0;
 	const int fd = -1;
 	const int invert = 0;
-	int n;
 	int nbelem = 0;
 	char qry_type = 0;
 	char req_type = 0;
@@ -521,14 +520,14 @@ int main(const int argc,
 			}
 			break;
 		case 'V':	/* vid */
-			n = strlen (optarg);
-			if (n > 6) {
+			vid[sizeof(vid)-1] = '\0';
+			strncpy(vid, optarg, sizeof(vid));
+			if(vid[sizeof(vid)-1] != '\0') {
 				fprintf (stderr, SR004, optarg);
 				errflg++;
-			} else {
-				strcpy (vid, optarg);
-				smc_str_upper (vid);
+				vid[sizeof(vid)-1] = '\0';
 			}
+			smc_str_upper(vid);
 			break;
                 case 'j':
                         isJsonEnabled = 1;

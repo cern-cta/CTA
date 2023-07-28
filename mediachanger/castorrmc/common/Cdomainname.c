@@ -50,16 +50,15 @@ int Cdomainname(char *name, int namelen)
 			    strncmp (line, "search", 6) == 0) && line[6] == ' ') {
 				fclose (fd);
 				p = line + 6;
-				while (*p == ' ')
-					p++;
-				if (*p)
-					*(p + strlen (p) - 1) = '\0';
-				if ((int)strlen (p) > namelen) {
+				while(*p == ' ') p++;
+				if(*p != '\0') *(p+strlen(p)-1) = '\0';
+				name[namelen] = '\0';
+				strncpy(name, p, namelen+1);
+				if(name[namelen] != '\0') {
 					serrno = EINVAL;
-					return (-1);
+					return -1;
 				}
-				strcpy (name, p);
-				return (0);
+				return 0;
 			}
 		}
 		fclose (fd);
@@ -99,12 +98,13 @@ int Cdomainname(char *name, int namelen)
 				if ((p = strchr (hp2->h_name, '.')) != NULL) {
 					free (haddrarray);
 					p++;
-					if ((int)strlen (p) > namelen) {
+					name[namelen] = '\0';
+					strncpy(name, p, namelen+1);
+					if(name[namelen] != '\0') {
 						serrno = EINVAL;
-						return (-1);
+						return -1;
 					}
-					strcpy (name, p);
-					return (0);
+					return 0;
 				}
 
 				/* Look for aliases */
@@ -114,12 +114,13 @@ int Cdomainname(char *name, int namelen)
 					if ((p = strchr (*hal, '.')) != NULL) {
 						free (haddrarray);
 						p++;
-						if ((int)strlen (p) > namelen) {
+						name[namelen-1] = '\0';
+						strncpy(name, p, namelen);
+						if(name[namelen-1] != '\0') {
 							serrno = EINVAL;
-							return (-1);
+							return -1;
 						}
-						strcpy (name, p);
-						return (0);
+						return 0;
 					}
 					hal++;
 				}
