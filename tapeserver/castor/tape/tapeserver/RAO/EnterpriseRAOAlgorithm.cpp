@@ -29,7 +29,7 @@ EnterpriseRAOAlgorithm::EnterpriseRAOAlgorithm(castor::tape::tapeserver::drive::
 EnterpriseRAOAlgorithm::~EnterpriseRAOAlgorithm() {
 }
 
-std::vector<uint64_t> EnterpriseRAOAlgorithm::performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob> >& jobs) {
+std::vector<uint64_t> EnterpriseRAOAlgorithm::performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs) {
   cta::utils::Timer totalTimer;
   std::vector<uint64_t> raoOrder;
   uint64_t njobs = jobs.size();
@@ -38,7 +38,12 @@ std::vector<uint64_t> EnterpriseRAOAlgorithm::performRAO(const std::vector<std::
   for (uint32_t i = 0; i < njobs; i++) {
     cta::RetrieveJob *job = jobs.at(i).get();
     castor::tape::SCSI::Structures::RAO::blockLims lims;
-    strncpy((char*)lims.fseq, std::to_string(i).c_str(), sizeof(i));
+    lims.fseq[sizeof(lims.fseq)-1] = '\0';
+    strncpy(reinterpret_cast<char*>(lims.fseq), std::to_string(i).c_str(), sizeof(lims.fseq));
+    if(lims.fseq[sizeof(lims.fseq)-1] != '\0') {
+      throw cta::exception::Exception("In EnterpriseRAOAlgorithm::performRAO: fSeq " + std::to_string(i) +
+                                      " too long for buffer length " + std::to_string(sizeof(lims.fseq)));
+    }
     lims.begin = job->selectedTapeFile().blockId;
     lims.end = job->selectedTapeFile().blockId + 8 +
                /* ceiling the number of blocks */

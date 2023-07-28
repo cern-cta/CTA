@@ -157,7 +157,6 @@ static int get_element_info(
 	int nb_sense_ret;
 	unsigned char *p;
 	unsigned char *page_end, *page_start;
-	unsigned char *q;
 	int rc = 0;
 	char sense[MAXSENSE];
         int pause_mode = 1;
@@ -247,14 +246,14 @@ static int get_element_info(
 			    (*(p+12) == '\0') || (*(p+12) == ' '))
 				element_info[i].name[0] = '\0';
 			else {
-				q = (unsigned char *) strchr ((char *)p+12, ' ');
-				if (q) {
-					strncpy (element_info[i].name, (char *)p+12, q-p-12);
-					element_info[i].name[q-p-12] = '\0';
-				} else
-					strcpy (element_info[i].name, (char *)p+12);
-				if (strlen (element_info[i].name) > CA_MAXVIDLEN)
-					element_info[i].name[CA_MAXVIDLEN] = '\0';
+				strncpy(element_info[i].name, (char*)p+12, CA_MAXVIDLEN+1);
+				// Truncate the VID to first 6 characters
+				element_info[i].name[CA_MAXVIDLEN] = '\0';
+				// Truncate again if it contains a space
+				char *q;
+				if((q = strchr(element_info[i].name, ' '))) {
+				  *q = '\0';
+				}
 			}
 		}
 	}
@@ -463,10 +462,9 @@ int smc_find_cartridge(
 	cdb[5] = 5;
 	cdb[9] = 40;
 	memset (plist, 0, sizeof(plist));
-	strncpy (plist, find_template, sizeof(plist));
-	strncat (plist, "*", sizeof(plist) - strlen(plist));
+	snprintf(plist, sizeof(plist), "%s*", find_template);
 
-       /* IBM library in pause mode  */
+        /* IBM library in pause mode  */
         while (pause_mode && nretries <= 900) {
           rc = rmc_send_scsi_cmd (fd, rbtdev, 0, cdb, 12, (unsigned char*)plist, 40,
                            sense, 38, SCSI_OUT, &nb_sense_ret, &msgaddr);

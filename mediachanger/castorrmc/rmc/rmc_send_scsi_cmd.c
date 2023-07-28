@@ -196,7 +196,7 @@ int rmc_send_scsi_cmd (
 	int procfd, nbread;
 	char procbuf[80];
 
-  (void)senselen;
+	(void)senselen;
 	/* First the value in /proc of the max buffer size for the sg driver */
 	procfd = open("/proc/scsi/sg/def_reserved_size", O_RDONLY);
 	if (procfd >= 0) {
@@ -232,7 +232,14 @@ int rmc_send_scsi_cmd (
 	}
 	if (do_not_open) {
 		fd = tapefd;
+		sgpath[SGPATH_BUFSZ-1] = '\0';
 		strncpy(sgpath, path, SGPATH_BUFSZ);
+		if(sgpath[SGPATH_BUFSZ-1] != '\0') {
+			snprintf(rmc_err_msgbuf, RMC_ERR_MSG_BUFSZ, "path exceeds maximum length");
+			*msgaddr = rmc_err_msgbuf;
+			serrno = ENOBUFS;
+			return -1;
+		}
 	} else {
 		if (stat (path, &sbuf) < 0) {
 			serrno = errno;
@@ -246,7 +253,14 @@ int rmc_send_scsi_cmd (
 		if (stat("/dev/sg0", &sbufa) == 0 && major(sbuf.st_rdev) == major(sbufa.st_rdev)) {
 		  /* If the major device ID of the specified device is the same as the major device ID of sg0,
                    * we can use the path directly */
+		  sgpath[SGPATH_BUFSZ-1] = '\0';
 		  strncpy(sgpath, path, SGPATH_BUFSZ);
+		  if(sgpath[SGPATH_BUFSZ-1] != '\0') {
+		    snprintf(rmc_err_msgbuf, RMC_ERR_MSG_BUFSZ, "path exceeds maximum length");
+		    *msgaddr = rmc_err_msgbuf;
+		    serrno = ENOBUFS;
+		    return -1;
+		  }
 		} else {
 		  /* Otherwise, look up the path using the (major,minor) device ID. If no match is found,
                    * sgpath is set to an empty string */

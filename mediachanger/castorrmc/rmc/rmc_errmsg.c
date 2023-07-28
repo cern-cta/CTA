@@ -52,10 +52,9 @@ int rmc_errmsg(char *func, char *msg, ...)
 		*prtbuf = '\0';
 	vsprintf (prtbuf + strlen(prtbuf), msg, args);
 	if (errbufp) {
-		if ((int)strlen (prtbuf) < errbuflen) {
-			strcpy (errbufp, prtbuf);
-		} else {
-			strncpy (errbufp, prtbuf, errbuflen - 2);
+		errbufp[errbuflen-1] = '\0';
+		strncpy(errbufp, prtbuf, errbuflen);
+		if(errbufp[errbuflen-1] != '\0') {
 			errbufp[errbuflen-2] = '\n';
 			errbufp[errbuflen-1] = '\0';
 		}

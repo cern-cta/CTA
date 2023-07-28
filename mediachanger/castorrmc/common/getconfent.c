@@ -57,7 +57,7 @@ static char *getconfent_r(const char *filename,
       }
     }
 
-    strncpy (path_config, filename, CA_MAXPATHLEN);
+    strncpy(path_config, filename, CA_MAXPATHLEN+1);
     /* Who knows */
     path_config[CA_MAXPATHLEN] = '\0';
 

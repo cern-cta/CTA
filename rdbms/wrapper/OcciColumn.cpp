@@ -130,22 +130,21 @@ ub2 OcciColumn::getMaxFieldLength() const {
 //------------------------------------------------------------------------------
 // copyStrIntoField
 //------------------------------------------------------------------------------
-void OcciColumn::copyStrIntoField(const size_t index, const std::string &str) {
+void OcciColumn::copyStrIntoField(const size_t index, const std::string& str) {
   try {
-    const size_t strLenIncludingNull = str.length() + 1;
-    if(strLenIncludingNull > m_maxFieldLength) {
+    char* const buf = getBuffer();
+    char* const element = buf + index * m_maxFieldLength;
+
+    element[m_maxFieldLength-1] = '\0';
+    strncpy(element, str.c_str(), m_maxFieldLength);
+    if(element[m_maxFieldLength-1] != '\0') {
       exception::Exception ex;
-      ex.getMessage() << "String length including the null terminator is greater than the maximum field length:"
-        " strLenIncludingNull=" << strLenIncludingNull << " maxFieldLength=" << m_maxFieldLength;
+      ex.getMessage() << "String length including the null terminator is greater than the maximum field length: strLenIncludingNull="
+                      << str.length()+1 << " maxFieldLength=" << m_maxFieldLength;
       throw ex;
     }
-    char *const buf = getBuffer();
-    char *const element = buf + index * m_maxFieldLength;
-    strncpy(element, str.c_str(), m_maxFieldLength);
-    element[m_maxFieldLength - 1] = '\0';
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: colName=" + m_colName + ": " +
-      ex.getMessage().str());
+  } catch(exception::Exception& ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: colName=" + m_colName + ": " + ex.getMessage().str());
   }
 }
 

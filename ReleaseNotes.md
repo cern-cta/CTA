@@ -18,6 +18,7 @@
 - cta/CTA#436 - Removes XrootC2FSReadFile
 - cta/CTA#438 - Fixes code quality issues with CTA mediachanger
 - cta/CTA#441 - Use snprintf instead of sprintf
+- cta/CTA#443 - Harden string functions in C code
 
 ### Building and Packaging
 - cta/CTA#385 - Remove OpenSSL dependency
