@@ -59,7 +59,7 @@ static char *getconfent_r(const char *filename,
 
     strncpy(path_config, filename, CA_MAXPATHLEN+1);
     /* Who knows */
-    path_config[CA_MAXPATHLEN+1] = '\0';
+    path_config[CA_MAXPATHLEN] = '\0';
 
     if ((fp = fopen(path_config,"r")) == NULL) {
         serrno = SENOCONFIG;
