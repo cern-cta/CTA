@@ -5,8 +5,10 @@
 This script will build the docker image that will be used to build Eos.
 
 ```bash
-./prepare_eos_builder.sh
+./prepare_eos_builder.sh <eos_version>
 ```
+
+The `<eos_version>` is the version of Eos to build. It can be `master` or a tag name like `5.0.0`.
 
 #### 2. Build Eos
 
