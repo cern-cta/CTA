@@ -55,7 +55,7 @@ public:
   LABEL();
   ~LABEL() = default;
 
-  inline char* rawLabel() {
+  char* rawLabel() {
     return m_tcRawLabel;
   }
 
@@ -64,33 +64,33 @@ public:
   void encode(uint64_t ulCreateTime, uint64_t ulExpireTime, uint64_t ulRecSize, uint64_t ulVolId,
               const std::string& strVolName, const std::string& strOwner, const std::string& strVersion); // can throw
 
-  inline std::string owner() {
+  std::string owner() {
     return std::string(m_tcOwner);
   }
-  inline std::string version() {
+  std::string version() {
     return std::string(m_tcVersion);
   }
-  inline std::string name() const {
+  std::string name() const {
     // Returns truncated name of the label
     return std::string(m_tcName, cta::CA_MAXVIDLEN);
   }
-  inline uint64_t createTime() {
+  uint64_t createTime() {
     return m_ulCreateTime;
   }
-  inline uint64_t expireTime() {
+  uint64_t expireTime() {
     return m_ulExpireTime;
   }
-  inline uint64_t recSize() {
+  uint64_t recSize() {
     return m_ulRecSize;
   }
-  inline uint64_t volId() {
+  uint64_t volId() {
     return m_ulVolId;
   }
 
   /**
-   * @return the logic block protection method
+   * @return the logical block protection method
    */
-  inline uint8_t getLBPMethod() const {
+  uint8_t getLBPMethod() const {
     // SCSI::logicBlockProtectionMethod::DoNotUse
     // SCSI::logicBlockProtectionMethod::ReedSolomon
     // SCSI::logicBlockProtectionMethod::CRC32C

@@ -25,7 +25,9 @@
 #include <unistd.h>
 #include "rmc_constants.h"
 #include "rmc_logit.h"
-extern int jid;
+
+/* Set in rmc_serv.c */
+extern int g_jid;
 
 int rmc_logit(const char *const func, const char *const msg, ...)
 {
@@ -41,7 +43,7 @@ int rmc_logit(const char *const func, const char *const msg, ...)
 	time (&current_time);		/* Get current time */
 	tm = localtime (&current_time);
 	snprintf (prtbuf, RMC_PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1,
-		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, jid, func);
+		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, g_jid, func);
 	vsprintf (prtbuf+strlen(prtbuf), msg, args);
 	va_end (args);
 	fd_log = open("/var/log/cta/cta-rmcd.log", O_WRONLY | O_CREAT | O_APPEND, 0664);

@@ -41,7 +41,7 @@ size_t marshal(char *const dst, const size_t dstLen, const RmcMountMsgBody &src)
   const uint32_t bodyLen =
     sizeof(src.uid) +
     sizeof(src.gid) +
-    strlen(src.unusedLoader) + 1 +
+    sizeof(src.unusedLoader) +
     strlen(src.vid) + 1 +
     sizeof(src.side) +
     sizeof(src.drvOrd);
@@ -142,7 +142,7 @@ size_t marshal(char *const dst, const size_t dstLen, const RmcUnmountMsgBody &sr
   const uint32_t bodyLen =
     sizeof(src.uid) +
     sizeof(src.gid) +
-    strlen(src.unusedLoader) + 1 +
+    sizeof(src.unusedLoader) +
     strlen(src.vid) + 1 +
     sizeof(src.drvOrd) +
     sizeof(src.force);

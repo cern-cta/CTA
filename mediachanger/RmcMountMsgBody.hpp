@@ -30,7 +30,7 @@ namespace mediachanger {
 struct RmcMountMsgBody {
   uint32_t uid;
   uint32_t gid;
-  char unusedLoader[1]; // Should always be set to the emtpy string
+  char unusedLoader[1]; // Should always be set to the empty string
   char vid[CA_MAXVIDLEN + 1];
   uint16_t side;
   uint16_t drvOrd;

@@ -49,18 +49,18 @@
 #define PATH_CONF "/etc/cta/cta-rmcd.conf"
 
 /* Forward declaration */
-static int rmc_getreq(const int s, int *const req_type, char *const req_data,
-  char **const clienthost);
-static void rmc_procreq(const int rpfd, const int req_type, char *const req_data,
-  char *const clienthost);
-static int rmc_dispatchRqstHandler(const int req_type,
-  const struct rmc_srv_rqst_context *const rqst_context);
+static int rmc_getreq(const int s, int *const req_type, char *const req_data, char **const clienthost);
+static void rmc_procreq(const int rpfd, const int req_type, char *const req_data, char *const clienthost);
+static int rmc_dispatchRqstHandler(const int req_type, const struct rmc_srv_rqst_context *const rqst_context);
 static void rmc_doit(const int rpfd);
 
-int jid;
-char localhost[CA_MAXHOSTNAMELEN+1];
-int maxfds;
-struct extended_robot_info extended_robot_info;
+/* extern globals */
+int g_jid;
+struct extended_robot_info g_extended_robot_info;
+
+/* globals with file scope */
+char g_localhost[CA_MAXHOSTNAMELEN+1];
+int g_maxfds;
 
 int rmc_main(const char *const robot)
 {
@@ -80,16 +80,21 @@ int rmc_main(const char *const robot)
 	strncpy (func, "rmc_serv", sizeof(func));
 	func[sizeof(func) - 1] = '\0';
 
-	jid = getpid();
+	g_jid = getpid();
 	rmc_logit (func, "started\n");
 
-	gethostname (localhost, CA_MAXHOSTNAMELEN+1);
-	if (strchr (localhost, '.') == NULL) {
-		if (Cdomainname (domainname, sizeof(domainname)) < 0) {
-			rmc_logit (func, "Unable to get domainname\n");
+	char localhost[CA_MAXHOSTNAMELEN+1];
+	gethostname(localhost, CA_MAXHOSTNAMELEN+1);
+	localhost[CA_MAXHOSTNAMELEN] = '\0';
+	if(strchr(localhost, '.') != NULL) {
+		strncpy(g_localhost, localhost, CA_MAXHOSTNAMELEN+1);
+	} else {
+		if(Cdomainname(domainname, sizeof(domainname)) < 0) {
+			rmc_logit(func, "Unable to get domainname\n");
 		}
-		strcat (localhost, ".");
-		strcat (localhost, domainname);
+		if(snprintf(g_localhost, CA_MAXHOSTNAMELEN+1, "%s.%s", localhost, domainname) != 0) {
+			rmc_logit(func, "localhost.domainname exceeds maximum length\n");
+		}
 	}
 
 	if(*robot == '\0') {
@@ -97,17 +102,17 @@ int rmc_main(const char *const robot)
 		exit(USERR);
 	}
 
-	extended_robot_info.smc_ldr[CA_MAXRBTNAMELEN] = '\0';
+	g_extended_robot_info.smc_ldr[CA_MAXRBTNAMELEN] = '\0';
 	if(*robot == '/') {
-		strncpy(extended_robot_info.smc_ldr, robot, CA_MAXRBTNAMELEN+1);
+		strncpy(g_extended_robot_info.smc_ldr, robot, CA_MAXRBTNAMELEN+1);
         } else {
-		snprintf(extended_robot_info.smc_ldr, CA_MAXRBTNAMELEN+1, "/dev/%s", robot);
+		snprintf(g_extended_robot_info.smc_ldr, CA_MAXRBTNAMELEN+1, "/dev/%s", robot);
 	}
-	if(extended_robot_info.smc_ldr[CA_MAXRBTNAMELEN] != '\0') {
+	if(g_extended_robot_info.smc_ldr[CA_MAXRBTNAMELEN] != '\0') {
 		rmc_logit(func, RMC06, "robot");
 		exit(USERR);
 	}
-	extended_robot_info.smc_fd = -1;
+	g_extended_robot_info.smc_fd = -1;
 
 	/* get robot geometry */
 	{
@@ -118,9 +123,9 @@ int rmc_main(const char *const robot)
                         rmc_logit (func,
                                 "Trying to get geometry of tape library"
                                 ": attempt_nb=%d\n", attempt_nb);
-			c = smc_get_geometry (extended_robot_info.smc_fd,
-				extended_robot_info.smc_ldr,
-				&extended_robot_info.robot_info);
+			c = smc_get_geometry (g_extended_robot_info.smc_fd,
+				g_extended_robot_info.smc_ldr,
+				&g_extended_robot_info.robot_info);
 
 			if(0 == c) {
                                 rmc_logit (func,
@@ -186,7 +191,7 @@ int rmc_main(const char *const robot)
 		memcpy (&readfd, &readmask, sizeof(readmask));
 		timeval.tv_sec = RMC_CHECKI;
 		timeval.tv_usec = 0;
-		if (select (maxfds, &readfd, (fd_set *)0, (fd_set *)0, &timeval) < 0) {
+		if (select (g_maxfds, &readfd, (fd_set *)0, (fd_set *)0, &timeval) < 0) {
 			FD_ZERO (&readfd);
 		}
 	}
@@ -280,7 +285,7 @@ int main(const int argc,
 	}
 
 	if(run_rmcd_in_background(argc, argv)) {
-		if ((maxfds = Cinitdaemon ("rmcd", NULL)) < 0) {
+		if ((g_maxfds = Cinitdaemon ("rmcd", NULL)) < 0) {
 			exit (SYERR);
 		}
 	}
@@ -364,7 +369,7 @@ static void rmc_procreq(
 {
 	struct rmc_srv_rqst_context rqst_context;
 
-	rqst_context.localhost = localhost;
+	rqst_context.localhost = g_localhost;
 	rqst_context.rpfd = rpfd;
 	rqst_context.req_data = req_data;
 	rqst_context.clienthost = clienthost;

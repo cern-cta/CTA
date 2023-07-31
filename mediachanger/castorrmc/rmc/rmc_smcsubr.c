@@ -385,11 +385,8 @@ int smc_find_cartridgeWithoutSendVolumeTag (
 	strncpy(func, "findWithoutVT", sizeof(func));
 	func[sizeof(func) - 1] = '\0';
 
-	{
-		const int smc_get_geometry_rc = smc_get_geometry (fd, rbtdev, &robot_info);
-		if(smc_get_geometry_rc) {
-			return smc_get_geometry_rc;
-		}
+	if(smc_get_geometry (fd, rbtdev, &robot_info) != 0) {
+		return -1;
 	}
 
 	tot_nbelem = robot_info.transport_count + robot_info.slot_count +
@@ -400,13 +397,13 @@ int smc_find_cartridgeWithoutSendVolumeTag (
 		snprintf(err_msgbuf, ERR_MSG_BUFSZ, "malloc error: %s", strerror(errno));
 		msgaddr = err_msgbuf;
 		save_error (-1, 0, NULL, msgaddr);
-		return (-1);
+		return -1;
 	}
 
 	nbElementsInReport = smc_read_elem_status (fd, rbtdev, type, start, tot_nbelem, inventory_info);
 	if(0 > nbElementsInReport) {
 		free (inventory_info);
-		return (nbElementsInReport);
+		return nbElementsInReport;
 	}
 	for (i = 0 ; i < nbElementsInReport && nbFound < nbelem; i++) {
 		if (inventory_info[i].state & 0x1) {
@@ -427,9 +424,8 @@ int smc_find_cartridgeWithoutSendVolumeTag (
 		}
 	}
 	free (inventory_info);
-	return (nbFound);
+	return nbFound;
 }
-
 
 int smc_find_cartridge(
 	const int fd,
@@ -939,8 +935,8 @@ int smc_mount (
 	const char *const vid,
 	const int invert)
 {
-    int c;
-    struct smc_element_info element_info;
+	int c;
+	struct smc_element_info element_info;
 	char func[16];
 	const char *msgaddr;
 	struct smc_status smc_status;
@@ -958,7 +954,6 @@ int smc_mount (
 		return (RBT_NORETRY);
 	}
 	if (element_info.element_type != 2) {
-
                 /* compare requested and replied vid   */
                 rmc_usrmsg ( rpfd, func, "Asked for %s, got reply for %s\n",
                         vid, element_info.name );
