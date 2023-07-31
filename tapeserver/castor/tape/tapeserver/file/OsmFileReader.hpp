@@ -49,10 +49,9 @@ public:
   /**
    *
    */
-  inline const CPIO& getCPIOHeader() const {
+  const CPIO& getCPIOHeader() const {
     return m_cpioHeader;
   }
-
 
 private:
   const size_t PAYLOAD_BOLCK_SIZE = 262144;

@@ -40,7 +40,7 @@ ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char *const *const argv) :
     help = true;
     return;
   }
-  if ((strlen(argv[1])) > CA_MAXVIDLEN) {
+  if(strnlen(argv[1], CA_MAXVIDLEN+1) > CA_MAXVIDLEN) {
     exception::CommandLineNotParsed ex;
     ex.getMessage() << "The vid is too long";
     throw ex;

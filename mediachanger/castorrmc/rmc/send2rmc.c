@@ -66,6 +66,7 @@ int send2rmc(
 	}
 	if (host && *host) {
 		strncpy(rmchost, host, CA_MAXHOSTNAMELEN+1);
+		rmchost[CA_MAXHOSTNAMELEN] = '\0';
 	} else {
 		gethostname (rmchost, CA_MAXHOSTNAMELEN+1);
 		serrno = 0;

@@ -35,10 +35,11 @@
 #include "rmc_smcsubr2.h"
 #include "rmc_sendrep.h"
 #include <string.h>
-extern struct extended_robot_info extended_robot_info;
 
-/*	rmc_srv_export - export/eject a cartridge from the robot */
+/* set in rmc_serv.c */
+extern struct extended_robot_info g_extended_robot_info;
 
+/* rmc_srv_export - export/eject a cartridge from the robot */
 int rmc_srv_export(const struct rmc_srv_rqst_context *const rqst_context) {
 	int c;
 	char func[16];
@@ -71,8 +72,8 @@ int rmc_srv_export(const struct rmc_srv_rqst_context *const rqst_context) {
 	snprintf (logbuf, CA_MAXVIDLEN+8, "export %s", vid);
 	rmc_logreq (func, logbuf);
 
-	c = smc_export (rqst_context->rpfd, extended_robot_info.smc_fd,
-          extended_robot_info.smc_ldr, &extended_robot_info.robot_info, vid);
+	c = smc_export (rqst_context->rpfd, g_extended_robot_info.smc_fd,
+          g_extended_robot_info.smc_ldr, &g_extended_robot_info.robot_info, vid);
 	if (c) c += ERMCRBTERR;
 	rmc_logit (func, "returns %d\n", c);
 	return c;
@@ -135,9 +136,9 @@ int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context) {
 		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
 	}
-	c = smc_find_cartridge (extended_robot_info.smc_fd,
-	    extended_robot_info.smc_ldr, template, type, startaddr,
-	    nbelem, element_info, &extended_robot_info.robot_info);
+	c = smc_find_cartridge (g_extended_robot_info.smc_fd,
+	    g_extended_robot_info.smc_ldr, template, type, startaddr,
+	    nbelem, element_info, &g_extended_robot_info.robot_info);
 	if (c < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
 		free (element_info);
@@ -194,15 +195,15 @@ int rmc_srv_getgeom(const struct rmc_srv_rqst_context *const rqst_context) {
 	rmc_logreq (func, logbuf);
 
 	sbp = repbuf;
-	marshall_STRING (sbp, extended_robot_info.robot_info.inquiry);
-	marshall_LONG (sbp, extended_robot_info.robot_info.transport_start);
-	marshall_LONG (sbp, extended_robot_info.robot_info.transport_count);
-	marshall_LONG (sbp, extended_robot_info.robot_info.slot_start);
-	marshall_LONG (sbp, extended_robot_info.robot_info.slot_count);
-	marshall_LONG (sbp, extended_robot_info.robot_info.port_start);
-	marshall_LONG (sbp, extended_robot_info.robot_info.port_count);
-	marshall_LONG (sbp, extended_robot_info.robot_info.device_start);
-	marshall_LONG (sbp, extended_robot_info.robot_info.device_count);
+	marshall_STRING (sbp, g_extended_robot_info.robot_info.inquiry);
+	marshall_LONG (sbp, g_extended_robot_info.robot_info.transport_start);
+	marshall_LONG (sbp, g_extended_robot_info.robot_info.transport_count);
+	marshall_LONG (sbp, g_extended_robot_info.robot_info.slot_start);
+	marshall_LONG (sbp, g_extended_robot_info.robot_info.slot_count);
+	marshall_LONG (sbp, g_extended_robot_info.robot_info.port_start);
+	marshall_LONG (sbp, g_extended_robot_info.robot_info.port_count);
+	marshall_LONG (sbp, g_extended_robot_info.robot_info.device_start);
+	marshall_LONG (sbp, g_extended_robot_info.robot_info.device_count);
 	rmc_sendrep (rqst_context->rpfd, MSG_DATA, sbp - repbuf, repbuf);
 	rmc_logit (func, "returns %d\n", 0);
 	return 0;
@@ -242,8 +243,8 @@ int rmc_srv_import(const struct rmc_srv_rqst_context *const rqst_context) {
 	snprintf (logbuf, CA_MAXVIDLEN+8, "import %s", vid);
 	rmc_logreq (func, logbuf);
 
-	c = smc_import (rqst_context->rpfd, extended_robot_info.smc_fd,
-	  extended_robot_info.smc_ldr, &extended_robot_info.robot_info, vid);
+	c = smc_import (rqst_context->rpfd, g_extended_robot_info.smc_fd,
+	  g_extended_robot_info.smc_ldr, &g_extended_robot_info.robot_info, vid);
 	if (c) c += ERMCRBTERR;
 	rmc_logit (func, "returns %d\n", c);
 	return c;
@@ -287,8 +288,8 @@ int rmc_srv_mount(const struct rmc_srv_rqst_context *const rqst_context) {
 	snprintf (logbuf, CA_MAXVIDLEN+64, "mount %s/%d on drive %d", vid, invert, drvord);
 	rmc_logreq (func, logbuf);
 
-	c = smc_mount (rqst_context->rpfd, extended_robot_info.smc_fd,
-	  extended_robot_info.smc_ldr, &extended_robot_info.robot_info, drvord,
+	c = smc_mount (rqst_context->rpfd, g_extended_robot_info.smc_fd,
+	  g_extended_robot_info.smc_ldr, &g_extended_robot_info.robot_info, drvord,
 	  vid, invert);
 	if (c) c += ERMCRBTERR;
 	rmc_logit (func, "returns %d\n", c);
@@ -351,8 +352,8 @@ int rmc_srv_readelem(const struct rmc_srv_rqst_context *const rqst_context) {
 		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
 	}
-	if ((c = smc_read_elem_status (extended_robot_info.smc_fd,
-	    extended_robot_info.smc_ldr, type, startaddr, nbelem,
+	if ((c = smc_read_elem_status (g_extended_robot_info.smc_fd,
+	    g_extended_robot_info.smc_ldr, type, startaddr, nbelem,
 	    element_info)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
 		free (element_info);
@@ -417,8 +418,8 @@ int rmc_srv_unmount(const struct rmc_srv_rqst_context *const rqst_context) {
 	snprintf (logbuf, CA_MAXVIDLEN+64, "unmount %s %d %d", vid, drvord, force);
 	rmc_logreq (func, logbuf);
 
-	c = smc_dismount (rqst_context->rpfd, extended_robot_info.smc_fd,
-	  extended_robot_info.smc_ldr, &extended_robot_info.robot_info, drvord,
+	c = smc_dismount (rqst_context->rpfd, g_extended_robot_info.smc_fd,
+	  g_extended_robot_info.smc_ldr, &g_extended_robot_info.robot_info, drvord,
 	  force == 0 ? vid : "");
 	if (c) c += ERMCRBTERR;
 	rmc_logit (func, "returns %d\n", c);
