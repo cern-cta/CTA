@@ -181,13 +181,7 @@ TEST_P(cta_catalogue_LogicalLibraryTest, removePhysicalLibraryAssociatedWithLogi
     m_catalogue->PhysicalLibrary()->deletePhysicalLibrary(physicalLibrary.name);
   };
 
-  try {
-    shouldThrow();
-  } catch (cta::rdbms::ConstraintError& ex) {
-    std::cerr << "Msg:  " << ex.getMessageValue() << std::endl;
-    std::cerr << "What: " << ex.what() << std::endl;
-    std::cerr << "Cons: " << ex.getViolatedConstraintName() << std::endl;
-  }
+  ASSERT_THROW(shouldThrow(), cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_LogicalLibraryTest, setLogicalLibraryDisabled_true) {

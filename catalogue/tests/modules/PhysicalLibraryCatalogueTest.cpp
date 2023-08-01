@@ -158,15 +158,7 @@ TEST_P(cta_catalogue_PhysicalLibraryTest, addingSameNamePhysicalLibrary) {
     m_catalogue->PhysicalLibrary()->createPhysicalLibrary(m_admin, m_physicalLibrary1);
   };
 
-  try {
-    shouldThrow();
-  } catch (cta::rdbms::ConstraintError& ex) {
-    std::cerr << "Msg:  " << ex.getMessageValue() << std::endl;
-    std::cerr << "What: " << ex.what() << std::endl;
-    std::cerr << "Cons: " << ex.getViolatedConstraintName() << std::endl;
-  }
-  // TODO: Recover this after testing
-  //ASSERT_THROW(shouldThrow(), cta::exception::UserError);
+  ASSERT_THROW(shouldThrow(), cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_PhysicalLibraryTest, modifyNonExistentPhysicalLibrary) {

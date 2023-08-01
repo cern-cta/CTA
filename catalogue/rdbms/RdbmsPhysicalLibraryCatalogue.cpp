@@ -31,6 +31,7 @@
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/ConstraintError.hpp"
 #include "rdbms/UniqueConstraintError.hpp"
+#include "rdbms/IntegrityConstraintError.hpp"
 #include "rdbms/ConstraintInfo.hpp"
 
 namespace cta {
