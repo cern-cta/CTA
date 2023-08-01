@@ -50,6 +50,17 @@ struct PhysicalLibrary {
   PhysicalLibrary() = default;
 }; // struct PhysicalLibrary
 
+struct UpdatePhysicalLibrary {
+  std::string name;
+  std::optional<std::string> guiUrl;
+  std::optional<std::string> webcamUrl;
+  std::optional<std::string> location;
+  std::optional<uint64_t> nbPhysicalCartridgeSlots;
+  std::optional<uint64_t> nbAvailableCartridgeSlots;
+  std::optional<uint64_t> nbPhysicalDriveSlots;
+  std::optional<std::string> comment;
+}; // struct PhysicalLibrary
+
 } // namespace dataStructures
 } // namespace common
 } // namespace cta

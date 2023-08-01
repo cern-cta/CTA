@@ -22,7 +22,7 @@
 #include "rdbms/NullDbValue.hpp"
 #include "rdbms/PrimaryKeyError.hpp"
 #include "rdbms/StmtTest.hpp"
-#include "rdbms/UniqueError.hpp"
+#include "rdbms/UniqueConstraintError.hpp"
 
 #include <gtest/gtest.h>
 
@@ -1046,7 +1046,7 @@ TEST_P(cta_rdbms_StmtTest, insert_same_primary_twice) {
     case Login::DBTYPE_IN_MEMORY:
     case Login::DBTYPE_ORACLE:
     case Login::DBTYPE_POSTGRESQL:
-      ASSERT_THROW(stmt.executeNonQuery(), UniqueError);
+      ASSERT_THROW(stmt.executeNonQuery(), UniqueConstraintError);
       break;
     default:
       ASSERT_THROW(stmt.executeNonQuery(), PrimaryKeyError);

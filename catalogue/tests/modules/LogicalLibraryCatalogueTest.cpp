@@ -28,6 +28,7 @@
 #include "common/dataStructures/PhysicalLibrary.hpp"
 #include "common/dataStructures/Tape.hpp"
 #include "common/exception/Exception.hpp"
+#include "rdbms/UniqueConstraintError.hpp"
 #include "common/log/LogContext.hpp"
 
 namespace unitTests {
@@ -165,6 +166,22 @@ TEST_P(cta_catalogue_LogicalLibraryTest, createLogicalLibrary_same_twice) {
     comment);
   ASSERT_THROW(m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName,
     logicalLibraryIsDisabled, physicalLibraryName, comment), cta::exception::UserError);
+}
+
+TEST_P(cta_catalogue_LogicalLibraryTest, removePhysicalLibraryAssociatedWithLogicalLibrary) {
+  const std::string logicalLibraryName = "logical_library";
+  const std::string comment = "Create logical library";
+  const bool logicalLibraryIsDisabled= false;
+  const auto physicalLibrary = CatalogueTestUtils::getPhysicalLibrary1();
+  m_catalogue->PhysicalLibrary()->createPhysicalLibrary(m_admin, physicalLibrary);
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibrary.name,
+                                                      comment);
+
+  auto shouldThrow = [this, physicalLibrary]() -> void {
+    m_catalogue->PhysicalLibrary()->deletePhysicalLibrary(physicalLibrary.name);
+  };
+
+  ASSERT_THROW(shouldThrow(), cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_LogicalLibraryTest, setLogicalLibraryDisabled_true) {
@@ -870,6 +887,5 @@ TEST_P(cta_catalogue_LogicalLibraryTest, createTape) {
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 }
-
 
 }  // namespace unitTests

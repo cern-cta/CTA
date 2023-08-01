@@ -565,7 +565,8 @@ const Option opt_diskinstancespace_alias      { Option::OPT_STR,      "--name", 
 const Option opt_verificationstatus           { Option::OPT_STR,      "--verificationstatus",        "--vs",   " <verification_status>" };
 const Option opt_disabledreason               { Option::OPT_STR,      "--disabledreason",            "--dr",   " <disabled_reason>" };
 const Option opt_archive_file_ids             { Option::OPT_STR_LIST, "--id",                        "-I",     " <archive_file_id>" };
-const Option opt_physical_library             { Option::OPT_STR,      "--physicallibrary",           "--pl",   " <physical_library>" };
+const Option opt_physical_library_alias       { Option::OPT_STR,      "--name",                      "-n",     " <physical_library_name>", "--physicallibrary"};
+const Option opt_physical_library             { Option::OPT_STR,      "--physicallibrary",           "--pl",   " <physical_library_name>", "--physicallibrary"};
 const Option opt_manufacturer                 { Option::OPT_STR,      "--manufacturer",              "--ma",   " <manufacturer>" };
 const Option opt_model                        { Option::OPT_STR,      "--model",                     "--mo",   " <model>" };
 const Option opt_type                         { Option::OPT_STR,      "--type",                      "-t",     " <type>" };
@@ -761,12 +762,12 @@ const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
       { opt_storageclass.optional(), opt_archive_file_ids, opt_fid.optional(), opt_diskinstance.optional() }},
       /*----------------------------------------------------------------------------------------------------*/
    {{ AdminCmd::CMD_PHYSICALLIBRARY,   AdminCmd::SUBCMD_ADD   },
-      { opt_physical_library, opt_manufacturer, opt_model, opt_type.optional(), opt_gui_url.optional(), opt_webcam_url.optional(), opt_location.optional(), opt_nb_physical_cartridge_slots,
+      { opt_physical_library_alias, opt_manufacturer, opt_model, opt_type.optional(), opt_gui_url.optional(), opt_webcam_url.optional(), opt_location.optional(), opt_nb_physical_cartridge_slots,
         opt_nb_available_cartridge_slots.optional(), opt_nb_physical_drive_slots ,opt_comment.optional() }},
    {{ AdminCmd::CMD_PHYSICALLIBRARY,   AdminCmd::SUBCMD_CH    },
-      { opt_physical_library, opt_gui_url.optional(), opt_webcam_url.optional(), opt_location.optional(), opt_nb_physical_cartridge_slots.optional(),
+      { opt_physical_library_alias, opt_gui_url.optional(), opt_webcam_url.optional(), opt_location.optional(), opt_nb_physical_cartridge_slots.optional(),
         opt_nb_available_cartridge_slots.optional(), opt_nb_physical_drive_slots.optional() ,opt_comment.optional() }},
-   {{ AdminCmd::CMD_PHYSICALLIBRARY,   AdminCmd::SUBCMD_RM    }, { opt_physical_library }},
+   {{ AdminCmd::CMD_PHYSICALLIBRARY,   AdminCmd::SUBCMD_RM    }, { opt_physical_library_alias }},
    {{ AdminCmd::CMD_PHYSICALLIBRARY,   AdminCmd::SUBCMD_LS    }, { }},
    /*----------------------------------------------------------------------------------------------------*/
 };

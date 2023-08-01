@@ -24,8 +24,6 @@
 #include "AdminCmd.hpp"
 #include "GrpcEndpoint.hpp"
 #include "PbException.hpp"
-#include "rdbms/ConstraintError.hpp"
-#include "rdbms/UniqueError.hpp"
 
 namespace cta {
 namespace frontend {
@@ -248,12 +246,6 @@ xrd::Response AdminCmd::process() {
     // Log the admin command
     logAdminCmd(__FUNCTION__, "success", "", t);
   } catch(exception::PbException& ex) {
-    logAdminCmd(__FUNCTION__, "failure", ex.what(), t);
-    throw ex;
-  } catch(cta::rdbms::UniqueError &ex) {
-    logAdminCmd(__FUNCTION__, "failure", ex.what(), t);
-    throw ex;
-  } catch(cta::rdbms::ConstraintError &ex) {
     logAdminCmd(__FUNCTION__, "failure", ex.what(), t);
     throw ex;
   } catch(exception::UserError& ex) {
@@ -1524,37 +1516,19 @@ void AdminCmd::processPhysicalLibrary_Add(xrd::Response& response) {
 void AdminCmd::processPhysicalLibrary_Ch(xrd::Response& response) {
   using namespace cta::admin;
 
-  const auto& name = getRequired(OptionString::PHYSICAL_LIBRARY);
+  common::dataStructures::UpdatePhysicalLibrary pl;
 
-  const auto guiUrl                    = getOptional(OptionString::GUI_URL);
-  const auto webcamUrl                 = getOptional(OptionString::WEBCAM_URL);
-  const auto location                  = getOptional(OptionString::LIBRARY_LOCATION);
-  const auto nbPhysicalCartridgeSlots  = getOptional(OptionUInt64::NB_PHYSICAL_CARTRIDGE_SLOTS);
-  const auto nbAvailableCartridgeSlots = getOptional(OptionUInt64::NB_AVAILABLE_CARTRIDGE_SLOTS);
-  const auto nbPhysicalDriveSlots      = getOptional(OptionUInt64::NB_PHYSICAL_DRIVE_SLOTS);
-  const auto comment                   = getOptional(OptionString::COMMENT);
+  pl.name = getRequired(OptionString::PHYSICAL_LIBRARY);
 
-  if (guiUrl) {
-    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryGuiUrl(m_cliIdentity, name, guiUrl.value());
-  }
-  if (webcamUrl) {
-    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryWebcamUrl(m_cliIdentity, name, webcamUrl.value());
-  }
-  if (location)  {
-    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryLocation(m_cliIdentity, name, location.value());
-  }
-  if (nbPhysicalCartridgeSlots) {
-    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryNbPhysicalCartridgeSlots(m_cliIdentity, name, nbPhysicalCartridgeSlots.value());
-  }
-  if (nbAvailableCartridgeSlots) {
-    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryNbAvailableCartridgeSlots(m_cliIdentity, name, nbAvailableCartridgeSlots.value());
-  }
-  if (nbPhysicalDriveSlots) {
-    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryNbPhysicalDriveSlots(m_cliIdentity, name, nbPhysicalDriveSlots.value());
-  }
-  if (comment) {
-    m_catalogue.PhysicalLibrary()->modifyPhysicalLibraryComment(m_cliIdentity, name, comment.value());
-  }
+  pl.guiUrl                    = getOptional(OptionString::GUI_URL);
+  pl.webcamUrl                 = getOptional(OptionString::WEBCAM_URL);
+  pl.location                  = getOptional(OptionString::LIBRARY_LOCATION);
+  pl.nbPhysicalCartridgeSlots  = getOptional(OptionUInt64::NB_PHYSICAL_CARTRIDGE_SLOTS);
+  pl.nbAvailableCartridgeSlots = getOptional(OptionUInt64::NB_AVAILABLE_CARTRIDGE_SLOTS);
+  pl.nbPhysicalDriveSlots      = getOptional(OptionUInt64::NB_PHYSICAL_DRIVE_SLOTS);
+  pl.comment                   = getOptional(OptionString::COMMENT);
+
+  m_catalogue.PhysicalLibrary()->modifyPhysicalLibrary(m_cliIdentity, pl);
 
   response.set_type(xrd::Response::RSP_SUCCESS);
 }

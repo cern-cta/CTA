@@ -15,23 +15,46 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "rdbms/UniqueError.hpp"
+#pragma once
+
+#include "common/exception/Exception.hpp"
+
+#include <string>
+
 
 namespace cta {
 namespace rdbms {
 
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-UniqueError::UniqueError(const std::string &context, const std::string &dbErrorMessage, const bool embedBacktrace):
-  ConstraintError(context, dbErrorMessage, embedBacktrace) {
-}
+/**
+ * A database constraint error.
+ */
+class DBException : public cta::exception::Exception {
+public:
 
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-UniqueError::~UniqueError() noexcept {
-}
+  /**
+   * Constructor.
+   *
+   * @param context optional context string added to the message
+   * at initialisation time.
+   * @param embedBacktrace whether to embed a backtrace of where the
+   * exception was throw in the message
+   */
+  DBException(const std::string &context = "", const std::string &dbErrorMessage="", const bool embedBacktrace = true);
+
+  /**
+   * Empty Destructor, explicitely non-throwing (needed for std::exception
+   * inheritance)
+   */
+  ~DBException() noexcept override;
+
+  /**
+   * Returns the raw error message generated bu the DB
+   */
+  std::string getDbErrorMessage() const;
+
+private:
+  std::string rawDbErrorMessage;
+}; // class DBException
 
 } // namespace rdbms
 } // namespace cta

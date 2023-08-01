@@ -18,9 +18,11 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/threading/MutexLocker.hpp"
+#include "common/utils/utils.hpp"
 #include "rdbms/CheckConstraintError.hpp"
 #include "rdbms/PrimaryKeyError.hpp"
-#include "rdbms/UniqueError.hpp"
+#include "rdbms/UniqueConstraintError.hpp"
+#include "rdbms/IntegrityConstraintError.hpp"
 #include "rdbms/wrapper/OcciColumn.hpp"
 #include "rdbms/wrapper/OcciConn.hpp"
 #include "rdbms/wrapper/OcciRset.hpp"
@@ -31,6 +33,7 @@
 #include <map>
 #include <sstream>
 #include <stdexcept>
+#include <regex>
 
 namespace cta {
 namespace rdbms {
@@ -275,11 +278,21 @@ void OcciStmt::executeNonQuery() {
       throw exception::LostDatabaseConnection(msg.str());
     }
 
+    std::regex rgx("\\([^\\.]*\\.(.*)\\)");
+    std::smatch match;
+    std::string whatStr = ex.what();
+    std::string violatedConstraint = std::regex_search(whatStr, match, rgx) ? std::string(match[1]) : "";
+    cta::utils::toUpper(violatedConstraint);
+
     switch(ex.getErrorCode()) {
     case 1:
-      throw UniqueError(msg.str(), ex.what());
+      throw UniqueConstraintError(msg.str(), ex.what(), violatedConstraint);
     case 2290:
-      throw CheckConstraintError(msg.str(), ex.what());
+      throw CheckConstraintError(msg.str(), ex.what(), violatedConstraint);
+    case 2291:
+      throw IntegrityConstraintError(msg.str(), ex.what(), violatedConstraint);
+    case 2292:
+      throw IntegrityConstraintError(msg.str(), ex.what(), violatedConstraint);
     default:
       throw exception::Exception(msg.str());
     }
