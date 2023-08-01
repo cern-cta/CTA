@@ -271,12 +271,11 @@ void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibrary(const common::dataStru
 
     if(!setClause.empty()) {
 
-      setClause += "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-                   "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-                   "LAST_UPDATE_TIME = :LAST_UPDATE_TIME ";
-
       std::string sql = "UPDATE PHYSICAL_LIBRARY SET ";
       sql += setClause;
+      sql += "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+             "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+             "LAST_UPDATE_TIME = :LAST_UPDATE_TIME ";
       sql += "WHERE PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
 
       auto conn = m_connPool->getConn();
