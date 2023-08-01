@@ -19,14 +19,17 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
+#include "common/utils/utils.hpp"
 #include "rdbms/CheckConstraintError.hpp"
-#include "rdbms/UniqueError.hpp"
+#include "rdbms/IntegrityConstraintError.hpp"
+#include "rdbms/UniqueConstraintError.hpp"
 
 #include <algorithm>
 #include <cstring>
 #include <iostream>
 #include <libpq-fe.h>
 #include <string>
+#include <regex>
 
 namespace cta {
 namespace rdbms {
@@ -53,12 +56,22 @@ public:
     std::string resstr;
     bool uniqueViolation = false;
     bool checkViolation = false;
+    bool integrityViolation = false;
+    bool foreignKeyViolation = false;
+    std::string violatedConstraint;
     if (nullptr != res) {
       resstr = "DB Result Status:" + std::to_string(PQresultStatus(res));
       const char *const e = PQresultErrorField(res, PG_DIAG_SQLSTATE);
+      const char *const m = PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY);
+      std::regex rgx("constraint\\s*\"([^\\s]*)\"");
+      std::smatch match;
+      std::string whatStr = (nullptr != m ? m : "");
+      violatedConstraint = std::regex_search(whatStr, match, rgx) ? std::string(match[1]) : "";
       if (nullptr != e && '\0' != *e) {
         uniqueViolation = 0 == std::strcmp("23505", e);
         checkViolation = 0 == std::strcmp("23514", e);
+        integrityViolation = 0 == std::strcmp("23000", e);
+        foreignKeyViolation = 0 == std::strcmp("23503", e);
         resstr += " SQLState:" + std::string(e);
       }
     }
@@ -90,14 +103,21 @@ public:
       }
     }
 
+    cta::utils::toUpper(violatedConstraint);
     if (badconn) {
       throw exception::LostDatabaseConnection(dbmsg);
     }
     if (uniqueViolation) {
-      throw UniqueError(dbmsg, pgstr);
+      throw UniqueConstraintError(dbmsg, pgstr, violatedConstraint);
     }
     if (checkViolation) {
-      throw CheckConstraintError(dbmsg, pgstr);
+      throw CheckConstraintError(dbmsg, pgstr, violatedConstraint);
+    }
+    if (integrityViolation) {
+      throw IntegrityConstraintError(dbmsg, pgstr, violatedConstraint);
+    }
+    if (foreignKeyViolation) {
+      throw IntegrityConstraintError(dbmsg, pgstr, violatedConstraint);
     }
     throw exception::Exception(dbmsg);
   }

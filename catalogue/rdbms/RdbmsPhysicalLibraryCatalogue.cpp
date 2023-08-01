@@ -30,7 +30,9 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/ConstraintError.hpp"
-#include "rdbms/UniqueError.hpp"
+#include "rdbms/UniqueConstraintError.hpp"
+#include "rdbms/IntegrityConstraintError.hpp"
+#include "rdbms/ConstraintInfo.hpp"
 
 namespace cta {
 namespace catalogue {
@@ -137,10 +139,16 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
     stmt.executeNonQuery();
   } catch(exception::UserError& ) {
     throw;
-  } catch(cta::rdbms::UniqueError& ex) {
-    throw ex;
+  } catch(cta::rdbms::UniqueConstraintError& ex) {
+    std::stringstream err_stream;
+    err_stream << "Cannot create physical library " << pl.name << " because of unique constraint: ";
+    err_stream << rdbms::ConstraintInfo::constraintViolationMessage(rdbms::ConstraintInfo::CREATE, ex.getViolatedConstraintName());
+    throw exception::UserError(err_stream.str());
   } catch(cta::rdbms::ConstraintError& ex) {
-    throw ex;
+    std::stringstream err_stream;
+    err_stream << "Cannot create physical library " << pl.name << ": ";
+    err_stream << rdbms::ConstraintInfo::constraintViolationMessage(rdbms::ConstraintInfo::CREATE, ex.getViolatedConstraintName());
+    throw exception::UserError(err_stream.str());
   } catch(exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
@@ -157,10 +165,22 @@ void RdbmsPhysicalLibraryCatalogue::deletePhysicalLibrary(const std::string& nam
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":PHYSICAL_LIBRARY_NAME", name);
     stmt.executeNonQuery();
-  } catch(exception::UserError& ) {
+
+    if(0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot delete physical library ") + name + " because it does not exist");
+    }
+  } catch(exception::UserError& ex) {
     throw;
-  } catch(cta::rdbms::ConstraintError &ex) {
-    throw;
+  } catch(cta::rdbms::IntegrityConstraintError& ex) {
+    std::stringstream err_stream;
+    err_stream << "Cannot delete physical library " << name << " because of integrity constraint: ";
+    err_stream << rdbms::ConstraintInfo::constraintViolationMessage(rdbms::ConstraintInfo::DELETE, ex.getViolatedConstraintName());
+    throw exception::UserError(err_stream.str());
+  } catch(cta::rdbms::ConstraintError& ex) {
+    std::stringstream err_stream;
+    err_stream << "Cannot delete physical library " << name << ": ";
+    err_stream << rdbms::ConstraintInfo::constraintViolationMessage(rdbms::ConstraintInfo::DELETE, ex.getViolatedConstraintName());
+    throw exception::UserError(err_stream.str());
   } catch(exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
@@ -237,225 +257,67 @@ std::list<common::dataStructures::PhysicalLibrary> RdbmsPhysicalLibraryCatalogue
   }
 }
 
-void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryGuiUrl(const common::dataStructures::SecurityIdentity& admin,
-  const std::string& name, const std::string& guiUrl) {
+void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibrary(const common::dataStructures::SecurityIdentity& admin, const common::dataStructures::UpdatePhysicalLibrary& pl) {
   try {
     const time_t now = time(nullptr);
-    const char *const sql =
-      "UPDATE PHYSICAL_LIBRARY SET "
-        "GUI_URL = :GUI_URL,"
-        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-      "WHERE "
-        "PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
-    auto conn = m_connPool->getConn();
-    auto stmt = conn.createStmt(sql);
-    stmt.bindString(":GUI_URL", guiUrl);
-    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
-    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
-    stmt.bindUint64(":LAST_UPDATE_TIME", now);
-    stmt.bindString(":PHYSICAL_LIBRARY_NAME", name);
-    stmt.executeNonQuery();
+    std::string setClause;
 
-    if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot modify physical library ") + name + " because it does not exist");
+    if(pl.guiUrl)                    setClause += "GUI_URL = :GUI_URL,";
+    if(pl.webcamUrl)                 setClause += "WEBCAM_URL = :WEBCAM_URL,";
+    if(pl.location)                  setClause += "PHYSICAL_LOCATION = :PHYSICAL_LOCATION,";
+    if(pl.nbPhysicalCartridgeSlots)  setClause += "NB_PHYSICAL_CARTRIDGE_SLOTS = :NB_PHYSICAL_CARTRIDGE_SLOTS,";
+    if(pl.nbAvailableCartridgeSlots) setClause += "NB_AVAILABLE_CARTRIDGE_SLOTS = :NB_AVAILABLE_CARTRIDGE_SLOTS,";
+    if(pl.nbPhysicalDriveSlots)      setClause += "NB_PHYSICAL_DRIVE_SLOTS = :NB_PHYSICAL_DRIVE_SLOTS,";
+    if(pl.comment)                   setClause += "USER_COMMENT = :USER_COMMENT,";
+
+    if(!setClause.empty()) {
+
+      std::string sql = "UPDATE PHYSICAL_LIBRARY SET ";
+      sql += setClause;
+      sql += "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+             "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+             "LAST_UPDATE_TIME = :LAST_UPDATE_TIME ";
+      sql += "WHERE PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
+
+      auto conn = m_connPool->getConn();
+      auto stmt = conn.createStmt(sql);
+
+      if(pl.guiUrl)                    stmt.bindString(":GUI_URL", pl.guiUrl.value());
+      if(pl.webcamUrl)                 stmt.bindString(":WEBCAM_URL", pl.webcamUrl.value());
+      if(pl.location)                  stmt.bindString(":PHYSICAL_LOCATION", pl.location.value());
+      if(pl.nbPhysicalCartridgeSlots)  stmt.bindUint64(":NB_PHYSICAL_CARTRIDGE_SLOTS", pl.nbPhysicalCartridgeSlots.value());
+      if(pl.nbAvailableCartridgeSlots) stmt.bindUint64(":NB_AVAILABLE_CARTRIDGE_SLOTS", pl.nbAvailableCartridgeSlots.value());
+      if(pl.nbPhysicalDriveSlots)      stmt.bindUint64(":NB_PHYSICAL_DRIVE_SLOTS", pl.nbPhysicalDriveSlots.value());
+      if(pl.comment) {
+        const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(pl.comment.value(), &m_log);
+        stmt.bindString(":USER_COMMENT", trimmedComment);
+      }
+
+      stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+      stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+      stmt.bindUint64(":LAST_UPDATE_TIME", now);
+      stmt.bindString(":PHYSICAL_LIBRARY_NAME", pl.name);
+
+      stmt.executeNonQuery();
+
+      if (0 == stmt.getNbAffectedRows()) {
+          throw exception::UserError(std::string("Cannot update physical library ") + pl.name + " because it does not exist");
+      }
+    } else {
+      throw exception::UserError(std::string("At least one value must be updated in physical library ") + pl.name);
     }
   } catch(exception::UserError& ) {
     throw;
-  } catch(exception::Exception& ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
-}
-
-void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryWebcamUrl(const common::dataStructures::SecurityIdentity& admin,
-  const std::string& name, const std::string& webcamUrl) {
-  try {
-    const time_t now = time(nullptr);
-    const char *const sql =
-      "UPDATE PHYSICAL_LIBRARY SET "
-        "WEBCAM_URL = :WEBCAM_URL,"
-        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-      "WHERE "
-        "PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
-    auto conn = m_connPool->getConn();
-    auto stmt = conn.createStmt(sql);
-    stmt.bindString(":WEBCAM_URL", webcamUrl);
-    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
-    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
-    stmt.bindUint64(":LAST_UPDATE_TIME", now);
-    stmt.bindString(":PHYSICAL_LIBRARY_NAME", name);
-    stmt.executeNonQuery();
-
-    if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot modify physical library ") + name + " because it does not exist");
-    }
-  } catch(exception::UserError& ) {
-    throw;
-  } catch(exception::Exception& ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
-}
-
-void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryLocation(const common::dataStructures::SecurityIdentity& admin,
-  const std::string& name, const std::string& location) {
-  try {
-    const time_t now = time(nullptr);
-    const char *const sql =
-      "UPDATE PHYSICAL_LIBRARY SET "
-        "PHYSICAL_LOCATION = :PHYSICAL_LOCATION,"
-        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-      "WHERE "
-        "PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
-    auto conn = m_connPool->getConn();
-    auto stmt = conn.createStmt(sql);
-    stmt.bindString(":PHYSICAL_LOCATION", location);
-    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
-    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
-    stmt.bindUint64(":LAST_UPDATE_TIME", now);
-    stmt.bindString(":PHYSICAL_LIBRARY_NAME", name);
-    stmt.executeNonQuery();
-
-    if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot modify physical library ") + name + " because it does not exist");
-    }
-  } catch(exception::UserError& ) {
-    throw;
-  } catch(exception::Exception& ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
-}
-
-void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryNbPhysicalCartridgeSlots(const common::dataStructures::SecurityIdentity& admin,
-  const std::string& name, const uint64_t& nbPhysicalCartridgeSlots) {
-  try {
-    const time_t now = time(nullptr);
-    const char *const sql =
-      "UPDATE PHYSICAL_LIBRARY SET "
-        "NB_PHYSICAL_CARTRIDGE_SLOTS = :NB_PHYSICAL_CARTRIDGE_SLOTS,"
-        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-      "WHERE "
-        "PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
-    auto conn = m_connPool->getConn();
-    auto stmt = conn.createStmt(sql);
-    stmt.bindUint64(":NB_PHYSICAL_CARTRIDGE_SLOTS", nbPhysicalCartridgeSlots);
-    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
-    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
-    stmt.bindUint64(":LAST_UPDATE_TIME", now);
-    stmt.bindString(":PHYSICAL_LIBRARY_NAME", name);
-    stmt.executeNonQuery();
-
-    if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot modify physical library ") + name + " because it does not exist");
-    }
-  } catch(exception::UserError& ) {
-    throw;
-  } catch(exception::Exception& ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
-}
-
-void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryNbAvailableCartridgeSlots(const common::dataStructures::SecurityIdentity& admin,
-  const std::string& name, const uint64_t& nbAvailableCartridgeSlots) {
-  try {
-    const time_t now = time(nullptr);
-    const char *const sql =
-      "UPDATE PHYSICAL_LIBRARY SET "
-        "NB_AVAILABLE_CARTRIDGE_SLOTS = :NB_AVAILABLE_CARTRIDGE_SLOTS,"
-        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-      "WHERE "
-        "PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
-    auto conn = m_connPool->getConn();
-    auto stmt = conn.createStmt(sql);
-    stmt.bindUint64(":NB_AVAILABLE_CARTRIDGE_SLOTS", nbAvailableCartridgeSlots);
-    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
-    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
-    stmt.bindUint64(":LAST_UPDATE_TIME", now);
-    stmt.bindString(":PHYSICAL_LIBRARY_NAME", name);
-    stmt.executeNonQuery();
-
-    if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot modify physical library ") + name + " because it does not exist");
-    }
-  } catch(exception::UserError& ) {
-    throw;
-  } catch(exception::Exception& ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
-}
-
-void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryNbPhysicalDriveSlots(const common::dataStructures::SecurityIdentity& admin,
-  const std::string& name, const uint64_t& nbPhysicalDriveSlots) {
-  try {
-    const time_t now = time(nullptr);
-    const char *const sql =
-      "UPDATE PHYSICAL_LIBRARY SET "
-        "NB_PHYSICAL_DRIVE_SLOTS = :NB_PHYSICAL_DRIVE_SLOTS,"
-        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-      "WHERE "
-        "PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
-    auto conn = m_connPool->getConn();
-    auto stmt = conn.createStmt(sql);
-    stmt.bindUint64(":NB_PHYSICAL_DRIVE_SLOTS", nbPhysicalDriveSlots);
-    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
-    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
-    stmt.bindUint64(":LAST_UPDATE_TIME", now);
-    stmt.bindString(":PHYSICAL_LIBRARY_NAME", name);
-    stmt.executeNonQuery();
-
-    if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot modify physical library ") + name + " because it does not exist");
-    }
-  } catch(exception::UserError& ) {
-    throw;
-  } catch(exception::Exception& ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
-  }
-}
-
-void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibraryComment(const common::dataStructures::SecurityIdentity& admin,
-  const std::string& name, const std::string& comment) {
-  try {
-    const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment,& m_log);
-    const time_t now = time(nullptr);
-    const char *const sql =
-      "UPDATE PHYSICAL_LIBRARY SET "
-        "USER_COMMENT = :USER_COMMENT,"
-        "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-        "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-        "LAST_UPDATE_TIME = :LAST_UPDATE_TIME "
-      "WHERE "
-        "PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
-    auto conn = m_connPool->getConn();
-    auto stmt = conn.createStmt(sql);
-    stmt.bindString(":USER_COMMENT", trimmedComment);
-    stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
-    stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
-    stmt.bindUint64(":LAST_UPDATE_TIME", now);
-    stmt.bindString(":PHYSICAL_LIBRARY_NAME", name);
-    stmt.executeNonQuery();
-
-    if(0 == stmt.getNbAffectedRows()) {
-      throw exception::UserError(std::string("Cannot modify physical library ") + name + " because it does not exist");
-    }
-  } catch(exception::UserError& ) {
-    throw;
+  } catch(cta::rdbms::UniqueConstraintError& ex) {
+    std::ostringstream err_stream;
+    err_stream << "Cannot update physical library " << pl.name << " because of unique constraint: ";
+    err_stream << rdbms::ConstraintInfo::constraintViolationMessage(rdbms::ConstraintInfo::UPDATE, ex.getViolatedConstraintName());
+    throw exception::UserError(err_stream.str());
+  } catch(cta::rdbms::ConstraintError& ex) {
+    std::ostringstream err_stream;
+    err_stream << "Cannot update physical library " << pl.name << ": ";
+    err_stream << rdbms::ConstraintInfo::constraintViolationMessage(rdbms::ConstraintInfo::UPDATE, ex.getViolatedConstraintName());
+    throw exception::UserError(err_stream.str());
   } catch(exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;

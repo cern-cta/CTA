@@ -26,6 +26,7 @@ namespace cta {
 
 namespace common::dataStructures {
 struct PhysicalLibrary;
+struct UpdatePhysicalLibrary;
 struct SecurityIdentity;
 } // namespace common::dataStructures
 
@@ -46,26 +47,8 @@ public:
 
   virtual std::list<common::dataStructures::PhysicalLibrary> getPhysicalLibraries() const = 0;
 
-  virtual void modifyPhysicalLibraryGuiUrl(const common::dataStructures::SecurityIdentity& admin,
-   const std::string& name, const std::string& guiUrl) = 0;
-
-  virtual void modifyPhysicalLibraryWebcamUrl(const common::dataStructures::SecurityIdentity& admin,
-   const std::string& name, const std::string& webcamUrl) = 0;
-
-  virtual void modifyPhysicalLibraryLocation(const common::dataStructures::SecurityIdentity& admin,
-   const std::string& name, const std::string& location) = 0;
-
-  virtual void modifyPhysicalLibraryNbPhysicalCartridgeSlots(const common::dataStructures::SecurityIdentity& admin,
-   const std::string& name, const uint64_t& nbPhysicalCartridgeSlots) = 0;
-
-  virtual void modifyPhysicalLibraryNbAvailableCartridgeSlots(const common::dataStructures::SecurityIdentity& admin,
-   const std::string& name, const uint64_t& nbAvailableCartridgeSlots) = 0;
-
-  virtual void modifyPhysicalLibraryNbPhysicalDriveSlots(const common::dataStructures::SecurityIdentity& admin,
-   const std::string& name, const uint64_t& nbPhysicalDriveSlots) = 0;
-
-  virtual void modifyPhysicalLibraryComment(const common::dataStructures::SecurityIdentity& admin,
-   const std::string& name, const std::string& comment) = 0;
+  virtual void modifyPhysicalLibrary(const common::dataStructures::SecurityIdentity& admin,
+   const common::dataStructures::UpdatePhysicalLibrary& pl) = 0;
 };
 
 } // namespace catalogue

@@ -23,6 +23,8 @@ set (RDBMS_LIB_SRC_FILES
   CheckConstraintError.cpp
   Conn.cpp
   ConnPool.cpp
+  DBException.cpp
+  ConstraintInfo.cpp
   ConstraintError.cpp
   Login.cpp
   LoginFactory.cpp
@@ -32,7 +34,8 @@ set (RDBMS_LIB_SRC_FILES
   Rset.cpp
   Stmt.cpp
   StmtPool.cpp
-  UniqueError.cpp)
+        UniqueConstraintError.cpp
+  IntegrityConstraintError.cpp)
 
 add_library (ctardbms SHARED
   ${RDBMS_LIB_SRC_FILES})

@@ -34,8 +34,9 @@
 - cta/CTA#349 - Add option to change the state reason even if the state is not changing
 - cta/CTA#386 - Remove buildtree for kubernetes CI
 - cta/CTA#403 - Add option `physicallibrary` to `cta-admin logicallibrary`
-- cta/CTA#418 - Add the physical library to the json output for tape ls and drive ls
 - cta/CTA#407 - Allow repack expanding limit to be configurable
+- cta/CTA#418 - Add the physical library to the json output for tape ls and drive ls
+- cta/CTA#431 - Improvements to the `cta-admin physicallibrary` command
 
 # v4.10.0-1
 

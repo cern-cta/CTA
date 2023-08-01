@@ -15,39 +15,27 @@
  *               submit itself to any jurisdiction.
  */
 
-#pragma once
-
-#include "rdbms/ConstraintError.hpp"
-
-#include <string>
-
+#include "rdbms/IntegrityConstraintError.hpp"
 
 namespace cta {
 namespace rdbms {
 
-/**
- * A database constraint has been violated.
- */
-class PrimaryKeyError : public ConstraintError {
-public:
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+IntegrityConstraintError::IntegrityConstraintError(
+        const std::string &context,
+        const std::string &dbErrorMessage,
+        const std::string &violatedConstraintName,
+        const bool embedBacktrace):
+  ConstraintError(context, dbErrorMessage, violatedConstraintName, embedBacktrace) {
+}
 
-  /**
-   * Constructor.
-   *
-   * @param context optional context string added to the message
-   * at initialisation time.
-   * @param embedBacktrace whether to embed a backtrace of where the
-   * exception was throw in the message
-   */
-  PrimaryKeyError(const std::string &context, const std::string &dbErrorMessage, const std::string &violatedConstraintName, const bool embedBacktrace = true);
-
-  /**
-   * Empty Destructor, explicitely non-throwing (needed for std::exception
-   * inheritance)
-   */
-  ~PrimaryKeyError() noexcept override;
-  
-}; // class PrimaryKeyError
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+IntegrityConstraintError::~IntegrityConstraintError() noexcept {
+}
 
 } // namespace rdbms
 } // namespace cta

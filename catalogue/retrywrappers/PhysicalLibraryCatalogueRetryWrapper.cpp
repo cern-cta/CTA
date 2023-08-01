@@ -47,46 +47,9 @@ std::list<common::dataStructures::PhysicalLibrary> PhysicalLibraryCatalogueRetry
     m_maxTriesToConnect);
 }
 
-void PhysicalLibraryCatalogueRetryWrapper::modifyPhysicalLibraryGuiUrl(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &guiUrl) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->PhysicalLibrary()->modifyPhysicalLibraryGuiUrl(admin,
-    name, guiUrl);}, m_maxTriesToConnect);
-}
-
-void PhysicalLibraryCatalogueRetryWrapper::modifyPhysicalLibraryWebcamUrl(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &webcamUrl) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->PhysicalLibrary()->modifyPhysicalLibraryWebcamUrl(admin,
-    name, webcamUrl);}, m_maxTriesToConnect);
-}
-
-void PhysicalLibraryCatalogueRetryWrapper::modifyPhysicalLibraryLocation(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &location) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->PhysicalLibrary()->modifyPhysicalLibraryLocation(admin,
-    name, location);}, m_maxTriesToConnect);
-}
-
-void PhysicalLibraryCatalogueRetryWrapper::modifyPhysicalLibraryNbPhysicalCartridgeSlots(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t &nbPhysicalCartridgeSlots) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->PhysicalLibrary()->modifyPhysicalLibraryNbPhysicalCartridgeSlots(admin,
-    name, nbPhysicalCartridgeSlots);}, m_maxTriesToConnect);
-}
-
-void PhysicalLibraryCatalogueRetryWrapper::modifyPhysicalLibraryNbAvailableCartridgeSlots(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t &nbAvailableCartridgeSlots) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->PhysicalLibrary()->modifyPhysicalLibraryNbAvailableCartridgeSlots(admin,
-    name, nbAvailableCartridgeSlots);}, m_maxTriesToConnect);
-}
-
-void PhysicalLibraryCatalogueRetryWrapper::modifyPhysicalLibraryNbPhysicalDriveSlots(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &currentName, const uint64_t &nbPhysicalDriveSlots) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->PhysicalLibrary()->modifyPhysicalLibraryNbPhysicalDriveSlots(admin,
-    currentName, nbPhysicalDriveSlots);}, m_maxTriesToConnect);
-}
-
-void PhysicalLibraryCatalogueRetryWrapper::modifyPhysicalLibraryComment(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) {
-  return retryOnLostConnection(m_log, [&]{return m_catalogue->PhysicalLibrary()->modifyPhysicalLibraryComment(admin,
-    name, comment);}, m_maxTriesToConnect);
+void PhysicalLibraryCatalogueRetryWrapper::modifyPhysicalLibrary(
+  const common::dataStructures::SecurityIdentity &admin,  const common::dataStructures::UpdatePhysicalLibrary& pl) {
+  return retryOnLostConnection(m_log, [&]{return m_catalogue->PhysicalLibrary()->modifyPhysicalLibrary(admin, pl);}, m_maxTriesToConnect);
 }
 
 }  // namespace catalogue
