@@ -19,6 +19,8 @@
 
 #include <memory>
 
+#include "tapeserver/daemon/DriveHandler.hpp"
+
 namespace cta {
 
 class Scheduler;
@@ -35,23 +37,26 @@ class TapedConfiguration;
 class TpconfigLine;
 class ProcessManager;
 
-class DriveHandlerBuilder {
+class DriveHandlerBuilder : public DriveHandler {
 
 public:
   DriveHandlerBuilder(const TapedConfiguration* tapedConfig, const TpconfigLine* driveConfig, ProcessManager* pm);
 
   ~DriveHandlerBuilder() = default;
 
-  std::unique_ptr<DriveHandler> build();
+  void build();
 
 private:
   const TapedConfiguration* m_tapedConfig;
   const TpconfigLine* m_driveConfig;
   ProcessManager* m_processManager;
 
+  std::unique_ptr<OStoreDBInit> m_sched_db_init;
+  std::unique_ptr<SchedulerDB_t> m_sched_db;
+
   std::unique_ptr<cta::catalogue::Catalogue> createCatalogue();
 
-  std::unique_ptr<Scheduler> createScheduler(cta::catalogue::Catalogue* catalogue);
+  std::unique_ptr<Scheduler> createScheduler(std::shared_ptr<cta::catalogue::Catalogue> catalogue);
 
   // std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> createCleanerSession(
   //   const std::unique_ptr<Scheduler>& scheduler, cta::log::LogContext* lc);

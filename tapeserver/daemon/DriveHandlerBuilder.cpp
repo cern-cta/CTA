@@ -33,17 +33,18 @@ namespace tape {
 namespace daemon {
 
 DriveHandlerBuilder::DriveHandlerBuilder(const TapedConfiguration* tapedConfig, const TpconfigLine* driveConfig,
-  ProcessManager* pm)
-  : m_tapedConfig(tapedConfig), m_driveConfig(driveConfig), m_processManager(pm) {
+  ProcessManager* pm) 
+  : DriveHandler(*tapedConfig, *driveConfig, *pm), m_tapedConfig(tapedConfig), m_driveConfig(driveConfig), m_processManager(pm) {
   
 }
 
-std::unique_ptr<DriveHandler> DriveHandlerBuilder::build() {
-  auto dh = std::make_unique<DriveHandler>(*m_tapedConfig, *m_driveConfig, *m_processManager);
-  auto catalogue = createCatalogue();
-  dh->setScheduler(createScheduler(catalogue.get()));
-  dh->setCatalogue(std::move(catalogue));
-  return dh;
+void DriveHandlerBuilder::build() {
+  // auto dh = std::make_unique<DriveHandler>(*m_tapedConfig, *m_driveConfig, *m_processManager);
+  auto catalogue = std::shared_ptr<cta::catalogue::Catalogue>(createCatalogue());
+  auto scheduler = std::shared_ptr<Scheduler>(createScheduler(catalogue));
+  setScheduler(scheduler);
+  setCatalogue(catalogue);
+  // return std::unique_ptr<DriveHandler>(this);
 }
 
 std::unique_ptr<cta::catalogue::Catalogue> DriveHandlerBuilder::createCatalogue() {
@@ -60,16 +61,16 @@ std::unique_ptr<cta::catalogue::Catalogue> DriveHandlerBuilder::createCatalogue(
   return catalogueFactory->create();
 }
 
-std::unique_ptr<Scheduler> DriveHandlerBuilder::createScheduler(cta::catalogue::Catalogue* catalogue) {
+std::unique_ptr<Scheduler> DriveHandlerBuilder::createScheduler(std::shared_ptr<cta::catalogue::Catalogue> catalogue) {
   auto& lc = m_processManager->logContext();
-  std::unique_ptr<SchedulerDBInit_t> sched_db_init;
+  // std::unique_ptr<SchedulerDBInit_t> sched_db_init;
   try {
     std::string processName = "DriveProcess-";
     processName += m_driveConfig->unitName;
     log::ScopedParamContainer params(lc);
     params.add("processName", processName);
     lc.log(log::DEBUG, "In DriveHandlerBuilder::createScheduler(): will create agent entry. Enabling leaving non-empty agent behind.");
-    sched_db_init.reset(new SchedulerDBInit_t(processName, m_tapedConfig->backendPath.value(), lc.logger(), true));
+    m_sched_db_init.reset(new SchedulerDBInit_t(processName, m_tapedConfig->backendPath.value(), lc.logger(), true));
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer param(lc);
     param.add("errorMessage", ex.getMessageValue());
@@ -78,9 +79,9 @@ std::unique_ptr<Scheduler> DriveHandlerBuilder::createScheduler(cta::catalogue::
     // sleep(1);
     throw;
   }
-  std::unique_ptr<SchedulerDB_t> sched_db;
+  // std::shared_ptr<SchedulerDB_t> sched_db;
   try {
-    sched_db = sched_db_init->getSchedDB(*catalogue, lc.logger());
+    m_sched_db = m_sched_db_init->getSchedDB(*catalogue, lc.logger());
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer param(lc);
     param.add("errorMessage", ex.getMessageValue());
@@ -90,7 +91,7 @@ std::unique_ptr<Scheduler> DriveHandlerBuilder::createScheduler(cta::catalogue::
     throw;
   }
   lc.log(log::DEBUG, "In DriveHandlerBuilder::createScheduler(): will create scheduler.");
-  return std::make_unique<Scheduler>(*catalogue, *sched_db, m_tapedConfig->mountCriteria.value().maxFiles,
+  return std::make_unique<Scheduler>(*catalogue, *m_sched_db, m_tapedConfig->mountCriteria.value().maxFiles,
     m_tapedConfig->mountCriteria.value().maxBytes);
 }
 

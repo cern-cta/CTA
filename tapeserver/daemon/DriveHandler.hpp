@@ -21,6 +21,7 @@
 
 #include "common/threading/SocketPair.hpp"
 #include "scheduler/Scheduler.hpp"
+#include "scheduler/OStoreDB/OStoreDBInit.hpp"
 #include "tapeserver/daemon/ProcessManager.hpp"
 #include "tapeserver/daemon/SubprocessHandler.hpp"
 #include "tapeserver/daemon/TapedConfiguration.hpp"
@@ -75,9 +76,9 @@ public:
 
   SubprocessHandler::ProcessingStatus processTimeout() override;
 
-  void setCatalogue(std::unique_ptr<catalogue::Catalogue> catalogue);
+  void setCatalogue(std::shared_ptr<catalogue::Catalogue> catalogue);
   
-  void setScheduler(std::unique_ptr<Scheduler> scheduler);
+  void setScheduler(std::shared_ptr<Scheduler> scheduler);
 
 private:
   /** Reference to the process manager*/
@@ -163,10 +164,10 @@ private:
   std::unique_ptr<cta::catalogue::Catalogue> createCatalogue(const std::string& methodCaller) const;
 
   std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> createCleanerSession(
-    const std::unique_ptr<Scheduler>& scheduler, cta::log::LogContext* lc) const;
+    cta::log::LogContext* lc) const;
 
-  std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
-  std::unique_ptr<cta::Scheduler> m_scheduler;
+  std::shared_ptr<cta::catalogue::Catalogue> m_catalogue;
+  std::shared_ptr<cta::Scheduler> m_scheduler;
 };
 
 // TODO: remove/merge ChildProcess.

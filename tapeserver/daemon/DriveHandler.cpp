@@ -697,7 +697,7 @@ int DriveHandler::runChild() {
       return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
     }
 
-    const auto cleanerSession = createCleanerSession(m_scheduler, &lc);
+    const auto cleanerSession = createCleanerSession(&lc);
     return cleanerSession->execute();
   }
   else {
@@ -863,7 +863,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
             .add("sessionType", session::toString(m_sessionType));
       lc.log(log::INFO, "In DriveHandler::shutdown(): starting cleaner.");
 
-      const auto cleanerSession = createCleanerSession(m_scheduler, &m_processManager.logContext());
+      const auto cleanerSession = createCleanerSession(&m_processManager.logContext());
       if (cleanerSession->execute() == castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN) {
         return exitShutdown();
       }
@@ -876,7 +876,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
 }
 
 std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> DriveHandler::createCleanerSession(
-  const std::unique_ptr<Scheduler>& scheduler, cta::log::LogContext* lc) const {
+  cta::log::LogContext* lc) const {
   // Capabilities management.
   cta::server::ProcessCap capUtils;
   // Mounting management.
@@ -897,7 +897,7 @@ std::unique_ptr<castor::tape::tapeserver::daemon::CleanerSession> DriveHandler::
     m_tapedConfig.tapeLoadTimeout.value(),
     "",
     *m_catalogue,
-    *scheduler);
+    *m_scheduler);
 }
 
 void DriveHandler::setDriveDownForShutdown(const std::string& reason, cta::log::LogContext* lc) {
@@ -941,12 +941,12 @@ void DriveHandler::setDriveDownForShutdown(const std::string& reason, cta::log::
   }
 }
 
-void DriveHandler::setCatalogue(std::unique_ptr<catalogue::Catalogue> catalogue) {
-  m_catalogue = std::move(catalogue);
+void DriveHandler::setCatalogue(std::shared_ptr<catalogue::Catalogue> catalogue) {
+  m_catalogue = catalogue;
 }
 
-void DriveHandler::setScheduler(std::unique_ptr<Scheduler> scheduler) {
-  m_scheduler = std::move(scheduler);
+void DriveHandler::setScheduler(std::shared_ptr<Scheduler> scheduler) {
+  m_scheduler = scheduler;
 }
 
 }
