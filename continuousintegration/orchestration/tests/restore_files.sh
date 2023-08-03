@@ -97,6 +97,9 @@ echo "kubectl cp ${TMP_DIR}/cta/cta-cli.conf ${NAMESPACE}/ctafrontend:/etc/cta-c
 kubectl cp ${NAMESPACE}/ctacli:/etc/cta/cta-cli.conf ${TMP_DIR}/cta-cli.conf
 kubectl cp ${TMP_DIR}/cta-cli.conf ${NAMESPACE}/ctafrontend:/etc/cta/cta-cli.conf
 
+##
+# Maybe that this part should entirely be moved to ctacli pod:
+# there is no reason to install cta-cli rpm on the frontend pod as it is just meant to run the cta-frontend with minimal requirements
 echo
 echo "ENABLE CTAFRONTEND TO EXECUTE CTA ADMIN COMMANDS"
 kubectl --namespace=${NAMESPACE} exec kdc -- cat /root/ctaadmin2.keytab | kubectl --namespace=${NAMESPACE} exec -i ctafrontend --  bash -c "cat > /root/ctaadmin2.keytab; mkdir -p /tmp/ctaadmin2"
@@ -105,10 +108,14 @@ touch ${TMP_DIR}/init_kerb.sh
 echo '. /root/client_helper.sh; admin_kinit' >> ${TMP_DIR}/init_kerb.sh
 kubectl -n ${NAMESPACE} cp ${TMP_DIR}/init_kerb.sh ctafrontend:${TMP_DIR}/init_kerb.sh
 kubectl -n ${NAMESPACE} exec ctafrontend -- bash ${TMP_DIR}/init_kerb.sh
+# install cta-cli that provides `cta-restore-deleted-files`
+kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c 'rpm -q cta-cli || yum install -y cta-cli'
 
 echo
 echo "RESTORE FILES"
 kubectl -n ${NAMESPACE} exec ctafrontend -- bash -c "XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/ctaadmin2/krb5cc_0 cta-restore-deleted-files --id ${ARCHIVE_FILE_ID} --copynb 1 --debug"
+# End of *movable* section
+##
 
 SECONDS_PASSED=0
 WAIT_FOR_RETRIEVED_FILE_TIMEOUT=10
