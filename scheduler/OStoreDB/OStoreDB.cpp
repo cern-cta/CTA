@@ -3267,7 +3267,7 @@ void OStoreDB::cancelRepack(const std::string& vid, log::LogContext & lc) {
           throw exception::Exception("In OStoreDB::getRepackInfo(): unexpected vid when reading request");
         // We now have a hold of the repack request.
         // We should delete all the file level subrequests.
-        rr.deleteAllSubrequests();
+        rr.deleteAllSubrequests(lc);
         // And then delete the request
         std::string repackRequestOwner = rr.getOwner();
         try {
@@ -4804,8 +4804,8 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc){
       lc.log(log::INFO, "In OStoreDB::RepackArchiveReportBatch::report(): deleted request.");
       try {
         //Subrequest deleted, async delete the file from the disk
-        cta::disk::AsyncDiskFileRemoverFactory asyncDiskFileRemoverFactory;
-        std::unique_ptr<cta::disk::AsyncDiskFileRemover> asyncRemover(asyncDiskFileRemoverFactory.createAsyncDiskFileRemover(d.subrequestInfo.repackInfo.fileBufferURL));
+        cta::disk::DiskFileRemoverFactory diskFileRemoverFactory;
+        std::unique_ptr<cta::disk::AsyncDiskFileRemover> asyncRemover(diskFileRemoverFactory.createAsyncDiskFileRemover(d.subrequestInfo.repackInfo.fileBufferURL));
         diskFileRemoverList.push_back({std::move(asyncRemover),d.subrequestInfo});
         diskFileRemoverList.back().asyncRemover->asyncDelete();
       } catch (const cta::exception::Exception &ex){

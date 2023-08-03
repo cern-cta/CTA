@@ -26,6 +26,7 @@
 #include "MountPolicySerDeser.hpp"
 #include "RepackQueueAlgorithms.hpp"
 #include "RepackRequest.hpp"
+#include "disk/DiskFile.hpp"
 
 namespace cta { namespace objectstore {
 
@@ -217,7 +218,11 @@ common::dataStructures::MountPolicy RepackRequest::getMountPolicy(){
   return mpSerDeser;
 }
 
-void RepackRequest::deleteAllSubrequests() {
+void RepackRequest::deleteAllSubrequests(log::LogContext & lc) {
+  struct SubrequestDeleter{
+    std::string subrequestAddr;
+    std::future<void> deleterFuture;
+  };
   checkPayloadWritable();
   if(!m_payload.is_complete()){
     m_payload.mutable_destination_infos()->Clear();
@@ -226,17 +231,56 @@ void RepackRequest::deleteAllSubrequests() {
     auto itor = subrequests->begin();
     while(itor != subrequests->end()){
       try {
-        std::list<std::unique_ptr<Backend::AsyncDeleter>> deleters;
+        std::list<SubrequestDeleter> deleterList;
         int nbSubReqProcessessed = 0;
         while(itor != subrequests->end() && nbSubReqProcessessed < 500){
           auto & subrequest = *itor;
+          deleterList.push_back({
+                  subrequest.address(),
+                  std::async(std::launch::async,
+                             [this, subrequest](){
+                    bool isArchiveRequest = subrequest.retrieve_accounted();
+                    std::string fileBufferUrl;
+                    if (isArchiveRequest) {
+                      try {
+                        cta::objectstore::ArchiveRequest ar(subrequest.address(), m_objectStore);
+                        ar.fetchNoLock();
+                        fileBufferUrl = ar.getRepackInfo().fileBufferURL;
+                      } catch (objectstore::ObjectOpsBase::WrongType &) {
+                        // If the object is of the wrong type, it may be actually a retrieve request
+                        isArchiveRequest = false;
+                      } catch (cta::exception::NoSuchObject &) {
+                      }
+                    }
+                    if (!isArchiveRequest) {
+                      try {
+                        cta::objectstore::RetrieveRequest rr(subrequest.address(), m_objectStore);
+                        rr.fetchNoLock();
+                        fileBufferUrl = rr.getRepackInfo().fileBufferURL;
+                      } catch (objectstore::ObjectOpsBase::WrongType &) {
+                      } catch (cta::exception::NoSuchObject &) {
+                      }
+                    }
+                    m_objectStore.remove(subrequest.address());
+                    if(!fileBufferUrl.empty()) {
+                      cta::disk::DiskFileRemoverFactory diskFileRemoverFactory;
+                      auto fileRemover = diskFileRemoverFactory.createDiskFileRemover(fileBufferUrl);
+                      fileRemover->remove();
+                    }
+                  })});
           subrequest.set_subrequest_deleted(true);
-          deleters.emplace_back(m_objectStore.asyncDelete(subrequest.address()));
           nbSubReqProcessessed++;
           itor++;
         }
-        for(auto & deleter: deleters){
-          deleter->wait();
+        for(auto & deleter: deleterList){
+          try {
+            deleter.deleterFuture.get();
+          } catch(cta::exception::Exception &ex) {
+            log::ScopedParamContainer spc(lc);
+            spc.add("subrequestAddress", deleter.subrequestAddr)
+               .add("exceptionMsg", ex.getMessageValue());
+            lc.log(cta::log::ERR, "Failed to fully delete repack subrequest");
+          }
         }
       } catch(cta::exception::NoSuchObject & ){ /* If object already deleted, do nothing */ }
     }

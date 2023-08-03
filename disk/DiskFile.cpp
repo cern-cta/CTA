@@ -341,11 +341,11 @@ RadosStriperWriteFile::~RadosStriperWriteFile() throw() {}
 //==============================================================================
 // AsyncDiskFileRemover FACTORY
 //==============================================================================
-AsyncDiskFileRemoverFactory::AsyncDiskFileRemoverFactory():
+DiskFileRemoverFactory::DiskFileRemoverFactory():
     m_URLLocalFile("^file://(.*)$"),
     m_URLXrootdFile("^(root://.*)$"){}
 
-AsyncDiskFileRemover * AsyncDiskFileRemoverFactory::createAsyncDiskFileRemover(const std::string &path){
+AsyncDiskFileRemover * DiskFileRemoverFactory::createAsyncDiskFileRemover(const std::string &path){
   // URL path parsing
   std::vector<std::string> regexResult;
   //local file URL?
@@ -356,6 +356,21 @@ AsyncDiskFileRemover * AsyncDiskFileRemoverFactory::createAsyncDiskFileRemover(c
   regexResult = m_URLXrootdFile.exec(path);
   if(regexResult.size()){
     return new AsyncXRootdDiskFileRemover(path);
+  }
+  throw cta::exception::Exception("In DiskFileRemoverFactory::createAsyncDiskFileRemover: unknown type of URL");
+}
+
+DiskFileRemover * DiskFileRemoverFactory::createDiskFileRemover(const std::string &path){
+  // URL path parsing
+  std::vector<std::string> regexResult;
+  //local file URL?
+  regexResult = m_URLLocalFile.exec(path);
+  if(regexResult.size()){
+    return new LocalDiskFileRemover(regexResult[1]);
+  }
+  regexResult = m_URLXrootdFile.exec(path);
+  if(regexResult.size()){
+    return new XRootdDiskFileRemover(path);
   }
   throw cta::exception::Exception("In DiskFileRemoverFactory::createDiskFileRemover: unknown type of URL");
 }

@@ -49,7 +49,7 @@ public:
   cta::SchedulerDatabase::RepackRequest::TotalStatsFiles getTotalStatsFile();
   void setMountPolicy(const common::dataStructures::MountPolicy &mp);
   common::dataStructures::MountPolicy getMountPolicy();
-  void deleteAllSubrequests();
+  void deleteAllSubrequests(log::LogContext & lc);
   void setIsComplete(const bool complete);
   void updateRepackDestinationInfos(const common::dataStructures::ArchiveFile & archiveFile, const std::string & destinationVid);
   std::list<common::dataStructures::RepackInfo::RepackDestinationInfo> getRepackDestinationInfos();

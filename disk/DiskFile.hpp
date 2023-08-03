@@ -141,7 +141,7 @@ namespace cta {
       protected:
 	std::future<void> m_futureDeletion;
       public:
-	virtual void asyncDelete() = 0;
+  virtual void asyncDelete() = 0;
 	virtual void wait() = 0;
 	virtual ~AsyncDiskFileRemover(){}
       };
@@ -150,11 +150,12 @@ namespace cta {
        * Factory class deciding which async disk file remover
        * to instanciate regarding the format of the path of the disk file
        */
-      class AsyncDiskFileRemoverFactory {
+      class DiskFileRemoverFactory {
 	typedef cta::utils::Regex Regex;
       public:
-	AsyncDiskFileRemoverFactory();
+	DiskFileRemoverFactory();
 	AsyncDiskFileRemover * createAsyncDiskFileRemover(const std::string &path);
+  DiskFileRemover * createDiskFileRemover(const std::string &path);
       private:
 	Regex m_URLLocalFile;
         Regex m_URLXrootdFile;
