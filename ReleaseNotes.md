@@ -1,16 +1,17 @@
-# v4.NEXT
+# v4.10.1-1
 
 ### Bug Fixes
-- cta/CTA#373 - cta-verify-file may fail if cta.verification.mount_policy is not set
-- cta/CTA#400 - Fix missing 'sleep' in system tests
-- cta/CTA#367 - Don't use "Putting the drive down" message in cleaner
-- cta/CTA#389 - Minor fix in Tape REST API system tests
-- cta/CTA#404 - REPACKING_DISABLED queues not always selected for queueing
 - cta/CTA#114 - Return catalogue schema compatibility to single version only
+- cta/CTA#367 - Don't use "Putting the drive down" message in cleaner
+- cta/CTA#373 - cta-verify-file may fail if cta.verification.mount_policy is not set
+- cta/CTA#389 - Minor fix in Tape REST API system tests
+- cta/CTA#400 - Fix missing 'sleep' in system tests
+- cta/CTA#404 - REPACKING_DISABLED queues not always selected for queueing
 - cta/CTA#408 - CTA build fails after fresh cloning of repository
-- cta/CTA#427 - Update getInstanceAndFid to allow multiple files to be returned from the Catalogue query
-- cta/CTA#423 - Remove duplicated RDBMS test files
 - cta/CTA#409 - Liquibade-update test not compatible with new runners
+- cta/CTA#411 - Don't update reason for disabled tape in cleaner
+- cta/CTA#423 - Remove duplicated RDBMS test files
+- cta/CTA#427 - Update getInstanceAndFid to allow multiple files to be returned from the Catalogue query
 - cta/CTA#432 - Do not throw uncaught exceptions in a destructor
 - cta/CTA#433 - Removes code which will never be executed
 - cta/CTA#434 - CTA frontend accepts files larger than a specified size
@@ -33,9 +34,9 @@
 - cta/CTA#267 - Add new purchase order field to the tape table
 - cta/CTA#276 - Add physical library table and a new `cta-admin` cmd for interacting with the table
 - cta/CTA#314 - Remove the option of using `cta-admin tapefile ls` with the `-l` option
-- cta/CTA#392 - Remove gRPC configuration for tool and test in cta-change-storage-class-in-catalogue
 - cta/CTA#349 - Add option to change the state reason even if the state is not changing
 - cta/CTA#386 - Remove buildtree for kubernetes CI
+- cta/CTA#392 - Remove gRPC configuration for tool and test in cta-change-storage-class-in-catalogue
 - cta/CTA#403 - Add option `physicallibrary` to `cta-admin logicallibrary`
 - cta/CTA#407 - Allow repack expanding limit to be configurable
 - cta/CTA#418 - Add the physical library to the json output for tape ls and drive ls
