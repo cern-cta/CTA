@@ -34,5 +34,19 @@ RmcMountMsgBody::RmcMountMsgBody():
   memset(vid, '\0', sizeof(vid));
 }
 
+uint32_t RmcMountMsgBody::bodyLen() const {
+  const auto vidLen = strnlen(vid, CA_MAXVIDLEN+1);
+  if(*unusedLoader != '\0' || vidLen > CA_MAXVIDLEN) {
+    throw exception::Exception("Message body contains improperly-terminated strings");
+  }
+
+  return sizeof(uid) +
+         sizeof(gid) +
+         sizeof(unusedLoader) +
+         vidLen + 1 +
+         sizeof(side) +
+         sizeof(drvOrd);
+}
+
 } // namespace mediachanger
 } // namespace cta

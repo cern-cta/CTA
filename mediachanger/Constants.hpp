@@ -17,31 +17,32 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <stdlib.h>
+#include <cstddef>
+#include <cstdint>
 
 namespace cta {
-namespace mediachanger     {
+namespace mediachanger {
   	
 const size_t HOSTNAMEBUFLEN    = 256;
 const int    LISTENBACKLOG     = 2;
 const size_t SERVICENAMEBUFLEN = 256;
 
-                        /* Request types */
+enum RequestType {
+  RMC_GETGEOM  = 1,    // Get robot geometry
+  RMC_FINDCART = 2,    // Find cartridge(s)
+  RMC_READELEM = 3,    // Read element status
+  RMC_MOUNT    = 4,    // Mount request
+  RMC_UNMOUNT  = 5,    // Unmount request
+  RMC_EXPORT   = 6,    // Export tape request
+  RMC_IMPORT   = 7     // Import tape request
+};
 
-#define RMC_GETGEOM        1 /* Get robot geometry */
-#define RMC_FINDCART       2 /* Find cartridge(s) */
-#define RMC_READELEM       3 /* Read element status */
-#define RMC_MOUNT          4 /* Mount request */
-#define RMC_UNMOUNT        5 /* Unmount request */
-#define RMC_EXPORT         6 /* Export tape request */
-#define RMC_IMPORT         7 /* Import tape request */
-
-                        /* SCSI media changer server reply types */
-
-#define MSG_ERR         1
-#define MSG_DATA        2
-#define RMC_RC          3
+// SCSI media changer server reply types
+enum MediaChangerReplyType {
+  MSG_ERR  = 1,
+  MSG_DATA = 2,
+  RMC_RC   = 3
+};
 
 /*
  *------------------------------------------------------------------------
@@ -86,5 +87,3 @@ const uint32_t RMC_MAGIC = 0x120D0301;
 
 } // namespace mediachanger
 } // namespace cta
-
-
