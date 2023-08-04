@@ -383,10 +383,9 @@ int connectWithTimeout(
  * @param src The source value be marshalled.
  * @param dst In/out parameter, before invocation points to the destination
  *            buffer where the source value should be marshalled to and on
- * return     Points to the byte in the destination buffer immediately after
- *            the marshalled value.
+ * return     The number of bytes marshalled
  */
-void marshalUint8(const uint8_t src, char * &dst);
+size_t marshalUint8(const uint8_t src, char*& dst);
 
 /**
  * Marshals the specified src value into the specified destination buffer.
@@ -394,10 +393,9 @@ void marshalUint8(const uint8_t src, char * &dst);
  * @param src The source value be marshalled.
  * @param dst In/out parameter, before invocation points to the destination
  *            buffer where the source value should be marshalled to and on
- * return     Points to the byte in the destination buffer immediately after
- *            the marshalled value.
+ * return     The number of bytes marshalled
  */
-void marshalInt16(const int16_t src, char * &dst);
+size_t marshalInt16(const int16_t src, char*& dst);
 
 /**
  * Marshals the specified src value into the specified destination buffer.
@@ -405,10 +403,9 @@ void marshalInt16(const int16_t src, char * &dst);
  * @param src The source value be marshalled.
  * @param dst In/out parameter, before invocation points to the destination
  *            buffer where the source value should be marshalled to and on
- * return     Points to the byte in the destination buffer immediately after
- *            the marshalled value.
+ * return     The number of bytes marshalled
  */
-void marshalUint16(const uint16_t src, char * &dst);
+size_t marshalUint16(const uint16_t src, char*& dst);
 
 /**
  * Marshals the specified src value into the specified destination buffer.
@@ -416,10 +413,9 @@ void marshalUint16(const uint16_t src, char * &dst);
  * @param src The source value be marshalled.
  * @param dst In/out parameter, before invocation points to the destination
  *            buffer where the source value should be marshalled to and on
- * return     Points to the byte in the destination buffer immediately after
- *            the marshalled value.
+ * return     The number of bytes marshalled
  */
-void marshalInt32(const int32_t src, char * &dst);
+size_t marshalInt32(const int32_t src, char*& dst);
 
 /**
  * Marshals the specified src value into the specified destination buffer.
@@ -427,10 +423,9 @@ void marshalInt32(const int32_t src, char * &dst);
  * @param src The source value be marshalled.
  * @param dst In/out parameter, before invocation points to the destination
  *            buffer where the source value should be marshalled to and on
- * return     Points to the byte in the destination buffer immediately after
- *            the marshalled value.
+ * return     The number of bytes marshalled
  */
-void marshalUint32(const uint32_t src, char * &dst);
+size_t marshalUint32(const uint32_t src, char*& dst);
 
 /**
  * Marshals the specified src value into the specified destination buffer.
@@ -438,21 +433,21 @@ void marshalUint32(const uint32_t src, char * &dst);
  * @param src The source value be marshalled.
  * @param dst In/out parameter, before invocation points to the destination
  *            buffer where the source value should be marshalled to and on
- * return     Points to the byte in the destination buffer immediately after
- *            the marshalled value.
+ * return     The number of bytes marshalled
  */
-void marshalUint64(const uint64_t src, char * &dst);
+size_t marshalUint64(const uint64_t src, char*& dst);
 
 /**
  * Marshals the specified string into the specified destination buffer.
  *
- * @param src The string to be marshalled.
- * @param dst In/out parameter, before invocation points to the destination
- * buffer where the string should be marshalled to and on return points to
- * the byte in the destination buffer immediately after the marshalled
- * string.
+ * @param src[in]            The string to be marshalled
+ * @param dst[in,out]        Pointer to the destination buffer where the string should be marshalled.
+ *                           On return, points to the byte in the destination buffer immediately after
+ *                           the marshalled string.
+ * @param dstSize[in,out]    Contains the size of the buffer pointed to by dst. Value is reduced by
+ *                           the number of bytes written to dst.
  */
-void marshalString(const std::string &src, char * &dst);
+void marshalString(const std::string& src, char*& dst, size_t& dstSize);
 
 /**
  * Unmarshals a value from the specified source buffer into the specified

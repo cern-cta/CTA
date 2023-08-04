@@ -970,97 +970,83 @@ int connectWithTimeout(
 //------------------------------------------------------------------------------
 // marshalUint8
 //------------------------------------------------------------------------------
-void marshalUint8(const uint8_t src, char * &dst) {
-
+size_t marshalUint8(const uint8_t src, char*& dst) {
   if(dst == nullptr) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to marshal uint8_t"
-      ": Pointer to destination buffer is nullptr";
-    throw ex;
+    throw exception::Exception("Failed to marshal uint8_t: Pointer to destination buffer is nullptr");
   }
 
   *dst = src;
   dst += sizeof(src);
+
+  return sizeof(src);
 }
 
 //------------------------------------------------------------------------------
 // marshalInt16
 //------------------------------------------------------------------------------
-void marshalInt16(const int16_t src, char * &dst) {
-
+size_t marshalInt16(const int16_t src, char*& dst) {
   if(dst == nullptr) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to marshal int16_t"
-      ": Pointer to destination buffer is nullptr";
-    throw ex;
+    throw exception::Exception("Failed to marshal int16_t: Pointer to destination buffer is nullptr");
   }
 
   const int16_t netByteOrder = htons(src);
   memcpy(dst, &netByteOrder, sizeof(src));
   dst += sizeof(src);
+
+  return sizeof(src);
 }
 
 //------------------------------------------------------------------------------
 // marshalUint16
 //------------------------------------------------------------------------------
-void marshalUint16(const uint16_t src, char * &dst) {
-
+size_t marshalUint16(const uint16_t src, char*& dst) {
   if(dst == nullptr) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to marshal uint16_t"
-      ": Pointer to destination buffer is nullptr";
-    throw ex;
+    throw exception::Exception("Failed to marshal uint16_t: Pointer to destination buffer is nullptr");
   }
 
   const uint16_t netByteOrder = htons(src);
   memcpy(dst, &netByteOrder, sizeof(src));
   dst += sizeof(src);
+
+  return sizeof(src);
 }
 
 //------------------------------------------------------------------------------
 // marshalInt32
 //------------------------------------------------------------------------------
-void marshalInt32(const int32_t src, char * &dst) {
-
+size_t marshalInt32(const int32_t src, char*& dst) {
   if(dst == nullptr) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to marshal int32_t"
-      ": Pointer to destination buffer is nullptr";
-    throw ex;
+    throw exception::Exception("Failed to marshal int32_t: Pointer to destination buffer is nullptr");
   }
 
   const int32_t netByteOrder = htonl(src);
   memcpy(dst, &netByteOrder, sizeof(src));
   dst += sizeof(src);
+
+  return sizeof(src);
 }
 
 //------------------------------------------------------------------------------
 // marshalUint32
 //------------------------------------------------------------------------------
-void marshalUint32(const uint32_t src, char * &dst) {
-
+size_t marshalUint32(const uint32_t src, char*& dst) {
   if(dst == nullptr) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to marshal uint32_t"
-      ": Pointer to destination buffer is nullptr";
-    throw ex;
+    throw exception::Exception("Failed to marshal uint32_t: Pointer to destination buffer is nullptr");
   }
 
   const uint32_t netByteOrder = htonl(src);
   memcpy(dst, &netByteOrder, sizeof(src));
   dst += sizeof(src);
+
+  return sizeof(src);
 }
 
 //------------------------------------------------------------------------------
 // marshalUint64
 //------------------------------------------------------------------------------
-void marshalUint64(const uint64_t src, char * &dst) {
-
+size_t marshalUint64(const uint64_t src, char*& dst) {
   if(dst == nullptr) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to marshal uint64_t"
-      ": Pointer to destination buffer is nullptr";
-    throw ex;
+    throw exception::Exception("Failed to marshal uint64_t: Pointer to destination buffer is nullptr");
   }
 
   // Be independent of the host's byte representation of a multi-byte integer by
@@ -1075,30 +1061,30 @@ void marshalUint64(const uint64_t src, char * &dst) {
   dst[6] = src >>  8 & 0xFF;
   dst[7] = src       & 0xFF;
   dst += sizeof(src);
+
+  return sizeof(src);
 }
 
 //------------------------------------------------------------------------------
 // marshalString
 //------------------------------------------------------------------------------
-void marshalString(const std::string &src, char * &dst) {
-
+void marshalString(const std::string& src, char*& dst, size_t& dstSize) {
   if(dst == nullptr) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to marshal string"
-      ": Pointer to destination buffer is nullptr";
-    throw ex;
+    throw exception::Exception("Failed to marshal string: Pointer to destination buffer is nullptr");
   }
-
+  if(src.size()+1 > dstSize) {
+    throw exception::Exception("Failed to marshal string: Source string is too long");
+  }
   strcpy(dst, src.c_str());
 
-  dst += strlen(src.c_str()) + 1;
+  dst     += src.size()+1;
+  dstSize -= src.size()+1;
 }
 
 //------------------------------------------------------------------------------
 // unmarshalUint8
 //------------------------------------------------------------------------------
-void unmarshalUint8(const char * &src, size_t &srcLen,
-  uint8_t &dst)  {
+void unmarshalUint8(const char * &src, size_t &srcLen, uint8_t &dst) {
 
   if(src == nullptr) {
     cta::exception::Exception ex;
@@ -1123,8 +1109,7 @@ void unmarshalUint8(const char * &src, size_t &srcLen,
 //------------------------------------------------------------------------------
 // unmarshalInt16
 //------------------------------------------------------------------------------
-void unmarshalInt16(const char * &src, size_t &srcLen,
-  int16_t &dst)  {
+void unmarshalInt16(const char * &src, size_t &srcLen, int16_t &dst) {
 
   if(src == nullptr) {
     cta::exception::Exception ex;
@@ -1151,8 +1136,7 @@ void unmarshalInt16(const char * &src, size_t &srcLen,
 //------------------------------------------------------------------------------
 // unmarshalUint16
 //------------------------------------------------------------------------------
-void unmarshalUint16(const char * &src, size_t &srcLen,
-  uint16_t &dst)  {
+void unmarshalUint16(const char * &src, size_t &srcLen, uint16_t &dst) {
 
   if(src == nullptr) {
     cta::exception::Exception ex;
@@ -1235,8 +1219,7 @@ void unmarshalInt32(const char * &src, size_t &srcLen,
 //------------------------------------------------------------------------------
 // unmarshalUint64
 //------------------------------------------------------------------------------
-void unmarshalUint64(const char * &src, size_t &srcLen,
-  uint64_t &dst)  {
+void unmarshalUint64(const char * &src, size_t &srcLen, uint64_t &dst) {
 
   if(src == nullptr) {
     cta::exception::Exception ex;
@@ -1268,10 +1251,7 @@ void unmarshalUint64(const char * &src, size_t &srcLen,
 //------------------------------------------------------------------------------
 // unmarshalString
 //------------------------------------------------------------------------------
-void unmarshalString(const char * &src,
-  size_t &srcLen, char *dst, const size_t dstLen)
-   {
-
+void unmarshalString(const char*& src, size_t& srcLen, char* dst, const size_t dstLen) {
   if(src == nullptr) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal string"
