@@ -41,7 +41,6 @@ int send2rmc(
 {
 	int actual_replen = 0;
 	int c;
-	char func[16];
 	char *getconfent();
 	char *getconfent_fromfile();
 	char *getenv();
@@ -55,8 +54,8 @@ int send2rmc(
 	char rmchost[CA_MAXHOSTNAMELEN+1];
 	int s;
 	struct sockaddr_in sin; /* internet socket */
+	const char* const func = "send2rmc";
 
-	strncpy (func, "send2rmc", 16);
 	sin.sin_family = AF_INET;
 	if ((p = getenv ("RMC_PORT")) || (p = getconfent_fromfile (PATH_CONF,"RMC", "PORT", 0))) {
 		sin.sin_port = htons ((unsigned short)atoi (p));

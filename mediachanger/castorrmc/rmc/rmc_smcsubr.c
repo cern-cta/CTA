@@ -150,7 +150,6 @@ static int get_element_info(
 	unsigned char *data;
 	int edl;
 	int element_size;
-	char func[16];
 	int i;
 	int len;
 	const char *msgaddr;
@@ -164,9 +163,7 @@ static int get_element_info(
 	int nbReportBytesRemaining = 0;
 	int nbElementsInReport = 0;
 
-	strncpy (func, "get_elem_info", sizeof(func));
-	func[sizeof(func) - 1] = '\0';
-	if (type) {
+	if(type != 0) {
 		element_size = get_element_size (fd, rbtdev, type);
 		if (element_size < 0) return (-1);
 	} else {
@@ -268,16 +265,12 @@ int smc_get_geometry(
 {
 	unsigned char buf[36];
 	unsigned char cdb[6];
-	char func[16];
 	const char *msgaddr;
 	int nb_sense_ret;
 	int rc;
 	char sense[MAXSENSE];
         int pause_mode = 1;
         int nretries = 0;
-
-	strncpy(func, "get_geometry", sizeof(func));
-	func[sizeof(func) - 1] = '\0';
 
 	memset (cdb, 0, sizeof(cdb));
 	cdb[0] = 0x12;		/* inquiry */
@@ -354,12 +347,7 @@ int smc_read_elem_status(
 	const int nbelem,
 	struct smc_element_info element_info[])
 {
-	char func[16];
-
-	strncpy(func, "read_elem_statu", sizeof(func));
-	func[sizeof(func) - 1] = '\0';
-
-	return get_element_info (0xB8, fd, rbtdev, type, start, nbelem, element_info);
+	return get_element_info(0xB8, fd, rbtdev, type, start, nbelem, element_info);
 }
 
 int smc_find_cartridgeWithoutSendVolumeTag (
@@ -373,7 +361,6 @@ int smc_find_cartridgeWithoutSendVolumeTag (
 {
 	static char err_msgbuf[ERR_MSG_BUFSZ];
 	int nbFound = 0;
-	char func[16];
 	int i;
 	struct smc_element_info *inventory_info;
 	char *msgaddr;
@@ -381,9 +368,6 @@ int smc_find_cartridgeWithoutSendVolumeTag (
 	struct robot_info robot_info;
 	int tot_nbelem = 0;
 	int nbElementsInReport = 0;
-
-	strncpy(func, "findWithoutVT", sizeof(func));
-	func[sizeof(func) - 1] = '\0';
 
 	if(smc_get_geometry (fd, rbtdev, &robot_info) != 0) {
 		return -1;
@@ -438,7 +422,6 @@ int smc_find_cartridge(
 	struct robot_info *const robot_info)
 {
 	unsigned char cdb[12];
-	char func[16];
 	const char *msgaddr;
 	int nb_sense_ret;
 	char plist[40];
@@ -446,9 +429,6 @@ int smc_find_cartridge(
 	char sense[MAXSENSE];
         int pause_mode = 1;
         int nretries = 0;
-
-	strncpy(func, "findWithVT", sizeof(func));
-	func[sizeof(func) - 1] = '\0';
 
 	memset (cdb, 0, sizeof(cdb));
 	cdb[0] = 0xB6;		/* send volume tag */
@@ -553,10 +533,7 @@ int smc_lasterror(
 	const char **const msgaddr)
 {
 	unsigned int i;
-	char func[16];
-
-	strncpy (func, "lasterror", sizeof(func));
-	func[sizeof(func) - 1] = '\0';
+	const char* const func = "lasterror";
 
 	rmc_logit(func, "Function entered:"
 		" asc=%d ascq=%d save_errno=%d rc=%d sensekey=%d skvalid=%d\n",
@@ -602,16 +579,12 @@ int smc_move_medium(
 	const int invert)
 {
 	unsigned char cdb[12];
-	char func[16];
 	const char *msgaddr;
 	int nb_sense_ret;
 	int rc;
 	char sense[MAXSENSE];
         int pause_mode = 1;
         int nretries = 0;
-
-	strncpy(func, "move_medium", sizeof(func));
-	func[sizeof(func) - 1] = '\0';
 
 	memset (cdb, 0, sizeof(cdb));
 	cdb[0] = 0xA5;		/* move medium */
@@ -688,12 +661,9 @@ int smc_dismount (
 	unsigned int nb_element_status_reads = 0;
 	int drive_not_unloaded = 1;
 	struct smc_element_info drive_element_info;
-	char func[16];
 	const char *msgaddr = 0;
 	struct smc_status smc_status;
-
-	strncpy (func, "smc_dismount", sizeof(func));
-	func[sizeof(func) - 1] = '\0';
+	const char* const func = "smc_dismount";
 
 	memset(&smc_status, '\0', sizeof(smc_status));
 
@@ -766,15 +736,12 @@ int smc_export (
 	const char *const vid)
 {
         struct smc_element_info element_info;
-	char func[16];
 	int i = 0;
         struct smc_element_info *impexp_info;
 	const char *msgaddr = NULL;
 	int nbelem = 0;
 	struct smc_status smc_status;
-
-	strncpy (func, "smc_export", sizeof(func));
-	func[sizeof(func) - 1] = '\0';
+	const char* const func = "smc_export";
 
 	{
 		const int smc_find_cartridge_rc = smc_find_cartridge (fd, loader, vid, 0, 0, 1, &element_info, robot_info);
@@ -848,16 +815,13 @@ int smc_import (
         int c;
 	int device_start;
         struct smc_element_info *element_info;
-	char func[16];
 	int i, j;
 	const char *msgaddr;
 	int nbelem;
 	int port_start;
 	int slot_start;
 	struct smc_status smc_status;
-
-	strncpy (func, "smc_import", sizeof(func));
-	func[sizeof(func) - 1] = '\0';
+	const char* const func = "smc_import";
 
 	nbelem = robot_info->transport_count + robot_info->slot_count +
 		 robot_info->port_count + robot_info->device_count;
@@ -937,12 +901,9 @@ int smc_mount (
 {
 	int c;
 	struct smc_element_info element_info;
-	char func[16];
 	const char *msgaddr;
 	struct smc_status smc_status;
-
-	strncpy (func, "smc_mount", sizeof(func));
-	func[sizeof(func) - 1] = '\0';
+	const char* const func = "smc_mount";
 
 	if ((c = smc_find_cartridge (fd, loader, vid, 0, 0, 1, &element_info, robot_info)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
