@@ -42,14 +42,13 @@ extern struct extended_robot_info g_extended_robot_info;
 /* rmc_srv_export - export/eject a cartridge from the robot */
 int rmc_srv_export(const struct rmc_srv_rqst_context *const rqst_context) {
 	int c;
-	char func[16];
 	gid_t gid;
 	char logbuf[CA_MAXVIDLEN+8];
 	char *rbp;
 	uid_t uid;
 	char vid[CA_MAXVIDLEN+1];
+	const char* const func = "rmc_srv_export";
 
-	strncpy (func, "rmc_srv_export", 16);
 	rbp = rqst_context->req_data;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
@@ -85,7 +84,6 @@ int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context) {
 	int c;
 	struct smc_element_info *element_info;
 	struct smc_element_info *elemp;
-	char func[17];
 	gid_t gid;
 	int i;
 	char logbuf[CA_MAXVIDLEN+15];
@@ -99,8 +97,8 @@ int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context) {
 	char template[40];
 	int type;
 	uid_t uid;
+	const char* const func = "rmc_srv_findcart";
 
-	strncpy (func, "rmc_srv_findcart", 17);
 	rbp = rqst_context->req_data;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
@@ -168,15 +166,14 @@ int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context) {
 /*	rmc_srv_getgeom - get the robot geometry */
 
 int rmc_srv_getgeom(const struct rmc_srv_rqst_context *const rqst_context) {
-	char func[16];
 	gid_t gid;
 	char logbuf[8];
 	char *rbp;
 	char repbuf[64];
 	char *sbp;
 	uid_t uid;
+	const char* const func = "rmc_srv_getgeom";
 
-	strncpy (func, "rmc_srv_getgeom", 16);
 	rbp = rqst_context->req_data;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
@@ -213,14 +210,13 @@ int rmc_srv_getgeom(const struct rmc_srv_rqst_context *const rqst_context) {
 
 int rmc_srv_import(const struct rmc_srv_rqst_context *const rqst_context) {
 	int c;
-	char func[16];
 	gid_t gid;
 	char logbuf[CA_MAXVIDLEN+8];
 	char *rbp;
 	uid_t uid;
 	char vid[CA_MAXVIDLEN+1];
+	const char* const func = "rmc_srv_import";
 
-	strncpy (func, "rmc_srv_import", 16);
 	rbp = rqst_context->req_data;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
@@ -255,15 +251,14 @@ int rmc_srv_import(const struct rmc_srv_rqst_context *const rqst_context) {
 int rmc_srv_mount(const struct rmc_srv_rqst_context *const rqst_context) {
 	int c;
 	int drvord;
-	char func[16];
 	gid_t gid;
 	int invert;
 	char logbuf[CA_MAXVIDLEN+64];
 	char *rbp;
 	uid_t uid;
 	char vid[CA_MAXVIDLEN+1];
+	const char* const func = "rmc_srv_mount";
 
-	strncpy (func, "rmc_srv_mount", 16);
 	rbp = rqst_context->req_data;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
@@ -302,7 +297,6 @@ int rmc_srv_readelem(const struct rmc_srv_rqst_context *const rqst_context) {
 	int c;
 	struct smc_element_info *element_info;
 	struct smc_element_info *elemp;
-	char func[17];
 	gid_t gid;
 	int i;
 	char logbuf[21];
@@ -315,8 +309,8 @@ int rmc_srv_readelem(const struct rmc_srv_rqst_context *const rqst_context) {
 	int startaddr;
 	int type;
 	uid_t uid;
+	const char* const func = "rmc_srv_readelem";
 
-	strncpy (func, "rmc_srv_readelem", 17);
 	rbp = rqst_context->req_data;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
@@ -386,14 +380,13 @@ int rmc_srv_unmount(const struct rmc_srv_rqst_context *const rqst_context) {
 	int c;
 	int drvord;
 	int force;
-	char func[16];
 	gid_t gid;
 	char logbuf[CA_MAXVIDLEN+64];
 	char *rbp;
 	uid_t uid;
 	char vid[CA_MAXVIDLEN+1];
+	const char* const func = "rmc_srv_unmount";
 
-	strncpy (func, "rmc_srv_unmount", 16);
 	rbp = rqst_context->req_data;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
@@ -402,8 +395,7 @@ int rmc_srv_unmount(const struct rmc_srv_rqst_context *const rqst_context) {
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
 		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
-			rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06,
-				"loader");
+			rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06, "loader");
 			rmc_logit (func, "returns %d\n", ERMCUNREC);
 			return ERMCUNREC;
 		}

@@ -75,10 +75,7 @@ int rmc_main(const char *const robot)
 	struct sockaddr_in sin;
 	struct smc_status smc_status;
 	struct timeval timeval;
-	char func[16];
-
-	strncpy (func, "rmc_serv", sizeof(func));
-	func[sizeof(func) - 1] = '\0';
+	const char* const func = "rmc_serv";
 
 	g_jid = getpid();
 	rmc_logit (func, "started\n");
@@ -322,10 +319,7 @@ static int rmc_getreq(
 	int n;
 	char *rbp;
 	char req_hdr[3*LONGSIZE];
-	char func[16];
-
-	strncpy (func, "rmc_getreq", sizeof(func));
-	func[sizeof(func) - 1] = '\0';
+	const char* const func = "rmc_getreq";
 
 	l = netread_timeout (s, req_hdr, sizeof(req_hdr), RMC_TIMEOUT);
 	if (l == sizeof(req_hdr)) {
