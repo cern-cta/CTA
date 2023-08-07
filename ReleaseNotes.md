@@ -41,6 +41,15 @@
 - cta/CTA#418 - Add the physical library to the json output for tape ls and drive ls
 - cta/CTA#431 - Improvements to the `cta-admin physicallibrary` command
 
+# v4.10.0-2
+
+## Summary
+This release is a repackaging of `v4.10.0-1``, which removes any usage of the CTA catalogue version 13.0.
+CTA catalogue migration is intended to be made directly from version 12.0 to 14.0.
+
+### Catalogue Schema
+- cta/CTA#442 - Update CTA catalogue schema to version 14.0
+
 # v4.10.0-1
 
 ### Features
