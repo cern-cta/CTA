@@ -25,6 +25,9 @@
 - cta/CTA#428 - Compile EOS using Docker
 - cta/CTA#437 - Use version to build EOS using Docker
 
+### Continuous Integration
+- cta/CTA#453 - Change from testing to production the image of cta-catalogue-updater
+
 ### Features
 - cta/CTA#31 - Allow VO override for repack
 - cta/CTA#267 - Add new purchase order field to the tape table
