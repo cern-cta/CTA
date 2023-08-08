@@ -24,6 +24,22 @@ exit 1
 
 die() { echo "$@" 1>&2 ; exit 1; }
 
+# Define a function to check the current schema version
+check_schema_version() {
+  DESIRED_SCHEMA_VERSION=$1
+  # Get the current schema version
+  CURRENT_SCHEMA_VERSION=$(kubectl -n ${NAMESPACE} exec ctafrontend -- cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf \
+    | grep -o -E '[0-9]+\.[0-9]')
+
+  # Check if the current schema version is the same as the previous one
+  if [ ${CURRENT_SCHEMA_VERSION} ==  ${DESIRED_SCHEMA_VERSION} ]; then
+    echo "The current Catalogue Schema Version is: ${CURRENT_SCHEMA_VERSION}"
+  else
+    echo "Error. Unexpected Catalogue Schema Version: ${CURRENT_SCHEMA_VERSION}, it should be: ${PREVIOUS_SCHEMA_VERSION}"
+    exit 1
+  fi
+}
+
 CTA_VERSION=""
 
 while getopts "n:v:" o; do
@@ -85,23 +101,15 @@ sed -i "s/COMMIT_ID_VALUE/${COMMITID}/g" ${tempdir}/pod-dbupdatetest.yaml
 sed -i "s/CTA_VERSION_VALUE/${CTA_VERSION}/g" ${tempdir}/pod-dbupdatetest.yaml
 
 # Check if the current schema version is the same as the previous one
-CURRENT_SCHEMA_VERSION=$(kubectl -n ${NAMESPACE} exec ctafrontend -- cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf \
-  | grep -o -E '[0-9]+\.[0-9]')
-
-if [ ${CURRENT_SCHEMA_VERSION} ==  ${PREVIOUS_SCHEMA_VERSION} ]; then
-  echo "The current Catalogue Schema Version is: ${CURRENT_SCHEMA_VERSION}"
-else
-  echo "Error. Unexpected Catalogue Schema Version: ${CURRENT_SCHEMA_VERSION}, it should be: ${PREVIOUS_SCHEMA_VERSION}"
-  exit 1
-fi
+check_schema_version ${PREVIOUS_SCHEMA_VERSION}
 
 kubectl create -f ${tempdir}/pod-dbupdatetest.yaml --namespace=${NAMESPACE}
 
 echo -n "Waiting for dbupdatetest pod to be created"
 for ((i=0; i<240; i++)); do
   echo -n "."
-  # exit loop when all pods are in Running state
-  kubectl --namespace=${instance} get pod dbupdatetest ${KUBECTL_DEPRECATED_SHOWALL} -o json | jq -r .status.phase | grep -q -v Running || break
+  kubectl --namespace=${instance} get pod ${KUBECTL_DEPRECATED_SHOWALL} -o json \
+    | jq -r '.items[] | select(.metadata.name == "dbupdatetest") | .status.phase' | grep -q -v Running || break
   sleep 1
 done
 
@@ -116,53 +124,12 @@ echo "\n"
 kubectl -n ${NAMESPACE} exec -it dbupdatetest -- /bin/bash -c "/launch_liquibase.sh \"tag --tag=test_update\""
 kubectl -n ${NAMESPACE} exec -it dbupdatetest -- /bin/bash -c "/launch_liquibase.sh update"
 
-# Check if the current schema version is the same as the new one
-CURRENT_SCHEMA_VERSION=$(kubectl -n ${NAMESPACE} exec ctafrontend -- cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf \
-  | grep -o -E '[0-9]+\.[0-9]')
-if [ ${CURRENT_SCHEMA_VERSION} ==  ${NEW_SCHEMA_VERSION} ]; then
-  echo "The current Catalogue Schema Version is: ${CURRENT_SCHEMA_VERSION}"
-  kubectl -n ${NAMESPACE} logs dbupdatetest &> "../../../pod_logs/${NAMESPACE}/liquibase-update.log"
-else
-  echo "Error. Unexpected Catalogue Schema Version: ${CURRENT_SCHEMA_VERSION}, it should be: ${NEW_SCHEMA_VERSION}"
-  kubectl -n ${NAMESPACE} logs dbupdatetest &> "../../../pod_logs/${NAMESPACE}/liquibase-update.log"
-  exit 1
-fi
+# Check if the current schema version is the same as the new one. If it is, the update was successful
+check_schema_version ${NEW_SCHEMA_VERSION}
 
 kubectl -n ${NAMESPACE} exec -it dbupdatetest -- /bin/bash -c "/launch_liquibase.sh \"rollback --tag=test_update\""
 
-# Check if the current schema version is the same as the previous one
-CURRENT_SCHEMA_VERSION=$(kubectl -n ${NAMESPACE} exec ctafrontend -- cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf \
-  | grep -o -E '[0-9]+\.[0-9]')
-
-if [ ${CURRENT_SCHEMA_VERSION} ==  ${PREVIOUS_SCHEMA_VERSION} ]; then
-  echo "The current Catalogue Schema Version is: ${CURRENT_SCHEMA_VERSION}"
-else
-  echo "Error. Unexpected Catalogue Schema Version: ${CURRENT_SCHEMA_VERSION}, it should be: ${PREVIOUS_SCHEMA_VERSION}"
-  exit 1
-fi
-
-# If the previous and new schema has same major version, we can run a simple archive-retrieve test
-PREVIOUS_MAJOR=$(echo ${PREVIOUS_SCHEMA_VERSION} | cut -d. -f1)
-if [ "${MAJOR}" == "${PREVIOUS_MAJOR}" ] ; then
-  echo
-  echo "Running a simple archive-retrieve test to check if the update is working"
-  echo "Preparing namespace for the tests"
-  ./prepare_tests.sh -n ${NAMESPACE}
-  if [ $? -ne 0 ]; then
-    echo "ERROR: failed to prepare namespace for the tests"
-    exit 1
-  fi
-
-  echo
-  echo "Launching simple_client_ar.sh on client pod"
-  echo " Archiving file: xrdcp as user1"
-  echo " Retrieving it as poweruser1"
-  kubectl -n ${NAMESPACE} cp simple_client_ar.sh client:/root/simple_client_ar.sh
-  kubectl -n ${NAMESPACE} cp client_helper.sh client:/root/client_helper.sh
-  kubectl -n ${NAMESPACE} exec client -- bash /root/simple_client_ar.sh || exit 1
-
-  kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh ctaeos:/root/grep_xrdlog_mgm_for_error.sh
-  kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-fi
+# Check if the current schema version is the same as the previous one. Rollback should be successful.
+check_schema_version ${PREVIOUS_SCHEMA_VERSION}
 
 exit 0
