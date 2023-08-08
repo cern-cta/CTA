@@ -50,8 +50,6 @@ COMMAND=\$1
 " &> /launch_liquibase.sh
 chmod +x /launch_liquibase.sh
 
-cat /launch_liquibase.sh
-
 echo "dbupdatetest pod is ready"
 #sleep 10 minutes
 sleep 600

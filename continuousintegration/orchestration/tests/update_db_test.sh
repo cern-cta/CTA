@@ -40,6 +40,27 @@ check_schema_version() {
   fi
 }
 
+# Create k8 pod for db update test
+create_dbupdatetest_pod() {
+  kubectl create -f ${tempdir}/pod-dbupdatetest.yaml --namespace=${NAMESPACE}
+
+  echo -n "Waiting for dbupdatetest pod to be created"
+  for ((i=0; i<240; i++)); do
+    echo -n "."
+    kubectl --namespace=${instance} get pod ${KUBECTL_DEPRECATED_SHOWALL} -o json \
+      | jq -r '.items[] | select(.metadata.name == "dbupdatetest") | .status.phase' | grep -q -v Running || break
+    sleep 1
+  done
+
+  echo -n "Waiting for dbupdatetest to be ready"
+  for ((i=0; i<400; i++)); do
+    echo -n "."
+    kubectl -n ${NAMESPACE} logs dbupdatetest | egrep -q "dbupdatetest pod is ready" && break
+    sleep 1
+  done
+  echo "\n"
+}
+
 CTA_VERSION=""
 
 while getopts "n:v:" o; do
@@ -101,35 +122,22 @@ sed -i "s/COMMIT_ID_VALUE/${COMMITID}/g" ${tempdir}/pod-dbupdatetest.yaml
 sed -i "s/CTA_VERSION_VALUE/${CTA_VERSION}/g" ${tempdir}/pod-dbupdatetest.yaml
 
 # Check if the current schema version is the same as the previous one
+echo "Checking if the current schema version is the same as the previous one"
 check_schema_version ${PREVIOUS_SCHEMA_VERSION}
 
-kubectl create -f ${tempdir}/pod-dbupdatetest.yaml --namespace=${NAMESPACE}
-
-echo -n "Waiting for dbupdatetest pod to be created"
-for ((i=0; i<240; i++)); do
-  echo -n "."
-  kubectl --namespace=${instance} get pod ${KUBECTL_DEPRECATED_SHOWALL} -o json \
-    | jq -r '.items[] | select(.metadata.name == "dbupdatetest") | .status.phase' | grep -q -v Running || break
-  sleep 1
-done
-
-echo -n "Waiting for dbupdatetest to be ready"
-for ((i=0; i<400; i++)); do
-  echo -n "."
-  kubectl -n ${NAMESPACE} logs dbupdatetest | egrep -q "dbupdatetest pod is ready" && break
-  sleep 1
-done
-echo "\n"
+create_dbupdatetest_pod
 
 kubectl -n ${NAMESPACE} exec -it dbupdatetest -- /bin/bash -c "/launch_liquibase.sh \"tag --tag=test_update\""
 kubectl -n ${NAMESPACE} exec -it dbupdatetest -- /bin/bash -c "/launch_liquibase.sh update"
 
 # Check if the current schema version is the same as the new one. If it is, the update was successful
+echo "Checking if liquibase update was successful"
 check_schema_version ${NEW_SCHEMA_VERSION}
 
 kubectl -n ${NAMESPACE} exec -it dbupdatetest -- /bin/bash -c "/launch_liquibase.sh \"rollback --tag=test_update\""
 
 # Check if the current schema version is the same as the previous one. Rollback should be successful.
+echo "Checking if liquibase rollback was successful"
 check_schema_version ${PREVIOUS_SCHEMA_VERSION}
 
 exit 0
