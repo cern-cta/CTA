@@ -24,6 +24,7 @@
 - cta/CTA#385 - Remove OpenSSL dependency
 - cta/CTA#428 - Compile EOS using Docker
 - cta/CTA#437 - Use version to build EOS using Docker
+- cta/CTA#454 - Update XRootD versions on CTA
 
 ### Continuous Integration
 - cta/CTA#453 - Change from testing to production the image of cta-catalogue-updater
