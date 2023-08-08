@@ -1,3 +1,8 @@
+# v4.NEXT
+
+### Continuous Integration
+- cta/CTA#352 - Test rollback Catalogue Version
+
 # v4.10.1-1
 
 ### Bug Fixes
@@ -29,7 +34,6 @@
 
 ### Continuous Integration
 - cta/CTA#453 - Change from testing to production the image of cta-catalogue-updater
-- cta/CTA#352 - Test rollback Catalogue Version
 
 ### Features
 - cta/CTA#31 - Allow VO override for repack
