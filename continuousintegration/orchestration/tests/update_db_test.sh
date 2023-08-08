@@ -140,4 +140,5 @@ kubectl -n ${NAMESPACE} exec -it dbupdatetest -- /bin/bash -c "/launch_liquibase
 echo "Checking if liquibase rollback was successful"
 check_schema_version ${PREVIOUS_SCHEMA_VERSION}
 
+echo "Liquibase update and rollback were successful"
 exit 0
