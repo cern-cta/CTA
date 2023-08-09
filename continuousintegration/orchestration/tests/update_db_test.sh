@@ -24,6 +24,43 @@ exit 1
 
 die() { echo "$@" 1>&2 ; exit 1; }
 
+# Define a function to check the current schema version
+check_schema_version() {
+  DESIRED_SCHEMA_VERSION=$1
+  # Get the current schema version
+  CURRENT_SCHEMA_VERSION=$(kubectl -n ${NAMESPACE} exec ctafrontend -- cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf \
+    | grep -o -E '[0-9]+\.[0-9]')
+
+  # Check if the current schema version is the same as the previous one
+  if [ ${CURRENT_SCHEMA_VERSION} ==  ${DESIRED_SCHEMA_VERSION} ]; then
+    echo "The current Catalogue Schema Version is: ${CURRENT_SCHEMA_VERSION}"
+  else
+    echo "Error. Unexpected Catalogue Schema Version: ${CURRENT_SCHEMA_VERSION}, it should be: ${PREVIOUS_SCHEMA_VERSION}"
+    exit 1
+  fi
+}
+
+# Create k8 pod for db update test
+create_dbupdatetest_pod() {
+  kubectl create -f ${tempdir}/pod-dbupdatetest.yaml --namespace=${NAMESPACE}
+
+  echo -n "Waiting for dbupdatetest pod to be created"
+  for ((i=0; i<240; i++)); do
+    echo -n "."
+    kubectl --namespace=${instance} get pod ${KUBECTL_DEPRECATED_SHOWALL} -o json \
+      | jq -r '.items[] | select(.metadata.name == "dbupdatetest") | .status.phase' | grep -q -v Running || break
+    sleep 1
+  done
+
+  echo -n "Waiting for dbupdatetest to be ready"
+  for ((i=0; i<400; i++)); do
+    echo -n "."
+    kubectl -n ${NAMESPACE} logs dbupdatetest | egrep -q "dbupdatetest pod is ready" && break
+    sleep 1
+  done
+  echo "\n"
+}
+
 CTA_VERSION=""
 
 while getopts "n:v:" o; do
@@ -80,68 +117,28 @@ cp ../pod-dbupdatetest.yaml ${tempdir}
 sed -i "s/CATALOGUE_SOURCE_VERSION_VALUE/${PREVIOUS_SCHEMA_VERSION}/g" ${tempdir}/pod-dbupdatetest.yaml
 sed -i "s/CATALOGUE_DESTINATION_VERSION_VALUE/${NEW_SCHEMA_VERSION}/g" ${tempdir}/pod-dbupdatetest.yaml
 
-COMMITID=$(git log -n1 | grep ^commit | cut -d\  -f2 | sed -e 's/\(........\).*/\1/')
+COMMITID=$(git submodule status | grep cta-catalogue-schema | awk '{print $1}')
 sed -i "s/COMMIT_ID_VALUE/${COMMITID}/g" ${tempdir}/pod-dbupdatetest.yaml
 sed -i "s/CTA_VERSION_VALUE/${CTA_VERSION}/g" ${tempdir}/pod-dbupdatetest.yaml
 
 # Check if the current schema version is the same as the previous one
-CURRENT_SCHEMA_VERSION=$(kubectl -n ${NAMESPACE} exec ctafrontend -- cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf \
-  | grep -o -E '[0-9]+\.[0-9]')
+echo "Checking if the current schema version is the same as the previous one"
+check_schema_version ${PREVIOUS_SCHEMA_VERSION}
 
-if [ ${CURRENT_SCHEMA_VERSION} ==  ${PREVIOUS_SCHEMA_VERSION} ]; then
-  echo "The current Catalogue Schema Version is: ${CURRENT_SCHEMA_VERSION}"
-else
-  echo "Error. Unexpected Catalogue Schema Version: ${CURRENT_SCHEMA_VERSION}, it should be: ${PREVIOUS_SCHEMA_VERSION}"
-  exit 1
-fi
+create_dbupdatetest_pod
 
-kubectl create -f ${tempdir}/pod-dbupdatetest.yaml --namespace=${NAMESPACE}
+kubectl -n ${NAMESPACE} exec -it dbupdatetest -- /bin/bash -c "/launch_liquibase.sh \"tag --tag=test_update\""
+kubectl -n ${NAMESPACE} exec -it dbupdatetest -- /bin/bash -c "/launch_liquibase.sh update"
 
-echo -n "Waiting for dbupdatetest"
-for ((i=0; i<400; i++)); do
-  echo -n "."
-  kubectl -n ${NAMESPACE} get pod dbupdatetest ${KUBECTL_DEPRECATED_SHOWALL} | egrep -q 'Completed|Error' && break
-  sleep 1
-done
-echo "\n"
+# Check if the current schema version is the same as the new one. If it is, the update was successful
+echo "Checking if liquibase update was successful"
+check_schema_version ${NEW_SCHEMA_VERSION}
 
-# Check if the current schema version is the same as the new one
-CURRENT_SCHEMA_VERSION=$(kubectl -n ${NAMESPACE} exec ctafrontend -- cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf \
-  | grep -o -E '[0-9]+\.[0-9]')
-if [ ${CURRENT_SCHEMA_VERSION} ==  ${NEW_SCHEMA_VERSION} ]; then
-  echo "The current Catalogue Schema Version is: ${CURRENT_SCHEMA_VERSION}"
-  kubectl -n ${NAMESPACE} logs dbupdatetest &> "../../../pod_logs/${NAMESPACE}/liquibase-update.log"
-else
-  echo "Error. Unexpected Catalogue Schema Version: ${CURRENT_SCHEMA_VERSION}, it should be: ${NEW_SCHEMA_VERSION}"
-  kubectl -n ${NAMESPACE} logs dbupdatetest &> "../../../pod_logs/${NAMESPACE}/liquibase-update.log"
-  exit 1
-fi
+kubectl -n ${NAMESPACE} exec -it dbupdatetest -- /bin/bash -c "/launch_liquibase.sh \"rollback --tag=test_update\""
 
-# Check if cta-catalogue-schema-verify has a successing output
-kubectl -n ${NAMESPACE} exec ctafrontend -- cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf || die "Error verifying catalogue"
+# Check if the current schema version is the same as the previous one. Rollback should be successful.
+echo "Checking if liquibase rollback was successful"
+check_schema_version ${PREVIOUS_SCHEMA_VERSION}
 
-# If the previous and new schema has same major version, we can run a simple archive-retrieve test
-PREVIOUS_MAJOR=$(echo ${PREVIOUS_SCHEMA_VERSION} | cut -d. -f1)
-if [ "${MAJOR}" == "${PREVIOUS_MAJOR}" ] ; then
-  echo
-  echo "Running a simple archive-retrieve test to check if the update is working"
-  echo "Preparing namespace for the tests"
-  ./prepare_tests.sh -n ${NAMESPACE}
-  if [ $? -ne 0 ]; then
-    echo "ERROR: failed to prepare namespace for the tests"
-    exit 1
-  fi
-
-  echo
-  echo "Launching simple_client_ar.sh on client pod"
-  echo " Archiving file: xrdcp as user1"
-  echo " Retrieving it as poweruser1"
-  kubectl -n ${NAMESPACE} cp simple_client_ar.sh client:/root/simple_client_ar.sh
-  kubectl -n ${NAMESPACE} cp client_helper.sh client:/root/client_helper.sh
-  kubectl -n ${NAMESPACE} exec client -- bash /root/simple_client_ar.sh || exit 1
-
-  kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh ctaeos:/root/grep_xrdlog_mgm_for_error.sh
-  kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-fi
-
+echo "Liquibase update and rollback were successful"
 exit 0

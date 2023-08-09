@@ -1,3 +1,8 @@
+# v4.NEXT
+
+### Continuous Integration
+- cta/CTA#352 - Test rollback Catalogue Version
+
 # v4.10.1-1
 
 ### Bug Fixes

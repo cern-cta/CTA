@@ -17,14 +17,16 @@
 
 # This libraries are needed to install oracle-instant-client
 # (TO BE FIXED: with the current population of repositories in CI the standard CC7 repos are not available in the container: this should be fixed in the container adding repos for these 2)
-yum install --assumeyes wget libaio;
+yum install --assumeyes wget libaio
 
-if [[ $CTA_VERSION ]]
-then
-  echo "CTA_VERSION"
-  /entrypoint.sh -d -v ${CTA_VERSION} -f ${CATALOGUE_SOURCE_VERSION} -t ${CATALOGUE_DESTINATION_VERSION} -c update;
-else
-  echo "COMMIT_ID"
-  /entrypoint.sh -d -i ${COMMIT_ID} -f ${CATALOGUE_SOURCE_VERSION} -t ${CATALOGUE_DESTINATION_VERSION} -c update;
-fi
+# Create wrapper to use the entrypoint of the container
+echo "
+#/bin/bash
+COMMAND=\$1
+/entrypoint.sh -d -f \"$CATALOGUE_SOURCE_VERSION\" -t \"$CATALOGUE_DESTINATION_VERSION\" -i \"$COMMIT_ID\" -c \"\$COMMAND\"
+" &> /launch_liquibase.sh
+chmod +x /launch_liquibase.sh
 
+echo "dbupdatetest pod is ready"
+#sleep 10 minutes
+sleep 600
