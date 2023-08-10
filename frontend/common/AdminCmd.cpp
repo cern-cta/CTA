@@ -1469,7 +1469,7 @@ void AdminCmd::processVirtualOrganization_Ch(xrd::Response& response) {
   if(isRepackVo) {
     // If there is no default repack VO set it to repackvo despite ongoing repacks. #461
     auto defaultRepackVo = m_catalogue.VO()->getDefaultVirtualOrganizationForRepack();
-    if (m_scheduler.repackExists() && defaultRepackVo->has_value()) {
+    if (m_scheduler.repackExists() && defaultRepackVo.has_value()) {
       throw exception::UserError("Cannot modify default virtual organization "
                                  "for repack while repacks are ongoing.");
     }
