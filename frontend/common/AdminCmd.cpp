@@ -1467,8 +1467,11 @@ void AdminCmd::processVirtualOrganization_Ch(xrd::Response& response) {
     m_catalogue.VO()->modifyVirtualOrganizationDiskInstanceName(m_cliIdentity, name, diskInstanceName.value());
 
   if(isRepackVo) {
-    if (m_scheduler.repackExists()) {
-      throw exception::UserError("Cannot modify default virtual organization for repack while repacks are ongoing.");
+    // If there is no default repack VO set it to repackvo despite ongoing repacks. #461
+    auto defaultRepackVo = m_catalogue.VO()->getDefaultVirtualOrganizationForRepack();
+    if (m_scheduler.repackExists() && defaultRepackVo->hasValue()) {
+      throw exception::UserError("Cannot modify default virtual organization "
+                                 "for repack while repacks are ongoing.");
     }
     m_catalogue.VO()->modifyVirtualOrganizationIsRepackVo(m_cliIdentity, name, isRepackVo.value());
   }
