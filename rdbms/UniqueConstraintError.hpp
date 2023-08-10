@@ -45,7 +45,7 @@ public:
    * Empty Destructor, explicitely non-throwing (needed for std::exception
    * inheritance)
    */
-  ~UniqueConstraintError() noexcept override;
+  ~UniqueConstraintError() noexcept override = default;
   
 }; // class UniqueConstraintError
 
