@@ -210,39 +210,19 @@ static int run_rmcd_in_background(const int argc, char **argv) {
 }
 
 /**
- * Returns 1 if the specified command-line argument start with '-' else
- * returns 0.
- */
-static int cmdline_arg_is_an_option(const char *arg) {
-  if(strlen(arg) < 1) {
-    return 0;
-  } else {
-    if('-' == arg[0]) {
-      return 1;
-    } else {
-      return 0;
-    }
-  }
-}
-
-/**
  * Returns the number of command-line arguments that start with '-'.
  */
 static int get_nb_cmdline_options(const int argc, char **argv) {
-  int i = 0;
   int nbOptions = 0;
-
-  for(i = 1; i < argc; i++) {
-    if(cmdline_arg_is_an_option(argv[i])) {
+  for(int i = 1; i < argc; i++) {
+    if(*argv[i] == '-') {
       nbOptions++;
     }
   }
-
   return nbOptions;
 }
 
-int main(const int argc,
-         char **argv)
+int main(const int argc, char **argv)
 {
 	const char *robot = "";
 	const int nb_cmdline_options = get_nb_cmdline_options(argc, argv);
