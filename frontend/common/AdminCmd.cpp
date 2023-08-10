@@ -1469,7 +1469,7 @@ void AdminCmd::processVirtualOrganization_Ch(xrd::Response& response) {
   if(isRepackVo) {
     // Don't allow unsetting repackvo while repacks are ongoing.
     if (m_scheduler.repackExists() && !isRepackVo.value()) {
-      throw exception::UserError("Cannot modify default virtual organization "
+      throw exception::UserError("Cannot remove default virtual organization "
                                  "for repack while repacks are ongoing.");
     }
     m_catalogue.VO()->modifyVirtualOrganizationIsRepackVo(m_cliIdentity, name, isRepackVo.value());
