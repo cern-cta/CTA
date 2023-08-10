@@ -23,6 +23,7 @@
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "catalogue/CreateTapeAttributes.hpp"
+#include "catalogue/InMemoryCatalogue.hpp"
 #include "catalogue/MediaType.hpp"
 #include "catalogue/TapeFileWritten.hpp"
 #include "catalogue/TapeItemWrittenPointer.hpp"
@@ -32,10 +33,33 @@
 #include "common/log/StringLogger.hpp"
 #include "rdbms/Login.hpp"
 #include "scheduler/testingMocks/MockArchiveMount.hpp"
+#include "scheduler/SchedulerDatabase.hpp"
+#include "scheduler/SchedulerDatabaseFactory.hpp"
+
+#ifdef CTA_PGSCHED
+#include "scheduler/PostgresSchedDB/PostgresSchedDBFactory.hpp"
+#else
+#include "objectstore/BackendRadosTestSwitch.hpp"
+#include "OStoreDB/OStoreDBFactory.hpp"
+#include "objectstore/BackendRados.hpp"
+#endif
+
 
 using ::testing::_;
 using ::testing::Invoke;
 using namespace castor::tape;
+
+/**
+ * This structure is used to parameterize scheduler tests.
+ */
+struct SchedulerTestParam {
+    cta::SchedulerDatabaseFactory &m_dbFactory;
+
+    SchedulerTestParam(
+            cta::SchedulerDatabaseFactory &dbFactory):
+            m_dbFactory(dbFactory) {
+    }
+}; // struct SchedulerTestParam
 
 namespace unitTests {
 
@@ -44,24 +68,57 @@ const uint32_t TEST_GROUP_1 = 9752;
 const uint32_t TEST_USER_2  = 9753;
 const uint32_t TEST_GROUP_2 = 9754;
 
-  class castor_tape_tapeserver_daemon_MigrationReportPackerTest: public ::testing::Test {
+class castor_tape_tapeserver_daemon_MigrationReportPackerTest: public ::testing::TestWithParam<SchedulerTestParam> {
   public:
     castor_tape_tapeserver_daemon_MigrationReportPackerTest():
       m_dummyLog("dummy", "dummy") {
     }
+
+    class FailedToGetCatalogue: public std::exception {
+    public:
+        const char *what() const noexcept {
+            return "Failed to get catalogue";
+        }
+    };
+
+    class FailedToGetScheduler: public std::exception {
+    public:
+        const char *what() const noexcept {
+            return "Failed to get scheduler";
+        }
+    };
+
+    class FailedToGetSchedulerDB: public std::exception {
+    public:
+        const char *what() const noexcept {
+            return "Failed to get object store db.";
+        }
+    };
+
+  private:
+    cta::log::DummyLogger m_dummyLog;
+    std::unique_ptr<cta::SchedulerDatabase> m_db;
+    std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
+    std::unique_ptr<cta::Scheduler> m_scheduler;
 
   protected:
 
     void SetUp() {
       using namespace cta;
       using namespace cta::catalogue;
-
-      rdbms::Login catalogueLogin(rdbms::Login::DBTYPE_IN_MEMORY, "", "", "", "", 0);
+      // We do a deep reference to the member as the C++ compiler requires the function to be already defined if called implicitly
+      const auto &factory = GetParam().m_dbFactory;
       const uint64_t nbConns = 1;
-      const uint64_t nbArchiveFileListingConns = 0;
-      auto catalogueFactory = CatalogueFactoryFactory::create(m_dummyLog, catalogueLogin, nbConns,
-        nbArchiveFileListingConns);
-      m_catalogue = catalogueFactory->create();
+      const uint64_t nbArchiveFileListingConns = 1;
+      //m_catalogue = std::make_unique<catalogue::SchemaCreatingSqliteCatalogue>(m_tempSqliteFile.path(), nbConns);
+      m_catalogue = std::make_unique<catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns);
+      // Get the Scheduler DB from the factory
+      auto sdb = std::move(factory.create(m_catalogue));
+      // Make sure the type of the SchedulerDatabase is correct (it should be an OStoreDBWrapperInterface)
+      //dynamic_cast<cta::objectstore::OStoreDBWrapperInterface*>(osdb.get());
+      // We know the cast will not fail, so we can safely do it (otherwise we could leak memory)
+      m_db.reset(sdb.get());
+      m_scheduler = std::make_unique<Scheduler>(*m_catalogue, *m_db, s_minFilesToWarrantAMount, s_minBytesToWarrantAMount);
     }
     
     void createMediaType(const std::string & name){
@@ -81,7 +138,6 @@ const uint32_t TEST_GROUP_2 = 9754;
       return di;
     }
 
-
     cta::common::dataStructures::VirtualOrganization getDefaultVo(){
       cta::common::dataStructures::VirtualOrganization vo;
       vo.name = "vo";
@@ -95,11 +151,31 @@ const uint32_t TEST_GROUP_2 = 9754;
     }
 
     void TearDown() {
+      m_scheduler.reset();
       m_catalogue.reset();
+      m_db.reset();
     }
 
-    cta::log::DummyLogger m_dummyLog;
-    std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
+    cta::catalogue::Catalogue &getCatalogue() {
+        cta::catalogue::Catalogue *const ptr = m_catalogue.get();
+        if(nullptr == ptr) {
+            throw FailedToGetCatalogue();
+        }
+        return *ptr;
+    }
+
+    cta::Scheduler &getScheduler() {
+        cta::Scheduler *const ptr = m_scheduler.get();
+        if(nullptr == ptr) {
+            throw FailedToGetScheduler();
+        }
+        return *ptr;
+    }
+
+    const uint64_t s_minFilesToWarrantAMount = 5;
+    const uint64_t s_minBytesToWarrantAMount = 2*1000*1000;
+    // cta::log::DummyLogger m_dummyLog;
+    // std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
 
   }; // class castor_tape_tapeserver_daemon_MigrationReportPackerTest
 
@@ -141,10 +217,12 @@ const uint32_t TEST_GROUP_2 = 9754;
   private:
     int & completesRef;
     int & failuresRef;
+
   };
 
   TEST_F(castor_tape_tapeserver_daemon_MigrationReportPackerTest, MigrationReportPackerNominal) {
-    cta::MockArchiveMount tam(*m_catalogue);
+    auto &catalogue = getCatalogue();
+    cta::MockArchiveMount tam(catalogue);
 
     const std::string vid1 = "VTEST001";
     const std::string vid2 = "VTEST002";
@@ -160,11 +238,11 @@ const uint32_t TEST_GROUP_2 = 9754;
     cta::common::dataStructures::VirtualOrganization vo = getDefaultVo();
     const auto di = getDefaultDiskInstance();
     cta::common::dataStructures::SecurityIdentity admin = cta::common::dataStructures::SecurityIdentity("admin","localhost");
-    m_catalogue->DiskInstance()->createDiskInstance(admin, di.name, di.comment);
-    m_catalogue->VO()->createVirtualOrganization(admin,vo);
+    catalogue.DiskInstance()->createDiskInstance(admin, di.name, di.comment);
+    catalogue.VO()->createVirtualOrganization(admin,vo);
 
-    m_catalogue->LogicalLibrary()->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
-    m_catalogue->TapePool()->createTapePool(admin, tapePoolName, vo.name, 2, true, supply, "Create tape pool");
+    catalogue.LogicalLibrary()->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+    catalogue.TapePool()->createTapePool(admin, tapePoolName, vo.name, 2, true, supply, "Create tape pool");
     createMediaType(mediaType);
 
     {
@@ -178,7 +256,7 @@ const uint32_t TEST_GROUP_2 = 9754;
       tape.comment = createTapeComment;
       tape.state = cta::common::dataStructures::Tape::DISABLED;
       tape.stateReason = "Test";
-      m_catalogue->Tape()->createTape(admin, tape);
+      catalogue.Tape()->createTape(admin, tape);
     }
 
     cta::common::dataStructures::StorageClass storageClass;
@@ -187,14 +265,14 @@ const uint32_t TEST_GROUP_2 = 9754;
     storageClass.nbCopies = 1;
     storageClass.vo.name = vo.name;
     storageClass.comment = "Create storage class";
-    m_catalogue->StorageClass()->createStorageClass(admin, storageClass);
+    catalogue.StorageClass()->createStorageClass(admin, storageClass);
 
     ::testing::InSequence dummy;
     std::unique_ptr<cta::ArchiveJob> job1;
     int job1completes(0), job1failures(0);
     {
       std::unique_ptr<cta::MockArchiveJob> mockJob(
-        new MockArchiveJobExternalStats(tam, *m_catalogue, job1completes, job1failures));
+        new MockArchiveJobExternalStats(tam, catalogue, job1completes, job1failures));
       job1.reset(mockJob.release());
     }
     job1->archiveFile.archiveFileID=1;
@@ -217,7 +295,7 @@ const uint32_t TEST_GROUP_2 = 9754;
     int job2completes(0), job2failures(0);
     {
       std::unique_ptr<cta::MockArchiveJob> mockJob(
-        new MockArchiveJobExternalStats(tam, *m_catalogue, job2completes, job2failures));
+        new MockArchiveJobExternalStats(tam, catalogue, job2completes, job2failures));
       job2.reset(mockJob.release());
     }
     job2->archiveFile.archiveFileID=2;
@@ -238,7 +316,12 @@ const uint32_t TEST_GROUP_2 = 9754;
 
     cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_MigrationReportPackerNominal",cta::log::DEBUG);
     cta::log::LogContext lc(log);
-    tapeserver::daemon::MigrationReportPacker mrp(&tam,lc);
+    cta::common::dataStructures::DriveInfo driveInfo;
+    driveInfo.driveName = "test_driveName";
+    driveInfo.host = "test_host";
+    driveInfo.logicalLibrary = logicalLibraryName;
+    cta::Scheduler *scheduler = &getScheduler();
+    tapeserver::daemon::MigrationReportPacker mrp(&tam, driveInfo, scheduler, lc);
     mrp.startThreads();
 
     mrp.reportCompletedJob(std::move(job1), lc);
@@ -258,30 +341,36 @@ const uint32_t TEST_GROUP_2 = 9754;
   }
 
   TEST_F(castor_tape_tapeserver_daemon_MigrationReportPackerTest, MigrationReportPackerFailure) {
-    cta::MockArchiveMount tam(*m_catalogue);
+    auto &catalogue = getCatalogue();
+    cta::MockArchiveMount tam(catalogue);
 
     ::testing::InSequence dummy;
     std::unique_ptr<cta::ArchiveJob> job1;
     {
-      std::unique_ptr<cta::MockArchiveJob> mockJob(new cta::MockArchiveJob(&tam, *m_catalogue));
+      std::unique_ptr<cta::MockArchiveJob> mockJob(new cta::MockArchiveJob(&tam, catalogue));
       job1.reset(mockJob.release());
     }
     std::unique_ptr<cta::ArchiveJob> job2;
     {
-      std::unique_ptr<cta::MockArchiveJob> mockJob(new cta::MockArchiveJob(&tam, *m_catalogue));
+      std::unique_ptr<cta::MockArchiveJob> mockJob(new cta::MockArchiveJob(&tam, catalogue));
       job2.reset(mockJob.release());
     }
     std::unique_ptr<cta::ArchiveJob> job3;
     int job3completes(0), job3failures(0);
     {
       std::unique_ptr<cta::MockArchiveJob> mockJob(
-        new MockArchiveJobExternalStats(tam, *m_catalogue, job3completes, job3failures));
+        new MockArchiveJobExternalStats(tam, catalogue, job3completes, job3failures));
       job3.reset(mockJob.release());
     }
 
     cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_MigrationReportPackerFailure",cta::log::DEBUG);
-    cta::log::LogContext lc(log);  
-    tapeserver::daemon::MigrationReportPacker mrp(&tam,lc);
+    cta::log::LogContext lc(log);
+    cta::common::dataStructures::DriveInfo driveInfo;
+    driveInfo.driveName = "test_driveName";
+    driveInfo.host = "test_host";
+    driveInfo.logicalLibrary = "logical_library_name";
+    cta::Scheduler *scheduler = &getScheduler();
+    tapeserver::daemon::MigrationReportPacker mrp(&tam, driveInfo, scheduler, lc);
     mrp.startThreads();
 
     mrp.reportCompletedJob(std::move(job1), lc);
@@ -304,7 +393,8 @@ const uint32_t TEST_GROUP_2 = 9754;
   }
 
   TEST_F(castor_tape_tapeserver_daemon_MigrationReportPackerTest, MigrationReportPackerBadFile) {
-    cta::MockArchiveMount tam(*m_catalogue);
+    auto &catalogue = getCatalogue();
+    cta::MockArchiveMount tam(catalogue);
 
     const std::string vid1 = "VTEST001";
     const std::string vid2 = "VTEST002";
@@ -323,11 +413,11 @@ const uint32_t TEST_GROUP_2 = 9754;
 
     cta::common::dataStructures::VirtualOrganization vo = getDefaultVo();
     const auto &di = getDefaultDiskInstance();
-    m_catalogue->DiskInstance()->createDiskInstance(admin, di.name, di.comment);
-    m_catalogue->VO()->createVirtualOrganization(admin,vo);
+    catalogue.DiskInstance()->createDiskInstance(admin, di.name, di.comment);
+    catalogue.VO()->createVirtualOrganization(admin,vo);
 
-    m_catalogue->LogicalLibrary()->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
-    m_catalogue->TapePool()->createTapePool(admin, tapePoolName, vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+    catalogue.LogicalLibrary()->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+    catalogue.TapePool()->createTapePool(admin, tapePoolName, vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
     createMediaType(mediaType);
 
     {
@@ -341,7 +431,7 @@ const uint32_t TEST_GROUP_2 = 9754;
       tape.comment = createTapeComment;
       tape.state = cta::common::dataStructures::Tape::DISABLED;
       tape.stateReason = "test";
-      m_catalogue->Tape()->createTape(admin, tape);
+      catalogue.Tape()->createTape(admin, tape);
     }
 
     cta::common::dataStructures::StorageClass storageClass;
@@ -350,28 +440,28 @@ const uint32_t TEST_GROUP_2 = 9754;
     storageClass.nbCopies = 1;
     storageClass.vo.name = vo.name;
     storageClass.comment = "Create storage class";
-    m_catalogue->StorageClass()->createStorageClass(admin, storageClass);
+    catalogue.StorageClass()->createStorageClass(admin, storageClass);
 
     ::testing::InSequence dummy;
     std::unique_ptr<cta::ArchiveJob> migratedBigFile;
     int migratedBigFileCompletes(0), migratedBigFileFailures(0);
     {
       std::unique_ptr<cta::MockArchiveJob> mockJob(
-        new MockArchiveJobExternalStats(tam, *m_catalogue, migratedBigFileCompletes, migratedBigFileFailures));
+        new MockArchiveJobExternalStats(tam, catalogue, migratedBigFileCompletes, migratedBigFileFailures));
       migratedBigFile.reset(mockJob.release());
     }
     std::unique_ptr<cta::ArchiveJob> migratedFileSmall;
     int migratedFileSmallCompletes(0), migratedFileSmallFailures(0);
     {
       std::unique_ptr<cta::MockArchiveJob> mockJob(
-        new MockArchiveJobExternalStats(tam, *m_catalogue, migratedFileSmallCompletes, migratedFileSmallFailures));
+        new MockArchiveJobExternalStats(tam, catalogue, migratedFileSmallCompletes, migratedFileSmallFailures));
       migratedFileSmall.reset(mockJob.release());
     }
     std::unique_ptr<cta::ArchiveJob> migratedNullFile;
     int migratedNullFileCompletes(0), migratedNullFileFailures(0);
     {
       std::unique_ptr<cta::MockArchiveJob> mockJob(
-        new MockArchiveJobExternalStats(tam, *m_catalogue, migratedNullFileCompletes, migratedNullFileFailures));
+        new MockArchiveJobExternalStats(tam, catalogue, migratedNullFileCompletes, migratedNullFileFailures));
       migratedNullFile.reset(mockJob.release());
     }
 
@@ -424,8 +514,13 @@ const uint32_t TEST_GROUP_2 = 9754;
     migratedNullFile->tapeFile.checksumBlob.insert(cta::checksum::MD5, cta::checksum::ChecksumBlob::HexToByteArray("b170288bf1f61b26a648358866f4d6c6"));
 
     cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_MigrationReportPackerOneByteFile",cta::log::DEBUG);
-    cta::log::LogContext lc(log);  
-    tapeserver::daemon::MigrationReportPacker mrp(&tam,lc);
+    cta::log::LogContext lc(log);
+    cta::common::dataStructures::DriveInfo driveInfo;
+    driveInfo.driveName = "test_driveName";
+    driveInfo.host = "test_host";
+    driveInfo.logicalLibrary = logicalLibraryName;
+    cta::Scheduler *scheduler = &getScheduler();
+    tapeserver::daemon::MigrationReportPacker mrp(&tam, driveInfo, scheduler, lc);
     mrp.startThreads();
 
     mrp.reportCompletedJob(std::move(migratedBigFile), lc);
@@ -445,5 +540,33 @@ const uint32_t TEST_GROUP_2 = 9754;
     ASSERT_EQ(0, migratedBigFileCompletes);
     ASSERT_EQ(0, migratedFileSmallCompletes);
     ASSERT_EQ(0, migratedNullFileCompletes);
-  } 
+  }
+  #undef TEST_MOCK_DB
+  #ifdef TEST_MOCK_DB
+  static cta::MockSchedulerDatabaseFactory mockDbFactory;
+
+  INSTANTIATE_TEST_CASE_P(MockSchedulerDatabaseMigrationReportPackerTest, castor_tape_tapeserver_daemon_MigrationReportPackerTest,
+                            ::testing::Values(SchedulerTestParam(mockDbFactory)));
+  #endif
+
+  #ifdef CTA_PGSCHED
+    static cta::PostgresSchedDBFactory PostgresSchedDBFactoryStatic;
+    INSTANTIATE_TEST_CASE_P(PgSchedMigrationReportPackerTest, castor_tape_tapeserver_daemon_MigrationReportPackerTest,
+                            ::testing::Values(SchedulerTestParam(PostgresSchedDBFactoryStatic)));
+  #else
+  #define TEST_VFS
+  #ifdef TEST_VFS
+    static cta::OStoreDBFactory<cta::objectstore::BackendVFS> OStoreDBFactoryVFS;
+
+    INSTANTIATE_TEST_CASE_P(OStoreSchedMigrationReportPackerTest, castor_tape_tapeserver_daemon_MigrationReportPackerTest,
+                            ::testing::Values(SchedulerTestParam(OStoreDBFactoryVFS)));
+  #endif
+
+  #ifdef TEST_RADOS
+    static cta::OStoreDBFactory<cta::objectstore::BackendRados> OStoreDBFactoryRados("rados://tapetest@tapetest");
+
+    INSTANTIATE_TEST_CASE_P(OStoreSchedMigrationReportPackerTestRados, castor_tape_tapeserver_daemon_MigrationReportPackerTest,
+                            ::testing::Values(SchedulerTestParam(OStoreDBFactoryRados)));
+  #endif
+  #endif
 }

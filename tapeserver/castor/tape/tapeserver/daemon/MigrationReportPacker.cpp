@@ -36,12 +36,24 @@ namespace daemon {
 //------------------------------------------------------------------------------
 //Constructor
 //------------------------------------------------------------------------------
-MigrationReportPacker::MigrationReportPacker(cta::ArchiveMount *archiveMount,
-                                             cta::log::LogContext& lc) :
-  ReportPackerInterface<detail::Migration>(lc),
-  m_workerThread(*this), m_errorHappened(false), m_continue(true), m_archiveMount(archiveMount) {
-}
+//MigrationReportPacker::MigrationReportPacker(cta::ArchiveMount *archiveMount,
+//                                             cta::log::LogContext& lc) :
+//  ReportPackerInterface<detail::Migration>(lc),
+//  m_workerThread(*this), m_errorHappened(false), m_continue(true), m_archiveMount(archiveMount) {
+//}
 
+MigrationReportPacker::MigrationReportPacker(cta::ArchiveMount *archiveMount,
+                                             const cta::common::dataStructures::DriveInfo& driveInfo,
+                                             cta::Scheduler* scheduler,
+                                             cta::log::LogContext& lc) :
+ ReportPackerInterface<detail::Migration>(lc),
+ m_workerThread(*this),
+ m_errorHappened(false),
+ m_continue(true),
+ m_archiveMount(archiveMount),
+ m_driveInfo(driveInfo),
+ m_scheduler(scheduler){
+}
 //------------------------------------------------------------------------------
 //Destructor
 //------------------------------------------------------------------------------
@@ -213,11 +225,22 @@ void MigrationReportPacker::reportDriveStatus(cta::common::dataStructures::Drive
 //------------------------------------------------------------------------------
 //ReportDriveStatus::execute
 //------------------------------------------------------------------------------
+//void MigrationReportPacker::ReportDriveStatus::execute(MigrationReportPacker& parent) {
+//  cta::log::ScopedParamContainer params(parent.m_lc);
+//  params.add("status", cta::common::dataStructures::toString(m_status));
+//  parent.m_lc.log(cta::log::DEBUG, "In MigrationReportPacker::ReportDriveStatus::execute(): reporting drive status.");
+//  parent.m_archiveMount->setDriveStatus(m_status, m_reason);
+//}
+
 void MigrationReportPacker::ReportDriveStatus::execute(MigrationReportPacker& parent) {
-  cta::log::ScopedParamContainer params(parent.m_lc);
-  params.add("status", cta::common::dataStructures::toString(m_status));
-  parent.m_lc.log(cta::log::DEBUG, "In MigrationReportPacker::ReportDriveStatus::execute(): reporting drive status.");
-  parent.m_archiveMount->setDriveStatus(m_status, m_reason);
+    cta::log::ScopedParamContainer params(parent.m_lc);
+    params.add("status", cta::common::dataStructures::toString(m_status));
+    parent.m_lc.log(cta::log::DEBUG, "In MigrationReportPacker::ReportDriveStatus::execute(): reporting drive status.");
+    parent.m_scheduler->reportDriveStatus(parent.m_driveInfo,
+                                        *parent.m_archiveMount,
+                                        m_status,
+                                        m_reason,
+                                        parent.m_lc);
 }
 
 //------------------------------------------------------------------------------

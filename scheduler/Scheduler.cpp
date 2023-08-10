@@ -903,6 +903,38 @@ void Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& drive
   }
 }
 
+void Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
+                                  const TapeMount& tapeMount,
+                                  cta::common::dataStructures::DriveStatus status,
+                                  const std::optional<std::string>& reason,
+                                  log::LogContext& lc){
+
+  utils::Timer t;
+  // We just report the drive status as instructed by the tape thread.
+  // Reset the drive state.
+  ReportDriveStatusInputs inputs;
+  inputs.mountType = tapeMount.getMountType();
+  inputs.mountSessionId = std::strtoull(tapeMount.getMountTransactionId().c_str(), nullptr, 0);
+  inputs.reportTime = time(nullptr);
+  inputs.status = status;
+  inputs.vid = tapeMount.getVid();
+  inputs.tapepool = tapeMount.getPoolName();
+  inputs.vo = tapeMount.getVo();
+  inputs.reason = reason;
+  inputs.activity = tapeMount.getActivity();
+  // TODO: statistics!
+  inputs.byteTransferred = 0;
+  inputs.filesTransferred = 0;
+  m_tapeDrivesState->updateDriveStatus(driveInfo, inputs, lc);
+  auto schedulerDbTime = t.secs();
+  if (schedulerDbTime > 1) {
+      log::ScopedParamContainer spc(lc);
+      spc.add("drive", driveInfo.driveName)
+      .add("schedulerDbTime", schedulerDbTime);
+      lc.log(log::DEBUG, "In Scheduler::reportDriveStatus(): success.");
+  }
+}
+
 void Scheduler::createTapeDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
   const common::dataStructures::DesiredDriveState & desiredState, const common::dataStructures::MountType& type,
   const common::dataStructures::DriveStatus& status, const tape::daemon::TpconfigLine& tpConfigLine,

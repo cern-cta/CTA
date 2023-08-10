@@ -230,9 +230,16 @@ public:
    * mean that  the desired state should be reset to down following an hardware
    * error encountered by the drive.
    */
-  void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo, cta::common::dataStructures::MountType type,
-    cta::common::dataStructures::DriveStatus status, log::LogContext & lc);
+  void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
+                         cta::common::dataStructures::MountType type,
+                         cta::common::dataStructures::DriveStatus status,
+                         log::LogContext & lc);
 
+  void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
+                         const TapeMount& tapeMount,
+                         cta::common::dataStructures::DriveStatus status,
+                         const std::optional<std::string>& reason,
+                         log::LogContext & lc);
   /**
    * Creates a Table in the Database for a new Tape Drives
    * @param driveInfo default info of the Tape Drive

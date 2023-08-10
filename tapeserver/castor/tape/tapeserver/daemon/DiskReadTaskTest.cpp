@@ -53,8 +53,9 @@ namespace unitTests{
     void reportEndOfSession(cta::log::LogContext & lc) override {}
     void reportEndOfSessionWithErrors(const std::string& msg, bool isTapeFull, cta::log::LogContext & lc) override {}
     void disableBulk() override {}
-    MockMigrationReportPacker(cta::ArchiveMount *rm,cta::log::LogContext lc):
-      MigrationReportPacker(rm,lc) {}
+    MockMigrationReportPacker(cta::ArchiveMount *rm, cta::common::dataStructures::DriveInfo driveInfo,
+                              cta::Scheduler* scheduler, cta::log::LogContext lc):
+                              MigrationReportPacker(rm, driveInfo, scheduler,lc) {}
   };
   
   class FakeTapeWriteTask : public  DataConsumer{

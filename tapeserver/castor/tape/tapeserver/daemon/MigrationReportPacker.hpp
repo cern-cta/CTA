@@ -24,6 +24,7 @@
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "scheduler/ArchiveMount.hpp"
 #include "scheduler/ArchiveJob.hpp"
+#include "scheduler/Scheduler.hpp"
 #include <list>
 #include <memory>
 #include <utility>
@@ -39,8 +40,11 @@ public:
    * @param tg The client who is asking for a migration of his files 
    * and to whom we have to report to the status of the operations.
    */
-  MigrationReportPacker(cta::ArchiveMount *archiveMount, cta::log::LogContext& lc);
-
+  //MigrationReportPacker(cta::ArchiveMount *archiveMount, cta::log::LogContext& lc);
+  MigrationReportPacker(cta::ArchiveMount *archiveMount,
+                        const cta::common::dataStructures::DriveInfo& driveInfo,
+                        cta::Scheduler* scheduler,
+                        cta::log::LogContext& lc);
   ~MigrationReportPacker();
 
   /**
@@ -250,6 +254,12 @@ private:
    * The mount object used to send reports
    */
   cta::ArchiveMount *m_archiveMount;
+
+  /**
+   * Scheduler and DriveInfo objects to reportDriveStatus
+   */
+  const cta::common::dataStructures::DriveInfo &m_driveInfo;
+  cta::Scheduler *m_scheduler;
 
   /**
    * The successful archive jobs to be reported when flushing

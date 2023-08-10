@@ -413,7 +413,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
     //then findDrive would have return nullptr and we would have not end up there
     MigrationMemoryManager memoryManager(m_dataTransferConfig.nbBufs,
                                          m_dataTransferConfig.bufsz, logContext);
-    MigrationReportPacker reportPacker(archiveMount, logContext);
+    MigrationReportPacker reportPacker(archiveMount, m_driveInfo, &m_scheduler, logContext);
     MigrationWatchDog watchDog(15, m_dataTransferConfig.wdNoBlockMoveMaxSecs, m_initialProcess, *archiveMount,
                                m_driveConfig.unitName, logContext);
     TapeWriteSingleThread writeSingleThread(*drive,
