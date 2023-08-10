@@ -1,5 +1,8 @@
 # v4.NEXT
 
+### Bug Fixes
+- cta/CTA#461 - Allow setting the repack VO if there is none with ongoing repacks
+
 ### Continuous Integration
 - cta/CTA#352 - Test rollback Catalogue Version
 
