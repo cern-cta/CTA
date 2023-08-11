@@ -72,7 +72,7 @@ size_t _marshal(char* const dst, const size_t dstLen, const T& src, const std::s
   size_t pLen = dstLen; // available buffer size remaining
   try {
     const uint32_t magic = RMC_MAGIC;
-    const uint32_t reqType = T::requestType;
+    const auto reqType = static_cast<uint32_t>(T::requestType);
     pLen -= marshalUint32(magic , p);
     pLen -= marshalUint32(reqType, p);
     pLen -= marshalUint32(totalLen, p);

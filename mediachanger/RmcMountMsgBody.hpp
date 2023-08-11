@@ -47,7 +47,7 @@ struct RmcMountMsgBody {
    */
   uint32_t bodyLen() const;
 
-  static const RequestType requestType = RMC_MOUNT;
+  static const RequestType requestType = RequestType::RMC_MOUNT;
 }; // struct RmcMountMsgBody
 
 } // namespace mediachanger

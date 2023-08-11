@@ -27,7 +27,7 @@ const size_t HOSTNAMEBUFLEN    = 256;
 const int    LISTENBACKLOG     = 2;
 const size_t SERVICENAMEBUFLEN = 256;
 
-enum RequestType {
+enum class RequestType {
   RMC_GETGEOM  = 1,    // Get robot geometry
   RMC_FINDCART = 2,    // Find cartridge(s)
   RMC_READELEM = 3,    // Read element status
@@ -38,7 +38,7 @@ enum RequestType {
 };
 
 // SCSI media changer server reply types
-enum MediaChangerReplyType {
+enum class MediaChangerReplyType {
   MSG_ERR  = 1,
   MSG_DATA = 2,
   RMC_RC   = 3
@@ -49,19 +49,19 @@ enum MediaChangerReplyType {
  * RMC (Remote SCSI media changer server) errors
  *------------------------------------------------------------------------
  */
-#define ERMBASEOFF      2200            /* RMC error base offset        */
-#define        ERMCNACT        ERMBASEOFF+1    /* Remote SCSI media changer server not active or service being drained */
-#define        ERMCRBTERR      (ERMBASEOFF+2)  /* Remote SCSI media changer error */
-#define        ERMCUNREC       ERMCRBTERR+1    /* Remote SCSI media changer unrec. error */
-#define        ERMCSLOWR       ERMCRBTERR+2    /* Remote SCSI media changer error (slow retry) */
-#define        ERMCFASTR       ERMCRBTERR+3    /* Remote SCSI media changer error (fast retry) */
-#define        ERMCDFORCE      ERMCRBTERR+4    /* Remote SCSI media changer error (demount force) */
-#define        ERMCDDOWN       ERMCRBTERR+5    /* Remote SCSI media changer error (drive down) */
-#define        ERMCOMSGN       ERMCRBTERR+6    /* Remote SCSI media changer error (ops message) */
-#define        ERMCOMSGS       ERMCRBTERR+7    /* Remote SCSI media changer error (ops message + retry) */
-#define        ERMCOMSGR       ERMCRBTERR+8    /* Remote SCSI media changer error (ops message + wait) */
-#define        ERMCUNLOAD      ERMCRBTERR+9    /* Remote SCSI media changer error (unload + demount) */
-#define ERMMAXERR       ERMBASEOFF+11
+constexpr uint16_t ERMBASEOFF      = 2200;            /* RMC error base offset        */
+constexpr uint16_t ERMCNACT        = ERMBASEOFF+1;    /* Remote SCSI media changer server not active or service being drained */
+constexpr uint16_t ERMCRBTERR      = ERMBASEOFF+2;    /* Remote SCSI media changer error */
+constexpr uint16_t ERMCUNREC       = ERMCRBTERR+1;    /* Remote SCSI media changer unrec. error */
+constexpr uint16_t ERMCSLOWR       = ERMCRBTERR+2;    /* Remote SCSI media changer error (slow retry) */
+constexpr uint16_t ERMCFASTR       = ERMCRBTERR+3;    /* Remote SCSI media changer error (fast retry) */
+constexpr uint16_t ERMCDFORCE      = ERMCRBTERR+4;    /* Remote SCSI media changer error (demount force) */
+constexpr uint16_t ERMCDDOWN       = ERMCRBTERR+5;    /* Remote SCSI media changer error (drive down) */
+constexpr uint16_t ERMCOMSGN       = ERMCRBTERR+6;    /* Remote SCSI media changer error (ops message) */
+constexpr uint16_t ERMCOMSGS       = ERMCRBTERR+7;    /* Remote SCSI media changer error (ops message + retry) */
+constexpr uint16_t ERMCOMSGR       = ERMCRBTERR+8;    /* Remote SCSI media changer error (ops message + wait) */
+constexpr uint16_t ERMCUNLOAD      = ERMCRBTERR+9;    /* Remote SCSI media changer error (unload + demount) */
+constexpr uint16_t ERMMAXERR       = ERMBASEOFF+11;
 
 /**
  * The default TCP/IP port on which the CASTOR rmcd daemon listens for incoming

@@ -155,11 +155,11 @@ MessageHeader RmcProxy::readRmcMsgHeader(const int fd) {
 //-----------------------------------------------------------------------------
 std::string RmcProxy::rmcReplyTypeToStr(const int replyType) {
   std::ostringstream oss;
-  switch(replyType) {
-  case RMC_RC:
+  switch(static_cast<MediaChangerReplyType>(replyType)) {
+  case MediaChangerReplyType::RMC_RC:
     oss << "RMC_RC";
     break;
-  case MSG_ERR:
+  case MediaChangerReplyType::MSG_ERR:
     oss << "MSG_ERR";
     break;
   default:

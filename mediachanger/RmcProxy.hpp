@@ -195,10 +195,10 @@ protected:
     int nbERR_MSG = 0;
     while(true) {
       const MessageHeader header = readRmcMsgHeader(fd.get());
-      switch(header.reqType) { 
-      case RMC_RC:
+      switch(static_cast<MediaChangerReplyType>(header.reqType)) { 
+      case MediaChangerReplyType::RMC_RC:
         return header.lenOrStatus;
-      case MSG_ERR:
+      case MediaChangerReplyType::MSG_ERR:
         nbERR_MSG++;
 
         if(maxERR_MSG < nbERR_MSG) {
