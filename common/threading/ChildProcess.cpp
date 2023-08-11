@@ -54,10 +54,9 @@ bool ChildProcess::running()  {
   /* If we are not aware of process exiting, let's check and collect exit code */
   if (!m_finished) {
     /* Re-check the status now. */
-    int status, ret;
-    cta::exception::Errnum::throwOnMinusOne(
-        ret = waitpid(m_pid, &status, WNOHANG),
-        "Error from waitpid in cta::threading::ChildProcess::running()");
+    int status;
+    int ret = waitpid(m_pid, &status, WNOHANG);
+    cta::exception::Errnum::throwOnMinusOne(ret, "Error from waitpid in cta::threading::ChildProcess::running()");
     if (ret == m_pid) parseStatus(status);
   }
   return !m_finished;
@@ -67,10 +66,9 @@ void ChildProcess::wait()  {
   /* Checking for a running process before starting gets an exception */
   if (!m_started) throw ProcessNeverStarted();
   if (m_finished) return;
-  int status, ret;
-  cta::exception::Errnum::throwOnMinusOne(
-      ret = waitpid(m_pid, &status, 0),
-      "Error from waitpid in cta::threading::ChildProcess::wait()");
+  int status;
+  int ret = waitpid(m_pid, &status, 0);
+  cta::exception::Errnum::throwOnMinusOne(ret, "Error from waitpid in cta::threading::ChildProcess::wait()");
   /* Check child status*/
   if (ret == m_pid) parseStatus(status);
   if(!m_finished)
@@ -80,10 +78,9 @@ void ChildProcess::wait()  {
 int ChildProcess::exitCode()  {
   if (!m_started) throw ProcessNeverStarted();
   if (!m_finished) {
-    int status, ret;
-    cta::exception::Errnum::throwOnMinusOne(
-        ret = waitpid(m_pid, &status, WNOHANG),
-        "Error from waitpid in cta::threading::ChildProcess::running()");
+    int status;
+    int ret = waitpid(m_pid, &status, WNOHANG);
+    cta::exception::Errnum::throwOnMinusOne(ret ,"Error from waitpid in cta::threading::ChildProcess::running()");
     if (ret == m_pid) parseStatus(status);
   }
   /* Check child status*/
@@ -96,8 +93,7 @@ int ChildProcess::exitCode()  {
   return m_exitCode;
 }
 
-void ChildProcess::kill()  {
-  if (!m_started) throw ProcessNeverStarted();
+void ChildProcess::kill() const {
   ::kill(m_pid, SIGTERM);
 }
 
