@@ -31,11 +31,5 @@ CheckConstraintError::CheckConstraintError(
   ConstraintError(context, dbErrorMessage, violatedConstraintName, embedBacktrace) {
 }
 
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-CheckConstraintError::~CheckConstraintError() noexcept {
-}
-
 } // namespace rdbms
 } // namespace cta
