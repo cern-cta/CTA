@@ -105,14 +105,6 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
       }
     };
 
-    auto setOptionalUint = [&stmt](const std::string& sqlField, const std::optional<uint64_t>& optionalField) {
-      if (optionalField) {
-        stmt.bindUint64(sqlField, optionalField.value());
-      } else {
-        stmt.bindUint64(sqlField, std::nullopt);
-      }
-    };
-
     stmt.bindUint64(":PHYSICAL_LIBRARY_ID"          , physicalLibraryId);
     stmt.bindString(":PHYSICAL_LIBRARY_NAME"        , pl.name);
     stmt.bindString(":PHYSICAL_LIBRARY_MANUFACTURER", pl.manufacturer);
@@ -123,7 +115,7 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
     setOptionalString(":PHYSICAL_LOCATION"          , pl.location);
 
     stmt.bindUint64(":NB_PHYSICAL_CARTRIDGE_SLOTS" , pl.nbPhysicalCartridgeSlots);
-    setOptionalUint(":NB_AVAILABLE_CARTRIDGE_SLOTS", pl.nbAvailableCartridgeSlots);
+    stmt.bindUint64(":NB_AVAILABLE_CARTRIDGE_SLOTS", pl.nbAvailableCartridgeSlots);
     stmt.bindUint64(":NB_PHYSICAL_DRIVE_SLOTS"     , pl.nbPhysicalDriveSlots);
 
     stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
@@ -137,7 +129,8 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
     setOptionalString(":USER_COMMENT", pl.comment);
 
     stmt.executeNonQuery();
-  } catch(exception::UserError& ) {
+  } catch(exception::UserError& ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   } catch(cta::rdbms::UniqueConstraintError& ex) {
     std::stringstream err_stream;
@@ -170,6 +163,7 @@ void RdbmsPhysicalLibraryCatalogue::deletePhysicalLibrary(const std::string& nam
       throw exception::UserError(std::string("Cannot delete physical library ") + name + " because it does not exist");
     }
   } catch(exception::UserError& ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   } catch(cta::rdbms::IntegrityConstraintError& ex) {
     std::stringstream err_stream;
@@ -249,7 +243,8 @@ std::list<common::dataStructures::PhysicalLibrary> RdbmsPhysicalLibraryCatalogue
     }
 
     return libs;
-  } catch(exception::UserError& ) {
+  } catch(exception::UserError& ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   } catch(exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
@@ -283,7 +278,8 @@ void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibrary(const common::dataStru
     } else {
       throw exception::UserError(std::string("At least one value must be updated in physical library ") + pl.name);
     }
-  } catch(exception::UserError& ) {
+  } catch(exception::UserError& ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   } catch(cta::rdbms::UniqueConstraintError& ex) {
     std::ostringstream err_stream;
@@ -318,7 +314,8 @@ std::optional<uint64_t> RdbmsPhysicalLibraryCatalogue::getPhysicalLibraryId(rdbm
       return std::nullopt;
     }
     return rset.columnUint64("PHYSICAL_LIBRARY_ID");
-  } catch(exception::UserError &) {
+  } catch(exception::UserError &ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   } catch(exception::Exception &ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
