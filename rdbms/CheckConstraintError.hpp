@@ -45,7 +45,7 @@ public:
    * Empty Destructor, explicitely non-throwing (needed for std::exception
    * inheritance)
    */
-  ~CheckConstraintError() noexcept override;
+  ~CheckConstraintError() noexcept override = default;
   
 }; // class CheckConstraintError
 

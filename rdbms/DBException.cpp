@@ -28,12 +28,6 @@ DBException::DBException(const std::string &context, const std::string &dbErrorM
 }
 
 //------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-DBException::~DBException() noexcept {
-}
-
-//------------------------------------------------------------------------------
 // getDbErrorMessage
 //------------------------------------------------------------------------------
 std::string DBException::getDbErrorMessage() const {

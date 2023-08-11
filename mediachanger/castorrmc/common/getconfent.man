@@ -26,18 +26,6 @@ getconfent, getconfent_r \- Get configuration entry
 .br
 .BI "               int " flags );
 .PP
-.BI "int getconfent_multi ("
-.br
-.BI "			const char *" category ,
-.br
-.BI "			const char *" name ,
-.br
-.BI "			int " flags ,
-.br
-.BI "			char ***" result ,
-.br
-.BI "			int *" count );
-.PP
 .BI "char * getconfent_fromfile ("
 .br
 .BI "			const char *" filename ,
@@ -47,20 +35,6 @@ getconfent, getconfent_r \- Get configuration entry
 .BI "			const char *" name ,
 .br
 .BI "			int " flags );
-.PP
-.BI "int getconfent_multi_fromfile ("
-.br
-.BI "			const char *" filename ,
-.br
-.BI "			const char *" category ,
-.br
-.BI "			const char *" name ,
-.br
-.BI "			int " flags ,
-.br
-.BI "			char ***" result ,
-.br
-.BI "			int *" count );
 .PP
 
 .fi
@@ -84,41 +58,11 @@ calls the re-entrant version
 .B getconfent_r(\|)
 internally using a buffer allocated in thread local storage.
 .PP
-.B getconfent_multi(\|)
-returns the
-.I result
-in the form of an array associated with a
-.I count
-of the number of results.
-.PP
-.B getconfent_fromfile(\|)
-and
-.B getconfent_multi_fromfile(\|)
-preform the same operation as
-.B getconfent(\|)
-and
-.B getconfent_multi(\|)
-but reading the information from a file.
-.PP
 
 .SH "RETURN VALUE"
 .B getconfent(\|)
 ,
 .B getconfent_r(\|)
-and
-.B getconfent_fromfile(|\)
-return NULL if the entry is not found. Otherwise,
-it returns the matched entry.
-If
-.B flags
-is not null, the return value is a pointer to the full string matched
-in the configuration file. Otherwise, only the pointer to the first
-blank separated token is returned.
-.PP
-.B getconfent_multi(\|)
-and
-.B getconfent_multi_fromfile(\|)
-return 0 if successful, -1 if failed.
 
 .SH "ERRORS"
 .PP

@@ -31,11 +31,5 @@ UniqueConstraintError::UniqueConstraintError(
   ConstraintError(context, dbErrorMessage, violatedConstraintName, embedBacktrace) {
 }
 
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-UniqueConstraintError::~UniqueConstraintError() noexcept {
-}
-
 } // namespace rdbms
 } // namespace cta

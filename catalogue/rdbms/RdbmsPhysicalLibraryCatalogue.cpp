@@ -260,20 +260,11 @@ std::list<common::dataStructures::PhysicalLibrary> RdbmsPhysicalLibraryCatalogue
 void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibrary(const common::dataStructures::SecurityIdentity& admin, const common::dataStructures::UpdatePhysicalLibrary& pl) {
   try {
     const time_t now = time(nullptr);
-    std::string setClause;
-
-    if(pl.guiUrl)                    setClause += "GUI_URL = :GUI_URL,";
-    if(pl.webcamUrl)                 setClause += "WEBCAM_URL = :WEBCAM_URL,";
-    if(pl.location)                  setClause += "PHYSICAL_LOCATION = :PHYSICAL_LOCATION,";
-    if(pl.nbPhysicalCartridgeSlots)  setClause += "NB_PHYSICAL_CARTRIDGE_SLOTS = :NB_PHYSICAL_CARTRIDGE_SLOTS,";
-    if(pl.nbAvailableCartridgeSlots) setClause += "NB_AVAILABLE_CARTRIDGE_SLOTS = :NB_AVAILABLE_CARTRIDGE_SLOTS,";
-    if(pl.nbPhysicalDriveSlots)      setClause += "NB_PHYSICAL_DRIVE_SLOTS = :NB_PHYSICAL_DRIVE_SLOTS,";
-    if(pl.comment)                   setClause += "USER_COMMENT = :USER_COMMENT,";
+    std::string setClause = buildSetClause(pl);
 
     if(!setClause.empty()) {
-
       std::string sql = "UPDATE PHYSICAL_LIBRARY SET ";
-      sql += setClause;
+      sql += buildSetClause(pl);
       sql += "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
              "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
              "LAST_UPDATE_TIME = :LAST_UPDATE_TIME ";
@@ -282,21 +273,7 @@ void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibrary(const common::dataStru
       auto conn = m_connPool->getConn();
       auto stmt = conn.createStmt(sql);
 
-      if(pl.guiUrl)                    stmt.bindString(":GUI_URL", pl.guiUrl.value());
-      if(pl.webcamUrl)                 stmt.bindString(":WEBCAM_URL", pl.webcamUrl.value());
-      if(pl.location)                  stmt.bindString(":PHYSICAL_LOCATION", pl.location.value());
-      if(pl.nbPhysicalCartridgeSlots)  stmt.bindUint64(":NB_PHYSICAL_CARTRIDGE_SLOTS", pl.nbPhysicalCartridgeSlots.value());
-      if(pl.nbAvailableCartridgeSlots) stmt.bindUint64(":NB_AVAILABLE_CARTRIDGE_SLOTS", pl.nbAvailableCartridgeSlots.value());
-      if(pl.nbPhysicalDriveSlots)      stmt.bindUint64(":NB_PHYSICAL_DRIVE_SLOTS", pl.nbPhysicalDriveSlots.value());
-      if(pl.comment) {
-        const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(pl.comment.value(), &m_log);
-        stmt.bindString(":USER_COMMENT", trimmedComment);
-      }
-
-      stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
-      stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
-      stmt.bindUint64(":LAST_UPDATE_TIME", now);
-      stmt.bindString(":PHYSICAL_LIBRARY_NAME", pl.name);
+      bindUpdateParams(stmt, pl, admin, now);
 
       stmt.executeNonQuery();
 
@@ -348,6 +325,39 @@ std::optional<uint64_t> RdbmsPhysicalLibraryCatalogue::getPhysicalLibraryId(rdbm
     throw;
   }
 }
+
+std::string RdbmsPhysicalLibraryCatalogue::buildSetClause(const common::dataStructures::UpdatePhysicalLibrary& pl) {
+  std::string setClause;
+
+  if(pl.guiUrl)                    setClause += "GUI_URL = :GUI_URL,";
+  if(pl.webcamUrl)                 setClause += "WEBCAM_URL = :WEBCAM_URL,";
+  if(pl.location)                  setClause += "PHYSICAL_LOCATION = :PHYSICAL_LOCATION,";
+  if(pl.nbPhysicalCartridgeSlots)  setClause += "NB_PHYSICAL_CARTRIDGE_SLOTS = :NB_PHYSICAL_CARTRIDGE_SLOTS,";
+  if(pl.nbAvailableCartridgeSlots) setClause += "NB_AVAILABLE_CARTRIDGE_SLOTS = :NB_AVAILABLE_CARTRIDGE_SLOTS,";
+  if(pl.nbPhysicalDriveSlots)      setClause += "NB_PHYSICAL_DRIVE_SLOTS = :NB_PHYSICAL_DRIVE_SLOTS,";
+  if(pl.comment)                   setClause += "USER_COMMENT = :USER_COMMENT,";
+
+  return setClause;
+}
+
+void RdbmsPhysicalLibraryCatalogue::bindUpdateParams(cta::rdbms::Stmt& stmt, const common::dataStructures::UpdatePhysicalLibrary& pl, const common::dataStructures::SecurityIdentity& admin, const time_t now) {
+  if(pl.guiUrl)                    stmt.bindString(":GUI_URL", pl.guiUrl.value());
+  if(pl.webcamUrl)                 stmt.bindString(":WEBCAM_URL", pl.webcamUrl.value());
+  if(pl.location)                  stmt.bindString(":PHYSICAL_LOCATION", pl.location.value());
+  if(pl.nbPhysicalCartridgeSlots)  stmt.bindUint64(":NB_PHYSICAL_CARTRIDGE_SLOTS", pl.nbPhysicalCartridgeSlots.value());
+  if(pl.nbAvailableCartridgeSlots) stmt.bindUint64(":NB_AVAILABLE_CARTRIDGE_SLOTS", pl.nbAvailableCartridgeSlots.value());
+  if(pl.nbPhysicalDriveSlots)      stmt.bindUint64(":NB_PHYSICAL_DRIVE_SLOTS", pl.nbPhysicalDriveSlots.value());
+  if(pl.comment) {
+    const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(pl.comment.value(), &m_log);
+    stmt.bindString(":USER_COMMENT", trimmedComment);
+  }
+
+  stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+  stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+  stmt.bindUint64(":LAST_UPDATE_TIME", now);
+  stmt.bindString(":PHYSICAL_LIBRARY_NAME", pl.name);
+}
+
 
 } // namespace catalogue
 } // namespace cta

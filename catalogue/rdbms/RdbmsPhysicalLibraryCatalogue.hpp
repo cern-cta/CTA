@@ -29,6 +29,7 @@ namespace cta {
 namespace rdbms {
 class Conn;
 class ConnPool;
+class Stmt;
 }
 
 namespace log {
@@ -76,6 +77,10 @@ private:
 
   friend class RdbmsLogicalLibraryCatalogue;
   std::optional<uint64_t> getPhysicalLibraryId(rdbms::Conn& conn, const std::string& name) const;
+
+  std::string buildSetClause(const common::dataStructures::UpdatePhysicalLibrary& pl);
+  void bindUpdateParams(cta::rdbms::Stmt& stmt, const common::dataStructures::UpdatePhysicalLibrary& pl,
+    const common::dataStructures::SecurityIdentity& admin, const time_t now);
 };
 
 } // namespace catalogue

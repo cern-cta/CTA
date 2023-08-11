@@ -45,7 +45,7 @@ public:
    * Empty Destructor, explicitely non-throwing (needed for std::exception
    * inheritance)
    */
-  ~DBException() noexcept override;
+  ~DBException() noexcept override = default;
 
   /**
    * Returns the raw error message generated bu the DB
