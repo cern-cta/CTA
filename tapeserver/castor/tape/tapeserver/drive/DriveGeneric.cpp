@@ -2789,7 +2789,7 @@ std::map<std::string,uint32_t> drive::DriveLTO::getDriveStats() {
   {
     memset(dataBuff, 0, sizeof(dataBuff));
 
-    cdb.pageCode = SCSI::logSensePages::driveWriteErrors;
+    cdb.pageCode = SCSI::logSensePages::driveWriteErrorsLTO;
     cdb.PC = 0x01; // Current Cumulative Values
     SCSI::Structures::setU16(cdb.allocationLength, sizeof(dataBuff));
 
@@ -2881,57 +2881,6 @@ std::map<std::string,uint32_t> drive::DriveLTO::getDriveStats() {
           break;
         case SCSI::driveReadErrorsPage::totalRetries:
           driveStats["mountTotalReadRetries"] = logPageParam.getU64Value();
-          break;
-      }
-      logParameter += logPageParam.header.parameterLength + sizeof(logPageParam.header);
-    }
-  }
-
-  // read BW errors
-  {
-    memset(dataBuff, 0, sizeof(dataBuff));
-
-    cdb.pageCode = SCSI::logSensePages::driveReadBackwardErrors;
-    cdb.PC = 0x01; // Current Cumulative Values
-    SCSI::Structures::setU16(cdb.allocationLength, sizeof(dataBuff));
-
-    sgh.setCDB(&cdb);
-    sgh.setDataBuffer(&dataBuff);
-    sgh.setSenseBuffer(&senseBuff);
-    sgh.dxfer_direction = SG_DXFER_FROM_DEV;
-
-    /* Manage both system error and SCSI errors. */
-    cta::exception::Errnum::throwOnMinusOne(
-      m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh),
-      "Failed SG_IO ioctl in DriveLTO::getDriveStats_readBWErrors");
-    SCSI::ExceptionLauncher(sgh, "SCSI error in DriveLTO::getDriveStats");
-
-    SCSI::Structures::logSenseLogPageHeader_t &logPageHeader =
-      *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
-
-    const unsigned char *endPage = dataBuff +
-                                   SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
-
-    unsigned char *logParameter = dataBuff + sizeof(logPageHeader);
-
-    while (logParameter < endPage) {
-      SCSI::Structures::logSenseParameter_t &logPageParam =
-        *(SCSI::Structures::logSenseParameter_t *) logParameter;
-      switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
-        case SCSI::driveReadErrorsPage::dataTemps:
-          driveStats["mountTemps"] += logPageParam.getU64Value();
-          break;
-        case SCSI::driveReadErrorsPage::servoTemps:
-          driveStats["mountServoTemps"] += logPageParam.getU64Value();
-          break;
-        case SCSI::driveReadErrorsPage::servoTransients:
-          driveStats["mountServoTransients"] += logPageParam.getU64Value();
-          break;
-        case SCSI::driveReadErrorsPage::dataTransients:
-          driveStats["mountReadTransients"] += logPageParam.getU64Value();
-          break;
-        case SCSI::driveReadErrorsPage::totalRetries:
-          driveStats["mountTotalReadRetries"] += logPageParam.getU64Value();
           break;
       }
       logParameter += logPageParam.header.parameterLength + sizeof(logPageParam.header);
