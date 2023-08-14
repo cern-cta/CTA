@@ -461,7 +461,7 @@ namespace SCSI {
       dataCompression32h         = 0x32, // for LTO, SDLT. We have Data Compression 1Bh for LTO5,6 and DataComppression 0Fh in SSC-3 
       driveWriteErrors           = 0x32, // IBM specific page
       driveWriteErrorsLTO        = 0x33, // LTO SCSI specific page
-      driveReadForwardErrors     = 0x34, // IBM specific page
+      driveReadForwardErrors     = 0x34, // IBM and LTO specific page
       driveReadBackwardErrors    = 0x36, // IBM specific page
       performanceCharacteristics = 0x37, // IBM specific page
       vendorUniqueDriveStatistics= 0x3d, // Oracle T1000D/E specific page
