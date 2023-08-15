@@ -545,6 +545,16 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       tmdi.existingOrNextMounts.back().averageBandwidth = 0;
       tmdi.existingOrNextMounts.back().activity = driveState.nextActivity ? driveState.nextActivity.value() : "";
     }
+    if (tmdi.existingOrNextMounts.back().tapePool.empty()) {
+      const auto mount = tmdi.existingOrNextMounts.back();
+      log::ScopedParamContainer params (logContext);
+      params.add("MountType", toString(mount.type))
+            .add("VO", mount.vo)
+            .add("DriveName", mount.driveName)
+            .add("Vid", mount.vid)
+            .add("Activity", mount.activity.value_or(""));
+      logContext.log(log::WARNING, "In JORGE_TEMP_LOG(): Empty Tape Pool Name.");
+    }
   }
   auto registerProcessingTime = t.secs(utils::Timer::resetCounter);
   log::ScopedParamContainer params (logContext);
