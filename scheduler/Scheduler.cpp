@@ -1031,9 +1031,14 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
         eligibleTapeMap[t.vid] = t;
       }
       searchCriteria.state = common::dataStructures::Tape::REPACKING;
+      // Reset the logical libraryflag to obtain all the repacks.
+      searchCriteria.logicalLibrary = std::nullopt;
       eligibleTapesList = m_catalogue.Tape()->getTapes(searchCriteria);
       for(auto& t : eligibleTapesList) {
-        eligibleTapeMap[t.vid] = t;
+        // Add to eligibleTapeMape only those in the tpsrv logical library.
+        if(t.logicalLibraryName == logicalLibraryName)
+          eligibleTapeMap[t.vid] = t;
+
         repackingTapeVids.insert(t.vid);
       }
     }
