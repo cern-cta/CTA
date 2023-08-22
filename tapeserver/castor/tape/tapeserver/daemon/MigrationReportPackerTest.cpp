@@ -40,7 +40,7 @@
 #include "scheduler/PostgresSchedDB/PostgresSchedDBFactory.hpp"
 #else
 #include "objectstore/BackendRadosTestSwitch.hpp"
-#include "OStoreDB/OStoreDBFactory.hpp"
+#include "scheduler/OStoreDB/OStoreDBFactory.hpp"
 #include "objectstore/BackendRados.hpp"
 #endif
 
@@ -241,7 +241,7 @@ class castor_tape_tapeserver_daemon_MigrationReportPackerTest: public ::testing:
     catalogue.DiskInstance()->createDiskInstance(admin, di.name, di.comment);
     catalogue.VO()->createVirtualOrganization(admin,vo);
 
-    catalogue.LogicalLibrary()->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+    catalogue.LogicalLibrary()->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
     catalogue.TapePool()->createTapePool(admin, tapePoolName, vo.name, 2, true, supply, "Create tape pool");
     createMediaType(mediaType);
 
@@ -416,7 +416,7 @@ class castor_tape_tapeserver_daemon_MigrationReportPackerTest: public ::testing:
     catalogue.DiskInstance()->createDiskInstance(admin, di.name, di.comment);
     catalogue.VO()->createVirtualOrganization(admin,vo);
 
-    catalogue.LogicalLibrary()->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, "Create logical library");
+    catalogue.LogicalLibrary()->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
     catalogue.TapePool()->createTapePool(admin, tapePoolName, vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
     createMediaType(mediaType);
 
