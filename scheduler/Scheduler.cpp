@@ -1075,9 +1075,26 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
   //Get the tapepools of the potential and existing mounts
   std::set<std::string> tapepoolsPotentialOrExistingMounts;
   for (auto & pm: mountInfo->potentialMounts) {
+    if(pm.tapePool.empty()) {
+      log::ScopedParamContainer params(lc);
+      params.add("logicalLibrary", pm.logicalLibrary)
+            .add("vo", pm.vo)
+            .add("mediaType", pm.mediaType)
+            .add("vid", pm.vid);
+      lc.log(log::WARNING, "In JORGE_TEMP_LOG1(): In Potential Mounnts, tapePool is an empty string.");
+    }
     tapepoolsPotentialOrExistingMounts.insert(pm.tapePool);
   }
   for (auto & em: mountInfo->existingOrNextMounts) {
+    if(em.tapePool.empty()) {
+      log::ScopedParamContainer params(lc);
+      params.add("DriveName", em.driveName)
+            .add("vo", em.vo)
+            .add("Activity", em.activity.value_or(""))
+            .add("MountType", toString(em.type))
+            .add("vid", em.vid);
+      lc.log(log::WARNING, "In JORGE_TEMP_LOG2(): In Existing or Next Mounts, tapePool is an empty string.");
+    }
     tapepoolsPotentialOrExistingMounts.insert(em.tapePool);
   }
   //Get the potential and existing mounts tapepool virtual organization information
