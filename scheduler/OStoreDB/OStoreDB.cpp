@@ -553,7 +553,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
             .add("DriveName", mount.driveName)
             .add("Vid", mount.vid)
             .add("Activity", mount.activity.value_or(""));
-      logContext.log(log::WARNING, "In JORGE_TEMP_LOG(): Empty Tape Pool Name.");
+      logContext.log(log::WARNING, "In JORGE_TEMP_LOG3(): Empty Tape Pool Name.");
     }
   }
   auto registerProcessingTime = t.secs(utils::Timer::resetCounter);
