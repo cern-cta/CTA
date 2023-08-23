@@ -336,9 +336,9 @@ void AdminCmd::logAdminCmd(const std::string& function, const std::string& statu
   std::pair<admin::AdminCmd::Cmd, admin::AdminCmd::SubCmd> cmd_key(m_adminCmd.cmd(), m_adminCmd.subcmd());
   std::vector<admin::Option> cmd_options = admin::cmdOptions.at(cmd_key);
 
-  for(auto &cmd_option: cmd_options) {
+  for(const auto &cmd_option: cmd_options) {
     bool has_option = false;
-    auto lookup_key = cmd_option.get_key();
+    const auto& lookup_key = cmd_option.get_key();
     // Lookup if command line option was used in the command
     switch(cmd_option.get_type()) {
       case admin::Option::option_t::OPT_FLAG: // Treat flag options as bool options
