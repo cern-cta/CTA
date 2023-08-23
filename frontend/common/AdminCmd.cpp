@@ -440,13 +440,11 @@ void AdminCmd::processArchiveRoute_Ch(xrd::Response& response) {
 
   auto& scn      = getRequired(OptionString::STORAGE_CLASS);
   auto& cn       = getRequired(OptionUInt64::COPY_NUMBER);
-  auto  tapepool = getOptional(OptionString::TAPE_POOL);
-  auto  comment  = getOptional(OptionString::COMMENT);
 
-  if(comment) {
+  if(getOptional(OptionString::COMMENT)) {
     m_catalogue.ArchiveRoute()->modifyArchiveRouteComment(m_cliIdentity, scn, cn, comment.value());
   }
-  if(tapepool) {
+  if(getOptional(OptionString::TAPE_POOL)) {
     m_catalogue.ArchiveRoute()->modifyArchiveRouteTapePoolName(m_cliIdentity, scn, cn, tapepool.value());
   }
 
