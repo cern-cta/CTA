@@ -1036,8 +1036,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       eligibleTapesList = m_catalogue.Tape()->getTapes(searchCriteria);
       for(auto& t : eligibleTapesList) {
         // Add to eligibleTapeMape only those in the tpsrv logical library.
-        if(t.logicalLibraryName == logicalLibraryName)
-          eligibleTapeMap[t.vid] = t;
+        if(t.logicalLibraryName == logicalLibraryName) eligibleTapeMap[t.vid] = t;
 
         repackingTapeVids.insert(t.vid);
       }
