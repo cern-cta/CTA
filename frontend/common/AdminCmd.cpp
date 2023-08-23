@@ -265,19 +265,25 @@ void AdminCmd::importOptions() {
   validateCmd(m_adminCmd);
 
   // Import Boolean options
-  for(auto opt_it = m_adminCmd.option_bool().begin(); opt_it != m_adminCmd.option_bool().end(); ++opt_it) {
-    m_option_bool.insert(std::make_pair(opt_it->key(), opt_it->value()));
-  }
+  std::for_each(m_adminCmd.option_bool().begin(),
+                m_adminCmd.option_bool().end(),
+                [&m_option_bool](opt){
+                  m_option_bool.insert(std::make_pair(opt->key(), opt->value()));
+                });
 
   // Import UInt64 options
-  for(auto opt_it = m_adminCmd.option_uint64().begin(); opt_it != m_adminCmd.option_uint64().end(); ++opt_it) {
-    m_option_uint64.insert(std::make_pair(opt_it->key(), opt_it->value()));
-  }
+  std::for_each(m_adminCmd.option_uint64.begin(),
+                m_adminCmd.option_uint64.end(),
+                [&m_option_uint64](opt){
+                  m_option_uint64.insert(std::make_pair(opt->key(), opt->value()));
+                });
 
   // Import String options
-  for(auto opt_it = m_adminCmd.option_str().begin(); opt_it != m_adminCmd.option_str().end(); ++opt_it) {
-    m_option_str.insert(std::make_pair(opt_it->key(), opt_it->value()));
-  }
+  std::for_each(m_adminCmd.option_str().begin(),
+                m_adminCmd.option_str().end(),
+                [&m_option_str](opt){
+                  m_option_str.insert(std::make_pair(opt->key(), opt->value()));
+                });
 
   // Import String List options
   for(auto opt_it = m_adminCmd.option_str_list().begin(); opt_it != m_adminCmd.option_str_list().end(); ++opt_it) {
@@ -285,8 +291,16 @@ void AdminCmd::importOptions() {
     for(auto item_it = opt_it->item().begin(); item_it != opt_it->item().end(); ++item_it) {
       items.push_back(*item_it);
     }
-    m_option_str_list.insert(std::make_pair(opt_it->key(), items));
+    m_option_str_list.try_emplace(std::make_pair(opt_it->key(), items));
   }
+  std::for_each(m_adminCmd.option_str_list().begin(), m_adminCmd.option_str_list().end(),
+                [&m_option_str_list](opt){
+                  std::vector<std::string> items;
+                  std::for_each(opt->item.begin(), opt->item.end(),
+                                [&items, &m_option_str_list](item){items.push_back(*item)});
+                  m_options_str_list.try_emplace(std::make_pair(opt->key(), items));
+                });
+
 }
 
 void AdminCmd::logAdminCmd(const std::string& function, const std::string& status, const std::string& reason, utils::Timer& t) {
@@ -295,19 +309,22 @@ void AdminCmd::logAdminCmd(const std::string& function, const std::string& statu
   std::string log_msg = "In RequestMessage::" + function + "(): Admin command succeeded.";
 
   // Reverse lookup of strings corresponding to <command,subcommand> pair
-  for(auto cmd_it = admin::cmdLookup.begin(); cmd_it != admin::cmdLookup.end(); ++cmd_it) {
-    // Return the matching long string (length > 3)
-    if(m_adminCmd.cmd() == cmd_it->second && cmd_it->first.length() > 3) {
-      params.add("command", cmd_it->first);
-      break;
-    }
-  }
-  for(auto subcmd_it = admin::subcmdLookup.begin(); subcmd_it != admin::subcmdLookup.end(); ++subcmd_it) {
-    if(m_adminCmd.subcmd() == subcmd_it->second) {
-      params.add("subcommand", subcmd_it->first);
-      break;
-    }
-  }
+  std::for_each(admin::cmdLookup.begin(), admin::cmdLookup.end(),
+                // Return the matching long string (length > 3)
+                [&m_adminCmd, &params](cmd){
+                  if(m_adminCmd.cmd() == cmd.second && cmd.first.length() > 3) {
+                    params.add("command", cmd->first);
+                    break;
+                  }
+                });
+
+  std::for_each(admin::subcmdLookup.begin(), admin::subcmdLookup.end(),
+                [&m_adminCmd, &params](subcmd){
+                  if(m_adminCmd.subcmd() == subcmd->second){
+                    params.add("subcommand", subcmd->first);
+                    break;
+                  }
+                });
 
   params.add("status", status);
 
