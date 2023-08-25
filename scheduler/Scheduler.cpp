@@ -1069,29 +1069,33 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
   }
 
   //Get the tapepools of the potential and existing mounts
+  // TODO: this is a temporary log to avoid a crash when the tapepool is not set in the mountInfo.
+  // Remove it when the bug is fixed or understood. CTA#470
   std::set<std::string> tapepoolsPotentialOrExistingMounts;
   for (auto & pm: mountInfo->potentialMounts) {
-    if(pm.tapePool.empty()) {
+    tapepoolsPotentialOrExistingMounts.insert(pm.tapePool);
+    if(tapepoolsPotentialOrExistingMounts.count(std::string()) > 0) {
+      // log an error that pm contained an empty string
       log::ScopedParamContainer params(lc);
       params.add("logicalLibrary", pm.logicalLibrary)
             .add("vo", pm.vo)
             .add("mediaType", pm.mediaType)
             .add("vid", pm.vid);
-      lc.log(log::WARNING, "In JORGE_TEMP_LOG1(): In Potential Mounnts, tapePool is an empty string.");
+      lc.log(log::ERR, "In JORGE_TEMP_LOG2(): In Potential Mounts, tapePool is an empty string.");
     }
-    tapepoolsPotentialOrExistingMounts.insert(pm.tapePool);
   }
   for (auto & em: mountInfo->existingOrNextMounts) {
-    if(em.tapePool.empty()) {
+    tapepoolsPotentialOrExistingMounts.insert(em.tapePool);
+    if(tapepoolsPotentialOrExistingMounts.count(std::string()) > 0) {
+      // log an error that em contained an empty string
       log::ScopedParamContainer params(lc);
       params.add("DriveName", em.driveName)
             .add("vo", em.vo)
             .add("Activity", em.activity.value_or(""))
             .add("MountType", toString(em.type))
             .add("vid", em.vid);
-      lc.log(log::WARNING, "In JORGE_TEMP_LOG2(): In Existing or Next Mounts, tapePool is an empty string.");
+      lc.log(log::ERR, "In JORGE_TEMP_LOG3(): In Existing or Next Mounts, tapePool is an empty string.");
     }
-    tapepoolsPotentialOrExistingMounts.insert(em.tapePool);
   }
   //Get the potential and existing mounts tapepool virtual organization information
   std::map<std::string,std::string> tapepoolVoNameMap;
