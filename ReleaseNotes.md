@@ -3,6 +3,7 @@
 ### Bug Fixes
 - cta/CTA#461 - Allow setting the repack VO if there is none with ongoing repacks
 - cta/CTA#471 - Fix device statistics from LTO drives
+- cta/CTA#477 - Fix uncaught exception Helpers::NoTapeAvailableForRetrieve
 
 ### Continuous Integration
 - cta/CTA#352 - Test rollback Catalogue Version

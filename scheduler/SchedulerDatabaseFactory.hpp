@@ -269,10 +269,6 @@ public:
     return m_SchedDB->getNextRepackJobToExpand();
   }
 
-  void requeueRetrieveJobs(std::list<cta::SchedulerDatabase::RetrieveJob *> &jobs, log::LogContext& logContext) override {
-    return m_SchedDB->requeueRetrieveJobs(jobs, logContext);
-  }
-
 protected:
   cta::SchedulerDatabase *m_SchedDB;
 };  // class SchedulerDatabaseDecorator

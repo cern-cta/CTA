@@ -842,12 +842,6 @@ class SchedulerDatabase {
    */
   virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose, log::LogContext& logContext) = 0;
 
-  /**
-   * A function to reinsert Retrieve jobs that were previously removed from 
-   * the scheduler database
-   */
-  virtual void requeueRetrieveJobs(std::list<cta::SchedulerDatabase::RetrieveJob*> &jobs, log::LogContext& logContext) = 0;
-
 }; // class SchedulerDatabase
 
 } // namespace cta

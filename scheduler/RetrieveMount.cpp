@@ -217,7 +217,7 @@ bool cta::RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationReq
 }
 
 //------------------------------------------------------------------------------
-// requeueJobBatch()
+// putQueueToSleep()
 //------------------------------------------------------------------------------
 void cta::RetrieveMount::putQueueToSleep(const std::string &diskSystemName, const uint64_t sleepTime, log::LogContext &logContext) {
   m_dbMount->putQueueToSleep(diskSystemName, sleepTime, logContext);
