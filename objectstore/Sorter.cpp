@@ -244,12 +244,12 @@ void Sorter::insertRetrieveRequest(std::shared_ptr<RetrieveRequest> retrieveRequ
 
 void Sorter::insertRetrieveRequest(SorterRetrieveRequest& retrieveRequest, AgentReferenceInterface& previousOwner, std::optional<uint32_t> copyNb, log::LogContext& lc) {
   SorterRetrieveRequestAccessor accessor(retrieveRequest);
-  insertRetrieveRequest(accessor,previousOwner,copyNb,lc);
+  insertRetrieveRequest(accessor, previousOwner, copyNb, lc);
 }
 
 void Sorter::insertRetrieveRequest(RetrieveRequestInfosAccessorInterface& accessor, AgentReferenceInterface& previousOwner, std::optional<uint32_t> copyNb, log::LogContext& lc) {
   if(copyNb == std::nullopt) {
-    // The job to queue will be a ToTransfer
+    // The job to queue is a ToTransfer job
     std::set<std::string> candidateVidsToTransfer = getCandidateVidsToTransfer(accessor);
     if(!candidateVidsToTransfer.empty()) {
       std::string bestVid("NOT_FOUND");
@@ -305,7 +305,7 @@ void Sorter::insertRetrieveRequest(RetrieveRequestInfosAccessorInterface& access
       throw cta::exception::Exception("In Sorter::insertRetrieveRequest(): there are no ToTransfer jobs in the RetrieveRequest. The copyNb of the job to be queued should be provided.");
     }
   } else {
-    //We want to queue a specific job identified by its copyNb
+    // The job to queue is a specific job identified by its copyNb
     log::ScopedParamContainer params(lc);
     auto rjqi = std::make_shared<RetrieveJobQueueInfo>();
     cta::common::dataStructures::ArchiveFile archiveFile = accessor.getArchiveFile();

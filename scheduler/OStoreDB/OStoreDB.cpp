@@ -3643,24 +3643,37 @@ void OStoreDB::RetrieveMount::putQueueToSleep(const std::string &diskSystemName,
 // OStoreDB::RetrieveMount::requeueJobBatch()
 //------------------------------------------------------------------------------
 void OStoreDB::RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobBatch,
-      log::LogContext& logContext) {
+  log::LogContext& logContext)
+{
   objectstore::Sorter sorter(*m_oStoreDB.m_agentReference, m_oStoreDB.m_objectStore, m_oStoreDB.m_catalogue);
   std::list<std::shared_ptr<objectstore::RetrieveRequest>> rrlist;
   std::list<objectstore::ScopedExclusiveLock> locks;
-  for (auto & j: jobBatch) {
-    OStoreDB::RetrieveJob *job = dynamic_cast<OStoreDB::RetrieveJob *>(j.get());
+  for(auto& j : jobBatch) {
+    OStoreDB::RetrieveJob *job = dynamic_cast<OStoreDB::RetrieveJob*>(j.get());
     auto rr = std::make_shared<objectstore::RetrieveRequest>(job->m_retrieveRequest.getAddressIfSet(), m_oStoreDB.m_objectStore);
     rrlist.push_back(rr);
     try {
       locks.emplace_back(*rr);
       rr->fetch();
-    } catch (cta::exception::NoSuchObject &) {
+      sorter.insertRetrieveRequest(rr, *m_oStoreDB.m_agentReference, std::nullopt, logContext);
+    } catch(exception::NoSuchObject&) {
       log::ScopedParamContainer params(logContext);
       params.add("retrieveRequestId", job->m_retrieveRequest.getAddressIfSet());
-      logContext.log(log::INFO, "In OStoreDB::RetrieveMount::requeueJobBatch(): no such retrieve request. Ignoring.");
+      logContext.log(log::INFO, "In OStoreDB::RetrieveMount::requeueJobBatch(): no such retrieve request, ignoring.");
+      continue;
+    } catch(Sorter::RetrieveRequestHasNoCopies& ex) {
+      log::ScopedParamContainer params(logContext);
+      params.add("retrieveRequestId", job->m_retrieveRequest.getAddressIfSet());
+      params.add("exceptionMessage", ex.what());
+      logContext.log(log::WARNING, "In OStoreDB::RetrieveMount::requeueJobBatch(): no VID available for retrieve request, ignoring.");
+      continue;
+    } catch(exception::Exception& ex) {
+      log::ScopedParamContainer params(logContext);
+      params.add("retrieveRequestId", job->m_retrieveRequest.getAddressIfSet());
+      params.add("exceptionMessage", ex.what());
+      logContext.log(log::ERR, "In OStoreDB::RetrieveMount::requeueJobBatch(): cannot requeue retrieve request, ignoring.");
       continue;
     }
-    sorter.insertRetrieveRequest(rr, *m_oStoreDB.m_agentReference, std::nullopt, logContext);
   }
   locks.clear();
   rrlist.clear();
