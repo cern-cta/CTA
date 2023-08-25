@@ -244,11 +244,7 @@ void Sorter::insertRetrieveRequest(std::shared_ptr<RetrieveRequest> retrieveRequ
 
 void Sorter::insertRetrieveRequest(SorterRetrieveRequest& retrieveRequest, AgentReferenceInterface& previousOwner, std::optional<uint32_t> copyNb, log::LogContext& lc) {
   SorterRetrieveRequestAccessor accessor(retrieveRequest);
-<<<<<<< HEAD
   insertRetrieveRequest(accessor, previousOwner, copyNb, lc);
-=======
-  insertRetrieveRequest(accessor,previousOwner,copyNb,lc);
->>>>>>> 92c039c6e2 ([ci skip] Reformats documentation for insertRetrieveRequest)
 }
 
 void Sorter::insertRetrieveRequest(RetrieveRequestInfosAccessorInterface& accessor, AgentReferenceInterface& previousOwner, std::optional<uint32_t> copyNb, log::LogContext& lc) {
