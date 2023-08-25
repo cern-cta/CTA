@@ -237,14 +237,14 @@ Sorter::RetrieveJob Sorter::createRetrieveJob(std::shared_ptr<RetrieveRequest> r
   return jobToAdd;
 }
 
-void Sorter::insertRetrieveRequest(std::shared_ptr<RetrieveRequest> retrieveRequest, AgentReferenceInterface &previousOwner, std::optional<uint32_t> copyNb, log::LogContext & lc){
+void Sorter::insertRetrieveRequest(std::shared_ptr<RetrieveRequest> retrieveRequest, AgentReferenceInterface& previousOwner, std::optional<uint32_t> copyNb, log::LogContext& lc) {
   OStoreRetrieveRequestAccessor requestAccessor(retrieveRequest);
-  this->insertRetrieveRequest(requestAccessor, previousOwner, copyNb, lc);
+  insertRetrieveRequest(requestAccessor, previousOwner, copyNb, lc);
 }
 
-void Sorter::insertRetrieveRequest(SorterRetrieveRequest& retrieveRequest, AgentReferenceInterface &previousOwner,std::optional<uint32_t> copyNb, log::LogContext& lc){
+void Sorter::insertRetrieveRequest(SorterRetrieveRequest& retrieveRequest, AgentReferenceInterface& previousOwner, std::optional<uint32_t> copyNb, log::LogContext& lc) {
   SorterRetrieveRequestAccessor accessor(retrieveRequest);
-  this->insertRetrieveRequest(accessor,previousOwner,copyNb,lc);
+  insertRetrieveRequest(accessor,previousOwner,copyNb,lc);
 }
 
 void Sorter::insertRetrieveRequest(RetrieveRequestInfosAccessorInterface& accessor, AgentReferenceInterface& previousOwner, std::optional<uint32_t> copyNb, log::LogContext& lc) {

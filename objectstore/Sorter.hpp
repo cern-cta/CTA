@@ -129,38 +129,52 @@ public:
 
   /* Retrieve-related methods */
   /**
-   * This methods allows to insert the RetrieveRequest passed in parameter into the sorter.
-   * It works as following :
-   * 1. if copyNb is std::nullopt, then the best vid will be selected by the Helpers::getBestRetrieveQueue() method. The tapeFile (copyNb) corresponding to this vid
-   * will be selected amongst the jobs of the RetrieveRequest. The job corresponding to the tapeFile will be inserted.
-   * 2. if copyNb corresponds to a tapeFile, the corresponding job will be inserted according to its status (e.g : if jobStatus = ToReportToUser, the job will be inserted in
-   * the list associated to the vid of the job and the ToReportToUser queueType.
-   * @param retrieveRequest the RetrieveRequest that needs to be queued. This request should be locked and fetched before calling this method. You have to unlock the request
-   * after this method
-   * @param previousOwner the previous owner of the RetrieveRequest. The new owner will be the agent of the Sorter.
-   * @param copyNb : if copyNb is std::nullopt, then the job we want to queue is supposed to be a ToTransfer job (if no job ToTransfer are present in the RetrieveJobs, an exception
-   * will be thrown). If not, this method will select the queueType according
-   * to the copyNb passed in parameter. If no queueType is found, an exception will be thrown.
-   * @param lc the LogContext for logging
-   * @throws RetrieveRequestHasNoCopies exception if no tapeFile is found for the best vid (in the case where copyNb == std::nullopt)
+   * Insert a RetrieveRequest into the Sorter, as follows:
+   *
+   * 1. If copyNb is std::nullopt, then the best vid will be selected by Helpers::getBestRetrieveQueue().
+   *    The tapeFile (copyNb) corresponding to this vid will be selected from the jobs of the RetrieveRequest.
+   *    The job corresponding to the tapeFile will be inserted.
+   * 2. If copyNb corresponds to a tapeFile, the corresponding job will be inserted according to its status
+   *    (e.g., if jobStatus == ToReportToUser, the job will be inserted in the list associated with the vid
+   *     of the job and the ToReportToUser queueType.)
+   *
+   * @param retrieveRequest    The RetrieveRequest to be queued. This request should be locked and fetched
+   *                           before calling this method, and unlocked after this method.
+   * @param previousOwner      The previous owner of the RetrieveRequest. The new owner will be the agent
+   *                           of the Sorter.
+   * @param copyNb             If copyNb is std::nullopt, then the job to queue should be a ToTransfer job
+   *                           If no ToTransfer jobs are present in the RetrieveJobs, an error will be logged.
+   *                           If not, this method will select the queueType according to the copyNb.
+   *                           If no queueType is found, an error will be logged.
+   * @param lc                 Log Context for logging
+   *
+   * @throws RetrieveRequestHasNoCopies if no tapeFile is found for the best vid (in the case where copyNb == std::nullopt)
    * @throws Exception if no ToTransfer jobs are found in the RetrieveRequest passed in parameter (in the case where copyNb == std::nullopt)
    * @throws Exception if the destination queue could not have been determined according to the copyNb passed in parameter
    */
-  void insertRetrieveRequest(std::shared_ptr<RetrieveRequest> retrieveRequest, AgentReferenceInterface &previousOwner, std::optional<uint32_t> copyNb, log::LogContext & lc);
+  void insertRetrieveRequest(std::shared_ptr<RetrieveRequest> retrieveRequest, AgentReferenceInterface& previousOwner, std::optional<uint32_t> copyNb, log::LogContext& lc);
 
   /**
-   * This method is the same as the one above. The difference is on the representation of a RetrieveRequest
-   * @param retrieveRequest the SorterRetrieveRequest object created by the user before calling this method
-   * @param previousOwner the previous owner of the retrieveRequest to insert
-   * @param if copyNb is std::nullopt, then the job we want to queue is supposed to be a ToTransfer job (if no job ToTransfer are present in the RetrieveJobs, an exception
-   * will be thrown). If not, this method will select the queueType according
-   * to the copyNb passed in parameter. If no queueType is found, an exception will be thrown.
-   * @param lc the LogContext for logging
-   * @throws RetrieveRequestHasNoCopies exception if no tapeFile is found for the best vid (in the case where copyNb == std::nullopt)
+   * Insert a RetrieveRequest into the Sorter.
+   *
+   * This method is the same as the one above, apart from the representation of the RetrieveRequest.
+   *
+   * @param retrieveRequest    The SorterRetrieveRequest object created by the user before calling this method.
+   * @param previousOwner      The previous owner of the RetrieveRequest. The new owner will be the agent
+   *                           of the Sorter.
+   * @param copyNb             If copyNb is std::nullopt, then the job to queue should be a ToTransfer job
+   *                           If no ToTransfer jobs are present in the RetrieveJobs, an error will be logged.
+   *                           If not, this method will select the queueType according to the copyNb.
+   *                           If no queueType is found, an error will be logged.
+   * @param lc                 Log Context for logging
+   *
+   * @throws RetrieveRequestHasNoCopies if no tapeFile is found for the best vid (in the case where copyNb == std::nullopt)
    * @throws Exception if no ToTransfer jobs are found in the RetrieveRequest passed in parameter (in the case where copyNb == std::nullopt)
    * @throws Exception if the destination queue could not have been determined according to the copyNb passed in parameter
    */
-  void insertRetrieveRequest(SorterRetrieveRequest& retrieveRequest, AgentReferenceInterface &previousOwner, std::optional<uint32_t> copyNb, log::LogContext & lc);
+  void insertRetrieveRequest(SorterRetrieveRequest& retrieveRequest, AgentReferenceInterface& previousOwner, std::optional<uint32_t> copyNb, log::LogContext& lc);
+
+  void insertRetrieveRequest(RetrieveRequestInfosAccessorInterface& accessor, AgentReferenceInterface& previousOwner, std::optional<uint32_t> copyNb, log::LogContext & lc);
 
   /**
    * This method will take the first list<RetrieveJobQueueInfo> contained in the MapRetrieve, queue all Retrieve jobs contained in it and delete the list from the map
@@ -202,8 +216,6 @@ private:
   Sorter::RetrieveJob createRetrieveJob(std::shared_ptr<RetrieveRequest> retrieveRequest,
     const cta::common::dataStructures::ArchiveFile& archiveFile, const uint32_t copyNb,
     const uint64_t fSeq, AgentReferenceInterface *previousOwner);
-  void insertRetrieveRequest(RetrieveRequestInfosAccessorInterface &accessor, AgentReferenceInterface &previousOwner,
-    std::optional<uint32_t> copyNb, log::LogContext & lc);
 
   template<typename SpecificQueue>
   void executeRetrieveAlgorithm(const std::string& vid, std::string& queueAddress,
