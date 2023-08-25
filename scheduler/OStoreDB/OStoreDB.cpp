@@ -3661,17 +3661,8 @@ void OStoreDB::RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<Schedule
       params.add("retrieveRequestId", job->m_retrieveRequest.getAddressIfSet());
       logContext.log(log::INFO, "In OStoreDB::RetrieveMount::requeueJobBatch(): no such retrieve request, ignoring.");
       continue;
-    } catch(Sorter::RetrieveRequestHasNoCopies& ex) {
-      log::ScopedParamContainer params(logContext);
-      params.add("retrieveRequestId", job->m_retrieveRequest.getAddressIfSet());
-      params.add("exceptionMessage", ex.what());
-      logContext.log(log::WARNING, "In OStoreDB::RetrieveMount::requeueJobBatch(): no VID available for retrieve request, ignoring.");
-      continue;
     } catch(exception::Exception& ex) {
-      log::ScopedParamContainer params(logContext);
-      params.add("retrieveRequestId", job->m_retrieveRequest.getAddressIfSet());
-      params.add("exceptionMessage", ex.what());
-      logContext.log(log::ERR, "In OStoreDB::RetrieveMount::requeueJobBatch(): cannot requeue retrieve request, ignoring.");
+      job->failTransfer(ex.what(), logContext);
       continue;
     }
   }
