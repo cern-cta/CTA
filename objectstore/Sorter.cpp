@@ -252,19 +252,19 @@ void Sorter::insertRetrieveRequest(RetrieveRequestInfosAccessorInterface& access
     // The job to queue is a ToTransfer job
     std::set<std::string> candidateVidsToTransfer = getCandidateVidsToTransfer(accessor);
     if(!candidateVidsToTransfer.empty()) {
-      std::string bestVid("NOT_FOUND");
+      std::string bestVid;
       try {
-        // Helpers::selectBestRetrieveQueue throws Helpers::NoTapeAvailableForRetrieve if tape not found
         bestVid = Helpers::selectBestRetrieveQueue(candidateVidsToTransfer, m_catalogue, m_objectstore);
-        bool is_found(false);
-        for(auto& tf: accessor.getArchiveFile().tapeFiles) {
-          if(tf.vid == bestVid) {
-            is_found = true;
-            break;
-          }
-        }
-        if(!is_found) throw Helpers::NoTapeAvailableForRetrieve();
       } catch(Helpers::NoTapeAvailableForRetrieve&) {
+        std::stringstream err;
+        err << "In Sorter::insertRetrieveRequest(): no vid available. archiveId=" << accessor.getArchiveFile().archiveFileID;
+        throw RetrieveRequestHasNoCopies(err.str());
+      }
+
+      const auto& tapeFileList = accessor.getArchiveFile().tapeFiles;
+      auto vid_it = std::find_if(begin(tapeFileList), end(tapeFileList), 
+        [&bestVid](const common::dataStructures::TapeFile& tf) { return tf.vid == bestVid; });
+      if(vid_it == std::end(tapeFileList)) {
         std::stringstream err;
         err << "In Sorter::insertRetrieveRequest(): no tape file for requested vid. archiveId="
             << accessor.getArchiveFile().archiveFileID << " vid=" << bestVid;
