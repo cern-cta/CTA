@@ -605,9 +605,6 @@ int DriveHandler::runChild() {
   }
   std::unique_ptr<SchedulerDB_t> sched_db;
   try {
-    if (!m_catalogue) {
-      m_catalogue = createCatalogue("DriveHandler::runChild()");
-    }
     sched_db = sched_db_init->getSchedDB(*m_catalogue, lc.logger());
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer param(lc);
@@ -878,8 +875,6 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
   kill();
 
   // Mounting management.
-  if (!m_catalogue)
-    m_catalogue = createCatalogue("DriveHandler::shutdown()");
   // Create the scheduler
   std::unique_ptr<SchedulerDBInit_t> sched_db_init;
 

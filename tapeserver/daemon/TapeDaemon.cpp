@@ -118,7 +118,7 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
     try {
       lc.log(log::INFO, "Creating drive handler for drive " + d.second.value().unitName);
       auto builder = std::make_unique<DriveHandlerBuilder>(&m_globalConfiguration, &d.second.value(), &pm);
-      // builder->build();
+      builder->build();
       dh = std::move(builder);
       lc.log(log::INFO, "Created drive handler for drive " + d.second.value().unitName);
     } catch (cta::exception::Exception &ex) {

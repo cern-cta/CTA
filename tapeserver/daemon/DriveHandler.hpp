@@ -167,6 +167,7 @@ private:
     const std::unique_ptr<Scheduler>& scheduler,
     cta::log::LogContext* lc) const;
 
+protected:
   std::shared_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::shared_ptr<cta::Scheduler> m_scheduler;
 };
