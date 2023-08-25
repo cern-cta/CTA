@@ -194,8 +194,6 @@ private:
 
   /* Retrieve-related methods */
   std::set<std::string> getCandidateVidsToTransfer(RetrieveRequestInfosAccessorInterface &requestAccessor);
-  std::string getBestVidForQueueingRetrieveRequest(RetrieveRequestInfosAccessorInterface &requestAccessor,
-    std::set<std::string>& candidateVids, log::LogContext &lc);
   std::string getContainerID(RetrieveRequestInfosAccessorInterface& requestAccessor, const std::string& vid, const uint32_t copyNb);
   void queueRetrieveRequests(const std::string& vid, const common::dataStructures::JobQueueType& jobQueueType,
     std::list<std::shared_ptr<RetrieveJobQueueInfo>>& archiveJobInfos, log::LogContext &lc);
