@@ -1956,33 +1956,6 @@ common::dataStructures::RepackInfo OStoreDB::getRepackInfo(const std::string& vi
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::requeueRetrieveJobs()
-//------------------------------------------------------------------------------
-void OStoreDB::requeueRetrieveJobs(std::list<cta::SchedulerDatabase::RetrieveJob *> &jobs, log::LogContext& logContext) {
-  objectstore::Sorter sorter(*m_agentReference, m_objectStore, m_catalogue);
-  std::list<std::shared_ptr<objectstore::RetrieveRequest>> rrlist;
-  std::list<objectstore::ScopedExclusiveLock> locks;
-  for (auto &job: jobs) {
-    OStoreDB::RetrieveJob *oStoreJob = dynamic_cast<OStoreDB::RetrieveJob *>(job);
-    auto rr = std::make_shared<objectstore::RetrieveRequest>(oStoreJob->m_retrieveRequest.getAddressIfSet(), m_objectStore);
-    rrlist.push_back(rr);
-    try {
-      locks.emplace_back(*rr);
-      rr->fetch();
-    } catch (cta::exception::NoSuchObject &) {
-      log::ScopedParamContainer params(logContext);
-      params.add("retrieveRequestId", oStoreJob->m_retrieveRequest.getAddressIfSet());
-      logContext.log(log::INFO, "In OStoreDB::requeueRetrieveJobs(): no such retrieve request. Ignoring.");
-      continue;
-    }
-    sorter.insertRetrieveRequest(rr, *m_agentReference, std::nullopt, logContext);
-  }
-  locks.clear();
-  rrlist.clear();
-  sorter.flushAll(logContext);
-}
-
-//------------------------------------------------------------------------------
 // OStoreDB::resheduleRetrieveRequest()
 //------------------------------------------------------------------------------
 void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob *> &jobs, log::LogContext& logContext) {

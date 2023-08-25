@@ -438,11 +438,6 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> PostgresSchedDB::getMo
   return ret;
 }
 
-void PostgresSchedDB::requeueRetrieveJobs(std::list<SchedulerDatabase::RetrieveJob *> &jobs, log::LogContext& logContext)
-{
-   throw cta::exception::Exception("Not implemented");
-}
-
 void PostgresSchedDB::setThreadNumber(uint64_t threadNumber, const std::optional<size_t> &stackSize)
 {
    throw cta::exception::Exception("Not implemented");
