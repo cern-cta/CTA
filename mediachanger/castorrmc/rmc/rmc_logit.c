@@ -42,12 +42,12 @@ int rmc_logit(const char *const func, const char *const msg, ...) {
   time(&current_time);
   tm = localtime(&current_time);
   snprintf(prtbuf, RMC_PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, g_jid, func);
-  size_t prtbufLen = strlen(prtbuf);
+  size_t prtbufLen = strnlen(prtbuf, RMC_PRTBUFSZ);
   vsnprintf(prtbuf+prtbufLen, RMC_PRTBUFSZ-prtbufLen, msg, args);
   va_end(args);
   fd_log = open("/var/log/cta/cta-rmcd.log", O_WRONLY | O_CREAT | O_APPEND, 0664);
   if(fd_log < 0) return -1;
-  write(fd_log, prtbuf, strlen(prtbuf));
+  write(fd_log, prtbuf, strnlen(prtbuf, RMC_PRTBUFSZ));
   close(fd_log);
   errno = save_errno;
   return 0;

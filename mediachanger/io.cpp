@@ -809,8 +809,7 @@ int connectWithTimeout(const std::string& hostName, const unsigned short port, c
     hints.ai_socktype = SOCK_STREAM;
 
     struct addrinfo *res = nullptr;
-    const int rc = getaddrinfo(hostName.c_str(), portStream.str().c_str(), &hints, &res);
-    if(rc != 0) {
+    if(const int rc = getaddrinfo(hostName.c_str(), portStream.str().c_str(), &hints, &res); rc != 0) {
       cta::exception::Exception ex;
       ex.getMessage() << "getaddrinfo() failed: " << getAddrInfoErrorString(rc);
       throw ex;
