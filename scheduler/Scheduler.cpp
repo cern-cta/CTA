@@ -1072,7 +1072,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
   // TODO: this is a temporary log to avoid a crash when the tapepool is not set in the mountInfo.
   // Remove it when the bug is fixed or understood. CTA#470
   std::set<std::string> tapepoolsPotentialOrExistingMounts;
-  for (auto & pm: mountInfo->potentialMounts) {
+  for (const auto& pm: mountInfo->potentialMounts) {
     tapepoolsPotentialOrExistingMounts.insert(pm.tapePool);
     if(tapepoolsPotentialOrExistingMounts.count(std::string()) > 0) {
       // log an error that pm contained an empty string
@@ -1084,7 +1084,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
       lc.log(log::ERR, "In JORGE_TEMP_LOG2(): In Potential Mounts, tapePool is an empty string.");
     }
   }
-  for (auto & em: mountInfo->existingOrNextMounts) {
+  for (const auto& em: mountInfo->existingOrNextMounts) {
     tapepoolsPotentialOrExistingMounts.insert(em.tapePool);
     if(tapepoolsPotentialOrExistingMounts.count(std::string()) > 0) {
       // log an error that em contained an empty string
