@@ -262,9 +262,9 @@ void Sorter::insertRetrieveRequest(RetrieveRequestInfosAccessorInterface& access
       }
 
       const auto& tapeFileList = accessor.getArchiveFile().tapeFiles;
-      auto vid_it = std::find_if(begin(tapeFileList), end(tapeFileList), 
+      if(auto vid_it = std::find_if(begin(tapeFileList), end(tapeFileList), 
         [&bestVid](const common::dataStructures::TapeFile& tf) { return tf.vid == bestVid; });
-      if(vid_it == std::end(tapeFileList)) {
+        vid_it == std::end(tapeFileList)) {
         std::stringstream err;
         err << "In Sorter::insertRetrieveRequest(): no tape file for requested vid. archiveId="
             << accessor.getArchiveFile().archiveFileID << " vid=" << bestVid;
@@ -275,7 +275,7 @@ void Sorter::insertRetrieveRequest(RetrieveRequestInfosAccessorInterface& access
       log::ScopedParamContainer params(lc);
       size_t copyNb = std::numeric_limits<size_t>::max();
       uint64_t fSeq = std::numeric_limits<uint64_t>::max();
-      for(auto& tc: accessor.getArchiveFile().tapeFiles) {
+      for(const auto& tc: accessor.getArchiveFile().tapeFiles) {
         if(tc.vid==bestVid) {
           copyNb=tc.copyNb;
           fSeq=tc.fSeq;
