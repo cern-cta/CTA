@@ -1081,7 +1081,7 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
             .add("vo", pm.vo)
             .add("mediaType", pm.mediaType)
             .add("vid", pm.vid);
-      lc.log(log::ERR, "In JORGE_TEMP_LOG2(): In Potential Mounts, tapePool is an empty string.");
+      lc.log(log::ERR, "In JORGE_TEMP_LOG1(): In Potential Mounts, tapePool is an empty string.");
     }
   }
   for (const auto& em: mountInfo->existingOrNextMounts) {
@@ -1094,8 +1094,12 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
             .add("Activity", em.activity.value_or(""))
             .add("MountType", toString(em.type))
             .add("vid", em.vid);
-      lc.log(log::ERR, "In JORGE_TEMP_LOG3(): In Existing or Next Mounts, tapePool is an empty string.");
+      lc.log(log::ERR, "In JORGE_TEMP_LOG2(): In Existing or Next Mounts, tapePool is an empty string.");
     }
+  }
+  if(tapepoolsPotentialOrExistingMounts.count(std::string()) > 0) {
+    // log an error that tapepoolsPotentialOrExistingMounts contained an empty string
+    lc.log(log::ERR, "In JORGE_TEMP_LOG3(): In Potential Mounts, tapePool is an empty string.");
   }
   //Get the potential and existing mounts tapepool virtual organization information
   std::map<std::string,std::string> tapepoolVoNameMap;
