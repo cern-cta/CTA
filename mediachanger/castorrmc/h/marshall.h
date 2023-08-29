@@ -142,7 +142,7 @@ typedef  char*          bitvct; /* bit vector type definition           */
 					  INC_PTR(ptr,strlen(str)+1); \
 					}
 
-EXTERN_C int unmarshall_STRINGN(char** ptr, char* str, int n);
+EXTERN_C int unmarshall_STRINGN(char** ptr, const char* ptr_end, char* str, int str_maxlen);
 
 /*
  *    H Y P E R   ( 6 4   B I T S )
