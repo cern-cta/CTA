@@ -93,10 +93,10 @@ void cta::server::Daemon::daemonizeIfNotRunInForegroundAndSetUserAndGroup(const 
 
     // We could set our working directory to '/' here with a call to chdir(2).
     // For the time being we don't and leave it to the initd script to change
-    // to a suitable directory for us!
+    // to a suitable directory for us.
 
     // Change the file mode mask
-    umask(0);
+    umask(0077);
 
     // Run the daemon in a new session
     cta::exception::Errnum::throwOnNegative(setsid(),
