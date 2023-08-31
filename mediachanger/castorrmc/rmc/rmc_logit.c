@@ -45,7 +45,7 @@ int rmc_logit(const char *const func, const char *const msg, ...) {
   size_t prtbufLen = strnlen(prtbuf, RMC_PRTBUFSZ);
   vsnprintf(prtbuf+prtbufLen, RMC_PRTBUFSZ-prtbufLen, msg, args);
   va_end(args);
-  fd_log = open("/var/log/cta/cta-rmcd.log", O_WRONLY | O_CREAT | O_APPEND, 0664);
+  fd_log = open("/var/log/cta/cta-rmcd.log", O_WRONLY | O_CREAT | O_APPEND, 0640);
   if(fd_log < 0) return -1;
   write(fd_log, prtbuf, strnlen(prtbuf, RMC_PRTBUFSZ));
   close(fd_log);
