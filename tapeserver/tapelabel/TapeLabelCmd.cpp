@@ -84,8 +84,7 @@ int TapeLabelCmd::exceptionThrowingMain(const int argc, char *const *const argv)
   
   readAndSetConfiguration(getUsername(), cmdLineArgs.m_vid, cmdLineArgs.m_oldLabel, cmdLineArgs.m_unitName);
    
-  const std::string capabilities("cap_sys_rawio+ep");
-  setProcessCapabilities(capabilities);
+  setProcessCapabilities("cap_sys_rawio+ep");
   
   m_catalogue->Tape()->checkTapeForLabel(m_vid);
   
