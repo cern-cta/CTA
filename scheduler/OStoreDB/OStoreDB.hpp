@@ -662,8 +662,6 @@ class OStoreDB: public SchedulerDatabase {
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc);
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextFailedArchiveRepackReportBatch(log::LogContext &lc);
 
-  void requeueRetrieveJobs(std::list<cta::SchedulerDatabase::RetrieveJob *> &jobs, log::LogContext& logContext) override;
-
  private:
   const size_t c_repackArchiveReportBatchSize = 10000;
   const size_t c_repackRetrieveReportBatchSize = 10000;

@@ -27,6 +27,8 @@
 #define	RMC_RETRYI	60
 #define	RMC_LOGBUFSZ 1024
 
+#define REQ_DATA_SIZE (RMC_REQBUFSZ-3*LONGSIZE) /* Size of buffer pointed to by rqst_context.req_data */
+
 #define RMC_PORT 5014
 
 #define RMC_MAXRQSTATTEMPTS 10 /* Maximum number of attempts a retriable RMC request should be issued */

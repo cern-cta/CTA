@@ -4,7 +4,9 @@
 - cta/CTA#461 - Allow setting the repack VO if there is none with ongoing repacks
 - cta/CTA#471 - Fix device statistics from LTO drives
 - cta/CTA#472 - Fix repack VO exceeding the readmaxdrives limit 
- 
+- cta/CTA#477 - Fix uncaught exception Helpers::NoTapeAvailableForRetrieve
+- cta/CTA#481 - Fix security hotspots related to file permissions and capabilities
+
 ### Continuous Integration
 - cta/CTA#352 - Test rollback Catalogue Version
 

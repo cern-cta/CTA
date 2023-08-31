@@ -32,7 +32,7 @@ static struct vendor_product_id_pair const spectra_like_libs[] = {
   {"IBM"    , "3573-TL"}  /*Match IBM libraries, model 3573-TL*/
 };
 
-void trim_trailing_spaces(char* str, size_t strSize) {
+void trim_trailing_spaces(char* str, int strSize) {
   if(strSize == 0) return;
   str[strSize-1] = '\0';
   if(strSize == 1) return;

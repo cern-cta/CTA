@@ -50,20 +50,21 @@ int rmc_srv_export(const struct rmc_srv_rqst_context *const rqst_context) {
 	const char* const func = "rmc_srv_export";
 
 	rbp = rqst_context->req_data;
+	const char* req_data_end = rqst_context->req_data+REQ_DATA_SIZE;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	rmc_logit (func, RMC92, "export", uid, gid, rqst_context->clienthost);
 	/* Unmarshall and ignore the loader field as it is no longer used */
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
-		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
+		if(unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN+1)) {
 			rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06,
 				"loader");
 			rmc_logit (func, "returns %d\n", ERMCUNREC);
 			return ERMCUNREC;
 		}
 	}
-	if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1)) {
+	if(unmarshall_STRINGN(&rbp, req_data_end, vid, CA_MAXVIDLEN+1)) {
 		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06, "vid");
 		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
@@ -100,20 +101,21 @@ int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context) {
 	const char* const func = "rmc_srv_findcart";
 
 	rbp = rqst_context->req_data;
+	const char* req_data_end = rqst_context->req_data+REQ_DATA_SIZE;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	rmc_logit (func, RMC92, "findcart", uid, gid, rqst_context->clienthost);
 	/* Unmarshall and ignore the loader fiel as it is no longer used */
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
-		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
+		if(unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN+1)) {
 			rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06,
 				"loader");
 			rmc_logit (func, "returns %d\n", ERMCUNREC);
 			return ERMCUNREC;
 		}
 	}
-	if (unmarshall_STRINGN (rbp, template, 40)) {
+	if(unmarshall_STRINGN(&rbp, req_data_end, template, 40)) {
 		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06, "template");
 		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
@@ -175,13 +177,14 @@ int rmc_srv_getgeom(const struct rmc_srv_rqst_context *const rqst_context) {
 	const char* const func = "rmc_srv_getgeom";
 
 	rbp = rqst_context->req_data;
+	const char* req_data_end = rqst_context->req_data+REQ_DATA_SIZE;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	rmc_logit (func, RMC92, "getgeom", uid, gid, rqst_context->clienthost);
 	/* Unmarshall and ignore the loader field as it is no longer used */
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
-		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
+		if(unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN+1)) {
 			rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06,
 				"loader");
 			rmc_logit (func, "returns %d\n", ERMCUNREC);
@@ -218,20 +221,21 @@ int rmc_srv_import(const struct rmc_srv_rqst_context *const rqst_context) {
 	const char* const func = "rmc_srv_import";
 
 	rbp = rqst_context->req_data;
+	const char* req_data_end = rqst_context->req_data+REQ_DATA_SIZE;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	rmc_logit (func, RMC92, "import", uid, gid, rqst_context->clienthost);
 	/* Unmarshall and ignore the loader field as it is no longer used */
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
-		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
+		if(unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN+1)) {
 			rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06,
 				"loader");
 			rmc_logit (func, "returns %d\n", ERMCUNREC);
 			return ERMCUNREC;
 		}
 	}
-	if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1)) {
+	if(unmarshall_STRINGN(&rbp, req_data_end, vid, CA_MAXVIDLEN+1)) {
 		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06, "vid");
 		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
@@ -260,20 +264,21 @@ int rmc_srv_mount(const struct rmc_srv_rqst_context *const rqst_context) {
 	const char* const func = "rmc_srv_mount";
 
 	rbp = rqst_context->req_data;
+	const char* req_data_end = rqst_context->req_data+REQ_DATA_SIZE;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	rmc_logit (func, RMC92, "mount", uid, gid, rqst_context->clienthost);
 	/* Unmarshall and ignore the loader field as it is no longer used */
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
-		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
+		if(unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN+1)) {
 			rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06,
 				"loader");
 			rmc_logit (func, "returns %d\n", ERMCUNREC);
 			return ERMCUNREC;
 		}
 	}
-	if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1)) {
+	if(unmarshall_STRINGN(&rbp, req_data_end, vid, CA_MAXVIDLEN+1)) {
 		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06, "vid");
 		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
@@ -312,13 +317,14 @@ int rmc_srv_readelem(const struct rmc_srv_rqst_context *const rqst_context) {
 	const char* const func = "rmc_srv_readelem";
 
 	rbp = rqst_context->req_data;
+	const char* req_data_end = rqst_context->req_data+REQ_DATA_SIZE;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	rmc_logit (func, RMC92, "readelem", uid, gid, rqst_context->clienthost);
 	/* Unmarshall and ignore the loader field as it is no longer used */
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
-		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
+		if(unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN+1)) {
 			rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06,
 				"loader");
 			rmc_logit (func, "returns %d\n", ERMCUNREC);
@@ -388,19 +394,20 @@ int rmc_srv_unmount(const struct rmc_srv_rqst_context *const rqst_context) {
 	const char* const func = "rmc_srv_unmount";
 
 	rbp = rqst_context->req_data;
+	const char* req_data_end = rqst_context->req_data+REQ_DATA_SIZE;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	rmc_logit (func, RMC92, "unmount", uid, gid, rqst_context->clienthost);
 	/* Unmarshall and ignore the loader field as it is no longer used */
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
-		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
+		if(unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN+1)) {
 			rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06, "loader");
 			rmc_logit (func, "returns %d\n", ERMCUNREC);
 			return ERMCUNREC;
 		}
 	}
-	if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1)) {
+	if(unmarshall_STRINGN(&rbp, req_data_end, vid, CA_MAXVIDLEN+1)) {
 		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06, "vid");
 		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;

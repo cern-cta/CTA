@@ -40,12 +40,13 @@ uint32_t RmcMountMsgBody::bodyLen() const {
     throw exception::Exception("Message body contains improperly-terminated strings");
   }
 
-  return sizeof(uid) +
-         sizeof(gid) +
-         sizeof(unusedLoader) +
-         vidLen + 1 +
-         sizeof(side) +
-         sizeof(drvOrd);
+  auto retval = sizeof(uid) +
+                sizeof(gid) +
+                sizeof(unusedLoader) +
+                vidLen + 1 +
+                sizeof(side) +
+                sizeof(drvOrd);
+  return static_cast<uint32_t>(retval);
 }
 
 } // namespace mediachanger

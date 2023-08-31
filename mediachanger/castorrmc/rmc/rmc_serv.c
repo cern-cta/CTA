@@ -261,10 +261,9 @@ int main(const int argc, char **argv)
 		exit (USERR);
 	}
 
-	if(run_rmcd_in_background(argc, argv)) {
-		if ((g_maxfds = Cinitdaemon ("rmcd", NULL)) < 0) {
-			exit (SYERR);
-		}
+	if(run_rmcd_in_background(argc, argv) &&
+	   (g_maxfds = Cinitdaemon("rmcd", NULL)) < 0) {
+		exit (SYERR);
 	}
 	exit (rmc_main (robot));
 }
@@ -273,7 +272,7 @@ static void rmc_doit(const int rpfd)
 {
 	int c;
 	char *clienthost;
-	char req_data[RMC_REQBUFSZ-3*LONGSIZE];
+	char req_data[REQ_DATA_SIZE];
 	int req_type = 0;
 
 	if ((c = rmc_getreq (rpfd, &req_type, req_data, &clienthost)) == 0)
