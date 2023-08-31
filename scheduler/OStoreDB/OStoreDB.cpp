@@ -228,6 +228,11 @@ std::list<SchedulerDatabase::RetrieveQueueCleanupInfo> OStoreDB::getRetrieveQueu
 //------------------------------------------------------------------------------
 void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, RootEntry& re,
   SchedulerDatabase::PurposeGetMountInfo /* not used */, log::LogContext & logContext) {
+  if (tmdi.existingOrNextMounts.size() > 0) {
+    logContext.log(log::WARNING, "In OStoreDB::fetchMountInfo(): tmdi.existingOrNextMounts.size() > 0");
+    // tmdi.existingOrNextMounts.clear();
+  }
+
   utils::Timer t, t2;
   std::list<common::dataStructures::MountPolicy> mountPolicies = m_catalogue.MountPolicy()->getCachedMountPolicies();
   // Walk the archive queues for USER for statistics
@@ -490,6 +495,16 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
     if(queueLockTime > 1 || queueFetchTime > 1){
       logContext.log(log::WARNING, "In OStoreDB::fetchMountInfo(): fetched a retrieve queue and that lasted more than 1 second.");
     }
+  }
+  if (tmdi.existingOrNextMounts.size() > 0 && tmdi.existingOrNextMounts.back().tapePool.empty()) {
+    const auto mount = tmdi.existingOrNextMounts.back();
+    log::ScopedParamContainer params (logContext);
+    params.add("MountType", toString(mount.type))
+          .add("VO", mount.vo)
+          .add("DriveName", mount.driveName)
+          .add("Vid", mount.vid)
+          .add("Activity", mount.activity.value_or(""));
+    logContext.log(log::WARNING, "In JORGE_TEMP_LOG6(): Before getTapeDrives.");
   }
   // Collect information about the existing and next mounts
   // If a next mount exists the drive "counts double", but the corresponding drive
