@@ -496,16 +496,6 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       logContext.log(log::WARNING, "In OStoreDB::fetchMountInfo(): fetched a retrieve queue and that lasted more than 1 second.");
     }
   }
-  if (tmdi.existingOrNextMounts.size() > 0 && tmdi.existingOrNextMounts.back().tapePool.empty()) {
-    const auto mount = tmdi.existingOrNextMounts.back();
-    log::ScopedParamContainer params (logContext);
-    params.add("MountType", toString(mount.type))
-          .add("VO", mount.vo)
-          .add("DriveName", mount.driveName)
-          .add("Vid", mount.vid)
-          .add("Activity", mount.activity.value_or(""));
-    logContext.log(log::WARNING, "In JORGE_TEMP_LOG6(): Before getTapeDrives.");
-  }
   // Collect information about the existing and next mounts
   // If a next mount exists the drive "counts double", but the corresponding drive
   // is either about to mount, or about to replace its current mount.
@@ -546,16 +536,6 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       }
       tmdi.existingOrNextMounts.back().activity = driveState.currentActivity ? driveState.currentActivity.value() : "";
     }
-    if (tmdi.existingOrNextMounts.size() > 0 && tmdi.existingOrNextMounts.back().tapePool.empty()) {
-      const auto mount = tmdi.existingOrNextMounts.back();
-      log::ScopedParamContainer params (logContext);
-      params.add("MountType", toString(mount.type))
-            .add("VO", mount.vo)
-            .add("DriveName", mount.driveName)
-            .add("Vid", mount.vid)
-            .add("Activity", mount.activity.value_or(""));
-      logContext.log(log::WARNING, "In JORGE_TEMP_LOG4(): Empty Tape Pool Name from catalogue.");
-    }
     if(driveState.nextMountType == common::dataStructures::MountType::NoMount) continue;
     if (activeMountTypes.count(static_cast<int>(driveState.nextMountType))) {
       tmdi.existingOrNextMounts.push_back(ExistingMount());
@@ -569,16 +549,6 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
       tmdi.existingOrNextMounts.back().filesTransferred = 0;
       tmdi.existingOrNextMounts.back().averageBandwidth = 0;
       tmdi.existingOrNextMounts.back().activity = driveState.nextActivity ? driveState.nextActivity.value() : "";
-    }
-    if (tmdi.existingOrNextMounts.size() > 0 && tmdi.existingOrNextMounts.back().tapePool.empty()) {
-      const auto mount = tmdi.existingOrNextMounts.back();
-      log::ScopedParamContainer params (logContext);
-      params.add("MountType", toString(mount.type))
-            .add("VO", mount.vo)
-            .add("DriveName", mount.driveName)
-            .add("Vid", mount.vid)
-            .add("Activity", mount.activity.value_or(""));
-      logContext.log(log::WARNING, "In JORGE_TEMP_LOG5(): Empty Tape Pool Name from catalogue.");
     }
   }
   auto registerProcessingTime = t.secs(utils::Timer::resetCounter);

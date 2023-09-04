@@ -1073,42 +1073,26 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
   }
 
   //Get the tapepools of the potential and existing mounts
-  // TODO: this is a temporary log to avoid a crash when the tapepool is not set in the mountInfo.
-  // Remove it when the bug is fixed or understood. CTA#470
   std::set<std::string> tapepoolsPotentialOrExistingMounts;
   for (const auto& pm: mountInfo->potentialMounts) {
     tapepoolsPotentialOrExistingMounts.insert(pm.tapePool);
-    if(tapepoolsPotentialOrExistingMounts.count(std::string()) > 0) {
-      // log an error that pm contained an empty string
-      log::ScopedParamContainer params(lc);
-      params.add("logicalLibrary", pm.logicalLibrary)
-            .add("vo", pm.vo)
-            .add("mediaType", pm.mediaType)
-            .add("vid", pm.vid);
-      lc.log(log::ERR, "In JORGE_TEMP_LOG1(): In Potential Mounts, tapePool is an empty string.");
-    }
   }
   for (const auto& em: mountInfo->existingOrNextMounts) {
     tapepoolsPotentialOrExistingMounts.insert(em.tapePool);
-    if(tapepoolsPotentialOrExistingMounts.count(std::string()) > 0) {
-      // log an error that em contained an empty string
-      log::ScopedParamContainer params(lc);
-      params.add("DriveName", em.driveName)
-            .add("vo", em.vo)
-            .add("Activity", em.activity.value_or(""))
-            .add("MountType", toString(em.type))
-            .add("vid", em.vid);
-      lc.log(log::ERR, "In JORGE_TEMP_LOG2(): In Existing or Next Mounts, tapePool is an empty string.");
-    }
-  }
-  if(tapepoolsPotentialOrExistingMounts.count(std::string()) > 0) {
-    // log an error that tapepoolsPotentialOrExistingMounts contained an empty string
-    lc.log(log::ERR, "In JORGE_TEMP_LOG3(): In Potential Mounts, tapePool is an empty string.");
   }
   //Get the potential and existing mounts tapepool virtual organization information
   std::map<std::string,std::string> tapepoolVoNameMap;
   std::map<std::string,common::dataStructures::VirtualOrganization> voNameVoMap;
   for (auto & tapepool: tapepoolsPotentialOrExistingMounts) {
+    if(tapepoolsPotentialOrExistingMounts.count(std::string()) > 0) {
+      // log an error that tapepool in PotentialOrExistingMounts contained an empty string
+      log::ScopedParamContainer params(lc);
+      params.add("DriveName", em.driveName)
+            .add("vo", em.vo)
+            .add("vid", em.vid);
+      lc.log(log::ERR, "In Scheduler::sortAndGetTapesForMountInfo(): for Potential or Existing Mounts, "
+        "tapePool is an empty string.");
+    }
     try {
       auto vo = m_catalogue.VO()->getCachedVirtualOrganizationOfTapepool(tapepool);
       tapepoolVoNameMap[tapepool] = vo.name;
