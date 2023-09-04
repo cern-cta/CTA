@@ -228,11 +228,6 @@ std::list<SchedulerDatabase::RetrieveQueueCleanupInfo> OStoreDB::getRetrieveQueu
 //------------------------------------------------------------------------------
 void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, RootEntry& re,
   SchedulerDatabase::PurposeGetMountInfo /* not used */, log::LogContext & logContext) {
-  if (tmdi.existingOrNextMounts.size() > 0) {
-    logContext.log(log::WARNING, "In OStoreDB::fetchMountInfo(): tmdi.existingOrNextMounts.size() > 0");
-    // tmdi.existingOrNextMounts.clear();
-  }
-
   utils::Timer t, t2;
   std::list<common::dataStructures::MountPolicy> mountPolicies = m_catalogue.MountPolicy()->getCachedMountPolicies();
   // Walk the archive queues for USER for statistics

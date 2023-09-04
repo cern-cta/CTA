@@ -1086,10 +1086,6 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
   for (auto & tapepool: tapepoolsPotentialOrExistingMounts) {
     if(tapepoolsPotentialOrExistingMounts.count(std::string()) > 0) {
       // log an error that tapepool in PotentialOrExistingMounts contained an empty string
-      log::ScopedParamContainer params(lc);
-      params.add("DriveName", em.driveName)
-            .add("vo", em.vo)
-            .add("vid", em.vid);
       lc.log(log::ERR, "In Scheduler::sortAndGetTapesForMountInfo(): for Potential or Existing Mounts, "
         "tapePool is an empty string.");
     }
