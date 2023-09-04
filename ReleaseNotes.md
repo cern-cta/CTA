@@ -6,6 +6,7 @@
 - cta/CTA#472 - Fix repack VO exceeding the readmaxdrives limit 
 - cta/CTA#477 - Fix uncaught exception Helpers::NoTapeAvailableForRetrieve
 - cta/CTA#481 - Fix security hotspots related to file permissions and capabilities
+- cta/CTA#470 - Scheduler crashing when look for a Virtual Organization with empty Tape Pool Name
 
 ### Continuous Integration
 - cta/CTA#352 - Test rollback Catalogue Version

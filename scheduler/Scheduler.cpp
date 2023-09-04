@@ -1074,16 +1074,21 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
 
   //Get the tapepools of the potential and existing mounts
   std::set<std::string> tapepoolsPotentialOrExistingMounts;
-  for (auto & pm: mountInfo->potentialMounts) {
+  for (const auto& pm: mountInfo->potentialMounts) {
     tapepoolsPotentialOrExistingMounts.insert(pm.tapePool);
   }
-  for (auto & em: mountInfo->existingOrNextMounts) {
+  for (const auto& em: mountInfo->existingOrNextMounts) {
     tapepoolsPotentialOrExistingMounts.insert(em.tapePool);
   }
   //Get the potential and existing mounts tapepool virtual organization information
   std::map<std::string,std::string> tapepoolVoNameMap;
   std::map<std::string,common::dataStructures::VirtualOrganization> voNameVoMap;
   for (auto & tapepool: tapepoolsPotentialOrExistingMounts) {
+    if(tapepoolsPotentialOrExistingMounts.count(std::string()) > 0) {
+      // log an error that tapepool in PotentialOrExistingMounts contained an empty string
+      lc.log(log::ERR, "In Scheduler::sortAndGetTapesForMountInfo(): for Potential or Existing Mounts, "
+        "tapePool is an empty string.");
+    }
     try {
       auto vo = m_catalogue.VO()->getCachedVirtualOrganizationOfTapepool(tapepool);
       tapepoolVoNameMap[tapepool] = vo.name;
