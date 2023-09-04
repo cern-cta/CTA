@@ -926,8 +926,8 @@ int DriveHandler::runChild() {
     }
     // Log the decision
     {
-      // scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
-      //                             cta::common::dataStructures::DriveStatus::CleaningUp, lc);
+      scheduler.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
+                                  cta::common::dataStructures::DriveStatus::CleaningUp, lc);
       log::ScopedParamContainer params(lc);
       params.add("tapeVid", m_previousVid)
             .add("tapeDrive", m_driveConfig.unitName)
@@ -1167,12 +1167,12 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
       lc.log(log::ERR, "In DriveHandler::shutdown(): Should run cleaner but VID is missing. Do nothing.");
     }
     else {
-    //   cta::common::dataStructures::DriveInfo driveInfo;
-    //   driveInfo.driveName = m_driveConfig.unitName;
-    //   driveInfo.logicalLibrary = m_driveConfig.logicalLibrary;
-    //   driveInfo.host = cta::utils::getShortHostname();
-    //   scheduler->reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
-    //                                cta::common::dataStructures::DriveStatus::CleaningUp, lc);
+      cta::common::dataStructures::DriveInfo driveInfo;
+      driveInfo.driveName = m_driveConfig.unitName;
+      driveInfo.logicalLibrary = m_driveConfig.logicalLibrary;
+      driveInfo.host = cta::utils::getShortHostname();
+      scheduler->reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
+                                   cta::common::dataStructures::DriveStatus::CleaningUp, lc);
       log::ScopedParamContainer scoped(m_processManager.logContext());
       scoped.add("tapeVid", m_sessionVid)
             .add("tapeDrive", m_driveConfig.unitName)
