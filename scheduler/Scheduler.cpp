@@ -1634,7 +1634,7 @@ auto logicalLibrary = getLogicalLibrary(logicalLibraryName,getLogicalLibrariesTi
           try {
             decisionTime += timer.secs(utils::Timer::resetCounter);
             internalRet->m_dbMount =
-              mountInfo->createArchiveMount(m->type, t, driveName, logicalLibraryName, utils::getShortHostname());
+              mountInfo->createArchiveMount(*m, t, driveName, logicalLibraryName, utils::getShortHostname());
             mountCreationTime += timer.secs(utils::Timer::resetCounter);
             internalRet->m_sessionRunning = true;
             driveStatusSetTime += timer.secs(utils::Timer::resetCounter);

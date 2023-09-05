@@ -39,7 +39,7 @@ class TapeMountDecisionInfo : public SchedulerDatabase::TapeMountDecisionInfo {
  public:
    explicit TapeMountDecisionInfo(PostgresSchedDB &pdb, rdbms::ConnPool &cp, const std::string &ownerId, TapeDrivesCatalogueState *drivesState, log::Logger &logger);
 
-   std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(const common::dataStructures::MountType& mountType,
+   std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(const cta::SchedulerDatabase::PotentialMount& mount,
                                                                        const catalogue::TapeForWriting& tape,
                                                                        const std::string& driveName,
                                                                        const std::string& logicalLibrary,

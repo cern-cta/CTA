@@ -110,7 +110,7 @@ class OStoreDB: public SchedulerDatabase {
     CTA_GENERATE_EXCEPTION_CLASS(TapeNotWritable);
     CTA_GENERATE_EXCEPTION_CLASS(TapeIsBusy);
     std::unique_ptr<SchedulerDatabase::ArchiveMount> createArchiveMount(
-      const common::dataStructures::MountType& mountType,
+      const cta::SchedulerDatabase::PotentialMount& mount,
       const catalogue::TapeForWriting& tape,
       const std::string& driveName, const std::string& logicalLibrary,
       const std::string& hostName) override;
@@ -132,7 +132,7 @@ class OStoreDB: public SchedulerDatabase {
   class TapeMountDecisionInfoNoLock: public SchedulerDatabase::TapeMountDecisionInfo {
    public:
     std::unique_ptr<SchedulerDatabase::ArchiveMount>
-    createArchiveMount(const common::dataStructures::MountType &type, const catalogue::TapeForWriting &tape,
+    createArchiveMount(const cta::SchedulerDatabase::PotentialMount& mount, const catalogue::TapeForWriting &tape,
                        const std::string &driveName, const std::string &logicalLibrary,
                        const std::string &hostName) override;
     std::unique_ptr<SchedulerDatabase::RetrieveMount>

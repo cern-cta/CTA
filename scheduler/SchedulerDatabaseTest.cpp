@@ -215,7 +215,8 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   cta::catalogue::TapeForWriting tfw;
   tfw.tapePool = "tapePool";
   tfw.vid = "vid";
-  auto am = mountInfo->createArchiveMount(common::dataStructures::MountType::ArchiveForUser, tfw,
+  ASSERT_EQ(1, mountInfo->potentialMounts.size());
+  auto am = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tfw,
                                          "drive", "library", "host");
   bool done = false;
   size_t count = 0;
@@ -297,7 +298,8 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   auto count = 0;
 #else
   mountInfo = db.getMountInfo(lc);
-  am = mountInfo->createArchiveMount(common::dataStructures::MountType::ArchiveForUser, tfw,
+  ASSERT_EQ(1, mountInfo->potentialMounts.size());
+  am = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tfw,
                                      "drive", "library", "host");
   done = false;
   count = 0;
@@ -519,7 +521,8 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueArchiveRequests) {
   cta::catalogue::TapeForWriting tfw;
   tfw.tapePool = "tapePool";
   tfw.vid = "vid";
-  auto am = mountInfo->createArchiveMount(common::dataStructures::MountType::ArchiveForUser, tfw,
+  ASSERT_EQ(1, mountInfo->potentialMounts.size());
+  auto am = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tfw,
                                          "drive", "library", "host");
   auto ajb = am->getNextJobBatch(filesToDo, 1000 * filesToDo, lc);
   //Files with successful fetch should be popped

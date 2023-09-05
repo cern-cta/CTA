@@ -37,11 +37,11 @@ TapeMountDecisionInfo::TapeMountDecisionInfo(PostgresSchedDB &pdb, rdbms::ConnPo
 }
 
 std::unique_ptr<SchedulerDatabase::ArchiveMount> TapeMountDecisionInfo::createArchiveMount(
-    const common::dataStructures::MountType   &mountType,
-    const catalogue::TapeForWriting           &tape,
-    const std::string                         &driveName,
-    const std::string                         &logicalLibrary,
-    const std::string                         &hostName
+    const cta::SchedulerDatabase::PotentialMount &mount,
+    const catalogue::TapeForWriting              &tape,
+    const std::string                            &driveName,
+    const std::string                            &logicalLibrary,
+    const std::string                            &hostName
   )
 {
 
