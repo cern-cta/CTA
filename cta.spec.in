@@ -595,6 +595,9 @@ echo $(jq --argjson CTA_MAJOR_VERSION $cta_major_version '. += {"cta_major_versi
 
 
 %changelog
+* Wed Sep 06 2023 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4.10.3-1
+- Fix device statistics from LTO drives
+
 * Tue Sep 05 2023 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4.10.2-1
 - Fix scheduler crashing because of empty tape pool name
 - See ReleaseNotes.md for details
