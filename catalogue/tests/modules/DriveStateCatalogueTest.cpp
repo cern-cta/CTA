@@ -1181,7 +1181,7 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusCleaningUp) {
   ASSERT_EQ(storedTapeDrive.value().mountType, inputs.mountType);
   ASSERT_EQ(storedTapeDrive.value().driveStatus, inputs.status);
   ASSERT_EQ(storedTapeDrive.value().currentVid.value(), inputs.vid);
-  ASSERT_FALSE(storedTapeDrive.value().currentTapePool.has_value());
+  ASSERT_EQ(storedTapeDrive.value().currentTapePool.value(), inputs.tapepool);
   ASSERT_EQ(storedTapeDrive.value().currentVo.value(), inputs.vo);
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().currentActivity));
 
