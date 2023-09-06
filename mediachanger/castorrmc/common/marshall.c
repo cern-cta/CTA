@@ -19,13 +19,13 @@
 #include "marshall.h"
 #include "osdep.h"
 
-int unmarshall_STRINGN(char** ptr, const char* ptr_end, char* str, int str_maxlen) {
+int unmarshall_STRINGN(char** ptr, const char* ptr_end, char* str, size_t str_maxlen) {
   if(*ptr+str_maxlen > ptr_end) {
     str_maxlen = ptr_end-*ptr+1;
   }
 
   strncpy(str, *ptr, str_maxlen);
-  int str_len = strnlen(str, str_maxlen);
+  size_t str_len = strnlen(str, str_maxlen);
   if(str_len < str_maxlen) {
     *ptr += str_len+1;
     return 0;

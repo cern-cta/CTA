@@ -68,7 +68,9 @@ public:
       if (m_freeBlocksProvided >= m_blocksNeeded) {
         throw cta::exception::MemException("DataFifo overflow on free blocks");
       }
-      m_freeBlocksProvided++;
+      // m_freeBlocksProvided is volatile: increment with separate read and write operations
+      auto fbp = m_freeBlocksProvided;
+      m_freeBlocksProvided = fbp+1;
       ret = m_freeBlocksProvided < m_blocksNeeded;
     }
     m_freeBlocks.push(mb);
@@ -105,7 +107,9 @@ public:
     m_dataBlocks.push(mb);
     {
         cta::threading::MutexLocker ml(m_countersMutex);
-        m_dataBlocksPushed++;
+        // m_dataBlocksPushed is volatile: increment with separate read and write operations
+        auto dbp = m_dataBlocksPushed;
+        m_dataBlocksPushed = dbp+1;
     }
   }
 
@@ -118,7 +122,9 @@ public:
     MemBlock *ret = m_dataBlocks.pop();
     {
       cta::threading::MutexLocker ml(m_countersMutex);
-      m_dataBlocksPopped++;
+      // m_dataBlocksPopped is volatile: increment with separate read and write operations
+      auto dbp = m_dataBlocksPopped;
+      m_dataBlocksPopped = dbp+1;
     }
     return ret;
   }

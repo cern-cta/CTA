@@ -70,13 +70,23 @@ OStoreDB::OStoreDB(objectstore::Backend& be, catalogue::Catalogue & catalogue, l
 //------------------------------------------------------------------------------
 // OStoreDB::~OStoreDB()
 //------------------------------------------------------------------------------
-OStoreDB::~OStoreDB() throw() {
-  while (m_taskQueueSize) sleep(1);
-  for (__attribute__((unused)) auto &t: m_enqueueingWorkerThreads) m_enqueueingTasksQueue.push(nullptr);
-  for (auto &t: m_enqueueingWorkerThreads) {
+OStoreDB::~OStoreDB() {
+  while(m_taskQueueSize) sleep(1);
+
+  for(__attribute__((unused)) auto& t : m_enqueueingWorkerThreads) {
+    try {
+      m_enqueueingTasksQueue.push(nullptr);
+    } catch(const exception::Exception& ex) {
+      log::LogContext lc(m_logger);
+      log::ScopedParamContainer params(lc);
+      params.add("exceptionMessage", ex.what());
+      lc.log(log::ERR, "In OStoreDB::~OStoreDB(): caught unexpected exception.");
+    }
+  }
+  for(auto& t : m_enqueueingWorkerThreads) {
     t->wait();
     delete t;
-    t=nullptr;
+    t = nullptr;
   }
 }
 
@@ -473,7 +483,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi, Ro
           m.sleepingMount = true;
           m.sleepStartTime = rqSummary.sleepInfo.value().sleepStartTime;
           m.diskSystemSleptFor = rqSummary.sleepInfo.value().diskSystemSleptFor;
-          rqSummary.sleepInfo.value().sleepTime;
+          m.sleepTime = rqSummary.sleepInfo.value().sleepTime;
         }
       }
     } else {
@@ -2281,27 +2291,25 @@ std::unique_ptr<SchedulerDatabase::RepackRequest> OStoreDB::getNextRepackJobToEx
   typedef objectstore::ContainerAlgorithms<RepackQueue,RepackQueueToExpand> RQTEAlgo;
   RQTEAlgo rqteAlgo(m_objectStore, *m_agentReference);
   log::LogContext lc(m_logger);
-  while(true){
-    RQTEAlgo::PopCriteria criteria;
-    //pop request that is in the RepackQueueToExpandRequest
-    auto jobs = rqteAlgo.popNextBatch(std::nullopt,criteria,lc);
-    if(jobs.elements.empty()){
-      //If there is no request, return a nullptr
-      return nullptr;
-    }
-    //Get the first one request that is in elements
-    auto repackRequest = jobs.elements.front().repackRequest.get();
-    auto repackInfo = jobs.elements.front().repackInfo;
-    //build the repackRequest with the repack infos
-    std::unique_ptr<SchedulerDatabase::RepackRequest> ret;
-    ret.reset(new OStoreDB::RepackRequest(repackRequest->getAddressIfSet(), *this));
-    ret->repackInfo.vid = repackInfo.vid;
-    ret->repackInfo.type = repackInfo.type;
-    ret->repackInfo.status = repackInfo.status;
-    ret->repackInfo.repackBufferBaseURL = repackInfo.repackBufferBaseURL;
-    ret->repackInfo.noRecall = repackInfo.noRecall;
-    return ret;
+
+  RQTEAlgo::PopCriteria criteria;
+  // pop request that is in RepackQueueToExpandRequest
+  auto jobs = rqteAlgo.popNextBatch(std::nullopt, criteria, lc);
+  if(jobs.elements.empty()) {
+    // If there is no request
+    return nullptr;
   }
+  // Get the first request that is in elements
+  auto repackRequest = jobs.elements.front().repackRequest.get();
+  auto repackInfo = jobs.elements.front().repackInfo;
+  // build the repackRequest with the repack info
+  std::unique_ptr<SchedulerDatabase::RepackRequest> ret = std::make_unique<OStoreDB::RepackRequest>(repackRequest->getAddressIfSet(), *this);
+  ret->repackInfo.vid = repackInfo.vid;
+  ret->repackInfo.type = repackInfo.type;
+  ret->repackInfo.status = repackInfo.status;
+  ret->repackInfo.repackBufferBaseURL = repackInfo.repackBufferBaseURL;
+  ret->repackInfo.noRecall = repackInfo.noRecall;
+  return ret;
 }
 
 //------------------------------------------------------------------------------
@@ -5132,23 +5140,24 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string &failureReason, log::
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveJob::failReport()
 //------------------------------------------------------------------------------
-void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::LogContext &lc) {
+void OStoreDB::RetrieveJob::failReport(const std::string& failureReason, log::LogContext& lc) {
   typedef objectstore::RetrieveRequest::EnqueueingNextStep EnqueueingNextStep;
   typedef EnqueueingNextStep::NextStep NextStep;
 
-  if(!m_jobOwned)
+  if(!m_jobOwned) {
     throw JobNotOwned("In OStoreDB::RetrieveJob::failReport: cannot fail a job not owned");
+  }
 
   // Lock the retrieve request. Fail the job.
   objectstore::ScopedExclusiveLock rrl(m_retrieveRequest);
   m_retrieveRequest.fetch();
 
   // Algorithms suppose the objects are not locked
-  auto  rfqc = m_retrieveRequest.getRetrieveFileQueueCriteria();
-  auto &af   = rfqc.archiveFile;
+  auto rfqc = m_retrieveRequest.getRetrieveFileQueueCriteria();
+  auto& af = rfqc.archiveFile;
 
   // Handle report failures for all tape copies in turn
-  for(auto &tf: af.tapeFiles) {
+  for(auto& tf : af.tapeFiles) {
     // Add a job failure and decide what to do next
     EnqueueingNextStep enQueueingNextStep = m_retrieveRequest.addReportFailure(tf.copyNb, m_mountId, failureReason, lc);
 
@@ -5156,12 +5165,12 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
     m_retrieveRequest.setJobStatus(tf.copyNb, enQueueingNextStep.nextStatus);
 
     // Apply the decision
-    switch (enQueueingNextStep.nextStep) {
+    switch(enQueueingNextStep.nextStep) {
       // We have a reduced set of supported next steps as some are not compatible with this event
       case NextStep::EnqueueForReportForUser: {
         m_retrieveRequest.commit();
         auto retryStatus = m_retrieveRequest.getRetryStatus(tf.copyNb);
-        // Algorithms suppose the objects are not locked.
+        // Algorithms suppose the objects are not locked
         rrl.release();
         typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueToReportForUser> CaRqtr;
         CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
@@ -5178,13 +5187,13 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
               .add("totalReportRetries", retryStatus.totalReportRetries)
               .add("maxReportRetries", retryStatus.maxReportRetries);
         lc.log(log::INFO, "In RetrieveJob::failReport(): requeued job for report retry.");
-        return;
+        break;
       }
       default: {
         m_retrieveRequest.setFailed();
         m_retrieveRequest.commit();
         auto retryStatus = m_retrieveRequest.getRetryStatus(tf.copyNb);
-        // Algorithms suppose the objects are not locked.
+        // Algorithms suppose the objects are not locked
         rrl.release();
         typedef objectstore::ContainerAlgorithms<RetrieveQueue,RetrieveQueueFailed> CaRqtr;
         CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
@@ -5200,13 +5209,12 @@ void OStoreDB::RetrieveJob::failReport(const std::string &failureReason, log::Lo
               .add("requestObject", m_retrieveRequest.getAddressIfSet())
               .add("totalReportRetries", retryStatus.totalReportRetries)
               .add("maxReportRetries", retryStatus.maxReportRetries);
-        if (enQueueingNextStep.nextStep == NextStep::StoreInFailedJobsContainer)
-          lc.log(log::INFO,
-              "In RetrieveJob::failReport(): stored job in failed container for operator handling.");
-        else
-          lc.log(log::ERR,
-              "In RetrieveJob::failReport(): stored job in failed container after unexpected next step.");
-        return;
+        if(enQueueingNextStep.nextStep == NextStep::StoreInFailedJobsContainer) {
+          lc.log(log::INFO, "In RetrieveJob::failReport(): stored job in failed container for operator handling.");
+        } else {
+          lc.log(log::ERR, "In RetrieveJob::failReport(): stored job in failed container after unexpected next step.");
+        }
+        break;
       }
     }
   }

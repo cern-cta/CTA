@@ -85,9 +85,9 @@ namespace cta { namespace objectstore {
 
 cta::threading::Mutex BackendRados::RadosTimeoutLogger::g_mutex;
 
-BackendRados::BackendRados(log::Logger & logger, const std::string & userId, const std::string & pool,
-  const std::string &radosNameSpace) :
-m_user(userId), m_pool(pool), m_namespace(radosNameSpace), m_cluster(), m_radosCtxPool() {
+BackendRados::BackendRados(log::Logger& logger, const std::string& userId, const std::string& pool, const std::string& radosNameSpace) :
+  m_logger(logger), m_user(userId), m_pool(pool), m_namespace(radosNameSpace), m_cluster(), m_radosCtxPool()
+{
   log::LogContext lc(logger);
   cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException([&]() { return -m_cluster.init(userId.c_str());},
       "In BackendRados::BackendRados, failed to m_cluster.init");
@@ -163,12 +163,21 @@ lc.log(log::DEBUG, "BackendRados::BackendRados() namespace set. About to test ac
 }
 
 BackendRados::~BackendRados() {
-  for (size_t i=0; i<m_threads.size(); i++) m_jobQueue.push(nullptr);
-  for (auto &t: m_threads) {
+  for(size_t i = 0; i < m_threads.size(); ++i) {
+    try {
+      m_jobQueue.push(nullptr);
+    } catch(const exception::Exception& ex) {
+      log::LogContext lc(m_logger);
+      log::ScopedParamContainer params(lc);
+      params.add("exceptionMessage", ex.what());
+      lc.log(log::ERR, "In BackendRados::~BackendRados(): caught unexpected exception.");
+    }
+  }
+  for(auto& t: m_threads) {
     t->wait();
   }
   RadosTimeoutLogger rtl;
-  for (auto &c: m_radosCtxPool) {
+  for(auto& c: m_radosCtxPool) {
     rtl.reset();
     c.close();
     rtl.logIfNeeded("In BackendRados::~BackendRados(): m_radosCtx.close()", "no object");

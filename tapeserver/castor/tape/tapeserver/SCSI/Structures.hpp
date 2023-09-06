@@ -22,10 +22,10 @@
 #include <algorithm>
 #include <arpa/inet.h>
 #include <endian.h>
-#include <string.h>
 #include <scsi/sg.h>
 #include <climits>
 #include <cstdio>
+#include <cstring>
 
 #include "Constants.hpp"
 #include "common/exception/Exception.hpp"
@@ -596,33 +596,36 @@ namespace SCSI {
       }
       
       /**
-       * Gets the parameter value.
-       * 
-       * @return The value  of the log sense parameter as int64_t.
-       *         If we have a parameter length more than 8 bytes the returning
-       *         value is not determined. 
+       * Gets the parameter value
+       *
+       * If the parameter value is longer than 8 bytes, the return value is undefined.
+       * Redefined to use memcpy as union type-punning is deprecated.
+       *
+       * @return    The value of the log sense parameter as int64_t
        */
-      inline int64_t getS64Value()  {
-        union {
-          unsigned char tmp[8];
-          uint64_t val64U;
-          int64_t  val64S;
-        } u;
-        
-        u.tmp[0]=(header.parameterLength>0)?parameterValue[0]:0;
-        u.tmp[1]=(header.parameterLength>1)?parameterValue[1]:0;
-        u.tmp[2]=(header.parameterLength>2)?parameterValue[2]:0;
-        u.tmp[3]=(header.parameterLength>3)?parameterValue[3]:0;
-        u.tmp[4]=(header.parameterLength>4)?parameterValue[4]:0;
-        u.tmp[5]=(header.parameterLength>5)?parameterValue[5]:0;
-        u.tmp[6]=(header.parameterLength>6)?parameterValue[6]:0;
-        u.tmp[7]=(header.parameterLength>7)?parameterValue[7]:0;
-      
-        u.val64U = be64toh(u.val64U);
-        
-        return  (u.val64S < 0?-(-u.val64S>> (64-(header.parameterLength<<3))):
-          (u.val64S>>(64-(header.parameterLength<<3))));     
-      }  
+      inline int64_t getS64Value() {
+        unsigned char tmp[8];
+
+        tmp[0] = header.parameterLength > 0 ? parameterValue[0] : 0;
+        tmp[1] = header.parameterLength > 1 ? parameterValue[1] : 0;
+        tmp[2] = header.parameterLength > 2 ? parameterValue[2] : 0;
+        tmp[3] = header.parameterLength > 3 ? parameterValue[3] : 0;
+        tmp[4] = header.parameterLength > 4 ? parameterValue[4] : 0;
+        tmp[5] = header.parameterLength > 5 ? parameterValue[5] : 0;
+        tmp[6] = header.parameterLength > 6 ? parameterValue[6] : 0;
+        tmp[7] = header.parameterLength > 7 ? parameterValue[7] : 0;
+
+        uint64_t val64U;
+        int64_t  val64S;
+
+        std::memcpy(&val64U, &tmp, sizeof(uint64_t));
+        val64U = be64toh(val64U);
+        std::memcpy(&val64S, &val64U, sizeof(int64_t));
+
+        return val64S < 0 ?
+               -(-val64S >> (64-(header.parameterLength<<3))):
+                ( val64S >> (64-(header.parameterLength<<3)));
+      }
     };
 
     /**

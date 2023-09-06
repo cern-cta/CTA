@@ -177,17 +177,20 @@ auto ArchiveRequest::addTransferFailure(uint32_t copyNumber,
 // ArchiveRequest::addReportFailure()
 //------------------------------------------------------------------------------
 auto ArchiveRequest::addReportFailure(uint32_t copyNumber, uint64_t sessionId, const std::string& failureReason,
-    log::LogContext& lc) -> EnqueueingNextStep {
+  log::LogContext& lc) -> EnqueueingNextStep
+{
   checkPayloadWritable();
+
   // Find the job and update the number of failures
-  for (size_t i=0; i<(size_t)m_payload.jobs_size(); i++) {
-    auto &j=*m_payload.mutable_jobs(i);
-    if (j.copynb() == copyNumber) {
-      j.set_totalreportretries(j.totalreportretries() + 1);
-      * j.mutable_reportfailurelogs()->Add() = failureReason;
-    }
+  for(auto i = 0; i < m_payload.jobs_size(); ++i) {
+    auto& j = *m_payload.mutable_jobs(i);
+
+    if(j.copynb() != copyNumber) continue;
+
+    j.set_totalreportretries(j.totalreportretries() + 1);
+    *j.mutable_reportfailurelogs()->Add() = failureReason;
     EnqueueingNextStep ret;
-    if (j.totalreportretries() >= j.maxreportretries()) {
+    if(j.totalreportretries() >= j.maxreportretries()) {
       // Status is now failed
       ret.nextStatus = serializers::ArchiveJobStatus::AJS_Failed;
       ret.nextStep = EnqueueingNextStep::NextStep::StoreInFailedJobsContainer;
@@ -198,7 +201,7 @@ auto ArchiveRequest::addReportFailure(uint32_t copyNumber, uint64_t sessionId, c
     }
     return ret;
   }
-  throw NoSuchJob ("In ArchiveRequest::addJobFailure(): could not find job");
+  throw NoSuchJob("In ArchiveRequest::addReportFailure(): could not find job");
 }
 
 //------------------------------------------------------------------------------

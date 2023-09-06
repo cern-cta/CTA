@@ -447,6 +447,7 @@ public:
   }
 
 private:
+  log::Logger& m_logger;
   std::string m_user;
   std::string m_pool;
   std::string m_namespace;
