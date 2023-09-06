@@ -672,7 +672,7 @@ void RdbmsDriveStateCatalogue::setDesiredTapeDriveStateComment(const std::string
 
     auto bindOptionalStringIfSet = [&stmt](const std::string& sqlField,
       const std::optional<std::string>& optionalString) {
-      if (optionalString) {
+      if (optionalString.has_value()) {
         if (optionalString.value().empty()) {
           stmt.bindString(sqlField, std::nullopt);
         } else {
@@ -862,7 +862,7 @@ void RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
       }
     };
     auto bindOptionalStringIfSet = [&stmt](const std::string& sqlField, const std::optional<std::string>& optionalString) {
-      if (optionalString) {
+      if (optionalString.has_value()) {
         if (optionalString.value().empty()) {
           stmt.bindString(sqlField, std::nullopt);
         } else {

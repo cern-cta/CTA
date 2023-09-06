@@ -29,6 +29,7 @@
 #include "catalogue/SchemaCreatingSqliteCatalogue.hpp"
 #include "catalogue/TapeFileWritten.hpp"
 #include "catalogue/TapeItemWrittenPointer.hpp"
+#include "catalogue/TapePool.hpp"
 #include "common/dataStructures/DiskInstance.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
@@ -330,6 +331,9 @@ public:
     tapeDrive.diskSystemName = "dummyDiskSystemName";
     tapeDrive.reservedBytes = 694498291384;
     tapeDrive.reservationSessionId = 0;
+    cta::common::dataStructures::EntryLog log = {"admin", "myHost", time(nullptr)};
+    tapeDrive.creationLog = log;
+    tapeDrive.lastModificationLog = log;
     return tapeDrive;
   }
 
