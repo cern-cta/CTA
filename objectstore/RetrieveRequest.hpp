@@ -18,6 +18,7 @@
 #pragma once
 
 #include <list>
+#include <string_view>
 
 #include "AgentReference.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
@@ -118,9 +119,13 @@ public:
 
   JobDump getJob(uint32_t copyNb);
   std::list<JobDump> getJobs();
-  bool addJobFailure(uint32_t copyNumber, uint64_t mountId, const std::string & failureReason, log::LogContext & lc);
-                                                                  /**< Returns true is the request is completely failed
-                                                                   (telling wheather we should requeue or not). */
+  /**
+   * Fail the job and determine if it should be re-queued
+   *
+   * @return true     The job completely failed and should not be requeued
+   * @return false    The job should be requeued
+   */
+  bool addJobFailure(uint32_t copyNumber, uint64_t mountId, std::string_view failureReason, log::LogContext&);
   struct RetryStatus {
     uint64_t retriesWithinMount = 0;
     uint64_t maxRetriesWithinMount = 0;
