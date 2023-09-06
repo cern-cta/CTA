@@ -604,16 +604,11 @@ namespace SCSI {
        * @return    The value of the log sense parameter as int64_t
        */
       inline int64_t getS64Value() {
-        unsigned char tmp[8];
+        std::byte tmp[8];
 
-        tmp[0] = header.parameterLength > 0 ? parameterValue[0] : 0;
-        tmp[1] = header.parameterLength > 1 ? parameterValue[1] : 0;
-        tmp[2] = header.parameterLength > 2 ? parameterValue[2] : 0;
-        tmp[3] = header.parameterLength > 3 ? parameterValue[3] : 0;
-        tmp[4] = header.parameterLength > 4 ? parameterValue[4] : 0;
-        tmp[5] = header.parameterLength > 5 ? parameterValue[5] : 0;
-        tmp[6] = header.parameterLength > 6 ? parameterValue[6] : 0;
-        tmp[7] = header.parameterLength > 7 ? parameterValue[7] : 0;
+        for(int i = 0; i < 8; ++i) {
+          tmp[i] = static_cast<std::byte>(header.parameterLength > i ? parameterValue[i] : 0);
+        }
 
         uint64_t val64U;
         int64_t  val64S;
@@ -623,8 +618,8 @@ namespace SCSI {
         std::memcpy(&val64S, &val64U, sizeof(int64_t));
 
         return val64S < 0 ?
-               -(-val64S >> (64-(header.parameterLength<<3))):
-                ( val64S >> (64-(header.parameterLength<<3)));
+               -(-val64S >> (64-(header.parameterLength << 3))):
+                ( val64S >> (64-(header.parameterLength << 3)));
       }
     };
 
