@@ -438,7 +438,7 @@ void TapeDrivesCatalogueState::setDriveCleaningUp(common::dataStructures::TapeDr
   driveState.mountType = inputs.mountType;
   driveState.driveStatus = common::dataStructures::DriveStatus::CleaningUp;
   driveState.currentVid = inputs.vid;
-  driveState.currentTapePool = std::nullopt;
+  driveState.currentTapePool = (inputs.tapepool == "") ? std::nullopt : std::optional<std::string>(inputs.tapepool);
   driveState.currentActivity = std::nullopt;
   driveState.currentVo = inputs.vo;
 }
