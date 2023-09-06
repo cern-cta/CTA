@@ -86,7 +86,7 @@ namespace cta { namespace objectstore {
 cta::threading::Mutex BackendRados::RadosTimeoutLogger::g_mutex;
 
 BackendRados::BackendRados(log::Logger& logger, const std::string& userId, const std::string& pool, const std::string& radosNameSpace) :
-  m_logger(logger), m_user(userId), m_pool(pool), m_namespace(radosNameSpace), m_cluster(), m_radosCtxPool()
+  m_logger(logger), m_user(userId), m_pool(pool), m_namespace(radosNameSpace)
 {
   log::LogContext lc(logger);
   cta::exception::Errnum::throwOnReturnedErrnoOrThrownStdException([&]() { return -m_cluster.init(userId.c_str());},

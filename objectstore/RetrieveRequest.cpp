@@ -637,8 +637,8 @@ auto RetrieveRequest::getJobs() -> std::list<JobDump> {
 //------------------------------------------------------------------------------
 // RetrieveRequest::addJobFailure()
 //------------------------------------------------------------------------------
-bool RetrieveRequest::addJobFailure(uint32_t copyNumber, uint64_t mountId, const std::string& failureReason,
-  log::LogContext & lc)
+bool RetrieveRequest::addJobFailure(uint32_t copyNumber, uint64_t mountId, std::string_view failureReason,
+  log::LogContext&)
 {
   checkPayloadWritable();
 
