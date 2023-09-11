@@ -6,6 +6,7 @@
 - cta/CTA#477 - Fix uncaught exception Helpers::NoTapeAvailableForRetrieve
 - cta/CTA#481 - Fix security hotspots related to file permissions and capabilities
 - cta/CTA#482 - Fix bugs reported by SonarCloud in tape server, scheduler and objectstore
+- cta/CTA#486 - Fix cppcheck new errors
 
 ### Continuous Integration
 - cta/CTA#352 - Test rollback Catalogue Version
