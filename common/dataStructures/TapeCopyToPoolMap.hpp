@@ -21,15 +21,11 @@
 #include <stdint.h>
 #include <string>
 
-namespace cta {
-namespace common {
-namespace dataStructures {
+namespace cta::common::dataStructures {
 
 /**
  * Map from tape copy number to destination tape pool name.
  */
 typedef std::map<uint64_t, std::string> TapeCopyToPoolMap;
 
-} // namespace dataStructures
-} // namespace common
-} // namespace cta
+} // namespace cta::common::dataStructures

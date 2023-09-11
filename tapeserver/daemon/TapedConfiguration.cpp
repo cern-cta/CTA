@@ -59,7 +59,9 @@ void SourcedParameter<tape::daemon::FetchReportOrFlushLimits>::set(const std::st
     throw ex;
   }
   // We can now split the entry
-  std::string bytes, files;
+  std::string bytes;
+  std::string files;
+
   size_t commaPos=value.find(',');
   bytes=value.substr(0, commaPos);
   files=value.substr(commaPos+1);
@@ -79,7 +81,7 @@ void SourcedParameter<tape::daemon::FetchReportOrFlushLimits>::set(const std::st
 }
 }
 
-namespace cta { namespace tape { namespace daemon {
+namespace cta::tape::daemon {
 
 //------------------------------------------------------------------------------
 // GlobalConfiguration::createFromCtaConf w path
@@ -180,8 +182,8 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
   ret.rmcNetTimeout.log(log);
   ret.rmcRequestAttempts.log(log);
 
-  for (auto & i:ret.driveConfigs) {
-    i.second.log(log);
+  for (auto & [driveName, configLine]:ret.driveConfigs) {
+    configLine.log(log);
   }
   return ret;
 }
@@ -191,4 +193,4 @@ TapedConfiguration TapedConfiguration::createFromCtaConf(
 //------------------------------------------------------------------------------
 cta::log::DummyLogger TapedConfiguration::gDummyLogger("", "");
 
-}}} // namespace cta::tape::daemon
+} // namespace cta::tape::daemon

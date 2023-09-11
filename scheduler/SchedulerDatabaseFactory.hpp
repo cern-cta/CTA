@@ -81,11 +81,11 @@ public:
     return m_SchedDB->getRetrieveJobs(tapePoolName);
   }
 
-  std::map<std::string, std::list<common::dataStructures::RetrieveJob> > getRetrieveJobs() const override {
+  std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<> > getRetrieveJobs() const override {
     return m_SchedDB->getRetrieveJobs();
   }
 
-  std::map<std::string, std::list<common::dataStructures::ArchiveJob> > getArchiveJobs() const override {
+  std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<> > getArchiveJobs() const override {
     return m_SchedDB->getArchiveJobs();
   }
 

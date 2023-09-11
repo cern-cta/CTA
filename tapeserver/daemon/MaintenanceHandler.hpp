@@ -35,7 +35,7 @@ public:
   SubprocessHandler::ProcessingStatus getInitialStatus() override;
   SubprocessHandler::ProcessingStatus fork() override;
   void postForkCleanup() override;
-  int runChild() override;
+  int runChild() noexcept override;
   SubprocessHandler::ProcessingStatus shutdown() override;
   void kill() override;
   SubprocessHandler::ProcessingStatus processEvent() override;

@@ -1047,8 +1047,8 @@ std::list<cta::common::dataStructures::ArchiveJob> OStoreDB::getArchiveJobs(cons
 //------------------------------------------------------------------------------
 // OStoreDB::getArchiveJobs()
 //------------------------------------------------------------------------------
-std::map<std::string, std::list<common::dataStructures::ArchiveJob>> OStoreDB::getArchiveJobs() const {
-  std::map<std::string, std::list<common::dataStructures::ArchiveJob>> ret;
+std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>> OStoreDB::getArchiveJobs() const {
+  std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>> ret;
   using common::dataStructures::JobQueueType;
   for (ArchiveJobQueueItor q_it(&m_objectStore, JobQueueType::JobsToTransferForUser); !q_it.end(); ++q_it) {
     ret[q_it.qid()].push_back(*q_it);
@@ -1806,8 +1806,8 @@ std::list<cta::common::dataStructures::RetrieveJob> OStoreDB::getRetrieveJobs(co
 //------------------------------------------------------------------------------
 // OStoreDB::getRetrieveJobs()
 //------------------------------------------------------------------------------
-std::map<std::string, std::list<common::dataStructures::RetrieveJob>> OStoreDB::getRetrieveJobs() const {
-  std::map<std::string, std::list<common::dataStructures::RetrieveJob>> ret;
+std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>> OStoreDB::getRetrieveJobs() const {
+  std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>> ret;
   using common::dataStructures::JobQueueType;
   for (RetrieveJobQueueItor q_it(&m_objectStore, JobQueueType::JobsToTransferForUser); !q_it.end(); ++q_it) {
     ret[q_it.qid()].push_back(*q_it);

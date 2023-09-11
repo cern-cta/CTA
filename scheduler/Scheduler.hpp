@@ -68,11 +68,10 @@ class Catalogue;
 class ArchiveJob;
 class RetrieveJob;
 
-namespace common {
-namespace dataStructures {
+namespace common::dataStructures {
 struct LogicalLibrary;
 }
-}
+
 /**
  * Class implementing a tape resource scheduler. This class is the main entry point
  * for most of the operations on both the tape file catalogue and the object store for
@@ -97,7 +96,7 @@ public:
   /**
    * Destructor.
    */
-  ~Scheduler() throw();
+  ~Scheduler() noexcept =default;
 
   /**
    * Validates that the underlying storages are accessible
@@ -183,9 +182,9 @@ public:
   cta::common::dataStructures::RepackInfo getRepack(const std::string &vid);
   bool isBeingRepacked(const std::string &vid);
 
-  std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob> > getPendingArchiveJobs(log::LogContext &lc) const;
+  std::map<std::string, std::list<cta::common::dataStructures::ArchiveJob>, std::less<> > getPendingArchiveJobs(log::LogContext &lc) const;
   std::list<cta::common::dataStructures::ArchiveJob> getPendingArchiveJobs(const std::string &tapePoolName, log::LogContext &lc) const;
-  std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob> > getPendingRetrieveJobs(log::LogContext &lc) const;
+  std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob>, std::less<> > getPendingRetrieveJobs(log::LogContext &lc) const;
   std::list<cta::common::dataStructures::RetrieveJob> getPendingRetrieveJobs(const std::string &vid, log::LogContext &lc) const;
 
   /*============== Drive state management ====================================*/
@@ -271,20 +270,20 @@ public:
 
   /*============== Actual mount scheduling and queue status reporting ========*/
 private:
-  typedef std::pair<std::string, common::dataStructures::MountType> TapePoolMountPair;
-  typedef std::pair<std::string, common::dataStructures::MountType> VirtualOrganizationMountPair;
+  using TapePoolMountPair = std::pair<std::string, common::dataStructures::MountType> ;
+  using VirtualOrganizationMountPair =  std::pair<std::string, common::dataStructures::MountType>;
 
   struct MountCounts {
     uint32_t totalMounts = 0;
     struct AutoZeroUint32_t {
       uint32_t value = 0;
     };
-    std::map<std::string, AutoZeroUint32_t> activityMounts;
+    std::map<std::string, AutoZeroUint32_t, std::less<> > activityMounts;
   };
-  typedef std::map<TapePoolMountPair, MountCounts> ExistingMountSummaryPerTapepool;
-  typedef std::map<VirtualOrganizationMountPair, MountCounts> ExistingMountSummaryPerVo;
+  using ExistingMountSummaryPerTapepool = std::map<TapePoolMountPair, MountCounts>;
+  using ExistingMountSummaryPerVo = std::map<VirtualOrganizationMountPair, MountCounts>;
 
-  const std::set<std::string> c_mandatoryEnvironmentVariables = {"XrdSecPROTOCOL", "XrdSecSSSKT"};
+  const std::set<std::string, std::less<> > c_mandatoryEnvironmentVariables = {"XrdSecPROTOCOL", "XrdSecSSSKT"};
 
   /**
    * Common part to getNextMountDryRun() and getNextMount() to populate mount decision info.
@@ -292,7 +291,7 @@ private:
    */
   void sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> &mountInfo,
     const std::string & logicalLibraryName, const std::string & driveName, utils::Timer & timer,
-    ExistingMountSummaryPerTapepool & existingMountsDistinctTypeSummaryPerTapepool, ExistingMountSummaryPerVo & existingMountBasicTypeSummaryPerVo, std::set<std::string> & tapesInUse, std::list<catalogue::TapeForWriting> & tapeList,
+    ExistingMountSummaryPerTapepool & existingMountsDistinctTypeSummaryPerTapepool, ExistingMountSummaryPerVo & existingMountBasicTypeSummaryPerVo, std::set<std::string, std::less<> > & tapesInUse, std::list<catalogue::TapeForWriting> & tapeList,
     double & getTapeInfoTime, double & candidateSortingTime, double & getTapeForWriteTime, log::LogContext & lc);
 
   /**
@@ -380,7 +379,6 @@ public:
   // Scheduler level will not distinguish between report types. It will just do a getnext-report cycle.
   class RepackReportBatch {
     friend Scheduler;
-  private:
     std::unique_ptr<SchedulerDatabase::RepackReportBatch> m_DbBatch;
   public:
     void report(log::LogContext & lc);

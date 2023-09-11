@@ -25,7 +25,7 @@ class Scheduler;
 
 class RepackRequestManager {
 public:
-  RepackRequestManager(Scheduler &scheduler) : m_scheduler(scheduler) {}
+  explicit RepackRequestManager(Scheduler &scheduler) : m_scheduler(scheduler) {}
 
   void runOnePass(log::LogContext &lc, const size_t repackMaxRequestsToExpand);
 

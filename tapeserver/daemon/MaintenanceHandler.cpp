@@ -35,7 +35,7 @@
 #include "scheduler/OStoreDB/OStoreDBInit.hpp"
 #endif
 
-namespace cta { namespace tape { namespace  daemon {
+namespace cta::tape::daemon {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -94,7 +94,7 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::fork() {
       // We are now ready to react to timeouts and messages from the child process.
       return m_processingStatus;
     }
-  } catch (cta::exception::Exception & ex) {
+  } catch (cta::exception::Exception &) {
     cta::log::ScopedParamContainer params(m_processManager.logContext());
     m_processManager.logContext().log(log::ERR, "Failed to fork maintenance process. Initiating shutdown with SIGTERM.");
     // Wipe all previous states as we are shutting down
@@ -165,8 +165,8 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::processSigChild() {
   try {
     exception::Errnum::throwOnMinusOne(rc);
   } catch (exception::Exception &ex) {
-    cta::log::ScopedParamContainer params(m_processManager.logContext());
-    params.add("pid", m_pid)
+    cta::log::ScopedParamContainer exParams(m_processManager.logContext());
+    exParams.add("pid", m_pid)
           .add("Message", ex.getMessageValue());
     m_processManager.logContext().log(log::WARNING,
         "In MaintenanceHandler::processSigChild(): failed to get child process exit code. Doing nothing as we are unable to determine if it is still running or not.");
@@ -243,14 +243,10 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::processTimeout() {
 //------------------------------------------------------------------------------
 // MaintenanceHandler::runChild
 //------------------------------------------------------------------------------
-int MaintenanceHandler::runChild() {
+int MaintenanceHandler::runChild() noexcept {
   try{
     exceptionThrowingRunChild();
     return EXIT_SUCCESS;
-  } catch(const cta::exception::Exception &ctaEx){
-    return EXIT_FAILURE;
-  } catch (const std::exception &stdEx){
-    return EXIT_FAILURE;
   } catch (...){
     return EXIT_FAILURE;
   }
@@ -286,12 +282,11 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
     // Before launching the transfer session, we validate that the scheduler is reachable.
     scheduler->ping(m_processManager.logContext());
   } catch(cta::exception::Exception &ex) {
-    {
-      log::ScopedParamContainer param(m_processManager.logContext());
-      param.add("errorMessage", ex.getMessageValue());
-      m_processManager.logContext().log(log::CRIT,
+    log::ScopedParamContainer exParams(m_processManager.logContext());
+    exParams.add("errorMessage", ex.getMessageValue());
+    m_processManager.logContext().log(log::CRIT,
           "In MaintenanceHandler::exceptionThrowingRunChild(): contact central storage. Waiting for shutdown.");
-    }
+
     server::SocketPair::pollMap pollList;
     pollList["0"]=m_socketPair.get();
     // Wait forever (negative timeout) for something to come from parent process.
@@ -328,24 +323,26 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
         repackRequestManager.runOnePass(m_processManager.logContext(), m_tapedConfig.repackMaxRequestsToExpand.value());
       }
       try {
-        server::SocketPair::poll(pollList, s_pollInterval - t.secs(), server::SocketPair::Side::parent);
-        receivedMessage=true;
-      } catch (server::SocketPair::Timeout & ex) {}
+        server::SocketPair::poll(pollList, s_pollInterval - static_cast<long>(t.secs()), server::SocketPair::Side::parent);
+       receivedMessage=true;
+      } catch (server::SocketPair::Timeout &) {
+        // Timing out while waiting for message is not a problem for us
+        // as we retry in the next loop iteration.
+      }
     } while (!receivedMessage);
     m_processManager.logContext().log(log::INFO,
         "In MaintenanceHandler::exceptionThrowingRunChild(): Received shutdown message. Exiting.");
   } catch(cta::exception::Exception & ex) {
-    {
-      log::ScopedParamContainer params(m_processManager.logContext());
-      params.add("Message", ex.getMessageValue());
-      m_processManager.logContext().log(log::ERR,
+    log::ScopedParamContainer exParams(m_processManager.logContext());
+    exParams.add("Message", ex.getMessageValue());
+    m_processManager.logContext().log(log::ERR,
         "In MaintenanceHandler::exceptionThrowingRunChild(): received an exception. Backtrace follows.");
-    }
+
     m_processManager.logContext().logBacktrace(log::INFO, ex.backtrace());
     throw ex;
   } catch(std::exception &ex) {
-    log::ScopedParamContainer params(m_processManager.logContext());
-    params.add("Message", ex.what());
+    log::ScopedParamContainer exParams(m_processManager.logContext());
+    exParams.add("Message", ex.what());
     m_processManager.logContext().log(log::ERR,
         "In MaintenanceHandler::exceptionThrowingRunChild(): received a std::exception.");
     throw ex;
@@ -392,4 +389,4 @@ bool MaintenanceHandler::runRepackRequestManager() const {
   return m_tapedConfig.useRepackManagement.value() == "yes";
 }
 
-}}} // namespace cta::tape::daemon
+} // namespace cta::tape::daemon
