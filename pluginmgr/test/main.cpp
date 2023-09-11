@@ -2,20 +2,16 @@
 
 #include "PluginLoader.hpp"
 
-class IMathFunction
-{
-public:
-	virtual const char* Name() const = 0;
-	virtual double  Eval(double x) const = 0;	
-	virtual ~IMathFunction() = default;
-};
+#include "IDBMS.hpp"
 
-
-int main()
+int main(int argc, char *argv[])
 {
+  std::string pluginLib = "PluginOracle";
+  if (argc == 2)
+    pluginLib = argv[1];
+  
 	PluginManager ma;
-	IPluginFactory* infoA = ma.addPlugin("PluginA");
-	// * infoA = ma.GetPluginInfo("PluginA");
+	IPluginFactory* infoA = ma.addPlugin(pluginLib);
 	assert(infoA != nullptr);
 	
 	std::cout << " ---- Plugin Information --------- " << "\n"
@@ -24,7 +20,7 @@ int main()
 			  << "  => Number of classes = " << infoA->NumberOfClasses()
 			  << "\n\n";
 
-	std::cout << "Classes exported by the Plugin: (PluginA) " << "\n";
+	std::cout << "Classes exported by the Plugin: (" << pluginLib << ") " << "\n";
 
 	for(size_t n = 0; n < infoA->NumberOfClasses(); n++)
 	{
@@ -32,16 +28,12 @@ int main()
 	}
 	
 	
-	// Type of pExp: std::shared_ptr<IMathFunction>
-	auto pExp = ma.CreateInstanceAs<IMathFunction>("PluginA", "Exp");
-	assert(pExp != nullptr);
+	// Use Oracle DB
+	auto pDB = ma.CreateInstanceAs<IDBMS>(pluginLib, infoA->GetClassName(0));
+	assert(pDB != nullptr);
 	
-	std::cout << "pExp->Name()    = " << pExp->Name() << "\n";
-	std::cout << "pExp->Eval(3.0) = " << pExp->Eval(3.0) << "\n";
-	
-	auto pLog = ma.CreateInstanceAs<IMathFunction>("PluginA", "Log");
-	std::cout << "pLog->Name()    = " << pLog->Name() << "\n";
-	std::cout << "pLog->Eval(3.0) = " << pLog->Eval(3.0) << "\n";
-	
+	std::cout << "pDB->Name()    = " << pDB->Name() << "\n";
+	std::cout << "pDB->Query(\"SELECT (*) AGE\") = " << pDB->Query("SELECT (*) AGE") << "\n";
+		
 	return 0;
 }

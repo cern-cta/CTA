@@ -17,10 +17,17 @@ if(UNIX)
 endif()  
 
 
-# >>> ---- Target: PluginA ----------------
-add_library(PluginA SHARED PluginA.cpp)
-target_include_directories(PluginA PUBLIC ".")
-set_target_properties(PluginA PROPERTIES
+# >>> ---- Target: PluginOracle ----------------
+add_library(PluginOracle SHARED PluginOracle.cpp)
+target_include_directories(PluginOracle PUBLIC ".")
+set_target_properties(PluginOracle PROPERTIES
+  PREFIX ""
+  )
+
+# >>> ---- Target: PluginPostgreSQL ----------------
+add_library(PluginPostgreSQL SHARED PluginPostgreSQL.cpp)
+target_include_directories(PluginPostgreSQL PUBLIC ".")
+set_target_properties(PluginPostgreSQL PROPERTIES
   PREFIX ""
   )
 
@@ -30,4 +37,4 @@ if(NOT DEFINED CMAKE_INSTALL_PREFIX OR CMAKE_INSTALL_PREFIX MATCHES "")
   set(CMAKE_INSTALL_PREFIX  ${CMAKE_CURRENT_LIST_DIR}/bin)
 endif()
 
-install( TARGETS main PluginA DESTINATION ".")
+install(TARGETS main PluginOracle PluginPostgreSQL DESTINATION ".")
