@@ -34,8 +34,9 @@ set (RDBMS_LIB_SRC_FILES
   Rset.cpp
   Stmt.cpp
   StmtPool.cpp
-        UniqueConstraintError.cpp
-  IntegrityConstraintError.cpp)
+  UniqueConstraintError.cpp
+  IntegrityConstraintError.cpp
+)
 
 add_library (ctardbms SHARED
   ${RDBMS_LIB_SRC_FILES})
