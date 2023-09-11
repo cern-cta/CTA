@@ -1,10 +1,13 @@
 
 CC := clang++
 
-all: PluginA.so main
+all: PluginOracle.so PluginPostgreSQL.so main
 
-PluginA.so: PluginA.cpp ../PluginInterfaces.hpp
-	$(CC) PluginA.cpp -o PluginA.so -I.. -shared -fPIC -Wall -std=c++1z
+PluginOracle.so: PluginOracle.cpp IDBMS.hpp ../PluginInterfaces.hpp
+	$(CC) PluginOracle.cpp -o PluginOracle.so -I.. -shared -fPIC -Wall -std=c++1z
 
-main: main.cpp ../PluginLoader.hpp
+PluginPostgreSQL.so: PluginPostgreSQL.cpp IDBMS.hpp ../PluginInterfaces.hpp
+	$(CC) PluginPostgreSQL.cpp -o PluginPostgreSQL.so -I.. -shared -fPIC -Wall -std=c++1z
+
+main: main.cpp IDBMS.hpp ../PluginLoader.hpp
 	$(CC) main.cpp -o main -I.. -fPIC -Wall -std=c++1z -ldl

@@ -76,6 +76,8 @@ public:
 #elif defined(_WIN32)
     m_hnd = (void *)::LoadLibraryA(m_file.c_str());
 #endif
+    if (!m_hnd)
+       std::cout << "Failed loading plugin: " << m_file << std::endl;
     assert(m_hnd != nullptr);
     m_isLoaded = true;
 #if !defined(_WIN32)
