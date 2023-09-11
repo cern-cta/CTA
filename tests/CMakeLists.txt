@@ -58,9 +58,6 @@ endif()
 target_link_libraries(cta-unitTests ${CTA_UNIT_TEST_LIBS})
 
 set_property (TARGET cta-unitTests APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-if (OCCI_SUPPORT)
-  set_property (TARGET cta-unitTests APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
-endif (OCCI_SUPPORT)
 
 add_executable(cta-rdbmsUnitTests
   GlobalCatalogueFactoryForUnitTests.cpp
@@ -80,9 +77,6 @@ target_link_libraries(cta-rdbmsUnitTests
   ${PROTOBUF3_LIBRARIES})
 
 set_property (TARGET cta-rdbmsUnitTests APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-if (OCCI_SUPPORT)
-  set_property (TARGET cta-rdbmsUnitTests APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
-endif (OCCI_SUPPORT)
 
 add_executable(cta-unitTests-multiProcess
   unit_tests.cpp)
@@ -97,9 +91,6 @@ target_link_libraries(cta-unitTests-multiProcess
   sqlite3)
 
 set_property (TARGET cta-unitTests-multiProcess APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-if (OCCI_SUPPORT)
-  set_property (TARGET cta-unitTests-multiProcess APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
-endif (OCCI_SUPPORT)
 
 add_library(unitTestHelper
   TempFile.cpp TempDirectory.cpp)

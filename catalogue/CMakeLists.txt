@@ -242,9 +242,6 @@ install (TARGETS ctaschemachecker DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 target_link_libraries (cta-catalogue-schema-create ctacatalogue)
 set_property(TARGET cta-catalogue-schema-create APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-if (OCCI_SUPPORT)
-  set_property(TARGET cta-catalogue-schema-create APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
-endif()
 
 install (TARGETS cta-catalogue-schema-create DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-create.1cta DESTINATION /usr/share/man/man1)
@@ -263,9 +260,6 @@ add_executable(cta-catalogue-schema-drop DropSchemaCmdMain.cpp)
 
 target_link_libraries (cta-catalogue-schema-drop ctacatalogue ctadropschemacmd)
 set_property(TARGET cta-catalogue-schema-drop APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-if (OCCI_SUPPORT)
-  set_property(TARGET cta-catalogue-schema-drop APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
-endif ()
 
 install (TARGETS cta-catalogue-schema-drop DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-drop.1cta DESTINATION /usr/share/man/man1)
@@ -278,9 +272,6 @@ add_executable(cta-catalogue-schema-set-production
 
 target_link_libraries (cta-catalogue-schema-set-production ctacatalogue ctaschemachecker)
 set_property(TARGET cta-catalogue-schema-set-production APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-if (OCCI_SUPPORT)
-  set_property(TARGET cta-catalogue-schema-set-production APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
-endif ()
 
 install (TARGETS cta-catalogue-schema-set-production DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-set-production.1cta DESTINATION /usr/share/man/man1)
@@ -292,9 +283,6 @@ add_executable(cta-database-poll
 
 target_link_libraries (cta-database-poll ctacatalogue)
 set_property(TARGET cta-database-poll APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-if (OCCI_SUPPORT)
-  set_property(TARGET cta-database-poll APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
-endif ()
 
 install (TARGETS cta-database-poll DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-database-poll.1cta DESTINATION /usr/share/man/man1)
@@ -306,9 +294,6 @@ add_executable(cta-catalogue-admin-user-create
 
 target_link_libraries(cta-catalogue-admin-user-create ctacatalogue)
 set_property(TARGET cta-catalogue-admin-user-create APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-if (OCCI_SUPPORT)
-  set_property(TARGET cta-catalogue-admin-user-create APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
-endif ()
 
 install(TARGETS cta-catalogue-admin-user-create DESTINATION /usr/bin)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-admin-user-create.1cta DESTINATION /usr/share/man/man1)
@@ -320,9 +305,6 @@ add_executable(cta-catalogue-schema-verify
 
 target_link_libraries(cta-catalogue-schema-verify ctacatalogue ctaschemachecker)
 set_property(TARGET cta-catalogue-schema-verify APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-if (OCCI_SUPPORT)
-  set_property(TARGET cta-catalogue-schema-verify APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
-endif ()
 
 install (TARGETS cta-catalogue-schema-verify DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-catalogue-schema-verify.1cta DESTINATION /usr/share/man/man1)

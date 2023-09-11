@@ -74,6 +74,7 @@ target_link_libraries (ctardbmswrapper
 
 if (OCCI_SUPPORT)
   target_link_libraries (ctardbmswrapper ${ORACLE-INSTANTCLIENT_LIBRARIES})
+  set_property (TARGET ctardbmswrapper APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 endif()
 
 install (TARGETS ctardbmswrapper DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

@@ -56,7 +56,6 @@ add_executable(cta-statistics-save
 target_link_libraries (cta-statistics-save ctastatistics)
 
 set_property(TARGET cta-statistics-save APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-set_property(TARGET cta-statistics-save APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 
 install (TARGETS cta-statistics-save DESTINATION /usr/bin)
 
@@ -69,6 +68,5 @@ add_executable(cta-statistics-update
 target_link_libraries (cta-statistics-update ctastatistics)
 
 set_property(TARGET cta-statistics-update APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-set_property(TARGET cta-statistics-update APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 
 install (TARGETS cta-statistics-update DESTINATION /usr/bin)
