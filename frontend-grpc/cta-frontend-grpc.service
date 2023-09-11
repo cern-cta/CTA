@@ -9,6 +9,7 @@ Type=simple
 Restart=always
 User=cta
 Group=cta
+LimitNOFILE=65535
 
 [Install]
 WantedBy=default.target
