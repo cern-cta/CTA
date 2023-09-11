@@ -47,7 +47,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(ForbiddenOperation);
 
   // In memory initialiser
-  void initialize();
+  void initialize() override;
 
   // Emptyness checker
   bool isEmpty();

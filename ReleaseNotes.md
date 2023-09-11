@@ -1,6 +1,7 @@
 # v4.10.4-1
 
 ### Features
+- cta/CTA#486 - Fix cppcheck new errors
 - cta/CTA#487 - Bump "filesWrittenToTape: File size mismatch" error to ALERT
 
 # v4.10.3-1

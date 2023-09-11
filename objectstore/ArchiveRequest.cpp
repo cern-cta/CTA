@@ -1030,4 +1030,12 @@ std::string ArchiveRequest::getTapePoolForJob(uint32_t copyNumber) {
   throw exception::Exception("In ArchiveRequest::getTapePoolForJob(): job not found.");
 }
 
+std::string ArchiveRequest::getOwner() {
+  throw std::runtime_error("getOwner() is not supported for ArchiveRequest");
+}
+
+void ArchiveRequest::setOwner(const std::string &) {
+  throw std::runtime_error("setOwner() is not supported for ArchiveRequest");
+}
+
 }} // namespace cta::objectstore

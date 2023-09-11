@@ -163,7 +163,8 @@ uint64_t ArchiveQueueShard::addJob(ArchiveQueue::JobToAdd& jobToAdd) {
   return m_payload.archivejobs_size();
 }
 
-
-
+void ArchiveQueueShard::initialize() {
+  throw std::runtime_error("initialize() is not supported for ArchiveQueueShard");
+}
 
 }}

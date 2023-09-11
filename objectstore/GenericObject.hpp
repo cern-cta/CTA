@@ -39,18 +39,18 @@ public:
   
   /** Overload of ObjectOps's implementation: we will leave the payload transparently
    * untouched and only deal with header parameters */
-  void commit();
+  void commit() override;
   
   /** Get the object's type (type is forced implicitly in other classes) */
   serializers::ObjectType type();
   
   /** Overload of ObjectOps's implementation: this operation is forbidden. Generic
    * Object is only used to manipulate existing objects */
-  void insert();
+  void insert() override;
   
   /** Overload of ObjectOps's implementation: this operation is forbidden. Generic
    * Object is only used to manipulate existing objects */
-  void initialize();
+  void initialize() override;
   
   /** Overload of ObjectOps's implementation: this operation is forbidden. Generic
    * Object cannot be garbage collected as-is */
