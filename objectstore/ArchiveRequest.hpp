@@ -43,11 +43,11 @@ public:
   ArchiveRequest(const std::string & address, Backend & os);
   ArchiveRequest(Backend & os);
   ArchiveRequest(GenericObject & go);
-  void initialize();
-  void commit();
+  void initialize() override;
+  void commit() override;
   // Ownership of archive requests is managed per job. Object level owner has no meaning.
-  std::string getOwner() = delete;
-  void setOwner(const std::string &) = delete;
+  std::string getOwner() override;
+  void setOwner(const std::string &) override;
   // Job management ============================================================
   void addJob(uint32_t copyNumber, const std::string & tapepool,
     const std::string & initialOwner, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries);
