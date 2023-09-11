@@ -49,7 +49,7 @@ public:
   Agent(GenericObject & go);
   Agent(const std::string & name, Backend & os);
 
-  void initialize();
+  void initialize() override;
 
   void insertAndRegisterSelf(log::LogContext & lc);
 

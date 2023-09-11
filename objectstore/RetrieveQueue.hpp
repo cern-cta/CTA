@@ -40,7 +40,7 @@ public:
   RetrieveQueue(Backend & os);
   RetrieveQueue(GenericObject & go);
   void initialize(const std::string & vid);
-  void commit();
+  void commit() override;
   void getPayloadFromHeader() override;
 
 private:

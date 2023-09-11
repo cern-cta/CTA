@@ -33,7 +33,7 @@ public:
   ArchiveQueueShard(GenericObject & go);
 
   // Forbid/hide base initializer
-  void initialize() = delete;
+  void initialize() override;
 
   // Initializer
   void initialize(const std::string & owner);

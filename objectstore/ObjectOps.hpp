@@ -176,12 +176,12 @@ public:
     m_payloadInterpreted = false;
   }
 
-  void setOwner(const std::string & owner) {
+  virtual void setOwner(const std::string & owner) {
     checkHeaderWritable();
     m_header.set_owner(owner);
   }
 
-  std::string getOwner() {
+  virtual std::string getOwner() {
     checkHeaderReadable();
     return m_header.owner();
   }
@@ -517,7 +517,7 @@ public:
     return ret.release();
   }
 
-  void commit() {
+  virtual void commit() {
     checkPayloadWritable();
     if (!m_existingObject)
       throw NewObject("In ObjectOps::commit: trying to update a new object");
@@ -592,7 +592,7 @@ public:
   /**
    * Fill up the header and object with its default contents
    */
-  void initialize() {
+  virtual void initialize() {
     if (m_headerInterpreted || m_existingObject)
       throw NotNewObject("In ObjectOps::initialize: trying to initialize an exitsting object");
     m_header.set_type(payloadTypeId);
@@ -602,7 +602,7 @@ public:
     m_headerInterpreted = true;
   }
 
-  void insert() {
+  virtual void insert() {
     // Check that we are not dealing with an existing object
     if (m_existingObject)
       throw NotNewObject("In ObjectOps::insert: trying to insert an already exitsting object");

@@ -42,7 +42,7 @@ class RepackQueue: public ObjectOps<serializers::RepackQueue, serializers::Repac
   explicit RepackQueue(GenericObject & go);
 
   // In memory initialiser
-  void initialize();
+  void initialize() override;
 
   struct RequestsSummary {
     uint64_t requests;

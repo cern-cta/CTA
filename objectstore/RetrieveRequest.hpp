@@ -44,7 +44,7 @@ class RetrieveRequest: public ObjectOps<serializers::RetrieveRequest, serializer
 public:
   RetrieveRequest(const std::string & address, Backend & os);
   RetrieveRequest(GenericObject & go);
-  void initialize();
+  void initialize() override;
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) override;
   void garbageCollectRetrieveRequest(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,

@@ -55,7 +55,7 @@ public:
   void initialize(const std::string & name);
   
   // Commit with sanity checks (overload from ObjectOps)
-  void commit();
+  void commit() override;
 private:
   // Validates all summaries are in accordance with each other.
   bool checkMapsAndShardsCoherency();

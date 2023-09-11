@@ -34,7 +34,7 @@ public:
   RepackRequest(const std::string & address, Backend & os);
   RepackRequest(Backend & os);
   RepackRequest(GenericObject & go);
-  void initialize();
+  void initialize() override;
 
   // Parameters interface
   void setVid(const std::string & vid);
