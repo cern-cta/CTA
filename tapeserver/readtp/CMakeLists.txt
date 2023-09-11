@@ -39,9 +39,6 @@ target_link_libraries (cta-readtp
 # need to be removed when drop dependencies to taped
 find_package(Protobuf3 REQUIRED)
 set_property (TARGET cta-readtp APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-if (OCCI_SUPPORT)
-  set_property (TARGET cta-readtp APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
-endif (OCCI_SUPPORT)
 
 install (TARGETS cta-readtp DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-readtp.1cta DESTINATION /usr/share/man/man1)

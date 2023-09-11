@@ -30,9 +30,6 @@ target_link_libraries (cta-tape-label
 # need to be removed when drop dependencies to taped
 find_package(Protobuf3 REQUIRED)
 set_property (TARGET cta-tape-label APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-if (OCCI_SUPPORT)
-  set_property (TARGET cta-tape-label APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
-endif (OCCI_SUPPORT)
 
 install (TARGETS cta-tape-label DESTINATION /usr/bin)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/cta-tape-label.1cta DESTINATION /usr/share/man/man1)
