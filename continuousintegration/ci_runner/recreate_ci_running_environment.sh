@@ -52,7 +52,10 @@ echo mhvtl config pre-run
 ls -lR /opt/mhvtl
 
 echo Running mhvtl config generator...
-./generate_mhvtl_config.sh
+if [ -n "$1" ]; then
+  echo "Using $1 number of dirves instead of default (3)."
+fi
+./generate_mhvtl_config.sh $1
 
 echo mhvtl config post run
 ls -lR /opt/mhvtl

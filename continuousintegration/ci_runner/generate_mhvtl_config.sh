@@ -18,6 +18,11 @@
 nlib=1
 
 ndrive=3 # no more than 9 drives
+
+if [ -n "$1" ]; then
+  ndrive=$1
+fi
+
 ntape=7
 
 freetapeslots=3
