@@ -9,6 +9,10 @@
 - cta/CTA#481 - Fix security hotspots related to file permissions and capabilities
 - cta/CTA#482 - Fix bugs reported by SonarCloud in tape server, scheduler and objectstore
 - cta/CTA#473 - Fix some code smells from repack expansion changes.
+- cta/CTA#485 - Check disk file metadata on delete requests
+
+### Features
+- cta/CTA#487 - Bump "filesWrittenToTape: File size mismatch" error to ALERT
 
 ### Features
 - cta/CTA#490 - Improve code quality in the Physical Library catalogue code
