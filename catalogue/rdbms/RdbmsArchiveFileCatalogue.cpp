@@ -894,6 +894,15 @@ void RdbmsArchiveFileCatalogue::checkDeleteRequestConsistency(
         archiveFile.diskInstance;
     throw cta::exception::Exception(msg.str());
   }
+  if(deleteRequest.archiveFileID != archiveFile.archiveFileID){
+    std::ostringstream msg;
+    msg << "Failed to move archive file with ID " << deleteRequest.archiveFileID
+        << " to the recycle-bin because the archive file ID of "
+        "the request does not match that of the archived file: archiveFileId=" << archiveFile.archiveFileID
+        << " requestDiskInstance=" << deleteRequest.diskInstance << " archiveFileDiskInstance=" <<
+        archiveFile.diskInstance;
+    throw cta::exception::Exception(msg.str());
+  }
   if(deleteRequest.diskFilePath.empty()){
     std::ostringstream msg;
     msg << "Failed to move archive file with ID " << deleteRequest.archiveFileID
