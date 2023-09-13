@@ -797,7 +797,7 @@ class SchedulerDatabase {
      * Create a new archive mount. This implicitly releases the global scheduling
      * lock.
      */
-    virtual std::unique_ptr<ArchiveMount> createArchiveMount(const common::dataStructures::MountType& mountType,
+    virtual std::unique_ptr<ArchiveMount> createArchiveMount(const cta::SchedulerDatabase::PotentialMount& mount,
                                                              const catalogue::TapeForWriting& tape,
                                                              const std::string& driveName,
                                                              const std::string& logicalLibrary,

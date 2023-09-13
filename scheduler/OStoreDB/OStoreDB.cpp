@@ -841,7 +841,7 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
 // OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount()
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount(
-  const common::dataStructures::MountType& type, const catalogue::TapeForWriting& tape,
+  const cta::SchedulerDatabase::PotentialMount& mount, const catalogue::TapeForWriting& tape,
   const std::string& driveName, const std::string& logicalLibrary,
   const std::string& hostName) {
   throw cta::exception::Exception(
@@ -3385,13 +3385,13 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> OStoreDB::getNextRetr
 // OStoreDB::TapeMountDecisionInfo::createArchiveMount()
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfo::createArchiveMount(
-  const common::dataStructures::MountType& type, const catalogue::TapeForWriting& tape,
+  const cta::SchedulerDatabase::PotentialMount& mount, const catalogue::TapeForWriting& tape,
   const std::string& driveName, const std::string& logicalLibrary, const std::string& hostName) {
   // In order to create the mount, we have to:
   // Check we actually hold the scheduling lock
   // Set the drive status to up, and indicate which tape we use.
   common::dataStructures::JobQueueType queueType;
-  switch (type) {
+  switch (mount.type) {
   case common::dataStructures::MountType::ArchiveForUser:
     queueType = common::dataStructures::JobQueueType::JobsToTransferForUser;
     break;
@@ -3415,7 +3415,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfo
   am.mountInfo.vid = tape.vid;
   am.mountInfo.drive = driveName;
   am.mountInfo.host = hostName;
-  am.mountInfo.vo = tape.vo;
+  am.mountInfo.vo = mount.vo;
   am.mountInfo.mountId = m_schedulerGlobalLock->getIncreaseCommitMountId();
   m_schedulerGlobalLock->commit();
   am.mountInfo.tapePool = tape.tapePool;
@@ -3424,7 +3424,7 @@ std::unique_ptr<SchedulerDatabase::ArchiveMount> OStoreDB::TapeMountDecisionInfo
   am.mountInfo.labelFormat = tape.labelFormat;
   am.mountInfo.vendor = tape.vendor;
   am.mountInfo.capacityInBytes = tape.capacityInBytes;
-  am.mountInfo.mountType = type;
+  am.mountInfo.mountType = mount.type;
   am.mountInfo.encryptionKeyName = tape.encryptionKeyName;
 
   // We committed the scheduling decision. We can now release the scheduling lock.

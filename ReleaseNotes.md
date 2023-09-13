@@ -2,12 +2,13 @@
 
 ### Bug Fixes
 - cta/CTA#461 - Allow setting the repack VO if there is none with ongoing repacks
+- cta/CTA#469 - Fix command 'cta-admin drive ls' not showing REPACK VO on mounts of type ARCHIVE_FOR_REPACK
 - cta/CTA#472 - Fix repack VO exceeding the readmaxdrives limit 
 - cta/CTA#477 - Fix uncaught exception Helpers::NoTapeAvailableForRetrieve
 - cta/CTA#481 - Fix security hotspots related to file permissions and capabilities
 - cta/CTA#482 - Fix bugs reported by SonarCloud in tape server, scheduler and objectstore
 - cta/CTA#486 - Fix cppcheck new errors
-- cta/CTA#473 - Fix some code smells from repack expansion changes. 
+- cta/CTA#473 - Fix some code smells from repack expansion changes.
 
 ### Continuous Integration
 - cta/CTA#352 - Test rollback Catalogue Version
