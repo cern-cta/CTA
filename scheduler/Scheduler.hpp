@@ -158,7 +158,7 @@ public:
    * Throws a UserError exception in case of wrong request parameters (ex. unknown file id)
    * Throws a (Non)RetryableError exception in case something else goes wrong with the request
    */
-  void deleteArchive(const std::string &instanceName,
+  void deleteArchive(std::string_view instanceName,
     const cta::common::dataStructures::DeleteArchiveRequest &request,
     log::LogContext & lc);
 
