@@ -78,8 +78,10 @@ ctacliIP=`kubectl --namespace ${NAMESPACE} describe pod ctacli | grep IP | sed -
 # Get list of tape drives that have a tape server
 TAPEDRIVES_IN_USE=()
 for tapeserver in $(kubectl --namespace ${NAMESPACE} get pods | grep tpsrv | awk '{print $1}'); do
-  for drive in $(kubectl -n ${NAMESPACE} exec ${tapeserver} -c taped -- cat /etc/cta/TPCONFIG | awk '{print $1}')
+  for drive in $(kubectl -n ${NAMESPACE} exec ${tapeserver} -c taped -- cat /etc/cta/TPCONFIG | awk '{print $1}'); do
     TAPEDRIVES_IN_USE+=(${drive})
+
+  done
 done
 NB_TAPEDRIVES_IN_USE=${#TAPEDRIVES_IN_USE[@]}
 
