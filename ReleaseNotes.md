@@ -12,6 +12,7 @@
 
 ### Continuous Integration
 - cta/CTA#352 - Test rollback Catalogue Version
+- cta/CTA#446 - Upgrade eos to 4.8.105/5.1.29
 
 # v4.10.3-1
 
