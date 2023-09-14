@@ -270,7 +270,7 @@ std::string Scheduler::queueRetrieve(
 //------------------------------------------------------------------------------
 // deleteArchive
 //------------------------------------------------------------------------------
-void Scheduler::deleteArchive([[maybe_unused]] const std::string_view &instanceName, const common::dataStructures::DeleteArchiveRequest &request,
+void Scheduler::deleteArchive([[maybe_unused]] const std::string_view instanceName, const common::dataStructures::DeleteArchiveRequest &request,
   log::LogContext & lc) {
   // We have different possible scenarios here. The file can be safe in the catalogue,
   // fully queued, or partially queued.
