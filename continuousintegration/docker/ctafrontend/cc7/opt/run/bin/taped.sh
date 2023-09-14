@@ -33,8 +33,19 @@ ln -s /dev/${LIBRARYDEVICE} /dev/smc
 
 # tpconfig="${DRIVENAMES[${driveslot}]} ${LIBRARYNAME} /dev/${DRIVEDEVICES[${driveslot}]} smc${driveslot}"
 # Configuring one library per tape drive so that mhvtl can work with multiple tapeservers
-tpconfig="${DRIVENAMES[${driveslot}]} ${DRIVENAMES[${driveslot}]} /dev/${DRIVEDEVICES[${driveslot}]} smc${driveslot}"
 
+
+if [ -z "${ndrives}" ]; then
+  tpconfig="${DRIVENAMES[${driveslot}]} ${DRIVENAMES[${driveslot}]} /dev/${DRIVEDEVICES[${driveslot}]} smc${driveslot}"
+  echo "${tpconfig}" > /etc/cta/TPCONFIG
+else
+  driveslot=${dr_slot_base}
+  for (( i=0; i < ndrives; i++ )); do
+    driveslot=$(( driveslot + i ))
+    tpconfig="${DRIVENAMES[${driveslot}]} ${DRIVENAMES[${driveslot}]} /dev/${DRIVEDEVICES[${driveslot}]} smc${driveslot}"
+    echo "${tpconfig}" >> /etc/cta/TPCONFIG
+  done
+fi
 /opt/run/bin/init_objectstore.sh
 . /tmp/objectstore-rc.sh
 
@@ -51,7 +62,6 @@ echo ${DATABASEURL} > /etc/cta/cta-catalogue.conf
   echo "taped WatchdogIdleSessionTimer 2" >> /etc/cta/cta-taped.conf # Make tape servers more responsive, thus improving CI test speed
   echo "ObjectStore BackendPath $OBJECTSTOREURL" >> /etc/cta/cta-taped.conf
   echo "taped UseEncryption no" >> /etc/cta/cta-taped.conf
-  echo "${tpconfig}" > /etc/cta/TPCONFIG
 
 ####
 # configuring taped using the official location for SSS: /etc/cta/cta-taped.sss.keytab

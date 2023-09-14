@@ -54,7 +54,7 @@ spec:
     stdin: true
     env:
     - name: MY_CONTAINER
-      value: "taped03"
+      value: "taped"
     - name: MY_NAME
       valueFrom:
         fieldRef:
@@ -79,58 +79,10 @@ spec:
           key: cta_subdir
     - name: TERM
       value: "xterm"
-    - name: driveslot
+    - name: ndrives
       value: "2"
-    command: ['/opt/run/bin/taped.sh']
-    args: ["none"]
-    volumeMounts:
-    - mountPath: /shared
-      name: shared
-    - mountPath: /etc/config/objectstore
-      name: myobjectstore
-    - mountPath: /etc/config/database
-      name: mydatabase
-    - mountPath: /etc/config/library
-      name: mylibrary
-    - mountPath: /etc/config/eos
-      name: eosconfig
-    - mountPath: /mnt/logs
-      name: logstorage
-    securityContext:
-      privileged: true
-
-  - name: taped04
-    image: blabla
-    stdin: true
-    env:
-    - name: MY_CONTAINER
-      value: "taped03"
-    - name: MY_NAME
-      valueFrom:
-        fieldRef:
-          fieldPath: metadata.name
-    - name: MY_NAMESPACE
-      valueFrom:
-        fieldRef:
-          fieldPath: metadata.namespace
-    - name: INSTANCE_NAME
-      value: "$(MY_NAMESPACE)"
-    - name: eoshost
-      value: "mgm"
-    - name: BUILDTREE_BASE
-      valueFrom:
-        configMapKeyRef:
-          name: buildtree
-          key: base
-    - name: CTA_BUILDTREE_SUBDIR
-      valueFrom:
-        configMapKeyRef:
-          name: buildtree
-          key: cta_subdir
-    - name: TERM
-      value: "xterm"
-    - name: driveslot
-      value: "3"
+    - name: dr_slot_base
+      value: "2"
     command: ['/opt/run/bin/taped.sh']
     args: ["none"]
     volumeMounts:
