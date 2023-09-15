@@ -118,7 +118,6 @@ void RetrieveRequest::garbageCollectRetrieveRequest(const std::string& presumedO
             cta::objectstore::AgentWrapper agentRRWrapper(agentRR);
             sorter.insertRetrieveRequest(rr,agentRRWrapper,std::optional<uint32_t>(tf.copynb()),lc);
             std::string retrieveQueueAddress = rr->getRepackInfo().repackRequestAddress;
-            this->m_exclusiveLock->release();
             cta::objectstore::Sorter::MapRetrieve allRetrieveJobs = sorter.getAllRetrieve();
             std::list<std::tuple<cta::objectstore::Sorter::RetrieveJob,std::future<void>>> allFutures;
             cta::utils::Timer t;
