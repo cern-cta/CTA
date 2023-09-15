@@ -341,6 +341,7 @@ void OracleTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenP
         catalogue::FileSizeMismatch ex;
         ex.getMessage() << __FUNCTION__ << ": File size mismatch: expected=" << fileSizeAndChecksum.fileSize <<
           ", actual=" << event.size << ": " << fileContext.str();
+        m_log(log::ALERT, ex.getMessage().str());
         throw ex;
       }
 

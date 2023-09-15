@@ -10,6 +10,9 @@
 - cta/CTA#486 - Fix cppcheck new errors
 - cta/CTA#473 - Fix some code smells from repack expansion changes.
 
+### Features
+- cta/CTA#487 - Bump "filesWrittenToTape: File size mismatch" error to ALERT
+
 ### Continuous Integration
 - cta/CTA#352 - Test rollback Catalogue Version
 - cta/CTA#446 - Upgrade eos to 4.8.105/5.1.29
