@@ -29,8 +29,8 @@ Tested at:
  + Windows NT (Windows 10) with MSVC compiler
 
 To test do:
- + make; ./main
+ + make; ./main [PluginOracle | PluginPostgreSQL]
 
  or
 
- + mkdir b; cd b; cmake ..; make; main.bin
+ + mkdir b; cd b; cmake ..; make; main.bin [PluginOracle | PluginPostgreSQL]
