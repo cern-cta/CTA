@@ -34,8 +34,7 @@
 #include "rdbms/IntegrityConstraintError.hpp"
 #include "rdbms/ConstraintInfo.hpp"
 
-namespace cta {
-namespace catalogue {
+namespace cta::catalogue {
 
 RdbmsPhysicalLibraryCatalogue::RdbmsPhysicalLibraryCatalogue(log::Logger& log, std::shared_ptr<rdbms::ConnPool> connPool,
   RdbmsCatalogue *rdbmsCatalogue)
@@ -97,33 +96,17 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
         ":USER_COMMENT)";
     auto stmt = conn.createStmt(sql);
 
-    auto setOptionalString = [&stmt](const std::string& sqlField, const std::optional<std::string>& optionalField) {
-      if (optionalField && !optionalField.value().empty()) {
-        stmt.bindString(sqlField, optionalField.value());
-      } else {
-        stmt.bindString(sqlField, std::nullopt);
-      }
-    };
-
-    auto setOptionalUint = [&stmt](const std::string& sqlField, const std::optional<uint64_t>& optionalField) {
-      if (optionalField) {
-        stmt.bindUint64(sqlField, optionalField.value());
-      } else {
-        stmt.bindUint64(sqlField, std::nullopt);
-      }
-    };
-
     stmt.bindUint64(":PHYSICAL_LIBRARY_ID"          , physicalLibraryId);
     stmt.bindString(":PHYSICAL_LIBRARY_NAME"        , pl.name);
     stmt.bindString(":PHYSICAL_LIBRARY_MANUFACTURER", pl.manufacturer);
     stmt.bindString(":PHYSICAL_LIBRARY_MODEL"       , pl.model);
-    setOptionalString(":PHYSICAL_LIBRARY_TYPE"      , pl.type);
-    setOptionalString(":GUI_URL"                    , pl.guiUrl);
-    setOptionalString(":WEBCAM_URL"                 , pl.webcamUrl);
-    setOptionalString(":PHYSICAL_LOCATION"          , pl.location);
+    stmt.bindString(":PHYSICAL_LIBRARY_TYPE"        , pl.type);
+    stmt.bindString(":GUI_URL"                      , pl.guiUrl);
+    stmt.bindString(":WEBCAM_URL"                   , pl.webcamUrl);
+    stmt.bindString(":PHYSICAL_LOCATION"            , pl.location);
 
     stmt.bindUint64(":NB_PHYSICAL_CARTRIDGE_SLOTS" , pl.nbPhysicalCartridgeSlots);
-    setOptionalUint(":NB_AVAILABLE_CARTRIDGE_SLOTS", pl.nbAvailableCartridgeSlots);
+    stmt.bindUint64(":NB_AVAILABLE_CARTRIDGE_SLOTS", pl.nbAvailableCartridgeSlots);
     stmt.bindUint64(":NB_PHYSICAL_DRIVE_SLOTS"     , pl.nbPhysicalDriveSlots);
 
     stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
@@ -134,10 +117,10 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
     stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
     stmt.bindUint64(":LAST_UPDATE_TIME"     , now);
 
-    setOptionalString(":USER_COMMENT", pl.comment);
+    stmt.bindString(":USER_COMMENT", pl.comment);
 
     stmt.executeNonQuery();
-  } catch(exception::UserError& ) {
+  } catch(exception::UserError&) {
     throw;
   } catch(cta::rdbms::UniqueConstraintError& ex) {
     std::stringstream err_stream;
@@ -169,7 +152,7 @@ void RdbmsPhysicalLibraryCatalogue::deletePhysicalLibrary(const std::string& nam
     if(0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot delete physical library ") + name + " because it does not exist");
     }
-  } catch(exception::UserError& ex) {
+  } catch(exception::UserError&) {
     throw;
   } catch(cta::rdbms::IntegrityConstraintError& ex) {
     std::stringstream err_stream;
@@ -260,29 +243,17 @@ std::list<common::dataStructures::PhysicalLibrary> RdbmsPhysicalLibraryCatalogue
 void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibrary(const common::dataStructures::SecurityIdentity& admin, const common::dataStructures::UpdatePhysicalLibrary& pl) {
   try {
     const time_t now = time(nullptr);
-    std::string setClause = buildSetClause(pl);
 
-    if(!setClause.empty()) {
-      std::string sql = "UPDATE PHYSICAL_LIBRARY SET ";
-      sql += buildSetClause(pl);
-      sql += "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
-             "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
-             "LAST_UPDATE_TIME = :LAST_UPDATE_TIME ";
-      sql += "WHERE PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
+    std::string updateStmtStr = buildUpdateStmtStr(pl);
+    auto conn = m_connPool->getConn();
+    auto stmt = conn.createStmt(updateStmtStr);
+    bindUpdateParams(stmt, pl, admin, now);
+    stmt.executeNonQuery();
 
-      auto conn = m_connPool->getConn();
-      auto stmt = conn.createStmt(sql);
-
-      bindUpdateParams(stmt, pl, admin, now);
-
-      stmt.executeNonQuery();
-
-      if (0 == stmt.getNbAffectedRows()) {
-          throw exception::UserError(std::string("Cannot update physical library ") + pl.name + " because it does not exist");
-      }
-    } else {
-      throw exception::UserError(std::string("At least one value must be updated in physical library ") + pl.name);
+    if (0 == stmt.getNbAffectedRows()) {
+      throw exception::UserError(std::string("Cannot update physical library ") + pl.name + " because it does not exist");
     }
+
   } catch(exception::UserError& ) {
     throw;
   } catch(cta::rdbms::UniqueConstraintError& ex) {
@@ -326,7 +297,7 @@ std::optional<uint64_t> RdbmsPhysicalLibraryCatalogue::getPhysicalLibraryId(rdbm
   }
 }
 
-std::string RdbmsPhysicalLibraryCatalogue::buildSetClause(const common::dataStructures::UpdatePhysicalLibrary& pl) {
+std::string RdbmsPhysicalLibraryCatalogue::buildUpdateStmtStr(const common::dataStructures::UpdatePhysicalLibrary& pl) const {
   std::string setClause;
 
   if(pl.guiUrl)                    setClause += "GUI_URL = :GUI_URL,";
@@ -337,10 +308,21 @@ std::string RdbmsPhysicalLibraryCatalogue::buildSetClause(const common::dataStru
   if(pl.nbPhysicalDriveSlots)      setClause += "NB_PHYSICAL_DRIVE_SLOTS = :NB_PHYSICAL_DRIVE_SLOTS,";
   if(pl.comment)                   setClause += "USER_COMMENT = :USER_COMMENT,";
 
-  return setClause;
+  if(setClause.empty()) {
+    throw exception::UserError(std::string("At least one value must be updated in physical library ") + pl.name);
+  }
+
+  std::string sql = "UPDATE PHYSICAL_LIBRARY SET ";
+  sql += setClause;
+  sql += "LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,"
+         "LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,"
+         "LAST_UPDATE_TIME = :LAST_UPDATE_TIME ";
+  sql += "WHERE PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME";
+  
+  return sql;
 }
 
-void RdbmsPhysicalLibraryCatalogue::bindUpdateParams(cta::rdbms::Stmt& stmt, const common::dataStructures::UpdatePhysicalLibrary& pl, const common::dataStructures::SecurityIdentity& admin, const time_t now) {
+void RdbmsPhysicalLibraryCatalogue::bindUpdateParams(cta::rdbms::Stmt& stmt, const common::dataStructures::UpdatePhysicalLibrary& pl, const common::dataStructures::SecurityIdentity& admin, const time_t now) const {
   if(pl.guiUrl)                    stmt.bindString(":GUI_URL", pl.guiUrl.value());
   if(pl.webcamUrl)                 stmt.bindString(":WEBCAM_URL", pl.webcamUrl.value());
   if(pl.location)                  stmt.bindString(":PHYSICAL_LOCATION", pl.location.value());
@@ -358,6 +340,4 @@ void RdbmsPhysicalLibraryCatalogue::bindUpdateParams(cta::rdbms::Stmt& stmt, con
   stmt.bindString(":PHYSICAL_LIBRARY_NAME", pl.name);
 }
 
-
-} // namespace catalogue
-} // namespace cta
+} // namespace cta::catalogue
