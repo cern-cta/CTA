@@ -12,6 +12,7 @@
 
 ### Features
 - cta/CTA#490 - Improve code quality in the Physical Library catalogue code
+- cta/CTA#134 - Proposal to change EOS disk fid to fxid
 
 ### Continuous Integration
 - cta/CTA#352 - Test rollback Catalogue Version
