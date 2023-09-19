@@ -595,6 +595,9 @@ echo $(jq --argjson CTA_MAJOR_VERSION $cta_major_version '. += {"cta_major_versi
 
 
 %changelog
+* Mon Sep 18 2023 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4.10.4-1
+- Bump "filesWrittenToTape: File size mismatch" error to ALERT
+
 * Wed Sep 06 2023 Jorge Camarero Vera <jorge.camarero@cern.ch> - 4.10.3-1
 - Fix device statistics from LTO drives
 

@@ -176,6 +176,7 @@ void SqliteTapeFileCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFil
       catalogue::FileSizeMismatch ex;
       ex.getMessage() << "File size mismatch: expected=" << archiveFileRow->size << ", actual=" << event.size << ": "
         << fileContext.str();
+      m_log(log::ALERT, ex.getMessage().str());
       throw ex;
     }
 
