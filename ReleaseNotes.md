@@ -1,6 +1,7 @@
 # v4.NEXT
 
 ### Bug Fixes
+- cta/CTA#460 - Fix "trying to unlock an unlocked lock" error
 - cta/CTA#461 - Allow setting the repack VO if there is none with ongoing repacks
 - cta/CTA#469 - Fix command 'cta-admin drive ls' not showing REPACK VO on mounts of type ARCHIVE_FOR_REPACK
 - cta/CTA#472 - Fix repack VO exceeding the readmaxdrives limit 
