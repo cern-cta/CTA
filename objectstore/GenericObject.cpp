@@ -97,7 +97,7 @@ namespace {
     typedObject.garbageCollect(presumedOwner, agentReference, lc, catalogue);
     // Release the lock now as if we let the caller do, it will point
     // to the then-removed typedObject.
-    lock.release();
+    lock.transfer(*gop);
   }
 }
 
