@@ -24,7 +24,6 @@ set (RDBMS_LIB_SRC_FILES
   Conn.cpp
   ConnPool.cpp
   DBException.cpp
-  ConstraintInfo.cpp
   ConstraintError.cpp
   Login.cpp
   LoginFactory.cpp

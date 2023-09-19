@@ -32,7 +32,6 @@
 #include "rdbms/ConstraintError.hpp"
 #include "rdbms/UniqueConstraintError.hpp"
 #include "rdbms/IntegrityConstraintError.hpp"
-#include "rdbms/ConstraintInfo.hpp"
 
 namespace cta::catalogue {
 
@@ -123,13 +122,13 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
     stmt.executeNonQuery();
   } catch(cta::rdbms::UniqueConstraintError& ex) {
     std::stringstream err_stream;
-    err_stream << "Cannot create physical library " << pl.name << " because of unique constraint: ";
-    err_stream << rdbms::ConstraintInfo::constraintViolationMessage(rdbms::ConstraintInfo::CREATE, ex.getViolatedConstraintName());
+    err_stream << "Cannot create physical library " << pl.name << " because of unique constraint: " << ex.getViolatedConstraintName()
+               << "\n" << ex.getMessageValue();
     throw exception::UserError(err_stream.str());
   } catch(cta::rdbms::ConstraintError& ex) {
     std::stringstream err_stream;
-    err_stream << "Cannot create physical library " << pl.name << ": ";
-    err_stream << rdbms::ConstraintInfo::constraintViolationMessage(rdbms::ConstraintInfo::CREATE, ex.getViolatedConstraintName());
+    err_stream << "Cannot create physical library " << pl.name << ": " << ex.getViolatedConstraintName()
+               << "\n" << ex.getMessageValue();
     throw exception::UserError(err_stream.str());
   }
 }
@@ -148,13 +147,13 @@ void RdbmsPhysicalLibraryCatalogue::deletePhysicalLibrary(const std::string& nam
     stmt.executeNonQuery();
   } catch(cta::rdbms::IntegrityConstraintError& ex) {
     std::stringstream err_stream;
-    err_stream << "Cannot delete physical library " << name << " because of integrity constraint: ";
-    err_stream << rdbms::ConstraintInfo::constraintViolationMessage(rdbms::ConstraintInfo::DELETE, ex.getViolatedConstraintName());
+    err_stream << "Cannot delete physical library " << name << " because of integrity constraint: " << ex.getViolatedConstraintName()
+               << "\n" << ex.getMessageValue();
     throw exception::UserError(err_stream.str());
   } catch(cta::rdbms::ConstraintError& ex) {
     std::stringstream err_stream;
-    err_stream << "Cannot delete physical library " << name << ": ";
-    err_stream << rdbms::ConstraintInfo::constraintViolationMessage(rdbms::ConstraintInfo::DELETE, ex.getViolatedConstraintName());
+    err_stream << "Cannot delete physical library " << name << ": " << ex.getViolatedConstraintName()
+               << "\n" << ex.getMessageValue();
     throw exception::UserError(err_stream.str());
   }
 
@@ -239,13 +238,13 @@ void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibrary(const common::dataStru
     stmt.executeNonQuery();
   } catch(cta::rdbms::UniqueConstraintError& ex) {
     std::ostringstream err_stream;
-    err_stream << "Cannot update physical library " << pl.name << " because of unique constraint: ";
-    err_stream << rdbms::ConstraintInfo::constraintViolationMessage(rdbms::ConstraintInfo::UPDATE, ex.getViolatedConstraintName());
+    err_stream << "Cannot update physical library " << pl.name << " because of unique constraint: " << ex.getViolatedConstraintName()
+               << "\n" << ex.getMessageValue();
     throw exception::UserError(err_stream.str());
   } catch(cta::rdbms::ConstraintError& ex) {
     std::ostringstream err_stream;
-    err_stream << "Cannot update physical library " << pl.name << ": ";
-    err_stream << rdbms::ConstraintInfo::constraintViolationMessage(rdbms::ConstraintInfo::UPDATE, ex.getViolatedConstraintName());
+    err_stream << "Cannot update physical library " << pl.name << ": " << ex.getViolatedConstraintName()
+               << "\n" << ex.getMessageValue();
     throw exception::UserError(err_stream.str());
   }
 
