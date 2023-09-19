@@ -45,16 +45,6 @@
 ### Bug Fixes
 - cta/CTA#470 - Scheduler crashing when look for a Virtual Organization with empty Tape Pool Name
 
-# v4.10.3-1
-
-### Bug Fixes
-- cta/CTA#471 - Fix device statistics from LTO drives
-
-# v4.10.2-1
-
-### Bug Fixes
-- cta/CTA#470 - Scheduler crashing when look for a Virtual Organization with empty Tape Pool Name
-
 # v4.10.1-1
 
 ### Bug Fixes
