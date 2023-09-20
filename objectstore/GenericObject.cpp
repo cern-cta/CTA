@@ -95,9 +95,6 @@ namespace {
     C typedObject(*gop);
     lock.transfer(typedObject);
     typedObject.garbageCollect(presumedOwner, agentReference, lc, catalogue);
-    // Release the lock now as if we let the caller do, it will point
-    // to the then-removed typedObject.
-    lock.release();
   }
 }
 
@@ -155,8 +152,6 @@ namespace {
     C typedObject(*gop);
     ScopedLock::transfer(*gop, typedObject);
     std::string ret = typedObject.dump();
-    // Release the lock now as if we let the caller do, it will point
-    // to the then-removed typedObject.
     return ret;
   }
 }
