@@ -10,6 +10,9 @@
 - cta/CTA#482 - Fix bugs reported by SonarCloud in tape server, scheduler and objectstore
 - cta/CTA#473 - Fix some code smells from repack expansion changes.
 
+### Features
+- cta/CTA#490 - Improve code quality in the Physical Library catalogue code
+
 ### Continuous Integration
 - cta/CTA#352 - Test rollback Catalogue Version
 - cta/CTA#446 - Upgrade eos to 4.8.105/5.1.29
