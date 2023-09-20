@@ -91,18 +91,10 @@ void RdbmsLogicalLibraryCatalogue::createLogicalLibrary(const common::dataStruct
         ":LAST_UPDATE_TIME)";
     auto stmt = conn.createStmt(sql);
 
-    auto setOptionalUint = [&stmt](const std::string& sqlField, const std::optional<uint64_t>& optionalField) {
-      if (optionalField) {
-        stmt.bindUint64(sqlField, optionalField.value());
-      } else {
-        stmt.bindUint64(sqlField, std::nullopt);
-      }
-    };
-
     stmt.bindUint64(":LOGICAL_LIBRARY_ID", logicalLibraryId);
     stmt.bindString(":LOGICAL_LIBRARY_NAME", name);
     stmt.bindBool(":IS_DISABLED", isDisabled);
-    setOptionalUint(":PHYSICAL_LIBRARY_ID", physicalLibraryId);
+    stmt.bindUint64(":PHYSICAL_LIBRARY_ID", physicalLibraryId);
 
     stmt.bindString(":USER_COMMENT", trimmedComment);
 

@@ -78,9 +78,9 @@ private:
   friend class RdbmsLogicalLibraryCatalogue;
   std::optional<uint64_t> getPhysicalLibraryId(rdbms::Conn& conn, const std::string& name) const;
 
-  std::string buildSetClause(const common::dataStructures::UpdatePhysicalLibrary& pl);
+  std::string buildUpdateStmtStr(const common::dataStructures::UpdatePhysicalLibrary& pl) const;
   void bindUpdateParams(cta::rdbms::Stmt& stmt, const common::dataStructures::UpdatePhysicalLibrary& pl,
-    const common::dataStructures::SecurityIdentity& admin, const time_t now);
+    const common::dataStructures::SecurityIdentity& admin, const time_t now) const;
 };
 
 } // namespace catalogue
