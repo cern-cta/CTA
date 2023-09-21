@@ -36,18 +36,18 @@ WorkflowEvent::WorkflowEvent(const frontend::FrontendService& frontendService,
   m_lc.pushOrReplace({"user", m_cliIdentity.username + "@" + m_cliIdentity.host});
 
   // Log event before processing. This corresponds to the entry in WFE.log in EOS.
-  {
-    const std::string& eventTypeName = Workflow_EventType_Name(event.wf().event());
-    const std::string& eosInstanceName = event.wf().instance().name();
-    const std::string& diskFilePath = event.file().lpath();
-    const std::string& diskFileId = std::to_string(event.file().fid());
-    log::ScopedParamContainer params(m_lc);
-    params.add("eventType", eventTypeName)
-          .add("eosInstance", eosInstanceName)
-          .add("diskFilePath", diskFilePath)
-          .add("diskFileId", diskFileId);
-    m_lc.log(log::INFO, "In WorkflowEvent::WorkflowEvent(): received event.");
-  }
+  const std::string& eventTypeName = Workflow_EventType_Name(event.wf().event());
+  const std::string& eosInstanceName = event.wf().instance().name();
+  const std::string& diskFilePath = event.file().lpath();
+  const std::string& diskFileId = event.file().disk_file_id().empty() ?
+    std::to_string(event.file().fid()) : event.file().disk_file_id();
+  log::ScopedParamContainer params(m_lc);
+  params.add("eventType", eventTypeName)
+        .add("eosInstance", eosInstanceName)
+        .add("diskFilePath", diskFilePath)
+        .add("diskFileId", diskFileId);
+  m_lc.log(log::INFO, "In WorkflowEvent::WorkflowEvent(): received event.");
+  
   // Validate that instance name in key used to authenticate == instance name in protocol buffer
   if(m_cliIdentity.username != event.wf().instance().name()) {
     // Special case:
@@ -65,23 +65,21 @@ WorkflowEvent::WorkflowEvent(const frontend::FrontendService& frontendService,
     }
   }
   // Refuse any workflow events for files in /eos/INSTANCE_NAME/proc/
-  {
-    const std::string& longInstanceName = event.wf().instance().name();
-    const bool longInstanceNameStartsWithEos = (0 == longInstanceName.find("eos"));
-    const std::string shortInstanceName =
-      longInstanceNameStartsWithEos ? longInstanceName.substr(3) : longInstanceName;
-    if(shortInstanceName.empty()) {
-      std::ostringstream msg;
-      msg << "Short instance name is an empty string: instance=" << longInstanceName;
-      throw exception::PbException(msg.str());
-    }
-    const std::string procFullPath = std::string("/eos/") + shortInstanceName + "/proc/";
-    if(event.file().lpath().find(procFullPath) == 0) {
-      std::ostringstream msg;
-      msg << "Cannot process a workflow event for a file in " << procFullPath << " instance=" << longInstanceName
-          << " event=" << Workflow_EventType_Name(event.wf().event()) << " lpath=" << event.file().lpath();
-      throw exception::PbException(msg.str());
-    }
+  const std::string& longInstanceName = event.wf().instance().name();
+  const bool longInstanceNameStartsWithEos = (0 == longInstanceName.find("eos"));
+  const std::string shortInstanceName =
+    longInstanceNameStartsWithEos ? longInstanceName.substr(3) : longInstanceName;
+  if(shortInstanceName.empty()) {
+    std::ostringstream msg;
+    msg << "Short instance name is an empty string: instance=" << longInstanceName;
+    throw exception::PbException(msg.str());
+  }
+  const std::string procFullPath = std::string("/eos/") + shortInstanceName + "/proc/";
+  if(event.file().lpath().find(procFullPath) == 0) {
+    std::ostringstream msg;
+    msg << "Cannot process a workflow event for a file in " << procFullPath << " instance=" << longInstanceName
+        << " event=" << Workflow_EventType_Name(event.wf().event()) << " lpath=" << event.file().lpath();
+    throw exception::PbException(msg.str());
   }
 }
 
@@ -163,7 +161,8 @@ void WorkflowEvent::processCREATE(xrd::Response& response) {
 
   // Create a log entry
   log::ScopedParamContainer params(m_lc);
-  params.add("diskFileId", std::to_string(m_event.file().fid()))
+  params.add("diskFileId", m_event.file().disk_file_id().empty() ?
+          std::to_string(m_event.file().fid()) : m_event.file().disk_file_id())
         .add("diskFilePath", m_event.file().lpath())
         .add("fileId", archiveFileId)
         .add("schedulerTime", t.secs());
@@ -198,12 +197,12 @@ void WorkflowEvent::processCLOSEW(xrd::Response& response) {
      throw exception::UserError("File is in fail_on_closew_test storage class, which always fails.");
   }
 
-  auto storageClass = m_catalogue.StorageClass()->getStorageClass(storageClassItor->second);
-
   // Disallow archival of files above the specified limit
-  if(storageClass.vo.maxFileSize && m_event.file().size() > storageClass.vo.maxFileSize) {
-     throw exception::UserError("Archive request rejected: file size (" + std::to_string(m_event.file().size()) +
-                                " bytes) exceeds maximum allowed size (" + std::to_string(storageClass.vo.maxFileSize) + " bytes)");
+  if(auto storageClass = m_catalogue.StorageClass()->getStorageClass(storageClassItor->second);
+    storageClass.vo.maxFileSize && m_event.file().size() > storageClass.vo.maxFileSize) {
+      throw exception::UserError("Archive request rejected: file size (" + std::to_string(m_event.file().size()) +
+                                " bytes) exceeds maximum allowed size (" + std::to_string(storageClass.vo.maxFileSize) +
+                                " bytes)");
   }
 
   common::dataStructures::ArchiveRequest request;
@@ -211,7 +210,8 @@ void WorkflowEvent::processCLOSEW(xrd::Response& response) {
   request.diskFileInfo.owner_uid = m_event.file().owner().uid();
   request.diskFileInfo.gid       = m_event.file().owner().gid();
   request.diskFileInfo.path      = m_event.file().lpath();
-  request.diskFileID             = std::to_string(m_event.file().fid());
+  request.diskFileID             = m_event.file().disk_file_id().empty() ?
+                                    std::to_string(m_event.file().fid()) : m_event.file().disk_file_id();
   request.fileSize               = m_event.file().size();
   request.requester.name         = m_event.cli().user().username();
   request.requester.group        = m_event.cli().user().groupname();
@@ -307,8 +307,8 @@ void WorkflowEvent::processPREPARE(xrd::Response& response) {
       throw exception::PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
     }
   }
-  const std::string archiveFileIdStr = archiveFileIdItor->second;
-  if((request.archiveFileID = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0)
+  if(const std::string archiveFileIdStr = archiveFileIdItor->second;
+    (request.archiveFileID = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0)
   {
      throw exception::PbException("Invalid archiveFileID " + archiveFileIdStr);
   }
@@ -359,8 +359,8 @@ void WorkflowEvent::processABORT_PREPARE(xrd::Response& response) {
       throw exception::PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
     }
   }
-  const std::string archiveFileIdStr = archiveFileIdItor->second;
-  if((request.archiveFileID = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0)
+  if(const std::string archiveFileIdStr = archiveFileIdItor->second;
+    (request.archiveFileID = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0)
   {
      throw exception::PbException("Invalid archiveFileID " + archiveFileIdStr);
   }
@@ -403,10 +403,10 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
   request.requester.group   = m_event.cli().user().groupname();
 
   std::string lpath         = m_event.file().lpath();
-  uint64_t diskFileId       = m_event.file().fid();
-  request.diskFilePath          = lpath;
-  request.diskFileId = std::to_string(diskFileId);
-  request.diskInstance = m_cliIdentity.username;
+  request.diskFilePath      = lpath;
+  request.diskFileId        = m_event.file().disk_file_id().empty() ?
+                                std::to_string(m_event.file().fid()) : m_event.file().disk_file_id();
+  request.diskInstance      = m_cliIdentity.username;
   // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which
   // must be converted to a valid uint64_t
   auto archiveFileIdItor = m_event.file().xattr().find("sys.archive.file_id");
@@ -417,17 +417,15 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
       throw exception::PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
     }
   }
-  const std::string archiveFileIdStr = archiveFileIdItor->second;
-  if((request.archiveFileID = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0)
+  if(const std::string archiveFileIdStr = archiveFileIdItor->second;
+    (request.archiveFileID = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0)
   {
      throw exception::PbException("Invalid archiveFileID " + archiveFileIdStr);
   }
-
-  auto archiveRequestAddrItor = m_event.file().xattr().find("sys.cta.archive.objectstore.id");
-  if(archiveRequestAddrItor != m_event.file().xattr().end()){
+  if(auto archiveRequestAddrItor = m_event.file().xattr().find("sys.cta.archive.objectstore.id");
+    archiveRequestAddrItor != m_event.file().xattr().end()){
     //We have the ArchiveRequest's objectstore address.
-    std::string objectstoreAddress = archiveRequestAddrItor->second;
-    if(!objectstoreAddress.empty()){
+    if(std::string objectstoreAddress = archiveRequestAddrItor->second; !objectstoreAddress.empty()){
      request.address = archiveRequestAddrItor->second;
     }
   }
@@ -438,7 +436,7 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
   try {
     request.archiveFile = m_catalogue.ArchiveFile()->getArchiveFileById(request.archiveFileID);
     tl.insertAndReset("catalogueGetArchiveFileByIdTime",t);
-  } catch (exception::Exception &ex){
+  } catch (exception::Exception&){
    log::ScopedParamContainer spc(m_lc);
    spc.add("fileId", request.archiveFileID);
    m_lc.log(log::DEBUG, "Ignoring request to delete archive file from the catalogue, because it does not exist");
@@ -464,7 +462,8 @@ void WorkflowEvent::processUPDATE_FID(xrd::Response& response) {
   // Unpack message
   const std::string &diskInstance = m_cliIdentity.username;
   const std::string &diskFilePath = m_event.file().lpath();
-  const std::string diskFileId = std::to_string(m_event.file().fid());
+  const std::string diskFileId = m_event.file().disk_file_id().empty() ?
+                                  std::to_string(m_event.file().fid()) : m_event.file().disk_file_id();
 
   // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which must be
   // converted to a valid uint64_t
