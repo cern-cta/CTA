@@ -282,7 +282,7 @@ void TapeDrivesCatalogueState::setDriveStarting(common::dataStructures::TapeDriv
   driveState.mountType = inputs.mountType;
   driveState.driveStatus = common::dataStructures::DriveStatus::Starting;
   driveState.currentVid = inputs.vid;
-  driveState.currentTapePool = inputs.tapepool;
+  driveState.currentTapePool = inputs.tapepool.empty() ? std::nullopt : std::optional<std::string>(inputs.tapepool);
   driveState.currentVo = inputs.vo;
   driveState.currentActivity = inputs.activity;
 }
@@ -308,7 +308,7 @@ void TapeDrivesCatalogueState::setDriveMounting(common::dataStructures::TapeDriv
   driveState.mountType = inputs.mountType;
   driveState.driveStatus = common::dataStructures::DriveStatus::Mounting;
   driveState.currentVid = inputs.vid;
-  driveState.currentTapePool = inputs.tapepool;
+  driveState.currentTapePool = inputs.tapepool.empty() ? std::nullopt : std::optional<std::string>(inputs.tapepool);
   driveState.currentVo = inputs.vo;
 }
 
@@ -330,7 +330,7 @@ void TapeDrivesCatalogueState::setDriveTransfering(common::dataStructures::TapeD
   driveState.mountType = inputs.mountType;
   driveState.driveStatus = common::dataStructures::DriveStatus::Transferring;
   driveState.currentVid = inputs.vid;
-  driveState.currentTapePool = inputs.tapepool;
+  driveState.currentTapePool = inputs.tapepool.empty() ? std::nullopt : std::optional<std::string>(inputs.tapepool);
   driveState.currentVo = inputs.vo;
 }
 
@@ -357,7 +357,7 @@ void TapeDrivesCatalogueState::setDriveUnloading(common::dataStructures::TapeDri
   driveState.mountType = inputs.mountType;
   driveState.driveStatus = common::dataStructures::DriveStatus::Unloading;
   driveState.currentVid = inputs.vid;
-  driveState.currentTapePool = inputs.tapepool;
+  driveState.currentTapePool = inputs.tapepool.empty() ? std::nullopt : std::optional<std::string>(inputs.tapepool);
   driveState.currentVo = inputs.vo;
 }
 
@@ -384,7 +384,7 @@ void TapeDrivesCatalogueState::setDriveUnmounting(common::dataStructures::TapeDr
   driveState.mountType = inputs.mountType;
   driveState.driveStatus = common::dataStructures::DriveStatus::Unmounting;
   driveState.currentVid = inputs.vid;
-  driveState.currentTapePool = inputs.tapepool;
+  driveState.currentTapePool = inputs.tapepool.empty() ? std::nullopt : std::optional<std::string>(inputs.tapepool);
   driveState.currentVo = inputs.vo;
 }
 
@@ -411,7 +411,7 @@ void TapeDrivesCatalogueState::setDriveDrainingToDisk(common::dataStructures::Ta
   driveState.mountType = inputs.mountType;
   driveState.driveStatus = common::dataStructures::DriveStatus::DrainingToDisk;
   driveState.currentVid = inputs.vid;
-  driveState.currentTapePool = inputs.tapepool;
+  driveState.currentTapePool = inputs.tapepool.empty() ? std::nullopt : std::optional<std::string>(inputs.tapepool);
   driveState.currentVo = inputs.vo;
 }
 
@@ -438,7 +438,7 @@ void TapeDrivesCatalogueState::setDriveCleaningUp(common::dataStructures::TapeDr
   driveState.mountType = inputs.mountType;
   driveState.driveStatus = common::dataStructures::DriveStatus::CleaningUp;
   driveState.currentVid = inputs.vid;
-  driveState.currentTapePool = (inputs.tapepool == "") ? std::nullopt : std::optional<std::string>(inputs.tapepool);
+  driveState.currentTapePool = inputs.tapepool.empty() ? std::nullopt : std::optional<std::string>(inputs.tapepool);
   driveState.currentActivity = std::nullopt;
   driveState.currentVo = inputs.vo;
 }
@@ -466,7 +466,7 @@ void TapeDrivesCatalogueState::setDriveShutdown(common::dataStructures::TapeDriv
   driveState.mountType = inputs.mountType;
   driveState.driveStatus = common::dataStructures::DriveStatus::Shutdown;
   driveState.currentVid = inputs.vid;
-  driveState.currentTapePool = inputs.tapepool;
+  driveState.currentTapePool = inputs.tapepool.empty() ? std::nullopt : std::optional<std::string>(inputs.tapepool);
   driveState.currentActivity = std::nullopt;
   driveState.currentVo = inputs.vo;
 }

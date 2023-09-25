@@ -6815,14 +6815,14 @@ TEST_P(SchedulerTest, testCleaningUpKeepingTapePoolName) {
   ASSERT_NO_THROW(scheduler.getNextMount(s_libraryName, driveName, lc));
 }
 
-// Issue 470, https://gitlab.cern.ch/cta/CTA/-/issues/470 
-TEST_P(SchedulerTest, testCleaningUpWithoutTapePoolName) {
+// Next two tests were added after the Issue 470, https://gitlab.cern.ch/cta/CTA/-/issues/470 
+TEST_P(SchedulerTest, testShutdownKeepingTapePoolName) {
   using namespace cta;
 
   setupDefaultCatalogue();
 
-  auto &scheduler = getScheduler();
   auto &catalogue = getCatalogue();
+  auto &scheduler = getScheduler();
 
 #ifdef STDOUT_LOGGING
   log::StdoutLogger dl("dummy", "unitTest");
@@ -6832,12 +6832,18 @@ TEST_P(SchedulerTest, testCleaningUpWithoutTapePoolName) {
   log::LogContext lc(dl);
 
   {
-    // Simulate the drive had a uncaught exception in CleaningUp state,
-    // and it didn't go to Down state with empty tape pool name
+    // Drive name to fail when it's in Shutdown state
+    const std::string driveName = "drive0";
+    auto tapeDrive = catalogue.DriveState()->getTapeDrive(driveName);
+    // Insert tape pool name to the drive
+    tapeDrive.value().currentTapePool = s_tapePoolName;
+    tapeDrive.value().driveStatus = common::dataStructures::DriveStatus::Shutdown;
+    catalogue.DriveState()->updateTapeDriveStatus(tapeDrive.value());
+    // And simulate the drive had a uncaught exception in Shutdown state, and it didn't go to Down state
     TapeDrivesCatalogueState tapeDriveState(catalogue);
-    cta::common::dataStructures::DriveInfo driveInfo = { "drive0", "myHost", s_libraryName };
+    cta::common::dataStructures::DriveInfo driveInfo = { driveName, "myHost", s_libraryName };
     tapeDriveState.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
-      cta::common::dataStructures::DriveStatus::CleaningUp, time(nullptr), lc);
+      cta::common::dataStructures::DriveStatus::Shutdown, time(nullptr), lc);
   }
 
   // Create the environment for the migration to happen (library + tape)
@@ -6855,8 +6861,7 @@ TEST_P(SchedulerTest, testCleaningUpWithoutTapePoolName) {
   const std::string driveName = "tape_drive";
   catalogue.Tape()->tapeLabelled(s_vid, driveName);
 
-  // It throws cta::exception::Exception with description " Aborting scheduling
-  ASSERT_THROW(scheduler.getNextMount(s_libraryName, driveName, lc), cta::exception::Exception);
+  ASSERT_NO_THROW(scheduler.getNextMount(s_libraryName, driveName, lc));
 }
 
 // This checks valid tape state changes
