@@ -9,7 +9,6 @@
 - cta/CTA#481 - Fix security hotspots related to file permissions and capabilities
 - cta/CTA#482 - Fix bugs reported by SonarCloud in tape server, scheduler and objectstore
 - cta/CTA#473 - Fix some code smells from repack expansion changes.
-- cta/CTA#494 - Workaround for scheduler crashing
 - cta/CTA#500 - Safely handle empty shards in object store
 - cta/CTA#509 - Avoid looping in cleaning up state
 - cta/CTA#510 - Remove critical constrain after update heartbeat
@@ -21,6 +20,11 @@
 ### Continuous Integration
 - cta/CTA#352 - Test rollback Catalogue Version
 - cta/CTA#446 - Upgrade eos to 4.8.105/5.1.29
+
+# v4.10.5-1
+
+### Bug Fixes
+- cta/CTA#494 - Workaround for scheduler crashing
 
 # v4.10.4-1
 

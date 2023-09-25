@@ -1108,11 +1108,6 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
   std::map<std::string,std::string> tapepoolVoNameMap;
   std::map<std::string,common::dataStructures::VirtualOrganization> voNameVoMap;
   for (auto & tapepool: tapepoolsPotentialOrExistingMounts) {
-    if(tapepoolsPotentialOrExistingMounts.count(std::string()) > 0) {
-      // log an error that tapepool in PotentialOrExistingMounts contained an empty string
-      lc.log(log::ERR, "In Scheduler::sortAndGetTapesForMountInfo(): for Potential or Existing Mounts, "
-        "tapePool is an empty string.");
-    }
     try {
       auto vo = m_catalogue.VO()->getCachedVirtualOrganizationOfTapepool(tapepool);
       tapepoolVoNameMap[tapepool] = vo.name;
