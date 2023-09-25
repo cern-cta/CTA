@@ -1071,35 +1071,41 @@ void Scheduler::sortAndGetTapesForMountInfo(std::unique_ptr<SchedulerDatabase::T
   //Get the tapepools of the potential and existing mounts
   std::set<std::string> tapepoolsPotentialOrExistingMounts;
   for (const auto& pm: mountInfo->potentialMounts) {
+    if (pm.tapePool.empty()) {
+      // log an error that tapepool in PotentialMounts contained an empty string
+      lc.log(log::ERR, "In Scheduler::sortAndGetTapesForMountInfo(): for Potential Mounts, "
+        "tapePool is an empty string.");
+      // Remove elements where tapepool is empty to don't have any problem later
+      mountInfo->potentialMounts.erase(std::remove_if(mountInfo->potentialMounts.begin(),
+        mountInfo->potentialMounts.end(),
+        [](const SchedulerDatabase::PotentialMount &mount)
+        {
+          return mount.tapePool.empty();
+        }), mountInfo->potentialMounts.end());
+      continue;
+    }
     tapepoolsPotentialOrExistingMounts.insert(pm.tapePool);
   }
   for (const auto& em: mountInfo->existingOrNextMounts) {
+    if (em.tapePool.empty()) {
+      // log an error that tapepool in ExistingOrNextMounts contained an empty string
+      lc.log(log::ERR, "In Scheduler::sortAndGetTapesForMountInfo(): for Existing or Next Mounts, "
+        "tapePool is an empty string.");
+      // Remove elements where tapepool is empty to don't have any problem later
+      mountInfo->existingOrNextMounts.erase(std::remove_if(mountInfo->existingOrNextMounts.begin(),
+        mountInfo->existingOrNextMounts.end(),
+        [](const SchedulerDatabase::ExistingMount &mount)
+        {
+          return mount.tapePool.empty();
+        }), mountInfo->existingOrNextMounts.end());
+      continue;
+    }
     tapepoolsPotentialOrExistingMounts.insert(em.tapePool);
   }
   //Get the potential and existing mounts tapepool virtual organization information
   std::map<std::string,std::string> tapepoolVoNameMap;
   std::map<std::string,common::dataStructures::VirtualOrganization> voNameVoMap;
   for (auto & tapepool: tapepoolsPotentialOrExistingMounts) {
-    if(tapepool.empty()) {
-      // log an error that tapepool in PotentialOrExistingMounts contained an empty string
-      lc.log(log::ERR, "In Scheduler::sortAndGetTapesForMountInfo(): for Potential or Existing Mounts, "
-        "tapePool is an empty string.");
-      // Remove elements where tapepool is empty to don't have any problem later
-      tapepoolsPotentialOrExistingMounts.erase(tapepool);
-      mountInfo->potentialMounts.erase(std::remove_if(mountInfo->potentialMounts.begin(),
-        mountInfo->potentialMounts.end(),
-        [&tapepool](const SchedulerDatabase::PotentialMount &pm)
-        {
-          return pm.tapePool == tapepool;
-        }), mountInfo->potentialMounts.end());
-      mountInfo->existingOrNextMounts.erase(std::remove_if(mountInfo->existingOrNextMounts.begin(),
-        mountInfo->existingOrNextMounts.end(),
-        [&tapepool](const SchedulerDatabase::ExistingMount &em)
-        {
-          return em.tapePool == tapepool;
-        }), mountInfo->existingOrNextMounts.end());
-      continue;
-    }
     try {
       auto vo = m_catalogue.VO()->getCachedVirtualOrganizationOfTapepool(tapepool);
       tapepoolVoNameMap[tapepool] = vo.name;
