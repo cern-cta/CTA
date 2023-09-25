@@ -6762,6 +6762,147 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,drive2,lc));
 }
 
+// Next two tests were added after the Issue 470, https://gitlab.cern.ch/cta/CTA/-/issues/470 
+TEST_P(SchedulerTest, testCleaningUpKeepingTapePoolName) {
+  using namespace cta;
+
+  setupDefaultCatalogue();
+
+  auto &catalogue = getCatalogue();
+  auto &scheduler = getScheduler();
+
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+
+  {
+    // Drive name to fail when it's in CleaningUp state
+    const std::string driveName = "drive0";
+    auto tapeDrive = catalogue.DriveState()->getTapeDrive(driveName);
+    // Insert tape pool name to the drive
+    tapeDrive.value().currentTapePool = s_tapePoolName;
+    tapeDrive.value().driveStatus = common::dataStructures::DriveStatus::CleaningUp;
+    catalogue.DriveState()->updateTapeDriveStatus(tapeDrive.value());
+    // And simulate the drive had a uncaught exception in CleaningUp state, and it didn't go to Down state
+    TapeDrivesCatalogueState tapeDriveState(catalogue);
+    cta::common::dataStructures::DriveInfo driveInfo = { driveName, "myHost", s_libraryName };
+    tapeDriveState.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
+      cta::common::dataStructures::DriveStatus::CleaningUp, time(nullptr), lc);
+  }
+
+  // Create the environment for the migration to happen (library + tape)
+  const std::string libraryComment = "Library comment";
+  const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+    libraryIsDisabled, physicalLibraryName, libraryComment);
+
+  {
+    auto tape = getDefaultTape();
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
+  }
+
+  const std::string driveName = "tape_drive";
+  catalogue.Tape()->tapeLabelled(s_vid, driveName);
+
+  ASSERT_NO_THROW(scheduler.getNextMount(s_libraryName, driveName, lc));
+}
+
+// Issue 470, https://gitlab.cern.ch/cta/CTA/-/issues/470 
+TEST_P(SchedulerTest, testCleaningUpWithoutTapePoolName) {
+  using namespace cta;
+
+  setupDefaultCatalogue();
+
+  auto &scheduler = getScheduler();
+  auto &catalogue = getCatalogue();
+
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+
+  {
+    // Simulate the drive had a uncaught exception in CleaningUp state,
+    // and it didn't go to Down state with empty tape pool name
+    TapeDrivesCatalogueState tapeDriveState(catalogue);
+    cta::common::dataStructures::DriveInfo driveInfo = { "drive0", "myHost", s_libraryName };
+    tapeDriveState.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
+      cta::common::dataStructures::DriveStatus::CleaningUp, time(nullptr), lc);
+  }
+
+  // Create the environment for the migration to happen (library + tape)
+  const std::string libraryComment = "Library comment";
+  const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+    libraryIsDisabled, physicalLibraryName, libraryComment);
+
+  {
+    auto tape = getDefaultTape();
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
+  }
+  const std::string driveName = "tape_drive";
+  catalogue.Tape()->tapeLabelled(s_vid, driveName);
+
+  // Now it doesn't throw an exception, ISSUE 494 Workaround for scheduler crashing 
+  ASSERT_NO_THROW(scheduler.getNextMount(s_libraryName, driveName, lc));
+}
+
+// Next two tests were added after the Issue 470, https://gitlab.cern.ch/cta/CTA/-/issues/470 
+TEST_P(SchedulerTest, testShutdownKeepingTapePoolName) {
+  using namespace cta;
+
+  setupDefaultCatalogue();
+
+  auto &catalogue = getCatalogue();
+  auto &scheduler = getScheduler();
+
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+
+  {
+    // Drive name to fail when it's in Shutdown state
+    const std::string driveName = "drive0";
+    auto tapeDrive = catalogue.DriveState()->getTapeDrive(driveName);
+    // Insert tape pool name to the drive
+    tapeDrive.value().currentTapePool = s_tapePoolName;
+    tapeDrive.value().driveStatus = common::dataStructures::DriveStatus::Shutdown;
+    catalogue.DriveState()->updateTapeDriveStatus(tapeDrive.value());
+    // And simulate the drive had a uncaught exception in Shutdown state, and it didn't go to Down state
+    TapeDrivesCatalogueState tapeDriveState(catalogue);
+    cta::common::dataStructures::DriveInfo driveInfo = { driveName, "myHost", s_libraryName };
+    tapeDriveState.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
+      cta::common::dataStructures::DriveStatus::Shutdown, time(nullptr), lc);
+  }
+
+  // Create the environment for the migration to happen (library + tape)
+  const std::string libraryComment = "Library comment";
+  const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
+    libraryIsDisabled, physicalLibraryName, libraryComment);
+
+  {
+    auto tape = getDefaultTape();
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
+  }
+
+  const std::string driveName = "tape_drive";
+  catalogue.Tape()->tapeLabelled(s_vid, driveName);
+
+  ASSERT_NO_THROW(scheduler.getNextMount(s_libraryName, driveName, lc));
+}
+
 // This checks valid tape state changes
 TEST_P(SchedulerTestTriggerTapeStateChangeBehaviour, triggerTapeStateChangeValidScenarios){
 //Queue 2 archive requests in two different logical libraries

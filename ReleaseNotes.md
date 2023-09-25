@@ -1,3 +1,8 @@
+# v4.10.5-1
+
+### Bug Fixes
+- cta/CTA#494 - Workaround for scheduler crashing
+
 # v4.10.4-1
 
 ### Features
