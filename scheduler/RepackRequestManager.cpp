@@ -34,7 +34,7 @@ void RepackRequestManager::runOnePass(log::LogContext &lc,
   m_scheduler.promoteRepackRequestsToToExpand(lc, repackMaxRequestsToExpand);
 
   //Retrieve the first repack request from the RepackQueueToExpand queue
-  if(auto repackRequest = m_scheduler.getNextRepackRequestToExpand(); repackRequest != nullptr) {
+  if(const auto repackRequest = m_scheduler.getNextRepackRequestToExpand(); repackRequest != nullptr) {
     //We have a RepackRequest that has the status ToExpand, expand it
     try{
       try{
