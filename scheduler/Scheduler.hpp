@@ -375,7 +375,7 @@ public:
                                        size_t repackMaxRequestsToExpand);
   // Expansion support
   std::unique_ptr<RepackRequest> getNextRepackRequestToExpand();
-  void expandRepackRequest(std::unique_ptr<RepackRequest> & repqckRequest, log::TimingList& , utils::Timer &, log::LogContext &);
+  void expandRepackRequest(const std::unique_ptr<RepackRequest> & repqckRequest, log::TimingList& , utils::Timer &, log::LogContext &);
   // Scheduler level will not distinguish between report types. It will just do a getnext-report cycle.
   class RepackReportBatch {
     friend Scheduler;

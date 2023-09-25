@@ -479,7 +479,7 @@ std::unique_ptr<RepackRequest> Scheduler::getNextRepackRequestToExpand() {
 //------------------------------------------------------------------------------
 // expandRepackRequest
 //------------------------------------------------------------------------------
-void Scheduler::expandRepackRequest(std::unique_ptr<RepackRequest>& repackRequest, log::TimingList& timingList, utils::Timer& t, log::LogContext& lc) {
+void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repackRequest, log::TimingList& timingList, utils::Timer& t, log::LogContext& lc) {
   auto repackInfo = repackRequest->getRepackInfo();
 
   using RepackType = cta::common::dataStructures::RepackInfo::Type;
