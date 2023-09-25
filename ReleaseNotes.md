@@ -9,6 +9,7 @@
 - cta/CTA#481 - Fix security hotspots related to file permissions and capabilities
 - cta/CTA#482 - Fix bugs reported by SonarCloud in tape server, scheduler and objectstore
 - cta/CTA#473 - Fix some code smells from repack expansion changes.
+- cta/CTA#494 - Workaround for scheduler crashing
 
 ### Features
 - cta/CTA#490 - Improve code quality in the Physical Library catalogue code
