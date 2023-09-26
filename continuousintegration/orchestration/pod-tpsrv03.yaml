@@ -21,16 +21,6 @@ spec:
       valueFrom:
         fieldRef:
           fieldPath: metadata.namespace
-    - name: BUILDTREE_BASE
-      valueFrom:
-        configMapKeyRef:
-          name: buildtree
-          key: base
-    - name: CTA_BUILDTREE_SUBDIR
-      valueFrom:
-        configMapKeyRef:
-          name: buildtree
-          key: cta_subdir
     - name: INSTANCE_NAME
       value: "$(MY_NAMESPACE)"
     - name: TERM
@@ -67,16 +57,6 @@ spec:
       value: "$(MY_NAMESPACE)"
     - name: eoshost
       value: "mgm"
-    - name: BUILDTREE_BASE
-      valueFrom:
-        configMapKeyRef:
-          name: buildtree
-          key: base
-    - name: CTA_BUILDTREE_SUBDIR
-      valueFrom:
-        configMapKeyRef:
-          name: buildtree
-          key: cta_subdir
     - name: TERM
       value: "xterm"
     - name: ndrives
