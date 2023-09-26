@@ -100,18 +100,26 @@ cta::log::LogContext&  ProcessManager::logContext() {
 
 ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
   // Check the current statuses for shutdown requests
-  // If any process requests a shutdown, we will trigger it in all.
-  bool anyAskedShutdown = std::count_if(m_subprocessHandlers.cbegin(), 
-      m_subprocessHandlers.cend(), 
-      [&](const SubprocessAndStatus &i){
-        if (i.status.shutdownRequested) {
-          cta::log::ScopedParamContainer params(m_logContext);
-          params.add("SubprocessName", i.handler->index);
-          m_logContext.log(log::INFO, "Subprocess requested shutdown");
-        }
-        return i.status.shutdownRequested;
-      });
-  if (anyAskedShutdown) {
+  bool nonDriveAskedShutdown = false;
+  std::list<SubprocessAndStatus *> drivesToShutdown();
+  int aliveDrives = 0;
+
+  for(const auto &i : m_subprocessHandlers) {
+    if (i.handler.index.find("drive:")) aliveDrives++;
+    if (i.status.shutdownRequested) {
+      cta::log::ScopedParamContainer params(m_logContext);
+      params.add("SubprocessName", i.handler->index);
+      m_logContext.log(log::INFO, "Subprocess requested shutdown");
+      if (i.handler.index.find("drive:"))
+        drivesToShutDown.insert(i);
+      else {
+        nonDriveAskedShutdown = true;
+        break;
+      }
+  }
+
+  // If a non drive handler requests a shutdown or all alive drive handlers request shutdown kill everything.
+  if (nonDriveAskedShutdown || (aliveDrives == drivesToShutDown.size())) {
     for(auto & sp: m_subprocessHandlers) {
       sp.status = sp.handler->shutdown();
       cta::log::ScopedParamContainer params(m_logContext);
@@ -120,6 +128,7 @@ ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
       m_logContext.log(log::INFO, "Signaled shutdown to subprocess handler");
     }
   }
+
   // If all processes completed their shutdown, we can exit
   bool shutdownComplete=true;
   for (auto & sp: m_subprocessHandlers) { shutdownComplete &= sp.status.shutdownComplete; }
@@ -130,6 +139,21 @@ ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
     ret.exitCode = EXIT_SUCCESS;
     return ret;
   }
+
+  // Only a subset of alive drives requested shutdown, proceed with those a keep going.
+  if (drivesToShutdown.size()){
+    cta::log::ScopedParamContainer params(m_logContext);
+    m_logContext.log(log::INFO, "Shutting down " + std::to_string(drivesToShutdown.size()) + " drive handlers.")
+
+    for(auto & dh : drivesToShutdown) {
+      dh.handler->shutdown();
+      cta::log::ScopedParamContainer params(m_logContext);
+      params.add("SubprocessName", dh.handler->index)
+            .add("ShutdownComplete", dh.status.shudownComplete);
+      m_logContext.log(log::INFO, "Signaled shutdown to drive handler.")
+    }
+  }
+
   return RunPartStatus();
 }
 
