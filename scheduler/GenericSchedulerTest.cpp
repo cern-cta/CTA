@@ -476,7 +476,6 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
   const std::string libraryComment = "Library comment";
   const bool libraryIsDisabled = true;
   std::optional<std::string> physicalLibraryName;
-  std::optional<std::string> physicalLibraryName;
   catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName,
     libraryIsDisabled, physicalLibraryName, libraryComment);
   {
@@ -2109,7 +2108,7 @@ TEST_P(SchedulerTest, expandRepackRequestRepackingTape) {
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
   std::optional<std::string> physicalLibraryName;
-  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, physicalLibraryName, physicalLibraryName, "Create logical library");
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
 
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;
@@ -2207,8 +2206,7 @@ TEST_P(SchedulerTest, expandRepackRequestRepackingDisabledTape) {
   //Create a logical library in the catalogue
   const bool logicalLibraryIsDisabled = false;
   std::optional<std::string> physicalLibraryName;
-  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, physicalLibraryName, physicalLibraryName,
-    "Create logical library");
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin, s_libraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
 
   std::ostringstream ossVid;
   ossVid << s_vid << "_" << 1;

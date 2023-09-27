@@ -109,7 +109,7 @@ std::string PostgresSchedDB::queueArchive(const std::string &instanceName, const
   return aReq->getIdStr();
 }
 
-std::map<std::string, std::list<common::dataStructures::ArchiveJob>> PostgresSchedDB::getArchiveJobs() const
+std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<void> > PostgresSchedDB::getArchiveJobs() const
 {
    throw cta::exception::Exception("Not implemented");
 }
@@ -255,7 +255,7 @@ void PostgresSchedDB::deleteFailed(const std::string &objectId, log::LogContext 
    throw cta::exception::Exception("Not implemented");
 }
 
-std::map<std::string, std::list<common::dataStructures::RetrieveJob>> PostgresSchedDB::getRetrieveJobs() const
+std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<void> > PostgresSchedDB::getRetrieveJobs() const
 {
    throw cta::exception::Exception("Not implemented");
 }
@@ -292,6 +292,13 @@ std::string PostgresSchedDB::queueRepack(const SchedulerDatabase::QueueRepackReq
   rr->commit();
 
   return rr->getIdStr();
+}
+
+//------------------------------------------------------------------------------
+// PostgresSchedDB::repackExists()
+//------------------------------------------------------------------------------
+bool PostgresSchedDB::repackExists() {
+    throw cta::exception::Exception("Not implemented");
 }
 
 std::list<common::dataStructures::RepackInfo> PostgresSchedDB::getRepackInfo()
